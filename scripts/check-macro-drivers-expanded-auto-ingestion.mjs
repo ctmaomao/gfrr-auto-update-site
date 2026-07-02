@@ -130,8 +130,14 @@ if (energyTransport !== undefined) {
       const candidate = energyTransport.transportShockCandidate;
       if (candidate.candidateOnly !== true) fail('macroDrivers.energyTransport.transportShockCandidate.candidateOnly must be true');
       if (candidate.auditOnly !== true) fail('macroDrivers.energyTransport.transportShockCandidate.auditOnly must be true');
-      if (candidate.eligibleForMainScore !== false) fail('macroDrivers.energyTransport.transportShockCandidate.eligibleForMainScore must be false');
-      if (candidate.boundaries?.affectsScoring !== false) fail('macroDrivers.energyTransport.transportShockCandidate.boundaries.affectsScoring must be false');
+      if (typeof candidate.eligibleForMainScore !== 'boolean') fail('macroDrivers.energyTransport.transportShockCandidate.eligibleForMainScore must be boolean');
+      if (candidate.eligibleForMainScore === true) {
+        if (energyTransport.sourceStatus?.chokepoints !== 'live') fail('macroDrivers.energyTransport.transportShockCandidate can be eligible only when PortWatch is live');
+        if (!['watch', 'elevated_watch'].includes(candidate.status)) fail('macroDrivers.energyTransport.transportShockCandidate eligible status must be watch/elevated_watch');
+        if (candidate.boundaries?.affectsScoring !== true) fail('macroDrivers.energyTransport.transportShockCandidate.boundaries.affectsScoring must be true when eligible');
+      } else if (candidate.boundaries?.affectsScoring !== false) {
+        fail('macroDrivers.energyTransport.transportShockCandidate.boundaries.affectsScoring must be false when not eligible');
+      }
       if (candidate.routeFreightConfirmation !== 'not_connected') fail('macroDrivers.energyTransport.transportShockCandidate.routeFreightConfirmation must be not_connected');
       if (candidate.marketConfirmation !== 'not_connected') fail('macroDrivers.energyTransport.transportShockCandidate.marketConfirmation must be not_connected');
     }

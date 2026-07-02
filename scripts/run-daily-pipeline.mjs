@@ -55,6 +55,9 @@ const EIA_API_KEY = (process.env.EIA_API_KEY || '').trim();
 const WIND_API_KEY = (process.env.WIND_API_KEY || '').trim();
 const RELEASE_VERSION = 'v28.0.10';
 const DATA_CONTRACT_VERSION = 'v27.0';
+const TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION = 'transport-shock-scoring-impact-v1';
+const TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3;
+const TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS = 7;
 const EXTERNAL_AI_SCAFFOLD_CONTRACT_VERSION = 'v28.0K-3A';
 const EXTERNAL_AI_SCAFFOLD_MODE = 'external_ai_disabled_scaffold';
 const EXTERNAL_AI_SCAFFOLD_LAYERS_AVAILABLE = [
@@ -8240,21 +8243,21 @@ function buildEnergyTransportLimitation() {
 
 function buildEnergyTransportNotes() {
   return [
-    'Sources: UN Global Platform; IMF PortWatch. Daily_Chokepoints_Data 为 AIS-derived chokepoint proxy;IMF Data Terms pinned via exact ArcGIS licenseInfo;display-only,不进 scoring/decision/execution/position。',
+    'Sources: UN Global Platform; IMF PortWatch. Daily_Chokepoints_Data 为 AIS-derived chokepoint proxy;IMF Data Terms pinned via exact ArcGIS licenseInfo。',
     '本层只保存 compact 派生摘要(latest + 7d/30d average + deviation),不提交 PortWatch raw AIS-derived history;usageTermsPinned=imf_data_terms_pinned,redistributionCaveat=true(UN Global Platform / AIS 第三方上游 caveat 保留)。',
-    'transportShockCandidate 是可入分前的候选审计层:只读 PortWatch 咽喉代理,需要路线级油轮运费与市场确认后才可另开评分评审;当前不改变主分数。'
+    'transportShockCandidate 已获 owner_thread_approval 进入 free-proxy low-weight runtime scoring migration:只读 PortWatch 咽喉代理,上限 +3,默认 fail-closed 0;routeFreightConfirmation/marketConfirmation 仍为 not_connected。'
   ];
 }
 
-function buildEnergyTransportBoundaryFlags() {
+function buildEnergyTransportBoundaryFlags({ affectsRuntimeScoring = false } = {}) {
   return {
     affectsValues: false,
     affectsDisplayInputsBaseline: false,
     affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
+    affectsScoring: affectsRuntimeScoring,
+    affectsDecisionModel: affectsRuntimeScoring,
+    affectsExecutionLock: affectsRuntimeScoring,
+    affectsPositionGuidance: affectsRuntimeScoring,
     affectsBrentPromotion: false,
     affectsWorldOrderWeights: false,
     affectsGlobalRiskHeatmap: false,
@@ -8359,7 +8362,7 @@ function buildEnergyTransportShockCandidate(chokepoints, reroutingProxy, sourceS
     confidence: 'low',
     candidateOnly: true,
     auditOnly: true,
-    eligibleForMainScore: false,
+    eligibleForMainScore: sourceStatus === 'live' && status !== 'normal',
     confirmationStatus: status === 'normal'
       ? 'no_transport_shock_candidate'
       : 'awaiting_route_freight_and_market_confirmation',
@@ -8379,8 +8382,10 @@ function buildEnergyTransportShockCandidate(chokepoints, reroutingProxy, sourceS
     },
     drivers,
     reasons,
-    boundaries: buildEnergyTransportBoundaryFlags(),
-    limitationZh: '运输冲击候选分仅为 PortWatch AIS 派生咽喉代理的审计读数;不确认封锁、断供、暗航行、战争概率或油价方向;不进 values、scoring、decision、execution、position、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation。'
+    boundaries: buildEnergyTransportBoundaryFlags({ affectsRuntimeScoring: sourceStatus === 'live' && status !== 'normal' }),
+    limitationZh: sourceStatus === 'live' && status !== 'normal'
+      ? '运输冲击候选分仅为 PortWatch AIS 派生咽喉代理的低权重压力输入;owner-approved runtime scoring migration 允许最高 +3 主分贡献,默认 fail-closed 0;不确认封锁、断供、暗航行、战争概率或油价方向;不改变 values、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation。'
+      : '运输冲击候选分仅为 PortWatch AIS 派生咽喉代理的审计读数;不确认封锁、断供、暗航行、战争概率或油价方向;不进 values、scoring、decision、execution、position、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation。'
   };
 }
 
@@ -10705,6 +10710,71 @@ function buildTailRiskOverlay(inputs) {
   };
 }
 
+function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport) {
+  const candidate = energyTransport?.transportShockCandidate;
+  const sourceStatus = energyTransport?.sourceStatus?.chokepoints || 'missing';
+  const latestAgeDays = Number.isFinite(energyTransport?.latestAgeDays) ? energyTransport.latestAgeDays : null;
+  const candidateScore = Number.isFinite(candidate?.score) ? candidate.score : null;
+  const pressureStatus = candidate?.status === 'watch' || candidate?.status === 'elevated_watch';
+  const guards = {
+    candidatePresent: Boolean(candidate && typeof candidate === 'object' && !Array.isArray(candidate)),
+    sourceLive: sourceStatus === 'live',
+    latestFresh: Number.isFinite(latestAgeDays) && latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
+    eligibleForMainScore: candidate?.eligibleForMainScore === true,
+    candidateScorePositive: Number.isFinite(candidateScore) && candidateScore > 0,
+    pressureStatus,
+    hardCapPct: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+    routeFreightConfirmationConnected: false,
+    marketConfirmationConnected: false
+  };
+  const base = Number.isFinite(scoreBeforeTransport) ? clamp(scoreBeforeTransport) : null;
+  const zero = (reason) => ({
+    contractVersion: TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
+    sourcePath: 'macroDrivers.energyTransport.transportShockCandidate',
+    applied: false,
+    contributionPct: 0,
+    maxContributionPct: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+    direction: 'transport_shock_pressure_only',
+    reason,
+    scoreBeforeTransport: base,
+    scoreAfterTransport: base,
+    sourceStatus,
+    latestAgeDays,
+    candidateStatus: typeof candidate?.status === 'string' ? candidate.status : null,
+    candidateScore,
+    guards
+  });
+
+  if (!guards.candidatePresent) return zero('candidate_missing_zero_contribution');
+  if (!guards.sourceLive) return zero('candidate_not_live_zero_contribution');
+  if (!guards.latestFresh) return zero('candidate_stale_zero_contribution');
+  if (!guards.eligibleForMainScore) return zero('candidate_not_eligible_zero_contribution');
+  if (!guards.pressureStatus) return zero('candidate_not_pressure_status_zero_contribution');
+  if (!guards.candidateScorePositive) return zero('candidate_score_not_positive_zero_contribution');
+  if (!Number.isFinite(base)) return zero('base_score_missing_zero_contribution');
+
+  const rawContribution = candidateScore >= 75 ? 3 : candidateScore >= 60 ? 2 : candidateScore >= 50 ? 1 : 0;
+  const contributionPct = clampRange(rawContribution, 0, TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT);
+  if (contributionPct <= 0) return zero('candidate_score_below_contribution_threshold_zero_contribution');
+
+  return {
+    contractVersion: TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
+    sourcePath: 'macroDrivers.energyTransport.transportShockCandidate',
+    applied: true,
+    contributionPct,
+    maxContributionPct: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+    direction: 'transport_shock_pressure_only',
+    reason: 'owner_approved_free_proxy_transport_pressure_low_weight_applied',
+    scoreBeforeTransport: base,
+    scoreAfterTransport: clamp(base + contributionPct),
+    sourceStatus,
+    latestAgeDays,
+    candidateStatus: candidate.status,
+    candidateScore,
+    guards
+  };
+}
+
 function deriveRisk(rt, macroDrivers) {
   const v = rt.values || {};
   const brent = v.brent ?? R.defaults.brent;
@@ -10852,7 +10922,13 @@ function deriveRisk(rt, macroDrivers) {
     curveInversionRisk,
     nimPressureRisk
   });
-  const score = tailRiskOverlay.adjustedScore;
+  const transportShockScoringImpact = buildTransportShockScoringImpact(
+    macroDrivers?.energyTransport,
+    tailRiskOverlay.adjustedScore
+  );
+  const score = transportShockScoringImpact.applied
+    ? transportShockScoringImpact.scoreAfterTransport
+    : tailRiskOverlay.adjustedScore;
   return {
     modules, score,
     oilRisk, dollarRisk, hyRisk, vixRisk, rateRisk, realRisk, inflationRisk, spxRisk,
@@ -10862,7 +10938,8 @@ function deriveRisk(rt, macroDrivers) {
     riskCalibration: {
       dxyBroadDollar: dxyRiskCalibration
     },
-    tailRiskOverlay
+    tailRiskOverlay,
+    transportShockScoringImpact
   };
 }
 
@@ -11554,6 +11631,7 @@ async function build() {
     modules: risk.modules,
     riskCalibration: risk.riskCalibration,
     tailRiskOverlay: risk.tailRiskOverlay,
+    transportShockScoringImpact: risk.transportShockScoringImpact,
     moduleTrends: {
       geopolitical: clamp((scoringRealtime.changes?.brent1d ?? 0) * 2, -9, 9),
       energy: clamp((scoringRealtime.changes?.brent1d ?? 0) * 3, -9, 9),

@@ -132,6 +132,9 @@ const VALID_ENERGY_TRANSPORT_SHOCK_CONFIRMATION = new Set([
   'no_transport_shock_candidate',
   'unavailable'
 ]);
+const TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION = 'transport-shock-scoring-impact-v1';
+const TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3;
+const TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS = 7;
 const ENERGY_TRANSPORT_CHOKEPOINT_KEYS = ['suez', 'panama', 'bosporus', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_CORE_KEYS = ['suez', 'babElMandeb', 'malacca', 'hormuz', 'capeGoodHope', 'gibraltar'];
 const ENERGY_TRANSPORT_FORBIDDEN_KEYS = new Set([
@@ -1082,7 +1085,7 @@ function validateEnergyTransportShockCandidate(candidate, fieldName, sourceStatu
   assert(VALID_ENERGY_TRANSPORT_SHOCK_CONFIRMATION.has(candidate.confirmationStatus), `${fieldName}.confirmationStatus is not supported`);
   assert(candidate.candidateOnly === true, `${fieldName}.candidateOnly must be true`);
   assert(candidate.auditOnly === true, `${fieldName}.auditOnly must be true`);
-  assert(candidate.eligibleForMainScore === false, `${fieldName}.eligibleForMainScore must be false`);
+  assertBoolean(candidate.eligibleForMainScore, `${fieldName}.eligibleForMainScore`);
   assert(candidate.routeFreightConfirmation === 'not_connected', `${fieldName}.routeFreightConfirmation must be not_connected`);
   assert(candidate.marketConfirmation === 'not_connected', `${fieldName}.marketConfirmation must be not_connected`);
   assert(isFiniteNumberOrNull(candidate.score), `${fieldName}.score must be finite number or null`);
@@ -1095,6 +1098,15 @@ function validateEnergyTransportShockCandidate(candidate, fieldName, sourceStatu
   }
   if (sourceStatus !== 'live' && sourceStatus !== 'fallback') {
     assert(candidate.status === 'unavailable', `${fieldName}.status must be unavailable unless source is live/fallback`);
+  }
+  if (candidate.eligibleForMainScore === true) {
+    assert(sourceStatus === 'live', `${fieldName}.eligibleForMainScore can be true only when source is live`);
+    assert(candidate.status === 'watch' || candidate.status === 'elevated_watch',
+      `${fieldName}.eligibleForMainScore can be true only for watch/elevated_watch`);
+    assert(Number.isFinite(candidate.score) && candidate.score >= 50,
+      `${fieldName}.eligibleForMainScore requires score >= 50`);
+    assert(candidate.confirmationStatus === 'awaiting_route_freight_and_market_confirmation',
+      `${fieldName}.eligibleForMainScore must preserve route/market confirmation gate`);
   }
 
   assertPlainObject(candidate.evidence, `${fieldName}.evidence`);
@@ -1120,6 +1132,12 @@ function validateEnergyTransportShockCandidate(candidate, fieldName, sourceStatu
   assertArray(candidate.reasons, `${fieldName}.reasons`);
   candidate.reasons.forEach((item, index) => assertString(item, `${fieldName}.reasons[${index}]`));
   assertPlainObject(candidate.boundaries, `${fieldName}.boundaries`);
+  const runtimeScoringBoundaryKeys = new Set([
+    'affectsScoring',
+    'affectsDecisionModel',
+    'affectsExecutionLock',
+    'affectsPositionGuidance'
+  ]);
   for (const key of [
     'affectsValues',
     'affectsDisplayInputsBaseline',
@@ -1133,16 +1151,117 @@ function validateEnergyTransportShockCandidate(candidate, fieldName, sourceStatu
     'affectsGlobalRiskHeatmap',
     'affectsCrossValidation'
   ]) {
-    assert(candidate.boundaries[key] === false, `${fieldName}.boundaries.${key} must be false`);
+    if (candidate.eligibleForMainScore === true && runtimeScoringBoundaryKeys.has(key)) {
+      assert(candidate.boundaries[key] === true, `${fieldName}.boundaries.${key} must be true for scoring-eligible transport pressure`);
+    } else {
+      assert(candidate.boundaries[key] === false, `${fieldName}.boundaries.${key} must be false`);
+    }
   }
   assertString(candidate.limitationZh, `${fieldName}.limitationZh`);
-  assert(
+  const limitationBaseOk =
     /候选|candidate/u.test(candidate.limitationZh) &&
     /AIS/u.test(candidate.limitationZh) &&
-    /不确认|does not confirm|not confirm/u.test(candidate.limitationZh) &&
-    /不进|not in|scoring/u.test(candidate.limitationZh),
-    `${fieldName}.limitationZh must preserve candidate-only, AIS, no-confirmation, and no-scoring boundaries`
-  );
+    /不确认|does not confirm|not confirm/u.test(candidate.limitationZh);
+  if (candidate.eligibleForMainScore === true) {
+    assert(
+      limitationBaseOk &&
+      /低权重|low-weight/u.test(candidate.limitationZh) &&
+      /\+3|3 主分|cap|上限/u.test(candidate.limitationZh),
+      `${fieldName}.limitationZh must disclose AIS, no-confirmation, low-weight scoring, and +3 cap boundaries`
+    );
+  } else {
+    assert(
+      limitationBaseOk &&
+      /不进|not in|scoring/u.test(candidate.limitationZh),
+      `${fieldName}.limitationZh must preserve candidate-only, AIS, no-confirmation, and no-scoring boundaries`
+    );
+  }
+}
+
+function validateTransportShockScoringImpact(dataPayload) {
+  if (dataPayload.transportShockScoringImpact === undefined) return;
+  const impact = dataPayload.transportShockScoringImpact;
+  assertPlainObject(impact, 'transportShockScoringImpact');
+  for (const key of [
+    'contractVersion',
+    'sourcePath',
+    'applied',
+    'contributionPct',
+    'maxContributionPct',
+    'direction',
+    'reason',
+    'scoreBeforeTransport',
+    'scoreAfterTransport',
+    'sourceStatus',
+    'latestAgeDays',
+    'candidateStatus',
+    'candidateScore',
+    'guards'
+  ]) {
+    assert(Object.hasOwn(impact, key), `transportShockScoringImpact.${key} is missing`);
+  }
+  assert(impact.contractVersion === TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
+    'transportShockScoringImpact.contractVersion is not supported');
+  assert(impact.sourcePath === 'macroDrivers.energyTransport.transportShockCandidate',
+    'transportShockScoringImpact.sourcePath must stay on the approved production candidate');
+  assertBoolean(impact.applied, 'transportShockScoringImpact.applied');
+  assert(Number.isFinite(impact.contributionPct), 'transportShockScoringImpact.contributionPct must be finite');
+  assert(impact.contributionPct >= 0 && impact.contributionPct <= TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+    'transportShockScoringImpact.contributionPct must stay within 0..3');
+  assert(impact.maxContributionPct === TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+    'transportShockScoringImpact.maxContributionPct must stay 3');
+  assert(impact.direction === 'transport_shock_pressure_only',
+    'transportShockScoringImpact.direction must stay pressure-only');
+  assertString(impact.reason, 'transportShockScoringImpact.reason');
+  assert(isFiniteNumberOrNull(impact.scoreBeforeTransport), 'transportShockScoringImpact.scoreBeforeTransport must be finite number or null');
+  assert(isFiniteNumberOrNull(impact.scoreAfterTransport), 'transportShockScoringImpact.scoreAfterTransport must be finite number or null');
+  assertString(impact.sourceStatus, 'transportShockScoringImpact.sourceStatus');
+  assert(ENERGY_TRANSPORT_SOURCE_STATUSES.has(impact.sourceStatus), 'transportShockScoringImpact.sourceStatus is not supported');
+  assert(isFiniteNumberOrNull(impact.latestAgeDays), 'transportShockScoringImpact.latestAgeDays must be finite number or null');
+  assert(impact.candidateStatus === null || VALID_ENERGY_TRANSPORT_SHOCK_STATUSES.has(impact.candidateStatus),
+    'transportShockScoringImpact.candidateStatus is not supported');
+  assert(isFiniteNumberOrNull(impact.candidateScore), 'transportShockScoringImpact.candidateScore must be finite number or null');
+  assertPlainObject(impact.guards, 'transportShockScoringImpact.guards');
+  for (const key of [
+    'candidatePresent',
+    'sourceLive',
+    'latestFresh',
+    'eligibleForMainScore',
+    'candidateScorePositive',
+    'pressureStatus',
+    'routeFreightConfirmationConnected',
+    'marketConfirmationConnected'
+  ]) {
+    assertBoolean(impact.guards[key], `transportShockScoringImpact.guards.${key}`);
+  }
+  assert(impact.guards.hardCapPct === TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+    'transportShockScoringImpact.guards.hardCapPct must stay 3');
+  assert(impact.guards.routeFreightConfirmationConnected === false,
+    'transportShockScoringImpact must not claim route freight confirmation');
+  assert(impact.guards.marketConfirmationConnected === false,
+    'transportShockScoringImpact must not claim market confirmation');
+  if (impact.applied) {
+    assert(impact.contributionPct > 0, 'transportShockScoringImpact.applied requires positive contribution');
+    assert(impact.guards.candidatePresent, 'transportShockScoringImpact.applied requires candidatePresent');
+    assert(impact.guards.sourceLive, 'transportShockScoringImpact.applied requires sourceLive');
+    assert(impact.guards.latestFresh, 'transportShockScoringImpact.applied requires latestFresh');
+    assert(impact.guards.eligibleForMainScore, 'transportShockScoringImpact.applied requires eligibleForMainScore');
+    assert(impact.guards.candidateScorePositive, 'transportShockScoringImpact.applied requires candidateScorePositive');
+    assert(impact.guards.pressureStatus, 'transportShockScoringImpact.applied requires pressureStatus');
+    assert(Number.isFinite(impact.latestAgeDays) && impact.latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
+      'transportShockScoringImpact.applied requires fresh PortWatch age');
+    assert(Number.isFinite(impact.scoreBeforeTransport), 'transportShockScoringImpact.applied requires scoreBeforeTransport');
+    assert(impact.scoreAfterTransport >= impact.scoreBeforeTransport,
+      'transportShockScoringImpact must not reduce main score');
+    assert(impact.scoreAfterTransport - impact.scoreBeforeTransport <= TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+      'transportShockScoringImpact score delta must stay capped at +3');
+  } else {
+    assert(impact.contributionPct === 0, 'transportShockScoringImpact.unapplied must contribute 0');
+    if (Number.isFinite(impact.scoreBeforeTransport) && Number.isFinite(impact.scoreAfterTransport)) {
+      assert(impact.scoreAfterTransport === impact.scoreBeforeTransport,
+        'transportShockScoringImpact.unapplied must not alter score');
+    }
+  }
 }
 
 function validateMacroDriversEnergyTransport(dataPayload) {
@@ -3177,6 +3296,7 @@ validateMacroDriversShippingFreight(data);
 validateMacroDriversEnergySpareCapacity(data);
 validateMacroDriversEnergyInventoryBalance(data);
 validateMacroDriversEnergyTransport(data);
+validateTransportShockScoringImpact(data);
 validateMacroDriversPolicyExpectations(data);
 validateMacroDriversEmployment(data);
 validateMacroDriversConsumerRetail(data);

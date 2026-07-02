@@ -4,19 +4,17 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const FIXTURE = 'docs/fixtures/transport-shock-confirmation-factor/runtime-scoring-migration-authorization-v1.json';
 
-const RUNTIME_FILES = [
+const RUNTIME_FORBIDDEN_FILES = [
   'index.html',
   'scripts/app.js',
   'scripts/modules/renderOilDirectional.js',
   'scripts/modules/renderMacroOverview.js',
   'scripts/modules/buildCrossValidationMatrix.js',
-  'scripts/run-daily-pipeline.mjs',
   'workers/gfrr-realtime-worker/src/worker-market-preview.js',
-  'data/radar-data.json',
   'data/oil-directional-pressure.json'
 ];
 
-const RUNTIME_FORBIDDEN_MARKERS = [
+const OUT_OF_SCOPE_RUNTIME_MARKERS = [
   'runtime_scoring_migration_authorized_capped_free_proxy',
   'transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1',
   'transportShockScoringImpact'
@@ -78,12 +76,33 @@ function assertFixture() {
   );
 }
 
-function assertRuntimeStillUnwiredForAuthorizationStage() {
-  for (const relativePath of RUNTIME_FILES) {
+function assertRuntimeImplementationScopedForAuthorization() {
+  const daily = readText('scripts/run-daily-pipeline.mjs');
+  for (const marker of [
+    'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
+    'function buildTransportShockScoringImpact',
+    'candidate_missing_zero_contribution',
+    'candidate_not_live_zero_contribution',
+    'candidate_not_eligible_zero_contribution',
+    'candidate_stale_zero_contribution',
+    'transportShockScoringImpact: risk.transportShockScoringImpact'
+  ]) {
+    assert(daily.includes(marker), `scripts/run-daily-pipeline.mjs missing scoped runtime marker: ${marker}`);
+  }
+  const validator = readText('scripts/validate-data.mjs');
+  for (const marker of [
+    'function validateTransportShockScoringImpact',
+    'transportShockScoringImpact.contributionPct must stay within 0..3',
+    'transportShockScoringImpact must not claim route freight confirmation',
+    'transportShockScoringImpact score delta must stay capped at +3'
+  ]) {
+    assert(validator.includes(marker), `scripts/validate-data.mjs missing scoped validator marker: ${marker}`);
+  }
+  for (const relativePath of RUNTIME_FORBIDDEN_FILES) {
     assert(fs.existsSync(absolute(relativePath)), `${relativePath} is missing.`);
     const source = readText(relativePath);
-    for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
-      assert(!source.includes(marker), `${relativePath} contains authorization-stage marker before runtime implementation: ${marker}`);
+    for (const marker of OUT_OF_SCOPE_RUNTIME_MARKERS) {
+      assert(!source.includes(marker), `${relativePath} contains out-of-scope runtime scoring marker: ${marker}`);
     }
   }
 }
@@ -127,7 +146,7 @@ function assertAuthorityDocs() {
 
 function main() {
   assertFixture();
-  assertRuntimeStillUnwiredForAuthorizationStage();
+  assertRuntimeImplementationScopedForAuthorization();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor runtime scoring migration authorization: PASS');
 }

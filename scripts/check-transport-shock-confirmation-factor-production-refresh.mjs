@@ -112,7 +112,9 @@ function validateWriterPath() {
     TRANSPORT_SHOCK_CANDIDATE_WRITER_MARKER,
     "transportShockCandidate: buildEnergyTransportShockCandidate(previousChokepoints, reroutingProxy, 'fallback')",
     'transportShockCandidate: buildMissingEnergyTransportShockCandidate(reason)',
-    'eligibleForMainScore: false',
+    'eligibleForMainScore:',
+    'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
+    'function buildTransportShockScoringImpact',
     "routeFreightConfirmation: 'not_connected'",
     "marketConfirmation: 'not_connected'"
   ]) {
@@ -165,7 +167,7 @@ function validateAuthorityDocs() {
   }
 }
 
-function validateCandidate(candidate) {
+function validateCandidate(candidate, sourceStatus) {
   if (!isPlainObject(candidate)) {
     fail('transportShockCandidate must be an object when present.');
     return;
@@ -181,7 +183,12 @@ function validateCandidate(candidate) {
   if (!['none', 'low'].includes(candidate.confidence)) fail('transportShockCandidate.confidence must be none/low.');
   if (candidate.candidateOnly !== true) fail('transportShockCandidate.candidateOnly must be true.');
   if (candidate.auditOnly !== true) fail('transportShockCandidate.auditOnly must be true.');
-  if (candidate.eligibleForMainScore !== false) fail('transportShockCandidate.eligibleForMainScore must be false.');
+  if (typeof candidate.eligibleForMainScore !== 'boolean') fail('transportShockCandidate.eligibleForMainScore must be boolean.');
+  if (candidate.eligibleForMainScore === true) {
+    if (sourceStatus !== 'live') fail('transportShockCandidate can be main-score eligible only when PortWatch source is live.');
+    if (!['watch', 'elevated_watch'].includes(candidate.status)) fail('transportShockCandidate eligible status must be watch/elevated_watch.');
+    if (!Number.isFinite(candidate.score) || candidate.score < 50) fail('transportShockCandidate eligible score must be >= 50.');
+  }
   if (candidate.routeFreightConfirmation !== 'not_connected') fail('transportShockCandidate.routeFreightConfirmation must stay not_connected.');
   if (candidate.marketConfirmation !== 'not_connected') fail('transportShockCandidate.marketConfirmation must stay not_connected.');
   if (!isPlainObject(candidate.evidence)) fail('transportShockCandidate.evidence must be an object.');
@@ -191,6 +198,12 @@ function validateCandidate(candidate) {
   if (!isPlainObject(boundaries)) {
     fail('transportShockCandidate.boundaries must be an object.');
   } else {
+    const runtimeScoringBoundaryKeys = new Set([
+      'affectsScoring',
+      'affectsDecisionModel',
+      'affectsExecutionLock',
+      'affectsPositionGuidance'
+    ]);
     for (const key of [
       'affectsValues',
       'affectsDisplayInputsBaseline',
@@ -204,7 +217,11 @@ function validateCandidate(candidate) {
       'affectsGlobalRiskHeatmap',
       'affectsCrossValidation'
     ]) {
-      if (boundaries[key] !== false) fail(`transportShockCandidate.boundaries.${key} must be false.`);
+      if (candidate.eligibleForMainScore === true && runtimeScoringBoundaryKeys.has(key)) {
+        if (boundaries[key] !== true) fail(`transportShockCandidate.boundaries.${key} must be true when main-score eligible.`);
+      } else if (boundaries[key] !== false) {
+        fail(`transportShockCandidate.boundaries.${key} must be false.`);
+      }
     }
   }
 }
@@ -247,7 +264,7 @@ function inspectProductionPayload() {
       recommendation: 'wait_for_next_daily_refresh_then_rerun_check'
     };
   }
-  validateCandidate(candidate);
+  validateCandidate(candidate, sourceStatus);
   return {
     state: 'candidate_present_verified',
     sourceStatus,

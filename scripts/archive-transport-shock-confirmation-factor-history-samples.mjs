@@ -188,6 +188,12 @@ function readRadarAtCommit(hash) {
 function hasValidBoundaryFlags(candidate) {
   const boundaries = candidate?.boundaries;
   if (!isPlainObject(boundaries)) return false;
+  const runtimeScoringBoundaryKeys = new Set([
+    'affectsScoring',
+    'affectsDecisionModel',
+    'affectsExecutionLock',
+    'affectsPositionGuidance'
+  ]);
   return [
     'affectsValues',
     'affectsDisplayInputsBaseline',
@@ -200,10 +206,15 @@ function hasValidBoundaryFlags(candidate) {
     'affectsWorldOrderWeights',
     'affectsGlobalRiskHeatmap',
     'affectsCrossValidation'
-  ].every((key) => boundaries[key] === false);
+  ].every((key) => {
+    if (candidate.eligibleForMainScore === true && runtimeScoringBoundaryKeys.has(key)) {
+      return boundaries[key] === true;
+    }
+    return boundaries[key] === false;
+  });
 }
 
-function validateCandidate(candidate, sourceLabel) {
+function validateCandidate(candidate, sourceLabel, sourceStatus) {
   if (!isPlainObject(candidate)) throw new Error(`${sourceLabel} candidate is not an object.`);
   if (candidate.contractVersion !== CONTRACT_VERSION) {
     throw new Error(`${sourceLabel} candidate contractVersion mismatch: ${candidate.contractVersion ?? '(missing)'}`);
@@ -222,7 +233,16 @@ function validateCandidate(candidate, sourceLabel) {
   }
   if (candidate.candidateOnly !== true) throw new Error(`${sourceLabel} candidateOnly must be true.`);
   if (candidate.auditOnly !== true) throw new Error(`${sourceLabel} auditOnly must be true.`);
-  if (candidate.eligibleForMainScore !== false) throw new Error(`${sourceLabel} eligibleForMainScore must be false.`);
+  if (typeof candidate.eligibleForMainScore !== 'boolean') throw new Error(`${sourceLabel} eligibleForMainScore must be boolean.`);
+  if (candidate.eligibleForMainScore === true) {
+    if (sourceStatus !== 'live') throw new Error(`${sourceLabel} eligibleForMainScore requires live source.`);
+    if (!['watch', 'elevated_watch'].includes(candidate.status)) {
+      throw new Error(`${sourceLabel} eligibleForMainScore requires watch/elevated_watch status.`);
+    }
+    if (!Number.isFinite(candidate.score) || candidate.score < 50) {
+      throw new Error(`${sourceLabel} eligibleForMainScore requires score >= 50.`);
+    }
+  }
   if (candidate.routeFreightConfirmation !== 'not_connected') {
     throw new Error(`${sourceLabel} routeFreightConfirmation must stay not_connected.`);
   }
@@ -242,7 +262,7 @@ function createSample(radar, commit, sourceLabel) {
   if (!isPlainObject(energyTransport)) throw new Error(`${sourceLabel} missing macroDrivers.energyTransport.`);
   if (energyTransport.transportShockCandidate === undefined) return null;
   const candidate = energyTransport.transportShockCandidate;
-  validateCandidate(candidate, sourceLabel);
+  validateCandidate(candidate, sourceLabel, energyTransport.sourceStatus?.chokepoints);
   const payloadUpdatedAt =
     isoOrNull(radar.updatedAt) ||
     isoOrNull(energyTransport.fetchedAt) ||
