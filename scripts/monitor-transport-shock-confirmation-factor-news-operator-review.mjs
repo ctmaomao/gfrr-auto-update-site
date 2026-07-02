@@ -31,6 +31,7 @@ Options:
   --max-commits <n>              Claim-ledger git commits to inspect. Default: ${DEFAULT_MAX_COMMITS}
   --max-samples <n>              Claim-ledger sample cap. Default: ${DEFAULT_MAX_SAMPLES}
   --min-samples <n>              Minimum samples for monitor/gate hint. Default: ${DEFAULT_MIN_SAMPLES}
+  --now <iso>                    Deterministic clock for checks. Default: current time.
   --dry-run                      Do not write ignored artifacts; requires --claim-ledger.
   --no-output                    Do not write final monitor artifact.
   --json                         Print full JSON result.
@@ -49,6 +50,7 @@ function parseArgs(argv) {
     maxCommits: DEFAULT_MAX_COMMITS,
     maxSamples: DEFAULT_MAX_SAMPLES,
     minSamples: DEFAULT_MIN_SAMPLES,
+    now: null,
     dryRun: false,
     writeOutput: true,
     printJson: false
@@ -84,6 +86,7 @@ function parseArgs(argv) {
     else if (arg === '--max-commits') options.maxCommits = Number(nextValue());
     else if (arg === '--max-samples') options.maxSamples = Number(nextValue());
     else if (arg === '--min-samples') options.minSamples = Number(nextValue());
+    else if (arg === '--now') options.now = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
@@ -102,6 +105,9 @@ function parseArgs(argv) {
   if (options.dryRun && !options.claimLedger) {
     throw new Error('--dry-run requires --claim-ledger so the monitor does not create intermediate artifacts.');
   }
+  if (options.now && !isoOrNull(options.now)) {
+    throw new Error('Invalid --now. Expected ISO timestamp.');
+  }
   if (!isManualArtifactPath(options.claimLedgerOutput)) {
     throw new Error(`Refusing claim-ledger output outside manual-artifacts/: ${options.claimLedgerOutput}`);
   }
@@ -112,6 +118,12 @@ function parseArgs(argv) {
     throw new Error(`Refusing monitor output outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
   }
   return options;
+}
+
+function isoOrNull(value) {
+  if (typeof value !== 'string') return null;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? new Date(time).toISOString() : null;
 }
 
 function safeRelativePath(filePath) {
@@ -244,6 +256,69 @@ function headlineDisplayAllowed(ledger) {
       && ledger.sampleOutcomes.some((sample) => sample?.displayHeadlinesApproved === true));
 }
 
+function freshnessState(ledger, nowIso) {
+  const referenceAt = isoOrNull(ledger?.summary?.lastSampleAt) ?? isoOrNull(ledger?.generatedAt);
+  if (!referenceAt) {
+    return {
+      status: 'unknown_re_review_required',
+      referenceAt: null,
+      ageHours: null,
+      confidenceAdjustment: 'none',
+      requiresReReview: true,
+      reason: 'claim_ledger_reference_time_missing'
+    };
+  }
+  const ageHours = (Date.parse(nowIso) - Date.parse(referenceAt)) / 36e5;
+  if (!Number.isFinite(ageHours) || ageHours < 0) {
+    return {
+      status: 'invalid_re_review_required',
+      referenceAt,
+      ageHours: Number.isFinite(ageHours) ? Number(ageHours.toFixed(2)) : null,
+      confidenceAdjustment: 'none',
+      requiresReReview: true,
+      reason: 'claim_ledger_reference_time_invalid'
+    };
+  }
+  if (ageHours <= 12) {
+    return {
+      status: 'current_0_12h',
+      referenceAt,
+      ageHours: Number(ageHours.toFixed(2)),
+      confidenceAdjustment: 'full',
+      requiresReReview: false,
+      reason: 'fresh_claim_window'
+    };
+  }
+  if (ageHours <= 24) {
+    return {
+      status: 'recent_12_24h',
+      referenceAt,
+      ageHours: Number(ageHours.toFixed(2)),
+      confidenceAdjustment: 'strong_but_aging',
+      requiresReReview: false,
+      reason: 'recent_claim_window'
+    };
+  }
+  if (ageHours <= 48) {
+    return {
+      status: 'aging_24_48h',
+      referenceAt,
+      ageHours: Number(ageHours.toFixed(2)),
+      confidenceAdjustment: 'reduced',
+      requiresReReview: false,
+      reason: 'aging_claim_window_recheck_soon'
+    };
+  }
+  return {
+    status: 'expired_over_48h',
+    referenceAt,
+    ageHours: Number(ageHours.toFixed(2)),
+    confidenceAdjustment: 'none',
+    requiresReReview: true,
+    reason: 'claim_ledger_too_old_re_review_required'
+  };
+}
+
 function rawNewsGateBlockers(ledger, options) {
   const blockers = [];
   const sampleCount = asNumber(ledger?.summary?.sampleCount);
@@ -261,7 +336,7 @@ function rawNewsGateBlockers(ledger, options) {
   return blockers;
 }
 
-function gateHint(ledger, operatorReview, options) {
+function gateHint(ledger, operatorReview, options, freshness) {
   const rawBlockers = rawNewsGateBlockers(ledger, options);
   const operatorApproved = operatorReview?.reviewFindings?.approvedForCrossConfirmation === true
     && operatorReview?.approvals?.scoreWriteApproved === false
@@ -272,6 +347,7 @@ function gateHint(ledger, operatorReview, options) {
       'low_confidence_high_claims_require_primary_source_review'
     ].includes(blocker))
     : rawBlockers;
+  if (freshness.requiresReReview) finalBlockers.push('news_operator_review_expired_re_review_required');
   return {
     status: finalBlockers.length === 0
       ? 'would_clear_news_manual_gate_for_cross_confirmation_review_no_score_write'
@@ -285,6 +361,7 @@ function gateHint(ledger, operatorReview, options) {
     repeatedElevatedSampleCount: repeatedElevatedSampleCount(ledger),
     contradictionState: ledger?.contradiction?.state ?? null,
     axisSplitState: ledger?.axisSplit?.state ?? null,
+    freshness,
     lowConfidenceHighClaimCount: asNumber(ledger?.summary?.lowConfidenceHighClaimCount),
     headlineDisplayAllowed: headlineDisplayAllowed(ledger),
     doesNotConfirm: [
@@ -318,12 +395,14 @@ function falseImpactMap() {
 }
 
 function buildResult(options) {
+  const nowIso = isoOrNull(options.now) ?? new Date().toISOString();
   const claimLedger = runClaimLedger(options);
   const operatorReview = runOperatorReview(options, claimLedger.path);
-  const hint = gateHint(claimLedger.review, operatorReview, options);
+  const freshness = freshnessState(claimLedger.review, nowIso);
+  const hint = gateHint(claimLedger.review, operatorReview, options, freshness);
   return {
     monitorVersion: MONITOR_VERSION,
-    generatedAt: new Date().toISOString(),
+    generatedAt: nowIso,
     status: hint.gateClearCandidate
       ? 'news_operator_review_still_clear_for_cross_confirmation_no_score_write'
       : 'news_operator_review_monitor_blocked_keep_manual_review',

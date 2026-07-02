@@ -54,6 +54,7 @@ function assertScriptSafety() {
     'artifact-only Transport Shock news operator review monitor',
     'news_operator_review_still_clear_for_cross_confirmation_no_score_write',
     'would_clear_news_manual_gate_for_cross_confirmation_review_no_score_write',
+    'expired_over_48h',
     'noScoreWrite',
     'noNetworkCall',
     'noEnvironmentRead'
@@ -82,6 +83,8 @@ function assertMonitorOutput() {
     FIXTURE_LEDGER,
     '--min-samples',
     '8',
+    '--now',
+    '2026-07-02T08:00:00.000Z',
     '--dry-run',
     '--json'
   ]);
@@ -94,6 +97,8 @@ function assertMonitorOutput() {
   assert(result.operatorReview.scoreWriteApproved === false, 'Operator review must not approve score write.');
   assert(result.operatorReview.eligibleForMainScore === false, 'Operator review must not approve main-score eligibility.');
   assert(result.newsManualGateHint.gateClearCandidate === true, 'Expected news manual gate clear candidate.');
+  assert(result.newsManualGateHint.freshness.status === 'current_0_12h', 'Expected fresh fixture window.');
+  assert(result.newsManualGateHint.freshness.requiresReReview === false, 'Fresh fixture should not require re-review.');
   assert(result.newsManualGateHint.operatorReviewApplied === true, 'Expected operator review applied.');
   assert(result.newsManualGateHint.rawRuleBlockers.includes('mixed_claims_require_manual_review'), 'Raw mixed-claims blocker must remain visible.');
   assert(result.newsManualGateHint.rawRuleBlockers.includes('low_confidence_high_claims_require_primary_source_review'), 'Raw source-tier blocker must remain visible.');
@@ -104,6 +109,26 @@ function assertMonitorOutput() {
   assert(result.productionImpact.affectsScoring === false, 'Monitor must not affect scoring.');
   assert(result.boundaries.noNetworkCall === true, 'Monitor must lock no network.');
   assert(result.boundaries.noScoreWrite === true, 'Monitor must lock no score write.');
+}
+
+function assertExpiredMonitorOutput() {
+  const stdout = runNode([
+    MONITOR_SCRIPT,
+    '--claim-ledger',
+    FIXTURE_LEDGER,
+    '--min-samples',
+    '8',
+    '--now',
+    '2026-07-05T08:00:00.000Z',
+    '--dry-run',
+    '--json'
+  ]);
+  const result = JSON.parse(stdout);
+  assert(result.status === 'news_operator_review_monitor_blocked_keep_manual_review', 'Expired monitor should be blocked.');
+  assert(result.newsManualGateHint.gateClearCandidate === false, 'Expired monitor should not clear gate.');
+  assert(result.newsManualGateHint.freshness.status === 'expired_over_48h', 'Expected expired freshness state.');
+  assert(result.newsManualGateHint.remainingBlockers.includes('news_operator_review_expired_re_review_required'), 'Expected stale review blocker.');
+  assert(result.scoreWriteApproved === false, 'Expired monitor must not approve score write.');
 }
 
 function assertRuntimeRemainsUnwired() {
@@ -143,6 +168,7 @@ function assertAuthorityDocs() {
 function main() {
   assertScriptSafety();
   assertMonitorOutput();
+  assertExpiredMonitorOutput();
   assertRuntimeRemainsUnwired();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor news operator-review monitor: PASS');
