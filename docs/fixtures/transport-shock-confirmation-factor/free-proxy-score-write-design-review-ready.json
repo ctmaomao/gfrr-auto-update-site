@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-score-write-design-review-v1",
+  "status": "score_write_design_review_ready_no_production_write",
+  "recommendation": "open_separate_runtime_score_integration_design_review_do_not_auto_wire",
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "candidatePath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-score-candidate-ready.json",
+  "replayPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-score-replay-ready.json",
+  "candidateStatus": "free_proxy_score_candidate_ready_no_score_write",
+  "replayStatus": "free_proxy_score_replay_scaffold_pass_no_score_write",
+  "candidateScoreContributionPct": 3,
+  "maxFutureMainScoreContributionPct": 3,
+  "confidence": "low",
+  "scoreWriteDesignReady": true,
+  "scoreDesignScope": "free_proxy_only_low_weight_candidate_cap_review",
+  "historicalBacktestPerformed": false,
+  "historicalBacktestReady": false,
+  "replayControlPass": true,
+  "replayControls": [
+    {
+      "id": "news_only",
+      "pass": true,
+      "expectedContributionPct": 0,
+      "observedContributionPct": 0
+    },
+    {
+      "id": "single_chokepoint_only",
+      "pass": true,
+      "expectedContributionPct": 0,
+      "observedContributionPct": 0
+    },
+    {
+      "id": "stale_portwatch",
+      "pass": true,
+      "expectedContributionPct": 0,
+      "observedContributionPct": 0
+    },
+    {
+      "id": "ready_candidate_cap",
+      "pass": true,
+      "expectedContributionPct": 3,
+      "observedContributionPct": 3
+    }
+  ],
+  "requiredBeforeRuntimeScoreIntegration": [
+    "separate_reviewed_runtime_score_integration_design_pr",
+    "production_payload_mapping_review",
+    "score_weight_interaction_review",
+    "rollback_and_kill_switch_design",
+    "historical_replay_or_post_launch_observation_window",
+    "frontend_copy_and_boundary_review"
+  ],
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "scoreIntegrationApproved": false,
+  "mainScoreApproved": false,
+  "frontendDisplayApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "blockerCount": 0,
+  "blockers": [],
+  "warnings": [
+    "design_ready_but_no_score_write",
+    "candidate_cap_is_low_weight_three_pct",
+    "historical_backtest_not_performed",
+    "runtime_integration_requires_separate_review"
+  ],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreIntegration": true,
+    "noScoreWrite": true,
+    "noMainJudgmentEligibility": true,
+    "noHistoricalBacktestClaim": true,
+    "artifactOnlyScoreWriteDesignReview": true,
+    "affectsScoring": false,
+    "affectsMainJudgment": false
+  },
+  "boundary": "fixture for runtime score integration design review; no score write"
+}
