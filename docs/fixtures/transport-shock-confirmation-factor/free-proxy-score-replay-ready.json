@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-free-proxy-score-replay-v1",
+  "status": "free_proxy_score_replay_scaffold_pass_no_score_write",
+  "recommendation": "ready_for_historical_replay_sample_design_keep_no_score_write",
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "inputPath": "docs/fixtures/transport-shock-confirmation-factor/free-proxy-score-candidate-ready.json",
+  "inputSchemaVersion": "transport-shock-confirmation-factor-free-proxy-score-candidate-v1",
+  "inputStatus": "free_proxy_score_candidate_ready_no_score_write",
+  "replayControlPass": true,
+  "historicalBacktestPerformed": false,
+  "historicalBacktestReady": false,
+  "replayScope": "hard_cap_control_scaffold_only",
+  "candidateScoreContributionPct": 3,
+  "maxFutureMainScoreContributionPct": 3,
+  "falsePositiveGuard": "zero_contribution_controls_pass",
+  "controls": [
+    {
+      "id": "news_only",
+      "description": "News-only event claims cannot create transport shock score contribution.",
+      "expectedContributionPct": 0,
+      "observedContributionPct": 0,
+      "pass": true
+    },
+    {
+      "id": "single_chokepoint_only",
+      "description": "Single chokepoint proxy without non-news confirmation cannot create contribution.",
+      "expectedContributionPct": 0,
+      "observedContributionPct": 0,
+      "pass": true
+    },
+    {
+      "id": "stale_portwatch",
+      "description": "Stale PortWatch input cannot create contribution.",
+      "expectedContributionPct": 0,
+      "observedContributionPct": 0,
+      "pass": true
+    },
+    {
+      "id": "ready_candidate_cap",
+      "description": "Ready candidate projection must remain at or below the free-proxy cap.",
+      "expectedContributionPct": 3,
+      "observedContributionPct": 3,
+      "pass": true
+    }
+  ],
+  "nextRequiredEvidence": [
+    "production_history_samples_with_transportShockCandidate",
+    "same_direction_non_news_physical_confirmation",
+    "market_confirmation_review_samples",
+    "thermal_or_eia_anchor_samples",
+    "replay_window_with_false_positive_review"
+  ],
+  "scoreWriteApproved": false,
+  "productionWriteApproved": false,
+  "scoreIntegrationApproved": false,
+  "eligibleForMainScore": false,
+  "routeFreightConfirmation": "not_connected",
+  "marketConfirmation": "not_connected",
+  "blockers": [],
+  "warnings": [
+    "artifact_only_replay_scaffold",
+    "historical_backtest_not_performed",
+    "score_integration_still_requires_separate_reviewed_pr"
+  ],
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "modifiesWorkerRuntime": false,
+    "modifiesWorkflow": false,
+    "affectsValues": false,
+    "affectsDisplayInputsBaseline": false,
+    "affectsEffectiveDisplayInputs": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsMainJudgment": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noScoreWrite": true,
+    "noHistoricalBacktestPerformed": true,
+    "noRawProviderResponseStored": true,
+    "artifactOnlyReplayScaffold": true
+  },
+  "boundary": "fixture for ready free-proxy score-write design review; no score write"
+}
