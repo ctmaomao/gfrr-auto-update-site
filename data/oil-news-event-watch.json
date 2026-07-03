@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-02T23:40:32.659Z",
+  "generatedAt": "2026-07-03T04:27:34.933Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "live",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 1,
         "failureCount": 0,
         "articleCount": 32,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "ok",
+            "status": "cache_hit",
             "articleCount": 32,
             "error": null
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-02T17:06:52.000Z",
-    "latestArticleAgeHours": 6.6,
+    "latestArticleAgeHours": 11.3,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 58,
+      "articleCount": 59,
       "sourceCount": 3,
-      "weightedSignal": 522,
+      "weightedSignal": 531,
       "topArticles": [
         {
           "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
@@ -230,32 +230,34 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 17,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 68,
+      "weightedSignal": 72,
       "topArticles": [
         {
-          "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
-          "url": "https://www.insurancejournal.com/news/international/2026/06/26/875257.htm",
-          "domain": "insurancejournal.com",
-          "publishedAt": "2026-06-26T05:10:08.000Z",
+          "title": "Iran warns oil tankers to use approved routes in Strait of Hormuz or face a ‘forceful response’ - Chicago Tribune",
+          "url": "https://www.chicagotribune.com/2026/07/02/iran-oil-tankers-strait-hormuz/",
+          "domain": "chicagotribune.com",
+          "publishedAt": "2026-07-02T12:42:15.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
+            "middle_east_risk",
             "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
+            "chokepoint_shipping",
             "sanctions_shadow_fleet"
           ]
         },
         {
-          "title": "Forget Hormuz. The Shadow Fleet Is The Next Maritime Crisis. - Forbes",
-          "url": "https://www.forbes.com/sites/jillgoldenziel/2026/06/26/forget-hormuz-the-shadow-fleet-is-the-next-maritime-crisis/",
-          "domain": "forbes.com",
-          "publishedAt": "2026-06-26T00:00:00.000Z",
+          "title": "France Seizes ‘Shadow Fleet’ Tanker, Stepping Up Pressure on Russia - Insurance Journal",
+          "url": "https://www.insurancejournal.com/news/international/2026/06/26/875257.htm",
+          "domain": "insurancejournal.com",
+          "publishedAt": "2026-06-26T05:10:08.000Z",
           "sources": [
             "tavily"
           ],
@@ -348,9 +350,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 24,
+      "articleCount": 25,
       "sourceCount": 3,
-      "weightedSignal": 144,
+      "weightedSignal": 150,
       "topArticles": [
         {
           "title": "Saudi Arabia Restarts Crude Loadings at Major Gulf Terminal After Nearly Four - Month Halt",
@@ -409,9 +411,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 42,
+      "articleCount": 43,
       "sourceCount": 3,
-      "weightedSignal": 189,
+      "weightedSignal": 193.5,
       "topArticles": [
         {
           "title": "Oil edges lower amid resumption of strait shipments even as vessel hit near Oman",
@@ -465,9 +467,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 53,
+      "articleCount": 54,
       "sourceCount": 3,
-      "weightedSignal": 238.5,
+      "weightedSignal": 243,
       "topArticles": [
         {
           "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
@@ -579,6 +581,27 @@
   },
   "topArticles": [
     {
+      "title": "Iran says it is selling oil at 20% premium as end of U.S. blockade sees 40 million barrels exported",
+      "url": "https://cnbc.com/2026/07/01/iran-us-mou-negotiation-war-oil-exports-strait-of-hormuz-.html",
+      "domain": "cnbc.com",
+      "publishedAt": "2026-07-01T02:41:41.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    },
+    {
       "title": "Saudi Aramco resumes oil loading at Ras Tanura in boost to supply",
       "url": "https://cnbc.com/amp/2026/06/27/saudi-aramco-resumes-oil-loading-at-ras-tanura-in-boost-to-supply.html",
       "domain": "cnbc.com",
@@ -596,26 +619,6 @@
       ],
       "queryIds": [
         "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Oil edges lower amid resumption of strait shipments even as vessel hit near Oman - Reuters",
-      "url": "https://www.reuters.com/business/energy/oil-edges-lower-amid-resumption-strait-shipments-even-vessel-hit-near-oman-2026-06-26/",
-      "domain": "reuters.com",
-      "publishedAt": "2026-06-26T04:31:40.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "market_reaction"
       ]
     },
     {
@@ -694,25 +697,6 @@
       ],
       "queryIds": [
         "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "title": "Gulf Producers Race to Load Oil and LNG as Hormuz Stays Open | OilPrice.com",
-      "url": "https://oilprice.com/Latest-Energy-News/World-News/Gulf-Producers-Race-to-Load-Oil-and-LNG-as-Hormuz-Stays-Open.html",
-      "domain": "oilprice.com",
-      "publishedAt": "2026-06-29T14:30:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
       ]
     },
     {
@@ -807,18 +791,38 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
+    },
+    {
+      "title": "Alberta will make initial West Coast oil pipeline proposal without private backing, sources say - The Globe and Mail",
+      "url": "https://www.theglobeandmail.com/business/article-alberta-west-coast-oil-pipeline-major-projects-office/",
+      "domain": "www.theglobeandmail.com",
+      "publishedAt": "2026-06-30T02:10:23.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
+    "highClaimTitleCount": 2,
+    "highClaimDomainCount": 2,
     "highClaimDomains": [
+      "cnbc.com",
       "tribune.com.pk"
     ],
     "highClaimTerms": [
-      "attacks"
+      "attacks",
+      "blockade"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -834,26 +838,26 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 3,
+      "risk_escalation": 4,
       "risk_deescalation": 3,
       "mixed_or_contested": 1,
-      "market_reaction_only": 4,
+      "market_reaction_only": 3,
       "unclear_or_high_claim": 1
     },
     "eventTypeCounts": {
-      "chokepoint": 6,
+      "chokepoint": 5,
       "shipping": 1,
       "sanctions": 0,
-      "facility": 2,
+      "facility": 3,
       "supply": 3,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 1,
-      "major_financial_media": 2,
-      "industry_trade": 2,
-      "aggregator_or_blog": 7,
+      "primary_wire_or_official": 0,
+      "major_financial_media": 3,
+      "industry_trade": 1,
+      "aggregator_or_blog": 8,
       "low_confidence": 0
     },
     "contradiction": {
@@ -864,8 +868,8 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 6,
-          "riskEscalation": 1,
+          "claimCount": 5,
+          "riskEscalation": 2,
           "riskDeescalation": 0,
           "mixedOrContested": 1,
           "contradiction": true
@@ -880,7 +884,7 @@
         },
         {
           "eventType": "facility",
-          "claimCount": 2,
+          "claimCount": 3,
           "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
