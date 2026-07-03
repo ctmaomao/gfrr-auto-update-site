@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-03T11:11:59.288Z",
+  "generatedAt": "2026-07-03T14:53:59.497Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -31,7 +31,7 @@
             "label": "GDELT broad oil-news cache query",
             "status": "stale_cache",
             "articleCount": 32,
-            "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
+            "error": "GDELT DOC broad oil-news cache GDELT DOC broad oil-news cache timeout after 20000ms after 1 attempt(s)"
           }
         ]
       },
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-07-02T18:15:43.000Z",
-    "latestArticleAgeHours": 16.9,
+    "latestArticleAt": "2026-07-02T17:06:52.000Z",
+    "latestArticleAgeHours": 21.8,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 96,
-    "uniqueArticleCount": 94,
+    "uniqueArticleCount": 93,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 61,
+      "articleCount": 59,
       "sourceCount": 3,
-      "weightedSignal": 549,
+      "weightedSignal": 531,
       "topArticles": [
         {
           "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
@@ -389,10 +389,10 @@
           ]
         },
         {
-          "title": "Saudi Aramco helicopter crash kills 14 nationals - CNN",
-          "url": "https://www.cnn.com/2026/06/28/business/saudi-aramco-helicopter-crash-intl",
-          "domain": "cnn.com",
-          "publishedAt": "2026-06-28T14:41:40.000Z",
+          "title": "Kuwait and Bahrain say Iran targeted them with drone and missile strikes - AP News",
+          "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-28-2026-1132d316545db2cddb3928b6e7840f51",
+          "domain": "apnews.com",
+          "publishedAt": "2026-06-28T04:32:09.000Z",
           "sources": [
             "tavily"
           ],
@@ -400,10 +400,11 @@
             "chokepoint",
             "facility_event",
             "middle_east_risk",
-            "supply_disruption"
+            "sanctions",
+            "tanker_shipping"
           ],
           "queryIds": [
-            "facility_supply_disruption"
+            "sanctions_shadow_fleet"
           ]
         }
       ]
@@ -466,9 +467,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 54,
+      "articleCount": 52,
       "sourceCount": 3,
-      "weightedSignal": 243,
+      "weightedSignal": 234,
       "topArticles": [
         {
           "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
@@ -523,9 +524,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 37,
+      "articleCount": 34,
       "sourceCount": 3,
-      "weightedSignal": 111,
+      "weightedSignal": 102,
       "topArticles": [
         {
           "title": "Oil Prices Rise as US - Iran Tensions Threaten Strait of Hormuz Oil Shipments",
@@ -697,6 +698,25 @@
       ]
     },
     {
+      "title": "Hormuz traffic drops after fresh vessel attacks fuel security concerns | The Express Tribune",
+      "url": "https://tribune.com.pk/story/2615557/hormuz-traffic-drops-after-fresh-vessel-attacks-fuel-security-concerns",
+      "domain": "tribune.com.pk",
+      "publishedAt": "2026-06-29T09:08:08.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
+    },
+    {
       "title": "U.S. refinery accidents, including in Pa., raise questions about cost impact as fuel demand rises",
       "url": "https://inquirer.com/business/refinery-accidents-fuel-costs-monroe-energy-20260629.html",
       "domain": "inquirer.com",
@@ -716,41 +736,22 @@
       ]
     },
     {
-      "title": "US refiners profit from Hormuz disruptions as crude price odds decline",
-      "url": "https://cryptobriefing.com/us-refiners-profit-from-hormuz-disruptions-as-crude-price-odds-decline",
-      "domain": "cryptobriefing.com",
-      "publishedAt": "2026-07-02T18:15:43.000Z",
+      "title": "Kuwait and Bahrain say Iran targeted them with drone and missile strikes - AP News",
+      "url": "https://apnews.com/article/iran-us-israel-war-hormuz-strait-june-28-2026-1132d316545db2cddb3928b6e7840f51",
+      "domain": "apnews.com",
+      "publishedAt": "2026-06-28T04:32:09.000Z",
       "sources": [
-        "brave"
+        "tavily"
       ],
       "buckets": [
         "chokepoint",
         "facility_event",
-        "market_reaction",
-        "supply_disruption",
+        "middle_east_risk",
+        "sanctions",
         "tanker_shipping"
       ],
       "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "title": "Oil falls for a third straight day after U.S., Iran conclude talks in Doha - The Globe and Mail",
-      "url": "https://theglobeandmail.com/investing/article-oil-falls-for-a-third-straight-day-after-us-iran-conclude-talks-in",
-      "domain": "theglobeandmail.com",
-      "publishedAt": "2026-07-02T08:58:44.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -811,13 +812,17 @@
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 1,
-    "highClaimDomainCount": 1,
+    "highClaimTitleCount": 3,
+    "highClaimDomainCount": 3,
     "highClaimDomains": [
-      "cnbc.com"
+      "apnews.com",
+      "cnbc.com",
+      "tribune.com.pk"
     ],
     "highClaimTerms": [
-      "blockade"
+      "attacks",
+      "blockade",
+      "strikes"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。"
@@ -833,10 +838,10 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 2,
+      "risk_escalation": 4,
       "risk_deescalation": 2,
       "mixed_or_contested": 1,
-      "market_reaction_only": 5,
+      "market_reaction_only": 3,
       "unclear_or_high_claim": 2
     },
     "eventTypeCounts": {
@@ -849,11 +854,11 @@
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 0,
+      "primary_wire_or_official": 1,
       "major_financial_media": 2,
       "industry_trade": 2,
       "aggregator_or_blog": 7,
-      "low_confidence": 1
+      "low_confidence": 0
     },
     "contradiction": {
       "state": "mixed_claims",
@@ -864,7 +869,7 @@
         {
           "eventType": "chokepoint",
           "claimCount": 6,
-          "riskEscalation": 1,
+          "riskEscalation": 3,
           "riskDeescalation": 0,
           "mixedOrContested": 1,
           "contradiction": true
