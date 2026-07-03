@@ -107,6 +107,7 @@ const SUITES = {
     'check:oil-directional-reading-structure',
     'check:oil-directional-responsive-readability',
     'check:oil-directional-global-overlay',
+    'check:oil-directional-qa-matrix',
     'check:transport-shock-confirmation-factor-source-to-score-contract',
     'check:transport-shock-confirmation-factor-source-review',
     'check:transport-shock-confirmation-factor-manual-sample-scaffold',

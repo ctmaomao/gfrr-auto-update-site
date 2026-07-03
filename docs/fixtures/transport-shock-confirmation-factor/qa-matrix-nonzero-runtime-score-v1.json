@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "transport-shock-confirmation-factor-qa-matrix-nonzero-runtime-score-fixture-v1",
+  "fixturePurpose": "QA matrix fixture proving the approved free-proxy Transport Shock runtime score policy can validate a nonzero capped contribution without route/market confirmation",
+  "fixtureOnly": true,
+  "productionWriteApproved": false,
+  "tailRiskOverlay": {
+    "adjustedScore": 57
+  },
+  "macroDrivers": {
+    "energyTransport": {
+      "sourceStatus": {
+        "chokepoints": "live"
+      },
+      "latestAgeDays": 1,
+      "transportShockCandidate": {
+        "contractVersion": "transport-shock-candidate-v1",
+        "status": "elevated_watch",
+        "score": 82,
+        "confidence": "medium",
+        "candidateOnly": false,
+        "auditOnly": false,
+        "eligibleForMainScore": true,
+        "routeFreightConfirmation": "not_connected",
+        "marketConfirmation": "not_connected",
+        "reasons": [
+          "fixture: free-proxy transport pressure candidate above 75 threshold"
+        ],
+        "drivers": [
+          "portwatch_chokepoint_proxy"
+        ]
+      }
+    }
+  },
+  "transportShockScoringImpact": {
+    "contractVersion": "transport-shock-scoring-impact-v1",
+    "sourcePath": "macroDrivers.energyTransport.transportShockCandidate",
+    "runtimeScoringAuthorized": true,
+    "applied": true,
+    "contributionPct": 3,
+    "maxContributionPct": 3,
+    "direction": "transport_shock_pressure_only",
+    "reason": "owner_approved_free_proxy_transport_pressure_low_weight_applied",
+    "scoreBeforeTransport": 57,
+    "scoreAfterTransport": 60,
+    "sourceStatus": "live",
+    "latestAgeDays": 1,
+    "candidateStatus": "elevated_watch",
+    "candidateScore": 82,
+    "guards": {
+      "candidatePresent": true,
+      "sourceLive": true,
+      "latestFresh": true,
+      "eligibleForMainScore": true,
+      "candidateScorePositive": true,
+      "pressureStatus": true,
+      "hardCapPct": 3,
+      "routeFreightConfirmationConnected": false,
+      "marketConfirmationConnected": false
+    }
+  },
+  "expectedReview": {
+    "status": "runtime_score_policy_review_passed_positive_contribution_observed",
+    "contributionPct": 3,
+    "maxContributionPct": 3,
+    "scoreDelta": 3,
+    "routeFreightConfirmationConnected": false,
+    "marketConfirmationConnected": false
+  },
+  "boundaries": {
+    "fixtureOnly": true,
+    "writesProductionData": false,
+    "connectsRouteFreightConfirmation": false,
+    "connectsMarketConfirmation": false,
+    "changesOilDirectionalFinalBias": false,
+    "changesBrentPromotion": false,
+    "changesGlobalRiskHeatmap": false,
+    "changesCrossValidation": false,
+    "touchesBubbleWatch": false
+  }
+}
