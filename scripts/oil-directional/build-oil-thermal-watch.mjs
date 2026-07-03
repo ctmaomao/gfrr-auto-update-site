@@ -499,6 +499,12 @@ function anomalyLabelZh(level) {
   })[level] || '待核';
 }
 
+function repeatedDisplayStatusZh(baselineStatus) {
+  return baselineStatus === 'partial'
+    ? '部分基线重复观察待核'
+    : '重复观察待核';
+}
+
 async function fetchWithTimeout(url, timeoutMs) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -718,10 +724,10 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
     artifact.signalState = 'source_unavailable';
   } else if (artifact.aggregate.elevatedRepeatedObservationCount > 0) {
     artifact.signalState = 'baseline_elevated_repeated_watch';
-    artifact.displayStatusZh = '重复观察待核';
+    artifact.displayStatusZh = repeatedDisplayStatusZh(artifact.baseline.status);
   } else if (artifact.aggregate.repeatedObservationCount > 0) {
     artifact.signalState = 'baseline_repeated_watch';
-    artifact.displayStatusZh = '重复观察待核';
+    artifact.displayStatusZh = repeatedDisplayStatusZh(artifact.baseline.status);
   } else if ((artifact.baseline.status === 'established' || artifact.baseline.status === 'partial') && artifact.aggregate.rowCount === 0) {
     artifact.signalState = 'baseline_established_no_detections';
   } else if (artifact.baseline.status === 'established' || artifact.baseline.status === 'partial') {

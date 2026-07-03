@@ -176,6 +176,21 @@ if (!data.baseline || typeof data.baseline !== 'object') {
   }
 }
 
+if (data.baseline && data.aggregate) {
+  if (data.aggregate.baselineStatus !== data.baseline.status) {
+    fail('aggregate.baselineStatus must match baseline.status');
+  }
+  if (data.baseline.status === 'partial') {
+    if (!String(data.displayStatusZh || '').includes('部分基线')) {
+      fail('partial baseline thermal watch must expose 部分基线 in displayStatusZh');
+    }
+    const limitationText = JSON.stringify(data.limitationsZh || []);
+    if (!limitationText.includes('部分基线')) {
+      fail('partial baseline thermal watch limitations must explain partial baseline');
+    }
+  }
+}
+
 if (!data.freshness || typeof data.freshness !== 'object') {
   fail('freshness missing');
 } else {

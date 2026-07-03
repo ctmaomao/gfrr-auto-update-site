@@ -94,6 +94,8 @@ for (const marker of [
   '短窗口起步基线',
   '小于 7 天',
   '不是成熟季节性或长历史运行基线',
+  '部分基线',
+  '不能计作重复升高确认',
 ]) {
   if (!src.includes(marker)) {
     fail(`ODP satellite thermal baseline copy must preserve marker: ${marker}`);

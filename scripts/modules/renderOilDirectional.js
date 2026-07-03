@@ -1155,6 +1155,29 @@ function thermalBaselineQualityNote(data) {
   }
   return caveats[0] || '基线质量尚未建立,热异常只作为人工复核代理。';
 }
+function thermalBaselineCoverageNote(data) {
+  const baseline = data?.baseline || {};
+  const aggregate = data?.aggregate || {};
+  const status = baseline.status || aggregate.baselineStatus;
+  if (status !== 'partial') return '';
+  const established = Number.isFinite(baseline.facilitiesWithEstablishedBaseline)
+    ? Math.round(baseline.facilitiesWithEstablishedBaseline)
+    : (Number.isFinite(aggregate.facilitiesWithEstablishedBaseline) ? Math.round(aggregate.facilitiesWithEstablishedBaseline) : null);
+  const total = Number.isFinite(baseline.facilityCount)
+    ? Math.round(baseline.facilityCount)
+    : (Number.isFinite(aggregate.facilityCount) ? Math.round(aggregate.facilityCount) : null);
+  const coverage = established !== null && total !== null ? `${established}/${total}` : '部分设施';
+  return `当前为部分基线覆盖(${coverage}),未建基线设施只能作为热源代理观察,不能计作重复升高确认。`;
+}
+function thermalStatusText(data) {
+  if (!data || typeof data !== 'object') return '数据未加载';
+  const label = data.displayStatusZh || data.status || '状态待核';
+  const baselineStatus = data?.baseline?.status || data?.aggregate?.baselineStatus;
+  if (baselineStatus === 'partial' && !label.includes('部分基线')) {
+    return `部分基线 · ${label}`;
+  }
+  return label;
+}
 function thermalSignalText(data) {
   const aggregate = data && data.aggregate ? data.aggregate : {};
   const baseline = data && data.baseline ? data.baseline : {};
@@ -1189,7 +1212,7 @@ function thermalNoteText(data) {
     return 'FIRMS 本轮查询失败或全部源不可用;保持 fail-closed,不沿用为事故、断供或油价方向判断。';
   }
   if (data.signalState === 'baseline_elevated_repeated_watch' || data.signalState === 'baseline_repeated_watch') {
-    return `设施热异常同时满足历史基线超阈值与多源重复观测,需要人工复核;${thermalBaselineQualityNote(data)}它仍不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。`;
+    return `设施热异常在已建基线设施内触发重复观测,需要人工复核;${thermalBaselineCoverageNote(data)}${thermalBaselineQualityNote(data)}它仍不确认炼厂事故、供应中断或油价预测,也不改变 ODP 方向判断。`;
   }
   if (data.signalState === 'baseline_established_no_detections' || data.signalState === 'baseline_established_no_repeated_signal') {
     return `设施热异常观察已接入基线解释框架。${thermalBaselineQualityNote(data)}本轮未满足超基线强度与多源重复观测的组合条件;不确认炼厂事故、供应中断或油价预测。`;
@@ -1201,7 +1224,7 @@ function thermalNoteText(data) {
 function renderSatelliteThermalWatch(oilThermalWatchData) {
   const data = oilThermalWatchData && typeof oilThermalWatchData === 'object' ? oilThermalWatchData : null;
   const sourceStatus = data?.sourceStatus?.firms ? ` · FIRMS ${data.sourceStatus.firms}` : '';
-  setLeafText('odp-thermal-status', data?.displayStatusZh || '数据未加载');
+  setLeafText('odp-thermal-status', thermalStatusText(data));
   setToneClass('odp-thermal-status', 'odp-thermal-status', thermalTone(data));
   setLeafText('odp-thermal-source', `NASA FIRMS / VIIRS NRT · production read-only${sourceStatus}`);
   setLeafText('odp-thermal-window', thermalWindowText(data));
@@ -1321,7 +1344,9 @@ function crossThermalLayer(oilThermalWatchData) {
   const elevated = Number.isFinite(aggregate.elevatedRepeatedObservationCount) ? Math.round(aggregate.elevatedRepeatedObservationCount) : 0;
   const detections = Number.isFinite(aggregate.facilitiesWithDetections) ? Math.round(aggregate.facilitiesWithDetections) : 0;
   const facilities = Number.isFinite(data.facilityCoverage?.facilityCount) ? Math.round(data.facilityCoverage.facilityCount) : (Number.isFinite(aggregate.facilityCount) ? Math.round(aggregate.facilityCount) : 0);
+  const baselineStatus = data.baseline?.status || aggregate.baselineStatus;
   const baseline = data.baseline?.sourceReview?.baselineQuality ? thermalBaselineQualityLabel(data.baseline.sourceReview.baselineQuality) : '基线待核';
+  const baselineCoverage = baselineStatus === 'partial' ? '部分基线' : (baselineStatus === 'established' ? '基线已建立' : '基线待建');
   let stance = 'no_confirm';
   let label = '未见设施热异常印证';
   if (data.signalState === 'source_unavailable' || data.status === 'source_unavailable' || data.status === 'not_configured') {
@@ -1336,7 +1361,7 @@ function crossThermalLayer(oilThermalWatchData) {
   }
   return {
     stance,
-    text: `${label} · 重复 ${repeated} / 升高 ${elevated} · 检出 ${detections}/${facilities} · ${baseline}`,
+    text: `${label} · 重复 ${repeated} / 升高 ${elevated} · 检出 ${detections}/${facilities} · ${baselineCoverage} · ${baseline}`,
   };
 }
 function crossConfirmationSummary(eia, market, news, thermal) {
@@ -1849,7 +1874,7 @@ function thermalReadiness(oilThermalWatchData) {
   const quality = baseline.sourceReview?.baselineQuality ? thermalBaselineQualityLabel(baseline.sourceReview.baselineQuality) : '质量待核';
   const repeated = Number.isFinite(aggregate.repeatedObservationCount) ? Math.round(aggregate.repeatedObservationCount) : 0;
   const elevated = Number.isFinite(aggregate.elevatedRepeatedObservationCount) ? Math.round(aggregate.elevatedRepeatedObservationCount) : 0;
-  const tone = elevated > 0 ? 'red' : (baselineStatus === 'established' ? 'green' : 'yellow');
+  const tone = baselineStatus === 'partial' ? 'yellow' : (elevated > 0 ? 'red' : (baselineStatus === 'established' ? 'green' : 'yellow'));
   return readinessItem({
     kicker: 'THERMAL WATCH',
     title: '设施热异常基线',

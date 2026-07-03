@@ -10,7 +10,7 @@
   ],
   "status": "ok",
   "signalState": "baseline_elevated_repeated_watch",
-  "displayStatusZh": "重复观察待核",
+  "displayStatusZh": "部分基线重复观察待核",
   "sourceStatus": {
     "mapKey": "configured",
     "firms": "live",
@@ -2226,6 +2226,7 @@
   "limitationsZh": [
     "FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。",
     "生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。",
-    "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。"
+    "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。",
+    "当前为部分基线覆盖:仅已建基线设施可用于重复/升高重复观察,未建基线设施只能作为热源代理,不能计作事故、断供或油价方向确认。"
   ]
 }
