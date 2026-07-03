@@ -477,9 +477,7 @@ function normalizeGdeltCachePolicy(cache) {
 
 function compactGdeltCacheArticle(article) {
   return {
-    title: article.title || null,
-    url: article.url || null,
-    domain: article.domain || null,
+    domain: article.domain || domainFromUrl(article.url) || null,
     publishedAt: article.publishedAt || null,
     buckets: Array.isArray(article.buckets) ? article.buckets.filter(Boolean).sort() : [],
     queryIds: [GDELT_BROAD_QUERY_SPEC.id]
@@ -494,8 +492,8 @@ function articlesFromGdeltCache(cache) {
       source: 'gdelt_doc',
       queryId: GDELT_BROAD_QUERY_SPEC.id,
       queryLabel: GDELT_BROAD_QUERY_SPEC.label,
-      title: compactSnippet(article.title, 180) || null,
-      url: normalizeUrl(article.url),
+      title: article.title ? compactSnippet(article.title, 180) : null,
+      url: article.url ? normalizeUrl(article.url) : null,
       domain: article.domain || domainFromUrl(article.url),
       publishedAt: parseDateToIso(article.publishedAt),
       snippet: null,
@@ -567,7 +565,7 @@ function buildGdeltNewsCacheArtifact({
     productionImpact: productionImpactFalseMap(),
     limitationsZh: [
       'GDELT 是低频缓存型新闻代理源,不是高频实时行情或事件确认源。',
-      '本 cache 只保存 compact title/url/domain/publishedAt/bucket 摘要,不保存 snippet、正文或 raw response。',
+      '本 cache 只保存 compact domain/publishedAt/bucket/query 摘要和聚合计数,不保存标题原文、URL、snippet、正文或 raw response。',
       '本 cache 不确认通道关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。'
     ],
     boundary: GDELT_CACHE_BOUNDARY

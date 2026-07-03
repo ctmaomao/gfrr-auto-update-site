@@ -54,6 +54,7 @@ const PRODUCTION_FALSE_KEYS = [
   'affectsGlobalRiskHeatmap',
   'affectsCrossValidation'
 ];
+const FORBIDDEN_ARTICLE_FIELDS = new Set(['title', 'url', 'snippet', 'raw', 'body', 'rawResponse']);
 
 function finiteNonNegative(value) {
   return Number.isFinite(value) && value >= 0;
@@ -61,6 +62,26 @@ function finiteNonNegative(value) {
 
 function isoOrNull(value) {
   return value === null || (typeof value === 'string' && !Number.isNaN(Date.parse(value)));
+}
+
+function assertNoForbiddenArticleFields(article, path) {
+  for (const field of FORBIDDEN_ARTICLE_FIELDS) {
+    if (field in article) fail(`${path} must not expose ${field}`);
+  }
+}
+
+function assertPublicArticleMetadata(article, path, requiredArrayFields = ['sources', 'buckets', 'queryIds']) {
+  if (!article || typeof article !== 'object') {
+    fail(`${path} must be object`);
+    return;
+  }
+  assertNoForbiddenArticleFields(article, path);
+  for (const field of ['domain', 'publishedAt']) {
+    if (!(article[field] === null || typeof article[field] === 'string')) fail(`${path}.${field} must be string|null`);
+  }
+  for (const field of requiredArrayFields) {
+    if (!Array.isArray(article[field])) fail(`${path}.${field} must be array`);
+  }
 }
 
 if (data.schemaVersion !== 'oil-news-event-watch-1') fail(`schemaVersion invalid: ${data.schemaVersion}`);
@@ -114,20 +135,7 @@ if (!gdeltCache || typeof gdeltCache !== 'object') {
     fail('gdelt cache articles must be array');
   } else {
     for (const [index, article] of gdeltCache.articles.entries()) {
-      const path = `gdeltCache.articles[${index}]`;
-      if (!article || typeof article !== 'object') {
-        fail(`${path} must be object`);
-        continue;
-      }
-      for (const field of ['title', 'url', 'domain', 'publishedAt']) {
-        if (!(article[field] === null || typeof article[field] === 'string')) fail(`${path}.${field} must be string|null`);
-      }
-      for (const field of ['buckets', 'queryIds']) {
-        if (!Array.isArray(article[field])) fail(`${path}.${field} must be array`);
-      }
-      if ('snippet' in article || 'raw' in article || 'body' in article || 'rawResponse' in article) {
-        fail(`${path} must not expose snippet/raw/body/rawResponse fields`);
-      }
+      assertPublicArticleMetadata(article, `gdeltCache.articles[${index}]`, ['buckets', 'queryIds']);
     }
   }
   if (gdeltCache.productionDisplayApproved !== false) fail('gdelt cache productionDisplayApproved must remain false');
@@ -189,6 +197,9 @@ if (!data.buckets || typeof data.buckets !== 'object') {
       if (!finiteNonNegative(bucket[field])) fail(`buckets.${bucketId}.${field} must be non-negative number`);
     }
     if (!Array.isArray(bucket.topArticles)) fail(`buckets.${bucketId}.topArticles must be array`);
+    for (const [index, article] of (Array.isArray(bucket.topArticles) ? bucket.topArticles : []).entries()) {
+      assertPublicArticleMetadata(article, `buckets.${bucketId}.topArticles[${index}]`);
+    }
   }
 }
 
@@ -196,18 +207,7 @@ if (!Array.isArray(data.topArticles)) {
   fail('topArticles must be array');
 } else {
   for (const [index, article] of data.topArticles.entries()) {
-    const path = `topArticles[${index}]`;
-    if (!article || typeof article !== 'object') {
-      fail(`${path} must be object`);
-      continue;
-    }
-    for (const field of ['title', 'url', 'domain', 'publishedAt']) {
-      if (!(article[field] === null || typeof article[field] === 'string')) fail(`${path}.${field} must be string|null`);
-    }
-    for (const field of ['sources', 'buckets', 'queryIds']) {
-      if (!Array.isArray(article[field])) fail(`${path}.${field} must be array`);
-    }
-    if ('snippet' in article || 'raw' in article || 'body' in article) fail(`${path} must not expose snippet/raw/body fields`);
+    assertPublicArticleMetadata(article, `topArticles[${index}]`);
   }
 }
 
@@ -329,6 +329,10 @@ if (typeof data.boundary !== 'string' || !/display-only|audit-only/i.test(data.b
 
 const serialized = JSON.stringify(data);
 const cacheSerialized = JSON.stringify(gdeltCache);
+for (const [label, payload] of [['production artifact', serialized], ['gdelt cache artifact', cacheSerialized]]) {
+  const forbiddenField = payload.match(/"(?:title|url|snippet|raw|body|rawResponse)"\s*:/u);
+  if (forbiddenField) fail(`${label} must not expose forbidden article/raw field: ${forbiddenField[0]}`);
+}
 for (const needle of [
   'TAVILY_API_KEY',
   'TAVILY_API_KEYS',

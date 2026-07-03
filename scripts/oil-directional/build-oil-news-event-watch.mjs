@@ -137,10 +137,8 @@ function displayStatusZh(status, signalState) {
   })[signalState] || '观察层已接入';
 }
 
-function compactArticle(article) {
+function compactArticleForProduction(article) {
   return {
-    title: typeof article.title === 'string' ? article.title : null,
-    url: typeof article.url === 'string' ? article.url : null,
     domain: typeof article.domain === 'string' ? article.domain : null,
     publishedAt: typeof article.publishedAt === 'string' ? article.publishedAt : null,
     sources: Array.isArray(article.sources) ? article.sources.filter(Boolean) : [],
@@ -171,8 +169,8 @@ function buildTitleRisk(topArticles) {
     highClaimTerms: terms,
     directHeadlineDisplayAllowed: false,
     noteZh: highClaimArticles.length > 0
-      ? '本轮 compact title 中包含封锁、战争、袭击、中断等高主张措辞;标题只能作为人工审阅线索,不得直接展示成事实确认。'
-      : '本轮 compact title 未触发高主张标题规则;标题展示仍需另开 reviewed UI/copy 审核。'
+      ? '本轮 transient 新闻标题中包含封锁、战争、袭击、中断等高主张措辞;标题只用于构造聚合风险闸门,不得写入生产 JSON 或直接展示成事实确认。'
+      : '本轮 transient 新闻标题未触发高主张标题规则;生产 JSON 仍不保存标题或 URL。'
   };
 }
 
@@ -205,7 +203,7 @@ function compactBucket(bucket) {
     articleCount: bucket.articleCount,
     sourceCount: bucket.sourceCount,
     weightedSignal: Number.isFinite(bucket.weightedScore) ? bucket.weightedScore : 0,
-    topArticles: Array.isArray(bucket.topArticles) ? bucket.topArticles.slice(0, 3).map(compactArticle) : []
+    topArticles: Array.isArray(bucket.topArticles) ? bucket.topArticles.slice(0, 3).map(compactArticleForProduction) : []
   };
 }
 
@@ -277,6 +275,10 @@ function productionImpact() {
 
 function assertSanitized(artifact) {
   const serialized = JSON.stringify(artifact);
+  const forbiddenField = serialized.match(/"(?:title|url)"\s*:/u);
+  if (forbiddenField) {
+    throw new Error(`Production oil-news artifact contains forbidden article field: ${forbiddenField[0]}`);
+  }
   const forbidden = [
     'TAVILY_API_KEY',
     'TAVILY_API_KEYS',
@@ -303,13 +305,14 @@ function buildProductionArtifact(options, diagnosis) {
   const liveSourceCount = diagnosis.aggregate?.liveSourceCount ?? 0;
   const status = statusFromSources({ dryRun: options.dryRun, sourceResults, liveSourceCount });
   const signalState = options.dryRun ? 'dry_run' : (diagnosis.aggregate?.state || 'source_unavailable');
-  const topArticles = Array.isArray(diagnosis.topArticles)
-    ? diagnosis.topArticles.slice(0, 12).map(compactArticle)
+  const topArticleInputs = Array.isArray(diagnosis.topArticles)
+    ? diagnosis.topArticles.slice(0, 12)
     : [];
-  const titleRisk = buildTitleRisk(topArticles);
+  const topArticles = topArticleInputs.map(compactArticleForProduction);
+  const titleRisk = buildTitleRisk(topArticleInputs);
   const headlineDisplayReadiness = buildHeadlineDisplayReadiness(status, titleRisk);
-  const claimPolarity = buildClaimPolarityAggregate(topArticles);
-  const latestAt = latestArticleAt(topArticles);
+  const claimPolarity = buildClaimPolarityAggregate(topArticleInputs);
+  const latestAt = latestArticleAt(topArticleInputs);
   const buckets = Object.fromEntries(Object.entries(diagnosis.buckets || {}).map(([key, bucket]) => [
     key,
     compactBucket(bucket)
@@ -381,7 +384,7 @@ function buildProductionArtifact(options, diagnosis) {
     promotionEligible: false,
     productionImpact: productionImpact(),
     limitationsZh: [
-      '新闻搜索结果会重复转载、标题党化或延迟收录;本文件只保存 compact 摘要,不保存原始新闻正文。',
+      '新闻搜索结果会重复转载、标题党化或延迟收录;本文件只保存 domain/publishedAt/source/query/bucket 等 compact 元数据与聚合计数,不保存标题原文、URL、snippet、正文或 raw response。',
       '本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。',
       '只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施层同时印证时,才适合提高人工观察置信度。'
     ],
