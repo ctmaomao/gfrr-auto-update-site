@@ -505,6 +505,23 @@ function repeatedDisplayStatusZh(baselineStatus) {
     : '重复观察待核';
 }
 
+const PARTIAL_BASELINE_LIMITATION_ZH =
+  '当前为部分基线覆盖:仅已建基线设施可用于重复/升高重复观察,未建基线设施只能作为热源代理,不能计作事故、断供或油价方向确认。';
+
+function applyBaselineCoverageCopy(artifact) {
+  if (!artifact || artifact.baseline?.status !== 'partial') return artifact;
+  if (!String(artifact.displayStatusZh || '').includes('部分基线')) {
+    artifact.displayStatusZh = artifact.displayStatusZh
+      ? `部分基线 · ${artifact.displayStatusZh}`
+      : '部分基线 · 状态待核';
+  }
+  if (!Array.isArray(artifact.limitationsZh)) artifact.limitationsZh = [];
+  if (!artifact.limitationsZh.some((text) => String(text).includes('部分基线'))) {
+    artifact.limitationsZh.push(PARTIAL_BASELINE_LIMITATION_ZH);
+  }
+  return artifact;
+}
+
 async function fetchWithTimeout(url, timeoutMs) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -826,6 +843,7 @@ async function main() {
     artifact = await buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution });
   }
 
+  artifact = applyBaselineCoverageCopy(artifact);
   artifact = stabilizeUnqueriedArtifact(options, artifact);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   console.log(JSON.stringify({
