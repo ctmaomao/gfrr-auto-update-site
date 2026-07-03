@@ -165,6 +165,7 @@ function contributionFromCandidateScore(candidateScore) {
 
 function expectedZero(reason, context) {
   return {
+    runtimeScoringAuthorized: true,
     applied: false,
     contributionPct: 0,
     maxContributionPct: MAX_CONTRIBUTION_PCT,
@@ -213,6 +214,7 @@ function buildExpectedImpact(payload) {
     return expectedZero('candidate_score_below_contribution_threshold_zero_contribution', context);
   }
   return {
+    runtimeScoringAuthorized: true,
     applied: true,
     contributionPct,
     maxContributionPct: MAX_CONTRIBUTION_PCT,
@@ -249,6 +251,9 @@ function validateContract(payload, blockers) {
   if (impact.sourcePath !== 'macroDrivers.energyTransport.transportShockCandidate') {
     addBlocker(blockers, 'impact_source_path_invalid', 'transportShockScoringImpact sourcePath 必须保持 approved production candidate。', impact.sourcePath ?? null, 'macroDrivers.energyTransport.transportShockCandidate');
   }
+  if (impact.runtimeScoringAuthorized !== true) {
+    addBlocker(blockers, 'runtime_scoring_authorization_missing', 'transportShockScoringImpact 必须显式记录 runtimeScoringAuthorized=true。', impact.runtimeScoringAuthorized ?? null, true);
+  }
   if (impact.maxContributionPct !== MAX_CONTRIBUTION_PCT || impact.guards?.hardCapPct !== MAX_CONTRIBUTION_PCT) {
     addBlocker(blockers, 'hard_cap_invalid', 'Transport Shock runtime hard cap 必须保持 3%。', {
       maxContributionPct: impact.maxContributionPct,
@@ -279,6 +284,7 @@ function compareActualToExpected(payload, expected, blockers) {
   const impact = payload?.transportShockScoringImpact;
   if (!isPlainObject(impact)) return;
   compareField(blockers, 'applied_policy_mismatch', 'applied', impact.applied, expected.applied);
+  compareField(blockers, 'runtime_authorization_policy_mismatch', 'runtimeScoringAuthorized', impact.runtimeScoringAuthorized, expected.runtimeScoringAuthorized);
   compareField(blockers, 'contribution_policy_mismatch', 'contributionPct', impact.contributionPct, expected.contributionPct);
   compareField(blockers, 'reason_policy_mismatch', 'reason', impact.reason, expected.reason);
   compareField(blockers, 'score_before_policy_mismatch', 'scoreBeforeTransport', impact.scoreBeforeTransport, expected.scoreBeforeTransport);
@@ -397,6 +403,7 @@ function buildReview(payload, inputPath) {
     },
     currentObservation: {
       applied: actualImpact?.applied === true,
+      runtimeScoringAuthorized: actualImpact?.runtimeScoringAuthorized === true,
       contributionPct: finiteNumberOrNull(actualImpact?.contributionPct),
       maxContributionPct: finiteNumberOrNull(actualImpact?.maxContributionPct),
       reason: actualImpact?.reason ?? null,

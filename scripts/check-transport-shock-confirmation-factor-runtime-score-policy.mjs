@@ -79,6 +79,7 @@ function assertScriptSafety() {
     'post_migration_runtime_score_policy_replay',
     'transport-shock-scoring-impact-v1',
     'macroDrivers.energyTransport.transportShockCandidate',
+    'runtimeScoringAuthorized',
     'candidate_not_eligible_zero_contribution',
     'owner_approved_free_proxy_transport_pressure_low_weight_applied',
     'candidateScore >= 75',
@@ -111,6 +112,7 @@ function assertReviewOutput() {
   assert(review.policy.thresholds[1].minCandidateScore === 60 && review.policy.thresholds[1].contributionPct === 2, '60+ threshold must map to +2.');
   assert(review.policy.thresholds[2].minCandidateScore === 50 && review.policy.thresholds[2].contributionPct === 1, '50+ threshold must map to +1.');
   assert(review.currentObservation.reason === review.currentObservation.expectedReason, 'Current reason must match policy replay.');
+  assert(review.currentObservation.runtimeScoringAuthorized === true, 'Runtime scoring authorization must be explicit.');
   assert(
     review.currentObservation.scoreAfterTransport === review.currentObservation.expectedScoreAfterTransport,
     'Current scoreAfterTransport must match policy replay.'

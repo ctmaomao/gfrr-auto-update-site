@@ -1185,6 +1185,7 @@ function validateTransportShockScoringImpact(dataPayload) {
   for (const key of [
     'contractVersion',
     'sourcePath',
+    'runtimeScoringAuthorized',
     'applied',
     'contributionPct',
     'maxContributionPct',
@@ -1204,6 +1205,8 @@ function validateTransportShockScoringImpact(dataPayload) {
     'transportShockScoringImpact.contractVersion is not supported');
   assert(impact.sourcePath === 'macroDrivers.energyTransport.transportShockCandidate',
     'transportShockScoringImpact.sourcePath must stay on the approved production candidate');
+  assert(impact.runtimeScoringAuthorized === true,
+    'transportShockScoringImpact.runtimeScoringAuthorized must remain true under P-score-50 authorization');
   assertBoolean(impact.applied, 'transportShockScoringImpact.applied');
   assert(Number.isFinite(impact.contributionPct), 'transportShockScoringImpact.contributionPct must be finite');
   assert(impact.contributionPct >= 0 && impact.contributionPct <= TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,

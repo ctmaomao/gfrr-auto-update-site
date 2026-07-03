@@ -10731,6 +10731,7 @@ function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport)
   const zero = (reason) => ({
     contractVersion: TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
     sourcePath: 'macroDrivers.energyTransport.transportShockCandidate',
+    runtimeScoringAuthorized: true,
     applied: false,
     contributionPct: 0,
     maxContributionPct: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
@@ -10760,6 +10761,7 @@ function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport)
   return {
     contractVersion: TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
     sourcePath: 'macroDrivers.energyTransport.transportShockCandidate',
+    runtimeScoringAuthorized: true,
     applied: true,
     contributionPct,
     maxContributionPct: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,

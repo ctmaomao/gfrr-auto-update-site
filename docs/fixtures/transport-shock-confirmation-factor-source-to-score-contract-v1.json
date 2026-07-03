@@ -15,6 +15,20 @@
     "eligibleForMainScore": false,
     "routeFreightConfirmation": "not_connected"
   },
+  "subsequentRuntimeScoringAuthorization": {
+    "runtimeScoringAuthorized": true,
+    "authorizationSchemaVersion": "transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1",
+    "authorizedScope": "capped_free_proxy_runtime_scoring_only",
+    "approvedRuntimeSourcePath": "macroDrivers.energyTransport.transportShockCandidate",
+    "maxContributionPct": 3,
+    "defaultContributionPct": 0,
+    "routeFreightConfirmationStillNotConnected": true,
+    "marketConfirmationStillNotConnected": true,
+    "odpFinalBiasStillUnaffected": true,
+    "brentPromotionStillUnaffected": true,
+    "globalRiskHeatmapStillUnaffected": true,
+    "crossValidationStillUnaffected": true
+  },
   "candidateInputBaskets": [
     {
       "basketKey": "portwatch_chokepoint_physical_proxy",

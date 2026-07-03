@@ -66,6 +66,22 @@ macroDrivers.energyTransport.transportShockCandidate.eligibleForMainScore = fals
 macroDrivers.energyTransport.transportShockCandidate.routeFreightConfirmation = not_connected
 ```
 
+Subsequent migration note:
+
+```text
+runtimeScoringAuthorized = true
+authorizationSchemaVersion = transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1
+approvedRuntimeSourcePath = macroDrivers.energyTransport.transportShockCandidate
+maxContributionPct = 3
+routeFreightConfirmation = not_connected
+marketConfirmation = not_connected
+ODP finalBias = unaffected
+```
+
+This later P-score-50/P-score-51 authorization does not retroactively make
+P-score-1 a score-writing contract. It only permits the capped free-proxy
+runtime path exposed as `transportShockScoringImpact`.
+
 ---
 
 ## 3. Candidate Input Baskets

@@ -65,6 +65,10 @@ function assertFixture() {
   assert(authorization.approvedScoreImpact.mayOverrideCoreRiskModel === false, 'Authorization must not override core risk model.');
   assert(authorization.approvedScoreImpact.mayOverrideOdpFinalBias === false, 'Authorization must not override ODP finalBias.');
   assert(authorization.approvedScoreImpact.mayAffectBrentPromotion === false, 'Authorization must not affect Brent promotion.');
+  assert(
+    authorization.requiredRuntimeOutputs.includes('transportShockScoringImpact.runtimeScoringAuthorized'),
+    'Authorization must require explicit runtimeScoringAuthorized output.'
+  );
   for (const guard of [
     'candidate_missing_zero_contribution',
     'candidate_not_live_zero_contribution',
@@ -87,6 +91,7 @@ function assertRuntimeImplementationScopedForAuthorization() {
   for (const marker of [
     'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
     'function buildTransportShockScoringImpact',
+    'runtimeScoringAuthorized: true',
     'candidate_missing_zero_contribution',
     'candidate_not_live_zero_contribution',
     'candidate_not_eligible_zero_contribution',
@@ -98,6 +103,7 @@ function assertRuntimeImplementationScopedForAuthorization() {
   const validator = readText('scripts/validate-data.mjs');
   for (const marker of [
     'function validateTransportShockScoringImpact',
+    'transportShockScoringImpact.runtimeScoringAuthorized must remain true under P-score-50 authorization',
     'transportShockScoringImpact.contributionPct must stay within 0..3',
     'transportShockScoringImpact must not claim route freight confirmation',
     'transportShockScoringImpact score delta must stay capped at +3'

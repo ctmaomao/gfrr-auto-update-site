@@ -106,6 +106,17 @@ function assertFixture() {
   }
   assert(production.routeFreightConfirmation === 'not_connected', 'routeFreightConfirmation must stay not_connected.');
 
+  const subsequentAuthorization = fixture.subsequentRuntimeScoringAuthorization || {};
+  assert(subsequentAuthorization.runtimeScoringAuthorized === true, 'subsequentRuntimeScoringAuthorization.runtimeScoringAuthorized must be true.');
+  assert(
+    subsequentAuthorization.authorizationSchemaVersion === 'transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1',
+    'subsequentRuntimeScoringAuthorization.authorizationSchemaVersion mismatch.'
+  );
+  assert(subsequentAuthorization.approvedRuntimeSourcePath === 'macroDrivers.energyTransport.transportShockCandidate', 'subsequent runtime source path mismatch.');
+  assert(subsequentAuthorization.maxContributionPct === 3, 'subsequent runtime maxContributionPct must be 3.');
+  assert(subsequentAuthorization.routeFreightConfirmationStillNotConnected === true, 'route freight must remain disconnected under subsequent authorization.');
+  assert(subsequentAuthorization.odpFinalBiasStillUnaffected === true, 'ODP finalBias must remain unaffected under subsequent authorization.');
+
   assert(Array.isArray(fixture.candidateInputBaskets), 'candidateInputBaskets must be an array.');
   const baskets = new Set(fixture.candidateInputBaskets.map((basket) => basket.basketKey));
   for (const basketKey of REQUIRED_BASKETS) {
@@ -167,8 +178,16 @@ function assertProductionDataRemainsUnwired() {
   assert(!('transportShockConfirmationFactor' in odp), 'oil-directional-pressure.json must not contain transportShockConfirmationFactor yet.');
   const candidate = radar?.macroDrivers?.energyTransport?.transportShockCandidate;
   if (candidate) {
-    assert(candidate.eligibleForMainScore === false, 'transportShockCandidate.eligibleForMainScore must remain false.');
+    assert(typeof candidate.eligibleForMainScore === 'boolean', 'transportShockCandidate.eligibleForMainScore must be boolean.');
     assert(candidate.routeFreightConfirmation === 'not_connected', 'transportShockCandidate.routeFreightConfirmation must remain not_connected.');
+    if (candidate.eligibleForMainScore === true) {
+      const impact = radar?.transportShockScoringImpact;
+      assert(impact?.contractVersion === 'transport-shock-scoring-impact-v1', 'eligible transportShockCandidate requires transportShockScoringImpact contract.');
+      assert(impact.runtimeScoringAuthorized === true, 'eligible transportShockCandidate requires runtimeScoringAuthorized=true.');
+      assert(impact.maxContributionPct === 3, 'eligible transportShockCandidate must stay capped by +3 runtime scoring impact.');
+      assert(impact.guards?.routeFreightConfirmationConnected === false, 'route freight confirmation must remain disconnected even when candidate is eligible.');
+      assert(impact.guards?.marketConfirmationConnected === false, 'market confirmation must remain disconnected even when candidate is eligible.');
+    }
   }
 }
 
