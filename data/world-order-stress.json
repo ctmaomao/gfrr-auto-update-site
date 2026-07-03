@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-07-03T00:03:30.407Z",
+  "updatedAt": "2026-07-03T00:12:57.200Z",
   "sourceMode": "computed_with_external_sources",
   "score": 58,
   "state": "bloc_fragmentation",
@@ -11,12 +11,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-07-03T00:03:05.467Z",
-    "ageMinutes": 0,
+    "updatedAt": "2026-07-03T00:09:05.508Z",
+    "ageMinutes": 4,
     "healthScore": 100,
     "criticalMissing": 0,
     "brent": 71.54,
-    "gold": 4125.7998,
+    "gold": 4127.7998,
     "vix": 16.59,
     "dxy": 120.8866,
     "hyOas": 2.74,
@@ -7671,7 +7671,7 @@
           "Yemen",
           "Myanmar"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "100 units/month free tier",
         "queriesRun": [
           {
@@ -7684,15 +7684,15 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-07-03T00:03:25.834Z"
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-07-03T00:12:56.662Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-07-03T00:03:26.027Z",
+      "lastFetchedAt": "2026-07-03T00:12:57.006Z",
       "summary": {
         "recentActionsCount": 17,
         "listUpdatesCount": 7,
@@ -7739,15 +7739,15 @@
     "acled": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-06-26T06:13:48.743Z",
+      "lastFetchedAt": "2026-07-03T00:11:00.921Z",
       "summary": {
-        "eventsLast4Weeks": 33517,
-        "eventsLast12Weeks": 107598,
-        "eventsDelta4Vs12": -0.065494,
-        "fatalitiesLast4Weeks": 13321,
-        "fatalitiesLast12Weeks": 45168,
-        "civilianTargetingShareLast4Weeks": 0.082287,
-        "latestWeek": "2026-06-12",
+        "eventsLast4Weeks": 33642,
+        "eventsLast12Weeks": 103544,
+        "eventsDelta4Vs12": -0.025284,
+        "fatalitiesLast4Weeks": 12510,
+        "fatalitiesLast12Weeks": 44157,
+        "civilianTargetingShareLast4Weeks": 0.08204,
+        "latestWeek": "2026-06-19",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
         "sourceFreshness": "aging",
@@ -7759,7 +7759,7 @@
         "monthlyAsOfDate": "2026-06-12",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-06-12，近4周事件相对12周均值变化 -6.5%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.1%。"
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-06-19，近4周事件相对12周均值变化 -2.5%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.1%。"
       }
     }
   },
@@ -7780,7 +7780,7 @@
         {
           "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
           "source": "acled",
-          "summary": "ACLED 手动周度聚合更新至 2026-06-12，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -7%。",
+          "summary": "ACLED 手动周度聚合更新至 2026-06-19，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -3%。",
           "value": 19,
           "direction": "neutral",
           "confidence": 0.9
@@ -7855,8 +7855,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4125.8，显示避险或实际利率压力定价。",
-          "value": 4125.7998,
+          "summary": "基于 Worker 快变量，黄金当前值 4127.8，显示避险或实际利率压力定价。",
+          "value": 4127.7998,
           "direction": "up",
           "confidence": 0.75
         },
@@ -7864,7 +7864,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "120.8866/4125.7998",
+          "value": "120.8866/4127.7998",
           "direction": "up",
           "confidence": 0.6
         },
@@ -7872,7 +7872,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7483.24/4125.7998",
+          "value": "7483.24/4127.7998",
           "direction": "mixed",
           "confidence": 0.45
         },
