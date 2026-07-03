@@ -138,6 +138,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-runtime-score-integration-design',
     'check:transport-shock-confirmation-factor-runtime-scoring-migration-authorization',
     'check:transport-shock-confirmation-factor-runtime-scoring-migration',
+    'check:transport-shock-confirmation-factor-score-impact-history-monitor',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-design',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-sample-scaffold',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review',
