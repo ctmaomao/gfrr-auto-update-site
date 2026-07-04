@@ -1,0 +1,96 @@
+{
+  "contractVersion": "gdelt-web-ngrams-fallback-source-review-p45",
+  "kind": "gdelt_web_ngrams_fallback_source_review",
+  "status": "source_review_manual_fallback_candidate_no_production_display",
+  "reviewedAt": "2026-07-04T00:00:00.000Z",
+  "source": {
+    "sourceKey": "gdelt_web_ngrams_v5_legacy",
+    "sourceFamily": "downloadable_ngram_frequency_files",
+    "primaryUse": "background_narrative_heat_fallback",
+    "notA": [
+      "article_record_feed",
+      "headline_feed",
+      "event_confirmation_feed",
+      "price_or_market_structure_feed",
+      "tanker_flow_feed",
+      "facility_status_feed"
+    ]
+  },
+  "candidateFutureRole": {
+    "roleKey": "oil_news_gdelt_web_ngrams_background_fallback_display_only",
+    "fallbackCandidate": true,
+    "productionDisplayFallbackApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "workflowApproved": false,
+    "frontendApproved": false,
+    "scoreApproved": false,
+    "limitedTo": [
+      "source_health_context",
+      "background_phrase_heat",
+      "manual_stability_review"
+    ]
+  },
+  "requiredBeforeP46": {
+    "requiresP44StableManualReviewReady": true,
+    "minimumUsableSamples": 8,
+    "minimumObservationWindowHours": 24,
+    "minimumSelectedTimestamps": 2,
+    "requiredBucketCoverage": [
+      "chokepoint",
+      "tanker_shipping",
+      "market_reaction"
+    ],
+    "requiresOneOfBucketCoverage": [
+      "sanctions",
+      "supply_disruption",
+      "facility_event"
+    ],
+    "requiresNoRawTextOrUrl": true,
+    "requiresSeparateP46Contract": true
+  },
+  "allowedInterpretation": [
+    "phrase_bucket_heat",
+    "gdelt_doc_rate_limit_fallback_context",
+    "manual_stability_sampling"
+  ],
+  "forbiddenInterpretation": [
+    "hormuz_closure_confirmation",
+    "hormuz_reopening_confirmation",
+    "tanker_flow_confirmation",
+    "sanctions_impact_confirmation",
+    "refinery_accident_confirmation",
+    "supply_outage_confirmation",
+    "oil_price_direction",
+    "score_input",
+    "decision_input",
+    "execution_input",
+    "position_guidance"
+  ],
+  "approvalState": {
+    "productionDisplayFallbackApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "productionWriteApproved": false,
+    "workflowApproved": false,
+    "frontendApproved": false,
+    "scoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "modifiesFrontend": false,
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "nextAllowedStep": "p46_production_display_only_fallback_contract_design_after_sufficient_p44_samples",
+  "boundary": "P45 GDELT Web NGrams fallback source-review only; no production data, workflow, frontend, current Oil News signal enhancement, values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

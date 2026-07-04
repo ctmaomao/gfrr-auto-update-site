@@ -31,12 +31,14 @@ const REQUIRED_POLICY_PHRASES = [
   'P41, current phase',
   'P43, current phase',
   'P44, current phase',
+  'P45, current phase',
   '24h fresh-cache or 24h error-cooldown',
   'GDELT Web NGrams',
   'scripts/gdelt/fetch-gdelt.mjs',
   'diagnose:gdelt-web-ngrams',
   'archive:gdelt-web-ngrams-samples',
   'review:gdelt-web-ngrams-samples',
+  'gdelt-web-ngrams-fallback-source-review-p45',
   'data/gdelt-news-cache.json',
   'data/gdelt-bubble-watch-cache.json',
   'data/gdelt-world-order-cache.json'
@@ -204,6 +206,13 @@ function checkPackageWiring() {
   if (!scripts['check:all'].includes('check:gdelt-web-ngrams-sample-archive')) {
     fail('check:all must include check:gdelt-web-ngrams-sample-archive');
   }
+  if (typeof scripts['check:gdelt-web-ngrams-fallback-source-review'] !== 'string' ||
+      !scripts['check:gdelt-web-ngrams-fallback-source-review'].includes('scripts/check-gdelt-web-ngrams-fallback-source-review.mjs')) {
+    fail('package.json missing scripts.check:gdelt-web-ngrams-fallback-source-review');
+  }
+  if (!scripts['check:all'].includes('check:gdelt-web-ngrams-fallback-source-review')) {
+    fail('check:all must include check:gdelt-web-ngrams-fallback-source-review');
+  }
 }
 
 function checkEndpointReferences() {
@@ -337,6 +346,26 @@ function checkSharedWrapperContract() {
     }
     for (const forbidden of ['fetch(', 'node:https', 'node:http', "writeFileSync(resolve('data/", 'writeFileSync(resolve("data/']) {
       if (oilNewsNgramsArchive.includes(forbidden)) fail(`${oilNewsNgramsArchivePath} must remain no-network/no-production-write; found ${forbidden}`);
+    }
+  }
+  const oilNewsNgramsFallbackReviewPath = 'scripts/check-gdelt-web-ngrams-fallback-source-review.mjs';
+  if (!existsSync(resolve(oilNewsNgramsFallbackReviewPath))) {
+    fail(`${oilNewsNgramsFallbackReviewPath} missing`);
+  } else {
+    const oilNewsNgramsFallbackReview = readText(oilNewsNgramsFallbackReviewPath);
+    for (const phrase of [
+      'gdelt-web-ngrams-fallback-source-review-p45',
+      'source_review_manual_fallback_candidate_no_production_display',
+      'oil_news_gdelt_web_ngrams_background_fallback_display_only',
+      'productionDisplayFallbackApproved',
+      'currentSignalEnhancementApproved',
+      'scoreApproved',
+      'assertRuntimeUnwired'
+    ]) {
+      if (!oilNewsNgramsFallbackReview.includes(phrase)) fail(`${oilNewsNgramsFallbackReviewPath} missing P45 fallback source-review phrase: ${phrase}`);
+    }
+    for (const forbidden of ['fetch(', 'node:https', 'node:http', "writeFileSync(resolve('data/", 'writeFileSync(resolve("data/']) {
+      if (oilNewsNgramsFallbackReview.includes(forbidden)) fail(`${oilNewsNgramsFallbackReviewPath} must remain no-network/no-production-write; found ${forbidden}`);
     }
   }
   const worldOrderPath = 'scripts/world-order/fetch-gdelt-cloud.mjs';

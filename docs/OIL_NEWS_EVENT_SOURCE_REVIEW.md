@@ -16,7 +16,9 @@ classification, and writes the compact cache artifact
 `data/gdelt-news-cache.json`. P41 adds a manual-only GDELT Web NGrams live smoke
 helper to evaluate the downloadable ngram path while DOC API is rate-limited.
 P44 adds a manual/local Web NGrams sample archive so adjacent diagnosis artifacts
-can be accumulated before any display-only fallback review.
+can be accumulated before any display-only fallback review. P45 adds a
+source-review gate for a possible future Web NGrams fallback, while keeping it
+out of production display and current Oil News signal enhancement.
 P52 adds a manual claim-ledger review, and P53 adds a production `claimPolarity`
 aggregate plus frontend aggregate display without exposing headlines or URLs.
 All layers remain outside ODP scoring, `finalBias`, decision, execution,
@@ -138,6 +140,28 @@ to a separate fallback source-review discussion. It does not approve production
 display fallback, current Oil News signal enhancement, scheduled workflows,
 frontend rendering, ODP `finalBias`, scoring, decision, execution, position,
 Brent promotion, Global Risk Heatmap, or cross-validation.
+
+P45 adds the fallback source-review:
+
+```text
+docs/GDELT_WEB_NGRAMS_FALLBACK_SOURCE_REVIEW.md
+docs/fixtures/oil-news/gdelt-web-ngrams-fallback-source-review-p45.json
+npm run check:gdelt-web-ngrams-fallback-source-review
+```
+
+Contract version is `gdelt-web-ngrams-fallback-source-review-p45`; status is
+`source_review_manual_fallback_candidate_no_production_display`. The only
+candidate future role is:
+
+```text
+oil_news_gdelt_web_ngrams_background_fallback_display_only
+```
+
+That role is limited to source-health/background phrase-heat context if GDELT DOC
+is rate-limited. P45 keeps `productionDisplayFallbackApproved=false`,
+`currentSignalEnhancementApproved=false`, `workflowApproved=false`,
+`frontendApproved=false`, and `scoreApproved=false`. A later P46 contract would
+still be required before any production display-only fallback.
 
 Default mode is dry-run/no-network:
 

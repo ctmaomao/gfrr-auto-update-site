@@ -175,6 +175,22 @@ P44, current phase:
   review does not approve production display fallback, Oil News signal
   enhancement, scoring, ODP direction, workflows, or frontend wiring.
 
+P45, current phase:
+
+- Add `gdelt-web-ngrams-fallback-source-review-p45` as the source-review gate
+  for a possible future Web NGrams fallback. Its status is
+  `source_review_manual_fallback_candidate_no_production_display`.
+- The reviewed candidate role is
+  `oil_news_gdelt_web_ngrams_background_fallback_display_only`: source-health
+  and background phrase-heat context only.
+- P45 explicitly keeps `productionDisplayFallbackApproved=false`,
+  `currentSignalEnhancementApproved=false`, `workflowApproved=false`,
+  `frontendApproved=false`, and `scoreApproved=false`.
+- A later P46 production display-only fallback contract may be considered only
+  after sufficient P44 samples exist; P45 itself does not approve production
+  JSON, workflow, frontend, current Oil News signal enhancement, scoring, ODP
+  direction, or cross-validation.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -187,6 +203,7 @@ npm run check:gdelt-source-policy
 npm run check:gdelt-web-ngrams-diagnosis
 npm run check:gdelt-web-ngrams-sample-archive
 npm run check:gdelt-web-ngrams-samples-review
+npm run check:gdelt-web-ngrams-fallback-source-review
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all
