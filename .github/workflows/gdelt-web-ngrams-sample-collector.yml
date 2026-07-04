@@ -1,0 +1,107 @@
+name: GDELT Web NGrams Sample Collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 */3 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gdelt-web-ngrams-sample-collector-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: Collect GDELT Web NGrams samples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore previous sample artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p manual-artifacts/oil-news/gdelt-web-ngrams-samples
+          mkdir -p manual-artifacts/oil-news/gdelt-web-ngrams-restored
+          run_id="$(gh run list --workflow "gdelt-web-ngrams-sample-collector.yml" --branch "${GITHUB_REF_NAME}" --status success --limit 1 --json databaseId --jq '.[0].databaseId // ""' || true)"
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --name gdelt-web-ngrams-samples --dir manual-artifacts/oil-news/gdelt-web-ngrams-restored || true
+            find manual-artifacts/oil-news/gdelt-web-ngrams-restored -type f -name '*.json' ! -name '*.archive-meta.json' ! -name '*review*' ! -name '*diagnosis-latest.json' -exec cp {} manual-artifacts/oil-news/gdelt-web-ngrams-samples/ \; || true
+            find manual-artifacts/oil-news/gdelt-web-ngrams-restored -type f -name '*.archive-meta.json' -exec cp {} manual-artifacts/oil-news/gdelt-web-ngrams-samples/ \; || true
+          fi
+          echo "RESTORED_GDELT_NGRAMS_RUN_ID=$run_id" >> "$GITHUB_ENV"
+
+      - name: Run live Web NGrams diagnosis
+        run: npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 12 --output manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json
+
+      - name: Archive sample and run gate review
+        run: |
+          set -euo pipefail
+          npm run archive:gdelt-web-ngrams-samples -- \
+            --input manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json \
+            --output-dir manual-artifacts/oil-news/gdelt-web-ngrams-samples \
+            --review-output manual-artifacts/oil-news/gdelt-web-ngrams-samples-review-latest.json \
+            --min-review-samples 8 \
+            --allow-empty
+          npm run review:gdelt-web-ngrams-samples -- \
+            --input-dir manual-artifacts/oil-news/gdelt-web-ngrams-samples \
+            --min-samples 8 \
+            --output manual-artifacts/oil-news/gdelt-web-ngrams-samples-review-latest.json \
+            --allow-empty
+
+      - name: Summarize sample gate
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+          if (!summaryPath) process.exit(0);
+          const reviewPath = 'manual-artifacts/oil-news/gdelt-web-ngrams-samples-review-latest.json';
+          const diagnosisPath = 'manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json';
+          const review = existsSync(reviewPath) ? JSON.parse(readFileSync(reviewPath, 'utf8')) : null;
+          const diagnosis = existsSync(diagnosisPath) ? JSON.parse(readFileSync(diagnosisPath, 'utf8')) : null;
+          const restoredRun = process.env.RESTORED_GDELT_NGRAMS_RUN_ID || 'none';
+          const lines = [
+            '## GDELT Web NGrams Sample Collector',
+            '',
+            `- restored previous run: ${restoredRun}`,
+            `- diagnosis status: ${diagnosis?.status || 'missing'}`,
+            `- selected file: ${diagnosis?.selectedFile?.timestamp || 'none'}`,
+            `- review status: ${review?.status || 'missing'}`,
+            `- recommendation: ${review?.recommendation || 'missing'}`,
+            `- usable samples: ${review?.usableSampleCount ?? 0}/8`,
+            `- selected timestamps: ${(review?.stability?.selectedTimestamps || []).length}`,
+            '',
+            'Boundary: artifact-only sample collection and gate review; no production data write, no frontend, no current Oil News signal enhancement, no ODP scoring.'
+          ];
+          appendFileSync(summaryPath, `${lines.join('\n')}\n`);
+          NODE
+
+      - name: Upload sample artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: gdelt-web-ngrams-samples
+          path: |
+            manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json
+            manual-artifacts/oil-news/gdelt-web-ngrams-samples-review-latest.json
+            manual-artifacts/oil-news/gdelt-web-ngrams-samples
+          if-no-files-found: error
+          retention-days: 14
+

@@ -190,6 +190,23 @@ responses before any later production writer can be reviewed. P46 keeps
 `scoreApproved=false`; it does not write production JSON, wire a workflow, render
 frontend UI, enhance current Oil News signal, or affect ODP direction/scoring.
 
+P47 adds artifact-only sample collection:
+
+```text
+.github/workflows/gdelt-web-ngrams-sample-collector.yml
+npm run check:gdelt-web-ngrams-sample-collector-workflow
+```
+
+Workflow name is `GDELT Web NGrams Sample Collector`. It runs every 3 hours at
+`23 */3 * * *` UTC or by manual dispatch. Each run restores the previous
+`gdelt-web-ngrams-samples` artifact when available, runs a live Web NGrams
+diagnosis, archives the sample, and reruns the 8-sample gate review.
+
+This is artifact-only sample collection. It does not write production data, does
+not commit/push, does not run `build:oil-news-event-watch`, does not use
+Tavily/Brave/GDELT Cloud/FIRMS secrets, and does not change frontend, current Oil
+News signal, ODP direction/scoring, Brent promotion, or cross-validation.
+
 Default mode is dry-run/no-network:
 
 ```powershell

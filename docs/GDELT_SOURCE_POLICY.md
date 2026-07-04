@@ -211,6 +211,22 @@ P46, current phase:
   rendering, workflow wiring, current Oil News signal enhancement, scoring, ODP
   direction, or cross-validation.
 
+P47, current phase:
+
+- Add `GDELT Web NGrams Sample Collector`
+  (`.github/workflows/gdelt-web-ngrams-sample-collector.yml`) as
+  artifact-only sample collection. It runs every 3 hours at `23 */3 * * *` UTC
+  or by manual dispatch.
+- The collector restores the previous `gdelt-web-ngrams-samples` artifact when
+  available, runs `diagnose:gdelt-web-ngrams -- --allow-network`, archives the
+  latest diagnosis, then runs the 8-sample gate review. It uploads the diagnosis,
+  archived samples, and latest review as a GitHub artifact.
+- The collector does not write production data, does not commit or push, does
+  not run Oil News production build, does not use Tavily/Brave/GDELT Cloud/FIRMS
+  secrets, and does not modify frontend, current Oil News signal, ODP direction,
+  scoring, decision, execution, position, Brent promotion, Global Risk Heatmap,
+  or cross-validation.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -225,6 +241,7 @@ npm run check:gdelt-web-ngrams-sample-archive
 npm run check:gdelt-web-ngrams-samples-review
 npm run check:gdelt-web-ngrams-fallback-source-review
 npm run check:gdelt-web-ngrams-production-display-fallback-contract
+npm run check:gdelt-web-ngrams-sample-collector-workflow
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all
