@@ -417,7 +417,7 @@ function checkSharedWrapperContract() {
     for (const phrase of [
       'GDELT Web NGrams Sample Collector',
       'gdelt-web-ngrams-sample-collector.yml',
-      'npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 12',
+      'npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 96',
       'npm run archive:gdelt-web-ngrams-samples',
       'npm run review:gdelt-web-ngrams-samples',
       'contents: read',

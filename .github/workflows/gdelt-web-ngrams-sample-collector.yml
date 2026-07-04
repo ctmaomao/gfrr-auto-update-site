@@ -50,7 +50,7 @@ jobs:
           echo "RESTORED_GDELT_NGRAMS_RUN_ID=$run_id" >> "$GITHUB_ENV"
 
       - name: Run live Web NGrams diagnosis
-        run: npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 12 --output manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json
+        run: npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 96 --output manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json
 
       - name: Archive sample and run gate review
         run: |
@@ -104,4 +104,3 @@ jobs:
             manual-artifacts/oil-news/gdelt-web-ngrams-samples
           if-no-files-found: error
           retention-days: 14
-

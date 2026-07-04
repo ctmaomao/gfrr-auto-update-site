@@ -38,7 +38,7 @@ function assertWorkflow() {
     'npm ci',
     'gh run list --workflow "gdelt-web-ngrams-sample-collector.yml"',
     'gh run download "$run_id" --name gdelt-web-ngrams-samples',
-    'npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 12',
+    'npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 96',
     'npm run archive:gdelt-web-ngrams-samples',
     '--min-review-samples 8',
     'npm run review:gdelt-web-ngrams-samples',
@@ -116,4 +116,3 @@ function main() {
 }
 
 main();
-
