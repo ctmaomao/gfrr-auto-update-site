@@ -13,11 +13,12 @@ bounded retry, serial request discipline, and sanitized diagnostics are handled
 outside the feature module. P37 changes the GDELT leg from four per-topic DOC
 queries into one broad `gdelt_broad_oil_news` query plus local bucket
 classification, and writes the compact cache artifact
-`data/gdelt-news-cache.json`. P52 adds a manual claim-ledger review, and P53
-adds a production `claimPolarity` aggregate plus frontend aggregate display
-without exposing headlines or URLs. All layers remain outside ODP scoring,
-`finalBias`, decision, execution, position, Brent promotion, Global Risk Heatmap,
-and cross-validation.
+`data/gdelt-news-cache.json`. P41 adds a manual-only GDELT Web NGrams live smoke
+helper to evaluate the downloadable ngram path while DOC API is rate-limited.
+P52 adds a manual claim-ledger review, and P53 adds a production `claimPolarity`
+aggregate plus frontend aggregate display without exposing headlines or URLs.
+All layers remain outside ODP scoring, `finalBias`, decision, execution,
+position, Brent promotion, Global Risk Heatmap, and cross-validation.
 
 ## Candidate Sources
 
@@ -27,6 +28,7 @@ patterns:
 | Source | Role | Key |
 |---|---|---|
 | GDELT DOC 2.0 public search | first-line public news search proxy | no key |
+| GDELT Web NGrams v5 legacy files | manual-only downloadable ngram smoke/source-review | no key |
 | Tavily Search API | free-credit news search cross-check/fallback | `TAVILY_API_KEYS` / `TAVILY_API_KEY` |
 | Brave News Search API | independent news-index cross-check/fallback | `BRAVE_API_KEYS` / `BRAVE_API_KEY` |
 
@@ -63,11 +65,32 @@ schemaVersion: gdelt-news-cache-p37
 query.id: gdelt_broad_oil_news
 ```
 
-The cache stores only compact `title/url/domain/publishedAt/buckets/queryIds`
-rows plus sanitized request diagnostics and cache policy. It must not contain
-snippets, body text, raw provider responses, keys, headers, cookies, or bearer
-tokens. The cache is a low-frequency source artifact for reuse and fallback; it
-does not grant headline display, event confirmation, or scoring authority.
+The cache stores only compact `domain/publishedAt/buckets/queryIds` rows plus
+sanitized request diagnostics and cache policy. It must not contain titles,
+URLs, snippets, body text, raw provider responses, keys, headers, cookies, or
+bearer tokens. The cache is a low-frequency source artifact for reuse and
+fallback; it does not grant headline display, event confirmation, or scoring
+authority.
+
+P41 adds a Web NGrams manual live smoke:
+
+```text
+scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs
+npm run diagnose:gdelt-web-ngrams
+npm run check:gdelt-web-ngrams-diagnosis
+```
+
+Default mode is dry-run/no-network. Live smoke requires explicit opt-in:
+
+```powershell
+npm run diagnose:gdelt-web-ngrams -- --allow-network --no-output
+```
+
+This helper downloads only recent GDELT Web NGrams `ngrams.txt.gz` candidate
+files through the shared wrapper, scans for Oil News term buckets, and writes
+only ignored manual artifacts when `--no-output` is not used. It does not read
+TOC titles/URLs, does not write production data, and does not enhance the
+current Oil News signal.
 
 Default mode is dry-run/no-network:
 

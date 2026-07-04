@@ -28,8 +28,11 @@ const REQUIRED_POLICY_PHRASES = [
   'P37, current phase',
   'P38, current phase',
   'P39, current phase',
+  'P41, current phase',
   '24h fresh-cache or 24h error-cooldown',
+  'GDELT Web NGrams',
   'scripts/gdelt/fetch-gdelt.mjs',
+  'diagnose:gdelt-web-ngrams',
   'data/gdelt-news-cache.json',
   'data/gdelt-bubble-watch-cache.json',
   'data/gdelt-world-order-cache.json'
@@ -42,7 +45,9 @@ const REQUIRED_WRAPPER_PHRASES = [
   'DEFAULT_GDELT_MIN_INTERVAL_MS',
   'sanitizeGdeltDiagnostics',
   'fetchGdeltCloudJson',
-  'fetchGdeltDocJson'
+  'fetchGdeltDocJson',
+  'fetchGdeltWebNgramsText',
+  'GDELT_WEB_NGRAMS_BASE'
 ];
 
 const REQUIRED_ODP_CACHE_PHRASES = [
@@ -164,6 +169,14 @@ function checkPackageWiring() {
   if (typeof scripts['check:all'] !== 'string' || !scripts['check:all'].includes('check:gdelt-source-policy')) {
     fail('check:all must include check:gdelt-source-policy');
   }
+  if (typeof scripts['diagnose:gdelt-web-ngrams'] !== 'string' ||
+      !scripts['diagnose:gdelt-web-ngrams'].includes('scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs')) {
+    fail('package.json missing scripts.diagnose:gdelt-web-ngrams');
+  }
+  if (typeof scripts['check:gdelt-web-ngrams-diagnosis'] !== 'string' ||
+      !scripts['check:gdelt-web-ngrams-diagnosis'].includes('--dry-run --no-output')) {
+    fail('package.json missing dry-run check:gdelt-web-ngrams-diagnosis');
+  }
 }
 
 function checkEndpointReferences() {
@@ -237,6 +250,18 @@ function checkSharedWrapperContract() {
   }
   if (!oilNews.includes('maxRetries: 0')) {
     fail(`${oilNewsPath} must keep ODP GDELT live attempts single-attempt after cache/cooldown expiry`);
+  }
+  const oilNewsNgramsPath = 'scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs';
+  if (!existsSync(resolve(oilNewsNgramsPath))) {
+    fail(`${oilNewsNgramsPath} missing`);
+  } else {
+    const oilNewsNgrams = readText(oilNewsNgramsPath);
+    if (!oilNewsNgrams.includes("../gdelt/fetch-gdelt.mjs") && !oilNewsNgrams.includes('../gdelt/fetch-gdelt.mjs')) {
+      fail(`${oilNewsNgramsPath} must import shared GDELT wrapper`);
+    }
+    for (const phrase of ['DIAGNOSIS_VERSION', 'gdelt-web-ngrams-diagnosis-p41', 'manual_live_diagnosis', 'productionDisplayApproved: false', 'promotionEligible: false']) {
+      if (!oilNewsNgrams.includes(phrase)) fail(`${oilNewsNgramsPath} missing Web NGrams diagnosis phrase: ${phrase}`);
+    }
   }
   const worldOrderPath = 'scripts/world-order/fetch-gdelt-cloud.mjs';
   if (!existsSync(resolve(worldOrderPath))) {
