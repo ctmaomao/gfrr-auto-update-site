@@ -191,6 +191,26 @@ P45, current phase:
   JSON, workflow, frontend, current Oil News signal enhancement, scoring, ODP
   direction, or cross-validation.
 
+P46, current phase:
+
+- Add `gdelt-web-ngrams-production-display-fallback-contract-p46` as a contract
+  design for the possible future production display fallback field
+  `sourceCaches.gdeltWebNgramsFallback`.
+- The future display mode is fixed to
+  `aggregate_source_health_only_no_headlines`: compact source-health and
+  aggregate phrase-heat metadata only, with no titles, URLs, snippets, bodies,
+  raw Web NGrams rows, raw provider responses, secrets, or request headers.
+- P46 status remains
+  `contract_design_only_waiting_for_sufficient_p44_samples_no_production_write`.
+  It requires a P44 `stable_manual_review_ready` archive, at least 8 usable
+  samples, at least 24 hours of observation, at least 2 selected timestamps, and
+  required bucket coverage before any later writer can be reviewed.
+- P46 keeps `productionWriteApproved=false`, `frontendApproved=false`,
+  `workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+  `scoreApproved=false`. It does not add a production JSON field, frontend
+  rendering, workflow wiring, current Oil News signal enhancement, scoring, ODP
+  direction, or cross-validation.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -204,6 +224,7 @@ npm run check:gdelt-web-ngrams-diagnosis
 npm run check:gdelt-web-ngrams-sample-archive
 npm run check:gdelt-web-ngrams-samples-review
 npm run check:gdelt-web-ngrams-fallback-source-review
+npm run check:gdelt-web-ngrams-production-display-fallback-contract
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

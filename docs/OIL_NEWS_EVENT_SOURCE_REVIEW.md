@@ -163,6 +163,33 @@ is rate-limited. P45 keeps `productionDisplayFallbackApproved=false`,
 `frontendApproved=false`, and `scoreApproved=false`. A later P46 contract would
 still be required before any production display-only fallback.
 
+P46 adds the production display fallback contract design:
+
+```text
+docs/GDELT_WEB_NGRAMS_PRODUCTION_DISPLAY_FALLBACK_CONTRACT.md
+docs/fixtures/oil-news/gdelt-web-ngrams-production-display-fallback-contract-p46.json
+npm run check:gdelt-web-ngrams-production-display-fallback-contract
+```
+
+Contract version is `gdelt-web-ngrams-production-display-fallback-contract-p46`;
+status is
+`contract_design_only_waiting_for_sufficient_p44_samples_no_production_write`.
+The only future production location under design is:
+
+```text
+sourceCaches.gdeltWebNgramsFallback
+```
+
+Its display mode is `aggregate_source_health_only_no_headlines`, meaning compact
+source-health and aggregate phrase-heat metadata only. P46 requires P44
+`stable_manual_review_ready`, at least 8 usable samples, at least 24 hours of
+observation, at least 2 selected timestamps, and no raw titles/URLs/bodies/raw
+responses before any later production writer can be reviewed. P46 keeps
+`productionWriteApproved=false`, `frontendApproved=false`,
+`workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+`scoreApproved=false`; it does not write production JSON, wire a workflow, render
+frontend UI, enhance current Oil News signal, or affect ODP direction/scoring.
+
 Default mode is dry-run/no-network:
 
 ```powershell
