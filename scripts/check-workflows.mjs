@@ -73,12 +73,17 @@ const contracts = [
       'workflow_run',
       'Build Daily Radar Data',
       "github.event.workflow_run.conclusion == 'success'",
+      'cancel-in-progress: false',
       'npm run check:all',
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
       'upload-pages-artifact',
-      'deploy-pages'
+      'deploy-pages',
+      'continue-on-error: true',
+      'Wait before Pages deploy retry',
+      'Retry deploy to GitHub Pages',
+      'steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url'
     ]
   },
   {

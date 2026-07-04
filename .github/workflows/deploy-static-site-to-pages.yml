@@ -36,14 +36,17 @@ permissions:
 
 concurrency:
   group: 'pages'
-  cancel-in-progress: true
+  # GitHub Pages accepts one effective deployment stream for the environment.
+  # Queue deploys instead of canceling in-flight runs; canceling after a
+  # deployment has been created can surface as "Deployment failed, try again later".
+  cancel-in-progress: false
 
 jobs:
   deploy:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -67,6 +70,24 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v5
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Wait before Pages deploy retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 45
+
+      - name: Retry deploy to GitHub Pages
+        id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Report Pages deploy retry state
+        if: always()
+        run: |
+          echo "primary deploy outcome: ${{ steps.deployment.outcome }}"
+          echo "retry deploy outcome: ${{ steps.deployment_retry.outcome }}"
