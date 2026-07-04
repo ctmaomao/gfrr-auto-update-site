@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-07-02T23:40:25.886Z",
+  "generatedAt": "2026-07-04T04:21:30.137Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "stale",
-  "sourceStatus": "stale",
-  "requestMode": "stale_cache_after_fetch_error",
+  "status": "error",
+  "sourceStatus": "error",
+  "requestMode": "live_broad_query_failed",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 360,
@@ -29,352 +29,32 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": 200,
+    "status": 429,
     "attempts": 1,
     "retryCount": 0,
-    "rateLimited": false,
+    "rateLimited": true,
     "timeout": false,
     "retryAfterSeconds": null,
     "timeoutMs": 20000,
     "minIntervalMs": 8000,
     "maxRetries": 0,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 13443,
-    "errorCode": null
+    "elapsedMs": 10145,
+    "errorCode": "rate_limited"
   },
   "aggregate": {
-    "articleCount": 32,
+    "articleCount": 0,
     "bucketCounts": {
-      "chokepoint": 12,
+      "chokepoint": 0,
       "sanctions": 0,
-      "supply_disruption": 2,
-      "facility_event": 1,
-      "tanker_shipping": 4,
-      "middle_east_risk": 11,
-      "market_reaction": 12
+      "supply_disruption": 0,
+      "facility_event": 0,
+      "tanker_shipping": 0,
+      "middle_east_risk": 0,
+      "market_reaction": 0
     }
   },
-  "articles": [
-    {
-      "domain": "econotimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "businessinsider.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "oilprice.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "cfi.net.cn",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "moneycontrol.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "tradearabia.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "businesstimes.com.sg",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "dailypioneer.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "jawapos.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "jawapos.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "jawapos.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "dunyanews.tv",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "cfi.net.cn",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "finance.yahoo.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "novinite.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "thehindubusinessline.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "shorouknews.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "morningstar.com",
-      "publishedAt": null,
-      "buckets": [
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "futures.cnfol.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "stcn.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "athens-times.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "naturalnews.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "finance.eastmoney.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "cna.com.tw",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "cna.com.tw",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "tribune.com.pk",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "benzinga.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    }
-  ],
+  "articles": [],
   "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
