@@ -91,7 +91,21 @@ files through the shared wrapper, scans for Oil News term buckets, and writes
 only ignored manual artifacts when `--no-output` is not used. P42 adds bounded
 latest-file discovery: the helper HEAD-probes recent heartbeat-style timestamps
 before downloading, so wider manual searches can use `--discovery-hours` and
-`--max-probes` without downloading every missing candidate. It does not read TOC
+`--max-probes` without downloading every missing candidate.
+
+P43 adds a no-network sample review:
+
+```text
+scripts/oil-directional/review-gdelt-web-ngrams-samples.mjs
+npm run review:gdelt-web-ngrams-samples
+npm run check:gdelt-web-ngrams-samples-review
+```
+
+It reads only ignored diagnosis artifacts or fixtures, validates the
+`gdelt-web-ngrams-diagnosis-p41` boundary, and summarizes discovery stability,
+hit/doc count ranges, bucket coverage, and term coverage. A passing review only
+means the samples are ready for manual stability review; it does not approve
+production display fallback or Oil News signal enhancement. It does not read TOC
 titles/URLs, does not write production data, and does not enhance the current Oil
 News signal.
 

@@ -151,6 +151,17 @@ P41, current phase:
   production artifacts, ODP `finalBias`, scoring, decision, execution,
   position, Brent promotion, Global Risk Heatmap, or cross-validation.
 
+P43, current phase:
+
+- Add `review:gdelt-web-ngrams-samples` as a no-network manual sample reviewer
+  for ignored Web NGrams diagnosis artifacts.
+- The review reads only `manual-artifacts/` or `docs/fixtures/`, validates the
+  `gdelt-web-ngrams-diagnosis-p41` boundary, and summarizes discovery stability,
+  hit/doc ranges, bucket coverage, and term coverage.
+- Even a `pass` review only means `ready_for_manual_web_ngrams_stability_review`;
+  it does not approve production display fallback, Oil News signal enhancement,
+  scoring, ODP direction, or any workflow/frontend wiring.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -161,6 +172,7 @@ Future source-review only:
 ```powershell
 npm run check:gdelt-source-policy
 npm run check:gdelt-web-ngrams-diagnosis
+npm run check:gdelt-web-ngrams-samples-review
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

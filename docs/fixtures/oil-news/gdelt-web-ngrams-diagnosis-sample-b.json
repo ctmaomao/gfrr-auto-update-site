@@ -1,0 +1,117 @@
+{
+  "diagnosisVersion": "gdelt-web-ngrams-diagnosis-p41",
+  "generatedAt": "2026-07-04T06:20:00.000Z",
+  "status": "ok",
+  "mode": "manual_live_diagnosis",
+  "sourceKey": "odp_oil_news_gdelt_web_ngrams_diagnosis",
+  "source": "GDELT Web NGrams v5 legacy ngrams files",
+  "input": {
+    "allowNetwork": true,
+    "probeBeforeDownload": true,
+    "candidateTimestamps": [
+      "20260704062100",
+      "20260704061600"
+    ],
+    "terms": []
+  },
+  "selectedFile": {
+    "timestamp": "20260704061600",
+    "url": "https://storage.googleapis.com/data.gdeltproject.org/gdeltv5/weblegacy/ngrams/20260704061600.ngrams.txt.gz",
+    "contentLength": 8123456,
+    "lastModified": "Sat, 04 Jul 2026 06:18:29 GMT",
+    "diagnostics": {
+      "provider": "gdelt",
+      "endpointType": "web_ngrams",
+      "label": "GDELT Web NGrams 20260704061600",
+      "status": 200,
+      "attempts": 1,
+      "retryCount": 0,
+      "rateLimited": false,
+      "timeout": false,
+      "retryAfterSeconds": null,
+      "timeoutMs": 20000,
+      "minIntervalMs": 1500,
+      "maxRetries": 0,
+      "retryAfterCapSeconds": 15,
+      "elapsedMs": 2050,
+      "errorCode": null
+    }
+  },
+  "discovery": {
+    "found": true,
+    "selectedTimestamp": "20260704061600",
+    "candidateCount": 96,
+    "attemptedCount": 14,
+    "contentLength": 8123456,
+    "lastModified": "Sat, 04 Jul 2026 06:18:29 GMT",
+    "failureCounts": {
+      "not_found": 13
+    }
+  },
+  "attempts": [],
+  "summary": {
+    "parsedLineCount": 1030000,
+    "totalHitCount": 104,
+    "totalMentionCount": 121,
+    "uniqueDocCount": 19,
+    "bucketCounts": {
+      "chokepoint": 50,
+      "middle_east_risk": 50,
+      "tanker_shipping": 20,
+      "market_reaction": 42,
+      "sanctions": 5,
+      "supply_disruption": 4,
+      "facility_event": 1
+    },
+    "terms": [
+      {
+        "termId": "hormuz",
+        "labelZh": "Hormuz",
+        "hitCount": 46,
+        "totalCount": 50,
+        "uniqueDocCount": 10,
+        "buckets": [
+          "chokepoint",
+          "middle_east_risk"
+        ],
+        "examples": []
+      },
+      {
+        "termId": "crude_oil",
+        "labelZh": "Crude oil",
+        "hitCount": 38,
+        "totalCount": 42,
+        "uniqueDocCount": 7,
+        "buckets": [
+          "market_reaction"
+        ],
+        "examples": []
+      },
+      {
+        "termId": "tanker",
+        "labelZh": "Tanker",
+        "hitCount": 18,
+        "totalCount": 20,
+        "uniqueDocCount": 5,
+        "buckets": [
+          "tanker_shipping"
+        ],
+        "examples": []
+      }
+    ]
+  },
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "promotionEligible": false,
+  "productionDisplayApproved": false,
+  "boundary": "manual ODP oil-news GDELT Web NGrams diagnosis only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}
