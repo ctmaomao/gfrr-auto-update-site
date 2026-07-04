@@ -2,7 +2,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -11,6 +10,11 @@ import {
 } from 'node:fs';
 import { basename, dirname, extname, relative, resolve } from 'node:path';
 import process from 'node:process';
+import {
+  GDELT_WEB_NGRAMS_ARTIFACT_SANITIZER_VERSION,
+  sanitizeGdeltWebNgramsArtifact,
+  stringifySanitizedArtifact
+} from './sanitize-gdelt-web-ngrams-artifacts.mjs';
 
 const ARCHIVE_VERSION = 'gdelt-web-ngrams-sample-archive-p44';
 const SAMPLE_SCHEMA_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
@@ -234,7 +238,10 @@ function validateDiagnosisArtifact(inputPath) {
   if (!isSafeInputPath(inputPath)) throw new Error(`Refusing unsafe input path: ${inputPath}`);
 
   const text = readFileSync(absoluteInput, 'utf8');
-  const parsed = JSON.parse(text);
+  const originalParsed = JSON.parse(text);
+  const sanitized = sanitizeGdeltWebNgramsArtifact(originalParsed);
+  const parsed = sanitized.artifact;
+  const sanitizedText = stringifySanitizedArtifact(parsed);
   const errors = [];
   const path = safeRelativePath(inputPath) || inputPath;
 
@@ -251,7 +258,7 @@ function validateDiagnosisArtifact(inputPath) {
   assertProductionImpactFalse(parsed, errors, path);
 
   const serialized = JSON.stringify(parsed);
-  for (const forbidden of ['rawResponse', 'rawProviderResponse', 'bodyText', 'articleTitle', 'newsUrl']) {
+  for (const forbidden of ['"url":', '"finalUrl":', '"requestUrl":', 'https://', 'http://', 'rawResponse', 'rawProviderResponse', 'bodyText', 'articleTitle', 'newsUrl']) {
     if (serialized.includes(forbidden)) errors.push(`${path} contains forbidden marker ${forbidden}`);
   }
 
@@ -262,10 +269,15 @@ function validateDiagnosisArtifact(inputPath) {
   }
 
   return {
-    text,
+    text: sanitizedText,
     artifact: parsed,
+    sanitizer: {
+      version: GDELT_WEB_NGRAMS_ARTIFACT_SANITIZER_VERSION,
+      removedPathCount: sanitized.removedPaths.length,
+      removedPaths: sanitized.removedPaths.slice(0, 20)
+    },
     generatedAt: isoOrNull(parsed.generatedAt),
-    contentHash: hashText(text),
+    contentHash: hashText(sanitizedText),
     sourcePath: absoluteInput
   };
 }
@@ -315,16 +327,17 @@ function createSidecar(options, inputPath, targetPaths, validation) {
       overwrite: options.overwrite
     },
     sampleSummary: createSampleSummary(artifact),
+    sanitizer: validation.sanitizer,
     productionImpact: productionImpactFalseMap(),
     nextCommand: `npm run review:gdelt-web-ngrams-samples -- --input-dir ${options.outputDir.replace(/\\/g, '/')} --min-samples ${options.minReviewSamples}`,
     boundary: BOUNDARY
   };
 }
 
-function writeArchive(options, inputPath, targetPaths, sidecar) {
+function writeArchive(options, validation, targetPaths, sidecar) {
   if (options.dryRun) return;
   mkdirSync(dirname(targetPaths.samplePath), { recursive: true });
-  copyFileSync(resolve(inputPath), targetPaths.samplePath);
+  writeFileSync(targetPaths.samplePath, validation.text, 'utf8');
   writeFileSync(targetPaths.sidecarPath, `${JSON.stringify(sidecar, null, 2)}\n`, 'utf8');
 }
 
@@ -470,7 +483,7 @@ function archiveSamples(options) {
       continue;
     }
 
-    writeArchive(options, inputPath, targetPaths, sidecar);
+    writeArchive(options, validation, targetPaths, sidecar);
     if (options.dryRun) {
       sample.archiveStatus = 'dry_run_would_archive';
       result.summary.dryRunWouldArchive += 1;

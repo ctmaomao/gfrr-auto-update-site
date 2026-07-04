@@ -49,8 +49,14 @@ jobs:
           fi
           echo "RESTORED_GDELT_NGRAMS_RUN_ID=$run_id" >> "$GITHUB_ENV"
 
+      - name: Sanitize restored Web NGrams artifacts
+        run: npm run sanitize:gdelt-web-ngrams-artifacts -- --input-dir manual-artifacts/oil-news/gdelt-web-ngrams-samples --allow-empty
+
       - name: Run live Web NGrams diagnosis
         run: npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 96 --output manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json
+
+      - name: Sanitize latest Web NGrams diagnosis
+        run: npm run sanitize:gdelt-web-ngrams-artifacts -- --input manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json --allow-empty
 
       - name: Archive sample and run gate review
         run: |

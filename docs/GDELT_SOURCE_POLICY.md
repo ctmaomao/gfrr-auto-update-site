@@ -23,7 +23,7 @@ Official GDELT references:
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
 | ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or 24h error-cooldown window expires | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized`; 429 keeps `lastUsableCache` for audit only |
-| ODP Oil News Web NGrams diagnostic | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; output is ignored `manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json` only; P44 sample archive/review remains ignored under `manual-artifacts/oil-news/gdelt-web-ngrams-samples/` | manual dry-run by default; `--allow-network` live smoke tries recent candidate files; archive/review is no-network | source-review/manual diagnosis only; not production data and not a current Oil News signal enhancer |
+| ODP Oil News Web NGrams diagnostic | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; output is ignored `manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json` only; P44 sample archive/review remains ignored under `manual-artifacts/oil-news/gdelt-web-ngrams-samples/`; P48 sanitizer strips `selectedFile.url` and raw-title/body/URL markers from ignored artifacts | manual dry-run by default; `--allow-network` live smoke tries recent candidate files; archive/review is no-network; collector runs sanitizer before review | source-review/manual diagnosis only; not production data and not a current Oil News signal enhancer |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -227,6 +227,23 @@ P47, current phase:
   scoring, decision, execution, position, Brent promotion, Global Risk Heatmap,
   or cross-validation.
 
+P48, current phase:
+
+- Add `sanitize:gdelt-web-ngrams-artifacts` with sanitizer version
+  `gdelt-web-ngrams-artifact-sanitizer-p48`.
+- The sanitizer removes legacy `selectedFile.url`, URL-bearing fields, raw title,
+  body, snippet, raw response, and raw row markers from ignored Web NGrams
+  diagnosis/sample artifacts.
+- The collector now sanitizes restored `gdelt-web-ngrams-samples` artifacts and
+  the latest diagnosis before archive/review, so pre-P48 artifacts cannot block
+  the later 8-sample gate only because they carried a file URL.
+- The archive tool writes sanitized sample files instead of copying raw input,
+  and the reviewer blocks any remaining URL/title/body/raw-response marker.
+- P48 does not write production data, does not add production display fallback,
+  does not enhance the current Oil News signal, and does not affect frontend,
+  scoring, ODP direction, decision, execution, position, Brent promotion,
+  Global Risk Heatmap, or cross-validation.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -237,6 +254,7 @@ Future source-review only:
 ```powershell
 npm run check:gdelt-source-policy
 npm run check:gdelt-web-ngrams-diagnosis
+npm run check:gdelt-web-ngrams-artifact-sanitizer
 npm run check:gdelt-web-ngrams-sample-archive
 npm run check:gdelt-web-ngrams-samples-review
 npm run check:gdelt-web-ngrams-fallback-source-review

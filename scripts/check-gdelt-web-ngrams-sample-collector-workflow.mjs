@@ -38,7 +38,11 @@ function assertWorkflow() {
     'npm ci',
     'gh run list --workflow "gdelt-web-ngrams-sample-collector.yml"',
     'gh run download "$run_id" --name gdelt-web-ngrams-samples',
+    'Sanitize restored Web NGrams artifacts',
+    'npm run sanitize:gdelt-web-ngrams-artifacts -- --input-dir manual-artifacts/oil-news/gdelt-web-ngrams-samples --allow-empty',
     'npm run diagnose:gdelt-web-ngrams -- --allow-network --max-probes 96',
+    'Sanitize latest Web NGrams diagnosis',
+    'npm run sanitize:gdelt-web-ngrams-artifacts -- --input manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json --allow-empty',
     'npm run archive:gdelt-web-ngrams-samples',
     '--min-review-samples 8',
     'npm run review:gdelt-web-ngrams-samples',
@@ -81,6 +85,18 @@ function assertPackage() {
   assert(
     scripts['check:gdelt-web-ngrams-sample-collector-workflow']?.includes('scripts/check-gdelt-web-ngrams-sample-collector-workflow.mjs'),
     'package.json missing check:gdelt-web-ngrams-sample-collector-workflow'
+  );
+  assert(
+    scripts['sanitize:gdelt-web-ngrams-artifacts']?.includes('scripts/oil-directional/sanitize-gdelt-web-ngrams-artifacts.mjs'),
+    'package.json missing sanitize:gdelt-web-ngrams-artifacts'
+  );
+  assert(
+    scripts['check:gdelt-web-ngrams-artifact-sanitizer']?.includes('scripts/check-gdelt-web-ngrams-artifact-sanitizer.mjs'),
+    'package.json missing check:gdelt-web-ngrams-artifact-sanitizer'
+  );
+  assert(
+    scripts['check:all']?.includes('check:gdelt-web-ngrams-artifact-sanitizer'),
+    'check:all missing check:gdelt-web-ngrams-artifact-sanitizer'
   );
   assert(
     scripts['check:all']?.includes('check:gdelt-web-ngrams-sample-collector-workflow'),

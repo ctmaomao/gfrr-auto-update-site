@@ -425,6 +425,16 @@ function buildDryRunArtifact(options, candidates) {
   };
 }
 
+function sanitizeSelectedFileForArtifact(fetched) {
+  if (!fetched.timestamp) return null;
+  return {
+    timestamp: fetched.timestamp,
+    contentLength: fetched.discovery?.contentLength || null,
+    lastModified: fetched.discovery?.lastModified || null,
+    diagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics)
+  };
+}
+
 async function buildLiveArtifact(options, candidates) {
   const fetched = await fetchFirstAvailableNgrams(candidates, options);
   const summary = fetched.text ? analyzeNgramsText(fetched.text) : summarizeMatches([]);
@@ -444,15 +454,7 @@ async function buildLiveArtifact(options, candidates) {
       candidateTimestamps: candidates,
       terms: TERM_SET.map(({ id, labelZh, patterns, buckets }) => ({ id, labelZh, patterns, buckets }))
     },
-    selectedFile: fetched.timestamp
-      ? {
-          timestamp: fetched.timestamp,
-          url: fetched.url,
-          contentLength: fetched.discovery?.contentLength || null,
-          lastModified: fetched.discovery?.lastModified || null,
-          diagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics)
-        }
-      : null,
+    selectedFile: sanitizeSelectedFileForArtifact(fetched),
     discovery: fetched.discovery
       ? {
           found: fetched.discovery.found,

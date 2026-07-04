@@ -221,7 +221,7 @@ function validateSample(sample, source) {
   if (sample.productionDisplayApproved !== false) errors.push(`${path}.productionDisplayApproved must be false`);
   assertProductionImpactFalse(sample, errors, path);
   const serialized = JSON.stringify(sample);
-  for (const forbidden of ['rawResponse', 'rawProviderResponse', 'bodyText', 'articleTitle', 'newsUrl']) {
+  for (const forbidden of ['"url":', '"finalUrl":', '"requestUrl":', 'https://', 'http://', 'rawResponse', 'rawProviderResponse', 'bodyText', 'articleTitle', 'newsUrl']) {
     if (serialized.includes(forbidden)) errors.push(`${path} contains forbidden marker ${forbidden}`);
   }
   if (sample.status !== 'dry_run' && (!sample.summary || typeof sample.summary !== 'object')) {

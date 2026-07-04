@@ -207,6 +207,24 @@ not commit/push, does not run `build:oil-news-event-watch`, does not use
 Tavily/Brave/GDELT Cloud/FIRMS secrets, and does not change frontend, current Oil
 News signal, ODP direction/scoring, Brent promotion, or cross-validation.
 
+P48 adds the artifact sanitizer:
+
+```text
+scripts/oil-directional/sanitize-gdelt-web-ngrams-artifacts.mjs
+npm run sanitize:gdelt-web-ngrams-artifacts
+npm run check:gdelt-web-ngrams-artifact-sanitizer
+```
+
+Sanitizer version is `gdelt-web-ngrams-artifact-sanitizer-p48`. It removes
+legacy `selectedFile.url`, URL fields, raw title/body/snippet markers, raw rows,
+and raw provider response markers from ignored diagnosis/sample artifacts. The
+collector sanitizes restored artifact samples and the latest diagnosis before
+archive/review. The archive writes sanitized samples instead of copying raw input,
+and the reviewer blocks any remaining raw title/URL/body/raw-response exposure.
+P48 is still artifact-only; it does not write production data, does not approve
+`sourceCaches.gdeltWebNgramsFallback`, and does not enhance current Oil News,
+frontend, ODP direction/scoring, Brent promotion, or cross-validation.
+
 Default mode is dry-run/no-network:
 
 ```powershell
