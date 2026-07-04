@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-04T04:21:36.753Z",
+  "generatedAt": "2026-07-04T07:24:28.526Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-03T16:01:00.000Z",
-    "latestArticleAgeHours": 12.3,
+    "latestArticleAgeHours": 15.4,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 63,
+    "uniqueArticleCount": 62,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -228,9 +228,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 17,
+      "articleCount": 16,
       "sourceCount": 2,
-      "weightedSignal": 68,
+      "weightedSignal": 64,
       "topArticles": [
         {
           "domain": "latimes.com",
@@ -319,8 +319,8 @@
           ]
         },
         {
-          "domain": "euronews.com",
-          "publishedAt": "2026-06-29T05:14:05.000Z",
+          "domain": "kyivindependent.com",
+          "publishedAt": "2026-07-03T20:11:52.000Z",
           "sources": [
             "tavily"
           ],
@@ -337,9 +337,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 28,
+      "articleCount": 27,
       "sourceCount": 2,
-      "weightedSignal": 112,
+      "weightedSignal": 108,
       "topArticles": [
         {
           "domain": "bloomberg.com",
@@ -394,9 +394,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 40,
+      "articleCount": 38,
       "sourceCount": 2,
-      "weightedSignal": 120,
+      "weightedSignal": 114,
       "topArticles": [
         {
           "domain": "bloomberg.com",
@@ -448,9 +448,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 43,
+      "articleCount": 41,
       "sourceCount": 2,
-      "weightedSignal": 129,
+      "weightedSignal": 123,
       "topArticles": [
         {
           "domain": "bloomberg.com",
@@ -502,9 +502,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 21,
+      "articleCount": 20,
       "sourceCount": 2,
-      "weightedSignal": 42,
+      "weightedSignal": 40,
       "topArticles": [
         {
           "domain": "oilprice.com",
@@ -555,24 +555,6 @@
     {
       "domain": "nytimes.com",
       "publishedAt": "2026-06-28T09:39:27.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "domain": "cnbc.com",
-      "publishedAt": "2026-06-29T00:00:26.000Z",
       "sources": [
         "brave"
       ],
@@ -754,6 +736,22 @@
       "queryIds": [
         "chokepoint_shipping"
       ]
+    },
+    {
+      "domain": "bloomberg.com",
+      "publishedAt": "2026-06-29T12:57:19.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
     }
   ],
   "titleRisk": {
@@ -763,14 +761,13 @@
     "highClaimDomainCount": 4,
     "highClaimDomains": [
       "apnews.com",
-      "cnbc.com",
+      "bloomberg.com",
       "marinelink.com",
       "nytimes.com"
     ],
     "highClaimTerms": [
       "attacks",
       "closed",
-      "halt",
       "strikes"
     ],
     "directHeadlineDisplayAllowed": false,
@@ -803,8 +800,8 @@
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 1,
-      "major_financial_media": 2,
+      "primary_wire_or_official": 2,
+      "major_financial_media": 1,
       "industry_trade": 3,
       "aggregator_or_blog": 5,
       "low_confidence": 1
