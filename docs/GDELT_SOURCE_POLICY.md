@@ -23,7 +23,7 @@ Official GDELT references:
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
 | ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or 24h error-cooldown window expires | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized`; 429 keeps `lastUsableCache` for audit only |
-| ODP Oil News Web NGrams diagnostic | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; output is ignored `manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json` only | manual dry-run by default; `--allow-network` live smoke tries recent candidate files | source-review/manual diagnosis only; not production data and not a current Oil News signal enhancer |
+| ODP Oil News Web NGrams diagnostic | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; output is ignored `manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json` only; P44 sample archive/review remains ignored under `manual-artifacts/oil-news/gdelt-web-ngrams-samples/` | manual dry-run by default; `--allow-network` live smoke tries recent candidate files; archive/review is no-network | source-review/manual diagnosis only; not production data and not a current Oil News signal enhancer |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -162,6 +162,19 @@ P43, current phase:
   it does not approve production display fallback, Oil News signal enhancement,
   scoring, ODP direction, or any workflow/frontend wiring.
 
+P44, current phase:
+
+- Add `archive:gdelt-web-ngrams-samples` as a manual/local sample collector for
+  ignored Web NGrams diagnosis artifacts.
+- The archive tool reads only `manual-artifacts/` or `docs/fixtures/`, copies
+  valid `gdelt-web-ngrams-diagnosis-p41` samples into
+  `manual-artifacts/oil-news/gdelt-web-ngrams-samples/`, writes sidecars there,
+  and invokes the P43 reviewer for a stability status.
+- Readiness states are limited to `insufficient_samples`,
+  `stable_manual_review_ready`, or `unstable_keep_manual_only`; even stable
+  review does not approve production display fallback, Oil News signal
+  enhancement, scoring, ODP direction, workflows, or frontend wiring.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -172,6 +185,7 @@ Future source-review only:
 ```powershell
 npm run check:gdelt-source-policy
 npm run check:gdelt-web-ngrams-diagnosis
+npm run check:gdelt-web-ngrams-sample-archive
 npm run check:gdelt-web-ngrams-samples-review
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health

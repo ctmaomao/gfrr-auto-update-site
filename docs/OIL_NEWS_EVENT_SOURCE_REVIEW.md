@@ -15,6 +15,8 @@ queries into one broad `gdelt_broad_oil_news` query plus local bucket
 classification, and writes the compact cache artifact
 `data/gdelt-news-cache.json`. P41 adds a manual-only GDELT Web NGrams live smoke
 helper to evaluate the downloadable ngram path while DOC API is rate-limited.
+P44 adds a manual/local Web NGrams sample archive so adjacent diagnosis artifacts
+can be accumulated before any display-only fallback review.
 P52 adds a manual claim-ledger review, and P53 adds a production `claimPolarity`
 aggregate plus frontend aggregate display without exposing headlines or URLs.
 All layers remain outside ODP scoring, `finalBias`, decision, execution,
@@ -108,6 +110,34 @@ means the samples are ready for manual stability review; it does not approve
 production display fallback or Oil News signal enhancement. It does not read TOC
 titles/URLs, does not write production data, and does not enhance the current Oil
 News signal.
+
+P44 adds a manual sample archive:
+
+```text
+scripts/oil-directional/archive-gdelt-web-ngrams-samples.mjs
+npm run archive:gdelt-web-ngrams-samples
+npm run check:gdelt-web-ngrams-sample-archive
+```
+
+The archive reads only ignored diagnosis artifacts or fixtures, validates the
+same `gdelt-web-ngrams-diagnosis-p41` boundary, copies valid samples into:
+
+```text
+manual-artifacts/oil-news/gdelt-web-ngrams-samples/
+```
+
+It writes only ignored sidecars and optionally invokes the P43 reviewer. The
+readiness states are deliberately narrow:
+
+- `insufficient_samples`
+- `stable_manual_review_ready`
+- `unstable_keep_manual_only`
+
+`stable_manual_review_ready` only means the accumulated manual samples can move
+to a separate fallback source-review discussion. It does not approve production
+display fallback, current Oil News signal enhancement, scheduled workflows,
+frontend rendering, ODP `finalBias`, scoring, decision, execution, position,
+Brent promotion, Global Risk Heatmap, or cross-validation.
 
 Default mode is dry-run/no-network:
 
