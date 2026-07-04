@@ -277,6 +277,10 @@ function reviewOilNewsCache(nowMs) {
     rateLimited: false,
     queryCurrent: false,
     articleCount: null,
+    lastUsableCacheGeneratedAt: null,
+    lastUsableCacheAgeHours: null,
+    lastUsableArticleCount: null,
+    lastUsableUsedForCurrentSignal: null,
     productionArtifactStatus: null,
     findings: []
   };
@@ -295,6 +299,12 @@ function reviewOilNewsCache(nowMs) {
   row.rateLimited = cache.requestDiagnostics?.rateLimited === true || cache.requestDiagnostics?.status === 429;
   row.queryCurrent = cache.query?.query === GDELT_BROAD_QUERY_SPEC.query;
   row.articleCount = Array.isArray(cache.articles) ? cache.articles.length : null;
+  if (cache.lastUsableCache && typeof cache.lastUsableCache === 'object') {
+    row.lastUsableCacheGeneratedAt = cache.lastUsableCache.generatedAt || null;
+    row.lastUsableCacheAgeHours = ageHours(cache.lastUsableCache.generatedAt, nowMs);
+    row.lastUsableArticleCount = Array.isArray(cache.lastUsableCache.articles) ? cache.lastUsableCache.articles.length : null;
+    row.lastUsableUsedForCurrentSignal = cache.lastUsableCache.usedForCurrentSignal ?? null;
+  }
   assertNoForbiddenCacheFields(row, cache, 'oil_news');
 
   if (cache.schemaVersion !== row.expectedSchemaVersion || cache.module !== 'gdelt-news-cache') {
@@ -315,6 +325,11 @@ function reviewOilNewsCache(nowMs) {
   }
   if (row.rateLimited) {
     pushFinding(row, 'watch', 'oil_news_gdelt_rate_limited', 'GDELT DOC is rate limited; Tavily/Brave fallbacks should remain authoritative for display-only event watch.');
+    if (!cache.lastUsableCache) {
+      pushFinding(row, 'watch', 'oil_news_last_usable_cache_missing_after_rate_limit', 'Rate-limited cache has no last usable compact cache yet; next successful or stale run should preserve one for audit-only context.');
+    } else if (cache.lastUsableCache.usedForCurrentSignal !== false) {
+      pushFinding(row, 'fail', 'oil_news_last_usable_cache_signal_boundary_invalid', 'lastUsableCache must be preserved for audit only and must not affect the current Oil News signal.');
+    }
   }
 
   const watchRead = readJson(CACHE_PATHS.oilNewsWatch);

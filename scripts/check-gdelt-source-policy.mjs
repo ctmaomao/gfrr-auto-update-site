@@ -28,7 +28,7 @@ const REQUIRED_POLICY_PHRASES = [
   'P37, current phase',
   'P38, current phase',
   'P39, current phase',
-  '6h fresh-cache or 6h error-cooldown',
+  '24h fresh-cache or 24h error-cooldown',
   'scripts/gdelt/fetch-gdelt.mjs',
   'data/gdelt-news-cache.json',
   'data/gdelt-bubble-watch-cache.json',
@@ -54,6 +54,10 @@ const REQUIRED_ODP_CACHE_PHRASES = [
   'GDELT_ERROR_COOLDOWN_HOURS',
   'GDELT_STALE_MAX_HOURS',
   'error_cooldown_cache_hit',
+  'lastUsableCachePreservedOnError',
+  'lastUsableCacheAffectsCurrentSignal',
+  'lastUsableGdeltCacheFrom',
+  'rate_limited_last_usable_cache_preserved',
   'fetchGdeltDocBroad',
   'single_broad_query_local_classification',
   'sourceCaches'
@@ -222,14 +226,14 @@ function checkSharedWrapperContract() {
   for (const phrase of REQUIRED_ODP_CACHE_PHRASES) {
     if (!oilNews.includes(phrase)) fail(`${oilNewsPath} missing P37 ODP cache phrase: ${phrase}`);
   }
-  if (!/GDELT_CACHE_TTL_MINUTES\s*=\s*360/u.test(oilNews)) {
-    fail(`${oilNewsPath} must keep ODP GDELT fresh-cache TTL at 360 minutes`);
+  if (!/GDELT_CACHE_TTL_MINUTES\s*=\s*1440/u.test(oilNews)) {
+    fail(`${oilNewsPath} must keep ODP GDELT fresh-cache TTL at 1440 minutes`);
   }
-  if (!/GDELT_STALE_MAX_HOURS\s*=\s*24/u.test(oilNews)) {
-    fail(`${oilNewsPath} must keep ODP GDELT stale-cache fallback at 24 hours`);
+  if (!/GDELT_STALE_MAX_HOURS\s*=\s*72/u.test(oilNews)) {
+    fail(`${oilNewsPath} must keep ODP GDELT stale-cache fallback at 72 hours`);
   }
-  if (!/GDELT_ERROR_COOLDOWN_HOURS\s*=\s*6/u.test(oilNews)) {
-    fail(`${oilNewsPath} must keep ODP GDELT error cooldown at 6 hours`);
+  if (!/GDELT_ERROR_COOLDOWN_HOURS\s*=\s*24/u.test(oilNews)) {
+    fail(`${oilNewsPath} must keep ODP GDELT error cooldown at 24 hours`);
   }
   if (!oilNews.includes('maxRetries: 0')) {
     fail(`${oilNewsPath} must keep ODP GDELT live attempts single-attempt after cache/cooldown expiry`);
@@ -289,6 +293,10 @@ function checkSharedWrapperContract() {
     }
     if (cache.cachePolicy?.broadQueryLocalClassification !== true) {
       fail(`${GDELT_NEWS_CACHE} must declare broadQueryLocalClassification`);
+    }
+    if (cache.cachePolicy?.lastUsableCachePreservedOnError !== true ||
+        cache.cachePolicy?.lastUsableCacheAffectsCurrentSignal !== false) {
+      fail(`${GDELT_NEWS_CACHE} must declare last usable cache preservation without current-signal impact`);
     }
   }
   if (!existsSync(resolve(GDELT_BUBBLE_CACHE))) {

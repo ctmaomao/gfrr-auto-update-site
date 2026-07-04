@@ -415,7 +415,9 @@ function buildGdeltCacheArtifact(diagnosis) {
       errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
       lowFrequencyCache: true,
       broadQueryLocalClassification: true,
-      liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown'
+      liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown',
+      lastUsableCachePreservedOnError: true,
+      lastUsableCacheAffectsCurrentSignal: false
     },
     query: {
       id: GDELT_BROAD_QUERY_SPEC.id,

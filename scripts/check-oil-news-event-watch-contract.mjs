@@ -84,6 +84,36 @@ function assertPublicArticleMetadata(article, path, requiredArrayFields = ['sour
   }
 }
 
+function assertLastUsableGdeltCache(cache, path) {
+  if (!cache || typeof cache !== 'object') {
+    fail(`${path} must be object`);
+    return;
+  }
+  if (cache.usedForCurrentSignal !== false) {
+    fail(`${path}.usedForCurrentSignal must be false`);
+  }
+  if (!cache.query || cache.query.id !== 'gdelt_broad_oil_news') {
+    fail(`${path}.query.id must be gdelt_broad_oil_news`);
+  }
+  if (!cache.aggregate || !finiteNonNegative(cache.aggregate.articleCount)) {
+    fail(`${path}.aggregate.articleCount must be non-negative number`);
+  }
+  if (!Array.isArray(cache.articles) || cache.articles.length === 0) {
+    fail(`${path}.articles must be non-empty array`);
+  } else {
+    for (const [index, article] of cache.articles.entries()) {
+      assertPublicArticleMetadata(article, `${path}.articles[${index}]`, ['buckets', 'queryIds']);
+    }
+  }
+  if (!cache.productionImpact || typeof cache.productionImpact !== 'object') {
+    fail(`${path}.productionImpact missing`);
+  } else {
+    for (const field of PRODUCTION_FALSE_KEYS) {
+      if (cache.productionImpact[field] !== false) fail(`${path}.productionImpact.${field} must be false`);
+    }
+  }
+}
+
 if (data.schemaVersion !== 'oil-news-event-watch-1') fail(`schemaVersion invalid: ${data.schemaVersion}`);
 if (data.module !== 'oil-news-event-watch') fail(`module invalid: ${data.module}`);
 if (typeof data.generatedAt !== 'string' || Number.isNaN(Date.parse(data.generatedAt))) fail('generatedAt must be ISO');
@@ -125,6 +155,10 @@ if (!gdeltCache || typeof gdeltCache !== 'object') {
       gdeltCache.cachePolicy.broadQueryLocalClassification !== true) {
     fail('gdelt cache must declare lowFrequencyCache and broadQueryLocalClassification');
   }
+  if (gdeltCache.cachePolicy?.lastUsableCachePreservedOnError !== true ||
+      gdeltCache.cachePolicy?.lastUsableCacheAffectsCurrentSignal !== false) {
+    fail('gdelt cache must declare last usable cache preservation without current-signal impact');
+  }
   if (!gdeltCache.query || gdeltCache.query.id !== 'gdelt_broad_oil_news') {
     fail('gdelt cache query.id must be gdelt_broad_oil_news');
   }
@@ -140,6 +174,9 @@ if (!gdeltCache || typeof gdeltCache !== 'object') {
   }
   if (gdeltCache.productionDisplayApproved !== false) fail('gdelt cache productionDisplayApproved must remain false');
   if (gdeltCache.promotionEligible !== false) fail('gdelt cache promotionEligible must remain false');
+  if ('lastUsableCache' in gdeltCache) {
+    assertLastUsableGdeltCache(gdeltCache.lastUsableCache, 'gdeltCache.lastUsableCache');
+  }
   if (!gdeltCache.productionImpact || typeof gdeltCache.productionImpact !== 'object') {
     fail('gdelt cache productionImpact missing');
   } else {

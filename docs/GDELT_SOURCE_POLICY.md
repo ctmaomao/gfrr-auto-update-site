@@ -18,7 +18,7 @@ Official GDELT references:
 | Consumer | Current source | Runtime path | Cadence | Current fallback |
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
-| ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 6h fresh-cache or 6h error-cooldown window expires | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized` |
+| ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or 24h error-cooldown window expires | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized`; 429 keeps `lastUsableCache` for audit only |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -85,8 +85,10 @@ P37, current phase:
 - Add a compact `data/gdelt-news-cache.json` or equivalent cache artifact.
 - Change ODP oil-news from per-bucket GDELT queries to one broad GDELT query plus
   local bucket classification.
-- Keep ODP GDELT DOC as a slow background source: 6h fresh cache, 24h stale
-  fallback, 6h error cooldown, and no second retry inside an Oil News refresh.
+- Keep ODP GDELT DOC as a slow background source: 24h fresh cache, 72h stale
+  fallback, 24h error cooldown, and no second retry inside an Oil News refresh.
+- Preserve `lastUsableCache` on 429/error for audit context only; it must set
+  `usedForCurrentSignal=false` and must not enhance the current Oil News signal.
 - Keep Tavily / Brave per-topic cross-checks unchanged.
 - Keep the cache display-only/audit-only and out of ODP `finalBias`, scoring,
   decision, execution, position, Brent promotion, Global Risk Heatmap, and

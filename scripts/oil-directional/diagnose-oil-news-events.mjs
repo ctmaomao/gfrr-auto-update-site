@@ -13,9 +13,9 @@ const DEFAULT_SOURCES = ['gdelt_doc', 'tavily', 'brave'];
 const DEFAULT_GDELT_CACHE_OUTPUT = 'data/gdelt-news-cache.json';
 const GDELT_CACHE_SCHEMA_VERSION = 'gdelt-news-cache-p37';
 const GDELT_CACHE_MODULE = 'gdelt-news-cache';
-const GDELT_CACHE_TTL_MINUTES = 360;
-const GDELT_STALE_MAX_HOURS = 24;
-const GDELT_ERROR_COOLDOWN_HOURS = 6;
+const GDELT_CACHE_TTL_MINUTES = 1440;
+const GDELT_STALE_MAX_HOURS = 72;
+const GDELT_ERROR_COOLDOWN_HOURS = 24;
 const GDELT_BROAD_QUERY_MAX_CHARS = 180;
 const FETCH_TIMEOUT_MS = 20000;
 const UA = 'gfrr-odp-oil-news-diagnosis/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
@@ -410,7 +410,8 @@ async function fetchWithTimeout(url, fetchOptions = {}) {
 }
 
 function effectiveGdeltMaxRecords(options) {
-  return Math.max(1, Math.min(50, options.maxResults * QUERY_SET.length));
+  const maxResults = Number.isFinite(Number(options.maxResults)) ? Number(options.maxResults) : DEFAULT_MAX_RESULTS;
+  return Math.max(1, Math.min(50, maxResults * QUERY_SET.length));
 }
 
 function cacheAgeMinutes(cache, nowMs = Date.now()) {
@@ -463,15 +464,21 @@ function gdeltCachePolicy() {
     errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
     lowFrequencyCache: true,
     broadQueryLocalClassification: true,
-    liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown'
+    liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown',
+    lastUsableCachePreservedOnError: true,
+    lastUsableCacheAffectsCurrentSignal: false
   };
 }
 
 function normalizeGdeltCachePolicy(cache) {
   if (!cache || typeof cache !== 'object') return cache;
+  const lastUsableCache = buildLastUsableGdeltCache(cache.lastUsableCache, {
+    windowDays: cache.query?.windowDays ?? DEFAULT_WINDOW_DAYS
+  });
   return {
     ...cache,
-    cachePolicy: gdeltCachePolicy()
+    cachePolicy: gdeltCachePolicy(),
+    ...(lastUsableCache ? { lastUsableCache } : {})
   };
 }
 
@@ -482,6 +489,54 @@ function compactGdeltCacheArticle(article) {
     buckets: Array.isArray(article.buckets) ? article.buckets.filter(Boolean).sort() : [],
     queryIds: [GDELT_BROAD_QUERY_SPEC.id]
   };
+}
+
+function buildGdeltCacheAggregate(compactArticles) {
+  return {
+    articleCount: compactArticles.length,
+    bucketCounts: Object.fromEntries(Object.keys(BUCKETS).map((bucket) => [
+      bucket,
+      compactArticles.filter((article) => article.buckets.includes(bucket)).length
+    ]))
+  };
+}
+
+function buildLastUsableGdeltCache(cache, options = {}) {
+  if (!cache || typeof cache !== 'object') return null;
+  if (!cacheMatchesCurrentGdeltQuery(cache, options)) return null;
+  if (!Array.isArray(cache.articles) || cache.articles.length === 0) return null;
+  const compactArticles = cache.articles.map(compactGdeltCacheArticle);
+  return {
+    generatedAt: cache.generatedAt || null,
+    status: cache.status === 'ok' ? 'ok' : 'stale',
+    sourceStatus: cache.sourceStatus === 'live' ? 'live' : 'stale',
+    requestMode: cache.requestMode || null,
+    source: 'GDELT DOC public search',
+    cachePolicy: gdeltCachePolicy(),
+    query: {
+      id: GDELT_BROAD_QUERY_SPEC.id,
+      label: GDELT_BROAD_QUERY_SPEC.label,
+      query: GDELT_BROAD_QUERY_SPEC.query,
+      windowDays: Number(cache.query?.windowDays ?? options.windowDays ?? DEFAULT_WINDOW_DAYS),
+      maxRecords: Number(cache.query?.maxRecords ?? effectiveGdeltMaxRecords(options)),
+      mode: 'ArtList',
+      sort: 'HybridRel'
+    },
+    aggregate: buildGdeltCacheAggregate(compactArticles),
+    articles: compactArticles,
+    usedForCurrentSignal: false,
+    productionImpact: productionImpactFalseMap(),
+    noteZh: '429/错误降级时仅保留最近可用 GDELT compact cache 供审计,不参与本轮 Oil News 聚合增强。'
+  };
+}
+
+function lastUsableGdeltCacheFrom(cache, options = {}) {
+  return buildLastUsableGdeltCache(cache, options) || buildLastUsableGdeltCache(cache?.lastUsableCache, options);
+}
+
+function isGdeltRateLimitedError(error) {
+  const diagnostics = error?.gdeltDiagnostics || {};
+  return diagnostics.rateLimited === true || Number(diagnostics.status) === 429 || diagnostics.errorCode === 'rate_limited';
 }
 
 function articlesFromGdeltCache(cache) {
@@ -529,10 +584,6 @@ function buildGdeltNewsCacheArtifact({
   error = null
 }) {
   const compactArticles = articles.map(compactGdeltCacheArticle);
-  const bucketCounts = Object.fromEntries(Object.keys(BUCKETS).map((bucket) => [
-    bucket,
-    compactArticles.filter((article) => article.buckets.includes(bucket)).length
-  ]));
   return {
     schemaVersion: GDELT_CACHE_SCHEMA_VERSION,
     module: GDELT_CACHE_MODULE,
@@ -554,10 +605,7 @@ function buildGdeltNewsCacheArtifact({
       sort: 'HybridRel'
     },
     requestDiagnostics: requestDiagnostics ? sanitizeGdeltDiagnostics(requestDiagnostics) : null,
-    aggregate: {
-      articleCount: compactArticles.length,
-      bucketCounts
-    },
+    aggregate: buildGdeltCacheAggregate(compactArticles),
     articles: compactArticles,
     error: error ? compactSnippet(error, 180) : null,
     promotionEligible: false,
@@ -586,6 +634,7 @@ function withGdeltCacheQueryMetadata(cacheArtifact, options) {
 async function fetchGdeltDocBroad(options) {
   const existingCache = readGdeltNewsCache(options.gdeltCachePath);
   const usability = cacheUsability(existingCache, options);
+  const lastUsableCache = lastUsableGdeltCacheFrom(existingCache, options);
   if (usability === 'fresh') {
     const articles = articlesFromGdeltCache(existingCache);
     return {
@@ -638,10 +687,13 @@ async function fetchGdeltDocBroad(options) {
             elapsedMs: 0,
             errorCode: 'error_cooldown_cache_hit'
           },
-      cacheArtifact: normalizeGdeltCachePolicy({
-        ...existingCache,
-        requestMode: 'error_cooldown_cache_hit'
-      }),
+      cacheArtifact: {
+        ...normalizeGdeltCachePolicy({
+          ...existingCache,
+          requestMode: 'error_cooldown_cache_hit'
+        }),
+        ...(lastUsableCache ? { lastUsableCache } : {})
+      },
       queryRunStatus: 'error_cooldown_cache_hit',
       sourceStatus: 'error',
       networkUsed: false,
@@ -690,7 +742,8 @@ async function fetchGdeltDocBroad(options) {
       networkUsed: true
     };
   } catch (error) {
-    if (usability === 'stale') {
+    const rateLimited = isGdeltRateLimitedError(error);
+    if (usability === 'stale' && !rateLimited) {
       const articles = articlesFromGdeltCache(existingCache);
       return {
         articles,
@@ -700,6 +753,7 @@ async function fetchGdeltDocBroad(options) {
           status: 'stale',
           sourceStatus: 'stale',
           requestMode: 'stale_cache_after_fetch_error',
+          ...(lastUsableCache ? { lastUsableCache } : {}),
           error: compactSnippet(error.message, 180)
         },
         queryRunStatus: 'stale_cache',
@@ -711,11 +765,12 @@ async function fetchGdeltDocBroad(options) {
     const cacheArtifact = withGdeltCacheQueryMetadata(buildGdeltNewsCacheArtifact({
       status: 'error',
       sourceStatus: 'error',
-      requestMode: 'live_broad_query_failed',
+      requestMode: rateLimited ? 'rate_limited_last_usable_cache_preserved' : 'live_broad_query_failed',
       articles: [],
       requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
       error: error.message
     }), options);
+    if (lastUsableCache) cacheArtifact.lastUsableCache = lastUsableCache;
     error.cacheArtifact = cacheArtifact;
     throw error;
   }
