@@ -138,6 +138,36 @@ async function fetchBinaryOnce(url, {
   }, minIntervalMs);
 }
 
+async function probeHeadOnce(url, {
+  headers = {},
+  label = 'GDELT',
+  timeoutMs = DEFAULT_GDELT_TIMEOUT_MS,
+  minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS
+} = {}) {
+  return runSerializedGdeltRequest(async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD',
+        headers,
+        signal: controller.signal,
+        redirect: 'follow'
+      });
+      return { response };
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        const timeoutError = new Error(`${label} timeout after ${timeoutMs}ms`);
+        timeoutError.code = 'timeout';
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }, minIntervalMs);
+}
+
 function buildDiagnostics({
   provider = 'gdelt',
   endpointType,
@@ -519,6 +549,91 @@ async function fetchGdeltWebNgramsText({
   return { ...result, url };
 }
 
+async function probeGdeltWebNgramsFile({
+  timestamp,
+  kind = 'ngrams',
+  userAgent = DEFAULT_GDELT_UA,
+  timeoutMs = DEFAULT_GDELT_TIMEOUT_MS,
+  minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
+  retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
+  label = 'GDELT Web NGrams probe'
+} = {}) {
+  if (!/^\d{14}$/u.test(String(timestamp || ''))) {
+    throw new Error('GDELT Web NGrams timestamp must be YYYYMMDDHHMMSS');
+  }
+  const suffix = kind === 'toc' ? 'toc.json.gz' : 'ngrams.txt.gz';
+  const url = `${GDELT_WEB_NGRAMS_BASE}/${timestamp}.${suffix}`;
+  const startedAtMs = Date.now();
+  const attempts = [];
+  const attemptStartedAtMs = Date.now();
+  try {
+    const { response } = await probeHeadOnce(url, {
+      headers: {
+        'User-Agent': userAgent,
+        Accept: 'application/gzip, text/plain, */*'
+      },
+      label,
+      timeoutMs,
+      minIntervalMs
+    });
+    const retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'), retryAfterCapMs);
+    attempts.push({
+      attempt: 1,
+      status: response.status,
+      retryAfterMs,
+      elapsedMs: Math.max(0, Date.now() - attemptStartedAtMs)
+    });
+    const diagnostics = sanitizeGdeltDiagnostics(buildDiagnostics({
+      endpointType: `web_${kind === 'toc' ? 'ngrams_toc_probe' : 'ngrams_probe'}`,
+      label,
+      attempts,
+      timeoutMs,
+      minIntervalMs,
+      maxRetries: 0,
+      retryAfterCapMs,
+      startedAtMs,
+      status: response.status,
+      errorCode: response.ok ? null : response.status === 404 ? 'not_found' : response.status === 429 ? 'rate_limited' : 'http_error'
+    }));
+    return {
+      ok: response.ok,
+      status: response.status,
+      timestamp,
+      url,
+      contentLength: Number(response.headers.get('content-length')) || null,
+      lastModified: response.headers.get('last-modified') || null,
+      diagnostics
+    };
+  } catch (error) {
+    attempts.push({
+      attempt: 1,
+      status: null,
+      errorCode: error?.code === 'timeout' ? 'timeout' : 'network_error',
+      elapsedMs: Math.max(0, Date.now() - attemptStartedAtMs)
+    });
+    return {
+      ok: false,
+      status: null,
+      timestamp,
+      url,
+      contentLength: null,
+      lastModified: null,
+      diagnostics: sanitizeGdeltDiagnostics(buildDiagnostics({
+        endpointType: `web_${kind === 'toc' ? 'ngrams_toc_probe' : 'ngrams_probe'}`,
+        label,
+        attempts,
+        timeoutMs,
+        minIntervalMs,
+        maxRetries: 0,
+        retryAfterCapMs,
+        startedAtMs,
+        errorCode: error?.code === 'timeout' ? 'timeout' : 'network_error'
+      })),
+      error: String(error?.message || error).slice(0, 180)
+    };
+  }
+}
+
 export {
   DEFAULT_GDELT_MAX_RETRIES,
   DEFAULT_GDELT_MIN_INTERVAL_MS,
@@ -527,5 +642,6 @@ export {
   fetchGdeltCloudJson,
   fetchGdeltDocJson,
   fetchGdeltWebNgramsText,
+  probeGdeltWebNgramsFile,
   sanitizeGdeltDiagnostics
 };

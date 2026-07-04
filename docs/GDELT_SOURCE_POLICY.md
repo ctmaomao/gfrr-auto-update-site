@@ -143,6 +143,9 @@ P41, current phase:
 - Add `diagnose:gdelt-web-ngrams` as a manual Oil News source-review smoke
   test. It is dry-run/no-network by default and only downloads files with
   `--allow-network`.
+- P42 adds bounded latest-file discovery: the helper HEAD-probes recent
+  heartbeat-style candidate timestamps with `probeGdeltWebNgramsFile`, then
+  downloads only the first available `ngrams.txt.gz` file.
 - Keep Web NGrams output ignored under `manual-artifacts/`; do not write
   `data/*.json`, `realtime/*.json`, workflows, frontend fields, Oil News
   production artifacts, ODP `finalBias`, scoring, decision, execution,

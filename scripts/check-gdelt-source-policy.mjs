@@ -47,6 +47,7 @@ const REQUIRED_WRAPPER_PHRASES = [
   'fetchGdeltCloudJson',
   'fetchGdeltDocJson',
   'fetchGdeltWebNgramsText',
+  'probeGdeltWebNgramsFile',
   'GDELT_WEB_NGRAMS_BASE'
 ];
 
@@ -259,7 +260,16 @@ function checkSharedWrapperContract() {
     if (!oilNewsNgrams.includes("../gdelt/fetch-gdelt.mjs") && !oilNewsNgrams.includes('../gdelt/fetch-gdelt.mjs')) {
       fail(`${oilNewsNgramsPath} must import shared GDELT wrapper`);
     }
-    for (const phrase of ['DIAGNOSIS_VERSION', 'gdelt-web-ngrams-diagnosis-p41', 'manual_live_diagnosis', 'productionDisplayApproved: false', 'promotionEligible: false']) {
+    for (const phrase of [
+      'DIAGNOSIS_VERSION',
+      'gdelt-web-ngrams-diagnosis-p41',
+      'manual_live_diagnosis',
+      'buildHeartbeatDiscoveryTimestamps',
+      'probeFirstAvailableNgrams',
+      '--max-probes',
+      'productionDisplayApproved: false',
+      'promotionEligible: false'
+    ]) {
       if (!oilNewsNgrams.includes(phrase)) fail(`${oilNewsNgramsPath} missing Web NGrams diagnosis phrase: ${phrase}`);
     }
   }

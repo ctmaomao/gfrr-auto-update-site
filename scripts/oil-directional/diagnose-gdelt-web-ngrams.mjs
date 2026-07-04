@@ -2,15 +2,22 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
-import { fetchGdeltWebNgramsText, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
+import {
+  fetchGdeltWebNgramsText,
+  probeGdeltWebNgramsFile,
+  sanitizeGdeltDiagnostics
+} from '../gdelt/fetch-gdelt.mjs';
 
 const DIAGNOSIS_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json';
 const DEFAULT_SAFE_LAG_MINUTES = 5;
 const DEFAULT_CANDIDATE_SPACING_MINUTES = 5;
 const DEFAULT_MAX_CANDIDATES = 18;
+const DEFAULT_DISCOVERY_HOURS = 12;
+const DEFAULT_MAX_PROBES = 96;
 const DEFAULT_TIMEOUT_MS = 20000;
 const DEFAULT_MIN_INTERVAL_MS = 1500;
+const DEFAULT_PROBE_MIN_INTERVAL_MS = 250;
 const UA = 'gfrr-odp-oil-news-web-ngrams-diagnosis/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 const BOUNDARY =
   'manual ODP oil-news GDELT Web NGrams diagnosis only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
@@ -35,6 +42,9 @@ Options:
   --safe-lag-minutes <n>          Start from now minus n minutes. Default: ${DEFAULT_SAFE_LAG_MINUTES}
   --candidate-spacing-minutes <n> Candidate spacing while looking back. Default: ${DEFAULT_CANDIDATE_SPACING_MINUTES}
   --max-candidates <n>            Max recent files to try, 1..60. Default: ${DEFAULT_MAX_CANDIDATES}
+  --discovery-hours <n>           Bounded heartbeat discovery window, 1..168h. Default: ${DEFAULT_DISCOVERY_HOURS}
+  --max-probes <n>                Max HEAD probes for latest-file discovery, 1..1000. Default: ${DEFAULT_MAX_PROBES}
+  --no-probe                      Skip HEAD discovery and directly download timestamp/recent candidates.
   --timestamp <YYYYMMDDHHMMSS>    Try exactly one GDELT Web NGrams timestamp.
   --output <path>                 Ignored manual artifact path. Default: ${DEFAULT_OUTPUT}
   --no-output                     Do not write artifact.
@@ -49,6 +59,9 @@ function parseArgs(argv) {
     safeLagMinutes: DEFAULT_SAFE_LAG_MINUTES,
     candidateSpacingMinutes: DEFAULT_CANDIDATE_SPACING_MINUTES,
     maxCandidates: DEFAULT_MAX_CANDIDATES,
+    discoveryHours: DEFAULT_DISCOVERY_HOURS,
+    maxProbes: DEFAULT_MAX_PROBES,
+    probeBeforeDownload: true,
     timestamp: null,
     output: DEFAULT_OUTPUT,
     writeOutput: true,
@@ -74,6 +87,10 @@ function parseArgs(argv) {
       options.writeOutput = false;
       continue;
     }
+    if (arg === '--no-probe') {
+      options.probeBeforeDownload = false;
+      continue;
+    }
     if (arg === '--strict') {
       options.strict = true;
       continue;
@@ -94,6 +111,10 @@ function parseArgs(argv) {
       options.candidateSpacingMinutes = Number(nextValue());
     } else if (arg === '--max-candidates') {
       options.maxCandidates = Number(nextValue());
+    } else if (arg === '--discovery-hours') {
+      options.discoveryHours = Number(nextValue());
+    } else if (arg === '--max-probes') {
+      options.maxProbes = Number(nextValue());
     } else if (arg === '--timestamp') {
       options.timestamp = nextValue();
     } else if (arg === '--output') {
@@ -111,6 +132,12 @@ function parseArgs(argv) {
   }
   if (!Number.isInteger(options.maxCandidates) || options.maxCandidates < 1 || options.maxCandidates > 60) {
     throw new Error('Invalid --max-candidates. Expected integer 1..60.');
+  }
+  if (!Number.isInteger(options.discoveryHours) || options.discoveryHours < 1 || options.discoveryHours > 168) {
+    throw new Error('Invalid --discovery-hours. Expected integer 1..168.');
+  }
+  if (!Number.isInteger(options.maxProbes) || options.maxProbes < 1 || options.maxProbes > 1000) {
+    throw new Error('Invalid --max-probes. Expected integer 1..1000.');
   }
   if (options.timestamp && !/^\d{14}$/u.test(options.timestamp)) {
     throw new Error('Invalid --timestamp. Expected YYYYMMDDHHMMSS.');
@@ -144,6 +171,44 @@ function buildCandidateTimestamps(options, nowMs = Date.now()) {
     candidates.push(timestampFromDate(candidate));
   }
   return [...new Set(candidates)];
+}
+
+function floorToMinute(date) {
+  const floored = new Date(date);
+  floored.setUTCSeconds(0, 0);
+  return floored;
+}
+
+function buildHeartbeatDiscoveryTimestamps(options, nowMs = Date.now()) {
+  if (options.timestamp) return [options.timestamp];
+  const candidates = [];
+  const seen = new Set();
+  const pushCandidate = (date) => {
+    const timestamp = timestampFromDate(floorToMinute(date));
+    if (seen.has(timestamp)) return;
+    seen.add(timestamp);
+    candidates.push(timestamp);
+  };
+
+  for (const timestamp of buildCandidateTimestamps(options, nowMs)) {
+    if (candidates.length >= options.maxProbes) break;
+    seen.add(timestamp);
+    candidates.push(timestamp);
+  }
+
+  const baseMs = nowMs - options.safeLagMinutes * 60000;
+  const maxSlots = Math.ceil((options.discoveryHours * 60) / 15);
+  const heartbeatOffsets = [0, 1, 2, 3, 4, 5];
+  for (let slot = 0; slot <= maxSlots && candidates.length < options.maxProbes; slot += 1) {
+    const slotStart = new Date(baseMs - slot * 15 * 60000);
+    const heartbeatMinute = Math.floor(slotStart.getUTCMinutes() / 15) * 15;
+    slotStart.setUTCMinutes(heartbeatMinute, 0, 0);
+    for (const offset of heartbeatOffsets) {
+      if (candidates.length >= options.maxProbes) break;
+      pushCandidate(new Date(slotStart.getTime() + offset * 60000));
+    }
+  }
+  return candidates;
 }
 
 function safeRelativePath(path) {
@@ -251,9 +316,61 @@ function analyzeNgramsText(text) {
   };
 }
 
-async function fetchFirstAvailableNgrams(candidates) {
+async function probeFirstAvailableNgrams(candidates) {
   const attempts = [];
   for (const timestamp of candidates) {
+    const result = await probeGdeltWebNgramsFile({
+      timestamp,
+      kind: 'ngrams',
+      userAgent: UA,
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      minIntervalMs: DEFAULT_PROBE_MIN_INTERVAL_MS,
+      label: `GDELT Web NGrams probe ${timestamp}`
+    });
+    attempts.push({
+      timestamp,
+      status: result.ok ? 'ok' : 'missing',
+      httpStatus: result.status,
+      contentLength: result.contentLength,
+      lastModified: result.lastModified,
+      diagnostics: sanitizeGdeltDiagnostics(result.diagnostics),
+      error: result.error || null
+    });
+    if (result.ok) {
+      return {
+        found: true,
+        timestamp,
+        url: result.url,
+        contentLength: result.contentLength,
+        lastModified: result.lastModified,
+        attempts
+      };
+    }
+  }
+  return {
+    found: false,
+    timestamp: null,
+    url: null,
+    contentLength: null,
+    lastModified: null,
+    attempts
+  };
+}
+
+async function fetchFirstAvailableNgrams(candidates, options) {
+  const attempts = [];
+  let candidateSet = candidates;
+  let discovery = null;
+  if (options.probeBeforeDownload) {
+    discovery = await probeFirstAvailableNgrams(candidates);
+    attempts.push(...discovery.attempts.map((attempt) => ({
+      ...attempt,
+      method: 'HEAD'
+    })));
+    candidateSet = discovery.found ? [discovery.timestamp] : [];
+  }
+  for (const timestamp of candidates) {
+    if (!candidateSet.includes(timestamp)) continue;
     try {
       const result = await fetchGdeltWebNgramsText({
         timestamp,
@@ -265,13 +382,17 @@ async function fetchFirstAvailableNgrams(candidates) {
         label: `GDELT Web NGrams ${timestamp}`
       });
       attempts.push({
+        method: 'GET',
         timestamp,
         status: 'ok',
+        contentLength: discovery?.contentLength || null,
+        lastModified: discovery?.lastModified || null,
         diagnostics: sanitizeGdeltDiagnostics(result.diagnostics)
       });
-      return { ...result, timestamp, attempts };
+      return { ...result, timestamp, attempts, discovery };
     } catch (error) {
       attempts.push({
+        method: 'GET',
         timestamp,
         status: 'error',
         diagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
@@ -280,7 +401,7 @@ async function fetchFirstAvailableNgrams(candidates) {
       });
     }
   }
-  return { text: '', timestamp: null, url: null, diagnostics: null, attempts };
+  return { text: '', timestamp: null, url: null, diagnostics: null, attempts, discovery };
 }
 
 function buildDryRunArtifact(options, candidates) {
@@ -293,6 +414,7 @@ function buildDryRunArtifact(options, candidates) {
     source: 'GDELT Web NGrams v5 legacy ngrams files',
     input: {
       allowNetwork: false,
+      probeBeforeDownload: options.probeBeforeDownload,
       candidateTimestamps: candidates,
       terms: TERM_SET.map(({ id, labelZh, patterns, buckets }) => ({ id, labelZh, patterns, buckets }))
     },
@@ -304,7 +426,7 @@ function buildDryRunArtifact(options, candidates) {
 }
 
 async function buildLiveArtifact(options, candidates) {
-  const fetched = await fetchFirstAvailableNgrams(candidates);
+  const fetched = await fetchFirstAvailableNgrams(candidates, options);
   const summary = fetched.text ? analyzeNgramsText(fetched.text) : summarizeMatches([]);
   const status = fetched.timestamp
     ? summary.totalHitCount > 0 ? 'ok' : 'ok_no_oil_terms_observed'
@@ -318,6 +440,7 @@ async function buildLiveArtifact(options, candidates) {
     source: 'GDELT Web NGrams v5 legacy ngrams files',
     input: {
       allowNetwork: true,
+      probeBeforeDownload: options.probeBeforeDownload,
       candidateTimestamps: candidates,
       terms: TERM_SET.map(({ id, labelZh, patterns, buckets }) => ({ id, labelZh, patterns, buckets }))
     },
@@ -325,9 +448,35 @@ async function buildLiveArtifact(options, candidates) {
       ? {
           timestamp: fetched.timestamp,
           url: fetched.url,
+          contentLength: fetched.discovery?.contentLength || null,
+          lastModified: fetched.discovery?.lastModified || null,
           diagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics)
         }
       : null,
+    discovery: fetched.discovery
+      ? {
+          found: fetched.discovery.found,
+          selectedTimestamp: fetched.discovery.timestamp,
+          candidateCount: candidates.length,
+          attemptedCount: fetched.discovery.attempts.length,
+          contentLength: fetched.discovery.contentLength,
+          lastModified: fetched.discovery.lastModified,
+          failureCounts: fetched.discovery.attempts.reduce((counts, attempt) => {
+            if (attempt.status === 'ok') return counts;
+            const key = attempt.diagnostics?.errorCode || String(attempt.httpStatus || 'unknown');
+            counts[key] = (counts[key] || 0) + 1;
+            return counts;
+          }, {})
+        }
+      : {
+          found: Boolean(fetched.timestamp),
+          selectedTimestamp: fetched.timestamp,
+          candidateCount: candidates.length,
+          attemptedCount: fetched.attempts.length,
+          contentLength: null,
+          lastModified: null,
+          failureCounts: {}
+        },
     attempts: fetched.attempts,
     summary,
     productionImpact: productionImpactFalseMap(),
@@ -351,7 +500,9 @@ function writeJson(path, payload) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const candidates = buildCandidateTimestamps(options);
+  const candidates = options.probeBeforeDownload
+    ? buildHeartbeatDiscoveryTimestamps(options)
+    : buildCandidateTimestamps(options);
   const artifact = options.allowNetwork
     ? await buildLiveArtifact(options, candidates)
     : buildDryRunArtifact(options, candidates);
@@ -366,6 +517,9 @@ async function main() {
     console.log(`mode: ${artifact.mode}`);
     console.log(`selectedFile: ${artifact.selectedFile?.timestamp || 'none'}`);
     console.log(`attempts: ${artifact.attempts?.length || artifact.input.candidateTimestamps.length}`);
+    if (artifact.discovery) {
+      console.log(`discovery: found=${artifact.discovery.found} probes=${artifact.discovery.attemptedCount}/${artifact.discovery.candidateCount}`);
+    }
     console.log(`hits: ${artifact.summary?.totalHitCount ?? 0}`);
     console.log(`uniqueDocCount: ${artifact.summary?.uniqueDocCount ?? 0}`);
     if (artifact.outputPath) console.log(`outputPath: ${safeRelativePath(artifact.outputPath) || artifact.outputPath}`);

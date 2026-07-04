@@ -88,9 +88,12 @@ npm run diagnose:gdelt-web-ngrams -- --allow-network --no-output
 
 This helper downloads only recent GDELT Web NGrams `ngrams.txt.gz` candidate
 files through the shared wrapper, scans for Oil News term buckets, and writes
-only ignored manual artifacts when `--no-output` is not used. It does not read
-TOC titles/URLs, does not write production data, and does not enhance the
-current Oil News signal.
+only ignored manual artifacts when `--no-output` is not used. P42 adds bounded
+latest-file discovery: the helper HEAD-probes recent heartbeat-style timestamps
+before downloading, so wider manual searches can use `--discovery-hours` and
+`--max-probes` without downloading every missing candidate. It does not read TOC
+titles/URLs, does not write production data, and does not enhance the current Oil
+News signal.
 
 Default mode is dry-run/no-network:
 
