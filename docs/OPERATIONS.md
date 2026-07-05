@@ -720,6 +720,7 @@ npm run check:all
 - `Check workflow contract / check:workflows` 失败：检查 GitHub Actions workflow 是否误删关键保护项，例如 Realtime 每小时 6 次错峰调度、Daily 消费 origin/realtime-data、Daily / Decision / Transmission Summary、Pages 部署前检查链路、upload-pages-artifact / deploy-pages 步骤。
 - `Check documentation links / check:docs` 失败：检查 README.md、AGENTS.md 和 docs/*.md 中的本地 Markdown 链接是否指向不存在的文件；http / https / mailto / 纯锚点链接会跳过。
 - `Validate data contract / check:data` 失败：检查 `data/radar-data.json`、`realtime/market.json`、Brent validation、decision contract、transmission delta contract 等数据契约，并查看 `validate-data.mjs` 的输出信息。
+- `actions/deploy-pages` 返回 `Deployment failed, try again later`：若前置 `check:all` 和 `upload-pages-artifact` 已成功，通常是 GitHub Pages deployment 环境的短时拒绝，不代表站点构建错误。Pages workflow 会按 90 / 180 / 300 秒退避最多重试 3 次；若仍失败，再检查相邻 Pages runs 是否也失败，必要时手动 rerun failed jobs。
 
 `check:syntax` 会自动扫描 `scripts/` 下的 `.js` / `.mjs`；`check:modules` 会自动扫描 `scripts/modules/*.js`。
 

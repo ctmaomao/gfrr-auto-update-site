@@ -81,9 +81,13 @@ const contracts = [
       'upload-pages-artifact',
       'deploy-pages',
       'continue-on-error: true',
-      'Wait before Pages deploy retry',
-      'Retry deploy to GitHub Pages',
-      'steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url'
+      'Wait before Pages deploy retry 1',
+      'Wait before Pages deploy retry 2',
+      'Wait before Pages deploy retry 3',
+      'Retry deploy to GitHub Pages 1',
+      'Retry deploy to GitHub Pages 2',
+      'Retry deploy to GitHub Pages 3',
+      'steps.deployment.outputs.page_url || steps.deployment_retry_1.outputs.page_url || steps.deployment_retry_2.outputs.page_url || steps.deployment_retry_3.outputs.page_url'
     ]
   },
   {

@@ -46,7 +46,7 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry_1.outputs.page_url || steps.deployment_retry_2.outputs.page_url || steps.deployment_retry_3.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -75,13 +75,37 @@ jobs:
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Wait before Pages deploy retry
+      - name: Wait before Pages deploy retry 1
         if: steps.deployment.outcome == 'failure'
-        run: sleep 45
+        run: sleep 90
 
-      - name: Retry deploy to GitHub Pages
-        id: deployment_retry
+      - name: Retry deploy to GitHub Pages 1
+        id: deployment_retry_1
         if: steps.deployment.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Wait before Pages deploy retry 2
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry_1.outcome == 'failure'
+        run: sleep 180
+
+      - name: Retry deploy to GitHub Pages 2
+        id: deployment_retry_2
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry_1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Wait before Pages deploy retry 3
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry_1.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure'
+        run: sleep 300
+
+      - name: Retry deploy to GitHub Pages 3
+        id: deployment_retry_3
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry_1.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure'
         uses: actions/deploy-pages@v5
         with:
           artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
@@ -90,4 +114,6 @@ jobs:
         if: always()
         run: |
           echo "primary deploy outcome: ${{ steps.deployment.outcome }}"
-          echo "retry deploy outcome: ${{ steps.deployment_retry.outcome }}"
+          echo "retry 1 deploy outcome: ${{ steps.deployment_retry_1.outcome }}"
+          echo "retry 2 deploy outcome: ${{ steps.deployment_retry_2.outcome }}"
+          echo "retry 3 deploy outcome: ${{ steps.deployment_retry_3.outcome }}"
