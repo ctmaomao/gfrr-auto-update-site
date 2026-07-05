@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-05T04:42:26.070Z",
+  "generatedAt": "2026-07-05T09:28:12.959Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -21,7 +21,7 @@
     "details": {
       "gdelt_doc": {
         "status": "error",
-        "networkUsed": true,
+        "networkUsed": false,
         "successCount": 0,
         "failureCount": 1,
         "articleCount": 0,
@@ -29,7 +29,7 @@
           {
             "queryId": "gdelt_broad_oil_news",
             "label": "GDELT broad oil-news cache query",
-            "status": "error",
+            "status": "error_cooldown_cache_hit",
             "articleCount": 0,
             "error": "GDELT DOC broad oil-news cache HTTP 429 after 1 attempt(s)"
           }
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-04T10:33:09.000Z",
-    "latestArticleAgeHours": 18.2,
+    "latestArticleAgeHours": 22.9,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 43,
+      "articleCount": 46,
       "sourceCount": 2,
-      "weightedSignal": 258,
+      "weightedSignal": 276,
       "topArticles": [
         {
           "domain": "bloomberg.com",
@@ -218,10 +218,12 @@
           "buckets": [
             "chokepoint",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         }
       ]
@@ -232,6 +234,23 @@
       "sourceCount": 2,
       "weightedSignal": 64,
       "topArticles": [
+        {
+          "domain": "chicagotribune.com",
+          "publishedAt": "2026-07-02T12:42:15.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "middle_east_risk",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
+          ]
+        },
         {
           "domain": "latimes.com",
           "publishedAt": "2026-07-02T15:52:21.000Z",
@@ -257,20 +276,6 @@
           ],
           "buckets": [
             "chokepoint",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
-        },
-        {
-          "domain": "maritime-executive.com",
-          "publishedAt": "2026-07-02T15:59:57.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
             "sanctions",
             "tanker_shipping"
           ],
@@ -437,10 +442,12 @@
           "buckets": [
             "chokepoint",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         }
       ]
@@ -491,10 +498,12 @@
           "buckets": [
             "chokepoint",
             "middle_east_risk",
+            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         }
       ]
@@ -637,22 +646,6 @@
       ]
     },
     {
-      "domain": "www.wionews.com",
-      "publishedAt": "2026-06-29T03:27:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
       "domain": "tass.com",
       "publishedAt": "2026-07-04T08:50:59.000Z",
       "sources": [
@@ -682,6 +675,23 @@
       ],
       "queryIds": [
         "chokepoint_shipping"
+      ]
+    },
+    {
+      "domain": "chicagotribune.com",
+      "publishedAt": "2026-07-02T12:42:15.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping",
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -777,17 +787,17 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 3,
+      "risk_escalation": 2,
       "risk_deescalation": 1,
       "mixed_or_contested": 1,
-      "market_reaction_only": 3,
+      "market_reaction_only": 4,
       "unclear_or_high_claim": 4
     },
     "eventTypeCounts": {
-      "chokepoint": 10,
+      "chokepoint": 11,
       "shipping": 0,
       "sanctions": 0,
-      "facility": 2,
+      "facility": 1,
       "supply": 0,
       "market_reaction": 0,
       "general_energy": 0
@@ -807,7 +817,7 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 10,
+          "claimCount": 11,
           "riskEscalation": 1,
           "riskDeescalation": 1,
           "mixedOrContested": 1,
@@ -815,8 +825,8 @@
         },
         {
           "eventType": "facility",
-          "claimCount": 2,
-          "riskEscalation": 2,
+          "claimCount": 1,
+          "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
