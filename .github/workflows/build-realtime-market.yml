@@ -31,7 +31,20 @@ jobs:
           package-manager-cache: false
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm ci; then
+              exit 0
+            fi
+            status=$?
+            if [ "$attempt" -eq 3 ]; then
+              exit "$status"
+            fi
+            sleep_seconds=$((attempt * 20))
+            echo "npm ci failed with exit ${status}; retrying in ${sleep_seconds}s (attempt ${attempt}/3)."
+            sleep "$sleep_seconds"
+          done
 
       - name: Generate realtime market
         run: npm run build:realtime

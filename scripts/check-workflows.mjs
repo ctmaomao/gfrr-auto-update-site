@@ -15,6 +15,8 @@ const contracts = [
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
+      'for attempt in 1 2 3',
+      'npm ci',
       'Validate realtime payload',
       'npm run check:realtime-local-schema',
       'Summarize realtime output',
