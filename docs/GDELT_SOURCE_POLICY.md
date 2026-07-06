@@ -244,6 +244,21 @@ P48, current phase:
   scoring, ODP direction, decision, execution, position, Brent promotion,
   Global Risk Heatmap, or cross-validation.
 
+P49, current phase:
+
+- Add `gdelt-web-ngrams-fallback-gate-review-p49` as the formal sample-gate
+  review after the collector accumulated enough sanitized Web NGrams samples.
+- The reviewed artifact passed the P46 gate: at least 8 usable samples, at
+  least 24 hours of observation, at least 2 selected timestamps, no blockers,
+  required bucket coverage, and no raw title/URL/body/raw-response exposure.
+- P49 status is
+  `sample_gate_passed_ready_for_display_only_fallback_projection_no_production_write`.
+  It allows only the next dry-run projection step
+  `p50_display_only_fallback_projection_dry_run_no_production_write`.
+- P49 keeps production writes, frontend display, workflow wiring, current Oil
+  News signal enhancement, scoring, ODP direction, decision, execution,
+  position, Brent promotion, Global Risk Heatmap, and cross-validation disabled.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -260,6 +275,7 @@ npm run check:gdelt-web-ngrams-samples-review
 npm run check:gdelt-web-ngrams-fallback-source-review
 npm run check:gdelt-web-ngrams-production-display-fallback-contract
 npm run check:gdelt-web-ngrams-sample-collector-workflow
+npm run check:gdelt-web-ngrams-fallback-gate-review
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

@@ -1,0 +1,199 @@
+{
+  "contractVersion": "gdelt-web-ngrams-fallback-gate-review-p49",
+  "kind": "gdelt_web_ngrams_fallback_gate_review",
+  "status": "sample_gate_passed_ready_for_display_only_fallback_projection_no_production_write",
+  "reviewedAt": "2026-07-05T16:05:10.721Z",
+  "dependsOn": {
+    "sourceReviewContract": "gdelt-web-ngrams-fallback-source-review-p45",
+    "productionDisplayFallbackContract": "gdelt-web-ngrams-production-display-fallback-contract-p46",
+    "sampleCollectorWorkflow": "GDELT Web NGrams Sample Collector",
+    "sampleReviewContract": "gdelt-web-ngrams-samples-review-p43",
+    "artifactSanitizerContract": "gdelt-web-ngrams-artifact-sanitizer-p48"
+  },
+  "evidenceSnapshot": {
+    "collectorRunId": 28743580007,
+    "sampleReviewGeneratedAt": "2026-07-05T14:12:50.518Z",
+    "sampleReviewStatus": "warn",
+    "sampleReviewRecommendation": "continue_manual_sampling_before_display_only_fallback",
+    "warningTreatment": "one_source_unavailable_sample_is_not_blocking_because_usable_sample_gate_passed",
+    "rawExposureScan": "no_raw_exposure_markers"
+  },
+  "sampleWindow": {
+    "sampleCount": 10,
+    "usableSampleCount": 9,
+    "liveHitSampleCount": 9,
+    "sourceUnavailableCount": 1,
+    "selectedTimestampCount": 9,
+    "firstSelectedTimestamp": "20260704094600",
+    "latestSelectedTimestamp": "20260705140200",
+    "observationWindowHours": 28.27,
+    "blockerCount": 0,
+    "warningCount": 1
+  },
+  "gateCriteria": {
+    "minimumUsableSamples": {
+      "required": 8,
+      "observed": 9,
+      "passed": true
+    },
+    "minimumObservationWindowHours": {
+      "required": 24,
+      "observed": 28.27,
+      "passed": true
+    },
+    "minimumSelectedTimestamps": {
+      "required": 2,
+      "observed": 9,
+      "passed": true
+    },
+    "noBlockers": {
+      "observed": 0,
+      "passed": true
+    },
+    "noRawExposure": {
+      "passed": true
+    },
+    "requiredBuckets": {
+      "required": [
+        "chokepoint",
+        "tanker_shipping",
+        "market_reaction"
+      ],
+      "passed": true
+    },
+    "requiresOneOfBuckets": {
+      "requiredOneOf": [
+        "sanctions",
+        "supply_disruption",
+        "facility_event"
+      ],
+      "observed": [
+        "sanctions",
+        "supply_disruption"
+      ],
+      "passed": true
+    }
+  },
+  "bucketCoverage": {
+    "chokepoint": {
+      "sampleHitCount": 9,
+      "totalCount": 1406
+    },
+    "tanker_shipping": {
+      "sampleHitCount": 9,
+      "totalCount": 393
+    },
+    "market_reaction": {
+      "sampleHitCount": 9,
+      "totalCount": 277
+    },
+    "sanctions": {
+      "sampleHitCount": 4,
+      "totalCount": 33
+    },
+    "supply_disruption": {
+      "sampleHitCount": 2,
+      "totalCount": 9
+    },
+    "facility_event": {
+      "sampleHitCount": 0,
+      "totalCount": 0
+    }
+  },
+  "termCoverage": [
+    {
+      "termId": "hormuz",
+      "samplesWithHits": 9,
+      "totalMentionCount": 1331,
+      "buckets": [
+        "chokepoint",
+        "middle_east_risk"
+      ]
+    },
+    {
+      "termId": "tanker",
+      "samplesWithHits": 9,
+      "totalMentionCount": 285,
+      "buckets": [
+        "tanker_shipping"
+      ]
+    },
+    {
+      "termId": "crude_oil",
+      "samplesWithHits": 9,
+      "totalMentionCount": 277,
+      "buckets": [
+        "market_reaction"
+      ]
+    },
+    {
+      "termId": "red_sea",
+      "samplesWithHits": 6,
+      "totalMentionCount": 75,
+      "buckets": [
+        "chokepoint",
+        "tanker_shipping"
+      ]
+    },
+    {
+      "termId": "sanctions",
+      "samplesWithHits": 4,
+      "totalMentionCount": 33,
+      "buckets": [
+        "sanctions",
+        "tanker_shipping"
+      ]
+    },
+    {
+      "termId": "supply_disruption",
+      "samplesWithHits": 2,
+      "totalMentionCount": 9,
+      "buckets": [
+        "supply_disruption"
+      ]
+    }
+  ],
+  "approvalState": {
+    "sampleGatePassed": true,
+    "readyForDisplayOnlyFallbackProjection": true,
+    "productionWriteApproved": false,
+    "frontendApproved": false,
+    "workflowApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "scoreApproved": false
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "addsWorkflow": false,
+    "changesFrontend": false,
+    "changesOilNewsCurrentSignal": false,
+    "changesOdpBuild": false,
+    "changesFinalBias": false,
+    "changesValues": false,
+    "changesScoring": false,
+    "changesDecision": false,
+    "changesExecution": false,
+    "changesPosition": false,
+    "changesBrentPromotion": false,
+    "changesGlobalRiskHeatmap": false,
+    "changesCrossValidation": false
+  },
+  "forbiddenInterpretation": [
+    "event_confirmation",
+    "article_headline_source",
+    "tanker_flow_confirmation",
+    "supply_cut_confirmation",
+    "facility_incident_confirmation",
+    "oil_price_direction",
+    "score_input"
+  ],
+  "futureFieldState": {
+    "fieldPath": "sourceCaches.gdeltWebNgramsFallback",
+    "presentInProductionData": false,
+    "displayModeCandidate": "aggregate_source_health_only_no_headlines",
+    "projectionDryRunAllowed": true,
+    "productionWriterAllowed": false
+  },
+  "nextAllowedStep": "p50_display_only_fallback_projection_dry_run_no_production_write",
+  "boundary": "P49 approves only the Web NGrams sample gate for a later display-only fallback projection dry run. It does not approve production data writes, frontend display, workflow wiring, current Oil News signal enhancement, ODP scoring, or oil direction changes."
+}

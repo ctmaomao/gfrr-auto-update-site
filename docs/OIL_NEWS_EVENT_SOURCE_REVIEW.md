@@ -225,6 +225,26 @@ P48 is still artifact-only; it does not write production data, does not approve
 `sourceCaches.gdeltWebNgramsFallback`, and does not enhance current Oil News,
 frontend, ODP direction/scoring, Brent promotion, or cross-validation.
 
+P49 adds the formal fallback gate review:
+
+```text
+docs/GDELT_WEB_NGRAMS_FALLBACK_GATE_REVIEW.md
+docs/fixtures/oil-news/gdelt-web-ngrams-fallback-gate-review-p49.json
+npm run check:gdelt-web-ngrams-fallback-gate-review
+```
+
+Contract version is `gdelt-web-ngrams-fallback-gate-review-p49`; status is
+`sample_gate_passed_ready_for_display_only_fallback_projection_no_production_write`.
+The reviewed collector artifact had 9 usable samples, 9 selected timestamps,
+28.27 hours of observation, no blockers, and no raw title/URL/body/raw-response
+exposure. P49 only approves the sample gate for the next display-only fallback
+projection dry run
+(`p50_display_only_fallback_projection_dry_run_no_production_write`). It keeps
+`productionWriteApproved=false`, `frontendApproved=false`,
+`workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+`scoreApproved=false`; it does not write production JSON, wire frontend/workflow,
+enhance current Oil News, or affect ODP direction/scoring.
+
 Default mode is dry-run/no-network:
 
 ```powershell
