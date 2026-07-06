@@ -300,6 +300,30 @@ P51, current phase:
 - The next allowed step is
   `p52_display_only_fallback_writer_contract_design_no_production_write`.
 
+P52, current phase:
+
+- Add `gdelt-web-ngrams-display-fallback-writer-contract-design-p52` as a
+  contract-design-only step for a possible future
+  `sourceCaches.gdeltWebNgramsFallback` compact display cache.
+- P52 status is
+  `display_only_fallback_writer_contract_design_no_production_write`; it only
+  defines the future `gdelt-web-ngrams-display-fallback-cache-v1` field shape.
+- The future display mode remains
+  `aggregate_source_health_only_no_headlines`: source-health, sample gate, and
+  aggregate phrase-heat metadata only, with no titles, URLs, snippets, bodies,
+  raw rows, raw responses, secrets, request headers, event confirmation, or oil
+  direction input.
+- P52 keeps `productionWriteApproved=false`,
+  `writerImplementationApproved=false`, `frontendImplementationApproved=false`,
+  `workflowAutomationApproved=false`, `liveFetchApproved=false`,
+  `apiKeyReadApproved=false`, `currentSignalEnhancementApproved=false`, and
+  `scoreApproved=false`. It does not create a writer, write production data,
+  add frontend or workflow wiring, or affect current Oil News signal, ODP
+  direction, scoring, decision, execution, position, Brent promotion, Global
+  Risk Heatmap, or cross-validation.
+- The next allowed step is
+  `p53_display_only_fallback_disabled_writer_scaffold_no_production_write`.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -319,6 +343,7 @@ npm run check:gdelt-web-ngrams-sample-collector-workflow
 npm run check:gdelt-web-ngrams-fallback-gate-review
 npm run check:gdelt-web-ngrams-display-fallback-projection
 npm run check:gdelt-web-ngrams-display-fallback-projection-review
+npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

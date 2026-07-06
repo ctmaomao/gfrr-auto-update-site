@@ -1,0 +1,180 @@
+{
+  "contractVersion": "gdelt-web-ngrams-display-fallback-writer-contract-design-p52",
+  "kind": "gdelt_web_ngrams_display_fallback_writer_contract_design",
+  "status": "display_only_fallback_writer_contract_design_no_production_write",
+  "generatedAt": "2026-07-06T00:00:00.000Z",
+  "purpose": "Design the future display-only writer contract for GDELT Web NGrams fallback cache without writing production data.",
+  "futureProductionField": {
+    "targetArtifact": "data/oil-news-event-watch.json",
+    "fieldPath": "sourceCaches.gdeltWebNgramsFallback",
+    "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
+    "presentInProductionData": false,
+    "displayMode": "aggregate_source_health_only_no_headlines",
+    "fallbackContextOnly": true,
+    "currentSignalEnhancement": false,
+    "eventConfirmationSource": false,
+    "headlineSource": false,
+    "oilDirectionInput": false,
+    "eligibleForScoring": false
+  },
+  "currentProductionState": {
+    "sourceCachesGdeltWebNgramsFallback": "absent",
+    "oilNewsCurrentSignalEnhancedByWebNgrams": false,
+    "frontendDisplayConnected": false,
+    "eligibleForScoring": false,
+    "productionWriteApproved": false
+  },
+  "requiredPreWriteInputs": [
+    "gdelt-web-ngrams-production-display-fallback-contract-p46",
+    "gdelt-web-ngrams-fallback-gate-review-p49",
+    "gdelt-web-ngrams-display-fallback-projection-p50",
+    "gdelt-web-ngrams-display-fallback-projection-review-p51"
+  ],
+  "futureFieldShape": {
+    "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
+    "defaultStatus": "not_connected",
+    "allowedStatuses": [
+      "not_connected",
+      "sample_gate_passed_projection_only",
+      "stale",
+      "unavailable",
+      "contradicted"
+    ],
+    "sourceKey": "gdelt_web_ngrams_v5_legacy",
+    "displayMode": "aggregate_source_health_only_no_headlines",
+    "fallbackContextOnly": true,
+    "currentSignalEnhancement": false,
+    "eventConfirmationSource": false,
+    "headlineSource": false,
+    "oilDirectionInput": false,
+    "eligibleForScoring": false,
+    "staleAfterHours": 72,
+    "sampleGate": {
+      "requiredState": "passed",
+      "minimumUsableSampleCount": 8,
+      "minimumSelectedTimestampCount": 2,
+      "minimumObservationWindowHours": 24,
+      "requiredBuckets": [
+        "chokepoint",
+        "tanker_shipping",
+        "market_reaction"
+      ],
+      "requiresOneOfBuckets": [
+        "sanctions",
+        "supply_disruption",
+        "facility_event"
+      ],
+      "requiresNoBlockers": true,
+      "requiresNoRawTitleUrlBodyOrResponseExposure": true
+    },
+    "sourceHealth": {
+      "allowedStates": [
+        "not_connected",
+        "fallback_sample_gate_passed",
+        "stale",
+        "unavailable",
+        "contradicted"
+      ],
+      "usedForCurrentSignal": false,
+      "gdeltDocReliefRole": "background_fallback_when_doc_api_rate_limited"
+    },
+    "aggregate": {
+      "allowedFields": [
+        "bucketCounts",
+        "termCounts",
+        "selectedTimestampCount",
+        "usableSampleCount",
+        "observationWindowHours",
+        "latestSelectedTimestamp"
+      ],
+      "forbiddenFields": [
+        "article_title",
+        "article_url",
+        "snippet",
+        "body",
+        "raw_ngram_rows",
+        "raw_provider_response",
+        "request_header",
+        "secret",
+        "api_key"
+      ]
+    },
+    "limitationZh": "GDELT Web NGrams 仅作为下载型叙事热度背景缓存候选,不确认具体事件、航运流向、设施事故、制裁影响或油价方向。"
+  },
+  "approvalState": {
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "writerImplementationApproved": false,
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "liveFetchApproved": false,
+    "apiKeyReadApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "scoreApproved": false,
+    "mainScoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "addsWriter": false,
+    "addsWorkflow": false,
+    "changesFrontend": false,
+    "changesOilNewsCurrentSignal": false,
+    "changesOdpBuild": false,
+    "changesFinalBias": false,
+    "changesValues": false,
+    "changesScoring": false,
+    "changesDecision": false,
+    "changesExecution": false,
+    "changesPosition": false,
+    "changesBrentPromotion": false,
+    "changesGlobalRiskHeatmap": false,
+    "changesCrossValidation": false
+  },
+  "boundaries": {
+    "contractDesignOnly": true,
+    "noWriter": true,
+    "noProductionDataWrite": true,
+    "noRealtimeWrite": true,
+    "noFrontendImplementation": true,
+    "noWorkflowAutomation": true,
+    "noLiveFetch": true,
+    "noApiKeyRead": true,
+    "noManualArtifactBrowserRead": true,
+    "noRawProviderResponseStored": true,
+    "noRawTitleOrUrl": true,
+    "noCurrentSignalEnhancement": true,
+    "noScoring": true,
+    "noDecisionModel": true,
+    "noExecutionLock": true,
+    "noPositionGuidance": true,
+    "noBrentPromotion": true,
+    "noOdpFinalBias": true,
+    "noGlobalRiskHeatmap": true,
+    "noCrossValidation": true
+  },
+  "forbiddenContent": [
+    "article_title",
+    "article_url",
+    "snippet",
+    "body",
+    "raw_ngram_rows",
+    "raw_provider_response",
+    "secret",
+    "request_header",
+    "api_key"
+  ],
+  "forbiddenInterpretation": [
+    "hormuz_closure_confirmation",
+    "tanker_flow_confirmation",
+    "facility_accident_confirmation",
+    "sanctions_impact_confirmation",
+    "oil_price_direction",
+    "score_input"
+  ],
+  "nextAllowedStep": "p53_display_only_fallback_disabled_writer_scaffold_no_production_write",
+  "boundary": "contract design only; no writer; no production data write; not in current Oil News signal, values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

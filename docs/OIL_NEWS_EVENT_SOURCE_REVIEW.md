@@ -300,6 +300,33 @@ keeps `productionWriteApproved=false`, `frontendApproved=false`,
 enhance current Oil News, or affect ODP direction/scoring. The next allowed step
 is `p52_display_only_fallback_writer_contract_design_no_production_write`.
 
+P52 adds the display fallback writer contract design:
+
+```text
+docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_WRITER_CONTRACT_DESIGN.md
+docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-writer-contract-design-p52.json
+npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design
+```
+
+Contract version is
+`gdelt-web-ngrams-display-fallback-writer-contract-design-p52`; status is
+`display_only_fallback_writer_contract_design_no_production_write`. It only
+defines the future compact field shape for:
+
+```text
+sourceCaches.gdeltWebNgramsFallback
+```
+
+The future display mode remains `aggregate_source_health_only_no_headlines`, and
+the future cache contract is `gdelt-web-ngrams-display-fallback-cache-v1`. P52
+keeps `productionWriteApproved=false`, `writerImplementationApproved=false`,
+`frontendImplementationApproved=false`, `workflowAutomationApproved=false`,
+`liveFetchApproved=false`, `apiKeyReadApproved=false`,
+`currentSignalEnhancementApproved=false`, and `scoreApproved=false`; it does
+not create a writer, write production JSON, wire frontend/workflow, enhance
+current Oil News, or affect ODP direction/scoring. The next allowed step is
+`p53_display_only_fallback_disabled_writer_scaffold_no_production_write`.
+
 Default mode is dry-run/no-network:
 
 ```powershell
