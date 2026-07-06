@@ -2480,32 +2480,74 @@ async function fetchCapexReactionFromPublicProxy() {
       t4qYoyPct: saT4qYoy(capex)?.yoyPct
     });
   }
-  const [qqqCloses, spyCloses] = await Promise.all([yahooCloses('QQQ', '6mo'), yahooCloses('SPY', '6mo')]);
-  const qqq21 = returnPctOverDays(qqqCloses, 21);
-  const spy21 = returnPctOverDays(spyCloses, 21);
+  const windows = [21, 63, 126];
+  const [qqqCloses, spyCloses] = await Promise.all([yahooCloses('QQQ', '1y'), yahooCloses('SPY', '1y')]);
+  const benchmarkWindows = Object.fromEntries(windows.map((days) => [
+    `${days}d`,
+    {
+      qqq: returnPctOverDays(qqqCloses, days),
+      spy: returnPctOverDays(spyCloses, days)
+    }
+  ]));
   const reactionRows = [];
   for (const ticker of companies) {
-    const closes = await yahooCloses(ticker, '6mo');
-    const ret21 = returnPctOverDays(closes, 21);
-    const ret63 = returnPctOverDays(closes, 63);
+    const closes = await yahooCloses(ticker, '1y');
+    const windowReturns = Object.fromEntries(windows.map((days) => {
+      const ret = returnPctOverDays(closes, days);
+      const benchmark = benchmarkWindows[`${days}d`];
+      return [
+        `${days}d`,
+        {
+          ret,
+          excessVsQqq: ret - benchmark.qqq,
+          excessVsSpy: ret - benchmark.spy
+        }
+      ];
+    }));
     reactionRows.push({
       ticker,
-      ret21,
-      ret63,
-      excess21VsQqq: ret21 - qqq21,
-      excess21VsSpy: ret21 - spy21
+      windowReturns
     });
   }
   const avgCapexYoy = capexRows.reduce((sum, row) => sum + row.t4qYoyPct, 0) / capexRows.length;
-  const avgExcessQqq = reactionRows.reduce((sum, row) => sum + row.excess21VsQqq, 0) / reactionRows.length;
-  const avgExcessSpy = reactionRows.reduce((sum, row) => sum + row.excess21VsSpy, 0) / reactionRows.length;
-  const punishedCount = reactionRows.filter((row) => row.excess21VsQqq <= -5).length;
+  const windowEvidence = windows.map((days) => {
+    const key = `${days}d`;
+    const avgExcessQqq = reactionRows.reduce((sum, row) => sum + row.windowReturns[key].excessVsQqq, 0) / reactionRows.length;
+    const avgExcessSpy = reactionRows.reduce((sum, row) => sum + row.windowReturns[key].excessVsSpy, 0) / reactionRows.length;
+    const punishedCount = reactionRows.filter((row) => row.windowReturns[key].excessVsQqq <= -5).length;
+    const severePunishedCount = reactionRows.filter((row) => row.windowReturns[key].excessVsQqq <= -8).length;
+    const marketPenalty = avgExcessQqq <= -5 || punishedCount >= 2;
+    const systemicPenalty = avgExcessQqq <= -8 && punishedCount >= 3;
+    return {
+      days,
+      avgExcessQqq,
+      avgExcessSpy,
+      punishedCount,
+      severePunishedCount,
+      marketPenalty,
+      systemicPenalty
+    };
+  });
+  const shortWindow = windowEvidence.find((row) => row.days === 21);
+  const mediumWindow = windowEvidence.find((row) => row.days === 63);
+  const longWindow = windowEvidence.find((row) => row.days === 126);
+  const penaltyWindowCount = windowEvidence.filter((row) => row.marketPenalty).length;
+  const systemicWindowCount = windowEvidence.filter((row) => row.systemicPenalty).length;
+  const multiWindowPenalty = penaltyWindowCount >= 2;
+  const capexStillAccelerating = avgCapexYoy >= 15;
   let status = 'green';
   let display = '奖励';
-  if (avgExcessQqq <= -8 && punishedCount >= 3) {
+  if (capexStillAccelerating && systemicWindowCount >= 2) {
     status = 'red';
     display = '系统性惩罚';
-  } else if (avgExcessQqq <= -3 || punishedCount >= 1) {
+  } else if (
+    capexStillAccelerating
+    && (
+      multiWindowPenalty
+      || (mediumWindow.avgExcessQqq <= -5 && mediumWindow.punishedCount >= 2)
+      || (longWindow.avgExcessQqq <= -5 && longWindow.punishedCount >= 2)
+    )
+  ) {
     status = 'yellow';
     display = '选择性惩罚';
   }
@@ -2513,21 +2555,44 @@ async function fetchCapexReactionFromPublicProxy() {
     status,
     value_display: display,
     source_name: 'StockAnalysis capex + Yahoo relative-return proxy',
-    note: `StockAnalysis 季度现金流解析 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 ${fmtPct(avgCapexYoy, 1, true)};Yahoo 近 21 交易日相对 QQQ 平均 ${fmtPct(avgExcessQqq, 1, true)}、相对 SPY ${fmtPct(avgExcessSpy, 1, true)},${punishedCount}/4 家跑输 QQQ 超 5pct。该项是 capex-heavy equity reaction proxy,不是逐字财报指引文本。判级:系统性惩罚=红 / 偶发或选择性=黄 / 奖励=绿`,
+    note: `StockAnalysis 季度现金流解析 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 ${fmtPct(avgCapexYoy, 1, true)};Yahoo 多窗口相对 QQQ:21日 ${fmtPct(shortWindow.avgExcessQqq, 1, true)}(${shortWindow.punishedCount}/4 跑输>5pct)、63日 ${fmtPct(mediumWindow.avgExcessQqq, 1, true)}(${mediumWindow.punishedCount}/4)、126日 ${fmtPct(longWindow.avgExcessQqq, 1, true)}(${longWindow.punishedCount}/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿`,
     detail: {
       source: 'StockAnalysis quarterly cash-flow + Yahoo Chart',
-      benchmark: { qqq21, spy21 },
+      benchmarkWindows: Object.fromEntries(Object.entries(benchmarkWindows).map(([key, value]) => [
+        key,
+        {
+          qqq: Number(value.qqq.toFixed(1)),
+          spy: Number(value.spy.toFixed(1))
+        }
+      ])),
       avgCapexYoy,
-      avgExcessQqq,
-      avgExcessSpy,
-      punishedCount,
+      avgExcessQqq: mediumWindow.avgExcessQqq,
+      avgExcessSpy: mediumWindow.avgExcessSpy,
+      punishedCount: mediumWindow.punishedCount,
+      penaltyWindowCount,
+      systemicWindowCount,
+      capexStillAccelerating,
+      windowEvidence: windowEvidence.map((row) => ({
+        days: row.days,
+        avgExcessQqq: Number(row.avgExcessQqq.toFixed(1)),
+        avgExcessSpy: Number(row.avgExcessSpy.toFixed(1)),
+        punishedCount: row.punishedCount,
+        severePunishedCount: row.severePunishedCount,
+        marketPenalty: row.marketPenalty,
+        systemicPenalty: row.systemicPenalty
+      })),
+      formulaVersion: 'capex_reaction_multi_window_v1',
       capexRows: capexRows.map((row) => ({ ...row, latestCapexB: Number(row.latestCapexB.toFixed(1)), latestYoyPct: Number(row.latestYoyPct.toFixed(1)), t4qYoyPct: Number(row.t4qYoyPct.toFixed(1)) })),
       reactionRows: reactionRows.map((row) => ({
         ticker: row.ticker,
-        ret21: Number(row.ret21.toFixed(1)),
-        ret63: Number(row.ret63.toFixed(1)),
-        excess21VsQqq: Number(row.excess21VsQqq.toFixed(1)),
-        excess21VsSpy: Number(row.excess21VsSpy.toFixed(1))
+        windowReturns: Object.fromEntries(Object.entries(row.windowReturns).map(([key, value]) => [
+          key,
+          {
+            ret: Number(value.ret.toFixed(1)),
+            excessVsQqq: Number(value.excessVsQqq.toFixed(1)),
+            excessVsSpy: Number(value.excessVsSpy.toFixed(1))
+          }
+        ]))
       }))
     }
   };
@@ -4002,12 +4067,10 @@ function hasStrongProxyConfirmation(id, result, entry) {
     case 'capex_reaction':
       return (
         Number(detail.directGuidancePenaltyCount) >= 2
-        && Number(detail.punishedCount) >= 3
-        && Number(detail.avgExcessQqq) <= -8
+        && Number(detail.systemicWindowCount) >= 2
       ) || (
         Boolean(capexResearchConfirmationAnchor(entry))
-        && Number(detail.punishedCount) >= 3
-        && Number(detail.avgExcessQqq) <= -8
+        && Number(detail.systemicWindowCount) >= 2
       );
     case 'ceo_hedging':
       return Number(detail.executiveHitCount) >= 6 && Number(detail.uniqueExecutiveCount) >= 4;
@@ -4024,7 +4087,7 @@ function proxyConfidenceRuleText(id) {
   return {
     insider_sell_buy: '内部人卖买比需要独立 Form-4/SEC 聚合确认;单一 OpenInsider 买入近零导致的极端 ratio 最多按黄灯发布。',
     ai_ipo_pipeline: 'AI IPO 洪流需要接近模板口径的具体发行/待发公司数确认;单一 Crunchbase 新闻检索命中不足以升红。',
-    capex_reaction: '系统性 capex 惩罚需要价格代理叠加直接 earnings-call/指引惩罚证据,或新鲜上游研究周报确认的系统性重定价证据;缺少研究/直接确认时单一相对收益窗口最多按黄灯发布。',
+    capex_reaction: '系统性 capex 惩罚需要多窗口价格代理叠加直接 earnings-call/指引惩罚证据,或新鲜上游研究周报确认的系统性重定价证据;缺少研究/直接确认时短期相对收益噪音不得升红。',
     ceo_hedging: 'CEO 普遍承认过热需要更多唯一高管与多篇直接表态确认;单一新闻搜索频率不足以升红。',
     token_revenue_ratio: 'OpenRouter token×catalog spend 只是平台代理;覆盖率和 ratio 未显著越线时不得把近 1x 噪声自动升黄。',
     enterprise_deploy: 'Google AI-agent production survey 是窄口径代理;未有第二调查源确认低部署率时不得把单一窄口径样本自动降档。'

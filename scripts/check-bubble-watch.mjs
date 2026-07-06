@@ -257,13 +257,14 @@ check('contract', buildSrc.includes('fetchBarchartS5fiBreadth') && buildSrc.incl
   'breadth_50d 必须优先尝试 Barchart $S5FI 直接广度源');
 check('contract', buildSrc.includes('capexResearchConfirmationAnchor') && buildSrc.includes('capex_market_repricing_research_confirmation_v1'),
   'capex_reaction 必须允许新鲜上游研究周报确认系统性重定价证据');
+check('contract', buildSrc.includes('capex_reaction_multi_window_v1') && buildSrc.includes('windowEvidence') && buildSrc.includes('systemicWindowCount'),
+  'capex_reaction 必须使用多窗口价格反应公式,避免单一 21 日相对收益噪音');
 const capexReaction = indicatorById.capex_reaction;
 const capexResearchConfirmation = capexReaction?.provenance?.detail?.upstreamResearchConfirmation;
 if (capexResearchConfirmation?.confirmationPolicy === 'capex_market_repricing_research_confirmation_v1'
-  && Number(capexReaction?.provenance?.detail?.avgExcessQqq) <= -8
-  && Number(capexReaction?.provenance?.detail?.punishedCount) >= 3) {
+  && Number(capexReaction?.provenance?.detail?.systemicWindowCount) >= 2) {
   check('contract', capexReaction.status === 'red' && capexReaction.value_display === '系统性惩罚',
-    'capex_reaction 本地价格代理红灯且上游研究确认时不得降档为黄灯');
+    'capex_reaction 本地多窗口价格代理红灯且上游研究确认时不得降档为黄灯');
 }
 check('contract', buildSrc.includes('fetchSecAiIpoFilingConfirmations') && buildSrc.includes('SEC EDGAR S-1/F-1 confirmation'),
   'ai_ipo_pipeline 必须保留 SEC S-1/F-1 官方申报确认路径');
