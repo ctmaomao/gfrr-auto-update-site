@@ -17,6 +17,7 @@ import {
   getAnalystSourceLayersForInput,
   isAllowedExternalAiSourceLayer,
   LEGACY_EXTERNAL_AI_SOURCE_LAYERS,
+  matchAnalystSourceLayerAliasPrefix,
 } from './external-ai/source-layers.mjs';
 import {
   ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
@@ -171,6 +172,9 @@ function matchAnalystSourceLayerPrefix(reference) {
   ) {
     return { sourceLayer: macroMatch[1], rest: macroMatch[2] || '', matched: macroMatch[1] };
   }
+
+  const analystAliasMatch = matchAnalystSourceLayerAliasPrefix(value);
+  if (analystAliasMatch) return analystAliasMatch;
 
   for (const layer of [...ANALYST_EXTERNAL_AI_SOURCE_LAYER_FLOOR].sort((a, b) => b.length - a.length)) {
     if (value.startsWith(layer) && hasSourceLayerBoundary(value, layer)) {

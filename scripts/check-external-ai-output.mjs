@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { BANNED_COPY, UNSAFE_CLAIMS } from './external-ai/safety-constants.mjs';
-import { isAllowedExternalAiSourceLayer } from './external-ai/source-layers.mjs';
+import {
+  isAllowedExternalAiSourceLayer,
+  normalizeAnalystSourceLayerReference,
+} from './external-ai/source-layers.mjs';
 import {
   ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
   validateAnalystPr4StructuredFields,
@@ -317,7 +320,10 @@ function validateSourceAttribution(data, sourceAttribution, errors, warnings) {
       addError(errors, `sourceAttribution[${index}].usesExternalMarketData must not be true in v28.0K-2`);
     }
     if (isPlainObject(item) && typeof item.sourceLayer === 'string') {
-      if (!isAllowedExternalAiSourceLayer(item.sourceLayer, { analyst: analystCompact })) {
+      const sourceLayer = analystCompact
+        ? normalizeAnalystSourceLayerReference(item.sourceLayer)
+        : item.sourceLayer;
+      if (!isAllowedExternalAiSourceLayer(sourceLayer, { analyst: analystCompact })) {
         addError(errors, `sourceAttribution[${index}].sourceLayer is not allowed for this input: ${item.sourceLayer}`);
       }
     }
@@ -409,6 +415,20 @@ function runSelfTests() {
   );
   if (analystSourceLayerErrors.length > 0) {
     throw new Error(`self-test failed: expected analyst sourceLayer pass, got ${analystSourceLayerErrors.join('; ')}`);
+  }
+
+  const analystEnergyAliasErrors = [];
+  validateSourceAttribution(
+    { auditFlags: ['analyst_compact_v1'] },
+    [
+      { sourceLayer: 'energyInventoryBalance', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+      { sourceLayer: 'energySpareCapacity', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+    ],
+    analystEnergyAliasErrors,
+    []
+  );
+  if (analystEnergyAliasErrors.length > 0) {
+    throw new Error(`self-test failed: expected analyst energy sourceLayer alias pass, got ${analystEnergyAliasErrors.join('; ')}`);
   }
 
   const legacySourceLayerErrors = [];
@@ -566,6 +586,17 @@ function runSelfTests() {
   nonCanonicalLayer.crossLayerSynthesis[0].supportingLayers = ['rateVol'];
   if (!validateOutput(nonCanonicalLayer).errors.some((error) => error.includes('canonical analyst sourceLayer'))) {
     throw new Error('self-test failed: expected PR4 canary output to reject non-canonical rateVol layer');
+  }
+
+  const energyAliasLayer = structuredClone(basePr4Output);
+  energyAliasLayer.crossLayerSynthesis[0].supportingLayers = ['energyInventoryBalance', 'energySpareCapacity'];
+  energyAliasLayer.keyDivergences[0].evidenceFor = [
+    'energyInventoryBalance.oecdCommercialInventoryVs5yPct',
+    'energySpareCapacity.spareCapacityMbpd',
+  ];
+  const energyAliasErrors = validateOutput(energyAliasLayer).errors;
+  if (energyAliasErrors.length > 0) {
+    throw new Error(`self-test failed: expected analyst energy sourceLayer aliases to pass, got ${energyAliasErrors.join('; ')}`);
   }
 
   const directLayerFieldPath = structuredClone(basePr4Output);

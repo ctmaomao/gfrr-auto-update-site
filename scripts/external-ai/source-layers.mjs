@@ -29,6 +29,10 @@ export const ANALYST_EXTERNAL_AI_SOURCE_LAYER_FLOOR = [
 const SAFE_MACRO_DRIVER_SOURCE_LAYER = /^macroDrivers\.[A-Za-z][A-Za-z0-9_]*$/u;
 const LEGACY_PRODUCTION_SOURCE_LAYERS = ['local_compact', ...LEGACY_EXTERNAL_AI_SOURCE_LAYERS];
 const FIXTURE_PRODUCTION_SOURCE_LAYERS = ['fixture_sample'];
+const ANALYST_SOURCE_LAYER_ALIASES = new Map([
+  ['energyInventoryBalance', 'macroDrivers.energyInventoryBalance'],
+  ['energySpareCapacity', 'macroDrivers.energySpareCapacity'],
+]);
 
 export function isMacroDriverSourceLayer(sourceLayer) {
   return typeof sourceLayer === 'string' && SAFE_MACRO_DRIVER_SOURCE_LAYER.test(sourceLayer);
@@ -49,6 +53,43 @@ export function isAllowedExternalAiProductionSourceLayer(sourceLayer, options = 
   if (options.fixture === true) return FIXTURE_PRODUCTION_SOURCE_LAYERS.includes(sourceLayer);
   if (options.analyst === true) return isAllowedExternalAiSourceLayer(sourceLayer, { analyst: true });
   return LEGACY_PRODUCTION_SOURCE_LAYERS.includes(sourceLayer);
+}
+
+export function normalizeAnalystSourceLayerReference(sourceLayer) {
+  if (typeof sourceLayer !== 'string') return sourceLayer;
+  const trimmed = sourceLayer.trim();
+  return ANALYST_SOURCE_LAYER_ALIASES.get(trimmed) || trimmed;
+}
+
+function hasReferenceBoundary(value, prefix) {
+  const next = value[prefix.length];
+  return (
+    next === undefined ||
+    next === '.' ||
+    next === '[' ||
+    next === ':' ||
+    next === '：' ||
+    next === ',' ||
+    next === '，' ||
+    next === ';' ||
+    next === '；' ||
+    /\s/u.test(next)
+  );
+}
+
+export function matchAnalystSourceLayerAliasPrefix(reference) {
+  if (typeof reference !== 'string') return null;
+  const value = reference.trim();
+  for (const [alias, sourceLayer] of ANALYST_SOURCE_LAYER_ALIASES) {
+    if (value.startsWith(alias) && hasReferenceBoundary(value, alias)) {
+      return {
+        sourceLayer,
+        rest: value.slice(alias.length),
+        matched: alias,
+      };
+    }
+  }
+  return null;
 }
 
 export function getAnalystMacroDriverSourceLayers(input) {

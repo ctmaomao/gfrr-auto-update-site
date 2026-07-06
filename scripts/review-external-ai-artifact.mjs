@@ -4,7 +4,10 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { OPERATION_LANGUAGE_PHRASES } from './external-ai/safety-constants.mjs';
-import { isAllowedExternalAiSourceLayer } from './external-ai/source-layers.mjs';
+import {
+  isAllowedExternalAiSourceLayer,
+  normalizeAnalystSourceLayerReference,
+} from './external-ai/source-layers.mjs';
 import {
   ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG,
   summarizeAnalystPr4StructuredFields,
@@ -441,8 +444,11 @@ function reviewSourceAttributionCoverage(data, review, sourceSemantics) {
   const distinctLayers = new Set();
   for (const item of sourceAttribution) {
     if (isPlainObject(item) && typeof item.sourceLayer === 'string' && item.sourceLayer.length > 0) {
-      distinctLayers.add(item.sourceLayer);
-      if (!isAllowedExternalAiSourceLayer(item.sourceLayer, { analyst: sourceSemantics.isAnalystCompact })) {
+      const sourceLayer = sourceSemantics.isAnalystCompact
+        ? normalizeAnalystSourceLayerReference(item.sourceLayer)
+        : item.sourceLayer;
+      distinctLayers.add(sourceLayer);
+      if (!isAllowedExternalAiSourceLayer(sourceLayer, { analyst: sourceSemantics.isAnalystCompact })) {
         markScore(
           review,
           'sourceAttributionCoverage',

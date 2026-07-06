@@ -1,6 +1,8 @@
 import {
   ANALYST_EXTERNAL_AI_SOURCE_LAYER_FLOOR,
   isAllowedExternalAiSourceLayer,
+  matchAnalystSourceLayerAliasPrefix,
+  normalizeAnalystSourceLayerReference,
 } from './source-layers.mjs';
 
 export const ANALYST_PR4_SCHEMA_CANARY_AUDIT_FLAG = 'analyst_pr4_schema_canary';
@@ -39,7 +41,13 @@ export function isAnalystPr4SchemaCanaryOutput(data) {
 export function extractCanonicalAnalystSourceLayer(reference) {
   if (!isNonEmptyString(reference)) return null;
   const value = reference.trim();
-  if (isAllowedExternalAiSourceLayer(value, { analyst: true })) return value;
+  const normalizedValue = normalizeAnalystSourceLayerReference(value);
+  if (isAllowedExternalAiSourceLayer(normalizedValue, { analyst: true })) return normalizedValue;
+
+  const aliasMatch = matchAnalystSourceLayerAliasPrefix(value);
+  if (aliasMatch && isAllowedExternalAiSourceLayer(aliasMatch.sourceLayer, { analyst: true })) {
+    return aliasMatch.sourceLayer;
+  }
 
   const macroMatch = value.match(MACRO_DRIVER_SOURCE_LAYER_PATTERN);
   if (macroMatch && isAllowedExternalAiSourceLayer(macroMatch[1], { analyst: true })) {
@@ -91,7 +99,10 @@ function validateLayerArray(value, path, errors, { allowFieldPath = false, maxIt
     }
     const canonicalLayer = allowFieldPath
       ? extractCanonicalAnalystSourceLayer(item)
-      : (isAllowedExternalAiSourceLayer(item.trim(), { analyst: true }) ? item.trim() : null);
+      : (() => {
+        const sourceLayer = normalizeAnalystSourceLayerReference(item);
+        return isAllowedExternalAiSourceLayer(sourceLayer, { analyst: true }) ? sourceLayer : null;
+      })();
     if (!canonicalLayer) {
       addError(errors, `${path}[${index}] must use a canonical analyst sourceLayer reference: ${item}`);
     }
@@ -200,7 +211,10 @@ function collectLayerReferencesFromArray(value, { allowFieldPath = false } = {})
       reference,
       canonicalLayer: allowFieldPath
         ? extractCanonicalAnalystSourceLayer(reference)
-        : (isAllowedExternalAiSourceLayer(reference.trim(), { analyst: true }) ? reference.trim() : null),
+        : (() => {
+          const sourceLayer = normalizeAnalystSourceLayerReference(reference);
+          return isAllowedExternalAiSourceLayer(sourceLayer, { analyst: true }) ? sourceLayer : null;
+        })(),
     }));
 }
 

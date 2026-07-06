@@ -6,7 +6,10 @@ import {
   EXTERNAL_AI_LEGACY_PRODUCTION_CONTRACT,
   EXTERNAL_AI_PRODUCTION_MODEL,
 } from './external-ai/production-contract.mjs';
-import { isAllowedExternalAiProductionSourceLayer } from './external-ai/source-layers.mjs';
+import {
+  isAllowedExternalAiProductionSourceLayer,
+  normalizeAnalystSourceLayerReference,
+} from './external-ai/source-layers.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/external-ai/external-ai-production-projection-latest.json';
@@ -345,7 +348,8 @@ function projectSourceAttribution(items, mapping) {
       if (typeof item.sourceLayer !== 'string' || item.sourceLayer.trim() === '') {
         throw new Error(`sourceAttribution[${index}].sourceLayer is required for analyst_compact_v1 projection`);
       }
-      if (!isAllowedExternalAiProductionSourceLayer(item.sourceLayer, { analyst: true })) {
+      const sourceLayer = normalizeAnalystSourceLayerReference(item.sourceLayer);
+      if (!isAllowedExternalAiProductionSourceLayer(sourceLayer, { analyst: true })) {
         throw new Error(`sourceAttribution[${index}].sourceLayer is not allowed for analyst_compact_v1 projection: ${item.sourceLayer}`);
       }
       if (typeof item.field !== 'string' || item.field.trim() === '') {
@@ -355,7 +359,7 @@ function projectSourceAttribution(items, mapping) {
         throw new Error(`sourceAttribution[${index}].claimType is required for analyst_compact_v1 projection`);
       }
       return {
-        sourceLayer: item.sourceLayer,
+        sourceLayer,
         field: item.field,
         claimType: item.claimType,
         noteZh: mapping.note,
