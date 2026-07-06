@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "gdelt-web-ngrams-display-fallback-projection-p50",
+  "status": "display_only_fallback_projection_ready_no_production_write",
+  "projectionState": "manual_projection_ready_for_separate_writer_contract_review",
+  "recommendation": "ready_for_p51_projection_review_keep_non_production",
+  "generatedAt": "2026-07-05T16:05:10.721Z",
+  "sourceMode": "p49_gate_review_projection_dry_run",
+  "input": {
+    "sourcePath": "docs/fixtures/oil-news/gdelt-web-ngrams-fallback-gate-review-p49.json",
+    "contractVersion": "gdelt-web-ngrams-fallback-gate-review-p49",
+    "status": "sample_gate_passed_ready_for_display_only_fallback_projection_no_production_write",
+    "reviewedAt": "2026-07-05T16:05:10.721Z",
+    "collectorRunId": 28743580007
+  },
+  "projectedProductionField": {
+    "targetArtifact": "data/oil-news-event-watch.json",
+    "fieldPath": "sourceCaches.gdeltWebNgramsFallback",
+    "presentInProductionData": false,
+    "writerApprovedByThisProjection": false,
+    "frontendApprovedByThisProjection": false,
+    "workflowApprovedByThisProjection": false,
+    "displayMode": "aggregate_source_health_only_no_headlines",
+    "projectedShape": {
+      "status": "sample_gate_passed_projection_only",
+      "generatedAt": null,
+      "sourceKey": "gdelt_web_ngrams_v5_legacy",
+      "fallbackContextOnly": true,
+      "currentSignalEnhancement": false,
+      "eventConfirmationSource": false,
+      "headlineSource": false,
+      "oilDirectionInput": false,
+      "sampleGate": {
+        "state": "passed",
+        "p49ContractVersion": "gdelt-web-ngrams-fallback-gate-review-p49",
+        "collectorRunId": 28743580007,
+        "usableSampleCount": 9,
+        "selectedTimestampCount": 9,
+        "observationWindowHours": 28.27,
+        "latestSelectedTimestamp": "20260705140200",
+        "warningCount": 1,
+        "warningTreatment": "one_source_unavailable_sample_is_not_blocking_because_usable_sample_gate_passed"
+      },
+      "sourceHealth": {
+        "state": "fallback_sample_gate_passed",
+        "freshness": "artifact_only_reviewed",
+        "gdeltDocReliefRole": "background_fallback_when_doc_api_rate_limited",
+        "usedForCurrentSignal": false
+      },
+      "aggregate": {
+        "bucketCounts": {
+          "chokepoint": {
+            "sampleHitCount": 9,
+            "totalCount": 1406
+          },
+          "tanker_shipping": {
+            "sampleHitCount": 9,
+            "totalCount": 393
+          },
+          "market_reaction": {
+            "sampleHitCount": 9,
+            "totalCount": 277
+          },
+          "sanctions": {
+            "sampleHitCount": 4,
+            "totalCount": 33
+          },
+          "supply_disruption": {
+            "sampleHitCount": 2,
+            "totalCount": 9
+          },
+          "facility_event": {
+            "sampleHitCount": 0,
+            "totalCount": 0
+          }
+        },
+        "termCounts": [
+          {
+            "termId": "hormuz",
+            "samplesWithHits": 9,
+            "totalMentionCount": 1331,
+            "buckets": [
+              "chokepoint",
+              "middle_east_risk"
+            ]
+          },
+          {
+            "termId": "tanker",
+            "samplesWithHits": 9,
+            "totalMentionCount": 285,
+            "buckets": [
+              "tanker_shipping"
+            ]
+          },
+          {
+            "termId": "crude_oil",
+            "samplesWithHits": 9,
+            "totalMentionCount": 277,
+            "buckets": [
+              "market_reaction"
+            ]
+          },
+          {
+            "termId": "red_sea",
+            "samplesWithHits": 6,
+            "totalMentionCount": 75,
+            "buckets": [
+              "chokepoint",
+              "tanker_shipping"
+            ]
+          },
+          {
+            "termId": "sanctions",
+            "samplesWithHits": 4,
+            "totalMentionCount": 33,
+            "buckets": [
+              "sanctions",
+              "tanker_shipping"
+            ]
+          },
+          {
+            "termId": "supply_disruption",
+            "samplesWithHits": 2,
+            "totalMentionCount": 9,
+            "buckets": [
+              "supply_disruption"
+            ]
+          }
+        ],
+        "selectedTimestampCount": 9,
+        "usableSampleCount": 9,
+        "observationWindowHours": 28.27
+      },
+      "limitations": [
+        "background phrase heat only",
+        "no headline or URL display",
+        "no event confirmation",
+        "no current Oil News signal enhancement",
+        "no ODP direction or scoring impact"
+      ]
+    }
+  },
+  "approvals": {
+    "productionWriteApproved": false,
+    "frontendApproved": false,
+    "workflowApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "scoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "currentProductionState": {
+    "sourceCachesGdeltWebNgramsFallback": "absent",
+    "oilNewsCurrentSignalEnhancedByWebNgrams": false,
+    "frontendDisplayConnected": false,
+    "eligibleForScoring": false
+  },
+  "productionImpact": {
+    "writesProductionData": false,
+    "addsWorkflow": false,
+    "changesFrontend": false,
+    "changesOilNewsCurrentSignal": false,
+    "changesOdpBuild": false,
+    "changesFinalBias": false,
+    "changesValues": false,
+    "changesScoring": false,
+    "changesDecision": false,
+    "changesExecution": false,
+    "changesPosition": false,
+    "changesBrentPromotion": false,
+    "changesGlobalRiskHeatmap": false,
+    "changesCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "notProductionData": true,
+    "displayProjectionOnly": true
+  },
+  "nextAllowedStep": "p51_display_only_fallback_projection_review_no_production_write",
+  "boundary": "dry-run-only GDELT Web NGrams display fallback projection; not production data; no frontend implementation; not in current Oil News signal, values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

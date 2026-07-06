@@ -18,7 +18,10 @@ helper to evaluate the downloadable ngram path while DOC API is rate-limited.
 P44 adds a manual/local Web NGrams sample archive so adjacent diagnosis artifacts
 can be accumulated before any display-only fallback review. P45 adds a
 source-review gate for a possible future Web NGrams fallback, while keeping it
-out of production display and current Oil News signal enhancement.
+out of production display and current Oil News signal enhancement. P50 adds a
+dry-run-only display fallback projection from the passed P49 gate while keeping
+production write, frontend, workflow, current signal, and scoring approvals
+false.
 P52 adds a manual claim-ledger review, and P53 adds a production `claimPolarity`
 aggregate plus frontend aggregate display without exposing headlines or URLs.
 All layers remain outside ODP scoring, `finalBias`, decision, execution,
@@ -244,6 +247,37 @@ projection dry run
 `workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
 `scoreApproved=false`; it does not write production JSON, wire frontend/workflow,
 enhance current Oil News, or affect ODP direction/scoring.
+
+P50 adds the display fallback projection dry run:
+
+```text
+docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PROJECTION.md
+docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-projection-p50.json
+npm run project:gdelt-web-ngrams-display-fallback-projection
+npm run check:gdelt-web-ngrams-display-fallback-projection
+```
+
+Contract version is `gdelt-web-ngrams-display-fallback-projection-p50`; status is
+`display_only_fallback_projection_ready_no_production_write`. The projector reads
+a P49 gate-review artifact and writes only the ignored manual artifact:
+
+```text
+manual-artifacts/oil-news/gdelt-web-ngrams-display-fallback-projection-latest.json
+```
+
+The projected future field remains:
+
+```text
+sourceCaches.gdeltWebNgramsFallback
+```
+
+Its display mode is still `aggregate_source_health_only_no_headlines`: compact
+sample-gate, source-health, bucket-count, and term-count metadata only. P50 keeps
+`productionWriteApproved=false`, `frontendApproved=false`,
+`workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+`scoreApproved=false`; it does not write production JSON, wire frontend/workflow,
+enhance current Oil News, or affect ODP direction/scoring. The next allowed step
+is `p51_display_only_fallback_projection_review_no_production_write`.
 
 Default mode is dry-run/no-network:
 

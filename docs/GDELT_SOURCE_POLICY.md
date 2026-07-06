@@ -259,6 +259,28 @@ P49, current phase:
   News signal enhancement, scoring, ODP direction, decision, execution,
   position, Brent promotion, Global Risk Heatmap, and cross-validation disabled.
 
+P50, current phase:
+
+- Add `gdelt-web-ngrams-display-fallback-projection-p50` as a dry-run-only
+  projection from the P49 sample gate into a possible future
+  `sourceCaches.gdeltWebNgramsFallback` compact display field.
+- P50 status is
+  `display_only_fallback_projection_ready_no_production_write`, and the only
+  generated output is the ignored manual artifact
+  `manual-artifacts/oil-news/gdelt-web-ngrams-display-fallback-projection-latest.json`.
+- The projected display mode remains
+  `aggregate_source_health_only_no_headlines`: source-health, sample gate, and
+  aggregate phrase-heat metadata only, with no titles, URLs, snippets, bodies,
+  raw rows, raw responses, secrets, or request headers.
+- P50 keeps `productionWriteApproved=false`, `frontendApproved=false`,
+  `workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+  `scoreApproved=false`. It does not write production data, does not add
+  frontend or workflow wiring, and does not affect current Oil News signal,
+  ODP direction, scoring, decision, execution, position, Brent promotion,
+  Global Risk Heatmap, or cross-validation.
+- The next allowed step is
+  `p51_display_only_fallback_projection_review_no_production_write`.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -276,6 +298,7 @@ npm run check:gdelt-web-ngrams-fallback-source-review
 npm run check:gdelt-web-ngrams-production-display-fallback-contract
 npm run check:gdelt-web-ngrams-sample-collector-workflow
 npm run check:gdelt-web-ngrams-fallback-gate-review
+npm run check:gdelt-web-ngrams-display-fallback-projection
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all
