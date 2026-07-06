@@ -367,6 +367,33 @@ P54, current phase:
 - The next allowed step is
   `p55_display_only_fallback_production_write_readiness_gate_no_production_write`.
 
+P55, current phase:
+
+- Add `gdelt-web-ngrams-display-fallback-production-write-readiness-p55` as a
+  production-write readiness gate. P55 itself does not write production data.
+- P55 status is `production_display_only_write_ready_no_production_write`; it
+  grants only `p56ProductionDataWriteApproved=true`,
+  `p56ProductionWriteApproved=true`, and `p56WriterImplementationApproved=true`
+  for the single future field
+  `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback`.
+- The review command is
+  `review:gdelt-web-ngrams-display-fallback-production-write-readiness`; the
+  check command is
+  `check:gdelt-web-ngrams-display-fallback-production-write-readiness`.
+- The allowed P56 write scope is compact display-only cache
+  `gdelt-web-ngrams-display-fallback-cache-v1` with display mode
+  `aggregate_source_health_only_no_headlines`; it must keep
+  `currentSignalEnhancement=false`, `eventConfirmationSource=false`,
+  `headlineSource=false`, `oilDirectionInput=false`, and
+  `eligibleForScoring=false`.
+- P55 keeps `frontendImplementationApproved=false`,
+  `workflowAutomationApproved=false`, `liveFetchApproved=false`,
+  `apiKeyReadApproved=false`, `currentSignalEnhancementApproved=false`, and
+  `scoreApproved=false`. It does not approve frontend display, workflow changes,
+  current Oil News signal enhancement, ODP direction, scoring, decision,
+  execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
+- The next allowed step is `p56_display_only_fallback_production_display_write`.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -389,6 +416,7 @@ npm run check:gdelt-web-ngrams-display-fallback-projection-review
 npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design
 npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold
 npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review
+npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

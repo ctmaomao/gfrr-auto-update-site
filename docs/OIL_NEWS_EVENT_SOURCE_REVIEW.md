@@ -375,6 +375,31 @@ not write production JSON, wire frontend/workflow, enhance current Oil News, or
 affect ODP direction/scoring. The next allowed step is
 `p55_display_only_fallback_production_write_readiness_gate_no_production_write`.
 
+P55 adds the production write readiness gate:
+
+```text
+docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PRODUCTION_WRITE_READINESS.md
+docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-production-write-readiness-p55.json
+npm run review:gdelt-web-ngrams-display-fallback-production-write-readiness
+npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness
+```
+
+Schema version is
+`gdelt-web-ngrams-display-fallback-production-write-readiness-p55`; status is
+`production_display_only_write_ready_no_production_write`. P55 does not write
+production JSON. It only grants the next step a narrow
+`p56ProductionDataWriteApproved=true` scope for:
+
+```text
+data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback
+```
+
+The scope is single-field, compact, display-only, no-current-signal, no-title,
+no-URL, no-raw-response, and no-score. P55 still keeps
+`frontendImplementationApproved=false`, `workflowAutomationApproved=false`,
+`currentSignalEnhancementApproved=false`, and `scoreApproved=false`. The next
+allowed step is `p56_display_only_fallback_production_display_write`.
+
 Default mode is dry-run/no-network:
 
 ```powershell
