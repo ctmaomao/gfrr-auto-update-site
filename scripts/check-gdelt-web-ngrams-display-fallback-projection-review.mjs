@@ -2,6 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
 
 const ROOT = process.cwd();
 const REVIEW_SCRIPT = 'scripts/review-gdelt-web-ngrams-display-fallback-projections.mjs';
@@ -25,8 +26,7 @@ const RUNTIME_FORBIDDEN_MARKERS = [
   'gdelt-web-ngrams-display-fallback-projection-review-p51',
   'display_fallback_projection_review_passed_no_production_write',
   'review:gdelt-web-ngrams-display-fallback-projections',
-  'p52_display_only_fallback_writer_contract_design_no_production_write',
-  'sourceCaches.gdeltWebNgramsFallback'
+  'p52_display_only_fallback_writer_contract_design_no_production_write'
 ];
 
 function absolute(relativePath) {
@@ -160,6 +160,10 @@ function assertRuntimeRemainsUnwired() {
     for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
       assert(!source.includes(marker), `${relativePath} contains P51 review marker: ${marker}`);
     }
+  }
+  const oilNews = JSON.parse(readText('data/oil-news-event-watch.json'));
+  if (oilNews.sourceCaches?.gdeltWebNgramsFallback) {
+    assertGdeltWebNgramsDisplayFallbackCache(oilNews.sourceCaches.gdeltWebNgramsFallback);
   }
 }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
 
 const ROOT = process.cwd();
 const DOC = 'docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_WRITER_CONTRACT_DESIGN.md';
@@ -21,10 +22,7 @@ const RUNTIME_FILES = [
 const RUNTIME_FORBIDDEN_MARKERS = [
   'gdelt-web-ngrams-display-fallback-writer-contract-design-p52',
   'gdelt_web_ngrams_display_fallback_writer_contract_design',
-  'gdelt-web-ngrams-display-fallback-cache-v1',
-  'p53_display_only_fallback_disabled_writer_scaffold_no_production_write',
-  'sourceCaches.gdeltWebNgramsFallback',
-  'gdeltWebNgramsFallback'
+  'p53_display_only_fallback_disabled_writer_scaffold_no_production_write'
 ];
 
 function absolute(relativePath) {
@@ -180,7 +178,9 @@ function assertRuntimeRemainsUnwired() {
   }
 
   const oilNews = JSON.parse(readText('data/oil-news-event-watch.json'));
-  assert(!oilNews.sourceCaches?.gdeltWebNgramsFallback, 'data/oil-news-event-watch.json must not contain sourceCaches.gdeltWebNgramsFallback.');
+  if (oilNews.sourceCaches?.gdeltWebNgramsFallback) {
+    assertGdeltWebNgramsDisplayFallbackCache(oilNews.sourceCaches.gdeltWebNgramsFallback);
+  }
 }
 
 function assertAuthorityDocsAndPackage() {

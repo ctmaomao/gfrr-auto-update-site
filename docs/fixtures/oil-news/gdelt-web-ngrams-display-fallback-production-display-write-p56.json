@@ -1,0 +1,69 @@
+{
+  "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
+  "status": "sample_gate_passed_projection_only",
+  "generatedAt": "2026-07-06T00:00:00.000Z",
+  "sourceKey": "gdelt_web_ngrams_v5_legacy",
+  "sourceReview": {
+    "gate": "display_fallback_production_write_readiness",
+    "source": "reviewed_fixture_candidate_cache",
+    "p56ScopedFieldOnly": true
+  },
+  "displayMode": "aggregate_source_health_only_no_headlines",
+  "fallbackContextOnly": true,
+  "productionDataWriteApproved": true,
+  "currentSignalEnhancement": false,
+  "eventConfirmationSource": false,
+  "headlineSource": false,
+  "oilDirectionInput": false,
+  "eligibleForScoring": false,
+  "usedForCurrentOilNewsSignal": false,
+  "usedForOdpFinalBias": false,
+  "usedForMainScore": false,
+  "frontendDisplayApproved": false,
+  "workflowAutomationApproved": false,
+  "liveFetchApproved": false,
+  "apiKeyReadApproved": false,
+  "staleAfterHours": 72,
+  "sampleGate": {
+    "state": "passed",
+    "collectorRunId": 28743580007,
+    "usableSampleCount": 9,
+    "selectedTimestampCount": 9,
+    "observationWindowHours": 28.27,
+    "latestSelectedTimestamp": "20260705140200",
+    "warningCount": 1,
+    "warningTreatment": "one_source_unavailable_sample_is_not_blocking_because_usable_sample_gate_passed"
+  },
+  "sourceHealth": {
+    "state": "fallback_sample_gate_passed",
+    "freshness": "artifact_only_reviewed",
+    "gdeltDocReliefRole": "background_fallback_when_doc_api_rate_limited",
+    "usedForCurrentSignal": false
+  },
+  "aggregate": {
+    "selectedTimestampCount": 9,
+    "usableSampleCount": 9,
+    "observationWindowHours": 28.27
+  },
+  "limitationZh": "GDELT Web NGrams 仅作为下载型叙事热度背景缓存候选,不确认具体事件、航运流向、设施事故、制裁影响或油价方向。",
+  "warnings": [
+    "manual_artifact_projection_only",
+    "not_current_news_signal",
+    "not_event_confirmation",
+    "production_display_only_cache",
+    "frontend_not_connected",
+    "not_used_for_current_oil_news_signal"
+  ],
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "production read-only GDELT Web NGrams fallback cache for ODP oil-news event watch; display-only/audit-only background source-health cache; NOT in current Oil News signal, values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

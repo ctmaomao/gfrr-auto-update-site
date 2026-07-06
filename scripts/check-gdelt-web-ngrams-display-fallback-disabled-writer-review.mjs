@@ -2,6 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
 
 const ROOT = process.cwd();
 const REVIEW_SCRIPT = 'scripts/review-gdelt-web-ngrams-display-fallback-disabled-writer.mjs';
@@ -191,7 +192,9 @@ function assertRuntimeRemainsUnwired() {
     }
   }
   const oilNews = readJson('data/oil-news-event-watch.json');
-  assert(!oilNews.sourceCaches?.gdeltWebNgramsFallback, 'data/oil-news-event-watch.json must not contain sourceCaches.gdeltWebNgramsFallback in P54.');
+  if (oilNews.sourceCaches?.gdeltWebNgramsFallback) {
+    assertGdeltWebNgramsDisplayFallbackCache(oilNews.sourceCaches.gdeltWebNgramsFallback);
+  }
 }
 
 function assertAuthorityDocsAndPackage() {

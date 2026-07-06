@@ -400,6 +400,31 @@ no-URL, no-raw-response, and no-score. P55 still keeps
 `currentSignalEnhancementApproved=false`, and `scoreApproved=false`. The next
 allowed step is `p56_display_only_fallback_production_display_write`.
 
+P56 writes the scoped production display-only cache field:
+
+```text
+docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PRODUCTION_DISPLAY_WRITE.md
+docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-production-display-write-p56.json
+npm run write:gdelt-web-ngrams-display-fallback-production-cache
+npm run check:gdelt-web-ngrams-display-fallback-production-display-write
+```
+
+The production field is:
+
+```text
+data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback
+```
+
+Its contract is `gdelt-web-ngrams-display-fallback-cache-v1`, display mode is
+`aggregate_source_health_only_no_headlines`, and the field carries
+`productionDataWriteApproved=true` only for this one compact cache object. It
+keeps `frontendDisplayApproved=false`, `workflowAutomationApproved=false`,
+`currentSignalEnhancement=false`, `eventConfirmationSource=false`,
+`headlineSource=false`, `oilDirectionInput=false`, and
+`eligibleForScoring=false`. It is source-health fallback provenance only, not a
+current Oil News signal enhancer, not a headline display layer, not event
+confirmation, and not scoring input.
+
 Default mode is dry-run/no-network:
 
 ```powershell

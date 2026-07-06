@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
 
 const ROOT = process.cwd();
 const DOC = 'docs/GDELT_WEB_NGRAMS_PRODUCTION_DISPLAY_FALLBACK_CONTRACT.md';
@@ -20,10 +21,7 @@ const RUNTIME_FILES = [
 
 const RUNTIME_FORBIDDEN_MARKERS = [
   'gdelt-web-ngrams-production-display-fallback-contract-p46',
-  'gdelt_web_ngrams_production_display_fallback_contract',
-  'sourceCaches.gdeltWebNgramsFallback',
-  'gdeltWebNgramsFallback',
-  'aggregate_source_health_only_no_headlines'
+  'gdelt_web_ngrams_production_display_fallback_contract'
 ];
 
 function absolute(relativePath) {
@@ -163,6 +161,10 @@ function assertRuntimeUnwired() {
     for (const marker of RUNTIME_FORBIDDEN_MARKERS) {
       assert(!source.includes(marker), `${relativePath} contains P46 production-display fallback marker: ${marker}`);
     }
+  }
+  const oilNews = JSON.parse(readText('data/oil-news-event-watch.json'));
+  if (oilNews.sourceCaches?.gdeltWebNgramsFallback) {
+    assertGdeltWebNgramsDisplayFallbackCache(oilNews.sourceCaches.gdeltWebNgramsFallback);
   }
 }
 

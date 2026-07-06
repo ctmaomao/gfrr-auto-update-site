@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
 
 const errors = [];
 const fail = (message) => errors.push(message);
@@ -114,6 +115,24 @@ function assertLastUsableGdeltCache(cache, path) {
   }
 }
 
+function assertGdeltWebNgramsFallbackSourceCache(cache) {
+  try {
+    assertGdeltWebNgramsDisplayFallbackCache(cache);
+  } catch (error) {
+    fail(`sourceCaches.gdeltWebNgramsFallback invalid: ${error.message}`);
+    return;
+  }
+  if (cache.productionDataWriteApproved !== true) {
+    fail('sourceCaches.gdeltWebNgramsFallback.productionDataWriteApproved must be true after P56');
+  }
+  if (cache.frontendDisplayApproved !== false) {
+    fail('sourceCaches.gdeltWebNgramsFallback.frontendDisplayApproved must remain false');
+  }
+  if (cache.workflowAutomationApproved !== false || cache.liveFetchApproved !== false || cache.apiKeyReadApproved !== false) {
+    fail('sourceCaches.gdeltWebNgramsFallback must not approve workflow/live fetch/API key reads');
+  }
+}
+
 if (data.schemaVersion !== 'oil-news-event-watch-1') fail(`schemaVersion invalid: ${data.schemaVersion}`);
 if (data.module !== 'oil-news-event-watch') fail(`module invalid: ${data.module}`);
 if (typeof data.generatedAt !== 'string' || Number.isNaN(Date.parse(data.generatedAt))) fail('generatedAt must be ISO');
@@ -132,6 +151,14 @@ if (!data.sourceStatus || typeof data.sourceStatus !== 'object') {
     if (!KEY_STATUSES.has(data.sourceStatus[field])) fail(`sourceStatus.${field} invalid: ${data.sourceStatus[field]}`);
   }
   if (!data.sourceStatus.details || typeof data.sourceStatus.details !== 'object') fail('sourceStatus.details missing');
+}
+
+if (!data.sourceCaches || typeof data.sourceCaches !== 'object') {
+  fail('sourceCaches missing');
+} else if (!data.sourceCaches.gdeltWebNgramsFallback) {
+  fail('sourceCaches.gdeltWebNgramsFallback missing');
+} else {
+  assertGdeltWebNgramsFallbackSourceCache(data.sourceCaches.gdeltWebNgramsFallback);
 }
 
 if (!gdeltCache || typeof gdeltCache !== 'object') {

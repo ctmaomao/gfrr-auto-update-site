@@ -14,6 +14,7 @@ import {
   QUERY_SET,
   runDiagnosis
 } from './diagnose-oil-news-events.mjs';
+import { attachGdeltWebNgramsDisplayFallbackCache } from './gdelt-web-ngrams-display-fallback-cache.mjs';
 import { buildClaimPolarityAggregate } from './oil-news-claim-classifier.mjs';
 
 const SCHEMA_VERSION = 'oil-news-event-watch-1';
@@ -390,8 +391,9 @@ function buildProductionArtifact(options, diagnosis) {
     ],
     boundary: BOUNDARY
   };
-  assertSanitized(artifact);
-  return artifact;
+  const artifactWithSourceCaches = attachGdeltWebNgramsDisplayFallbackCache(artifact, { generatedAt });
+  assertSanitized(artifactWithSourceCaches);
+  return artifactWithSourceCaches;
 }
 
 function buildGdeltCacheArtifact(diagnosis) {
