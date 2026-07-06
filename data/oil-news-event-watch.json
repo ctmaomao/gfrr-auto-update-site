@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-06T21:56:23.616Z",
+  "generatedAt": "2026-07-06T23:40:35.531Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-06T00:36:18.000Z",
-    "latestArticleAgeHours": 21.3,
+    "latestArticleAgeHours": 23.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 61,
+    "uniqueArticleCount": 62,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 44,
+      "articleCount": 45,
       "sourceCount": 2,
-      "weightedSignal": 264,
+      "weightedSignal": 270,
       "topArticles": [
         {
           "domain": "cnbc.com",
@@ -229,27 +229,10 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 18,
+      "articleCount": 19,
       "sourceCount": 2,
-      "weightedSignal": 72,
+      "weightedSignal": 76,
       "topArticles": [
-        {
-          "domain": "latimes.com",
-          "publishedAt": "2026-07-02T15:52:21.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "middle_east_risk",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping",
-            "sanctions_shadow_fleet"
-          ]
-        },
         {
           "domain": "insurancejournal.com",
           "publishedAt": "2026-07-06T11:54:17.000Z",
@@ -280,14 +263,29 @@
           "queryIds": [
             "sanctions_shadow_fleet"
           ]
+        },
+        {
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-06-30T18:02:30.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "sanctions_shadow_fleet"
+          ]
         }
       ]
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 17,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 102,
+      "weightedSignal": 108,
       "topArticles": [
         {
           "domain": "energynewsbeat.co",
@@ -457,9 +455,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 36,
+      "articleCount": 37,
       "sourceCount": 2,
-      "weightedSignal": 108,
+      "weightedSignal": 111,
       "topArticles": [
         {
           "domain": "cnbc.com",
@@ -512,9 +510,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 17,
+      "articleCount": 19,
       "sourceCount": 2,
-      "weightedSignal": 34,
+      "weightedSignal": 38,
       "topArticles": [
         {
           "domain": "energynewsbeat.co",
@@ -536,28 +534,28 @@
           ]
         },
         {
+          "domain": "icis.com",
+          "publishedAt": "2026-07-05T08:00:00.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "chokepoint",
+            "market_reaction",
+            "middle_east_risk",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "chokepoint_shipping"
+          ]
+        },
+        {
           "domain": "oilprice.com",
           "publishedAt": "2026-07-03T19:30:00.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "market_reaction",
-            "middle_east_risk"
-          ],
-          "queryIds": [
-            "market_reaction"
-          ]
-        },
-        {
-          "domain": "bloomberg.com",
-          "publishedAt": "2026-07-06T14:40:27.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
             "market_reaction",
             "middle_east_risk"
           ],
@@ -583,6 +581,25 @@
       ],
       "queryIds": [
         "facility_supply_disruption"
+      ]
+    },
+    {
+      "domain": "hormuzstraitmonitor.com",
+      "publishedAt": "2026-07-04T12:13:15.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
       ]
     },
     {
@@ -715,7 +732,6 @@
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping",
         "sanctions_shadow_fleet"
       ]
     },
@@ -748,22 +764,6 @@
       "queryIds": [
         "facility_supply_disruption"
       ]
-    },
-    {
-      "domain": "cbsnews.com",
-      "publishedAt": "2026-07-05T18:19:59.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping"
-      ]
     }
   ],
   "titleRisk": {
@@ -772,13 +772,14 @@
     "highClaimTitleCount": 4,
     "highClaimDomainCount": 3,
     "highClaimDomains": [
-      "cbsnews.com",
       "cnbc.com",
+      "hormuzstraitmonitor.com",
       "kyivindependent.com"
     ],
     "highClaimTerms": [
       "attack",
-      "strike"
+      "strike",
+      "war"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 transient 新闻标题中包含封锁、战争、袭击、中断等高主张措辞;标题只用于构造聚合风险闸门,不得写入生产 JSON 或直接展示成事实确认。"
@@ -873,7 +874,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-06T21:56:23.616Z",
+      "generatedAt": "2026-07-06T23:40:35.531Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
