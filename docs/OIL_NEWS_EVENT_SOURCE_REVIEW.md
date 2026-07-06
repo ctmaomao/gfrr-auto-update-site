@@ -279,6 +279,27 @@ sample-gate, source-health, bucket-count, and term-count metadata only. P50 keep
 enhance current Oil News, or affect ODP direction/scoring. The next allowed step
 is `p51_display_only_fallback_projection_review_no_production_write`.
 
+P51 adds the display fallback projection review:
+
+```text
+docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PROJECTION_REVIEW.md
+docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-projection-review-p51.json
+npm run review:gdelt-web-ngrams-display-fallback-projections
+npm run check:gdelt-web-ngrams-display-fallback-projection-review
+```
+
+Contract version is `gdelt-web-ngrams-display-fallback-projection-review-p51`;
+passing review state is
+`display_fallback_projection_review_passed_no_production_write`. It only confirms
+that one or more P50 projection artifacts remain internally consistent: future
+field absent, aggregate-only display mode, no raw title/URL/body/raw response,
+and all production/frontend/workflow/current-signal/scoring approvals false. P51
+keeps `productionWriteApproved=false`, `frontendApproved=false`,
+`workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+`scoreApproved=false`; it does not write production JSON, wire frontend/workflow,
+enhance current Oil News, or affect ODP direction/scoring. The next allowed step
+is `p52_display_only_fallback_writer_contract_design_no_production_write`.
+
 Default mode is dry-run/no-network:
 
 ```powershell

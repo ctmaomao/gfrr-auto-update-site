@@ -281,6 +281,25 @@ P50, current phase:
 - The next allowed step is
   `p51_display_only_fallback_projection_review_no_production_write`.
 
+P51, current phase:
+
+- Add `gdelt-web-ngrams-display-fallback-projection-review-p51` as a
+  manual/local review of one or more P50 projection artifacts.
+- P51 status is `display_fallback_projection_review_passed_no_production_write`
+  when at least one projection passes the sample, no-raw-content, absent-field,
+  and all-approvals-false checks.
+- The review command is `review:gdelt-web-ngrams-display-fallback-projections`;
+  the check command is
+  `check:gdelt-web-ngrams-display-fallback-projection-review`.
+- P51 keeps `productionWriteApproved=false`, `frontendApproved=false`,
+  `workflowApproved=false`, `currentSignalEnhancementApproved=false`, and
+  `scoreApproved=false`. It does not write production data, does not add
+  frontend or workflow wiring, and does not affect current Oil News signal,
+  ODP direction, scoring, decision, execution, position, Brent promotion,
+  Global Risk Heatmap, or cross-validation.
+- The next allowed step is
+  `p52_display_only_fallback_writer_contract_design_no_production_write`.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -299,6 +318,7 @@ npm run check:gdelt-web-ngrams-production-display-fallback-contract
 npm run check:gdelt-web-ngrams-sample-collector-workflow
 npm run check:gdelt-web-ngrams-fallback-gate-review
 npm run check:gdelt-web-ngrams-display-fallback-projection
+npm run check:gdelt-web-ngrams-display-fallback-projection-review
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all
