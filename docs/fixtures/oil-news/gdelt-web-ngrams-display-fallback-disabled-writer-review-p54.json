@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "gdelt-web-ngrams-display-fallback-disabled-writer-review-p54",
+  "status": "pass",
+  "reviewState": "disabled_writer_scaffold_review_passed_no_production_write",
+  "recommendation": "ready_for_p55_production_write_readiness_gate_keep_non_production",
+  "generatedAt": "2026-07-06T00:00:00.000Z",
+  "minProjections": 1,
+  "inputCount": 1,
+  "projectionCount": 1,
+  "usableProjectionCount": 1,
+  "blockerCount": 0,
+  "warningCount": 1,
+  "approvalState": {
+    "disabledWriterReviewPassed": true,
+    "readyForProductionWriteReadinessGate": true,
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "writerImplementationApproved": false,
+    "frontendImplementationApproved": false,
+    "workflowAutomationApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "scoreApproved": false
+  },
+  "approvals": {
+    "productionDataWriteApproved": false,
+    "productionWriteApproved": false,
+    "writerImplementationApproved": false,
+    "frontendApproved": false,
+    "workflowApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "scoreApproved": false,
+    "odpFinalBiasApproved": false,
+    "brentPromotionApproved": false,
+    "globalRiskHeatmapApproved": false,
+    "crossValidationApproved": false
+  },
+  "currentProductionState": {
+    "sourceCachesGdeltWebNgramsFallback": "absent",
+    "oilNewsCurrentSignalEnhancedByWebNgrams": false,
+    "frontendDisplayConnected": false,
+    "eligibleForScoring": false
+  },
+  "aggregate": {
+    "maxUsableSampleCount": 9,
+    "maxSelectedTimestampCount": 9,
+    "maxObservationWindowHours": 28.27,
+    "latestSelectedTimestamp": "20260705140200"
+  },
+  "projections": [
+    {
+      "sourcePath": "docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-disabled-writer-p53.json",
+      "artifactHash": "placeholder",
+      "schemaVersion": "gdelt-web-ngrams-display-fallback-disabled-writer-p53",
+      "status": "disabled_no_production_write",
+      "writerState": "disabled_scaffold_no_production_write",
+      "usable": true,
+      "blockerCount": 0,
+      "warningCount": 1,
+      "usableSampleCount": 9,
+      "selectedTimestampCount": 9,
+      "observationWindowHours": 28.27,
+      "latestSelectedTimestamp": "20260705140200",
+      "bucketCounts": {
+        "chokepoint": {
+          "sampleHitCount": 9,
+          "totalCount": 1406
+        },
+        "tanker_shipping": {
+          "sampleHitCount": 9,
+          "totalCount": 393
+        },
+        "market_reaction": {
+          "sampleHitCount": 9,
+          "totalCount": 277
+        },
+        "sanctions": {
+          "sampleHitCount": 4,
+          "totalCount": 33
+        },
+        "supply_disruption": {
+          "sampleHitCount": 2,
+          "totalCount": 9
+        },
+        "facility_event": {
+          "sampleHitCount": 0,
+          "totalCount": 0
+        }
+      },
+      "termCount": 6,
+      "blockers": [],
+      "warnings": [
+        "sample_gate_passed_with_non_blocking_warning"
+      ]
+    }
+  ],
+  "blockers": [],
+  "productionImpact": {
+    "writesProductionData": false,
+    "addsWriter": false,
+    "addsWorkflow": false,
+    "changesFrontend": false,
+    "changesOilNewsCurrentSignal": false,
+    "changesOdpBuild": false,
+    "changesFinalBias": false,
+    "changesValues": false,
+    "changesScoring": false,
+    "changesDecision": false,
+    "changesExecution": false,
+    "changesPosition": false,
+    "changesBrentPromotion": false,
+    "changesGlobalRiskHeatmap": false,
+    "changesCrossValidation": false
+  },
+  "boundaries": {
+    "outputOnlyToManualArtifacts": true,
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionWrite": true,
+    "noRealtimeWrite": true,
+    "noWorkflowChange": true,
+    "noFrontendChange": true,
+    "noWorkerRuntimeChange": true,
+    "noRawProviderResponseStored": true,
+    "notProductionData": true,
+    "disabledWriterScaffoldReviewOnly": true
+  },
+  "nextAllowedStep": "p55_display_only_fallback_production_write_readiness_gate_no_production_write",
+  "boundary": "manual/local GDELT Web NGrams disabled writer scaffold review only; not production data; not in current Oil News signal, values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+}

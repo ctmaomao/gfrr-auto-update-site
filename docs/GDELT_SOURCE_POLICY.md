@@ -346,6 +346,27 @@ P53, current phase:
 - The next allowed step is
   `p54_display_only_fallback_disabled_writer_scaffold_review_no_production_write`.
 
+P54, current phase:
+
+- Add `gdelt-web-ngrams-display-fallback-disabled-writer-review-p54` as a
+  manual/local review of one or more P53 disabled writer scaffold artifacts.
+- P54 passing state is
+  `disabled_writer_scaffold_review_passed_no_production_write`; it only confirms
+  the disabled scaffold remains no-production-write, future-field-absent,
+  aggregate-only, raw-content-free, sample-gated, and all approvals false.
+- The review command is
+  `review:gdelt-web-ngrams-display-fallback-disabled-writer`; the check command
+  is `check:gdelt-web-ngrams-display-fallback-disabled-writer-review`.
+- P54 keeps `productionDataWriteApproved=false`,
+  `productionWriteApproved=false`, `writerImplementationApproved=false`,
+  `frontendImplementationApproved=false`, `workflowAutomationApproved=false`,
+  `currentSignalEnhancementApproved=false`, and `scoreApproved=false`. It does
+  not write production data, add frontend or workflow wiring, or affect current
+  Oil News signal, ODP direction, scoring, decision, execution, position, Brent
+  promotion, Global Risk Heatmap, or cross-validation.
+- The next allowed step is
+  `p55_display_only_fallback_production_write_readiness_gate_no_production_write`.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -367,6 +388,7 @@ npm run check:gdelt-web-ngrams-display-fallback-projection
 npm run check:gdelt-web-ngrams-display-fallback-projection-review
 npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design
 npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold
+npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all
