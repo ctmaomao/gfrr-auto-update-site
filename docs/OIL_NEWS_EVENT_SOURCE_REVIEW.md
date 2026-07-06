@@ -327,6 +327,32 @@ not create a writer, write production JSON, wire frontend/workflow, enhance
 current Oil News, or affect ODP direction/scoring. The next allowed step is
 `p53_display_only_fallback_disabled_writer_scaffold_no_production_write`.
 
+P53 adds the disabled writer scaffold:
+
+```text
+docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_DISABLED_WRITER_SCAFFOLD.md
+docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-disabled-writer-p53.json
+npm run project:gdelt-web-ngrams-display-fallback-disabled-writer
+npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold
+```
+
+Schema version is `gdelt-web-ngrams-display-fallback-disabled-writer-p53`;
+status is `disabled_no_production_write`; writer state is
+`disabled_scaffold_no_production_write`. It only emits the ignored manual
+artifact:
+
+```text
+manual-artifacts/oil-news/gdelt-web-ngrams-display-fallback-disabled-writer-latest.json
+```
+
+P53 keeps `productionDataWriteApproved=false`,
+`productionWriteApproved=false`, `writerImplementationApproved=false`,
+`frontendImplementationApproved=false`, `workflowAutomationApproved=false`,
+`currentSignalEnhancementApproved=false`, and `scoreApproved=false`; it does
+not write production JSON, wire frontend/workflow, enhance current Oil News, or
+affect ODP direction/scoring. The next allowed step is
+`p54_display_only_fallback_disabled_writer_scaffold_review_no_production_write`.
+
 Default mode is dry-run/no-network:
 
 ```powershell
