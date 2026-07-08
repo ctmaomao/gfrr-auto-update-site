@@ -689,6 +689,45 @@ for (const file of workflowFiles) {
   }
 }
 
+for (const file of [
+  '.github/workflows/acled-weekly-refresh-reminder.yml',
+  '.github/workflows/acled-monthly-refresh-reminder.yml'
+]) {
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'ACLED reminder workflow missing');
+    continue;
+  }
+  const text = fs.readFileSync(file, 'utf8');
+  for (const needle of [
+    'https://data.humdata.org/api/3/action/package_show',
+    'political-violence-events-and-fatalities',
+    'civilian-targeting-events-and-fatalities',
+    'demonstration-events',
+    'hdx_acled_asof_ready',
+    'state: \'all\'',
+    'per_page: 100',
+    'does not download HDX data files',
+    'does not contact acleddata.com'
+  ]) {
+    if (!text.includes(needle)) {
+      addRuntimeFailure(file, `missing HDX-gated ACLED reminder marker "${needle}"`);
+    }
+  }
+  for (const forbiddenNeedle of [
+    'actions/checkout@',
+    'npm ci',
+    'npm install',
+    'acled:sanitize',
+    'scripts/world-order/sanitize-acled',
+    'curl ',
+    'wget '
+  ]) {
+    if (text.includes(forbiddenNeedle)) {
+      addRuntimeFailure(file, `ACLED reminder must stay metadata-only; found "${forbiddenNeedle}"`);
+    }
+  }
+}
+
 if (fs.existsSync(dailyWorkflowFile)) {
   const text = fs.readFileSync(dailyWorkflowFile, 'utf8');
   if (text.includes('--fail-on-large-drift')) {

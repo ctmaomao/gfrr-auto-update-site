@@ -5,8 +5,8 @@ env:
 
 on:
   schedule:
-    # 9th of each month at 00:00 UTC. ACLED publishes monthly global aggregated
-    # files around the 8th; firing on the 9th catches the latest as-of batch.
+    # 9th of each month at 00:00 UTC. The job opens an issue only after HDX
+    # metadata shows a new ACLED aggregate as-of date.
     - cron: '0 0 9 * *'
   workflow_dispatch:
 
@@ -22,11 +22,78 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
+            const packageIds = [
+              'political-violence-events-and-fatalities',
+              'civilian-targeting-events-and-fatalities',
+              'demonstration-events',
+            ];
+            const parseDatasetDateEnd = (value) => {
+              const match = typeof value === 'string' ? value.match(/\bTO\s+(\d{4}-\d{2}-\d{2})T/u) : null;
+              return match?.[1] || null;
+            };
+            const parseAsOfDate = (value) => {
+              const match = typeof value === 'string' ? value.match(/as-of-(\d{4}-\d{2}-\d{2})/iu) : null;
+              return match?.[1] || null;
+            };
+            const fetchHdxPackage = async (id) => {
+              const url = `https://data.humdata.org/api/3/action/package_show?id=${encodeURIComponent(id)}`;
+              const response = await fetch(url, {
+                headers: { 'user-agent': 'GFRRBot/1.0 acled-hdx-refresh-reminder' },
+              });
+              if (!response.ok) throw new Error(`HDX package_show ${id} failed: ${response.status}`);
+              const payload = await response.json();
+              if (payload?.success !== true || !payload.result) throw new Error(`HDX package_show ${id} returned no result`);
+              return payload.result;
+            };
+            const probeHdx = async () => {
+              const packages = await Promise.all(packageIds.map(fetchHdxPackage));
+              const entries = packages.map((pkg) => {
+                const resource = Array.isArray(pkg.resources) ? pkg.resources[0] : null;
+                return {
+                  id: pkg.name,
+                  resourceName: resource?.name || null,
+                  resourceFormat: resource?.format || null,
+                  datasetEndDate: parseDatasetDateEnd(pkg.dataset_date),
+                  asOfDate: parseAsOfDate(`${resource?.name || ''} ${resource?.url || ''}`),
+                  metadataModified: pkg.metadata_modified || null,
+                  resourceLastModified: resource?.last_modified || null,
+                };
+              });
+              const asOfDates = [...new Set(entries.map((entry) => entry.asOfDate).filter(Boolean))].sort();
+              const blockers = [];
+              if (entries.length !== packageIds.length) blockers.push('missing_packages');
+              if (entries.some((entry) => entry.resourceFormat !== 'XLSX')) blockers.push('non_xlsx_resource');
+              if (entries.some((entry) => !entry.asOfDate)) blockers.push('missing_resource_as_of_date');
+              if (entries.some((entry) => !entry.datasetEndDate)) blockers.push('missing_dataset_end_date');
+              if (asOfDates.length !== 1) blockers.push(`inconsistent_as_of_dates:${asOfDates.join(',')}`);
+              return {
+                status: blockers.length ? 'hdx_acled_asof_not_ready' : 'hdx_acled_asof_ready',
+                readyForManualReminder: blockers.length === 0,
+                asOfDate: asOfDates.length === 1 ? asOfDates[0] : null,
+                entries,
+                blockers,
+              };
+            };
+
+            let probe;
+            try {
+              probe = await probeHdx();
+            } catch (err) {
+              console.log(`HDX metadata probe unavailable; no issue opened: ${err instanceof Error ? err.message : String(err)}`);
+              return;
+            }
+            console.log(`HDX metadata probe: ${probe.status} asOfDate=${probe.asOfDate || 'null'} blockers=${probe.blockers.join(',') || 'none'}`);
+            if (!probe.readyForManualReminder) return;
+
             const now = new Date();
             const monthIso = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-            const title = `M-63c ACLED monthly global xlsx refresh due (${monthIso})`;
+            const title = `M-63c ACLED monthly global xlsx refresh available (HDX as-of ${probe.asOfDate})`;
             const body = [
-              `ACLED monthly global aggregate files must be downloaded manually by the operator. ACLED EULA Section 3.3 prohibits automated scraping/crawling; this reminder does not download files or contact acleddata.com.`,
+              `ACLED monthly global aggregate files must be downloaded manually by the operator. This issue opened only after HDX CKAN metadata showed all three ACLED aggregate packages at as-of ${probe.asOfDate}.`,
+              ``,
+              `The HDX check is a release-availability proxy only. This workflow does not download HDX data files, does not fetch ACLED data files, and does not contact acleddata.com. ACLED EULA Section 3.3 still prohibits automated scraping/crawling.`,
+              ``,
+              `Calendar month at workflow run: ${monthIso}.`,
               ``,
               `## Download`,
               ``,
@@ -53,7 +120,7 @@ jobs:
               ``,
               `\`acled:status:monthly\` runs sanitize:monthly + check:world-order-acled-monthly and reports config-vs-data status (expect \`data_current\`; if \`sanitized_not_refreshed\` -> commit config + push + run "Refresh World Order Stress" workflow). The monthly sanitizer is strict — all 6 files must be present or it fails.`,
               ``,
-              `Expected final validation: \`npm run check:all\` PASS 69 items.`,
+              `Expected final validation: \`npm run check:all\` PASS.`,
               ``,
               `## Commit pattern`,
               ``,
@@ -77,7 +144,7 @@ jobs:
               ``,
               `## Idempotency`,
               ``,
-              `This workflow skips only if an open issue already exists with this exact monthly title and the \`acled-monthly-refresh\` label. Different months open new reminders, so an old open issue will not silence this month's reminder.`,
+              `This workflow skips if any issue, open or closed, already exists with this exact HDX as-of title and the \`acled-monthly-refresh\` label. Different HDX as-of dates open new reminders; unchanged HDX metadata stays silent.`,
               ``,
               `_Auto-opened by \`.github/workflows/acled-monthly-refresh-reminder.yml\`. Closing without action will silently age the ACLED monthly data — re-open or recreate manually if needed._`,
             ].join('\n');
@@ -85,12 +152,13 @@ jobs:
             const { data: existing } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
+              state: 'all',
               labels: 'acled-monthly-refresh',
+              per_page: 100,
             });
             const duplicate = existing.find((issue) => issue.title === title);
             if (duplicate) {
-              console.log(`Issue already open: ${duplicate.html_url}`);
+              console.log(`Issue already exists for this HDX as-of date: ${duplicate.html_url}`);
               return;
             }
 

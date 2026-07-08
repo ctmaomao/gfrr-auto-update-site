@@ -69,6 +69,8 @@ Runtime production code remains zero-dep:
 
 The raw xlsx files are gitignored. The derived JSON is the only production-adjacent data artifact produced by the operator after manual download and local sanitization.
 
+M-63c reminder workflows are gated by a metadata-only HDX CKAN probe against three ACLED-published aggregate packages (`political-violence-events-and-fatalities`, `civilian-targeting-events-and-fatalities`, `demonstration-events`). This probe uses `data.humdata.org` only, does not download HDX data files, and opens at most one issue per HDX `as-of` date. HDX is only a release-availability proxy: its public data is month-country/year-country, so it does not replace the weekly-admin ACLED files used for the GFRR weekly signal.
+
 ## 3. Weekly Refresh Procedure
 
 M-63a covers weekly regional aggregation only.
@@ -277,7 +279,7 @@ Weekly refresh:
 3. Place the files under `manual-artifacts/world-order/acled-input/weekly/`.
 4. On first use after M-63a, run `npm install` so the `xlsx` devDependency is installed.
 5. Run `npm run acled:status` — the one-command helper that runs `acled:sanitize:weekly` + `check:world-order-acled-weekly` and then reports a config-vs-data verdict (expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`). `npm run acled:status:weekly` is an explicit alias. To run the steps individually instead: `npm run acled:sanitize:weekly` then `npm run check:world-order-acled-weekly`. If the verdict is `sanitized_not_refreshed`, `npm run acled:publish` is the explicit opt-in full-chain helper (checks weekly + monthly, commits any changed derived config, pushes, dispatches "Refresh World Order Stress", watches CI, pulls, then re-verifies both tracks; requires authenticated `gh` CLI) — it replaces manual steps 7-8 below; `acled:status` itself stays read-only.
-6. Run `npm run check:all`; M-63b expects 69 items to pass.
+6. Run `npm run check:all`; it must pass.
 7. Review `config/world-order-acled-regional-weekly.json`.
 8. Commit the derived JSON with a focused operator refresh commit:
 
