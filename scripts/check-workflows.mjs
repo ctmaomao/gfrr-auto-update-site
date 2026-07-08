@@ -698,6 +698,9 @@ for (const file of [
     continue;
   }
   const text = fs.readFileSync(file, 'utf8');
+  if (file.includes('acled-weekly') && !text.includes("cron: '0 0 * * *'")) {
+    addRuntimeFailure(file, 'ACLED weekly reminder must scan HDX metadata daily so weekly releases are caught promptly.');
+  }
   for (const needle of [
     'https://data.humdata.org/api/3/action/package_show',
     'political-violence-events-and-fatalities',

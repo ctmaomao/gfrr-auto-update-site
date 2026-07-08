@@ -5,9 +5,9 @@ env:
 
 on:
   schedule:
-    # Tuesday 00:00 UTC. The job opens an issue only after HDX metadata shows
-    # a new ACLED aggregate as-of date, avoiding calendar-only false reminders.
-    - cron: '0 0 * * 2'
+    # Daily 00:00 UTC. HDX as-of idempotency makes this quiet until a new
+    # weekly aggregate release appears, then it opens one manual reminder.
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
