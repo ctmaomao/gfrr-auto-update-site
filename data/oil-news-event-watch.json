@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-08T21:44:03.616Z",
+  "generatedAt": "2026-07-08T23:38:23.550Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-08T17:30:00.000Z",
-    "latestArticleAgeHours": 4.2,
+    "latestArticleAgeHours": 6.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 96,
-    "uniqueArticleCount": 86,
+    "uniqueArticleCount": 84,
     "liveSourceCount": 3,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 57,
+      "articleCount": 58,
       "sourceCount": 3,
-      "weightedSignal": 513,
+      "weightedSignal": 522,
       "topArticles": [
         {
           "domain": "punchng.com",
@@ -227,9 +227,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 23,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 92,
+      "weightedSignal": 88,
       "topArticles": [
         {
           "domain": "insurancejournal.com",
@@ -389,9 +389,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 43,
+      "articleCount": 42,
       "sourceCount": 3,
-      "weightedSignal": 193.5,
+      "weightedSignal": 189,
       "topArticles": [
         {
           "domain": "punchng.com",
@@ -444,9 +444,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 58,
+      "articleCount": 56,
       "sourceCount": 3,
-      "weightedSignal": 261,
+      "weightedSignal": 252,
       "topArticles": [
         {
           "domain": "businesstimes.com.sg",
@@ -495,9 +495,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 38,
+      "articleCount": 37,
       "sourceCount": 3,
-      "weightedSignal": 114,
+      "weightedSignal": 111,
       "topArticles": [
         {
           "domain": "punchng.com",
@@ -713,6 +713,25 @@
       ]
     },
     {
+      "domain": "nytimes.com",
+      "publishedAt": "2026-07-08T04:45:06.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "market_reaction",
+        "sanctions_shadow_fleet"
+      ]
+    },
+    {
       "domain": "mining.com.au",
       "publishedAt": "2026-07-08T00:56:31.000Z",
       "sources": [
@@ -744,23 +763,6 @@
       ],
       "queryIds": [
         "facility_supply_disruption"
-      ]
-    },
-    {
-      "domain": "reuters.com",
-      "publishedAt": "2026-07-06T00:36:18.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "sanctions",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
       ]
     }
   ],
@@ -816,10 +818,10 @@
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 2,
+      "primary_wire_or_official": 1,
       "major_financial_media": 1,
       "industry_trade": 4,
-      "aggregator_or_blog": 5,
+      "aggregator_or_blog": 6,
       "low_confidence": 0
     },
     "contradiction": {
@@ -895,7 +897,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-08T21:44:03.616Z",
+      "generatedAt": "2026-07-08T23:38:23.550Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
