@@ -6,9 +6,9 @@ env:
 on:
   workflow_dispatch:
   schedule:
-    # Thursday 23:30 UTC — after the weekly EIA WPSR release (Wed) and after that
-    # day's Build Daily Radar Data (22:30) so radar-data reuse fields are fresh.
-    - cron: '30 23 * * 4'
+    # Daily 23:45 UTC — after Build Daily Radar Data (22:30) so ODP reuses
+    # fresh radar market proxies while EIA WPSR remains the weekly physical anchor.
+    - cron: '45 23 * * *'
 
 concurrency:
   group: gfrr-oil-directional-${{ github.ref }}

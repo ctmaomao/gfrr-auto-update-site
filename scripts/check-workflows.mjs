@@ -731,6 +731,28 @@ for (const file of [
   }
 }
 
+{
+  const file = '.github/workflows/refresh-oil-directional-pressure.yml';
+  if (!fs.existsSync(file)) {
+    addRuntimeFailure(file, 'Oil Directional Pressure refresh workflow missing');
+  } else {
+    const text = fs.readFileSync(file, 'utf8');
+    for (const needle of [
+      "cron: '45 23 * * *'",
+      'after Build Daily Radar Data (22:30)',
+      'fresh radar market proxies',
+      'EIA WPSR remains the weekly physical anchor',
+      'npm run build:oil-directional',
+      'npm run check:oil-directional',
+      'data/oil-directional-pressure.json'
+    ]) {
+      if (!text.includes(needle)) {
+        addRuntimeFailure(file, `missing ODP daily refresh marker "${needle}"`);
+      }
+    }
+  }
+}
+
 if (fs.existsSync(dailyWorkflowFile)) {
   const text = fs.readFileSync(dailyWorkflowFile, 'utf8');
   if (text.includes('--fail-on-large-drift')) {
