@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { safeRelativePath } from '../lib/check-script-helpers.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'firms-thermal-watch-review-p20';
@@ -124,15 +125,6 @@ function parseArgs(argv) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) {
-    return null;
-  }
-  return relativePath.replace(/\\/g, '/');
 }
 
 function isManualOrFixturePath(filePath) {

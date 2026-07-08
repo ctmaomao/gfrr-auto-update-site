@@ -74,10 +74,6 @@ function readText(relativePath) {
   return fs.readFileSync(absolute(relativePath), 'utf8');
 }
 
-function readJson(relativePath) {
-  return JSON.parse(readText(relativePath));
-}
-
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);

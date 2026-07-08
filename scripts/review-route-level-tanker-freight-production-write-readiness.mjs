@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { assertAllFalse as allFalse, assertAllTrue as allTrue, isManualArtifactPath, readJson, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const READINESS_VERSION = 'route-level-tanker-freight-production-write-readiness-v1';
@@ -97,32 +95,12 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/') === true;
 }
 
 function isSafeInputPath(filePath) {
   return isManualArtifactPath(filePath) || isFixturePath(filePath);
-}
-
-function readJson(filePath) {
-  if (!existsSync(resolve(filePath))) throw new Error(`Input file does not exist: ${filePath}`);
-  return JSON.parse(readFileSync(resolve(filePath), 'utf8'));
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function falseImpactMap() {
@@ -144,18 +122,6 @@ function falseImpactMap() {
     affectsGlobalRiskHeatmap: false,
     affectsCrossValidation: false
   };
-}
-
-function allFalse(record, label) {
-  for (const [key, value] of Object.entries(record || {})) {
-    if (value !== false) throw new Error(`${label}.${key} must be false.`);
-  }
-}
-
-function allTrue(record, label) {
-  for (const [key, value] of Object.entries(record || {})) {
-    if (value !== true) throw new Error(`${label}.${key} must be true.`);
-  }
 }
 
 function assertProjectionReview(review) {
@@ -246,7 +212,7 @@ function buildReadiness({ projectionReview, displayContract, frontendBrief, opti
     inputs: {
       projectionReview: {
         sourcePath: safeRelativePath(options.projectionReview),
-        artifactHash: hashObject(projectionReview),
+        artifactHash: shortHash(projectionReview),
         schemaVersion: projectionReview.schemaVersion,
         status: projectionReview.status,
         recommendation: projectionReview.recommendation,
@@ -256,14 +222,14 @@ function buildReadiness({ projectionReview, displayContract, frontendBrief, opti
       },
       displayContract: {
         sourcePath: safeRelativePath(options.displayContract),
-        artifactHash: hashObject(displayContract),
+        artifactHash: shortHash(displayContract),
         contractVersion: displayContract.contractVersion,
         status: displayContract.status,
         futureProductionFieldCandidate: displayContract.futureProductionFieldCandidate
       },
       frontendBrief: {
         sourcePath: safeRelativePath(options.frontendBrief),
-        artifactHash: hashObject(frontendBrief),
+        artifactHash: shortHash(frontendBrief),
         contractVersion: frontendBrief.contractVersion,
         status: frontendBrief.status,
         targetSurface: frontendBrief.targetSurface,
@@ -307,12 +273,6 @@ function buildReadiness({ projectionReview, displayContract, frontendBrief, opti
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(readiness) {

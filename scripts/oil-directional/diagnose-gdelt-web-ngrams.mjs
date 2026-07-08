@@ -1,12 +1,8 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { writeJson } from '../lib/check-script-helpers.mjs';
+import { relative, resolve } from 'node:path';
 import process from 'node:process';
-import {
-  fetchGdeltWebNgramsText,
-  probeGdeltWebNgramsFile,
-  sanitizeGdeltDiagnostics
-} from '../gdelt/fetch-gdelt.mjs';
+import { fetchGdeltWebNgramsText, probeGdeltWebNgramsFile, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
 
 const DIAGNOSIS_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json';
@@ -491,13 +487,6 @@ async function buildLiveArtifact(options, candidates) {
     ],
     boundary: BOUNDARY
   };
-}
-
-function writeJson(path, payload) {
-  const absolutePath = resolve(path);
-  mkdirSync(dirname(absolutePath), { recursive: true });
-  writeFileSync(absolutePath, `${JSON.stringify(payload, null, 2)}\n`);
-  return absolutePath;
 }
 
 async function main() {

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { dirname, extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'oil-thermal-baseline-samples-review-p25';
@@ -98,20 +99,6 @@ function parseArgs(argv) {
   }
 
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) {
-    return null;
-  }
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isFixturePath(filePath) {

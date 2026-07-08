@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'transport-shock-confirmation-factor-manual-samples-review-v1';
@@ -83,17 +84,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write review outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
   }
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -340,12 +330,6 @@ function buildEmptyReview(options) {
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

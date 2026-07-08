@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-score-readiness-v1';
@@ -108,13 +109,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
 function isDataPath(filePath) {
   return [
     DEFAULT_RADAR,
@@ -126,10 +120,6 @@ function isDataPath(filePath) {
 
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isAllowedInputPath(filePath) {
@@ -566,12 +556,6 @@ function buildReadiness(inputs, options) {
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(outputPath, value) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(readiness) {

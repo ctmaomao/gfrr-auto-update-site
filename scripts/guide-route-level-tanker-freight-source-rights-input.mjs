@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const INPUT_SCHEMA = 'route-level-tanker-freight-source-rights-input-v1';
@@ -19,17 +20,6 @@ Options:
   --template <path>  Approval template fixture. Default: ${DEFAULT_TEMPLATE}
   --json             Print full JSON guide to stdout.
   --help             Show this help.`);
-}
-
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
 }
 
 function isFixturePath(filePath) {

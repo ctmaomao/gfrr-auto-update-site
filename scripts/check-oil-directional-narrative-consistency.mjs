@@ -1,3 +1,4 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -6,10 +7,6 @@ const errors = [];
 
 function readText(path) {
   return readFileSync(resolve(ROOT, path), 'utf8');
-}
-
-function readJson(path) {
-  return JSON.parse(readText(path));
 }
 
 function fail(message) {

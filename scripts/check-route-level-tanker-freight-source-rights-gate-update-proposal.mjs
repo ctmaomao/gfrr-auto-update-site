@@ -1,3 +1,4 @@
+import { assertIncludes, readJson } from './lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,16 +47,8 @@ function readText(relativePath) {
   return fs.readFileSync(absolute(relativePath), 'utf8');
 }
 
-function readJson(relativePath) {
-  return JSON.parse(readText(relativePath));
-}
-
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function assertIncludes(text, marker, label) {
-  assert(text.includes(marker), `${label} missing marker: ${marker}`);
 }
 
 function assertAllFalse(record, label) {

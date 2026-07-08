@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const INPUT_SCHEMA = 'route-level-tanker-freight-source-rights-input-v1';
@@ -24,19 +25,8 @@ Options:
   --help               Show this help.`);
 }
 
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/') === true;
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
 }
 
 function parseArgs(argv) {

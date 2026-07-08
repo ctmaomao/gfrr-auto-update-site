@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { isManualArtifactPath } from '../lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const PREP_VERSION = 'oil-thermal-baseline-readiness-p47';
@@ -117,20 +118,6 @@ function parseArgs(argv) {
   }
 
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) {
-    return null;
-  }
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function runNodeScript(scriptPath, args) {

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-free-proxy-score-candidate-v1';
@@ -28,17 +29,6 @@ Boundary:
   Reads only docs/fixtures/transport-shock-confirmation-factor-free-proxy-score-design-v1.json or manual-artifacts/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data write, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isAllowedDesignFixture(filePath) {
@@ -360,12 +350,6 @@ function buildProjection(input, readinessInput) {
     boundary: BOUNDARY,
     limitationZh: '本投影只把免费代理低权重路径转成候选贡献审阅 artifact;即使候选贡献达到 cap,仍不得写入生产数据、前端卡片、ODP finalBias 或今日总判断打分。'
   };
-}
-
-function writeJson(outputPath, projection) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(projection, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(projection) {

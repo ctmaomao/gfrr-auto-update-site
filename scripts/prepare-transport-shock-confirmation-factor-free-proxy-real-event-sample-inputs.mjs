@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, readJson, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const MONITOR_VERSION = 'transport-shock-free-proxy-score-readiness-gate-monitor-p32';
@@ -89,28 +88,12 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
 }
 
 function isSafeInputPath(filePath) {
   return isManualArtifactPath(filePath) || isFixturePath(filePath);
-}
-
-function readJson(filePath) {
-  if (!existsSync(resolve(filePath))) throw new Error(`Input file does not exist: ${filePath}`);
-  return JSON.parse(readFileSync(resolve(filePath), 'utf8'));
 }
 
 function remaining(value) {
@@ -288,12 +271,6 @@ function buildPrep(monitor, options) {
     productionImpact: falseImpactMap(),
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const absolutePath = resolve(filePath);
-  mkdirSync(dirname(absolutePath), { recursive: true });
-  writeFileSync(absolutePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function writeTemplates(prep) {

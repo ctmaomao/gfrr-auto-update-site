@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-high-frequency-confirmation-v1';
@@ -35,13 +36,6 @@ Boundary:
   docs/fixtures/oil-thermal/, or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production write, workflow, Worker, frontend, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
 }
 
 function isManualOutputPath(filePath) {
@@ -423,12 +417,6 @@ function buildReview(options, inputs) {
     boundary: BOUNDARY,
     limitationZh: '本审阅只区分新闻重复升高、设施热异常重复观察和设施热异常升高重复观察;即使出现 partial progress,也不得确认断供、炼厂事故、霍尔木兹中断或油价方向,不得写入今日总判断打分。'
   };
-}
-
-function writeJson(outputPath, review) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(review, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

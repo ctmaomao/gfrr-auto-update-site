@@ -1,7 +1,6 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 // check-realtime-local-schema.mjs — local fallback/Daily-baseline realtime payload schema guard.
 // This intentionally does not enforce freshness; local realtime may lag Worker runtime.
-import fs from 'node:fs';
-import path from 'node:path';
 
 const ROOT = process.cwd();
 const REALTIME_PATH = 'realtime/market.json';
@@ -34,10 +33,6 @@ function isIsoStringOrNull(value) {
   if (value === null) return true;
   if (typeof value !== 'string' || value.length === 0) return false;
   return Number.isFinite(Date.parse(value));
-}
-
-function readJson(relativePath) {
-  return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 
 function assertOptionalIso(value, label) {

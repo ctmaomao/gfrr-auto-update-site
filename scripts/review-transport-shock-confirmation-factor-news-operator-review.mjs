@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-news-operator-review-v1';
@@ -29,13 +30,6 @@ Boundary:
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No raw headline output, network, env, production write, workflow, Worker,
   frontend, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
 }
 
 function isAllowedInputPath(filePath) {
@@ -251,12 +245,6 @@ function buildReview(ledger, options) {
     boundary: BOUNDARY,
     limitationZh: '本复核只允许新闻人工闸门进入下一层交叉确认审阅;不确认通道关闭/重开、供应中断、路线级运费、油价方向或今日总判断打分。'
   };
-}
-
-function writeJson(outputPath, review) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(review, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

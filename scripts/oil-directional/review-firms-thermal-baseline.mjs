@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'firms-thermal-baseline-review-p19';
@@ -95,20 +96,6 @@ function parseArgs(argv) {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) {
-    return null;
-  }
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isSafeOutputPath(filePath) {

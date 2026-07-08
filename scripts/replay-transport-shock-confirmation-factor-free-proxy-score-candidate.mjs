@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-free-proxy-score-replay-v1';
@@ -24,17 +25,6 @@ Boundary:
   Reads only manual-artifacts/transport-shock-confirmation-factor/ or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -296,12 +286,6 @@ function buildReplay(input) {
     boundary: BOUNDARY,
     limitationZh: '本 replay 只验证免费代理候选的硬性零贡献控制,尚未做历史回放或真实误报率评估;不得写入生产数据或今日总判断打分。'
   };
-}
-
-function writeJson(outputPath, replay) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(replay, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(replay) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'route-level-tanker-freight-production-display-projection-review-v1';
@@ -82,17 +82,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/') === true;
 }
@@ -124,10 +113,6 @@ function readInput(filePath) {
     safePath: safeRelativePath(filePath),
     data: JSON.parse(readFileSync(resolve(filePath), 'utf8'))
   };
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function isoOrNull(value) {
@@ -185,7 +170,7 @@ function summarizeProjection(input) {
     ? projection.displayCandidate.routeSummary.repeatedRoutes
     : [];
   return {
-    projectionId: hashObject({ path: input.safePath, generatedAt: projection.generatedAt }),
+    projectionId: shortHash({ path: input.safePath, generatedAt: projection.generatedAt }),
     sourcePath: input.safePath,
     generatedAt: isoOrNull(projection.generatedAt),
     status: projection.status || null,
@@ -337,12 +322,6 @@ function buildEmptyReview(options) {
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { readFileSync } from 'node:fs';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'gdelt-web-ngrams-display-fallback-projection-p50';
@@ -70,18 +70,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write projection outside manual-artifacts/: ${options.output}`);
   }
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isFixturePath(filePath) {
@@ -261,13 +249,6 @@ function buildProjection(gateReview, options) {
     nextAllowedStep: 'p51_display_only_fallback_projection_review_no_production_write',
     boundary: BOUNDARY
   };
-}
-
-function writeJson(path, payload) {
-  const absolutePath = resolve(path);
-  mkdirSync(dirname(absolutePath), { recursive: true });
-  writeFileSync(absolutePath, `${JSON.stringify(payload, null, 2)}\n`);
-  return absolutePath;
 }
 
 function printSummary(projection) {

@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { assertIncludes, runNode } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -49,21 +49,6 @@ function readText(relativePath) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function assertIncludes(file, marker) {
-  assert(readText(file).includes(marker), `${file} missing marker: ${marker}`);
-}
-
-function runNode(args) {
-  const result = spawnSync(process.execPath, args, {
-    cwd: ROOT,
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
-  return String(result.stdout || '');
 }
 
 function assertMonitorSafety() {
@@ -126,8 +111,8 @@ function assertAuthorityDocs() {
   assert(packageJson.scripts[CHECK_COMMAND], `package.json missing ${CHECK_COMMAND}.`);
   assert(readText('scripts/check-suite.mjs').includes(CHECK_COMMAND), 'check-suite missing runtime score policy monitor checker.');
   for (const file of ['AGENTS.md', 'docs/DATA_CONTRACT.md', 'docs/DATA_SOURCES.md', 'docs/SIGNAL_INTAKE.md', 'docs/PROJECT_BACKLOG.md']) {
-    assertIncludes(file, MONITOR_VERSION);
-    assertIncludes(file, 'P-score-56');
+    assertIncludes(readText(file), MONITOR_VERSION, file);
+    assertIncludes(readText(file), 'P-score-56', file);
   }
 }
 

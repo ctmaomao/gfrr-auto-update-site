@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+import { isManualArtifactPath } from './lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const ARCHIVE_VERSION = 'transport-shock-confirmation-factor-history-sample-archive-p10';
@@ -92,18 +93,6 @@ function parseArgs(argv) {
   }
 
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isPlainObject(value) {

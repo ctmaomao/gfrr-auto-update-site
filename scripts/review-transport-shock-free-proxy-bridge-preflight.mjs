@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-free-proxy-bridge-preflight-v1';
@@ -35,13 +36,6 @@ Boundary:
   or manual-artifacts/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production write, workflow, Worker, frontend, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
 }
 
 function isAllowedInputPath(filePath) {
@@ -286,12 +280,6 @@ function buildReview(inputs) {
     boundary: BOUNDARY,
     limitationZh: '本飞检只把路线级运费缺失从低权重 free-proxy 路径中剥离,不确认路线运费,不绕过高频物理确认,不自动写分。'
   };
-}
-
-function writeJson(outputPath, review) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(review, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

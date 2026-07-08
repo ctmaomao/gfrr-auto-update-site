@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-runtime-score-policy-review-v1';
@@ -32,13 +33,6 @@ Boundary:
   cross-validation, or Bubble Watch.`);
 }
 
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
 function isProductionInputPath(filePath) {
   return safeRelativePath(filePath) === DEFAULT_INPUT;
 }
@@ -49,10 +43,6 @@ function isFixturePath(filePath) {
 
 function isSafeInputPath(filePath) {
   return isProductionInputPath(filePath) || isFixturePath(filePath);
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function manualArtifactWritePathChain(filePath) {

@@ -1,10 +1,7 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  buildCommittedHistory,
-  buildFirstRealRecordWriteReport,
-  mergeByIsoWeek
-} from './market-pricing/first-real-record-write-scaffold.mjs';
+import { buildCommittedHistory, buildFirstRealRecordWriteReport, mergeByIsoWeek } from './market-pricing/first-real-record-write-scaffold.mjs';
 
 const ROOT = process.cwd();
 const FIXTURE_PATH = path.join(
@@ -69,10 +66,6 @@ function assert(condition, message) {
 
 function readText(relativeOrAbsolutePath) {
   return fs.readFileSync(relativeOrAbsolutePath, 'utf8');
-}
-
-function readJson(filePath) {
-  return JSON.parse(readText(filePath));
 }
 
 function snapshotProtectedFiles() {

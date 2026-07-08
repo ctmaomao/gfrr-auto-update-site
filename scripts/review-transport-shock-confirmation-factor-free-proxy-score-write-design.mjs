@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-free-proxy-score-write-design-review-v1';
@@ -29,17 +30,6 @@ Boundary:
   Reads only manual-artifacts/transport-shock-confirmation-factor/ or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -300,12 +290,6 @@ function buildReview(candidateInput, replayInput) {
     boundary: BOUNDARY,
     limitationZh: '本 review 只确认免费代理候选的 3% cap 与 replay 控制是否自洽;它不批准生产写分,也不证明历史回测、真实误报率或今日油价方向。'
   };
-}
-
-function writeJson(outputPath, value) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

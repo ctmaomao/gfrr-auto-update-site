@@ -1,9 +1,7 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  buildMetricsCalculationReport,
-  computeRollingMetrics
-} from './market-pricing/metrics-calculation-scaffold.mjs';
+import { buildMetricsCalculationReport, computeRollingMetrics } from './market-pricing/metrics-calculation-scaffold.mjs';
 
 const ROOT = process.cwd();
 const FIXTURE_PATH = path.join(
@@ -85,10 +83,6 @@ function assertEqual(actual, expected, message) {
 
 function readText(relativeOrAbsolutePath) {
   return fs.readFileSync(relativeOrAbsolutePath, 'utf8');
-}
-
-function readJson(filePath) {
-  return JSON.parse(readText(filePath));
 }
 
 function round4(value) {

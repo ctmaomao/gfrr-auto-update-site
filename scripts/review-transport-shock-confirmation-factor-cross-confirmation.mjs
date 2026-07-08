@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-cross-confirmation-v1';
@@ -45,19 +46,8 @@ Boundary:
   No network, env, production write, workflow, Worker, frontend, ODP finalBias, or main judgment scoring.`);
 }
 
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isRadarInputPath(filePath) {
@@ -525,12 +515,6 @@ function buildReview(inputs, options) {
     boundary: BOUNDARY,
     limitationZh: '本审阅只把运输候选、新闻人工闸门、新闻/卫星高频确认和 ODP 周度锚放在同一张交叉确认表;它不确认封锁、断供、油轮流向、设施事故、制裁影响或油价方向,也不批准今日总判断打分。'
   };
-}
-
-function writeJson(outputPath, review) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(review, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

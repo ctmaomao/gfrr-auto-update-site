@@ -1,7 +1,6 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 // check-market-pricing-metrics-schema.mjs — direct guard for the production sidecar
 // consumed by the homepage market-temperature and cross-validation renderers.
-import fs from 'node:fs';
-import path from 'node:path';
 
 const ROOT = process.cwd();
 const METRICS_PATH = 'data/market-pricing-metrics.json';
@@ -80,10 +79,6 @@ function isIsoTimestamp(value) {
 
 function hasChineseText(value) {
   return typeof value === 'string' && /[\u4e00-\u9fff]/u.test(value);
-}
-
-function readJson(relativePath) {
-  return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 
 function rangeFor(records, key) {

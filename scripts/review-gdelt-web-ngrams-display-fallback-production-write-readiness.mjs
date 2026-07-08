@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, readJson, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const READINESS_VERSION = 'gdelt-web-ngrams-display-fallback-production-write-readiness-p55';
@@ -83,32 +81,12 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/') === true;
 }
 
 function isSafeInputPath(filePath) {
   return isManualArtifactPath(filePath) || isFixturePath(filePath);
-}
-
-function readJson(filePath) {
-  if (!existsSync(resolve(filePath))) throw new Error(`Input file does not exist: ${filePath}`);
-  return JSON.parse(readFileSync(resolve(filePath), 'utf8'));
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function clone(value) {
@@ -178,14 +156,14 @@ function buildReadiness({ options, review, projection }) {
     inputs: {
       disabledWriterReview: {
         sourcePath: safeRelativePath(options.review),
-        artifactHash: hashObject(review),
+        artifactHash: shortHash(review),
         schemaVersion: review.schemaVersion,
         reviewState: review.reviewState,
         status: review.status
       },
       disabledWriterProjection: {
         sourcePath: safeRelativePath(options.projection),
-        artifactHash: hashObject(projection),
+        artifactHash: shortHash(projection),
         schemaVersion: projection.schemaVersion,
         status: projection.status,
         writerState: projection.writerState
@@ -277,12 +255,6 @@ function buildReadiness({ options, review, projection }) {
     nextAllowedStep: 'p56_display_only_fallback_production_display_write',
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 function main() {

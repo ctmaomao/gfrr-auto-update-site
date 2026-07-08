@@ -1,3 +1,4 @@
+import { assertIncludes } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -43,10 +44,6 @@ function readText(relativePath) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function assertIncludes(text, marker, label) {
-  assert(text.includes(marker), `${label} missing marker: ${marker}`);
 }
 
 function assertDoc() {

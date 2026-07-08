@@ -1,3 +1,4 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import { readFileSync } from 'node:fs';
 
 import { buildCrossValidationMatrix } from './modules/buildCrossValidationMatrix.js';
@@ -9,10 +10,6 @@ function fail(message) {
 
 function readText(path) {
   return readFileSync(path, 'utf8');
-}
-
-function readJson(path) {
-  return JSON.parse(readText(path));
 }
 
 const helperText = readText('scripts/modules/buildCrossValidationMatrix.js');

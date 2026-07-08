@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, readJson, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const INPUT_SCHEMA = 'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review-v1';
@@ -37,17 +36,6 @@ Boundary:
   Reads only manual-artifacts/transport-shock-confirmation-factor/ or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -119,11 +107,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write gate outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
   }
   return options;
-}
-
-function readJson(filePath) {
-  if (!existsSync(resolve(filePath))) throw new Error(`Input file does not exist: ${filePath}`);
-  return JSON.parse(readFileSync(resolve(filePath), 'utf8'));
 }
 
 function falseImpactMap() {
@@ -269,12 +252,6 @@ function buildGate(review, options) {
     boundary: BOUNDARY,
     limitationZh: '本 gate 只把 P-score-30 真实事件样本聚合结果转成入分准备门槛状态;即使 gate 未来通过,也只允许另开 reviewed score integration 设计,不得自动入分。'
   };
-}
-
-function writeJson(outputPath, value) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(gate) {

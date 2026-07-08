@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
@@ -79,18 +80,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing output outside manual-artifacts/: ${options.output}`);
   }
   return options;
-}
-
-function safeRelativePath(path) {
-  const absolutePath = resolve(path);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(path) {
-  const relativePath = safeRelativePath(path);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function manualArtifactWritePathChain(path) {

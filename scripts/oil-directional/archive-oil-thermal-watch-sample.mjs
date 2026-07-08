@@ -1,12 +1,7 @@
 #!/usr/bin/env node
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync
-} from 'node:fs';
-import { basename, dirname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const ARCHIVE_VERSION = 'oil-thermal-watch-sample-archive-p26';
@@ -94,20 +89,6 @@ function normalizeLabel(value) {
     throw new Error('Invalid --label. Expected 48 characters or fewer.');
   }
   return normalized;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) {
-    return null;
-  }
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isFixturePath(filePath) {

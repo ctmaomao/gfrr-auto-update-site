@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, readJson, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const SCAFFOLD_VERSION = 'route-level-tanker-freight-disabled-writer-scaffold-v1';
@@ -79,32 +77,12 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/') === true;
 }
 
 function isSafeInputPath(filePath) {
   return isManualArtifactPath(filePath) || isFixturePath(filePath);
-}
-
-function readJson(filePath) {
-  if (!existsSync(resolve(filePath))) throw new Error(`Input file does not exist: ${filePath}`);
-  return JSON.parse(readFileSync(resolve(filePath), 'utf8'));
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function falseImpactMap() {
@@ -186,13 +164,13 @@ function buildDisabledProjection({ writerContract, sourceRightsGate, options }) 
     inputs: {
       writerContract: {
         sourcePath: safeRelativePath(options.writerContract),
-        artifactHash: hashObject(writerContract),
+        artifactHash: shortHash(writerContract),
         contractVersion: writerContract.contractVersion,
         status: writerContract.status
       },
       sourceRightsGate: {
         sourcePath: safeRelativePath(options.sourceRightsGate),
-        artifactHash: hashObject(sourceRightsGate),
+        artifactHash: shortHash(sourceRightsGate),
         contractVersion: sourceRightsGate.contractVersion,
         status: sourceRightsGate.status,
         blockReason: sourceRightsGate.gateDecision?.blockReason || null
@@ -253,12 +231,6 @@ function buildDisabledProjection({ writerContract, sourceRightsGate, options }) 
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(projection) {

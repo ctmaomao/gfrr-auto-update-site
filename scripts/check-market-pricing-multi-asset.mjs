@@ -1,5 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { readJson } from './lib/check-script-helpers.mjs';
 
 const ROOT = process.cwd();
 const HISTORY_PATH = 'data/market-pricing-history.json';
@@ -38,10 +37,6 @@ function assertEqual(actual, expected, message) {
     Object.is(actual, expected),
     `${message}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
   );
-}
-
-function readJson(relativePath) {
-  return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 
 function isRecord(value) {

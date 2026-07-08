@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
 import { appendFileSync, existsSync, lstatSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -37,21 +38,10 @@ Boundary:
   No network, secrets, production data write, workflow trigger, Worker, frontend, ODP finalBias, or main judgment scoring.`);
 }
 
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
 function isAllowedInputPath(filePath) {
   const relativePath = safeRelativePath(filePath);
   return relativePath?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true
     || relativePath?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function parseArgs(argv) {

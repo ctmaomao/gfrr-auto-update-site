@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, safeRelativePath, writeJson } from '../lib/check-script-helpers.mjs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'gdelt-web-ngrams-samples-review-p43';
@@ -104,18 +105,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write review outside manual-artifacts/: ${options.output}`);
   }
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isFixturePath(filePath) {
@@ -417,13 +406,6 @@ function buildReview(samples, options) {
     productionDisplayApproved: false,
     boundary: BOUNDARY
   };
-}
-
-function writeJson(path, payload) {
-  const absolutePath = resolve(path);
-  mkdirSync(dirname(absolutePath), { recursive: true });
-  writeFileSync(absolutePath, `${JSON.stringify(payload, null, 2)}\n`);
-  return absolutePath;
 }
 
 function shouldExitNonZero(review, options) {

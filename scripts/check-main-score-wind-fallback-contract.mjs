@@ -1,13 +1,10 @@
 #!/usr/bin/env node
+import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
 function readText(file) {
   return fs.readFileSync(path.resolve(file), 'utf8');
-}
-
-function readJson(file) {
-  return JSON.parse(readText(file));
 }
 
 const failures = [];

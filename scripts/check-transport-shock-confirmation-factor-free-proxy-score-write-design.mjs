@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { runNode } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -50,17 +50,6 @@ function readText(relativePath) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function runNode(args) {
-  const result = spawnSync(process.execPath, args, {
-    cwd: ROOT,
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
-  return String(result.stdout || '');
 }
 
 function assertScriptSafety() {

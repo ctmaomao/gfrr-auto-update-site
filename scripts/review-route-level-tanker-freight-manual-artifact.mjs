@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const CONTRACT_VERSION = 'route-level-tanker-freight-manual-artifact-scaffold-v1';
@@ -55,17 +56,6 @@ Options:
   --json           Print full JSON review to stdout.
   --no-output      Do not write the ignored manual review artifact.
   --help           Show this help.`);
-}
-
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -337,12 +327,6 @@ function missingInputReview(options) {
   review.recommendation = 'create_manual_input_under_manual_artifacts_then_rerun';
   inputIssue(review, 'routes_not_array', `Input file not found: ${options.input}`);
   return review;
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

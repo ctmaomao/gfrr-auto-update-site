@@ -1,13 +1,8 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import {
-  MACRO_OVERVIEW_NARRATIVE_BYTE_BUDGET,
-  MACRO_OVERVIEW_NARRATIVE_VERSION,
-  buildMacroOverviewHeadline,
-  buildMacroOverviewNarrativePlan,
-  buildMacroOverviewVerdictBodyFromPlan,
-} from './modules/macroOverviewNarrative.js';
+import { MACRO_OVERVIEW_NARRATIVE_BYTE_BUDGET, MACRO_OVERVIEW_NARRATIVE_VERSION, buildMacroOverviewHeadline, buildMacroOverviewNarrativePlan, buildMacroOverviewVerdictBodyFromPlan } from './modules/macroOverviewNarrative.js';
 
 const ROOT = process.cwd();
 const errors = [];
@@ -22,10 +17,6 @@ function assert(condition, message) {
 
 function readText(relativePath) {
   return readFileSync(resolve(ROOT, relativePath), 'utf8');
-}
-
-function readJson(relativePath) {
-  return JSON.parse(readText(relativePath));
 }
 
 function byteLength(text) {

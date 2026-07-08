@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const INPUT_SCHEMA = 'route-level-tanker-freight-source-rights-input-v1';
@@ -28,17 +29,6 @@ Options:
   --json             Print full JSON review to stdout.
   --strict           Exit non-zero unless artifact is reviewable or fixture-reviewable.
   --help             Show this help.`);
-}
-
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -110,10 +100,6 @@ function readJson(filePath) {
 
 function nowIso() {
   return new Date().toISOString();
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function hashText(value) {
@@ -271,7 +257,7 @@ function reviewInput(input, options, template, gate) {
   review.inputSummary.sourceKey = typeof input.sourceKey === 'string' ? input.sourceKey.trim() : null;
   review.inputSummary.sourceOwnerHash = hashText(input.requiredApprovalEvidence?.sourceOwner || '');
   review.inputSummary.operatorAttestationHash = hashText(input.operatorReview?.attestation || '');
-  review.inputSummary.evidenceHash = hashObject(input.requiredApprovalEvidence || {});
+  review.inputSummary.evidenceHash = shortHash(input.requiredApprovalEvidence || {});
 
   const requiredEvidenceKeys = Object.keys(template.requiredApprovalEvidence || {});
   for (const key of requiredEvidenceKeys) {
@@ -329,12 +315,6 @@ function missingInputReview(options, template, gate) {
     'source_rights_gate_requires_separate_review'
   ];
   return review;
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

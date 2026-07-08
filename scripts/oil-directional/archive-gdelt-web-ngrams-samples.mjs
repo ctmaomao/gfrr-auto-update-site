@@ -1,20 +1,11 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync
-} from 'node:fs';
-import { basename, dirname, extname, relative, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { basename, dirname, extname, resolve } from 'node:path';
 import process from 'node:process';
-import {
-  GDELT_WEB_NGRAMS_ARTIFACT_SANITIZER_VERSION,
-  sanitizeGdeltWebNgramsArtifact,
-  stringifySanitizedArtifact
-} from './sanitize-gdelt-web-ngrams-artifacts.mjs';
+import { GDELT_WEB_NGRAMS_ARTIFACT_SANITIZER_VERSION, sanitizeGdeltWebNgramsArtifact, stringifySanitizedArtifact } from './sanitize-gdelt-web-ngrams-artifacts.mjs';
 
 const ARCHIVE_VERSION = 'gdelt-web-ngrams-sample-archive-p44';
 const SAMPLE_SCHEMA_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
@@ -146,18 +137,6 @@ function normalizeLabel(value) {
   if (!normalized) throw new Error('Invalid --label. Use at least one ASCII letter or number.');
   if (normalized.length > 48) throw new Error('Invalid --label. Expected 48 characters or fewer.');
   return normalized;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isFixturePath(filePath) {

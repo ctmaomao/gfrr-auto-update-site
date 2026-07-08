@@ -1,3 +1,4 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -34,10 +35,6 @@ function addError(errors, message) {
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
-}
-
-function readJson(filePath) {
-  return JSON.parse(readText(filePath));
 }
 
 function listFiles(root, predicate = () => true) {

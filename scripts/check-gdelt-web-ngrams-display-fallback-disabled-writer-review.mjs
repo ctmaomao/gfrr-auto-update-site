@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
+import { readJson, runNode } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
@@ -37,10 +37,6 @@ function readText(relativePath) {
   return readFileSync(absolute(relativePath), 'utf8');
 }
 
-function readJson(relativePath) {
-  return JSON.parse(readText(relativePath));
-}
-
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -70,17 +66,6 @@ function assertNoRawContentMarkers(value, path = '$') {
   if (value && typeof value === 'object') {
     for (const [key, nested] of Object.entries(value)) assertNoRawContentMarkers(nested, `${path}.${key}`);
   }
-}
-
-function runNode(args) {
-  const result = spawnSync(process.execPath, args, {
-    cwd: ROOT,
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`node ${args.join(' ')} failed:\n${result.stdout}\n${result.stderr}`);
-  return String(result.stdout || '');
 }
 
 function assertDoc() {

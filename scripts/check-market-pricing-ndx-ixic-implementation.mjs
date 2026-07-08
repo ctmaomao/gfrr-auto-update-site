@@ -1,3 +1,4 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -90,10 +91,6 @@ function assertEqual(actual, expected, message) {
 
 function readText(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), 'utf8');
-}
-
-function readJson(relativePath) {
-  return JSON.parse(readText(relativePath));
 }
 
 function isIgnored(relativePath) {

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, readJson, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const REVIEW_SCHEMA = 'route-level-tanker-freight-source-rights-artifact-review-v1';
@@ -25,17 +23,6 @@ Options:
   --json                         Print full JSON proposal to stdout.
   --strict                       Exit non-zero unless proposal is ready or fixture-blocked.
   --help                         Show this help.`);
-}
-
-function safeRelativePath(filePath) {
-  const abs = resolve(filePath);
-  const rel = relative(process.cwd(), abs);
-  if (rel === '' || rel.startsWith('..')) return null;
-  return rel.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -94,15 +81,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write proposal outside manual-artifacts/: ${options.output}`);
   }
   return options;
-}
-
-function readJson(filePath) {
-  if (!existsSync(resolve(filePath))) throw new Error(`Input file does not exist: ${filePath}`);
-  return JSON.parse(readFileSync(resolve(filePath), 'utf8'));
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function falseImpactMap() {
@@ -184,7 +162,7 @@ function buildProposal({ review, gate, options }) {
     generatedAt: new Date().toISOString(),
     sourceRightsReview: {
       path: safeRelativePath(options.sourceRightsReview),
-      hash: hashObject(review),
+      hash: shortHash(review),
       status: review.status,
       fixtureOnly,
       sourceKey,
@@ -192,7 +170,7 @@ function buildProposal({ review, gate, options }) {
     },
     currentGate: {
       path: safeRelativePath(options.gate),
-      hash: hashObject(gate),
+      hash: shortHash(gate),
       status: gate.status,
       blockReason: gate.gateDecision?.blockReason || 'source_rights_and_redistribution_not_approved',
       approvedSourcesCount: Array.isArray(gate.approvedSources) ? gate.approvedSources.length : null
@@ -244,12 +222,6 @@ function buildProposal({ review, gate, options }) {
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(proposal) {

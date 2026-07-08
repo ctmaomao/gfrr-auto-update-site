@@ -1,3 +1,4 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS } from './external-ai/production-contract.mjs';
@@ -9,10 +10,6 @@ const RENDER_MACRO_OVERVIEW_PATH = 'scripts/modules/renderMacroOverview.js';
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
-}
-
-function readJson(filePath) {
-  return JSON.parse(readText(filePath));
 }
 
 function isPlainObject(value) {

@@ -1,13 +1,10 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
 import { appendFileSync, existsSync, lstatSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import process from 'node:process';
 
-import {
-  gitJsonAtCommit,
-  gitOutput,
-  runTransportShockRefreshHistorySelfTests
-} from './transport-shock-refresh-history.mjs';
+import { gitJsonAtCommit, gitOutput, runTransportShockRefreshHistorySelfTests } from './transport-shock-refresh-history.mjs';
 
 const MONITOR_VERSION = 'transport-shock-score-impact-history-monitor-p54';
 const IMPACT_CONTRACT_VERSION = 'transport-shock-scoring-impact-v1';
@@ -105,18 +102,6 @@ function isPlainObject(value) {
 
 function finiteNumberOrNull(value) {
   return Number.isFinite(value) ? value : null;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function manualArtifactWritePathChain(filePath) {

@@ -1,3 +1,4 @@
+import { writeJson } from './lib/check-script-helpers.mjs';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -248,12 +249,6 @@ function reviewInput(inputPath) {
     }
   }
   return review;
-}
-
-function writeJson(outputPath, review) {
-  const absoluteOutput = path.join(ROOT, outputPath);
-  fs.mkdirSync(path.dirname(absoluteOutput), { recursive: true });
-  fs.writeFileSync(absoluteOutput, `${JSON.stringify(review, null, 2)}\n`);
 }
 
 function printSummary(review) {

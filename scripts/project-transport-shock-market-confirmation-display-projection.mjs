@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-market-confirmation-display-projection-v1';
@@ -28,17 +28,6 @@ Boundary:
   Reads only manual-artifacts/transport-shock-confirmation-factor/ or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/transport-shock-confirmation-factor/') === true;
 }
 
 function isFixturePath(filePath) {
@@ -94,10 +83,6 @@ function readReview(inputPath) {
   const absolutePath = resolve(inputPath);
   if (!existsSync(absolutePath)) throw new Error(`Input file does not exist: ${inputPath}`);
   return JSON.parse(readFileSync(absolutePath, 'utf8'));
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function falseImpactMap() {
@@ -168,7 +153,7 @@ function buildProjection(review, options) {
     sourceMode: 'market_confirmation_manual_sample_review_dry_run',
     input: {
       sourcePath: safeRelativePath(options.input),
-      artifactHash: hashObject(review),
+      artifactHash: shortHash(review),
       schemaVersion: review.schemaVersion,
       contractVersion: review.contractVersion || null,
       status: review.status,
@@ -230,12 +215,6 @@ function buildProjection(review, options) {
     },
     boundary: BOUNDARY
   };
-}
-
-function writeJson(outputPath, projection) {
-  const absoluteOutput = resolve(outputPath);
-  mkdirSync(dirname(absoluteOutput), { recursive: true });
-  writeFileSync(absoluteOutput, `${JSON.stringify(projection, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(projection) {

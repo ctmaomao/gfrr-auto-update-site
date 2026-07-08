@@ -1,3 +1,4 @@
+import { readJson } from './lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -18,10 +19,6 @@ function fail(message) {
 
 function readText(relativePath) {
   return readFileSync(resolve(ROOT, relativePath), 'utf8');
-}
-
-function readJson(relativePath) {
-  return JSON.parse(readText(relativePath));
 }
 
 function parseMapKeys(source, mapName) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { isManualArtifactPath, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'gdelt-web-ngrams-display-fallback-projection-review-p51';
@@ -85,17 +85,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('manual-artifacts/') === true;
-}
-
 function isFixturePath(filePath) {
   return safeRelativePath(filePath)?.startsWith('docs/fixtures/') === true;
 }
@@ -129,10 +118,6 @@ function readInput(filePath) {
     safePath: safeRelativePath(filePath),
     data: JSON.parse(readFileSync(resolve(filePath), 'utf8'))
   };
-}
-
-function hashObject(value) {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 }
 
 function allFalseEntries(value = {}) {
@@ -247,7 +232,7 @@ function summarizeProjection(input) {
   const aggregate = projection.projectedProductionField?.projectedShape?.aggregate || {};
   const bucketCounts = aggregate.bucketCounts || {};
   return {
-    projectionId: hashObject({ sourcePath: input.safePath, generatedAt: projection.generatedAt }),
+    projectionId: shortHash({ sourcePath: input.safePath, generatedAt: projection.generatedAt }),
     sourcePath: input.safePath,
     generatedAt: projection.generatedAt || null,
     status: projection.status || null,
@@ -419,12 +404,6 @@ function buildEmptyReview(options) {
     nextAllowedStep: NEXT_STEP,
     boundary: BOUNDARY
   };
-}
-
-function writeJson(filePath, value) {
-  const outputPath = resolve(filePath);
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function printSummary(review) {

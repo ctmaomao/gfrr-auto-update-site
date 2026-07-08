@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, relative, resolve } from 'node:path';
+import { dirname, extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'oil-news-claim-ledger-p52';
@@ -177,18 +178,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write claim ledger outside manual-artifacts/: ${options.output}`);
   }
   return options;
-}
-
-function safeRelativePath(filePath) {
-  const absolutePath = resolve(filePath);
-  const relativePath = relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..')) return null;
-  return relativePath.replace(/\\/g, '/');
-}
-
-function isManualArtifactPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('manual-artifacts/'));
 }
 
 function isFixturePath(filePath) {
