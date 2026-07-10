@@ -440,8 +440,40 @@ function printSummary(review) {
   console.log(`boundary: ${review.boundary}`);
 }
 
+function runPolicySelfTests() {
+  const cases = [
+    ['normal', { status: 'normal', score: 15, eligible: false }, 0, 'candidate_not_eligible_zero_contribution'],
+    ['watch-50', { status: 'watch', score: 50, eligible: true }, 1, 'owner_approved_free_proxy_transport_pressure_low_weight_applied'],
+    ['watch-60', { status: 'watch', score: 60, eligible: true }, 2, 'owner_approved_free_proxy_transport_pressure_low_weight_applied'],
+    ['elevated-75', { status: 'elevated_watch', score: 75, eligible: true }, 3, 'owner_approved_free_proxy_transport_pressure_low_weight_applied'],
+    ['stale', { status: 'watch', score: 60, eligible: true, age: 8 }, 0, 'candidate_stale_zero_contribution'],
+    ['not-live', { status: 'watch', score: 60, eligible: true, source: 'fallback' }, 0, 'candidate_not_live_zero_contribution']
+  ];
+  for (const [name, input, contributionPct, reason] of cases) {
+    const impact = buildExpectedImpact({
+      macroDrivers: {
+        energyTransport: {
+          sourceStatus: { chokepoints: input.source || 'live' },
+          latestAgeDays: input.age ?? 1,
+          transportShockCandidate: {
+            status: input.status,
+            score: input.score,
+            confidence: 'low',
+            eligibleForMainScore: input.eligible
+          }
+        }
+      },
+      transportShockScoringImpact: { scoreBeforeTransport: 29 }
+    });
+    if (impact.contributionPct !== contributionPct || impact.reason !== reason || impact.applied !== (contributionPct > 0)) {
+      throw new Error(`Runtime score policy self-test failed: ${name}`);
+    }
+  }
+}
+
 function main() {
   try {
+    runPolicySelfTests();
     const options = parseArgs(process.argv.slice(2));
     const review = buildReview(readJson(options.input), options.input);
     if (options.writeOutput) writeReview(options.output, review);
