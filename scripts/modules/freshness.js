@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=transport-shock-score-attribution-1';
+﻿import { fmtNumSafe } from './config.js?v=oil-news-claim-axis-gate-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

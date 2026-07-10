@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
+import { buildClaimPolarityAggregate, CLAIM_AXES } from './oil-directional/oil-news-claim-classifier.mjs';
 
 const errors = [];
 const fail = (message) => errors.push(message);
@@ -56,6 +57,15 @@ const PRODUCTION_FALSE_KEYS = [
   'affectsCrossValidation'
 ];
 const FORBIDDEN_ARTICLE_FIELDS = new Set(['title', 'url', 'snippet', 'raw', 'body', 'rawResponse']);
+const CLAIM_AXIS_STATES = new Set([
+  'mixed_or_contested',
+  'risk_escalation_supported',
+  'risk_escalation_unconfirmed',
+  'risk_deescalation_supported',
+  'risk_deescalation_unconfirmed',
+  'market_reaction_observed',
+  'insufficient_directional_claims'
+]);
 
 function finiteNonNegative(value) {
   return Number.isFinite(value) && value >= 0;
@@ -131,6 +141,43 @@ function assertGdeltWebNgramsFallbackSourceCache(cache) {
   if (cache.workflowAutomationApproved !== false || cache.liveFetchApproved !== false || cache.apiKeyReadApproved !== false) {
     fail('sourceCaches.gdeltWebNgramsFallback must not approve workflow/live fetch/API key reads');
   }
+}
+
+function assertClaimAxisGate(gate, path = 'claimPolarity.axisGate') {
+  if (!gate || typeof gate !== 'object') {
+    fail(`${path} missing`);
+    return;
+  }
+  if (gate.ruleVersion !== 'oil-news-claim-axis-gate-v1') fail(`${path}.ruleVersion invalid`);
+  if (!['mixed_axes_manual_review', 'stable_directional_axis_observed', 'no_stable_directional_axis'].includes(gate.overallState)) {
+    fail(`${path}.overallState invalid: ${gate.overallState}`);
+  }
+  for (const field of ['mixedAxisCount', 'stableDirectionalAxisCount']) {
+    if (!finiteNonNegative(gate[field])) fail(`${path}.${field} must be non-negative number`);
+  }
+  for (const axis of CLAIM_AXES) {
+    const row = gate.axes?.[axis];
+    if (!row || !CLAIM_AXIS_STATES.has(row.state)) fail(`${path}.axes.${axis}.state invalid`);
+    if (!finiteNonNegative(row?.claimCount) || !finiteNonNegative(row?.sourceDomainCount)) {
+      fail(`${path}.axes.${axis} counts must be non-negative numbers`);
+    }
+    if (typeof row?.gateOpen !== 'boolean') fail(`${path}.axes.${axis}.gateOpen must be boolean`);
+  }
+  if (gate.displayOnly !== true || gate.eligibleForScoring !== false) fail(`${path} must remain display-only and non-scoring`);
+}
+
+const axisGateSelfCheck = buildClaimPolarityAggregate([
+  { title: 'Hormuz tanker attacks halt transit', domain: 'reuters.com', buckets: ['chokepoint'] },
+  { title: 'Hormuz transit resumes after truce', domain: 'apnews.com', buckets: ['chokepoint'] },
+  { title: 'Oil supply disruption deepens', domain: 'reuters.com', buckets: ['supply_disruption'] },
+  { title: 'Crude exports halted', domain: 'apnews.com', buckets: ['supply_disruption'] }
+]).axisGate;
+assertClaimAxisGate(axisGateSelfCheck, 'axisGateSelfCheck');
+if (axisGateSelfCheck.axes.transport_security.state !== 'mixed_or_contested') {
+  fail('axisGateSelfCheck must keep contradictory transport claims mixed');
+}
+if (axisGateSelfCheck.axes.supply_flow.state !== 'risk_escalation_supported' || !axisGateSelfCheck.axes.supply_flow.gateOpen) {
+  fail('axisGateSelfCheck must open only the stable two-domain supply axis');
 }
 
 if (data.schemaVersion !== 'oil-news-event-watch-1') fail(`schemaVersion invalid: ${data.schemaVersion}`);
@@ -340,6 +387,7 @@ if (!data.claimPolarity || typeof data.claimPolarity !== 'object') {
     if (!Array.isArray(contradiction.eventTypes)) fail('claimPolarity.contradiction.eventTypes must be array');
     if (!Array.isArray(contradiction.details)) fail('claimPolarity.contradiction.details must be array');
   }
+  if (data.claimPolarity.axisGate !== undefined) assertClaimAxisGate(data.claimPolarity.axisGate);
   if (data.claimPolarity.displayMode !== 'aggregate_only_no_headlines') {
     fail(`claimPolarity.displayMode invalid: ${data.claimPolarity.displayMode}`);
   }

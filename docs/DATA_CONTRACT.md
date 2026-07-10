@@ -935,6 +935,8 @@ P56 新增 ODP frontend `READINESS / 证据成熟度矩阵` display-only 组,只
 
 P57 新增 ODP frontend Oil News `主张质量` display-only 行,只读 `data/oil-news-event-watch.json` 已有 `claimPolarity`、`headlineDisplayReadiness`、`titleRisk`、`sourceStatus`、`aggregate.liveSourceCount` 与 `queryCoverage` 聚合字段,把主张混合、未明/高主张、标题未批准、高主张标题、来源降级和多源不足汇总为一条人工复核质量提示。P57 不新增 production JSON 字段、不改 oil-news workflow cadence、不读取 `topArticles`、title、URL、snippet/body/raw response 或 ignored manual artifacts,不展示标题原文,不确认霍尔木兹关闭/重开、断供、油轮流向、炼厂事故、制裁影响或油价方向;不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
 
+Oil News axis gate v1 在既有 `claimPolarity` 内增加 `axisGate`,复用 P52 的 `claimAxis` 口径,把 transport security、supply flow、sanctions policy、facility operations、market reaction 与 general context 分轴统计。单轴只有在至少 2 条同向主张、至少 2 个来源域且无反向/混合主张时才可 `gateOpen=true`;任一反向或 mixed claim 必须保持 `mixed_or_contested`。该 gate 仅作 aggregate-only display,`displayOnly=true`,`eligibleForScoring=false`,不得包含 title/URL/titleHash/snippet/body/rawResponse,不得改变 Oil News aggregate confidence、ODP `finalBias`、主分、Brent promotion 或任何 decision/execution/position 路径。
+
 ### oil-directional-history.json — ODP PR2 历史 cache + 回测 GATE contract
 
 PR2 新增**第二个独立文件** `data/oil-directional-history.json`:8 个 WPSR weekly series 的 2014-至今全周度史 committed snapshot,供回测 harness 离线、可复现回放。**仅供 backtest GATE**,不进 live `oil-directional-pressure.json`、不进 `values.*` / scoring / `decisionModel` / `executionLock` / `positionGuidance` / cross-validation / Global Risk Heatmap。zero-dependency build(ADR-0013)+ fail-closed。
@@ -1005,7 +1007,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-score-attribution-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-news-claim-axis-gate-1`）。
 
 稳定边界：
 
@@ -1272,26 +1274,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-transport-shock-score-attribution-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP P57 Oil News claim quality frontend display patch:新增新闻主张质量聚合行,并继续通过 cache busting 避免浏览器沿用旧 module graph。
+oil-news-claim-axis-gate-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP P57 Oil News claim quality frontend display patch:新增新闻主张质量聚合行,并继续通过 cache busting 避免浏览器沿用旧 module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-score-attribution-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-news-claim-axis-gate-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=transport-shock-score-attribution-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=transport-shock-score-attribution-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `transport-shock-score-attribution-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=oil-news-claim-axis-gate-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=oil-news-claim-axis-gate-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `oil-news-claim-axis-gate-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs transport-shock-score-attribution-1
-npm run bump:frontend-asset-version -- transport-shock-score-attribution-1
+node scripts/bump-frontend-asset-version.mjs oil-news-claim-axis-gate-1
+npm run bump:frontend-asset-version -- oil-news-claim-axis-gate-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `transport-shock-score-attribution-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `oil-news-claim-axis-gate-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

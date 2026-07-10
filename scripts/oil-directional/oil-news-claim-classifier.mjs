@@ -26,6 +26,17 @@ export const SOURCE_TIERS = [
   'low_confidence'
 ];
 
+export const CLAIM_AXES = [
+  'transport_security',
+  'supply_flow',
+  'sanctions_policy',
+  'facility_operations',
+  'market_reaction',
+  'general_energy_context'
+];
+
+export const CLAIM_AXIS_GATE_VERSION = 'oil-news-claim-axis-gate-v1';
+
 export const RISK_ESCALATION_RE = /\b(blockade|closure|closed|shut|shutdown|halt|halts|disrupt|disrupted|disruption|mine|mines|mined|attack|attacks|strike|strikes|blast|explosion|fire|outage|war|sanction|sanctions|embargo|injured|missing|blockaded)\b/iu;
 export const RISK_DEESCALATION_RE = /\b(reopen|reopened|reopening|resume|resumes|resumed|restart|restarts|restarted|return|returns|returned|lifted|license|waiver|ceasefire|truce|de-escalat|deescalat|recover|recovered|restore|restored)\b/iu;
 export const MARKET_REACTION_RE = /\b(oil|brent|wti|crude|price|prices|futures|spread|spreads|trader|traders|market|risk premium|pre-war|decline|falls|losses|extends|inflation)\b/iu;
@@ -154,6 +165,15 @@ export function claimPolarity(article) {
   return 'unclear_or_high_claim';
 }
 
+export function claimAxis(type) {
+  if (type === 'chokepoint' || type === 'shipping') return 'transport_security';
+  if (type === 'supply') return 'supply_flow';
+  if (type === 'sanctions') return 'sanctions_policy';
+  if (type === 'facility') return 'facility_operations';
+  if (type === 'market_reaction') return 'market_reaction';
+  return 'general_energy_context';
+}
+
 export function claimTriggerTerms(article) {
   const title = article?.title;
   return {
@@ -165,12 +185,56 @@ export function claimTriggerTerms(article) {
 
 export function classifyOilNewsArticle(article) {
   const domain = typeof article?.domain === 'string' ? article.domain : null;
+  const type = eventType(article);
   return {
     domain,
     sourceTier: sourceTier(domain),
-    eventType: eventType(article),
+    eventType: type,
+    claimAxis: claimAxis(type),
     claimPolarity: claimPolarity(article),
     triggerTerms: claimTriggerTerms(article)
+  };
+}
+
+function axisState(rows) {
+  const counts = fillCounts(POLARITIES, countBy(rows, 'claimPolarity'));
+  const sourceDomainCount = new Set(rows.map((row) => row.domain).filter(Boolean)).size;
+  const escalation = counts.risk_escalation;
+  const deescalation = counts.risk_deescalation;
+  const mixed = counts.mixed_or_contested;
+  const stable = rows.length >= 2 && sourceDomainCount >= 2;
+  let state = 'insufficient_directional_claims';
+  if (mixed > 0 || (escalation > 0 && deescalation > 0)) state = 'mixed_or_contested';
+  else if (escalation > 0) state = stable ? 'risk_escalation_supported' : 'risk_escalation_unconfirmed';
+  else if (deescalation > 0) state = stable ? 'risk_deescalation_supported' : 'risk_deescalation_unconfirmed';
+  else if (counts.market_reaction_only > 0) state = 'market_reaction_observed';
+  return {
+    claimCount: rows.length,
+    sourceDomainCount,
+    polarityCounts: counts,
+    state,
+    gateOpen: state === 'risk_escalation_supported' || state === 'risk_deescalation_supported'
+  };
+}
+
+export function buildClaimAxisGate(claims) {
+  const axes = Object.fromEntries(CLAIM_AXES.map((axis) => [
+    axis,
+    axisState(claims.filter((claim) => claim.claimAxis === axis))
+  ]));
+  const rows = Object.values(axes);
+  const mixedAxisCount = rows.filter((row) => row.state === 'mixed_or_contested').length;
+  const stableDirectionalAxisCount = rows.filter((row) => row.gateOpen).length;
+  return {
+    ruleVersion: CLAIM_AXIS_GATE_VERSION,
+    overallState: mixedAxisCount > 0
+      ? 'mixed_axes_manual_review'
+      : (stableDirectionalAxisCount > 0 ? 'stable_directional_axis_observed' : 'no_stable_directional_axis'),
+    mixedAxisCount,
+    stableDirectionalAxisCount,
+    axes,
+    displayOnly: true,
+    eligibleForScoring: false
   };
 }
 
@@ -218,6 +282,7 @@ export function buildClaimPolarityAggregate(articles) {
     eventTypeCounts: fillCounts(EVENT_TYPES, countBy(rows, 'eventType')),
     sourceTierCounts: fillCounts(SOURCE_TIERS, countBy(rows, 'sourceTier')),
     contradiction: contradictionState(rows),
+    axisGate: buildClaimAxisGate(rows),
     displayMode: 'aggregate_only_no_headlines',
     directHeadlineDisplayAllowed: false,
     originalHeadlineDisplayAllowed: false,

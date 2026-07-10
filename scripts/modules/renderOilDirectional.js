@@ -1026,7 +1026,20 @@ function claimPolarityText(data) {
     no_directional_claim_dominance: '未见方向冲突',
   })[layer.contradiction?.state] || '状态待核';
   const unclearText = unclear > 0 ? ` / 未明 ${unclear}` : '';
-  return `升温 ${escalation} / 降温 ${deescalation} / 混合 ${mixed} / 市场 ${marketOnly}${unclearText} · ${state} · 不展示标题原文`;
+  const axes = layer.axisGate?.axes;
+  const axisLabel = (axis) => ({
+    mixed_or_contested: '矛盾待核',
+    risk_escalation_supported: '升温稳定',
+    risk_escalation_unconfirmed: '升温待证',
+    risk_deescalation_supported: '缓和稳定',
+    risk_deescalation_unconfirmed: '缓和待证',
+    market_reaction_observed: '反应已见',
+    insufficient_directional_claims: '证据不足'
+  })[axes?.[axis]?.state] || '待刷新';
+  const axisText = layer.axisGate?.ruleVersion === 'oil-news-claim-axis-gate-v1'
+    ? ` · 通道 ${axisLabel('transport_security')} / 供应 ${axisLabel('supply_flow')} / 市场 ${axisLabel('market_reaction')}`
+    : '';
+  return `升温 ${escalation} / 降温 ${deescalation} / 混合 ${mixed} / 市场 ${marketOnly}${unclearText} · ${state}${axisText} · 不展示标题原文`;
 }
 function claimPolarityTone(data) {
   const layer = data?.claimPolarity || {};
