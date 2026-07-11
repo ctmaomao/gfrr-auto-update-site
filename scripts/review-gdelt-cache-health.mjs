@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
+import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
@@ -18,12 +19,8 @@ const CACHE_PATHS = {
 };
 const BOUNDARY =
   'read-only GDELT cache health review; does not fetch external sources, write production data, change scoring, decision, execution, position, ODP finalBias, Brent promotion, Global Risk Heatmap, or cross-validation';
-const BUBBLE_WATCH_REFRESH_SCHEDULE_UTC = {
-  dayOfWeek: 1,
-  hour: 5,
-  minute: 30
-};
-const BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES = 2;
+const BUBBLE_WATCH_REFRESH_COMMIT_SUBJECT = 'chore: refresh bubble watch';
+const BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SUCCESSFUL_REFRESHES = 2;
 const BUBBLE_WATCH_CACHE_TTL_HOURS = 132;
 const BUBBLE_WATCH_CACHE_STALE_MAX_HOURS = 21 * 24;
 const SENSITIVE_CACHE_FIELD_RE = /^(?:authorization|authorizationHeader|apiKey|api_key|secret|token|bearer|bearerToken|cookie|cookies|setCookie|headers|requestHeaders|responseHeaders|rawProviderResponse|providerResponse|rawResponse|responseBody|rawBody|body)$/iu;
@@ -174,37 +171,85 @@ function assertNoForbiddenCacheFields(row, cache, codePrefix) {
   );
 }
 
-function countWeeklyScheduleSlotsSince(startIso, nowMs, schedule) {
-  const startMs = Date.parse(startIso || '');
-  if (!Number.isFinite(startMs) || !Number.isFinite(nowMs)) return null;
-  if (nowMs <= startMs) return 0;
-
-  const start = new Date(startMs);
-  const dayMs = 24 * 60 * 60 * 1000;
-  const weekMs = 7 * dayMs;
-  const daysUntilScheduled = (schedule.dayOfWeek - start.getUTCDay() + 7) % 7;
-  let cursorMs = Date.UTC(
-    start.getUTCFullYear(),
-    start.getUTCMonth(),
-    start.getUTCDate() + daysUntilScheduled,
-    schedule.hour,
-    schedule.minute,
-    0,
-    0
-  );
-  if (cursorMs <= startMs) cursorMs += weekMs;
-
-  let count = 0;
-  while (cursorMs <= nowMs) {
-    count += 1;
-    cursorMs += weekMs;
+function gitOutput(args) {
+  try {
+    return execFileSync('git', args, {
+      encoding: 'utf8',
+      maxBuffer: 10 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+  } catch {
+    return null;
   }
-  return count;
 }
 
-function bubblePlaceholderSeverity(elapsedScheduledRefreshes) {
-  return Number.isFinite(elapsedScheduledRefreshes)
-    && elapsedScheduledRefreshes >= BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES
+function gitJsonAtCommit(commit, path) {
+  return JSON.parse(execFileSync('git', ['show', `${commit}:${path}`], {
+    encoding: 'utf8',
+    maxBuffer: 10 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'ignore']
+  }));
+}
+
+function summarizeBubblePlaceholderRefreshHistory(
+  placeholderGeneratedAt,
+  { gitOutputFn = gitOutput, gitJsonAtCommitFn = gitJsonAtCommit } = {}
+) {
+  const summary = {
+    historyAvailable: false,
+    historyUnavailableReason: null,
+    successfulRefreshesWithPlaceholder: 0,
+    inspectedRefreshes: []
+  };
+  if (!Number.isFinite(Date.parse(placeholderGeneratedAt || ''))) {
+    summary.historyUnavailableReason = 'placeholder_generated_at_invalid';
+    return summary;
+  }
+  const shallow = gitOutputFn(['rev-parse', '--is-shallow-repository']);
+  if (shallow !== 'false') {
+    summary.historyUnavailableReason = shallow === 'true' ? 'git_history_shallow' : 'git_unavailable';
+    return summary;
+  }
+  const output = gitOutputFn([
+    'log',
+    '--format=%H%x09%aI%x09%s',
+    `--since=${placeholderGeneratedAt}`
+  ]);
+  if (output === null) {
+    summary.historyUnavailableReason = 'git_log_unavailable';
+    return summary;
+  }
+  const refreshes = output.split(/\r?\n/u).filter(Boolean).map((line) => {
+    const [commit, committedAt, ...subjectParts] = line.split('\t');
+    return { commit, committedAt, subject: subjectParts.join('\t') };
+  }).filter((row) => row.subject === BUBBLE_WATCH_REFRESH_COMMIT_SUBJECT);
+
+  for (const refresh of refreshes) {
+    try {
+      const cache = gitJsonAtCommitFn(refresh.commit, CACHE_PATHS.bubbleWatch);
+      const placeholder = cache?.status === 'not_initialized'
+        || cache?.requestMode === 'placeholder_until_next_bubble_watch_refresh';
+      summary.inspectedRefreshes.push({
+        commit: refresh.commit.slice(0, 8),
+        committedAt: refresh.committedAt,
+        placeholder
+      });
+      if (!placeholder) break;
+      summary.successfulRefreshesWithPlaceholder += 1;
+    } catch {
+      summary.historyUnavailableReason = 'git_cache_snapshot_unreadable';
+      summary.successfulRefreshesWithPlaceholder = 0;
+      return summary;
+    }
+  }
+  summary.historyAvailable = true;
+  return summary;
+}
+
+function bubblePlaceholderSeverity(successfulRefreshes, historyAvailable = true) {
+  return historyAvailable
+    && Number.isFinite(successfulRefreshes)
+    && successfulRefreshes >= BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SUCCESSFUL_REFRESHES
     ? 'fail'
     : 'watch';
 }
@@ -245,7 +290,7 @@ function awaitingPostMigrationRefresh(rows) {
 
 function recommendationFor(status, rows) {
   if (onlyBubblePlaceholderFail(rows)) {
-    return 'investigate_bubble_watch_scheduled_refresh_then_rerun_review';
+    return 'investigate_bubble_watch_refresh_history_then_rerun_review';
   }
   return status === 'fail'
     ? 'fix_schema_or_policy_before_relying_on_gdelt_caches'
@@ -352,7 +397,7 @@ function reviewOilNewsCache(nowMs, cacheOverride = null) {
   return row;
 }
 
-function reviewBubbleWatchCache(nowMs, cacheOverride = null) {
+function reviewBubbleWatchCache(nowMs, cacheOverride = null, refreshHistoryOverride = null) {
   const row = {
     key: 'bubble_watch_gdelt_doc',
     label: 'Bubble Watch GDELT DOC',
@@ -366,8 +411,10 @@ function reviewBubbleWatchCache(nowMs, cacheOverride = null) {
     errorCode: null,
     rateLimited: false,
     articleCount: null,
-    placeholderScheduledRefreshesElapsed: null,
-    placeholderFailAfterScheduledRefreshes: BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES,
+    placeholderRefreshHistoryAvailable: null,
+    placeholderHistoryUnavailableReason: null,
+    placeholderSuccessfulRefreshesObserved: null,
+    placeholderFailAfterSuccessfulRefreshes: BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SUCCESSFUL_REFRESHES,
     findings: []
   };
   const cacheRead = cacheOverride
@@ -409,23 +456,25 @@ function reviewBubbleWatchCache(nowMs, cacheOverride = null) {
     }
   }
   if (isPlaceholder) {
-    row.placeholderScheduledRefreshesElapsed = countWeeklyScheduleSlotsSince(
-      row.generatedAt,
-      nowMs,
-      BUBBLE_WATCH_REFRESH_SCHEDULE_UTC
+    const history = refreshHistoryOverride || summarizeBubblePlaceholderRefreshHistory(row.generatedAt);
+    row.placeholderRefreshHistoryAvailable = history.historyAvailable;
+    row.placeholderHistoryUnavailableReason = history.historyUnavailableReason;
+    row.placeholderSuccessfulRefreshesObserved = history.successfulRefreshesWithPlaceholder;
+    const severity = bubblePlaceholderSeverity(
+      row.placeholderSuccessfulRefreshesObserved,
+      row.placeholderRefreshHistoryAvailable
     );
-    const severity = bubblePlaceholderSeverity(row.placeholderScheduledRefreshesElapsed);
     const code = severity === 'fail'
       ? 'bubble_cache_placeholder_refresh_threshold_exceeded'
       : 'bubble_cache_awaits_first_post_p38_refresh';
-    const countLabel = row.placeholderScheduledRefreshesElapsed === null
+    const countLabel = row.placeholderSuccessfulRefreshesObserved === null
       ? 'unknown'
-      : String(row.placeholderScheduledRefreshesElapsed);
+      : String(row.placeholderSuccessfulRefreshesObserved);
     pushFinding(
       row,
       severity,
       code,
-      `Bubble Watch GDELT cache is still the P38 placeholder after ${countLabel}/${BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES} scheduled weekly refresh slots; refresh should write live/error/stale state.`
+      `Bubble Watch GDELT cache is still the P38 placeholder after ${countLabel}/${BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SUCCESSFUL_REFRESHES} successful refresh commits; refresh should write live/error/stale state.`
     );
   }
   if (row.rateLimited) {
@@ -510,20 +559,28 @@ function assertSelfTest(condition, message) {
 
 function runSelfTests() {
   const placeholderGeneratedAt = '2026-06-23T00:00:00.000Z';
-  assertSelfTest(
-    countWeeklyScheduleSlotsSince(placeholderGeneratedAt, Date.parse('2026-06-29T05:29:59.000Z'), BUBBLE_WATCH_REFRESH_SCHEDULE_UTC) === 0,
-    'weekly refresh count before first scheduled slot'
-  );
-  assertSelfTest(
-    countWeeklyScheduleSlotsSince(placeholderGeneratedAt, Date.parse('2026-06-29T05:30:00.000Z'), BUBBLE_WATCH_REFRESH_SCHEDULE_UTC) === 1,
-    'weekly refresh count at first scheduled slot'
-  );
-  assertSelfTest(
-    countWeeklyScheduleSlotsSince(placeholderGeneratedAt, Date.parse('2026-07-06T05:30:00.000Z'), BUBBLE_WATCH_REFRESH_SCHEDULE_UTC) === 2,
-    'weekly refresh count at second scheduled slot'
-  );
-  assertSelfTest(bubblePlaceholderSeverity(1) === 'watch', 'placeholder remains WATCH before threshold');
-  assertSelfTest(bubblePlaceholderSeverity(2) === 'fail', 'placeholder becomes FAIL at threshold');
+  const placeholderCache = {
+    status: 'not_initialized',
+    requestMode: 'placeholder_until_next_bubble_watch_refresh'
+  };
+  const refreshHistory = summarizeBubblePlaceholderRefreshHistory(placeholderGeneratedAt, {
+    gitOutputFn: (args) => args[0] === 'rev-parse'
+      ? 'false'
+      : [
+          `bbbbbbbb\t2026-07-06T05:30:00.000Z\t${BUBBLE_WATCH_REFRESH_COMMIT_SUBJECT}`,
+          `aaaaaaaa\t2026-06-29T05:30:00.000Z\t${BUBBLE_WATCH_REFRESH_COMMIT_SUBJECT}`
+        ].join('\n'),
+    gitJsonAtCommitFn: () => placeholderCache
+  });
+  assertSelfTest(refreshHistory.historyAvailable === true, 'full git history is trusted');
+  assertSelfTest(refreshHistory.successfulRefreshesWithPlaceholder === 2, 'counts successful refresh commits that remain placeholder');
+  const shallowHistory = summarizeBubblePlaceholderRefreshHistory(placeholderGeneratedAt, {
+    gitOutputFn: () => 'true'
+  });
+  assertSelfTest(shallowHistory.historyAvailable === false, 'shallow git history is diagnostic only');
+  assertSelfTest(bubblePlaceholderSeverity(2, false) === 'watch', 'untrusted history cannot upgrade placeholder to FAIL');
+  assertSelfTest(bubblePlaceholderSeverity(1, true) === 'watch', 'placeholder remains WATCH before successful refresh threshold');
+  assertSelfTest(bubblePlaceholderSeverity(2, true) === 'fail', 'placeholder becomes FAIL at successful refresh threshold');
   assertSelfTest(bubbleCacheAgeStatus(132) === 'fresh', 'bubble cache stays fresh through 132h');
   assertSelfTest(bubbleCacheAgeStatus(132.01) === 'stale', 'bubble cache becomes stale after 132h');
   assertSelfTest(bubbleCacheAgeStatus(504.01) === 'expired', 'bubble cache expires after 21d');
@@ -581,13 +638,13 @@ function runSelfTests() {
     requestMode: 'placeholder_until_next_bubble_watch_refresh',
     generatedAt: placeholderGeneratedAt,
     articles: []
-  });
+  }, refreshHistory);
   assertSelfTest(
     placeholderRow.findings.some((finding) => finding.severity === 'fail' && finding.code === 'bubble_cache_placeholder_refresh_threshold_exceeded'),
     'placeholder fixture becomes FAIL at threshold'
   );
   assertSelfTest(
-    recommendationFor('fail', [placeholderRow]) === 'investigate_bubble_watch_scheduled_refresh_then_rerun_review',
+    recommendationFor('fail', [placeholderRow]) === 'investigate_bubble_watch_refresh_history_then_rerun_review',
     'placeholder threshold fail routes to scheduled refresh triage'
   );
   assertSelfTest(

@@ -78,6 +78,7 @@ const contracts = [
       'cancel-in-progress: false',
       'npm run check:all',
       'actions/checkout@v6',
+      'fetch-depth: 0',
       'actions/setup-node@v6',
       'node-version: 24',
       'upload-pages-artifact',
@@ -1697,9 +1698,16 @@ function checkRefreshScheduleConsistency() {
     const bubbleSource = fs.readFileSync(bubbleWorkflow, 'utf8');
     const gdeltSource = fs.readFileSync(gdeltReview, 'utf8');
     if (!bubbleSource.includes("cron: '30 5 * * 1'")) {
-      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch cron must stay Monday 05:30 UTC or review-gdelt-cache-health schedule constants must be updated.');
+      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch cron must stay Monday 05:30 UTC.');
     }
-    for (const marker of ['dayOfWeek: 1', 'hour: 5', 'minute: 30']) {
+    if (!bubbleSource.includes('git commit -m "chore: refresh bubble watch"')) {
+      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch refresh commit subject must remain available to cache history review.');
+    }
+    for (const marker of [
+      "BUBBLE_WATCH_REFRESH_COMMIT_SUBJECT = 'chore: refresh bubble watch'",
+      "'rev-parse', '--is-shallow-repository'",
+      'gitJsonAtCommitFn(refresh.commit, CACHE_PATHS.bubbleWatch)'
+    ]) {
       requireSourceMarker(gdeltReview, gdeltSource, marker);
     }
   }
