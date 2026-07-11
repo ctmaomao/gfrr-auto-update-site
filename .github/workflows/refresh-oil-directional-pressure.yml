@@ -35,7 +35,6 @@ jobs:
         env:
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
         run: npm run build:oil-directional
-        continue-on-error: true
 
       - run: npm run check:oil-directional
 

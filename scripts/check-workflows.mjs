@@ -750,6 +750,9 @@ for (const file of [
         addRuntimeFailure(file, `missing ODP daily refresh marker "${needle}"`);
       }
     }
+    if (text.includes('continue-on-error: true')) {
+      addRuntimeFailure(file, 'ODP builder failure must stop the refresh before stale artifact checks');
+    }
   }
 }
 
