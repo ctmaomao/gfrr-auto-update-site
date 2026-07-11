@@ -73,7 +73,18 @@ jobs:
         run: node scripts/run-external-ai-manual-test.mjs --dry-run --input manual-artifacts/external-ai/manual-input-compact-latest.json > manual-artifacts/external-ai/workflow-dry-run-report.json
 
       - name: Write dry-run summary
+        env:
+          TIMEOUT_MS: ${{ github.event.inputs.timeout_ms }}
         run: |
+          set -euo pipefail
+          if ! printf '%s' "$TIMEOUT_MS" | grep -Eq '^[0-9]+$'; then
+            echo "timeout_ms must be numeric"
+            exit 1
+          fi
+          if [ "$TIMEOUT_MS" -gt 180000 ]; then
+            echo "timeout_ms must be <= 180000"
+            exit 1
+          fi
           {
             echo "## External AI Manual Dry Run"
             echo ""
@@ -85,7 +96,7 @@ jobs:
             echo "- secretsRead=false"
             echo "- productionDataWritten=false"
             echo "- frontendDisplayChanged=false"
-            echo "- timeoutMetadataMs=${{ github.event.inputs.timeout_ms }}"
+            echo "- timeoutMetadataMs=$TIMEOUT_MS"
             echo ""
             echo "This workflow is dry-run-only and does not call DeepSeek."
           } >> "$GITHUB_STEP_SUMMARY"

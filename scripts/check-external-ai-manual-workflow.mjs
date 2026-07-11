@@ -93,6 +93,15 @@ function checkDryRunInputs(text) {
   assert(!/provider\s*:/u.test(text), 'workflow must not define provider input');
   assert(!/dry_run\s*:/u.test(text), 'workflow must not define a dry_run input');
   assert(!/dry_run\s*=\s*false/u.test(text), 'workflow must not allow dry_run=false');
+
+  const summaryStart = text.indexOf('name: Write dry-run summary');
+  const summaryEnd = text.indexOf('\n      - name:', summaryStart + 1);
+  const summaryStep = text.slice(summaryStart, summaryEnd === -1 ? text.length : summaryEnd);
+  const runBlock = summaryStep.slice(summaryStep.indexOf('run:'));
+  assert(summaryStep.includes('TIMEOUT_MS: ${{ github.event.inputs.timeout_ms }}'), 'timeout_ms must pass through step env');
+  assert(runBlock && !runBlock.includes('${{ github.event.inputs.'), 'dry-run summary shell must not interpolate dispatch inputs');
+  assert(runBlock.includes('timeout_ms must be numeric'), 'dry-run summary must validate numeric timeout_ms before use');
+  assert(runBlock.includes('timeout_ms must be <= 180000'), 'dry-run summary must cap timeout_ms before use');
 }
 
 function checkTriggerShape(text) {
