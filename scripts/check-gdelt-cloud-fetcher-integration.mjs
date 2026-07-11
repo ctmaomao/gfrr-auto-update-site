@@ -33,10 +33,12 @@ for (const needle of [
   'npm run build:world-order',
   'npm run check:world-order',
   "cron: '0 23 * * *'",
-  'continue-on-error: true',
   'data/gdelt-world-order-cache.json'
 ]) {
   if (!workflowContent.includes(needle)) fail(`M-59 workflow: missing "${needle}"`);
+}
+if (workflowContent.includes('continue-on-error: true')) {
+  fail('M-59 workflow: world-order builder failure must stop before stale artifact checks');
 }
 
 for (const needle of [

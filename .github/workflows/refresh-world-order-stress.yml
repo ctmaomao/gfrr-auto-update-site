@@ -34,7 +34,6 @@ jobs:
           GDELT_CLOUD_API_KEY: ${{ secrets.GDELT_CLOUD_API_KEY }}
           # ACLED secrets reserved for M-60 (Research/Partner tier required)
         run: npm run build:world-order
-        continue-on-error: true
 
       - run: npm run check:world-order
 

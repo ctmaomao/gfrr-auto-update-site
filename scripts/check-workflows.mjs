@@ -200,7 +200,6 @@ const contracts = [
       'package-manager-cache: false',
       'GDELT_CLOUD_API_KEY: ${{ secrets.GDELT_CLOUD_API_KEY }}',
       'npm run build:world-order',
-      'continue-on-error: true',
       'npm run check:world-order',
       'data/world-order-stress.json',
       'data/gdelt-world-order-cache.json',
@@ -209,6 +208,7 @@ const contracts = [
     forbidden: [
       'ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}',
       'ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}',
+      'continue-on-error: true',
       'npm run build:data',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json'
