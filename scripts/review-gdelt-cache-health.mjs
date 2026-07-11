@@ -251,7 +251,7 @@ function shouldExitNonZero(status, strict) {
   return status === 'fail' || (strict && status !== 'ok');
 }
 
-function reviewOilNewsCache(nowMs) {
+function reviewOilNewsCache(nowMs, cacheOverride = null) {
   const row = {
     key: 'oil_news_gdelt_doc',
     label: 'Oil News GDELT DOC',
@@ -273,7 +273,9 @@ function reviewOilNewsCache(nowMs) {
     productionArtifactStatus: null,
     findings: []
   };
-  const cacheRead = readJson(CACHE_PATHS.oilNews);
+  const cacheRead = cacheOverride
+    ? { ok: true, path: CACHE_PATHS.oilNews, value: cacheOverride }
+    : readJson(CACHE_PATHS.oilNews);
   if (!cacheRead.ok) {
     pushFinding(row, 'fail', 'oil_news_cache_missing', `Unable to read ${CACHE_PATHS.oilNews}: ${cacheRead.error}`);
     return row;
@@ -311,6 +313,13 @@ function reviewOilNewsCache(nowMs) {
   }
   if (row.errorCode === 'query_rejected_length') {
     pushFinding(row, 'warn', 'oil_news_query_rejected_length', 'Current cache was rejected by GDELT for query length; the broad query needs further shortening.');
+  }
+  if (
+    (row.status === 'error' || row.sourceStatus === 'error')
+    && !row.rateLimited
+    && !['json_parse_failed', 'query_rejected_length'].includes(row.errorCode)
+  ) {
+    pushFinding(row, 'watch', 'oil_news_gdelt_source_error', `GDELT DOC cache reports source error: ${row.errorCode || 'unknown_error'}.`);
   }
   if (row.rateLimited) {
     pushFinding(row, 'watch', 'oil_news_gdelt_rate_limited', 'GDELT DOC is rate limited; Tavily/Brave fallbacks should remain authoritative for display-only event watch.');
@@ -517,6 +526,23 @@ function runSelfTests() {
   assertSelfTest(shouldExitNonZero('fail', false) === true, 'default mode exits non-zero on FAIL');
   assertSelfTest(shouldExitNonZero('watch', false) === false, 'default mode keeps WATCH non-blocking');
   assertSelfTest(shouldExitNonZero('watch', true) === true, 'strict mode exits non-zero on WATCH');
+
+  const oilNetworkErrorRow = reviewOilNewsCache(Date.parse('2026-07-10T16:00:00.000Z'), {
+    schemaVersion: 'gdelt-news-cache-p37',
+    module: 'gdelt-news-cache',
+    status: 'error',
+    sourceStatus: 'error',
+    requestMode: 'error_cooldown_cache_hit',
+    generatedAt: '2026-07-10T15:00:00.000Z',
+    cachePolicy: { lowFrequencyCache: true, broadQueryLocalClassification: true },
+    query: { query: GDELT_BROAD_QUERY_SPEC.query },
+    requestDiagnostics: { errorCode: 'network_error' },
+    articles: []
+  });
+  assertSelfTest(
+    oilNetworkErrorRow.findings.some((finding) => finding.severity === 'watch' && finding.code === 'oil_news_gdelt_source_error'),
+    'network_error cache becomes WATCH instead of healthy'
+  );
 
   const placeholderRow = reviewBubbleWatchCache(Date.parse('2026-07-06T05:30:00.000Z'), {
     schemaVersion: 'gdelt-bubble-watch-cache-p38',
