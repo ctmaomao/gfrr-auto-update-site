@@ -184,6 +184,7 @@ function impactReasonLabel(reason) {
   if (text === 'candidate_score_not_positive_zero_contribution') return 'candidate score not positive';
   if (text === 'base_score_missing_zero_contribution') return 'base score missing';
   if (text === 'candidate_score_below_contribution_threshold_zero_contribution') return 'candidate below contribution threshold';
+  if (text === 'score_ceiling_zero_contribution') return 'main score already at ceiling';
   if (text === 'owner_approved_free_proxy_transport_pressure_low_weight_applied') return 'owner-approved free-proxy low-weight contribution applied';
   return text || 'impact reason missing';
 }

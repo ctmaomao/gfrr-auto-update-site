@@ -199,10 +199,13 @@ function buildExpectedImpact(payload) {
   if (!guards.candidateScorePositive) return expectedZero('candidate_score_not_positive_zero_contribution', context);
   if (!Number.isFinite(baseScore)) return expectedZero('base_score_missing_zero_contribution', context);
 
-  const contributionPct = contributionFromCandidateScore(candidateScore);
-  if (contributionPct <= 0) {
+  const requestedContributionPct = contributionFromCandidateScore(candidateScore);
+  if (requestedContributionPct <= 0) {
     return expectedZero('candidate_score_below_contribution_threshold_zero_contribution', context);
   }
+  const scoreAfterTransport = Math.min(100, baseScore + requestedContributionPct);
+  const contributionPct = scoreAfterTransport - baseScore;
+  if (contributionPct <= 0) return expectedZero('score_ceiling_zero_contribution', context);
   return {
     runtimeScoringAuthorized: true,
     applied: true,
@@ -211,7 +214,7 @@ function buildExpectedImpact(payload) {
     direction: 'transport_shock_pressure_only',
     reason: 'owner_approved_free_proxy_transport_pressure_low_weight_applied',
     scoreBeforeTransport: baseScore,
-    scoreAfterTransport: Math.min(100, baseScore + contributionPct),
+    scoreAfterTransport,
     sourceStatus,
     latestAgeDays,
     candidateStatus: candidate.status,
@@ -387,7 +390,8 @@ function buildReview(payload, inputPath) {
         'candidate_not_pressure_status_zero_contribution',
         'candidate_score_not_positive_zero_contribution',
         'base_score_missing_zero_contribution',
-        'candidate_score_below_contribution_threshold_zero_contribution'
+        'candidate_score_below_contribution_threshold_zero_contribution',
+        'score_ceiling_zero_contribution'
       ],
       positiveReason: 'owner_approved_free_proxy_transport_pressure_low_weight_applied'
     },
@@ -445,11 +449,13 @@ function runPolicySelfTests() {
     ['normal', { status: 'normal', score: 15, eligible: false }, 0, 'candidate_not_eligible_zero_contribution'],
     ['watch-50', { status: 'watch', score: 50, eligible: true }, 1, 'owner_approved_free_proxy_transport_pressure_low_weight_applied'],
     ['watch-60', { status: 'watch', score: 60, eligible: true }, 2, 'owner_approved_free_proxy_transport_pressure_low_weight_applied'],
-    ['elevated-75', { status: 'elevated_watch', score: 75, eligible: true }, 3, 'owner_approved_free_proxy_transport_pressure_low_weight_applied'],
+    ['elevated-75', { status: 'elevated_watch', score: 75, eligible: true }, 3, 'owner_approved_free_proxy_transport_pressure_low_weight_applied', 32],
+    ['elevated-75-near-ceiling', { status: 'elevated_watch', score: 75, eligible: true, base: 99 }, 1, 'owner_approved_free_proxy_transport_pressure_low_weight_applied', 100],
+    ['elevated-75-at-ceiling', { status: 'elevated_watch', score: 75, eligible: true, base: 100 }, 0, 'score_ceiling_zero_contribution', 100],
     ['stale', { status: 'watch', score: 60, eligible: true, age: 8 }, 0, 'candidate_stale_zero_contribution'],
     ['not-live', { status: 'watch', score: 60, eligible: true, source: 'fallback' }, 0, 'candidate_not_live_zero_contribution']
   ];
-  for (const [name, input, contributionPct, reason] of cases) {
+  for (const [name, input, contributionPct, reason, scoreAfterTransport] of cases) {
     const impact = buildExpectedImpact({
       macroDrivers: {
         energyTransport: {
@@ -463,9 +469,14 @@ function runPolicySelfTests() {
           }
         }
       },
-      transportShockScoringImpact: { scoreBeforeTransport: 29 }
+      transportShockScoringImpact: { scoreBeforeTransport: input.base ?? 29 }
     });
-    if (impact.contributionPct !== contributionPct || impact.reason !== reason || impact.applied !== (contributionPct > 0)) {
+    if (
+      impact.contributionPct !== contributionPct
+      || impact.reason !== reason
+      || impact.applied !== (contributionPct > 0)
+      || (scoreAfterTransport !== undefined && impact.scoreAfterTransport !== scoreAfterTransport)
+    ) {
       throw new Error(`Runtime score policy self-test failed: ${name}`);
     }
   }

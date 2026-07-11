@@ -10755,8 +10755,11 @@ function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport)
   if (!Number.isFinite(base)) return zero('base_score_missing_zero_contribution');
 
   const rawContribution = candidateScore >= 75 ? 3 : candidateScore >= 60 ? 2 : candidateScore >= 50 ? 1 : 0;
-  const contributionPct = clampRange(rawContribution, 0, TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT);
-  if (contributionPct <= 0) return zero('candidate_score_below_contribution_threshold_zero_contribution');
+  const requestedContributionPct = clampRange(rawContribution, 0, TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT);
+  if (requestedContributionPct <= 0) return zero('candidate_score_below_contribution_threshold_zero_contribution');
+  const scoreAfterTransport = clamp(base + requestedContributionPct);
+  const contributionPct = scoreAfterTransport - base;
+  if (contributionPct <= 0) return zero('score_ceiling_zero_contribution');
 
   return {
     contractVersion: TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
@@ -10768,7 +10771,7 @@ function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport)
     direction: 'transport_shock_pressure_only',
     reason: 'owner_approved_free_proxy_transport_pressure_low_weight_applied',
     scoreBeforeTransport: base,
-    scoreAfterTransport: clamp(base + contributionPct),
+    scoreAfterTransport,
     sourceStatus,
     latestAgeDays,
     candidateStatus: candidate.status,

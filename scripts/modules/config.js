@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=oil-news-claim-axis-gate-1';
+﻿import { formatFiniteNumber } from './format.js?v=transport-shock-score-ceiling-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

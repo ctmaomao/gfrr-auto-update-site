@@ -1258,6 +1258,8 @@ function validateTransportShockScoringImpact(dataPayload) {
       'transportShockScoringImpact must not reduce main score');
     assert(impact.scoreAfterTransport - impact.scoreBeforeTransport <= TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
       'transportShockScoringImpact score delta must stay capped at +3');
+    assert(impact.scoreAfterTransport - impact.scoreBeforeTransport === impact.contributionPct,
+      'transportShockScoringImpact contributionPct must equal the actual score delta');
   } else {
     assert(impact.contributionPct === 0, 'transportShockScoringImpact.unapplied must contribute 0');
     if (Number.isFinite(impact.scoreBeforeTransport) && Number.isFinite(impact.scoreAfterTransport)) {

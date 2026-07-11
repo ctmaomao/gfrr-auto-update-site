@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=oil-news-claim-axis-gate-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=oil-news-claim-axis-gate-1';
-import { MODULE_LABELS } from './decision.js?v=oil-news-claim-axis-gate-1';
+} from './config.js?v=transport-shock-score-ceiling-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-score-ceiling-1';
+import { MODULE_LABELS } from './decision.js?v=transport-shock-score-ceiling-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=oil-news-claim-axis-gate-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=oil-news-claim-axis-gate-1';
+} from './macroOverviewDisplayHelpers.js?v=transport-shock-score-ceiling-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-score-ceiling-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -332,6 +332,7 @@ function transportShockImpactReasonLabel(reason) {
   if (text === 'candidate_score_not_positive_zero_contribution') return '候选分不足';
   if (text === 'base_score_missing_zero_contribution') return '主分基线缺失';
   if (text === 'candidate_score_below_contribution_threshold_zero_contribution') return '候选未达贡献阈值';
+  if (text === 'score_ceiling_zero_contribution') return '主分已达上限';
   if (text === 'owner_approved_free_proxy_transport_pressure_low_weight_applied') return '授权免费代理触发';
   return text || '影响待确认';
 }

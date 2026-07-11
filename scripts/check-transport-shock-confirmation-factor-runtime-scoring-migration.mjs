@@ -59,6 +59,7 @@ function assertDailyRuntimePath() {
     'candidate_not_pressure_status_zero_contribution',
     'candidate_score_not_positive_zero_contribution',
     'candidate_score_below_contribution_threshold_zero_contribution',
+    'score_ceiling_zero_contribution',
     'routeFreightConfirmationConnected: false',
     'marketConfirmationConnected: false',
     'candidateScore >= 75 ? 3 : candidateScore >= 60 ? 2 : candidateScore >= 50 ? 1 : 0',
@@ -95,6 +96,7 @@ function assertValidatorPath() {
     'transportShockScoringImpact must not claim route freight confirmation',
     'transportShockScoringImpact must not claim market confirmation',
     'transportShockScoringImpact score delta must stay capped at +3',
+    'transportShockScoringImpact contributionPct must equal the actual score delta',
     'validateTransportShockScoringImpact(data)'
   ]);
 }

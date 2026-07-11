@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=oil-news-claim-axis-gate-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=oil-news-claim-axis-gate-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=transport-shock-score-ceiling-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=transport-shock-score-ceiling-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
