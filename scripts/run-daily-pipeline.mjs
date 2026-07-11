@@ -2687,7 +2687,8 @@ function dateOnlyAgeDays(value) {
   const todayMs = Date.parse(`${isoNow.slice(0, 10)}T00:00:00Z`);
   const obsMs = Date.parse(`${dateOnly}T00:00:00Z`);
   if (!Number.isFinite(todayMs) || !Number.isFinite(obsMs)) return null;
-  return Math.floor((todayMs - obsMs) / (24 * 3600 * 1000));
+  const ageDays = Math.floor((todayMs - obsMs) / (24 * 3600 * 1000));
+  return ageDays >= 0 ? ageDays : null;
 }
 
 function isFreshDateOnly(value, maxAgeDays) {
@@ -10719,7 +10720,9 @@ function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport)
   const guards = {
     candidatePresent: Boolean(candidate && typeof candidate === 'object' && !Array.isArray(candidate)),
     sourceLive: sourceStatus === 'live',
-    latestFresh: Number.isFinite(latestAgeDays) && latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
+    latestFresh: Number.isFinite(latestAgeDays)
+      && latestAgeDays >= 0
+      && latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
     eligibleForMainScore: candidate?.eligibleForMainScore === true,
     candidateScorePositive: Number.isFinite(candidateScore) && candidateScore > 0,
     pressureStatus,
@@ -11994,12 +11997,32 @@ async function build() {
   return { data, history, historyFull };
 }
 
+function replaceJsonBatchSafely(entries) {
+  const suffix = `${process.pid}.${Date.now()}.tmp`;
+  const staged = entries.map(([filePath, value]) => ({
+    filePath,
+    tmpPath: path.join(path.dirname(filePath), `.${path.basename(filePath)}.${suffix}`),
+    text: `${JSON.stringify(value, null, 2)}\n`
+  }));
+
+  try {
+    for (const entry of staged) fs.writeFileSync(entry.tmpPath, entry.text, 'utf8');
+    for (const entry of staged) fs.renameSync(entry.tmpPath, entry.filePath);
+  } finally {
+    for (const entry of staged) {
+      if (fs.existsSync(entry.tmpPath)) fs.rmSync(entry.tmpPath, { force: true });
+    }
+  }
+}
+
 async function main() {
   const built = await build();
   fs.mkdirSync(dataDir, { recursive: true });
-  fs.writeFileSync(dataPath, JSON.stringify(built.data, null, 2));
-  fs.writeFileSync(histPath, JSON.stringify(built.history, null, 2));
-  fs.writeFileSync(histFullPath, JSON.stringify(built.historyFull, null, 2));
+  replaceJsonBatchSafely([
+    [histPath, built.history],
+    [histFullPath, built.historyFull],
+    [dataPath, built.data]
+  ]);
   console.log(`${RELEASE_VERSION} 雷达数据构建成功。`);
 }
 

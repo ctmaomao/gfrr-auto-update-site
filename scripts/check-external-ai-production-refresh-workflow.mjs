@@ -66,7 +66,7 @@ function checkRuntimeBaseline(text) {
     'contents: write',
     'actions: read',
     'concurrency:',
-    'group: external-ai-production-refresh',
+    'group: gfrr-main-writer-${{ github.ref }}',
     'cancel-in-progress: false',
     'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
     'actions/checkout@v6',

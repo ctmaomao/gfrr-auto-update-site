@@ -42,7 +42,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: external-ai-production-refresh
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

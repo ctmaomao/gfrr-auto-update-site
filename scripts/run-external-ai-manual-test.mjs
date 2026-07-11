@@ -27,6 +27,7 @@ import {
   MAX_PR4_LAYER_REFERENCES_PER_ARRAY,
   MAX_PR4_SCENARIO_REFS,
 } from './external-ai/pr4-schema-canary.mjs';
+import { assertManualArtifactWritePath } from './lib/check-script-helpers.mjs';
 
 const CONTRACT_VERSION = 'v28.0K-4D';
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-input-v28.0K-1.json';
@@ -34,18 +35,7 @@ const DEFAULT_DEEPSEEK_TIMEOUT_MS = 90000;
 const MAX_DEEPSEEK_TIMEOUT_MS = 180000;
 const DEFAULT_DEEPSEEK_MAX_TOKENS = 5000;
 const ANALYST_PR4_SCHEMA_CANARY_MAX_TOKENS = 5000;
-const UNSAFE_OUTPUT_DIRS = [
-  'data',
-  'realtime',
-  'config',
-  'workers',
-  'scripts/modules',
-  '.github/workflows'
-];
-const UNSAFE_OUTPUT_FILES = new Set([
-  'index.html',
-  'scripts/app.js'
-]);
+const EXTERNAL_AI_ARTIFACT_PREFIX = 'manual-artifacts/external-ai/';
 
 const DECISION_CONTEXT_OUTPUT_RULES = [
   'decisionContext is read-only background only.',
@@ -478,24 +468,19 @@ function collectLayersAvailable(input) {
 }
 
 function isUnsafeOutputPath(outputPath) {
-  const absoluteOutput = path.resolve(outputPath);
-  const cwd = process.cwd();
-  const relative = path.relative(cwd, absoluteOutput);
-  if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) return false;
-
-  const normalizedRelative = relative.split(path.sep).join('/');
-  return (
-    UNSAFE_OUTPUT_FILES.has(normalizedRelative) ||
-    UNSAFE_OUTPUT_DIRS.some((unsafeDir) => normalizedRelative === unsafeDir || normalizedRelative.startsWith(`${unsafeDir}/`))
-  );
+  try {
+    assertManualArtifactWritePath(outputPath, EXTERNAL_AI_ARTIFACT_PREFIX);
+    return false;
+  } catch {
+    return true;
+  }
 }
 
 async function writeOutputFile(outputPath, text) {
-  if (isUnsafeOutputPath(outputPath)) {
-    throw new Error(`unsafe output path rejected: ${outputPath}`);
-  }
-  await fs.mkdir(path.dirname(path.resolve(outputPath)), { recursive: true });
-  await fs.writeFile(outputPath, text, 'utf8');
+  const resolvedOutput = assertManualArtifactWritePath(outputPath, EXTERNAL_AI_ARTIFACT_PREFIX);
+  await fs.mkdir(path.dirname(resolvedOutput), { recursive: true });
+  assertManualArtifactWritePath(resolvedOutput, EXTERNAL_AI_ARTIFACT_PREFIX);
+  await fs.writeFile(resolvedOutput, text, 'utf8');
 }
 
 function buildDeepSeekSystemPrompt(input = null, promptOptions = {}) {

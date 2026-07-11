@@ -9,7 +9,7 @@ on:
     - cron: '0 23 * * *'  # 30 min after Build Daily Radar Data (22:30 UTC)
 
 concurrency:
-  group: gfrr-world-order-${{ github.ref }}
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

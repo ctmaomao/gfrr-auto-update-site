@@ -7,6 +7,7 @@ import {
   getExternalAiProviderMetadata,
   normalizeExternalAiProvider
 } from './external-ai/provider-adapters.mjs';
+import { assertManualArtifactWritePath } from './lib/check-script-helpers.mjs';
 
 function assertDisabledMetadata(metadata) {
   assert.equal(metadata.networkAllowed, false);
@@ -28,6 +29,13 @@ function assertNotProviderOutput(result) {
 }
 
 async function run() {
+  assert.doesNotThrow(() => assertManualArtifactWritePath(
+    'manual-artifacts/external-ai/output.json',
+    'manual-artifacts/external-ai/'
+  ));
+  assert.throws(() => assertManualArtifactWritePath('package.json', 'manual-artifacts/external-ai/'), /Refusing output/);
+  assert.throws(() => assertManualArtifactWritePath('../outside.json', 'manual-artifacts/external-ai/'), /Refusing output/);
+
   assert.equal(normalizeExternalAiProvider(), 'none');
   assert.equal(normalizeExternalAiProvider(null), 'none');
   assert.equal(normalizeExternalAiProvider(''), 'none');

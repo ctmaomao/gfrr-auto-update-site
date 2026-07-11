@@ -10,7 +10,7 @@ on:
     - cron: '30 5 * * 1'
 
 concurrency:
-  group: gfrr-bubble-watch-${{ github.ref }}
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

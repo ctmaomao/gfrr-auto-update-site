@@ -9,7 +9,7 @@ on:
     - cron: '0 8 * * 6'  # Saturday 08:00 UTC, after Friday US market close
 
 concurrency:
-  group: gfrr-qqq-market-pricing-${{ github.ref }}
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

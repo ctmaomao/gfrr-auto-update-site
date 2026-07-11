@@ -11,7 +11,7 @@ on:
     - cron: '45 23 * * *'
 
 concurrency:
-  group: gfrr-oil-directional-${{ github.ref }}
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

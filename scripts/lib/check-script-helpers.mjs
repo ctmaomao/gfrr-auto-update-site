@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -33,6 +33,22 @@ export function safeRelativePath(filePath) {
 export function isManualArtifactPath(filePath, prefix = 'manual-artifacts/') {
   const relativePath = safeRelativePath(filePath);
   return Boolean(relativePath && relativePath.startsWith(prefix));
+}
+
+export function assertManualArtifactWritePath(filePath, prefix = 'manual-artifacts/') {
+  const relativePath = safeRelativePath(filePath);
+  if (!relativePath || !relativePath.startsWith(prefix) || !relativePath.endsWith('.json')) {
+    throw new Error(`Refusing output outside ${prefix}: ${filePath}`);
+  }
+
+  let cursor = process.cwd();
+  for (const segment of relativePath.split('/')) {
+    cursor = resolve(cursor, segment);
+    if (existsSync(cursor) && lstatSync(cursor).isSymbolicLink()) {
+      throw new Error(`Refusing output through symlink/junction path segment: ${relativePath}`);
+    }
+  }
+  return resolve(filePath);
 }
 
 export function isTransportShockManualArtifactPath(filePath) {

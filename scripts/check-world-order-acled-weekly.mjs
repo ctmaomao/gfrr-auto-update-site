@@ -11,6 +11,12 @@ const SOURCE = 'acled-aggregated-manual-normalized-weekly';
 const SOURCE_URL = 'https://acleddata.com/conflict-data/download-data-files';
 const LICENSE_LEVEL = 'open';
 const ATTRIBUTION = 'ACLED (Armed Conflict Location & Event Data) — https://acleddata.com';
+const XLSX_ALLOWED_IMPORTS = new Set([
+  'scripts/world-order/sanitize-acled-weekly.mjs',
+  'scripts/world-order/sanitize-acled-monthly.mjs'
+]);
+const failures = [];
+const warnings = [];
 
 const topLevelKeys = [
   'version',
@@ -63,13 +69,57 @@ function fmtDelta(value) {
   return Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : 'null';
 }
 
+function listSourceFiles(target) {
+  if (!fs.existsSync(target)) return [];
+  const stats = fs.statSync(target);
+  if (stats.isFile()) return [target];
+  return fs.readdirSync(target, { withFileTypes: true }).flatMap((entry) =>
+    listSourceFiles(path.join(target, entry.name))
+  );
+}
+
+function validateXlsxIsolation() {
+  const dependency = ['xl', 'sx'].join('');
+  const imports = [
+    'scripts',
+    'workers',
+    'tools',
+    '.github/workflows',
+    'index.html',
+    'bubble-watch.html'
+  ]
+    .flatMap((target) => listSourceFiles(path.join(root, target)))
+    .filter((file) => /\.(?:c?js|mjs|ya?ml|html)$/u.test(file))
+    .filter((file) => {
+      const source = fs.readFileSync(file, 'utf8');
+      return source.includes(`from '${dependency}'`)
+        || source.includes(`from "${dependency}"`)
+        || source.includes(`require('${dependency}')`)
+        || source.includes(`require("${dependency}")`)
+        || source.includes(`import('${dependency}')`)
+        || source.includes(`import("${dependency}")`);
+    })
+    .map((file) => path.relative(root, file).replace(/\\/gu, '/'));
+
+  for (const file of imports) {
+    if (!XLSX_ALLOWED_IMPORTS.has(file)) addFailure(`xlsx import escaped ADR-0013 allowlist: ${file}`);
+  }
+  for (const file of XLSX_ALLOWED_IMPORTS) {
+    if (!imports.includes(file)) addFailure(`expected xlsx sanitizer import missing: ${file}`);
+  }
+}
+
+validateXlsxIsolation();
+
 if (!fs.existsSync(inputPath)) {
+  if (failures.length > 0) {
+    console.error('ACLED weekly aggregated check: FAIL');
+    for (const failure of failures) console.error(`- ${failure}`);
+    process.exit(1);
+  }
   console.log('ACLED weekly aggregated check: PASS (state=no_input)');
   process.exit(0);
 }
-
-const failures = [];
-const warnings = [];
 
 function addFailure(message) {
   failures.push(message);

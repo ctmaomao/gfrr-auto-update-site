@@ -54,7 +54,7 @@ const contracts = [
     required: [
       'workflow_dispatch',
       'concurrency',
-      'gfrr-daily',
+      'gfrr-main-writer-${{ github.ref }}',
       'git show origin/realtime-data:realtime/market.json',
       'GFRR_REALTIME_COMMIT_SHA',
       'actions/checkout@v6',
@@ -194,7 +194,7 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-world-order',
+      'gfrr-main-writer-${{ github.ref }}',
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
@@ -224,7 +224,7 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-oil-thermal-watch',
+      'gfrr-main-writer-${{ github.ref }}',
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
@@ -321,7 +321,7 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-oil-news-event-watch',
+      'gfrr-main-writer-${{ github.ref }}',
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
@@ -352,7 +352,7 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-bubble-watch-${{ github.ref }}',
+      'gfrr-main-writer-${{ github.ref }}',
       'actions/checkout@v6',
       'actions/setup-node@v6',
       'node-version: 24',
@@ -424,6 +424,23 @@ for (const contract of contracts) {
       addFailure(contract.file, `${group.label}: ${group.options.join(' | ')}`);
     }
   }
+}
+
+const mainWriterWorkflows = [
+  'build-daily-radar-data.yml',
+  'external-ai-production-refresh.yml',
+  'refresh-bubble-watch.yml',
+  'refresh-oil-directional-pressure.yml',
+  'refresh-oil-news-event-watch.yml',
+  'refresh-oil-thermal-watch.yml',
+  'refresh-qqq-market-pricing.yml',
+  'refresh-world-order-stress.yml'
+];
+for (const workflow of mainWriterWorkflows) {
+  const file = `.github/workflows/${workflow}`;
+  const text = fs.readFileSync(file, 'utf8');
+  requireSourceMarker(file, text, 'group: gfrr-main-writer-${{ github.ref }}');
+  requireSourceMarker(file, text, 'cancel-in-progress: false');
 }
 
 const workflowDir = '.github/workflows';
@@ -1671,6 +1688,7 @@ if (fs.existsSync(workerContract.routerFile)) {
 // workflows, and that refresh-world-order-stress.yml has no obsolete Pages step.
 function checkRefreshScheduleConsistency() {
   const dailyWorkflow = '.github/workflows/build-daily-radar-data.yml';
+  const dailyBuilder = 'scripts/run-daily-pipeline.mjs';
   const transportCheck = 'scripts/check-transport-shock-confirmation-factor-production-refresh.mjs';
   const transportMonitor = 'scripts/monitor-transport-shock-confirmation-factor-production-refresh.mjs';
   const transportHelper = 'scripts/transport-shock-refresh-history.mjs';
@@ -1683,6 +1701,15 @@ function checkRefreshScheduleConsistency() {
     if (!dailySrc.includes(dailyCron)) {
       addRuntimeFailure(dailyWorkflow, `Daily cron must match Transport Shock schedule constants: ${dailyCron}`);
     }
+  }
+  const dailyBuilderSource = fs.readFileSync(dailyBuilder, 'utf8');
+  for (const marker of [
+    'function replaceJsonBatchSafely(entries)',
+    'fs.writeFileSync(entry.tmpPath',
+    'fs.renameSync(entry.tmpPath, entry.filePath)',
+    'replaceJsonBatchSafely(['
+  ]) {
+    requireSourceMarker(dailyBuilder, dailyBuilderSource, marker);
   }
 
   for (const file of [transportCheck, transportMonitor]) {

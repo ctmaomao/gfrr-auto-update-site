@@ -3,6 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { EXTERNAL_AI_BLOCKLIST_GROUPS } from './external-ai/safety-constants.mjs';
+import { assertManualArtifactWritePath } from './lib/check-script-helpers.mjs';
 
 const INPUT_VERSION = 'v28.0K-4E-live-site-manual-input';
 const COMPACT_INPUT_VERSION = 'v28.0K-4E-1-live-site-manual-input-compact';
@@ -27,18 +28,7 @@ const ALLOWED_SOURCE_URLS = new Set([
   'https://ctmaomao.github.io/gfrr-auto-update-site/data/radar-data.json',
   'https://radar.gfrfinradar.uk/data/radar-data.json'
 ]);
-const UNSAFE_OUTPUT_DIRS = [
-  'data',
-  'realtime',
-  'config',
-  'workers',
-  'scripts/modules',
-  '.github/workflows'
-];
-const UNSAFE_OUTPUT_FILES = new Set([
-  'index.html',
-  'scripts/app.js'
-]);
+const EXTERNAL_AI_ARTIFACT_PREFIX = 'manual-artifacts/external-ai/';
 
 function fail(message) {
   console.error(message);
@@ -103,37 +93,8 @@ function parseArgs(argv) {
   return options;
 }
 
-function toProjectRelativePath(value) {
-  const absolutePath = path.resolve(value);
-  const relativePath = path.relative(process.cwd(), absolutePath);
-  if (relativePath === '' || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-    return null;
-  }
-  return relativePath.split(path.sep).join('/');
-}
-
-function normalizeProjectPath(value) {
-  return value.toLowerCase();
-}
-
 function assertSafeOutputPath(outputPath) {
-  const relativePath = toProjectRelativePath(outputPath);
-  if (!relativePath) {
-    throw new Error(`unsafe output path rejected outside project: ${outputPath}`);
-  }
-
-  const normalizedPath = normalizeProjectPath(relativePath);
-  if (!normalizedPath.endsWith('.json')) {
-    throw new Error(`unsafe output path rejected because it is not a JSON artifact: ${outputPath}`);
-  }
-  if (UNSAFE_OUTPUT_FILES.has(normalizedPath)) {
-    throw new Error(`unsafe output path rejected: ${outputPath}`);
-  }
-  for (const unsafeDir of UNSAFE_OUTPUT_DIRS) {
-    if (normalizedPath === unsafeDir || normalizedPath.startsWith(`${unsafeDir}/`)) {
-      throw new Error(`unsafe output path rejected: ${outputPath}`);
-    }
-  }
+  return assertManualArtifactWritePath(outputPath, EXTERNAL_AI_ARTIFACT_PREFIX);
 }
 
 function missingMarker(field) {
@@ -1395,9 +1356,9 @@ async function readAnalystSidecars(options) {
 }
 
 async function writeArtifact(outputPath, artifact) {
-  assertSafeOutputPath(outputPath);
-  const absoluteOutput = path.resolve(outputPath);
+  const absoluteOutput = assertSafeOutputPath(outputPath);
   await fs.mkdir(path.dirname(absoluteOutput), { recursive: true });
+  assertSafeOutputPath(absoluteOutput);
   await fs.writeFile(absoluteOutput, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
 }
 

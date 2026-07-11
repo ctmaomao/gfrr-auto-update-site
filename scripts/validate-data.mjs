@@ -1251,7 +1251,7 @@ function validateTransportShockScoringImpact(dataPayload) {
     assert(impact.guards.eligibleForMainScore, 'transportShockScoringImpact.applied requires eligibleForMainScore');
     assert(impact.guards.candidateScorePositive, 'transportShockScoringImpact.applied requires candidateScorePositive');
     assert(impact.guards.pressureStatus, 'transportShockScoringImpact.applied requires pressureStatus');
-    assert(Number.isFinite(impact.latestAgeDays) && impact.latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
+    assert(Number.isFinite(impact.latestAgeDays) && impact.latestAgeDays >= 0 && impact.latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
       'transportShockScoringImpact.applied requires fresh PortWatch age');
     assert(Number.isFinite(impact.scoreBeforeTransport), 'transportShockScoringImpact.applied requires scoreBeforeTransport');
     assert(impact.scoreAfterTransport >= impact.scoreBeforeTransport,

@@ -10,7 +10,7 @@ on:
     - cron: '17 */3 * * *'
 
 concurrency:
-  group: gfrr-oil-thermal-watch-${{ github.ref }}
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

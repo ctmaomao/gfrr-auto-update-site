@@ -10,7 +10,7 @@ on:
     - cron: '30 22 * * *'
 
 concurrency:
-  group: gfrr-daily-${{ github.ref }}
+  group: gfrr-main-writer-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

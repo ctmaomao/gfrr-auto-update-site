@@ -135,7 +135,7 @@ function buildExpectedGuards(energyTransport) {
   return {
     candidatePresent: isPlainObject(candidate),
     sourceLive: sourceStatus === 'live',
-    latestFresh: Number.isFinite(latestAgeDays) && latestAgeDays <= STALE_AFTER_DAYS,
+    latestFresh: Number.isFinite(latestAgeDays) && latestAgeDays >= 0 && latestAgeDays <= STALE_AFTER_DAYS,
     eligibleForMainScore: candidate?.eligibleForMainScore === true,
     candidateScorePositive: Number.isFinite(candidateScore) && candidateScore > 0,
     pressureStatus: candidate?.status === 'watch' || candidate?.status === 'elevated_watch',
