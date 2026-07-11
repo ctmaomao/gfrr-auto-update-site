@@ -24,6 +24,8 @@ const BUBBLE_WATCH_REFRESH_SCHEDULE_UTC = {
   minute: 30
 };
 const BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SCHEDULED_REFRESHES = 2;
+const BUBBLE_WATCH_CACHE_TTL_HOURS = 132;
+const BUBBLE_WATCH_CACHE_STALE_MAX_HOURS = 21 * 24;
 const SENSITIVE_CACHE_FIELD_RE = /^(?:authorization|authorizationHeader|apiKey|api_key|secret|token|bearer|bearerToken|cookie|cookies|setCookie|headers|requestHeaders|responseHeaders|rawProviderResponse|providerResponse|rawResponse|responseBody|rawBody|body)$/iu;
 const ALLOWED_SENSITIVE_POLICY_FLAG_PATHS = new Set([
   'cachePolicy.rawProviderResponseStored',
@@ -207,6 +209,13 @@ function bubblePlaceholderSeverity(elapsedScheduledRefreshes) {
     : 'watch';
 }
 
+function bubbleCacheAgeStatus(cacheAgeHours) {
+  if (!Number.isFinite(cacheAgeHours)) return 'invalid';
+  if (cacheAgeHours <= BUBBLE_WATCH_CACHE_TTL_HOURS) return 'fresh';
+  if (cacheAgeHours <= BUBBLE_WATCH_CACHE_STALE_MAX_HOURS) return 'stale';
+  return 'expired';
+}
+
 function worstSeverity(rows) {
   const severities = rows.flatMap((row) => row.findings.map((finding) => finding.severity));
   if (severities.includes('fail')) return 'fail';
@@ -388,7 +397,18 @@ function reviewBubbleWatchCache(nowMs, cacheOverride = null) {
   if (cache.cachePolicy?.lowFrequencyCache !== true || cache.cachePolicy?.broadQueryLocalClassification !== true) {
     pushFinding(row, 'fail', 'bubble_cache_policy_missing', 'Bubble Watch GDELT cache policy must declare lowFrequencyCache and broadQueryLocalClassification.');
   }
-  if (row.status === 'not_initialized' || row.requestMode === 'placeholder_until_next_bubble_watch_refresh') {
+  const isPlaceholder = row.status === 'not_initialized' || row.requestMode === 'placeholder_until_next_bubble_watch_refresh';
+  if (!isPlaceholder) {
+    const ageStatus = bubbleCacheAgeStatus(row.ageHours);
+    if (ageStatus === 'invalid') {
+      pushFinding(row, 'warn', 'bubble_cache_generated_at_invalid', 'Bubble Watch GDELT cache generatedAt is missing or invalid.');
+    } else if (ageStatus === 'expired') {
+      pushFinding(row, 'warn', 'bubble_cache_expired', `Bubble Watch GDELT cache age ${row.ageHours}h exceeds the ${BUBBLE_WATCH_CACHE_STALE_MAX_HOURS}h stale fallback window.`);
+    } else if (ageStatus === 'stale') {
+      pushFinding(row, 'watch', 'bubble_cache_stale', `Bubble Watch GDELT cache age ${row.ageHours}h exceeds the ${BUBBLE_WATCH_CACHE_TTL_HOURS}h fresh TTL.`);
+    }
+  }
+  if (isPlaceholder) {
     row.placeholderScheduledRefreshesElapsed = countWeeklyScheduleSlotsSince(
       row.generatedAt,
       nowMs,
@@ -504,6 +524,10 @@ function runSelfTests() {
   );
   assertSelfTest(bubblePlaceholderSeverity(1) === 'watch', 'placeholder remains WATCH before threshold');
   assertSelfTest(bubblePlaceholderSeverity(2) === 'fail', 'placeholder becomes FAIL at threshold');
+  assertSelfTest(bubbleCacheAgeStatus(132) === 'fresh', 'bubble cache stays fresh through 132h');
+  assertSelfTest(bubbleCacheAgeStatus(132.01) === 'stale', 'bubble cache becomes stale after 132h');
+  assertSelfTest(bubbleCacheAgeStatus(504.01) === 'expired', 'bubble cache expires after 21d');
+  assertSelfTest(bubbleCacheAgeStatus(null) === 'invalid', 'bubble cache rejects invalid age');
   assertSelfTest(isManualArtifactPath(DEFAULT_OUTPUT), 'default output path stays inside manual-artifacts');
   assertSelfTest(!isManualArtifactPath('data/gdelt-cache-health.json'), 'production data output path is rejected');
   assertManualArtifactWritePath(DEFAULT_OUTPUT);
