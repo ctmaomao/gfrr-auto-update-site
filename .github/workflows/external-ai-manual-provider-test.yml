@@ -112,19 +112,30 @@ jobs:
           npm run check:external-ai-production-provider-path
 
       - name: Validate provider-test workflow inputs
+        env:
+          PROVIDER_INPUT: ${{ github.event.inputs.provider }}
+          INPUT_SOURCE: ${{ github.event.inputs.input_source }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          ALLOW_NETWORK: ${{ github.event.inputs.allow_network }}
+          ACKNOWLEDGE_COST: ${{ github.event.inputs.acknowledge_cost }}
+          ACKNOWLEDGE_NON_PRODUCTION: ${{ github.event.inputs.acknowledge_non_production }}
+          VALIDATE_OUTPUT: ${{ github.event.inputs.validate_output }}
+          TIMEOUT_MS: ${{ github.event.inputs.timeout_ms }}
+          MAX_ATTEMPTS: ${{ github.event.inputs.max_attempts }}
+          UPLOAD_ARTIFACTS: ${{ github.event.inputs.upload_artifacts }}
         run: |
           set -euo pipefail
 
-          provider="${{ github.event.inputs.provider }}"
-          input_source="${{ github.event.inputs.input_source }}"
-          dry_run="${{ github.event.inputs.dry_run }}"
-          allow_network="${{ github.event.inputs.allow_network }}"
-          acknowledge_cost="${{ github.event.inputs.acknowledge_cost }}"
-          acknowledge_non_production="${{ github.event.inputs.acknowledge_non_production }}"
-          validate_output="${{ github.event.inputs.validate_output }}"
-          timeout_ms="${{ github.event.inputs.timeout_ms }}"
-          max_attempts="${{ github.event.inputs.max_attempts }}"
-          upload_artifacts="${{ github.event.inputs.upload_artifacts }}"
+          provider="$PROVIDER_INPUT"
+          input_source="$INPUT_SOURCE"
+          dry_run="$DRY_RUN"
+          allow_network="$ALLOW_NETWORK"
+          acknowledge_cost="$ACKNOWLEDGE_COST"
+          acknowledge_non_production="$ACKNOWLEDGE_NON_PRODUCTION"
+          validate_output="$VALIDATE_OUTPUT"
+          timeout_ms="$TIMEOUT_MS"
+          max_attempts="$MAX_ATTEMPTS"
+          upload_artifacts="$UPLOAD_ARTIFACTS"
 
           if [ "$provider" != "deepseek" ]; then
             echo "Invalid provider"
@@ -186,18 +197,28 @@ jobs:
 
       - name: Evaluate provider gates
         id: evaluate_provider_gates
+        env:
+          PROVIDER_INPUT: ${{ github.event.inputs.provider }}
+          INPUT_SOURCE: ${{ github.event.inputs.input_source }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          ALLOW_NETWORK: ${{ github.event.inputs.allow_network }}
+          ACKNOWLEDGE_COST: ${{ github.event.inputs.acknowledge_cost }}
+          ACKNOWLEDGE_NON_PRODUCTION: ${{ github.event.inputs.acknowledge_non_production }}
+          VALIDATE_OUTPUT: ${{ github.event.inputs.validate_output }}
+          TIMEOUT_MS: ${{ github.event.inputs.timeout_ms }}
+          MAX_ATTEMPTS: ${{ github.event.inputs.max_attempts }}
         run: |
           set -euo pipefail
 
-          provider="${{ github.event.inputs.provider }}"
-          input_source="${{ github.event.inputs.input_source }}"
-          dry_run="${{ github.event.inputs.dry_run }}"
-          allow_network="${{ github.event.inputs.allow_network }}"
-          acknowledge_cost="${{ github.event.inputs.acknowledge_cost }}"
-          acknowledge_non_production="${{ github.event.inputs.acknowledge_non_production }}"
-          validate_output="${{ github.event.inputs.validate_output }}"
-          timeout_ms="${{ github.event.inputs.timeout_ms }}"
-          max_attempts="${{ github.event.inputs.max_attempts }}"
+          provider="$PROVIDER_INPUT"
+          input_source="$INPUT_SOURCE"
+          dry_run="$DRY_RUN"
+          allow_network="$ALLOW_NETWORK"
+          acknowledge_cost="$ACKNOWLEDGE_COST"
+          acknowledge_non_production="$ACKNOWLEDGE_NON_PRODUCTION"
+          validate_output="$VALIDATE_OUTPUT"
+          timeout_ms="$TIMEOUT_MS"
+          max_attempts="$MAX_ATTEMPTS"
 
           input_artifact_path="docs/fixtures/external-ai/sample-input-v28.0K-1.json"
           if [ "$input_source" = "local_compact" ]; then
@@ -341,18 +362,27 @@ jobs:
       - name: Run DeepSeek provider call
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          PROVIDER_INPUT: ${{ github.event.inputs.provider }}
+          INPUT_SOURCE: ${{ github.event.inputs.input_source }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          ALLOW_NETWORK: ${{ github.event.inputs.allow_network }}
+          ACKNOWLEDGE_COST: ${{ github.event.inputs.acknowledge_cost }}
+          ACKNOWLEDGE_NON_PRODUCTION: ${{ github.event.inputs.acknowledge_non_production }}
+          VALIDATE_OUTPUT: ${{ github.event.inputs.validate_output }}
+          TIMEOUT_MS: ${{ github.event.inputs.timeout_ms }}
+          MAX_ATTEMPTS: ${{ github.event.inputs.max_attempts }}
         run: |
           set -euo pipefail
 
-          provider="${{ github.event.inputs.provider }}"
-          input_source="${{ github.event.inputs.input_source }}"
-          dry_run="${{ github.event.inputs.dry_run }}"
-          allow_network="${{ github.event.inputs.allow_network }}"
-          acknowledge_cost="${{ github.event.inputs.acknowledge_cost }}"
-          acknowledge_non_production="${{ github.event.inputs.acknowledge_non_production }}"
-          validate_output="${{ github.event.inputs.validate_output }}"
-          timeout_ms="${{ github.event.inputs.timeout_ms }}"
-          max_attempts="${{ github.event.inputs.max_attempts }}"
+          provider="$PROVIDER_INPUT"
+          input_source="$INPUT_SOURCE"
+          dry_run="$DRY_RUN"
+          allow_network="$ALLOW_NETWORK"
+          acknowledge_cost="$ACKNOWLEDGE_COST"
+          acknowledge_non_production="$ACKNOWLEDGE_NON_PRODUCTION"
+          validate_output="$VALIDATE_OUTPUT"
+          timeout_ms="$TIMEOUT_MS"
+          max_attempts="$MAX_ATTEMPTS"
 
           input_artifact_path="docs/fixtures/external-ai/sample-input-v28.0K-1.json"
           case "$input_source" in

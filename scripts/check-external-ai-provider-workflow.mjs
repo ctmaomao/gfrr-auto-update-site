@@ -232,6 +232,20 @@ function checkProviderJob(text) {
   assert(providerStep.includes('manual-artifacts/external-ai/manual-input-compact-latest.json'), 'provider-call job must support local_compact input artifact');
 }
 
+function checkShellInputPolicy(text) {
+  for (const stepName of [
+    'Validate provider-test workflow inputs',
+    'Evaluate provider gates',
+    'Run DeepSeek provider call',
+  ]) {
+    const step = getBlock(text, `name: ${stepName}`, ['\n      - name:']);
+    const runBlock = step.slice(step.indexOf('run:'));
+    assert(runBlock && !runBlock.includes('${{ github.event.inputs.'), `${stepName} must not interpolate dispatch inputs into shell`);
+    assert(step.includes('TIMEOUT_MS: ${{ github.event.inputs.timeout_ms }}'), `${stepName} must pass timeout_ms through step env`);
+    assert(step.includes('MAX_ATTEMPTS: ${{ github.event.inputs.max_attempts }}'), `${stepName} must pass max_attempts through step env`);
+  }
+}
+
 function checkArtifactPolicy(text) {
   const uploadPaths = [
     'manual-artifacts/external-ai/workflow-dry-run-report.json',
@@ -280,6 +294,7 @@ function checkWorkflow() {
   checkForbiddenText(text);
   checkSecretPolicy(text);
   checkProviderJob(text);
+  checkShellInputPolicy(text);
   checkArtifactPolicy(text);
 }
 
