@@ -588,6 +588,14 @@ function runSelfTests() {
   assertSelfTest(isManualArtifactPath(DEFAULT_OUTPUT), 'default output path stays inside manual-artifacts');
   assertSelfTest(!isManualArtifactPath('data/gdelt-cache-health.json'), 'production data output path is rejected');
   assertManualArtifactWritePath(DEFAULT_OUTPUT);
+  const writeReviewSource = writeReview.toString();
+  const firstPathCheck = writeReviewSource.indexOf('assertManualArtifactWritePath(resolved)');
+  const mkdirIndex = writeReviewSource.indexOf('mkdirSync(dirname(resolved)');
+  const secondPathCheck = writeReviewSource.lastIndexOf('assertManualArtifactWritePath(resolved)');
+  assertSelfTest(
+    firstPathCheck !== -1 && firstPathCheck < mkdirIndex && mkdirIndex < secondPathCheck,
+    'manual artifact path is checked before and after directory creation'
+  );
   assertSelfTest(
     collectForbiddenCacheFields({ cachePolicy: { rawProviderResponseStored: false, authorizationStored: false } }).length === 0,
     'policy flags for not storing raw/auth are allowed'
@@ -709,6 +717,7 @@ function buildReview() {
 
 function writeReview(review, outputPath) {
   const resolved = resolve(outputPath);
+  assertManualArtifactWritePath(resolved);
   mkdirSync(dirname(resolved), { recursive: true });
   assertManualArtifactWritePath(resolved);
   writeFileSync(resolved, `${JSON.stringify(review, null, 2)}\n`, 'utf8');
