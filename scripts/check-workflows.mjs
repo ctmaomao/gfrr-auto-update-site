@@ -1,6 +1,9 @@
 ﻿import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import { DAILY_REFRESH_SCHEDULE_UTC } from './transport-shock-refresh-history.mjs';
+import { replaceJsonBatchSafely } from './run-daily-pipeline.mjs';
 
 const contracts = [
   {
@@ -12,8 +15,8 @@ const contracts = [
       'gfrr-realtime',
       'permissions:',
       'contents: write',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'for attempt in 1 2 3',
       'npm ci',
@@ -34,8 +37,8 @@ const contracts = [
       'concurrency',
       'group: gfrr-realtime-${{ github.ref }}',
       'cancel-in-progress: false',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'node scripts/check-realtime-health.mjs --soft --github-output',
@@ -54,11 +57,11 @@ const contracts = [
     required: [
       'workflow_dispatch',
       'concurrency',
-      'gfrr-main-writer-${{ github.ref }}',
+      'gfrr-main-writer-main',
       'git show origin/realtime-data:realtime/market.json',
       'GFRR_REALTIME_COMMIT_SHA',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'Audit Daily realtime input vs Worker preview',
       'node scripts/audit-daily-vs-worker.mjs --github-summary',
@@ -77,9 +80,9 @@ const contracts = [
       "github.event.workflow_run.conclusion == 'success'",
       'cancel-in-progress: false',
       'npm run check:all',
-      'actions/checkout@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'fetch-depth: 0',
-      'actions/setup-node@v6',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'upload-pages-artifact',
       'deploy-pages',
@@ -105,8 +108,8 @@ const contracts = [
       'permissions:',
       'contents: read',
       'concurrency:',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'npm ci',
@@ -132,8 +135,8 @@ const contracts = [
       'contents: read',
       'concurrency',
       'realtime-health',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'node scripts/check-realtime-health.mjs --github-output'
@@ -164,13 +167,13 @@ const contracts = [
       'concurrency',
       'group: worker-health',
       'cancel-in-progress: true',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy',
       '--snapshot-file health-worker-snapshot.json',
-      'actions/upload-artifact@v7',
+      'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
       'worker-health-snapshot',
       'retention-days: 14'
     ],
@@ -194,9 +197,9 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-main-writer-${{ github.ref }}',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'gfrr-main-writer-main',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'GDELT_CLOUD_API_KEY: ${{ secrets.GDELT_CLOUD_API_KEY }}',
@@ -224,9 +227,9 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-main-writer-${{ github.ref }}',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'gfrr-main-writer-main',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}',
@@ -254,13 +257,13 @@ const contracts = [
       'contents: read',
       'concurrency',
       'oil-thermal-baseline-quality-reminder',
-      'actions/checkout@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'fetch-depth: 0',
-      'actions/setup-node@v6',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'npm run monitor:oil-thermal-baseline-quality -- --github-summary',
-      'actions/upload-artifact@v7',
+      'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
       'oil-thermal-baseline-quality-monitor',
       'retention-days: 30'
     ],
@@ -287,13 +290,13 @@ const contracts = [
       'contents: read',
       'concurrency',
       'transport-shock-production-refresh-monitor',
-      'actions/checkout@v6',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'fetch-depth: 0',
-      'actions/setup-node@v6',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'npm run monitor:transport-shock-confirmation-factor-production-refresh -- --github-summary',
-      'actions/upload-artifact@v7',
+      'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
       'transport-shock-production-refresh-monitor',
       'retention-days: 14'
     ],
@@ -321,9 +324,9 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-main-writer-${{ github.ref }}',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'gfrr-main-writer-main',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}',
@@ -352,9 +355,9 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'gfrr-main-writer-${{ github.ref }}',
-      'actions/checkout@v6',
-      'actions/setup-node@v6',
+      'gfrr-main-writer-main',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
       'package-manager-cache: false',
       'FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
@@ -439,8 +442,13 @@ const mainWriterWorkflows = [
 for (const workflow of mainWriterWorkflows) {
   const file = `.github/workflows/${workflow}`;
   const text = fs.readFileSync(file, 'utf8');
-  requireSourceMarker(file, text, 'group: gfrr-main-writer-${{ github.ref }}');
+  requireSourceMarker(file, text, 'group: gfrr-main-writer-main');
   requireSourceMarker(file, text, 'cancel-in-progress: false');
+  requireSourceMarker(file, text, 'queue: max');
+  requireSourceMarker(file, text, "if: ${{ github.ref == 'refs/heads/main' }}");
+  requireSourceMarker(file, text, 'ref: main');
+  requireSourceMarker(file, text, 'fetch-depth: 0');
+  requireSourceMarker(file, text, 'git pull --ff-only origin main');
 }
 
 const workflowDir = '.github/workflows';
@@ -670,6 +678,14 @@ const workerContract = {
 for (const file of workflowFiles) {
   const text = fs.readFileSync(file, 'utf8');
 
+  for (const match of text.matchAll(/^\s*uses:\s*([^\s#]+)/gmu)) {
+    const actionRef = match[1].replace(/['"]/gu, '');
+    if (actionRef.startsWith('./')) continue;
+    if (!/^[^@\s]+@[a-f0-9]{40}$/u.test(actionRef)) {
+      addRuntimeFailure(file, `external action must be pinned to a full commit SHA: ${actionRef}`);
+    }
+  }
+
   for (const [pattern, message] of forbiddenRuntimePatterns) {
     if (pattern.test(text)) addRuntimeFailure(file, message);
   }
@@ -680,15 +696,15 @@ for (const file of workflowFiles) {
 
   const checkoutMatches = text.match(/actions\/checkout@[^\s'"]+/gu) || [];
   for (const match of checkoutMatches) {
-    if (match !== 'actions/checkout@v6') {
-      addRuntimeFailure(file, `uses ${match}; expected actions/checkout@v6`);
+    if (match !== 'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10') {
+      addRuntimeFailure(file, `uses ${match}; expected actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10`);
     }
   }
 
   const setupNodeMatches = text.match(/actions\/setup-node@[^\s'"]+/gu) || [];
   for (const match of setupNodeMatches) {
-    if (match !== 'actions/setup-node@v6') {
-      addRuntimeFailure(file, `uses ${match}; expected actions/setup-node@v6`);
+    if (match !== 'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e') {
+      addRuntimeFailure(file, `uses ${match}; expected actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e`);
     }
   }
 
@@ -701,8 +717,8 @@ for (const file of workflowFiles) {
 
   const uploadArtifactMatches = text.match(/actions\/upload-artifact@[^\s'"]+/gu) || [];
   for (const match of uploadArtifactMatches) {
-    if (match !== 'actions/upload-artifact@v7') {
-      addRuntimeFailure(file, `uses ${match}; expected actions/upload-artifact@v7`);
+    if (match !== 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a') {
+      addRuntimeFailure(file, `uses ${match}; expected actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`);
     }
   }
 }
@@ -1704,12 +1720,47 @@ function checkRefreshScheduleConsistency() {
   }
   const dailyBuilderSource = fs.readFileSync(dailyBuilder, 'utf8');
   for (const marker of [
-    'function replaceJsonBatchSafely(entries)',
+    'function replaceJsonBatchSafely(entries, replaceFile = fs.renameSync)',
     'fs.writeFileSync(entry.tmpPath',
-    'fs.renameSync(entry.tmpPath, entry.filePath)',
+    'fs.copyFileSync(entry.filePath, entry.backupPath)',
+    'fs.copyFileSync(entry.backupPath, entry.filePath)',
     'replaceJsonBatchSafely(['
   ]) {
     requireSourceMarker(dailyBuilder, dailyBuilderSource, marker);
+  }
+
+  const rollbackDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-daily-batch-'));
+  try {
+    const files = ['history.json', 'history-full.json', 'radar.json'].map((name) => path.join(rollbackDir, name));
+    files.forEach((file, index) => fs.writeFileSync(file, `${JSON.stringify({ old: index })}\n`, 'utf8'));
+    let renameCount = 0;
+    let injectedFailureObserved = false;
+    try {
+      replaceJsonBatchSafely(
+        files.map((file, index) => [file, { next: index }]),
+        (source, target) => {
+          renameCount += 1;
+          if (renameCount === 2) throw new Error('injected second rename failure');
+          fs.renameSync(source, target);
+        },
+      );
+    } catch (error) {
+      injectedFailureObserved = error?.message === 'injected second rename failure';
+    }
+    if (!injectedFailureObserved) {
+      addRuntimeFailure(dailyBuilder, 'Daily batch rollback test did not observe the injected rename failure.');
+    }
+    files.forEach((file, index) => {
+      const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (value.old !== index) {
+        addRuntimeFailure(dailyBuilder, `Daily batch rollback did not restore ${path.basename(file)}.`);
+      }
+    });
+    if (fs.readdirSync(rollbackDir).some((name) => name.startsWith('.'))) {
+      addRuntimeFailure(dailyBuilder, 'Daily batch rollback left temporary or backup files behind.');
+    }
+  } finally {
+    fs.rmSync(rollbackDir, { recursive: true, force: true });
   }
 
   for (const file of [transportCheck, transportMonitor]) {
@@ -1729,6 +1780,9 @@ function checkRefreshScheduleConsistency() {
     }
     if (!bubbleSource.includes('git commit -m "chore: refresh bubble watch"')) {
       addRuntimeFailure(bubbleWorkflow, 'Bubble Watch refresh commit subject must remain available to cache history review.');
+    }
+    if (!bubbleSource.includes('npm run check:gdelt-cache-health')) {
+      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch refresh must enforce the GDELT placeholder escalation gate before commit.');
     }
     for (const marker of [
       "BUBBLE_WATCH_REFRESH_COMMIT_SUBJECT = 'chore: refresh bubble watch'",

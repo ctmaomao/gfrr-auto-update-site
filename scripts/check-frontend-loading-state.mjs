@@ -93,7 +93,8 @@ for (const snippet of [
   'function markDataUnavailable()',
   'function allRenderableDataPresent',
   'return Boolean(radarData);',
-  'dataReady && macroOverviewRendered && oilDirectionalRendered',
+  'dataReady && macroOverviewRendered',
+  "document.getElementById('oil-directional-pressure')",
 ]) {
   assert(app.includes(snippet), `scripts/app.js missing loading-state guard snippet: ${snippet}`);
 }
@@ -104,6 +105,8 @@ for (const snippet of [
 ]) {
   assertMissing(app, snippet, 'scripts/app.js');
 }
+
+assertMissing(app, 'dataReady && macroOverviewRendered && oilDirectionalRendered', 'scripts/app.js');
 
 const { allRenderableDataPresent } = loadRenderableDataHarness(app);
 

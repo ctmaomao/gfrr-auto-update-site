@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { writeJson } from '../lib/check-script-helpers.mjs';
-import { relative, resolve } from 'node:path';
+import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
+import { mkdirSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fetchGdeltWebNgramsText, probeGdeltWebNgramsFile, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
 
@@ -498,7 +499,10 @@ async function main() {
     ? await buildLiveArtifact(options, candidates)
     : buildDryRunArtifact(options, candidates);
   if (options.writeOutput) {
-    const outputPath = writeJson(options.output, artifact);
+    const outputPath = assertManualArtifactWritePath(options.output, 'manual-artifacts/oil-news/');
+    mkdirSync(dirname(outputPath), { recursive: true });
+    assertManualArtifactWritePath(outputPath, 'manual-artifacts/oil-news/');
+    writeJson(outputPath, artifact);
     artifact.outputPath = outputPath;
   }
   if (options.printJson) {

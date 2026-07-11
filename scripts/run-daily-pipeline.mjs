@@ -2452,7 +2452,24 @@ function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-export function isPreservableExternalAiLayer(layer) {
+function isCurrentExternalAiFreshness(freshness, nowMs) {
+  if (!isRecord(freshness) || freshness.isStale !== false) return false;
+  const maxAgeHours = Number(freshness.maxAgeHours);
+  if (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0) return false;
+
+  const timestamps = [freshness.artifactGeneratedAt, freshness.sourceDataUpdatedAt]
+    .filter((value) => typeof value === 'string' && value.trim() !== '');
+  if (timestamps.length === 0) return false;
+
+  return timestamps.every((timestamp) => {
+    const parsed = Date.parse(timestamp);
+    if (!Number.isFinite(parsed)) return false;
+    const ageHours = (nowMs - parsed) / (60 * 60 * 1000);
+    return ageHours >= -(5 / 60) && ageHours <= maxAgeHours;
+  });
+}
+
+export function isPreservableExternalAiLayer(layer, nowMs = Date.now()) {
   const qualityReview = isRecord(layer?.qualityReview) ? layer.qualityReview : null;
   const boundaries = isRecord(layer?.boundaries) ? layer.boundaries : null;
   return isRecord(layer)
@@ -2461,6 +2478,7 @@ export function isPreservableExternalAiLayer(layer) {
     && typeof layer.displayEnabled === 'boolean'
     && isRecord(qualityReview)
     && qualityReview.promotionEligible === false
+    && isCurrentExternalAiFreshness(layer.freshness, nowMs)
     && isRecord(boundaries)
     && boundaries.displayOnly === true
     && boundaries.externalAiGenerated === true
@@ -10711,7 +10729,7 @@ function buildTailRiskOverlay(inputs) {
   };
 }
 
-function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport) {
+export function buildTransportShockScoringImpact(energyTransport, scoreBeforeTransport) {
   const candidate = energyTransport?.transportShockCandidate;
   const sourceStatus = energyTransport?.sourceStatus?.chokepoints || 'missing';
   const latestAgeDays = Number.isFinite(energyTransport?.latestAgeDays) ? energyTransport.latestAgeDays : null;
@@ -11997,20 +12015,44 @@ async function build() {
   return { data, history, historyFull };
 }
 
-function replaceJsonBatchSafely(entries) {
-  const suffix = `${process.pid}.${Date.now()}.tmp`;
+export function replaceJsonBatchSafely(entries, replaceFile = fs.renameSync) {
+  const suffix = `${process.pid}.${Date.now()}`;
   const staged = entries.map(([filePath, value]) => ({
     filePath,
-    tmpPath: path.join(path.dirname(filePath), `.${path.basename(filePath)}.${suffix}`),
+    tmpPath: path.join(path.dirname(filePath), `.${path.basename(filePath)}.${suffix}.tmp`),
+    backupPath: path.join(path.dirname(filePath), `.${path.basename(filePath)}.${suffix}.backup`),
+    hadOriginal: fs.existsSync(filePath),
     text: `${JSON.stringify(value, null, 2)}\n`
   }));
+  const replaced = [];
 
   try {
     for (const entry of staged) fs.writeFileSync(entry.tmpPath, entry.text, 'utf8');
-    for (const entry of staged) fs.renameSync(entry.tmpPath, entry.filePath);
+    for (const entry of staged) {
+      if (entry.hadOriginal) fs.copyFileSync(entry.filePath, entry.backupPath);
+    }
+    for (const entry of staged) {
+      replaceFile(entry.tmpPath, entry.filePath);
+      replaced.push(entry);
+    }
+  } catch (error) {
+    const rollbackErrors = [];
+    for (const entry of replaced.reverse()) {
+      try {
+        if (entry.hadOriginal) fs.copyFileSync(entry.backupPath, entry.filePath);
+        else fs.rmSync(entry.filePath, { force: true });
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+    }
+    if (rollbackErrors.length > 0) {
+      throw new AggregateError([error, ...rollbackErrors], 'Daily JSON batch replacement and rollback failed');
+    }
+    throw error;
   } finally {
     for (const entry of staged) {
       if (fs.existsSync(entry.tmpPath)) fs.rmSync(entry.tmpPath, { force: true });
+      if (fs.existsSync(entry.backupPath)) fs.rmSync(entry.backupPath, { force: true });
     }
   }
 }

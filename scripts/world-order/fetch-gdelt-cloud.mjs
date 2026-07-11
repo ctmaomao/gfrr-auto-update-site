@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { gdeltCacheAgeHours } from '../gdelt/cache-age.mjs';
 
 import {
   fetchGdeltCloudJson,
@@ -127,10 +128,8 @@ function readJsonIfExists(filePath) {
 }
 
 function cacheAgeHours(cache, nowIso) {
-  const observedAt = Date.parse(cache?.lastFetchedAt || cache?.generatedAt || '');
   const nowMs = Date.parse(nowIso);
-  if (!Number.isFinite(observedAt) || !Number.isFinite(nowMs)) return null;
-  return Math.max(0, (nowMs - observedAt) / (60 * 60 * 1000));
+  return gdeltCacheAgeHours(cache?.lastFetchedAt || cache?.generatedAt, nowMs);
 }
 
 function readGdeltWorldOrderCache(cachePath = DEFAULT_GDELT_WORLD_ORDER_CACHE_OUTPUT) {

@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `transport-shock-score-ceiling-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `audit-hardening-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -63,8 +63,8 @@
 - live `externalAiInterpretationLayer` 现为已实现的 **visible read-only 展示层**（v28.0L-3P+ 起：`status=valid` / `displayEnabled=true` / `frontendDisplayApproved=true` / `provider=deepseek`，由 `External AI Production Refresh` workflow + `check:external-ai-production-contract` validator + quality review 写入与守门）。硬边界保持：`qualityReview.promotionEligible=false`、`provenance.humanApproved=false`，不影响 scoring / `decisionModel` / `executionLock` / `positionGuidance` / `values.*` / Brent promotion；不得替换 rule-based `aiInterpretationLayer`，不得手工编辑该字段（唯一写入路径为上述 workflow）。（K-3A/3B disabled scaffold 为历史基线,见 `docs/DATA_CONTRACT.md`。）
 - v28.0K-3D Stable Observation Audit 是只读 gate；不得用它 auto-fix、auto-commit、auto-push、deploy 或触发 recovery。PASS 可允许规划 v28.0K-4，FAIL 阻止 v28.0K-4。
 - v28.0K-4A 后，任何 external AI API calls implementation 必须先阅读 `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`；manual API test 必须 opt-in、validator-gated，并与 production data / scoring / decision / execution / position 隔离。
-- v28.0K-4B 的 `scripts/run-external-ai-manual-test.mjs` 必须保持 no-network dry-run scaffold；不得在未另开 K-4C reviewed PR 前加入 provider calls，不得读取 API keys。
-- v28.0K-4C 的 `scripts/external-ai/provider-adapters.mjs` 只是 disabled provider skeleton；不得把它改成真实 provider call，不得读取 API keys。任何真实 DeepSeek / OpenAI provider call 必须另开 reviewed PR。
+- v28.0K-4B 的 no-network dry-run scaffold 与 v28.0K-4C disabled adapter 是历史阶段基线；其绝对禁用语义已被后续 reviewed K-4D+ manual provider path 与 v28.0L-3P+ `External AI Production Refresh` 生产路径取代。当前仍要求默认 dry-run、显式网络/成本确认、单次调用、validator + quality review 守门，且不得打印或提交 API key。
+- `scripts/external-ai/provider-adapters.mjs` 的真实 DeepSeek 调用只允许由已批准的 manual provider test 或 `External AI Production Refresh` 路径触发；不得从 Daily、前端或其他 workflow 旁路调用，不得读取未显式注入的 key，也不得削弱 timeout、fallback、source attribution 或 output validator。
 - v28.0K-4D 的 DeepSeek manual artifact test 只能在用户明确要求且提供 `DEEPSEEK_API_KEY` 环境变量时运行；不得打印 API key，不得提交 `manual-artifacts/` 或其中的 output artifact，不得把 artifact 提升为生产数据或前端展示，除非另开 reviewed PR 且 validator 通过。
 - v28.0K-4E 的 manual input artifact 只能作为 ignored `manual-artifacts/` 手动输入；不得提交，不得当作 production data，不得复制进 `data/radar-data.json`，不得从 Daily、workflow 或自动流程触发 DeepSeek。
 - v28.0K-4E-1 后，paid DeepSeek live-data manual test 前应优先使用 compact input；若出现 timeout / aborted failure，不得反复重试，应先审阅 failure artifact 的 `requestDiagnostics`。

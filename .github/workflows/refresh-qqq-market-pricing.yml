@@ -9,19 +9,27 @@ on:
     - cron: '0 8 * * 6'  # Saturday 08:00 UTC, after Friday US market close
 
 concurrency:
-  group: gfrr-main-writer-${{ github.ref }}
+  group: gfrr-main-writer-main
   cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: write
 
 jobs:
   refresh:
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - name: Sync latest main before refresh
+        run: git pull --ff-only origin main
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 24
           cache: npm

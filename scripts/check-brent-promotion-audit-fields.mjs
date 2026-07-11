@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { hoursSinceTimestamp } from '../workers/gfrr-realtime-worker/src/worker-market-preview.js';
 
 const errors = [];
 
@@ -9,6 +10,17 @@ function fail(message) {
 
 const radarPath = resolve('data/radar-data.json');
 const radarData = JSON.parse(readFileSync(radarPath, 'utf8'));
+
+const fixedNowMs = Date.parse('2026-07-12T12:00:00.000Z');
+if (hoursSinceTimestamp('2026-07-12T11:00:00.000Z', fixedNowMs) !== 1) {
+  fail('past timestamps must retain their positive age');
+}
+if (hoursSinceTimestamp('2026-07-12T12:04:00.000Z', fixedNowMs) !== 0) {
+  fail('minor clock skew must remain within the five-minute tolerance');
+}
+if (hoursSinceTimestamp('2026-07-12T12:06:00.000Z', fixedNowMs) !== null) {
+  fail('materially future timestamps must be rejected');
+}
 
 const promotionAudit = radarData?.brentPricingLayer?.promotionAudit;
 if (!promotionAudit || typeof promotionAudit !== 'object') {

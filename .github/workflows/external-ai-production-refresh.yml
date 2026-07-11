@@ -42,22 +42,28 @@ permissions:
   actions: read
 
 concurrency:
-  group: gfrr-main-writer-${{ github.ref }}
+  group: gfrr-main-writer-main
   cancel-in-progress: false
+  queue: max
 
 jobs:
   external_ai_production_refresh:
     name: external-ai-production-refresh
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment: external-ai-production-refresh
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
+          ref: main
           fetch-depth: 0
 
+      - name: Sync latest main before refresh
+        run: git pull --ff-only origin main
+
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 24
           cache: npm
@@ -197,7 +203,8 @@ jobs:
             --input manual-artifacts/external-ai/deepseek-output-latest.json \
             --review manual-artifacts/external-ai/external-ai-quality-review-latest.json \
             --output manual-artifacts/external-ai/external-ai-production-projection-latest.json \
-            --preserve-display-state-from data/radar-data.json
+            --preserve-display-state-from data/radar-data.json \
+            --restore-visible-display
 
       - name: Validate projection
         run: npm run check:external-ai-production-contract -- manual-artifacts/external-ai/external-ai-production-projection-latest.json
@@ -208,7 +215,7 @@ jobs:
 
       - name: Upload sanitized refresh artifacts
         if: ${{ always() && steps.sanitize_refresh_artifacts.outcome == 'success' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: external-ai-production-refresh-${{ github.run_id }}
           path: |

@@ -8,9 +8,9 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=transport-shock-score-ceiling-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=transport-shock-score-ceiling-1';
-import { MODULE_LABELS } from './decision.js?v=transport-shock-score-ceiling-1';
+} from './config.js?v=audit-hardening-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=audit-hardening-1';
+import { MODULE_LABELS } from './decision.js?v=audit-hardening-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,8 +18,8 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=transport-shock-score-ceiling-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=transport-shock-score-ceiling-1';
+} from './macroOverviewDisplayHelpers.js?v=audit-hardening-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=audit-hardening-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -3418,14 +3418,51 @@ function renderExternalAiStructuredFields(layer) {
   setHidden('ext-ai-structured-output', !shown);
 }
 
-function isExternalAiVisibleForFrontend(layer) {
+function isExternalAiFreshForFrontend(freshness, nowMs = Date.now()) {
+  if (!freshness || typeof freshness !== 'object' || Array.isArray(freshness)) return false;
+  if (freshness.isStale !== false) return false;
+  const maxAgeHours = Number(freshness.maxAgeHours);
+  if (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0) return false;
+  const timestamps = [freshness.artifactGeneratedAt, freshness.sourceDataUpdatedAt]
+    .filter((value) => typeof value === 'string' && value.trim() !== '');
+  if (timestamps.length === 0) return false;
+  return timestamps.every((timestamp) => {
+    const parsed = Date.parse(timestamp);
+    if (!Number.isFinite(parsed)) return false;
+    const ageHours = (nowMs - parsed) / (60 * 60 * 1000);
+    return ageHours >= -(5 / 60) && ageHours <= maxAgeHours;
+  });
+}
+
+function isExternalAiVisibleForFrontend(layer, nowMs = Date.now()) {
   if (!layer || typeof layer !== 'object' || Array.isArray(layer)) return false;
   const boundaries = layer.boundaries || {};
   const qualityReview = layer.qualityReview || {};
-  const freshness = layer.freshness || {};
+  const provenance = layer.provenance || {};
+
+  const productionContract = layer.schemaVersion === 'v28.0L-external-ai-production-1'
+    ? {
+        sourceMode: 'manual_local_compact',
+        inputSource: 'local_compact',
+        sourceSemantics: 'site_structured_data_compact_summary',
+      }
+    : layer.schemaVersion === 'v28.0L-external-ai-production-analyst-1'
+      ? {
+          sourceMode: 'manual_analyst_compact_v1',
+          inputSource: 'analyst_compact_v1',
+          sourceSemantics: 'site_structured_analyst_evidence_pack_v1',
+        }
+      : null;
 
   if (layer.displayEnabled !== true) return false;
   if (layer.status !== 'valid') return false;
+  if (!productionContract) return false;
+  if (layer.sourceMode !== productionContract.sourceMode) return false;
+  if (layer.inputSource !== productionContract.inputSource) return false;
+  if (layer.sourceSemantics !== productionContract.sourceSemantics) return false;
+  if (layer.provider !== 'deepseek') return false;
+  if (layer.model !== 'deepseek-v4-flash') return false;
+  if (provenance.humanApproved !== false) return false;
   if (boundaries.frontendDisplayApproved !== true) return false;
   if (boundaries.displayOnly !== true) return false;
   if (boundaries.externalAiGenerated !== true) return false;
@@ -3439,7 +3476,7 @@ function isExternalAiVisibleForFrontend(layer) {
   if (!['pass', 'warn'].includes(qualityReview.status)) return false;
   if (qualityReview.recommendation !== 'pass_for_manual_review') return false;
   if (qualityReview.promotionEligible !== false) return false;
-  if (freshness.isStale !== false) return false;
+  if (!isExternalAiFreshForFrontend(layer.freshness, nowMs)) return false;
   return true;
 }
 

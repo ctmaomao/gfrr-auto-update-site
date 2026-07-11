@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=transport-shock-score-ceiling-1';
+﻿import { fmtNumSafe } from './config.js?v=audit-hardening-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

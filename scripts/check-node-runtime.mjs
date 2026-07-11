@@ -16,12 +16,12 @@ function warn(message) {
 // M-NODE-1: merged from former check:workflows-node24-only — every actions/*
 // reference is validated against this Node 24 expected-version map.
 const expectedNode24Actions = new Map([
-  ['actions/checkout', 'v6'],
-  ['actions/setup-node', 'v6'],
-  ['actions/upload-artifact', 'v7'],
-  ['actions/github-script', 'v8'],
-  ['actions/upload-pages-artifact', 'v5'],
-  ['actions/deploy-pages', 'v5'],
+  ['actions/checkout', 'df4cb1c069e1874edd31b4311f1884172cec0e10'],
+  ['actions/setup-node', '48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e'],
+  ['actions/upload-artifact', '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'],
+  ['actions/github-script', 'ed597411d8f924073f98dfc5c65a23a2325f34cd'],
+  ['actions/upload-pages-artifact', 'fc324d3547104276b827a68afc52ff2a11cc49c9'],
+  ['actions/deploy-pages', 'cd2ce8fcbc39b97be8ca5fce6e763baed58fa128'],
 ]);
 
 function actionStatus(actionRef) {
@@ -83,14 +83,14 @@ function checkWorkflow(file) {
   }
 
   for (const match of text.matchAll(/actions\/checkout@[^\s'"]+/gu)) {
-    if (match[0] !== 'actions/checkout@v6') {
-      fail(`${file} uses ${match[0]}; expected actions/checkout@v6`);
+    if (match[0] !== 'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10') {
+      fail(`${file} uses ${match[0]}; expected actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10`);
     }
   }
 
   for (const match of text.matchAll(/actions\/setup-node@[^\s'"]+/gu)) {
-    if (match[0] !== 'actions/setup-node@v6') {
-      fail(`${file} uses ${match[0]}; expected actions/setup-node@v6`);
+    if (match[0] !== 'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e') {
+      fail(`${file} uses ${match[0]}; expected actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e`);
     }
     const stepBlock = getStepBlock(text, match.index);
     if (!/node-version:\s*['"]?24['"]?/u.test(stepBlock)) {
@@ -99,8 +99,8 @@ function checkWorkflow(file) {
   }
 
   for (const match of text.matchAll(/actions\/upload-artifact@[^\s'"]+/gu)) {
-    if (match[0] !== 'actions/upload-artifact@v7') {
-      fail(`${file} uses ${match[0]}; expected actions/upload-artifact@v7`);
+    if (match[0] !== 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a') {
+      fail(`${file} uses ${match[0]}; expected actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`);
     }
   }
 

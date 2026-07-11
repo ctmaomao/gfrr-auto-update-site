@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import {
   EXTERNAL_AI_PRODUCTION_MODEL,
   resolveExternalAiProductionContract,
@@ -162,17 +163,31 @@ function readProjection(inputPath, expectedDisplayState) {
   return layer;
 }
 
-function assertTargetDisplayStateAllowsWrite(data, expectedDisplayState) {
+export function targetDisplayStateAllowsWrite(data, expectedDisplayState) {
   const currentLayer = data.externalAiInterpretationLayer;
   const currentBoundaries = currentLayer?.boundaries;
-  if (!isPlainObject(currentLayer) || !isPlainObject(currentBoundaries)) {
-    throw new Error('target data must already contain externalAiInterpretationLayer with boundaries');
-  }
-  if (currentLayer.displayEnabled !== expectedDisplayState.displayEnabled) {
-    throw new Error('target displayEnabled does not match requested preservation mode');
-  }
-  if (currentBoundaries.frontendDisplayApproved !== expectedDisplayState.frontendDisplayApproved) {
-    throw new Error('target frontendDisplayApproved does not match requested preservation mode');
+  if (!isPlainObject(currentLayer) || !isPlainObject(currentBoundaries)) return false;
+  const currentDisplayEnabled = currentLayer.displayEnabled;
+  const currentFrontendApproved = currentBoundaries.frontendDisplayApproved;
+  if (currentDisplayEnabled !== currentFrontendApproved) return false;
+  if (
+    currentDisplayEnabled === expectedDisplayState.displayEnabled
+    && currentFrontendApproved === expectedDisplayState.frontendDisplayApproved
+  ) return true;
+  const dailyFallbackHidden = currentLayer.status === 'disabled'
+    && currentLayer.fallback?.used === true
+    && currentBoundaries.externalAiGenerated === false
+    && currentBoundaries.usesExternalAiApi === false;
+  return expectedDisplayState.displayEnabled === true
+    && expectedDisplayState.frontendDisplayApproved === true
+    && currentDisplayEnabled === false
+    && currentFrontendApproved === false
+    && dailyFallbackHidden;
+}
+
+function assertTargetDisplayStateAllowsWrite(data, expectedDisplayState) {
+  if (!targetDisplayStateAllowsWrite(data, expectedDisplayState)) {
+    throw new Error('target display state cannot transition to the requested production display state');
   }
 }
 
@@ -212,4 +227,6 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  main();
+}

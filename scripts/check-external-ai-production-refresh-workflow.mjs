@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { targetDisplayStateAllowsWrite } from './write-external-ai-production-data.mjs';
 
 const WORKFLOW_PATH = '.github/workflows/external-ai-production-refresh.yml';
 const errors = [];
@@ -66,19 +67,25 @@ function checkRuntimeBaseline(text) {
     'contents: write',
     'actions: read',
     'concurrency:',
-    'group: gfrr-main-writer-${{ github.ref }}',
+    'group: gfrr-main-writer-main',
     'cancel-in-progress: false',
+    'queue: max',
+    "if: ${{ github.ref == 'refs/heads/main' }}",
     'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
-    'actions/checkout@v6',
-    'actions/setup-node@v6',
+    'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+    'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
     'node-version: 24',
-    'actions/upload-artifact@v7',
+    'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
     'retention-days: 3',
     'npm run check:external-ai-production-refresh-workflow',
+    'git pull --ff-only origin main',
   ];
   for (const marker of required) {
     assert(text.includes(marker), `workflow missing required runtime marker: ${marker}`);
   }
+
+  const checkoutStep = getBlock(text, 'name: Checkout repository', ['\n      - name: Setup Node.js']);
+  assert(checkoutStep.includes('ref: main'), 'production refresh checkout must be pinned to main');
 
   const forbidden = [
     'actions/checkout@v4',
@@ -144,6 +151,7 @@ function checkProviderAndValidationPath(text) {
     'npm run review:external-ai-artifact -- --input manual-artifacts/external-ai/deepseek-output-latest.json --output manual-artifacts/external-ai/external-ai-quality-review-latest.json',
     'node scripts/project-external-ai-production-dry-run.mjs \\',
     '--preserve-display-state-from data/radar-data.json',
+    '--restore-visible-display',
     'npm run check:external-ai-production-contract -- manual-artifacts/external-ai/external-ai-production-projection-latest.json',
     'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test',
     'npm run write:external-ai-production -- \\',
@@ -168,6 +176,53 @@ function checkProviderAndValidationPath(text) {
     'scheduled path must default to analyst_compact_v1',
   );
   assert(!text.includes('max_attempts="2"'), 'workflow must not configure retries beyond one attempt');
+  assert(
+    targetDisplayStateAllowsWrite(
+      {
+        externalAiInterpretationLayer: {
+          displayEnabled: false,
+          status: 'disabled',
+          fallback: { used: true },
+          boundaries: {
+            frontendDisplayApproved: false,
+            externalAiGenerated: false,
+            usesExternalAiApi: false,
+          },
+        },
+      },
+      { displayEnabled: true, frontendDisplayApproved: true },
+    ),
+    'approved production refresh must be able to restore a hidden fallback layer',
+  );
+  assert(
+    !targetDisplayStateAllowsWrite(
+      {
+        externalAiInterpretationLayer: {
+          displayEnabled: false,
+          status: 'valid',
+          boundaries: {
+            frontendDisplayApproved: false,
+            externalAiGenerated: true,
+            usesExternalAiApi: true,
+          },
+        },
+      },
+      { displayEnabled: true, frontendDisplayApproved: true },
+    ),
+    'production writer must not override a deliberately hidden valid layer',
+  );
+  assert(
+    !targetDisplayStateAllowsWrite(
+      {
+        externalAiInterpretationLayer: {
+          displayEnabled: true,
+          boundaries: { frontendDisplayApproved: false },
+        },
+      },
+      { displayEnabled: true, frontendDisplayApproved: true },
+    ),
+    'production writer must reject mismatched target display approval state',
+  );
 }
 
 function checkArtifactPolicy(text) {

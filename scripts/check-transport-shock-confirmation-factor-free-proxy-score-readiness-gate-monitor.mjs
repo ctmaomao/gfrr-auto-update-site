@@ -136,7 +136,7 @@ function assertWorkflow() {
     'npm run review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples -- --allow-empty',
     'npm run monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate',
     'manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-readiness-gate-monitor-latest.json',
-    'actions/upload-artifact@v7'
+    'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
   ]) {
     assert(workflow.includes(marker), `Workflow missing marker: ${marker}`);
   }

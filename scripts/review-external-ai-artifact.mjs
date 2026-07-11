@@ -13,22 +13,11 @@ import {
   summarizeAnalystPr4StructuredFields,
   validateAnalystPr4StructuredFields,
 } from './external-ai/pr4-schema-canary.mjs';
+import { assertManualArtifactWritePath } from './lib/check-script-helpers.mjs';
 
 const REVIEW_VERSION = 'v28.0K-4F';
 const DEFAULT_INPUT = 'manual-artifacts/external-ai/deepseek-output-latest.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/external-ai/external-ai-quality-review-latest.json';
-const UNSAFE_OUTPUT_DIRS = [
-  'data',
-  'realtime',
-  'config',
-  'workers',
-  'scripts/modules',
-  '.github/workflows'
-];
-const UNSAFE_OUTPUT_FILES = new Set([
-  'index.html',
-  'scripts/app.js'
-]);
 const UNSUPPORTED_EXTERNAL_CLAIMS = [
   '已接入新闻验证',
   '已经外部验证',
@@ -99,27 +88,11 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isUnsafeOutputPath(outputPath) {
-  const absoluteOutput = path.resolve(outputPath);
-  const cwd = process.cwd();
-  const relative = path.relative(cwd, absoluteOutput);
-  if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) return true;
-
-  const normalizedRelative = relative.split(path.sep).join('/');
-  if (!normalizedRelative.startsWith('manual-artifacts/')) return true;
-
-  return (
-    UNSAFE_OUTPUT_FILES.has(normalizedRelative) ||
-    UNSAFE_OUTPUT_DIRS.some((unsafeDir) => normalizedRelative === unsafeDir || normalizedRelative.startsWith(`${unsafeDir}/`))
-  );
-}
-
 async function writeJsonFile(outputPath, value) {
-  if (isUnsafeOutputPath(outputPath)) {
-    throw new Error(`unsafe output path rejected: ${outputPath}`);
-  }
-  await fs.mkdir(path.dirname(path.resolve(outputPath)), { recursive: true });
-  await fs.writeFile(outputPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  const resolvedOutput = assertManualArtifactWritePath(outputPath, 'manual-artifacts/external-ai/');
+  await fs.mkdir(path.dirname(resolvedOutput), { recursive: true });
+  assertManualArtifactWritePath(resolvedOutput, 'manual-artifacts/external-ai/');
+  await fs.writeFile(resolvedOutput, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function collectStrings(value, currentPath = '$', results = []) {
@@ -791,8 +764,10 @@ async function main() {
     return;
   }
 
-  if (isUnsafeOutputPath(options.output)) {
-    fail(`unsafe output path rejected: ${options.output}`);
+  try {
+    assertManualArtifactWritePath(options.output, 'manual-artifacts/external-ai/');
+  } catch (error) {
+    fail(error.message);
     return;
   }
 

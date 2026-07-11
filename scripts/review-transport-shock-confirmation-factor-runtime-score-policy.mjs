@@ -3,6 +3,7 @@ import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativ
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
+import { buildTransportShockScoringImpact } from './run-daily-pipeline.mjs';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-runtime-score-policy-review-v1';
 const IMPACT_CONTRACT_VERSION = 'transport-shock-scoring-impact-v1';
@@ -43,6 +44,10 @@ function isFixturePath(filePath) {
 
 function isSafeInputPath(filePath) {
   return isProductionInputPath(filePath) || isFixturePath(filePath);
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 function manualArtifactWritePathChain(filePath) {
@@ -113,10 +118,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
 function finiteNumberOrNull(value) {
   return Number.isFinite(value) ? value : null;
 }
@@ -127,100 +128,13 @@ function readJson(filePath) {
   return JSON.parse(readFileSync(absolutePath, 'utf8'));
 }
 
-function buildExpectedGuards(energyTransport) {
-  const candidate = energyTransport?.transportShockCandidate;
-  const sourceStatus = energyTransport?.sourceStatus?.chokepoints || 'missing';
-  const latestAgeDays = Number.isFinite(energyTransport?.latestAgeDays) ? energyTransport.latestAgeDays : null;
-  const candidateScore = Number.isFinite(candidate?.score) ? candidate.score : null;
-  return {
-    candidatePresent: isPlainObject(candidate),
-    sourceLive: sourceStatus === 'live',
-    latestFresh: Number.isFinite(latestAgeDays) && latestAgeDays >= 0 && latestAgeDays <= STALE_AFTER_DAYS,
-    eligibleForMainScore: candidate?.eligibleForMainScore === true,
-    candidateScorePositive: Number.isFinite(candidateScore) && candidateScore > 0,
-    pressureStatus: candidate?.status === 'watch' || candidate?.status === 'elevated_watch',
-    hardCapPct: MAX_CONTRIBUTION_PCT,
-    routeFreightConfirmationConnected: false,
-    marketConfirmationConnected: false
-  };
-}
-
-function contributionFromCandidateScore(candidateScore) {
-  if (!Number.isFinite(candidateScore)) return 0;
-  if (candidateScore >= 75) return 3;
-  if (candidateScore >= 60) return 2;
-  if (candidateScore >= 50) return 1;
-  return 0;
-}
-
-function expectedZero(reason, context) {
-  return {
-    runtimeScoringAuthorized: true,
-    applied: false,
-    contributionPct: 0,
-    maxContributionPct: MAX_CONTRIBUTION_PCT,
-    direction: 'transport_shock_pressure_only',
-    reason,
-    scoreBeforeTransport: context.baseScore,
-    scoreAfterTransport: context.baseScore,
-    sourceStatus: context.sourceStatus,
-    latestAgeDays: context.latestAgeDays,
-    candidateStatus: context.candidateStatus,
-    candidateScore: context.candidateScore,
-    guards: context.guards
-  };
-}
-
 function buildExpectedImpact(payload) {
   const energyTransport = payload?.macroDrivers?.energyTransport;
-  const candidate = energyTransport?.transportShockCandidate;
   const impact = payload?.transportShockScoringImpact;
-  const guards = buildExpectedGuards(energyTransport);
-  const sourceStatus = energyTransport?.sourceStatus?.chokepoints || 'missing';
-  const latestAgeDays = Number.isFinite(energyTransport?.latestAgeDays) ? energyTransport.latestAgeDays : null;
-  const candidateScore = Number.isFinite(candidate?.score) ? candidate.score : null;
   const baseScore = Number.isFinite(impact?.scoreBeforeTransport)
     ? impact.scoreBeforeTransport
     : finiteNumberOrNull(payload?.tailRiskOverlay?.adjustedScore);
-  const context = {
-    baseScore,
-    sourceStatus,
-    latestAgeDays,
-    candidateStatus: typeof candidate?.status === 'string' ? candidate.status : null,
-    candidateScore,
-    guards
-  };
-
-  if (!guards.candidatePresent) return expectedZero('candidate_missing_zero_contribution', context);
-  if (!guards.sourceLive) return expectedZero('candidate_not_live_zero_contribution', context);
-  if (!guards.latestFresh) return expectedZero('candidate_stale_zero_contribution', context);
-  if (!guards.eligibleForMainScore) return expectedZero('candidate_not_eligible_zero_contribution', context);
-  if (!guards.pressureStatus) return expectedZero('candidate_not_pressure_status_zero_contribution', context);
-  if (!guards.candidateScorePositive) return expectedZero('candidate_score_not_positive_zero_contribution', context);
-  if (!Number.isFinite(baseScore)) return expectedZero('base_score_missing_zero_contribution', context);
-
-  const requestedContributionPct = contributionFromCandidateScore(candidateScore);
-  if (requestedContributionPct <= 0) {
-    return expectedZero('candidate_score_below_contribution_threshold_zero_contribution', context);
-  }
-  const scoreAfterTransport = Math.min(100, baseScore + requestedContributionPct);
-  const contributionPct = scoreAfterTransport - baseScore;
-  if (contributionPct <= 0) return expectedZero('score_ceiling_zero_contribution', context);
-  return {
-    runtimeScoringAuthorized: true,
-    applied: true,
-    contributionPct,
-    maxContributionPct: MAX_CONTRIBUTION_PCT,
-    direction: 'transport_shock_pressure_only',
-    reason: 'owner_approved_free_proxy_transport_pressure_low_weight_applied',
-    scoreBeforeTransport: baseScore,
-    scoreAfterTransport,
-    sourceStatus,
-    latestAgeDays,
-    candidateStatus: candidate.status,
-    candidateScore,
-    guards
-  };
+  return buildTransportShockScoringImpact(energyTransport, baseScore);
 }
 
 function addBlocker(blockers, id, reasonZh, observed, expected) {

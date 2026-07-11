@@ -2,6 +2,7 @@ import { readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ALLOWED_EXTERNAL_AI_PRODUCTION_SCHEMA_VERSIONS } from './external-ai/production-contract.mjs';
+import { isPreservableExternalAiLayer } from './run-daily-pipeline.mjs';
 
 const DATA_PATH = 'data/radar-data.json';
 const WORKFLOW_DIR = '.github/workflows';
@@ -156,6 +157,12 @@ function validateFrontendFailClosedGuard(errors) {
   const text = readText(RENDER_MACRO_OVERVIEW_PATH);
   const requiredSnippets = [
     'function isExternalAiVisibleForFrontend',
+    'function isExternalAiFreshForFrontend',
+    "layer.schemaVersion === 'v28.0L-external-ai-production-1'",
+    "layer.schemaVersion === 'v28.0L-external-ai-production-analyst-1'",
+    "layer.provider !== 'deepseek'",
+    "layer.model !== 'deepseek-v4-flash'",
+    'provenance.humanApproved !== false',
     "layer.displayEnabled !== true",
     "layer.status !== 'valid'",
     'boundaries.frontendDisplayApproved !== true',
@@ -163,7 +170,7 @@ function validateFrontendFailClosedGuard(errors) {
     'boundaries.affectsScoring !== false',
     "qualityReview.recommendation !== 'pass_for_manual_review'",
     'qualityReview.promotionEligible !== false',
-    'freshness.isStale !== false',
+    '!isExternalAiFreshForFrontend(layer.freshness, nowMs)',
     "setHidden('external-ai-auxiliary', true)",
     "setHidden('external-ai-auxiliary', false)",
   ];
@@ -174,11 +181,16 @@ function validateFrontendFailClosedGuard(errors) {
 }
 
 function createApprovedVisibleLayer() {
+  const generatedAt = new Date(Date.now() - (60 * 60 * 1000)).toISOString();
   return {
+    schemaVersion: 'v28.0L-external-ai-production-analyst-1',
     displayEnabled: true,
     status: 'valid',
+    sourceMode: 'manual_analyst_compact_v1',
+    inputSource: 'analyst_compact_v1',
+    sourceSemantics: 'site_structured_analyst_evidence_pack_v1',
     provider: 'deepseek',
-    model: 'deepseek-chat',
+    model: 'deepseek-v4-flash',
     boundaries: {
       frontendDisplayApproved: true,
       displayOnly: true,
@@ -196,7 +208,13 @@ function createApprovedVisibleLayer() {
       recommendation: 'pass_for_manual_review',
       promotionEligible: false,
     },
+    provenance: {
+      humanApproved: false,
+    },
     freshness: {
+      artifactGeneratedAt: generatedAt,
+      sourceDataUpdatedAt: generatedAt,
+      maxAgeHours: 24,
       isStale: false,
     },
   };
@@ -212,7 +230,7 @@ function buildFrontendRendererHarness() {
   const setHidden = (id, hidden) => calls.push({ id, hidden });
   const harnessFactory = new Function(
     'setHidden',
-    `${extractFunctionSource(text, 'isExternalAiVisibleForFrontend')}\n${extractFunctionSource(text, 'renderExternalAiAuxiliary')}\nreturn { isExternalAiVisibleForFrontend, renderExternalAiAuxiliary };`
+    `${extractFunctionSource(text, 'isExternalAiFreshForFrontend')}\n${extractFunctionSource(text, 'isExternalAiVisibleForFrontend')}\n${extractFunctionSource(text, 'renderExternalAiAuxiliary')}\nreturn { isExternalAiVisibleForFrontend, renderExternalAiAuxiliary };`
   );
   const harness = harnessFactory(setHidden);
   return {
@@ -231,11 +249,22 @@ function validateFrontendFailClosedFixtures(errors) {
   if (harness.isExternalAiVisibleForFrontend(approvedLayer) !== true) {
     addError(errors, 'approved visible External AI fixture must pass frontend visibility gate');
   }
+  if (isPreservableExternalAiLayer(approvedLayer) !== true) {
+    addError(errors, 'approved fresh External AI fixture must remain preservable by Daily');
+  }
 
   const hiddenFixtures = [
     ['missing layer', () => null],
     ['displayEnabled false', (layer) => ({ ...layer, displayEnabled: false })],
     ['status invalid', (layer) => ({ ...layer, status: 'invalid' })],
+    ['schemaVersion invalid', (layer) => ({ ...layer, schemaVersion: 'unknown' })],
+    ['source contract mismatch', (layer) => ({ ...layer, inputSource: 'local_compact' })],
+    ['provider mismatch', (layer) => ({ ...layer, provider: 'other' })],
+    ['model mismatch', (layer) => ({ ...layer, model: 'other' })],
+    ['humanApproved true', (layer) => ({
+      ...layer,
+      provenance: { ...layer.provenance, humanApproved: true },
+    })],
     ['frontendDisplayApproved false', (layer) => ({
       ...layer,
       boundaries: { ...layer.boundaries, frontendDisplayApproved: false },
@@ -255,6 +284,14 @@ function validateFrontendFailClosedFixtures(errors) {
     ['freshness stale', (layer) => ({
       ...layer,
       freshness: { ...layer.freshness, isStale: true },
+    })],
+    ['freshness expired despite stale flag', (layer) => ({
+      ...layer,
+      freshness: {
+        ...layer.freshness,
+        artifactGeneratedAt: '2020-01-01T00:00:00.000Z',
+        sourceDataUpdatedAt: '2020-01-01T00:00:00.000Z',
+      },
     })],
     ['affectsScoring true', (layer) => ({
       ...layer,
@@ -276,6 +313,13 @@ function validateFrontendFailClosedFixtures(errors) {
     if (!hiddenAuxiliary || !hiddenStructuredOutput) {
       addError(errors, `External AI renderer must hide auxiliary output for ${name}`);
     }
+  }
+
+  const expiredLayer = hiddenFixtures.find(([name]) => name === 'freshness expired despite stale flag')[1](
+    cloneLayer(approvedLayer),
+  );
+  if (isPreservableExternalAiLayer(expiredLayer) !== false) {
+    addError(errors, 'Daily must not preserve an expired External AI layer whose stale flag was never updated');
   }
 }
 

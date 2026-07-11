@@ -520,11 +520,13 @@ function buildDiagnosticCandidateDiagnostics(result, reason, error = null) {
   };
 }
 
-function hoursSinceTimestamp(timestamp, nowMs) {
+export function hoursSinceTimestamp(timestamp, nowMs) {
   if (typeof timestamp !== 'string' || timestamp === '') return null;
   const parsed = Date.parse(timestamp);
   if (!Number.isFinite(parsed)) return null;
-  return Math.max(0, (nowMs - parsed) / (60 * 60 * 1000));
+  const ageHours = (nowMs - parsed) / (60 * 60 * 1000);
+  if (ageHours < -(5 / 60)) return null;
+  return Math.max(0, ageHours);
 }
 
 const MONTH_NAME_TO_INDEX = {

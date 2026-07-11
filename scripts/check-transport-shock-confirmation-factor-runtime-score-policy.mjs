@@ -68,9 +68,7 @@ function assertScriptSafety() {
     'candidate_not_eligible_zero_contribution',
     'score_ceiling_zero_contribution',
     'owner_approved_free_proxy_transport_pressure_low_weight_applied',
-    'candidateScore >= 75',
-    'routeFreightConfirmationConnected: false',
-    'marketConfirmationConnected: false',
+    "import { buildTransportShockScoringImpact } from './run-daily-pipeline.mjs'",
     'scoreExpansionApproved: false',
     'runtimeChangeApproved: false',
     'affectsBubbleWatch: false'

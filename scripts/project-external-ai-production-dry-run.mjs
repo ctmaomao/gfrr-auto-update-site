@@ -10,6 +10,7 @@ import {
   isAllowedExternalAiProductionSourceLayer,
   normalizeAnalystSourceLayerReference,
 } from './external-ai/source-layers.mjs';
+import { assertManualArtifactWritePath } from './lib/check-script-helpers.mjs';
 
 const DEFAULT_INPUT = 'docs/fixtures/external-ai/sample-output-v28.0K-1.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/external-ai/external-ai-production-projection-latest.json';
@@ -112,6 +113,7 @@ function parseArgs(argv) {
     output: DEFAULT_OUTPUT,
     review: null,
     preserveDisplayStateFrom: null,
+    restoreVisibleDisplay: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -124,13 +126,15 @@ function parseArgs(argv) {
       options.review = argv[++index];
     } else if (arg === '--preserve-display-state-from') {
       options.preserveDisplayStateFrom = argv[++index];
+    } else if (arg === '--restore-visible-display') {
+      options.restoreVisibleDisplay = true;
     } else {
       throw new Error(`unsupported argument: ${arg}`);
     }
   }
 
   for (const [key, value] of Object.entries(options)) {
-    if (!['review', 'preserveDisplayStateFrom'].includes(key) && (typeof value !== 'string' || value.trim() === '')) {
+    if (!['review', 'preserveDisplayStateFrom', 'restoreVisibleDisplay'].includes(key) && (typeof value !== 'string' || value.trim() === '')) {
       throw new Error(`--${key} must be a non-empty path`);
     }
   }
@@ -158,6 +162,23 @@ function readDisplayStateFrom(filePath) {
     displayEnabled: layer.displayEnabled,
     frontendDisplayApproved: boundaries.frontendDisplayApproved,
     sourceDataUpdatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : null,
+  };
+}
+
+function resolveDisplayState(options) {
+  const displayState = readDisplayStateFrom(options.preserveDisplayStateFrom);
+  if (!options.restoreVisibleDisplay) return displayState;
+  if (!options.preserveDisplayStateFrom) {
+    throw new Error('--restore-visible-display requires --preserve-display-state-from');
+  }
+  return restoreVisibleDisplayState(displayState);
+}
+
+function restoreVisibleDisplayState(displayState) {
+  return {
+    ...displayState,
+    displayEnabled: true,
+    frontendDisplayApproved: true,
   };
 }
 
@@ -205,7 +226,7 @@ function assertNoSecretMarkers(value, label) {
 
 function assertSafeOutputPath(outputPath) {
   const repoRoot = process.cwd();
-  const resolvedOutput = path.resolve(outputPath);
+  const resolvedOutput = assertManualArtifactWritePath(outputPath, 'manual-artifacts/external-ai/');
   const allowedRoot = path.resolve('manual-artifacts/external-ai');
   const relativeToRepo = normalizePathForReport(path.relative(repoRoot, resolvedOutput));
 
@@ -556,7 +577,7 @@ function buildProjection({ input, inputPath, outputPath, reviewPath, generatedAt
     },
     freshness: {
       artifactGeneratedAt: generatedAt,
-      sourceDataUpdatedAt: null,
+      sourceDataUpdatedAt: displayState.sourceDataUpdatedAt,
       maxAgeHours: 24,
       isStale: false,
       staleReasonZh: null,
@@ -684,6 +705,11 @@ function runRegressionChecks() {
   if (Object.keys(legacyLayerWithPr4).length !== 0) {
     throw new Error('regression failed: legacy projection passthrough PR4 fields');
   }
+
+  const restoredDisplayState = restoreVisibleDisplayState(DEFAULT_DISPLAY_STATE);
+  if (!restoredDisplayState.displayEnabled || !restoredDisplayState.frontendDisplayApproved) {
+    throw new Error('regression failed: approved production refresh must restore visible display state');
+  }
 }
 
 function main() {
@@ -694,7 +720,7 @@ function main() {
     const resolvedInput = path.resolve(options.input);
     const resolvedReview = options.review ? path.resolve(options.review) : null;
     const { raw: deepseekOutputJsonString, value: input } = readJsonWithRaw(resolvedInput);
-    const displayState = readDisplayStateFrom(options.preserveDisplayStateFrom);
+    const displayState = resolveDisplayState(options);
 
     validateInputArtifact(input);
 
@@ -710,6 +736,7 @@ function main() {
     });
 
     fs.mkdirSync(path.dirname(resolvedOutput), { recursive: true });
+    assertManualArtifactWritePath(resolvedOutput, 'manual-artifacts/external-ai/');
     fs.writeFileSync(resolvedOutput, `${JSON.stringify(projection, null, 2)}\n`);
 
     const layer = projection.externalAiInterpretationLayer;

@@ -639,7 +639,7 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ---
 
-### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / OpenInsider / public research proxies (ADR-0016)
+### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016)
 
 第二页面「AI 泡沫监测」(`data/bubble-watch.json`,周一 cron)专属,display-only,不进 scoring/decision。正式页面刷新仍由 `refresh-bubble-watch.yml` 周一写入;`audit-bubble-watch-sources.yml` 周二至周五只做 source-health 只读审计,不提交数据、不触发 Pages,默认设置 `BUBBLE_WATCH_DISABLE_WIND=1` 避免 Wind 付费调用(仅手动 dispatch 勾选 paid Wind opt-in 时才注入 `WIND_API_KEY`)。复用既有 FRED API(`BAMLH0A0HYM2`/`DFF`/`CPIAUCSL`/`DFEDTARL`/`DFEDTARU`,`FRED_API_KEY`;本地无 key/接口失败时短窗口 `fredgraph.csv?cosd=...` 兜底)、Federal Reserve SEP 公开页与 Yahoo Chart(SPY/RSP/成份股/ZQ Fed funds futures closes)之外,新增:
 
@@ -649,7 +649,7 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 | **multpl.com** | `/shiller-pe` 公开 HTML | Shiller CAPE | 公开 HTML proxy,不得写成官方 Shiller 数据库 |
 | **stockanalysis.com** | `/stocks/nvda/statistics/`、`/etf/spy/holdings/`、`/stocks/*/financials/{,cash-flow-statement/}?p=quarterly`、`/stocks/{msft,amzn,googl}/metrics/`、`/stocks/orcl/financials/metrics/` 公开 HTML | NVDA 远期 PE、S&P Top-5 权重(SPY 持仓代理,服务端只渲染前 ~25 行)、**EDGAR 被封时的季报镜像**(OCF/Capex/Revenue/FCF,~20 季服务端渲染)、Cloud RPO 二级源(MSFT/AMZN/GOOGL 季度 operating metrics + ORCL 年度 metrics) | 公开页代理;Top-5 是 SPY 持仓口径非 S&P 官方权重;季报数字为 $M 口径镜像非 SEC 原始 filing;Big5 capex/OCF 主口径固定为 AMZN/MSFT/GOOGL/META/ORCL realized TTM cash capex ÷ Operating Cash Flow,同一 `mag4_fcf_yoy` score slot 改造而来;不得与前瞻 FCF、levered/unlevered FCF、单家公司压力或参考站编辑口径混用;RPO metrics 标注为 StockAnalysis/Fiscal.ai 镜像,不是公司官方 API |
 | **Wikipedia** | `List of S&P 500 companies` | 全市场广度成份股名单(~503 只 → Yahoo 实算 %>50DMA) | 名单代理;广度为全成份实算,非 Barchart S5FI 官方序列 |
-| **OpenInsider** | `/screener?s=<ticker>&fd=365&xp=1&xs=1` 公开 HTML | AI 龙头(NVDA/PLTR/AVGO)内部人卖买比 | SEC Form 4 聚合代理主路径;买入不足 $1M 按 $1M 下限折算,不得写成官方 SEC 统计。OpenInsider 不可用时,对应 ticker 可回落到 SEC EDGAR Form 4 ownership XML 官方兜底 |
+| **SEC EDGAR Form 4** | `data.sec.gov/submissions/CIK*.json` + Archives ownership XML | AI 龙头(NVDA/PLTR/AVGO)内部人卖买比 | 唯一 live 路径;只解析非衍生 P/S 交易金额,买入不足 $1M 按 $1M 下限折算。不可达时 fail-closed 沿用带日期快照,不得改用明文 HTTP 源 |
 | **SEC EDGAR submissions / ownership XML** | `data.sec.gov/submissions/CIK##########.json`、`sec.gov/Archives/edgar/data/*/*/ownership.xml`、`sec.gov/files/company_tickers_exchange.json` | `insider_sell_buy` 的 Form 4 官方兜底;`ai_ipo_pipeline` 的 S-1/F-1/424B4 官方申报确认 | 美国政府公共领域;UA 必须携带联系方式;与 companyconcept 一样可能对数据中心/GitHub runner 返回 403,必须 fail-closed。Form 4 只解析非衍生 P/S 交易金额;AI IPO 只确认 watchlist 中已能通过 CIK/ticker 发现且近 12 个月有公开申报的公司,不是完整私募 IPO calendar |
 | **Crunchbase News WordPress API** | `news.crunchbase.com/wp-json/wp/v2/{search,posts}` | `vc_ai_share`、`ai_ipo_pipeline` 的 hybrid public-source 覆盖 | 只解析公开文章的金额/占比/IPO-exit 语义,不是 PitchBook/Crunchbase Pro 数据库,不是正式 IPO calendar;`vc_ai_share` 必须优先匹配 AI sector / total global venture funding 句子(例如 `$242B = 80% of total global venture funding`),不得误抓 OpenAI/Anthropic/xAI/Waymo 等少数巨额轮次合计 `$188B / 65%`;`ai_ipo_pipeline` 可叠加 SEC S-1/F-1/424B4 官方确认,抓取失败 fail-closed 回 `config/bubble-watch-curated.json` |
 | **OpenRouter public rankings API** | `openrouter.ai/api/frontend/v1/rankings/market-share` | `token_volume_mom` 的 hybrid public-source 覆盖 | frontend-public weekly token-volume proxy,用于 4w/4w growth;不是全行业 token tape,endpoint 可能变动,失败 fail-closed 回 curated |
@@ -793,12 +793,12 @@ documented attribution string and code is a contract violation.
 | **Quota** | 按账单付费;**fail 后不得反复重试** (K-4E-1) |
 | **Refresh 频率** | `external-ai-production-refresh.yml` (manual + scheduled) |
 | **失败 fallback** | `provider_unavailable` / `provider_timeout` 写 failure artifact;`promotionEligible=false`;不写入 production data |
-| **影响 scoring?** | **否** — External AI 是只读展示层 (`externalAiInterpretationLayer`),`generatedByExternalAi=false` 时不显示 |
+| **影响 scoring?** | **否** — `externalAiInterpretationLayer` 是外部 AI 生成的只读展示层；仅在 production contract、quality review、freshness 与前端 approval 全部通过时显示，始终不影响 scoring/decision/execution/position |
 | **fetcher** | `scripts/external-ai/provider-adapters.mjs` + `scripts/run-external-ai-manual-test.mjs` |
 
 ⚠️ **不得**:
 - 把 manual artifacts 直接 promotion 进 production
-- 写入 `data/radar-data.json` 字段 (有 write guard)
+- 绕过唯一批准的 `External AI Production Refresh` workflow 或 write guard 写入 `data/radar-data.json`
 - 通过削弱 unsafe wording validator 让 artifact 通过
 - 复述具体 execution / position / exposure / cash buffer 字段
 
@@ -817,7 +817,7 @@ documented attribution string and code is a contract violation.
 | **License** | Cloudflare Workers free tier |
 | **Quota** | <800 writes/day (free-tier safe);v28.0B 后每轮 scheduled 最多 1 次 KV 写 |
 | **KV keys** | `market:latest` (production, **当前 Worker 不写**), `market:latest-preview` (GitHub mirror), `market:worker-generated-preview` (主 worker preview), `market:secondary-preview` (secondary), `market:worker-heartbeat` (status) |
-| **影响 scoring?** | `market:worker-generated-preview` **是主 realtime overlay 来源**,通过前端 strict gate 决定是否用;不通过则回退 GitHub `realtime-data` 分支 |
+| **影响 scoring?** | Worker preview 仍服务 Worker/diagnostics 与部分后端确认链路；M-94 V0 路径 C 后前端入口只读 `data/radar-data.json` 静态快照，不再运行 worker-first strict gate。是否重接 realtime overlay 必须另开评审 |
 | **deploy** | `wrangler deploy` (manual,Cursor 实现后) |
 
 ---

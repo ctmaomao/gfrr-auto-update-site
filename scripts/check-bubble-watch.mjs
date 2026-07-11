@@ -247,8 +247,10 @@ check('contract', buildSrc.includes('SOURCE_CANDIDATES_PATH') && buildSrc.includ
 for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
   check('contract', buildSrc.includes(`${id}:`), `build 缺 ${id} hybrid builder 绑定`);
 }
-check('contract', buildSrc.includes('fetchInsiderTotalsWithSecFallback') && buildSrc.includes('SEC EDGAR Form 4 ownership XML'),
-  'insider_sell_buy 必须保留 SEC Form 4 官方兜底路径');
+check('contract', buildSrc.includes('fetchInsiderTotals') && buildSrc.includes('SEC EDGAR Form 4 ownership XML'),
+  'insider_sell_buy 必须使用 SEC Form 4 官方路径');
+check('contract', !buildSrc.includes('http://openinsider.com') && !buildSrc.includes('fetchOpenInsiderTotals'),
+  'insider_sell_buy 不得使用明文 HTTP OpenInsider 路径');
 check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.includes('fetchYearEndFedFundsFuture') && buildSrc.includes('fed_policy_path_v2'),
   'fed_policy 必须保留 Fed SEP + 年末 Fed funds futures 政策路径证据');
 check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',

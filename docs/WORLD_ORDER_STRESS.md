@@ -105,7 +105,7 @@ sanitizer 读取 `manual-artifacts/world-order/acled-input/weekly/` 下的本地
 
 ### 当前自动刷新与 history 交互
 
-当前仓库已经存在 `refresh-world-order-stress.yml` daily workflow (`0 23 * * *`)。它会运行 `npm run build:world-order` 并提交 `data/world-order-stress.json` 与 `data/gdelt-world-order-cache.json`; build step 使用 `continue-on-error: true`。`build-daily-radar-data.yml` 在 `30 22 * * *` 先运行，写入 `data/radar-data.json`、`data/radar-history.json` 与 `data/radar-history-full.json`。
+当前仓库已经存在 `refresh-world-order-stress.yml` daily workflow (`0 23 * * *`)。它会运行 `npm run build:world-order` 并提交 `data/world-order-stress.json` 与 `data/gdelt-world-order-cache.json`;build 或 check 失败会阻止提交，不使用 `continue-on-error`。`build-daily-radar-data.yml` 在 `30 22 * * *` 先运行，写入 `data/radar-data.json`、`data/radar-history.json` 与 `data/radar-history-full.json`。
 
 因此 Daily history 注入 World Order overlay 时，读取到的通常是上一轮已经提交的 `data/world-order-stress.json`，而不是 23:00 当轮尚未生成的文件。history snapshot 必须记录 `worldOrderStress.observedAt = data/world-order-stress.json.updatedAt`，并由前端用 observedAt 判断 insufficient history 与 stale tail。
 

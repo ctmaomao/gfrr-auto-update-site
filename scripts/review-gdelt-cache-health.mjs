@@ -7,6 +7,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { GDELT_BROAD_QUERY_SPEC } from './oil-directional/diagnose-oil-news-events.mjs';
+import { gdeltCacheAgeHours } from './gdelt/cache-age.mjs';
 
 const REVIEW_VERSION = 'gdelt-cache-health-review-p40';
 const DEFAULT_OUTPUT = 'manual-artifacts/gdelt-cache-health/gdelt-cache-health-latest.json';
@@ -123,9 +124,8 @@ function readJson(path) {
 }
 
 function ageHours(value, nowMs = Date.now()) {
-  const parsed = Date.parse(value || '');
-  if (!Number.isFinite(parsed)) return null;
-  return Math.max(0, Number(((nowMs - parsed) / 3600000).toFixed(2)));
+  const age = gdeltCacheAgeHours(value, nowMs);
+  return Number.isFinite(age) ? Number(age.toFixed(2)) : null;
 }
 
 function compact(value, maxLength = 180) {
@@ -585,6 +585,9 @@ function runSelfTests() {
   assertSelfTest(bubbleCacheAgeStatus(132.01) === 'stale', 'bubble cache becomes stale after 132h');
   assertSelfTest(bubbleCacheAgeStatus(504.01) === 'expired', 'bubble cache expires after 21d');
   assertSelfTest(bubbleCacheAgeStatus(null) === 'invalid', 'bubble cache rejects invalid age');
+  const fixedNowMs = Date.parse('2026-07-12T12:00:00.000Z');
+  assertSelfTest(gdeltCacheAgeHours('2026-07-12T12:04:00.000Z', fixedNowMs) === 0, 'minor GDELT cache clock skew is tolerated');
+  assertSelfTest(gdeltCacheAgeHours('2026-07-12T12:06:00.000Z', fixedNowMs) === null, 'future GDELT cache timestamps are rejected');
   assertSelfTest(isManualArtifactPath(DEFAULT_OUTPUT), 'default output path stays inside manual-artifacts');
   assertSelfTest(!isManualArtifactPath('data/gdelt-cache-health.json'), 'production data output path is rejected');
   assertManualArtifactWritePath(DEFAULT_OUTPUT);

@@ -1,7 +1,7 @@
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
 // 24 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
-// StockAnalysis metrics / multpl / slickcharts / OpenInsider),12 项编辑/研究类指标
+// StockAnalysis metrics / multpl / slickcharts / SEC EDGAR Form 4),12 项编辑/研究类指标
 // 读 config/bubble-watch-curated.json 人工口径。所有自动指标 fail-closed:
 // 抓取失败沿用 curated 快照并按 maxAgeDays 标 STALE,绝不造数。
 //
@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gdeltCacheAgeHours } from './gdelt/cache-age.mjs';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -87,7 +88,7 @@ const INDICATOR_DEFS = [
   { id: 'nvda_invest_revenue', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
   { id: 'breadth_50d', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
   { id: 'spy_vs_rsp_6m', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
-  { id: 'insider_sell_buy', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'OpenInsider / SEC Form 4', mode: 'auto' },
+  { id: 'insider_sell_buy', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'SEC EDGAR Form 4', mode: 'auto' },
   { id: 'ai_ipo_pipeline', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
   { id: 'hy_oas', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
   { id: 'dc_abs_spread', category: 'credit', name_en: 'Data Center ABS Spread', name_zh: '数据中心 ABS 利差', threshold_text: '走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿', source_name: 'Green Street News / 公开发行定价(编辑口径)', mode: 'curated' },
@@ -537,22 +538,15 @@ async function fetchSecForm4InsiderTotals(symbol, cik) {
   return { buy, sell, filingCount: filings.length, transactionCount };
 }
 
-async function fetchInsiderTotalsWithSecFallback(symbol) {
-  try {
-    const totals = await fetchOpenInsiderTotals(symbol);
-    return { ...totals, source: 'OpenInsider public screener', sourceMode: 'openinsider_primary' };
-  } catch (error) {
-    const cik = EDGAR_CIK[symbol];
-    if (!cik) throw error;
-    console.warn(`[bubble-watch] OpenInsider ${symbol} failed, try SEC Form 4 official fallback: ${error.message}`);
-    const totals = await fetchSecForm4InsiderTotals(symbol, cik);
-    return {
-      ...totals,
-      source: 'SEC EDGAR Form 4 ownership XML',
-      sourceMode: 'sec_form4_fallback',
-      primaryFailure: error.message
-    };
-  }
+async function fetchInsiderTotals(symbol) {
+  const cik = EDGAR_CIK[symbol];
+  if (!cik) throw new Error(`SEC Form 4 CIK missing for ${symbol}`);
+  const totals = await fetchSecForm4InsiderTotals(symbol, cik);
+  return {
+    ...totals,
+    source: 'SEC EDGAR Form 4 ownership XML',
+    sourceMode: 'sec_form4_primary'
+  };
 }
 
 async function fetchSecCompanyTickersExchange() {
@@ -1042,28 +1036,6 @@ async function fetchNvdaForwardPe() {
   throw new Error('stockanalysis NVDA forward PE 解析失败');
 }
 
-async function fetchOpenInsiderTotals(symbol) {
-  const url = `http://openinsider.com/screener?s=${symbol}&fd=365&td=0&xp=1&xs=1&cnt=500`;
-  const html = await fetchWithTimeout(url, { headers: { 'User-Agent': BROWSER_UA } });
-  let buy = 0;
-  let sell = 0;
-  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gu;
-  let m;
-  while ((m = rowRe.exec(html)) !== null) {
-    const row = m[1];
-    const type = row.match(/>\s*(P|S)\s*-\s*(?:Purchase|Sale)/u);
-    if (!type) continue;
-    const value = row.match(/[+-]?\$([0-9,]+)/gu);
-    if (!value || !value.length) continue;
-    const amount = Math.abs(Number(value[value.length - 1].replace(/[^0-9]/gu, '')));
-    if (!Number.isFinite(amount)) continue;
-    if (type[1] === 'P') buy += amount;
-    else sell += amount;
-  }
-  if (buy === 0 && sell === 0) throw new Error(`OpenInsider ${symbol} 无交易行`);
-  return { buy, sell };
-}
-
 async function crunchbaseWpSearch(query, perPage = 8) {
   const params = new URLSearchParams({ search: query, per_page: String(perPage) });
   const rows = await fetchWithTimeout(`https://news.crunchbase.com/wp-json/wp/v2/search?${params}`, {
@@ -1495,10 +1467,8 @@ const autoBuilders = {
     let buy = 0;
     let sell = 0;
     const sources = [];
-    const secFallbackSymbols = [];
-    const primaryFailures = [];
     for (const symbol of basket) {
-      const totals = await retry(() => fetchInsiderTotalsWithSecFallback(symbol), `OpenInsider/SEC Form 4 ${symbol}`);
+      const totals = await retry(() => fetchInsiderTotals(symbol), `SEC Form 4 ${symbol}`);
       buy += totals.buy;
       sell += totals.sell;
       sources.push({
@@ -1510,24 +1480,20 @@ const autoBuilders = {
         filingCount: totals.filingCount || null,
         transactionCount: totals.transactionCount || null
       });
-      if (totals.sourceMode === 'sec_form4_fallback') secFallbackSymbols.push(symbol);
-      if (totals.primaryFailure) primaryFailures.push({ symbol, reason: totals.primaryFailure });
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
     const buyFloor = Math.max(buy, 1e6); // 买入不足 $1M 时按 $1M 下限计算,避免除零
     const ratio = sell / buyFloor;
     const status = ratio > 20 ? 'red' : ratio >= 5 ? 'yellow' : 'green';
     const display = ratio > 99 ? '≫20x' : `~${ratio.toFixed(0)}x`;
-    const sourceName = secFallbackSymbols.length ? 'OpenInsider + SEC EDGAR Form 4 fallback' : 'OpenInsider public screener';
-    const sourceNote = secFallbackSymbols.length
-      ? `OpenInsider 不可用标的 ${secFallbackSymbols.join('/')} 已改用 SEC EDGAR Form 4 ownership XML 官方兜底`
-      : 'OpenInsider public screener';
+    const sourceName = 'SEC EDGAR Form 4 ownership XML';
+    const sourceNote = 'SEC EDGAR Form 4 官方披露';
     return {
       status,
       value_display: display,
       source_name: sourceName,
       note: `${sourceNote} 实拉 ${basket.join(' / ')} 近 12 个月 Form 4:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
-      detail: { buyUsd: buy, sellUsd: sell, ratio, sources, secFallbackSymbols, primaryFailures }
+      detail: { buyUsd: buy, sellUsd: sell, ratio, sources }
     };
   },
   async hy_oas() {
@@ -3240,9 +3206,7 @@ function collectCeoHedgingEvidenceText(entries) {
 }
 
 function ageHours(isoValue) {
-  const ms = Date.now() - Date.parse(isoValue || '');
-  if (!Number.isFinite(ms)) return null;
-  return Math.max(0, ms / 3600000);
+  return gdeltCacheAgeHours(isoValue);
 }
 
 function gdeltBubbleCacheAgeStatus(cache) {
@@ -4058,8 +4022,7 @@ function hasStrongProxyConfirmation(id, result, entry) {
   const detail = result?.detail || {};
   switch (id) {
     case 'insider_sell_buy':
-      // OpenInsider ratio can explode when buy volume is near zero; require a future
-      // independent SEC/Form-4 aggregate or equivalent cross-check before publishing red.
+      // Form 4 ratio can explode when buy volume is near zero; keep the conservative cap.
       return detail.secondaryConfirmation === true || detail.secAggregateRatioConfirmed === true;
     case 'ai_ipo_pipeline':
       return Number(detail.confirmedIssueCount) >= 10
@@ -4085,7 +4048,7 @@ function hasStrongProxyConfirmation(id, result, entry) {
 
 function proxyConfidenceRuleText(id) {
   return {
-    insider_sell_buy: '内部人卖买比需要独立 Form-4/SEC 聚合确认;单一 OpenInsider 买入近零导致的极端 ratio 最多按黄灯发布。',
+    insider_sell_buy: '内部人卖买比使用 SEC Form 4 官方披露;买入近零导致的极端 ratio 最多按黄灯发布。',
     ai_ipo_pipeline: 'AI IPO 洪流需要接近模板口径的具体发行/待发公司数确认;单一 Crunchbase 新闻检索命中不足以升红。',
     capex_reaction: '系统性 capex 惩罚需要多窗口价格代理叠加直接 earnings-call/指引惩罚证据,或新鲜上游研究周报确认的系统性重定价证据;缺少研究/直接确认时短期相对收益噪音不得升红。',
     ceo_hedging: 'CEO 普遍承认过热需要更多唯一高管与多篇直接表态确认;单一新闻搜索频率不足以升红。',
