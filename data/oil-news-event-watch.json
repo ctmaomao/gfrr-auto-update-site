@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-12T10:09:01.613Z",
+  "generatedAt": "2026-07-12T11:39:02.221Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-11T03:35:29.000Z",
-    "latestArticleAgeHours": 30.6,
+    "latestArticleAgeHours": 32.1,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -282,9 +282,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 21,
+      "articleCount": 20,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 120,
       "topArticles": [
         {
           "domain": "reuters.com",
@@ -372,8 +372,8 @@
           ]
         },
         {
-          "domain": "reuters.com",
-          "publishedAt": "2026-07-06T00:36:18.000Z",
+          "domain": "seatrade-maritime.com",
+          "publishedAt": "2026-07-07T10:30:06.000Z",
           "sources": [
             "tavily"
           ],
@@ -381,11 +381,10 @@
             "chokepoint",
             "facility_event",
             "middle_east_risk",
-            "sanctions",
             "tanker_shipping"
           ],
           "queryIds": [
-            "sanctions_shadow_fleet"
+            "chokepoint_shipping"
           ]
         }
       ]
@@ -497,9 +496,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 42,
+      "articleCount": 41,
       "sourceCount": 3,
-      "weightedSignal": 126,
+      "weightedSignal": 123,
       "topArticles": [
         {
           "domain": "punchng.com",
@@ -971,7 +970,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-12T10:09:01.613Z",
+      "generatedAt": "2026-07-12T11:39:02.221Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
