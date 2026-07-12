@@ -407,9 +407,9 @@
   "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
   "lastUsableCache": {
     "generatedAt": "2026-07-11T15:32:23.655Z",
-    "status": "ok",
-    "sourceStatus": "live",
-    "requestMode": "live_broad_query",
+    "status": "stale",
+    "sourceStatus": "stale",
+    "requestMode": "stale_cache_after_fetch_error",
     "source": "GDELT DOC public search",
     "cachePolicy": {
       "ttlMinutes": 1440,
