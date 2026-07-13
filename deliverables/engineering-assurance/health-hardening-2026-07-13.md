@@ -66,7 +66,20 @@ Bot commit distribution:
 | Bubble Watch | 6 |
 | QQQ weekly market data | 5 |
 
-Moving the two high-frequency writers to a separate data branch could reduce automatic `main` commits by 70.6%, but it would also require the EdgeOne production path to overlay that branch. That production contract is not currently represented in this repository, so the branch migration is not approved by this hardening work without separate production evidence. A safe measured semantic no-op guard can remove at most 32 of 412 commits (7.8%); the project will report that measured ceiling rather than lower freshness or hide meaningful data changes.
+Moving the two high-frequency writers to a separate data branch could reduce automatic `main` commits by 70.6%, but it would also require the EdgeOne production path to overlay that branch. That production contract is not currently represented in this repository, so the branch migration is not approved by this hardening work without separate production evidence. A structural semantic-diff audit found at most 32 of 412 commits (7.8%) whose substantive payload appeared unchanged after volatile freshness metadata was excluded; this is an upper bound, not an approved guard, because those timestamps and age fields are part of the current freshness contract.
+
+## Automatic commit-noise hardening decision
+
+The eight `main` writers already use a physical `git diff` no-op guard, and all eight share `gfrr-main-writer-main` with `cancel-in-progress: false`. The repository therefore already has the safe baseline controls requested for no-op writes and a single-writer queue.
+
+| Option | Measured reduction | Decision |
+|---|---:|---|
+| Ignore freshness-only fields | At most 32 / 412 = 7.8% | Rejected: `generatedAt` / `observedAt` / age changes are current evidence of observation freshness; skipping them would make successful refreshes look stale or require weakening the freshness contract. |
+| Reduce Oil News / Thermal cadence | Up to 291 / 412 = 70.6% | Rejected: directly lowers freshness SLA. |
+| Move Oil News / Thermal outputs to a data branch | 291 / 412 = 70.6% | Blocked: GitHub Pages could be adapted, but authoritative production is an EdgeOne deployment whose branch/overlay contract is absent from the repository. Merging this change could leave production stale. |
+| Rewrite/amend bot history | Historical only | Prohibited by the task safety boundary. |
+
+The maximum measured architecture-level reduction is 70.6%, but the immediately deployable safe reduction under the current production and freshness contracts is 0%. No workflow cadence, success signal or data field was changed to manufacture the 50% target. The next authorized step is to obtain the EdgeOne production build/branch contract, then validate a data-branch overlay in isolated staging before proposing that migration.
 
 ## Confirmed findings at baseline
 
