@@ -110,3 +110,30 @@ The maximum measured architecture-level reduction is 70.6%, but the immediately 
 ## Independent read-only reviews
 
 The baseline was reviewed by six explicit roles: code mapper, security auditor, QA expert, architect reviewer, correctness reviewer and debugger. All six completed before implementation started.
+
+## Implemented hardening results
+
+- `xlsx` is locked to the official SheetJS `0.20.3` tarball and integrity. The two ACLED sanitizers now reject non-regular/symlinked or out-of-root inputs, enforce pre-parse byte caps, accept only `Sheet1`, and enforce worksheet row caps. A dedicated security checker locks the package source, integrity, import allowlist and input guards.
+- PR validation now runs the complete development dependency audit, measured Node 24 coverage, the existing full check chain and one non-duplicated Playwright Chromium matrix. The four browser cases cover desktop/mobile, home/Bubble Watch, ancillary-data loss and ineligible External AI fallback.
+- The cohesive Daily Brief planner moved to `scripts/daily/daily-brief.mjs`. Six available fixtures plus the unavailable fallback produced an exact normalized before/after JSON match after timestamp exclusion.
+- The macro trend SVG cluster moved to `scripts/modules/renderMacroTrend.js`. Desktop and mobile before/after screenshots were byte-identical, and the asset version was advanced to `health-hardening-1` through the repository version script.
+- The Pages workflow publishes an explicit `_site` allowlist instead of the repository root. FRED secrets are step-scoped. The default GDELT contract check no longer creates an ignored manual artifact.
+- No scoring, decision, execution, position, Brent promotion, data contract, External AI, World Order, macro-driver or ODP semantics changed. `scripts/modules/realtime.js`, `data/*.json` and `realtime/*.json` have no branch diff.
+
+Current measured coverage for the selected pure modules is 99.56% lines, 95.63% branches and 96.97% functions. The extracted Daily Brief module is 100% line/function and 91.18% branch covered. The Daily entry is 11,840 lines / 523,749 bytes (down 233 lines / 11,540 bytes); the macro renderer is 3,242 lines / 148,200 bytes (down 467 lines / 16,520 bytes).
+
+## Isolated staging and observation
+
+- Pages project: `gfrr-health-hardening-20260713`
+- Stable endpoint: `https://gfrr-health-hardening-20260713.pages.dev`
+- Initial deployment: `7efffbe7-19aa-41f3-a746-154a2af4f956`
+- Immutable deployment endpoint: `https://7efffbe7.gfrr-health-hardening-20260713.pages.dev`
+- Source: `5bd5d3b` from branch `staging`
+- Artifact: 35 allowlisted files / 2,891,522 bytes; excludes `.codex`, `manual-artifacts`, secrets, package files and workflows
+- Local equivalent dry-run: `wrangler pages dev` with compatibility date `2026-05-01`, exit 0
+- Browser verification: local 4/4 and stable remote endpoint 4/4, exit 0
+- Worker/KV: not created because Worker code was unchanged; production KV was not reused
+- Monitor: Codex automation `gfrr-hardening-staging-monitor`, active every six hours through 2026-07-20 06:00 UTC
+- Observation evidence: ignored `manual-artifacts/health-hardening/staging-observation.jsonl`; successful samples are intentionally not committed
+
+The first staging sample is `WARN`, not a false `PASS`: the repository-local `realtime/market.json` fallback is old. M-94 frontend reads `data/radar-data.json`, so this does not invalidate the browser result. Subsequent isolated redeploys explicitly overlay `origin/realtime-data` and independently check the public Worker endpoint. Any reproducible branch-caused High/Medium regression restarts the seven-day observation window after its fix.
