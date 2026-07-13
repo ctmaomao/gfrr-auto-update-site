@@ -1,4 +1,12 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import {
+  FUTURE_TIMESTAMP_TOLERANCE_MINUTES,
+  isFutureTimestampAge,
+  timestampAgeMinutes
+} from './health/timestamp-policy.mjs';
 
 const DEFAULT_REALTIME_HEALTH_URL =
   'https://raw.githubusercontent.com/ctmaomao/gfrr-auto-update-site/realtime-data/realtime/market.json';
@@ -6,6 +14,7 @@ const SOFT_FAIL_NOTE =
   'Realtime-data health is fallback/Daily baseline observation; Worker-first runtime hard fail is handled by Check Worker Health.';
 const WORKER_RUNTIME_NOTE =
   'This check does not represent the Worker-first runtime health. Worker-first runtime hard gate is handled by Check Worker Health.';
+const DEFAULT_FETCH_TIMEOUT_MS = 4500;
 
 const FRESHNESS_ACTIONS = {
   fresh: 'No action needed.',
@@ -181,20 +190,28 @@ function writeGithubSummary(report, mode) {
   }
 }
 
-async function checkRealtimeHealth() {
-  const nowMs = Date.now();
+async function checkRealtimeHealth({
+  nowMs = Date.now(),
+  timeoutMs = DEFAULT_FETCH_TIMEOUT_MS,
+  fetchImpl = globalThis.fetch
+} = {}) {
   const fetchedAt = new Date(nowMs).toISOString();
   const sourceUrl = process.env.GFRR_REALTIME_HEALTH_URL || DEFAULT_REALTIME_HEALTH_URL;
   const url = buildCacheBustedUrl(sourceUrl, nowMs);
+  const signal = AbortSignal.timeout(timeoutMs);
 
   let response;
   try {
-    response = await fetch(url, {
+    response = await fetchImpl(url, {
       headers: {
         accept: 'application/json'
-      }
+      },
+      signal
     });
   } catch (error) {
+    if (signal.aborted) {
+      return unavailableReport(url, fetchedAt, `fetch timed out after ${timeoutMs}ms`);
+    }
     return unavailableReport(url, fetchedAt, `fetch failed: ${error.message}`);
   }
 
@@ -206,16 +223,26 @@ async function checkRealtimeHealth() {
   try {
     data = await response.json();
   } catch (error) {
+    if (signal.aborted) {
+      return unavailableReport(url, fetchedAt, `response timed out after ${timeoutMs}ms`);
+    }
     return unavailableReport(url, fetchedAt, `JSON parse failed: ${error.message}`);
   }
 
   const updatedAt = extractUpdatedAt(data);
-  const updatedAtMs = Date.parse(updatedAt);
-  if (!updatedAt || Number.isNaN(updatedAtMs)) {
+  const rawAgeMinutes = timestampAgeMinutes(updatedAt, nowMs);
+  if (rawAgeMinutes == null) {
     return unavailableReport(url, fetchedAt, 'updatedAt is missing or invalid');
   }
+  if (isFutureTimestampAge(rawAgeMinutes)) {
+    return unavailableReport(
+      url,
+      fetchedAt,
+      `updatedAt exceeds ${FUTURE_TIMESTAMP_TOLERANCE_MINUTES} minute future tolerance`
+    );
+  }
 
-  const ageMinutes = Math.max(0, Math.floor((nowMs - updatedAtMs) / 60000));
+  const ageMinutes = Math.max(0, Math.floor(rawAgeMinutes));
   const freshness = classifyFreshness(ageMinutes);
 
   return {
@@ -242,16 +269,21 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  const mode = parseMode(process.argv.slice(2));
-  const fetchedAt = new Date().toISOString();
-  const sourceUrl = process.env.GFRR_REALTIME_HEALTH_URL || DEFAULT_REALTIME_HEALTH_URL;
-  const report = unavailableReport(sourceUrl, fetchedAt, error.message);
-  printReport(report);
-  writeGithubOutput(report, mode);
-  writeGithubSummary(report, mode);
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  main().catch((error) => {
+    const mode = parseMode(process.argv.slice(2));
+    const fetchedAt = new Date().toISOString();
+    const sourceUrl = process.env.GFRR_REALTIME_HEALTH_URL || DEFAULT_REALTIME_HEALTH_URL;
+    const report = unavailableReport(sourceUrl, fetchedAt, error.message);
+    printReport(report);
+    writeGithubOutput(report, mode);
+    writeGithubSummary(report, mode);
 
-  if (!mode.soft) {
-    process.exitCode = 1;
-  }
-});
+    if (!mode.soft) {
+      process.exitCode = 1;
+    }
+  });
+}
+
+export { checkRealtimeHealth };
