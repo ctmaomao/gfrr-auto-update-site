@@ -27,6 +27,11 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#issue-meta-issue')).toContainText('ISSUE v28.0.10');
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-thematic-cards')).toBeVisible();
+    await expect(page.locator('#external-ai-auxiliary')).toBeVisible();
+    await page.locator('#external-ai-auxiliary').evaluate((element) => { element.open = true; });
+    await expect(page.locator('#ext-ai-provider')).toHaveText('deepseek');
+    await expect(page.locator('#ext-ai-structured-output')).toBeVisible();
+    await expect(page.locator('#ext-ai-boundaries-text')).toContainText('不参与平台的风险打分与决策');
     expect(pageErrors).toEqual([]);
   });
 

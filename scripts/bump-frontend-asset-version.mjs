@@ -22,6 +22,9 @@ const fixedFiles = [
   // anchored regexes below keep their single cache-version reference in sync.
   'docs/PROJECT_BACKLOG.md',
   'docs/MILESTONE_INDEX.md',
+  // The unit suite imports config.js with the runtime cache token so Node's
+  // coverage collector observes the same module instance as active modules.
+  'tests/unit/core-display-logic.test.mjs',
 ];
 
 function fail(message) {

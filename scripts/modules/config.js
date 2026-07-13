@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=health-hardening-1';
+﻿import { formatFiniteNumber } from './format.js?v=health-hardening-2';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
