@@ -2,7 +2,7 @@ import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, resolve, sep } from 'node:path';
 
-const root = resolve(import.meta.dirname, '..', '..');
+const root = resolve(import.meta.dirname, '..', '..', '_site');
 const port = Number(process.env.PORT || 4173);
 const contentTypes = new Map([
   ['.css', 'text/css; charset=utf-8'],

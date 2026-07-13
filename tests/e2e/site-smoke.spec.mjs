@@ -9,6 +9,14 @@ function capturePageErrors(page) {
   return errors;
 }
 
+function captureConsoleErrors(page) {
+  const errors = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  return errors;
+}
+
 test.describe('desktop smoke', () => {
   test.use({ viewport: DESKTOP });
 
@@ -20,6 +28,21 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-thematic-cards')).toBeVisible();
     expect(pageErrors).toEqual([]);
+  });
+
+  test('trend tolerates a missing weekly date without keeping the static placeholder', async ({ page }) => {
+    const consoleErrors = captureConsoleErrors(page);
+    await page.route('**/data/radar-history.json*', async (route) => {
+      const response = await route.fetch();
+      const history = await response.json();
+      history.at(-8).date = null;
+      await route.fulfill({ response, json: history });
+    });
+
+    await page.goto('/index.html');
+    await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
+    await expect(page.locator('#trend-line-score')).toHaveAttribute('aria-label', /Risk score trend/u);
+    expect(consoleErrors).toEqual([]);
   });
 
   test('Bubble Watch renders indicators and trend SVG', async ({ page }) => {
@@ -66,6 +89,11 @@ test.describe('mobile smoke', () => {
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#external-ai-auxiliary')).toBeHidden();
+    await expect(page.locator('#trend-line-score')).toHaveAttribute('points', '');
+    await expect(page.locator('#trend-line-overlay')).toHaveAttribute('points', '');
+    await expect(page.locator('#trend-dots-score circle')).toHaveCount(0);
+    await expect(page.locator('#trend-dots-overlay circle')).toHaveCount(0);
+    await expect(page.locator('#trend-overlay-mode')).toHaveText('升档层(Overlay)数据不足');
     expect(missingRequests).toBe(6);
     expect(pageErrors).toEqual([]);
   });

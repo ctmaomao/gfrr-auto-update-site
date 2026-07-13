@@ -65,16 +65,7 @@ jobs:
         run: npm run check:all
 
       - name: Prepare clean Pages artifact
-        run: |
-          set -euo pipefail
-          mkdir -p _site/scripts
-          cp index.html bubble-watch.html _site/
-          cp -R assets data realtime _site/
-          cp scripts/app.js _site/scripts/
-          cp -R scripts/modules _site/scripts/
-          test ! -e _site/manual-artifacts
-          test ! -e _site/.codex
-          test ! -e _site/package-lock.json
+        run: npm run build:pages-artifact
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

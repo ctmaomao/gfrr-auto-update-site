@@ -116,6 +116,36 @@ function prepareTrendLayout() {
   syncTrendFrame(TREND_CHART);
 }
 
+function resetTrendDynamicState() {
+  for (const id of ['trend-line-score', 'trend-line-overlay']) {
+    const line = $(id);
+    if (!line) continue;
+    line.setAttribute('points', '');
+    line.removeAttribute('aria-label');
+    line.hidden = true;
+  }
+  const overlayLine = $('trend-line-overlay');
+  overlayLine?.classList.remove('is-partial', 'is-fallback');
+  for (const id of ['trend-dots-score', 'trend-dots-overlay']) {
+    const group = $(id);
+    if (!group) continue;
+    group.replaceChildren();
+    group.hidden = true;
+  }
+  TREND_X.forEach((x, index) => {
+    const label = $(`trend-x-${index}`);
+    if (!label) return;
+    label.textContent = index === TREND_X.length - 1 ? 'NOW' : `W-${TREND_X.length - 1 - index}`;
+    label.setAttribute('x', Number(x.toFixed(2)).toString());
+  });
+  const mode = $('trend-overlay-mode');
+  if (mode) mode.textContent = '升档层(Overlay)数据不足';
+  const now = $('threshold-now-line');
+  if (now) now.textContent = '等待最新数据';
+  const marker = $('threshold-marker-override');
+  if (marker) marker.hidden = true;
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -134,6 +164,7 @@ function pointPair(x, y) {
 
 function formatTrendDateLabel(value, fallback) {
   const text = textValue(value);
+  if (!text) return fallback;
   const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/u);
   if (match) return `${match[2]}-${match[3]}`;
   return fallback;
@@ -141,6 +172,7 @@ function formatTrendDateLabel(value, fallback) {
 
 function trendIsoDate(value) {
   const text = textValue(value);
+  if (!text) return null;
   const match = text.match(/^(\d{4}-\d{2}-\d{2})/u);
   if (match) return match[1];
   const ms = Date.parse(text);
@@ -209,6 +241,7 @@ function pointsToAttribute(points) {
 function renderTrendDots(groupId, points, className, radius, lastId) {
   const group = $(groupId);
   if (!group) return;
+  group.hidden = false;
   group.textContent = '';
   points.filter(Boolean).forEach((point, index, validPoints) => {
     const circle = document.createElementNS(SVG_NS, 'circle');
@@ -392,6 +425,7 @@ function renderOverlayTrendStatus({ mode, radarData, worldOrderStressData, analy
     nowEl.textContent = `原始 ${mainText}(高风险预警) · overlay ${scoreText}${labelText}${suffixText}`;
   }
   const marker = $('threshold-marker-override');
+  if (marker) marker.hidden = false;
   const labelSpan = marker?.querySelector('.marker-label');
   if (labelSpan) {
     labelSpan.textContent = suffix ? `overlay ${scoreText} (${suffix})` : `overlay ${scoreText}`;
@@ -438,6 +472,7 @@ export function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressDa
     lastTrendSvgArgs = { radarData, radarHistoryData, worldOrderStressData };
     bindTrendResizeHandler();
     prepareTrendLayout();
+    resetTrendDynamicState();
     const weekly = mergeCurrentTrendSnapshot(
       pickEightWeeklyPoints(radarHistoryData),
       radarData,
@@ -449,6 +484,7 @@ export function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressDa
     if (scorePoints.some((p) => p === null)) return;
     const scoreLine = $('trend-line-score');
     if (scoreLine) {
+      scoreLine.hidden = false;
       scoreLine.setAttribute('points', pointsToAttribute(scorePoints));
       scoreLine.setAttribute('aria-label', `Risk score trend ${weekly.map((item) => `${item.date}:${Math.round(item.score)}`).join(', ')}`);
     }
@@ -462,6 +498,7 @@ export function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressDa
     if (!overlayTrend) return;
     const overlayLine = $('trend-line-overlay');
     if (overlayLine) {
+      overlayLine.hidden = false;
       overlayLine.setAttribute('points', pointsToAttribute(overlayTrend.points));
       overlayLine.classList.toggle('is-partial', overlayTrend.mode === 'partial-history');
       overlayLine.classList.toggle('is-fallback', overlayTrend.mode === 'fallback');
