@@ -116,7 +116,7 @@ The baseline was reviewed by six explicit roles: code mapper, security auditor, 
 - `xlsx` is locked to the official SheetJS `0.20.3` tarball and integrity. The two ACLED sanitizers reject non-regular/symlinked or out-of-root inputs; enforce compressed, actual-expanded, entry-count, ratio and batch limits before SheetJS; then accept only `Sheet1` and enforce row/column caps. The bounded inflater verifies real output against ZIP metadata, so forged central-directory sizes cannot defer resource use until SheetJS. A dedicated security checker locks the package source, integrity, import allowlist and executable guards.
 - PR validation now runs the complete development dependency audit, measured Node 24 coverage, the existing full check chain and one non-duplicated Playwright Chromium matrix. The five browser cases cover desktop/mobile, home/Bubble Watch, ancillary-data loss and ineligible External AI fallback; the desktop case also verifies the eligible read-only External AI panel.
 - The cohesive Daily Brief planner moved to `scripts/daily/daily-brief.mjs`. Six available fixtures plus the unavailable fallback produced an exact normalized before/after JSON match after timestamp exclusion.
-- The macro trend SVG cluster moved to `scripts/modules/renderMacroTrend.js`. Desktop and mobile before/after screenshots were byte-identical, and the asset version was advanced to `health-hardening-1` through the repository version script.
+- The macro trend SVG cluster moved to `scripts/modules/renderMacroTrend.js`. Desktop and mobile before/after screenshots were byte-identical; its initial `health-hardening-1` cache bump was advanced to `health-hardening-2` when the External AI display cluster was separately extracted.
 - The Pages workflow publishes an explicit `_site` allowlist instead of the repository root. FRED secrets are step-scoped. The default GDELT contract check no longer creates an ignored manual artifact.
 - No scoring, decision, execution, position, Brent promotion, data contract, External AI, World Order, macro-driver or ODP semantics changed. `scripts/modules/realtime.js`, `data/*.json` and `realtime/*.json` have no branch diff.
 
@@ -129,13 +129,15 @@ Current measured coverage for the selected pure/security modules is 99.79% lines
 - Pages project: `gfrr-health-hardening-20260713`
 - Stable endpoint: `https://gfrr-health-hardening-20260713.pages.dev`
 - Initial deployment: `7efffbe7-19aa-41f3-a746-154a2af4f956`
-- Immutable deployment endpoint: `https://7efffbe7.gfrr-health-hardening-20260713.pages.dev`
-- Source: `5bd5d3b` from branch `staging`
-- Artifact: 35 allowlisted files / 2,891,522 bytes; excludes `.codex`, `manual-artifacts`, secrets, package files and workflows
+- Current deployment: `b7c94298-33e7-4362-9f99-66d2358d4fb1`
+- Current immutable deployment endpoint: `https://b7c94298.gfrr-health-hardening-20260713.pages.dev`
+- Source: `930a5cb3776871dcc355e383603566ef4c409e22` from branch `staging`
+- Artifact: 36 allowlisted files / 2,893,865 bytes; excludes `.codex`, `manual-artifacts`, secrets, package files and workflows
 - Local equivalent dry-run: `wrangler pages dev` with compatibility date `2026-05-01`, exit 0
-- Browser verification: local 4/4 and stable remote endpoint 4/4, exit 0
+- Browser verification: local 5/5, immutable remote 5/5 and stable remote 5/5, all exit 0
 - Worker/KV: not created because Worker code was unchanged; production KV was not reused
-- Monitor: Codex automation `gfrr-hardening-staging-monitor`, active every six hours through 2026-07-20 06:00 UTC
+- Monitor: Codex automation `gfrr-hardening-staging-monitor`, active every six hours through 2026-07-20 18:00 UTC
+- Observation restart: `2026-07-13T10:14:35.9416381Z`; the seven-day window is measured from this deployment sample
 - Observation evidence: ignored `manual-artifacts/health-hardening/staging-observation.jsonl`; successful samples are intentionally not committed
 
-The first staging sample is `WARN`, not a false `PASS`: the repository-local `realtime/market.json` fallback is old. M-94 frontend reads `data/radar-data.json`, so this does not invalidate the browser result. Subsequent isolated redeploys explicitly overlay `origin/realtime-data` and independently check the public Worker endpoint. Any reproducible branch-caused High/Medium regression restarts the seven-day observation window after its fix.
+The restart sample is `WARN`, not a false `PASS`: the public Worker is usable at health 100/100, while weekend VIX carries the expected stale-warning. The six monitored data snapshots are byte-identical to the previous staging deployment, so the current output diff is limited to frontend code/assets. Subsequent isolated redeploys explicitly overlay `origin/realtime-data` and independently check the public Worker endpoint. Any reproducible branch-caused High/Medium regression restarts the seven-day observation window after its fix.
