@@ -7,10 +7,24 @@ function fail(message) {
   errors.push(message);
 }
 
-const radarPath = resolve('data/radar-data.json');
+const radarPath = process.argv[2] === '-' ? 0 : resolve('data/radar-data.json');
 const radarData = JSON.parse(readFileSync(radarPath, 'utf8'));
 
-const provenance = radarData?.externalAiInterpretationLayer?.provenance;
+const layer = radarData?.externalAiInterpretationLayer;
+const isDisabledFallback = layer?.contractVersion === 'v28.0K-3A'
+  && layer.enabled === false
+  && layer.status === 'disabled'
+  && layer.displayEnabled === false
+  && layer.provider === 'none'
+  && layer.fallback?.used === true
+  && layer.fallback?.fallbackLayer === 'aiInterpretationLayer';
+
+if (isDisabledFallback) {
+  console.log('External AI provenance completeness check: EXPECTED SKIP (disabled fallback has no provider artifact provenance)');
+  process.exit(0);
+}
+
+const provenance = layer?.provenance;
 const requiredFields = [
   'runId',
   'artifactName',
