@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=audit-hardening-1';
+} from '../../scripts/modules/config.js?v=health-hardening-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

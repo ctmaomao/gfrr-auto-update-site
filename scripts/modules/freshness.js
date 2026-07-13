@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=audit-hardening-1';
+﻿import { fmtNumSafe } from './config.js?v=health-hardening-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
