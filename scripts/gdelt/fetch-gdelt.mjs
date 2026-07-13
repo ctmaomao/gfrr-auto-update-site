@@ -9,6 +9,9 @@ const DEFAULT_GDELT_MIN_INTERVAL_MS = 8000;
 const DEFAULT_GDELT_MAX_RETRIES = 1;
 const DEFAULT_GDELT_RETRY_AFTER_CAP_MS = 15000;
 const DEFAULT_GDELT_RETRY_MS = 6000;
+const DEFAULT_GDELT_MAX_COMPRESSED_BYTES = 32 * 1024 * 1024;
+const DEFAULT_GDELT_MAX_DECOMPRESSED_BYTES = 128 * 1024 * 1024;
+const DEFAULT_GDELT_MAX_COMPRESSION_RATIO = 100;
 const DEFAULT_GDELT_UA = 'gfrr-gdelt-client/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
 
 let gdeltRequestQueue = Promise.resolve();
@@ -111,7 +114,8 @@ async function fetchBinaryOnce(url, {
   headers = {},
   label = 'GDELT',
   timeoutMs = DEFAULT_GDELT_TIMEOUT_MS,
-  minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS
+  minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
+  maxBytes = DEFAULT_GDELT_MAX_COMPRESSED_BYTES
 } = {}) {
   return runSerializedGdeltRequest(async () => {
     const controller = new AbortController();
@@ -123,7 +127,45 @@ async function fetchBinaryOnce(url, {
         signal: controller.signal,
         redirect: 'follow'
       });
-      const buffer = Buffer.from(await response.arrayBuffer());
+      const contentLength = Number(response.headers.get('content-length'));
+      if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+        const error = new Error(`${label} compressed response exceeds ${maxBytes} bytes`);
+        error.code = 'compressed_size_exceeded';
+        controller.abort();
+        throw error;
+      }
+
+      const reader = response.body?.getReader?.();
+      if (!reader) {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        if (buffer.length > maxBytes) {
+          const error = new Error(`${label} compressed response exceeds ${maxBytes} bytes`);
+          error.code = 'compressed_size_exceeded';
+          throw error;
+        }
+        return { response, buffer };
+      }
+
+      const chunks = [];
+      let totalBytes = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        if (totalBytes > maxBytes) {
+          try {
+            await reader.cancel('compressed response size limit exceeded');
+          } catch {
+            // The explicit size error below is the authoritative failure.
+          }
+          controller.abort();
+          const error = new Error(`${label} compressed response exceeds ${maxBytes} bytes`);
+          error.code = 'compressed_size_exceeded';
+          throw error;
+        }
+        chunks.push(Buffer.from(value));
+      }
+      const buffer = Buffer.concat(chunks, totalBytes);
       return { response, buffer };
     } catch (error) {
       if (error?.name === 'AbortError') {
@@ -411,7 +453,10 @@ async function fetchGdeltGzipText(url, {
   timeoutMs = DEFAULT_GDELT_TIMEOUT_MS,
   minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
   maxRetries = 0,
-  retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS
+  retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
+  maxCompressedBytes = DEFAULT_GDELT_MAX_COMPRESSED_BYTES,
+  maxDecompressedBytes = DEFAULT_GDELT_MAX_DECOMPRESSED_BYTES,
+  maxCompressionRatio = DEFAULT_GDELT_MAX_COMPRESSION_RATIO
 } = {}) {
   const startedAtMs = Date.now();
   const attempts = [];
@@ -421,7 +466,13 @@ async function fetchGdeltGzipText(url, {
     let retryAfterMs = null;
     const attemptStartedAtMs = Date.now();
     try {
-      const { response, buffer } = await fetchBinaryOnce(url, { headers, label, timeoutMs, minIntervalMs });
+      const { response, buffer } = await fetchBinaryOnce(url, {
+        headers,
+        label,
+        timeoutMs,
+        minIntervalMs,
+        maxBytes: maxCompressedBytes
+      });
       retryAfterMs = parseRetryAfterMs(response.headers.get('Retry-After'), retryAfterCapMs);
       attempts.push({
         attempt: attemptIndex + 1,
@@ -432,8 +483,10 @@ async function fetchGdeltGzipText(url, {
 
       if (response.ok) {
         try {
+          const ratioBound = Math.max(1, Math.floor(buffer.length * maxCompressionRatio));
+          const maxOutputLength = Math.min(maxDecompressedBytes, ratioBound);
           return {
-            text: gunzipSync(buffer).toString('utf8'),
+            text: gunzipSync(buffer, { maxOutputLength }).toString('utf8'),
             diagnostics: sanitizeGdeltDiagnostics(buildDiagnostics({
               endpointType,
               label,
@@ -446,19 +499,22 @@ async function fetchGdeltGzipText(url, {
               status: response.status
             }))
           };
-        } catch {
-          throw createGdeltError(`${label} gzip decode failed`, buildDiagnostics({
-            endpointType,
-            label,
-            attempts,
-            timeoutMs,
-            minIntervalMs,
-            maxRetries: boundedRetries,
-            retryAfterCapMs,
-            startedAtMs,
-            status: response.status,
-            errorCode: 'gzip_decode_failed'
-          }));
+        } catch (error) {
+          const sizeLimitExceeded = error?.code === 'ERR_BUFFER_TOO_LARGE';
+          throw createGdeltError(
+            sizeLimitExceeded ? `${label} decompressed response exceeds safety limit` : `${label} gzip decode failed`,
+            buildDiagnostics({
+              endpointType,
+              label,
+              attempts,
+              timeoutMs,
+              minIntervalMs,
+              maxRetries: boundedRetries,
+              retryAfterCapMs,
+              startedAtMs,
+              status: response.status,
+              errorCode: sizeLimitExceeded ? 'decompressed_size_exceeded' : 'gzip_decode_failed'
+            }));
         }
       }
 
@@ -485,7 +541,11 @@ async function fetchGdeltGzipText(url, {
       attempts.push({
         attempt: attemptIndex + 1,
         status: null,
-        errorCode: error?.code === 'timeout' ? 'timeout' : 'network_error',
+        errorCode: error?.code === 'timeout'
+          ? 'timeout'
+          : error?.code === 'compressed_size_exceeded'
+            ? 'compressed_size_exceeded'
+            : 'network_error',
         elapsedMs: Math.max(0, Date.now() - attemptStartedAtMs)
       });
       if (attemptIndex < boundedRetries) {
@@ -501,7 +561,11 @@ async function fetchGdeltGzipText(url, {
         maxRetries: boundedRetries,
         retryAfterCapMs,
         startedAtMs,
-        errorCode: error?.code === 'timeout' ? 'timeout' : 'network_error'
+        errorCode: error?.code === 'timeout'
+          ? 'timeout'
+          : error?.code === 'compressed_size_exceeded'
+            ? 'compressed_size_exceeded'
+            : 'network_error'
       }));
     }
   }
@@ -527,6 +591,9 @@ async function fetchGdeltWebNgramsText({
   minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
   maxRetries = 0,
   retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
+  maxCompressedBytes = DEFAULT_GDELT_MAX_COMPRESSED_BYTES,
+  maxDecompressedBytes = DEFAULT_GDELT_MAX_DECOMPRESSED_BYTES,
+  maxCompressionRatio = DEFAULT_GDELT_MAX_COMPRESSION_RATIO,
   label = 'GDELT Web NGrams'
 } = {}) {
   if (!/^\d{14}$/u.test(String(timestamp || ''))) {
@@ -544,7 +611,10 @@ async function fetchGdeltWebNgramsText({
     timeoutMs,
     minIntervalMs,
     maxRetries,
-    retryAfterCapMs
+    retryAfterCapMs,
+    maxCompressedBytes,
+    maxDecompressedBytes,
+    maxCompressionRatio
   });
   return { ...result, url };
 }
@@ -635,6 +705,9 @@ async function probeGdeltWebNgramsFile({
 }
 
 export {
+  DEFAULT_GDELT_MAX_COMPRESSED_BYTES,
+  DEFAULT_GDELT_MAX_COMPRESSION_RATIO,
+  DEFAULT_GDELT_MAX_DECOMPRESSED_BYTES,
   DEFAULT_GDELT_MAX_RETRIES,
   DEFAULT_GDELT_MIN_INTERVAL_MS,
   DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
