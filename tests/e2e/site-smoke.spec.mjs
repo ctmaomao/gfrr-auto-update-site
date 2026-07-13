@@ -42,6 +42,7 @@ test.describe('desktop smoke', () => {
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#trend-line-score')).toHaveAttribute('aria-label', /Risk score trend/u);
+    await expect(page.locator('#trend-line-score')).not.toHaveAttribute('aria-label', /null/u);
     expect(consoleErrors).toEqual([]);
   });
 

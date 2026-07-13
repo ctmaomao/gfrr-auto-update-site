@@ -486,7 +486,7 @@ export function renderTrendSvg({ radarData, radarHistoryData, worldOrderStressDa
     if (scoreLine) {
       scoreLine.hidden = false;
       scoreLine.setAttribute('points', pointsToAttribute(scorePoints));
-      scoreLine.setAttribute('aria-label', `Risk score trend ${weekly.map((item) => `${item.date}:${Math.round(item.score)}`).join(', ')}`);
+      scoreLine.setAttribute('aria-label', `Risk score trend ${weekly.map((item, index) => `${textValue(item.date) || `slot-${index + 1}`}:${Math.round(item.score)}`).join(', ')}`);
     }
     renderTrendDots('trend-dots-score', scorePoints, 'trend-dot-score', 4, 'trend-dot-score');
 
