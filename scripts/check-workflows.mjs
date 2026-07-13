@@ -12,7 +12,8 @@ const contracts = [
       'workflow_dispatch',
       "cron: '7,17,27,37,47,57 * * * *'",
       'concurrency',
-      'gfrr-realtime',
+      'group: gfrr-realtime-writer-realtime-data',
+      "if: ${{ github.ref == 'refs/heads/main' }}",
       'permissions:',
       'contents: write',
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
@@ -27,7 +28,8 @@ const contracts = [
       'Commit updated realtime file'
     ],
     forbidden: [
-      '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}'
+      '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
+      'group: gfrr-realtime-${{ github.ref }}'
     ],
     exactlyOnce: ['FRED_API_KEY: ${{ secrets.FRED_API_KEY }}']
   },
@@ -40,8 +42,9 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'group: gfrr-realtime-${{ github.ref }}',
+      'group: gfrr-realtime-writer-realtime-data',
       'cancel-in-progress: false',
+      "if: ${{ github.ref == 'refs/heads/main' }}",
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
@@ -54,7 +57,8 @@ const contracts = [
       'npm run build:daily',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json',
-      'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'
+      'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION',
+      'group: gfrr-realtime-${{ github.ref }}'
     ]
   },
   {

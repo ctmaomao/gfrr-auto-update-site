@@ -9,7 +9,7 @@ on:
     - cron: '7,17,27,37,47,57 * * * *'
 
 concurrency:
-  group: gfrr-realtime-${{ github.ref }}
+  group: gfrr-realtime-writer-realtime-data
   cancel-in-progress: false
 
 permissions:
@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
