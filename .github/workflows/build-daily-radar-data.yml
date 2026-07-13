@@ -2,7 +2,6 @@ name: Build Daily Radar Data
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
 
 on:
   workflow_dispatch:
@@ -55,6 +54,7 @@ jobs:
 
       - name: Generate radar data
         env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
           WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
           GFRR_MAIN_SCORE_WIND_FALLBACK: "1"

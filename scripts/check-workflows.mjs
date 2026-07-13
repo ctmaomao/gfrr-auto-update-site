@@ -20,10 +20,14 @@ const contracts = [
       'node-version: 24',
       'for attempt in 1 2 3',
       'npm ci',
+      '          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
       'Validate realtime payload',
       'npm run check:realtime-local-schema',
       'Summarize realtime output',
       'Commit updated realtime file'
+    ],
+    forbidden: [
+      '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}'
     ]
   },
   {
@@ -65,11 +69,15 @@ const contracts = [
       'node-version: 24',
       'Audit Daily realtime input vs Worker preview',
       'node scripts/audit-daily-vs-worker.mjs --github-summary',
+      '          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
       'npm run build:data',
       'npm run check:data',
       'Daily Radar Summary',
       'Decision Summary',
       'Transmission Delta Summary'
+    ],
+    forbidden: [
+      '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}'
     ]
   },
   {
@@ -80,6 +88,13 @@ const contracts = [
       "github.event.workflow_run.conclusion == 'success'",
       'cancel-in-progress: false',
       'npm run check:all',
+      'Prepare clean Pages artifact',
+      'mkdir -p _site/scripts',
+      'cp index.html bubble-watch.html _site/',
+      'cp -R assets data realtime _site/',
+      'cp scripts/app.js _site/scripts/',
+      'cp -R scripts/modules _site/scripts/',
+      'path: _site',
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'fetch-depth: 0',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
@@ -113,6 +128,7 @@ const contracts = [
       'node-version: 24',
       'package-manager-cache: false',
       'npm ci',
+      'npm audit --include=dev',
       'npm run check:all'
     ],
     forbidden: [

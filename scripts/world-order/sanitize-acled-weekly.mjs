@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import xlsx from 'xlsx';
+import * as xlsx from 'xlsx';
+
+xlsx.set_fs(fs);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +15,8 @@ const outputPath = path.join(root, 'config', 'world-order-acled-regional-weekly.
 const SOURCE_URL = 'https://acleddata.com/conflict-data/download-data-files';
 const LICENSE_LEVEL = 'open';
 const ATTRIBUTION = 'ACLED (Armed Conflict Location & Event Data) — https://acleddata.com';
+const MAX_INPUT_BYTES = 16 * 1024 * 1024;
+const MAX_DATA_ROWS = 350_000;
 
 const expectedRegions = [
   'Africa',
@@ -141,13 +145,43 @@ function selectRecognizedFiles(filenames) {
   return selected;
 }
 
+function resolveInputFile(filename) {
+  const candidate = path.resolve(inputDir, filename);
+  const stats = fs.lstatSync(candidate);
+  if (!stats.isFile() || stats.isSymbolicLink()) fail(`${filename}: input must be a regular file`);
+  if (stats.size > MAX_INPUT_BYTES) {
+    fail(`${filename}: file size ${stats.size} exceeds ${MAX_INPUT_BYTES} bytes`);
+  }
+  const resolvedInputDir = fs.realpathSync(inputDir);
+  const resolvedFile = fs.realpathSync(candidate);
+  const relative = path.relative(resolvedInputDir, resolvedFile);
+  if (!relative || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    fail(`${filename}: resolved path escapes the weekly input directory`);
+  }
+  return resolvedFile;
+}
+
+function validateSheetRowLimit(sheet, filename) {
+  const fullRange = sheet['!fullref'] || sheet['!ref'];
+  if (!fullRange) return;
+  const endRowIndex = xlsx.utils.decode_range(fullRange).e.r;
+  if (endRowIndex > MAX_DATA_ROWS) {
+    fail(`${filename}: worksheet exceeds ${MAX_DATA_ROWS} data rows`);
+  }
+}
+
 function readWorkbookRows(entry) {
-  const filePath = path.join(inputDir, entry.filename);
-  const workbook = xlsx.readFile(filePath, { cellDates: true });
+  const filePath = resolveInputFile(entry.filename);
+  const workbook = xlsx.readFile(filePath, {
+    cellDates: true,
+    sheets: 'Sheet1',
+    sheetRows: MAX_DATA_ROWS + 2
+  });
   if (workbook.SheetNames.length !== 1 || workbook.SheetNames[0] !== 'Sheet1') {
     fail(`${entry.filename}: expected exactly one sheet named Sheet1`);
   }
   const sheet = workbook.Sheets.Sheet1;
+  validateSheetRowLimit(sheet, entry.filename);
   const rows = xlsx.utils.sheet_to_json(sheet, {
     header: 1,
     raw: true,
@@ -155,6 +189,7 @@ function readWorkbookRows(entry) {
     blankrows: false
   }).filter(isNonEmptyRow);
   if (rows.length === 0) fail(`${entry.filename}: sheet is empty`);
+  if (rows.length > MAX_DATA_ROWS + 1) fail(`${entry.filename}: worksheet exceeds ${MAX_DATA_ROWS} data rows`);
   validateHeader(rows[0], entry.filename);
 
   return rows.slice(1).filter(isNonEmptyRow).map((row, index) => {

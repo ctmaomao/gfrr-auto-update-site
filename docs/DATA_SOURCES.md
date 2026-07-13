@@ -731,8 +731,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 | **失败 fallback** | `manual_required` / `error` / legacy `not_configured` 只影响 World Order overlay 可用性提示,不得阻断 `check:all`,不得进入 main scoring / decision / execution / position |
 | **影响 scoring?** | **overlay only** — M-63a 起只允许进入 World Order `peaceDividendRetreat` 维度;不得影响主决策模型 |
 | **fetcher** | `scripts/world-order/fetch-acled.mjs` (M-63a local JSON importer;不访问网络、不读取 credentials、不导入 `xlsx`) |
-| **weekly sanitizer** | `scripts/world-order/sanitize-acled-weekly.mjs` (M-63a 已落地;唯一允许导入 `xlsx` 的 ACLED 路径) |
-| **monthly sanitizer** | `scripts/world-order/sanitize-acled-monthly.mjs` (M-63b 已落地;唯一允许导入 `xlsx` 的 ACLED monthly 路径) |
+| **weekly sanitizer** | `scripts/world-order/sanitize-acled-weekly.mjs` (唯一允许导入 `xlsx` 的 ACLED weekly 路径;16 MiB / 350,000 data-row fail-closed cap) |
+| **monthly sanitizer** | `scripts/world-order/sanitize-acled-monthly.mjs` (唯一允许导入 `xlsx` 的 ACLED monthly 路径;1 MiB / 50,000 data-row fail-closed cap) |
 | **提醒机制** | `.github/workflows/acled-weekly-refresh-reminder.yml` (daily 00:00 UTC HDX metadata scan) + `.github/workflows/acled-monthly-refresh-reminder.yml` (cron 9th 00:00 UTC each month);M-63c 起 active;HDX metadata-gated reminder-only,同一 HDX as-of 只提醒一次;不得升级为 ACLED auto-fetch |
 | **derived JSON** | `config/world-order-acled-regional-weekly.json` (M-63a) + `config/world-order-acled-global-monthly.json` (M-63b) |
 | **raw xlsx storage** | `manual-artifacts/world-order/acled-input/{weekly,monthly}/` (gitignored) |

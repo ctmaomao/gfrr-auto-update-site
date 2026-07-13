@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
@@ -8,7 +8,6 @@ const ROOT = process.cwd();
 const DOC = 'docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PROJECTION.md';
 const PROJECT_SCRIPT = 'scripts/project-gdelt-web-ngrams-display-fallback-projection.mjs';
 const FIXTURE = 'docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-projection-p50.json';
-const CHECK_OUTPUT = 'manual-artifacts/oil-news/gdelt-web-ngrams-display-fallback-projection-check.json';
 
 const RUNTIME_FILES = [
   'index.html',
@@ -224,9 +223,8 @@ function assertAuthorityDocsAndPackage() {
 }
 
 function assertGeneratedProjection() {
-  rmSync(absolute(CHECK_OUTPUT), { force: true });
-  runNode([PROJECT_SCRIPT, '--output', CHECK_OUTPUT, '--strict']);
-  const projection = JSON.parse(readText(CHECK_OUTPUT));
+  const result = runNode([PROJECT_SCRIPT, '--no-output', '--json', '--strict']);
+  const projection = JSON.parse(result.stdout);
   assertProjection(projection);
 }
 

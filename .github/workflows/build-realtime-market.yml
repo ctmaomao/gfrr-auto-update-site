@@ -2,7 +2,6 @@ name: Build Realtime Market
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
 
 on:
   workflow_dispatch:
@@ -47,6 +46,8 @@ jobs:
           done
 
       - name: Generate realtime market
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: npm run build:realtime
 
       - name: Validate realtime payload
