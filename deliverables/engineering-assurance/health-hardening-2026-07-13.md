@@ -113,14 +113,16 @@ The baseline was reviewed by six explicit roles: code mapper, security auditor, 
 
 ## Implemented hardening results
 
-- `xlsx` is locked to the official SheetJS `0.20.3` tarball and integrity. The two ACLED sanitizers now reject non-regular/symlinked or out-of-root inputs, enforce pre-parse byte caps, accept only `Sheet1`, and enforce worksheet row caps. A dedicated security checker locks the package source, integrity, import allowlist and input guards.
+- `xlsx` is locked to the official SheetJS `0.20.3` tarball and integrity. The two ACLED sanitizers reject non-regular/symlinked or out-of-root inputs; enforce compressed, actual-expanded, entry-count, ratio and batch limits before SheetJS; then accept only `Sheet1` and enforce row/column caps. The bounded inflater verifies real output against ZIP metadata, so forged central-directory sizes cannot defer resource use until SheetJS. A dedicated security checker locks the package source, integrity, import allowlist and executable guards.
 - PR validation now runs the complete development dependency audit, measured Node 24 coverage, the existing full check chain and one non-duplicated Playwright Chromium matrix. The four browser cases cover desktop/mobile, home/Bubble Watch, ancillary-data loss and ineligible External AI fallback.
 - The cohesive Daily Brief planner moved to `scripts/daily/daily-brief.mjs`. Six available fixtures plus the unavailable fallback produced an exact normalized before/after JSON match after timestamp exclusion.
 - The macro trend SVG cluster moved to `scripts/modules/renderMacroTrend.js`. Desktop and mobile before/after screenshots were byte-identical, and the asset version was advanced to `health-hardening-1` through the repository version script.
 - The Pages workflow publishes an explicit `_site` allowlist instead of the repository root. FRED secrets are step-scoped. The default GDELT contract check no longer creates an ignored manual artifact.
 - No scoring, decision, execution, position, Brent promotion, data contract, External AI, World Order, macro-driver or ODP semantics changed. `scripts/modules/realtime.js`, `data/*.json` and `realtime/*.json` have no branch diff.
 
-Current measured coverage for the selected pure modules is 99.56% lines, 95.63% branches and 96.97% functions. The extracted Daily Brief module is 100% line/function and 91.18% branch covered. The Daily entry is 11,840 lines / 523,749 bytes (down 233 lines / 11,540 bytes); the macro renderer is 3,242 lines / 148,200 bytes (down 467 lines / 16,520 bytes).
+The second independent deep review found two browser false-positive paths, a nullable trend date crash, static trend placeholders surviving missing data, forged ZIP metadata bypassing declared expansion limits, broad first-party XLSX import-scan blind spots, unportable local-secret ignores and diagnostic URLs retaining secret query strings. Each reproducible Medium was fixed without changing data/scoring semantics. The browser suite now serves the exact `_site` Pages artifact, refuses a stale reused server and contains five smoke cases. Repository branch protection now actively blocks deletion and force-push, Dependabot vulnerability alerts/security updates are enabled, and existing writer-workflow compatibility is unchanged.
+
+Current measured coverage for the selected pure/security modules is 99.67% lines, 96.00% branches and 97.62% functions. `xlsx-input-guard.mjs` is 100% line/function and 96.70% branch covered. The extracted Daily Brief module is 100% line/function and 91.18% branch covered. The Daily entry is 11,840 lines / 523,749 bytes (down 233 lines / 11,540 bytes); the macro renderer is 3,242 lines / 148,200 bytes (down 467 lines / 16,520 bytes).
 
 ## Isolated staging and observation
 

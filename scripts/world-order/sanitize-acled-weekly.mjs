@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as xlsx from 'xlsx';
+import { assertWorksheetDimensions, preflightXlsxInputs } from './xlsx-input-guard.mjs';
 
 xlsx.set_fs(fs);
 
@@ -16,7 +17,16 @@ const SOURCE_URL = 'https://acleddata.com/conflict-data/download-data-files';
 const LICENSE_LEVEL = 'open';
 const ATTRIBUTION = 'ACLED (Armed Conflict Location & Event Data) — https://acleddata.com';
 const MAX_INPUT_BYTES = 16 * 1024 * 1024;
+const MAX_BATCH_INPUT_BYTES = 64 * 1024 * 1024;
+const MAX_BATCH_UNCOMPRESSED_BYTES = 640 * 1024 * 1024;
 const MAX_DATA_ROWS = 350_000;
+const MAX_DATA_COLUMNS = 32;
+const ZIP_LIMITS = Object.freeze({
+  maxEntries: 64,
+  maxEntryUncompressedBytes: 160 * 1024 * 1024,
+  maxUncompressedBytes: 192 * 1024 * 1024,
+  maxCompressionRatio: 32,
+});
 
 const expectedRegions = [
   'Africa',
@@ -145,33 +155,8 @@ function selectRecognizedFiles(filenames) {
   return selected;
 }
 
-function resolveInputFile(filename) {
-  const candidate = path.resolve(inputDir, filename);
-  const stats = fs.lstatSync(candidate);
-  if (!stats.isFile() || stats.isSymbolicLink()) fail(`${filename}: input must be a regular file`);
-  if (stats.size > MAX_INPUT_BYTES) {
-    fail(`${filename}: file size ${stats.size} exceeds ${MAX_INPUT_BYTES} bytes`);
-  }
-  const resolvedInputDir = fs.realpathSync(inputDir);
-  const resolvedFile = fs.realpathSync(candidate);
-  const relative = path.relative(resolvedInputDir, resolvedFile);
-  if (!relative || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
-    fail(`${filename}: resolved path escapes the weekly input directory`);
-  }
-  return resolvedFile;
-}
-
-function validateSheetRowLimit(sheet, filename) {
-  const fullRange = sheet['!fullref'] || sheet['!ref'];
-  if (!fullRange) return;
-  const endRowIndex = xlsx.utils.decode_range(fullRange).e.r;
-  if (endRowIndex > MAX_DATA_ROWS) {
-    fail(`${filename}: worksheet exceeds ${MAX_DATA_ROWS} data rows`);
-  }
-}
-
-function readWorkbookRows(entry) {
-  const filePath = resolveInputFile(entry.filename);
+function readWorkbookRows(entry, inputFiles) {
+  const filePath = inputFiles.get(entry.filename);
   const workbook = xlsx.readFile(filePath, {
     cellDates: true,
     sheets: 'Sheet1',
@@ -181,7 +166,7 @@ function readWorkbookRows(entry) {
     fail(`${entry.filename}: expected exactly one sheet named Sheet1`);
   }
   const sheet = workbook.Sheets.Sheet1;
-  validateSheetRowLimit(sheet, entry.filename);
+  assertWorksheetDimensions(sheet, entry.filename, { maxDataRows: MAX_DATA_ROWS, maxColumns: MAX_DATA_COLUMNS });
   const rows = xlsx.utils.sheet_to_json(sheet, {
     header: 1,
     raw: true,
@@ -400,7 +385,15 @@ function main() {
     warn(`missing expected regions: ${missingRegions.join(', ')}`);
   }
 
-  const aggregates = selectedFiles.map((entry) => aggregateRegion(entry.region, readWorkbookRows(entry)));
+  const inputFiles = preflightXlsxInputs({
+    inputDir,
+    filenames: selectedFiles.map((entry) => entry.filename),
+    maxInputBytes: MAX_INPUT_BYTES,
+    maxBatchInputBytes: MAX_BATCH_INPUT_BYTES,
+    maxBatchUncompressedBytes: MAX_BATCH_UNCOMPRESSED_BYTES,
+    zipLimits: ZIP_LIMITS,
+  });
+  const aggregates = selectedFiles.map((entry) => aggregateRegion(entry.region, readWorkbookRows(entry, inputFiles)));
   const payload = buildPayload(aggregates, selectedFiles);
   const relPath = path.relative(root, outputPath);
   const summary = `regions=${aggregates.length}, latestWeek=${payload.latestWeek}`;

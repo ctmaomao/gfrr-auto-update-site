@@ -311,14 +311,14 @@ Pinned integrity: `sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94
 
 ### Threat model
 
-The dependency is still restricted to the two local manual sanitizers. Each sanitizer now fails closed before parsing when the selected input is not a regular file, is a symbolic link, resolves outside its expected input directory, exceeds its byte cap, has any sheet other than the single required `Sheet1`, or exceeds its row cap.
+The dependency is still restricted to the two local manual sanitizers. Each sanitizer treats every downloaded workbook as untrusted and fails closed before SheetJS parsing when the selected input is not a regular file, is a symbolic link, resolves outside its expected input directory, exceeds its byte cap, or violates ZIP entry-count, bounded actual-expansion, compression-ratio or batch limits. Central-directory size claims are verified against a real per-entry expansion with `maxOutputLength`; they are not trusted as the resource limit. After the bounded parse it accepts only the single required `Sheet1` and enforces row and column caps.
 
-**Realistic source of malicious xlsx:** The only xlsx files this project processes come from manual downloads at `https://acleddata.com/conflict-data/download-data-files`, performed by the operator while logged into a personal myACLED account. ACLED is a Wisconsin-registered research organization (ACLED Analysis, Incorporated) used by the UN, World Bank, and Carnegie Endowment. For an attack to succeed, ACLED itself would need to deliberately poison its publicly-published aggregated data files — an effectively zero-probability scenario given their institutional model.
+**Trust boundary:** The normal source is a manual operator download from `https://acleddata.com/conflict-data/download-data-files`, but source reputation is not a security control. A compromised account, mirror, browser download or upstream publication can still supply a malformed workbook, so the same fail-closed limits apply to every input.
 
-| Track | Maximum file size | Maximum data rows |
-|---|---:|---:|
-| Weekly regional | 16 MiB | 350,000 |
-| Monthly global | 1 MiB | 50,000 |
+| Track | File / batch compressed | Per-file / batch expanded | Rows / columns | ZIP entries / ratio |
+|---|---:|---:|---:|---:|
+| Weekly regional | 16 / 64 MiB | 192 / 640 MiB | 350,000 / 32 | 64 / 32× |
+| Monthly global | 1 / 2 MiB | 12 / 16 MiB | 50,000 / 8 | 64 / 32× |
 
 ### ADR-0013 isolation retained
 

@@ -28,7 +28,8 @@ const contracts = [
     ],
     forbidden: [
       '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}'
-    ]
+    ],
+    exactlyOnce: ['FRED_API_KEY: ${{ secrets.FRED_API_KEY }}']
   },
   {
     file: '.github/workflows/recover-stale-realtime-market.yml',
@@ -78,7 +79,8 @@ const contracts = [
     ],
     forbidden: [
       '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}'
-    ]
+    ],
+    exactlyOnce: ['FRED_API_KEY: ${{ secrets.FRED_API_KEY }}']
   },
   {
     file: '.github/workflows/deploy-static-site-to-pages.yml',
@@ -437,11 +439,26 @@ for (const contract of contracts) {
     if (text.includes(needle)) addForbiddenFailure(contract.file, needle);
   }
 
+  for (const needle of contract.exactlyOnce || []) {
+    const count = text.split(needle).length - 1;
+    if (count !== 1) addRuntimeFailure(contract.file, `must contain exactly one "${needle}" occurrence; found ${count}`);
+  }
+
   for (const group of contract.anyOf || []) {
     if (!group.options.some((needle) => text.includes(needle))) {
       addFailure(contract.file, `${group.label}: ${group.options.join(' | ')}`);
     }
   }
+}
+
+const gitignoreFile = '.gitignore';
+if (fs.existsSync(gitignoreFile)) {
+  const ignored = new Set(fs.readFileSync(gitignoreFile, 'utf8').split(/\r?\n/u).map((line) => line.trim()));
+  for (const entry of ['.codex/', '.env', '.env.*', '.dev.vars', '.dev.vars.*', '.wrangler/', 'workers/gfrr-realtime-worker/wrangler.toml']) {
+    if (!ignored.has(entry)) addRuntimeFailure(gitignoreFile, `missing local secret/config ignore: ${entry}`);
+  }
+} else {
+  addRuntimeFailure(gitignoreFile, 'file missing');
 }
 
 const mainWriterWorkflows = [

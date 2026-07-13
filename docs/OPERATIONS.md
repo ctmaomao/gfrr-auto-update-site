@@ -28,11 +28,7 @@ npx --no-install playwright install chromium
 npm run test:e2e
 ```
 
-`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 使用一个 Chromium worker，分别验证桌面和手机的首页、Bubble Watch，以及附属 JSON 缺失与 External AI fallback。
-
-```bash
-npm run check:all
-```
+`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
 
 `check:data` 等价于 `node scripts/validate-data.mjs`。v28.0G-10 Data Check Expected-Skip Noise Cleanup 后，默认检查不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。
 
@@ -719,6 +715,7 @@ pending deltas: 0
 
 ```bash
 npm run check:all
+npm run build:pages-artifact
 ```
 
 失败时按类型排查：
@@ -736,7 +733,7 @@ npm run check:all
 
 GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions：`actions/checkout@v6`、`actions/setup-node@v6` 和 `actions/upload-artifact@v7`；`setup-node` 使用 `node-version: 24`。每个 workflow 必须设置 top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`。不要使用 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`、`FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`、Node 20 或 Node 25 作为默认项目 runtime。
 
-`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行默认只读 `check:all`；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
+`build:pages-artifact` 只允许两张 HTML、`assets` 静态类型、`data/realtime` JSON、`scripts/app.js` 与 `scripts/modules/*.js`，并拒绝任意层级的隐藏配置、非白名单扩展或 symlink。`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行默认只读 `check:all`；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
 
 ## v28.0L-3I-0 Workflow / runtime hygiene
 
