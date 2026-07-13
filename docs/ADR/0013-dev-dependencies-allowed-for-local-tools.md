@@ -69,6 +69,7 @@ All `devDependencies` must be:
 - M-63a PR description must reference this ADR (ADR-0013) and confirm all four mandatory disclosures
 - M-63b (monthly), M-63c (workflows), and future similar PRs follow the same pattern
 - The 2026-07-13 security refresh pins SheetJS Community Edition 0.20.3 from the official CDN with reviewed lockfile integrity, requires `npm audit --include=dev` to exit 0, and enforces file/path/sheet/row limits in both ACLED sanitizers.
+- The 2026-07-13 browser smoke suite pins `@playwright/test@1.61.1` as a dev-only test runner. It is used only by PR/local tests, installs one Chromium browser, and is not imported by frontend, data builders, workflows with write permissions, or Worker runtime.
 - This ADR does NOT retroactively allow adding the dashboard's `package.json` "dependencies" array — that remains forbidden
 
 ## Alternatives considered

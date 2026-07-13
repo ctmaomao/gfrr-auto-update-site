@@ -20,6 +20,16 @@ npm run check:all
 
 默认 `check:all` 是只读验证链。external AI 的 artifact / projection / manual-input 生成能力保留为显式 opt-in 命令,不属于日常默认验证。
 
+PR 还必须通过可量化纯逻辑覆盖率和单一 Chromium 浏览器 smoke。首次本地运行浏览器 smoke 前安装项目锁定版本对应的 Chromium；测试只读取本地静态文件，不调用生产 AI、Worker 写接口或 KV：
+
+```bash
+npm run test:unit:coverage
+npx --no-install playwright install chromium
+npm run test:e2e
+```
+
+`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 使用一个 Chromium worker，分别验证桌面和手机的首页、Bubble Watch，以及附属 JSON 缺失与 External AI fallback。
+
 ```bash
 npm run check:all
 ```

@@ -129,7 +129,10 @@ const contracts = [
       'package-manager-cache: false',
       'npm ci',
       'npm audit --include=dev',
-      'npm run check:all'
+      'npx --no-install playwright install --with-deps chromium',
+      'npm run test:unit:coverage',
+      'npm run check:all',
+      'npm run test:e2e'
     ],
     forbidden: [
       'contents: write',
