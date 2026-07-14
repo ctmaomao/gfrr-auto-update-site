@@ -1,7 +1,7 @@
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
-// 24 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
-// StockAnalysis metrics / multpl / slickcharts / SEC EDGAR Form 4),12 项编辑/研究类指标
+// 27 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
+// StockAnalysis metrics / multpl / slickcharts / SEC EDGAR Form 4),15 项编辑/研究类指标
 // 读 config/bubble-watch-curated.json 人工口径。所有自动指标 fail-closed:
 // 抓取失败沿用 curated 快照并按 maxAgeDays 标 STALE,绝不造数。
 //
@@ -53,6 +53,7 @@ const STATUS_RANK = { green: 0, yellow: 1, red: 2 };
 const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
+const AXIS_SCORE = { green: 0, yellow: 50, red: 100 };
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
 const GDELT_BUBBLE_CACHE_SCHEMA_VERSION = 'gdelt-bubble-watch-cache-p38';
 const GDELT_BUBBLE_CACHE_MODULE = 'gdelt-bubble-watch-cache';
@@ -78,32 +79,35 @@ const CATEGORY_ORDER = [
   { key: 'macro', zh: '宏观', en: 'MACRO' }
 ];
 
-// 24 项指标静态定义(名称/分类/阈值文案/来源文案 1:1 复刻原页)
+// 27 项指标静态定义。axis 用于 Stage × Trigger 第二层聚合。
 const INDICATOR_DEFS = [
-  { id: 'cape', category: 'valuation', name_en: 'Shiller CAPE', name_zh: 'CAPE 周期调整 PE', threshold_text: '>35 红 / 25-35 黄 / <25 绿', source_name: 'multpl.com / GuruFocus', mode: 'auto' },
-  { id: 'top5_weight', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
-  { id: 'nvda_fpe', category: 'valuation', name_en: 'NVDA Forward P/E', name_zh: 'NVDA 远期 PE', threshold_text: '>40 红 / 30-40 黄 / <30 绿', source_name: 'GuruFocus / StockAnalysis', mode: 'auto' },
-  { id: 'hyperscaler_capex_yoy', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
-  { id: 'mag4_fcf_yoy', category: 'capital', name_en: 'Big5 Capex / OCF', name_zh: 'Big5 资本开支/经营现金流', threshold_text: '≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
-  { id: 'vc_ai_share', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
-  { id: 'nvda_invest_revenue', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
-  { id: 'breadth_50d', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
-  { id: 'spy_vs_rsp_6m', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
-  { id: 'insider_sell_buy', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'SEC EDGAR Form 4', mode: 'auto' },
-  { id: 'ai_ipo_pipeline', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
-  { id: 'hy_oas', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
-  { id: 'dc_abs_spread', category: 'credit', name_en: 'Data Center ABS Spread', name_zh: '数据中心 ABS 利差', threshold_text: '走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿', source_name: 'Green Street News / 公开发行定价(编辑口径)', mode: 'curated' },
-  { id: 'debt_capex_ratio', category: 'credit', name_en: 'Debt / Capex Flow Ratio', name_zh: '全口径外部融资/Capex 比', threshold_text: '>60% 红 / 30-60% 黄 / <30% 绿', source_name: 'Morgan Stanley public research / Wind paid cross-check', mode: 'curated' },
-  { id: 'neocloud_credit', category: 'credit', name_en: 'Neocloud Credit Events', name_zh: 'Neocloud 信用事件', threshold_text: '任何违约/降级=红', source_name: 'S&P Global Ratings / Morningstar(编辑口径)', mode: 'curated' },
-  { id: 'token_volume_mom', category: 'fundamentals', name_en: 'Industry Token Volume MoM', name_zh: 'AI 行业 Token 月度环比', threshold_text: '收缩=红 / 减速=黄 / 加速=绿', source_name: 'OpenRouter 公开披露(研究口径)', mode: 'curated' },
-  { id: 'token_revenue_ratio', category: 'fundamentals', name_en: 'Token Growth / Revenue Growth', name_zh: 'Token 增速 / 收入增速 比值', threshold_text: '>2x 红 / 1-2x 黄 / <1x 绿', source_name: '厂商公开披露 / OpenRouter(研究口径)', mode: 'curated' },
-  { id: 'arr_2nd_deriv', category: 'fundamentals', name_en: 'AI ARR 2nd Derivative', name_zh: 'AI 收入增速的二阶导', threshold_text: '减速=红 / 平稳=黄 / 加速=绿', source_name: 'Sacra / 公开报道(研究口径)', mode: 'curated' },
-  { id: 'enterprise_deploy', category: 'fundamentals', name_en: 'Enterprise Production Deploy', name_zh: '企业生产环境部署率', threshold_text: '<50%=红 / 50-65%=黄 / >65%=绿', source_name: 'McKinsey / Deloitte(季度调查口径)', mode: 'curated' },
-  { id: 'cloud_rpo_growth', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
-  { id: 'accounting_events', category: 'macro', name_en: 'Round-Tripping / Accounting', name_zh: '会计造假/round-tripping 事件', threshold_text: '任何=红 / 调查=黄 / 无=绿', source_name: 'SEC / 公开执法报道(编辑口径)', mode: 'curated' },
-  { id: 'fed_policy', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'Fed SEP / Fed funds futures / FRED', mode: 'auto' },
-  { id: 'capex_reaction', category: 'macro', name_en: 'Capex Guidance Reaction', name_zh: '资本开支指引市场反应', threshold_text: '系统性惩罚=红 / 偶发=黄 / 奖励=绿', source_name: '财报市场反应(编辑口径)', mode: 'curated' },
-  { id: 'ceo_hedging', category: 'macro', name_en: 'CEO Hedging Language', name_zh: 'CEO 表态对冲程度', threshold_text: '普遍承认过热=红 / 部分=黄 / 无=绿', source_name: '公开表态汇编(编辑口径)', mode: 'curated' }
+  { id: 'cape', axis: 'stage', category: 'valuation', name_en: 'Shiller CAPE', name_zh: 'CAPE 周期调整 PE', threshold_text: '>35 红 / 25-35 黄 / <25 绿', source_name: 'multpl.com / GuruFocus', mode: 'auto' },
+  { id: 'top5_weight', axis: 'stage', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
+  { id: 'nvda_fpe', axis: 'stage', category: 'valuation', name_en: 'NVDA Forward P/E', name_zh: 'NVDA 远期 PE', threshold_text: '>40 红 / 30-40 黄 / <30 绿', source_name: 'GuruFocus / StockAnalysis', mode: 'auto' },
+  { id: 'private_secondary_marks', axis: 'trigger', category: 'valuation', name_en: 'AI Private Secondary Marks', name_zh: 'AI 私募二级市场标价', threshold_text: '折价/下跌=红 / 溢价收窄+卖压=黄 / 溢价稳定或扩大=绿', source_name: 'Forge Global / Caplight / Hiive', mode: 'curated' },
+  { id: 'hyperscaler_capex_yoy', axis: 'stage', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
+  { id: 'mag4_fcf_yoy', axis: 'trigger', category: 'capital', name_en: 'Big5 Capex / OCF', name_zh: 'Big5 资本开支/经营现金流', threshold_text: '≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
+  { id: 'vc_ai_share', axis: 'stage', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
+  { id: 'nvda_invest_revenue', axis: 'stage', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
+  { id: 'breadth_50d', axis: 'trigger', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
+  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
+  { id: 'insider_sell_buy', axis: 'trigger', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'SEC EDGAR Form 4', mode: 'auto' },
+  { id: 'ai_ipo_pipeline', axis: 'stage', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
+  { id: 'hy_oas', axis: 'trigger', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
+  { id: 'dc_abs_spread', axis: 'trigger', category: 'credit', name_en: 'Data Center ABS Spread', name_zh: '数据中心 ABS 利差', threshold_text: '走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿', source_name: 'Green Street News / 公开发行定价(编辑口径)', mode: 'curated' },
+  { id: 'debt_capex_ratio', axis: 'stage', category: 'credit', name_en: 'Debt / Capex Flow Ratio', name_zh: '全口径外部融资/Capex 比', threshold_text: '>60% 红 / 30-60% 黄 / <30% 绿', source_name: 'Morgan Stanley public research / Wind paid cross-check', mode: 'curated' },
+  { id: 'neocloud_credit', axis: 'trigger', category: 'credit', name_en: 'Neocloud Credit Events', name_zh: 'Neocloud 信用事件', threshold_text: '任何违约/降级=红', source_name: 'S&P Global Ratings / Morningstar(编辑口径)', mode: 'curated' },
+  { id: 'token_volume_mom', axis: 'trigger', category: 'fundamentals', name_en: 'Industry Token Volume MoM', name_zh: 'AI 行业 Token 月度环比', threshold_text: '收缩=红 / 减速=黄 / 加速=绿', source_name: 'OpenRouter 公开披露(研究口径)', mode: 'curated' },
+  { id: 'token_revenue_ratio', axis: 'trigger', category: 'fundamentals', name_en: 'Token Growth / Revenue Growth', name_zh: 'Token 增速 / 收入增速 比值', threshold_text: '>2x 红 / 1-2x 黄 / <1x 绿', source_name: '厂商公开披露 / OpenRouter(研究口径)', mode: 'curated' },
+  { id: 'gpu_rental_price', axis: 'trigger', category: 'fundamentals', name_en: 'GPU Rental Spot Price', name_zh: 'GPU 租赁现货价', threshold_text: '环比跌>15%/供过于求=红 / 阴跌=黄 / 稳定或上涨=绿', source_name: 'Thunder Compute / getdeploying', mode: 'curated' },
+  { id: 'arr_2nd_deriv', axis: 'trigger', category: 'fundamentals', name_en: 'AI ARR 2nd Derivative', name_zh: 'AI 收入增速的二阶导', threshold_text: '减速=红 / 平稳=黄 / 加速=绿', source_name: 'Sacra / 公开报道(研究口径)', mode: 'curated' },
+  { id: 'enterprise_deploy', axis: 'stage', category: 'fundamentals', name_en: 'Enterprise Production Deploy', name_zh: '企业生产环境部署率', threshold_text: '<50%=红 / 50-65%=黄 / >65%=绿', source_name: 'McKinsey / Deloitte(季度调查口径)', mode: 'curated' },
+  { id: 'cloud_rpo_growth', axis: 'trigger', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
+  { id: 'frontier_progress', axis: 'trigger', category: 'fundamentals', name_en: 'Frontier Model Progress', name_zh: '前沿模型能力进展', threshold_text: '停滞=红 / 放缓=黄 / 正常或加速=绿', source_name: 'METR / Epoch AI / ARC Prize', mode: 'curated' },
+  { id: 'accounting_events', axis: 'trigger', category: 'macro', name_en: 'Round-Tripping / Accounting', name_zh: '会计造假/round-tripping 事件', threshold_text: '任何=红 / 调查=黄 / 无=绿', source_name: 'SEC / 公开执法报道(编辑口径)', mode: 'curated' },
+  { id: 'fed_policy', axis: 'trigger', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'Fed SEP / Fed funds futures / FRED', mode: 'auto' },
+  { id: 'capex_reaction', axis: 'trigger', category: 'macro', name_en: 'Capex Guidance Reaction', name_zh: '资本开支指引市场反应', threshold_text: '系统性惩罚=红 / 偶发=黄 / 奖励=绿', source_name: '财报市场反应(编辑口径)', mode: 'curated' },
+  { id: 'ceo_hedging', axis: 'stage', category: 'macro', name_en: 'CEO Hedging Language', name_zh: 'CEO 表态对冲程度', threshold_text: '普遍承认过热=红 / 部分=黄 / 无=绿', source_name: '公开表态汇编(编辑口径)', mode: 'curated' }
 ];
 
 const EDGAR_CIK = {
@@ -2646,7 +2650,7 @@ async function fetchCapexReactionFromPublicProxy() {
   };
 }
 
-// ---------- 公开市场技术热度审计面板(display-only,不进 24 项主分数) ----------
+// ---------- 公开市场技术热度审计面板(display-only,不进 27 项主分数) ----------
 
 function mean(values) {
   const nums = values.filter(Number.isFinite);
@@ -2911,7 +2915,7 @@ async function buildMarketTechnicalHeatPanel() {
 
   return {
     contractVersion: 'bubble-watch-market-technical-heat-v1',
-    boundary: 'display-only audit panel; excluded from 24-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
+    boundary: 'display-only audit panel; excluded from 27-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
     as_of_date: latestDate,
     generated_at: new Date().toISOString(),
     status,
@@ -2956,7 +2960,7 @@ async function buildMarketTechnicalHeatPanel() {
 function buildUnavailableMarketTechnicalHeatPanel(error) {
   return {
     contractVersion: 'bubble-watch-market-technical-heat-v1',
-    boundary: 'display-only audit panel; excluded from 24-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
+    boundary: 'display-only audit panel; excluded from 27-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
     as_of_date: isoDate(),
     generated_at: new Date().toISOString(),
     status: 'unavailable',
@@ -4071,6 +4075,7 @@ function buildCuratedIndicator(def, entry, today) {
     status: entry.status,
     value_display: entry.value_display,
     note: stale ? `${entry.note}(沿用 ${entry.asOfDate} 口径)` : entry.note,
+    as_of: entry.asOfDate,
     stale,
     provenance: { mode: 'curated', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays }
   };
@@ -4084,6 +4089,7 @@ function buildFallbackIndicator(def, entry, today, reason) {
     status: entry.status,
     value_display: entry.value_display,
     note: `${entry.note}(实时抓取失败,沿用 ${entry.asOfDate} 快照)`,
+    as_of: entry.asOfDate,
     stale,
     provenance: { mode: 'auto_fallback', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays, reason }
   };
@@ -4092,6 +4098,7 @@ function buildFallbackIndicator(def, entry, today, reason) {
 function baseIndicator(def) {
   return {
     id: def.id,
+    axis: def.axis,
     category: def.category,
     name_en: def.name_en,
     name_zh: def.name_zh,
@@ -4297,6 +4304,7 @@ const PUBLIC_SOURCE_LABELS = {
   cape: 'CAPE 历史估值序列',
   top5_weight: 'SPY 持仓集中度',
   nvda_fpe: 'NVDA 远期估值',
+  private_secondary_marks: 'Forge / Caplight 私募二级标价',
   hyperscaler_capex_yoy: '公开季度现金流',
   mag4_fcf_yoy: '公开季度现金流',
   vc_ai_share: 'VC 市场季度研究',
@@ -4311,9 +4319,11 @@ const PUBLIC_SOURCE_LABELS = {
   neocloud_credit: 'Neocloud 公开融资与信用事件',
   token_volume_mom: '公开模型平台用量',
   token_revenue_ratio: '公开模型平台用量与价格口径',
+  gpu_rental_price: 'Thunder Compute / getdeploying',
   arr_2nd_deriv: '公开 ARR 里程碑',
   enterprise_deploy: '企业 AI 部署调查',
   cloud_rpo_growth: '云厂商订单与 backlog 披露',
+  frontier_progress: 'METR / Epoch AI / ARC Prize',
   accounting_events: 'SEC / DOJ 执法公告',
   fed_policy: 'Fed 点阵图/期货/FRED',
   capex_reaction: '公开财报与相对收益窗口',
@@ -4422,6 +4432,90 @@ function tierFromPct(p) {
   if (p >= 40) return 'alert';
   if (p >= 25) return 'caution';
   return 'observation';
+}
+
+const HISTORICAL_PERIODS = [
+  { period: '1999-06', label_zh: '互联网泡沫顶前 9 个月', label_en: '9 months before dot-com top' },
+  { period: '2000-02', label_zh: '互联网泡沫顶前 1 个月', label_en: '1 month before dot-com top' },
+  { period: '2007-10', label_zh: '金融危机股市顶', label_en: 'GFC equity top' },
+  { period: '2021-11', label_zh: '成长股/SPAC 顶', label_en: 'Growth/SPAC top' }
+];
+
+// ponytail: Keep local-only spy_vs_rsp_6m/token_revenue_ratio outside the
+// reference match denominator until they have a reviewed historical analogue.
+const HISTORICAL_CALIBRATION_ROWS = {
+  cape: ['red', 'red', 'yellow', 'red'],
+  top5_weight: ['yellow', 'red', 'green', 'yellow'],
+  nvda_fpe: ['red', 'red', 'green', 'red'],
+  private_secondary_marks: ['green', 'green', 'yellow', 'green'],
+  hyperscaler_capex_yoy: ['yellow', 'yellow', 'green', 'yellow'],
+  mag4_fcf_yoy: ['yellow', 'red', 'green', 'green'],
+  vc_ai_share: ['red', 'red', 'green', 'red'],
+  nvda_invest_revenue: ['yellow', 'red', 'green', 'green'],
+  breadth_50d: ['yellow', 'red', 'red', 'red'],
+  insider_sell_buy: ['yellow', 'red', 'yellow', 'red'],
+  ai_ipo_pipeline: ['red', 'red', 'yellow', 'red'],
+  hy_oas: ['yellow', 'yellow', 'yellow', 'green'],
+  dc_abs_spread: ['yellow', 'yellow', 'red', 'green'],
+  neocloud_credit: ['green', 'yellow', 'red', 'green'],
+  debt_capex_ratio: ['yellow', 'red', null, 'green'],
+  token_volume_mom: ['green', 'green', null, 'green'],
+  gpu_rental_price: ['green', 'yellow', null, 'green'],
+  arr_2nd_deriv: ['green', 'yellow', null, 'green'],
+  enterprise_deploy: ['green', 'yellow', null, 'green'],
+  cloud_rpo_growth: ['green', 'green', null, 'green'],
+  frontier_progress: ['green', 'green', null, 'green'],
+  accounting_events: ['green', 'yellow', 'yellow', 'yellow'],
+  fed_policy: ['red', 'red', 'green', 'red'],
+  capex_reaction: ['green', 'yellow', null, 'green'],
+  ceo_hedging: ['green', 'yellow', 'yellow', 'yellow']
+};
+
+function meanStatusScore(items) {
+  return Number((items.reduce((sum, item) => sum + AXIS_SCORE[item.status], 0) / items.length).toFixed(1));
+}
+
+function axisLabel(axis, score) {
+  if (axis === 'stage') {
+    if (score < 30) return { zh: '早期 Displacement', en: 'Displacement' };
+    if (score < 50) return { zh: '扩张 Boom', en: 'Boom' };
+    if (score < 70) return { zh: '亢奋 Euphoria', en: 'Euphoria' };
+    return { zh: '极端 Mania', en: 'Mania' };
+  }
+  if (score < 25) return { zh: '引线未燃', en: 'Fuse Unlit' };
+  if (score < 45) return { zh: '零星火花', en: 'Sparks' };
+  if (score < 65) return { zh: '引线点燃', en: 'Fuse Lit' };
+  return { zh: '破裂进行中', en: 'Unwinding' };
+}
+
+function computeMomentum(indicators, prevEntry) {
+  let deteriorated = 0;
+  let improved = 0;
+  for (const ind of indicators) {
+    const previous = prevEntry?.statuses?.[ind.id];
+    if (!previous || previous === ind.status) continue;
+    const delta = STATUS_RANK[ind.status] - STATUS_RANK[previous];
+    if (delta > 0) deteriorated += delta;
+    else improved -= delta;
+  }
+  return { deteriorated, improved, net: deteriorated - improved };
+}
+
+function computeSimilarity(indicators) {
+  const current = new Map(indicators.map((item) => [item.id, item.status]));
+  return HISTORICAL_PERIODS.map((period, periodIndex) => {
+    let matched = 0;
+    let denominator = 0;
+    for (const [id, row] of Object.entries(HISTORICAL_CALIBRATION_ROWS)) {
+      const historical = row[periodIndex];
+      const status = current.get(id);
+      if (!historical || !status) continue;
+      denominator += 1;
+      const distance = Math.abs(STATUS_RANK[status] - STATUS_RANK[historical]);
+      matched += distance === 0 ? 1 : distance === 1 ? 0.5 : 0;
+    }
+    return { ...period, match_pct: Math.round((matched / denominator) * 100) };
+  }).sort((a, b) => b.match_pct - a.match_pct);
 }
 
 function shortenText(text, maxChars) {
@@ -4546,10 +4640,15 @@ function buildBubbleNarrativePlan({
   green,
   redPct,
   weighted,
+  stageScore,
+  stageLabel,
+  triggerScore,
+  triggerLabel,
   baseTier,
   effTier,
   overrideActive,
   resonant,
+  twoAxisUpgrade,
   flips,
   prevEntry,
   meta
@@ -4570,7 +4669,7 @@ function buildBubbleNarrativePlan({
     key: 'scorecard',
     role: 'lead',
     sourceIndicators: [],
-    summaryZh: `本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿，${scoreParts.join('，')}。${flipText}；基础判读落在「${TIER_LABEL_ZH[baseTier]}」，有效判读为「${TIER_LABEL_ZH[effTier]}」。`
+    summaryZh: `本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿，${scoreParts.join('，')}。${flipText}；两轴判读为泡沫成熟度 ${stageScore.toFixed(1)}（${stageLabel.zh}）、破裂临近度 ${triggerScore.toFixed(1)}（${triggerLabel.zh}）；基础判读落在「${TIER_LABEL_ZH[baseTier]}」，有效判读为「${TIER_LABEL_ZH[effTier]}」。`
   });
 
   const breadth = byId.get('breadth_50d');
@@ -4631,12 +4730,15 @@ function buildBubbleNarrativePlan({
     .filter((i) => i.status === 'red')
     .map((i) => `${i.name_zh} ${i.value_display}`)
     .join('、');
+  const overrideReasons = [];
+  if (resonant.length >= 2) overrideReasons.push(`双类压力共振（${resonantText}）`);
+  if (twoAxisUpgrade) overrideReasons.push(`两轴共振（stage ${stageScore.toFixed(1)} / trigger ${triggerScore.toFixed(1)}）`);
   sections.push({
     key: 'override_conclusion',
     role: 'final_judgment',
     sourceIndicators: indicators.filter((i) => i.status === 'red').map((i) => i.id),
     summaryZh: overrideActive
-      ? `因此，尽管红灯比例仍在「${TIER_LABEL_ZH[baseTier]}」区间，估值与资金面共振继续抬高综合判读: ${resonantText}。红灯集中在 ${redNames}；双类压力共振使有效判读维持「${TIER_LABEL_ZH[effTier]}」。`
+      ? `因此，尽管红灯比例仍在「${TIER_LABEL_ZH[baseTier]}」区间，${overrideReasons.join('、')}抬高综合判读。红灯集中在 ${redNames}；有效判读维持「${TIER_LABEL_ZH[effTier]}」。`
       : `因此，本期未出现双类红灯共振: ${resonantText}。红灯为 ${redNames || '无'}；有效判读保持「${TIER_LABEL_ZH[effTier]}」。`
   });
 
@@ -4675,6 +4777,16 @@ function computeSummary(indicators, today, prevEntry, meta) {
   const green = total - red - yellow;
   const redPct = Number(((red / total) * 100).toFixed(1));
   const weighted = Number((((red + 0.5 * yellow) / total) * 100).toFixed(1));
+  const stageScore = meanStatusScore(indicators.filter((item) => item.axis === 'stage'));
+  const triggerScore = meanStatusScore(indicators.filter((item) => item.axis === 'trigger'));
+  const stageLabel = axisLabel('stage', stageScore);
+  const triggerLabel = axisLabel('trigger', triggerScore);
+  const categoryScores = Object.fromEntries(CATEGORY_ORDER.map((cat) => [
+    cat.key,
+    meanStatusScore(indicators.filter((item) => item.category === cat.key))
+  ]));
+  const momentum = computeMomentum(indicators, prevEntry);
+  const similarity = computeSimilarity(indicators);
 
   const baseTier = tierFromPct(redPct);
   // 分类强制升级:红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」
@@ -4688,6 +4800,13 @@ function computeSummary(indicators, today, prevEntry, meta) {
   const tierRank = { observation: 0, caution: 1, alert: 2, top: 3 };
   let effTier = baseTier;
   if (resonant.length >= 2 && tierRank[effTier] < tierRank.alert) effTier = 'alert';
+  const twoAxisTarget = stageScore >= 60 && triggerScore >= 65
+    ? 'top'
+    : stageScore >= 60 && triggerScore >= 50
+      ? 'alert'
+      : null;
+  const twoAxisUpgrade = twoAxisTarget && tierRank[twoAxisTarget] > tierRank[effTier] ? twoAxisTarget : null;
+  if (twoAxisUpgrade) effTier = twoAxisUpgrade;
   const overrideActive = effTier !== baseTier;
 
   // WoW 翻灯
@@ -4731,10 +4850,15 @@ function computeSummary(indicators, today, prevEntry, meta) {
     green,
     redPct,
     weighted,
+    stageScore,
+    stageLabel,
+    triggerScore,
+    triggerLabel,
     baseTier,
     effTier,
     overrideActive,
     resonant,
+    twoAxisUpgrade,
     flips,
     prevEntry,
     meta
@@ -4750,6 +4874,15 @@ function computeSummary(indicators, today, prevEntry, meta) {
       primary_score_basis: 'red_light_ratio',
       red_pct: redPct,
       weighted_risk_score: weighted,
+      stage_score: stageScore,
+      stage_label: stageLabel.zh,
+      stage_label_en: stageLabel.en,
+      trigger_score: triggerScore,
+      trigger_label: triggerLabel.zh,
+      trigger_label_en: triggerLabel.en,
+      momentum,
+      category_scores: categoryScores,
+      similarity,
       verdict_label: TIER_LABEL_ZH[effTier],
       verdict_label_en: TIER_LABEL_EN[effTier],
       verdict_desc: buildVerdictDescFromNarrativePlan(narrativePlan, templateVerdictDesc),
@@ -4760,7 +4893,13 @@ function computeSummary(indicators, today, prevEntry, meta) {
       base_tier: baseTier,
       effective_tier: effTier,
       override_active: overrideActive,
-      override_rule: '红灯占比 ≥50% 的分类 ≥2 个 → 判读至少上调到「高风险预警」',
+      override_rule: '双类红灯共振或 Stage × Trigger 共振可升级判读;主分仍为红灯比例',
+      override_rules: {
+        category_resonance: '红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」',
+        two_axis_alert: 'stage ≥60 且 trigger ≥50 → 至少「高风险预警」',
+        two_axis_top: 'stage ≥60 且 trigger ≥65 → 「系统性顶部」'
+      },
+      two_axis_upgrade: twoAxisUpgrade,
       resonant_categories: resonant.map(({ key, zh, red: r, total: t }) => ({ key, zh, red: r, total: t }))
     },
     flips
@@ -4815,6 +4954,7 @@ async function main() {
             status: result.status,
             value_display: result.value_display,
             note: result.note,
+            as_of: result.as_of || today,
             stale: false,
             provenance: {
               mode: 'auto',
@@ -4840,10 +4980,11 @@ async function main() {
               indicators.push({
                 ...baseIndicator(def),
                 source_name: result.source_name || def.source_name,
-                status: result.status,
-                value_display: result.value_display,
-                note: result.note,
-                stale: false,
+                    status: result.status,
+                    value_display: result.value_display,
+                    note: result.note,
+                    as_of: result.as_of || today,
+                    stale: false,
                 provenance: {
                   mode: 'auto',
                   fetchedAt: new Date().toISOString(),
@@ -4895,6 +5036,7 @@ async function main() {
         status: result.status,
         value_display: result.value_display,
         note: result.note,
+        as_of: result.as_of || today,
         stale: false,
         provenance: { mode: 'auto', fetchedAt: new Date().toISOString(), detail: result.detail || null }
       });
@@ -4931,6 +5073,8 @@ async function main() {
     issue_number: issueNumber,
     red_pct: summary.red_pct,
     risk_score: summary.weighted_risk_score,
+    stage_score: summary.stage_score,
+    trigger_score: summary.trigger_score,
     statuses: Object.fromEntries(publicIndicators.map((i) => [i.id, i.status]))
   };
   if (sameWeekIdx >= 0) entries[sameWeekIdx] = newEntry;
@@ -4997,7 +5141,7 @@ async function main() {
 
   fs.writeFileSync(OUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
   fs.writeFileSync(HISTORY_PATH, `${JSON.stringify({ ...history, entries }, null, 2)}\n`);
-  console.log(`[bubble-watch] OK — issue ${issueNumber}, ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, red_pct ${summary.red_pct}%, verdict ${summary.verdict_label}${scoring.override_active ? '(分类升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
+  console.log(`[bubble-watch] OK — issue ${issueNumber}, ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, red_pct ${summary.red_pct}%, stage ${summary.stage_score}, trigger ${summary.trigger_score}, verdict ${summary.verdict_label}${scoring.override_active ? '(综合升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
 }
 
 main().catch((error) => {

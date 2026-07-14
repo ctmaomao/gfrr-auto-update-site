@@ -1,6 +1,15 @@
 {
-  "_comment": "AI 泡沫监测(Bubble Watch)curated 层:本文件是 12 项编辑/研究类指标的唯一人工口径来源,以及 12 项自动指标的 fail-closed 回退快照。自动指标实时抓取失败时沿用此处快照并按 maxAgeDays 标 STALE;编辑类指标更新本文件即可(改 value/status/note + asOfDate)。本层 display-only,不进 GFRR scoring/decision。",
+  "_comment": "AI 泡沫监测(Bubble Watch)curated 层:本文件是 15 项编辑/研究类指标的唯一人工口径来源,以及 12 项自动指标的 fail-closed 回退快照。自动指标实时抓取失败时沿用此处快照并按 maxAgeDays 标 STALE;编辑类指标更新本文件即可(改 value/status/note + asOfDate)。本层 display-only,不进 GFRR scoring/decision。",
   "curated": {
+    "private_secondary_marks": {
+      "status": "green",
+      "value_display": "溢价·走强",
+      "note": "Forge Global / Caplight 公开二级市场观察显示 OpenAI、Anthropic 等旗舰 AI 私募标的仍以溢价成交,买盘强于卖盘,未见低于最近一轮一级估值 5% 以上的转折性折价;一级市场退潮信号尚未出现,维持绿灯",
+      "asOfDate": "2026-07-12",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial",
+      "syncedFromUpstream": true
+    },
     "vc_ai_share": {
       "status": "red",
       "value_display": "≈70%",
@@ -64,6 +73,15 @@
       "cadence": "monthly-research",
       "syncedFromUpstream": true
     },
+    "gpu_rental_price": {
+      "status": "green",
+      "value_display": "紧俏·企稳",
+      "note": "Thunder Compute / getdeploying 公开报价显示 H100 按需价约 $2.01/hr 起、样本中位约 $2.99/hr,H200 中位约 $4/hr;价格较 2024 年初高位明显回落但近月企稳,大批量 Hopper 现货仍偏紧,尚无普遍供给过剩,维持绿灯",
+      "asOfDate": "2026-07-12",
+      "maxAgeDays": 21,
+      "cadence": "weekly-editorial",
+      "syncedFromUpstream": true
+    },
     "arr_2nd_deriv": {
       "status": "green",
       "value_display": "加速中",
@@ -80,6 +98,15 @@
       "asOfDate": "2026-07-12",
       "maxAgeDays": 120,
       "cadence": "quarterly",
+      "syncedFromUpstream": true
+    },
+    "frontier_progress": {
+      "status": "green",
+      "value_display": "加速中",
+      "note": "METR time horizon、Epoch AI 与 ARC Prize 公开基准显示前沿模型能力仍在轨:METR 2023 年后任务时程倍增约 4.3 个月,困难基准持续刷新;尚无持续放缓或停滞证据,模型进步对算力需求的第一性支撑仍在,维持绿灯",
+      "asOfDate": "2026-07-12",
+      "maxAgeDays": 35,
+      "cadence": "monthly-research",
       "syncedFromUpstream": true
     },
     "accounting_events": {

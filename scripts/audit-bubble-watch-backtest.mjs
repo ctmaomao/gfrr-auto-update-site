@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/bubble-watch-backtest/bubble-watch-backtest-latest.json';
 const ROOT = process.cwd();
-const EXPECTED_IDS = [
+const LEGACY_IDS = [
   'cape', 'top5_weight', 'nvda_fpe',
   'hyperscaler_capex_yoy', 'mag4_fcf_yoy', 'vc_ai_share', 'nvda_invest_revenue',
   'breadth_50d', 'spy_vs_rsp_6m', 'insider_sell_buy', 'ai_ipo_pipeline',
@@ -12,6 +12,16 @@ const EXPECTED_IDS = [
   'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth',
   'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
 ];
+const EXPECTED_IDS = [
+  'cape', 'top5_weight', 'nvda_fpe', 'private_secondary_marks',
+  'hyperscaler_capex_yoy', 'mag4_fcf_yoy', 'vc_ai_share', 'nvda_invest_revenue',
+  'breadth_50d', 'spy_vs_rsp_6m', 'insider_sell_buy', 'ai_ipo_pipeline',
+  'hy_oas', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
+  'token_volume_mom', 'token_revenue_ratio', 'gpu_rental_price', 'arr_2nd_deriv',
+  'enterprise_deploy', 'cloud_rpo_growth', 'frontier_progress',
+  'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
+];
+const AXIS_SCORE = { green: 0, yellow: 50, red: 100 };
 const CATEGORY_ORDER = ['valuation', 'capital', 'market_structure', 'credit', 'fundamentals', 'macro'];
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_RANK = { observation: 0, caution: 1, alert: 2, top: 3 };
@@ -54,39 +64,59 @@ function roundPct(value) {
   return Number(value.toFixed(1));
 }
 
-function replayStatuses(statuses, categoryById) {
+function replayStatuses(statuses, categoryById, axisById, ids = EXPECTED_IDS) {
   const statusById = new Map(Object.entries(statuses || {}));
-  const missing = EXPECTED_IDS.filter((id) => !['red', 'yellow', 'green'].includes(statusById.get(id)));
+  const missing = ids.filter((id) => !['red', 'yellow', 'green'].includes(statusById.get(id)));
   if (missing.length) {
     return {
       replayable: false,
       missing,
-      total: EXPECTED_IDS.length
+      total: ids.length
     };
   }
-  const red = EXPECTED_IDS.filter((id) => statusById.get(id) === 'red').length;
-  const yellow = EXPECTED_IDS.filter((id) => statusById.get(id) === 'yellow').length;
-  const green = EXPECTED_IDS.length - red - yellow;
-  const redPct = roundPct((red / EXPECTED_IDS.length) * 100);
-  const weightedAux = roundPct(((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100);
+  const red = ids.filter((id) => statusById.get(id) === 'red').length;
+  const yellow = ids.filter((id) => statusById.get(id) === 'yellow').length;
+  const green = ids.length - red - yellow;
+  const redPct = roundPct((red / ids.length) * 100);
+  const weightedAux = roundPct(((red + 0.5 * yellow) / ids.length) * 100);
   const baseTier = tierFromPct(redPct);
   const resonantCategories = CATEGORY_ORDER
     .map((category) => {
-      const ids = EXPECTED_IDS.filter((id) => categoryById.get(id) === category);
-      const redInCategory = ids.filter((id) => statusById.get(id) === 'red').length;
+      const categoryIds = ids.filter((id) => categoryById.get(id) === category);
+      const redInCategory = categoryIds.filter((id) => statusById.get(id) === 'red').length;
       return {
         key: category,
         red: redInCategory,
-        total: ids.length,
-        ratio: ids.length ? redInCategory / ids.length : 0
+        total: categoryIds.length,
+        ratio: categoryIds.length ? redInCategory / categoryIds.length : 0
       };
     })
     .filter((category) => category.ratio >= 0.5);
   let effectiveTier = baseTier;
   if (resonantCategories.length >= 2 && TIER_RANK[effectiveTier] < TIER_RANK.alert) effectiveTier = 'alert';
+  let stageScore = null;
+  let triggerScore = null;
+  let twoAxisUpgrade = null;
+  if (ids === EXPECTED_IDS) {
+    const axisScore = (axis) => {
+      const axisIds = ids.filter((id) => axisById.get(id) === axis);
+      return roundPct(axisIds.reduce((sum, id) => sum + AXIS_SCORE[statusById.get(id)], 0) / axisIds.length);
+    };
+    stageScore = axisScore('stage');
+    triggerScore = axisScore('trigger');
+    const target = stageScore >= 60 && triggerScore >= 65
+      ? 'top'
+      : stageScore >= 60 && triggerScore >= 50
+        ? 'alert'
+        : null;
+    if (target && TIER_RANK[target] > TIER_RANK[effectiveTier]) {
+      effectiveTier = target;
+      twoAxisUpgrade = target;
+    }
+  }
   return {
     replayable: true,
-    total: EXPECTED_IDS.length,
+    total: ids.length,
     red,
     yellow,
     green,
@@ -96,6 +126,9 @@ function replayStatuses(statuses, categoryById) {
     baseTier,
     effectiveTier,
     overrideActive: effectiveTier !== baseTier,
+    stageScore,
+    triggerScore,
+    twoAxisUpgrade,
     resonantCategories: resonantCategories.map(({ key, red: r, total }) => ({ key, red: r, total }))
   };
 }
@@ -110,9 +143,9 @@ function withStatuses(base, entries) {
   return out;
 }
 
-function buildScenarioInputs() {
+function buildScenarioInputs(axisById) {
   const allGreen = makeAll('green');
-  const manyYellowNoRed = withStatuses(allGreen, EXPECTED_IDS.slice(0, 16).map((id) => [id, 'yellow']));
+  const manyYellowNoRed = withStatuses(allGreen, EXPECTED_IDS.slice(0, 18).map((id) => [id, 'yellow']));
   const dualResonanceLowRed = withStatuses(allGreen, [
     ['cape', 'red'],
     ['top5_weight', 'red'],
@@ -125,14 +158,26 @@ function buildScenarioInputs() {
   ]);
   const cautionByRedPct = withStatuses(allGreen, [
     ['cape', 'red'],
+    ['private_secondary_marks', 'red'],
     ['hyperscaler_capex_yoy', 'red'],
     ['breadth_50d', 'red'],
     ['hy_oas', 'red'],
     ['token_volume_mom', 'red'],
     ['accounting_events', 'red']
   ]);
-  const alertByRedPct = withStatuses(allGreen, EXPECTED_IDS.slice(0, 10).map((id) => [id, 'red']));
-  const topByRedPct = withStatuses(allGreen, EXPECTED_IDS.slice(0, 15).map((id) => [id, 'red']));
+  const alertByRedPct = withStatuses(allGreen, EXPECTED_IDS.slice(0, 11).map((id) => [id, 'red']));
+  const topByRedPct = withStatuses(allGreen, EXPECTED_IDS.slice(0, 17).map((id) => [id, 'red']));
+  const stageIds = EXPECTED_IDS.filter((id) => axisById.get(id) === 'stage');
+  const triggerIds = EXPECTED_IDS.filter((id) => !stageIds.includes(id));
+  const axisAlert = withStatuses(allGreen, [
+    ...stageIds.map((id) => [id, 'yellow']),
+    ['cape', 'red'], ['top5_weight', 'red'],
+    ...triggerIds.map((id) => [id, 'yellow'])
+  ]);
+  const axisTop = withStatuses(axisAlert, [
+    ['breadth_50d', 'red'], ['hy_oas', 'red'], ['token_volume_mom', 'red'],
+    ['gpu_rental_price', 'red'], ['frontier_progress', 'red'], ['accounting_events', 'red']
+  ]);
   return [
     {
       key: 'all_green_floor',
@@ -147,27 +192,37 @@ function buildScenarioInputs() {
     {
       key: 'single_resonance_low_redpct_no_override',
       statuses: singleResonanceLowRed,
-      expected: { primaryScorePct: 8.3, effectiveTier: 'observation', overrideActive: false }
+      expected: { primaryScorePct: 7.4, effectiveTier: 'observation', overrideActive: false }
     },
     {
       key: 'dual_resonance_low_redpct_forces_alert',
       statuses: dualResonanceLowRed,
-      expected: { primaryScorePct: 16.7, effectiveTier: 'alert', overrideActive: true }
+      expected: { primaryScorePct: 14.8, effectiveTier: 'alert', overrideActive: true }
     },
     {
       key: 'caution_by_redpct_without_resonance',
       statuses: cautionByRedPct,
-      expected: { primaryScorePct: 25, effectiveTier: 'caution', overrideActive: false }
+      expected: { primaryScorePct: 25.9, effectiveTier: 'caution', overrideActive: false }
     },
     {
       key: 'alert_by_redpct',
       statuses: alertByRedPct,
-      expected: { primaryScorePct: 41.7, effectiveTier: 'alert' }
+      expected: { primaryScorePct: 40.7, effectiveTier: 'alert' }
     },
     {
       key: 'systemic_top_by_redpct',
       statuses: topByRedPct,
-      expected: { primaryScorePct: 62.5, effectiveTier: 'top' }
+      expected: { primaryScorePct: 63, effectiveTier: 'top' }
+    },
+    {
+      key: 'stage_trigger_alert_without_redpct_threshold',
+      statuses: axisAlert,
+      expected: { primaryScorePct: 7.4, stageScore: 60, triggerScore: 50, effectiveTier: 'alert', twoAxisUpgrade: 'alert' }
+    },
+    {
+      key: 'stage_trigger_top_without_redpct_threshold',
+      statuses: axisTop,
+      expected: { primaryScorePct: 29.6, stageScore: 60, triggerScore: 67.6, effectiveTier: 'top', twoAxisUpgrade: 'top' }
     }
   ];
 }
@@ -192,8 +247,9 @@ function main() {
   const history = readJson('data/bubble-watch-history.json');
   const pageHtml = fs.readFileSync(path.join(ROOT, 'bubble-watch.html'), 'utf8');
   const categoryById = new Map((latest.indicators || []).map((indicator) => [indicator.id, indicator.category]));
+  const axisById = new Map((latest.indicators || []).map((indicator) => [indicator.id, indicator.axis]));
   const currentStatuses = Object.fromEntries((latest.indicators || []).map((indicator) => [indicator.id, indicator.status]));
-  const currentReplay = replayStatuses(currentStatuses, categoryById);
+  const currentReplay = replayStatuses(currentStatuses, categoryById, axisById);
   const summary = latest.summary || {};
   const currentMismatches = [
     ...compareExpected(currentReplay, {
@@ -206,12 +262,16 @@ function main() {
     summary.primary_score_basis === 'red_light_ratio' ? null : `primary_score_basis: expected red_light_ratio, got ${summary.primary_score_basis}`,
     summary.primary_score_pct === summary.red_pct ? null : `primary_score_pct ${summary.primary_score_pct} != red_pct ${summary.red_pct}`,
     String(summary.verdict_desc || '').includes('加权风险分') ? 'verdict_desc still contains 加权风险分' : null,
-    pageHtml.includes('WEIGHTED RISK SCORE') ? 'page still contains WEIGHTED RISK SCORE' : null
+    pageHtml.includes('WEIGHTED RISK SCORE') ? 'page still contains WEIGHTED RISK SCORE' : null,
+    pageHtml.includes('Stage × Trigger') ? null : 'page missing Stage × Trigger',
+    pageHtml.includes('Threshold Scale') || pageHtml.includes('触发阈值标尺') ? 'page still contains retired threshold scale' : null
   ].filter(Boolean);
 
   const historyEntries = Array.isArray(history.entries) ? history.entries : [];
   const historyReplay = historyEntries.map((entry) => {
-    const replay = replayStatuses(entry.statuses, categoryById);
+    const usesLegacyContract = LEGACY_IDS.every((id) => ['red', 'yellow', 'green'].includes(entry.statuses?.[id])) &&
+      !EXPECTED_IDS.every((id) => ['red', 'yellow', 'green'].includes(entry.statuses?.[id]));
+    const replay = replayStatuses(entry.statuses, categoryById, axisById, usesLegacyContract ? LEGACY_IDS : EXPECTED_IDS);
     return {
       week: entry.week,
       date: entry.date,
@@ -228,8 +288,8 @@ function main() {
     };
   });
 
-  const scenarios = buildScenarioInputs().map((scenario) => {
-    const replay = replayStatuses(scenario.statuses, categoryById);
+  const scenarios = buildScenarioInputs(axisById).map((scenario) => {
+    const replay = replayStatuses(scenario.statuses, categoryById, axisById);
     return {
       key: scenario.key,
       expected: scenario.expected,

@@ -23,16 +23,16 @@ function check(group, cond, message) {
 }
 
 const EXPECTED_IDS = [
-  'cape', 'top5_weight', 'nvda_fpe',
+  'cape', 'top5_weight', 'nvda_fpe', 'private_secondary_marks',
   'hyperscaler_capex_yoy', 'mag4_fcf_yoy', 'vc_ai_share', 'nvda_invest_revenue',
   'breadth_50d', 'spy_vs_rsp_6m', 'insider_sell_buy', 'ai_ipo_pipeline',
   'hy_oas', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
-  'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth',
+  'token_volume_mom', 'token_revenue_ratio', 'gpu_rental_price', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth', 'frontier_progress',
   'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
 ];
 const CURATED_ORIGIN_IDS = [
-  'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
-  'token_volume_mom', 'token_revenue_ratio', 'arr_2nd_deriv', 'enterprise_deploy',
+  'private_secondary_marks', 'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
+  'token_volume_mom', 'token_revenue_ratio', 'gpu_rental_price', 'arr_2nd_deriv', 'enterprise_deploy', 'frontier_progress',
   'accounting_events', 'capex_reaction', 'ceo_hedging'
 ];
 const HYBRID_LIVE_IDS = [
@@ -51,8 +51,11 @@ const HYBRID_LIVE_IDS = [
 const HYBRID_PAID_OPTIONAL_IDS = [
   'dc_abs_spread'
 ];
+const CANDIDATE_ONLY_IDS = ['private_secondary_marks', 'gpu_rental_price', 'frontier_progress'];
 const CATEGORIES = ['valuation', 'capital', 'market_structure', 'credit', 'fundamentals', 'macro'];
 const STATUSES = ['red', 'yellow', 'green'];
+const AXES = ['stage', 'trigger'];
+const STATUS_SCORE = { red: 100, yellow: 50, green: 0 };
 const TECHNICAL_HEAT_IDS = [
   'relative_momentum_21d',
   'rsi_14d',
@@ -98,11 +101,13 @@ const ids = new Set();
 for (const ind of data.indicators || []) {
   ids.add(ind.id);
   check('contract', CATEGORIES.includes(ind.category), `${ind.id} category 非法: ${ind.category}`);
+  check('contract', AXES.includes(ind.axis), `${ind.id} axis 非法: ${ind.axis}`);
   check('contract', STATUSES.includes(ind.status), `${ind.id} status 非法: ${ind.status}`);
   for (const field of ['name_en', 'name_zh', 'value_display', 'note', 'threshold_text', 'source_name']) {
     check('contract', typeof ind[field] === 'string' && ind[field].length > 0, `${ind.id} 缺 ${field}`);
   }
   check('contract', typeof ind.stale === 'boolean', `${ind.id} stale 非 boolean`);
+  check('contract', /^\d{4}-\d{2}-\d{2}$/u.test(ind.as_of || ''), `${ind.id} as_of 缺失/异常`);
   check('contract', ['auto', 'curated', 'auto_fallback'].includes(ind.provenance?.mode), `${ind.id} provenance.mode 非法`);
 }
 check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === EXPECTED_IDS.length,
@@ -136,6 +141,51 @@ check('contract', s.primary_score_pct === s.red_pct, `primary_score_pct ${s.prim
 check('contract', s.primary_score_basis === 'red_light_ratio', `primary_score_basis 异常: ${s.primary_score_basis}`);
 check('contract', Math.abs(s.red_pct - (red / EXPECTED_IDS.length) * 100) < 0.06, `red_pct ${s.red_pct} 复算不符`);
 check('contract', Math.abs(s.weighted_risk_score - ((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100) < 0.06, `weighted_risk_score ${s.weighted_risk_score} 复算不符`);
+function replayAxisScore(axis) {
+  const items = (data.indicators || []).filter((item) => item.axis === axis);
+  return Number((items.reduce((sum, item) => sum + STATUS_SCORE[item.status], 0) / items.length).toFixed(1));
+}
+function replayAxisLabel(axis, score) {
+  if (axis === 'stage') {
+    if (score < 30) return ['早期 Displacement', 'Displacement'];
+    if (score < 50) return ['扩张 Boom', 'Boom'];
+    if (score < 70) return ['亢奋 Euphoria', 'Euphoria'];
+    return ['极端 Mania', 'Mania'];
+  }
+  if (score < 25) return ['引线未燃', 'Fuse Unlit'];
+  if (score < 45) return ['零星火花', 'Sparks'];
+  if (score < 65) return ['引线点燃', 'Fuse Lit'];
+  return ['破裂进行中', 'Unwinding'];
+}
+const replayStage = replayAxisScore('stage');
+const replayTrigger = replayAxisScore('trigger');
+const [stageLabelZh, stageLabelEn] = replayAxisLabel('stage', replayStage);
+const [triggerLabelZh, triggerLabelEn] = replayAxisLabel('trigger', replayTrigger);
+check('contract', Math.abs(s.stage_score - replayStage) < 0.06, `stage_score ${s.stage_score} 复算不符 ${replayStage}`);
+check('contract', Math.abs(s.trigger_score - replayTrigger) < 0.06, `trigger_score ${s.trigger_score} 复算不符 ${replayTrigger}`);
+check('contract', s.stage_label === stageLabelZh && s.stage_label_en === stageLabelEn, 'stage label 与区间不符');
+check('contract', s.trigger_label === triggerLabelZh && s.trigger_label_en === triggerLabelEn, 'trigger label 与区间不符');
+for (const category of CATEGORIES) {
+  const items = (data.indicators || []).filter((item) => item.category === category);
+  const replay = Number((items.reduce((sum, item) => sum + STATUS_SCORE[item.status], 0) / items.length).toFixed(1));
+  check('contract', Math.abs(s.category_scores?.[category] - replay) < 0.06, `category_scores.${category} 复算不符`);
+}
+const previousComparable = [...(history.entries || [])].reverse().find((entry) => entry.date !== data.as_of_date && entry.statuses);
+let replayDeteriorated = 0;
+let replayImproved = 0;
+for (const item of data.indicators || []) {
+  const previous = previousComparable?.statuses?.[item.id];
+  if (!previous || previous === item.status) continue;
+  const delta = STATUSES.indexOf(previous) - STATUSES.indexOf(item.status);
+  if (delta > 0) replayDeteriorated += delta;
+  else replayImproved -= delta;
+}
+check('contract', s.momentum?.deteriorated === replayDeteriorated && s.momentum?.improved === replayImproved && s.momentum?.net === replayDeteriorated - replayImproved,
+  'summary.momentum 与历史状态迁移不符');
+check('contract', Array.isArray(s.similarity) && s.similarity.length === 4, 'summary.similarity 必须含 4 个历史时点');
+check('contract', new Set((s.similarity || []).map((item) => item.period)).size === 4
+  && (s.similarity || []).every((item) => Number.isInteger(item.match_pct) && item.match_pct >= 0 && item.match_pct <= 100),
+  'summary.similarity period/match_pct 非法');
 const verdictDescBytes = Buffer.byteLength(String(s.verdict_desc || ''), 'utf8');
 check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >= 650, 'verdict_desc 过短/缺失研究员式判读');
 check('contract', verdictDescBytes >= 900 && verdictDescBytes <= 2600, `verdict_desc 字节数 ${verdictDescBytes} 不在 900-2600 预算内`);
@@ -180,8 +230,8 @@ for (const [index, item] of (data.wow_changes || []).entries()) {
 
 const technicalHeat = data.market_technical_heat || {};
 check('contract', technicalHeat.contractVersion === 'bubble-watch-market-technical-heat-v1', 'market_technical_heat contractVersion 缺失/异常');
-check('contract', String(technicalHeat.boundary || '').includes('display-only') && String(technicalHeat.boundary || '').includes('excluded from 24-indicator'),
-  'market_technical_heat 必须声明 display-only 且排除 24 项主分');
+check('contract', String(technicalHeat.boundary || '').includes('display-only') && String(technicalHeat.boundary || '').includes('excluded from 27-indicator'),
+  'market_technical_heat 必须声明 display-only 且排除 27 项主分');
 check('contract', ['red', 'yellow', 'green', 'unavailable'].includes(technicalHeat.status), `market_technical_heat.status 非法:${technicalHeat.status}`);
 check('contract', typeof technicalHeat.summary === 'string' && technicalHeat.summary.length >= 40, 'market_technical_heat.summary 缺失/过短');
 check('contract', Array.isArray(technicalHeat.source_priority) && technicalHeat.source_priority.length >= 3, 'market_technical_heat.source_priority 不足');
@@ -242,6 +292,9 @@ for (const id of HYBRID_LIVE_IDS) {
 for (const id of HYBRID_PAID_OPTIONAL_IDS) {
   check('contract', candidateEntries[id]?.automationStatus === 'hybrid_paid_optional', `${id} 必须保持 hybrid_paid_optional`);
   check('contract', Array.isArray(candidateEntries[id]?.paidSourceCandidates) && candidateEntries[id].paidSourceCandidates.length >= 1, `${id} 缺 paidSourceCandidates`);
+}
+for (const id of CANDIDATE_ONLY_IDS) {
+  check('contract', candidateEntries[id]?.automationStatus === 'candidate_only', `${id} 必须保持 candidate_only,由现有上游周报同步 + curated STALE 链更新`);
 }
 check('contract', buildSrc.includes('SOURCE_CANDIDATES_PATH') && buildSrc.includes('hybridCuratedBuilders'), 'build 须读取 source-candidates 并保留 hybrid curated builders');
 for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
@@ -365,11 +418,21 @@ const resonant = CATEGORIES.filter((cat) => {
 const tierRank = { observation: 0, caution: 1, alert: 2, top: 3 };
 let effTier = baseTier;
 if (resonant.length >= 2 && tierRank[effTier] < tierRank.alert) effTier = 'alert';
+const twoAxisTarget = replayStage >= 60 && replayTrigger >= 65
+  ? 'top'
+  : replayStage >= 60 && replayTrigger >= 50
+    ? 'alert'
+    : null;
+const twoAxisUpgrade = twoAxisTarget && tierRank[twoAxisTarget] > tierRank[effTier] ? twoAxisTarget : null;
+if (twoAxisUpgrade) effTier = twoAxisUpgrade;
 check('scoring', s.verdict_label === TIER_LABEL_ZH[effTier], `verdict_label「${s.verdict_label}」≠ replay「${TIER_LABEL_ZH[effTier]}」`);
 check('scoring', s.verdict_label_en === TIER_LABEL_EN[effTier], `verdict_label_en「${s.verdict_label_en}」≠ replay`);
 check('scoring', data.scoring?.base_tier === baseTier, `scoring.base_tier ${data.scoring?.base_tier} ≠ replay ${baseTier}`);
 check('scoring', data.scoring?.effective_tier === effTier, `scoring.effective_tier ${data.scoring?.effective_tier} ≠ replay ${effTier}`);
 check('scoring', data.scoring?.override_active === (effTier !== baseTier), 'scoring.override_active 与 replay 不符');
+check('scoring', data.scoring?.two_axis_upgrade === twoAxisUpgrade, 'scoring.two_axis_upgrade 与 replay 不符');
+check('scoring', typeof data.scoring?.override_rules?.two_axis_alert === 'string' && typeof data.scoring?.override_rules?.two_axis_top === 'string',
+  'scoring.override_rules 缺两轴升级规则');
 
 // ---- 3. freshness ----
 const ageDays = Math.round((Date.now() - new Date(`${data.as_of_date}T00:00:00Z`).getTime()) / 86400000);
@@ -398,10 +461,14 @@ check('boundary', !indexHtml.includes('bubble-watch.json'), 'index.html 不得 f
 check('boundary', indexHtml.includes('class="page-bookmarks"') && indexHtml.includes('href="bubble-watch.html"'), 'index.html 缺页面切换书签组件');
 check('boundary', pageHtml.includes('class="page-bookmarks"') && pageHtml.includes('href="index.html"'), 'bubble-watch.html 缺页面切换书签组件');
 check('boundary', pageHtml.includes('data/bubble-watch.json'), 'bubble-watch.html 未读 data/bubble-watch.json');
+check('boundary', pageHtml.includes('两轴判读') && pageHtml.includes('Stage × Trigger') && pageHtml.includes('s.stage_score') && pageHtml.includes('s.trigger_score'),
+  'bubble-watch.html 缺 Stage × Trigger 两轴判读');
+check('boundary', !pageHtml.includes('Threshold Scale') && !pageHtml.includes('触发阈值标尺'),
+  'bubble-watch.html 仍残留已移除的单轴阈值标尺');
 check('boundary', pageHtml.includes('id="market-technical-heat"') && pageHtml.includes('renderMarketTechnicalHeat'), 'bubble-watch.html 缺公开市场技术热度审计面板渲染');
 check('boundary', !pageHtml.includes('WEIGHTED RISK SCORE'), 'bubble-watch.html 不得把 weighted_risk_score 标成页面主风险分');
 check('boundary', pageHtml.includes('PRIMARY SCORE:'), 'bubble-watch.html 必须显式标注主分数口径');
-check('public-copy', !/Yellow-adjusted aux|数据管线|实时接入|人工研究口径|分类升级 →|不计入 24 项主分|不改变 24 项红灯比例|不参与平台的风险打分与决策/u.test(pageHtml),
+check('public-copy', !/Yellow-adjusted aux|数据管线|实时接入|人工研究口径|分类升级 →|不计入 27 项主分|不改变 27 项红灯比例|不参与平台的风险打分与决策/u.test(pageHtml),
   'bubble-watch.html 可见模板残留工程语言');
 check('boundary', !buildSrc.includes('radar-data.json') && !buildSrc.includes("'realtime"), 'build 脚本不得触碰 radar-data / realtime');
 check('boundary', !/scoring\s*[:=].*decisionModel|executionLock|positionGuidance/u.test(buildSrc), 'build 脚本出现决策链字段');

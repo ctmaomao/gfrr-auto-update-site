@@ -32,6 +32,10 @@ const EXPECTED_PAID_FALLBACK_IDS = [
   'capex_reaction',
   'ceo_hedging'
 ];
+const sourceCandidates = JSON.parse(fs.readFileSync(relPath('config/bubble-watch-source-candidates.json'), 'utf8'));
+const EXPECTED_CANDIDATE_ONLY_IDS = new Set(Object.entries(sourceCandidates.indicators || {})
+  .filter(([, candidate]) => candidate?.automationStatus === 'candidate_only')
+  .map(([id]) => id));
 
 function relPath(p) {
   return path.join(ROOT, p);
@@ -79,6 +83,12 @@ function isExpectedPaidSkip(row) {
     /WIND_API_KEY|Wind/i.test(String(row.provenance?.reason || ''));
 }
 
+function isExpectedCandidateOnly(row) {
+  return EXPECTED_CANDIDATE_ONLY_IDS.has(row.id) &&
+    row.provenance?.mode === 'curated' &&
+    row.stale !== true;
+}
+
 function sourceWarningLines(text) {
   return String(text || '')
     .split(/\r?\n/u)
@@ -102,7 +112,8 @@ function buildReport(data, buildResult, checkResult) {
   }));
   const fallbackRows = indicators.filter((row) => row.provenance?.mode !== 'auto' || row.stale === true);
   const expectedPaidSkips = fallbackRows.filter(isExpectedPaidSkip);
-  const unexpectedFallbackRows = fallbackRows.filter((row) => !isExpectedPaidSkip(row));
+  const expectedCandidateOnly = fallbackRows.filter(isExpectedCandidateOnly);
+  const unexpectedFallbackRows = fallbackRows.filter((row) => !isExpectedPaidSkip(row) && !isExpectedCandidateOnly(row));
   const fetchFailures = Array.isArray(data.meta?.fetch_failures) ? data.meta.fetch_failures : [];
   const unexpectedFetchFailures = fetchFailures.filter((failure) => {
     return !expectedPaidSkips.some((row) => row.id === failure.id);
@@ -124,7 +135,8 @@ function buildReport(data, buildResult, checkResult) {
       readOnly: true,
       productionFilesRestored: true,
       windDisabledByDefault: !allowPaidWind,
-      paidFallbackSkipAllowed: !allowPaidWind ? EXPECTED_PAID_FALLBACK_IDS : []
+      paidFallbackSkipAllowed: !allowPaidWind ? EXPECTED_PAID_FALLBACK_IDS : [],
+      candidateOnlyAllowed: [...EXPECTED_CANDIDATE_ONLY_IDS]
     },
     buildExitCode: buildResult.code,
     checkExitCode: checkResult.code,
@@ -143,6 +155,11 @@ function buildReport(data, buildResult, checkResult) {
     expectedPaidSkips: expectedPaidSkips.map((row) => ({
       id: row.id,
       reason: row.provenance?.reason || null,
+      status: row.status,
+      value_display: row.value_display
+    })),
+    expectedCandidateOnly: expectedCandidateOnly.map((row) => ({
+      id: row.id,
       status: row.status,
       value_display: row.value_display
     })),
@@ -176,6 +193,11 @@ function markdownReport(report) {
   if (report.expectedPaidSkips.length) {
     lines.push('Expected paid-fallback skips:');
     for (const row of report.expectedPaidSkips) lines.push(`- \`${row.id}\`: ${row.reason}`);
+    lines.push('');
+  }
+  if (report.expectedCandidateOnly.length) {
+    lines.push('Expected candidate-only curated rows:');
+    for (const row of report.expectedCandidateOnly) lines.push(`- \`${row.id}\`: ${row.status} ${row.value_display}`);
     lines.push('');
   }
   if (report.unexpectedFallbackRows.length) {
