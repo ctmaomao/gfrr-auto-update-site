@@ -58,6 +58,7 @@ const GDELT_BUBBLE_CACHE_SCHEMA_VERSION = 'gdelt-bubble-watch-cache-p38';
 const GDELT_BUBBLE_CACHE_MODULE = 'gdelt-bubble-watch-cache';
 const GDELT_BUBBLE_CACHE_TTL_HOURS = 132;
 const GDELT_BUBBLE_STALE_MAX_DAYS = 21;
+const XOOMAR_INSIDER_MAX_AGE_HOURS = 48;
 const GDELT_BUBBLE_CACHE_BOUNDARY = 'production read-only GDELT compact news cache for Bubble Watch ceo_hedging; display-only/audit-only cache; NOT in GFRR values, scoring, decision, execution, position, ODP finalBias, Brent promotion, Global Risk Heatmap, or cross-validation';
 const PROXY_CONFIDENCE_CALIBRATION_IDS = new Set([
   'insider_sell_buy',
@@ -538,14 +539,83 @@ async function fetchSecForm4InsiderTotals(symbol, cik) {
   return { buy, sell, filingCount: filings.length, transactionCount };
 }
 
+async function fetchXoomarForm4InsiderTotals(symbol) {
+  const json = await fetchWithTimeout(`https://xoomar.com/api/markets/insiders/${encodeURIComponent(symbol)}`, {
+    asJson: true,
+    headers: { 'User-Agent': UA, Accept: 'application/json' }
+  });
+  const payload = json?.data;
+  const rows = payload?.transactions;
+  if (String(payload?.ticker || '').toUpperCase() !== symbol || !Array.isArray(rows)) {
+    throw new Error(`Xoomar Form 4 ${symbol} schema changed`);
+  }
+  const updatedAtMs = Date.parse(json?.updatedAt || '');
+  const ageHours = (Date.now() - updatedAtMs) / 3600000;
+  if (!Number.isFinite(updatedAtMs) || ageHours < -1 || ageHours > XOOMAR_INSIDER_MAX_AGE_HOURS) {
+    throw new Error(`Xoomar Form 4 ${symbol} updatedAt stale/invalid`);
+  }
+  const cutoff = Date.now() - 365 * 86400000;
+  let buy = 0;
+  let sell = 0;
+  let transactionCount = 0;
+  let coverageStart = null;
+  for (const row of rows) {
+    const txDate = String(row?.txDate || '');
+    const txDateMs = Date.parse(`${txDate}T00:00:00Z`);
+    const code = String(row?.txCode || '').toUpperCase();
+    const amount = Number(row?.valueUsd);
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(txDate) || !Number.isFinite(txDateMs) || txDateMs < cutoff || row?.isOpenMarket !== true) continue;
+    if (code !== 'P' && code !== 'S') continue;
+    if (!(amount > 0)) continue;
+    if (code === 'P') buy += amount;
+    else sell += amount;
+    transactionCount += 1;
+    if (!coverageStart || txDate < coverageStart) coverageStart = txDate;
+  }
+  if (buy === 0 && sell === 0) throw new Error(`Xoomar Form 4 ${symbol} 近 12 个月未解析到 P/S 交易`);
+  return {
+    buy,
+    sell,
+    filingCount: null,
+    transactionCount,
+    updatedAt: json.updatedAt,
+    coverageStart,
+    recordCount: rows.length,
+    recordLimitReached: rows.length >= 200
+  };
+}
+
+let insiderSecBlockedReason = null;
+
 async function fetchInsiderTotals(symbol) {
   const cik = EDGAR_CIK[symbol];
   if (!cik) throw new Error(`SEC Form 4 CIK missing for ${symbol}`);
-  const totals = await fetchSecForm4InsiderTotals(symbol, cik);
+  if (!insiderSecBlockedReason) {
+    try {
+      const totals = await fetchSecForm4InsiderTotals(symbol, cik);
+      return {
+        ...totals,
+        source: 'SEC EDGAR Form 4 ownership XML',
+        sourceMode: 'sec_form4_primary'
+      };
+    } catch (error) {
+      if (/HTTP 403/iu.test(error.message)) insiderSecBlockedReason = error.message;
+      console.warn(`[bubble-watch] SEC Form 4 ${symbol} 失败,改走 Xoomar HTTPS fallback: ${error.message}`);
+      const totals = await fetchXoomarForm4InsiderTotals(symbol);
+      return {
+        ...totals,
+        source: 'Xoomar public Form 4 HTTPS mirror',
+        sourceMode: 'xoomar_form4_fallback',
+        primaryFailure: error.message
+      };
+    }
+  }
+  const totals = await fetchXoomarForm4InsiderTotals(symbol);
   return {
     ...totals,
-    source: 'SEC EDGAR Form 4 ownership XML',
-    sourceMode: 'sec_form4_primary'
+    source: 'Xoomar public Form 4 HTTPS mirror',
+    sourceMode: 'xoomar_form4_fallback',
+    primaryFailure: 'SEC Form 4 skipped after prior HTTP 403 from shared runner egress'
   };
 }
 
@@ -1467,8 +1537,10 @@ const autoBuilders = {
     let buy = 0;
     let sell = 0;
     const sources = [];
+    const fallbackSymbols = [];
+    const primaryFailures = [];
     for (const symbol of basket) {
-      const totals = await retry(() => fetchInsiderTotals(symbol), `SEC Form 4 ${symbol}`);
+      const totals = await retry(() => fetchInsiderTotals(symbol), `SEC/Xoomar Form 4 ${symbol}`);
       buy += totals.buy;
       sell += totals.sell;
       sources.push({
@@ -1478,22 +1550,32 @@ const autoBuilders = {
         buyUsd: totals.buy,
         sellUsd: totals.sell,
         filingCount: totals.filingCount || null,
-        transactionCount: totals.transactionCount || null
+        transactionCount: totals.transactionCount || null,
+        updatedAt: totals.updatedAt || null,
+        coverageStart: totals.coverageStart || null,
+        recordCount: totals.recordCount || null,
+        recordLimitReached: totals.recordLimitReached === true
       });
+      if (totals.sourceMode === 'xoomar_form4_fallback') fallbackSymbols.push(symbol);
+      if (totals.primaryFailure) primaryFailures.push({ symbol, reason: totals.primaryFailure });
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
     const buyFloor = Math.max(buy, 1e6); // 买入不足 $1M 时按 $1M 下限计算,避免除零
     const ratio = sell / buyFloor;
     const status = ratio > 20 ? 'red' : ratio >= 5 ? 'yellow' : 'green';
     const display = ratio > 99 ? '≫20x' : `~${ratio.toFixed(0)}x`;
-    const sourceName = 'SEC EDGAR Form 4 ownership XML';
-    const sourceNote = 'SEC EDGAR Form 4 官方披露';
+    const sourceName = fallbackSymbols.length
+      ? 'SEC EDGAR Form 4 + Xoomar HTTPS fallback'
+      : 'SEC EDGAR Form 4 ownership XML';
+    const sourceNote = fallbackSymbols.length
+      ? `SEC EDGAR 不可达标的 ${fallbackSymbols.join('/')} 已改用 Xoomar public Form 4 HTTPS mirror`
+      : 'SEC EDGAR Form 4 官方披露';
     return {
       status,
       value_display: display,
       source_name: sourceName,
-      note: `${sourceNote} 实拉 ${basket.join(' / ')} 近 12 个月 Form 4:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
-      detail: { buyUsd: buy, sellUsd: sell, ratio, sources }
+      note: `${sourceNote} 显示 ${basket.join(' / ')} 近 12 个月范围内最新可得 Form 4:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
+      detail: { buyUsd: buy, sellUsd: sell, ratio, sources, fallbackSymbols, primaryFailures }
     };
   },
   async hy_oas() {

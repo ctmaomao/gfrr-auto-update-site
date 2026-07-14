@@ -249,6 +249,13 @@ for (const id of [...HYBRID_LIVE_IDS, ...HYBRID_PAID_OPTIONAL_IDS]) {
 }
 check('contract', buildSrc.includes('fetchInsiderTotals') && buildSrc.includes('SEC EDGAR Form 4 ownership XML'),
   'insider_sell_buy 必须使用 SEC Form 4 官方路径');
+check('contract', buildSrc.includes('fetchXoomarForm4InsiderTotals') &&
+  buildSrc.includes('https://xoomar.com/api/markets/insiders/') &&
+  buildSrc.includes("sourceMode: 'xoomar_form4_fallback'"),
+  'insider_sell_buy 必须保留 Xoomar HTTPS 独立实时备用路径');
+check('contract', buildSrc.includes('row?.isOpenMarket !== true') &&
+  buildSrc.includes("code !== 'P' && code !== 'S'"),
+  'insider_sell_buy Xoomar 备用只能统计 open-market P/S 交易');
 check('contract', !buildSrc.includes('http://openinsider.com') && !buildSrc.includes('fetchOpenInsiderTotals'),
   'insider_sell_buy 不得使用明文 HTTP OpenInsider 路径');
 check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.includes('fetchYearEndFedFundsFuture') && buildSrc.includes('fed_policy_path_v2'),
