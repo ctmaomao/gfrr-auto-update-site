@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-14T19:52:15.128Z",
+  "generatedAt": "2026-07-14T21:31:52.215Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-07-14T12:28:23.000Z",
-    "latestArticleAgeHours": 7.4,
+    "latestArticleAt": "2026-07-14T13:20:50.000Z",
+    "latestArticleAgeHours": 8.2,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 60,
+    "uniqueArticleCount": 62,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 50,
+      "articleCount": 53,
       "sourceCount": 2,
-      "weightedSignal": 300,
+      "weightedSignal": 318,
       "topArticles": [
         {
           "domain": "insurancejournal.com",
@@ -186,14 +186,11 @@
           ],
           "buckets": [
             "chokepoint",
-            "facility_event",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption"
+            "chokepoint_shipping"
           ]
         },
         {
@@ -230,10 +227,25 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 17,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 68,
+      "weightedSignal": 72,
       "topArticles": [
+        {
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-07-14T13:15:29.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "facility_event",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "sanctions_shadow_fleet"
+          ]
+        },
         {
           "domain": "cryptobriefing.com",
           "publishedAt": "2026-07-14T08:57:20.000Z",
@@ -266,21 +278,6 @@
           "queryIds": [
             "sanctions_shadow_fleet"
           ]
-        },
-        {
-          "domain": "marinelink.com",
-          "publishedAt": "2026-07-08T12:40:27.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "facility_event",
-            "sanctions",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "sanctions_shadow_fleet"
-          ]
         }
       ]
     },
@@ -290,24 +287,6 @@
       "sourceCount": 2,
       "weightedSignal": 138,
       "topArticles": [
-        {
-          "domain": "insurancejournal.com",
-          "publishedAt": "2026-07-14T12:28:23.000Z",
-          "sources": [
-            "tavily"
-          ],
-          "buckets": [
-            "chokepoint",
-            "facility_event",
-            "middle_east_risk",
-            "supply_disruption",
-            "tanker_shipping"
-          ],
-          "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption"
-          ]
-        },
         {
           "domain": "reuters.com",
           "publishedAt": "2026-07-14T14:09:28.000Z",
@@ -341,18 +320,10 @@
           "queryIds": [
             "sanctions_shadow_fleet"
           ]
-        }
-      ]
-    },
-    "facility_event": {
-      "labelZh": "设施事件",
-      "articleCount": 28,
-      "sourceCount": 2,
-      "weightedSignal": 112,
-      "topArticles": [
+        },
         {
           "domain": "insurancejournal.com",
-          "publishedAt": "2026-07-14T12:28:23.000Z",
+          "publishedAt": "2026-07-14T13:20:50.000Z",
           "sources": [
             "tavily"
           ],
@@ -364,10 +335,17 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping",
             "facility_supply_disruption"
           ]
-        },
+        }
+      ]
+    },
+    "facility_event": {
+      "labelZh": "设施事件",
+      "articleCount": 27,
+      "sourceCount": 2,
+      "weightedSignal": 108,
+      "topArticles": [
         {
           "domain": "maritime-executive.com",
           "publishedAt": "2026-07-14T15:55:54.000Z",
@@ -382,6 +360,21 @@
           ],
           "queryIds": [
             "chokepoint_shipping"
+          ]
+        },
+        {
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-07-14T13:15:29.000Z",
+          "sources": [
+            "tavily"
+          ],
+          "buckets": [
+            "facility_event",
+            "sanctions",
+            "tanker_shipping"
+          ],
+          "queryIds": [
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -403,9 +396,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 44,
+      "articleCount": 45,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 135,
       "topArticles": [
         {
           "domain": "insurancejournal.com",
@@ -415,14 +408,11 @@
           ],
           "buckets": [
             "chokepoint",
-            "facility_event",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption"
+            "chokepoint_shipping"
           ]
         },
         {
@@ -459,9 +449,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 49,
+      "articleCount": 52,
       "sourceCount": 2,
-      "weightedSignal": 147,
+      "weightedSignal": 156,
       "topArticles": [
         {
           "domain": "insurancejournal.com",
@@ -471,14 +461,11 @@
           ],
           "buckets": [
             "chokepoint",
-            "facility_event",
             "middle_east_risk",
-            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping",
-            "facility_supply_disruption"
+            "chokepoint_shipping"
           ]
         },
         {
@@ -515,9 +502,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 31,
+      "articleCount": 33,
       "sourceCount": 2,
-      "weightedSignal": 62,
+      "weightedSignal": 66,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -642,26 +629,7 @@
         "tanker_shipping"
       ],
       "queryIds": [
-        "market_reaction",
         "sanctions_shadow_fleet"
-      ]
-    },
-    {
-      "domain": "npr.org",
-      "publishedAt": "2026-07-13T16:53:40.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
       ]
     },
     {
@@ -702,7 +670,7 @@
     },
     {
       "domain": "insurancejournal.com",
-      "publishedAt": "2026-07-14T12:28:23.000Z",
+      "publishedAt": "2026-07-14T13:20:50.000Z",
       "sources": [
         "tavily"
       ],
@@ -714,7 +682,23 @@
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping",
+        "facility_supply_disruption"
+      ]
+    },
+    {
+      "domain": "insurancejournal.com",
+      "publishedAt": "2026-07-08T12:29:45.000Z",
+      "sources": [
+        "tavily"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
         "facility_supply_disruption"
       ]
     },
@@ -736,40 +720,6 @@
       ]
     },
     {
-      "domain": "reuters.com",
-      "publishedAt": "2026-07-08T09:45:59.000Z",
-      "sources": [
-        "tavily"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "facility_supply_disruption"
-      ]
-    },
-    {
-      "domain": "eurasiareview.com",
-      "publishedAt": "2026-07-13T15:49:34.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping"
-      ]
-    },
-    {
       "domain": "energyandcleanair.org",
       "publishedAt": "2026-07-10T09:45:29.000Z",
       "sources": [
@@ -786,19 +736,53 @@
       "queryIds": [
         "sanctions_shadow_fleet"
       ]
+    },
+    {
+      "domain": "thenationalnews.com",
+      "publishedAt": "2026-07-13T03:00:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
+      ]
+    },
+    {
+      "domain": "cnbc.com",
+      "publishedAt": "2026-07-14T02:37:12.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
     "highClaimTitleCount": 6,
-    "highClaimDomainCount": 6,
+    "highClaimDomainCount": 5,
     "highClaimDomains": [
       "cnbc.com",
       "cnn.com",
+      "insurancejournal.com",
       "marinelink.com",
-      "npr.org",
-      "reuters.com",
       "thenationalnews.com"
     ],
     "highClaimTerms": [
@@ -806,7 +790,7 @@
       "blockade",
       "disruption",
       "strike",
-      "strikes"
+      "war"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 transient 新闻标题中包含封锁、战争、袭击、中断等高主张措辞;标题只用于构造聚合风险闸门,不得写入生产 JSON 或直接展示成事实确认。"
@@ -822,24 +806,24 @@
     "evaluatedArticleCount": 12,
     "claimCount": 12,
     "polarityCounts": {
-      "risk_escalation": 7,
+      "risk_escalation": 8,
       "risk_deescalation": 1,
       "mixed_or_contested": 0,
       "market_reaction_only": 3,
-      "unclear_or_high_claim": 1
+      "unclear_or_high_claim": 0
     },
     "eventTypeCounts": {
-      "chokepoint": 7,
+      "chokepoint": 6,
       "shipping": 3,
       "sanctions": 0,
-      "facility": 0,
+      "facility": 1,
       "supply": 2,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
-      "primary_wire_or_official": 1,
-      "major_financial_media": 1,
+      "primary_wire_or_official": 0,
+      "major_financial_media": 2,
       "industry_trade": 3,
       "aggregator_or_blog": 7,
       "low_confidence": 0
@@ -852,7 +836,7 @@
       "details": [
         {
           "eventType": "chokepoint",
-          "claimCount": 7,
+          "claimCount": 6,
           "riskEscalation": 3,
           "riskDeescalation": 1,
           "mixedOrContested": 0,
@@ -862,6 +846,14 @@
           "eventType": "shipping",
           "claimCount": 3,
           "riskEscalation": 2,
+          "riskDeescalation": 0,
+          "mixedOrContested": 0,
+          "contradiction": false
+        },
+        {
+          "eventType": "facility",
+          "claimCount": 1,
+          "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
@@ -883,14 +875,14 @@
       "stableDirectionalAxisCount": 1,
       "axes": {
         "transport_security": {
-          "claimCount": 10,
-          "sourceDomainCount": 9,
+          "claimCount": 9,
+          "sourceDomainCount": 6,
           "polarityCounts": {
             "risk_escalation": 5,
             "risk_deescalation": 1,
             "mixed_or_contested": 0,
             "market_reaction_only": 3,
-            "unclear_or_high_claim": 1
+            "unclear_or_high_claim": 0
           },
           "state": "mixed_or_contested",
           "gateOpen": false
@@ -922,16 +914,16 @@
           "gateOpen": false
         },
         "facility_operations": {
-          "claimCount": 0,
-          "sourceDomainCount": 0,
+          "claimCount": 1,
+          "sourceDomainCount": 1,
           "polarityCounts": {
-            "risk_escalation": 0,
+            "risk_escalation": 1,
             "risk_deescalation": 0,
             "mixed_or_contested": 0,
             "market_reaction_only": 0,
             "unclear_or_high_claim": 0
           },
-          "state": "insufficient_directional_claims",
+          "state": "risk_escalation_unconfirmed",
           "gateOpen": false
         },
         "market_reaction": {
@@ -997,7 +989,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-14T19:52:15.128Z",
+      "generatedAt": "2026-07-14T21:31:52.215Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
