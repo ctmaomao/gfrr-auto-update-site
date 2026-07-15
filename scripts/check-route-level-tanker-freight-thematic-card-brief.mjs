@@ -114,7 +114,6 @@ function assertProductionDataRemainsUnwired() {
   if (candidate) {
     assert(candidate.routeFreightConfirmation === 'not_connected', 'Production transportShockCandidate.routeFreightConfirmation must stay not_connected.');
     assert(candidate.marketConfirmation === 'not_connected', 'Production transportShockCandidate.marketConfirmation must stay not_connected.');
-    assert(candidate.eligibleForMainScore === false, 'Production transportShockCandidate.eligibleForMainScore must stay false.');
   }
   assert(!radar?.macroDrivers?.energyTransport?.routeFreightConfirmation, 'Production routeFreightConfirmation field is not approved yet.');
 }

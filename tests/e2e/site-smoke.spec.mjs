@@ -22,6 +22,22 @@ test.describe('desktop smoke', () => {
 
   test('homepage renders the current data snapshot', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
+    await page.route('**/data/radar-data.json', async (route) => {
+      const response = await route.fetch();
+      const radarData = await response.json();
+      const currentTimestamp = new Date().toISOString();
+      radarData.externalAiInterpretationLayer = {
+        ...radarData.externalAiInterpretationLayer,
+        generatedAt: currentTimestamp,
+        freshness: {
+          ...radarData.externalAiInterpretationLayer?.freshness,
+          artifactGeneratedAt: currentTimestamp,
+          sourceDataUpdatedAt: currentTimestamp,
+          isStale: false,
+        },
+      };
+      await route.fulfill({ response, json: radarData });
+    });
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#issue-meta-issue')).toContainText('ISSUE v28.0.10');

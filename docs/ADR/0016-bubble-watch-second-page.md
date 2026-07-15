@@ -21,3 +21,10 @@ Owner 提供了外部静态页「AI 泡沫监测 · The Bubble Watch」(23 项�
 - Pages 部署清单与 push paths 登记 `Refresh Bubble Watch` / `bubble-watch.html`。
 - SEC EDGAR 为新数据源(美国政府公共领域,UA 需携带联系方式);**实测 EDGAR 对数据中心 IP(含 GitHub runner)整段 403**,故 capex/FCF/NVDA 收入三项配 stockanalysis 季报镜像二级源(EDGAR → 镜像 → curated 三级 fail-closed),Cloud RPO 无镜像、EDGAR 不可达时落 curated。
 - 编辑类 11 项的更新动作 = 改 `config/bubble-watch-curated.json`(value/status/note/asOfDate)后触发 workflow;超期未更新由 STALE 角标显式暴露,与原版「沿用旧口径」机制同构。
+
+## 2026-07-14 Amendment — Stage × Trigger
+
+- 参考页 2026-07-06/07 前端升级已同步:旧「触发阈值标尺」移除,改为 Stage(泡沫成熟度)× Trigger(破裂临近度)双轴,并显示历史相似度、周度动量与单卡 `as_of` /「沿用」。趋势图继续复用本站零依赖 SVG,不引入 Chart.js。
+- 本站保留原有 24 卡并追加参考页新增而本站缺失的 `private_secondary_marks`、`gpu_rental_price`、`frontier_progress`,合计 27 卡。三张新卡均复用既有上游周报同步 + curated/maxAgeDays STALE 路径;源候选为 `candidate_only`,不新增直接抓取器。
+- 主分仍为 `red_pct`;两轴为第二层结构判读。分类共振规则保留,并增加参考规则的两轴升级门槛(stage ≥60 + trigger ≥50/65)。公开市场技术热度子面板继续排除在 27 卡主分之外。
+- `mag4_fcf_yoy` 仍是本站本地权威 Big5 realized TTM capex/OCF 槽,继续受上游同步 blocklist 保护;本 amendment 不恢复参考页的前瞻 FCF 编辑口径。

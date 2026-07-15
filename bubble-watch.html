@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="AI 泡沫监测 - 24 项领先指标周度评级 / The Bubble Watch - weekly AI bubble indicator briefing">
+<meta name="description" content="AI 泡沫监测：多维领先指标体系，两轴判读泡沫成熟度与破裂临近度，每周一更新。">
 <title>AI 泡沫监测 · The Bubble Watch</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -13,9 +13,12 @@
     --ink: #1A1815;
     --red: #7C1D1D;
     --yellow: #A8761A;
+    --orange: #C25E2A;
     --green: #1F4D2C;
     --muted: #666;
     --warm: #3A3530;
+    --canvas: #E8E0D0;
+    --soft-line: #999;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -61,33 +64,35 @@
   .verdict p em { font-style: italic; }
   .verdict .footnote { margin-top: 24px; border-top: 1px solid var(--ink); padding-top: 16px; font-family: "IBM Plex Mono", monospace; font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 
-  /* Threshold scale */
-  section.threshold { margin-bottom: 48px; padding: 4px 0; }
-  .threshold-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
-  .threshold-header h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: 22px; font-weight: 700; margin: 0; }
-  .threshold-header h3 em { font-style: italic; font-weight: 400; font-size: 0.7em; }
-  .threshold-header .now { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
-  .threshold-bar-wrap { position: relative; padding-top: 28px; }
-  .threshold-bar { position: relative; height: 64px; border: 1px solid var(--ink); display: flex; overflow: visible; }
-  .threshold-bar .zone { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 6px 4px; text-align: center; color: #FBF7F0; gap: 3px; min-width: 0; }
-  .threshold-bar .zone.t-green  { background: #1F4D2C; }
-  .threshold-bar .zone.t-yellow { background: #A8761A; }
-  .threshold-bar .zone.t-orange { background: #C25E2A; }
-  .threshold-bar .zone.t-red    { background: #7C1D1D; }
-  .threshold-bar .zone-label { font-family: "Noto Serif SC", serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.1; }
-  .threshold-bar .zone-pct { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.08em; opacity: 0.9; }
-  .threshold-bar .marker { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--ink); transform: translateX(-50%); z-index: 2; }
-  .threshold-bar .marker::after { content: ""; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--ink); }
-  .threshold-bar .marker .marker-label { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 10px; background: var(--ink); color: var(--bg); padding: 3px 7px; white-space: nowrap; letter-spacing: 0.05em; font-weight: 600; }
-  /* Override marker — 分类强制升级把判读推高于原始 red% 档位时出现 */
-  .threshold-bar .marker.override { background: #C25E2A; }
-  .threshold-bar .marker.override::after { bottom: auto; top: -6px; border-top: none; border-bottom: 8px solid #C25E2A; }
-  .threshold-bar .marker.override .marker-label { top: auto; bottom: -24px; background: #C25E2A; }
-  .threshold-bar-wrap.has-override { padding-bottom: 28px; }
-  @media (max-width: 600px) {
-    .threshold-bar .zone-label { font-size: 11px; }
-    .threshold-bar .zone-pct { font-size: 9px; }
-  }
+  /* Two-axis read (stage x trigger) */
+  section.axes { margin-bottom: 48px; border: 1px solid var(--ink); padding: 20px; }
+  .axes-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .axes-header h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: 22px; font-weight: 700; margin: 0; }
+  .axes-header h3 em { font-style: italic; font-weight: 400; font-size: 0.7em; }
+  .axes-header .now { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+  .axes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 720px) { .axes-grid { grid-template-columns: 1fr; } }
+  .axis-label { display: flex; justify-content: space-between; align-items: baseline; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 8px; gap: 8px; flex-wrap: wrap; }
+  .axis-label .axis-score { font-weight: 600; color: var(--ink); letter-spacing: 0.05em; }
+  .axis-bar { position: relative; height: 40px; border: 1px solid var(--ink); display: flex; }
+  .axis-bar .zone { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; color: var(--bg); min-width: 0; padding: 2px; text-align: center; }
+  .axis-bar .zone.t-green { background: var(--green); }
+  .axis-bar .zone.t-yellow { background: var(--yellow); }
+  .axis-bar .zone.t-orange { background: var(--orange); }
+  .axis-bar .zone.t-red { background: var(--red); }
+  .axis-bar .zone-label { font-size: 11px; font-weight: 700; line-height: 1.1; font-family: "Noto Serif SC", serif; }
+  .axis-bar .zone-pct { font-family: "IBM Plex Mono", monospace; font-size: 9px; opacity: 0.85; }
+  .axis-bar .marker { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--ink); transform: translateX(-50%); }
+  .axis-bar .marker::after { content: ""; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid var(--ink); }
+  .axis-desc { margin-top: 8px; font-family: "Noto Serif SC", serif; font-size: 12px; color: var(--warm); font-style: italic; line-height: 1.5; }
+  .similarity-row { margin-top: 18px; border-top: 1px dashed var(--soft-line); padding-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+  .similarity-row .sim-label { letter-spacing: 0.15em; color: var(--muted); margin-right: 4px; }
+  .sim-chip { border: 1px solid var(--ink); padding: 3px 8px; }
+  .sim-chip b { font-weight: 700; }
+  .sim-chip.top { background: var(--ink); color: var(--bg); }
+  .momentum-row { margin-top: 10px; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--warm); }
+  .momentum-row .worse { color: var(--red); }
+  .momentum-row .better { color: var(--green); }
 
   /* Trend */
   section.trend { margin-bottom: 48px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 24px 0; }
@@ -118,15 +123,18 @@
   article.indicator .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 4px; }
   article.indicator .name-en { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); }
   article.indicator .name-zh { font-family: "Noto Serif SC", serif; font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .score-role { display: inline-block; margin-top: 7px; padding: 2px 6px; border: 1px solid var(--ink); font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--ink); }
+  .score-role.shadow { border-style: dashed; color: var(--muted); border-color: var(--soft-line); }
   .badge { font-family: "IBM Plex Mono", monospace; font-size: 10px; padding: 4px 8px; letter-spacing: 0.1em; font-weight: 600; white-space: nowrap; color: var(--bg); }
   .badge.red { background: var(--red); }
   .badge.yellow { background: var(--yellow); }
   .badge.green { background: var(--green); }
   article.indicator .number { font-family: "Playfair Display", serif; font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
   article.indicator .number .unit { font-size: 0.5em; font-weight: 400; margin-left: 2px; }
-  article.indicator .note { font-family: "Noto Serif SC", serif; font-size: 13px; color: var(--warm); line-height: 1.55; font-style: italic; }
-  article.indicator .meta { border-top: 1px dashed #999; padding-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+  article.indicator .note { font-family: "Noto Serif SC", serif; font-size: 13px; color: var(--warm); line-height: 1.55; font-style: italic; overflow-wrap: anywhere; }
+  article.indicator .meta { border-top: 1px dashed var(--soft-line); padding-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
   article.indicator.stale::after { content: "STALE"; position: absolute; top: 8px; right: 8px; font-family: "IBM Plex Mono", monospace; font-size: 9px; padding: 2px 5px; background: #ddd; color: #555; letter-spacing: 0.1em; }
+  .carry-tag { background: var(--canvas); color: var(--yellow); padding: 1px 4px; font-weight: 600; }
 
   /* WoW */
   section.wow { margin-bottom: 40px; background: var(--ink); color: var(--bg); padding: 28px; }
@@ -135,8 +143,8 @@
   .wow-item .tag { font-family: "IBM Plex Mono", monospace; font-size: 10px; margin-bottom: 4px; }
   .wow-item .tag.up { color: var(--yellow); }
   .wow-item .tag.down { color: #7DB37C; }
-  .wow-item .tag.flat { color: #999; }
-  .wow-item .text { font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.6; }
+  .wow-item .tag.flat { color: var(--soft-line); }
+  .wow-item .text { font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 
   /* Public market technical heat audit */
   section.market-technical-heat { margin-bottom: 40px; }
@@ -233,8 +241,8 @@
 </div>
 
 <script>
-// 渲染逻辑 1:1 移植自原 The Bubble Watch 静态页;数据源换为本仓库自动管线
-// 产出的 data/bubble-watch.json(同 schema);趋势图以手写 SVG 替代 Chart.js(零依赖)。
+// Editorial layout follows The Bubble Watch;data comes from this repo's weekly pipeline.
+// Bubble Watch v2 renders 27 cards while scoring only the frozen Core-23;trend uses comparable Core-23 replays.
 const CATEGORY_ORDER = [
   { key: 'valuation',        zh: '估值',     en: 'VALUATION' },
   { key: 'capital',          zh: '资金面',    en: 'CAPITAL' },
@@ -254,7 +262,7 @@ const WATCH_LIST = [
 ];
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function statusBadge(status) {
@@ -322,7 +330,6 @@ function renderMarketTechnicalHeat(panel) {
 
 const TIER_FROM_LABEL_ZH = { '系统性顶部信号': 'top', '系统性顶部': 'top', '高风险预警': 'alert', '中度警戒': 'caution', '观察期': 'observation' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
-const TIER_MID_POS = { observation: 12.5, caution: 32.5, alert: 50, top: 80 };
 
 function tierFromPct(p) {
   if (p >= 60) return 'top';
@@ -337,6 +344,8 @@ function render(data) {
   lastData = data;
   const s = data.summary;
   const indicators = data.indicators;
+  const coreCount = s.scoring_total_indicators ?? indicators.filter(item => item.score_role === 'core').length;
+  const shadowCount = indicators.filter(item => item.score_role === 'shadow').length;
   const issueNo = String(data.issue_number).padStart(3, '0');
   const headlineColor = s.red_pct >= 60 ? '#E63946' : s.red_pct >= 40 ? '#E89B3C' : s.red_pct >= 25 ? '#F1C232' : 'var(--bg)';
 
@@ -344,10 +353,6 @@ function render(data) {
   const baseTier = tierFromPct(s.red_pct);
   const effTier = TIER_FROM_LABEL_ZH[s.verdict_label] || baseTier;
   const overrideActive = effTier !== baseTier;
-  const overridePos = TIER_MID_POS[effTier];
-  const nowText = overrideActive
-    ? `红灯比例 ${s.red_pct.toFixed(1)}% (${TIER_LABEL_ZH[baseTier]}) · 综合判读 → ${s.verdict_label}`
-    : `红灯比例 ${s.red_pct.toFixed(1)}% · ${s.verdict_label}`;
 
   const meta = data.meta || {};
   const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径`;
@@ -357,28 +362,29 @@ function render(data) {
     <header class="masthead">
       <div class="masthead-row">
         <div>
-          <div class="kicker">${s.total_indicators} 项指标 · 每周一更新</div>
+          <div class="kicker">${s.total_indicators} 张证据卡 · ${coreCount} 项固定核心 · 每周一更新</div>
           <h1 class="title">AI 泡沫监测<br/><em>The Bubble Watch</em></h1>
         </div>
         <div class="issue-meta">
           <div>ISSUE NO. ${issueNo}</div>
           <div>${escapeHtml(data.as_of_date)}</div>
-          <div class="small">${s.total_indicators} INDICATORS · 6 CATEGORIES</div>
+          <div class="small">CORE-${coreCount} · SHADOW-${shadowCount} · 6 CATEGORIES</div>
         </div>
       </div>
     </header>
 
     <section class="headline">
       <div class="big-number">
-        <div class="label">RED LIGHT RATIO</div>
+        <div class="label">风险温度 · CORE RED LIGHT RATIO</div>
         <div>
           <div class="value" style="color:${headlineColor}">${s.red_pct.toFixed(1)}<sup>%</sup></div>
           <div class="breakdown">
-            ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿<br/>
-            阈值: 25% 黄 / 40% 橙 / 60% 红
+            固定核心: ${s.scoring_red_count} 红 / ${s.scoring_yellow_count} 黄 / ${s.scoring_green_count} 绿<br/>
+            全部展示: ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿 · ${shadowCount} 项影子观察<br/>
+            阈值: 25% 黄 / 40% 橙 / 60% 红${overrideActive ? `<br/>原始档位 ${TIER_LABEL_ZH[baseTier]} · 综合判读 ${escapeHtml(s.verdict_label)}` : ''}
           </div>
         </div>
-        <div class="footer">PRIMARY SCORE: ${s.red_count} / ${s.total_indicators} RED = ${s.red_pct.toFixed(1)}%</div>
+        <div class="footer">PRIMARY SCORE: ${s.scoring_red_count} / CORE-${coreCount} RED = ${s.red_pct.toFixed(1)}%</div>
       </div>
       <div class="verdict">
         <div>
@@ -393,46 +399,50 @@ function render(data) {
       </div>
     </section>
 
-    <section class="threshold">
-      <div class="threshold-header">
-        <h3>触发阈值标尺 <em>· Threshold Scale</em></h3>
-        <div class="now">${escapeHtml(nowText)}</div>
+    ${(s.stage_score != null && s.trigger_score != null) ? `
+    <section class="axes">
+      <div class="axes-header">
+        <h3>两轴判读 <em>· Stage × Trigger</em></h3>
+        <div class="now">固定核心判读 · 泡沫成熟度 ${s.stage_score.toFixed(0)} · 破裂临近度 ${s.trigger_score.toFixed(0)}</div>
       </div>
-      <div class="threshold-bar-wrap${overrideActive ? ' has-override' : ''}">
-        <div class="threshold-bar">
-          <div class="zone t-green" style="flex:25">
-            <span class="zone-label">观察期</span>
-            <span class="zone-pct">0–25%</span>
+      <div class="axes-grid">
+        <div class="axis-block">
+          <div class="axis-label"><span>泡沫成熟度 · STAGE</span><span class="axis-score">${s.stage_score.toFixed(1)} · ${escapeHtml(s.stage_label)}</span></div>
+          <div class="axis-bar">
+            <div class="zone t-green" style="flex:30"><span class="zone-label">早期</span><span class="zone-pct">0–30</span></div>
+            <div class="zone t-yellow" style="flex:20"><span class="zone-label">扩张</span><span class="zone-pct">30–50</span></div>
+            <div class="zone t-orange" style="flex:20"><span class="zone-label">亢奋</span><span class="zone-pct">50–70</span></div>
+            <div class="zone t-red" style="flex:30"><span class="zone-label">极端</span><span class="zone-pct">≥70</span></div>
+            <div class="marker" style="left:${Math.min(Math.max(s.stage_score, 0.5), 99.5)}%"></div>
           </div>
-          <div class="zone t-yellow" style="flex:15">
-            <span class="zone-label">中度警戒</span>
-            <span class="zone-pct">25–40%</span>
+          <div class="axis-desc">慢变量：估值 · 资金结构 · 发行热度 · 叙事——回答“泡沫有多大”</div>
+        </div>
+        <div class="axis-block">
+          <div class="axis-label"><span>破裂临近度 · TRIGGER</span><span class="axis-score">${s.trigger_score.toFixed(1)} · ${escapeHtml(s.trigger_label)}</span></div>
+          <div class="axis-bar">
+            <div class="zone t-green" style="flex:25"><span class="zone-label">引线未燃</span><span class="zone-pct">0–25</span></div>
+            <div class="zone t-yellow" style="flex:20"><span class="zone-label">零星火花</span><span class="zone-pct">25–45</span></div>
+            <div class="zone t-orange" style="flex:20"><span class="zone-label">引线点燃</span><span class="zone-pct">45–65</span></div>
+            <div class="zone t-red" style="flex:35"><span class="zone-label">破裂进行中</span><span class="zone-pct">≥65</span></div>
+            <div class="marker" style="left:${Math.min(Math.max(s.trigger_score, 0.5), 99.5)}%"></div>
           </div>
-          <div class="zone t-orange" style="flex:20">
-            <span class="zone-label">高风险预警</span>
-            <span class="zone-pct">40–60%</span>
-          </div>
-          <div class="zone t-red" style="flex:40">
-            <span class="zone-label">系统性顶部</span>
-            <span class="zone-pct">≥60%</span>
-          </div>
-          <div class="marker" style="left:${Math.min(Math.max(s.red_pct, 0.5), 99.5)}%">
-            <span class="marker-label">红灯比例 ${s.red_pct.toFixed(1)}%</span>
-          </div>
-          ${overrideActive ? `
-          <div class="marker override" style="left:${overridePos}%">
-            <span class="marker-label">综合判读 → ${escapeHtml(s.verdict_label)}</span>
-          </div>` : ''}
+          <div class="axis-desc">快变量：信用利差 · 市场广度 · 内部人 · 收入动量 · 宏观政策——回答“引线是否点燃”</div>
         </div>
       </div>
-    </section>
+      ${(s.similarity && s.similarity.length) ? `
+      <div class="similarity-row">
+        <span class="sim-label">核心历史相似度</span>
+        ${s.similarity.map((x, i) => `<span class="sim-chip${i === 0 ? ' top' : ''}">${escapeHtml(x.period)} ${escapeHtml(x.label_zh)} <b>${x.match_pct}%</b></span>`).join('')}
+      </div>` : ''}
+      ${s.momentum ? `<div class="momentum-row">核心本周边际：<b class="worse">${s.momentum.deteriorated} 级恶化</b> · <b class="better">${s.momentum.improved} 级好转</b>（净 ${s.momentum.net > 0 ? '+' : ''}${s.momentum.net}）</div>` : ''}
+    </section>` : ''}
 
     <section class="trend">
       <div class="trend-header">
-        <h3>红灯比例趋势 <em>· 8-Week Trend</em></h3>
+        <h3>核心红灯比例趋势 <em>· CORE-23 COMPARABLE</em></h3>
         <div class="trend-legend">
-          <span><span style="color:var(--red)">●</span> Red %</span>
-          <span><span style="color:var(--yellow)">●</span> Yellow-adjusted pressure</span>
+          <span><span style="color:var(--red)">●</span> Core Red %</span>
+          <span><span style="color:var(--yellow)">●</span> Core yellow-adjusted pressure</span>
           <span style="color:var(--muted)">阈值: 25 / 40 / 60</span>
         </div>
       </div>
@@ -444,6 +454,8 @@ function render(data) {
       if (!items.length) return '';
       const r = items.filter(i => i.status === 'red').length;
       const y = items.filter(i => i.status === 'yellow').length;
+      const categoryCore = items.filter(i => i.score_role === 'core').length;
+      const categoryShadow = items.length - categoryCore;
       return `
         <section class="category">
           <div class="category-header">
@@ -452,17 +464,20 @@ function render(data) {
               <span class="en">${cat.en}</span>
             </div>
             <div class="counts">
-              ${items.length} 个指标 · <span class="red">${r} 红</span> · <span class="yellow">${y} 黄</span>
+              ${items.length} 张 · ${categoryCore} 核心${categoryShadow ? ` + ${categoryShadow} 影子` : ''} · <span class="red">${r} 红</span> · <span class="yellow">${y} 黄</span>
             </div>
           </div>
           <div class="indicator-grid">
-            ${items.map(ind => `
+            ${items.map(ind => {
+              const carried = !ind.stale && ind.as_of && data.as_of_date && ind.as_of < data.as_of_date;
+              return `
               <article class="indicator${ind.stale ? ' stale' : ''}">
                 <div class="status-bar ${ind.status}"></div>
                 <div class="head">
                   <div>
                     <div class="name-en">${escapeHtml(ind.name_en)}</div>
                     <div class="name-zh">${escapeHtml(ind.name_zh)}</div>
+                    <div class="score-role ${ind.score_role === 'shadow' ? 'shadow' : 'core'}">${ind.score_role === 'shadow' ? '影子观察' : '固定核心'}</div>
                   </div>
                   ${statusBadge(ind.status)}
                 </div>
@@ -470,10 +485,10 @@ function render(data) {
                 <div class="note">${escapeHtml(ind.note)}</div>
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>
-                  <span>${escapeHtml(ind.source_name)}</span>
+                  <span>${escapeHtml(ind.source_name)}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''}</span>
                 </div>
               </article>
-            `).join('')}
+            `;}).join('')}
           </div>
         </section>
       `;
@@ -516,11 +531,15 @@ function render(data) {
       <div class="method-grid">
         <div>
           <h4>方法论</h4>
-          <div>24 个领先指标,分 6 类。每个指标按其历史阈值评级 RED / YELLOW / GREEN。主分数 = 红灯比例;整体红灯比例 ≥60% 为系统性顶部信号。黄灯调整辅助压力分 = (红×1.0 + 黄×0.5) / 总数,仅用于趋势辅助,不参与阈值分档。红灯占比过半的分类 ≥2 个时,判读强制升级到「高风险预警」。关键阈值锚定历史泡沫。</div>
+          <div>${s.total_indicators} 张证据卡全部展示,其中固定核心 ${coreCount} 项等权计分、影子观察 ${shadowCount} 项暂不入分。主分数为核心红灯比例;STAGE（泡沫成熟度）与 TRIGGER（破裂临近度）、分类共振、周度动量和历史相似度也只使用固定核心。双类红灯共振,或 stage≥60 且 trigger≥50,可升级综合判读;stage≥60 且 trigger≥65 对应系统性顶部信号。黄灯调整压力分仅用于核心可比趋势。</div>
         </div>
         <div>
           <h4>历史对照</h4>
           <div>2000 dot-com、1845 铁路狂热、1996 telecom 泡沫顶部前 6-12 个月,下列指标均闪烁: 内部人减持、capex/FCF 背离、广度恶化、循环融资、CEO 对冲表态。</div>
+        </div>
+        <div>
+          <h4>数据新鲜度</h4>
+          <div>卡片右下角显示各自数据日期;与本期日期不一致但仍在时效窗口内标“沿用”,超过 maxAgeDays 标 STALE。自动源不可用时继续沿用有日期的本地快照,不造数。</div>
         </div>
         <div>
           <h4>免责</h4>
@@ -582,7 +601,7 @@ function drawTrend(data) {
 
   const tooltip = document.getElementById('trend-tooltip');
   wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="红灯比例与风险分趋势">
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Core-23 红灯比例与黄灯调整压力趋势">
       ${grid}
       <path d="${smoothPath(ylwPts)}" fill="none" stroke="#A8761A" stroke-width="1.5" stroke-dasharray="3 3"/>
       <path d="${smoothPath(redPts)}" fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
@@ -604,7 +623,7 @@ function drawTrend(data) {
     });
     const p = seed[best];
     tooltip.style.display = 'block';
-    tooltip.innerHTML = `${escapeHtml(p.week)}<br>Red % ${p.red_pct.toFixed(1)}<br>Risk ${p.risk_score.toFixed(1)}`;
+    tooltip.innerHTML = `${escapeHtml(p.week)}<br>Core Red % ${p.red_pct.toFixed(1)}<br>Core Pressure ${p.risk_score.toFixed(1)}`;
     const tx = Math.min(Math.max(x(best) / W * rect.width - 40, 0), rect.width - 110);
     tooltip.style.left = `${tx}px`;
     tooltip.style.top = `${Math.max(y(Math.max(p.red_pct, p.risk_score)) / H * rect.height - 64, 0)}px`;

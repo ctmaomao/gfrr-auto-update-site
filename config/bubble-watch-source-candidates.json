@@ -1,6 +1,6 @@
 {
   "contractVersion": "bubble-watch-source-candidates-v1",
-  "note": "AI 泡沫监测 12 个 curated-origin 指标的数据源候选矩阵。hybrid_live 表示 build 可先尝试免费公开源自动覆盖; hybrid_paid_optional 表示有付费 API Key 时可尝试自动覆盖、无 Key 或失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录源,但还不够稳定,暂不自动改灯。",
+  "note": "AI 泡沫监测 15 个 curated-origin 指标的数据源候选矩阵。hybrid_live 表示 build 可先尝试免费公开源自动覆盖; hybrid_paid_optional 表示有付费 API Key 时可尝试自动覆盖、无 Key 或失败仍 fail-closed 回到 config/bubble-watch-curated.json; candidate_only 表示已记录源,但还不够稳定,暂不自动改灯。",
   "indicators": {
     "vc_ai_share": {
       "automationStatus": "hybrid_live",
@@ -514,6 +514,45 @@
           "cadence": "weekly cross-check + fallback",
           "role": "independent news-index cross-check for GDELT/Tavily results and fallback when GDELT public search is rate-limited or unavailable",
           "limitations": "Requires BRAVE_API_KEYS; official Brave news-search API with freshness=pm. Search-result proxy only, not a complete executive-transcript database. Red requires multi-source confirmation; single-source hits are capped below red by local proxy-confidence rules."
+        }
+      ]
+    },
+    "private_secondary_marks": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "AI private-company secondary-market discount or premium direction",
+      "freeSourceCandidates": [
+        {
+          "source": "Forge Global / Caplight / Hiive public market commentary",
+          "url": "https://forgeglobal.com/insights/",
+          "cadence": "weekly editorial review",
+          "role": "compare OpenAI, Anthropic and xAI secondary marks with their latest primary-round valuations",
+          "limitations": "Public commentary is intermittent and does not expose a complete transaction tape; production stays on the reviewed upstream-curated snapshot and must not infer a mark when no comparable quote is published."
+        }
+      ]
+    },
+    "gpu_rental_price": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "H100/H200 spot rental price and availability direction",
+      "freeSourceCandidates": [
+        {
+          "source": "Thunder Compute market reports / getdeploying price comparison",
+          "url": "https://www.thundercompute.com/blog/ai-gpu-rental-market-trends",
+          "cadence": "weekly editorial review",
+          "role": "observe public hourly quotes and broad availability for Hopper-class GPU rentals",
+          "limitations": "Provider mix and hardware configuration change over time; production stays on the reviewed upstream-curated snapshot until a stable comparable panel and history are available."
+        }
+      ]
+    },
+    "frontier_progress": {
+      "automationStatus": "candidate_only",
+      "primarySignal": "frontier-model capability progress versus its recent trend",
+      "freeSourceCandidates": [
+        {
+          "source": "METR time horizons / Epoch AI / ARC Prize",
+          "url": "https://metr.org/time-horizons/",
+          "cadence": "monthly research review",
+          "role": "use METR time-horizon trend as the primary anchor with independent benchmark context",
+          "limitations": "Benchmark releases are low-frequency and methodology can change; production stays on the reviewed upstream-curated snapshot and does not combine incomparable benchmark scores mechanically."
         }
       ]
     }
