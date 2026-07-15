@@ -1,21 +1,27 @@
 {
-  "contractVersion": "bubble-watch-v1",
+  "contractVersion": "bubble-watch-v2",
   "issue_number": 15,
-  "as_of_date": "2026-07-14",
-  "generated_at": "2026-07-14T09:58:38.673Z",
+  "as_of_date": "2026-07-15",
+  "generated_at": "2026-07-15T02:32:41.621Z",
   "summary": {
     "total_indicators": 27,
     "red_count": 6,
     "yellow_count": 6,
     "green_count": 15,
-    "primary_score_pct": 22.2,
-    "primary_score_basis": "red_light_ratio",
-    "red_pct": 22.2,
-    "weighted_risk_score": 33.3,
+    "display_red_pct": 22.2,
+    "display_weighted_risk_score": 33.3,
+    "scoring_total_indicators": 23,
+    "scoring_red_count": 6,
+    "scoring_yellow_count": 6,
+    "scoring_green_count": 11,
+    "primary_score_pct": 26.1,
+    "primary_score_basis": "core_red_light_ratio",
+    "red_pct": 26.1,
+    "weighted_risk_score": 39.1,
     "stage_score": 60,
     "stage_label": "亢奋 Euphoria",
     "stage_label_en": "Euphoria",
-    "trigger_score": 17.6,
+    "trigger_score": 23.1,
     "trigger_label": "引线未燃",
     "trigger_label_en": "Fuse Unlit",
     "momentum": {
@@ -24,7 +30,7 @@
       "net": 0
     },
     "category_scores": {
-      "valuation": 50,
+      "valuation": 66.7,
       "capital": 87.5,
       "market_structure": 25,
       "credit": 12.5,
@@ -36,33 +42,41 @@
         "period": "1999-06",
         "label_zh": "互联网泡沫顶前 9 个月",
         "label_en": "9 months before dot-com top",
-        "match_pct": 78
+        "match_pct": 75,
+        "denominator": 22,
+        "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2000-02",
         "label_zh": "互联网泡沫顶前 1 个月",
         "label_en": "1 month before dot-com top",
-        "match_pct": 72
+        "match_pct": 70,
+        "denominator": 22,
+        "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2021-11",
         "label_zh": "成长股/SPAC 顶",
         "label_en": "Growth/SPAC top",
-        "match_pct": 72
+        "match_pct": 68,
+        "denominator": 22,
+        "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2007-10",
         "label_zh": "金融危机股市顶",
         "label_en": "GFC equity top",
-        "match_pct": 38
+        "match_pct": 38,
+        "denominator": 16,
+        "basis": "core_calibrated_indicators_only"
       }
     ],
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "本周计数 6 红 / 6 黄 / 15 绿，红灯比例由 25.0% 降至 22.2%。状态层面无指标翻灯；两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 17.6（引线未燃）；基础判读落在「观察期」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈65%（绿）、市值加权 vs 等权重 +0.7%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。资金面仍是核心压力: Big5 资本开支/经营现金流 ≈75%（红）、AI 占 VC 投资比重 ~80%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 +186%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 269 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 隐含加息（红），叠加 资本开支指引市场反应 混合·选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管红灯比例仍在「观察期」区间，双类压力共振（估值 2/4 红（CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈26.0%）；资金面 3/4 红（Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%））抬高综合判读。红灯集中在 CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈26.0%、Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%、Fed 政策方向 隐含加息；有效判读维持「高风险预警」。",
-    "verdict_desc_source": "bubble-watch-narrative-v1",
+    "verdict_desc": "固定核心 23 项本周计数 6 红 / 6 黄 / 11 绿，红灯比例维持 26.1%。27 张展示卡合计 6 红 / 6 黄 / 15 绿，其中 4 项为影子观察、不进入判读。状态层面无指标翻灯；两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 23.1（引线未燃）；基础判读落在「中度警戒」，有效判读为「高风险预警」。市场结构边际改善: S&P 50 日均线上方比例 ≈63%（绿）、市值加权 vs 等权重 +1.6%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。资金面仍是核心压力: Big5 资本开支/经营现金流 ≈75%（红）、AI 占 VC 投资比重 ~80%（红）、NVDA 客户投资/收入比 ≈49%（红）；同时，云厂商递延收入增速 +186%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 269 bps（绿）、数据中心 ABS 利差 收窄（绿）、Neocloud 信用事件 0 件（绿）；宏观端则是 Fed 政策方向 隐含加息（红），叠加 资本开支指引市场反应 混合·选择性惩罚（黄）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管红灯比例仍在「中度警戒」区间，双类压力共振（估值 2/3 红（CAPE 周期调整 PE 42.0、前 5 大权重占比 ≈26.0%）；资金面 3/4 红（Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%））抬高综合判读。红灯集中在 CAPE 周期调整 PE 42.0、前 5 大权重占比 ≈26.0%、Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%、Fed 政策方向 隐含加息；有效判读维持「高风险预警」。",
+    "verdict_desc_source": "bubble-watch-narrative-v2",
     "narrative_plan": {
-      "version": "bubble-watch-narrative-v1",
+      "version": "bubble-watch-narrative-v2",
       "sourceMode": "local_indicator_evidence_pack",
       "upstreamVerdictPolicy": "calibration_only_never_copied",
       "categorySnapshots": [
@@ -70,18 +84,17 @@
           "key": "valuation",
           "zh": "估值",
           "en": "VALUATION",
-          "total": 4,
+          "total": 3,
           "red": 2,
           "yellow": 0,
-          "green": 2,
+          "green": 1,
           "redItems": [
             "cape",
             "top5_weight"
           ],
           "yellowItems": [],
           "greenItems": [
-            "nvda_fpe",
-            "private_secondary_marks"
+            "nvda_fpe"
           ]
         },
         {
@@ -142,20 +155,17 @@
           "key": "fundamentals",
           "zh": "基本面",
           "en": "FUNDAMENTALS",
-          "total": 7,
+          "total": 4,
           "red": 0,
           "yellow": 0,
-          "green": 7,
+          "green": 4,
           "redItems": [],
           "yellowItems": [],
           "greenItems": [
             "token_volume_mom",
-            "token_revenue_ratio",
-            "gpu_rental_price",
             "arr_2nd_deriv",
             "enterprise_deploy",
-            "cloud_rpo_growth",
-            "frontier_progress"
+            "cloud_rpo_growth"
           ]
         },
         {
@@ -183,15 +193,15 @@
           "indicator_id": "breadth_50d",
           "category": "market_structure",
           "status": "green",
-          "value_display": "≈65%",
-          "note_summary": "Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 65.0%(Mon,Jul 13th,2026);该源为 S&P 500 50 日均线广度直接指数"
+          "value_display": "≈63%",
+          "note_summary": "Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 63.2%(Tue,Jul 14th,2026);该源为 S&P 500 50 日均线广度直接指数"
         },
         {
           "indicator_id": "spy_vs_rsp_6m",
           "category": "market_structure",
           "status": "green",
-          "value_display": "+0.7%",
-          "note_summary": "公开市场价格显示 6 个月回报:SPY +8.5% vs 等权重 RSP +7.8%,市值加权领先 +0.7%——头部与平均股差距可控"
+          "value_display": "+1.6%",
+          "note_summary": "公开市场价格显示 6 个月回报:SPY +8.6% vs 等权重 RSP +7.0%,市值加权领先 +1.6%——头部与平均股差距可控"
         },
         {
           "indicator_id": "ai_ipo_pipeline",
@@ -233,7 +243,7 @@
           "category": "credit",
           "status": "green",
           "value_display": "269 bps",
-          "note_summary": "FRED 显示 ICE BofA 高收益债 OAS = 2.69%(269 bps,2026-07-10);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标"
+          "note_summary": "FRED 显示 ICE BofA 高收益债 OAS = 2.69%(269 bps,2026-07-13);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标"
         },
         {
           "indicator_id": "dc_abs_spread",
@@ -254,14 +264,14 @@
           "category": "macro",
           "status": "red",
           "value_display": "隐含加息",
-          "note_summary": "Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 4.01%;有效联邦基金利率 3.62%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制"
+          "note_summary": "Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 3.91%;有效联邦基金利率 3.62%(60 日漂移 -1bp)、CPI 同比 3.7%(2026-06-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制"
         },
         {
           "indicator_id": "capex_reaction",
           "category": "macro",
           "status": "yellow",
           "value_display": "混合·选择性惩罚",
-          "note_summary": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 -10.3%(4/4)、126日 -16.7%(4/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本"
+          "note_summary": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 多窗口相对 QQQ:21日 +4.1%(0/4 跑输>5pct)、63日 -11.7%(3/4)、126日 -17.1%(4/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本"
         }
       ],
       "sections": [
@@ -269,7 +279,7 @@
           "key": "scorecard",
           "role": "lead",
           "sourceIndicators": [],
-          "summaryZh": "本周计数 6 红 / 6 黄 / 15 绿，红灯比例由 25.0% 降至 22.2%。状态层面无指标翻灯；两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 17.6（引线未燃）；基础判读落在「观察期」，有效判读为「高风险预警」。"
+          "summaryZh": "固定核心 23 项本周计数 6 红 / 6 黄 / 11 绿，红灯比例维持 26.1%。27 张展示卡合计 6 红 / 6 黄 / 15 绿，其中 4 项为影子观察、不进入判读。状态层面无指标翻灯；两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 23.1（引线未燃）；基础判读落在「中度警戒」，有效判读为「高风险预警」。"
         },
         {
           "key": "market_structure",
@@ -279,7 +289,7 @@
             "spy_vs_rsp_6m",
             "insider_sell_buy"
           ],
-          "summaryZh": "市场结构边际改善: S&P 50 日均线上方比例 ≈65%（绿）、市值加权 vs 等权重 +0.7%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。"
+          "summaryZh": "市场结构边际改善: S&P 50 日均线上方比例 ≈63%（绿）、市值加权 vs 等权重 +1.6%（绿） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 ~8x（黄），风险偏好并非完全健康。"
         },
         {
           "key": "capital_fundamentals",
@@ -315,23 +325,74 @@
             "nvda_invest_revenue",
             "fed_policy"
           ],
-          "summaryZh": "因此，尽管红灯比例仍在「观察期」区间，双类压力共振（估值 2/4 红（CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈26.0%）；资金面 3/4 红（Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%））抬高综合判读。红灯集中在 CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈26.0%、Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%、Fed 政策方向 隐含加息；有效判读维持「高风险预警」。"
+          "summaryZh": "因此，尽管红灯比例仍在「中度警戒」区间，双类压力共振（估值 2/3 红（CAPE 周期调整 PE 42.0、前 5 大权重占比 ≈26.0%）；资金面 3/4 红（Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%））抬高综合判读。红灯集中在 CAPE 周期调整 PE 42.0、前 5 大权重占比 ≈26.0%、Big5 资本开支/经营现金流 ≈75%、AI 占 VC 投资比重 ~80%、NVDA 客户投资/收入比 ≈49%、Fed 政策方向 隐含加息；有效判读维持「高风险预警」。"
         }
       ],
       "limitations": [
         "23 项公开数据口径、4 项研究口径。",
         "4 项新闻或调查口径采用多源确认,灯色按样本强度保守发布。",
-        "黄灯压力读数 33.3% 仅用于趋势观察,不改变红灯比例阈值。",
+        "黄灯压力读数 39.1% 仅按固定核心 23 项计算并用于趋势观察,不改变红灯比例阈值。",
+        "AI 私募二级市场标价、Token 增速/收入增速、GPU 租赁现货价、前沿模型能力进展为影子观察,不进入主分或升级规则。",
         "当前无过期指标。",
         "历史页面仅用于周度结构对照；本期正文由当前指标重新生成。"
       ]
     }
   },
   "scoring": {
-    "base_tier": "observation",
+    "model_version": "bubble-watch-v2-core23-shadow4",
+    "primary_universe": "core",
+    "core_indicator_ids": [
+      "cape",
+      "top5_weight",
+      "nvda_fpe",
+      "hyperscaler_capex_yoy",
+      "mag4_fcf_yoy",
+      "vc_ai_share",
+      "nvda_invest_revenue",
+      "breadth_50d",
+      "spy_vs_rsp_6m",
+      "insider_sell_buy",
+      "ai_ipo_pipeline",
+      "hy_oas",
+      "dc_abs_spread",
+      "debt_capex_ratio",
+      "neocloud_credit",
+      "token_volume_mom",
+      "arr_2nd_deriv",
+      "enterprise_deploy",
+      "cloud_rpo_growth",
+      "accounting_events",
+      "fed_policy",
+      "capex_reaction",
+      "ceo_hedging"
+    ],
+    "shadow_indicator_ids": [
+      "private_secondary_marks",
+      "token_revenue_ratio",
+      "gpu_rental_price",
+      "frontier_progress"
+    ],
+    "shadow_policy": "display_only_no_score_impact",
+    "shadow_promotion_policy": {
+      "automatic_promotion": false,
+      "separate_review_required": true,
+      "minimum_observation_weeks": 52,
+      "minimum_fresh_availability_pct": 90,
+      "required_reviews": [
+        "historical_proxy_or_backfill",
+        "non_redundancy_ablation",
+        "out_of_sample_target_improvement",
+        "separate_contract_migration"
+      ],
+      "forecast_targets": {
+        "stage": "12-24 month valuation or relative-return unwind",
+        "trigger": "13/26-week NDX or fixed AI-basket max drawdown >=20%"
+      }
+    },
+    "base_tier": "caution",
     "effective_tier": "alert",
     "override_active": true,
-    "override_rule": "双类红灯共振或 Stage × Trigger 共振可升级判读;主分仍为红灯比例",
+    "override_rule": "固定核心 23 项的双类红灯共振或 Stage × Trigger 共振可升级判读;主分仍为核心红灯比例",
     "override_rules": {
       "category_resonance": "红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」",
       "two_axis_alert": "stage ≥60 且 trigger ≥50 → 至少「高风险预警」",
@@ -343,7 +404,7 @@
         "key": "valuation",
         "zh": "估值",
         "red": 2,
-        "total": 4
+        "total": 3
       },
       {
         "key": "capital",
@@ -356,6 +417,7 @@
   "indicators": [
     {
       "id": "cape",
+      "score_role": "core",
       "axis": "stage",
       "category": "valuation",
       "name_en": "Shiller CAPE",
@@ -363,20 +425,21 @@
       "threshold_text": ">35 红 / 25-35 黄 / <25 绿",
       "source_name": "CAPE 历史估值序列",
       "status": "red",
-      "value_display": "41.9",
-      "note": "multpl.com 最新可得数据 CAPE = 41.85,距 2000 年互联网泡沫峰值 44.19 约 5%;earnings yield ≈ 2.4%。阈值:>35 红 / 25-35 黄 / <25 绿",
-      "as_of": "2026-07-14",
+      "value_display": "42.0",
+      "note": "multpl.com 最新可得数据 CAPE = 42.00,距 2000 年互联网泡沫峰值 44.19 约 5%;earnings yield ≈ 2.4%。阈值:>35 红 / 25-35 黄 / <25 绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:36.167Z",
+        "fetchedAt": "2026-07-15T02:32:02.470Z",
         "detail": {
-          "cape": 41.85
+          "cape": 42
         }
       }
     },
     {
       "id": "top5_weight",
+      "score_role": "core",
       "axis": "stage",
       "category": "valuation",
       "name_en": "S&P 500 Top-5 Weight",
@@ -386,11 +449,11 @@
       "status": "red",
       "value_display": "≈26.0%",
       "note": "SPY 持仓表最新可得数据:前 5 大权重 NVDA / AAPL / MSFT / AMZN / GOOGL 合计 ≈26.0%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:36.701Z",
+        "fetchedAt": "2026-07-15T02:32:02.997Z",
         "detail": {
           "top5": [
             {
@@ -420,6 +483,7 @@
     },
     {
       "id": "nvda_fpe",
+      "score_role": "core",
       "axis": "stage",
       "category": "valuation",
       "name_en": "NVDA Forward P/E",
@@ -427,20 +491,21 @@
       "threshold_text": ">40 红 / 30-40 黄 / <30 绿",
       "source_name": "NVDA 远期估值",
       "status": "green",
-      "value_display": "≈20x",
-      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 20.4x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿",
-      "as_of": "2026-07-14",
+      "value_display": "≈21x",
+      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 21.3x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:37.202Z",
+        "fetchedAt": "2026-07-15T02:32:03.482Z",
         "detail": {
-          "forwardPe": 20.45
+          "forwardPe": 21.25
         }
       }
     },
     {
       "id": "private_secondary_marks",
+      "score_role": "shadow",
       "axis": "trigger",
       "category": "valuation",
       "name_en": "AI Private Secondary Marks",
@@ -455,12 +520,13 @@
       "provenance": {
         "mode": "curated",
         "asOfDate": "2026-07-12",
-        "ageDays": 2,
+        "ageDays": 3,
         "maxAgeDays": 21
       }
     },
     {
       "id": "hyperscaler_capex_yoy",
+      "score_role": "core",
       "axis": "stage",
       "category": "capital",
       "name_en": "Hyperscaler Capex YoY",
@@ -470,11 +536,11 @@
       "status": "yellow",
       "value_display": "+70%",
       "note": "公开季报现金流显示 AMZN/MSFT/GOOGL/META 滚动 4 季 capex 合计 $434B,同比 +69.5%(上年同期 $256B);开支仍在加速扩张。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:41.207Z",
+        "fetchedAt": "2026-07-15T02:32:07.106Z",
         "detail": {
           "yoyPct": 69.52159559297533,
           "source": "stockanalysis 季报镜像",
@@ -501,6 +567,7 @@
     },
     {
       "id": "mag4_fcf_yoy",
+      "score_role": "core",
       "axis": "trigger",
       "category": "capital",
       "name_en": "Big5 Capex / OCF",
@@ -510,11 +577,11 @@
       "status": "red",
       "value_display": "≈75%",
       "note": "公开季报现金流显示 AMZN/MSFT/GOOGL/META/ORCL 滚动 4 季经营现金流 $649B、cash capex $490B,capex/OCF ≈75.4%(上年同期 56.1%,变化 +19.3%);2/5 家 capex 已超过 OCF。该口径采用 Epoch/Apollo 式 hyperscaler 现金流覆盖率,比单纯 FCF YoY 更敏感。阈值:≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:41.846Z",
+        "fetchedAt": "2026-07-15T02:32:08.024Z",
         "detail": {
           "ratioPct": 75.43304951294449,
           "prevRatioPct": 56.09105056633403,
@@ -690,6 +757,7 @@
     },
     {
       "id": "vc_ai_share",
+      "score_role": "core",
       "axis": "stage",
       "category": "capital",
       "name_en": "AI / Total VC Funding",
@@ -699,11 +767,11 @@
       "status": "red",
       "value_display": "~80%",
       "note": "Crunchbase News 公开文章(2026-04-01)解析:AI startup funding 约 $242B,占全球 VC 80%,隐含/披露总额约 $300B;>50% 仍属资金面红区。阈值:>50% 红 / 30-50% 黄 / <30% 绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:42.509Z",
+        "fetchedAt": "2026-07-15T02:32:09.415Z",
         "detail": {
           "source": "Crunchbase News WordPress API",
           "url": "https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/",
@@ -721,6 +789,7 @@
     },
     {
       "id": "nvda_invest_revenue",
+      "score_role": "core",
       "axis": "stage",
       "category": "capital",
       "name_en": "NVDA Customer Invest / Rev",
@@ -730,11 +799,11 @@
       "status": "red",
       "value_display": "≈49%",
       "note": "分子=公开披露投资承诺 累计股权投资承诺 $110B+(含 OpenAI $30B)+ GPU 抵押债务 $15B+(2026-06-07 口径,$125B);分母=公开季报现金流显示 NVDA LTM 收入 $253.5B;比率 ≈49.3%,仍远超 Lucent 1999 循环融资峰值 24%。阈值:>30% 红 / 15-30% 黄 / <15% 绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:43.357Z",
+        "fetchedAt": "2026-07-15T02:32:10.441Z",
         "detail": {
           "commitmentsUsd": 125000000000,
           "ltmRevenue": 253491000000,
@@ -745,6 +814,7 @@
     },
     {
       "id": "breadth_50d",
+      "score_role": "core",
       "axis": "trigger",
       "category": "market_structure",
       "name_en": "% Above 50-Day MA",
@@ -752,24 +822,25 @@
       "threshold_text": "<40% 红 / 40-60% 黄 / >60% 绿",
       "source_name": "Barchart $S5FI 市场广度",
       "status": "green",
-      "value_display": "≈65%",
-      "note": "Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 65.0%(Mon,Jul 13th,2026);该源为 S&P 500 50 日均线广度直接指数。阈值:<40% 红 / 40-60% 黄 / >60% 绿",
-      "as_of": "2026-07-14",
+      "value_display": "≈63%",
+      "note": "Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 63.2%(Tue,Jul 14th,2026);该源为 S&P 500 50 日均线广度直接指数。阈值:<40% 红 / 40-60% 黄 / >60% 绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:44.846Z",
+        "fetchedAt": "2026-07-15T02:32:11.553Z",
         "detail": {
           "source": "Barchart:$S5FI",
-          "pct": 65,
-          "tradeTime": "07\\/13\\/26",
-          "sessionDate": "Mon, Jul 13th, 2026",
+          "pct": 63.22,
+          "tradeTime": "07\\/14\\/26",
+          "sessionDate": "Tue, Jul 14th, 2026",
           "fallbackCalculator": "Yahoo Chart × Wikipedia constituents not used"
         }
       }
     },
     {
       "id": "spy_vs_rsp_6m",
+      "score_role": "core",
       "axis": "trigger",
       "category": "market_structure",
       "name_en": "SPY vs RSP 6M Spread",
@@ -777,22 +848,23 @@
       "threshold_text": ">10% 红 / 5-10% 黄 / <5% 绿",
       "source_name": "市值加权与等权重 ETF",
       "status": "green",
-      "value_display": "+0.7%",
-      "note": "公开市场价格显示 6 个月回报:SPY +8.5% vs 等权重 RSP +7.8%,市值加权领先 +0.7%——头部与平均股差距可控。阈值:>10% 红 / 5-10% 黄 / <5% 绿",
-      "as_of": "2026-07-14",
+      "value_display": "+1.6%",
+      "note": "公开市场价格显示 6 个月回报:SPY +8.6% vs 等权重 RSP +7.0%,市值加权领先 +1.6%——头部与平均股差距可控。阈值:>10% 红 / 5-10% 黄 / <5% 绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:45.246Z",
+        "fetchedAt": "2026-07-15T02:32:12.120Z",
         "detail": {
-          "spyRet": 8.518743670904541,
-          "rspRet": 7.8266577536739215,
-          "spread": 0.69208591723062
+          "spyRet": 8.608290144476205,
+          "rspRet": 6.9603124672168475,
+          "spread": 1.647977677259358
         }
       }
     },
     {
       "id": "insider_sell_buy",
+      "score_role": "core",
       "axis": "trigger",
       "category": "market_structure",
       "name_en": "AI Insider Sell/Buy Ratio",
@@ -802,15 +874,15 @@
       "status": "yellow",
       "value_display": "~8x",
       "note": "SEC EDGAR 不可达标的 NVDA/PLTR/AVGO 已改用 Xoomar public Form 4 HTTPS mirror 显示 NVDA / PLTR / AVGO 近 12 个月范围内最新可得 Form 4:累计卖出 $1.9B、买入 $0M,卖买比 ≈>99x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿 内部人卖出仍偏高，但尚未接近互联网泡沫峰值强度，因此维持黄灯。",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:48.759Z",
+        "fetchedAt": "2026-07-15T02:32:16.403Z",
         "detail": {
           "buyUsd": 325129,
-          "sellUsd": 1864817401.3861992,
-          "ratio": 1864.8174013861992,
+          "sellUsd": 1874813706.2261992,
+          "ratio": 1874.8137062261992,
           "sources": [
             {
               "symbol": "NVDA",
@@ -820,7 +892,7 @@
               "sellUsd": 726400668.4628998,
               "filingCount": null,
               "transactionCount": 161,
-              "updatedAt": "2026-07-14T09:57:46.199Z",
+              "updatedAt": "2026-07-15T02:32:13.071Z",
               "coverageStart": "2025-10-29",
               "recordCount": 200,
               "recordLimitReached": true
@@ -833,7 +905,7 @@
               "sellUsd": 367162692.29499996,
               "filingCount": null,
               "transactionCount": 189,
-              "updatedAt": "2026-07-14T09:57:47.270Z",
+              "updatedAt": "2026-07-15T02:32:14.053Z",
               "coverageStart": "2025-09-02",
               "recordCount": 200,
               "recordLimitReached": true
@@ -843,10 +915,10 @@
               "source": "Xoomar public Form 4 HTTPS mirror",
               "sourceMode": "xoomar_form4_fallback",
               "buyUsd": 325129,
-              "sellUsd": 771254040.6282995,
+              "sellUsd": 781250345.4682994,
               "filingCount": null,
-              "transactionCount": 179,
-              "updatedAt": "2026-07-14T09:57:48.173Z",
+              "transactionCount": 178,
+              "updatedAt": "2026-07-15T02:32:15.517Z",
               "coverageStart": "2025-12-17",
               "recordCount": 200,
               "recordLimitReached": true
@@ -882,7 +954,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 14,
               "syncedFromUpstream": true
             }
@@ -898,7 +970,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 14,
               "syncedFromUpstream": true
             }
@@ -908,6 +980,7 @@
     },
     {
       "id": "ai_ipo_pipeline",
+      "score_role": "core",
       "axis": "stage",
       "category": "market_structure",
       "name_en": "AI IPO/SPAC Pipeline",
@@ -917,11 +990,11 @@
       "status": "yellow",
       "value_display": "升温",
       "note": "Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；公开申报确认样本暂缺;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:49.486Z",
+        "fetchedAt": "2026-07-15T02:32:17.531Z",
         "detail": {
           "source": "Crunchbase News public article search",
           "crunchbaseSource": "Crunchbase News WordPress API",
@@ -956,7 +1029,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -972,7 +1045,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -985,6 +1058,7 @@
     },
     {
       "id": "hy_oas",
+      "score_role": "core",
       "axis": "trigger",
       "category": "credit",
       "name_en": "HY OAS Spread",
@@ -993,20 +1067,21 @@
       "source_name": "ICE BofA 高收益债利差",
       "status": "green",
       "value_display": "269 bps",
-      "note": "FRED 显示 ICE BofA 高收益债 OAS = 2.69%(269 bps,2026-07-10);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标。阈值:>500 红 / 350-500 黄 / <350 绿",
-      "as_of": "2026-07-14",
+      "note": "FRED 显示 ICE BofA 高收益债 OAS = 2.69%(269 bps,2026-07-13);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标。阈值:>500 红 / 350-500 黄 / <350 绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:50.188Z",
+        "fetchedAt": "2026-07-15T02:32:17.911Z",
         "detail": {
           "bps": 269,
-          "date": "2026-07-10"
+          "date": "2026-07-13"
         }
       }
     },
     {
       "id": "dc_abs_spread",
+      "score_role": "core",
       "axis": "trigger",
       "category": "credit",
       "name_en": "Data Center ABS Spread",
@@ -1021,13 +1096,14 @@
       "provenance": {
         "mode": "auto_fallback",
         "asOfDate": "2026-07-12",
-        "ageDays": 2,
+        "ageDays": 3,
         "maxAgeDays": 21,
         "reason": "hybrid_paid_optional source failed: WIND_API_KEY 未配置"
       }
     },
     {
       "id": "debt_capex_ratio",
+      "score_role": "core",
       "axis": "stage",
       "category": "credit",
       "name_en": "Debt / Capex Flow Ratio",
@@ -1037,11 +1113,11 @@
       "status": "yellow",
       "value_display": "≈52%",
       "note": "Morgan Stanley 公开研究页解析:2025-2028 数据中心总 capex 约 $2.9T,其中 hyperscaler cash flows 覆盖约 $1.4T,隐含外部融资缺口约 $1.5T,占 capex ≈52%;债务/类债子项(公司债、ABS/CMBS、private credit/JV debt)约 $1.15T,占 capex ≈40%。本项以外部融资缺口/Capex 为主口径,不是单一债券发行额。阈值:>60% 红 / 30-60% 黄 / <30% 绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:50.274Z",
+        "fetchedAt": "2026-07-15T02:32:18.132Z",
         "detail": {
           "source": "Morgan Stanley public AI capex financing split",
           "url": "https://www.morganstanley.com/insights/articles/ai-market-trends-institute-2026",
@@ -1068,6 +1144,7 @@
     },
     {
       "id": "neocloud_credit",
+      "score_role": "core",
       "axis": "trigger",
       "category": "credit",
       "name_en": "Neocloud Credit Events",
@@ -1077,11 +1154,11 @@
       "status": "green",
       "value_display": "0 件",
       "note": "公开 neocloud 信用事件监测覆盖 CoreWeave/Lambda/Crusoe/Nebius 共 5 个页面,未命中违约、降级或困境重组词;同时记录 27 条融资/票据/credit facility 正常事件。该项不是完整评级数据库。判级:任何违约/降级=红 / 无正式事件=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:56.413Z",
+        "fetchedAt": "2026-07-15T02:32:23.948Z",
         "detail": {
           "source": "public neocloud credit-event monitor",
           "checkedPages": 5,
@@ -1137,6 +1214,7 @@
     },
     {
       "id": "token_volume_mom",
+      "score_role": "core",
       "axis": "trigger",
       "category": "fundamentals",
       "name_en": "Industry Token Volume MoM",
@@ -1146,11 +1224,11 @@
       "status": "green",
       "value_display": "加速(+36.2%)",
       "note": "公开模型平台用量显示:最近 4 周合计 192.71T tokens,较前 4 周 +36.2%;上一窗口为 +43.9%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:56.534Z",
+        "fetchedAt": "2026-07-15T02:32:25.698Z",
         "detail": {
           "source": "OpenRouter /api/frontend/v1/rankings/market-share",
           "latestWeek": "2026-07-06",
@@ -1176,7 +1254,7 @@
           "prev4wTokens": 141459869984127,
           "droppedPartialWeek": {
             "date": "2026-07-13",
-            "totalTokens": 12461351103867
+            "totalTokens": 19158010736039
           },
           "momPct": 36.227794316239255,
           "prevMomPct": 43.87920249214729,
@@ -1188,6 +1266,7 @@
     },
     {
       "id": "token_revenue_ratio",
+      "score_role": "shadow",
       "axis": "trigger",
       "category": "fundamentals",
       "name_en": "Token Growth / Revenue Growth",
@@ -1196,29 +1275,29 @@
       "source_name": "公开模型平台用量与价格口径",
       "status": "green",
       "value_display": "~0.9x",
-      "note": "公开模型平台用量与价格口径显示:最近 4 周 token volume +36.2%,估算 spend +38.6%,token/spend 增速比 ~0.9x;定价覆盖 57.5%。该口径用于观察平台内用量与价格变化，不能等同厂商确认收入。阈值:>2x 红 / 1-2x 黄 / <1x 绿",
-      "as_of": "2026-07-14",
+      "note": "公开模型平台用量与价格口径显示:最近 4 周 token volume +36.2%,估算 spend +38.4%,token/spend 增速比 ~0.9x;定价覆盖 57.5%。该口径用于观察平台内用量与价格变化，不能等同厂商确认收入。阈值:>2x 红 / 1-2x 黄 / <1x 绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:56.713Z",
+        "fetchedAt": "2026-07-15T02:32:25.873Z",
         "detail": {
           "source": "OpenRouter v1 model-rankings-chart + frontend catalog models",
           "latestWeek": "2026-07-06",
           "latest4wTokens": 192707660721996,
           "prev4wTokens": 141459869984127,
-          "latest4wSpendProxyUsd": 191066607.24545723,
+          "latest4wSpendProxyUsd": 190814532.27765173,
           "prev4wSpendProxyUsd": 137900974.55389154,
           "tokenGrowthPct": 36.227794316239255,
-          "spendGrowthPct": 38.55348583543811,
-          "ratio": 0.9396762324131767,
+          "spendGrowthPct": 38.37069164662185,
+          "ratio": 0.9441527572628142,
           "pricedCoveragePct": 57.51815095260835,
           "droppedPartialWeek": {
             "date": "2026-07-13",
-            "totalTokens": 12623238766685,
-            "pricedTokens": 8801285115632,
-            "spendProxyUsd": 11938323.501471322,
-            "othersTokens": 3821953651053,
+            "totalTokens": 19101428446019,
+            "pricedTokens": 13248274106612,
+            "spendProxyUsd": 16382013.817277608,
+            "othersTokens": 5853154339407,
             "missingModels": []
           },
           "rows": [
@@ -1233,21 +1312,21 @@
               "date": "2026-06-22",
               "totalTokens": 46720348192435,
               "pricedTokens": 24637268883495,
-              "spendProxyUsd": 45281874.88562404,
+              "spendProxyUsd": 45214430.90128562,
               "othersTokens": 18608241430604
             },
             {
               "date": "2026-06-29",
               "totalTokens": 46719738264038,
               "pricedTokens": 27735959597961,
-              "spendProxyUsd": 47254966.28955603,
+              "spendProxyUsd": 47172465.18311039,
               "othersTokens": 18983778666077
             },
             {
               "date": "2026-07-06",
               "totalTokens": 52619668699308,
               "pricedTokens": 33907834487400,
-              "spendProxyUsd": 47727660.57558112,
+              "spendProxyUsd": 47625530.69855971,
               "othersTokens": 18711834211908
             }
           ],
@@ -1264,6 +1343,7 @@
     },
     {
       "id": "gpu_rental_price",
+      "score_role": "shadow",
       "axis": "trigger",
       "category": "fundamentals",
       "name_en": "GPU Rental Spot Price",
@@ -1278,12 +1358,13 @@
       "provenance": {
         "mode": "curated",
         "asOfDate": "2026-07-12",
-        "ageDays": 2,
+        "ageDays": 3,
         "maxAgeDays": 21
       }
     },
     {
       "id": "arr_2nd_deriv",
+      "score_role": "core",
       "axis": "trigger",
       "category": "fundamentals",
       "name_en": "AI ARR 2nd Derivative",
@@ -1293,11 +1374,11 @@
       "status": "green",
       "value_display": "加速中",
       "note": "公开 Anthropic ARR/run-rate 里程碑显示:2025-07-12 $4B → 2026-02-15 $14B → 2026-04-09 $30B → 2026-05-28 $44B;最新区间月增量约 $8.7B,为前一区间的 0.95x。该口径来自公开估算里程碑，不能等同审计收入。阈值:明显减速=红 / 高位放缓=黄 / 维持加速=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:57:57.189Z",
+        "fetchedAt": "2026-07-15T02:32:26.333Z",
         "detail": {
           "source": "SaaStr WordPress public API",
           "milestones": [
@@ -1359,6 +1440,7 @@
     },
     {
       "id": "enterprise_deploy",
+      "score_role": "core",
       "axis": "stage",
       "category": "fundamentals",
       "name_en": "Enterprise Production Deploy",
@@ -1368,11 +1450,11 @@
       "status": "green",
       "value_display": "72%",
       "note": "企业 AI 部署调查显示:约 52% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该口径反映企业调查中的生产部署比例，不等同所有企业 AI 使用场景。阈值:<50%=红 / 50-65%=黄 / >65%=绿 单一 AI-agent 口径偏窄，但跨调查仍显示生产部署处于高位，暂不下调灯色。",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:58:00.953Z",
+        "fetchedAt": "2026-07-15T02:32:30.448Z",
         "detail": {
           "source": "Google Cloud ROI of AI public report",
           "url": "https://cloud.google.com/transform/roi-of-ai-how-agents-help-business",
@@ -1389,7 +1471,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 120,
               "syncedFromUpstream": true
             }
@@ -1405,7 +1487,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 120,
               "syncedFromUpstream": true
             }
@@ -1418,6 +1500,7 @@
     },
     {
       "id": "cloud_rpo_growth",
+      "score_role": "core",
       "axis": "trigger",
       "category": "fundamentals",
       "name_en": "Cloud RPO Growth",
@@ -1427,11 +1510,11 @@
       "status": "green",
       "value_display": "+186%",
       "note": "公开订单披露显示 MSFT/ORCL/AMZN/GOOGL RPO / 云 backlog 合计 $2.10T,同比 +185.6%(上一披露期同比 +87.6%,未见减速);分公司:MSFT +99% / ORCL +363% / AMZN +93% / GOOGL +406%。EDGAR 对当前运行环境不可达时采用免费公开二级源;Oracle 用年度 metrics,其余三家用季度 operating metrics。判级:负增长=红 / 减速=黄 / 加速=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:58:05.173Z",
+        "fetchedAt": "2026-07-15T02:32:34.703Z",
         "detail": {
           "yoyPct": 185.5625170253337,
           "prevYoyPct": 87.60026788443905,
@@ -1485,6 +1568,7 @@
     },
     {
       "id": "frontier_progress",
+      "score_role": "shadow",
       "axis": "trigger",
       "category": "fundamentals",
       "name_en": "Frontier Model Progress",
@@ -1499,12 +1583,13 @@
       "provenance": {
         "mode": "curated",
         "asOfDate": "2026-07-12",
-        "ageDays": 2,
+        "ageDays": 3,
         "maxAgeDays": 35
       }
     },
     {
       "id": "accounting_events",
+      "score_role": "core",
       "axis": "trigger",
       "category": "macro",
       "name_en": "Round-Tripping / Accounting",
@@ -1514,11 +1599,11 @@
       "status": "green",
       "value_display": "0 件",
       "note": "SEC 与 DOJ 官方执法公告近两年未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法监测未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:58:07.085Z",
+        "fetchedAt": "2026-07-15T02:32:39.133Z",
         "detail": {
           "source": "SEC RSS + DOJ News API official monitor",
           "checkedSources": 4,
@@ -1533,6 +1618,7 @@
     },
     {
       "id": "fed_policy",
+      "score_role": "core",
       "axis": "trigger",
       "category": "macro",
       "name_en": "Fed Policy Direction",
@@ -1541,18 +1627,18 @@
       "source_name": "Fed 点阵图/期货/FRED",
       "status": "red",
       "value_display": "隐含加息",
-      "note": "Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 4.01%;有效联邦基金利率 3.62%(60 日漂移 -1bp)、CPI 同比 4.3%(2026-05-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制。判级:加息=红 / 通胀压力=黄 / 降息=绿",
-      "as_of": "2026-07-14",
+      "note": "Fed 政策路径显示:目标区间 3.50-3.75%(mid 3.625%);SEP 点阵图当前年 median 3.8%(2026-06-17);ZQZ26.CBT 年末 Fed funds futures 隐含 3.91%;有效联邦基金利率 3.62%(60 日漂移 -1bp)、CPI 同比 3.7%(2026-06-01 口径)→ 判定「隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制。判级:加息=红 / 通胀压力=黄 / 降息=绿",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:58:07.626Z",
+        "fetchedAt": "2026-07-15T02:32:39.661Z",
         "detail": {
           "policyPathEvidenceVersion": "fed_policy_path_v2",
           "dff": 3.62,
           "drift60dBp": -0.9999999999999787,
-          "cpiYoy": 4.270032656680247,
-          "cpiDate": "2026-05-01",
+          "cpiYoy": 3.7265298484186826,
+          "cpiDate": "2026-06-01",
           "targetLower": 3.5,
           "targetUpper": 3.75,
           "targetMid": 3.625,
@@ -1564,12 +1650,12 @@
           },
           "yearEndFedFundsFuture": {
             "symbol": "ZQZ26.CBT",
-            "price": 95.98500061035156,
-            "impliedRate": 4.015,
-            "updatedAt": "2026-07-14T04:00:00.000Z"
+            "price": 96.08999633789062,
+            "impliedRate": 3.91,
+            "updatedAt": "2026-07-15T01:27:34.000Z"
           },
           "sepGap": 0.175,
-          "yearEndGap": 0.39,
+          "yearEndGap": 0.285,
           "classificationReason": "policy_path_above_current_target",
           "sourceStatus": {
             "targetRange": "live",
@@ -1584,6 +1670,7 @@
     },
     {
       "id": "capex_reaction",
+      "score_role": "core",
       "axis": "trigger",
       "category": "macro",
       "name_en": "Capex Guidance Reaction",
@@ -1592,40 +1679,40 @@
       "source_name": "公开财报与相对收益窗口",
       "status": "yellow",
       "value_display": "混合·选择性惩罚",
-      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 -10.3%(4/4)、126日 -16.7%(4/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿 价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。",
-      "as_of": "2026-07-14",
+      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 多窗口相对 QQQ:21日 +4.1%(0/4 跑输>5pct)、63日 -11.7%(3/4)、126日 -17.1%(4/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿 价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:58:08.460Z",
+        "fetchedAt": "2026-07-15T02:32:40.611Z",
         "detail": {
           "source": "StockAnalysis quarterly cash-flow + Yahoo Chart",
           "benchmarkWindows": {
             "21d": {
-              "qqq": 2.6,
-              "spy": 3.3
+              "qqq": 0.4,
+              "spy": 1.9
             },
             "63d": {
-              "qqq": 16.5,
-              "spy": 10.3
+              "qqq": 16.6,
+              "spy": 9.6
             },
             "126d": {
-              "qqq": 14.7,
-              "spy": 8.7
+              "qqq": 14.9,
+              "spy": 8.3
             }
           },
           "avgCapexYoy": 71.02230187618855,
-          "avgExcessQqq": -10.335629075915818,
-          "avgExcessSpy": -4.120862917327802,
-          "punishedCount": 4,
+          "avgExcessQqq": -11.727859862738999,
+          "avgExcessSpy": -4.7351088171289115,
+          "punishedCount": 3,
           "penaltyWindowCount": 2,
           "systemicWindowCount": 2,
           "capexStillAccelerating": true,
           "windowEvidence": [
             {
               "days": 21,
-              "avgExcessQqq": 1.5,
-              "avgExcessSpy": 0.8,
+              "avgExcessQqq": 4.1,
+              "avgExcessSpy": 2.6,
               "punishedCount": 0,
               "severePunishedCount": 0,
               "marketPenalty": false,
@@ -1633,16 +1720,16 @@
             },
             {
               "days": 63,
-              "avgExcessQqq": -10.3,
-              "avgExcessSpy": -4.1,
-              "punishedCount": 4,
+              "avgExcessQqq": -11.7,
+              "avgExcessSpy": -4.7,
+              "punishedCount": 3,
               "severePunishedCount": 3,
               "marketPenalty": true,
               "systemicPenalty": true
             },
             {
               "days": 126,
-              "avgExcessQqq": -16.7,
+              "avgExcessQqq": -17.1,
               "avgExcessSpy": -10.6,
               "punishedCount": 4,
               "severePunishedCount": 3,
@@ -1682,19 +1769,19 @@
               "ticker": "MSFT",
               "windowReturns": {
                 "21d": {
-                  "ret": -1.6,
-                  "excessVsQqq": -4.2,
-                  "excessVsSpy": -4.9
+                  "ret": -1.4,
+                  "excessVsQqq": -1.7,
+                  "excessVsSpy": -3.3
                 },
                 "63d": {
-                  "ret": 5.4,
-                  "excessVsQqq": -11,
-                  "excessVsSpy": -4.8
+                  "ret": 0.1,
+                  "excessVsQqq": -16.4,
+                  "excessVsSpy": -9.4
                 },
                 "126d": {
-                  "ret": -18.2,
-                  "excessVsQqq": -32.9,
-                  "excessVsSpy": -26.9
+                  "ret": -19.7,
+                  "excessVsQqq": -34.5,
+                  "excessVsSpy": -28
                 }
               }
             },
@@ -1702,19 +1789,19 @@
               "ticker": "META",
               "windowReturns": {
                 "21d": {
-                  "ret": 15,
-                  "excessVsQqq": 12.4,
-                  "excessVsSpy": 11.7
+                  "ret": 16.3,
+                  "excessVsQqq": 15.9,
+                  "excessVsSpy": 14.4
                 },
                 "63d": {
-                  "ret": 4.3,
-                  "excessVsQqq": -12.2,
-                  "excessVsSpy": -6
+                  "ret": 4.2,
+                  "excessVsQqq": -12.4,
+                  "excessVsSpy": -5.4
                 },
                 "126d": {
-                  "ret": 1.7,
-                  "excessVsQqq": -13.1,
-                  "excessVsSpy": -7
+                  "ret": 1.2,
+                  "excessVsQqq": -13.6,
+                  "excessVsSpy": -7.1
                 }
               }
             },
@@ -1722,19 +1809,19 @@
               "ticker": "AMZN",
               "windowReturns": {
                 "21d": {
-                  "ret": 3.9,
-                  "excessVsQqq": 1.3,
+                  "ret": 2.5,
+                  "excessVsQqq": 2.1,
                   "excessVsSpy": 0.6
                 },
                 "63d": {
-                  "ret": 3.7,
-                  "excessVsQqq": -12.7,
-                  "excessVsSpy": -6.5
+                  "ret": 3.2,
+                  "excessVsQqq": -13.4,
+                  "excessVsSpy": -6.4
                 },
                 "126d": {
-                  "ret": 0.4,
-                  "excessVsQqq": -14.3,
-                  "excessVsSpy": -8.2
+                  "ret": 0,
+                  "excessVsQqq": -14.8,
+                  "excessVsSpy": -8.3
                 }
               }
             },
@@ -1742,19 +1829,19 @@
               "ticker": "GOOGL",
               "windowReturns": {
                 "21d": {
-                  "ret": -1.1,
-                  "excessVsQqq": -3.7,
-                  "excessVsSpy": -4.4
+                  "ret": 0.5,
+                  "excessVsQqq": 0.1,
+                  "excessVsSpy": -1.4
                 },
                 "63d": {
-                  "ret": 11.1,
-                  "excessVsQqq": -5.4,
-                  "excessVsSpy": 0.9
+                  "ret": 11.9,
+                  "excessVsQqq": -4.7,
+                  "excessVsSpy": 2.3
                 },
                 "126d": {
-                  "ret": 8.3,
-                  "excessVsQqq": -6.4,
-                  "excessVsSpy": -0.3
+                  "ret": 9.4,
+                  "excessVsQqq": -5.4,
+                  "excessVsSpy": 1.1
                 }
               }
             }
@@ -1770,7 +1857,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -1786,7 +1873,7 @@
             "displayAnchor": {
               "source": "local_curated_snapshot",
               "asOfDate": "2026-07-12",
-              "ageDays": 2,
+              "ageDays": 3,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
             }
@@ -1799,6 +1886,7 @@
     },
     {
       "id": "ceo_hedging",
+      "score_role": "core",
       "axis": "stage",
       "category": "macro",
       "name_en": "CEO Hedging Language",
@@ -1808,34 +1896,26 @@
       "status": "yellow",
       "value_display": "部分",
       "note": "对冲表态继续升温:多篇新闻围绕 AI bubble、估值和回撤风险展开。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。",
-      "as_of": "2026-07-14",
+      "as_of": "2026-07-15",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-07-14T09:58:37.270Z",
+        "fetchedAt": "2026-07-15T02:32:40.614Z",
         "detail": {
           "source": "GDELT DOC 2.0",
           "query": "(\"AI bubble\" OR \"artificial intelligence bubble\" OR \"AI overbuild\" OR \"AI capex bubble\")",
           "gdeltRequest": {
-            "label": "weekly_30d_hybrid_cache",
+            "label": "fresh_cache",
             "maxrecords": "20",
             "timespan": "30d",
             "sort": "HybridRel",
-            "cacheStatus": "refreshed_live"
+            "cacheStatus": "fresh"
           },
-          "gdeltAttempts": [
-            {
-              "label": "weekly_30d_hybrid_cache",
-              "maxrecords": "20",
-              "timespan": "30d",
-              "sort": "HybridRel",
-              "status": "ok"
-            }
-          ],
+          "gdeltAttempts": [],
           "gdeltCache": {
             "schemaVersion": "gdelt-bubble-watch-cache-p38",
-            "cacheStatus": "refreshed_live",
-            "cacheGeneratedAt": null,
+            "cacheStatus": "fresh",
+            "cacheGeneratedAt": "2026-07-14T09:58:37.267Z",
             "liveFailure": null
           },
           "requestDiagnostics": {
@@ -1877,13 +1957,13 @@
               "seendate": "20260623T134500Z"
             },
             {
-              "title": "Talk of a bubble is an  insult to AI  says SoftBank Son",
+              "title": "Talk of a bubble is an insult to AI says SoftBank Son",
               "url": "https://economictimes.indiatimes.com/tech/artificial-intelligence/talk-of-a-bubble-is-an-insult-to-ai-says-softbanks-son/articleshow/131957186.cms",
               "domain": "economictimes.indiatimes.com",
               "seendate": "20260624T071500Z"
             },
             {
-              "title": "Is the AI Bubble Really About to Burst ? What the Dot - Com Crash Tells Us About Your Money in 2026 . ",
+              "title": "Is the AI Bubble Really About to Burst ? What the Dot - Com Crash Tells Us About Your Money in 2026 .",
               "url": "https://finance.yahoo.com/markets/stocks/articles/ai-bubble-really-burst-dot-195604988.html",
               "domain": "finance.yahoo.com",
               "seendate": "20260709T064500Z"
@@ -1929,9 +2009,9 @@
   ],
   "market_technical_heat": {
     "contractVersion": "bubble-watch-market-technical-heat-v1",
-    "boundary": "display-only audit panel; excluded from 27-indicator red/yellow/green primary score, scoring, decision, execution, and position logic",
-    "as_of_date": "2026-07-13",
-    "generated_at": "2026-07-14T09:58:38.673Z",
+    "boundary": "display-only audit panel; excluded from Bubble Watch core/shadow indicator scoring, verdict, decision, execution, and position logic",
+    "as_of_date": "2026-07-14",
+    "generated_at": "2026-07-15T02:32:41.619Z",
     "status": "yellow",
     "label": "升温观察",
     "heat_score": 20,
@@ -1967,7 +2047,7 @@
       "benchmark": "QQQ",
       "betaBenchmark": "SPY",
       "observationCount": 251,
-      "latestDate": "2026-07-13",
+      "latestDate": "2026-07-14",
       "failedSymbols": []
     },
     "source_priority": [
@@ -2002,13 +2082,13 @@
         "name_en": "AI Basket 21D vs QQQ",
         "threshold_text": ">+8pct 红 / +3~+8 黄 / <+3 绿",
         "status": "green",
-        "value_display": "+1.3pct",
-        "note": "等权 AI 篮子近 21 个交易日回报 +3.9%,QQQ +2.6%,相对超额 +1.3pct。该项只衡量公开市场短线追价热度,不进入红灯主分。",
+        "value_display": "+2.4pct",
+        "note": "等权 AI 篮子近 21 个交易日回报 +2.8%,QQQ +0.4%,相对超额 +2.4pct。该项只衡量公开市场短线追价热度,不进入红灯主分。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "basket21": 3.944489431660144,
-          "qqq21": 2.6020250730791488,
-          "excess21": 1.3424643585809952
+          "basket21": 2.8043937212105496,
+          "qqq21": 0.3611706371463681,
+          "excess21": 2.4432230840641815
         }
       },
       {
@@ -2017,11 +2097,11 @@
         "name_en": "Equal-Weight Basket RSI",
         "threshold_text": "≥75 红 / 65-75 黄 / <65 绿",
         "status": "green",
-        "value_display": "47",
-        "note": "按等权 AI 篮子日线合成价计算 14 日 RSI=47.1。RSI 反映短线超买温度,不能替代估值或基本面判断。",
+        "value_display": "56",
+        "note": "按等权 AI 篮子日线合成价计算 14 日 RSI=56.3。RSI 反映短线超买温度,不能替代估值或基本面判断。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "rsi": 47.077637449732656,
+          "rsi": 56.330394534813166,
           "period": 14
         }
       },
@@ -2031,11 +2111,11 @@
         "name_en": "Bollinger %B",
         "threshold_text": "≥1.05 红 / 0.85-1.05 黄 / <0.85 绿",
         "status": "green",
-        "value_display": "0.48",
-        "note": "20 日 Bollinger %B=0.48;%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。",
+        "value_display": "0.65",
+        "note": "20 日 Bollinger %B=0.65;%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "pctB": 0.4780529517148824,
+          "pctB": 0.6461027193795633,
           "window": 20,
           "bandStdDev": 2
         }
@@ -2046,11 +2126,11 @@
         "name_en": "Distance from 200D SMA",
         "threshold_text": ">25% 红 / 10-25% 黄 / <10% 绿",
         "status": "yellow",
-        "value_display": "+15.5%",
-        "note": "等权 AI 篮子较 200 日均线偏离 +15.5%。该项捕捉趋势拥挤,不判断企业现金流兑现。",
+        "value_display": "+16.4%",
+        "note": "等权 AI 篮子较 200 日均线偏离 +16.4%。该项捕捉趋势拥挤,不判断企业现金流兑现。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "sma200Deviation": 15.507556503415618,
+          "sma200Deviation": 16.432804313321892,
           "window": 200
         }
       },
@@ -2060,12 +2140,12 @@
         "name_en": "60D Correlation / Beta",
         "threshold_text": "ρ≥0.75且β≥1.35 红 / ρ≥0.55或β≥1.15 黄 / 其余绿",
         "status": "yellow",
-        "value_display": "ρ 0.25 / β 2.32",
-        "note": "最近 60 个交易日 AI 篮子平均两两相关性 ρ=0.25,相对 SPY beta=2.32。相关性和 beta 同升时,代表主题交易更容易同涨同跌。",
+        "value_display": "ρ 0.25 / β 2.29",
+        "note": "最近 60 个交易日 AI 篮子平均两两相关性 ρ=0.25,相对 SPY beta=2.29。相关性和 beta 同升时,代表主题交易更容易同涨同跌。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "avgCorrelation": 0.2523301901878977,
-          "beta": 2.316725726470846,
+          "avgCorrelation": 0.2504906392935714,
+          "beta": 2.2869508682513606,
           "window": 60,
           "pairCount": 28
         }
@@ -2074,60 +2154,40 @@
   },
   "history_seed": [
     {
-      "week": "05-24",
-      "red_pct": 21.7,
-      "risk_score": 34.8
-    },
-    {
-      "week": "05-29",
-      "red_pct": 21.7,
-      "risk_score": 37
-    },
-    {
-      "week": "05-31",
-      "red_pct": 21.7,
-      "risk_score": 39.1
-    },
-    {
-      "week": "06-07",
-      "red_pct": 21.7,
-      "risk_score": 39.1
-    },
-    {
-      "week": "06-11",
-      "red_pct": 21.7,
-      "risk_score": 37
-    },
-    {
       "week": "06-18",
-      "red_pct": 16.7,
-      "risk_score": 35.4
+      "red_pct": 17.4,
+      "risk_score": 37,
+      "model_version": "bubble-watch-v2-core23-shadow4"
     },
     {
       "week": "06-22",
-      "red_pct": 20.8,
-      "risk_score": 41.7
+      "red_pct": 21.7,
+      "risk_score": 43.5,
+      "model_version": "bubble-watch-v2-core23-shadow4"
     },
     {
       "week": "06-30",
-      "red_pct": 29.2,
-      "risk_score": 39.6
+      "red_pct": 30.4,
+      "risk_score": 41.3,
+      "model_version": "bubble-watch-v2-core23-shadow4"
     },
     {
       "week": "07-06",
-      "red_pct": 25,
-      "risk_score": 37.5
+      "red_pct": 26.1,
+      "risk_score": 39.1,
+      "model_version": "bubble-watch-v2-core23-shadow4"
     },
     {
-      "week": "07-14",
-      "red_pct": 22.2,
-      "risk_score": 33.3
+      "week": "07-15",
+      "red_pct": 26.1,
+      "risk_score": 39.1,
+      "model_version": "bubble-watch-v2-core23-shadow4"
     }
   ],
   "wow_changes": [
     {
       "type": "flat",
-      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 -10.3%(4/4)、126日 -16.7%(4/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿 价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。"
+      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +71.0%;Yahoo 多窗口相对 QQQ:21日 +4.1%(0/4 跑输>5pct)、63日 -11.7%(3/4)、126日 -17.1%(4/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿 价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。"
     },
     {
       "type": "flat",
@@ -2139,11 +2199,11 @@
     },
     {
       "type": "flat",
-      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 20.4x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿"
+      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 21.3x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿"
     },
     {
       "type": "flat",
-      "note": "Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 65.0%(Mon,Jul 13th,2026);该源为 S&P 500 50 日均线广度直接指数。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
+      "note": "Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 63.2%(Tue,Jul 14th,2026);该源为 S&P 500 50 日均线广度直接指数。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
     }
   ],
   "meta": {
@@ -2164,7 +2224,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 14,
           "syncedFromUpstream": true
         }
@@ -2177,7 +2237,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -2190,7 +2250,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 120,
           "syncedFromUpstream": true
         }
@@ -2203,7 +2263,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -2219,7 +2279,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 14,
           "syncedFromUpstream": true
         }
@@ -2232,7 +2292,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }
@@ -2245,7 +2305,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 120,
           "syncedFromUpstream": true
         }
@@ -2258,7 +2318,7 @@
         "displayAnchor": {
           "source": "local_curated_snapshot",
           "asOfDate": "2026-07-12",
-          "ageDays": 2,
+          "ageDays": 3,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
         }

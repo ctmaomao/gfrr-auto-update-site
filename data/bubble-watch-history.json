@@ -1,6 +1,6 @@
 {
-  "contractVersion": "bubble-watch-v1",
-  "note": "AI 泡沫监测周度历史。前 10 个点种子来自上游 ai-bubble-monitor Issue 001-009 公开 latest.json(2026-06-07 抓取);statuses 仅最近一期可得,用于 WoW 翻灯比对。本文件由 scripts/build-bubble-watch.mjs 维护,请勿手改。",
+  "contractVersion": "bubble-watch-history-v2",
+  "note": "AI 泡沫监测周度历史。2026-07-15 起采用 Bubble Watch v2 Core-23 + Shadow-4;旧 red_pct/risk_score 保留原发布口径,core_* 字段为固定 Core-23 可比回放。history_seed 只使用可完整回放 Core-23 的周次。本文件由 scripts/build-bubble-watch.mjs 维护,请勿手改。",
   "entries": [
     {
       "date": "2026-04-12",
@@ -169,7 +169,12 @@
         "fed_policy": "yellow",
         "capex_reaction": "yellow",
         "ceo_hedging": "yellow"
-      }
+      },
+      "scoring_model_version": "bubble-watch-v2-core23-shadow4",
+      "core_red_pct": 17.4,
+      "core_risk_score": 37,
+      "core_stage_score": 60,
+      "core_trigger_score": 19.2
     },
     {
       "date": "2026-06-22",
@@ -202,7 +207,12 @@
         "fed_policy": "yellow",
         "capex_reaction": "yellow",
         "ceo_hedging": "yellow"
-      }
+      },
+      "scoring_model_version": "bubble-watch-v2-core23-shadow4",
+      "core_red_pct": 21.7,
+      "core_risk_score": 43.5,
+      "core_stage_score": 60,
+      "core_trigger_score": 30.8
     },
     {
       "date": "2026-06-30",
@@ -235,7 +245,12 @@
         "fed_policy": "red",
         "capex_reaction": "red",
         "ceo_hedging": "yellow"
-      }
+      },
+      "scoring_model_version": "bubble-watch-v2-core23-shadow4",
+      "core_red_pct": 30.4,
+      "core_risk_score": 41.3,
+      "core_stage_score": 60,
+      "core_trigger_score": 26.9
     },
     {
       "date": "2026-07-06",
@@ -268,16 +283,26 @@
         "fed_policy": "red",
         "capex_reaction": "yellow",
         "ceo_hedging": "yellow"
-      }
+      },
+      "scoring_model_version": "bubble-watch-v2-core23-shadow4",
+      "core_red_pct": 26.1,
+      "core_risk_score": 39.1,
+      "core_stage_score": 60,
+      "core_trigger_score": 23.1
     },
     {
-      "date": "2026-07-14",
-      "week": "07-14",
+      "date": "2026-07-15",
+      "week": "07-15",
       "issue_number": 15,
-      "red_pct": 22.2,
-      "risk_score": 33.3,
+      "red_pct": 26.1,
+      "risk_score": 39.1,
+      "scoring_model_version": "bubble-watch-v2-core23-shadow4",
+      "core_red_pct": 26.1,
+      "core_risk_score": 39.1,
+      "display_red_pct": 22.2,
+      "display_risk_score": 33.3,
       "stage_score": 60,
-      "trigger_score": 17.6,
+      "trigger_score": 23.1,
       "statuses": {
         "cape": "red",
         "top5_weight": "red",
@@ -306,7 +331,9 @@
         "fed_policy": "red",
         "capex_reaction": "yellow",
         "ceo_hedging": "yellow"
-      }
+      },
+      "core_stage_score": 60,
+      "core_trigger_score": 23.1
     }
   ]
 }
