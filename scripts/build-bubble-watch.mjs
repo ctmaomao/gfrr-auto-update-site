@@ -1,12 +1,13 @@
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
-// 27 项指标 × 6 分类:12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
+// 27 项展示指标 × 6 分类:固定 Core-23 计分 + Shadow-4 观察。12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
 // StockAnalysis metrics / multpl / slickcharts / SEC EDGAR Form 4),15 项编辑/研究类指标
 // 读 config/bubble-watch-curated.json 人工口径。所有自动指标 fail-closed:
 // 抓取失败沿用 curated 快照并按 maxAgeDays 标 STALE,绝不造数。
 //
-// 打分逻辑(复刻原 The Bubble Watch 页):
-//   primary score = red_pct = 红灯数 / total;weighted = (红×1.0 + 黄×0.5) / total
+// 打分逻辑(Bubble Watch v2 校准):
+//   primary score = red_pct = Core-23 红灯数 / 23;weighted = Core-23 (红×1.0 + 黄×0.5) / 23
+//   Shadow-4 全部展示,但不进入主分、两轴、分类共振、动量或历史相似度
 //   分档只使用 red_pct:<25% 观察期 / 25-40% 中度警戒 / 40-60% 高风险预警 / ≥60% 系统性顶部
 //   分类强制升级:≥2 个分类红灯占比 ≥50% → 判读至少上调到「高风险预警」
 //
@@ -54,7 +55,39 @@ const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
 const AXIS_SCORE = { green: 0, yellow: 50, red: 100 };
-const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
+const BUBBLE_WATCH_CONTRACT_VERSION = 'bubble-watch-v2';
+const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = 'bubble-watch-history-v2';
+const SCORING_MODEL_VERSION = 'bubble-watch-v2-core23-shadow4';
+const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v2';
+const CORE_INDICATOR_IDS = [
+  'cape', 'top5_weight', 'nvda_fpe',
+  'hyperscaler_capex_yoy', 'mag4_fcf_yoy', 'vc_ai_share', 'nvda_invest_revenue',
+  'breadth_50d', 'spy_vs_rsp_6m', 'insider_sell_buy', 'ai_ipo_pipeline',
+  'hy_oas', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
+  'token_volume_mom', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth',
+  'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
+];
+const SHADOW_INDICATOR_IDS = [
+  'private_secondary_marks', 'token_revenue_ratio', 'gpu_rental_price', 'frontier_progress'
+];
+const CORE_INDICATOR_ID_SET = new Set(CORE_INDICATOR_IDS);
+const SHADOW_INDICATOR_ID_SET = new Set(SHADOW_INDICATOR_IDS);
+const SHADOW_PROMOTION_POLICY = {
+  automatic_promotion: false,
+  separate_review_required: true,
+  minimum_observation_weeks: 52,
+  minimum_fresh_availability_pct: 90,
+  required_reviews: [
+    'historical_proxy_or_backfill',
+    'non_redundancy_ablation',
+    'out_of_sample_target_improvement',
+    'separate_contract_migration'
+  ],
+  forecast_targets: {
+    stage: '12-24 month valuation or relative-return unwind',
+    trigger: '13/26-week NDX or fixed AI-basket max drawdown >=20%'
+  }
+};
 const GDELT_BUBBLE_CACHE_SCHEMA_VERSION = 'gdelt-bubble-watch-cache-p38';
 const GDELT_BUBBLE_CACHE_MODULE = 'gdelt-bubble-watch-cache';
 const GDELT_BUBBLE_CACHE_TTL_HOURS = 132;
@@ -2650,7 +2683,7 @@ async function fetchCapexReactionFromPublicProxy() {
   };
 }
 
-// ---------- 公开市场技术热度审计面板(display-only,不进 27 项主分数) ----------
+// ---------- 公开市场技术热度审计面板(display-only,不进 Bubble Watch v2 计分) ----------
 
 function mean(values) {
   const nums = values.filter(Number.isFinite);
@@ -2915,7 +2948,7 @@ async function buildMarketTechnicalHeatPanel() {
 
   return {
     contractVersion: 'bubble-watch-market-technical-heat-v1',
-    boundary: 'display-only audit panel; excluded from 27-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
+    boundary: 'display-only audit panel; excluded from Bubble Watch core/shadow indicator scoring, verdict, decision, execution, and position logic',
     as_of_date: latestDate,
     generated_at: new Date().toISOString(),
     status,
@@ -2960,7 +2993,7 @@ async function buildMarketTechnicalHeatPanel() {
 function buildUnavailableMarketTechnicalHeatPanel(error) {
   return {
     contractVersion: 'bubble-watch-market-technical-heat-v1',
-    boundary: 'display-only audit panel; excluded from 27-indicator red/yellow/green primary score, scoring, decision, execution, and position logic',
+    boundary: 'display-only audit panel; excluded from Bubble Watch core/shadow indicator scoring, verdict, decision, execution, and position logic',
     as_of_date: isoDate(),
     generated_at: new Date().toISOString(),
     status: 'unavailable',
@@ -4096,8 +4129,12 @@ function buildFallbackIndicator(def, entry, today, reason) {
 }
 
 function baseIndicator(def) {
+  if (!CORE_INDICATOR_ID_SET.has(def.id) && !SHADOW_INDICATOR_ID_SET.has(def.id)) {
+    throw new Error(`指标 ${def.id} 未登记 Bubble Watch v2 score_role`);
+  }
   return {
     id: def.id,
+    score_role: CORE_INDICATOR_ID_SET.has(def.id) ? 'core' : 'shadow',
     axis: def.axis,
     category: def.category,
     name_en: def.name_en,
@@ -4441,8 +4478,9 @@ const HISTORICAL_PERIODS = [
   { period: '2021-11', label_zh: '成长股/SPAC 顶', label_en: 'Growth/SPAC top' }
 ];
 
-// ponytail: Keep local-only spy_vs_rsp_6m/token_revenue_ratio outside the
-// reference match denominator until they have a reviewed historical analogue.
+// ponytail: Similarity uses only Core-23 rows with a reviewed historical analogue.
+// spy_vs_rsp_6m remains core-scored but stays outside similarity until reviewed;
+// Shadow-4 rows are naturally absent from the current-status map passed here.
 const HISTORICAL_CALIBRATION_ROWS = {
   cape: ['red', 'red', 'yellow', 'red'],
   top5_weight: ['yellow', 'red', 'green', 'yellow'],
@@ -4514,8 +4552,28 @@ function computeSimilarity(indicators) {
       const distance = Math.abs(STATUS_RANK[status] - STATUS_RANK[historical]);
       matched += distance === 0 ? 1 : distance === 1 ? 0.5 : 0;
     }
-    return { ...period, match_pct: Math.round((matched / denominator) * 100) };
+    return {
+      ...period,
+      match_pct: Math.round((matched / denominator) * 100),
+      denominator,
+      basis: 'core_calibrated_indicators_only'
+    };
   }).sort((a, b) => b.match_pct - a.match_pct);
+}
+
+function replayCoreHistoryEntry(entry) {
+  if (!entry?.statuses || !CORE_INDICATOR_IDS.every((id) => ['red', 'yellow', 'green'].includes(entry.statuses[id]))) return null;
+  const items = INDICATOR_DEFS
+    .filter((def) => CORE_INDICATOR_ID_SET.has(def.id))
+    .map((def) => ({ ...def, status: entry.statuses[def.id] }));
+  const red = items.filter((item) => item.status === 'red').length;
+  const yellow = items.filter((item) => item.status === 'yellow').length;
+  return {
+    core_red_pct: Number(((red / items.length) * 100).toFixed(1)),
+    core_risk_score: Number((((red + 0.5 * yellow) / items.length) * 100).toFixed(1)),
+    core_stage_score: meanStatusScore(items.filter((item) => item.axis === 'stage')),
+    core_trigger_score: meanStatusScore(items.filter((item) => item.axis === 'trigger'))
+  };
 }
 
 function shortenText(text, maxChars) {
@@ -4635,6 +4693,8 @@ function buildEvidenceHighlights(byId, flips) {
 
 function buildBubbleNarrativePlan({
   indicators,
+  displayIndicators,
+  displayCounts,
   red,
   yellow,
   green,
@@ -4669,7 +4729,7 @@ function buildBubbleNarrativePlan({
     key: 'scorecard',
     role: 'lead',
     sourceIndicators: [],
-    summaryZh: `本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿，${scoreParts.join('，')}。${flipText}；两轴判读为泡沫成熟度 ${stageScore.toFixed(1)}（${stageLabel.zh}）、破裂临近度 ${triggerScore.toFixed(1)}（${triggerLabel.zh}）；基础判读落在「${TIER_LABEL_ZH[baseTier]}」，有效判读为「${TIER_LABEL_ZH[effTier]}」。`
+    summaryZh: `固定核心 23 项本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿，${scoreParts.join('，')}。27 张展示卡合计 ${displayCounts.red} 红 / ${displayCounts.yellow} 黄 / ${displayCounts.green} 绿，其中 4 项为影子观察、不进入判读。${flipText}；两轴判读为泡沫成熟度 ${stageScore.toFixed(1)}（${stageLabel.zh}）、破裂临近度 ${triggerScore.toFixed(1)}（${triggerLabel.zh}）；基础判读落在「${TIER_LABEL_ZH[baseTier]}」，有效判读为「${TIER_LABEL_ZH[effTier]}」。`
   });
 
   const breadth = byId.get('breadth_50d');
@@ -4742,12 +4802,13 @@ function buildBubbleNarrativePlan({
       : `因此，本期未出现双类红灯共振: ${resonantText}。红灯为 ${redNames || '无'}；有效判读保持「${TIER_LABEL_ZH[effTier]}」。`
   });
 
-  const staleCount = indicators.filter((i) => i.stale).length;
-  const proxyCalibrationCount = indicators.filter((i) => i.provenance?.detail?.proxyConfidenceCalibration?.applied).length;
+  const staleCount = displayIndicators.filter((i) => i.stale).length;
+  const proxyCalibrationCount = displayIndicators.filter((i) => i.provenance?.detail?.proxyConfidenceCalibration?.applied).length;
   const limitations = [
     `${meta.autoCount} 项公开数据口径、${meta.curatedCount + meta.fallbackCount} 项研究口径。`,
     proxyCalibrationCount ? `${proxyCalibrationCount} 项新闻或调查口径采用多源确认,灯色按样本强度保守发布。` : '本期无需要额外置信度折扣的新闻或调查口径。',
-    `黄灯压力读数 ${weighted.toFixed(1)}% 仅用于趋势观察,不改变红灯比例阈值。`,
+    `黄灯压力读数 ${weighted.toFixed(1)}% 仅按固定核心 23 项计算并用于趋势观察,不改变红灯比例阈值。`,
+    'AI 私募二级市场标价、Token 增速/收入增速、GPU 租赁现货价、前沿模型能力进展为影子观察,不进入主分或升级规则。',
     staleCount ? `${staleCount} 项数据时效偏弱,相关叙事按低确定性处理。` : '当前无过期指标。',
     '历史页面仅用于周度结构对照；本期正文由当前指标重新生成。'
   ];
@@ -4772,27 +4833,38 @@ function buildVerdictDescFromNarrativePlan(plan, fallbackDesc) {
 
 function computeSummary(indicators, today, prevEntry, meta) {
   const total = indicators.length;
-  const red = indicators.filter((i) => i.status === 'red').length;
-  const yellow = indicators.filter((i) => i.status === 'yellow').length;
-  const green = total - red - yellow;
-  const redPct = Number(((red / total) * 100).toFixed(1));
-  const weighted = Number((((red + 0.5 * yellow) / total) * 100).toFixed(1));
-  const stageScore = meanStatusScore(indicators.filter((item) => item.axis === 'stage'));
-  const triggerScore = meanStatusScore(indicators.filter((item) => item.axis === 'trigger'));
+  const displayRed = indicators.filter((i) => i.status === 'red').length;
+  const displayYellow = indicators.filter((i) => i.status === 'yellow').length;
+  const displayGreen = total - displayRed - displayYellow;
+  const displayRedPct = Number(((displayRed / total) * 100).toFixed(1));
+  const displayWeighted = Number((((displayRed + 0.5 * displayYellow) / total) * 100).toFixed(1));
+  const coreIndicators = indicators.filter((item) => item.score_role === 'core');
+  const shadowIndicators = indicators.filter((item) => item.score_role === 'shadow');
+  if (coreIndicators.length !== CORE_INDICATOR_IDS.length || shadowIndicators.length !== SHADOW_INDICATOR_IDS.length) {
+    throw new Error(`Bubble Watch v2 score-role contract drift: core=${coreIndicators.length}, shadow=${shadowIndicators.length}`);
+  }
+  const scoringTotal = coreIndicators.length;
+  const red = coreIndicators.filter((i) => i.status === 'red').length;
+  const yellow = coreIndicators.filter((i) => i.status === 'yellow').length;
+  const green = scoringTotal - red - yellow;
+  const redPct = Number(((red / scoringTotal) * 100).toFixed(1));
+  const weighted = Number((((red + 0.5 * yellow) / scoringTotal) * 100).toFixed(1));
+  const stageScore = meanStatusScore(coreIndicators.filter((item) => item.axis === 'stage'));
+  const triggerScore = meanStatusScore(coreIndicators.filter((item) => item.axis === 'trigger'));
   const stageLabel = axisLabel('stage', stageScore);
   const triggerLabel = axisLabel('trigger', triggerScore);
   const categoryScores = Object.fromEntries(CATEGORY_ORDER.map((cat) => [
     cat.key,
-    meanStatusScore(indicators.filter((item) => item.category === cat.key))
+    meanStatusScore(coreIndicators.filter((item) => item.category === cat.key))
   ]));
-  const momentum = computeMomentum(indicators, prevEntry);
-  const similarity = computeSimilarity(indicators);
+  const momentum = computeMomentum(coreIndicators, prevEntry);
+  const similarity = computeSimilarity(coreIndicators);
 
   const baseTier = tierFromPct(redPct);
   // 分类强制升级:红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」
   const resonant = [];
   for (const cat of CATEGORY_ORDER) {
-    const items = indicators.filter((i) => i.category === cat.key);
+    const items = coreIndicators.filter((i) => i.category === cat.key);
     if (!items.length) continue;
     const r = items.filter((i) => i.status === 'red').length;
     if (r / items.length >= 0.5) resonant.push({ key: cat.key, zh: cat.zh, red: r, total: items.length });
@@ -4812,7 +4884,7 @@ function computeSummary(indicators, today, prevEntry, meta) {
   // WoW 翻灯
   const flips = [];
   if (prevEntry?.statuses) {
-    for (const ind of indicators) {
+    for (const ind of coreIndicators) {
       const prev = prevEntry.statuses[ind.id];
       if (prev && prev !== ind.status) {
         flips.push({ id: ind.id, name_zh: ind.name_zh, from: prev, to: ind.status, up: STATUS_RANK[ind.status] > STATUS_RANK[prev], ind });
@@ -4820,13 +4892,13 @@ function computeSummary(indicators, today, prevEntry, meta) {
     }
   }
 
-  const redNames = indicators.filter((i) => i.status === 'red').map((i) => `${i.name_zh}(${i.value_display})`);
+  const redNames = coreIndicators.filter((i) => i.status === 'red').map((i) => `${i.name_zh}(${i.value_display})`);
   const staleCount = indicators.filter((i) => i.stale).length;
   const autoCount = meta.autoCount;
   const curatedCount = meta.curatedCount + meta.fallbackCount;
 
   const parts = [];
-  parts.push(`本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿${prevEntry?.statuses ? (flips.length ? '' : ',与上期持平') : ''},红灯比例 ${redPct.toFixed(1)}%。`);
+  parts.push(`固定核心 23 项本周计数 ${red} 红 / ${yellow} 黄 / ${green} 绿${prevEntry?.statuses ? (flips.length ? '' : ',与上期持平') : ''},红灯比例 ${redPct.toFixed(1)}%;27 张展示卡合计 ${displayRed} 红 / ${displayYellow} 黄 / ${displayGreen} 绿,其中 4 项为影子观察。`);
   if (flips.length) {
     parts.push(`本期翻灯 ${flips.length} 项:${flips.map((f) => `「${f.name_zh}」${STATUS_ZH[f.from]}→${STATUS_ZH[f.to]}`).join('、')}。`);
   } else if (prevEntry?.statuses) {
@@ -4844,7 +4916,9 @@ function computeSummary(indicators, today, prevEntry, meta) {
   parts.push(`数据覆盖截至 ${today}:${autoCount} 项公开数据口径、${curatedCount} 项研究口径${staleCount ? `(其中 ${staleCount} 项时效偏弱)` : ''};事件类叙事以最近一期可确认材料为准。`);
   const templateVerdictDesc = parts.join('');
   const narrativePlan = buildBubbleNarrativePlan({
-    indicators,
+    indicators: coreIndicators,
+    displayIndicators: indicators,
+    displayCounts: { red: displayRed, yellow: displayYellow, green: displayGreen },
     red,
     yellow,
     green,
@@ -4867,11 +4941,17 @@ function computeSummary(indicators, today, prevEntry, meta) {
   return {
     summary: {
       total_indicators: total,
-      red_count: red,
-      yellow_count: yellow,
-      green_count: green,
+      red_count: displayRed,
+      yellow_count: displayYellow,
+      green_count: displayGreen,
+      display_red_pct: displayRedPct,
+      display_weighted_risk_score: displayWeighted,
+      scoring_total_indicators: scoringTotal,
+      scoring_red_count: red,
+      scoring_yellow_count: yellow,
+      scoring_green_count: green,
       primary_score_pct: redPct,
-      primary_score_basis: 'red_light_ratio',
+      primary_score_basis: 'core_red_light_ratio',
       red_pct: redPct,
       weighted_risk_score: weighted,
       stage_score: stageScore,
@@ -4890,10 +4970,16 @@ function computeSummary(indicators, today, prevEntry, meta) {
       narrative_plan: narrativePlan
     },
     scoring: {
+      model_version: SCORING_MODEL_VERSION,
+      primary_universe: 'core',
+      core_indicator_ids: CORE_INDICATOR_IDS,
+      shadow_indicator_ids: SHADOW_INDICATOR_IDS,
+      shadow_policy: 'display_only_no_score_impact',
+      shadow_promotion_policy: SHADOW_PROMOTION_POLICY,
       base_tier: baseTier,
       effective_tier: effTier,
       override_active: overrideActive,
-      override_rule: '双类红灯共振或 Stage × Trigger 共振可升级判读;主分仍为红灯比例',
+      override_rule: '固定核心 23 项的双类红灯共振或 Stage × Trigger 共振可升级判读;主分仍为核心红灯比例',
       override_rules: {
         category_resonance: '红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」',
         two_axis_alert: 'stage ≥60 且 trigger ≥50 → 至少「高风险预警」',
@@ -5053,7 +5139,11 @@ async function main() {
   // 历史:同 ISO 周覆盖,新周追加 + issue 自增
   const publicIndicators = applyPublicIndicatorCopy(indicators);
   const entries = [...history.entries];
-  const prevForWow = [...entries].reverse().find((e) => e.statuses && isoWeekKey(e.date) !== isoWeekKey(today)) || null;
+  const prevRaw = [...entries].reverse().find((entry) => (
+    isoWeekKey(entry.date) !== isoWeekKey(today) && replayCoreHistoryEntry(entry)
+  )) || null;
+  const prevReplay = replayCoreHistoryEntry(prevRaw);
+  const prevForWow = prevRaw ? { ...prevRaw, red_pct: prevReplay.core_red_pct, risk_score: prevReplay.core_risk_score } : null;
   const meta = { autoCount, curatedCount, fallbackCount, hybridCount };
   const { summary, scoring, flips } = computeSummary(publicIndicators, today, prevForWow, meta);
   let marketTechnicalHeat = null;
@@ -5073,6 +5163,11 @@ async function main() {
     issue_number: issueNumber,
     red_pct: summary.red_pct,
     risk_score: summary.weighted_risk_score,
+    scoring_model_version: SCORING_MODEL_VERSION,
+    core_red_pct: summary.red_pct,
+    core_risk_score: summary.weighted_risk_score,
+    display_red_pct: summary.display_red_pct,
+    display_risk_score: summary.display_weighted_risk_score,
     stage_score: summary.stage_score,
     trigger_score: summary.trigger_score,
     statuses: Object.fromEntries(publicIndicators.map((i) => [i.id, i.status]))
@@ -5080,6 +5175,15 @@ async function main() {
   if (sameWeekIdx >= 0) entries[sameWeekIdx] = newEntry;
   else entries.push(newEntry);
   while (entries.length > 16) entries.shift();
+  const normalizedEntries = entries.map((entry) => {
+    const replay = replayCoreHistoryEntry(entry);
+    return replay ? { ...entry, scoring_model_version: SCORING_MODEL_VERSION, ...replay } : entry;
+  });
+  const comparableHistory = normalizedEntries.filter((entry) => (
+    entry.scoring_model_version === SCORING_MODEL_VERSION
+    && Number.isFinite(entry.core_red_pct)
+    && Number.isFinite(entry.core_risk_score)
+  ));
 
   const proxyConfidenceCalibrations = publicIndicators
     .map((ind) => {
@@ -5097,7 +5201,7 @@ async function main() {
     .filter(Boolean);
 
   const output = {
-    contractVersion: 'bubble-watch-v1',
+    contractVersion: BUBBLE_WATCH_CONTRACT_VERSION,
     issue_number: issueNumber,
     as_of_date: today,
     generated_at: new Date().toISOString(),
@@ -5105,7 +5209,12 @@ async function main() {
     scoring,
     indicators: publicIndicators.map(({ ...ind }) => ind),
     market_technical_heat: marketTechnicalHeat,
-    history_seed: entries.slice(-10).map((e) => ({ week: e.week, red_pct: e.red_pct, risk_score: e.risk_score })),
+    history_seed: comparableHistory.slice(-10).map((entry) => ({
+      week: entry.week,
+      red_pct: entry.core_red_pct,
+      risk_score: entry.core_risk_score,
+      model_version: SCORING_MODEL_VERSION
+    })),
     wow_changes: buildWowChanges(flips, publicIndicators),
     meta: {
       builder: 'scripts/build-bubble-watch.mjs',
@@ -5140,8 +5249,13 @@ async function main() {
   };
 
   fs.writeFileSync(OUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
-  fs.writeFileSync(HISTORY_PATH, `${JSON.stringify({ ...history, entries }, null, 2)}\n`);
-  console.log(`[bubble-watch] OK — issue ${issueNumber}, ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, red_pct ${summary.red_pct}%, stage ${summary.stage_score}, trigger ${summary.trigger_score}, verdict ${summary.verdict_label}${scoring.override_active ? '(综合升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
+  fs.writeFileSync(HISTORY_PATH, `${JSON.stringify({
+    ...history,
+    contractVersion: BUBBLE_WATCH_HISTORY_CONTRACT_VERSION,
+    note: 'AI 泡沫监测周度历史。2026-07-15 起采用 Bubble Watch v2 Core-23 + Shadow-4;旧 red_pct/risk_score 保留原发布口径,core_* 字段为固定 Core-23 可比回放。history_seed 只使用可完整回放 Core-23 的周次。本文件由 scripts/build-bubble-watch.mjs 维护,请勿手改。',
+    entries: normalizedEntries
+  }, null, 2)}\n`);
+  console.log(`[bubble-watch] OK — issue ${issueNumber}, core ${summary.scoring_red_count}红/${summary.scoring_yellow_count}黄/${summary.scoring_green_count}绿, display ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, primary ${summary.red_pct}%, stage ${summary.stage_score}, trigger ${summary.trigger_score}, verdict ${summary.verdict_label}${scoring.override_active ? '(综合升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
 }
 
 main().catch((error) => {

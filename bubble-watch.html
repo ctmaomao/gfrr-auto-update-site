@@ -123,13 +123,15 @@
   article.indicator .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 4px; }
   article.indicator .name-en { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); }
   article.indicator .name-zh { font-family: "Noto Serif SC", serif; font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .score-role { display: inline-block; margin-top: 7px; padding: 2px 6px; border: 1px solid var(--ink); font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--ink); }
+  .score-role.shadow { border-style: dashed; color: var(--muted); border-color: var(--soft-line); }
   .badge { font-family: "IBM Plex Mono", monospace; font-size: 10px; padding: 4px 8px; letter-spacing: 0.1em; font-weight: 600; white-space: nowrap; color: var(--bg); }
   .badge.red { background: var(--red); }
   .badge.yellow { background: var(--yellow); }
   .badge.green { background: var(--green); }
   article.indicator .number { font-family: "Playfair Display", serif; font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
   article.indicator .number .unit { font-size: 0.5em; font-weight: 400; margin-left: 2px; }
-  article.indicator .note { font-family: "Noto Serif SC", serif; font-size: 13px; color: var(--warm); line-height: 1.55; font-style: italic; }
+  article.indicator .note { font-family: "Noto Serif SC", serif; font-size: 13px; color: var(--warm); line-height: 1.55; font-style: italic; overflow-wrap: anywhere; }
   article.indicator .meta { border-top: 1px dashed var(--soft-line); padding-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
   article.indicator.stale::after { content: "STALE"; position: absolute; top: 8px; right: 8px; font-family: "IBM Plex Mono", monospace; font-size: 9px; padding: 2px 5px; background: #ddd; color: #555; letter-spacing: 0.1em; }
   .carry-tag { background: var(--canvas); color: var(--yellow); padding: 1px 4px; font-weight: 600; }
@@ -142,7 +144,7 @@
   .wow-item .tag.up { color: var(--yellow); }
   .wow-item .tag.down { color: #7DB37C; }
   .wow-item .tag.flat { color: var(--soft-line); }
-  .wow-item .text { font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.6; }
+  .wow-item .text { font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 
   /* Public market technical heat audit */
   section.market-technical-heat { margin-bottom: 40px; }
@@ -239,8 +241,8 @@
 </div>
 
 <script>
-// 渲染逻辑 1:1 移植自原 The Bubble Watch 静态页;数据源换为本仓库自动管线
-// 产出的 data/bubble-watch.json(同 schema);趋势图以手写 SVG 替代 Chart.js(零依赖)。
+// Editorial layout follows The Bubble Watch;data comes from this repo's weekly pipeline.
+// Bubble Watch v2 renders 27 cards while scoring only the frozen Core-23;trend uses comparable Core-23 replays.
 const CATEGORY_ORDER = [
   { key: 'valuation',        zh: '估值',     en: 'VALUATION' },
   { key: 'capital',          zh: '资金面',    en: 'CAPITAL' },
@@ -342,6 +344,8 @@ function render(data) {
   lastData = data;
   const s = data.summary;
   const indicators = data.indicators;
+  const coreCount = s.scoring_total_indicators ?? indicators.filter(item => item.score_role === 'core').length;
+  const shadowCount = indicators.filter(item => item.score_role === 'shadow').length;
   const issueNo = String(data.issue_number).padStart(3, '0');
   const headlineColor = s.red_pct >= 60 ? '#E63946' : s.red_pct >= 40 ? '#E89B3C' : s.red_pct >= 25 ? '#F1C232' : 'var(--bg)';
 
@@ -358,28 +362,29 @@ function render(data) {
     <header class="masthead">
       <div class="masthead-row">
         <div>
-          <div class="kicker">${s.total_indicators} 项指标 · 每周一更新</div>
+          <div class="kicker">${s.total_indicators} 张证据卡 · ${coreCount} 项固定核心 · 每周一更新</div>
           <h1 class="title">AI 泡沫监测<br/><em>The Bubble Watch</em></h1>
         </div>
         <div class="issue-meta">
           <div>ISSUE NO. ${issueNo}</div>
           <div>${escapeHtml(data.as_of_date)}</div>
-          <div class="small">${s.total_indicators} INDICATORS · 6 CATEGORIES</div>
+          <div class="small">CORE-${coreCount} · SHADOW-${shadowCount} · 6 CATEGORIES</div>
         </div>
       </div>
     </header>
 
     <section class="headline">
       <div class="big-number">
-        <div class="label">风险温度 · RED LIGHT RATIO</div>
+        <div class="label">风险温度 · CORE RED LIGHT RATIO</div>
         <div>
           <div class="value" style="color:${headlineColor}">${s.red_pct.toFixed(1)}<sup>%</sup></div>
           <div class="breakdown">
-            ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿<br/>
+            固定核心: ${s.scoring_red_count} 红 / ${s.scoring_yellow_count} 黄 / ${s.scoring_green_count} 绿<br/>
+            全部展示: ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿 · ${shadowCount} 项影子观察<br/>
             阈值: 25% 黄 / 40% 橙 / 60% 红${overrideActive ? `<br/>原始档位 ${TIER_LABEL_ZH[baseTier]} · 综合判读 ${escapeHtml(s.verdict_label)}` : ''}
           </div>
         </div>
-        <div class="footer">PRIMARY SCORE: ${s.red_count} / ${s.total_indicators} RED = ${s.red_pct.toFixed(1)}%</div>
+        <div class="footer">PRIMARY SCORE: ${s.scoring_red_count} / CORE-${coreCount} RED = ${s.red_pct.toFixed(1)}%</div>
       </div>
       <div class="verdict">
         <div>
@@ -398,7 +403,7 @@ function render(data) {
     <section class="axes">
       <div class="axes-header">
         <h3>两轴判读 <em>· Stage × Trigger</em></h3>
-        <div class="now">泡沫成熟度 ${s.stage_score.toFixed(0)} · 破裂临近度 ${s.trigger_score.toFixed(0)}</div>
+        <div class="now">固定核心判读 · 泡沫成熟度 ${s.stage_score.toFixed(0)} · 破裂临近度 ${s.trigger_score.toFixed(0)}</div>
       </div>
       <div class="axes-grid">
         <div class="axis-block">
@@ -421,23 +426,23 @@ function render(data) {
             <div class="zone t-red" style="flex:35"><span class="zone-label">破裂进行中</span><span class="zone-pct">≥65</span></div>
             <div class="marker" style="left:${Math.min(Math.max(s.trigger_score, 0.5), 99.5)}%"></div>
           </div>
-          <div class="axis-desc">快变量：信用利差 · 市场广度 · 内部人 · 算力价格 · 私募标价——回答“引线是否点燃”</div>
+          <div class="axis-desc">快变量：信用利差 · 市场广度 · 内部人 · 收入动量 · 宏观政策——回答“引线是否点燃”</div>
         </div>
       </div>
       ${(s.similarity && s.similarity.length) ? `
       <div class="similarity-row">
-        <span class="sim-label">历史相似度</span>
+        <span class="sim-label">核心历史相似度</span>
         ${s.similarity.map((x, i) => `<span class="sim-chip${i === 0 ? ' top' : ''}">${escapeHtml(x.period)} ${escapeHtml(x.label_zh)} <b>${x.match_pct}%</b></span>`).join('')}
       </div>` : ''}
-      ${s.momentum ? `<div class="momentum-row">本周边际：<b class="worse">${s.momentum.deteriorated} 级恶化</b> · <b class="better">${s.momentum.improved} 级好转</b>（净 ${s.momentum.net > 0 ? '+' : ''}${s.momentum.net}）</div>` : ''}
+      ${s.momentum ? `<div class="momentum-row">核心本周边际：<b class="worse">${s.momentum.deteriorated} 级恶化</b> · <b class="better">${s.momentum.improved} 级好转</b>（净 ${s.momentum.net > 0 ? '+' : ''}${s.momentum.net}）</div>` : ''}
     </section>` : ''}
 
     <section class="trend">
       <div class="trend-header">
-        <h3>红灯比例趋势 <em>· 8-Week Trend</em></h3>
+        <h3>核心红灯比例趋势 <em>· CORE-23 COMPARABLE</em></h3>
         <div class="trend-legend">
-          <span><span style="color:var(--red)">●</span> Red %</span>
-          <span><span style="color:var(--yellow)">●</span> Yellow-adjusted pressure</span>
+          <span><span style="color:var(--red)">●</span> Core Red %</span>
+          <span><span style="color:var(--yellow)">●</span> Core yellow-adjusted pressure</span>
           <span style="color:var(--muted)">阈值: 25 / 40 / 60</span>
         </div>
       </div>
@@ -449,6 +454,8 @@ function render(data) {
       if (!items.length) return '';
       const r = items.filter(i => i.status === 'red').length;
       const y = items.filter(i => i.status === 'yellow').length;
+      const categoryCore = items.filter(i => i.score_role === 'core').length;
+      const categoryShadow = items.length - categoryCore;
       return `
         <section class="category">
           <div class="category-header">
@@ -457,7 +464,7 @@ function render(data) {
               <span class="en">${cat.en}</span>
             </div>
             <div class="counts">
-              ${items.length} 个指标 · <span class="red">${r} 红</span> · <span class="yellow">${y} 黄</span>
+              ${items.length} 张 · ${categoryCore} 核心${categoryShadow ? ` + ${categoryShadow} 影子` : ''} · <span class="red">${r} 红</span> · <span class="yellow">${y} 黄</span>
             </div>
           </div>
           <div class="indicator-grid">
@@ -470,6 +477,7 @@ function render(data) {
                   <div>
                     <div class="name-en">${escapeHtml(ind.name_en)}</div>
                     <div class="name-zh">${escapeHtml(ind.name_zh)}</div>
+                    <div class="score-role ${ind.score_role === 'shadow' ? 'shadow' : 'core'}">${ind.score_role === 'shadow' ? '影子观察' : '固定核心'}</div>
                   </div>
                   ${statusBadge(ind.status)}
                 </div>
@@ -523,7 +531,7 @@ function render(data) {
       <div class="method-grid">
         <div>
           <h4>方法论</h4>
-          <div>${s.total_indicators} 个领先指标,分 ${CATEGORY_ORDER.length} 类。主分数仍为红灯比例;两轴把指标拆为 STAGE（泡沫成熟度,慢变量）与 TRIGGER（破裂临近度,快变量）,按红/黄/绿计 100/50/0 分后取轴内均值。双类红灯共振,或 stage≥60 且 trigger≥50,可升级综合判读;stage≥60 且 trigger≥65 对应系统性顶部信号。黄灯调整压力分仅用于趋势辅助。</div>
+          <div>${s.total_indicators} 张证据卡全部展示,其中固定核心 ${coreCount} 项等权计分、影子观察 ${shadowCount} 项暂不入分。主分数为核心红灯比例;STAGE（泡沫成熟度）与 TRIGGER（破裂临近度）、分类共振、周度动量和历史相似度也只使用固定核心。双类红灯共振,或 stage≥60 且 trigger≥50,可升级综合判读;stage≥60 且 trigger≥65 对应系统性顶部信号。黄灯调整压力分仅用于核心可比趋势。</div>
         </div>
         <div>
           <h4>历史对照</h4>
@@ -593,7 +601,7 @@ function drawTrend(data) {
 
   const tooltip = document.getElementById('trend-tooltip');
   wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="红灯比例与风险分趋势">
+    <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Core-23 红灯比例与黄灯调整压力趋势">
       ${grid}
       <path d="${smoothPath(ylwPts)}" fill="none" stroke="#A8761A" stroke-width="1.5" stroke-dasharray="3 3"/>
       <path d="${smoothPath(redPts)}" fill="none" stroke="#7C1D1D" stroke-width="2.5"/>
@@ -615,7 +623,7 @@ function drawTrend(data) {
     });
     const p = seed[best];
     tooltip.style.display = 'block';
-    tooltip.innerHTML = `${escapeHtml(p.week)}<br>Red % ${p.red_pct.toFixed(1)}<br>Risk ${p.risk_score.toFixed(1)}`;
+    tooltip.innerHTML = `${escapeHtml(p.week)}<br>Core Red % ${p.red_pct.toFixed(1)}<br>Core Pressure ${p.risk_score.toFixed(1)}`;
     const tx = Math.min(Math.max(x(best) / W * rect.width - 40, 0), rect.width - 110);
     tooltip.style.left = `${tx}px`;
     tooltip.style.top = `${Math.max(y(Math.max(p.red_pct, p.risk_score)) / H * rect.height - 64, 0)}px`;

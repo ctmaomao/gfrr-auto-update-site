@@ -223,7 +223,8 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 站点自 2026-06-11 起有两个独立页面(见 ADR-0016):
 
 - `index.html` — 全球金融风险雷达(本合约 §4.1-4.3 的 IA 锁定仅约束此页)。
-- `bubble-watch.html` — AI 泡沫监测 · The Bubble Watch,**独立单文件页**(内联 CSS + 内联渲染 JS,1:1 复刻外部原版的报纸排版),自带视觉契约,不受 §4.1 一级阅读顺序约束;数据只读 `data/bubble-watch.json`,display-only,不进雷达打分/决策链。
+- `bubble-watch.html` — AI 泡沫监测 · The Bubble Watch,**独立单文件页**(内联 CSS + 内联渲染 JS,沿用外部原版的报纸排版与本站 editorial paper 语言),自带视觉契约,不受 §4.1 一级阅读顺序约束;数据只读 `data/bubble-watch.json`,display-only,不进雷达打分/决策链。
+- Bubble Watch v2 必须全量展示 27 张证据卡,并以克制的 mono 小印章区分「固定核心」与「影子观察」;Hero、Stage × Trigger、历史趋势须明确标注 Core-23 口径。角色标签只能使用纸媒式细边框/虚线印章,不得改成彩色 SaaS pill、开关或独立 dashboard 面板。
 - 两页通过左上角 `.page-bookmarks` 彩色书签丝带互切:默认缩在角落只露带尾(当前页饱和度更高、带光环圆点),hover / 键盘聚焦滑出显示页名;纯 CSS、无 JS。组件契约**双侧同构**:`assets/styles.css`(index 侧)与 `bubble-watch.html` 内联(专题侧)各持一份,**改任一侧必须同步另一侧**,由 `check:bubble-watch` 的 boundary leaf 守卫两侧存在性。
 - 书签是 fixed overlay 导航,不属于 §4.1 的 section,不进 dashboard-jump-nav。
 

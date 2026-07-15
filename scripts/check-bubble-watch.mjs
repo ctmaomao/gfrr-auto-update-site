@@ -1,8 +1,8 @@
 // check-bubble-watch.mjs — AI 泡沫监测(Bubble Watch)契约检查
 //
 // leaf 检查:
-//   1. contract   — data/bubble-watch.json schema + 指标完整性 + 计数/打分一致
-//   2. scoring    — red_pct 分档 + 分类强制升级规则 replay,verdict 必须可复算
+//   1. contract   — data/bubble-watch.json schema + 27 展示 / Core-23 / Shadow-4 完整性
+//   2. scoring    — Core-23 red_pct 分档 + 分类强制升级规则 replay,Shadow-4 不得入分
 //   3. freshness  — as_of_date 不得超过 35 天(周更 + 缓冲)
 //   4. provenance — curated/auto_fallback 必带 asOfDate;stale 标记与 maxAgeDays 一致
 //   5. boundary   — display-only:主站 app.js / index.html 不读本数据;build 不碰
@@ -30,6 +30,18 @@ const EXPECTED_IDS = [
   'token_volume_mom', 'token_revenue_ratio', 'gpu_rental_price', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth', 'frontier_progress',
   'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
 ];
+const CORE_IDS = [
+  'cape', 'top5_weight', 'nvda_fpe',
+  'hyperscaler_capex_yoy', 'mag4_fcf_yoy', 'vc_ai_share', 'nvda_invest_revenue',
+  'breadth_50d', 'spy_vs_rsp_6m', 'insider_sell_buy', 'ai_ipo_pipeline',
+  'hy_oas', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
+  'token_volume_mom', 'arr_2nd_deriv', 'enterprise_deploy', 'cloud_rpo_growth',
+  'accounting_events', 'fed_policy', 'capex_reaction', 'ceo_hedging'
+];
+const SHADOW_IDS = ['private_secondary_marks', 'token_revenue_ratio', 'gpu_rental_price', 'frontier_progress'];
+const CORE_ID_SET = new Set(CORE_IDS);
+const SHADOW_ID_SET = new Set(SHADOW_IDS);
+const SCORING_MODEL_VERSION = 'bubble-watch-v2-core23-shadow4';
 const CURATED_ORIGIN_IDS = [
   'private_secondary_marks', 'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
   'token_volume_mom', 'token_revenue_ratio', 'gpu_rental_price', 'arr_2nd_deriv', 'enterprise_deploy', 'frontier_progress',
@@ -65,7 +77,7 @@ const TECHNICAL_HEAT_IDS = [
 ];
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
-const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v1';
+const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v2';
 const VISIBLE_COPY_FORBIDDEN_PATTERNS = [
   { re: /\blocal_proxy_confidence_v1\b/iu, label: 'local_proxy_confidence_v1' },
   { re: /\bprovenance\b/iu, label: 'provenance' },
@@ -91,7 +103,8 @@ const curatedConfig = JSON.parse(read('config/bubble-watch-curated.json'));
 const gdeltBubbleCache = JSON.parse(read('data/gdelt-bubble-watch-cache.json'));
 
 // ---- 1. contract ----
-check('contract', data.contractVersion === 'bubble-watch-v1', `contractVersion 异常: ${data.contractVersion}`);
+check('contract', data.contractVersion === 'bubble-watch-v2', `contractVersion 异常: ${data.contractVersion}`);
+check('contract', history.contractVersion === 'bubble-watch-history-v2', `history contractVersion 异常: ${history.contractVersion}`);
 check('contract', Number.isInteger(data.issue_number) && data.issue_number > 0, `issue_number 异常: ${data.issue_number}`);
 check('contract', /^\d{4}-\d{2}-\d{2}$/u.test(data.as_of_date || ''), `as_of_date 异常: ${data.as_of_date}`);
 check('contract', Array.isArray(data.indicators) && data.indicators.length === EXPECTED_IDS.length,
@@ -103,6 +116,8 @@ for (const ind of data.indicators || []) {
   check('contract', CATEGORIES.includes(ind.category), `${ind.id} category 非法: ${ind.category}`);
   check('contract', AXES.includes(ind.axis), `${ind.id} axis 非法: ${ind.axis}`);
   check('contract', STATUSES.includes(ind.status), `${ind.id} status 非法: ${ind.status}`);
+  const expectedRole = CORE_ID_SET.has(ind.id) ? 'core' : SHADOW_ID_SET.has(ind.id) ? 'shadow' : null;
+  check('contract', ind.score_role === expectedRole, `${ind.id} score_role ${ind.score_role} ≠ ${expectedRole}`);
   for (const field of ['name_en', 'name_zh', 'value_display', 'note', 'threshold_text', 'source_name']) {
     check('contract', typeof ind[field] === 'string' && ind[field].length > 0, `${ind.id} 缺 ${field}`);
   }
@@ -113,6 +128,10 @@ for (const ind of data.indicators || []) {
 check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === EXPECTED_IDS.length,
   `指标 id 集不等于预登记 ${EXPECTED_IDS.length} 项 (got ${ids.size})`);
 const indicatorById = Object.fromEntries((data.indicators || []).map((ind) => [ind.id, ind]));
+const coreIndicators = (data.indicators || []).filter((ind) => ind.score_role === 'core');
+const shadowIndicators = (data.indicators || []).filter((ind) => ind.score_role === 'shadow');
+check('contract', coreIndicators.length === CORE_IDS.length, `Core 指标数 ${coreIndicators.length} ≠ ${CORE_IDS.length}`);
+check('contract', shadowIndicators.length === SHADOW_IDS.length, `Shadow 指标数 ${shadowIndicators.length} ≠ ${SHADOW_IDS.length}`);
 
 check('contract', gdeltBubbleCache.schemaVersion === 'gdelt-bubble-watch-cache-p38',
   `GDELT Bubble cache schemaVersion 异常: ${gdeltBubbleCache.schemaVersion}`);
@@ -134,15 +153,25 @@ const s = data.summary || {};
 const red = (data.indicators || []).filter((i) => i.status === 'red').length;
 const yellow = (data.indicators || []).filter((i) => i.status === 'yellow').length;
 const green = (data.indicators || []).filter((i) => i.status === 'green').length;
+const coreRed = coreIndicators.filter((i) => i.status === 'red').length;
+const coreYellow = coreIndicators.filter((i) => i.status === 'yellow').length;
+const coreGreen = coreIndicators.filter((i) => i.status === 'green').length;
 check('contract', s.total_indicators === EXPECTED_IDS.length, `summary.total_indicators ${s.total_indicators}`);
 check('contract', s.red_count === red && s.yellow_count === yellow && s.green_count === green,
-  `summary 计数 ${s.red_count}/${s.yellow_count}/${s.green_count} ≠ 实算 ${red}/${yellow}/${green}`);
+  `summary 展示计数 ${s.red_count}/${s.yellow_count}/${s.green_count} ≠ 实算 ${red}/${yellow}/${green}`);
+check('contract', Math.abs(s.display_red_pct - (red / EXPECTED_IDS.length) * 100) < 0.06, `display_red_pct ${s.display_red_pct} 复算不符`);
+check('contract', Math.abs(s.display_weighted_risk_score - ((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100) < 0.06,
+  `display_weighted_risk_score ${s.display_weighted_risk_score} 复算不符`);
+check('contract', s.scoring_total_indicators === CORE_IDS.length, `summary.scoring_total_indicators ${s.scoring_total_indicators}`);
+check('contract', s.scoring_red_count === coreRed && s.scoring_yellow_count === coreYellow && s.scoring_green_count === coreGreen,
+  `summary 核心计数 ${s.scoring_red_count}/${s.scoring_yellow_count}/${s.scoring_green_count} ≠ 实算 ${coreRed}/${coreYellow}/${coreGreen}`);
 check('contract', s.primary_score_pct === s.red_pct, `primary_score_pct ${s.primary_score_pct} 必须等于 red_pct ${s.red_pct}`);
-check('contract', s.primary_score_basis === 'red_light_ratio', `primary_score_basis 异常: ${s.primary_score_basis}`);
-check('contract', Math.abs(s.red_pct - (red / EXPECTED_IDS.length) * 100) < 0.06, `red_pct ${s.red_pct} 复算不符`);
-check('contract', Math.abs(s.weighted_risk_score - ((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100) < 0.06, `weighted_risk_score ${s.weighted_risk_score} 复算不符`);
+check('contract', s.primary_score_basis === 'core_red_light_ratio', `primary_score_basis 异常: ${s.primary_score_basis}`);
+check('contract', Math.abs(s.red_pct - (coreRed / CORE_IDS.length) * 100) < 0.06, `red_pct ${s.red_pct} Core-23 复算不符`);
+check('contract', Math.abs(s.weighted_risk_score - ((coreRed + 0.5 * coreYellow) / CORE_IDS.length) * 100) < 0.06,
+  `weighted_risk_score ${s.weighted_risk_score} Core-23 复算不符`);
 function replayAxisScore(axis) {
-  const items = (data.indicators || []).filter((item) => item.axis === axis);
+  const items = coreIndicators.filter((item) => item.axis === axis);
   return Number((items.reduce((sum, item) => sum + STATUS_SCORE[item.status], 0) / items.length).toFixed(1));
 }
 function replayAxisLabel(axis, score) {
@@ -166,14 +195,14 @@ check('contract', Math.abs(s.trigger_score - replayTrigger) < 0.06, `trigger_sco
 check('contract', s.stage_label === stageLabelZh && s.stage_label_en === stageLabelEn, 'stage label 与区间不符');
 check('contract', s.trigger_label === triggerLabelZh && s.trigger_label_en === triggerLabelEn, 'trigger label 与区间不符');
 for (const category of CATEGORIES) {
-  const items = (data.indicators || []).filter((item) => item.category === category);
+  const items = coreIndicators.filter((item) => item.category === category);
   const replay = Number((items.reduce((sum, item) => sum + STATUS_SCORE[item.status], 0) / items.length).toFixed(1));
   check('contract', Math.abs(s.category_scores?.[category] - replay) < 0.06, `category_scores.${category} 复算不符`);
 }
 const previousComparable = [...(history.entries || [])].reverse().find((entry) => entry.date !== data.as_of_date && entry.statuses);
 let replayDeteriorated = 0;
 let replayImproved = 0;
-for (const item of data.indicators || []) {
+for (const item of coreIndicators) {
   const previous = previousComparable?.statuses?.[item.id];
   if (!previous || previous === item.status) continue;
   const delta = STATUSES.indexOf(previous) - STATUSES.indexOf(item.status);
@@ -184,7 +213,8 @@ check('contract', s.momentum?.deteriorated === replayDeteriorated && s.momentum?
   'summary.momentum 与历史状态迁移不符');
 check('contract', Array.isArray(s.similarity) && s.similarity.length === 4, 'summary.similarity 必须含 4 个历史时点');
 check('contract', new Set((s.similarity || []).map((item) => item.period)).size === 4
-  && (s.similarity || []).every((item) => Number.isInteger(item.match_pct) && item.match_pct >= 0 && item.match_pct <= 100),
+  && (s.similarity || []).every((item) => Number.isInteger(item.match_pct) && item.match_pct >= 0 && item.match_pct <= 100
+    && Number.isInteger(item.denominator) && item.denominator > 0 && item.basis === 'core_calibrated_indicators_only'),
   'summary.similarity period/match_pct 非法');
 const verdictDescBytes = Buffer.byteLength(String(s.verdict_desc || ''), 'utf8');
 check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >= 650, 'verdict_desc 过短/缺失研究员式判读');
@@ -230,8 +260,8 @@ for (const [index, item] of (data.wow_changes || []).entries()) {
 
 const technicalHeat = data.market_technical_heat || {};
 check('contract', technicalHeat.contractVersion === 'bubble-watch-market-technical-heat-v1', 'market_technical_heat contractVersion 缺失/异常');
-check('contract', String(technicalHeat.boundary || '').includes('display-only') && String(technicalHeat.boundary || '').includes('excluded from 27-indicator'),
-  'market_technical_heat 必须声明 display-only 且排除 27 项主分');
+check('contract', String(technicalHeat.boundary || '').includes('display-only') && String(technicalHeat.boundary || '').includes('excluded from Bubble Watch core/shadow indicator scoring'),
+  'market_technical_heat 必须声明 display-only 且排除 Bubble Watch v2 计分');
 check('contract', ['red', 'yellow', 'green', 'unavailable'].includes(technicalHeat.status), `market_technical_heat.status 非法:${technicalHeat.status}`);
 check('contract', typeof technicalHeat.summary === 'string' && technicalHeat.summary.length >= 40, 'market_technical_heat.summary 缺失/过短');
 check('contract', Array.isArray(technicalHeat.source_priority) && technicalHeat.source_priority.length >= 3, 'market_technical_heat.source_priority 不足');
@@ -411,7 +441,7 @@ function tierFromPct(p) {
 }
 const baseTier = tierFromPct(s.red_pct);
 const resonant = CATEGORIES.filter((cat) => {
-  const items = (data.indicators || []).filter((i) => i.category === cat);
+  const items = coreIndicators.filter((i) => i.category === cat);
   if (!items.length) return false;
   return items.filter((i) => i.status === 'red').length / items.length >= 0.5;
 });
@@ -429,6 +459,19 @@ check('scoring', s.verdict_label === TIER_LABEL_ZH[effTier], `verdict_label「${
 check('scoring', s.verdict_label_en === TIER_LABEL_EN[effTier], `verdict_label_en「${s.verdict_label_en}」≠ replay`);
 check('scoring', data.scoring?.base_tier === baseTier, `scoring.base_tier ${data.scoring?.base_tier} ≠ replay ${baseTier}`);
 check('scoring', data.scoring?.effective_tier === effTier, `scoring.effective_tier ${data.scoring?.effective_tier} ≠ replay ${effTier}`);
+check('scoring', data.scoring?.model_version === SCORING_MODEL_VERSION, `scoring.model_version ${data.scoring?.model_version}`);
+check('scoring', data.scoring?.primary_universe === 'core', `scoring.primary_universe ${data.scoring?.primary_universe}`);
+check('scoring', JSON.stringify(data.scoring?.core_indicator_ids) === JSON.stringify(CORE_IDS), 'scoring.core_indicator_ids 漂移');
+check('scoring', JSON.stringify(data.scoring?.shadow_indicator_ids) === JSON.stringify(SHADOW_IDS), 'scoring.shadow_indicator_ids 漂移');
+check('scoring', data.scoring?.shadow_policy === 'display_only_no_score_impact', `scoring.shadow_policy ${data.scoring?.shadow_policy}`);
+const promotion = data.scoring?.shadow_promotion_policy || {};
+check('scoring', promotion.automatic_promotion === false && promotion.separate_review_required === true,
+  'Shadow promotion 必须禁止自动晋升并要求独立评审');
+check('scoring', promotion.minimum_observation_weeks === 52 && promotion.minimum_fresh_availability_pct === 90,
+  'Shadow promotion 最低 52 周 / 90% fresh 可用率门槛漂移');
+check('scoring', JSON.stringify(promotion.required_reviews) === JSON.stringify([
+  'historical_proxy_or_backfill', 'non_redundancy_ablation', 'out_of_sample_target_improvement', 'separate_contract_migration'
+]), 'Shadow promotion required_reviews 漂移');
 check('scoring', data.scoring?.override_active === (effTier !== baseTier), 'scoring.override_active 与 replay 不符');
 check('scoring', data.scoring?.two_axis_upgrade === twoAxisUpgrade, 'scoring.two_axis_upgrade 与 replay 不符');
 check('scoring', typeof data.scoring?.override_rules?.two_axis_alert === 'string' && typeof data.scoring?.override_rules?.two_axis_top === 'string',
@@ -468,6 +511,8 @@ check('boundary', !pageHtml.includes('Threshold Scale') && !pageHtml.includes('�
 check('boundary', pageHtml.includes('id="market-technical-heat"') && pageHtml.includes('renderMarketTechnicalHeat'), 'bubble-watch.html 缺公开市场技术热度审计面板渲染');
 check('boundary', !pageHtml.includes('WEIGHTED RISK SCORE'), 'bubble-watch.html 不得把 weighted_risk_score 标成页面主风险分');
 check('boundary', pageHtml.includes('PRIMARY SCORE:'), 'bubble-watch.html 必须显式标注主分数口径');
+check('boundary', pageHtml.includes('固定核心') && pageHtml.includes('影子观察') && pageHtml.includes('CORE-23'),
+  'bubble-watch.html 必须显式区分固定核心与影子观察');
 check('public-copy', !/Yellow-adjusted aux|数据管线|实时接入|人工研究口径|分类升级 →|不计入 27 项主分|不改变 27 项红灯比例|不参与平台的风险打分与决策/u.test(pageHtml),
   'bubble-watch.html 可见模板残留工程语言');
 check('boundary', !buildSrc.includes('radar-data.json') && !buildSrc.includes("'realtime"), 'build 脚本不得触碰 radar-data / realtime');
@@ -480,10 +525,25 @@ check('history', entries.length >= 1, 'history entries 为空');
 const last = entries[entries.length - 1] || {};
 check('history', last.date === data.as_of_date, `history 尾项 ${last.date} ≠ as_of_date ${data.as_of_date}`);
 check('history', last.red_pct === s.red_pct && last.risk_score === s.weighted_risk_score, 'history 尾项分值与 summary 不符');
+check('history', last.scoring_model_version === SCORING_MODEL_VERSION
+  && last.core_red_pct === s.red_pct
+  && last.core_risk_score === s.weighted_risk_score
+  && last.display_red_pct === s.display_red_pct
+  && last.display_risk_score === s.display_weighted_risk_score,
+  'history 尾项 v2 core/display 字段与 summary 不符');
 check('history', last.statuses && Object.keys(last.statuses).length === EXPECTED_IDS.length, 'history 尾项 statuses 不全');
 const seed = data.history_seed || [];
 check('history', seed.length >= 1 && seed.length <= 10, `history_seed 长度异常 ${seed.length}`);
 check('history', seed.length && seed[seed.length - 1].week === last.week, 'history_seed 尾点与 history 尾项不符');
+const replayableCoreEntries = entries.filter((entry) => CORE_IDS.every((id) => STATUSES.includes(entry.statuses?.[id])));
+check('history', seed.length === Math.min(10, replayableCoreEntries.length),
+  `history_seed ${seed.length} 项 ≠ Core-23 可回放周次 ${Math.min(10, replayableCoreEntries.length)}`);
+check('history', seed.every((entry) => entry.model_version === SCORING_MODEL_VERSION), 'history_seed 混入非 v2 模型点');
+for (const [index, entry] of seed.entries()) {
+  const source = replayableCoreEntries.slice(-10)[index];
+  check('history', source?.week === entry.week && source?.core_red_pct === entry.red_pct && source?.core_risk_score === entry.risk_score,
+    `history_seed[${index}] 未按 Core-23 回放字段生成`);
+}
 for (const w of data.wow_changes || []) {
   check('history', ['status_upgrade', 'status_downgrade', 'flat'].includes(w.type) && typeof w.note === 'string' && w.note.length > 0, 'wow_changes 项非法');
 }
