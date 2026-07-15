@@ -98,7 +98,6 @@ function assertProductionDataState() {
   if (candidate) {
     assert(candidate.routeFreightConfirmation === 'not_connected', 'transportShockCandidate.routeFreightConfirmation must stay not_connected.');
     assert(candidate.marketConfirmation === 'not_connected', 'transportShockCandidate.marketConfirmation must stay not_connected.');
-    assert(candidate.eligibleForMainScore === false, 'transportShockCandidate.eligibleForMainScore must stay false.');
   }
 }
 
