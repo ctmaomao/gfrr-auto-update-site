@@ -320,7 +320,8 @@ const contracts = [
     required: [
       'name: Refresh Oil News Event Watch',
       'workflow_dispatch',
-      "cron: '37 */2 * * *'",
+      "cron: '37 */3 * * 1-5'",
+      "cron: '37 */4 * * 0,6'",
       'permissions:',
       'contents: write',
       'concurrency',
@@ -339,6 +340,7 @@ const contracts = [
       'git pull --rebase origin "${GITHUB_REF_NAME}"'
     ],
     forbidden: [
+      "cron: '37 */2 * * *'",
       'npm run build:data',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json',
