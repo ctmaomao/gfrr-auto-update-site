@@ -104,7 +104,6 @@ function validateProductionLayer(errors) {
   const qualityReview = isPlainObject(layer.qualityReview) ? layer.qualityReview : {};
   const freshness = isPlainObject(layer.freshness) ? layer.freshness : {};
   const requiredFalse = [
-    ['qualityReview.promotionEligible', qualityReview.promotionEligible],
     ['boundaries.affectsScoring', boundaries.affectsScoring],
     ['boundaries.affectsDecisionModel', boundaries.affectsDecisionModel],
     ['boundaries.affectsExecutionLock', boundaries.affectsExecutionLock],
@@ -113,6 +112,9 @@ function validateProductionLayer(errors) {
 
   for (const [field, value] of requiredFalse) {
     if (value !== false) addError(errors, `${field} must be false for display scaffold`);
+  }
+  if (qualityReview.promotionEligible === true) {
+    addError(errors, 'qualityReview.promotionEligible must not be true for display scaffold');
   }
 
   if (typeof layer.displayEnabled !== 'boolean') {
@@ -133,6 +135,7 @@ function validateProductionLayer(errors) {
       ['boundaries.notInvestmentAdvice', boundaries.notInvestmentAdvice === true],
       ['qualityReview.status', ['pass', 'warn'].includes(qualityReview.status)],
       ['qualityReview.recommendation', qualityReview.recommendation === 'pass_for_manual_review'],
+      ['qualityReview.promotionEligible', qualityReview.promotionEligible === false],
       ['freshness.isStale', freshness.isStale === false],
     ];
     for (const [field, passed] of visibleRequirements) {
