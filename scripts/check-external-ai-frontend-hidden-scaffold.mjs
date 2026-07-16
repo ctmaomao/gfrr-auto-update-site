@@ -92,9 +92,7 @@ function isApprovedProductionRefreshWorkflow(filePath, text) {
     && text.includes('git push origin HEAD:main');
 }
 
-function validateProductionLayer(errors) {
-  const data = readJson(DATA_PATH);
-  const layer = data.externalAiInterpretationLayer;
+function validateProductionLayer(errors, layer = readJson(DATA_PATH).externalAiInterpretationLayer) {
   if (!isPlainObject(layer)) {
     addError(errors, 'data/radar-data.json must contain externalAiInterpretationLayer');
     return;
@@ -140,6 +138,35 @@ function validateProductionLayer(errors) {
     ];
     for (const [field, passed] of visibleRequirements) {
       if (!passed) addError(errors, `approved visible display requires ${field} to remain safe`);
+    }
+  }
+}
+
+function validateProductionLayerFixtures(errors) {
+  const approved = createApprovedVisibleLayer();
+  const disabled = cloneLayer(approved);
+  disabled.status = 'disabled';
+  disabled.displayEnabled = false;
+  disabled.boundaries.frontendDisplayApproved = false;
+  delete disabled.qualityReview;
+  delete disabled.freshness;
+
+  const stale = cloneLayer(approved);
+  stale.freshness.isStale = true;
+
+  const malformed = cloneLayer(approved);
+  malformed.qualityReview.promotionEligible = true;
+
+  for (const [name, layer, shouldPass] of [
+    ['approved visible', approved, true],
+    ['disabled fallback without qualityReview', disabled, true],
+    ['stale visible', stale, false],
+    ['promotion-eligible visible', malformed, false],
+  ]) {
+    const fixtureErrors = [];
+    validateProductionLayer(fixtureErrors, layer);
+    if ((fixtureErrors.length === 0) !== shouldPass) {
+      addError(errors, `${name} production-layer fixture must ${shouldPass ? 'pass' : 'fail closed'}`);
     }
   }
 }
@@ -331,6 +358,7 @@ function main() {
 
   try {
     validateProductionLayer(errors);
+    validateProductionLayerFixtures(errors);
     validateNoAutomation(errors);
     validateFrontendFailClosedGuard(errors);
     validateFrontendFailClosedFixtures(errors);
