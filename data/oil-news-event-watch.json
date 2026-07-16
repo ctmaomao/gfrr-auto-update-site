@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-16T16:51:27.249Z",
+  "generatedAt": "2026-07-16T19:43:49.349Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -113,8 +113,8 @@
   },
   "freshness": {
     "windowDays": 7,
-    "latestArticleAt": "2026-07-16T07:30:00.000Z",
-    "latestArticleAgeHours": 9.4,
+    "latestArticleAt": "2026-07-16T12:09:26.000Z",
+    "latestArticleAgeHours": 7.6,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 56,
+      "articleCount": 54,
       "sourceCount": 3,
-      "weightedSignal": 504,
+      "weightedSignal": 486,
       "topArticles": [
         {
           "domain": "geo.tv",
@@ -226,9 +226,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 17,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 68,
+      "weightedSignal": 72,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -286,9 +286,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 22,
+      "articleCount": 20,
       "sourceCount": 2,
-      "weightedSignal": 132,
+      "weightedSignal": 120,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -349,9 +349,9 @@
     },
     "facility_event": {
       "labelZh": "设施事件",
-      "articleCount": 31,
+      "articleCount": 30,
       "sourceCount": 2,
-      "weightedSignal": 124,
+      "weightedSignal": 120,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -411,9 +411,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 44,
+      "articleCount": 43,
       "sourceCount": 3,
-      "weightedSignal": 198,
+      "weightedSignal": 193.5,
       "topArticles": [
         {
           "domain": "samaa.tv",
@@ -452,26 +452,29 @@
         },
         {
           "domain": "insurancejournal.com",
-          "publishedAt": "2026-07-15T11:32:35.000Z",
+          "publishedAt": "2026-07-14T12:28:23.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "chokepoint",
+            "facility_event",
             "middle_east_risk",
+            "supply_disruption",
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "facility_supply_disruption"
           ]
         }
       ]
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 68,
+      "articleCount": 67,
       "sourceCount": 3,
-      "weightedSignal": 306,
+      "weightedSignal": 301.5,
       "topArticles": [
         {
           "domain": "geo.tv",
@@ -519,9 +522,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 40,
+      "articleCount": 38,
       "sourceCount": 3,
-      "weightedSignal": 120,
+      "weightedSignal": 114,
       "topArticles": [
         {
           "domain": "paktribune.com",
@@ -609,24 +612,6 @@
       ]
     },
     {
-      "domain": "cnbc.com",
-      "publishedAt": "2026-07-12T22:07:32.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "sanctions",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
       "domain": "oilprice.com",
       "publishedAt": "2026-07-16T07:30:00.000Z",
       "sources": [
@@ -698,23 +683,6 @@
       ]
     },
     {
-      "domain": "theguardian.com",
-      "publishedAt": "2026-07-15T17:01:59.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "facility_event",
-        "middle_east_risk",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "chokepoint_shipping"
-      ]
-    },
-    {
       "domain": "energyandcleanair.org",
       "publishedAt": "2026-07-10T09:45:29.000Z",
       "sources": [
@@ -782,25 +750,56 @@
       "queryIds": [
         "sanctions_shadow_fleet"
       ]
+    },
+    {
+      "domain": "www.bbc.com",
+      "publishedAt": "2026-07-16T12:09:26.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "chokepoint_shipping"
+      ]
+    },
+    {
+      "domain": "tradeflock.com",
+      "publishedAt": "2026-07-14T09:52:44.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "middle_east_risk",
+        "sanctions",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "sanctions_shadow_fleet"
+      ]
     }
   ],
   "titleRisk": {
     "ruleVersion": "oil-news-title-risk-p31",
     "evaluatedArticleCount": 12,
-    "highClaimTitleCount": 5,
-    "highClaimDomainCount": 5,
+    "highClaimTitleCount": 4,
+    "highClaimDomainCount": 4,
     "highClaimDomains": [
-      "cnbc.com",
       "cnn.com",
       "discoveryalert.com.au",
-      "theguardian.com",
-      "worldoil.com"
+      "worldoil.com",
+      "www.bbc.com"
     ],
     "highClaimTerms": [
       "attacks",
-      "blockade",
-      "halt",
-      "war"
+      "blockade"
     ],
     "directHeadlineDisplayAllowed": false,
     "noteZh": "本轮 transient 新闻标题中包含封锁、战争、袭击、中断等高主张措辞;标题只用于构造聚合风险闸门,不得写入生产 JSON 或直接展示成事实确认。"
@@ -824,18 +823,18 @@
     },
     "eventTypeCounts": {
       "chokepoint": 10,
-      "shipping": 0,
+      "shipping": 1,
       "sanctions": 0,
       "facility": 0,
-      "supply": 2,
+      "supply": 1,
       "market_reaction": 0,
       "general_energy": 0
     },
     "sourceTierCounts": {
       "primary_wire_or_official": 0,
-      "major_financial_media": 2,
+      "major_financial_media": 1,
       "industry_trade": 3,
-      "aggregator_or_blog": 7,
+      "aggregator_or_blog": 8,
       "low_confidence": 0
     },
     "contradiction": {
@@ -851,9 +850,17 @@
           "contradiction": false
         },
         {
+          "eventType": "shipping",
+          "claimCount": 1,
+          "riskEscalation": 1,
+          "riskDeescalation": 0,
+          "mixedOrContested": 0,
+          "contradiction": false
+        },
+        {
           "eventType": "supply",
-          "claimCount": 2,
-          "riskEscalation": 2,
+          "claimCount": 1,
+          "riskEscalation": 1,
           "riskDeescalation": 0,
           "mixedOrContested": 0,
           "contradiction": false
@@ -864,13 +871,13 @@
       "ruleVersion": "oil-news-claim-axis-gate-v1",
       "overallState": "stable_directional_axis_observed",
       "mixedAxisCount": 0,
-      "stableDirectionalAxisCount": 2,
+      "stableDirectionalAxisCount": 1,
       "axes": {
         "transport_security": {
-          "claimCount": 10,
-          "sourceDomainCount": 9,
+          "claimCount": 11,
+          "sourceDomainCount": 11,
           "polarityCounts": {
-            "risk_escalation": 4,
+            "risk_escalation": 5,
             "risk_deescalation": 0,
             "mixed_or_contested": 0,
             "market_reaction_only": 6,
@@ -880,17 +887,17 @@
           "gateOpen": true
         },
         "supply_flow": {
-          "claimCount": 2,
-          "sourceDomainCount": 2,
+          "claimCount": 1,
+          "sourceDomainCount": 1,
           "polarityCounts": {
-            "risk_escalation": 2,
+            "risk_escalation": 1,
             "risk_deescalation": 0,
             "mixed_or_contested": 0,
             "market_reaction_only": 0,
             "unclear_or_high_claim": 0
           },
-          "state": "risk_escalation_supported",
-          "gateOpen": true
+          "state": "risk_escalation_unconfirmed",
+          "gateOpen": false
         },
         "sanctions_policy": {
           "claimCount": 0,
@@ -981,7 +988,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-16T16:51:27.249Z",
+      "generatedAt": "2026-07-16T19:43:49.349Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
