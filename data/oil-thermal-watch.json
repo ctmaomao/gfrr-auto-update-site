@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-07-16T19:34:44.464Z",
+  "generatedAt": "2026-07-16T22:16:22.950Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-07-16T10:24:00Z",
-    "latestAgeHours": 9.2,
+    "latestAcqAt": "2026-07-16T19:45:00Z",
+    "latestAgeHours": 2.5,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -124,11 +124,11 @@
     ]
   },
   "aggregate": {
-    "rowCount": 47,
-    "latestAcqAt": "2026-07-16T10:24:00Z",
+    "rowCount": 49,
+    "latestAcqAt": "2026-07-16T19:45:00Z",
     "maxFrp": 105.59,
     "confidenceCounts": {
-      "n": 37,
+      "n": 39,
       "h": 7,
       "l": 3
     },
@@ -137,21 +137,21 @@
     "frpOver100Count": 1,
     "dayNightCounts": {
       "N": 16,
-      "D": 31
+      "D": 33
     },
-    "latestAgeHours": 9.2,
+    "latestAgeHours": 2.5,
     "facilityCount": 42,
-    "facilitiesWithDetections": 12,
+    "facilitiesWithDetections": 13,
     "requestCount": 126,
     "requestErrorCount": 0,
     "baselineStatus": "partial",
-    "repeatedObservationCount": 1,
+    "repeatedObservationCount": 2,
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 12,
     "facilitiesByAnomalyLevel": {
-      "none_observed": 30,
+      "none_observed": 29,
       "low_signal": 8,
-      "repeated_watch": 1,
+      "repeated_watch": 2,
       "watch": 3
     }
   },
@@ -224,7 +224,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 12,
+      "latestAgeHours": 14.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -275,7 +275,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 11.1,
+      "latestAgeHours": 13.8,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -405,19 +405,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=CITGO PETROLEUM CORP; Site=Lake Charles; State=Louisiana; PADD=3; AD_Mbpd=440.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-07-16T19:45:00Z",
+      "maxFrp": 30.25,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 2
+      },
+      "latestAgeHours": 2.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -430,21 +434,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
-        "maxFrpAboveP95": false,
+        "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_beaumont_tx",
@@ -514,7 +518,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 11.1,
+      "latestAgeHours": 13.8,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -612,7 +616,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 11.1,
+      "latestAgeHours": 13.8,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -710,7 +714,7 @@
       "dayNightCounts": {
         "N": 7
       },
-      "latestAgeHours": 11.1,
+      "latestAgeHours": 13.8,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -902,7 +906,7 @@
       "dayNightCounts": {
         "D": 3
       },
-      "latestAgeHours": 9.3,
+      "latestAgeHours": 12,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -1047,7 +1051,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 9.2,
+      "latestAgeHours": 11.9,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -1240,7 +1244,7 @@
       "dayNightCounts": {
         "D": 13
       },
-      "latestAgeHours": 9.2,
+      "latestAgeHours": 11.9,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -1291,7 +1295,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 9.2,
+      "latestAgeHours": 11.9,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -1436,7 +1440,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 9.3,
+      "latestAgeHours": 12,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -1535,7 +1539,7 @@
       "dayNightCounts": {
         "D": 10
       },
-      "latestAgeHours": 9.3,
+      "latestAgeHours": 12,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
@@ -1633,7 +1637,7 @@
       "dayNightCounts": {
         "D": 2
       },
-      "latestAgeHours": 9.3,
+      "latestAgeHours": 12,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
