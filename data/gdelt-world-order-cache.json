@@ -2,10 +2,10 @@
   "schemaVersion": "gdelt-world-order-cache-p39",
   "module": "gdelt-world-order-cache",
   "cacheScope": "world_order_gdelt_cloud",
-  "generatedAt": "2026-07-17T23:49:56.168Z",
-  "status": "ok",
-  "sourceStatus": "ok",
-  "requestMode": "live_cloud_query",
+  "generatedAt": "2026-07-18T23:51:17.468Z",
+  "status": "stale",
+  "sourceStatus": "stale",
+  "requestMode": "stale_cache_after_fetch_error",
   "source": "GDELT Cloud v2 events/summary",
   "lastFetchedAt": "2026-07-17T23:49:56.168Z",
   "query": {
@@ -14,8 +14,8 @@
     "path": "/events/summary",
     "groupBy": "country",
     "eventFamily": "conflict",
-    "dateStart": "2026-07-10",
-    "dateEnd": "2026-07-17",
+    "dateStart": "2026-07-11",
+    "dateEnd": "2026-07-18",
     "windowDays": 7,
     "classification": "single_cloud_summary_local_normalization"
   },
@@ -31,7 +31,9 @@
     "productionImpact": "world-order-overlay-only"
   },
   "summary": {
-    "errors": [],
+    "errors": [
+      "请求超时或被中止"
+    ],
     "totalEvents": 610,
     "totalArticles": 610,
     "conflictEvents": 610,
@@ -7724,36 +7726,53 @@
     "queriesRun": [
       {
         "label": "GDELT Cloud conflict country summary",
-        "status": "ok",
-        "articleCount": 610,
-        "error": null
+        "status": "error",
+        "articleCount": 0,
+        "error": "请求超时或被中止"
       }
     ],
-    "successCount": 1,
-    "failureCount": 0,
+    "successCount": 0,
+    "failureCount": 1,
     "rateLimitedCount": 0,
-    "usedCachedSummary": false,
-    "cacheReason": null,
-    "attemptedAt": "2026-07-17T23:49:56.168Z"
+    "usedCachedSummary": true,
+    "cacheReason": "gdelt-cloud-request-failed-using-local-cache",
+    "attemptedAt": "2026-07-18T23:51:17.468Z",
+    "requestDiagnostics": {
+      "provider": "gdelt",
+      "endpointType": "cloud",
+      "label": "GDELT Cloud conflict country summary",
+      "status": null,
+      "attempts": 1,
+      "retryCount": 0,
+      "rateLimited": false,
+      "timeout": true,
+      "retryAfterSeconds": null,
+      "timeoutMs": 30000,
+      "minIntervalMs": 8000,
+      "maxRetries": 0,
+      "retryAfterCapSeconds": 15,
+      "elapsedMs": 30030,
+      "errorCode": "timeout"
+    }
   },
   "requestDiagnostics": {
     "provider": "gdelt",
     "endpointType": "cloud",
     "label": "GDELT Cloud conflict country summary",
-    "status": 200,
+    "status": null,
     "attempts": 1,
     "retryCount": 0,
     "rateLimited": false,
-    "timeout": false,
+    "timeout": true,
     "retryAfterSeconds": null,
     "timeoutMs": 30000,
     "minIntervalMs": 8000,
     "maxRetries": 0,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 17362,
-    "errorCode": null
+    "elapsedMs": 30030,
+    "errorCode": "timeout"
   },
-  "error": null,
+  "error": "请求超时或被中止",
   "productionImpact": {
     "worldOrderOverlayOnly": true,
     "affectsValues": false,

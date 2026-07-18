@@ -1,18 +1,18 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-07-17T23:50:13.815Z",
-  "sourceMode": "computed_with_external_sources",
+  "updatedAt": "2026-07-18T23:51:47.669Z",
+  "sourceMode": "computed_with_partial_external_sources",
   "score": 62,
   "state": "multi_theater_stress",
   "labelZh": "多战区压力期",
   "confidence": 1,
-  "freshness": "fresh",
+  "freshness": "partial",
   "marketConfirmationInput": {
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-07-17T23:45:00.417Z",
-    "ageMinutes": 5,
+    "updatedAt": "2026-07-18T23:51:09.279Z",
+    "ageMinutes": 1,
     "healthScore": 100,
     "criticalMissing": 0,
     "brent": 81.62,
@@ -22,8 +22,8 @@
     "hyOas": 2.71,
     "us10y": 4.57,
     "real10y": 2.35,
-    "spx": 7533.77,
-    "brentSource": "FRED:DCOILBRENTEU held after unconfirmed Brent jump",
+    "spx": 7457.69,
+    "brentSource": "FRED:DCOILBRENTEU held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump",
     "brentPromotionApplied": false,
     "brentPromotionReason": "unconfirmed-jump-hold",
     "fallbackReason": null
@@ -31,10 +31,12 @@
   "externalSources": {
     "gdelt": {
       "enabled": true,
-      "status": "ok",
+      "status": "stale",
       "lastFetchedAt": "2026-07-17T23:49:56.168Z",
       "summary": {
-        "errors": [],
+        "errors": [
+          "请求超时或被中止"
+        ],
         "totalEvents": 610,
         "totalArticles": 610,
         "conflictEvents": 610,
@@ -7727,23 +7729,40 @@
         "queriesRun": [
           {
             "label": "GDELT Cloud conflict country summary",
-            "status": "ok",
-            "articleCount": 610,
-            "error": null
+            "status": "error",
+            "articleCount": 0,
+            "error": "请求超时或被中止"
           }
         ],
-        "successCount": 1,
-        "failureCount": 0,
+        "successCount": 0,
+        "failureCount": 1,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-07-17T23:49:56.168Z"
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-request-failed-using-local-cache",
+        "attemptedAt": "2026-07-18T23:51:17.468Z",
+        "requestDiagnostics": {
+          "provider": "gdelt",
+          "endpointType": "cloud",
+          "label": "GDELT Cloud conflict country summary",
+          "status": null,
+          "attempts": 1,
+          "retryCount": 0,
+          "rateLimited": false,
+          "timeout": true,
+          "retryAfterSeconds": null,
+          "timeoutMs": 30000,
+          "minIntervalMs": 8000,
+          "maxRetries": 0,
+          "retryAfterCapSeconds": 15,
+          "elapsedMs": 30030,
+          "errorCode": "timeout"
+        }
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-07-17T23:49:56.309Z",
+      "lastFetchedAt": "2026-07-18T23:51:17.610Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 6,
@@ -7841,7 +7860,7 @@
       ]
     },
     "blocFormation": {
-      "score": 83,
+      "score": 82,
       "labelZh": "阵营化与联盟硬化",
       "trend": "rising",
       "evidence": [
@@ -7856,7 +7875,7 @@
       ]
     },
     "multiTheaterConflict": {
-      "score": 83,
+      "score": 82,
       "labelZh": "多战区冲突",
       "trend": "rising",
       "evidence": [
@@ -7871,7 +7890,7 @@
       ]
     },
     "economicWeaponization": {
-      "score": 83,
+      "score": 82,
       "labelZh": "经济金融武器化",
       "trend": "rising",
       "evidence": [
@@ -7886,7 +7905,7 @@
       ]
     },
     "capitalControlRisk": {
-      "score": 71,
+      "score": 70,
       "labelZh": "资本管制与金融抑制风险",
       "trend": "rising",
       "evidence": [
@@ -7925,14 +7944,14 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7533.77/4019.3",
+          "value": "7457.69/4019.3",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU held after unconfirmed Brent jump；promotion=未应用；原因：unconfirmed-jump-hold。",
+          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump held after unconfirmed Brent jump；promotion=未应用；原因：unconfirmed-jump-hold。",
           "value": 81.62,
           "direction": "neutral",
           "confidence": 0.45
@@ -7944,17 +7963,17 @@
     {
       "key": "blocFormation",
       "labelZh": "阵营化与联盟硬化",
-      "score": 83
+      "score": 82
     },
     {
       "key": "multiTheaterConflict",
       "labelZh": "多战区冲突",
-      "score": 83
+      "score": 82
     },
     {
       "key": "economicWeaponization",
       "labelZh": "经济金融武器化",
-      "score": 83
+      "score": 82
     }
   ],
   "systemInterpretationZh": "世界秩序压力主要来自：阵营化与联盟硬化、多战区冲突、经济金融武器化。该层仅用于结构性风险识别。",
