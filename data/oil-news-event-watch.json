@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-18T03:44:00.592Z",
+  "generatedAt": "2026-07-18T06:32:04.024Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-17T18:47:39.000Z",
-    "latestArticleAgeHours": 8.9,
+    "latestArticleAgeHours": 11.7,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 47,
+      "articleCount": 48,
       "sourceCount": 2,
-      "weightedSignal": 282,
+      "weightedSignal": 288,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -296,9 +296,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 24,
+      "articleCount": 22,
       "sourceCount": 2,
-      "weightedSignal": 144,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -424,9 +424,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 42,
+      "articleCount": 44,
       "sourceCount": 2,
-      "weightedSignal": 126,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "domain": "worldoil.com",
@@ -544,9 +544,9 @@
     },
     "market_reaction": {
       "labelZh": "市场反应",
-      "articleCount": 27,
+      "articleCount": 30,
       "sourceCount": 2,
-      "weightedSignal": 54,
+      "weightedSignal": 60,
       "topArticles": [
         {
           "domain": "time.com",
@@ -598,7 +598,6 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "market_reaction",
             "sanctions_shadow_fleet"
           ]
         }
@@ -623,6 +622,26 @@
       ],
       "queryIds": [
         "chokepoint_shipping"
+      ]
+    },
+    {
+      "domain": "oilprice.com",
+      "publishedAt": "2026-07-16T07:30:00.000Z",
+      "sources": [
+        "brave"
+      ],
+      "buckets": [
+        "chokepoint",
+        "facility_event",
+        "market_reaction",
+        "middle_east_risk",
+        "sanctions",
+        "supply_disruption",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "facility_supply_disruption",
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -771,23 +790,6 @@
       ]
     },
     {
-      "domain": "oilprice.com",
-      "publishedAt": "2026-07-16T07:30:00.000Z",
-      "sources": [
-        "brave"
-      ],
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk",
-        "sanctions",
-        "supply_disruption",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "sanctions_shadow_fleet"
-      ]
-    },
-    {
       "domain": "politico.eu",
       "publishedAt": "2026-07-15T18:16:00.000Z",
       "sources": [
@@ -858,8 +860,8 @@
       "risk_escalation": 5,
       "risk_deescalation": 1,
       "mixed_or_contested": 0,
-      "market_reaction_only": 5,
-      "unclear_or_high_claim": 1
+      "market_reaction_only": 6,
+      "unclear_or_high_claim": 0
     },
     "eventTypeCounts": {
       "chokepoint": 10,
@@ -914,8 +916,8 @@
             "risk_escalation": 5,
             "risk_deescalation": 1,
             "mixed_or_contested": 0,
-            "market_reaction_only": 5,
-            "unclear_or_high_claim": 1
+            "market_reaction_only": 6,
+            "unclear_or_high_claim": 0
           },
           "state": "mixed_or_contested",
           "gateOpen": false
@@ -1022,7 +1024,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-18T03:44:00.592Z",
+      "generatedAt": "2026-07-18T06:32:04.024Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
