@@ -3816,70 +3816,287 @@
     }
   },
   "externalAiInterpretationLayer": {
-    "contractVersion": "v28.0K-3A",
-    "generatedAt": "2026-07-18T23:25:55.943Z",
-    "enabled": false,
-    "status": "disabled",
-    "displayEnabled": false,
-    "provider": "none",
-    "model": null,
-    "mode": "external_ai_disabled_scaffold",
-    "summaryZh": "外部 AI 解读层本轮不可用，页面使用规则化解释层作为回退。",
-    "inputDigest": {
-      "inputVersion": "v28.0.10-daily-external-ai-fallback",
-      "siteStructuredDataOnly": true,
-      "layersAvailable": [
-        "dailyBrief",
-        "divergenceLayer",
-        "brentPricingLayer",
-        "macroDrivers.consumer",
-        "aiInterpretationLayer",
-        "decisionModel"
-      ],
-      "usesPrivateUserData": false,
-      "usesSecrets": false,
-      "usesExternalMarketData": false,
-      "noteZh": "Daily 普通刷新未调用外部 AI API，也未生成新的外部 AI 文本。"
-    },
-    "output": null,
-    "audit": {
-      "outputValidated": false,
-      "validator": "check-external-ai-output",
-      "auditStatus": "not_applicable",
-      "auditFlags": [
-        "daily_external_ai_preservation_fallback"
-      ],
-      "bannedCopyPassed": null,
-      "sourceAttributionPresent": null,
-      "boundariesValid": true
-    },
-    "fallback": {
-      "used": true,
-      "fallbackLayer": "aiInterpretationLayer",
-      "reasonZh": "既有外部 AI 层不符合当前生产契约，本轮回退到规则化解释层。"
-    },
-    "confidence": {
-      "level": "low",
-      "score": 0,
-      "reasonZh": "未展示外部 AI 输出，仅保留规则化解释层。"
-    },
+    "schemaVersion": "v28.0L-external-ai-production-analyst-1",
+    "status": "valid",
+    "displayEnabled": true,
+    "generatedAt": "2026-07-19T01:13:15.585Z",
+    "updatedAt": "2026-07-19T01:13:15.585Z",
+    "sourceMode": "manual_analyst_compact_v1",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "inputSource": "analyst_compact_v1",
+    "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
+    "summaryZh": "站内结构化数据表明，当前宏观主线为能源向通胀与利率传导，消费者信心与风险资产定价之间存在观察性背离，但该信号为月频慢变量，不宜过度解读。能源物理链偏紧与价格回落并存，形成假跌压力信号，但置信度较低。多战区地缘压力持续，但信用利差与波动率尚未明显扩张。整体证据充分性中等，跨层一致性存在部分矛盾，需更多数据确认。",
+    "facts": [
+      "布伦特原油现货代理价81.62美元，期货代理价88.1美元，价差-6.48美元，显示公开代理价差压力。",
+      "美国10年期收益率4.57%，10年盈亏平衡通胀2.24%，长端利率处于高位。",
+      "密歇根消费者信心指数44.8，三个月变化-11.8，处于低位且持续下滑。",
+      "OECD商业库存同比减少219.94百万桶，较5年均值低7.53%，库存偏紧。",
+      "OPEC闲置产能缓冲仅0.02百万桶/日，预测12个月后为2.38百万桶/日，缓冲偏薄。",
+      "世界秩序压力评分62，状态为多战区压力期，阵营化、多战区冲突、经济金融武器化三个维度评分均为82。",
+      "高收益债信用利差2.71%，VIX 16.73，信用与波动率市场尚未明显承压。",
+      "中国MLF数据源状态为fallback，存在数据质量降级。"
+    ],
+    "inferences": [
+      "消费者信心持续恶化与风险资产定价高位形成背离，可能反映实体压力尚未完全传导至金融市场，但需月频数据确认。",
+      "能源物理链偏紧（库存去化、闲置产能低）与价格回落（布伦特4周下跌3.25%）并存，暗示市场可能未完全定价供给紧张，但需求下修风险构成上限。",
+      "长端利率上行与信用利差、波动率低位并存，表明利率压力尚未显著扩散至信用与风险偏好层面，但需警惕传导滞后。",
+      "多战区地缘压力持续，但黄金价格4019.3美元处于高位，可能已部分定价地缘风险，需关注进一步升级信号。"
+    ],
+    "modelJudgments": [
+      "消费者信心与资产定价背离的证据强度中等，因消费者信心为月频慢变量且存在发布延迟，不足以作为实时判断依据。",
+      "能源物理偏紧与价格回落的矛盾构成低置信度假跌信号，数据充分但价格与物理链的背离需要更多周度数据确认。",
+      "利率-信用传导未扩散的观察基于当前信用利差和波动率数据，但数据充分性中等，若利差或波动率上升则需升级判断。",
+      "地缘压力评分较高但数据来源部分陈旧（GDELT状态stale），整体置信度受限。"
+    ],
+    "scenarioHypotheses": [
+      {
+        "titleZh": "能源-利率-资产重新定价观察",
+        "triggerConditions": [
+          "布伦特公开代理价差持续扩大至-10美元以上",
+          "美国10年期收益率突破4.7%且VIX同步上升至20以上",
+          "高收益债利差扩张至3.5%以上"
+        ],
+        "invalidationConditions": [
+          "布伦特回落至78美元以下且价差收窄",
+          "美国10年期收益率回落至4.3%以下",
+          "消费者信心指数企稳或回升"
+        ]
+      },
+      {
+        "titleZh": "地缘风险升级观察",
+        "triggerConditions": [
+          "世界秩序压力评分上升至70以上",
+          "乌克兰或中东地区冲突事件数量显著增加",
+          "布伦特原油突破90美元且持续上行"
+        ],
+        "invalidationConditions": [
+          "世界秩序压力评分回落至50以下",
+          "主要冲突地区出现停火或缓和信号",
+          "布伦特原油回落至80美元以下"
+        ]
+      }
+    ],
     "dataGaps": [
-      "externalAiInterpretationLayer production layer missing or incompatible"
+      "Platts Dated Brent或正式现货成交价未接入，仅依赖公开代理价格。",
+      "Brent期货期限结构完整曲线未接入，仅知backwardation状态。",
+      "消费者信心指数为月频数据，最新值存在发布延迟，缺乏更高频的消费者活动数据。",
+      "中国MLF数据源为fallback状态，可靠性降低。",
+      "GDELT地缘事件数据状态为stale，可能影响地缘压力评估的时效性。"
     ],
-    "limitations": [
-      "External AI Production Refresh remains the only approved automatic provider write path."
+    "invalidationSignals": [
+      "布伦特原油回落且验证层不再提示压力。",
+      "美国10年期收益率回落至4.3%以下。",
+      "消费者信心指数回升至50以上。",
+      "OECD商业库存回补至5年均值以上。"
     ],
+    "sourceAttribution": [
+      {
+        "sourceLayer": "dailyBrief",
+        "field": "macroState",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "dailyBrief",
+        "field": "dominantRiskChain",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.consumer",
+        "field": "umichSentiment",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "brentPricingLayer",
+        "field": "selectedBrent",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "oilDirectionalPressure",
+        "field": "signals.inventoryDrawPressure",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "worldOrderStress",
+        "field": "score",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "divergenceLayer",
+        "field": "primaryDivergence",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "dataQuality",
+        "field": "macroDrivers.chinaMlf",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "transmissionChain",
+        "field": "stressScore",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "regimeProbabilities",
+        "field": "crisisLiquiditySqueeze",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      }
+    ],
+    "confidence": {
+      "level": "medium",
+      "score": 35,
+      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。部分数据源存在陈旧或降级（GDELT stale、中国MLF fallback），跨层一致性中等，消费者信心与资产定价背离需更多数据确认。"
+    },
+    "qualityReview": {
+      "status": "pass",
+      "recommendation": "pass_for_manual_review",
+      "promotionEligible": false,
+      "failedDimensions": [],
+      "warningDimensions": [],
+      "reviewedAt": "2026-07-19T01:13:15.585Z"
+    },
+    "provenance": {
+      "runId": "29668201639",
+      "artifactName": "external-ai-production-refresh-29668201639",
+      "artifactId": "29668201639-1",
+      "artifactDigest": "8e3c8e30b4b74b8f3edaa72ffed8c4cf3629bfd72553538c60d02ebb3a42e810",
+      "sourceCommit": "30ab191bd49bd406c3a89eab3e35c02dbe414894",
+      "sourceDataUpdatedAt": "2026-07-18T23:25:55.943Z",
+      "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
+      "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
+      "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
+      "generatedBy": "manual_workflow",
+      "humanApproved": false
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-07-19T01:13:15.585Z",
+      "sourceDataUpdatedAt": "2026-07-18T23:25:55.943Z",
+      "maxAgeHours": 24,
+      "isStale": false,
+      "staleReasonZh": null
+    },
     "boundaries": {
       "displayOnly": true,
-      "diagnosticOnly": true,
-      "externalAiGenerated": false,
-      "usesExternalAiApi": false,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
       "affectsScoring": false,
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
       "affectsPositionGuidance": false,
       "notInvestmentAdvice": true,
-      "frontendDisplayApproved": false
+      "productionWriteApproved": false,
+      "frontendDisplayApproved": true
+    },
+    "auditFlags": [
+      "manual_artifact_only",
+      "site_structured_data_only",
+      "analyst_compact_v1",
+      "validator_required",
+      "non_production_output",
+      "no_frontend_display"
+    ],
+    "crossLayerSynthesis": [
+      {
+        "theme": "能源物理偏紧与价格回落背离",
+        "summaryZh": "能源物理链（库存、闲置产能）显示偏紧，但布伦特价格近4周下跌，形成假跌压力信号。",
+        "supportingLayers": [
+          "oilDirectionalPressure",
+          "brentPricingLayer",
+          "macroDrivers.energyInventoryBalance"
+        ],
+        "conflictingLayers": [
+          "dailyBrief"
+        ],
+        "confidence": "low"
+      },
+      {
+        "theme": "消费者信心与风险资产定价背离",
+        "summaryZh": "消费者信心持续下滑，但风险资产（标普500、信用利差）尚未明显承压，存在观察性背离。",
+        "supportingLayers": [
+          "macroDrivers.consumer",
+          "divergenceLayer"
+        ],
+        "conflictingLayers": [
+          "dailyBrief"
+        ],
+        "confidence": "medium"
+      }
+    ],
+    "keyDivergences": [
+      {
+        "titleZh": "能源价格与物理链背离",
+        "evidenceFor": [
+          "oilDirectionalPressure.signals.inventoryDrawPressure",
+          "oilDirectionalPressure.signals.dieselProductStress",
+          "brentPricingLayer.proxySpread"
+        ],
+        "evidenceAgainst": [
+          "dailyBrief.evidence[0].summaryZh",
+          "oilDirectionalPressure.signals.priceContext.brentChangePct4w"
+        ],
+        "whyItMattersZh": "若价格持续下跌而物理链维持偏紧，可能预示需求破坏或市场预期转弱，需关注后续库存数据。",
+        "invalidationConditions": [
+          "OECD商业库存回补至5年均值以上",
+          "布伦特期货曲线转为contango"
+        ]
+      },
+      {
+        "titleZh": "利率压力与信用市场未扩散",
+        "evidenceFor": [
+          "dailyBrief.evidence[1].summaryZh",
+          "macroDrivers.curve.t10y2y"
+        ],
+        "evidenceAgainst": [
+          "dailyBrief.evidence[2].summaryZh",
+          "macroDrivers.credit.igOas"
+        ],
+        "whyItMattersZh": "长端利率上行尚未传导至信用利差和波动率，若后续扩散可能加剧市场压力。",
+        "invalidationConditions": [
+          "高收益债利差扩张至3.5%以上",
+          "VIX上升至20以上"
+        ]
+      }
+    ],
+    "scenarioLean": {
+      "leanZh": "当前偏向能源-利率传导观察，但置信度较低，需等待更多数据确认。",
+      "scenarioRefs": [
+        "基准情景",
+        "风险情景"
+      ],
+      "triggerConditions": [
+        "布伦特公开代理价差持续扩大",
+        "美国10年期收益率突破4.7%",
+        "高收益债利差扩张至3.5%"
+      ],
+      "invalidationConditions": [
+        "布伦特回落至78美元以下",
+        "美国10年期收益率回落至4.3%以下",
+        "消费者信心指数回升"
+      ],
+      "confidence": "low"
+    },
+    "dataQualityLens": {
+      "summaryZh": "大部分数据源状态正常，但GDELT地缘数据陈旧，中国MLF为fallback状态，消费者信心为月频数据存在延迟。",
+      "staleLayers": [
+        "worldOrderStress"
+      ],
+      "fallbackLayers": [
+        "macroDrivers.chinaMlf"
+      ],
+      "missingLayers": [
+        "macroDrivers.allSourcesMissing"
+      ],
+      "confidenceImpactZh": "GDELT陈旧和中国MLF降级降低了地缘和中国货币政策的判断置信度。"
     }
   },
   "historyWindowFields": {
