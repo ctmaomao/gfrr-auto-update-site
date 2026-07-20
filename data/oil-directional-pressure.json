@@ -2,7 +2,7 @@
   "schemaVersion": "odp-1",
   "module": "oil-directional-pressure",
   "boundary": "audit-only/display-only; NOT in values/scoring/decisionModel/executionLock/positionGuidance; Global Risk Heatmap independent",
-  "builtAt": "2026-07-19T01:11:21.440Z",
+  "builtAt": "2026-07-20T01:15:27.504Z",
   "ingestion": {
     "mode": "A",
     "provider": "EIA API v2",
@@ -14,7 +14,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCESTUS1.W",
@@ -39,7 +39,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCSSTUS1.W",
@@ -64,7 +64,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDISTUS1.W",
@@ -89,7 +89,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGTSTUS1.W",
@@ -114,7 +114,7 @@
       "unit": "percent",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WPULEUS3.W",
@@ -139,7 +139,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCRRIUS2.W",
@@ -164,7 +164,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGFUPUS2.W",
@@ -189,7 +189,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 9,
+      "ageDays": 10,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDIUPUS2.W",
@@ -210,11 +210,11 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "wtiPrice": {
-      "value": 82.49,
+      "value": 84.06,
       "unit": "$/bbl",
-      "asOfDate": "2026-07-17T04:00:00.000Z",
+      "asOfDate": "2026-07-19T23:18:49.000Z",
       "frequency": "daily",
-      "ageDays": 2,
+      "ageDays": 0,
       "maxAgeDays": 3,
       "sourceStatus": "live",
       "source": "radar-data:macroDrivers.inflationEnergy.wtiMarketProxy",
@@ -229,7 +229,7 @@
       "officialSpotFallback": {
         "value": 79.2,
         "asOfDate": "2026-07-13T00:00:00Z",
-        "ageDays": 6,
+        "ageDays": 7,
         "sourceStatus": "live",
         "source": "radar-data:macroDrivers.inflationEnergy.wti",
         "noteZh": "FRED DCOILWTICO 官方 WTI spot 保留为低噪声滞后校准源。"
@@ -237,9 +237,9 @@
       "limitationZh": "WTI 市场代理优先使用 Yahoo CL=F 期货快照;不是 FRED 官方 WTI spot。"
     },
     "brentPrice": {
-      "value": 81.62,
+      "value": 90.98,
       "unit": "$/bbl",
-      "asOfDate": "2026-07-18T22:30:58.301Z",
+      "asOfDate": "2026-07-19T23:08:46.188Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 5,
@@ -254,9 +254,9 @@
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。"
     },
     "crackSpread": {
-      "value": 75.59,
+      "value": 66.23,
       "unit": "$/bbl",
-      "asOfDate": "2026-07-18T23:25:55.943Z",
+      "asOfDate": "2026-07-19T23:28:50.048Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 10,
@@ -275,14 +275,14 @@
     },
     "curve": {
       "slopeRegime": "backwardation",
-      "frontMinusBack": 8.73,
-      "frontPrice": 88.1,
+      "frontMinusBack": 11.54,
+      "frontPrice": 90.91,
       "backPrice": 79.37,
       "confidence": "low",
       "curveStatus": "live_proxy_priced",
       "frequency": "daily",
-      "asOfDate": "2026-07-17T04:00:00.000Z",
-      "ageDays": 2,
+      "asOfDate": "2026-07-19T23:19:09.000Z",
+      "ageDays": 0,
       "maxAgeDays": 4,
       "sourceStatus": "live",
       "source": "radar-data:brentPricingLayer.futuresPriceCurve",
@@ -405,28 +405,26 @@
     },
     "futuresCurveConfirmation": "not_used_in_backtest",
     "priceContext": {
-      "brentChangePct4w": -3.25,
+      "brentChangePct4w": 7.85,
       "curveSlopeRegime": "backwardation",
       "crackChange4w": 23.86,
       "priceDirectionSource": "radar-history-full:brent~4w"
     }
   },
-  "finalBias": "false_down_physical_stress",
+  "finalBias": "moderate_bullish",
   "interpretation": {
     "physicalBias": "moderate_bullish",
-    "finalBias": "false_down_physical_stress",
-    "divergence": "false_down_physical_stress",
-    "priceVsPhysical": "price_down_physical_tight",
+    "finalBias": "moderate_bullish",
+    "divergence": "none",
+    "priceVsPhysical": "price_up",
     "drivers": [
-      "inventoryDrawPressure",
-      "dieselProductStress",
-      "futuresCurveConfirmation"
+      "inventoryDrawPressure"
     ],
     "confidence": "low",
     "dataSufficiency": "full",
     "globalOverlay": {
       "status": "active",
-      "effect": "confirms_false_down",
+      "effect": "confirms_physical_tightness",
       "supplyBuffer": "extremely_tight",
       "inventoryBalance": "acute_draw",
       "demandState": "downshift_watch",
@@ -456,7 +454,7 @@
     "attribution": {
       "schemaVersion": "odp-attribution-1",
       "boundary": "display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position",
-      "primaryThesis": "价格下跌与周度物理链偏紧并存,当前判读是价格未完全确认物理压力解除。",
+      "primaryThesis": "周度物理链偏紧但未形成全面极端压力,当前判读为温和上行压力。",
       "supportEvidence": [
         {
           "role": "core_physical_anchor",
@@ -518,13 +516,15 @@
       ],
       "counterEvidence": [
         {
-          "role": "market_confirmation",
-          "label": "Brent 价格回落",
-          "stance": "counters_physical_pressure",
+          "role": "data_quality",
+          "label": "反证暂未主导",
+          "stance": "no_dominant_counter",
           "evidenceKeys": [
-            "brentPrice"
+            "brentPrice",
+            "curve",
+            "demandGasolineSupplied"
           ],
-          "text": "近 4 周 Brent 下跌是当前判读的主要反证;ODP 将其解释为价格与物理链背离,而非直接确认物理宽松。"
+          "text": "当前反向证据不足以覆盖周度物理链,但仍需要继续观察价格结构与需求端。"
         }
       ],
       "confidenceCaps": [
