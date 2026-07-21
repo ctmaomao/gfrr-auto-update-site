@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-07-21T03:47:14.696Z",
+  "generatedAt": "2026-07-21T08:46:40.450Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -9,8 +9,8 @@
     "VIIRS_NOAA21_NRT"
   ],
   "status": "ok",
-  "signalState": "baseline_established_no_detections",
-  "displayStatusZh": "部分基线 · 观察层已接入",
+  "signalState": "baseline_repeated_watch",
+  "displayStatusZh": "部分基线重复观察待核",
   "sourceStatus": {
     "mapKey": "configured",
     "firms": "live",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": null,
-    "latestAgeHours": null,
+    "latestAcqAt": "2026-07-21T08:34:00Z",
+    "latestAgeHours": 0.2,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -124,25 +124,31 @@
     ]
   },
   "aggregate": {
-    "rowCount": 0,
-    "latestAcqAt": null,
-    "maxFrp": null,
-    "confidenceCounts": {},
+    "rowCount": 71,
+    "latestAcqAt": "2026-07-21T08:34:00Z",
+    "maxFrp": 9.92,
+    "confidenceCounts": {
+      "n": 71
+    },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
-    "dayNightCounts": {},
-    "latestAgeHours": null,
+    "dayNightCounts": {
+      "N": 71
+    },
+    "latestAgeHours": 0.2,
     "facilityCount": 42,
-    "facilitiesWithDetections": 0,
+    "facilitiesWithDetections": 11,
     "requestCount": 126,
     "requestErrorCount": 0,
     "baselineStatus": "partial",
-    "repeatedObservationCount": 0,
+    "repeatedObservationCount": 5,
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 12,
     "facilitiesByAnomalyLevel": {
-      "none_observed": 42
+      "repeated_watch": 5,
+      "low_signal": 6,
+      "none_observed": 31
     }
   },
   "facilities": [
@@ -152,19 +158,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 6,
+      "latestAcqAt": "2026-07-21T08:34:00Z",
+      "maxFrp": 2.19,
+      "confidenceCounts": {
+        "n": 6
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 6
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -177,21 +187,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_marathon_galveston_bay_tx",
@@ -199,19 +209,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Galveston Bay; State=Texas; PADD=3; AD_Mbpd=625.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 10,
+      "latestAcqAt": "2026-07-21T08:34:00Z",
+      "maxFrp": 3.97,
+      "confidenceCounts": {
+        "n": 10
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 10
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -224,21 +238,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_marathon_garyville_la",
@@ -246,19 +260,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Garyville; State=Louisiana; PADD=3; AD_Mbpd=608.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-07-21T08:34:00Z",
+      "maxFrp": 5.35,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 2
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -271,21 +289,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 0,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
-        "maxFrpAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
+        "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_baytown_tx",
@@ -293,19 +311,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baytown; State=Texas; PADD=3; AD_Mbpd=584.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 7,
+      "latestAcqAt": "2026-07-21T08:15:00Z",
+      "maxFrp": 2.83,
+      "confidenceCounts": {
+        "n": 7
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 7
+      },
+      "latestAgeHours": 0.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -318,21 +340,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "usgc_refinery_exxon_baton_rouge_la",
@@ -340,19 +362,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baton Rouge; State=Louisiana; PADD=3; AD_Mbpd=542.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 5,
+      "latestAcqAt": "2026-07-21T08:33:00Z",
+      "maxFrp": 5.3,
+      "confidenceCounts": {
+        "n": 5
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 5
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -365,8 +391,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -376,8 +402,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -387,19 +413,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=CITGO PETROLEUM CORP; Site=Lake Charles; State=Louisiana; PADD=3; AD_Mbpd=440.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 6,
+      "latestAcqAt": "2026-07-21T08:34:00Z",
+      "maxFrp": 2.96,
+      "confidenceCounts": {
+        "n": 6
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 6
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -412,8 +442,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -423,8 +453,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -434,19 +464,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Beaumont; State=Texas; PADD=3; AD_Mbpd=384.4; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-07-21T07:39:00Z",
+      "maxFrp": 1.02,
+      "confidenceCounts": {
+        "n": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 1
+      },
+      "latestAgeHours": 1.1,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -459,7 +493,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -470,8 +504,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -481,19 +515,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=DEER PARK REFINING LTD PARTNERSHIP; Site=Deer Park; State=Texas; PADD=3; AD_Mbpd=340.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 6,
+      "latestAcqAt": "2026-07-21T08:34:00Z",
+      "maxFrp": 1.18,
+      "confidenceCounts": {
+        "n": 6
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 6
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -506,8 +544,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -517,8 +555,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -575,19 +613,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Sweeny; State=Texas; PADD=3; AD_Mbpd=278.9; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-07-21T08:15:00Z",
+      "maxFrp": 2.86,
+      "confidenceCounts": {
+        "n": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 1
+      },
+      "latestAgeHours": 0.5,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -600,7 +642,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -611,8 +653,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -669,19 +711,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=SHELL OIL PRODUCTS US; Site=Norco; State=Louisiana; PADD=3; AD_Mbpd=250.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 25,
+      "latestAcqAt": "2026-07-21T08:34:00Z",
+      "maxFrp": 7.13,
+      "confidenceCounts": {
+        "n": 25
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 25
+      },
+      "latestAgeHours": 0.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 16,
@@ -694,21 +740,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "me_saudi_oil_terminal_ras_tanura",
@@ -2079,19 +2125,23 @@
       "region": "Middle East / Iraq / Kirkuk",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Kirkuk; desig_cd=OILF; fc=L; cc_ft=IRQ; adm1=IQ-KI; mod_dt_ft=2012-04-16T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-07-21T00:05:00Z",
+      "maxFrp": 9.92,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 2
+      },
+      "latestAgeHours": 8.7,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -2104,7 +2154,7 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -2115,8 +2165,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     }
