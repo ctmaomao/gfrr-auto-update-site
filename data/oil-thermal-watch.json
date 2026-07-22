@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-07-22T11:20:32.523Z",
+  "generatedAt": "2026-07-22T14:23:32.355Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-07-22T09:02:00Z",
-    "latestAgeHours": 2.3,
+    "latestAcqAt": "2026-07-22T11:06:00Z",
+    "latestAgeHours": 3.3,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -124,22 +124,24 @@
     ]
   },
   "aggregate": {
-    "rowCount": 80,
-    "latestAcqAt": "2026-07-22T09:02:00Z",
-    "maxFrp": 5.37,
+    "rowCount": 156,
+    "latestAcqAt": "2026-07-22T11:06:00Z",
+    "maxFrp": 33.75,
     "confidenceCounts": {
-      "n": 80
+      "n": 120,
+      "h": 16,
+      "l": 20
     },
-    "highConfidenceCount": 0,
+    "highConfidenceCount": 16,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
-      "N": 79,
-      "D": 1
+      "N": 78,
+      "D": 78
     },
-    "latestAgeHours": 2.3,
+    "latestAgeHours": 3.3,
     "facilityCount": 42,
-    "facilitiesWithDetections": 11,
+    "facilitiesWithDetections": 19,
     "requestCount": 126,
     "requestErrorCount": 0,
     "baselineStatus": "partial",
@@ -147,9 +149,11 @@
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 12,
     "facilitiesByAnomalyLevel": {
-      "low_signal": 8,
+      "low_signal": 10,
       "repeated_watch": 3,
-      "none_observed": 31
+      "none_observed": 23,
+      "elevated_watch": 2,
+      "watch": 4
     }
   },
   "facilities": [
@@ -174,7 +178,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 2.3,
+      "latestAgeHours": 5.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -225,7 +229,7 @@
       "dayNightCounts": {
         "N": 17
       },
-      "latestAgeHours": 2.3,
+      "latestAgeHours": 5.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -276,7 +280,7 @@
       "dayNightCounts": {
         "N": 1
       },
-      "latestAgeHours": 4,
+      "latestAgeHours": 7.1,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -327,7 +331,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 2.3,
+      "latestAgeHours": 5.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -378,7 +382,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 6.1,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -429,7 +433,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 6.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -480,7 +484,7 @@
       "dayNightCounts": {
         "N": 15
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 6.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -531,7 +535,7 @@
       "dayNightCounts": {
         "N": 8
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 6.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -629,7 +633,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 6.1,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -715,19 +719,19 @@
       "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 15,
+      "rowCount": 14,
       "latestAcqAt": "2026-07-22T08:16:00Z",
       "maxFrp": 3.21,
       "confidenceCounts": {
-        "n": 15
+        "n": 14
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 15
+        "N": 14
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 6.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1045,19 +1049,25 @@
       "region": "Middle East / Iran",
       "assetType": "oil_terminal",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Kharg Island Terminal; desig_cd=TRMO; fc=S; cc_ft=IRN; adm1=IR-000; lat_dd=29.25; long_dd=50.328611; mod_dt_ft=2025-04-29T13:40:15.000Z; point converted to +/-0.05 degree FIRMS watch box. This is an oil-terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 5,
+      "latestAcqAt": "2026-07-22T10:43:00Z",
+      "maxFrp": 33.75,
+      "confidenceCounts": {
+        "h": 3,
+        "n": 1,
+        "l": 1
+      },
+      "highConfidenceCount": 3,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 5
+      },
+      "latestAgeHours": 3.7,
+      "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -1070,8 +1080,8 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1081,8 +1091,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "elevated_watch",
+      "anomalyLabelZh": "升高观察",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -1107,7 +1117,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 2.8,
+      "latestAgeHours": 5.9,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
@@ -1237,19 +1247,25 @@
       "region": "Middle East / Iran",
       "assetType": "energy_processing_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Asaluyeh; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-18; lat_dd=27.47383219; long_dd=52.60782293; mod_dt_ft=2023-06-08T21:35:22.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a broad energy-processing area proxy from the official place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 20,
+      "latestAcqAt": "2026-07-22T10:43:00Z",
+      "maxFrp": 30.1,
+      "confidenceCounts": {
+        "n": 17,
+        "h": 2,
+        "l": 1
+      },
+      "highConfidenceCount": 2,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 20
+      },
+      "latestAgeHours": 3.7,
+      "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -1262,8 +1278,8 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1273,8 +1289,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "elevated_watch",
+      "anomalyLabelZh": "升高观察",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -1284,19 +1300,23 @@
       "region": "Middle East / Israel",
       "assetType": "refinery_area",
       "sourceNote": "NGA GNS country file Israel.txt; row full_name=Haifa Bay Area; desig_cd=VAL; fc=T; cc_ft=ISR; adm1=IL-HA; lat_dd=32.870326; long_dd=35.081473; mod_dt_ft=2014-08-25T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Bazan public page separately states Oil Refineries Ltd. is located in the Haifa Bay area. This is a refinery-area proxy from the official bay-area point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 3,
+      "latestAcqAt": "2026-07-22T11:06:00Z",
+      "maxFrp": 4.73,
+      "confidenceCounts": {
+        "l": 3
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 3
+      },
+      "latestAgeHours": 3.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -1309,8 +1329,8 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1320,8 +1340,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -1425,19 +1445,23 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "refinery_area_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Ruwais; desig_cd=PPL; fc=P; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1999-06-15T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-07-22T09:02:00Z",
+      "maxFrp": 13.62,
+      "confidenceCounts": {
+        "l": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 1
+      },
+      "latestAgeHours": 5.4,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -1450,7 +1474,7 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1461,8 +1485,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -1519,19 +1543,24 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "export_terminal_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Das Island Terminal; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1993-12-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 21,
+      "latestAcqAt": "2026-07-22T10:43:00Z",
+      "maxFrp": 24.93,
+      "confidenceCounts": {
+        "h": 9,
+        "n": 12
+      },
+      "highConfidenceCount": 9,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 21
+      },
+      "latestAgeHours": 3.7,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -1544,7 +1573,7 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1555,8 +1584,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "watch",
+      "anomalyLabelZh": "观察",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -1613,19 +1642,24 @@
       "region": "Middle East / Qatar / Al Khor",
       "assetType": "energy_port_proxy",
       "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Ra's Laffan; desig_cd=PT; fc=T; cc_ft=QAT; adm1=QA-KH; mod_dt_ft=2016-06-17T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 2,
+      "latestAcqAt": "2026-07-22T09:22:00Z",
+      "maxFrp": 25.51,
+      "confidenceCounts": {
+        "h": 1,
+        "l": 1
+      },
+      "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 2
+      },
+      "latestAgeHours": 5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -1638,8 +1672,8 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1649,8 +1683,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "watch",
+      "anomalyLabelZh": "观察",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -2083,19 +2117,24 @@
       "region": "Middle East / Iraq / Basra",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Ar Rumaila; desig_cd=PPL; fc=P; cc_ft=IRQ; adm1=IQ-BA; mod_dt_ft=2002-10-22T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 19,
+      "latestAcqAt": "2026-07-22T10:45:00Z",
+      "maxFrp": 33.06,
+      "confidenceCounts": {
+        "l": 12,
+        "n": 7
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 19
+      },
+      "latestAgeHours": 3.6,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -2108,8 +2147,8 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -2119,8 +2158,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "watch",
+      "anomalyLabelZh": "观察",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     },
@@ -2130,19 +2169,25 @@
       "region": "Middle East / Iraq / Kirkuk",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Kirkuk; desig_cd=OILF; fc=L; cc_ft=IRQ; adm1=IQ-KI; mod_dt_ft=2012-04-16T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 6,
+      "latestAcqAt": "2026-07-22T11:06:00Z",
+      "maxFrp": 11.47,
+      "confidenceCounts": {
+        "n": 4,
+        "l": 1,
+        "h": 1
+      },
+      "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 6
+      },
+      "latestAgeHours": 3.3,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "not_established",
         "sampleCount": 0,
@@ -2155,8 +2200,8 @@
         "frpOver50CountP95": null,
         "frpOver100CountP95": null,
         "sourcesWithDetectionsP95": null,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -2166,8 +2211,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "baseline_missing_or_insufficient_samples"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "watch",
+      "anomalyLabelZh": "观察",
       "baselineStatus": "not_established",
       "noteZh": "设施级热异常观察仅供人工复核;历史基线样本不足前不确认事故、停产、断供或油价方向。"
     }
