@@ -2,7 +2,7 @@
   "schemaVersion": "odp-1",
   "module": "oil-directional-pressure",
   "boundary": "audit-only/display-only; NOT in values/scoring/decisionModel/executionLock/positionGuidance; Global Risk Heatmap independent",
-  "builtAt": "2026-07-21T01:11:05.824Z",
+  "builtAt": "2026-07-22T01:09:19.932Z",
   "ingestion": {
     "mode": "A",
     "provider": "EIA API v2",
@@ -14,7 +14,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCESTUS1.W",
@@ -39,7 +39,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCSSTUS1.W",
@@ -64,7 +64,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDISTUS1.W",
@@ -89,7 +89,7 @@
       "unit": "thousand barrels",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGTSTUS1.W",
@@ -114,7 +114,7 @@
       "unit": "percent",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WPULEUS3.W",
@@ -139,7 +139,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCRRIUS2.W",
@@ -164,7 +164,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGFUPUS2.W",
@@ -189,7 +189,7 @@
       "unit": "thousand barrels per day",
       "asOfDate": "2026-07-10",
       "frequency": "weekly",
-      "ageDays": 11,
+      "ageDays": 12,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDIUPUS2.W",
@@ -210,9 +210,9 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "wtiPrice": {
-      "value": 82.56,
+      "value": 84.72,
       "unit": "$/bbl",
-      "asOfDate": "2026-07-20T04:00:00.000Z",
+      "asOfDate": "2026-07-21T04:00:00.000Z",
       "frequency": "daily",
       "ageDays": 1,
       "maxAgeDays": 3,
@@ -229,7 +229,7 @@
       "officialSpotFallback": {
         "value": 79.2,
         "asOfDate": "2026-07-13T00:00:00Z",
-        "ageDays": 8,
+        "ageDays": 9,
         "sourceStatus": "live",
         "source": "radar-data:macroDrivers.inflationEnergy.wti",
         "noteZh": "FRED DCOILWTICO 官方 WTI spot 保留为低噪声滞后校准源。"
@@ -237,9 +237,9 @@
       "limitationZh": "WTI 市场代理优先使用 Yahoo CL=F 期货快照;不是 FRED 官方 WTI spot。"
     },
     "brentPrice": {
-      "value": 89.22,
+      "value": 81.62,
       "unit": "$/bbl",
-      "asOfDate": "2026-07-20T22:38:03.699Z",
+      "asOfDate": "2026-07-21T22:39:04.215Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 5,
@@ -254,9 +254,9 @@
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。"
     },
     "crackSpread": {
-      "value": 67.99,
+      "value": 75.59,
       "unit": "$/bbl",
-      "asOfDate": "2026-07-20T23:29:46.158Z",
+      "asOfDate": "2026-07-21T23:27:38.583Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 10,
@@ -275,13 +275,13 @@
     },
     "curve": {
       "slopeRegime": "backwardation",
-      "frontMinusBack": 9.77,
-      "frontPrice": 89.14,
-      "backPrice": 79.37,
+      "frontMinusBack": 12.21,
+      "frontPrice": 91.56,
+      "backPrice": 79.35,
       "confidence": "low",
       "curveStatus": "live_proxy_priced",
       "frequency": "daily",
-      "asOfDate": "2026-07-20T04:00:00.000Z",
+      "asOfDate": "2026-07-21T04:00:00.000Z",
       "ageDays": 1,
       "maxAgeDays": 4,
       "sourceStatus": "live",
@@ -405,7 +405,7 @@
     },
     "futuresCurveConfirmation": "not_used_in_backtest",
     "priceContext": {
-      "brentChangePct4w": 5.76,
+      "brentChangePct4w": 6.28,
       "curveSlopeRegime": "backwardation",
       "crackChange4w": 23.86,
       "priceDirectionSource": "radar-history-full:brent~4w"
@@ -447,7 +447,7 @@
       "sourceWindows": {
         "inventoryPeriod": "2026-07",
         "sparePeriod": "2026-07",
-        "transportDate": "2026-07-12"
+        "transportDate": "2026-07-19"
       },
       "boundary": "display-only global/monthly confirmation overlay; NOT in values/scoring/decision/execution/position"
     },
