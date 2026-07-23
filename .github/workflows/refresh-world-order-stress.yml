@@ -51,6 +51,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/world-order-stress.json data/gdelt-world-order-cache.json
           if ! git diff --cached --quiet; then
+            npm run check:all
             git commit -m "chore: refresh world order stress"
             git push
           fi

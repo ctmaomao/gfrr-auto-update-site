@@ -259,6 +259,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
+            npm run check:all
             git commit -m "chore: refresh radar data"
             git push
           fi

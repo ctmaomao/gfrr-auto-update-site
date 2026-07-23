@@ -342,7 +342,8 @@ const contracts = [
     required: [
       'name: Refresh Oil News Event Watch',
       'workflow_dispatch',
-      "cron: '37 */2 * * *'",
+      "cron: '37 */3 * * 1-5'",
+      "cron: '37 */4 * * 0,6'",
       'permissions:',
       'contents: write',
       'concurrency',
@@ -361,6 +362,7 @@ const contracts = [
       'git pull --rebase origin "${GITHUB_REF_NAME}"'
     ],
     forbidden: [
+      "cron: '37 */2 * * *'",
       'npm run build:data',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json',
@@ -486,6 +488,11 @@ for (const workflow of mainWriterWorkflows) {
   requireSourceMarker(file, text, 'ref: main');
   requireSourceMarker(file, text, 'fetch-depth: 0');
   requireSourceMarker(file, text, 'git pull --ff-only origin main');
+  const fullCheckIndex = text.indexOf('npm run check:all');
+  const commitIndex = text.indexOf('git commit');
+  if (fullCheckIndex === -1 || commitIndex === -1 || fullCheckIndex > commitIndex) {
+    addRuntimeFailure(file, 'must run npm run check:all before committing to main');
+  }
 }
 
 const workflowDir = '.github/workflows';

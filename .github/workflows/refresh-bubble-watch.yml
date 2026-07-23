@@ -56,6 +56,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/bubble-watch.json data/bubble-watch-history.json data/gdelt-bubble-watch-cache.json config/bubble-watch-curated.json
           if ! git diff --cached --quiet; then
+            npm run check:all
             git commit -m "chore: refresh bubble watch"
             git pull --rebase origin "${GITHUB_REF_NAME}"
             git push

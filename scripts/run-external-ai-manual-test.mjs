@@ -114,6 +114,7 @@ const ANALYST_PR4_STRUCTURED_OUTPUT_RULES = [
   'For PR4 layer-name arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers are machine-readable identifier lists: each element MUST be exactly one bare canonical sourceLayer string and nothing else.',
   'For PR4 layer-name arrays, each element MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text; write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing; write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress; write modules, not riskModules.',
   'For PR4 layer-name arrays, put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields, never inside a layer array element.',
+  'Never use externalAiInterpretationLayer as a PR4 layer reference; it is the output being generated, not an input evidence layer. Omit that self-reference.',
   'For keyDivergences evidenceFor/evidenceAgainst, use sourceLayer.field references with a canonical sourceLayer prefix.',
   'For keyDivergences evidenceFor/evidenceAgainst, each element must be a machine-readable sourceLayer.field reference and not prose; write macroDrivers.consumer.umichSentiment, not macroDrivers.consumer: umichSentiment=49.8.',
   'scenarioRefs may point to scenarioTree entries and are not sourceLayer references.',
@@ -231,6 +232,16 @@ function normalizePr4ReferenceArray(container, key, path, changes, { allowFieldP
   container[key].forEach((item, index) => {
     if (typeof item !== 'string') {
       nextValues.push(item);
+      return;
+    }
+
+    const input = item.trim();
+    if (input.startsWith('externalAiInterpretationLayer')
+      && hasSourceLayerBoundary(input, 'externalAiInterpretationLayer')) {
+      changes.push({
+        path: `${path}[${index}]`,
+        mode: 'forbidden_self_reference_dropped',
+      });
       return;
     }
 
@@ -895,6 +906,7 @@ function runPr4ReferenceNormalizationSelfTests() {
         'brentPricingLayer.limitations: Platts Dated Brent missing',
         'brentPricingLayer.limitations: Brent curve missing',
         'riskModules: module summary',
+        'externalAiInterpretationLayer',
       ],
     },
     scenarioLean: {
@@ -937,8 +949,17 @@ function runPr4ReferenceNormalizationSelfTests() {
   if (sample.scenarioLean.triggerConditions[0] !== 'keep this prose untouched') {
     throw new Error('self-test failed: PR4 reference normalization must not touch prose condition arrays');
   }
-  if (!diagnostics.applied || diagnostics.changeCount < 7) {
+  if (!diagnostics.applied || diagnostics.changeCount < 8) {
     throw new Error('self-test failed: PR4 reference normalization diagnostics should record applied changes');
+  }
+  if (!diagnostics.modes.includes('forbidden_self_reference_dropped')) {
+    throw new Error('self-test failed: PR4 self-reference removal should remain explicit in diagnostics');
+  }
+
+  const unknownReferenceSample = { dataQualityLens: { missingLayers: ['unknownLayer'] } };
+  normalizePr4StructuredReferenceFields(unknownReferenceSample);
+  if (unknownReferenceSample.dataQualityLens.missingLayers[0] !== 'unknownLayer') {
+    throw new Error('self-test failed: unknown PR4 references must remain fail-closed for strict validation');
   }
 
   const overBudgetSample = {
