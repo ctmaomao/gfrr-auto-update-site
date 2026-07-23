@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import xlsx from 'xlsx';
+import * as xlsx from 'xlsx';
+import { assertWorksheetDimensions, preflightXlsxInputs } from './xlsx-input-guard.mjs';
+
+xlsx.set_fs(fs);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +18,17 @@ const SOURCE_NAME = 'ACLED Global Monthly Aggregated Data';
 const SOURCE_URL = 'https://acleddata.com/conflict-data/download-data-files';
 const LICENSE_LEVEL = 'open';
 const ATTRIBUTION = 'ACLED (Armed Conflict Location & Event Data) — https://acleddata.com';
+const MAX_INPUT_BYTES = 1 * 1024 * 1024;
+const MAX_BATCH_INPUT_BYTES = 2 * 1024 * 1024;
+const MAX_BATCH_UNCOMPRESSED_BYTES = 16 * 1024 * 1024;
+const MAX_DATA_ROWS = 50_000;
+const MAX_DATA_COLUMNS = 8;
+const ZIP_LIMITS = Object.freeze({
+  maxEntries: 64,
+  maxEntryUncompressedBytes: 8 * 1024 * 1024,
+  maxUncompressedBytes: 12 * 1024 * 1024,
+  maxCompressionRatio: 32,
+});
 
 const ESCALATION_BASELINE_THRESHOLD = 50;
 const TOP_RANK_LIMIT = 10;
@@ -181,13 +195,18 @@ function selectRecognizedFiles(filenames) {
   return selected;
 }
 
-function readSheetRows(entry) {
-  const filePath = path.join(inputDir, entry.filename);
-  const workbook = xlsx.readFile(filePath, { cellDates: false });
+function readSheetRows(entry, inputFiles) {
+  const filePath = inputFiles.get(entry.filename);
+  const workbook = xlsx.readFile(filePath, {
+    cellDates: false,
+    sheets: 'Sheet1',
+    sheetRows: MAX_DATA_ROWS + 2
+  });
   if (workbook.SheetNames.length !== 1 || workbook.SheetNames[0] !== 'Sheet1') {
     fail(`${entry.filename}: expected exactly one sheet named Sheet1`);
   }
   const sheet = workbook.Sheets.Sheet1;
+  assertWorksheetDimensions(sheet, entry.filename, { maxDataRows: MAX_DATA_ROWS, maxColumns: MAX_DATA_COLUMNS });
   const rows = xlsx.utils.sheet_to_json(sheet, {
     header: 1,
     raw: true,
@@ -195,12 +214,13 @@ function readSheetRows(entry) {
     blankrows: false
   }).filter(isNonEmptyRow);
   if (rows.length === 0) fail(`${entry.filename}: sheet is empty`);
+  if (rows.length > MAX_DATA_ROWS + 1) fail(`${entry.filename}: worksheet exceeds ${MAX_DATA_ROWS} data rows`);
   validateHeader(rows[0], entry.filename, entry.spec.columns);
   return rows.slice(1).filter(isNonEmptyRow);
 }
 
-function parseYearlyRows(entry) {
-  const rows = readSheetRows(entry);
+function parseYearlyRows(entry, inputFiles) {
+  const rows = readSheetRows(entry, inputFiles);
   const valueColumnIndex = entry.spec.columns.indexOf(entry.spec.valueColumn);
   return rows.map((row, index) => {
     const context = `${entry.filename} row ${index + 2}`;
@@ -212,8 +232,8 @@ function parseYearlyRows(entry) {
   });
 }
 
-function parseMonthlyRows(entry) {
-  const rows = readSheetRows(entry);
+function parseMonthlyRows(entry, inputFiles) {
+  const rows = readSheetRows(entry, inputFiles);
   const valueColumnIndex = entry.spec.columns.indexOf(entry.spec.valueColumn);
   return rows.map((row, index) => {
     const context = `${entry.filename} row ${index + 2}`;
@@ -474,11 +494,19 @@ function main() {
     fail(`missing required monthly slugs (all 6 must be present for committed JSON): ${missingSlugs.join(', ')}`);
   }
 
+  const inputFiles = preflightXlsxInputs({
+    inputDir,
+    filenames: selectedFiles.map((entry) => entry.filename),
+    maxInputBytes: MAX_INPUT_BYTES,
+    maxBatchInputBytes: MAX_BATCH_INPUT_BYTES,
+    maxBatchUncompressedBytes: MAX_BATCH_UNCOMPRESSED_BYTES,
+    zipLimits: ZIP_LIMITS,
+  });
   const parsedByMetric = new Map();
   for (const entry of selectedFiles) {
     const rows = entry.spec.granularity === 'country-month-year'
-      ? parseMonthlyRows(entry)
-      : parseYearlyRows(entry);
+      ? parseMonthlyRows(entry, inputFiles)
+      : parseYearlyRows(entry, inputFiles);
     parsedByMetric.set(entry.spec.metric, rows);
   }
 

@@ -90,6 +90,7 @@ const SUITES = {
     'check:market-pricing-ndx-ixic-implementation'
   ],
   'world-order-acled': [
+    'check:xlsx-security',
     'check:world-order-acled-hdx-probe',
     'check:world-order-acled-weekly',
     'check:world-order-acled-monthly'

@@ -1,5 +1,11 @@
 import fs from 'node:fs';
 
+import {
+  FUTURE_TIMESTAMP_TOLERANCE_MINUTES,
+  isFutureTimestampAge,
+  timestampAgeMinutes
+} from './health/timestamp-policy.mjs';
+
 const WORKER_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
 const SECONDARY_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.secondary-preview.json';
 const FETCH_TIMEOUT_MS = 4500;
@@ -47,10 +53,10 @@ function bool(value) {
 }
 
 function ageMinutes(updatedAt) {
-  if (typeof updatedAt !== 'string') return null;
-  const parsed = Date.parse(updatedAt);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.round((Date.now() - parsed) / 60000);
+  const rawAgeMinutes = timestampAgeMinutes(updatedAt);
+  if (rawAgeMinutes == null) return null;
+  if (isFutureTimestampAge(rawAgeMinutes)) return Math.floor(rawAgeMinutes);
+  return Math.max(0, Math.round(rawAgeMinutes));
 }
 
 function parseObservedAt(value) {
@@ -170,7 +176,15 @@ function auditSecondaryFreshness(name, source) {
     };
   }
 
-  const ageHours = Math.max(0, (Date.now() - observedMs) / 36e5);
+  const rawAgeMinutes = (Date.now() - observedMs) / 60000;
+  if (isFutureTimestampAge(rawAgeMinutes)) {
+    return {
+      observedAgeHours: Math.floor(rawAgeMinutes) / 60,
+      freshnessStatus: 'future-observedAt',
+      freshnessReason: `${name}-observedAt-exceeds-${FUTURE_TIMESTAMP_TOLERANCE_MINUTES}m-future-tolerance`,
+    };
+  }
+  const ageHours = Math.max(0, rawAgeMinutes / 60);
   const observedAgeHours = roundHours(ageHours);
   const profile = SECONDARY_FRESHNESS_PROFILES[name] || { freshHours: 24, marketClosedHours: 72, staleWarningHours: 120 };
 
@@ -243,6 +257,9 @@ function checkWorkerPreview(result) {
   if (finiteNumber(payload.healthScore) == null || payload.healthScore < 85) addReason(reasons, `worker healthScore is ${payload.healthScore ?? 'missing'}`);
   if (finiteNumber(payload.criticalMissing) == null || payload.criticalMissing > 1) addReason(reasons, `worker criticalMissing is ${payload.criticalMissing ?? 'missing'}`);
   if (age == null) addReason(reasons, 'worker updatedAt is missing or unparsable');
+  if (age != null && age < -FUTURE_TIMESTAMP_TOLERANCE_MINUTES) {
+    addReason(reasons, `worker updatedAt exceeds ${FUTURE_TIMESTAMP_TOLERANCE_MINUTES} minute future tolerance`);
+  }
   if (age != null && age > 10) addReason(reasons, `worker ageMinutes ${age} exceeds 10`);
 
   for (const field of CORE_FIELDS) {
@@ -359,7 +376,9 @@ function checkSecondarySource(name, source, expected, reasons, warnings) {
     addReason(warnings, `${name} secondary status is ${source.status}`);
   }
   const freshness = auditSecondaryFreshness(name, source);
-  if (freshnessWarningStatus(freshness.freshnessStatus)) {
+  if (freshness.freshnessStatus === 'future-observedAt') {
+    addReason(reasons, `${name} freshness ${freshness.freshnessStatus}: ${freshness.freshnessReason}`);
+  } else if (freshnessWarningStatus(freshness.freshnessStatus)) {
     addReason(warnings, `${name} freshness ${freshness.freshnessStatus}: ${freshness.freshnessReason}`);
   }
 
@@ -391,6 +410,9 @@ function checkSecondaryPreview(result) {
     addReason(reasons, `secondary sourceMode invalid: ${payload.sourceMode ?? 'missing'}`);
   }
   if (age == null) addReason(reasons, 'secondary updatedAt is missing or unparsable');
+  if (age != null && age < -FUTURE_TIMESTAMP_TOLERANCE_MINUTES) {
+    addReason(reasons, `secondary updatedAt exceeds ${FUTURE_TIMESTAMP_TOLERANCE_MINUTES} minute future tolerance`);
+  }
   if (payload.sourceMode === 'secondary-preview' && payload.unavailable !== false) {
     addReason(reasons, 'secondary-preview must have unavailable=false');
   }

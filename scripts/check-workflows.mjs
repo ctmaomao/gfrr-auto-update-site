@@ -12,7 +12,8 @@ const contracts = [
       'workflow_dispatch',
       "cron: '7,17,27,37,47,57 * * * *'",
       'concurrency',
-      'gfrr-realtime',
+      'group: gfrr-realtime-writer-realtime-data',
+      "if: ${{ github.ref == 'refs/heads/main' }}",
       'permissions:',
       'contents: write',
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
@@ -20,11 +21,17 @@ const contracts = [
       'node-version: 24',
       'for attempt in 1 2 3',
       'npm ci',
+      '          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
       'Validate realtime payload',
       'npm run check:realtime-local-schema',
       'Summarize realtime output',
       'Commit updated realtime file'
-    ]
+    ],
+    forbidden: [
+      '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
+      'group: gfrr-realtime-${{ github.ref }}'
+    ],
+    exactlyOnce: ['FRED_API_KEY: ${{ secrets.FRED_API_KEY }}']
   },
   {
     file: '.github/workflows/recover-stale-realtime-market.yml',
@@ -35,8 +42,9 @@ const contracts = [
       'permissions:',
       'contents: write',
       'concurrency',
-      'group: gfrr-realtime-${{ github.ref }}',
+      'group: gfrr-realtime-writer-realtime-data',
       'cancel-in-progress: false',
+      "if: ${{ github.ref == 'refs/heads/main' }}",
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
@@ -49,7 +57,8 @@ const contracts = [
       'npm run build:daily',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json',
-      'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION'
+      'ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION',
+      'group: gfrr-realtime-${{ github.ref }}'
     ]
   },
   {
@@ -65,12 +74,17 @@ const contracts = [
       'node-version: 24',
       'Audit Daily realtime input vs Worker preview',
       'node scripts/audit-daily-vs-worker.mjs --github-summary',
+      '          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
       'npm run build:data',
       'npm run check:data',
       'Daily Radar Summary',
       'Decision Summary',
       'Transmission Delta Summary'
-    ]
+    ],
+    forbidden: [
+      '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}'
+    ],
+    exactlyOnce: ['FRED_API_KEY: ${{ secrets.FRED_API_KEY }}']
   },
   {
     file: '.github/workflows/deploy-static-site-to-pages.yml',
@@ -80,6 +94,9 @@ const contracts = [
       "github.event.workflow_run.conclusion == 'success'",
       'cancel-in-progress: false',
       'npm run check:all',
+      'Prepare clean Pages artifact',
+      'npm run build:pages-artifact',
+      'path: _site',
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'fetch-depth: 0',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
@@ -113,7 +130,11 @@ const contracts = [
       'node-version: 24',
       'package-manager-cache: false',
       'npm ci',
-      'npm run check:all'
+      'npm audit --include=dev',
+      'npx --no-install playwright install --with-deps chromium',
+      'npm run test:unit:coverage',
+      'npm run check:all',
+      'npm run test:e2e'
     ],
     forbidden: [
       'contents: write',
@@ -135,6 +156,7 @@ const contracts = [
       'contents: read',
       'concurrency',
       'realtime-health',
+      'timeout-minutes: 2',
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',
@@ -424,11 +446,26 @@ for (const contract of contracts) {
     if (text.includes(needle)) addForbiddenFailure(contract.file, needle);
   }
 
+  for (const needle of contract.exactlyOnce || []) {
+    const count = text.split(needle).length - 1;
+    if (count !== 1) addRuntimeFailure(contract.file, `must contain exactly one "${needle}" occurrence; found ${count}`);
+  }
+
   for (const group of contract.anyOf || []) {
     if (!group.options.some((needle) => text.includes(needle))) {
       addFailure(contract.file, `${group.label}: ${group.options.join(' | ')}`);
     }
   }
+}
+
+const gitignoreFile = '.gitignore';
+if (fs.existsSync(gitignoreFile)) {
+  const ignored = new Set(fs.readFileSync(gitignoreFile, 'utf8').split(/\r?\n/u).map((line) => line.trim()));
+  for (const entry of ['.codex/', '.env', '.env.*', '.dev.vars', '.dev.vars.*', '.wrangler/', 'workers/gfrr-realtime-worker/wrangler.toml']) {
+    if (!ignored.has(entry)) addRuntimeFailure(gitignoreFile, `missing local secret/config ignore: ${entry}`);
+  }
+} else {
+  addRuntimeFailure(gitignoreFile, 'file missing');
 }
 
 const mainWriterWorkflows = [

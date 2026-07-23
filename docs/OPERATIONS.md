@@ -20,9 +20,15 @@ npm run check:all
 
 默认 `check:all` 是只读验证链。external AI 的 artifact / projection / manual-input 生成能力保留为显式 opt-in 命令,不属于日常默认验证。
 
+PR 还必须通过可量化纯逻辑覆盖率和单一 Chromium 浏览器 smoke。首次本地运行浏览器 smoke 前安装项目锁定版本对应的 Chromium；测试只读取本地静态文件，不调用生产 AI、Worker 写接口或 KV：
+
 ```bash
-npm run check:all
+npm run test:unit:coverage
+npx --no-install playwright install chromium
+npm run test:e2e
 ```
+
+`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
 
 `check:data` 等价于 `node scripts/validate-data.mjs`。v28.0G-10 Data Check Expected-Skip Noise Cleanup 后，默认检查不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。
 
@@ -56,7 +62,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `audit-hardening-1`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `health-hardening-2`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 检查 Worker Health；Check Worker Health 仍是 Worker-first runtime hard gate。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -71,7 +77,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API（独立的 `externalAiInterpretationLayer` 已由 approved workflow 用 DeepSeek,visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约）。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `audit-hardening-1`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `health-hardening-2`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -499,22 +505,22 @@ safe-dom-rendering-1 是当前前端 cache token；同一 Frontend Asset Cache B
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=audit-hardening-1
-scripts/app.js and active scripts/modules/*.js local imports → ?v=audit-hardening-1
+index.html app.js entry → ?v=health-hardening-2
+scripts/app.js and active scripts/modules/*.js local imports → ?v=health-hardening-2
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `audit-hardening-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 本身不新增 KV、不 deploy Worker；同一提交中的 Brent 未来时间戳修复属于独立 Worker runtime 改动。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `health-hardening-2`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 Macro Overview 趋势 SVG 与 External AI 展示簇模块拆分，本身不新增 KV、不 deploy Worker、不改变 DOM/文案/布局/fallback。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs audit-hardening-1
-npm run bump:frontend-asset-version -- audit-hardening-1
+node scripts/bump-frontend-asset-version.mjs health-hardening-2
+npm run bump:frontend-asset-version -- health-hardening-2
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `audit-hardening-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `health-hardening-2`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
@@ -709,6 +715,7 @@ pending deltas: 0
 
 ```bash
 npm run check:all
+npm run build:pages-artifact
 ```
 
 失败时按类型排查：
@@ -726,7 +733,7 @@ npm run check:all
 
 GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions：`actions/checkout@v6`、`actions/setup-node@v6` 和 `actions/upload-artifact@v7`；`setup-node` 使用 `node-version: 24`。每个 workflow 必须设置 top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`。不要使用 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`、`FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`、Node 20 或 Node 25 作为默认项目 runtime。
 
-`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行默认只读 `check:all`；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
+`build:pages-artifact` 只允许两张 HTML、`assets` 静态类型、`data/realtime` JSON、`scripts/app.js` 与 `scripts/modules/*.js`，并拒绝任意层级的隐藏配置、非白名单扩展或 symlink。`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行默认只读 `check:all`；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
 
 ## v28.0L-3I-0 Workflow / runtime hygiene
 

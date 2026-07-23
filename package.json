@@ -218,6 +218,10 @@
     "check:market-pricing": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs market-pricing",
     "check:realtime-local-schema": "node --check scripts/check-realtime-local-schema.mjs && node scripts/check-realtime-local-schema.mjs",
     "check:world-order-acled": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs world-order-acled",
+    "check:xlsx-security": "node --check scripts/check-xlsx-security.mjs && node scripts/check-xlsx-security.mjs",
+    "test:unit:coverage": "node --test --experimental-test-coverage --test-coverage-include=scripts/daily/daily-brief.mjs --test-coverage-include=scripts/daily/divergence-layer.mjs --test-coverage-include=scripts/health/timestamp-policy.mjs --test-coverage-include=scripts/modules/config.js --test-coverage-include=scripts/modules/displayStatusThresholds.js --test-coverage-include=scripts/modules/freshness.js --test-coverage-include=scripts/modules/format.js --test-coverage-include=scripts/sanitize-diagnostic-url.mjs --test-coverage-include=scripts/world-order/xlsx-input-guard.mjs --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=95 tests/unit/*.test.mjs",
+    "build:pages-artifact": "node scripts/build-pages-artifact.mjs",
+    "test:e2e": "npm run build:pages-artifact && playwright test",
     "check:data:verbose": "node scripts/validate-data.mjs --verbose",
     "check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment",
     "check:all": "npm run check:syntax && npm run check:worker-syntax && npm run check:gdelt-cloud-fetcher-integration && npm run check:gdelt-source-policy && npm run check:gdelt-web-ngrams-diagnosis && npm run check:gdelt-web-ngrams-artifact-sanitizer && npm run check:gdelt-web-ngrams-sample-archive && npm run check:gdelt-web-ngrams-samples-review && npm run check:gdelt-web-ngrams-fallback-source-review && npm run check:gdelt-web-ngrams-production-display-fallback-contract && npm run check:gdelt-web-ngrams-sample-collector-workflow && npm run check:gdelt-web-ngrams-fallback-gate-review && npm run check:gdelt-web-ngrams-display-fallback-projection && npm run check:gdelt-web-ngrams-display-fallback-projection-review && npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design && npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold && npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review && npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness && npm run check:gdelt-web-ngrams-display-fallback-production-display-write && npm run check:gdelt-cache-health && npm run check:modules && npm run check:realtime-js-frozen && npm run check:frontend-live-contracts && npm run check:node-runtime && npm run check:workflows && npm run check:docs && npm run check:external-ai && npm run check:data && npm run check:realtime-local-schema && npm run check:main-score-wind-fallback && npm run check:brent && npm run check:macro-drivers && npm run check:narrative-density && npm run check:market-pricing && npm run check:world-order && npm run check:world-order-acled && npm run check:oil-directional && npm run check:bubble-watch && npm run check:frontend-zh-copy",
@@ -342,6 +346,7 @@
     "node": ">=24 <25"
   },
   "devDependencies": {
-    "xlsx": "0.18.5"
+    "@playwright/test": "1.61.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

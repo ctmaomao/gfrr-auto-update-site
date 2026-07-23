@@ -131,7 +131,14 @@ function assertPackageScripts() {
   }
   assert(!pkg.scripts?.[REMOVED_SOURCE_REVIEW_SCRIPT], `package.json must remove ${REMOVED_SOURCE_REVIEW_SCRIPT}`);
   assert(!pkg.dependencies || Object.keys(pkg.dependencies).length === 0, 'package.json must not add runtime dependencies');
-  assertEqual(Object.keys(pkg.devDependencies || {}).join(','), 'xlsx', 'package.json devDependencies remain unchanged');
+  assertEqual(
+    JSON.stringify(pkg.devDependencies || {}),
+    JSON.stringify({
+      '@playwright/test': '1.61.1',
+      xlsx: 'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz'
+    }),
+    'package.json devDependencies stay on the reviewed test/sanitizer allowlist'
+  );
 }
 
 function assertSuiteWiring() {

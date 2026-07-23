@@ -7,7 +7,7 @@ import { isPreservableExternalAiLayer } from './run-daily-pipeline.mjs';
 const DATA_PATH = 'data/radar-data.json';
 const WORKFLOW_DIR = '.github/workflows';
 const APPROVED_PRODUCTION_REFRESH_WORKFLOW = '.github/workflows/external-ai-production-refresh.yml';
-const RENDER_MACRO_OVERVIEW_PATH = 'scripts/modules/renderMacroOverview.js';
+const RENDER_EXTERNAL_AI_PATH = 'scripts/modules/renderExternalAi.js';
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
@@ -45,10 +45,10 @@ function normalizeRepoPath(filePath) {
 function extractFunctionSource(text, functionName) {
   const marker = `function ${functionName}`;
   const start = text.indexOf(marker);
-  if (start < 0) throw new Error(`Unable to find ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+  if (start < 0) throw new Error(`Unable to find ${functionName} in ${RENDER_EXTERNAL_AI_PATH}`);
 
   const parenStart = text.indexOf('(', start);
-  if (parenStart < 0) throw new Error(`Unable to find signature for ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+  if (parenStart < 0) throw new Error(`Unable to find signature for ${functionName} in ${RENDER_EXTERNAL_AI_PATH}`);
 
   let parenDepth = 0;
   let signatureEnd = -1;
@@ -64,10 +64,10 @@ function extractFunctionSource(text, functionName) {
     }
   }
 
-  if (signatureEnd < 0) throw new Error(`Unable to parse signature for ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+  if (signatureEnd < 0) throw new Error(`Unable to parse signature for ${functionName} in ${RENDER_EXTERNAL_AI_PATH}`);
 
   const braceStart = text.indexOf('{', signatureEnd);
-  if (braceStart < 0) throw new Error(`Unable to find body for ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+  if (braceStart < 0) throw new Error(`Unable to find body for ${functionName} in ${RENDER_EXTERNAL_AI_PATH}`);
 
   let depth = 0;
   for (let index = braceStart; index < text.length; index += 1) {
@@ -79,7 +79,7 @@ function extractFunctionSource(text, functionName) {
     }
   }
 
-  throw new Error(`Unable to parse ${functionName} in ${RENDER_MACRO_OVERVIEW_PATH}`);
+  throw new Error(`Unable to parse ${functionName} in ${RENDER_EXTERNAL_AI_PATH}`);
 }
 
 function isApprovedProductionRefreshWorkflow(filePath, text) {
@@ -184,7 +184,7 @@ function validateNoAutomation(errors) {
 }
 
 function validateFrontendFailClosedGuard(errors) {
-  const text = readText(RENDER_MACRO_OVERVIEW_PATH);
+  const text = readText(RENDER_EXTERNAL_AI_PATH);
   const requiredSnippets = [
     'function isExternalAiVisibleForFrontend',
     'function isExternalAiFreshForFrontend',
@@ -255,7 +255,7 @@ function cloneLayer(layer) {
 }
 
 function buildFrontendRendererHarness() {
-  const text = readText(RENDER_MACRO_OVERVIEW_PATH);
+  const text = readText(RENDER_EXTERNAL_AI_PATH);
   const calls = [];
   const setHidden = (id, hidden) => calls.push({ id, hidden });
   const harnessFactory = new Function(

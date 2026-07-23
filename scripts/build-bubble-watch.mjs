@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gdeltCacheAgeHours } from './gdelt/cache-age.mjs';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt.mjs';
+import { sanitizeDiagnosticUrl } from './sanitize-diagnostic-url.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -195,7 +196,7 @@ async function fetchWithTimeout(url, options = {}) {
       redirect: 'follow'
     });
     if (!res.ok) {
-      const error = new Error(`HTTP ${res.status} for ${url}`);
+      const error = new Error(`HTTP ${res.status} for ${sanitizeDiagnosticUrl(url)}`);
       error.status = res.status;
       error.retryAfter = res.headers.get('Retry-After') || '';
       throw error;

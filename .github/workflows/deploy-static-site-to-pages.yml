@@ -64,11 +64,14 @@ jobs:
       - name: Run full check suite
         run: npm run check:all
 
+      - name: Prepare clean Pages artifact
+        run: npm run build:pages-artifact
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

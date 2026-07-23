@@ -42,7 +42,7 @@ All `devDependencies` must be:
 - The PR reviewer (project owner) retains discretion to reject any `devDependency` for any reason
 
 ### Mandatory disclosures in any PR introducing a `devDependency`:
-1. Library name + version (pinned exactly, e.g. `"xlsx": "0.18.5"`)
+1. Library name + version/source (pinned exactly with lockfile integrity, e.g. the official SheetJS `0.20.3` tarball)
 2. Why a hand-rolled implementation would be impractical or risky
 3. The dev-time script(s) that consume the library
 4. Confirmation that no runtime code paths import the library
@@ -68,6 +68,8 @@ All `devDependencies` must be:
 - M-63a will be the first PR to add a `devDependency` (`xlsx` / SheetJS) under this ADR
 - M-63a PR description must reference this ADR (ADR-0013) and confirm all four mandatory disclosures
 - M-63b (monthly), M-63c (workflows), and future similar PRs follow the same pattern
+- The 2026-07-13 security refresh pins SheetJS Community Edition 0.20.3 from the official CDN with reviewed lockfile integrity, requires `npm audit --include=dev` to exit 0, and enforces file/path/sheet/row limits in both ACLED sanitizers.
+- The 2026-07-13 browser smoke suite pins `@playwright/test@1.61.1` as a dev-only test runner. It is used only by PR/local tests, installs one Chromium browser, and is not imported by frontend, data builders, workflows with write permissions, or Worker runtime.
 - This ADR does NOT retroactively allow adding the dashboard's `package.json` "dependencies" array — that remains forbidden
 
 ## Alternatives considered
@@ -82,4 +84,4 @@ All `devDependencies` must be:
 - ADR-0001: zero-dependencies (the policy this ADR refines)
 - M-63a: ACLED weekly regional sanitizer + importer (the first PR exercising this ADR)
 - ACLED EULA Section 3.3: forbids automation against acleddata.com (rules out API-based circumvention of the xlsx issue)
-- SheetJS Community Edition: https://github.com/SheetJS/sheetjs (the library M-63a will adopt)
+- SheetJS Community Edition Node installation: https://docs.sheetjs.com/docs/getting-started/installation/nodejs/
