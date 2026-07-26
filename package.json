@@ -118,7 +118,7 @@
     "check:gdelt-cloud-fetcher-integration": "node --check scripts/check-gdelt-cloud-fetcher-integration.mjs && node scripts/check-gdelt-cloud-fetcher-integration.mjs",
     "check:gdelt-source-policy": "node --check scripts/check-gdelt-source-policy.mjs && node scripts/check-gdelt-source-policy.mjs",
     "review:gdelt-cache-health": "node scripts/review-gdelt-cache-health.mjs",
-    "check:gdelt-cache-health": "node --check scripts/review-gdelt-cache-health.mjs && node scripts/review-gdelt-cache-health.mjs --no-output",
+    "check:gdelt-cache-health": "node --check scripts/gdelt/cache-health-context.mjs && node --check scripts/review-gdelt-cache-health.mjs && node scripts/review-gdelt-cache-health.mjs --no-output",
     "check:modules": "node scripts/check-module-imports.mjs",
     "check:realtime-js-frozen": "node --check scripts/check-realtime-js-frozen.mjs && node scripts/check-realtime-js-frozen.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",

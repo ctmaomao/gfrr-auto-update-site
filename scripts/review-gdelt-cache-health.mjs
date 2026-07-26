@@ -8,6 +8,11 @@ import { fileURLToPath } from 'node:url';
 
 import { GDELT_BROAD_QUERY_SPEC } from './oil-directional/diagnose-oil-news-events.mjs';
 import { gdeltCacheAgeHours } from './gdelt/cache-age.mjs';
+import {
+  classifyBubbleScheduleContext,
+  classifyOilNewsPostRefresh,
+  summarizePostRefreshContexts
+} from './gdelt/cache-health-context.mjs';
 
 const REVIEW_VERSION = 'gdelt-cache-health-review-p40';
 const DEFAULT_OUTPUT = 'manual-artifacts/gdelt-cache-health/gdelt-cache-health-latest.json';
@@ -292,13 +297,48 @@ function recommendationFor(status, rows) {
   if (onlyBubblePlaceholderFail(rows)) {
     return 'investigate_bubble_watch_refresh_history_then_rerun_review';
   }
-  return status === 'fail'
-    ? 'fix_schema_or_policy_before_relying_on_gdelt_caches'
-    : status === 'warn'
-      ? 'review_gdelt_cache_errors_before_next_promotion'
-      : status === 'watch'
-        ? 'wait_for_next_scheduled_refresh_then_rerun_review'
-        : 'gdelt_cache_health_current';
+  if (status === 'fail') return 'fix_schema_or_policy_before_relying_on_gdelt_caches';
+  if (status === 'warn') return 'review_gdelt_cache_errors_before_next_promotion';
+  if (rows.some((row) => row.refreshContext?.state === 'persistent_error_after_cooldown_expiry')) {
+    return 'diagnose_oil_news_cooldown_persistence_without_loosening_ttl_or_backoff';
+  }
+  if (rows.some((row) => row.refreshContext?.state === 'scheduled_refresh_overdue')) {
+    return 'diagnose_scheduled_refresh_or_cache_write_before_policy_change';
+  }
+  if (rows.some((row) => row.refreshContext?.state === 'expected_error_cooldown_after_refresh')) {
+    return 'wait_until_error_cooldown_expires_then_rerun_after_scheduled_refresh';
+  }
+  return status === 'watch'
+    ? 'wait_for_next_scheduled_refresh_then_rerun_review'
+    : 'gdelt_cache_health_current';
+}
+
+function formatPostRefreshSummary(postRefresh) {
+  if (!postRefresh || typeof postRefresh !== 'object') return null;
+  return [
+    `expectedCooldown=${Number(postRefresh.expectedErrorCooldownCount) || 0}`,
+    `persistentAfterCooldown=${Number(postRefresh.persistentAfterCooldownCount) || 0}`,
+    `expectedScheduleGap=${Number(postRefresh.expectedScheduleGapCount) || 0}`,
+    `scheduledOverdue=${Number(postRefresh.scheduledRefreshOverdueCount) || 0}`
+  ].join(' ');
+}
+
+function formatRefreshContext(context) {
+  if (!context || typeof context !== 'object' || !context.state) return null;
+  const details = [`state=${context.state}`];
+  if (Number.isFinite(context.cooldownRemainingHours)) {
+    details.push(`cooldownRemainingHours=${context.cooldownRemainingHours}`);
+  }
+  if (Number.isFinite(context.hoursPastFreshTtl)) {
+    details.push(`hoursPastFreshTtl=${context.hoursPastFreshTtl}`);
+  }
+  if (Number.isFinite(context.hoursPastScheduledCadence)) {
+    details.push(`hoursPastScheduledCadence=${context.hoursPastScheduledCadence}`);
+  }
+  if (context.nextAction) {
+    details.push(`nextAction=${context.nextAction}`);
+  }
+  return details.join(' ');
 }
 
 function shouldExitNonZero(status, strict) {
@@ -325,6 +365,9 @@ function reviewOilNewsCache(nowMs, cacheOverride = null) {
     lastUsableArticleCount: null,
     lastUsableUsedForCurrentSignal: null,
     productionArtifactStatus: null,
+    productionArtifactGeneratedAt: null,
+    productionRequestMode: null,
+    refreshContext: null,
     findings: []
   };
   const cacheRead = cacheOverride
@@ -387,6 +430,17 @@ function reviewOilNewsCache(nowMs, cacheOverride = null) {
   const watchRead = readJson(CACHE_PATHS.oilNewsWatch);
   if (watchRead.ok) {
     row.productionArtifactStatus = watchRead.value?.sourceStatus?.gdeltDoc || null;
+    row.productionArtifactGeneratedAt = watchRead.value?.generatedAt || null;
+    row.productionRequestMode =
+      watchRead.value?.sourceStatus?.details?.gdelt_doc?.queryRuns?.[0]?.status || null;
+    row.refreshContext = classifyOilNewsPostRefresh({
+      cacheGeneratedAt: row.generatedAt,
+      cacheAgeHours: row.ageHours,
+      errorCooldownHours: cache.cachePolicy?.errorCooldownHours,
+      productionGeneratedAt: row.productionArtifactGeneratedAt,
+      productionStatus: row.productionArtifactStatus,
+      productionRequestMode: row.productionRequestMode
+    });
     if (row.productionArtifactStatus === 'error' && row.status === 'ok') {
       pushFinding(row, 'watch', 'oil_news_artifact_not_refreshed_after_cache', 'Oil News watch artifact has not yet reflected a healthier GDELT cache state.');
     }
@@ -415,6 +469,7 @@ function reviewBubbleWatchCache(nowMs, cacheOverride = null, refreshHistoryOverr
     placeholderHistoryUnavailableReason: null,
     placeholderSuccessfulRefreshesObserved: null,
     placeholderFailAfterSuccessfulRefreshes: BUBBLE_WATCH_PLACEHOLDER_FAIL_AFTER_SUCCESSFUL_REFRESHES,
+    refreshContext: null,
     findings: []
   };
   const cacheRead = cacheOverride
@@ -433,6 +488,7 @@ function reviewBubbleWatchCache(nowMs, cacheOverride = null, refreshHistoryOverr
   row.errorCode = cache.requestDiagnostics?.errorCode || null;
   row.rateLimited = cache.requestDiagnostics?.rateLimited === true || cache.requestDiagnostics?.status === 429;
   row.articleCount = Array.isArray(cache.articles) ? cache.articles.length : null;
+  row.refreshContext = classifyBubbleScheduleContext(row.ageHours, BUBBLE_WATCH_CACHE_TTL_HOURS);
   assertNoForbiddenCacheFields(row, cache, 'bubble');
 
   if (cache.schemaVersion !== row.expectedSchemaVersion || cache.module !== 'gdelt-bubble-watch-cache') {
@@ -618,6 +674,38 @@ function runSelfTests() {
   assertSelfTest(shouldExitNonZero('fail', false) === true, 'default mode exits non-zero on FAIL');
   assertSelfTest(shouldExitNonZero('watch', false) === false, 'default mode keeps WATCH non-blocking');
   assertSelfTest(shouldExitNonZero('watch', true) === true, 'strict mode exits non-zero on WATCH');
+  assertSelfTest(
+    classifyOilNewsPostRefresh({
+      cacheGeneratedAt: '2026-07-25T00:00:00.000Z',
+      cacheAgeHours: 25,
+      errorCooldownHours: 24,
+      productionGeneratedAt: '2026-07-26T00:00:00.000Z',
+      productionStatus: 'error',
+      productionRequestMode: 'error_cooldown_cache_hit'
+    }).state === 'persistent_error_after_cooldown_expiry',
+    'newer degraded Oil News artifact beyond cooldown is persistent evidence'
+  );
+  assertSelfTest(
+    classifyOilNewsPostRefresh({
+      cacheGeneratedAt: '2026-07-25T00:00:00.000Z',
+      cacheAgeHours: 12,
+      errorCooldownHours: 24,
+      productionGeneratedAt: '2026-07-25T12:00:00.000Z',
+      productionStatus: 'error',
+      productionRequestMode: 'error_cooldown_cache_hit'
+    }).state === 'expected_error_cooldown_after_refresh',
+    'newer degraded Oil News artifact inside cooldown is expected bounded behavior'
+  );
+  assertSelfTest(
+    classifyBubbleScheduleContext(141, BUBBLE_WATCH_CACHE_TTL_HOURS).state
+      === 'expected_pre_refresh_schedule_gap',
+    'weekly Bubble Watch cache gap is distinguished from overdue refresh'
+  );
+  assertSelfTest(
+    classifyBubbleScheduleContext(181, BUBBLE_WATCH_CACHE_TTL_HOURS).state
+      === 'scheduled_refresh_overdue',
+    'Bubble Watch cache beyond cadence grace is overdue'
+  );
 
   const oilNetworkErrorRow = reviewOilNewsCache(Date.parse('2026-07-10T16:00:00.000Z'), {
     schemaVersion: 'gdelt-news-cache-p37',
@@ -669,6 +757,23 @@ function runSelfTests() {
     awaitingPostMigrationRefresh([placeholderRow]) === true,
     'placeholder threshold fail remains a post-migration refresh state'
   );
+  assertSelfTest(
+    formatPostRefreshSummary({
+      expectedErrorCooldownCount: 1,
+      persistentAfterCooldownCount: 0,
+      expectedScheduleGapCount: 2,
+      scheduledRefreshOverdueCount: 0
+    }) === 'expectedCooldown=1 persistentAfterCooldown=0 expectedScheduleGap=2 scheduledOverdue=0',
+    'post-refresh summary formatter emits stable operator summary'
+  );
+  assertSelfTest(
+    formatRefreshContext({
+      state: 'expected_error_cooldown_after_refresh',
+      cooldownRemainingHours: 11.74,
+      nextAction: 'wait_until_error_cooldown_expires_then_rerun_after_scheduled_refresh'
+    }) === 'state=expected_error_cooldown_after_refresh cooldownRemainingHours=11.74 nextAction=wait_until_error_cooldown_expires_then_rerun_after_scheduled_refresh',
+    'refresh-context formatter emits cooldown details'
+  );
 }
 
 function buildReview() {
@@ -687,6 +792,7 @@ function buildReview() {
       return counts;
     }, {});
   const recommendation = recommendationFor(status, rows);
+  const postRefresh = summarizePostRefreshContexts(rows);
   return {
     reviewVersion: REVIEW_VERSION,
     generatedAt: now,
@@ -698,7 +804,8 @@ function buildReview() {
       issueCounts,
       hasJsonParseFailed: rows.some((row) => row.errorCode === 'json_parse_failed'),
       hasRateLimited: rows.some((row) => row.rateLimited === true),
-      awaitingPostMigrationRefresh: awaitingPostMigrationRefresh(rows)
+      awaitingPostMigrationRefresh: awaitingPostMigrationRefresh(rows),
+      postRefresh
     },
     rows,
     productionImpact: {
@@ -730,11 +837,23 @@ function writeReview(review, outputPath) {
 function printSummary(review) {
   console.log(`GDELT cache health review: ${review.status.toUpperCase()}`);
   console.log(`recommendation: ${review.recommendation}`);
+  const postRefreshSummary = formatPostRefreshSummary(review.summary?.postRefresh);
+  if (postRefreshSummary) {
+    console.log(`postRefresh: ${postRefreshSummary}`);
+  }
+  const nextActions = review.summary?.postRefresh?.nextActions;
+  if (Array.isArray(nextActions) && nextActions.length > 0) {
+    console.log(`postRefreshNextActions: ${nextActions.join(', ')}`);
+  }
   for (const row of review.rows) {
     const primary = row.findings[0] || { severity: 'ok', code: 'ok' };
     const generated = row.generatedAt ? ` generatedAt=${row.generatedAt}` : '';
     const age = row.ageHours === null ? '' : ` ageHours=${row.ageHours}`;
     console.log(`- ${row.key}: ${primary.severity}/${primary.code} status=${row.status} requestMode=${row.requestMode || 'null'}${generated}${age}`);
+    const refreshContextSummary = formatRefreshContext(row.refreshContext);
+    if (refreshContextSummary) {
+      console.log(`  refreshContext: ${refreshContextSummary}`);
+    }
   }
   if (review.outputPath) console.log(`outputPath: ${review.outputPath}`);
 }
