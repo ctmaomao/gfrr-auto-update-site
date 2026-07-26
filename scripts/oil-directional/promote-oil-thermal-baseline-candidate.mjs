@@ -2,8 +2,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
+import { evaluateOilThermalPromotionHealthGate } from './oil-thermal-sample-health.mjs';
 
-const PROMOTION_VERSION = 'oil-thermal-baseline-promotion-p49';
+const PROMOTION_VERSION = 'oil-thermal-baseline-promotion-p60';
 const DEFAULT_REVIEW = 'manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json';
 const DEFAULT_READINESS = 'manual-artifacts/oil-thermal/oil-thermal-baseline-readiness-latest.json';
 const DEFAULT_FACILITIES = 'config/oil-thermal-watch-facilities.json';
@@ -39,12 +40,12 @@ function printUsage() {
   npm run promote:oil-thermal-baseline-candidate -- [options]
 
 Options:
-  --review <path>                 P25 review artifact. Default: ${DEFAULT_REVIEW}
+  --review <path>                 P26 health-gated review artifact. Default: ${DEFAULT_REVIEW}
   --readiness <path>              P47 readiness artifact. Default: ${DEFAULT_READINESS}
   --facilities <path>             Production facility whitelist. Default: ${DEFAULT_FACILITIES}
   --output <path>                 Production baseline config. Default: ${DEFAULT_OUTPUT}
   --min-samples <n>               Required samples per facility. Default: ${DEFAULT_MIN_SAMPLES}
-  --allow-warnings                Allow P25/P47 warning arrays during promotion.
+  --allow-warnings                Allow P26/P47 warning arrays during promotion.
   --write-production-baseline     Actually write config/oil-thermal-watch-baseline.json.
   --json                          Print full JSON result.
   --help                          Show this help.`);
@@ -169,39 +170,57 @@ function ensureNoRawSensitiveText(payload, label) {
 }
 
 function validateArtifacts({ review, readiness, facilitiesConfig, options }) {
-  if (review.reviewVersion !== 'oil-thermal-baseline-samples-review-p25') {
+  if (review.reviewVersion !== 'oil-thermal-baseline-samples-review-p26') {
     throw new Error(`Unsupported reviewVersion: ${review.reviewVersion}`);
   }
   if (readiness.prepVersion !== 'oil-thermal-baseline-readiness-p47') {
     throw new Error(`Unsupported prepVersion: ${readiness.prepVersion}`);
   }
-  if (review.status !== 'pass') throw new Error(`P25 review must be pass, got ${review.status}`);
+  if (review.status !== 'pass') throw new Error(`P26 review must be pass, got ${review.status}`);
   if (readiness.status !== 'ok') throw new Error(`P47 readiness must be ok, got ${readiness.status}`);
   if (review.candidateBaseline?.candidateOnly !== true) {
-    throw new Error('P25 candidateBaseline.candidateOnly must be true before P49 rolling promotion.');
+    throw new Error('P26 candidateBaseline.candidateOnly must be true before P60 rolling promotion.');
+  }
+  if (review.candidateBaseline?.sampleSelection !== 'eligible_only') {
+    throw new Error('P26 candidate baseline must be built from health-eligible samples only.');
   }
   if (review.candidateBaseline?.status !== 'established') {
-    throw new Error(`P25 candidate baseline must be established, got ${review.candidateBaseline?.status}`);
+    throw new Error(`P26 candidate baseline must be established, got ${review.candidateBaseline?.status}`);
   }
   if (readiness.recommendation !== 'baseline_candidate_ready_for_manual_promotion_review') {
     throw new Error(`P47 readiness recommendation is not promotion-ready: ${readiness.recommendation}`);
   }
+  const promotionHealthGate = evaluateOilThermalPromotionHealthGate({
+    sampleHealth: review.sampleHealth,
+    candidateBaselineStatus: review.summary?.candidateBaselineStatus,
+    facilitiesReadyForBaseline: review.summary?.facilitiesReadyForBaseline,
+    facilityCount: review.summary?.facilityCount
+  });
+  if (!promotionHealthGate.satisfied) {
+    throw new Error(`P60 sample health gate is not satisfied: ${promotionHealthGate.reasons.join(', ')}`);
+  }
+  if (review.sampleHealth?.promotionGate?.satisfied !== true) {
+    throw new Error('P26 review must carry a satisfied sampleHealth.promotionGate.');
+  }
+  if (readiness.sampleHealth?.promotionGate?.satisfied !== true) {
+    throw new Error('P47 readiness must carry a satisfied sampleHealth.promotionGate.');
+  }
   if (review.promotionEligible !== false || readiness.promotionEligible !== false) {
-    throw new Error('P25/P47 artifacts must remain non-promotional review artifacts.');
+    throw new Error('P26/P47 artifacts must remain non-promotional review artifacts.');
   }
   if (review.summary?.productionBaselineWriteApproved !== false || readiness.productionBaselineWriteApproved !== false) {
-    throw new Error('P25/P47 artifacts must not claim production baseline write approval.');
+    throw new Error('P26/P47 artifacts must not claim production baseline write approval.');
   }
   if (!options.allowWarnings) {
     const warningCount = (review.warnings?.length ?? 0) + (readiness.review?.warnings ?? 0);
     if (warningCount > 0) throw new Error(`Warnings present (${warningCount}); rerun with --allow-warnings only after manual review.`);
   }
   if ((review.blockers?.length ?? 0) > 0 || (readiness.review?.blockers ?? 0) > 0) {
-    throw new Error('P25/P47 blockers are present.');
+    throw new Error('P26/P47 blockers are present.');
   }
-  allProductionImpactFalse(review.productionImpact, 'P25 review');
+  allProductionImpactFalse(review.productionImpact, 'P26 review');
   allProductionImpactFalse(readiness.productionImpact, 'P47 readiness');
-  ensureNoRawSensitiveText(review, 'P25 review');
+  ensureNoRawSensitiveText(review, 'P26 review');
   ensureNoRawSensitiveText(readiness, 'P47 readiness');
 
   const facilities = Array.isArray(facilitiesConfig.facilities) ? facilitiesConfig.facilities : [];
@@ -214,7 +233,13 @@ function validateArtifacts({ review, readiness, facilitiesConfig, options }) {
     throw new Error(`P47 not-ready facilities remain: ${readiness.notReadyFacilityIds.join(', ')}`);
   }
   if (review.summary?.sampleCount !== readiness.review?.sampleCount) {
-    throw new Error('P25/P47 sample counts do not match.');
+    throw new Error('P26/P47 sample counts do not match.');
+  }
+  if (review.summary?.totalSampleCount !== readiness.review?.totalSampleCount) {
+    throw new Error('P26/P47 total sample counts do not match.');
+  }
+  if (review.summary?.quarantinedSampleCount !== readiness.review?.quarantinedSampleCount) {
+    throw new Error('P26/P47 quarantined sample counts do not match.');
   }
   if (review.summary?.facilitiesReadyForBaseline !== facilities.length) {
     throw new Error('Not all whitelist facilities are ready for baseline.');
@@ -277,7 +302,7 @@ function caveatsForQuality(quality) {
   return [
     'Rolling baseline is derived from sanitized production watch samples only.',
     qualityCaveat,
-    'P25/P47 artifacts remain non-promotional review packets; P49 rolling refresh is the separate explicit production-config promotion.'
+    'P26/P47 artifacts remain non-promotional review packets; P60 rolling refresh is the separate explicit production-config promotion.'
   ];
 }
 
@@ -327,7 +352,7 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
     establishedAt: isoOrThrow(review.generatedAt, 'review.generatedAt'),
     sourceReview: {
       promotionVersion: PROMOTION_VERSION,
-      promotionStage: 'P49',
+      promotionStage: 'P60',
       baselineQuality: quality,
       qualityPolicy: QUALITY_POLICY,
       qualityTransition: transition,
@@ -339,6 +364,16 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
       readinessVersion: readiness.prepVersion,
       readinessGeneratedAt: isoOrThrow(readiness.generatedAt, 'readiness.generatedAt'),
       sampleCount: numberOrThrow(review.summary.sampleCount, 'review.summary.sampleCount'),
+      totalSampleCount: numberOrThrow(review.summary.totalSampleCount, 'review.summary.totalSampleCount'),
+      quarantinedSampleCount: numberOrThrow(
+        review.summary.quarantinedSampleCount,
+        'review.summary.quarantinedSampleCount'
+      ),
+      sampleHealthGateVersion: review.sampleHealth.gateVersion,
+      diagnosticsConfirmedEligibleSampleCount: numberOrThrow(
+        review.sampleHealth.diagnosticsConfirmedEligibleSampleCount,
+        'review.sampleHealth.diagnosticsConfirmedEligibleSampleCount'
+      ),
       firstSampleAt: isoOrThrow(review.summary.firstSampleAt, 'review.summary.firstSampleAt'),
       lastSampleAt: isoOrThrow(review.summary.lastSampleAt, 'review.summary.lastSampleAt'),
       sampleWindowDays,
@@ -347,7 +382,8 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
       caveats: caveatsForQuality(quality)
     },
     notes: [
-      'P49 rolling refresh promotes operator-reviewed p95 rows from P25/P47 sanitized oil-thermal-watch history samples.',
+      'P60 rolling refresh promotes operator-reviewed p95 rows from P26/P47 health-eligible sanitized oil-thermal-watch history samples.',
+      'Partial, source-unavailable, request-error, incomplete-coverage, and unclassified-health samples are retained for audit but excluded from candidate statistics.',
       'Baseline quality ages by sampleWindowDays: <7 days starter_short_window, 7-30 days starter_observation_window, 30+ days established_observation_window.',
       'Repeated observation still requires established facility baseline, multi-source repeatability, and above-baseline strength.',
       'This baseline file never stores MAP_KEY, raw FIRMS rows, raw URLs, outage claims, supply-disruption claims, or oil-price direction.',

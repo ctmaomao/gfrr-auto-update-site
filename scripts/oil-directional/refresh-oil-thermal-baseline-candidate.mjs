@@ -24,7 +24,7 @@ function printUsage() {
 
 Options:
   --output-dir <path>             Ignored sample archive directory. Default: ${DEFAULT_OUTPUT_DIR}
-  --review-output <path>          Ignored P25 review artifact. Default: ${DEFAULT_REVIEW_OUTPUT}
+  --review-output <path>          Ignored P26 health-gated review artifact. Default: ${DEFAULT_REVIEW_OUTPUT}
   --readiness-output <path>       Ignored P47 readiness artifact. Default: ${DEFAULT_READINESS_OUTPUT}
   --facilities <path>             Production facility whitelist. Default: ${DEFAULT_FACILITIES}
   --baseline-output <path>        Production baseline config. Default: ${DEFAULT_BASELINE_OUTPUT}
@@ -174,6 +174,12 @@ function canRunPromotion(options) {
   return existsSync(resolve(options.reviewOutput)) && existsSync(resolve(options.readinessOutput));
 }
 
+function promotionReady(preparation) {
+  return preparation?.status === 'ok'
+    && preparation?.recommendation === 'baseline_candidate_ready_for_manual_promotion_review'
+    && preparation?.sampleHealth?.promotionGate?.satisfied === true;
+}
+
 function runPromotion(options) {
   const args = [
     '--review',
@@ -199,12 +205,18 @@ function summarizeRefresh({ options, previousBaseline, preparation, promotion })
   return {
     refreshVersion: REFRESH_VERSION,
     generatedAt: new Date().toISOString(),
-    status: promotion ? 'ok' : 'prepared_no_promotion',
+    status: promotion
+      ? 'ok'
+      : preparation?.sampleHealth?.promotionGate?.satisfied === false
+        ? 'prepared_health_gate_hold'
+        : 'prepared_no_promotion',
     writeMode: options.writeProductionBaseline ? 'wrote_production_baseline' : 'dry_run_no_production_write',
     preparation: {
       status: preparation.status,
       recommendation: preparation.recommendation,
       sampleCount: preparation.review?.sampleCount ?? null,
+      totalSampleCount: preparation.review?.totalSampleCount ?? null,
+      quarantinedSampleCount: preparation.review?.quarantinedSampleCount ?? null,
       sampleWindowDays: preparation.review?.sampleWindowDays ?? null,
       facilitiesReadyForBaseline: preparation.review?.facilitiesReadyForBaseline ?? null,
       facilityCount: preparation.review?.facilityCount ?? null,
@@ -212,6 +224,7 @@ function summarizeRefresh({ options, previousBaseline, preparation, promotion })
       archived: preparation.archive?.archived ?? null,
       alreadyArchived: preparation.archive?.alreadyArchived ?? null
     },
+    sampleHealth: preparation?.sampleHealth ?? null,
     baselineAging: {
       previousQuality: previousReview?.baselineQuality ?? null,
       nextQuality: nextReview?.baselineQuality ?? null,
@@ -247,6 +260,9 @@ function printSummary(result) {
   console.log(`Oil thermal baseline rolling refresh: ${result.status}`);
   console.log(`writeMode: ${result.writeMode}`);
   console.log(`preparation: ${result.preparation.status} / ${result.preparation.recommendation}`);
+  console.log(`eligibleSampleCount: ${result.preparation.sampleCount ?? 'none'} / ${result.preparation.totalSampleCount ?? 'none'}`);
+  console.log(`quarantinedSampleCount: ${result.preparation.quarantinedSampleCount ?? 'none'}`);
+  console.log(`sampleHealthPromotionGate: ${result.sampleHealth?.promotionGate?.satisfied ?? false}`);
   console.log(`sampleCount: ${result.baselineAging.previousSampleCount ?? 'none'} -> ${result.baselineAging.nextSampleCount ?? 'none'}`);
   console.log(`sampleWindowDays: ${result.baselineAging.previousSampleWindowDays ?? 'none'} -> ${result.baselineAging.nextSampleWindowDays ?? 'none'}`);
   console.log(`baselineQuality: ${result.baselineAging.previousQuality ?? 'none'} -> ${result.baselineAging.nextQuality ?? 'none'}`);
@@ -259,7 +275,12 @@ function main() {
   const options = parseArgs(process.argv.slice(2));
   const previousBaseline = readJsonIfExists(options.baselineOutput);
   const preparation = runPrepare(options);
-  const promotion = canRunPromotion(options) ? runPromotion(options) : null;
+  const readyForPromotion = canRunPromotion(options) && promotionReady(preparation);
+  if (options.writeProductionBaseline && !readyForPromotion) {
+    const reasons = preparation?.sampleHealth?.promotionGate?.reasons ?? ['readiness_not_satisfied'];
+    throw new Error(`Refusing production baseline write while sample health gate is not ready: ${reasons.join(', ')}`);
+  }
+  const promotion = readyForPromotion ? runPromotion(options) : null;
   const result = summarizeRefresh({ options, previousBaseline, preparation, promotion });
   if (options.printJson) {
     console.log(JSON.stringify(result, null, 2));

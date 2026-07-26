@@ -1363,3 +1363,20 @@ Operator guidance:
 - NDX label must remain `纳斯达克 100 — 横向对照`;IXIC label must remain `纳斯达克综合指数 — 广度参照`.
 - SPX remains `fallback_candidate_only` and must never display as Nasdaq temperature.
 - Required validation after an M-91 refresh: `npm run check:market-pricing` and `npm run check:all`.
+
+### ODP P59 FIRMS request-health operator note
+
+Oil Thermal FIRMS refresh now emits only categorized request diagnostics. Never restore raw provider bodies, raw/redacted Area API URLs, MAP_KEY fragments, or free-form upstream errors to production artifacts.
+
+Operator guidance:
+
+- Treat `authentication_error` and `request_rejected` as configuration/request investigation; they are deliberately not retried.
+- Treat `timeout`, `network_error`, `rate_limited`, and `server_error` as bounded transient classes. One logical request may retry once, but the whole 42-facility run may consume at most six retries and five seconds backoff per retry.
+- Inspect `data/oil-thermal-watch.json.aggregate.requestDiagnostics` after a production refresh: `failuresByCategory`, `recoveredAfterRetryCount`, `retryBudgetExhaustedCount`, and `failedRequestCount` are the audit entry points.
+- If the run is `partial` or `source_unavailable`, do not repeatedly dispatch the workflow. Review the sanitized category mix and upstream health first.
+- Run `npm run check:firms-request-policy`, `npm run check:oil-thermal-watch`, and then `npm run check:all` after request-policy changes.
+- P26 health gate changes the default interpretation of baseline review artifacts: `summary.sampleCount` and `summary.sampleWindowDays` are now healthy-sample-only. Use `summary.totalSampleCount`, `summary.quarantinedSampleCount`, `summary.sampleEligibility`, and `summary.facilityP95ChangedCountAfterQuarantine` to see what was excluded.
+- `health_filtered_candidate_ready_post_policy_observation_required` means the healthy-only candidate is numerically established, but no healthy production sample has yet confirmed the P59 diagnostics contract. `refresh:oil-thermal-baseline-candidate` must stop at `prepared_health_gate_hold`, and `monitor:oil-thermal-baseline-quality` must report `observe_post_policy_health_sample` with `manualAction.requiredNow=false`.
+- A future promotion packet must contain at least one health-eligible sample whose `aggregate.requestDiagnostics.policyVersion` is the literal machine value `firms-request-policy-1`. A successful bounded retry may remain eligible when all logical requests ultimately succeed and coverage/counts match.
+- `promote:oil-thermal-baseline-candidate` and `refresh:oil-thermal-baseline-candidate -- --write-production-baseline` must reject stale P25 artifacts, unhealthy candidates, and P26/P47 packets whose shared P60 health gate is not satisfied.
+- Do not promote an Oil Thermal baseline solely because the healthy `sampleWindowDays` crossed 7 or 30 days. Health-gated candidate math still requires a separate human-reviewed baseline change.

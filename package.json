@@ -20,6 +20,7 @@
     "review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json",
     "diagnose:reliefweb": "node scripts/world-order/diagnose-reliefweb-source.mjs",
     "diagnose:firms-thermal": "node scripts/oil-directional/diagnose-firms-thermal.mjs",
+    "check:firms-request-policy": "node --check scripts/oil-directional/firms-request-policy.mjs && node --check scripts/check-firms-request-policy.mjs && node scripts/check-firms-request-policy.mjs",
     "probe:oil-thermal-targeted": "node scripts/oil-directional/run-oil-thermal-targeted-probe.mjs",
     "diagnose:oil-news-events": "node scripts/oil-directional/diagnose-oil-news-events.mjs",
     "check:oil-news-events-diagnosis": "node --check scripts/oil-directional/diagnose-oil-news-events.mjs && node scripts/oil-directional/diagnose-oil-news-events.mjs --dry-run --no-output",
@@ -66,7 +67,7 @@
     "archive:oil-thermal-watch-history-samples": "node scripts/oil-directional/archive-oil-thermal-watch-history-samples.mjs",
     "check:oil-thermal-watch-history-sample-archive": "node --check scripts/oil-directional/archive-oil-thermal-watch-history-samples.mjs && node scripts/oil-directional/archive-oil-thermal-watch-history-samples.mjs --max-commits 3 --max-samples 1 --dry-run --allow-empty",
     "review:oil-thermal-baseline-samples": "node scripts/oil-directional/review-oil-thermal-baseline-samples.mjs",
-    "check:oil-thermal-baseline-samples-review": "node --check scripts/oil-directional/review-oil-thermal-baseline-samples.mjs && node scripts/oil-directional/review-oil-thermal-baseline-samples.mjs --input docs/fixtures/oil-thermal/oil-thermal-watch-sample-a.json --input docs/fixtures/oil-thermal/oil-thermal-watch-sample-b.json --input docs/fixtures/oil-thermal/oil-thermal-watch-sample-c.json --min-samples 2 --no-output",
+    "check:oil-thermal-baseline-samples-review": "node --check scripts/oil-directional/oil-thermal-sample-health.mjs && node --check scripts/oil-directional/review-oil-thermal-baseline-samples.mjs && node --check scripts/check-oil-thermal-baseline-samples-health-gate.mjs && node scripts/oil-directional/review-oil-thermal-baseline-samples.mjs --input docs/fixtures/oil-thermal/oil-thermal-watch-sample-a.json --input docs/fixtures/oil-thermal/oil-thermal-watch-sample-b.json --input docs/fixtures/oil-thermal/oil-thermal-watch-sample-c.json --min-samples 2 --no-output && node scripts/check-oil-thermal-baseline-samples-health-gate.mjs",
     "prepare:oil-thermal-baseline-review": "node scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs",
     "check:oil-thermal-baseline-readiness-prep": "node --check scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs && node scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs --dry-run --no-output --max-commits 3 --max-samples 1",
     "promote:oil-thermal-baseline-candidate": "node scripts/oil-directional/promote-oil-thermal-baseline-candidate.mjs",
@@ -339,7 +340,7 @@
     "check:transport-shock-free-proxy-bridge-preflight": "node --check scripts/review-transport-shock-free-proxy-bridge-preflight.mjs && node --check scripts/check-transport-shock-free-proxy-bridge-preflight.mjs && node scripts/check-transport-shock-free-proxy-bridge-preflight.mjs",
     "check:oil-news-event-watch": "node --check scripts/oil-directional/oil-news-claim-classifier.mjs && node --check scripts/oil-directional/build-oil-news-event-watch.mjs && node --check scripts/check-oil-news-event-watch-contract.mjs && node scripts/check-oil-news-event-watch-contract.mjs",
     "check:oil-thermal-targeted-probe": "node --check scripts/oil-directional/run-oil-thermal-targeted-probe.mjs && node --check scripts/check-oil-thermal-targeted-probe.mjs && node scripts/check-oil-thermal-targeted-probe.mjs",
-    "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs && npm run check:oil-thermal-targeted-probe",
+    "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs && npm run check:firms-request-policy && npm run check:oil-thermal-targeted-probe",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs"
   },
   "engines": {

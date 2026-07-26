@@ -2,6 +2,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import {
+  FIRMS_REQUEST_POLICY,
+  createFirmsRetryBudget,
+  fetchFirmsText,
+  getFirmsErrorDiagnostics,
+  summarizeFirmsRequestDiagnostics,
+  wrapFirmsResponseError
+} from './firms-request-policy.mjs';
 
 const SCHEMA_VERSION = 'oil-thermal-watch-1';
 const MODULE = 'oil-thermal-watch';
@@ -522,26 +530,22 @@ function applyBaselineCoverageCopy(artifact) {
   return artifact;
 }
 
-async function fetchWithTimeout(url, timeoutMs) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    const text = await response.text();
-    if (!response.ok) throw new Error(`FIRMS HTTP ${response.status}: ${text.slice(0, 120)}`);
-    return text;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs }) {
+async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retryBudget }) {
   const url = buildUrl(mapKey, source, facility.bbox.string, dayRange);
-  const text = await fetchWithTimeout(url, timeoutMs);
-  const records = parseCsv(text);
+  const request = await fetchFirmsText(url, {
+    timeoutMs,
+    retryBudget
+  });
+  let records;
+  try {
+    records = parseCsv(request.text);
+  } catch (error) {
+    wrapFirmsResponseError(error, request.diagnostics);
+  }
   return {
     source,
     sourceStatus: 'live',
+    requestDiagnostics: request.diagnostics,
     summary: summarizeRecords(records)
   };
 }
@@ -560,6 +564,9 @@ function requestBudget(sources) {
     sources,
     maxFacilitiesPerRun: MAX_FACILITIES_PER_RUN,
     maxRequestsPerRun: MAX_REQUESTS_PER_RUN,
+    maxRetryRequestsPerRun: FIRMS_REQUEST_POLICY.maxRetriesPerRun,
+    maxNetworkAttemptsPerRun: MAX_REQUESTS_PER_RUN + FIRMS_REQUEST_POLICY.maxRetriesPerRun,
+    maxRetriesPerRequest: FIRMS_REQUEST_POLICY.maxRetriesPerRequest,
     maxFacilityBboxSpanDegrees: MAX_FACILITY_BBOX_SPAN_DEGREES
   };
 }
@@ -604,6 +611,9 @@ function baseArtifact({ generatedAt, options, config, baselineConfig, keyResolut
       facilitiesWithDetections: 0,
       requestCount: facilities.length * options.sources.length,
       requestErrorCount: 0,
+      requestDiagnostics: summarizeFirmsRequestDiagnostics([], {
+        logicalRequestCount: facilities.length * options.sources.length
+      }),
       baselineStatus: deriveBaselineStatus(facilities, baselineConfig),
       repeatedObservationCount: 0,
       elevatedRepeatedObservationCount: 0,
@@ -649,6 +659,8 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
   }
 
   const facilityRows = [];
+  const retryBudget = createFirmsRetryBudget();
+  const allRequestDiagnostics = [];
   for (const facility of config.facilities) {
     const sourceResults = [];
     for (const source of options.sources) {
@@ -658,13 +670,19 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
           source,
           facility,
           dayRange: options.dayRange,
-          timeoutMs: options.timeoutMs
+          timeoutMs: options.timeoutMs,
+          retryBudget
         }));
+        allRequestDiagnostics.push(sourceResults.at(-1).requestDiagnostics);
       } catch (error) {
+        const requestDiagnostics = getFirmsErrorDiagnostics(error, {
+          timeoutMs: options.timeoutMs
+        });
+        allRequestDiagnostics.push(requestDiagnostics);
         sourceResults.push({
           source,
           sourceStatus: 'error',
-          errorReason: error.message.slice(0, 160),
+          requestDiagnostics,
           summary: emptySummary()
         });
       }
@@ -726,6 +744,10 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
     facilitiesWithDetections: facilityRows.filter((facility) => facility.rowCount > 0).length,
     requestCount,
     requestErrorCount,
+    requestDiagnostics: summarizeFirmsRequestDiagnostics(allRequestDiagnostics, {
+      logicalRequestCount: requestCount,
+      retryBudget
+    }),
     baselineStatus: artifact.baseline.status,
     repeatedObservationCount,
     elevatedRepeatedObservationCount,

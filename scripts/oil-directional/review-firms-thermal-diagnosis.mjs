@@ -214,11 +214,16 @@ function collectFacilityReview(facilities) {
 
 function reviewFacilityBatch(artifact, review) {
   const aggregate = isPlainObject(artifact.aggregate) ? artifact.aggregate : {};
+  const requestDiagnostics = isPlainObject(aggregate.requestDiagnostics)
+    ? aggregate.requestDiagnostics
+    : null;
   const facilityReview = collectFacilityReview(artifact.facilities);
   const rowCount = finiteNumber(aggregate.rowCount) ?? 0;
   const maxFrp = finiteNumber(aggregate.maxFrp);
   const highConfidenceCount = finiteNumber(aggregate.highConfidenceCount) ?? 0;
   const sourceCount = Array.isArray(artifact.sources) ? artifact.sources.length : 0;
+  const requestCount = finiteNumber(aggregate.requestCount) ?? 0;
+  const requestErrorCount = finiteNumber(aggregate.requestErrorCount) ?? 0;
 
   review.summary = {
     type: 'facility_batch',
@@ -233,6 +238,12 @@ function reviewFacilityBatch(artifact, review) {
     facilityCount: facilityReview.facilityCount,
     facilitiesWithDetections: finiteNumber(aggregate.facilitiesWithDetections) ?? 0,
     facilitiesByAnomalyLevel: aggregate.facilitiesByAnomalyLevel ?? {},
+    requestCount,
+    requestErrorCount,
+    requestFailureCategories: requestDiagnostics?.failuresByCategory ?? {},
+    requestRetryCount: finiteNumber(requestDiagnostics?.retryCount) ?? 0,
+    requestRecoveredAfterRetryCount: finiteNumber(requestDiagnostics?.recoveredAfterRetryCount) ?? 0,
+    requestRetryBudgetExhaustedCount: finiteNumber(requestDiagnostics?.retryBudgetExhaustedCount) ?? 0,
     exampleFacilityCount: facilityReview.exampleFacilityCount,
     watchFacilityIds: facilityReview.watchFacilityIds,
     elevatedFacilityIds: facilityReview.elevatedFacilityIds
@@ -256,6 +267,12 @@ function reviewFacilityBatch(artifact, review) {
       `Facility rows missing region, assetType or sourceNote: ${facilityReview.missingMetadataIds.join(', ')}`
     );
   }
+  if (requestErrorCount > 0) {
+    addWarning(
+      review,
+      `FIRMS request failures require source-health review: ${requestErrorCount}/${requestCount}; categories=${JSON.stringify(requestDiagnostics?.failuresByCategory ?? {})}`
+    );
+  }
 
   if (facilityReview.elevatedFacilityIds.length > 0) {
     review.recommendation = 'elevated_manual_review_required';
@@ -265,6 +282,10 @@ function reviewFacilityBatch(artifact, review) {
     addWarning(review, `Thermal detections require manual review: ${facilityReview.watchFacilityIds.join(', ')}`);
   } else if (facilityReview.exampleFacilityCount === facilityReview.facilityCount && facilityReview.facilityCount > 0) {
     review.recommendation = 'replace_example_facilities_before_use';
+  } else if (requestErrorCount > 0) {
+    review.recommendation = requestErrorCount === requestCount
+      ? 'source_unavailable_review_sanitized_failure_categories'
+      : 'partial_source_health_review_required';
   } else {
     review.recommendation = rowCount > 0 ? 'manual_review_required' : 'no_manual_signal_observed';
   }

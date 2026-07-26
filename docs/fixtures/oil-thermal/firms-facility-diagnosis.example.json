@@ -19,6 +19,27 @@
     "dayNightCounts": {},
     "facilityCount": 1,
     "requestCount": 2,
+    "requestErrorCount": 0,
+    "requestDiagnostics": {
+      "policyVersion": "firms-request-policy-1",
+      "logicalRequestCount": 2,
+      "totalAttemptCount": 2,
+      "retryCount": 0,
+      "recoveredAfterRetryCount": 0,
+      "failedRequestCount": 0,
+      "retryableFailureCount": 0,
+      "retryBudgetExhaustedCount": 0,
+      "backoffAppliedMs": 0,
+      "failuresByCategory": {},
+      "attemptFailuresByCategory": {},
+      "retryPolicy": {
+        "maxRetriesPerRequest": 1,
+        "maxRetriesPerRun": 6,
+        "retriesUsed": 0,
+        "baseBackoffMs": 1000,
+        "maxBackoffMs": 5000
+      }
+    },
     "facilitiesWithDetections": 0,
     "facilitiesByAnomalyLevel": {
       "none_observed": 1
@@ -48,6 +69,8 @@
         "dayNightCounts": {},
         "sourcesChecked": 2,
         "sourcesWithDetections": 0,
+        "sourceErrorCount": 0,
+        "sourceStatus": "live",
         "sourceAgreement": "0/2",
         "anomalyLevel": "none_observed",
         "anomalyLabelZh": "未观察到",
@@ -69,6 +92,21 @@
             "frpOver100Count": 0,
             "dayNightCounts": {}
           },
+          "requestDiagnostics": {
+            "policyVersion": "firms-request-policy-1",
+            "outcome": "success",
+            "category": null,
+            "retryable": false,
+            "httpStatus": 200,
+            "attempts": 1,
+            "retryCount": 0,
+            "recoveredAfterRetry": false,
+            "retryBudgetExhausted": false,
+            "backoffAppliedMs": 0,
+            "timeoutMs": 15000,
+            "maxRetriesPerRequest": 1,
+            "lastFailureCategory": null
+          },
           "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_SNPP_NRT/0,0,0.1,0.1/5"
         },
         {
@@ -84,6 +122,21 @@
             "frpOver50Count": 0,
             "frpOver100Count": 0,
             "dayNightCounts": {}
+          },
+          "requestDiagnostics": {
+            "policyVersion": "firms-request-policy-1",
+            "outcome": "success",
+            "category": null,
+            "retryable": false,
+            "httpStatus": 200,
+            "attempts": 1,
+            "retryCount": 0,
+            "recoveredAfterRetry": false,
+            "retryBudgetExhausted": false,
+            "backoffAppliedMs": 0,
+            "timeoutMs": 15000,
+            "maxRetriesPerRequest": 1,
+            "lastFailureCategory": null
           },
           "redactedUrl": "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<FIRMS_MAP_KEY>/VIIRS_NOAA20_NRT/0,0,0.1,0.1/5"
         }

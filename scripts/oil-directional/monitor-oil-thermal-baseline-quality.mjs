@@ -35,7 +35,7 @@ function printUsage() {
 Options:
   --output <path>             Ignored monitor artifact. Default: ${DEFAULT_OUTPUT}
   --output-dir <path>         Ignored sample archive directory. Default: ${DEFAULT_OUTPUT_DIR}
-  --review-output <path>      Ignored P25 review artifact. Default: ${DEFAULT_REVIEW_OUTPUT}
+  --review-output <path>      Ignored P26 health-gated review artifact. Default: ${DEFAULT_REVIEW_OUTPUT}
   --readiness-output <path>   Ignored P47 readiness artifact. Default: ${DEFAULT_READINESS_OUTPUT}
   --baseline <path>           Production baseline config to read. Default: ${DEFAULT_BASELINE}
   --max-commits <n>           Recent commits touching data/oil-thermal-watch.json. Default: ${DEFAULT_MAX_COMMITS}
@@ -205,8 +205,23 @@ function nextQualityThreshold(sampleWindowDays) {
   return null;
 }
 
-function classifyStatus({ currentQuality, candidateQuality, candidateSampleWindowDays, preparationStatus }) {
+function classifyStatus({
+  currentQuality,
+  candidateQuality,
+  candidateSampleWindowDays,
+  preparationStatus,
+  preparationRecommendation,
+  promotionHealthGate
+}) {
   if (preparationStatus === 'fail') return 'review_failed';
+  if (promotionHealthGate?.satisfied === false) {
+    return promotionHealthGate.reasons?.includes('post_policy_healthy_sample_missing')
+      ? 'observe_post_policy_health_sample'
+      : 'candidate_health_gate_hold';
+  }
+  if (preparationStatus === 'warn') return preparationRecommendation === 'collect_more_samples_before_baseline_candidate_review'
+    ? 'collect_more_samples'
+    : 'candidate_health_gate_hold';
   if (!candidateQuality) return 'collect_more_samples';
   const currentRank = qualityRank(currentQuality);
   const candidateRank = qualityRank(candidateQuality);
@@ -251,7 +266,9 @@ function createMonitorResult(options, baseline, preparation) {
     currentQuality,
     candidateQuality,
     candidateSampleWindowDays,
-    preparationStatus: preparation?.status ?? null
+    preparationStatus: preparation?.status ?? null,
+    preparationRecommendation: preparation?.recommendation ?? null,
+    promotionHealthGate: preparation?.sampleHealth?.promotionGate ?? null
   });
   const qualityTransition = (() => {
     const currentRank = qualityRank(currentQuality);
@@ -294,17 +311,20 @@ function createMonitorResult(options, baseline, preparation) {
       validUniqueSamples: preparation?.archive?.validUniqueSamples ?? null,
       archived: preparation?.archive?.archived ?? null,
       alreadyArchived: preparation?.archive?.alreadyArchived ?? null,
+      sampleHealth: preparation?.sampleHealth ?? null,
       nextQualityThreshold: nextThreshold
     },
     thresholds: QUALITY_THRESHOLDS,
     manualAction: {
-      requiredNow: status === 'baseline_quality_threshold_ready' || status === 'baseline_quality_candidate_ready',
+      requiredNow:
+        preparation?.status === 'ok'
+        && (status === 'baseline_quality_threshold_ready' || status === 'baseline_quality_candidate_ready'),
       recommendedReviewCommand:
         'npm run refresh:oil-thermal-baseline-candidate',
       productionPromotionCommand:
         'npm run refresh:oil-thermal-baseline-candidate -- --write-production-baseline',
       note:
-        'Promotion command is informational only; P51 never runs it automatically and never commits config changes.'
+        'Promotion command is informational only; P51 never runs it automatically, never commits config changes, and keeps manual action false while the shared sample-health gate is not satisfied.'
     },
     artifacts: {
       outputPath: options.dryRun || !options.writeOutput ? null : resolve(options.output),
@@ -365,6 +385,7 @@ function appendGithubSummary(options, result) {
     `- Status: \`${result.status}\``,
     `- Current quality: \`${result.baseline.currentQuality ?? 'missing'}\` (${result.baseline.sampleCount ?? 'n/a'} samples / ${result.baseline.sampleWindowDays ?? 'n/a'}d)`,
     `- Candidate quality: \`${candidate.candidateQuality ?? 'missing'}\` (${candidate.sampleCount ?? 'n/a'} samples / ${candidate.sampleWindowDays ?? 'n/a'}d)`,
+    `- Candidate health: \`${candidate.sampleHealth?.eligibleSampleCount ?? 'n/a'}\` eligible / \`${candidate.sampleHealth?.inputSampleCount ?? 'n/a'}\` input; promotion gate \`${candidate.sampleHealth?.promotionGate?.satisfied ?? false}\``,
     `- Next threshold: ${thresholdText}`,
     `- Manual action required now: \`${result.manualAction.requiredNow}\``,
     `- Production write approved by this workflow: \`${result.productionBaselineWriteApproved}\``,
@@ -381,6 +402,8 @@ function printSummary(result) {
   console.log(`candidateQuality: ${result.candidate.candidateQuality ?? 'missing'}`);
   console.log(`sampleWindowDays: ${result.baseline.sampleWindowDays ?? 'none'} -> ${result.candidate.sampleWindowDays ?? 'none'}`);
   console.log(`qualityTransition: ${result.candidate.qualityTransition}`);
+  console.log(`eligibleSampleCount: ${result.candidate.sampleHealth?.eligibleSampleCount ?? 'none'} / ${result.candidate.sampleHealth?.inputSampleCount ?? 'none'}`);
+  console.log(`sampleHealthPromotionGate: ${result.candidate.sampleHealth?.promotionGate?.satisfied ?? false}`);
   console.log(`manualAction.requiredNow: ${result.manualAction.requiredNow}`);
   console.log(`productionBaselineWriteApproved: ${result.productionBaselineWriteApproved}`);
   if (result.artifacts.outputPath) console.log(`outputPath: ${result.artifacts.outputPath}`);

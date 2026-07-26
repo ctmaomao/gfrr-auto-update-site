@@ -3,8 +3,13 @@ import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-help
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 import process from 'node:process';
+import {
+  classifyOilThermalSampleHealth,
+  evaluateOilThermalPromotionHealthGate,
+  summarizeOilThermalSampleHealth
+} from './oil-thermal-sample-health.mjs';
 
-const REVIEW_VERSION = 'oil-thermal-baseline-samples-review-p25';
+const REVIEW_VERSION = 'oil-thermal-baseline-samples-review-p26';
 const DEFAULT_INPUT = 'data/oil-thermal-watch.json';
 const DEFAULT_BASELINE_POLICY = 'config/oil-thermal-watch-baseline.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json';
@@ -283,16 +288,19 @@ function createReview(options, inputPaths, rawPolicy) {
       mirroredProductionPolicy: policy
     },
     summary: {},
+    sampleHealth: {},
     candidateBaseline: {
       schemaVersion: 'oil-thermal-baseline-production-v1',
       candidateOnly: true,
+      sampleSelection: 'eligible_only',
       status: 'not_established',
       generatedAt: new Date().toISOString(),
       baselineWindowDays: null,
       policy,
       facilities: [],
       notes: [
-        'Candidate rows are generated from sanitized oil-thermal-watch artifacts only.',
+        'Candidate rows are generated only from health-eligible sanitized oil-thermal-watch artifacts.',
+        'Partial, source-unavailable, request-error, incomplete-coverage, and unclassified-health samples remain quarantined for audit and do not enter p95 metrics.',
         'This artifact is for human review and must not be copied into production baseline config without a separate reviewed change.',
         'The script never reads FIRMS MAP_KEY, never fetches network data, and never writes production data.'
       ]
@@ -380,7 +388,9 @@ function loadSamples(inputPaths, review) {
       generatedAt,
       status: artifact.status ?? null,
       signalState: artifact.signalState ?? null,
-      facilities: artifact.facilities
+      aggregate: isPlainObject(artifact.aggregate) ? artifact.aggregate : {},
+      facilities: artifact.facilities,
+      health: classifyOilThermalSampleHealth(artifact)
     });
   }
 
@@ -442,13 +452,147 @@ function buildFacilityRows(samples, review, minSamples, percentileValue) {
   return facilities;
 }
 
-function finalizeReview(review, samples, facilityRows) {
+function mergeFacilityRows({ eligibleRows, allRows }) {
+  const allById = new Map(allRows.map((row) => [row.id, row]));
+  const eligibleById = new Map(eligibleRows.map((row) => [row.id, row]));
+  const ids = [...new Set([...allById.keys(), ...eligibleById.keys()])].sort((a, b) => a.localeCompare(b));
+  const merged = [];
+
+  for (const id of ids) {
+    const allRow = allById.get(id) ?? null;
+    const eligibleRow = eligibleById.get(id) ?? null;
+    const base = eligibleRow ?? allRow;
+    if (!base) continue;
+    const totalSampleCount = allRow?.sampleCount ?? 0;
+    const eligibleSampleCount = eligibleRow?.sampleCount ?? 0;
+    const quarantinedSampleCount = Math.max(0, totalSampleCount - eligibleSampleCount);
+    const row = {
+      id,
+      label: base.label ?? null,
+      region: base.region ?? null,
+      assetType: base.assetType ?? null,
+      sampleCount: eligibleSampleCount,
+      totalSampleCount,
+      quarantinedSampleCount,
+      readyForBaseline: eligibleSampleCount >= 1 ? Boolean(eligibleRow?.readyForBaseline) : false,
+      firstSampleAt: eligibleRow?.firstSampleAt ?? null,
+      lastSampleAt: eligibleRow?.lastSampleAt ?? null,
+      windowDays: eligibleRow?.windowDays ?? null,
+      allSamplesWindowDays: allRow?.windowDays ?? null,
+      metrics: eligibleRow?.metrics ?? {
+        rowCountP95: null,
+        maxFrpP95: null,
+        highConfidenceCountP95: null,
+        frpOver50CountP95: null,
+        frpOver100CountP95: null,
+        sourcesWithDetectionsP95: null,
+        maxObservedFrp: null,
+        maxObservedRowCount: null,
+        samplesWithDetections: 0,
+        samplesWithMultiSourceDetections: 0
+      },
+      allSamplesMetrics: allRow?.metrics ?? null,
+      warnings: [...(eligibleRow?.warnings ?? [])]
+    };
+    if (quarantinedSampleCount > 0) {
+      row.warnings.push(`${quarantinedSampleCount} samples were quarantined and excluded from candidate baseline statistics.`);
+    }
+    if (eligibleSampleCount === 0 && totalSampleCount > 0) {
+      row.warnings.push('All historical samples for this facility were quarantined by the health gate.');
+    }
+    merged.push(row);
+  }
+
+  return merged;
+}
+
+function buildEligibilitySummary(samples) {
+  const summary = summarizeOilThermalSampleHealth(samples);
+  const eligibleByReason = {};
+  let totalRequestErrorCount = 0;
+  let partialSampleCount = 0;
+  let sourceUnavailableSampleCount = 0;
+  for (const sample of samples) {
+    totalRequestErrorCount += sample.health.requestErrorCount ?? 0;
+    if (sample.status === 'partial') partialSampleCount += 1;
+    if (sample.status === 'source_unavailable') sourceUnavailableSampleCount += 1;
+    if (sample.health.eligible) {
+      const basis = sample.health.eligibilityBasis;
+      eligibleByReason[basis] = (eligibleByReason[basis] ?? 0) + 1;
+    }
+  }
+  return {
+    ...summary,
+    totalSampleCount: summary.inputSampleCount,
+    eligibleByReason,
+    quarantinedByReason: summary.quarantineReasonCounts,
+    totalRequestErrorCount,
+    partialSampleCount,
+    sourceUnavailableSampleCount,
+    nonOkSampleCount: samples.filter((sample) => sample.status !== 'ok').length
+  };
+}
+
+function compareFacilityRows(allRows, eligibleRows) {
+  const eligibleById = new Map(eligibleRows.map((row) => [row.id, row]));
+  const changedFacilities = [];
+  const comparedMetrics = [
+    'rowCountP95',
+    'maxFrpP95',
+    'highConfidenceCountP95',
+    'frpOver50CountP95',
+    'frpOver100CountP95',
+    'sourcesWithDetectionsP95'
+  ];
+
+  for (const row of allRows) {
+    const eligibleRow = eligibleById.get(row.id);
+    if (!eligibleRow) continue;
+    const changedMetrics = comparedMetrics.filter((metric) => {
+      const allValue = row.metrics?.[metric] ?? null;
+      const eligibleValue = eligibleRow.metrics?.[metric] ?? null;
+      return allValue !== eligibleValue;
+    });
+    if (changedMetrics.length > 0) {
+      changedFacilities.push({
+        id: row.id,
+        changedMetrics
+      });
+    }
+  }
+
+  return {
+    changedFacilityCount: changedFacilities.length,
+    changedFacilities
+  };
+}
+
+function finalizeReview(review, allSamples, eligibleSamples, facilityRows, eligibilitySummary, facilityDelta) {
   const readyFacilities = facilityRows.filter((facility) => facility.readyForBaseline);
-  const allSampleTimes = samples.map((sample) => sample.generatedAt).sort();
-  const firstSampleAt = allSampleTimes[0] ?? null;
-  const lastSampleAt = allSampleTimes[allSampleTimes.length - 1] ?? null;
+  const allSampleTimes = allSamples.map((sample) => sample.generatedAt).sort();
+  const eligibleSampleTimes = eligibleSamples.map((sample) => sample.generatedAt).sort();
+  const firstSampleAt = eligibleSampleTimes[0] ?? null;
+  const lastSampleAt = eligibleSampleTimes[eligibleSampleTimes.length - 1] ?? null;
+  const allFirstSampleAt = allSampleTimes[0] ?? null;
+  const allLastSampleAt = allSampleTimes[allSampleTimes.length - 1] ?? null;
 
   review.facilities = facilityRows;
+  review.sampleHealth = {
+    ...eligibilitySummary,
+    quarantinedSamples: allSamples
+      .filter((sample) => !sample.health.eligible)
+      .map((sample) => ({
+        path: safeRelativePath(sample.path) ?? sample.path,
+        generatedAt: sample.generatedAt,
+        artifactStatus: sample.health.artifactStatus,
+        firmsSourceStatus: sample.health.firmsSourceStatus,
+        requestCount: sample.health.requestCount,
+        requestErrorCount: sample.health.requestErrorCount,
+        diagnosticsPolicyVersion: sample.health.diagnosticsPolicyVersion,
+        reasons: sample.health.reasons,
+        failureCategories: sample.health.failureCategories
+      }))
+  };
   review.candidateBaseline.facilities = readyFacilities.map((facility) => ({
     id: facility.id,
     label: facility.label,
@@ -477,25 +621,46 @@ function finalizeReview(review, samples, facilityRows) {
       : round(Math.max(...readyFacilities.map((facility) => facility.windowDays ?? 0)), 2);
 
   review.summary = {
-    sampleCount: samples.length,
+    sampleCount: eligibleSamples.length,
     firstSampleAt,
     lastSampleAt,
     sampleWindowDays: dateDiffDays(firstSampleAt, lastSampleAt),
+    totalSampleCount: allSamples.length,
+    allFirstSampleAt,
+    allLastSampleAt,
+    allSampleWindowDays: dateDiffDays(allFirstSampleAt, allLastSampleAt),
+    eligibleSampleCount: eligibilitySummary.eligibleSampleCount,
+    quarantinedSampleCount: eligibilitySummary.quarantinedSampleCount,
+    partialSampleCount: eligibilitySummary.partialSampleCount,
+    sourceUnavailableSampleCount: eligibilitySummary.sourceUnavailableSampleCount,
+    totalRequestErrorCount: eligibilitySummary.totalRequestErrorCount,
+    sampleEligibility: {
+      eligibleByReason: eligibilitySummary.eligibleByReason,
+      quarantinedByReason: eligibilitySummary.quarantinedByReason
+    },
     facilityCount: facilityRows.length,
     totalFacilitySamples: facilityRows.reduce((sum, facility) => sum + facility.sampleCount, 0),
     facilitiesReadyForBaseline: readyFacilities.length,
     facilitiesNeedingMoreSamples: facilityRows.length - readyFacilities.length,
     candidateBaselineStatus: review.candidateBaseline.status,
+    facilityP95ChangedCountAfterQuarantine: facilityDelta.changedFacilityCount,
+    facilityP95ChangedIdsAfterQuarantine: facilityDelta.changedFacilities.map((facility) => facility.id),
     productionBaselineWriteApproved: false
   };
+  review.sampleHealth.promotionGate = evaluateOilThermalPromotionHealthGate({
+    sampleHealth: review.sampleHealth,
+    candidateBaselineStatus: review.candidateBaseline.status,
+    facilitiesReadyForBaseline: readyFacilities.length,
+    facilityCount: facilityRows.length
+  });
 
   if (review.blockers.length > 0) {
     review.status = 'fail';
     review.recommendation = 'fix_sample_artifacts_before_baseline_review';
     return;
   }
-  if (samples.length === 0 || facilityRows.length === 0) {
-    addWarning(review, 'No usable oil thermal watch samples were found.');
+  if (eligibleSamples.length === 0 || facilityRows.length === 0) {
+    addWarning(review, 'No health-eligible oil thermal watch samples were found.');
   }
   for (const facility of facilityRows) {
     if (!facility.readyForBaseline) {
@@ -504,10 +669,21 @@ function finalizeReview(review, samples, facilityRows) {
   }
   if (readyFacilities.length === 0) {
     review.status = 'warn';
-    review.recommendation = 'collect_more_samples_before_baseline_candidate_review';
+    review.recommendation = 'collect_more_health_eligible_samples_before_baseline_candidate_review';
   } else if (readyFacilities.length < facilityRows.length) {
     review.status = 'warn';
-    review.recommendation = 'partial_baseline_candidate_ready_manual_review_required';
+    review.recommendation = 'partial_health_filtered_candidate_manual_review_required';
+  } else if (!review.sampleHealth.promotionGate.satisfied) {
+    review.status = 'warn';
+    review.recommendation = review.sampleHealth.promotionGate.reasons.includes(
+      'post_policy_healthy_sample_missing'
+    )
+      ? 'health_filtered_candidate_ready_post_policy_observation_required'
+      : 'sample_health_gate_not_ready';
+    addWarning(
+      review,
+      `Sample health promotion gate is not satisfied: ${review.sampleHealth.promotionGate.reasons.join(', ')}.`
+    );
   } else if (review.warnings.length > 0) {
     review.status = 'warn';
     review.recommendation = 'baseline_candidate_ready_with_warnings';
@@ -532,9 +708,14 @@ function printSummary(review) {
   console.log(`recommendation: ${review.recommendation}`);
   console.log(`promotionEligible: ${review.promotionEligible}`);
   console.log(`sampleCount: ${review.summary.sampleCount ?? 0}`);
+  console.log(`totalSampleCount: ${review.summary.totalSampleCount ?? 0}`);
+  console.log(`quarantinedSampleCount: ${review.summary.quarantinedSampleCount ?? 0}`);
   console.log(`facilityCount: ${review.summary.facilityCount ?? 0}`);
   console.log(`facilitiesReadyForBaseline: ${review.summary.facilitiesReadyForBaseline ?? 0}`);
   console.log(`candidateBaselineStatus: ${review.summary.candidateBaselineStatus ?? 'unknown'}`);
+  console.log(`facilityP95ChangedCountAfterQuarantine: ${review.summary.facilityP95ChangedCountAfterQuarantine ?? 0}`);
+  console.log(`diagnosticsConfirmedEligibleSampleCount: ${review.sampleHealth?.diagnosticsConfirmedEligibleSampleCount ?? 0}`);
+  console.log(`sampleHealthPromotionGate: ${review.sampleHealth?.promotionGate?.satisfied ?? false}`);
   console.log(`productionBaselineWriteApproved: ${review.summary.productionBaselineWriteApproved}`);
   if (review.outputPath) {
     console.log(`outputPath: ${review.outputPath}`);
@@ -562,13 +743,26 @@ function main() {
     addWarning(review, `Baseline policy file not found: ${options.baselinePolicy}`);
   }
   const samples = loadSamples(inputPaths, review);
-  const facilityRows = buildFacilityRows(
+  const eligibilitySummary = buildEligibilitySummary(samples);
+  const eligibleSamples = samples.filter((sample) => sample.health.eligible);
+  const allFacilityRows = buildFacilityRows(
     samples,
     review,
     review.policy.minSamplesPerFacility,
     review.policy.percentile
   );
-  finalizeReview(review, samples, facilityRows);
+  const eligibleFacilityRows = buildFacilityRows(
+    eligibleSamples,
+    review,
+    review.policy.minSamplesPerFacility,
+    review.policy.percentile
+  );
+  const facilityRows = mergeFacilityRows({
+    eligibleRows: eligibleFacilityRows,
+    allRows: allFacilityRows
+  });
+  const facilityDelta = compareFacilityRows(allFacilityRows, eligibleFacilityRows);
+  finalizeReview(review, samples, eligibleSamples, facilityRows, eligibilitySummary, facilityDelta);
   writeReview(review, options);
 
   if (options.printJson) {

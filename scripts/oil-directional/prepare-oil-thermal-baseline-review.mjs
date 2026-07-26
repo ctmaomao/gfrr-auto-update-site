@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { evaluateOilThermalPromotionHealthGate } from './oil-thermal-sample-health.mjs';
 
 const PREP_VERSION = 'oil-thermal-baseline-readiness-p47';
 const DEFAULT_OUTPUT_DIR = 'manual-artifacts/oil-thermal/watch-samples';
@@ -207,8 +208,20 @@ function createReadiness(options, archive, review) {
   const reviewSummary = review?.summary ?? {};
   const facilityReadiness = summarizeFacilities(review);
   const readyFacilities = facilityReadiness.filter((facility) => facility.readyForBaseline);
+  const promotionHealthGate = evaluateOilThermalPromotionHealthGate({
+    sampleHealth: review?.sampleHealth,
+    candidateBaselineStatus: reviewSummary.candidateBaselineStatus,
+    facilitiesReadyForBaseline: reviewSummary.facilitiesReadyForBaseline,
+    facilityCount: reviewSummary.facilityCount
+  });
   const recommendation = (() => {
     if (review?.status === 'fail') return 'fix_sample_artifacts_before_baseline_review';
+    if (!promotionHealthGate.satisfied) {
+      return promotionHealthGate.reasons.includes('post_policy_healthy_sample_missing')
+        ? 'health_filtered_candidate_ready_post_policy_observation_required'
+        : review?.recommendation ?? 'sample_health_gate_not_ready';
+    }
+    if (review?.status === 'warn') return review?.recommendation ?? 'manual_review_required';
     if ((reviewSummary.facilitiesReadyForBaseline ?? 0) === 0) return 'collect_more_samples';
     if ((reviewSummary.facilitiesReadyForBaseline ?? 0) < (reviewSummary.facilityCount ?? 0)) {
       return 'partial_baseline_candidate_ready_manual_review_required';
@@ -220,7 +233,14 @@ function createReadiness(options, archive, review) {
     prepVersion: PREP_VERSION,
     generatedAt: new Date().toISOString(),
     dryRun: options.dryRun,
-    status: review?.status === 'fail' ? 'fail' : recommendation === 'collect_more_samples' ? 'warn' : 'ok',
+    status:
+      review?.status === 'fail'
+        ? 'fail'
+        : review?.status === 'warn'
+          ? 'warn'
+          : recommendation === 'collect_more_samples'
+            ? 'warn'
+            : 'ok',
     recommendation,
     promotionEligible: false,
     productionBaselineWriteApproved: false,
@@ -246,13 +266,29 @@ function createReadiness(options, archive, review) {
       recommendation: review?.recommendation ?? null,
       sampleCount: reviewSummary.sampleCount ?? null,
       sampleWindowDays: reviewSummary.sampleWindowDays ?? null,
+      totalSampleCount: reviewSummary.totalSampleCount ?? null,
+      quarantinedSampleCount: reviewSummary.quarantinedSampleCount ?? null,
       facilityCount: reviewSummary.facilityCount ?? null,
       facilitiesReadyForBaseline: reviewSummary.facilitiesReadyForBaseline ?? null,
       facilitiesNeedingMoreSamples: reviewSummary.facilitiesNeedingMoreSamples ?? null,
       candidateBaselineStatus: reviewSummary.candidateBaselineStatus ?? null,
+      facilityP95ChangedCountAfterQuarantine: reviewSummary.facilityP95ChangedCountAfterQuarantine ?? null,
       warnings: Array.isArray(review?.warnings) ? review.warnings.length : null,
       blockers: Array.isArray(review?.blockers) ? review.blockers.length : null,
       reviewOutput: options.dryRun ? null : resolve(options.reviewOutput)
+    },
+    sampleHealth: {
+      gateVersion: review?.sampleHealth?.gateVersion ?? null,
+      mode: review?.sampleHealth?.mode ?? null,
+      inputSampleCount: review?.sampleHealth?.inputSampleCount ?? null,
+      eligibleSampleCount: review?.sampleHealth?.eligibleSampleCount ?? null,
+      quarantinedSampleCount: review?.sampleHealth?.quarantinedSampleCount ?? null,
+      diagnosticsConfirmedEligibleSampleCount:
+        review?.sampleHealth?.diagnosticsConfirmedEligibleSampleCount ?? null,
+      legacyEligibleSampleCount: review?.sampleHealth?.legacyEligibleSampleCount ?? null,
+      postPolicyObservationReady: review?.sampleHealth?.postPolicyObservationReady ?? false,
+      failureCategoryCounts: review?.sampleHealth?.failureCategoryCounts ?? {},
+      promotionGate: promotionHealthGate
     },
     facilityReadiness,
     readyFacilityIds: readyFacilities.map((facility) => facility.id),
@@ -295,8 +331,12 @@ function printSummary(readiness) {
   console.log(`archive.archived: ${readiness.archive.archived}`);
   console.log(`archive.alreadyArchived: ${readiness.archive.alreadyArchived}`);
   console.log(`review.sampleCount: ${readiness.review.sampleCount}`);
+  console.log(`review.totalSampleCount: ${readiness.review.totalSampleCount}`);
+  console.log(`review.quarantinedSampleCount: ${readiness.review.quarantinedSampleCount}`);
   console.log(`review.facilitiesReadyForBaseline: ${readiness.review.facilitiesReadyForBaseline}/${readiness.review.facilityCount}`);
   console.log(`review.candidateBaselineStatus: ${readiness.review.candidateBaselineStatus}`);
+  console.log(`sampleHealth.postPolicyObservationReady: ${readiness.sampleHealth.postPolicyObservationReady}`);
+  console.log(`sampleHealth.promotionGate: ${readiness.sampleHealth.promotionGate.satisfied}`);
   if (readiness.outputPath) console.log(`outputPath: ${readiness.outputPath}`);
   if (readiness.notReadyFacilityIds.length > 0) {
     console.log(`notReadyFacilityIds: ${readiness.notReadyFacilityIds.join(', ')}`);

@@ -14,9 +14,10 @@ const rowIds = new Set();
 const VALID_STATUS = new Set(['not_established', 'partial', 'established']);
 const VALID_PROMOTION_VERSIONS = new Set([
   'oil-thermal-baseline-promotion-p48',
-  'oil-thermal-baseline-promotion-p49'
+  'oil-thermal-baseline-promotion-p49',
+  'oil-thermal-baseline-promotion-p60'
 ]);
-const VALID_PROMOTION_STAGES = new Set(['P48', 'P49']);
+const VALID_PROMOTION_STAGES = new Set(['P48', 'P49', 'P60']);
 const VALID_BASELINE_QUALITIES = [
   'starter_short_window',
   'starter_observation_window',
@@ -155,6 +156,27 @@ if (baseline.status === 'partial' || baseline.status === 'established') {
       fail('sourceReview.facilitiesReadyForBaseline must match established baseline row count');
     }
     if (!isNonNegativeNumber(review.sampleWindowDays)) fail('sourceReview.sampleWindowDays must be non-negative number');
+    if (review.promotionStage === 'P60') {
+      if (review.sampleHealthGateVersion !== 'oil-thermal-sample-health-gate-p60') {
+        fail('P60 sourceReview.sampleHealthGateVersion must be oil-thermal-sample-health-gate-p60');
+      }
+      if (!Number.isInteger(review.totalSampleCount) || review.totalSampleCount < review.sampleCount) {
+        fail('P60 sourceReview.totalSampleCount must be integer >= sampleCount');
+      }
+      if (
+        !Number.isInteger(review.quarantinedSampleCount)
+        || review.quarantinedSampleCount !== review.totalSampleCount - review.sampleCount
+      ) {
+        fail('P60 sourceReview.quarantinedSampleCount must equal totalSampleCount - sampleCount');
+      }
+      if (
+        !Number.isInteger(review.diagnosticsConfirmedEligibleSampleCount)
+        || review.diagnosticsConfirmedEligibleSampleCount < 1
+        || review.diagnosticsConfirmedEligibleSampleCount > review.sampleCount
+      ) {
+        fail('P60 sourceReview.diagnosticsConfirmedEligibleSampleCount must be within 1..sampleCount');
+      }
+    }
     const expectedQuality = isNonNegativeNumber(review.sampleWindowDays)
       ? expectedBaselineQuality(review.sampleWindowDays)
       : null;

@@ -5,6 +5,9 @@
   "status": "ok",
   "signalState": "baseline_building_watch",
   "sources": ["VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT"],
+  "sourceStatus": {
+    "firms": "live"
+  },
   "productionImpact": {
     "writesProductionData": false,
     "modifiesFrontend": false,
@@ -18,12 +21,39 @@
     "affectsGlobalRiskHeatmap": false,
     "affectsCrossValidation": false
   },
+  "aggregate": {
+    "facilityCount": 2,
+    "requestCount": 6,
+    "requestErrorCount": 0,
+    "requestDiagnostics": {
+      "policyVersion": "firms-request-policy-1",
+      "logicalRequestCount": 6,
+      "totalAttemptCount": 6,
+      "retryCount": 0,
+      "recoveredAfterRetryCount": 0,
+      "failedRequestCount": 0,
+      "retryableFailureCount": 0,
+      "retryBudgetExhaustedCount": 0,
+      "backoffAppliedMs": 0,
+      "failuresByCategory": {},
+      "attemptFailuresByCategory": {},
+      "retryPolicy": {
+        "maxRetriesPerRequest": 1,
+        "maxRetriesPerRun": 6,
+        "retriesUsed": 0,
+        "baseBackoffMs": 1000,
+        "maxBackoffMs": 5000
+      }
+    }
+  },
   "facilities": [
     {
       "id": "synthetic_refinery_alpha",
       "label": "Synthetic Refinery Alpha",
       "region": "Fixture region",
       "assetType": "refinery",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
       "sourceAgreement": "2/3",
       "rowCount": 2,
       "latestAcqAt": "2026-06-21T22:00:00Z",
@@ -40,6 +70,8 @@
       "label": "Synthetic Refinery Beta",
       "region": "Fixture region",
       "assetType": "refinery",
+      "sourceStatus": "live",
+      "requestErrorCount": 0,
       "sourceAgreement": "2/3",
       "rowCount": 1,
       "latestAcqAt": "2026-06-21T22:15:00Z",

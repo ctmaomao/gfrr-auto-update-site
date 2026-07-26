@@ -24,6 +24,20 @@ const SIGNAL_STATES = new Set([
   'dry_run'
 ]);
 const SOURCE_STATUSES = new Set(['configured', 'missing', 'not_queried', 'live', 'partial', 'error']);
+const FIRMS_FAILURE_CATEGORIES = new Set([
+  'timeout',
+  'network_error',
+  'rate_limited',
+  'server_error',
+  'authentication_error',
+  'request_rejected',
+  'unexpected_http_status',
+  'empty_response',
+  'non_csv_response',
+  'invalid_csv_schema',
+  'response_parse_error',
+  'unknown_error'
+]);
 const ANOMALY_LEVELS = new Set([
   'none_observed',
   'low_signal',
@@ -134,6 +148,16 @@ if (!data.facilityCoverage || typeof data.facilityCoverage !== 'object') {
   }
   if (!data.facilityCoverage.requestBudget || data.facilityCoverage.requestBudget.maxRequestsPerRun !== 150) {
     fail('facilityCoverage.requestBudget must preserve maxRequestsPerRun=150');
+  } else if ('maxRetryRequestsPerRun' in data.facilityCoverage.requestBudget) {
+    if (data.facilityCoverage.requestBudget.maxRetryRequestsPerRun !== 6) {
+      fail('facilityCoverage.requestBudget.maxRetryRequestsPerRun must be 6');
+    }
+    if (data.facilityCoverage.requestBudget.maxRetriesPerRequest !== 1) {
+      fail('facilityCoverage.requestBudget.maxRetriesPerRequest must be 1');
+    }
+    if (data.facilityCoverage.requestBudget.maxNetworkAttemptsPerRun !== 156) {
+      fail('facilityCoverage.requestBudget.maxNetworkAttemptsPerRun must be 156');
+    }
   }
 }
 
@@ -209,6 +233,54 @@ if (data.aggregate) {
     if (!Number.isFinite(data.aggregate[field]) || data.aggregate[field] < 0) fail(`aggregate.${field} must be non-negative number`);
   }
   if (!BASELINE_STATUSES.has(data.aggregate.baselineStatus)) fail(`aggregate.baselineStatus invalid: ${data.aggregate.baselineStatus}`);
+  if ('requestDiagnostics' in data.aggregate) {
+    const diagnostics = data.aggregate.requestDiagnostics;
+    if (!diagnostics || typeof diagnostics !== 'object') {
+      fail('aggregate.requestDiagnostics must be an object');
+    } else {
+      if (diagnostics.policyVersion !== 'firms-request-policy-1') {
+        fail(`aggregate.requestDiagnostics.policyVersion invalid: ${diagnostics.policyVersion}`);
+      }
+      if (diagnostics.logicalRequestCount !== data.aggregate.requestCount) {
+        fail('aggregate.requestDiagnostics.logicalRequestCount must match aggregate.requestCount');
+      }
+      if (diagnostics.failedRequestCount !== data.aggregate.requestErrorCount) {
+        fail('aggregate.requestDiagnostics.failedRequestCount must match aggregate.requestErrorCount');
+      }
+      for (const field of [
+        'totalAttemptCount',
+        'retryCount',
+        'recoveredAfterRetryCount',
+        'failedRequestCount',
+        'retryableFailureCount',
+        'retryBudgetExhaustedCount',
+        'backoffAppliedMs'
+      ]) {
+        if (!Number.isFinite(diagnostics[field]) || diagnostics[field] < 0) {
+          fail(`aggregate.requestDiagnostics.${field} must be a non-negative number`);
+        }
+      }
+      if (diagnostics.retryCount > 6 || diagnostics.totalAttemptCount > data.aggregate.requestCount + 6) {
+        fail('aggregate.requestDiagnostics exceeds the bounded per-run retry budget');
+      }
+      for (const field of ['failuresByCategory', 'attemptFailuresByCategory']) {
+        const counts = diagnostics[field];
+        if (!counts || typeof counts !== 'object' || Array.isArray(counts)) {
+          fail(`aggregate.requestDiagnostics.${field} must be an object`);
+          continue;
+        }
+        for (const [category, count] of Object.entries(counts)) {
+          if (!FIRMS_FAILURE_CATEGORIES.has(category) || !Number.isFinite(count) || count < 0) {
+            fail(`aggregate.requestDiagnostics.${field}.${category} is invalid`);
+          }
+        }
+      }
+      const retryPolicy = diagnostics.retryPolicy;
+      if (!retryPolicy || retryPolicy.maxRetriesPerRequest !== 1 || retryPolicy.maxRetriesPerRun !== 6) {
+        fail('aggregate.requestDiagnostics.retryPolicy must preserve one retry/request and six retries/run');
+      }
+    }
+  }
 }
 
 if (!Array.isArray(data.facilities)) {
@@ -256,6 +328,9 @@ if (typeof data.boundary !== 'string' || !/display-only|audit-only/i.test(data.b
 }
 if (JSON.stringify(data).includes('FIRMS_MAP_KEY') || /firms\.modaps\.eosdis\.nasa\.gov\/api\/area\/csv/u.test(JSON.stringify(data))) {
   fail('production artifact must not contain raw/redacted FIRMS URL or key marker');
+}
+if (JSON.stringify(data).includes('errorReason')) {
+  fail('production artifact must expose categorized diagnostics instead of free-form errorReason text');
 }
 
 if (errors.length > 0) {

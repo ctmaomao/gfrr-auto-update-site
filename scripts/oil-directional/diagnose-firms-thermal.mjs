@@ -2,6 +2,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import {
+  createFirmsRetryBudget,
+  fetchFirmsText,
+  getFirmsErrorDiagnostics,
+  summarizeFirmsRequestDiagnostics,
+  wrapFirmsResponseError
+} from './firms-request-policy.mjs';
 
 const DEFAULT_SOURCE = 'VIIRS_SNPP_NRT';
 const DEFAULT_BBOX = '47,23,58,31';
@@ -370,21 +377,6 @@ function aggregateSummaries(summaries) {
   return aggregate;
 }
 
-async function fetchWithTimeout(url, timeoutMs) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`FIRMS HTTP ${response.status}: ${text.slice(0, 160)}`);
-    }
-    return text;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 function writeJsonArtifact(outputPath, artifact) {
   const absolutePath = resolve(outputPath);
   mkdirSync(dirname(absolutePath), { recursive: true });
@@ -545,16 +537,25 @@ function makeRequest({ source, bbox, dayRange, date }) {
   };
 }
 
-async function runFirmsRequest(mapKey, request, timeoutMs) {
+async function runFirmsRequest(mapKey, request, timeoutMs, retryBudget) {
   const url = buildUrl(mapKey, request);
-  const responseText = await fetchWithTimeout(url, timeoutMs);
-  const records = parseCsv(responseText);
+  const response = await fetchFirmsText(url, {
+    timeoutMs,
+    retryBudget
+  });
+  let records;
+  try {
+    records = parseCsv(response.text);
+  } catch (error) {
+    wrapFirmsResponseError(error, response.diagnostics);
+  }
   const summary = summarizeRecords(records);
   return {
     status: 'ok',
     diagnosis: summary.rowCount > 0 ? 'firms-api-ok-detections-returned' : 'firms-api-ok-no-detections-in-bbox',
     source: request.source,
     summary,
+    requestDiagnostics: response.diagnostics,
     redactedUrl: redactUrl(url, mapKey)
   };
 }
@@ -589,11 +590,16 @@ function buildFacilityAggregate(sourceResults) {
   const sourceSummaries = sourceResults.map((result) => result.summary);
   const summary = aggregateSummaries(sourceSummaries);
   const sourcesWithDetections = sourceResults.filter((result) => result.summary.rowCount > 0).length;
+  const sourceErrorCount = sourceResults.filter((result) => result.status !== 'ok').length;
   const anomaly = deriveAnomalyLevel(summary, sourcesWithDetections);
   return {
     ...summary,
     sourcesChecked: sourceResults.length,
     sourcesWithDetections,
+    sourceErrorCount,
+    sourceStatus: sourceErrorCount === 0
+      ? 'live'
+      : (sourceErrorCount === sourceResults.length ? 'error' : 'partial'),
     sourceAgreement: `${sourcesWithDetections}/${sourceResults.length}`,
     anomalyLevel: anomaly.level,
     anomalyLabelZh: anomaly.labelZh,
@@ -610,6 +616,8 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
 
   const facilityResults = [];
   let completedRequests = 0;
+  const retryBudget = createFirmsRetryBudget();
+  const allRequestDiagnostics = [];
   logProgress(options, `facility batch start: facilities=${facilities.length}, sources=${sourceList.length}, requests=${requestCount}`);
   for (const [facilityIndex, facility] of facilities.entries()) {
     logProgress(options, `facility ${facilityIndex + 1}/${facilities.length}: ${facility.id} (${facility.label})`);
@@ -623,12 +631,29 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
       });
       try {
         logProgress(options, `request ${completedRequests + 1}/${requestCount}: ${facility.id} ${source}`);
-        const result = await runFirmsRequest(mapKey, request, options.timeoutMs);
+        const result = await runFirmsRequest(mapKey, request, options.timeoutMs, retryBudget);
         completedRequests += 1;
+        allRequestDiagnostics.push(result.requestDiagnostics);
         logProgress(options, `done ${completedRequests}/${requestCount}: ${facility.id} ${source} rows=${result.summary.rowCount}`);
         sourceResults.push(result);
       } catch (error) {
-        throw new Error(`FIRMS request failed for facility ${facility.id} source ${source}: ${error.message}`);
+        completedRequests += 1;
+        const requestDiagnostics = getFirmsErrorDiagnostics(error, {
+          timeoutMs: options.timeoutMs
+        });
+        allRequestDiagnostics.push(requestDiagnostics);
+        logProgress(
+          options,
+          `failed ${completedRequests}/${requestCount}: ${facility.id} ${source} category=${requestDiagnostics.category}`
+        );
+        sourceResults.push({
+          status: 'error',
+          diagnosis: 'firms-request-failed',
+          source,
+          summary: aggregateSummaries([]),
+          requestDiagnostics,
+          redactedUrl: redactUrl(buildUrl(mapKey, request), mapKey)
+        });
       }
     }
 
@@ -645,6 +670,10 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
   }
 
   const batchSummary = aggregateSummaries(facilityResults.map((facility) => facility.aggregate));
+  const requestErrorCount = facilityResults.reduce(
+    (sum, facility) => sum + facility.aggregate.sourceErrorCount,
+    0
+  );
   const facilitiesByAnomalyLevel = {};
   facilityResults.forEach((facility) => {
     const level = facility.aggregate.anomalyLevel;
@@ -657,6 +686,11 @@ async function runFacilityBatch({ mapKey, options, sourceList, dayRange, facilit
       ...batchSummary,
       facilityCount: facilityResults.length,
       requestCount,
+      requestErrorCount,
+      requestDiagnostics: summarizeFirmsRequestDiagnostics(allRequestDiagnostics, {
+        logicalRequestCount: requestCount,
+        retryBudget
+      }),
       facilitiesWithDetections: facilityResults.filter((facility) => facility.aggregate.rowCount > 0).length,
       facilitiesByAnomalyLevel
     }
@@ -760,13 +794,19 @@ async function main() {
       dayRange,
       facilities
     });
+    const batchStatus = aggregate.requestErrorCount === 0
+      ? 'ok'
+      : (aggregate.requestErrorCount === aggregate.requestCount ? 'source_unavailable' : 'partial');
     const artifact = {
       schemaVersion: 'firms-facility-thermal-diagnosis-1',
-      status: 'ok',
-      diagnosis:
-        aggregate.facilitiesWithDetections > 0
+      status: batchStatus,
+      diagnosis: batchStatus === 'source_unavailable'
+        ? 'firms-facility-batch-source-unavailable'
+        : aggregate.facilitiesWithDetections > 0
           ? 'firms-facility-batch-detections-returned'
-          : 'firms-facility-batch-no-detections',
+          : batchStatus === 'partial'
+            ? 'firms-facility-batch-partial-no-detections'
+            : 'firms-facility-batch-no-detections',
       generatedAt,
       mode: 'facility_batch',
       sources: sourceList,
@@ -815,7 +855,12 @@ async function main() {
     date: options.date
   });
   logProgress(options, `single bbox request start: source=${request.source}, bbox=${request.bbox}, dayRange=${request.dayRange}`);
-  const result = await runFirmsRequest(keyResolution.mapKey, request, options.timeoutMs);
+  const result = await runFirmsRequest(
+    keyResolution.mapKey,
+    request,
+    options.timeoutMs,
+    createFirmsRetryBudget()
+  );
   logProgress(options, `single bbox request done: source=${request.source}, rows=${result.summary.rowCount}`);
   const summary = result.summary;
   const anomaly = deriveAnomalyLevel(summary);
