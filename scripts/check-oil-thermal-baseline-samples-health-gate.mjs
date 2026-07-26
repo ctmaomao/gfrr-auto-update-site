@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -123,7 +123,9 @@ function runPromote({ reviewPath, readinessPath }) {
 
 const tempRoot = resolve(tmpdir());
 const tempDir = mkdtempSync(join(tempRoot, 'gfrr-oil-thermal-health-gate-'));
-const promotionTempDir = mkdtempSync(resolve('manual-artifacts/oil-thermal/check-health-gate-'));
+const promotionTempRoot = resolve('manual-artifacts/oil-thermal');
+mkdirSync(promotionTempRoot, { recursive: true });
+const promotionTempDir = mkdtempSync(join(promotionTempRoot, 'check-health-gate-'));
 
 try {
   const recoveredSample = buildSample({
@@ -336,8 +338,7 @@ try {
     throw new Error(`Refusing to remove unexpected temp path: ${tempDir}`);
   }
   rmSync(tempDir, { recursive: true, force: true });
-  const promotionRoot = resolve('manual-artifacts/oil-thermal');
-  if (resolve(promotionTempDir).startsWith(`${promotionRoot}${sep}`)) {
+  if (resolve(promotionTempDir).startsWith(`${promotionTempRoot}${sep}`)) {
     rmSync(promotionTempDir, { recursive: true, force: true });
   }
 }
