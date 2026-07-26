@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-07-26T03:57:10.348Z",
+  "generatedAt": "2026-07-26T05:10:54.277Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -71,6 +71,9 @@
       ],
       "maxFacilitiesPerRun": 50,
       "maxRequestsPerRun": 150,
+      "maxRetryRequestsPerRun": 6,
+      "maxNetworkAttemptsPerRun": 156,
+      "maxRetriesPerRequest": 1,
       "maxFacilityBboxSpanDegrees": 1.5
     },
     "notes": [
@@ -137,6 +140,26 @@
     "facilitiesWithDetections": 0,
     "requestCount": 126,
     "requestErrorCount": 0,
+    "requestDiagnostics": {
+      "policyVersion": "firms-request-policy-1",
+      "logicalRequestCount": 126,
+      "totalAttemptCount": 126,
+      "retryCount": 0,
+      "recoveredAfterRetryCount": 0,
+      "failedRequestCount": 0,
+      "retryableFailureCount": 0,
+      "retryBudgetExhaustedCount": 0,
+      "backoffAppliedMs": 0,
+      "failuresByCategory": {},
+      "attemptFailuresByCategory": {},
+      "retryPolicy": {
+        "maxRetriesPerRequest": 1,
+        "maxRetriesPerRun": 6,
+        "retriesUsed": 0,
+        "baseBackoffMs": 1000,
+        "maxBackoffMs": 5000
+      }
+    },
     "baselineStatus": "partial",
     "repeatedObservationCount": 0,
     "elevatedRepeatedObservationCount": 0,
