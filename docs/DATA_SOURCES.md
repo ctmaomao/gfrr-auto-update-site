@@ -163,6 +163,8 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 | `DX-Y.NYB` | DXY 美元指数 | secondary diagnostics only (E-2) |
 | `^MOVE` | ICE BofA MOVE 债券/利率波动率指数 | `macroDrivers.rateVol` 结构信号（进结构门控：≥140→黄、≥160→红）；**评分例外**，非 secondary/display-only；日频 + 闸门 `[20,400]`/INDEX/≤5d + fail-closed |
 
+Market Pricing 新鲜度复核使用 `npm run review:market-pricing-freshness`，只读比较 QQQ / NDX / IXIC weekly history 与 metrics 的 latest date。QQQ 继续由周六 workflow 自动刷新；NDX/IXIC 仍是 M-91 manual-only 刷新路径，WARN 后先跑 `market-pricing:ndx-ixic-yahoo:dry-run`，经人工批准再 commit history 并重算 metrics。reviewer 本身不访问 Yahoo、不写 production data，也不改变 display-only / no-Worker / no-scoring 边界。
+
 ---
 
 ### Stooq

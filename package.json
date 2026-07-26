@@ -163,6 +163,8 @@
     "check:market-pricing-metrics-schema": "node --check scripts/check-market-pricing-metrics-schema.mjs && node scripts/check-market-pricing-metrics-schema.mjs",
     "check:market-pricing-multi-asset": "node --check scripts/check-market-pricing-multi-asset.mjs && node scripts/check-market-pricing-multi-asset.mjs",
     "check:market-pricing-ndx-ixic-implementation": "node --check scripts/check-market-pricing-ndx-ixic-implementation.mjs && node scripts/check-market-pricing-ndx-ixic-implementation.mjs",
+    "review:market-pricing-freshness": "node scripts/review-market-pricing-freshness.mjs",
+    "check:market-pricing-freshness": "node --check scripts/review-market-pricing-freshness.mjs && node --check scripts/check-market-pricing-freshness.mjs && node scripts/check-market-pricing-freshness.mjs",
     "check:data": "node scripts/validate-data.mjs",
     "check:brent-promotion-audit-fields": "node scripts/check-brent-promotion-audit-fields.mjs",
     "check:brent-crack-spread": "node scripts/check-brent-crack-spread.mjs",

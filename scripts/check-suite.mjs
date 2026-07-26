@@ -88,7 +88,8 @@ const SUITES = {
     'check:market-pricing-metrics-calculation-scaffold',
     'check:market-pricing-metrics-schema',
     'check:market-pricing-multi-asset',
-    'check:market-pricing-ndx-ixic-implementation'
+    'check:market-pricing-ndx-ixic-implementation',
+    'check:market-pricing-freshness'
   ],
   'world-order-acled': [
     'check:xlsx-security',

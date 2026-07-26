@@ -12,7 +12,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | Release/display version | `v28.0.10` |
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
 | Cache version | `health-hardening-2` |
-| check:all 项数 | 24 顶层项 / ~89 leaf checks(checker 精简 Phase 1+2 后 + `check:gdelt-source-policy` + `check:gdelt-cache-health` + `check:realtime-js-frozen` + `check:worker-syntax` + `check:realtime-local-schema` + `check:frontend-safe-dom-rendering` + ODP `oil-directional` 套件 26 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 8 leaf + `check:market-pricing` 8 leaf + `check:main-score-wind-fallback`)|
+| check:all 项数 | 24 顶层项 / ~90 leaf checks(checker 精简 Phase 1+2 后 + `check:gdelt-source-policy` + `check:gdelt-cache-health` + `check:realtime-js-frozen` + `check:worker-syntax` + `check:realtime-local-schema` + `check:frontend-safe-dom-rendering` + ODP `oil-directional` 套件 26 leaf + `check:frontend-zh-copy` + `check:bubble-watch` 8 leaf + `check:market-pricing` 9 leaf + `check:main-score-wind-fallback`)|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
@@ -31,6 +31,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-06-16 Bubble Watch 公开市场技术热度面板**:`market_technical_heat` 是独立 display-only 审计子面板,使用 Yahoo Chart 免费公开日线价格计算 AI 等权篮子相对动量/RSI/Bollinger/200D 偏离/相关性-Beta;不进入 27 卡灯色计数、Core-23 主分/主判读或 GFRR scoring/decision/execution/position。public-apis Finance 仅作 source-review fallback 候选;Wind paid API 只作最后兜底。
 - **2026-06-17 Bubble Watch CEO 表态新闻源**:`ceo_hedging` 免费源顺序为 GDELT DOC public search -> Tavily Search API + Brave News Search API free-credit cross-check/fallback -> Wind paid final fallback。GDELT 默认小样本请求,429/5xx 时有界退避重试一次;Tavily 需 `TAVILY_API_KEYS`,Brave 需 `BRAVE_API_KEYS`,GDELT 成功时做第二/第三新闻源确认,GDELT 429/不可用时做免费兜底;红灯必须有多源确认,单一路径新闻命中不得绕过 `local_proxy_confidence_v1` 多源/样本门槛升红。
 - **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
+- **2026-07-26 Market Pricing freshness/alignment review**:发现 QQQ 已到 2026-07-24、NDX/IXIC 仍停在 2026-05-22；按 owner 本次授权运行既有 M-91 manual-only Yahoo refresh 并重算 metrics，三资产现均到 2026-07-24。新增 `review:market-pricing-freshness` / `check:market-pricing-freshness`，守住 active 周线 10 天龄、辅助资产落后 QQQ 7 天、history/metrics/coverage/commit timestamp 一致性。默认 WARN 不阻断、FAIL 阻断，`--strict` 供人工硬复核；保持 display-only，不把 NDX/IXIC 接入 GitHub Actions、Worker、scoring、decision、execution、position 或 cross-validation。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
 
 ---

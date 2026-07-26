@@ -1373,6 +1373,15 @@ Operator guidance:
 - SPX remains `fallback_candidate_only` and must never display as Nasdaq temperature.
 - Required validation after an M-91 refresh: `npm run check:market-pricing` and `npm run check:all`.
 
+### Market Pricing freshness/alignment review
+
+```bash
+npm run review:market-pricing-freshness
+npm run review:market-pricing-freshness -- --strict
+```
+
+默认只读检查 QQQ / NDX / IXIC 的 history、metrics、coverage 与 source commit timestamp。周线超过 10 天或 NDX/IXIC 落后 QQQ 超过 7 天为 `WARN`；history/metrics 错位、未来日期或 active 资产缺失为 `FAIL`。`WARN` 默认退出 0，`--strict` 用于人工硬复核。NDX/IXIC WARN 后先 dry-run，再经人工批准执行 `market-pricing:ndx-ixic-yahoo:commit` 和 `market-pricing:metrics-calculation:commit`；不得把 M-91 manual-only 路径接入 GitHub Actions 或 Worker。
+
 ### Transport Shock P-score-57 path-boundary review
 
 当 production refresh、runtime score policy 与 score-readiness 的输出看似冲突时,先运行 `npm run review:transport-shock-path-boundaries -- --dry-run`。`transport-shock-path-boundary-review-v1` 会把两个批准层并列显示:

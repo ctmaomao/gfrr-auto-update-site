@@ -1280,6 +1280,8 @@ Boundaries:
 - NDX / IXIC do not alter Brent promotion, scoring, `decisionModel`, `executionLock`, `positionGuidance`, Action Queue, Trigger Monitor, Invalidation Rules, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation.
 - NDX / IXIC success must not hide QQQ failure; QQQ must not be substituted with NDX or IXIC.
 
+2026-07-26 起，`market-pricing-freshness-review-v1` 只读核对 QQQ / NDX / IXIC 的 history latest、metrics latest、coverage latest 与 `source.lastCommittedAt`。active weekly record 超过 10 calendar days 或 NDX/IXIC 落后 QQQ 超过 7 calendar days 输出 `WARN`；history/metrics 错位、无效/未来日期或 active 资产缺数据输出 `FAIL`。`review:market-pricing-freshness` 默认不联网、不写 artifact/production data；`--strict` 仅供人工硬复核。该 review 不改变三资产角色、60 周算法、display-only 边界或 M-91 manual-only ingestion policy。
+
 ### Frontend asset cache version
 
 health-hardening-2 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 Macro Overview 趋势 SVG 与 External AI 展示簇分别迁入独立模块；DOM ID、文案、布局和 fallback 保持不变，cache busting 用于避免浏览器沿用旧 module graph。
