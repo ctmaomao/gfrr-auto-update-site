@@ -1384,6 +1384,16 @@ Operator guidance:
 - `scheduled_refresh_overdue`:已越过 cadence grace；检查 workflow 或 cache commit,不得手工修改 production JSON。
 - 每次 context/checker 变更后运行 `npm run check:gdelt-cache-health` 与 `npm run check:all`。
 
+### FOMC minutes tone quality
+
+FOMC minutes keyword NLP 的日常离线复核：
+
+```bash
+npm run review:fomc-minutes-tone-quality -- --no-output
+```
+
+默认 `PASS` 表示官方 URL/日期、鹰鸽差值 8 阈值、六类 topic count 与确定性摘要相互一致且证据龄不超过 70 天。`fallback`、70–120 天 `aging`、超过 120 天 `stale` 或完整 `missing/未知` 输出 `WATCH`,默认不阻断 `check:all`;scheduled refresh 后需要人工硬门时追加 `--strict`。`FAIL` 表示字段/语义冲突、非官方 URL、无效计数、摘要不可复现或出现预测/交易/决策语言。该命令不联网、不刷新 Daily、不写 production data；默认 artifact 仅位于 ignored `manual-artifacts/fomc-minutes/`。
+
 ### ODP P59 FIRMS request-health operator note
 
 Oil Thermal FIRMS refresh now emits only categorized request diagnostics. Never restore raw provider bodies, raw/redacted Area API URLs, MAP_KEY fragments, or free-form upstream errors to production artifacts.

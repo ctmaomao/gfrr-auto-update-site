@@ -248,6 +248,8 @@ M-67 起,ISM Manufacturing PMI 直接解析 ismworld.org 公开 HTML:fetcher 使
 
 These M-74/M-77/M-78/M-79/M-80/M-81/M-82/M-83/M-84/M-85/Energy Stress Phase 2/P6A sources are audit-only / display-only. They must not change Brent promotion, scoring, decision, execution, position, Worker runtime, `displayInputsBaseline`, `effectiveDisplayInputs`, or cross-validation. Private credit marks, Redbook raw subscription feed, BoA raw card feed, Platts Dated Brent, official ICE Brent settlement curve, proprietary dealer OIS forward, non-public CRE loan tape, OPEC official quota execution, real-time global commercial inventory total, Kpler/AIS oil-on-water confirmation, PortWatch raw AIS-derived history, war/blockade probability, and oil-price prediction remain unconnected or explicitly out of scope.
 
+FOMC minutes keyword NLP 只使用已落盘的 `macroDrivers.policyExpectations` 字段做离线质量复核。`npm run review:fomc-minutes-tone-quality -- --no-output` 会复算语气阈值、topic 排序、摘要、官方 URL/日期与证据龄；它不重新请求 Federal Reserve,不升级为完整政策 NLP 模型,也不把 `fallback` / `manual_required` / `stale` 包装成新鲜信号。人工需要把 `WATCH` 也作为非零退出时才使用 `--strict`。
+
 ---
 
 ### Brent physical / term / freight public proxy candidates (M-71 source review only)
