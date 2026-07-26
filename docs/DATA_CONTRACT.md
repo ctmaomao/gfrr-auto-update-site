@@ -164,6 +164,8 @@ H-5A 的 UI source / trend / direction labels 也是 presentation-only derivatio
 
 H-4 的 build summary / check summary / review helper 只改变 stdout 可读性，不改变 JSON contract。`check:world-order` 已纳入 `check:all`，但 `build:world-order` 仍需显式运行，不得加入默认完整检查。
 
+2026-07-26 起，`review:world-order` 升级为 `world-order-source-health-consistency-review-v1` 只读复核：按 GDELT / OFAC / SIPRI / ACLED 四源状态重算 `freshness` 与 `sourceMode`，覆盖单源降级、聚合状态错配、异常高置信度提示、source timestamp、结构性风险文案及 `decisionModifier` 的 future-reference-only 边界。`check:world-order` 通过 synthetic replay 锁定这些规则；默认 `WARN` 不阻断，`FAIL` 阻断，人工硬复核可加 `--strict`。该复核不联网、不写 artifact/production data，不改变 overlay score、权重、前端、workflow、`values.*`、main scoring、decision、execution、position、Worker 或 cross-validation。
+
 ### dailyBrief 解释层 contract
 
 `v28.0I-1` 在 `data/radar-data.json` 根级新增：

@@ -1075,6 +1075,15 @@ v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 
 - 不要把 JSON 产物作为临时修复随意提交。
 - 不要用 UI 文案反向修改数据契约或评分逻辑。
 
+## World Order source-health consistency
+
+```bash
+npm run review:world-order
+npm run review:world-order -- --strict
+```
+
+该 helper 只读当前 `data/world-order-stress.json`，不联网、不触发 refresh、不写 artifact 或 production data。它按 GDELT / OFAC / SIPRI / ACLED 四源状态重算 `freshness` 和 `sourceMode`：状态错配、越界文案或 future-reference-only 边界破坏为 `FAIL`；源降级及降级时仍异常高置信为 `WARN`。默认 WARN 便于日常观察且退出 0；`--strict` 供 scheduled refresh 后人工硬复核。ACLED 缺失时应手工下载 weekly/monthly xlsx 并运行 sanitizer，不得恢复 API credential 路径。
+
 ## v28.0L-3H External AI provider-call workflow runbook
 
 Before the first real provider call:

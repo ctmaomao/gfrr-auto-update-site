@@ -277,3 +277,5 @@ console.log(`ofacStatus: ${payload.externalSources.ofac.status}`);
 console.log(`sipriStatus: ${payload.externalSources.sipri.status}`);
 console.log(`acledStatus: ${payload.externalSources.acled.status}`);
 console.log(`warnings: ${payload.warnings.length}`);
+
+await import('./check-world-order-stress-review.mjs');
