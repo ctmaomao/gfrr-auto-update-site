@@ -11,6 +11,13 @@ function isLaterTimestamp(laterValue, earlierValue) {
   return Number.isFinite(later) && Number.isFinite(earlier) && later > earlier;
 }
 
+function hoursBetween(laterValue, earlierValue) {
+  const later = Date.parse(laterValue || '');
+  const earlier = Date.parse(earlierValue || '');
+  if (!Number.isFinite(later) || !Number.isFinite(earlier) || later < earlier) return null;
+  return (later - earlier) / 3_600_000;
+}
+
 export function classifyOilNewsPostRefresh({
   cacheGeneratedAt,
   cacheAgeHours,
@@ -20,6 +27,7 @@ export function classifyOilNewsPostRefresh({
   productionRequestMode
 }) {
   const productionNewerThanCache = isLaterTimestamp(productionGeneratedAt, cacheGeneratedAt);
+  const productionHoursAfterCache = hoursBetween(productionGeneratedAt, cacheGeneratedAt);
   const productionStillDegraded = productionStatus === 'error';
   if (productionNewerThanCache && productionStillDegraded) {
     const age = finiteHours(cacheAgeHours);
@@ -32,6 +40,17 @@ export function classifyOilNewsPostRefresh({
         errorCooldownHours: cooldown,
         cooldownRemainingHours: Math.round((cooldown - age) * 100) / 100,
         nextAction: 'wait_until_error_cooldown_expires_then_rerun_after_scheduled_refresh'
+      };
+    }
+    if (cooldown !== null && (productionHoursAfterCache === null || productionHoursAfterCache < cooldown)) {
+      return {
+        state: 'degraded_awaiting_post_cooldown_refresh_evidence',
+        productionNewerThanCache,
+        requestMode: productionRequestMode || null,
+        errorCooldownHours: cooldown,
+        productionHoursAfterCache:
+          productionHoursAfterCache === null ? null : Math.round(productionHoursAfterCache * 100) / 100,
+        nextAction: 'wait_for_first_scheduled_refresh_after_error_cooldown_then_rerun_strict_review'
       };
     }
     return {
@@ -100,6 +119,9 @@ export function summarizePostRefreshContexts(rows) {
   return {
     expectedErrorCooldownCount: contexts.filter(
       (context) => context.state === 'expected_error_cooldown_after_refresh'
+    ).length,
+    awaitingPostCooldownRefreshCount: contexts.filter(
+      (context) => context.state === 'degraded_awaiting_post_cooldown_refresh_evidence'
     ).length,
     persistentAfterCooldownCount: contexts.filter(
       (context) => context.state === 'persistent_error_after_cooldown_expiry'

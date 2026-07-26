@@ -308,6 +308,9 @@ function recommendationFor(status, rows) {
   if (rows.some((row) => row.refreshContext?.state === 'expected_error_cooldown_after_refresh')) {
     return 'wait_until_error_cooldown_expires_then_rerun_after_scheduled_refresh';
   }
+  if (rows.some((row) => row.refreshContext?.state === 'degraded_awaiting_post_cooldown_refresh_evidence')) {
+    return 'wait_for_first_scheduled_refresh_after_error_cooldown_then_rerun_strict_review';
+  }
   return status === 'watch'
     ? 'wait_for_next_scheduled_refresh_then_rerun_review'
     : 'gdelt_cache_health_current';
@@ -317,6 +320,7 @@ function formatPostRefreshSummary(postRefresh) {
   if (!postRefresh || typeof postRefresh !== 'object') return null;
   return [
     `expectedCooldown=${Number(postRefresh.expectedErrorCooldownCount) || 0}`,
+    `awaitingPostCooldownRefresh=${Number(postRefresh.awaitingPostCooldownRefreshCount) || 0}`,
     `persistentAfterCooldown=${Number(postRefresh.persistentAfterCooldownCount) || 0}`,
     `expectedScheduleGap=${Number(postRefresh.expectedScheduleGapCount) || 0}`,
     `scheduledOverdue=${Number(postRefresh.scheduledRefreshOverdueCount) || 0}`
@@ -697,6 +701,17 @@ function runSelfTests() {
     'newer degraded Oil News artifact inside cooldown is expected bounded behavior'
   );
   assertSelfTest(
+    classifyOilNewsPostRefresh({
+      cacheGeneratedAt: '2026-07-25T00:00:00.000Z',
+      cacheAgeHours: 25,
+      errorCooldownHours: 24,
+      productionGeneratedAt: '2026-07-25T00:10:00.000Z',
+      productionStatus: 'error',
+      productionRequestMode: 'error_cooldown_cache_hit'
+    }).state === 'degraded_awaiting_post_cooldown_refresh_evidence',
+    'elapsed wall time alone cannot prove persistence without a post-cooldown refresh'
+  );
+  assertSelfTest(
     classifyBubbleScheduleContext(141, BUBBLE_WATCH_CACHE_TTL_HOURS).state
       === 'expected_pre_refresh_schedule_gap',
     'weekly Bubble Watch cache gap is distinguished from overdue refresh'
@@ -760,10 +775,11 @@ function runSelfTests() {
   assertSelfTest(
     formatPostRefreshSummary({
       expectedErrorCooldownCount: 1,
+      awaitingPostCooldownRefreshCount: 0,
       persistentAfterCooldownCount: 0,
       expectedScheduleGapCount: 2,
       scheduledRefreshOverdueCount: 0
-    }) === 'expectedCooldown=1 persistentAfterCooldown=0 expectedScheduleGap=2 scheduledOverdue=0',
+    }) === 'expectedCooldown=1 awaitingPostCooldownRefresh=0 persistentAfterCooldown=0 expectedScheduleGap=2 scheduledOverdue=0',
     'post-refresh summary formatter emits stable operator summary'
   );
   assertSelfTest(

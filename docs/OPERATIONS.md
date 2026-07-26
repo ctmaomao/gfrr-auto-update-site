@@ -1373,6 +1373,17 @@ Operator guidance:
 - 正常组合为 `two_distinct_approval_layers_no_contradiction`。若输出 `boundary_drift_detected`,先修复三个既有 monitor 的合同漂移,不得提高 cap、连接新源或手工改 `data/radar-data.json`。
 - 修改该 review 后运行 `npm run check:transport-shock-path-boundaries`,然后运行 `npm run check:oil-directional` 与 `npm run check:all`。
 
+### GDELT P40 post-refresh context
+
+在 Oil News、Bubble Watch 或 World Order 自然刷新后运行 `npm run review:gdelt-cache-health -- --no-output --strict`。严格模式在任何 WATCH/WARN/FAIL 上非零退出；先看 `rows[].refreshContext` 和 `summary.postRefresh`,不要仅凭全局 WATCH 调整缓存政策:
+
+- `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在既有 24h error cooldown 内；等待 cooldown 到期后的自然刷新,不要手动连发 workflow。
+- `degraded_awaiting_post_cooldown_refresh_evidence`:wall-clock 已过 cooldown,但最新 production watch 生成于 cooldown 到期前；等待第一轮 post-cooldown 自然刷新,不得提前判为 persistent。
+- `persistent_error_after_cooldown_expiry`:production watch 本身在 cooldown 到期后刷新且仍错误；检查 sanitized request category、调度与 cache write,但不要先放宽 TTL/backoff。
+- `expected_pre_refresh_schedule_gap`:Bubble Watch 已越过 132h fresh TTL,但仍在周一 168h cadence + 12h grace 内；等待下一次周一刷新。
+- `scheduled_refresh_overdue`:已越过 cadence grace；检查 workflow 或 cache commit,不得手工修改 production JSON。
+- 每次 context/checker 变更后运行 `npm run check:gdelt-cache-health` 与 `npm run check:all`。
+
 ### ODP P59 FIRMS request-health operator note
 
 Oil Thermal FIRMS refresh now emits only categorized request diagnostics. Never restore raw provider bodies, raw/redacted Area API URLs, MAP_KEY fragments, or free-form upstream errors to production artifacts.
