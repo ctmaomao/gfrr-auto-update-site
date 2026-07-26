@@ -40,19 +40,12 @@
 
 ### Market Pricing scope (M-14 → M-91)
 
-- `docs/MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md`
 - `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md` (M-20)
 - `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md` (M-21)
-- `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md` (M-22)
-- `docs/MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md` (M-23)
 - `docs/MARKET_PRICING_FIRST_REAL_RECORD_WRITE.md` (M-24)
-- `docs/MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md` (M-25)
 - `docs/MARKET_PRICING_METRICS_CALCULATION.md` (M-26)
-- `docs/MARKET_PRICING_TEMPERATURE_DISPLAY.md` (M-27)
-- `docs/MARKET_PRICING_FIRST_FOLD_AND_CROSS_VALIDATION.md` (M-28)
-- `docs/MARKET_PRICING_MACRODRIVERS_SURFACING.md` (M-29)
 - `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` (M-91 implementation reference; source review completed, implementation landed)
-- `docs/CROSS_VALIDATION_EDUCATION_APPENDIX.md` (M-30)
+- 其余 M-14 / M-22 / M-23 / M-25 / M-27 → M-30 阶段文档已移入 Historical Background；文件保留，但默认不加载。
 
 ### Editorial / Visual scope (M-31 → M-39)
 
@@ -62,16 +55,12 @@
 ### Macro driver expansion scope (M-41 → M-50)
 
 - `docs/M-41_FED_LIQUIDITY_EXTENDED_DRIVERS.md`
-- `docs/M-42_FED_LIQUIDITY_RESERVE_BALANCES.md`
-- `docs/M-45_FRONTEND_FIELD_SYNCHRONIZATION.md`
-- `docs/M-46_SLOOS_BANK_LOAN_STANDARDS.md`
-- `docs/M-47_ISM_PMI_GROWTH_LAYER.md`
-- `docs/M-48_NFCI_BANK_STRESS_INDEX.md`
 - `docs/M-49_DIESEL_CRACK_SPREAD.md`
 - `docs/M-50_REPO_MARKET_SPREAD.md`
 - `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` — ISM PMI **active source contract**(`docs/M-47_ISM_PMI_GROWTH_LAYER.md` §Current Source 明确指向它;FRED:NAPM 404 后现行源为 `ISM:ManufacturingPMI`)。**仍有效,非历史**;audit-only/display-only。
 - `docs/TREASURY_FISCAL_DATA_TGA_SOURCE_REVIEW.md` — Treasury Fiscal Data DTS / TGA source-review only; future `macroDrivers.fedLiquidity` candidate, no runtime / formula / scoring approval.
 - `docs/FED_LIQUIDITY_RECALIBRATION_BRIEF.md` — brief-only research contract for funding-stress target, regime-aware ON RRP buffer/velocity, and near-zero percentage-noise recalibration; no runtime / formula / scoring approval.
+- M-42 / M-45 → M-48 阶段文档已移入 Historical Background；ISM 当前源边界以 M-67 为准。
 
 ### Cross-validation narrative density scope (M-51 → M-53)
 
@@ -118,11 +107,9 @@
 
 ### Recent milestones (M-57 → M-62)
 
-- `docs/M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md`
-- `docs/M-58_REALTIME_BAND_FIELD_COMPLETION.md`
-- `docs/M-59_GDELT_CLOUD_INTEGRATION.md`
-- `docs/M-60_PAGES_TRIGGER_COVERAGE.md`
-- `docs/M-61_SIPRI_INTEGRATION.md`
+- `docs/M-60_PAGES_TRIGGER_COVERAGE.md` — Pages trigger coverage 的现行保护边界仍有效；实现已合并进 `check:workflows`。
+- `docs/M-61_SIPRI_INTEGRATION.md` — SIPRI manual normalized source 的现行数据边界仍有效。
+- M-57 → M-59 已移入 Historical Background；其实现状态以当前 checker、runbook 与数据契约为准。
 - (M-43 provenance, M-62 isoWeek merge — 见 MILESTONE_INDEX.md)
 
 ### M-94 V0 Path C frontend rebuild scope (current — 仍有效,非历史)
@@ -179,5 +166,8 @@
 - `docs/EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md` — 历史 gate
 - `docs/MARKET_PRICING_SOURCE_INCIDENT_LOG.md` — 历史 incident 记录
 - Market Pricing 中间阶段设计文档(对应 checker 已于 checker 精简 Phase 1 退休)— 文件未删,仅作历史设计背景保留、移出 active 导航:`MARKET_PRICING_ARTIFACT_ONLY_FETCH_DESIGN.md`、`MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md`、`MARKET_PRICING_SOURCE_SELECTION_REVIEW.md`、`MARKET_PRICING_PROOF_OF_SOURCE_DESIGN.md`、`MARKET_PRICING_NETWORK_GATE_DESIGN.md`、`MARKET_PRICING_NETWORK_GATE_SCAFFOLD.md`、`MARKET_PRICING_SOURCE_COMPLIANCE_REVIEW_SCAFFOLD.md`、`MARKET_PRICING_SYMBOL_MAPPING_VERIFICATION_DESIGN.md`
+- Market Pricing 已完成阶段文档(M-14 / M-22 / M-23 / M-25 / M-27 → M-30)— 文件未删,仅作历史设计/实施背景保留:`MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md`、`MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md`、`MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md`、`MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md`、`MARKET_PRICING_TEMPERATURE_DISPLAY.md`、`MARKET_PRICING_FIRST_FOLD_AND_CROSS_VALIDATION.md`、`MARKET_PRICING_MACRODRIVERS_SURFACING.md`、`CROSS_VALIDATION_EDUCATION_APPENDIX.md`
+- Macro driver 已完成阶段文档(M-42 / M-45 → M-48)— 文件未删,仅作历史实施背景保留:`M-42_FED_LIQUIDITY_RESERVE_BALANCES.md`、`M-45_FRONTEND_FIELD_SYNCHRONIZATION.md`、`M-46_SLOOS_BANK_LOAN_STANDARDS.md`、`M-47_ISM_PMI_GROWTH_LAYER.md`、`M-48_NFCI_BANK_STRESS_INDEX.md`;ISM 当前源契约以 `M-67_ISM_PMI_SOURCE_REPAIR.md` 为准。
+- Recent milestones 已完成阶段文档(M-57 → M-59)— 文件未删,仅作历史实施背景保留:`M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md`、`M-58_REALTIME_BAND_FIELD_COMPLETION.md`、`M-59_GDELT_CLOUD_INTEGRATION.md`;M-60 / M-61 因仍承载现行保护边界而保留在 Conditional。
 - M-92 / M-93 today-summary-card + 普通用户 plain-summary 源审计 / spec 文档(`SUMMARY_VIEW_M92A_SOURCE_REVIEW.md`、`SUMMARY_VIEW_M92_GAP_ANALYSIS_V2.md`、`PLAIN_SUMMARY_M93A_V2_SOURCE_REVIEW.md`、`USER_LANGUAGE_AUDIT_M93_V1.md`)— 描述 2026-05 已 shipped、后被 M-94 V0 Path C 前端重写退场的 runtime path(checker / renderer / DOM 分别于 `5eff6ab`(stage 1)/ `c8229574`(stage 2)/ `91d06f3d` 退场);纯历史 pre-impl 审计/spec,2 个 spec doc 顶部带 STATUS banner。DESIGN / `M94_V0_DATA_CONTRACT.md` 的 plain-summary residual = M-94 cleanup debt,待 Batch 5余项 处理(`assets/styles.css` 的孤儿 `.plain-summary-section`/`.ps-kicker`/`.ps-story`/`.ps-meta` 选择器已于 `7f2ee0fd` 删除收口,2026-06-05;残留债仅剩 DESIGN / `M94_V0_DATA_CONTRACT.md` 文案)。
 - 所有已合并 milestone 的 scope-only doc (按 Conditional Authority 处理,但默认不主动加载;见 `docs/MILESTONE_INDEX.md` Archived 段)
