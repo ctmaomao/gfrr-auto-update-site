@@ -17,6 +17,57 @@ function captureConsoleErrors(page) {
   return errors;
 }
 
+async function gotoBubbleWatch(page) {
+  const dataResponsePromise = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith('/data/bubble-watch.json');
+  });
+  await page.goto('/bubble-watch.html');
+  const dataResponse = await dataResponsePromise;
+  expect(dataResponse.ok()).toBeTruthy();
+  return dataResponse.json();
+}
+
+async function expectBubbleWatchContract(page, data) {
+  await expect(page.locator('#root .masthead')).toBeVisible();
+  await expect(page.locator('section.category')).toHaveCount(6);
+  await expect(page.locator('section.category article.indicator')).toHaveCount(27);
+  await expect(page.locator('.score-role.core')).toHaveCount(23);
+  await expect(page.locator('.score-role.shadow')).toHaveCount(4);
+  await expect(page.locator('.big-number .value')).toContainText(data.summary.red_pct.toFixed(1));
+  await expect(page.locator('.big-number .footer')).toContainText(
+    `${data.summary.scoring_red_count} / CORE-${data.summary.scoring_total_indicators}`
+  );
+  await expect(page.locator('.axes-header .now')).toContainText(
+    `泡沫成熟度 ${data.summary.stage_score.toFixed(0)} · 破裂临近度 ${data.summary.trigger_score.toFixed(0)}`
+  );
+  await expect(page.locator('#trend-chart-wrap svg')).toHaveAttribute('aria-label', /Core-23/u);
+  await expect(page.locator('body')).not.toContainText('undefined');
+  await expect(page.locator('body')).not.toContainText('[object Object]');
+}
+
+async function expectNoHorizontalOverflow(page) {
+  const dimensions = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    bodyWidth: document.body.scrollWidth,
+    trendWidth: document.querySelector('#trend-chart-wrap')?.getBoundingClientRect().width ?? 0,
+    trendSvgWidth: document.querySelector('#trend-chart-wrap svg')?.getBoundingClientRect().width ?? 0
+  }));
+  expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+  expect(dimensions.bodyWidth).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+  expect(dimensions.trendSvgWidth).toBeLessThanOrEqual(dimensions.trendWidth + 1);
+}
+
+async function bubbleGridColumns(page) {
+  return page.evaluate(() => ({
+    headlineColumns: getComputedStyle(document.querySelector('.headline')).gridTemplateColumns
+      .split(/\s+/u).filter(Boolean).length,
+    axesColumns: getComputedStyle(document.querySelector('.axes-grid')).gridTemplateColumns
+      .split(/\s+/u).filter(Boolean).length
+  }));
+}
+
 test.describe('desktop smoke', () => {
   test.use({ viewport: DESKTOP });
 
@@ -69,10 +120,10 @@ test.describe('desktop smoke', () => {
 
   test('Bubble Watch renders indicators and trend SVG', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
-    await page.goto('/bubble-watch.html');
-    await expect(page.locator('#root .masthead')).toBeVisible();
-    await expect(page.locator('#root .indicator').first()).toBeVisible();
-    await expect(page.locator('#trend-chart-wrap svg')).toBeVisible();
+    const data = await gotoBubbleWatch(page);
+    await expectBubbleWatchContract(page, data);
+    await expectNoHorizontalOverflow(page);
+    expect(await bubbleGridColumns(page)).toEqual({ headlineColumns: 2, axesColumns: 2 });
     expect(pageErrors).toEqual([]);
   });
 });
@@ -122,10 +173,23 @@ test.describe('mobile smoke', () => {
 
   test('Bubble Watch renders on a phone viewport', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
+    const data = await gotoBubbleWatch(page);
+    await expectBubbleWatchContract(page, data);
+    await expectNoHorizontalOverflow(page);
+    expect(await bubbleGridColumns(page)).toEqual({ headlineColumns: 1, axesColumns: 1 });
+    expect(pageErrors).toEqual([]);
+  });
+
+  test('Bubble Watch fails closed when its dedicated JSON is unavailable', async ({ page }) => {
+    const pageErrors = capturePageErrors(page);
+    await page.route('**/data/bubble-watch.json*', async (route) => {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+    });
     await page.goto('/bubble-watch.html');
-    await expect(page.locator('#root .masthead')).toBeVisible();
-    await expect(page.locator('#root .indicator').first()).toBeVisible();
-    await expect(page.locator('#trend-chart-wrap svg')).toBeVisible();
+    await expect(page.locator('#root .error')).toContainText('数据加载失败: HTTP 503');
+    await expect(page.locator('section.category article.indicator')).toHaveCount(0);
+    await expect(page.locator('#trend-chart-wrap svg')).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
     expect(pageErrors).toEqual([]);
   });
 });

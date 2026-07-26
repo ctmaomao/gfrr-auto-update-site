@@ -30,6 +30,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-07-14 Bubble Watch Stage × Trigger**:旧「触发阈值标尺」已替换为 Stage(泡沫成熟度)× Trigger(破裂临近度)双轴,并新增历史相似度、周度动量与单卡日期/沿用标记。27 卡的数据源链继续沿用;Big5 capex/OCF 本地权威槽继续 block 上游覆盖。打分权重以后续 ADR-0019 Core-23/Shadow-4 为准。
 - **2026-06-16 Bubble Watch 公开市场技术热度面板**:`market_technical_heat` 是独立 display-only 审计子面板,使用 Yahoo Chart 免费公开日线价格计算 AI 等权篮子相对动量/RSI/Bollinger/200D 偏离/相关性-Beta;不进入 27 卡灯色计数、Core-23 主分/主判读或 GFRR scoring/decision/execution/position。public-apis Finance 仅作 source-review fallback 候选;Wind paid API 只作最后兜底。
 - **2026-06-17 Bubble Watch CEO 表态新闻源**:`ceo_hedging` 免费源顺序为 GDELT DOC public search -> Tavily Search API + Brave News Search API free-credit cross-check/fallback -> Wind paid final fallback。GDELT 默认小样本请求,429/5xx 时有界退避重试一次;Tavily 需 `TAVILY_API_KEYS`,Brave 需 `BRAVE_API_KEYS`,GDELT 成功时做第二/第三新闻源确认,GDELT 429/不可用时做免费兜底;红灯必须有多源确认,单一路径新闻命中不得绕过 `local_proxy_confidence_v1` 多源/样本门槛升红。
+- **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
 
 ---
