@@ -144,6 +144,7 @@ const SUITES = {
     'check:transport-shock-confirmation-factor-score-impact-history-monitor',
     'check:transport-shock-confirmation-factor-runtime-score-policy',
     'check:transport-shock-confirmation-factor-runtime-score-policy-monitor',
+    'check:transport-shock-path-boundaries',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-design',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-sample-scaffold',
     'check:transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review',

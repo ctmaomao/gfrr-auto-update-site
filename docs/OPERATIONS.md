@@ -1364,6 +1364,15 @@ Operator guidance:
 - SPX remains `fallback_candidate_only` and must never display as Nasdaq temperature.
 - Required validation after an M-91 refresh: `npm run check:market-pricing` and `npm run check:all`.
 
+### Transport Shock P-score-57 path-boundary review
+
+当 production refresh、runtime score policy 与 score-readiness 的输出看似冲突时,先运行 `npm run review:transport-shock-path-boundaries -- --dry-run`。`transport-shock-path-boundary-review-v1` 会把两个批准层并列显示:
+
+- `paths.cappedFreeProxyRuntime` 是已批准的低权重运行路径,只允许沿既有 policy 在 `+3` hard cap 内工作。
+- `paths.routeMarketConfirmedReadiness` 是更高置信 route/market-confirmed 路径；`not_connected` / blocked 仍表示必须另开 reviewed change,不是现有 capped path 的回滚指令。
+- 正常组合为 `two_distinct_approval_layers_no_contradiction`。若输出 `boundary_drift_detected`,先修复三个既有 monitor 的合同漂移,不得提高 cap、连接新源或手工改 `data/radar-data.json`。
+- 修改该 review 后运行 `npm run check:transport-shock-path-boundaries`,然后运行 `npm run check:oil-directional` 与 `npm run check:all`。
+
 ### ODP P59 FIRMS request-health operator note
 
 Oil Thermal FIRMS refresh now emits only categorized request diagnostics. Never restore raw provider bodies, raw/redacted Area API URLs, MAP_KEY fragments, or free-form upstream errors to production artifacts.
