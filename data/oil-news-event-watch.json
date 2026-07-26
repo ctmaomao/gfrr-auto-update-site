@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-07-26T04:17:35.113Z",
+  "generatedAt": "2026-07-26T07:15:57.480Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -114,7 +114,7 @@
   "freshness": {
     "windowDays": 7,
     "latestArticleAt": "2026-07-25T11:46:00.000Z",
-    "latestArticleAgeHours": 16.5,
+    "latestArticleAgeHours": 19.5,
     "cadenceZh": "约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声"
   },
   "queryCoverage": {
@@ -164,7 +164,7 @@
   },
   "aggregate": {
     "rawArticleCount": 64,
-    "uniqueArticleCount": 58,
+    "uniqueArticleCount": 57,
     "liveSourceCount": 2,
     "configuredSourceCount": 3,
     "bucketCountWithHits": 7,
@@ -174,9 +174,9 @@
   "buckets": {
     "chokepoint": {
       "labelZh": "通道/咽喉",
-      "articleCount": 43,
+      "articleCount": 44,
       "sourceCount": 2,
-      "weightedSignal": 258,
+      "weightedSignal": 264,
       "topArticles": [
         {
           "domain": "aljazeera.com",
@@ -212,7 +212,8 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -235,9 +236,9 @@
     },
     "sanctions": {
       "labelZh": "制裁/禁运",
-      "articleCount": 19,
+      "articleCount": 18,
       "sourceCount": 2,
-      "weightedSignal": 76,
+      "weightedSignal": 72,
       "topArticles": [
         {
           "domain": "cnbc.com",
@@ -254,17 +255,19 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
-          "domain": "google.com",
-          "publishedAt": "2026-07-25T04:00:00.000Z",
+          "domain": "kharon.com",
+          "publishedAt": "2026-07-24T07:00:00.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
-            "facility_event",
+            "market_reaction",
+            "middle_east_risk",
             "sanctions",
             "tanker_shipping"
           ],
@@ -273,12 +276,14 @@
           ]
         },
         {
-          "domain": "google.com",
-          "publishedAt": "2026-07-24T04:00:00.000Z",
+          "domain": "maritime-executive.com",
+          "publishedAt": "2026-07-24T07:00:00.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
+            "chokepoint",
+            "facility_event",
             "sanctions",
             "tanker_shipping"
           ],
@@ -290,9 +295,9 @@
     },
     "supply_disruption": {
       "labelZh": "供应中断",
-      "articleCount": 30,
+      "articleCount": 29,
       "sourceCount": 2,
-      "weightedSignal": 180,
+      "weightedSignal": 174,
       "topArticles": [
         {
           "domain": "aljazeera.com",
@@ -328,7 +333,8 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -389,7 +395,8 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -414,9 +421,9 @@
     },
     "tanker_shipping": {
       "labelZh": "油轮/航运",
-      "articleCount": 45,
+      "articleCount": 44,
       "sourceCount": 2,
-      "weightedSignal": 135,
+      "weightedSignal": 132,
       "topArticles": [
         {
           "domain": "aljazeera.com",
@@ -452,7 +459,8 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -475,9 +483,9 @@
     },
     "middle_east_risk": {
       "labelZh": "中东风险",
-      "articleCount": 40,
+      "articleCount": 42,
       "sourceCount": 2,
-      "weightedSignal": 120,
+      "weightedSignal": 126,
       "topArticles": [
         {
           "domain": "aljazeera.com",
@@ -513,7 +521,8 @@
             "tanker_shipping"
           ],
           "queryIds": [
-            "chokepoint_shipping"
+            "chokepoint_shipping",
+            "sanctions_shadow_fleet"
           ]
         },
         {
@@ -576,13 +585,14 @@
           ]
         },
         {
-          "domain": "google.com",
-          "publishedAt": "2026-07-24T04:00:00.000Z",
+          "domain": "kharon.com",
+          "publishedAt": "2026-07-24T07:00:00.000Z",
           "sources": [
             "tavily"
           ],
           "buckets": [
             "market_reaction",
+            "middle_east_risk",
             "sanctions",
             "tanker_shipping"
           ],
@@ -686,7 +696,8 @@
         "tanker_shipping"
       ],
       "queryIds": [
-        "chokepoint_shipping"
+        "chokepoint_shipping",
+        "sanctions_shadow_fleet"
       ]
     },
     {
@@ -1027,7 +1038,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v1",
       "status": "sample_gate_passed_projection_only",
-      "generatedAt": "2026-07-26T04:17:35.113Z",
+      "generatedAt": "2026-07-26T07:15:57.480Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "display_fallback_production_write_readiness",
