@@ -286,7 +286,7 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
     enabled: true,
     riskBias: 'neutral',
     maxStateBoost: 0,
-    appliesWhen: '仅作为结构性解释层，不直接修改现有 decisionModel。'
+    appliesWhen: '仅作为结构性解释层，未来只供状态研判参考，不直接修改现有评分或决策路径。'
   };
   if (finalScore >= 61 && finalScore <= 75 && ['partial_confirmed', 'high_confirmed'].includes(marketConfirmation.state)) {
     decisionModifier.riskBias = 'upward';
@@ -296,7 +296,7 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
   if (finalScore > 75 && marketConfirmation.state === 'high_confirmed') {
     decisionModifier.riskBias = 'upward';
     decisionModifier.maxStateBoost = 1;
-    decisionModifier.appliesWhen = '结构性压力进入战争经济压力期且市场高度确认时，未来可提示组合压力测试。';
+    decisionModifier.appliesWhen = '结构性压力进入战争经济压力期且市场高度确认时，未来可作为组合压力测试参考。';
   }
 
   return {

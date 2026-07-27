@@ -9,6 +9,7 @@ import {
   expectedSourceMode,
   reviewWorldOrderStress
 } from './review-world-order-stress.mjs';
+import { scoreWorldOrderStress } from './world-order/score-world-order-stress.mjs';
 
 const errors = [];
 
@@ -38,7 +39,7 @@ const currentPayload = JSON.parse(readText('data/world-order-stress.json'));
 const current = review(currentPayload);
 assert(current.schemaVersion === REVIEW_SCHEMA, 'review schema version is not stable');
 assert(
-  ['PASS', 'WATCH'].includes(current.review.status),
+  ['PASS', 'WARN'].includes(current.review.status),
   'current production World Order review must stay non-failing for coherent degraded states'
 );
 assert(current.review.expectedFreshness === currentPayload.freshness, 'current freshness must match source statuses');
@@ -111,6 +112,55 @@ assert(
   'future-reference-only modifier wording must be enforced'
 );
 
+const weakMarketScored = scoreWorldOrderStress({
+  externalSources: currentPayload.externalSources,
+  marketConfirmation: { state: 'weak', score: 36 },
+  dataPayload: JSON.parse(readText('data/radar-data.json')),
+  rules: JSON.parse(readText('config/world-order-rules.json'))
+});
+assert(weakMarketScored.decisionModifier.riskBias === 'neutral', 'weak market must keep neutral risk bias');
+assert(weakMarketScored.decisionModifier.maxStateBoost === 0, 'weak market must keep zero state boost');
+const weakMarketPayload = clone(currentPayload);
+weakMarketPayload.score = weakMarketScored.score;
+weakMarketPayload.state = weakMarketScored.state;
+weakMarketPayload.labelZh = weakMarketScored.labelZh;
+weakMarketPayload.confidence = weakMarketScored.confidence;
+weakMarketPayload.dimensions = weakMarketScored.dimensions;
+weakMarketPayload.dominantDrivers = weakMarketScored.dominantDrivers;
+weakMarketPayload.systemInterpretationZh = weakMarketScored.systemInterpretationZh;
+weakMarketPayload.decisionModifier = weakMarketScored.decisionModifier;
+weakMarketPayload.warnings = weakMarketScored.warnings;
+const weakMarketReport = review(weakMarketPayload);
+assert(
+  ['PASS', 'WARN'].includes(weakMarketReport.review.status),
+  'canonical weak-market neutral modifier must remain valid'
+);
+assert(
+  !hasCode(weakMarketReport, 'decision_modifier_reference_boundary_missing'),
+  'canonical weak-market neutral modifier must preserve future-reference-only wording'
+);
+assert(
+  !hasCode(weakMarketReport, 'unsafe_prediction_or_action_language'),
+  'canonical weak-market neutral modifier must not look like a decision-engine connection'
+);
+
+const highConfirmedModifier = clone(currentPayload);
+highConfirmedModifier.decisionModifier = {
+  enabled: true,
+  riskBias: 'upward',
+  maxStateBoost: 1,
+  appliesWhen: '结构性压力进入战争经济压力期且市场高度确认时，未来可作为组合压力测试参考。'
+};
+const highConfirmedReport = review(highConfirmedModifier);
+assert(
+  ['PASS', 'WARN'].includes(highConfirmedReport.review.status),
+  'canonical high-confirmation modifier must remain valid'
+);
+assert(
+  !hasCode(highConfirmedReport, 'decision_modifier_reference_boundary_missing'),
+  'canonical high-confirmation modifier must preserve future-reference-only wording'
+);
+
 const reviewerText = readText('scripts/review-world-order-stress.mjs');
 for (const marker of [
   "export const REVIEW_SCHEMA = 'world-order-source-health-consistency-review-v1'",
@@ -127,6 +177,19 @@ for (const marker of [
 for (const forbidden of ['fetch(', 'writeFile', 'node:https', 'node:http', 'process.env', 'ACLED_API_KEY', 'ACLED_EMAIL']) {
   assert(!reviewerText.includes(forbidden), `reviewer must remain offline/read-only; found ${forbidden}`);
 }
+
+const scorerText = readText('scripts/world-order/score-world-order-stress.mjs');
+for (const marker of [
+  '未来只供状态研判参考，不直接修改现有评分或决策路径',
+  '未来可作为状态上修参考',
+  '未来可作为组合压力测试参考'
+]) {
+  assert(scorerText.includes(marker), `World Order scorer missing future-reference-only marker: ${marker}`);
+}
+assert(
+  !scorerText.includes('不直接修改现有 decisionModel'),
+  'World Order scorer must not emit decisionModel language in the canonical neutral branch'
+);
 
 const packageJson = JSON.parse(readText('package.json'));
 assert(
