@@ -377,6 +377,18 @@ if (arrSecondDerivative?.provenance?.mode === 'auto'
         <= Number(arrSecondDerivative.provenance?.detail?.underlyingObservationFreshness?.maxAgeDays),
     'arr_2nd_deriv 自动发布时底层 ARR 里程碑必须 fresh');
 }
+const insiderSellBuy = indicatorById.insider_sell_buy;
+if (insiderSellBuy?.provenance?.detail?.proxyConfidenceCalibration?.applied === true) {
+  check('public-copy', insiderSellBuy.value_display === '高卖压·覆盖受限',
+    'insider_sell_buy 代理校准后必须显示覆盖受限,不得展示不可比极端倍数');
+  check('public-copy', /记录上限|覆盖受限/u.test(insiderSellBuy.note || '')
+    && !/尚未接近互联网泡沫峰值/u.test(insiderSellBuy.note || ''),
+  'insider_sell_buy 必须解释样本覆盖限制,不得用与展示倍数矛盾的峰值文案');
+}
+if (indicatorById.fed_policy?.provenance?.detail?.classificationReason === 'policy_path_above_current_target') {
+  check('public-copy', indicatorById.fed_policy.value_display === '年末路径隐含加息',
+    'fed_policy 年末路径红灯必须明确显示观察周期');
+}
 check('contract', buildSrc.includes('fetchBarchartS5fiBreadth') && buildSrc.includes('Barchart:$S5FI'),
   'breadth_50d 必须优先尝试 Barchart $S5FI 直接广度源');
 check('contract', buildSrc.includes('capexResearchConfirmationAnchor') && buildSrc.includes('capex_market_repricing_research_confirmation_v1'),

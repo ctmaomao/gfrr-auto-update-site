@@ -2544,7 +2544,7 @@ function classifyFedPolicyPath({ drift, cpiYoy, targetMid, sepCurrentYear, yearE
     ? +(yearEndImplied - targetMid).toFixed(3)
     : null;
   if ((Number.isFinite(sepGap) && sepGap >= 0.1) || (Number.isFinite(yearEndGap) && yearEndGap >= 0.15)) {
-    return { status: 'red', stance: '隐含加息', sepGap, yearEndGap, reason: 'policy_path_above_current_target' };
+    return { status: 'red', stance: '年末路径隐含加息', sepGap, yearEndGap, reason: 'policy_path_above_current_target' };
   }
   if (drift > 0.1) {
     return { status: 'red', stance: '重启加息', sepGap, yearEndGap, reason: 'effective_rate_rising' };
@@ -4195,7 +4195,7 @@ function proxyConfidenceTarget(def, result, entry) {
   switch (def.id) {
     case 'insider_sell_buy':
       return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
-        ? { status: 'yellow', value_display: result.value_display }
+        ? { status: 'yellow', value_display: '高卖压·覆盖受限' }
         : null;
     case 'ai_ipo_pipeline':
       return result.status === 'red' && !hasStrongProxyConfirmation(def.id, result)
@@ -4375,7 +4375,7 @@ const PUBLIC_SOURCE_LABELS = {
 };
 
 const PUBLIC_CALIBRATION_SUMMARIES = {
-  insider_sell_buy: '内部人卖出仍偏高，但尚未接近互联网泡沫峰值强度，因此维持黄灯。',
+  insider_sell_buy: '备用样本存在记录上限且买入金额接近零，卖压方向偏高，但极端倍数不能与完整周期聚合直接比较，因此保守维持黄灯。',
   ai_ipo_pipeline: '发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。',
   capex_reaction: '价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。',
   ceo_hedging: '高管和市场领袖的谨慎措辞增加，但尚未形成集体承认过热或暂停投入的共振。',

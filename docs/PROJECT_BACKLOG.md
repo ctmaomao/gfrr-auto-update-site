@@ -31,6 +31,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-06-16 Bubble Watch 公开市场技术热度面板**:`market_technical_heat` 是独立 display-only 审计子面板,使用 Yahoo Chart 免费公开日线价格计算 AI 等权篮子相对动量/RSI/Bollinger/200D 偏离/相关性-Beta;不进入 27 卡灯色计数、Core-23 主分/主判读或 GFRR scoring/decision/execution/position。public-apis Finance 仅作 source-review fallback 候选;Wind paid API 只作最后兜底。
 - **2026-06-17 Bubble Watch CEO 表态新闻源**:`ceo_hedging` 免费源顺序为 GDELT DOC public search -> Tavily Search API + Brave News Search API free-credit cross-check/fallback -> Wind paid final fallback。GDELT 默认小样本请求,429/5xx 时有界退避重试一次;Tavily 需 `TAVILY_API_KEYS`,Brave 需 `BRAVE_API_KEYS`,GDELT 成功时做第二/第三新闻源确认,GDELT 429/不可用时做免费兜底;红灯必须有多源确认,单一路径新闻命中不得绕过 `local_proxy_confidence_v1` 多源/样本门槛升红。
 - **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
+- **2026-07-28 Bubble Watch source-quality hardening**:`accounting_events` 改为核心企业实体 + 会计/财报/证券欺诈语义 + 正式执法动作的邻近语境三重门槛,并以 Google Drive DOJ 文章锁定负向回归；`arr_2nd_deriv` 用底层 ARR 里程碑日期对照 `maxAgeDays`,超龄 fail-closed 回较新的 curated 快照；`insider_sell_buy` 与 `fed_policy` 分别明确显示「高卖压·覆盖受限」和「年末路径隐含加息」。Core-23/Shadow-4、权重、阈值与 GFRR 主链边界均未改变；当前主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6,有效判读仍为「高风险预警」。
 - **2026-07-26 Market Pricing freshness/alignment review**:发现 QQQ 已到 2026-07-24、NDX/IXIC 仍停在 2026-05-22；按 owner 本次授权运行既有 M-91 manual-only Yahoo refresh 并重算 metrics，三资产现均到 2026-07-24。新增 `review:market-pricing-freshness` / `check:market-pricing-freshness`，守住 active 周线 10 天龄、辅助资产落后 QQQ 7 天、history/metrics/coverage/commit timestamp 一致性。默认 WARN 不阻断、FAIL 阻断，`--strict` 供人工硬复核；保持 display-only，不把 NDX/IXIC 接入 GitHub Actions、Worker、scoring、decision、execution、position 或 cross-validation。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
 
@@ -448,6 +449,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-07-28 · Bubble Watch weekly score drift hardening)**: 已按三步 serial-trunk 收口会计执法误报、ARR 底层观测超龄和内部人/Fed 展示语义；每步均独立重建 Bubble Watch、运行 `npm run check:all`、commit 并 push。生产 JSON 当前为 7红/7黄/9绿 Core-23,主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6。
+- **当前进行中(2026-07-28 · Bubble Watch weekly score drift hardening)**: 无。`accounting_events=green`、`arr_2nd_deriv=yellow(auto_fallback)`、`insider_sell_buy=yellow(高卖压·覆盖受限)`、`fed_policy=red(年末路径隐含加息)`；Core-23/Shadow-4 合同、评分权重和阈值未改。
+- **下一步建议(2026-07-28 · Bubble Watch weekly score drift hardening)**: 观察本次 Pages 部署与下一次周度 Refresh Bubble Watch；若 SaaStr 或其他公开源出现更新 ARR 里程碑,新鲜度门槛会自动恢复 live,否则继续 fail-closed 使用未超龄 curated 研究快照。
+- **阻塞或等待(2026-07-28 · Bubble Watch weekly score drift hardening)**: 无。当前环境既有 SEC EDGAR 403 由 StockAnalysis/Xoomar 等既定路径降级,不影响本轮三项修订；GDELT CEO hedging 429 由既有缓存/免费搜索链处理。
 
 - **上次会话结束于(2026-07-15 · Bubble Watch v2 Core-23 + Shadow-4 calibration)**: Owner 批准 27 卡全展示、固定核心计分集 + 候选卡影子观察。ADR-0019 定稿 Core-23 与 Shadow-4,数据契约升为 `bubble-watch-v2`,页面以纸媒式细边框印章标注「固定核心/影子观察」,Hero/双轴/趋势明确 Core-23 口径。
 - **当前进行中(2026-07-15 · Bubble Watch v2 calibration)**: builder/checker/history/backtest/page/docs 已迁移;原有来源构建与 fail-closed 边界未改。Core 可比历史严格从 2026-06-18 起共 5 期;旧变分母点保留审计但不混入 v2 趋势。当前主分 26.1%,Stage 60.0,Trigger 23.1,有效判读「高风险预警」。
