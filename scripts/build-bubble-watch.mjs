@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { gdeltCacheAgeHours } from './gdelt/cache-age.mjs';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt.mjs';
 import { sanitizeDiagnosticUrl } from './sanitize-diagnostic-url.mjs';
+import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -1922,8 +1923,6 @@ async function fetchAccountingEventsFromPublicSearch() {
   ];
   const currentYear = new Date().getUTCFullYear();
   const recentYearRe = new RegExp(`\\b(${currentYear}|${currentYear - 1})\\b`, 'u');
-  const coreNameRe = /\b(NVIDIA|NVDA|Super Micro|SMCI|CoreWeave|Oracle|Broadcom|OpenAI|Anthropic|Databricks|Cerebras|Microsoft|Meta|Alphabet|Google|Amazon|AWS)\b/iu;
-  const formalEventRe = /\b(accounting|fraud|round[-\s]?tripping|misstatement|charged|charges|settled|settlement|enforcement|indictment)\b/iu;
   const events = [];
   const sourceFailures = [];
   let checkedSources = 0;
@@ -1940,7 +1939,7 @@ async function fetchAccountingEventsFromPublicSearch() {
     for (const link of links) {
       const haystack = `${link.title} ${link.context} ${link.date || ''}`;
       if (!recentYearRe.test(haystack)) continue;
-      if (coreNameRe.test(haystack) && formalEventRe.test(haystack)) events.push(link);
+      if (isCoreAiAccountingEnforcementEvent(link)) events.push(link);
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }

@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -345,6 +346,18 @@ check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.incl
   'fed_policy 必须保留 Fed SEP + 年末 Fed funds futures 政策路径证据');
 check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',
   'fed_policy provenance 缺 fed_policy_path_v2 审计版本');
+check('contract', buildSrc.includes('isCoreAiAccountingEnforcementEvent'),
+  'accounting_events 必须使用会计执法语义分类器');
+check('contract', isCoreAiAccountingEnforcementEvent({
+  title: 'Grosse Ile Man Charged with Child Pornography Offenses',
+  context: 'The defendant allegedly uploaded files to Google Drive and was charged by criminal complaint.',
+  date: '2026-07-24'
+}) === false, 'accounting_events 不得把 Google Drive 消费服务提及误判为企业会计事件');
+check('contract', isCoreAiAccountingEnforcementEvent({
+  title: 'SEC Charges Alphabet with Accounting Fraud',
+  context: 'The complaint alleges financial statement misstatements and revenue-recognition violations.',
+  date: '2026-07-24'
+}) === true, 'accounting_events 必须识别核心企业正式会计执法事件');
 check('contract', buildSrc.includes('fetchBarchartS5fiBreadth') && buildSrc.includes('Barchart:$S5FI'),
   'breadth_50d 必须优先尝试 Barchart $S5FI 直接广度源');
 check('contract', buildSrc.includes('capexResearchConfirmationAnchor') && buildSrc.includes('capex_market_repricing_research_confirmation_v1'),
