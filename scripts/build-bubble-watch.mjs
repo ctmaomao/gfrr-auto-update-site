@@ -22,6 +22,7 @@ import { gdeltCacheAgeHours } from './gdelt/cache-age.mjs';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt.mjs';
 import { sanitizeDiagnosticUrl } from './sanitize-diagnostic-url.mjs';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
+import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -2352,7 +2353,7 @@ function extractAnthropicArrB(post) {
   throw new Error(`SaaStr post ${post.id} 未解析到 Anthropic ARR/run-rate`);
 }
 
-async function fetchArrSecondDerivativeFromSaastr() {
+async function fetchArrSecondDerivativeFromSaastr(_ctx, entry) {
   const postIds = [315823, 322211, 323715, 325206];
   const posts = [];
   for (const id of postIds) posts.push(await fetchSaastrPost(id));
@@ -2379,6 +2380,11 @@ async function fetchArrSecondDerivativeFromSaastr() {
   const slopeRatio = latest.monthlyDeltaB / prev.monthlyDeltaB;
   const status = slopeRatio < 0.5 ? 'red' : slopeRatio < 0.85 ? 'yellow' : 'green';
   const latestMilestone = milestones[milestones.length - 1];
+  const underlyingObservationFreshness = requireFreshUnderlyingObservation({
+    observationDate: latestMilestone.date,
+    asOfDate: isoDate(),
+    maxAgeDays: Number(entry?.maxAgeDays)
+  });
   const display = status === 'red' ? '减速' : status === 'yellow' ? '高位放缓' : '加速中';
   return {
     status,
@@ -2390,7 +2396,8 @@ async function fetchArrSecondDerivativeFromSaastr() {
       milestones,
       segments: segments.map((s) => ({ ...s, monthlyDeltaB: Number(s.monthlyDeltaB.toFixed(2)), months: Number(s.months.toFixed(1)) })),
       latestArrB: latestMilestone.arrB,
-      slopeRatio
+      slopeRatio,
+      underlyingObservationFreshness
     }
   };
 }
@@ -5032,7 +5039,7 @@ async function main() {
       const hybridBuilder = hybridCuratedBuilders[def.id];
       if (['hybrid_live', 'hybrid_paid_optional'].includes(candidate?.automationStatus) && hybridBuilder) {
         try {
-          const rawResult = await hybridBuilder(ctx);
+          const rawResult = await hybridBuilder(ctx, entry);
           const result = calibrateProxyConfidenceResult(def, rawResult, entry);
           indicators.push({
             ...baseIndicator(def),

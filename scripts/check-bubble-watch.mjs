@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
+import { assessUnderlyingObservationFreshness } from './bubble-watch/observation-freshness.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -358,6 +359,24 @@ check('contract', isCoreAiAccountingEnforcementEvent({
   context: 'The complaint alleges financial statement misstatements and revenue-recognition violations.',
   date: '2026-07-24'
 }) === true, 'accounting_events 必须识别核心企业正式会计执法事件');
+const staleArrFixture = assessUnderlyingObservationFreshness({
+  observationDate: '2026-05-28',
+  asOfDate: '2026-07-28',
+  maxAgeDays: 45
+});
+check('freshness', staleArrFixture.status === 'stale' && staleArrFixture.ageDays === 61,
+  'ARR 底层里程碑新鲜度回归样本必须判为 stale');
+check('contract', buildSrc.includes('requireFreshUnderlyingObservation') && buildSrc.includes('hybridBuilder(ctx, entry)'),
+  'arr_2nd_deriv 必须按 curated maxAgeDays 检查底层观测日期');
+const arrSecondDerivative = indicatorById.arr_2nd_deriv;
+if (arrSecondDerivative?.provenance?.mode === 'auto'
+  && /SaaStr WordPress public API/iu.test(arrSecondDerivative.provenance?.detail?.source || '')) {
+  check('freshness',
+    arrSecondDerivative.provenance?.detail?.underlyingObservationFreshness?.status === 'fresh'
+      && Number(arrSecondDerivative.provenance?.detail?.underlyingObservationFreshness?.ageDays)
+        <= Number(arrSecondDerivative.provenance?.detail?.underlyingObservationFreshness?.maxAgeDays),
+    'arr_2nd_deriv 自动发布时底层 ARR 里程碑必须 fresh');
+}
 check('contract', buildSrc.includes('fetchBarchartS5fiBreadth') && buildSrc.includes('Barchart:$S5FI'),
   'breadth_50d 必须优先尝试 Barchart $S5FI 直接广度源');
 check('contract', buildSrc.includes('capexResearchConfirmationAnchor') && buildSrc.includes('capex_market_repricing_research_confirmation_v1'),
