@@ -8,6 +8,10 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  isExpectedPolicyFallback,
+  isExpectedPolicyFetchFailure
+} from './bubble-watch/source-health-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SNAPSHOT_FILES = [
@@ -113,10 +117,16 @@ function buildReport(data, buildResult, checkResult) {
   const fallbackRows = indicators.filter((row) => row.provenance?.mode !== 'auto' || row.stale === true);
   const expectedPaidSkips = fallbackRows.filter(isExpectedPaidSkip);
   const expectedCandidateOnly = fallbackRows.filter(isExpectedCandidateOnly);
-  const unexpectedFallbackRows = fallbackRows.filter((row) => !isExpectedPaidSkip(row) && !isExpectedCandidateOnly(row));
+  const expectedPolicyFallbacks = fallbackRows.filter(isExpectedPolicyFallback);
+  const unexpectedFallbackRows = fallbackRows.filter((row) =>
+    !isExpectedPaidSkip(row) &&
+    !isExpectedCandidateOnly(row) &&
+    !isExpectedPolicyFallback(row));
   const fetchFailures = Array.isArray(data.meta?.fetch_failures) ? data.meta.fetch_failures : [];
   const unexpectedFetchFailures = fetchFailures.filter((failure) => {
-    return !expectedPaidSkips.some((row) => row.id === failure.id);
+    const policyFallback = expectedPolicyFallbacks.find((row) => row.id === failure.id);
+    return !expectedPaidSkips.some((row) => row.id === failure.id) &&
+      !isExpectedPolicyFetchFailure(failure, policyFallback);
   });
   const windRows = rows.filter((row) => /Wind/i.test(`${row.source_name || ''} ${row.source_tag || ''}`));
   const warnings = sourceWarningLines(buildResult.text);
@@ -124,7 +134,9 @@ function buildReport(data, buildResult, checkResult) {
     checkResult.code !== 0 ||
     unexpectedFallbackRows.length > 0 ||
     unexpectedFetchFailures.length > 0;
-  const status = hardFail ? 'fail' : (expectedPaidSkips.length || warnings.length ? 'warn' : 'pass');
+  const status = hardFail
+    ? 'fail'
+    : (expectedPaidSkips.length || expectedPolicyFallbacks.length || warnings.length ? 'warn' : 'pass');
 
   return {
     contractVersion: 'bubble-watch-source-health-audit-v1',
@@ -136,7 +148,12 @@ function buildReport(data, buildResult, checkResult) {
       productionFilesRestored: true,
       windDisabledByDefault: !allowPaidWind,
       paidFallbackSkipAllowed: !allowPaidWind ? EXPECTED_PAID_FALLBACK_IDS : [],
-      candidateOnlyAllowed: [...EXPECTED_CANDIDATE_ONLY_IDS]
+      candidateOnlyAllowed: [...EXPECTED_CANDIDATE_ONLY_IDS],
+      policyFallbackAllowed: [{
+        id: 'arr_2nd_deriv',
+        reasonCode: 'arr_underlying_observation_stale',
+        requiresFreshFallbackSnapshot: true
+      }]
     },
     buildExitCode: buildResult.code,
     checkExitCode: checkResult.code,
@@ -162,6 +179,15 @@ function buildReport(data, buildResult, checkResult) {
       id: row.id,
       status: row.status,
       value_display: row.value_display
+    })),
+    expectedPolicyFallbacks: expectedPolicyFallbacks.map((row) => ({
+      id: row.id,
+      reason: row.provenance?.reason || null,
+      status: row.status,
+      value_display: row.value_display,
+      asOfDate: row.provenance?.asOfDate || null,
+      ageDays: row.provenance?.ageDays ?? null,
+      maxAgeDays: row.provenance?.maxAgeDays ?? null
     })),
     unexpectedFallbackRows: unexpectedFallbackRows.map((row) => ({
       id: row.id,
@@ -198,6 +224,13 @@ function markdownReport(report) {
   if (report.expectedCandidateOnly.length) {
     lines.push('Expected candidate-only curated rows:');
     for (const row of report.expectedCandidateOnly) lines.push(`- \`${row.id}\`: ${row.status} ${row.value_display}`);
+    lines.push('');
+  }
+  if (report.expectedPolicyFallbacks.length) {
+    lines.push('Expected policy-driven fallbacks:');
+    for (const row of report.expectedPolicyFallbacks) {
+      lines.push(`- \`${row.id}\`: ${row.reason} (fallback age ${row.ageDays}/${row.maxAgeDays}d)`);
+    }
     lines.push('');
   }
   if (report.unexpectedFallbackRows.length) {

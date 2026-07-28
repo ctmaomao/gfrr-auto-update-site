@@ -450,6 +450,11 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
+- **上次会话结束于(2026-07-28 · Bubble Watch source audit #28 repair)**: 已从 Actions #28 原始日志确认不是 ARR 数据链失效,而是审计分类未适配已上线的 `arr_underlying_observation_stale` fail-closed 语义。审计器现仅在精确 reason code、`arr_2nd_deriv` 配对和 curated 回退快照仍 fresh 三项同时成立时记为 policy-driven expected WARN；其它 fallback/stale/fetch failure 仍 FAIL。
+- **当前进行中(2026-07-28 · Bubble Watch source audit #28 repair)**: 运行本地定向 source audit 与 `npm run check:all`,随后 commit/push 并触发新的远端 `Audit Bubble Watch Sources` 验证。未改 Bubble Watch 指标值、评分权重、阈值、builder freshness gate、生产 JSON 或 workflow 权限。
+- **下一步建议(2026-07-28 · Bubble Watch source audit #28 repair)**: 远端验证通过后继续观察 SaaStr 是否发布较新的 ARR 里程碑；有新鲜底层观测时 builder 自动恢复 live,没有时保持 fresh curated fallback + audit WARN。
+- **阻塞或等待(2026-07-28 · Bubble Watch source audit #28 repair)**: 无。若 curated fallback 自身超过 `maxAgeDays`、freshness 元数据缺失或 ARR 出现其它抓取错误,新分类会继续 hard fail,不会掩盖真实来源故障。
+
 - **上次会话结束于(2026-07-28 · Bubble Watch weekly score drift hardening)**: 已按三步 serial-trunk 收口会计执法误报、ARR 底层观测超龄和内部人/Fed 展示语义；每步均独立重建 Bubble Watch、运行 `npm run check:all`、commit 并 push。生产 JSON 当前为 7红/7黄/9绿 Core-23,主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6。
 - **当前进行中(2026-07-28 · Bubble Watch weekly score drift hardening)**: 无。`accounting_events=green`、`arr_2nd_deriv=yellow(auto_fallback)`、`insider_sell_buy=yellow(高卖压·覆盖受限)`、`fed_policy=red(年末路径隐含加息)`；Core-23/Shadow-4 合同、评分权重和阈值未改。
 - **下一步建议(2026-07-28 · Bubble Watch weekly score drift hardening)**: 观察本次 Pages 部署与下一次周度 Refresh Bubble Watch；若 SaaStr 或其他公开源出现更新 ARR 里程碑,新鲜度门槛会自动恢复 live,否则继续 fail-closed 使用未超龄 curated 研究快照。

@@ -15,6 +15,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { assessUnderlyingObservationFreshness } from './bubble-watch/observation-freshness.mjs';
+import {
+  isExpectedPolicyFallback,
+  isExpectedPolicyFetchFailure
+} from './bubble-watch/source-health-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -366,6 +370,42 @@ const staleArrFixture = assessUnderlyingObservationFreshness({
 });
 check('freshness', staleArrFixture.status === 'stale' && staleArrFixture.ageDays === 61,
   'ARR 底层里程碑新鲜度回归样本必须判为 stale');
+const expectedArrPolicyFallbackFixture = {
+  id: 'arr_2nd_deriv',
+  stale: false,
+  provenance: {
+    mode: 'auto_fallback',
+    asOfDate: '2026-07-26',
+    ageDays: 2,
+    maxAgeDays: 45,
+    reason: 'hybrid_live source failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 61d old (max 45d)'
+  }
+};
+const expectedArrPolicyFetchFailureFixture = {
+  id: 'arr_2nd_deriv',
+  reason: 'hybrid_live_source_failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 61d old (max 45d)'
+};
+check('freshness', isExpectedPolicyFallback(expectedArrPolicyFallbackFixture),
+  'ARR 底层观测超龄且 curated 回退仍新鲜时,source audit 必须识别为 expected policy fallback');
+check('freshness', isExpectedPolicyFetchFailure(
+  expectedArrPolicyFetchFailureFixture,
+  expectedArrPolicyFallbackFixture
+), 'ARR 底层观测超龄对应的 fetch failure 必须与 expected policy fallback 成对识别');
+check('freshness', !isExpectedPolicyFallback({
+  ...expectedArrPolicyFallbackFixture,
+  stale: true
+}), 'ARR curated 回退本身 stale 时不得降级为 WARN');
+check('freshness', !isExpectedPolicyFallback({
+  ...expectedArrPolicyFallbackFixture,
+  provenance: {
+    ...expectedArrPolicyFallbackFixture.provenance,
+    ageDays: 46
+  }
+}), 'ARR curated 回退超过 maxAgeDays 时不得降级为 WARN');
+check('freshness', !isExpectedPolicyFetchFailure({
+  id: 'arr_2nd_deriv',
+  reason: 'hybrid_live_source_failed: unexpected_schema'
+}, expectedArrPolicyFallbackFixture), 'ARR 非底层观测超龄故障必须继续 hard fail');
 check('contract', buildSrc.includes('requireFreshUnderlyingObservation') && buildSrc.includes('hybridBuilder(ctx, entry)'),
   'arr_2nd_deriv 必须按 curated maxAgeDays 检查底层观测日期');
 const arrSecondDerivative = indicatorById.arr_2nd_deriv;
