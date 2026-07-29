@@ -425,6 +425,23 @@ keeps `frontendDisplayApproved=false`, `workflowAutomationApproved=false`,
 current Oil News signal enhancer, not a headline display layer, not event
 confirmation, and not scoring input.
 
+P63 separately approves the frontend aggregate-health projection:
+
+```text
+docs/GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH.md
+docs/fixtures/oil-news/gdelt-web-ngrams-frontend-aggregate-health-p63.json
+npm run check:gdelt-web-ngrams-frontend-aggregate-health
+```
+
+The current production cache therefore carries `frontendDisplayApproved=true`,
+but only for `aggregate_source_health_only_no_headlines`. The renderer is
+fail-closed and may show sample-gate counts, observation window, warning count,
+and the explicit “not used for current signal” boundary. It must not read or
+display headlines, URLs, snippets, article bodies, raw responses, or event
+claims. All current-signal, event-confirmation, oil-direction, scoring,
+workflow, live-fetch, decision, execution, and position boundaries remain
+false.
+
 Default mode is dry-run/no-network:
 
 ```powershell

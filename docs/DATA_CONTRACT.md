@@ -1017,7 +1017,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-request-health-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-health-1`）。
 
 稳定边界：
 
@@ -1220,6 +1220,8 @@ P55 新增 `docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PRODUCTION_WRITE_READINESS.md
 
 P56(Web NGrams fallback) 新增 `docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PRODUCTION_DISPLAY_WRITE.md` + `docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-production-display-write-p56.json` + `scripts/oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs` + `scripts/write-gdelt-web-ngrams-display-fallback-production-cache.mjs` + `npm run write:gdelt-web-ngrams-display-fallback-production-cache` + `npm run check:gdelt-web-ngrams-display-fallback-production-display-write`。production artifact `data/oil-news-event-watch.json` 现在允许且要求 `sourceCaches.gdeltWebNgramsFallback` 字段,contract 为 `gdelt-web-ngrams-display-fallback-cache-v1`,display mode 为 `aggregate_source_health_only_no_headlines`,并声明 `productionDataWriteApproved=true`。该字段只保存 P55 审核后的 sample gate、source health、observation window 与 limitation/warnings;不得保存 article title、URL、snippet、body、raw response、titleHash、source URL、request header 或 secret。字段必须保持 `frontendDisplayApproved=false`,`workflowAutomationApproved=false`,`liveFetchApproved=false`,`apiKeyReadApproved=false`,`currentSignalEnhancement=false`,`eventConfirmationSource=false`,`headlineSource=false`,`oilDirectionInput=false`,`eligibleForScoring=false`;不得改变 Oil News current signal、ODP build/classifier/finalBias、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
+P63(Web NGrams frontend aggregate health) 新增 `docs/GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH.md` + `docs/fixtures/oil-news/gdelt-web-ngrams-frontend-aggregate-health-p63.json` + `npm run check:gdelt-web-ngrams-frontend-aggregate-health`。P63 只后继修改 P56 cache 的 frontend approval marker 为 `frontendDisplayApproved=true`,并允许 `scripts/modules/renderOilDirectional.js` 从 `sourceCaches.gdeltWebNgramsFallback` 读取 contract/displayMode/approval、sampleGate 的 state/usableSampleCount/selectedTimestampCount/observationWindowHours/warningCount 与 sourceHealth.usedForCurrentSignal,渲染 aggregate-only 中文源健康。renderer 遇到缺字段、错误 contract、错误 displayMode 或未批准时必须 fail-closed;不得读取或展示 article list/title/URL/snippet/body/raw response。`currentSignalEnhancement=false`,`eventConfirmationSource=false`,`headlineSource=false`,`oilDirectionInput=false`,`eligibleForScoring=false`,`usedForCurrentOilNewsSignal=false`,`usedForOdpFinalBias=false`,`usedForMainScore=false`,`workflowAutomationApproved=false`,`liveFetchApproved=false`,`apiKeyReadApproved=false` 均保持;P63 不改变 Oil News signal、ODP build/classifier/finalBias、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
@@ -1288,26 +1290,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-thermal-request-health-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 新增脱敏请求健康展示行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+odp-web-ngrams-health-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 新增脱敏请求健康展示行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-request-health-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-health-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-request-health-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-request-health-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-request-health-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-web-ngrams-health-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-web-ngrams-health-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-web-ngrams-health-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-thermal-request-health-1
-npm run bump:frontend-asset-version -- odp-thermal-request-health-1
+node scripts/bump-frontend-asset-version.mjs odp-web-ngrams-health-1
+npm run bump:frontend-asset-version -- odp-web-ngrams-health-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-request-health-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-web-ngrams-health-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

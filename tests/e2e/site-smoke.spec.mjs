@@ -103,6 +103,9 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#odp-thermal-request-health')).toContainText('请求完成 126/126');
     await expect(page.locator('#odp-thermal-request-health')).toContainText('最终失败 0');
     await expect(page.locator('#odp-thermal-request-health')).toContainText('仅显示脱敏分类计数');
+    await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('聚合背景样本门已通过');
+    await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('样本 9/9');
+    await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('不用于当前新闻信号');
     expect(pageErrors).toEqual([]);
   });
 

@@ -1,0 +1,45 @@
+{
+  "contractVersion": "gdelt-web-ngrams-frontend-aggregate-health-p63",
+  "status": "frontend_aggregate_source_health_approved",
+  "sourceField": "data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback",
+  "requiredCacheContract": "gdelt-web-ngrams-display-fallback-cache-v1",
+  "displayMode": "aggregate_source_health_only_no_headlines",
+  "allowedFrontendFields": [
+    "contractVersion",
+    "frontendDisplayApproved",
+    "displayMode",
+    "status",
+    "sampleGate.state",
+    "sampleGate.usableSampleCount",
+    "sampleGate.selectedTimestampCount",
+    "sampleGate.observationWindowHours",
+    "sampleGate.warningCount",
+    "sourceHealth.state",
+    "sourceHealth.freshness",
+    "sourceHealth.usedForCurrentSignal",
+    "limitationZh"
+  ],
+  "approvalState": {
+    "frontendAggregateHealthApproved": true,
+    "headlineDisplayApproved": false,
+    "rawContentDisplayApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "eventConfirmationApproved": false,
+    "oilDirectionInputApproved": false,
+    "workflowAutomationApproved": false,
+    "liveFetchApproved": false,
+    "scoreApproved": false
+  },
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "frontend may render only reviewed aggregate source-health fields from the production fallback cache; no headlines, URLs, snippets, bodies, raw responses, current-signal enhancement, event confirmation, oil-direction input, workflow automation, live fetch, or scoring"
+}

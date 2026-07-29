@@ -3,8 +3,12 @@ import { join } from 'node:path';
 
 export const GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_READINESS_PATH =
   'docs/fixtures/oil-news/gdelt-web-ngrams-display-fallback-production-write-readiness-p55.json';
+export const GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_PATH =
+  'docs/fixtures/oil-news/gdelt-web-ngrams-frontend-aggregate-health-p63.json';
 export const GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT =
   'gdelt-web-ngrams-display-fallback-cache-v1';
+export const GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_CONTRACT =
+  'gdelt-web-ngrams-frontend-aggregate-health-p63';
 
 const ROOT = process.cwd();
 const BOUNDARY =
@@ -91,6 +95,40 @@ function validateReadiness(readiness) {
   assertNoRawExposure(readiness.candidateCache, '$.candidateCache');
 }
 
+function validateFrontendApproval(approval) {
+  assert(
+    approval?.contractVersion === GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_CONTRACT,
+    'P63 frontend aggregate-health contract mismatch.'
+  );
+  assert(approval?.status === 'frontend_aggregate_source_health_approved', 'P63 frontend status is not approved.');
+  assert(
+    approval?.sourceField === 'data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback',
+    'P63 frontend source field mismatch.'
+  );
+  assert(
+    approval?.requiredCacheContract === GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT,
+    'P63 required cache contract mismatch.'
+  );
+  assert(approval?.displayMode === 'aggregate_source_health_only_no_headlines', 'P63 display mode mismatch.');
+  assert(approval?.approvalState?.frontendAggregateHealthApproved === true, 'P63 frontend aggregate health is not approved.');
+  for (const field of [
+    'headlineDisplayApproved',
+    'rawContentDisplayApproved',
+    'currentSignalEnhancementApproved',
+    'eventConfirmationApproved',
+    'oilDirectionInputApproved',
+    'workflowAutomationApproved',
+    'liveFetchApproved',
+    'scoreApproved'
+  ]) {
+    assert(approval?.approvalState?.[field] === false, `P63 approvalState.${field} must be false.`);
+  }
+  for (const [key, value] of Object.entries(approval?.productionImpact || {})) {
+    assert(value === false, `P63 productionImpact.${key} must be false.`);
+  }
+  assertNoRawExposure(approval);
+}
+
 export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
   assert(cache?.contractVersion === GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT, 'Fallback cache contract mismatch.');
   assert(cache.status === 'sample_gate_passed_projection_only', `Fallback cache status invalid: ${cache.status}`);
@@ -106,7 +144,6 @@ export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
     'usedForCurrentOilNewsSignal',
     'usedForOdpFinalBias',
     'usedForMainScore',
-    'frontendDisplayApproved',
     'workflowAutomationApproved',
     'liveFetchApproved',
     'apiKeyReadApproved'
@@ -114,6 +151,7 @@ export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
     assert(cache[field] === false, `Fallback cache ${field} must be false.`);
   }
   assert(cache.productionDataWriteApproved === true, 'Fallback cache productionDataWriteApproved must be true.');
+  assert(cache.frontendDisplayApproved === true, 'Fallback cache frontendDisplayApproved must be true after P63.');
   assert(cache.sourceHealth?.usedForCurrentSignal === false, 'Fallback cache sourceHealth.usedForCurrentSignal must be false.');
   assert(cache.sampleGate?.state === 'passed', 'Fallback cache sample gate must be passed.');
   assert(cache.sampleGate.usableSampleCount >= 8, 'Fallback cache usable sample count is too low.');
@@ -128,10 +166,13 @@ export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
 
 export function buildGdeltWebNgramsDisplayFallbackCache({
   generatedAt = new Date().toISOString(),
-  readinessPath = GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_READINESS_PATH
+  readinessPath = GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_READINESS_PATH,
+  frontendApprovalPath = GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_PATH
 } = {}) {
   const readiness = readJson(readinessPath);
+  const frontendApproval = readJson(frontendApprovalPath);
   validateReadiness(readiness);
+  validateFrontendApproval(frontendApproval);
   const candidate = readiness.candidateCache;
   const cache = {
     contractVersion: GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT,
@@ -140,6 +181,7 @@ export function buildGdeltWebNgramsDisplayFallbackCache({
     sourceKey: candidate.sourceKey,
     sourceReview: {
       gate: 'display_fallback_production_write_readiness',
+      frontendGate: GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_CONTRACT,
       source: 'reviewed_fixture_candidate_cache',
       p56ScopedFieldOnly: true
     },
@@ -154,7 +196,7 @@ export function buildGdeltWebNgramsDisplayFallbackCache({
     usedForCurrentOilNewsSignal: false,
     usedForOdpFinalBias: false,
     usedForMainScore: false,
-    frontendDisplayApproved: false,
+    frontendDisplayApproved: true,
     workflowAutomationApproved: false,
     liveFetchApproved: false,
     apiKeyReadApproved: false,
@@ -184,7 +226,7 @@ export function buildGdeltWebNgramsDisplayFallbackCache({
     warnings: [
       ...candidate.warnings,
       'production_display_only_cache',
-      'frontend_not_connected',
+      'frontend_aggregate_source_health_connected',
       'not_used_for_current_oil_news_signal'
     ],
     productionImpact: productionImpact(),

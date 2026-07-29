@@ -415,6 +415,19 @@ P56, current phase:
   ODP direction, scoring, decision, execution, position, Brent promotion, Global
   Risk Heatmap, or cross-validation.
 
+P63, current frontend phase:
+
+- `gdelt-web-ngrams-frontend-aggregate-health-p63` approves only the sanitized
+  aggregate source-health/sample-gate row and sets
+  `frontendDisplayApproved=true` on the production cache.
+- No headline, URL, snippet, article body, raw response, or event claim is
+  allowed in the frontend projection.
+- The row remains background provenance only and explicitly reports that it is
+  not used for the current Oil News signal.
+- Workflow automation, live fetch, API-key reads, signal enhancement, ODP
+  direction, scoring, decision, execution, position, Brent promotion, Global
+  Risk Heatmap, and cross-validation remain unapproved.
+
 Future source-review only:
 
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
@@ -439,6 +452,7 @@ npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold
 npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review
 npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness
 npm run check:gdelt-web-ngrams-display-fallback-production-display-write
+npm run check:gdelt-web-ngrams-frontend-aggregate-health
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

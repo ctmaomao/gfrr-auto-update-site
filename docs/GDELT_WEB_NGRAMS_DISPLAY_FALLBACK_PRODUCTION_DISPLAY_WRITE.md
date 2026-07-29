@@ -56,5 +56,7 @@ execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
 ## Future Work
 
 Frontend rendering and workflow automation remain separate reviewed changes.
-Until those changes exist, this cache is production data only for source-health
-fallback provenance and audit visibility.
+P63 subsequently approved only the aggregate source-health frontend row; see
+`docs/GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH.md`. Workflow automation,
+live fetch, current-signal enhancement, event confirmation, headlines, and
+scoring remain unapproved.

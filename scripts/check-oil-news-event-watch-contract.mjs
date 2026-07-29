@@ -135,8 +135,8 @@ function assertGdeltWebNgramsFallbackSourceCache(cache) {
   if (cache.productionDataWriteApproved !== true) {
     fail('sourceCaches.gdeltWebNgramsFallback.productionDataWriteApproved must be true after P56');
   }
-  if (cache.frontendDisplayApproved !== false) {
-    fail('sourceCaches.gdeltWebNgramsFallback.frontendDisplayApproved must remain false');
+  if (cache.frontendDisplayApproved !== true) {
+    fail('sourceCaches.gdeltWebNgramsFallback.frontendDisplayApproved must be true after P63');
   }
   if (cache.workflowAutomationApproved !== false || cache.liveFetchApproved !== false || cache.apiKeyReadApproved !== false) {
     fail('sourceCaches.gdeltWebNgramsFallback must not approve workflow/live fetch/API key reads');

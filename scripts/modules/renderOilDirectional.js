@@ -129,6 +129,7 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-sanctions',
   'odp-news-event-headline-gate',
   'odp-news-event-source-health',
+  'odp-news-event-web-ngrams-health',
   'odp-news-event-market',
   'odp-news-event-claim-polarity',
   'odp-news-event-claim-quality',
@@ -394,6 +395,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-news-event-status', 'odp-news-event-status', '');
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', '');
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', '');
+  setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', '');
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', '');
   setToneClass('odp-news-event-claim-quality', 'odp-news-claim-quality', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
@@ -848,6 +850,8 @@ function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', 'yellow');
   setLeafText('odp-news-event-source-health', '广义 GDELT 摘要 · 专用三源未接入');
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', 'yellow');
+  setLeafText('odp-news-event-web-ngrams-health', '聚合背景未批准或未加载 · 不用于当前新闻信号');
+  setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', 'yellow');
   setLeafText('odp-news-event-market', marketText);
   setLeafText('odp-news-event-claim-polarity', '专用主张聚合未接入 · 不展示标题原文');
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', 'yellow');
@@ -920,6 +924,40 @@ function newsSourceHealthTone(data) {
   if (data.status === 'ok') return 'green';
   if (data.status === 'partial' || data.status === 'source_unavailable' || data.status === 'not_configured') return 'yellow';
   return '';
+}
+function webNgramsSourceHealth(data) {
+  const cache = data?.sourceCaches?.gdeltWebNgramsFallback;
+  const approved = cache?.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v1'
+    && cache?.frontendDisplayApproved === true
+    && cache?.displayMode === 'aggregate_source_health_only_no_headlines'
+    && cache?.sourceHealth?.usedForCurrentSignal === false;
+  if (!approved) {
+    return {
+      text: '聚合背景未批准或未加载 · 不用于当前新闻信号',
+      tone: 'yellow',
+    };
+  }
+
+  const gate = cache.sampleGate || {};
+  const usable = Number.isFinite(gate.usableSampleCount) ? Math.max(0, Math.round(gate.usableSampleCount)) : null;
+  const selected = Number.isFinite(gate.selectedTimestampCount) ? Math.max(0, Math.round(gate.selectedTimestampCount)) : null;
+  const windowHours = Number.isFinite(gate.observationWindowHours) ? Math.max(0, gate.observationWindowHours) : null;
+  const warnings = Number.isFinite(gate.warningCount) ? Math.max(0, Math.round(gate.warningCount)) : null;
+  const gatePassed = gate.state === 'passed'
+    && usable !== null
+    && usable >= 8
+    && selected !== null
+    && selected >= 2
+    && windowHours !== null
+    && windowHours >= 24;
+  const stateText = gatePassed ? '聚合背景样本门已通过' : '聚合背景样本门待复核';
+  const sampleText = usable === null || selected === null ? '样本数待核' : `样本 ${usable}/${selected}`;
+  const windowText = windowHours === null ? '观察窗待核' : `${windowHours}小时观察窗`;
+  const warningText = warnings === null ? '告警数待核' : `${warnings}条样本告警`;
+  return {
+    text: `${stateText} · ${sampleText} · ${windowText} · ${warningText} · 不用于当前新闻信号`,
+    tone: gatePassed && warnings === 0 ? 'green' : 'yellow',
+  };
 }
 function newsFallbackContextText(data) {
   if (!data || typeof data !== 'object') return '来源状态待核;观察层不补推断。';
@@ -1082,6 +1120,7 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
     ? `Brent ${formatUsd(marketBrent)}${marketAt}`
     : 'Brent 市场确认暂不可用';
   const stateText = data.displayStatusZh || '观察层已接入';
+  const webNgramsHealth = webNgramsSourceHealth(data);
 
   setLeafText('odp-news-event-status', stateText);
   setToneClass('odp-news-event-status', 'odp-news-event-status', newsEventTone(data));
@@ -1092,6 +1131,8 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', headlineReadinessTone(data));
   setLeafText('odp-news-event-source-health', newsSourceHealthText(data));
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', newsSourceHealthTone(data));
+  setLeafText('odp-news-event-web-ngrams-health', webNgramsHealth.text);
+  setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', webNgramsHealth.tone);
   setLeafText('odp-news-event-market', `市场反应 ${marketReaction} 条 · ${brentText}`);
   setLeafText('odp-news-event-claim-polarity', claimPolarityText(data));
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', claimPolarityTone(data));

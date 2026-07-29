@@ -19,6 +19,8 @@
 // and keep the short-window starter caveat visible.
 // P62: satellite request health may render categorized aggregate counters only;
 // raw URLs, provider bodies and free-text errors remain forbidden.
+// P63: Web NGrams may render reviewed aggregate source-health/sample-gate fields
+// only; headlines, URLs, snippets, bodies and raw responses remain forbidden.
 // P54: cross-confirmation may compare oil-news, market, satellite/facility and
 // EIA layers only as display-only confirmation text. It must not change ODP
 // finalBias or promote any single source into a confirmed event.
@@ -88,6 +90,19 @@ if (!src.includes('odp-news-event-source-health') || !src.includes('newsSourceHe
 }
 if (!src.includes('失败关闭') || !src.includes('不把单一路径报道写成确认事件')) {
   fail('ODP oil-news source-health copy must preserve fail-closed and no-single-path-confirmation wording');
+}
+if (
+  !src.includes('odp-news-event-web-ngrams-health')
+  || !src.includes('webNgramsSourceHealth')
+  || !src.includes('gdelt-web-ngrams-display-fallback-cache-v1')
+  || !src.includes('aggregate_source_health_only_no_headlines')
+) {
+  fail('ODP renderer must expose the P63 aggregate-only Web NGrams source-health row');
+}
+for (const marker of ['聚合背景样本门已通过', '聚合背景样本门待复核', '不用于当前新闻信号']) {
+  if (!src.includes(marker)) {
+    fail(`ODP Web NGrams aggregate-health copy must preserve marker: ${marker}`);
+  }
 }
 if (!src.includes('odp-thermal-baseline-quality') || !src.includes('thermalBaselineQualityText')) {
   fail('ODP satellite thermal watch must expose baseline quality/sample-window text');

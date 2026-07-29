@@ -5,6 +5,7 @@
   "sourceKey": "gdelt_web_ngrams_v5_legacy",
   "sourceReview": {
     "gate": "display_fallback_production_write_readiness",
+    "frontendGate": "gdelt-web-ngrams-frontend-aggregate-health-p63",
     "source": "reviewed_fixture_candidate_cache",
     "p56ScopedFieldOnly": true
   },
@@ -19,7 +20,7 @@
   "usedForCurrentOilNewsSignal": false,
   "usedForOdpFinalBias": false,
   "usedForMainScore": false,
-  "frontendDisplayApproved": false,
+  "frontendDisplayApproved": true,
   "workflowAutomationApproved": false,
   "liveFetchApproved": false,
   "apiKeyReadApproved": false,
@@ -51,7 +52,7 @@
     "not_current_news_signal",
     "not_event_confirmation",
     "production_display_only_cache",
-    "frontend_not_connected",
+    "frontend_aggregate_source_health_connected",
     "not_used_for_current_oil_news_signal"
   ],
   "productionImpact": {

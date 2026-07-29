@@ -14,10 +14,7 @@ const PRODUCTION_ARTIFACT = 'data/oil-news-event-watch.json';
 const GENERATED_AT = '2026-07-06T00:00:00.000Z';
 
 const GUARDED_RUNTIME_FILES = [
-  'index.html',
-  'scripts/app.js',
   'scripts/oil-directional/build-oil-directional-pressure.mjs',
-  'scripts/modules/renderOilDirectional.js',
   'data/oil-directional-pressure.json',
   'data/radar-data.json',
   '.github/workflows/refresh-oil-news-event-watch.yml'
@@ -107,6 +104,7 @@ function assertProductionArtifact() {
   const cache = artifact.sourceCaches?.gdeltWebNgramsFallback;
   assertGdeltWebNgramsDisplayFallbackCache(cache);
   assert(cache.productionDataWriteApproved === true, 'P56 production cache must declare scoped production data write approval.');
+  assert(cache.frontendDisplayApproved === true, 'P63 must approve only the aggregate source-health frontend projection.');
   assert(cache.currentSignalEnhancement === false, 'P56 production cache must not enhance current signal.');
   assert(cache.eligibleForScoring === false, 'P56 production cache must not be scoring eligible.');
   assertNoRawContentMarkers(cache);
