@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=health-hardening-2';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=health-hardening-2';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-thermal-request-health-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-thermal-request-health-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

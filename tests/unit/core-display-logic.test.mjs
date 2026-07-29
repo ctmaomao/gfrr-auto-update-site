@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=health-hardening-2';
+} from '../../scripts/modules/config.js?v=odp-thermal-request-health-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

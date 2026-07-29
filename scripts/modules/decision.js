@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=health-hardening-2';
-import { formatOnRrpYiUsd } from './format.js?v=health-hardening-2';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-thermal-request-health-1';
+import { formatOnRrpYiUsd } from './format.js?v=odp-thermal-request-health-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

@@ -17,6 +17,8 @@
 // artifact; the renderer still must not read article lists or expose headlines.
 // P50: satellite thermal watch must expose baseline quality/sample-window copy
 // and keep the short-window starter caveat visible.
+// P62: satellite request health may render categorized aggregate counters only;
+// raw URLs, provider bodies and free-text errors remain forbidden.
 // P54: cross-confirmation may compare oil-news, market, satellite/facility and
 // EIA layers only as display-only confirmation text. It must not change ODP
 // finalBias or promote any single source into a confirmed event.
@@ -103,6 +105,23 @@ for (const marker of [
 }
 if (!src.includes('sampleWindowDays') || !src.includes('sampleCount') || !src.includes('starter_short_window')) {
   fail('ODP satellite thermal baseline copy must read sampleWindowDays and starter_short_window');
+}
+if (
+  !src.includes('odp-thermal-request-health')
+  || !src.includes('thermalRequestHealthText')
+  || !src.includes('aggregate?.requestDiagnostics')
+) {
+  fail('ODP satellite thermal watch must expose categorized aggregate request health');
+}
+for (const marker of ['请求完成', '最终失败', '重试预算耗尽', '仅显示脱敏分类计数']) {
+  if (!src.includes(marker)) {
+    fail(`ODP satellite request-health copy must preserve marker: ${marker}`);
+  }
+}
+for (const forbidden of ['providerBody', 'responseBody', 'rawUrl', 'errorMessage']) {
+  if (src.includes(forbidden)) {
+    fail(`ODP renderer must not read unsafe FIRMS request field: ${forbidden}`);
+  }
 }
 if (!src.includes('renderCrossConfirmation') || !src.includes('odp-cross-confirmation-status')) {
   fail('ODP renderer must expose P54 cross-confirmation display-only status');

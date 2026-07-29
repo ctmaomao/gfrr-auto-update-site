@@ -136,6 +136,7 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-note',
   'odp-thermal-status',
   'odp-thermal-source',
+  'odp-thermal-request-health',
   'odp-thermal-window',
   'odp-thermal-facility',
   'odp-thermal-baseline-quality',
@@ -396,6 +397,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', '');
   setToneClass('odp-news-event-claim-quality', 'odp-news-claim-quality', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
+  setToneClass('odp-thermal-request-health', 'odp-thermal-request-health', '');
   setToneClass('odp-thermal-baseline-quality', 'odp-thermal-baseline-quality', '');
   setToneClass('odp-cross-confirmation-status', 'odp-cross-confirmation-status', '');
   setToneClass('odp-qc-ledger-status', 'odp-qc-ledger-status', '');
@@ -1116,6 +1118,58 @@ function thermalWindowText(data) {
   const windowDays = Number.isFinite(freshness.windowDays) ? `${freshness.windowDays}天窗` : '窗口待核';
   return latest ? `${windowDays} · ${latest}${age}` : `${windowDays} · 尚未查询设施热异常`;
 }
+const THERMAL_REQUEST_FAILURE_LABELS = {
+  timeout: '超时',
+  network_error: '网络',
+  rate_limited: '限流',
+  server_error: '服务端',
+  authentication_error: '鉴权',
+  request_rejected: '请求拒绝',
+  unexpected_http_status: '异常状态',
+  empty_response: '空响应',
+  non_csv_response: '非表格响应',
+  invalid_csv_schema: '表格结构',
+  response_parse_error: '响应解析',
+  unknown_error: '其他',
+};
+function thermalRequestCount(value) {
+  return Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
+}
+function thermalRequestHealthText(data) {
+  const diagnostics = data?.aggregate?.requestDiagnostics;
+  if (!diagnostics || diagnostics.policyVersion !== 'firms-request-policy-1') {
+    return '请求健康待核 · 未提供脱敏分类计数';
+  }
+  const logical = thermalRequestCount(diagnostics.logicalRequestCount);
+  const failed = thermalRequestCount(diagnostics.failedRequestCount);
+  const retries = thermalRequestCount(diagnostics.retryCount);
+  const recovered = thermalRequestCount(diagnostics.recoveredAfterRetryCount);
+  const budgetExhausted = thermalRequestCount(diagnostics.retryBudgetExhaustedCount);
+  if (logical === null || failed === null || retries === null || recovered === null || budgetExhausted === null) {
+    return '请求健康待核 · 脱敏计数不完整';
+  }
+  const completed = Math.max(0, logical - failed);
+  const retryText = retries > 0 ? `重试 ${retries}（恢复 ${recovered}）` : '无重试';
+  const categories = diagnostics.failuresByCategory && typeof diagnostics.failuresByCategory === 'object'
+    ? Object.entries(THERMAL_REQUEST_FAILURE_LABELS)
+      .map(([key, label]) => [label, thermalRequestCount(diagnostics.failuresByCategory[key])])
+      .filter(([, count]) => count !== null && count > 0)
+      .map(([label, count]) => `${label} ${count}`)
+    : [];
+  const failureText = categories.length ? ` · 分类 ${categories.join(' / ')}` : '';
+  const budgetText = budgetExhausted > 0 ? ` · 重试预算耗尽 ${budgetExhausted}` : '';
+  return `请求完成 ${completed}/${logical} · ${retryText} · 最终失败 ${failed}${failureText}${budgetText} · 仅显示脱敏分类计数`;
+}
+function thermalRequestHealthTone(data) {
+  const diagnostics = data?.aggregate?.requestDiagnostics;
+  if (!diagnostics || diagnostics.policyVersion !== 'firms-request-policy-1') return 'yellow';
+  const failed = thermalRequestCount(diagnostics.failedRequestCount);
+  const retries = thermalRequestCount(diagnostics.retryCount);
+  const budgetExhausted = thermalRequestCount(diagnostics.retryBudgetExhaustedCount);
+  if (failed === null || retries === null || budgetExhausted === null) return 'yellow';
+  if (failed > 0 || retries > 0 || budgetExhausted > 0) return 'yellow';
+  return 'green';
+}
 function thermalFacilityText(data) {
   const coverage = data && data.facilityCoverage ? data.facilityCoverage : {};
   const count = Number.isFinite(coverage.facilityCount) ? coverage.facilityCount : 0;
@@ -1240,6 +1294,8 @@ function renderSatelliteThermalWatch(oilThermalWatchData) {
   setLeafText('odp-thermal-status', thermalStatusText(data));
   setToneClass('odp-thermal-status', 'odp-thermal-status', thermalTone(data));
   setLeafText('odp-thermal-source', `NASA FIRMS / VIIRS NRT · production read-only${sourceStatus}`);
+  setLeafText('odp-thermal-request-health', thermalRequestHealthText(data));
+  setToneClass('odp-thermal-request-health', 'odp-thermal-request-health', thermalRequestHealthTone(data));
   setLeafText('odp-thermal-window', thermalWindowText(data));
   setLeafText('odp-thermal-facility', thermalFacilityText(data));
   setLeafText('odp-thermal-baseline-quality', thermalBaselineQualityText(data));

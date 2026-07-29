@@ -939,6 +939,8 @@ P58 另新增 manual/local targeted probe artifact contract:`probe:oil-thermal-t
 
 P61 在不改变 `oil-thermal-baseline-production-v1` schema 的前提下,完成 P60 health-gated candidate 的独立人工晋升。当前 `config/oil-thermal-watch-baseline.json` 必须为 `status='established'`,覆盖 42 个 production whitelist facilities；`sourceReview.promotionVersion='oil-thermal-baseline-promotion-p60'`,`baselineQuality='starter_observation_window'`,`sampleCount=69`,`totalSampleCount=100`,`quarantinedSampleCount=31`,`diagnosticsConfirmedEligibleSampleCount=16`,`sampleWindowDays=14.46`,`sampleHealthGateVersion='oil-thermal-sample-health-gate-p60'`。候选统计只允许使用 status/source/request/facility coverage 全部健康的样本；`partial`、`source_unavailable`、最终 request error、coverage mismatch 或健康状态不可验证样本必须继续 quarantine。该 7–30 天 baseline 不是成熟季节性或长历史运行基线；facility-specific p95 只用于 repeated-observation 人工复核门,不得被解释为事故、停产、断供、封锁或油价方向,不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
 
+P62 只增加 ODP 前端 `SATELLITE THERMAL WATCH / 请求健康` 展示行,不改变 `oil-thermal-watch-1` schema。renderer 只能读取 `aggregate.requestDiagnostics.policyVersion/logicalRequestCount/retryCount/recoveredAfterRetryCount/failedRequestCount/retryBudgetExhaustedCount/failuresByCategory`,且 `failuresByCategory` 只能通过固定 `firms-request-policy-1` category allowlist 映射为中文聚合计数；不得遍历显示未知分类,不得读取或显示 MAP_KEY、raw/redacted FIRMS URL、provider body、raw response、raw row、自由文本 error/message/stack。该行只说明请求链路健康,不得被解释为无事故、无断供或油价方向确认；不改 retry/backoff、baseline/repeated-observation 数学,不进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
+
 P56 新增 ODP frontend `READINESS / 证据成熟度矩阵` display-only 组,只读派生既有输入:ODP/EIA 周度物理链、Worker/World Order 市场确认、radar-data global energy overlay/energyTransport 摘要、Oil News claim/source health 与 Oil Thermal baseline/facility 聚合。该矩阵只做页面信息架构整理,把证据分为方向锚、确认/反证、慢变量、运输候选、新闻观察和卫星设施代理,并显式列出使用边界与闸门状态。ODP renderer 不直接读取 Transport Shock candidate 字段;具体路线/市场确认候选仍由 C1 Transport Shock 专属卡展示。P56 不新增 production JSON 字段、不写 `data/*.json` / `realtime/*.json`、不读取新闻 `topArticles` 或 manual artifacts、不新增外部源、不改变 refresh cadence;输出不得改变 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation,也不得确认通道关闭、断供、封锁、炼厂事故、制裁影响或油价方向。
 
 P57 新增 ODP frontend Oil News `主张质量` display-only 行,只读 `data/oil-news-event-watch.json` 已有 `claimPolarity`、`headlineDisplayReadiness`、`titleRisk`、`sourceStatus`、`aggregate.liveSourceCount` 与 `queryCoverage` 聚合字段,把主张混合、未明/高主张、标题未批准、高主张标题、来源降级和多源不足汇总为一条人工复核质量提示。P57 不新增 production JSON 字段、不改 oil-news workflow cadence、不读取 `topArticles`、title、URL、snippet/body/raw response 或 ignored manual artifacts,不展示标题原文,不确认霍尔木兹关闭/重开、断供、油轮流向、炼厂事故、制裁影响或油价方向;不得进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
@@ -1015,7 +1017,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `health-hardening-2`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-request-health-1`）。
 
 稳定边界：
 
@@ -1286,26 +1288,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-health-hardening-2 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 Macro Overview 趋势 SVG 与 External AI 展示簇分别迁入独立模块；DOM ID、文案、布局和 fallback 保持不变，cache busting 用于避免浏览器沿用旧 module graph。
+odp-thermal-request-health-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 新增脱敏请求健康展示行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `health-hardening-2`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-request-health-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=health-hardening-2`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=health-hardening-2`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `health-hardening-2`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-request-health-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-request-health-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-request-health-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs health-hardening-2
-npm run bump:frontend-asset-version -- health-hardening-2
+node scripts/bump-frontend-asset-version.mjs odp-thermal-request-health-1
+npm run bump:frontend-asset-version -- odp-thermal-request-health-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `health-hardening-2`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-request-health-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

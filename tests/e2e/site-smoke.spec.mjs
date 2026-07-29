@@ -99,6 +99,10 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#ext-ai-provider')).toHaveText('deepseek');
     await expect(page.locator('#ext-ai-structured-output')).toBeVisible();
     await expect(page.locator('#ext-ai-boundaries-text')).toContainText('不参与平台的风险打分与决策');
+    await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
+    await expect(page.locator('#odp-thermal-request-health')).toContainText('请求完成 126/126');
+    await expect(page.locator('#odp-thermal-request-health')).toContainText('最终失败 0');
+    await expect(page.locator('#odp-thermal-request-health')).toContainText('仅显示脱敏分类计数');
     expect(pageErrors).toEqual([]);
   });
 

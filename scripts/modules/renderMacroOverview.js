@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=health-hardening-2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=health-hardening-2';
+} from './config.js?v=odp-thermal-request-health-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-thermal-request-health-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,10 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=health-hardening-2';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=health-hardening-2';
-import { renderExternalAiAuxiliary } from './renderExternalAi.js?v=health-hardening-2';
-import { renderTrendSvg } from './renderMacroTrend.js?v=health-hardening-2';
+} from './macroOverviewDisplayHelpers.js?v=odp-thermal-request-health-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-thermal-request-health-1';
+import { renderExternalAiAuxiliary } from './renderExternalAi.js?v=odp-thermal-request-health-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=odp-thermal-request-health-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

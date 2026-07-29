@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=health-hardening-2';
+﻿import { fmtNumSafe } from './config.js?v=odp-thermal-request-health-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
