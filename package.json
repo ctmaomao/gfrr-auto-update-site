@@ -15,6 +15,8 @@
     "build:oil-news-event-watch": "node scripts/oil-directional/build-oil-news-event-watch.mjs",
     "build:oil-directional-history": "node scripts/oil-directional/build-oil-directional-history.mjs",
     "backtest:oil-directional": "node scripts/oil-directional/backtest-oil-directional.mjs",
+    "monitor:oil-directional-verdict-history": "node scripts/oil-directional/monitor-oil-directional-verdict-history.mjs",
+    "check:oil-directional-verdict-history-monitor": "node --check scripts/oil-directional/monitor-oil-directional-verdict-history.mjs && node --check scripts/check-oil-directional-verdict-history-monitor.mjs && node scripts/check-oil-directional-verdict-history-monitor.mjs",
     "write:external-ai-production": "node scripts/write-external-ai-production-data.mjs",
     "check:world-order": "node scripts/check-world-order-stress.mjs",
     "review:world-order": "node scripts/review-world-order-stress.mjs data/world-order-stress.json",

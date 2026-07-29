@@ -511,7 +511,7 @@ scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `odp-web-ngrams-health-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP Satellite Thermal Watch 脱敏请求健康行，本身不新增 KV、不 deploy Worker、不改变数据/评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `odp-web-ngrams-health-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP Web NGrams 聚合源健康行；此前 FIRMS 脱敏请求健康行仍保留。该版本不新增 KV、不 deploy Worker、不改变数据/评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
@@ -1439,3 +1439,30 @@ The 2026-07-29 reviewed promotion used `--max-commits 240 --max-samples 100`. Th
 - A facility-specific high p95 is background calibration, not incident evidence. Repeated observation still requires the existing multi-source and above-baseline gates and remains a manual-review prompt.
 - Never copy ignored review packets into tracked data. Production config may only be written by an explicit reviewed promotion command.
 - P61 does not change FIRMS request policy, repeated-observation thresholds, ODP `finalBias`, scoring, decision, execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
+
+### ODP P64 verdict history monitor
+
+Run the monitor locally without writing an artifact:
+
+```bash
+npm run monitor:oil-directional-verdict-history -- --dry-run --no-output
+```
+
+The scheduled workflow runs daily at 01:29 UTC with full git history and
+`contents: read` only. It uploads
+`manual-artifacts/oil-directional/oil-directional-verdict-history-monitor-latest.json`
+and appends a GitHub Summary.
+
+- `stable_current_verdict`: continue read-only monitoring.
+- `watch_active_price_physical_divergence`: review the existing price/physical
+  divergence; do not change thresholds merely to remove the warning.
+- `watch_recent_verdict_churn`: inspect recent evidence timestamps, freshness,
+  and transition context before interpreting the latest headline.
+- `watch_latest_evidence_degraded` / `watch_latest_data_insufficient`: wait for
+  or diagnose a complete ODP refresh; do not substitute missing evidence.
+- `no_valid_verdict_history`: confirm `fetch-depth: 0`, repository history, and
+  the committed ODP schema before rerunning.
+
+The monitor never fetches sources, triggers refresh, writes production data,
+recalculates the classifier, or creates a new score. Its artifact is evidence
+for operator review only and must not be copied into production data.

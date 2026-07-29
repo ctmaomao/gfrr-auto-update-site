@@ -303,6 +303,43 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/oil-directional-verdict-history-monitor.yml',
+    required: [
+      'name: Oil Directional Verdict History Monitor',
+      'workflow_dispatch',
+      "cron: '29 1 * * *'",
+      'permissions:',
+      'contents: read',
+      'concurrency',
+      'oil-directional-verdict-history-monitor',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'fetch-depth: 0',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'npm run monitor:oil-directional-verdict-history -- --github-summary',
+      'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
+      'oil-directional-verdict-history-monitor',
+      'retention-days: 30'
+    ],
+    forbidden: [
+      'contents: write',
+      'git push',
+      'git commit',
+      'secrets.',
+      'EIA_API_KEY',
+      'FIRMS_MAP_KEY',
+      'TAVILY_API',
+      'BRAVE_API',
+      'npm run build:oil-directional',
+      'npm run build:data',
+      'scripts/run-daily-pipeline.mjs',
+      'data/oil-directional-pressure.json',
+      'data/radar-data.json',
+      'realtime/market.json'
+    ]
+  },
+  {
     file: '.github/workflows/transport-shock-confirmation-factor-production-refresh-monitor.yml',
     required: [
       'name: Transport Shock Production Refresh Monitor',
