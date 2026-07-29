@@ -1428,3 +1428,14 @@ Operator guidance:
 - A future promotion packet must contain at least one health-eligible sample whose `aggregate.requestDiagnostics.policyVersion` is the literal machine value `firms-request-policy-1`. A successful bounded retry may remain eligible when all logical requests ultimately succeed and coverage/counts match.
 - `promote:oil-thermal-baseline-candidate` and `refresh:oil-thermal-baseline-candidate -- --write-production-baseline` must reject stale P25 artifacts, unhealthy candidates, and P26/P47 packets whose shared P60 health gate is not satisfied.
 - Do not promote an Oil Thermal baseline solely because the healthy `sampleWindowDays` crossed 7 or 30 days. Health-gated candidate math still requires a separate human-reviewed baseline change.
+
+### ODP P61 FIRMS baseline promotion record
+
+The 2026-07-29 reviewed promotion used `--max-commits 240 --max-samples 100`. The packet contained 69 eligible healthy samples, 31 quarantined samples, 16 post-P59 diagnostics-confirmed eligible samples, a 14.46-day healthy window, and 42/42 facilities ready. Human review found no blocker or warning before the explicit `--write-production-baseline` run.
+
+- The production config is now 42-row `established` with `baselineQuality=starter_observation_window`; this is an improving 7–30 day baseline, not a mature seasonal baseline.
+- The post-promotion live refresh completed 126/126 logical requests with zero final error. It emitted one non-elevated `repeated_watch` row (Sweeny: 3/3 sources, 15 rows, max FRP 39.71); treat this only as an operator review prompt, not an incident or disruption claim.
+- Re-run `npm run prepare:oil-thermal-baseline-review -- --max-commits 240 --max-samples 100 --json` before any later promotion. Review quarantine composition, p95 changes, and high-background industrial flare rows before writing.
+- A facility-specific high p95 is background calibration, not incident evidence. Repeated observation still requires the existing multi-source and above-baseline gates and remains a manual-review prompt.
+- Never copy ignored review packets into tracked data. Production config may only be written by an explicit reviewed promotion command.
+- P61 does not change FIRMS request policy, repeated-observation thresholds, ODP `finalBias`, scoring, decision, execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
