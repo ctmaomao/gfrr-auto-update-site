@@ -1296,6 +1296,9 @@ function thermalBaselineQualityText(data) {
   const quality = review.baselineQuality;
   const sampleCount = Number.isFinite(review.sampleCount) ? Math.round(review.sampleCount) : null;
   const sampleWindowDays = Number.isFinite(review.sampleWindowDays) ? review.sampleWindowDays : null;
+  const effectiveQualityWindowDays = Number.isFinite(review.effectiveQualityWindowDays)
+    ? review.effectiveQualityWindowDays
+    : sampleWindowDays;
   const transition = review.qualityTransition ? ` · ${review.qualityTransition}` : '';
   if (!quality) {
     const status = baseline.status || 'missing';
@@ -1304,8 +1307,15 @@ function thermalBaselineQualityText(data) {
       : '基线质量待建立';
   }
   const samples = sampleCount !== null ? `${sampleCount}样本` : '样本待核';
-  const window = sampleWindowDays !== null ? `${sampleWindowDays.toFixed(2)}天窗` : '窗口待核';
-  return `${thermalBaselineQualityLabel(quality)} · ${samples} · ${window}${transition}`;
+  const window = effectiveQualityWindowDays !== null
+    ? `最短设施窗 ${effectiveQualityWindowDays.toFixed(2)}天`
+    : '设施窗口待核';
+  const globalWindow = sampleWindowDays !== null
+    && effectiveQualityWindowDays !== null
+    && Math.abs(sampleWindowDays - effectiveQualityWindowDays) >= 0.005
+    ? ` · 全局历史 ${sampleWindowDays.toFixed(2)}天`
+    : '';
+  return `${thermalBaselineQualityLabel(quality)} · ${samples} · ${window}${globalWindow}${transition}`;
 }
 function thermalBaselineQualityTone(data) {
   const quality = data?.baseline?.sourceReview?.baselineQuality;
@@ -1318,13 +1328,13 @@ function thermalBaselineQualityNote(data) {
   const quality = review.baselineQuality;
   const caveats = Array.isArray(review.caveats) ? review.caveats.filter(Boolean) : [];
   if (quality === 'starter_short_window') {
-    return '当前设施基线已建立,但样本窗口仍小于 7 天,只能作为短窗口起步基线使用。';
+    return '当前设施基线已建立,但最短设施窗口仍小于 7 天,只能作为短窗口起步基线使用。';
   }
   if (quality === 'starter_observation_window') {
-    return '当前设施基线进入 7-30 天观察窗口,稳定性提升,但仍不是成熟季节性或长历史运行基线。';
+    return '当前最短设施窗口处于 7-30 天,稳定性提升,但仍不是成熟季节性或长历史运行基线。';
   }
   if (quality === 'established_observation_window') {
-    return '当前设施基线已有 30 天以上观察窗口,但热异常仍需多源重复与人工复核,不自动确认事故或断供。';
+    return '当前所有已晋升设施均有 30 天以上观察窗口,但热异常仍需多源重复与人工复核,不自动确认事故或断供。';
   }
   return caveats[0] || '基线质量尚未建立,热异常只作为人工复核代理。';
 }

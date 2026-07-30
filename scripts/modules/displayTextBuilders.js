@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-web-ngrams-age-1';
+﻿import { fmtNumSafe } from './config.js?v=odp-thermal-facility-window-quality-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -15,7 +15,8 @@ const VALID_STATUS = new Set(['not_established', 'partial', 'established']);
 const VALID_PROMOTION_VERSIONS = new Set([
   'oil-thermal-baseline-promotion-p48',
   'oil-thermal-baseline-promotion-p49',
-  'oil-thermal-baseline-promotion-p60'
+  'oil-thermal-baseline-promotion-p60',
+  'oil-thermal-baseline-promotion-p68'
 ]);
 const VALID_PROMOTION_STAGES = new Set(['P48', 'P49', 'P60']);
 const VALID_BASELINE_QUALITIES = [
@@ -57,9 +58,13 @@ function isNonNegativeNumber(value) {
   return Number.isFinite(value) && value >= 0;
 }
 
-function expectedBaselineQuality(sampleWindowDays) {
-  if (sampleWindowDays < QUALITY_POLICY.starterShortWindowMaxDays) return 'starter_short_window';
-  if (sampleWindowDays < QUALITY_POLICY.starterObservationWindowMaxDays) return 'starter_observation_window';
+function sameRoundedNumber(left, right) {
+  return Number.isFinite(left) && Number.isFinite(right) && Math.abs(left - right) < 0.005;
+}
+
+function expectedBaselineQuality(windowDays) {
+  if (windowDays < QUALITY_POLICY.starterShortWindowMaxDays) return 'starter_short_window';
+  if (windowDays < QUALITY_POLICY.starterObservationWindowMaxDays) return 'starter_observation_window';
   return 'established_observation_window';
 }
 
@@ -156,6 +161,55 @@ if (baseline.status === 'partial' || baseline.status === 'established') {
       fail('sourceReview.facilitiesReadyForBaseline must match established baseline row count');
     }
     if (!isNonNegativeNumber(review.sampleWindowDays)) fail('sourceReview.sampleWindowDays must be non-negative number');
+    const isFacilityWindowQuality = review.promotionVersion === 'oil-thermal-baseline-promotion-p68';
+    if (isFacilityWindowQuality) {
+      const validFacilityWindows = rows
+        .map((row) => row.windowDays)
+        .filter((windowDays) => isNonNegativeNumber(windowDays));
+      const minimumFacilityWindowDays = validFacilityWindows.length === rows.length && rows.length > 0
+        ? Math.min(...validFacilityWindows)
+        : null;
+      const maximumFacilityWindowDays = validFacilityWindows.length === rows.length && rows.length > 0
+        ? Math.max(...validFacilityWindows)
+        : null;
+      const facilitiesMeetingQualityTarget = validFacilityWindows.filter(
+        (windowDays) => windowDays >= QUALITY_POLICY.starterObservationWindowMaxDays
+      ).length;
+      if (review.baselineQualityBasis !== 'minimum_facility_window_days') {
+        fail('P68 sourceReview.baselineQualityBasis must be minimum_facility_window_days');
+      }
+      if (review.qualityTargetDays !== QUALITY_POLICY.starterObservationWindowMaxDays) {
+        fail('P68 sourceReview.qualityTargetDays must be 30');
+      }
+      if (!sameRoundedNumber(review.minimumFacilityWindowDays, minimumFacilityWindowDays)) {
+        fail('P68 sourceReview.minimumFacilityWindowDays must match the facility window floor');
+      }
+      if (!sameRoundedNumber(review.maximumFacilityWindowDays, maximumFacilityWindowDays)) {
+        fail('P68 sourceReview.maximumFacilityWindowDays must match the facility window ceiling');
+      }
+      if (!sameRoundedNumber(review.effectiveQualityWindowDays, minimumFacilityWindowDays)) {
+        fail('P68 sourceReview.effectiveQualityWindowDays must match minimumFacilityWindowDays');
+      }
+      if (
+        !Number.isInteger(review.facilitiesMeetingQualityTarget)
+        || review.facilitiesMeetingQualityTarget !== facilitiesMeetingQualityTarget
+      ) {
+        fail('P68 sourceReview.facilitiesMeetingQualityTarget must match 30-day facility rows');
+      }
+      if (
+        !Number.isInteger(review.facilitiesBelowQualityTarget)
+        || review.facilitiesBelowQualityTarget !== rows.length - facilitiesMeetingQualityTarget
+      ) {
+        fail('P68 sourceReview.facilitiesBelowQualityTarget must match sub-30-day facility rows');
+      }
+      if (
+        isNonNegativeNumber(review.sampleWindowDays)
+        && Number.isFinite(maximumFacilityWindowDays)
+        && review.sampleWindowDays + 0.005 < maximumFacilityWindowDays
+      ) {
+        fail('P68 sourceReview.sampleWindowDays must cover the maximum facility window');
+      }
+    }
     if (review.promotionStage === 'P60') {
       if (review.sampleHealthGateVersion !== 'oil-thermal-sample-health-gate-p60') {
         fail('P60 sourceReview.sampleHealthGateVersion must be oil-thermal-sample-health-gate-p60');
@@ -177,11 +231,14 @@ if (baseline.status === 'partial' || baseline.status === 'established') {
         fail('P60 sourceReview.diagnosticsConfirmedEligibleSampleCount must be within 1..sampleCount');
       }
     }
-    const expectedQuality = isNonNegativeNumber(review.sampleWindowDays)
-      ? expectedBaselineQuality(review.sampleWindowDays)
+    const qualityWindowDays = isFacilityWindowQuality
+      ? review.effectiveQualityWindowDays
+      : review.sampleWindowDays;
+    const expectedQuality = isNonNegativeNumber(qualityWindowDays)
+      ? expectedBaselineQuality(qualityWindowDays)
       : null;
     if (expectedQuality && review.baselineQuality !== expectedQuality) {
-      fail(`sampleWindowDays=${review.sampleWindowDays} must be labelled ${expectedQuality}`);
+      fail(`qualityWindowDays=${qualityWindowDays} must be labelled ${expectedQuality}`);
     }
     const caveatText = Array.isArray(review.caveats) ? review.caveats.join(' ') : '';
     if (!caveatText) {

@@ -77,6 +77,7 @@
     "refresh:oil-thermal-baseline-candidate": "node scripts/oil-directional/refresh-oil-thermal-baseline-candidate.mjs",
     "monitor:oil-thermal-baseline-quality": "node scripts/oil-directional/monitor-oil-thermal-baseline-quality.mjs",
     "check:oil-thermal-history-window-capacity": "node --check scripts/oil-directional/oil-thermal-history-window.mjs && node --check scripts/check-oil-thermal-history-window-capacity.mjs && node scripts/check-oil-thermal-history-window-capacity.mjs",
+    "check:oil-thermal-facility-window-quality": "node --check scripts/oil-directional/oil-thermal-baseline-quality.mjs && node --check scripts/check-oil-thermal-facility-window-quality.mjs && node scripts/check-oil-thermal-facility-window-quality.mjs",
     "check:oil-thermal-baseline-config": "node --check scripts/oil-directional/promote-oil-thermal-baseline-candidate.mjs && node --check scripts/check-oil-thermal-baseline-config.mjs && node scripts/check-oil-thermal-baseline-config.mjs",
     "check:oil-thermal-baseline-rolling-refresh": "node --check scripts/oil-directional/refresh-oil-thermal-baseline-candidate.mjs",
     "check:oil-thermal-baseline-quality-monitor": "node --check scripts/oil-directional/monitor-oil-thermal-baseline-quality.mjs && node scripts/oil-directional/monitor-oil-thermal-baseline-quality.mjs --dry-run --no-output --max-commits 3 --max-samples 1",

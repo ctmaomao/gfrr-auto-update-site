@@ -181,6 +181,7 @@ const SUITES = {
     'check:oil-thermal-baseline-readiness-prep',
     'check:oil-thermal-baseline-rolling-refresh',
     'check:oil-thermal-history-window-capacity',
+    'check:oil-thermal-facility-window-quality',
     'check:oil-thermal-baseline-quality-monitor',
     'check:oil-thermal-baseline-config',
     'check:firms-thermal-watch-review'

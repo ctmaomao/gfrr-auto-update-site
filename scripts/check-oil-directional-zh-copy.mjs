@@ -17,6 +17,8 @@
 // artifact; the renderer still must not read article lists or expose headlines.
 // P50: satellite thermal watch must expose baseline quality/sample-window copy
 // and keep the short-window starter caveat visible.
+// P68: baseline quality copy must distinguish the minimum facility window from
+// the global healthy-history audit horizon.
 // P62: satellite request health may render categorized aggregate counters only;
 // raw URLs, provider bodies and free-text errors remain forbidden.
 // P63: Web NGrams may render reviewed aggregate source-health/sample-gate fields
@@ -120,6 +122,11 @@ for (const marker of [
 }
 if (!src.includes('sampleWindowDays') || !src.includes('sampleCount') || !src.includes('starter_short_window')) {
   fail('ODP satellite thermal baseline copy must read sampleWindowDays and starter_short_window');
+}
+for (const marker of ['effectiveQualityWindowDays', '最短设施窗', '全局历史', '所有已晋升设施']) {
+  if (!src.includes(marker)) {
+    fail(`ODP satellite thermal baseline quality must preserve P68 facility-window marker: ${marker}`);
+  }
 }
 if (
   !src.includes('odp-thermal-request-health')

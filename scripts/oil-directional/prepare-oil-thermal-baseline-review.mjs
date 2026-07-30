@@ -195,6 +195,7 @@ function summarizeFacilities(review) {
     label: facility.label,
     region: facility.region,
     sampleCount: facility.sampleCount,
+    windowDays: facility.windowDays,
     readyForBaseline: facility.readyForBaseline,
     needsMoreSamples: Math.max(0, (review?.policy?.minSamplesPerFacility ?? DEFAULT_MIN_SAMPLES) - (facility.sampleCount ?? 0)),
     samplesWithDetections: facility.metrics?.samplesWithDetections ?? null,
@@ -266,6 +267,12 @@ function createReadiness(options, archive, review) {
       recommendation: review?.recommendation ?? null,
       sampleCount: reviewSummary.sampleCount ?? null,
       sampleWindowDays: reviewSummary.sampleWindowDays ?? null,
+      minimumFacilityWindowDays: reviewSummary.minimumFacilityWindowDays ?? null,
+      maximumFacilityWindowDays: reviewSummary.maximumFacilityWindowDays ?? null,
+      effectiveQualityWindowDays: reviewSummary.effectiveQualityWindowDays ?? null,
+      qualityTargetDays: reviewSummary.qualityTargetDays ?? null,
+      facilitiesMeetingQualityTarget: reviewSummary.facilitiesMeetingQualityTarget ?? null,
+      facilitiesBelowQualityTarget: reviewSummary.facilitiesBelowQualityTarget ?? null,
       totalSampleCount: reviewSummary.totalSampleCount ?? null,
       quarantinedSampleCount: reviewSummary.quarantinedSampleCount ?? null,
       facilityCount: reviewSummary.facilityCount ?? null,
@@ -334,6 +341,8 @@ function printSummary(readiness) {
   console.log(`review.totalSampleCount: ${readiness.review.totalSampleCount}`);
   console.log(`review.quarantinedSampleCount: ${readiness.review.quarantinedSampleCount}`);
   console.log(`review.facilitiesReadyForBaseline: ${readiness.review.facilitiesReadyForBaseline}/${readiness.review.facilityCount}`);
+  console.log(`review.effectiveQualityWindowDays: ${readiness.review.effectiveQualityWindowDays}`);
+  console.log(`review.facilitiesMeetingQualityTarget: ${readiness.review.facilitiesMeetingQualityTarget}/${readiness.review.facilityCount}`);
   console.log(`review.candidateBaselineStatus: ${readiness.review.candidateBaselineStatus}`);
   console.log(`sampleHealth.postPolicyObservationReady: ${readiness.sampleHealth.postPolicyObservationReady}`);
   console.log(`sampleHealth.promotionGate: ${readiness.sampleHealth.promotionGate.satisfied}`);

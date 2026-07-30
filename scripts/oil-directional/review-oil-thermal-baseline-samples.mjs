@@ -8,6 +8,7 @@ import {
   evaluateOilThermalPromotionHealthGate,
   summarizeOilThermalSampleHealth
 } from './oil-thermal-sample-health.mjs';
+import { summarizeOilThermalFacilityWindows } from './oil-thermal-baseline-quality.mjs';
 
 const REVIEW_VERSION = 'oil-thermal-baseline-samples-review-p26';
 const DEFAULT_INPUT = 'data/oil-thermal-watch.json';
@@ -296,11 +297,15 @@ function createReview(options, inputPaths, rawPolicy) {
       status: 'not_established',
       generatedAt: new Date().toISOString(),
       baselineWindowDays: null,
+      minimumFacilityWindowDays: null,
+      maximumFacilityWindowDays: null,
+      effectiveQualityWindowDays: null,
       policy,
       facilities: [],
       notes: [
         'Candidate rows are generated only from health-eligible sanitized oil-thermal-watch artifacts.',
         'Partial, source-unavailable, request-error, incomplete-coverage, and unclassified-health samples remain quarantined for audit and do not enter p95 metrics.',
+        'Candidate quality uses the minimum ready-facility window; the global eligible history horizon remains an audit metric only.',
         'This artifact is for human review and must not be copied into production baseline config without a separate reviewed change.',
         'The script never reads FIRMS MAP_KEY, never fetches network data, and never writes production data.'
       ]
@@ -569,6 +574,7 @@ function compareFacilityRows(allRows, eligibleRows) {
 
 function finalizeReview(review, allSamples, eligibleSamples, facilityRows, eligibilitySummary, facilityDelta) {
   const readyFacilities = facilityRows.filter((facility) => facility.readyForBaseline);
+  const facilityWindowSummary = summarizeOilThermalFacilityWindows(readyFacilities);
   const allSampleTimes = allSamples.map((sample) => sample.generatedAt).sort();
   const eligibleSampleTimes = eligibleSamples.map((sample) => sample.generatedAt).sort();
   const firstSampleAt = eligibleSampleTimes[0] ?? null;
@@ -616,9 +622,18 @@ function finalizeReview(review, allSamples, eligibleSamples, facilityRows, eligi
         ? 'established'
         : 'partial';
   review.candidateBaseline.baselineWindowDays =
-    readyFacilities.length === 0
-      ? null
-      : round(Math.max(...readyFacilities.map((facility) => facility.windowDays ?? 0)), 2);
+    facilityWindowSummary.minimumFacilityWindowDays;
+  review.candidateBaseline.minimumFacilityWindowDays =
+    facilityWindowSummary.minimumFacilityWindowDays;
+  review.candidateBaseline.maximumFacilityWindowDays =
+    facilityWindowSummary.maximumFacilityWindowDays;
+  review.candidateBaseline.effectiveQualityWindowDays =
+    facilityWindowSummary.effectiveQualityWindowDays;
+  review.candidateBaseline.qualityTargetDays = facilityWindowSummary.targetDays;
+  review.candidateBaseline.facilitiesMeetingQualityTarget =
+    facilityWindowSummary.facilitiesMeetingTargetDays;
+  review.candidateBaseline.facilitiesBelowQualityTarget =
+    facilityWindowSummary.facilitiesBelowTargetDays;
 
   review.summary = {
     sampleCount: eligibleSamples.length,
@@ -643,10 +658,23 @@ function finalizeReview(review, allSamples, eligibleSamples, facilityRows, eligi
     facilitiesReadyForBaseline: readyFacilities.length,
     facilitiesNeedingMoreSamples: facilityRows.length - readyFacilities.length,
     candidateBaselineStatus: review.candidateBaseline.status,
+    minimumFacilityWindowDays: facilityWindowSummary.minimumFacilityWindowDays,
+    maximumFacilityWindowDays: facilityWindowSummary.maximumFacilityWindowDays,
+    effectiveQualityWindowDays: facilityWindowSummary.effectiveQualityWindowDays,
+    qualityTargetDays: facilityWindowSummary.targetDays,
+    facilitiesMeetingQualityTarget: facilityWindowSummary.facilitiesMeetingTargetDays,
+    facilitiesBelowQualityTarget: facilityWindowSummary.facilitiesBelowTargetDays,
+    facilityIdsBelowQualityTarget: facilityWindowSummary.facilityIdsBelowTargetDays,
     facilityP95ChangedCountAfterQuarantine: facilityDelta.changedFacilityCount,
     facilityP95ChangedIdsAfterQuarantine: facilityDelta.changedFacilities.map((facility) => facility.id),
     productionBaselineWriteApproved: false
   };
+  if (readyFacilities.length > 0 && !facilityWindowSummary.complete) {
+    addBlocker(
+      review,
+      `Ready facility window summary is incomplete: ${facilityWindowSummary.invalidFacilityIds.join(', ')}.`
+    );
+  }
   review.sampleHealth.promotionGate = evaluateOilThermalPromotionHealthGate({
     sampleHealth: review.sampleHealth,
     candidateBaselineStatus: review.candidateBaseline.status,

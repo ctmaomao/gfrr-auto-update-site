@@ -1,5 +1,5 @@
-import { $ } from './config.js?v=odp-web-ngrams-age-1';
-import { MODULE_LABELS } from './decision.js?v=odp-web-ngrams-age-1';
+import { $ } from './config.js?v=odp-thermal-facility-window-quality-1';
+import { MODULE_LABELS } from './decision.js?v=odp-thermal-facility-window-quality-1';
 
 function asNumber(value) {
   const n = Number(value);

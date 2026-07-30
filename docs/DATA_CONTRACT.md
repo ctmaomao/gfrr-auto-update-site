@@ -941,6 +941,8 @@ P61 在不改变 `oil-thermal-baseline-production-v1` schema 的前提下,完成
 
 P65 将 Oil Thermal history-window capacity 与质量阈值分离:`oil-thermal-history-window.mjs` 统一 baseline preparation / rolling refresh / quality monitor 的默认窗口为 240 commits / 240 samples,archive/preparation/refresh/monitor CLI 允许 1..500。`established_observation_window` 仍要求健康 `sampleWindowDays>=30`,P60 sample-health gate 与 post-policy diagnostics gate 不变。扩大 history window 只允许读取更多 committed sanitized `data/oil-thermal-watch.json` 历史并写 ignored review artifacts；不得据此自动 promotion 或写 `config/oil-thermal-watch-baseline.json`,不得改变 repeated-observation 数学、ODP build/classifier/`finalBias`/globalOverlay/`values.*`/scoring/decision/execution/position/Brent promotion/Global Risk Heatmap/cross-validation。
 
+P68 修正 P65 后暴露的混合设施窗口语义:`sampleWindowDays` 继续表示全部 healthy eligible history 的全局审计跨度；质量分级改由 `effectiveQualityWindowDays=min(facilities[].windowDays)` 决定。新 promotion `oil-thermal-baseline-promotion-p68` 必须在 `sourceReview` 写入 `minimumFacilityWindowDays`、`maximumFacilityWindowDays`、`effectiveQualityWindowDays`、`baselineQualityBasis='minimum_facility_window_days'`、`qualityTargetDays=30`、`facilitiesMeetingQualityTarget` 与 `facilitiesBelowQualityTarget`，且 checker 必须逐行重算验证。只有所有已晋升设施均达到 30 天才可标记 `established_observation_window`。旧 P48/P49/P60 config 仍可兼容读取,但不得用旧兼容路径生成新的 P68 promotion。当前 2026-07-30 no-write packet 为 global 36.20d / effective 27.74d / 12 of 42 facilities at target,所以 candidate quality 仍为 `starter_observation_window`。P68 不改变 baseline `status`、P60 sample-health/post-policy gate、repeated-observation 数学或任何 ODP/scoring/decision/execution boundary。
+
 P62 只增加 ODP 前端 `SATELLITE THERMAL WATCH / 请求健康` 展示行,不改变 `oil-thermal-watch-1` schema。renderer 只能读取 `aggregate.requestDiagnostics.policyVersion/logicalRequestCount/retryCount/recoveredAfterRetryCount/failedRequestCount/retryBudgetExhaustedCount/failuresByCategory`,且 `failuresByCategory` 只能通过固定 `firms-request-policy-1` category allowlist 映射为中文聚合计数；不得遍历显示未知分类,不得读取或显示 MAP_KEY、raw/redacted FIRMS URL、provider body、raw response、raw row、自由文本 error/message/stack。该行只说明请求链路健康,不得被解释为无事故、无断供或油价方向确认；不改 retry/backoff、baseline/repeated-observation 数学,不进入 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation。
 
 P56 新增 ODP frontend `READINESS / 证据成熟度矩阵` display-only 组,只读派生既有输入:ODP/EIA 周度物理链、Worker/World Order 市场确认、radar-data global energy overlay/energyTransport 摘要、Oil News claim/source health 与 Oil Thermal baseline/facility 聚合。该矩阵只做页面信息架构整理,把证据分为方向锚、确认/反证、慢变量、运输候选、新闻观察和卫星设施代理,并显式列出使用边界与闸门状态。ODP renderer 不直接读取 Transport Shock candidate 字段;具体路线/市场确认候选仍由 C1 Transport Shock 专属卡展示。P56 不新增 production JSON 字段、不写 `data/*.json` / `realtime/*.json`、不读取新闻 `topArticles` 或 manual artifacts、不新增外部源、不改变 refresh cadence;输出不得改变 ODP build / classifier / `finalBias` / globalOverlay / `values.*` / scoring / decision / execution / position / Brent promotion / Global Risk Heatmap / cross-validation,也不得确认通道关闭、断供、封锁、炼厂事故、制裁影响或油价方向。
@@ -1019,7 +1021,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-age-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-facility-window-quality-1`）。
 
 稳定边界：
 
@@ -1298,26 +1300,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-web-ngrams-age-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 新增脱敏请求健康展示行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+odp-thermal-facility-window-quality-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 基线质量行改为显示最短设施窗与独立全局历史跨度；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-age-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-facility-window-quality-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-web-ngrams-age-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-web-ngrams-age-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-web-ngrams-age-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-facility-window-quality-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-facility-window-quality-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-facility-window-quality-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-web-ngrams-age-1
-npm run bump:frontend-asset-version -- odp-web-ngrams-age-1
+node scripts/bump-frontend-asset-version.mjs odp-thermal-facility-window-quality-1
+npm run bump:frontend-asset-version -- odp-thermal-facility-window-quality-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-web-ngrams-age-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-facility-window-quality-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

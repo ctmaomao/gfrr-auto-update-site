@@ -5,13 +5,17 @@ import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import {
+  OIL_THERMAL_BASELINE_QUALITY_ORDER,
+  oilThermalBaselineQualityForDays
+} from './oil-thermal-baseline-quality.mjs';
+import {
   OIL_THERMAL_BASELINE_DEFAULT_MAX_COMMITS,
   OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES,
   OIL_THERMAL_BASELINE_TARGET_DAYS,
   validateOilThermalHistoryWindow
 } from './oil-thermal-history-window.mjs';
 
-const MONITOR_VERSION = 'oil-thermal-baseline-quality-monitor-p51';
+const MONITOR_VERSION = 'oil-thermal-baseline-quality-monitor-p68';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-quality-monitor-latest.json';
 const DEFAULT_OUTPUT_DIR = 'manual-artifacts/oil-thermal/watch-samples';
 const DEFAULT_REVIEW_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json';
@@ -21,11 +25,7 @@ const DEFAULT_MAX_COMMITS = OIL_THERMAL_BASELINE_DEFAULT_MAX_COMMITS;
 const DEFAULT_MAX_SAMPLES = OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES;
 const DEFAULT_MIN_SAMPLES = 8;
 const PREPARE_SCRIPT = 'scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs';
-const QUALITY_ORDER = [
-  'starter_short_window',
-  'starter_observation_window',
-  'established_observation_window'
-];
+const QUALITY_ORDER = OIL_THERMAL_BASELINE_QUALITY_ORDER;
 const QUALITY_THRESHOLDS = [
   { quality: 'starter_short_window', minDays: 0, maxDays: 7 },
   {
@@ -182,15 +182,6 @@ function round(value, digits = 2) {
   return Number(value.toFixed(digits));
 }
 
-function qualityForWindowDays(sampleWindowDays) {
-  if (!Number.isFinite(sampleWindowDays)) return null;
-  if (sampleWindowDays < 7) return 'starter_short_window';
-  if (sampleWindowDays < OIL_THERMAL_BASELINE_TARGET_DAYS) {
-    return 'starter_observation_window';
-  }
-  return 'established_observation_window';
-}
-
 function qualityRank(quality) {
   return QUALITY_ORDER.indexOf(quality);
 }
@@ -219,7 +210,7 @@ function nextQualityThreshold(sampleWindowDays) {
 function classifyStatus({
   currentQuality,
   candidateQuality,
-  candidateSampleWindowDays,
+  candidateEffectiveQualityWindowDays,
   preparationStatus,
   preparationRecommendation,
   promotionHealthGate
@@ -239,7 +230,7 @@ function classifyStatus({
   if (currentRank === -1) return 'baseline_quality_candidate_ready';
   if (candidateRank > currentRank) return 'baseline_quality_threshold_ready';
   if (candidateRank < currentRank) return 'candidate_quality_below_current_baseline';
-  const nextThreshold = nextQualityThreshold(candidateSampleWindowDays);
+  const nextThreshold = nextQualityThreshold(candidateEffectiveQualityWindowDays);
   if (nextThreshold) return `collect_until_${nextThreshold.targetDays}d_quality_gate`;
   return 'mature_baseline_observing';
 }
@@ -268,15 +259,23 @@ function createMonitorResult(options, baseline, preparation) {
   const currentReview = baseline?.sourceReview ?? {};
   const prepReview = preparation?.review ?? {};
   const currentQuality = currentReview.baselineQuality ?? null;
+  const currentEffectiveQualityWindowDays = Number.isFinite(currentReview.effectiveQualityWindowDays)
+    ? currentReview.effectiveQualityWindowDays
+    : Number.isFinite(currentReview.sampleWindowDays)
+      ? currentReview.sampleWindowDays
+      : null;
   const candidateSampleWindowDays = Number.isFinite(prepReview.sampleWindowDays)
     ? prepReview.sampleWindowDays
     : null;
-  const candidateQuality = qualityForWindowDays(candidateSampleWindowDays);
-  const nextThreshold = nextQualityThreshold(candidateSampleWindowDays);
+  const candidateEffectiveQualityWindowDays = Number.isFinite(prepReview.effectiveQualityWindowDays)
+    ? prepReview.effectiveQualityWindowDays
+    : candidateSampleWindowDays;
+  const candidateQuality = oilThermalBaselineQualityForDays(candidateEffectiveQualityWindowDays);
+  const nextThreshold = nextQualityThreshold(candidateEffectiveQualityWindowDays);
   const status = classifyStatus({
     currentQuality,
     candidateQuality,
-    candidateSampleWindowDays,
+    candidateEffectiveQualityWindowDays,
     preparationStatus: preparation?.status ?? null,
     preparationRecommendation: preparation?.recommendation ?? null,
     promotionHealthGate: preparation?.sampleHealth?.promotionGate ?? null
@@ -307,6 +306,8 @@ function createMonitorResult(options, baseline, preparation) {
       currentQuality,
       sampleCount: currentReview.sampleCount ?? null,
       sampleWindowDays: currentReview.sampleWindowDays ?? null,
+      effectiveQualityWindowDays: currentEffectiveQualityWindowDays,
+      baselineQualityBasis: currentReview.baselineQualityBasis ?? 'global_sample_window_days_legacy',
       lastSampleAt: currentReview.lastSampleAt ?? null,
       qualityTransition: currentReview.qualityTransition ?? null
     },
@@ -317,6 +318,13 @@ function createMonitorResult(options, baseline, preparation) {
       qualityTransition,
       sampleCount: prepReview.sampleCount ?? null,
       sampleWindowDays: candidateSampleWindowDays,
+      minimumFacilityWindowDays: prepReview.minimumFacilityWindowDays ?? null,
+      maximumFacilityWindowDays: prepReview.maximumFacilityWindowDays ?? null,
+      effectiveQualityWindowDays: candidateEffectiveQualityWindowDays,
+      baselineQualityBasis: 'minimum_facility_window_days',
+      qualityTargetDays: prepReview.qualityTargetDays ?? OIL_THERMAL_BASELINE_TARGET_DAYS,
+      facilitiesMeetingQualityTarget: prepReview.facilitiesMeetingQualityTarget ?? null,
+      facilitiesBelowQualityTarget: prepReview.facilitiesBelowQualityTarget ?? null,
       facilitiesReadyForBaseline: prepReview.facilitiesReadyForBaseline ?? null,
       facilityCount: prepReview.facilityCount ?? null,
       validUniqueSamples: preparation?.archive?.validUniqueSamples ?? null,
@@ -335,7 +343,7 @@ function createMonitorResult(options, baseline, preparation) {
       productionPromotionCommand:
         'npm run refresh:oil-thermal-baseline-candidate -- --write-production-baseline',
       note:
-        'Promotion command is informational only; P51 never runs it automatically, never commits config changes, and keeps manual action false while the shared sample-health gate is not satisfied.'
+        'Promotion command is informational only; P68 never runs it automatically, never commits config changes, and keeps manual action false until the effective facility-window quality gate is ready.'
     },
     artifacts: {
       outputPath: options.dryRun || !options.writeOutput ? null : resolve(options.output),
@@ -394,8 +402,9 @@ function appendGithubSummary(options, result) {
     '## Oil Thermal Baseline Quality Reminder',
     '',
     `- Status: \`${result.status}\``,
-    `- Current quality: \`${result.baseline.currentQuality ?? 'missing'}\` (${result.baseline.sampleCount ?? 'n/a'} samples / ${result.baseline.sampleWindowDays ?? 'n/a'}d)`,
-    `- Candidate quality: \`${candidate.candidateQuality ?? 'missing'}\` (${candidate.sampleCount ?? 'n/a'} samples / ${candidate.sampleWindowDays ?? 'n/a'}d)`,
+    `- Current quality: \`${result.baseline.currentQuality ?? 'missing'}\` (${result.baseline.sampleCount ?? 'n/a'} samples / effective ${result.baseline.effectiveQualityWindowDays ?? 'n/a'}d; global ${result.baseline.sampleWindowDays ?? 'n/a'}d)`,
+    `- Candidate quality: \`${candidate.candidateQuality ?? 'missing'}\` (${candidate.sampleCount ?? 'n/a'} samples / effective ${candidate.effectiveQualityWindowDays ?? 'n/a'}d; global ${candidate.sampleWindowDays ?? 'n/a'}d)`,
+    `- Facility quality target: \`${candidate.facilitiesMeetingQualityTarget ?? 'n/a'}/${candidate.facilityCount ?? 'n/a'}\` at ${candidate.qualityTargetDays ?? OIL_THERMAL_BASELINE_TARGET_DAYS}d`,
     `- Candidate health: \`${candidate.sampleHealth?.eligibleSampleCount ?? 'n/a'}\` eligible / \`${candidate.sampleHealth?.inputSampleCount ?? 'n/a'}\` input; promotion gate \`${candidate.sampleHealth?.promotionGate?.satisfied ?? false}\``,
     `- Next threshold: ${thresholdText}`,
     `- Manual action required now: \`${result.manualAction.requiredNow}\``,
@@ -411,7 +420,9 @@ function printSummary(result) {
   console.log(`Oil thermal baseline quality monitor: ${result.status}`);
   console.log(`currentQuality: ${result.baseline.currentQuality ?? 'missing'}`);
   console.log(`candidateQuality: ${result.candidate.candidateQuality ?? 'missing'}`);
-  console.log(`sampleWindowDays: ${result.baseline.sampleWindowDays ?? 'none'} -> ${result.candidate.sampleWindowDays ?? 'none'}`);
+  console.log(`globalSampleWindowDays: ${result.baseline.sampleWindowDays ?? 'none'} -> ${result.candidate.sampleWindowDays ?? 'none'}`);
+  console.log(`effectiveQualityWindowDays: ${result.baseline.effectiveQualityWindowDays ?? 'none'} -> ${result.candidate.effectiveQualityWindowDays ?? 'none'}`);
+  console.log(`facilitiesMeetingQualityTarget: ${result.candidate.facilitiesMeetingQualityTarget ?? 'none'}/${result.candidate.facilityCount ?? 'none'}`);
   console.log(`qualityTransition: ${result.candidate.qualityTransition}`);
   console.log(`eligibleSampleCount: ${result.candidate.sampleHealth?.eligibleSampleCount ?? 'none'} / ${result.candidate.sampleHealth?.inputSampleCount ?? 'none'}`);
   console.log(`sampleHealthPromotionGate: ${result.candidate.sampleHealth?.promotionGate?.satisfied ?? false}`);

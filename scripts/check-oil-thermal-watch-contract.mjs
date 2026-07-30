@@ -193,6 +193,27 @@ if (!data.baseline || typeof data.baseline !== 'object') {
       if (!finiteOrNull(data.baseline.sourceReview.sampleWindowDays)) {
         fail('baseline.sourceReview.sampleWindowDays must be number|null');
       }
+      const isFacilityWindowQuality =
+        baselineConfig.sourceReview.promotionVersion === 'oil-thermal-baseline-promotion-p68';
+      if (isFacilityWindowQuality) {
+        for (const field of [
+          'minimumFacilityWindowDays',
+          'maximumFacilityWindowDays',
+          'effectiveQualityWindowDays',
+          'qualityTargetDays',
+          'facilitiesMeetingQualityTarget',
+          'facilitiesBelowQualityTarget'
+        ]) {
+          if (!Number.isFinite(data.baseline.sourceReview[field])) {
+            fail(`P68 baseline.sourceReview.${field} must be a number`);
+          } else if (data.baseline.sourceReview[field] !== baselineConfig.sourceReview[field]) {
+            fail(`P68 baseline.sourceReview.${field} must match config sourceReview`);
+          }
+        }
+        if (data.baseline.sourceReview.baselineQualityBasis !== 'minimum_facility_window_days') {
+          fail('P68 baseline.sourceReview.baselineQualityBasis must be minimum_facility_window_days');
+        }
+      }
       if (!Array.isArray(data.baseline.sourceReview.caveats)) {
         fail('baseline.sourceReview.caveats must be an array');
       }

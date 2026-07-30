@@ -2,9 +2,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
+import {
+  OIL_THERMAL_BASELINE_QUALITY_POLICY,
+  oilThermalBaselineQualityForDays,
+  summarizeOilThermalFacilityWindows
+} from './oil-thermal-baseline-quality.mjs';
 import { evaluateOilThermalPromotionHealthGate } from './oil-thermal-sample-health.mjs';
 
-const PROMOTION_VERSION = 'oil-thermal-baseline-promotion-p60';
+const PROMOTION_VERSION = 'oil-thermal-baseline-promotion-p68';
 const DEFAULT_REVIEW = 'manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json';
 const DEFAULT_READINESS = 'manual-artifacts/oil-thermal/oil-thermal-baseline-readiness-latest.json';
 const DEFAULT_FACILITIES = 'config/oil-thermal-watch-facilities.json';
@@ -12,15 +17,7 @@ const DEFAULT_OUTPUT = 'config/oil-thermal-watch-baseline.json';
 const DEFAULT_MIN_SAMPLES = 8;
 const BOUNDARY =
   'production oil thermal rolling baseline config; display-only repeated-observation gate only; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
-const QUALITY_POLICY = {
-  starterShortWindowMaxDays: 7,
-  starterObservationWindowMaxDays: 30,
-  qualityOrder: [
-    'starter_short_window',
-    'starter_observation_window',
-    'established_observation_window'
-  ]
-};
+const QUALITY_POLICY = OIL_THERMAL_BASELINE_QUALITY_POLICY;
 
 const FULL_POLICY_DEFAULTS = {
   minSamplesPerFacility: 8,
@@ -154,6 +151,10 @@ function numberOrThrow(value, label) {
   return number;
 }
 
+function sameRoundedNumber(left, right) {
+  return Number.isFinite(left) && Number.isFinite(right) && Math.abs(left - right) < 0.005;
+}
+
 function allProductionImpactFalse(map, label) {
   if (!map || typeof map !== 'object' || Array.isArray(map)) {
     throw new Error(`${label}.productionImpact must be an object.`);
@@ -229,6 +230,29 @@ function validateArtifacts({ review, readiness, facilitiesConfig, options }) {
   if (candidateRows.length !== facilities.length) {
     throw new Error(`Candidate facility count ${candidateRows.length} does not match whitelist ${facilities.length}.`);
   }
+  const facilityWindowSummary = summarizeOilThermalFacilityWindows(candidateRows);
+  if (!facilityWindowSummary.complete) {
+    throw new Error(
+      `Candidate facility windows are incomplete: ${facilityWindowSummary.invalidFacilityIds.join(', ')}.`
+    );
+  }
+  for (const [label, value] of [
+    ['review.summary.minimumFacilityWindowDays', review.summary?.minimumFacilityWindowDays],
+    ['review.summary.effectiveQualityWindowDays', review.summary?.effectiveQualityWindowDays],
+    ['review.candidateBaseline.baselineWindowDays', review.candidateBaseline?.baselineWindowDays]
+  ]) {
+    if (!sameRoundedNumber(value, facilityWindowSummary.minimumFacilityWindowDays)) {
+      throw new Error(`${label} must equal the minimum candidate facility window.`);
+    }
+  }
+  if (
+    !sameRoundedNumber(
+      readiness.review?.effectiveQualityWindowDays,
+      facilityWindowSummary.effectiveQualityWindowDays
+    )
+  ) {
+    throw new Error('P47 effectiveQualityWindowDays must match the candidate facility window floor.');
+  }
   if ((readiness.notReadyFacilityIds?.length ?? 0) > 0) {
     throw new Error(`P47 not-ready facilities remain: ${readiness.notReadyFacilityIds.join(', ')}`);
   }
@@ -255,12 +279,6 @@ function normalizePolicy(existingPolicy, candidatePolicy, minSamples) {
   ]));
 }
 
-function baselineQuality(sampleWindowDays) {
-  if (sampleWindowDays < QUALITY_POLICY.starterShortWindowMaxDays) return 'starter_short_window';
-  if (sampleWindowDays < QUALITY_POLICY.starterObservationWindowMaxDays) return 'starter_observation_window';
-  return 'established_observation_window';
-}
-
 function qualityRank(quality) {
   return QUALITY_POLICY.qualityOrder.indexOf(quality);
 }
@@ -275,6 +293,11 @@ function previousBaselineSnapshot(existingBaseline) {
     baselineQuality: baselineQualityValue,
     sampleCount: Number.isFinite(review.sampleCount) ? review.sampleCount : null,
     sampleWindowDays: Number.isFinite(review.sampleWindowDays) ? review.sampleWindowDays : null,
+    effectiveQualityWindowDays: Number.isFinite(review.effectiveQualityWindowDays)
+      ? review.effectiveQualityWindowDays
+      : Number.isFinite(review.sampleWindowDays)
+        ? review.sampleWindowDays
+        : null,
     lastSampleAt: typeof review.lastSampleAt === 'string' ? review.lastSampleAt : null
   };
 }
@@ -292,12 +315,12 @@ function qualityTransition(previousBaseline, nextQuality) {
 function caveatsForQuality(quality) {
   const qualityCaveat = (() => {
     if (quality === 'starter_short_window') {
-      return 'The current sample window is short (<7 days); repeated/elevated observations remain manual-review prompts, not incident or supply-disruption confirmation.';
+      return 'The minimum facility window is short (<7 days); repeated/elevated observations remain manual-review prompts, not incident or supply-disruption confirmation.';
     }
     if (quality === 'starter_observation_window') {
-      return 'The current sample window is 7-30 days; the baseline is improving but is not a mature seasonal or long-history operating baseline.';
+      return 'The minimum facility window is 7-30 days; the baseline is improving but is not a mature seasonal or long-history operating baseline.';
     }
-    return 'The current sample window is 30+ days; the baseline is more durable, but repeated/elevated observations still require manual source review.';
+    return 'Every promoted facility has a 30+ day window; the baseline is more durable, but repeated/elevated observations still require manual source review.';
   })();
   return [
     'Rolling baseline is derived from sanitized production watch samples only.',
@@ -335,16 +358,21 @@ function promoteRows({ candidateRows, facilities, minSamples }) {
 }
 
 function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBaseline, options }) {
-  const sampleWindowDays = numberOrThrow(review.summary?.sampleWindowDays, 'review.summary.sampleWindowDays');
-  const quality = baselineQuality(sampleWindowDays);
-  const previousBaseline = previousBaselineSnapshot(existingBaseline);
-  const transition = qualityTransition(previousBaseline, quality);
   const facilities = facilitiesConfig.facilities;
   const promotedRows = promoteRows({
     candidateRows: review.candidateBaseline.facilities,
     facilities,
     minSamples: options.minSamples
   });
+  const sampleWindowDays = numberOrThrow(review.summary?.sampleWindowDays, 'review.summary.sampleWindowDays');
+  const facilityWindowSummary = summarizeOilThermalFacilityWindows(promotedRows);
+  if (!facilityWindowSummary.complete) {
+    throw new Error('Promoted facility windows must all be valid before building a production baseline.');
+  }
+  const effectiveQualityWindowDays = facilityWindowSummary.effectiveQualityWindowDays;
+  const quality = oilThermalBaselineQualityForDays(effectiveQualityWindowDays);
+  const previousBaseline = previousBaselineSnapshot(existingBaseline);
+  const transition = qualityTransition(previousBaseline, quality);
 
   return {
     schemaVersion: 'oil-thermal-baseline-production-v1',
@@ -377,6 +405,13 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
       firstSampleAt: isoOrThrow(review.summary.firstSampleAt, 'review.summary.firstSampleAt'),
       lastSampleAt: isoOrThrow(review.summary.lastSampleAt, 'review.summary.lastSampleAt'),
       sampleWindowDays,
+      minimumFacilityWindowDays: facilityWindowSummary.minimumFacilityWindowDays,
+      maximumFacilityWindowDays: facilityWindowSummary.maximumFacilityWindowDays,
+      effectiveQualityWindowDays,
+      baselineQualityBasis: 'minimum_facility_window_days',
+      qualityTargetDays: facilityWindowSummary.targetDays,
+      facilitiesMeetingQualityTarget: facilityWindowSummary.facilitiesMeetingTargetDays,
+      facilitiesBelowQualityTarget: facilityWindowSummary.facilitiesBelowTargetDays,
       facilityCount: facilities.length,
       facilitiesReadyForBaseline: numberOrThrow(review.summary.facilitiesReadyForBaseline, 'review.summary.facilitiesReadyForBaseline'),
       caveats: caveatsForQuality(quality)
@@ -384,7 +419,8 @@ function buildBaselineConfig({ review, readiness, facilitiesConfig, existingBase
     notes: [
       'P60 rolling refresh promotes operator-reviewed p95 rows from P26/P47 health-eligible sanitized oil-thermal-watch history samples.',
       'Partial, source-unavailable, request-error, incomplete-coverage, and unclassified-health samples are retained for audit but excluded from candidate statistics.',
-      'Baseline quality ages by sampleWindowDays: <7 days starter_short_window, 7-30 days starter_observation_window, 30+ days established_observation_window.',
+      'Global sampleWindowDays remains an audit horizon; baseline quality ages by the minimum promoted-facility window.',
+      'Minimum facility window quality bands remain <7 days starter_short_window, 7-30 days starter_observation_window, and 30+ days established_observation_window.',
       'Repeated observation still requires established facility baseline, multi-source repeatability, and above-baseline strength.',
       'This baseline file never stores MAP_KEY, raw FIRMS rows, raw URLs, outage claims, supply-disruption claims, or oil-price direction.',
       'Satellite thermal watch remains production read-only and does not enter ODP finalBias, scoring, decision, execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.'
@@ -410,6 +446,8 @@ function printSummary(result) {
   console.log(`previousBaselineQuality: ${result.baseline.sourceReview.previousBaseline?.baselineQuality ?? 'none'}`);
   console.log(`sampleCount: ${result.baseline.sourceReview.sampleCount}`);
   console.log(`sampleWindowDays: ${result.baseline.sourceReview.sampleWindowDays}`);
+  console.log(`effectiveQualityWindowDays: ${result.baseline.sourceReview.effectiveQualityWindowDays}`);
+  console.log(`facilitiesMeetingQualityTarget: ${result.baseline.sourceReview.facilitiesMeetingQualityTarget}/${result.baseline.sourceReview.facilityCount}`);
   console.log(`facilityCount: ${result.baseline.sourceReview.facilityCount}`);
   console.log(`facilities: ${result.baseline.facilities.length}`);
   console.log(`outputPath: ${result.outputPath ?? '(dry-run)'}`);

@@ -55,6 +55,26 @@ Crossing 30 days does not approve or perform production promotion. Review
 quarantined samples, facility p95 changes, request health, and the P60 health
 gate before any separate explicit `--write-production-baseline` command.
 
+## P68 facility-window quality correction
+
+P65 made the global history horizon long enough to observe 30 days. It also
+revealed that a mixed-vintage facility whitelist cannot safely use that global
+horizon as the quality label for every row. The 2026-07-30 packet spans 36.20
+healthy days globally, while the minimum facility window is 27.74 days and only
+12 of 42 facilities have reached 30 days.
+
+P68 therefore preserves `sampleWindowDays` as an audit horizon and uses
+`effectiveQualityWindowDays=min(facilities[].windowDays)` for quality aging.
+The production promoter, reminder monitor, config checker, watch projection,
+and frontend display share this rule. A new P68 promotion must carry the
+minimum/maximum/effective window and target counts; legacy P60 configs remain
+read-compatible. `npm run check:oil-thermal-facility-window-quality` guards the
+mixed-window case.
+
+The current candidate remains `starter_observation_window`; this change does
+not write the production baseline. Only a later healthy packet with every
+promoted facility at 30+ days may enter a separate human promotion review.
+
 ## Boundary
 
 This is history-window capacity only. It does not fetch FIRMS, change the

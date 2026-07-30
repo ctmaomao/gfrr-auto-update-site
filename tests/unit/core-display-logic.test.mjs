@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=odp-web-ngrams-age-1';
+} from '../../scripts/modules/config.js?v=odp-thermal-facility-window-quality-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

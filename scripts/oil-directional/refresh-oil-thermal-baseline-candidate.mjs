@@ -218,6 +218,14 @@ function summarizeRefresh({ options, previousBaseline, preparation, promotion })
       totalSampleCount: preparation.review?.totalSampleCount ?? null,
       quarantinedSampleCount: preparation.review?.quarantinedSampleCount ?? null,
       sampleWindowDays: preparation.review?.sampleWindowDays ?? null,
+      minimumFacilityWindowDays: preparation.review?.minimumFacilityWindowDays ?? null,
+      maximumFacilityWindowDays: preparation.review?.maximumFacilityWindowDays ?? null,
+      effectiveQualityWindowDays: preparation.review?.effectiveQualityWindowDays
+        ?? preparation.review?.sampleWindowDays
+        ?? null,
+      qualityTargetDays: preparation.review?.qualityTargetDays ?? null,
+      facilitiesMeetingQualityTarget: preparation.review?.facilitiesMeetingQualityTarget ?? null,
+      facilitiesBelowQualityTarget: preparation.review?.facilitiesBelowQualityTarget ?? null,
       facilitiesReadyForBaseline: preparation.review?.facilitiesReadyForBaseline ?? null,
       facilityCount: preparation.review?.facilityCount ?? null,
       validUniqueSamples: preparation.archive?.validUniqueSamples ?? null,
@@ -233,6 +241,12 @@ function summarizeRefresh({ options, previousBaseline, preparation, promotion })
       nextSampleCount: nextReview?.sampleCount ?? null,
       previousSampleWindowDays: previousReview?.sampleWindowDays ?? null,
       nextSampleWindowDays: nextReview?.sampleWindowDays ?? null,
+      previousEffectiveQualityWindowDays: previousReview?.effectiveQualityWindowDays
+        ?? previousReview?.sampleWindowDays
+        ?? null,
+      nextEffectiveQualityWindowDays: nextReview?.effectiveQualityWindowDays
+        ?? nextReview?.sampleWindowDays
+        ?? null,
       previousLastSampleAt: previousReview?.lastSampleAt ?? null,
       nextLastSampleAt: nextReview?.lastSampleAt ?? null
     },
@@ -264,7 +278,8 @@ function printSummary(result) {
   console.log(`quarantinedSampleCount: ${result.preparation.quarantinedSampleCount ?? 'none'}`);
   console.log(`sampleHealthPromotionGate: ${result.sampleHealth?.promotionGate?.satisfied ?? false}`);
   console.log(`sampleCount: ${result.baselineAging.previousSampleCount ?? 'none'} -> ${result.baselineAging.nextSampleCount ?? 'none'}`);
-  console.log(`sampleWindowDays: ${result.baselineAging.previousSampleWindowDays ?? 'none'} -> ${result.baselineAging.nextSampleWindowDays ?? 'none'}`);
+  console.log(`globalSampleWindowDays: ${result.baselineAging.previousSampleWindowDays ?? 'none'} -> ${result.baselineAging.nextSampleWindowDays ?? 'none'}`);
+  console.log(`effectiveQualityWindowDays: ${result.baselineAging.previousEffectiveQualityWindowDays ?? 'none'} -> ${result.baselineAging.nextEffectiveQualityWindowDays ?? 'none'}`);
   console.log(`baselineQuality: ${result.baselineAging.previousQuality ?? 'none'} -> ${result.baselineAging.nextQuality ?? 'none'}`);
   console.log(`qualityTransition: ${result.baselineAging.qualityTransition ?? 'not_evaluated'}`);
   console.log(`outputPath: ${result.outputPath ?? '(no production write)'}`);

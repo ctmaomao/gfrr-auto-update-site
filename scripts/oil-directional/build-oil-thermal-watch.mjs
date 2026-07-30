@@ -196,13 +196,25 @@ function normalizeBaselineSourceReview(rawReview) {
   const caveats = Array.isArray(rawReview.caveats)
     ? rawReview.caveats.filter((note) => typeof note === 'string')
     : [];
+  const sampleWindowDays = finiteNumberOrNull(rawReview.sampleWindowDays);
+  const effectiveQualityWindowDays = finiteNumberOrNull(rawReview.effectiveQualityWindowDays)
+    ?? sampleWindowDays;
   return {
     promotionVersion: typeof rawReview.promotionVersion === 'string' ? rawReview.promotionVersion : null,
     promotionStage: typeof rawReview.promotionStage === 'string' ? rawReview.promotionStage : null,
     baselineQuality: typeof rawReview.baselineQuality === 'string' ? rawReview.baselineQuality : null,
     qualityTransition: typeof rawReview.qualityTransition === 'string' ? rawReview.qualityTransition : null,
     sampleCount: finiteNumberOrNull(rawReview.sampleCount),
-    sampleWindowDays: finiteNumberOrNull(rawReview.sampleWindowDays),
+    sampleWindowDays,
+    minimumFacilityWindowDays: finiteNumberOrNull(rawReview.minimumFacilityWindowDays),
+    maximumFacilityWindowDays: finiteNumberOrNull(rawReview.maximumFacilityWindowDays),
+    effectiveQualityWindowDays,
+    baselineQualityBasis: typeof rawReview.baselineQualityBasis === 'string'
+      ? rawReview.baselineQualityBasis
+      : 'global_sample_window_days_legacy',
+    qualityTargetDays: finiteNumberOrNull(rawReview.qualityTargetDays),
+    facilitiesMeetingQualityTarget: finiteNumberOrNull(rawReview.facilitiesMeetingQualityTarget),
+    facilitiesBelowQualityTarget: finiteNumberOrNull(rawReview.facilitiesBelowQualityTarget),
     firstSampleAt: validIsoOrNull(rawReview.firstSampleAt),
     lastSampleAt: validIsoOrNull(rawReview.lastSampleAt),
     caveats
