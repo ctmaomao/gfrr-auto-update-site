@@ -17,6 +17,58 @@ function captureConsoleErrors(page) {
   return errors;
 }
 
+function buildApprovedVisibleExternalAiLayer(layer, currentTimestamp) {
+  return {
+    ...layer,
+    schemaVersion: 'v28.0L-external-ai-production-analyst-1',
+    status: 'valid',
+    displayEnabled: true,
+    sourceMode: 'manual_analyst_compact_v1',
+    inputSource: 'analyst_compact_v1',
+    sourceSemantics: 'site_structured_analyst_evidence_pack_v1',
+    provider: 'deepseek',
+    model: 'deepseek-v4-flash',
+    generatedAt: currentTimestamp,
+    boundaries: {
+      ...layer?.boundaries,
+      frontendDisplayApproved: true,
+      displayOnly: true,
+      externalAiGenerated: true,
+      usesExternalAiApi: true,
+      affectsScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
+      notInvestmentAdvice: true,
+      productionWriteApproved: false,
+    },
+    qualityReview: {
+      ...layer?.qualityReview,
+      status: 'pass',
+      recommendation: 'pass_for_manual_review',
+      promotionEligible: false,
+    },
+    provenance: {
+      ...layer?.provenance,
+      humanApproved: false,
+    },
+    freshness: {
+      ...layer?.freshness,
+      artifactGeneratedAt: currentTimestamp,
+      sourceDataUpdatedAt: currentTimestamp,
+      maxAgeHours: 24,
+      isStale: false,
+    },
+    dataQualityLens: layer?.dataQualityLens || {
+      summaryZh: '站内结构化数据质量满足展示测试要求。',
+      confidenceImpactZh: '仅验证只读解释层的展示边界。',
+      staleLayers: [],
+      fallbackLayers: [],
+      missingLayers: [],
+    },
+  };
+}
+
 async function gotoBubbleWatch(page) {
   const dataResponsePromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
@@ -77,16 +129,10 @@ test.describe('desktop smoke', () => {
       const response = await route.fetch();
       const radarData = await response.json();
       const currentTimestamp = new Date().toISOString();
-      radarData.externalAiInterpretationLayer = {
-        ...radarData.externalAiInterpretationLayer,
-        generatedAt: currentTimestamp,
-        freshness: {
-          ...radarData.externalAiInterpretationLayer?.freshness,
-          artifactGeneratedAt: currentTimestamp,
-          sourceDataUpdatedAt: currentTimestamp,
-          isStale: false,
-        },
-      };
+      radarData.externalAiInterpretationLayer = buildApprovedVisibleExternalAiLayer(
+        radarData.externalAiInterpretationLayer,
+        currentTimestamp,
+      );
       await route.fulfill({ response, json: radarData });
     });
     await page.goto('/index.html');
