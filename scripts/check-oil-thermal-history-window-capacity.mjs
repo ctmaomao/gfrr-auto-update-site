@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 import {
@@ -17,6 +17,18 @@ const SCRIPT_PATHS = [
   'scripts/oil-directional/refresh-oil-thermal-baseline-candidate.mjs',
   'scripts/oil-directional/monitor-oil-thermal-baseline-quality.mjs'
 ];
+const SMOKE_ARTIFACT_ROOT = resolve(
+  'manual-artifacts',
+  'oil-thermal',
+  `gfrr-oil-thermal-history-window-smoke-${process.pid}-${Date.now()}`
+);
+const SMOKE_PATHS = Object.freeze({
+  outputDir: resolve(SMOKE_ARTIFACT_ROOT, 'watch-samples'),
+  reviewOutput: resolve(SMOKE_ARTIFACT_ROOT, 'review.json'),
+  readinessOutput: resolve(SMOKE_ARTIFACT_ROOT, 'readiness.json'),
+  baselineOutput: resolve(SMOKE_ARTIFACT_ROOT, 'baseline.json'),
+  monitorOutput: resolve(SMOKE_ARTIFACT_ROOT, 'monitor.json')
+});
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -81,7 +93,14 @@ for (const scriptPath of SCRIPT_PATHS) {
   );
 }
 
+assert(!existsSync(SMOKE_ARTIFACT_ROOT), `smoke root must start absent: ${SMOKE_ARTIFACT_ROOT}`);
+for (const artifactPath of Object.values(SMOKE_PATHS)) {
+  assert(!existsSync(artifactPath), `smoke path must start absent: ${artifactPath}`);
+}
+
 runSmoke(SCRIPT_PATHS[0], [
+  '--output-dir',
+  SMOKE_PATHS.outputDir,
   '--max-commits',
   '3',
   '--max-samples',
@@ -90,6 +109,12 @@ runSmoke(SCRIPT_PATHS[0], [
   '--allow-empty'
 ]);
 runSmoke(SCRIPT_PATHS[1], [
+  '--output-dir',
+  SMOKE_PATHS.outputDir,
+  '--review-output',
+  SMOKE_PATHS.reviewOutput,
+  '--output',
+  SMOKE_PATHS.readinessOutput,
   '--max-commits',
   '3',
   '--max-samples',
@@ -98,6 +123,14 @@ runSmoke(SCRIPT_PATHS[1], [
   '--no-output'
 ]);
 runSmoke(SCRIPT_PATHS[2], [
+  '--output-dir',
+  SMOKE_PATHS.outputDir,
+  '--review-output',
+  SMOKE_PATHS.reviewOutput,
+  '--readiness-output',
+  SMOKE_PATHS.readinessOutput,
+  '--baseline-output',
+  SMOKE_PATHS.baselineOutput,
   '--max-commits',
   '3',
   '--max-samples',
@@ -105,6 +138,14 @@ runSmoke(SCRIPT_PATHS[2], [
   '--dry-run'
 ]);
 runSmoke(SCRIPT_PATHS[3], [
+  '--output',
+  SMOKE_PATHS.monitorOutput,
+  '--output-dir',
+  SMOKE_PATHS.outputDir,
+  '--review-output',
+  SMOKE_PATHS.reviewOutput,
+  '--readiness-output',
+  SMOKE_PATHS.readinessOutput,
   '--max-commits',
   '3',
   '--max-samples',
@@ -112,6 +153,11 @@ runSmoke(SCRIPT_PATHS[3], [
   '--dry-run',
   '--no-output'
 ]);
+
+assert(!existsSync(SMOKE_ARTIFACT_ROOT), `dry-run smoke must not create its root: ${SMOKE_ARTIFACT_ROOT}`);
+for (const artifactPath of Object.values(SMOKE_PATHS)) {
+  assert(!existsSync(artifactPath), `dry-run smoke must not write artifacts: ${artifactPath}`);
+}
 
 console.log(
   `PASS: oil thermal history-window capacity supports ${OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES} samples for the ${OIL_THERMAL_BASELINE_TARGET_DAYS}-day gate.`
