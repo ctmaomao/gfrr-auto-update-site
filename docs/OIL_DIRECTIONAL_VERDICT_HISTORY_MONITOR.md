@@ -1,11 +1,12 @@
 # ODP Verdict History Monitor
 
 P64 adds a read-only history and drift monitor for the committed
-`data/oil-directional-pressure.json` verdict stream.
+`data/oil-directional-pressure.json` verdict stream. P66 adds an orthogonal
+persistent-low-confidence observation without changing the primary status.
 
 ## Contract
 
-- Monitor: `oil-directional-verdict-history-monitor-p64`
+- Monitor: `oil-directional-verdict-history-monitor-p66`
 - Command: `npm run monitor:oil-directional-verdict-history`
 - Check: `npm run check:oil-directional-verdict-history-monitor`
 - Input: committed `data/oil-directional-pressure.json` git history only
@@ -22,6 +23,8 @@ classifier. It summarizes:
 - the current verdict streak and the latest seven-sample transition count;
 - physical/final divergence frequency;
 - confidence and data-sufficiency counts;
+- the latest seven-sample low-confidence count and
+  `persistentLowConfidence` observation;
 - maximum committed evidence age and degraded-evidence count;
 - existing global-overlay effect and confidence-adjustment state.
 
@@ -41,6 +44,22 @@ classifier. It summarizes:
   history is absent.
 
 These are monitor labels, not new ODP verdicts or trading signals.
+
+## Persistent low confidence
+
+When all seven latest valid samples have `confidence=low`, the monitor records:
+
+- `trend.recentLowConfidenceCount=7`;
+- `trend.persistentLowConfidence=true`;
+- `observations.persistentLowConfidence.active=true`;
+- `manualAction.suggestedNow=true`;
+- recommendation
+  `review_existing_confidence_caps_without_changing_classifier`.
+
+This observation does not replace `stable_current_verdict`, does not set
+`manualAction.requiredNow=true` by itself, and does not change the classifier.
+It asks the operator to review why existing evidence-quality caps remain active
+without weakening those caps merely to remove the observation.
 
 ## Boundaries
 

@@ -8,7 +8,7 @@ import process from 'node:process';
 import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
 import { FINAL_BIAS_VALUES } from './odp-classifier.mjs';
 
-export const MONITOR_VERSION = 'oil-directional-verdict-history-monitor-p64';
+export const MONITOR_VERSION = 'oil-directional-verdict-history-monitor-p66';
 export const ODP_PATH = 'data/oil-directional-pressure.json';
 export const DEFAULT_OUTPUT =
   'manual-artifacts/oil-directional/oil-directional-verdict-history-monitor-latest.json';
@@ -227,6 +227,12 @@ export function buildVerdictTrend(samples) {
   }
 
   const recentSamples = samples.slice(0, RECENT_WINDOW);
+  const recentLowConfidenceCount = recentSamples.filter(
+    (sample) => sample.confidence === 'low'
+  ).length;
+  const persistentLowConfidence =
+    recentSamples.length >= RECENT_WINDOW
+    && recentLowConfidenceCount === recentSamples.length;
   let recentVerdictTransitionCount = 0;
   let recentFamilyTransitionCount = 0;
   for (let index = 0; index < recentSamples.length - 1; index += 1) {
@@ -252,6 +258,8 @@ export function buildVerdictTrend(samples) {
     verdictTransitionCount: transitions.length,
     familyTransitionCount,
     recentWindowSamples: recentSamples.length,
+    recentLowConfidenceCount,
+    persistentLowConfidence,
     recentVerdictTransitionCount,
     recentFamilyTransitionCount,
     currentVerdictStreak,
@@ -280,6 +288,31 @@ export function classifyVerdictMonitorStatus(trend, invalidCommitCount = 0) {
   return 'stable_current_verdict';
 }
 
+export function buildVerdictManualAction(status, trend) {
+  const requiredNow = status.startsWith('watch_') || status === 'no_valid_verdict_history';
+  const suggestedNow = trend.persistentLowConfidence === true;
+  const recommendation =
+    status === 'stable_current_verdict'
+      ? suggestedNow
+        ? 'review_existing_confidence_caps_without_changing_classifier'
+        : 'continue_read_only_monitoring'
+      : status === 'watch_active_price_physical_divergence'
+        ? 'review_price_vs_physical_divergence_without_changing_classifier'
+        : status === 'watch_recent_verdict_churn'
+          ? 'review_recent_evidence_timestamps_and_transition_context'
+          : status === 'watch_latest_evidence_degraded'
+            ? 'review_latest_source_status_and_freshness_before_interpretation'
+            : status === 'watch_latest_data_insufficient'
+              ? 'wait_for_complete_odp_refresh_and_review_missing_evidence'
+              : 'wait_for_valid_odp_history_then_rerun_monitor';
+  return {
+    requiredNow,
+    suggestedNow,
+    recommendation,
+    followUpCheck: 'npm run check:oil-directional-verdict-history-monitor'
+  };
+}
+
 function createMonitorResult(options) {
   const commits = readCommitRows(options.maxCommits);
   const samples = [];
@@ -306,6 +339,7 @@ function createMonitorResult(options) {
 
   const trend = buildVerdictTrend(samples);
   const status = classifyVerdictMonitorStatus(trend, invalid.length);
+  const manualAction = buildVerdictManualAction(status, trend);
   return {
     monitorVersion: MONITOR_VERSION,
     generatedAt: new Date().toISOString(),
@@ -323,24 +357,20 @@ function createMonitorResult(options) {
       invalidCommitCount: invalid.length
     },
     trend,
+    observations: {
+      persistentLowConfidence: {
+        active: trend.persistentLowConfidence,
+        confidenceLevel: 'low',
+        observedSamples: trend.recentLowConfidenceCount,
+        windowSamples: trend.recentWindowSamples,
+        requiredSamples: RECENT_WINDOW,
+        changesPrimaryStatus: false,
+        changesClassifier: false
+      }
+    },
     samples,
     invalid,
-    manualAction: {
-      requiredNow: status.startsWith('watch_') || status === 'no_valid_verdict_history',
-      recommendation:
-        status === 'stable_current_verdict'
-          ? 'continue_read_only_monitoring'
-          : status === 'watch_active_price_physical_divergence'
-            ? 'review_price_vs_physical_divergence_without_changing_classifier'
-            : status === 'watch_recent_verdict_churn'
-              ? 'review_recent_evidence_timestamps_and_transition_context'
-              : status === 'watch_latest_evidence_degraded'
-                ? 'review_latest_source_status_and_freshness_before_interpretation'
-                : status === 'watch_latest_data_insufficient'
-                  ? 'wait_for_complete_odp_refresh_and_review_missing_evidence'
-                  : 'wait_for_valid_odp_history_then_rerun_monitor',
-      followUpCheck: 'npm run check:oil-directional-verdict-history-monitor'
-    },
+    manualAction,
     artifacts: {
       outputPath: options.dryRun || !options.writeOutput ? null : resolve(options.output)
     },
@@ -430,8 +460,12 @@ function appendGithubSummary(options, result) {
     `- Current verdict streak: \`${result.trend.currentVerdictStreak}\``,
     `- Recent verdict transitions: \`${result.trend.recentVerdictTransitionCount}/${result.trend.recentWindowSamples}\``,
     `- Active divergence: \`${latest?.divergenceActive ?? false}\``,
+    `- Latest confidence: \`${latest?.confidence ?? 'missing'}\``,
+    `- Persistent low confidence: \`${result.trend.persistentLowConfidence}\` (${result.trend.recentLowConfidenceCount}/${result.trend.recentWindowSamples})`,
     `- Latest max evidence age: \`${latest?.maxEvidenceAgeDays ?? 'missing'} days\``,
     `- Manual action required now: \`${result.manualAction.requiredNow}\``,
+    `- Manual review suggested now: \`${result.manualAction.suggestedNow}\``,
+    `- Recommendation: \`${result.manualAction.recommendation}\``,
     `- Production data write approved: \`${result.productionDataWriteApproved}\``,
     '',
     `Boundary: ${result.boundary}`,
@@ -459,8 +493,13 @@ function printSummary(result) {
   console.log(`currentVerdictStreak: ${result.trend.currentVerdictStreak}`);
   console.log(`recentVerdictTransitions: ${result.trend.recentVerdictTransitionCount}/${result.trend.recentWindowSamples}`);
   console.log(`activeDivergence: ${latest?.divergenceActive ?? false}`);
+  console.log(`latestConfidence: ${latest?.confidence ?? '—'}`);
+  console.log(
+    `persistentLowConfidence: ${result.trend.persistentLowConfidence} (${result.trend.recentLowConfidenceCount}/${result.trend.recentWindowSamples})`
+  );
   console.log(`latestMaxEvidenceAgeDays: ${latest?.maxEvidenceAgeDays ?? '—'}`);
   console.log(`manualAction.requiredNow: ${result.manualAction.requiredNow}`);
+  console.log(`manualAction.suggestedNow: ${result.manualAction.suggestedNow}`);
   console.log(`recommendation: ${result.manualAction.recommendation}`);
   if (result.artifacts.outputPath) console.log(`outputPath: ${result.artifacts.outputPath}`);
   console.log(`boundary: ${result.boundary}`);

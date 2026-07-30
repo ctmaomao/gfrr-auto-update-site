@@ -1475,7 +1475,7 @@ production baseline. Do not add `--write-production-baseline` until the packet,
 quarantine composition, facility p95 changes, and current request health have
 been reviewed separately.
 
-### ODP P64 verdict history monitor
+### ODP P64/P66 verdict history monitor
 
 Run the monitor locally without writing an artifact:
 
@@ -1497,6 +1497,13 @@ and appends a GitHub Summary.
   or diagnose a complete ODP refresh; do not substitute missing evidence.
 - `no_valid_verdict_history`: confirm `fetch-depth: 0`, repository history, and
   the committed ODP schema before rerunning.
+
+P66 adds an orthogonal confidence observation. When the latest seven valid
+samples are all `low`, `trend.persistentLowConfidence=true` and
+`manualAction.suggestedNow=true`, while the primary status can remain
+`stable_current_verdict` and `manualAction.requiredNow` remains false. Review
+the existing evidence-quality caps and their source/freshness context; do not
+weaken the classifier or caps merely to clear the observation.
 
 The monitor never fetches sources, triggers refresh, writes production data,
 recalculates the classifier, or creates a new score. Its artifact is evidence

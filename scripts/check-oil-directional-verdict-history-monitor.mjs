@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import {
+  buildVerdictManualAction,
   buildVerdictTrend,
   classifyVerdictMonitorStatus,
   MONITOR_VERSION,
@@ -75,6 +76,49 @@ function assertBehavior() {
     classifyVerdictMonitorStatus(stableTrend) === 'stable_current_verdict',
     'stable trend classification mismatch'
   );
+  requireValue(stableTrend.persistentLowConfidence === false, 'short low-confidence run must not be persistent');
+
+  const persistentLowConfidenceTrend = buildVerdictTrend(
+    Array.from({ length: 7 }, () => sample('moderate_bullish'))
+  );
+  requireValue(
+    persistentLowConfidenceTrend.recentLowConfidenceCount === 7,
+    'persistent low-confidence count mismatch'
+  );
+  requireValue(
+    persistentLowConfidenceTrend.persistentLowConfidence === true,
+    'seven recent low-confidence samples must activate the observation'
+  );
+  requireValue(
+    classifyVerdictMonitorStatus(persistentLowConfidenceTrend) === 'stable_current_verdict',
+    'persistent low confidence must not replace the primary monitor status'
+  );
+  const persistentManualAction = buildVerdictManualAction(
+    'stable_current_verdict',
+    persistentLowConfidenceTrend
+  );
+  requireValue(
+    persistentManualAction.requiredNow === false,
+    'persistent low confidence alone must not require immediate action'
+  );
+  requireValue(
+    persistentManualAction.suggestedNow === true,
+    'persistent low confidence must suggest manual review'
+  );
+  requireValue(
+    persistentManualAction.recommendation
+      === 'review_existing_confidence_caps_without_changing_classifier',
+    'persistent low-confidence recommendation mismatch'
+  );
+
+  const mixedConfidenceTrend = buildVerdictTrend([
+    ...Array.from({ length: 6 }, () => sample('moderate_bullish')),
+    sample('moderate_bullish', 'moderate_bullish', { confidence: 'medium' })
+  ]);
+  requireValue(
+    mixedConfidenceTrend.persistentLowConfidence === false,
+    'mixed recent confidence must not activate the persistent observation'
+  );
 
   const divergenceTrend = buildVerdictTrend([
     sample('false_down_physical_stress', 'moderate_bullish'),
@@ -140,6 +184,19 @@ function assertDryRun() {
   requireValue(result.productionImpact?.calculatesNewVerdict === false, 'dry-run must not calculate a new verdict');
   requireValue(result.productionImpact?.calculatesNewScore === false, 'dry-run must not calculate a new score');
   requireValue(result.artifacts?.outputPath === null, 'dry-run must not expose an output path');
+  const confidenceObservation = result.observations?.persistentLowConfidence;
+  requireValue(
+    typeof confidenceObservation?.active === 'boolean',
+    'dry-run persistent-low-confidence active flag missing'
+  );
+  requireValue(
+    confidenceObservation?.changesPrimaryStatus === false,
+    'low-confidence observation must not change the primary status'
+  );
+  requireValue(
+    result.manualAction?.suggestedNow === confidenceObservation?.active,
+    'dry-run suggestion must follow the persistent-low-confidence observation'
+  );
 }
 
 function assertStaticBoundaries() {
@@ -150,10 +207,14 @@ function assertStaticBoundaries() {
   const docs = read(DOC_PATH);
 
   for (const marker of [
-    "export const MONITOR_VERSION = 'oil-directional-verdict-history-monitor-p64'",
+    "export const MONITOR_VERSION = 'oil-directional-verdict-history-monitor-p66'",
     'git_show_history',
     'function readJsonAtCommit',
     'function createMonitorResult',
+    'persistentLowConfidence',
+    'changesPrimaryStatus: false',
+    'buildVerdictManualAction',
+    'Recommendation:',
     'calculatesNewVerdict: false',
     'calculatesNewScore: false',
     'artifact-only ODP verdict history and drift monitor'
@@ -197,8 +258,9 @@ function assertStaticBoundaries() {
   requireValue(packageJson.scripts['check:all']?.includes('check:oil-directional'), 'check:all missing ODP suite');
   requireIncludes(suite, 'check:oil-directional-verdict-history-monitor', 'scripts/check-suite.mjs');
   for (const marker of [
-    'oil-directional-verdict-history-monitor-p64',
+    'oil-directional-verdict-history-monitor-p66',
     'git history only',
+    'persistentLowConfidence',
     'productionDataWriteApproved=false',
     'calculatesNewVerdict=false',
     'calculatesNewScore=false'
@@ -212,7 +274,7 @@ function assertStaticBoundaries() {
     'scripts/modules/decision.js',
     'scripts/modules/buildCrossValidationMatrix.js'
   ]) {
-    forbidIncludes(read(path), 'oil-directional-verdict-history-monitor-p64', path);
+    forbidIncludes(read(path), 'oil-directional-verdict-history-monitor-p66', path);
   }
 }
 

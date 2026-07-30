@@ -1226,6 +1226,8 @@ P63(Web NGrams frontend aggregate health) 新增 `docs/GDELT_WEB_NGRAMS_FRONTEND
 
 P64(ODP verdict history monitor) 新增 `oil-directional-verdict-history-monitor-p64`。该 artifact-only monitor 的唯一 production input 是 committed `data/oil-directional-pressure.json` git history;输出 contract 包含 `status`、`input`、`trend`、sanitized `samples`、`invalid`、`manualAction`、all-false `productionImpact` 与 `boundary`。`trend` 只聚合既有 final/physical bias counts、verdict/family transitions、recent seven-sample transitions、current streak、divergence count、confidence/data-sufficiency counts、max evidence age/degraded-evidence sample count 和 global-overlay effect counts。`productionDataWriteApproved=false`,`calculatesNewVerdict=false`,`calculatesNewScore=false`;不得写 `data/*.json` / `realtime/*.json`,不得触发 ODP/Daily/Worker,不得进入 `values.*`、scoring、decision、execution、position、Brent promotion、ODP `finalBias`、Global Risk Heatmap 或 cross-validation。
 
+P66 将 monitor contract 升为 `oil-directional-verdict-history-monitor-p66`,在 `trend` 增加 `recentLowConfidenceCount` / `persistentLowConfidence`,并增加 `observations.persistentLowConfidence`。只有 recent window 达到 7 个有效样本且 7/7 `confidence='low'` 时 `active=true`;该观察固定 `changesPrimaryStatus=false`,`changesClassifier=false`。它可令 `manualAction.suggestedNow=true` 并建议审阅既有 confidence caps,但不得单独令 `manualAction.requiredNow=true`,不得替换 primary status,不得修改 classifier/caps、ODP `finalBias` 或任何 scoring/decision/execution/position 路径。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
