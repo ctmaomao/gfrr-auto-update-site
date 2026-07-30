@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { buildEnergyTransportLayer } from './run-daily-pipeline.mjs';
 
 const errors = [];
 
@@ -58,6 +59,40 @@ function assertEnergyTransportChokepoint(layer, path, key, requireLiveValues = f
   }
 }
 
+function assertEnergyTransportMissingCoreFailClosed() {
+  const latestDate = new Date().toISOString().slice(0, 10);
+  const laggedDate = new Date(Date.now() - (3 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+  const rows = Array.from({ length: 8 }, (_, index) => ({
+    portid: `chokepoint${index + 1}`,
+    date: index === 5 ? laggedDate : latestDate,
+    nTanker: 10 + index,
+    nTotal: 20 + index,
+    capacityTanker: 1000 + index,
+    capacityTotal: 2000 + index
+  }));
+  const layer = buildEnergyTransportLayer(rows);
+
+  if (layer.sourceStatus?.chokepoints !== 'missing') {
+    fail('energyTransport missing-core replay must fail closed to sourceStatus.missing');
+  }
+  if (layer.latestDate !== null || layer.latestAgeDays !== null) {
+    fail('energyTransport missing-core replay must clear parent latestDate/latestAgeDays');
+  }
+  if (layer.fetchReason !== 'missing_core_chokepoints:hormuz') {
+    fail(`energyTransport missing-core replay has unexpected fetchReason: ${layer.fetchReason}`);
+  }
+  if (layer.chokepoints?.hormuz?.latest?.date !== laggedDate) {
+    fail('energyTransport missing-core replay must preserve the lagged Hormuz diagnostic');
+  }
+  if (
+    layer.transportShockCandidate?.status !== 'unavailable' ||
+    layer.transportShockCandidate?.eligibleForMainScore !== false ||
+    layer.transportShockCandidate?.boundaries?.affectsScoring !== false
+  ) {
+    fail('energyTransport missing-core replay must keep the transport score path disabled');
+  }
+}
+
 const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const validateText = readText('scripts/validate-data.mjs');
@@ -67,6 +102,7 @@ const agentsText = readText('AGENTS.md');
 
 const macroDrivers = radarData?.macroDrivers;
 if (!isPlainObject(macroDrivers)) fail('macroDrivers is missing or not an object');
+assertEnergyTransportMissingCoreFailClosed();
 
 const freight = macroDrivers?.shippingFreight;
 assertLayer('macroDrivers.shippingFreight', freight);

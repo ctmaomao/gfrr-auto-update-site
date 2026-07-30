@@ -8102,7 +8102,7 @@ function classifyRedSeaToCapeRerouting(chokepoints) {
   };
 }
 
-function buildEnergyTransportLayer(rows) {
+export function buildEnergyTransportLayer(rows) {
   const latestDate = rows[0]?.date || null;
   const latestAgeDays = dateOnlyAgeDays(latestDate);
   if (!latestDate || latestAgeDays === null) throw new Error('portwatch:chokepoints missing latestDate');
@@ -8130,8 +8130,6 @@ function buildEnergyTransportLayer(rows) {
     return {
       ...buildMissingEnergyTransport(`missing_core_chokepoints:${missingCore.join(',')}`),
       sourceStatus: { chokepoints: 'missing' },
-      latestDate,
-      latestAgeDays,
       chokepoints
     };
   }
