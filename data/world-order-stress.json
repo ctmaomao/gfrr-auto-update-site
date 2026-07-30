@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-07-29T23:58:03.047Z",
+  "updatedAt": "2026-07-30T09:01:11.376Z",
   "sourceMode": "computed_with_external_sources",
-  "score": 65,
+  "score": 66,
   "state": "multi_theater_stress",
   "labelZh": "多战区压力期",
   "confidence": 1,
@@ -11,21 +11,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-07-29T23:57:43.830Z",
-    "ageMinutes": 0,
+    "updatedAt": "2026-07-30T08:57:43.815Z",
+    "ageMinutes": 3,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 91.82,
-    "gold": 4088.7,
+    "brent": 91.7,
+    "gold": 4061,
     "vix": 18.21,
     "dxy": 120.7105,
     "hyOas": 2.84,
     "us10y": 4.61,
     "real10y": 2.41,
-    "spx": 7428.78,
-    "brentSource": "FRED:DCOILBRENTEU",
-    "brentPromotionApplied": false,
-    "brentPromotionReason": "fred-anchor-not-stale",
+    "spx": 7316.15,
+    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
+    "brentPromotionApplied": true,
+    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
     "fallbackReason": null
   },
   "externalSources": {
@@ -7721,7 +7721,7 @@
           "Sudan",
           "Taiwan"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "100 units/month free tier",
         "queriesRun": [
           {
@@ -7734,15 +7734,15 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-07-29T23:57:58.390Z"
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-07-30T09:01:11.073Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-07-29T23:57:58.640Z",
+      "lastFetchedAt": "2026-07-30T09:01:11.211Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 10,
@@ -7792,18 +7792,18 @@
     "acled": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-07-23T06:40:35.859Z",
+      "lastFetchedAt": "2026-07-30T08:47:15.443Z",
       "summary": {
-        "eventsLast4Weeks": 31261,
-        "eventsLast12Weeks": 101528,
-        "eventsDelta4Vs12": -0.076284,
-        "fatalitiesLast4Weeks": 12573,
-        "fatalitiesLast12Weeks": 42755,
-        "civilianTargetingShareLast4Weeks": 0.090784,
-        "latestWeek": "2026-07-10",
+        "eventsLast4Weeks": 32293,
+        "eventsLast12Weeks": 101241,
+        "eventsDelta4Vs12": -0.043085,
+        "fatalitiesLast4Weeks": 12502,
+        "fatalitiesLast12Weeks": 41110,
+        "civilianTargetingShareLast4Weeks": 0.09036,
+        "latestWeek": "2026-07-17",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
-        "sourceFreshness": "aging",
+        "sourceFreshness": "fresh",
         "politicalViolenceEventsLatestFullYear": 210308,
         "politicalViolenceYoyDelta": 0.202511,
         "civilianTargetingShareLatestFullYear": 0.313126,
@@ -7812,7 +7812,7 @@
         "monthlyAsOfDate": "2026-07-03",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-07-10，近4周事件相对12周均值变化 -7.6%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.3%。"
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-07-17，近4周事件相对12周均值变化 -4.3%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.3%。"
       }
     }
   },
@@ -7833,7 +7833,7 @@
         {
           "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
           "source": "acled",
-          "summary": "ACLED 手动周度聚合更新至 2026-07-10，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -8%。",
+          "summary": "ACLED 手动周度聚合更新至 2026-07-17，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -4%。",
           "value": 19,
           "direction": "neutral",
           "confidence": 0.9
@@ -7856,7 +7856,7 @@
       ]
     },
     "multiTheaterConflict": {
-      "score": 83,
+      "score": 84,
       "labelZh": "多战区冲突",
       "trend": "rising",
       "evidence": [
@@ -7886,7 +7886,7 @@
       ]
     },
     "capitalControlRisk": {
-      "score": 78,
+      "score": 79,
       "labelZh": "资本管制与金融抑制风险",
       "trend": "rising",
       "evidence": [
@@ -7908,8 +7908,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4088.7，显示避险或实际利率压力定价。",
-          "value": 4088.7,
+          "summary": "基于 Worker 快变量，黄金当前值 4061，显示避险或实际利率压力定价。",
+          "value": 4061,
           "direction": "up",
           "confidence": 0.75
         },
@@ -7917,7 +7917,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "120.7105/4088.7",
+          "value": "120.7105/4061",
           "direction": "up",
           "confidence": 0.6
         },
@@ -7925,17 +7925,17 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7428.78/4088.7",
+          "value": "7316.15/4061",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：fred-anchor-not-stale。",
-          "value": 91.82,
-          "direction": "neutral",
-          "confidence": 0.45
+          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
+          "value": 91.7,
+          "direction": "up",
+          "confidence": 0.65
         }
       ]
     }
@@ -7954,7 +7954,7 @@
     {
       "key": "multiTheaterConflict",
       "labelZh": "多战区冲突",
-      "score": 83
+      "score": 84
     }
   ],
   "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、阵营化与联盟硬化、多战区冲突。该层仅用于结构性风险识别。",
