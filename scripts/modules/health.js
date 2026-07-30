@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-web-ngrams-health-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-web-ngrams-health-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-web-ngrams-age-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-web-ngrams-age-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

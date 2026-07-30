@@ -1,0 +1,40 @@
+{
+  "contractVersion": "gdelt-web-ngrams-frontend-sample-age-p67",
+  "status": "frontend_sample_age_approved",
+  "sourceField": "data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback",
+  "requiredFrontendGate": "gdelt-web-ngrams-frontend-aggregate-health-p63",
+  "allowedFrontendFields": [
+    "staleAfterHours",
+    "sampleGate.latestSelectedTimestamp"
+  ],
+  "agePolicy": {
+    "timestampFormat": "yyyyMMddHHmmss_utc",
+    "staleThresholdField": "staleAfterHours",
+    "futureToleranceHours": 1,
+    "invalidState": "unavailable",
+    "copyScope": "historical_review_sample_age_only"
+  },
+  "approvalState": {
+    "frontendSampleAgeApproved": true,
+    "headlineDisplayApproved": false,
+    "rawContentDisplayApproved": false,
+    "currentSignalEnhancementApproved": false,
+    "eventConfirmationApproved": false,
+    "oilDirectionInputApproved": false,
+    "workflowAutomationApproved": false,
+    "liveFetchApproved": false,
+    "scoreApproved": false
+  },
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "boundary": "frontend may derive only historical reviewed sample date and age from the existing aggregate fallback cache; no current-signal enhancement, event confirmation, oil-direction input, live fetch, raw content, or scoring"
+}

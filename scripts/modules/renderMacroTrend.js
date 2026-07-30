@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=odp-web-ngrams-health-1';
+import { $ } from './config.js?v=odp-web-ngrams-age-1';
 
 function asNumber(value) {
   const n = Number(value);

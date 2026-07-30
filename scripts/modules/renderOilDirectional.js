@@ -130,6 +130,7 @@ const ENERGY_TEXT_IDS = [
   'odp-news-event-headline-gate',
   'odp-news-event-source-health',
   'odp-news-event-web-ngrams-health',
+  'odp-news-event-web-ngrams-age',
   'odp-news-event-market',
   'odp-news-event-claim-polarity',
   'odp-news-event-claim-quality',
@@ -396,6 +397,7 @@ function clearEnergyAddendum() {
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', '');
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', '');
   setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', '');
+  setToneClass('odp-news-event-web-ngrams-age', 'odp-news-web-ngrams-health', '');
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', '');
   setToneClass('odp-news-event-claim-quality', 'odp-news-claim-quality', '');
   setToneClass('odp-thermal-status', 'odp-thermal-status', '');
@@ -852,6 +854,8 @@ function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', 'yellow');
   setLeafText('odp-news-event-web-ngrams-health', '聚合背景未批准或未加载 · 不用于当前新闻信号');
   setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', 'yellow');
+  setLeafText('odp-news-event-web-ngrams-age', '历史审阅样本日期待核 · 不用于当前新闻信号');
+  setToneClass('odp-news-event-web-ngrams-age', 'odp-news-web-ngrams-health', 'yellow');
   setLeafText('odp-news-event-market', marketText);
   setLeafText('odp-news-event-claim-polarity', '专用主张聚合未接入 · 不展示标题原文');
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', 'yellow');
@@ -925,6 +929,63 @@ function newsSourceHealthTone(data) {
   if (data.status === 'partial' || data.status === 'source_unavailable' || data.status === 'not_configured') return 'yellow';
   return '';
 }
+function parseWebNgramsTimestamp(value) {
+  const match = typeof value === 'string'
+    ? value.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/u)
+    : null;
+  if (!match) return null;
+  const parts = match.slice(1).map(Number);
+  const [year, month, day, hour, minute, second] = parts;
+  const timestampMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const date = new Date(timestampMs);
+  const valid = date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
+    && date.getUTCHours() === hour
+    && date.getUTCMinutes() === minute
+    && date.getUTCSeconds() === second;
+  return valid ? timestampMs : null;
+}
+
+export function webNgramsSampleAge(cache, nowMs = Date.now()) {
+  const timestamp = cache?.sampleGate?.latestSelectedTimestamp;
+  const timestampMs = parseWebNgramsTimestamp(timestamp);
+  const staleAfterHours = Number.isFinite(cache?.staleAfterHours)
+    && cache.staleAfterHours > 0
+    ? cache.staleAfterHours
+    : null;
+  if (timestampMs === null || staleAfterHours === null || !Number.isFinite(nowMs)) {
+    return {
+      state: 'unavailable',
+      text: '历史审阅样本日期待核 · 不用于当前新闻信号',
+      tone: 'yellow',
+      ageHours: null,
+    };
+  }
+  const ageHours = (nowMs - timestampMs) / (60 * 60 * 1000);
+  if (ageHours < -1) {
+    return {
+      state: 'unavailable',
+      text: '历史审阅样本时间异常 · 不用于当前新闻信号',
+      tone: 'yellow',
+      ageHours: null,
+    };
+  }
+  const safeAgeHours = Math.max(0, ageHours);
+  const ageText = safeAgeHours < 24
+    ? `距今约 ${Math.round(safeAgeHours)} 小时`
+    : `距今约 ${Math.floor(safeAgeHours / 24)} 天`;
+  const asOfDate = `${timestamp.slice(0, 4)}-${timestamp.slice(4, 6)}-${timestamp.slice(6, 8)}`;
+  const thresholdText = `${Math.round(staleAfterHours)} 小时`;
+  const stale = safeAgeHours > staleAfterHours;
+  return {
+    state: stale ? 'stale' : 'within_window',
+    text: `历史审阅样本截至 ${asOfDate} · ${ageText} · ${stale ? `已超 ${thresholdText}时效` : `${thresholdText}内`}`,
+    tone: stale ? 'yellow' : 'green',
+    ageHours: safeAgeHours,
+  };
+}
+
 function webNgramsSourceHealth(data) {
   const cache = data?.sourceCaches?.gdeltWebNgramsFallback;
   const approved = cache?.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v1'
@@ -935,6 +996,7 @@ function webNgramsSourceHealth(data) {
     return {
       text: '聚合背景未批准或未加载 · 不用于当前新闻信号',
       tone: 'yellow',
+      sampleAge: webNgramsSampleAge(null),
     };
   }
 
@@ -957,6 +1019,7 @@ function webNgramsSourceHealth(data) {
   return {
     text: `${stateText} · ${sampleText} · ${windowText} · ${warningText} · 不用于当前新闻信号`,
     tone: gatePassed && warnings === 0 ? 'green' : 'yellow',
+    sampleAge: webNgramsSampleAge(cache),
   };
 }
 function newsFallbackContextText(data) {
@@ -1133,6 +1196,8 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', newsSourceHealthTone(data));
   setLeafText('odp-news-event-web-ngrams-health', webNgramsHealth.text);
   setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', webNgramsHealth.tone);
+  setLeafText('odp-news-event-web-ngrams-age', webNgramsHealth.sampleAge.text);
+  setToneClass('odp-news-event-web-ngrams-age', 'odp-news-web-ngrams-health', webNgramsHealth.sampleAge.tone);
   setLeafText('odp-news-event-market', `市场反应 ${marketReaction} 条 · ${brentText}`);
   setLeafText('odp-news-event-claim-polarity', claimPolarityText(data));
   setToneClass('odp-news-event-claim-polarity', 'odp-news-claim-polarity', claimPolarityTone(data));

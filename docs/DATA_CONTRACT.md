@@ -1019,7 +1019,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-health-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-age-1`）。
 
 稳定边界：
 
@@ -1224,6 +1224,8 @@ P56(Web NGrams fallback) 新增 `docs/GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_PRODUCTI
 
 P63(Web NGrams frontend aggregate health) 新增 `docs/GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH.md` + `docs/fixtures/oil-news/gdelt-web-ngrams-frontend-aggregate-health-p63.json` + `npm run check:gdelt-web-ngrams-frontend-aggregate-health`。P63 只后继修改 P56 cache 的 frontend approval marker 为 `frontendDisplayApproved=true`,并允许 `scripts/modules/renderOilDirectional.js` 从 `sourceCaches.gdeltWebNgramsFallback` 读取 contract/displayMode/approval、sampleGate 的 state/usableSampleCount/selectedTimestampCount/observationWindowHours/warningCount 与 sourceHealth.usedForCurrentSignal,渲染 aggregate-only 中文源健康。renderer 遇到缺字段、错误 contract、错误 displayMode 或未批准时必须 fail-closed;不得读取或展示 article list/title/URL/snippet/body/raw response。`currentSignalEnhancement=false`,`eventConfirmationSource=false`,`headlineSource=false`,`oilDirectionInput=false`,`eligibleForScoring=false`,`usedForCurrentOilNewsSignal=false`,`usedForOdpFinalBias=false`,`usedForMainScore=false`,`workflowAutomationApproved=false`,`liveFetchApproved=false`,`apiKeyReadApproved=false` 均保持;P63 不改变 Oil News signal、ODP build/classifier/finalBias、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
 
+P67(Web NGrams frontend sample age) 新增 `gdelt-web-ngrams-frontend-sample-age-p67` additive approval,在 P63 gate 不变、production cache 不改的前提下,额外允许 renderer 读取 `sampleGate.latestSelectedTimestamp` 与 `staleAfterHours`。时间戳必须严格按 UTC `yyyyMMddHHmmss` 解析；前端只可派生历史审阅样本截至日期、距今小时/天数与是否超过 cache `staleAfterHours`,无效或超过 1 小时未来值必须显示 unavailable。该 age 不是当前新闻 freshness、事件确认、oil direction input 或 score；不得读取/展示 headline/URL/snippet/body/raw response,不得改变 Oil News signal、ODP `finalBias`、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
+
 P64(ODP verdict history monitor) 新增 `oil-directional-verdict-history-monitor-p64`。该 artifact-only monitor 的唯一 production input 是 committed `data/oil-directional-pressure.json` git history;输出 contract 包含 `status`、`input`、`trend`、sanitized `samples`、`invalid`、`manualAction`、all-false `productionImpact` 与 `boundary`。`trend` 只聚合既有 final/physical bias counts、verdict/family transitions、recent seven-sample transitions、current streak、divergence count、confidence/data-sufficiency counts、max evidence age/degraded-evidence sample count 和 global-overlay effect counts。`productionDataWriteApproved=false`,`calculatesNewVerdict=false`,`calculatesNewScore=false`;不得写 `data/*.json` / `realtime/*.json`,不得触发 ODP/Daily/Worker,不得进入 `values.*`、scoring、decision、execution、position、Brent promotion、ODP `finalBias`、Global Risk Heatmap 或 cross-validation。
 
 P66 将 monitor contract 升为 `oil-directional-verdict-history-monitor-p66`,在 `trend` 增加 `recentLowConfidenceCount` / `persistentLowConfidence`,并增加 `observations.persistentLowConfidence`。只有 recent window 达到 7 个有效样本且 7/7 `confidence='low'` 时 `active=true`;该观察固定 `changesPrimaryStatus=false`,`changesClassifier=false`。它可令 `manualAction.suggestedNow=true` 并建议审阅既有 confidence caps,但不得单独令 `manualAction.requiredNow=true`,不得替换 primary status,不得修改 classifier/caps、ODP `finalBias` 或任何 scoring/decision/execution/position 路径。
@@ -1296,26 +1298,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-web-ngrams-health-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 新增脱敏请求健康展示行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+odp-web-ngrams-age-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变数据契约、Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 新增脱敏请求健康展示行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-health-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-web-ngrams-age-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-web-ngrams-health-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-web-ngrams-health-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-web-ngrams-health-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-web-ngrams-age-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-web-ngrams-age-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-web-ngrams-age-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-web-ngrams-health-1
-npm run bump:frontend-asset-version -- odp-web-ngrams-health-1
+node scripts/bump-frontend-asset-version.mjs odp-web-ngrams-age-1
+npm run bump:frontend-asset-version -- odp-web-ngrams-age-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-web-ngrams-health-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-web-ngrams-age-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

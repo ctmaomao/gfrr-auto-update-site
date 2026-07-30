@@ -1,4 +1,4 @@
-# GDELT Web NGrams Frontend Aggregate Health
+# GDELT Web NGrams Frontend Aggregate Health and Sample Age
 
 P63 approves one narrow read-only frontend projection from:
 
@@ -23,6 +23,22 @@ The exact allowlist lives in
 The renderer is fail-closed: a missing approval marker, wrong contract, or wrong
 display mode produces an unavailable message instead of consuming unreviewed
 fields.
+
+## P67 historical review sample age
+
+P67 adds the narrow
+`gdelt-web-ngrams-frontend-sample-age-p67` approval. The new
+`frontendSampleAgeApproved=true` fixture authorizes two already-existing cache
+fields:
+
+- `sampleGate.latestSelectedTimestamp`;
+- `staleAfterHours`.
+
+The renderer parses `latestSelectedTimestamp` as UTC `yyyyMMddHHmmss`, displays
+the historical review sample date and age, and compares it with
+`staleAfterHours`. Invalid or more-than-one-hour future timestamps fail closed
+to an unavailable message. This is historical review sample age only, not
+current news freshness or event confirmation.
 
 ## Preserved boundaries
 
