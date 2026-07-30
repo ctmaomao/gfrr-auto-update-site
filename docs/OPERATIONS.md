@@ -1440,6 +1440,41 @@ The 2026-07-29 reviewed promotion used `--max-commits 240 --max-samples 100`. Th
 - Never copy ignored review packets into tracked data. Production config may only be written by an explicit reviewed promotion command.
 - P61 does not change FIRMS request policy, repeated-observation thresholds, ODP `finalBias`, scoring, decision, execution, position, Brent promotion, Global Risk Heatmap, or cross-validation.
 
+### ODP P65 FIRMS 30-day history-window capacity
+
+The shared baseline preparation, rolling refresh, and quality monitor defaults
+are now 240 commits / 240 samples. The former 100-sample ceiling covered only
+about 14.46 healthy days at the observed cadence and could not reach the
+existing 30-day quality gate.
+
+Run the no-write capacity check first:
+
+```bash
+npm run check:oil-thermal-history-window-capacity
+npm run monitor:oil-thermal-baseline-quality -- --dry-run --no-output
+```
+
+Dry-run discovers candidate history but reviews only samples already
+materialized in the existing archive directory. To materialize the expanded
+history and review the same set, run the artifact-only monitor:
+
+```bash
+npm run monitor:oil-thermal-baseline-quality
+```
+
+This writes only ignored `manual-artifacts/` outputs and never writes the
+production baseline. For a separate current ignored review packet, run:
+
+```bash
+npm run prepare:oil-thermal-baseline-review -- --max-commits 240 --max-samples 240 --json
+```
+
+The 30-day threshold, P60 health filtering, and post-policy gate are unchanged.
+Crossing the threshold is a prompt for human review, not approval to write the
+production baseline. Do not add `--write-production-baseline` until the packet,
+quarantine composition, facility p95 changes, and current request health have
+been reviewed separately.
+
 ### ODP P64 verdict history monitor
 
 Run the monitor locally without writing an artifact:

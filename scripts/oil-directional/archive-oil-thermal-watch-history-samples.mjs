@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { validateOilThermalHistoryWindow } from './oil-thermal-history-window.mjs';
 
 const ARCHIVE_VERSION = 'oil-thermal-watch-history-sample-archive-p27';
 const WATCH_PATH = 'data/oil-thermal-watch.json';
@@ -83,12 +84,7 @@ function parseArgs(argv) {
     }
   }
 
-  if (!Number.isInteger(options.maxCommits) || options.maxCommits < 1 || options.maxCommits > 500) {
-    throw new Error('Invalid --max-commits. Expected integer 1..500.');
-  }
-  if (!Number.isInteger(options.maxSamples) || options.maxSamples < 1 || options.maxSamples > 100) {
-    throw new Error('Invalid --max-samples. Expected integer 1..100.');
-  }
+  validateOilThermalHistoryWindow(options.maxCommits, options.maxSamples);
   if (!isManualArtifactPath(options.outputDir)) {
     throw new Error(`Refusing to write outside manual-artifacts/: ${options.outputDir}`);
   }

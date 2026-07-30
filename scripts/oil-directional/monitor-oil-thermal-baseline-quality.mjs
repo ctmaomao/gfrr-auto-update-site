@@ -4,6 +4,12 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import {
+  OIL_THERMAL_BASELINE_DEFAULT_MAX_COMMITS,
+  OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES,
+  OIL_THERMAL_BASELINE_TARGET_DAYS,
+  validateOilThermalHistoryWindow
+} from './oil-thermal-history-window.mjs';
 
 const MONITOR_VERSION = 'oil-thermal-baseline-quality-monitor-p51';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-quality-monitor-latest.json';
@@ -11,8 +17,8 @@ const DEFAULT_OUTPUT_DIR = 'manual-artifacts/oil-thermal/watch-samples';
 const DEFAULT_REVIEW_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-samples-review-latest.json';
 const DEFAULT_READINESS_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-readiness-latest.json';
 const DEFAULT_BASELINE = 'config/oil-thermal-watch-baseline.json';
-const DEFAULT_MAX_COMMITS = 240;
-const DEFAULT_MAX_SAMPLES = 100;
+const DEFAULT_MAX_COMMITS = OIL_THERMAL_BASELINE_DEFAULT_MAX_COMMITS;
+const DEFAULT_MAX_SAMPLES = OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES;
 const DEFAULT_MIN_SAMPLES = 8;
 const PREPARE_SCRIPT = 'scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs';
 const QUALITY_ORDER = [
@@ -22,8 +28,16 @@ const QUALITY_ORDER = [
 ];
 const QUALITY_THRESHOLDS = [
   { quality: 'starter_short_window', minDays: 0, maxDays: 7 },
-  { quality: 'starter_observation_window', minDays: 7, maxDays: 30 },
-  { quality: 'established_observation_window', minDays: 30, maxDays: null }
+  {
+    quality: 'starter_observation_window',
+    minDays: 7,
+    maxDays: OIL_THERMAL_BASELINE_TARGET_DAYS
+  },
+  {
+    quality: 'established_observation_window',
+    minDays: OIL_THERMAL_BASELINE_TARGET_DAYS,
+    maxDays: null
+  }
 ];
 const BOUNDARY =
   'artifact-only oil thermal baseline quality reminder; writes ignored manual-artifacts and GitHub artifact/Summary only; does not write production baseline config; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
@@ -115,12 +129,7 @@ function parseArgs(argv) {
     }
   }
 
-  if (!Number.isInteger(options.maxCommits) || options.maxCommits < 1 || options.maxCommits > 500) {
-    throw new Error('Invalid --max-commits. Expected integer 1..500.');
-  }
-  if (!Number.isInteger(options.maxSamples) || options.maxSamples < 1 || options.maxSamples > 100) {
-    throw new Error('Invalid --max-samples. Expected integer 1..100.');
-  }
+  validateOilThermalHistoryWindow(options.maxCommits, options.maxSamples);
   if (!Number.isInteger(options.minSamples) || options.minSamples < 1 || options.minSamples > 365) {
     throw new Error('Invalid --min-samples. Expected integer 1..365.');
   }
@@ -176,7 +185,9 @@ function round(value, digits = 2) {
 function qualityForWindowDays(sampleWindowDays) {
   if (!Number.isFinite(sampleWindowDays)) return null;
   if (sampleWindowDays < 7) return 'starter_short_window';
-  if (sampleWindowDays < 30) return 'starter_observation_window';
+  if (sampleWindowDays < OIL_THERMAL_BASELINE_TARGET_DAYS) {
+    return 'starter_observation_window';
+  }
   return 'established_observation_window';
 }
 
@@ -195,11 +206,11 @@ function nextQualityThreshold(sampleWindowDays) {
       daysRemaining: round(7 - sampleWindowDays, 2)
     };
   }
-  if (sampleWindowDays < 30) {
+  if (sampleWindowDays < OIL_THERMAL_BASELINE_TARGET_DAYS) {
     return {
-      targetDays: 30,
+      targetDays: OIL_THERMAL_BASELINE_TARGET_DAYS,
       targetQuality: 'established_observation_window',
-      daysRemaining: round(30 - sampleWindowDays, 2)
+      daysRemaining: round(OIL_THERMAL_BASELINE_TARGET_DAYS - sampleWindowDays, 2)
     };
   }
   return null;

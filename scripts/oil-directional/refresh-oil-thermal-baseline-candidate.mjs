@@ -3,6 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
+import {
+  OIL_THERMAL_BASELINE_DEFAULT_MAX_COMMITS,
+  OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES,
+  validateOilThermalHistoryWindow
+} from './oil-thermal-history-window.mjs';
 
 const REFRESH_VERSION = 'oil-thermal-baseline-rolling-refresh-p49';
 const DEFAULT_OUTPUT_DIR = 'manual-artifacts/oil-thermal/watch-samples';
@@ -10,8 +15,8 @@ const DEFAULT_REVIEW_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline
 const DEFAULT_READINESS_OUTPUT = 'manual-artifacts/oil-thermal/oil-thermal-baseline-readiness-latest.json';
 const DEFAULT_FACILITIES = 'config/oil-thermal-watch-facilities.json';
 const DEFAULT_BASELINE_OUTPUT = 'config/oil-thermal-watch-baseline.json';
-const DEFAULT_MAX_COMMITS = 240;
-const DEFAULT_MAX_SAMPLES = 100;
+const DEFAULT_MAX_COMMITS = OIL_THERMAL_BASELINE_DEFAULT_MAX_COMMITS;
+const DEFAULT_MAX_SAMPLES = OIL_THERMAL_BASELINE_DEFAULT_MAX_SAMPLES;
 const DEFAULT_MIN_SAMPLES = 8;
 const PREPARE_SCRIPT = 'scripts/oil-directional/prepare-oil-thermal-baseline-review.mjs';
 const PROMOTE_SCRIPT = 'scripts/oil-directional/promote-oil-thermal-baseline-candidate.mjs';
@@ -105,12 +110,7 @@ function parseArgs(argv) {
     }
   }
 
-  if (!Number.isInteger(options.maxCommits) || options.maxCommits < 1 || options.maxCommits > 500) {
-    throw new Error('Invalid --max-commits. Expected integer 1..500.');
-  }
-  if (!Number.isInteger(options.maxSamples) || options.maxSamples < 1 || options.maxSamples > 100) {
-    throw new Error('Invalid --max-samples. Expected integer 1..100.');
-  }
+  validateOilThermalHistoryWindow(options.maxCommits, options.maxSamples);
   if (!Number.isInteger(options.minSamples) || options.minSamples < 1 || options.minSamples > 365) {
     throw new Error('Invalid --min-samples. Expected integer 1..365.');
   }

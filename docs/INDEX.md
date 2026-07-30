@@ -71,6 +71,7 @@
 - `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
 - `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — feasibility + source review; this doc stays a source-review artifact, but PR1 ingestion + checks are implemented: `data/oil-directional-pressure.json` + `scripts/oil-directional/` + `check:oil-directional`)
 - `docs/OIL_DIRECTIONAL_VERDICT_HISTORY_MONITOR.md` (P64 artifact-only git-history monitor for existing ODP verdict transitions/divergence/evidence age; no network, production write, refresh trigger, new verdict, or score)
+- `docs/OIL_THERMAL_HISTORY_WINDOW_CAPACITY.md` (P65 shared 240-sample baseline review capacity; existing P60 health gate, 30-day threshold, and manual promotion boundary unchanged)
 - `docs/OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + owner-approved implementation follow-up; EIA STEO `COPS_OPEC` → `macroDrivers.energySpareCapacity`)
 - `docs/ENERGY_INVENTORY_BALANCE_SOURCE_REVIEW.md` (P6A source-review + implementation follow-up; EIA STEO OECD commercial inventory + global net inventory withdrawals → `macroDrivers.energyInventoryBalance`)
 - `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + implementation follow-up; IMF PortWatch chokepoint source → `macroDrivers.energyTransport`)
