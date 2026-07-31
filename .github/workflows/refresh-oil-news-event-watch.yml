@@ -45,21 +45,15 @@ jobs:
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
         run: npm run build:oil-news-event-watch
 
-      - name: Refresh automated Web NGrams display cache
-        run: |
-          set -euo pipefail
-          diagnosis_path="manual-artifacts/oil-news/gdelt-web-ngrams-production-diagnosis.json"
-          npm run diagnose:gdelt-web-ngrams -- \
-            --allow-network \
-            --max-probes 96 \
-            --output "$diagnosis_path"
-          npm run sanitize:gdelt-web-ngrams-artifacts -- \
-            --input "$diagnosis_path" \
-            --allow-empty
-          npm run write:gdelt-web-ngrams-display-fallback-production-cache -- \
-            --diagnosis "$diagnosis_path"
-
       - run: npm run check:oil-news-event-watch
+
+      - name: Upload sanitized Web NGrams article shadow observation
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gdelt-web-ngrams-article-shadow-${{ github.run_id }}
+          path: manual-artifacts/oil-news/gdelt-web-ngrams-article-shadow-latest.json
+          if-no-files-found: error
+          retention-days: 35
 
       - name: Commit
         run: |

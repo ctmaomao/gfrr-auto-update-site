@@ -131,13 +131,26 @@ for (const marker of [
 
 const workflow = readText('.github/workflows/refresh-oil-news-event-watch.yml');
 for (const marker of [
-  'Refresh automated Web NGrams display cache',
-  'diagnose:gdelt-web-ngrams',
-  'sanitize:gdelt-web-ngrams-artifacts',
-  'write:gdelt-web-ngrams-display-fallback-production-cache',
-  '--diagnosis "$diagnosis_path"'
+  'npm run build:oil-news-event-watch',
+  'Upload sanitized Web NGrams article shadow observation',
+  'gdelt-web-ngrams-article-shadow-latest.json',
+  'retention-days: 35'
 ]) {
   assert(workflow.includes(marker), `Oil News workflow missing marker: ${marker}`);
+}
+assert(
+  !workflow.includes('Refresh automated Web NGrams display cache'),
+  'Oil News workflow must not perform a second Web NGrams download after the integrated build.'
+);
+
+const integratedBuild = readText('scripts/oil-directional/build-oil-news-event-watch.mjs');
+for (const marker of [
+  'buildGdeltWebNgramsArticleShadow',
+  'gdeltWebNgramsArticleShadow',
+  'webNgramsShadow.diagnosis',
+  'gdelt-web-ngrams-article-shadow-latest.json'
+]) {
+  assert(integratedBuild.includes(marker), `Integrated Oil News build missing marker: ${marker}`);
 }
 
 for (const path of [

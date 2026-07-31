@@ -1443,7 +1443,7 @@ function createArtifact(options, keyState, sourceResults) {
   };
 }
 
-async function runDiagnosis(options) {
+async function collectDiagnosis(options) {
   assertGdeltBroadQueryWithinSafeLength();
   const keyState = getApiKeyState();
   const sources = options.sources;
@@ -1458,7 +1458,22 @@ async function runDiagnosis(options) {
     }
   }
 
+  return { keyState, sourceResults };
+}
+
+async function runDiagnosis(options) {
+  const { keyState, sourceResults } = await collectDiagnosis(options);
   return createArtifact(options, keyState, sourceResults);
+}
+
+async function runDiagnosisWithTransientArticles(options) {
+  const { keyState, sourceResults } = await collectDiagnosis(options);
+  return {
+    diagnosis: createArtifact(options, keyState, sourceResults),
+    referenceArticles: sourceResults
+      .filter((result) => result.source === 'tavily' || result.source === 'brave')
+      .flatMap((result) => result.articles || [])
+  };
 }
 
 function writeArtifact(artifact, options) {
@@ -1518,7 +1533,8 @@ export {
   classifyGdeltFailure,
   gdeltCooldownHoursForClass,
   getApiKeyState,
-  runDiagnosis
+  runDiagnosis,
+  runDiagnosisWithTransientArticles
 };
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

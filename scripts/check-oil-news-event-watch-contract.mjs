@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
+import { assertWebNgramsArticleShadowCache } from './oil-directional/gdelt-web-ngrams-article-shadow-cache.mjs';
 import {
   GDELT_BROAD_QUERY_SPEC,
   buildGdeltAvailability,
@@ -290,6 +291,13 @@ if (!data.sourceCaches || typeof data.sourceCaches !== 'object') {
   fail('sourceCaches.gdeltWebNgramsFallback missing');
 } else {
   assertGdeltWebNgramsFallbackSourceCache(data.sourceCaches.gdeltWebNgramsFallback);
+  if (data.sourceCaches.gdeltWebNgramsArticleShadow) {
+    try {
+      assertWebNgramsArticleShadowCache(data.sourceCaches.gdeltWebNgramsArticleShadow);
+    } catch (error) {
+      fail(`sourceCaches.gdeltWebNgramsArticleShadow invalid: ${error.message}`);
+    }
+  }
 }
 
 if (!gdeltCache || typeof gdeltCache !== 'object') {

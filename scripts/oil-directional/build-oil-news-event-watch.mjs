@@ -15,14 +15,17 @@ import {
   GDELT_RETRY_JITTER_MAX_MS,
   GDELT_STALE_MAX_HOURS,
   QUERY_SET,
-  runDiagnosis
+  runDiagnosisWithTransientArticles
 } from './diagnose-oil-news-events.mjs';
+import { buildGdeltWebNgramsArticleShadow } from './build-gdelt-web-ngrams-article-shadow.mjs';
 import { attachGdeltWebNgramsDisplayFallbackCache } from './gdelt-web-ngrams-display-fallback-cache.mjs';
 import { buildClaimPolarityAggregate } from './oil-news-claim-classifier.mjs';
 
 const SCHEMA_VERSION = 'oil-news-event-watch-1';
 const MODULE = 'oil-news-event-watch';
 const DEFAULT_OUTPUT = 'data/oil-news-event-watch.json';
+const DEFAULT_WEB_NGRAMS_SHADOW_OUTPUT =
+  'manual-artifacts/oil-news/gdelt-web-ngrams-article-shadow-latest.json';
 const DEFAULT_WINDOW_DAYS = 7;
 const DEFAULT_MAX_RESULTS = 8;
 const TITLE_RISK_RULE_VERSION = 'oil-news-title-risk-p31';
@@ -321,7 +324,12 @@ function assertSanitized(artifact) {
   }
 }
 
-function buildProductionArtifact(options, diagnosis, previousWebNgramsCache = null) {
+function buildProductionArtifact(
+  options,
+  diagnosis,
+  previousWebNgramsCache = null,
+  webNgramsShadow = null
+) {
   const generatedAt = new Date().toISOString();
   const sourceResults = diagnosis.sourceResults || [];
   const sourceStatus = buildSourceStatus(sourceResults, diagnosis);
@@ -413,10 +421,24 @@ function buildProductionArtifact(options, diagnosis, previousWebNgramsCache = nu
     ],
     boundary: BOUNDARY
   };
-  const artifactWithSourceCaches = attachGdeltWebNgramsDisplayFallbackCache(artifact, {
+  const artifactWithFallbackCache = attachGdeltWebNgramsDisplayFallbackCache(artifact, {
     generatedAt,
-    preservedCache: previousWebNgramsCache
+    ...(webNgramsShadow?.diagnosis?.mode === 'manual_live_diagnosis'
+      ? {
+          diagnosis: webNgramsShadow.diagnosis,
+          previousCache: previousWebNgramsCache
+        }
+      : { preservedCache: previousWebNgramsCache })
   });
+  const artifactWithSourceCaches = webNgramsShadow?.productionCache
+    ? {
+        ...artifactWithFallbackCache,
+        sourceCaches: {
+          ...artifactWithFallbackCache.sourceCaches,
+          gdeltWebNgramsArticleShadow: webNgramsShadow.productionCache
+        }
+      }
+    : artifactWithFallbackCache;
   assertSanitized(artifactWithSourceCaches);
   return artifactWithSourceCaches;
 }
@@ -508,7 +530,7 @@ function writeJson(path, payload) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const previousWebNgramsCache = readPreviousWebNgramsCache(options.output);
-  const diagnosis = await runDiagnosis({
+  const diagnosisResult = await runDiagnosisWithTransientArticles({
     allowNetwork: !options.dryRun,
     sources: options.sources,
     windowDays: options.windowDays,
@@ -519,10 +541,23 @@ async function main() {
     strict: false,
     printJson: false
   });
-  const artifact = buildProductionArtifact(options, diagnosis, previousWebNgramsCache);
+  const diagnosis = diagnosisResult.diagnosis;
+  const webNgramsShadow = await buildGdeltWebNgramsArticleShadow({
+    allowNetwork: !options.dryRun,
+    referenceArticles: diagnosisResult.referenceArticles
+  });
+  const artifact = buildProductionArtifact(
+    options,
+    diagnosis,
+    previousWebNgramsCache,
+    webNgramsShadow
+  );
   const gdeltCacheArtifact = buildGdeltCacheArtifact(diagnosis);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   const gdeltCacheOutputPath = options.writeOutput ? writeJson(options.gdeltCacheOutput, gdeltCacheArtifact) : null;
+  const webNgramsShadowOutputPath = options.writeOutput
+    ? writeJson(DEFAULT_WEB_NGRAMS_SHADOW_OUTPUT, webNgramsShadow.observation)
+    : null;
   console.log(JSON.stringify({
     status: artifact.status,
     signalState: artifact.signalState,
@@ -536,6 +571,8 @@ async function main() {
     aggregate: artifact.aggregate,
     outputPath,
     gdeltCacheOutputPath,
+    webNgramsShadowOutputPath,
+    webNgramsShadowStatus: webNgramsShadow.productionCache.status,
     boundary: artifact.boundary
   }, null, 2));
 }

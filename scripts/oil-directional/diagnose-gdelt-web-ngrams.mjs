@@ -469,8 +469,7 @@ function sanitizeSelectedFileForArtifact(fetched) {
   };
 }
 
-async function buildLiveArtifact(options, candidates) {
-  const fetched = await fetchFirstAvailableNgrams(candidates, options);
+function buildLiveArtifactFromFetched(options, candidates, fetched) {
   const summary = fetched.ngramsText
     ? analyzeNgramsText(fetched.ngramsText)
     : fetched.text
@@ -533,6 +532,11 @@ async function buildLiveArtifact(options, candidates) {
   };
 }
 
+async function buildLiveArtifact(options, candidates) {
+  const fetched = await fetchFirstAvailableNgrams(candidates, options);
+  return buildLiveArtifactFromFetched(options, candidates, fetched);
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const candidates = options.probeBeforeDownload
@@ -579,6 +583,7 @@ export {
   buildCandidateTimestamps,
   buildDryRunArtifact,
   buildHeartbeatDiscoveryTimestamps,
+  buildLiveArtifactFromFetched,
   fetchFirstAvailableNgrams,
   parseArgs,
   probeFirstAvailableNgrams,

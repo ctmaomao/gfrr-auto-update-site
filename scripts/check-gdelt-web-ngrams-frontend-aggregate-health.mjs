@@ -254,12 +254,12 @@ function assertCorePathsRemainUnwired() {
   }
   const workflow = readText('.github/workflows/refresh-oil-news-event-watch.yml');
   for (const marker of [
-    'Refresh automated Web NGrams display cache',
-    'diagnose:gdelt-web-ngrams',
-    'sanitize:gdelt-web-ngrams-artifacts',
-    'write:gdelt-web-ngrams-display-fallback-production-cache'
+    'npm run build:oil-news-event-watch',
+    'Upload sanitized Web NGrams article shadow observation',
+    'gdelt-web-ngrams-article-shadow-latest.json',
+    'retention-days: 35'
   ]) {
-    assert(workflow.includes(marker), `Oil News workflow missing automated Web NGrams marker: ${marker}`);
+    assert(workflow.includes(marker), `Oil News workflow missing integrated Web NGrams marker: ${marker}`);
   }
 }
 

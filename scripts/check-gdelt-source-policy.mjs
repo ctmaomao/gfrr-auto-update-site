@@ -499,13 +499,15 @@ function checkSharedWrapperContract() {
   const oilNewsWorkflowPath = '.github/workflows/refresh-oil-news-event-watch.yml';
   const oilNewsWorkflow = readText(oilNewsWorkflowPath);
   for (const phrase of [
-    'Refresh automated Web NGrams display cache',
-    'diagnose:gdelt-web-ngrams',
-    'sanitize:gdelt-web-ngrams-artifacts',
-    'write:gdelt-web-ngrams-display-fallback-production-cache',
-    '--diagnosis "$diagnosis_path"'
+    'npm run build:oil-news-event-watch',
+    'Upload sanitized Web NGrams article shadow observation',
+    'gdelt-web-ngrams-article-shadow-latest.json',
+    'retention-days: 35'
   ]) {
     if (!oilNewsWorkflow.includes(phrase)) fail(`${oilNewsWorkflowPath} missing automated Web NGrams phrase: ${phrase}`);
+  }
+  if (oilNewsWorkflow.includes('Refresh automated Web NGrams display cache')) {
+    fail(`${oilNewsWorkflowPath} must not perform a second Web NGrams download after the integrated build`);
   }
   const worldOrderPath = 'scripts/world-order/fetch-gdelt-cloud.mjs';
   if (!existsSync(resolve(worldOrderPath))) {
