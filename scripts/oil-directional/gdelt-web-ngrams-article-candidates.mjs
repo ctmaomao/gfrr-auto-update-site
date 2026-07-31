@@ -1,14 +1,15 @@
-import { createHash } from 'node:crypto';
 import {
   matchWebNgramsTerms,
   WEB_NGRAMS_QUERY_SET_VERSION,
   WEB_NGRAMS_TERM_SET
 } from './oil-news-query-taxonomy.mjs';
+import {
+  buildArticleIdentity,
+  canonicalizeArticleUrl
+} from './oil-news-story-identity.mjs';
 
 export const WEB_NGRAMS_ARTICLE_CANDIDATE_CONTRACT =
   'gdelt-web-ngrams-article-candidates-shadow-v1';
-
-const TRACKING_PARAMS = new Set(['fbclid', 'gclid', 'mc_cid', 'mc_eid', 'ref', 'ref_src']);
 
 function* textLines(text) {
   const input = String(text || '');
@@ -30,39 +31,6 @@ function compactText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function sha256(value) {
-  return createHash('sha256').update(value).digest('hex');
-}
-
-function canonicalizeUrl(rawUrl) {
-  try {
-    const url = new URL(String(rawUrl || ''));
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-    url.username = '';
-    url.password = '';
-    url.hash = '';
-    url.hostname = url.hostname.toLocaleLowerCase('en-US').replace(/^www\./u, '');
-    for (const key of [...url.searchParams.keys()]) {
-      const normalizedKey = key.toLocaleLowerCase('en-US');
-      if (normalizedKey.startsWith('utm_') || TRACKING_PARAMS.has(normalizedKey)) {
-        url.searchParams.delete(key);
-      }
-    }
-    url.searchParams.sort();
-    if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/u, '');
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function normalizeTitleForCluster(title) {
-  return compactText(title, 500)
-    .toLocaleLowerCase('en-US')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
-}
-
 function parsePublishedAt(value) {
   const parsed = Date.parse(String(value || ''));
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
@@ -79,7 +47,7 @@ function parseTocRows(tocText) {
       const row = JSON.parse(line);
       const docId = Number(row?.ID);
       const title = compactText(row?.title, 500);
-      const canonicalUrl = canonicalizeUrl(row?.url);
+      const canonicalUrl = canonicalizeArticleUrl(row?.url);
       const publishedAt = parsePublishedAt(row?.date);
       if (!Number.isInteger(docId) || docId < 0 || !title || !canonicalUrl || !publishedAt) {
         invalidRowCount += 1;
@@ -172,7 +140,10 @@ export function buildWebNgramsArticleCandidates({
       missingTocCount += 1;
       continue;
     }
-    const titleCluster = normalizeTitleForCluster(metadata.title);
+    const identity = buildArticleIdentity({
+      url: metadata.url,
+      title: metadata.title
+    });
     const candidate = {
       source: 'gdelt_web_ngrams',
       sourceName: metadata.domain,
@@ -186,8 +157,8 @@ export function buildWebNgramsArticleCandidates({
       matchedTermIds: [...document.matchedTermIds].sort(),
       buckets: [...document.buckets].sort(),
       mentionCount: document.mentionCount,
-      canonicalUrlHash: sha256(metadata.url),
-      storyClusterHash: sha256(titleCluster || metadata.url)
+      canonicalUrlHash: identity.canonicalUrlHash,
+      storyClusterHash: identity.storyClusterHash || identity.canonicalUrlHash
     };
     if (byCanonicalUrl.has(candidate.canonicalUrlHash)) {
       duplicateUrlCount += 1;

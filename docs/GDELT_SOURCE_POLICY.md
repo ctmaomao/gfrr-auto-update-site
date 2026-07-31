@@ -496,6 +496,20 @@ P69C multilingual shadow classification:
 - P69C remains ignored shadow-only with no workflow, production writer,
   frontend, current-signal, event-confirmation, or scoring approval.
 
+P69D cross-source shadow telemetry:
+
+- Exact canonical-URL or normalized-title overlap with Tavily/Brave measures
+  discovery coverage only; it is not independent editorial confirmation.
+- Independent support requires a different editorial domain, no more than 36
+  hours of timestamp separation, matching claim axis and explicit directional
+  polarity, and at least one shared bucket. Cross-provider support additionally
+  requires both Tavily and Brave and at least two supporting domains.
+- Telemetry stores only compact identities/classifications/counts. Titles,
+  URLs, snippets, bodies, matched text, raw responses, headers, and secrets are
+  forbidden.
+- Independent support is still a noisy shadow quality measure, not a confirmed
+  event and not a current Oil News signal or scoring input.
+
 ## Verification
 
 ```powershell
@@ -520,6 +534,7 @@ npm run check:gdelt-web-ngrams-automated-display-cache
 npm run check:gdelt-web-ngrams-pair
 npm run check:gdelt-web-ngrams-article-candidates
 npm run check:gdelt-web-ngrams-shadow-classifier
+npm run check:gdelt-web-ngrams-cross-source-telemetry
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

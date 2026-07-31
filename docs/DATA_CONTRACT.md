@@ -1293,6 +1293,23 @@ title 或 URL。`multilingualClassificationShadowOnly=true`,
 `eligibleForScoring=false` 均为强制边界。P69C 仍无 workflow、production
 writer 或 frontend approval；下一阶段必须用 Tavily/Brave 做独立来源确认。
 
+### GDELT Web NGrams cross-source shadow telemetry (P69D)
+
+`gdelt-web-ngrams-cross-source-telemetry-shadow-v1` 比较 P69C Web candidates
+与进程内 Tavily/Brave normalized articles。相同 canonical URL 或 normalized
+title hash 只记为 discovery overlap，不得记为事件确认。`independentSourceSupported`
+要求不同 editorial domain、36 小时时间窗内、相同 claim axis、相同明确
+directional polarity 且至少一个 bucket 重叠；`crossProviderSupported` 还要求
+Tavily 与 Brave 都有支持且至少两个独立 supporting domains。
+
+telemetry 只保存 hashes、domain/time/language、claim axis/polarity 与 provider/
+domain counts，不保存 title、URL、snippet/body、命中原文、raw response、
+header 或 secret。即使 `independentSourceSupported=true`，也必须保持
+`independentSupportIsConfirmedEvent=false`,`eventConfirmationSource=false`,
+`currentSignalEnhancement=false`,`eligibleForScoring=false`。P69D 仍是
+library/check-only；下一步才能把 sanitized telemetry 接入 shadow workflow
+并开始真实观察窗。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：

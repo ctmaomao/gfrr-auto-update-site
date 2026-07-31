@@ -905,6 +905,13 @@ URL。该分类仍是 ignored shadow-only，不改变 current Oil News signal，
 进入 frontend、ODP finalBias、`values.*`、scoring、decision、execution、
 position、Brent promotion、Heatmap 或 cross-validation。
 
+P69D 增加 `gdelt-web-ngrams-cross-source-telemetry-shadow-v1`。它只接受
+Tavily/Brave 作为独立 comparison providers：同 URL/title hash 只表示
+discovery overlap；不同 domain、36h 内、同 axis/polarity 且 bucket overlap
+才记录 independent support；Tavily+Brave 和至少两个 supporting domains
+同时满足才记录 cross-provider support。上述状态仍不是事件确认，只能写
+ignored shadow artifact，不得写 production data 或改变 current signal。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |
