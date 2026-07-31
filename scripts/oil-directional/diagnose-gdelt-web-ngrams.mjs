@@ -4,6 +4,10 @@ import { mkdirSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fetchGdeltWebNgramsText, probeGdeltWebNgramsFile, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
+import {
+  fetchGdeltWebNgramsPair,
+  probeGdeltWebNgramsPair
+} from '../gdelt/gdelt-web-ngrams-pair.mjs';
 
 const DIAGNOSIS_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json';
@@ -316,30 +320,40 @@ function analyzeNgramsText(text) {
 async function probeFirstAvailableNgrams(candidates) {
   const attempts = [];
   for (const timestamp of candidates) {
-    const result = await probeGdeltWebNgramsFile({
+    const result = await probeGdeltWebNgramsPair({
       timestamp,
-      kind: 'ngrams',
-      userAgent: UA,
-      timeoutMs: DEFAULT_TIMEOUT_MS,
-      minIntervalMs: DEFAULT_PROBE_MIN_INTERVAL_MS,
-      label: `GDELT Web NGrams probe ${timestamp}`
+      probeFile: async (probeOptions) => {
+        const kind = String(probeOptions.kind || '');
+        return probeGdeltWebNgramsFile({
+          ...probeOptions,
+          userAgent: UA,
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+          minIntervalMs: DEFAULT_PROBE_MIN_INTERVAL_MS,
+          label: `GDELT Web NGrams ${kind} probe ${timestamp}`
+        });
+      },
+      label: `GDELT Web NGrams pair probe ${timestamp}`
     });
     attempts.push({
       timestamp,
       status: result.ok ? 'ok' : 'missing',
-      httpStatus: result.status,
-      contentLength: result.contentLength,
-      lastModified: result.lastModified,
+      httpStatus: result.ngrams?.status,
+      tocHttpStatus: result.toc?.status,
+      contentLength: result.ngrams?.contentLength || null,
+      tocContentLength: result.toc?.contentLength || null,
+      lastModified: result.ngrams?.lastModified || null,
+      tocLastModified: result.toc?.lastModified || null,
       diagnostics: sanitizeGdeltDiagnostics(result.diagnostics),
-      error: result.error || null
+      error: null
     });
     if (result.ok) {
       return {
         found: true,
         timestamp,
-        url: result.url,
-        contentLength: result.contentLength,
-        lastModified: result.lastModified,
+        contentLength: result.ngrams?.contentLength || null,
+        tocContentLength: result.toc?.contentLength || null,
+        lastModified: result.ngrams?.lastModified || null,
+        tocLastModified: result.toc?.lastModified || null,
         attempts
       };
     }
@@ -369,21 +383,29 @@ async function fetchFirstAvailableNgrams(candidates, options) {
   for (const timestamp of candidates) {
     if (!candidateSet.includes(timestamp)) continue;
     try {
-      const result = await fetchGdeltWebNgramsText({
+      const result = await fetchGdeltWebNgramsPair({
         timestamp,
-        kind: 'ngrams',
-        userAgent: UA,
-        timeoutMs: DEFAULT_TIMEOUT_MS,
-        minIntervalMs: DEFAULT_MIN_INTERVAL_MS,
-        maxRetries: 0,
-        label: `GDELT Web NGrams ${timestamp}`
+        fetchText: async (fetchOptions) => {
+          const kind = String(fetchOptions.kind || '');
+          return fetchGdeltWebNgramsText({
+            ...fetchOptions,
+            userAgent: UA,
+            timeoutMs: DEFAULT_TIMEOUT_MS,
+            minIntervalMs: DEFAULT_MIN_INTERVAL_MS,
+            maxRetries: 0,
+            label: `GDELT Web NGrams ${kind} ${timestamp}`
+          });
+        },
+        label: `GDELT Web NGrams article-pair ${timestamp}`
       });
       attempts.push({
         method: 'GET',
         timestamp,
         status: 'ok',
-        contentLength: discovery?.contentLength || null,
-        lastModified: discovery?.lastModified || null,
+        ngramsContentLength: discovery?.contentLength || result.diagnostics?.ngrams?.contentLength || null,
+        tocContentLength: discovery?.tocContentLength || result.diagnostics?.toc?.contentLength || null,
+        lastModified: discovery?.lastModified || result.diagnostics?.ngrams?.lastModified || null,
+        tocLastModified: discovery?.tocLastModified || result.diagnostics?.toc?.lastModified || null,
         diagnostics: sanitizeGdeltDiagnostics(result.diagnostics)
       });
       return { ...result, timestamp, attempts, discovery };
@@ -408,7 +430,7 @@ function buildDryRunArtifact(options, candidates) {
     status: 'dry_run',
     mode: 'dry_run_no_network',
     sourceKey: 'odp_oil_news_gdelt_web_ngrams_diagnosis',
-    source: 'GDELT Web NGrams v5 legacy ngrams files',
+    source: 'GDELT Web NGrams v5 legacy article-pair files',
     input: {
       allowNetwork: false,
       probeBeforeDownload: options.probeBeforeDownload,
@@ -427,7 +449,9 @@ function sanitizeSelectedFileForArtifact(fetched) {
   return {
     timestamp: fetched.timestamp,
     contentLength: fetched.discovery?.contentLength || null,
+    tocContentLength: fetched.discovery?.tocContentLength || null,
     lastModified: fetched.discovery?.lastModified || null,
+    tocLastModified: fetched.discovery?.tocLastModified || null,
     diagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics)
   };
 }
@@ -444,7 +468,7 @@ async function buildLiveArtifact(options, candidates) {
     status,
     mode: 'manual_live_diagnosis',
     sourceKey: 'odp_oil_news_gdelt_web_ngrams_diagnosis',
-    source: 'GDELT Web NGrams v5 legacy ngrams files',
+    source: 'GDELT Web NGrams v5 legacy article-pair files',
     input: {
       allowNetwork: true,
       probeBeforeDownload: options.probeBeforeDownload,
@@ -483,7 +507,7 @@ async function buildLiveArtifact(options, candidates) {
     productionDisplayApproved: false,
     limitationsZh: [
       'Web NGrams 是下载型 ngram 频次文件,可降低 DOC API 429 风险,但不是新闻事实确认源。',
-      '本诊断不读取 TOC 标题/URL,不保存新闻正文,只统计短语命中与桶计数。',
+      '本诊断仅进行 ngrams/toc 成对可用性保障,但不读取标题/URL正文,不保存新闻正文,只统计短语命中与桶计数。',
       '本诊断不写 production data,不改变 Oil News、ODP 或今日总判断。'
     ],
     boundary: BOUNDARY
