@@ -855,6 +855,82 @@ documented attribution string and code is a contract violation.
 
 ---
 
+### 2026-07-31 GDELT DOC resilience follow-up
+
+ODP Oil News 的 GDELT DOC broad query 继续保持 24h fresh / 72h stale 与
+fail-closed 边界,但 live path 允许严格一次有界重试,遵守 `Retry-After` 并增加
+最多 1.5 秒 jitter。错误冷却按 429=24h、timeout/network=4h、5xx=6h、
+other=12h 分类；`lastFetchFailure` 让 stale-cache-after-error 后续刷新也遵守
+对应窗口。`data/gdelt-news-cache.json` 只新增最多 64 条 sanitized availability
+history 与 7/30 天成功率,不得保存 URL、标题、正文、header 或 secret。429 下
+`lastUsableCache` 仍仅供审计且 `usedForCurrentSignal=false`;本改动不进入 Oil
+News signal、ODP `finalBias`、scoring、decision、execution、position、Brent
+promotion、Global Risk Heatmap 或 cross-validation。
+
+同日 Web NGrams automated display-only 路径把既有 bounded diagnosis 接入
+`Refresh Oil News Event Watch`:主 build 内的一次 pair fetch 直接更新
+`sourceCaches.gdeltWebNgramsFallback`，不再由 workflow 做第二次下载。production contract
+为 `gdelt-web-ngrams-display-fallback-cache-v2`,只保存源文件时间、可达状态和
+compact aggregate counts；不保存 headline/URL/snippet/body/raw row/response。
+该缓存 is not a current Oil News signal；`currentSignalEnhancement=false`,
+`oilDirectionInput=false`,`eligibleForScoring=false`。live 失败只可在 12h 内把
+上一份 v2 observation 标为 stale,超窗必须 `source_unavailable`。
+
+P69A 起,新增 `gdelt-web-ngrams-article-pair-v1` 适配器基础。它只通过共享
+GDELT wrapper 串行探测/下载相同时间戳的 `ngrams.txt.gz` +
+`toc.json.gz`,任一半缺失都 fail-closed,且不向诊断投影 provider URL。该
+适配器属于 `github_actions_backup_validation_layer`,P69A 仅有 library/check
+路径,尚未接 workflow、production writer 或 current Oil News signal。raw
+NGRAMS/TOC 内容只允许在内存中用于后续 sanitized join；不得写入 production
+artifact。完整晋升仍需 article join、多语言分类、去重、Tavily/Brave 独立
+确认与 shadow quality gate；ADR 见
+[`ADR-0020`](ADR/0020-web-ngrams-primary-article-discovery.md)。
+
+P69B 在同一 `github_actions_backup_validation_layer` 内增加
+`gdelt-web-ngrams-article-candidates-shadow-v1` join/dedupe 层。该层用共享
+`odp-oil-news-web-ngrams-taxonomy-v1` 从 NGRAMS 选择 document IDs，再与同
+timestamp TOC metadata 连接并按 canonical URL 去重。title/URL 只在进程内
+短暂存在；sanitized output 只包含 domain、publishedAt、language、
+term/bucket IDs、mention count、不可逆 URL/story cluster hashes 与 compact
+quality metrics，且目前只能写 ignored shadow artifact。它没有 workflow、
+production writer、frontend/current-signal/scoring approval；不得写入
+`data/*.json` / `realtime/*.json`，也不得把候选报道包装成事件确认。
+
+P69C 增加
+`gdelt-web-ngrams-multilingual-classification-shadow-v1`，在同一 backup
+validation layer 内对进程内 title 做 `en/zh/ar/ru/es` 本地规则分类。规则将
+topic context 与 escalation/deescalation 分离；多方向命中必须标成 mixed。
+sanitized output 只保留 rule IDs 与聚合计数，不保留命中的原始 pattern/title/
+URL。该分类仍是 ignored shadow-only，不改变 current Oil News signal，也不
+进入 frontend、ODP finalBias、`values.*`、scoring、decision、execution、
+position、Brent promotion、Heatmap 或 cross-validation。
+
+P69D 增加 `gdelt-web-ngrams-cross-source-telemetry-shadow-v1`。它只接受
+Tavily/Brave 作为独立 comparison providers：同 URL/title hash 只表示
+discovery overlap；不同 domain、36h 内、同 axis/polarity 且 bucket overlap
+才记录 independent support；Tavily+Brave 和至少两个 supporting domains
+同时满足才记录 cross-provider support。上述状态仍不是事件确认，只能写
+ignored shadow artifact，不得写 production data 或改变 current signal。
+
+P69E 把 article shadow 接入现有 refresh，但仍位于
+`github_actions_backup_validation_layer`。`build:oil-news-event-watch` 复用本轮
+Tavily/Brave transient results，并以同一 Web pair 同时生成 display cache、
+aggregate-only `sourceCaches.gdeltWebNgramsArticleShadow` 与 ignored sanitized
+observation artifact。production shadow cache 不含 article/hash/domain/title/URL；
+per-article sanitized observation 只上传 35-day GitHub artifact。该路径不新增
+provider/key 请求，不做第二次 Web download，不接 frontend/current signal/
+event confirmation/scoring。
+
+P69F 增加 `oil-news-discovery-policy-v1` 与只读 git-history readiness reviewer。
+当前 source routing 仍是 GDELT DOC primary + Web NGrams shadow；目标
+Web NGrams primary + GDELT DOC fallback 只登记、不激活。reviewer 只读取
+production watch 历史中的 aggregate shadow cache，并以 30 天/120 usable
+samples、pair availability、usable rate、candidate count、多语言覆盖与
+Tavily/Brave 独立/cross-provider support 作质量门禁。每日 readiness workflow
+只生成 ignored artifact/GitHub Summary，不访问新闻源、不读取 secrets、不
+commit/push。门禁通过仍只表示可另开人工 reviewed cutover PR，不会自动改变
+source order，也不批准 current signal、event confirmation、frontend 或 scoring。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |

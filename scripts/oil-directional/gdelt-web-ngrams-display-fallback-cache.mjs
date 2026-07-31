@@ -7,12 +7,15 @@ export const GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_PATH =
   'docs/fixtures/oil-news/gdelt-web-ngrams-frontend-aggregate-health-p63.json';
 export const GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT =
   'gdelt-web-ngrams-display-fallback-cache-v1';
+export const GDELT_WEB_NGRAMS_AUTOMATED_DISPLAY_CACHE_CONTRACT =
+  'gdelt-web-ngrams-display-fallback-cache-v2';
 export const GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_CONTRACT =
   'gdelt-web-ngrams-frontend-aggregate-health-p63';
 
 const ROOT = process.cwd();
 const BOUNDARY =
   'production read-only GDELT Web NGrams fallback cache for ODP oil-news event watch; display-only/audit-only background source-health cache; NOT in current Oil News signal, values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
+const AUTOMATED_STALE_AFTER_HOURS = 12;
 
 function readJson(relativePath) {
   const absolutePath = join(ROOT, relativePath);
@@ -129,12 +132,7 @@ function validateFrontendApproval(approval) {
   assertNoRawExposure(approval);
 }
 
-export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
-  assert(cache?.contractVersion === GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT, 'Fallback cache contract mismatch.');
-  assert(cache.status === 'sample_gate_passed_projection_only', `Fallback cache status invalid: ${cache.status}`);
-  assert(cache.sourceKey === 'gdelt_web_ngrams_v5_legacy', 'Fallback cache sourceKey mismatch.');
-  assert(cache.displayMode === 'aggregate_source_health_only_no_headlines', 'Fallback cache displayMode mismatch.');
-  assert(cache.fallbackContextOnly === true, 'Fallback cache must be context-only.');
+function assertBoundaryFields(cache) {
   for (const field of [
     'currentSignalEnhancement',
     'eventConfirmationSource',
@@ -143,25 +141,93 @@ export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
     'eligibleForScoring',
     'usedForCurrentOilNewsSignal',
     'usedForOdpFinalBias',
-    'usedForMainScore',
-    'workflowAutomationApproved',
-    'liveFetchApproved',
-    'apiKeyReadApproved'
+    'usedForMainScore'
   ]) {
     assert(cache[field] === false, `Fallback cache ${field} must be false.`);
   }
+  assert(cache.apiKeyReadApproved === false, 'Fallback cache apiKeyReadApproved must be false.');
   assert(cache.productionDataWriteApproved === true, 'Fallback cache productionDataWriteApproved must be true.');
-  assert(cache.frontendDisplayApproved === true, 'Fallback cache frontendDisplayApproved must be true after P63.');
+  assert(cache.frontendDisplayApproved === true, 'Fallback cache frontendDisplayApproved must be true.');
   assert(cache.sourceHealth?.usedForCurrentSignal === false, 'Fallback cache sourceHealth.usedForCurrentSignal must be false.');
-  assert(cache.sampleGate?.state === 'passed', 'Fallback cache sample gate must be passed.');
-  assert(cache.sampleGate.usableSampleCount >= 8, 'Fallback cache usable sample count is too low.');
-  assert(cache.sampleGate.selectedTimestampCount >= 2, 'Fallback cache timestamp count is too low.');
-  assert(cache.sampleGate.observationWindowHours >= 24, 'Fallback cache observation window is too short.');
   for (const [key, value] of Object.entries(cache.productionImpact || {})) {
     assert(value === false, `Fallback cache productionImpact.${key} must be false.`);
   }
   assert(typeof cache.boundary === 'string' && cache.boundary.includes('display-only') && cache.boundary.includes('NOT in'), 'Fallback cache boundary is missing.');
   assertNoRawExposure(cache);
+}
+
+function assertReviewedSampleGate(cache) {
+  assert(cache.sampleGate?.state === 'passed', 'Fallback cache sample gate must be passed.');
+  assert(Number.isFinite(cache.sampleGate.usableSampleCount) && cache.sampleGate.usableSampleCount >= 8, 'Fallback cache usable sample count is too low.');
+  assert(Number.isFinite(cache.sampleGate.selectedTimestampCount) && cache.sampleGate.selectedTimestampCount >= 2, 'Fallback cache timestamp count is too low.');
+  assert(Number.isFinite(cache.sampleGate.observationWindowHours) && cache.sampleGate.observationWindowHours >= 24, 'Fallback cache observation window is too short.');
+}
+
+function assertLegacyCache(cache) {
+  assert(cache?.contractVersion === GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT, 'Fallback cache contract mismatch.');
+  assert(cache.status === 'sample_gate_passed_projection_only', `Fallback cache status invalid: ${cache.status}`);
+  assert(cache.sourceKey === 'gdelt_web_ngrams_v5_legacy', 'Fallback cache sourceKey mismatch.');
+  assert(cache.displayMode === 'aggregate_source_health_only_no_headlines', 'Fallback cache displayMode mismatch.');
+  assert(cache.fallbackContextOnly === true, 'Fallback cache must be context-only.');
+  assert(cache.workflowAutomationApproved === false, 'Legacy fallback cache workflowAutomationApproved must be false.');
+  assert(cache.liveFetchApproved === false, 'Legacy fallback cache liveFetchApproved must be false.');
+  assertReviewedSampleGate(cache);
+  assertBoundaryFields(cache);
+}
+
+function assertAutomatedCache(cache) {
+  assert(cache?.contractVersion === GDELT_WEB_NGRAMS_AUTOMATED_DISPLAY_CACHE_CONTRACT, 'Automated fallback cache contract mismatch.');
+  assert(['live', 'live_no_oil_terms_observed', 'stale', 'source_unavailable'].includes(cache.status), `Automated fallback cache status invalid: ${cache.status}`);
+  assert(cache.sourceKey === 'gdelt_web_ngrams_v5_legacy', 'Automated fallback cache sourceKey mismatch.');
+  assert(cache.displayMode === 'aggregate_source_health_only_no_headlines', 'Automated fallback cache displayMode mismatch.');
+  assert(cache.fallbackContextOnly === true, 'Automated fallback cache must be context-only.');
+  assert(cache.workflowAutomationApproved === true, 'Automated fallback cache workflowAutomationApproved must be true.');
+  assert(cache.liveFetchApproved === true, 'Automated fallback cache liveFetchApproved must be true.');
+  assert(cache.automation?.contractVersion === 'gdelt-web-ngrams-automation-v1', 'Automated fallback cache automation contract mismatch.');
+  assert(cache.automation?.workflow === 'refresh-oil-news-event-watch', 'Automated fallback cache workflow mismatch.');
+  assert(typeof cache.automation?.attemptedAt === 'string' && !Number.isNaN(Date.parse(cache.automation.attemptedAt)), 'Automated fallback cache attemptedAt invalid.');
+  const expectedSourceState = cache.status === 'source_unavailable'
+    ? 'unavailable'
+    : cache.status === 'stale'
+      ? 'stale'
+      : 'live';
+  const expectedFreshness = expectedSourceState === 'unavailable'
+    ? 'unavailable'
+    : expectedSourceState === 'stale'
+      ? 'stale'
+      : 'fresh';
+  assert(cache.sourceHealth?.state === expectedSourceState, 'Automated fallback cache sourceHealth.state must match status.');
+  assert(cache.sourceHealth?.freshness === expectedFreshness, 'Automated fallback cache sourceHealth.freshness must match status.');
+  for (const field of ['parsedLineCount', 'totalHitCount', 'totalMentionCount', 'uniqueDocCount', 'matchedTermCount', 'matchedBucketCount']) {
+    assert(Number.isFinite(cache.aggregate?.[field]) && cache.aggregate[field] >= 0, `Automated fallback cache aggregate.${field} invalid.`);
+  }
+  if (cache.status === 'source_unavailable') {
+    assert(cache.automation?.selectedFileTimestamp === null, 'Unavailable automated cache must clear selectedFileTimestamp.');
+    assert(cache.automation?.selectedFileAgeHours === null, 'Unavailable automated cache must clear selectedFileAgeHours.');
+    for (const [field, value] of Object.entries(cache.aggregate)) {
+      assert(value === 0, `Unavailable automated cache aggregate.${field} must be zero.`);
+    }
+  } else {
+    assert(/^\d{14}$/u.test(cache.automation?.selectedFileTimestamp || ''), 'Automated fallback cache selectedFileTimestamp invalid.');
+    assert(Number.isFinite(cache.automation?.selectedFileAgeHours) && cache.automation.selectedFileAgeHours >= 0, 'Automated fallback cache selectedFileAgeHours invalid.');
+  }
+  if (cache.status === 'live') {
+    assert(cache.aggregate.totalHitCount > 0, 'Live automated cache must contain at least one aggregate hit.');
+  }
+  if (cache.status === 'live_no_oil_terms_observed') {
+    assert(cache.aggregate.totalHitCount === 0, 'No-oil-terms automated cache must have zero aggregate hits.');
+  }
+  assert(cache.staleAfterHours === AUTOMATED_STALE_AFTER_HOURS, 'Automated fallback cache staleAfterHours must remain fixed at 12.');
+  assertReviewedSampleGate(cache);
+  assertBoundaryFields(cache);
+}
+
+export function assertGdeltWebNgramsDisplayFallbackCache(cache) {
+  if (cache?.contractVersion === GDELT_WEB_NGRAMS_AUTOMATED_DISPLAY_CACHE_CONTRACT) {
+    assertAutomatedCache(cache);
+    return;
+  }
+  assertLegacyCache(cache);
 }
 
 export function buildGdeltWebNgramsDisplayFallbackCache({
@@ -236,9 +302,177 @@ export function buildGdeltWebNgramsDisplayFallbackCache({
   return cache;
 }
 
+function parseNgramsTimestamp(value) {
+  const match = typeof value === 'string'
+    ? value.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/u)
+    : null;
+  if (!match) return null;
+  const [year, month, day, hour, minute, second] = match.slice(1).map(Number);
+  const timestampMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const date = new Date(timestampMs);
+  const valid = date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
+    && date.getUTCHours() === hour
+    && date.getUTCMinutes() === minute
+    && date.getUTCSeconds() === second;
+  return valid ? timestampMs : null;
+}
+
+function compactAutomatedAggregate(summary = {}) {
+  const terms = Array.isArray(summary.terms) ? summary.terms : [];
+  const bucketCounts = summary.bucketCounts && typeof summary.bucketCounts === 'object'
+    ? summary.bucketCounts
+    : {};
+  return {
+    parsedLineCount: Number.isFinite(summary.parsedLineCount) ? Math.max(0, Math.round(summary.parsedLineCount)) : 0,
+    totalHitCount: Number.isFinite(summary.totalHitCount) ? Math.max(0, Math.round(summary.totalHitCount)) : 0,
+    totalMentionCount: Number.isFinite(summary.totalMentionCount) ? Math.max(0, Math.round(summary.totalMentionCount)) : 0,
+    uniqueDocCount: Number.isFinite(summary.uniqueDocCount) ? Math.max(0, Math.round(summary.uniqueDocCount)) : 0,
+    matchedTermCount: Number.isFinite(summary.matchedTermCount)
+      ? Math.max(0, Math.round(summary.matchedTermCount))
+      : terms.length,
+    matchedBucketCount: Number.isFinite(summary.matchedBucketCount)
+      ? Math.max(0, Math.round(summary.matchedBucketCount))
+      : Object.keys(bucketCounts).length
+  };
+}
+
+function automatedObservationAgeHours(timestamp, nowMs) {
+  const timestampMs = parseNgramsTimestamp(timestamp);
+  if (!Number.isFinite(timestampMs) || !Number.isFinite(nowMs)) return null;
+  return Math.max(0, Math.round(((nowMs - timestampMs) / 3600000) * 10) / 10);
+}
+
+function isAutomatedCache(cache) {
+  if (cache?.contractVersion !== GDELT_WEB_NGRAMS_AUTOMATED_DISPLAY_CACHE_CONTRACT) return false;
+  try {
+    assertAutomatedCache(cache);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function buildGdeltWebNgramsAutomatedDisplayCache({
+  diagnosis,
+  previousCache = null,
+  generatedAt = new Date().toISOString()
+} = {}) {
+  assert(diagnosis?.diagnosisVersion === 'gdelt-web-ngrams-diagnosis-p41', 'Automated cache requires a P41 diagnosis artifact.');
+  assert(diagnosis?.mode === 'manual_live_diagnosis', 'Automated cache requires a live diagnosis artifact.');
+  assert(diagnosis?.productionDisplayApproved === false, 'Diagnosis artifact must not approve production display by itself.');
+  assert(diagnosis?.promotionEligible === false, 'Diagnosis artifact must remain non-promotable.');
+  const generatedAtMs = Date.parse(generatedAt);
+  assert(Number.isFinite(generatedAtMs), 'Automated cache generatedAt must be ISO.');
+
+  const legacyGate = buildGdeltWebNgramsDisplayFallbackCache({ generatedAt });
+  const prior = isAutomatedCache(previousCache) ? previousCache : null;
+  const diagnosisLive = ['ok', 'ok_no_oil_terms_observed'].includes(diagnosis.status);
+  const selectedTimestamp = diagnosisLive ? diagnosis.selectedFile?.timestamp : null;
+  const selectedTimestampMs = parseNgramsTimestamp(selectedTimestamp);
+  const selectedAgeHours = automatedObservationAgeHours(selectedTimestamp, generatedAtMs);
+  const selectedTimestampValid = Number.isFinite(selectedTimestampMs)
+    && selectedTimestampMs <= generatedAtMs + 3600000;
+  const currentObservationUsable = diagnosisLive && selectedTimestampValid;
+
+  let status = 'source_unavailable';
+  let effectiveTimestamp = null;
+  let aggregate = compactAutomatedAggregate();
+  let lastSuccessfulObservationAt = prior?.automation?.lastSuccessfulObservationAt || null;
+  if (currentObservationUsable) {
+    status = selectedAgeHours > AUTOMATED_STALE_AFTER_HOURS
+      ? 'stale'
+      : diagnosis.status === 'ok_no_oil_terms_observed'
+        ? 'live_no_oil_terms_observed'
+        : 'live';
+    effectiveTimestamp = selectedTimestamp;
+    aggregate = compactAutomatedAggregate(diagnosis.summary);
+    lastSuccessfulObservationAt = diagnosis.generatedAt || generatedAt;
+  } else if (prior?.automation?.selectedFileTimestamp) {
+    const priorAgeHours = automatedObservationAgeHours(prior.automation.selectedFileTimestamp, generatedAtMs);
+    if (Number.isFinite(priorAgeHours) && priorAgeHours <= AUTOMATED_STALE_AFTER_HOURS) {
+      status = 'stale';
+      effectiveTimestamp = prior.automation.selectedFileTimestamp;
+      aggregate = compactAutomatedAggregate(prior.aggregate);
+    }
+  }
+
+  const cache = {
+    contractVersion: GDELT_WEB_NGRAMS_AUTOMATED_DISPLAY_CACHE_CONTRACT,
+    status,
+    generatedAt,
+    sourceKey: 'gdelt_web_ngrams_v5_legacy',
+    sourceReview: {
+      gate: 'automated_display_only_cache_v1',
+      frontendGate: GDELT_WEB_NGRAMS_FRONTEND_AGGREGATE_HEALTH_CONTRACT,
+      source: 'sanitized_live_diagnosis',
+      priorReviewedSampleGateRetained: true
+    },
+    displayMode: 'aggregate_source_health_only_no_headlines',
+    fallbackContextOnly: true,
+    productionDataWriteApproved: true,
+    currentSignalEnhancement: false,
+    eventConfirmationSource: false,
+    headlineSource: false,
+    oilDirectionInput: false,
+    eligibleForScoring: false,
+    usedForCurrentOilNewsSignal: false,
+    usedForOdpFinalBias: false,
+    usedForMainScore: false,
+    frontendDisplayApproved: true,
+    workflowAutomationApproved: true,
+    liveFetchApproved: true,
+    apiKeyReadApproved: false,
+    staleAfterHours: AUTOMATED_STALE_AFTER_HOURS,
+    sampleGate: { ...legacyGate.sampleGate },
+    automation: {
+      contractVersion: 'gdelt-web-ngrams-automation-v1',
+      workflow: 'refresh-oil-news-event-watch',
+      attemptedAt: diagnosis.generatedAt || generatedAt,
+      diagnosisStatus: diagnosis.status,
+      selectedFileTimestamp: effectiveTimestamp,
+      selectedFileAgeHours: effectiveTimestamp
+        ? automatedObservationAgeHours(effectiveTimestamp, generatedAtMs)
+        : null,
+      lastSuccessfulObservationAt
+    },
+    sourceHealth: {
+      state: status === 'source_unavailable' ? 'unavailable' : status === 'stale' ? 'stale' : 'live',
+      freshness: status === 'source_unavailable' ? 'unavailable' : status === 'stale' ? 'stale' : 'fresh',
+      gdeltDocReliefRole: 'automated_download_path_only',
+      usedForCurrentSignal: false
+    },
+    aggregate,
+    limitationZh: '自动缓存只表示 GDELT Web NGrams 下载文件的可达性与聚合短语命中,不读取或展示标题、URL、正文,不确认事件,不用于当前 Oil News 信号或油价方向。',
+    warnings: [
+      'automated_display_only_cache',
+      'no_headlines_or_urls',
+      'not_used_for_current_oil_news_signal',
+      ...(status === 'source_unavailable' ? ['latest_download_unavailable'] : []),
+      ...(status === 'stale' ? ['latest_observation_stale'] : [])
+    ],
+    productionImpact: productionImpact(),
+    boundary: BOUNDARY
+  };
+  assertAutomatedCache(cache);
+  return cache;
+}
+
 export function attachGdeltWebNgramsDisplayFallbackCache(artifact, options = {}) {
   const generatedAt = options.generatedAt || artifact?.generatedAt || new Date().toISOString();
-  const cache = buildGdeltWebNgramsDisplayFallbackCache({ ...options, generatedAt });
+  let cache;
+  if (options.diagnosis) {
+    cache = buildGdeltWebNgramsAutomatedDisplayCache({
+      diagnosis: options.diagnosis,
+      previousCache: options.previousCache,
+      generatedAt
+    });
+  } else if (isAutomatedCache(options.preservedCache)) {
+    cache = options.preservedCache;
+  } else {
+    cache = buildGdeltWebNgramsDisplayFallbackCache({ ...options, generatedAt });
+  }
   return {
     ...artifact,
     sourceCaches: {

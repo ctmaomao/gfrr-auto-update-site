@@ -47,6 +47,14 @@ jobs:
 
       - run: npm run check:oil-news-event-watch
 
+      - name: Upload sanitized Web NGrams article shadow observation
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gdelt-web-ngrams-article-shadow-${{ github.run_id }}
+          path: manual-artifacts/oil-news/gdelt-web-ngrams-article-shadow-latest.json
+          if-no-files-found: error
+          retention-days: 35
+
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"

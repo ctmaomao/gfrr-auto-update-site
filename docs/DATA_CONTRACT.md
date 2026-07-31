@@ -1021,7 +1021,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-facility-window-quality-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-gdelt-web-ngrams-auto-1`）。
 
 稳定边界：
 
@@ -1232,6 +1232,130 @@ P64(ODP verdict history monitor) 新增 `oil-directional-verdict-history-monitor
 
 P66 将 monitor contract 升为 `oil-directional-verdict-history-monitor-p66`,在 `trend` 增加 `recentLowConfidenceCount` / `persistentLowConfidence`,并增加 `observations.persistentLowConfidence`。只有 recent window 达到 7 个有效样本且 7/7 `confidence='low'` 时 `active=true`;该观察固定 `changesPrimaryStatus=false`,`changesClassifier=false`。它可令 `manualAction.suggestedNow=true` 并建议审阅既有 confidence caps,但不得单独令 `manualAction.requiredNow=true`,不得替换 primary status,不得修改 classifier/caps、ODP `finalBias` 或任何 scoring/decision/execution/position 路径。
 
+### GDELT Web NGrams automated display cache (2026-07-31)
+
+`data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` 支持
+`gdelt-web-ngrams-display-fallback-cache-v2`。`Refresh Oil News Event Watch`
+在主 build 内做一次 bounded pair fetch，并从同一 fetch 写入 source-file
+timestamp、`sourceHealth`、`automation` 与 compact `aggregate` counts。
+`workflowAutomationApproved=true` / `liveFetchApproved=true` 只批准该 keyless
+automated display-only 写入；`apiKeyReadApproved=false`。
+
+v2 不保存 headline、URL、snippet、body、raw Web NGrams row 或 raw provider
+response。它 is not a current Oil News signal,并必须保持
+`currentSignalEnhancement=false`,`eventConfirmationSource=false`,
+`headlineSource=false`,`oilDirectionInput=false`,`eligibleForScoring=false`,
+`usedForCurrentOilNewsSignal=false`,`usedForOdpFinalBias=false`,
+`usedForMainScore=false`。live fetch 失败时,只有 12 小时内的上一份 v2
+observation 可标为 `stale`;超窗必须 `source_unavailable`。
+
+### GDELT Web NGrams article-pair adapter foundation (P69A)
+
+`gdelt-web-ngrams-article-pair-v1` 只定义共享 GDELT wrapper 之上的
+timestamp-matched `ngrams.txt.gz` + `toc.json.gz` 原子探测/下载边界。任一
+half 缺失必须 `source_unavailable`;pair diagnostics 不得包含 provider URL、
+raw NGRAMS/TOC rows、title、snippet、body、header 或 secret。P69A 没有
+production artifact field、workflow、writer、current signal 或 frontend
+approval。它必须保持 `usedForCurrentSignal=false` 与
+`eligibleForScoring=false`;后续 article join / multilingual classification /
+dedupe / cross-source confirmation / shadow gate 必须分阶段审核。
+
+### GDELT Web NGrams sanitized article candidates (P69B)
+
+`gdelt-web-ngrams-article-candidates-shadow-v1` 在同一 timestamp 的
+NGRAMS/TOC pair 内按 document ID 连接 quadgram 命中与文章元数据，并先按
+canonical URL 去重。query taxonomy 由
+`odp-oil-news-web-ngrams-taxonomy-v1` 集中管理，避免诊断路径与 article
+candidate 路径各自漂移。
+
+raw title / URL 只允许在当前 Node 进程内参与后续分类与跨源匹配；sanitized
+shadow shape 不保存 title / URL / snippet / body / raw NGRAMS/TOC rows /
+provider response / header / secret。它可保留不可逆 SHA-256 URL/story cluster
+hash、domain、publishedAt、language、term/bucket IDs、mention count 和 compact
+join/dedupe metrics，但只允许进入 ignored shadow artifact。P69B 不新增
+workflow 或 production writer，不写 `data/*.json` / `realtime/*.json`，并固定
+`currentSignalEnhancement=false` / `eligibleForScoring=false`。后续仍需完成
+多语言 claim/event classification、独立源确认与真实观察窗 shadow gate。
+
+### GDELT Web NGrams multilingual shadow classification (P69C)
+
+`gdelt-web-ngrams-multilingual-classification-shadow-v1` 只对 P69B 的进程内
+article candidates 做规则分类。taxonomy v2 的显式语言集合为
+`en` / `zh` / `ar` / `ru` / `es`；directional rules 把
+`risk_escalation` / `risk_deescalation` 与普通 topic context 分开。仅命中
+Hormuz / tanker / crude / market 等 context term 不得产生 directional claim；
+同一标题同时命中升温和缓和规则时必须标为 `mixed_or_contested`。
+
+shadow output 仅保留 hashes、domain/time/language、term/bucket IDs、rule IDs
+和 aggregate language/polarity/event/axis counts，不保存命中的原始 pattern、
+title 或 URL。`multilingualClassificationShadowOnly=true`,
+`currentSignalEnhancement=false`,`eventConfirmationSource=false`,
+`eligibleForScoring=false` 均为强制边界。P69C 仍无 workflow、production
+writer 或 frontend approval；下一阶段必须用 Tavily/Brave 做独立来源确认。
+
+### GDELT Web NGrams cross-source shadow telemetry (P69D)
+
+`gdelt-web-ngrams-cross-source-telemetry-shadow-v1` 比较 P69C Web candidates
+与进程内 Tavily/Brave normalized articles。相同 canonical URL 或 normalized
+title hash 只记为 discovery overlap，不得记为事件确认。`independentSourceSupported`
+要求不同 editorial domain、36 小时时间窗内、相同 claim axis、相同明确
+directional polarity 且至少一个 bucket 重叠；`crossProviderSupported` 还要求
+Tavily 与 Brave 都有支持且至少两个独立 supporting domains。
+
+telemetry 只保存 hashes、domain/time/language、claim axis/polarity 与 provider/
+domain counts，不保存 title、URL、snippet/body、命中原文、raw response、
+header 或 secret。即使 `independentSourceSupported=true`，也必须保持
+`independentSupportIsConfirmedEvent=false`,`eventConfirmationSource=false`,
+`currentSignalEnhancement=false`,`eligibleForScoring=false`。P69D 仍是
+library/check-only；下一步才能把 sanitized telemetry 接入 shadow workflow
+并开始真实观察窗。
+
+### GDELT Web NGrams automated article shadow cache (P69E)
+
+`build:oil-news-event-watch` 现在复用同一轮 Tavily/Brave transient provider
+results，并只做一次 timestamp-matched Web NGrams pair fetch；不再在 workflow
+中运行第二次 diagnosis/download。它同时更新原
+`gdeltWebNgramsFallback` v2 display cache，并写
+`sourceCaches.gdeltWebNgramsArticleShadow` contract
+`gdelt-web-ngrams-article-shadow-cache-v1`。该新字段只保存 source timestamp、
+candidate/classification/cross-source aggregates 与 30-day observation policy，
+不保存 article rows、hashes、domain、title、URL 或 raw content。
+
+字段允许 `productionDataWriteApproved=true`,
+`workflowAutomationApproved=true`,`liveFetchApproved=true`，但 Web shadow
+模块本身不新增 API key 读取：`apiKeyReadApproved=false`，只复用既有 Oil
+News provider results。它必须保持 `frontendDisplayApproved=false`,
+`shadowObservationOnly=true`,`currentSignalEnhancement=false`,
+`eventConfirmationSource=false`,`oilDirectionInput=false`,
+`eligibleForScoring=false`,`promotionEligible=false`。合并后的首个成功 refresh
+前字段可 absent；存在时必须通过 contract validator。每轮 sanitized per-article
+shadow observation 仅上传 GitHub artifact，retention 35 days，不 commit。
+
+### GDELT Web NGrams discovery cutover readiness gate (P69F)
+
+`config/oil-news-discovery-policy.json` 固定当前模式为
+`gdelt_doc_primary_web_ngrams_shadow`，目标模式仅登记为
+`web_ngrams_primary_gdelt_doc_fallback`。当前 fallback 顺序仍是 GDELT DOC →
+Tavily → Brave；目标顺序在独立 reviewed cutover PR 获批前不生效。
+`webNgramsPrimaryApproved=false` 与 `automaticCutoverApproved=false` 是硬边界。
+
+`review:gdelt-web-ngrams-article-shadow-history` 只读 git history 中已提交的
+`data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsArticleShadow`，
+验证所有 cache contract，按 `generatedAt` 去重，并计算真实观察天数、可用
+样本数、pair availability、usable rate、candidate count、多语言覆盖率及
+Tavily/Brave independent/cross-provider support。质量门槛固定为至少 30 天、
+120 个可用样本、95% pair availability、80% usable rate、中位数候选数 10、
+多语言覆盖率 70%、independent support 10%、cross-provider support 5%，且
+invalid sample 必须为 0。
+
+即使全部门槛通过，review 也只能输出
+`ready_for_manual_cutover_review`；`promotionEligible=false` 与
+`automaticCutoverApproved=false` 始终不变。每日只读 workflow
+`GDELT Web NGrams Article Shadow Readiness` 仅生成 GitHub Summary 和 35-day
+ignored artifact，不读取 secrets、不访问新闻源、不 commit/push、不写
+production data。它不会自动切换 discovery，也不改变 frontend/current signal/
+event confirmation/ODP finalBias/scoring/decision/execution/position。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
@@ -1300,26 +1424,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-thermal-facility-window-quality-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 基线质量行改为显示最短设施窗与独立全局历史跨度；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+odp-gdelt-web-ngrams-auto-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP 新闻事件观察把 GDELT Web NGrams v2 自动 display-only 缓存的下载源状态、聚合计数与源文件时效接入既有前端行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-facility-window-quality-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-gdelt-web-ngrams-auto-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-facility-window-quality-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-facility-window-quality-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-facility-window-quality-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-gdelt-web-ngrams-auto-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-gdelt-web-ngrams-auto-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-gdelt-web-ngrams-auto-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-thermal-facility-window-quality-1
-npm run bump:frontend-asset-version -- odp-thermal-facility-window-quality-1
+node scripts/bump-frontend-asset-version.mjs odp-gdelt-web-ngrams-auto-1
+npm run bump:frontend-asset-version -- odp-gdelt-web-ngrams-auto-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-facility-window-quality-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-gdelt-web-ngrams-auto-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

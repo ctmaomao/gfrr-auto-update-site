@@ -62,7 +62,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `odp-thermal-facility-window-quality-1`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `odp-gdelt-web-ngrams-auto-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 检查 Worker Health；Check Worker Health 仍是 Worker-first runtime hard gate。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -77,7 +77,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API（独立的 `externalAiInterpretationLayer` 已由 approved workflow 用 DeepSeek,visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约）。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `odp-thermal-facility-window-quality-1`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `odp-gdelt-web-ngrams-auto-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -500,27 +500,27 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-safe-dom-rendering-1 是当前前端 cache token；同一 Frontend Asset Cache Busting 机制用于处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
+`odp-gdelt-web-ngrams-auto-1` 是当前前端 cache token；同一 Frontend Asset Cache Busting 机制用于处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=odp-thermal-facility-window-quality-1
-scripts/app.js and active scripts/modules/*.js local imports → ?v=odp-thermal-facility-window-quality-1
+index.html app.js entry → ?v=odp-gdelt-web-ngrams-auto-1
+scripts/app.js and active scripts/modules/*.js local imports → ?v=odp-gdelt-web-ngrams-auto-1
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `odp-thermal-facility-window-quality-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP Satellite Thermal Watch 基线质量行的“最短设施窗 / 全局历史”分离展示；此前 Web NGrams 时效、聚合源健康与 FIRMS 脱敏请求健康行仍保留。该版本不新增 KV、不 deploy Worker、不改变评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `odp-gdelt-web-ngrams-auto-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP 新闻事件观察中的 GDELT Web NGrams v2 自动 display-only 下载源状态、聚合计数与源文件时效展示；既有历史 sample-gate、FIRMS 脱敏请求健康与设施窗口质量行仍保留。该版本不新增 KV、不 deploy Worker、不改变评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-thermal-facility-window-quality-1
-npm run bump:frontend-asset-version -- odp-thermal-facility-window-quality-1
+node scripts/bump-frontend-asset-version.mjs odp-gdelt-web-ngrams-auto-1
+npm run bump:frontend-asset-version -- odp-gdelt-web-ngrams-auto-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-facility-window-quality-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-gdelt-web-ngrams-auto-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
@@ -1395,12 +1395,59 @@ npm run review:market-pricing-freshness -- --strict
 
 在 Oil News、Bubble Watch 或 World Order 自然刷新后运行 `npm run review:gdelt-cache-health -- --no-output --strict`。严格模式在任何 WATCH/WARN/FAIL 上非零退出；先看 `rows[].refreshContext` 和 `summary.postRefresh`,不要仅凭全局 WATCH 调整缓存政策:
 
-- `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在既有 24h error cooldown 内；等待 cooldown 到期后的自然刷新,不要手动连发 workflow。
+- `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在 classified error cooldown 内；先读 `lastFetchFailure.errorClass/cooldownHours`（429=24h、timeout/network=4h、5xx=6h、other=12h）,等待对应窗口到期后的自然刷新,不要手动连发 workflow。
 - `degraded_awaiting_post_cooldown_refresh_evidence`:wall-clock 已过 cooldown,但最新 production watch 生成于 cooldown 到期前；等待第一轮 post-cooldown 自然刷新,不得提前判为 persistent。
 - `persistent_error_after_cooldown_expiry`:production watch 本身在 cooldown 到期后刷新且仍错误；检查 sanitized request category、调度与 cache write,但不要先放宽 TTL/backoff。
 - `expected_pre_refresh_schedule_gap`:Bubble Watch 已越过 132h fresh TTL,但仍在周一 168h cadence + 12h grace 内；等待下一次周一刷新。
 - `scheduled_refresh_overdue`:已越过 cadence grace；检查 workflow 或 cache commit,不得手工修改 production JSON。
 - 每次 context/checker 变更后运行 `npm run check:gdelt-cache-health` 与 `npm run check:all`。
+
+### GDELT Web NGrams automated display-only cache
+
+`Refresh Oil News Event Watch` 现在会在 Oil News 主 build 内运行一次 bounded
+Web NGrams pair fetch；同一 in-memory pair 同时供 display cache 和 article
+shadow 使用。生产 display 字段 contract 为
+`gdelt-web-ngrams-display-fallback-cache-v2`。排障顺序:
+
+1. 查看 `Refresh oil news event watch` step 的
+   `webNgramsShadowStatus` / `webNgramsShadowOutputPath`。
+2. 查看 `sourceCaches.gdeltWebNgramsFallback.{status,automation,sourceHealth}`；
+   `live` / `live_no_oil_terms_observed` 表示源文件可达,`stale` 只允许沿用 12h
+   内上一份 v2 observation,`source_unavailable` 表示失败关闭。
+3. 查看 `sourceCaches.gdeltWebNgramsArticleShadow`:只应有 aggregate metrics，
+   `promotionEligible=false`；workflow 同时上传 35-day sanitized shadow artifact。
+4. 运行 `npm run check:gdelt-web-ngrams-automated-display-cache`，再运行
+   `npm run check:oil-news-event-watch`。
+
+这是 automated display-only source-health cache,not a current Oil News signal。
+不得把 aggregate hits/doc count 写成事件确认、headline feed、油价方向或评分
+输入；不得手工修改 production JSON。
+
+### GDELT Web NGrams article shadow readiness
+
+`GDELT Web NGrams Article Shadow Readiness` 每日只读已提交的 Oil News watch
+历史。它不联网查询新闻源、不读取 secrets、不刷新数据、不 commit/push；输出
+仅为 GitHub Summary 和 35-day artifact。
+
+本地等价检查：
+
+```bash
+npm run check:gdelt-web-ngrams-article-shadow-history-review
+npm run review:gdelt-web-ngrams-article-shadow-history -- --no-output
+```
+
+- `insufficient_history`：尚无 aggregate shadow cache，或首个 post-merge
+  refresh 尚未提交；等待正常 `Refresh Oil News Event Watch`。
+- `collecting_shadow_history`：已有真实样本，但 30 天/120 usable samples 或
+  availability/coverage/support 任一门槛未过；查看 artifact 的 `gates[]`，不得
+  为消除 WAIT 而放宽 classifier、pair validator 或独立来源规则。
+- `ready_for_manual_cutover_review`：只表示可以另开人工 reviewed cutover PR。
+  不得在当前 PR、readiness workflow 或 production JSON 中直接改变 source
+  order。`promotionEligible` 和 `automaticCutoverApproved` 必须继续为 false。
+
+当前运行顺序仍是 GDELT DOC → Tavily → Brave，Web NGrams 只在 shadow
+观察。未来切换必须同时审阅误报样本、语言覆盖、Tavily/Brave 独立支持以及
+GDELT DOC fallback 行为；单一 provider 或同 URL/title overlap 不能确认事件。
 
 ### FOMC minutes tone quality
 

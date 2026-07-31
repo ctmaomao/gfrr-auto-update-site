@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-thermal-facility-window-quality-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-gdelt-web-ngrams-auto-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

@@ -1,0 +1,41 @@
+{
+  "contractVersion": "oil-news-discovery-policy-v1",
+  "activeMode": "gdelt_doc_primary_web_ngrams_shadow",
+  "targetModeAfterApproval": "web_ngrams_primary_gdelt_doc_fallback",
+  "webNgramsPrimaryApproved": false,
+  "automaticCutoverApproved": false,
+  "promotionPolicy": {
+    "minimumObservationDays": 30,
+    "minimumUsableSamples": 120,
+    "minimumPairAvailabilityRate": 0.95,
+    "minimumUsableSampleRate": 0.8,
+    "minimumMedianCandidateCount": 10,
+    "minimumMedianSupportedLanguageCoverageRate": 0.7,
+    "minimumMedianIndependentSupportRate": 0.1,
+    "minimumMedianCrossProviderSupportRate": 0.05
+  },
+  "fallbackPolicy": {
+    "currentOrder": [
+      "gdelt_doc",
+      "tavily",
+      "brave"
+    ],
+    "targetOrderAfterApproval": [
+      "gdelt_web_ngrams",
+      "tavily",
+      "brave",
+      "gdelt_doc"
+    ],
+    "failClosedOnMissingPair": true,
+    "singleProviderCannotConfirmEvent": true
+  },
+  "boundaries": {
+    "currentSignalChanged": false,
+    "frontendChanged": false,
+    "scoringChanged": false,
+    "decisionChanged": false,
+    "executionChanged": false,
+    "positionChanged": false,
+    "odpFinalBiasChanged": false
+  }
+}

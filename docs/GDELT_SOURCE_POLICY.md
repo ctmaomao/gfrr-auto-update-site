@@ -22,8 +22,9 @@ Official GDELT references:
 | Consumer | Current source | Runtime path | Cadence | Current fallback |
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
-| ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or 24h error-cooldown window expires | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized`; 429 keeps `lastUsableCache` for audit only |
-| ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; P44 sample archive/review remains ignored under `manual-artifacts/oil-news/gdelt-web-ngrams-samples/`; P48 sanitizer strips `selectedFile.url` and raw-title/body/URL markers from ignored artifacts; P56 writes only `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` via `write:gdelt-web-ngrams-display-fallback-production-cache` | sample collector runs artifact-only every 3h; production field uses reviewed sample-gate cache only, no live fetch in writer | production display-only source-health fallback provenance; not a current Oil News signal enhancer, not frontend, not scoring |
+| ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or classified error-cooldown window expires; one bounded retry with `Retry-After` + jitter | Tavily / Brave source health remains visible; 429 cools down 24h, timeout/network 4h, 5xx 6h, other errors 12h; stale cache may remain current only for non-rate-limit failures, while 429 keeps `lastUsableCache` for audit only |
+| ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | integrated Oil News build performs one shared pair fetch and derives `sourceCaches.gdeltWebNgramsFallback` from its sanitized diagnosis | existing sample collector remains artifact-only every 3h; `Refresh Oil News Event Watch` writes `gdelt-web-ngrams-display-fallback-cache-v2` from the integrated fetch | automated display-only aggregate source health; not a current Oil News signal, no headlines/URLs, no scoring |
+| ODP Oil News Web NGrams article-discovery shadow | Timestamp-matched GDELT Web NGrams v5 legacy `ngrams.txt.gz` + `toc.json.gz` pair plus existing Tavily/Brave results | integrated Oil News build joins/dedupes/classifies in memory, writes aggregate-only `sourceCaches.gdeltWebNgramsArticleShadow`, and uploads a sanitized ignored observation | same Oil News refresh; no second Web download and no additional Tavily/Brave calls | 30-day shadow observation only; frontend/current signal/event confirmation/scoring all disabled |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -91,9 +92,13 @@ P37, current phase:
 - Change ODP oil-news from per-bucket GDELT queries to one broad GDELT query plus
   local bucket classification.
 - Keep ODP GDELT DOC as a slow background source: 24h fresh cache, 72h stale
-  fallback, 24h error cooldown, and no second retry inside an Oil News refresh.
+  fallback, classified error cooldown (429 24h; timeout/network 4h; 5xx 6h;
+  other 12h), and exactly one bounded retry inside an Oil News refresh.
 - Preserve `lastUsableCache` on 429/error for audit context only; it must set
   `usedForCurrentSignal=false` and must not enhance the current Oil News signal.
+- Persist only a bounded 64-row sanitized DOC availability history and derived
+  7/30-day success rates; never store request URLs, article text, headers, or
+  secrets in availability telemetry.
 - Keep Tavily / Brave per-topic cross-checks unchanged.
 - Keep the cache display-only/audit-only and out of ODP `finalBias`, scoring,
   decision, execution, position, Brent promotion, Global Risk Heatmap, and
@@ -433,6 +438,107 @@ Future source-review only:
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
   news-factor research library.
 
+2026-07-31 automated display-only phase:
+
+- `Refresh Oil News Event Watch` performs one bounded pair fetch inside the
+  existing Oil News build and updates `sourceCaches.gdeltWebNgramsFallback`
+  from the same in-memory diagnosis.
+- The production contract is `gdelt-web-ngrams-display-fallback-cache-v2`; it
+  stores source-file timestamp, source availability, and compact aggregate
+  counts only. It stores no headline, URL, snippet, article body, raw row, or
+  provider response.
+- `workflowAutomationApproved=true` and `liveFetchApproved=true` apply only to
+  this keyless aggregate source-health write. The cache is not a current Oil
+  News signal and keeps `currentSignalEnhancement=false`,
+  `oilDirectionInput=false`, and `eligibleForScoring=false`.
+- A failed latest-file attempt may preserve a prior v2 observation for at most
+  12 hours as `stale`; after that it fails closed to `source_unavailable`.
+
+P69A article-pair adapter foundation:
+
+- ADR-0020 defines Web NGrams as a candidate replacement for the GDELT DOC
+  article-discovery role, not as a direct ODP or oil-price signal.
+- `scripts/gdelt/gdelt-web-ngrams-pair.mjs` probes and fetches a timestamp only
+  as an atomic `ngrams.txt.gz` + `toc.json.gz` pair through the shared wrapper.
+  A missing half fails closed and the adapter does not expose provider URLs.
+- Raw NGRAMS/TOC text is transient in-memory data. P69A has no workflow,
+  production writer, current-signal, frontend, scoring, decision, execution,
+  position, Brent-promotion, ODP-finalBias, Heatmap, or cross-validation
+  approval.
+- Later stages must add sanitized article joining, multilingual
+  classification, deduplication, independent-source confirmation, and a
+  reviewed shadow gate before DOC discovery can be retired.
+
+P69B sanitized article candidates:
+
+- `scripts/oil-directional/oil-news-query-taxonomy.mjs` is the single
+  query-taxonomy authority for the existing diagnosis and the new candidate
+  join path.
+- `scripts/oil-directional/gdelt-web-ngrams-article-candidates.mjs` joins
+  NGRAMS document IDs to the timestamp-matched TOC and deduplicates canonical
+  URLs. Invalid counts, TOC rows, dates, and URLs fail closed.
+- Raw titles and URLs remain transient in memory. The sanitized shadow shape
+  contains compact metadata and irreversible hashes only, and is not approved
+  for a production data write.
+- P69B has no workflow, production writer, frontend, current-signal, scoring,
+  decision, execution, position, Brent-promotion, ODP-finalBias, Heatmap, or
+  cross-validation approval.
+
+P69C multilingual shadow classification:
+
+- Taxonomy v2 supports explicit `en`, `zh`, `ar`, `ru`, and `es` term/rule
+  families while keeping topic context separate from directional rules.
+- A context-only match must remain `market_reaction_only` or
+  `unclear_or_high_claim`; it cannot become an escalation claim solely because
+  an article mentions a tanker, crude oil, or a chokepoint.
+- Sanitized classification may retain rule IDs and compact language/polarity/
+  event/axis counts, but not matched source text, titles, or URLs.
+- P69C remains ignored shadow-only with no workflow, production writer,
+  frontend, current-signal, event-confirmation, or scoring approval.
+
+P69D cross-source shadow telemetry:
+
+- Exact canonical-URL or normalized-title overlap with Tavily/Brave measures
+  discovery coverage only; it is not independent editorial confirmation.
+- Independent support requires a different editorial domain, no more than 36
+  hours of timestamp separation, matching claim axis and explicit directional
+  polarity, and at least one shared bucket. Cross-provider support additionally
+  requires both Tavily and Brave and at least two supporting domains.
+- Telemetry stores only compact identities/classifications/counts. Titles,
+  URLs, snippets, bodies, matched text, raw responses, headers, and secrets are
+  forbidden.
+- Independent support is still a noisy shadow quality measure, not a confirmed
+  event and not a current Oil News signal or scoring input.
+
+P69E automated article shadow observation:
+
+- The Oil News build reuses the current Tavily/Brave transient results and one
+  Web NGrams pair fetch. A second Web download or additional provider query for
+  shadow comparison is forbidden.
+- Production may contain only aggregate
+  `sourceCaches.gdeltWebNgramsArticleShadow`; per-article hashes/domains remain
+  in an ignored sanitized artifact uploaded for 35 days.
+- The production cache records a 30-day / 120-sample minimum observation policy
+  but keeps `promotionEligible=false` until a separate history reviewer passes.
+- The new cache has no frontend/current-signal/event-confirmation/scoring
+  approval and does not change DOC fallback behavior.
+
+P69F discovery cutover readiness gate:
+
+- `config/oil-news-discovery-policy.json` is the fail-closed routing authority.
+  It keeps GDELT DOC primary and Web NGrams shadow-only; the target ordering is
+  recorded but inactive.
+- The history reviewer reads only committed aggregate shadow caches from git
+  history. It requires zero invalid samples, at least 30 observation days and
+  120 usable samples, then checks pair availability, usable rate, candidate
+  volume, supported-language coverage, and independent/cross-provider support.
+- The daily readiness workflow uses full git history and emits only an ignored
+  artifact plus GitHub Summary. It does not query GDELT, Tavily, or Brave, read
+  secrets, write production data, commit, or push.
+- Passing all numeric gates means only `ready_for_manual_cutover_review`.
+  `promotionEligible=false` and `automaticCutoverApproved=false` remain fixed;
+  changing source order requires a separate reviewed cutover PR.
+
 ## Verification
 
 ```powershell
@@ -453,6 +559,14 @@ npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review
 npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness
 npm run check:gdelt-web-ngrams-display-fallback-production-display-write
 npm run check:gdelt-web-ngrams-frontend-aggregate-health
+npm run check:gdelt-web-ngrams-automated-display-cache
+npm run check:gdelt-web-ngrams-pair
+npm run check:gdelt-web-ngrams-article-candidates
+npm run check:gdelt-web-ngrams-shadow-classifier
+npm run check:gdelt-web-ngrams-cross-source-telemetry
+npm run check:gdelt-web-ngrams-article-shadow-cache
+npm run check:gdelt-web-ngrams-article-shadow-history-review
+npm run review:gdelt-web-ngrams-article-shadow-history -- --no-output
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

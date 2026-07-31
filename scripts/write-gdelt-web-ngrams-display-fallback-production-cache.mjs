@@ -2,6 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { isManualArtifactPath } from './lib/check-script-helpers.mjs';
 import {
   assertGdeltWebNgramsDisplayFallbackCache,
   attachGdeltWebNgramsDisplayFallbackCache
@@ -15,7 +16,8 @@ function parseArgs(argv) {
     output: DEFAULT_TARGET,
     writeOutput: true,
     printJson: false,
-    generatedAt: null
+    generatedAt: null,
+    diagnosis: null
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -40,6 +42,8 @@ function parseArgs(argv) {
       options.output = nextValue();
     } else if (arg === '--generated-at') {
       options.generatedAt = nextValue();
+    } else if (arg === '--diagnosis') {
+      options.diagnosis = nextValue();
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
@@ -50,6 +54,9 @@ function parseArgs(argv) {
   }
   if (options.writeOutput && resolve(options.output) !== resolve(DEFAULT_TARGET)) {
     throw new Error(`Refusing to write GDELT Web NGrams fallback cache outside ${DEFAULT_TARGET}`);
+  }
+  if (options.diagnosis && !isManualArtifactPath(options.diagnosis, 'manual-artifacts/oil-news/')) {
+    throw new Error('Refusing to read automated GDELT Web NGrams diagnosis outside manual-artifacts/oil-news/');
   }
   return options;
 }
@@ -79,15 +86,22 @@ function main() {
   const options = parseArgs(process.argv.slice(2));
   const artifact = readJson(options.input);
   assertOilNewsArtifact(artifact);
-  const generatedAt = options.generatedAt || artifact.generatedAt || new Date().toISOString();
-  const updated = attachGdeltWebNgramsDisplayFallbackCache(artifact, { generatedAt });
+  const diagnosis = options.diagnosis ? readJson(options.diagnosis) : null;
+  const generatedAt = options.generatedAt || diagnosis?.generatedAt || artifact.generatedAt || new Date().toISOString();
+  const updated = attachGdeltWebNgramsDisplayFallbackCache(artifact, {
+    generatedAt,
+    diagnosis,
+    previousCache: artifact.sourceCaches?.gdeltWebNgramsFallback
+  });
   assertGdeltWebNgramsDisplayFallbackCache(updated.sourceCaches.gdeltWebNgramsFallback);
 
   if (options.writeOutput) writeJson(options.output, updated);
 
   const summary = {
     status: 'ok',
-    action: options.writeOutput ? 'production_display_only_cache_written' : 'dry_run_no_output',
+    action: options.writeOutput
+      ? diagnosis ? 'automated_production_display_only_cache_written' : 'production_display_only_cache_written'
+      : 'dry_run_no_output',
     outputPath: options.writeOutput ? resolve(options.output) : null,
     fieldPath: 'sourceCaches.gdeltWebNgramsFallback',
     cacheStatus: updated.sourceCaches.gdeltWebNgramsFallback.status,

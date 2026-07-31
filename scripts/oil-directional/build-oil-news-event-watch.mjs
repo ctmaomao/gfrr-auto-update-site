@@ -10,16 +10,22 @@ import {
   GDELT_CACHE_SCHEMA_VERSION,
   GDELT_CACHE_TTL_MINUTES,
   GDELT_ERROR_COOLDOWN_HOURS,
+  GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS,
+  GDELT_LIVE_MAX_RETRIES,
+  GDELT_RETRY_JITTER_MAX_MS,
   GDELT_STALE_MAX_HOURS,
   QUERY_SET,
-  runDiagnosis
+  runDiagnosisWithTransientArticles
 } from './diagnose-oil-news-events.mjs';
+import { buildGdeltWebNgramsArticleShadow } from './build-gdelt-web-ngrams-article-shadow.mjs';
 import { attachGdeltWebNgramsDisplayFallbackCache } from './gdelt-web-ngrams-display-fallback-cache.mjs';
 import { buildClaimPolarityAggregate } from './oil-news-claim-classifier.mjs';
 
 const SCHEMA_VERSION = 'oil-news-event-watch-1';
 const MODULE = 'oil-news-event-watch';
 const DEFAULT_OUTPUT = 'data/oil-news-event-watch.json';
+const DEFAULT_WEB_NGRAMS_SHADOW_OUTPUT =
+  'manual-artifacts/oil-news/gdelt-web-ngrams-article-shadow-latest.json';
 const DEFAULT_WINDOW_DAYS = 7;
 const DEFAULT_MAX_RESULTS = 8;
 const TITLE_RISK_RULE_VERSION = 'oil-news-title-risk-p31';
@@ -250,6 +256,25 @@ function buildSourceStatus(sourceResults, diagnosis) {
         : []
     }
   ]));
+  const gdeltCache = diagnosis.sourceCaches?.gdelt_doc;
+  const gdeltAvailability = gdeltCache?.availability;
+  if (bySource.gdelt_doc && gdeltAvailability?.contractVersion === 'gdelt-doc-availability-v1') {
+    bySource.gdelt_doc.availability = {
+      contractVersion: gdeltAvailability.contractVersion,
+      latestAttemptAt: gdeltAvailability.latestAttemptAt || null,
+      lastLiveSuccessAt: gdeltAvailability.lastLiveSuccessAt || null,
+      latestOutcome: gdeltAvailability.latestOutcome || null,
+      windows: gdeltAvailability.windows || {}
+    };
+    bySource.gdelt_doc.cooldown = gdeltCache.lastFetchFailure
+      ? {
+          errorClass: gdeltCache.lastFetchFailure.errorClass || null,
+          cooldownHours: Number.isFinite(gdeltCache.lastFetchFailure.cooldownHours)
+            ? gdeltCache.lastFetchFailure.cooldownHours
+            : null
+        }
+      : null;
+  }
   return {
     gdeltDoc: bySource.gdelt_doc?.status || 'not_queried',
     tavily: bySource.tavily?.status || 'not_queried',
@@ -299,7 +324,12 @@ function assertSanitized(artifact) {
   }
 }
 
-function buildProductionArtifact(options, diagnosis) {
+function buildProductionArtifact(
+  options,
+  diagnosis,
+  previousWebNgramsCache = null,
+  webNgramsShadow = null
+) {
   const generatedAt = new Date().toISOString();
   const sourceResults = diagnosis.sourceResults || [];
   const sourceStatus = buildSourceStatus(sourceResults, diagnosis);
@@ -391,9 +421,36 @@ function buildProductionArtifact(options, diagnosis) {
     ],
     boundary: BOUNDARY
   };
-  const artifactWithSourceCaches = attachGdeltWebNgramsDisplayFallbackCache(artifact, { generatedAt });
+  const artifactWithFallbackCache = attachGdeltWebNgramsDisplayFallbackCache(artifact, {
+    generatedAt,
+    ...(webNgramsShadow?.diagnosis?.mode === 'manual_live_diagnosis'
+      ? {
+          diagnosis: webNgramsShadow.diagnosis,
+          previousCache: previousWebNgramsCache
+        }
+      : { preservedCache: previousWebNgramsCache })
+  });
+  const artifactWithSourceCaches = webNgramsShadow?.productionCache
+    ? {
+        ...artifactWithFallbackCache,
+        sourceCaches: {
+          ...artifactWithFallbackCache.sourceCaches,
+          gdeltWebNgramsArticleShadow: webNgramsShadow.productionCache
+        }
+      }
+    : artifactWithFallbackCache;
   assertSanitized(artifactWithSourceCaches);
   return artifactWithSourceCaches;
+}
+
+function readPreviousWebNgramsCache(path) {
+  if (!existsSync(resolve(path))) return null;
+  try {
+    const previous = JSON.parse(readFileSync(resolve(path), 'utf8'));
+    return previous?.sourceCaches?.gdeltWebNgramsFallback || null;
+  } catch {
+    return null;
+  }
 }
 
 function buildGdeltCacheArtifact(diagnosis) {
@@ -415,9 +472,12 @@ function buildGdeltCacheArtifact(diagnosis) {
       ttlMinutes: GDELT_CACHE_TTL_MINUTES,
       staleMaxHours: GDELT_STALE_MAX_HOURS,
       errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
+      errorCooldownHoursByClass: { ...GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS },
       lowFrequencyCache: true,
       broadQueryLocalClassification: true,
-      liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown',
+      liveRetryPolicy: 'one_bounded_retry_after_cache_or_classified_error_cooldown',
+      liveMaxRetries: GDELT_LIVE_MAX_RETRIES,
+      retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS,
       lastUsableCachePreservedOnError: true,
       lastUsableCacheAffectsCurrentSignal: false
     },
@@ -431,6 +491,18 @@ function buildGdeltCacheArtifact(diagnosis) {
       sort: 'HybridRel'
     },
     requestDiagnostics: null,
+    availability: {
+      contractVersion: 'gdelt-doc-availability-v1',
+      historyLimit: 64,
+      latestAttemptAt: null,
+      lastLiveSuccessAt: null,
+      latestOutcome: null,
+      windows: {
+        days7: { attemptCount: 0, successCount: 0, failureCount: 0, successRatePct: null },
+        days30: { attemptCount: 0, successCount: 0, failureCount: 0, successRatePct: null }
+      },
+      history: []
+    },
     aggregate: {
       articleCount: 0,
       bucketCounts: {}
@@ -457,7 +529,8 @@ function writeJson(path, payload) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const diagnosis = await runDiagnosis({
+  const previousWebNgramsCache = readPreviousWebNgramsCache(options.output);
+  const diagnosisResult = await runDiagnosisWithTransientArticles({
     allowNetwork: !options.dryRun,
     sources: options.sources,
     windowDays: options.windowDays,
@@ -468,10 +541,23 @@ async function main() {
     strict: false,
     printJson: false
   });
-  const artifact = buildProductionArtifact(options, diagnosis);
+  const diagnosis = diagnosisResult.diagnosis;
+  const webNgramsShadow = await buildGdeltWebNgramsArticleShadow({
+    allowNetwork: !options.dryRun,
+    referenceArticles: diagnosisResult.referenceArticles
+  });
+  const artifact = buildProductionArtifact(
+    options,
+    diagnosis,
+    previousWebNgramsCache,
+    webNgramsShadow
+  );
   const gdeltCacheArtifact = buildGdeltCacheArtifact(diagnosis);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   const gdeltCacheOutputPath = options.writeOutput ? writeJson(options.gdeltCacheOutput, gdeltCacheArtifact) : null;
+  const webNgramsShadowOutputPath = options.writeOutput
+    ? writeJson(DEFAULT_WEB_NGRAMS_SHADOW_OUTPUT, webNgramsShadow.observation)
+    : null;
   console.log(JSON.stringify({
     status: artifact.status,
     signalState: artifact.signalState,
@@ -485,6 +571,8 @@ async function main() {
     aggregate: artifact.aggregate,
     outputPath,
     gdeltCacheOutputPath,
+    webNgramsShadowOutputPath,
+    webNgramsShadowStatus: webNgramsShadow.productionCache.status,
     boundary: artifact.boundary
   }, null, 2));
 }

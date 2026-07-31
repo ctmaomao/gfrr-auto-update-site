@@ -17,6 +17,16 @@ const GDELT_CACHE_MODULE = 'gdelt-news-cache';
 const GDELT_CACHE_TTL_MINUTES = 1440;
 const GDELT_STALE_MAX_HOURS = 72;
 const GDELT_ERROR_COOLDOWN_HOURS = 24;
+const GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS = Object.freeze({
+  rate_limited: 24,
+  timeout: 4,
+  network_error: 4,
+  server_error: 6,
+  other: 12
+});
+const GDELT_LIVE_MAX_RETRIES = 1;
+const GDELT_RETRY_JITTER_MAX_MS = 1500;
+const GDELT_AVAILABILITY_HISTORY_LIMIT = 64;
 const GDELT_BROAD_QUERY_MAX_CHARS = 180;
 const FETCH_TIMEOUT_MS = 20000;
 const UA = 'gfrr-odp-oil-news-diagnosis/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
@@ -434,8 +444,17 @@ function cacheUsability(cache, options = {}, nowMs = Date.now()) {
   if (!cacheMatchesCurrentGdeltQuery(cache, options)) return 'expired';
   const ageMinutes = cacheAgeMinutes(cache, nowMs);
   if (!Number.isFinite(ageMinutes)) return 'unusable';
+  const failureCooldown = gdeltFailureCooldown(cache, nowMs);
+  if (failureCooldown.active) {
+    const staleArticlesUsable = Array.isArray(cache.articles)
+      && cache.articles.length > 0
+      && ageMinutes <= GDELT_STALE_MAX_HOURS * 60;
+    if (staleArticlesUsable && failureCooldown.errorClass !== 'rate_limited') {
+      return 'stale_error_cooldown';
+    }
+    return 'error_cooldown';
+  }
   if (cache.status === 'error' || cache.sourceStatus === 'error') {
-    if (ageMinutes <= GDELT_ERROR_COOLDOWN_HOURS * 60) return 'error_cooldown';
     return 'expired';
   }
   if (!Array.isArray(cache.articles) || cache.articles.length === 0) return 'unusable';
@@ -444,14 +463,136 @@ function cacheUsability(cache, options = {}, nowMs = Date.now()) {
   return 'expired';
 }
 
+function classifyGdeltFailure(diagnostics = {}) {
+  if (diagnostics.rateLimited === true || Number(diagnostics.status) === 429 || diagnostics.errorCode === 'rate_limited') {
+    return 'rate_limited';
+  }
+  if (diagnostics.timeout === true || diagnostics.errorCode === 'timeout') return 'timeout';
+  if (Number(diagnostics.status) >= 500) return 'server_error';
+  if (diagnostics.errorCode === 'network_error') return 'network_error';
+  return 'other';
+}
+
+function gdeltCooldownHoursForClass(errorClass) {
+  return GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS[errorClass] || GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS.other;
+}
+
+function gdeltFailureCooldown(cache, nowMs = Date.now()) {
+  const failure = cache?.lastFetchFailure && typeof cache.lastFetchFailure === 'object'
+    ? cache.lastFetchFailure
+    : (cache?.status === 'error' || cache?.sourceStatus === 'error')
+      ? {
+          at: cache.generatedAt,
+          errorClass: classifyGdeltFailure(cache.requestDiagnostics)
+        }
+      : null;
+  const failureAtMs = Date.parse(failure?.at || '');
+  const errorClass = failure?.errorClass || classifyGdeltFailure(cache?.requestDiagnostics);
+  const cooldownHours = gdeltCooldownHoursForClass(errorClass);
+  if (!Number.isFinite(failureAtMs)) {
+    return { active: false, errorClass, cooldownHours, ageHours: null };
+  }
+  const ageHours = Math.max(0, (nowMs - failureAtMs) / 3600000);
+  return {
+    active: ageHours <= cooldownHours,
+    errorClass,
+    cooldownHours,
+    ageHours
+  };
+}
+
+function compactAvailabilityAttempt(attempt) {
+  if (!attempt || typeof attempt !== 'object') return null;
+  const attemptedAt = typeof attempt.attemptedAt === 'string' && !Number.isNaN(Date.parse(attempt.attemptedAt))
+    ? attempt.attemptedAt
+    : null;
+  const outcome = typeof attempt.outcome === 'string' ? attempt.outcome : null;
+  if (!attemptedAt || !outcome) return null;
+  return {
+    attemptedAt,
+    outcome,
+    attempts: Number.isFinite(attempt.attempts) ? Math.max(0, Math.trunc(attempt.attempts)) : 0,
+    retryCount: Number.isFinite(attempt.retryCount) ? Math.max(0, Math.trunc(attempt.retryCount)) : 0,
+    status: Number.isFinite(attempt.status) ? attempt.status : null,
+    errorCode: typeof attempt.errorCode === 'string' ? attempt.errorCode.slice(0, 80) : null,
+    elapsedMs: Number.isFinite(attempt.elapsedMs) ? Math.max(0, Math.round(attempt.elapsedMs)) : null
+  };
+}
+
+function gdeltAttemptOutcome(diagnostics = {}, succeeded = false) {
+  if (succeeded) return 'success';
+  const errorClass = classifyGdeltFailure(diagnostics);
+  return errorClass === 'other' ? 'other_error' : errorClass;
+}
+
+function availabilityWindow(history, nowMs, days) {
+  const cutoffMs = nowMs - days * 24 * 3600000;
+  const attempts = history.filter((attempt) => Date.parse(attempt.attemptedAt) >= cutoffMs);
+  const successCount = attempts.filter((attempt) => attempt.outcome === 'success').length;
+  return {
+    attemptCount: attempts.length,
+    successCount,
+    failureCount: attempts.length - successCount,
+    successRatePct: attempts.length > 0 ? Math.round((successCount / attempts.length) * 1000) / 10 : null
+  };
+}
+
+function buildGdeltAvailability(existingCache, {
+  attemptedAt = null,
+  diagnostics = null,
+  succeeded = false,
+  nowMs = Date.now()
+} = {}) {
+  const existingHistory = Array.isArray(existingCache?.availability?.history)
+    ? existingCache.availability.history.map(compactAvailabilityAttempt).filter(Boolean)
+    : [];
+  const history = [...existingHistory];
+  if (attemptedAt && diagnostics) {
+    history.push(compactAvailabilityAttempt({
+      attemptedAt,
+      outcome: gdeltAttemptOutcome(diagnostics, succeeded),
+      attempts: diagnostics.attempts,
+      retryCount: diagnostics.retryCount,
+      status: diagnostics.status,
+      errorCode: diagnostics.errorCode,
+      elapsedMs: diagnostics.elapsedMs
+    }));
+  }
+  const compactHistory = history
+    .filter(Boolean)
+    .sort((left, right) => Date.parse(left.attemptedAt) - Date.parse(right.attemptedAt))
+    .slice(-GDELT_AVAILABILITY_HISTORY_LIMIT);
+  const priorSuccessAt = typeof existingCache?.availability?.lastLiveSuccessAt === 'string'
+    ? existingCache.availability.lastLiveSuccessAt
+    : existingCache?.sourceStatus === 'live'
+      ? existingCache.generatedAt
+      : existingCache?.lastUsableCache?.generatedAt || null;
+  const lastSuccess = [...compactHistory].reverse().find((attempt) => attempt.outcome === 'success');
+  return {
+    contractVersion: 'gdelt-doc-availability-v1',
+    historyLimit: GDELT_AVAILABILITY_HISTORY_LIMIT,
+    latestAttemptAt: compactHistory.at(-1)?.attemptedAt || null,
+    lastLiveSuccessAt: lastSuccess?.attemptedAt || priorSuccessAt,
+    latestOutcome: compactHistory.at(-1)?.outcome || null,
+    windows: {
+      days7: availabilityWindow(compactHistory, nowMs, 7),
+      days30: availabilityWindow(compactHistory, nowMs, 30)
+    },
+    history: compactHistory
+  };
+}
+
 function gdeltCachePolicy() {
   return {
     ttlMinutes: GDELT_CACHE_TTL_MINUTES,
     staleMaxHours: GDELT_STALE_MAX_HOURS,
     errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
+    errorCooldownHoursByClass: { ...GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS },
     lowFrequencyCache: true,
     broadQueryLocalClassification: true,
-    liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown',
+    liveRetryPolicy: 'one_bounded_retry_after_cache_or_classified_error_cooldown',
+    liveMaxRetries: GDELT_LIVE_MAX_RETRIES,
+    retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS,
     lastUsableCachePreservedOnError: true,
     lastUsableCacheAffectsCurrentSignal: false
   };
@@ -465,6 +606,7 @@ function normalizeGdeltCachePolicy(cache) {
   return {
     ...cache,
     cachePolicy: gdeltCachePolicy(),
+    availability: buildGdeltAvailability(cache),
     ...(lastUsableCache ? { lastUsableCache } : {})
   };
 }
@@ -568,6 +710,8 @@ function buildGdeltNewsCacheArtifact({
   requestMode,
   articles = [],
   requestDiagnostics = null,
+  availability = null,
+  lastFetchFailure = null,
   error = null
 }) {
   const compactArticles = articles.map(compactGdeltCacheArticle);
@@ -592,6 +736,8 @@ function buildGdeltNewsCacheArtifact({
       sort: 'HybridRel'
     },
     requestDiagnostics: requestDiagnostics ? sanitizeGdeltDiagnostics(requestDiagnostics) : null,
+    availability: availability || buildGdeltAvailability(null),
+    ...(lastFetchFailure ? { lastFetchFailure } : {}),
     aggregate: buildGdeltCacheAggregate(compactArticles),
     articles: compactArticles,
     error: error ? compactSnippet(error, 180) : null,
@@ -687,6 +833,29 @@ async function fetchGdeltDocBroad(options) {
       error: existingCache.error || 'GDELT live query skipped during error cooldown'
     };
   }
+  if (usability === 'stale_error_cooldown') {
+    const articles = articlesFromGdeltCache(existingCache);
+    return {
+      articles,
+      requestDiagnostics: existingCache.requestDiagnostics
+        ? {
+            ...sanitizeGdeltDiagnostics(existingCache.requestDiagnostics),
+            errorCode: 'stale_error_cooldown_cache_hit'
+          }
+        : null,
+      cacheArtifact: {
+        ...normalizeGdeltCachePolicy({
+          ...existingCache,
+          requestMode: 'stale_error_cooldown_cache_hit'
+        }),
+        ...(lastUsableCache ? { lastUsableCache } : {})
+      },
+      queryRunStatus: 'stale_error_cooldown_cache_hit',
+      sourceStatus: 'stale',
+      networkUsed: false,
+      error: existingCache.error || 'GDELT live query skipped during classified error cooldown'
+    };
+  }
 
   const params = new URLSearchParams({
     query: GDELT_BROAD_QUERY_SPEC.query,
@@ -696,14 +865,17 @@ async function fetchGdeltDocBroad(options) {
     timespan: `${options.windowDays}d`,
     sort: 'HybridRel'
   });
+  const attemptedAt = new Date().toISOString();
   try {
     const { json, diagnostics } = await fetchGdeltDocJson({
       queryParams: params,
       userAgent: BROWSER_UA,
       timeoutMs: FETCH_TIMEOUT_MS,
-      maxRetries: 0,
+      maxRetries: GDELT_LIVE_MAX_RETRIES,
+      retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS,
       label: 'GDELT DOC broad oil-news cache'
     });
+    const sanitizedDiagnostics = sanitizeGdeltDiagnostics(diagnostics);
     const articles = (Array.isArray(json?.articles) ? json.articles : []).map((item) => normalizeArticle({
       source: 'gdelt_doc',
       querySpec: GDELT_BROAD_QUERY_SPEC,
@@ -718,11 +890,16 @@ async function fetchGdeltDocBroad(options) {
       sourceStatus: 'live',
       requestMode: 'live_broad_query',
       articles,
-      requestDiagnostics: diagnostics
+      requestDiagnostics: diagnostics,
+      availability: buildGdeltAvailability(existingCache, {
+        attemptedAt,
+        diagnostics: sanitizedDiagnostics,
+        succeeded: true
+      })
     }), options);
     return {
       articles,
-      requestDiagnostics: sanitizeGdeltDiagnostics(diagnostics),
+      requestDiagnostics: sanitizedDiagnostics,
       cacheArtifact,
       queryRunStatus: 'ok',
       sourceStatus: 'ok',
@@ -730,16 +907,31 @@ async function fetchGdeltDocBroad(options) {
     };
   } catch (error) {
     const rateLimited = isGdeltRateLimitedError(error);
+    const sanitizedDiagnostics = error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : {};
+    const errorClass = classifyGdeltFailure(sanitizedDiagnostics);
+    const lastFetchFailure = {
+      at: attemptedAt,
+      errorClass,
+      cooldownHours: gdeltCooldownHoursForClass(errorClass)
+    };
+    const availability = buildGdeltAvailability(existingCache, {
+      attemptedAt,
+      diagnostics: sanitizedDiagnostics,
+      succeeded: false
+    });
     if (usability === 'stale' && !rateLimited) {
       const articles = articlesFromGdeltCache(existingCache);
       return {
         articles,
-        requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
+        requestDiagnostics: sanitizedDiagnostics,
         cacheArtifact: {
           ...normalizeGdeltCachePolicy(existingCache),
           status: 'stale',
           sourceStatus: 'stale',
           requestMode: 'stale_cache_after_fetch_error',
+          requestDiagnostics: sanitizedDiagnostics,
+          availability,
+          lastFetchFailure,
           ...(lastUsableCache ? { lastUsableCache } : {}),
           error: compactSnippet(error.message, 180)
         },
@@ -754,7 +946,9 @@ async function fetchGdeltDocBroad(options) {
       sourceStatus: 'error',
       requestMode: rateLimited ? 'rate_limited_last_usable_cache_preserved' : 'live_broad_query_failed',
       articles: [],
-      requestDiagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
+      requestDiagnostics: sanitizedDiagnostics,
+      availability,
+      lastFetchFailure,
       error: error.message
     }), options);
     if (lastUsableCache) cacheArtifact.lastUsableCache = lastUsableCache;
@@ -1249,7 +1443,7 @@ function createArtifact(options, keyState, sourceResults) {
   };
 }
 
-async function runDiagnosis(options) {
+async function collectDiagnosis(options) {
   assertGdeltBroadQueryWithinSafeLength();
   const keyState = getApiKeyState();
   const sources = options.sources;
@@ -1264,7 +1458,22 @@ async function runDiagnosis(options) {
     }
   }
 
+  return { keyState, sourceResults };
+}
+
+async function runDiagnosis(options) {
+  const { keyState, sourceResults } = await collectDiagnosis(options);
   return createArtifact(options, keyState, sourceResults);
+}
+
+async function runDiagnosisWithTransientArticles(options) {
+  const { keyState, sourceResults } = await collectDiagnosis(options);
+  return {
+    diagnosis: createArtifact(options, keyState, sourceResults),
+    referenceArticles: sourceResults
+      .filter((result) => result.source === 'tavily' || result.source === 'brave')
+      .flatMap((result) => result.articles || [])
+  };
 }
 
 function writeArtifact(artifact, options) {
@@ -1314,10 +1523,18 @@ export {
   GDELT_CACHE_SCHEMA_VERSION,
   GDELT_CACHE_TTL_MINUTES,
   GDELT_ERROR_COOLDOWN_HOURS,
+  GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS,
+  GDELT_LIVE_MAX_RETRIES,
+  GDELT_RETRY_JITTER_MAX_MS,
   GDELT_STALE_MAX_HOURS,
   QUERY_SET,
+  buildGdeltAvailability,
+  cacheUsability,
+  classifyGdeltFailure,
+  gdeltCooldownHoursForClass,
   getApiKeyState,
-  runDiagnosis
+  runDiagnosis,
+  runDiagnosisWithTransientArticles
 };
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -689,6 +689,16 @@ The output summarizes bucket counts and cross-source availability. It can flag
 `quiet`, `watch`, `elevated_manual_review`, or `source_unavailable`, but this is
 a manual review state only.
 
+## Automated Web NGrams display cache
+
+2026-07-31 起,`Refresh Oil News Event Watch` 复用既有 bounded live diagnosis,
+先清洗 ignored artifact,再通过 scoped writer 更新
+`sourceCaches.gdeltWebNgramsFallback`。v2 contract
+`gdelt-web-ngrams-display-fallback-cache-v2` 是 automated display-only
+aggregate source-health cache,not a current Oil News signal。它只允许源文件
+时间、可达状态和 compact aggregate counts,不允许 headline、URL、snippet、
+body、raw row 或 raw response；全部 Oil News/ODP/scoring 边界继续为 false。
+
 ## Boundaries
 
 P28 does not:

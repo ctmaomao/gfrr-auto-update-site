@@ -3,7 +3,16 @@ import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-he
 import { mkdirSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 import { fetchGdeltWebNgramsText, probeGdeltWebNgramsFile, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
+import {
+  fetchGdeltWebNgramsPair,
+  probeGdeltWebNgramsPair
+} from '../gdelt/gdelt-web-ngrams-pair.mjs';
+import {
+  matchWebNgramsTerms,
+  WEB_NGRAMS_TERM_SET
+} from './oil-news-query-taxonomy.mjs';
 
 const DIAGNOSIS_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json';
@@ -19,15 +28,7 @@ const UA = 'gfrr-odp-oil-news-web-ngrams-diagnosis/1.0 (+https://github.com/ctma
 const BOUNDARY =
   'manual ODP oil-news GDELT Web NGrams diagnosis only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
 
-const TERM_SET = [
-  { id: 'hormuz', labelZh: '霍尔木兹', patterns: ['hormuz', 'strait of hormuz'], buckets: ['chokepoint', 'middle_east_risk'] },
-  { id: 'red_sea', labelZh: '红海', patterns: ['red sea', 'bab el-mandeb', 'bab el mandeb'], buckets: ['chokepoint', 'tanker_shipping'] },
-  { id: 'tanker', labelZh: '油轮/航运', patterns: ['tanker', 'vlcc', 'shipping insurance'], buckets: ['tanker_shipping'] },
-  { id: 'crude_oil', labelZh: '原油', patterns: ['crude oil', 'oil prices', 'brent crude', 'wti crude'], buckets: ['market_reaction'] },
-  { id: 'sanctions', labelZh: '制裁', patterns: ['oil sanctions', 'shadow fleet', 'price cap'], buckets: ['sanctions', 'tanker_shipping'] },
-  { id: 'supply_disruption', labelZh: '供应中断', patterns: ['oil outage', 'pipeline outage', 'export halt', 'supply disruption'], buckets: ['supply_disruption'] },
-  { id: 'facility_event', labelZh: '设施事件', patterns: ['refinery fire', 'refinery outage', 'terminal shutdown'], buckets: ['facility_event', 'supply_disruption'] }
-];
+const TERM_SET = WEB_NGRAMS_TERM_SET;
 
 function printUsage() {
   console.log(`Usage:
@@ -233,11 +234,8 @@ function classifyLine(line) {
   const count = Number(countRaw);
   const ngram = String(ngramRaw || '').trim();
   if (!Number.isFinite(docId) || !ngram || !Number.isFinite(count)) return [];
-  const lower = ngram.toLowerCase();
   const matches = [];
-  for (const term of TERM_SET) {
-    const matchedPattern = term.patterns.find((pattern) => lower.includes(pattern));
-    if (!matchedPattern) continue;
+  for (const { term, matchedPattern } of matchWebNgramsTerms(ngram, TERM_SET)) {
     matches.push({
       termId: term.id,
       labelZh: term.labelZh,
@@ -313,33 +311,48 @@ function analyzeNgramsText(text) {
   };
 }
 
-async function probeFirstAvailableNgrams(candidates) {
+async function probeFirstAvailableNgrams(candidates, {
+  probePair = probeGdeltWebNgramsPair,
+  probeFile = probeGdeltWebNgramsFile
+} = {}) {
   const attempts = [];
   for (const timestamp of candidates) {
-    const result = await probeGdeltWebNgramsFile({
+    const result = await probePair({
       timestamp,
-      kind: 'ngrams',
-      userAgent: UA,
-      timeoutMs: DEFAULT_TIMEOUT_MS,
-      minIntervalMs: DEFAULT_PROBE_MIN_INTERVAL_MS,
-      label: `GDELT Web NGrams probe ${timestamp}`
+      probeFile: async (probeOptions) => {
+        const kind = String(probeOptions.kind || '');
+        return probeFile({
+          ...probeOptions,
+          userAgent: UA,
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+          minIntervalMs: DEFAULT_PROBE_MIN_INTERVAL_MS,
+          label: `GDELT Web NGrams ${kind} probe ${timestamp}`
+        });
+      },
+      label: `GDELT Web NGrams pair probe ${timestamp}`
     });
     attempts.push({
       timestamp,
       status: result.ok ? 'ok' : 'missing',
-      httpStatus: result.status,
-      contentLength: result.contentLength,
-      lastModified: result.lastModified,
-      diagnostics: sanitizeGdeltDiagnostics(result.diagnostics),
-      error: result.error || null
+      httpStatus: result.ngrams?.status,
+      tocHttpStatus: result.toc?.status,
+      contentLength: result.ngrams?.contentLength || null,
+      tocContentLength: result.toc?.contentLength || null,
+      lastModified: result.ngrams?.lastModified || null,
+      tocLastModified: result.toc?.lastModified || null,
+      diagnostics: sanitizeGdeltDiagnostics(
+        result.ok ? result.ngrams?.diagnostics : (result.toc || result.ngrams)?.diagnostics
+      ),
+      error: null
     });
     if (result.ok) {
       return {
         found: true,
         timestamp,
-        url: result.url,
-        contentLength: result.contentLength,
-        lastModified: result.lastModified,
+        contentLength: result.ngrams?.contentLength || null,
+        tocContentLength: result.toc?.contentLength || null,
+        lastModified: result.ngrams?.lastModified || null,
+        tocLastModified: result.toc?.lastModified || null,
         attempts
       };
     }
@@ -354,12 +367,17 @@ async function probeFirstAvailableNgrams(candidates) {
   };
 }
 
-async function fetchFirstAvailableNgrams(candidates, options) {
+async function fetchFirstAvailableNgrams(candidates, options, {
+  probePair = probeGdeltWebNgramsPair,
+  probeFile = probeGdeltWebNgramsFile,
+  fetchPair = fetchGdeltWebNgramsPair,
+  fetchText = fetchGdeltWebNgramsText
+} = {}) {
   const attempts = [];
   let candidateSet = candidates;
   let discovery = null;
   if (options.probeBeforeDownload) {
-    discovery = await probeFirstAvailableNgrams(candidates);
+    discovery = await probeFirstAvailableNgrams(candidates, { probePair, probeFile });
     attempts.push(...discovery.attempts.map((attempt) => ({
       ...attempt,
       method: 'HEAD'
@@ -369,32 +387,48 @@ async function fetchFirstAvailableNgrams(candidates, options) {
   for (const timestamp of candidates) {
     if (!candidateSet.includes(timestamp)) continue;
     try {
-      const result = await fetchGdeltWebNgramsText({
+      const result = await fetchPair({
         timestamp,
-        kind: 'ngrams',
-        userAgent: UA,
-        timeoutMs: DEFAULT_TIMEOUT_MS,
-        minIntervalMs: DEFAULT_MIN_INTERVAL_MS,
-        maxRetries: 0,
-        label: `GDELT Web NGrams ${timestamp}`
+        fetchText: async (fetchOptions) => {
+          const kind = String(fetchOptions.kind || '');
+          return fetchText({
+            ...fetchOptions,
+            userAgent: UA,
+            timeoutMs: DEFAULT_TIMEOUT_MS,
+            minIntervalMs: DEFAULT_MIN_INTERVAL_MS,
+            maxRetries: 0,
+            label: `GDELT Web NGrams ${kind} ${timestamp}`
+          });
+        },
+        label: `GDELT Web NGrams article-pair ${timestamp}`
       });
       attempts.push({
         method: 'GET',
         timestamp,
         status: 'ok',
-        contentLength: discovery?.contentLength || null,
-        lastModified: discovery?.lastModified || null,
-        diagnostics: sanitizeGdeltDiagnostics(result.diagnostics)
+        ngramsContentLength: discovery?.contentLength || result.diagnostics?.ngrams?.contentLength || null,
+        tocContentLength: discovery?.tocContentLength || result.diagnostics?.toc?.contentLength || null,
+        lastModified: discovery?.lastModified || result.diagnostics?.ngrams?.lastModified || null,
+        tocLastModified: discovery?.tocLastModified || result.diagnostics?.toc?.lastModified || null,
+        diagnostics: sanitizeGdeltDiagnostics(result.diagnostics?.ngrams?.diagnostics),
+        tocDiagnostics: sanitizeGdeltDiagnostics(result.diagnostics?.toc?.diagnostics)
       });
-      return { ...result, timestamp, attempts, discovery };
+      return {
+        ...result,
+        text: result.ngramsText,
+        timestamp,
+        attempts,
+        discovery
+      };
     } catch (error) {
+      const failureDiagnostics = error.pairDiagnostics?.failure || error.gdeltDiagnostics || null;
       attempts.push({
         method: 'GET',
         timestamp,
         status: 'error',
-        diagnostics: error.gdeltDiagnostics ? sanitizeGdeltDiagnostics(error.gdeltDiagnostics) : null,
-        errorCode: error.gdeltDiagnostics?.errorCode || null,
-        error: String(error.message || error).slice(0, 180)
+        diagnostics: failureDiagnostics ? sanitizeGdeltDiagnostics(failureDiagnostics) : null,
+        errorCode: failureDiagnostics?.errorCode || error.code || null,
+        error: error.code || 'gdelt_web_ngrams_pair_unavailable'
       });
     }
   }
@@ -408,7 +442,7 @@ function buildDryRunArtifact(options, candidates) {
     status: 'dry_run',
     mode: 'dry_run_no_network',
     sourceKey: 'odp_oil_news_gdelt_web_ngrams_diagnosis',
-    source: 'GDELT Web NGrams v5 legacy ngrams files',
+    source: 'GDELT Web NGrams v5 legacy article-pair files',
     input: {
       allowNetwork: false,
       probeBeforeDownload: options.probeBeforeDownload,
@@ -427,14 +461,20 @@ function sanitizeSelectedFileForArtifact(fetched) {
   return {
     timestamp: fetched.timestamp,
     contentLength: fetched.discovery?.contentLength || null,
+    tocContentLength: fetched.discovery?.tocContentLength || null,
     lastModified: fetched.discovery?.lastModified || null,
-    diagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics)
+    tocLastModified: fetched.discovery?.tocLastModified || null,
+    diagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics?.ngrams?.diagnostics || fetched.diagnostics),
+    tocDiagnostics: sanitizeGdeltDiagnostics(fetched.diagnostics?.toc?.diagnostics)
   };
 }
 
-async function buildLiveArtifact(options, candidates) {
-  const fetched = await fetchFirstAvailableNgrams(candidates, options);
-  const summary = fetched.text ? analyzeNgramsText(fetched.text) : summarizeMatches([]);
+function buildLiveArtifactFromFetched(options, candidates, fetched) {
+  const summary = fetched.ngramsText
+    ? analyzeNgramsText(fetched.ngramsText)
+    : fetched.text
+      ? analyzeNgramsText(fetched.text)
+      : summarizeMatches([]);
   const status = fetched.timestamp
     ? summary.totalHitCount > 0 ? 'ok' : 'ok_no_oil_terms_observed'
     : 'source_unavailable';
@@ -444,7 +484,7 @@ async function buildLiveArtifact(options, candidates) {
     status,
     mode: 'manual_live_diagnosis',
     sourceKey: 'odp_oil_news_gdelt_web_ngrams_diagnosis',
-    source: 'GDELT Web NGrams v5 legacy ngrams files',
+    source: 'GDELT Web NGrams v5 legacy article-pair files',
     input: {
       allowNetwork: true,
       probeBeforeDownload: options.probeBeforeDownload,
@@ -459,7 +499,9 @@ async function buildLiveArtifact(options, candidates) {
           candidateCount: candidates.length,
           attemptedCount: fetched.discovery.attempts.length,
           contentLength: fetched.discovery.contentLength,
+          tocContentLength: fetched.discovery.tocContentLength,
           lastModified: fetched.discovery.lastModified,
+          tocLastModified: fetched.discovery.tocLastModified,
           failureCounts: fetched.discovery.attempts.reduce((counts, attempt) => {
             if (attempt.status === 'ok') return counts;
             const key = attempt.diagnostics?.errorCode || String(attempt.httpStatus || 'unknown');
@@ -483,11 +525,16 @@ async function buildLiveArtifact(options, candidates) {
     productionDisplayApproved: false,
     limitationsZh: [
       'Web NGrams 是下载型 ngram 频次文件,可降低 DOC API 429 风险,但不是新闻事实确认源。',
-      '本诊断不读取 TOC 标题/URL,不保存新闻正文,只统计短语命中与桶计数。',
+      '本诊断只校验 ngrams/toc 成对可用性,不解析 TOC 标题/URL,不保存新闻正文,只统计短语命中与桶计数。',
       '本诊断不写 production data,不改变 Oil News、ODP 或今日总判断。'
     ],
     boundary: BOUNDARY
   };
+}
+
+async function buildLiveArtifact(options, candidates) {
+  const fetched = await fetchFirstAvailableNgrams(candidates, options);
+  return buildLiveArtifactFromFetched(options, candidates, fetched);
 }
 
 async function main() {
@@ -524,7 +571,21 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error?.stack || error?.message || error);
-  process.exit(1);
-});
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error?.stack || error?.message || error);
+    process.exit(1);
+  });
+}
+
+export {
+  analyzeNgramsText,
+  buildCandidateTimestamps,
+  buildDryRunArtifact,
+  buildHeartbeatDiscoveryTimestamps,
+  buildLiveArtifactFromFetched,
+  fetchFirstAvailableNgrams,
+  parseArgs,
+  probeFirstAvailableNgrams,
+  summarizeMatches
+};

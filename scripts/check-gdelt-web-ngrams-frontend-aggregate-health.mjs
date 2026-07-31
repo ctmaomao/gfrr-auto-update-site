@@ -130,10 +130,13 @@ function assertProductionCache() {
     Number.isFinite(cache.staleAfterHours) && cache.staleAfterHours > 0,
     'Production cache must expose a positive staleAfterHours threshold.'
   );
-  assert(
-    /^\d{14}$/.test(cache.sampleGate?.latestSelectedTimestamp || ''),
-    'Production cache must expose a yyyyMMddHHmmss latestSelectedTimestamp.'
-  );
+  const automated = cache.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v2';
+  const freshnessTimestamp = automated
+    ? cache.automation?.selectedFileTimestamp
+    : cache.sampleGate?.latestSelectedTimestamp;
+  if (cache.status !== 'source_unavailable') {
+    assert(/^\d{14}$/.test(freshnessTimestamp || ''), 'Production cache must expose a yyyyMMddHHmmss freshness timestamp.');
+  }
   for (const field of [
     'currentSignalEnhancement',
     'eventConfirmationSource',
@@ -143,12 +146,12 @@ function assertProductionCache() {
     'usedForCurrentOilNewsSignal',
     'usedForOdpFinalBias',
     'usedForMainScore',
-    'workflowAutomationApproved',
-    'liveFetchApproved',
     'apiKeyReadApproved'
   ]) {
     assert(cache[field] === false, `Production cache ${field} must remain false.`);
   }
+  assert(cache.workflowAutomationApproved === automated, 'Production cache workflow automation approval mismatch.');
+  assert(cache.liveFetchApproved === automated, 'Production cache live fetch approval mismatch.');
 }
 
 function assertFrontendProjection() {
@@ -163,6 +166,7 @@ function assertFrontendProjection() {
   for (const marker of [
     'gdeltWebNgramsFallback',
     'gdelt-web-ngrams-display-fallback-cache-v1',
+    'gdelt-web-ngrams-display-fallback-cache-v2',
     'aggregate_source_health_only_no_headlines',
     'frontendDisplayApproved',
     'sampleGate',
@@ -171,6 +175,8 @@ function assertFrontendProjection() {
     'usedForCurrentSignal',
     '聚合背景样本门已通过',
     '历史审阅样本截至',
+    '自动下载源正常',
+    '自动源文件截至',
     '已超',
     '不用于当前新闻信号'
   ]) {
@@ -225,16 +231,35 @@ function assertFrontendProjection() {
   );
   assert(futureBeyondTolerance.state === 'unavailable', 'P67 timestamp over one hour in the future must fail closed.');
   assert(futureBeyondTolerance.text.includes('时间异常'), 'P67 future timestamp copy must expose an anomaly.');
+
+  const automated = webNgramsSampleAge(
+    {
+      contractVersion: 'gdelt-web-ngrams-display-fallback-cache-v2',
+      staleAfterHours: 12,
+      automation: { selectedFileTimestamp: '20260731110000' }
+    },
+    Date.parse('2026-07-31T12:00:00Z')
+  );
+  assert(automated.state === 'within_window', 'Automated Web NGrams source file must be within its 12h window.');
+  assert(automated.text.includes('自动源文件截至 2026-07-31'), 'Automated Web NGrams copy must expose source-file freshness.');
 }
 
 function assertCorePathsRemainUnwired() {
   for (const path of [
     'scripts/oil-directional/build-oil-directional-pressure.mjs',
     'data/oil-directional-pressure.json',
-    'data/radar-data.json',
-    '.github/workflows/refresh-oil-news-event-watch.yml'
+    'data/radar-data.json'
   ]) {
     assert(!readText(path).includes('gdeltWebNgramsFallback'), `${path} must not consume the P63 cache.`);
+  }
+  const workflow = readText('.github/workflows/refresh-oil-news-event-watch.yml');
+  for (const marker of [
+    'npm run build:oil-news-event-watch',
+    'Upload sanitized Web NGrams article shadow observation',
+    'gdelt-web-ngrams-article-shadow-latest.json',
+    'retention-days: 35'
+  ]) {
+    assert(workflow.includes(marker), `Oil News workflow missing integrated Web NGrams marker: ${marker}`);
   }
 }
 

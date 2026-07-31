@@ -35,7 +35,7 @@ const REQUIRED_POLICY_PHRASES = [
   'P46, current phase',
   'P47, current phase',
   'P48, current phase',
-  '24h fresh-cache or 24h error-cooldown',
+  '24h fresh-cache or classified error-cooldown',
   'GDELT Web NGrams',
   'scripts/gdelt/fetch-gdelt.mjs',
   'diagnose:gdelt-web-ngrams',
@@ -46,6 +46,9 @@ const REQUIRED_POLICY_PHRASES = [
   'gdelt-web-ngrams-fallback-source-review-p45',
   'gdelt-web-ngrams-production-display-fallback-contract-p46',
   'gdelt-web-ngrams-sample-collector.yml',
+  'gdelt-web-ngrams-display-fallback-cache-v2',
+  'automated display-only',
+  'not a current Oil News signal',
   'data/gdelt-news-cache.json',
   'data/gdelt-bubble-watch-cache.json',
   'data/gdelt-world-order-cache.json'
@@ -314,10 +317,26 @@ function checkSharedWrapperContract() {
     fail(`${oilNewsPath} must keep ODP GDELT stale-cache fallback at 72 hours`);
   }
   if (!/GDELT_ERROR_COOLDOWN_HOURS\s*=\s*24/u.test(oilNews)) {
-    fail(`${oilNewsPath} must keep ODP GDELT error cooldown at 24 hours`);
+    fail(`${oilNewsPath} must keep the compatibility/max ODP GDELT error cooldown at 24 hours`);
   }
-  if (!oilNews.includes('maxRetries: 0')) {
-    fail(`${oilNewsPath} must keep ODP GDELT live attempts single-attempt after cache/cooldown expiry`);
+  for (const phrase of [
+    'GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS',
+    'rate_limited: 24',
+    'timeout: 4',
+    'network_error: 4',
+    'server_error: 6',
+    'GDELT_LIVE_MAX_RETRIES = 1',
+    'GDELT_RETRY_JITTER_MAX_MS = 1500',
+    'lastFetchFailure',
+    'gdelt-doc-availability-v1'
+  ]) {
+    if (!oilNews.includes(phrase)) fail(`${oilNewsPath} missing classified cooldown/availability phrase: ${phrase}`);
+  }
+  if (!oilNews.includes('maxRetries: GDELT_LIVE_MAX_RETRIES')) {
+    fail(`${oilNewsPath} must allow exactly one bounded retry after cache/classified cooldown expiry`);
+  }
+  if (!oilNews.includes('retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS')) {
+    fail(`${oilNewsPath} must add bounded jitter to the retry path`);
   }
   const oilNewsNgramsPath = 'scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs';
   if (!existsSync(resolve(oilNewsNgramsPath))) {
@@ -476,6 +495,19 @@ function checkSharedWrapperContract() {
     ]) {
       if (!oilNewsNgramsCollectorWorkflow.includes(phrase)) fail(`${oilNewsNgramsCollectorWorkflowPath} missing P47 collector workflow phrase: ${phrase}`);
     }
+  }
+  const oilNewsWorkflowPath = '.github/workflows/refresh-oil-news-event-watch.yml';
+  const oilNewsWorkflow = readText(oilNewsWorkflowPath);
+  for (const phrase of [
+    'npm run build:oil-news-event-watch',
+    'Upload sanitized Web NGrams article shadow observation',
+    'gdelt-web-ngrams-article-shadow-latest.json',
+    'retention-days: 35'
+  ]) {
+    if (!oilNewsWorkflow.includes(phrase)) fail(`${oilNewsWorkflowPath} missing automated Web NGrams phrase: ${phrase}`);
+  }
+  if (oilNewsWorkflow.includes('Refresh automated Web NGrams display cache')) {
+    fail(`${oilNewsWorkflowPath} must not perform a second Web NGrams download after the integrated build`);
   }
   const worldOrderPath = 'scripts/world-order/fetch-gdelt-cloud.mjs';
   if (!existsSync(resolve(worldOrderPath))) {
