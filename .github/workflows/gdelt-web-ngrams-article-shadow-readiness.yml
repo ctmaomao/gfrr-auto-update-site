@@ -1,0 +1,47 @@
+name: GDELT Web NGrams Article Shadow Readiness
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 2 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gdelt-web-ngrams-article-shadow-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review shadow observation history
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with history
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Review Web NGrams article shadow history
+        run: npm run review:gdelt-web-ngrams-article-shadow-history -- --github-summary
+
+      - name: Upload readiness artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gdelt-web-ngrams-article-shadow-readiness
+          path: manual-artifacts/oil-news/gdelt-web-ngrams-article-shadow-history-review-latest.json
+          if-no-files-found: error
+          retention-days: 35

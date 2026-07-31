@@ -1331,6 +1331,31 @@ News provider results。它必须保持 `frontendDisplayApproved=false`,
 前字段可 absent；存在时必须通过 contract validator。每轮 sanitized per-article
 shadow observation 仅上传 GitHub artifact，retention 35 days，不 commit。
 
+### GDELT Web NGrams discovery cutover readiness gate (P69F)
+
+`config/oil-news-discovery-policy.json` 固定当前模式为
+`gdelt_doc_primary_web_ngrams_shadow`，目标模式仅登记为
+`web_ngrams_primary_gdelt_doc_fallback`。当前 fallback 顺序仍是 GDELT DOC →
+Tavily → Brave；目标顺序在独立 reviewed cutover PR 获批前不生效。
+`webNgramsPrimaryApproved=false` 与 `automaticCutoverApproved=false` 是硬边界。
+
+`review:gdelt-web-ngrams-article-shadow-history` 只读 git history 中已提交的
+`data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsArticleShadow`，
+验证所有 cache contract，按 `generatedAt` 去重，并计算真实观察天数、可用
+样本数、pair availability、usable rate、candidate count、多语言覆盖率及
+Tavily/Brave independent/cross-provider support。质量门槛固定为至少 30 天、
+120 个可用样本、95% pair availability、80% usable rate、中位数候选数 10、
+多语言覆盖率 70%、independent support 10%、cross-provider support 5%，且
+invalid sample 必须为 0。
+
+即使全部门槛通过，review 也只能输出
+`ready_for_manual_cutover_review`；`promotionEligible=false` 与
+`automaticCutoverApproved=false` 始终不变。每日只读 workflow
+`GDELT Web NGrams Article Shadow Readiness` 仅生成 GitHub Summary 和 35-day
+ignored artifact，不读取 secrets、不访问新闻源、不 commit/push、不写
+production data。它不会自动切换 discovery，也不改变 frontend/current signal/
+event confirmation/ODP finalBias/scoring/decision/execution/position。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：

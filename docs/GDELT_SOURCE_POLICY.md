@@ -523,6 +523,22 @@ P69E automated article shadow observation:
 - The new cache has no frontend/current-signal/event-confirmation/scoring
   approval and does not change DOC fallback behavior.
 
+P69F discovery cutover readiness gate:
+
+- `config/oil-news-discovery-policy.json` is the fail-closed routing authority.
+  It keeps GDELT DOC primary and Web NGrams shadow-only; the target ordering is
+  recorded but inactive.
+- The history reviewer reads only committed aggregate shadow caches from git
+  history. It requires zero invalid samples, at least 30 observation days and
+  120 usable samples, then checks pair availability, usable rate, candidate
+  volume, supported-language coverage, and independent/cross-provider support.
+- The daily readiness workflow uses full git history and emits only an ignored
+  artifact plus GitHub Summary. It does not query GDELT, Tavily, or Brave, read
+  secrets, write production data, commit, or push.
+- Passing all numeric gates means only `ready_for_manual_cutover_review`.
+  `promotionEligible=false` and `automaticCutoverApproved=false` remain fixed;
+  changing source order requires a separate reviewed cutover PR.
+
 ## Verification
 
 ```powershell
@@ -549,6 +565,8 @@ npm run check:gdelt-web-ngrams-article-candidates
 npm run check:gdelt-web-ngrams-shadow-classifier
 npm run check:gdelt-web-ngrams-cross-source-telemetry
 npm run check:gdelt-web-ngrams-article-shadow-cache
+npm run check:gdelt-web-ngrams-article-shadow-history-review
+npm run review:gdelt-web-ngrams-article-shadow-history -- --no-output
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

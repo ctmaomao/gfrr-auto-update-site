@@ -1423,6 +1423,32 @@ shadow 使用。生产 display 字段 contract 为
 不得把 aggregate hits/doc count 写成事件确认、headline feed、油价方向或评分
 输入；不得手工修改 production JSON。
 
+### GDELT Web NGrams article shadow readiness
+
+`GDELT Web NGrams Article Shadow Readiness` 每日只读已提交的 Oil News watch
+历史。它不联网查询新闻源、不读取 secrets、不刷新数据、不 commit/push；输出
+仅为 GitHub Summary 和 35-day artifact。
+
+本地等价检查：
+
+```bash
+npm run check:gdelt-web-ngrams-article-shadow-history-review
+npm run review:gdelt-web-ngrams-article-shadow-history -- --no-output
+```
+
+- `insufficient_history`：尚无 aggregate shadow cache，或首个 post-merge
+  refresh 尚未提交；等待正常 `Refresh Oil News Event Watch`。
+- `collecting_shadow_history`：已有真实样本，但 30 天/120 usable samples 或
+  availability/coverage/support 任一门槛未过；查看 artifact 的 `gates[]`，不得
+  为消除 WAIT 而放宽 classifier、pair validator 或独立来源规则。
+- `ready_for_manual_cutover_review`：只表示可以另开人工 reviewed cutover PR。
+  不得在当前 PR、readiness workflow 或 production JSON 中直接改变 source
+  order。`promotionEligible` 和 `automaticCutoverApproved` 必须继续为 false。
+
+当前运行顺序仍是 GDELT DOC → Tavily → Brave，Web NGrams 只在 shadow
+观察。未来切换必须同时审阅误报样本、语言覆盖、Tavily/Brave 独立支持以及
+GDELT DOC fallback 行为；单一 provider 或同 URL/title overlap 不能确认事件。
+
 ### FOMC minutes tone quality
 
 FOMC minutes keyword NLP 的日常离线复核：

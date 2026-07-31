@@ -341,6 +341,43 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/gdelt-web-ngrams-article-shadow-readiness.yml',
+    required: [
+      'name: GDELT Web NGrams Article Shadow Readiness',
+      'workflow_dispatch',
+      "cron: '41 2 * * *'",
+      'permissions:',
+      'contents: read',
+      'concurrency',
+      'gdelt-web-ngrams-article-shadow-readiness',
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'fetch-depth: 0',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
+      'node-version: 24',
+      'package-manager-cache: false',
+      'npm run review:gdelt-web-ngrams-article-shadow-history -- --github-summary',
+      'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
+      'gdelt-web-ngrams-article-shadow-readiness',
+      'retention-days: 35'
+    ],
+    forbidden: [
+      'contents: write',
+      'git push',
+      'git commit',
+      'secrets.',
+      'TAVILY_API',
+      'BRAVE_API',
+      'npm run build:oil-news-event-watch',
+      'npm run build:oil-directional',
+      'npm run build:data',
+      'scripts/run-daily-pipeline.mjs',
+      'data/oil-news-event-watch.json',
+      'data/oil-directional-pressure.json',
+      'data/radar-data.json',
+      'realtime/market.json'
+    ]
+  },
+  {
     file: '.github/workflows/transport-shock-confirmation-factor-production-refresh-monitor.yml',
     required: [
       'name: Transport Shock Production Refresh Monitor',

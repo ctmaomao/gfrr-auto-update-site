@@ -921,6 +921,16 @@ per-article sanitized observation 只上传 35-day GitHub artifact。该路径�
 provider/key 请求，不做第二次 Web download，不接 frontend/current signal/
 event confirmation/scoring。
 
+P69F 增加 `oil-news-discovery-policy-v1` 与只读 git-history readiness reviewer。
+当前 source routing 仍是 GDELT DOC primary + Web NGrams shadow；目标
+Web NGrams primary + GDELT DOC fallback 只登记、不激活。reviewer 只读取
+production watch 历史中的 aggregate shadow cache，并以 30 天/120 usable
+samples、pair availability、usable rate、candidate count、多语言覆盖与
+Tavily/Brave 独立/cross-provider support 作质量门禁。每日 readiness workflow
+只生成 ignored artifact/GitHub Summary，不访问新闻源、不读取 secrets、不
+commit/push。门禁通过仍只表示可另开人工 reviewed cutover PR，不会自动改变
+source order，也不批准 current signal、event confirmation、frontend 或 scoring。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |
