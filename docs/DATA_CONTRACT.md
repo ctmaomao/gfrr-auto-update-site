@@ -1277,6 +1277,22 @@ workflow 或 production writer，不写 `data/*.json` / `realtime/*.json`，并�
 `currentSignalEnhancement=false` / `eligibleForScoring=false`。后续仍需完成
 多语言 claim/event classification、独立源确认与真实观察窗 shadow gate。
 
+### GDELT Web NGrams multilingual shadow classification (P69C)
+
+`gdelt-web-ngrams-multilingual-classification-shadow-v1` 只对 P69B 的进程内
+article candidates 做规则分类。taxonomy v2 的显式语言集合为
+`en` / `zh` / `ar` / `ru` / `es`；directional rules 把
+`risk_escalation` / `risk_deescalation` 与普通 topic context 分开。仅命中
+Hormuz / tanker / crude / market 等 context term 不得产生 directional claim；
+同一标题同时命中升温和缓和规则时必须标为 `mixed_or_contested`。
+
+shadow output 仅保留 hashes、domain/time/language、term/bucket IDs、rule IDs
+和 aggregate language/polarity/event/axis counts，不保存命中的原始 pattern、
+title 或 URL。`multilingualClassificationShadowOnly=true`,
+`currentSignalEnhancement=false`,`eventConfirmationSource=false`,
+`eligibleForScoring=false` 均为强制边界。P69C 仍无 workflow、production
+writer 或 frontend approval；下一阶段必须用 Tavily/Brave 做独立来源确认。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：

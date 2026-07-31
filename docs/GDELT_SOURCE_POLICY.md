@@ -484,6 +484,18 @@ P69B sanitized article candidates:
   decision, execution, position, Brent-promotion, ODP-finalBias, Heatmap, or
   cross-validation approval.
 
+P69C multilingual shadow classification:
+
+- Taxonomy v2 supports explicit `en`, `zh`, `ar`, `ru`, and `es` term/rule
+  families while keeping topic context separate from directional rules.
+- A context-only match must remain `market_reaction_only` or
+  `unclear_or_high_claim`; it cannot become an escalation claim solely because
+  an article mentions a tanker, crude oil, or a chokepoint.
+- Sanitized classification may retain rule IDs and compact language/polarity/
+  event/axis counts, but not matched source text, titles, or URLs.
+- P69C remains ignored shadow-only with no workflow, production writer,
+  frontend, current-signal, event-confirmation, or scoring approval.
+
 ## Verification
 
 ```powershell
@@ -507,6 +519,7 @@ npm run check:gdelt-web-ngrams-frontend-aggregate-health
 npm run check:gdelt-web-ngrams-automated-display-cache
 npm run check:gdelt-web-ngrams-pair
 npm run check:gdelt-web-ngrams-article-candidates
+npm run check:gdelt-web-ngrams-shadow-classifier
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

@@ -896,6 +896,15 @@ quality metrics，且目前只能写 ignored shadow artifact。它没有 workflo
 production writer、frontend/current-signal/scoring approval；不得写入
 `data/*.json` / `realtime/*.json`，也不得把候选报道包装成事件确认。
 
+P69C 增加
+`gdelt-web-ngrams-multilingual-classification-shadow-v1`，在同一 backup
+validation layer 内对进程内 title 做 `en/zh/ar/ru/es` 本地规则分类。规则将
+topic context 与 escalation/deescalation 分离；多方向命中必须标成 mixed。
+sanitized output 只保留 rule IDs 与聚合计数，不保留命中的原始 pattern/title/
+URL。该分类仍是 ignored shadow-only，不改变 current Oil News signal，也不
+进入 frontend、ODP finalBias、`values.*`、scoring、decision、execution、
+position、Brent promotion、Heatmap 或 cross-validation。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |
