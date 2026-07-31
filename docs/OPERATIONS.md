@@ -1395,7 +1395,7 @@ npm run review:market-pricing-freshness -- --strict
 
 在 Oil News、Bubble Watch 或 World Order 自然刷新后运行 `npm run review:gdelt-cache-health -- --no-output --strict`。严格模式在任何 WATCH/WARN/FAIL 上非零退出；先看 `rows[].refreshContext` 和 `summary.postRefresh`,不要仅凭全局 WATCH 调整缓存政策:
 
-- `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在既有 24h error cooldown 内；等待 cooldown 到期后的自然刷新,不要手动连发 workflow。
+- `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在 classified error cooldown 内；先读 `lastFetchFailure.errorClass/cooldownHours`（429=24h、timeout/network=4h、5xx=6h、other=12h）,等待对应窗口到期后的自然刷新,不要手动连发 workflow。
 - `degraded_awaiting_post_cooldown_refresh_evidence`:wall-clock 已过 cooldown,但最新 production watch 生成于 cooldown 到期前；等待第一轮 post-cooldown 自然刷新,不得提前判为 persistent。
 - `persistent_error_after_cooldown_expiry`:production watch 本身在 cooldown 到期后刷新且仍错误；检查 sanitized request category、调度与 cache write,但不要先放宽 TTL/backoff。
 - `expected_pre_refresh_schedule_gap`:Bubble Watch 已越过 132h fresh TTL,但仍在周一 168h cadence + 12h grace 内；等待下一次周一刷新。

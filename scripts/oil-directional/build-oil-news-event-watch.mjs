@@ -10,6 +10,9 @@ import {
   GDELT_CACHE_SCHEMA_VERSION,
   GDELT_CACHE_TTL_MINUTES,
   GDELT_ERROR_COOLDOWN_HOURS,
+  GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS,
+  GDELT_LIVE_MAX_RETRIES,
+  GDELT_RETRY_JITTER_MAX_MS,
   GDELT_STALE_MAX_HOURS,
   QUERY_SET,
   runDiagnosis
@@ -250,6 +253,25 @@ function buildSourceStatus(sourceResults, diagnosis) {
         : []
     }
   ]));
+  const gdeltCache = diagnosis.sourceCaches?.gdelt_doc;
+  const gdeltAvailability = gdeltCache?.availability;
+  if (bySource.gdelt_doc && gdeltAvailability?.contractVersion === 'gdelt-doc-availability-v1') {
+    bySource.gdelt_doc.availability = {
+      contractVersion: gdeltAvailability.contractVersion,
+      latestAttemptAt: gdeltAvailability.latestAttemptAt || null,
+      lastLiveSuccessAt: gdeltAvailability.lastLiveSuccessAt || null,
+      latestOutcome: gdeltAvailability.latestOutcome || null,
+      windows: gdeltAvailability.windows || {}
+    };
+    bySource.gdelt_doc.cooldown = gdeltCache.lastFetchFailure
+      ? {
+          errorClass: gdeltCache.lastFetchFailure.errorClass || null,
+          cooldownHours: Number.isFinite(gdeltCache.lastFetchFailure.cooldownHours)
+            ? gdeltCache.lastFetchFailure.cooldownHours
+            : null
+        }
+      : null;
+  }
   return {
     gdeltDoc: bySource.gdelt_doc?.status || 'not_queried',
     tavily: bySource.tavily?.status || 'not_queried',
@@ -415,9 +437,12 @@ function buildGdeltCacheArtifact(diagnosis) {
       ttlMinutes: GDELT_CACHE_TTL_MINUTES,
       staleMaxHours: GDELT_STALE_MAX_HOURS,
       errorCooldownHours: GDELT_ERROR_COOLDOWN_HOURS,
+      errorCooldownHoursByClass: { ...GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS },
       lowFrequencyCache: true,
       broadQueryLocalClassification: true,
-      liveRetryPolicy: 'single_attempt_after_cache_or_error_cooldown',
+      liveRetryPolicy: 'one_bounded_retry_after_cache_or_classified_error_cooldown',
+      liveMaxRetries: GDELT_LIVE_MAX_RETRIES,
+      retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS,
       lastUsableCachePreservedOnError: true,
       lastUsableCacheAffectsCurrentSignal: false
     },
@@ -431,6 +456,18 @@ function buildGdeltCacheArtifact(diagnosis) {
       sort: 'HybridRel'
     },
     requestDiagnostics: null,
+    availability: {
+      contractVersion: 'gdelt-doc-availability-v1',
+      historyLimit: 64,
+      latestAttemptAt: null,
+      lastLiveSuccessAt: null,
+      latestOutcome: null,
+      windows: {
+        days7: { attemptCount: 0, successCount: 0, failureCount: 0, successRatePct: null },
+        days30: { attemptCount: 0, successCount: 0, failureCount: 0, successRatePct: null }
+      },
+      history: []
+    },
     aggregate: {
       articleCount: 0,
       bucketCounts: {}

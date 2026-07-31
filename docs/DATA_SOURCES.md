@@ -855,6 +855,18 @@ documented attribution string and code is a contract violation.
 
 ---
 
+### 2026-07-31 GDELT DOC resilience follow-up
+
+ODP Oil News 的 GDELT DOC broad query 继续保持 24h fresh / 72h stale 与
+fail-closed 边界,但 live path 允许严格一次有界重试,遵守 `Retry-After` 并增加
+最多 1.5 秒 jitter。错误冷却按 429=24h、timeout/network=4h、5xx=6h、
+other=12h 分类；`lastFetchFailure` 让 stale-cache-after-error 后续刷新也遵守
+对应窗口。`data/gdelt-news-cache.json` 只新增最多 64 条 sanitized availability
+history 与 7/30 天成功率,不得保存 URL、标题、正文、header 或 secret。429 下
+`lastUsableCache` 仍仅供审计且 `usedForCurrentSignal=false`;本改动不进入 Oil
+News signal、ODP `finalBias`、scoring、decision、execution、position、Brent
+promotion、Global Risk Heatmap 或 cross-validation。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |

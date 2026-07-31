@@ -23,6 +23,12 @@ function sleep(ms) {
   });
 }
 
+function retryDelayMs(baseMs, jitterMaxMs = 0) {
+  const boundedJitter = Math.max(0, Math.min(5000, Number.isFinite(jitterMaxMs) ? Math.round(jitterMaxMs) : 0));
+  const jitter = boundedJitter > 0 ? Math.floor(Math.random() * (boundedJitter + 1)) : 0;
+  return Math.max(0, baseMs) + jitter;
+}
+
 function parseRetryAfterMs(value, capMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS) {
   const raw = String(value || '').trim();
   if (!raw) return null;
@@ -281,7 +287,8 @@ async function fetchGdeltJson(url, {
   timeoutMs = DEFAULT_GDELT_TIMEOUT_MS,
   minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
   maxRetries = DEFAULT_GDELT_MAX_RETRIES,
-  retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS
+  retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
+  retryJitterMaxMs = 0
 } = {}) {
   const startedAtMs = Date.now();
   const attempts = [];
@@ -335,7 +342,7 @@ async function fetchGdeltJson(url, {
 
       const retryable = response.status === 429 || response.status >= 500;
       if (retryable && attemptIndex < boundedRetries) {
-        await sleep(retryAfterMs || DEFAULT_GDELT_RETRY_MS);
+        await sleep(retryDelayMs(retryAfterMs || DEFAULT_GDELT_RETRY_MS, retryJitterMaxMs));
         continue;
       }
 
@@ -360,7 +367,7 @@ async function fetchGdeltJson(url, {
         elapsedMs: Math.max(0, Date.now() - attemptStartedAtMs)
       });
       if (attemptIndex < boundedRetries) {
-        await sleep(DEFAULT_GDELT_RETRY_MS);
+        await sleep(retryDelayMs(DEFAULT_GDELT_RETRY_MS, retryJitterMaxMs));
         continue;
       }
       throw createGdeltError(`${label} ${error?.message || 'request failed'} after ${attempts.length} attempt(s)`, buildDiagnostics({
@@ -397,6 +404,7 @@ async function fetchGdeltDocJson({
   minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
   maxRetries = DEFAULT_GDELT_MAX_RETRIES,
   retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
+  retryJitterMaxMs = 0,
   label = 'GDELT DOC'
 } = {}) {
   const params = queryParams instanceof URLSearchParams
@@ -412,7 +420,8 @@ async function fetchGdeltDocJson({
     timeoutMs,
     minIntervalMs,
     maxRetries,
-    retryAfterCapMs
+    retryAfterCapMs,
+    retryJitterMaxMs
   });
 }
 

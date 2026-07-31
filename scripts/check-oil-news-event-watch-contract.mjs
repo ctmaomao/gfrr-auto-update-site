@@ -2,6 +2,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assertGdeltWebNgramsDisplayFallbackCache } from './oil-directional/gdelt-web-ngrams-display-fallback-cache.mjs';
+import {
+  GDELT_BROAD_QUERY_SPEC,
+  buildGdeltAvailability,
+  cacheUsability,
+  classifyGdeltFailure,
+  gdeltCooldownHoursForClass
+} from './oil-directional/diagnose-oil-news-events.mjs';
 import { buildClaimPolarityAggregate, CLAIM_AXES } from './oil-directional/oil-news-claim-classifier.mjs';
 
 const errors = [];
@@ -66,6 +73,74 @@ const CLAIM_AXIS_STATES = new Set([
   'market_reaction_observed',
   'insufficient_directional_claims'
 ]);
+
+function gdeltCacheFixture(overrides = {}) {
+  return {
+    schemaVersion: 'gdelt-news-cache-p37',
+    module: 'gdelt-news-cache',
+    generatedAt: '2026-07-31T07:00:00.000Z',
+    status: 'error',
+    sourceStatus: 'error',
+    query: {
+      id: GDELT_BROAD_QUERY_SPEC.id,
+      query: GDELT_BROAD_QUERY_SPEC.query,
+      windowDays: 7
+    },
+    articles: [],
+    ...overrides
+  };
+}
+
+const cooldownNowMs = Date.parse('2026-07-31T12:00:00.000Z');
+if (classifyGdeltFailure({ status: 429, rateLimited: true }) !== 'rate_limited') {
+  fail('GDELT failure classifier must identify rate limits');
+}
+if (classifyGdeltFailure({ errorCode: 'network_error' }) !== 'network_error') {
+  fail('GDELT failure classifier must identify network errors');
+}
+if (gdeltCooldownHoursForClass('rate_limited') !== 24 || gdeltCooldownHoursForClass('network_error') !== 4) {
+  fail('GDELT classified cooldowns must keep 24h rate-limit and 4h network windows');
+}
+if (cacheUsability(gdeltCacheFixture({
+  requestDiagnostics: { errorCode: 'network_error' }
+}), { windowDays: 7 }, cooldownNowMs) !== 'expired') {
+  fail('GDELT network-error cache must leave cooldown after four hours');
+}
+if (cacheUsability(gdeltCacheFixture({
+  requestDiagnostics: { status: 429, rateLimited: true, errorCode: 'rate_limited' }
+}), { windowDays: 7 }, cooldownNowMs) !== 'error_cooldown') {
+  fail('GDELT rate-limit cache must retain the 24-hour cooldown');
+}
+if (cacheUsability(gdeltCacheFixture({
+  generatedAt: '2026-07-29T12:00:00.000Z',
+  status: 'stale',
+  sourceStatus: 'stale',
+  articles: [{ domain: 'example.test', publishedAt: null, buckets: [], queryIds: [GDELT_BROAD_QUERY_SPEC.id] }],
+  lastFetchFailure: {
+    at: '2026-07-31T11:00:00.000Z',
+    errorClass: 'network_error',
+    cooldownHours: 4
+  }
+}), { windowDays: 7 }, cooldownNowMs) !== 'stale_error_cooldown') {
+  fail('GDELT stale cache must honor recent non-rate-limit failure cooldown');
+}
+const availabilityAfterFailure = buildGdeltAvailability(null, {
+  attemptedAt: '2026-07-30T12:00:00.000Z',
+  diagnostics: { attempts: 2, retryCount: 1, errorCode: 'network_error', elapsedMs: 12000 },
+  succeeded: false,
+  nowMs: cooldownNowMs
+});
+const availabilityAfterSuccess = buildGdeltAvailability({ availability: availabilityAfterFailure }, {
+  attemptedAt: '2026-07-31T11:30:00.000Z',
+  diagnostics: { attempts: 2, retryCount: 1, status: 200, elapsedMs: 9000 },
+  succeeded: true,
+  nowMs: cooldownNowMs
+});
+if (availabilityAfterSuccess.windows.days7.attemptCount !== 2 ||
+    availabilityAfterSuccess.windows.days7.successCount !== 1 ||
+    availabilityAfterSuccess.windows.days7.successRatePct !== 50) {
+  fail('GDELT availability telemetry must compute compact 7-day success rate');
+}
 
 function finiteNonNegative(value) {
   return Number.isFinite(value) && value >= 0;
@@ -198,6 +273,10 @@ if (!data.sourceStatus || typeof data.sourceStatus !== 'object') {
     if (!KEY_STATUSES.has(data.sourceStatus[field])) fail(`sourceStatus.${field} invalid: ${data.sourceStatus[field]}`);
   }
   if (!data.sourceStatus.details || typeof data.sourceStatus.details !== 'object') fail('sourceStatus.details missing');
+  const availability = data.sourceStatus.details?.gdelt_doc?.availability;
+  if (availability && availability.contractVersion !== 'gdelt-doc-availability-v1') {
+    fail('sourceStatus.details.gdelt_doc.availability contract invalid');
+  }
 }
 
 if (!data.sourceCaches || typeof data.sourceCaches !== 'object') {
@@ -233,6 +312,15 @@ if (!gdeltCache || typeof gdeltCache !== 'object') {
       gdeltCache.cachePolicy?.lastUsableCacheAffectsCurrentSignal !== false) {
     fail('gdelt cache must declare last usable cache preservation without current-signal impact');
   }
+  if (gdeltCache.cachePolicy?.liveRetryPolicy === 'one_bounded_retry_after_cache_or_classified_error_cooldown') {
+    if (gdeltCache.cachePolicy.liveMaxRetries !== 1) fail('gdelt cache liveMaxRetries must be 1');
+    if (gdeltCache.cachePolicy.errorCooldownHoursByClass?.rate_limited !== 24 ||
+        gdeltCache.cachePolicy.errorCooldownHoursByClass?.network_error !== 4 ||
+        gdeltCache.cachePolicy.errorCooldownHoursByClass?.timeout !== 4 ||
+        gdeltCache.cachePolicy.errorCooldownHoursByClass?.server_error !== 6) {
+      fail('gdelt cache classified cooldown policy invalid');
+    }
+  }
   if (!gdeltCache.query || gdeltCache.query.id !== 'gdelt_broad_oil_news') {
     fail('gdelt cache query.id must be gdelt_broad_oil_news');
   }
@@ -250,6 +338,26 @@ if (!gdeltCache || typeof gdeltCache !== 'object') {
   if (gdeltCache.promotionEligible !== false) fail('gdelt cache promotionEligible must remain false');
   if ('lastUsableCache' in gdeltCache) {
     assertLastUsableGdeltCache(gdeltCache.lastUsableCache, 'gdeltCache.lastUsableCache');
+  }
+  if (gdeltCache.availability) {
+    const availability = gdeltCache.availability;
+    if (availability.contractVersion !== 'gdelt-doc-availability-v1') fail('gdelt cache availability contract invalid');
+    if (!Array.isArray(availability.history) || availability.history.length > 64) {
+      fail('gdelt cache availability history must be bounded at 64 entries');
+    }
+    for (const windowKey of ['days7', 'days30']) {
+      const window = availability.windows?.[windowKey];
+      if (!window || !finiteNonNegative(window.attemptCount) || !finiteNonNegative(window.successCount) ||
+          !finiteNonNegative(window.failureCount)) {
+        fail(`gdelt cache availability.windows.${windowKey} invalid`);
+      }
+    }
+  }
+  if (gdeltCache.lastFetchFailure) {
+    if (!isoOrNull(gdeltCache.lastFetchFailure.at) || typeof gdeltCache.lastFetchFailure.errorClass !== 'string' ||
+        !finiteNonNegative(gdeltCache.lastFetchFailure.cooldownHours)) {
+      fail('gdelt cache lastFetchFailure invalid');
+    }
   }
   if (!gdeltCache.productionImpact || typeof gdeltCache.productionImpact !== 'object') {
     fail('gdelt cache productionImpact missing');

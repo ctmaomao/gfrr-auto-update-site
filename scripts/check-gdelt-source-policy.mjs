@@ -35,7 +35,7 @@ const REQUIRED_POLICY_PHRASES = [
   'P46, current phase',
   'P47, current phase',
   'P48, current phase',
-  '24h fresh-cache or 24h error-cooldown',
+  '24h fresh-cache or classified error-cooldown',
   'GDELT Web NGrams',
   'scripts/gdelt/fetch-gdelt.mjs',
   'diagnose:gdelt-web-ngrams',
@@ -314,10 +314,26 @@ function checkSharedWrapperContract() {
     fail(`${oilNewsPath} must keep ODP GDELT stale-cache fallback at 72 hours`);
   }
   if (!/GDELT_ERROR_COOLDOWN_HOURS\s*=\s*24/u.test(oilNews)) {
-    fail(`${oilNewsPath} must keep ODP GDELT error cooldown at 24 hours`);
+    fail(`${oilNewsPath} must keep the compatibility/max ODP GDELT error cooldown at 24 hours`);
   }
-  if (!oilNews.includes('maxRetries: 0')) {
-    fail(`${oilNewsPath} must keep ODP GDELT live attempts single-attempt after cache/cooldown expiry`);
+  for (const phrase of [
+    'GDELT_ERROR_COOLDOWN_HOURS_BY_CLASS',
+    'rate_limited: 24',
+    'timeout: 4',
+    'network_error: 4',
+    'server_error: 6',
+    'GDELT_LIVE_MAX_RETRIES = 1',
+    'GDELT_RETRY_JITTER_MAX_MS = 1500',
+    'lastFetchFailure',
+    'gdelt-doc-availability-v1'
+  ]) {
+    if (!oilNews.includes(phrase)) fail(`${oilNewsPath} missing classified cooldown/availability phrase: ${phrase}`);
+  }
+  if (!oilNews.includes('maxRetries: GDELT_LIVE_MAX_RETRIES')) {
+    fail(`${oilNewsPath} must allow exactly one bounded retry after cache/classified cooldown expiry`);
+  }
+  if (!oilNews.includes('retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS')) {
+    fail(`${oilNewsPath} must add bounded jitter to the retry path`);
   }
   const oilNewsNgramsPath = 'scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs';
   if (!existsSync(resolve(oilNewsNgramsPath))) {

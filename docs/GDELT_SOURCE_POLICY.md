@@ -22,7 +22,7 @@ Official GDELT references:
 | Consumer | Current source | Runtime path | Cadence | Current fallback |
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
-| ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or 24h error-cooldown window expires | Tavily / Brave source health remains visible; GDELT cache can be `ok` / `stale` / `error` / `not_initialized`; 429 keeps `lastUsableCache` for audit only |
+| ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or classified error-cooldown window expires; one bounded retry with `Retry-After` + jitter | Tavily / Brave source health remains visible; 429 cools down 24h, timeout/network 4h, 5xx 6h, other errors 12h; stale cache may remain current only for non-rate-limit failures, while 429 keeps `lastUsableCache` for audit only |
 | ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; P44 sample archive/review remains ignored under `manual-artifacts/oil-news/gdelt-web-ngrams-samples/`; P48 sanitizer strips `selectedFile.url` and raw-title/body/URL markers from ignored artifacts; P56 writes only `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` via `write:gdelt-web-ngrams-display-fallback-production-cache` | sample collector runs artifact-only every 3h; production field uses reviewed sample-gate cache only, no live fetch in writer | production display-only source-health fallback provenance; not a current Oil News signal enhancer, not frontend, not scoring |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
@@ -91,9 +91,13 @@ P37, current phase:
 - Change ODP oil-news from per-bucket GDELT queries to one broad GDELT query plus
   local bucket classification.
 - Keep ODP GDELT DOC as a slow background source: 24h fresh cache, 72h stale
-  fallback, 24h error cooldown, and no second retry inside an Oil News refresh.
+  fallback, classified error cooldown (429 24h; timeout/network 4h; 5xx 6h;
+  other 12h), and exactly one bounded retry inside an Oil News refresh.
 - Preserve `lastUsableCache` on 429/error for audit context only; it must set
   `usedForCurrentSignal=false` and must not enhance the current Oil News signal.
+- Persist only a bounded 64-row sanitized DOC availability history and derived
+  7/30-day success rates; never store request URLs, article text, headers, or
+  secrets in availability telemetry.
 - Keep Tavily / Brave per-topic cross-checks unchanged.
 - Keep the cache display-only/audit-only and out of ODP `finalBias`, scoring,
   decision, execution, position, Brent promotion, Global Risk Heatmap, and
