@@ -1249,6 +1249,17 @@ response。它 is not a current Oil News signal,并必须保持
 `usedForMainScore=false`。live fetch 失败时,只有 12 小时内的上一份 v2
 observation 可标为 `stale`;超窗必须 `source_unavailable`。
 
+### GDELT Web NGrams article-pair adapter foundation (P69A)
+
+`gdelt-web-ngrams-article-pair-v1` 只定义共享 GDELT wrapper 之上的
+timestamp-matched `ngrams.txt.gz` + `toc.json.gz` 原子探测/下载边界。任一
+half 缺失必须 `source_unavailable`;pair diagnostics 不得包含 provider URL、
+raw NGRAMS/TOC rows、title、snippet、body、header 或 secret。P69A 没有
+production artifact field、workflow、writer、current signal 或 frontend
+approval。它必须保持 `usedForCurrentSignal=false` 与
+`eligibleForScoring=false`;后续 article join / multilingual classification /
+dedupe / cross-source confirmation / shadow gate 必须分阶段审核。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：

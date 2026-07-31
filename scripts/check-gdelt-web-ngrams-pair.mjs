@@ -6,6 +6,7 @@ import {
   GDELT_WEB_NGRAMS_PAIR_CONTRACT,
   probeGdeltWebNgramsPair
 } from './gdelt/gdelt-web-ngrams-pair.mjs';
+import { fetchFirstAvailableNgrams } from './oil-directional/diagnose-gdelt-web-ngrams.mjs';
 
 const FIRST = '20260731010000';
 const SECOND = '20260731004500';
@@ -115,10 +116,35 @@ async function checkPairFetch() {
   );
 }
 
+async function checkDiagnosisPairProjection() {
+  const fetched = await fetchFirstAvailableNgrams([FIRST], {
+    probeBeforeDownload: false
+  }, {
+    fetchPair: async ({ timestamp }) => ({
+      contractVersion: GDELT_WEB_NGRAMS_PAIR_CONTRACT,
+      status: 'live',
+      timestamp,
+      ngramsText: '1\toil supply disruption now\t1',
+      tocText: '{"ID":1,"title":"transient title","url":"https://example.com/story"}',
+      diagnostics: {
+        ngrams: { diagnostics: { endpointType: 'web_ngrams', status: 200 } },
+        toc: { diagnostics: { endpointType: 'web_ngrams_toc', status: 200 } }
+      }
+    })
+  });
+  assert.equal(fetched.text, fetched.ngramsText);
+  assert.equal(fetched.text.includes('oil supply'), true);
+  assert.equal(fetched.tocText.includes('transient title'), true);
+  assert.equal(JSON.stringify(fetched.attempts).includes('transient title'), false);
+  assert.equal(fetched.attempts[0].diagnostics.endpointType, 'web_ngrams');
+  assert.equal(fetched.attempts[0].tocDiagnostics.endpointType, 'web_ngrams_toc');
+}
+
 async function main() {
   await checkAtomicProbe();
   await checkPairDiscovery();
   await checkPairFetch();
+  await checkDiagnosisPairProjection();
   await assert.rejects(probeGdeltWebNgramsPair({ timestamp: 'invalid' }), /YYYYMMDDHHMMSS/u);
   console.log('PASS check-gdelt-web-ngrams-pair');
 }

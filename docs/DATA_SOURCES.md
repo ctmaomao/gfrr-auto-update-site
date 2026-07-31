@@ -876,6 +876,16 @@ compact aggregate counts；不保存 headline/URL/snippet/body/raw row/response�
 `oilDirectionInput=false`,`eligibleForScoring=false`。live 失败只可在 12h 内把
 上一份 v2 observation 标为 stale,超窗必须 `source_unavailable`。
 
+P69A 起,新增 `gdelt-web-ngrams-article-pair-v1` 适配器基础。它只通过共享
+GDELT wrapper 串行探测/下载相同时间戳的 `ngrams.txt.gz` +
+`toc.json.gz`,任一半缺失都 fail-closed,且不向诊断投影 provider URL。该
+适配器属于 `github_actions_backup_validation_layer`,P69A 仅有 library/check
+路径,尚未接 workflow、production writer 或 current Oil News signal。raw
+NGRAMS/TOC 内容只允许在内存中用于后续 sanitized join；不得写入 production
+artifact。完整晋升仍需 article join、多语言分类、去重、Tavily/Brave 独立
+确认与 shadow quality gate；ADR 见
+[`ADR-0020`](ADR/0020-web-ngrams-primary-article-discovery.md)。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |
