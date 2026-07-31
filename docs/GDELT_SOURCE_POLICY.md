@@ -24,7 +24,7 @@ Official GDELT references:
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
 | ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or classified error-cooldown window expires; one bounded retry with `Retry-After` + jitter | Tavily / Brave source health remains visible; 429 cools down 24h, timeout/network 4h, 5xx 6h, other errors 12h; stale cache may remain current only for non-rate-limit failures, while 429 keeps `lastUsableCache` for audit only |
 | ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; the Oil News writer sanitizes the diagnosis and writes only `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` through the scoped writer | existing sample collector remains artifact-only every 3h; `Refresh Oil News Event Watch` now performs one bounded latest-file diagnosis and writes `gdelt-web-ngrams-display-fallback-cache-v2` | automated display-only aggregate source health; not a current Oil News signal, no headlines/URLs, no scoring |
-| ODP Oil News Web NGrams article-discovery candidate | Timestamp-matched GDELT Web NGrams v5 legacy `ngrams.txt.gz` + `toc.json.gz` pair | `scripts/gdelt/gdelt-web-ngrams-pair.mjs` calls only the shared wrapper and rejects incomplete timestamp pairs | library/check path only in P69A; no workflow or production writer connection | replaceable article-discovery adapter foundation; shadow-only, not a current Oil News signal, no scoring |
+| ODP Oil News Web NGrams article-discovery candidate | Timestamp-matched GDELT Web NGrams v5 legacy `ngrams.txt.gz` + `toc.json.gz` pair | shared pair adapter plus `scripts/oil-directional/gdelt-web-ngrams-article-candidates.mjs`; incomplete pairs fail closed, then document IDs join to TOC and canonical URLs dedupe | library/check path only through P69B; no workflow or production writer connection | sanitized shadow candidate foundation; title/URL remain transient, not a current Oil News signal, no scoring |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -469,6 +469,21 @@ P69A article-pair adapter foundation:
   classification, deduplication, independent-source confirmation, and a
   reviewed shadow gate before DOC discovery can be retired.
 
+P69B sanitized article candidates:
+
+- `scripts/oil-directional/oil-news-query-taxonomy.mjs` is the single
+  query-taxonomy authority for the existing diagnosis and the new candidate
+  join path.
+- `scripts/oil-directional/gdelt-web-ngrams-article-candidates.mjs` joins
+  NGRAMS document IDs to the timestamp-matched TOC and deduplicates canonical
+  URLs. Invalid counts, TOC rows, dates, and URLs fail closed.
+- Raw titles and URLs remain transient in memory. The sanitized shadow shape
+  contains compact metadata and irreversible hashes only, and is not approved
+  for a production data write.
+- P69B has no workflow, production writer, frontend, current-signal, scoring,
+  decision, execution, position, Brent-promotion, ODP-finalBias, Heatmap, or
+  cross-validation approval.
+
 ## Verification
 
 ```powershell
@@ -491,6 +506,7 @@ npm run check:gdelt-web-ngrams-display-fallback-production-display-write
 npm run check:gdelt-web-ngrams-frontend-aggregate-health
 npm run check:gdelt-web-ngrams-automated-display-cache
 npm run check:gdelt-web-ngrams-pair
+npm run check:gdelt-web-ngrams-article-candidates
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

@@ -9,6 +9,10 @@ import {
   fetchGdeltWebNgramsPair,
   probeGdeltWebNgramsPair
 } from '../gdelt/gdelt-web-ngrams-pair.mjs';
+import {
+  matchWebNgramsTerms,
+  WEB_NGRAMS_TERM_SET
+} from './oil-news-query-taxonomy.mjs';
 
 const DIAGNOSIS_VERSION = 'gdelt-web-ngrams-diagnosis-p41';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/gdelt-web-ngrams-diagnosis-latest.json';
@@ -24,15 +28,7 @@ const UA = 'gfrr-odp-oil-news-web-ngrams-diagnosis/1.0 (+https://github.com/ctma
 const BOUNDARY =
   'manual ODP oil-news GDELT Web NGrams diagnosis only; not production data; not in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation';
 
-const TERM_SET = [
-  { id: 'hormuz', labelZh: '霍尔木兹', patterns: ['hormuz', 'strait of hormuz'], buckets: ['chokepoint', 'middle_east_risk'] },
-  { id: 'red_sea', labelZh: '红海', patterns: ['red sea', 'bab el-mandeb', 'bab el mandeb'], buckets: ['chokepoint', 'tanker_shipping'] },
-  { id: 'tanker', labelZh: '油轮/航运', patterns: ['tanker', 'vlcc', 'shipping insurance'], buckets: ['tanker_shipping'] },
-  { id: 'crude_oil', labelZh: '原油', patterns: ['crude oil', 'oil prices', 'brent crude', 'wti crude'], buckets: ['market_reaction'] },
-  { id: 'sanctions', labelZh: '制裁', patterns: ['oil sanctions', 'shadow fleet', 'price cap'], buckets: ['sanctions', 'tanker_shipping'] },
-  { id: 'supply_disruption', labelZh: '供应中断', patterns: ['oil outage', 'pipeline outage', 'export halt', 'supply disruption'], buckets: ['supply_disruption'] },
-  { id: 'facility_event', labelZh: '设施事件', patterns: ['refinery fire', 'refinery outage', 'terminal shutdown'], buckets: ['facility_event', 'supply_disruption'] }
-];
+const TERM_SET = WEB_NGRAMS_TERM_SET;
 
 function printUsage() {
   console.log(`Usage:
@@ -238,11 +234,8 @@ function classifyLine(line) {
   const count = Number(countRaw);
   const ngram = String(ngramRaw || '').trim();
   if (!Number.isFinite(docId) || !ngram || !Number.isFinite(count)) return [];
-  const lower = ngram.toLowerCase();
   const matches = [];
-  for (const term of TERM_SET) {
-    const matchedPattern = term.patterns.find((pattern) => lower.includes(pattern));
-    if (!matchedPattern) continue;
+  for (const { term, matchedPattern } of matchWebNgramsTerms(ngram, TERM_SET)) {
     matches.push({
       termId: term.id,
       labelZh: term.labelZh,

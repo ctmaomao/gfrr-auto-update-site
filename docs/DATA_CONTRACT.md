@@ -1260,6 +1260,23 @@ approval。它必须保持 `usedForCurrentSignal=false` 与
 `eligibleForScoring=false`;后续 article join / multilingual classification /
 dedupe / cross-source confirmation / shadow gate 必须分阶段审核。
 
+### GDELT Web NGrams sanitized article candidates (P69B)
+
+`gdelt-web-ngrams-article-candidates-shadow-v1` 在同一 timestamp 的
+NGRAMS/TOC pair 内按 document ID 连接 quadgram 命中与文章元数据，并先按
+canonical URL 去重。query taxonomy 由
+`odp-oil-news-web-ngrams-taxonomy-v1` 集中管理，避免诊断路径与 article
+candidate 路径各自漂移。
+
+raw title / URL 只允许在当前 Node 进程内参与后续分类与跨源匹配；sanitized
+shadow shape 不保存 title / URL / snippet / body / raw NGRAMS/TOC rows /
+provider response / header / secret。它可保留不可逆 SHA-256 URL/story cluster
+hash、domain、publishedAt、language、term/bucket IDs、mention count 和 compact
+join/dedupe metrics，但只允许进入 ignored shadow artifact。P69B 不新增
+workflow 或 production writer，不写 `data/*.json` / `realtime/*.json`，并固定
+`currentSignalEnhancement=false` / `eligibleForScoring=false`。后续仍需完成
+多语言 claim/event classification、独立源确认与真实观察窗 shadow gate。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：

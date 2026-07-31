@@ -886,6 +886,16 @@ artifact。完整晋升仍需 article join、多语言分类、去重、Tavily/B
 确认与 shadow quality gate；ADR 见
 [`ADR-0020`](ADR/0020-web-ngrams-primary-article-discovery.md)。
 
+P69B 在同一 `github_actions_backup_validation_layer` 内增加
+`gdelt-web-ngrams-article-candidates-shadow-v1` join/dedupe 层。该层用共享
+`odp-oil-news-web-ngrams-taxonomy-v1` 从 NGRAMS 选择 document IDs，再与同
+timestamp TOC metadata 连接并按 canonical URL 去重。title/URL 只在进程内
+短暂存在；sanitized output 只包含 domain、publishedAt、language、
+term/bucket IDs、mention count、不可逆 URL/story cluster hashes 与 compact
+quality metrics，且目前只能写 ignored shadow artifact。它没有 workflow、
+production writer、frontend/current-signal/scoring approval；不得写入
+`data/*.json` / `realtime/*.json`，也不得把候选报道包装成事件确认。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |
