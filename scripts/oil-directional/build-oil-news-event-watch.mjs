@@ -321,7 +321,7 @@ function assertSanitized(artifact) {
   }
 }
 
-function buildProductionArtifact(options, diagnosis) {
+function buildProductionArtifact(options, diagnosis, previousWebNgramsCache = null) {
   const generatedAt = new Date().toISOString();
   const sourceResults = diagnosis.sourceResults || [];
   const sourceStatus = buildSourceStatus(sourceResults, diagnosis);
@@ -413,9 +413,22 @@ function buildProductionArtifact(options, diagnosis) {
     ],
     boundary: BOUNDARY
   };
-  const artifactWithSourceCaches = attachGdeltWebNgramsDisplayFallbackCache(artifact, { generatedAt });
+  const artifactWithSourceCaches = attachGdeltWebNgramsDisplayFallbackCache(artifact, {
+    generatedAt,
+    preservedCache: previousWebNgramsCache
+  });
   assertSanitized(artifactWithSourceCaches);
   return artifactWithSourceCaches;
+}
+
+function readPreviousWebNgramsCache(path) {
+  if (!existsSync(resolve(path))) return null;
+  try {
+    const previous = JSON.parse(readFileSync(resolve(path), 'utf8'));
+    return previous?.sourceCaches?.gdeltWebNgramsFallback || null;
+  } catch {
+    return null;
+  }
 }
 
 function buildGdeltCacheArtifact(diagnosis) {
@@ -494,6 +507,7 @@ function writeJson(path, payload) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  const previousWebNgramsCache = readPreviousWebNgramsCache(options.output);
   const diagnosis = await runDiagnosis({
     allowNetwork: !options.dryRun,
     sources: options.sources,
@@ -505,7 +519,7 @@ async function main() {
     strict: false,
     printJson: false
   });
-  const artifact = buildProductionArtifact(options, diagnosis);
+  const artifact = buildProductionArtifact(options, diagnosis, previousWebNgramsCache);
   const gdeltCacheArtifact = buildGdeltCacheArtifact(diagnosis);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   const gdeltCacheOutputPath = options.writeOutput ? writeJson(options.gdeltCacheOutput, gdeltCacheArtifact) : null;

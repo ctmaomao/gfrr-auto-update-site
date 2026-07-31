@@ -867,6 +867,15 @@ history 与 7/30 天成功率,不得保存 URL、标题、正文、header 或 se
 News signal、ODP `finalBias`、scoring、decision、execution、position、Brent
 promotion、Global Risk Heatmap 或 cross-validation。
 
+同日 Web NGrams automated display-only 路径把既有 bounded diagnosis 接入
+`Refresh Oil News Event Watch`:workflow 先生成并清洗 ignored diagnosis,再由
+scoped writer 只更新 `sourceCaches.gdeltWebNgramsFallback`。production contract
+为 `gdelt-web-ngrams-display-fallback-cache-v2`,只保存源文件时间、可达状态和
+compact aggregate counts；不保存 headline/URL/snippet/body/raw row/response。
+该缓存 is not a current Oil News signal；`currentSignalEnhancement=false`,
+`oilDirectionInput=false`,`eligibleForScoring=false`。live 失败只可在 12h 内把
+上一份 v2 observation 标为 stale,超窗必须 `source_unavailable`。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |

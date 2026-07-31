@@ -23,7 +23,7 @@ Official GDELT references:
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
 | ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or classified error-cooldown window expires; one bounded retry with `Retry-After` + jitter | Tavily / Brave source health remains visible; 429 cools down 24h, timeout/network 4h, 5xx 6h, other errors 12h; stale cache may remain current only for non-rate-limit failures, while 429 keeps `lastUsableCache` for audit only |
-| ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; P44 sample archive/review remains ignored under `manual-artifacts/oil-news/gdelt-web-ngrams-samples/`; P48 sanitizer strips `selectedFile.url` and raw-title/body/URL markers from ignored artifacts; P56 writes only `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` via `write:gdelt-web-ngrams-display-fallback-production-cache` | sample collector runs artifact-only every 3h; production field uses reviewed sample-gate cache only, no live fetch in writer | production display-only source-health fallback provenance; not a current Oil News signal enhancer, not frontend, not scoring |
+| ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; the Oil News writer sanitizes the diagnosis and writes only `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` through the scoped writer | existing sample collector remains artifact-only every 3h; `Refresh Oil News Event Watch` now performs one bounded latest-file diagnosis and writes `gdelt-web-ngrams-display-fallback-cache-v2` | automated display-only aggregate source health; not a current Oil News signal, no headlines/URLs, no scoring |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -437,6 +437,22 @@ Future source-review only:
 - Evaluate BigQuery / raw data files for large-scale historical backtests or a
   news-factor research library.
 
+2026-07-31 automated display-only phase:
+
+- `Refresh Oil News Event Watch` runs the existing bounded Web NGrams diagnosis,
+  sanitizes the ignored artifact, then updates only
+  `sourceCaches.gdeltWebNgramsFallback`.
+- The production contract is `gdelt-web-ngrams-display-fallback-cache-v2`; it
+  stores source-file timestamp, source availability, and compact aggregate
+  counts only. It stores no headline, URL, snippet, article body, raw row, or
+  provider response.
+- `workflowAutomationApproved=true` and `liveFetchApproved=true` apply only to
+  this keyless aggregate source-health write. The cache is not a current Oil
+  News signal and keeps `currentSignalEnhancement=false`,
+  `oilDirectionInput=false`, and `eligibleForScoring=false`.
+- A failed latest-file attempt may preserve a prior v2 observation for at most
+  12 hours as `stale`; after that it fails closed to `source_unavailable`.
+
 ## Verification
 
 ```powershell
@@ -457,6 +473,7 @@ npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review
 npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness
 npm run check:gdelt-web-ngrams-display-fallback-production-display-write
 npm run check:gdelt-web-ngrams-frontend-aggregate-health
+npm run check:gdelt-web-ngrams-automated-display-cache
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

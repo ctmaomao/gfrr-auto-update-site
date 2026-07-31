@@ -1021,7 +1021,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-facility-window-quality-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-gdelt-web-ngrams-auto-1`）。
 
 稳定边界：
 
@@ -1232,6 +1232,23 @@ P64(ODP verdict history monitor) 新增 `oil-directional-verdict-history-monitor
 
 P66 将 monitor contract 升为 `oil-directional-verdict-history-monitor-p66`,在 `trend` 增加 `recentLowConfidenceCount` / `persistentLowConfidence`,并增加 `observations.persistentLowConfidence`。只有 recent window 达到 7 个有效样本且 7/7 `confidence='low'` 时 `active=true`;该观察固定 `changesPrimaryStatus=false`,`changesClassifier=false`。它可令 `manualAction.suggestedNow=true` 并建议审阅既有 confidence caps,但不得单独令 `manualAction.requiredNow=true`,不得替换 primary status,不得修改 classifier/caps、ODP `finalBias` 或任何 scoring/decision/execution/position 路径。
 
+### GDELT Web NGrams automated display cache (2026-07-31)
+
+`data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` 支持
+`gdelt-web-ngrams-display-fallback-cache-v2`。`Refresh Oil News Event Watch`
+运行既有 bounded diagnosis,清洗 ignored artifact 后由 scoped writer 写入
+source-file timestamp、`sourceHealth`、`automation` 与 compact `aggregate`
+counts。`workflowAutomationApproved=true` / `liveFetchApproved=true` 只批准
+该 keyless automated display-only 写入；`apiKeyReadApproved=false`。
+
+v2 不保存 headline、URL、snippet、body、raw Web NGrams row 或 raw provider
+response。它 is not a current Oil News signal,并必须保持
+`currentSignalEnhancement=false`,`eventConfirmationSource=false`,
+`headlineSource=false`,`oilDirectionInput=false`,`eligibleForScoring=false`,
+`usedForCurrentOilNewsSignal=false`,`usedForOdpFinalBias=false`,
+`usedForMainScore=false`。live fetch 失败时,只有 12 小时内的上一份 v2
+observation 可标为 `stale`;超窗必须 `source_unavailable`。
+
 #### SIPRI normalized input
 
 v28.0H-3 起，SIPRI 支持手动标准化导入。真实输入路径为：
@@ -1300,26 +1317,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-thermal-facility-window-quality-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP Satellite Thermal Watch 基线质量行改为显示最短设施窗与独立全局历史跨度；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+odp-gdelt-web-ngrams-auto-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP 新闻事件观察把 GDELT Web NGrams v2 自动 display-only 缓存的下载源状态、聚合计数与源文件时效接入既有前端行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-thermal-facility-window-quality-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-gdelt-web-ngrams-auto-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-thermal-facility-window-quality-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-thermal-facility-window-quality-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-thermal-facility-window-quality-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=odp-gdelt-web-ngrams-auto-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-gdelt-web-ngrams-auto-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-gdelt-web-ngrams-auto-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-thermal-facility-window-quality-1
-npm run bump:frontend-asset-version -- odp-thermal-facility-window-quality-1
+node scripts/bump-frontend-asset-version.mjs odp-gdelt-web-ngrams-auto-1
+npm run bump:frontend-asset-version -- odp-gdelt-web-ngrams-auto-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-thermal-facility-window-quality-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-gdelt-web-ngrams-auto-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

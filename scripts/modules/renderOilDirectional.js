@@ -948,7 +948,10 @@ function parseWebNgramsTimestamp(value) {
 }
 
 export function webNgramsSampleAge(cache, nowMs = Date.now()) {
-  const timestamp = cache?.sampleGate?.latestSelectedTimestamp;
+  const automated = cache?.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v2';
+  const timestamp = automated
+    ? cache?.automation?.selectedFileTimestamp
+    : cache?.sampleGate?.latestSelectedTimestamp;
   const timestampMs = parseWebNgramsTimestamp(timestamp);
   const staleAfterHours = Number.isFinite(cache?.staleAfterHours)
     && cache.staleAfterHours > 0
@@ -957,7 +960,9 @@ export function webNgramsSampleAge(cache, nowMs = Date.now()) {
   if (timestampMs === null || staleAfterHours === null || !Number.isFinite(nowMs)) {
     return {
       state: 'unavailable',
-      text: '历史审阅样本日期待核 · 不用于当前新闻信号',
+      text: automated
+        ? '自动源文件日期待核 · 不用于当前新闻信号'
+        : '历史审阅样本日期待核 · 不用于当前新闻信号',
       tone: 'yellow',
       ageHours: null,
     };
@@ -966,7 +971,9 @@ export function webNgramsSampleAge(cache, nowMs = Date.now()) {
   if (ageHours < -1) {
     return {
       state: 'unavailable',
-      text: '历史审阅样本时间异常 · 不用于当前新闻信号',
+      text: automated
+        ? '自动源文件时间异常 · 不用于当前新闻信号'
+        : '历史审阅样本时间异常 · 不用于当前新闻信号',
       tone: 'yellow',
       ageHours: null,
     };
@@ -980,7 +987,7 @@ export function webNgramsSampleAge(cache, nowMs = Date.now()) {
   const stale = safeAgeHours > staleAfterHours;
   return {
     state: stale ? 'stale' : 'within_window',
-    text: `历史审阅样本截至 ${asOfDate} · ${ageText} · ${stale ? `已超 ${thresholdText}时效` : `${thresholdText}内`}`,
+    text: `${automated ? '自动源文件截至' : '历史审阅样本截至'} ${asOfDate} · ${ageText} · ${stale ? `已超 ${thresholdText}时效` : `${thresholdText}内`}`,
     tone: stale ? 'yellow' : 'green',
     ageHours: safeAgeHours,
   };
@@ -988,7 +995,9 @@ export function webNgramsSampleAge(cache, nowMs = Date.now()) {
 
 function webNgramsSourceHealth(data) {
   const cache = data?.sourceCaches?.gdeltWebNgramsFallback;
-  const approved = cache?.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v1'
+  const approvedContract = cache?.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v1'
+    || cache?.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v2';
+  const approved = approvedContract
     && cache?.frontendDisplayApproved === true
     && cache?.displayMode === 'aggregate_source_health_only_no_headlines'
     && cache?.sourceHealth?.usedForCurrentSignal === false;
@@ -997,6 +1006,23 @@ function webNgramsSourceHealth(data) {
       text: '聚合背景未批准或未加载 · 不用于当前新闻信号',
       tone: 'yellow',
       sampleAge: webNgramsSampleAge(null),
+    };
+  }
+  if (cache.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v2') {
+    const sourceState = cache.sourceHealth?.state;
+    const aggregate = cache.aggregate || {};
+    const hits = Number.isFinite(aggregate.totalHitCount) ? Math.max(0, Math.round(aggregate.totalHitCount)) : null;
+    const docs = Number.isFinite(aggregate.uniqueDocCount) ? Math.max(0, Math.round(aggregate.uniqueDocCount)) : null;
+    const stateText = sourceState === 'live'
+      ? '自动下载源正常'
+      : sourceState === 'stale'
+        ? '自动下载源沿用时效内缓存'
+        : '自动下载源暂不可用';
+    const countText = hits === null || docs === null ? '聚合计数待核' : `命中 ${hits} · 文档 ${docs}`;
+    return {
+      text: `${stateText} · ${countText} · 不用于当前新闻信号`,
+      tone: sourceState === 'live' ? 'green' : 'yellow',
+      sampleAge: webNgramsSampleAge(cache),
     };
   }
 

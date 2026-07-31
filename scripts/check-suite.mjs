@@ -167,6 +167,7 @@ const SUITES = {
     'check:oil-news-events-diagnosis',
     'check:oil-news-event-watch',
     'check:gdelt-web-ngrams-frontend-aggregate-health',
+    'check:gdelt-web-ngrams-automated-display-cache',
     'check:oil-news-event-watch-samples-review',
     'check:oil-news-source-health-samples-review',
     'check:oil-news-claim-ledger-review',

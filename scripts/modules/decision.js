@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-thermal-facility-window-quality-1';
-import { formatOnRrpYiUsd } from './format.js?v=odp-thermal-facility-window-quality-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-gdelt-web-ngrams-auto-1';
+import { formatOnRrpYiUsd } from './format.js?v=odp-gdelt-web-ngrams-auto-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

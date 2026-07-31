@@ -213,8 +213,13 @@ function assertGdeltWebNgramsFallbackSourceCache(cache) {
   if (cache.frontendDisplayApproved !== true) {
     fail('sourceCaches.gdeltWebNgramsFallback.frontendDisplayApproved must be true after P63');
   }
-  if (cache.workflowAutomationApproved !== false || cache.liveFetchApproved !== false || cache.apiKeyReadApproved !== false) {
-    fail('sourceCaches.gdeltWebNgramsFallback must not approve workflow/live fetch/API key reads');
+  const automated = cache.contractVersion === 'gdelt-web-ngrams-display-fallback-cache-v2';
+  if (automated) {
+    if (cache.workflowAutomationApproved !== true || cache.liveFetchApproved !== true || cache.apiKeyReadApproved !== false) {
+      fail('automated sourceCaches.gdeltWebNgramsFallback approvals invalid');
+    }
+  } else if (cache.workflowAutomationApproved !== false || cache.liveFetchApproved !== false || cache.apiKeyReadApproved !== false) {
+    fail('legacy sourceCaches.gdeltWebNgramsFallback must not approve workflow/live fetch/API key reads');
   }
 }
 

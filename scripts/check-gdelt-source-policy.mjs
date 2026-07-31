@@ -46,6 +46,9 @@ const REQUIRED_POLICY_PHRASES = [
   'gdelt-web-ngrams-fallback-source-review-p45',
   'gdelt-web-ngrams-production-display-fallback-contract-p46',
   'gdelt-web-ngrams-sample-collector.yml',
+  'gdelt-web-ngrams-display-fallback-cache-v2',
+  'automated display-only',
+  'not a current Oil News signal',
   'data/gdelt-news-cache.json',
   'data/gdelt-bubble-watch-cache.json',
   'data/gdelt-world-order-cache.json'
@@ -492,6 +495,17 @@ function checkSharedWrapperContract() {
     ]) {
       if (!oilNewsNgramsCollectorWorkflow.includes(phrase)) fail(`${oilNewsNgramsCollectorWorkflowPath} missing P47 collector workflow phrase: ${phrase}`);
     }
+  }
+  const oilNewsWorkflowPath = '.github/workflows/refresh-oil-news-event-watch.yml';
+  const oilNewsWorkflow = readText(oilNewsWorkflowPath);
+  for (const phrase of [
+    'Refresh automated Web NGrams display cache',
+    'diagnose:gdelt-web-ngrams',
+    'sanitize:gdelt-web-ngrams-artifacts',
+    'write:gdelt-web-ngrams-display-fallback-production-cache',
+    '--diagnosis "$diagnosis_path"'
+  ]) {
+    if (!oilNewsWorkflow.includes(phrase)) fail(`${oilNewsWorkflowPath} missing automated Web NGrams phrase: ${phrase}`);
   }
   const worldOrderPath = 'scripts/world-order/fetch-gdelt-cloud.mjs';
   if (!existsSync(resolve(worldOrderPath))) {

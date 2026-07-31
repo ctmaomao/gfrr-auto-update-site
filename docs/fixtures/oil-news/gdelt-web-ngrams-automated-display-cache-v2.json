@@ -1,0 +1,62 @@
+{
+  "diagnosisVersion": "gdelt-web-ngrams-diagnosis-p41",
+  "generatedAt": "2026-07-31T14:10:00.000Z",
+  "status": "ok",
+  "mode": "manual_live_diagnosis",
+  "sourceKey": "odp_oil_news_gdelt_web_ngrams_diagnosis",
+  "source": "GDELT Web NGrams v5 legacy ngrams files",
+  "selectedFile": {
+    "timestamp": "20260731140200",
+    "contentLength": 2048,
+    "lastModified": "Thu, 31 Jul 2026 14:03:00 GMT",
+    "diagnostics": {
+      "provider": "gdelt",
+      "endpointType": "web_ngrams",
+      "label": "GDELT Web NGrams fixture",
+      "status": 200,
+      "attempts": 1,
+      "retryCount": 0,
+      "rateLimited": false,
+      "timeout": false,
+      "retryAfterSeconds": null,
+      "timeoutMs": 20000,
+      "minIntervalMs": 1500,
+      "maxRetries": 0,
+      "retryAfterCapSeconds": 15,
+      "elapsedMs": 420,
+      "errorCode": null
+    }
+  },
+  "summary": {
+    "parsedLineCount": 1200,
+    "totalHitCount": 18,
+    "totalMentionCount": 31,
+    "uniqueDocCount": 14,
+    "bucketCounts": {
+      "chokepoint": 8,
+      "market_reaction": 15
+    },
+    "terms": [
+      {
+        "termId": "hormuz"
+      },
+      {
+        "termId": "crude_oil"
+      }
+    ]
+  },
+  "productionImpact": {
+    "affectsValues": false,
+    "affectsScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "affectsBrentPromotion": false,
+    "affectsOdpFinalBias": false,
+    "affectsGlobalRiskHeatmap": false,
+    "affectsCrossValidation": false
+  },
+  "promotionEligible": false,
+  "productionDisplayApproved": false,
+  "boundary": "sanitized fixture for automated display-only cache validation"
+}
