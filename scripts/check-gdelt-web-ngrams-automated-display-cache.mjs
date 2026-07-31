@@ -21,6 +21,16 @@ function readText(path) {
   return readFileSync(resolve(path), 'utf8');
 }
 
+function assertRejected(cache, message) {
+  let rejected = false;
+  try {
+    assertGdeltWebNgramsDisplayFallbackCache(cache);
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, message);
+}
+
 const diagnosis = readJson(FIXTURE);
 const live = buildGdeltWebNgramsAutomatedDisplayCache({
   diagnosis,
@@ -68,6 +78,40 @@ const unavailable = buildGdeltWebNgramsAutomatedDisplayCache({
 assertGdeltWebNgramsDisplayFallbackCache(unavailable);
 assert(unavailable.status === 'source_unavailable', 'Expired prior observation must fail closed.');
 assert(unavailable.aggregate.totalHitCount === 0, 'Expired automated cache must not preserve active aggregate.');
+
+assertRejected(
+  {
+    ...live,
+    sourceHealth: { ...live.sourceHealth, state: 'unavailable' }
+  },
+  'Automated cache must reject status/source-health mismatches.'
+);
+assertRejected(
+  {
+    ...live,
+    staleAfterHours: 72
+  },
+  'Automated cache must reject a widened stale threshold.'
+);
+assertRejected(
+  {
+    ...live,
+    sampleGate: { ...live.sampleGate, usableSampleCount: 0 }
+  },
+  'Automated cache must retain the reviewed sample-count gate.'
+);
+assertRejected(
+  {
+    ...unavailable,
+    automation: {
+      ...unavailable.automation,
+      selectedFileTimestamp: live.automation.selectedFileTimestamp,
+      selectedFileAgeHours: live.automation.selectedFileAgeHours
+    },
+    aggregate: { ...live.aggregate }
+  },
+  'Unavailable automated cache must reject retained active timestamps and aggregates.'
+);
 
 const production = readJson(PRODUCTION);
 assertGdeltWebNgramsDisplayFallbackCache(production.sourceCaches?.gdeltWebNgramsFallback);

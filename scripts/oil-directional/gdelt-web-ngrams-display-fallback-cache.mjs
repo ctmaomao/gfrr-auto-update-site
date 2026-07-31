@@ -156,6 +156,13 @@ function assertBoundaryFields(cache) {
   assertNoRawExposure(cache);
 }
 
+function assertReviewedSampleGate(cache) {
+  assert(cache.sampleGate?.state === 'passed', 'Fallback cache sample gate must be passed.');
+  assert(Number.isFinite(cache.sampleGate.usableSampleCount) && cache.sampleGate.usableSampleCount >= 8, 'Fallback cache usable sample count is too low.');
+  assert(Number.isFinite(cache.sampleGate.selectedTimestampCount) && cache.sampleGate.selectedTimestampCount >= 2, 'Fallback cache timestamp count is too low.');
+  assert(Number.isFinite(cache.sampleGate.observationWindowHours) && cache.sampleGate.observationWindowHours >= 24, 'Fallback cache observation window is too short.');
+}
+
 function assertLegacyCache(cache) {
   assert(cache?.contractVersion === GDELT_WEB_NGRAMS_DISPLAY_FALLBACK_CACHE_CONTRACT, 'Fallback cache contract mismatch.');
   assert(cache.status === 'sample_gate_passed_projection_only', `Fallback cache status invalid: ${cache.status}`);
@@ -164,10 +171,7 @@ function assertLegacyCache(cache) {
   assert(cache.fallbackContextOnly === true, 'Fallback cache must be context-only.');
   assert(cache.workflowAutomationApproved === false, 'Legacy fallback cache workflowAutomationApproved must be false.');
   assert(cache.liveFetchApproved === false, 'Legacy fallback cache liveFetchApproved must be false.');
-  assert(cache.sampleGate?.state === 'passed', 'Fallback cache sample gate must be passed.');
-  assert(cache.sampleGate.usableSampleCount >= 8, 'Fallback cache usable sample count is too low.');
-  assert(cache.sampleGate.selectedTimestampCount >= 2, 'Fallback cache timestamp count is too low.');
-  assert(cache.sampleGate.observationWindowHours >= 24, 'Fallback cache observation window is too short.');
+  assertReviewedSampleGate(cache);
   assertBoundaryFields(cache);
 }
 
@@ -182,15 +186,39 @@ function assertAutomatedCache(cache) {
   assert(cache.automation?.contractVersion === 'gdelt-web-ngrams-automation-v1', 'Automated fallback cache automation contract mismatch.');
   assert(cache.automation?.workflow === 'refresh-oil-news-event-watch', 'Automated fallback cache workflow mismatch.');
   assert(typeof cache.automation?.attemptedAt === 'string' && !Number.isNaN(Date.parse(cache.automation.attemptedAt)), 'Automated fallback cache attemptedAt invalid.');
-  assert(['live', 'stale', 'unavailable'].includes(cache.sourceHealth?.state), 'Automated fallback cache sourceHealth.state invalid.');
-  for (const field of ['parsedLineCount', 'totalHitCount', 'uniqueDocCount', 'matchedTermCount', 'matchedBucketCount']) {
+  const expectedSourceState = cache.status === 'source_unavailable'
+    ? 'unavailable'
+    : cache.status === 'stale'
+      ? 'stale'
+      : 'live';
+  const expectedFreshness = expectedSourceState === 'unavailable'
+    ? 'unavailable'
+    : expectedSourceState === 'stale'
+      ? 'stale'
+      : 'fresh';
+  assert(cache.sourceHealth?.state === expectedSourceState, 'Automated fallback cache sourceHealth.state must match status.');
+  assert(cache.sourceHealth?.freshness === expectedFreshness, 'Automated fallback cache sourceHealth.freshness must match status.');
+  for (const field of ['parsedLineCount', 'totalHitCount', 'totalMentionCount', 'uniqueDocCount', 'matchedTermCount', 'matchedBucketCount']) {
     assert(Number.isFinite(cache.aggregate?.[field]) && cache.aggregate[field] >= 0, `Automated fallback cache aggregate.${field} invalid.`);
   }
-  if (cache.status !== 'source_unavailable') {
+  if (cache.status === 'source_unavailable') {
+    assert(cache.automation?.selectedFileTimestamp === null, 'Unavailable automated cache must clear selectedFileTimestamp.');
+    assert(cache.automation?.selectedFileAgeHours === null, 'Unavailable automated cache must clear selectedFileAgeHours.');
+    for (const [field, value] of Object.entries(cache.aggregate)) {
+      assert(value === 0, `Unavailable automated cache aggregate.${field} must be zero.`);
+    }
+  } else {
     assert(/^\d{14}$/u.test(cache.automation?.selectedFileTimestamp || ''), 'Automated fallback cache selectedFileTimestamp invalid.');
+    assert(Number.isFinite(cache.automation?.selectedFileAgeHours) && cache.automation.selectedFileAgeHours >= 0, 'Automated fallback cache selectedFileAgeHours invalid.');
   }
-  assert(Number.isFinite(cache.staleAfterHours) && cache.staleAfterHours > 0, 'Automated fallback cache staleAfterHours invalid.');
-  assert(cache.sampleGate?.state === 'passed', 'Automated fallback cache must retain the reviewed sample gate.');
+  if (cache.status === 'live') {
+    assert(cache.aggregate.totalHitCount > 0, 'Live automated cache must contain at least one aggregate hit.');
+  }
+  if (cache.status === 'live_no_oil_terms_observed') {
+    assert(cache.aggregate.totalHitCount === 0, 'No-oil-terms automated cache must have zero aggregate hits.');
+  }
+  assert(cache.staleAfterHours === AUTOMATED_STALE_AFTER_HOURS, 'Automated fallback cache staleAfterHours must remain fixed at 12.');
+  assertReviewedSampleGate(cache);
   assertBoundaryFields(cache);
 }
 
