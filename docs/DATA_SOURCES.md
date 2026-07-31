@@ -868,8 +868,8 @@ News signal、ODP `finalBias`、scoring、decision、execution、position、Bren
 promotion、Global Risk Heatmap 或 cross-validation。
 
 同日 Web NGrams automated display-only 路径把既有 bounded diagnosis 接入
-`Refresh Oil News Event Watch`:workflow 先生成并清洗 ignored diagnosis,再由
-scoped writer 只更新 `sourceCaches.gdeltWebNgramsFallback`。production contract
+`Refresh Oil News Event Watch`:主 build 内的一次 pair fetch 直接更新
+`sourceCaches.gdeltWebNgramsFallback`，不再由 workflow 做第二次下载。production contract
 为 `gdelt-web-ngrams-display-fallback-cache-v2`,只保存源文件时间、可达状态和
 compact aggregate counts；不保存 headline/URL/snippet/body/raw row/response。
 该缓存 is not a current Oil News signal；`currentSignalEnhancement=false`,
@@ -911,6 +911,15 @@ discovery overlap；不同 domain、36h 内、同 axis/polarity 且 bucket overl
 才记录 independent support；Tavily+Brave 和至少两个 supporting domains
 同时满足才记录 cross-provider support。上述状态仍不是事件确认，只能写
 ignored shadow artifact，不得写 production data 或改变 current signal。
+
+P69E 把 article shadow 接入现有 refresh，但仍位于
+`github_actions_backup_validation_layer`。`build:oil-news-event-watch` 复用本轮
+Tavily/Brave transient results，并以同一 Web pair 同时生成 display cache、
+aggregate-only `sourceCaches.gdeltWebNgramsArticleShadow` 与 ignored sanitized
+observation artifact。production shadow cache 不含 article/hash/domain/title/URL；
+per-article sanitized observation 只上传 35-day GitHub artifact。该路径不新增
+provider/key 请求，不做第二次 Web download，不接 frontend/current signal/
+event confirmation/scoring。
 
 ## 反向索引 (消费层 → 数据源)
 

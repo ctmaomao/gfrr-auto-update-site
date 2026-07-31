@@ -1236,10 +1236,10 @@ P66 将 monitor contract 升为 `oil-directional-verdict-history-monitor-p66`,�
 
 `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` 支持
 `gdelt-web-ngrams-display-fallback-cache-v2`。`Refresh Oil News Event Watch`
-运行既有 bounded diagnosis,清洗 ignored artifact 后由 scoped writer 写入
-source-file timestamp、`sourceHealth`、`automation` 与 compact `aggregate`
-counts。`workflowAutomationApproved=true` / `liveFetchApproved=true` 只批准
-该 keyless automated display-only 写入；`apiKeyReadApproved=false`。
+在主 build 内做一次 bounded pair fetch，并从同一 fetch 写入 source-file
+timestamp、`sourceHealth`、`automation` 与 compact `aggregate` counts。
+`workflowAutomationApproved=true` / `liveFetchApproved=true` 只批准该 keyless
+automated display-only 写入；`apiKeyReadApproved=false`。
 
 v2 不保存 headline、URL、snippet、body、raw Web NGrams row 或 raw provider
 response。它 is not a current Oil News signal,并必须保持
@@ -1309,6 +1309,27 @@ header 或 secret。即使 `independentSourceSupported=true`，也必须保持
 `currentSignalEnhancement=false`,`eligibleForScoring=false`。P69D 仍是
 library/check-only；下一步才能把 sanitized telemetry 接入 shadow workflow
 并开始真实观察窗。
+
+### GDELT Web NGrams automated article shadow cache (P69E)
+
+`build:oil-news-event-watch` 现在复用同一轮 Tavily/Brave transient provider
+results，并只做一次 timestamp-matched Web NGrams pair fetch；不再在 workflow
+中运行第二次 diagnosis/download。它同时更新原
+`gdeltWebNgramsFallback` v2 display cache，并写
+`sourceCaches.gdeltWebNgramsArticleShadow` contract
+`gdelt-web-ngrams-article-shadow-cache-v1`。该新字段只保存 source timestamp、
+candidate/classification/cross-source aggregates 与 30-day observation policy，
+不保存 article rows、hashes、domain、title、URL 或 raw content。
+
+字段允许 `productionDataWriteApproved=true`,
+`workflowAutomationApproved=true`,`liveFetchApproved=true`，但 Web shadow
+模块本身不新增 API key 读取：`apiKeyReadApproved=false`，只复用既有 Oil
+News provider results。它必须保持 `frontendDisplayApproved=false`,
+`shadowObservationOnly=true`,`currentSignalEnhancement=false`,
+`eventConfirmationSource=false`,`oilDirectionInput=false`,
+`eligibleForScoring=false`,`promotionEligible=false`。合并后的首个成功 refresh
+前字段可 absent；存在时必须通过 contract validator。每轮 sanitized per-article
+shadow observation 仅上传 GitHub artifact，retention 35 days，不 commit。
 
 #### SIPRI normalized input
 

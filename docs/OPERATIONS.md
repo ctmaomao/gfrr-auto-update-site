@@ -1404,15 +1404,19 @@ npm run review:market-pricing-freshness -- --strict
 
 ### GDELT Web NGrams automated display-only cache
 
-`Refresh Oil News Event Watch` 现在会在 Oil News 主 build 后运行 bounded Web
-NGrams diagnosis、sanitizer 与 scoped writer。生产字段 contract 为
+`Refresh Oil News Event Watch` 现在会在 Oil News 主 build 内运行一次 bounded
+Web NGrams pair fetch；同一 in-memory pair 同时供 display cache 和 article
+shadow 使用。生产 display 字段 contract 为
 `gdelt-web-ngrams-display-fallback-cache-v2`。排障顺序:
 
-1. 查看 workflow 的 `Refresh automated Web NGrams display cache` step。
+1. 查看 `Refresh oil news event watch` step 的
+   `webNgramsShadowStatus` / `webNgramsShadowOutputPath`。
 2. 查看 `sourceCaches.gdeltWebNgramsFallback.{status,automation,sourceHealth}`；
    `live` / `live_no_oil_terms_observed` 表示源文件可达,`stale` 只允许沿用 12h
    内上一份 v2 observation,`source_unavailable` 表示失败关闭。
-3. 运行 `npm run check:gdelt-web-ngrams-automated-display-cache`，再运行
+3. 查看 `sourceCaches.gdeltWebNgramsArticleShadow`:只应有 aggregate metrics，
+   `promotionEligible=false`；workflow 同时上传 35-day sanitized shadow artifact。
+4. 运行 `npm run check:gdelt-web-ngrams-automated-display-cache`，再运行
    `npm run check:oil-news-event-watch`。
 
 这是 automated display-only source-health cache,not a current Oil News signal。

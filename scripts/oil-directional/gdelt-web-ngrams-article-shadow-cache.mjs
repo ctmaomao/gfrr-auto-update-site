@@ -70,6 +70,24 @@ function finiteNonNegative(value) {
   return Number.isFinite(value) && value >= 0;
 }
 
+function parseNgramsTimestamp(value) {
+  const match = typeof value === 'string'
+    ? value.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/u)
+    : null;
+  if (!match) return null;
+  const [year, month, day, hour, minute, second] = match.slice(1).map(Number);
+  const timestampMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const date = new Date(timestampMs);
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
+    && date.getUTCHours() === hour
+    && date.getUTCMinutes() === minute
+    && date.getUTCSeconds() === second
+    ? timestampMs
+    : null;
+}
+
 export function assertWebNgramsArticleShadowCache(cache) {
   if (cache?.contractVersion !== WEB_NGRAMS_ARTICLE_SHADOW_CACHE_CONTRACT) {
     throw new Error('Web NGrams article shadow cache contract invalid');
@@ -80,14 +98,23 @@ export function assertWebNgramsArticleShadowCache(cache) {
   if (typeof cache.generatedAt !== 'string' || Number.isNaN(Date.parse(cache.generatedAt))) {
     throw new Error('Web NGrams article shadow cache generatedAt invalid');
   }
+  const generatedAtMs = Date.parse(cache.generatedAt);
   const timestamp = cache.sourceFile?.selectedTimestamp;
-  if (!(timestamp === null || /^\d{14}$/u.test(timestamp))) {
+  const timestampMs = timestamp === null ? null : parseNgramsTimestamp(timestamp);
+  if (!(timestamp === null || Number.isFinite(timestampMs))) {
     throw new Error('Web NGrams article shadow cache selectedTimestamp invalid');
   }
-  if (!finiteNonNegative(cache.observationPolicy?.requiredObservationDays)
-      || cache.observationPolicy.requiredObservationDays < 30
-      || !finiteNonNegative(cache.observationPolicy?.minimumUsableSamples)
-      || cache.observationPolicy.minimumUsableSamples < 120) {
+  if (Number.isFinite(timestampMs) && timestampMs > generatedAtMs + 60 * 60 * 1000) {
+    throw new Error('Web NGrams article shadow cache selectedTimestamp is in the future');
+  }
+  if (cache.sourceFile?.pairAvailable !== Boolean(timestamp)) {
+    throw new Error('Web NGrams article shadow cache pair availability mismatch');
+  }
+  if (cache.observationPolicy?.requiredObservationDays !== 30
+      || cache.observationPolicy?.minimumUsableSamples !== 120
+      || !Number.isInteger(cache.observationPolicy?.comparisonWindowHours)
+      || cache.observationPolicy.comparisonWindowHours < 1
+      || cache.observationPolicy.comparisonWindowHours > 168) {
     throw new Error('Web NGrams article shadow observation policy invalid');
   }
   if (JSON.stringify(cache.observationPolicy?.comparisonProviders) !== '["tavily","brave"]') {
@@ -116,6 +143,27 @@ export function assertWebNgramsArticleShadowCache(cache) {
   }
   if (cache.usesExistingOilNewsProviderResults !== true) {
     throw new Error('Web NGrams article shadow must reuse existing Oil News provider results');
+  }
+  const candidateCount = cache.candidateAggregate?.candidateCount;
+  const referenceArticleCount = cache.crossSourceAggregate?.referenceArticleCount;
+  if (cache.status === 'shadow_observation_ready') {
+    if (!finiteNonNegative(candidateCount) || candidateCount < 1
+        || !finiteNonNegative(referenceArticleCount) || referenceArticleCount < 1
+        || !cache.classificationAggregate) {
+      throw new Error('Web NGrams ready shadow cache aggregates are incomplete');
+    }
+  }
+  if (cache.status === 'shadow_partial_no_reference') {
+    if (!finiteNonNegative(candidateCount) || candidateCount < 1
+        || referenceArticleCount !== 0 || !cache.classificationAggregate) {
+      throw new Error('Web NGrams partial shadow cache aggregates are inconsistent');
+    }
+  }
+  if (cache.status === 'no_candidates' && candidateCount !== 0) {
+    throw new Error('Web NGrams no-candidates shadow cache count is inconsistent');
+  }
+  if (cache.status === 'source_unavailable' && cache.sourceFile.pairAvailable !== false) {
+    throw new Error('Web NGrams unavailable shadow cache cannot claim a pair');
   }
   const serialized = JSON.stringify(cache);
   for (const forbidden of [

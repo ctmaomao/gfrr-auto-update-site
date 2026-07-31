@@ -23,8 +23,8 @@ Official GDELT references:
 |---|---|---|---|---|
 | World Order Stress | GDELT Cloud v2 `events/summary` low-frequency cache | `scripts/world-order/fetch-gdelt-cloud.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-world-order-cache.json` | daily workflow / explicit build; manual reruns use 12h fresh cache before any live Cloud attempt | fresh/stale GDELT cache first; previous `data/world-order-stress.json` GDELT summary remains final fallback |
 | ODP Oil News Event Watch | GDELT DOC 2.0 broad cache query plus Tavily / Brave | `scripts/oil-directional/diagnose-oil-news-events.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-news-cache.json` | 2h workflow / manual dispatch; GDELT DOC live attempt only after the 24h fresh-cache or classified error-cooldown window expires; one bounded retry with `Retry-After` + jitter | Tavily / Brave source health remains visible; 429 cools down 24h, timeout/network 4h, 5xx 6h, other errors 12h; stale cache may remain current only for non-rate-limit failures, while 429 keeps `lastUsableCache` for audit only |
-| ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | `scripts/oil-directional/diagnose-gdelt-web-ngrams.mjs` calls shared wrapper `fetchGdeltWebNgramsText`; the Oil News writer sanitizes the diagnosis and writes only `data/oil-news-event-watch.json.sourceCaches.gdeltWebNgramsFallback` through the scoped writer | existing sample collector remains artifact-only every 3h; `Refresh Oil News Event Watch` now performs one bounded latest-file diagnosis and writes `gdelt-web-ngrams-display-fallback-cache-v2` | automated display-only aggregate source health; not a current Oil News signal, no headlines/URLs, no scoring |
-| ODP Oil News Web NGrams article-discovery candidate | Timestamp-matched GDELT Web NGrams v5 legacy `ngrams.txt.gz` + `toc.json.gz` pair | shared pair adapter plus `scripts/oil-directional/gdelt-web-ngrams-article-candidates.mjs`; incomplete pairs fail closed, then document IDs join to TOC and canonical URLs dedupe | library/check path only through P69B; no workflow or production writer connection | sanitized shadow candidate foundation; title/URL remain transient, not a current Oil News signal, no scoring |
+| ODP Oil News Web NGrams fallback | GDELT Web NGrams v5 legacy `ngrams.txt.gz` files | integrated Oil News build performs one shared pair fetch and derives `sourceCaches.gdeltWebNgramsFallback` from its sanitized diagnosis | existing sample collector remains artifact-only every 3h; `Refresh Oil News Event Watch` writes `gdelt-web-ngrams-display-fallback-cache-v2` from the integrated fetch | automated display-only aggregate source health; not a current Oil News signal, no headlines/URLs, no scoring |
+| ODP Oil News Web NGrams article-discovery shadow | Timestamp-matched GDELT Web NGrams v5 legacy `ngrams.txt.gz` + `toc.json.gz` pair plus existing Tavily/Brave results | integrated Oil News build joins/dedupes/classifies in memory, writes aggregate-only `sourceCaches.gdeltWebNgramsArticleShadow`, and uploads a sanitized ignored observation | same Oil News refresh; no second Web download and no additional Tavily/Brave calls | 30-day shadow observation only; frontend/current signal/event confirmation/scoring all disabled |
 | Bubble Watch `ceo_hedging` | GDELT DOC 2.0 compact cache plus Tavily / Brave / Wind fallback | `scripts/build-bubble-watch.mjs` calls shared wrapper `scripts/gdelt/fetch-gdelt.mjs`; production writer also writes `data/gdelt-bubble-watch-cache.json` | weekly build plus source-health audit | fresh/stale GDELT cache first; Tavily / Brave free fallback; Wind paid final fallback only when enabled |
 | API secret diagnostic | GDELT Cloud v2 smoke checks | `.github/workflows/test-api-secrets.yml` | manual diagnostic | diagnostic-only; not production data |
 
@@ -440,9 +440,9 @@ Future source-review only:
 
 2026-07-31 automated display-only phase:
 
-- `Refresh Oil News Event Watch` runs the existing bounded Web NGrams diagnosis,
-  sanitizes the ignored artifact, then updates only
-  `sourceCaches.gdeltWebNgramsFallback`.
+- `Refresh Oil News Event Watch` performs one bounded pair fetch inside the
+  existing Oil News build and updates `sourceCaches.gdeltWebNgramsFallback`
+  from the same in-memory diagnosis.
 - The production contract is `gdelt-web-ngrams-display-fallback-cache-v2`; it
   stores source-file timestamp, source availability, and compact aggregate
   counts only. It stores no headline, URL, snippet, article body, raw row, or
@@ -510,6 +510,19 @@ P69D cross-source shadow telemetry:
 - Independent support is still a noisy shadow quality measure, not a confirmed
   event and not a current Oil News signal or scoring input.
 
+P69E automated article shadow observation:
+
+- The Oil News build reuses the current Tavily/Brave transient results and one
+  Web NGrams pair fetch. A second Web download or additional provider query for
+  shadow comparison is forbidden.
+- Production may contain only aggregate
+  `sourceCaches.gdeltWebNgramsArticleShadow`; per-article hashes/domains remain
+  in an ignored sanitized artifact uploaded for 35 days.
+- The production cache records a 30-day / 120-sample minimum observation policy
+  but keeps `promotionEligible=false` until a separate history reviewer passes.
+- The new cache has no frontend/current-signal/event-confirmation/scoring
+  approval and does not change DOC fallback behavior.
+
 ## Verification
 
 ```powershell
@@ -535,6 +548,7 @@ npm run check:gdelt-web-ngrams-pair
 npm run check:gdelt-web-ngrams-article-candidates
 npm run check:gdelt-web-ngrams-shadow-classifier
 npm run check:gdelt-web-ngrams-cross-source-telemetry
+npm run check:gdelt-web-ngrams-article-shadow-cache
 npm run review:gdelt-cache-health -- --no-output
 npm run check:gdelt-cache-health
 npm run check:all

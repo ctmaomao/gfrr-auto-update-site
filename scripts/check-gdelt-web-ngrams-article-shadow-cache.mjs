@@ -106,6 +106,26 @@ for (const forbidden of ['"title":', '"url":', 'Hormuz tanker shutdown', 'https:
 }
 assert.equal(live.observation.productionImpact.affectsScoring, false);
 assert.equal(live.observation.eventConfirmationSource, false);
+assert.throws(
+  () => assertWebNgramsArticleShadowCache({
+    ...live.productionCache,
+    sourceFile: {
+      ...live.productionCache.sourceFile,
+      selectedTimestamp: '20260801090000'
+    }
+  }),
+  /future/u
+);
+assert.throws(
+  () => assertWebNgramsArticleShadowCache({
+    ...live.productionCache,
+    crossSourceAggregate: {
+      ...live.productionCache.crossSourceAggregate,
+      referenceArticleCount: 0
+    }
+  }),
+  /aggregates are incomplete/u
+);
 
 let dryRunFetchCalled = false;
 const dryRun = await buildGdeltWebNgramsArticleShadow({
