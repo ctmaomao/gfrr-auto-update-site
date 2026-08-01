@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-08-01T08:34:34.275Z",
+  "generatedAt": "2026-08-01T10:49:32.590Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-08-01T08:29:00Z",
-    "latestAgeHours": 0.1,
+    "latestAcqAt": "2026-08-01T08:39:00Z",
+    "latestAgeHours": 2.2,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -135,21 +135,23 @@
     ]
   },
   "aggregate": {
-    "rowCount": 57,
-    "latestAcqAt": "2026-08-01T08:29:00Z",
-    "maxFrp": 4.79,
+    "rowCount": 67,
+    "latestAcqAt": "2026-08-01T08:39:00Z",
+    "maxFrp": 91,
     "confidenceCounts": {
-      "n": 57
+      "n": 61,
+      "h": 6
     },
-    "highConfidenceCount": 0,
-    "frpOver50Count": 0,
+    "highConfidenceCount": 6,
+    "frpOver50Count": 3,
     "frpOver100Count": 0,
     "dayNightCounts": {
-      "N": 57
+      "N": 57,
+      "D": 10
     },
-    "latestAgeHours": 0.1,
+    "latestAgeHours": 2.2,
     "facilityCount": 42,
-    "facilitiesWithDetections": 13,
+    "facilitiesWithDetections": 15,
     "requestCount": 126,
     "requestErrorCount": 0,
     "requestDiagnostics": {
@@ -177,8 +179,8 @@
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 42,
     "facilitiesByAnomalyLevel": {
-      "low_signal": 13,
-      "none_observed": 29
+      "low_signal": 15,
+      "none_observed": 27
     }
   },
   "facilities": [
@@ -193,7 +195,7 @@
       "requestErrorCount": 0,
       "rowCount": 7,
       "latestAcqAt": "2026-08-01T08:28:00Z",
-      "maxFrp": 4.26,
+      "maxFrp": 4.27,
       "confidenceCounts": {
         "n": 7
       },
@@ -203,7 +205,7 @@
       "dayNightCounts": {
         "N": 7
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -254,7 +256,7 @@
       "dayNightCounts": {
         "N": 13
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -294,7 +296,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 2,
-      "latestAcqAt": "2026-08-01T08:09:00Z",
+      "latestAcqAt": "2026-08-01T08:07:00Z",
       "maxFrp": 2.06,
       "confidenceCounts": {
         "n": 2
@@ -305,7 +307,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 0.4,
+      "latestAgeHours": 2.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -346,7 +348,7 @@
       "requestErrorCount": 0,
       "rowCount": 4,
       "latestAcqAt": "2026-08-01T08:28:00Z",
-      "maxFrp": 2.88,
+      "maxFrp": 2.89,
       "confidenceCounts": {
         "n": 4
       },
@@ -356,7 +358,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -397,7 +399,7 @@
       "requestErrorCount": 0,
       "rowCount": 2,
       "latestAcqAt": "2026-08-01T08:28:00Z",
-      "maxFrp": 3.95,
+      "maxFrp": 4,
       "confidenceCounts": {
         "n": 2
       },
@@ -407,7 +409,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -458,7 +460,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -499,7 +501,7 @@
       "requestErrorCount": 0,
       "rowCount": 2,
       "latestAcqAt": "2026-08-01T08:09:00Z",
-      "maxFrp": 2.26,
+      "maxFrp": 2.29,
       "confidenceCounts": {
         "n": 2
       },
@@ -509,7 +511,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 0.4,
+      "latestAgeHours": 2.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -550,7 +552,7 @@
       "requestErrorCount": 0,
       "rowCount": 7,
       "latestAcqAt": "2026-08-01T08:28:00Z",
-      "maxFrp": 2.77,
+      "maxFrp": 2.78,
       "confidenceCounts": {
         "n": 7
       },
@@ -560,7 +562,7 @@
       "dayNightCounts": {
         "N": 7
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -600,7 +602,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 4,
-      "latestAcqAt": "2026-08-01T08:29:00Z",
+      "latestAcqAt": "2026-08-01T08:28:00Z",
       "maxFrp": 2.74,
       "confidenceCounts": {
         "n": 4
@@ -611,7 +613,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -652,7 +654,7 @@
       "requestErrorCount": 0,
       "rowCount": 2,
       "latestAcqAt": "2026-08-01T08:28:00Z",
-      "maxFrp": 2.93,
+      "maxFrp": 2.94,
       "confidenceCounts": {
         "n": 2
       },
@@ -662,7 +664,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -760,7 +762,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 0.1,
+      "latestAgeHours": 2.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -999,7 +1001,7 @@
       "dayNightCounts": {
         "N": 1
       },
-      "latestAgeHours": 8.6,
+      "latestAgeHours": 10.8,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1332,7 +1334,7 @@
       "dayNightCounts": {
         "N": 1
       },
-      "latestAgeHours": 8.6,
+      "latestAgeHours": 10.8,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1462,19 +1464,23 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "refinery_area_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Ruwais; desig_cd=PPL; fc=P; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1999-06-15T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-08-01T08:39:00Z",
+      "maxFrp": 4.16,
+      "confidenceCounts": {
+        "n": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 1
+      },
+      "latestAgeHours": 2.2,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 69,
@@ -1487,7 +1493,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1498,8 +1504,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -1556,19 +1562,24 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "export_terminal_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Das Island Terminal; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1993-12-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
-      "frpOver50Count": 0,
+      "rowCount": 9,
+      "latestAcqAt": "2026-08-01T08:39:00Z",
+      "maxFrp": 91,
+      "confidenceCounts": {
+        "h": 6,
+        "n": 3
+      },
+      "highConfidenceCount": 6,
+      "frpOver50Count": 3,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 9
+      },
+      "latestAgeHours": 2.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 69,
@@ -1581,19 +1592,19 @@
         "frpOver50CountP95": 2,
         "frpOver100CountP95": 1,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
-        "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
+        "frpOver50AboveP95": true,
+        "aboveBaselineStrength": true,
         "repeatedObservation": false,
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
