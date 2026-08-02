@@ -2,6 +2,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { deriveMainScoreRisk } from './main-score/main-score-engine.mjs';
+import {
+  buildBinaryEpisodes,
+  daysBetween,
+  summarizeBinaryTask
+} from './main-score/validation-metrics.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/main-score-audit/main-score-backtest-latest.json';
 const DEFAULT_START_DATE = '2006-01-01';
@@ -10,6 +15,7 @@ const FRED_CSV_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
 const FETCH_TIMEOUT_MS = Number(process.env.MAIN_SCORE_BACKTEST_FETCH_TIMEOUT_MS) || 30000;
 const SOURCE_POLICY_PATH = path.resolve('config', 'main-score-source-policy.json');
+const VALIDATION_CONFIG_PATH = path.resolve('config', 'main-score-validation.json');
 
 const SERIES = {
   brent: 'DCOILBRENTEU',
@@ -24,20 +30,14 @@ const SERIES = {
   onRrp: 'RRPONTSYD',
   t10y2y: 'T10Y2Y',
   igOas: 'BAMLC0A0CM',
-  baa10y: 'BAA10Y'
+  baa10y: 'BAA10Y',
+  usRecession: 'USRECM'
 };
-
-const EVENT_WINDOWS = [
-  { key: 'gfc_2008', label: '2008 Global Financial Crisis', start: '2008-09-15', end: '2009-03-09', expected: 'high_stress', minMaxScore: 75 },
-  { key: 'euro_2011', label: '2011 Euro / US debt stress', start: '2011-08-01', end: '2011-10-31', expected: 'elevated', minMaxScore: 55 },
-  { key: 'covid_2020', label: '2020 COVID liquidity shock', start: '2020-02-20', end: '2020-04-30', expected: 'high_stress', minMaxScore: 75 },
-  { key: 'inflation_2022', label: '2022 inflation / rates shock', start: '2022-06-01', end: '2022-10-31', expected: 'elevated', minMaxScore: 65 },
-  { key: 'banking_2023', label: '2023 regional-bank stress', start: '2023-03-08', end: '2023-05-15', expected: 'watch', minMaxScore: 50 },
-  { key: 'calm_2017', label: '2017 low-volatility expansion', start: '2017-01-01', end: '2017-12-31', expected: 'calm', maxAvgScore: 45 }
-];
 
 const rules = JSON.parse(fs.readFileSync(path.resolve('config', 'rules.json'), 'utf8'));
 const mainScoreSourcePolicy = JSON.parse(fs.readFileSync(SOURCE_POLICY_PATH, 'utf8'));
+const validationConfig = JSON.parse(fs.readFileSync(VALIDATION_CONFIG_PATH, 'utf8'));
+const EVENT_WINDOWS = validationConfig.eventWindows;
 
 function clamp(n, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(n)));
@@ -360,6 +360,17 @@ function summarizeRows(rows) {
 function summarizeEvent(rows, event) {
   const subset = rows.filter((row) => row.date >= event.start && row.date <= event.end);
   const summary = summarizeRows(subset);
+  const thresholdCoverage = validationConfig.thresholds.map((threshold) => {
+    const hits = subset.filter((row) => row.score >= threshold);
+    return {
+      threshold,
+      hitWeeks: hits.length,
+      totalWeeks: subset.length,
+      coveragePct: round(subset.length ? hits.length / subset.length * 100 : null, 2),
+      firstSignalDate: hits[0]?.date ?? null,
+      firstSignalOffsetDays: hits[0] ? daysBetween(event.start, hits[0].date) : null
+    };
+  });
   let pass = true;
   let rule = null;
   if (Number.isFinite(event.minMaxScore)) {
@@ -370,7 +381,133 @@ function summarizeEvent(rows, event) {
     pass = Number.isFinite(summary.avg) && summary.avg <= event.maxAvgScore;
     rule = `avg <= ${event.maxAvgScore}`;
   }
-  return { ...event, rule, pass, ...summary };
+  return { ...event, rule, pass, ...summary, thresholdCoverage };
+}
+
+function labelRowsForScientificValidation(rows, recessionSeries, episodes) {
+  const leadDays = validationConfig.labels.earlyWarning6m.leadDays;
+  return rows.map((row) => {
+    const recessionValue = latestOnOrBefore(recessionSeries, row.date)?.value ?? null;
+    const stressNowcast = Number.isFinite(recessionValue) && recessionValue >= 0.5;
+    const nextEpisode = episodes.find((episode) => episode.start > row.date);
+    const daysToNextOnset = nextEpisode ? daysBetween(row.date, nextEpisode.start) : null;
+    const earlyWarning6m = !stressNowcast
+      && Number.isFinite(daysToNextOnset)
+      && daysToNextOnset >= 1
+      && daysToNextOnset <= leadDays;
+    return {
+      ...row,
+      validationLabels: {
+        stressNowcast,
+        earlyWarning6m,
+        earlyWarningEligible: !stressNowcast,
+        daysToNextRecessionOnset: daysToNextOnset
+      }
+    };
+  });
+}
+
+function firstSignal(rows, threshold) {
+  return rows.find((row) => row.score >= threshold) || null;
+}
+
+function median(values) {
+  const sorted = values.filter(Number.isFinite).slice().sort((left, right) => left - right);
+  if (!sorted.length) return null;
+  const midpoint = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[midpoint]
+    : (sorted[midpoint - 1] + sorted[midpoint]) / 2;
+}
+
+function buildEpisodeDiagnostics(rows, episodes) {
+  const leadDays = validationConfig.labels.earlyWarning6m.leadDays;
+  const firstDate = rows[0]?.date ?? null;
+  const lastDate = rows[rows.length - 1]?.date ?? null;
+  const overlappingEpisodes = episodes.filter((episode) => (
+    (!lastDate || episode.start <= lastDate)
+    && (!firstDate || episode.end >= firstDate)
+  ));
+  const episodeRows = overlappingEpisodes.map((episode) => {
+    const preStart = new Date(Date.parse(episode.start) - leadDays * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const preRows = rows.filter((row) => row.date >= preStart && row.date < episode.start);
+    const activeRows = rows.filter((row) => (
+      row.date >= episode.start
+      && row.date <= episode.end
+      && row.validationLabels.stressNowcast
+    ));
+    return {
+      ...episode,
+      preWindowStart: preStart,
+      preWindowObservations: preRows.length,
+      activeObservations: activeRows.length,
+      thresholds: validationConfig.thresholds.map((threshold) => {
+        const preSignal = firstSignal(preRows, threshold);
+        const activeSignal = firstSignal(activeRows, threshold);
+        return {
+          threshold,
+          preOnsetDetected: Boolean(preSignal),
+          firstPreOnsetSignalDate: preSignal?.date ?? null,
+          leadDays: preSignal ? daysBetween(preSignal.date, episode.start) : null,
+          maxPreOnsetScore: preRows.length ? Math.max(...preRows.map((row) => row.score)) : null,
+          activeStressDetected: Boolean(activeSignal),
+          firstActiveSignalDate: activeSignal?.date ?? null,
+          detectionDelayDays: activeSignal ? daysBetween(episode.start, activeSignal.date) : null,
+          maxActiveScore: activeRows.length ? Math.max(...activeRows.map((row) => row.score)) : null
+        };
+      })
+    };
+  });
+
+  const thresholdSummary = validationConfig.thresholds.map((threshold) => {
+    const diagnostics = episodeRows.map((episode) => episode.thresholds.find((item) => item.threshold === threshold));
+    const preHits = diagnostics.filter((item) => item.preOnsetDetected);
+    const activeHits = diagnostics.filter((item) => item.activeStressDetected);
+    return {
+      threshold,
+      episodes: diagnostics.length,
+      preOnsetHits: preHits.length,
+      preOnsetEventHitRate: round(diagnostics.length ? preHits.length / diagnostics.length : null, 6),
+      activeStressHits: activeHits.length,
+      activeStressEventHitRate: round(diagnostics.length ? activeHits.length / diagnostics.length : null, 6),
+      medianLeadDays: round(median(preHits.map((item) => item.leadDays)), 2),
+      medianDetectionDelayDays: round(median(activeHits.map((item) => item.detectionDelayDays)), 2)
+    };
+  });
+  return { episodes: episodeRows, thresholdSummary };
+}
+
+function buildScientificValidation(rows, recessionSeries) {
+  const episodes = buildBinaryEpisodes(recessionSeries);
+  const labeledRows = labelRowsForScientificValidation(rows, recessionSeries, episodes);
+  const nowcastObservations = labeledRows.map((row) => ({
+    date: row.date,
+    score: row.score,
+    label: row.validationLabels.stressNowcast
+  }));
+  const earlyWarningObservations = labeledRows
+    .filter((row) => row.validationLabels.earlyWarningEligible)
+    .map((row) => ({
+      date: row.date,
+      score: row.score,
+      label: row.validationLabels.earlyWarning6m
+    }));
+  return {
+    contractVersion: validationConfig.schemaVersion,
+    auditOnly: validationConfig.auditOnly,
+    changesProductionScore: validationConfig.changesProductionScore,
+    primaryThreshold: validationConfig.primaryThreshold,
+    thresholds: validationConfig.thresholds,
+    labelSource: 'FRED:USRECM',
+    labelCaveat: 'USRECM is a contemporaneous revised recession indicator used only as an ex-post outcome label; it is not a real-time vintage input.',
+    tasks: {
+      stressNowcast: summarizeBinaryTask(nowcastObservations, validationConfig.thresholds),
+      earlyWarning6m: summarizeBinaryTask(earlyWarningObservations, validationConfig.thresholds)
+    },
+    eventLevel: buildEpisodeDiagnostics(labeledRows, episodes)
+  };
 }
 
 function adjustByPct(value, pct) {
@@ -660,6 +797,7 @@ async function main() {
   const events = EVENT_WINDOWS.map((event) => summarizeEvent(rows, event));
   const failedEvents = events.filter((event) => !event.pass);
   const windFallbackPolicy = buildWindFallbackPolicyReplay(rows, seriesRows);
+  const scientificValidation = buildScientificValidation(rows, seriesRows.usRecession);
   const report = {
     generatedAt: new Date().toISOString(),
     options,
@@ -668,10 +806,13 @@ async function main() {
       'Backtest uses FRED historical series only; intraday Brent public-consensus promotion cannot be replayed before this implementation.',
       'HY/IG OAS exact FRED API coverage may be short in this environment; BAA10Y is used as a long-history credit-spread proxy only for this audit when exact OAS rows are unavailable.',
       'This audit tests score logic and historical regime behavior; it does not prove investable timing by itself.',
+      'USRECM is used as a revised ex-post outcome label. It is not a point-in-time recession call and does not remove vintage-data look-ahead from score inputs.',
+      'Stress-nowcast and six-month early-warning results are separate tasks; strong contemporaneous discrimination must not be described as advance warning.',
       'Wind fallback replay is a deterministic conflict-stress simulation over public historical data; it does not call Wind and does not assert Wind data accuracy.',
       'Raw Wind/public conflict stress is reported separately; automatic score switching is evaluated after score-impact guards reject large source-switch jumps for review or independent confirmation.'
     ],
     formula: {
+      scoringEngine: 'scripts/main-score/main-score-engine.mjs',
       dxyCalibration: rules.riskCalibrations?.dxyBroadDollar || null,
       tailRiskOverlay: 'conditional_tail_floor_v1'
     },
@@ -679,10 +820,15 @@ async function main() {
       path: path.relative(process.cwd(), SOURCE_POLICY_PATH),
       contractVersion: mainScoreSourcePolicy.contractVersion
     },
+    validationPolicy: {
+      path: path.relative(process.cwd(), VALIDATION_CONFIG_PATH),
+      contractVersion: validationConfig.schemaVersion
+    },
     seriesStatus,
     distribution: summarizeRows(rows),
     events,
     failedEvents: failedEvents.map((event) => event.key),
+    scientificValidation,
     windFallbackPolicy,
     sampleRows: rows
   };
@@ -694,6 +840,8 @@ async function main() {
   for (const event of events) {
     console.log(`[main-score-backtest] ${event.key}: pass=${event.pass}, avg=${event.avg}, max=${event.max}, overlay=${event.overlayAppliedPct}%`);
   }
+  console.log(`[main-score-backtest] stressNowcast AUROC=${scientificValidation.tasks.stressNowcast.auroc}, AP=${scientificValidation.tasks.stressNowcast.averagePrecision}`);
+  console.log(`[main-score-backtest] earlyWarning6m AUROC=${scientificValidation.tasks.earlyWarning6m.auroc}, AP=${scientificValidation.tasks.earlyWarning6m.averagePrecision}`);
   console.log(`[main-score-backtest] windFallbackPolicy=${windFallbackPolicy.pass ? 'pass' : 'needs_review'} scenarios=${windFallbackPolicy.scenarios.length}`);
   console.log(`[main-score-backtest] wrote ${path.relative(process.cwd(), outputPath)}`);
 }
