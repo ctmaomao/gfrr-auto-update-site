@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "main-score-validation-reference-results-v1",
+  "asOf": "2026-08-02",
+  "auditOnly": true,
+  "changesProductionScore": false,
+  "modernFormulaReplay": {
+    "coverage": { "start": "2006-01-01", "end": "2026-07-27", "weeklyObservations": 1074 },
+    "stressNowcast": {
+      "auroc": 0.875016,
+      "averagePrecision": 0.612362,
+      "annualBlockBootstrap95AuRoc": [0.503564, 0.970464],
+      "threshold55": { "recall": 0.65625, "specificity": 0.931493, "precision": 0.484615, "falseAlarmsPerYear": 3.2581 }
+    },
+    "earlyWarning6m": {
+      "auroc": 0.359539,
+      "averagePrecision": 0.039986,
+      "threshold55Recall": 0,
+      "preOnsetEpisodeHits": 0,
+      "episodes": 2,
+      "medianDetectionDelayDays": 74.5
+    }
+  },
+  "centuryProxy": {
+    "productionFormulaReplay": false,
+    "eligibleForProductionScore": false,
+    "coverage": { "start": "1926-01-01", "end": "2026-06-01", "monthlyObservations": 1206, "years": 100.41 },
+    "stressNowcast": {
+      "auroc": 0.779765,
+      "averagePrecision": 0.527447,
+      "annualBlockBootstrap95AuRoc": [0.68507, 0.861707],
+      "threshold60": { "recall": 0.61194, "specificity": 0.806965, "precision": 0.388013, "falseAlarmsPerYear": 1.932 },
+      "activeStressEpisodeHits": 11,
+      "episodes": 16
+    },
+    "earlyWarning6m": {
+      "auroc": 0.497025,
+      "averagePrecision": 0.090518,
+      "annualBlockBootstrap95AuRoc": [0.359987, 0.633343],
+      "threshold60": { "recall": 0.188889, "specificity": 0.806557, "precision": 0.087629, "falseAlarmsPerYear": 1.7627 },
+      "preOnsetEpisodeHits": 3,
+      "episodes": 16
+    }
+  },
+  "dataVintage": {
+    "pointInTime": false,
+    "alfredApplied": false,
+    "centuryProxyInformationLagMonths": 1,
+    "revisionPolicy": "latest_revised_fred_observations"
+  },
+  "sourceUrls": {
+    "baa": "https://fred.stlouisfed.org/series/BAA",
+    "aaa": "https://fred.stlouisfed.org/series/AAA",
+    "industrialProduction": "https://fred.stlouisfed.org/series/INDPRO",
+    "recessionLabel": "https://fred.stlouisfed.org/series/USREC",
+    "nberChronology": "https://www.nber.org/research/business-cycle-dating"
+  }
+}

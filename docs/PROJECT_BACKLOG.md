@@ -466,6 +466,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
+- **上次会话结束于(2026-08-02 · 主评分科学验证修订)**: 本分支累计完成共享生产评分引擎、现代压力同步/六个月预警指标、DXY 截至当时 expanding calibration、年度 block bootstrap、时间分段、六模块权重 ±20% 稳健性，以及 1926-2026 百年代理验证。现代回放 stress-nowcast AUROC 0.875,early-warning-6m AUROC 0.360;百年代理在保守一月信息滞后后分别 0.780 / 0.497。结论:主分数只能表述为当前压力温度,不是危机概率或六个月预测。
+- **当前进行中(2026-08-02 · 主评分科学验证修订)**: 无。所有新增路径均 audit-only,输出仅写 ignored `manual-artifacts/main-score-audit/`;百年代理固定 `productionFormulaReplay=false` / `eligibleForProductionScore=false`;未改生产公式、阈值、Daily/Worker、决策、执行、仓位或前端。权威口径见 [`MAIN_SCORE_SCIENTIFIC_VALIDATION.md`](MAIN_SCORE_SCIENTIFIC_VALIDATION.md)。
+- **下一步建议(2026-08-02 · 主评分科学验证)**: 若未来要提升“提前预警”能力,必须另立研究模型并使用 ALFRED point-in-time vintage、真实发布日期、更多国际危机 outcome 与严格样本外评估;不得通过改名或调阈值把当前 nowcast 包装成 forecast。
+
 - **上次会话结束于(2026-07-28 · Bubble Watch source audit #28 repair)**: 已从 Actions #28 原始日志确认不是 ARR 数据链失效,而是审计分类未适配已上线的 `arr_underlying_observation_stale` fail-closed 语义。修复提交 `d7eb0633` 已通过本地 source audit、`npm run check:all` 和远端 Audit run `30347669342`;远端结果为预期 WARN,artifact 上传成功,Pages 部署同步成功。
 - **当前进行中(2026-07-28 · Bubble Watch source audit #28 repair)**: 无。审计器仅在精确 reason code、`arr_2nd_deriv` 配对和 curated 回退快照仍 fresh 三项同时成立时记为 policy-driven expected WARN；未改 Bubble Watch 指标值、评分权重、阈值、builder freshness gate、生产 JSON 或 workflow 权限。
 - **下一步建议(2026-07-28 · Bubble Watch source audit #28 repair)**: 继续观察下一次 scheduled Audit 与 SaaStr 是否发布较新的 ARR 里程碑；有新鲜底层观测时 builder 自动恢复 live,没有时保持 fresh curated fallback + audit WARN。

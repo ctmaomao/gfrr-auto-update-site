@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "main-score-century-proxy-v1",
+  "auditOnly": true,
+  "productionFormulaReplay": false,
+  "eligibleForProductionScore": false,
+  "targetStartDate": "1926-01-01",
+  "series": {
+    "baa": "BAA",
+    "aaa": "AAA",
+    "industrialProduction": "INDPRO",
+    "recessionLabel": "USREC"
+  },
+  "model": {
+    "method": "causal_long_history_proxy_percentile_v1",
+    "minimumHistoryMonths": 60,
+    "informationLagMonths": 1,
+    "components": {
+      "creditSpread": { "weight": 0.45, "definition": "BAA minus AAA yield" },
+      "industrialProductionYoYContraction": { "weight": 0.35, "months": 12 },
+      "industrialProduction6mContraction": { "weight": 0.2, "months": 6 }
+    },
+    "transform": "expanding_midrank_percentile_using_observations_at_least_one_month_before_the_labeled_month"
+  },
+  "labels": {
+    "stressNowcast": "USREC >= 0.5 in the scored month",
+    "earlyWarning6m": {
+      "leadDays": 183,
+      "excludesActiveRecession": true
+    }
+  },
+  "thresholds": [50, 60, 70],
+  "primaryThreshold": 60,
+  "robustness": {
+    "annualBlockBootstrap": {
+      "iterations": 1000,
+      "seed": 20260802,
+      "confidenceLevel": 0.95
+    },
+    "temporalHoldouts": [
+      { "key": "interwar_and_wwii", "start": "1926-01-01", "end": "1945-12-31" },
+      { "key": "postwar_to_volcker", "start": "1946-01-01", "end": "1979-12-31" },
+      { "key": "great_moderation", "start": "1980-01-01", "end": "2006-12-31" },
+      { "key": "gfc_and_after", "start": "2007-01-01", "end": "2026-12-31" }
+    ]
+  }
+}

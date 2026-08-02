@@ -23,7 +23,11 @@
 | Series ID | 含义 | 消费层 | Milestone |
 |---|---|---|---|
 | `DCOILBRENTEU` | Brent crude oil spot (USD/bbl) | Brent main value (anchor) | 长期 |
-| `DTWEXBGS` | Trade Weighted U.S. Dollar Index: Broad, Goods and Services | `values.dxy` / `displayInputsBaseline.dxy`;主分数 `dollarRisk` 采用 2006-2026 历史分位校准 | 长期 / 2026-06-16 calibration |
+| `DTWEXBGS` | Trade Weighted U.S. Dollar Index: Broad, Goods and Services | `values.dxy` / `displayInputsBaseline.dxy`;生产主分数 `dollarRisk` 采用固定 2006-2026 历史分位校准;历史审计改用截至评分日 expanding 分位以消除全样本前视 | 长期 / 2026-06-16 calibration / 2026-08-02 audit |
+| `USRECM` | NBER recession indicator,peak-through-trough,monthly | 主评分 2006+ 科学验证的 outcome-only 标签;不进入评分或前端 | 2026-08-02 audit |
+| `BAA` / `AAA` | Moody's seasoned Baa/Aaa corporate bond yields,monthly | 百年代理审计的信用利差;原始值不提交,有 Moody's 再分发限制;不进入生产评分 | 2026-08-02 audit |
+| `INDPRO` | Industrial Production:Total Index,monthly | 百年代理审计的 12m/6m 收缩组件;不进入生产评分 | 2026-08-02 audit |
+| `USREC` | NBER recession indicator,period following peak through trough,monthly | 百年代理审计的 outcome-only 标签;不进入代理输入、生产评分或前端 | 2026-08-02 audit |
 | `DGS10` / `DGS2` / `T10Y2Y` | US Treasury yields + 10y2y spread | macroDrivers.fedLiquidity | 长期 |
 | `BAMLH0A0HYM2` | HY OAS (high-yield bond spread) | macroDrivers.credit, macroDrivers.privateCreditProxy, cross-validation | 长期 / M-74 |
 | `BAMLC0A0CM` | IG OAS (investment-grade spread) | macroDrivers.credit, macroDrivers.privateCreditProxy | 长期 / M-78 |
@@ -59,6 +63,8 @@
 | `ICE:CDX-index-settlement-public` | ICE Clear Credit public CDX index EOD settlement price | macroDrivers.privateCreditProxy | M-81 |
 
 **注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
+
+**主评分科学验证边界(2026-08-02)**:`npm run audit:main-score-backtest` 复用生产评分引擎做 2006+ 公式回放,但缺失历史输入仍可能使用明确代理/默认值;`npm run audit:main-score-century-proxy` 用至少滞后一个月的 `BAA-AAA` + `INDPRO` 构造 1926+ 的不同代理模型。后者固定 `productionFormulaReplay=false` / `eligibleForProductionScore=false`,不得被写成“百年生产主分数回放”。两者都使用最新修订 FRED rows,不是 ALFRED point-in-time vintage。完整结果和产品语义见 [`MAIN_SCORE_SCIENTIFIC_VALIDATION.md`](MAIN_SCORE_SCIENTIFIC_VALIDATION.md)。
 
 **M-69/M-77/M-79 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 使用 `CARTS` / `CARTSR`、MRTS 细分零售、BoA Consumer Checkpoint 公开 HTML 摘要与 Trading Economics Redbook public HTML 摘要。BoA Consumer Checkpoint 不是 Redbook；Redbook public HTML 不是 Redbook raw subscription feed；两者都不是 BoA 原始卡明细或非公开 raw feed。
 
