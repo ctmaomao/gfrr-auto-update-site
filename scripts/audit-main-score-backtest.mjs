@@ -2,7 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { deriveMainScoreRisk } from './main-score/main-score-engine.mjs';
+import { buildCausalDxyCalibration } from './main-score/causal-calibration.mjs';
 import {
+  annualBlockBootstrap,
   buildBinaryEpisodes,
   daysBetween,
   summarizeBinaryTask
@@ -38,6 +40,7 @@ const rules = JSON.parse(fs.readFileSync(path.resolve('config', 'rules.json'), '
 const mainScoreSourcePolicy = JSON.parse(fs.readFileSync(SOURCE_POLICY_PATH, 'utf8'));
 const validationConfig = JSON.parse(fs.readFileSync(VALIDATION_CONFIG_PATH, 'utf8'));
 const EVENT_WINDOWS = validationConfig.eventWindows;
+const causalDxyCache = new WeakMap();
 
 function clamp(n, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(n)));
@@ -220,7 +223,37 @@ function buildValuesForDate(date, seriesRows) {
   return Object.fromEntries(Object.keys(SERIES).map((key) => [key, latestOnOrBefore(seriesRows[key], date)?.value ?? null]));
 }
 
-function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
+function causalDxyForDate(date, seriesRows) {
+  let cache = causalDxyCache.get(seriesRows.dxy);
+  if (!cache) {
+    cache = new Map();
+    causalDxyCache.set(seriesRows.dxy, cache);
+  }
+  if (!cache.has(date)) {
+    cache.set(date, buildCausalDxyCalibration(
+      seriesRows.dxy,
+      date,
+      validationConfig.causalCalibration.dxy
+    ));
+  }
+  return cache.get(date);
+}
+
+function deriveRiskForDate(date, seriesRows, valueOverrides = null, auditOptions = {}) {
+  const scoringRules = auditOptions.scoringRules || rules;
+  const dxyCalibrationMode = auditOptions.dxyCalibrationMode || 'causal_expanding';
+  const causalDxy = dxyCalibrationMode === 'causal_expanding'
+    ? causalDxyForDate(date, seriesRows)
+    : null;
+  const effectiveRules = causalDxy
+    ? {
+        ...scoringRules,
+        riskCalibrations: {
+          ...scoringRules.riskCalibrations,
+          dxyBroadDollar: causalDxy.calibration
+        }
+      }
+    : scoringRules;
   const values = buildValuesForDate(date, seriesRows);
   if (valueOverrides && typeof valueOverrides === 'object') {
     for (const [key, value] of Object.entries(valueOverrides)) {
@@ -247,7 +280,7 @@ function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
   const t10y2yWeekChange = Number.isFinite(values.t10y2y) && Number.isFinite(curveAgo)
     ? values.t10y2y - curveAgo
     : null;
-  const curveConfig = rules.macroDrivers.curve;
+  const curveConfig = effectiveRules.macroDrivers.curve;
   const steepeningAlert = Number.isFinite(values.t10y2y) && Number.isFinite(t10y2yWeekChange)
     && values.t10y2y < curveConfig.inversionThreshold
     && t10y2yWeekChange >= curveConfig.steepeningWeekChangeThreshold;
@@ -260,9 +293,9 @@ function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
       hyOas: creditSpread,
       us10y: values.us10y,
       real10y: values.real10y,
-      breakeven10y: Number.isFinite(values.breakeven10y) ? values.breakeven10y : rules.defaults.breakeven10y,
-      spx: Number.isFinite(values.spx) ? values.spx : rules.defaults.spx,
-      gold: rules.defaults.gold
+      breakeven10y: Number.isFinite(values.breakeven10y) ? values.breakeven10y : effectiveRules.defaults.breakeven10y,
+      spx: Number.isFinite(values.spx) ? values.spx : effectiveRules.defaults.spx,
+      gold: effectiveRules.defaults.gold
     },
     changes: {
       brent1d: pctChange(values.brent, brentAgo)
@@ -293,7 +326,7 @@ function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
       }
     }
   };
-  const risk = deriveMainScoreRisk(realtimePayload, macroDrivers, rules);
+  const risk = deriveMainScoreRisk(realtimePayload, macroDrivers, effectiveRules);
 
   return {
     date,
@@ -302,6 +335,15 @@ function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
     overlayApplied: risk.tailRiskOverlay.applied,
     overlayFloor: risk.tailRiskOverlay.floor,
     overlayReasons: risk.tailRiskOverlay.reasons.map((reason) => reason.key),
+    auditCalibration: {
+      dxyMode: dxyCalibrationMode,
+      dxy: causalDxy?.audit || {
+        asOfDate: date,
+        observations: null,
+        sufficientHistory: null,
+        futureRowsUsed: null
+      }
+    },
     modules: risk.modules,
     inputs: {
       brent: risk.brent,
@@ -479,7 +521,24 @@ function buildEpisodeDiagnostics(rows, episodes) {
   return { episodes: episodeRows, thresholdSummary };
 }
 
-function buildScientificValidation(rows, recessionSeries) {
+function buildTaskRobustness(observations) {
+  const robustness = validationConfig.robustness;
+  return {
+    thresholdGrid: robustness.thresholdGrid.map((threshold) => (
+      summarizeBinaryTask(observations, [threshold]).thresholds[0]
+    )),
+    annualBlockBootstrap: annualBlockBootstrap(observations, robustness.annualBlockBootstrap),
+    temporalHoldouts: robustness.temporalHoldouts.map((holdout) => ({
+      ...holdout,
+      ...summarizeBinaryTask(
+        observations.filter((row) => row.date >= holdout.start && row.date <= holdout.end),
+        validationConfig.thresholds
+      )
+    }))
+  };
+}
+
+function buildScientificValidation(rows, recessionSeries, options = {}) {
   const episodes = buildBinaryEpisodes(recessionSeries);
   const labeledRows = labelRowsForScientificValidation(rows, recessionSeries, episodes);
   const nowcastObservations = labeledRows.map((row) => ({
@@ -494,7 +553,11 @@ function buildScientificValidation(rows, recessionSeries) {
       score: row.score,
       label: row.validationLabels.earlyWarning6m
     }));
-  return {
+  const tasks = {
+    stressNowcast: summarizeBinaryTask(nowcastObservations, validationConfig.thresholds),
+    earlyWarning6m: summarizeBinaryTask(earlyWarningObservations, validationConfig.thresholds)
+  };
+  const result = {
     contractVersion: validationConfig.schemaVersion,
     auditOnly: validationConfig.auditOnly,
     changesProductionScore: validationConfig.changesProductionScore,
@@ -502,11 +565,76 @@ function buildScientificValidation(rows, recessionSeries) {
     thresholds: validationConfig.thresholds,
     labelSource: 'FRED:USRECM',
     labelCaveat: 'USRECM is a contemporaneous revised recession indicator used only as an ex-post outcome label; it is not a real-time vintage input.',
-    tasks: {
-      stressNowcast: summarizeBinaryTask(nowcastObservations, validationConfig.thresholds),
-      earlyWarning6m: summarizeBinaryTask(earlyWarningObservations, validationConfig.thresholds)
-    },
+    tasks,
     eventLevel: buildEpisodeDiagnostics(labeledRows, episodes)
+  };
+  if (options.includeRobustness !== false) {
+    result.robustness = {
+      temporalEvaluationMethod: 'fixed_preregistered_score_no_refit_out_of_period_holdouts',
+      stressNowcast: buildTaskRobustness(nowcastObservations),
+      earlyWarning6m: buildTaskRobustness(earlyWarningObservations)
+    };
+  }
+  return result;
+}
+
+function scoreDeltaSummary(baseRows, comparisonRows) {
+  const comparisonByDate = new Map(comparisonRows.map((row) => [row.date, row]));
+  const deltas = baseRows
+    .map((row) => {
+      const comparison = comparisonByDate.get(row.date);
+      return comparison ? comparison.score - row.score : null;
+    })
+    .filter(Number.isFinite);
+  return {
+    observations: deltas.length,
+    meanDelta: round(deltas.length ? deltas.reduce((sum, value) => sum + value, 0) / deltas.length : null, 4),
+    meanAbsoluteDelta: round(deltas.length ? deltas.reduce((sum, value) => sum + Math.abs(value), 0) / deltas.length : null, 4),
+    p95AbsoluteDelta: round(percentile(deltas.map(Math.abs), 95), 4),
+    maxAbsoluteDelta: round(deltas.length ? Math.max(...deltas.map(Math.abs)) : null, 4)
+  };
+}
+
+function buildModuleWeightSensitivity(baseRows, seriesRows, recessionSeries) {
+  const perturbationPct = Number(validationConfig.robustness.moduleWeightPerturbationPct) || 20;
+  const baseWeights = rules.moduleWeights;
+  const moduleKeys = Object.keys(baseWeights).filter((key) => Number.isFinite(baseWeights[key]));
+  const scenarios = [];
+  for (const moduleKey of moduleKeys) {
+    for (const direction of [-1, 1]) {
+      const multiplier = 1 + direction * perturbationPct / 100;
+      const rawWeights = Object.fromEntries(moduleKeys.map((key) => [
+        key,
+        baseWeights[key] * (key === moduleKey ? multiplier : 1)
+      ]));
+      const weightSum = Object.values(rawWeights).reduce((sum, value) => sum + value, 0);
+      const moduleWeights = Object.fromEntries(moduleKeys.map((key) => [key, rawWeights[key] / weightSum]));
+      const scenarioRules = { ...rules, moduleWeights };
+      const rows = baseRows
+        .map((baseRow) => deriveRiskForDate(baseRow.date, seriesRows, null, { scoringRules: scenarioRules }))
+        .filter(Boolean);
+      const validation = buildScientificValidation(rows, recessionSeries, { includeRobustness: false });
+      scenarios.push({
+        key: `${moduleKey}_${direction > 0 ? 'up' : 'down'}_${perturbationPct}pct`,
+        changedModule: moduleKey,
+        perturbationPct: direction * perturbationPct,
+        normalizedWeights: moduleWeights,
+        scoreDelta: scoreDeltaSummary(baseRows, rows),
+        stressNowcast: {
+          auroc: validation.tasks.stressNowcast.auroc,
+          averagePrecision: validation.tasks.stressNowcast.averagePrecision
+        },
+        earlyWarning6m: {
+          auroc: validation.tasks.earlyWarning6m.auroc,
+          averagePrecision: validation.tasks.earlyWarning6m.averagePrecision
+        }
+      });
+    }
+  }
+  return {
+    method: 'one_module_weight_plus_minus_then_renormalize_v1',
+    perturbationPct,
+    scenarios
   };
 }
 
@@ -784,6 +912,9 @@ async function main() {
     seriesStatus[key] = {
       seriesId,
       fetchMode: result.fetchMode,
+      revisionPolicy: 'latest_revised_observations',
+      pointInTimeVintage: false,
+      vintageSource: 'not_used',
       observations: result.rows.length,
       firstDate: result.rows[0]?.date ?? null,
       lastDate: result.rows[result.rows.length - 1]?.date ?? null,
@@ -794,10 +925,48 @@ async function main() {
   const rows = makeWeeklyDates(options.startDate, options.endDate)
     .map((date) => deriveRiskForDate(date, seriesRows))
     .filter(Boolean);
+  const fixedCalibrationRows = makeWeeklyDates(options.startDate, options.endDate)
+    .map((date) => deriveRiskForDate(date, seriesRows, null, { dxyCalibrationMode: 'fixed_full_sample' }))
+    .filter(Boolean);
   const events = EVENT_WINDOWS.map((event) => summarizeEvent(rows, event));
   const failedEvents = events.filter((event) => !event.pass);
   const windFallbackPolicy = buildWindFallbackPolicyReplay(rows, seriesRows);
   const scientificValidation = buildScientificValidation(rows, seriesRows.usRecession);
+  const fixedCalibrationValidation = buildScientificValidation(
+    fixedCalibrationRows,
+    seriesRows.usRecession,
+    { includeRobustness: false }
+  );
+  const robustness = {
+    dxyCalibrationComparison: {
+      primaryMode: 'causal_expanding_as_of_observation_date',
+      comparisonMode: 'fixed_2006_2026_full_sample_lookahead_diagnostic_only',
+      scoreDeltaComparisonMinusCausal: scoreDeltaSummary(rows, fixedCalibrationRows),
+      causal: {
+        distribution: summarizeRows(rows),
+        stressNowcast: {
+          auroc: scientificValidation.tasks.stressNowcast.auroc,
+          averagePrecision: scientificValidation.tasks.stressNowcast.averagePrecision
+        },
+        earlyWarning6m: {
+          auroc: scientificValidation.tasks.earlyWarning6m.auroc,
+          averagePrecision: scientificValidation.tasks.earlyWarning6m.averagePrecision
+        }
+      },
+      fixedFullSample: {
+        distribution: summarizeRows(fixedCalibrationRows),
+        stressNowcast: {
+          auroc: fixedCalibrationValidation.tasks.stressNowcast.auroc,
+          averagePrecision: fixedCalibrationValidation.tasks.stressNowcast.averagePrecision
+        },
+        earlyWarning6m: {
+          auroc: fixedCalibrationValidation.tasks.earlyWarning6m.auroc,
+          averagePrecision: fixedCalibrationValidation.tasks.earlyWarning6m.averagePrecision
+        }
+      }
+    },
+    moduleWeightSensitivity: buildModuleWeightSensitivity(rows, seriesRows, seriesRows.usRecession)
+  };
   const report = {
     generatedAt: new Date().toISOString(),
     options,
@@ -807,14 +976,31 @@ async function main() {
       'HY/IG OAS exact FRED API coverage may be short in this environment; BAA10Y is used as a long-history credit-spread proxy only for this audit when exact OAS rows are unavailable.',
       'This audit tests score logic and historical regime behavior; it does not prove investable timing by itself.',
       'USRECM is used as a revised ex-post outcome label. It is not a point-in-time recession call and does not remove vintage-data look-ahead from score inputs.',
+      'DXY calibration is recomputed from observations available on or before each scored date, but all fetched FRED observations remain latest revised values rather than ALFRED vintages.',
+      'Release-date lags are not reconstructed; latest-on-or-before observation dating can still be optimistic for revised or later-published macro series.',
       'Stress-nowcast and six-month early-warning results are separate tasks; strong contemporaneous discrimination must not be described as advance warning.',
       'Wind fallback replay is a deterministic conflict-stress simulation over public historical data; it does not call Wind and does not assert Wind data accuracy.',
       'Raw Wind/public conflict stress is reported separately; automatic score switching is evaluated after score-impact guards reject large source-switch jumps for review or independent confirmation.'
     ],
     formula: {
       scoringEngine: 'scripts/main-score/main-score-engine.mjs',
-      dxyCalibration: rules.riskCalibrations?.dxyBroadDollar || null,
+      dxyCalibration: validationConfig.causalCalibration.dxy,
+      productionDxyCalibrationUnchanged: rules.riskCalibrations?.dxyBroadDollar || null,
       tailRiskOverlay: 'conditional_tail_floor_v1'
+    },
+    dataVintageAudit: {
+      status: 'current_revised_data_not_point_in_time',
+      alfredVintageApplied: false,
+      lookAheadControls: {
+        dxyCalibration: 'causal_expanding_percentiles_using_rows_on_or_before_each_scored_date',
+        marketChanges: 'prior_observation_only',
+        scoreEvaluation: 'fixed_preregistered_formula_without_fitting_to_holdout_labels'
+      },
+      remainingLookAheadRisks: [
+        'FRED input observations can contain revisions unavailable to a historical observer.',
+        'Publication release lags are not reconstructed from real-time vintages.',
+        'USRECM is a revised outcome label and is never used as a score input.'
+      ]
     },
     sourcePolicy: {
       path: path.relative(process.cwd(), SOURCE_POLICY_PATH),
@@ -829,6 +1015,7 @@ async function main() {
     events,
     failedEvents: failedEvents.map((event) => event.key),
     scientificValidation,
+    robustness,
     windFallbackPolicy,
     sampleRows: rows
   };

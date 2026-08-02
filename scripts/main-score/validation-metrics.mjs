@@ -158,6 +158,68 @@ export function summarizeBinaryTask(observations, thresholds) {
   };
 }
 
+function seededRandom(seed) {
+  let state = Number(seed) >>> 0;
+  return () => {
+    state += 0x6D2B79F5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function empiricalQuantile(values, probability) {
+  const sorted = values.filter(Number.isFinite).slice().sort((left, right) => left - right);
+  if (!sorted.length) return null;
+  const position = (sorted.length - 1) * Math.max(0, Math.min(1, probability));
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
+export function annualBlockBootstrap(observations, options = {}) {
+  const pairs = validPairs(observations).filter((row) => row.date && /^\d{4}-/.test(row.date));
+  const blocksByYear = new Map();
+  for (const pair of pairs) {
+    const year = pair.date.slice(0, 4);
+    if (!blocksByYear.has(year)) blocksByYear.set(year, []);
+    blocksByYear.get(year).push(pair);
+  }
+  const blocks = [...blocksByYear.values()];
+  const iterations = Math.max(1, Math.floor(Number(options.iterations) || 1000));
+  const confidenceLevel = Math.max(0.5, Math.min(0.999, Number(options.confidenceLevel) || 0.95));
+  const random = seededRandom(Number(options.seed) || 1);
+  const aurocs = [];
+  const averagePrecisions = [];
+  for (let iteration = 0; iteration < iterations && blocks.length; iteration += 1) {
+    const sample = [];
+    for (let index = 0; index < blocks.length; index += 1) {
+      sample.push(...blocks[Math.floor(random() * blocks.length)]);
+    }
+    const auroc = computeAuRoc(sample);
+    const averagePrecision = computeAveragePrecision(sample);
+    if (Number.isFinite(auroc)) aurocs.push(auroc);
+    if (Number.isFinite(averagePrecision)) averagePrecisions.push(averagePrecision);
+  }
+  const tail = (1 - confidenceLevel) / 2;
+  const interval = (values) => ({
+    estimateCount: values.length,
+    lower: round(empiricalQuantile(values, tail), 6),
+    median: round(empiricalQuantile(values, 0.5), 6),
+    upper: round(empiricalQuantile(values, 1 - tail), 6)
+  });
+  return {
+    method: 'calendar_year_block_bootstrap_v1',
+    blocks: blocks.length,
+    iterations,
+    seed: Number(options.seed) || 1,
+    confidenceLevel,
+    auroc: interval(aurocs),
+    averagePrecision: interval(averagePrecisions)
+  };
+}
+
 export function buildBinaryEpisodes(seriesRows) {
   const rows = seriesRows
     .map((row) => ({ date: row?.date, value: Number(row?.value) }))

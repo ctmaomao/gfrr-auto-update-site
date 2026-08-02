@@ -30,6 +30,35 @@
     "eventHitRate",
     "leadOrDelayDays"
   ],
+  "causalCalibration": {
+    "dxy": {
+      "method": "expanding_percentile_as_of_each_observation_v1",
+      "minimumObservations": 252,
+      "legacyFloor": { "value": 95, "risk": 0, "label": "legacy_floor" },
+      "quantileRiskMap": [
+        { "quantile": 0.5, "risk": 15, "label": "causal_p50" },
+        { "quantile": 0.75, "risk": 45, "label": "causal_p75" },
+        { "quantile": 0.9, "risk": 70, "label": "causal_p90" },
+        { "quantile": 0.97, "risk": 90, "label": "causal_p97" },
+        { "quantile": 0.99, "risk": 100, "label": "causal_p99" }
+      ],
+      "insufficientHistoryMode": "legacy_linear_fallback"
+    }
+  },
+  "robustness": {
+    "thresholdGrid": [40, 45, 50, 55, 60, 65, 70],
+    "annualBlockBootstrap": {
+      "iterations": 1000,
+      "seed": 20260802,
+      "confidenceLevel": 0.95
+    },
+    "temporalHoldouts": [
+      { "key": "gfc_and_euro", "start": "2006-01-01", "end": "2012-12-31" },
+      { "key": "post_euro_pre_covid", "start": "2013-01-01", "end": "2019-12-31" },
+      { "key": "covid_and_after", "start": "2020-01-01", "end": "2026-12-31" }
+    ],
+    "moduleWeightPerturbationPct": 20
+  },
   "eventWindows": [
     {
       "key": "gfc_2008",
