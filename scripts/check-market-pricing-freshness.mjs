@@ -10,7 +10,7 @@ import {
 } from './review-market-pricing-freshness.mjs';
 
 const errors = [];
-const NOW_MS = Date.parse('2026-07-26T12:00:00Z');
+const DAY_MS = 86_400_000;
 
 function assert(condition, message) {
   if (!condition) errors.push(message);
@@ -38,6 +38,14 @@ function hasCode(report, code) {
 
 const history = JSON.parse(readText('data/market-pricing-history.json'));
 const metrics = JSON.parse(readText('data/market-pricing-metrics.json'));
+const qqqLatestMs = Date.parse(`${history.assets.qqq.records.at(-1).date}T00:00:00Z`);
+if (!Number.isFinite(qqqLatestMs)) throw new Error('QQQ latest date must anchor freshness scenarios.');
+const NOW_MS = qqqLatestMs + (2 * DAY_MS);
+
+function relativeDate(offsetDays) {
+  return new Date(NOW_MS + (offsetDays * DAY_MS)).toISOString().slice(0, 10);
+}
+
 const current = review(history, metrics, Date.now());
 assert(current.schemaVersion === REVIEW_SCHEMA, 'review schema version is not stable');
 assert(current.review.status !== 'FAIL', 'current Market Pricing snapshot must not FAIL');
@@ -52,16 +60,17 @@ for (const [key, value] of Object.entries(current.boundary)) {
 }
 
 const staleAuxHistory = clone(history);
+const staleAuxDate = relativeDate(-30);
 for (const assetKey of ['ndx', 'ixic']) {
   const records = staleAuxHistory.assets[assetKey].records;
-  records[records.length - 1].date = '2026-05-22';
-  staleAuxHistory.assets[assetKey].coverage.latestDate = '2026-05-22';
+  records[records.length - 1].date = staleAuxDate;
+  staleAuxHistory.assets[assetKey].coverage.latestDate = staleAuxDate;
 }
 const staleAuxMetrics = clone(metrics);
 for (const assetKey of ['ndx', 'ixic']) {
   const records = staleAuxMetrics.assets[assetKey].records;
-  records[records.length - 1].date = '2026-05-22';
-  staleAuxMetrics.assets[assetKey].latestMetricDate = '2026-05-22';
+  records[records.length - 1].date = staleAuxDate;
+  staleAuxMetrics.assets[assetKey].latestMetricDate = staleAuxDate;
 }
 const staleAuxReport = review(staleAuxHistory, staleAuxMetrics);
 assert(staleAuxReport.review.status === 'WARN', 'stale but aligned auxiliaries must WARN');
@@ -71,18 +80,20 @@ assert(hasCode(staleAuxReport, 'ndx_lags_primary'), 'NDX primary-lag warning is 
 assert(hasCode(staleAuxReport, 'ixic_lags_primary'), 'IXIC primary-lag warning is missing');
 
 const metricMismatch = clone(metrics);
-metricMismatch.assets.ndx.latestMetricDate = '2026-07-17';
-metricMismatch.assets.ndx.records.at(-1).date = '2026-07-17';
+const mismatchDate = relativeDate(-20);
+metricMismatch.assets.ndx.latestMetricDate = mismatchDate;
+metricMismatch.assets.ndx.records.at(-1).date = mismatchDate;
 const mismatchReport = review(history, metricMismatch);
 assert(mismatchReport.review.status === 'FAIL', 'history/metrics mismatch must FAIL');
 assert(hasCode(mismatchReport, 'ndx_history_metrics_mismatch'), 'history/metrics mismatch code is missing');
 
 const futureHistory = clone(history);
-futureHistory.assets.qqq.records.at(-1).date = '2026-08-20';
-futureHistory.assets.qqq.coverage.latestDate = '2026-08-20';
+const futureDate = relativeDate(20);
+futureHistory.assets.qqq.records.at(-1).date = futureDate;
+futureHistory.assets.qqq.coverage.latestDate = futureDate;
 const futureMetrics = clone(metrics);
-futureMetrics.assets.qqq.records.at(-1).date = '2026-08-20';
-futureMetrics.assets.qqq.latestMetricDate = '2026-08-20';
+futureMetrics.assets.qqq.records.at(-1).date = futureDate;
+futureMetrics.assets.qqq.latestMetricDate = futureDate;
 const futureReport = review(futureHistory, futureMetrics);
 assert(futureReport.review.status === 'FAIL', 'future market date must FAIL');
 assert(hasCode(futureReport, 'qqq_date_in_future'), 'future-date code is missing');

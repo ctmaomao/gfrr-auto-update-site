@@ -33,6 +33,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
 - **2026-07-28 Bubble Watch source-quality hardening**:`accounting_events` 改为核心企业实体 + 会计/财报/证券欺诈语义 + 正式执法动作的邻近语境三重门槛,并以 Google Drive DOJ 文章锁定负向回归；`arr_2nd_deriv` 用底层 ARR 里程碑日期对照 `maxAgeDays`,超龄 fail-closed 回较新的 curated 快照；`insider_sell_buy` 与 `fed_policy` 分别明确显示「高卖压·覆盖受限」和「年末路径隐含加息」。Core-23/Shadow-4、权重、阈值与 GFRR 主链边界均未改变；当前主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6,有效判读仍为「高风险预警」。
 - **2026-07-26 Market Pricing freshness/alignment review**:发现 QQQ 已到 2026-07-24、NDX/IXIC 仍停在 2026-05-22；按 owner 本次授权运行既有 M-91 manual-only Yahoo refresh 并重算 metrics，三资产现均到 2026-07-24。新增 `review:market-pricing-freshness` / `check:market-pricing-freshness`，守住 active 周线 10 天龄、辅助资产落后 QQQ 7 天、history/metrics/coverage/commit timestamp 一致性。默认 WARN 不阻断、FAIL 阻断，`--strict` 供人工硬复核；保持 display-only，不把 NDX/IXIC 接入 GitHub Actions、Worker、scoring、decision、execution、position 或 cross-validation。
+- **2026-08-02 Refresh QQQ Market Pricing calendar-drift repair**:scheduled run `30694893490` 的 Yahoo QQQ refresh 与 metrics 重算均成功，失败来自 freshness checker 把合成场景时钟写死在 2026-07-26；QQQ 正常前进到 2026-07-31 后，stale-auxiliary WARN 用例误叠加 `qqq_date_in_future` 而变 FAIL。checker 现以 production QQQ latest date +2 天作为场景时钟，stale/mismatch/future dates 全改为相对日期；10 天/7 天阈值、reviewer、workflow、production data 与 display-only/no-scoring 边界均未改。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
 
 ---
@@ -465,6 +466,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-08-02 · Refresh QQQ Market Pricing calendar-drift repair)**: 基于 latest `main` 新建 `codex/fix-qqq-market-pricing-freshness`，只修改 freshness checker 的合成场景日期构造并同步本 Handoff。失败 run `30694893490` 的根因已由相同 QQQ=2026-07-31、NDX/IXIC=2026-07-24 状态复现。
+- **当前进行中(2026-08-02 · QQQ freshness checker)**: 无代码工作。workflow 三步本地复放后 `check:market-pricing-freshness` 与完整 `check:all` 均通过；临时生成的两份 market-pricing production JSON 已精确恢复，未纳入改动。
+- **下一步建议(2026-08-02 · QQQ freshness checker)**: 经 owner 授权后 push 分支、创建/合并窄范围 PR，再手动 rerun `Refresh QQQ Market Pricing` 验证 QQQ 数据提交与 Pages 后续触发。
+- **阻塞或等待(2026-08-02 · QQQ freshness checker)**: 仅等待外部发布与 workflow rerun 授权；无实现或测试阻塞。`.agents/` 与 `skills-lock.json` 是用户未跟踪文件，不得提交。
 
 - **上次会话结束于(2026-07-28 · Bubble Watch source audit #28 repair)**: 已从 Actions #28 原始日志确认不是 ARR 数据链失效,而是审计分类未适配已上线的 `arr_underlying_observation_stale` fail-closed 语义。修复提交 `d7eb0633` 已通过本地 source audit、`npm run check:all` 和远端 Audit run `30347669342`;远端结果为预期 WARN,artifact 上传成功,Pages 部署同步成功。
 - **当前进行中(2026-07-28 · Bubble Watch source audit #28 repair)**: 无。审计器仅在精确 reason code、`arr_2nd_deriv` 配对和 curated 回退快照仍 fresh 三项同时成立时记为 policy-driven expected WARN；未改 Bubble Watch 指标值、评分权重、阈值、builder freshness gate、生产 JSON 或 workflow 权限。
