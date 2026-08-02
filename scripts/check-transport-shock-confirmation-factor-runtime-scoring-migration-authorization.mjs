@@ -89,16 +89,24 @@ function assertFixture() {
 function assertRuntimeImplementationScopedForAuthorization() {
   const daily = readText('scripts/run-daily-pipeline.mjs');
   for (const marker of [
+    'buildTransportShockScoringImpactFromEngine',
+    'deriveMainScoreRisk',
+    'return deriveMainScoreRisk(rt, macroDrivers, R)',
+    'transportShockScoringImpact: risk.transportShockScoringImpact'
+  ]) {
+    assert(daily.includes(marker), `scripts/run-daily-pipeline.mjs missing scoped runtime marker: ${marker}`);
+  }
+  const engine = readText('scripts/main-score/main-score-engine.mjs');
+  for (const marker of [
     'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
     'function buildTransportShockScoringImpact',
     'runtimeScoringAuthorized: true',
     'candidate_missing_zero_contribution',
     'candidate_not_live_zero_contribution',
     'candidate_not_eligible_zero_contribution',
-    'candidate_stale_zero_contribution',
-    'transportShockScoringImpact: risk.transportShockScoringImpact'
+    'candidate_stale_zero_contribution'
   ]) {
-    assert(daily.includes(marker), `scripts/run-daily-pipeline.mjs missing scoped runtime marker: ${marker}`);
+    assert(engine.includes(marker), `scripts/main-score/main-score-engine.mjs missing scoped runtime marker: ${marker}`);
   }
   const validator = readText('scripts/validate-data.mjs');
   for (const marker of [

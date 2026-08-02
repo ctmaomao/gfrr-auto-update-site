@@ -113,12 +113,17 @@ function validateWriterPath() {
     "transportShockCandidate: buildEnergyTransportShockCandidate(previousChokepoints, reroutingProxy, 'fallback')",
     'transportShockCandidate: buildMissingEnergyTransportShockCandidate(reason)',
     'eligibleForMainScore:',
-    'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
-    'function buildTransportShockScoringImpact',
     "routeFreightConfirmation: 'not_connected'",
     "marketConfirmation: 'not_connected'"
   ]) {
     requireMarker(daily, marker, 'scripts/run-daily-pipeline.mjs');
+  }
+  const engine = read('scripts/main-score/main-score-engine.mjs');
+  for (const marker of [
+    'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
+    'function buildTransportShockScoringImpact'
+  ]) {
+    requireMarker(engine, marker, 'scripts/main-score/main-score-engine.mjs');
   }
 }
 

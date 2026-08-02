@@ -46,7 +46,7 @@ function assertNoMarkers(file, markers) {
 }
 
 function assertDailyRuntimePath() {
-  assertMarkers('scripts/run-daily-pipeline.mjs', [
+  assertMarkers('scripts/main-score/main-score-engine.mjs', [
     "const TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION = 'transport-shock-scoring-impact-v1'",
     'const TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
     'const TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS = 7',
@@ -60,12 +60,18 @@ function assertDailyRuntimePath() {
     'candidate_score_not_positive_zero_contribution',
     'candidate_score_below_contribution_threshold_zero_contribution',
     'score_ceiling_zero_contribution',
-    'return ageDays >= 0 ? ageDays : null',
     '&& latestAgeDays >= 0',
     'routeFreightConfirmationConnected: false',
     'marketConfirmationConnected: false',
     'candidateScore >= 75 ? 3 : candidateScore >= 60 ? 2 : candidateScore >= 50 ? 1 : 0',
-    'const score = transportShockScoringImpact.applied',
+    'const score = transportShockScoringImpact.applied'
+  ]);
+  assertMarkers('scripts/run-daily-pipeline.mjs', [
+    'buildTransportShockScoringImpactFromEngine',
+    'deriveMainScoreRisk',
+    'return buildTransportShockScoringImpactFromEngine(energyTransport, scoreBeforeTransport)',
+    'return deriveMainScoreRisk(rt, macroDrivers, R)',
+    'return ageDays >= 0 ? ageDays : null',
     'transportShockScoringImpact: risk.transportShockScoringImpact'
   ]);
   const daily = readText('scripts/run-daily-pipeline.mjs');
@@ -106,6 +112,7 @@ function assertValidatorPath() {
 
 function assertLegacyCheckersUpdated() {
   assertMarkers('scripts/check-transport-shock-confirmation-factor-production-refresh.mjs', [
+    'scripts/main-score/main-score-engine.mjs',
     'TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT = 3',
     'function buildTransportShockScoringImpact',
     'transportShockCandidate.eligibleForMainScore must be boolean.',
