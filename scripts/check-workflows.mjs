@@ -717,10 +717,12 @@ const workerContract = {
     'raw-yahoo-tnx-already-percent',
     'no-valid-yahoo-tnx-value',
     'tryWriteSecondaryPreview',
-    'key === MARKET_WORKER_GENERATED_PREVIEW_KEY',
+    'key === MARKET_PREVIEW_KEY',
     'readPreviousWorkerPreviewSummary',
     'previousPreviewSummary',
-    'previousSourceProbe'
+    'previousSourceProbe',
+    "runtimeBudget: 'free-tier-10ms'",
+    "text.lastIndexOf('\\n'"
   ],
   brentAuditRequired: [
     'buildBrentAudit',
@@ -772,6 +774,8 @@ const workerContract = {
     'reused: true',
     'reused: false',
     'source-probe-reused-within-60m',
+    'source-probe-refresh-deferred-free-tier-cpu-budget',
+    'deferred-free-tier-cpu-budget',
     'probeCount: probes.length',
     'fullHtmlStored: false',
     'fullCsvStored: false',
@@ -1552,6 +1556,21 @@ if (fs.existsSync(workerContract.mainPreviewFile)) {
   for (const [pattern, message] of workerContract.brentPrimaryForbiddenPatterns) {
     if (pattern.test(text)) addRuntimeFailure(workerContract.mainPreviewFile, message);
   }
+  const fredApiUrlStart = text.indexOf('export function buildFredApiUrl');
+  const fredFallbackStart = text.indexOf('function fredApiFallbackFields', fredApiUrlStart);
+  if (fredApiUrlStart !== -1 && fredFallbackStart > fredApiUrlStart) {
+    const fredApiUrlBlock = text.slice(fredApiUrlStart, fredFallbackStart);
+    for (const needle of ["sort_order: 'desc'", "limit: '2'"]) {
+      if (!fredApiUrlBlock.includes(needle)) {
+        addRuntimeFailure(
+          workerContract.mainPreviewFile,
+          `free-tier FRED request must keep compact newest-two marker "${needle}"`,
+        );
+      }
+    }
+  } else {
+    addRuntimeFailure(workerContract.mainPreviewFile, 'missing compact FRED API URL builder');
+  }
   // F6: Stooq diagnostic Brent probe permanently removed — block reintroduction (worker file only).
   for (const removedStooqMarker of [
     'STOOQ_BRENT_PROBE_SYMBOLS',
@@ -1791,6 +1810,19 @@ if (fs.existsSync(workerContract.routerFile)) {
   }
   if (!/MARKET_SECONDARY_PREVIEW_KEY\s*=\s*['"]market:secondary-preview['"]/u.test(text)) {
     addRuntimeFailure(workerContract.routerFile, 'secondary preview must continue using market:secondary-preview KV key');
+  }
+  const vixParserStart = text.indexOf('export function parseCboeVixHistory');
+  const yahooGoldParserStart = text.indexOf('function parseYahooGoldChart', vixParserStart);
+  if (vixParserStart !== -1 && yahooGoldParserStart > vixParserStart) {
+    const vixParserBlock = text.slice(vixParserStart, yahooGoldParserStart);
+    if (!vixParserBlock.includes("lastIndexOf('\\n'")) {
+      addRuntimeFailure(workerContract.routerFile, 'VIX parser must scan from the CSV tail under the free-tier CPU budget');
+    }
+    if (/\.split\(\/\\r\?\\n\//u.test(vixParserBlock)) {
+      addRuntimeFailure(workerContract.routerFile, 'VIX parser must not materialize the full Cboe history CSV');
+    }
+  } else {
+    addRuntimeFailure(workerContract.routerFile, 'missing VIX tail parser');
   }
   const scheduledStart = text.indexOf('async scheduled(_event, env)');
   const scheduledBlock = scheduledStart === -1 ? '' : text.slice(scheduledStart);

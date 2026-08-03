@@ -227,34 +227,42 @@ function latestTwoCsvValues(text, valueColumnIndex = 1) {
   };
 }
 
-function latestTwoFredApiValues(text) {
+export function latestTwoFredApiValues(text) {
   const json = JSON.parse(text);
   const observations = json?.observations;
   if (!Array.isArray(observations)) {
     throw new Error('FRED API returned invalid observations payload');
   }
-  const values = [];
+  let latest = null;
+  let previous = null;
 
   for (const observation of observations) {
     const value = parseNumeric(observation?.value);
     if (observation?.date && value != null) {
-      values.push({ timestamp: observation.date, value });
+      const entry = { timestamp: observation.date, value };
+      if (latest == null || entry.timestamp > latest.timestamp) {
+        previous = latest;
+        latest = entry;
+      } else if (previous == null || entry.timestamp > previous.timestamp) {
+        previous = entry;
+      }
     }
   }
 
   return {
-    latest: values.at(-1) ?? null,
-    previous: values.at(-2) ?? null,
+    latest,
+    previous,
   };
 }
 
-function buildFredApiUrl(seriesId, cosd, fredApiKey) {
+export function buildFredApiUrl(seriesId, cosd, fredApiKey) {
   const params = new URLSearchParams({
     series_id: seriesId,
     api_key: fredApiKey,
     file_type: 'json',
     observation_start: cosd,
-    sort_order: 'asc',
+    sort_order: 'desc',
+    limit: '2',
   });
   return `https://api.stlouisfed.org/fred/series/observations?${params.toString()}`;
 }
@@ -1250,6 +1258,60 @@ async function fetchGoogleFinanceDiagnosticCandidate() {
   };
 }
 
+function buildCpuBudgetDeferredGoogleFinanceCandidate() {
+  return {
+    source: 'google-finance:BZW00:NYMEX',
+    value: null,
+    timestamp: null,
+    ok: false,
+    error: null,
+    reason: 'deferred-free-tier-cpu-budget',
+    role: 'diagnostic',
+    participatesInConsensus: false,
+    quality: 'html-experimental',
+    promotionEligible: false,
+    exclusionReason: 'google-finance-html-experimental-not-used-for-promotion',
+    diagnostics: {
+      ok: false,
+      status: null,
+      contentType: null,
+      bodyLength: 0,
+      durationMs: 0,
+      error: null,
+      retryCount: 0,
+      reason: 'deferred-free-tier-cpu-budget',
+      deferred: true,
+    },
+  };
+}
+
+function buildCpuBudgetDeferredSourceProbe(previousPreviewSummary) {
+  const previousSourceProbe = previousPreviewSummary?.previousSourceProbe;
+  const probes = Array.isArray(previousSourceProbe?.probes)
+    ? previousSourceProbe.probes.slice(0, 5)
+    : [];
+  return {
+    generatedAt: typeof previousSourceProbe?.generatedAt === 'string'
+      ? previousSourceProbe.generatedAt
+      : null,
+    reused: probes.length > 0,
+    refreshDeferred: true,
+    frequencyMinutes: SOURCE_PROBE_FREQUENCY_MINUTES,
+    probeCount: probes.length,
+    status: 'deferred',
+    reason: 'source-probe-refresh-deferred-free-tier-cpu-budget',
+    role: 'diagnostic-only',
+    affectsPromotion: false,
+    payloadPolicy: {
+      fullHtmlStored: false,
+      fullCsvStored: false,
+      maxSampleRows: PROBE_SAMPLE_ROW_LIMIT,
+      maxSnippetChars: PROBE_SNIPPET_LIMIT,
+    },
+    probes,
+  };
+}
+
 async function fetchTradingEconomicsDiagnosticCandidate(nowMs = Date.now()) {
   let result = await fetchTextWithDiagnostics(TRADING_ECONOMICS_BRENT_URL, {
     headers: { Accept: 'text/html,text/plain,*/*' },
@@ -1295,14 +1357,29 @@ async function fetchTradingEconomicsDiagnosticCandidate(nowMs = Date.now()) {
   };
 }
 
-async function buildBrentValidation(anchorValue, previousPreviewSummary = null, nowMs = Date.now()) {
+async function buildBrentValidation(
+  anchorValue,
+  previousPreviewSummary = null,
+  nowMs = Date.now(),
+  options = {},
+) {
+  const freeTierCpuBudget = options.runtimeBudget === 'free-tier-10ms';
   const yahoo = await fetchYahooBrentCandidate();
   await sleep(150 + Math.floor(Math.random() * 151));
-  const googleFinance = await fetchGoogleFinanceDiagnosticCandidate();
-  await sleep(150 + Math.floor(Math.random() * 151));
+  const googleFinance = freeTierCpuBudget
+    ? buildCpuBudgetDeferredGoogleFinanceCandidate()
+    : await fetchGoogleFinanceDiagnosticCandidate();
+  if (!freeTierCpuBudget) {
+    await sleep(150 + Math.floor(Math.random() * 151));
+  }
   const tradingEconomics = await fetchTradingEconomicsDiagnosticCandidate(nowMs);
-  await sleep(150 + Math.floor(Math.random() * 151));
-  const sourceProbe = await buildBrentSourceProbe(previousPreviewSummary, nowMs);
+  let sourceProbe;
+  if (freeTierCpuBudget) {
+    sourceProbe = buildCpuBudgetDeferredSourceProbe(previousPreviewSummary);
+  } else {
+    await sleep(150 + Math.floor(Math.random() * 151));
+    sourceProbe = await buildBrentSourceProbe(previousPreviewSummary, nowMs);
+  }
 
   const candidates = [
     {
@@ -1394,6 +1471,9 @@ function sourceSummaryFromDiagnostic(diagnostic) {
 export async function buildWorkerGeneratedMarketPreview(options = {}) {
   const previousPreviewSummary = options?.previousPreviewSummary ?? null;
   const fredApiKey = typeof options?.fredApiKey === 'string' ? options.fredApiKey.trim() : '';
+  const runtimeBudget = options?.runtimeBudget === 'free-tier-10ms'
+    ? 'free-tier-10ms'
+    : 'standard';
   const nowIso = new Date().toISOString();
   const cosd = formatDate(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000));
   const fredResults = await fetchAllFredSeries(cosd, fredApiKey);
@@ -1413,7 +1493,12 @@ export async function buildWorkerGeneratedMarketPreview(options = {}) {
   sourceDetails.gold = gold.detail;
 
   const nowMs = Date.parse(nowIso);
-  const brentValidation = await buildBrentValidation(values.brent, previousPreviewSummary, nowMs);
+  const brentValidation = await buildBrentValidation(
+    values.brent,
+    previousPreviewSummary,
+    nowMs,
+    { runtimeBudget },
+  );
   const brentAnchorDetail = { ...sourceDetails.brent };
   const brentPromotion = buildBrentPromotionDecision(
     brentAnchorDetail,
@@ -1482,7 +1567,11 @@ export async function buildWorkerGeneratedMarketPreview(options = {}) {
   const fredSummary = summarizeFred(fredResults);
   const diagnostics = {
     generatedAt: nowIso,
-    requestPolicy: 'sequential-fred-with-retry',
+    requestPolicy: runtimeBudget === 'free-tier-10ms'
+      ? 'sequential-fred-compact-with-retry-free-tier-10ms'
+      : 'sequential-fred-compact-with-retry',
+    runtimeBudget,
+    expensiveDiagnosticsDeferred: runtimeBudget === 'free-tier-10ms',
     fredAllFailed: fredSummary.fredAllFailed,
     fredFailureStatuses: fredSummary.fredFailureStatuses,
     sourceHttpSummary: {
