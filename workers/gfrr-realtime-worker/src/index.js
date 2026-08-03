@@ -140,24 +140,27 @@ function roundValue(value, digits = 4) {
   return Math.round(value * factor) / factor;
 }
 
-function parseCboeVixHistory(text) {
-  const rows = text
-    .trim()
-    .split(/\r?\n/)
-    .map((line) => splitCsvLine(line));
-  const header = rows.shift()?.map((item) => item.trim().toLowerCase()) ?? [];
+export function parseCboeVixHistory(text) {
+  const firstLineEnd = text.indexOf('\n');
+  if (firstLineEnd < 0) throw new Error('missing DATE/CLOSE columns');
+  const header = splitCsvLine(text.slice(0, firstLineEnd).replace(/\r$/u, ''))
+    .map((item) => item.trim().toLowerCase());
   const dateIndex = header.findIndex((name) => name === 'date');
   const closeIndex = header.findIndex((name) => name === 'close');
   if (dateIndex < 0 || closeIndex < 0) throw new Error('missing DATE/CLOSE columns');
 
-  for (let i = rows.length - 1; i >= 0; i -= 1) {
-    const value = parseNumeric(rows[i]?.[closeIndex]);
+  let rowEnd = text.length;
+  while (rowEnd > firstLineEnd) {
+    const rowStart = text.lastIndexOf('\n', rowEnd - 1);
+    const row = splitCsvLine(text.slice(rowStart + 1, rowEnd).replace(/\r$/u, ''));
+    const value = parseNumeric(row[closeIndex]);
     if (value != null) {
       return {
         value: roundValue(value),
-        observedAt: rows[i]?.[dateIndex] || null,
+        observedAt: row[dateIndex] || null,
       };
     }
+    rowEnd = rowStart;
   }
 
   throw new Error('no numeric VIX close');
@@ -652,6 +655,7 @@ async function buildWorkerGeneratedPreviewOrStatusPayload(scheduledAt, env) {
       value: await buildWorkerGeneratedMarketPreview({
         previousPreviewSummary,
         fredApiKey: env.FRED_API_KEY,
+        runtimeBudget: 'free-tier-10ms',
       }),
     };
   } catch (err) {
@@ -814,7 +818,7 @@ export default {
       });
       return;
     }
-    if (key === MARKET_WORKER_GENERATED_PREVIEW_KEY) {
+    if (key === MARKET_PREVIEW_KEY) {
       await tryWriteSecondaryPreview(env);
     }
   },

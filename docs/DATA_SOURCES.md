@@ -848,7 +848,7 @@ documented attribution string and code is a contract violation.
 | 字段 | 值 |
 |---|---|
 | **License** | Cloudflare Workers free tier |
-| **Quota** | <800 writes/day (free-tier safe);v28.0B 后每轮 scheduled 最多 1 次 KV 写 |
+| **Quota** | <800 writes/day (free-tier safe);v28.0B 后每轮 scheduled 最多 1 次主 KV 写；Free Cron CPU 上限 10 ms，生产路径使用 compact FRED newest-two + deferred experimental Google HTML diagnostics |
 | **KV keys** | `market:latest` (production, **当前 Worker 不写**), `market:latest-preview` (GitHub mirror), `market:worker-generated-preview` (主 worker preview), `market:secondary-preview` (secondary), `market:worker-heartbeat` (status) |
 | **影响 scoring?** | Worker preview 仍服务 Worker/diagnostics 与部分后端确认链路；M-94 V0 路径 C 后前端入口只读 `data/radar-data.json` 静态快照，不再运行 worker-first strict gate。是否重接 realtime overlay 必须另开评审 |
 | **deploy** | `wrangler deploy` (manual,Cursor 实现后) |
