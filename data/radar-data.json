@@ -7,20 +7,20 @@
     "decisionModelContractVersion": "v27.0",
     "note": "releaseVersion drives user-visible release display; version remains the legacy data contract marker."
   },
-  "updatedAt": "2026-08-02T23:28:37.183Z",
+  "updatedAt": "2026-08-03T23:35:08.375Z",
   "dailyRealtimeInput": {
     "branch": "realtime-data",
-    "commitSha": "ff715a7522e94644b6587d7bd0efd38bda30ca91",
-    "updatedAt": "2026-08-02T23:06:51.165Z",
+    "commitSha": "924f165542ae876eb1917aa77f5c421f62792fe4",
+    "updatedAt": "2026-08-03T22:30:11.012Z",
     "sourceMode": "live",
     "healthScore": 100,
-    "capturedAt": "2026-08-02T23:28:37.183Z"
+    "capturedAt": "2026-08-03T23:35:08.375Z"
   },
   "mainScoreSourcePolicy": {
     "contractVersion": "main-score-source-policy-v1",
     "mode": "wind_paid_invalid_leaf_fallback_v1",
     "status": "skipped_no_candidates",
-    "evaluatedAt": "2026-08-02T23:28:37.183Z",
+    "evaluatedAt": "2026-08-03T23:35:08.375Z",
     "enabledEnvVar": "GFRR_MAIN_SCORE_WIND_FALLBACK",
     "enabled": true,
     "windKeyPresent": true,
@@ -99,8 +99,8 @@
   },
   "dailyBrief": {
     "contractVersion": "v28.0I-1",
-    "generatedAt": "2026-08-02T23:28:37.183Z",
-    "macroState": "滞胀冲击 / 风险缓和",
+    "generatedAt": "2026-08-03T23:35:08.375Z",
+    "macroState": "流动性偏紧 / 风险缓和",
     "oneLineConclusion": "今日主线是能源 → 通胀 → 利率压力；最大背离为长端利率与风险资产背离。",
     "dominantRiskChain": {
       "key": "energy_inflation_rates",
@@ -112,22 +112,22 @@
           "source": "displayInputsBaseline",
           "key": "brent",
           "labelZh": "布伦特",
-          "value": 91.82,
-          "summaryZh": "布伦特 91.8，用于观察能源压力。"
+          "value": 83.77,
+          "summaryZh": "布伦特 83.8，用于观察能源压力。"
         },
         {
           "source": "displayInputsBaseline",
           "key": "breakeven10y",
           "labelZh": "10年盈亏平衡通胀",
-          "value": 2.28,
-          "summaryZh": "10年盈亏平衡通胀 2.28%。"
+          "value": 2.27,
+          "summaryZh": "10年盈亏平衡通胀 2.27%。"
         },
         {
           "source": "displayInputsBaseline",
           "key": "us10y",
           "labelZh": "美国10年期收益率",
-          "value": 4.68,
-          "summaryZh": "美国10年期收益率 4.68%。"
+          "value": 4.75,
+          "summaryZh": "美国10年期收益率 4.75%。"
         }
       ]
     },
@@ -141,8 +141,8 @@
           "source": "displayInputsBaseline",
           "key": "us10y",
           "labelZh": "美国10年期收益率",
-          "value": 4.68,
-          "summaryZh": "美国10年期收益率 4.68%。"
+          "value": 4.75,
+          "summaryZh": "美国10年期收益率 4.75%。"
         },
         {
           "source": "displayInputsBaseline",
@@ -190,14 +190,14 @@
         "key": "topRisk1",
         "labelZh": "顶部风险摘要",
         "value": null,
-        "summaryZh": "布伦特 91.8 美元，能源链条仍在传导。"
+        "summaryZh": "布伦特 83.8 美元，能源链条仍在传导。"
       },
       {
         "source": "topRisks",
         "key": "topRisk2",
         "labelZh": "顶部风险摘要",
         "value": null,
-        "summaryZh": "广义美元指数 120.71，融资环境尚未明显放松。"
+        "summaryZh": "广义美元指数 119.70，融资环境尚未明显放松。"
       },
       {
         "source": "topRisks",
@@ -211,14 +211,14 @@
         "key": "topRisk4",
         "labelZh": "顶部风险摘要",
         "value": null,
-        "summaryZh": "10年期美债 4.68%，实际利率 2.41%。"
+        "summaryZh": "10年期美债 4.75%，实际利率 2.47%。"
       }
     ]
   },
   "divergenceLayer": {
     "contractVersion": "v28.0I-3A",
-    "generatedAt": "2026-08-02T23:28:37.183Z",
-    "score": 42,
+    "generatedAt": "2026-08-03T23:35:08.375Z",
+    "score": 38,
     "state": "watch",
     "stateZh": "背离观察",
     "summaryZh": "当前背离层综合状态为背离观察，仅用于实体压力与金融定价的 audit-only 观察。",
@@ -233,15 +233,15 @@
           "source": "displayInputsBaseline",
           "key": "us10y",
           "labelZh": "美国10年期收益率",
-          "value": 4.68,
-          "summaryZh": "美国10年期收益率 4.68%。"
+          "value": 4.75,
+          "summaryZh": "美国10年期收益率 4.75%。"
         },
         {
           "source": "displayInputsBaseline",
           "key": "real10y",
           "labelZh": "美国10年期实际利率",
-          "value": 2.41,
-          "summaryZh": "美国10年期实际利率 2.41%。"
+          "value": 2.47,
+          "summaryZh": "美国10年期实际利率 2.47%。"
         },
         {
           "source": "displayInputsBaseline",
@@ -254,8 +254,8 @@
           "source": "displayInputsBaseline",
           "key": "vix",
           "labelZh": "VIX",
-          "value": 17.09,
-          "summaryZh": "VIX 17.09。"
+          "value": 15.99,
+          "summaryZh": "VIX 15.99。"
         }
       ]
     },
@@ -264,16 +264,16 @@
         "key": "energy_pricing_gap_watch",
         "labelZh": "能源定价背离观察",
         "category": "energy_pricing",
-        "status": "watch",
-        "score": 34,
+        "status": "normal",
+        "score": 18,
         "summaryZh": "当前只是公开 Brent 价格验证层观察，不等同于 Platts Dated Brent，不能证明真实实物现货溢价；它只提示能源价格来源之间是否存在验证压力或确认压力。",
         "evidence": [
           {
             "source": "displayInputsBaseline",
             "key": "brent",
             "labelZh": "布伦特",
-            "value": 91.82,
-            "summaryZh": "布伦特主显示值为 91.8。"
+            "value": 83.77,
+            "summaryZh": "布伦特主显示值为 83.8。"
           },
           {
             "source": "brentValidation",
@@ -286,8 +286,8 @@
             "source": "sourceDetails",
             "key": "brent.source",
             "labelZh": "Brent 来源说明",
-            "value": "fred:DCOILBRENTEU",
-            "summaryZh": "来源：fred:DCOILBRENTEU。"
+            "value": "barchart:public-consensus-promoted",
+            "summaryZh": "来源：barchart:public-consensus-promoted。"
           }
         ],
         "dataUsed": [
@@ -313,15 +313,15 @@
             "source": "displayInputsBaseline",
             "key": "us10y",
             "labelZh": "美国10年期收益率",
-            "value": 4.68,
-            "summaryZh": "美国10年期收益率 4.68%。"
+            "value": 4.75,
+            "summaryZh": "美国10年期收益率 4.75%。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "real10y",
             "labelZh": "美国10年期实际利率",
-            "value": 2.41,
-            "summaryZh": "美国10年期实际利率 2.41%。"
+            "value": 2.47,
+            "summaryZh": "美国10年期实际利率 2.47%。"
           },
           {
             "source": "displayInputsBaseline",
@@ -334,8 +334,8 @@
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.09,
-            "summaryZh": "VIX 17.09。"
+            "value": 15.99,
+            "summaryZh": "VIX 15.99。"
           }
         ],
         "dataUsed": [
@@ -361,15 +361,15 @@
             "source": "displayInputsBaseline",
             "key": "dxy",
             "labelZh": "广义美元指数",
-            "value": 120.7105,
-            "summaryZh": "广义美元指数 120.71。"
+            "value": 119.7034,
+            "summaryZh": "广义美元指数 119.70。"
           },
           {
             "source": "displayInputsBaseline",
             "key": "us10y",
             "labelZh": "美国10年期收益率",
-            "value": 4.68,
-            "summaryZh": "美国10年期收益率 4.68%。"
+            "value": 4.75,
+            "summaryZh": "美国10年期收益率 4.75%。"
           },
           {
             "source": "displayInputsBaseline",
@@ -382,8 +382,8 @@
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.09,
-            "summaryZh": "VIX 17.09。"
+            "value": 15.99,
+            "summaryZh": "VIX 15.99。"
           }
         ],
         "dataUsed": [
@@ -408,8 +408,8 @@
             "source": "score",
             "key": "score",
             "labelZh": "综合风险分数",
-            "value": 43,
-            "summaryZh": "综合风险分数 43。"
+            "value": 38,
+            "summaryZh": "综合风险分数 38。"
           },
           {
             "source": "modules",
@@ -422,8 +422,8 @@
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.09,
-            "summaryZh": "VIX 17.09。"
+            "value": 15.99,
+            "summaryZh": "VIX 15.99。"
           },
           {
             "source": "displayInputsBaseline",
@@ -477,8 +477,8 @@
             "source": "displayInputsBaseline",
             "key": "vix",
             "labelZh": "VIX",
-            "value": 17.09,
-            "summaryZh": "VIX 17.09。"
+            "value": 15.99,
+            "summaryZh": "VIX 15.99。"
           },
           {
             "source": "displayInputsBaseline",
@@ -522,13 +522,13 @@
   },
   "brentPricingLayer": {
     "contractVersion": "v28.0I-5A",
-    "generatedAt": "2026-08-02T23:28:37.183Z",
+    "generatedAt": "2026-08-03T23:35:08.375Z",
     "mode": "public_proxy_observation",
-    "summaryZh": "Brent 公开代理价格层显示，当前主值与公开期货/确认源之间未形成明显异常背离。",
+    "summaryZh": "Brent 公开代理价格层显示，部分来源之间存在观察性价差，需要继续交叉验证。",
     "selectedBrent": {
-      "value": 91.82,
-      "source": "fred:DCOILBRENTEU",
-      "observedAt": "2026-08-02T23:06:51.165Z",
+      "value": 83.77,
+      "source": "barchart:public-consensus-promoted",
+      "observedAt": "2026-08-03T22:30:11.012Z",
       "status": "ok",
       "noteZh": "当前主 Brent 显示值来自现有 Daily / realtime 输入；该层只做公开代理审计，不改变 values.brent。"
     },
@@ -543,8 +543,8 @@
     "futuresProxy": {
       "labelZh": "Brent 期货代理",
       "source": "yahoo",
-      "value": 90.12,
-      "observedAt": "2026-07-31T18:28:19.000Z",
+      "value": 83.58,
+      "observedAt": "2026-08-03T22:11:22.000Z",
       "status": "ok",
       "limitationZh": "该字段为公开期货/市场报价代理，仅用于验证层观察。"
     },
@@ -561,7 +561,7 @@
       "source": "ICE:Brent-Crude-Futures-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_structure_only",
-      "fetchedAt": "2026-08-02T23:28:37.183Z",
+      "fetchedAt": "2026-08-03T23:35:08.375Z",
       "contracts": [
         {
           "contract": "Sep26",
@@ -630,7 +630,7 @@
       "source": "Yahoo:BZ-monthly-futures",
       "sourceUrl": "https://finance.yahoo.com/quote/BZ=F",
       "curveStatus": "live_proxy_priced",
-      "updatedAt": "2026-08-02T23:18:59.000Z",
+      "updatedAt": "2026-08-03T04:00:00.000Z",
       "frontPrice": 90.12,
       "backPrice": 77.57,
       "frontMinusBack": 12.55,
@@ -645,32 +645,32 @@
         {
           "symbol": "BZV26.NYM",
           "contractMonth": "Oct26",
-          "price": 84.18,
-          "updatedAt": "2026-08-02T23:18:59.000Z"
+          "price": 83.53,
+          "updatedAt": "2026-08-03T04:00:00.000Z"
         },
         {
           "symbol": "BZX26.NYM",
           "contractMonth": "Nov26",
-          "price": 81.82,
-          "updatedAt": "2026-08-02T23:15:07.000Z"
+          "price": 80.84,
+          "updatedAt": "2026-08-03T04:00:00.000Z"
         },
         {
           "symbol": "BZZ26.NYM",
           "contractMonth": "Dec26",
-          "price": 79.89,
-          "updatedAt": "2026-08-02T23:06:46.000Z"
+          "price": 79.08,
+          "updatedAt": "2026-08-03T04:00:00.000Z"
         },
         {
           "symbol": "BZF27.NYM",
           "contractMonth": "Jan27",
-          "price": 78.41,
-          "updatedAt": "2026-08-02T22:28:12.000Z"
+          "price": 77.96,
+          "updatedAt": "2026-08-03T04:00:00.000Z"
         },
         {
           "symbol": "BZG27.NYM",
           "contractMonth": "Feb27",
-          "price": 77.4,
-          "updatedAt": "2026-08-02T22:34:41.000Z"
+          "price": 76.88,
+          "updatedAt": "2026-08-03T04:00:00.000Z"
         },
         {
           "symbol": "BZH27.NYM",
@@ -691,107 +691,107 @@
       "source": "ICE:Brent-Crude-Futures-public-contract-data",
       "sourceUrl": "https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=6018430",
       "curveStatus": "live_delayed_priced",
-      "updatedAt": "2026-08-02T23:18:00.000Z",
-      "frontPrice": 90.09,
-      "backPrice": 74.39,
-      "frontMinusBack": 15.7,
+      "updatedAt": "2026-08-03T21:59:00.000Z",
+      "frontPrice": 83.7,
+      "backPrice": 73.61,
+      "frontMinusBack": 10.09,
       "slopeRegime": "backwardation",
       "contracts": [
         {
-          "marketId": 6018448,
-          "contract": "Sep26",
-          "price": 90.09,
-          "volume": 15235,
-          "updatedAt": "2026-07-31T18:29:00.000Z",
-          "changePct": -0.0003
-        },
-        {
           "marketId": 6018445,
           "contract": "Oct26",
-          "price": 84.2,
-          "volume": 382274,
-          "updatedAt": "2026-08-02T23:18:00.000Z",
-          "changePct": -0.0424
+          "price": 83.7,
+          "volume": 332045,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
+          "changePct": -0.0481
         },
         {
           "marketId": 6018442,
           "contract": "Nov26",
-          "price": 81.69,
-          "volume": 212897,
-          "updatedAt": "2026-08-02T23:18:00.000Z",
-          "changePct": -0.0342
+          "price": 81.13,
+          "volume": 196748,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
+          "changePct": -0.0408
         },
         {
           "marketId": 6018421,
           "contract": "Dec26",
-          "price": 79.83,
-          "volume": 172203,
-          "updatedAt": "2026-08-02T23:18:00.000Z",
-          "changePct": -0.0292
+          "price": 79.2,
+          "volume": 165970,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
+          "changePct": -0.0368
         },
         {
           "marketId": 6018427,
           "contract": "Jan27",
-          "price": 78.52,
-          "volume": 55752,
-          "updatedAt": "2026-08-02T23:17:00.000Z",
-          "changePct": -0.0257
+          "price": 78.14,
+          "volume": 57084,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
+          "changePct": -0.0304
         },
         {
           "marketId": 6018424,
           "contract": "Feb27",
-          "price": 77.63,
-          "volume": 36812,
-          "updatedAt": "2026-08-02T23:15:00.000Z",
-          "changePct": -0.0217
+          "price": 77.25,
+          "volume": 38651,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
+          "changePct": -0.0265
         },
         {
           "marketId": 6018436,
           "contract": "Mar27",
-          "price": 76.73,
-          "volume": 36489,
-          "updatedAt": "2026-08-02T23:18:00.000Z",
-          "changePct": -0.0211
+          "price": 76.58,
+          "volume": 39724,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
+          "changePct": -0.023
         },
         {
           "marketId": 6018416,
           "contract": "Apr27",
-          "price": 76.06,
-          "volume": 11456,
-          "updatedAt": "2026-08-02T23:18:00.000Z",
-          "changePct": -0.0195
+          "price": 75.74,
+          "volume": 14887,
+          "updatedAt": "2026-08-03T20:53:00.000Z",
+          "changePct": -0.0236
         },
         {
           "marketId": 6018440,
           "contract": "May27",
-          "price": 75.58,
-          "volume": 8080,
-          "updatedAt": "2026-08-02T22:28:00.000Z",
-          "changePct": -0.0169
+          "price": 75.15,
+          "volume": 9735,
+          "updatedAt": "2026-08-03T20:41:00.000Z",
+          "changePct": -0.0225
         },
         {
           "marketId": 6018434,
           "contract": "Jun27",
           "price": 74.99,
-          "volume": 32244,
-          "updatedAt": "2026-08-02T23:18:00.000Z",
+          "volume": 33596,
+          "updatedAt": "2026-08-03T21:59:00.000Z",
           "changePct": -0.017
         },
         {
           "marketId": 6018431,
           "contract": "Jul27",
-          "price": 74.64,
-          "volume": 3521,
-          "updatedAt": "2026-08-02T22:28:00.000Z",
-          "changePct": -0.0149
+          "price": 74.14,
+          "volume": 2838,
+          "updatedAt": "2026-08-03T20:32:00.000Z",
+          "changePct": -0.0215
         },
         {
           "marketId": 6018419,
           "contract": "Aug27",
-          "price": 74.39,
-          "volume": 2814,
-          "updatedAt": "2026-08-02T22:19:00.000Z",
-          "changePct": -0.0122
+          "price": 73.94,
+          "volume": 2193,
+          "updatedAt": "2026-08-03T19:59:00.000Z",
+          "changePct": -0.0182
+        },
+        {
+          "marketId": 6018449,
+          "contract": "Sep27",
+          "price": 73.61,
+          "volume": 5002,
+          "updatedAt": "2026-08-03T17:13:00.000Z",
+          "changePct": -0.0172
         }
       ],
       "limitationZh": "ICE public contract-data lastPrice 是 delayed/last quote；不是 official settlement curve、Platts Dated Brent 或正式实物现货。"
@@ -810,8 +810,8 @@
       {
         "source": "barchart",
         "labelZh": "barchart",
-        "value": 84.41,
-        "observedAt": "2026-08-02T22:56:46.000Z",
+        "value": 83.77,
+        "observedAt": "2026-08-03T21:59:55.000Z",
         "status": "excluded",
         "role": "diagnostic",
         "participatesInPromotion": false,
@@ -840,7 +840,7 @@
       {
         "source": "oilprice",
         "labelZh": "oilprice",
-        "value": 84.35,
+        "value": 83.77,
         "observedAt": null,
         "status": "excluded",
         "role": "diagnostic",
@@ -850,8 +850,8 @@
       {
         "source": "yahoo",
         "labelZh": "Yahoo BZ=F",
-        "value": 90.12,
-        "observedAt": "2026-07-31T18:28:19.000Z",
+        "value": 83.58,
+        "observedAt": "2026-08-03T22:11:22.000Z",
         "status": "ok",
         "role": "futures_proxy",
         "participatesInPromotion": true,
@@ -870,25 +870,25 @@
     ],
     "ulsdPrice": 3.998,
     "ulsd4wChange": 0.782,
-    "crackSpread": 76.1,
+    "crackSpread": 84.15,
     "crackSpread4wChange": 32.84,
     "crackSpreadRegime": "供应紧张",
     "ulsdSourceStatus": "live",
     "proxySpread": {
-      "spotMinusFutures": 1.7,
-      "selectedMinusFutures": 1.7,
-      "maxProxyDivergencePct": 1.863,
-      "status": "normal",
-      "statusZh": "公开代理价差正常",
+      "spotMinusFutures": 8.24,
+      "selectedMinusFutures": 0.19,
+      "maxProxyDivergencePct": 9.538,
+      "status": "stress",
+      "statusZh": "公开代理价差压力",
       "interpretationZh": "该价差只用于公开代理价格层审计，不改变 Brent 主值或 promotion。"
     },
     "promotionAudit": {
-      "promotionApplied": false,
+      "promotionApplied": true,
       "moveStatus": null,
-      "promotionReason": "consensus-not-promotable",
-      "selectedSource": "fred:DCOILBRENTEU",
+      "promotionReason": "promoted-stale-fred-anchor-with-guarded-two-source-consensus",
+      "selectedSource": "barchart:public-consensus-promoted",
       "anchorSource": "fred-anchor",
-      "anchorAgeHours": 167.11444444444444
+      "anchorAgeHours": 0.5
     },
     "dataGaps": [
       "EIA Europe Brent Spot Price FOB public proxy 已接入；Platts Dated Brent / 正式 Dated Brent 仍未接入。",
@@ -919,49 +919,49 @@
       "affectsPositionGuidance": false
     }
   },
-  "score": 43,
-  "scoreChange1d": 0,
-  "scoreChange7d": -1,
-  "scoreChange30d": 13,
-  "trendLabel": "高位震荡偏紧",
-  "currentMacroRegime": "滞胀冲击",
+  "score": 38,
+  "scoreChange1d": -5,
+  "scoreChange7d": -6,
+  "scoreChange30d": 7,
+  "trendLabel": "风险回落",
+  "currentMacroRegime": "流动性偏紧",
   "currentCrisisPhase": "风险缓和",
   "nextCrisisPhase": "风险缓和",
-  "transitionRisk": 30,
+  "transitionRisk": 26,
   "confidenceScore": 100,
   "confidenceLevel": "高",
   "displayInputsBaseline": {
-    "brent": 91.82,
-    "dxy": 120.7105,
-    "vix": 17.09,
+    "brent": 83.77,
+    "dxy": 119.7034,
+    "vix": 15.99,
     "hyOas": 2.84,
-    "us10y": 4.68,
-    "real10y": 2.41,
-    "breakeven10y": 2.28,
-    "gold": 4065.100098,
+    "us10y": 4.75,
+    "real10y": 2.47,
+    "breakeven10y": 2.27,
+    "gold": 4053.100098,
     "spx": 7489.72,
-    "asOf": "2026-08-02T23:28:37.183Z"
+    "asOf": "2026-08-03T23:35:08.375Z"
   },
   "topRisks": [
-    "布伦特 91.8 美元，能源链条仍在传导。",
-    "广义美元指数 120.71，融资环境尚未明显放松。",
+    "布伦特 83.8 美元，能源链条仍在传导。",
+    "广义美元指数 119.70，融资环境尚未明显放松。",
     "高收益利差 2.84%，信用风险可控但需观察。",
-    "10年期美债 4.68%，实际利率 2.41%。"
+    "10年期美债 4.75%，实际利率 2.47%。"
   ],
   "decisionLine": "当前已进入 v28.0.10 交易引擎模式：实时快变量实时，执行状态灯为红灯 / 禁止新增。已激活结构信号：逆回购准备金告急。先看状态灯，再决定能不能动。",
-  "summary": "v28.0.10 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 91.8、广义美元指数 120.71、波动率 17.09、高收益利差 2.84%。",
+  "summary": "v28.0.10 正根据混合实时架构输出交易引擎结论。最新快变量：布伦特 83.8、广义美元指数 119.70、波动率 15.99、高收益利差 2.84%。",
   "modules": {
-    "geopolitical": 56,
-    "energy": 52,
-    "inflation": 46,
-    "liquidity": 41,
-    "debt": 32,
-    "banking": 32
+    "geopolitical": 42,
+    "energy": 39,
+    "inflation": 42,
+    "liquidity": 39,
+    "debt": 33,
+    "banking": 30
   },
   "riskCalibration": {
     "dxyBroadDollar": {
-      "value": 120.7105,
-      "risk": 66,
+      "value": 119.7034,
+      "risk": 61,
       "method": "piecewise_historical_percentile_v1",
       "source": "FRED:DTWEXBGS",
       "sampleStart": "2006-01-01",
@@ -982,9 +982,9 @@
   "tailRiskOverlay": {
     "method": "conditional_tail_floor_v1",
     "applied": false,
-    "baseScore": 43,
+    "baseScore": 38,
     "floor": null,
-    "adjustedScore": 43,
+    "adjustedScore": 38,
     "scoreAdd": 0,
     "reasons": []
   },
@@ -997,8 +997,8 @@
     "maxContributionPct": 3,
     "direction": "transport_shock_pressure_only",
     "reason": "candidate_not_live_zero_contribution",
-    "scoreBeforeTransport": 43,
-    "scoreAfterTransport": 43,
+    "scoreBeforeTransport": 38,
+    "scoreAfterTransport": 38,
     "sourceStatus": "missing",
     "latestAgeDays": null,
     "candidateStatus": "unavailable",
@@ -1019,37 +1019,37 @@
     "geopolitical": -9,
     "energy": -9,
     "inflation": 0,
-    "liquidity": -2,
-    "debt": 0,
+    "liquidity": 0,
+    "debt": 3,
     "banking": 0
   },
   "regimeProbabilities": {
-    "disinflationaryGrowth": 12,
-    "liquidityBull": 3,
-    "stagflationShock": 27,
-    "crisisLiquiditySqueeze": 26,
+    "disinflationaryGrowth": 14,
+    "liquidityBull": 6,
+    "stagflationShock": 24,
+    "crisisLiquiditySqueeze": 25,
     "monetaryDebasement": 21,
-    "deflationaryBust": 11
+    "deflationaryBust": 10
   },
   "phaseSignals": [
-    "实时输入：布伦特 91.8 / 波动率 17.09 / 高收益利差 2.84%。",
-    "利率输入：10年期 4.68 / 实际利率 2.41 / 盈亏平衡通胀 2.28%。",
+    "实时输入：布伦特 83.8 / 波动率 15.99 / 高收益利差 2.84%。",
+    "利率输入：10年期 4.75 / 实际利率 2.47 / 盈亏平衡通胀 2.27%。",
     "快变量状态：实时，健康度 100。"
   ],
   "macroDrivers": {
     "fedLiquidity": {
       "walcl": 6738190,
       "walcl4wChange": 0.203,
-      "onRrp": 2.151,
-      "onRrpWeekChange": 218.667,
+      "onRrp": 2.127,
+      "onRrpWeekChange": 54.13,
       "effectiveFedFundsRate": 3.63,
-      "sofr": 3.65,
+      "sofr": 3.66,
       "reserveBalances": 2984570,
       "reserveBalances4wChange": 0.596,
-      "bgcr": 3.63,
-      "tgcr": 3.63,
-      "bgcrUpdatedAt": "2026-07-30T00:00:00Z",
-      "tgcrUpdatedAt": "2026-07-30T00:00:00Z",
+      "bgcr": 3.64,
+      "tgcr": 3.64,
+      "bgcrUpdatedAt": "2026-07-31T00:00:00Z",
+      "tgcrUpdatedAt": "2026-07-31T00:00:00Z",
       "repoRatesSource": "NYFED:secured-rates-latest",
       "bgcrSofrSpread": -0.02,
       "tgcrSofrSpread": -0.02,
@@ -1072,66 +1072,66 @@
       "targetUpper": 3.75,
       "targetMid": 3.625,
       "effectiveFedFundsRate": 3.63,
-      "targetUpdatedAt": "2026-08-02T00:00:00Z",
-      "fedFundsFutureFrontPrice": 96.2,
-      "fedFundsFutureImpliedRate": 3.8,
-      "futureMinusTargetMid": 0.175,
-      "futureUpdatedAt": "2026-08-02T22:43:35.000Z",
+      "targetUpdatedAt": "2026-08-03T00:00:00Z",
+      "fedFundsFutureFrontPrice": 96.365,
+      "fedFundsFutureImpliedRate": 3.635,
+      "futureMinusTargetMid": 0.01,
+      "futureUpdatedAt": "2026-08-03T04:00:00.000Z",
       "fedFundsFuturesCurve": {
         "source": "Yahoo:ZQ-monthly-futures",
         "curveStatus": "live_proxy_curve",
-        "updatedAt": "2026-08-02T23:14:25.000Z",
-        "frontImpliedRate": 3.705,
-        "backImpliedRate": 4.095,
-        "frontMinusBack": -0.39,
+        "updatedAt": "2026-08-03T04:00:00.000Z",
+        "frontImpliedRate": 3.71,
+        "backImpliedRate": 4.09,
+        "frontMinusBack": -0.38,
         "contracts": [
           {
             "symbol": "ZQU26.CBT",
             "contractMonth": "Sep26",
-            "price": 96.295,
-            "impliedRate": 3.705,
-            "impliedMinusTargetMid": 0.08,
-            "updatedAt": "2026-08-02T23:11:22.000Z"
+            "price": 96.29,
+            "impliedRate": 3.71,
+            "impliedMinusTargetMid": 0.085,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQV26.CBT",
             "contractMonth": "Oct26",
-            "price": 96.2,
-            "impliedRate": 3.8,
-            "impliedMinusTargetMid": 0.175,
-            "updatedAt": "2026-08-02T22:43:35.000Z"
+            "price": 96.195,
+            "impliedRate": 3.805,
+            "impliedMinusTargetMid": 0.18,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQX26.CBT",
             "contractMonth": "Nov26",
-            "price": 96.135,
-            "impliedRate": 3.865,
-            "impliedMinusTargetMid": 0.24,
-            "updatedAt": "2026-08-02T22:50:06.000Z"
+            "price": 96.13,
+            "impliedRate": 3.87,
+            "impliedMinusTargetMid": 0.245,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQZ26.CBT",
             "contractMonth": "Dec26",
-            "price": 96.055,
-            "impliedRate": 3.945,
-            "impliedMinusTargetMid": 0.32,
-            "updatedAt": "2026-08-02T23:14:01.000Z"
+            "price": 96.05,
+            "impliedRate": 3.95,
+            "impliedMinusTargetMid": 0.325,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQF27.CBT",
             "contractMonth": "Jan27",
-            "price": 96.02,
-            "impliedRate": 3.98,
-            "impliedMinusTargetMid": 0.355,
-            "updatedAt": "2026-08-02T23:01:01.000Z"
+            "price": 96.015,
+            "impliedRate": 3.985,
+            "impliedMinusTargetMid": 0.36,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQG27.CBT",
             "contractMonth": "Feb27",
-            "price": 95.985,
-            "impliedRate": 4.015,
-            "impliedMinusTargetMid": 0.39,
-            "updatedAt": "2026-08-02T23:14:25.000Z"
+            "price": 95.98,
+            "impliedRate": 4.02,
+            "impliedMinusTargetMid": 0.395,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQH27.CBT",
@@ -1139,15 +1139,15 @@
             "price": 95.95,
             "impliedRate": 4.05,
             "impliedMinusTargetMid": 0.425,
-            "updatedAt": "2026-08-02T23:08:02.000Z"
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           },
           {
             "symbol": "ZQJ27.CBT",
             "contractMonth": "Apr27",
-            "price": 95.905,
-            "impliedRate": 4.095,
-            "impliedMinusTargetMid": 0.47,
-            "updatedAt": "2026-08-02T23:09:00.000Z"
+            "price": 95.91,
+            "impliedRate": 4.09,
+            "impliedMinusTargetMid": 0.465,
+            "updatedAt": "2026-08-03T04:00:00.000Z"
           }
         ],
         "limitationZh": "Yahoo 月度 Fed funds futures 为公开政策路径 proxy；不是 OIS forward rate。"
@@ -1155,10 +1155,10 @@
       "sofrFuturesCurve": {
         "source": "Yahoo:SR3-monthly-SOFR-futures",
         "curveStatus": "live_proxy_curve",
-        "updatedAt": "2026-08-02T23:15:43.000Z",
+        "updatedAt": "2026-08-03T23:17:09.000Z",
         "frontImpliedRate": 3.88,
-        "backImpliedRate": 4.175,
-        "frontMinusBack": -0.295,
+        "backImpliedRate": 4.17,
+        "frontMinusBack": -0.29,
         "contracts": [
           {
             "symbol": "SR3U26.CME",
@@ -1166,7 +1166,7 @@
             "price": 96.12,
             "impliedRate": 3.88,
             "impliedMinusTargetMid": 0.255,
-            "updatedAt": "2026-08-02T23:03:26.000Z"
+            "updatedAt": "2026-08-03T23:17:09.000Z"
           },
           {
             "symbol": "SR3V26.CME",
@@ -1177,44 +1177,36 @@
             "updatedAt": "2026-07-31T12:51:11.000Z"
           },
           {
-            "symbol": "SR3X26.CME",
-            "contractMonth": "Nov26",
-            "price": 95.98,
-            "impliedRate": 4.02,
-            "impliedMinusTargetMid": 0.395,
-            "updatedAt": "2026-07-27T10:52:26.000Z"
-          },
-          {
             "symbol": "SR3Z26.CME",
             "contractMonth": "Dec26",
-            "price": 95.95,
-            "impliedRate": 4.05,
-            "impliedMinusTargetMid": 0.425,
-            "updatedAt": "2026-08-02T23:09:48.000Z"
+            "price": 95.945,
+            "impliedRate": 4.055,
+            "impliedMinusTargetMid": 0.43,
+            "updatedAt": "2026-08-03T22:49:46.000Z"
           },
           {
             "symbol": "SR3F27.CME",
             "contractMonth": "Jan27",
-            "price": 95.885,
-            "impliedRate": 4.115,
-            "impliedMinusTargetMid": 0.49,
-            "updatedAt": "2026-07-30T18:54:48.000Z"
+            "price": 95.9,
+            "impliedRate": 4.1,
+            "impliedMinusTargetMid": 0.475,
+            "updatedAt": "2026-08-03T16:52:40.000Z"
           },
           {
             "symbol": "SR3H27.CME",
             "contractMonth": "Mar27",
-            "price": 95.85,
-            "impliedRate": 4.15,
-            "impliedMinusTargetMid": 0.525,
-            "updatedAt": "2026-08-02T23:09:00.000Z"
+            "price": 95.855,
+            "impliedRate": 4.145,
+            "impliedMinusTargetMid": 0.52,
+            "updatedAt": "2026-08-03T23:03:24.000Z"
           },
           {
             "symbol": "SR3M27.CME",
             "contractMonth": "Jun27",
-            "price": 95.825,
-            "impliedRate": 4.175,
-            "impliedMinusTargetMid": 0.55,
-            "updatedAt": "2026-08-02T23:15:43.000Z"
+            "price": 95.83,
+            "impliedRate": 4.17,
+            "impliedMinusTargetMid": 0.545,
+            "updatedAt": "2026-08-03T23:05:07.000Z"
           }
         ],
         "limitationZh": "Yahoo 月度 SR3 Three-Month SOFR futures 为公开担保融资利率曲线 proxy；不是 OIS forward rate。"
@@ -1224,7 +1216,7 @@
         "sourceUrl": "https://www.checkmyswap.com/rates",
         "curveStatus": "live_public_curve",
         "date": "2026-07-31",
-        "updatedAt": "2026-08-01T01:00:03.549Z",
+        "updatedAt": "2026-08-03T01:00:04.287Z",
         "oneYearRate": 4.07,
         "twoYearRate": 4.13,
         "fiveYearRate": 4.14,
@@ -1384,7 +1376,7 @@
         "fomcMinutes": "live",
         "oisForward": "live"
       },
-      "updatedAt": "2026-08-02T23:15:43.000Z",
+      "updatedAt": "2026-08-03T23:17:09.000Z",
       "source": "FRED:DFEDTARL/DFEDTARU/DFF; Yahoo:ZQ=F/ZQ-monthly-futures/SR3-monthly-SOFR-futures; CheckMySwap:USD-OIS-public-curve; FederalReserve:FOMC statement/SEP/minutes",
       "notes": [
         "Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。",
@@ -1392,7 +1384,7 @@
       ]
     },
     "curve": {
-      "t10y2y": 0.47,
+      "t10y2y": 0.45,
       "t10y2yWeekChange": 0.11,
       "regime": "正常",
       "steepeningAlert": false,
@@ -1405,10 +1397,10 @@
       "igOas1dChange": -0.01,
       "igHyRatio": 0.282,
       "regime": "偏宽松",
-      "sloosTighteningLargeFirms": 8.1,
-      "sloosTighteningSmallFirms": 6.6,
-      "sloosTighteningLargeQoQ": 2.8,
-      "sloosTighteningSmallQoQ": -2.3,
+      "sloosTighteningLargeFirms": 0,
+      "sloosTighteningSmallFirms": 1.8,
+      "sloosTighteningLargeQoQ": -8.1,
+      "sloosTighteningSmallQoQ": -4.8,
       "sloosRegime": "中性",
       "nfci": -0.554,
       "nfci4wChange": -0.044,
@@ -1426,9 +1418,9 @@
       "threeMonthChange": -3.8,
       "sixMonthChange": -3.4,
       "regime": "稳定",
-      "ismManufacturingPmi": 53.3,
-      "ismManufacturingPmi3mChange": 0.6,
-      "ismPmiRegime": "中性偏扩张",
+      "ismManufacturingPmi": 55.6,
+      "ismManufacturingPmi3mChange": 2.9,
+      "ismPmiRegime": "扩张",
       "sourceStatus": {
         "umichSentiment": "live",
         "pmi": "live"
@@ -1437,10 +1429,10 @@
         "pmi": {
           "httpStatus": 200,
           "landingHttpStatus": 200,
-          "latencyMs": 217,
-          "parsedAt": "2026-08-02T23:28:42.731Z",
-          "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/",
-          "reportMonthLabel": "June"
+          "latencyMs": 483,
+          "parsedAt": "2026-08-03T23:35:14.227Z",
+          "reportUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/july/",
+          "reportMonthLabel": "July"
         }
       },
       "updatedAt": "2026-06-01T00:00:00Z",
@@ -1450,15 +1442,15 @@
       ]
     },
     "shippingFreight": {
-      "balticDirtyTankerIndex": 2582,
-      "balticDirtyTankerDailyChangePct": -0.0031,
-      "balticDirtyTankerUpdatedAt": "2026-07-31T00:00:00.000Z",
-      "balticCleanTankerIndex": 1427,
-      "balticCleanTankerDailyChangePct": -0.0042,
-      "balticCleanTankerUpdatedAt": "2026-07-31T00:00:00.000Z",
-      "balticDryIndex": 2732,
-      "balticDryDailyChangePct": 0.0221,
-      "balticDryUpdatedAt": "2026-07-31T00:00:00.000Z",
+      "balticDirtyTankerIndex": 2554,
+      "balticDirtyTankerDailyChangePct": -0.0108,
+      "balticDirtyTankerUpdatedAt": "2026-08-03T00:00:00.000Z",
+      "balticCleanTankerIndex": 1436,
+      "balticCleanTankerDailyChangePct": 0.0063,
+      "balticCleanTankerUpdatedAt": "2026-08-03T00:00:00.000Z",
+      "balticDryIndex": 2843,
+      "balticDryDailyChangePct": 0.0406,
+      "balticDryUpdatedAt": "2026-08-03T00:00:00.000Z",
       "tankerFreightRegime": "高压",
       "cleanTankerFreightRegime": "高压",
       "dryBulkFreightRegime": "观察",
@@ -1468,7 +1460,7 @@
         "cleanTanker": "live",
         "dryBulk": "live"
       },
-      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedAt": "2026-08-03T00:00:00.000Z",
       "source": "StockQ:BDTI; StockQ:BCTI; StockQ:BDI",
       "notes": [
         "BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。"
@@ -1685,19 +1677,19 @@
       "creDelinquencyRateQoQChange": -0.02,
       "creChargeOffRate": 0.17,
       "creChargeOffRateQoQChange": 0.03,
-      "sloosCreNonfarmNonresidentialTightening": -3.3,
-      "sloosCreConstructionTightening": 4.9,
-      "sloosCreMultifamilyTightening": 0,
-      "sloosCreTighteningMax": 4.9,
-      "reitEtfPrice": 98.95,
-      "reitEtf4wChange": 0.022,
-      "reitEtfUpdatedAt": "2026-07-31T13:30:00.000Z",
-      "mortgageReitEtfPrice": 21.5,
-      "mortgageReitEtf4wChange": -0.0201,
-      "mortgageReitEtfUpdatedAt": "2026-07-31T13:30:00.000Z",
-      "cmbsEtfPrice": 48.33,
-      "cmbsEtf4wChange": -0.0027,
-      "cmbsEtfUpdatedAt": "2026-07-31T13:30:00.000Z",
+      "sloosCreNonfarmNonresidentialTightening": -11.3,
+      "sloosCreConstructionTightening": -3.7,
+      "sloosCreMultifamilyTightening": -5.7,
+      "sloosCreTighteningMax": -3.7,
+      "reitEtfPrice": 99.07,
+      "reitEtf4wChange": 0.0188,
+      "reitEtfUpdatedAt": "2026-08-03T13:30:00.000Z",
+      "mortgageReitEtfPrice": 21.63,
+      "mortgageReitEtf4wChange": -0.0252,
+      "mortgageReitEtfUpdatedAt": "2026-08-03T13:30:00.000Z",
+      "cmbsEtfPrice": 48.12,
+      "cmbsEtf4wChange": -0.0091,
+      "cmbsEtfUpdatedAt": "2026-08-03T13:30:00.000Z",
       "creLoanBalance": 3121.5037,
       "creLoanBalance4wChange": 0.0036,
       "creLoanBalanceYoY": 0.0337,
@@ -1718,7 +1710,7 @@
         "creLoanBalance": "live",
         "nonPublicCre": "manual_required"
       },
-      "updatedAt": "2026-07-31T13:30:00.000Z",
+      "updatedAt": "2026-08-03T13:30:00.000Z",
       "source": "FRED:DRCRELEXFACBS; FRED:CORCREXFACBS; FRED:SUBLPDRCSN; FRED:SUBLPDRCSC; FRED:SUBLPDRCSM; FRED:CREACBW027SBOG; Yahoo:VNQ; Yahoo:REM; Yahoo:CMBS",
       "notes": [
         "CRE delinquency / charge-off / SLOOS CRE tightening (3 子类) 为 FRED 季频公开数据;observation date 为季度起始日;audit-only / display-only。",
@@ -1726,17 +1718,17 @@
       ]
     },
     "privateCreditProxy": {
-      "bdcEtfPrice": 12.4,
-      "bdcEtf4wChange": -0.0112,
-      "bdcEtfUpdatedAt": "2026-07-31T13:30:00.000Z",
-      "pbdcEtfPrice": 26.38,
-      "pbdcEtf4wChange": -0.0379,
-      "pbdcEtfUpdatedAt": "2026-07-31T13:30:00.000Z",
-      "seniorLoanEtfPrice": 40.4,
-      "seniorLoanEtf4wChange": 0.0087,
-      "seniorLoanEtfUpdatedAt": "2026-07-31T13:30:00.000Z",
+      "bdcEtfPrice": 12.74,
+      "bdcEtf4wChange": 0.0233,
+      "bdcEtfUpdatedAt": "2026-08-03T13:30:00.000Z",
+      "pbdcEtfPrice": 27.06,
+      "pbdcEtf4wChange": -0.0066,
+      "pbdcEtfUpdatedAt": "2026-08-03T13:30:00.000Z",
+      "seniorLoanEtfPrice": 40.25,
+      "seniorLoanEtf4wChange": -0.0002,
+      "seniorLoanEtfUpdatedAt": "2026-08-03T13:30:00.000Z",
       "intervalFundNavPrice": 10.29,
-      "intervalFundNav4wChange": -0.0172,
+      "intervalFundNav4wChange": 0.0039,
       "intervalFundNavUpdatedAt": "2026-07-31T13:30:00.000Z",
       "intervalFundNavSymbol": "CCLFX",
       "intervalFundNavStatus": "live",
@@ -1744,16 +1736,16 @@
       "igOas": 0.8,
       "igOasUpdatedAt": "2026-07-30T00:00:00Z",
       "igMinusHyOas": -2.04,
-      "cdxHyPrice": 107.566,
+      "cdxHyPrice": 107.8738,
       "cdxHyInstrument": "CDX-NAHYS46V2-5Y",
-      "cdxHyUpdatedAt": "2026-07-31T00:00:00.000Z",
-      "cdxIgPrice": 102.0699,
+      "cdxHyUpdatedAt": "2026-08-03T00:00:00.000Z",
+      "cdxIgPrice": 102.1288,
       "cdxIgInstrument": "CDX-NAIGS46V1-5Y",
-      "cdxIgUpdatedAt": "2026-07-31T00:00:00.000Z",
+      "cdxIgUpdatedAt": "2026-08-03T00:00:00.000Z",
       "cdxHyStatus": "live",
       "cdxIgStatus": "live",
       "privateCreditMarksStatus": "manual_required",
-      "privateCreditProxyRegime": "观察",
+      "privateCreditProxyRegime": "平稳",
       "sourceStatus": {
         "bdcEtf": "live",
         "pbdcEtf": "live",
@@ -1765,14 +1757,14 @@
         "cdxIg": "live",
         "privateCreditMarks": "manual_required"
       },
-      "updatedAt": "2026-07-31T13:30:00.000Z",
+      "updatedAt": "2026-08-03T13:30:00.000Z",
       "source": "Yahoo:BIZD; Yahoo:PBDC; Yahoo:SRLN; Yahoo:CCLFX; FRED:BAMLH0A0HYM2; FRED:BAMLC0A0CM; ICE:CDX-index-settlement-public",
       "notes": [
         "BIZD/PBDC 为公开上市 BDC ETF 代理；SRLN 为 senior loan ETF 代理；CCLFX 为公开 interval-fund NAV proxy；HY/IG OAS 为 FRED cash-bond spread proxy；ICE CDX 为公开 EOD settlement price；私募信用 marks 仍保留 manual/licensed 插槽。"
       ]
     },
     "worldEconomy": {
-      "updatedAt": "2026-07-31T13:00:00.000Z",
+      "updatedAt": "2026-08-03T13:00:00.000Z",
       "source": "Yahoo:^STOXX50E; Yahoo:^N225; Yahoo:^GDAXI; Yahoo:^FTSE; Yahoo:^FCHI; Yahoo:^STOXX; Yahoo:^KS11; Yahoo:^AXJO; Yahoo:^STI; Yahoo:^TWII; Yahoo:^NSEI; Yahoo:^BVSP",
       "sourceStatus": {
         "stoxx50": "live",
@@ -1793,7 +1785,7 @@
         "symbol": "^STOXX50E",
         "labelZh": "欧元区大盘",
         "price": 6358.0098,
-        "changePct": 0.0121,
+        "changePct": 0.0109,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T07:00:00.000Z",
         "source": "Yahoo:^STOXX50E",
@@ -1803,7 +1795,7 @@
         "symbol": "^N225",
         "labelZh": "日经 225",
         "price": 64362.0195,
-        "changePct": -0.0088,
+        "changePct": 0.032,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T00:00:00.000Z",
         "source": "Yahoo:^N225",
@@ -1813,7 +1805,7 @@
         "symbol": "^GDAXI",
         "labelZh": "德国 DAX",
         "price": 25629.2402,
-        "changePct": 0.0106,
+        "changePct": 0.0065,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T07:00:00.000Z",
         "source": "Yahoo:^GDAXI",
@@ -1823,7 +1815,7 @@
         "symbol": "^FTSE",
         "labelZh": "英国富时 100",
         "price": 10868.0996,
-        "changePct": 0.008,
+        "changePct": -0.0003,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T07:00:00.000Z",
         "source": "Yahoo:^FTSE",
@@ -1833,7 +1825,7 @@
         "symbol": "^FCHI",
         "labelZh": "法国 CAC 40",
         "price": 8509.6396,
-        "changePct": 0.0123,
+        "changePct": 0.006,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T07:00:00.000Z",
         "source": "Yahoo:^FCHI",
@@ -1843,7 +1835,7 @@
         "symbol": "^STOXX",
         "labelZh": "泛欧 STOXX 600",
         "price": 649.19,
-        "changePct": 0.0071,
+        "changePct": 0.0036,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T07:00:00.000Z",
         "source": "Yahoo:^STOXX",
@@ -1853,7 +1845,7 @@
         "symbol": "^KS11",
         "labelZh": "韩国 KOSPI",
         "price": 6595.4502,
-        "changePct": -0.0237,
+        "changePct": 0.0949,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T00:00:00.000Z",
         "source": "Yahoo:^KS11",
@@ -1863,7 +1855,7 @@
         "symbol": "^AXJO",
         "labelZh": "澳洲 ASX 200",
         "price": 8976.7998,
-        "changePct": 0.0093,
+        "changePct": 0.0032,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T00:00:00.000Z",
         "source": "Yahoo:^AXJO",
@@ -1873,7 +1865,7 @@
         "symbol": "^STI",
         "labelZh": "新加坡 STI",
         "price": 5628.5,
-        "changePct": 0.0015,
+        "changePct": 0.0022,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T01:00:00.000Z",
         "source": "Yahoo:^STI",
@@ -1883,7 +1875,7 @@
         "symbol": "^TWII",
         "labelZh": "台湾加权 TAIEX",
         "price": 43119.75,
-        "changePct": -0.0118,
+        "changePct": 0.0364,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T01:00:00.000Z",
         "source": "Yahoo:^TWII",
@@ -1893,7 +1885,7 @@
         "symbol": "^NSEI",
         "labelZh": "印度 Nifty 50",
         "price": 24383.5996,
-        "changePct": 0.0162,
+        "changePct": 0.0166,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T03:45:00.000Z",
         "source": "Yahoo:^NSEI",
@@ -1902,16 +1894,16 @@
       "bovespa": {
         "symbol": "^BVSP",
         "labelZh": "巴西 Bovespa",
-        "price": 177999,
-        "changePct": 0.0152,
+        "price": 178000.2344,
+        "changePct": 0.0081,
         "changeWindow": "5d",
-        "updatedAt": "2026-07-31T13:00:00.000Z",
+        "updatedAt": "2026-08-03T13:00:00.000Z",
         "source": "Yahoo:^BVSP",
         "sourceStatus": "live"
       }
     },
     "chinaEquity": {
-      "updatedAt": "2026-07-31T07:00:24.000Z",
+      "updatedAt": "2026-08-03T07:00:24.000Z",
       "source": "Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS",
       "sourceStatus": {
         "sseComposite": "live",
@@ -1923,7 +1915,7 @@
         "symbol": "000001.SS",
         "labelZh": "上证综指",
         "price": 3832.262,
-        "changePct": -0.0067,
+        "changePct": 0.005,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T01:30:00.000Z",
         "source": "Yahoo:000001.SS",
@@ -1933,7 +1925,7 @@
         "symbol": "^HSI",
         "labelZh": "恒生指数",
         "price": 25884.4297,
-        "changePct": 0.0269,
+        "changePct": 0.0227,
         "changeWindow": "5d",
         "updatedAt": "2026-07-31T01:30:00.000Z",
         "source": "Yahoo:^HSI",
@@ -1942,16 +1934,16 @@
       "csi300": {
         "symbol": "000300.SS",
         "labelZh": "沪深 300",
-        "price": 4588.1968,
+        "price": 4543.1782,
         "changePct": null,
         "changeWindow": "5d",
-        "updatedAt": "2026-07-31T07:00:24.000Z",
+        "updatedAt": "2026-08-03T07:00:24.000Z",
         "source": "Yahoo:000300.SS",
         "sourceStatus": "live"
       }
     },
     "inflationEnergy": {
-      "updatedAt": "2026-08-02T23:18:32.000Z",
+      "updatedAt": "2026-08-03T04:00:00.000Z",
       "source": "FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO; Yahoo:CL=F",
       "sourceStatus": {
         "cpi": "live",
@@ -1984,10 +1976,10 @@
         "sourceStatus": "live"
       },
       "wtiMarketProxy": {
-        "price": 80.98,
-        "changePct": 0.0217,
+        "price": 79.93,
+        "changePct": -0.0536,
         "changeWindow": "5d",
-        "updatedAt": "2026-08-02T23:18:32.000Z",
+        "updatedAt": "2026-08-03T04:00:00.000Z",
         "source": "Yahoo:CL=F",
         "sourceStatus": "live",
         "basis": "WTI futures market proxy, not official spot",
@@ -1995,7 +1987,7 @@
       }
     },
     "copperGold": {
-      "updatedAt": "2026-08-02T23:28:23Z",
+      "updatedAt": "2026-08-03T23:34:55Z",
       "source": "gold-api:HG; gold-api:XAU",
       "sourceStatus": {
         "copper": "live",
@@ -2006,53 +1998,53 @@
       "copper": {
         "symbol": "HG",
         "labelZh": "铜现货",
-        "price": 6.2592,
-        "changePct": 0,
+        "price": 6.3221,
+        "changePct": 0.01,
         "changeWindow": "1d",
-        "updatedAt": "2026-08-02T23:28:23Z",
+        "updatedAt": "2026-08-03T23:34:55Z",
         "source": "gold-api:HG",
         "sourceStatus": "live"
       },
       "gold": {
         "symbol": "XAU",
         "labelZh": "金现货",
-        "price": 4073.3999,
-        "changePct": 0.0073,
+        "price": 4052.5,
+        "changePct": -0.0051,
         "changeWindow": "1d",
-        "updatedAt": "2026-08-02T23:28:21Z",
+        "updatedAt": "2026-08-03T23:34:53Z",
         "source": "gold-api:XAU",
         "sourceStatus": "live"
       },
-      "ratio": 0.0015366,
-      "ratioChangePct": -0.0072,
+      "ratio": 0.00156005,
+      "ratioChangePct": 0.0152,
       "ratioWindow": "1d"
     },
     "chinaBond": {
-      "updatedAt": "2026-07-31T00:00:00Z",
+      "updatedAt": "2026-08-03T00:00:00Z",
       "source": "ChinaBond:MOF-yield-curve",
       "sourceStatus": {
         "yield10y": "live"
       },
       "notes": "中国 10 年国债收益率来自 ChinaBond 官方 JSON;display-only,不进 scoring/decision/execution/position。",
       "yield10y": {
-        "value": 1.71,
-        "latestObsDate": "2026-07-31T00:00:00Z",
-        "updatedAt": "2026-07-31T00:00:00Z",
+        "value": 1.72,
+        "latestObsDate": "2026-08-03T00:00:00Z",
+        "updatedAt": "2026-08-03T00:00:00Z",
         "source": "ChinaBond:MOF",
         "sourceStatus": "live"
       }
     },
     "cfetsRmb": {
-      "updatedAt": "2026-07-24T00:00:00Z",
+      "updatedAt": "2026-07-31T00:00:00Z",
       "source": "ChinaMoney:CFETS-RmbIdx",
       "sourceStatus": {
         "cfets": "live"
       },
       "notes": "CFETS 人民币篮子指数来自 ChinaMoney 官方 JSON;周频精确篮子,display-only,不进 scoring/decision/execution/position。",
-      "cfets": 102.75,
-      "bis": 110.55,
-      "sdr": 97.33,
-      "latestObsDate": "2026-07-24T00:00:00Z"
+      "cfets": 102.19,
+      "bis": 109.78,
+      "sdr": 96.88,
+      "latestObsDate": "2026-07-31T00:00:00Z"
     },
     "chinaInflation": {
       "updatedAt": "2026-07-09T00:00:00Z",
@@ -2096,13 +2088,13 @@
       }
     },
     "euroVolatility": {
-      "updatedAt": "2026-07-31T15:30:00.000Z",
+      "updatedAt": "2026-08-03T15:30:00.000Z",
       "source": "DeutscheBoerse:quote_box:V2TX; STOXX(fallback)",
       "sourceStatus": "live",
       "notes": "VSTOXX 欧版 VIX 来自 Deutsche Börse quote_box 主源 / STOXX 官页 fallback;display-only,不进 scoring/decision/execution/position。",
-      "value": 17.2061,
-      "refDate": "2026-07-31",
-      "changePct": -0.0552
+      "value": 16.0578,
+      "refDate": "2026-08-03",
+      "changePct": -0.0667
     },
     "chinaPropertyPrice": {
       "updatedAt": "2026-07-15T09:30:00+08:00",
@@ -2316,16 +2308,16 @@
       }
     },
     "chinaOmo": {
-      "updatedAt": "2026-07-31T14:07:00+08:00",
+      "updatedAt": "2026-08-03T09:23:40+08:00",
       "source": "EastMoney:OMO-aggregated-news",
       "sourceStatus": "live",
       "notes": "东方财富聚合转载的央行公开市场操作新闻,非 PBOC 官方原始公告;按新闻毛额操作句提取逆回购/正回购期限、利率、操作量,announcementNo 因聚合新闻缺失为 null;display-only,不进 scoring/decision/execution/position,不代表逐机构/逐笔 raw tape。",
-      "opDate": "2026-07-31",
+      "opDate": "2026-08-03",
       "announcementNo": null,
       "operationType": "逆回购",
       "termDays": 7,
       "operationRate": 0.014,
-      "operationAmount": 1340
+      "operationAmount": 630
     },
     "chinaTsf": {
       "updatedAt": "2026-07-15T15:20:57+08:00",
@@ -2393,9 +2385,9 @@
       "mlfRate": null
     },
     "rateVol": {
-      "move": 83.02,
-      "moveUpdatedAt": "2026-07-31T20:34:30.000Z",
-      "moveAgeDays": 2.12,
+      "move": 80.48,
+      "moveUpdatedAt": "2026-08-03T20:34:45.000Z",
+      "moveAgeDays": 0.13,
       "moveRegime": "平静",
       "freshnessStatus": "fresh",
       "source": "Yahoo:^MOVE",
@@ -2422,7 +2414,7 @@
       "source": "EIA:STEO:COPS_OPEC",
       "sourceUrl": "https://www.eia.gov/outlooks/steo/data.php",
       "updatedAt": "2026-08-01T00:00:00.000Z",
-      "fetchedAt": "2026-08-02T23:28:37.183Z",
+      "fetchedAt": "2026-08-03T23:35:08.375Z",
       "limitationZh": "EIA STEO OPEC spare crude capacity 是估算/预测慢变量,不是实时物理闲置桶数、OPEC 官方配额执行或油价预测。",
       "notes": [
         "EIA STEO COPS_OPEC 为 OPEC surplus crude oil production capacity monthly estimate/forecast;display-only,不进 scoring/decision/execution/position。",
@@ -2468,7 +2460,7 @@
       "source": "EIA:STEO:PASC_OECD_T3/T3_STCHANGE_WORLD/PATC_WORLD",
       "sourceUrl": "https://www.eia.gov/outlooks/steo/report/global_oil.php",
       "updatedAt": "2026-08-01T00:00:00.000Z",
-      "fetchedAt": "2026-08-02T23:28:37.183Z",
+      "fetchedAt": "2026-08-03T23:35:08.375Z",
       "series": {
         "oecdCommercialInventory": "PASC_OECD_T3",
         "usCommercialInventory": "PASC_US",
@@ -2499,7 +2491,7 @@
       "latestDate": null,
       "latestAgeDays": null,
       "windowDays": 120,
-      "fetchedAt": "2026-08-02T23:28:37.183Z",
+      "fetchedAt": "2026-08-03T23:35:08.375Z",
       "lastEditDate": null,
       "fetchReason": "missing_core_chokepoints:hormuz",
       "chokepoints": {
@@ -2735,7 +2727,7 @@
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 21.51 亿美元",
+        "detail": "ON RRP 21.27 亿美元",
         "reliability": "live"
       }
     ],
@@ -2752,24 +2744,25 @@
     "allSourcesMissing": false
   },
   "liquidityIndex": {
-    "score": 41,
+    "score": 39,
     "regime": "流动性修复",
-    "change1d": -2,
+    "change1d": 0,
     "directionLabel": "快变量实时覆盖",
     "notes": [
-      "广义美元指数 120.71 / 高收益利差 2.84 / 波动率 17.09 为三大流动性输入。",
-      "实时数据源刷新成功。"
+      "广义美元指数 119.70 / 高收益利差 2.84 / 波动率 15.99 为三大流动性输入。",
+      "实时数据源刷新成功。",
+      "brent 已从滞后 FRED 锚点晋升为 barchart 多源共识值。"
     ],
     "pillars": [
       {
         "label": "美元融资",
-        "value": 66,
-        "delta": -2
+        "value": 61,
+        "delta": 0
       },
       {
         "label": "跨资产波动",
-        "value": 36,
-        "delta": -9
+        "value": 28,
+        "delta": -4
       },
       {
         "label": "信用 / 利差",
@@ -2778,8 +2771,8 @@
       },
       {
         "label": "利率敏感压力",
-        "value": 56,
-        "delta": 0
+        "value": 58,
+        "delta": 2
       }
     ],
     "structuralSignals": {
@@ -2790,43 +2783,43 @@
   },
   "timeDimension": {
     "trend30d": "滚动风险曲线（混合实时驱动）",
-    "scoreChange30d": 13,
+    "scoreChange30d": 7,
     "avg30d": 38,
     "peak30d": 45,
     "trough30d": 29,
-    "drawFromPeak": -2,
-    "transmissionSpeed": 46,
-    "transmissionAcceleration": "平稳",
+    "drawFromPeak": -7,
+    "transmissionSpeed": 40,
+    "transmissionAcceleration": "放缓",
     "dominantPath": "油价 → 通胀 → 利率 → 股票",
     "pathChanges": [
       {
         "label": "油价→通胀",
-        "value": 61,
+        "value": 50,
         "delta": -9
       },
       {
         "label": "通胀→利率",
-        "value": 53,
+        "value": 51,
         "delta": 0
       },
       {
         "label": "利率→股票",
-        "value": 24,
-        "delta": -2
+        "value": 25,
+        "delta": -1
       },
       {
         "label": "美元→信用",
-        "value": 39,
-        "delta": -2
+        "value": 37,
+        "delta": 0
       },
       {
         "label": "流动性→估值",
-        "value": 39,
-        "delta": -9
+        "value": 34,
+        "delta": -4
       }
     ],
     "notes": [
-      "当前综合风险分数 43。",
+      "当前综合风险分数 38。",
       "执行引擎状态：红灯 / 禁止新增。",
       "慢变量由实时快照与结构性数据共同驱动。"
     ]
@@ -2836,49 +2829,49 @@
       "key": "us",
       "label": "美国",
       "shortLabel": "美国",
-      "risk": 40,
-      "note": "融资偏紧 + 实际利率 2.41%"
+      "risk": 38,
+      "note": "融资偏紧 + 实际利率 2.47%"
     },
     {
       "key": "europe",
       "label": "欧洲",
       "shortLabel": "欧洲",
-      "risk": 42,
+      "risk": 35,
       "note": "能源敏感 + 增长拖累"
     },
     {
       "key": "middleeast",
       "label": "中东",
       "shortLabel": "中东",
-      "risk": 56,
+      "risk": 42,
       "note": "原油与地缘仍是主风险源"
     },
     {
       "key": "china",
       "label": "中国",
       "shortLabel": "中国",
-      "risk": 19,
+      "risk": 18,
       "note": "外需与美元约束"
     },
     {
       "key": "japan",
       "label": "日韩",
       "shortLabel": "日韩",
-      "risk": 23,
+      "risk": 20,
       "note": "输入型压力+美元波动"
     },
     {
       "key": "emAsia",
       "label": "新兴亚洲",
       "shortLabel": "新兴亚洲",
-      "risk": 22,
+      "risk": 20,
       "note": "美元敏感度较高"
     },
     {
       "key": "latam",
       "label": "拉美",
       "shortLabel": "拉美",
-      "risk": 22,
+      "risk": 20,
       "note": "商品支撑但外部融资受限"
     }
   ],
@@ -3089,27 +3082,27 @@
   "assetMatrix": [
     {
       "asset": "黄金",
-      "score": 77,
+      "score": 75,
       "bias": "谨慎偏多",
-      "reason": "金价 4065.1，通胀对冲仍在，但真实利率继续约束。"
+      "reason": "金价 4053.1，通胀对冲仍在，但真实利率继续约束。"
     },
     {
       "asset": "原油",
-      "score": 80,
-      "bias": "强配",
-      "reason": "布伦特 91.8 美元，仍是主导链条。"
+      "score": 71,
+      "bias": "中性偏多",
+      "reason": "布伦特 83.8 美元，仍是主导链条。"
     },
     {
       "asset": "美元",
-      "score": 76,
+      "score": 74,
       "bias": "强配",
-      "reason": "广义美元指数 120.71，融资偏紧阶段继续占优。"
+      "reason": "广义美元指数 119.70，融资偏紧阶段继续占优。"
     },
     {
       "asset": "美债久期",
-      "score": 32,
+      "score": 31,
       "bias": "低配",
-      "reason": "10年期 4.68 / 实际利率 2.41%。"
+      "reason": "10年期 4.75 / 实际利率 2.47%。"
     },
     {
       "asset": "科技股",
@@ -3119,13 +3112,13 @@
     },
     {
       "asset": "能源股",
-      "score": 73,
+      "score": 68,
       "bias": "中性偏多",
       "reason": "能源现金流继续受益于高油价环境。"
     },
     {
       "asset": "比特币",
-      "score": 26,
+      "score": 29,
       "bias": "低配",
       "reason": "高波动资产对流动性最敏感。"
     }
@@ -3242,28 +3235,28 @@
   "scenarioTree": [
     {
       "name": "基准情景",
-      "probability": 27,
+      "probability": 25,
       "description": "快变量显示风险仍高位但未失控，市场以防守与分化为主。",
-      "triggers": "布伦特 91.8 / 广义美元指数 120.71 / 高收益利差 2.84",
+      "triggers": "布伦特 83.8 / 广义美元指数 119.70 / 高收益利差 2.84",
       "assets": "能源领先 / 美元与黄金保留 / 成长受限"
     },
     {
       "name": "风险情景",
-      "probability": 24,
+      "probability": 20,
       "description": "信用与波动率继续上行，执行引擎会切到红灯。",
       "triggers": "布伦特 > 110 或高收益利差 > 4.5% 或波动率 > 28",
       "assets": "只允许减仓 / 现金与美元提高 / 高波动回避"
     },
     {
       "name": "极端情景",
-      "probability": 39,
+      "probability": 34,
       "description": "多源关键快变量连续失效时，系统进入缓存模式并强制防守。",
       "triggers": "关键缺失 ≥ 4 或缓存模式启动",
       "assets": "停止加仓 / 保留现金 / 仅做风险控制"
     },
     {
       "name": "反转情景",
-      "probability": 8,
+      "probability": 10,
       "description": "美元走弱、波动率和利差收敛后，系统重新开放进攻窗口。",
       "triggers": "波动率 < 18 / 高收益利差 < 3.7 / 布伦特 < 95",
       "assets": "逐步恢复权益与质量成长配置"
@@ -3273,13 +3266,13 @@
     "status": "红灯 / 禁止新增 / 数据模式实时",
     "criticalCount": 0,
     "warningCount": 0,
-    "watchCount": 9,
+    "watchCount": 8,
     "alerts": [
       {
         "level": "红色",
         "title": "执行状态灯",
         "driver": "交易引擎",
-        "triggeredAgo": "2026-08-02T23:28:37.183Z",
+        "triggeredAgo": "2026-08-03T23:35:08.375Z",
         "condition": "结构性双压触发红灯（逆回购准备金临界告急）。系统检测到高压风险组合，执行引擎已锁定为红灯。任何新增风险仓位均被禁止，只允许减仓、防守和补充现金。",
         "action": "执行引擎锁定：禁止新增，只允许减仓与防守恢复。"
       },
@@ -3287,16 +3280,24 @@
         "level": "橙色",
         "title": "逆回购准备金告急",
         "driver": "结构信号",
-        "triggeredAgo": "2026-08-02T23:28:37.183Z",
-        "condition": "ON RRP 21.51 亿美元",
+        "triggeredAgo": "2026-08-03T23:35:08.375Z",
+        "condition": "ON RRP 21.27 亿美元",
         "action": "该结构信号已纳入决策层门控。"
       },
       {
         "level": "黄色",
         "title": "数据源提示",
         "driver": "快变量源",
-        "triggeredAgo": "2026-08-02T23:28:37.183Z",
+        "triggeredAgo": "2026-08-03T23:35:08.375Z",
         "condition": "实时数据源刷新成功。",
+        "action": "继续使用回退值，不中断系统"
+      },
+      {
+        "level": "黄色",
+        "title": "数据源提示",
+        "driver": "快变量源",
+        "triggeredAgo": "2026-08-03T23:35:08.375Z",
+        "condition": "brent 已从滞后 FRED 锚点晋升为 barchart 多源共识值。",
         "action": "继续使用回退值，不中断系统"
       }
     ],
@@ -3310,14 +3311,14 @@
   },
   "triggerPanel": {
     "critical": [
-      "布伦特 91.8",
-      "广义美元指数 120.71",
+      "布伦特 83.8",
+      "广义美元指数 119.70",
       "高收益利差 2.84%"
     ],
     "drivers": [
-      "波动率 17.09",
-      "10年期美债 4.68%",
-      "实际利率 2.41%"
+      "波动率 15.99",
+      "10年期美债 4.75%",
+      "实际利率 2.47%"
     ],
     "watchlist": [
       "下一次通胀数据",
@@ -3334,23 +3335,24 @@
   "recovery": {
     "degradedMode": false,
     "safeOutput": true,
-    "lastRun": "2026-08-02T23:28:37.183Z",
+    "lastRun": "2026-08-03T23:35:08.375Z",
     "notes": [
       "实时数据源刷新成功。",
+      "brent 已从滞后 FRED 锚点晋升为 barchart 多源共识值。",
       "external-ai-fallback:invalid_production_layer"
     ]
   },
   "tradingSystem": {
     "signalEngine": {
-      "strength": 43,
+      "strength": 38,
       "direction": "只允许减仓/防守",
       "consistency": "高一致性",
-      "macroSignal": "滞胀冲击",
+      "macroSignal": "流动性偏紧",
       "liquiditySignal": "流动性修复（实时）",
       "chainSignal": "油价→通胀→利率→股票",
       "notes": [
         "执行引擎状态：红灯 / 禁止新增。",
-        "关键快变量：布伦特 91.8 / 广义美元指数 120.71 / 波动率 17.09 / 高收益利差 2.84。",
+        "关键快变量：布伦特 83.8 / 广义美元指数 119.70 / 波动率 15.99 / 高收益利差 2.84。",
         "健康度 100，关键缺失 0。",
         "结构信号：逆回购准备金告急。"
       ]
@@ -3451,13 +3453,13 @@
         "禁止主观覆盖系统阈值。"
       ],
       "checkpoints": [
-        "布伦特 当前 91.8",
-        "广义美元指数 当前 120.71",
-        "波动率指数 当前 17.09",
+        "布伦特 当前 83.8",
+        "广义美元指数 当前 119.70",
+        "波动率指数 当前 15.99",
         "高收益利差 当前 2.84%",
-        "曲线 10年-2年 当前 0.47",
+        "曲线 10年-2年 当前 0.45",
         "投资级信用利差 当前 0.80%",
-        "逆回购余额 当前 21.51 亿美元"
+        "逆回购余额 当前 21.27 亿美元"
       ]
     },
     "executionLock": {
@@ -3488,13 +3490,13 @@
     "contractVersion": "v27.0",
     "strategyState": "Defensive",
     "stateLabel": "红灯 / 禁止新增",
-    "stateScore": 43,
-    "stateReason": "红灯 / 禁止新增，风险分数 43。结构信号激活：逆回购准备金告急（ON RRP 21.51 亿美元）。 主导模块：地缘政治、能源、通胀。",
+    "stateScore": 38,
+    "stateReason": "红灯 / 禁止新增，风险分数 38。结构信号激活：逆回购准备金告急（ON RRP 21.27 亿美元）。 主导模块：地缘政治、通胀、能源。",
     "structuralSignals": [
       {
         "key": "onRrpCritical",
         "label": "逆回购准备金告急",
-        "detail": "ON RRP 21.51 亿美元",
+        "detail": "ON RRP 21.27 亿美元",
         "reliability": "live"
       }
     ],
@@ -3503,20 +3505,20 @@
     "dominantDrivers": [
       {
         "key": "geopolitical",
-        "score": 56,
+        "score": 42,
         "label": "地缘政治",
         "trend": 0
       },
       {
-        "key": "energy",
-        "score": 52,
-        "label": "能源",
+        "key": "inflation",
+        "score": 42,
+        "label": "通胀",
         "trend": 0
       },
       {
-        "key": "inflation",
-        "score": 46,
-        "label": "通胀",
+        "key": "energy",
+        "score": 39,
+        "label": "能源",
         "trend": 0
       }
     ],
@@ -3535,7 +3537,7 @@
         "若总仓位高于 42%，必须先减到 38% 附近。",
         "若高波动资产 > 2%，立即降回 2% 以下。",
         "若现金缓冲 < 30%，立即补回。",
-        "关注结构信号：逆回购准备金告急（ON RRP 21.51 亿美元）。"
+        "关注结构信号：逆回购准备金告急（ON RRP 21.27 亿美元）。"
       ],
       "blockedActions": [
         "禁止新增股票与高波动仓位。",
@@ -3553,14 +3555,14 @@
     },
     "triggerMonitor": {
       "upgradeTriggers": [
-        "布伦特 91.8",
-        "广义美元指数 120.71",
+        "布伦特 83.8",
+        "广义美元指数 119.70",
         "高收益利差 2.84%",
-        "10年-2年利差 0.47",
+        "10年-2年利差 0.45",
         "投资级信用利差 0.80%"
       ],
       "activeEscalationSignals": [
-        "逆回购准备金告急（ON RRP 21.51 亿美元）"
+        "逆回购准备金告急（ON RRP 21.27 亿美元）"
       ]
     },
     "invalidationRules": {
@@ -3574,7 +3576,7 @@
   },
   "aiInterpretationLayer": {
     "contractVersion": "v28.0J-0",
-    "generatedAt": "2026-08-02T23:28:37.183Z",
+    "generatedAt": "2026-08-03T23:35:08.375Z",
     "mode": "rule_based_structured_interpretation",
     "summaryZh": "当前 AI 解释层为规则化结构解释，不调用外部 AI。系统将事实、数据推断、模型判断和情景假设分离展示，避免把观察信号误写成确定性结论。",
     "facts": [
@@ -3641,11 +3643,11 @@
       {
         "key": "brent_proxy_spread_observation",
         "labelZh": "Brent 代理价差观察",
-        "statementZh": "公开 Brent 代理价格之间暂未显示需要升级处理的价差压力。",
+        "statementZh": "公开 Brent 代理价格之间显示观察性价差，需要结合验证源继续跟踪。",
         "basedOn": [
           "brentPricingLayer.proxySpread"
         ],
-        "confidence": "low"
+        "confidence": "medium"
       },
       {
         "key": "consumer_margin_observation",
@@ -3803,289 +3805,79 @@
     }
   },
   "externalAiInterpretationLayer": {
-    "schemaVersion": "v28.0L-external-ai-production-analyst-1",
-    "status": "valid",
-    "displayEnabled": true,
-    "generatedAt": "2026-08-03T07:23:20.936Z",
-    "updatedAt": "2026-08-03T07:23:20.936Z",
-    "sourceMode": "manual_analyst_compact_v1",
-    "provider": "deepseek",
-    "model": "deepseek-v4-flash",
-    "inputSource": "analyst_compact_v1",
-    "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
-    "summaryZh": "站内结构化数据表明，当前宏观状态为滞胀冲击与风险缓和并存，主链条为能源、通胀向利率端传导。布伦特公开代理价91.82美元，美国10年期收益率4.68%，实际利率2.41%，长端利率与风险资产定价存在观察性背离，但非崩盘预测。能源物理链显示库存偏紧、闲置产能缓冲薄，方向为温和上行压力。消费者信心月频慢变量未显示明显走弱，与资产定价背离暂不显著。数据质量方面，部分宏观驱动层为对象状态，未标记陈旧或回退，但Brent期限结构未接入，公开代理价差仅用于审计。跨层证据支持能源—利率—资产重新定价的观察，但置信度受限于数据缺口。若布伦特回落且验证层不再提示压力，或美国10年期收益率回落，则当前背离观察将失效。",
-    "facts": [
-      "布伦特公开代理价91.82美元，期货代理90.12美元，代理价差1.7美元，状态正常。",
-      "美国10年期收益率4.68%，实际利率2.41%，标普500为7489.72，VIX为17.09。",
-      "OECD商业库存同比减少289.06百万桶，较5年均值低8.62%，闲置产能缓冲为0.02百万桶/日。",
-      "消费者信心指数49.5，前值44.8，三个月变化-3.8，六个月变化-3.4。",
-      "世界秩序压力得分71，状态为多战区压力期，主要驱动为经济金融武器化93、阵营化89、多战区冲突84。",
-      "风险模块得分：地缘56、能源52、通胀46、流动性41、债务32、银行32。",
-      "情景概率：滞胀冲击27%、危机流动性挤压26%、货币贬值21%、反通胀增长12%、通缩衰退11%、流动性牛市3%。",
-      "背离层状态为观察，得分42，主要背离为长端利率与风险资产，状态为压力，得分72。"
-    ],
-    "inferences": [
-      "能源物理链偏紧与价格上行相互印证，但公开代理价差正常，表明价格验证层未显示异常，物理压力尚未转化为极端价格信号。",
-      "长端利率上行与风险资产定价背离，但信用利差和波动率未明显扩张，显示压力尚未扩散至信用与波动率维度。",
-      "消费者信心虽低于前值，但未显示明显走弱，且为月频慢变量，与资产定价背离暂不显著，需更多数据确认。",
-      "世界秩序压力上升与能源、通胀链条同向，可能强化能源—利率—资产重新定价的观察，但需警惕多战区冲突的升级风险。"
-    ],
-    "modelJudgments": [
-      "能源物理链证据强度中等，库存偏紧与闲置产能薄支撑温和上行压力，但官方周报滞后，快速信号仅用于确认或观察。",
-      "长端利率与风险资产背离证据强度中等，但信用利差和波动率未扩张，表明压力尚未扩散，条件为观察而非高置信度。",
-      "消费者信心数据充分性不足，月频慢变量且发布时间延迟，暂不足以判断消费者体感与资产定价背离。",
-      "世界秩序压力数据充分，但为计算型外部来源，置信度中等，需结合市场确认。",
-      "整体数据充分性中等，部分层为对象状态，未标记陈旧或回退，但Brent期限结构缺失，限制了对价格结构的判断。"
-    ],
-    "scenarioHypotheses": [
-      {
-        "titleZh": "能源—利率—资产重新定价观察",
-        "triggerConditions": [
-          "布伦特公开代理价差扩大且验证层提示压力",
-          "美国10年期收益率继续上行",
-          "VIX或高收益利差扩张"
-        ],
-        "invalidationConditions": [
-          "布伦特回落且验证层不再提示压力",
-          "美国10年期收益率回落",
-          "信用利差和波动率保持稳定"
-        ]
-      },
-      {
-        "titleZh": "消费者信心与资产定价背离观察",
-        "triggerConditions": [
-          "消费者信心指数进一步下降",
-          "零售数据走弱",
-          "资产定价维持高位"
-        ],
-        "invalidationConditions": [
-          "消费者信心回升",
-          "零售数据改善",
-          "资产定价回落"
-        ]
-      }
-    ],
-    "dataGaps": [
-      "Platts Dated Brent或正式Dated Brent未接入，公开代理价差仅用于审计。",
-      "Brent期限结构未接入，无法判断曲线形态的完整性。",
-      "消费者信心为月频慢变量，发布时间延迟，缺乏高频替代数据。",
-      "能源运输数据不可用，无法评估咽喉点风险。",
-      "部分宏观驱动层为对象状态，未提供具体数值，如世界经济和通胀能源。"
-    ],
-    "invalidationSignals": [
-      "布伦特回落且验证层不再提示压力。",
-      "美国10年期收益率回落。",
-      "信用利差和波动率明显扩张。",
-      "消费者信心指数显著回升。"
-    ],
-    "sourceAttribution": [
-      {
-        "sourceLayer": "dailyBrief",
-        "field": "macroState",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "brentPricingLayer",
-        "field": "selectedBrent",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "divergenceLayer",
-        "field": "primaryDivergence",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "oilDirectionalPressure",
-        "field": "finalBias",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "macroDrivers.consumer",
-        "field": "umichSentiment",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "worldOrderStress",
-        "field": "score",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "modules",
-        "field": "energy",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "regimeProbabilities",
-        "field": "stagflationShock",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "dataQuality",
-        "field": "sidecars",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "aiInterpretationLayer",
-        "field": "modelJudgments",
-        "claimType": "rule_based_interpretation",
-        "noteZh": "来自站内结构化数据"
-      }
-    ],
+    "contractVersion": "v28.0K-3A",
+    "generatedAt": "2026-08-03T23:35:08.375Z",
+    "enabled": false,
+    "status": "disabled",
+    "displayEnabled": false,
+    "provider": "none",
+    "model": null,
+    "mode": "external_ai_disabled_scaffold",
+    "summaryZh": "外部 AI 解读层本轮不可用，页面使用规则化解释层作为回退。",
+    "inputDigest": {
+      "inputVersion": "v28.0.10-daily-external-ai-fallback",
+      "siteStructuredDataOnly": true,
+      "layersAvailable": [
+        "dailyBrief",
+        "divergenceLayer",
+        "brentPricingLayer",
+        "macroDrivers.consumer",
+        "aiInterpretationLayer",
+        "decisionModel"
+      ],
+      "usesPrivateUserData": false,
+      "usesSecrets": false,
+      "usesExternalMarketData": false,
+      "noteZh": "Daily 普通刷新未调用外部 AI API，也未生成新的外部 AI 文本。"
+    },
+    "output": null,
+    "audit": {
+      "outputValidated": false,
+      "validator": "check-external-ai-output",
+      "auditStatus": "not_applicable",
+      "auditFlags": [
+        "daily_external_ai_preservation_fallback"
+      ],
+      "bannedCopyPassed": null,
+      "sourceAttributionPresent": null,
+      "boundariesValid": true
+    },
+    "fallback": {
+      "used": true,
+      "fallbackLayer": "aiInterpretationLayer",
+      "reasonZh": "既有外部 AI 层不符合当前生产契约，本轮回退到规则化解释层。"
+    },
     "confidence": {
-      "level": "medium",
-      "score": 35,
-      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。"
+      "level": "low",
+      "score": 0,
+      "reasonZh": "未展示外部 AI 输出，仅保留规则化解释层。"
     },
-    "qualityReview": {
-      "status": "pass",
-      "recommendation": "pass_for_manual_review",
-      "promotionEligible": false,
-      "failedDimensions": [],
-      "warningDimensions": [],
-      "reviewedAt": "2026-08-03T07:23:20.936Z"
-    },
-    "provenance": {
-      "runId": "30793426170",
-      "artifactName": "external-ai-production-refresh-30793426170",
-      "artifactId": "30793426170-1",
-      "artifactDigest": "bdd901ad39d949a81e72af2f701a7854f89c15056751242aa13e6931116b7b2f",
-      "sourceCommit": "3b46548906786d9d4e7912cd483de5916de31888",
-      "sourceDataUpdatedAt": "2026-08-02T23:28:37.183Z",
-      "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
-      "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
-      "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
-      "generatedBy": "manual_workflow",
-      "humanApproved": false
-    },
-    "freshness": {
-      "artifactGeneratedAt": "2026-08-03T07:23:20.936Z",
-      "sourceDataUpdatedAt": "2026-08-02T23:28:37.183Z",
-      "maxAgeHours": 24,
-      "isStale": false,
-      "staleReasonZh": null
-    },
+    "dataGaps": [
+      "externalAiInterpretationLayer production layer missing or incompatible"
+    ],
+    "limitations": [
+      "External AI Production Refresh remains the only approved automatic provider write path."
+    ],
     "boundaries": {
       "displayOnly": true,
-      "externalAiGenerated": true,
-      "usesExternalAiApi": true,
+      "diagnosticOnly": true,
+      "externalAiGenerated": false,
+      "usesExternalAiApi": false,
       "affectsScoring": false,
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
       "affectsPositionGuidance": false,
       "notInvestmentAdvice": true,
-      "productionWriteApproved": false,
-      "frontendDisplayApproved": true
-    },
-    "auditFlags": [
-      "manual_artifact_only",
-      "site_structured_data_only",
-      "analyst_compact_v1",
-      "validator_required",
-      "non_production_output",
-      "no_frontend_display"
-    ],
-    "crossLayerSynthesis": [
-      {
-        "theme": "能源—利率—资产重新定价",
-        "summaryZh": "能源物理链偏紧与长端利率上行共同指向重新定价压力，但信用利差和波动率未扩张，压力尚未扩散。",
-        "supportingLayers": [
-          "oilDirectionalPressure",
-          "divergenceLayer",
-          "dailyBrief"
-        ],
-        "conflictingLayers": [
-          "macroDrivers.credit"
-        ],
-        "confidence": "medium"
-      },
-      {
-        "theme": "消费者信心与资产定价",
-        "summaryZh": "消费者信心未明显走弱，与资产定价背离暂不显著，但为月频慢变量，需更多数据确认。",
-        "supportingLayers": [
-          "macroDrivers.consumer",
-          "divergenceLayer"
-        ],
-        "conflictingLayers": [],
-        "confidence": "low"
-      }
-    ],
-    "keyDivergences": [
-      {
-        "titleZh": "长端利率与风险资产背离",
-        "evidenceFor": [
-          "divergenceLayer.primaryDivergence",
-          "dailyBrief.dominantRiskChain"
-        ],
-        "evidenceAgainst": [
-          "macroDrivers.credit.igOas",
-          "macroDrivers.rateVol.move"
-        ],
-        "whyItMattersZh": "若利率压力持续而信用利差和波动率未扩张，可能意味着压力尚未传导至风险定价，但需警惕突然扩散。",
-        "invalidationConditions": [
-          "信用利差明显扩张",
-          "波动率显著上升"
-        ]
-      },
-      {
-        "titleZh": "能源物理压力与价格验证",
-        "evidenceFor": [
-          "oilDirectionalPressure.signals.inventoryDrawPressure",
-          "oilDirectionalPressure.interpretation.globalOverlay"
-        ],
-        "evidenceAgainst": [
-          "brentPricingLayer.proxySpread"
-        ],
-        "whyItMattersZh": "物理压力与价格验证一致，但公开代理价差正常，表明价格未显示异常，需关注期限结构缺失的影响。",
-        "invalidationConditions": [
-          "库存回补",
-          "价格结构转为contango"
-        ]
-      }
-    ],
-    "scenarioLean": {
-      "leanZh": "能源—利率—资产重新定价观察",
-      "scenarioRefs": [
-        "基准情景",
-        "风险情景"
-      ],
-      "triggerConditions": [
-        "布伦特公开代理价差扩大",
-        "美国10年期收益率继续上行",
-        "VIX或高收益利差扩张"
-      ],
-      "invalidationConditions": [
-        "布伦特回落且验证层不再提示压力",
-        "美国10年期收益率回落"
-      ],
-      "confidence": "medium"
-    },
-    "dataQualityLens": {
-      "summaryZh": "多数宏观驱动层为对象状态，未标记陈旧或回退，但Brent期限结构缺失，能源运输数据不可用，消费者信心为月频慢变量。",
-      "staleLayers": [],
-      "fallbackLayers": [],
-      "missingLayers": [
-        "brentPricingLayer",
-        "macroDrivers.energyTransport"
-      ],
-      "confidenceImpactZh": "数据缺口限制了价格结构和运输风险的判断，置信度中等偏低。"
+      "frontendDisplayApproved": false
     }
   },
   "historyWindowFields": {
     "hyOasWoW": {
-      "changeBp": 7,
-      "changePct": 0.0253,
+      "changeBp": 5,
+      "changePct": 0.0179,
       "windowStatus": "ready",
-      "priorDate": "2026-07-26",
-      "lastDate": "2026-08-02",
+      "priorDate": "2026-07-27",
+      "lastDate": "2026-08-03",
       "observations": 7,
       "targetObservations": 7,
       "windowLabel": "周度变化"
@@ -4096,8 +3888,8 @@
       "observations": 84,
       "targetObservations": 84,
       "windowLabel": "12周",
-      "firstDate": "2026-05-03",
-      "lastDate": "2026-08-02"
+      "firstDate": "2026-05-04",
+      "lastDate": "2026-08-03"
     },
     "privateCreditStressZScore": {
       "headline": null,
@@ -4107,57 +3899,57 @@
           "z": null,
           "stressZ": null,
           "direction": "-z",
-          "observations": 61
+          "observations": 62
         },
         {
           "key": "pbdcEtfPrice",
           "z": null,
           "stressZ": null,
           "direction": "-z",
-          "observations": 61
+          "observations": 62
         },
         {
           "key": "seniorLoanEtfPrice",
           "z": null,
           "stressZ": null,
           "direction": "-z",
-          "observations": 61
+          "observations": 62
         },
         {
           "key": "intervalFundNavPrice",
           "z": null,
           "stressZ": null,
           "direction": "-z",
-          "observations": 61
+          "observations": 62
         },
         {
           "key": "hyOas",
           "z": null,
           "stressZ": null,
           "direction": "+z",
-          "observations": 61
+          "observations": 62
         },
         {
           "key": "igOas",
           "z": null,
           "stressZ": null,
           "direction": "+z",
-          "observations": 61
+          "observations": 62
         }
       ],
       "windowStatus": "partial",
-      "observations": 61,
+      "observations": 62,
       "targetObservations": 84,
       "windowLabel": "12周"
     },
     "spx52wHigh": {
       "value": 7599.96,
       "windowStatus": "partial",
-      "observations": 61,
+      "observations": 62,
       "targetObservations": 364,
       "windowLabel": "52周",
       "firstDate": "2026-05-29",
-      "lastDate": "2026-08-02"
+      "lastDate": "2026-08-03"
     }
   }
 }
