@@ -4,6 +4,8 @@ import path from 'node:path';
 
 const ARTIFACT_DIR = 'manual-artifacts/external-ai';
 const STRICT_MODE = process.argv.includes('--workflow-provider-test');
+const INPUT_ONLY_ARG_INDEX = process.argv.indexOf('--input-only');
+const INPUT_ONLY_PATH = INPUT_ONLY_ARG_INDEX === -1 ? null : process.argv[INPUT_ONLY_ARG_INDEX + 1];
 const MAX_ARTIFACT_BYTES = 500 * 1024;
 const LOCAL_RADAR_DATA_SOURCE_PATH = 'data/radar-data.json';
 const COMPACT_INPUT_ARTIFACT = 'manual-input-compact-latest.json';
@@ -323,6 +325,40 @@ function checkDefaultFile(filePath, fileName) {
 }
 
 function checkArtifacts() {
+  if (INPUT_ONLY_ARG_INDEX !== -1) {
+    if (!STRICT_MODE) {
+      addError('--input-only requires --workflow-provider-test');
+      return;
+    }
+    if (!INPUT_ONLY_PATH || INPUT_ONLY_PATH.startsWith('--')) {
+      addError('--input-only requires an artifact path');
+      return;
+    }
+
+    const artifactRoot = path.resolve(ARTIFACT_DIR);
+    const inputPath = path.resolve(INPUT_ONLY_PATH);
+    if (!inputPath.startsWith(`${artifactRoot}${path.sep}`)) {
+      addError(`input-only artifact must stay under ${ARTIFACT_DIR}`);
+      return;
+    }
+    if (!fs.existsSync(inputPath) || !fs.statSync(inputPath).isFile()) {
+      addError(`input-only artifact is missing: "${INPUT_ONLY_PATH}"`);
+      return;
+    }
+
+    const fileName = relativeArtifactName(inputPath);
+    if (fileName.includes('/') || fileName.includes('\\')) {
+      addError(`nested artifact path is not allowed: "${fileName}"`);
+      return;
+    }
+    if (fileName !== COMPACT_INPUT_ARTIFACT && fileName !== ANALYST_INPUT_ARTIFACT) {
+      addError(`input-only mode requires ${COMPACT_INPUT_ARTIFACT} or ${ANALYST_INPUT_ARTIFACT}`);
+      return;
+    }
+    checkStrictFile(inputPath, fileName);
+    return;
+  }
+
   if (!fs.existsSync(ARTIFACT_DIR)) return;
 
   const files = walkFiles(ARTIFACT_DIR);

@@ -136,6 +136,8 @@ function checkProviderAndValidationPath(text) {
     '--compact',
     '--analyst-compact-v1',
     '--output "${{ steps.refresh_inputs.outputs.input_artifact_path }}"',
+    'name: Sanitize selected production input before provider call',
+    'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test --input-only "${{ steps.refresh_inputs.outputs.input_artifact_path }}"',
     'allow_network="true"',
     'acknowledge_cost="true"',
     'acknowledge_non_production="true"',
@@ -170,6 +172,11 @@ function checkProviderAndValidationPath(text) {
   }
 
   assert(countOccurrences(text, 'node scripts/run-external-ai-manual-test.mjs') === 1, 'workflow must call provider command exactly once');
+  assert(countOccurrences(text, 'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test') === 2, 'workflow must sanitize input before the provider call and sanitize the complete artifact set before upload');
+  assert(
+    text.indexOf('name: Sanitize selected production input before provider call') < text.indexOf('name: Run DeepSeek production refresh provider call'),
+    'input artifact sanitizer must run before the provider call',
+  );
   assert(
     getBlock(text, 'if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then', ['\n          fi']).includes('else') &&
       text.includes('input_source="analyst_compact_v1"'),

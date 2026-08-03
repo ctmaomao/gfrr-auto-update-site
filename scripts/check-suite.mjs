@@ -15,6 +15,7 @@ const SUITES = {
   'external-ai': [
     'check:external-ai-manual-workflow',
     'check:external-ai-provider-workflow',
+    'check:external-ai-manual-input:analyst',
     'check:external-ai-production-refresh-workflow',
     'check:external-ai-workflow-artifacts',
     'check:external-ai-output',
