@@ -1202,10 +1202,11 @@ If a refresh fails provider output validation, quality review, production contra
 Refresh behavior:
 
 - Builds the selected input from current site data: scheduled/default `analyst_compact_v1`, or manual-dispatch rollback `local_compact`.
+- Sanitizes the selected input artifact before the provider call; an unsafe input stops before any paid call.
 - Calls DeepSeek once.
 - Runs output validation.
 - Runs external AI artifact quality review.
-- Runs artifact sanitizer before upload.
+- Runs the artifact sanitizer again on the complete input/output/review/projection set before upload.
 - Projects the output into the production `externalAiInterpretationLayer` contract.
 - Preserves `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
 - Writes only `externalAiInterpretationLayer` into `data/radar-data.json`.

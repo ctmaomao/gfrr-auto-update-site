@@ -19,6 +19,12 @@ const ANALYST_TARGET_BYTES = {
   warn: 40 * 1024,
   fail: 60 * 1024
 };
+const ANALYST_FORBIDDEN_INTERNAL_PATH_MARKERS = [
+  'realtime/',
+  'realtime\\',
+  'config/',
+  'config\\'
+];
 const ANALYST_SIDECAR_PATHS = {
   oilDirectionalPressure: 'data/oil-directional-pressure.json',
   worldOrderStress: 'data/world-order-stress.json',
@@ -851,6 +857,7 @@ function compactWorldOrderSidecar(sidecar) {
   const externalSources = getOwn(sidecar, 'externalSources') || {};
   const gdelt = getOwn(externalSources, 'gdelt') || {};
   const gdeltSummary = getOwn(gdelt, 'summary') || {};
+  const marketConfirmationInput = getOwn(sidecar, 'marketConfirmationInput');
   return {
     ...(pickFields(sidecar, [
       'version',
@@ -862,12 +869,7 @@ function compactWorldOrderSidecar(sidecar) {
       'confidence',
       'freshness'
     ]) || {}),
-    marketConfirmationInput: compactUnknownValue(getOwn(sidecar, 'marketConfirmationInput'), {
-      maxDepth: 1,
-      maxKeys: 9,
-      maxListItems: 2,
-      stringMaxLength: 120
-    }),
+    marketConfirmationInput: pickFields(marketConfirmationInput, ['source']),
     sourceStatuses: summarizeSourceStatusMap(getOwn(externalSources, 'sourceStatus') || externalSources),
     gdeltTopCountries: compactUnknownValue(topArray(getOwn(gdeltSummary, 'topCountries'), 3), {
       maxDepth: 1,
@@ -1214,6 +1216,16 @@ function finalizeAnalystArtifact(artifact) {
   return redacted;
 }
 
+function assertAnalystArtifactHasNoInternalPaths(artifact) {
+  for (const { path: stringPath, value } of collectStringValues(artifact)) {
+    for (const marker of ANALYST_FORBIDDEN_INTERNAL_PATH_MARKERS) {
+      if (value.includes(marker)) {
+        throw new Error(`analyst input contains forbidden internal path marker "${marker}" at ${stringPath}`);
+      }
+    }
+  }
+}
+
 function siteDataForOptions(radarData, options, sidecars) {
   if (options.analystCompactV1) return extractAnalystSiteDataV2(radarData, sidecars);
   return options.compact ? extractCompactSiteData(radarData) : extractSiteData(radarData);
@@ -1435,6 +1447,7 @@ async function main() {
   let sizeDiagnostics = null;
   if (options.analystCompactV1) {
     try {
+      assertAnalystArtifactHasNoInternalPaths(artifact);
       sizeDiagnostics = assertAnalystArtifactSize(outputText, artifact);
     } catch (error) {
       fail(error.message);

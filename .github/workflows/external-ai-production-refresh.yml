@@ -168,6 +168,9 @@ jobs:
             exit 1
           fi
 
+      - name: Sanitize selected production input before provider call
+        run: npm run check:external-ai-workflow-artifacts -- --workflow-provider-test --input-only "${{ steps.refresh_inputs.outputs.input_artifact_path }}"
+
       - name: Run DeepSeek production refresh provider call
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
