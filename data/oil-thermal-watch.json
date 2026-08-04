@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-08-04T19:57:39.885Z",
+  "generatedAt": "2026-08-04T22:29:53.199Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-08-04T19:34:00Z",
-    "latestAgeHours": 0.4,
+    "latestAcqAt": "2026-08-04T20:29:00Z",
+    "latestAgeHours": 2,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -135,11 +135,11 @@
     ]
   },
   "aggregate": {
-    "rowCount": 96,
-    "latestAcqAt": "2026-08-04T19:34:00Z",
+    "rowCount": 99,
+    "latestAcqAt": "2026-08-04T20:29:00Z",
     "maxFrp": 144.23,
     "confidenceCounts": {
-      "n": 81,
+      "n": 84,
       "l": 12,
       "h": 3
     },
@@ -148,9 +148,9 @@
     "frpOver100Count": 1,
     "dayNightCounts": {
       "N": 58,
-      "D": 38
+      "D": 41
     },
-    "latestAgeHours": 0.4,
+    "latestAgeHours": 2,
     "facilityCount": 42,
     "facilitiesWithDetections": 18,
     "requestCount": 126,
@@ -208,7 +208,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 12.4,
+      "latestAgeHours": 15,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -259,7 +259,7 @@
       "dayNightCounts": {
         "N": 17
       },
-      "latestAgeHours": 10.8,
+      "latestAgeHours": 13.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -310,7 +310,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 11.7,
+      "latestAgeHours": 14.2,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -361,7 +361,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 10.8,
+      "latestAgeHours": 13.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -412,7 +412,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 11.7,
+      "latestAgeHours": 14.2,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -465,7 +465,7 @@
         "N": 6,
         "D": 1
       },
-      "latestAgeHours": 0.4,
+      "latestAgeHours": 2.9,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -563,7 +563,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 11.7,
+      "latestAgeHours": 14.2,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -614,7 +614,7 @@
       "dayNightCounts": {
         "N": 1
       },
-      "latestAgeHours": 11.7,
+      "latestAgeHours": 14.2,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -650,22 +650,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Sweeny; State=Texas; PADD=3; AD_Mbpd=278.9; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "2/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 8,
-      "latestAcqAt": "2026-08-04T09:11:00Z",
-      "maxFrp": 3.49,
+      "rowCount": 11,
+      "latestAcqAt": "2026-08-04T20:29:00Z",
+      "maxFrp": 39.64,
       "confidenceCounts": {
-        "n": 8
+        "n": 11
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
+        "D": 3,
         "N": 8
       },
-      "latestAgeHours": 10.8,
+      "latestAgeHours": 2,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -679,10 +680,10 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 2,
+        "sourcesWithDetections": 3,
         "sourceRepeatMet": true,
         "rowCountAboveP95": true,
-        "maxFrpAboveP95": false,
+        "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
         "aboveBaselineStrength": true,
@@ -763,7 +764,7 @@
       "dayNightCounts": {
         "N": 9
       },
-      "latestAgeHours": 11.7,
+      "latestAgeHours": 14.2,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1190,7 +1191,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 10.5,
+      "latestAgeHours": 13.1,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1289,7 +1290,7 @@
       "dayNightCounts": {
         "D": 23
       },
-      "latestAgeHours": 9.6,
+      "latestAgeHours": 12.2,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1481,7 +1482,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 9.7,
+      "latestAgeHours": 12.2,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1580,7 +1581,7 @@
       "dayNightCounts": {
         "D": 5
       },
-      "latestAgeHours": 9.6,
+      "latestAgeHours": 12.2,
       "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "established",
@@ -1678,7 +1679,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 9.6,
+      "latestAgeHours": 12.2,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1777,7 +1778,7 @@
       "dayNightCounts": {
         "D": 3
       },
-      "latestAgeHours": 9.6,
+      "latestAgeHours": 12.2,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -2157,7 +2158,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 10.5,
+      "latestAgeHours": 13.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -2209,7 +2210,7 @@
       "dayNightCounts": {
         "D": 2
       },
-      "latestAgeHours": 8.8,
+      "latestAgeHours": 11.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
