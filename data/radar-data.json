@@ -3805,70 +3805,283 @@
     }
   },
   "externalAiInterpretationLayer": {
-    "contractVersion": "v28.0K-3A",
-    "generatedAt": "2026-08-03T23:35:08.375Z",
-    "enabled": false,
-    "status": "disabled",
-    "displayEnabled": false,
-    "provider": "none",
-    "model": null,
-    "mode": "external_ai_disabled_scaffold",
-    "summaryZh": "外部 AI 解读层本轮不可用，页面使用规则化解释层作为回退。",
-    "inputDigest": {
-      "inputVersion": "v28.0.10-daily-external-ai-fallback",
-      "siteStructuredDataOnly": true,
-      "layersAvailable": [
-        "dailyBrief",
-        "divergenceLayer",
-        "brentPricingLayer",
-        "macroDrivers.consumer",
-        "aiInterpretationLayer",
-        "decisionModel"
-      ],
-      "usesPrivateUserData": false,
-      "usesSecrets": false,
-      "usesExternalMarketData": false,
-      "noteZh": "Daily 普通刷新未调用外部 AI API，也未生成新的外部 AI 文本。"
-    },
-    "output": null,
-    "audit": {
-      "outputValidated": false,
-      "validator": "check-external-ai-output",
-      "auditStatus": "not_applicable",
-      "auditFlags": [
-        "daily_external_ai_preservation_fallback"
-      ],
-      "bannedCopyPassed": null,
-      "sourceAttributionPresent": null,
-      "boundariesValid": true
-    },
-    "fallback": {
-      "used": true,
-      "fallbackLayer": "aiInterpretationLayer",
-      "reasonZh": "既有外部 AI 层不符合当前生产契约，本轮回退到规则化解释层。"
-    },
-    "confidence": {
-      "level": "low",
-      "score": 0,
-      "reasonZh": "未展示外部 AI 输出，仅保留规则化解释层。"
-    },
+    "schemaVersion": "v28.0L-external-ai-production-analyst-1",
+    "status": "valid",
+    "displayEnabled": true,
+    "generatedAt": "2026-08-04T01:10:50.605Z",
+    "updatedAt": "2026-08-04T01:10:50.605Z",
+    "sourceMode": "manual_analyst_compact_v1",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "inputSource": "analyst_compact_v1",
+    "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
+    "summaryZh": "站内结构化数据提示能源、通胀与利率压力仍是主链条，长端利率与风险资产存在观察性背离，但当前证据不足以形成高置信度方向判断。能源物理链偏紧与公开代理价差压力并存，需更多数据确认。消费者慢变量与资产定价暂未形成明显背离。数据质量整体良好，但部分慢变量存在发布滞后，需持续观察。",
+    "facts": [
+      "布伦特主显示值 83.77，公开现货代理 91.82，期货代理 83.58，代理价差压力为 stress。",
+      "美国10年期收益率 4.75%，实际利率 2.47%，标普500 7490，VIX 15.99。",
+      "OECD 商业库存同比 -289.06 百万桶，较5年均值 -8.62%，库存天数 55.4。",
+      "OPEC 闲置产能 0.02 百万桶/日，为预测值，12个月预测 2.38。",
+      "消费者信心指数 49.5，前值 44.8，三个月变化 -3.8，六个月变化 -3.4。",
+      "高收益利差 2.84%，IG OAS 0.8，信用利差与波动率尚未明显扩张。",
+      "世界秩序压力评分 63，状态为多战区压力期，经济金融武器化评分 90。",
+      "市场定价层显示 QQQ 指标活跃，但仅用于展示，不参与评分或决策。"
+    ],
+    "inferences": [
+      "能源物理链偏紧与公开代理价差压力并存，可能反映实物与期货定价之间的分歧，但需更多数据确认。",
+      "长端利率压力与风险资产定价背离，但 VIX 与信用利差未明显扩张，表明压力尚未广泛扩散。",
+      "消费者信心虽低于前值，但未与资产定价形成明显背离，可能因月频慢变量存在发布延迟。",
+      "世界秩序压力上升与能源链条传导相互印证，但地缘事件对市场的影响需通过价格结构确认。"
+    ],
+    "modelJudgments": [
+      "能源物理链偏紧证据较强，但官方周报存在发布滞后，快速信号仅用于观察，当前判读为温和上行压力，置信度中等。",
+      "长端利率与风险资产背离为观察状态，证据强度中等，但不足以判断市场定价错误，需更多数据确认。",
+      "消费者慢变量与资产定价背离暂未形成，数据充分性不足，因月频数据存在延迟，当前为低置信度观察。",
+      "世界秩序压力与能源链条传导相互印证，但地缘事件对市场的影响需通过价格结构确认，当前为观察状态。"
+    ],
+    "scenarioHypotheses": [
+      {
+        "titleZh": "能源—利率—资产重新定价观察",
+        "triggerConditions": [
+          "Brent 公开代理价差进一步扩大",
+          "美国10年期收益率继续上行",
+          "VIX 或高收益利差明显扩张"
+        ],
+        "invalidationConditions": [
+          "Brent 回落且验证层不再提示压力",
+          "美国10年期收益率回落",
+          "信用利差与波动率保持平稳"
+        ]
+      },
+      {
+        "titleZh": "能源物理链转松观察",
+        "triggerConditions": [
+          "商业原油库存回补",
+          "馏分油库存修复",
+          "炼厂开工率回落"
+        ],
+        "invalidationConditions": [
+          "库存继续去化",
+          "炼厂开工率维持高位",
+          "价格结构保持 backwardation"
+        ]
+      }
+    ],
     "dataGaps": [
-      "externalAiInterpretationLayer production layer missing or incompatible"
+      "Platts Dated Brent 或正式 Dated Brent 未接入，公开代理价差可能失真。",
+      "Brent 期限结构未接入，无法确认曲线形态。",
+      "能源运输风险数据不可用，影响全球覆盖层判断。",
+      "消费者信心为月频慢变量，发布时间存在延迟。",
+      "部分中国宏观数据为聚合转载，非官方原始公告。"
     ],
-    "limitations": [
-      "External AI Production Refresh remains the only approved automatic provider write path."
+    "invalidationSignals": [
+      "Brent 回落且验证层不再提示压力。",
+      "美国10年期收益率回落。",
+      "商业原油库存回补且馏分油库存修复。",
+      "公开曲线转为 contango。"
     ],
+    "sourceAttribution": [
+      {
+        "sourceLayer": "dailyBrief",
+        "field": "dominantRiskChain",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "brentPricingLayer",
+        "field": "proxySpread",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "oilDirectionalPressure",
+        "field": "signals.inventoryDrawPressure",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.consumer",
+        "field": "umichSentiment",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "divergenceLayer",
+        "field": "primaryDivergence",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "worldOrderStress",
+        "field": "score",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.credit",
+        "field": "igOas",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "dataQuality",
+        "field": "macroDrivers",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "aiInterpretationLayer",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
+        "noteZh": "来自站内结构化数据"
+      }
+    ],
+    "confidence": {
+      "level": "medium",
+      "score": 35,
+      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。"
+    },
+    "qualityReview": {
+      "status": "pass",
+      "recommendation": "pass_for_manual_review",
+      "promotionEligible": false,
+      "failedDimensions": [],
+      "warningDimensions": [],
+      "reviewedAt": "2026-08-04T01:10:50.605Z"
+    },
+    "provenance": {
+      "runId": "30867913973",
+      "artifactName": "external-ai-production-refresh-30867913973",
+      "artifactId": "30867913973-1",
+      "artifactDigest": "12a355ba7d446be839790469a725971f9f61b1ac9269ff444875008a3d00ca6a",
+      "sourceCommit": "836a6a075626bed06255a89b77a1dcdd651fdf85",
+      "sourceDataUpdatedAt": "2026-08-03T23:35:08.375Z",
+      "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
+      "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
+      "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
+      "generatedBy": "manual_workflow",
+      "humanApproved": false
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-08-04T01:10:50.605Z",
+      "sourceDataUpdatedAt": "2026-08-03T23:35:08.375Z",
+      "maxAgeHours": 24,
+      "isStale": false,
+      "staleReasonZh": null
+    },
     "boundaries": {
       "displayOnly": true,
-      "diagnosticOnly": true,
-      "externalAiGenerated": false,
-      "usesExternalAiApi": false,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
       "affectsScoring": false,
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
       "affectsPositionGuidance": false,
       "notInvestmentAdvice": true,
-      "frontendDisplayApproved": false
+      "productionWriteApproved": false,
+      "frontendDisplayApproved": true
+    },
+    "auditFlags": [
+      "manual_artifact_only",
+      "site_structured_data_only",
+      "analyst_compact_v1",
+      "validator_required",
+      "non_production_output",
+      "no_frontend_display"
+    ],
+    "crossLayerSynthesis": [
+      {
+        "theme": "能源物理链与价格背离",
+        "summaryZh": "能源物理链偏紧与公开代理价差压力并存，但价格结构未完全确认。",
+        "supportingLayers": [
+          "oilDirectionalPressure",
+          "brentPricingLayer",
+          "macroDrivers.energyInventoryBalance"
+        ],
+        "conflictingLayers": [
+          "brentPricingLayer"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "theme": "利率与风险资产背离",
+        "summaryZh": "长端利率压力与风险资产定价存在观察性背离，但信用利差与波动率未明显扩张。",
+        "supportingLayers": [
+          "divergenceLayer",
+          "macroDrivers.curve",
+          "macroDrivers.credit"
+        ],
+        "conflictingLayers": [
+          "macroDrivers.credit"
+        ],
+        "confidence": "medium"
+      }
+    ],
+    "keyDivergences": [
+      {
+        "titleZh": "能源价格来源分歧",
+        "evidenceFor": [
+          "brentPricingLayer.proxySpread",
+          "oilDirectionalPressure.signals.inventoryDrawPressure"
+        ],
+        "evidenceAgainst": [
+          "brentPricingLayer.futuresProxy"
+        ],
+        "whyItMattersZh": "公开代理价差压力可能反映实物与期货定价分歧，但需更多数据确认。",
+        "invalidationConditions": [
+          "Brent 回落且验证层不再提示压力",
+          "公开曲线转为 contango"
+        ]
+      },
+      {
+        "titleZh": "利率与风险资产背离",
+        "evidenceFor": [
+          "divergenceLayer.primaryDivergence",
+          "macroDrivers.curve.t10y2y"
+        ],
+        "evidenceAgainst": [
+          "macroDrivers.credit.igOas"
+        ],
+        "whyItMattersZh": "长端利率压力与风险资产定价背离，但信用利差未扩张，压力尚未广泛扩散。",
+        "invalidationConditions": [
+          "美国10年期收益率回落",
+          "信用利差与波动率保持平稳"
+        ]
+      }
+    ],
+    "scenarioLean": {
+      "leanZh": "能源—利率—资产重新定价观察",
+      "scenarioRefs": [
+        "基准情景",
+        "风险情景",
+        "反转情景"
+      ],
+      "triggerConditions": [
+        "Brent 公开代理价差进一步扩大",
+        "美国10年期收益率继续上行",
+        "VIX 或高收益利差明显扩张"
+      ],
+      "invalidationConditions": [
+        "Brent 回落且验证层不再提示压力",
+        "美国10年期收益率回落",
+        "信用利差与波动率保持平稳"
+      ],
+      "confidence": "medium"
+    },
+    "dataQualityLens": {
+      "summaryZh": "数据质量整体良好，但部分慢变量存在发布滞后，能源运输风险数据不可用。",
+      "staleLayers": [
+        "macroDrivers.consumer",
+        "macroDrivers.chinaInflation"
+      ],
+      "fallbackLayers": [
+        "macroDrivers.chinaOmo",
+        "macroDrivers.chinaTsf",
+        "macroDrivers.chinaMlf"
+      ],
+      "missingLayers": [
+        "macroDrivers.energyTransport"
+      ],
+      "confidenceImpactZh": "慢变量滞后与缺失数据降低整体置信度，需更多数据确认。"
     }
   },
   "historyWindowFields": {
