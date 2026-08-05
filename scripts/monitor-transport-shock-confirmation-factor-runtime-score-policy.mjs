@@ -181,6 +181,7 @@ function createMonitorResult(options) {
       candidateScore: Number.isFinite(review?.currentObservation?.candidateScore)
         ? review.currentObservation.candidateScore
         : null,
+      candidateEligibleForMainScore: review?.currentObservation?.candidateEligibleForMainScore === true,
       scoreBeforeTransport: Number.isFinite(review?.currentObservation?.scoreBeforeTransport)
         ? review.currentObservation.scoreBeforeTransport
         : null,

@@ -117,16 +117,14 @@ function finiteNumber(value) {
   return Number.isFinite(value) ? value : null;
 }
 
-function buildReview() {
-  const production = runMonitor('production refresh monitor', CHILD_MONITORS.productionRefresh);
-  const runtime = runMonitor('runtime score policy monitor', CHILD_MONITORS.runtimeScorePolicy);
-  const readiness = runMonitor('score readiness monitor', CHILD_MONITORS.scoreReadiness);
+function buildReviewFromMonitors(production, runtime, readiness) {
   const candidate = production.monitor?.candidate?.summary ?? {};
   const observation = runtime.monitor?.currentObservation ?? {};
   const readinessState = readiness.monitor?.readiness ?? {};
   const contribution = finiteNumber(observation.contributionPct);
   const cap = finiteNumber(observation.maxContributionPct);
   const cappedPathActive = observation.applied === true && contribution !== null && contribution > 0;
+  const runtimeCandidateEligible = observation.candidateEligibleForMainScore === true;
   const cappedPathContractValid =
     production.exitStatus === 0
     && production.monitor?.status === 'candidate_present_verified'
@@ -137,7 +135,7 @@ function buildReview() {
     && contribution !== null
     && contribution >= 0
     && contribution <= cap
-    && (!cappedPathActive || candidate.eligibleForMainScore === true);
+    && (!cappedPathActive || runtimeCandidateEligible);
   const confirmedPathBlocked =
     readinessState.scoreReady !== true
     || readinessState.routeFreightConfirmation === 'not_connected'
@@ -175,7 +173,10 @@ function buildReview() {
         state: cappedPathContractValid ? (cappedPathActive ? 'active' : 'inactive') : 'contract_review_required',
         productionCandidateStatus: candidate.status ?? null,
         productionCandidateScore: finiteNumber(candidate.score),
-        eligibleForMainScore: candidate.eligibleForMainScore === true,
+        productionCandidateEligibleForMainScore: candidate.eligibleForMainScore === true,
+        runtimeCandidateStatus: observation.candidateStatus ?? null,
+        runtimeCandidateScore: finiteNumber(observation.candidateScore),
+        eligibleForMainScore: runtimeCandidateEligible,
         policyReviewPassed: runtime.monitor?.review?.scorePolicyReviewPassed === true,
         contributionPct: contribution,
         maxContributionPct: cap,
@@ -201,9 +202,10 @@ function buildReview() {
       noContradiction,
       childMonitorsHealthy,
       cappedPathContractValid,
+      cappedPathEligibilitySource: 'runtime_score_policy_snapshot',
       confirmedPathBlocked,
       note:
-        'A capped free-proxy runtime contribution may be active while the separate route/market-confirmed path remains blocked.'
+        'Runtime contribution and eligibility are evaluated from the same runtime score-policy snapshot; the committed production-refresh candidate remains an independent monitor observation.'
     },
     sourceMonitors: {
       productionRefresh: {
@@ -257,6 +259,72 @@ function buildReview() {
   };
 }
 
+function buildReview() {
+  const production = runMonitor('production refresh monitor', CHILD_MONITORS.productionRefresh);
+  const runtime = runMonitor('runtime score policy monitor', CHILD_MONITORS.runtimeScorePolicy);
+  const readiness = runMonitor('score readiness monitor', CHILD_MONITORS.scoreReadiness);
+  return buildReviewFromMonitors(production, runtime, readiness);
+}
+
+function runPathBoundarySelfTests() {
+  const review = buildReviewFromMonitors(
+    {
+      exitStatus: 0,
+      monitor: {
+        status: 'candidate_present_verified',
+        candidate: {
+          summary: {
+            status: 'unavailable',
+            score: null,
+            eligibleForMainScore: false
+          }
+        }
+      }
+    },
+    {
+      exitStatus: 0,
+      monitor: {
+        status: 'nonzero_contribution_observed',
+        review: { scorePolicyReviewPassed: true },
+        currentObservation: {
+          applied: true,
+          contributionPct: 3,
+          maxContributionPct: 3,
+          reason: 'owner_approved_free_proxy_transport_pressure_low_weight_applied',
+          sourceStatus: 'live',
+          candidateStatus: 'elevated_watch',
+          candidateScore: 80,
+          candidateEligibleForMainScore: true
+        }
+      }
+    },
+    {
+      exitStatus: 0,
+      monitor: {
+        status: 'score_readiness_blocked',
+        readiness: {
+          status: 'blocked',
+          scoreReady: false,
+          routeFreightConfirmation: 'not_connected',
+          marketConfirmation: 'not_connected',
+          promotionEligible: false,
+          productionWriteApproved: false,
+          scoreWriteApproved: false,
+          hardBlockerIds: ['route_freight_confirmation_not_connected']
+        }
+      }
+    }
+  );
+  if (
+    review.status !== 'active_capped_path_confirmed_higher_confidence_path_blocked'
+    || review.consistency.noContradiction !== true
+    || review.paths.cappedFreeProxyRuntime.eligibleForMainScore !== true
+    || review.paths.cappedFreeProxyRuntime.productionCandidateEligibleForMainScore !== false
+  ) {
+    throw new Error('self-test failed: pre-commit runtime snapshot must not be compared with stale HEAD eligibility');
+  }
+}
+
 function writeReview(options, review) {
   if (!options.writeOutput) return;
   assertSafeOutputPath(options.output);
@@ -279,6 +347,7 @@ function printSummary(review) {
 }
 
 try {
+  runPathBoundarySelfTests();
   const options = parseArgs(process.argv.slice(2));
   const review = buildReview();
   writeReview(options, review);

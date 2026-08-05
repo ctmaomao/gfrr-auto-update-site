@@ -323,6 +323,7 @@ function buildReview(payload, inputPath) {
       latestAgeDays: finiteNumberOrNull(actualImpact?.latestAgeDays),
       candidateStatus: actualImpact?.candidateStatus ?? null,
       candidateScore: finiteNumberOrNull(actualImpact?.candidateScore),
+      candidateEligibleForMainScore: actualImpact?.guards?.eligibleForMainScore === true,
       guards: actualImpact?.guards ?? null,
       expectedGuards: expectedImpact.guards
     },
