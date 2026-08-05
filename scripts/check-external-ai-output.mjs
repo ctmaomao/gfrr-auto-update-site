@@ -423,6 +423,7 @@ function runSelfTests() {
     [
       { sourceLayer: 'energyInventoryBalance', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
       { sourceLayer: 'energySpareCapacity', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
+      { sourceLayer: 'energyTransport', noteZh: '来自站内结构化数据', claimType: 'site_structured_data' },
     ],
     analystEnergyAliasErrors,
     []
@@ -589,10 +590,11 @@ function runSelfTests() {
   }
 
   const energyAliasLayer = structuredClone(basePr4Output);
-  energyAliasLayer.crossLayerSynthesis[0].supportingLayers = ['energyInventoryBalance', 'energySpareCapacity'];
+  energyAliasLayer.crossLayerSynthesis[0].supportingLayers = ['energyInventoryBalance', 'energySpareCapacity', 'energyTransport'];
   energyAliasLayer.keyDivergences[0].evidenceFor = [
     'energyInventoryBalance.oecdCommercialInventoryVs5yPct',
     'energySpareCapacity.spareCapacityMbpd',
+    'energyTransport.latestDate',
   ];
   const energyAliasErrors = validateOutput(energyAliasLayer).errors;
   if (energyAliasErrors.length > 0) {

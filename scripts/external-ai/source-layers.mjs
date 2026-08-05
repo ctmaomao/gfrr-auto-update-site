@@ -32,6 +32,7 @@ const FIXTURE_PRODUCTION_SOURCE_LAYERS = ['fixture_sample'];
 const ANALYST_SOURCE_LAYER_ALIASES = new Map([
   ['energyInventoryBalance', 'macroDrivers.energyInventoryBalance'],
   ['energySpareCapacity', 'macroDrivers.energySpareCapacity'],
+  ['energyTransport', 'macroDrivers.energyTransport'],
 ]);
 
 export function isMacroDriverSourceLayer(sourceLayer) {

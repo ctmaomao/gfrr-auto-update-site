@@ -1199,6 +1199,8 @@ gh workflow run "External AI Production Refresh" \
 
 If a refresh fails provider output validation, quality review, production contract validation, write guard, `check:data`, or `check:all`, do not rerun repeatedly; inspect sanitized artifacts and use manual `local_compact` rollback only after confirming analyst output is the failure source.
 
+For `analyst_compact_v1`, exact compact energy-layer aliases `energyInventoryBalance`, `energySpareCapacity`, and `energyTransport` are normalized before strict validation to their canonical `macroDrivers.*` sourceLayer names. Unknown or ambiguous layer names remain unchanged and fail closed. If validation reports a new bare compact key, update the explicit alias map, prompt rule, and regression tests together; do not broaden the canonical validator or add automatic provider retries.
+
 Refresh behavior:
 
 - Builds the selected input from current site data: scheduled/default `analyst_compact_v1`, or manual-dispatch rollback `local_compact`.

@@ -319,6 +319,7 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **PR4b-2 ✅ 已落 + 线上实测收口**:在现有 `#external-ai-auxiliary` 折叠区内渲染 4 个 optional 字段(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`),不新增一级 section、不改 IA;缺字段时 hidden fallback,仍 display-only;asset bump `external-ai-pr4b2-1`。Pages 绿后线上 `#ext-ai-structured-output` 6 块均渲染真实结构化内容,console 无错误。
 - **PR4b-2 follow-up ✅ 已落(read-only warning 可读性)**:修 External AI read-only warning block 的深色反白低对比问题,改为 paper/canvas warning surface + 暖墨正文 + 橙色左边界;asset bump `external-ai-warning-readability-1`;display-only,不改 data/workflow/runtime。
 - **PR4b-3 ✅ 已落(display-only 友好标签映射)**:结构化跨层解读区已把静态英文标签(`supporting/for/stale...`)译成中文,并把 sourceLayer/field-path 引用显示为中文友好名;JSON/schema/checker/provider/production contract 未改;asset `external-ai-pr4b3-1`。
+- **External AI energyTransport canonical alias hardening(2026-08-05)**:`External AI Production Refresh #95` 的 DeepSeek 输出把 compact evidence-pack 键 `energyTransport` 放进 `dataQualityLens.missingLayers`,严格 validator 因非 canonical sourceLayer 而在写生产数据前安全失败。修复只把这个已知精确别名归一化为 `macroDrivers.energyTransport`,并同步 prompt 明示映射、normalizer 自测和 output-validator 回归；unknown/ambiguous layer 仍 fail closed,不放宽 schema/unsafe wording/quality/write guards,不加 provider 自动重试,不改 scoring/decision/execution/position/frontend。
 - 状态:**External AI 深化 PR0→PR4b-3 全链 live + 线上验证闭环;当前无待落库的 PR4b 前端任务**。记忆见 `project_external_ai_deep_analysis`。
 
 #### P3-21: AI 泡沫监测第二页面(Bubble Watch · ADR-0016,一次性落地)

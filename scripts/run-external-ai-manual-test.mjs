@@ -110,7 +110,7 @@ const ANALYST_PR4_STRUCTURED_OUTPUT_RULES = [
   `For PR4 structured output budget, if more than ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} layer/evidence references seem relevant, choose the ${MAX_PR4_LAYER_REFERENCES_PER_ARRAY} strongest canonical references and omit the rest.`,
   'For PR4 structured output budget, keep summaryZh, whyItMattersZh, and confidenceImpactZh as short sentences rather than long paragraphs.',
   'PR4 sub-field confidence values must be low or medium only; never high and never low-medium as a literal string.',
-  'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol.',
+  'PR4 layer references must use canonical sourceLayer names from the analyst allowlist, for example macroDrivers.rateVol rather than rateVol; map energyInventoryBalance, energySpareCapacity, and energyTransport to macroDrivers.energyInventoryBalance, macroDrivers.energySpareCapacity, and macroDrivers.energyTransport.',
   'For PR4 layer-name arrays, crossLayerSynthesis.supportingLayers, crossLayerSynthesis.conflictingLayers, dataQualityLens.staleLayers, dataQualityLens.fallbackLayers, and dataQualityLens.missingLayers are machine-readable identifier lists: each element MUST be exactly one bare canonical sourceLayer string and nothing else.',
   'For PR4 layer-name arrays, each element MUST NOT contain a field path, a colon, any explanation, or any Chinese/natural-language text; write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing; write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress; write modules, not riskModules.',
   'For PR4 layer-name arrays, put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields, never inside a layer array element.',
@@ -906,6 +906,7 @@ function runPr4ReferenceNormalizationSelfTests() {
         'brentPricingLayer.limitations: Platts Dated Brent missing',
         'brentPricingLayer.limitations: Brent curve missing',
         'riskModules: module summary',
+        'energyTransport',
         'externalAiInterpretationLayer',
       ],
     },
@@ -922,7 +923,7 @@ function runPr4ReferenceNormalizationSelfTests() {
     evidenceAgainst: 'macroDrivers.credit.igOas',
     stale: 'aiInterpretationLayer',
     fallback: 'decisionContext.sanitized',
-    missing: ['brentPricingLayer', 'modules'],
+    missing: ['brentPricingLayer', 'modules', 'macroDrivers.energyTransport'],
   };
 
   if (sample.crossLayerSynthesis[0].supportingLayers[0] !== expected.supporting) {
@@ -1040,6 +1041,7 @@ function runPromptModeSelfTests() {
     'write brentPricingLayer, not brentPricingLayer.limitations: Platts Dated Brent missing',
     'write oilDirectionalPressure, not oilDirectionalPressure.signals.dieselProductStress',
     'write modules, not riskModules',
+    'map energyInventoryBalance, energySpareCapacity, and energyTransport to macroDrivers.energyInventoryBalance, macroDrivers.energySpareCapacity, and macroDrivers.energyTransport',
     'put all reasons and explanations in dataQualityLens.summaryZh, dataQualityLens.confidenceImpactZh, or the relevant *Zh fields',
     'write macroDrivers.consumer.umichSentiment, not macroDrivers.consumer: umichSentiment=49.8',
   ];
