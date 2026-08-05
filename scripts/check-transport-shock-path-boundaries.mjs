@@ -24,6 +24,8 @@ function assertScriptSafety() {
     'monitor-transport-shock-confirmation-factor-runtime-score-policy.mjs',
     'monitor-transport-shock-confirmation-factor-score-readiness.mjs',
     'two_distinct_approval_layers_no_contradiction',
+    'candidateEligibleForMainScore',
+    'runPathBoundarySelfTests',
     'isTransportShockManualArtifactPath',
     'for (const protectedPath of [manualArtifactsPath, rootPath])',
     '--dry-run',
@@ -59,6 +61,10 @@ function assertReview(review) {
   );
   assert(review.consistency?.noContradiction === true, 'Current path synthesis must be internally consistent');
   assert(review.consistency?.childMonitorsHealthy === true, 'All three source monitors must be healthy');
+  assert(
+    review.consistency?.cappedPathEligibilitySource === 'runtime_score_policy_snapshot',
+    'Capped path eligibility must use the same runtime score-policy snapshot as its contribution'
+  );
 
   const capped = review.paths?.cappedFreeProxyRuntime;
   assert(capped?.approvalLayer === 'approved_capped_runtime_policy', 'Capped path approval layer drifted');
