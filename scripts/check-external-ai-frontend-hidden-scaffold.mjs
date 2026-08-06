@@ -353,6 +353,33 @@ function validateFrontendFailClosedFixtures(errors) {
   }
 }
 
+function validateModelJudgmentRendering(errors) {
+  const text = readText(RENDER_EXTERNAL_AI_PATH);
+  const displayText = (value) => {
+    if (value === null || value === undefined || typeof value === 'object') return null;
+    const normalized = String(value).trim();
+    return normalized || null;
+  };
+  const joinNonEmpty = (parts, separator = ' · ') => parts.map(displayText).filter(Boolean).join(separator);
+  const factory = new Function(
+    'externalAiDisplayText',
+    'joinNonEmpty',
+    `${extractFunctionSource(text, 'modelJudgmentText')}\n${extractFunctionSource(text, 'orderedModelJudgments')}\nreturn orderedModelJudgments;`,
+  );
+  const orderedModelJudgments = factory(displayText, joinNonEmpty);
+  const rendered = orderedModelJudgments([
+    { key: 'certainty', labelZh: '证据充分性', detailZh: '当前仅支持低置信观察。' },
+    '字符串判断',
+    { key: 'machine_only' },
+  ]);
+  if (rendered !== '(1) 证据充分性：当前仅支持低置信观察。 (2) 字符串判断') {
+    addError(errors, `object-shaped modelJudgments must render display fields only, got: ${rendered}`);
+  }
+  if (rendered?.includes('[object Object]')) {
+    addError(errors, 'object-shaped modelJudgments must not render as [object Object]');
+  }
+}
+
 function main() {
   const errors = [];
 
@@ -362,6 +389,7 @@ function main() {
     validateNoAutomation(errors);
     validateFrontendFailClosedGuard(errors);
     validateFrontendFailClosedFixtures(errors);
+    validateModelJudgmentRendering(errors);
   } catch (error) {
     addError(errors, error.message);
   }

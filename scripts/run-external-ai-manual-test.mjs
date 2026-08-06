@@ -707,6 +707,7 @@ function buildDeepSeekUserPrompt(input, promptOptions = {}) {
     '- Do not write 不构成交易建议 or 不构成投资建议 in any text field.',
     '- Express all boundary semantics only through boundaries.notInvestmentAdvice=true, boundaries.affectsScoring=false, boundaries.affectsDecisionModel=false, boundaries.affectsExecutionLock=false, and boundaries.affectsPositionGuidance=false.',
     'modelJudgments requirements:',
+    '- modelJudgments must be an array of Chinese strings, not objects.',
     '- modelJudgments should discuss only evidence strength, data sufficiency, uncertainty, and whether a condition is watch, insufficient_data, or low_confidence.',
     '- modelJudgments must not discuss trading, execution, portfolio action, exposure, cash targets, or position.',
     'decisionContext output requirements:',

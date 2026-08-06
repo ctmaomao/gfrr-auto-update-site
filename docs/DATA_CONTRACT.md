@@ -1021,7 +1021,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-gdelt-web-ngrams-auto-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-low-maintenance-1`）。
 
 稳定边界：
 
@@ -1036,7 +1036,9 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 #### externalAiInterpretationLayer 当前生产契约（已实现 · visible read-only）
 
-`externalAiInterpretationLayer` 已实现,为 **visible read-only 展示层**:当前 live data 为 `schemaVersion = v28.0L-external-ai-production-analyst-1`、`status = valid`、`displayEnabled = true`、`boundaries.frontendDisplayApproved = true`、`provider = deepseek`,由 `External AI Production Refresh` workflow 经 `check:external-ai-production-contract` validator + quality review 写入。生产契约(权威定义见 `scripts/check-external-ai-production-contract.mjs`)要求:`displayEnabled === boundaries.frontendDisplayApproved`;visible 时须 `status=valid` + `qualityReview.status ∈ {pass,warn}` + `recommendation=pass_for_manual_review` + `freshness.isStale=false`;且**恒** `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,`auditFlags` 须含 `non_production_output` / `no_frontend_display`(后两者命名为历史遗留、与 visible 现态字面相左,属待另开协调改名项,非当前 docs slice)。接入与输出仍须遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+`externalAiInterpretationLayer` 已实现,为 **visible read-only 展示层**:当前 live data 为 `schemaVersion = v28.0L-external-ai-production-analyst-1`、`status = valid`、`displayEnabled = true`、`boundaries.frontendDisplayApproved = true`、`provider = deepseek`,由 `External AI Production Refresh` workflow 经 scoped production publish gate 写入。生产契约(权威定义见 `scripts/check-external-ai-production-contract.mjs`)要求:`displayEnabled === boundaries.frontendDisplayApproved`;visible 时须 `status=valid` + `qualityReview.status ∈ {pass,warn}` + `recommendation=pass_for_manual_review` + `freshness.isStale=false`;且**恒** `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,`auditFlags` 须含 `non_production_output` / `no_frontend_display`(后两者命名为历史遗留、与 visible 现态字面相左,属待另开协调改名项,非当前 docs slice)。接入与输出仍须遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+
+`qualityReview.status=warn` 是参考展示的非阻断状态：warning 继续记录在 `warningDimensions`,但不因一般质量不足（如覆盖偏少或增量价值有限）要求再次付费生成。`status=fail`、provider failure、安全/归因/结构 hard fail、production contract/write guard/path assertion 失败仍禁止写入。运行时专用 `check:external-ai-production-publish` 组合 production write guard 与 `check:data`;PR / Pages CI 继续承担全仓库 `check:all`。
 
 PR3 expand-then-contract 后,validator / projection / write guard 同时接受两套 production source family:
 
@@ -1424,26 +1426,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-odp-gdelt-web-ngrams-auto-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP 新闻事件观察把 GDELT Web NGrams v2 自动 display-only 缓存的下载源状态、聚合计数与源文件时效接入既有前端行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+external-ai-low-maintenance-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP 新闻事件观察把 GDELT Web NGrams v2 自动 display-only 缓存的下载源状态、聚合计数与源文件时效接入既有前端行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-gdelt-web-ngrams-auto-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-low-maintenance-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-gdelt-web-ngrams-auto-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-gdelt-web-ngrams-auto-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-gdelt-web-ngrams-auto-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=external-ai-low-maintenance-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=external-ai-low-maintenance-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `external-ai-low-maintenance-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-gdelt-web-ngrams-auto-1
-npm run bump:frontend-asset-version -- odp-gdelt-web-ngrams-auto-1
+node scripts/bump-frontend-asset-version.mjs external-ai-low-maintenance-1
+npm run bump:frontend-asset-version -- external-ai-low-maintenance-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-gdelt-web-ngrams-auto-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `external-ai-low-maintenance-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

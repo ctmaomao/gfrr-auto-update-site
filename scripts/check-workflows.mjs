@@ -553,6 +553,9 @@ const mainWriterWorkflows = [
   'refresh-qqq-market-pricing.yml',
   'refresh-world-order-stress.yml'
 ];
+const scopedMainWriterGates = {
+  'external-ai-production-refresh.yml': 'npm run check:external-ai-production-publish',
+};
 for (const workflow of mainWriterWorkflows) {
   const file = `.github/workflows/${workflow}`;
   const text = fs.readFileSync(file, 'utf8');
@@ -563,10 +566,11 @@ for (const workflow of mainWriterWorkflows) {
   requireSourceMarker(file, text, 'ref: main');
   requireSourceMarker(file, text, 'fetch-depth: 0');
   requireSourceMarker(file, text, 'git pull --ff-only origin main');
-  const fullCheckIndex = text.indexOf('npm run check:all');
+  const requiredGate = scopedMainWriterGates[workflow] || 'npm run check:all';
+  const fullCheckIndex = text.indexOf(requiredGate);
   const commitIndex = text.indexOf('git commit');
   if (fullCheckIndex === -1 || commitIndex === -1 || fullCheckIndex > commitIndex) {
-    addRuntimeFailure(file, 'must run npm run check:all before committing to main');
+    addRuntimeFailure(file, `must run ${requiredGate} before committing to main`);
   }
 }
 

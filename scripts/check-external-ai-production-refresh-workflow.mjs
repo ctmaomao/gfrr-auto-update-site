@@ -108,7 +108,7 @@ function checkSecretPolicy(text) {
   assert(countOccurrences(text, 'secrets.DEEPSEEK_API_KEY') === 1, 'secrets.DEEPSEEK_API_KEY must appear exactly once');
   assert(text.includes('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'), 'secret must be injected as a step env var');
 
-  const providerStep = getBlock(text, 'name: Run DeepSeek production refresh provider call', ['\n      - name: Validate provider output']);
+  const providerStep = getBlock(text, 'name: Run DeepSeek production refresh provider call', ['\n      - name: Run external AI quality review']);
   assert(providerStep.includes('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'), 'provider step must contain the secret env mapping');
   assert(providerStep.includes('if [ -z "${DEEPSEEK_API_KEY:-}" ]; then'), 'provider step must fail before provider command when secret is missing');
   assert(providerStep.indexOf('if [ -z "${DEEPSEEK_API_KEY:-}" ]; then') < providerStep.indexOf('node scripts/run-external-ai-manual-test.mjs'), 'missing secret check must run before provider command');
@@ -140,8 +140,6 @@ function checkProviderAndValidationPath(text) {
     'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test --input-only "${{ steps.refresh_inputs.outputs.input_artifact_path }}"',
     'allow_network="true"',
     'acknowledge_cost="true"',
-    'acknowledge_non_production="true"',
-    'max_attempts="1"',
     'node scripts/run-external-ai-manual-test.mjs \\',
     '--provider deepseek',
     '--input "${{ steps.refresh_inputs.outputs.input_artifact_path }}"',
@@ -149,29 +147,28 @@ function checkProviderAndValidationPath(text) {
     '--allow-network',
     '--validate-output',
     '--timeout-ms "${{ steps.refresh_inputs.outputs.timeout_ms }}"',
-    'npm run check:external-ai-output -- manual-artifacts/external-ai/deepseek-output-latest.json',
     'npm run review:external-ai-artifact -- --input manual-artifacts/external-ai/deepseek-output-latest.json --output manual-artifacts/external-ai/external-ai-quality-review-latest.json',
     'node scripts/project-external-ai-production-dry-run.mjs \\',
     '--preserve-display-state-from data/radar-data.json',
     '--restore-visible-display',
-    'npm run check:external-ai-production-contract -- manual-artifacts/external-ai/external-ai-production-projection-latest.json',
     'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test',
     'npm run write:external-ai-production -- \\',
     '--confirm-production-write',
     '--data-only',
     '--no-frontend-display',
     '--preserve-visible-display',
-    'npm run check:external-ai-production-contract -- data/radar-data.json',
-    'npm run check:external-ai-production-write-guard',
-    'npm run check:external-ai-frontend-hidden-scaffold',
-    'npm run check:data',
-    'npm run check:all',
+    'npm run check:external-ai-production-publish',
   ];
   for (const marker of required) {
     assert(text.includes(marker), `workflow missing provider/validation marker: ${marker}`);
   }
 
   assert(countOccurrences(text, 'node scripts/run-external-ai-manual-test.mjs') === 1, 'workflow must call provider command exactly once');
+  assert(countOccurrences(text, '--validate-output') === 1, 'provider output must be validated exactly once by the provider runner');
+  assert(!text.includes('name: Validate provider output'), 'workflow must not repeat provider output validation');
+  assert(!text.includes('name: Validate projection'), 'writer already validates the projection contract; workflow must not repeat it');
+  assert(!text.includes('npm run check:all'), 'paid production refresh must use its scoped publish gate instead of unrelated full-repository checks');
+  assert(countOccurrences(text, 'npm run check:external-ai-production-publish') === 1, 'workflow must run the scoped production publish gate exactly once');
   assert(countOccurrences(text, 'npm run check:external-ai-workflow-artifacts -- --workflow-provider-test') === 2, 'workflow must sanitize input before the provider call and sanitize the complete artifact set before upload');
   assert(
     text.indexOf('name: Sanitize selected production input before provider call') < text.indexOf('name: Run DeepSeek production refresh provider call'),
@@ -182,7 +179,6 @@ function checkProviderAndValidationPath(text) {
       text.includes('input_source="analyst_compact_v1"'),
     'scheduled path must default to analyst_compact_v1',
   );
-  assert(!text.includes('max_attempts="2"'), 'workflow must not configure retries beyond one attempt');
   assert(
     targetDisplayStateAllowsWrite(
       {
