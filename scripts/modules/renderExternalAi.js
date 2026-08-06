@@ -1,5 +1,5 @@
-import { $ } from './config.js?v=odp-gdelt-web-ngrams-auto-1';
-import { MODULE_LABELS } from './decision.js?v=odp-gdelt-web-ngrams-auto-1';
+import { $ } from './config.js?v=external-ai-low-maintenance-1';
+import { MODULE_LABELS } from './decision.js?v=external-ai-low-maintenance-1';
 
 function asNumber(value) {
   const n = Number(value);
@@ -46,6 +46,20 @@ function shortHash(value, length = 12) {
 function orderedSentence(items) {
   if (!Array.isArray(items) || items.length === 0) return null;
   const clean = items.map((item) => textValue(item)).filter(Boolean);
+  if (clean.length === 0) return null;
+  return clean.map((item, index) => `(${index + 1}) ${item}`).join(' ');
+}
+
+function modelJudgmentText(item) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return externalAiDisplayText(item);
+  const label = externalAiDisplayText(item.labelZh ?? item.titleZh);
+  const detail = externalAiDisplayText(item.detailZh ?? item.textZh ?? item.summaryZh ?? item.valueZh);
+  return joinNonEmpty([label, detail], '：') || null;
+}
+
+function orderedModelJudgments(items) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const clean = items.map((item) => modelJudgmentText(item)).filter(Boolean);
   if (clean.length === 0) return null;
   return clean.map((item, index) => `(${index + 1}) ${item}`).join(' ');
 }
@@ -507,7 +521,7 @@ export function renderExternalAiAuxiliary({ radarData }) {
     if (factsText) setLeafText('ext-ai-facts-text', externalAiDisplayText(factsText));
     const inferencesText = orderedSentence(layer.inferences);
     if (inferencesText) setLeafText('ext-ai-inferences-text', externalAiDisplayText(inferencesText));
-    const judgmentsText = orderedSentence(layer.modelJudgments);
+    const judgmentsText = orderedModelJudgments(layer.modelJudgments);
     if (judgmentsText) setLeafText('ext-ai-judgments-text', externalAiDisplayText(judgmentsText));
 
     if (Array.isArray(layer.scenarioHypotheses)) {

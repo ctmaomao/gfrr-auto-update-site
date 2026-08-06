@@ -289,6 +289,20 @@ function runSelfTests() {
     throw new Error('self-test failed: operation language should fail quality review');
   }
 
+  const advisoryReview = createBaseReview('self-test.json', {});
+  markScore(advisoryReview, 'incrementalValue', 'warn', 'Advisory quality warning.');
+  finalizeReview(advisoryReview);
+  if (advisoryReview.status !== 'warn' || advisoryReview.recommendation !== 'pass_for_manual_review') {
+    throw new Error('self-test failed: advisory quality warnings should not block reference display');
+  }
+
+  const blockingReview = createBaseReview('self-test.json', {});
+  markScore(blockingReview, 'executionLanguageSafety', 'fail', 'Blocking safety failure.');
+  finalizeReview(blockingReview);
+  if (blockingReview.status !== 'fail' || blockingReview.recommendation !== 'reject_for_promotion') {
+    throw new Error('self-test failed: execution-language safety failures must remain blocking');
+  }
+
   const analystReview = createBaseReview('self-test.json', {});
   reviewSourceAttributionCoverage(
     {
@@ -632,7 +646,7 @@ function finalizeReview(review) {
     review.recommendation = 'needs_prompt_revision';
   } else if (hasWarn) {
     review.status = 'warn';
-    review.recommendation = 'needs_prompt_revision';
+    review.recommendation = 'pass_for_manual_review';
   } else {
     review.status = 'pass';
     review.recommendation = 'pass_for_manual_review';
@@ -737,7 +751,7 @@ function printReviewResult(review, outputPath) {
 
   if (review.status === 'warn') {
     console.log('External AI artifact quality review: WARN');
-    console.log('recommendation: needs_prompt_revision');
+    console.log('recommendation: pass_for_manual_review');
     console.log('promotionEligible: false');
     console.log(`warnings: ${review.warnings.length}`);
     printReviewDetails(review, process.stdout);

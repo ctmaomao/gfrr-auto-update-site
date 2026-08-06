@@ -11,7 +11,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016/0019,display-only)live,27 卡展示 + Core-23/Shadow-4**|
 | Release/display version | `v28.0.10` |
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
-| Cache version | `odp-gdelt-web-ngrams-auto-1` |
+| Cache version | `external-ai-low-maintenance-1` |
 | check:all 项数 | 41 个顶层命令；ODP `oil-directional` 套件当前 88 leaf checks（含 GDELT Web NGrams automated display cache guard 与 P68 facility-window quality guard）。其余 suite/直连 checker 的实时组成以 `package.json` 与 `scripts/check-suite.mjs` 为准，避免手工总数再次漂移。|
 | 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -320,6 +320,7 @@ No active P2 item. P2-13(Node daily/realtime)+ P2-13b(Cloudflare Worker)FRED API
 - **PR4b-2 follow-up ✅ 已落(read-only warning 可读性)**:修 External AI read-only warning block 的深色反白低对比问题,改为 paper/canvas warning surface + 暖墨正文 + 橙色左边界;asset bump `external-ai-warning-readability-1`;display-only,不改 data/workflow/runtime。
 - **PR4b-3 ✅ 已落(display-only 友好标签映射)**:结构化跨层解读区已把静态英文标签(`supporting/for/stale...`)译成中文,并把 sourceLayer/field-path 引用显示为中文友好名;JSON/schema/checker/provider/production contract 未改;asset `external-ai-pr4b3-1`。
 - **External AI energyTransport canonical alias hardening(2026-08-05)**:`External AI Production Refresh #95` 的 DeepSeek 输出把 compact evidence-pack 键 `energyTransport` 放进 `dataQualityLens.missingLayers`,严格 validator 因非 canonical sourceLayer 而在写生产数据前安全失败。修复只把这个已知精确别名归一化为 `macroDrivers.energyTransport`,并同步 prompt 明示映射、normalizer 自测和 output-validator 回归；unknown/ambiguous layer 仍 fail closed,不放宽 schema/unsafe wording/quality/write guards,不加 provider 自动重试,不改 scoring/decision/execution/position/frontend。
+- **External AI low-maintenance reference mode(2026-08-06)**:`External AI Production Refresh #97` 在 provider 成功返回后，因机器标识 `modelJudgments[2].key=certainty` 被当作用户文案而误判。修复将该精确 machine-only path 排除出 banned-copy scan，同时继续检查 `labelZh` / `detailZh` 等展示文案；prompt 要求 `modelJudgments` 优先输出中文字符串，renderer 兼容历史对象形态。普通 quality `warn` 改为 advisory/non-blocking，安全与结构 `fail` 仍阻断。workflow 删除重复 provider-output / projection validation，以 `check:external-ai-production-publish` 替代付费刷新中的全仓库 `check:all`;write guard、`check:data`、protected-path assertion 以及 no scoring/decision/execution/position 边界不变。
 - 状态:**External AI 深化 PR0→PR4b-3 全链 live + 线上验证闭环;当前无待落库的 PR4b 前端任务**。记忆见 `project_external_ai_deep_analysis`。
 
 #### P3-21: AI 泡沫监测第二页面(Bubble Watch · ADR-0016,一次性落地)

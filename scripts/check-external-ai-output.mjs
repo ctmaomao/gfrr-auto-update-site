@@ -147,6 +147,10 @@ function collectStrings(value, currentPath = '$', results = []) {
   return results;
 }
 
+function isMachineIdentifierPath(stringPath) {
+  return /^\$\.modelJudgments\[\d+\]\.key$/u.test(stringPath);
+}
+
 function findPhraseOccurrences(text, phrase) {
   const normalizedText = text.toLowerCase();
   const normalizedPhrase = phrase.toLowerCase();
@@ -345,9 +349,11 @@ function validateRecursiveStrings(data, errors) {
   for (const { path: stringPath, value } of collectStrings(data)) {
     const lower = value.toLowerCase();
 
-    for (const phrase of BANNED_COPY) {
-      if (lower.includes(phrase.toLowerCase())) {
-        addError(errors, `${stringPath} contains banned copy: ${phrase}`);
+    if (!isMachineIdentifierPath(stringPath)) {
+      for (const phrase of BANNED_COPY) {
+        if (lower.includes(phrase.toLowerCase())) {
+          addError(errors, `${stringPath} contains banned copy: ${phrase}`);
+        }
       }
     }
 
@@ -404,6 +410,24 @@ function runSelfTests() {
     if (errors.length === 0) {
       throw new Error(`self-test failed: expected failure for "${text}"`);
     }
+  }
+
+  const machineIdentifierErrors = [];
+  validateRecursiveStrings(
+    { modelJudgments: [{ key: 'certainty', labelZh: '证据充分性', detailZh: '当前仅支持低置信观察。' }] },
+    machineIdentifierErrors,
+  );
+  if (machineIdentifierErrors.length > 0) {
+    throw new Error(`self-test failed: machine identifier must not be scanned as display copy: ${machineIdentifierErrors.join('; ')}`);
+  }
+
+  const displayCopyErrors = [];
+  validateRecursiveStrings(
+    { modelJudgments: [{ key: 'evidence_strength', labelZh: 'certainty', detailZh: '当前仅支持低置信观察。' }] },
+    displayCopyErrors,
+  );
+  if (!displayCopyErrors.some((error) => error.includes('labelZh contains banned copy: certainty'))) {
+    throw new Error('self-test failed: user-visible model judgment copy must remain subject to banned-copy validation');
   }
 
   const analystSourceLayerErrors = [];

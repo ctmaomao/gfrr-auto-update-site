@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-gdelt-web-ngrams-auto-1';
+﻿import { fmtNumSafe } from './config.js?v=external-ai-low-maintenance-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

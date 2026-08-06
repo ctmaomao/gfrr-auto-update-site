@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=odp-gdelt-web-ngrams-auto-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=odp-gdelt-web-ngrams-auto-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=external-ai-low-maintenance-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=external-ai-low-maintenance-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
