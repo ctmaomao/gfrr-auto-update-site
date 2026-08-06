@@ -3805,74 +3805,80 @@
     "schemaVersion": "v28.0L-external-ai-production-analyst-1",
     "status": "valid",
     "displayEnabled": true,
-    "generatedAt": "2026-08-05T01:55:03.643Z",
-    "updatedAt": "2026-08-05T01:55:03.643Z",
+    "generatedAt": "2026-08-06T01:41:43.184Z",
+    "updatedAt": "2026-08-06T01:41:43.184Z",
     "sourceMode": "manual_analyst_compact_v1",
     "provider": "deepseek",
     "model": "deepseek-v4-flash",
     "inputSource": "analyst_compact_v1",
     "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
-    "summaryZh": "站内结构化数据显示能源、通胀与利率压力仍是主链条，布伦特公开代理价差出现压力，但期货代理与现货代理存在明显偏离。消费者信心与资产定价暂未形成明显背离，信用利差与波动率尚未扩张。整体证据支持观察而非高置信度判断，需更多数据确认。",
+    "summaryZh": "站内结构化数据提示能源、通胀与利率压力仍是当前主链条，长端利率与风险资产存在观察性背离，但并非确定性结论。消费者信心与资产定价暂未形成明显背离，信用利差与波动率尚未显著扩张。整体证据强度中等，部分数据存在滞后或回退，需更多确认。若布伦特回落且验证层不再提示压力，或美国10年期收益率回落，则当前解读需下调。",
     "facts": [
-      "布伦特公开现货代理为91.82美元，期货代理为78.78美元，价差13.04美元，偏离度14.9%。",
-      "美国10年期收益率4.70%，10年期实际利率2.43%，标普500为7601，VIX为15.86。",
-      "消费者信心指数49.5，前值44.8，三个月变化-3.8。",
-      "OECD商业库存同比减少289百万桶，较5年均值低8.62%。",
-      "OPEC闲置产能缓冲为0.02百万桶/日，12个月预测为2.38百万桶/日。",
-      "世界秩序压力评分为63，状态为多战区压力期，经济金融武器化评分90。",
-      "风险模块评分：地缘54、能源52、通胀45、流动性37、债务32、银行30。",
-      "情景概率：滞胀冲击28%、危机流动性紧缩23%、货币贬值21%。"
+      "布伦特公开代理价 88.9，期货代理价 79.45，代理价差 9.45，提示公开代理价差压力。",
+      "美国10年期收益率 4.63%，10年期实际利率 2.40%，标普500 7736.52，VIX 16.50。",
+      "10年盈亏平衡通胀 2.22%，广义美元指数 119.70，高收益利差 2.73%。",
+      "消费者信心指数 49.5，前值 44.8，三个月变化 -3.8，六个月变化 -3.4。",
+      "OECD 商业库存同比 -289.06 百万桶，较5年均值 -8.62%，库存天数 55.4 天。",
+      "OPEC 闲置产能 0.02 百万桶/日，为预测值，12个月预测 2.38 百万桶/日。",
+      "世界秩序压力评分 64，状态为多战区压力期，经济金融武器化维度评分 90。",
+      "传导链压力评分 79，主冲击为战争/油价，路径置信度 88，主导影响为全球股票承压。",
+      "背离层状态为观察，综合评分 42，主背离为长端利率与风险资产，状态为背离压力。",
+      "中国MLF数据源状态为回退，其余多数宏观驱动数据源状态为正常或实时。"
     ],
     "inferences": [
-      "能源价格压力与利率上行可能相互强化，但期货与现货代理的偏离提示价格信号存在不确定性。",
+      "能源价格与通胀预期同步上行，叠加长端利率高位，可能强化利率压力向风险资产传导的观察。",
       "消费者信心虽低于前值，但未与资产定价形成明显背离，可能反映慢变量滞后。",
-      "信用利差与波动率未扩张，显示压力尚未明显传导至信用与波动率层面。",
-      "世界秩序压力与能源链条同向，可能增强能源价格的上行压力。"
+      "信用利差与波动率尚未扩张，提示利率压力尚未明显扩散至信用与波动率层面。",
+      "世界秩序压力与能源物理偏紧相互印证，可能共同支撑能源价格高位。",
+      "中国MLF数据回退可能影响对中国货币政策的判断，需谨慎解读。"
     ],
     "modelJudgments": [
-      "能源物理链偏紧的证据较强，但官方周报存在发布滞后，快速信号仅能用于观察。",
-      "消费者信心数据为月频慢变量，发布时间延迟，暂不足以判断其与资产定价的背离。",
-      "利率与风险资产背离处于观察状态，但信用与波动率未确认，证据强度中等。",
-      "整体数据充分性为中等，部分层存在滞后或缺失，置信度受限。"
+      "能源物理链偏紧的证据强度中等，但官方周报存在发布滞后，快速信号仅能用于确认或观察。",
+      "长端利率与风险资产背离的证据强度中等，但属于观察性背离，不足以形成高置信度方向判断。",
+      "消费者信心数据为月频慢变量，存在发布时间延迟，当前不足以判断消费者体感与资产定价背离。",
+      "中国MLF数据源回退，相关判断证据不足，暂不足以形成可靠结论。",
+      "整体数据充分性中等，部分关键数据存在滞后或回退，需更多确认。"
     ],
     "scenarioHypotheses": [
       {
         "titleZh": "能源—利率—资产重新定价观察",
         "triggerConditions": [
-          "布伦特公开代理价差继续扩大",
+          "布伦特公开代理价差进一步扩大",
           "美国10年期收益率继续上行",
-          "VIX或高收益利差出现扩张"
+          "VIX 或高收益利差出现扩张"
         ],
         "invalidationConditions": [
           "布伦特回落且验证层不再提示压力",
           "美国10年期收益率回落",
-          "信用利差与波动率保持稳定"
+          "信用利差与波动率保持平稳"
         ]
       },
       {
         "titleZh": "消费者信心与资产定价背离观察",
         "triggerConditions": [
-          "消费者信心指数进一步下降",
-          "零售数据出现明显走弱"
+          "消费者信心指数进一步下行",
+          "零售销售数据转弱",
+          "资产定价维持高位"
         ],
         "invalidationConditions": [
-          "消费者信心回升",
-          "零售数据保持稳定"
+          "消费者信心指数回升",
+          "零售销售数据改善",
+          "资产定价回落"
         ]
       }
     ],
     "dataGaps": [
-      "Platts Dated Brent 或正式 Dated Brent 未接入。",
-      "Brent 期限结构尚未接入。",
-      "能源运输风险数据不可用。",
-      "中国MLF数据为fallback状态，可能影响相关判断。",
-      "消费者信心数据存在发布延迟。"
+      "Platts Dated Brent 或正式 Dated Brent 未接入，仅使用公开代理价格。",
+      "Brent 期限结构尚未接入，无法确认市场结构是否确认物理宽松。",
+      "中国MLF数据源为回退状态，相关操作信息不完整。",
+      "消费者信心为月频慢变量，存在发布时间延迟，缺乏高频确认。",
+      "市场定价指标最新日期为2026-07-31，存在一定滞后。"
     ],
     "invalidationSignals": [
       "布伦特回落且验证层不再提示压力。",
       "美国10年期收益率回落。",
-      "OECD库存回补且馏分油库存修复。",
-      "公开曲线转为contango。"
+      "信用利差与波动率明显扩张。",
+      "消费者信心指数回升。"
     ],
     "sourceAttribution": [
       {
@@ -3918,14 +3924,8 @@
         "noteZh": "来自站内结构化数据"
       },
       {
-        "sourceLayer": "modules",
-        "field": "energy.score",
-        "claimType": "site_structured_data",
-        "noteZh": "来自站内结构化数据"
-      },
-      {
-        "sourceLayer": "regimeProbabilities",
-        "field": "stagflationShock",
+        "sourceLayer": "transmissionChain",
+        "field": "stressScore",
         "claimType": "site_structured_data",
         "noteZh": "来自站内结构化数据"
       },
@@ -3934,12 +3934,18 @@
         "field": "macroDrivers.chinaMlf.status",
         "claimType": "site_structured_data",
         "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "aiInterpretationLayer",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
+        "noteZh": "来自站内结构化数据"
       }
     ],
     "confidence": {
       "level": "medium",
       "score": 35,
-      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。"
+      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。部分关键数据存在滞后或回退，证据强度中等。"
     },
     "qualityReview": {
       "status": "pass",
@@ -3947,15 +3953,15 @@
       "promotionEligible": false,
       "failedDimensions": [],
       "warningDimensions": [],
-      "reviewedAt": "2026-08-05T01:55:03.643Z"
+      "reviewedAt": "2026-08-06T01:41:43.184Z"
     },
     "provenance": {
-      "runId": "30967782552",
-      "artifactName": "external-ai-production-refresh-30967782552",
-      "artifactId": "30967782552-1",
-      "artifactDigest": "fe0a9e77a9783b97c43b1b329cd3036999c4463fbb0fa38044cd8af75fbc4e35",
-      "sourceCommit": "b6e847367c43f2bf0fb26f3a70cca026d2999d37",
-      "sourceDataUpdatedAt": "2026-08-05T01:52:20.619Z",
+      "runId": "31063440527",
+      "artifactName": "external-ai-production-refresh-31063440527",
+      "artifactId": "31063440527-1",
+      "artifactDigest": "d95b7009d0dad210f480b2d3ad24a6bfa079fc424048b8b6561d7c5e28496208",
+      "sourceCommit": "27308a86a2498d8e48f76539af9c5d0b7d570018",
+      "sourceDataUpdatedAt": "2026-08-05T23:28:39.128Z",
       "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
       "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
       "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
@@ -3963,8 +3969,8 @@
       "humanApproved": false
     },
     "freshness": {
-      "artifactGeneratedAt": "2026-08-05T01:55:03.643Z",
-      "sourceDataUpdatedAt": "2026-08-05T01:52:20.619Z",
+      "artifactGeneratedAt": "2026-08-06T01:41:43.184Z",
+      "sourceDataUpdatedAt": "2026-08-05T23:28:39.128Z",
       "maxAgeHours": 24,
       "isStale": false,
       "staleReasonZh": null
@@ -3991,90 +3997,95 @@
     ],
     "crossLayerSynthesis": [
       {
-        "theme": "能源压力与利率上行",
-        "summaryZh": "能源物理链偏紧与利率上行可能相互强化，但期货与现货代理偏离提示不确定性。",
+        "theme": "能源物理偏紧与价格压力",
+        "summaryZh": "能源库存偏低、闲置产能偏薄与公开代理价差压力相互印证，但官方数据存在滞后。",
         "supportingLayers": [
-          "brentPricingLayer",
           "macroDrivers.energyInventoryBalance",
-          "macroDrivers.energySpareCapacity"
+          "macroDrivers.energySpareCapacity",
+          "brentPricingLayer"
         ],
         "conflictingLayers": [
-          "divergenceLayer"
+          "oilDirectionalPressure"
         ],
         "confidence": "medium"
       },
       {
-        "theme": "消费者信心与资产定价",
-        "summaryZh": "消费者信心暂未与资产定价形成明显背离，但数据存在延迟。",
+        "theme": "利率压力与风险资产背离",
+        "summaryZh": "长端利率高位与风险资产定价存在观察性背离，但信用利差与波动率尚未扩张。",
         "supportingLayers": [
-          "macroDrivers.consumer",
-          "divergenceLayer"
+          "divergenceLayer",
+          "dailyBrief",
+          "macroDrivers.credit"
         ],
-        "conflictingLayers": [],
-        "confidence": "low"
+        "conflictingLayers": [
+          "macroDrivers.rateVol"
+        ],
+        "confidence": "medium"
       }
     ],
     "keyDivergences": [
       {
-        "titleZh": "布伦特现货与期货代理偏离",
+        "titleZh": "长端利率与风险资产背离",
         "evidenceFor": [
-          "brentPricingLayer.proxySpread"
-        ],
-        "evidenceAgainst": [
-          "brentPricingLayer.futuresProxy"
-        ],
-        "whyItMattersZh": "价格信号不一致可能影响能源压力判断的可靠性。",
-        "invalidationConditions": [
-          "价差收窄至正常范围",
-          "现货与期货代理趋同"
-        ]
-      },
-      {
-        "titleZh": "利率压力与风险资产定价背离",
-        "evidenceFor": [
-          "divergenceLayer.primaryDivergence"
+          "divergenceLayer.primaryDivergence.status",
+          "dailyBrief.dominantRiskChain"
         ],
         "evidenceAgainst": [
           "macroDrivers.credit.igOas",
-          "macroDrivers.rateVol.move"
+          "macroDrivers.rateVol.moveRegime"
         ],
-        "whyItMattersZh": "利率压力未传导至信用与波动率，可能意味着压力尚未扩散。",
+        "whyItMattersZh": "该背离可能提示利率压力尚未传导至信用与波动率，但需更多确认。",
         "invalidationConditions": [
-          "信用利差扩张",
-          "波动率上升"
+          "信用利差明显扩张",
+          "波动率明显上升"
+        ]
+      },
+      {
+        "titleZh": "能源物理偏紧与价格结构",
+        "evidenceFor": [
+          "macroDrivers.energyInventoryBalance.oecdCommercialInventoryYoYMbbl",
+          "macroDrivers.energySpareCapacity.spareCapacityMbpd"
+        ],
+        "evidenceAgainst": [
+          "brentPricingLayer.futuresProxy.value"
+        ],
+        "whyItMattersZh": "物理偏紧与期货价格存在差异，可能反映市场预期或数据滞后。",
+        "invalidationConditions": [
+          "库存回补",
+          "闲置产能回升"
         ]
       }
     ],
     "scenarioLean": {
-      "leanZh": "能源—利率—资产重新定价观察",
+      "leanZh": "当前倾向观察能源与利率压力，但证据强度中等，需更多确认。",
       "scenarioRefs": [
         "基准情景",
         "风险情景"
       ],
       "triggerConditions": [
-        "布伦特公开代理价差继续扩大",
-        "美国10年期收益率继续上行",
-        "VIX或高收益利差出现扩张"
+        "布伦特公开代理价差扩大",
+        "美国10年期收益率上行",
+        "信用利差或波动率扩张"
       ],
       "invalidationConditions": [
-        "布伦特回落且验证层不再提示压力",
+        "布伦特回落",
         "美国10年期收益率回落",
-        "信用利差与波动率保持稳定"
+        "信用利差与波动率平稳"
       ],
       "confidence": "medium"
     },
     "dataQualityLens": {
-      "summaryZh": "大部分层为对象状态，部分层存在滞后或缺失，整体数据质量中等。",
+      "summaryZh": "多数数据源状态正常，但中国MLF为回退状态，市场定价指标存在滞后，消费者信心为月频慢变量。",
       "staleLayers": [
-        "macroDrivers.chinaMlf"
+        "marketPricing"
       ],
       "fallbackLayers": [
         "macroDrivers.chinaMlf"
       ],
       "missingLayers": [
-        "macroDrivers.energyTransport"
+        "brentPricingLayer"
       ],
-      "confidenceImpactZh": "数据滞后与缺失降低了整体置信度。"
+      "confidenceImpactZh": "数据滞后与回退降低了整体置信度，相关判断需谨慎。"
     }
   },
   "historyWindowFields": {
