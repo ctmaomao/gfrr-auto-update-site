@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-08-07T05:19:42.725Z",
+  "generatedAt": "2026-08-08T05:23:23.700Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,27 +50,27 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 28610,
+    "elapsedMs": 24620,
     "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-07T05:19:14.115Z",
+    "latestAttemptAt": "2026-08-08T05:22:59.079Z",
     "lastLiveSuccessAt": "2026-08-05T20:12:01.481Z",
     "latestOutcome": "rate_limited",
     "windows": {
       "days7": {
-        "attemptCount": 7,
+        "attemptCount": 8,
         "successCount": 2,
-        "failureCount": 5,
-        "successRatePct": 28.6
+        "failureCount": 6,
+        "successRatePct": 25
       },
       "days30": {
-        "attemptCount": 8,
+        "attemptCount": 9,
         "successCount": 3,
-        "failureCount": 5,
-        "successRatePct": 37.5
+        "failureCount": 6,
+        "successRatePct": 33.3
       }
     },
     "history": [
@@ -145,11 +145,20 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 28610
+      },
+      {
+        "attemptedAt": "2026-08-08T05:22:59.079Z",
+        "outcome": "rate_limited",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 24620
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-08-07T05:19:14.115Z",
+    "at": "2026-08-08T05:22:59.079Z",
     "errorClass": "rate_limited",
     "cooldownHours": 24
   },
