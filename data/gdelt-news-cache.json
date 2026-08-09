@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-08-08T05:23:23.700Z",
+  "generatedAt": "2026-08-09T05:31:51.655Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "live_broad_query_failed",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -40,37 +40,37 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": 429,
+    "status": null,
     "attempts": 2,
     "retryCount": 1,
-    "rateLimited": true,
+    "rateLimited": false,
     "timeout": false,
     "retryAfterSeconds": null,
     "timeoutMs": 20000,
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 24620,
-    "errorCode": "rate_limited"
+    "elapsedMs": 28513,
+    "errorCode": "network_error"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-08T05:22:59.079Z",
+    "latestAttemptAt": "2026-08-09T05:31:23.142Z",
     "lastLiveSuccessAt": "2026-08-05T20:12:01.481Z",
-    "latestOutcome": "rate_limited",
+    "latestOutcome": "network_error",
     "windows": {
       "days7": {
-        "attemptCount": 7,
+        "attemptCount": 8,
         "successCount": 2,
-        "failureCount": 5,
-        "successRatePct": 28.6
+        "failureCount": 6,
+        "successRatePct": 25
       },
       "days30": {
-        "attemptCount": 9,
+        "attemptCount": 10,
         "successCount": 3,
-        "failureCount": 6,
-        "successRatePct": 33.3
+        "failureCount": 7,
+        "successRatePct": 30
       }
     },
     "history": [
@@ -154,13 +154,22 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 24620
+      },
+      {
+        "attemptedAt": "2026-08-09T05:31:23.142Z",
+        "outcome": "network_error",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": null,
+        "errorCode": "network_error",
+        "elapsedMs": 28513
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-08-08T05:22:59.079Z",
-    "errorClass": "rate_limited",
-    "cooldownHours": 24
+    "at": "2026-08-09T05:31:23.142Z",
+    "errorClass": "network_error",
+    "cooldownHours": 4
   },
   "aggregate": {
     "articleCount": 0,
@@ -175,7 +184,7 @@
     }
   },
   "articles": [],
-  "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)",
+  "error": "GDELT DOC broad oil-news cache fetch failed after 2 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
