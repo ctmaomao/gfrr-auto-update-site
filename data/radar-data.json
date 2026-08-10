@@ -3821,70 +3821,272 @@
     }
   },
   "externalAiInterpretationLayer": {
-    "contractVersion": "v28.0K-3A",
-    "generatedAt": "2026-08-09T22:59:30.456Z",
-    "enabled": false,
-    "status": "disabled",
-    "displayEnabled": false,
-    "provider": "none",
-    "model": null,
-    "mode": "external_ai_disabled_scaffold",
-    "summaryZh": "外部 AI 解读层本轮不可用，页面使用规则化解释层作为回退。",
-    "inputDigest": {
-      "inputVersion": "v28.0.10-daily-external-ai-fallback",
-      "siteStructuredDataOnly": true,
-      "layersAvailable": [
-        "dailyBrief",
-        "divergenceLayer",
-        "brentPricingLayer",
-        "macroDrivers.consumer",
-        "aiInterpretationLayer",
-        "decisionModel"
-      ],
-      "usesPrivateUserData": false,
-      "usesSecrets": false,
-      "usesExternalMarketData": false,
-      "noteZh": "Daily 普通刷新未调用外部 AI API，也未生成新的外部 AI 文本。"
-    },
-    "output": null,
-    "audit": {
-      "outputValidated": false,
-      "validator": "check-external-ai-output",
-      "auditStatus": "not_applicable",
-      "auditFlags": [
-        "daily_external_ai_preservation_fallback"
-      ],
-      "bannedCopyPassed": null,
-      "sourceAttributionPresent": null,
-      "boundariesValid": true
-    },
-    "fallback": {
-      "used": true,
-      "fallbackLayer": "aiInterpretationLayer",
-      "reasonZh": "既有外部 AI 层不符合当前生产契约，本轮回退到规则化解释层。"
-    },
-    "confidence": {
-      "level": "low",
-      "score": 0,
-      "reasonZh": "未展示外部 AI 输出，仅保留规则化解释层。"
-    },
+    "schemaVersion": "v28.0L-external-ai-production-analyst-1",
+    "status": "valid",
+    "displayEnabled": true,
+    "generatedAt": "2026-08-10T00:39:05.034Z",
+    "updatedAt": "2026-08-10T00:39:05.034Z",
+    "sourceMode": "manual_analyst_compact_v1",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "inputSource": "analyst_compact_v1",
+    "sourceSemantics": "site_structured_analyst_evidence_pack_v1",
+    "summaryZh": "站内结构化数据显示能源、通胀与利率链条仍是当前主线，布伦特公开代理价差出现压力，但该层仅用于审计观察。长端利率与风险资产之间存在观察性背离，消费者信心为月频慢变量且未显示明显走弱。跨层证据指向能源物理链偏紧，但官方周报存在发布滞后，且部分数据源为回退或缺失，整体证据充分度中等，暂不足以形成高置信度方向判断。若布伦特回落且验证层不再提示压力，或美国10年期收益率回落，则当前观察链条将被削弱。",
+    "facts": [
+      "布伦特主显示值为84.45美元，公开现货代理为88.9美元，期货代理为84.4美元，代理价差状态为压力。",
+      "美国10年期收益率为4.69%，10年期实际利率为2.43%，标普500为7757.64，VIX为15.15。",
+      "消费者信心指数为49.5，前值44.8，三个月变化-3.8，六个月变化-3.4。",
+      "OECD商业库存同比减少289.06百万桶，较5年均值低8.62%，库存天数55.4天。",
+      "OPEC闲置产能为0.02百万桶/日，为预测值，未来12个月预测为2.38百万桶/日。",
+      "世界秩序压力评分为64，状态为多战区压力期，主要驱动为经济金融武器化92、阵营化88、多战区冲突81。",
+      "背离层综合状态为背离观察，其中长端利率与风险资产背离状态为压力，评分为72。",
+      "中国制造业PMI数据源状态为对象状态，未标注为实时或回退。"
+    ],
+    "inferences": [
+      "能源物理链偏紧与公开代理价差压力相互印证，但官方周报滞后，快速信号仅能用于观察。",
+      "长端利率上行与风险资产定价之间的背离，可能反映利率压力尚未完全传导至风险资产，但需更多数据确认。",
+      "消费者信心虽为慢变量且未明显走弱，但其与资产定价的背离状态为正常，暂不构成显著信号。",
+      "世界秩序压力上升与能源链条压力同向，可能强化能源—通胀—利率传导，但证据强度中等。"
+    ],
+    "modelJudgments": [
+      "能源物理链偏紧的证据强度中等，主要依赖OECD库存与闲置产能，但存在发布滞后，数据充分度中等。",
+      "长端利率与风险资产背离的证据强度中等，但该背离仅为观察性，不足以作为高置信度判断依据。",
+      "消费者信心数据为月频慢变量，存在发布时间延迟，当前证据不足以判断其与资产定价的背离。",
+      "世界秩序压力数据新鲜，但来源为外部计算，未接入独立验证，证据充分度中等。",
+      "整体证据充分度中等，部分数据源为回退或缺失，暂不足以形成高置信度方向判断。"
+    ],
+    "scenarioHypotheses": [
+      {
+        "titleZh": "能源—利率—资产重新定价观察",
+        "triggerConditions": [
+          "布伦特公开代理价差进一步扩大",
+          "美国10年期收益率继续上行",
+          "VIX或高收益利差出现扩张"
+        ],
+        "invalidationConditions": [
+          "布伦特回落且验证层不再提示压力",
+          "美国10年期收益率回落"
+        ]
+      },
+      {
+        "titleZh": "能源物理链转松观察",
+        "triggerConditions": [
+          "商业原油库存回补",
+          "馏分油库存修复",
+          "炼厂开工率回落"
+        ],
+        "invalidationConditions": [
+          "库存继续去化且炼厂开工率维持高位"
+        ]
+      }
+    ],
     "dataGaps": [
-      "externalAiInterpretationLayer production layer missing or incompatible"
+      "Platts Dated Brent或正式Dated Brent未接入，公开代理价差仅用于审计。",
+      "Brent期限结构尚未接入，无法确认市场结构是否确认宽松。",
+      "中国制造业PMI数据源状态未明确，可能为回退或缺失。",
+      "消费者信心为月频慢变量，存在发布时间延迟，影响实时判断。",
+      "部分宏观数据源（如chinaMlf）为回退状态，可能影响数据完整性。"
     ],
-    "limitations": [
-      "External AI Production Refresh remains the only approved automatic provider write path."
+    "invalidationSignals": [
+      "布伦特回落且验证层不再提示压力",
+      "美国10年期收益率回落",
+      "商业原油库存回补且馏分油库存修复"
     ],
+    "sourceAttribution": [
+      {
+        "sourceLayer": "dailyBrief",
+        "field": "dominantRiskChain",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "brentPricingLayer",
+        "field": "proxySpread",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "divergenceLayer",
+        "field": "primaryDivergence",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.consumer",
+        "field": "umichSentiment",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.energyInventoryBalance",
+        "field": "oecdCommercialInventoryVs5yPct",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "macroDrivers.energySpareCapacity",
+        "field": "spareCapacityMbpd",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "worldOrderStress",
+        "field": "score",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "dataQuality",
+        "field": "macroDrivers.chinaMlf.status",
+        "claimType": "site_structured_data",
+        "noteZh": "来自站内结构化数据"
+      },
+      {
+        "sourceLayer": "aiInterpretationLayer",
+        "field": "modelJudgments",
+        "claimType": "rule_based_interpretation",
+        "noteZh": "来自站内结构化数据"
+      }
+    ],
+    "confidence": {
+      "level": "medium",
+      "score": 35,
+      "reasonZh": "基于站内结构化数据的跨层证据包生成，未接入外部独立取数或新闻验证。"
+    },
+    "qualityReview": {
+      "status": "pass",
+      "recommendation": "pass_for_manual_review",
+      "promotionEligible": false,
+      "failedDimensions": [],
+      "warningDimensions": [],
+      "reviewedAt": "2026-08-10T00:39:05.034Z"
+    },
+    "provenance": {
+      "runId": "31345005417",
+      "artifactName": "external-ai-production-refresh-31345005417",
+      "artifactId": "31345005417-1",
+      "artifactDigest": "5996149d9d5d6b92800da05f782a7d11973c68ad208d41b2d7fd29b3c3c5da15",
+      "sourceCommit": "432c230b2bdc7b042a6714c38338473f6d1a2fc1",
+      "sourceDataUpdatedAt": "2026-08-09T22:59:30.456Z",
+      "inputArtifactPath": "manual-artifacts/external-ai/deepseek-output-latest.json",
+      "outputArtifactPath": "manual-artifacts/external-ai/external-ai-production-projection-latest.json",
+      "qualityReviewArtifactPath": "manual-artifacts/external-ai/external-ai-quality-review-latest.json",
+      "generatedBy": "manual_workflow",
+      "humanApproved": false
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-08-10T00:39:05.034Z",
+      "sourceDataUpdatedAt": "2026-08-09T22:59:30.456Z",
+      "maxAgeHours": 24,
+      "isStale": false,
+      "staleReasonZh": null
+    },
     "boundaries": {
       "displayOnly": true,
-      "diagnosticOnly": true,
-      "externalAiGenerated": false,
-      "usesExternalAiApi": false,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
       "affectsScoring": false,
       "affectsDecisionModel": false,
       "affectsExecutionLock": false,
       "affectsPositionGuidance": false,
       "notInvestmentAdvice": true,
-      "frontendDisplayApproved": false
+      "productionWriteApproved": false,
+      "frontendDisplayApproved": true
+    },
+    "auditFlags": [
+      "manual_artifact_only",
+      "site_structured_data_only",
+      "analyst_compact_v1",
+      "validator_required",
+      "non_production_output",
+      "no_frontend_display"
+    ],
+    "crossLayerSynthesis": [
+      {
+        "theme": "能源物理链偏紧与价格压力",
+        "summaryZh": "OECD库存去化、闲置产能偏薄与公开代理价差压力相互印证，但官方周报滞后，证据充分度中等。",
+        "supportingLayers": [
+          "macroDrivers.energyInventoryBalance",
+          "macroDrivers.energySpareCapacity",
+          "brentPricingLayer"
+        ],
+        "conflictingLayers": [],
+        "confidence": "medium"
+      },
+      {
+        "theme": "利率与风险资产背离",
+        "summaryZh": "长端利率上行与风险资产定价存在观察性背离，但消费者信心未明显走弱，背离状态为观察。",
+        "supportingLayers": [
+          "divergenceLayer",
+          "macroDrivers.consumer"
+        ],
+        "conflictingLayers": [
+          "macroDrivers.consumer"
+        ],
+        "confidence": "low"
+      }
+    ],
+    "keyDivergences": [
+      {
+        "titleZh": "长端利率与风险资产背离",
+        "evidenceFor": [
+          "divergenceLayer.primaryDivergence.status",
+          "dailyBrief.dominantRiskChain"
+        ],
+        "evidenceAgainst": [
+          "macroDrivers.consumer.umichSentiment"
+        ],
+        "whyItMattersZh": "该背离可能反映利率压力尚未完全传导至风险资产，但消费者信心未走弱，需更多数据确认。",
+        "invalidationConditions": [
+          "美国10年期收益率回落",
+          "VIX或高收益利差扩张"
+        ]
+      },
+      {
+        "titleZh": "能源物理链偏紧与价格结构",
+        "evidenceFor": [
+          "macroDrivers.energyInventoryBalance.oecdCommercialInventoryVs5yPct",
+          "macroDrivers.energySpareCapacity.spareCapacityMbpd"
+        ],
+        "evidenceAgainst": [
+          "brentPricingLayer.proxySpread"
+        ],
+        "whyItMattersZh": "物理链偏紧与公开代理价差压力同向，但代理价差仅用于审计，需官方数据确认。",
+        "invalidationConditions": [
+          "商业原油库存回补",
+          "馏分油库存修复"
+        ]
+      }
+    ],
+    "scenarioLean": {
+      "leanZh": "能源—利率—资产重新定价观察",
+      "scenarioRefs": [
+        "基准情景",
+        "风险情景"
+      ],
+      "triggerConditions": [
+        "布伦特公开代理价差进一步扩大",
+        "美国10年期收益率继续上行",
+        "VIX或高收益利差扩张"
+      ],
+      "invalidationConditions": [
+        "布伦特回落且验证层不再提示压力",
+        "美国10年期收益率回落"
+      ],
+      "confidence": "medium"
+    },
+    "dataQualityLens": {
+      "summaryZh": "部分数据源为回退或缺失，如中国MLF为回退状态，Brent期限结构未接入，消费者信心为月频慢变量。",
+      "staleLayers": [
+        "macroDrivers.consumer"
+      ],
+      "fallbackLayers": [
+        "macroDrivers.chinaMlf"
+      ],
+      "missingLayers": [
+        "brentPricingLayer"
+      ],
+      "confidenceImpactZh": "数据缺失与滞后降低了整体证据充分度，暂不足以形成高置信度判断。"
     }
   },
   "historyWindowFields": {
