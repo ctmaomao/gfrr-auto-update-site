@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "bubble-watch-weekly-news-provider-fixture-v1",
+  "fixtureOnly": true,
+  "providers": {
+    "tavily": [
+      {
+        "topic": "ai_capex_earnings",
+        "title": "NVIDIA reports quarterly results and expands AI infrastructure investment",
+        "url": "https://nvidia.com/investor/sample-quarterly-results?utm_source=tavily",
+        "publishedAt": "2026-08-08T12:00:00Z",
+        "snippet": "Fixture issuer release describing earnings, demand and infrastructure investment.",
+        "searchScore": 0.92
+      },
+      {
+        "topic": "ai_financing_credit",
+        "title": "AI data center financing expands as lenders test demand",
+        "url": "https://reuters.com/technology/sample-ai-financing?utm_medium=search",
+        "publishedAt": "2026-08-07T11:00:00Z",
+        "snippet": "Fixture report on financing terms and lender scrutiny. This is discovery context, not a credit event confirmation."
+      },
+      {
+        "topic": "ai_demand_fundamentals",
+        "title": "Enterprise AI demand remains strong but deployment is uneven",
+        "url": "https://microsoft.com/investor/sample-ai-demand",
+        "publishedAt": "2026-08-06T10:00:00Z",
+        "snippet": "Fixture official demand and deployment context."
+      },
+      {
+        "topic": "market_structure_valuation",
+        "title": "AI equity concentration keeps valuation debate active",
+        "url": "https://market-a.example/ai-valuation-concentration",
+        "publishedAt": "2026-08-05T09:00:00Z",
+        "snippet": "Fixture search-only valuation commentary."
+      },
+      {
+        "topic": "macro_policy",
+        "title": "Higher rates remain a constraint for richly valued technology shares",
+        "url": "https://macro-a.example/rates-technology-valuations",
+        "publishedAt": "2026-08-04T08:00:00Z",
+        "snippet": "Fixture macro context on rates and valuations."
+      },
+      {
+        "topic": "accounting_regulatory",
+        "title": "SEC updates disclosure guidance for artificial intelligence claims",
+        "url": "https://sec.gov/newsroom/sample-ai-disclosure-guidance",
+        "publishedAt": "2026-08-03T07:00:00Z",
+        "snippet": "Fixture official regulatory guidance."
+      }
+    ],
+    "brave": [
+      {
+        "topic": "ai_capex_earnings",
+        "title": "NVIDIA reports quarterly results and expands AI infrastructure investment",
+        "url": "https://www.nvidia.com/investor/sample-quarterly-results?ref=brave",
+        "publishedAt": "2026-08-08T12:00:00Z",
+        "snippet": "Duplicate fixture discovery result from an independent search index."
+      },
+      {
+        "topic": "ai_financing_credit",
+        "title": "AI data center financing expands as lenders test demand",
+        "url": "https://finance-b.example/ai-data-center-financing",
+        "publishedAt": "2026-08-07T11:20:00Z",
+        "snippet": "Fixture independent-domain report on the same financing development."
+      },
+      {
+        "topic": "macro_policy",
+        "title": "Higher rates remain a constraint for richly valued technology shares",
+        "url": "https://macro-b.example/higher-rates-technology-valuations",
+        "publishedAt": "2026-08-04T08:30:00Z",
+        "snippet": "Fixture independent-domain macro report."
+      },
+      {
+        "topic": "market_structure_valuation",
+        "title": "AI equity concentration keeps valuation debate active",
+        "url": "https://market-a.example/ai-valuation-concentration?fbclid=fixture",
+        "publishedAt": "2026-08-05T09:00:00Z",
+        "snippet": "Duplicate same-domain search result; it must remain discovery_only."
+      }
+    ]
+  },
+  "boundaries": {
+    "fixtureOnly": true,
+    "containsLiveNews": false,
+    "containsApiKeys": false,
+    "containsRawProviderResponse": false
+  }
+}

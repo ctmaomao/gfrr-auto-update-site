@@ -74,6 +74,7 @@
   ],
   "newsContext": {
     "schemaVersion": "bubble-watch-weekly-news-discovery-v1",
+    "generatedAt": "2026-08-11T00:00:00.000Z",
     "status": "ok",
     "windowStart": "2026-08-01",
     "windowEnd": "2026-08-10",
@@ -88,6 +89,7 @@
         "domain": "news-a.example",
         "publishedAt": "2026-08-08T12:00:00.000Z",
         "providers": ["tavily", "brave"],
+        "supportingDomains": ["news-a.example", "news-a-mirror.example"],
         "evidenceStatus": "cross_checked"
       },
       {
@@ -98,6 +100,7 @@
         "domain": "issuer.example",
         "publishedAt": "2026-08-07T10:00:00.000Z",
         "providers": ["tavily"],
+        "supportingDomains": ["issuer.example"],
         "evidenceStatus": "official"
       },
       {
@@ -108,9 +111,19 @@
         "domain": "news-b.example",
         "publishedAt": "2026-08-06T09:00:00.000Z",
         "providers": ["tavily", "brave"],
+        "supportingDomains": ["news-b.example", "news-b-mirror.example"],
         "evidenceStatus": "cross_checked"
       }
-    ]
+    ],
+    "boundaries": {
+      "transientArtifactOnly": true,
+      "containsRawProviderResponse": false,
+      "containsHeaders": false,
+      "containsApiKeys": false,
+      "containsFullArticleBody": false,
+      "affectsBubbleWatchScoring": false,
+      "affectsGfrrScoring": false
+    }
   },
   "historicalContext": {
     "topSimilarity": {
@@ -149,4 +162,3 @@
     "affectsGfrrScoring": false
   }
 }
-

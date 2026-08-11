@@ -137,6 +137,54 @@ export function visibleEditorialText(output) {
   return collectStrings(visible).join('\n');
 }
 
+export function validateNewsDiscovery(discovery) {
+  const errors = [];
+  const root = requireRecord(discovery, 'news discovery', errors);
+  if (root.schemaVersion !== NEWS_DISCOVERY_SCHEMA) errors.push(`news discovery.schemaVersion must be ${NEWS_DISCOVERY_SCHEMA}`);
+  if (!['ok', 'partial', 'insufficient'].includes(root.status)) errors.push('news discovery.status must be ok, partial, or insufficient');
+  requireString(root.generatedAt, 'news discovery.generatedAt', errors, { max: 64 });
+  requireString(root.windowStart, 'news discovery.windowStart', errors, { min: 10, max: 10 });
+  requireString(root.windowEnd, 'news discovery.windowEnd', errors, { min: 10, max: 10 });
+  if (!Number.isInteger(root.topicsQueried) || root.topicsQueried < 1 || root.topicsQueried > EDITORIAL_TOPICS.length) {
+    errors.push(`news discovery.topicsQueried must be 1-${EDITORIAL_TOPICS.length}`);
+  }
+  if (!Number.isInteger(root.liveProviderCount) || root.liveProviderCount < 0 || root.liveProviderCount > 2) {
+    errors.push('news discovery.liveProviderCount must be 0-2');
+  }
+
+  const stories = requireArray(root.stories, 'news discovery.stories', errors, { max: 30 });
+  const storyIds = uniqueStrings(stories.map((story) => story?.id), 'news discovery story ids', errors);
+  const perTopic = new Map();
+  for (const [index, story] of stories.entries()) {
+    if (!EDITORIAL_TOPICS.includes(story?.topic)) errors.push(`news discovery.stories[${index}].topic is not registered`);
+    perTopic.set(story?.topic, (perTopic.get(story?.topic) || 0) + 1);
+    if (!['official', 'cross_checked', 'discovery_only'].includes(story?.evidenceStatus)) errors.push(`news discovery.stories[${index}].evidenceStatus is invalid`);
+    requireString(story?.title, `news discovery.stories[${index}].title`, errors, { min: 4, max: 220 });
+    requireString(story?.url, `news discovery.stories[${index}].url`, errors, { min: 8, max: 2048 });
+    if (typeof story?.url === 'string' && !story.url.startsWith('https://')) errors.push(`news discovery.stories[${index}].url must use https`);
+    const providers = requireArray(story?.providers, `news discovery.stories[${index}].providers`, errors, { min: 1, max: 2 });
+    if (providers.some((provider) => !['tavily', 'brave'].includes(provider))) errors.push(`news discovery.stories[${index}].providers contains unsupported provider`);
+    if (story?.evidenceStatus === 'cross_checked') {
+      const domains = requireArray(story?.supportingDomains, `news discovery.stories[${index}].supportingDomains`, errors, { min: 2, max: 8 });
+      if (new Set(domains).size < 2) errors.push(`news discovery.stories[${index}] cross_checked requires two independent domains`);
+    }
+    if (typeof story?.snippet === 'string' && story.snippet.length > 360) errors.push(`news discovery.stories[${index}].snippet exceeds 360 characters`);
+    for (const forbidden of ['raw', 'rawResponse', 'rawContent', 'headers', 'apiKey', 'authorization', 'fullArticleBody']) {
+      if (Object.hasOwn(story || {}, forbidden)) errors.push(`news discovery.stories[${index}] contains forbidden field ${forbidden}`);
+    }
+  }
+  for (const [topic, count] of perTopic.entries()) {
+    if (count > 5) errors.push(`news discovery topic ${topic} exceeds 5 stories`);
+  }
+  if (root.status === 'ok' && root.liveProviderCount !== 2) errors.push('news discovery status ok requires two live providers');
+  const boundaries = requireRecord(root.boundaries, 'news discovery.boundaries', errors);
+  for (const key of ['transientArtifactOnly']) requireExactBoolean(boundaries, key, true, 'news discovery.boundaries', errors);
+  for (const key of ['containsRawProviderResponse', 'containsHeaders', 'containsApiKeys', 'containsFullArticleBody', 'affectsBubbleWatchScoring', 'affectsGfrrScoring']) {
+    requireExactBoolean(boundaries, key, false, 'news discovery.boundaries', errors);
+  }
+  return { ok: errors.length === 0, errors, storyIds };
+}
+
 export function validateWeeklyEditorialInput(input) {
   const errors = [];
   const root = requireRecord(input, 'input', errors);
@@ -158,15 +206,9 @@ export function validateWeeklyEditorialInput(input) {
   }
 
   const news = requireRecord(root.newsContext, 'input.newsContext', errors);
-  if (news.schemaVersion !== NEWS_DISCOVERY_SCHEMA) errors.push(`input.newsContext.schemaVersion must be ${NEWS_DISCOVERY_SCHEMA}`);
-  const stories = requireArray(news.stories, 'input.newsContext.stories', errors, { max: 30 });
-  const storyIds = uniqueStrings(stories.map((story) => story?.id), 'input news story ids', errors);
-  for (const [index, story] of stories.entries()) {
-    if (!EDITORIAL_TOPICS.includes(story?.topic)) errors.push(`input.newsContext.stories[${index}].topic is not registered`);
-    if (!['official', 'cross_checked', 'discovery_only'].includes(story?.evidenceStatus)) errors.push(`input.newsContext.stories[${index}].evidenceStatus is invalid`);
-    requireString(story?.url, `input.newsContext.stories[${index}].url`, errors, { min: 8, max: 2048 });
-    if (typeof story?.url === 'string' && !story.url.startsWith('https://')) errors.push(`input.newsContext.stories[${index}].url must use https`);
-  }
+  const newsResult = validateNewsDiscovery(news);
+  errors.push(...newsResult.errors.map((error) => `input prerequisite: ${error}`));
+  const storyIds = newsResult.storyIds;
 
   const sourceRefs = requireArray(root.sourceRefs, 'input.sourceRefs', errors, { min: 1, max: 80 });
   const sourceRefIds = uniqueStrings(sourceRefs.map((source) => source?.id), 'input.sourceRefs ids', errors);

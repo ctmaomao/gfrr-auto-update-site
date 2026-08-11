@@ -1,0 +1,92 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import {
+  assertValid,
+  validateNewsDiscovery,
+  validateWeeklyEditorialInput
+} from './bubble-watch/weekly-editorial-contract.mjs';
+import { buildWeeklyEditorialInput } from './bubble-watch/weekly-editorial-input.mjs';
+import {
+  buildNewsDiscovery,
+  canonicalizeNewsUrl,
+  rawStoriesFromFixture
+} from './bubble-watch/weekly-editorial-news.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function readJson(relativePath) {
+  return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function allKeys(value, output = []) {
+  if (Array.isArray(value)) value.forEach((item) => allKeys(item, output));
+  else if (value && typeof value === 'object') {
+    for (const [key, item] of Object.entries(value)) {
+      output.push(key);
+      allKeys(item, output);
+    }
+  }
+  return output;
+}
+
+const providerFixture = readJson('docs/fixtures/bubble-watch-weekly-editorial/sample-news-provider-responses-v1.json');
+const sourceStatus = {
+  tavily: { status: 'ok', successCount: 6, failureCount: 0, queryRuns: [] },
+  brave: { status: 'ok', successCount: 6, failureCount: 0, queryRuns: [] }
+};
+const discovery = buildNewsDiscovery({
+  rawStories: rawStoriesFromFixture(providerFixture),
+  sourceStatus,
+  generatedAt: '2026-08-11T00:00:00.000Z',
+  windowStart: '2026-08-02',
+  windowEnd: '2026-08-11'
+});
+assertValid(validateNewsDiscovery(discovery), 'weekly editorial news discovery');
+assert(discovery.status === 'ok', 'two live providers with usable stories must produce status=ok');
+assert(discovery.stories.length === 6, `fixture must deduplicate to 6 stories, got ${discovery.stories.length}`);
+assert(discovery.stories.some((story) => story.evidenceStatus === 'official'), 'fixture must exercise official evidence');
+assert(discovery.stories.some((story) => story.evidenceStatus === 'cross_checked'), 'fixture must exercise cross_checked evidence');
+assert(discovery.stories.some((story) => story.evidenceStatus === 'discovery_only'), 'fixture must exercise discovery_only evidence');
+assert(!canonicalizeNewsUrl('https://example.com/story?utm_source=test&fbclid=abc').includes('utm_'), 'canonical URL must strip tracking parameters');
+assert(!canonicalizeNewsUrl('https://example.com/story?utm_source=test&fbclid=abc').includes('fbclid'), 'canonical URL must strip fbclid');
+const forbiddenNewsKeys = new Set(['raw', 'rawResponse', 'rawContent', 'headers', 'apiKey', 'authorization', 'fullArticleBody']);
+assert(!allKeys(discovery).some((key) => forbiddenNewsKeys.has(key)), 'discovery artifact contains a forbidden raw/secret field');
+
+const bubbleWatch = readJson('data/bubble-watch.json');
+const radarData = readJson('data/radar-data.json');
+const oilNewsWatch = readJson('data/oil-news-event-watch.json');
+const bubbleWithSentinel = structuredClone(bubbleWatch);
+bubbleWithSentinel.summary.weekly_editorial = { sentinel: 'must_not_enter_compact_input' };
+const input = buildWeeklyEditorialInput({
+  bubbleWatch: bubbleWithSentinel,
+  radarData,
+  oilNewsWatch,
+  discovery,
+  generatedAt: '2026-08-11T00:01:00.000Z'
+});
+assertValid(validateWeeklyEditorialInput(input), 'live-site compact input fixture replay');
+assert(input.structuredFacts.length === 27, 'compact input must include all 27 display facts with score roles');
+assert(input.scoringSnapshot.coreIndicatorCount === 23, 'compact input must preserve Core-23 count');
+assert(input.scoringSnapshot.shadowIndicatorCount === 4, 'compact input must preserve Shadow-4 count');
+assert(!JSON.stringify(input).includes('must_not_enter_compact_input'), 'compact input must exclude existing weekly editorial output');
+assert(Buffer.byteLength(JSON.stringify(input)) < 60 * 1024, 'compact input must stay below 60 KiB');
+const forbiddenInputKeys = new Set(['positionGuidance', 'executionLock', 'actionQueue', 'triggerMonitor', 'invalidationRules', 'rawResponse', 'headers', 'apiKey']);
+assert(!allKeys(input).some((key) => forbiddenInputKeys.has(key)), 'compact input contains forbidden decision/execution/secret fields');
+
+const invalidTopic = structuredClone(discovery);
+invalidTopic.stories[0].topic = 'unregistered_topic';
+const invalidTopicResult = validateNewsDiscovery(invalidTopic);
+assert(!invalidTopicResult.ok && invalidTopicResult.errors.some((error) => error.includes('not registered')), 'unregistered topic negative test must fail');
+
+const unsafeBoundary = structuredClone(discovery);
+unsafeBoundary.boundaries.affectsBubbleWatchScoring = true;
+const unsafeBoundaryResult = validateNewsDiscovery(unsafeBoundary);
+assert(!unsafeBoundaryResult.ok && unsafeBoundaryResult.errors.some((error) => error.includes('affectsBubbleWatchScoring must be false')), 'news scoring boundary negative test must fail');
+
+console.log(`Bubble Watch weekly editorial news/input PASS (stories=${discovery.stories.length}, facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, bytes=${Buffer.byteLength(JSON.stringify(input))}, negative tests=2)`);
