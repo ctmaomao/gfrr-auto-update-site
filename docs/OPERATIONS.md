@@ -127,6 +127,47 @@ GitHub Actions cron 使用 UTC。当前 `Build Daily Radar Data` 每日 `22:30 U
 
 如果看到 `data/radar-data.json` 中 Daily 生成时间与 `externalAiInterpretationLayer.generatedAt` 不同，不要按事故处理，也不要为对齐时间而重跑付费 provider 或手工编辑 JSON。日频简报允许这类约 1 天内的时序差；只有当 external AI output contract 失败、质量审查失败、provider failure、缺失超过预期刷新窗口，或显示层没有 fallback 到 rule-based `aiInterpretationLayer` 时，才按 external AI incident 排查。
 
+### Bubble Watch weekly editorial refresh
+
+`Bubble Watch Weekly Editorial Refresh` 是
+`data/bubble-watch.json.summary.weekly_editorial` 的唯一生产写入路径。正常由周一
+`Refresh Bubble Watch` 成功后的 `workflow_run` 触发；在 `main` 手动运行时必须显式设置
+`acknowledge_cost=true`。工作流复用现有 `external-ai-production-refresh` environment、
+Tavily/Brave repository secrets 与 `DEEPSEEK_API_KEY`，每次最多一次 DeepSeek 请求，
+不自动重试。
+
+生产顺序固定为：bounded Tavily + Brave discovery → compact input validation → 一次
+DeepSeek JSON request → output validation → quality review → projection → guarded writer →
+`check:bubble-watch` + `check:all` → exact-path assertion → 只提交
+`data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；topic 部分成功只在两个
+provider 均存在且至少有两条 official/cross-checked story 时允许继续。discovery、input、
+provider output、review 与 projection 都是 ignored artifact，仅上传保存 3 天供诊断，
+不得提交。
+
+故障处理：
+
+- Collector/input failure 发生在付费调用前。先看 provider status、query diagnostics 和
+  credible-story count；不得削弱双 provider 或来源质量门槛。
+- Provider timeout/unavailable/invalid JSON 只生成 sanitized failure artifact，不写生产。
+  不得连续重跑付费失败；先审阅 failure classification 与 diagnostics。
+- Validator、quality hard-fail、writer、protected-path 或 repository check 失败均阻止
+  commit。不得把 provider artifact 复制进生产或手工编辑 `data/bubble-watch.json`。
+- Editorial 缺失、过期或 as-of 不匹配是预期 fail-closed display 状态：
+  `bubble-watch.html` 继续显示确定性 `bubble-watch-narrative-v2`。AI 层不影响
+  Bubble Watch 分数或任何 GFRR scoring/decision/execution/position 路径。
+
+本地 no-network 验证：
+
+```bash
+npm run check:bubble-watch-weekly-editorial-workflow
+npm run check:bubble-watch
+npx playwright test tests/e2e/site-smoke.spec.mjs --grep "Bubble Watch"
+```
+
+回滚必须 reviewed revert 最近一次 `chore: refresh Bubble Watch weekly editorial` 数据
+commit，或 reviewed data update 同时关闭 `displayEnabled` 与
+`frontendDisplayApproved`。回滚 display 层时不得改变确定性 verdict。
+
 ## Stable Observation Audit
 
 v28.0K-3D originally added a read-only stable observation gate for the v28.0K baseline. M-44 deprecates that legacy gate because it was hard-coded to the disabled external-AI scaffold era and no longer matches the v28.0L+ production External AI state.

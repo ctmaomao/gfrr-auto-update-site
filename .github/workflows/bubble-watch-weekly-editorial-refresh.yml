@@ -1,0 +1,153 @@
+name: Bubble Watch Weekly Editorial Refresh
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_run:
+    workflows:
+      - Refresh Bubble Watch
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      acknowledge_cost:
+        description: "Acknowledge one DeepSeek call"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gfrr-main-writer-main
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  weekly_editorial_refresh:
+    name: bubble-watch-weekly-editorial-refresh
+    if: >-
+      ${{
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.head_branch == 'main') ||
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+      }}
+    runs-on: ubuntu-latest
+    environment: external-ai-production-refresh
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Sync latest main before refresh
+        run: git pull --ff-only origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Require manual cost acknowledgement
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.acknowledge_cost != true }}
+        run: |
+          echo "Manual dispatch requires acknowledge_cost=true."
+          exit 1
+
+      - name: Preflight workflow and provider contracts
+        run: |
+          npm run check:bubble-watch-weekly-editorial-workflow
+          npm run check:bubble-watch-weekly-editorial-provider-path
+
+      - name: Collect bounded weekly news context
+        env:
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+        run: |
+          as_of_date="$(node -e "const fs = require('node:fs'); process.stdout.write(JSON.parse(fs.readFileSync('data/bubble-watch.json', 'utf8')).as_of_date)")"
+          npm run collect:bubble-watch-weekly-news -- --allow-network --as-of "$as_of_date"
+
+      - name: Build and hard-check compact provider input
+        run: |
+          npm run build:bubble-watch-weekly-editorial-input
+          npm run check:bubble-watch-weekly-editorial-live-input
+
+      - name: Run one DeepSeek editorial call
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: npm run run:bubble-watch-weekly-editorial-deepseek -- --allow-network
+
+      - name: Review and project display-only production layer
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          npm run review:bubble-watch-weekly-editorial
+          GITHUB_SHA="$(git rev-parse HEAD)" npm run project:bubble-watch-weekly-editorial
+
+      - name: Write weekly editorial field
+        run: |
+          npm run write:bubble-watch-weekly-editorial -- \
+            --input manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json \
+            --target data/bubble-watch.json \
+            --confirm-production-write \
+            --data-only
+
+      - name: Validate final data and repository contracts
+        run: |
+          npm run check:bubble-watch
+          npm run check:all
+
+      - name: Protected path assertion
+        run: |
+          set -euo pipefail
+          changed_paths="$(git diff --name-only)"
+          if [ "$changed_paths" != "data/bubble-watch.json" ]; then
+            echo "Unexpected tracked file changes:"
+            printf '%s\n' "$changed_paths"
+            exit 1
+          fi
+          if git status --short -- manual-artifacts | grep -q .; then
+            echo "manual-artifacts must remain ignored"
+            exit 1
+          fi
+
+      - name: Commit refreshed weekly editorial
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bubble-watch.json
+          staged_paths="$(git diff --cached --name-only)"
+          if [ "$staged_paths" != "data/bubble-watch.json" ]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$staged_paths"
+            exit 1
+          fi
+          git commit -m "chore: refresh Bubble Watch weekly editorial"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Upload sanitized editorial artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: bubble-watch-weekly-editorial-${{ github.run_id }}
+          path: |
+            manual-artifacts/bubble-watch-weekly-editorial/news-discovery-latest.json
+            manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json
+            manual-artifacts/bubble-watch-weekly-editorial/deepseek-output-latest.json
+            manual-artifacts/bubble-watch-weekly-editorial/deepseek-failure-latest.json
+            manual-artifacts/bubble-watch-weekly-editorial/quality-review-latest.json
+            manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json
+          if-no-files-found: warn
+          retention-days: 3

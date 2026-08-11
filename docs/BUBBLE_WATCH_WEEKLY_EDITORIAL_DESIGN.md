@@ -195,5 +195,5 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 - Stage 1 complete: ADR / contract family / positive-negative fixtures / machine validator。
 - Stage 2 complete: Tavily + Brave bounded collector、URL/title 去重、evidence status、27-card + radar/oil compact input；默认 no-network，输出仅允许 `manual-artifacts/bubble-watch-weekly-editorial/`。
 - Stage 3 complete: DeepSeek 单次 JSON request、prompt contract、output validation、quality review、production projection、source ledger、原子 writer 与 protected-target/write-semantic guard。离线 provider replay 证明 call=1 / retry=0，timeout / invalid JSON / fixture promotion / unsafe target 均 fail closed。
-- Stage 4 pending: GitHub workflow、Bubble Watch frontend、fallback/runtime responsive acceptance、Pages trigger 和 full check。
+- Stage 4 complete: GitHub post-refresh/manual workflow、protected path、Bubble Watch 长篇 frontend、240h/as-of fallback、1440px/390px runtime acceptance 与 Pages trigger 均已实现；本地 full check 作为该阶段提交前硬门禁。
 - Stage 5 pending: main 上一次 owner-authorized live DeepSeek run 与 deployed JSON / DOM 终验。

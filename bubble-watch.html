@@ -64,6 +64,40 @@
   .verdict p em { font-style: italic; }
   .verdict .footnote { margin-top: 24px; border-top: 1px solid var(--ink); padding-top: 16px; font-family: "IBM Plex Mono", monospace; font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 
+  /* DeepSeek weekly editorial — read-only, evidence-linked long-form layer */
+  section.weekly-editorial { margin-bottom: 48px; border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); padding: 30px 0 34px; }
+  .weekly-editorial-header { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 28px; align-items: end; margin-bottom: 28px; }
+  .weekly-editorial-kicker { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--red); margin-bottom: 8px; }
+  .weekly-editorial-header h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: clamp(27px, 4vw, 40px); line-height: 1.15; margin: 0; }
+  .weekly-editorial-meta { border-left: 1px solid var(--ink); padding-left: 18px; font-family: "IBM Plex Mono", monospace; font-size: 10px; line-height: 1.8; color: var(--muted); overflow-wrap: anywhere; }
+  .weekly-editorial-scorecard { margin: 0 0 30px; padding: 18px 0 18px 22px; border-left: 4px solid var(--red); font-size: 17px; line-height: 1.75; color: var(--warm); }
+  .weekly-editorial h4 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: 22px; margin: 28px 0 14px; border-bottom: 1px solid var(--ink); padding-bottom: 7px; }
+  .weekly-editorial h4 em { font-size: 0.6em; font-weight: 400; color: var(--muted); }
+  .editorial-timeline { display: grid; gap: 0; }
+  .editorial-timeline-item { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 18px; padding: 16px 0; border-bottom: 1px dashed var(--soft-line); }
+  .editorial-timeline-date { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--red); }
+  .editorial-item-title { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .editorial-item-detail { font-size: 14px; color: var(--warm); line-height: 1.7; overflow-wrap: anywhere; }
+  .editorial-two-column, .editorial-category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 30px; }
+  .editorial-plain-item { padding-top: 12px; border-top: 2px solid var(--ink); min-width: 0; }
+  .editorial-plain-item .category-name { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.15em; margin-bottom: 7px; }
+  .editorial-history { font-size: 15px; line-height: 1.75; color: var(--warm); padding: 16px 0; }
+  .editorial-watch-list { margin: 0; padding: 0; list-style: none; counter-reset: editorial-watch; }
+  .editorial-watch-list li { counter-increment: editorial-watch; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 13px 0; border-bottom: 1px dashed var(--soft-line); }
+  .editorial-watch-list li::before { content: counter(editorial-watch, decimal-leading-zero); font-family: "Playfair Display", serif; font-weight: 700; color: var(--red); }
+  .editorial-invalidation { display: block; margin-top: 4px; color: var(--muted); font-style: italic; }
+  .editorial-gaps { padding-left: 1.25em; margin: 0; color: var(--warm); font-size: 13px; line-height: 1.75; }
+  .editorial-sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; font-family: "IBM Plex Mono", monospace; font-size: 10px; line-height: 1.55; }
+  .editorial-source { min-width: 0; overflow-wrap: anywhere; }
+  .editorial-source a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--ink); }
+  .editorial-source .source-class { color: var(--muted); }
+  .editorial-review-warning { margin-top: 22px; padding: 10px 14px; border: 1px solid var(--yellow); color: var(--warm); font-size: 12px; line-height: 1.6; }
+  @media (max-width: 720px) {
+    .weekly-editorial-header, .editorial-two-column, .editorial-category-grid, .editorial-sources { grid-template-columns: 1fr; }
+    .weekly-editorial-meta { border-left: 0; border-top: 1px solid var(--ink); padding: 12px 0 0; }
+    .editorial-timeline-item { grid-template-columns: 1fr; gap: 5px; }
+  }
+
   /* Two-axis read (stage x trigger) */
   section.axes { margin-bottom: 48px; border: 1px solid var(--ink); padding: 20px; }
   .axes-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
@@ -265,6 +299,107 @@ function escapeHtml(s) {
   return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function safeHttpsUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function eligibleWeeklyEditorial(data, nowMs = Date.now()) {
+  const layer = data?.summary?.weekly_editorial;
+  if (!layer || layer.schemaVersion !== 'bubble-watch-weekly-editorial-production-v1') return null;
+  if (layer.status !== 'valid' || layer.displayEnabled !== true) return null;
+  if (layer.asOfDate !== data.as_of_date || layer.output?.asOfDate !== data.as_of_date) return null;
+  if (layer.provider !== 'deepseek' || layer.mode !== 'external_ai_weekly_editorial') return null;
+  if (layer.validation?.status !== 'pass' || !['pass', 'warn'].includes(layer.qualityReview?.status)) return null;
+  if (layer.qualityReview?.promotionEligible !== false || layer.provenance?.humanApproved !== false) return null;
+  if (layer.boundaries?.frontendDisplayApproved !== true || layer.boundaries?.displayOnly !== true) return null;
+  for (const key of ['affectsBubbleWatchScoring', 'affectsCore23', 'affectsShadow4', 'affectsStageTrigger', 'affectsGfrrScoring', 'affectsDecisionModel', 'affectsExecutionLock', 'affectsPositionGuidance']) {
+    if (layer.boundaries?.[key] !== false) return null;
+  }
+  if (layer.freshness?.isStale !== false) return null;
+  const generatedAtMs = Date.parse(layer.freshness?.artifactGeneratedAt || layer.generatedAt || '');
+  const maxAgeHours = Math.min(Number(layer.freshness?.maxAgeHours) || 0, 240);
+  if (!Number.isFinite(generatedAtMs) || maxAgeHours <= 0) return null;
+  const ageHours = (nowMs - generatedAtMs) / 3_600_000;
+  if (ageHours < -1 || ageHours > maxAgeHours) return null;
+  if (!layer.output?.headlineZh || !layer.output?.leadZh) return null;
+  return layer;
+}
+
+function renderWeeklyEditorial(layer) {
+  if (!layer) return '';
+  const output = layer.output || {};
+  const categoryNames = Object.fromEntries(CATEGORY_ORDER.map(item => [item.key, `${item.zh} · ${item.en}`]));
+  const attributionById = new Map((output.sourceAttribution || []).map(item => [item.sourceRefId, item]));
+  const generatedLabel = String(layer.generatedAt || '').replace('T', ' ').replace(/\.\d{3}Z$/u, ' UTC');
+  const confidence = output.confidence || {};
+  const warnings = Array.isArray(layer.qualityReview?.warnings) ? layer.qualityReview.warnings : [];
+  return `
+    <section class="weekly-editorial" id="weekly-editorial" data-editorial-status="${escapeHtml(layer.qualityReview.status)}">
+      <div class="weekly-editorial-header">
+        <div>
+          <div class="weekly-editorial-kicker">DEEPSEEK WEEKLY EDITORIAL · 只读解释层</div>
+          <h3>证据如何拼成这一周</h3>
+        </div>
+        <div class="weekly-editorial-meta">
+          <div>PROVIDER ${escapeHtml(layer.provider)} · ${escapeHtml(layer.model)}</div>
+          <div>GENERATED ${escapeHtml(generatedLabel)}</div>
+          <div>CONFIDENCE ${escapeHtml(confidence.level || '—')} · ${Number.isFinite(confidence.score) ? confidence.score : '—'}/100</div>
+          <div>QUALITY ${escapeHtml(layer.qualityReview.status)} · 不进入 Core-23 / Stage / Trigger</div>
+        </div>
+      </div>
+
+      <div class="weekly-editorial-scorecard">${escapeHtml(output.scorecardSynthesisZh)}</div>
+
+      <h4>周内时间线 <em>· WEEKLY TIMELINE</em></h4>
+      <div class="editorial-timeline">
+        ${(output.weeklyTimeline || []).map(item => `
+          <div class="editorial-timeline-item">
+            <div class="editorial-timeline-date">${escapeHtml(item.date)}</div>
+            <div><div class="editorial-item-title">${escapeHtml(item.titleZh)}</div><div class="editorial-item-detail">${escapeHtml(item.detailZh)}</div></div>
+          </div>
+        `).join('')}
+      </div>
+
+      <h4>关键矛盾 <em>· KEY TENSIONS</em></h4>
+      <div class="editorial-two-column">
+        ${(output.keyTensions || []).map(item => `<div class="editorial-plain-item"><div class="editorial-item-title">${escapeHtml(item.titleZh)}</div><div class="editorial-item-detail">${escapeHtml(item.detailZh)}</div></div>`).join('')}
+      </div>
+
+      <h4>六类证据 <em>· CATEGORY READ</em></h4>
+      <div class="editorial-category-grid">
+        ${(output.categoryAnalysis || []).map(item => `<div class="editorial-plain-item"><div class="category-name">${escapeHtml(categoryNames[item.category] || item.category)}</div><div class="editorial-item-detail">${escapeHtml(item.detailZh)}</div></div>`).join('')}
+      </div>
+
+      <h4>历史差异 <em>· HISTORICAL DIFFERENCE</em></h4>
+      <div class="editorial-history"><b>${escapeHtml(output.historicalComparison?.period || '历史对照')}</b> · ${escapeHtml(output.historicalComparison?.detailZh)}</div>
+
+      <h4>下周观察与反证 <em>· WATCH & INVALIDATION</em></h4>
+      <ol class="editorial-watch-list">
+        ${(output.watchNextWeek || []).map(item => `<li><div><span>${escapeHtml(item.conditionZh)}</span><span class="editorial-invalidation">反证: ${escapeHtml(item.invalidationZh)}</span></div></li>`).join('')}
+      </ol>
+
+      <h4>数据限制 <em>· DATA GAPS</em></h4>
+      <ul class="editorial-gaps">${(output.dataGaps || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+
+      <h4>来源 <em>· SOURCE LEDGER</em></h4>
+      <div class="editorial-sources">
+        ${(layer.sourceLedger || []).map(source => {
+          const url = safeHttpsUrl(source.url);
+          const label = source.title || source.sourceName || source.id;
+          const attribution = attributionById.get(source.id);
+          return `<div class="editorial-source">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : `<span>${escapeHtml(label)}</span>`}<br/><span class="source-class">${escapeHtml(source.sourceClass)}${attribution?.noteZh ? ` · ${escapeHtml(attribution.noteZh)}` : ''}</span></div>`;
+        }).join('')}
+      </div>
+      ${warnings.length ? `<div class="editorial-review-warning">质量提示: ${warnings.map(escapeHtml).join('；')}</div>` : ''}
+    </section>
+  `;
+}
+
 function statusBadge(status) {
   const map = { red: '● RED', yellow: '◐ YELLOW', green: '○ GREEN' };
   return `<span class="badge ${status}">${map[status] || status}</span>`;
@@ -356,6 +491,9 @@ function render(data) {
 
   const meta = data.meta || {};
   const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径`;
+  const weeklyEditorial = eligibleWeeklyEditorial(data);
+  const heroHeadline = weeklyEditorial?.output?.headlineZh || s.verdict_label;
+  const heroLead = weeklyEditorial?.output?.leadZh || s.verdict_desc;
 
   const root = document.getElementById('root');
   root.innerHTML = `
@@ -389,15 +527,17 @@ function render(data) {
       <div class="verdict">
         <div>
           <div class="label">本周判读 · THIS WEEK'S VERDICT</div>
-          <h2>${escapeHtml(s.verdict_label)}</h2>
-          <p>${escapeHtml(s.verdict_desc)}</p>
+          <h2>${escapeHtml(heroHeadline)}</h2>
+          <p>${escapeHtml(heroLead)}</p>
         </div>
         <div class="footnote">
-          <span>Issue ${issueNo} · ${escapeHtml(data.as_of_date)}</span>
+          <span>Issue ${issueNo} · ${escapeHtml(data.as_of_date)}${weeklyEditorial ? ` · 固定判读 ${escapeHtml(s.verdict_label)}` : ''}</span>
           <span>对照: 2000-03 (CAPE 44.19, NDX -78%)</span>
         </div>
       </div>
     </section>
+
+    ${renderWeeklyEditorial(weeklyEditorial)}
 
     ${(s.stage_score != null && s.trigger_score != null) ? `
     <section class="axes">

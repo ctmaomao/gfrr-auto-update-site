@@ -25,6 +25,11 @@ for (const marker of [
   '@media (max-width: 720px) { .axes-grid { grid-template-columns: 1fr; } }',
   'grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));',
   '.technical-audit-summary { grid-template-columns: 1fr; }',
+  '.weekly-editorial-header, .editorial-two-column, .editorial-category-grid, .editorial-sources { grid-template-columns: 1fr; }',
+  "function eligibleWeeklyEditorial(data, nowMs = Date.now())",
+  'layer.asOfDate !== data.as_of_date',
+  'ageHours > maxAgeHours',
+  'renderWeeklyEditorial(weeklyEditorial)',
   'overflow-wrap: anywhere;',
   'const labelStep = W < 560 ? Math.ceil(seed.length / 5) : 1;',
   'width="${W}" height="${H}" role="img" aria-label="Core-23'
@@ -44,7 +49,9 @@ for (const marker of [
   'document.documentElement.scrollWidth',
   'headlineColumns',
   'axesColumns',
-  "Bubble Watch fails closed when its dedicated JSON is unavailable"
+  "Bubble Watch fails closed when its dedicated JSON is unavailable",
+  "Bubble Watch falls back to deterministic verdict when weekly editorial is stale",
+  "page.locator('#weekly-editorial')"
 ]) {
   requireMarker(e2e, marker, 'tests/e2e/site-smoke.spec.mjs');
 }

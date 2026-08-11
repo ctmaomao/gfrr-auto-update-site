@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 const DESKTOP = { width: 1440, height: 1000 };
 const MOBILE = { width: 390, height: 844 };
+const SAMPLE_WEEKLY_EDITORIAL_OUTPUT = JSON.parse(
+  readFileSync('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json', 'utf8'),
+);
 
 function capturePageErrors(page) {
   const errors = [];
@@ -65,6 +69,48 @@ function buildApprovedVisibleExternalAiLayer(layer, currentTimestamp) {
       staleLayers: [],
       fallbackLayers: [],
       missingLayers: [],
+    },
+  };
+}
+
+function buildApprovedBubbleWeeklyEditorial(data, currentTimestamp) {
+  const output = {
+    ...SAMPLE_WEEKLY_EDITORIAL_OUTPUT,
+    generatedAt: currentTimestamp,
+    asOfDate: data.as_of_date,
+  };
+  return {
+    schemaVersion: 'bubble-watch-weekly-editorial-production-v1',
+    status: 'valid',
+    displayEnabled: true,
+    generatedAt: currentTimestamp,
+    updatedAt: currentTimestamp,
+    asOfDate: data.as_of_date,
+    provider: 'deepseek',
+    model: 'deepseek-v4-flash',
+    mode: 'external_ai_weekly_editorial',
+    sourceMode: 'weekly_news_and_site_structured_compact_v1',
+    output,
+    sourceLedger: [
+      { id: 'indicator:cape', kind: 'indicator', sourceName: 'Bubble Watch CAPE', sourceClass: 'site_structured' },
+      { id: 'news:earnings-sample', kind: 'news', sourceName: 'Issuer', sourceClass: 'official', title: 'Fixture issuer earnings', url: 'https://issuer.example/earnings-sample', domain: 'issuer.example' },
+      { id: 'news:financing-sample', kind: 'news', sourceName: 'News A', sourceClass: 'cross_checked', title: 'Fixture financing context', url: 'https://news-a.example/ai-financing-sample', domain: 'news-a.example' },
+    ],
+    validation: { status: 'pass' },
+    qualityReview: { status: 'pass', promotionEligible: false, warnings: [] },
+    provenance: { humanApproved: false },
+    freshness: { artifactGeneratedAt: currentTimestamp, sourceAsOfDate: data.as_of_date, maxAgeHours: 240, isStale: false },
+    boundaries: {
+      displayOnly: true,
+      frontendDisplayApproved: true,
+      affectsBubbleWatchScoring: false,
+      affectsCore23: false,
+      affectsShadow4: false,
+      affectsStageTrigger: false,
+      affectsGfrrScoring: false,
+      affectsDecisionModel: false,
+      affectsExecutionLock: false,
+      affectsPositionGuidance: false,
     },
   };
 }
@@ -174,8 +220,19 @@ test.describe('desktop smoke', () => {
 
   test('Bubble Watch renders indicators and trend SVG', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
+    await page.route('**/data/bubble-watch.json*', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      data.summary.weekly_editorial = buildApprovedBubbleWeeklyEditorial(data, new Date().toISOString());
+      await route.fulfill({ response, json: data });
+    });
     const data = await gotoBubbleWatch(page);
     await expectBubbleWatchContract(page, data);
+    await expect(page.locator('#weekly-editorial')).toBeVisible();
+    await expect(page.locator('.verdict h2')).toHaveText(data.summary.weekly_editorial.output.headlineZh);
+    await expect(page.locator('.editorial-timeline-item')).toHaveCount(3);
+    await expect(page.locator('.editorial-category-grid .editorial-plain-item')).toHaveCount(6);
+    await expect(page.locator('.editorial-source')).toHaveCount(3);
     await expectNoHorizontalOverflow(page);
     expect(await bubbleGridColumns(page)).toEqual({ headlineColumns: 2, axesColumns: 2 });
     expect(pageErrors).toEqual([]);
@@ -227,10 +284,38 @@ test.describe('mobile smoke', () => {
 
   test('Bubble Watch renders on a phone viewport', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
+    await page.route('**/data/bubble-watch.json*', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      data.summary.weekly_editorial = buildApprovedBubbleWeeklyEditorial(data, new Date().toISOString());
+      await route.fulfill({ response, json: data });
+    });
     const data = await gotoBubbleWatch(page);
     await expectBubbleWatchContract(page, data);
+    await expect(page.locator('#weekly-editorial')).toBeVisible();
+    const editorialColumns = await page.locator('.editorial-category-grid').evaluate(
+      (element) => getComputedStyle(element).gridTemplateColumns.split(/\s+/u).filter(Boolean).length,
+    );
+    expect(editorialColumns).toBe(1);
     await expectNoHorizontalOverflow(page);
     expect(await bubbleGridColumns(page)).toEqual({ headlineColumns: 1, axesColumns: 1 });
+    expect(pageErrors).toEqual([]);
+  });
+
+  test('Bubble Watch falls back to deterministic verdict when weekly editorial is stale', async ({ page }) => {
+    const pageErrors = capturePageErrors(page);
+    await page.route('**/data/bubble-watch.json*', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      const staleTimestamp = new Date(Date.now() - 241 * 60 * 60 * 1000).toISOString();
+      data.summary.weekly_editorial = buildApprovedBubbleWeeklyEditorial(data, staleTimestamp);
+      await route.fulfill({ response, json: data });
+    });
+    const data = await gotoBubbleWatch(page);
+    await expect(page.locator('#weekly-editorial')).toHaveCount(0);
+    await expect(page.locator('.verdict h2')).toHaveText(data.summary.verdict_label);
+    await expect(page.locator('.verdict p')).toHaveText(data.summary.verdict_desc);
+    await expectNoHorizontalOverflow(page);
     expect(pageErrors).toEqual([]);
   });
 

@@ -479,6 +479,42 @@ const contracts = [
       'data/radar-data.json',
       'realtime/market.json'
     ]
+  },
+  {
+    file: '.github/workflows/bubble-watch-weekly-editorial-refresh.yml',
+    required: [
+      'name: Bubble Watch Weekly Editorial Refresh',
+      'workflow_run:',
+      '- Refresh Bubble Watch',
+      "github.event.workflow_run.conclusion == 'success'",
+      "github.event.workflow_run.head_branch == 'main'",
+      'workflow_dispatch:',
+      'acknowledge_cost:',
+      'permissions:',
+      'contents: write',
+      'actions: read',
+      'gfrr-main-writer-main',
+      'environment: external-ai-production-refresh',
+      'TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}',
+      'BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}',
+      'DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}',
+      'npm run check:bubble-watch-weekly-editorial-live-input',
+      'npm run run:bubble-watch-weekly-editorial-deepseek -- --allow-network',
+      'npm run check:all',
+      'git add data/bubble-watch.json',
+      'chore: refresh Bubble Watch weekly editorial',
+      'git push origin HEAD:main'
+    ],
+    forbidden: [
+      'schedule:',
+      'continue-on-error: true',
+      'WIND_API_KEY',
+      'data/radar-data.json',
+      'data/bubble-watch-history.json',
+      'realtime/',
+      'npm run build:data',
+      'npm run build:bubble-watch\n'
+    ]
   }
 ];
 
