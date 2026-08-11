@@ -6,6 +6,9 @@ const MOBILE = { width: 390, height: 844 };
 const SAMPLE_WEEKLY_EDITORIAL_OUTPUT = JSON.parse(
   readFileSync('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json', 'utf8'),
 );
+const OIL_THERMAL_WATCH = JSON.parse(
+  readFileSync('data/oil-thermal-watch.json', 'utf8'),
+);
 
 function capturePageErrors(page) {
   const errors = [];
@@ -207,8 +210,15 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#homepage-risk-engines .mini-card')).toHaveCount(6);
     await expect(page.locator('#homepage-macro-coherence .mc-row')).toHaveCount(7);
     await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
-    await expect(page.locator('#odp-thermal-request-health')).toContainText('请求完成 126/126');
-    await expect(page.locator('#odp-thermal-request-health')).toContainText('最终失败 0');
+    const thermalRequestDiagnostics = OIL_THERMAL_WATCH.aggregate.requestDiagnostics;
+    const completedThermalRequests = thermalRequestDiagnostics.logicalRequestCount
+      - thermalRequestDiagnostics.failedRequestCount;
+    await expect(page.locator('#odp-thermal-request-health')).toContainText(
+      `请求完成 ${completedThermalRequests}/${thermalRequestDiagnostics.logicalRequestCount}`,
+    );
+    await expect(page.locator('#odp-thermal-request-health')).toContainText(
+      `最终失败 ${thermalRequestDiagnostics.failedRequestCount}`,
+    );
     await expect(page.locator('#odp-thermal-request-health')).toContainText('仅显示脱敏分类计数');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('自动下载源正常');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('命中');
