@@ -21,13 +21,42 @@ export const WEEKLY_EDITORIAL_PROVIDER_CONFIG = Object.freeze({
 });
 
 function responseDiagnostics(responseJson, status = null) {
+  const firstChoice = Array.isArray(responseJson?.choices) ? responseJson.choices[0] : null;
+  const message = firstChoice?.message && typeof firstChoice.message === 'object' ? firstChoice.message : null;
+  const content = message?.content;
+  const reasoningContent = message?.reasoning_content;
+  const usage = responseJson?.usage && typeof responseJson.usage === 'object' ? responseJson.usage : null;
+  const trimmed = typeof content === 'string' ? content.trim() : '';
   return {
     httpStatus: status,
     errorType: typeof responseJson?.error?.type === 'string' ? responseJson.error.type.slice(0, 80) : null,
     errorCode: typeof responseJson?.error?.code === 'string' ? responseJson.error.code.slice(0, 80) : null,
     requestIdPresent: Boolean(responseJson?.id),
-    choicesCount: Array.isArray(responseJson?.choices) ? responseJson.choices.length : 0
+    responseModel: typeof responseJson?.model === 'string' ? responseJson.model.slice(0, 80) : null,
+    choicesCount: Array.isArray(responseJson?.choices) ? responseJson.choices.length : 0,
+    finishReason: typeof firstChoice?.finish_reason === 'string' ? firstChoice.finish_reason.slice(0, 80) : null,
+    messageKeys: message ? Object.keys(message).sort() : [],
+    hasContent: trimmed.length > 0,
+    contentLength: typeof content === 'string' ? content.length : null,
+    contentStartsWithObject: trimmed.startsWith('{'),
+    contentEndsWithObject: trimmed.endsWith('}'),
+    contentHasSingleJsonFence: /^```(?:json)?\s*[\s\S]*\s*```$/iu.test(trimmed),
+    hasReasoningContent: typeof reasoningContent === 'string' && reasoningContent.length > 0,
+    reasoningContentLength: typeof reasoningContent === 'string' ? reasoningContent.length : null,
+    usage: usage ? Object.fromEntries(Object.entries(usage).filter(([, value]) => Number.isFinite(value))) : null
   };
+}
+
+export function parseWeeklyEditorialProviderContent(content) {
+  if (typeof content !== 'string' || !content.trim()) throw new SyntaxError('provider content is empty');
+  const trimmed = content.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch (directError) {
+    const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/iu);
+    if (!fenced) throw directError;
+    return JSON.parse(fenced[1]);
+  }
 }
 
 export function classifyProviderFailure(error) {
@@ -38,6 +67,9 @@ export function classifyProviderFailure(error) {
     return { category: 'provider_unavailable', retryAllowedInSameRun: false, recommendedAction: 'Stop repeated paid calls and retry later.' };
   }
   if (error?.category === 'invalid_provider_json') {
+    if (error?.responseDiagnostics?.finishReason === 'length') {
+      return { category: 'provider_output_truncated', retryAllowedInSameRun: false, recommendedAction: 'Reduce requested output density and inspect the bounded prompt before any later run.' };
+    }
     return { category: 'invalid_provider_json', retryAllowedInSameRun: false, recommendedAction: 'Inspect the sanitized failure artifact and prompt contract.' };
   }
   return { category: 'provider_unknown_error', retryAllowedInSameRun: false, recommendedAction: 'Inspect sanitized diagnostics before any later run.' };
@@ -98,7 +130,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
 
   let output;
   try {
-    output = JSON.parse(content);
+    output = parseWeeklyEditorialProviderContent(content);
   } catch {
     const error = new Error('DeepSeek message content was not valid JSON');
     error.category = 'invalid_provider_json';

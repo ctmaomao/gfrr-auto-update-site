@@ -8,6 +8,7 @@ import { buildNewsDiscovery, rawStoriesFromFixture } from './bubble-watch/weekly
 import {
   WEEKLY_EDITORIAL_PROVIDER_CONFIG,
   classifyProviderFailure,
+  parseWeeklyEditorialProviderContent,
   requestWeeklyEditorial
 } from './bubble-watch/weekly-editorial-provider.mjs';
 import {
@@ -86,6 +87,8 @@ providerOutput.sourceAttribution = providerOutput.sourceAttribution.map((item) =
 });
 assertValid(validateWeeklyEditorialOutput(providerOutput, input), 'provider-path adapted output');
 assert(validateWeeklyEditorialPrompt(input).ok, 'weekly editorial prompt contract must pass');
+assert(JSON.stringify(parseWeeklyEditorialProviderContent(JSON.stringify(providerOutput))) === JSON.stringify(providerOutput), 'direct provider JSON parser replay failed');
+assert(JSON.stringify(parseWeeklyEditorialProviderContent(`\`\`\`json\n${JSON.stringify(providerOutput)}\n\`\`\``)) === JSON.stringify(providerOutput), 'single fenced provider JSON parser replay failed');
 
 let apiCallCount = 0;
 let capturedRequest = null;
@@ -96,7 +99,7 @@ const fakeFetch = async (url, request) => {
     ok: true,
     status: 200,
     async json() {
-      return { id: 'fixture-response', choices: [{ message: { content: JSON.stringify(providerOutput) } }] };
+      return { id: 'fixture-response', model: 'deepseek-v4-flash', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(providerOutput) } }], usage: { prompt_tokens: 100, completion_tokens: 200 } };
     }
   };
 };
@@ -113,8 +116,10 @@ assert(requestBody.model === 'deepseek-v4-flash', 'DeepSeek model drifted');
 assert(requestBody.max_tokens === 5000, 'DeepSeek max_tokens must remain 5000');
 assert(requestBody.response_format?.type === 'json_object', 'DeepSeek response_format must remain json_object');
 assert(requestBody.thinking?.type === 'disabled', 'DeepSeek thinking must remain disabled for bounded editorial call');
+assert(!requestBody.messages[1].content.includes('\n  "schemaVersion"'), 'DeepSeek user prompt must serialize compact JSON without pretty-print expansion');
 assert(!JSON.stringify(providerResult).includes('fixture-secret-never-serialized'), 'provider result must not serialize API key');
 assert(providerResult.diagnostics.apiCallCount === 1 && providerResult.diagnostics.retryCount === 0, 'provider diagnostics must prove one call/no retry');
+assert(providerResult.diagnostics.response.finishReason === 'stop' && providerResult.diagnostics.response.contentLength > 0, 'provider diagnostics must retain sanitized finish/content evidence');
 
 const review = reviewWeeklyEditorial({ input, output: providerResult.output, generatedAt: '2026-08-11T00:06:00.000Z' });
 assertValid(validateWeeklyEditorialReview(review), 'provider-path quality review');
@@ -165,6 +170,7 @@ assert(rejectedTarget, 'unsafe writer target negative test must fail');
 
 let invalidJsonCalls = 0;
 let invalidJsonFailure = null;
+let invalidJsonError = null;
 try {
   await requestWeeklyEditorial({
     input,
@@ -175,10 +181,17 @@ try {
     }
   });
 } catch (error) {
+  invalidJsonError = error;
   invalidJsonFailure = classifyProviderFailure(error);
 }
 assert(invalidJsonCalls === 1, 'invalid JSON path must not retry');
 assert(invalidJsonFailure?.category === 'invalid_provider_json' && invalidJsonFailure.retryAllowedInSameRun === false, 'invalid JSON classification failed');
+assert(invalidJsonError?.responseDiagnostics?.contentLength === 8, 'invalid JSON diagnostics must preserve sanitized content length');
+
+const truncatedError = new Error('truncated');
+truncatedError.category = 'invalid_provider_json';
+truncatedError.responseDiagnostics = { finishReason: 'length' };
+assert(classifyProviderFailure(truncatedError).category === 'provider_output_truncated', 'finish_reason=length classification failed');
 
 let timeoutCalls = 0;
 let timeoutFailure = null;

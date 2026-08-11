@@ -11,7 +11,7 @@ export function buildWeeklyEditorialSystemPrompt() {
     'Write restrained Chinese analysis, not investment advice. Never recommend buying, selling, positions, exposure, cash allocation, execution, targets, timing a crash, or certainty that a bubble will burst.',
     'Every factual timeline/category/tension/history item must cite sourceRefIds from input.sourceRefs. Indicator-based claims must also use sourceIndicatorIds from input.structuredFacts.',
     `Cover these categories when evidence exists: ${EDITORIAL_CATEGORIES.join(', ')}.`,
-    'Target 1,800-4,200 visible Chinese characters. Prefer evidence density over repetition.',
+    'Target 1,800-3,000 visible Chinese characters. Prefer evidence density over repetition and finish the complete JSON object within the token budget.',
     'The output must use these exact machine fields:',
     JSON.stringify({
       schemaVersion: OUTPUT_SCHEMA,
@@ -58,7 +58,7 @@ export function buildWeeklyEditorialUserPrompt(input) {
     'Organize the content through the structured fields: weekly timeline, fixed scorecard, key tensions, six-category analysis, historical differences, next-week watch conditions, and data gaps.',
     'Do not repeat the deterministic narrative verbatim. Add synthesis only where the input supports it.',
     'Use sourceRefIds and sourceIndicatorIds exactly as supplied. Return one JSON object only.',
-    JSON.stringify(input, null, 2)
+    JSON.stringify(input)
   ].join('\n\n');
 }
 

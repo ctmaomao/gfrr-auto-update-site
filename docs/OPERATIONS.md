@@ -172,6 +172,12 @@ npx playwright test tests/e2e/site-smoke.spec.mjs --grep "Bubble Watch"
 commit，或 reviewed data update 同时关闭 `displayEnabled` 与
 `frontendDisplayApproved`。回滚 display 层时不得改变确定性 verdict。
 
+`invalid_provider_json` 排障必须先看 sanitized `finishReason`、`contentLength`、
+`contentStartsWithObject` / `contentEndsWithObject`、`contentHasSingleJsonFence`、usage 和
+reasoning-content presence；artifact 不保存正文。`finishReason=length` 归类为
+`provider_output_truncated`。不得通过保存 raw response、放宽 output validator 或接受夹带
+任意前后文的 JSON 片段来“修复”生成失败。
+
 ## Stable Observation Audit
 
 v28.0K-3D originally added a read-only stable observation gate for the v28.0K baseline. M-44 deprecates that legacy gate because it was hard-coded to the disabled external-AI scaffold era and no longer matches the v28.0L+ production External AI state.

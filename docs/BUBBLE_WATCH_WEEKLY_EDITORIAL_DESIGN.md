@@ -107,7 +107,8 @@ AI `facts` 的唯一依据。
   - `auditFlags[]`
   - `boundaries`
 - 所有事实性段落必须带 `sourceRefIds` 或 `sourceIndicatorIds`；引用必须存在于 input。
-- 用户可见中文字数目标 1,800–4,200；不以堆砌内容凑长度。
+- Provider 生成目标为用户可见中文 1,800–3,000 字；quality review 对 1,800–4,200
+  保留兼容接受窗口。不以堆砌内容凑长度，必须在 token budget 内闭合完整 JSON。
 
 ### 5.4 Quality review
 
