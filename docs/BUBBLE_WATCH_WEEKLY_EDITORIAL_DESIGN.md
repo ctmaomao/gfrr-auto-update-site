@@ -119,9 +119,12 @@ AI `facts` 的唯一依据。
 
 - `schemaVersion = bubble-watch-weekly-editorial-review-v1`
 - 状态 `pass | warn | fail`。
-- `warn` 只用于非安全类质量维度，例如分类覆盖略低；可展示但必须披露 warning。
+- `warn` 只用于非安全类质量维度，例如分类覆盖略低，或 Tavily/Brave 都成功但
+  本周只形成 1 条 official/cross_checked 新闻。后一种情形必须在 `dataGaps`
+  披露覆盖限制，其余事实性段落必须同时引用站内指标；可展示但必须披露 warning。
 - `fail` 包括 invalid refs、unsafe copy、来源不足、结构错误、评分越权、外部验证虚构或
-  provider failure；不得 production write。
+  provider failure；两个索引均无可用结果或 official/cross_checked 为 0 也必须 fail，
+  不得 production write。
 - `promotionEligible=false` 恒成立，表示不得晋升为评分输入。
 
 ### 5.5 Production layer

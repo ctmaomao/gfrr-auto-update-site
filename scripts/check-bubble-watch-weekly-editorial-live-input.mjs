@@ -50,7 +50,7 @@ function main() {
     throw new Error('production provider call requires usable live results from both Tavily and Brave');
   }
   const credibleStories = discovery.stories.filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus));
-  if (credibleStories.length < 2) throw new Error('production provider call requires at least two official/cross_checked stories');
+  if (credibleStories.length < 1) throw new Error('production provider call requires at least one official/cross_checked story');
   if (input.fixtureOnly !== false || input.inputMode !== 'live_site_compact_evidence_pack') throw new Error('production provider call rejects fixture/non-live input');
   if (input.asOfDate !== bubbleWatch.as_of_date) throw new Error('provider input asOfDate must match current Bubble Watch data');
   const inputBytes = Buffer.byteLength(JSON.stringify(input));

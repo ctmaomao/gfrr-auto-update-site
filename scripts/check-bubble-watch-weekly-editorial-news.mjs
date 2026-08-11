@@ -58,6 +58,21 @@ assert(!canonicalizeNewsUrl('https://example.com/story?utm_source=test&fbclid=ab
 const forbiddenNewsKeys = new Set(['raw', 'rawResponse', 'rawContent', 'headers', 'apiKey', 'authorization', 'fullArticleBody']);
 assert(!allKeys(discovery).some((key) => forbiddenNewsKeys.has(key)), 'discovery artifact contains a forbidden raw/secret field');
 
+const oneCredibleDiscovery = buildNewsDiscovery({
+  rawStories: [
+    { provider: 'tavily', topic: 'ai_financing_credit', title: 'AI infrastructure financing receives independent confirmation', url: 'https://news-one.example/ai-financing', publishedAt: '2026-08-10', snippet: 'bounded context' },
+    { provider: 'brave', topic: 'ai_financing_credit', title: 'AI infrastructure financing receives independent confirmation', url: 'https://news-two.example/ai-financing', publishedAt: '2026-08-10', snippet: 'bounded context' },
+    { provider: 'tavily', topic: 'macro_policy', title: 'Technology shares await the next inflation release', url: 'https://news-three.example/macro', publishedAt: '2026-08-10', snippet: 'bounded context' }
+  ],
+  sourceStatus,
+  generatedAt: '2026-08-11T00:00:30.000Z',
+  windowStart: '2026-08-02',
+  windowEnd: '2026-08-11'
+});
+assertValid(validateNewsDiscovery(oneCredibleDiscovery), 'one-credible-story partial discovery');
+assert(oneCredibleDiscovery.status === 'partial', 'one credible story must produce transparent status=partial');
+assert(oneCredibleDiscovery.dataGaps.some((gap) => gap.includes('仅形成 1 条')), 'one credible story must disclose its coverage limitation');
+
 const bubbleWatch = readJson('data/bubble-watch.json');
 const radarData = readJson('data/radar-data.json');
 const oilNewsWatch = readJson('data/oil-news-event-watch.json');

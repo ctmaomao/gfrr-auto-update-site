@@ -90,6 +90,23 @@ assert(validateWeeklyEditorialPrompt(input).ok, 'weekly editorial prompt contrac
 assert(JSON.stringify(parseWeeklyEditorialProviderContent(JSON.stringify(providerOutput))) === JSON.stringify(providerOutput), 'direct provider JSON parser replay failed');
 assert(JSON.stringify(parseWeeklyEditorialProviderContent(`\`\`\`json\n${JSON.stringify(providerOutput)}\n\`\`\``)) === JSON.stringify(providerOutput), 'single fenced provider JSON parser replay failed');
 
+const oneCredibleReplacements = new Map(credibleStories.slice(1).map((story) => [story.id, credibleStories[0].id]));
+const oneCredibleOutput = replaceExactStrings(providerOutput, oneCredibleReplacements);
+const seenOneCredibleAttributions = new Set();
+oneCredibleOutput.sourceAttribution = oneCredibleOutput.sourceAttribution.filter((item) => {
+  if (seenOneCredibleAttributions.has(item.sourceRefId)) return false;
+  seenOneCredibleAttributions.add(item.sourceRefId);
+  return true;
+});
+assertValid(validateWeeklyEditorialOutput(oneCredibleOutput, input), 'one-credible-story output');
+const oneCredibleInput = structuredClone(input);
+oneCredibleInput.newsContext.status = 'partial';
+oneCredibleInput.newsContext.dataGaps.push('本周期仅形成 1 条 official/cross_checked 新闻证据。');
+const oneCredibleReview = reviewWeeklyEditorial({ input: oneCredibleInput, output: oneCredibleOutput, generatedAt: '2026-08-11T00:04:00.000Z' });
+assert(oneCredibleReview.status === 'warn', `one credible news reference must remain display-eligible WARN, got ${oneCredibleReview.status}`);
+assert(oneCredibleReview.dimensions.newsEvidenceQuality === 'warn', 'one credible news reference must warn on newsEvidenceQuality');
+assert(oneCredibleReview.frontendDisplayEligible === true && oneCredibleReview.promotionEligible === false, 'one-credible-story review must stay display-only and non-promotable');
+
 let apiCallCount = 0;
 let capturedRequest = null;
 const fakeFetch = async (url, request) => {

@@ -144,8 +144,9 @@ Provider 请求固定 `max_tokens=8000`，可见正文目标 2,600–3,400 中�
 生产顺序固定为：bounded Tavily + Brave discovery → compact input validation → 一次
 DeepSeek JSON request → output validation → quality review → projection → guarded writer →
 `check:bubble-watch` + `check:all` → exact-path assertion → 只提交
-`data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；topic 部分成功只在两个
-provider 均存在且至少有两条 official/cross-checked story 时允许继续。discovery、input、
+`data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；official/cross-checked 为 0
+时 hard fail。只有 1 条时可以继续，但 discovery 必须标记 `partial`、quality review 必须
+`warn`、`dataGaps` 必须披露，其余 discovery-only 事实段落必须同时引用站内指标。discovery、input、
 provider output、review 与 projection 都是 ignored artifact，仅上传保存 3 天供诊断，
 不得提交。
 

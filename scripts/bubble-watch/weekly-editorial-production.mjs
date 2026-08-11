@@ -76,10 +76,14 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
   const referencedSources = collectReferenceValues(output, 'sourceRefIds');
   const referencedIndicators = collectReferenceValues(output, 'sourceIndicatorIds');
   const credibleNewsRefs = [...referencedSources].filter((refId) => ['official', 'cross_checked'].includes(newsById.get(refId)?.evidenceStatus));
-  if (credibleNewsRefs.length < 2) {
+  if (credibleNewsRefs.length < 1) {
     dimensions.newsEvidenceQuality = 'fail';
-    blockers.push('at least two official/cross_checked news references are required');
-  } else if (input?.newsContext?.status === 'partial') {
+    blockers.push('at least one official/cross_checked news reference is required');
+  } else if (credibleNewsRefs.length === 1) {
+    dimensions.newsEvidenceQuality = 'warn';
+    warnings.push('only one official/cross_checked news reference was used; remaining factual claims require site-indicator corroboration');
+  }
+  if (input?.newsContext?.status === 'partial') {
     dimensions.newsEvidenceQuality = 'warn';
     warnings.push('news discovery was partial; visible data gaps must retain this limitation');
   }

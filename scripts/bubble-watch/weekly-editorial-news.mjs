@@ -193,7 +193,7 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
   const liveProviderCount = ['tavily', 'brave'].filter((provider) => ['ok', 'partial'].includes(statuses[provider]?.status)).length;
   const fullProviderCount = ['tavily', 'brave'].filter((provider) => statuses[provider]?.status === 'ok').length;
   const usableCount = stories.filter((story) => story.evidenceStatus !== 'discovery_only').length;
-  const status = fullProviderCount === 2 && usableCount > 0
+  const status = fullProviderCount === 2 && usableCount >= 2
     ? 'ok'
     : liveProviderCount > 0 && usableCount > 0
       ? 'partial'
@@ -201,6 +201,7 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
   const dataGaps = [];
   if (liveProviderCount < 2) dataGaps.push('新闻发现未获得 Tavily 与 Brave 两个索引的完整成功响应。');
   if (usableCount === 0) dataGaps.push('本周期未形成 official 或 cross_checked 新闻证据。');
+  if (usableCount === 1) dataGaps.push('本周期仅形成 1 条 official/cross_checked 新闻证据；其余事实性段落必须同时引用站内结构化指标并披露新闻覆盖限制。');
   if (stories.some((story) => story.evidenceStatus === 'discovery_only')) dataGaps.push('部分搜索结果仅为 discovery_only，不得单独支撑事实性判断。');
 
   return {
