@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=macro-risk-editorial-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-risk-editorial-1';
+} from './config.js?v=macro-evidence-fold-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-evidence-fold-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,10 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=macro-risk-editorial-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-risk-editorial-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=macro-risk-editorial-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=macro-risk-editorial-1';
+} from './macroOverviewDisplayHelpers.js?v=macro-evidence-fold-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-evidence-fold-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=macro-evidence-fold-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=macro-evidence-fold-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -708,6 +708,20 @@ function renderMacroCoherence({ radarData, worldOrderStressData, marketPricingMe
   } catch (error) {
     console.error('[renderMacroOverview] renderMacroCoherence failed:', error);
   }
+}
+
+function syncProfessionalEvidenceDisclosure(editorialVisible) {
+  const evidence = $('macro-professional-evidence');
+  if (!evidence) return;
+  const usesEditorial = editorialVisible === true;
+  evidence.open = !usesEditorial;
+  evidence.dataset.editorialState = usesEditorial ? 'editorial-visible' : 'deterministic-fallback';
+  setLeafText(
+    'macro-professional-evidence-status',
+    usesEditorial
+      ? '完整模型依据 · 按需展开'
+      : 'AI 判读不可用 · 已展开确定性依据'
+  );
 }
 
 // ---------- Stage 5a shared helpers ----------
@@ -2714,8 +2728,9 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderDetailData({ radarData });
   renderWorldOrderStress({ worldOrderStressData });
 
-  // Integrated read-only editorial + execution-risk appendix narratives
-  renderMacroRiskEditorial({ radarData });
+  // Integrated read-only editorial + deterministic evidence fallback + execution-risk appendix narratives
+  const editorialVisible = renderMacroRiskEditorial({ radarData });
+  syncProfessionalEvidenceDisclosure(editorialVisible);
   renderExecutionRiskDetail({ radarData });
 
   console.log('[renderMacroOverview] Stage 5d-2 renders complete (all Stage 5 frontend binding complete)');

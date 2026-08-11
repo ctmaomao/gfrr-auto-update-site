@@ -155,6 +155,20 @@
   .macro-editorial-gaps ul, .macro-editorial-source-list { margin: 0; padding-left: 20px; font-size: 11px; line-height: 1.7; color: var(--paper-muted); }
   .macro-editorial-source-list a { color: var(--risk-red); text-underline-offset: 2px; }
   .macro-editorial-source-list span { font-family: var(--font-mono); font-size: 9px; }
+
+  /* ADR-0023:完整模型证据保留在主总览内，但不再阻断叙事阅读路径。 */
+  .macro-evidence-fold { min-width: 0; margin-top: 4px; border-top: 3px double var(--paper-ink); border-bottom: 1px solid var(--paper-line); background: var(--paper-bg); }
+  .macro-evidence-summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 18px 0; }
+  .macro-evidence-summary::-webkit-details-marker { display: none; }
+  .macro-evidence-marker { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--paper-ink); font-family: var(--font-mono); font-size: 18px; line-height: 1; color: var(--paper-ink); }
+  .macro-evidence-marker::before { content: "+"; }
+  .macro-evidence-fold[open] .macro-evidence-marker::before { content: "-"; }
+  .macro-evidence-heading strong { display: block; font-family: var(--font-display); font-size: clamp(20px, 2.4vw, 26px); line-height: 1.2; color: var(--paper-ink); }
+  .macro-evidence-heading > span { display: block; margin-top: 4px; font-family: var(--font-mono); font-size: 10px; line-height: 1.5; letter-spacing: .08em; color: var(--paper-muted); }
+  .macro-evidence-count { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; color: var(--paper-muted); white-space: nowrap; }
+  .macro-evidence-fold[open] > .macro-evidence-summary { border-bottom: 2px solid var(--paper-ink); }
+  .macro-evidence-content { display: grid; gap: 22px; min-width: 0; padding: 22px 0 4px; }
+  .macro-evidence-fold[data-editorial-state="deterministic-fallback"] .macro-evidence-heading > span { color: var(--risk-red); }
   @media (max-width: 860px) {
     .macro-editorial-split, .macro-editorial-history-grid, .macro-editorial-sources-content { grid-template-columns: minmax(0, 1fr); }
     .macro-editorial-split > .macro-editorial-block:first-child { border-right: 0; }
@@ -715,6 +729,9 @@
     /* 窄手机:市场温度块内联 auto/1fr 网格改单列堆叠,避免右栏 minmax(150px)
        指标在 ~360px 越界(覆盖 HTML 内联 style 需 !important)*/
     #homepage-market-temperature .runtime-block-body > div { grid-template-columns: 1fr !important; gap: 14px !important; }
+    .macro-evidence-summary { grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px; padding: 16px 0; }
+    .macro-evidence-count { grid-column: 2; white-space: normal; }
+    .macro-evidence-content { gap: 16px; padding-top: 16px; }
   }
 
   /* ================================================================

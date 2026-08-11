@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=macro-risk-editorial-1';
+﻿import { formatFiniteNumber } from './format.js?v=macro-evidence-fold-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

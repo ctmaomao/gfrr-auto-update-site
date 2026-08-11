@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=macro-risk-editorial-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=macro-evidence-fold-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -37,20 +37,17 @@
 
     <nav class="dashboard-jump-nav" aria-label="顶部跳转导航">
       <a href="#homepage-today-judgment">今日判断</a>
-      <a href="#homepage-pressure-sources">压力来源</a>
-      <a href="#homepage-signal-layers">信号分层</a>
+      <a href="#macro-risk-editorial" class="new">本期判读 AI</a>
+      <a href="#wow-key-changes">本期变化</a>
       <a href="#homepage-macro-drivers">四大驱动</a>
       <a href="#homepage-market-temperature">市场温度</a>
-      <a href="#homepage-risk-engines">风险引擎</a>
-      <a href="#homepage-cross-validation">交叉验证</a>
-      <a href="#wow-key-changes">本期变化</a>
+      <a href="#macro-professional-evidence">模型依据</a>
       <a href="#macro-thematic-cards" class="new">主题卡阵 NEW</a>
       <a href="#global-risk-heatmap">风险热力图</a>
       <a href="#oil-directional-pressure">油价方向</a>
       <a href="#detail-data">详细数据</a>
       <a href="#world-order-stress-section">世界秩序</a>
       <a href="#method-evidence">方法说明</a>
-      <a href="#macro-risk-editorial" class="new">本期判读 AI</a>
       <a href="#execution-risk-detail">执行风控</a>
     </nav>
 
@@ -88,6 +85,19 @@
       <article class="macro-editorial" id="macro-risk-editorial" hidden aria-labelledby="macro-editorial-title">
         <div id="macro-editorial-content"></div>
       </article>
+
+      <section class="wow-section" id="wow-key-changes">
+        <div class="wow-label">本期关键变化 · Week-over-Week</div>
+        <h3>能源链加压，信用反向证据，地缘结构升档 <em>· this issue's deltas</em></h3>
+        <div class="wow-grid">
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span><div class="wow-text"><span id="wow-item-1-text">布伦特原油(Brent)周内 +6.2，裂解价差(Crack Spread)同步走阔到 48.37。</span><span class="wow-source" id="wow-item-1-source">炼油价差 4 周变化 +19.87</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 信用</span><div class="wow-text"><span id="wow-item-2-text">高收益债利差(HY OAS)周内收窄，与波动率指数(VIX)同步走低。信用市场不验证恐慌。</span><span class="wow-source" id="wow-item-2-source">信用与波动率反向证据</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 地缘</span><div class="wow-text"><span id="wow-item-3-text">世界秩序压力(World Order)升档至多战区压力 持续第 2 周。</span><span class="wow-source" id="wow-item-3-source">世界秩序状态变化</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 流动性</span><div class="wow-text"><span id="wow-item-4-text">美联储(Fed)政策路径分歧扩至 +38bp，市场比委员更鹰。</span><span class="wow-source" id="wow-item-4-source">美联储(Fed)政策路径分歧</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-flat">━ 持平 · 美国就业</span><div class="wow-text"><span id="wow-item-5-text">首次申请稳在 238k，扩张产业占比 70% → 63%。</span><span class="wow-source" id="wow-item-5-source">就业扩散度</span></div></div>
+          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 消费 vs 资产</span><div class="wow-text"><span id="wow-item-6-text">消费与资产价格背离收敛。</span><span class="wow-source" id="wow-item-6-source">消费与资产价格背离</span></div></div>
+        </div>
+      </section>
 
       <div class="threshold-block">
         <div class="threshold-header">
@@ -177,6 +187,56 @@
         </div>
       </div>
 
+      <div class="runtime-block" id="homepage-macro-drivers">
+        <div class="runtime-block-header">
+          <h3>四大驱动 <span class="en">MACRO DRIVERS · 13 SUB-MODULES IN 4 PILLARS</span></h3>
+          <div class="meta">流动性 / 政策路径 / 利率曲线 / 信用 / 消费 / 就业 / 商业地产等</div>
+        </div>
+        <div class="runtime-block-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">美联储流动性(Fed Liquidity)</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">政策预期(Policy Expectations)</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">利率曲线(Curve)</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">信用环境(Credit)</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
+          <div style="grid-column: 1 / -1;border-top:1px dashed #aaa;padding-top:10px;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">子模块覆盖：流动性、政策路径、利率曲线、信用、消费、运输、就业、商业地产与私募信贷公开代理。</div>
+        </div>
+      </div>
+
+      <div class="runtime-block" id="homepage-market-temperature">
+        <div class="runtime-block-header">
+          <h3>市场温度 <span class="en">MARKET PRICING TEMPERATURE</span></h3>
+          <div class="meta">纳斯达克100 ETF(QQQ)60 周均值与偏离度(z-score) · 纳指100(NDX)/纳指综合(IXIC)广度对照 · 本数据为统计描述，不构成投资建议</div>
+        </div>
+        <div class="runtime-block-body">
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;">极度过热 · extreme-hot</div>
+              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;"><span id="mt-zscore-value">—</span><span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
+              <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">纳斯达克100 ETF(QQQ) vs 60 周均值 · 历史第二极端</div>
+            </div>
+            <div>
+              <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">等待最新市场温度数据。</p>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
+                <div>收盘(close): <span id="mt-close" style="color:var(--paper-ink);">—</span></div>
+                <div>60周均线(ma60): <span id="mt-ma60" style="color:var(--paper-ink);">—</span></div>
+                <div>60 日标准差: <span id="mt-stddev" style="color:var(--paper-ink);">—</span></div>
+                <div>z 分数区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <details class="macro-evidence-fold" id="macro-professional-evidence">
+        <summary class="macro-evidence-summary">
+          <span class="macro-evidence-marker" aria-hidden="true"></span>
+          <span class="macro-evidence-heading">
+            <strong>专业证据与模型诊断</strong>
+            <span id="macro-professional-evidence-status">完整模型依据 · 按需展开</span>
+          </span>
+          <span class="macro-evidence-count">5 EVIDENCE BLOCKS</span>
+        </summary>
+        <div class="macro-evidence-content">
+
       <div class="runtime-block" id="homepage-pressure-sources">
         <div class="runtime-block-header">
           <h3>压力来源 <span class="en">PRESSURE SOURCES</span></h3>
@@ -214,45 +274,6 @@
           <div class="narrative-item" id="narrative-5"><div class="head"><span class="name" id="narrative-5-name">等待数据</span><span class="score" id="narrative-5-score">分数 — · 待确认</span></div><p id="narrative-5-desc">真实数据到达前不显示信号叙事。</p></div>
           <div class="narrative-item" id="narrative-6"><div class="head"><span class="name" id="narrative-6-name">等待数据</span><span class="score" id="narrative-6-score">分数 — · 待确认</span></div><p id="narrative-6-desc">真实数据到达前不显示信号叙事。</p></div>
           <div class="narrative-item" id="narrative-7"><div class="head"><span class="name" id="narrative-7-name">等待数据</span><span class="score" id="narrative-7-score">分数 — · 待确认</span></div><p id="narrative-7-desc">真实数据到达前不显示信号叙事。</p></div>
-        </div>
-      </div>
-
-      <div class="runtime-block" id="homepage-macro-drivers">
-        <div class="runtime-block-header">
-          <h3>四大驱动 <span class="en">MACRO DRIVERS · 13 SUB-MODULES IN 4 PILLARS</span></h3>
-          <div class="meta">流动性 / 政策路径 / 利率曲线 / 信用 / 消费 / 就业 / 商业地产等</div>
-        </div>
-        <div class="runtime-block-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">美联储流动性(Fed Liquidity)</strong><p id="pillar-1-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">政策预期(Policy Expectations)</strong><p id="pillar-2-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">利率曲线(Curve)</strong><p id="pillar-3-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
-          <div><strong style="font-family:var(--font-display);font-size:16px;display:block;margin-bottom:4px;">信用环境(Credit)</strong><p id="pillar-4-text" style="margin:0;font-size:12.5px;">等待最新数据。</p></div>
-          <div style="grid-column: 1 / -1;border-top:1px dashed #aaa;padding-top:10px;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);">子模块覆盖：流动性、政策路径、利率曲线、信用、消费、运输、就业、商业地产与私募信贷公开代理。</div>
-        </div>
-      </div>
-
-      <div class="runtime-block" id="homepage-market-temperature">
-        <div class="runtime-block-header">
-          <h3>市场温度 <span class="en">MARKET PRICING TEMPERATURE</span></h3>
-          <div class="meta">纳斯达克100 ETF(QQQ)60 周均值与偏离度(z-score) · 纳指100(NDX)/纳指综合(IXIC)广度对照 · 本数据为统计描述，不构成投资建议</div>
-        </div>
-        <div class="runtime-block-body">
-          <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
-            <div>
-              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;">极度过热 · extreme-hot</div>
-              <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;"><span id="mt-zscore-value">—</span><span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
-              <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">纳斯达克100 ETF(QQQ) vs 60 周均值 · 历史第二极端</div>
-            </div>
-            <div>
-              <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">等待最新市场温度数据。</p>
-              <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
-                <div>收盘(close): <span id="mt-close" style="color:var(--paper-ink);">—</span></div>
-                <div>60周均线(ma60): <span id="mt-ma60" style="color:var(--paper-ink);">—</span></div>
-                <div>60 日标准差: <span id="mt-stddev" style="color:var(--paper-ink);">—</span></div>
-                <div>z 分数区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">—</span></div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -301,18 +322,8 @@
         <div class="mc-summary"><span id="mc-summary-line">—</span></div>
       </div>
 
-      <section class="wow-section" id="wow-key-changes">
-        <div class="wow-label">本期关键变化 · Week-over-Week</div>
-        <h3>能源链加压，信用反向证据，地缘结构升档 <em>· this issue's deltas</em></h3>
-        <div class="wow-grid">
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 通胀与能源</span><div class="wow-text"><span id="wow-item-1-text">布伦特原油(Brent)周内 +6.2，裂解价差(Crack Spread)同步走阔到 48.37。</span><span class="wow-source" id="wow-item-1-source">炼油价差 4 周变化 +19.87</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 信用</span><div class="wow-text"><span id="wow-item-2-text">高收益债利差(HY OAS)周内收窄，与波动率指数(VIX)同步走低。信用市场不验证恐慌。</span><span class="wow-source" id="wow-item-2-source">信用与波动率反向证据</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 地缘</span><div class="wow-text"><span id="wow-item-3-text">世界秩序压力(World Order)升档至多战区压力 持续第 2 周。</span><span class="wow-source" id="wow-item-3-source">世界秩序状态变化</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-up">▲ 风险升高 · 流动性</span><div class="wow-text"><span id="wow-item-4-text">美联储(Fed)政策路径分歧扩至 +38bp，市场比委员更鹰。</span><span class="wow-source" id="wow-item-4-source">美联储(Fed)政策路径分歧</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-flat">━ 持平 · 美国就业</span><div class="wow-text"><span id="wow-item-5-text">首次申请稳在 238k，扩张产业占比 70% → 63%。</span><span class="wow-source" id="wow-item-5-source">就业扩散度</span></div></div>
-          <div class="wow-item"><span class="wow-tag is-down">▼ 风险下降 · 消费 vs 资产</span><div class="wow-text"><span id="wow-item-6-text">消费与资产价格背离收敛。</span><span class="wow-source" id="wow-item-6-source">消费与资产价格背离</span></div></div>
         </div>
-      </section>
+      </details>
 
         </div>
       </div>
@@ -1179,6 +1190,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=macro-risk-editorial-1"></script>
+  <script type="module" src="scripts/app.js?v=macro-evidence-fold-1"></script>
 </body>
 </html>
