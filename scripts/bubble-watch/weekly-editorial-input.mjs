@@ -1,6 +1,8 @@
 import { INPUT_SCHEMA } from './weekly-editorial-contract.mjs';
 
 const STATUS_ZH = Object.freeze({ red: '红灯', yellow: '黄灯', green: '绿灯' });
+const MAX_INPUT_NEWS_PER_TOPIC = 3;
+const MAX_INPUT_NEWS_STORIES = 18;
 
 function compactText(value, maxLength = 360) {
   const text = String(value || '').replace(/\s+/gu, ' ').trim();
@@ -57,6 +59,36 @@ function buildNewsSourceRefs(discovery) {
     providers: story.providers,
     supportingDomains: story.supportingDomains
   }));
+}
+
+function buildCompactNewsContext(discovery) {
+  const topicCounts = new Map();
+  const stories = (Array.isArray(discovery?.stories) ? discovery.stories : [])
+    .filter((story) => {
+      const count = topicCounts.get(story.topic) || 0;
+      if (count >= MAX_INPUT_NEWS_PER_TOPIC) return false;
+      topicCounts.set(story.topic, count + 1);
+      return true;
+    })
+    .slice(0, MAX_INPUT_NEWS_STORIES)
+    .map((story) => ({
+      ...story,
+      snippet: compactText(story.snippet, 240)
+    }));
+  const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
+    status: status?.status || 'unavailable',
+    successCount: Number.isInteger(status?.successCount) ? status.successCount : 0,
+    failureCount: Number.isInteger(status?.failureCount) ? status.failureCount : 0
+  }]));
+  return {
+    ...discovery,
+    sourceStatus,
+    topics: (Array.isArray(discovery?.topics) ? discovery.topics : []).map((topic) => ({
+      ...topic,
+      storyCount: stories.filter((story) => story.topic === topic.id).length
+    })),
+    stories
+  };
 }
 
 function buildRadarContext(radar) {
@@ -127,6 +159,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
   const indicators = bubbleWatch.indicators;
   const radarContext = buildRadarContext(radarData);
   const oilContext = buildOilNewsContext(oilNewsWatch);
+  const newsContext = buildCompactNewsContext(discovery);
   const staleIndicators = indicators.filter((indicator) => indicator.stale === true).map((indicator) => indicator.name_zh || indicator.id);
   const dataGaps = [
     ...(Array.isArray(discovery?.dataGaps) ? discovery.dataGaps : []),
@@ -180,7 +213,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
       upstreamSummaryAdopted: false
     },
     structuredFacts: buildStructuredFacts(indicators),
-    newsContext: discovery,
+    newsContext,
     contextSnapshots: {
       radar: radarContext,
       oilNews: oilContext
@@ -188,7 +221,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
     historicalContext: buildHistoricalContext(summary),
     sourceRefs: [
       ...buildIndicatorSourceRefs(indicators),
-      ...buildNewsSourceRefs(discovery),
+      ...buildNewsSourceRefs(newsContext),
       ...contextSourceRefs
     ],
     dataGaps,

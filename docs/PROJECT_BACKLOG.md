@@ -475,6 +475,7 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **当前进行中(2026-08-11 · Bubble Watch weekly editorial)**: Stage 1–4 已完成。新增 post-`Refresh Bubble Watch` + owner-ack manual workflow、Tavily/Brave 双索引 live-input gate、单次 DeepSeek/no-retry、validator/review/projection/writer、protected single-file write 与 Pages trigger；前端在合格层展示周度长篇，missing/stale/as-of mismatch 时回退确定性 `bubble-watch-narrative-v2`，1440px/390px runtime acceptance 已覆盖。当前分支 `codex/bubble-watch-weekly-editorial`，用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
+- **Stage 5 live preflight(2026-08-11 · run 31454539629)**: 首次 owner-authorized manual run 在 DeepSeek 前的 60 KiB input gate 失败，provider step 明确 skipped，因此无付费调用/生产写入。真实双索引 discovery 为 30 stories / 70,771 bytes；修复后完整 discovery artifact 保留，provider input 按每 topic 3 条压缩为 18 stories，27 indicators 不变，真实 artifact replay 为 51,817 bytes / 47 source refs / 2 credible stories，live-input gate PASS。不得用提高字节上限替代 compact projection。
 - **下一步(2026-08-11 · Bubble Watch weekly editorial)**: Stage 4 完整检查通过并独立 commit+push 后，将分支更新到 latest main；再发布到 main，执行一次 owner-authorized live workflow，核对生产 JSON、Pages DOM、来源链接、回退边界和远端 checks，完成 Stage 5。
 
 - **上次会话结束于(2026-08-02 · Refresh QQQ Market Pricing calendar-drift repair)**: 基于 latest `main` 新建 `codex/fix-qqq-market-pricing-freshness`，只修改 freshness checker 的合成场景日期构造并同步本 Handoff。失败 run `30694893490` 的根因已由相同 QQQ=2026-07-31、NDX/IXIC=2026-07-24 状态复现。

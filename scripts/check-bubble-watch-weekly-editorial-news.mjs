@@ -79,6 +79,31 @@ assert(Buffer.byteLength(JSON.stringify(input)) < 60 * 1024, 'compact input must
 const forbiddenInputKeys = new Set(['positionGuidance', 'executionLock', 'actionQueue', 'triggerMonitor', 'invalidationRules', 'rawResponse', 'headers', 'apiKey']);
 assert(!allKeys(input).some((key) => forbiddenInputKeys.has(key)), 'compact input contains forbidden decision/execution/secret fields');
 
+const stressDiscovery = structuredClone(discovery);
+stressDiscovery.stories = discovery.stories.flatMap((story) => Array.from({ length: 5 }, (_, index) => ({
+  ...story,
+  id: `${story.id}:stress-${index}`,
+  title: `${story.title.slice(0, 205)} ${index + 1}`,
+  url: `${story.url}${story.url.includes('?') ? '&' : '?'}stress=${index + 1}`,
+  snippet: 'bounded live discovery context '.repeat(12).slice(0, 360)
+})));
+stressDiscovery.topics = stressDiscovery.topics.map((topic) => ({ ...topic, storyCount: 5 }));
+assertValid(validateNewsDiscovery(stressDiscovery), '30-story weekly news discovery stress fixture');
+const stressInput = buildWeeklyEditorialInput({
+  bubbleWatch,
+  radarData,
+  oilNewsWatch,
+  discovery: stressDiscovery,
+  generatedAt: '2026-08-11T00:02:00.000Z'
+});
+assertValid(validateWeeklyEditorialInput(stressInput), '30-story compact input stress replay');
+assert(stressInput.newsContext.stories.length === 18, `compact provider input must cap news at 18, got ${stressInput.newsContext.stories.length}`);
+for (const topic of stressInput.newsContext.topics) {
+  assert(topic.storyCount <= 3, `compact provider input topic ${topic.id} exceeds 3 stories`);
+}
+assert(stressInput.newsContext.stories.filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus)).length >= 2, 'compaction must preserve credible news evidence');
+assert(Buffer.byteLength(JSON.stringify(stressInput)) < 60 * 1024, '30-story live discovery must compact below 60 KiB');
+
 const invalidTopic = structuredClone(discovery);
 invalidTopic.stories[0].topic = 'unregistered_topic';
 const invalidTopicResult = validateNewsDiscovery(invalidTopic);
@@ -89,4 +114,4 @@ unsafeBoundary.boundaries.affectsBubbleWatchScoring = true;
 const unsafeBoundaryResult = validateNewsDiscovery(unsafeBoundary);
 assert(!unsafeBoundaryResult.ok && unsafeBoundaryResult.errors.some((error) => error.includes('affectsBubbleWatchScoring must be false')), 'news scoring boundary negative test must fail');
 
-console.log(`Bubble Watch weekly editorial news/input PASS (stories=${discovery.stories.length}, facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, bytes=${Buffer.byteLength(JSON.stringify(input))}, negative tests=2)`);
+console.log(`Bubble Watch weekly editorial news/input PASS (stories=${discovery.stories.length}, stressInputStories=${stressInput.newsContext.stories.length}, facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, bytes=${Buffer.byteLength(JSON.stringify(input))}, negative tests=2)`);

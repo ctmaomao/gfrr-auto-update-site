@@ -83,6 +83,9 @@ AI `facts` 的唯一依据。
   - `boundaries`
 - `sourceRefs[].id` 是所有 output 引用的唯一主键。
 - Input 不包含 `summary.weekly_editorial`，防止模型自我复述。
+- 完整 discovery artifact 可保留每 topic 最多 5 条；DeepSeek compact input 再按既有
+  evidence-quality/date 顺序压缩为每 topic 最多 3 条、总计最多 18 条，并移除 query-run
+  诊断明细。27 个结构化指标必须全部保留，最终 input 必须小于 60 KiB。
 
 ### 5.3 Provider output
 
