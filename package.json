@@ -272,6 +272,7 @@
     "acled:status:weekly": "node scripts/world-order/acled-weekly-status.mjs",
     "acled:status:monthly": "node scripts/world-order/acled-monthly-status.mjs",
     "acled:publish": "node scripts/world-order/acled-publish.mjs",
+    "check:acled-operator-safety": "node --check scripts/world-order/acled-monthly-filename.mjs && node --check scripts/world-order/acled-publish-guard.mjs && node --check scripts/check-acled-operator-safety.mjs && node scripts/check-acled-operator-safety.mjs",
     "check:world-order-acled-hdx-probe": "node --check scripts/world-order/probe-acled-hdx-refresh.mjs && node --check scripts/check-acled-hdx-refresh-probe.mjs && node scripts/check-acled-hdx-refresh-probe.mjs",
     "check:world-order-acled-weekly": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs",
     "check:world-order-acled-monthly": "node --check scripts/check-world-order-acled-monthly.mjs && node scripts/check-world-order-acled-monthly.mjs",

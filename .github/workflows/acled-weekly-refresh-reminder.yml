@@ -128,7 +128,7 @@ jobs:
               ``,
               `\`acled:status\` runs sanitize:weekly + check:world-order-acled-weekly and reports config-vs-data status (read-only; expect \`data_current\`).`,
               ``,
-              `If status is \`sanitized_not_refreshed\`, run \`npm run acled:publish\` — the explicit opt-in full-chain helper: commit config + push + dispatch "Refresh World Order Stress" + watch CI + pull + re-verify (requires authenticated \`gh\` CLI; ends with \`data_current\`). Without \`gh\`, do the same steps manually: commit/push \`config/world-order-acled-regional-weekly.json\`, then Actions -> "Refresh World Order Stress" -> Run workflow.`,
+              `If status is \`sanitized_not_refreshed\`, switch to latest main and run \`npm run acled:publish\` — the main-only full-chain helper: commit config + push \`main:main\` + dispatch "Refresh World Order Stress" with \`--ref main\` + watch CI + fast-forward pull + re-verify (requires authenticated \`gh\` CLI; ends with \`data_current\`). It refuses feature branches, stale main, unrelated tracked changes, and unrelated local commits.`,
               ``,
               `Expected final validation: \`npm run check:all\` PASS.`,
               ``,
