@@ -698,3 +698,4 @@ var(--font-mono)              /* IBM Plex Mono */
 | 2026-05 | M-94 V0 PR 1: IA 扩为 15 项，新增 `#macro-thematic-cards` 绿色带 section 容器骨架，并同步 DESIGN.md 与 IA checker 契约 | PR #<待 owner 填> |
 | 2026-06 | IA 合约变更: 主题卡阵视觉顺序改为 C1/C2/C3/C4/C7/C8/C5/C6,将世界经济与中国宏观观察层置底,并新增 checker 锁定顺序 | PR #<待 owner 填> |
 | 2026-06 | 观察层反应徽章语义更新: `印证` 颜色跟随有效主判断等级,`背离` 保留反向证据方向色;同步 checker 行为样例 | PR #<待 owner 填> |
+| 2026-08 | ADR-0023: Macro Overview 改为叙事优先；WoW 紧随有效编辑层，五块确定性模型证据统一进入条件折叠区，AI 无资格时自动展开 | owner approved implementation |

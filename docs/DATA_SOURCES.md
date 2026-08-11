@@ -961,7 +961,8 @@ source order，也不批准 current signal、event confirmation、frontend 或 s
 | `brentPricingLayer.futuresCurve` | ICE Brent futures public product page structure-only contracts |
 | `brentPricingLayer.iceFuturesPriceCurve` | ICE Brent futures public delayed last-price curve; Platts/official ICE settlement = not connected |
 | `brentPricingLayer.futuresPriceCurve` | Yahoo: BZ monthly futures priced proxy; Platts/official ICE settlement = not connected |
-| `externalAiInterpretationLayer` | DeepSeek (production) / OpenAI (alternate);只读展示 |
+| `macroRiskEditorialLayer` | DeepSeek production；首页唯一可见外部 AI 编辑层，只读展示，失败时 deterministic overview + 自动展开专业证据 |
+| `externalAiInterpretationLayer` | 历史数据兼容字段；无前端 consumer、无 scheduled provider refresh |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |
 | `worldOrderStress.dimensions.economicWeaponization` | OFAC + (GDELT) |
 | `worldOrderStress.dimensions.peaceDividendRetreat` | SIPRI (年度) |
