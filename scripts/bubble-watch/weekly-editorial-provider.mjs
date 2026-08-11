@@ -14,7 +14,7 @@ export const WEEKLY_EDITORIAL_PROVIDER_CONFIG = Object.freeze({
   provider: 'deepseek',
   model: DEFAULT_DEEPSEEK_MODEL,
   timeoutMs: 120_000,
-  maxTokens: 5_000,
+  maxTokens: 8_000,
   temperature: 0.2,
   maxCallsPerRun: 1,
   retryCount: 0

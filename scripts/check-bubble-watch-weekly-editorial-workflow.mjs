@@ -68,7 +68,7 @@ for (const marker of [
   'maxCallsPerRun: 1',
   'retryCount: 0',
   'timeoutMs: 120_000',
-  'maxTokens: 5_000',
+  'maxTokens: 8_000',
   "response_format: { type: 'json_object' }"
 ]) requireMarker(provider, marker, PROVIDER);
 for (const marker of [

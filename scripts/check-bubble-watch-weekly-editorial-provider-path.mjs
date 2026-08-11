@@ -113,9 +113,10 @@ assert(apiCallCount === 1, `DeepSeek path must call provider exactly once, got $
 const requestBody = JSON.parse(capturedRequest.request.body);
 assert(capturedRequest.url === 'https://api.deepseek.com/chat/completions', 'DeepSeek endpoint drifted');
 assert(requestBody.model === 'deepseek-v4-flash', 'DeepSeek model drifted');
-assert(requestBody.max_tokens === 5000, 'DeepSeek max_tokens must remain 5000');
+assert(requestBody.max_tokens === 8000, 'DeepSeek max_tokens must remain 8000');
 assert(requestBody.response_format?.type === 'json_object', 'DeepSeek response_format must remain json_object');
 assert(requestBody.thinking?.type === 'disabled', 'DeepSeek thinking must remain disabled for bounded editorial call');
+assert(requestBody.messages[0].content.includes('Target 2,600-3,400 visible Chinese characters'), 'DeepSeek prompt must retain the calibrated visible-length target');
 assert(requestBody.messages[0].content.includes('Hard output caps:') && requestBody.messages[0].content.includes('exactly 6 categoryAnalysis'), 'DeepSeek prompt must retain explicit completion caps');
 assert(!requestBody.messages[1].content.includes('\n  "schemaVersion"'), 'DeepSeek user prompt must serialize compact JSON without pretty-print expansion');
 assert(!JSON.stringify(providerResult).includes('fixture-secret-never-serialized'), 'provider result must not serialize API key');
