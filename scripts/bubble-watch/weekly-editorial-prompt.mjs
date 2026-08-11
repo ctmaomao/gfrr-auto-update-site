@@ -12,7 +12,8 @@ export function buildWeeklyEditorialSystemPrompt() {
     'Every factual timeline/category/tension/history item must cite sourceRefIds from input.sourceRefs. Indicator-based claims must also use sourceIndicatorIds from input.structuredFacts.',
     `Cover these categories when evidence exists: ${EDITORIAL_CATEGORIES.join(', ')}.`,
     'Target 2,600-3,400 visible Chinese characters, calibrated to the reference site recent five-issue average of about 2,947 characters and a 3,278-character observed maximum. Prefer evidence density over repetition and finish the complete JSON object within the token budget.',
-    'Hard output caps: headlineZh <= 36 Chinese characters; leadZh <= 240; scorecardSynthesisZh <= 260; exactly 3 weeklyTimeline items with titleZh <= 28 and detailZh <= 180; exactly 2 keyTensions with titleZh <= 28 and detailZh <= 220; exactly 6 categoryAnalysis items with detailZh <= 180; historicalComparison.detailZh <= 240; exactly 3 watchNextWeek items with conditionZh/invalidationZh <= 120 each; 2-4 dataGaps <= 100 each; 8-16 sourceAttribution rows with noteZh <= 70; confidence.reasonZh <= 160.',
+    'Hard output caps: headlineZh <= 36 Chinese characters; leadZh <= 200; scorecardSynthesisZh <= 240; exactly 3 weeklyTimeline items with titleZh <= 24 and detailZh <= 150; exactly 2 keyTensions with titleZh <= 24 and detailZh <= 180; exactly 6 categoryAnalysis items with detailZh <= 140; historicalComparison.detailZh <= 200; exactly 3 watchNextWeek items with conditionZh <= 90 and invalidationZh <= 80; 2-4 dataGaps <= 80 each; confidence.reasonZh <= 140.',
+    'sourceAttribution is not part of the visible-character target. Include exactly one sourceAttribution row for every unique sourceRefId used anywhere in the output, up to the contract maximum of 80 rows; do not omit referenced indicator:* sources to meet a shorter attribution count.',
     'Never continue expanding a field after its cap. Close every array/object and return syntactically complete JSON before using extra detail.',
     'The output must use these exact machine fields:',
     JSON.stringify({
@@ -32,7 +33,7 @@ export function buildWeeklyEditorialSystemPrompt() {
       historicalComparison: { period: 'historical period', detailZh: 'similarities and differences', sourceIndicatorIds: ['indicator ID'], sourceRefIds: ['stable source ID'] },
       watchNextWeek: [{ conditionZh: 'observable condition', invalidationZh: 'what would weaken the interpretation', sourceIndicatorIds: ['indicator ID'] }],
       dataGaps: ['specific limitation'],
-      sourceAttribution: [{ sourceRefId: 'stable source ID', claimType: 'site_structured_data or official_news_context or cross_checked_news_context', noteZh: 'short attribution note' }],
+      sourceAttribution: [{ sourceRefId: 'stable source ID', claimType: 'site_structured_data, official_news_context, cross_checked_news_context, or discovery_only_news_context', noteZh: 'short attribution note' }],
       confidence: { level: 'low or medium or high', score: 0, reasonZh: 'reason tied to coverage and gaps' },
       auditFlags: ['display_only', 'validator_required', 'no_score_impact'],
       boundaries: {

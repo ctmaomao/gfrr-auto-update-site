@@ -107,6 +107,9 @@ AI `facts` 的唯一依据。
   - `auditFlags[]`
   - `boundaries`
 - 所有事实性段落必须带 `sourceRefIds` 或 `sourceIndicatorIds`；引用必须存在于 input。
+- `sourceAttribution[]` 必须逐一覆盖 output 实际使用的全部 `sourceRefIds`。Provider 若遗漏已引用来源，adapter
+  只可从 input `sourceRefs[]` 确定性补齐 attribution row；不得改写 AI 正文、增加引用或把
+  `discovery_only` 冒充 official/cross-checked。
 - 2026-08-11 长度标定样本为参考站最近 12 个已提交周度版本：全样本均值
   1,976 字，最近 5 期均值 2,947 字，P90 3,137 字，最大 3,278 字。早期短稿
   不代表当前成熟版，因此 production prompt 以最近 5 期均值为主标定。

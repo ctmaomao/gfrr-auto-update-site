@@ -149,6 +149,30 @@ assert(!JSON.stringify(providerResult).includes('fixture-secret-never-serialized
 assert(providerResult.diagnostics.apiCallCount === 1 && providerResult.diagnostics.retryCount === 0, 'provider diagnostics must prove one call/no retry');
 assert(providerResult.diagnostics.response.finishReason === 'stop' && providerResult.diagnostics.response.contentLength > 0, 'provider diagnostics must retain sanitized finish/content evidence');
 
+const omittedAttribution = providerOutput.sourceAttribution.at(-1).sourceRefId;
+const missingAttributionOutput = {
+  ...providerOutput,
+  sourceAttribution: providerOutput.sourceAttribution.filter((item) => item.sourceRefId !== omittedAttribution)
+};
+let attributionRepairCalls = 0;
+const attributionRepairResult = await requestWeeklyEditorial({
+  input,
+  apiKey: 'fixture-key',
+  fetchImpl: async () => {
+    attributionRepairCalls += 1;
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { id: 'fixture-attribution-repair', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(missingAttributionOutput) } }] };
+      }
+    };
+  }
+});
+assert(attributionRepairCalls === 1, 'deterministic attribution normalization must not call the provider again');
+assert(attributionRepairResult.output.sourceAttribution.some((item) => item.sourceRefId === omittedAttribution), 'deterministic attribution normalization must restore every referenced source');
+assertValid(validateWeeklyEditorialOutput(attributionRepairResult.output, input), 'normalized source attribution output');
+
 const review = reviewWeeklyEditorial({ input, output: providerResult.output, generatedAt: '2026-08-11T00:06:00.000Z' });
 assertValid(validateWeeklyEditorialReview(review), 'provider-path quality review');
 assert(review.status === 'pass', `fixture quality review must pass, got ${review.status}: ${review.warnings.join('; ')}`);

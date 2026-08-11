@@ -61,6 +61,49 @@ function transportDiagnostics(error) {
   };
 }
 
+function collectSourceRefIds(value, output = new Set()) {
+  if (Array.isArray(value)) value.forEach((item) => collectSourceRefIds(item, output));
+  else if (value && typeof value === 'object') {
+    for (const [key, item] of Object.entries(value)) {
+      if (key === 'sourceRefIds' && Array.isArray(item)) {
+        item.forEach((entry) => typeof entry === 'string' && output.add(entry));
+      } else {
+        collectSourceRefIds(item, output);
+      }
+    }
+  }
+  return output;
+}
+
+function deterministicAttribution(source) {
+  const sourceClass = source?.sourceClass;
+  const claimType = source?.kind === 'indicator' || sourceClass === 'site_structured'
+    ? 'site_structured_data'
+    : sourceClass === 'official'
+      ? 'official_news_context'
+      : sourceClass === 'cross_checked'
+        ? 'cross_checked_news_context'
+        : 'discovery_only_news_context';
+  const suffix = claimType === 'site_structured_data' ? '站内结构化数据' : '周度新闻上下文';
+  return {
+    sourceRefId: source.id,
+    claimType,
+    noteZh: `${source.sourceName || source.domain || source.id}（${suffix}）`.slice(0, 70)
+  };
+}
+
+function normalizeSourceAttribution(output, input) {
+  const sourceMap = new Map((input?.sourceRefs || []).map((source) => [source.id, source]));
+  const referencedIds = collectSourceRefIds(output);
+  const existingMap = new Map();
+  for (const item of Array.isArray(output?.sourceAttribution) ? output.sourceAttribution : []) {
+    if (typeof item?.sourceRefId === 'string' && referencedIds.has(item.sourceRefId) && sourceMap.has(item.sourceRefId) && !existingMap.has(item.sourceRefId)) {
+      existingMap.set(item.sourceRefId, item);
+    }
+  }
+  return [...referencedIds].map((sourceRefId) => existingMap.get(sourceRefId) || deterministicAttribution(sourceMap.get(sourceRefId) || { id: sourceRefId }));
+}
+
 export function parseWeeklyEditorialProviderContent(content) {
   if (typeof content !== 'string' || !content.trim()) throw new SyntaxError('provider content is empty');
   const trimmed = content.trim();
@@ -186,6 +229,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
     model: config.model,
     mode: 'external_ai_weekly_editorial'
   };
+  normalizedOutput.sourceAttribution = normalizeSourceAttribution(normalizedOutput, input);
   const outputValidation = validateWeeklyEditorialOutput(normalizedOutput, input);
   if (!outputValidation.ok) {
     const error = new Error('DeepSeek weekly editorial output failed contract validation');
