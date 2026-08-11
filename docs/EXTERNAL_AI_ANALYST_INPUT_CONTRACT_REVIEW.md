@@ -1,8 +1,8 @@
 # External AI Analyst Input Contract Review — PR0
 
-> **STATUS (2026-06-05):** Source-review / design-contract only. This document proposes the future `analyst_compact_v1` External AI input contract. It does **not** implement the contract, call DeepSeek / OpenAI, write production data, update workflow automation, or change frontend display.
+> **STATUS (2026-08-11):** Historical source-review / design-contract for the legacy `externalAiInterpretationLayer`. The former visible panel and scheduled production refresh have been retired; the field remains only for data compatibility/manual diagnostics. Current visible homepage AI is the separate `macroRiskEditorialLayer` governed by `MACRO_RISK_EDITORIAL_DESIGN.md`, `DATA_CONTRACT.md`, `OPERATIONS.md`, and ADR-0022.
 
-> **Hard boundary:** `externalAiInterpretationLayer` remains a visible read-only auxiliary layer. It must not affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, `values.*`, Brent promotion, Action Queue, Trigger Monitor, Invalidation Rules, Worker runtime, Daily scoring, or portfolio / execution logic. `qualityReview.promotionEligible=false`, `provenance.humanApproved=false`, and all `boundaries.affects* = false` remain mandatory.
+> **Hard boundary:** `externalAiInterpretationLayer` is now a non-visible legacy compatibility field. Neither it nor the current `macroRiskEditorialLayer` may affect scoring, `decisionModel`, `executionLock`, `positionGuidance`, `values.*`, Brent promotion, Action Queue, Trigger Monitor, Invalidation Rules, Worker runtime, Daily scoring, or portfolio / execution logic. `qualityReview.promotionEligible=false`, `provenance.humanApproved=false`, and all `boundaries.affects* = false` remain mandatory.
 
 本文是 External AI Auxiliary 的 **PR0 design-contract / source-review**。目标不是把外部 AI 变成数据源,也不是让它接外部新闻 / 行情;目标是把当前过薄的 site-structured input 升级为一个受控的 **analyst evidence-pack**,让 provider 对站内已有结构化数据做更深的跨层综合、背离侦测、情景倾向和数据质量加权判断。
 
@@ -65,9 +65,9 @@ The production refresh path is a contract migration problem, not a field-add pro
 
 Any future production analyst input must migrate these contracts deliberately using expand-then-contract.
 
-### 1.4 Production layer is visible but non-impacting
+### 1.4 Historical production layer was visible but non-impacting
 
-`docs/DATA_CONTRACT.md` defines the current `externalAiInterpretationLayer` as visible read-only output written only by the approved `External AI Production Refresh` workflow. The current hard guards remain:
+At the time of this review, `externalAiInterpretationLayer` was visible read-only output written by `External AI Production Refresh`. That path is now retired; the following guards remain relevant to legacy/manual validation:
 
 - visible only when display state and quality/freshness gates pass.
 - `qualityReview.promotionEligible=false` always.

@@ -34,7 +34,7 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 - Public proxy 只能写成 public proxy,不得写成 Platts Dated Brent、formal Dated Brent、official ICE settlement、private credit marks、non-public CRE loan tape 或 BoA raw card feed。
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.*`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 是解释层 / 审计层 / 展示层。
 - 解释层不得进入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
-- External AI 当前可作为只读解释层展示,仍受 workflow / review gate 约束;任何 AI 输出不得影响 scoring、decision、execution 或 position。
+- 首页唯一可见外部 AI 为嵌入 `MACRO RISK OVERVIEW` 的 `macroRiskEditorialLayer`，由 DeepSeek 综合近 7 日可信新闻与站内结构化数据生成并受 validator/review/freshness gate 约束；旧 `externalAiInterpretationLayer` 仅保留数据兼容、无可见消费者。任何 AI 输出不得影响 scoring、decision、execution 或 position。
 - Bubble Watch 的 DeepSeek 周度编辑层只解释既有 Core-23 / Shadow-4 与经校验新闻；provider/review/stale 失败时回退确定性判读，不改变任何灯色、分数或 verdict。
 - World Order Stress Overlay 是 regime overlay,不是第七个底层风险模块;用户可见文案必须保持克制和可归因。
 

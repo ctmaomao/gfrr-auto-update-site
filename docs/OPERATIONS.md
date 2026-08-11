@@ -122,7 +122,7 @@ GitHub Actions cron 使用 UTC。当前顺序为 `Build Daily Radar Data` 22:30�
 
 `Macro Risk Editorial Refresh` 是 `macroRiskEditorialLayer` 的唯一生产写入路径。流程固定为 news discovery → compact input → one DeepSeek call → output contract → quality review → projection → guarded write → live layer check + `check:data` → protected-path assertion。只允许提交 `data/radar-data.json`；Pages 在 workflow 成功后自动部署。
 
-普通质量 `warn`（例如只有一条可信新闻或正文偏离 2,800–3,800 字目标但仍在 2,000–4,600 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
+普通质量 `warn`（例如只有一条可信新闻或正文偏离 4,000–5,600 字目标但仍在 2,000–6,800 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
 
 如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端会因 `sourceDataUpdatedAt` 不匹配而暂时隐藏编辑层；这是 fail-closed 预期状态。不得为几分钟的调度间隔手工改时间戳或重复调用 provider。
 
@@ -412,11 +412,11 @@ Security:
 
 ### External AI production integration design status（历史 staged-rollout note）
 
-> **历史:** 以下 v28.0L-0…L-3G note 为分阶段 rollout 期间所写(当时 production layer 尚 disabled、integration 尚未实现)。该 rollout 已在 **v28.0L-3P+** 完成:当前 production `externalAiInterpretationLayer` 为 **visible read-only**,由 `External AI Production Refresh` workflow(validator + quality 门控)写入;`DEEPSEEK_API_KEY` secret 与 refresh workflow 已就位。当前态见 `docs/DATA_CONTRACT.md` 当前生产契约。下列各阶段 note 保留作历史。
+> **历史:** 以下 v28.0L-0…L-3G note 为旧 `externalAiInterpretationLayer` staged rollout 记录。该层曾在 v28.0L-3P+ 进入 visible read-only，现已退为 data compatibility/manual diagnostics；旧 scheduled workflow 与前端 panel 均已删除。当前首页 AI 运维以上方 `Macro Risk Editorial operations` 为准。
 
 v28.0L-0 is documented in [`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md), but no production integration exists. Do not create GitHub secrets, scheduled provider calls, Daily provider calls, Worker provider calls, or frontend display until the L-0 design is reviewed and a later implementation PR is approved.
 
-_(历史 L-0 note:撰写时无 production integration、layer 为 disabled scaffold。该 rollout 已在 v28.0L-3P+ 完成,当前 production `externalAiInterpretationLayer` 为 visible read-only,由 `External AI Production Refresh` workflow 写入;见 `docs/DATA_CONTRACT.md` 当前生产契约。)_
+_(历史 L-0 note:撰写时无 production integration、layer 为 disabled scaffold；该旧 rollout 后续曾完成，现又已退场。见 `docs/DATA_CONTRACT.md` legacy compatibility contract。)_
 
 v28.0L-1 readiness audit is documented in [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md). Operators must not add `DEEPSEEK_API_KEY` to GitHub Secrets until a reviewed `workflow_dispatch` artifact-only PR is approved. Do not run provider calls from Daily. Continue manual-only testing unless a later phase explicitly changes this boundary.
 
@@ -1217,160 +1217,22 @@ Stop and do not retry repeatedly if the provider returns unavailable, times out,
 - **L-3Q** frontend display design note:文档 future 只读 panel 设计;勿手设 `displayEnabled=true`;文案中文非 actionable;勿并入 Global Risk Heatmap。
 - **L-3R** hidden frontend scaffold note(历史,已被 L-3T 取代):guarded scaffold,两 flag false 时隐藏;跑 `check:external-ai-frontend-hidden-scaffold`。
 - **L-3S** visible display approval note:文档可见审批/data-flag 流程;data-only 即可可见,勿为显示 rerun DeepSeek。
-- **L-3T** visible display flag note:**经批准 data flag 启用可见 panel**(`displayEnabled=true`/`frontendDisplayApproved=true` = 当前态);回滚 = revert 或两 flag 置 false;不安全文案或 Heatmap 变动即 revert。
-- **L-3T-1** visible display audit-sync:可见 flags 启用 + post-merge checks 过,panel 现可显示;勿手编 AI 文本/为显示 rerun。
+- **L-3T** visible display flag note:**当时经批准 data flag 启用可见 panel**(`displayEnabled=true`/`frontendDisplayApproved=true` = 当时态)；该 panel 现已退场。
+- **L-3T-1** visible display audit-sync:当时可见 flags 启用 + post-merge checks 通过；仅作历史记录。
 - **L-3U** visible display UX polish note:仅视觉 polish,不改 provider content/data;panel 过大只调 UI,Heatmap 变动即 revert。
 - **L-3U-1** visible display UX audit-sync:panel 可见、polished、audited;勿手编/为 polish rerun;可选下一步当时为 L-4A refresh workflow。
 
-### v28.0L-4A production refresh workflow runbook
+### Retired legacy External AI production operations（historical summary）
 
-v28.0L-4A adds the first production refresh workflow for the visible external AI read-only panel.
+The former `External AI Production Refresh` workflow, `#external-ai-auxiliary` panel, navigation entry, and `renderExternalAi.js` were retired on 2026-08-11. Do not run or recreate the obsolete 23:50 UTC workflow, do not use its historical dispatch commands, and do not perform a paid refresh for `externalAiInterpretationLayer`.
 
-Schedule:
+Current operational rules:
 
-- Workflow: `External AI Production Refresh`.
-- Refresh schedule: `23:50 UTC`.
-- The schedule intentionally runs after `Build Daily Radar Data` (`22:30 UTC`) so the refresh can use the latest daily site data while the next Daily run preserves the refreshed layer.
-- Scheduled runs use `input_source=analyst_compact_v1` by default. `local_compact` remains available as a manual dispatch rollback option.
-- Do not add additional schedules.
-
-Required GitHub environment:
-
-- Environment name: `external-ai-production-refresh`.
-- Environment secret: `DEEPSEEK_API_KEY`.
-- For true automatic daily refresh, this environment must not require manual reviewers. If required reviewers are configured, scheduled runs wait for approval and are not fully automatic.
-
-Manual analyst/default refresh:
-
-```bash
-gh workflow run "External AI Production Refresh" \
-  -f input_source=analyst_compact_v1 \
-  -f allow_network=true \
-  -f acknowledge_cost=true \
-  -f validate_output=true \
-  -f timeout_ms=120000
-```
-
-Manual legacy rollback refresh:
-
-```bash
-gh workflow run "External AI Production Refresh" \
-  -f input_source=local_compact \
-  -f allow_network=true \
-  -f acknowledge_cost=true \
-  -f validate_output=true \
-  -f timeout_ms=120000
-```
-
-If a refresh fails provider output validation, quality review, production contract validation, write guard, `check:data`, or `check:all`, do not rerun repeatedly; inspect sanitized artifacts and use manual `local_compact` rollback only after confirming analyst output is the failure source.
-
-For `analyst_compact_v1`, exact compact energy-layer aliases `energyInventoryBalance`, `energySpareCapacity`, and `energyTransport` are normalized before strict validation to their canonical `macroDrivers.*` sourceLayer names. Unknown or ambiguous layer names remain unchanged and fail closed. If validation reports a new bare compact key, update the explicit alias map, prompt rule, and regression tests together; do not broaden the canonical validator or add automatic provider retries.
-
-Refresh behavior:
-
-- Builds the selected input from current site data: scheduled/default `analyst_compact_v1`, or manual-dispatch rollback `local_compact`.
-- Sanitizes the selected input artifact before the provider call; an unsafe input stops before any paid call.
-- Calls DeepSeek once.
-- Runs output validation.
-- Runs external AI artifact quality review.
-- Runs the artifact sanitizer again on the complete input/output/review/projection set before upload.
-- Projects the output into the production `externalAiInterpretationLayer` contract.
-- Preserves `displayEnabled=true` and `boundaries.frontendDisplayApproved=true`.
-- Writes only `externalAiInterpretationLayer` into `data/radar-data.json`.
-- Runs production contract validation, write guard, frontend scaffold check, `check:data`, and `check:all`.
-- Commits only `data/radar-data.json` when the refreshed layer actually changes.
-
-Failure behavior:
-
-- Provider failure, validator failure, quality review failure, sanitizer failure, `check:data` failure, or `check:all` failure stops the workflow.
-- Failed runs must not write or commit production data.
-- Manual artifacts remain workflow artifacts only and must not be committed.
-
-Rollback:
-
-- Revert the latest `chore: refresh external AI interpretation layer` commit if the refreshed content should be removed.
-- If only display must be disabled, set `displayEnabled=false` and `boundaries.frontendDisplayApproved=false` through an approved data update.
-- If unsafe copy appears, revert immediately.
-- If Global Risk Heatmap layout changes, revert immediately.
-
-- **L-4A-1** production refresh workflow audit sync:首个成功 manual run `25611392014`(commit `c32af65`,只改 `data/radar-data.json` 33+/37−,`productionDataWritten=true`/`displayEnabled=true`/`promotionEligible=false`,全 checks 过);scheduled `23:50 UTC` refresh 就绪,勿手编 layer/加 schedule/retry。
-- **L-4B** display coverage polish note:frontend-only,显示更多已验证 layer 字段的 capped 安全摘要;勿 rerun/编辑 AI 文本;过长则在 `scripts/modules/renderExternalAi.js` 降 cap;raw provenance/run ID/artifact ID 仍隐藏。
-- **L-4B-1** display coverage audit-sync:coverage 完成(frontend-only);`External AI Production Refresh` 仍是唯一批准自动 provider 路径。
-
-### v28.0L-4C refresh monitoring / failure notification design
-
-v28.0L-4C documents monitoring and failure-notification handling for the existing `External AI Production Refresh` workflow. It does not add a workflow, trigger a run, call DeepSeek, read secrets, change production data, or change frontend behavior.
-
-Monitoring baseline:
-
-- `External AI Production Refresh` runs on the daily `23:50 UTC` schedule and by manual `workflow_dispatch`.
-- The first successful manual production refresh was run `25611392014`.
-- That run committed `c32af65` and changed only `data/radar-data.json`.
-- The recommended first notification channel is GitHub native failed-workflow notification.
-- Dedicated issue, webhook, Slack, or email notification automation is not implemented yet.
-
-Failure review procedure:
-
-- Open the failed `External AI Production Refresh` run in GitHub Actions.
-- Inspect the first failing step and determine whether the failure is configuration, provider transport, output safety, production write, check, or protected-path related.
-- Confirm whether a production commit was pushed. If failure happened before final checks, there should be no `data/radar-data.json` commit.
-- Check whether a sanitized artifact is available before reviewing output details.
-- Treat the known non-blocking `check:world-order` warning as not an external AI refresh failure when `check:all` still passes.
-
-Allowed rollback actions:
-
-- Revert the latest refresh commit if the refreshed production layer must be removed.
-- Rerun one validated manual refresh only when operator review says a rerun is appropriate.
-- Disable display flags through an approved data update if display must be hidden.
-
-Do not:
-
-- Manually edit AI text or `externalAiInterpretationLayer`.
-- Add provider auto-retry loops.
-- Add another refresh schedule.
-- Add issue, webhook, Slack, email, or external notification secrets without explicit approval.
-- Let monitoring write `data/radar-data.json`, call DeepSeek, trigger provider refresh, or change frontend files.
-
-Design reference:
-
-- `docs/EXTERNAL_AI_REFRESH_MONITORING_DESIGN.md`
-
-### v28.0M-3H external AI layer preservation hotfix
-
-Ordinary radar data refresh must preserve the current production `externalAiInterpretationLayer` when it is contract-valid. `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
-
-If `check:external-ai-production-write-guard` fails after a `chore: refresh radar data` commit:
-
-- Inspect `data/radar-data.json.externalAiInterpretationLayer`.
-- Check whether `displayEnabled`, `boundaries.frontendDisplayApproved`, and `qualityReview.promotionEligible=false` were lost or malformed.
-- Run `npm run check:external-ai-production-contract -- data/radar-data.json`.
-- Run `npm run check:external-ai-frontend-hidden-scaffold`.
-- Do not manually edit external AI generated text.
-- Do not call DeepSeek or rerun the provider just to repair ordinary refresh damage.
-- Repair by preserving the last valid production external AI layer from git history, or rerun the approved `External AI Production Refresh` only after the preservation bug is fixed and operator review says a refresh is appropriate. If the previous layer is missing or contract-invalid before an ordinary Daily refresh starts, the Daily pipeline may fail soft to a disabled scaffold and rule-based `aiInterpretationLayer` fallback instead of blocking the whole radar build.
-
-Rollback and repair boundaries:
-
-- A normal radar refresh may update current market and radar fields, but must carry forward the existing valid external AI layer unchanged.
-- If no valid external AI layer is available, a normal radar refresh may write the disabled scaffold only as a fallback; it must not call DeepSeek, generate new provider text, or mark external AI display as approved.
-- If unsafe copy appears or display gates are malformed, revert the damaging data refresh or restore the latest contract-valid layer.
-- Treat the known non-blocking `check:world-order` warning as separate from external AI preservation when `check:all` passes.
-
-### v28.0M-3H-1 preservation hotfix audit-sync operator note
-
-v28.0M-3H-1 records that the preservation hotfix passed post-merge audit after PR #118.
-
-Operator guidance:
-
-- If `check:external-ai-production-write-guard` fails after `chore: refresh radar data`, first inspect whether ordinary radar refresh preserved `externalAiInterpretationLayer`.
-- Ordinary radar refresh should not overwrite a valid production `externalAiInterpretationLayer` with the disabled scaffold.
-- If the previous layer is missing or production-contract-invalid, ordinary radar refresh may write the disabled scaffold and fall back to rule-based `aiInterpretationLayer` rather than fail the whole Daily build.
-- Do not manually edit external AI generated text.
-- Do not rerun the provider repeatedly to repair ordinary radar refresh damage.
-- `External AI Production Refresh` remains the only approved automatic path for changing external AI content.
-- Allowed rollback path is reverting the faulty radar refresh or restoring the last valid `externalAiInterpretationLayer` only through an approved hotfix.
-- Continue treating the known `check:world-order` warning as non-blocking when `check:all` passes.
-
+- Use the top-level `Macro Risk Editorial operations` and `Macro Risk Editorial production checks` sections for the visible homepage AI layer.
+- Daily may preserve a contract-valid legacy `externalAiInterpretationLayer` unchanged for data compatibility, or fail-soft to its disabled scaffold when invalid; the frontend must never consume it.
+- Historical external-AI manual provider tools remain artifact-only and opt-in. They may not write `macroRiskEditorialLayer`, production JSON, or frontend output.
+- Legacy incidents/runs `25611392014`, `27049623075`, `27084750986`, and related L-4A/L-4C/M-3H details remain available in git history and the `EXTERNAL_AI_*` phase documents; they are not current runbook actions.
+- Never hand-edit either AI field, add automatic retries, copy artifacts into production, or weaken no-scoring/no-decision/no-execution/no-position boundaries.
 > **Market Pricing + Editorial 阶段 operator-note 历史(B-consolidated 折叠 · M-4 → N-16):** 以下各阶段 operator note 折成索引(完整见 git history + `MILESTONE_INDEX.md` + 对应 scope docs)。统一边界:Market Pricing Temperature display-only;勿手编 `data/market-pricing-history.json` / `data/radar-data.json`、勿伪造 Nasdaq/QQQ/MA60/标准差/z-score、SPX 仅 fallback 不冒充 Nasdaq;各 scaffold 命令本地安全/不抓网/不写 production;editorial(N-*)为前端版面,不改 scoring/decision/execution/position。**当前 Market Pricing 运维以下方 M-24 first-real-record-write 与 M-91 NDX/IXIC refresh 为准。**
 
 - **M-4** macro overview structure audit-sync:Macro Overview 稳定(M-1 skeleton→M-3 unified→M-3H preservation 后),为首读判断路径;Heatmap 独立。

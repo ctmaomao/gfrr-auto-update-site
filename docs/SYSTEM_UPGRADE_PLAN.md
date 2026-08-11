@@ -294,7 +294,7 @@ v28.0J 已完成规则化 AI 解释层的 contract、live data activation、fron
 - **L-3Q** frontend display design([`EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md`](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md)):中文文案;须 `displayEnabled=true`+`frontendDisplayApproved=true` 才显示(当时 NO-GO)。
 - **L-3R** hidden frontend scaffold:`external-ai-display-panel` hidden 容器 + `check:external-ai-frontend-hidden-scaffold`(两 flag false 时隐藏)。
 - **L-3S** visible display approval + data-flag design([`EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md`](EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md)):文档 data-flag 流程(当时两 flag 仍 false)。
-- **L-3T** visible display flag enablement:**置 `displayEnabled=true` + `boundaries.frontendDisplayApproved=true`(= 当前 visible 态)**;不改 AI 文本/前端代码。
+- **L-3T** visible display flag enablement:**当时置 `displayEnabled=true` + `boundaries.frontendDisplayApproved=true`(= 当时 visible 态)**;不改 AI 文本/前端代码。该旧 panel 已于 2026-08-11 退场。
 - **L-3T-1** visible display audit-sync:可见 flags post-merge 审计 PASS(contract / write-guard / hidden-scaffold / check:data / check:all)。
 
 - **L-3U** visible display UX polish:仅 polish 已可见 panel(`data/radar-data.json` / AI 文本不变)。
@@ -355,5 +355,5 @@ v28.0J 已完成规则化 AI 解释层的 contract、live data activation、fron
 - **M-7V** homepage reading path repair:顶部导航走客户路径(今日总判断→压力来源→信号分层→四大驱动→市场温度→风险引擎→交叉验证→风险热力图→详细数据→方法说明);生成前 7 块真锚点;`#detail-data`/`#method-evidence` 分组;bump asset `28.0M-7V`。
 - **M-7V-1** reading path UX audit sync:M-7V merged `f9b1d4c #126`、post-merge audit PASS;生成锚点稳定(`homepage-today-judgment`…`homepage-cross-validation`);non-blocking `check:world-order` warn(gdelt stale/sipri manual/acled not_configured)。
 - **M-4** macro overview structure audit sync:记录 M-1/M-2/M-3/M-3H/M-3H-1 line 完成;当前结构=今日总判断/主要压力来源/信号分层/四大宏观驱动/市场定价温度计 waiting/五大风险引擎摘要/风险交叉验证。
-- **M-3H** external AI layer preservation hotfix 【当前活规则,非纯历史】:普通 radar refresh 必须保留既有 contract-valid `externalAiInterpretationLayer`,`External AI Production Refresh` 是更新 AI 内容的唯一批准路径(merged `368a851 #118`);**当前契约以 `docs/DATA_CONTRACT.md` 为准**。
+- **M-3H** external AI layer preservation hotfix（历史实现，兼容规则仍保留）:普通 radar refresh 可原样保留 contract-valid `externalAiInterpretationLayer`；旧 `External AI Production Refresh` 已于 2026-08-11 退役，旧字段无可见消费者。**当前契约以 `docs/DATA_CONTRACT.md` 为准**。
 - **M-3H-1** preservation hotfix audit sync:记录 M-3H post-merge audit PASS(`check:external-ai-production-contract`/`-write-guard`/`-frontend-hidden-scaffold`/`check:all` 全 PASS)。

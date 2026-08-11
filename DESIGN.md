@@ -157,6 +157,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 3. #macro-risk-overview                   宏观风险判断总览
    └─ .macro-overview-shell
       ├─ #homepage-today-judgment         Hero / 今日判断
+      ├─ #macro-risk-editorial             本期宏观判读（DeepSeek 只读编辑层；失败时隐藏）
       ├─ .threshold-block                 风险阈值尺
       ├─ .trend-block                     8 周趋势
       ├─ #homepage-pressure-sources       压力来源
@@ -176,12 +177,11 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 ═══ Energy theme（PR4 · 独立能源专题,主路径可见 + 折叠详情）═══
 6. #oil-directional-pressure              油价方向压力研判(ODP,display-only;不进打分/执行/Heatmap)
 
-═══ 第二层：附录区（5 个 details,默认收起）═══
+═══ 第二层：附录区（4 个 details,默认收起）═══
 7. #detail-data                           详细数据与图表
 8. #world-order-stress-section            World Order regime overlay
 9. #method-evidence                       方法说明与证据链
-10. #external-ai-auxiliary                外部 AI 解读 - 只读辅助
-11. #execution-risk-detail                执行与风控详情
+10. #execution-risk-detail                执行与风控详情
 
 ═══ Footer（不进 jump nav）═══
 <footer class="method">                   method-grid 4 项
@@ -205,7 +205,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 12. `#detail-data`
 13. `#world-order-stress-section`
 14. `#method-evidence`
-15. `#external-ai-auxiliary`
+15. `#macro-risk-editorial`（嵌入 `#macro-risk-overview`；只读、fail-closed）
 16. `#execution-risk-detail`
 
 ### 4.3 修改 IA 顺序的流程
@@ -262,7 +262,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 | `#detail-data` | `var(--paper-ink)` | 中性 appendix |
 | `#world-order-stress-section` | `var(--risk-orange)` | regime overlay;独立结构性观察层 |
 | `#method-evidence` | `var(--paper-ink)` | 中性 appendix |
-| `#external-ai-auxiliary` | `var(--paper-muted)` | 辅助层 |
+| `#macro-risk-editorial` | `var(--paper-ink)` | 主总览内嵌 DeepSeek 只读编辑层；不是独立一级 section |
 | `#execution-risk-detail` | `var(--risk-red)` | 风控严重性 |
 | `#plain-summary-card` | n/a (preface, no accent band required) | non-nav preface block — 已退场 / historical preface block(M-94 退场) |
 
@@ -337,9 +337,9 @@ runtime block 的基准结构:
 
 ### 5.4 折叠态硬约束（appendix details）
 
-5 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始渲染时全部为收起状态。任何把 `open` 属性加进 `index.html` 的改动都视为视觉契约违规。
+4 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始渲染时全部为收起状态。任何把 `open` 属性加进 `index.html` 的改动都视为视觉契约违规。
 
-适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#external-ai-auxiliary` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。
+适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。`#macro-risk-editorial` 是主路径内嵌 article，仅其来源账本使用局部 `<details>`，不属于 appendix。
 
 执行机制:`scripts/check-frontend-folded-default.mjs`(Stage 6 写)在 CI 中拦截任何包含 `<details ... open>` 的提交。
 
@@ -654,13 +654,13 @@ var(--font-mono)              /* IBM Plex Mono */
 
 ```text
 #macro-risk-overview          宏观风险判断总览（红色带）
+  #macro-risk-editorial       本期宏观判读（DeepSeek 只读编辑层；校验失败时隐藏）
   #wow-key-changes            本期关键变化（runtime 注入，不是顶级 section）
 #macro-thematic-cards         宏观主题卡阵（绿色带）
 #global-risk-heatmap          全球风险热力图（红色带）
 #detail-data                  详细数据与图表（墨色带，折叠）
 #world-order-stress-section   世界秩序压力层（regime overlay，橙色带，折叠）
 #method-evidence              方法说明（墨色带，折叠）
-#external-ai-auxiliary        外部 AI 解读（灰色带，折叠）
 #execution-risk-detail        执行与风控详情（红色带，折叠）
 
 ─── non-nav preface（可选，不进 jump nav，不计入 IA 编号）───

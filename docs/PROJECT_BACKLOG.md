@@ -13,7 +13,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
 | Cache version | `macro-risk-editorial-1` |
 | check:all 项数 | 41 个顶层命令；ODP `oil-directional` 套件当前 88 leaf checks（含 GDELT Web NGrams automated display cache guard 与 P68 facility-window quality guard）。其余 suite/直连 checker 的实时组成以 `package.json` 与 `scripts/check-suite.mjs` 为准，避免手工总数再次漂移。|
-| 最后审计日期 | 2026-06-05(全站 `.md` doc-slim 审计 Batch 1a→5余项,docs-only;两大 scope-of-record 簇 External AI / Market Pricing 收口 + 三 Operating Document changelog tail 折叠,详见 Section 5 + Session Handoff)。上次系统审计 2026-06-02(Codex 只读审计 7 findings 全收口,详见 Section 2 P3-17)|
+| 最后审计日期 | 2026-08-11(Macro Risk DeepSeek 编辑层生产上线 + 旧可见 External AI 模块退场；权威文档、IA、数据源、运维与 Pages trigger 状态已同步)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
 | 下次审计建议 | 下一次 stage / milestone 合并时 |
@@ -33,6 +33,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
 - **2026-07-28 Bubble Watch source-quality hardening**:`accounting_events` 改为核心企业实体 + 会计/财报/证券欺诈语义 + 正式执法动作的邻近语境三重门槛,并以 Google Drive DOJ 文章锁定负向回归；`arr_2nd_deriv` 用底层 ARR 里程碑日期对照 `maxAgeDays`,超龄 fail-closed 回较新的 curated 快照；`insider_sell_buy` 与 `fed_policy` 分别明确显示「高卖压·覆盖受限」和「年末路径隐含加息」。Core-23/Shadow-4、权重、阈值与 GFRR 主链边界均未改变；当前主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6,有效判读仍为「高风险预警」。
 - **2026-08-11 Bubble Watch 周度 DeepSeek 编辑层**:P2-14 已完成并上线。`Bubble Watch Weekly Editorial Refresh` 在周一 Bubble Watch 成功后或 owner 显式确认成本时运行，Tavily/Brave → compact input → 单次 DeepSeek/no-retry → validator/review → protected single-field writer；只写 `summary.weekly_editorial`，确定性 `summary.verdict_desc` 永远保留为 fallback。首个生产成功 run `31462238973` / data commit `9ac2b911` 生成 3,691 字、3 timeline / 2 tensions / 6 categories / 3 watch / 26 sources；quality=`warn` 仅因本周 1 条 cross-checked 新闻且 discovery partial，blockers=0。最终 Pages run `31462975922`、真实桌面 DOM 与 390px Playwright 均通过。该层不改 Core-23/Shadow-4、主分、Stage/Trigger、verdict 或任何 GFRR scoring/decision/execution/position。
+- **2026-08-11 Macro Risk DeepSeek 编辑层**:P2-15 已完成并上线。`Macro Risk Editorial Refresh` 每日 00:05 UTC 汇总 Tavily/Brave 近 7 日新闻与站内结构化数据，单次 DeepSeek/no-retry 后经 validator/review/protected writer 写入 `macroRiskEditorialLayer`；首个成功 run `31466780614` / data commit `ff660b9c` 生成 5,160 字、37 sources、6 modules、5 cross-market、4 timeline，quality=`pass`。旧 `#external-ai-auxiliary`、renderer 与 scheduled workflow 已退场，旧字段仅保留数据兼容；Pages run `31466848275` 与桌面/390px 真实浏览器验收通过。该层不改主分、六模块、tail overlay、decision/execution/position、World Order、ODP、Bubble Watch 或 cross-validation。
 - **2026-07-26 Market Pricing freshness/alignment review**:发现 QQQ 已到 2026-07-24、NDX/IXIC 仍停在 2026-05-22；按 owner 本次授权运行既有 M-91 manual-only Yahoo refresh 并重算 metrics，三资产现均到 2026-07-24。新增 `review:market-pricing-freshness` / `check:market-pricing-freshness`，守住 active 周线 10 天龄、辅助资产落后 QQQ 7 天、history/metrics/coverage/commit timestamp 一致性。默认 WARN 不阻断、FAIL 阻断，`--strict` 供人工硬复核；保持 display-only，不把 NDX/IXIC 接入 GitHub Actions、Worker、scoring、decision、execution、position 或 cross-validation。
 - **2026-08-02 Refresh QQQ Market Pricing calendar-drift repair**:scheduled run `30694893490` 的 Yahoo QQQ refresh 与 metrics 重算均成功，失败来自 freshness checker 把合成场景时钟写死在 2026-07-26；QQQ 正常前进到 2026-07-31 后，stale-auxiliary WARN 用例误叠加 `qqq_date_in_future` 而变 FAIL。checker 现以 production QQQ latest date +2 天作为场景时钟，stale/mismatch/future dates 全改为相对日期；10 天/7 天阈值、reviewer、workflow、production data 与 display-only/no-scoring 边界均未改。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
@@ -51,12 +52,7 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-#### P2-15: 主页面 Macro Risk DeepSeek 编辑层
-
-- owner 已于 2026-08-11 批准；设计与迁移边界见 [`MACRO_RISK_EDITORIAL_DESIGN.md`](MACRO_RISK_EDITORIAL_DESIGN.md) / ADR-0022。
-- 按 serial trunk 推进：contract/input/news/provider/review/writer → workflow/frontend/旧模块退场 → 单次生产终验。
-- 硬边界：新 `macroRiskEditorialLayer` 只作主总览解释展示；确定性 Hero 永远 fallback；不改主分、六模块、tail overlay、decision/execution/position、World Order、ODP、Bubble Watch 或 cross-validation。
-- 旧 `externalAiInterpretationLayer` 暂时保留兼容，但删除用户可见卡片并停止日常 provider refresh，避免重复 AI 成本。
+No active P2 item. P2-14 Bubble Watch weekly editorial 与 P2-15 Macro Risk DeepSeek 编辑层均已于 2026-08-11 完成并上线；边界见对应设计文档与 ADR。
 
 ### P3 Items
 
@@ -303,9 +299,9 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 - **BDI/Baltic**:不新增官方 Baltic source;现有 `macroDrivers.shippingFreight` 已有 StockQ BDTI/BCTI/BDI freight proxy。PortWatch 若未来实现应 complement 而非替换。
 - **remaining unlock**:PortWatch / OPEC 可视化已通过 Pulse P3-P5 放入现有 ODP 折叠详情;P6A 补入 STEO OECD 库存/全球净抽库慢变量;P6B 将这些慢变量收束为 ODP 内部 global overlay;P7 增加离线 replay 守门。后续仍不得把 OPEC spare capacity、energyInventoryBalance 或 chokepoint proxy 变成 Oil Bull Score / World Order weight / scoring input。
 
-#### P3-20: External AI 深化 — analyst_compact_v1 深度独立分析(PR0/PR1/PR2+canary/PR3+follow-up+go-live+Daily 终证+默认翻转+PR4a/PR4b-1 证毕 · PR4b-2 前端渲染待复核)
+#### P3-20: External AI 深化 — analyst_compact_v1（COMPLETED HISTORICAL；旧可见层已于 2026-08-11 退场）
 
-来源:2026-06-05 owner 立项。目标:让 External AI Auxiliary 对后台丰富数据做**深度独立跨层分析**。根因=输入面窄(`extractSiteData`/`extractCompactSiteData` 都只喂 `macroDrivers.consumer` 一个,约 5-10% richness),非模型能力。**硬边界(CLAUDE.md 绝对规则 4,全程不动)**:External AI = 只读展示层,输出不进 scoring/decision/execution/position;3 守卫(`check-external-ai-output`/`-production-contract`/`-production-write-guard`)+ unsafe-wording + `promotionEligible/humanApproved=false` + `affects*=false` 保留;「独立」=对站内数据独立推理,不接外部新闻/行情。
+历史来源:2026-06-05 owner 立项。该线曾让 External AI Auxiliary 对后台数据做深度跨层分析；2026-08-11 可见卡片与 scheduled refresh 已被 P2-15 的 integrated `macroRiskEditorialLayer` 取代，旧字段仅保留数据兼容/手动诊断。以下 PR0→PR4b 记录均为历史落地账本；不进 scoring/decision/execution/position 的硬边界继续适用于所有 AI 层。
 
 - **关键现实(Codex+Claude 交叉核实)**:production **硬锁** `local_compact`——workflow 固定 `--compact`、`validate-data.mjs` 硬断言 sourceMode/model/inputSource、projection 折叠 sourceAttribution。故为 **contract migration 非加字段**,必走 expand-then-contract(本地 check:all 只校验旧 committed 数据→换源类本地绿≠Daily 绿)。
 - **PR0 ✅ 设计契约已锁**(design-contract only,Codex 起草 + Claude 逐行交叉核 5 轮,check:docs 绿,doc 内自洽):新 source mode `analyst_compact_v1` / schema 串 `v28.0L-external-ai-production-analyst-1`;evidence-pack schema(全 macroDrivers + modules + regimeProbabilities + scenarioTree + transmission + heatmap + divergence + ODP/world-order/market-pricing 仅 summary+top-N);**redaction 以 checker 数组为单一真相源**(`BANNED_COPY`/`UNSAFE_CLAIMS`/`UNSAFE_CONTENT`,不手抄);sourceLayer floor + `macroDrivers.<key>` pattern;confidence cap **`medium` enum + score<=45**(低至中低语义,禁 `high`);canary gates;rollback;PR0→PR4 迁移地图。详见 [`EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md`](EXTERNAL_AI_ANALYST_INPUT_CONTRACT_REVIEW.md)。
@@ -322,12 +318,12 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 - **PR4a follow-up#4 ✅ 已落(canary layer-name array zero-ambiguity 规则)**:第四次 canary 无截断、4 字段齐全、sourceAttribution 全 canonical,但 `dataQualityLens.missingLayers[0]` 写成 `brentPricingLayer.limitations: Platts Dated Brent未接入`(field-path + 冒号 + 解释文字)。修:仅 canary prompt 讲死 PR4 layer-name arrays 是机器可读 identifier list,每个元素必须 exactly one bare canonical sourceLayer,不得含 field-path/colon/explanation/natural-language text;原因写入 `summaryZh`/`confidenceImpactZh`/相关 `*Zh` 字段;output checker 加 inline explanation 负例自测。**checker/pr4-schema/source-layers 逻辑零放宽**,default prompt/2400/production/前端/data 零碰。
 - **PR4a ✅ 证毕(第 5 次 provider canary PASS)**:第五次 `--analyst-pr4-schema-canary` 真调 DeepSeek PASS: `check:external-ai-output` PASS(0 warn),`review:external-ai-artifact` PASS,4 字段齐全,caps 守(2/2、数组≤3),layer refs 18/18 valid 0 invalid,sub-confidence 全 `low|medium`,blocklist 0。至此模型已证实可稳定产出 PR4 结构化字段;4 次 safe-fail 均为 prompt 格式歧义且 production 零影响。
 - **PR4b-1 ✅ 已落 + production/Daily 终证完成(production prompt 产出 + optional 接受,无前端)**:默认 analyst production prompt 移除 PR4 禁令并并入 4 字段 shape/caps/canonical/bare layer-name 规则,默认 `max_tokens` 提升到 5000;production projection / contract checker / validate-data 对 4 字段 **additive optional** 接受(存在才复用 PR4a validator 严校验,不 bump schema,不要求旧 committed layer 有字段)。owner 授权 production refresh run `27084750986` PASS → commit `74f6ed7` 将 4 字段写入 `externalAiInterpretationLayer`;随后 Daily run `27084845769` PASS → commit `c6996a7` preserve 后 4 字段仍在,contract/data/check:all/Pages 绿。
-- **PR4b-2 ✅ 已落 + 线上实测收口**:在现有 `#external-ai-auxiliary` 折叠区内渲染 4 个 optional 字段(`crossLayerSynthesis`/`keyDivergences`/`scenarioLean`/`dataQualityLens`),不新增一级 section、不改 IA;缺字段时 hidden fallback,仍 display-only;asset bump `external-ai-pr4b2-1`。Pages 绿后线上 `#ext-ai-structured-output` 6 块均渲染真实结构化内容,console 无错误。
+- **PR4b-2 ✅ 历史落地**:当时在 `#external-ai-auxiliary` 折叠区内渲染 4 个 optional 字段；该 DOM/renderer 已于 2026-08-11 随 P2-15 退场，旧数据字段继续兼容保留。
 - **PR4b-2 follow-up ✅ 已落(read-only warning 可读性)**:修 External AI read-only warning block 的深色反白低对比问题,改为 paper/canvas warning surface + 暖墨正文 + 橙色左边界;asset bump `external-ai-warning-readability-1`;display-only,不改 data/workflow/runtime。
 - **PR4b-3 ✅ 已落(display-only 友好标签映射)**:结构化跨层解读区已把静态英文标签(`supporting/for/stale...`)译成中文,并把 sourceLayer/field-path 引用显示为中文友好名;JSON/schema/checker/provider/production contract 未改;asset `external-ai-pr4b3-1`。
 - **External AI energyTransport canonical alias hardening(2026-08-05)**:`External AI Production Refresh #95` 的 DeepSeek 输出把 compact evidence-pack 键 `energyTransport` 放进 `dataQualityLens.missingLayers`,严格 validator 因非 canonical sourceLayer 而在写生产数据前安全失败。修复只把这个已知精确别名归一化为 `macroDrivers.energyTransport`,并同步 prompt 明示映射、normalizer 自测和 output-validator 回归；unknown/ambiguous layer 仍 fail closed,不放宽 schema/unsafe wording/quality/write guards,不加 provider 自动重试,不改 scoring/decision/execution/position/frontend。
 - **External AI low-maintenance reference mode(2026-08-06)**:`External AI Production Refresh #97` 在 provider 成功返回后，因机器标识 `modelJudgments[2].key=certainty` 被当作用户文案而误判。修复将该精确 machine-only path 排除出 banned-copy scan，同时继续检查 `labelZh` / `detailZh` 等展示文案；prompt 要求 `modelJudgments` 优先输出中文字符串，renderer 兼容历史对象形态。普通 quality `warn` 改为 advisory/non-blocking，安全与结构 `fail` 仍阻断。workflow 删除重复 provider-output / projection validation，以 `check:external-ai-production-publish` 替代付费刷新中的全仓库 `check:all`;write guard、`check:data`、protected-path assertion 以及 no scoring/decision/execution/position 边界不变。
-- 状态:**External AI 深化 PR0→PR4b-3 全链 live + 线上验证闭环;当前无待落库的 PR4b 前端任务**。记忆见 `project_external_ai_deep_analysis`。
+- 状态:**历史 PR0→PR4b-3 已闭环；旧 visible/scheduled 路径现已退场且无待办。当前首页 AI 以 P2-15 `macroRiskEditorialLayer` 为准。**
 
 #### P3-21: AI 泡沫监测第二页面(Bubble Watch · ADR-0016,一次性落地)
 
@@ -474,6 +470,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-08-11 · Macro Risk DeepSeek editorial)**: P2-15 已完成。实现提交 `5e076610` / `b32d3cbb` / `d6aa3815`，长度上限修正 `9f255058`，生产数据 commit `ff660b9c`；功能分支 `codex/macro-risk-weekly-editorial` 与 `main` 均已推送。用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
+- **当前进行中(2026-08-11 · Macro Risk DeepSeek editorial)**: 无。成功生产 run `31466780614` 写入 valid/displayEnabled、quality=pass 的 `macroRiskEditorialLayer`：5,160 可见字符、37 sources、6 modules、5 cross-market、4 timeline；旧 `#external-ai-auxiliary`、旧 renderer 和旧 scheduled workflow 已移除，旧字段仅保留数据兼容。
+- **下一步建议(2026-08-11 · Macro Risk DeepSeek editorial)**: 正常观察每日 00:05 UTC 自动刷新。若 provider/contract/review/freshness 失败，按 `docs/OPERATIONS.md` 审阅脱敏 artifact；不得同 run 重试、手工改 production JSON 或削弱 gate。
+- **阻塞或等待(2026-08-11 · Macro Risk DeepSeek editorial)**: 无。Pages run `31466848275` 成功并重跑完整 `check:all`；线上桌面 1920px 与移动 390px 均无横向溢出，来源账本可展开，旧模块 DOM/text 计数为 0。
 
 - **上次会话结束于(2026-08-11 · Bubble Watch weekly editorial)**: P2-14 已完成。生产 run `31462238973` / data commit `9ac2b911` / 最终 Pages run `31462975922` 全部成功；最终功能提交为 `32cafd17`，分支 `codex/bubble-watch-weekly-editorial` 与 `main` 已推送。用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
 - **当前进行中(2026-08-11 · Bubble Watch weekly editorial)**: 无。线上 `summary.weekly_editorial` status=valid/displayEnabled=true/validation=pass/quality=warn，3,691 可见字符、3 timeline、2 tensions、6 categories、3 watch、26 sources；quality WARN 只披露 1 条 cross-checked 新闻和 partial discovery，不影响展示或评分。置信度按 0–100 显示为 60/100，动态 quality/source labels 与 legacy warnings 已中文化。

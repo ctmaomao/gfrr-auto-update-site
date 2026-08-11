@@ -5,6 +5,8 @@ M-60 replaces the one-off M-59 fixup Pages trigger with a centralized
 future workflows that commit to `main` cannot silently skip Pages deployment
 wiring.
 
+> **CURRENT UPDATE (2026-08-11):** The former `External AI Production Refresh` upstream has been retired and replaced by `Macro Risk Editorial Refresh`. The current authoritative upstream list is `.github/workflows/deploy-static-site-to-pages.yml`; the original M-60 incident narrative below remains historical context.
+
 ## Motivation
 
 PR #212 added `Refresh World Order Stress`, which refreshes
@@ -84,7 +86,13 @@ Current workflows that trigger Pages through `workflow_run`:
 
 - `Build Daily Radar Data`
 - `Refresh World Order Stress`
-- `External AI Production Refresh`
+- `Macro Risk Editorial Refresh`
+- `Refresh QQQ Market Pricing`
+- `Refresh Oil Directional Pressure`
+- `Refresh Oil Thermal Watch`
+- `Refresh Oil News Event Watch`
+- `Refresh Bubble Watch`
+- `Bubble Watch Weekly Editorial Refresh`
 
 Current workflows excluded from Pages because they publish only to the
 `realtime-data` branch:

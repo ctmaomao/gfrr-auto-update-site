@@ -36,7 +36,7 @@
 
 仅在对应 PR / 子系统范围内权威。**默认会话不应将其作为全项目规则。**
 
-> **2026-06 doc-slim 审计注**:External AI scope + Market Pricing scope 的 phase/scaffold 设计文档顶部已加 STATUS banner,把文中「disabled / waiting-for-history / scaffold-only」阶段措辞 reconcile 到当前生产态(External AI = live visible read-only;Market Pricing = has_history / M-27 温度卡 live);**grading 未变**,仅消除冷打开 current-state 误导。Operating Document 三 changelog tail + READINESS_CHECKLIST + TEMPERATURE_DATA_SOURCE_DESIGN 的 stacked 段已 B-consolidated 折叠。详见 `docs/PROJECT_BACKLOG.md` Section 5(doc-slim 审计 Batch 1–3b)。
+> **2026-08-11 状态注**:External AI 早期 phase/scaffold 文档仅保留为历史设计记录；旧 `externalAiInterpretationLayer` 已退出现有前端与 scheduled refresh。当前唯一可见首页 AI 编辑层是 `macroRiskEditorialLayer`，以 `docs/MACRO_RISK_EDITORIAL_DESIGN.md`、ADR-0022、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md` 为准。Market Pricing 仍为 has_history / M-27 温度卡 live。
 
 ### Market Pricing scope (M-14 → M-91)
 
@@ -126,6 +126,7 @@
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`
 - `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`
 - `docs/BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md` — Bubble Watch 独立 DeepSeek 周度编辑层；只读展示，不影响 Core-23 / Shadow-4 或 GFRR 主链。
+- `docs/MACRO_RISK_EDITORIAL_DESIGN.md` — 首页 Macro Risk DeepSeek 编辑层；嵌入主总览、每日单次调用、fail-closed，只解释不改分。
 - `docs/EXTERNAL_AI_PROVENANCE_TRACKING_M43.md`
 - `docs/EXTERNAL_AI_*_DESIGN.md` (其他;wildcard 覆盖未逐条列出的 External AI 设计文档 — 本轮有意不逐文件展开)
 

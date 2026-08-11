@@ -827,14 +827,14 @@ documented attribution string and code is a contract violation.
 |---|---|
 | **License** | 商业 API;`DEEPSEEK_API_KEY` env |
 | **Quota** | 按账单付费;**fail 后不得反复重试** (K-4E-1) |
-| **Refresh 频率** | `external-ai-production-refresh.yml` (manual + scheduled) |
-| **失败 fallback** | `provider_unavailable` / `provider_timeout` 写 failure artifact;`promotionEligible=false`;不写入 production data |
-| **影响 scoring?** | **否** — `externalAiInterpretationLayer` 是外部 AI 生成的只读展示层；仅在 production contract、quality review、freshness 与前端 approval 全部通过时显示，始终不影响 scoring/decision/execution/position |
-| **fetcher** | `scripts/external-ai/provider-adapters.mjs` + `scripts/run-external-ai-manual-test.mjs` |
+| **Refresh 频率** | `macro-risk-editorial-refresh.yml` 每日 00:05 UTC；Bubble Watch 周度编辑层按其周一 workflow；manual test 仍显式 opt-in |
+| **失败 fallback** | provider/contract/review/freshness 失败只写脱敏 artifact 或直接 fail-closed；不写入 production，首页继续显示 deterministic macro overview |
+| **影响 scoring?** | **否** — `macroRiskEditorialLayer` 是首页唯一可见外部 AI 编辑层；旧 `externalAiInterpretationLayer` 仅保留数据兼容、无可见消费者。所有层始终不影响 scoring/decision/execution/position |
+| **fetcher** | `scripts/external-ai/provider-adapters.mjs` + `scripts/macro-risk/*` + `scripts/bubble-watch/weekly-editorial-*` |
 
 ⚠️ **不得**:
 - 把 manual artifacts 直接 promotion 进 production
-- 绕过唯一批准的 `External AI Production Refresh` workflow 或 write guard 写入 `data/radar-data.json`
+- 绕过当前批准的 `Macro Risk Editorial Refresh` / Bubble Watch weekly editorial workflow 或各自 write guard 写入生产 JSON
 - 通过削弱 unsafe wording validator 让 artifact 通过
 - 复述具体 execution / position / exposure / cash buffer 字段
 

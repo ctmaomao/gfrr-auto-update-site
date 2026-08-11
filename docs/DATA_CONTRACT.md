@@ -1048,7 +1048,7 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 - `boundaries.frontendDisplayApproved=true`、`displayOnly=true`、`notInvestmentAdvice=true`。
 - `affectsGfrrScoring` / `affectsRiskModules` / `affectsTailRiskOverlay` / `affectsDecisionModel` / `affectsExecutionLock` / `affectsPositionGuidance` / `affectsWorldOrder` / `affectsOdp` / `affectsBubbleWatch` 全部为 false。
 
-`output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–4,600 字，质量目标为 2,800–3,800 字。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
+`output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–6,800 字，质量目标为 4,000–5,600 字；上限略高于 Bubble Watch 的 6,500 字，为六大模块和跨市场归因留冗余。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
 
 `sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。
 
@@ -1082,13 +1082,13 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 `scripts/check-external-ai-output.mjs` / `npm run check:external-ai-output` 只验证 sample 或 future external AI output artifacts；它不验证 production `data/radar-data.json`，不改变 `aiInterpretationLayer`，也不把 external AI 字段加入当前 production contract。
 
-v28.0K-4A does not change the production data contract. _(历史:当时 live `externalAiInterpretationLayer` 为 disabled scaffold;自 v28.0L-3P+ 已是 visible read-only,见上方当前生产契约。)_ Manual API test output must not overwrite live `data/radar-data.json` outside the approved `External AI Production Refresh` write path.
+v28.0K-4A does not change the production data contract. _(历史:当时 live `externalAiInterpretationLayer` 为 disabled scaffold，之后曾在 v28.0L-3P+ 成为 visible read-only；现已退回 legacy compatibility，见上方当前契约。)_ Manual API test output must not overwrite live `data/radar-data.json` or the current `macroRiskEditorialLayer`.
 
-v28.0L-3C provider-call workflow design does not change the production data contract. Future provider-call workflow artifacts, if implemented later, remain manual diagnostics and are not production data. They must not overwrite `data/radar-data.json`, `data/*.json`, `realtime/*.json`, config files, or the approved production `externalAiInterpretationLayer` field (now visible read-only — see current contract above; this remains a historical L-3C note).
+v28.0L-3C provider-call workflow design does not change the production data contract. Future provider-call workflow artifacts, if implemented later, remain manual diagnostics and are not production data. They must not overwrite `data/radar-data.json`, `data/*.json`, `realtime/*.json`, config files, the legacy `externalAiInterpretationLayer`, or the current `macroRiskEditorialLayer` (historical L-3C note).
 
 #### externalAiInterpretationLayer disabled scaffold contract（SUPERSEDED — 历史 v28.0K-3A/3B 基线）
 
-> **SUPERSEDED:** 以下为 v28.0K-3A/3B 时期的 disabled-scaffold 基线,保留作历史。**当前态见上方「当前生产契约」**——自 v28.0L-3P+ 起该层已是 visible read-only(`status=valid`/`displayEnabled=true`/`provider=deepseek`),并由 `v28.0M-3H` preservation 规则跨日刷新保留。
+> **SUPERSEDED:** 以下为 v28.0K-3A/3B 时期的 disabled-scaffold 基线,保留作历史。旧层曾在 v28.0L-3P+ 进入 visible read-only，现已退为无可见消费者的 legacy compatibility；当前可见层见上方 `macroRiskEditorialLayer` 契约。
 
 v28.0K-3A 在 Daily radar data 根级新增 future-only disabled scaffold；v28.0K-3B activation audit 通过后，该字段进入 live data baseline（历史）：
 
@@ -1098,7 +1098,7 @@ externalAiInterpretationLayer
 
 该字段不是外部 AI 输出，也不代表 DeepSeek / OpenAI / external AI API 已接入。它只记录外部 AI 当前 disabled，并明确 fallback 到现有 rule-based `aiInterpretationLayer`。本地旧数据如果缺少该字段，`check:data` 可能 warning；pull latest `main` 或等待 Daily workflow 重新生成后即可对齐。
 
-当前 contract：
+当时 contract：
 
 - `contractVersion` 必须为 `v28.0K-3A`。
 - `enabled=false`，`status="disabled"`。
@@ -1122,9 +1122,9 @@ Manual artifacts must not be copied into `data/radar-data.json`, `data/*.json`, 
 
 #### v28.0L-0 production integration design note（历史 staged-rollout note）
 
-> **历史:** 以下 v28.0L-0…L-3F-1 为分阶段 rollout 期间所写(撰写时该层尚 disabled、integration 尚未实现)。该 rollout 已在 **v28.0L-3P+** 完成,当前 live `externalAiInterpretationLayer` 为 visible read-only(见上方「当前生产契约」)。下列各阶段 note 保留作历史。
+> **历史:** 以下 v28.0L-0…L-3F-1 为分阶段 rollout 期间所写(撰写时该层尚 disabled、integration 尚未实现)。该 rollout 曾在 **v28.0L-3P+** 完成 visible read-only，现旧层已退为 legacy compatibility；当前可见层见上方 `macroRiskEditorialLayer`。下列各阶段 note 保留作历史。
 
-[`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md) designed the production `externalAiInterpretationLayer` contract. _(历史 L-0 note:撰写时尚未实现;该设计已在 v28.0L-3P+ 落地,当前 live 为 visible read-only,见上方当前生产契约。)_
+[`EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`](EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md) designed the historical production `externalAiInterpretationLayer` contract. _(历史 L-0 note；该旧层现只保留数据兼容。)_
 
 v28.0L-1 readiness audit does not change the production data contract. [`EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md`](EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md) confirms production external AI data writes are not ready, and `externalAiInterpretationLayer` remains the disabled scaffold.
 
@@ -2211,7 +2211,7 @@ Contract:
 
 删除或重命名前必须先确认所有消费方，包括页面渲染、运行时 overlay、校验脚本和历史数据兼容逻辑。
 
-> **External AI staged-rollout 历史阶段账本（style-B 折叠）:** 以下 `v28.0L-3H → v28.0M-3H-1` 各段记录 External AI 从 provider-call 试验 → 首次 production 写入 → visible 展示的分阶段落地。**当前态(visible read-only / `provider=deepseek` / `promotionEligible=false` / 不影响 scoring·decision·execution·position)以上方「externalAiInterpretationLayer 当前生产契约」为准**;各段当时反复声明的 "remains disabled / non-production / promotionEligible=false / not_ready" 已被当前契约 + 下方 M-3H preservation 取代,完整历史见 git history 与对应 `EXTERNAL_AI_*.md` 设计文档。
+> **External AI staged-rollout 历史阶段账本（style-B 折叠）:** 以下 `v28.0L-3H → v28.0M-3H-1` 各段记录旧 `externalAiInterpretationLayer` 从 provider-call 试验 → production 写入 → visible 展示的历史过程。该层现只保留 data compatibility、无可见消费者或 scheduled refresh；当前可见首页 AI 以 `macroRiskEditorialLayer` 契约为准。完整历史见 git history 与对应 `EXTERNAL_AI_*.md` 设计文档。
 
 ## v28.0L-3H External AI provider artifact boundary
 
@@ -2291,7 +2291,7 @@ production integration readiness review;当时结论 production 仍 disabled / `
 
 ## v28.0L-3T externalAiInterpretationLayer visible display flags
 
-**经数据 flag 启用 production external AI panel:`displayEnabled=true` + `boundaries.frontendDisplayApproved=true`(= 当前 visible 态)。** 仅批准展示(不批 provider rerun / AI text 改);`qualityReview.promotionEligible=false` 与 `boundaries.affectsScoring/DecisionModel/ExecutionLock/PositionGuidance=false` 仍必需。
+**历史上经数据 flag 启用 production external AI panel:`displayEnabled=true` + `boundaries.frontendDisplayApproved=true`(= 当时 visible 态)。** 仅批准展示(不批 provider rerun / AI text 改);`qualityReview.promotionEligible=false` 与 `boundaries.affectsScoring/DecisionModel/ExecutionLock/PositionGuidance=false` 仍必需。该 panel 现已退场。
 
 ## v28.0L-3T-1 externalAiInterpretationLayer visible display audit
 
@@ -2319,11 +2319,11 @@ display coverage polish 不改 production contract;raw provenance / artifact IDs
 
 ## v28.0M-3H externalAiInterpretationLayer preservation
 
-**【当前活规则,非纯历史】** `data/radar-data.json` 须跨日常 radar refresh 优先保留 contract-valid `externalAiInterpretationLayer`:普通 refresh **不得**删除 `displayEnabled` / `boundaries.frontendDisplayApproved` / `qualityReview.promotionEligible` / non-impact 边界 flags,**不得**编辑 external AI 生成文本;**`External AI Production Refresh` 是唯一批准的自动 provider 写入路径**;future data 更新仍须过 production contract validation + write guard。若上一轮 layer 缺失或不符合 production contract,普通 Daily refresh 不得阻断整条数据构建,应写入 disabled scaffold 并 fallback 到 rule-based `aiInterpretationLayer`,等待 approved production refresh 恢复可见 external AI 层。
+**【当前兼容规则】** `data/radar-data.json` 的普通 Daily refresh 可继续原样保留 contract-valid `externalAiInterpretationLayer`，不得编辑其历史文本或放宽 non-impact 边界；该字段没有可见消费者，也没有批准的 scheduled provider 写入路径。若字段缺失或 contract-invalid，Daily 可 fail-soft 写入 disabled scaffold，且不得阻断主数据构建或影响当前 `macroRiskEditorialLayer`。
 
 ## v28.0M-3H-1 externalAiInterpretationLayer preservation audit
 
-**【当前活规则,非纯历史】** preservation hotfix post-merge 审计通过:普通 refresh 须在 layer contract-valid 时原样保留(不得以 disabled scaffold 覆盖有效生产层);`displayEnabled` / `frontendDisplayApproved` 须为 boolean,`qualityReview.promotionEligible=false` 与 non-impact 边界(no scoring/decision/execution/position)仍必需。若 layer 缺失或 contract-invalid,Daily 可 fail-soft 写入 disabled scaffold,但不得生成 provider 文本或调用外部 AI;future 改动须过 production contract validation + write guard + frontend scaffold check + `check:data` + `check:all`。
+**【当前兼容规则】** preservation hotfix 的数据兼容性仍保留：contract-valid legacy field 原样保存；缺失或 invalid 时可写 disabled scaffold。无论旧字段 flags 为何，前端不得消费；Daily 不得生成 provider 文本或调用外部 AI。任何兼容逻辑改动仍须过 production contract validation + write guard + `check:data` + `check:all`。
 
 ## v28.0M-4 macro overview read-only derivation boundary
 
