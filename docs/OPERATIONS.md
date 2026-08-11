@@ -136,6 +136,11 @@ GitHub Actions cron 使用 UTC。当前 `Build Daily Radar Data` 每日 `22:30 U
 Tavily/Brave repository secrets 与 `DEEPSEEK_API_KEY`，每次最多一次 DeepSeek 请求，
 不自动重试。
 
+Provider 请求固定 `max_tokens=8000`，可见正文目标 2,600–3,400 中文字符。这一
+长度以 2026-08-11 读取的参考站近 12 个已提交周度版本为标定：最近 5 期均值
+2,947 字，P90 3,137 字，最大 3,278 字。Token budget 还需容纳 stable IDs、引用、
+边界对象与 JSON 字段名，不得把 8,000 tokens 解读为 8,000 字用户可见正文。
+
 生产顺序固定为：bounded Tavily + Brave discovery → compact input validation → 一次
 DeepSeek JSON request → output validation → quality review → projection → guarded writer →
 `check:bubble-watch` + `check:all` → exact-path assertion → 只提交

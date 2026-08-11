@@ -107,7 +107,11 @@ AI `facts` 的唯一依据。
   - `auditFlags[]`
   - `boundaries`
 - 所有事实性段落必须带 `sourceRefIds` 或 `sourceIndicatorIds`；引用必须存在于 input。
-- Provider 生成目标为用户可见中文 1,800–2,600 字，并对 timeline/tension/category/
+- 2026-08-11 长度标定样本为参考站最近 12 个已提交周度版本：全样本均值
+  1,976 字，最近 5 期均值 2,947 字，P90 3,137 字，最大 3,278 字。早期短稿
+  不代表当前成熟版，因此 production prompt 以最近 5 期均值为主标定。
+- Provider 生成目标为用户可见中文 2,600–3,400 字，覆盖参考站近期均值并
+  保留约 15% 上侧篇幅余量；同时对 timeline/tension/category/
   history/watch/gap/attribution 各字段设置数量和字符硬上限；quality review 对 1,800–4,200
   保留兼容接受窗口。不以堆砌内容凑长度，必须在 token budget 内闭合完整 JSON。
 
@@ -138,7 +142,9 @@ AI `facts` 的唯一依据。
 
 - 复用仓库 DeepSeek endpoint / model 默认值，provider 固定为 DeepSeek。
 - `response_format={type:"json_object"}`。
-- 默认 `max_tokens=5000`、timeout `120000ms`。
+- 默认 `max_tokens=8000`、timeout `120000ms`。8,000 是 provider JSON 序列化预算，不是用户
+  可见正文字数；它覆盖约 3,000 中文可见正文以及 stable IDs、引用、边界和
+  JSON 字段名的额外序列化成本。
 - 每个 workflow 最多一次调用，retry=0。
 - 输入在调用前必须通过 sanitizer / contract validation。
 - Prompt 必须声明:
@@ -202,6 +208,7 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 - Stage 3 complete: DeepSeek 单次 JSON request、prompt contract、output validation、quality review、production projection、source ledger、原子 writer 与 protected-target/write-semantic guard。离线 provider replay 证明 call=1 / retry=0，timeout / invalid JSON / fixture promotion / unsafe target 均 fail closed。
 - Stage 4 complete: GitHub post-refresh/manual workflow、protected path、Bubble Watch 长篇 frontend、240h/as-of fallback、1440px/390px runtime acceptance 与 Pages trigger 均已实现；本地 full check 作为该阶段提交前硬门禁。
 - Stage 5 production code deployed / live output pending: main workflow、Pages 与 fallback 已上线；
-  run `31455140609` 证明旧 prompt 在 5,000 tokens 截断，未写 production。最终 compact
-  12-story + per-field hard-cap 修复等待下一次自然周更验证；在成功生成前 DOM 合法保持
-  deterministic verdict，不允许继续付费连发。
+  run `31455140609` 证明旧 prompt 在 5,000 tokens 截断，未写 production。Owner 随后明确
+  授权按参考站近期篇幅重新标定：prompt 目标 2,600–3,400 字，provider 预算 8,000
+  tokens，同时保留 compact 12-story + per-field hard caps。下一次真实调用仍只允许
+  单次/no-retry，成功后才可写 production；失败时 DOM 继续回退 deterministic verdict。
