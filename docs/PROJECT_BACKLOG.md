@@ -51,7 +51,12 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 ### P2 Items
 
-No active P2 item. P2-14 Bubble Watch 周度 DeepSeek 编辑层已于 2026-08-11 完成生产终验；当前边界与运维入口见 Section 1、[`BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md`](BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md) 和 [`OPERATIONS.md`](OPERATIONS.md)。
+#### P2-15: 主页面 Macro Risk DeepSeek 编辑层
+
+- owner 已于 2026-08-11 批准；设计与迁移边界见 [`MACRO_RISK_EDITORIAL_DESIGN.md`](MACRO_RISK_EDITORIAL_DESIGN.md) / ADR-0022。
+- 按 serial trunk 推进：contract/input/news/provider/review/writer → workflow/frontend/旧模块退场 → 单次生产终验。
+- 硬边界：新 `macroRiskEditorialLayer` 只作主总览解释展示；确定性 Hero 永远 fallback；不改主分、六模块、tail overlay、decision/execution/position、World Order、ODP、Bubble Watch 或 cross-validation。
+- 旧 `externalAiInterpretationLayer` 暂时保留兼容，但删除用户可见卡片并停止日常 provider refresh，避免重复 AI 成本。
 
 ### P3 Items
 
