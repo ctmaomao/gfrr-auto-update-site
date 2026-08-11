@@ -339,6 +339,10 @@ function renderWeeklyEditorial(layer) {
   const confidence = output.confidence || {};
   const confidenceLabels = { low: '低', medium: '中等', high: '高' };
   const qualityLabels = { pass: '通过', warn: '有提示' };
+  const reviewWarningLabels = {
+    'only one official/cross_checked news reference was used; remaining factual claims require site-indicator corroboration': '本周期仅使用 1 条官方或交叉确认新闻；其余事实性判断均需站内指标共同支撑',
+    'news discovery was partial; visible data gaps must retain this limitation': '本周期新闻发现覆盖有限；页面数据限制必须保留这一说明'
+  };
   const sourceClassLabels = {
     site_structured: '站内结构化',
     site_structured_proxy: '站内结构化代理',
@@ -407,7 +411,7 @@ function renderWeeklyEditorial(layer) {
           return `<div class="editorial-source">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : `<span>${escapeHtml(label)}</span>`}<br/><span class="source-class">${escapeHtml(sourceClassLabels[source.sourceClass] || source.sourceClass)}${attribution?.noteZh ? ` · ${escapeHtml(attribution.noteZh)}` : ''}</span></div>`;
         }).join('')}
       </div>
-      ${warnings.length ? `<div class="editorial-review-warning">质量提示: ${warnings.map(escapeHtml).join('；')}</div>` : ''}
+      ${warnings.length ? `<div class="editorial-review-warning">质量提示: ${warnings.map(item => escapeHtml(reviewWarningLabels[item] || item)).join('；')}</div>` : ''}
     </section>
   `;
 }

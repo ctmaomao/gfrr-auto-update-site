@@ -97,7 +97,11 @@ function buildApprovedBubbleWeeklyEditorial(data, currentTimestamp) {
       { id: 'news:financing-sample', kind: 'news', sourceName: 'News A', sourceClass: 'cross_checked', title: 'Fixture financing context', url: 'https://news-a.example/ai-financing-sample', domain: 'news-a.example' },
     ],
     validation: { status: 'pass' },
-    qualityReview: { status: 'pass', promotionEligible: false, warnings: [] },
+    qualityReview: {
+      status: 'pass',
+      promotionEligible: false,
+      warnings: ['only one official/cross_checked news reference was used; remaining factual claims require site-indicator corroboration'],
+    },
     provenance: { humanApproved: false },
     freshness: { artifactGeneratedAt: currentTimestamp, sourceAsOfDate: data.as_of_date, maxAgeHours: 240, isStale: false },
     boundaries: {
@@ -233,8 +237,10 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('.weekly-editorial-meta')).toContainText('置信度 中等 · 58/100');
     await expect(page.locator('.weekly-editorial-meta')).toContainText('质量 通过');
     await expect(page.locator('.editorial-source .source-class').first()).toContainText('站内结构化');
+    await expect(page.locator('.editorial-review-warning')).toContainText('本周期仅使用 1 条官方或交叉确认新闻');
     await expect(page.locator('#weekly-editorial')).not.toContainText('site_structured');
     await expect(page.locator('#weekly-editorial')).not.toContainText('cross_checked');
+    await expect(page.locator('#weekly-editorial')).not.toContainText('only one official');
     await expect(page.locator('.editorial-timeline-item')).toHaveCount(3);
     await expect(page.locator('.editorial-category-grid .editorial-plain-item')).toHaveCount(6);
     await expect(page.locator('.editorial-source')).toHaveCount(3);
