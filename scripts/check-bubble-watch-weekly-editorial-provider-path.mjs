@@ -17,7 +17,7 @@ import {
   reviewWeeklyEditorial,
   validateWeeklyEditorialProduction
 } from './bubble-watch/weekly-editorial-production.mjs';
-import { validateWeeklyEditorialPrompt } from './bubble-watch/weekly-editorial-prompt.mjs';
+import { buildWeeklyEditorialUserPrompt, validateWeeklyEditorialPrompt } from './bubble-watch/weekly-editorial-prompt.mjs';
 import {
   assertWeeklyEditorialSafeTarget,
   buildWeeklyEditorialWriteResult
@@ -102,6 +102,15 @@ assertValid(validateWeeklyEditorialOutput(oneCredibleOutput, input), 'one-credib
 const oneCredibleInput = structuredClone(input);
 oneCredibleInput.newsContext.status = 'partial';
 oneCredibleInput.newsContext.dataGaps.push('本周期仅形成 1 条 official/cross_checked 新闻证据。');
+const sparsePromptInput = structuredClone(oneCredibleInput);
+sparsePromptInput.newsContext.stories = [
+  credibleStories[0],
+  ...input.newsContext.stories.filter((story) => story.evidenceStatus === 'discovery_only')
+];
+const sparseUserPrompt = buildWeeklyEditorialUserPrompt(sparsePromptInput);
+assert(sparseUserPrompt.includes('Only 1 official/cross_checked news story is available'), 'sparse-news prompt must state the credible-story budget');
+assert(sparseUserPrompt.includes('Build the remaining timeline items from structuredFacts'), 'sparse-news prompt must route remaining timeline items to structured facts');
+assert(sparseUserPrompt.includes('Never use discovery_only news as sole support'), 'sparse-news prompt must retain discovery-only guard');
 const oneCredibleReview = reviewWeeklyEditorial({ input: oneCredibleInput, output: oneCredibleOutput, generatedAt: '2026-08-11T00:04:00.000Z' });
 assert(oneCredibleReview.status === 'warn', `one credible news reference must remain display-eligible WARN, got ${oneCredibleReview.status}`);
 assert(oneCredibleReview.dimensions.newsEvidenceQuality === 'warn', 'one credible news reference must warn on newsEvidenceQuality');
@@ -270,4 +279,33 @@ assert(envelopeCalls === 1, 'invalid response envelope path must not retry');
 assert(envelopeFailure?.category === 'provider_unavailable' && envelopeFailure.retryAllowedInSameRun === false, 'HTTP 502 envelope failure must classify as provider_unavailable');
 assert(envelopeError?.responseDiagnostics?.httpStatus === 502, 'invalid response envelope diagnostics must retain sanitized HTTP status');
 
-console.log(`Bubble Watch weekly editorial provider/quality/writer PASS (api calls=${apiCallCount}, review=${review.status}, sources=${layer.sourceLedger.length}, negative tests=7)`);
+let contractCalls = 0;
+let contractError = null;
+try {
+  const invalidContractOutput = { ...providerOutput, headlineZh: '短' };
+  await requestWeeklyEditorial({
+    input,
+    apiKey: 'fixture-key',
+    fetchImpl: async () => {
+      contractCalls += 1;
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return { id: 'fixture-contract-failure', choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(invalidContractOutput) } }] };
+        }
+      };
+    }
+  });
+} catch (error) {
+  contractError = error;
+}
+const contractFailure = classifyProviderFailure(contractError);
+assert(contractCalls === 1, 'contract failure path must not retry');
+assert(contractFailure?.category === 'provider_output_contract_invalid' && contractFailure.retryAllowedInSameRun === false, 'provider output contract failure classification failed');
+assert(contractError?.responseDiagnostics?.finishReason === 'stop', 'contract diagnostics must retain sanitized finish reason');
+assert(contractError?.responseDiagnostics?.contract?.errorCount >= 1, 'contract diagnostics must retain validation error count');
+assert(contractError?.responseDiagnostics?.contract?.errors?.some((item) => item.includes('headlineZh')), 'contract diagnostics must identify the rejected field without raw output');
+assert(!JSON.stringify(contractError.responseDiagnostics).includes('fixture-contract-failure'), 'contract diagnostics must not retain provider response IDs or raw content');
+
+console.log(`Bubble Watch weekly editorial provider/quality/writer PASS (api calls=${apiCallCount}, review=${review.status}, sources=${layer.sourceLedger.length}, negative tests=8)`);

@@ -55,10 +55,15 @@ export function buildWeeklyEditorialSystemPrompt() {
 }
 
 export function buildWeeklyEditorialUserPrompt(input) {
+  const credibleStories = (input?.newsContext?.stories || []).filter((story) => ['official', 'cross_checked'].includes(story?.evidenceStatus));
+  const coverageConstraint = credibleStories.length <= 1
+    ? `Only ${credibleStories.length} official/cross_checked news story is available${credibleStories.length === 1 ? ` (${credibleStories[0].id})` : ''}. In weeklyTimeline, use at most ${credibleStories.length} news story as a primary factual event. Build the remaining timeline items from structuredFacts, previousComparison, and deterministic scorecard changes; cite matching indicator:* sourceRefIds and sourceIndicatorIds. Never use discovery_only news as sole support.`
+    : 'Prefer official/cross_checked news for timeline events. If a discovery_only item is mentioned, corroborate it with matching structuredFacts plus indicator:* sourceRefIds and sourceIndicatorIds.';
   return [
     'Produce this week\'s Chinese Bubble Watch editorial from the compact evidence pack below.',
     'Organize the content through the structured fields: weekly timeline, fixed scorecard, key tensions, six-category analysis, historical differences, next-week watch conditions, and data gaps.',
     'Do not repeat the deterministic narrative verbatim. Add synthesis only where the input supports it.',
+    coverageConstraint,
     'Use sourceRefIds and sourceIndicatorIds exactly as supplied. Return one JSON object only.',
     JSON.stringify(input)
   ].join('\n\n');

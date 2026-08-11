@@ -86,6 +86,12 @@ export function classifyProviderFailure(error) {
   if (error?.category === 'provider_response_envelope_invalid') {
     return { category: 'provider_response_envelope_invalid', retryAllowedInSameRun: false, recommendedAction: 'Inspect the sanitized HTTP status and retry only after ruling out a provider outage.' };
   }
+  if (error?.category === 'provider_output_contract_invalid') {
+    if (error?.responseDiagnostics?.finishReason === 'length') {
+      return { category: 'provider_output_truncated', retryAllowedInSameRun: false, recommendedAction: 'Reduce requested output density and inspect the bounded prompt before any later run.' };
+    }
+    return { category: 'provider_output_contract_invalid', retryAllowedInSameRun: false, recommendedAction: 'Inspect sanitized contract diagnostics and correct the prompt or deterministic normalization before any later run.' };
+  }
   if (error?.category === 'invalid_provider_json') {
     if (error?.responseDiagnostics?.finishReason === 'length') {
       return { category: 'provider_output_truncated', retryAllowedInSameRun: false, recommendedAction: 'Reduce requested output density and inspect the bounded prompt before any later run.' };
@@ -180,7 +186,20 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
     model: config.model,
     mode: 'external_ai_weekly_editorial'
   };
-  assertValid(validateWeeklyEditorialOutput(normalizedOutput, input), 'DeepSeek weekly editorial output');
+  const outputValidation = validateWeeklyEditorialOutput(normalizedOutput, input);
+  if (!outputValidation.ok) {
+    const error = new Error('DeepSeek weekly editorial output failed contract validation');
+    error.category = 'provider_output_contract_invalid';
+    error.responseDiagnostics = {
+      ...responseDiagnostics(responseJson, response?.status || null),
+      contract: {
+        errorCount: outputValidation.errors.length,
+        visibleTextLength: outputValidation.visibleTextLength,
+        errors: outputValidation.errors.slice(0, 24).map((item) => String(item).slice(0, 240))
+      }
+    };
+    throw error;
+  }
   return {
     output: normalizedOutput,
     diagnostics: {

@@ -162,6 +162,10 @@ provider output、review 与 projection 都是 ignored artifact，仅上传保�
 - Provider 连接在 HTTP/JSON envelope 前中断必须分类为 `provider_transport_error`，并只保留
   error name/code 等 sanitized transport diagnostics；HTTP 响应存在但 envelope 无法解析时使用
   `provider_response_envelope_invalid`。两者均不得在同一 run 重试，不得保存 raw body。
+- Provider 已返回可解析 JSON、但候选输出未通过字段/引用/安全契约时必须分类为
+  `provider_output_contract_invalid`；failure artifact 只保留 finish reason、可见字符数和脱敏
+  validator errors，不保存候选正文。若 `finish_reason=length`，仍归类为
+  `provider_output_truncated`。同一 run 不重试。
   不得连续重跑付费失败；先审阅 failure classification 与 diagnostics。
 - Validator、quality hard-fail、writer、protected-path 或 repository check 失败均阻止
   commit。不得把 provider artifact 复制进生产或手工编辑 `data/bubble-watch.json`。
