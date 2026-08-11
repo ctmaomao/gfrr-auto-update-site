@@ -2,7 +2,7 @@
 
 ## 1. 状态与目标
 
-- 状态: Owner approved for staged implementation, 2026-08-11.
+- 状态: Production live and browser-verified, 2026-08-11.
 - 目标: 在不改变 Bubble Watch v2 评分合同的前提下，用 DeepSeek 将经过审计的周度
   新闻和站内结构化数据编辑为更丰富的「本周判读」。
 - 参考结构: 周内时间线 → 分数变化 → 关键矛盾 → 分类分析 → 历史差异 → 下周观察。
@@ -216,8 +216,10 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 - Stage 2 complete: Tavily + Brave bounded collector、URL/title 去重、evidence status、27-card + radar/oil compact input；默认 no-network，输出仅允许 `manual-artifacts/bubble-watch-weekly-editorial/`。
 - Stage 3 complete: DeepSeek 单次 JSON request、prompt contract、output validation、quality review、production projection、source ledger、原子 writer 与 protected-target/write-semantic guard。离线 provider replay 证明 call=1 / retry=0，timeout / invalid JSON / fixture promotion / unsafe target 均 fail closed。
 - Stage 4 complete: GitHub post-refresh/manual workflow、protected path、Bubble Watch 长篇 frontend、240h/as-of fallback、1440px/390px runtime acceptance 与 Pages trigger 均已实现；本地 full check 作为该阶段提交前硬门禁。
-- Stage 5 production code deployed / live output pending: main workflow、Pages 与 fallback 已上线；
-  run `31455140609` 证明旧 prompt 在 5,000 tokens 截断，未写 production。Owner 随后明确
-  授权按参考站近期篇幅重新标定：prompt 目标 2,600–3,400 字，provider 预算 8,000
-  tokens，同时保留 compact 12-story + per-field hard caps。下一次真实调用仍只允许
-  单次/no-retry，成功后才可写 production；失败时 DOM 继续回退 deterministic verdict。
+- Stage 5 complete: owner-authorized run `31462238973` 在 8,000-token 预算下以
+  `finishReason=stop` 生成完整 JSON，workflow/review/writer/full checks/protected-path 全链通过，
+  bot commit `9ac2b911` 只写 `data/bubble-watch.json`。生产正文 3,691 可见字符，包含
+  3 timeline / 2 tensions / 6 categories / 3 watch / 26-source ledger；本周期只有 1 条
+  cross-checked 新闻，因此 quality=`warn`、blockers=0、display eligible=true，限制已在页面披露。
+  最终 Pages run `31462975922` 成功；真实桌面 DOM 无溢出，390px Playwright、来源 HTTPS、
+  中文 confidence/quality/source labels 和 deterministic fallback 均通过。

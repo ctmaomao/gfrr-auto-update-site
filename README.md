@@ -2,8 +2,11 @@
 
 Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它把 realtime 快变量、Daily baseline、风险模块、解释层和运维检查组织成可审计的网站,用于观察宏观风险状态和策略约束。
 
-在线访问: <https://ctmaomao.github.io/gfrr-auto-update-site/>   
-         <https://radar.gfrfinradar.uk/>
+在线访问:
+
+- <https://ctmaomao.github.io/gfrr-auto-update-site/>
+- <https://radar.gfrfinradar.uk/>
+- AI 泡沫监测: <https://ctmaomao.github.io/gfrr-auto-update-site/bubble-watch.html>
 
 ## 核心定位
 
@@ -32,6 +35,7 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.*`、`consumer_vs_asset_pricing`、`brentPricingLayer` 和 `aiInterpretationLayer` 是解释层 / 审计层 / 展示层。
 - 解释层不得进入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - External AI 当前可作为只读解释层展示,仍受 workflow / review gate 约束;任何 AI 输出不得影响 scoring、decision、execution 或 position。
+- Bubble Watch 的 DeepSeek 周度编辑层只解释既有 Core-23 / Shadow-4 与经校验新闻；provider/review/stale 失败时回退确定性判读，不改变任何灯色、分数或 verdict。
 - World Order Stress Overlay 是 regime overlay,不是第七个底层风险模块;用户可见文案必须保持克制和可归因。
 
 ## 本地使用
