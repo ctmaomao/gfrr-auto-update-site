@@ -92,7 +92,7 @@ const result = await requestEditorial({
   now: () => new Date('2026-08-11T06:02:00.000Z')
 });
 const outputResult = assertValid(validateEditorialOutput(result.output, input), 'macro editorial output');
-assert(outputResult.visibleTextLength >= 2000 && outputResult.visibleTextLength <= 4600, 'fixture output length drifted');
+assert(outputResult.visibleTextLength >= 2000 && outputResult.visibleTextLength <= 6800, 'fixture output length drifted');
 assert(validateEditorialPrompt(input).ok, 'prompt contract must pass');
 assert(apiCalls === 1 && result.diagnostics.retryCount === 0, 'provider path must use one call and no retry');
 const body = JSON.parse(capturedRequest.request.body);

@@ -97,7 +97,7 @@
   - `boundaries`
 - 事实性段落必须引用 input stable IDs；provider attribution 漏项只可从 input source ledger
   确定性补齐，不得改写正文或提升 evidence class。
-- 目标可见中文 2,800–3,800 字；quality review 兼容窗口 2,000–4,600 字。
+- 目标可见中文 4,000–5,600 字；quality review 兼容窗口 2,000–6,800 字。上限略高于 Bubble Watch 的 6,500 字，以容纳六大模块和跨市场归因，同时禁止为凑字数重复。
 
 ### 5.4 Quality review
 

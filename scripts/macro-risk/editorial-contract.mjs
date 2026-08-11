@@ -248,7 +248,7 @@ export function validateEditorialOutput(output, input) {
   for (const key of TRUE_OUTPUT_BOUNDARIES) if (boundaries[key] !== true) errors.push(`output.boundaries.${key} must be true`);
   for (const key of FALSE_OUTPUT_BOUNDARIES) if (boundaries[key] !== false) errors.push(`output.boundaries.${key} must be false`);
   const visibleText = visibleEditorialText(root);
-  if (visibleText.length < 2000 || visibleText.length > 4600) errors.push('output visible editorial text must be 2000-4600 characters');
+  if (visibleText.length < 2000 || visibleText.length > 6800) errors.push('output visible editorial text must be 2000-6800 characters');
   for (const pattern of UNSAFE_TEXT_PATTERNS) if (pattern.test(visibleText)) errors.push(`output contains unsafe wording matching ${pattern}`);
   if (timeline.some((item) => typeof item?.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(item.date))) errors.push('output timeline dates must use YYYY-MM-DD');
   return { ok: errors.length === 0, errors, visibleTextLength: visibleText.length, referencedSourceCount: referencedIds.size };

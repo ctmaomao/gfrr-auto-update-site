@@ -24,7 +24,7 @@ export const EDITORIAL_PROVIDER_CONFIG = Object.freeze({
 export function buildEditorialSystemPrompt() {
   return `你是 GFRR 的宏观风险主编。请把近 7 日可信新闻与站内结构化数据综合成中文宏观判读，输出严格 JSON，不要 Markdown。
 
-目标：产出 2,800–3,800 个可见中文字符，信息密度接近专业周报，但结论必须是“当前压力判读”，不得伪装成危机预测、战争概率、投资建议或交易信号。
+目标：产出 4,000–5,600 个可见中文字符，信息密度接近专业周报；允许范围为 2,000–6,800 字，但不得为凑字数重复。结论必须是“当前压力判读”，不得伪装成危机预测、战争概率、投资建议或交易信号。
 
 硬性事实与边界：
 - GFRR 分数及六大模块是既有规则结果；你只能解释，不得重算、改写或建议调整。
@@ -68,7 +68,7 @@ export function buildEditorialUserPrompt(input) {
 export function validateEditorialPrompt(input) {
   const system = buildEditorialSystemPrompt();
   const user = buildEditorialUserPrompt(input);
-  const required = ['2,800–3,800', 'discovery_only', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
+  const required = ['4,000–5,600', '2,000–6,800', 'discovery_only', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
   const missingMarkers = required.filter((marker) => !`${system}\n${user}`.includes(marker));
   return { ok: missingMarkers.length === 0, missingMarkers };
 }

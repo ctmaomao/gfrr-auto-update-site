@@ -54,7 +54,7 @@ export function reviewEditorial({ input, output, generatedAt = new Date().toISOS
   if (referenced.size < 12) blockers.push(`判读仅引用 ${referenced.size} 个来源，至少需要 12 个`);
   if (input?.newsContext?.status === 'partial') warnings.push('近 7 日新闻发现为 partial，页面必须保留数据限制');
   const visibleTextLength = visibleEditorialText(output).length;
-  if (visibleTextLength < 2800 || visibleTextLength > 3800) warnings.push(`可见判读长度 ${visibleTextLength} 字，超出目标 2,800–3,800 字但仍在兼容范围`);
+  if (visibleTextLength < 4000 || visibleTextLength > 5600) warnings.push(`可见判读长度 ${visibleTextLength} 字，超出目标 4,000–5,600 字但仍在兼容范围`);
   const status = blockers.length > 0 ? 'fail' : warnings.length > 0 ? 'warn' : 'pass';
   return {
     schemaVersion: REVIEW_SCHEMA,
@@ -69,7 +69,7 @@ export function reviewEditorial({ input, output, generatedAt = new Date().toISOS
       newsEvidenceQuality: credibleNewsReferences.length < 1 ? 'fail' : credibleNewsReferences.length === 1 ? 'warn' : 'pass',
       scoringBoundaryIntegrity: validation.ok ? 'pass' : 'fail',
       unsafeWording: validation.ok ? 'pass' : 'fail',
-      editorialDepth: referenced.size < 12 ? 'fail' : visibleTextLength < 2800 || visibleTextLength > 3800 ? 'warn' : 'pass',
+      editorialDepth: referenced.size < 12 ? 'fail' : visibleTextLength < 4000 || visibleTextLength > 5600 ? 'warn' : 'pass',
       deterministicFallback: 'pass'
     },
     warnings,

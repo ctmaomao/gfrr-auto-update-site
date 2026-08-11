@@ -32,7 +32,7 @@
 5. 新闻发现只使用 Tavily / Brave 近 7 日结果，经 URL/title 去重与 evidence-class 标记后进入
    compact input。`discovery_only` 不能成为事实段落的唯一支撑。
 6. Provider 每个生产周期最多一次调用、retry=0、`max_tokens=8000`、JSON object only。
-   目标可见中文正文为 2,800–3,800 字；这比 Bubble Watch 的范围略宽，以覆盖六大宏观模块。
+   目标可见中文正文为 4,000–5,600 字，兼容窗口上限为 6,800 字；这略高于 Bubble Watch 的 6,500 字上限，为六大宏观模块和跨市场归因保留冗余。
 7. 新 workflow 每日一次，接在 Daily Radar、World Order 和 ODP 刷新之后；它取代旧
    `External AI Production Refresh` 的每日付费职责，不增加既有日频调用次数。
 8. 删除主页面 `#external-ai-auxiliary`、导航入口、旧 renderer 与相应 frontend acceptance。
