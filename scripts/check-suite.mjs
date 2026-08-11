@@ -10,32 +10,29 @@ const SUITES = {
     'check:dom',
     'check:macro-overview-narrative',
     'check:macro-overview-display-helpers',
-    'check:macro-coherence-display-only'
+    'check:macro-coherence-display-only',
+    'check:macro-risk-editorial-frontend'
   ],
   'external-ai': [
     'check:external-ai-manual-workflow',
     'check:external-ai-provider-workflow',
     'check:external-ai-manual-input:analyst',
-    'check:external-ai-production-refresh-workflow',
     'check:external-ai-workflow-artifacts',
     'check:external-ai-output',
     'check:external-ai-production-contract',
     'check:external-ai-provenance-completeness',
     'check:external-ai-production-write-guard',
-    'check:external-ai-frontend-hidden-scaffold',
     'check:external-ai-production-provider-path'
   ],
   'external-ai-with-artifacts': [
     'check:external-ai-manual-workflow',
     'check:external-ai-provider-workflow',
-    'check:external-ai-production-refresh-workflow',
     'check:external-ai-workflow-artifacts',
     'check:external-ai-output',
     'check:external-ai-production-contract',
     'check:external-ai-provenance-completeness',
     'check:external-ai-production-projection',
     'check:external-ai-production-write-guard',
-    'check:external-ai-frontend-hidden-scaffold',
     'check:external-ai-manual-scaffold',
     'check:external-ai-production-provider-path'
   ],

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=external-ai-low-maintenance-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=external-ai-low-maintenance-1';
+} from './config.js?v=macro-risk-editorial-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-risk-editorial-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,10 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=external-ai-low-maintenance-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=external-ai-low-maintenance-1';
-import { renderExternalAiAuxiliary } from './renderExternalAi.js?v=external-ai-low-maintenance-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=external-ai-low-maintenance-1';
+} from './macroOverviewDisplayHelpers.js?v=macro-risk-editorial-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-risk-editorial-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=macro-risk-editorial-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=macro-risk-editorial-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2714,8 +2714,8 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderDetailData({ radarData });
   renderWorldOrderStress({ worldOrderStressData });
 
-  // Stage 5d-2: external-ai + execution-risk appendix narratives
-  renderExternalAiAuxiliary({ radarData });
+  // Integrated read-only editorial + execution-risk appendix narratives
+  renderMacroRiskEditorial({ radarData });
   renderExecutionRiskDetail({ radarData });
 
   console.log('[renderMacroOverview] Stage 5d-2 renders complete (all Stage 5 frontend binding complete)');

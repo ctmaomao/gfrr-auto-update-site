@@ -581,7 +581,7 @@ if (fs.existsSync(gitignoreFile)) {
 
 const mainWriterWorkflows = [
   'build-daily-radar-data.yml',
-  'external-ai-production-refresh.yml',
+  'macro-risk-editorial-refresh.yml',
   'refresh-bubble-watch.yml',
   'refresh-oil-directional-pressure.yml',
   'refresh-oil-news-event-watch.yml',
@@ -590,7 +590,7 @@ const mainWriterWorkflows = [
   'refresh-world-order-stress.yml'
 ];
 const scopedMainWriterGates = {
-  'external-ai-production-refresh.yml': 'npm run check:external-ai-production-publish',
+  'macro-risk-editorial-refresh.yml': 'npm run check:macro-risk-editorial-live -- --require-layer',
 };
 for (const workflow of mainWriterWorkflows) {
   const file = `.github/workflows/${workflow}`;

@@ -187,17 +187,17 @@ function validateFrontendNoDisplayMarkers(errors) {
 
   if (markerFindings.length === 0) return;
 
-  const hiddenScaffoldCheck = spawnSync(
+  const integratedEditorialCheck = spawnSync(
     process.execPath,
-    ['scripts/check-external-ai-frontend-hidden-scaffold.mjs'],
+    ['scripts/check-macro-risk-editorial-frontend.mjs'],
     { encoding: 'utf8', stdio: 'pipe' },
   );
-  if (hiddenScaffoldCheck.status === 0) return;
+  if (integratedEditorialCheck.status === 0) return;
 
   for (const finding of markerFindings) addError(errors, finding);
-  addError(errors, 'external AI frontend hidden scaffold checker must pass before frontend markers are allowed');
-  if (hiddenScaffoldCheck.stderr.trim()) addError(errors, hiddenScaffoldCheck.stderr.trim());
-  if (hiddenScaffoldCheck.stdout.trim()) addError(errors, hiddenScaffoldCheck.stdout.trim());
+  addError(errors, 'integrated macro editorial checker must pass before frontend display markers are allowed');
+  if (integratedEditorialCheck.stderr.trim()) addError(errors, integratedEditorialCheck.stderr.trim());
+  if (integratedEditorialCheck.stdout.trim()) addError(errors, integratedEditorialCheck.stdout.trim());
 }
 
 function validateNoWorkflowProductionAutomation(errors) {

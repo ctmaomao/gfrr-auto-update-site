@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=external-ai-low-maintenance-1';
+} from '../../scripts/modules/config.js?v=macro-risk-editorial-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

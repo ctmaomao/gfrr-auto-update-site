@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=external-ai-low-maintenance-1';
+﻿import { fmtNumSafe } from './config.js?v=macro-risk-editorial-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

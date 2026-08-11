@@ -85,7 +85,7 @@ const visibleText = html
 scanText(visibleText, 'index.html 可见文本');
 
 // ---------- 2. render 模块的显示串(setLeafText/setBadge 字符串参数 + .textContent 赋值)----------
-const RENDER_MODULES = ['renderOilDirectional.js', 'renderMacroOverview.js', 'renderMacroTrend.js', 'renderExternalAi.js'];
+const RENDER_MODULES = ['renderOilDirectional.js', 'renderMacroOverview.js', 'renderMacroTrend.js', 'renderMacroRiskEditorial.js'];
 const DISPLAY_STRING =
   /(?:setLeafText|setBadge)\s*\([^,]+,\s*(`[^`]*`|'[^']*'|"[^"]*")|\.textContent\s*=\s*(`[^`]*`|'[^']*'|"[^"]*")/g;
 const DISPLAY_PROPERTY_STRING =

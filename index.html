@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=external-ai-low-maintenance-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=macro-risk-editorial-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -50,7 +50,7 @@
       <a href="#detail-data">详细数据</a>
       <a href="#world-order-stress-section">世界秩序</a>
       <a href="#method-evidence">方法说明</a>
-      <a href="#external-ai-auxiliary">外部 AI</a>
+      <a href="#macro-risk-editorial" class="new">本期判读 AI</a>
       <a href="#execution-risk-detail">执行风控</a>
     </nav>
 
@@ -83,6 +83,10 @@
           <div><div class="k">WEEKLY CHANGE · 周变化</div><div class="v" id="hero-weekly-change">—</div></div>
           <div><div class="k">DATA HEALTH · 数据健康</div><div class="v" id="hero-data-health">—</div></div>
         </div>
+      </article>
+
+      <article class="macro-editorial" id="macro-risk-editorial" hidden aria-labelledby="macro-editorial-title">
+        <div id="macro-editorial-content"></div>
       </article>
 
       <div class="threshold-block">
@@ -992,7 +996,7 @@
         <h4>4. 数据边界 <em>· Data Boundary</em></h4>
         <p><strong>Market Pricing Temperature</strong> 由本地统计文件驱动；页面只读取统计结果并做分桶展示，不参与平台的风险打分与决策。</p>
         <p><strong>Brent 公开代理价格层</strong>仅用于审计观察，<code>不等同于 Platts Dated Brent</code>。当前为公开现货代理模式，现货代理与期货代理之间的价差仅作为反向证据呈现，不改变 Brent 主显示值。</p>
-        <p><strong>External AI</strong> 是只读辅助解释，不参与平台的风险打分与决策。仅在审核通过后展示，否则前端只显示占位。</p>
+        <p><strong>本期宏观判读</strong> 是嵌入总览的 DeepSeek 只读编辑层，综合近 7 日可信新闻与站内结构化数据；它不参与平台风险打分、六大模块、决策或执行。仅在契约校验与质量复核通过后展示，否则沿用上方规则生成的今日总判断。</p>
         <p><strong>所有数据治理</strong>：前端为只读展示层，不写入数据管线、清洗器或工作流，也不进行生产数据写入。</p>
 
         <h4>5. 非投资建议声明 <em>· Not Advice</em></h4>
@@ -1000,119 +1004,6 @@
           <div class="callout-kicker">郑重声明</div>
           <p>本站用于风险观察与证据整理，不构成投资建议，也不生成直接交易指令。</p>
           <p>所有"动作清单"、"目标仓位"、"硬阈值风控"等执行层信息，是本站作者基于个人交易框架的自我约束规则，仅供作者本人参考。指标阈值与方法论可能随研究演进调整。</p>
-        </div>
-
-      </div>
-        </div>
-      </div>
-    </details>
-
-    <details class="editorial-folded-content" id="external-ai-auxiliary">
-      <summary>
-        <span><span class="fold-marker"></span> 外部 AI 解读 <em>· External AI Auxiliary (read-only)</em></span>
-        <span class="fold-label">展开/收起 · AI 摘要 + 证据来源</span>
-      </summary>
-      <div class="editorial-section-body">
-        <div class="appendix-content">
-      <div class="appendix-narrative">
-
-        <div class="ai-warning-block">
-          <div class="aw-kicker">⚠ 只读辅助解读(Read-only Auxiliary)</div>
-          <p>本层为 <strong>DeepSeek</strong> / <strong>OpenAI</strong> 自动生成的解释层，<strong>不影响平台评分</strong>(项目宪法第 4 条)。当前 提供方 <code id="ext-ai-provider">deepseek</code> / 模型 <code id="ext-ai-model">deepseek-v4-flash</code>，质量复核 (<code id="ext-ai-quality">已通过人工复核</code>)，但晋升资格为 <code id="ext-ai-promotion">false</code>，因此不晋升为生产证据。来源归属与溯源完整可审计：运行ID <code id="ext-ai-run-id">26379224068</code>，生成时间 <code id="ext-ai-generated-at">2026-05-25 01:55 UTC</code>。</p>
-        </div>
-
-        <h4>1. AI 摘要</h4>
-        <p id="ext-ai-summary">站内结构化数据显示<strong>能源定价背离压力持续</strong>，布伦特公开代理价差达 <code class="danger">16.52 美元</code>，但不等同于正式实物成交价。消费者信心月频走弱(<code class="warn">UMCSENT 49.8</code>，三个月变化 −6.6)，与风险资产定价存在观察性背离。当前证据仅支持观察，<strong>不足以形成高置信度方向判断</strong>。若布伦特回落且验证层压力解除，或消费者信心改善，则当前背离观察可能失效。</p>
-
-        <h4>2. AI 已验证事实</h4>
-        <p id="ext-ai-facts-text">AI 从站内结构化数据中提取 10 项可验证事实：布伦特主显示值 <code>116.73</code> 来源 <code>fred:DCOILBRENTEU</code>；布伦特公开代理价差(现货减期货)<code>16.52</code> 状态为压力；消费者信心指数 <code>UMCSENT 49.8</code>，前值 <code>53.3</code>，三个月变化 <code>−6.6</code>；美国 10 年期收益率 <code>4.57%</code>，10 年盈亏平衡通胀 <code>2.40%</code>；广义美元指数 <code>119.28</code>；高收益利差 <code>2.78%</code>；背离层整体状态<strong>压力</strong>(得分 60)；能源定价背离检查得分 <code>72</code>(压力)；消费者与资产定价背离检查得分 <code>54</code>(压力)；数据健康评分 <code>100</code>。</p>
-
-        <h4>3. AI 数据推断</h4>
-        <p id="ext-ai-inferences-text">AI 在已验证事实之上给出 3 项观察性推断：(1) <strong>能源定价背离压力</strong>主要源于公开代理价差扩大，但该价差仅用于审计观察，不改变布伦特主值；(2) <strong>消费者信心持续走弱</strong>，而风险资产定价尚未充分反映，存在观察性错配——但该信号为月频慢变量；(3) <strong>长端利率压力与风险资产定价之间的背离</strong>处于压力状态，但信用利差和波动率尚未明显扩张，表明压力尚未广泛扩散。</p>
-
-        <h4>4. AI 模型判断</h4>
-        <p id="ext-ai-judgments-text">AI 给出的 3 项模型判断，每项都附带置信度声明：(1) 能源定价背离的证据强度<strong>中等</strong>，数据充分但来源为公开代理，不足以确认实物现货溢价；(2) 消费者信心数据为月频，存在发布延迟，时效性不足，属于<strong>低置信度观察</strong>；(3) 综合背离层得分 60，多个维度存在压力，但信用和波动率指标相对平静，<strong>整体不确定性较高</strong>。</p>
-
-        <h4>5. AI 情景假设</h4>
-        <p>AI 给出 2 个条件式(if-then)假设(均附触发条件和失效条件)：</p>
-        <ul style="font-family:var(--font-serif);font-size:13.5px;line-height:1.85;color:var(--paper-warm);margin:8px 0 0 0;padding-left:20px;">
-          <li id="ext-ai-scenario-1"><strong>能源利率资产重定价观察</strong>：若布伦特原油(Brent)公开代理价差持续压力、美国10年期国债收益率(US10Y)上行、波动率指数(VIX)或高收益债利差(HY OAS)扩张，则升级；若价差收敛、美国10年期国债收益率(US10Y)回落、波动率指数(VIX)与高收益债利差(HY OAS)不扩张，则降级。</li>
-          <li id="ext-ai-scenario-2"><strong>消费者资产背离缓解观察</strong>：若消费者信心三个月变化改善、美国10年期国债收益率(US10Y)回落、高收益债利差(HY OAS)不扩张，则缓解；若消费者信心继续走弱、高收益债利差(HY OAS)或波动率指数(VIX)扩张，则继续。</li>
-        </ul>
-
-        <div id="ext-ai-structured-output" hidden>
-          <h4>6. 结构化跨层解读</h4>
-          <div class="appendix-twocol">
-            <article class="appendix-callout neutral" id="ext-ai-synthesis-1-block" hidden>
-              <h5 id="ext-ai-synthesis-1-theme">跨层主题 —</h5>
-              <p id="ext-ai-synthesis-1-summary">—</p>
-              <p><span class="ext-ai-field-label">支撑层</span> <span class="ext-ai-ref-list" id="ext-ai-synthesis-1-supporting">—</span></p>
-              <p><span class="ext-ai-field-label">相互校验</span> <span class="ext-ai-ref-list" id="ext-ai-synthesis-1-conflicting">—</span></p>
-            </article>
-            <article class="appendix-callout neutral" id="ext-ai-synthesis-2-block" hidden>
-              <h5 id="ext-ai-synthesis-2-theme">跨层主题 —</h5>
-              <p id="ext-ai-synthesis-2-summary">—</p>
-              <p><span class="ext-ai-field-label">支撑层</span> <span class="ext-ai-ref-list" id="ext-ai-synthesis-2-supporting">—</span></p>
-              <p><span class="ext-ai-field-label">相互校验</span> <span class="ext-ai-ref-list" id="ext-ai-synthesis-2-conflicting">—</span></p>
-            </article>
-          </div>
-          <div class="appendix-twocol">
-            <article class="appendix-callout neutral" id="ext-ai-divergence-1-block" hidden>
-              <h5 id="ext-ai-divergence-1-title">关键背离 —</h5>
-              <p id="ext-ai-divergence-1-why">—</p>
-              <p><span class="ext-ai-field-label">支持证据</span> <span class="ext-ai-ref-list" id="ext-ai-divergence-1-for">—</span></p>
-              <p><span class="ext-ai-field-label">反向证据</span> <span class="ext-ai-ref-list" id="ext-ai-divergence-1-against">—</span></p>
-              <p><span class="ext-ai-field-label">失效条件</span> <span id="ext-ai-divergence-1-invalidations">—</span></p>
-            </article>
-            <article class="appendix-callout neutral" id="ext-ai-divergence-2-block" hidden>
-              <h5 id="ext-ai-divergence-2-title">关键背离 —</h5>
-              <p id="ext-ai-divergence-2-why">—</p>
-              <p><span class="ext-ai-field-label">支持证据</span> <span class="ext-ai-ref-list" id="ext-ai-divergence-2-for">—</span></p>
-              <p><span class="ext-ai-field-label">反向证据</span> <span class="ext-ai-ref-list" id="ext-ai-divergence-2-against">—</span></p>
-              <p><span class="ext-ai-field-label">失效条件</span> <span id="ext-ai-divergence-2-invalidations">—</span></p>
-            </article>
-          </div>
-          <div class="appendix-twocol">
-            <article class="appendix-callout neutral" id="ext-ai-scenario-lean-block" hidden>
-              <h5>情景倾向</h5>
-              <p id="ext-ai-scenario-lean-text">—</p>
-              <p><span class="ext-ai-field-label">情景引用</span> <span id="ext-ai-scenario-lean-refs">—</span></p>
-              <p><span class="ext-ai-field-label">触发条件</span> <span id="ext-ai-scenario-lean-triggers">—</span></p>
-              <p><span class="ext-ai-field-label">失效条件</span> <span id="ext-ai-scenario-lean-invalidations">—</span></p>
-            </article>
-            <article class="appendix-callout neutral" id="ext-ai-data-quality-lens-block" hidden>
-              <h5>数据质量透镜</h5>
-              <p id="ext-ai-data-quality-summary">—</p>
-              <p><span class="ext-ai-field-label">滞后层</span> <span class="ext-ai-ref-list" id="ext-ai-data-quality-stale">—</span></p>
-              <p><span class="ext-ai-field-label">回退层</span> <span class="ext-ai-ref-list" id="ext-ai-data-quality-fallback">—</span></p>
-              <p><span class="ext-ai-field-label">缺失层</span> <span class="ext-ai-ref-list" id="ext-ai-data-quality-missing">—</span></p>
-              <p id="ext-ai-data-quality-impact">—</p>
-            </article>
-          </div>
-        </div>
-
-        <h4>7. 使用边界与审计溯源</h4>
-        <div class="appendix-twocol">
-          <div>
-            <p id="ext-ai-boundaries-text">本 AI 解读层<strong>仅供展示参考,不参与平台的风险打分、决策与执行</strong>，不构成投资建议。</p>
-            <p id="ext-ai-audit-flags">审计标记：手动工作流制品 / 仅使用站内结构化数据 / 必须通过校验 / 不作为生产决策输出 / 不覆盖平台主结论。</p>
-          </div>
-          <aside class="appendix-sidebar">
-            <div class="sidebar-kicker">审计溯源</div>
-            <div class="sidebar-title">运行ID <span id="ext-ai-prov-run-id">26379224068</span></div>
-            <dl>
-              <dt>提供方</dt><dd>deepseek</dd>
-              <dt>模型</dt><dd>deepseek-v4-flash</dd>
-              <dt>输入源</dt><dd id="ext-ai-prov-input-source">本地压缩输入</dd>
-              <dt>来源模式</dt><dd id="ext-ai-prov-source-mode">手动本地压缩输入</dd>
-              <dt>生成时间</dt><dd id="ext-ai-prov-generated-at">2026-05-25 01:55 UTC</dd>
-              <dt>制品摘要</dt><dd id="ext-ai-prov-artifact-digest">47b3303a88...</dd>
-              <dt>源提交</dt><dd id="ext-ai-prov-source-commit">8a4464bf...</dd>
-              <dt>人工审核</dt><dd id="ext-ai-prov-human-approved">否</dd>
-              <dt>晋升资格</dt><dd id="ext-ai-prov-promotion">否</dd>
-              <dt>置信度</dt><dd id="ext-ai-prov-confidence">低 30/100</dd>
-            </dl>
-          </aside>
         </div>
 
       </div>
@@ -1288,6 +1179,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=external-ai-low-maintenance-1"></script>
+  <script type="module" src="scripts/app.js?v=macro-risk-editorial-1"></script>
 </body>
 </html>

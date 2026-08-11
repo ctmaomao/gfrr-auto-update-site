@@ -21,55 +21,49 @@ function captureConsoleErrors(page) {
   return errors;
 }
 
-function buildApprovedVisibleExternalAiLayer(layer, currentTimestamp) {
+function buildApprovedMacroRiskEditorial(data, currentTimestamp) {
+  const sourceIds = ['site:score', 'site:module:energy', 'site:module:geopolitical', 'site:module:inflation', 'site:module:liquidity', 'site:module:debt', 'site:module:banking', 'site:market:brent', 'site:market:us10y', 'site:market:vix', 'site:market:hyOas', 'news:official'];
+  const modules = ['energy', 'geopolitical', 'inflation', 'liquidity', 'debt', 'banking'];
   return {
-    ...layer,
-    schemaVersion: 'v28.0L-external-ai-production-analyst-1',
+    schemaVersion: 'macro-risk-editorial-production-v1',
     status: 'valid',
     displayEnabled: true,
-    sourceMode: 'manual_analyst_compact_v1',
-    inputSource: 'analyst_compact_v1',
-    sourceSemantics: 'site_structured_analyst_evidence_pack_v1',
+    generatedAt: currentTimestamp,
+    sourceDataUpdatedAt: data.updatedAt,
     provider: 'deepseek',
     model: 'deepseek-v4-flash',
-    generatedAt: currentTimestamp,
+    mode: 'external_ai_macro_risk_editorial',
+    output: {
+      headlineZh: '风险缓和仍有条件：能源与利率链条尚未完成降温',
+      leadZh: '综合分数回落说明广泛金融压力尚未同步扩张，但能源、长端利率与美元仍在高位，风险缓和仍带有明显条件。这里解释的是当前压力，不是危机概率或投资建议。',
+      weeklyTimeline: [0, 1, 2].map((index) => ({ date: '2026-08-10', titleZh: `关键脉络 ${index + 1}`, detailZh: '新闻背景与站内结构化数据相互校验。', sourceRefIds: ['news:official', sourceIds[index]] })),
+      scoreSynthesis: { assessmentZh: '总分处于近期区间内，能源、地缘与通胀高于信用和银行压力。', sourceRefIds: ['site:score', 'site:market:brent'] },
+      keyTensions: [{ titleZh: '利率压力与风险资产韧性', detailZh: '金融条件偏紧但波动率与信用利差尚未全面扩张。', sourceRefIds: ['site:market:us10y', 'site:market:vix', 'site:market:hyOas'] }, { titleZh: '能源与通胀链条', detailZh: '能源压力仍需要物理链和市场价格共同确认。', sourceRefIds: ['site:market:brent', 'site:module:inflation'] }],
+      moduleAnalysis: modules.map((module) => ({ module, labelZh: module, score: data.modules[module], assessmentZh: '既有规则分数的只读解释，不改变模块权重。', sourceRefIds: [`site:module:${module}`] })),
+      crossMarketAnalysis: [{ assetZh: '原油与通胀', observationZh: '能源价格仍高。', implicationZh: '观察传导持续性。', sourceRefIds: ['site:market:brent'] }, { assetZh: '利率与波动率', observationZh: '长端利率偏高而波动率平稳。', implicationZh: '存在观察性背离。', sourceRefIds: ['site:market:us10y', 'site:market:vix'] }, { assetZh: '信用市场', observationZh: '信用利差尚未扩张。', implicationZh: '系统性确认不足。', sourceRefIds: ['site:market:hyOas'] }],
+      historicalComparison: { periodZh: '最近 14 个日度样本', similaritiesZh: '分数仍在近期区间。', differencesZh: '比较只描述同步压力，不构成预测。', sourceRefIds: ['site:score'] },
+      watchNext: [{ conditionZh: '能源继续上行', whyItMattersZh: '可能延长通胀压力。', invalidationZh: '油价与物理链同时转松。', sourceRefIds: ['site:market:brent'] }, { conditionZh: '长端利率维持高位', whyItMattersZh: '金融条件继续偏紧。', invalidationZh: '收益率持续回落。', sourceRefIds: ['site:market:us10y'] }, { conditionZh: '信用或波动率扩张', whyItMattersZh: '确认压力扩散。', invalidationZh: '两者保持平稳。', sourceRefIds: ['site:market:vix', 'site:market:hyOas'] }],
+      dataGaps: ['新闻仅提供标题与摘要级上下文。'],
+      confidence: { level: 'medium', score: 78, reasonZh: '站内结构化数据完整，新闻只用于背景校验。' },
+    },
+    sourceLedger: sourceIds.map((id) => id === 'news:official'
+      ? { id, kind: 'news', sourceName: 'Federal Reserve', sourceClass: 'official', title: 'Official policy update', url: 'https://federalreserve.gov/example' }
+      : { id, kind: 'site_structured', sourceName: 'GFRR 站内结构化数据', sourceClass: 'site_structured' }),
+    validation: { status: 'pass' },
+    qualityReview: { status: 'pass', promotionEligible: false },
+    provenance: { humanApproved: false },
+    freshness: { artifactGeneratedAt: currentTimestamp, sourceDataUpdatedAt: data.updatedAt, maxAgeHours: 30, isStale: false },
     boundaries: {
-      ...layer?.boundaries,
       frontendDisplayApproved: true,
       displayOnly: true,
-      externalAiGenerated: true,
-      usesExternalAiApi: true,
-      affectsScoring: false,
+      notInvestmentAdvice: true,
+      affectsGfrrScoring: false,
+      affectsRiskModules: false,
+      affectsTailRiskOverlay: false,
       affectsDecisionModel: false,
       affectsExecutionLock: false,
       affectsPositionGuidance: false,
-      notInvestmentAdvice: true,
-      productionWriteApproved: false,
-    },
-    qualityReview: {
-      ...layer?.qualityReview,
-      status: 'pass',
-      recommendation: 'pass_for_manual_review',
-      promotionEligible: false,
-    },
-    provenance: {
-      ...layer?.provenance,
-      humanApproved: false,
-    },
-    freshness: {
-      ...layer?.freshness,
-      artifactGeneratedAt: currentTimestamp,
-      sourceDataUpdatedAt: currentTimestamp,
-      maxAgeHours: 24,
-      isStale: false,
-    },
-    dataQualityLens: layer?.dataQualityLens || {
-      summaryZh: '站内结构化数据质量满足展示测试要求。',
-      confidenceImpactZh: '仅验证只读解释层的展示边界。',
-      staleLayers: [],
-      fallbackLayers: [],
-      missingLayers: [],
-    },
+    }
   };
 }
 
@@ -179,10 +173,7 @@ test.describe('desktop smoke', () => {
       const response = await route.fetch();
       const radarData = await response.json();
       const currentTimestamp = new Date().toISOString();
-      radarData.externalAiInterpretationLayer = buildApprovedVisibleExternalAiLayer(
-        radarData.externalAiInterpretationLayer,
-        currentTimestamp,
-      );
+      radarData.macroRiskEditorialLayer = buildApprovedMacroRiskEditorial(radarData, currentTimestamp);
       await route.fulfill({ response, json: radarData });
     });
     await page.goto('/index.html');
@@ -190,11 +181,11 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#issue-meta-issue')).toContainText('ISSUE v28.0.10');
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-thematic-cards')).toBeVisible();
-    await expect(page.locator('#external-ai-auxiliary')).toBeVisible();
-    await page.locator('#external-ai-auxiliary').evaluate((element) => { element.open = true; });
-    await expect(page.locator('#ext-ai-provider')).toHaveText('deepseek');
-    await expect(page.locator('#ext-ai-structured-output')).toBeVisible();
-    await expect(page.locator('#ext-ai-boundaries-text')).toContainText('不参与平台的风险打分与决策');
+    await expect(page.locator('#macro-risk-editorial')).toBeVisible();
+    await expect(page.locator('#macro-editorial-title')).toContainText('风险缓和仍有条件');
+    await expect(page.locator('.macro-editorial-module-card')).toHaveCount(6);
+    await expect(page.locator('.macro-editorial-market-card')).toHaveCount(3);
+    await expect(page.locator('#external-ai-auxiliary')).toHaveCount(0);
     await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
     await expect(page.locator('#odp-thermal-request-health')).toContainText('请求完成 126/126');
     await expect(page.locator('#odp-thermal-request-health')).toContainText('最终失败 0');
@@ -253,7 +244,7 @@ test.describe('desktop smoke', () => {
 test.describe('mobile smoke', () => {
   test.use({ viewport: MOBILE, hasTouch: true, isMobile: true });
 
-  test('homepage stays usable when ancillary data is missing and External AI is ineligible', async ({ page }) => {
+  test('homepage stays usable when ancillary data is missing and macro editorial is ineligible', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     let missingRequests = 0;
     for (const file of [
@@ -272,8 +263,8 @@ test.describe('mobile smoke', () => {
     await page.route('**/data/radar-data.json', async (route) => {
       const response = await route.fetch();
       const radarData = await response.json();
-      radarData.externalAiInterpretationLayer = {
-        ...radarData.externalAiInterpretationLayer,
+      radarData.macroRiskEditorialLayer = {
+        ...buildApprovedMacroRiskEditorial(radarData, new Date().toISOString()),
         displayEnabled: false,
         status: 'fallback',
       };
@@ -283,7 +274,8 @@ test.describe('mobile smoke', () => {
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
-    await expect(page.locator('#external-ai-auxiliary')).toBeHidden();
+    await expect(page.locator('#macro-risk-editorial')).toBeHidden();
+    await expect(page.locator('#external-ai-auxiliary')).toHaveCount(0);
     await expect(page.locator('#trend-line-score')).toHaveAttribute('points', '');
     await expect(page.locator('#trend-line-overlay')).toHaveAttribute('points', '');
     await expect(page.locator('#trend-dots-score circle')).toHaveCount(0);

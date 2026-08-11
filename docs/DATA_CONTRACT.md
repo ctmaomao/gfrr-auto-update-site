@@ -1021,33 +1021,53 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-low-maintenance-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-risk-editorial-1`）。
 
 稳定边界：
 
 - `aiInterpretationLayer` 是 display-only / interpretation-only。
 - `generatedByExternalAi=false`。
 - `usesExternalAiApi=false`。
-- rule-based `aiInterpretationLayer` 本身不调用 DeepSeek / OpenAI / 外部 AI API（独立的 `externalAiInterpretationLayer` 已用 DeepSeek,见下方当前生产契约）。
+- rule-based `aiInterpretationLayer` 本身不调用 DeepSeek / OpenAI / 外部 AI API；新的可见 DeepSeek 编辑层使用独立 `macroRiskEditorialLayer`。
 - 不参与 scoring / `decisionModel` / `executionLock` / `positionGuidance`。
 - 不改变 `values.*`、`effectiveDisplayInputs`、Brent promotion、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 前端只能只读消费 `aiInterpretationLayer`，不得在 render 层生成、重算或补写解释。
-- 外部 AI 已通过独立字段 `externalAiInterpretationLayer` 接入(visible read-only,见下方当前生产契约),不覆盖本 rule-based layer;任何进一步扩展仍须用单独字段 + source metadata,不得覆盖 rule-based layer。
+- 外部 AI 通过独立 `macroRiskEditorialLayer` 嵌入宏观总览，不覆盖本 rule-based layer；旧 `externalAiInterpretationLayer` 仅保留数据兼容且无可见消费者。
 
-#### externalAiInterpretationLayer 当前生产契约（已实现 · visible read-only）
+#### macroRiskEditorialLayer 当前生产契约（integrated visible read-only）
 
-`externalAiInterpretationLayer` 已实现,为 **visible read-only 展示层**:当前 live data 为 `schemaVersion = v28.0L-external-ai-production-analyst-1`、`status = valid`、`displayEnabled = true`、`boundaries.frontendDisplayApproved = true`、`provider = deepseek`,由 `External AI Production Refresh` workflow 经 scoped production publish gate 写入。生产契约(权威定义见 `scripts/check-external-ai-production-contract.mjs`)要求:`displayEnabled === boundaries.frontendDisplayApproved`;visible 时须 `status=valid` + `qualityReview.status ∈ {pass,warn}` + `recommendation=pass_for_manual_review` + `freshness.isStale=false`;且**恒** `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,`auditFlags` 须含 `non_production_output` / `no_frontend_display`(后两者命名为历史遗留、与 visible 现态字面相左,属待另开协调改名项,非当前 docs slice)。接入与输出仍须遵守 [`EXTERNAL_AI_API_DESIGN.md`](EXTERNAL_AI_API_DESIGN.md)。
+`macroRiskEditorialLayer` 是根级可选字段，也是首页 `MACRO RISK OVERVIEW` 唯一可见的 DeepSeek 编辑层。生产 schema 固定为 `macro-risk-editorial-production-v1`；唯一写入路径为 `Macro Risk Editorial Refresh` workflow。该 workflow 每日 `00:05 UTC` 在 Daily / World Order / ODP 后运行，合并近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据，每次最多一次 DeepSeek 调用、无同 run 重试，`max_tokens=8000`、timeout 120 秒。
 
-`qualityReview.status=warn` 是参考展示的非阻断状态：warning 继续记录在 `warningDimensions`,但不因一般质量不足（如覆盖偏少或增量价值有限）要求再次付费生成。`status=fail`、provider failure、安全/归因/结构 hard fail、production contract/write guard/path assertion 失败仍禁止写入。运行时专用 `check:external-ai-production-publish` 组合 production write guard 与 `check:data`;PR / Pages CI 继续承担全仓库 `check:all`。
+可见条件必须全部满足：
 
-PR3 expand-then-contract 后,validator / projection / write guard 同时接受两套 production source family:
+- `status=valid`、`displayEnabled=true`、`provider=deepseek`、`mode=external_ai_macro_risk_editorial`。
+- `sourceDataUpdatedAt === radarData.updatedAt`。
+- `validation.status=pass`、`qualityReview.status ∈ {pass,warn}`。
+- `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`。
+- `freshness.maxAgeHours=30`、`freshness.isStale=false`，且生成时间未超过 30 小时。
+- `boundaries.frontendDisplayApproved=true`、`displayOnly=true`、`notInvestmentAdvice=true`。
+- `affectsGfrrScoring` / `affectsRiskModules` / `affectsTailRiskOverlay` / `affectsDecisionModel` / `affectsExecutionLock` / `affectsPositionGuidance` / `affectsWorldOrder` / `affectsOdp` / `affectsBubbleWatch` 全部为 false。
+
+`output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–4,600 字，质量目标为 2,800–3,800 字。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
+
+`sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。
+
+当字段缺失、陈旧、时间错配或任一门控失败时，前端隐藏该编辑层并保留 deterministic macro overview；不得显示旧 `externalAiInterpretationLayer` 卡片。
+
+#### externalAiInterpretationLayer legacy compatibility contract（no visible consumer）
+
+`externalAiInterpretationLayer` 曾是首页 visible read-only 层；现只保留 data compatibility 与手动诊断 contract。`External AI Production Refresh` scheduled workflow、`#external-ai-auxiliary` DOM、导航入口和 `renderExternalAi.js` 已移除。Daily 可继续 preserve 已有字段以避免破坏旧数据契约，但前端不得消费，生产也不得为它执行日常付费 refresh。其历史 validator/manual provider tooling 保留用于兼容审计，不得把旧 artifact 写入 `macroRiskEditorialLayer`。
+
+历史兼容规则：`qualityReview.status=warn` 曾是旧卡片的非阻断状态；`status=fail`、provider failure、安全/归因/结构 hard fail 与 write/path assertion 仍用于验证已保存的 legacy field。它不再触发 scheduled provider 或前端展示。
+
+历史 PR3 expand-then-contract 后，legacy validator / projection / write guard 接受两套 source family：
 
 - legacy: `schemaVersion=v28.0L-external-ai-production-1`, `sourceMode=manual_local_compact`, `inputSource=local_compact`, `sourceSemantics=site_structured_data_compact_summary`。
 - analyst current/default: `schemaVersion=v28.0L-external-ai-production-analyst-1`, `sourceMode=manual_analyst_compact_v1`, `inputSource=analyst_compact_v1`, `sourceSemantics=site_structured_analyst_evidence_pack_v1`。
 
-`External AI Production Refresh` 的 scheduled cron 与 `workflow_dispatch` 默认源为 `analyst_compact_v1`;legacy `local_compact` 仍保留为手动 dispatch rollback 选项,直到另一个 reviewed PR 明确 contract。
+旧 `External AI Production Refresh` 已退役；下述 scheduled/default 语义仅为历史记录。手动 external AI provider tooling 仍是 artifact-only，不得写当前首页判读。
 
-PR4b-1 后,`analyst_compact_v1` production prompt 默认要求 4 个结构化字段: `crossLayerSynthesis` / `keyDivergences` / `scenarioLean` / `dataQualityLens`,并把 provider `max_tokens` 提升到 5000。生产数据契约**不 bump schema**:这 4 个字段为 additive optional,现有 committed analyst 层即使没有这些字段仍 valid;字段存在时必须通过与 PR4a canary 相同的结构校验(caps、canonical sourceLayer、direct layer arrays 仅 bare sourceLayer、sub-field confidence 仅 `low|medium`)。PR4b-2 前端在现有 `#external-ai-auxiliary` 折叠区内渲染这些 optional 字段;缺字段时保持隐藏 fallback,不改变 scoring / decision / execution / position。
+历史 PR4b-1/2 曾为旧层增加 `crossLayerSynthesis` / `keyDivergences` / `scenarioLean` / `dataQualityLens` 与前端折叠区；该折叠区现已删除。这些 optional 字段只作为 legacy data compatibility 保留。
 
 边界：
 
@@ -1058,7 +1078,7 @@ PR4b-1 后,`analyst_compact_v1` production prompt 默认要求 4 个结构化字
 - 不得影响 scoring / decision / execution / position。
 - 不得影响 `values.*`、`effectiveDisplayInputs`、Brent promotion、Action Queue、Trigger Monitor 或 Invalidation Rules。
 
-`docs/fixtures/external-ai/*.json` 是 v28.0K-1 prompt contract 的非生产样例，不属于 production data contract，不得被 runtime 消费，也不得作为 `data/*.json`、`realtime/*.json` 或 Worker payload 的替代输入。（External AI production contract 已在 v28.0L-3P+ 实现并 visible read-only,见上方当前生产契约;下文 832 起的 K-3A/3B disabled scaffold 与 L-0…L-3F-1 段为历史基线,保留作历史。）
+`docs/fixtures/external-ai/*.json` 是 v28.0K-1 prompt contract 的非生产样例，不属于 production data contract，不得被 runtime 消费，也不得作为 `data/*.json`、`realtime/*.json` 或 Worker payload 的替代输入。下文 K-3A/3B disabled scaffold 与 L-0…L-3F-1 段均为历史基线。
 
 `scripts/check-external-ai-output.mjs` / `npm run check:external-ai-output` 只验证 sample 或 future external AI output artifacts；它不验证 production `data/radar-data.json`，不改变 `aiInterpretationLayer`，也不把 external AI 字段加入当前 production contract。
 
@@ -1096,7 +1116,7 @@ externalAiInterpretationLayer
 
 #### v28.0K-4G manual artifact boundary
 
-`externalAiInterpretationLayer` in production data is the implemented visible read-only layer (see current contract above). The only approved write path is the validator + quality-review gated `External AI Production Refresh` workflow. Manual DeepSeek output artifacts, manual input artifacts, provider failure artifacts, and quality review artifacts under `manual-artifacts/` are not themselves the production data contract and must not be hand-copied into it.
+`externalAiInterpretationLayer` in production data is a legacy compatibility field with no visible consumer or scheduled provider refresh. Manual DeepSeek output artifacts, manual input artifacts, provider failure artifacts, and quality review artifacts under `manual-artifacts/` must not be hand-copied into it or into the current `macroRiskEditorialLayer`.
 
 Manual artifacts must not be copied into `data/radar-data.json`, `data/*.json`, `realtime/*.json`, Worker payloads, or frontend display paths. A future production external AI data contract requires a separate reviewed version with explicit audit, validator, quality-review, fallback, disable-switch, and source-attribution boundaries.
 
@@ -1426,26 +1446,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-external-ai-low-maintenance-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP 新闻事件观察把 GDELT Web NGrams v2 自动 display-only 缓存的下载源状态、聚合计数与源文件时效接入既有前端行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
+macro-risk-editorial-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是 ODP 新闻事件观察把 GDELT Web NGrams v2 自动 display-only 缓存的下载源状态、聚合计数与源文件时效接入既有前端行；cache busting 用于避免浏览器沿用旧 renderer/module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-low-maintenance-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-risk-editorial-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=external-ai-low-maintenance-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=external-ai-low-maintenance-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `external-ai-low-maintenance-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=macro-risk-editorial-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=macro-risk-editorial-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `macro-risk-editorial-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs external-ai-low-maintenance-1
-npm run bump:frontend-asset-version -- external-ai-low-maintenance-1
+node scripts/bump-frontend-asset-version.mjs macro-risk-editorial-1
+npm run bump:frontend-asset-version -- macro-risk-editorial-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `external-ai-low-maintenance-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `macro-risk-editorial-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

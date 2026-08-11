@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `external-ai-low-maintenance-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-risk-editorial-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 
@@ -54,18 +54,18 @@
 - v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
 - v28.0I 后，任何新增解释层 / 新信号 / 新数据源必须先检查 `docs/SYSTEM_UPGRADE_PLAN.md` 中的 v28.0I stable baseline 边界。
 - `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`macroDrivers.employment`、`macroDrivers.consumerRetail`、`macroDrivers.commercialRealEstate`、`consumer_vs_asset_pricing` 与 `brentPricingLayer` 均为解释层 / 审计层 / 展示层；不得直接接入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
-- v28.0J 后，rule-based `aiInterpretationLayer` 不得被改成外部 AI 输出，除非另开版本并新增 API / output audit contract;它本身仍 `generatedByExternalAi=false`、`usesExternalAiApi=false`，不调用 DeepSeek / OpenAI / 外部 AI API。**注:独立字段 `externalAiInterpretationLayer`(不同对象)已由 approved `External AI Production Refresh` workflow 作为 visible read-only 层使用 DeepSeek(见下条 + `docs/DATA_CONTRACT.md` 当前生产契约);二者不得混淆,external 层不得覆盖 rule-based 层。**
+- v28.0J 后，rule-based `aiInterpretationLayer` 不得被改成外部 AI 输出，除非另开版本并新增 API / output audit contract;它本身仍 `generatedByExternalAi=false`、`usesExternalAiApi=false`，不调用 DeepSeek / OpenAI / 外部 AI API。独立旧字段 `externalAiInterpretationLayer` 仅保留数据兼容，不再有首页可见消费者或 scheduled provider refresh；新的可见 DeepSeek 输出必须写入独立 `macroRiskEditorialLayer`，不得覆盖 rule-based 层或旧字段。
 - 不得让 AI 输出直接影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 任何 DeepSeek / OpenAI 接入必须从设计文档和审计 contract 开始，并先定义 timeout、fallback、source attribution 与禁用文案检查。
 - 任何 DeepSeek / OpenAI / external AI API implementation 必须先阅读 `docs/EXTERNAL_AI_API_DESIGN.md`；external AI output 不得直接影响 scoring / decision / execution / position，未来也必须作为单独 layer 设计，不得覆盖当前 rule-based `aiInterpretationLayer`。
 - v28.0K-1 的 `docs/fixtures/external-ai/*.json` 只允许作为 offline/manual prompt design samples；未来 external AI implementation 不得把这些 fixtures 当作 production data，不得导入 runtime。
 - v28.0K-2 新增 `npm run check:external-ai-output` 离线 validator；未来 external AI output 不得绕过该 validator 进入展示路径，validator 不调用外部 API、不导入 runtime。
-- live `externalAiInterpretationLayer` 现为已实现的 **visible read-only 展示层**（v28.0L-3P+ 起：`status=valid` / `displayEnabled=true` / `frontendDisplayApproved=true` / `provider=deepseek`，由 `External AI Production Refresh` workflow + `check:external-ai-production-contract` validator + quality review 写入与守门）。硬边界保持：`qualityReview.promotionEligible=false`、`provenance.humanApproved=false`，不影响 scoring / `decisionModel` / `executionLock` / `positionGuidance` / `values.*` / Brent promotion；不得替换 rule-based `aiInterpretationLayer`，不得手工编辑该字段（唯一写入路径为上述 workflow）。（K-3A/3B disabled scaffold 为历史基线,见 `docs/DATA_CONTRACT.md`。）
+- `macroRiskEditorialLayer` 是首页 `MACRO RISK OVERVIEW` 内唯一可见的外部 AI 编辑层：`schemaVersion=macro-risk-editorial-production-v1`、`provider=deepseek`，由 `Macro Risk Editorial Refresh` 每日 00:05 UTC 在近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据上生成。必须保持 `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`、`sourceDataUpdatedAt===radarData.updatedAt`、30 小时 freshness、每次最多一次 provider call/no retry；不得影响 scoring / 六大模块 / tail overlay / `decisionModel` / `executionLock` / `positionGuidance` / World Order / ODP / Bubble Watch。失败或陈旧时隐藏编辑层并沿用 deterministic macro overview。
 - `data/bubble-watch.json.summary.weekly_editorial` 是独立的 Bubble Watch DeepSeek 周度只读编辑层；唯一生产写入路径为 `Bubble Watch Weekly Editorial Refresh`。它不得覆盖确定性 `summary.verdict_desc`，不得影响 Core-23 / Shadow-4、主分、Stage / Trigger、verdict 或任何 GFRR scoring / decision / execution / position；provider/review/stale 失败时前端必须回退确定性正文，禁止手工编辑 production field。
 - v28.0K-3D Stable Observation Audit 是只读 gate；不得用它 auto-fix、auto-commit、auto-push、deploy 或触发 recovery。PASS 可允许规划 v28.0K-4，FAIL 阻止 v28.0K-4。
 - v28.0K-4A 后，任何 external AI API calls implementation 必须先阅读 `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`；manual API test 必须 opt-in、validator-gated，并与 production data / scoring / decision / execution / position 隔离。
-- v28.0K-4B 的 no-network dry-run scaffold 与 v28.0K-4C disabled adapter 是历史阶段基线；其绝对禁用语义已被后续 reviewed K-4D+ manual provider path 与 v28.0L-3P+ `External AI Production Refresh` 生产路径取代。当前仍要求默认 dry-run、显式网络/成本确认、单次调用、validator + quality review 守门，且不得打印或提交 API key。
-- `scripts/external-ai/provider-adapters.mjs` 的真实 DeepSeek 调用只允许由已批准的 manual provider test 或 `External AI Production Refresh` 路径触发；不得从 Daily、前端或其他 workflow 旁路调用，不得读取未显式注入的 key，也不得削弱 timeout、fallback、source attribution 或 output validator。
+- v28.0K-4B 的 no-network dry-run scaffold 与 v28.0K-4C disabled adapter 是历史阶段基线；其绝对禁用语义已被后续 reviewed K-4D+ manual provider path 与当前 `Macro Risk Editorial Refresh` 生产路径取代。当前仍要求默认 dry-run、显式网络/成本确认、单次调用、validator + quality review 守门，且不得打印或提交 API key。
+- `scripts/external-ai/provider-adapters.mjs` 的真实 DeepSeek 调用只允许由已批准的 manual provider test、Bubble Watch weekly editorial 或 `Macro Risk Editorial Refresh` 路径触发；不得从 Daily、前端或其他 workflow 旁路调用，不得读取未显式注入的 key，也不得削弱 timeout、fallback、source attribution 或 output validator。
 - v28.0K-4D 的 DeepSeek manual artifact test 只能在用户明确要求且提供 `DEEPSEEK_API_KEY` 环境变量时运行；不得打印 API key，不得提交 `manual-artifacts/` 或其中的 output artifact，不得把 artifact 提升为生产数据或前端展示，除非另开 reviewed PR 且 validator 通过。
 - v28.0K-4E 的 manual input artifact 只能作为 ignored `manual-artifacts/` 手动输入；不得提交，不得当作 production data，不得复制进 `data/radar-data.json`，不得从 Daily、workflow 或自动流程触发 DeepSeek。
 - v28.0K-4E-1 后，paid DeepSeek live-data manual test 前应优先使用 compact input；若出现 timeout / aborted failure，不得反复重试，应先审阅 failure artifact 的 `requestDiagnostics`。

@@ -1,0 +1,173 @@
+name: Macro Risk Editorial Refresh
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  schedule:
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+    inputs:
+      allow_network:
+        description: "Allow Tavily, Brave, and DeepSeek network calls"
+        type: boolean
+        required: true
+        default: true
+      acknowledge_cost:
+        description: "Acknowledge one paid DeepSeek call"
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gfrr-main-writer-main
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  macro_risk_editorial_refresh:
+    name: macro-risk-editorial-refresh
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment: external-ai-production-refresh
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Sync latest main before refresh
+        run: git pull --ff-only origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Preflight editorial contracts
+        run: |
+          npm run check:macro-risk-editorial-core
+          npm run check:macro-risk-editorial-workflow
+          npm run check:macro-risk-editorial-frontend
+
+      - name: Confirm network and cost authorization
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            allow_network="${{ inputs.allow_network }}"
+            acknowledge_cost="${{ inputs.acknowledge_cost }}"
+          else
+            allow_network="true"
+            acknowledge_cost="true"
+          fi
+          if [ "$allow_network" != "true" ]; then
+            echo "allow_network must be true"
+            exit 1
+          fi
+          if [ "$acknowledge_cost" != "true" ]; then
+            echo "acknowledge_cost must be true"
+            exit 1
+          fi
+
+      - name: Prepare transient artifact directory
+        run: mkdir -p manual-artifacts/macro-risk-editorial
+
+      - name: Collect near-7-day macro news
+        env:
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+        run: npm run collect:macro-risk-editorial-news -- --allow-network
+
+      - name: Build compact editorial evidence pack
+        run: npm run build:macro-risk-editorial-input
+
+      - name: Run one DeepSeek editorial call
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: npm run run:macro-risk-editorial-deepseek -- --allow-network
+
+      - name: Review editorial quality
+        run: npm run review:macro-risk-editorial
+
+      - name: Project production layer
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: npm run project:macro-risk-editorial
+
+      - name: Upload sanitized editorial artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macro-risk-editorial-refresh-${{ github.run_id }}
+          path: |
+            manual-artifacts/macro-risk-editorial/news-discovery-latest.json
+            manual-artifacts/macro-risk-editorial/editorial-input-latest.json
+            manual-artifacts/macro-risk-editorial/deepseek-output-latest.json
+            manual-artifacts/macro-risk-editorial/deepseek-failure-latest.json
+            manual-artifacts/macro-risk-editorial/review-latest.json
+            manual-artifacts/macro-risk-editorial/production-projection-latest.json
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Write production editorial layer
+        run: |
+          npm run write:macro-risk-editorial -- \
+            --input manual-artifacts/macro-risk-editorial/production-projection-latest.json \
+            --target data/radar-data.json \
+            --confirm-production-write \
+            --data-only
+
+      - name: Validate final production data
+        run: |
+          npm run check:macro-risk-editorial-live -- --require-layer
+          npm run check:data
+
+      - name: Protected path assertion
+        run: |
+          set -euo pipefail
+          changed_paths="$(git diff --name-only)"
+          if [ -z "$changed_paths" ]; then
+            echo "No tracked file changes after refresh."
+            exit 0
+          fi
+          if [ "$changed_paths" != "data/radar-data.json" ]; then
+            echo "Unexpected tracked file changes:"
+            printf '%s\n' "$changed_paths"
+            exit 1
+          fi
+          if git status --short -- manual-artifacts | grep -q .; then
+            echo "manual-artifacts must not be committed"
+            exit 1
+          fi
+
+      - name: Commit refreshed macro editorial if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/radar-data.json; then
+            echo "No macro risk editorial data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/radar-data.json
+          staged_paths="$(git diff --cached --name-only)"
+          if [ "$staged_paths" != "data/radar-data.json" ]; then
+            echo "Unexpected staged file changes:"
+            printf '%s\n' "$staged_paths"
+            exit 1
+          fi
+          git commit -m "chore: refresh macro risk editorial"
+          git push origin HEAD:main

@@ -62,7 +62,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `external-ai-low-maintenance-1`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `macro-risk-editorial-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 检查 Worker Health；Check Worker Health 仍是 Worker-first runtime hard gate。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -75,9 +75,9 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 ## v28.0J AI Interpretation Layer baseline checks
 
-v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API（独立的 `externalAiInterpretationLayer` 已由 approved workflow 用 DeepSeek,visible read-only,见 `docs/DATA_CONTRACT.md` 当前生产契约）。日常排查顺序：
+v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。旧 `externalAiInterpretationLayer` 只保留数据兼容；首页当前可见的 DeepSeek 输出是独立 `macroRiskEditorialLayer`。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `external-ai-low-maintenance-1`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `macro-risk-editorial-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -85,47 +85,46 @@ v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 r
 6. 不要手工补 `data/radar-data.json`。
 7. 若未来外部 AI 接入，必须检查 timeout、fallback、source attribution、禁用文案和不影响 scoring / decision 的边界。
 
-## External AI operations note（已实现 · visible read-only）
+## Macro Risk Editorial operations（当前 · integrated visible read-only）
 
-`externalAiInterpretationLayer` 已实现并为 visible read-only 展示层（见 `docs/DATA_CONTRACT.md` 当前生产契约）。排查时先确认该层是否通过 output audit / `check:external-ai-production-contract`。若外部 AI output 缺失、timeout、API error、rate limit、invalid JSON、unsafe output 或 stale input，应 fallback 到现有 rule-based `aiInterpretationLayer`。
+`macroRiskEditorialLayer` 是首页 `MACRO RISK OVERVIEW` 内的 DeepSeek 只读编辑层。它综合近 7 日 Tavily/Brave 新闻与站内结构化数据；不影响评分、六大模块、tail overlay、决策、执行、仓位、World Order、ODP 或 Bubble Watch。若 output 缺失、provider timeout/API error/rate limit、invalid JSON、unsafe wording、来源不足、`sourceDataUpdatedAt` 不匹配或超过 30 小时，前端隐藏编辑层，并继续显示规则生成的今日总判断。
 
-若 AI output audit 失败，应隐藏 external output，不得手工编辑 `data/radar-data.json` 修复 AI 输出。外部 AI 输出不得影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
+若 AI output audit 失败，不得手工编辑 `data/radar-data.json` 修复 AI 输出，也不得在同一次运行内重复付费调用。先审阅 `manual-artifacts/macro-risk-editorial/deepseek-failure-latest.json` 的脱敏 diagnostics。
 
-v28.0K-1 的 `docs/fixtures/external-ai/*.json` 不影响 live operations。不要通过编辑这些 fixtures 排查或修复生产问题；未来 external AI production issues 必须按 output audit、source attribution 和 fallback rules 排查。
+旧 `docs/fixtures/external-ai/*.json` 与 `externalAiInterpretationLayer` 工具仍供兼容/手动诊断，不是当前首页判读生产路径，不得把其中 artifact 手工复制到 `macroRiskEditorialLayer`。
 
-未来排查 external AI output 问题时，先运行：
+排查当前宏观判读时先运行：
 
 ```bash
-npm run check:external-ai-output
+npm run check:macro-risk-editorial
 ```
 
-如果 validation fails，应隐藏 external output 或 fallback 到 rule-based `aiInterpretationLayer`。不要手工编辑 `data/radar-data.json` 修复 external AI output。
+如果 validation fails，应保留 deterministic macro overview fallback。不要手工编辑生产 JSON，也不要削弱契约、危险文案或来源守门。
 
-_(历史 v28.0K-3A:当时 `status="disabled"` 为预期、回退 rule-based layer。)_ 当前 live `externalAiInterpretationLayer.status=valid`、visible read-only。任何情况下都不要手工编辑 `data/radar-data.json` 补/改该字段;缺失或异常时等待 `External AI Production Refresh` / Daily 自然刷新,或 fallback rule-based `aiInterpretationLayer`。
+`externalAiInterpretationLayer` 的历史 production value 允许 Daily 继续 preserve，但它没有可见 DOM/renderer，也没有 scheduled provider refresh。不要为该旧字段触发付费修复。
 
-## External AI production layer checks（当前 · v28.0L visible read-only）
+## Macro Risk Editorial production checks
 
-> 历史 v28.0K-3 disabled-scaffold 排查清单已 superseded(当时验证 `enabled=false`/`status=disabled`)。当前 live 为 visible read-only,排查顺序：
+当前生产排查顺序：
 
-1. 检查 live data 是否包含 `externalAiInterpretationLayer`。
-2. 确认 `status=valid`、`displayEnabled=true`、`boundaries.frontendDisplayApproved=true`(visible read-only)。
-3. 确认 `provider=deepseek`、`qualityReview.status ∈ {pass,warn}`、`recommendation=pass_for_manual_review`。
-4. 确认硬边界:`qualityReview.promotionEligible=false`、`provenance.humanApproved=false`,且不影响 scoring/decision/execution/position/`values.*`。
-5. 用 `npm run check:external-ai-production-contract` 验证字段/边界契约(含 `auditFlags` 必含项)。
-6. 如果本地缺失但 live 已存在，pull latest `main` 或等待 `External AI Production Refresh` / Daily data commit。
-7. 不要手工编辑 `data/radar-data.json`(唯一写入路径是 validator+quality 门控的 `External AI Production Refresh` workflow)。
-8. 输出异常时 fallback 到 rule-based `aiInterpretationLayer`,不要手改产物。
-9. `External AI Production Refresh` 的 scheduled 默认源为 `analyst_compact_v1`；rollback 时手动 `workflow_dispatch` 选择 `input_source=local_compact`。
+1. 检查 live data 是否包含 `macroRiskEditorialLayer`。
+2. 确认 `schemaVersion=macro-risk-editorial-production-v1`、`status=valid`、`displayEnabled=true`、`provider=deepseek`。
+3. 确认 `sourceDataUpdatedAt === radarData.updatedAt`、`freshness.maxAgeHours=30`、`freshness.isStale=false`。
+4. 确认 `validation.status=pass`、`qualityReview.status ∈ {pass,warn}`、`qualityReview.promotionEligible=false`、`provenance.humanApproved=false`。
+5. 确认所有 `affects*` 边界均为 false，并运行 `npm run check:macro-risk-editorial-live -- --require-layer`。
+6. 检查 `sourceLedger` 中新闻 URL 为 HTTPS、没有 snippet/raw provider response/API key，并确认 output 引用均能回到 ledger。
+7. 若字段缺失或异常，查看 `Macro Risk Editorial Refresh` 日志与三天期 artifact；不要手工编辑生产 JSON。
+8. provider failure 不得同 run 重试；待问题定位或下一次 scheduled refresh。
 
-### External AI refresh / Daily consumption timing
+### Macro editorial refresh / Daily timing
 
-GitHub Actions cron 使用 UTC。当前 `Build Daily Radar Data` 每日 `22:30 UTC` 运行，`External AI Production Refresh` 每日 `23:50 UTC` 运行。该顺序是预期状态：Daily 普通刷新不会调用 DeepSeek，也不会生成新的 external AI 文本；它只会 preserve 上一次已通过生产契约的 `externalAiInterpretationLayer`，若该层缺失或不兼容则回退到 disabled scaffold + rule-based `aiInterpretationLayer`。
+GitHub Actions cron 使用 UTC。当前顺序为 `Build Daily Radar Data` 22:30、`Refresh World Order Stress` 23:00、`Refresh Oil Directional Pressure` 23:45、`Macro Risk Editorial Refresh` 00:05。Daily 不调用 DeepSeek；编辑 workflow 在主要站内数据完成后抓取近 7 日新闻、构建紧凑证据包并最多调用一次 DeepSeek。
 
-`External AI Production Refresh` 是独立的 production layer 写入路径。provider runner 只做一次 output validation；writer 在写入前自行验证 projection；写入后统一运行 `check:external-ai-production-publish`（production write guard + `check:data`），再用 protected-path assertion 保证只能提交 `data/radar-data.json`。付费刷新不再重复相同 validator，也不再运行与 External AI 无关的全仓库 `check:all`；全仓库检查仍由 PR / Pages CI 承担。因此一次成功的 23:50 refresh 可以在 Pages 重新部署后让页面看到新的 `externalAiInterpretationLayer`，但它会晚于当天 22:30 Daily；下一次 Daily 才会把该生产层作为 previous data preserve 进入新的 Daily output。
+`Macro Risk Editorial Refresh` 是 `macroRiskEditorialLayer` 的唯一生产写入路径。流程固定为 news discovery → compact input → one DeepSeek call → output contract → quality review → projection → guarded write → live layer check + `check:data` → protected-path assertion。只允许提交 `data/radar-data.json`；Pages 在 workflow 成功后自动部署。
 
-该层按个人站点“参考展示”维护：质量审查中的普通 `warn`（例如来源覆盖或增量价值不足）会保留在 `warningDimensions` 供阅读，但使用 `recommendation=pass_for_manual_review`，不再阻断刷新。结构错误、provider failure、危险操作性文案、虚构外部验证、生产契约/路径越界，以及任何 scoring / decision / execution / position 边界变化仍是 hard fail。机器标识字段（当前仅 `modelJudgments[*].key`）不参与面向用户的 banned-copy 扫描；同一对象中的 `labelZh` / `detailZh` 等展示文案仍严格检查。
+普通质量 `warn`（例如只有一条可信新闻或正文偏离 2,800–3,800 字目标但仍在 2,000–4,600 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
 
-如果看到 `data/radar-data.json` 中 Daily 生成时间与 `externalAiInterpretationLayer.generatedAt` 不同，不要按事故处理，也不要为对齐时间而重跑付费 provider 或手工编辑 JSON。日频简报允许这类约 1 天内的时序差；只有当 external AI output contract 失败、质量审查失败、provider failure、缺失超过预期刷新窗口，或显示层没有 fallback 到 rule-based `aiInterpretationLayer` 时，才按 external AI incident 排查。
+如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端会因 `sourceDataUpdatedAt` 不匹配而暂时隐藏编辑层；这是 fail-closed 预期状态。不得为几分钟的调度间隔手工改时间戳或重复调用 provider。
 
 ### Bubble Watch weekly editorial refresh
 
@@ -571,22 +570,22 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=external-ai-low-maintenance-1
-scripts/app.js and active scripts/modules/*.js local imports → ?v=external-ai-low-maintenance-1
+index.html app.js entry → ?v=macro-risk-editorial-1
+scripts/app.js and active scripts/modules/*.js local imports → ?v=macro-risk-editorial-1
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `external-ai-low-maintenance-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP 新闻事件观察中的 GDELT Web NGrams v2 自动 display-only 下载源状态、聚合计数与源文件时效展示；既有历史 sample-gate、FIRMS 脱敏请求健康与设施窗口质量行仍保留。该版本不新增 KV、不 deploy Worker、不改变评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `macro-risk-editorial-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP 新闻事件观察中的 GDELT Web NGrams v2 自动 display-only 下载源状态、聚合计数与源文件时效展示；既有历史 sample-gate、FIRMS 脱敏请求健康与设施窗口质量行仍保留。该版本不新增 KV、不 deploy Worker、不改变评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs external-ai-low-maintenance-1
-npm run bump:frontend-asset-version -- external-ai-low-maintenance-1
+node scripts/bump-frontend-asset-version.mjs macro-risk-editorial-1
+npm run bump:frontend-asset-version -- macro-risk-editorial-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `external-ai-low-maintenance-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `macro-risk-editorial-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
