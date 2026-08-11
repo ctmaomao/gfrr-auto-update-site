@@ -29,6 +29,7 @@
 | [ADR-0018](0018-m94-path-c-static-frontend-runtime.md) | M-94 Path C frontend consumes static daily snapshot | Accepted |
 | [ADR-0019](0019-bubble-watch-v2-core-shadow-scoring.md) | Bubble Watch v2 使用固定 Core-23 + Shadow-4 | Accepted |
 | [ADR-0020](0020-web-ngrams-primary-article-discovery.md) | Web NGrams as the primary Oil News article-discovery candidate | Accepted |
+| [ADR-0021](0021-bubble-watch-weekly-editorial-read-only.md) | Bubble Watch weekly AI editorial is an independent read-only display layer | Accepted |
 
 ## Superseded
 

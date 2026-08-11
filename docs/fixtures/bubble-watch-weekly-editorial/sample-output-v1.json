@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "bubble-watch-weekly-editorial-output-v1",
+  "generatedAt": "2026-08-11T00:05:00.000Z",
+  "asOfDate": "2026-08-10",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "mode": "external_ai_weekly_editorial",
+  "headlineZh": "估值和融资压力仍高，信用与需求尚未同步转弱",
+  "leadZh": "本周样例证据显示，Bubble Watch 的主要矛盾仍是高估值、资本开支和融资扩张，与尚未恶化的信用利差、市场广度和订单需求并存。Core-23 主分与两轴状态没有被新闻叙事改写；周内新增材料只用于解释为什么高风险预警仍然成立，以及哪些条件尚未出现。",
+  "weeklyTimeline": [
+    {
+      "date": "2026-08-06",
+      "titleZh": "宏观政策约束重新进入讨论",
+      "detailZh": "样例宏观报道与站内政策路径指标共同指向：高估值资产仍需要面对利率维持偏高的约束，但这不等同于已确认的市场转折。",
+      "sourceRefIds": ["news:macro-sample", "indicator:fed_policy"]
+    },
+    {
+      "date": "2026-08-07",
+      "titleZh": "资本开支与订单需求继续同时扩张",
+      "detailZh": "样例公司材料显示资本开支保持高位，站内现金流覆盖指标仍为红灯；与此同时，订单积压指标保持绿灯，说明压力来自投入强度，而不是需求已经消失。",
+      "sourceRefIds": ["news:earnings-sample", "indicator:mag4_fcf_yoy", "indicator:cloud_rpo_growth"]
+    },
+    {
+      "date": "2026-08-08",
+      "titleZh": "融资扩张继续接受信用市场检验",
+      "detailZh": "样例融资报道增加了对资本循环的关注，但高收益债利差仍未显示广泛信用断裂，因此相关材料应被解释为需要继续核验的融资压力，而不是系统性事件确认。",
+      "sourceRefIds": ["news:financing-sample", "indicator:hy_oas"]
+    }
+  ],
+  "scorecardSynthesisZh": "固定 Core-23 样例计数为 6 红、8 黄、9 绿，主分 26.1%，Stage 为 60.0，Trigger 为 30.8。有效判读维持高风险预警，来源是估值与资金面的结构性共振；新闻材料没有进入计分，也没有改变任何灯色。",
+  "scorecardSourceIndicatorIds": ["cape", "mag4_fcf_yoy", "hy_oas", "breadth_50d", "fed_policy", "cloud_rpo_growth"],
+  "keyTensions": [
+    {
+      "titleZh": "投入强度与需求兑现并存",
+      "detailZh": "现金流覆盖压力仍高，但订单积压保持扩张，现阶段更像高成本增长，而不是需求崩塌。",
+      "sourceIndicatorIds": ["mag4_fcf_yoy", "cloud_rpo_growth"],
+      "sourceRefIds": ["indicator:mag4_fcf_yoy", "indicator:cloud_rpo_growth", "news:earnings-sample"]
+    },
+    {
+      "titleZh": "高估值与信用托底并存",
+      "detailZh": "估值处于红灯区，而广义信用利差仍为绿灯，说明顶部风险和即时信用压力尚未同步。",
+      "sourceIndicatorIds": ["cape", "hy_oas"],
+      "sourceRefIds": ["indicator:cape", "indicator:hy_oas", "news:financing-sample"]
+    }
+  ],
+  "categoryAnalysis": [
+    {"category": "valuation", "detailZh": "样例估值仍是最明确的慢变量压力，CAPE 高位意味着对利率和盈利失望更敏感。", "sourceIndicatorIds": ["cape"], "sourceRefIds": ["indicator:cape"]},
+    {"category": "capital", "detailZh": "样例资本开支对经营现金流的占用维持红灯，新增公司材料只用于说明投入仍在继续。", "sourceIndicatorIds": ["mag4_fcf_yoy"], "sourceRefIds": ["indicator:mag4_fcf_yoy", "news:earnings-sample"]},
+    {"category": "market_structure", "detailZh": "样例广度尚未全面恶化，市场结构暂未给出与高估值同步的破裂信号。", "sourceIndicatorIds": ["breadth_50d"], "sourceRefIds": ["indicator:breadth_50d"]},
+    {"category": "credit", "detailZh": "样例融资新闻增加观察需求，但高收益债利差仍未确认广泛信用压力。", "sourceIndicatorIds": ["hy_oas"], "sourceRefIds": ["indicator:hy_oas", "news:financing-sample"]},
+    {"category": "fundamentals", "detailZh": "样例订单积压仍强，基础面暂不支持把高投入直接写成需求崩塌。", "sourceIndicatorIds": ["cloud_rpo_growth"], "sourceRefIds": ["indicator:cloud_rpo_growth", "news:earnings-sample"]},
+    {"category": "macro", "detailZh": "样例政策路径对高估值形成约束，但新闻语境不足以确认单一方向的市场转折。", "sourceIndicatorIds": ["fed_policy"], "sourceRefIds": ["indicator:fed_policy", "news:macro-sample"]}
+  ],
+  "historicalComparison": {
+    "period": "2000-02",
+    "detailZh": "颜色向量样例最接近 2000-02，但当前信用利差和市场广度仍比历史顶部阶段更有支撑；只有这些差异继续收窄，历史类比才会增强。",
+    "sourceIndicatorIds": ["hy_oas", "breadth_50d", "cape"],
+    "sourceRefIds": ["indicator:hy_oas", "indicator:breadth_50d", "indicator:cape"]
+  },
+  "watchNextWeek": [
+    {"conditionZh": "观察高收益债利差是否从低压力区持续走阔。", "invalidationZh": "若利差继续稳定，融资新闻仍只属于局部压力。", "sourceIndicatorIds": ["hy_oas"]},
+    {"conditionZh": "观察市场广度是否与估值压力同步恶化。", "invalidationZh": "若广度维持，Trigger 不应被叙事性上调。", "sourceIndicatorIds": ["breadth_50d"]},
+    {"conditionZh": "观察订单需求能否继续覆盖高资本开支。", "invalidationZh": "若订单积压保持扩张，需求崩塌叙事缺少支持。", "sourceIndicatorIds": ["mag4_fcf_yoy", "cloud_rpo_growth"]}
+  ],
+  "dataGaps": [
+    "样例内部人数据覆盖不完整，相关方向不作高置信判断。",
+    "新闻搜索只提供发现与交叉确认，不能替代公司公告或监管原文。"
+  ],
+  "sourceAttribution": [
+    {"sourceRefId": "indicator:cape", "claimType": "site_structured_data", "noteZh": "来自 Bubble Watch 样例结构化指标。"},
+    {"sourceRefId": "indicator:mag4_fcf_yoy", "claimType": "site_structured_data", "noteZh": "来自 Bubble Watch 样例结构化指标。"},
+    {"sourceRefId": "indicator:hy_oas", "claimType": "site_structured_data", "noteZh": "来自 Bubble Watch 样例结构化指标。"},
+    {"sourceRefId": "indicator:breadth_50d", "claimType": "site_structured_data", "noteZh": "来自 Bubble Watch 样例结构化指标。"},
+    {"sourceRefId": "indicator:fed_policy", "claimType": "site_structured_data", "noteZh": "来自 Bubble Watch 样例结构化指标。"},
+    {"sourceRefId": "indicator:cloud_rpo_growth", "claimType": "site_structured_data", "noteZh": "来自 Bubble Watch 样例结构化指标。"},
+    {"sourceRefId": "news:financing-sample", "claimType": "cross_checked_news_context", "noteZh": "来自两条独立搜索索引的样例新闻发现。"},
+    {"sourceRefId": "news:earnings-sample", "claimType": "official_news_context", "noteZh": "来自样例发行人来源。"},
+    {"sourceRefId": "news:macro-sample", "claimType": "cross_checked_news_context", "noteZh": "来自两条独立搜索索引的样例新闻发现。"}
+  ],
+  "confidence": {
+    "level": "medium",
+    "score": 58,
+    "reasonZh": "样例结构化指标完整，新闻上下文具有交叉来源，但部分定性数据覆盖仍有限。"
+  },
+  "auditFlags": ["fixture_input_only", "display_only", "validator_required", "no_score_impact"],
+  "boundaries": {
+    "displayOnly": true,
+    "commentaryOnly": true,
+    "externalAiGenerated": true,
+    "usesExternalAiApi": true,
+    "affectsBubbleWatchScoring": false,
+    "affectsCore23": false,
+    "affectsShadow4": false,
+    "affectsStageTrigger": false,
+    "affectsGfrrScoring": false,
+    "affectsDecisionModel": false,
+    "affectsExecutionLock": false,
+    "affectsPositionGuidance": false,
+    "notInvestmentAdvice": true
+  }
+}
+

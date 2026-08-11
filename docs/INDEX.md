@@ -125,6 +125,7 @@
 - `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`
 - `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`
 - `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`
+- `docs/BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md` — Bubble Watch 独立 DeepSeek 周度编辑层；只读展示，不影响 Core-23 / Shadow-4 或 GFRR 主链。
 - `docs/EXTERNAL_AI_PROVENANCE_TRACKING_M43.md`
 - `docs/EXTERNAL_AI_*_DESIGN.md` (其他;wildcard 覆盖未逐条列出的 External AI 设计文档 — 本轮有意不逐文件展开)
 

@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "bubble-watch-weekly-editorial-input-v1",
+  "generatedAt": "2026-08-11T00:00:00.000Z",
+  "asOfDate": "2026-08-10",
+  "inputMode": "fixture_compact_evidence_pack",
+  "fixtureOnly": true,
+  "scoringSnapshot": {
+    "contractVersion": "bubble-watch-v2",
+    "modelVersion": "bubble-watch-v2-core23-shadow4",
+    "coreIndicatorCount": 23,
+    "shadowIndicatorCount": 4,
+    "coreRedCount": 6,
+    "coreYellowCount": 8,
+    "coreGreenCount": 9,
+    "primaryScorePct": 26.1,
+    "stageScore": 60,
+    "triggerScore": 30.8,
+    "verdictLabelZh": "高风险预警"
+  },
+  "narrativeBaseline": {
+    "source": "bubble-watch-narrative-v2",
+    "verdictDescZh": "样例规则正文：估值与资金面压力仍高，信用和需求证据尚未显示系统性断裂。",
+    "upstreamVerdictIncluded": false
+  },
+  "structuredFacts": [
+    {
+      "id": "fact:cape",
+      "indicatorId": "cape",
+      "category": "valuation",
+      "status": "red",
+      "factZh": "样例 CAPE 处于历史高位区间。",
+      "sourceRefIds": ["indicator:cape"]
+    },
+    {
+      "id": "fact:cash-flow",
+      "indicatorId": "mag4_fcf_yoy",
+      "category": "capital",
+      "status": "red",
+      "factZh": "样例大型云厂商资本开支对经营现金流覆盖形成压力。",
+      "sourceRefIds": ["indicator:mag4_fcf_yoy"]
+    },
+    {
+      "id": "fact:credit",
+      "indicatorId": "hy_oas",
+      "category": "credit",
+      "status": "green",
+      "factZh": "样例高收益债利差仍处于低压力区间。",
+      "sourceRefIds": ["indicator:hy_oas"]
+    },
+    {
+      "id": "fact:breadth",
+      "indicatorId": "breadth_50d",
+      "category": "market_structure",
+      "status": "green",
+      "factZh": "样例市场广度尚未与估值压力同步恶化。",
+      "sourceRefIds": ["indicator:breadth_50d"]
+    },
+    {
+      "id": "fact:policy",
+      "indicatorId": "fed_policy",
+      "category": "macro",
+      "status": "red",
+      "factZh": "样例政策路径仍对高估值资产构成约束。",
+      "sourceRefIds": ["indicator:fed_policy"]
+    },
+    {
+      "id": "fact:demand",
+      "indicatorId": "cloud_rpo_growth",
+      "category": "fundamentals",
+      "status": "green",
+      "factZh": "样例云厂商订单积压仍显示需求在兑现。",
+      "sourceRefIds": ["indicator:cloud_rpo_growth"]
+    }
+  ],
+  "newsContext": {
+    "schemaVersion": "bubble-watch-weekly-news-discovery-v1",
+    "status": "ok",
+    "windowStart": "2026-08-01",
+    "windowEnd": "2026-08-10",
+    "topicsQueried": 6,
+    "liveProviderCount": 2,
+    "stories": [
+      {
+        "id": "news:financing-sample",
+        "topic": "ai_financing_credit",
+        "title": "Fixture financing story",
+        "url": "https://news-a.example/ai-financing-sample",
+        "domain": "news-a.example",
+        "publishedAt": "2026-08-08T12:00:00.000Z",
+        "providers": ["tavily", "brave"],
+        "evidenceStatus": "cross_checked"
+      },
+      {
+        "id": "news:earnings-sample",
+        "topic": "ai_capex_earnings",
+        "title": "Fixture earnings and capex story",
+        "url": "https://issuer.example/earnings-sample",
+        "domain": "issuer.example",
+        "publishedAt": "2026-08-07T10:00:00.000Z",
+        "providers": ["tavily"],
+        "evidenceStatus": "official"
+      },
+      {
+        "id": "news:macro-sample",
+        "topic": "macro_policy",
+        "title": "Fixture macro policy story",
+        "url": "https://news-b.example/macro-policy-sample",
+        "domain": "news-b.example",
+        "publishedAt": "2026-08-06T09:00:00.000Z",
+        "providers": ["tavily", "brave"],
+        "evidenceStatus": "cross_checked"
+      }
+    ]
+  },
+  "historicalContext": {
+    "topSimilarity": {
+      "period": "2000-02",
+      "matchPct": 72,
+      "denominator": 22
+    },
+    "differencesZh": [
+      "样例信用利差仍比历史顶部阶段更紧。",
+      "样例市场广度尚未进入全面恶化。"
+    ]
+  },
+  "sourceRefs": [
+    {"id": "indicator:cape", "kind": "indicator", "sourceName": "Bubble Watch fixture", "sourceClass": "site_structured", "indicatorIds": ["cape"]},
+    {"id": "indicator:mag4_fcf_yoy", "kind": "indicator", "sourceName": "Bubble Watch fixture", "sourceClass": "site_structured", "indicatorIds": ["mag4_fcf_yoy"]},
+    {"id": "indicator:hy_oas", "kind": "indicator", "sourceName": "Bubble Watch fixture", "sourceClass": "site_structured", "indicatorIds": ["hy_oas"]},
+    {"id": "indicator:breadth_50d", "kind": "indicator", "sourceName": "Bubble Watch fixture", "sourceClass": "site_structured", "indicatorIds": ["breadth_50d"]},
+    {"id": "indicator:fed_policy", "kind": "indicator", "sourceName": "Bubble Watch fixture", "sourceClass": "site_structured", "indicatorIds": ["fed_policy"]},
+    {"id": "indicator:cloud_rpo_growth", "kind": "indicator", "sourceName": "Bubble Watch fixture", "sourceClass": "site_structured", "indicatorIds": ["cloud_rpo_growth"]},
+    {"id": "news:financing-sample", "kind": "news", "sourceName": "Fixture News A", "sourceClass": "cross_checked", "title": "Fixture financing story", "url": "https://news-a.example/ai-financing-sample", "domain": "news-a.example", "publishedAt": "2026-08-08T12:00:00.000Z", "topic": "ai_financing_credit"},
+    {"id": "news:earnings-sample", "kind": "news", "sourceName": "Fixture Issuer", "sourceClass": "official", "title": "Fixture earnings and capex story", "url": "https://issuer.example/earnings-sample", "domain": "issuer.example", "publishedAt": "2026-08-07T10:00:00.000Z", "topic": "ai_capex_earnings"},
+    {"id": "news:macro-sample", "kind": "news", "sourceName": "Fixture News B", "sourceClass": "cross_checked", "title": "Fixture macro policy story", "url": "https://news-b.example/macro-policy-sample", "domain": "news-b.example", "publishedAt": "2026-08-06T09:00:00.000Z", "topic": "macro_policy"}
+  ],
+  "dataGaps": [
+    "样例内部人数据覆盖不完整。",
+    "样例新闻发现不能替代原始公告核验。"
+  ],
+  "boundaries": {
+    "fixtureOnly": true,
+    "siteStructuredDataOnly": true,
+    "newsDiscoveryContextOnly": true,
+    "noSecrets": true,
+    "noRawArticleBody": true,
+    "readOnlyContext": true,
+    "affectsBubbleWatchScoring": false,
+    "affectsGfrrScoring": false
+  }
+}
+
