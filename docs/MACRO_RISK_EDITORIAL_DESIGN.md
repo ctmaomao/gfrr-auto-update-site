@@ -160,6 +160,8 @@
 - 枚举映射为中文，不暴露内部 `medium` / `warn` / `cross_checked` 等值。
 - 删除 `#external-ai-auxiliary`、顶部“外部 AI”导航和旧 `renderExternalAi.js`。
 - 390px 单列，无横向溢出；JSON 缺失、stale、mismatch 时 fail closed。
+- ADR-0023 后，Hero → 有效编辑层 → 本期关键变化构成主叙事；压力来源、信号分层、风险引擎、交叉验证与跨市场印证统一置于 `#macro-professional-evidence`。
+- 编辑层有效时该专业证据区默认收起；编辑层缺失、过期、mismatch、无资格或渲染失败时自动展开，确保 deterministic fallback 仍完整可见。
 
 ## 9. 兼容与 rollback
 

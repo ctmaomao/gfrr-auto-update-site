@@ -31,6 +31,7 @@
 | [ADR-0020](0020-web-ngrams-primary-article-discovery.md) | Web NGrams as the primary Oil News article-discovery candidate | Accepted |
 | [ADR-0021](0021-bubble-watch-weekly-editorial-read-only.md) | Bubble Watch weekly AI editorial is an independent read-only display layer | Accepted |
 | [ADR-0022](0022-macro-risk-editorial-integrated-overview.md) | Macro Risk AI editorial is integrated into the main overview | Accepted |
+| [ADR-0023](0023-macro-overview-narrative-first-evidence-on-demand.md) | Macro overview uses a narrative-first, evidence-on-demand reading path | Accepted |
 
 ## Superseded
 

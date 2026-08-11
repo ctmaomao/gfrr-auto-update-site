@@ -1,6 +1,6 @@
 # DESIGN.md — Editorial Design Contract
 
-> **Version**: v2.0 (M-94 V0 路径 C 启动,2026-05-26)
+> **Version**: v2.1 (ADR-0023 narrative-first evidence-on-demand,2026-08-11)
 >
 > **本文档是设计合约。** 任何前端改动（无论由人工、Codex、Cursor、Claude 或其他 AI 执行）在动手之前都必须读完本文档，并在 PR 描述中声明"本 PR 符合 DESIGN.md 的所有规则"。M-94 V0 路径 C 启动后,违反本合约的视觉改动会被 Stage 6 新写的 frontend checker(`check-frontend-ia-m94v0` + `check-frontend-folded-default`)拦截。
 >
@@ -138,14 +138,14 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 
 ## 4. 信息架构（IA 合约，section 顺序不可随意改动）
 
-### 4.1 M-94 V0 路径 C 一级阅读顺序（不可变更）
+### 4.1 首页一级阅读顺序（不可变更）
 
 M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不折叠,附录区默认折叠。
 
 ```text
 ═══ 第一层：核心阅读路径（不折叠，始终展开）═══
 1. <header class="masthead">              顶部品牌 / 日期 / 数据健康 / 观察边界
-2. <nav class="dashboard-jump-nav">       顶部跳转导航 16 项
+2. <nav class="dashboard-jump-nav">       顶部跳转导航 13 项
 
 ═══ Non-nav preface block（不计入 nav 编号）═══
 #plain-summary-card                       普通用户 preface block（2026-05 Bubble Watch 改版已退场)
@@ -153,20 +153,22 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
    - 使用 plain-summary-section 叙事结构
    - 不计入 jump-nav IA section
 
-═══ Macro runtime path（8 runtime block + WoW）═══
+═══ Macro narrative path（主叙事展开 + 专业证据按需展开）═══
 3. #macro-risk-overview                   宏观风险判断总览
    └─ .macro-overview-shell
       ├─ #homepage-today-judgment         Hero / 今日判断
       ├─ #macro-risk-editorial             本期宏观判读（DeepSeek 只读编辑层；失败时隐藏）
+      ├─ #wow-key-changes                 本期关键变化
       ├─ .threshold-block                 风险阈值尺
       ├─ .trend-block                     8 周趋势
-      ├─ #homepage-pressure-sources       压力来源
-      ├─ #homepage-signal-layers          信号层
       ├─ #homepage-macro-drivers          宏观驱动
       ├─ #homepage-market-temperature     Market Pricing Temperature
-      ├─ #homepage-risk-engines           六大风险引擎
-      ├─ #homepage-cross-validation       交叉验证矩阵
-      └─ #wow-key-changes                 本期关键变化
+      └─ #macro-professional-evidence     专业证据与模型诊断（局部 details）
+          ├─ #homepage-pressure-sources   压力来源
+          ├─ #homepage-signal-layers      信号层
+          ├─ #homepage-risk-engines       六大风险引擎
+          ├─ #homepage-cross-validation   交叉验证矩阵
+          └─ #homepage-macro-coherence    跨市场印证
 
 ═══ Thematic reader path（8 主题卡阵）═══
 4. #macro-thematic-cards                  C1-C8 主题卡阵,52 张 indicator-card；C5/C6 观察层视觉置底
@@ -187,26 +189,23 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 <footer class="method">                   method-grid 4 项
 ```
 
-### 4.2 dashboard-jump-nav 16 项（顺序锁定）
+### 4.2 dashboard-jump-nav 13 项（顺序锁定）
 
-顶部跳转导航必须是 16 项,按以下顺序指向主路径锚点:
+顶部跳转导航必须是 13 项,按以下顺序指向主路径锚点:
 
 1. `#homepage-today-judgment`
-2. `#homepage-pressure-sources`
-3. `#homepage-signal-layers`
+2. `#macro-risk-editorial`（嵌入 `#macro-risk-overview`；只读、fail-closed）
+3. `#wow-key-changes`
 4. `#homepage-macro-drivers`
 5. `#homepage-market-temperature`
-6. `#homepage-risk-engines`
-7. `#homepage-cross-validation`
-8. `#wow-key-changes`
-9. `#macro-thematic-cards`（`.new` 主题卡阵入口）
-10. `#global-risk-heatmap`
-11. `#oil-directional-pressure`（PR4 · 独立能源专题）
-12. `#detail-data`
-13. `#world-order-stress-section`
-14. `#method-evidence`
-15. `#macro-risk-editorial`（嵌入 `#macro-risk-overview`；只读、fail-closed）
-16. `#execution-risk-detail`
+6. `#macro-professional-evidence`
+7. `#macro-thematic-cards`（`.new` 主题卡阵入口）
+8. `#global-risk-heatmap`
+9. `#oil-directional-pressure`（PR4 · 独立能源专题）
+10. `#detail-data`
+11. `#world-order-stress-section`
+12. `#method-evidence`
+13. `#execution-risk-detail`
 
 ### 4.3 修改 IA 顺序的流程
 
@@ -255,7 +254,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 
 | Section | 色带 token | 语义 |
 |---|---|---|
-| `#macro-risk-overview` | `var(--risk-red)` | 主判断与 8 runtime block |
+| `#macro-risk-overview` | `var(--risk-red)` | 主判断、编辑判读、WoW 与按需专业证据 |
 | `#macro-thematic-cards` | `var(--risk-green)` | 主题汇编,跨分析层的读者类别入口 |
 | `#global-risk-heatmap` | `var(--risk-red)` | 6 cells 静态风险热力图 |
 | `#oil-directional-pressure` | `var(--risk-red)` | PR4 独立能源专题(ODP,display-only;物理>金融,verdict 动态上色) |
@@ -274,23 +273,30 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 - `section-title`:display 字体,22-30px clamp,font-weight 900(2026-06-11 对齐 Bubble Watch 原版分类标题字重;原 700)
 - `section-note`:serif 字体,13px,line-height 1.7
 
-### 5.2 macro-overview-shell 与 8 runtime block
+### 5.2 macro-overview-shell 与 narrative-first runtime path
 
-`#macro-risk-overview` 内部必须使用 `.macro-overview-shell` 包裹所有 runtime 内容。顺序固定:
+`#macro-risk-overview` 内部必须使用 `.macro-overview-shell` 包裹所有 runtime 内容。ADR-0023 后顺序固定如下；专业证据保留原 id 与 renderer，但移入局部 disclosure:
 
 ```html
 <section class="editorial-section" id="macro-risk-overview">
   <div class="macro-overview-shell">
     <article id="homepage-today-judgment" class="editorial-big-number">...</article>
+    <article id="macro-risk-editorial" class="macro-editorial" hidden>...</article>
+    <section id="wow-key-changes" class="wow-section">...</section>
     <section class="threshold-block">...</section>
     <section class="trend-block">...</section>
-    <section id="homepage-pressure-sources" class="runtime-block">...</section>
-    <section id="homepage-signal-layers" class="runtime-block">...</section>
     <section id="homepage-macro-drivers" class="runtime-block">...</section>
     <section id="homepage-market-temperature" class="runtime-block">...</section>
-    <section id="homepage-risk-engines" class="runtime-block">...</section>
-    <section id="homepage-cross-validation" class="runtime-block">...</section>
-    <section id="wow-key-changes" class="wow-section">...</section>
+    <details id="macro-professional-evidence" class="macro-evidence-fold">
+      <summary>专业证据与模型诊断...</summary>
+      <div class="macro-evidence-content">
+        <section id="homepage-pressure-sources" class="runtime-block">...</section>
+        <section id="homepage-signal-layers" class="runtime-block">...</section>
+        <section id="homepage-risk-engines" class="runtime-block">...</section>
+        <section id="homepage-cross-validation" class="runtime-block">...</section>
+        <section id="homepage-macro-coherence" class="runtime-block">...</section>
+      </div>
+    </details>
   </div>
 </section>
 ```
@@ -339,6 +345,8 @@ runtime block 的基准结构:
 
 4 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始渲染时全部为收起状态。任何把 `open` 属性加进 `index.html` 的改动都视为视觉契约违规。
 
+`#macro-professional-evidence.macro-evidence-fold` 同样不得在静态 HTML 中带 `open`。区别是它由 `renderMacroOverview` 按 AI 编辑层资格设置初始运行态：有效编辑层时保持收起；编辑层缺失、过期、mismatch、无资格或渲染失败时自动设为展开。此行为是 deterministic fallback，不把 AI 接入评分或模型计算。
+
 适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。`#macro-risk-editorial` 是主路径内嵌 article，仅其来源账本使用局部 `<details>`，不属于 appendix。
 
 执行机制:`scripts/check-frontend-folded-default.mjs`(Stage 6 写)在 CI 中拦截任何包含 `<details ... open>` 的提交。
@@ -377,6 +385,7 @@ runtime block 的基准结构:
 
 **mini-grid / mini-card**:
 - `#homepage-pressure-sources` 与 `#homepage-risk-engines` 使用 `.mini-grid`
+- ADR-0023 后两者位于 `#macro-professional-evidence` 内；渲染和数据含义保持不变
 - `.mini-card.red/.yellow/.green` 仅使用 `--risk-*` 语义色
 - mini-card 只承载 label / num / status 一行,避免旧 dossier sublist 回流
 
@@ -411,8 +420,8 @@ tag 颜色:
 - `.is-flat`, `.is-gap` → `var(--paper-muted)` 背景 + 反白文字
 
 **dashboard-jump-nav**:
-- 顶部跳转导航固定 16 项
-- 第 9 项 `#macro-thematic-cards` 必须带 `.new`
+- 顶部跳转导航固定 13 项
+- 第 7 项 `#macro-thematic-cards` 必须带 `.new`
 - 字体 mono 11px,`letter-spacing: 0.18em`,uppercase
 - 默认色 `var(--paper-muted)`
 - hover 时 `color: var(--paper-ink)` + `border-bottom: 1px solid var(--risk-red)`
@@ -433,7 +442,7 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 **永久禁用的旧 IA 元素**(任何 PR 不得引入):
 - 旧 `<section id="homepage-realtime-band">` 及其内部所有元素(`#rt-brent-source` / `#rt-brent-delta` 等 16 个子 ID)
 - 旧 `<section id="world-heatmap">` SVG 投影层(由 6 cells 静态 grid 替代)
-- 旧 jump nav 14 项结构(PR4 起为 16 项 + .new 主题卡阵替代)
+- 旧 jump nav 14 / 16 项结构(ADR-0023 后固定 13 项 + .new 主题卡阵)
 - 旧 `#core-dashboard` / 旧 hero `.hero-*` selector 全套
 - `<head>` 内联 `<style>` 块(M94_V0_DATA_CONTRACT.md §I.6 禁止)
 
@@ -543,7 +552,7 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 
 1. ❌ 改变 §4.1 的 IA 顺序（除非走 §4.2 流程）
 2. ❌ 添加新的一级 section 而不同步更新 §4.1 IA 顺序 / §5.6 视觉契约 与 `docs/ADR/0014-design-md-is-ia-ground-truth.md`,且未运行 `npm run check:frontend-live-contracts`
-3. ❌ 把"主路径 section"改为折叠
+3. ❌ 把 Hero、AI 判读、WoW、阈值、趋势、四大驱动或市场温度改为折叠；ADR-0023 明确批准的局部 `#macro-professional-evidence` 除外
 4. ❌ 把"附录 section"提升到主路径
 5. ❌ 使用非标准的 className 派系（如 `editorial-heatmap-*`, `editorial-appendix-*`, `ia-detail-panel`, `advanced-panel` 作为顶层容器）
 
@@ -656,6 +665,7 @@ var(--font-mono)              /* IBM Plex Mono */
 #macro-risk-overview          宏观风险判断总览（红色带）
   #macro-risk-editorial       本期宏观判读（DeepSeek 只读编辑层；校验失败时隐藏）
   #wow-key-changes            本期关键变化（runtime 注入，不是顶级 section）
+  #macro-professional-evidence 专业证据与模型诊断（AI 有效时默认收起；AI 失败时自动展开）
 #macro-thematic-cards         宏观主题卡阵（绿色带）
 #global-risk-heatmap          全球风险热力图（红色带）
 #detail-data                  详细数据与图表（墨色带，折叠）
