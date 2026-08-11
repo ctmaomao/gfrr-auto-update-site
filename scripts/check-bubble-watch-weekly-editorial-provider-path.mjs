@@ -116,6 +116,7 @@ assert(requestBody.model === 'deepseek-v4-flash', 'DeepSeek model drifted');
 assert(requestBody.max_tokens === 5000, 'DeepSeek max_tokens must remain 5000');
 assert(requestBody.response_format?.type === 'json_object', 'DeepSeek response_format must remain json_object');
 assert(requestBody.thinking?.type === 'disabled', 'DeepSeek thinking must remain disabled for bounded editorial call');
+assert(requestBody.messages[0].content.includes('Hard output caps:') && requestBody.messages[0].content.includes('exactly 6 categoryAnalysis'), 'DeepSeek prompt must retain explicit completion caps');
 assert(!requestBody.messages[1].content.includes('\n  "schemaVersion"'), 'DeepSeek user prompt must serialize compact JSON without pretty-print expansion');
 assert(!JSON.stringify(providerResult).includes('fixture-secret-never-serialized'), 'provider result must not serialize API key');
 assert(providerResult.diagnostics.apiCallCount === 1 && providerResult.diagnostics.retryCount === 0, 'provider diagnostics must prove one call/no retry');

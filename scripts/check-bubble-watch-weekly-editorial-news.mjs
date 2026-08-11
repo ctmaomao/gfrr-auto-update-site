@@ -97,9 +97,9 @@ const stressInput = buildWeeklyEditorialInput({
   generatedAt: '2026-08-11T00:02:00.000Z'
 });
 assertValid(validateWeeklyEditorialInput(stressInput), '30-story compact input stress replay');
-assert(stressInput.newsContext.stories.length === 18, `compact provider input must cap news at 18, got ${stressInput.newsContext.stories.length}`);
+assert(stressInput.newsContext.stories.length === 12, `compact provider input must cap news at 12, got ${stressInput.newsContext.stories.length}`);
 for (const topic of stressInput.newsContext.topics) {
-  assert(topic.storyCount <= 3, `compact provider input topic ${topic.id} exceeds 3 stories`);
+  assert(topic.storyCount <= 2, `compact provider input topic ${topic.id} exceeds 2 stories`);
 }
 assert(stressInput.newsContext.stories.filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus)).length >= 2, 'compaction must preserve credible news evidence');
 assert(Buffer.byteLength(JSON.stringify(stressInput)) < 60 * 1024, '30-story live discovery must compact below 60 KiB');

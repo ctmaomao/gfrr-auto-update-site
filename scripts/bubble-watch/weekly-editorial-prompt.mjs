@@ -11,7 +11,9 @@ export function buildWeeklyEditorialSystemPrompt() {
     'Write restrained Chinese analysis, not investment advice. Never recommend buying, selling, positions, exposure, cash allocation, execution, targets, timing a crash, or certainty that a bubble will burst.',
     'Every factual timeline/category/tension/history item must cite sourceRefIds from input.sourceRefs. Indicator-based claims must also use sourceIndicatorIds from input.structuredFacts.',
     `Cover these categories when evidence exists: ${EDITORIAL_CATEGORIES.join(', ')}.`,
-    'Target 1,800-3,000 visible Chinese characters. Prefer evidence density over repetition and finish the complete JSON object within the token budget.',
+    'Target 1,800-2,600 visible Chinese characters. Prefer evidence density over repetition and finish the complete JSON object within the token budget.',
+    'Hard output caps: headlineZh <= 36 Chinese characters; leadZh <= 240; scorecardSynthesisZh <= 260; exactly 3 weeklyTimeline items with titleZh <= 28 and detailZh <= 180; exactly 2 keyTensions with titleZh <= 28 and detailZh <= 220; exactly 6 categoryAnalysis items with detailZh <= 180; historicalComparison.detailZh <= 240; exactly 3 watchNextWeek items with conditionZh/invalidationZh <= 120 each; 2-4 dataGaps <= 100 each; 8-16 sourceAttribution rows with noteZh <= 70; confidence.reasonZh <= 160.',
+    'Never continue expanding a field after its cap. Close every array/object and return syntactically complete JSON before using extra detail.',
     'The output must use these exact machine fields:',
     JSON.stringify({
       schemaVersion: OUTPUT_SCHEMA,

@@ -1,8 +1,8 @@
 import { INPUT_SCHEMA } from './weekly-editorial-contract.mjs';
 
 const STATUS_ZH = Object.freeze({ red: '红灯', yellow: '黄灯', green: '绿灯' });
-const MAX_INPUT_NEWS_PER_TOPIC = 3;
-const MAX_INPUT_NEWS_STORIES = 18;
+const MAX_INPUT_NEWS_PER_TOPIC = 2;
+const MAX_INPUT_NEWS_STORIES = 12;
 
 function compactText(value, maxLength = 360) {
   const text = String(value || '').replace(/\s+/gu, ' ').trim();
@@ -27,7 +27,7 @@ function buildStructuredFacts(indicators) {
     status: indicator.status,
     asOfDate: indicator.as_of || null,
     stale: indicator.stale === true,
-    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${indicator.note}`, 460),
+    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${indicator.note}`, 340),
     sourceRefIds: [`indicator:${indicator.id}`]
   }));
 }
@@ -73,7 +73,7 @@ function buildCompactNewsContext(discovery) {
     .slice(0, MAX_INPUT_NEWS_STORIES)
     .map((story) => ({
       ...story,
-      snippet: compactText(story.snippet, 240)
+      snippet: compactText(story.snippet, 180)
     }));
   const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
     status: status?.status || 'unavailable',

@@ -144,8 +144,8 @@ provider 均存在且至少有两条 official/cross-checked story 时允许继�
 provider output、review 与 projection 都是 ignored artifact，仅上传保存 3 天供诊断，
 不得提交。
 
-完整 discovery 可保留每 topic 5 条；进入 DeepSeek 前必须压缩为每 topic 最多 3 条、
-总计最多 18 条，保留全部 27 个结构化指标且总输入小于 60 KiB。若 input size gate
+完整 discovery 可保留每 topic 5 条；进入 DeepSeek 前必须压缩为每 topic 最多 2 条、
+总计最多 12 条，保留全部 27 个结构化指标且总输入小于 60 KiB。若 input size gate
 失败，应修复 compact projection 或来源冗余，不得提高上限后直接付费调用。
 
 故障处理：

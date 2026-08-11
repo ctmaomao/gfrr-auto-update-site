@@ -84,7 +84,7 @@ AI `facts` 的唯一依据。
 - `sourceRefs[].id` 是所有 output 引用的唯一主键。
 - Input 不包含 `summary.weekly_editorial`，防止模型自我复述。
 - 完整 discovery artifact 可保留每 topic 最多 5 条；DeepSeek compact input 再按既有
-  evidence-quality/date 顺序压缩为每 topic 最多 3 条、总计最多 18 条，并移除 query-run
+  evidence-quality/date 顺序压缩为每 topic 最多 2 条、总计最多 12 条，并移除 query-run
   诊断明细。27 个结构化指标必须全部保留，最终 input 必须小于 60 KiB。
 
 ### 5.3 Provider output
@@ -107,7 +107,8 @@ AI `facts` 的唯一依据。
   - `auditFlags[]`
   - `boundaries`
 - 所有事实性段落必须带 `sourceRefIds` 或 `sourceIndicatorIds`；引用必须存在于 input。
-- Provider 生成目标为用户可见中文 1,800–3,000 字；quality review 对 1,800–4,200
+- Provider 生成目标为用户可见中文 1,800–2,600 字，并对 timeline/tension/category/
+  history/watch/gap/attribution 各字段设置数量和字符硬上限；quality review 对 1,800–4,200
   保留兼容接受窗口。不以堆砌内容凑长度，必须在 token budget 内闭合完整 JSON。
 
 ### 5.4 Quality review
@@ -200,4 +201,7 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 - Stage 2 complete: Tavily + Brave bounded collector、URL/title 去重、evidence status、27-card + radar/oil compact input；默认 no-network，输出仅允许 `manual-artifacts/bubble-watch-weekly-editorial/`。
 - Stage 3 complete: DeepSeek 单次 JSON request、prompt contract、output validation、quality review、production projection、source ledger、原子 writer 与 protected-target/write-semantic guard。离线 provider replay 证明 call=1 / retry=0，timeout / invalid JSON / fixture promotion / unsafe target 均 fail closed。
 - Stage 4 complete: GitHub post-refresh/manual workflow、protected path、Bubble Watch 长篇 frontend、240h/as-of fallback、1440px/390px runtime acceptance 与 Pages trigger 均已实现；本地 full check 作为该阶段提交前硬门禁。
-- Stage 5 pending: main 上一次 owner-authorized live DeepSeek run 与 deployed JSON / DOM 终验。
+- Stage 5 production code deployed / live output pending: main workflow、Pages 与 fallback 已上线；
+  run `31455140609` 证明旧 prompt 在 5,000 tokens 截断，未写 production。最终 compact
+  12-story + per-field hard-cap 修复等待下一次自然周更验证；在成功生成前 DOM 合法保持
+  deterministic verdict，不允许继续付费连发。
