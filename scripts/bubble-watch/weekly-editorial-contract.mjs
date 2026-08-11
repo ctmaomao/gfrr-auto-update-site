@@ -108,6 +108,17 @@ function collectStrings(value, output = []) {
   return output;
 }
 
+function collectNamedStringArrays(value, fieldName, output = new Set()) {
+  if (Array.isArray(value)) value.forEach((item) => collectNamedStringArrays(item, fieldName, output));
+  else if (isRecord(value)) {
+    for (const [key, item] of Object.entries(value)) {
+      if (key === fieldName && Array.isArray(item)) item.forEach((entry) => typeof entry === 'string' && output.add(entry));
+      else collectNamedStringArrays(item, fieldName, output);
+    }
+  }
+  return output;
+}
+
 function collectClaims(output) {
   return [
     ...requireSafeArray(output.weeklyTimeline),
@@ -259,16 +270,25 @@ export function validateWeeklyEditorialOutput(output, input) {
   }
 
   const newsById = new Map(requireSafeArray(input?.newsContext?.stories).map((story) => [story.id, story]));
-  const referencedSourceIds = new Set();
+  const referencedSourceIds = collectNamedStringArrays(root, 'sourceRefIds');
+  const referencedIndicatorIds = new Set([
+    ...collectNamedStringArrays(root, 'sourceIndicatorIds'),
+    ...(Array.isArray(root.scorecardSourceIndicatorIds) ? root.scorecardSourceIndicatorIds : [])
+  ]);
+  for (const refId of referencedSourceIds) {
+    if (!inputResult.sourceRefIds.has(refId)) errors.push(`output references unknown source ${refId}`);
+  }
+  for (const indicatorId of referencedIndicatorIds) {
+    if (!inputResult.indicatorIds.has(indicatorId)) errors.push(`output references unknown indicator ${indicatorId}`);
+  }
   for (const [index, claim] of collectClaims(root).entries()) {
     const refs = requireArray(claim?.sourceRefIds, `output factual claim[${index}].sourceRefIds`, errors, { min: 1, max: 12 });
     const indicators = requireSafeArray(claim?.sourceIndicatorIds);
     for (const refId of refs) {
       referencedSourceIds.add(refId);
-      if (!inputResult.sourceRefIds.has(refId)) errors.push(`output references unknown source ${refId}`);
     }
     for (const indicatorId of indicators) {
-      if (!inputResult.indicatorIds.has(indicatorId)) errors.push(`output references unknown indicator ${indicatorId}`);
+      referencedIndicatorIds.add(indicatorId);
     }
     const discoveryRefs = refs.filter((refId) => newsById.get(refId)?.evidenceStatus === 'discovery_only');
     const corroboratingRefs = refs.filter((refId) => !discoveryRefs.includes(refId));

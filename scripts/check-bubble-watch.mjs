@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { assessUnderlyingObservationFreshness } from './bubble-watch/observation-freshness.mjs';
+import { validateWeeklyEditorialProduction } from './bubble-watch/weekly-editorial-production.mjs';
 import {
   isExpectedPolicyFallback,
   isExpectedPolicyFetchFailure
@@ -236,6 +237,10 @@ for (const section of s.narrative_plan?.sections || []) {
   check('contract', typeof section.key === 'string' && section.key.length > 0, 'narrative_plan section 缺 key');
   check('contract', typeof section.summaryZh === 'string' && section.summaryZh.length >= 40, `narrative_plan.${section.key || '?'} summaryZh 过短`);
   check('contract', Array.isArray(section.sourceIndicators), `narrative_plan.${section.key || '?'} sourceIndicators 非数组`);
+}
+if (s.weekly_editorial !== undefined) {
+  const editorialValidation = validateWeeklyEditorialProduction(s.weekly_editorial, data);
+  check('contract', editorialValidation.ok, `summary.weekly_editorial production contract invalid: ${editorialValidation.errors.join('; ')}`);
 }
 
 function checkVisibleCopy(fieldName, value) {

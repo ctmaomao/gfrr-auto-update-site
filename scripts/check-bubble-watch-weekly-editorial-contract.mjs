@@ -56,4 +56,8 @@ const promotedReview = clone(review);
 promotedReview.promotionEligible = true;
 expectFailure(validateWeeklyEditorialReview(promotedReview), 'promotionEligible must remain false', 'promotion negative test');
 
-console.log(`Bubble Watch weekly editorial contract PASS (visible fixture chars=${outputResult.visibleTextLength}, negative tests=5)`);
+const unknownIndicator = clone(output);
+unknownIndicator.watchNextWeek[0].sourceIndicatorIds = ['unknown_indicator'];
+expectFailure(validateWeeklyEditorialOutput(unknownIndicator, input), 'unknown indicator', 'unknown indicator negative test');
+
+console.log(`Bubble Watch weekly editorial contract PASS (visible fixture chars=${outputResult.visibleTextLength}, negative tests=6)`);

@@ -190,3 +190,10 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 - Playwright 1440px / 390px runtime 与 missing/stale layer fallback PASS。
 - Main 上一次授权 DeepSeek workflow run 成功后，核对 Pages JSON 与 DOM。
 
+## 11. 分阶段实施状态（2026-08-11）
+
+- Stage 1 complete: ADR / contract family / positive-negative fixtures / machine validator。
+- Stage 2 complete: Tavily + Brave bounded collector、URL/title 去重、evidence status、27-card + radar/oil compact input；默认 no-network，输出仅允许 `manual-artifacts/bubble-watch-weekly-editorial/`。
+- Stage 3 complete: DeepSeek 单次 JSON request、prompt contract、output validation、quality review、production projection、source ledger、原子 writer 与 protected-target/write-semantic guard。离线 provider replay 证明 call=1 / retry=0，timeout / invalid JSON / fixture promotion / unsafe target 均 fail closed。
+- Stage 4 pending: GitHub workflow、Bubble Watch frontend、fallback/runtime responsive acceptance、Pages trigger 和 full check。
+- Stage 5 pending: main 上一次 owner-authorized live DeepSeek run 与 deployed JSON / DOM 终验。

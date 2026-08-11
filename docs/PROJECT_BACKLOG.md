@@ -32,7 +32,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-06-17 Bubble Watch CEO 表态新闻源**:`ceo_hedging` 免费源顺序为 GDELT DOC public search -> Tavily Search API + Brave News Search API free-credit cross-check/fallback -> Wind paid final fallback。GDELT 默认小样本请求,429/5xx 时有界退避重试一次;Tavily 需 `TAVILY_API_KEYS`,Brave 需 `BRAVE_API_KEYS`,GDELT 成功时做第二/第三新闻源确认,GDELT 429/不可用时做免费兜底;红灯必须有多源确认,单一路径新闻命中不得绕过 `local_proxy_confidence_v1` 多源/样本门槛升红。
 - **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
 - **2026-07-28 Bubble Watch source-quality hardening**:`accounting_events` 改为核心企业实体 + 会计/财报/证券欺诈语义 + 正式执法动作的邻近语境三重门槛,并以 Google Drive DOJ 文章锁定负向回归；`arr_2nd_deriv` 用底层 ARR 里程碑日期对照 `maxAgeDays`,超龄 fail-closed 回较新的 curated 快照；`insider_sell_buy` 与 `fed_policy` 分别明确显示「高卖压·覆盖受限」和「年末路径隐含加息」。Core-23/Shadow-4、权重、阈值与 GFRR 主链边界均未改变；当前主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6,有效判读仍为「高风险预警」。
-- **2026-08-11 Bubble Watch 周度 DeepSeek 编辑层**:owner 已批准按 ADR-0021 分阶段实施。Stage 1 已新增独立 `summary.weekly_editorial` 合同族和正/负 fixture gate；Stage 2 已实现默认 no-network 的 Tavily/Brave 周度 collector、key rotation、20s timeout、6 topic×5 条上限、canonical URL/title fingerprint 去重、official/cross_checked/discovery_only 证据等级，以及从当前 27 卡 + radar/oil compact context 构建的 DeepSeek evidence pack。该层只编辑解释文本，`summary.verdict_desc` 保留为确定性 fallback，不改 Core-23/Shadow-4、主分、Stage/Trigger、verdict 或任何 GFRR scoring/decision/execution/position。余项为 provider/quality/writer、workflow/frontend 与生产终验；每阶段独立 commit+push。
+- **2026-08-11 Bubble Watch 周度 DeepSeek 编辑层**:owner 已批准按 ADR-0021 分阶段实施。Stage 1 已新增独立 `summary.weekly_editorial` 合同族和正/负 fixture gate；Stage 2 已实现默认 no-network 的 Tavily/Brave 周度 collector、key rotation、20s timeout、6 topic×5 条上限、canonical URL/title fingerprint 去重、official/cross_checked/discovery_only 证据等级，以及从当前 27 卡 + radar/oil compact context 构建的 evidence pack；Stage 3 已实现项目既有 DeepSeek endpoint 单次 JSON 调用、prompt/output validator、quality review、只含实际引用且无 snippet 的 source ledger、production projection 与仅可写 `summary.weekly_editorial` 的原子 writer。该层只编辑解释文本，`summary.verdict_desc` 保留为确定性 fallback，不改 Core-23/Shadow-4、主分、Stage/Trigger、verdict 或任何 GFRR scoring/decision/execution/position。余项为 workflow/frontend 与生产终验；每阶段独立 commit+push。
 - **2026-07-26 Market Pricing freshness/alignment review**:发现 QQQ 已到 2026-07-24、NDX/IXIC 仍停在 2026-05-22；按 owner 本次授权运行既有 M-91 manual-only Yahoo refresh 并重算 metrics，三资产现均到 2026-07-24。新增 `review:market-pricing-freshness` / `check:market-pricing-freshness`，守住 active 周线 10 天龄、辅助资产落后 QQQ 7 天、history/metrics/coverage/commit timestamp 一致性。默认 WARN 不阻断、FAIL 阻断，`--strict` 供人工硬复核；保持 display-only，不把 NDX/IXIC 接入 GitHub Actions、Worker、scoring、decision、execution、position 或 cross-validation。
 - **2026-08-02 Refresh QQQ Market Pricing calendar-drift repair**:scheduled run `30694893490` 的 Yahoo QQQ refresh 与 metrics 重算均成功，失败来自 freshness checker 把合成场景时钟写死在 2026-07-26；QQQ 正常前进到 2026-07-31 后，stale-auxiliary WARN 用例误叠加 `qqq_date_in_future` 而变 FAIL。checker 现以 production QQQ latest date +2 天作为场景时钟，stale/mismatch/future dates 全改为相对日期；10 天/7 天阈值、reviewer、workflow、production data 与 display-only/no-scoring 边界均未改。
 - 详情字段和 schema 约束以 [DATA_CONTRACT.md](DATA_CONTRACT.md) 为准;运维流程以 [OPERATIONS.md](OPERATIONS.md) 为准。
@@ -53,8 +53,8 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 #### P2-14: Bubble Watch 周度 DeepSeek 编辑层
 
-- owner 已于 2026-08-11 批准；Stage 1 契约/ADR/fixture/checker与 Stage 2 新闻 discovery/compact input 已落地。
-- 余项按 serial trunk 推进：DeepSeek output/review/writer → workflow/frontend/fallback → main/Pages 生产终验。
+- owner 已于 2026-08-11 批准；Stage 1 契约、Stage 2 新闻 discovery/input、Stage 3 DeepSeek/review/projection/writer 已落地。
+- 余项按 serial trunk 推进：workflow/frontend/fallback → main/Pages 生产终验。
 - 硬边界：只写 `summary.weekly_editorial`；AI 与新闻不入 Core-23/Shadow-4、主分、Stage/Trigger、verdict 或 GFRR 决策链；provider failure 不自动重试。
 
 ### P3 Items
@@ -474,8 +474,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **当前进行中(2026-08-11 · Bubble Watch weekly editorial)**: Stage 1 契约与 Stage 2 新闻 discovery/compact input 已完成。fixture CLI 实测把 10 条 provider rows 去重为 6 个 stories，覆盖 official/cross_checked/discovery_only；当前真实 Bubble 数据输入为 27 facts / 35 sources / 35,547 compact bytes，并排除旧 weekly editorial 与 decision/execution/position 字段。当前分支 `codex/bubble-watch-weekly-editorial`，用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
-- **下一步(2026-08-11 · Bubble Watch weekly editorial)**: Stage 3 实现项目现有 DeepSeek endpoint 的单次 JSON 调用、prompt contract、output validator、quality review、projection 与专用 production writer/write guard；随后继续 frontend/workflow 阶段，每阶段验证后 commit+push。
+- **当前进行中(2026-08-11 · Bubble Watch weekly editorial)**: Stage 1–3 已完成。离线 provider replay 证明 DeepSeek endpoint/model/JSON/5,000-token contract、apiCallCount=1/retry=0；quality review PASS，production source ledger 9 项且无 snippet，writer replay 证明主分/Stage/Trigger及其余数据不变。no-network、timeout、invalid JSON、fixture projection、as-of mismatch、unsafe target 均为预期 fail closed。当前分支 `codex/bubble-watch-weekly-editorial`，用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
+- **下一步(2026-08-11 · Bubble Watch weekly editorial)**: Stage 4 新增 `workflow_run` + manual workflow、protected-path gate、Bubble Watch 长篇前端与 stale/missing fallback、390px/1440px runtime acceptance、Pages trigger；完成后跑 full checks 并独立 commit+push。
 
 - **上次会话结束于(2026-08-02 · Refresh QQQ Market Pricing calendar-drift repair)**: 基于 latest `main` 新建 `codex/fix-qqq-market-pricing-freshness`，只修改 freshness checker 的合成场景日期构造并同步本 Handoff。失败 run `30694893490` 的根因已由相同 QQQ=2026-07-31、NDX/IXIC=2026-07-24 状态复现。
 - **当前进行中(2026-08-02 · QQQ freshness checker)**: 无代码工作。workflow 三步本地复放后 `check:market-pricing-freshness` 与完整 `check:all` 均通过；临时生成的两份 market-pricing production JSON 已精确恢复，未纳入改动。
