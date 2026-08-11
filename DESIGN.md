@@ -345,7 +345,7 @@ runtime block 的基准结构:
 
 4 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始渲染时全部为收起状态。任何把 `open` 属性加进 `index.html` 的改动都视为视觉契约违规。
 
-`#macro-professional-evidence.macro-evidence-fold` 同样不得在静态 HTML 中带 `open`。区别是它由 `renderMacroOverview` 按 AI 编辑层资格设置初始运行态：有效编辑层时保持收起；编辑层缺失、过期、mismatch、无资格或渲染失败时自动设为展开。此行为是 deterministic fallback，不把 AI 接入评分或模型计算。
+`#macro-professional-evidence.macro-evidence-fold` 同样不得在静态 HTML 中带 `open`。区别是它由 `renderMacroOverview` 按 AI 编辑层资格设置初始运行态：有效编辑层时保持收起；AI 判读不可用时自动展开（包括编辑层缺失、过期、mismatch、无资格或渲染失败）。此行为是 deterministic fallback，不把 AI 接入评分或模型计算。
 
 适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。`#macro-risk-editorial` 是主路径内嵌 article，仅其来源账本使用局部 `<details>`，不属于 appendix。
 

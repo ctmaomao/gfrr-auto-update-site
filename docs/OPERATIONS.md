@@ -87,7 +87,7 @@ v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 r
 
 ## Macro Risk Editorial operations（当前 · integrated visible read-only）
 
-`macroRiskEditorialLayer` 是首页 `MACRO RISK OVERVIEW` 内的 DeepSeek 只读编辑层。它综合近 7 日 Tavily/Brave 新闻与站内结构化数据；不影响评分、六大模块、tail overlay、决策、执行、仓位、World Order、ODP 或 Bubble Watch。若 output 缺失、provider timeout/API error/rate limit、invalid JSON、unsafe wording、来源不足、`sourceDataUpdatedAt` 不匹配或超过 30 小时，前端隐藏编辑层，并继续显示规则生成的今日总判断。
+`macroRiskEditorialLayer` 是首页 `MACRO RISK OVERVIEW` 内的 DeepSeek 只读编辑层。它综合近 7 日 Tavily/Brave 新闻与站内结构化数据；不影响评分、六大模块、tail overlay、决策、执行、仓位、World Order、ODP 或 Bubble Watch。若 output 缺失、provider timeout/API error/rate limit、invalid JSON、unsafe wording、来源不足、`sourceDataUpdatedAt` 不匹配或超过 30 小时，前端隐藏编辑层，并继续显示规则生成的今日总判断，同时自动展开 `#macro-professional-evidence` 中的确定性压力来源、信号、引擎、交叉验证和跨市场依据。
 
 若 AI output audit 失败，不得手工编辑 `data/radar-data.json` 修复 AI 输出，也不得在同一次运行内重复付费调用。先审阅 `manual-artifacts/macro-risk-editorial/deepseek-failure-latest.json` 的脱敏 diagnostics。
 
@@ -100,6 +100,8 @@ npm run check:macro-risk-editorial
 ```
 
 如果 validation fails，应保留 deterministic macro overview fallback。不要手工编辑生产 JSON，也不要削弱契约、危险文案或来源守门。
+
+页面 IA 排查还应运行 `npm run check:macro-overview-evidence-fold`。有效编辑层下专业证据默认收起属于正常状态；编辑层无资格时专业证据必须自动展开。不要用 `display:none` 删除这些确定性模块，也不要为修复折叠状态修改评分或 production JSON。
 
 `externalAiInterpretationLayer` 的历史 production value 允许 Daily 继续 preserve，但它没有可见 DOM/renderer，也没有 scheduled provider refresh。不要为该旧字段触发付费修复。
 

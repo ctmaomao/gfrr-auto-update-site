@@ -186,6 +186,26 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('.macro-editorial-module-card')).toHaveCount(6);
     await expect(page.locator('.macro-editorial-market-card')).toHaveCount(3);
     await expect(page.locator('#external-ai-auxiliary')).toHaveCount(0);
+    const primaryOrder = await page.locator('.macro-overview-shell').evaluate((shell) => [...shell.children].map((element) => element.id || element.className));
+    expect(primaryOrder.slice(0, 8)).toEqual([
+      'homepage-today-judgment',
+      'macro-risk-editorial',
+      'wow-key-changes',
+      'threshold-block',
+      'trend-block',
+      'homepage-macro-drivers',
+      'homepage-market-temperature',
+      'macro-professional-evidence',
+    ]);
+    const evidence = page.locator('#macro-professional-evidence');
+    await expect(evidence).toHaveAttribute('data-editorial-state', 'editorial-visible');
+    await expect(evidence).not.toHaveAttribute('open', '');
+    await expect(page.locator('#homepage-pressure-sources')).toBeHidden();
+    await evidence.locator('> summary').click();
+    await expect(page.locator('#homepage-pressure-sources')).toBeVisible();
+    await expect(page.locator('#homepage-signal-layers .narrative-item')).toHaveCount(7);
+    await expect(page.locator('#homepage-risk-engines .mini-card')).toHaveCount(6);
+    await expect(page.locator('#homepage-macro-coherence .mc-row')).toHaveCount(7);
     await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
     await expect(page.locator('#odp-thermal-request-health')).toContainText('请求完成 126/126');
     await expect(page.locator('#odp-thermal-request-health')).toContainText('最终失败 0');
@@ -276,11 +296,21 @@ test.describe('mobile smoke', () => {
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-risk-editorial')).toBeHidden();
     await expect(page.locator('#external-ai-auxiliary')).toHaveCount(0);
+    const evidence = page.locator('#macro-professional-evidence');
+    await expect(evidence).toHaveAttribute('data-editorial-state', 'deterministic-fallback');
+    await expect(evidence).toHaveAttribute('open', '');
+    await expect(page.locator('#macro-professional-evidence-status')).toContainText('已展开确定性依据');
+    await expect(page.locator('#homepage-pressure-sources')).toBeVisible();
+    await expect(page.locator('#homepage-signal-layers')).toBeVisible();
+    await expect(page.locator('#homepage-risk-engines')).toBeVisible();
+    await expect(page.locator('#homepage-cross-validation')).toBeVisible();
+    await expect(page.locator('#homepage-macro-coherence')).toBeVisible();
     await expect(page.locator('#trend-line-score')).toHaveAttribute('points', '');
     await expect(page.locator('#trend-line-overlay')).toHaveAttribute('points', '');
     await expect(page.locator('#trend-dots-score circle')).toHaveCount(0);
     await expect(page.locator('#trend-dots-overlay circle')).toHaveCount(0);
     await expect(page.locator('#trend-overlay-mode')).toHaveText('升档层(Overlay)数据不足');
+    await expectNoHorizontalOverflow(page);
     expect(missingRequests).toBe(6);
     expect(pageErrors).toEqual([]);
   });

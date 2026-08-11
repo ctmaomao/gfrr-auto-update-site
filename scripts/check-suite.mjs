@@ -10,6 +10,7 @@ const SUITES = {
     'check:dom',
     'check:macro-overview-narrative',
     'check:macro-overview-display-helpers',
+    'check:macro-overview-evidence-fold',
     'check:macro-coherence-display-only',
     'check:macro-risk-editorial-frontend'
   ],
