@@ -47,6 +47,20 @@ function responseDiagnostics(responseJson, status = null) {
   };
 }
 
+function transportDiagnostics(error) {
+  const errorName = typeof error?.name === 'string' ? error.name.slice(0, 80) : null;
+  const errorCode = typeof error?.code === 'string'
+    ? error.code.slice(0, 80)
+    : typeof error?.cause?.code === 'string'
+      ? error.cause.code.slice(0, 80)
+      : null;
+  return {
+    ...responseDiagnostics(null, null),
+    transportErrorName: errorName,
+    transportErrorCode: errorCode
+  };
+}
+
 export function parseWeeklyEditorialProviderContent(content) {
   if (typeof content !== 'string' || !content.trim()) throw new SyntaxError('provider content is empty');
   const trimmed = content.trim();
@@ -65,6 +79,12 @@ export function classifyProviderFailure(error) {
   }
   if ([429, 500, 502, 503, 504].includes(error?.httpStatus)) {
     return { category: 'provider_unavailable', retryAllowedInSameRun: false, recommendedAction: 'Stop repeated paid calls and retry later.' };
+  }
+  if (error?.category === 'provider_transport_error') {
+    return { category: 'provider_transport_error', retryAllowedInSameRun: false, recommendedAction: 'Inspect sanitized transport diagnostics and retry once in a later run.' };
+  }
+  if (error?.category === 'provider_response_envelope_invalid') {
+    return { category: 'provider_response_envelope_invalid', retryAllowedInSameRun: false, recommendedAction: 'Inspect the sanitized HTTP status and retry only after ruling out a provider outage.' };
   }
   if (error?.category === 'invalid_provider_json') {
     if (error?.responseDiagnostics?.finishReason === 'length') {
@@ -106,7 +126,15 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
       }),
       signal: controller.signal
     });
-    responseJson = await response.json();
+    try {
+      responseJson = await response.json();
+    } catch {
+      const error = new Error('DeepSeek response envelope was not valid JSON');
+      error.category = 'provider_response_envelope_invalid';
+      error.httpStatus = response?.status || null;
+      error.responseDiagnostics = responseDiagnostics(null, response?.status || null);
+      throw error;
+    }
     if (!response.ok) {
       const error = new Error(`DeepSeek HTTP ${response.status}`);
       error.httpStatus = response.status;
@@ -115,6 +143,10 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
     }
   } catch (error) {
     if (error?.name === 'AbortError') error.category = 'provider_timeout';
+    else if (!error?.category && !response) {
+      error.category = 'provider_transport_error';
+      error.responseDiagnostics = transportDiagnostics(error);
+    }
     throw error;
   } finally {
     clearTimeout(timeout);

@@ -159,6 +159,9 @@ provider output、review 与 projection 都是 ignored artifact，仅上传保�
 - Collector/input failure 发生在付费调用前。先看 provider status、query diagnostics 和
   credible-story count；不得削弱双 provider 或来源质量门槛。
 - Provider timeout/unavailable/invalid JSON 只生成 sanitized failure artifact，不写生产。
+- Provider 连接在 HTTP/JSON envelope 前中断必须分类为 `provider_transport_error`，并只保留
+  error name/code 等 sanitized transport diagnostics；HTTP 响应存在但 envelope 无法解析时使用
+  `provider_response_envelope_invalid`。两者均不得在同一 run 重试，不得保存 raw body。
   不得连续重跑付费失败；先审阅 failure classification 与 diagnostics。
 - Validator、quality hard-fail、writer、protected-path 或 repository check 失败均阻止
   commit。不得把 provider artifact 复制进生产或手工编辑 `data/bubble-watch.json`。

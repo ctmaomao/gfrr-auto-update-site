@@ -232,4 +232,42 @@ try {
 assert(timeoutCalls === 1, 'timeout path must not retry');
 assert(timeoutFailure?.category === 'provider_timeout' && timeoutFailure.retryAllowedInSameRun === false, 'timeout classification failed');
 
-console.log(`Bubble Watch weekly editorial provider/quality/writer PASS (api calls=${apiCallCount}, review=${review.status}, sources=${layer.sourceLedger.length}, negative tests=5)`);
+let transportCalls = 0;
+let transportError = null;
+try {
+  await requestWeeklyEditorial({
+    input,
+    apiKey: 'fixture-key',
+    fetchImpl: async () => {
+      transportCalls += 1;
+      throw new TypeError('fetch failed', { cause: { code: 'ECONNRESET' } });
+    }
+  });
+} catch (error) {
+  transportError = error;
+}
+const transportFailure = classifyProviderFailure(transportError);
+assert(transportCalls === 1, 'transport failure path must not retry');
+assert(transportFailure?.category === 'provider_transport_error' && transportFailure.retryAllowedInSameRun === false, 'transport failure classification failed');
+assert(transportError?.responseDiagnostics?.transportErrorName === 'TypeError' && transportError?.responseDiagnostics?.transportErrorCode === 'ECONNRESET', 'transport diagnostics must retain only sanitized error identity/code');
+
+let envelopeCalls = 0;
+let envelopeError = null;
+try {
+  await requestWeeklyEditorial({
+    input,
+    apiKey: 'fixture-key',
+    fetchImpl: async () => {
+      envelopeCalls += 1;
+      return { ok: false, status: 502, async json() { throw new SyntaxError('invalid envelope'); } };
+    }
+  });
+} catch (error) {
+  envelopeError = error;
+}
+const envelopeFailure = classifyProviderFailure(envelopeError);
+assert(envelopeCalls === 1, 'invalid response envelope path must not retry');
+assert(envelopeFailure?.category === 'provider_unavailable' && envelopeFailure.retryAllowedInSameRun === false, 'HTTP 502 envelope failure must classify as provider_unavailable');
+assert(envelopeError?.responseDiagnostics?.httpStatus === 502, 'invalid response envelope diagnostics must retain sanitized HTTP status');
+
+console.log(`Bubble Watch weekly editorial provider/quality/writer PASS (api calls=${apiCallCount}, review=${review.status}, sources=${layer.sourceLedger.length}, negative tests=7)`);

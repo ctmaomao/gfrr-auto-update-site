@@ -38,7 +38,7 @@ function parseArgs(argv) {
 function safeMessage(error) {
   if (/^DeepSeek HTTP \d{3}$/u.test(error?.message || '')) return error.message;
   if (/^(?:DEEPSEEK_API_KEY is required|weekly editorial prompt contract missing)/u.test(error?.message || '')) return error.message;
-  if (error?.category === 'invalid_provider_json') return error.message;
+  if (['invalid_provider_json', 'provider_response_envelope_invalid'].includes(error?.category)) return error.message;
   return 'weekly_editorial_provider_failed';
 }
 
