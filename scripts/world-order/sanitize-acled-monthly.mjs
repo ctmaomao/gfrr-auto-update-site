@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as xlsx from 'xlsx';
+import { parseAcledMonthlyFilename } from './acled-monthly-filename.mjs';
 import { assertWorksheetDimensions, preflightXlsxInputs } from './xlsx-input-guard.mjs';
 
 xlsx.set_fs(fs);
@@ -38,12 +39,6 @@ const MONTH_ORDER = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 const MONTH_INDEX = new Map(MONTH_ORDER.map((name, idx) => [name, idx + 1]));
-const MONTH_SHORT_BY_NUMBER = new Map([
-  [1, 'Jan'], [2, 'Feb'], [3, 'Mar'], [4, 'Apr'], [5, 'May'], [6, 'Jun'],
-  [7, 'Jul'], [8, 'Aug'], [9, 'Sep'], [10, 'Oct'], [11, 'Nov'], [12, 'Dec']
-]);
-const MONTH_NUMBER_BY_SHORT = new Map([...MONTH_SHORT_BY_NUMBER.entries()].map(([n, s]) => [s, n]));
-
 const fileSpecs = [
   {
     slug: 'demonstration_events_by_country-year',
@@ -90,7 +85,6 @@ const fileSpecs = [
 ];
 
 const slugByName = new Map(fileSpecs.map((spec) => [spec.slug, spec]));
-const filenamePattern = /^number_of_(?<slug>[a-z_-]+)_as-of-(?<day>\d{2})(?<mon>[A-Z][a-z]{2})(?<year>\d{4})\.xlsx$/u;
 
 function warn(message) {
   console.warn(`ACLED monthly sanitizer warning: ${message}`);
@@ -144,17 +138,6 @@ function validateHeader(header, filename, expected) {
   }
 }
 
-function asOfFromMatch(match) {
-  const day = Number(match.groups.day);
-  const year = Number(match.groups.year);
-  const monthNumber = MONTH_NUMBER_BY_SHORT.get(match.groups.mon);
-  if (!monthNumber || day < 1 || day > 31) fail(`unparseable as-of date in filename: ${match[0]}`);
-  const iso = `${year}-${String(monthNumber).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const date = new Date(`${iso}T00:00:00.000Z`);
-  if (!Number.isFinite(date.getTime())) fail(`invalid as-of date: ${iso}`);
-  return iso;
-}
-
 function listInputFiles() {
   if (!fs.existsSync(inputDir)) return [];
   return fs.readdirSync(inputDir, { withFileTypes: true })
@@ -166,19 +149,18 @@ function listInputFiles() {
 function selectRecognizedFiles(filenames) {
   const bySlug = new Map();
   for (const filename of filenames) {
-    const match = filename.match(filenamePattern);
-    if (!match) {
+    const parsedFilename = parseAcledMonthlyFilename(filename);
+    if (!parsedFilename) {
       warn(`unknown filename pattern skipped: ${filename}`);
       continue;
     }
-    const spec = slugByName.get(match.groups.slug);
+    const spec = slugByName.get(parsedFilename.slug);
     if (!spec) {
-      warn(`unknown slug skipped: ${match.groups.slug} (${filename})`);
+      warn(`unknown slug skipped: ${parsedFilename.slug} (${filename})`);
       continue;
     }
-    const asOfDate = asOfFromMatch(match);
     const existing = bySlug.get(spec.slug) || [];
-    existing.push({ spec, filename, asOfDate });
+    existing.push({ spec, filename, asOfDate: parsedFilename.asOfDate });
     bySlug.set(spec.slug, existing);
   }
 
@@ -492,6 +474,11 @@ function main() {
     .filter((slug) => !selectedFiles.some((entry) => entry.spec.slug === slug));
   if (missingSlugs.length > 0) {
     fail(`missing required monthly slugs (all 6 must be present for committed JSON): ${missingSlugs.join(', ')}`);
+  }
+
+  const selectedAsOfDates = [...new Set(selectedFiles.map((entry) => entry.asOfDate))];
+  if (selectedAsOfDates.length !== 1) {
+    fail(`all 6 monthly files must share one as-of date, got: ${selectedAsOfDates.sort().join(', ')}`);
   }
 
   const inputFiles = preflightXlsxInputs({

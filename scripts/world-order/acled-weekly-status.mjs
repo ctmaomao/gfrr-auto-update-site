@@ -101,10 +101,10 @@ const verdicts = {
     '✅ data_current — data/world-order-stress.json 已反映 config 最新刷新;前端世界秩序附录显示的就是这一周。',
   sanitized_not_refreshed:
     '⏳ sanitized_not_refreshed — config 已更新但 data 还旧。下一步:\n' +
-    '   一条命令打通全链: npm run acled:publish (提交 weekly/monthly 已更新 config + push + 触发 workflow + 等 CI + pull 复核;需已登录 gh CLI)\n' +
+    '   先切换并同步 main；一条命令打通全链: npm run acled:publish (main-only guard + 提交 config + push main + 触发 main workflow + 等 CI + pull 复核;需已登录 gh CLI)\n' +
     '   或手动三步:\n' +
-    '   1) git add config/world-order-acled-regional-weekly.json && git commit -m "chore(world-order): refresh ACLED weekly" && git push\n' +
-    '   2) GitHub -> Actions -> "Refresh World Order Stress" -> Run workflow\n' +
+    '   1) 在最新 main 上 git add config/world-order-acled-regional-weekly.json && git commit -m "chore(world-order): refresh ACLED weekly" && git push origin main:main\n' +
+    '   2) GitHub -> Actions -> "Refresh World Order Stress" -> Run workflow (branch: main)\n' +
     '   3) CI 跑完 + git pull 后再跑本命令,应转为 data_current。',
   config_missing_or_no_input:
     '⚠️ config_missing_or_no_input — 未读到有效 config(可能未放置 xlsx,sanitize 为 no-op)。\n' +

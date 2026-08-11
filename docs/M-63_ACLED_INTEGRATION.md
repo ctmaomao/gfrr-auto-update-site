@@ -380,13 +380,18 @@ M-63b adds the monthly global aggregation track. The operator downloads exactly 
 
 The six files share the same `as-of-<DD><Mmm><YYYY>` date stamp (e.g. `08May2026`). Five files are yearly cadence; the `country-month-year` file is the only monthly-cadence file. The sanitizer is strict: **all 6 files must be present**. Missing any file fails the sanitizer (committed JSON must always reflect a complete monthly snapshot — partial monthly imports are not allowed because `fetch-acled.mjs` treats a present monthly JSON as authoritative evidence).
 
+Browser/download-manager duplicate suffixes after the date are accepted, including `_0`,
+` (1)`, and `-copy`; `.xlsx` matching is case-insensitive. The stable
+`number_of_<dataset>_as-of-<DD><Mmm><YYYY>` identity remains mandatory, all six selected
+files must resolve to the same as-of date, and workbook/header/security checks still run.
+
 Monthly refresh:
 
 1. Open `https://acleddata.com/conflict-data/download-data-files` manually in a browser.
 2. Download the 6 monthly aggregated xlsx files (one batch per refresh; all 6 must share the same `as-of` date).
 3. Place the files under `manual-artifacts/world-order/acled-input/monthly/`.
 4. On first use after M-63a, run `npm install` so the `xlsx` devDependency is installed.
-5. Run `npm run acled:status:monthly`. This one-command helper runs `acled:sanitize:monthly` + `check:world-order-acled-monthly` and then reports a config-vs-data verdict (it is the monthly sibling of `npm run acled:status`; see Section 9 for weekly). Expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`. If the verdict is `sanitized_not_refreshed`, `npm run acled:publish` is the explicit opt-in full-chain helper (checks weekly + monthly, commits any changed derived config, pushes, dispatches "Refresh World Order Stress", watches CI, pulls, then re-verifies both tracks; requires authenticated `gh` CLI).
+5. Run `npm run acled:status:monthly`. This one-command helper runs `acled:sanitize:monthly` + `check:world-order-acled-monthly` and then reports a config-vs-data verdict (it is the monthly sibling of `npm run acled:status`; see Section 9 for weekly). Expect `data_current`; a fresh local refresh that has not yet propagated to data reports `sanitized_not_refreshed`. If the verdict is `sanitized_not_refreshed`, first switch to an up-to-date local `main`, then run `npm run acled:publish`. The explicit opt-in helper refuses non-`main`, stale `main`, unrelated tracked changes, and unrelated local commits; it pushes `main:main`, dispatches "Refresh World Order Stress" with `--ref main`, watches CI, fast-forward pulls, and re-verifies both tracks (requires authenticated `gh` CLI).
 6. Run `npm run check:all`; M-63b expects 69 items to pass.
 7. Review `config/world-order-acled-global-monthly.json`.
 8. Commit the derived JSON with a focused operator refresh commit:

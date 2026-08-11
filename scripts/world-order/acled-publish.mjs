@@ -21,6 +21,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  ACLED_PUBLISH_BRANCH,
+  ACLED_PUBLISH_UPSTREAM,
+  validateAcledPublishContext
+} from './acled-publish-guard.mjs';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const WORKFLOW_NAME = 'Refresh World Order Stress';
 
@@ -54,6 +60,70 @@ function sh(cmd, { capture = false } = {}) {
     stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
     shell: true,
   });
+}
+
+function captureLines(cmd) {
+  return sh(cmd, { capture: true })
+    .split(/\r?\n/gu)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function ensureMainPublishContext() {
+  const currentBranch = sh('git branch --show-current', { capture: true }).trim();
+  let upstreamBranch = '';
+  let behindCount = 0;
+  let aheadCommitPaths = [];
+
+  // Do not even fetch when invoked from a feature branch. Publishing is a
+  // deliberate main-only operation, not a way to promote the current branch.
+  if (currentBranch === ACLED_PUBLISH_BRANCH) {
+    sh(`git fetch origin ${ACLED_PUBLISH_BRANCH}`);
+    upstreamBranch = sh(
+      `git for-each-ref --format="%(upstream:short)" "refs/heads/${ACLED_PUBLISH_BRANCH}"`,
+      { capture: true }
+    ).trim();
+    behindCount = Number(sh(
+      `git rev-list --count HEAD..${ACLED_PUBLISH_UPSTREAM}`,
+      { capture: true }
+    ).trim());
+    aheadCommitPaths = captureLines(`git diff --name-only ${ACLED_PUBLISH_UPSTREAM}..HEAD`);
+  }
+
+  const trackedChangePaths = [
+    ...captureLines('git diff --name-only'),
+    ...captureLines('git diff --cached --name-only')
+  ];
+  const unmergedPaths = captureLines('git diff --name-only --diff-filter=U');
+  const failures = validateAcledPublishContext({
+    currentBranch,
+    upstreamBranch,
+    behindCount,
+    trackedChangePaths,
+    aheadCommitPaths,
+    unmergedPaths
+  });
+
+  if (failures.length > 0) {
+    console.log('\n❌ ACLED publish 已停止：只允许从最新、无无关改动的 main 发布。');
+    for (const failure of failures) console.log(`   - ${failure}`);
+    console.log(`   请切换并同步 ${ACLED_PUBLISH_UPSTREAM}，再重新运行 status 与 publish。`);
+    process.exit(1);
+  }
+
+  console.log(`✅ publish branch guard: ${ACLED_PUBLISH_BRANCH} -> ${ACLED_PUBLISH_UPSTREAM}`);
+}
+
+function ensureHeadPublishedToMain() {
+  sh(`git fetch origin ${ACLED_PUBLISH_BRANCH}`);
+  const localHead = sh('git rev-parse HEAD', { capture: true }).trim();
+  const remoteHead = sh(`git rev-parse ${ACLED_PUBLISH_UPSTREAM}`, { capture: true }).trim();
+  if (!localHead || localHead !== remoteHead) {
+    console.log('\n❌ main push 后本地 HEAD 与 origin/main 不一致，未触发 workflow。');
+    console.log(`   local HEAD: ${localHead || '<missing>'}`);
+    console.log(`   origin/main: ${remoteHead || '<missing>'}`);
+    process.exit(1);
+  }
 }
 
 function readJson(rel) {
@@ -92,7 +162,7 @@ function readStatus(track, label) {
 function latestRunId() {
   try {
     const out = sh(
-      `gh run list --workflow "${WORKFLOW_NAME}" --limit 1 --json databaseId --jq ".[0].databaseId"`,
+      `gh run list --workflow "${WORKFLOW_NAME}" --branch "${ACLED_PUBLISH_BRANCH}" --event workflow_dispatch --limit 1 --json databaseId --jq ".[0].databaseId"`,
       { capture: true }
     ).trim();
     return out || null;
@@ -113,13 +183,16 @@ function commitMessageFor(tracks) {
   return 'chore(world-order): refresh ACLED weekly and monthly aggregates';
 }
 
-// ---- 0/5 preconditions: gh available + authenticated ----
+// ---- 0/5 preconditions: main-only Git context + gh authenticated ----
+ensureMainPublishContext();
+
 try {
   sh('gh auth status', { capture: true });
 } catch {
   console.log('❌ GitHub CLI (gh) 不可用或未登录。请先安装并 `gh auth login`,或手动执行:');
-  console.log('   1) git add config/world-order-acled-*.json && git commit -m "chore(world-order): refresh ACLED aggregates" && git push');
-  console.log(`   2) GitHub -> Actions -> "${WORKFLOW_NAME}" -> Run workflow`);
+  console.log(`   1) 确认当前分支是 ${ACLED_PUBLISH_BRANCH} 且已同步 ${ACLED_PUBLISH_UPSTREAM}`);
+  console.log('   2) git add config/world-order-acled-*.json && git commit -m "chore(world-order): refresh ACLED aggregates" && git push origin main:main');
+  console.log(`   3) GitHub -> Actions -> "${WORKFLOW_NAME}" -> Run workflow (branch: main)`);
   process.exit(1);
 }
 
@@ -155,20 +228,21 @@ if (dirtyTracks.length > 0) {
   console.log('stale config 已是 committed (clean) — 跳过 commit,直接 push + 触发 workflow。');
 }
 
-// ---- 3/5 push (rebase-and-retry once on reject) ----
+// ---- 3/5 explicit main push (fail closed on any race/rejection) ----
 console.log('\n===== 3/5 push =====');
 try {
-  sh('git push');
+  sh('git push origin main:main');
 } catch {
-  console.log('push 被拒(远端有新提交),执行 git pull --rebase 后重试一次…');
-  sh('git pull --rebase');
-  sh('git push');
+  console.log('❌ main push 被拒，未自动 rebase、未触发 workflow。');
+  console.log('   请人工核对 origin/main 的新提交，在最新 main 上重新运行 status 与 publish。');
+  process.exit(1);
 }
+ensureHeadPublishedToMain();
 
 // ---- 4/5 dispatch workflow + watch ----
 console.log(`\n===== 4/5 dispatch "${WORKFLOW_NAME}" =====`);
 const beforeRunId = latestRunId();
-sh(`gh workflow run "${WORKFLOW_NAME}"`);
+sh(`gh workflow run "${WORKFLOW_NAME}" --ref "${ACLED_PUBLISH_BRANCH}"`);
 let runId = null;
 for (let attempt = 0; attempt < 15; attempt += 1) {
   await sleep(4000);
@@ -192,7 +266,7 @@ try {
 
 // ---- 5/5 pull + re-verify ----
 console.log('\n===== 5/5 pull + re-verify =====');
-sh('git pull --rebase');
+sh(`git pull --ff-only origin ${ACLED_PUBLISH_BRANCH}`);
 const finalResults = TRACKS.map((track) => readStatus(track, 'final verify'));
 const notCurrent = finalResults.filter((result) => result.status !== 'data_current');
 if (notCurrent.length === 0) {
