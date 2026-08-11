@@ -34,7 +34,7 @@ export function buildWeeklyEditorialSystemPrompt() {
       watchNextWeek: [{ conditionZh: 'observable condition', invalidationZh: 'what would weaken the interpretation', sourceIndicatorIds: ['indicator ID'] }],
       dataGaps: ['specific limitation'],
       sourceAttribution: [{ sourceRefId: 'stable source ID', claimType: 'site_structured_data, official_news_context, cross_checked_news_context, or discovery_only_news_context', noteZh: 'short attribution note' }],
-      confidence: { level: 'low or medium or high', score: 0, reasonZh: 'reason tied to coverage and gaps' },
+      confidence: { level: 'low or medium or high', score: 'integer 0-100, never a 0-1 probability', reasonZh: 'reason tied to coverage and gaps' },
       auditFlags: ['display_only', 'validator_required', 'no_score_impact'],
       boundaries: {
         displayOnly: true,

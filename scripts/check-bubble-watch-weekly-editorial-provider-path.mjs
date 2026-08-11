@@ -144,6 +144,7 @@ assert(requestBody.response_format?.type === 'json_object', 'DeepSeek response_f
 assert(requestBody.thinking?.type === 'disabled', 'DeepSeek thinking must remain disabled for bounded editorial call');
 assert(requestBody.messages[0].content.includes('Target 2,600-3,400 visible Chinese characters'), 'DeepSeek prompt must retain the calibrated visible-length target');
 assert(requestBody.messages[0].content.includes('Hard output caps:') && requestBody.messages[0].content.includes('exactly 6 categoryAnalysis'), 'DeepSeek prompt must retain explicit completion caps');
+assert(requestBody.messages[0].content.includes('integer 0-100, never a 0-1 probability'), 'DeepSeek prompt must require percentage-scale confidence');
 assert(!requestBody.messages[1].content.includes('\n  "schemaVersion"'), 'DeepSeek user prompt must serialize compact JSON without pretty-print expansion');
 assert(!JSON.stringify(providerResult).includes('fixture-secret-never-serialized'), 'provider result must not serialize API key');
 assert(providerResult.diagnostics.apiCallCount === 1 && providerResult.diagnostics.retryCount === 0, 'provider diagnostics must prove one call/no retry');
@@ -152,6 +153,7 @@ assert(providerResult.diagnostics.response.finishReason === 'stop' && providerRe
 const omittedAttribution = providerOutput.sourceAttribution.at(-1).sourceRefId;
 const missingAttributionOutput = {
   ...providerOutput,
+  confidence: { ...providerOutput.confidence, score: 0.6 },
   sourceAttribution: providerOutput.sourceAttribution.filter((item) => item.sourceRefId !== omittedAttribution)
 };
 let attributionRepairCalls = 0;
@@ -171,6 +173,7 @@ const attributionRepairResult = await requestWeeklyEditorial({
 });
 assert(attributionRepairCalls === 1, 'deterministic attribution normalization must not call the provider again');
 assert(attributionRepairResult.output.sourceAttribution.some((item) => item.sourceRefId === omittedAttribution), 'deterministic attribution normalization must restore every referenced source');
+assert(attributionRepairResult.output.confidence.score === 60, '0-1 confidence probability must normalize to the 0-100 display contract');
 assertValid(validateWeeklyEditorialOutput(attributionRepairResult.output, input), 'normalized source attribution output');
 
 const review = reviewWeeklyEditorial({ input, output: providerResult.output, generatedAt: '2026-08-11T00:06:00.000Z' });

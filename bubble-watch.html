@@ -337,6 +337,18 @@ function renderWeeklyEditorial(layer) {
   const attributionById = new Map((output.sourceAttribution || []).map(item => [item.sourceRefId, item]));
   const generatedLabel = String(layer.generatedAt || '').replace('T', ' ').replace(/\.\d{3}Z$/u, ' UTC');
   const confidence = output.confidence || {};
+  const confidenceLabels = { low: '低', medium: '中等', high: '高' };
+  const qualityLabels = { pass: '通过', warn: '有提示' };
+  const sourceClassLabels = {
+    site_structured: '站内结构化',
+    site_structured_proxy: '站内结构化代理',
+    official: '官方来源',
+    cross_checked: '交叉确认',
+    discovery_only: '仅新闻发现'
+  };
+  const confidenceScore = Number.isFinite(confidence.score)
+    ? (confidence.score > 0 && confidence.score <= 1 ? Math.round(confidence.score * 100) : confidence.score)
+    : '—';
   const warnings = Array.isArray(layer.qualityReview?.warnings) ? layer.qualityReview.warnings : [];
   return `
     <section class="weekly-editorial" id="weekly-editorial" data-editorial-status="${escapeHtml(layer.qualityReview.status)}">
@@ -348,8 +360,8 @@ function renderWeeklyEditorial(layer) {
         <div class="weekly-editorial-meta">
           <div>PROVIDER ${escapeHtml(layer.provider)} · ${escapeHtml(layer.model)}</div>
           <div>GENERATED ${escapeHtml(generatedLabel)}</div>
-          <div>CONFIDENCE ${escapeHtml(confidence.level || '—')} · ${Number.isFinite(confidence.score) ? confidence.score : '—'}/100</div>
-          <div>QUALITY ${escapeHtml(layer.qualityReview.status)} · 不进入 Core-23 / Stage / Trigger</div>
+          <div>置信度 ${escapeHtml(confidenceLabels[confidence.level] || confidence.level || '—')} · ${confidenceScore}/100</div>
+          <div>质量 ${escapeHtml(qualityLabels[layer.qualityReview.status] || layer.qualityReview.status)} · 不进入 Core-23 / Stage / Trigger</div>
         </div>
       </div>
 
@@ -392,7 +404,7 @@ function renderWeeklyEditorial(layer) {
           const url = safeHttpsUrl(source.url);
           const label = source.title || source.sourceName || source.id;
           const attribution = attributionById.get(source.id);
-          return `<div class="editorial-source">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : `<span>${escapeHtml(label)}</span>`}<br/><span class="source-class">${escapeHtml(source.sourceClass)}${attribution?.noteZh ? ` · ${escapeHtml(attribution.noteZh)}` : ''}</span></div>`;
+          return `<div class="editorial-source">${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : `<span>${escapeHtml(label)}</span>`}<br/><span class="source-class">${escapeHtml(sourceClassLabels[source.sourceClass] || source.sourceClass)}${attribution?.noteZh ? ` · ${escapeHtml(attribution.noteZh)}` : ''}</span></div>`;
         }).join('')}
       </div>
       ${warnings.length ? `<div class="editorial-review-warning">质量提示: ${warnings.map(escapeHtml).join('；')}</div>` : ''}

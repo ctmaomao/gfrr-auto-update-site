@@ -230,6 +230,11 @@ test.describe('desktop smoke', () => {
     await expectBubbleWatchContract(page, data);
     await expect(page.locator('#weekly-editorial')).toBeVisible();
     await expect(page.locator('.verdict h2')).toHaveText(data.summary.weekly_editorial.output.headlineZh);
+    await expect(page.locator('.weekly-editorial-meta')).toContainText('置信度 中等 · 58/100');
+    await expect(page.locator('.weekly-editorial-meta')).toContainText('质量 通过');
+    await expect(page.locator('.editorial-source .source-class').first()).toContainText('站内结构化');
+    await expect(page.locator('#weekly-editorial')).not.toContainText('site_structured');
+    await expect(page.locator('#weekly-editorial')).not.toContainText('cross_checked');
     await expect(page.locator('.editorial-timeline-item')).toHaveCount(3);
     await expect(page.locator('.editorial-category-grid .editorial-plain-item')).toHaveCount(6);
     await expect(page.locator('.editorial-source')).toHaveCount(3);

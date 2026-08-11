@@ -78,18 +78,18 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
   const credibleNewsRefs = [...referencedSources].filter((refId) => ['official', 'cross_checked'].includes(newsById.get(refId)?.evidenceStatus));
   if (credibleNewsRefs.length < 1) {
     dimensions.newsEvidenceQuality = 'fail';
-    blockers.push('at least one official/cross_checked news reference is required');
+    blockers.push('至少需要 1 条官方或交叉确认的新闻引用');
   } else if (credibleNewsRefs.length === 1) {
     dimensions.newsEvidenceQuality = 'warn';
-    warnings.push('only one official/cross_checked news reference was used; remaining factual claims require site-indicator corroboration');
+    warnings.push('本周期仅使用 1 条官方或交叉确认新闻；其余事实性判断均需站内指标共同支撑');
   }
   if (input?.newsContext?.status === 'partial') {
     dimensions.newsEvidenceQuality = 'warn';
-    warnings.push('news discovery was partial; visible data gaps must retain this limitation');
+    warnings.push('本周期新闻发现覆盖有限；页面数据限制必须保留这一说明');
   }
   if (referencedIndicators.size < 5) {
     dimensions.incrementalEditorialValue = 'fail';
-    blockers.push('editorial must synthesize at least five distinct Bubble Watch indicators');
+    blockers.push('周度判读必须综合至少 5 项不同的 Bubble Watch 指标');
   }
   const categories = new Set((output?.categoryAnalysis || []).map((item) => item.category));
   if (categories.size < 5) {
@@ -99,11 +99,11 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
   const visibleLength = visibleEditorialText(output).length;
   if (visibleLength < 1800 || visibleLength > 4200) {
     dimensions.incrementalEditorialValue = dimensions.incrementalEditorialValue === 'fail' ? 'fail' : 'warn';
-    warnings.push(`visible editorial length ${visibleLength} is outside the 1800-4200 target`);
+    warnings.push(`可见判读长度 ${visibleLength} 字，超出 1,800–4,200 字兼容窗口`);
   }
   if (!Array.isArray(output?.weeklyTimeline) || output.weeklyTimeline.length < 3) {
     dimensions.incrementalEditorialValue = 'warn';
-    warnings.push('weekly timeline has fewer than three evidence-backed items');
+    warnings.push('周内时间线少于 3 条有证据支撑的项目');
   }
 
   const status = blockers.length > 0 ? 'fail' : warnings.length > 0 ? 'warn' : 'pass';

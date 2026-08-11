@@ -186,6 +186,9 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
   `verdict_label` + `verdict_desc`。
 - Hero 后增加纸媒式长文 section：时间线、关键矛盾、分类、历史差异、观察条件、数据限制。
 - 展示 provider / model / generatedAt / confidence / quality warnings / 来源链接。
+- `confidence.score` 的生产/展示口径固定为 0–100；provider 若返回常见 0–1 比例，adapter
+  确定性换算为百分制。用户界面把 confidence / quality / source evidence class 枚举映射为
+  中文，不直接暴露 `medium` / `warn` / `site_structured` / `cross_checked` 等内部值。
 - 不新增 SaaS card、彩色 pill、圆角或阴影；390px 单列且无横向溢出。
 
 ## 9. Fallback / rollback

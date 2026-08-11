@@ -104,6 +104,15 @@ function normalizeSourceAttribution(output, input) {
   return [...referencedIds].map((sourceRefId) => existingMap.get(sourceRefId) || deterministicAttribution(sourceMap.get(sourceRefId) || { id: sourceRefId }));
 }
 
+function normalizeConfidence(confidence) {
+  if (!confidence || typeof confidence !== 'object' || Array.isArray(confidence)) return confidence;
+  const score = confidence.score;
+  return {
+    ...confidence,
+    score: Number.isFinite(score) && score > 0 && score <= 1 ? Math.round(score * 100) : score
+  };
+}
+
 export function parseWeeklyEditorialProviderContent(content) {
   if (typeof content !== 'string' || !content.trim()) throw new SyntaxError('provider content is empty');
   const trimmed = content.trim();
@@ -230,6 +239,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
     mode: 'external_ai_weekly_editorial'
   };
   normalizedOutput.sourceAttribution = normalizeSourceAttribution(normalizedOutput, input);
+  normalizedOutput.confidence = normalizeConfidence(normalizedOutput.confidence);
   const outputValidation = validateWeeklyEditorialOutput(normalizedOutput, input);
   if (!outputValidation.ok) {
     const error = new Error('DeepSeek weekly editorial output failed contract validation');
