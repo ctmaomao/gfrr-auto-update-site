@@ -133,6 +133,10 @@
 - 输入必须先过 sanitizer / contract validation。
 - Prompt 明确：只用 input、不浏览、不发明数据、新闻 discovery status 限制、不得改分、
   不得输出预测/交易/仓位文案、所有引用使用 stable IDs、只返回一个 JSON object。
+- Provider user prompt 必须把 `discovery_only` 与可独立支撑的 site structured / official /
+  cross-checked source IDs 分组列出，并要求对每个事实对象逐项自检；若使用
+  `discovery_only`，同一个 `sourceRefIds` 数组必须同时包含独立支撑，不能只在
+  `sourceAttribution` 补来源。无法满足时应放弃该新闻断言，不得削弱 validator。
 
 ## 7. 生产工作流迁移
 

@@ -97,6 +97,10 @@ assert(validateEditorialPrompt(input).ok, 'prompt contract must pass');
 assert(apiCalls === 1 && result.diagnostics.retryCount === 0, 'provider path must use one call and no retry');
 const body = JSON.parse(capturedRequest.request.body);
 assert(body.max_tokens === 8000 && body.response_format.type === 'json_object' && body.thinking.type === 'disabled', 'DeepSeek request bounds drifted');
+const providerUserPrompt = body.messages.find((message) => message.role === 'user')?.content || '';
+const discoveryOnlyStory = discovery.stories.find((story) => story.evidenceStatus === 'discovery_only');
+assert(discoveryOnlyStory, 'fixture must include a discovery_only story');
+assert(providerUserPrompt.includes('逐项引用自检') && providerUserPrompt.includes(discoveryOnlyStory.id) && providerUserPrompt.includes('site:score'), 'provider prompt must expose claim-level discovery-only grounding guard and valid independent source IDs');
 assert(!JSON.stringify(result).includes('fixture-secret-not-serialized'), 'provider result leaked API key');
 assert(JSON.stringify(parseEditorialProviderContent(`\`\`\`json\n${JSON.stringify(result.output)}\n\`\`\``)) === JSON.stringify(result.output), 'fenced JSON parser failed');
 
@@ -117,6 +121,10 @@ const scoreMutation = structuredClone(result.output); scoreMutation.boundaries.a
 assert(!validateEditorialOutput(scoreMutation, input).ok, 'score mutation negative test must fail');
 const unsafe = structuredClone(result.output); unsafe.watchNext[0].conditionZh = '建议买入并加仓';
 assert(!validateEditorialOutput(unsafe, input).ok, 'unsafe wording negative test must fail');
+const unsupportedDiscoveryClaim = structuredClone(result.output);
+unsupportedDiscoveryClaim.weeklyTimeline[1].sourceRefIds = [discoveryOnlyStory.id];
+const unsupportedDiscoveryResult = validateEditorialOutput(unsupportedDiscoveryClaim, input);
+assert(!unsupportedDiscoveryResult.ok && unsupportedDiscoveryResult.errors.some((error) => error.includes('relies only on discovery_only news')), 'discovery-only factual claim negative test must fail closed');
 const stale = validateEditorialProduction(layer, radarData, new Date('2026-08-13T06:05:00.000Z'));
 assert(!stale.ok && stale.errors.some((error) => error.includes('stale')), 'stale layer negative test must fail');
 let unsafeTarget = false; try { assertEditorialSafeTarget('data/bubble-watch.json'); } catch { unsafeTarget = true; }
@@ -124,4 +132,4 @@ assert(unsafeTarget, 'unsafe writer target negative test must fail');
 const truncated = new Error('truncated'); truncated.category = 'provider_output_contract_invalid'; truncated.responseDiagnostics = { finishReason: 'length' };
 assert(classifyProviderFailure(truncated).category === 'provider_output_truncated', 'truncation classification failed');
 
-console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, negativeTests=5)`);
+console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, negativeTests=6)`);

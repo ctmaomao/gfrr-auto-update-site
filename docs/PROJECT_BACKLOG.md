@@ -55,6 +55,14 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 No active P2 item. P2-14 Bubble Watch weekly editorial 与 P2-15 Macro Risk DeepSeek 编辑层均已于 2026-08-11 完成并上线；边界见对应设计文档与 ADR。
 
+- **2026-08-12 maintenance follow-up（待生产 rerun 验证）**: `Macro Risk Editorial Refresh` #3
+  (`31557497174`) 的唯一 hard failure 是 provider 返回的第 2 条事实对象只引用
+  `discovery_only` 新闻；HTTP 200、完整 JSON、长度 5,921 均正常，writer/production/scoring
+  保持 fail closed。`codex/fix-macro-risk-editorial-grounding` 已在本地把所有事实对象和
+  source ID 分组写入 provider 逐项引用自检，并增加不放宽 validator 的负向回归。
+  本地 `check:macro-risk-editorial`、`check:all`、unit coverage 与 Playwright 7/7 均通过；
+  代码发布状态以对应 GitHub PR 为准，尚未触发需要 owner 明确确认成本的付费 rerun。
+
 ### P3 Items
 
 #### P3-10: Fed dot plot / OIS / FOMC 文本
@@ -471,6 +479,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-08-12 · Macro Risk Editorial #3 grounding repair)**: 精确审阅 run `31557497174` 日志与三天期脱敏 artifact 后，确认 `provider_output_contract_invalid` 仅由 factual claim[1] 单独引用 `discovery_only` 新闻触发；`productionDataWritten=false`、`frontendChanged=false`，未污染评分/决策链。本地分支 `codex/fix-macro-risk-editorial-grounding` 已落地 prompt/source-ID 自检与第 6 个负向测试；用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
+- **当前进行中(2026-08-12 · Macro Risk Editorial #3 grounding repair)**: 无代码阻塞。相邻异常中，Check All PR #40 已由 #41 修复并随 PR #290 合并；两个 Pages `skipped` 是上游失败的依赖行为，不是独立缺陷。
+- **下一步建议(2026-08-12 · Macro Risk Editorial #3 grounding repair)**: PR 合并后，只有 owner 明确确认本次 DeepSeek 成本，才手动 rerun `Macro Risk Editorial Refresh`，再核对 provider/review/projection/guarded write/live validation 与 Pages。不得用重复付费调用、伪造站内引用或削弱 discovery-only validator 换取成功。
+- **阻塞或等待(2026-08-12 · Macro Risk Editorial #3 grounding repair)**: 仅保留付费 workflow rerun 授权与生产路径验证；本地 `check:macro-risk-editorial`、`check:all`、`test:unit:coverage`、`test:e2e`、`git diff --check` 均 exit 0，Playwright 7/7 通过。
 
 - **上次会话结束于(2026-08-11 · Macro Overview narrative-first IA)**: P2-15 后续 IA 收口已完成并上线。基于最新 `main` 重放后的 ADR/设计提交 `f30406cc`、前端实现 `99a54e41`、契约/E2E `7fb8efcf` 已推送至 `codex/macro-risk-weekly-editorial` 与 `main`。用户未跟踪 `.agents/` / `skills-lock.json` 保持不动。
 - **当前进行中(2026-08-11 · Macro Overview narrative-first IA)**: 无。有效 DeepSeek 判读下 `#macro-professional-evidence` 默认收起；AI 无资格时自动展开五块 deterministic evidence；顶部导航 13 项。
