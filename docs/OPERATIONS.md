@@ -167,6 +167,9 @@ provider output、review 与 projection 都是 ignored artifact，仅上传保�
   `provider_output_contract_invalid`；failure artifact 只保留 finish reason、可见字符数和脱敏
   validator errors，不保存候选正文。若 `finish_reason=length`，仍归类为
   `provider_output_truncated`。同一 run 不重试。
+  若错误为 `relies only on discovery_only news`，应检查 provider prompt 的逐项引用自检与
+  source ID 分组是否仍在；不得删除来源守门、自动伪造站内引用或把引用只补到
+  `sourceAttribution`。事实对象的同一个 `sourceRefIds` 必须包含独立支撑。
   不得连续重跑付费失败；先审阅 failure classification 与 diagnostics。
 - Validator、quality hard-fail、writer、protected-path 或 repository check 失败均阻止
   commit。不得把 provider artifact 复制进生产或手工编辑 `data/bubble-watch.json`。
