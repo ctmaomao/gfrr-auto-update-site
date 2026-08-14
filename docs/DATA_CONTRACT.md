@@ -1054,6 +1054,8 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 `sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。
 
+Provider prompt 必须把 `official` / `cross_checked` 新闻 source IDs 与 `discovery_only` IDs 分开枚举，并要求 `weeklyTimeline` 至少一个对象及全体事实对象引用并集实际包含至少 1 个可信新闻 ID。`sourceAttribution` 单独列出不等于事实对象引用；provider 忽略全部可信新闻时 review 必须 hard fail，adapter/writer 不得自动补引用或改写 AI 正文。
+
 当字段缺失、陈旧、时间错配或任一门控失败时，前端隐藏该编辑层并保留 deterministic macro overview；不得显示旧 `externalAiInterpretationLayer` 卡片。
 
 #### externalAiInterpretationLayer legacy compatibility contract（no visible consumer）

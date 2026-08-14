@@ -9,6 +9,15 @@ import { assertEditorialSafeTarget, buildEditorialWriteResult } from './write-ma
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 function assert(condition, message) { if (!condition) throw new Error(message); }
+function stripCredibleSourceRefs(value, credibleIds) {
+  if (Array.isArray(value)) return value.map((item) => stripCredibleSourceRefs(item, credibleIds));
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+    if (key !== 'sourceRefIds' || !Array.isArray(item)) return [key, stripCredibleSourceRefs(item, credibleIds)];
+    const filtered = item.filter((refId) => !credibleIds.has(refId));
+    return [key, filtered.length > 0 ? filtered : ['site:score']];
+  }));
+}
 
 const rawStories = [
   ['tavily', 'central_bank_inflation', 'Federal Reserve publishes policy statement', 'https://federalreserve.gov/newsevents/pressreleases/monetary20260808a.htm'],
@@ -126,12 +135,16 @@ const providerUserPrompt = body.messages.find((message) => message.role === 'use
 const discoveryOnlyStory = discovery.stories.find((story) => story.evidenceStatus === 'discovery_only');
 assert(discoveryOnlyStory, 'fixture must include a discovery_only story');
 assert(providerUserPrompt.includes('逐项引用自检') && providerUserPrompt.includes(discoveryOnlyStory.id) && providerUserPrompt.includes('site:score'), 'provider prompt must expose claim-level discovery-only grounding guard and valid independent source IDs');
+assert(credibleNews.every((story) => providerUserPrompt.includes(story.id)) && providerUserPrompt.includes('必须至少引用其中 1 条') && providerUserPrompt.includes('weeklyTimeline 至少一个对象'), 'provider prompt must enumerate credible news IDs and require an actual factual-object citation');
 assert(!JSON.stringify(result).includes('fixture-secret-not-serialized'), 'provider result leaked API key');
 assert(JSON.stringify(parseEditorialProviderContent(`\`\`\`json\n${JSON.stringify(result.output)}\n\`\`\``)) === JSON.stringify(result.output), 'fenced JSON parser failed');
 
 const review = reviewEditorial({ input, output: result.output, generatedAt: '2026-08-11T06:03:00.000Z' });
 assertValid(validateEditorialReview(review), 'macro editorial review');
 assert(['pass', 'warn'].includes(review.status), `fixture review must be display eligible, got ${review.status}: ${review.blockers.join('; ')}`);
+const credibleIds = new Set(credibleNews.map((story) => story.id));
+const noCredibleCitationReview = reviewEditorial({ input, output: stripCredibleSourceRefs(result.output, credibleIds), generatedAt: '2026-08-11T06:03:30.000Z' });
+assert(noCredibleCitationReview.status === 'fail' && noCredibleCitationReview.blockers.includes('至少需要引用 1 条 official 或 cross_checked 新闻'), 'output that ignores every enumerated credible news ID must remain fail closed');
 const layer = projectEditorial({ input, output: result.output, review, generatedAt: '2026-08-11T06:04:00.000Z', sourceCommit: '0123456789012345678901234567890123456789', runId: '123' });
 assertValid(validateEditorialProduction(layer, radarData, new Date('2026-08-11T06:05:00.000Z')), 'macro editorial production');
 assert(layer.sourceLedger.every((source) => !Object.hasOwn(source, 'snippet')), 'production ledger must remove news snippets');
@@ -157,4 +170,4 @@ assert(unsafeTarget, 'unsafe writer target negative test must fail');
 const truncated = new Error('truncated'); truncated.category = 'provider_output_contract_invalid'; truncated.responseDiagnostics = { finishReason: 'length' };
 assert(classifyProviderFailure(truncated).category === 'provider_output_truncated', 'truncation classification failed');
 
-console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, negativeTests=6)`);
+console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, negativeTests=7)`);

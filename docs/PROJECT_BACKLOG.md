@@ -65,6 +65,14 @@ No active P2 item. P2-14 Bubble Watch weekly editorial 与 P2-15 Macro Risk Deep
   并增加双搜索完全健康但确无 credible news 时的 `SKIPPED_NO_CREDIBLE_NEWS` 路径：只上传
   脱敏 artifact/Summary，严格跳过 provider/review/write；源健康异常、schema/contract 或
   provider/write 故障仍 hard fail。未触发付费 rerun，生产验证等待下一次自然 schedule。
+- **2026-08-14 Macro Risk Editorial #7 credible-reference follow-up**: owner 授权的单次 dispatch
+  `31791928277` 已在 `main@8c515de2` 执行 exactly one DeepSeek call/no retry；discovery 成功把
+  `comptroller.nyc.gov` 标为唯一 official，provider output 的结构、4,336 字长度、29 个来源、
+  unsafe/scoring 边界均通过，但所有事实对象均未实际引用该 official ID，review 以
+  `credibleNewsReferenceCount=0` fail closed，production write/commit=0。follow-up 只强化
+  prompt：单独枚举 credible news IDs，并要求 weeklyTimeline 与全体事实对象引用并集至少
+  实际引用 1 条；新增 provider 完全忽略可信新闻时仍 hard fail 的负向回归。不自动补引用、
+  不改 reviewer、不重试本次付费调用。
 
 ### P3 Items
 
