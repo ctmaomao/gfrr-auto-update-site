@@ -143,6 +143,10 @@
   cross-checked source IDs 分组列出，并要求对每个事实对象逐项自检；若使用
   `discovery_only`，同一个 `sourceRefIds` 数组必须同时包含独立支撑，不能只在
   `sourceAttribution` 补来源。无法满足时应放弃该新闻断言，不得削弱 validator。
+- Provider user prompt 还必须单独枚举本期 `official` / `cross_checked` 新闻 ID，并要求
+  `weeklyTimeline` 至少一个对象以及全体事实对象的引用并集实际引用其中至少 1 条；仅在
+  `sourceAttribution` 列出可信新闻不算合格。reviewer 的零可信新闻引用 hard fail 不得削弱，
+  也不得在 provider 后确定性补写引用来伪造 AI 已使用该来源。
 
 ## 7. 生产工作流迁移
 

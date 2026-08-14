@@ -31,6 +31,7 @@ export function buildEditorialSystemPrompt() {
 - weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 中的每一个对象都视为事实性断言。
 - 若任一事实性断言引用 discovery_only 新闻，同一个 sourceRefIds 数组还必须至少包含一条站内结构化数据或 official/cross_checked 新闻；只在 sourceAttribution 补来源不算合格。
 - 无法为 discovery_only 新闻找到独立支撑时，不得输出该新闻断言，应改用有依据的站内结构化事实。
+- 整份输出的事实对象引用集合必须至少实际引用 1 条 official/cross_checked 新闻；weeklyTimeline 至少一个对象必须引用可信新闻。只在 sourceAttribution 列出可信新闻不算合格。
 - 所有事实段落都必须提供 sourceRefIds，且只能使用输入 sourceRefs 中的 id。
 - 历史比较必须同时写相似点与差异点，并明确不代表危机概率或时间预测。
 - 不得给出买卖、仓位、现金比例、目标价、止损、风险敞口或执行建议。
@@ -63,7 +64,10 @@ export function buildEditorialSystemPrompt() {
 }
 
 export function buildEditorialUserPrompt(input) {
-  const credibleCount = (input?.newsContext?.stories || []).filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus)).length;
+  const credibleNewsIds = (input?.newsContext?.stories || [])
+    .filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus))
+    .map((story) => story.id);
+  const credibleCount = credibleNewsIds.length;
   const discoveryOnlyIds = (input?.newsContext?.stories || [])
     .filter((story) => story?.evidenceStatus === 'discovery_only')
     .map((story) => story.id);
@@ -74,11 +78,12 @@ export function buildEditorialUserPrompt(input) {
 
 逐项引用自检（输出前必须执行）：
 1. 逐一检查 weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 内每个对象的 sourceRefIds。
-2. discovery_only source IDs = ${JSON.stringify(discoveryOnlyIds)}。
-3. 可提供独立支撑的 source IDs = ${JSON.stringify(independentSourceRefIds)}。
-4. 若某个 sourceRefIds 含任一 discovery_only ID，同一个数组必须同时含至少一个可独立支撑 ID；仅在 sourceAttribution 中补 ID 无效。
-5. 禁止示例：{"sourceRefIds":["discovery_only_id"]}。合格示例：{"sourceRefIds":["discovery_only_id","site_structured_or_credible_news_id"]}。
-6. 无法满足时删除该 discovery_only 断言，改写为由站内结构化数据支撑的当前压力判断；不得编造支撑来源。
+2. 可信新闻 source IDs = ${JSON.stringify(credibleNewsIds)}；整份输出的事实对象 sourceRefIds 并集必须至少引用其中 1 条，且 weeklyTimeline 至少一个对象必须引用其中 1 条。仅在 sourceAttribution 列出不算合格。
+3. discovery_only source IDs = ${JSON.stringify(discoveryOnlyIds)}。
+4. 可提供独立支撑的 source IDs = ${JSON.stringify(independentSourceRefIds)}。
+5. 若某个 sourceRefIds 含任一 discovery_only ID，同一个数组必须同时含至少一个可独立支撑 ID；仅在 sourceAttribution 中补 ID 无效。
+6. 禁止示例：{"sourceRefIds":["discovery_only_id"]}。合格示例：{"sourceRefIds":["discovery_only_id","site_structured_or_credible_news_id"]}。
+7. 无法满足时删除该 discovery_only 断言，改写为由站内结构化数据支撑的当前压力判断；不得编造支撑来源。
 
 紧凑证据包：
 ${JSON.stringify(input)}`;
@@ -87,7 +92,7 @@ ${JSON.stringify(input)}`;
 export function validateEditorialPrompt(input) {
   const system = buildEditorialSystemPrompt();
   const user = buildEditorialUserPrompt(input);
-  const required = ['4,000–5,600', '2,000–6,800', 'discovery_only', '逐项引用自检', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
+  const required = ['4,000–5,600', '2,000–6,800', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
   const missingMarkers = required.filter((marker) => !`${system}\n${user}`.includes(marker));
   return { ok: missingMarkers.length === 0, missingMarkers };
 }
