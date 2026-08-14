@@ -114,6 +114,44 @@ const contracts = [
     ]
   },
   {
+    file: '.github/workflows/publish-edgeone-release.yml',
+    required: [
+      'name: Publish EdgeOne Release Channel',
+      'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
+      'RELEASE_REPOSITORY: ctmaomao/gfrr-edgeone-release',
+      'workflow_dispatch:',
+      "cron: '55 */3 * * *'",
+      'contents: read',
+      'group: edgeone-release-publisher',
+      'cancel-in-progress: false',
+      "if: ${{ github.ref == 'refs/heads/main' }}",
+      'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+      'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
+      'node-version: 24',
+      'npm ci',
+      'npm run check:all',
+      'npm run build:pages-artifact',
+      'EDGEONE_RELEASE_DEPLOY_KEY: ${{ secrets.EDGEONE_RELEASE_DEPLOY_KEY }}',
+      'https://api.github.com/meta',
+      "rsync -a --delete --exclude='.git/'",
+      "git rev-list --count --since='32 days ago' HEAD",
+      '"$release_count" -ge 400',
+      'git push origin main',
+      'if: always()'
+    ],
+    forbidden: [
+      'contents: write',
+      'EDGEONE_API_TOKEN',
+      'edgeone makers deploy',
+      'secrets.GITHUB_TOKEN'
+    ],
+    exactlyOnce: [
+      'EDGEONE_RELEASE_DEPLOY_KEY: ${{ secrets.EDGEONE_RELEASE_DEPLOY_KEY }}',
+      "cron: '55 */3 * * *'",
+      'git push origin main'
+    ]
+  },
+  {
     file: '.github/workflows/check-all-pr.yml',
     required: [
       'name: Check All PR',
@@ -2041,6 +2079,7 @@ function checkPagesTriggerCoverage() {
     const commitLines = src.match(/git\s+commit[^\n]*/g) || [];
     const pushesToRealtimeBranch = pushLines.some((line) => line.includes('realtime-data'));
     const pushesToMain = pushLines.some((line) => !line.includes('realtime-data'));
+    const pushesToExternalEdgeOneRelease = src.includes('RELEASE_REPOSITORY: ctmaomao/gfrr-edgeone-release');
     const hasCommit = commitLines.length > 0;
     const hasPush = pushLines.length > 0;
     const assertsNoDiff = /git\s+diff\s+--exit-code/.test(src);
@@ -2053,6 +2092,8 @@ function checkPagesTriggerCoverage() {
       category = 'dry-run';
     } else if (pushesToRealtimeBranch && !pushesToMain) {
       category = 'realtime-data-branch';
+    } else if (pushesToExternalEdgeOneRelease && hasCommit && hasPush) {
+      category = 'external-release-repository';
     } else if (hasCommit && pushesToMain) {
       category = 'commits-to-main';
       needsPagesTrigger = true;

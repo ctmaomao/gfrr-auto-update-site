@@ -1,0 +1,114 @@
+name: Publish EdgeOne Release Channel
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RELEASE_REPOSITORY: ctmaomao/gfrr-edgeone-release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '55 */3 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+      - 'bubble-watch.html'
+      - 'assets/**'
+      - 'scripts/app.js'
+      - 'scripts/modules/**'
+      - 'scripts/build-pages-artifact.mjs'
+      - '.github/workflows/publish-edgeone-release.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edgeone-release-publisher
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full check suite
+        run: npm run check:all
+
+      - name: Build allowlisted static artifact
+        run: npm run build:pages-artifact
+
+      - name: Configure release deploy key
+        env:
+          EDGEONE_RELEASE_DEPLOY_KEY: ${{ secrets.EDGEONE_RELEASE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$EDGEONE_RELEASE_DEPLOY_KEY" ]; then
+            echo "EDGEONE_RELEASE_DEPLOY_KEY is not configured." >&2
+            exit 1
+          fi
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$EDGEONE_RELEASE_DEPLOY_KEY" > "$HOME/.ssh/gfrr_edgeone_release"
+          chmod 600 "$HOME/.ssh/gfrr_edgeone_release"
+          curl -fsSL --retry 3 https://api.github.com/meta \
+            | jq -r '.ssh_keys[] | "github.com " + .' \
+            > "$HOME/.ssh/known_hosts"
+
+      - name: Publish changed artifact with quota guard
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/gfrr_edgeone_release -o IdentitiesOnly=yes -o UserKnownHostsFile=~/.ssh/known_hosts
+        run: |
+          release_dir="$RUNNER_TEMP/edgeone-release"
+          mkdir -p "$release_dir"
+          git -C "$release_dir" init -b main
+          git -C "$release_dir" remote add origin "git@github.com:${RELEASE_REPOSITORY}.git"
+
+          if git -C "$release_dir" ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
+            git -C "$release_dir" fetch origin main
+            git -C "$release_dir" checkout -B main FETCH_HEAD
+          fi
+
+          rsync -a --delete --exclude='.git/' "$GITHUB_WORKSPACE/_site/" "$release_dir/"
+          cd "$release_dir"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No published-file changes; EdgeOne build not triggered." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          release_count=0
+          if git rev-parse --verify HEAD >/dev/null 2>&1; then
+            release_count=$(git rev-list --count --since='32 days ago' HEAD)
+          fi
+          echo "Release commits in the last 32 days: ${release_count}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$release_count" -ge 400 ]; then
+            echo "Quota guard stopped publication at 400 releases in 32 days." >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: publish source ${GITHUB_SHA::12}"
+          git push origin main
+          echo "Published source ${GITHUB_SHA} to ${RELEASE_REPOSITORY}." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove release deploy key
+        if: always()
+        run: rm -f "$HOME/.ssh/gfrr_edgeone_release"
