@@ -23,6 +23,7 @@ import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt
 import { sanitizeDiagnosticUrl } from './sanitize-diagnostic-url.mjs';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
+import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -1574,48 +1575,76 @@ const autoBuilders = {
   },
   async insider_sell_buy(ctx) {
     const basket = ctx.config.params?.insiderBasket || ['NVDA', 'PLTR', 'AVGO'];
-    let buy = 0;
-    let sell = 0;
     const sources = [];
     const fallbackSymbols = [];
     const primaryFailures = [];
+    const sourceFailures = [];
     for (const symbol of basket) {
-      const totals = await retry(() => fetchInsiderTotals(symbol), `SEC/Xoomar Form 4 ${symbol}`);
-      buy += totals.buy;
-      sell += totals.sell;
-      sources.push({
-        symbol,
-        source: totals.source,
-        sourceMode: totals.sourceMode,
-        buyUsd: totals.buy,
-        sellUsd: totals.sell,
-        filingCount: totals.filingCount || null,
-        transactionCount: totals.transactionCount || null,
-        updatedAt: totals.updatedAt || null,
-        coverageStart: totals.coverageStart || null,
-        recordCount: totals.recordCount || null,
-        recordLimitReached: totals.recordLimitReached === true
-      });
-      if (totals.sourceMode === 'xoomar_form4_fallback') fallbackSymbols.push(symbol);
-      if (totals.primaryFailure) primaryFailures.push({ symbol, reason: totals.primaryFailure });
+      try {
+        const totals = await retry(() => fetchInsiderTotals(symbol), `SEC/Xoomar Form 4 ${symbol}`);
+        sources.push({
+          symbol,
+          source: totals.source,
+          sourceMode: totals.sourceMode,
+          buyUsd: totals.buy,
+          sellUsd: totals.sell,
+          filingCount: totals.filingCount || null,
+          transactionCount: totals.transactionCount || null,
+          updatedAt: totals.updatedAt || null,
+          coverageStart: totals.coverageStart || null,
+          recordCount: totals.recordCount || null,
+          recordLimitReached: totals.recordLimitReached === true
+        });
+        if (totals.sourceMode === 'xoomar_form4_fallback') fallbackSymbols.push(symbol);
+        if (totals.primaryFailure) primaryFailures.push({ symbol, reason: totals.primaryFailure });
+      } catch (error) {
+        sourceFailures.push({ symbol, reason: error.message });
+        console.warn(`[bubble-watch] SEC/Xoomar Form 4 ${symbol} unavailable after retries: ${error.message}`);
+      }
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
-    const buyFloor = Math.max(buy, 1e6); // 买入不足 $1M 时按 $1M 下限计算,避免除零
-    const ratio = sell / buyFloor;
-    const status = ratio > 20 ? 'red' : ratio >= 5 ? 'yellow' : 'green';
-    const display = ratio > 99 ? '≫20x' : `~${ratio.toFixed(0)}x`;
-    const sourceName = fallbackSymbols.length
+    const coverage = evaluateInsiderLiveCoverage({ requestedSymbols: basket, liveRows: sources });
+    if (!coverage.usable) {
+      throw new Error(`${coverage.reasonCode}: successful=${coverage.successfulSymbols.join('/') || 'none'}; missing=${coverage.missingSymbols.join('/') || 'none'}`);
+    }
+    const { buyUsd: buy, sellUsd: sell, ratio } = coverage;
+    const status = coverage.publishedStatusOverride || (ratio > 20 ? 'red' : ratio >= 5 ? 'yellow' : 'green');
+    const display = coverage.publishedValueOverride || (ratio > 99 ? '≫20x' : `~${ratio.toFixed(0)}x`);
+    const sourceName = coverage.coverageStatus === 'partial'
+      ? 'SEC EDGAR Form 4 + Xoomar HTTPS partial live coverage'
+      : fallbackSymbols.length
       ? 'SEC EDGAR Form 4 + Xoomar HTTPS fallback'
       : 'SEC EDGAR Form 4 ownership XML';
-    const sourceNote = fallbackSymbols.length
+    const sourceNote = coverage.coverageStatus === 'partial'
+      ? `SEC/Xoomar 实时链本轮覆盖 ${coverage.successfulSymbols.join('/')},${coverage.missingSymbols.join('/')} 连续失败;仅在已覆盖标的卖买比达到 ≥5x 时按黄灯方向发布`
+      : fallbackSymbols.length
       ? `SEC EDGAR 不可达标的 ${fallbackSymbols.join('/')} 已改用 Xoomar public Form 4 HTTPS mirror`
       : 'SEC EDGAR Form 4 官方披露';
+    const coverageLabel = coverage.coverageStatus === 'partial'
+      ? `${coverage.successfulSymbols.join(' / ')} 两个新鲜实时标的(原篮子 ${basket.join(' / ')})`
+      : `${basket.join(' / ')} 近 12 个月范围内最新可得 Form 4`;
     return {
       status,
       value_display: display,
       source_name: sourceName,
-      note: `${sourceNote} 显示 ${basket.join(' / ')} 近 12 个月范围内最新可得 Form 4:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
-      detail: { buyUsd: buy, sellUsd: sell, ratio, sources, fallbackSymbols, primaryFailures }
+      note: `${sourceNote}。${coverageLabel}:累计卖出 $${(sell / 1e9).toFixed(1)}B、买入 $${(buy / 1e6).toFixed(0)}M,卖买比 ≈${ratio > 99 ? '>99' : ratio.toFixed(1)}x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿`,
+      detail: {
+        buyUsd: buy,
+        sellUsd: sell,
+        ratio,
+        sources,
+        fallbackSymbols,
+        primaryFailures,
+        sourceFailures,
+        coverageStatus: coverage.coverageStatus,
+        coverageReasonCode: coverage.reasonCode,
+        requestedSymbols: coverage.requestedSymbols,
+        successfulSymbols: coverage.successfulSymbols,
+        missingSymbols: coverage.missingSymbols,
+        minimumSuccessfulSymbols: coverage.minimumSuccessfulSymbols,
+        minimumPartialRatio: coverage.minimumPartialRatio,
+        partialCoveragePolicy: coverage.policy
+      }
     };
   },
   async hy_oas() {

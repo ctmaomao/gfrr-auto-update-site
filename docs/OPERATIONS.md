@@ -126,6 +126,8 @@ GitHub Actions cron 使用 UTC。当前顺序为 `Build Daily Radar Data` 22:30�
 
 普通质量 `warn`（例如只有一条可信新闻或正文偏离 4,000–5,600 字目标但仍在 2,000–6,800 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
 
+零可信新闻不允许进入 provider/review/write。若 artifact 显示 Tavily 与 Brave 的所有 topic 查询均为 `ok`，但当期确实只有 `discovery_only`，workflow 会在 provider 前记录 `SKIPPED_NO_CREDIBLE_NEWS` 并以 expected fail-closed skip 结束；这表示本期没有生成新判读，不是 refresh 成功。确认 Summary 中 `DeepSeek calls: 0`、`Production data writes: 0`，并允许 deterministic overview 继续兜底。若任一搜索源不是 `ok`、artifact/schema 异常或已进入 provider 后失败，仍按真实故障处理，不得改成 skip。
+
 如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端会因 `sourceDataUpdatedAt` 不匹配而暂时隐藏编辑层；这是 fail-closed 预期状态。不得为几分钟的调度间隔手工改时间戳或重复调用 provider。
 
 ### Bubble Watch weekly editorial refresh

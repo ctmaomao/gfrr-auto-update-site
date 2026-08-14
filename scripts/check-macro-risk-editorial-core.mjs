@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 
-import { assertValid, validateEditorialInput, validateEditorialOutput, validateEditorialReview } from './macro-risk/editorial-contract.mjs';
+import { EDITORIAL_TOPICS, assertValid, validateEditorialInput, validateEditorialOutput, validateEditorialReview } from './macro-risk/editorial-contract.mjs';
 import { buildEditorialInput } from './macro-risk/editorial-input.mjs';
-import { buildNewsDiscovery } from './macro-risk/editorial-news.mjs';
+import { assessEditorialNewsReadiness, buildNewsDiscovery } from './macro-risk/editorial-news.mjs';
 import { EDITORIAL_PROVIDER_CONFIG, classifyProviderFailure, parseEditorialProviderContent, requestEditorial, validateEditorialPrompt } from './macro-risk/editorial-provider.mjs';
 import { applyEditorialProjection, projectEditorial, reviewEditorial, validateEditorialProduction } from './macro-risk/editorial-production.mjs';
 import { assertEditorialSafeTarget, buildEditorialWriteResult } from './write-macro-risk-editorial.mjs';
@@ -27,6 +27,31 @@ const discovery = buildNewsDiscovery({
   generatedAt: '2026-08-11T06:00:00.000Z', windowStart: '2026-08-04', windowEnd: '2026-08-11'
 });
 assert(discovery.status === 'ok', `fixture news discovery should be ok, got ${discovery.status}`);
+
+const governmentDomainDiscovery = buildNewsDiscovery({
+  rawStories: [
+    { provider: 'tavily', topic: 'credit_liquidity', title: 'New York City pension funds publish annual returns', url: 'https://comptroller.nyc.gov/reports/pension-fund-returns', publishedAt: '2026-08-13T02:00:00Z' },
+    { provider: 'brave', topic: 'credit_liquidity', title: 'Macro government themed commentary', url: 'https://macro-gov.example.com/commentary', publishedAt: '2026-08-13T03:00:00Z' }
+  ],
+  sourceStatus: { tavily: { status: 'ok' }, brave: { status: 'ok' } },
+  generatedAt: '2026-08-14T02:38:55.000Z', windowStart: '2026-08-07', windowEnd: '2026-08-14'
+});
+assert(governmentDomainDiscovery.stories.find((story) => story.domain === 'comptroller.nyc.gov')?.evidenceStatus === 'official', 'verified .gov subdomains must be classified as official');
+assert(governmentDomainDiscovery.stories.find((story) => story.domain === 'macro-gov.example.com')?.evidenceStatus === 'discovery_only', 'non-government lookalike domains must not be classified as official');
+
+const healthyNoCredibleDiscovery = buildNewsDiscovery({
+  rawStories: [{ provider: 'tavily', topic: 'credit_liquidity', title: 'Credit conditions commentary', url: 'https://example.com/credit', publishedAt: '2026-08-13T02:00:00Z' }],
+  sourceStatus: Object.fromEntries(['tavily', 'brave'].map((provider) => [provider, {
+    status: 'ok', successCount: 6, failureCount: 0,
+    queryRuns: EDITORIAL_TOPICS
+      .map((topic) => ({ topic, status: 'ok', resultCount: provider === 'tavily' && topic === 'credit_liquidity' ? 1 : 0 }))
+  }])),
+  generatedAt: '2026-08-14T02:38:55.000Z', windowStart: '2026-08-07', windowEnd: '2026-08-14'
+});
+const healthyNoCredibleReadiness = assessEditorialNewsReadiness(healthyNoCredibleDiscovery);
+assert(!healthyNoCredibleReadiness.editorialReady && healthyNoCredibleReadiness.expectedSkip && healthyNoCredibleReadiness.reason === 'no_credible_news', 'healthy search with zero credible news must be an expected pre-provider skip');
+const degradedNoCredibleReadiness = assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery, sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, brave: { status: 'error' } } });
+assert(!degradedNoCredibleReadiness.expectedSkip && degradedNoCredibleReadiness.reason === 'news_source_health_incomplete', 'source-health failures must remain hard failures');
 
 const radarData = readJson('data/radar-data.json');
 const input = buildEditorialInput({
@@ -132,4 +157,4 @@ assert(unsafeTarget, 'unsafe writer target negative test must fail');
 const truncated = new Error('truncated'); truncated.category = 'provider_output_contract_invalid'; truncated.responseDiagnostics = { finishReason: 'length' };
 assert(classifyProviderFailure(truncated).category === 'provider_output_truncated', 'truncation classification failed');
 
-console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, negativeTests=6)`);
+console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, negativeTests=6)`);

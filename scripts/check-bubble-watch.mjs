@@ -15,8 +15,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { assessUnderlyingObservationFreshness } from './bubble-watch/observation-freshness.mjs';
+import {
+  evaluateInsiderLiveCoverage,
+  INSIDER_PARTIAL_COVERAGE_POLICY
+} from './bubble-watch/insider-source-policy.mjs';
 import { validateWeeklyEditorialProduction } from './bubble-watch/weekly-editorial-production.mjs';
 import {
+  isExpectedPolicyDegradedLiveRow,
   isExpectedPolicyFallback,
   isExpectedPolicyFetchFailure
 } from './bubble-watch/source-health-policy.mjs';
@@ -105,6 +110,7 @@ const pageHtml = read('bubble-watch.html');
 const indexHtml = read('index.html');
 const appJs = read('scripts/app.js');
 const buildSrc = read('scripts/build-bubble-watch.mjs');
+const sourceAuditSrc = read('scripts/audit-bubble-watch-sources.mjs');
 const sourceCandidates = JSON.parse(read('config/bubble-watch-source-candidates.json'));
 const curatedConfig = JSON.parse(read('config/bubble-watch-curated.json'));
 const gdeltBubbleCache = JSON.parse(read('data/gdelt-bubble-watch-cache.json'));
@@ -350,8 +356,111 @@ check('contract', buildSrc.includes('fetchXoomarForm4InsiderTotals') &&
 check('contract', buildSrc.includes('row?.isOpenMarket !== true') &&
   buildSrc.includes("code !== 'P' && code !== 'S'"),
   'insider_sell_buy Xoomar 备用只能统计 open-market P/S 交易');
+check('contract', buildSrc.includes('evaluateInsiderLiveCoverage') &&
+  buildSrc.includes('sourceFailures') &&
+  buildSrc.includes("coverage.coverageStatus === 'partial'"),
+  'insider_sell_buy 必须保留有界 2/3 实时覆盖降级和逐标的失败记录');
+check('contract', sourceAuditSrc.includes('degradedLiveRows') &&
+  sourceAuditSrc.includes('unexpectedDegradedLiveRows') &&
+  sourceAuditSrc.includes('Degraded but policy-valid live coverage'),
+  'Bubble Watch source audit 必须把 policy-valid partial live coverage 显式报告为 WARN');
 check('contract', !buildSrc.includes('http://openinsider.com') && !buildSrc.includes('fetchOpenInsiderTotals'),
   'insider_sell_buy 不得使用明文 HTTP OpenInsider 路径');
+
+const fullInsiderCoverage = evaluateInsiderLiveCoverage({
+  requestedSymbols: ['NVDA', 'PLTR', 'AVGO'],
+  liveRows: [
+    { symbol: 'NVDA', buyUsd: 0, sellUsd: 12_000_000 },
+    { symbol: 'PLTR', buyUsd: 0, sellUsd: 8_000_000 },
+    { symbol: 'AVGO', buyUsd: 1_000_000, sellUsd: 4_000_000 }
+  ]
+});
+check('contract', fullInsiderCoverage.usable === true &&
+  fullInsiderCoverage.coverageStatus === 'full' &&
+  fullInsiderCoverage.missingSymbols.length === 0,
+  'insider full 3/3 live coverage policy replay 失败');
+
+const partialInsiderCoverage = evaluateInsiderLiveCoverage({
+  requestedSymbols: ['NVDA', 'PLTR', 'AVGO'],
+  liveRows: [
+    { symbol: 'NVDA', buyUsd: 0, sellUsd: 12_000_000 },
+    { symbol: 'PLTR', buyUsd: 0, sellUsd: 8_000_000 }
+  ]
+});
+check('contract', partialInsiderCoverage.usable === true &&
+  partialInsiderCoverage.coverageStatus === 'partial' &&
+  partialInsiderCoverage.missingSymbols.join(',') === 'AVGO' &&
+  partialInsiderCoverage.publishedStatusOverride === 'yellow' &&
+  partialInsiderCoverage.policy === INSIDER_PARTIAL_COVERAGE_POLICY,
+  'insider 单标的瞬态失败必须仅在 2/3 高卖压方向确认时降级为黄灯');
+
+const weakPartialInsiderCoverage = evaluateInsiderLiveCoverage({
+  requestedSymbols: ['NVDA', 'PLTR', 'AVGO'],
+  liveRows: [
+    { symbol: 'NVDA', buyUsd: 1_000_000, sellUsd: 1_000_000 },
+    { symbol: 'PLTR', buyUsd: 1_000_000, sellUsd: 1_000_000 }
+  ]
+});
+check('contract', weakPartialInsiderCoverage.usable === false &&
+  weakPartialInsiderCoverage.reasonCode === 'insider_partial_coverage_direction_unconfirmed',
+  'insider 2/3 覆盖但卖压方向未确认时必须 fail-closed');
+
+const insufficientInsiderCoverage = evaluateInsiderLiveCoverage({
+  requestedSymbols: ['NVDA', 'PLTR', 'AVGO'],
+  liveRows: [{ symbol: 'NVDA', buyUsd: 0, sellUsd: 12_000_000 }]
+});
+check('contract', insufficientInsiderCoverage.usable === false &&
+  insufficientInsiderCoverage.reasonCode === 'insider_live_coverage_insufficient',
+  'insider 仅 1/3 live coverage 时必须 fail-closed');
+
+const duplicateInsiderCoverage = evaluateInsiderLiveCoverage({
+  requestedSymbols: ['NVDA', 'PLTR', 'AVGO'],
+  liveRows: [
+    { symbol: 'NVDA', buyUsd: 0, sellUsd: 12_000_000 },
+    { symbol: 'NVDA', buyUsd: 0, sellUsd: 8_000_000 }
+  ]
+});
+check('contract', duplicateInsiderCoverage.usable === false &&
+  duplicateInsiderCoverage.reasonCode === 'insider_live_coverage_symbols_invalid',
+  'insider 重复/越界标的不得凑足 partial coverage');
+
+const policyValidPartialInsiderRow = {
+  id: 'insider_sell_buy',
+  status: 'yellow',
+  value_display: '高卖压·覆盖受限',
+  stale: false,
+  provenance: {
+    mode: 'auto',
+    detail: {
+      buyUsd: 0,
+      sellUsd: 20_000_000,
+      ratio: 20,
+      sources: [
+        { symbol: 'NVDA', buyUsd: 0, sellUsd: 12_000_000 },
+        { symbol: 'PLTR', buyUsd: 0, sellUsd: 8_000_000 }
+      ],
+      sourceFailures: [{ symbol: 'AVGO', reason: 'simulated timeout' }],
+      coverageStatus: 'partial',
+      coverageReasonCode: 'insider_partial_live_coverage_direction_confirmed',
+      requestedSymbols: ['NVDA', 'PLTR', 'AVGO'],
+      successfulSymbols: ['NVDA', 'PLTR'],
+      missingSymbols: ['AVGO'],
+      minimumSuccessfulSymbols: 2,
+      minimumPartialRatio: 5,
+      partialCoveragePolicy: INSIDER_PARTIAL_COVERAGE_POLICY
+    }
+  }
+};
+check('contract', isExpectedPolicyDegradedLiveRow(policyValidPartialInsiderRow) === true,
+  'source audit 必须把确定性的 AVGO timeout + NVDA/PLTR 高卖压 fixture 分类为 policy-valid WARN');
+check('contract', isExpectedPolicyDegradedLiveRow({
+  ...policyValidPartialInsiderRow,
+  provenance: {
+    ...policyValidPartialInsiderRow.provenance,
+    detail: { ...policyValidPartialInsiderRow.provenance.detail, ratio: 4 }
+  }
+}) === false,
+  'source audit 不得把低于 5x 或 ratio replay 不一致的 partial coverage 分类为 WARN');
 check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.includes('fetchYearEndFedFundsFuture') && buildSrc.includes('fed_policy_path_v2'),
   'fed_policy 必须保留 Fed SEP + 年末 Fed funds futures 政策路径证据');
 check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',

@@ -33,6 +33,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **2026-06-17 Bubble Watch CEO 表态新闻源**:`ceo_hedging` 免费源顺序为 GDELT DOC public search -> Tavily Search API + Brave News Search API free-credit cross-check/fallback -> Wind paid final fallback。GDELT 默认小样本请求,429/5xx 时有界退避重试一次;Tavily 需 `TAVILY_API_KEYS`,Brave 需 `BRAVE_API_KEYS`,GDELT 成功时做第二/第三新闻源确认,GDELT 429/不可用时做免费兜底;红灯必须有多源确认,单一路径新闻命中不得绕过 `local_proxy_confidence_v1` 多源/样本门槛升红。
 - **2026-07-26 Bubble Watch responsive/data-contract acceptance**:新增 `check-bubble-watch-responsive-acceptance.mjs`,并强化 Playwright 1440px/390px smoke：运行态核对 27 张分类卡、Core-23/Shadow-4 角色数、Hero/Stage/Trigger 与 JSON 一致、390px 单列与无横向溢出、趋势 SVG 容器边界，以及 Bubble Watch JSON 503 时 fail-closed 错误态。仅新增验收保护网,不改页面视觉、production JSON、builder、评分或 GFRR 决策链。
 - **2026-07-28 Bubble Watch source-quality hardening**:`accounting_events` 改为核心企业实体 + 会计/财报/证券欺诈语义 + 正式执法动作的邻近语境三重门槛,并以 Google Drive DOJ 文章锁定负向回归；`arr_2nd_deriv` 用底层 ARR 里程碑日期对照 `maxAgeDays`,超龄 fail-closed 回较新的 curated 快照；`insider_sell_buy` 与 `fed_policy` 分别明确显示「高卖压·覆盖受限」和「年末路径隐含加息」。Core-23/Shadow-4、权重、阈值与 GFRR 主链边界均未改变；当前主分 30.4%、加权 45.7%、Stage 60.0、Trigger 34.6,有效判读仍为「高风险预警」。
+- **2026-08-14 Bubble Watch Form 4 单标的瞬态容错**:`Audit Bubble Watch Sources #40` 的 SEC 主源仍为 runner 403,Xoomar 中 NVDA/PLTR 可恢复而 AVGO 连续超时,导致整项误落旧快照并硬失败。新增 `insider-form4-partial-live-coverage-v1`:固定三标的篮子只允许 2/3 新鲜 live 且合计卖买比 ≥5x 时发布明确的「高卖压·覆盖受限」黄灯与 source-health WARN,同时记录 missing symbol 和逐标的失败；1/3、弱方向、重复/越界或异常数据继续 fail-closed。Core-23 槽位、阈值、权重和 GFRR 主链边界均未改变。
 - **2026-08-11 Bubble Watch 周度 DeepSeek 编辑层**:P2-14 已完成并上线。`Bubble Watch Weekly Editorial Refresh` 在周一 Bubble Watch 成功后或 owner 显式确认成本时运行，Tavily/Brave → compact input → 单次 DeepSeek/no-retry → validator/review → protected single-field writer；只写 `summary.weekly_editorial`，确定性 `summary.verdict_desc` 永远保留为 fallback。首个生产成功 run `31462238973` / data commit `9ac2b911` 生成 3,691 字、3 timeline / 2 tensions / 6 categories / 3 watch / 26 sources；quality=`warn` 仅因本周 1 条 cross-checked 新闻且 discovery partial，blockers=0。最终 Pages run `31462975922`、真实桌面 DOM 与 390px Playwright 均通过。该层不改 Core-23/Shadow-4、主分、Stage/Trigger、verdict 或任何 GFRR scoring/decision/execution/position。
 - **2026-08-11 Macro Risk DeepSeek 编辑层**:P2-15 已完成并上线。`Macro Risk Editorial Refresh` 每日 00:05 UTC 汇总 Tavily/Brave 近 7 日新闻与站内结构化数据，单次 DeepSeek/no-retry 后经 validator/review/protected writer 写入 `macroRiskEditorialLayer`；首个成功 run `31466780614` / data commit `ff660b9c` 生成 5,160 字、37 sources、6 modules、5 cross-market、4 timeline，quality=`pass`。旧 `#external-ai-auxiliary`、renderer 与 scheduled workflow 已退场，旧字段仅保留数据兼容；Pages run `31466848275` 与桌面/390px 真实浏览器验收通过。该层不改主分、六模块、tail overlay、decision/execution/position、World Order、ODP、Bubble Watch 或 cross-validation。
 - **2026-08-11 Macro Overview narrative-first IA (ADR-0023)**:主阅读顺序改为 Hero → 有效宏观判读 → 本期关键变化 → 阈值/趋势 → 四大驱动/市场温度；压力来源、信号分层、风险引擎、交叉验证和 Macro Coherence 保留全部 renderer/DOM/数据含义，统一进入 `#macro-professional-evidence`。有效 AI 时默认收起，AI 缺失/stale/mismatch/无资格/渲染失败时自动展开 deterministic evidence。顶部导航 16→13 项；新增 `check:macro-overview-evidence-fold` 并接入 `frontend-live-contracts`，Playwright 覆盖桌面收起/手动展开与 390px fallback 自动展开。纯 frontend IA，不改 scoring/decision/execution/position/data/workflow。
@@ -56,13 +57,14 @@ No active P1 item. ACLED/SIPRI/GDELT、Pages trigger coverage、World Order refr
 
 No active P2 item. P2-14 Bubble Watch weekly editorial 与 P2-15 Macro Risk DeepSeek 编辑层均已于 2026-08-11 完成并上线；边界见对应设计文档与 ADR。
 
-- **2026-08-12 maintenance follow-up（待生产 rerun 验证）**: `Macro Risk Editorial Refresh` #3
-  (`31557497174`) 的唯一 hard failure 是 provider 返回的第 2 条事实对象只引用
-  `discovery_only` 新闻；HTTP 200、完整 JSON、长度 5,921 均正常，writer/production/scoring
-  保持 fail closed。`codex/fix-macro-risk-editorial-grounding` 已在本地把所有事实对象和
-  source ID 分组写入 provider 逐项引用自检，并增加不放宽 validator 的负向回归。
-  本地 `check:macro-risk-editorial`、`check:all`、unit coverage 与 Playwright 7/7 均通过；
-  代码发布状态以对应 GitHub PR 为准，尚未触发需要 owner 明确确认成本的付费 rerun。
+- **2026-08-14 Macro Risk Editorial #6 source-readiness repair**: scheduled run `31764341561`
+  的 Tavily/Brave 12/12 topic 查询均成功并返回 30 条脱敏结果，但全部被标为
+  `discovery_only`，compact input 在 DeepSeek 前正确 fail closed；paid calls=0、production
+  writes=0。artifact 中实际包含 `comptroller.nyc.gov` 官方页面，暴露 `.gov` 未纳入窄
+  official allowlist 的分类缺口。修复把受资格约束的美国 `.gov` 根域/子域识别为 official，
+  并增加双搜索完全健康但确无 credible news 时的 `SKIPPED_NO_CREDIBLE_NEWS` 路径：只上传
+  脱敏 artifact/Summary，严格跳过 provider/review/write；源健康异常、schema/contract 或
+  provider/write 故障仍 hard fail。未触发付费 rerun，生产验证等待下一次自然 schedule。
 
 ### P3 Items
 

@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  isExpectedPolicyDegradedLiveRow,
   isExpectedPolicyFallback,
   isExpectedPolicyFetchFailure
 } from './bubble-watch/source-health-policy.mjs';
@@ -129,14 +130,34 @@ function buildReport(data, buildResult, checkResult) {
       !isExpectedPolicyFetchFailure(failure, policyFallback);
   });
   const windRows = rows.filter((row) => /Wind/i.test(`${row.source_name || ''} ${row.source_tag || ''}`));
+  const partialLiveRows = indicators
+    .filter((row) => row.provenance?.mode === 'auto' && row.provenance?.detail?.coverageStatus === 'partial');
+  const degradedLiveRows = partialLiveRows
+    .filter(isExpectedPolicyDegradedLiveRow)
+    .map((row) => ({
+      id: row.id,
+      policy: row.provenance?.detail?.partialCoveragePolicy || null,
+      reasonCode: row.provenance?.detail?.coverageReasonCode || null,
+      successfulSymbols: row.provenance?.detail?.successfulSymbols || [],
+      missingSymbols: row.provenance?.detail?.missingSymbols || [],
+      sourceFailures: row.provenance?.detail?.sourceFailures || []
+    }));
+  const unexpectedDegradedLiveRows = partialLiveRows
+    .filter((row) => !isExpectedPolicyDegradedLiveRow(row))
+    .map((row) => ({
+      id: row.id,
+      policy: row.provenance?.detail?.partialCoveragePolicy || null,
+      reasonCode: row.provenance?.detail?.coverageReasonCode || null
+    }));
   const warnings = sourceWarningLines(buildResult.text);
   const hardFail = buildResult.code !== 0 ||
     checkResult.code !== 0 ||
     unexpectedFallbackRows.length > 0 ||
-    unexpectedFetchFailures.length > 0;
+    unexpectedFetchFailures.length > 0 ||
+    unexpectedDegradedLiveRows.length > 0;
   const status = hardFail
     ? 'fail'
-    : (expectedPaidSkips.length || expectedPolicyFallbacks.length || warnings.length ? 'warn' : 'pass');
+    : (expectedPaidSkips.length || expectedPolicyFallbacks.length || degradedLiveRows.length || warnings.length ? 'warn' : 'pass');
 
   return {
     contractVersion: 'bubble-watch-source-health-audit-v1',
@@ -198,6 +219,8 @@ function buildReport(data, buildResult, checkResult) {
     })),
     fetchFailures,
     unexpectedFetchFailures,
+    degradedLiveRows,
+    unexpectedDegradedLiveRows,
     windRows,
     sourceWarnings: warnings,
     rows
@@ -241,6 +264,20 @@ function markdownReport(report) {
   if (report.unexpectedFetchFailures.length) {
     lines.push('Unexpected fetch failures:');
     for (const failure of report.unexpectedFetchFailures) lines.push(`- \`${failure.id}\`: ${failure.reason}`);
+    lines.push('');
+  }
+  if (report.degradedLiveRows.length) {
+    lines.push('Degraded but policy-valid live coverage:');
+    for (const row of report.degradedLiveRows) {
+      lines.push(`- \`${row.id}\`: live=${row.successfulSymbols.join('/') || 'none'}, missing=${row.missingSymbols.join('/') || 'none'}, policy=${row.policy || 'n/a'}`);
+    }
+    lines.push('');
+  }
+  if (report.unexpectedDegradedLiveRows.length) {
+    lines.push('Unexpected or invalid partial live coverage:');
+    for (const row of report.unexpectedDegradedLiveRows) {
+      lines.push(`- \`${row.id}\`: reason=${row.reasonCode || 'n/a'}, policy=${row.policy || 'n/a'}`);
+    }
     lines.push('');
   }
   if (report.sourceWarnings.length) {

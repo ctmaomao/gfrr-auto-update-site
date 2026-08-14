@@ -91,17 +91,21 @@ jobs:
         run: npm run collect:macro-risk-editorial-news -- --allow-network
 
       - name: Build compact editorial evidence pack
-        run: npm run build:macro-risk-editorial-input
+        id: build_input
+        run: npm run build:macro-risk-editorial-input -- --allow-expected-news-skip
 
       - name: Run one DeepSeek editorial call
+        if: steps.build_input.outputs.editorial_ready == 'true'
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: npm run run:macro-risk-editorial-deepseek -- --allow-network
 
       - name: Review editorial quality
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: npm run review:macro-risk-editorial
 
       - name: Project production layer
+        if: steps.build_input.outputs.editorial_ready == 'true'
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_SHA: ${{ github.sha }}
@@ -123,6 +127,7 @@ jobs:
           retention-days: 3
 
       - name: Write production editorial layer
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           npm run write:macro-risk-editorial -- \
             --input manual-artifacts/macro-risk-editorial/production-projection-latest.json \
@@ -131,11 +136,13 @@ jobs:
             --data-only
 
       - name: Validate final production data
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           npm run check:macro-risk-editorial-live -- --require-layer
           npm run check:data
 
       - name: Protected path assertion
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           set -euo pipefail
           changed_paths="$(git diff --name-only)"
@@ -154,6 +161,7 @@ jobs:
           fi
 
       - name: Commit refreshed macro editorial if changed
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           set -euo pipefail
           if git diff --quiet -- data/radar-data.json; then
@@ -171,3 +179,14 @@ jobs:
           fi
           git commit -m "chore: refresh macro risk editorial"
           git push origin HEAD:main
+
+      - name: Verify expected no-credible-news skip stayed side-effect free
+        if: steps.build_input.outputs.editorial_ready == 'false'
+        run: |
+          set -euo pipefail
+          test ! -e manual-artifacts/macro-risk-editorial/editorial-input-latest.json
+          test ! -e manual-artifacts/macro-risk-editorial/deepseek-output-latest.json
+          test ! -e manual-artifacts/macro-risk-editorial/deepseek-failure-latest.json
+          test ! -e manual-artifacts/macro-risk-editorial/production-projection-latest.json
+          git diff --quiet --exit-code
+          echo "SKIPPED_NO_CREDIBLE_NEWS: no DeepSeek call and no production write."
