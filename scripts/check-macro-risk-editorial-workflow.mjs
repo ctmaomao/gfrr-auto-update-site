@@ -13,7 +13,7 @@ for (const marker of [
   'environment: external-ai-production-refresh',
   'npm run check:macro-risk-editorial-workflow',
   'npm run collect:macro-risk-editorial-news -- --allow-network',
-  'npm run build:macro-risk-editorial-input',
+  'npm run build:macro-risk-editorial-input -- --allow-expected-news-skip',
   'npm run run:macro-risk-editorial-deepseek -- --allow-network',
   'npm run review:macro-risk-editorial',
   'npm run project:macro-risk-editorial',
@@ -22,6 +22,9 @@ for (const marker of [
   'git add data/radar-data.json',
   'git push origin HEAD:main'
 ]) assert(workflow.includes(marker), `workflow missing ${marker}`);
+assert(workflow.includes('id: build_input'), 'workflow must expose compact-input readiness');
+assert(count(workflow, "if: steps.build_input.outputs.editorial_ready == 'true'") === 7, 'every provider/review/write step must require editorial readiness');
+assert(workflow.includes("if: steps.build_input.outputs.editorial_ready == 'false'") && workflow.includes('SKIPPED_NO_CREDIBLE_NEWS'), 'workflow must verify the expected no-credible-news skip is side-effect free');
 assert(count(workflow, 'npm run run:macro-risk-editorial-deepseek -- --allow-network') === 1, 'workflow must call DeepSeek exactly once');
 assert(workflow.includes('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'), 'workflow must inject DeepSeek key only at provider step');
 assert(count(workflow, 'DEEPSEEK_API_KEY:') === 1, 'DeepSeek key must be scoped to one step');
@@ -32,4 +35,4 @@ const pages = fs.readFileSync('.github/workflows/deploy-static-site-to-pages.yml
 assert(pages.includes('- Macro Risk Editorial Refresh'), 'Pages workflow must listen for macro editorial refresh completion');
 assert(!pages.includes('- External AI Production Refresh'), 'Pages workflow must not listen for retired external AI refresh');
 
-console.log('Macro risk editorial workflow PASS (daily 00:05 UTC, one paid call, fail-closed review/write, protected path, Pages trigger)');
+console.log('Macro risk editorial workflow PASS (daily 00:05 UTC, at most one paid call, source-quality skip before provider, fail-closed review/write, protected path, Pages trigger)');

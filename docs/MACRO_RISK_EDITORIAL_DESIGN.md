@@ -46,6 +46,8 @@
 
 - Tavily Search API，`topic=news`，近 7 日，每 topic 最多 5 条。
 - Brave News Search API，`freshness=pw`，相同 topic，每 topic 最多 5 条。
+- 受注册资格约束的美国 `.gov` 根域及其子域按政府官方来源标记为 `official`；名称中仅含
+  `gov` 的普通商业域不得获得该标记。
 - production 只投影实际引用来源的 title / URL / domain / publishedAt / topic /
   evidence status；不提交 snippet、raw response、headers 或完整正文。
 
@@ -107,6 +109,10 @@
   必须在页面披露。
 - `fail`: 无 credible news、invalid refs、unsafe wording、结构错误、虚构外部验证、评分越权、
   provider failure 或 source-data mismatch。
+- 上述“无 credible news”仍禁止生成、审阅或写入 AI output。仅当 Tavily 与 Brave 的所有
+  topic 查询都为 `ok`、但结果确实为 0 条 credible news 时，workflow 可在 provider 前记录
+  `SKIPPED_NO_CREDIBLE_NEWS` 并成功结束；该 expected skip 必须保持 DeepSeek calls=0、
+  production writes=0，并继续使用 deterministic overview。任一搜索源不健康仍是 hard failure。
 - `promotionEligible=false` 恒成立。
 
 ### 5.5 Production layer

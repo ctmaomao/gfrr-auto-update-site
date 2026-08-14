@@ -12,6 +12,9 @@ export const EDITORIAL_QUERIES = Object.freeze({
 });
 
 const OFFICIAL_DOMAIN_SUFFIXES = Object.freeze([
+  // The .gov namespace is restricted to verified U.S. government organizations,
+  // including federal, state, local, tribal, and territorial authorities.
+  'gov',
   'federalreserve.gov',
   'ecb.europa.eu',
   'bls.gov',
@@ -88,6 +91,34 @@ function isOfficialDomain(domain) {
   return OFFICIAL_DOMAIN_SUFFIXES.some((suffix) => domain === suffix || domain.endsWith(`.${suffix}`));
 }
 
+export function assessEditorialNewsReadiness(discovery) {
+  const stories = Array.isArray(discovery?.stories) ? discovery.stories : [];
+  const officialCount = stories.filter((story) => story?.evidenceStatus === 'official').length;
+  const crossCheckedCount = stories.filter((story) => story?.evidenceStatus === 'cross_checked').length;
+  const credibleCount = officialCount + crossCheckedCount;
+  const providers = ['tavily', 'brave'].map((provider) => discovery?.sourceStatus?.[provider] || {});
+  const providerStatuses = providers.map((status) => status.status || 'missing');
+  const searchProvidersHealthy = providers.every((status) => {
+    const runs = Array.isArray(status.queryRuns) ? status.queryRuns : [];
+    return status.status === 'ok'
+      && status.successCount === EDITORIAL_TOPICS.length
+      && status.failureCount === 0
+      && runs.length === EDITORIAL_TOPICS.length
+      && new Set(runs.map((run) => run?.topic)).size === EDITORIAL_TOPICS.length
+      && runs.every((run) => EDITORIAL_TOPICS.includes(run?.topic) && run?.status === 'ok');
+  });
+  return {
+    editorialReady: credibleCount > 0,
+    expectedSkip: credibleCount === 0 && searchProvidersHealthy,
+    reason: credibleCount > 0 ? null : searchProvidersHealthy ? 'no_credible_news' : 'news_source_health_incomplete',
+    credibleCount,
+    officialCount,
+    crossCheckedCount,
+    storyCount: stories.length,
+    providerStatuses
+  };
+}
+
 export function normalizeProviderStory(raw) {
   if (!raw || !EDITORIAL_TOPICS.includes(raw.topic) || !['tavily', 'brave'].includes(raw.provider)) return null;
   const url = canonicalizeNewsUrl(raw.url);
@@ -155,7 +186,7 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
   const statuses = sourceStatus || {};
   const liveProviderCount = ['tavily', 'brave'].filter((provider) => ['ok', 'partial'].includes(statuses[provider]?.status)).length;
   const fullProviderCount = ['tavily', 'brave'].filter((provider) => statuses[provider]?.status === 'ok').length;
-  const credibleCount = stories.filter((story) => story.evidenceStatus !== 'discovery_only').length;
+  const { credibleCount } = assessEditorialNewsReadiness({ stories, sourceStatus: statuses });
   const status = fullProviderCount === 2 && credibleCount >= 2 ? 'ok' : liveProviderCount > 0 && credibleCount > 0 ? 'partial' : 'insufficient';
   const dataGaps = [];
   if (liveProviderCount < 2) dataGaps.push('近 7 日新闻发现未获得 Tavily 与 Brave 两个索引的完整成功响应。');
