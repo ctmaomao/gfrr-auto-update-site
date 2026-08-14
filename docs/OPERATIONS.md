@@ -805,6 +805,28 @@ GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions�
 
 `build:pages-artifact` 只允许两张 HTML、`assets` 静态类型、`data/realtime` JSON、`scripts/app.js` 与 `scripts/modules/*.js`，并拒绝任意层级的隐藏配置、非白名单扩展或 symlink。`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行默认只读 `check:all`；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
 
+## 8A. EdgeOne 自定义域名低频发布通道
+
+`ctmaomao.github.io/gfrr-auto-update-site/` 仍是 GitHub Pages 主发布站。腾讯云 EdgeOne 自定义域名只允许连接专用静态仓库 `ctmaomao/gfrr-edgeone-release`，不得重新直接连接本源码仓库的 `main`；源码仓库的高频数据提交会让 EdgeOne 对每个 commit 自动构建，并撞上免费版每月 500 分钟 Build times 限额。
+
+`.github/workflows/publish-edgeone-release.yml` 是唯一受审发布入口：
+
+- 每 3 小时的第 55 分钟运行，理论上最多 8 次/天、31 天最多 248 次；前端 HTML / CSS / JS 改动可额外即时发布。
+- 每次先运行 `npm run check:all` 和 `npm run build:pages-artifact`，只同步 `_site` 白名单产物；产物无变化时不提交，因此不会触发 EdgeOne 构建。
+- 专用仓库最近 32 天已有 400 次发布时 fail closed，保留至少 100 次额度缓冲；不要为了越过保护而改阈值或反复手动部署。
+- 源码仓库只保存 Actions secret `EDGEONE_RELEASE_DEPLOY_KEY`；对应公钥仅作为专用仓库的单仓库 write deploy key。workflow 的源码仓库权限必须保持 `contents: read`，不得改用 broad PAT、EdgeOne API token 或源码仓库 write token。
+- 首次迁移必须先让新 EdgeOne 项目的临时域名完整通过，再从旧项目解绑并把 `radar.gfrfinradar.uk` 绑定到新项目；不要先删除旧项目或旧域名。
+
+日常排查顺序：
+
+1. 查看 `Publish EdgeOne Release Channel` 最近一次 run 是否成功；若显示 `No published-file changes`，这是正常 no-op。
+2. 查看 `ctmaomao/gfrr-edgeone-release` 最新 commit message 中的 source SHA，确认对应源码 `main`。
+3. 查看 EdgeOne 项目的最近一次 Production deployment 是否使用同一 release commit。
+4. 对 GitHub Pages、EdgeOne 临时域名和 `radar.gfrfinradar.uk` 使用 cache-busting query，比较 `scripts/app.js` 的 `APP_VERSION` 以及关键 JSON 的内容哈希。
+5. 只有确有紧急前端修复且等待 3 小时不可接受时，才手动触发一次 workflow；不要在 EdgeOne 控制台连续点击 Redeploy。
+
+若需要立即停用发布，先在源码仓库禁用该 workflow；若怀疑密钥泄露，同时删除专用仓库 deploy key `gfrr-edgeone-release-publisher` 和源码仓库 secret `EDGEONE_RELEASE_DEPLOY_KEY`，然后创建并替换一对新 key。密钥轮换不要求修改站点内容。
+
 ## v28.0L-3I-0 Workflow / runtime hygiene
 
 Node 20 GitHub Actions warnings are blocking workflow hygiene issues. The project baseline is Node.js 24 LTS across local development, package engines, and GitHub Actions.

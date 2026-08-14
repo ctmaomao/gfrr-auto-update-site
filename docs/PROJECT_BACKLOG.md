@@ -13,13 +13,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
 | Cache version | `macro-evidence-fold-1` |
 | check:all 项数 | 41 个顶层命令；ODP `oil-directional` 套件当前 88 leaf checks（含 GDELT Web NGrams automated display cache guard 与 P68 facility-window quality guard）。其余 suite/直连 checker 的实时组成以 `package.json` 与 `scripts/check-suite.mjs` 为准，避免手工总数再次漂移。|
-| 最后审计日期 | 2026-08-11(Macro Risk DeepSeek 编辑层生产上线 + ADR-0023 叙事优先/专业证据按需展开；旧可见 External AI 模块退场；权威文档、IA、数据源与运维状态已同步)|
+| 最后审计日期 | 2026-08-14(EdgeOne 低频静态发布通道：专用 release repo + 3 小时去重发布 + 32 天 400 次 fail-closed 配额保护；自定义域名迁移须在临时域名验收后执行)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
 | secondary diagnostics | `/market.secondary-preview.json` only |
 | 下次审计建议 | 下一次 stage / milestone 合并时 |
 
 当前边界摘要:
 
+- **2026-08-14 EdgeOne Build times 防撞限**：源码 `main` 不得直接连接 EdgeOne；`Publish EdgeOne Release Channel` 只向 `ctmaomao/gfrr-edgeone-release` 发布 `_site` 白名单产物，固定每 3 小时检查、无差异不提交，并在最近 32 天 400 次发布时 fail closed。EdgeOne 自定义域名只能连接该低频仓库；迁移与验收步骤见 [OPERATIONS.md](OPERATIONS.md#8a-edgeone-自定义域名低频发布通道)。GitHub Pages 主链、站点数据契约、评分与决策链均不变。
 - 版本语义为“双版本”:用户可见发布/展示版本使用 `releaseVersion = v28.0.10`;根级 `data.version` 与 `decisionModel.contractVersion` 的 `v27.0` 是兼容数据契约,不得机械全局替换。
 - `macroDrivers.*`、`brentPricingLayer`、`consumer_vs_asset_pricing`、`dailyBrief`、`divergenceLayer` 和 `aiInterpretationLayer` 仍为 audit-only / display-only 解释层。
 - 这些层不得进入 scoring、decision、execution、position、Worker main payload、`displayInputsBaseline`、`effectiveDisplayInputs` 或 cross-validation matrix,除非另开 reviewed PR。
