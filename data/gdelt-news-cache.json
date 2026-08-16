@@ -6,7 +6,7 @@
   "cacheScope": "odp_oil_news_event_watch",
   "status": "stale",
   "sourceStatus": "stale",
-  "requestMode": "stale_error_cooldown_cache_hit",
+  "requestMode": "stale_cache_after_fetch_error",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,13 +50,13 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 28249,
+    "elapsedMs": 27656,
     "errorCode": "network_error"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-16T02:09:19.969Z",
+    "latestAttemptAt": "2026-08-16T09:00:16.978Z",
     "lastLiveSuccessAt": "2026-08-14T10:35:26.855Z",
     "latestOutcome": "network_error",
     "windows": {
@@ -67,10 +67,10 @@
         "successRatePct": 33.3
       },
       "days30": {
-        "attemptCount": 21,
+        "attemptCount": 22,
         "successCount": 7,
-        "failureCount": 14,
-        "successRatePct": 33.3
+        "failureCount": 15,
+        "successRatePct": 31.8
       }
     },
     "history": [
@@ -262,6 +262,15 @@
         "status": null,
         "errorCode": "network_error",
         "elapsedMs": 28249
+      },
+      {
+        "attemptedAt": "2026-08-16T09:00:16.978Z",
+        "outcome": "network_error",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": null,
+        "errorCode": "network_error",
+        "elapsedMs": 27656
       }
     ]
   },
@@ -612,7 +621,7 @@
   ],
   "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
   "lastFetchFailure": {
-    "at": "2026-08-16T02:09:19.969Z",
+    "at": "2026-08-16T09:00:16.978Z",
     "errorClass": "network_error",
     "cooldownHours": 4
   },
@@ -620,7 +629,7 @@
     "generatedAt": "2026-08-14T10:35:42.990Z",
     "status": "stale",
     "sourceStatus": "stale",
-    "requestMode": "stale_cache_after_fetch_error",
+    "requestMode": "stale_error_cooldown_cache_hit",
     "source": "GDELT DOC public search",
     "cachePolicy": {
       "ttlMinutes": 1440,
