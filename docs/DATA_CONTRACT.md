@@ -1050,7 +1050,7 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 - `boundaries.frontendDisplayApproved=true`、`displayOnly=true`、`notInvestmentAdvice=true`。
 - `affectsGfrrScoring` / `affectsRiskModules` / `affectsTailRiskOverlay` / `affectsDecisionModel` / `affectsExecutionLock` / `affectsPositionGuidance` / `affectsWorldOrder` / `affectsOdp` / `affectsBubbleWatch` 全部为 false。
 
-`output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–6,800 字，质量目标为 4,000–5,600 字；上限略高于 Bubble Watch 的 6,500 字，为六大模块和跨市场归因留冗余。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
+`output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–6,800 字，质量目标为 4,000–5,600 字；上限略高于 Bubble Watch 的 6,500 字，为六大模块和跨市场归因留冗余。`leadZh` 的 output contract 保持 80–900 字硬范围；provider prompt 目标为 350–650 字，并要求输出前重写到不超过 760 字以保留安全缓冲。Adapter、reviewer 与 writer 不得截断或自动改写越界正文。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
 
 `sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。
 

@@ -130,6 +130,12 @@ GitHub Actions cron 使用 UTC。当前顺序为 `Build Daily Radar Data` 22:30�
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。
 
+若 provider 已返回完整 JSON，但 `provider_output_contract_invalid` 只报告
+`output.leadZh must be a string with length 80-900`，这是 provider 字段长度漂移。保持
+production write 为 0，不得放宽 900 字 hard cap，也不得由 adapter/writer 截断或自动改写；
+prompt 目标为 350–650 字，并要求输出前自检、重写到不超过 760 字。同一 run 仍不重试，
+任何新的付费验证都需要 owner 另行明确授权。
+
 如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端会因 `sourceDataUpdatedAt` 不匹配而暂时隐藏编辑层；这是 fail-closed 预期状态。不得为几分钟的调度间隔手工改时间戳或重复调用 provider。
 
 ### Bubble Watch weekly editorial refresh

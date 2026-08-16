@@ -26,6 +26,11 @@ export function buildEditorialSystemPrompt() {
 
 目标：产出 4,000–5,600 个可见中文字符，信息密度接近专业周报；允许范围为 2,000–6,800 字，但不得为凑字数重复。结论必须是“当前压力判读”，不得伪装成危机预测、战争概率、投资建议或交易信号。
 
+字段长度分配：
+- leadZh 是 Hero 导语，目标 350–650 个字符串字符；输出前必须重写到不超过 760 个字符，为 900 字 validator hard cap 保留缓冲。
+- leadZh 只概括总分、主风险链条、关键跨市场张力和数据边界；六模块逐项展开留在 moduleAnalysis，不得堆入导语。
+- 不得在 provider 后截断、压缩或自动改写正文；超长时必须由你在输出 JSON 前自行重写。
+
 硬性事实与边界：
 - GFRR 分数及六大模块是既有规则结果；你只能解释，不得重算、改写或建议调整。
 - weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 中的每一个对象都视为事实性断言。
@@ -41,7 +46,7 @@ export function buildEditorialSystemPrompt() {
 严格输出字段：
 {
   "headlineZh": "8–90 字",
-  "leadZh": "80–900 字",
+  "leadZh": "80–900 字 hard contract；目标 350–650 字，输出前必须重写到不超过 760 字",
   "weeklyTimeline": [{"date":"YYYY-MM-DD","titleZh":"...","detailZh":"...","sourceRefIds":["..."]}],
   "scoreSynthesis": {"assessmentZh":"...","sourceRefIds":["..."]},
   "keyTensions": [{"titleZh":"...","detailZh":"...","sourceRefIds":["..."]}],
@@ -76,6 +81,11 @@ export function buildEditorialUserPrompt(input) {
     .map((source) => source.id);
   return `请依据以下紧凑证据包生成本期宏观判读。可用可信新闻 ${credibleCount} 条。只返回 JSON 对象。
 
+长度自检（输出前必须执行）：
+1. 单独检查 leadZh 字符数，目标 350–650，必须不超过 760。
+2. 若 leadZh 超过 760，先完整重写压缩；不得截断 JSON、不得把溢出内容搬到其他字段、不得依赖 adapter/writer 修正。
+3. 整体可见正文仍以 4,000–5,600 字为目标，并保持在 2,000–6,800 字兼容范围内。
+
 逐项引用自检（输出前必须执行）：
 1. 逐一检查 weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 内每个对象的 sourceRefIds。
 2. 可信新闻 source IDs = ${JSON.stringify(credibleNewsIds)}；整份输出的事实对象 sourceRefIds 并集必须至少引用其中 1 条，且 weeklyTimeline 至少一个对象必须引用其中 1 条。仅在 sourceAttribution 列出不算合格。
@@ -92,7 +102,7 @@ ${JSON.stringify(input)}`;
 export function validateEditorialPrompt(input) {
   const system = buildEditorialSystemPrompt();
   const user = buildEditorialUserPrompt(input);
-  const required = ['4,000–5,600', '2,000–6,800', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
+  const required = ['4,000–5,600', '2,000–6,800', 'leadZh 是 Hero 导语', '80–900', '350–650', '不超过 760', '不得在 provider 后截断', '长度自检', '不得截断 JSON', '不得依赖 adapter/writer 修正', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
   const missingMarkers = required.filter((marker) => !`${system}\n${user}`.includes(marker));
   return { ok: missingMarkers.length === 0, missingMarkers };
 }

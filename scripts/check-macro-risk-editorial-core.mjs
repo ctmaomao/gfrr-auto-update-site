@@ -131,9 +131,12 @@ assert(validateEditorialPrompt(input).ok, 'prompt contract must pass');
 assert(apiCalls === 1 && result.diagnostics.retryCount === 0, 'provider path must use one call and no retry');
 const body = JSON.parse(capturedRequest.request.body);
 assert(body.max_tokens === 8000 && body.response_format.type === 'json_object' && body.thinking.type === 'disabled', 'DeepSeek request bounds drifted');
+const providerSystemPrompt = body.messages.find((message) => message.role === 'system')?.content || '';
 const providerUserPrompt = body.messages.find((message) => message.role === 'user')?.content || '';
 const discoveryOnlyStory = discovery.stories.find((story) => story.evidenceStatus === 'discovery_only');
 assert(discoveryOnlyStory, 'fixture must include a discovery_only story');
+assert(providerSystemPrompt.includes('leadZh 是 Hero 导语') && providerSystemPrompt.includes('80–900') && providerSystemPrompt.includes('350–650') && providerSystemPrompt.includes('不超过 760') && providerSystemPrompt.includes('不得在 provider 后截断'), 'provider system prompt must preserve the hard leadZh contract and reserve a safe length buffer without post-provider rewriting');
+assert(providerUserPrompt.includes('长度自检') && providerUserPrompt.includes('不得截断 JSON') && providerUserPrompt.includes('不得依赖 adapter/writer 修正'), 'provider user prompt must require pre-output leadZh rewriting instead of downstream truncation');
 assert(providerUserPrompt.includes('逐项引用自检') && providerUserPrompt.includes(discoveryOnlyStory.id) && providerUserPrompt.includes('site:score'), 'provider prompt must expose claim-level discovery-only grounding guard and valid independent source IDs');
 assert(credibleNews.every((story) => providerUserPrompt.includes(story.id)) && providerUserPrompt.includes('必须至少引用其中 1 条') && providerUserPrompt.includes('weeklyTimeline 至少一个对象'), 'provider prompt must enumerate credible news IDs and require an actual factual-object citation');
 assert(!JSON.stringify(result).includes('fixture-secret-not-serialized'), 'provider result leaked API key');
@@ -163,6 +166,9 @@ const unsupportedDiscoveryClaim = structuredClone(result.output);
 unsupportedDiscoveryClaim.weeklyTimeline[1].sourceRefIds = [discoveryOnlyStory.id];
 const unsupportedDiscoveryResult = validateEditorialOutput(unsupportedDiscoveryClaim, input);
 assert(!unsupportedDiscoveryResult.ok && unsupportedDiscoveryResult.errors.some((error) => error.includes('relies only on discovery_only news')), 'discovery-only factual claim negative test must fail closed');
+const oversizedLead = structuredClone(result.output); oversizedLead.leadZh = '长'.repeat(901);
+const oversizedLeadResult = validateEditorialOutput(oversizedLead, input);
+assert(!oversizedLeadResult.ok && oversizedLeadResult.errors.some((error) => error.includes('output.leadZh')), 'oversized lead negative test must preserve the 900-character hard cap');
 const stale = validateEditorialProduction(layer, radarData, new Date('2026-08-13T06:05:00.000Z'));
 assert(!stale.ok && stale.errors.some((error) => error.includes('stale')), 'stale layer negative test must fail');
 let unsafeTarget = false; try { assertEditorialSafeTarget('data/bubble-watch.json'); } catch { unsafeTarget = true; }
@@ -170,4 +176,4 @@ assert(unsafeTarget, 'unsafe writer target negative test must fail');
 const truncated = new Error('truncated'); truncated.category = 'provider_output_contract_invalid'; truncated.responseDiagnostics = { finishReason: 'length' };
 assert(classifyProviderFailure(truncated).category === 'provider_output_truncated', 'truncation classification failed');
 
-console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, negativeTests=7)`);
+console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, negativeTests=8)`);

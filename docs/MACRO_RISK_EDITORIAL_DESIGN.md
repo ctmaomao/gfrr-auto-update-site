@@ -100,6 +100,9 @@
 - 事实性段落必须引用 input stable IDs；provider attribution 漏项只可从 input source ledger
   确定性补齐，不得改写正文或提升 evidence class。
 - 目标可见中文 4,000–5,600 字；quality review 兼容窗口 2,000–6,800 字。上限略高于 Bubble Watch 的 6,500 字，以容纳六大模块和跨市场归因，同时禁止为凑字数重复。
+- `leadZh` 是 Hero 导语，prompt 目标为 350–650 个字符串字符，并要求 provider 在输出前
+  自检、重写到不超过 760 个字符，为 output validator 的 900 字 hard cap 保留缓冲。
+  Adapter、reviewer 与 writer 不得截断、压缩或自动改写超长 provider 正文；越界仍须 fail closed。
 
 ### 5.4 Quality review
 
@@ -139,6 +142,8 @@
 - 输入必须先过 sanitizer / contract validation。
 - Prompt 明确：只用 input、不浏览、不发明数据、新闻 discovery status 限制、不得改分、
   不得输出预测/交易/仓位文案、所有引用使用 stable IDs、只返回一个 JSON object。
+- Prompt 必须在 JSON 输出前单独检查 `leadZh`：目标 350–650 字、必须不超过 760 字；若超长，
+  provider 应先完整重写压缩，不得截断 JSON、迁移溢出内容或依赖下游 adapter/writer 修正。
 - Provider user prompt 必须把 `discovery_only` 与可独立支撑的 site structured / official /
   cross-checked source IDs 分组列出，并要求对每个事实对象逐项自检；若使用
   `discovery_only`，同一个 `sourceRefIds` 数组必须同时包含独立支撑，不能只在

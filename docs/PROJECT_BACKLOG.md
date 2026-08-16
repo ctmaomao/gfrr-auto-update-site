@@ -73,6 +73,13 @@ No active P2 item. P2-14 Bubble Watch weekly editorial 与 P2-15 Macro Risk Deep
   prompt：单独枚举 credible news IDs，并要求 weeklyTimeline 与全体事实对象引用并集至少
   实际引用 1 条；新增 provider 完全忽略可信新闻时仍 hard fail 的负向回归。不自动补引用、
   不改 reviewer、不重试本次付费调用。
+- **2026-08-16 Macro Risk Editorial #10 lead-length drift repair**: scheduled run `31920590099`
+  的 Tavily/Brave 12/12 topic 查询、30 条新闻与 compact input 均正常；DeepSeek 单次调用返回
+  HTTP 200、`finishReason=stop` 和完整 JSON，但唯一 contract error 为 `leadZh` 超过 900 字。
+  该 run 保持 retry=0、production write/commit=0，前端继续 deterministic fallback；相邻 scheduled
+  run #9 在相同代码上成功，故不扩大 timeout/token/retry 或放宽 validator。本次只增加
+  `leadZh` 350–650 字 prompt 目标、输出前不超过 760 字的重写自检与 901 字 fail-closed 回归；
+  adapter/writer 仍不得截断或自动改写 provider 正文，未触发新的付费 rerun。
 
 ### P3 Items
 
