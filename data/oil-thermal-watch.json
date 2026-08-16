@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-08-16T13:01:30.329Z",
+  "generatedAt": "2026-08-16T15:36:58.912Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-08-16T10:43:00Z",
-    "latestAgeHours": 2.3,
+    "latestAcqAt": "2026-08-16T11:19:00Z",
+    "latestAgeHours": 4.3,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -135,22 +135,22 @@
     ]
   },
   "aggregate": {
-    "rowCount": 115,
-    "latestAcqAt": "2026-08-16T10:43:00Z",
+    "rowCount": 120,
+    "latestAcqAt": "2026-08-16T11:19:00Z",
     "maxFrp": 125.08,
     "confidenceCounts": {
-      "n": 101,
-      "l": 4,
-      "h": 10
+      "n": 102,
+      "l": 7,
+      "h": 11
     },
-    "highConfidenceCount": 10,
+    "highConfidenceCount": 11,
     "frpOver50Count": 1,
     "frpOver100Count": 1,
     "dayNightCounts": {
       "N": 77,
-      "D": 38
+      "D": 43
     },
-    "latestAgeHours": 2.3,
+    "latestAgeHours": 4.3,
     "facilityCount": 42,
     "facilitiesWithDetections": 19,
     "requestCount": 126,
@@ -176,12 +176,13 @@
       }
     },
     "baselineStatus": "established",
-    "repeatedObservationCount": 1,
+    "repeatedObservationCount": 2,
     "elevatedRepeatedObservationCount": 1,
     "facilitiesWithEstablishedBaseline": 42,
     "facilitiesByAnomalyLevel": {
-      "low_signal": 18,
+      "low_signal": 17,
       "none_observed": 23,
+      "repeated_watch": 1,
       "elevated_repeated_watch": 1
     }
   },
@@ -207,7 +208,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 4.2,
+      "latestAgeHours": 6.8,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -258,7 +259,7 @@
       "dayNightCounts": {
         "N": 16
       },
-      "latestAgeHours": 4.2,
+      "latestAgeHours": 6.8,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -309,7 +310,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 4.6,
+      "latestAgeHours": 7.1,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -360,7 +361,7 @@
       "dayNightCounts": {
         "N": 9
       },
-      "latestAgeHours": 4.2,
+      "latestAgeHours": 6.8,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -411,7 +412,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 6.9,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -462,7 +463,7 @@
       "dayNightCounts": {
         "N": 7
       },
-      "latestAgeHours": 4.2,
+      "latestAgeHours": 6.8,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -513,7 +514,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 5.2,
+      "latestAgeHours": 7.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -564,7 +565,7 @@
       "dayNightCounts": {
         "N": 8
       },
-      "latestAgeHours": 4.6,
+      "latestAgeHours": 7.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -615,7 +616,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 4.2,
+      "latestAgeHours": 6.8,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -760,7 +761,7 @@
       "dayNightCounts": {
         "N": 10
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 6.9,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -999,7 +1000,7 @@
       "dayNightCounts": {
         "N": 3
       },
-      "latestAgeHours": 13,
+      "latestAgeHours": 15.6,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1191,7 +1192,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 2.3,
+      "latestAgeHours": 4.9,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1291,7 +1292,7 @@
       "dayNightCounts": {
         "D": 12
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 5.7,
       "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "established",
@@ -1330,21 +1331,22 @@
       "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 4,
-      "latestAcqAt": "2026-08-16T09:58:00Z",
-      "maxFrp": 2.45,
+      "rowCount": 5,
+      "latestAcqAt": "2026-08-16T11:17:00Z",
+      "maxFrp": 2.78,
       "confidenceCounts": {
-        "n": 4
+        "n": 4,
+        "l": 1
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
         "N": 3,
-        "D": 1
+        "D": 2
       },
-      "latestAgeHours": 3.1,
-      "rawSignalLevel": "low_signal",
+      "latestAgeHours": 4.3,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 69,
@@ -1359,19 +1361,19 @@
         "sourcesWithDetectionsP95": 2,
         "sourcesWithDetections": 2,
         "sourceRepeatMet": true,
-        "rowCountAboveP95": false,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "low_signal",
-      "anomalyLabelZh": "低信号",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "me_israel_refinery_area_ashdod",
@@ -1488,7 +1490,7 @@
       "dayNightCounts": {
         "D": 2
       },
-      "latestAgeHours": 4.1,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1588,7 +1590,7 @@
       "dayNightCounts": {
         "D": 6
       },
-      "latestAgeHours": 3.1,
+      "latestAgeHours": 5.7,
       "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "established",
@@ -1687,7 +1689,7 @@
       "dayNightCounts": {
         "D": 2
       },
-      "latestAgeHours": 2.3,
+      "latestAgeHours": 4.9,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -2146,25 +2148,25 @@
       "region": "Middle East / Iraq / Basra",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Ar Rumaila; desig_cd=PPL; fc=P; cc_ft=IRQ; adm1=IQ-BA; mod_dt_ft=2002-10-22T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 12,
+      "rowCount": 14,
       "latestAcqAt": "2026-08-16T10:43:00Z",
       "maxFrp": 41.18,
       "confidenceCounts": {
-        "n": 7,
-        "h": 4,
-        "l": 1
+        "l": 2,
+        "h": 5,
+        "n": 7
       },
-      "highConfidenceCount": 4,
+      "highConfidenceCount": 5,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 12
+        "D": 14
       },
-      "latestAgeHours": 2.3,
-      "rawSignalLevel": "watch",
+      "latestAgeHours": 4.9,
+      "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 69,
@@ -2177,8 +2179,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -2199,23 +2201,24 @@
       "region": "Middle East / Iraq / Kirkuk",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Kirkuk; desig_cd=OILF; fc=L; cc_ft=IRQ; adm1=IQ-KI; mod_dt_ft=2012-04-16T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 2,
-      "latestAcqAt": "2026-08-16T10:41:00Z",
+      "rowCount": 4,
+      "latestAcqAt": "2026-08-16T11:19:00Z",
       "maxFrp": 16.63,
       "confidenceCounts": {
-        "n": 1,
+        "l": 1,
+        "n": 2,
         "h": 1
       },
       "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 2
+        "D": 4
       },
-      "latestAgeHours": 2.3,
+      "latestAgeHours": 4.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -2229,8 +2232,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
