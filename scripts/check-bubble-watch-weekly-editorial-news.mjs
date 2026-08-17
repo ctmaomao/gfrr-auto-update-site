@@ -9,6 +9,7 @@ import {
 } from './bubble-watch/weekly-editorial-contract.mjs';
 import { buildWeeklyEditorialInput } from './bubble-watch/weekly-editorial-input.mjs';
 import {
+  assessWeeklyEditorialNewsReadiness,
   buildNewsDiscovery,
   canonicalizeNewsUrl,
   rawStoriesFromFixture
@@ -72,6 +73,27 @@ const oneCredibleDiscovery = buildNewsDiscovery({
 assertValid(validateNewsDiscovery(oneCredibleDiscovery), 'one-credible-story partial discovery');
 assert(oneCredibleDiscovery.status === 'partial', 'one credible story must produce transparent status=partial');
 assert(oneCredibleDiscovery.dataGaps.some((gap) => gap.includes('仅形成 1 条')), 'one credible story must disclose its coverage limitation');
+const oneCredibleReadiness = assessWeeklyEditorialNewsReadiness(oneCredibleDiscovery);
+assert(oneCredibleReadiness.editorialReady && !oneCredibleReadiness.expectedSkip, 'one credible story with two healthy providers must remain provider-ready');
+
+const noCredibleDiscovery = buildNewsDiscovery({
+  rawStories: [
+    { provider: 'tavily', topic: 'macro_policy', title: 'Technology shares await the next inflation release', url: 'https://single-source.example/macro', publishedAt: '2026-08-10', snippet: 'bounded context' },
+    { provider: 'brave', topic: 'ai_financing_credit', title: 'AI infrastructure financing remains under review', url: 'https://another-single-source.example/financing', publishedAt: '2026-08-10', snippet: 'bounded context' }
+  ],
+  sourceStatus,
+  generatedAt: '2026-08-11T00:00:45.000Z',
+  windowStart: '2026-08-02',
+  windowEnd: '2026-08-11'
+});
+assertValid(validateNewsDiscovery(noCredibleDiscovery), 'healthy no-credible-news discovery');
+const noCredibleReadiness = assessWeeklyEditorialNewsReadiness(noCredibleDiscovery);
+assert(noCredibleDiscovery.status === 'insufficient' && noCredibleReadiness.expectedSkip && !noCredibleReadiness.editorialReady && noCredibleReadiness.reason === 'no_credible_news', 'two fully healthy indexes with zero credible stories must become an expected zero-call skip');
+const unhealthyNoCredible = structuredClone(noCredibleDiscovery);
+unhealthyNoCredible.sourceStatus.brave = { status: 'error', successCount: 0, failureCount: 6, queryRuns: [] };
+unhealthyNoCredible.liveProviderCount = 1;
+const unhealthyReadiness = assessWeeklyEditorialNewsReadiness(unhealthyNoCredible);
+assert(!unhealthyReadiness.expectedSkip && !unhealthyReadiness.editorialReady && unhealthyReadiness.reason === 'search_provider_unhealthy', 'source-health failure must remain a hard failure, not an expected skip');
 
 const bubbleWatch = readJson('data/bubble-watch.json');
 const radarData = readJson('data/radar-data.json');
@@ -129,4 +151,4 @@ unsafeBoundary.boundaries.affectsBubbleWatchScoring = true;
 const unsafeBoundaryResult = validateNewsDiscovery(unsafeBoundary);
 assert(!unsafeBoundaryResult.ok && unsafeBoundaryResult.errors.some((error) => error.includes('affectsBubbleWatchScoring must be false')), 'news scoring boundary negative test must fail');
 
-console.log(`Bubble Watch weekly editorial news/input PASS (stories=${discovery.stories.length}, stressInputStories=${stressInput.newsContext.stories.length}, facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, bytes=${Buffer.byteLength(JSON.stringify(input))}, negative tests=2)`);
+console.log(`Bubble Watch weekly editorial news/input PASS (stories=${discovery.stories.length}, stressInputStories=${stressInput.newsContext.stories.length}, facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, bytes=${Buffer.byteLength(JSON.stringify(input))}, readiness tests=3, negative tests=2)`);

@@ -73,6 +73,14 @@ No active P2 item. P2-14 Bubble Watch weekly editorial 与 P2-15 Macro Risk Deep
   prompt：单独枚举 credible news IDs，并要求 weeklyTimeline 与全体事实对象引用并集至少
   实际引用 1 条；新增 provider 完全忽略可信新闻时仍 hard fail 的负向回归。不自动补引用、
   不改 reviewer、不重试本次付费调用。
+- **2026-08-17 Bubble Watch Weekly Editorial #9 source-readiness repair**: post-refresh run
+  `31999823886` 的 Tavily/Brave 均为 6/6 `ok`，30 条脱敏结果全部为 `discovery_only`；旧流程
+  在 compact input 后以笼统的双 provider 错误非零退出，实际 DeepSeek calls=0、production
+  writes=0。修复仅把“双索引完全健康但可信新闻为 0”归类为
+  `SKIPPED_NO_CREDIBLE_NEWS` side-effect-free expected skip，并用 step outputs 守住 provider、
+  review、writer、validation、commit 七个后续步骤；任一搜索源异常仍 hard fail，可信来源门槛、
+  单次调用/no-retry 与 deterministic fallback 均未改变。真实失败 artifact replay 已证明
+  不创建 input/output/review/projection、不写 production data。
 
 ### P3 Items
 

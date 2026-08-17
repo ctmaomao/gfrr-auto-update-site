@@ -11,6 +11,34 @@ export const WEEKLY_EDITORIAL_QUERIES = Object.freeze({
   accounting_regulatory: '(AI OR artificial intelligence) accounting SEC DOJ investigation disclosure regulation'
 });
 
+export function assessWeeklyEditorialNewsReadiness(discovery) {
+  const providers = ['tavily', 'brave'].map((provider) => discovery?.sourceStatus?.[provider] || {});
+  const providerStatuses = providers.map((status) => status.status || 'missing');
+  const searchProvidersHealthy = providers.every((status) => status.status === 'ok'
+    && status.successCount === EDITORIAL_TOPICS.length
+    && status.failureCount === 0);
+  const stories = Array.isArray(discovery?.stories) ? discovery.stories : [];
+  const credibleCount = stories.filter((story) => ['official', 'cross_checked'].includes(story?.evidenceStatus)).length;
+  const editorialReady = ['ok', 'partial'].includes(discovery?.status)
+    && discovery?.liveProviderCount === 2
+    && credibleCount >= 1;
+  let reason = null;
+  if (credibleCount === 0 && searchProvidersHealthy) reason = 'no_credible_news';
+  else if (!searchProvidersHealthy) reason = 'search_provider_unhealthy';
+  else if (discovery?.liveProviderCount !== 2) reason = 'two_live_providers_required';
+  else if (credibleCount === 0) reason = 'credible_news_required';
+  else if (!['ok', 'partial'].includes(discovery?.status)) reason = 'discovery_status_not_ready';
+  return {
+    editorialReady,
+    expectedSkip: credibleCount === 0 && searchProvidersHealthy,
+    reason,
+    storyCount: stories.length,
+    credibleCount,
+    providerStatuses,
+    searchProvidersHealthy
+  };
+}
+
 const OFFICIAL_DOMAIN_SUFFIXES = Object.freeze([
   'sec.gov',
   'justice.gov',
