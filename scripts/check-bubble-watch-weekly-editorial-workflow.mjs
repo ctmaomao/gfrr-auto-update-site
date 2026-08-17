@@ -19,6 +19,12 @@ function forbidExactCommand(text, command, label) {
   if (lines.includes(command)) errors.push(`${label} contains forbidden command: ${command}`);
 }
 
+function requireReadyGate(stepName) {
+  const escaped = stepName.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const pattern = new RegExp(`- name: ${escaped}\\r?\\n\\s+if: steps\\.build_input\\.outputs\\.editorial_ready == 'true'`, 'u');
+  if (!pattern.test(workflow)) errors.push(`${WORKFLOW} step must be gated by editorial_ready=true: ${stepName}`);
+}
+
 const workflow = fs.readFileSync(WORKFLOW, 'utf8');
 const pages = fs.readFileSync(PAGES, 'utf8');
 const provider = fs.readFileSync(PROVIDER, 'utf8');
@@ -37,6 +43,9 @@ for (const marker of [
   'BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}',
   'DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}',
   'collect:bubble-watch-weekly-news -- --allow-network',
+  'id: build_input',
+  'build:bubble-watch-weekly-editorial-input -- --allow-expected-news-skip',
+  "if: steps.build_input.outputs.editorial_ready == 'true'",
   'check:bubble-watch-weekly-editorial-live-input',
   'run:bubble-watch-weekly-editorial-deepseek -- --allow-network',
   'review:bubble-watch-weekly-editorial',
@@ -47,8 +56,22 @@ for (const marker of [
   'git add data/bubble-watch.json',
   'chore: refresh Bubble Watch weekly editorial',
   'git push origin HEAD:main',
+  "if: steps.build_input.outputs.editorial_ready == 'false'",
+  'SKIPPED_NO_CREDIBLE_NEWS: no DeepSeek call and no production write.',
+  'test ! -e manual-artifacts/bubble-watch-weekly-editorial/deepseek-output-latest.json',
+  'git diff --quiet --exit-code',
   'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
 ]) requireMarker(workflow, marker, WORKFLOW);
+
+for (const stepName of [
+  'Hard-check compact provider input',
+  'Run one DeepSeek editorial call',
+  'Review and project display-only production layer',
+  'Write weekly editorial field',
+  'Validate final data and repository contracts',
+  'Protected path assertion',
+  'Commit refreshed weekly editorial'
+]) requireReadyGate(stepName);
 
 for (const marker of [
   'schedule:',
@@ -86,4 +109,4 @@ if (errors.length > 0) {
   for (const error of errors) console.error(`- ${error}`);
   process.exit(1);
 }
-console.log('Bubble Watch weekly editorial workflow check PASS (post-refresh/manual, one DeepSeek call, protected data-only write, Pages trigger)');
+console.log('Bubble Watch weekly editorial workflow check PASS (post-refresh/manual, healthy no-credible expected skip, one DeepSeek call when ready, protected data-only write, Pages trigger)');

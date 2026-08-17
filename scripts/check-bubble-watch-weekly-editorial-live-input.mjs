@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import process from 'node:process';
 
 import { assertValid, validateNewsDiscovery, validateWeeklyEditorialInput } from './bubble-watch/weekly-editorial-contract.mjs';
+import { assessWeeklyEditorialNewsReadiness } from './bubble-watch/weekly-editorial-news.mjs';
 
 const DEFAULT_DISCOVERY = 'manual-artifacts/bubble-watch-weekly-editorial/news-discovery-latest.json';
 const DEFAULT_INPUT = 'manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json';
@@ -46,9 +47,8 @@ function main() {
   const bubbleWatch = readJson(options.bubbleWatch);
   assertValid(validateNewsDiscovery(discovery), 'live weekly news discovery');
   assertValid(validateWeeklyEditorialInput(input), 'live weekly editorial input');
-  if (!['ok', 'partial'].includes(discovery.status) || discovery.liveProviderCount !== 2) {
-    throw new Error('production provider call requires usable live results from both Tavily and Brave');
-  }
+  const readiness = assessWeeklyEditorialNewsReadiness(discovery);
+  if (!readiness.editorialReady) throw new Error(`production provider call is not ready: ${readiness.reason}`);
   const credibleStories = discovery.stories.filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus));
   if (credibleStories.length < 1) throw new Error('production provider call requires at least one official/cross_checked story');
   if (input.fixtureOnly !== false || input.inputMode !== 'live_site_compact_evidence_pack') throw new Error('production provider call rejects fixture/non-live input');

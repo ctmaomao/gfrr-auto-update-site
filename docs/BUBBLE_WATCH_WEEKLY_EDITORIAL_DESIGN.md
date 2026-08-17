@@ -128,6 +128,11 @@ AI `facts` 的唯一依据。
 - `fail` 包括 invalid refs、unsafe copy、来源不足、结构错误、评分越权、外部验证虚构或
   provider failure；两个索引均无可用结果或 official/cross_checked 为 0 也必须 fail，
   不得 production write。
+- 上述 official/cross_checked 为 0 仍是 provider/review/write 的 hard stop。仅当 Tavily 与
+  Brave 的全部 6 个 topic 查询均为 `ok`、但本期确实只有 `discovery_only` 时，workflow 可在
+  provider 前记录 `SKIPPED_NO_CREDIBLE_NEWS` 并成功结束；该 expected skip 必须保持
+  DeepSeek calls=0、production writes=0，并继续显示 deterministic fallback。任一搜索源不健康、
+  schema/contract 异常或进入 provider 后失败，仍必须非零退出。
 - `promotionEligible=false` 恒成立，表示不得晋升为评分输入。
 
 ### 5.5 Production layer
@@ -168,8 +173,9 @@ AI `facts` 的唯一依据。
 1. `workflow_run` 监听成功的 `Refresh Bubble Watch`，另保留 manual dispatch。
 2. checkout / fast-forward latest main。
 3. 构建 bounded 新闻发现 artifact。
-4. 构建并验证 compact input。
-5. 调用 DeepSeek 一次。
+4. 评估新闻 readiness；双索引完全健康但可信新闻为 0 时执行 side-effect-free expected skip，
+   否则构建并验证 compact input。
+5. 仅在 `editorial_ready=true` 时调用 DeepSeek 一次。
 6. output validation。
 7. quality review。
 8. projection + production writer。
@@ -194,6 +200,8 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 ## 9. Fallback / rollback
 
 - Collector source unavailable: 不调用 DeepSeek，保留确定性正文。
+- 两个 collector 全部查询健康但可信新闻为 0：记录 `SKIPPED_NO_CREDIBLE_NEWS`，不创建 input、
+  provider output、review 或 projection，不写 production；这不是成功生成周报。
 - Provider unavailable / timeout / invalid JSON: 不写 production；不自动重试。
 - Validator / review fail: 不写 production；artifact 仅供诊断。
 - Stale / as-of mismatch: 前端忽略 AI 层。
@@ -204,6 +212,8 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 
 - Fixture contract positive / negative self-tests PASS。
 - News collector dry-run / fixture test PASS；无 secrets / raw response / unbounded body。
+- 真实 run `31999823886` 的 30 条全 `discovery_only` artifact replay 必须归类为双 provider 健康的
+  zero-call expected skip；source-health 异常的相似场景必须继续 hard fail。
 - Provider failure、timeout、invalid JSON、unknown ref、unsafe copy 均 fail closed。
 - Writer guard 证明除 `summary.weekly_editorial` 外没有语义变化。
 - `npm run check:bubble-watch`、`npm run check:all`、`git diff --check` PASS。

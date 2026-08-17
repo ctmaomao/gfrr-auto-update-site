@@ -150,7 +150,10 @@ Provider 请求固定 `max_tokens=8000`，可见正文目标 2,600–3,400 中�
 DeepSeek JSON request → output validation → quality review → projection → guarded writer →
 `check:bubble-watch` + `check:all` → exact-path assertion → 只提交
 `data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；official/cross-checked 为 0
-时 hard fail。只有 1 条时可以继续，但 discovery 必须标记 `partial`、quality review 必须
+时禁止进入 provider/review/write。若 Tavily 与 Brave 的全部 6 个 topic 查询均为 `ok`、但确实
+没有可信新闻，workflow 以 `SKIPPED_NO_CREDIBLE_NEWS` expected skip 结束，Summary 必须显示
+DeepSeek calls=0、production writes=0；任一搜索源异常仍 hard fail。只有 1 条时可以继续，
+但 discovery 必须标记 `partial`、quality review 必须
 `warn`、`dataGaps` 必须披露，其余 discovery-only 事实段落必须同时引用站内指标。discovery、input、
 provider output、review 与 projection 都是 ignored artifact，仅上传保存 3 天供诊断，
 不得提交。
@@ -163,6 +166,10 @@ provider output、review 与 projection 都是 ignored artifact，仅上传保�
 
 - Collector/input failure 发生在付费调用前。先看 provider status、query diagnostics 和
   credible-story count；不得削弱双 provider 或来源质量门槛。
+- Run `31999823886` 的 Tavily/Brave 均为 6/6 `ok`、30 条结果全部为 `discovery_only`；旧 workflow
+  把这种健康但无可信新闻的数据状态报成 input failure。修复后该精确状态只走
+  `SKIPPED_NO_CREDIBLE_NEWS`，并以不存在 input/output/review/projection、`git diff --quiet` 证明
+  零副作用；不得为了强行调用 DeepSeek 把单一媒体报道提升为 official/cross_checked。
 - Provider timeout/unavailable/invalid JSON 只生成 sanitized failure artifact，不写生产。
 - Provider 连接在 HTTP/JSON envelope 前中断必须分类为 `provider_transport_error`，并只保留
   error name/code 等 sanitized transport diagnostics；HTTP 响应存在但 envelope 无法解析时使用

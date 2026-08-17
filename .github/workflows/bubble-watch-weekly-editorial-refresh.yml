@@ -77,17 +77,22 @@ jobs:
           as_of_date="$(node -e "const fs = require('node:fs'); process.stdout.write(JSON.parse(fs.readFileSync('data/bubble-watch.json', 'utf8')).as_of_date)")"
           npm run collect:bubble-watch-weekly-news -- --allow-network --as-of "$as_of_date"
 
-      - name: Build and hard-check compact provider input
-        run: |
-          npm run build:bubble-watch-weekly-editorial-input
-          npm run check:bubble-watch-weekly-editorial-live-input
+      - name: Build compact provider input
+        id: build_input
+        run: npm run build:bubble-watch-weekly-editorial-input -- --allow-expected-news-skip
+
+      - name: Hard-check compact provider input
+        if: steps.build_input.outputs.editorial_ready == 'true'
+        run: npm run check:bubble-watch-weekly-editorial-live-input
 
       - name: Run one DeepSeek editorial call
+        if: steps.build_input.outputs.editorial_ready == 'true'
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: npm run run:bubble-watch-weekly-editorial-deepseek -- --allow-network
 
       - name: Review and project display-only production layer
+        if: steps.build_input.outputs.editorial_ready == 'true'
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
@@ -95,6 +100,7 @@ jobs:
           GITHUB_SHA="$(git rev-parse HEAD)" npm run project:bubble-watch-weekly-editorial
 
       - name: Write weekly editorial field
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           npm run write:bubble-watch-weekly-editorial -- \
             --input manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json \
@@ -103,11 +109,13 @@ jobs:
             --data-only
 
       - name: Validate final data and repository contracts
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           npm run check:bubble-watch
           npm run check:all
 
       - name: Protected path assertion
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           set -euo pipefail
           changed_paths="$(git diff --name-only)"
@@ -122,6 +130,7 @@ jobs:
           fi
 
       - name: Commit refreshed weekly editorial
+        if: steps.build_input.outputs.editorial_ready == 'true'
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -136,6 +145,18 @@ jobs:
           git commit -m "chore: refresh Bubble Watch weekly editorial"
           git pull --rebase origin main
           git push origin HEAD:main
+
+      - name: Verify expected no-credible-news skip stayed side-effect free
+        if: steps.build_input.outputs.editorial_ready == 'false'
+        run: |
+          set -euo pipefail
+          test ! -e manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json
+          test ! -e manual-artifacts/bubble-watch-weekly-editorial/deepseek-output-latest.json
+          test ! -e manual-artifacts/bubble-watch-weekly-editorial/deepseek-failure-latest.json
+          test ! -e manual-artifacts/bubble-watch-weekly-editorial/quality-review-latest.json
+          test ! -e manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json
+          git diff --quiet --exit-code
+          echo "SKIPPED_NO_CREDIBLE_NEWS: no DeepSeek call and no production write."
 
       - name: Upload sanitized editorial artifacts
         if: ${{ always() }}
