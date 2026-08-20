@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-08-20T13:11:47.004Z",
+  "generatedAt": "2026-08-20T15:49:32.340Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -19,7 +19,7 @@
   "freshness": {
     "windowDays": 1,
     "latestAcqAt": "2026-08-20T10:21:00Z",
-    "latestAgeHours": 2.8,
+    "latestAgeHours": 5.5,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -135,21 +135,21 @@
     ]
   },
   "aggregate": {
-    "rowCount": 62,
+    "rowCount": 51,
     "latestAcqAt": "2026-08-20T10:21:00Z",
     "maxFrp": 44.59,
     "confidenceCounts": {
-      "n": 56,
+      "n": 45,
       "l": 6
     },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
-      "N": 47,
+      "N": 36,
       "D": 15
     },
-    "latestAgeHours": 2.8,
+    "latestAgeHours": 5.5,
     "facilityCount": 42,
     "facilitiesWithDetections": 14,
     "requestCount": 126,
@@ -190,22 +190,22 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "2/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-08-20T08:53:00Z",
+      "rowCount": 2,
+      "latestAcqAt": "2026-08-20T07:31:00Z",
       "maxFrp": 5.88,
       "confidenceCounts": {
-        "n": 3
+        "n": 2
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 3
+        "N": 2
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 8.3,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -219,8 +219,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 2,
-        "sourceRepeatMet": true,
+        "sourcesWithDetections": 1,
+        "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -241,23 +241,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Galveston Bay; State=Texas; PADD=3; AD_Mbpd=625.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "2/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 5,
-      "latestAcqAt": "2026-08-20T08:53:00Z",
+      "rowCount": 1,
+      "latestAcqAt": "2026-08-20T07:31:00Z",
       "maxFrp": 2.69,
       "confidenceCounts": {
-        "n": 5
+        "n": 1
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 5
+        "N": 1
       },
-      "latestAgeHours": 4.3,
-      "rawSignalLevel": "watch",
+      "latestAgeHours": 8.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 69,
@@ -270,8 +270,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 2,
-        "sourceRepeatMet": true,
+        "sourcesWithDetections": 1,
+        "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -292,22 +292,22 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Garyville; State=Louisiana; PADD=3; AD_Mbpd=608.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "3/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-08-20T08:53:00Z",
+      "rowCount": 2,
+      "latestAcqAt": "2026-08-20T08:18:00Z",
       "maxFrp": 3.39,
       "confidenceCounts": {
-        "n": 3
+        "n": 2
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 3
+        "N": 2
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 7.5,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -321,7 +321,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 3,
+        "sourcesWithDetections": 2,
         "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -358,7 +358,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 4.9,
+      "latestAgeHours": 7.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -397,19 +397,19 @@
       "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 4,
-      "latestAcqAt": "2026-08-20T08:53:00Z",
+      "rowCount": 3,
+      "latestAcqAt": "2026-08-20T08:16:00Z",
       "maxFrp": 4.69,
       "confidenceCounts": {
-        "n": 4
+        "n": 3
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 4
+        "N": 3
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 7.6,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -448,19 +448,19 @@
       "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 8,
-      "latestAcqAt": "2026-08-20T08:53:00Z",
+      "rowCount": 6,
+      "latestAcqAt": "2026-08-20T08:18:00Z",
       "maxFrp": 4.32,
       "confidenceCounts": {
-        "n": 8
+        "n": 6
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 8
+        "N": 6
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 7.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -511,7 +511,7 @@
       "dayNightCounts": {
         "N": 4
       },
-      "latestAgeHours": 4.9,
+      "latestAgeHours": 7.5,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -562,7 +562,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 4,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -742,19 +742,19 @@
       "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 9,
-      "latestAcqAt": "2026-08-20T08:53:00Z",
+      "rowCount": 7,
+      "latestAcqAt": "2026-08-20T08:18:00Z",
       "maxFrp": 4.67,
       "confidenceCounts": {
-        "n": 9
+        "n": 7
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 9
+        "N": 7
       },
-      "latestAgeHours": 4.3,
+      "latestAgeHours": 7.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1275,7 +1275,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 2.9,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1326,7 +1326,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 2.8,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1566,7 +1566,7 @@
       "dayNightCounts": {
         "D": 7
       },
-      "latestAgeHours": 2.9,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1664,7 +1664,7 @@
       "dayNightCounts": {
         "D": 4
       },
-      "latestAgeHours": 2.9,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -2138,7 +2138,7 @@
       "dayNightCounts": {
         "D": 2
       },
-      "latestAgeHours": 2.8,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
