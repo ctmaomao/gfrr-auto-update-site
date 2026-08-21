@@ -4,9 +4,9 @@
   "generatedAt": "2026-08-20T13:29:37.977Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "ok",
-  "sourceStatus": "live",
-  "requestMode": "live_broad_query",
+  "status": "stale",
+  "sourceStatus": "stale",
+  "requestMode": "stale_cache_after_fetch_error",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -40,9 +40,9 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": 200,
-    "attempts": 1,
-    "retryCount": 0,
+    "status": null,
+    "attempts": 2,
+    "retryCount": 1,
     "rateLimited": false,
     "timeout": false,
     "retryAfterSeconds": null,
@@ -50,27 +50,27 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 16707,
-    "errorCode": null
+    "elapsedMs": 28080,
+    "errorCode": "network_error"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-20T13:29:21.263Z",
+    "latestAttemptAt": "2026-08-21T16:01:19.484Z",
     "lastLiveSuccessAt": "2026-08-20T13:29:21.263Z",
-    "latestOutcome": "success",
+    "latestOutcome": "network_error",
     "windows": {
       "days7": {
-        "attemptCount": 9,
+        "attemptCount": 10,
         "successCount": 4,
-        "failureCount": 5,
-        "successRatePct": 44.4
+        "failureCount": 6,
+        "successRatePct": 40
       },
       "days30": {
-        "attemptCount": 27,
+        "attemptCount": 28,
         "successCount": 11,
-        "failureCount": 16,
-        "successRatePct": 40.7
+        "failureCount": 17,
+        "successRatePct": 39.3
       }
     },
     "history": [
@@ -316,6 +316,15 @@
         "status": 200,
         "errorCode": null,
         "elapsedMs": 16707
+      },
+      {
+        "attemptedAt": "2026-08-21T16:01:19.484Z",
+        "outcome": "network_error",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": null,
+        "errorCode": "network_error",
+        "elapsedMs": 28080
       }
     ]
   },
@@ -661,7 +670,7 @@
       ]
     }
   ],
-  "error": null,
+  "error": "GDELT DOC broad oil-news cache fetch failed after 2 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
@@ -680,5 +689,400 @@
     "本 cache 只保存 compact domain/publishedAt/bucket/query 摘要和聚合计数,不保存标题原文、URL、snippet、正文或 raw response。",
     "本 cache 不确认通道关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。"
   ],
-  "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
+  "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
+  "lastFetchFailure": {
+    "at": "2026-08-21T16:01:19.484Z",
+    "errorClass": "network_error",
+    "cooldownHours": 4
+  },
+  "lastUsableCache": {
+    "generatedAt": "2026-08-20T13:29:37.977Z",
+    "status": "ok",
+    "sourceStatus": "live",
+    "requestMode": "live_broad_query",
+    "source": "GDELT DOC public search",
+    "cachePolicy": {
+      "ttlMinutes": 1440,
+      "staleMaxHours": 72,
+      "errorCooldownHours": 24,
+      "errorCooldownHoursByClass": {
+        "rate_limited": 24,
+        "timeout": 4,
+        "network_error": 4,
+        "server_error": 6,
+        "other": 12
+      },
+      "lowFrequencyCache": true,
+      "broadQueryLocalClassification": true,
+      "liveRetryPolicy": "one_bounded_retry_after_cache_or_classified_error_cooldown",
+      "liveMaxRetries": 1,
+      "retryJitterMaxMs": 1500,
+      "lastUsableCachePreservedOnError": true,
+      "lastUsableCacheAffectsCurrentSignal": false
+    },
+    "query": {
+      "id": "gdelt_broad_oil_news",
+      "label": "GDELT broad oil-news cache query",
+      "query": "(oil OR crude OR Brent OR WTI OR tanker OR refinery) (Hormuz OR \"Red Sea\" OR sanction OR outage OR attack OR disruption OR futures)",
+      "windowDays": 7,
+      "maxRecords": 32,
+      "mode": "ArtList",
+      "sort": "HybridRel"
+    },
+    "aggregate": {
+      "articleCount": 32,
+      "bucketCounts": {
+        "chokepoint": 15,
+        "sanctions": 0,
+        "supply_disruption": 1,
+        "facility_event": 1,
+        "tanker_shipping": 6,
+        "middle_east_risk": 14,
+        "market_reaction": 9
+      }
+    },
+    "articles": [
+      {
+        "domain": "economictimes.indiatimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "market_reaction",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "oilprice.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "economictimes.indiatimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "ibtimes.co.in",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "sana.sy",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "gdnonline.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "oilprice.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "thepeninsulaqatar.com",
+        "publishedAt": null,
+        "buckets": [
+          "middle_east_risk",
+          "tanker_shipping"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "timesofindia.indiatimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction",
+          "supply_disruption"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "businesstimes.com.sg",
+        "publishedAt": null,
+        "buckets": [],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "businesstimes.com.sg",
+        "publishedAt": null,
+        "buckets": [
+          "tanker_shipping"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "thedailystar.net",
+        "publishedAt": null,
+        "buckets": [
+          "tanker_shipping"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "theglobeandmail.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "econotimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "timesofindia.indiatimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "market_reaction"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "bankingnews.gr",
+        "publishedAt": null,
+        "buckets": [],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "bankingnews.gr",
+        "publishedAt": null,
+        "buckets": [],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "peakoil.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "tribune.com.pk",
+        "publishedAt": null,
+        "buckets": [
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "shippingtribune.com",
+        "publishedAt": null,
+        "buckets": [
+          "middle_east_risk",
+          "tanker_shipping"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "theepochtimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "geo.tv",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "middle_east_risk",
+          "tanker_shipping"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "en.shafaqna.com",
+        "publishedAt": null,
+        "buckets": [],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "peakoil.com",
+        "publishedAt": null,
+        "buckets": [
+          "tanker_shipping"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "theglobeandmail.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "english.aawsat.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "rigzone.com",
+        "publishedAt": null,
+        "buckets": [
+          "facility_event"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "oilprice.com",
+        "publishedAt": null,
+        "buckets": [
+          "chokepoint"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "economictimes.indiatimes.com",
+        "publishedAt": null,
+        "buckets": [
+          "market_reaction",
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "tribune.com.pk",
+        "publishedAt": null,
+        "buckets": [],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "freepressjournal.in",
+        "publishedAt": null,
+        "buckets": [
+          "middle_east_risk"
+        ],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      },
+      {
+        "domain": "zaobao.com.sg",
+        "publishedAt": null,
+        "buckets": [],
+        "queryIds": [
+          "gdelt_broad_oil_news"
+        ]
+      }
+    ],
+    "usedForCurrentSignal": false,
+    "productionImpact": {
+      "affectsValues": false,
+      "affectsScoring": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false,
+      "affectsBrentPromotion": false,
+      "affectsOdpFinalBias": false,
+      "affectsGlobalRiskHeatmap": false,
+      "affectsCrossValidation": false
+    },
+    "noteZh": "429/错误降级时仅保留最近可用 GDELT compact cache 供审计,不参与本轮 Oil News 聚合增强。"
+  }
 }
