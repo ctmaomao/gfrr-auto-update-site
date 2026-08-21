@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-08-20T13:29:37.977Z",
+  "generatedAt": "2026-08-21T21:54:30.811Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "stale",
-  "sourceStatus": "stale",
-  "requestMode": "stale_error_cooldown_cache_hit",
+  "status": "error",
+  "sourceStatus": "error",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -40,37 +40,37 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": null,
+    "status": 429,
     "attempts": 2,
     "retryCount": 1,
-    "rateLimited": false,
+    "rateLimited": true,
     "timeout": false,
     "retryAfterSeconds": null,
     "timeoutMs": 20000,
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 28080,
-    "errorCode": "network_error"
+    "elapsedMs": 28324,
+    "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-21T16:01:19.484Z",
+    "latestAttemptAt": "2026-08-21T21:54:02.485Z",
     "lastLiveSuccessAt": "2026-08-20T13:29:21.263Z",
-    "latestOutcome": "network_error",
+    "latestOutcome": "rate_limited",
     "windows": {
       "days7": {
-        "attemptCount": 10,
+        "attemptCount": 11,
         "successCount": 4,
-        "failureCount": 6,
-        "successRatePct": 40
+        "failureCount": 7,
+        "successRatePct": 36.4
       },
       "days30": {
-        "attemptCount": 28,
+        "attemptCount": 29,
         "successCount": 11,
-        "failureCount": 17,
-        "successRatePct": 39.3
+        "failureCount": 18,
+        "successRatePct": 37.9
       }
     },
     "history": [
@@ -325,352 +325,37 @@
         "status": null,
         "errorCode": "network_error",
         "elapsedMs": 28080
+      },
+      {
+        "attemptedAt": "2026-08-21T21:54:02.485Z",
+        "outcome": "rate_limited",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 28324
       }
     ]
   },
+  "lastFetchFailure": {
+    "at": "2026-08-21T21:54:02.485Z",
+    "errorClass": "rate_limited",
+    "cooldownHours": 24
+  },
   "aggregate": {
-    "articleCount": 32,
+    "articleCount": 0,
     "bucketCounts": {
-      "chokepoint": 15,
+      "chokepoint": 0,
       "sanctions": 0,
-      "supply_disruption": 1,
-      "facility_event": 1,
-      "tanker_shipping": 6,
-      "middle_east_risk": 14,
-      "market_reaction": 9
+      "supply_disruption": 0,
+      "facility_event": 0,
+      "tanker_shipping": 0,
+      "middle_east_risk": 0,
+      "market_reaction": 0
     }
   },
-  "articles": [
-    {
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "oilprice.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "ibtimes.co.in",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "sana.sy",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "gdnonline.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "oilprice.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "thepeninsulaqatar.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "supply_disruption"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "businesstimes.com.sg",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "businesstimes.com.sg",
-      "publishedAt": null,
-      "buckets": [
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "thedailystar.net",
-      "publishedAt": null,
-      "buckets": [
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "theglobeandmail.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "econotimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "timesofindia.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "market_reaction"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "bankingnews.gr",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "bankingnews.gr",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "peakoil.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "tribune.com.pk",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "shippingtribune.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "theepochtimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "geo.tv",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "en.shafaqna.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "peakoil.com",
-      "publishedAt": null,
-      "buckets": [
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "theglobeandmail.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "english.aawsat.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "rigzone.com",
-      "publishedAt": null,
-      "buckets": [
-        "facility_event"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "oilprice.com",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "economictimes.indiatimes.com",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "tribune.com.pk",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "freepressjournal.in",
-      "publishedAt": null,
-      "buckets": [
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "zaobao.com.sg",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    }
-  ],
-  "error": "GDELT DOC broad oil-news cache fetch failed after 2 attempt(s)",
+  "articles": [],
+  "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
@@ -690,16 +375,11 @@
     "本 cache 不确认通道关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。"
   ],
   "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
-  "lastFetchFailure": {
-    "at": "2026-08-21T16:01:19.484Z",
-    "errorClass": "network_error",
-    "cooldownHours": 4
-  },
   "lastUsableCache": {
     "generatedAt": "2026-08-20T13:29:37.977Z",
     "status": "stale",
     "sourceStatus": "stale",
-    "requestMode": "stale_cache_after_fetch_error",
+    "requestMode": "stale_error_cooldown_cache_hit",
     "source": "GDELT DOC public search",
     "cachePolicy": {
       "ttlMinutes": 1440,
