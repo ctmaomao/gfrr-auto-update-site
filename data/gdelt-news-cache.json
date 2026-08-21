@@ -6,7 +6,7 @@
   "cacheScope": "odp_oil_news_event_watch",
   "status": "stale",
   "sourceStatus": "stale",
-  "requestMode": "stale_cache_after_fetch_error",
+  "requestMode": "stale_error_cooldown_cache_hit",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -697,9 +697,9 @@
   },
   "lastUsableCache": {
     "generatedAt": "2026-08-20T13:29:37.977Z",
-    "status": "ok",
-    "sourceStatus": "live",
-    "requestMode": "live_broad_query",
+    "status": "stale",
+    "sourceStatus": "stale",
+    "requestMode": "stale_cache_after_fetch_error",
     "source": "GDELT DOC public search",
     "cachePolicy": {
       "ttlMinutes": 1440,
