@@ -1,8 +1,8 @@
 {
   "schemaVersion": "v28.0M-market-pricing-history-1",
   "status": "has_history",
-  "updatedAt": "2026-08-15T08:31:53.701Z",
-  "generatedAt": "2026-08-15T08:31:53.701Z",
+  "updatedAt": "2026-08-22T08:32:35.267Z",
+  "generatedAt": "2026-08-22T08:32:35.267Z",
   "sourceMode": "manual_weekly_input_committed",
   "descriptionZh": "市场定价温度计历史数据。QQQ 继续作为 primary；M-91 已通过 Yahoo chart Daily/manual market-pricing path 接入 NDX / IXIC display-only auxiliary comparison。当前 status=has_history。",
   "assets": {
@@ -20,19 +20,12 @@
         "marketPricingDailyOnly": true,
         "workerRuntime": false,
         "previousVendor": "yahoo_chart",
-        "lastCommittedAt": "2026-08-15T08:31:53.701Z",
+        "lastCommittedAt": "2026-08-22T08:32:35.267Z",
         "committedRecordsCount": 522
       },
       "frequency": "weekly",
       "currency": "USD",
       "records": [
-        {
-          "date": "2016-08-15",
-          "isoWeek": "2016-W33",
-          "close": 117.26,
-          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
         {
           "date": "2016-08-22",
           "isoWeek": "2016-W34",
@@ -3674,9 +3667,16 @@
           "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-08-14",
+          "date": "2026-08-10",
           "isoWeek": "2026-W33",
           "close": 731.07,
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-21",
+          "isoWeek": "2026-W34",
+          "close": 713.44,
           "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
           "sourceVendor": "yahoo_chart"
         }
@@ -3684,8 +3684,8 @@
       "coverage": {
         "weeklyRows": 522,
         "hasAtLeast60Weeks": true,
-        "oldestDate": "2016-08-15",
-        "latestDate": "2026-08-14"
+        "oldestDate": "2016-08-22",
+        "latestDate": "2026-08-21"
       },
       "dataGaps": [
         "MA60 / 标准差 / z-score 计算待 v28.0M-26 启用。",
