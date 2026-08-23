@@ -26,6 +26,16 @@ export function buildEditorialSystemPrompt() {
 
 目标：产出 4,000–5,600 个可见中文字符，信息密度接近专业周报；允许范围为 2,000–6,800 字，但不得为凑字数重复。结论必须是“当前压力判读”，不得伪装成危机预测、战争概率、投资建议或交易信号。
 
+可见正文预算：只统计前端实际展示的标题、日期、正文、数据限制与置信度说明；不计 sourceRefIds、module 枚举、claimType、auditFlags 或其他机器元数据。
+- leadZh 是 Hero 导语，目标 350–600 字，必须不超过 650 字；只概括总分、主风险链、关键张力和证据边界。
+- weeklyTimeline 恰好 3 条，每条 detailZh 100–170 字；keyTensions 恰好 2 条，每条 detailZh 180–280 字。
+- moduleAnalysis 恰好 6 条，每条 assessmentZh 180–250 字；不得把其他章节原句重复到六模块。
+- crossMarketAnalysis 恰好 3 条，每条 observationZh 与 implicationZh 各 70–120 字。
+- historicalComparison 的 similaritiesZh 与 differencesZh 各 140–200 字。
+- watchNext 恰好 3 条；每条 conditionZh 不超过 50 字、whyItMattersZh 不超过 100 字、invalidationZh 不超过 80 字。
+- dataGaps 恰好 2 条，每条不超过 80 字；confidence.reasonZh 不超过 140 字。
+- 输出前按上述真实可见字段汇总自检，目标 4,000–5,600 字且必须不超过 6,200 字，为 6,800 字 hard cap 保留缓冲。超长时完整重写压缩，不得截断 JSON、不得把溢出内容搬到机器字段，也不得依赖 adapter/writer 修正。
+
 硬性事实与边界：
 - GFRR 分数及六大模块是既有规则结果；你只能解释，不得重算、改写或建议调整。
 - weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 中的每一个对象都视为事实性断言。
@@ -41,7 +51,7 @@ export function buildEditorialSystemPrompt() {
 严格输出字段：
 {
   "headlineZh": "8–90 字",
-  "leadZh": "80–900 字",
+  "leadZh": "80–900 字 hard contract；本次目标 350–600 字且必须不超过 650 字",
   "weeklyTimeline": [{"date":"YYYY-MM-DD","titleZh":"...","detailZh":"...","sourceRefIds":["..."]}],
   "scoreSynthesis": {"assessmentZh":"...","sourceRefIds":["..."]},
   "keyTensions": [{"titleZh":"...","detailZh":"...","sourceRefIds":["..."]}],
@@ -60,7 +70,7 @@ export function buildEditorialSystemPrompt() {
   }
 }
 
-数量上限：weeklyTimeline 3–5；keyTensions 2–4；moduleAnalysis 恰好 6 且顺序为 ${RISK_MODULES.join(', ')}；crossMarketAnalysis 3–5；watchNext 3–5；dataGaps 1–12。`;
+合同允许范围：weeklyTimeline 3–5；keyTensions 2–4；moduleAnalysis 恰好 6 且顺序为 ${RISK_MODULES.join(', ')}；crossMarketAnalysis 3–5；watchNext 3–5；dataGaps 1–12。本次生成必须采用上方较窄预算，不得把合同兼容上限当作目标。`;
 }
 
 export function buildEditorialUserPrompt(input) {
@@ -75,6 +85,11 @@ export function buildEditorialUserPrompt(input) {
     .filter((source) => source?.kind === 'site_structured' || ['official', 'cross_checked'].includes(source?.sourceClass))
     .map((source) => source.id);
   return `请依据以下紧凑证据包生成本期宏观判读。可用可信新闻 ${credibleCount} 条。只返回 JSON 对象。
+
+长度自检（输出前必须执行）：
+1. 只汇总前端真实可见字段，不计 sourceRefIds 或其他机器元数据；总计目标 4,000–5,600 字，必须不超过 6,200 字。
+2. 逐项核对系统提示中的分区数量和字符预算，尤其是 leadZh 必须不超过 650 字，weeklyTimeline/keyTensions/crossMarketAnalysis/watchNext 分别采用 3/2/3/3 条。
+3. 若超出任一预算，先完整重写压缩；不得截断 JSON、不得将正文移入 sourceRefIds/sourceAttribution/auditFlags、不得依赖 adapter/writer 修正。
 
 逐项引用自检（输出前必须执行）：
 1. 逐一检查 weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 内每个对象的 sourceRefIds。
@@ -92,7 +107,7 @@ ${JSON.stringify(input)}`;
 export function validateEditorialPrompt(input) {
   const system = buildEditorialSystemPrompt();
   const user = buildEditorialUserPrompt(input);
-  const required = ['4,000–5,600', '2,000–6,800', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
+  const required = ['4,000–5,600', '2,000–6,800', '不计 sourceRefIds', 'weeklyTimeline 恰好 3', 'keyTensions 恰好 2', 'crossMarketAnalysis 恰好 3', 'watchNext 恰好 3', '不超过 6,200', '长度自检', '不得截断 JSON', '不得依赖 adapter/writer 修正', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
   const missingMarkers = required.filter((marker) => !`${system}\n${user}`.includes(marker));
   return { ok: missingMarkers.length === 0, missingMarkers };
 }
@@ -251,7 +266,12 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
     error.category = 'provider_output_contract_invalid';
     error.responseDiagnostics = {
       ...responseDiagnostics(responseJson, response?.status || null),
-      contract: { errorCount: validation.errors.length, visibleTextLength: validation.visibleTextLength, errors: validation.errors.slice(0, 24) }
+      contract: {
+        errorCount: validation.errors.length,
+        visibleTextLength: validation.visibleTextLength,
+        visibleTextSectionLengths: validation.visibleTextSectionLengths,
+        errors: validation.errors.slice(0, 24)
+      }
     };
     throw error;
   }

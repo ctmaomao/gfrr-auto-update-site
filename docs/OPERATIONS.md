@@ -126,6 +126,10 @@ GitHub Actions cron 使用 UTC。当前顺序为 `Build Daily Radar Data` 22:30�
 
 普通质量 `warn`（例如只有一条可信新闻或正文偏离 4,000–5,600 字目标但仍在 2,000–6,800 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
 
+可见正文长度只统计页面真实渲染的标题、日期、正文、数据限制和置信度说明；`sourceRefIds`、module 枚举、claim type 与 audit flags 是机器元数据，不得因引用更充分而增加“可见字数”。prompt 要求按 section 预算并在输出前把真实可见正文控制在 6,200 字以内；validator 的 6,800 字 hard cap 不变。若仍出现长度失败，先查看 failure artifact 的 `visibleTextSectionLengths`，定位超长 section；不得提高上限、保存失败正文、在 adapter/writer 截断，或同 run 重试。
+
+scheduled workflow 始终运行远端 `main`，本地修改或仅 push 到 feature branch 都不会修复下一次定时任务。Actions 故障只有在修复提交已成为 `origin/main` 的祖先、精确 workflow 重跑成功且下游 Pages/写入边界核对完成后才算线上闭环；否则只能报告“本地修复完成，线上仍未生效”。
+
 零可信新闻不允许进入 provider/review/write。若 artifact 显示 Tavily 与 Brave 的所有 topic 查询均为 `ok`，但当期确实只有 `discovery_only`，workflow 会在 provider 前记录 `SKIPPED_NO_CREDIBLE_NEWS` 并以 expected fail-closed skip 结束；这表示本期没有生成新判读，不是 refresh 成功。确认 Summary 中 `DeepSeek calls: 0`、`Production data writes: 0`，并允许 deterministic overview 继续兜底。若任一搜索源不是 `ok`、artifact/schema 异常或已进入 provider 后失败，仍按真实故障处理，不得改成 skip。
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。
@@ -1428,7 +1432,7 @@ FOMC minutes keyword NLP 的日常离线复核：
 npm run review:fomc-minutes-tone-quality -- --no-output
 ```
 
-默认 `PASS` 表示官方 URL/日期、鹰鸽差值 8 阈值、六类 topic count 与确定性摘要相互一致且证据龄不超过 70 天。`fallback`、70–120 天 `aging`、超过 120 天 `stale` 或完整 `missing/未知` 输出 `WATCH`,默认不阻断 `check:all`;scheduled refresh 后需要人工硬门时追加 `--strict`。`FAIL` 表示字段/语义冲突、非官方 URL、无效计数、摘要不可复现或出现预测/交易/决策语言。该命令不联网、不刷新 Daily、不写 production data；默认 artifact 仅位于 ignored `manual-artifacts/fomc-minutes/`。
+默认 `PASS` 表示官方 URL/日期、鹰鸽差值 8 阈值、六类 topic count 与确定性摘要相互一致且证据龄不超过 70 天。生产文件的证据龄按 checker 实际执行时的 UTC 时间计算；只有 synthetic replay 使用冻结时间。`fallback`、70–120 天 `aging`、超过 120 天 `stale` 或完整 `missing/未知` 输出 `WATCH`,默认不阻断 `check:all`;scheduled refresh 后需要人工硬门时追加 `--strict`。`FAIL` 表示字段/语义冲突、非官方 URL、无效计数、摘要不可复现或出现预测/交易/决策语言。若 Daily 在 `Commit updated data files` 阶段失败，日志中的 `findings=` 会给出实际 failure code；先核对是否为真实未来日期或契约冲突，不得通过放宽官方 URL、计数或摘要门禁处理。该命令不联网、不刷新 Daily、不写 production data；默认 artifact 仅位于 ignored `manual-artifacts/fomc-minutes/`。
 
 ### ODP P59 FIRMS request-health operator note
 

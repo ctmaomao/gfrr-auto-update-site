@@ -99,7 +99,7 @@
   - `boundaries`
 - 事实性段落必须引用 input stable IDs；provider attribution 漏项只可从 input source ledger
   确定性补齐，不得改写正文或提升 evidence class。
-- 目标可见中文 4,000–5,600 字；quality review 兼容窗口 2,000–6,800 字。上限略高于 Bubble Watch 的 6,500 字，以容纳六大模块和跨市场归因，同时禁止为凑字数重复。
+- 目标可见中文 4,000–5,600 字；quality review 兼容窗口 2,000–6,800 字。可见字数只统计前端实际渲染的标题、日期、正文、数据限制与置信度说明，不得把 `sourceRefIds`、module 枚举、claim type 或 audit flags 等机器元数据计入正文长度。上限略高于 Bubble Watch 的 6,500 字，以容纳六大模块和跨市场归因，同时禁止为凑字数重复。
 
 ### 5.4 Quality review
 
@@ -139,6 +139,7 @@
 - 输入必须先过 sanitizer / contract validation。
 - Prompt 明确：只用 input、不浏览、不发明数据、新闻 discovery status 限制、不得改分、
   不得输出预测/交易/仓位文案、所有引用使用 stable IDs、只返回一个 JSON object。
+- Prompt 必须给出按前端字段划分的字符预算，要求采用合同允许数量的低端组合并在输出前把真实可见正文压到 6,200 字以内，为 6,800 字 hard cap 留出缓冲；不得依赖 adapter/writer 截断或改写。provider contract failure 的脱敏 diagnostics 应记录各可见 section 的字符数，但不得保存未通过的候选正文。
 - Provider user prompt 必须把 `discovery_only` 与可独立支撑的 site structured / official /
   cross-checked source IDs 分组列出，并要求对每个事实对象逐项自检；若使用
   `discovery_only`，同一个 `sourceRefIds` 数组必须同时包含独立支撑，不能只在

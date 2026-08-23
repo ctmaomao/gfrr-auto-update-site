@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { EDITORIAL_TOPICS, assertValid, validateEditorialInput, validateEditorialOutput, validateEditorialReview } from './macro-risk/editorial-contract.mjs';
+import { EDITORIAL_TOPICS, assertValid, validateEditorialInput, validateEditorialOutput, validateEditorialReview, visibleEditorialText } from './macro-risk/editorial-contract.mjs';
 import { buildEditorialInput } from './macro-risk/editorial-input.mjs';
 import { assessEditorialNewsReadiness, buildNewsDiscovery } from './macro-risk/editorial-news.mjs';
 import { EDITORIAL_PROVIDER_CONFIG, classifyProviderFailure, parseEditorialProviderContent, requestEditorial, validateEditorialPrompt } from './macro-risk/editorial-provider.mjs';
@@ -17,6 +17,17 @@ function stripCredibleSourceRefs(value, credibleIds) {
     const filtered = item.filter((refId) => !credibleIds.has(refId));
     return [key, filtered.length > 0 ? filtered : ['site:score']];
   }));
+}
+
+function replaceSourceRefIds(value, sourceRefIds) {
+  if (Array.isArray(value)) return value.map((item) => replaceSourceRefIds(item, sourceRefIds));
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+    key,
+    key === 'sourceRefIds' && Array.isArray(item)
+      ? [...sourceRefIds]
+      : replaceSourceRefIds(item, sourceRefIds)
+  ]));
 }
 
 const rawStories = [
@@ -131,9 +142,12 @@ assert(validateEditorialPrompt(input).ok, 'prompt contract must pass');
 assert(apiCalls === 1 && result.diagnostics.retryCount === 0, 'provider path must use one call and no retry');
 const body = JSON.parse(capturedRequest.request.body);
 assert(body.max_tokens === 8000 && body.response_format.type === 'json_object' && body.thinking.type === 'disabled', 'DeepSeek request bounds drifted');
+const providerSystemPrompt = body.messages.find((message) => message.role === 'system')?.content || '';
 const providerUserPrompt = body.messages.find((message) => message.role === 'user')?.content || '';
 const discoveryOnlyStory = discovery.stories.find((story) => story.evidenceStatus === 'discovery_only');
 assert(discoveryOnlyStory, 'fixture must include a discovery_only story');
+assert(providerSystemPrompt.includes('可见正文预算') && providerSystemPrompt.includes('不计 sourceRefIds') && providerSystemPrompt.includes('weeklyTimeline 恰好 3') && providerSystemPrompt.includes('不超过 6,200'), 'provider system prompt must budget actual frontend prose with a safe global buffer');
+assert(providerUserPrompt.includes('长度自检') && providerUserPrompt.includes('3/2/3/3') && providerUserPrompt.includes('不得依赖 adapter/writer 修正'), 'provider user prompt must require section-budget self-review without downstream rewriting');
 assert(providerUserPrompt.includes('逐项引用自检') && providerUserPrompt.includes(discoveryOnlyStory.id) && providerUserPrompt.includes('site:score'), 'provider prompt must expose claim-level discovery-only grounding guard and valid independent source IDs');
 assert(credibleNews.every((story) => providerUserPrompt.includes(story.id)) && providerUserPrompt.includes('必须至少引用其中 1 条') && providerUserPrompt.includes('weeklyTimeline 至少一个对象'), 'provider prompt must enumerate credible news IDs and require an actual factual-object citation');
 assert(!JSON.stringify(result).includes('fixture-secret-not-serialized'), 'provider result leaked API key');
@@ -163,6 +177,16 @@ const unsupportedDiscoveryClaim = structuredClone(result.output);
 unsupportedDiscoveryClaim.weeklyTimeline[1].sourceRefIds = [discoveryOnlyStory.id];
 const unsupportedDiscoveryResult = validateEditorialOutput(unsupportedDiscoveryClaim, input);
 assert(!unsupportedDiscoveryResult.ok && unsupportedDiscoveryResult.errors.some((error) => error.includes('relies only on discovery_only news')), 'discovery-only factual claim negative test must fail closed');
+const citationIds = result.output.sourceAttribution.map((item) => item.sourceRefId).slice(0, 12);
+const citationRichOutput = replaceSourceRefIds(structuredClone(result.output), citationIds);
+const citationRichResult = validateEditorialOutput(citationRichOutput, input);
+assert(citationIds.length >= 2 && citationRichResult.ok, `machine citation metadata must not invalidate otherwise bounded visible prose: ${citationRichResult.errors.join('; ')}`);
+assert(citationRichResult.visibleTextLength === outputResult.visibleTextLength && visibleEditorialText(citationRichOutput) === visibleEditorialText(result.output), 'sourceRefIds must not be counted as visible editorial prose');
+const oversizedVisibleProse = structuredClone(result.output);
+oversizedVisibleProse.moduleAnalysis[0].assessmentZh = '长'.repeat(6801);
+const oversizedVisibleResult = validateEditorialOutput(oversizedVisibleProse, input);
+assert(!oversizedVisibleResult.ok && oversizedVisibleResult.errors.some((error) => error.includes('visible editorial text')), 'genuinely oversized visible prose must remain fail closed');
+assert(oversizedVisibleResult.visibleTextSectionLengths.modules > 6800, 'oversized visible prose diagnostics must identify the responsible section without storing provider text');
 const stale = validateEditorialProduction(layer, radarData, new Date('2026-08-13T06:05:00.000Z'));
 assert(!stale.ok && stale.errors.some((error) => error.includes('stale')), 'stale layer negative test must fail');
 let unsafeTarget = false; try { assertEditorialSafeTarget('data/bubble-watch.json'); } catch { unsafeTarget = true; }
@@ -170,4 +194,4 @@ assert(unsafeTarget, 'unsafe writer target negative test must fail');
 const truncated = new Error('truncated'); truncated.category = 'provider_output_contract_invalid'; truncated.responseDiagnostics = { finishReason: 'length' };
 assert(classifyProviderFailure(truncated).category === 'provider_output_truncated', 'truncation classification failed');
 
-console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, negativeTests=7)`);
+console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, metadataRegressionTests=1, negativeTests=8)`);
