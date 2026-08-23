@@ -8,7 +8,8 @@ import {
 } from './review-fomc-minutes-tone-quality.mjs';
 
 const errors = [];
-const NOW_MS = Date.parse('2026-07-26T00:00:00Z');
+const FIXTURE_NOW_MS = Date.parse('2026-07-26T00:00:00Z');
+const POST_RELEASE_NOW_MS = Date.parse('2026-08-21T22:51:00Z');
 
 function fail(message) {
   errors.push(message);
@@ -29,7 +30,7 @@ function clone(value) {
 function review(data) {
   return reviewFomcMinutesToneQuality(data, {
     inputPath: 'docs/fixtures/fomc-minutes/synthetic.json',
-    nowMs: NOW_MS
+    nowMs: FIXTURE_NOW_MS
   });
 }
 
@@ -37,10 +38,21 @@ function hasCode(report, code) {
   return report.review.findings.some((finding) => finding.code === code);
 }
 
+function summarizeFindings(report) {
+  return report.review.findings
+    .map((finding) => `${finding.severity}:${finding.code}`)
+    .join(', ') || 'none';
+}
+
 const radarData = JSON.parse(readText('data/radar-data.json'));
-const current = review(radarData);
+const current = reviewFomcMinutesToneQuality(radarData, {
+  inputPath: 'data/radar-data.json'
+});
 assert(current.schemaVersion === REVIEW_SCHEMA, 'review schema version is not stable');
-assert(current.review.status !== 'FAIL', 'current production FOMC minutes review must not FAIL');
+assert(
+  current.review.status !== 'FAIL',
+  `current production FOMC minutes review must not FAIL (findings=${summarizeFindings(current)})`
+);
 assert(current.boundary.auditOnly === true, 'review boundary.auditOnly must be true');
 assert(current.boundary.displayOnly === true, 'review boundary.displayOnly must be true');
 for (const [key, value] of Object.entries(current.boundary)) {
@@ -49,33 +61,61 @@ for (const [key, value] of Object.entries(current.boundary)) {
   }
 }
 
-const policy = radarData.macroDrivers.policyExpectations;
+const fixtureRadarData = clone(radarData);
+const fixturePolicy = fixtureRadarData.macroDrivers.policyExpectations;
+fixturePolicy.minutesDate = '2026-06-17T00:00:00Z';
+fixturePolicy.minutesUrl = 'https://www.federalreserve.gov/monetarypolicy/fomcminutes20260617.htm';
+const policy = fixturePolicy;
 
-const toneMismatch = clone(radarData);
+const postFixtureRelease = clone(fixtureRadarData);
+postFixtureRelease.macroDrivers.policyExpectations.minutesDate = '2026-07-29T00:00:00Z';
+postFixtureRelease.macroDrivers.policyExpectations.minutesUrl =
+  'https://www.federalreserve.gov/monetarypolicy/fomcminutes20260729.htm';
+const postFixtureReleaseReport = reviewFomcMinutesToneQuality(postFixtureRelease, {
+  inputPath: 'docs/fixtures/fomc-minutes/post-fixture-release.json',
+  nowMs: POST_RELEASE_NOW_MS
+});
+assert(
+  postFixtureReleaseReport.review.status === 'PASS',
+  'a valid newly released minutes date after the frozen fixture epoch must PASS at the production review time'
+);
+const postFixtureFallback = clone(postFixtureRelease);
+postFixtureFallback.macroDrivers.policyExpectations.sourceStatus.fomcMinutes = 'fallback';
+const postFixtureFallbackReport = reviewFomcMinutesToneQuality(postFixtureFallback, {
+  inputPath: 'docs/fixtures/fomc-minutes/post-fixture-fallback.json',
+  nowMs: POST_RELEASE_NOW_MS
+});
+assert(
+  postFixtureFallbackReport.review.status === 'WATCH'
+    && hasCode(postFixtureFallbackReport, 'minutes_source_fallback'),
+  'a valid post-fixture last-good payload must WATCH instead of inheriting the frozen-time future-date failure'
+);
+
+const toneMismatch = clone(fixtureRadarData);
 toneMismatch.macroDrivers.policyExpectations.minutesPolicyTone = '偏鸽';
 const toneMismatchReport = review(toneMismatch);
 assert(toneMismatchReport.review.status === 'FAIL', 'tone/count mismatch must FAIL');
 assert(hasCode(toneMismatchReport, 'tone_count_mismatch'), 'tone/count mismatch code is missing');
 
-const summaryMismatch = clone(radarData);
+const summaryMismatch = clone(fixtureRadarData);
 summaryMismatch.macroDrivers.policyExpectations.minutesSummaryZh = 'FOMC minutes keyword NLP 显示语气平衡。';
 assert(hasCode(review(summaryMismatch), 'summary_not_reproducible'), 'summary mismatch must be detected');
 
-const unsafeWording = clone(radarData);
+const unsafeWording = clone(fixtureRadarData);
 unsafeWording.macroDrivers.policyExpectations.minutesSummaryZh =
   `${policy.minutesSummaryZh} 建议加仓并执行交易。`;
 assert(hasCode(review(unsafeWording), 'summary_decision_language'), 'decision wording must be rejected');
 
-const unofficialUrl = clone(radarData);
+const unofficialUrl = clone(fixtureRadarData);
 unofficialUrl.macroDrivers.policyExpectations.minutesUrl =
   'https://example.com/monetarypolicy/fomcminutes20260617.htm';
 assert(hasCode(review(unofficialUrl), 'minutes_url_not_official'), 'unofficial minutes URL must FAIL');
 
-const invalidCounts = clone(radarData);
+const invalidCounts = clone(fixtureRadarData);
 invalidCounts.macroDrivers.policyExpectations.minutesHawkishTermCount = -1;
 assert(hasCode(review(invalidCounts), 'tone_count_invalid'), 'negative tone count must FAIL');
 
-const cleanMissing = clone(radarData);
+const cleanMissing = clone(fixtureRadarData);
 const missingPolicy = cleanMissing.macroDrivers.policyExpectations;
 missingPolicy.sourceStatus.fomcMinutes = 'missing';
 missingPolicy.minutesDate = null;
@@ -93,10 +133,13 @@ const inconsistentMissing = clone(cleanMissing);
 inconsistentMissing.macroDrivers.policyExpectations.minutesSummaryZh = '偏鹰';
 assert(review(inconsistentMissing).review.status === 'FAIL', 'missing source with payload must FAIL');
 
-const fallback = clone(radarData);
+const fallback = clone(fixtureRadarData);
 fallback.macroDrivers.policyExpectations.sourceStatus.fomcMinutes = 'fallback';
 const fallbackReport = review(fallback);
-assert(fallbackReport.review.status === 'WATCH', 'fallback source must WATCH');
+assert(
+  fallbackReport.review.status === 'WATCH',
+  `fallback source must WATCH (actual=${fallbackReport.review.status}, findings=${summarizeFindings(fallbackReport)})`
+);
 assert(hasCode(fallbackReport, 'minutes_source_fallback'), 'fallback source watch code is absent');
 
 const manualRequired = clone(cleanMissing);
@@ -105,7 +148,7 @@ const manualRequiredReport = review(manualRequired);
 assert(manualRequiredReport.review.status === 'WATCH', 'manual_required source must WATCH');
 assert(hasCode(manualRequiredReport, 'minutes_source_manual_required'), 'manual_required watch code is absent');
 
-const stale = clone(radarData);
+const stale = clone(fixtureRadarData);
 stale.macroDrivers.policyExpectations.minutesDate = '2026-01-01T00:00:00.000Z';
 stale.macroDrivers.policyExpectations.minutesUrl =
   'https://www.federalreserve.gov/monetarypolicy/fomcminutes20260101.htm';

@@ -87,13 +87,6 @@ function uniqueStrings(values, label, errors) {
   return seen;
 }
 
-function collectStrings(value, output = []) {
-  if (typeof value === 'string') output.push(value);
-  else if (Array.isArray(value)) value.forEach((item) => collectStrings(item, output));
-  else if (isRecord(value)) Object.values(value).forEach((item) => collectStrings(item, output));
-  return output;
-}
-
 function collectNamedStringArrays(value, fieldName, output = new Set()) {
   if (Array.isArray(value)) value.forEach((item) => collectNamedStringArrays(item, fieldName, output));
   else if (isRecord(value)) {
@@ -117,20 +110,37 @@ function factualClaims(output) {
   ];
 }
 
+function joinVisibleStrings(values) {
+  return values.filter((value) => typeof value === 'string' && value.trim()).join('\n');
+}
+
+export function visibleEditorialSections(output) {
+  return {
+    headline: joinVisibleStrings([output?.headlineZh]),
+    lead: joinVisibleStrings([output?.leadZh]),
+    timeline: joinVisibleStrings((Array.isArray(output?.weeklyTimeline) ? output.weeklyTimeline : [])
+      .flatMap((item) => [item?.date, item?.titleZh, item?.detailZh])),
+    scoreSynthesis: joinVisibleStrings([output?.scoreSynthesis?.assessmentZh]),
+    keyTensions: joinVisibleStrings((Array.isArray(output?.keyTensions) ? output.keyTensions : [])
+      .flatMap((item) => [item?.titleZh, item?.detailZh])),
+    modules: joinVisibleStrings((Array.isArray(output?.moduleAnalysis) ? output.moduleAnalysis : [])
+      .flatMap((item) => [item?.labelZh, item?.assessmentZh])),
+    crossMarket: joinVisibleStrings((Array.isArray(output?.crossMarketAnalysis) ? output.crossMarketAnalysis : [])
+      .flatMap((item) => [item?.assetZh, item?.observationZh, item?.implicationZh])),
+    historicalComparison: joinVisibleStrings([
+      output?.historicalComparison?.periodZh,
+      output?.historicalComparison?.similaritiesZh,
+      output?.historicalComparison?.differencesZh
+    ]),
+    watchNext: joinVisibleStrings((Array.isArray(output?.watchNext) ? output.watchNext : [])
+      .flatMap((item) => [item?.conditionZh, item?.whyItMattersZh, item?.invalidationZh])),
+    dataGaps: joinVisibleStrings(Array.isArray(output?.dataGaps) ? output.dataGaps : []),
+    confidence: joinVisibleStrings([output?.confidence?.reasonZh])
+  };
+}
+
 export function visibleEditorialText(output) {
-  return collectStrings({
-    headlineZh: output?.headlineZh,
-    leadZh: output?.leadZh,
-    weeklyTimeline: output?.weeklyTimeline,
-    scoreSynthesis: output?.scoreSynthesis,
-    keyTensions: output?.keyTensions,
-    moduleAnalysis: output?.moduleAnalysis,
-    crossMarketAnalysis: output?.crossMarketAnalysis,
-    historicalComparison: output?.historicalComparison,
-    watchNext: output?.watchNext,
-    dataGaps: output?.dataGaps,
-    confidence: output?.confidence
-  }).join('\n');
+  return joinVisibleStrings(Object.values(visibleEditorialSections(output)));
 }
 
 export function validateNewsDiscovery(discovery) {
@@ -247,11 +257,18 @@ export function validateEditorialOutput(output, input) {
   const boundaries = requireRecord(root.boundaries, 'output.boundaries', errors);
   for (const key of TRUE_OUTPUT_BOUNDARIES) if (boundaries[key] !== true) errors.push(`output.boundaries.${key} must be true`);
   for (const key of FALSE_OUTPUT_BOUNDARIES) if (boundaries[key] !== false) errors.push(`output.boundaries.${key} must be false`);
-  const visibleText = visibleEditorialText(root);
+  const visibleSections = visibleEditorialSections(root);
+  const visibleText = joinVisibleStrings(Object.values(visibleSections));
   if (visibleText.length < 2000 || visibleText.length > 6800) errors.push('output visible editorial text must be 2000-6800 characters');
   for (const pattern of UNSAFE_TEXT_PATTERNS) if (pattern.test(visibleText)) errors.push(`output contains unsafe wording matching ${pattern}`);
   if (timeline.some((item) => typeof item?.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(item.date))) errors.push('output timeline dates must use YYYY-MM-DD');
-  return { ok: errors.length === 0, errors, visibleTextLength: visibleText.length, referencedSourceCount: referencedIds.size };
+  return {
+    ok: errors.length === 0,
+    errors,
+    visibleTextLength: visibleText.length,
+    visibleTextSectionLengths: Object.fromEntries(Object.entries(visibleSections).map(([key, value]) => [key, value.length])),
+    referencedSourceCount: referencedIds.size
+  };
 }
 
 export function validateEditorialReview(review) {
