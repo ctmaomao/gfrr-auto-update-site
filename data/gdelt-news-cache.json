@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-08-21T21:54:30.811Z",
+  "generatedAt": "2026-08-23T02:12:50.116Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,13 +50,13 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 28324,
+    "elapsedMs": 28441,
     "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-21T21:54:02.485Z",
+    "latestAttemptAt": "2026-08-23T02:12:21.673Z",
     "lastLiveSuccessAt": "2026-08-20T13:29:21.263Z",
     "latestOutcome": "rate_limited",
     "windows": {
@@ -67,10 +67,10 @@
         "successRatePct": 44.4
       },
       "days30": {
-        "attemptCount": 29,
+        "attemptCount": 30,
         "successCount": 11,
-        "failureCount": 18,
-        "successRatePct": 37.9
+        "failureCount": 19,
+        "successRatePct": 36.7
       }
     },
     "history": [
@@ -334,11 +334,20 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 28324
+      },
+      {
+        "attemptedAt": "2026-08-23T02:12:21.673Z",
+        "outcome": "rate_limited",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 28441
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-08-21T21:54:02.485Z",
+    "at": "2026-08-23T02:12:21.673Z",
     "errorClass": "rate_limited",
     "cooldownHours": 24
   },
