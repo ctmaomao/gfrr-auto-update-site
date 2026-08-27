@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-08-26T21:07:47.150Z",
+  "generatedAt": "2026-08-27T14:34:49.876Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "live_broad_query_failed",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,27 +50,27 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 27121,
+    "elapsedMs": 20599,
     "errorCode": "network_error"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-08-26T21:07:20.028Z",
+    "latestAttemptAt": "2026-08-27T14:34:29.276Z",
     "lastLiveSuccessAt": "2026-08-20T13:29:21.263Z",
     "latestOutcome": "network_error",
     "windows": {
       "days7": {
         "attemptCount": 9,
-        "successCount": 1,
-        "failureCount": 8,
-        "successRatePct": 11.1
+        "successCount": 0,
+        "failureCount": 9,
+        "successRatePct": 0
       },
       "days30": {
-        "attemptCount": 35,
+        "attemptCount": 36,
         "successCount": 11,
-        "failureCount": 24,
-        "successRatePct": 31.4
+        "failureCount": 25,
+        "successRatePct": 30.6
       }
     },
     "history": [
@@ -388,11 +388,20 @@
         "status": null,
         "errorCode": "network_error",
         "elapsedMs": 27121
+      },
+      {
+        "attemptedAt": "2026-08-27T14:34:29.276Z",
+        "outcome": "network_error",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": null,
+        "errorCode": "network_error",
+        "elapsedMs": 20599
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-08-26T21:07:20.028Z",
+    "at": "2026-08-27T14:34:29.276Z",
     "errorClass": "network_error",
     "cooldownHours": 4
   },
