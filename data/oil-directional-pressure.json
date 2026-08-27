@@ -2,7 +2,7 @@
   "schemaVersion": "odp-1",
   "module": "oil-directional-pressure",
   "boundary": "audit-only/display-only; NOT in values/scoring/decisionModel/executionLock/positionGuidance; Global Risk Heatmap independent",
-  "builtAt": "2026-08-26T00:01:01.740Z",
+  "builtAt": "2026-08-27T05:06:43.538Z",
   "ingestion": {
     "mode": "A",
     "provider": "EIA API v2",
@@ -10,21 +10,21 @@
   },
   "evidence": {
     "crudeStocksExSpr": {
-      "value": 428815,
+      "value": 428910,
       "unit": "thousand barrels",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCESTUS1.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WCESTUS1&f=W",
-      "change1w": 4405,
-      "change4w": 17140,
-      "change13w": -16198,
-      "vs5yAvgPct": -0.13,
-      "fiveYrRangePosition": 0.428,
-      "historyWeeks": 2290,
+      "change1w": 95,
+      "change4w": 24402,
+      "change13w": -12776,
+      "vs5yAvgPct": 0.62,
+      "fiveYrRangePosition": 0.697,
+      "historyWeeks": 2291,
       "signalGroup": "inventoryDrawPressure",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -35,47 +35,46 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "sprStocks": {
-      "value": null,
+      "value": 289726,
       "unit": "thousand barrels",
-      "asOfDate": null,
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": null,
+      "ageDays": 6,
       "maxAgeDays": 16,
-      "sourceStatus": "missing",
+      "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCSSTUS1.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WCSSTUS1&f=W",
-      "change1w": null,
-      "change4w": null,
-      "change13w": null,
-      "vs5yAvgPct": null,
-      "fiveYrRangePosition": null,
-      "historyWeeks": 0,
+      "change1w": -3700,
+      "change4w": -17924,
+      "change13w": -75386,
+      "vs5yAvgPct": -34.32,
+      "fiveYrRangePosition": -0.217,
+      "historyWeeks": 2291,
       "signalGroup": "sprBufferEffectiveness",
-      "fetchReason": "timeout",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
       "timelinessZh": "低噪声、经过验证、约一周滞后",
       "sourceRole": "official_weekly_physical_anchor",
       "directionalRole": "core_physical_anchor",
-      "directionalUse": "校准低噪声供需锚点;缺失时不得补值或硬判方向",
+      "directionalUse": "低噪声供需锚点,用于校准较快的市场和事件信号",
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "distillateStocks": {
-      "value": 105619,
+      "value": 103391,
       "unit": "thousand barrels",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDISTUS1.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WDISTUS1&f=W",
-      "change1w": -1530,
-      "change4w": -3951,
-      "change13w": 2713,
-      "vs5yAvgPct": -12.66,
-      "fiveYrRangePosition": -0.26,
-      "historyWeeks": 2290,
+      "change1w": -2228,
+      "change4w": -7241,
+      "change13w": 2592,
+      "vs5yAvgPct": -14.42,
+      "fiveYrRangePosition": -0.305,
+      "historyWeeks": 2291,
       "signalGroup": "dieselProductStress",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -86,21 +85,21 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "gasolineStocks": {
-      "value": 209378,
+      "value": 206842,
       "unit": "thousand barrels",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGTSTUS1.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WGTSTUS1&f=W",
-      "change1w": 688,
-      "change4w": -1916,
-      "change13w": -4785,
-      "vs5yAvgPct": -5.19,
-      "fiveYrRangePosition": -0.504,
-      "historyWeeks": 1911,
+      "change1w": -2536,
+      "change4w": -4459,
+      "change13w": -4749,
+      "vs5yAvgPct": -5.97,
+      "fiveYrRangePosition": -0.857,
+      "historyWeeks": 1912,
       "signalGroup": "dieselProductStress",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -111,21 +110,21 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "refineryUtilization": {
-      "value": 97.2,
+      "value": 97.4,
       "unit": "percent",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WPULEUS3.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WPULEUS3&f=W",
-      "change1w": 1,
-      "change4w": 1.1,
-      "change13w": 5.6,
-      "vs5yAvgPct": 3.56,
-      "fiveYrRangePosition": 1.136,
-      "historyWeeks": 1868,
+      "change1w": 0.2,
+      "change4w": 0.2,
+      "change13w": 2.9,
+      "vs5yAvgPct": 3.93,
+      "fiveYrRangePosition": 2.273,
+      "historyWeeks": 1869,
       "signalGroup": "refineryConfirmation",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -136,21 +135,21 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "refinerCrudeInputs": {
-      "value": 17395,
+      "value": 17393,
       "unit": "thousand barrels per day",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WCRRIUS2.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WCRRIUS2&f=W",
-      "change1w": 216,
-      "change4w": 330,
-      "change13w": 1076,
-      "vs5yAvgPct": 4.7,
-      "fiveYrRangePosition": 1.156,
-      "historyWeeks": 2290,
+      "change1w": -2,
+      "change4w": 57,
+      "change13w": 422,
+      "vs5yAvgPct": 4.97,
+      "fiveYrRangePosition": 1.635,
+      "historyWeeks": 2291,
       "signalGroup": "refineryConfirmation",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -161,21 +160,21 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "demandGasolineSupplied": {
-      "value": 8689,
+      "value": 9043,
       "unit": "thousand barrels per day",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WGFUPUS2.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WGFUPUS2&f=W",
-      "change1w": -275,
-      "change4w": -258,
-      "change13w": -78,
-      "vs5yAvgPct": -4.66,
-      "fiveYrRangePosition": -0.302,
-      "historyWeeks": 1854,
+      "change1w": 354,
+      "change4w": 2,
+      "change13w": -213,
+      "vs5yAvgPct": -0.55,
+      "fiveYrRangePosition": 0.535,
+      "historyWeeks": 1855,
       "signalGroup": "demandDestructionRisk",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -186,21 +185,21 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "demandDistillateSupplied": {
-      "value": 3953,
+      "value": 3839,
       "unit": "thousand barrels per day",
-      "asOfDate": "2026-08-14",
+      "asOfDate": "2026-08-21",
       "frequency": "weekly",
-      "ageDays": 12,
+      "ageDays": 6,
       "maxAgeDays": 16,
       "sourceStatus": "live",
       "source": "EIA:api-v2:seriesid:PET.WDIUPUS2.W",
       "sourceUrl": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WDIUPUS2&f=W",
-      "change1w": 495,
-      "change4w": 235,
-      "change13w": 401,
-      "vs5yAvgPct": 1.68,
-      "fiveYrRangePosition": 0.505,
-      "historyWeeks": 1854,
+      "change1w": -114,
+      "change4w": 315,
+      "change13w": -109,
+      "vs5yAvgPct": -3.01,
+      "fiveYrRangePosition": 0.053,
+      "historyWeeks": 1855,
       "signalGroup": "demandDestructionRisk",
       "latencyTier": "T2_weekly_official_anchor",
       "latencyTierZh": "T2 周频官方锚",
@@ -211,11 +210,11 @@
       "calibrationNoteZh": "用于校准价格、运输、新闻与卫星等更快但更嘈杂的信号。"
     },
     "wtiPrice": {
-      "value": 80.96,
+      "value": 81.7,
       "unit": "$/bbl",
-      "asOfDate": "2026-08-25T04:00:00.000Z",
+      "asOfDate": "2026-08-27T03:16:21.000Z",
       "frequency": "daily",
-      "ageDays": 1,
+      "ageDays": 0,
       "maxAgeDays": 3,
       "sourceStatus": "live",
       "source": "radar-data:macroDrivers.inflationEnergy.wtiMarketProxy",
@@ -228,9 +227,9 @@
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。",
       "proxyBasis": "Yahoo CL=F WTI futures market proxy; not official WTI spot.",
       "officialSpotFallback": {
-        "value": 86.48,
-        "asOfDate": "2026-08-18T00:00:00Z",
-        "ageDays": 8,
+        "value": 83.9,
+        "asOfDate": "2026-08-25T00:00:00Z",
+        "ageDays": 2,
         "sourceStatus": "live",
         "source": "radar-data:macroDrivers.inflationEnergy.wti",
         "noteZh": "FRED DCOILWTICO 官方 WTI spot 保留为低噪声滞后校准源。"
@@ -238,9 +237,9 @@
       "limitationZh": "WTI 市场代理优先使用 Yahoo CL=F 期货快照;不是 FRED 官方 WTI spot。"
     },
     "brentPrice": {
-      "value": 95.29,
+      "value": 88.24,
       "unit": "$/bbl",
-      "asOfDate": "2026-08-25T22:47:44.244Z",
+      "asOfDate": "2026-08-27T03:23:33.241Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 5,
@@ -255,14 +254,14 @@
       "calibrationNoteZh": "用于观察市场是否正在确认或否定周度物理链,不能单独决定方向。"
     },
     "crackSpread": {
-      "value": 88.25,
+      "value": 83.5,
       "unit": "$/bbl",
-      "asOfDate": "2026-08-25T22:54:36.669Z",
+      "asOfDate": "2026-08-27T03:26:22.493Z",
       "frequency": "daily",
       "ageDays": 0,
       "maxAgeDays": 10,
       "sourceStatus": "live",
-      "change4w": 13.9,
+      "change4w": 1.47,
       "regime": "供应紧张",
       "note": "价格/裂解代理,非馏分油库存",
       "source": "radar-data:brentPricingLayer.crackSpread",
@@ -276,14 +275,14 @@
     },
     "curve": {
       "slopeRegime": "backwardation",
-      "frontMinusBack": 6.21,
-      "frontPrice": 87.04,
-      "backPrice": 80.83,
+      "frontMinusBack": 8.11,
+      "frontPrice": 87.16,
+      "backPrice": 79.05,
       "confidence": "low",
       "curveStatus": "live_proxy_priced",
       "frequency": "daily",
-      "asOfDate": "2026-08-25T04:00:00.000Z",
-      "ageDays": 1,
+      "asOfDate": "2026-08-27T03:16:28.000Z",
+      "ageDays": 0,
       "maxAgeDays": 4,
       "sourceStatus": "live",
       "source": "radar-data:brentPricingLayer.futuresPriceCurve",
@@ -299,147 +298,277 @@
   },
   "seasonality": {
     "crudeStocksExSpr": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 429374.6,
-      "fiveYrSameWeekMin": 420684,
-      "fiveYrSameWeekMax": 439662,
+      "fiveYrSameWeekMean": 426247.8,
+      "fiveYrSameWeekMin": 418292,
+      "fiveYrSameWeekMax": 433528,
+      "sampleYears": 5,
+      "windowFallback": "exact"
+    },
+    "sprStocks": {
+      "weekOfYear": 34,
+      "seasonBucket": "summer_driving",
+      "fiveYrSameWeekMean": 441084.8,
+      "fiveYrSameWeekMin": 348948,
+      "fiveYrSameWeekMax": 621302,
       "sampleYears": 5,
       "windowFallback": "exact"
     },
     "distillateStocks": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 120930.4,
-      "fiveYrSameWeekMin": 112256,
-      "fiveYrSameWeekMax": 137814,
+      "fiveYrSameWeekMean": 120813.8,
+      "fiveYrSameWeekMin": 111594,
+      "fiveYrSameWeekMax": 138459,
       "sampleYears": 5,
       "windowFallback": "exact"
     },
     "gasolineStocks": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 220832.8,
-      "fiveYrSameWeekMin": 215674,
-      "fiveYrSameWeekMax": 228165,
+      "fiveYrSameWeekMean": 219985,
+      "fiveYrSameWeekMin": 215647,
+      "fiveYrSameWeekMax": 225924,
       "sampleYears": 5,
       "windowFallback": "exact"
     },
     "refineryUtilization": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 93.86,
-      "fiveYrSameWeekMin": 92.2,
-      "fiveYrSameWeekMax": 96.6,
+      "fiveYrSameWeekMean": 93.72,
+      "fiveYrSameWeekMin": 92.4,
+      "fiveYrSameWeekMax": 94.6,
       "sampleYears": 5,
       "windowFallback": "exact"
     },
     "refinerCrudeInputs": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 16614.4,
-      "fiveYrSameWeekMin": 16006,
-      "fiveYrSameWeekMax": 17208,
+      "fiveYrSameWeekMean": 16569.4,
+      "fiveYrSameWeekMin": 16072,
+      "fiveYrSameWeekMax": 16880,
       "sampleYears": 5,
       "windowFallback": "exact"
     },
     "demandGasolineSupplied": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 9113.4,
-      "fiveYrSameWeekMin": 8842,
-      "fiveYrSameWeekMax": 9348,
+      "fiveYrSameWeekMean": 9092.6,
+      "fiveYrSameWeekMin": 8434,
+      "fiveYrSameWeekMax": 9572,
       "sampleYears": 5,
       "windowFallback": "exact"
     },
     "demandDistillateSupplied": {
-      "weekOfYear": 33,
+      "weekOfYear": 34,
       "seasonBucket": "summer_driving",
-      "fiveYrSameWeekMean": 3887.8,
-      "fiveYrSameWeekMin": 3576,
-      "fiveYrSameWeekMax": 4323,
+      "fiveYrSameWeekMean": 3958.2,
+      "fiveYrSameWeekMin": 3822,
+      "fiveYrSameWeekMax": 4141,
       "sampleYears": 5,
       "windowFallback": "exact"
     }
   },
-  "signals": null,
-  "finalBias": "insufficient_data",
+  "signals": {
+    "inventoryDrawPressure": {
+      "drawAccel": false,
+      "tight": false,
+      "extremeTight": false,
+      "loose": false,
+      "vs5yPct": 0.624566273421238,
+      "rangePos": 0.6969020740351798,
+      "change4w": 24402
+    },
+    "dieselProductStress": {
+      "tight": true,
+      "extremeTight": true,
+      "drawing": true,
+      "vs5yPct": -14.421200227126374,
+      "rangePos": -0.30534152242694956
+    },
+    "refineryConfirmation": {
+      "utilAvg4w": 96.82499999999999,
+      "high": true,
+      "low": false
+    },
+    "sprBufferEffectiveness": {
+      "bufferInsufficient": false,
+      "sprChange4w": -17924,
+      "totalChange4w": 6478
+    },
+    "demandDestructionRisk": {
+      "demandFalling": false,
+      "demandDestruction": false,
+      "suppliedAvg4w": 12729.5,
+      "suppliedAvg13w": 12606.23076923077
+    },
+    "futuresCurveConfirmation": "not_used_in_backtest",
+    "priceContext": {
+      "brentChangePct4w": -3.9,
+      "curveSlopeRegime": "backwardation",
+      "crackChange4w": 1.47,
+      "priceDirectionSource": "radar-history-full:brent~4w"
+    }
+  },
+  "finalBias": "product_crisis",
   "interpretation": {
-    "physicalBias": "insufficient_data",
-    "finalBias": "insufficient_data",
+    "physicalBias": "product_crisis",
+    "finalBias": "product_crisis",
     "divergence": "none",
-    "priceVsPhysical": "insufficient_data",
-    "drivers": [],
-    "confidence": "low",
-    "dataSufficiency": "insufficient",
+    "priceVsPhysical": "price_down",
+    "drivers": [
+      "dieselProductStress",
+      "refineryConfirmation"
+    ],
+    "confidence": "moderate",
+    "dataSufficiency": "full",
     "globalOverlay": {
-      "status": "not_evaluated",
-      "effect": "insufficient_physical_data",
-      "supplyBuffer": "unavailable",
-      "inventoryBalance": "unavailable",
-      "demandState": "unavailable",
-      "transportRisk": "unavailable",
-      "confirmationCount": 0,
-      "confidenceAdjustment": "flat",
-      "confidence": "low",
-      "drivers": [],
-      "reasons": [
-        "EIA 周度物理链不足,全球慢变量不替代主判定。"
+      "status": "active",
+      "effect": "confirms_physical_tightness",
+      "supplyBuffer": "extremely_tight",
+      "inventoryBalance": "acute_draw",
+      "demandState": "neutral",
+      "transportRisk": "normal",
+      "confirmationCount": 3,
+      "confidenceAdjustment": "up",
+      "confidence": "moderate",
+      "drivers": [
+        "oecdCommercialInventory",
+        "globalInventoryDraw",
+        "opecSpareCapacity"
       ],
-      "sourceWindows": {},
+      "reasons": [
+        "OECD 商业库存低于同期或同比明显下降。",
+        "全球净库存变化显示抽库。",
+        "OPEC 闲置产能缓冲偏薄。"
+      ],
+      "sourceWindows": {
+        "inventoryPeriod": "2026-08",
+        "sparePeriod": "2026-08",
+        "transportDate": "2026-08-23"
+      },
       "boundary": "display-only global/monthly confirmation overlay; NOT in values/scoring/decision/execution/position"
     },
     "attribution": {
       "schemaVersion": "odp-attribution-1",
       "boundary": "display-only attribution; qualitative explanation only; NOT in values/scoring/decision/execution/position",
-      "primaryThesis": "周度物理链数据不足,当前不做方向判读。",
+      "primaryThesis": "压力主要集中在馏分油/成品油链条,当前判读不是单纯原油库存故事。",
       "supportEvidence": [
         {
-          "role": "data_quality",
-          "label": "主支撑待恢复",
-          "stance": "no_directional_support",
+          "role": "core_physical_anchor",
+          "label": "馏分油库存偏紧",
+          "stance": "supports_product_stress",
           "evidenceKeys": [
-            "evidence"
+            "distillateStocks",
+            "crackSpread"
           ],
-          "text": "当前没有完整的同周 EIA 周度物理链,ODP 不生成方向性主支撑。"
+          "text": "馏分油库存处在偏紧区间,说明压力不只来自原油库存,还延伸到成品油链条。"
+        },
+        {
+          "role": "core_physical_anchor",
+          "label": "炼厂加工端确认",
+          "stance": "supports_physical_confirmation",
+          "evidenceKeys": [
+            "refineryUtilization",
+            "refinerCrudeInputs"
+          ],
+          "text": "炼厂开工率偏高,与库存去化共同说明需求/加工端仍在消耗物理库存。"
+        },
+        {
+          "role": "market_confirmation",
+          "label": "期限结构仍偏紧",
+          "stance": "confirms_physical_tightness",
+          "evidenceKeys": [
+            "curve"
+          ],
+          "text": "公开期货曲线呈 backwardation,市场结构没有确认物理宽松。"
+        },
+        {
+          "role": "global_slow_variable",
+          "label": "全球慢变量同向",
+          "stance": "supports_context_confirmation",
+          "evidenceKeys": [
+            "interpretation.globalOverlay"
+          ],
+          "text": "OECD 库存、全球净抽库或闲置产能慢变量对周度物理链形成背景确认。"
         }
       ],
       "counterEvidence": [
         {
-          "role": "data_quality",
-          "label": "市场代理不补位",
-          "stance": "prevents_proxy_override",
+          "role": "market_confirmation",
+          "label": "Brent 价格回落",
+          "stance": "counters_physical_pressure",
           "evidenceKeys": [
-            "brentPrice",
-            "curve",
-            "oilNewsEventWatch",
-            "oilThermalWatch"
+            "brentPrice"
           ],
-          "text": "价格、新闻和观察层在官方物理锚缺失时不能替代方向判读。"
+          "text": "近 4 周 Brent 下跌是当前判读的主要反证;ODP 将其解释为价格与物理链背离,而非直接确认物理宽松。"
         }
       ],
       "confidenceCaps": [
         {
           "role": "data_quality",
-          "label": "周度物理链不完整",
-          "stance": "blocks_directional_view",
+          "label": "官方周报天然滞后",
+          "stance": "caps_timeliness",
           "evidenceKeys": [
-            "evidence"
+            "crudeStocksExSpr",
+            "distillateStocks"
           ],
-          "text": "EIA 周度锚未满足同周完整条件,因此不把价格、新闻或观察层提升为方向判断。"
+          "text": "EIA WPSR 是低噪声官方锚,但对当前流向存在发布滞后;快速信号只能用于确认或观察。"
+        },
+        {
+          "role": "high_frequency_watch",
+          "label": "新闻与卫星仍为观察层",
+          "stance": "keeps_watch_layer_separate",
+          "evidenceKeys": [
+            "oilNewsEventWatch",
+            "oilThermalWatch"
+          ],
+          "text": "新闻事件和卫星热异常没有与价格结构、周度库存和设施基线同时印证前,不改变 ODP 方向判读。"
         }
       ],
       "viewChangeTriggers": [
         {
           "role": "core_physical_anchor",
-          "label": "恢复同周完整锚点",
-          "stance": "restores_model_input",
+          "label": "物理链转松",
+          "stance": "would_weaken_physical_bias",
           "evidenceKeys": [
             "crudeStocksExSpr",
             "distillateStocks",
             "refineryUtilization"
           ],
-          "text": "8 个 EIA 周度源重新同周 live 后,才重新生成物理链方向归因。"
+          "text": "若商业原油库存回补、馏分油库存修复、炼厂开工回落同时出现,当前物理偏紧归因会失效。"
+        },
+        {
+          "role": "market_confirmation",
+          "label": "价格结构确认宽松",
+          "stance": "would_confirm_market_easing",
+          "evidenceKeys": [
+            "brentPrice",
+            "curve"
+          ],
+          "text": "若 Brent 继续回落且公开曲线转为 contango,市场层将从背离转为确认宽松。"
+        },
+        {
+          "role": "core_physical_anchor",
+          "label": "需求破坏明确",
+          "stance": "would_cap_or_reverse_view",
+          "evidenceKeys": [
+            "demandGasolineSupplied",
+            "demandDistillateSupplied"
+          ],
+          "text": "若 product supplied 明确转弱并持续,供应紧张叙事需要被需求放缓叙事覆盖。"
+        },
+        {
+          "role": "high_frequency_watch",
+          "label": "观察层获得交叉印证",
+          "stance": "would_raise_event_confidence",
+          "evidenceKeys": [
+            "oilNewsEventWatch",
+            "oilThermalWatch",
+            "interpretation.globalOverlay"
+          ],
+          "text": "新闻、卫星或咽喉转运异常只有在价格结构、设施基线和周度库存同时印证后,才提高事件观察置信度。"
         }
       ]
     },
