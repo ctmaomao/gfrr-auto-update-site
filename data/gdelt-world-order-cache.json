@@ -2,12 +2,12 @@
   "schemaVersion": "gdelt-world-order-cache-p39",
   "module": "gdelt-world-order-cache",
   "cacheScope": "world_order_gdelt_cloud",
-  "generatedAt": "2026-08-27T04:12:44.240Z",
+  "generatedAt": "2026-08-27T23:44:51.974Z",
   "status": "ok",
   "sourceStatus": "ok",
   "requestMode": "live_cloud_query",
   "source": "GDELT Cloud v2 events/summary",
-  "lastFetchedAt": "2026-08-27T04:12:44.240Z",
+  "lastFetchedAt": "2026-08-27T23:44:51.974Z",
   "query": {
     "id": "gdelt_world_order_conflict_country_summary",
     "endpoint": "GDELT Cloud v2 events/summary",
@@ -32,49 +32,49 @@
   },
   "summary": {
     "errors": [],
-    "totalEvents": 773,
-    "totalArticles": 773,
-    "conflictEvents": 773,
+    "totalEvents": 842,
+    "totalArticles": 842,
+    "conflictEvents": 842,
     "sanctionsEvents": 0,
     "blockadeOrChokepointEvents": 0,
     "regionsCovered": [
       "India",
-      "Palestine",
       "Ukraine",
+      "Palestine",
       "Nigeria",
       "Russia",
-      "United States",
       "Yemen",
+      "United States",
       "Bangladesh",
       "Syria",
-      "Israel"
+      "Indonesia"
     ],
     "topThemes": [],
     "averageTone": null,
-    "toneProxy": -0.133,
+    "toneProxy": -0.137,
     "topCountries": [
       {
         "key": "India",
         "group_by": "country",
-        "event_count": 116,
-        "conflict_event_count": 116,
+        "event_count": 124,
+        "conflict_event_count": 124,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 2,
-        "fatalities": 7,
-        "fatality_event_rate": 0.0172,
+        "fatality_event_count": 3,
+        "fatalities": 11,
+        "fatality_event_rate": 0.0242,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 485,
-        "avg_article_count": 4.181,
+        "article_count": 528,
+        "avg_article_count": 4.258,
         "min_article_count": 1,
         "max_article_count": 50,
-        "avg_significance": 0.2351,
-        "max_significance": 0.4544,
+        "avg_significance": 0.2366,
+        "max_significance": 0.5901,
         "min_significance": 0.0935,
-        "avg_goldstein_scale": -6.483,
+        "avg_goldstein_scale": -6.472,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": 8,
-        "avg_goldstein_severity": 6.759,
+        "avg_goldstein_severity": 6.73,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -89,23 +89,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8851,
+        "avg_confidence": 0.8868,
         "min_confidence": 0.55,
         "max_confidence": 0.99,
         "metrics": {
           "significance": {
-            "avg": 0.2351,
-            "max": 0.4544,
+            "avg": 0.2366,
+            "max": 0.5901,
             "min": 0.0935
           },
           "goldstein_scale": {
-            "avg": -6.483,
+            "avg": -6.472,
             "min": -10,
             "max": 8,
-            "avg_severity": 6.759
+            "avg_severity": 6.73
           },
           "goldstein_severity": {
-            "avg": 6.759,
+            "avg": 6.73,
             "min": 2,
             "max": 10
           },
@@ -132,141 +132,45 @@
             }
           },
           "confidence": {
-            "avg": 0.8851,
+            "avg": 0.8868,
             "max": 0.99,
             "min": 0.55
           },
           "article_count": {
-            "total": 485,
-            "avg": 4.181,
+            "total": 528,
+            "avg": 4.258,
             "min": 1,
             "max": 50
           },
           "fatalities": {
-            "events": 2,
-            "rate": 0.0172,
-            "total": 7
-          }
-        }
-      },
-      {
-        "key": "Palestine",
-        "group_by": "country",
-        "event_count": 83,
-        "conflict_event_count": 83,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 18,
-        "fatalities": 34,
-        "fatality_event_rate": 0.2169,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 575,
-        "avg_article_count": 6.928,
-        "min_article_count": 1,
-        "max_article_count": 70,
-        "avg_significance": 0.3467,
-        "max_significance": 0.5607,
-        "min_significance": 0.086,
-        "avg_goldstein_scale": -8.193,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 8.193,
-        "min_goldstein_severity": 2,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.8339,
-        "min_confidence": 0.38,
-        "max_confidence": 0.97,
-        "metrics": {
-          "significance": {
-            "avg": 0.3467,
-            "max": 0.5607,
-            "min": 0.086
-          },
-          "goldstein_scale": {
-            "avg": -8.193,
-            "min": -10,
-            "max": -2,
-            "avg_severity": 8.193
-          },
-          "goldstein_severity": {
-            "avg": 8.193,
-            "min": 2,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.8339,
-            "max": 0.97,
-            "min": 0.38
-          },
-          "article_count": {
-            "total": 575,
-            "avg": 6.928,
-            "min": 1,
-            "max": 70
-          },
-          "fatalities": {
-            "events": 18,
-            "rate": 0.2169,
-            "total": 34
+            "events": 3,
+            "rate": 0.0242,
+            "total": 11
           }
         }
       },
       {
         "key": "Ukraine",
         "group_by": "country",
-        "event_count": 81,
-        "conflict_event_count": 81,
+        "event_count": 93,
+        "conflict_event_count": 93,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 22,
-        "fatalities": 71,
-        "fatality_event_rate": 0.2716,
+        "fatality_event_count": 25,
+        "fatalities": 74,
+        "fatality_event_rate": 0.2688,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 387,
-        "avg_article_count": 4.778,
+        "article_count": 514,
+        "avg_article_count": 5.527,
         "min_article_count": 1,
-        "max_article_count": 64,
-        "avg_significance": 0.33,
+        "max_article_count": 91,
+        "avg_significance": 0.3283,
         "max_significance": 0.7501,
         "min_significance": 0.0995,
-        "avg_goldstein_scale": -8.691,
+        "avg_goldstein_scale": -8.543,
         "min_goldstein_scale": -10,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 8.691,
+        "max_goldstein_scale": 8,
+        "avg_goldstein_severity": 8.715,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -281,23 +185,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8021,
-        "min_confidence": 0.38,
+        "avg_confidence": 0.8031,
+        "min_confidence": 0.3,
         "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.33,
+            "avg": 0.3283,
             "max": 0.7501,
             "min": 0.0995
           },
           "goldstein_scale": {
-            "avg": -8.691,
+            "avg": -8.543,
             "min": -10,
-            "max": -2,
-            "avg_severity": 8.691
+            "max": 8,
+            "avg_severity": 8.715
           },
           "goldstein_severity": {
-            "avg": 8.691,
+            "avg": 8.715,
             "min": 2,
             "max": 10
           },
@@ -324,45 +228,45 @@
             }
           },
           "confidence": {
-            "avg": 0.8021,
+            "avg": 0.8031,
             "max": 0.98,
-            "min": 0.38
+            "min": 0.3
           },
           "article_count": {
-            "total": 387,
-            "avg": 4.778,
+            "total": 514,
+            "avg": 5.527,
             "min": 1,
-            "max": 64
+            "max": 91
           },
           "fatalities": {
-            "events": 22,
-            "rate": 0.2716,
-            "total": 71
+            "events": 25,
+            "rate": 0.2688,
+            "total": 74
           }
         }
       },
       {
-        "key": "Nigeria",
+        "key": "Palestine",
         "group_by": "country",
-        "event_count": 49,
-        "conflict_event_count": 49,
+        "event_count": 87,
+        "conflict_event_count": 87,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 12,
-        "fatalities": 85,
-        "fatality_event_rate": 0.2449,
+        "fatality_event_count": 18,
+        "fatalities": 34,
+        "fatality_event_rate": 0.2069,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 203,
-        "avg_article_count": 4.143,
+        "article_count": 580,
+        "avg_article_count": 6.667,
         "min_article_count": 1,
-        "max_article_count": 40,
-        "avg_significance": 0.3156,
-        "max_significance": 0.7494,
-        "min_significance": 0.0959,
-        "avg_goldstein_scale": -7.014,
+        "max_article_count": 70,
+        "avg_significance": 0.3452,
+        "max_significance": 0.5607,
+        "min_significance": 0.086,
+        "avg_goldstein_scale": -8.213,
         "min_goldstein_scale": -10,
-        "max_goldstein_scale": 8,
-        "avg_goldstein_severity": 7.341,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 8.213,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -377,12 +281,108 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8324,
-        "min_confidence": 0.52,
+        "avg_confidence": 0.8329,
+        "min_confidence": 0.38,
+        "max_confidence": 0.97,
+        "metrics": {
+          "significance": {
+            "avg": 0.3452,
+            "max": 0.5607,
+            "min": 0.086
+          },
+          "goldstein_scale": {
+            "avg": -8.213,
+            "min": -10,
+            "max": -2,
+            "avg_severity": 8.213
+          },
+          "goldstein_severity": {
+            "avg": 8.213,
+            "min": 2,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.8329,
+            "max": 0.97,
+            "min": 0.38
+          },
+          "article_count": {
+            "total": 580,
+            "avg": 6.667,
+            "min": 1,
+            "max": 70
+          },
+          "fatalities": {
+            "events": 18,
+            "rate": 0.2069,
+            "total": 34
+          }
+        }
+      },
+      {
+        "key": "Nigeria",
+        "group_by": "country",
+        "event_count": 50,
+        "conflict_event_count": 50,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 13,
+        "fatalities": 89,
+        "fatality_event_rate": 0.26,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 205,
+        "avg_article_count": 4.1,
+        "min_article_count": 1,
+        "max_article_count": 40,
+        "avg_significance": 0.3161,
+        "max_significance": 0.7494,
+        "min_significance": 0.0959,
+        "avg_goldstein_scale": -7.014,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": 8,
+        "avg_goldstein_severity": 7.334,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.8414,
+        "min_confidence": 0.62,
         "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.3156,
+            "avg": 0.3161,
             "max": 0.7494,
             "min": 0.0959
           },
@@ -390,10 +390,10 @@
             "avg": -7.014,
             "min": -10,
             "max": 8,
-            "avg_severity": 7.341
+            "avg_severity": 7.334
           },
           "goldstein_severity": {
-            "avg": 7.341,
+            "avg": 7.334,
             "min": 2,
             "max": 10
           },
@@ -420,45 +420,45 @@
             }
           },
           "confidence": {
-            "avg": 0.8324,
+            "avg": 0.8414,
             "max": 0.98,
-            "min": 0.52
+            "min": 0.62
           },
           "article_count": {
-            "total": 203,
-            "avg": 4.143,
+            "total": 205,
+            "avg": 4.1,
             "min": 1,
             "max": 40
           },
           "fatalities": {
-            "events": 12,
-            "rate": 0.2449,
-            "total": 85
+            "events": 13,
+            "rate": 0.26,
+            "total": 89
           }
         }
       },
       {
         "key": "Russia",
         "group_by": "country",
-        "event_count": 45,
-        "conflict_event_count": 45,
+        "event_count": 48,
+        "conflict_event_count": 48,
         "cameoplus_event_count": 0,
         "fatality_event_count": 7,
         "fatalities": 22,
-        "fatality_event_rate": 0.1556,
+        "fatality_event_rate": 0.1458,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 624,
-        "avg_article_count": 13.867,
+        "article_count": 630,
+        "avg_article_count": 13.125,
         "min_article_count": 1,
         "max_article_count": 130,
-        "avg_significance": 0.2841,
+        "avg_significance": 0.281,
         "max_significance": 0.6032,
         "min_significance": 0.0815,
-        "avg_goldstein_scale": -7.867,
+        "avg_goldstein_scale": -7.854,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7.867,
+        "avg_goldstein_severity": 7.854,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -473,23 +473,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.7636,
+        "avg_confidence": 0.755,
         "min_confidence": 0.34,
         "max_confidence": 0.96,
         "metrics": {
           "significance": {
-            "avg": 0.2841,
+            "avg": 0.281,
             "max": 0.6032,
             "min": 0.0815
           },
           "goldstein_scale": {
-            "avg": -7.867,
+            "avg": -7.854,
             "min": -10,
             "max": -2,
-            "avg_severity": 7.867
+            "avg_severity": 7.854
           },
           "goldstein_severity": {
-            "avg": 7.867,
+            "avg": 7.854,
             "min": 2,
             "max": 10
           },
@@ -516,45 +516,141 @@
             }
           },
           "confidence": {
-            "avg": 0.7636,
+            "avg": 0.755,
             "max": 0.96,
             "min": 0.34
           },
           "article_count": {
-            "total": 624,
-            "avg": 13.867,
+            "total": 630,
+            "avg": 13.125,
             "min": 1,
             "max": 130
           },
           "fatalities": {
             "events": 7,
-            "rate": 0.1556,
+            "rate": 0.1458,
             "total": 22
+          }
+        }
+      },
+      {
+        "key": "Yemen",
+        "group_by": "country",
+        "event_count": 35,
+        "conflict_event_count": 35,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 5,
+        "fatalities": 7,
+        "fatality_event_rate": 0.1429,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 164,
+        "avg_article_count": 4.686,
+        "min_article_count": 1,
+        "max_article_count": 36,
+        "avg_significance": 0.3252,
+        "max_significance": 0.456,
+        "min_significance": 0.165,
+        "avg_goldstein_scale": -9.329,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -5,
+        "avg_goldstein_severity": 9.329,
+        "min_goldstein_severity": 5,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.5949,
+        "min_confidence": 0.35,
+        "max_confidence": 0.91,
+        "metrics": {
+          "significance": {
+            "avg": 0.3252,
+            "max": 0.456,
+            "min": 0.165
+          },
+          "goldstein_scale": {
+            "avg": -9.329,
+            "min": -10,
+            "max": -5,
+            "avg_severity": 9.329
+          },
+          "goldstein_severity": {
+            "avg": 9.329,
+            "min": 5,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.5949,
+            "max": 0.91,
+            "min": 0.35
+          },
+          "article_count": {
+            "total": 164,
+            "avg": 4.686,
+            "min": 1,
+            "max": 36
+          },
+          "fatalities": {
+            "events": 5,
+            "rate": 0.1429,
+            "total": 7
           }
         }
       },
       {
         "key": "United States",
         "group_by": "country",
-        "event_count": 32,
-        "conflict_event_count": 32,
+        "event_count": 33,
+        "conflict_event_count": 33,
         "cameoplus_event_count": 0,
         "fatality_event_count": 1,
         "fatalities": 2,
-        "fatality_event_rate": 0.0312,
+        "fatality_event_rate": 0.0303,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 245,
-        "avg_article_count": 7.656,
+        "article_count": 246,
+        "avg_article_count": 7.455,
         "min_article_count": 1,
         "max_article_count": 86,
-        "avg_significance": 0.2308,
+        "avg_significance": 0.227,
         "max_significance": 0.4508,
-        "min_significance": 0.1069,
-        "avg_goldstein_scale": -6.25,
+        "min_significance": 0.1045,
+        "avg_goldstein_scale": -6.121,
         "min_goldstein_scale": -9.5,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 6.25,
+        "avg_goldstein_severity": 6.121,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 9.5,
         "avg_magnitude": null,
@@ -569,23 +665,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8947,
+        "avg_confidence": 0.8961,
         "min_confidence": 0.55,
         "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.2308,
+            "avg": 0.227,
             "max": 0.4508,
-            "min": 0.1069
+            "min": 0.1045
           },
           "goldstein_scale": {
-            "avg": -6.25,
+            "avg": -6.121,
             "min": -9.5,
             "max": -2,
-            "avg_severity": 6.25
+            "avg_severity": 6.121
           },
           "goldstein_severity": {
-            "avg": 6.25,
+            "avg": 6.121,
             "min": 2,
             "max": 9.5
           },
@@ -612,237 +708,45 @@
             }
           },
           "confidence": {
-            "avg": 0.8947,
+            "avg": 0.8961,
             "max": 0.98,
             "min": 0.55
           },
           "article_count": {
-            "total": 245,
-            "avg": 7.656,
+            "total": 246,
+            "avg": 7.455,
             "min": 1,
             "max": 86
           },
           "fatalities": {
             "events": 1,
-            "rate": 0.0312,
+            "rate": 0.0303,
             "total": 2
-          }
-        }
-      },
-      {
-        "key": "Yemen",
-        "group_by": "country",
-        "event_count": 30,
-        "conflict_event_count": 30,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 4,
-        "fatalities": 6,
-        "fatality_event_rate": 0.1333,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 155,
-        "avg_article_count": 5.167,
-        "min_article_count": 1,
-        "max_article_count": 36,
-        "avg_significance": 0.3208,
-        "max_significance": 0.456,
-        "min_significance": 0.165,
-        "avg_goldstein_scale": -9.333,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -5,
-        "avg_goldstein_severity": 9.333,
-        "min_goldstein_severity": 5,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.587,
-        "min_confidence": 0.35,
-        "max_confidence": 0.86,
-        "metrics": {
-          "significance": {
-            "avg": 0.3208,
-            "max": 0.456,
-            "min": 0.165
-          },
-          "goldstein_scale": {
-            "avg": -9.333,
-            "min": -10,
-            "max": -5,
-            "avg_severity": 9.333
-          },
-          "goldstein_severity": {
-            "avg": 9.333,
-            "min": 5,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.587,
-            "max": 0.86,
-            "min": 0.35
-          },
-          "article_count": {
-            "total": 155,
-            "avg": 5.167,
-            "min": 1,
-            "max": 36
-          },
-          "fatalities": {
-            "events": 4,
-            "rate": 0.1333,
-            "total": 6
           }
         }
       },
       {
         "key": "Bangladesh",
         "group_by": "country",
-        "event_count": 21,
-        "conflict_event_count": 21,
+        "event_count": 22,
+        "conflict_event_count": 22,
         "cameoplus_event_count": 0,
         "fatality_event_count": 0,
         "fatalities": 0,
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 49,
-        "avg_article_count": 2.333,
+        "article_count": 50,
+        "avg_article_count": 2.273,
         "min_article_count": 1,
         "max_article_count": 17,
-        "avg_significance": 0.2124,
+        "avg_significance": 0.2074,
         "max_significance": 0.364,
-        "min_significance": 0.1599,
-        "avg_goldstein_scale": -6.452,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -5,
-        "avg_goldstein_severity": 6.452,
-        "min_goldstein_severity": 5,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.6124,
-        "min_confidence": 0.38,
-        "max_confidence": 0.98,
-        "metrics": {
-          "significance": {
-            "avg": 0.2124,
-            "max": 0.364,
-            "min": 0.1599
-          },
-          "goldstein_scale": {
-            "avg": -6.452,
-            "min": -10,
-            "max": -5,
-            "avg_severity": 6.452
-          },
-          "goldstein_severity": {
-            "avg": 6.452,
-            "min": 5,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.6124,
-            "max": 0.98,
-            "min": 0.38
-          },
-          "article_count": {
-            "total": 49,
-            "avg": 2.333,
-            "min": 1,
-            "max": 17
-          },
-          "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
-          }
-        }
-      },
-      {
-        "key": "Syria",
-        "group_by": "country",
-        "event_count": 20,
-        "conflict_event_count": 20,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 2,
-        "fatalities": 5,
-        "fatality_event_rate": 0.1,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 356,
-        "avg_article_count": 17.8,
-        "min_article_count": 1,
-        "max_article_count": 70,
-        "avg_significance": 0.2649,
-        "max_significance": 0.4918,
-        "min_significance": 0.0915,
-        "avg_goldstein_scale": -7.2,
+        "min_significance": 0.1025,
+        "avg_goldstein_scale": -6.25,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7.2,
+        "avg_goldstein_severity": 6.25,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -857,23 +761,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.734,
-        "min_confidence": 0.42,
+        "avg_confidence": 0.6255,
+        "min_confidence": 0.38,
         "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.2649,
-            "max": 0.4918,
-            "min": 0.0915
+            "avg": 0.2074,
+            "max": 0.364,
+            "min": 0.1025
           },
           "goldstein_scale": {
-            "avg": -7.2,
+            "avg": -6.25,
             "min": -10,
             "max": -2,
-            "avg_severity": 7.2
+            "avg_severity": 6.25
           },
           "goldstein_severity": {
-            "avg": 7.2,
+            "avg": 6.25,
             "min": 2,
             "max": 10
           },
@@ -900,20 +804,212 @@
             }
           },
           "confidence": {
-            "avg": 0.734,
+            "avg": 0.6255,
+            "max": 0.98,
+            "min": 0.38
+          },
+          "article_count": {
+            "total": 50,
+            "avg": 2.273,
+            "min": 1,
+            "max": 17
+          },
+          "fatalities": {
+            "events": 0,
+            "rate": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "key": "Syria",
+        "group_by": "country",
+        "event_count": 21,
+        "conflict_event_count": 21,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 2,
+        "fatalities": 5,
+        "fatality_event_rate": 0.0952,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 357,
+        "avg_article_count": 17,
+        "min_article_count": 1,
+        "max_article_count": 70,
+        "avg_significance": 0.2601,
+        "max_significance": 0.4918,
+        "min_significance": 0.0915,
+        "avg_goldstein_scale": -7.095,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 7.095,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.7286,
+        "min_confidence": 0.42,
+        "max_confidence": 0.98,
+        "metrics": {
+          "significance": {
+            "avg": 0.2601,
+            "max": 0.4918,
+            "min": 0.0915
+          },
+          "goldstein_scale": {
+            "avg": -7.095,
+            "min": -10,
+            "max": -2,
+            "avg_severity": 7.095
+          },
+          "goldstein_severity": {
+            "avg": 7.095,
+            "min": 2,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.7286,
             "max": 0.98,
             "min": 0.42
           },
           "article_count": {
-            "total": 356,
-            "avg": 17.8,
+            "total": 357,
+            "avg": 17,
             "min": 1,
             "max": 70
           },
           "fatalities": {
             "events": 2,
-            "rate": 0.1,
+            "rate": 0.0952,
             "total": 5
+          }
+        }
+      },
+      {
+        "key": "Indonesia",
+        "group_by": "country",
+        "event_count": 18,
+        "conflict_event_count": 18,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 95,
+        "avg_article_count": 5.278,
+        "min_article_count": 0,
+        "max_article_count": 53,
+        "avg_significance": 0.2406,
+        "max_significance": 0.3799,
+        "min_significance": 0.1104,
+        "avg_goldstein_scale": -6.861,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 6.861,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.8789,
+        "min_confidence": 0.7,
+        "max_confidence": 0.98,
+        "metrics": {
+          "significance": {
+            "avg": 0.2406,
+            "max": 0.3799,
+            "min": 0.1104
+          },
+          "goldstein_scale": {
+            "avg": -6.861,
+            "min": -10,
+            "max": -2,
+            "avg_severity": 6.861
+          },
+          "goldstein_severity": {
+            "avg": 6.861,
+            "min": 2,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.8789,
+            "max": 0.98,
+            "min": 0.7
+          },
+          "article_count": {
+            "total": 95,
+            "avg": 5.278,
+            "min": 0,
+            "max": 53
+          },
+          "fatalities": {
+            "events": 0,
+            "rate": 0,
+            "total": 0
           }
         }
       },
@@ -1010,6 +1106,102 @@
             "events": 1,
             "rate": 0.0556,
             "total": 3
+          }
+        }
+      },
+      {
+        "key": "Romania",
+        "group_by": "country",
+        "event_count": 18,
+        "conflict_event_count": 18,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 239,
+        "avg_article_count": 13.278,
+        "min_article_count": 1,
+        "max_article_count": 92,
+        "avg_significance": 0.205,
+        "max_significance": 0.3256,
+        "min_significance": 0.1144,
+        "avg_goldstein_scale": -5.583,
+        "min_goldstein_scale": -9.5,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 5.583,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 9.5,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.8672,
+        "min_confidence": 0.62,
+        "max_confidence": 0.98,
+        "metrics": {
+          "significance": {
+            "avg": 0.205,
+            "max": 0.3256,
+            "min": 0.1144
+          },
+          "goldstein_scale": {
+            "avg": -5.583,
+            "min": -9.5,
+            "max": -2,
+            "avg_severity": 5.583
+          },
+          "goldstein_severity": {
+            "avg": 5.583,
+            "min": 2,
+            "max": 9.5
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.8672,
+            "max": 0.98,
+            "min": 0.62
+          },
+          "article_count": {
+            "total": 239,
+            "avg": 13.278,
+            "min": 1,
+            "max": 92
+          },
+          "fatalities": {
+            "events": 0,
+            "rate": 0,
+            "total": 0
           }
         }
       },
@@ -1112,25 +1304,25 @@
       {
         "key": "Colombia",
         "group_by": "country",
-        "event_count": 15,
-        "conflict_event_count": 15,
+        "event_count": 16,
+        "conflict_event_count": 16,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 1,
-        "fatalities": 1,
-        "fatality_event_rate": 0.0667,
+        "fatality_event_count": 2,
+        "fatalities": 9,
+        "fatality_event_rate": 0.125,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 32,
-        "avg_article_count": 2.133,
+        "article_count": 36,
+        "avg_article_count": 2.25,
         "min_article_count": 1,
         "max_article_count": 6,
-        "avg_significance": 0.2852,
-        "max_significance": 0.3911,
+        "avg_significance": 0.3014,
+        "max_significance": 0.5443,
         "min_significance": 0.107,
-        "avg_goldstein_scale": -7.133,
+        "avg_goldstein_scale": -7.281,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": 8,
-        "avg_goldstein_severity": 8.2,
+        "avg_goldstein_severity": 8.281,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -1145,23 +1337,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8667,
-        "min_confidence": 0.63,
+        "avg_confidence": 0.8469,
+        "min_confidence": 0.55,
         "max_confidence": 0.96,
         "metrics": {
           "significance": {
-            "avg": 0.2852,
-            "max": 0.3911,
+            "avg": 0.3014,
+            "max": 0.5443,
             "min": 0.107
           },
           "goldstein_scale": {
-            "avg": -7.133,
+            "avg": -7.281,
             "min": -10,
             "max": 8,
-            "avg_severity": 8.2
+            "avg_severity": 8.281
           },
           "goldstein_severity": {
-            "avg": 8.2,
+            "avg": 8.281,
             "min": 2,
             "max": 10
           },
@@ -1188,141 +1380,45 @@
             }
           },
           "confidence": {
-            "avg": 0.8667,
+            "avg": 0.8469,
             "max": 0.96,
-            "min": 0.63
+            "min": 0.55
           },
           "article_count": {
-            "total": 32,
-            "avg": 2.133,
+            "total": 36,
+            "avg": 2.25,
             "min": 1,
             "max": 6
           },
           "fatalities": {
-            "events": 1,
-            "rate": 0.0667,
-            "total": 1
-          }
-        }
-      },
-      {
-        "key": "Romania",
-        "group_by": "country",
-        "event_count": 15,
-        "conflict_event_count": 15,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 222,
-        "avg_article_count": 14.8,
-        "min_article_count": 1,
-        "max_article_count": 92,
-        "avg_significance": 0.2089,
-        "max_significance": 0.3256,
-        "min_significance": 0.1144,
-        "avg_goldstein_scale": -5.7,
-        "min_goldstein_scale": -9.5,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 5.7,
-        "min_goldstein_severity": 2,
-        "max_goldstein_severity": 9.5,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.858,
-        "min_confidence": 0.62,
-        "max_confidence": 0.98,
-        "metrics": {
-          "significance": {
-            "avg": 0.2089,
-            "max": 0.3256,
-            "min": 0.1144
-          },
-          "goldstein_scale": {
-            "avg": -5.7,
-            "min": -9.5,
-            "max": -2,
-            "avg_severity": 5.7
-          },
-          "goldstein_severity": {
-            "avg": 5.7,
-            "min": 2,
-            "max": 9.5
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.858,
-            "max": 0.98,
-            "min": 0.62
-          },
-          "article_count": {
-            "total": 222,
-            "avg": 14.8,
-            "min": 1,
-            "max": 92
-          },
-          "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
+            "events": 2,
+            "rate": 0.125,
+            "total": 9
           }
         }
       },
       {
         "key": "Lebanon",
         "group_by": "country",
-        "event_count": 14,
-        "conflict_event_count": 14,
+        "event_count": 15,
+        "conflict_event_count": 15,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 1,
-        "fatalities": 2,
-        "fatality_event_rate": 0.0714,
+        "fatality_event_count": 2,
+        "fatalities": 3,
+        "fatality_event_rate": 0.1333,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 144,
-        "avg_article_count": 10.286,
+        "article_count": 151,
+        "avg_article_count": 10.067,
         "min_article_count": 1,
         "max_article_count": 28,
-        "avg_significance": 0.2922,
+        "avg_significance": 0.2988,
         "max_significance": 0.539,
         "min_significance": 0.0976,
-        "avg_goldstein_scale": -7.714,
+        "avg_goldstein_scale": -7.833,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": 7,
-        "avg_goldstein_severity": 8.714,
+        "avg_goldstein_severity": 8.767,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -1337,23 +1433,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.7271,
+        "avg_confidence": 0.7447,
         "min_confidence": 0.38,
         "max_confidence": 0.96,
         "metrics": {
           "significance": {
-            "avg": 0.2922,
+            "avg": 0.2988,
             "max": 0.539,
             "min": 0.0976
           },
           "goldstein_scale": {
-            "avg": -7.714,
+            "avg": -7.833,
             "min": -10,
             "max": 7,
-            "avg_severity": 8.714
+            "avg_severity": 8.767
           },
           "goldstein_severity": {
-            "avg": 8.714,
+            "avg": 8.767,
             "min": 2,
             "max": 10
           },
@@ -1380,45 +1476,45 @@
             }
           },
           "confidence": {
-            "avg": 0.7271,
+            "avg": 0.7447,
             "max": 0.96,
             "min": 0.38
           },
           "article_count": {
-            "total": 144,
-            "avg": 10.286,
+            "total": 151,
+            "avg": 10.067,
             "min": 1,
             "max": 28
           },
           "fatalities": {
-            "events": 1,
-            "rate": 0.0714,
-            "total": 2
+            "events": 2,
+            "rate": 0.1333,
+            "total": 3
           }
         }
       },
       {
         "key": "Pakistan",
         "group_by": "country",
-        "event_count": 13,
-        "conflict_event_count": 13,
+        "event_count": 14,
+        "conflict_event_count": 14,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 8,
-        "fatalities": 23,
-        "fatality_event_rate": 0.6154,
+        "fatality_event_count": 9,
+        "fatalities": 24,
+        "fatality_event_rate": 0.6429,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 38,
-        "avg_article_count": 2.923,
+        "article_count": 40,
+        "avg_article_count": 2.857,
         "min_article_count": 1,
         "max_article_count": 6,
-        "avg_significance": 0.3649,
+        "avg_significance": 0.363,
         "max_significance": 0.599,
         "min_significance": 0.101,
-        "avg_goldstein_scale": -7.615,
+        "avg_goldstein_scale": -7.643,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7.615,
+        "avg_goldstein_severity": 7.643,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -1433,23 +1529,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.7638,
+        "avg_confidence": 0.7721,
         "min_confidence": 0.42,
         "max_confidence": 0.94,
         "metrics": {
           "significance": {
-            "avg": 0.3649,
+            "avg": 0.363,
             "max": 0.599,
             "min": 0.101
           },
           "goldstein_scale": {
-            "avg": -7.615,
+            "avg": -7.643,
             "min": -10,
             "max": -2,
-            "avg_severity": 7.615
+            "avg_severity": 7.643
           },
           "goldstein_severity": {
-            "avg": 7.615,
+            "avg": 7.643,
             "min": 2,
             "max": 10
           },
@@ -1476,47 +1572,47 @@
             }
           },
           "confidence": {
-            "avg": 0.7638,
+            "avg": 0.7721,
             "max": 0.94,
             "min": 0.42
           },
           "article_count": {
-            "total": 38,
-            "avg": 2.923,
+            "total": 40,
+            "avg": 2.857,
             "min": 1,
             "max": 6
           },
           "fatalities": {
-            "events": 8,
-            "rate": 0.6154,
-            "total": 23
+            "events": 9,
+            "rate": 0.6429,
+            "total": 24
           }
         }
       },
       {
-        "key": "Indonesia",
+        "key": "Spain",
         "group_by": "country",
-        "event_count": 13,
-        "conflict_event_count": 13,
+        "event_count": 11,
+        "conflict_event_count": 11,
         "cameoplus_event_count": 0,
         "fatality_event_count": 0,
         "fatalities": 0,
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 33,
-        "avg_article_count": 2.538,
+        "article_count": 91,
+        "avg_article_count": 8.273,
         "min_article_count": 1,
-        "max_article_count": 5,
-        "avg_significance": 0.2481,
-        "max_significance": 0.3799,
-        "min_significance": 0.1104,
-        "avg_goldstein_scale": -7.038,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7.038,
-        "min_goldstein_severity": 2,
-        "max_goldstein_severity": 10,
+        "max_article_count": 27,
+        "avg_significance": 0.2599,
+        "max_significance": 0.4013,
+        "min_significance": 0.1715,
+        "avg_goldstein_scale": -7.091,
+        "min_goldstein_scale": -9,
+        "max_goldstein_scale": -5,
+        "avg_goldstein_severity": 7.091,
+        "min_goldstein_severity": 5,
+        "max_goldstein_severity": 9,
         "avg_magnitude": null,
         "min_magnitude": null,
         "max_magnitude": null,
@@ -1529,25 +1625,25 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8777,
-        "min_confidence": 0.7,
+        "avg_confidence": 0.8945,
+        "min_confidence": 0.62,
         "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.2481,
-            "max": 0.3799,
-            "min": 0.1104
+            "avg": 0.2599,
+            "max": 0.4013,
+            "min": 0.1715
           },
           "goldstein_scale": {
-            "avg": -7.038,
-            "min": -10,
-            "max": -2,
-            "avg_severity": 7.038
+            "avg": -7.091,
+            "min": -9,
+            "max": -5,
+            "avg_severity": 7.091
           },
           "goldstein_severity": {
-            "avg": 7.038,
-            "min": 2,
-            "max": 10
+            "avg": 7.091,
+            "min": 5,
+            "max": 9
           },
           "cameoplus": {
             "magnitude": {
@@ -1572,15 +1668,15 @@
             }
           },
           "confidence": {
-            "avg": 0.8777,
+            "avg": 0.8945,
             "max": 0.98,
-            "min": 0.7
+            "min": 0.62
           },
           "article_count": {
-            "total": 33,
-            "avg": 2.538,
+            "total": 91,
+            "avg": 8.273,
             "min": 1,
-            "max": 5
+            "max": 27
           },
           "fatalities": {
             "events": 0,
@@ -1590,27 +1686,123 @@
         }
       },
       {
+        "key": "Iraq",
+        "group_by": "country",
+        "event_count": 11,
+        "conflict_event_count": 11,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 2,
+        "fatalities": 2,
+        "fatality_event_rate": 0.1818,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 47,
+        "avg_article_count": 4.273,
+        "min_article_count": 1,
+        "max_article_count": 13,
+        "avg_significance": 0.2412,
+        "max_significance": 0.3964,
+        "min_significance": 0.0835,
+        "avg_goldstein_scale": -7.227,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 7.227,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.6309,
+        "min_confidence": 0.48,
+        "max_confidence": 0.84,
+        "metrics": {
+          "significance": {
+            "avg": 0.2412,
+            "max": 0.3964,
+            "min": 0.0835
+          },
+          "goldstein_scale": {
+            "avg": -7.227,
+            "min": -10,
+            "max": -2,
+            "avg_severity": 7.227
+          },
+          "goldstein_severity": {
+            "avg": 7.227,
+            "min": 2,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.6309,
+            "max": 0.84,
+            "min": 0.48
+          },
+          "article_count": {
+            "total": 47,
+            "avg": 4.273,
+            "min": 1,
+            "max": 13
+          },
+          "fatalities": {
+            "events": 2,
+            "rate": 0.1818,
+            "total": 2
+          }
+        }
+      },
+      {
         "key": "Germany",
         "group_by": "country",
-        "event_count": 10,
-        "conflict_event_count": 10,
+        "event_count": 11,
+        "conflict_event_count": 11,
         "cameoplus_event_count": 0,
         "fatality_event_count": 0,
         "fatalities": 0,
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 40,
-        "avg_article_count": 4,
+        "article_count": 42,
+        "avg_article_count": 3.818,
         "min_article_count": 1,
         "max_article_count": 19,
-        "avg_significance": 0.2311,
+        "avg_significance": 0.2303,
         "max_significance": 0.3735,
         "min_significance": 0.1255,
-        "avg_goldstein_scale": -6.5,
+        "avg_goldstein_scale": -6.545,
         "min_goldstein_scale": -9,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 6.5,
+        "avg_goldstein_severity": 6.545,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 9,
         "avg_magnitude": null,
@@ -1625,23 +1817,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.891,
+        "avg_confidence": 0.8755,
         "min_confidence": 0.55,
         "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.2311,
+            "avg": 0.2303,
             "max": 0.3735,
             "min": 0.1255
           },
           "goldstein_scale": {
-            "avg": -6.5,
+            "avg": -6.545,
             "min": -9,
             "max": -2,
-            "avg_severity": 6.5
+            "avg_severity": 6.545
           },
           "goldstein_severity": {
-            "avg": 6.5,
+            "avg": 6.545,
             "min": 2,
             "max": 9
           },
@@ -1668,13 +1860,13 @@
             }
           },
           "confidence": {
-            "avg": 0.891,
+            "avg": 0.8755,
             "max": 0.98,
             "min": 0.55
           },
           "article_count": {
-            "total": 40,
-            "avg": 4,
+            "total": 42,
+            "avg": 3.818,
             "min": 1,
             "max": 19
           },
@@ -1686,123 +1878,27 @@
         }
       },
       {
-        "key": "Iraq",
+        "key": "Brazil",
         "group_by": "country",
         "event_count": 10,
         "conflict_event_count": 10,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 1,
-        "fatalities": 1,
-        "fatality_event_rate": 0.1,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 35,
-        "avg_article_count": 3.5,
-        "min_article_count": 1,
-        "max_article_count": 13,
-        "avg_significance": 0.2256,
-        "max_significance": 0.3691,
-        "min_significance": 0.0835,
-        "avg_goldstein_scale": -6.95,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 6.95,
-        "min_goldstein_severity": 2,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.622,
-        "min_confidence": 0.48,
-        "max_confidence": 0.84,
-        "metrics": {
-          "significance": {
-            "avg": 0.2256,
-            "max": 0.3691,
-            "min": 0.0835
-          },
-          "goldstein_scale": {
-            "avg": -6.95,
-            "min": -10,
-            "max": -2,
-            "avg_severity": 6.95
-          },
-          "goldstein_severity": {
-            "avg": 6.95,
-            "min": 2,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.622,
-            "max": 0.84,
-            "min": 0.48
-          },
-          "article_count": {
-            "total": 35,
-            "avg": 3.5,
-            "min": 1,
-            "max": 13
-          },
-          "fatalities": {
-            "events": 1,
-            "rate": 0.1,
-            "total": 1
-          }
-        }
-      },
-      {
-        "key": "Brazil",
-        "group_by": "country",
-        "event_count": 9,
-        "conflict_event_count": 9,
         "cameoplus_event_count": 0,
         "fatality_event_count": 0,
         "fatalities": 0,
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 33,
-        "avg_article_count": 3.667,
+        "article_count": 35,
+        "avg_article_count": 3.5,
         "min_article_count": 1,
         "max_article_count": 20,
-        "avg_significance": 0.2717,
+        "avg_significance": 0.2686,
         "max_significance": 0.3799,
         "min_significance": 0.1089,
-        "avg_goldstein_scale": -7.8,
+        "avg_goldstein_scale": -7.77,
         "min_goldstein_scale": -10,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7.8,
+        "avg_goldstein_severity": 7.77,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
@@ -1817,23 +1913,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8344,
+        "avg_confidence": 0.833,
         "min_confidence": 0.64,
         "max_confidence": 0.94,
         "metrics": {
           "significance": {
-            "avg": 0.2717,
+            "avg": 0.2686,
             "max": 0.3799,
             "min": 0.1089
           },
           "goldstein_scale": {
-            "avg": -7.8,
+            "avg": -7.77,
             "min": -10,
             "max": -2,
-            "avg_severity": 7.8
+            "avg_severity": 7.77
           },
           "goldstein_severity": {
-            "avg": 7.8,
+            "avg": 7.77,
             "min": 2,
             "max": 10
           },
@@ -1860,13 +1956,13 @@
             }
           },
           "confidence": {
-            "avg": 0.8344,
+            "avg": 0.833,
             "max": 0.94,
             "min": 0.64
           },
           "article_count": {
-            "total": 33,
-            "avg": 3.667,
+            "total": 35,
+            "avg": 3.5,
             "min": 1,
             "max": 20
           },
@@ -1874,6 +1970,102 @@
             "events": 0,
             "rate": 0,
             "total": 0
+          }
+        }
+      },
+      {
+        "key": "DR Congo",
+        "group_by": "country",
+        "event_count": 9,
+        "conflict_event_count": 9,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 2,
+        "fatalities": 2,
+        "fatality_event_rate": 0.2222,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 13,
+        "avg_article_count": 1.444,
+        "min_article_count": 1,
+        "max_article_count": 3,
+        "avg_significance": 0.2905,
+        "max_significance": 0.4426,
+        "min_significance": 0.1635,
+        "avg_goldstein_scale": -6.944,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": 8,
+        "avg_goldstein_severity": 8.722,
+        "min_goldstein_severity": 5,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.6733,
+        "min_confidence": 0.48,
+        "max_confidence": 0.93,
+        "metrics": {
+          "significance": {
+            "avg": 0.2905,
+            "max": 0.4426,
+            "min": 0.1635
+          },
+          "goldstein_scale": {
+            "avg": -6.944,
+            "min": -10,
+            "max": 8,
+            "avg_severity": 8.722
+          },
+          "goldstein_severity": {
+            "avg": 8.722,
+            "min": 5,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.6733,
+            "max": 0.93,
+            "min": 0.48
+          },
+          "article_count": {
+            "total": 13,
+            "avg": 1.444,
+            "min": 1,
+            "max": 3
+          },
+          "fatalities": {
+            "events": 2,
+            "rate": 0.2222,
+            "total": 2
           }
         }
       },
@@ -1974,28 +2166,124 @@
         }
       },
       {
-        "key": "DR Congo",
+        "key": "Moldova",
+        "group_by": "country",
+        "event_count": 9,
+        "conflict_event_count": 9,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 65,
+        "avg_article_count": 7.222,
+        "min_article_count": 1,
+        "max_article_count": 20,
+        "avg_significance": 0.1388,
+        "max_significance": 0.3085,
+        "min_significance": 0.0859,
+        "avg_goldstein_scale": -3.333,
+        "min_goldstein_scale": -9.5,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 3.333,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 9.5,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.7233,
+        "min_confidence": 0.39,
+        "max_confidence": 0.94,
+        "metrics": {
+          "significance": {
+            "avg": 0.1388,
+            "max": 0.3085,
+            "min": 0.0859
+          },
+          "goldstein_scale": {
+            "avg": -3.333,
+            "min": -9.5,
+            "max": -2,
+            "avg_severity": 3.333
+          },
+          "goldstein_severity": {
+            "avg": 3.333,
+            "min": 2,
+            "max": 9.5
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.7233,
+            "max": 0.94,
+            "min": 0.39
+          },
+          "article_count": {
+            "total": 65,
+            "avg": 7.222,
+            "min": 1,
+            "max": 20
+          },
+          "fatalities": {
+            "events": 0,
+            "rate": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "key": "Myanmar",
         "group_by": "country",
         "event_count": 8,
         "conflict_event_count": 8,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 2,
-        "fatalities": 2,
-        "fatality_event_rate": 0.25,
+        "fatality_event_count": 4,
+        "fatalities": 44,
+        "fatality_event_rate": 0.5,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 11,
-        "avg_article_count": 1.375,
+        "article_count": 42,
+        "avg_article_count": 5.25,
         "min_article_count": 1,
-        "max_article_count": 3,
-        "avg_significance": 0.2926,
-        "max_significance": 0.4426,
-        "min_significance": 0.1635,
-        "avg_goldstein_scale": -6.625,
+        "max_article_count": 32,
+        "avg_significance": 0.4682,
+        "max_significance": 0.7441,
+        "min_significance": 0.2485,
+        "avg_goldstein_scale": -9.375,
         "min_goldstein_scale": -10,
-        "max_goldstein_scale": 8,
-        "avg_goldstein_severity": 8.625,
-        "min_goldstein_severity": 5,
+        "max_goldstein_scale": -8,
+        "avg_goldstein_severity": 9.375,
+        "min_goldstein_severity": 8,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
         "min_magnitude": null,
@@ -2009,24 +2297,24 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.6975,
-        "min_confidence": 0.55,
+        "avg_confidence": 0.6788,
+        "min_confidence": 0.35,
         "max_confidence": 0.93,
         "metrics": {
           "significance": {
-            "avg": 0.2926,
-            "max": 0.4426,
-            "min": 0.1635
+            "avg": 0.4682,
+            "max": 0.7441,
+            "min": 0.2485
           },
           "goldstein_scale": {
-            "avg": -6.625,
+            "avg": -9.375,
             "min": -10,
-            "max": 8,
-            "avg_severity": 8.625
+            "max": -8,
+            "avg_severity": 9.375
           },
           "goldstein_severity": {
-            "avg": 8.625,
-            "min": 5,
+            "avg": 9.375,
+            "min": 8,
             "max": 10
           },
           "cameoplus": {
@@ -2052,47 +2340,47 @@
             }
           },
           "confidence": {
-            "avg": 0.6975,
+            "avg": 0.6788,
             "max": 0.93,
-            "min": 0.55
+            "min": 0.35
           },
           "article_count": {
-            "total": 11,
-            "avg": 1.375,
+            "total": 42,
+            "avg": 5.25,
             "min": 1,
-            "max": 3
+            "max": 32
           },
           "fatalities": {
-            "events": 2,
-            "rate": 0.25,
-            "total": 2
+            "events": 4,
+            "rate": 0.5,
+            "total": 44
           }
         }
       },
       {
-        "key": "Spain",
+        "key": "Sudan",
         "group_by": "country",
         "event_count": 8,
         "conflict_event_count": 8,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
+        "fatality_event_count": 3,
+        "fatalities": 11,
+        "fatality_event_rate": 0.375,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 32,
-        "avg_article_count": 4,
+        "article_count": 14,
+        "avg_article_count": 1.75,
         "min_article_count": 1,
-        "max_article_count": 17,
-        "avg_significance": 0.2744,
-        "max_significance": 0.4013,
-        "min_significance": 0.1715,
-        "avg_goldstein_scale": -7.188,
-        "min_goldstein_scale": -9,
-        "max_goldstein_scale": -5,
-        "avg_goldstein_severity": 7.188,
-        "min_goldstein_severity": 5,
-        "max_goldstein_severity": 9,
+        "max_article_count": 3,
+        "avg_significance": 0.341,
+        "max_significance": 0.6094,
+        "min_significance": 0.205,
+        "avg_goldstein_scale": -8.212,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -6.5,
+        "avg_goldstein_severity": 8.212,
+        "min_goldstein_severity": 6.5,
+        "max_goldstein_severity": 10,
         "avg_magnitude": null,
         "min_magnitude": null,
         "max_magnitude": null,
@@ -2105,25 +2393,25 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.87,
-        "min_confidence": 0.62,
-        "max_confidence": 0.97,
+        "avg_confidence": 0.7425,
+        "min_confidence": 0.55,
+        "max_confidence": 0.9,
         "metrics": {
           "significance": {
-            "avg": 0.2744,
-            "max": 0.4013,
-            "min": 0.1715
+            "avg": 0.341,
+            "max": 0.6094,
+            "min": 0.205
           },
           "goldstein_scale": {
-            "avg": -7.188,
-            "min": -9,
-            "max": -5,
-            "avg_severity": 7.188
+            "avg": -8.212,
+            "min": -10,
+            "max": -6.5,
+            "avg_severity": 8.212
           },
           "goldstein_severity": {
-            "avg": 7.188,
-            "min": 5,
-            "max": 9
+            "avg": 8.212,
+            "min": 6.5,
+            "max": 10
           },
           "cameoplus": {
             "magnitude": {
@@ -2148,20 +2436,20 @@
             }
           },
           "confidence": {
-            "avg": 0.87,
-            "max": 0.97,
-            "min": 0.62
+            "avg": 0.7425,
+            "max": 0.9,
+            "min": 0.55
           },
           "article_count": {
-            "total": 32,
-            "avg": 4,
+            "total": 14,
+            "avg": 1.75,
             "min": 1,
-            "max": 17
+            "max": 3
           },
           "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
+            "events": 3,
+            "rate": 0.375,
+            "total": 11
           }
         }
       },
@@ -2176,11 +2464,11 @@
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 36,
-        "avg_article_count": 4.5,
+        "article_count": 39,
+        "avg_article_count": 4.875,
         "min_article_count": 1,
         "max_article_count": 20,
-        "avg_significance": 0.1114,
+        "avg_significance": 0.1126,
         "max_significance": 0.201,
         "min_significance": 0.085,
         "avg_goldstein_scale": -2.562,
@@ -2206,7 +2494,7 @@
         "max_confidence": 0.9,
         "metrics": {
           "significance": {
-            "avg": 0.1114,
+            "avg": 0.1126,
             "max": 0.201,
             "min": 0.085
           },
@@ -2249,8 +2537,8 @@
             "min": 0.55
           },
           "article_count": {
-            "total": 36,
-            "avg": 4.5,
+            "total": 39,
+            "avg": 4.875,
             "min": 1,
             "max": 20
           },
@@ -2262,123 +2550,27 @@
         }
       },
       {
-        "key": "Myanmar",
+        "key": "Ecuador",
         "group_by": "country",
         "event_count": 7,
         "conflict_event_count": 7,
         "cameoplus_event_count": 0,
         "fatality_event_count": 4,
-        "fatalities": 44,
+        "fatalities": 9,
         "fatality_event_rate": 0.5714,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 41,
-        "avg_article_count": 5.857,
+        "article_count": 31,
+        "avg_article_count": 4.429,
         "min_article_count": 1,
-        "max_article_count": 32,
-        "avg_significance": 0.4949,
-        "max_significance": 0.7441,
-        "min_significance": 0.2485,
-        "avg_goldstein_scale": -9.286,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -8,
-        "avg_goldstein_severity": 9.286,
-        "min_goldstein_severity": 8,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.7071,
-        "min_confidence": 0.35,
-        "max_confidence": 0.93,
-        "metrics": {
-          "significance": {
-            "avg": 0.4949,
-            "max": 0.7441,
-            "min": 0.2485
-          },
-          "goldstein_scale": {
-            "avg": -9.286,
-            "min": -10,
-            "max": -8,
-            "avg_severity": 9.286
-          },
-          "goldstein_severity": {
-            "avg": 9.286,
-            "min": 8,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.7071,
-            "max": 0.93,
-            "min": 0.35
-          },
-          "article_count": {
-            "total": 41,
-            "avg": 5.857,
-            "min": 1,
-            "max": 32
-          },
-          "fatalities": {
-            "events": 4,
-            "rate": 0.5714,
-            "total": 44
-          }
-        }
-      },
-      {
-        "key": "Moldova",
-        "group_by": "country",
-        "event_count": 7,
-        "conflict_event_count": 7,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 42,
-        "avg_article_count": 6,
-        "min_article_count": 1,
-        "max_article_count": 15,
-        "avg_significance": 0.1492,
-        "max_significance": 0.3085,
-        "min_significance": 0.0859,
-        "avg_goldstein_scale": -3.714,
+        "max_article_count": 12,
+        "avg_significance": 0.3648,
+        "max_significance": 0.5312,
+        "min_significance": 0.1208,
+        "avg_goldstein_scale": -7.786,
         "min_goldstein_scale": -9.5,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 3.714,
+        "avg_goldstein_severity": 7.786,
         "min_goldstein_severity": 2,
         "max_goldstein_severity": 9.5,
         "avg_magnitude": null,
@@ -2393,23 +2585,23 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.7686,
-        "min_confidence": 0.48,
-        "max_confidence": 0.94,
+        "avg_confidence": 0.7043,
+        "min_confidence": 0.42,
+        "max_confidence": 0.92,
         "metrics": {
           "significance": {
-            "avg": 0.1492,
-            "max": 0.3085,
-            "min": 0.0859
+            "avg": 0.3648,
+            "max": 0.5312,
+            "min": 0.1208
           },
           "goldstein_scale": {
-            "avg": -3.714,
+            "avg": -7.786,
             "min": -9.5,
             "max": -2,
-            "avg_severity": 3.714
+            "avg_severity": 7.786
           },
           "goldstein_severity": {
-            "avg": 3.714,
+            "avg": 7.786,
             "min": 2,
             "max": 9.5
           },
@@ -2436,20 +2628,212 @@
             }
           },
           "confidence": {
-            "avg": 0.7686,
-            "max": 0.94,
-            "min": 0.48
+            "avg": 0.7043,
+            "max": 0.92,
+            "min": 0.42
           },
           "article_count": {
-            "total": 42,
-            "avg": 6,
+            "total": 31,
+            "avg": 4.429,
             "min": 1,
-            "max": 15
+            "max": 12
+          },
+          "fatalities": {
+            "events": 4,
+            "rate": 0.5714,
+            "total": 9
+          }
+        }
+      },
+      {
+        "key": "Kosovo",
+        "group_by": "country",
+        "event_count": 7,
+        "conflict_event_count": 7,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 52,
+        "avg_article_count": 7.429,
+        "min_article_count": 1,
+        "max_article_count": 17,
+        "avg_significance": 0.2255,
+        "max_significance": 0.2628,
+        "min_significance": 0.1765,
+        "avg_goldstein_scale": -6.5,
+        "min_goldstein_scale": -7.5,
+        "max_goldstein_scale": -5,
+        "avg_goldstein_severity": 6.5,
+        "min_goldstein_severity": 5,
+        "max_goldstein_severity": 7.5,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.8429,
+        "min_confidence": 0.42,
+        "max_confidence": 0.95,
+        "metrics": {
+          "significance": {
+            "avg": 0.2255,
+            "max": 0.2628,
+            "min": 0.1765
+          },
+          "goldstein_scale": {
+            "avg": -6.5,
+            "min": -7.5,
+            "max": -5,
+            "avg_severity": 6.5
+          },
+          "goldstein_severity": {
+            "avg": 6.5,
+            "min": 5,
+            "max": 7.5
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.8429,
+            "max": 0.95,
+            "min": 0.42
+          },
+          "article_count": {
+            "total": 52,
+            "avg": 7.429,
+            "min": 1,
+            "max": 17
           },
           "fatalities": {
             "events": 0,
             "rate": 0,
             "total": 0
+          }
+        }
+      },
+      {
+        "key": "South Sudan",
+        "group_by": "country",
+        "event_count": 6,
+        "conflict_event_count": 6,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 5,
+        "fatalities": 68,
+        "fatality_event_rate": 0.8333,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 57,
+        "avg_article_count": 9.5,
+        "min_article_count": 1,
+        "max_article_count": 41,
+        "avg_significance": 0.5001,
+        "max_significance": 0.8536,
+        "min_significance": 0.221,
+        "avg_goldstein_scale": -8.917,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -7,
+        "avg_goldstein_severity": 8.917,
+        "min_goldstein_severity": 7,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.7167,
+        "min_confidence": 0.55,
+        "max_confidence": 0.86,
+        "metrics": {
+          "significance": {
+            "avg": 0.5001,
+            "max": 0.8536,
+            "min": 0.221
+          },
+          "goldstein_scale": {
+            "avg": -8.917,
+            "min": -10,
+            "max": -7,
+            "avg_severity": 8.917
+          },
+          "goldstein_severity": {
+            "avg": 8.917,
+            "min": 7,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.7167,
+            "max": 0.86,
+            "min": 0.55
+          },
+          "article_count": {
+            "total": 57,
+            "avg": 9.5,
+            "min": 1,
+            "max": 41
+          },
+          "fatalities": {
+            "events": 5,
+            "rate": 0.8333,
+            "total": 68
           }
         }
       },
@@ -2550,28 +2934,28 @@
         }
       },
       {
-        "key": "Sudan",
+        "key": "Chad",
         "group_by": "country",
         "event_count": 6,
         "conflict_event_count": 6,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 3,
-        "fatalities": 11,
-        "fatality_event_rate": 0.5,
+        "fatality_event_count": 2,
+        "fatalities": 7,
+        "fatality_event_rate": 0.3333,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 10,
-        "avg_article_count": 1.667,
+        "article_count": 41,
+        "avg_article_count": 6.833,
         "min_article_count": 1,
-        "max_article_count": 3,
-        "avg_significance": 0.3681,
-        "max_significance": 0.6094,
-        "min_significance": 0.205,
-        "avg_goldstein_scale": -8.117,
+        "max_article_count": 22,
+        "avg_significance": 0.3191,
+        "max_significance": 0.5268,
+        "min_significance": 0.127,
+        "avg_goldstein_scale": -8.5,
         "min_goldstein_scale": -10,
-        "max_goldstein_scale": -6.5,
-        "avg_goldstein_severity": 8.117,
-        "min_goldstein_severity": 6.5,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 8.5,
+        "min_goldstein_severity": 2,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
         "min_magnitude": null,
@@ -2585,24 +2969,24 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.75,
-        "min_confidence": 0.55,
-        "max_confidence": 0.9,
+        "avg_confidence": 0.7017,
+        "min_confidence": 0.35,
+        "max_confidence": 0.91,
         "metrics": {
           "significance": {
-            "avg": 0.3681,
-            "max": 0.6094,
-            "min": 0.205
+            "avg": 0.3191,
+            "max": 0.5268,
+            "min": 0.127
           },
           "goldstein_scale": {
-            "avg": -8.117,
+            "avg": -8.5,
             "min": -10,
-            "max": -6.5,
-            "avg_severity": 8.117
+            "max": -2,
+            "avg_severity": 8.5
           },
           "goldstein_severity": {
-            "avg": 8.117,
-            "min": 6.5,
+            "avg": 8.5,
+            "min": 2,
             "max": 10
           },
           "cameoplus": {
@@ -2628,116 +3012,20 @@
             }
           },
           "confidence": {
-            "avg": 0.75,
-            "max": 0.9,
-            "min": 0.55
+            "avg": 0.7017,
+            "max": 0.91,
+            "min": 0.35
           },
           "article_count": {
-            "total": 10,
-            "avg": 1.667,
+            "total": 41,
+            "avg": 6.833,
             "min": 1,
-            "max": 3
+            "max": 22
           },
           "fatalities": {
-            "events": 3,
-            "rate": 0.5,
-            "total": 11
-          }
-        }
-      },
-      {
-        "key": "Ecuador",
-        "group_by": "country",
-        "event_count": 6,
-        "conflict_event_count": 6,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 3,
-        "fatalities": 6,
-        "fatality_event_rate": 0.5,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 28,
-        "avg_article_count": 4.667,
-        "min_article_count": 1,
-        "max_article_count": 12,
-        "avg_significance": 0.337,
-        "max_significance": 0.5187,
-        "min_significance": 0.1208,
-        "avg_goldstein_scale": -7.583,
-        "min_goldstein_scale": -9.5,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7.583,
-        "min_goldstein_severity": 2,
-        "max_goldstein_severity": 9.5,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.735,
-        "min_confidence": 0.42,
-        "max_confidence": 0.92,
-        "metrics": {
-          "significance": {
-            "avg": 0.337,
-            "max": 0.5187,
-            "min": 0.1208
-          },
-          "goldstein_scale": {
-            "avg": -7.583,
-            "min": -9.5,
-            "max": -2,
-            "avg_severity": 7.583
-          },
-          "goldstein_severity": {
-            "avg": 7.583,
-            "min": 2,
-            "max": 9.5
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.735,
-            "max": 0.92,
-            "min": 0.42
-          },
-          "article_count": {
-            "total": 28,
-            "avg": 4.667,
-            "min": 1,
-            "max": 12
-          },
-          "fatalities": {
-            "events": 3,
-            "rate": 0.5,
-            "total": 6
+            "events": 2,
+            "rate": 0.3333,
+            "total": 7
           }
         }
       },
@@ -2838,7 +3126,7 @@
         }
       },
       {
-        "key": "Kosovo",
+        "key": "Bolivia",
         "group_by": "country",
         "event_count": 6,
         "conflict_event_count": 6,
@@ -2848,19 +3136,19 @@
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 40,
-        "avg_article_count": 6.667,
+        "article_count": 23,
+        "avg_article_count": 3.833,
         "min_article_count": 1,
-        "max_article_count": 17,
-        "avg_significance": 0.2193,
-        "max_significance": 0.2438,
-        "min_significance": 0.1765,
-        "avg_goldstein_scale": -6.333,
-        "min_goldstein_scale": -7,
-        "max_goldstein_scale": -5,
-        "avg_goldstein_severity": 6.333,
-        "min_goldstein_severity": 5,
-        "max_goldstein_severity": 7,
+        "max_article_count": 7,
+        "avg_significance": 0.2202,
+        "max_significance": 0.2905,
+        "min_significance": 0.1205,
+        "avg_goldstein_scale": -6.417,
+        "min_goldstein_scale": -9.5,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 6.417,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 9.5,
         "avg_magnitude": null,
         "min_magnitude": null,
         "max_magnitude": null,
@@ -2873,25 +3161,25 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.825,
-        "min_confidence": 0.42,
-        "max_confidence": 0.95,
+        "avg_confidence": 0.885,
+        "min_confidence": 0.62,
+        "max_confidence": 0.96,
         "metrics": {
           "significance": {
-            "avg": 0.2193,
-            "max": 0.2438,
-            "min": 0.1765
+            "avg": 0.2202,
+            "max": 0.2905,
+            "min": 0.1205
           },
           "goldstein_scale": {
-            "avg": -6.333,
-            "min": -7,
-            "max": -5,
-            "avg_severity": 6.333
+            "avg": -6.417,
+            "min": -9.5,
+            "max": -2,
+            "avg_severity": 6.417
           },
           "goldstein_severity": {
-            "avg": 6.333,
-            "min": 5,
-            "max": 7
+            "avg": 6.417,
+            "min": 2,
+            "max": 9.5
           },
           "cameoplus": {
             "magnitude": {
@@ -2916,15 +3204,15 @@
             }
           },
           "confidence": {
-            "avg": 0.825,
-            "max": 0.95,
-            "min": 0.42
+            "avg": 0.885,
+            "max": 0.96,
+            "min": 0.62
           },
           "article_count": {
-            "total": 40,
-            "avg": 6.667,
+            "total": 23,
+            "avg": 3.833,
             "min": 1,
-            "max": 17
+            "max": 7
           },
           "fatalities": {
             "events": 0,
@@ -3222,29 +3510,29 @@
         }
       },
       {
-        "key": "South Sudan",
+        "key": "United Kingdom",
         "group_by": "country",
         "event_count": 5,
         "conflict_event_count": 5,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 4,
-        "fatalities": 19,
-        "fatality_event_rate": 0.8,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 52,
-        "avg_article_count": 10.4,
+        "article_count": 26,
+        "avg_article_count": 5.2,
         "min_article_count": 1,
-        "max_article_count": 41,
-        "avg_significance": 0.4294,
-        "max_significance": 0.5228,
-        "min_significance": 0.221,
-        "avg_goldstein_scale": -8.9,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -7,
-        "avg_goldstein_severity": 8.9,
-        "min_goldstein_severity": 7,
-        "max_goldstein_severity": 10,
+        "max_article_count": 13,
+        "avg_significance": 0.2475,
+        "max_significance": 0.3614,
+        "min_significance": 0.1914,
+        "avg_goldstein_scale": -6.7,
+        "min_goldstein_scale": -9,
+        "max_goldstein_scale": -5,
+        "avg_goldstein_severity": 6.7,
+        "min_goldstein_severity": 5,
+        "max_goldstein_severity": 9,
         "avg_magnitude": null,
         "min_magnitude": null,
         "max_magnitude": null,
@@ -3257,25 +3545,25 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.688,
-        "min_confidence": 0.55,
-        "max_confidence": 0.83,
+        "avg_confidence": 0.848,
+        "min_confidence": 0.38,
+        "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.4294,
-            "max": 0.5228,
-            "min": 0.221
+            "avg": 0.2475,
+            "max": 0.3614,
+            "min": 0.1914
           },
           "goldstein_scale": {
-            "avg": -8.9,
-            "min": -10,
-            "max": -7,
-            "avg_severity": 8.9
+            "avg": -6.7,
+            "min": -9,
+            "max": -5,
+            "avg_severity": 6.7
           },
           "goldstein_severity": {
-            "avg": 8.9,
-            "min": 7,
-            "max": 10
+            "avg": 6.7,
+            "min": 5,
+            "max": 9
           },
           "cameoplus": {
             "magnitude": {
@@ -3300,46 +3588,46 @@
             }
           },
           "confidence": {
-            "avg": 0.688,
-            "max": 0.83,
-            "min": 0.55
+            "avg": 0.848,
+            "max": 0.98,
+            "min": 0.38
           },
           "article_count": {
-            "total": 52,
-            "avg": 10.4,
+            "total": 26,
+            "avg": 5.2,
             "min": 1,
-            "max": 41
+            "max": 13
           },
           "fatalities": {
-            "events": 4,
-            "rate": 0.8,
-            "total": 19
+            "events": 0,
+            "rate": 0,
+            "total": 0
           }
         }
       },
       {
-        "key": "Chad",
+        "key": "Argentina",
         "group_by": "country",
         "event_count": 5,
         "conflict_event_count": 5,
         "cameoplus_event_count": 0,
-        "fatality_event_count": 2,
-        "fatalities": 7,
-        "fatality_event_rate": 0.4,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 19,
-        "avg_article_count": 3.8,
+        "article_count": 20,
+        "avg_article_count": 4,
         "min_article_count": 1,
-        "max_article_count": 6,
-        "avg_significance": 0.3576,
-        "max_significance": 0.5268,
-        "min_significance": 0.2909,
-        "avg_goldstein_scale": -9.8,
+        "max_article_count": 12,
+        "avg_significance": 0.2462,
+        "max_significance": 0.2935,
+        "min_significance": 0.2195,
+        "avg_goldstein_scale": -4.3,
         "min_goldstein_scale": -10,
-        "max_goldstein_scale": -9.5,
-        "avg_goldstein_severity": 9.8,
-        "min_goldstein_severity": 9.5,
+        "max_goldstein_scale": 8,
+        "avg_goldstein_severity": 7.5,
+        "min_goldstein_severity": 6.5,
         "max_goldstein_severity": 10,
         "avg_magnitude": null,
         "min_magnitude": null,
@@ -3353,24 +3641,24 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.67,
-        "min_confidence": 0.35,
-        "max_confidence": 0.91,
+        "avg_confidence": 0.878,
+        "min_confidence": 0.72,
+        "max_confidence": 0.98,
         "metrics": {
           "significance": {
-            "avg": 0.3576,
-            "max": 0.5268,
-            "min": 0.2909
+            "avg": 0.2462,
+            "max": 0.2935,
+            "min": 0.2195
           },
           "goldstein_scale": {
-            "avg": -9.8,
+            "avg": -4.3,
             "min": -10,
-            "max": -9.5,
-            "avg_severity": 9.8
+            "max": 8,
+            "avg_severity": 7.5
           },
           "goldstein_severity": {
-            "avg": 9.8,
-            "min": 9.5,
+            "avg": 7.5,
+            "min": 6.5,
             "max": 10
           },
           "cameoplus": {
@@ -3396,20 +3684,20 @@
             }
           },
           "confidence": {
-            "avg": 0.67,
-            "max": 0.91,
-            "min": 0.35
+            "avg": 0.878,
+            "max": 0.98,
+            "min": 0.72
           },
           "article_count": {
-            "total": 19,
-            "avg": 3.8,
+            "total": 20,
+            "avg": 4,
             "min": 1,
-            "max": 6
+            "max": 12
           },
           "fatalities": {
-            "events": 2,
-            "rate": 0.4,
-            "total": 7
+            "events": 0,
+            "rate": 0,
+            "total": 0
           }
         }
       },
@@ -3597,102 +3885,6 @@
             "avg": 16.5,
             "min": 2,
             "max": 58
-          },
-          "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
-          }
-        }
-      },
-      {
-        "key": "United Kingdom",
-        "group_by": "country",
-        "event_count": 4,
-        "conflict_event_count": 4,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 23,
-        "avg_article_count": 5.75,
-        "min_article_count": 1,
-        "max_article_count": 13,
-        "avg_significance": 0.2527,
-        "max_significance": 0.3614,
-        "min_significance": 0.1914,
-        "avg_goldstein_scale": -6.75,
-        "min_goldstein_scale": -9,
-        "max_goldstein_scale": -5,
-        "avg_goldstein_severity": 6.75,
-        "min_goldstein_severity": 5,
-        "max_goldstein_severity": 9,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.815,
-        "min_confidence": 0.38,
-        "max_confidence": 0.98,
-        "metrics": {
-          "significance": {
-            "avg": 0.2527,
-            "max": 0.3614,
-            "min": 0.1914
-          },
-          "goldstein_scale": {
-            "avg": -6.75,
-            "min": -9,
-            "max": -5,
-            "avg_severity": 6.75
-          },
-          "goldstein_severity": {
-            "avg": 6.75,
-            "min": 5,
-            "max": 9
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.815,
-            "max": 0.98,
-            "min": 0.38
-          },
-          "article_count": {
-            "total": 23,
-            "avg": 5.75,
-            "min": 1,
-            "max": 13
           },
           "fatalities": {
             "events": 0,
@@ -3894,7 +4086,7 @@
         }
       },
       {
-        "key": "Argentina",
+        "key": "Paraguay",
         "group_by": "country",
         "event_count": 4,
         "conflict_event_count": 4,
@@ -3904,115 +4096,19 @@
         "fatality_event_rate": 0,
         "country_count": 1,
         "region_count": 1,
-        "article_count": 19,
-        "avg_article_count": 4.75,
-        "min_article_count": 2,
-        "max_article_count": 12,
-        "avg_significance": 0.2344,
-        "max_significance": 0.2584,
-        "min_significance": 0.2195,
-        "avg_goldstein_scale": -2.875,
-        "min_goldstein_scale": -6.5,
-        "max_goldstein_scale": 8,
-        "avg_goldstein_severity": 6.875,
-        "min_goldstein_severity": 6.5,
-        "max_goldstein_severity": 8,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.9175,
-        "min_confidence": 0.84,
-        "max_confidence": 0.98,
-        "metrics": {
-          "significance": {
-            "avg": 0.2344,
-            "max": 0.2584,
-            "min": 0.2195
-          },
-          "goldstein_scale": {
-            "avg": -2.875,
-            "min": -6.5,
-            "max": 8,
-            "avg_severity": 6.875
-          },
-          "goldstein_severity": {
-            "avg": 6.875,
-            "min": 6.5,
-            "max": 8
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.9175,
-            "max": 0.98,
-            "min": 0.84
-          },
-          "article_count": {
-            "total": 19,
-            "avg": 4.75,
-            "min": 2,
-            "max": 12
-          },
-          "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
-          }
-        }
-      },
-      {
-        "key": "Bolivia",
-        "group_by": "country",
-        "event_count": 4,
-        "conflict_event_count": 4,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 15,
-        "avg_article_count": 3.75,
+        "article_count": 75,
+        "avg_article_count": 18.75,
         "min_article_count": 1,
-        "max_article_count": 7,
-        "avg_significance": 0.2106,
-        "max_significance": 0.2905,
-        "min_significance": 0.1205,
-        "avg_goldstein_scale": -6.125,
-        "min_goldstein_scale": -9.5,
+        "max_article_count": 36,
+        "avg_significance": 0.2018,
+        "max_significance": 0.2716,
+        "min_significance": 0.1019,
+        "avg_goldstein_scale": -5.625,
+        "min_goldstein_scale": -7.5,
         "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 6.125,
+        "avg_goldstein_severity": 5.625,
         "min_goldstein_severity": 2,
-        "max_goldstein_severity": 9.5,
+        "max_goldstein_severity": 7.5,
         "avg_magnitude": null,
         "min_magnitude": null,
         "max_magnitude": null,
@@ -4025,25 +4121,25 @@
         "avg_market_sensitivity": null,
         "min_market_sensitivity": null,
         "max_market_sensitivity": null,
-        "avg_confidence": 0.8575,
-        "min_confidence": 0.62,
-        "max_confidence": 0.96,
+        "avg_confidence": 0.7025,
+        "min_confidence": 0.63,
+        "max_confidence": 0.9,
         "metrics": {
           "significance": {
-            "avg": 0.2106,
-            "max": 0.2905,
-            "min": 0.1205
+            "avg": 0.2018,
+            "max": 0.2716,
+            "min": 0.1019
           },
           "goldstein_scale": {
-            "avg": -6.125,
-            "min": -9.5,
+            "avg": -5.625,
+            "min": -7.5,
             "max": -2,
-            "avg_severity": 6.125
+            "avg_severity": 5.625
           },
           "goldstein_severity": {
-            "avg": 6.125,
+            "avg": 5.625,
             "min": 2,
-            "max": 9.5
+            "max": 7.5
           },
           "cameoplus": {
             "magnitude": {
@@ -4068,15 +4164,15 @@
             }
           },
           "confidence": {
-            "avg": 0.8575,
-            "max": 0.96,
-            "min": 0.62
+            "avg": 0.7025,
+            "max": 0.9,
+            "min": 0.63
           },
           "article_count": {
-            "total": 15,
-            "avg": 3.75,
+            "total": 75,
+            "avg": 18.75,
             "min": 1,
-            "max": 7
+            "max": 36
           },
           "fatalities": {
             "events": 0,
@@ -4374,6 +4470,102 @@
         }
       },
       {
+        "key": "Netherlands",
+        "group_by": "country",
+        "event_count": 4,
+        "conflict_event_count": 4,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 0,
+        "fatalities": 0,
+        "fatality_event_rate": 0,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 8,
+        "avg_article_count": 2,
+        "min_article_count": 1,
+        "max_article_count": 3,
+        "avg_significance": 0.1935,
+        "max_significance": 0.2265,
+        "min_significance": 0.1115,
+        "avg_goldstein_scale": -5.375,
+        "min_goldstein_scale": -6.5,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 5.375,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 6.5,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.9575,
+        "min_confidence": 0.93,
+        "max_confidence": 0.98,
+        "metrics": {
+          "significance": {
+            "avg": 0.1935,
+            "max": 0.2265,
+            "min": 0.1115
+          },
+          "goldstein_scale": {
+            "avg": -5.375,
+            "min": -6.5,
+            "max": -2,
+            "avg_severity": 5.375
+          },
+          "goldstein_severity": {
+            "avg": 5.375,
+            "min": 2,
+            "max": 6.5
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.9575,
+            "max": 0.98,
+            "min": 0.93
+          },
+          "article_count": {
+            "total": 8,
+            "avg": 2,
+            "min": 1,
+            "max": 3
+          },
+          "fatalities": {
+            "events": 0,
+            "rate": 0,
+            "total": 0
+          }
+        }
+      },
+      {
         "key": "Mali",
         "group_by": "country",
         "event_count": 4,
@@ -4466,6 +4658,102 @@
             "events": 0,
             "rate": 0,
             "total": 0
+          }
+        }
+      },
+      {
+        "key": "Iran",
+        "group_by": "country",
+        "event_count": 3,
+        "conflict_event_count": 3,
+        "cameoplus_event_count": 0,
+        "fatality_event_count": 1,
+        "fatalities": 1,
+        "fatality_event_rate": 0.3333,
+        "country_count": 1,
+        "region_count": 1,
+        "article_count": 107,
+        "avg_article_count": 35.667,
+        "min_article_count": 4,
+        "max_article_count": 52,
+        "avg_significance": 0.3324,
+        "max_significance": 0.4705,
+        "min_significance": 0.117,
+        "avg_goldstein_scale": -7,
+        "min_goldstein_scale": -10,
+        "max_goldstein_scale": -2,
+        "avg_goldstein_severity": 7,
+        "min_goldstein_severity": 2,
+        "max_goldstein_severity": 10,
+        "avg_magnitude": null,
+        "min_magnitude": null,
+        "max_magnitude": null,
+        "avg_systemic_importance": null,
+        "min_systemic_importance": null,
+        "max_systemic_importance": null,
+        "avg_propagation_potential": null,
+        "min_propagation_potential": null,
+        "max_propagation_potential": null,
+        "avg_market_sensitivity": null,
+        "min_market_sensitivity": null,
+        "max_market_sensitivity": null,
+        "avg_confidence": 0.5767,
+        "min_confidence": 0.34,
+        "max_confidence": 0.91,
+        "metrics": {
+          "significance": {
+            "avg": 0.3324,
+            "max": 0.4705,
+            "min": 0.117
+          },
+          "goldstein_scale": {
+            "avg": -7,
+            "min": -10,
+            "max": -2,
+            "avg_severity": 7
+          },
+          "goldstein_severity": {
+            "avg": 7,
+            "min": 2,
+            "max": 10
+          },
+          "cameoplus": {
+            "magnitude": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "systemic_importance": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "propagation_potential": {
+              "avg": null,
+              "max": null,
+              "min": null
+            },
+            "market_sensitivity": {
+              "avg": null,
+              "max": null,
+              "min": null
+            }
+          },
+          "confidence": {
+            "avg": 0.5767,
+            "max": 0.91,
+            "min": 0.34
+          },
+          "article_count": {
+            "total": 107,
+            "avg": 35.667,
+            "min": 4,
+            "max": 52
+          },
+          "fatalities": {
+            "events": 1,
+            "rate": 0.3333,
+            "total": 1
           }
         }
       },
@@ -4564,309 +4852,21 @@
             "total": 0
           }
         }
-      },
-      {
-        "key": "Iran",
-        "group_by": "country",
-        "event_count": 3,
-        "conflict_event_count": 3,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 1,
-        "fatalities": 1,
-        "fatality_event_rate": 0.3333,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 57,
-        "avg_article_count": 19,
-        "min_article_count": 1,
-        "max_article_count": 52,
-        "avg_significance": 0.2877,
-        "max_significance": 0.4705,
-        "min_significance": 0.117,
-        "avg_goldstein_scale": -7,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -2,
-        "avg_goldstein_severity": 7,
-        "min_goldstein_severity": 2,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.5833,
-        "min_confidence": 0.36,
-        "max_confidence": 0.91,
-        "metrics": {
-          "significance": {
-            "avg": 0.2877,
-            "max": 0.4705,
-            "min": 0.117
-          },
-          "goldstein_scale": {
-            "avg": -7,
-            "min": -10,
-            "max": -2,
-            "avg_severity": 7
-          },
-          "goldstein_severity": {
-            "avg": 7,
-            "min": 2,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.5833,
-            "max": 0.91,
-            "min": 0.36
-          },
-          "article_count": {
-            "total": 57,
-            "avg": 19,
-            "min": 1,
-            "max": 52
-          },
-          "fatalities": {
-            "events": 1,
-            "rate": 0.3333,
-            "total": 1
-          }
-        }
-      },
-      {
-        "key": "Libya",
-        "group_by": "country",
-        "event_count": 3,
-        "conflict_event_count": 3,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 4,
-        "avg_article_count": 1.333,
-        "min_article_count": 1,
-        "max_article_count": 2,
-        "avg_significance": 0.2526,
-        "max_significance": 0.2735,
-        "min_significance": 0.2385,
-        "avg_goldstein_scale": -8.667,
-        "min_goldstein_scale": -10,
-        "max_goldstein_scale": -8,
-        "avg_goldstein_severity": 8.667,
-        "min_goldstein_severity": 8,
-        "max_goldstein_severity": 10,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.54,
-        "min_confidence": 0.32,
-        "max_confidence": 0.68,
-        "metrics": {
-          "significance": {
-            "avg": 0.2526,
-            "max": 0.2735,
-            "min": 0.2385
-          },
-          "goldstein_scale": {
-            "avg": -8.667,
-            "min": -10,
-            "max": -8,
-            "avg_severity": 8.667
-          },
-          "goldstein_severity": {
-            "avg": 8.667,
-            "min": 8,
-            "max": 10
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.54,
-            "max": 0.68,
-            "min": 0.32
-          },
-          "article_count": {
-            "total": 4,
-            "avg": 1.333,
-            "min": 1,
-            "max": 2
-          },
-          "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
-          }
-        }
-      },
-      {
-        "key": "Latvia",
-        "group_by": "country",
-        "event_count": 3,
-        "conflict_event_count": 3,
-        "cameoplus_event_count": 0,
-        "fatality_event_count": 0,
-        "fatalities": 0,
-        "fatality_event_rate": 0,
-        "country_count": 1,
-        "region_count": 1,
-        "article_count": 68,
-        "avg_article_count": 22.667,
-        "min_article_count": 4,
-        "max_article_count": 32,
-        "avg_significance": 0.2426,
-        "max_significance": 0.2549,
-        "min_significance": 0.2289,
-        "avg_goldstein_scale": -6.833,
-        "min_goldstein_scale": -7,
-        "max_goldstein_scale": -6.5,
-        "avg_goldstein_severity": 6.833,
-        "min_goldstein_severity": 6.5,
-        "max_goldstein_severity": 7,
-        "avg_magnitude": null,
-        "min_magnitude": null,
-        "max_magnitude": null,
-        "avg_systemic_importance": null,
-        "min_systemic_importance": null,
-        "max_systemic_importance": null,
-        "avg_propagation_potential": null,
-        "min_propagation_potential": null,
-        "max_propagation_potential": null,
-        "avg_market_sensitivity": null,
-        "min_market_sensitivity": null,
-        "max_market_sensitivity": null,
-        "avg_confidence": 0.8133,
-        "min_confidence": 0.62,
-        "max_confidence": 0.98,
-        "metrics": {
-          "significance": {
-            "avg": 0.2426,
-            "max": 0.2549,
-            "min": 0.2289
-          },
-          "goldstein_scale": {
-            "avg": -6.833,
-            "min": -7,
-            "max": -6.5,
-            "avg_severity": 6.833
-          },
-          "goldstein_severity": {
-            "avg": 6.833,
-            "min": 6.5,
-            "max": 7
-          },
-          "cameoplus": {
-            "magnitude": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "systemic_importance": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "propagation_potential": {
-              "avg": null,
-              "max": null,
-              "min": null
-            },
-            "market_sensitivity": {
-              "avg": null,
-              "max": null,
-              "min": null
-            }
-          },
-          "confidence": {
-            "avg": 0.8133,
-            "max": 0.98,
-            "min": 0.62
-          },
-          "article_count": {
-            "total": 68,
-            "avg": 22.667,
-            "min": 4,
-            "max": 32
-          },
-          "fatalities": {
-            "events": 0,
-            "rate": 0,
-            "total": 0
-          }
-        }
       }
     ],
     "countryCount": 50,
-    "fatalityEventCount": 103,
-    "fatalities": 370,
+    "fatalityEventCount": 115,
+    "fatalities": 445,
     "keyConflictRegions": [
-      "Palestine",
       "Ukraine",
+      "Palestine",
       "Russia",
       "Yemen",
       "Israel",
       "Lebanon",
-      "Taiwan",
       "Myanmar",
       "Sudan",
+      "Taiwan",
       "Iran"
     ],
     "requestsUsed": 1,
@@ -4875,7 +4875,7 @@
       {
         "label": "GDELT Cloud conflict country summary",
         "status": "ok",
-        "articleCount": 773,
+        "articleCount": 842,
         "error": null
       }
     ],
@@ -4884,7 +4884,7 @@
     "rateLimitedCount": 0,
     "usedCachedSummary": false,
     "cacheReason": null,
-    "attemptedAt": "2026-08-27T04:12:44.240Z"
+    "attemptedAt": "2026-08-27T23:44:51.974Z"
   },
   "requestDiagnostics": {
     "provider": "gdelt",
@@ -4900,7 +4900,7 @@
     "minIntervalMs": 8000,
     "maxRetries": 0,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 2388,
+    "elapsedMs": 2821,
     "errorCode": null
   },
   "error": null,
