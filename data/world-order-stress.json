@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-08-27T23:44:54.968Z",
+  "updatedAt": "2026-08-28T06:44:45.427Z",
   "sourceMode": "computed_with_external_sources",
   "score": 64,
   "state": "multi_theater_stress",
@@ -11,21 +11,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-08-27T23:39:24.238Z",
-    "ageMinutes": 6,
+    "updatedAt": "2026-08-28T06:39:24.240Z",
+    "ageMinutes": 5,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 88.24,
-    "gold": 4601,
+    "brent": 88.045,
+    "gold": 4587.7998,
     "vix": 15.21,
     "dxy": 118.0628,
     "hyOas": 2.67,
     "us10y": 4.66,
     "real10y": 2.34,
-    "spx": 7675.7,
-    "brentSource": "FRED:DCOILBRENTEU",
-    "brentPromotionApplied": false,
-    "brentPromotionReason": "fred-anchor-not-stale",
+    "spx": 7730.99,
+    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
+    "brentPromotionApplied": true,
+    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4872,7 +4872,7 @@
           "Taiwan",
           "Iran"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "100 units/month free tier",
         "queriesRun": [
           {
@@ -4885,15 +4885,15 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-08-27T23:44:51.974Z"
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-08-28T06:44:45.128Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-08-27T23:44:52.274Z",
+      "lastFetchedAt": "2026-08-28T06:44:45.264Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -4953,7 +4953,7 @@
         "latestWeek": "2026-08-14",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
-        "sourceFreshness": "fresh",
+        "sourceFreshness": "aging",
         "politicalViolenceEventsLatestFullYear": 210877,
         "politicalViolenceYoyDelta": 0.205103,
         "civilianTargetingShareLatestFullYear": 0.313884,
@@ -5058,8 +5058,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4601，显示避险或实际利率压力定价。",
-          "value": 4601,
+          "summary": "基于 Worker 快变量，黄金当前值 4587.8，显示避险或实际利率压力定价。",
+          "value": 4587.7998,
           "direction": "up",
           "confidence": 0.75
         },
@@ -5067,7 +5067,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.0628/4601",
+          "value": "118.0628/4587.7998",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5075,17 +5075,17 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7675.7/4601",
+          "value": "7730.99/4587.7998",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：fred-anchor-not-stale。",
-          "value": 88.24,
-          "direction": "neutral",
-          "confidence": 0.45
+          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
+          "value": 88.045,
+          "direction": "up",
+          "confidence": 0.65
         }
       ]
     }
