@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-news-event-watch-1",
   "module": "oil-news-event-watch",
-  "generatedAt": "2026-08-30T05:53:56.865Z",
+  "generatedAt": "2026-08-30T14:05:25.484Z",
   "sourceKey": "odp_oil_news_event_watch",
   "source": "GDELT DOC broad cache + Tavily Search API + Brave News Search API",
   "sources": [
@@ -36,21 +36,21 @@
         ],
         "availability": {
           "contractVersion": "gdelt-doc-availability-v1",
-          "latestAttemptAt": "2026-08-30T05:46:13.042Z",
+          "latestAttemptAt": "2026-08-30T13:58:49.353Z",
           "lastLiveSuccessAt": "2026-08-20T13:29:21.263Z",
           "latestOutcome": "network_error",
           "windows": {
             "days7": {
-              "attemptCount": 13,
+              "attemptCount": 14,
               "successCount": 0,
-              "failureCount": 13,
+              "failureCount": 14,
               "successRatePct": 0
             },
             "days30": {
               "attemptCount": 43,
-              "successCount": 11,
-              "failureCount": 32,
-              "successRatePct": 25.6
+              "successCount": 10,
+              "failureCount": 33,
+              "successRatePct": 23.3
             }
           }
         },
@@ -416,7 +416,7 @@
     "gdeltWebNgramsFallback": {
       "contractVersion": "gdelt-web-ngrams-display-fallback-cache-v2",
       "status": "live",
-      "generatedAt": "2026-08-30T05:53:56.865Z",
+      "generatedAt": "2026-08-30T14:05:25.484Z",
       "sourceKey": "gdelt_web_ngrams_v5_legacy",
       "sourceReview": {
         "gate": "automated_display_only_cache_v1",
@@ -453,11 +453,11 @@
       "automation": {
         "contractVersion": "gdelt-web-ngrams-automation-v1",
         "workflow": "refresh-oil-news-event-watch",
-        "attemptedAt": "2026-08-30T05:50:20.961Z",
+        "attemptedAt": "2026-08-30T14:02:25.909Z",
         "diagnosisStatus": "ok",
-        "selectedFileTimestamp": "20260830053100",
-        "selectedFileAgeHours": 0.4,
-        "lastSuccessfulObservationAt": "2026-08-30T05:50:20.961Z"
+        "selectedFileTimestamp": "20260830123400",
+        "selectedFileAgeHours": 1.5,
+        "lastSuccessfulObservationAt": "2026-08-30T14:02:25.909Z"
       },
       "sourceHealth": {
         "state": "live",
@@ -466,11 +466,11 @@
         "usedForCurrentSignal": false
       },
       "aggregate": {
-        "parsedLineCount": 1305249,
-        "totalHitCount": 310,
-        "totalMentionCount": 313,
-        "uniqueDocCount": 30,
-        "matchedTermCount": 5,
+        "parsedLineCount": 1109877,
+        "totalHitCount": 205,
+        "totalMentionCount": 205,
+        "uniqueDocCount": 33,
+        "matchedTermCount": 6,
         "matchedBucketCount": 6
       },
       "limitationZh": "自动缓存只表示 GDELT Web NGrams 下载文件的可达性与聚合短语命中,不读取或展示标题、URL、正文,不确认事件,不用于当前 Oil News 信号或油价方向。",
@@ -494,72 +494,71 @@
     },
     "gdeltWebNgramsArticleShadow": {
       "contractVersion": "gdelt-web-ngrams-article-shadow-cache-v1",
-      "generatedAt": "2026-08-30T05:46:41.254Z",
+      "generatedAt": "2026-08-30T13:59:18.676Z",
       "status": "shadow_partial_no_reference",
       "sourceFile": {
-        "selectedTimestamp": "20260830053100",
+        "selectedTimestamp": "20260830123400",
         "pairAvailable": true,
         "sourceStatus": "ok"
       },
       "candidateAggregate": {
-        "parsedNgramsLineCount": 1305249,
+        "parsedNgramsLineCount": 1109877,
         "invalidNgramsLineCount": 0,
-        "matchedNgramsLineCount": 310,
-        "matchedDocCount": 30,
-        "validTocRowCount": 2309,
-        "invalidTocRowCount": 1,
+        "matchedNgramsLineCount": 205,
+        "matchedDocCount": 33,
+        "validTocRowCount": 2241,
+        "invalidTocRowCount": 5,
         "duplicateTocIdCount": 0,
-        "joinedDocCount": 30,
+        "joinedDocCount": 33,
         "missingTocCount": 0,
         "joinRate": 1,
         "duplicateUrlCount": 0,
-        "candidateCount": 30
+        "candidateCount": 33
       },
       "classificationAggregate": {
-        "candidateCount": 30,
-        "directionalArticleCount": 1,
-        "supportedLanguageCandidateCount": 20,
-        "supportedLanguageDirectionalCount": 1,
+        "candidateCount": 33,
+        "directionalArticleCount": 0,
+        "supportedLanguageCandidateCount": 22,
+        "supportedLanguageDirectionalCount": 0,
         "supportedLanguageCoverageRate": 0.6667,
         "languageCounts": {
-          "ar": 3,
-          "en": 11,
-          "es": 6,
-          "id": 1,
-          "ms": 1,
-          "ro": 1,
-          "sl": 1,
-          "sr": 1,
-          "sv": 3,
-          "vi": 2
+          "ar": 4,
+          "da": 2,
+          "de": 3,
+          "en": 14,
+          "es": 4,
+          "it": 2,
+          "no": 1,
+          "uk": 2,
+          "vi": 1
         },
         "polarityCounts": {
           "risk_escalation": 0,
-          "risk_deescalation": 1,
+          "risk_deescalation": 0,
           "mixed_or_contested": 0,
-          "market_reaction_only": 12,
-          "unclear_or_high_claim": 17
+          "market_reaction_only": 5,
+          "unclear_or_high_claim": 28
         },
         "eventTypeCounts": {
-          "chokepoint": 11,
-          "shipping": 10,
+          "chokepoint": 14,
+          "shipping": 15,
           "sanctions": 0,
-          "facility": 1,
-          "supply": 1,
-          "market_reaction": 7,
+          "facility": 0,
+          "supply": 2,
+          "market_reaction": 2,
           "general_energy": 0
         },
         "claimAxisCounts": {
-          "transport_security": 21,
-          "supply_flow": 1,
+          "transport_security": 29,
+          "supply_flow": 2,
           "sanctions_policy": 0,
-          "facility_operations": 1,
-          "market_reaction": 7,
+          "facility_operations": 0,
+          "market_reaction": 2,
           "general_energy_context": 0
         }
       },
       "crossSourceAggregate": {
-        "webCandidateCount": 30,
+        "webCandidateCount": 33,
         "referenceArticleCount": 0,
         "excludedReferenceArticleCount": 0,
         "exactDiscoveryMatchCount": 0,
