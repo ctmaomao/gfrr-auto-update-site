@@ -61,10 +61,12 @@ for (const [key, value] of Object.entries(current.boundary)) {
 
 const staleAuxHistory = clone(history);
 const staleAuxDate = relativeDate(-30);
+const staleAuxCommittedAt = `${relativeDate(-29)}T00:00:00.000Z`;
 for (const assetKey of ['ndx', 'ixic']) {
   const records = staleAuxHistory.assets[assetKey].records;
   records[records.length - 1].date = staleAuxDate;
   staleAuxHistory.assets[assetKey].coverage.latestDate = staleAuxDate;
+  staleAuxHistory.assets[assetKey].source.lastCommittedAt = staleAuxCommittedAt;
 }
 const staleAuxMetrics = clone(metrics);
 for (const assetKey of ['ndx', 'ixic']) {
@@ -78,6 +80,8 @@ assert(hasCode(staleAuxReport, 'ndx_history_stale'), 'NDX stale warning is missi
 assert(hasCode(staleAuxReport, 'ixic_history_stale'), 'IXIC stale warning is missing');
 assert(hasCode(staleAuxReport, 'ndx_lags_primary'), 'NDX primary-lag warning is missing');
 assert(hasCode(staleAuxReport, 'ixic_lags_primary'), 'IXIC primary-lag warning is missing');
+assert(!hasCode(staleAuxReport, 'ndx_commit_before_market_date'), 'NDX synthetic commit timestamp must stay aligned');
+assert(!hasCode(staleAuxReport, 'ixic_commit_before_market_date'), 'IXIC synthetic commit timestamp must stay aligned');
 
 const metricMismatch = clone(metrics);
 const mismatchDate = relativeDate(-20);
