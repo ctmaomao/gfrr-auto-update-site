@@ -5,6 +5,7 @@ import { buildEditorialInput } from './macro-risk/editorial-input.mjs';
 import { assessEditorialNewsReadiness, buildNewsDiscovery } from './macro-risk/editorial-news.mjs';
 import { EDITORIAL_PROVIDER_CONFIG, classifyProviderFailure, parseEditorialProviderContent, requestEditorial, validateEditorialPrompt } from './macro-risk/editorial-provider.mjs';
 import { applyEditorialProjection, projectEditorial, reviewEditorial, validateEditorialProduction } from './macro-risk/editorial-production.mjs';
+import { classifySearchRequestError } from './macro-risk/search-request-policy.mjs';
 import { assertEditorialSafeTarget, buildEditorialWriteResult } from './write-macro-risk-editorial.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -72,6 +73,23 @@ const healthyNoCredibleReadiness = assessEditorialNewsReadiness(healthyNoCredibl
 assert(!healthyNoCredibleReadiness.editorialReady && healthyNoCredibleReadiness.expectedSkip && healthyNoCredibleReadiness.reason === 'no_credible_news', 'healthy search with zero credible news must be an expected pre-provider skip');
 const degradedNoCredibleReadiness = assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery, sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, brave: { status: 'error' } } });
 assert(!degradedNoCredibleReadiness.expectedSkip && degradedNoCredibleReadiness.reason === 'news_source_health_incomplete', 'source-health failures must remain hard failures');
+
+const searchStatusCases = new Map([
+  [401, 'http_401_unauthorized'],
+  [402, 'http_402_payment_required'],
+  [403, 'http_403_forbidden'],
+  [429, 'http_429_rate_limited'],
+  [432, 'http_432_plan_limit'],
+  [433, 'http_433_paygo_limit']
+]);
+for (const [httpStatus, expected] of searchStatusCases) {
+  assert(classifySearchRequestError(Object.assign(new Error(`HTTP ${httpStatus}`), { httpStatus })) === expected, `search HTTP ${httpStatus} diagnostics must remain explicit and sanitized`);
+}
+const abortError = new Error('aborted'); abortError.name = 'AbortError';
+assert(classifySearchRequestError(Object.assign(new Error('HTTP 503'), { httpStatus: 503 })) === 'http_5xx_server_error', 'search provider 5xx diagnostics must remain categorized');
+assert(classifySearchRequestError(abortError) === 'request_timeout', 'search provider aborts must remain categorized');
+assert(classifySearchRequestError(new TypeError('fetch failed')) === 'network_error', 'search provider transport failures must remain categorized');
+assert(classifySearchRequestError(new SyntaxError('invalid JSON')) === 'invalid_json', 'search provider JSON failures must remain categorized');
 
 const radarData = readJson('data/radar-data.json');
 const input = buildEditorialInput({
@@ -194,4 +212,4 @@ assert(unsafeTarget, 'unsafe writer target negative test must fail');
 const truncated = new Error('truncated'); truncated.category = 'provider_output_contract_invalid'; truncated.responseDiagnostics = { finishReason: 'length' };
 assert(classifyProviderFailure(truncated).category === 'provider_output_truncated', 'truncation classification failed');
 
-console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, metadataRegressionTests=1, negativeTests=8)`);
+console.log(`Macro risk editorial core PASS (facts=${input.structuredFacts.length}, sources=${input.sourceRefs.length}, visibleChars=${outputResult.visibleTextLength}, review=${review.status}, apiCalls=${apiCalls}, readinessTests=4, searchDiagnosticsTests=${searchStatusCases.size + 4}, metadataRegressionTests=1, negativeTests=8)`);

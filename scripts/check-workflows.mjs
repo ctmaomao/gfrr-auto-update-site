@@ -4,6 +4,9 @@ import path from 'node:path';
 
 import { DAILY_REFRESH_SCHEDULE_UTC } from './transport-shock-refresh-history.mjs';
 import { replaceJsonBatchSafely } from './run-daily-pipeline.mjs';
+import { EDITORIAL_TOPICS as BUBBLE_EDITORIAL_TOPICS } from './bubble-watch/weekly-editorial-contract.mjs';
+import { EDITORIAL_TOPICS as MACRO_EDITORIAL_TOPICS } from './macro-risk/editorial-contract.mjs';
+import { QUERY_SET as OIL_NEWS_QUERY_SET } from './oil-directional/diagnose-oil-news-events.mjs';
 
 const contracts = [
   {
@@ -455,8 +458,7 @@ const contracts = [
     required: [
       'name: Refresh Oil News Event Watch',
       'workflow_dispatch',
-      "cron: '37 */3 * * 1-5'",
-      "cron: '37 */4 * * 0,6'",
+      "cron: '37 */6 * * *'",
       'permissions:',
       'contents: write',
       'concurrency',
@@ -476,6 +478,8 @@ const contracts = [
     ],
     forbidden: [
       "cron: '37 */2 * * *'",
+      "cron: '37 */3 * * 1-5'",
+      "cron: '37 */4 * * 0,6'",
       'npm run build:data',
       'scripts/run-daily-pipeline.mjs',
       'data/radar-data.json',
@@ -606,6 +610,25 @@ for (const contract of contracts) {
     }
   }
 }
+
+// Both providers include 1,000 monthly free requests. Keep a 200-request reserve
+// for bounded manual reruns and key-rotation diagnostics instead of scheduling to
+// the hard limit. Counts are conservative worst cases for a 31-day month.
+const sharedSearchScheduledRequests =
+  (31 * 4 * OIL_NEWS_QUERY_SET.length) +
+  (31 * MACRO_EDITORIAL_TOPICS.length) +
+  5 + // weekly Bubble Watch refresh: one CEO-news query per provider
+  20 + // Tuesday-Friday source audit: at most 20 runs in a 31-day month
+  (5 * BUBBLE_EDITORIAL_TOPICS.length);
+const sharedSearchManualReserve = 200;
+const sharedSearchMonthlyLimit = 1000;
+if (sharedSearchScheduledRequests + sharedSearchManualReserve > sharedSearchMonthlyLimit) {
+  addRuntimeFailure(
+    '.github/workflows/refresh-oil-news-event-watch.yml',
+    `shared Tavily/Brave monthly budget exceeds limit: scheduled=${sharedSearchScheduledRequests}, reserve=${sharedSearchManualReserve}, limit=${sharedSearchMonthlyLimit}`
+  );
+}
+console.log(`Shared Tavily/Brave monthly budget: scheduled=${sharedSearchScheduledRequests}, reserve=${sharedSearchManualReserve}, limit=${sharedSearchMonthlyLimit}`);
 
 const gitignoreFile = '.gitignore';
 if (fs.existsSync(gitignoreFile)) {

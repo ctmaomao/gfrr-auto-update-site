@@ -370,7 +370,7 @@ function buildProductionArtifact(
       windowDays: options.windowDays,
       latestArticleAt: latestAt,
       latestArticleAgeHours: ageHours(latestAt, generatedAt),
-      cadenceZh: '约 2 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声'
+      cadenceZh: '约 6 小时 workflow + manual dispatch;新闻索引存在收录延迟、重复转载和标题噪声'
     },
     queryCoverage: {
       querySetVersion: 'odp-oil-news-query-set-p28',
