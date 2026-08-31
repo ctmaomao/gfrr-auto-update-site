@@ -3,6 +3,7 @@ import process from 'node:process';
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { EDITORIAL_TOPICS } from './editorial-contract.mjs';
 import { EDITORIAL_QUERIES, buildNewsDiscovery } from './editorial-news.mjs';
+import { classifySearchRequestError } from './search-request-policy.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
 const DEFAULT_OUTPUT = `${PREFIX}news-discovery-latest.json`;
@@ -45,7 +46,11 @@ async function fetchJson(url, init) {
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
     const text = await response.text();
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      const error = new Error(`HTTP ${response.status}`);
+      error.httpStatus = response.status;
+      throw error;
+    }
     return JSON.parse(text);
   } finally {
     clearTimeout(timer);
@@ -87,7 +92,7 @@ async function collectProvider(provider, keys) {
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });
     } catch (error) {
-      queryRuns.push({ topic, status: 'error', resultCount: 0, error: error?.name === 'AbortError' ? 'request_timeout' : 'request_failed' });
+      queryRuns.push({ topic, status: 'error', resultCount: 0, error: classifySearchRequestError(error) });
     }
   }
   const successCount = queryRuns.filter((run) => run.status === 'ok').length;

@@ -6,9 +6,8 @@ env:
 on:
   workflow_dispatch:
   schedule:
-    # Weekdays every 3 hours; weekends every 4 hours. Keep minute 37.
-    - cron: '37 */3 * * 1-5'
-    - cron: '37 */4 * * 0,6'
+    # Every 6 hours. Keeps the shared Tavily/Brave monthly request budget below free-tier limits.
+    - cron: '37 */6 * * *'
 
 concurrency:
   group: gfrr-main-writer-main
