@@ -1,7 +1,7 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-09-02T16:50:19.649Z",
+  "generatedAt": "2026-09-02T21:14:08.597Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
@@ -50,13 +50,13 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 28113,
+    "elapsedMs": 19448,
     "errorCode": "network_error"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-09-02T16:49:51.535Z",
+    "latestAttemptAt": "2026-09-02T21:13:49.149Z",
     "lastLiveSuccessAt": "2026-08-20T13:29:21.263Z",
     "latestOutcome": "network_error",
     "windows": {
@@ -67,10 +67,10 @@
         "successRatePct": 0
       },
       "days30": {
-        "attemptCount": 50,
+        "attemptCount": 51,
         "successCount": 9,
-        "failureCount": 41,
-        "successRatePct": 18
+        "failureCount": 42,
+        "successRatePct": 17.6
       }
     },
     "history": [
@@ -559,11 +559,20 @@
         "status": null,
         "errorCode": "network_error",
         "elapsedMs": 28113
+      },
+      {
+        "attemptedAt": "2026-09-02T21:13:49.149Z",
+        "outcome": "network_error",
+        "attempts": 2,
+        "retryCount": 1,
+        "status": null,
+        "errorCode": "network_error",
+        "elapsedMs": 19448
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-09-02T16:49:51.535Z",
+    "at": "2026-09-02T21:13:49.149Z",
     "errorClass": "network_error",
     "cooldownHours": 4
   },
