@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-02T00:48:39.696Z",
+  "updatedAt": "2026-09-03T00:56:14.365Z",
   "sourceMode": "computed_with_partial_external_sources",
-  "score": 67,
+  "score": 68,
   "state": "multi_theater_stress",
   "labelZh": "多战区压力期",
   "confidence": 1,
@@ -11,21 +11,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-02T00:45:24.239Z",
-    "ageMinutes": 3,
+    "updatedAt": "2026-09-03T00:51:18.569Z",
+    "ageMinutes": 5,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 95.425,
-    "gold": 4330.8999,
-    "vix": 14.92,
+    "brent": 96.02,
+    "gold": 4391,
+    "vix": 16.34,
     "dxy": 118.7479,
-    "hyOas": 2.63,
-    "us10y": 4.75,
+    "hyOas": 2.65,
+    "us10y": 4.79,
     "real10y": 2.44,
-    "spx": 7631.47,
-    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
-    "brentPromotionApplied": true,
-    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
+    "spx": 7666.6,
+    "brentSource": "FRED:DCOILBRENTEU",
+    "brentPromotionApplied": false,
+    "brentPromotionReason": "fred-anchor-not-stale",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4889,7 +4889,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-request-failed-using-local-cache",
-        "attemptedAt": "2026-09-02T00:48:09.432Z",
+        "attemptedAt": "2026-09-03T00:55:44.024Z",
         "requestDiagnostics": {
           "provider": "gdelt",
           "endpointType": "cloud",
@@ -4904,7 +4904,7 @@
           "minIntervalMs": 8000,
           "maxRetries": 0,
           "retryAfterCapSeconds": 15,
-          "elapsedMs": 30040,
+          "elapsedMs": 30072,
           "errorCode": "timeout"
         }
       }
@@ -4912,12 +4912,12 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-02T00:48:09.777Z",
+      "lastFetchedAt": "2026-09-03T00:55:44.798Z",
       "summary": {
         "recentActionsCount": 18,
-        "listUpdatesCount": 8,
+        "listUpdatesCount": 7,
         "enforcementActionsCount": 2,
-        "guidanceCount": 8,
+        "guidanceCount": 9,
         "highRiskPrograms": [
           "Russia",
           "Iran",
@@ -4925,7 +4925,7 @@
           "Terrorism",
           "Venezuela"
         ],
-        "lastUpdated": "August 28, 2026",
+        "lastUpdated": "September 02, 2026",
         "sourceFreshness": "fresh",
         "errors": []
       }
@@ -4987,7 +4987,7 @@
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 69,
+      "score": 70,
       "labelZh": "和平红利退潮",
       "trend": "rising",
       "evidence": [
@@ -5025,7 +5025,7 @@
       ]
     },
     "multiTheaterConflict": {
-      "score": 84,
+      "score": 85,
       "labelZh": "多战区冲突",
       "trend": "rising",
       "evidence": [
@@ -5040,7 +5040,7 @@
       ]
     },
     "economicWeaponization": {
-      "score": 90,
+      "score": 88,
       "labelZh": "经济金融武器化",
       "trend": "rising",
       "evidence": [
@@ -5048,7 +5048,7 @@
           "labelZh": "制裁与金融限制活动",
           "source": "OFAC/GDELT",
           "summary": "由 OFAC 近期行动与 GDELT 制裁主题共同估算。",
-          "value": 95,
+          "value": 91,
           "direction": "up",
           "confidence": 0.6
         }
@@ -5063,7 +5063,7 @@
           "labelZh": "金融限制与流动性压力组合",
           "source": "OFAC/GDELT/modules",
           "summary": "用于识别资本管制、金融抑制或跨境限制风险的代理信号。",
-          "value": 95,
+          "value": 91,
           "direction": "up",
           "confidence": 0.5
         }
@@ -5077,16 +5077,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4330.9，显示避险或实际利率压力定价。",
-          "value": 4330.8999,
+          "summary": "基于 Worker 快变量，黄金当前值 4391，显示避险或实际利率压力定价。",
+          "value": 4391,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 95.42，对地缘与供应风险有部分确认作用。",
-          "value": 95.425,
+          "summary": "基于 Worker 快变量，布伦特当前值 96.02，对地缘与供应风险有部分确认作用。",
+          "value": 96.02,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5094,7 +5094,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.7479/4330.8999",
+          "value": "118.7479/4391",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5102,17 +5102,17 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7631.47/4330.8999",
+          "value": "7666.6/4391",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 95.425,
-          "direction": "up",
-          "confidence": 0.65
+          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：fred-anchor-not-stale。",
+          "value": 96.02,
+          "direction": "neutral",
+          "confidence": 0.45
         }
       ]
     }
@@ -5121,7 +5121,7 @@
     {
       "key": "economicWeaponization",
       "labelZh": "经济金融武器化",
-      "score": 90
+      "score": 88
     },
     {
       "key": "blocFormation",
@@ -5131,7 +5131,7 @@
     {
       "key": "multiTheaterConflict",
       "labelZh": "多战区冲突",
-      "score": 84
+      "score": 85
     }
   ],
   "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、阵营化与联盟硬化、多战区冲突。该层仅用于结构性风险识别。",
