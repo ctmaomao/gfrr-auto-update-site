@@ -6,7 +6,7 @@
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "rate_limited_last_usable_cache_preserved",
+  "requestMode": "error_cooldown_cache_hit",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -61,9 +61,9 @@
     "latestOutcome": "rate_limited",
     "windows": {
       "days7": {
-        "attemptCount": 23,
+        "attemptCount": 22,
         "successCount": 0,
-        "failureCount": 23,
+        "failureCount": 22,
         "successRatePct": 0
       },
       "days30": {
