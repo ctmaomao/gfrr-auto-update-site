@@ -54,6 +54,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - 后续：新闻影子支持率诊断、ARR底层观察证据审阅及ACLED操作者材料；运输6样本云端交接与BoA/MLF解析已完成，生产公共源恢复仍待Daily刷新。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
 - **EdgeOne源快照 / 2026-09-05**：排队后显式checkout最新main，记录并锁定实际检查/构建的SHA，release提交不再误用触发事件SHA。保留3小时调度、无变化不发布、32天400次配额保护和独立静态仓库，未改DNS/域名。此前FIRMS成熟基线及两份市场历史/指标已经在自定义域名逐字节对齐；低频通道不是每笔高频数据提交立即发布。
 - **Web NGrams影子质量 / 2026-09-05**：旧历史223有效/208可用/35.81天，独立支持中位3.03%、跨provider为0，不能晋升；最新32候选仅2条明确方向，支持率低不只是匹配缺陷。确认reference旧英文classifier与Web五语classifier不一致，修复为shadow-only统一分类并补日期/域名安全与脱敏诊断。v2计算口径独立重新积累原30天/120样本资格；旧历史完整保留、不混算、不改阈值/分母/主源/评分。没有真实逐篇近期artifact时，不猜测漏配原因占比，不承诺修复后门槛会通过。
+- **ARR解析安全 / 2026-09-05**：修复无公司约束的通用ARR金额误归因及不存在日期被接受两项缺陷；只接受Anthropic与ARR/annualized run-rate直接绑定的主张，已审标题优先，唯一325206短续句按结构锁定、不硬编码金额。固定4个SaaStr来源ID与45天底层观察门保持；未补未经核实的新里程碑、未修改curated/production灯色，底层最新5月28日仍须降级。恢复自动新鲜来源仍需同口径新观察证据，不能只刷新页面抓取时间。
 - **运输P30/P33证据交接 / 2026-09-05**：本地6份人工真实事件审阅（3扰动/3对照）原为ignored，云端checkout缺失；改为唯一固定路径的版本化白名单元数据/hash manifest，P33显式读取并重算，不提交原件/URL/自由文本。不再把空review缺字段误报为已批准评分/已连接确认，真正越界仍拒绝。人工贡献及命中/误报统计明确不是模型历史回测；评分审批false、route/market not_connected及既有capped runtime边界不变，仍需独立设计审阅。
 - 运输交接发布验证：`8ac9285d`，实际云run `33953468989`成功；下载的artifact为6/3/3、gatePassed=true、scoreIntegrationApproved=false、historicalBacktestPerformed=false，完成本地/clean-checkout一致性交接。
 - Market Pricing发布验证：`5eb2cb72`，Pages run `33953020935`成功，线上history/metrics两文件SHA-256均与9月4日提交快照一致。

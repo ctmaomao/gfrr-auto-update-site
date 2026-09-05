@@ -23,6 +23,7 @@ import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from './gdelt/fetch-gdelt
 import { sanitizeDiagnosticUrl } from './sanitize-diagnostic-url.mjs';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
+import { extractAnthropicArrB } from './bubble-watch/arr-milestone-parser.mjs';
 import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -2364,23 +2365,6 @@ async function fetchSaastrPost(id) {
   return { id, date: json.date.slice(0, 10), title, text: `${title}. ${content}` };
 }
 
-function extractAnthropicArrB(post) {
-  const patterns = [
-    /\$?([0-9]+(?:\.[0-9]+)?)\s*(B|BN|Billion)\s+(?:in\s+)?(?:ARR|annualized revenue|annualized run-rate)/iu,
-    /Anthropic[^.]{0,160}?\$?([0-9]+(?:\.[0-9]+)?)\s*(B|BN|Billion)[^.]{0,80}?(?:annualized|run-rate|revenue|ARR)/iu,
-    /Anthropic[^.]{0,120}?(?:hit|hits|reached|rocketed to|confirmed)\s+\$?([0-9]+(?:\.[0-9]+)?)\s*(B|BN|Billion)\b/iu
-  ];
-  for (const re of patterns) {
-    const match = post.text.match(re);
-    if (!match) continue;
-    const around = post.text.slice(Math.max(0, match.index - 80), match.index + match[0].length + 120);
-    if (/Nvidia|OpenAI|SpaceX/iu.test(around) && !/ARR|annualized|run-rate|Anthropic[^.]{0,80}revenue/iu.test(around)) continue;
-    if (/valuation|post-money|Series [A-Z]/iu.test(around) && !/ARR|annualized|run-rate|revenue/iu.test(around)) continue;
-    const value = Number(match[1]);
-    if (value >= 1 && value <= 80) return value;
-  }
-  throw new Error(`SaaStr post ${post.id} 未解析到 Anthropic ARR/run-rate`);
-}
 
 async function fetchArrSecondDerivativeFromSaastr(_ctx, entry) {
   const postIds = [315823, 322211, 323715, 325206];

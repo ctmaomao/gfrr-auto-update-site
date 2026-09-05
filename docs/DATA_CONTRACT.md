@@ -2448,6 +2448,12 @@ latest 文件关键字段:
 - `history_seed` 最多尾 10 个 Core-23 可完整回放周次,不得混入旧变分母点;历史 entry 的旧 `red_pct/risk_score` 保留原发布口径,`core_red_pct/core_risk_score/core_stage_score/core_trigger_score` 为 v2 可比回放字段。`wow_changes` 只以 Core-23 翻灯驱动。
 - `meta`:`auto_count + curated_count + fallback_count = indicators.length`、`hybrid_count`、`paid_wind_fallback_count`、`proxy_confidence_calibration_count` / `proxy_confidence_calibrations`、`source_candidates`、`fetch_failures`、`boundary` 声明。旧数据可能暂缺 `source_candidates`,但下一轮 build 应写入 `contractVersion`、`hybrid_live_ids`、`hybrid_paid_optional_ids` 与 `candidate_only_ids`。
 
+ARR公开里程碑解析安全：`arr_2nd_deriv` 只能读取明确绑定Anthropic、金额和
+ARR/annualized run-rate口径的主张，其他公司、普通收入/季度收入、融资估值、
+疑问/否定/条件或前瞻句不能补位。明确已审标题优先于回顾正文；固定SaaStr
+325206仅保留已审短续句结构，不锁金额。日期必须是真实日历，45天陈旧门不变；
+修复解析不授予新来源/新里程碑，也不得用页面抓取日刷新底层观察。
+
 ### Bubble Watch 周度 DeepSeek 编辑层（ADR-0021）
 
 经 owner 于 2026-08-11 批准，`data/bubble-watch.json.summary.weekly_editorial` 可承载独立的周度 AI 编辑展示层，生产 schema 固定为 `bubble-watch-weekly-editorial-production-v1`。该字段与主页 `externalAiInterpretationLayer` 平行，不得复用或覆盖后者，也不得覆盖 `summary.verdict_desc` / `bubble-watch-narrative-v2`。它属于 `frontend_display_layer`，只解释既有 Core-23 / Shadow-4 结构化证据和经校验的周度新闻 context；不改变指标状态、主分、weighted pressure、Stage / Trigger、分类共振、momentum、similarity 或 verdict label。

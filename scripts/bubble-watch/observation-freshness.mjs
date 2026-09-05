@@ -1,11 +1,13 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function parseIsoDate(value, label) {
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(String(value || ''))) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) {
     throw new Error(`${label} must be an ISO date`);
   }
   const timestamp = Date.parse(`${value}T00:00:00Z`);
-  if (!Number.isFinite(timestamp)) throw new Error(`${label} is invalid`);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) {
+    throw new Error(`${label} is invalid`);
+  }
   return timestamp;
 }
 
