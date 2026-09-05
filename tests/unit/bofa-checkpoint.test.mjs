@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from '../../scripts/daily/bofa-checkpoint.mjs';
+import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from '../../scripts/daily/bofa-checkpoint.mjs';
+import { fetchBofaConsumerCheckpoint } from '../../scripts/run-daily-pipeline.mjs';
 
 const origin = 'https://institute.bankofamerica.com';
 const report = (month, year = 2026) => `${origin}/economic-insights/consumer-checkpoint-${month}-${year}.html`;
@@ -12,6 +13,100 @@ const total = 'Total card spending growth eased to 5.0% year-over-year (YoY) in 
 const exGas = 'Spending ex-gas still rose a solid 4.3% YoY.';
 const explicit = 'Total credit and debit card spending per household rose 5.0% YoY in July, from 6.3% in June.';
 const parse = (text, options = august) => parseBofaCheckpointMetrics(text, options);
+
+test('failure diagnostics expose only allowlisted stages, classes and HTTP status', () => {
+  const secret = 'private-token https://private.invalid/path?key=private-token Authorization: Bearer private-token';
+  for (const [stage, message, classification, status] of [
+    ['landing_fetch', `failed: HTTP 403 ${secret}`, 'http_error', 403],
+    ['report_fetch', `failed: HTTP 429 ${secret}`, 'http_error', 429],
+    ['report_fetch', `failed: HTTP 503 ${secret}`, 'http_error', 503],
+    ['landing_fetch', `failed: timeout 10000ms ${secret}`, 'request_timeout', null],
+    ['report_fetch', `failed: fetch failed ${secret}`, 'network_error', null],
+    ['report_discovery', `missing non-future official report link ${secret}`, 'report_discovery_failed', null],
+    ['report_discovery', `stale or future report month ${secret}`, 'report_freshness_rejected', null],
+    ['report_parse', `unreviewed shorthand spending basis ${secret}`, 'source_review_required', null],
+    ['report_parse', `PDF report month mismatch ${secret}`, 'report_identity_rejected', null],
+    ['report_parse', `conflicting current YoY ${secret}`, 'parse_contract_rejected', null],
+    ['report_parse', `HTTP 403 ${secret}`, 'parse_contract_rejected', null],
+    ['landing_fetch', secret, 'unexpected_failure', null],
+    [secret, `HTTP 403 ${secret}`, 'unexpected_failure', null]
+  ]) {
+    const diagnostic = createBofaFailureDiagnostic(new Error(message), stage);
+    assert.equal(diagnostic.classification, classification);
+    assert.equal(diagnostic.httpStatus, status);
+    assert.deepEqual(Object.keys(diagnostic), ['source', 'stage', 'classification', 'httpStatus']);
+    assert.doesNotMatch(JSON.stringify(diagnostic), /private|https|Authorization|Bearer/u);
+  }
+  assert.equal(createBofaFailureDiagnostic({ name: 'AbortError' }, 'report_fetch').classification, 'request_timeout');
+  assert.equal(createBofaFailureDiagnostic(null, 'landing_fetch').classification, 'unexpected_failure');
+});
+
+test('production fetch logs one sanitized failure at the actual stage and still rejects', async t => {
+  t.mock.method(Date, 'now', () => nowMs);
+  const warnings = [];
+  t.mock.method(console, 'warn', line => warnings.push(line));
+  const landing = `<a href="${report('august')}">Report</a>`;
+  const reportHtml = `<a href="${pdf('august')}">Full analysis</a><p>private-token no metrics</p>`;
+  let calls = 0;
+  const mockedFetch = t.mock.method(globalThis, 'fetch', async () => {
+    calls += 1;
+    return new Response(calls === 1 ? landing : reportHtml);
+  });
+  await assert.rejects(fetchBofaConsumerCheckpoint(), /missing unambiguous/u);
+  assert.equal(calls, 2);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /"stage":"report_parse"/u);
+  assert.match(warnings[0], /"classification":"parse_contract_rejected"/u);
+  assert.doesNotMatch(warnings[0], /private-token|https|no metrics/u);
+
+  warnings.length = 0;
+  mockedFetch.mock.mockImplementation(async () => new Response('<p>No report anchors</p>'));
+  await assert.rejects(fetchBofaConsumerCheckpoint(), /missing non-future/u);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /"stage":"report_discovery"/u);
+
+  warnings.length = 0;
+  calls = 0;
+  mockedFetch.mock.mockImplementation(async () => {
+    calls += 1;
+    return new Response(calls === 1 ? landing : `<a href="${pdf('august')}">Full analysis</a><p>${total} ${exGas}</p>`);
+  });
+  assert.equal((await fetchBofaConsumerCheckpoint()).bofaStatus, 'live');
+  assert.equal(calls, 2);
+  assert.equal(warnings.length, 0);
+});
+
+test('HTTP failures keep the existing bounded retry count and distinguish landing from report', async t => {
+  t.mock.method(Date, 'now', () => nowMs);
+  const warnings = [];
+  t.mock.method(console, 'warn', line => warnings.push(line));
+  let calls = 0;
+  const mockedFetch = t.mock.method(globalThis, 'fetch', async () => {
+    calls += 1;
+    return new Response('private-token blocked body', { status: 403 });
+  });
+  await assert.rejects(fetchBofaConsumerCheckpoint(), /bofa:consumer-checkpoint-landing failed: HTTP 403/u);
+  assert.equal(calls, 3); // Existing first attempt + two retries, not a new retry layer.
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /"stage":"landing_fetch"/u);
+  assert.match(warnings[0], /"httpStatus":403/u);
+  assert.doesNotMatch(warnings[0], /private-token|blocked body/u);
+
+  calls = 0;
+  warnings.length = 0;
+  mockedFetch.mock.mockImplementation(async () => {
+    calls += 1;
+    return calls === 1
+      ? new Response(`<a href="${report('august')}">Report</a>`)
+      : new Response('private-token unavailable', { status: 503 });
+  });
+  await assert.rejects(fetchBofaConsumerCheckpoint(), /bofa:consumer-checkpoint-report failed: HTTP 503/u);
+  assert.equal(calls, 4); // One successful landing request + three report attempts.
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /"stage":"report_fetch"/u);
+  assert.match(warnings[0], /"httpStatus":503/u);
+  assert.doesNotMatch(warnings[0], /private-token|unavailable/u);
+});
 
 test('reviewed August HTML shorthand preserves per-household ratios and report month', () => {
   const value = parse(`${total} ${exGas}`);

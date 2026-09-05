@@ -1187,6 +1187,10 @@ v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 
 - 不要把 JSON 产物作为临时修复随意提交。
 - 不要用 UI 文案反向修改数据契约或评分逻辑。
 
+## BoA public-summary failure diagnostics
+
+Daily中BoA失败会输出一条`[BoA source diagnostic]` JSON：`stage`为`landing_fetch` / `report_discovery` / `report_fetch` / `report_parse`，`classification`区分HTTP、超时、网络、发现失败、报告身份/新鲜度、待来源审阅及解析契约拒绝。仅HTTP失败带数值`httpStatus`，其余为null；未知异常保留`unexpected_failure`，不猜测地理封锁或站点故障。输出不含原始异常、URL、正文、headers或凭据，也不写生产字段；既有timeout/retry及fallback不变。一次手动Daily授权已用完时，等待下次自然排程收集日志，不为取证重复触发可能付费的Daily。2026-09-05授权run `33958975125`发生在该诊断上线前，不能从新代码反推旧run具体失败原因。
+
 ## World Order source-health consistency
 
 ```bash

@@ -49,6 +49,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-05 全模块完善（owner 授权逐项 commit + push）
 
+- **BoA云端降级取证补齐**：一次授权Daily已确认五月fallback，但旧Promise.allSettled路径未记录具体错误。新增log-only `[BoA source diagnostic]`，只输出固定source/stage/classification与HTTP状态码，区分landing/report请求、报告发现及解析；绝不输出原始异常/URL/正文/headers。离线真实fetch入口回归覆盖四阶段、成功不告警、原先首试+两次重试不增加，错误继续抛给原fallback路径。未运行第二次Daily，不写production JSON；云端原因仍需下一次自然Daily日志证据，不能因诊断代码补齐就宣称BoA恢复。
 - **09-05追加授权执行**：一次Daily已成功（run `33958975125` / `9c93507d`），Wind=`skipped_no_candidates`，未付费兜底/未重跑。BDI污染值已清除、MLF已live；BoA云端仍五月fallback，本地八月probe成功但云端原因未记录，不能关闭恢复项。ACLED三份新周表+三份原样文件经main-only publisher提交`6a04c891`并成功刷新`f36faebd`（run `33958873350`）；六区实际日期为三份8月21日/三份8月14日，月表仍7月31日，weekly/monthly data_current不代表统一最新。Pages两份JSON逐字节一致，自定义域名等待原EdgeOne低频发布。MCP复用项目启动配置的官方CLI已恢复并full索引24799节点/81642边；应用连接仍需Restart，5处partial parse及coverage metadata_changed提示保留源码回读。执行记录优先于下列首轮待办描述，详见[追加授权回执](REVIEW_2026-09-05_CLOSEOUT.md#owner授权后的执行回执2026-09-05)。
 - 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。9项独立提交与最新验证/剩余输入见 [2026-09-05验收清单](REVIEW_2026-09-05_CLOSEOUT.md)。
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
@@ -522,6 +523,11 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **上次会话结束于(2026-09-05 · 授权刷新后诊断补齐)**: `caa02939`之前的九项修复和追加ACLED/World Order/Daily数据均已独立推送；详细数据日期、run和验证见Section 2与[执行回执](REVIEW_2026-09-05_CLOSEOUT.md)。原有`.agents/`与`skills-lock.json`未跟踪、未改动。
+- **当前进行中(2026-09-05 · BoA诊断)**: 补上BoA四阶段脱敏失败日志与15项离线回归；保持既有取数/重试/fallback/数据契约不变，本提交不运行Daily或外部AI、不写production JSON。
+- **下一步建议(2026-09-05)**: 下一次自然Daily完成后查`[BoA source diagnostic]`并核对生产报告月；待具体错误证据再决定源/解析处理。检查EdgeOne自然发布后radar/World Order两JSON是否逐字节对齐；不要以Pages成功代替自定义域名发布证据。
+- **阻塞或等待(2026-09-05)**: 一次Daily成本授权已使用，未触发Wind候选；BoA云端仍fallback。MCP官方CLI已可使用完整项目配置并full重索引，应用工具连接仍需Restart。其余ACLED滞后地区/月表、StockQ/ARR来源、Web v2观察期及运输商业授权继续保留；不能自行制造审批或解除。
 
 - **上次会话结束于(2026-08-31 · shared search API quota repair)**: 新 failure `Macro Risk Editorial Refresh` run `33360332836` 与 Oil News `2026-08-31T06:13:30Z` production artifact 交叉定位为 Tavily HTTP 432 plan limit + Brave HTTP 402，非 DeepSeek/provider-output 失败；连续两次 Macro run 均 0 paid call / 0 production write。
 - **当前进行中(2026-08-31 · shared search API quota repair)**: 把 Oil News cadence 从 weekday 3h/weekend 4h 收口为 6h，shared scheduled budget 从约 1,144 降到最坏 737 requests/provider/month，并保留 200 manual reserve；Macro search diagnostics 改为固定脱敏 HTTP/transport category，source-health hard-fail contract 不变。

@@ -13,6 +13,31 @@ const REVIEWED_SHORTHAND = Object.freeze({
 const NUMBER = '[-+]?\\d+(?:\\.\\d+)?';
 const YOY = '(?:year[- ]over[- ]year(?:\\s*\\(YoY\\))?|YoY)';
 
+/** Log-only allowlist: never return raw exception text, URLs, bodies or headers. */
+export function createBofaFailureDiagnostic(error, stage) {
+  const knownStage = ['landing_fetch', 'report_discovery', 'report_fetch', 'report_parse'].includes(stage) ? stage : 'unknown';
+  const message = typeof error?.message === 'string' ? error.message.slice(0, 400) : '';
+  let classification = 'unexpected_failure';
+  let httpStatus = null;
+  if (knownStage === 'landing_fetch' || knownStage === 'report_fetch') {
+    const http = message.match(/\bHTTP ([45]\d{2})\b/u);
+    if (http) {
+      httpStatus = Number(http[1]);
+      classification = 'http_error';
+    } else if (error?.name === 'AbortError' || error?.name === 'TimeoutError' || /\btimeout \d+ms\b/u.test(message)) {
+      classification = 'request_timeout';
+    } else if (/\bfetch failed\b|\b(?:ENOTFOUND|ECONNRESET|ECONNREFUSED|EAI_AGAIN)\b/u.test(message)) {
+      classification = 'network_error';
+    }
+  } else if (knownStage === 'report_discovery' || knownStage === 'report_parse') {
+    if (message.includes('stale or future report month')) classification = 'report_freshness_rejected';
+    else if (message.includes('unreviewed shorthand')) classification = 'source_review_required';
+    else if (/URL|PDF report month mismatch/u.test(message)) classification = 'report_identity_rejected';
+    else classification = knownStage === 'report_discovery' ? 'report_discovery_failed' : 'parse_contract_rejected';
+  }
+  return { source: 'bofa_consumer_checkpoint', stage: knownStage, classification, httpStatus };
+}
+
 function fail(message) {
   throw new Error(`bofa:consumer-checkpoint ${message}`);
 }

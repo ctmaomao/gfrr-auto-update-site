@@ -11,7 +11,7 @@ import {
 } from './daily/daily-brief.mjs';
 import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
-import { parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
+import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -5152,21 +5152,30 @@ function parseBofaConsumerCheckpointReport(html, reportUrl) {
 }
 
 export async function fetchBofaConsumerCheckpoint() {
-  const landingHtml = await retryFetch(
-    BOFA_CONSUMER_CHECKPOINT_URL,
-    'bofa:consumer-checkpoint-landing',
-    BOFA_CONSUMER_FETCH_TIMEOUT_MS,
-    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
-  );
-  const reportUrl = selectLatestBofaCheckpointUrl(landingHtml);
-  if (!reportUrl) throw new Error('bofa:consumer-checkpoint missing report link');
-  const reportHtml = await retryFetch(
-    reportUrl,
-    'bofa:consumer-checkpoint-report',
-    BOFA_CONSUMER_FETCH_TIMEOUT_MS,
-    { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
-  );
-  return parseBofaConsumerCheckpointReport(reportHtml, reportUrl);
+  let stage = 'landing_fetch';
+  try {
+    const landingHtml = await retryFetch(
+      BOFA_CONSUMER_CHECKPOINT_URL,
+      'bofa:consumer-checkpoint-landing',
+      BOFA_CONSUMER_FETCH_TIMEOUT_MS,
+      { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+    );
+    stage = 'report_discovery';
+    const reportUrl = selectLatestBofaCheckpointUrl(landingHtml);
+    if (!reportUrl) throw new Error('bofa:consumer-checkpoint missing report link');
+    stage = 'report_fetch';
+    const reportHtml = await retryFetch(
+      reportUrl,
+      'bofa:consumer-checkpoint-report',
+      BOFA_CONSUMER_FETCH_TIMEOUT_MS,
+      { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
+    );
+    stage = 'report_parse';
+    return parseBofaConsumerCheckpointReport(reportHtml, reportUrl);
+  } catch (error) {
+    console.warn(`[BoA source diagnostic] ${JSON.stringify(createBofaFailureDiagnostic(error, stage))}`);
+    throw error;
+  }
 }
 
 function parseMonthDayYearToIso(month, day, year) {
