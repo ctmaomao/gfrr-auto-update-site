@@ -1501,6 +1501,23 @@ been reviewed separately.
 
 ### ODP P68 FIRMS facility-window baseline quality gate
 
+Promotion must commit the baseline config together with a watch snapshot rebuilt
+by the existing generator. Run its no-output dry-run first, then the live build
+with an explicitly configured local key, inspect request health, and run
+`check:oil-thermal-watch` plus `check:all`. Never hand-edit snapshot statistics or
+weaken config/snapshot alignment checks to permit a config-only promotion.
+
+**2026-09-05 reviewed update:** the owner authorized the follow-up work and the
+fresh 240-snapshot packet contains 193 healthy / 47 quarantined snapshots.
+All 42 facilities have 193 samples and a 35.48-day effective window. Independent
+recalculation of all 252 p95 values agrees with the candidate. The existing
+promotion CLI updates the production config to `established_observation_window`
+without changing thresholds, facility IDs, request policy or score boundaries.
+This supersedes the July time-blocked snapshot below, not the standing guards.
+There are 41 healthy all-zero snapshots and 16 all-zero p95 rows: snapshots are
+not independent overpasses, and absence of detections is not operational proof.
+Future refreshes must repeat health/window review rather than auto-promoting.
+
 Do not use global `sampleWindowDays` alone to decide baseline maturity. It is
 the healthy-history audit horizon. The effective quality gate is the minimum
 `windowDays` across all ready/promoted facilities.
