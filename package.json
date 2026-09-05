@@ -243,7 +243,7 @@
     "check:macro-drivers-employment": "node --check scripts/check-macro-drivers-employment.mjs && node scripts/check-macro-drivers-employment.mjs",
     "check:macro-drivers-consumer-retail": "node --check scripts/check-macro-drivers-consumer-retail.mjs && node scripts/check-macro-drivers-consumer-retail.mjs",
     "check:macro-drivers-commercial-real-estate": "node --check scripts/check-macro-drivers-commercial-real-estate.mjs && node scripts/check-macro-drivers-commercial-real-estate.mjs",
-    "check:macro-drivers-expanded-auto-ingestion": "node --check scripts/check-macro-drivers-expanded-auto-ingestion.mjs && node scripts/check-macro-drivers-expanded-auto-ingestion.mjs && node --test tests/unit/stockq-freight.test.mjs tests/unit/bofa-checkpoint.test.mjs",
+    "check:macro-drivers-expanded-auto-ingestion": "node --check scripts/check-macro-drivers-expanded-auto-ingestion.mjs && node scripts/check-macro-drivers-expanded-auto-ingestion.mjs && node --test tests/unit/stockq-freight.test.mjs tests/unit/bofa-checkpoint.test.mjs tests/unit/china-mlf.test.mjs",
     "review:fomc-minutes-tone-quality": "node scripts/review-fomc-minutes-tone-quality.mjs",
     "check:macro-drivers-fomc-minutes-tone-quality": "node --check scripts/review-fomc-minutes-tone-quality.mjs && node --check scripts/check-fomc-minutes-tone-quality.mjs && node scripts/check-fomc-minutes-tone-quality.mjs && node scripts/review-fomc-minutes-tone-quality.mjs --no-output",
     "check:world-order-narrative-density": "node scripts/check-world-order-narrative-density.mjs",

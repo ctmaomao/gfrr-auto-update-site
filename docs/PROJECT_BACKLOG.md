@@ -57,6 +57,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - Market Pricing发布验证：`5eb2cb72`，Pages run `33953020935`成功，线上history/metrics两文件SHA-256均与9月4日提交快照一致。
 - **BoA消费证据 / 2026-09-05**：修复旧摘要措辞绑定导致的五月fallback，按官方PDF人工核实8月HTML简写仍是每户同比；新增精确语义配对与旧明确模板回归，不自动认可未来未知简写。最新官方链接按报告月份排序，新live限定62天月龄；UI显示本报告月份和旧值/缺失状态，静态示例数字退场，当前asset token为`bofa-report-review-1`；不改评分或原始卡数据边界。
 - BoA验收：实时只读probe为八月报告0.05/0.063/0.043，12项解析测试与11项浏览器测试通过；生产`radar-data.json`尚未刷新，需既有Daily使用新parser后再确认八月值已发布，不能把本地抓取成功当作生产数据刷新。
+- **MLF查询与操作语义 / 2026-09-05**：确认primary搜索非空但全为逆回购时不会尝试备用MLF查询；修复为至多2次逻辑搜索，摘要先行、正文去重且全程上限6，正文优先明确MLF标题。逐操作绑定毛额/期限/利率，不能借其他工具或其他日期的字段；实际操作日期必须真实、非未来且45天内，新发布不能洗白旧操作，未披露利率为null。仍为EastMoney聚合公开新闻/display-only，不冒充PBOC原始公告，不改评分。 只读 live probe 已验证2026-08-25 / 5000亿元 / 12个月 / null利率；16项MLF负例和全量检查通过。生产radar快照仍须等待既有Daily刷新，不能把本地解析成功写成生产已恢复。
 - **Market Pricing 周线对齐 / 2026-09-05**：既有 Yahoo manual 路径先 dry-run 再提交 history，QQQ/NDX/IXIC 均更新至 2026-09-04（各522条10年周线）；离线重算每资产463条60周指标。strict freshness 为 PASS / 0 WARN，逐窗独立复算1389组均吻合，SPX未变。QQQ primary、NDX/IXIC auxiliary、display-only与自动化边界不变；正常滚动10年源窗口不承诺永久保留窗口外历史。
 - MCP辅助修复：对最新main使用full mode重索引，恢复scripts覆盖；忽略凭证/人工artifact目录，局部HTML/Markdown parse gaps仍需源码回读。
 - FIRMS 发布验证：`5d7f5493` 的 Pages run `33952848899` 成功，cache-busted GitHub Pages 热点 JSON 与提交快照 SHA-256 相同，成熟窗口35.48天；EdgeOne自定义域名当时仍为04:33旧快照/14.46天，待低频release同步，不把Pages成功等同于双通道完成。

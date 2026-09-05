@@ -327,6 +327,7 @@ See [`CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md`](CHINA_MACRO_LIQUIDITY_PR
 | **失败 fallback** | `macroDrivers.chinaOmo.sourceStatus` / `macroDrivers.chinaMlf.sourceStatus` / `macroDrivers.chinaTsf.sourceStatus = 'fallback'` or `'missing'`;OMO amount/term/type/rate 缺失、MLF gross amount/term 缺失或 TSF stockYoY 缺失时 fail-closed |
 | **影响 scoring?** | **否** — display-only / audit-only,不进入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | **fetcher** | `resolveChinaOmo` / `resolveChinaMlf` / `resolveChinaTsf` |
+| **MLF 发现与解析保护** | 主关键词没有可解析的有效操作时使用备用关键词（包括主查询失败）；最多 2 次逻辑查询、总计最多 6 篇去重正文，优先 MLF 标题。毛额、期限及可选利率只绑定同一操作上下文，逆回购/到期/净额不能补位；严格校验日历和非未来操作日，45 天按操作日计算，不能用新文章日期刷新旧操作。逻辑请求预算不改变既有 HTTP retry 的有界策略。 |
 | **边界** | 东方财富聚合转载公开财经媒体文本,非 PBOC 官方原始公告/报告；OMO 只保存新闻毛额操作句中的期限、利率、操作量,不得把到期量、净投放/净回笼写成操作量；MLF 只保存新闻毛额操作句中的操作量和期限,不得把到期量、净投放/净回笼或加量续作轧差写成操作量；TSF 只保存报告级累计社融口径,不得写成贷款笔级 / 机构级 raw tape |
 
 ---
