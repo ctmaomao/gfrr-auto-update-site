@@ -49,6 +49,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-05 全模块完善（owner 授权逐项 commit + push）
 
+- **09-05追加授权执行**：一次Daily已成功（run `33958975125` / `9c93507d`），Wind=`skipped_no_candidates`，未付费兜底/未重跑。BDI污染值已清除、MLF已live；BoA云端仍五月fallback，本地八月probe成功但云端原因未记录，不能关闭恢复项。ACLED三份新周表+三份原样文件经main-only publisher提交`6a04c891`并成功刷新`f36faebd`（run `33958873350`）；六区实际日期为三份8月21日/三份8月14日，月表仍7月31日，weekly/monthly data_current不代表统一最新。Pages两份JSON逐字节一致，自定义域名等待原EdgeOne低频发布。MCP复用项目启动配置的官方CLI已恢复并full索引24799节点/81642边；应用连接仍需Restart，5处partial parse及coverage metadata_changed提示保留源码回读。执行记录优先于下列首轮待办描述，详见[追加授权回执](REVIEW_2026-09-05_CLOSEOUT.md#owner授权后的执行回执2026-09-05)。
 - 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。9项独立提交与最新验证/剩余输入见 [2026-09-05验收清单](REVIEW_2026-09-05_CLOSEOUT.md)。
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
 - 后续仅保留真实依赖：Daily生产刷新确认、ACLED新版操作者材料、StockQ/ARR新源证据、Web v2同口径观察与独立切换审阅、运输商业授权及MCP重连。已完成的运输交接、BoA/MLF/ARR解析、影子分类和发布修复不再列为待实施。

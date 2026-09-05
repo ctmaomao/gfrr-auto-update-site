@@ -1,6 +1,20 @@
 # 2026-09-05 全模块修复与剩余门槛
 
-取证截至2026-09-05 08:47 UTC。起点为最新main `67eae2a8`，按owner授权串行处理；9项代码/数据事项均已独立commit并push。此文是本轮验收，不承诺所有外部数据永久可用、未来需求完成或绝对零缺陷。
+首轮取证截至2026-09-05 08:47 UTC，后续授权执行见下节。起点为最新main `67eae2a8`，按owner授权串行处理；9项代码/数据事项均已独立commit并push。此文是本轮验收，不承诺所有外部数据永久可用、未来需求完成或绝对零缺陷。
+
+## Owner授权后的执行回执（2026-09-05）
+
+- Owner明确批准一次现有Daily（允许配置内Wind兜底）、提供六份手动下载ACLED周表，并要求重连MCP；其余观察期和来源授权门槛保留。
+- ACLED仅复制Downloads内三份新文件到ignored输入目录，另外三份与原件SHA-256相同；旧输入及Downloads原件完整保留。非洲/中东/拉美表内最新WEEK为2026-08-21，欧洲中亚/美国加拿大/亚太仍为2026-08-14；不得把文件名中的周标签或下载时间当作统一数据日。当前汇总使用既有各区域最新窗口，地区日期不齐，不作为严格同窗全球比较证据。
+- `6a04c891`独立提交推送周度汇总；既有main-only `acled:publish`触发[World Order run 33958873350](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/33958873350)，成功生成并推送`f36faebd`。最终weekly/monthly均`data_current`；周度eventsLast4Weeks=33122、latestWeek=2026-08-21。月度2026-07-31配置未变且仍aging；data_current仅表示配置已进入生产快照，不代表六区/月表均为最新。
+- 唯一一次[Daily run 33958975125](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/33958975125)成功，数据提交`9c93507d`，radar.updatedAt=2026-09-05T09:48:43.787Z。Wind策略为`skipped_no_candidates`、candidateInputs=[]、appliedInputs=[]，未进入付费兜底分支；没有第二次Daily或额外DeepSeek调用。
+- 生产BDI由污染值4.06变为null/missing；BDTI/BCTI仍保留8月10日旧值fallback，源可用性未恢复。MLF已live：2026-08-25、5000亿元、12个月、未披露利率null。BoA仍为五月缓存fallback，不能关闭生产恢复；同版本地只读fetch成功返回八月5.0%/6.3%/4.3%，云端日志未记录BoA失败分类，具体云端原因未确认，不以猜测替代诊断。
+- Daily按原快照绑定规则移除失效macroRiskEditorialLayer，页面回退确定性正文；没有手工补入或付费重生成AI层。
+- ACLED本地check:all、operator-safety、weekly/monthly status、publish、review:world-order均退出0；两次云端生成及其提交前check:all成功。新Daily快照的test:e2e为11/11、退出0。
+- Pages runs `33958930869`（World Order）与`33959057073`（Daily）成功，cache-busted GitHub Pages两份JSON与本地committed文件逐字节一致。此时自定义域名仍为旧快照，等待既有EdgeOne三小时发布通道；不为本次数据刷新绕过配额保护。
+- MCP：应用工具仍报Transport closed。复用现有项目注册的完整启动配置调用官方CLI成功，说明裸CLI的secure-coordination endpoint失败不能证明程序损坏。09:47 UTC full reindex成功：24799 nodes/81642 edges、0 skipped、5处partial parse；publisher结构查询成功。路径coverage无记录解析缺口但仍给出metadata_changed提示，保留源码回读，不把图谱视为完整性证明。未改配置/删除协调文件/终止其他进程；应用内连接仍需Settings → MCP servers → Restart。
+
+以下首轮记录中的“尚未执行Daily/尚未收到周表/MCP无法重索引”已由本节更新；未解除的BoA云端失败归因、StockQ/ARR来源、ACLED滞后地区/月表、新闻v2观察和运输商业授权继续保留。
 
 ## 已交付
 
