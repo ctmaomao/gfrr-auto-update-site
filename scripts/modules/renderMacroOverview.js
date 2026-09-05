@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=macro-evidence-fold-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-evidence-fold-1';
+} from './config.js?v=bofa-report-review-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=bofa-report-review-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,10 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=macro-evidence-fold-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-evidence-fold-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=macro-evidence-fold-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=macro-evidence-fold-1';
+} from './macroOverviewDisplayHelpers.js?v=bofa-report-review-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=bofa-report-review-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=bofa-report-review-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=bofa-report-review-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1946,7 +1946,18 @@ function renderC4UsEconomyTemperature({ radarData }) {
     if (asNumber(consumer.umichSentiment) !== null && asNumber(consumer.threeMonthChange) !== null) {
       setLeafText('c4-consumer-umich', `${consumer.umichSentiment.toFixed(1)} · 3m ${signedNumber(consumer.threeMonthChange, 1)}`);
     }
-    if (signedPercentFromDecimal(retail.bofaCardSpendingExGasYoY, 1)) setLeafText('c4-consumer-bofa', `${signedPercentFromDecimal(retail.bofaCardSpendingExGasYoY, 1)} YoY`);
+    const bofaValue = signedPercentFromDecimal(retail.bofaCardSpendingExGasYoY, 1);
+    const bofaDate = typeof retail.bofaReportDate === 'string' ? retail.bofaReportDate : '';
+    const bofaDateMs = Date.parse(bofaDate);
+    const bofaMonth = /^\d{4}-(?:0[1-9]|1[0-2])-01T/u.test(bofaDate) && Number.isFinite(bofaDateMs) && bofaDateMs <= Date.now()
+      ? bofaDate.slice(0, 7) : null;
+    const bofaStatus = retail.bofaStatus || retail.sourceStatus?.bofaConsumerCheckpoint;
+    const bofaOld = Number.isFinite(bofaDateMs) && Date.now() - bofaDateMs > 62 * 86400000;
+    const bofaStateZh = bofaStatus === 'fallback' ? '沿用旧值'
+      : bofaStatus === 'live' ? (bofaOld ? '报告较旧' : '已更新') : '来源不可用';
+    setLeafText('c4-consumer-bofa', bofaValue && bofaMonth && ['live', 'fallback'].includes(bofaStatus)
+      ? `${bofaValue} YoY · ${bofaMonth}报告 · ${bofaStateZh}`
+      : '— · 缺少可用报告');
     if (signedPercentFromDecimal(retail.redbookRetailSalesYoY, 1)) setLeafText('c4-consumer-redbook', signedPercentFromDecimal(retail.redbookRetailSalesYoY, 1));
   } catch (error) {
     console.error('[renderMacroOverview] renderC4UsEconomyTemperature failed:', error);

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=macro-evidence-fold-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=macro-evidence-fold-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=bofa-report-review-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=bofa-report-review-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

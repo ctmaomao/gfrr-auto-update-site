@@ -31,7 +31,7 @@
 
 ## 1. 项目当前状态
 
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-evidence-fold-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
+当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `bofa-report-review-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
 
 维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
 

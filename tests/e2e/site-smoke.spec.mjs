@@ -227,6 +227,30 @@ test.describe('desktop smoke', () => {
     expect(pageErrors).toEqual([]);
   });
 
+  for (const state of ['live', 'fallback', 'missing', 'future']) {
+    test(`BoA spending exposes its report month and ${state} state`, async ({ page }) => {
+      const now = new Date();
+      const offset = state === 'fallback' ? -4 : state === 'future' ? 2 : 0;
+      const reportDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1)).toISOString();
+      await page.route('**/data/radar-data.json', async (route) => {
+        const response = await route.fetch();
+        const radarData = await response.json();
+        radarData.macroDrivers.consumerRetail.bofaCardSpendingExGasYoY = state === 'missing' ? null : 0.043;
+        radarData.macroDrivers.consumerRetail.bofaReportDate = state === 'missing' ? null : reportDate;
+        radarData.macroDrivers.consumerRetail.bofaStatus = state === 'future' ? 'live' : state;
+        await route.fulfill({ response, json: radarData });
+      });
+      await page.goto('/index.html');
+      await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
+      const text = page.locator('#c4-consumer-bofa');
+      if (state === 'missing' || state === 'future') {
+        await expect(text).toHaveText('— · 缺少可用报告');
+      } else {
+        await expect(text).toHaveText(`+4.3% YoY · ${reportDate.slice(0, 7)}报告 · ${state === 'fallback' ? '沿用旧值' : '已更新'}`);
+      }
+    });
+  }
+
   test('trend tolerates a missing weekly date without keeping the static placeholder', async ({ page }) => {
     const consoleErrors = captureConsoleErrors(page);
     await page.route('**/data/radar-history.json*', async (route) => {

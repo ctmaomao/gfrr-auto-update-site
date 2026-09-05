@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=macro-evidence-fold-1';
+﻿import { fmtNumSafe } from './config.js?v=bofa-report-review-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

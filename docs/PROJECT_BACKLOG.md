@@ -11,7 +11,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 | 当前生产状态 | v28.0N-1 editorial first-fold + Stage 6A China 10Y/CFETS + Stage 6C China CPI/PPI/PMI + Stage V2X 欧元区波动率(VSTOXX)live display-only 卡;Stage 7 C5 World Order 暂代占位卡退场(C5 = 4 张 live);Stage 8 小批收尾;Stage 9 C6 intro 三分类勘误;Stage 10-13 P3-16 China Macro Liquidity/Property 层全 live(70 城房价 + OMO + 社融 + MLF;C6 = 11 张 live);Stage 14 社融 + Stage 15 OMO + Stage 16 MLF 三卡数据源 pbc→EastMoney 聚合切换(pbc.gov.cn 在 US runner 域名级地理封锁,改抓境外可达聚合源,均线上验证 live;**三 pbc 卡全部迁移完成**);C5 +9 国/地区股指(C5 4→13 live);系统终审批 A-E 展示层加固(A 展示完整性 / B 守卫 / C Baltic Freight 卡 / B-next 数据龄 / E「跨市场印证」display-only 块,均不进打分);**第二页面 AI 泡沫监测(`bubble-watch.html` + 周一 cron 数据管线,ADR-0016/0019,display-only)live,27 卡展示 + Core-23/Shadow-4**|
 | Release/display version | `v28.0.10` |
 | Data/decision contract version | 根级 `data.version` 与 `decisionModel.contractVersion` 保持兼容契约 `v27.0` |
-| Cache version | `macro-evidence-fold-1` |
+| Cache version | `bofa-report-review-1` |
 | check:all 项数 | 41 个顶层命令；ODP `oil-directional` 套件当前 88 leaf checks（含 GDELT Web NGrams automated display cache guard 与 P68 facility-window quality guard）。其余 suite/直连 checker 的实时组成以 `package.json` 与 `scripts/check-suite.mjs` 为准，避免手工总数再次漂移。|
 | 最后审计日期 | 2026-08-14(EdgeOne 低频静态发布通道：专用 release repo + 3 小时去重发布 + 32 天 400 次 fail-closed 配额保护；自定义域名迁移须在临时域名验收后执行)|
 | 主 runtime | Worker-first `/market.worker-preview.json` |
@@ -53,6 +53,10 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
 - 后续依次：运输本地6样本与云端提醒证据交接；BoA/MLF/ACLED数据维护；新闻影子支持率诊断；发布源快照同步。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
 - **运输P30/P33证据交接 / 2026-09-05**：本地6份人工真实事件审阅（3扰动/3对照）原为ignored，云端checkout缺失；改为唯一固定路径的版本化白名单元数据/hash manifest，P33显式读取并重算，不提交原件/URL/自由文本。不再把空review缺字段误报为已批准评分/已连接确认，真正越界仍拒绝。人工贡献及命中/误报统计明确不是模型历史回测；评分审批false、route/market not_connected及既有capped runtime边界不变，仍需独立设计审阅。
+- 运输交接发布验证：`8ac9285d`，实际云run `33953468989`成功；下载的artifact为6/3/3、gatePassed=true、scoreIntegrationApproved=false、historicalBacktestPerformed=false，完成本地/clean-checkout一致性交接。
+- Market Pricing发布验证：`5eb2cb72`，Pages run `33953020935`成功，线上history/metrics两文件SHA-256均与9月4日提交快照一致。
+- **BoA消费证据 / 2026-09-05**：修复旧摘要措辞绑定导致的五月fallback，按官方PDF人工核实8月HTML简写仍是每户同比；新增精确语义配对与旧明确模板回归，不自动认可未来未知简写。最新官方链接按报告月份排序，新live限定62天月龄；UI显示本报告月份和旧值/缺失状态，静态示例数字退场，当前asset token为`bofa-report-review-1`；不改评分或原始卡数据边界。
+- BoA验收：实时只读probe为八月报告0.05/0.063/0.043，12项解析测试与11项浏览器测试通过；生产`radar-data.json`尚未刷新，需既有Daily使用新parser后再确认八月值已发布，不能把本地抓取成功当作生产数据刷新。
 - **Market Pricing 周线对齐 / 2026-09-05**：既有 Yahoo manual 路径先 dry-run 再提交 history，QQQ/NDX/IXIC 均更新至 2026-09-04（各522条10年周线）；离线重算每资产463条60周指标。strict freshness 为 PASS / 0 WARN，逐窗独立复算1389组均吻合，SPX未变。QQQ primary、NDX/IXIC auxiliary、display-only与自动化边界不变；正常滚动10年源窗口不承诺永久保留窗口外历史。
 - MCP辅助修复：对最新main使用full mode重索引，恢复scripts覆盖；忽略凭证/人工artifact目录，局部HTML/Markdown parse gaps仍需源码回读。
 - FIRMS 发布验证：`5d7f5493` 的 Pages run `33952848899` 成功，cache-busted GitHub Pages 热点 JSON 与提交快照 SHA-256 相同，成熟窗口35.48天；EdgeOne自定义域名当时仍为04:33旧快照/14.46天，待低频release同步，不把Pages成功等同于双通道完成。

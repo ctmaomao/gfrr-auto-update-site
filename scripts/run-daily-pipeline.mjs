@@ -11,6 +11,7 @@ import {
 } from './daily/daily-brief.mjs';
 import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
+import { parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -5241,50 +5242,22 @@ function monthIndexFromName(value) {
   return match ? match[1] : null;
 }
 
-function parseBofaReportDateFromUrl(url) {
-  const match = String(url || '').match(/consumer-checkpoint-(?<month>[a-z]+)-(?<year>\d{4})\.html/iu);
-  const month = match?.groups?.month?.toLowerCase();
-  const year = Number(match?.groups?.year);
-  if (!MONTH_INDEX_BY_NAME.has(month) || !Number.isInteger(year)) return null;
-  return new Date(Date.UTC(year, MONTH_INDEX_BY_NAME.get(month), 1)).toISOString();
-}
-
 function parseBofaConsumerCheckpointReport(html, reportUrl) {
-  const plain = htmlToPlainText(html);
-  const spendingMatch = plain.match(
-    /Total credit and debit card spending per household rose\s+(?<current>[-+]?\d+(?:\.\d+)?)%[^.]*?from\s+(?<previous>[-+]?\d+(?:\.\d+)?)%/iu
-  );
-  const exGasMatch = plain.match(/Excluding gasoline[^.]*?\s(?<exGas>[-+]?\d+(?:\.\d+)?)%\s+YoY/iu);
   const pdfMatch = String(html || '').match(/href=["'](?<href>[^"']*consumer-checkpoint[^"']+\.pdf)["']/iu);
-  const currentYoY = parsePercentRatio(spendingMatch?.groups?.current);
-  const previousYoY = parsePercentRatio(spendingMatch?.groups?.previous);
-  const exGasYoY = parsePercentRatio(exGasMatch?.groups?.exGas);
-  if (!Number.isFinite(currentYoY) && !Number.isFinite(exGasYoY)) {
-    throw new Error('bofa:consumer-checkpoint missing card spending metrics');
-  }
-  return {
-    bofaCardSpendingYoY: Number.isFinite(currentYoY) ? currentYoY : null,
-    bofaCardSpendingPriorYoY: Number.isFinite(previousYoY) ? previousYoY : null,
-    bofaCardSpendingExGasYoY: Number.isFinite(exGasYoY) ? exGasYoY : null,
-    bofaReportDate: parseBofaReportDateFromUrl(reportUrl),
-    bofaReportUrl: reportUrl,
-    bofaPdfUrl: resolveAbsoluteUrl(pdfMatch?.groups?.href, BOFA_CONSUMER_CHECKPOINT_BASE_URL),
-    bofaStatus: 'live',
-    bofaSummary: 'Bank of America Institute Consumer Checkpoint 公开 HTML 摘要提供 card spending per household YoY 与 ex-gas YoY；作为第三方消费证据观察，不等同于 Redbook。'
-  };
+  return parseBofaCheckpointMetrics(htmlToPlainText(html), {
+    reportUrl,
+    pdfUrl: resolveAbsoluteUrl(pdfMatch?.groups?.href, BOFA_CONSUMER_CHECKPOINT_BASE_URL)
+  });
 }
 
-async function fetchBofaConsumerCheckpoint() {
+export async function fetchBofaConsumerCheckpoint() {
   const landingHtml = await retryFetch(
     BOFA_CONSUMER_CHECKPOINT_URL,
     'bofa:consumer-checkpoint-landing',
     BOFA_CONSUMER_FETCH_TIMEOUT_MS,
     { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
   );
-  const latestLink = [...String(landingHtml || '').matchAll(/href=["'](?<href>\/economic-insights\/consumer-checkpoint-[^"']+\.html)["']/giu)]
-    .map((match) => match.groups?.href)
-    .filter(Boolean)[0];
-  const reportUrl = resolveAbsoluteUrl(latestLink, BOFA_CONSUMER_CHECKPOINT_BASE_URL);
+  const reportUrl = selectLatestBofaCheckpointUrl(landingHtml);
   if (!reportUrl) throw new Error('bofa:consumer-checkpoint missing report link');
   const reportHtml = await retryFetch(
     reportUrl,
