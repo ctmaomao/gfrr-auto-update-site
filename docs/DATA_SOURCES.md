@@ -82,6 +82,8 @@ SEC EDGAR 免费补充源不需要 GitHub secret。它在数据中心或 GitHub 
 
 ---
 
+> 运价源维护（2026-09-05）：StockQ BDI/BDTI/BCTI仅接收对应指数页面的日期绑定明文历史报价；收益率表、混淆/空白值、错页、未来或超过7天的最新记录不能标live。解析失败保留合法旧值并标fallback，无合法旧值则missing；不解码隐藏报价，不把百分比或非正/非整数值当指数，不把旧涨跌幅拼入新报价。仍是广义运价display-only背景，不授予路线级运费确认或重分发权限。
+
 ### Treasury Fiscal Data — Daily Treasury Statement / TGA candidate(source-review only)
 
 | 字段 | 值 |

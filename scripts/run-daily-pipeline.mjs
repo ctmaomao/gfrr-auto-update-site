@@ -10,6 +10,7 @@ import {
   buildUnavailableDailyBrief,
 } from './daily/daily-brief.mjs';
 import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
+import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -2455,22 +2456,10 @@ async function fetchStockqIndex(symbol, label) {
   const html = await retryFetch(url, `stockq:${symbol}`, STOCKQ_FETCH_TIMEOUT_MS, {
     userAgent: 'Mozilla/5.0 GFRRBot/1.0'
   });
-  const historyRow = extractHtmlRows(html)
-    .map(extractHtmlCells)
-    .find((cells) => /^\d{4}\/\d{2}\/\d{2}$/u.test(cells[0] || '') && Number.isFinite(parseLooseNumber(cells[1])));
-  const summaryRow = extractHtmlRows(html)
-    .map(extractHtmlCells)
-    .find((cells) => cells.length >= 3 && Number.isFinite(parseLooseNumber(cells[0])) && /%$/u.test(cells[2] || ''));
-  const value = parseLooseNumber(historyRow?.[1] ?? summaryRow?.[0]);
-  const dailyChangePct = parseLooseNumber(historyRow?.[2] ?? summaryRow?.[2]);
-  const updatedAt = parseDateToIso(historyRow?.[0]);
-  if (!Number.isFinite(value)) throw new Error(`stockq:${symbol} missing latest value`);
   return {
     symbol,
     label,
-    value: +value.toFixed(2),
-    dailyChangePct: Number.isFinite(dailyChangePct) ? +(dailyChangePct / 100).toFixed(4) : null,
-    updatedAt,
+    ...parseStockqFreight(html, symbol),
     url
   };
 }
@@ -8710,18 +8699,18 @@ function normalizePreviousCommercialRealEstate(prevCre) {
   };
 }
 
-function normalizePreviousShippingFreight(prevShippingFreight) {
+export function normalizePreviousShippingFreight(prevShippingFreight) {
   if (!prevShippingFreight || typeof prevShippingFreight !== 'object') return buildMissingShippingFreight();
-  const dirty = Number.isFinite(prevShippingFreight.balticDirtyTankerIndex) ? prevShippingFreight.balticDirtyTankerIndex : null;
-  const clean = Number.isFinite(prevShippingFreight.balticCleanTankerIndex) ? prevShippingFreight.balticCleanTankerIndex : null;
-  const dry = Number.isFinite(prevShippingFreight.balticDryIndex) ? prevShippingFreight.balticDryIndex : null;
-  const dirtyChange = Number.isFinite(prevShippingFreight.balticDirtyTankerDailyChangePct)
+  const dirty = isUsableFreightCache(prevShippingFreight.balticDirtyTankerIndex, prevShippingFreight.balticDirtyTankerUpdatedAt, prevShippingFreight.balticDirtyTankerDailyChangePct) ? prevShippingFreight.balticDirtyTankerIndex : null;
+  const clean = isUsableFreightCache(prevShippingFreight.balticCleanTankerIndex, prevShippingFreight.balticCleanTankerUpdatedAt, prevShippingFreight.balticCleanTankerDailyChangePct) ? prevShippingFreight.balticCleanTankerIndex : null;
+  const dry = isUsableFreightCache(prevShippingFreight.balticDryIndex, prevShippingFreight.balticDryUpdatedAt, prevShippingFreight.balticDryDailyChangePct) ? prevShippingFreight.balticDryIndex : null;
+  const dirtyChange = dirty !== null && Number.isFinite(prevShippingFreight.balticDirtyTankerDailyChangePct)
     ? prevShippingFreight.balticDirtyTankerDailyChangePct
     : null;
-  const cleanChange = Number.isFinite(prevShippingFreight.balticCleanTankerDailyChangePct)
+  const cleanChange = clean !== null && Number.isFinite(prevShippingFreight.balticCleanTankerDailyChangePct)
     ? prevShippingFreight.balticCleanTankerDailyChangePct
     : null;
-  const dryChange = Number.isFinite(prevShippingFreight.balticDryDailyChangePct)
+  const dryChange = dry !== null && Number.isFinite(prevShippingFreight.balticDryDailyChangePct)
     ? prevShippingFreight.balticDryDailyChangePct
     : null;
   const tankerFreightRegime = classifyFreightIndexRegime(dirty, dirtyChange, 1800, 1200);
@@ -8730,13 +8719,13 @@ function normalizePreviousShippingFreight(prevShippingFreight) {
   return {
     balticDirtyTankerIndex: dirty,
     balticDirtyTankerDailyChangePct: dirtyChange,
-    balticDirtyTankerUpdatedAt: typeof prevShippingFreight.balticDirtyTankerUpdatedAt === 'string' ? prevShippingFreight.balticDirtyTankerUpdatedAt : null,
+    balticDirtyTankerUpdatedAt: dirty !== null ? prevShippingFreight.balticDirtyTankerUpdatedAt : null,
     balticCleanTankerIndex: clean,
     balticCleanTankerDailyChangePct: cleanChange,
-    balticCleanTankerUpdatedAt: typeof prevShippingFreight.balticCleanTankerUpdatedAt === 'string' ? prevShippingFreight.balticCleanTankerUpdatedAt : null,
+    balticCleanTankerUpdatedAt: clean !== null ? prevShippingFreight.balticCleanTankerUpdatedAt : null,
     balticDryIndex: dry,
     balticDryDailyChangePct: dryChange,
-    balticDryUpdatedAt: typeof prevShippingFreight.balticDryUpdatedAt === 'string' ? prevShippingFreight.balticDryUpdatedAt : null,
+    balticDryUpdatedAt: dry !== null ? prevShippingFreight.balticDryUpdatedAt : null,
     tankerFreightRegime,
     cleanTankerFreightRegime,
     dryBulkFreightRegime,
@@ -8904,18 +8893,23 @@ function normalizePreviousConsumer(prevConsumer) {
   };
 }
 
-async function resolveShippingFreight(prevShippingFreight) {
+export async function resolveShippingFreight(prevShippingFreight) {
+  const results = await Promise.allSettled([
+    fetchStockqIndex('BDTI', 'Baltic Dirty Tanker Index'),
+    fetchStockqIndex('BCTI', 'Baltic Clean Tanker Index'),
+    fetchStockqIndex('BDI', 'Baltic Dry Index')
+  ]);
+  return combineShippingFreightResults(prevShippingFreight, results);
+}
+
+export function combineShippingFreightResults(prevShippingFreight, results) {
   const fallback = normalizePreviousShippingFreight(prevShippingFreight);
   const status = {
     dirtyTanker: 'missing',
     cleanTanker: 'missing',
     dryBulk: 'missing'
   };
-  const [dirtyResult, cleanResult, dryResult] = await Promise.allSettled([
-    fetchStockqIndex('BDTI', 'Baltic Dirty Tanker Index'),
-    fetchStockqIndex('BCTI', 'Baltic Clean Tanker Index'),
-    fetchStockqIndex('BDI', 'Baltic Dry Index')
-  ]);
+  const [dirtyResult, cleanResult, dryResult] = results;
 
   const dirty = dirtyResult.status === 'fulfilled' ? dirtyResult.value : null;
   const clean = cleanResult.status === 'fulfilled' ? cleanResult.value : null;
@@ -8929,17 +8923,11 @@ async function resolveShippingFreight(prevShippingFreight) {
   else if (Number.isFinite(fallback.balticDryIndex)) status.dryBulk = 'fallback';
 
   const balticDirtyTankerIndex = Number.isFinite(dirty?.value) ? dirty.value : fallback.balticDirtyTankerIndex;
-  const balticDirtyTankerDailyChangePct = Number.isFinite(dirty?.dailyChangePct)
-    ? dirty.dailyChangePct
-    : fallback.balticDirtyTankerDailyChangePct;
+  const balticDirtyTankerDailyChangePct = dirty ? dirty.dailyChangePct : fallback.balticDirtyTankerDailyChangePct;
   const balticCleanTankerIndex = Number.isFinite(clean?.value) ? clean.value : fallback.balticCleanTankerIndex;
-  const balticCleanTankerDailyChangePct = Number.isFinite(clean?.dailyChangePct)
-    ? clean.dailyChangePct
-    : fallback.balticCleanTankerDailyChangePct;
+  const balticCleanTankerDailyChangePct = clean ? clean.dailyChangePct : fallback.balticCleanTankerDailyChangePct;
   const balticDryIndex = Number.isFinite(dry?.value) ? dry.value : fallback.balticDryIndex;
-  const balticDryDailyChangePct = Number.isFinite(dry?.dailyChangePct)
-    ? dry.dailyChangePct
-    : fallback.balticDryDailyChangePct;
+  const balticDryDailyChangePct = dry ? dry.dailyChangePct : fallback.balticDryDailyChangePct;
   const tankerFreightRegime = classifyFreightIndexRegime(balticDirtyTankerIndex, balticDirtyTankerDailyChangePct, 1800, 1200);
   const cleanTankerFreightRegime = classifyFreightIndexRegime(balticCleanTankerIndex, balticCleanTankerDailyChangePct, 1200, 850);
   const dryBulkFreightRegime = classifyFreightIndexRegime(balticDryIndex, balticDryDailyChangePct, 3000, 1800);

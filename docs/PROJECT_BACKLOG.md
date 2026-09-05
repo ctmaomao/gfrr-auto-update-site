@@ -47,6 +47,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-05 全模块完善（owner 授权逐项 commit + push）
+
+- 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。
+- **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
+- 后续依次：FIRMS 42设施35.48天候选人工晋升；NDX/IXIC人工刷新；运输本地6样本与云端提醒证据交接；BoA/MLF/ACLED数据维护；新闻影子支持率诊断；发布源快照同步。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
+- MCP辅助修复：对最新main使用full mode重索引，恢复scripts覆盖；忽略凭证/人工artifact目录，局部HTML/Markdown parse gaps仍需源码回读。
+
 ### P0 Items
 
 No active P0 item.
