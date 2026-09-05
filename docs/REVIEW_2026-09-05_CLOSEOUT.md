@@ -12,7 +12,7 @@
 - Daily按原快照绑定规则移除失效macroRiskEditorialLayer，页面回退确定性正文；没有手工补入或付费重生成AI层。
 - ACLED本地check:all、operator-safety、weekly/monthly status、publish、review:world-order均退出0；两次云端生成及其提交前check:all成功。新Daily快照的test:e2e为11/11、退出0。
 - Pages runs `33958930869`（World Order）与`33959057073`（Daily）成功，cache-busted GitHub Pages两份JSON与本地committed文件逐字节一致。此时自定义域名仍为旧快照，等待既有EdgeOne三小时发布通道；不为本次数据刷新绕过配额保护。
-- MCP：应用工具仍报Transport closed。复用现有项目注册的完整启动配置调用官方CLI成功，说明裸CLI的secure-coordination endpoint失败不能证明程序损坏。09:47 UTC full reindex成功：24799 nodes/81642 edges、0 skipped、5处partial parse；publisher结构查询成功。路径coverage无记录解析缺口但仍给出metadata_changed提示，保留源码回读，不把图谱视为完整性证明。未改配置/删除协调文件/终止其他进程；应用内连接仍需Settings → MCP servers → Restart。
+- MCP连接恢复已验证：应用内`list_projects`、`index_status`、`search_graph`与`check_index_coverage`均成功，不再仅CLI可用；查询命中`574fa753`新增的`createBofaFailureDiagnostic`。最新代码full索引完成于10:07 UTC，24726 nodes/81458 edges、0 skipped、5处partial parse。路径coverage仍给出metadata_changed提示，保留源码回读，不把图谱视为完整性证明。此前裸CLI的secure-coordination endpoint错误可通过复用现有项目完整启动配置避开；没有改配置、删除协调文件或终止其他进程，也未冒称执行过应用Restart。连接恢复与索引已关闭，不再要求owner重启。
 
 以下首轮记录中的“尚未执行Daily/尚未收到周表/MCP无法重索引”已由本节更新；未解除的BoA云端失败归因、StockQ/ARR来源、ACLED滞后地区/月表、新闻v2观察和运输商业授权继续保留。
 
@@ -82,6 +82,5 @@ FIRMS统计另有必要限制：29个设施至少一个p95发生变化，独立�
 | Web NGrams主源切换 | v2同口径30天/120可用样本及原质量门，随后独立人工cutover审阅；旧支持中位3.03%与0未过门 | 未降低阈值/改分母、未重算旧aggregate、未换主源；最新32候选仅2条明确方向，不能保证修复后就够格 |
 | ARR新鲜自动序列 | 新的同公司、同ARR/run-rate口径、可核实观察日期序列及来源审阅；固定SaaStr最后一条仍5月28日 | 未把季度收入、其他公司金额或抓取日期补作新里程碑；保留curated fallback |
 | 运输高置信与商业数据 | 原7类readiness阻塞、路线/市场确认及source-rights/重分发证据，需要独立评审 | 不改既有capped评分边界；不接未授权路线运费、正式现货/结算、raw card或私贷数据 |
-| MCP最终索引 | 07:45 UTC已完成full reindex（24,693 nodes/81,355 edges、scripts未排除，5处HTML/Markdown局部缺口）；之后连接报Transport closed，本机CLI报secure coordination endpoint失败，需要重连后再索引最后几项 | 未宣称08:47重索引成功；未删除协调文件/杀其他进程/绕过安全检查 |
 
 其余正常运维不等于待开发功能。本轮没有改变主评分公式、decision/execution/position、ODP主判词规则、AI审批边界或商业授权。原有untracked `.agents/` 与 `skills-lock.json` 始终未加入提交。
