@@ -1,32 +1,32 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-05T00:35:41.517Z",
+  "updatedAt": "2026-09-05T09:46:27.911Z",
   "sourceMode": "computed_with_external_sources",
-  "score": 68,
+  "score": 70,
   "state": "multi_theater_stress",
   "labelZh": "多战区压力期",
   "confidence": 1,
   "freshness": "fresh",
   "marketConfirmationInput": {
-    "source": "worker-generated-preview",
-    "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
-    "path": null,
-    "updatedAt": "2026-09-05T00:33:13.932Z",
-    "ageMinutes": 2,
+    "source": "local-realtime",
+    "sourceUrl": null,
+    "path": "realtime/market.json",
+    "updatedAt": "2026-05-22T08:34:40.650Z",
+    "ageMinutes": 152712,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 95.78,
-    "gold": 4431.1001,
-    "vix": 14.32,
-    "dxy": 118.7479,
-    "hyOas": 2.65,
-    "us10y": 4.77,
-    "real10y": 2.42,
-    "spx": 7718.6,
-    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
-    "brentPromotionApplied": true,
-    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
-    "fallbackReason": null
+    "brent": 116.73,
+    "gold": 4525,
+    "vix": 17.44,
+    "dxy": 119.2825,
+    "hyOas": 2.8,
+    "us10y": 4.57,
+    "real10y": 2.13,
+    "spx": 7445.72,
+    "brentSource": "fred:DCOILBRENTEU",
+    "brentPromotionApplied": false,
+    "brentPromotionReason": null,
+    "fallbackReason": "worker-stale"
   },
   "externalSources": {
     "gdelt": {
@@ -4872,7 +4872,7 @@
           "Myanmar",
           "Taiwan"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "100 units/month free tier",
         "queriesRun": [
           {
@@ -4885,15 +4885,15 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-09-05T00:35:39.128Z"
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-09-05T09:46:27.480Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-05T00:35:39.401Z",
+      "lastFetchedAt": "2026-09-05T09:46:27.621Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -4942,15 +4942,15 @@
     "acled": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-08-27T23:36:52.232Z",
+      "lastFetchedAt": "2026-09-05T09:42:31.442Z",
       "summary": {
-        "eventsLast4Weeks": 33291,
-        "eventsLast12Weeks": 102007,
-        "eventsDelta4Vs12": -0.02092,
-        "fatalitiesLast4Weeks": 12707,
-        "fatalitiesLast12Weeks": 39781,
-        "civilianTargetingShareLast4Weeks": 0.089694,
-        "latestWeek": "2026-08-14",
+        "eventsLast4Weeks": 33122,
+        "eventsLast12Weeks": 101554,
+        "eventsDelta4Vs12": -0.021545,
+        "fatalitiesLast4Weeks": 12675,
+        "fatalitiesLast12Weeks": 39644,
+        "civilianTargetingShareLast4Weeks": 0.089336,
+        "latestWeek": "2026-08-21",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
         "sourceFreshness": "aging",
@@ -4962,7 +4962,7 @@
         "monthlyAsOfDate": "2026-07-31",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "aging",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-08-14，近4周事件相对12周均值变化 -2.1%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.5%。"
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-08-21，近4周事件相对12周均值变化 -2.2%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.5%。"
       }
     }
   },
@@ -4983,7 +4983,7 @@
         {
           "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
           "source": "acled",
-          "summary": "ACLED 手动周度聚合更新至 2026-08-14，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -2%。",
+          "summary": "ACLED 手动周度聚合更新至 2026-08-21，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 -2%。",
           "value": 19,
           "direction": "neutral",
           "confidence": 0.9
@@ -5051,31 +5051,31 @@
       ]
     },
     "marketConfirmation": {
-      "score": 45,
+      "score": 52,
       "labelZh": "市场确认",
       "state": "partial_confirmed",
       "evidence": [
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4431.1，显示避险或实际利率压力定价。",
-          "value": 4431.1001,
+          "summary": "基于 local realtime fallback，黄金当前值 4525，显示避险或实际利率压力定价。",
+          "value": 4525,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 95.78，对地缘与供应风险有部分确认作用。",
-          "value": 95.78,
+          "summary": "基于 local realtime fallback，布伦特当前值 116.73，对地缘与供应风险有部分确认作用。",
+          "value": 116.73,
           "direction": "up",
-          "confidence": 0.55
+          "confidence": 0.75
         },
         {
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.7479/4431.1001",
+          "value": "119.2825/4525",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5083,17 +5083,9 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7718.6/4431.1001",
+          "value": "7445.72/4525",
           "direction": "mixed",
           "confidence": 0.45
-        },
-        {
-          "labelZh": "布伦特来源确认",
-          "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 95.78,
-          "direction": "up",
-          "confidence": 0.65
         }
       ]
     }
