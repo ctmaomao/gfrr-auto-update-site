@@ -49,9 +49,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-05 全模块完善（owner 授权逐项 commit + push）
 
-- 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。
+- 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。9项独立提交与最新验证/剩余输入见 [2026-09-05验收清单](REVIEW_2026-09-05_CLOSEOUT.md)。
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
-- 后续：新闻影子支持率诊断、ARR底层观察证据审阅及ACLED操作者材料；运输6样本云端交接与BoA/MLF解析已完成，生产公共源恢复仍待Daily刷新。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
+- 后续仅保留真实依赖：Daily生产刷新确认、ACLED新版操作者材料、StockQ/ARR新源证据、Web v2同口径观察与独立切换审阅、运输商业授权及MCP重连。已完成的运输交接、BoA/MLF/ARR解析、影子分类和发布修复不再列为待实施。
 - **EdgeOne源快照 / 2026-09-05**：排队后显式checkout最新main，记录并锁定实际检查/构建的SHA，release提交不再误用触发事件SHA。保留3小时调度、无变化不发布、32天400次配额保护和独立静态仓库，未改DNS/域名。此前FIRMS成熟基线及两份市场历史/指标已经在自定义域名逐字节对齐；低频通道不是每笔高频数据提交立即发布。
 - **Web NGrams影子质量 / 2026-09-05**：旧历史223有效/208可用/35.81天，独立支持中位3.03%、跨provider为0，不能晋升；最新32候选仅2条明确方向，支持率低不只是匹配缺陷。确认reference旧英文classifier与Web五语classifier不一致，修复为shadow-only统一分类并补日期/域名安全与脱敏诊断。v2计算口径独立重新积累原30天/120样本资格；旧历史完整保留、不混算、不改阈值/分母/主源/评分。没有真实逐篇近期artifact时，不猜测漏配原因占比，不承诺修复后门槛会通过。
 - **ARR解析安全 / 2026-09-05**：修复无公司约束的通用ARR金额误归因及不存在日期被接受两项缺陷；只接受Anthropic与ARR/annualized run-rate直接绑定的主张，已审标题优先，唯一325206短续句按结构锁定、不硬编码金额。固定4个SaaStr来源ID与45天底层观察门保持；未补未经核实的新里程碑、未修改curated/production灯色，底层最新5月28日仍须降级。恢复自动新鲜来源仍需同口径新观察证据，不能只刷新页面抓取时间。
@@ -62,8 +62,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - BoA验收：实时只读probe为八月报告0.05/0.063/0.043，12项解析测试与11项浏览器测试通过；生产`radar-data.json`尚未刷新，需既有Daily使用新parser后再确认八月值已发布，不能把本地抓取成功当作生产数据刷新。
 - **MLF查询与操作语义 / 2026-09-05**：确认primary搜索非空但全为逆回购时不会尝试备用MLF查询；修复为至多2次逻辑搜索，摘要先行、正文去重且全程上限6，正文优先明确MLF标题。逐操作绑定毛额/期限/利率，不能借其他工具或其他日期的字段；实际操作日期必须真实、非未来且45天内，新发布不能洗白旧操作，未披露利率为null。仍为EastMoney聚合公开新闻/display-only，不冒充PBOC原始公告，不改评分。 只读 live probe 已验证2026-08-25 / 5000亿元 / 12个月 / null利率；16项MLF负例和全量检查通过。生产radar快照仍须等待既有Daily刷新，不能把本地解析成功写成生产已恢复。
 - **Market Pricing 周线对齐 / 2026-09-05**：既有 Yahoo manual 路径先 dry-run 再提交 history，QQQ/NDX/IXIC 均更新至 2026-09-04（各522条10年周线）；离线重算每资产463条60周指标。strict freshness 为 PASS / 0 WARN，逐窗独立复算1389组均吻合，SPX未变。QQQ primary、NDX/IXIC auxiliary、display-only与自动化边界不变；正常滚动10年源窗口不承诺永久保留窗口外历史。
-- MCP辅助修复：对最新main使用full mode重索引，恢复scripts覆盖；忽略凭证/人工artifact目录，局部HTML/Markdown parse gaps仍需源码回读。
-- FIRMS 发布验证：`5d7f5493` 的 Pages run `33952848899` 成功，cache-busted GitHub Pages 热点 JSON 与提交快照 SHA-256 相同，成熟窗口35.48天；EdgeOne自定义域名当时仍为04:33旧快照/14.46天，待低频release同步，不把Pages成功等同于双通道完成。
+- MCP辅助修复：07:45 UTC已full重索引并恢复scripts覆盖，局部HTML/Markdown缺口仍需源码回读；随后连接Transport closed，08:47最终重索引未成功，CLI同报secure coordination endpoint失败。需重连后再索引最后几项，不把旧索引宣称最新。
+- FIRMS 发布验证：`5d7f5493` 的Pages run `33952848899`成功；后续EdgeOne已追平成熟窗口35.48天，cache-busted两通道热点JSON与提交快照SHA-256相同。08:45左右自定义域名六份核心JSON也已逐字节对齐，旧的14.46天发布滞后已关闭。
 - **FIRMS P68成熟观察基线晋升 / 2026-09-05**：按本次owner明确授权，经独立只读复算252个p95无差异后，使用既有`promote:oil-thermal-baseline-candidate -- --write-production-baseline`更新配置：193健康/240总样本、47隔离、42/42设施窗口35.48天，`established_observation_window`；相比旧生产29设施统计变化，policy及设施ID不变。41个健康快照全设施零检出仍受卫星过境/日窗口影响，193快照不是193次独立观测；16设施p95全零并不证明正常运营；高FRP背景不等于火灾/停产。配置与展示快照必须原子提交：既有生成器实抓126/126请求成功，42设施投影通过契约检查；不接ODP或评分，部署后继续核对live投影。
 
 ### P0 Items
