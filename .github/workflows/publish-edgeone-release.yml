@@ -36,7 +36,16 @@ jobs:
       - name: Checkout source repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
+          ref: main
           fetch-depth: 0
+
+      - name: Record checked source revision
+        id: source_revision
+        run: |
+          source_sha=$(git rev-parse HEAD)
+          [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "Trigger source: ${GITHUB_SHA}; checked latest-main source: ${source_sha}." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -72,8 +81,11 @@ jobs:
 
       - name: Publish changed artifact with quota guard
         env:
+          SOURCE_SHA: ${{ steps.source_revision.outputs.sha }}
           GIT_SSH_COMMAND: ssh -i ~/.ssh/gfrr_edgeone_release -o IdentitiesOnly=yes -o UserKnownHostsFile=~/.ssh/known_hosts
         run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           release_dir="$RUNNER_TEMP/edgeone-release"
           mkdir -p "$release_dir"
           git -C "$release_dir" init -b main
@@ -105,9 +117,9 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: publish source ${GITHUB_SHA::12}"
+          git commit -m "chore: publish source ${SOURCE_SHA::12}"
           git push origin main
-          echo "Published source ${GITHUB_SHA} to ${RELEASE_REPOSITORY}." >> "$GITHUB_STEP_SUMMARY"
+          echo "Published checked source ${SOURCE_SHA} to ${RELEASE_REPOSITORY}." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove release deploy key
         if: always()

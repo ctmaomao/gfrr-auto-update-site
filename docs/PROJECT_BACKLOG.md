@@ -51,7 +51,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 - 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
-- 后续依次：运输本地6样本与云端提醒证据交接；BoA/MLF/ACLED数据维护；新闻影子支持率诊断；发布源快照同步。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
+- 后续：新闻影子支持率诊断、ARR底层观察证据审阅及ACLED操作者材料；运输6样本云端交接与BoA/MLF解析已完成，生产公共源恢复仍待Daily刷新。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
+- **EdgeOne源快照 / 2026-09-05**：排队后显式checkout最新main，记录并锁定实际检查/构建的SHA，release提交不再误用触发事件SHA。保留3小时调度、无变化不发布、32天400次配额保护和独立静态仓库，未改DNS/域名。此前FIRMS成熟基线及两份市场历史/指标已经在自定义域名逐字节对齐；低频通道不是每笔高频数据提交立即发布。
 - **运输P30/P33证据交接 / 2026-09-05**：本地6份人工真实事件审阅（3扰动/3对照）原为ignored，云端checkout缺失；改为唯一固定路径的版本化白名单元数据/hash manifest，P33显式读取并重算，不提交原件/URL/自由文本。不再把空review缺字段误报为已批准评分/已连接确认，真正越界仍拒绝。人工贡献及命中/误报统计明确不是模型历史回测；评分审批false、route/market not_connected及既有capped runtime边界不变，仍需独立设计审阅。
 - 运输交接发布验证：`8ac9285d`，实际云run `33953468989`成功；下载的artifact为6/3/3、gatePassed=true、scoreIntegrationApproved=false、historicalBacktestPerformed=false，完成本地/clean-checkout一致性交接。
 - Market Pricing发布验证：`5eb2cb72`，Pages run `33953020935`成功，线上history/metrics两文件SHA-256均与9月4日提交快照一致。

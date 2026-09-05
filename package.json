@@ -172,7 +172,7 @@
     "check:macro-overview-evidence-fold": "node --check scripts/check-macro-overview-evidence-fold.mjs && node scripts/check-macro-overview-evidence-fold.mjs",
     "check:macro-coherence-display-only": "node scripts/check-macro-coherence-display-only.mjs",
     "check:node-runtime": "node --check scripts/check-node-runtime.mjs && node scripts/check-node-runtime.mjs",
-    "check:workflows": "node scripts/check-workflows.mjs",
+    "check:workflows": "node scripts/check-workflows.mjs && node --test tests/unit/edgeone-source-revision.test.mjs",
     "check:docs": "node scripts/check-doc-links.mjs",
     "check:external-ai-output": "node scripts/check-external-ai-output.mjs",
     "check:external-ai-production-contract": "node --check scripts/check-external-ai-production-contract.mjs && node scripts/check-external-ai-production-contract.mjs",

@@ -830,6 +830,7 @@ GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions�
 
 - 每 3 小时的第 55 分钟运行，理论上最多 8 次/天、31 天最多 248 次；前端 HTML / CSS / JS 改动可额外即时发布。
 - 每次先运行 `npm run check:all` 和 `npm run build:pages-artifact`，只同步 `_site` 白名单产物；产物无变化时不提交，因此不会触发 EdgeOne 构建。
+- 排队后 checkout 显式读取运行时最新 `main`，在安装/校验/构建前固定实际 source SHA；发布提交和 Summary 使用这个 SHA，而不是可能已旧的触发事件 SHA。校验后不再更新源 checkout，避免产物与已验证代码脱节；三小时正常批次延迟仍是有意保留的配额边界。
 - 专用仓库最近 32 天已有 400 次发布时 fail closed，保留至少 100 次额度缓冲；不要为了越过保护而改阈值或反复手动部署。
 - 源码仓库只保存 Actions secret `EDGEONE_RELEASE_DEPLOY_KEY`；对应公钥仅作为专用仓库的单仓库 write deploy key。workflow 的源码仓库权限必须保持 `contents: read`，不得改用 broad PAT、EdgeOne API token 或源码仓库 write token。
 - 首次迁移必须先让新 EdgeOne 项目的临时域名完整通过，再从旧项目解绑并把 `radar.gfrfinradar.uk` 绑定到新项目；不要先删除旧项目或旧域名。

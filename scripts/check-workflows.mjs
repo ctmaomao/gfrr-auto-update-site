@@ -127,6 +127,13 @@ const contracts = [
       'contents: read',
       'group: edgeone-release-publisher',
       'cancel-in-progress: false',
+      'ref: main',
+      'name: Record checked source revision',
+      'id: source_revision',
+      'source_sha=$(git rev-parse HEAD)',
+      'SOURCE_SHA: ${{ steps.source_revision.outputs.sha }}',
+      'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
+      'git commit -m "chore: publish source ${SOURCE_SHA::12}"',
       "if: ${{ github.ref == 'refs/heads/main' }}",
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
@@ -146,7 +153,9 @@ const contracts = [
       'contents: write',
       'EDGEONE_API_TOKEN',
       'edgeone makers deploy',
-      'secrets.GITHUB_TOKEN'
+      'secrets.GITHUB_TOKEN',
+      'chore: publish source ${GITHUB_SHA',
+      'Published source ${GITHUB_SHA}'
     ],
     exactlyOnce: [
       'EDGEONE_RELEASE_DEPLOY_KEY: ${{ secrets.EDGEONE_RELEASE_DEPLOY_KEY }}',
