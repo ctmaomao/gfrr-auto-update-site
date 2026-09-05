@@ -1,8 +1,8 @@
 {
   "schemaVersion": "v28.0M-market-pricing-history-1",
   "status": "has_history",
-  "updatedAt": "2026-08-30T09:56:25.911Z",
-  "generatedAt": "2026-08-30T09:56:25.911Z",
+  "updatedAt": "2026-09-05T07:32:57.117Z",
+  "generatedAt": "2026-09-05T07:32:57.117Z",
   "sourceMode": "manual_weekly_input_committed",
   "descriptionZh": "市场定价温度计历史数据。QQQ 继续作为 primary；M-91 已通过 Yahoo chart Daily/manual market-pricing path 接入 NDX / IXIC display-only auxiliary comparison。当前 status=has_history。",
   "assets": {
@@ -20,19 +20,12 @@
         "marketPricingDailyOnly": true,
         "workerRuntime": false,
         "previousVendor": "yahoo_chart",
-        "lastCommittedAt": "2026-08-30T09:56:25.911Z",
+        "lastCommittedAt": "2026-09-05T07:32:57.117Z",
         "committedRecordsCount": 522
       },
       "frequency": "weekly",
       "currency": "USD",
       "records": [
-        {
-          "date": "2016-08-29",
-          "isoWeek": "2016-W35",
-          "close": 117.12,
-          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
         {
           "date": "2016-09-05",
           "isoWeek": "2016-W36",
@@ -3674,9 +3667,16 @@
           "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-08-28",
+          "date": "2026-08-24",
           "isoWeek": "2026-W35",
           "close": 716.43,
+          "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-09-04",
+          "isoWeek": "2026-W36",
+          "close": 718.96,
           "sourceFile": "yahoo-chart-QQQ-10y-1wk.json",
           "sourceVendor": "yahoo_chart"
         }
@@ -3684,8 +3684,8 @@
       "coverage": {
         "weeklyRows": 522,
         "hasAtLeast60Weeks": true,
-        "oldestDate": "2016-08-29",
-        "latestDate": "2026-08-28"
+        "oldestDate": "2016-09-05",
+        "latestDate": "2026-09-04"
       },
       "dataGaps": [
         "MA60 / 标准差 / z-score 计算待 v28.0M-26 启用。",
@@ -3706,54 +3706,12 @@
         "sourceApproval": "owner_approved_m91",
         "marketPricingDailyOnly": true,
         "workerRuntime": false,
-        "lastCommittedAt": "2026-07-26T06:47:00.913Z",
+        "lastCommittedAt": "2026-09-05T07:32:55.478Z",
         "committedRecordsCount": 522
       },
       "frequency": "weekly",
       "currency": "USD",
       "records": [
-        {
-          "date": "2016-07-25",
-          "isoWeek": "2016-W30",
-          "close": 4730.23,
-          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-01",
-          "isoWeek": "2016-W31",
-          "close": 4791.21,
-          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-08",
-          "isoWeek": "2016-W32",
-          "close": 4807.0801,
-          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-15",
-          "isoWeek": "2016-W33",
-          "close": 4806.1401,
-          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-22",
-          "isoWeek": "2016-W34",
-          "close": 4783.6899,
-          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-29",
-          "isoWeek": "2016-W35",
-          "close": 4798.7402,
-          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
         {
           "date": "2016-09-05",
           "isoWeek": "2016-W36",
@@ -7360,9 +7318,51 @@
           "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-07-24",
+          "date": "2026-07-20",
           "isoWeek": "2026-W30",
-          "close": 28128.3418,
+          "close": 28128.3398,
+          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-07-27",
+          "isoWeek": "2026-W31",
+          "close": 28274.1992,
+          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-03",
+          "isoWeek": "2026-W32",
+          "close": 29722.3008,
+          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-10",
+          "isoWeek": "2026-W33",
+          "close": 30046.1406,
+          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-17",
+          "isoWeek": "2026-W34",
+          "close": 29308.8594,
+          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-24",
+          "isoWeek": "2026-W35",
+          "close": 29433.4297,
+          "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-09-04",
+          "isoWeek": "2026-W36",
+          "close": 29544.1543,
           "sourceFile": "yahoo-chart-%5ENDX-10y-1wk.json",
           "sourceVendor": "yahoo_chart"
         }
@@ -7370,8 +7370,8 @@
       "coverage": {
         "weeklyRows": 522,
         "hasAtLeast60Weeks": true,
-        "oldestDate": "2016-07-25",
-        "latestDate": "2026-07-24"
+        "oldestDate": "2016-09-05",
+        "latestDate": "2026-09-04"
       },
       "dataGaps": [
         "仅作为 Market Pricing auxiliary comparison 展示，不替代 QQQ primary。",
@@ -7392,54 +7392,12 @@
         "sourceApproval": "owner_approved_m91",
         "marketPricingDailyOnly": true,
         "workerRuntime": false,
-        "lastCommittedAt": "2026-07-26T06:47:00.913Z",
+        "lastCommittedAt": "2026-09-05T07:32:55.478Z",
         "committedRecordsCount": 522
       },
       "frequency": "weekly",
       "currency": "USD",
       "records": [
-        {
-          "date": "2016-07-25",
-          "isoWeek": "2016-W30",
-          "close": 5162.1299,
-          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-01",
-          "isoWeek": "2016-W31",
-          "close": 5221.1201,
-          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-08",
-          "isoWeek": "2016-W32",
-          "close": 5232.8901,
-          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-15",
-          "isoWeek": "2016-W33",
-          "close": 5238.3799,
-          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-22",
-          "isoWeek": "2016-W34",
-          "close": 5218.9199,
-          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
-        {
-          "date": "2016-08-29",
-          "isoWeek": "2016-W35",
-          "close": 5249.8999,
-          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
-          "sourceVendor": "yahoo_chart"
-        },
         {
           "date": "2016-09-05",
           "isoWeek": "2016-W36",
@@ -11046,9 +11004,51 @@
           "sourceVendor": "yahoo_chart"
         },
         {
-          "date": "2026-07-24",
+          "date": "2026-07-20",
           "isoWeek": "2026-W30",
-          "close": 24975.8242,
+          "close": 24975.8203,
+          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-07-27",
+          "isoWeek": "2026-W31",
+          "close": 25373.8496,
+          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-03",
+          "isoWeek": "2026-W32",
+          "close": 26690.6191,
+          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-10",
+          "isoWeek": "2026-W33",
+          "close": 26729.1602,
+          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-17",
+          "isoWeek": "2026-W34",
+          "close": 26180.4609,
+          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-08-24",
+          "isoWeek": "2026-W35",
+          "close": 26402.4199,
+          "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
+          "sourceVendor": "yahoo_chart"
+        },
+        {
+          "date": "2026-09-04",
+          "isoWeek": "2026-W36",
+          "close": 26506.9902,
           "sourceFile": "yahoo-chart-%5EIXIC-10y-1wk.json",
           "sourceVendor": "yahoo_chart"
         }
@@ -11056,8 +11056,8 @@
       "coverage": {
         "weeklyRows": 522,
         "hasAtLeast60Weeks": true,
-        "oldestDate": "2016-07-25",
-        "latestDate": "2026-07-24"
+        "oldestDate": "2016-09-05",
+        "latestDate": "2026-09-04"
       },
       "dataGaps": [
         "仅作为 Market Pricing auxiliary comparison 展示，不替代 QQQ primary。",

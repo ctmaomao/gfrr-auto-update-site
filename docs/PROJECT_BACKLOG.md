@@ -51,8 +51,10 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 - 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
-- 后续依次：FIRMS 42设施35.48天候选人工晋升；NDX/IXIC人工刷新；运输本地6样本与云端提醒证据交接；BoA/MLF/ACLED数据维护；新闻影子支持率诊断；发布源快照同步。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
+- 后续依次：运输本地6样本与云端提醒证据交接；BoA/MLF/ACLED数据维护；新闻影子支持率诊断；发布源快照同步。商业来源/重分发授权与缺少操作者材料的项目继续明确阻塞，不自动伪造审批。
+- **Market Pricing 周线对齐 / 2026-09-05**：既有 Yahoo manual 路径先 dry-run 再提交 history，QQQ/NDX/IXIC 均更新至 2026-09-04（各522条10年周线）；离线重算每资产463条60周指标。strict freshness 为 PASS / 0 WARN，逐窗独立复算1389组均吻合，SPX未变。QQQ primary、NDX/IXIC auxiliary、display-only与自动化边界不变；正常滚动10年源窗口不承诺永久保留窗口外历史。
 - MCP辅助修复：对最新main使用full mode重索引，恢复scripts覆盖；忽略凭证/人工artifact目录，局部HTML/Markdown parse gaps仍需源码回读。
+- FIRMS 发布验证：`5d7f5493` 的 Pages run `33952848899` 成功，cache-busted GitHub Pages 热点 JSON 与提交快照 SHA-256 相同，成熟窗口35.48天；EdgeOne自定义域名当时仍为04:33旧快照/14.46天，待低频release同步，不把Pages成功等同于双通道完成。
 - **FIRMS P68成熟观察基线晋升 / 2026-09-05**：按本次owner明确授权，经独立只读复算252个p95无差异后，使用既有`promote:oil-thermal-baseline-candidate -- --write-production-baseline`更新配置：193健康/240总样本、47隔离、42/42设施窗口35.48天，`established_observation_window`；相比旧生产29设施统计变化，policy及设施ID不变。41个健康快照全设施零检出仍受卫星过境/日窗口影响，193快照不是193次独立观测；16设施p95全零并不证明正常运营；高FRP背景不等于火灾/停产。配置与展示快照必须原子提交：既有生成器实抓126/126请求成功，42设施投影通过契约检查；不接ODP或评分，部署后继续核对live投影。
 
 ### P0 Items
