@@ -939,6 +939,17 @@ Tavily/Brave 独立/cross-provider support 作质量门禁。每日 readiness wo
 commit/push。门禁通过仍只表示可另开人工 reviewed cutover PR，不会自动改变
 source order，也不批准 current signal、event confirmation、frontend 或 scoring。
 
+2026-09-05 shadow 质量修复引入
+`gdelt-web-ngrams-cross-source-telemetry-shadow-v2`：两侧统一使用既有五语
+shadow classifier，不扩大词表、不改变生产 Oil News classifier。发表时间必须
+真实、绝对且不晚于 Web 文件观察时间；缺失、相对时间和非法日期不得用抓取
+时间补齐。相同域及父子域不算独立来源，支持域彼此也合并父子关系；没有
+public-suffix/所有权数据库，不把未知兄弟域宣称为已核实的不同所有者。
+生产 cache 仍只保存脱敏计数和计算版本，不保存逐篇文本/URL/domain/hash。
+只读 reviewer 保留旧历史 `metrics`，但 `qualityMetrics` 仅统计 v2 同口径
+样本，继续执行原30天/120样本及全部质量阈值；旧aggregate不能离线猜测重算，
+不能把修复前后观察混在一起宣称可晋升。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |

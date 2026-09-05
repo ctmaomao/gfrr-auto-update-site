@@ -1416,9 +1416,14 @@ npm run review:gdelt-web-ngrams-article-shadow-history -- --no-output
 
 - `insufficient_history`：尚无 aggregate shadow cache，或首个 post-merge
   refresh 尚未提交；等待正常 `Refresh Oil News Event Watch`。
-- `collecting_shadow_history`：已有真实样本，但 30 天/120 usable samples 或
+- `collecting_shadow_history`（旧v1审阅产物）：已有真实样本，但 30 天/120 usable samples 或
   availability/coverage/support 任一门槛未过；查看 artifact 的 `gates[]`，不得
   为消除 WAIT 而放宽 classifier、pair validator 或独立来源规则。
+- `legacy_samples_require_requalification`：已有旧计算口径样本，但尚无可用的
+  v2同口径质量历史；旧历史保留在 `metrics`，不能混入新 `qualityMetrics`。
+- `collecting_requalified_shadow_history`：已开始v2观察，但仍未通过原有全部
+  质量门；查看 `qualityMetrics` 和脱敏诊断，区分方向候选少、日期不可用、
+  时间不对齐与真实支持不足。不可更换支持率分母、推测发表日期或提前换主源。
 - `ready_for_manual_cutover_review`：只表示可以另开人工 reviewed cutover PR。
   不得在当前 PR、readiness workflow 或 production JSON 中直接改变 source
   order。`promotionEligible` 和 `automaticCutoverApproved` 必须继续为 false。

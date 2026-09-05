@@ -1,3 +1,8 @@
+import {
+  WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT,
+  WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT
+} from './gdelt-web-ngrams-cross-source-telemetry.mjs';
+
 export const WEB_NGRAMS_ARTICLE_SHADOW_CACHE_CONTRACT =
   'gdelt-web-ngrams-article-shadow-cache-v1';
 
@@ -43,6 +48,7 @@ export function buildWebNgramsArticleShadowCache({
     candidateAggregate: compactAggregate(candidateSet?.aggregate),
     classificationAggregate: compactAggregate(classification?.aggregate),
     crossSourceAggregate: compactAggregate(telemetry?.aggregate),
+    crossSourceTelemetryContractVersion: telemetry?.contractVersion || WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT,
     observationPolicy: {
       requiredObservationDays: 30,
       minimumUsableSamples: 120,
@@ -70,6 +76,67 @@ function finiteNonNegative(value) {
   return Number.isFinite(value) && value >= 0;
 }
 
+function exactKeys(value, keys, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+      || Object.keys(value).length !== keys.length || keys.some(key => !Object.hasOwn(value, key))) {
+    throw new Error(`Web NGrams v2 ${label} fields invalid`);
+  }
+}
+
+function count(value) { return Number.isSafeInteger(value) && value >= 0; }
+
+function assertDiagnostics(aggregate, candidateCount) {
+  exactKeys(aggregate, ['webCandidateCount', 'referenceArticleCount', 'excludedReferenceArticleCount',
+    'exactDiscoveryMatchCount', 'exactDiscoveryMatchRate', 'independentSupportCandidateCount',
+    'independentSupportRate', 'crossProviderSupportCandidateCount', 'crossProviderSupportRate',
+    'providerDiscoveryCounts', 'providerIndependentSupportCounts', 'diagnostics'], 'aggregate');
+  const n = aggregate.webCandidateCount;
+  if (!count(n) || n !== candidateCount || !count(aggregate.referenceArticleCount)
+      || !count(aggregate.excludedReferenceArticleCount)) throw new Error('Web NGrams v2 candidate/reference count invalid');
+  for (const [key, rateKey] of [['exactDiscoveryMatchCount', 'exactDiscoveryMatchRate'],
+    ['independentSupportCandidateCount', 'independentSupportRate'],
+    ['crossProviderSupportCandidateCount', 'crossProviderSupportRate']]) {
+    if (!count(aggregate[key]) || aggregate[key] > n
+        || aggregate[rateKey] !== (n ? Math.round(aggregate[key] / n * 10000) / 10000 : null)) {
+      throw new Error('Web NGrams v2 support counts/rates inconsistent');
+    }
+  }
+  if (aggregate.crossProviderSupportCandidateCount > aggregate.independentSupportCandidateCount) {
+    throw new Error('Web NGrams v2 cross-provider support exceeds independent support');
+  }
+  for (const key of ['providerDiscoveryCounts', 'providerIndependentSupportCounts']) {
+    exactKeys(aggregate[key], ['tavily', 'brave'], 'provider counts');
+    const limit = key === 'providerDiscoveryCounts' ? aggregate.exactDiscoveryMatchCount : aggregate.independentSupportCandidateCount;
+    if (Object.values(aggregate[key]).some(value => !count(value) || value > limit)) {
+      throw new Error('Web NGrams v2 provider count invalid');
+    }
+  }
+  const diagnostics = aggregate.diagnostics;
+  exactKeys(diagnostics, ['web', 'reference', 'comparison'], 'diagnostics');
+  for (const [key, total] of [['web', n], ['reference', aggregate.referenceArticleCount]]) {
+    const row = diagnostics[key];
+    exactKeys(row, ['totalCount', 'directionalCount', 'validDateCount', 'missingDateCount',
+      'invalidDateCount', 'futureDateCount'], 'date diagnostics');
+    if (Object.values(row).some(value => !count(value)) || row.totalCount !== total
+        || row.directionalCount > total || row.validDateCount + row.missingDateCount
+          + row.invalidDateCount + row.futureDateCount !== total) {
+      throw new Error('Web NGrams v2 date diagnostic counts inconsistent');
+    }
+  }
+  const comparisons = diagnostics.comparison;
+  exactKeys(comparisons, ['windowComparableWebCount', 'directionalWindowComparableWebCount',
+    'independentDomainSupportedWebCount'], 'comparison diagnostics');
+  if (Object.values(comparisons).some(value => !count(value))
+      || comparisons.windowComparableWebCount > diagnostics.web.validDateCount
+      || comparisons.directionalWindowComparableWebCount > comparisons.windowComparableWebCount
+      || comparisons.directionalWindowComparableWebCount > diagnostics.web.directionalCount
+      || comparisons.independentDomainSupportedWebCount > comparisons.directionalWindowComparableWebCount
+      || comparisons.independentDomainSupportedWebCount !== aggregate.independentSupportCandidateCount
+      || (diagnostics.reference.validDateCount === 0 && comparisons.windowComparableWebCount !== 0)) {
+    throw new Error('Web NGrams v2 comparison diagnostic counts inconsistent');
+  }
+}
+
 function parseNgramsTimestamp(value) {
   const match = typeof value === 'string'
     ? value.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/u)
@@ -91,6 +158,11 @@ function parseNgramsTimestamp(value) {
 export function assertWebNgramsArticleShadowCache(cache) {
   if (cache?.contractVersion !== WEB_NGRAMS_ARTICLE_SHADOW_CACHE_CONTRACT) {
     throw new Error('Web NGrams article shadow cache contract invalid');
+  }
+  const telemetryVersion = cache.crossSourceTelemetryContractVersion;
+  if (telemetryVersion !== undefined && telemetryVersion !== WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT
+      && telemetryVersion !== WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT) {
+    throw new Error('Web NGrams article shadow telemetry version invalid');
   }
   if (!STATUSES.has(cache.status)) {
     throw new Error(`Web NGrams article shadow cache status invalid: ${cache.status}`);
@@ -164,6 +236,12 @@ export function assertWebNgramsArticleShadowCache(cache) {
   }
   if (cache.status === 'source_unavailable' && cache.sourceFile.pairAvailable !== false) {
     throw new Error('Web NGrams unavailable shadow cache cannot claim a pair');
+  }
+  if (telemetryVersion === WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT) {
+    if (cache.crossSourceAggregate) assertDiagnostics(cache.crossSourceAggregate, candidateCount);
+    else if (['shadow_observation_ready', 'shadow_partial_no_reference', 'no_candidates'].includes(cache.status)) {
+      throw new Error('Web NGrams v2 telemetry aggregate missing');
+    }
   }
   const serialized = JSON.stringify(cache);
   for (const forbidden of [

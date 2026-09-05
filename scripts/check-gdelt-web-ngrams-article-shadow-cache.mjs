@@ -8,6 +8,7 @@ import {
   assertWebNgramsArticleShadowCache,
   WEB_NGRAMS_ARTICLE_SHADOW_CACHE_CONTRACT
 } from './oil-directional/gdelt-web-ngrams-article-shadow-cache.mjs';
+import { WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT } from './oil-directional/gdelt-web-ngrams-cross-source-telemetry.mjs';
 
 const nowMs = Date.parse('2026-07-31T07:20:00.000Z');
 const fetchedPair = {
@@ -86,6 +87,8 @@ assert.equal(live.productionCache.candidateAggregate.candidateCount, 2);
 assert.equal(live.productionCache.classificationAggregate.directionalArticleCount, 1);
 assert.equal(live.productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 1);
 assertWebNgramsArticleShadowCache(live.productionCache);
+assert.equal(live.productionCache.crossSourceTelemetryContractVersion, WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT);
+assert.equal(live.productionCache.crossSourceAggregate.diagnostics.reference.validDateCount, 2);
 
 const serializedCache = JSON.stringify(live.productionCache);
 for (const forbidden of [
@@ -140,6 +143,7 @@ const dryRun = await buildGdeltWebNgramsArticleShadow({
 assert.equal(dryRunFetchCalled, false);
 assert.equal(dryRun.productionCache.status, 'dry_run');
 assertWebNgramsArticleShadowCache(dryRun.productionCache);
+assert.equal(dryRun.productionCache.crossSourceTelemetryContractVersion, WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT);
 
 const malformed = await buildGdeltWebNgramsArticleShadow({
   allowNetwork: true,
@@ -152,5 +156,29 @@ const malformed = await buildGdeltWebNgramsArticleShadow({
 });
 assert.equal(malformed.productionCache.status, 'no_candidates');
 assertWebNgramsArticleShadowCache(malformed.productionCache);
+
+const legacy = structuredClone(live.productionCache);
+delete legacy.crossSourceTelemetryContractVersion;
+delete legacy.crossSourceAggregate.diagnostics;
+assertWebNgramsArticleShadowCache(legacy);
+assertWebNgramsArticleShadowCache({ ...legacy,
+  crossSourceTelemetryContractVersion: 'gdelt-web-ngrams-cross-source-telemetry-shadow-v1' });
+for (const mutate of [
+  cache => { cache.crossSourceTelemetryContractVersion = 'unknown'; },
+  cache => { delete cache.crossSourceAggregate.diagnostics; },
+  cache => { cache.crossSourceAggregate.diagnostics.reference.validDateCount = 3; },
+  cache => { cache.crossSourceAggregate.diagnostics.web.invalidDateCount = null; },
+  cache => { cache.crossSourceAggregate.diagnostics.web.totalCount = Infinity; },
+  cache => { cache.crossSourceAggregate.diagnostics.web.domain = 'private.example'; },
+  cache => { cache.crossSourceAggregate.diagnostics.comparison.independentDomainSupportedWebCount = 2; },
+  cache => { cache.crossSourceAggregate.independentSupportRate = 0.9; },
+  cache => { cache.crossSourceAggregate.webCandidateCount = 20; },
+  cache => { cache.crossSourceAggregate.providerIndependentSupportCounts.extra = 1; },
+  cache => { cache.crossSourceAggregate = null; }
+]) {
+  const changed = structuredClone(live.productionCache);
+  mutate(changed);
+  assert.throws(() => assertWebNgramsArticleShadowCache(changed));
+}
 
 console.log('PASS check-gdelt-web-ngrams-article-shadow-cache');

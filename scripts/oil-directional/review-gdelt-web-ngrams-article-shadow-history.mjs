@@ -7,9 +7,10 @@ import { fileURLToPath } from 'node:url';
 import {
   assertWebNgramsArticleShadowCache
 } from './gdelt-web-ngrams-article-shadow-cache.mjs';
+import { WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT } from './gdelt-web-ngrams-cross-source-telemetry.mjs';
 
 export const WEB_NGRAMS_SHADOW_HISTORY_REVIEW_CONTRACT =
-  'gdelt-web-ngrams-article-shadow-history-review-v1';
+  'gdelt-web-ngrams-article-shadow-history-review-v2';
 export const DEFAULT_POLICY_PATH = 'config/oil-news-discovery-policy.json';
 const DEFAULT_OUTPUT =
   'manual-artifacts/oil-news/gdelt-web-ngrams-article-shadow-history-review-latest.json';
@@ -145,34 +146,43 @@ export function evaluateWebNgramsShadowHistory(samples, policy) {
   ])).values()].sort((left, right) => (
     Date.parse(left.cache.generatedAt) - Date.parse(right.cache.generatedAt)
   ));
-  const usable = deduped.filter((sample) => sample.cache.status === 'shadow_observation_ready');
-  const firstAt = usable[0]?.cache.generatedAt || null;
-  const lastAt = usable.at(-1)?.cache.generatedAt || null;
-  const observationDays = firstAt && lastAt
-    ? Math.max(0, (Date.parse(lastAt) - Date.parse(firstAt)) / 86400000)
-    : 0;
-  const pairAvailableCount = deduped.filter((sample) => sample.cache.sourceFile.pairAvailable).length;
-  const metrics = {
-    totalSampleCount: (Array.isArray(samples) ? samples.length : 0),
-    validSampleCount: deduped.length,
-    invalidSampleCount,
-    usableSampleCount: usable.length,
-    observationDays: Math.round(observationDays * 100) / 100,
-    pairAvailabilityRate: roundRate(pairAvailableCount / Math.max(1, deduped.length)),
-    usableSampleRate: roundRate(usable.length / Math.max(1, deduped.length)),
-    medianCandidateCount: median(usable.map((sample) => (
-      sample.cache.candidateAggregate?.candidateCount
-    ))),
-    medianSupportedLanguageCoverageRate: median(usable.map((sample) => (
-      sample.cache.classificationAggregate?.supportedLanguageCoverageRate
-    ))),
-    medianIndependentSupportRate: median(usable.map((sample) => (
-      sample.cache.crossSourceAggregate?.independentSupportRate
-    ))),
-    medianCrossProviderSupportRate: median(usable.map((sample) => (
-      sample.cache.crossSourceAggregate?.crossProviderSupportRate
-    )))
+  const summarize = (cohort, totalSampleCount = cohort.length) => {
+    const usable = cohort.filter((sample) => sample.cache.status === 'shadow_observation_ready');
+    const firstAt = usable[0]?.cache.generatedAt || null;
+    const lastAt = usable.at(-1)?.cache.generatedAt || null;
+    const observationDays = firstAt && lastAt
+      ? Math.max(0, (Date.parse(lastAt) - Date.parse(firstAt)) / 86400000)
+      : 0;
+    const pairAvailableCount = cohort.filter((sample) => sample.cache.sourceFile.pairAvailable).length;
+    return {
+      totalSampleCount,
+      validSampleCount: cohort.length,
+      invalidSampleCount,
+      usableSampleCount: usable.length,
+      observationDays: Math.round(observationDays * 100) / 100,
+      pairAvailabilityRate: roundRate(pairAvailableCount / Math.max(1, cohort.length)),
+      usableSampleRate: roundRate(usable.length / Math.max(1, cohort.length)),
+      medianCandidateCount: median(usable.map((sample) => (
+        sample.cache.candidateAggregate?.candidateCount
+      ))),
+      medianSupportedLanguageCoverageRate: median(usable.map((sample) => (
+        sample.cache.classificationAggregate?.supportedLanguageCoverageRate
+      ))),
+      medianIndependentSupportRate: median(usable.map((sample) => (
+        sample.cache.crossSourceAggregate?.independentSupportRate
+      ))),
+      medianCrossProviderSupportRate: median(usable.map((sample) => (
+        sample.cache.crossSourceAggregate?.crossProviderSupportRate
+      )))
+    };
   };
+  const allHistoryMetrics = summarize(deduped, Array.isArray(samples) ? samples.length : 0);
+  const requalified = deduped.filter(sample => (
+    sample.cache.crossSourceTelemetryContractVersion === WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT
+  ));
+  // Every quality gate below uses the new calculation cohort; legacy data is
+  // still reported independently, never silently relabelled or recalculated.
+  const metrics = summarize(requalified);
   const required = policy.promotionPolicy;
   const gates = [
     gate('invalid_samples', metrics.invalidSampleCount, 0,
@@ -208,10 +218,15 @@ export function evaluateWebNgramsShadowHistory(samples, policy) {
     generatedAt: new Date().toISOString(),
     status: qualityGatePassed
       ? 'ready_for_manual_cutover_review'
-      : deduped.length === 0 ? 'insufficient_history' : 'collecting_shadow_history',
+      : deduped.length === 0 ? 'insufficient_history'
+        : requalified.length === 0 ? 'legacy_samples_require_requalification' : 'collecting_requalified_shadow_history',
     activeMode: policy.activeMode,
     targetModeAfterApproval: policy.targetModeAfterApproval,
-    metrics,
+    metrics: allHistoryMetrics,
+    qualityMetrics: metrics,
+    qualityTelemetryContractVersion: WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT,
+    legacySampleCount: deduped.length - requalified.length,
+    legacyAggregatesRecomputed: false,
     gates,
     qualityGatePassed,
     readyForManualCutoverReview: qualityGatePassed,
@@ -219,7 +234,7 @@ export function evaluateWebNgramsShadowHistory(samples, policy) {
     automaticCutoverApproved: false,
     requiredNextStep: qualityGatePassed
       ? 'separate reviewed manual cutover PR'
-      : 'continue automated shadow observation',
+      : 'collect v2 shadow samples under unchanged 30-day/120-sample policy; legacy observations remain historical evidence only',
     productionImpact: {
       writesProductionData: false,
       changesCurrentSignal: false,
@@ -244,8 +259,12 @@ function writeGitHubSummary(review) {
     '## GDELT Web NGrams article shadow readiness',
     '',
     `- Status: \`${review.status}\``,
-    `- Usable samples: **${review.metrics.usableSampleCount}**`,
-    `- Observation days: **${review.metrics.observationDays}**`,
+    `- All-history usable samples: **${review.metrics.usableSampleCount}**`,
+    `- All-history observation days: **${review.metrics.observationDays}**`,
+    `- Legacy samples (not requalified or recomputed): **${review.legacySampleCount}**`,
+    `- V2 quality usable samples: **${review.qualityMetrics.usableSampleCount}**`,
+    `- V2 quality observation days: **${review.qualityMetrics.observationDays}**`,
+    '- Gates below use only v2 quality observations; thresholds and source mode are unchanged.',
     `- Quality gate passed: **${review.qualityGatePassed}**`,
     '- Promotion eligible: **false** (manual reviewed cutover PR required)',
     '',
@@ -273,6 +292,9 @@ function main() {
     console.log(`Web NGrams article shadow history review: ${review.status}`);
     console.log(`usableSamples: ${review.metrics.usableSampleCount}`);
     console.log(`observationDays: ${review.metrics.observationDays}`);
+    console.log(`legacySamples: ${review.legacySampleCount}`);
+    console.log(`v2QualityUsableSamples: ${review.qualityMetrics.usableSampleCount}`);
+    console.log(`v2QualityObservationDays: ${review.qualityMetrics.observationDays}`);
     console.log(`qualityGatePassed: ${review.qualityGatePassed}`);
     console.log('promotionEligible: false');
   }

@@ -1337,6 +1337,14 @@ header 或 secret。即使 `independentSourceSupported=true`，也必须保持
 library/check-only；下一步才能把 sanitized telemetry 接入 shadow workflow
 并开始真实观察窗。
 
+2026-09-05 当前计算版本为
+`gdelt-web-ngrams-cross-source-telemetry-shadow-v2`。reference 与 Web 两侧使用
+相同既有五语 shadow 分类器；不扩词表、不改变 production Oil News 主分类。
+绝对发表日期必须通过真实日历校验且不晚于 Web 文件时间，缺失/非法/未来
+分别计数，不能从相对时间或抓取时间推测。独立域排除同域及父子域，支持域
+之间也按父子关系合并；这不是完整所有权或 public-suffix 认证。方向明确数、
+日期可用数与时间窗可比较数只作诊断，原全候选支持率分母和36小时窗不变。
+
 ### GDELT Web NGrams automated article shadow cache (P69E)
 
 `build:oil-news-event-watch` 现在复用同一轮 Tavily/Brave transient provider
@@ -1374,6 +1382,13 @@ Tavily/Brave independent/cross-provider support。质量门槛固定为至少 30
 120 个可用样本、95% pair availability、80% usable rate、中位数候选数 10、
 多语言覆盖率 70%、independent support 10%、cross-provider support 5%，且
 invalid sample 必须为 0。
+
+cache 容器保留 v1 兼容格式，以 `crossSourceTelemetryContractVersion` 区分
+计算口径。无版本/旧v1样本仍可读且保留在全历史 `metrics`，不能当成v2。
+`qualityMetrics` 与质量门仅使用v2 cohort（包括该口径失败轮次的可用率），
+仍须满足原30天、120可用样本及全部阈值。全部legacy时状态为
+`legacy_samples_require_requalification`，新口径不足为
+`collecting_requalified_shadow_history`；不得重写旧aggregate或假称旧样本丢失。
 
 即使全部门槛通过，review 也只能输出
 `ready_for_manual_cutover_review`；`promotionEligible=false` 与
