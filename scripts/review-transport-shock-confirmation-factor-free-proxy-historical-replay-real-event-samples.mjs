@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { DEFAULT_MANIFEST_PATH, readEvidenceManifest } from './lib/free-proxy-evidence-manifest.mjs';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
 import process from 'node:process';
@@ -39,6 +40,7 @@ function usage() {
 Options:
   --input <path>                         P-score-29 intake artifact or sanitized sample review. May be repeated.
   --input-dir <path>                     Directory of P-score-29 archives. Default: ${DEFAULT_INPUT_DIR}
+  --manifest <path>                      Reviewed compact metadata only: ${DEFAULT_MANIFEST_PATH}. Exclusive of input options.
   --min-samples <n>                      Minimum usable real-event samples. Default: ${DEFAULT_MIN_SAMPLES}
   --min-known-disruption-samples <n>     Minimum known-disruption samples. Default: ${DEFAULT_MIN_KNOWN_DISRUPTION_SAMPLES}
   --min-zero-control-samples <n>         Minimum zero-control samples. Default: ${DEFAULT_MIN_ZERO_CONTROL_SAMPLES}
@@ -51,6 +53,7 @@ Options:
 
 Boundary:
   Reads only manual-artifacts/transport-shock-confirmation-factor/ or docs/fixtures/transport-shock-confirmation-factor/.
+  Explicit manifest mode reads only the single reviewed evidence manifest above; never raw archives in that mode.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
 }
@@ -67,6 +70,7 @@ function parseArgs(argv) {
   const options = {
     inputs: [],
     inputDirs: [],
+    manifest: null,
     minSamples: DEFAULT_MIN_SAMPLES,
     minKnownDisruptionSamples: DEFAULT_MIN_KNOWN_DISRUPTION_SAMPLES,
     minZeroControlSamples: DEFAULT_MIN_ZERO_CONTROL_SAMPLES,
@@ -106,13 +110,20 @@ function parseArgs(argv) {
     };
     if (arg === '--input') options.inputs.push(nextValue());
     else if (arg === '--input-dir') options.inputDirs.push(nextValue());
+    else if (arg === '--manifest') {
+      if (options.manifest) throw new Error('--manifest may only be supplied once.');
+      options.manifest = nextValue();
+    }
     else if (arg === '--min-samples') options.minSamples = Number(nextValue());
     else if (arg === '--min-known-disruption-samples') options.minKnownDisruptionSamples = Number(nextValue());
     else if (arg === '--min-zero-control-samples') options.minZeroControlSamples = Number(nextValue());
     else if (arg === '--output') options.output = nextValue();
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (options.inputs.length === 0 && options.inputDirs.length === 0) options.inputDirs.push(DEFAULT_INPUT_DIR);
+  if (options.manifest && (options.inputs.length || options.inputDirs.length || options.allowEmpty)) {
+    throw new Error('--manifest cannot be combined with --input, --input-dir or --allow-empty.');
+  }
+  if (!options.manifest && options.inputs.length === 0 && options.inputDirs.length === 0) options.inputDirs.push(DEFAULT_INPUT_DIR);
   for (const [name, value] of [
     ['--min-samples', options.minSamples],
     ['--min-known-disruption-samples', options.minKnownDisruptionSamples],
@@ -337,31 +348,13 @@ function buildReview(inputs, options) {
 
 function buildEmptyReview(options) {
   return {
-    schemaVersion: OUTPUT_SCHEMA,
-    contractVersion: CONTRACT_VERSION,
+    ...buildReview([], options),
     status: options.allowEmpty ? 'empty' : 'real_event_sample_set_review_blocked_keep_no_score_write',
     recommendation: 'provide_real_event_sample_intake_archives_under_manual_artifacts',
-    generatedAt: new Date().toISOString(),
-    minSamples: options.minSamples,
-    minKnownDisruptionSamples: options.minKnownDisruptionSamples,
-    minZeroControlSamples: options.minZeroControlSamples,
-    inputCount: 0,
-    sampleCount: 0,
-    usableSampleCount: 0,
     blockerCount: options.allowEmpty ? 0 : 1,
     warningCount: 0,
-    promotionEligible: false,
-    scoreReadinessApproved: false,
-    scoreWriteApproved: false,
-    productionWriteApproved: false,
-    eligibleForMainScore: false,
-    productionHistoricalReplayPerformed: false,
-    historicalBacktestPerformed: false,
     blockers: options.allowEmpty ? [] : [{ sampleId: null, reason: 'real_event_sample_archives_missing' }],
-    warnings: [],
-    productionImpact: falseImpactMap(),
-    boundaries: boundaries(),
-    boundary: BOUNDARY
+    warnings: []
   };
 }
 
@@ -377,15 +370,22 @@ function printSummary(review) {
 function main() {
   try {
     const options = parseArgs(process.argv.slice(2));
-    const inputFiles = expandInputFiles(options);
-    const review = inputFiles.length > 0
-      ? buildReview(inputFiles.map(readInput), options)
+    const inputs = options.manifest
+      ? readEvidenceManifest(options.manifest)
+      : expandInputFiles(options).map(readInput);
+    const review = inputs.length > 0
+      ? buildReview(inputs, options)
       : buildEmptyReview(options);
+    if (options.manifest) {
+      review.evidenceInputMode = 'reviewed_manifest_metadata_only';
+      review.contributionBasis = 'manual_review_not_model_backtest';
+      review.limitationZh = '仅聚合人工审阅的脱敏元数据；哈希用于原件追溯，不代表云端已重新验证原件；候选贡献为人工标注，不是模型历史回测结果，不批准任何生产写入或评分。';
+    }
     if (options.writeOutput) writeJson(options.output, review);
     if (options.printJson) console.log(JSON.stringify(review, null, 2));
     else printSummary(review);
     if (options.strict && review.status === 'real_event_sample_set_review_blocked_keep_no_score_write') process.exitCode = 1;
-    if (!options.allowEmpty && inputFiles.length === 0) process.exitCode = 1;
+    if (!options.allowEmpty && inputs.length === 0) process.exitCode = 1;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

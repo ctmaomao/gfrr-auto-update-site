@@ -1,0 +1,242 @@
+{
+  "schemaVersion": "transport-shock-free-proxy-reviewed-evidence-manifest-v1",
+  "reviewedAt": "2026-09-05T07:42:45.647Z",
+  "contributionBasis": "manual_review_not_model_backtest",
+  "boundaries": {
+    "promotionEligible": false,
+    "scoreReadinessApproved": false,
+    "scoreIntegrationApproved": false,
+    "scoreWriteApproved": false,
+    "productionWriteApproved": false,
+    "productionDisplayApproved": false,
+    "frontendDisplayApproved": false,
+    "mainScoreApproved": false,
+    "eligibleForMainScore": false,
+    "productionHistoricalReplayPerformed": false,
+    "historicalBacktestPerformed": false,
+    "routeFreightConfirmation": "not_connected",
+    "marketConfirmation": "not_connected",
+    "noNetworkCall": true,
+    "noEnvironmentRead": true,
+    "noProductionDataRead": true,
+    "noProductionWrite": true,
+    "noScoreWrite": true,
+    "noProductionReplayExecution": true,
+    "rawCitationStored": false
+  },
+  "samples": [
+    {
+      "sampleId": "manual-real-event-baltimore-port-local-noise-2024-03",
+      "familyKey": "single_chokepoint_noise",
+      "generatedAt": "2026-06-30T10:21:22.316Z",
+      "sampleWindow": {
+        "startDate": "2024-03-26",
+        "endDate": "2024-04-02"
+      },
+      "observedCandidateContributionPct": 0,
+      "sourceReviewSha256": "aa0386024b82a7632257065a96996c772d81829973d67a65198028268c09bc5e",
+      "compactEvidence": [
+        {
+          "sourceFamily": "official_energy_context",
+          "sourceStatus": "manual_reference",
+          "direction": "zero_contribution_control",
+          "confirmationType": "local_physical_context",
+          "sourceCitationHash": "9a47785ff78e4d7dc93ccb60c7c40a2d5fa1f56a24d405d313440bae4988c8cf",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "public_news_event_context",
+          "sourceStatus": "manual_reference",
+          "direction": "zero_contribution_control",
+          "confirmationType": "news_claim_proxy",
+          "sourceCitationHash": "cb32df7f41b8802887c8632bd5ff708469e7fd71764561c8b0f6b227aea79d18",
+          "sourceDomainHint": "apnews.com",
+          "rawCitationStored": false
+        }
+      ]
+    },
+    {
+      "sampleId": "manual-real-event-msc-aries-headline-control-2024-04",
+      "familyKey": "headline_only_false_positive",
+      "generatedAt": "2026-06-30T10:21:21.134Z",
+      "sampleWindow": {
+        "startDate": "2024-04-13",
+        "endDate": "2024-04-20"
+      },
+      "observedCandidateContributionPct": 0,
+      "sourceReviewSha256": "59b2057c777d17a6fbc70defefd4ae0ab14c849c47ee4179912cb7f64a5eda2b",
+      "compactEvidence": [
+        {
+          "sourceFamily": "public_news_event_context",
+          "sourceStatus": "manual_reference",
+          "direction": "zero_contribution_control",
+          "confirmationType": "news_claim_proxy",
+          "sourceCitationHash": "1e9bd88b956dd9034b5f4a58e2ac04ccc190232971fb0d1bb4ffece82c530ba0",
+          "sourceDomainHint": "seatrade-maritime.com",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "shipping_association_context",
+          "sourceStatus": "manual_reference",
+          "direction": "zero_contribution_control",
+          "confirmationType": "news_claim_proxy",
+          "sourceCitationHash": "252813313cc5cfd5a0369328d5f717496c7ab578674ea770fb61c467919e6800",
+          "sourceDomainHint": "ics-shipping.org",
+          "rawCitationStored": false
+        }
+      ]
+    },
+    {
+      "sampleId": "manual-real-event-panama-canal-vlgc-drought-2023-10",
+      "familyKey": "known_disruption_tightening",
+      "generatedAt": "2026-06-30T10:31:21.083Z",
+      "sampleWindow": {
+        "startDate": "2023-09-29",
+        "endDate": "2023-10-31"
+      },
+      "observedCandidateContributionPct": 2,
+      "sourceReviewSha256": "8f9a85a724624caab8d33b557c95176a30055ab0e83dce6865d7f55fe27c0d7c",
+      "compactEvidence": [
+        {
+          "sourceFamily": "official_energy_context",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "physical_proxy",
+          "sourceCitationHash": "40306f06f499e93b7c0d3fe32f84d9fdd2c682158462ee50510002810601a159",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "public_market_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "market_proxy",
+          "sourceCitationHash": "40306f06f499e93b7c0d3fe32f84d9fdd2c682158462ee50510002810601a159",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "official_physical_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "physical_proxy",
+          "sourceCitationHash": "75c18c2f012c89e9192e65b59ab9c98ca8e62b4e2206ee1b4117cfe5cadf5698",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        }
+      ]
+    },
+    {
+      "sampleId": "manual-real-event-red-sea-stale-physical-proxy-control-2024-06",
+      "familyKey": "stale_physical_proxy",
+      "generatedAt": "2026-06-30T10:21:22.694Z",
+      "sampleWindow": {
+        "startDate": "2024-05-01",
+        "endDate": "2024-05-08"
+      },
+      "observedCandidateContributionPct": 0,
+      "sourceReviewSha256": "dcc56f808d37b88d03a25aca35943fe79dc9d57aa45695aacbffe0083d443d51",
+      "compactEvidence": [
+        {
+          "sourceFamily": "official_physical_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "zero_contribution_control",
+          "confirmationType": "stale_physical_proxy",
+          "sourceCitationHash": "6e1a9dd41cc8d2336bfbdd968605c9b495edadba7101d9952773dd25a521ac20",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "portwatch_chokepoint_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "zero_contribution_control",
+          "confirmationType": "stale_physical_proxy",
+          "sourceCitationHash": "52592985bc72fbeda8fc0c47bd8150171f39b75564981bde5c894df0d6137a6d",
+          "sourceDomainHint": "portwatch.imf.org",
+          "rawCitationStored": false
+        }
+      ]
+    },
+    {
+      "sampleId": "manual-real-event-red-sea-tanker-reroute-2024-01",
+      "familyKey": "known_disruption_tightening",
+      "generatedAt": "2026-06-30T10:21:21.541Z",
+      "sampleWindow": {
+        "startDate": "2024-01-12",
+        "endDate": "2024-02-01"
+      },
+      "observedCandidateContributionPct": 2,
+      "sourceReviewSha256": "239d06bf7673662edbcc92edb236f09bf8b72d9d0d0fc327dd75cfd2d812612e",
+      "compactEvidence": [
+        {
+          "sourceFamily": "official_energy_context",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "physical_proxy",
+          "sourceCitationHash": "4f73e86ac4a1a57f3ea90879bc29721dad615896788685629b300fa33802887a",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "energy_department_pdf_mirror",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "market_proxy",
+          "sourceCitationHash": "94f924c94b0b890f43cb9511585c176af68d7f3ba82e2d832797452d2baba68f",
+          "sourceDomainHint": "energy.gov",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "official_chokepoint_context",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "route_context",
+          "sourceCitationHash": "5a0a994e2ae4656d4eab814334dc3797eda330fc4e171ac6022b908147424be6",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        }
+      ]
+    },
+    {
+      "sampleId": "manual-real-event-suez-ever-given-blockage-2021-03",
+      "familyKey": "known_disruption_tightening",
+      "generatedAt": "2026-06-30T10:21:21.947Z",
+      "sampleWindow": {
+        "startDate": "2021-03-23",
+        "endDate": "2021-03-29"
+      },
+      "observedCandidateContributionPct": 2,
+      "sourceReviewSha256": "024e60a8cc4447e7e3b9f380486d614585584b6d818cced774fb682b9894226a",
+      "compactEvidence": [
+        {
+          "sourceFamily": "public_news_event_context",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "physical_disruption_claim",
+          "sourceCitationHash": "eb0ad9304cc424aacfea9a77f273ddf63a6947ff5582a2716ec64e5f081ecfbe",
+          "sourceDomainHint": "theguardian.com",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "public_market_proxy",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "market_proxy",
+          "sourceCitationHash": "b37e5f10b84216d3c5e6d5bfa426bdde5eafc54c53e790be0394f0e0d09d2d70",
+          "sourceDomainHint": "aljazeera.com",
+          "rawCitationStored": false
+        },
+        {
+          "sourceFamily": "official_chokepoint_context",
+          "sourceStatus": "manual_reference",
+          "direction": "tightening",
+          "confirmationType": "route_context",
+          "sourceCitationHash": "5a0a994e2ae4656d4eab814334dc3797eda330fc4e171ac6022b908147424be6",
+          "sourceDomainHint": "eia.gov",
+          "rawCitationStored": false
+        }
+      ]
+    }
+  ]
+}

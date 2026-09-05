@@ -235,6 +235,9 @@ function createMonitorResult(options) {
     generatedAt: new Date().toISOString(),
     status,
     reminderOnly: true,
+    contributionBasis: 'manual_review_not_model_backtest',
+    historicalBacktestPerformed: false,
+    limitationZh: '候选贡献与命中/误报统计仅来自人工样本标注，不是生产模型历史回测；满足样本目标不批准评分或生产写入。',
     dryRun: options.dryRun,
     inputPath: safeRelativePath(options.input),
     productionDataWriteApproved: false,
@@ -294,6 +297,7 @@ function printSummary(result) {
   console.log(`Transport Shock free-proxy score-readiness gate monitor: ${result.status}`);
   console.log(`gateStatus: ${result.gate.status}`);
   console.log(`gatePassed: ${result.gate.gatePassed}`);
+  console.log(`contributionBasis: ${result.contributionBasis}; historicalBacktestPerformed=false`);
   console.log(`realEventSamplesRemaining: ${result.targetGaps.realEventSamples.remaining}`);
   console.log(`knownDisruptionSamplesRemaining: ${result.targetGaps.knownDisruptionSamples.remaining}`);
   console.log(`zeroControlSamplesRemaining: ${result.targetGaps.zeroControlSamples.remaining}`);

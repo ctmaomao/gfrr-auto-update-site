@@ -246,11 +246,12 @@ function buildGate(review, options) {
     productionHistoricalReplayPerformed: false,
     historicalBacktestPerformed: false,
     blockerCount: blockers.length,
+    contributionBasis: 'manual_review_not_model_backtest',
     blockers,
     productionImpact: falseImpactMap(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
-    limitationZh: '本 gate 只把 P-score-30 真实事件样本聚合结果转成入分准备门槛状态;即使 gate 未来通过,也只允许另开 reviewed score integration 设计,不得自动入分。'
+    limitationZh: '本 gate 只聚合 P-score-30 人工事件样本；候选贡献与命中/误报统计来自人工标注，不是生产模型历史回测。通过只允许另开 reviewed score integration 设计，不批准生产写入或自动入分。'
   };
 }
 

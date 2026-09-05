@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: Build real-event sample-set review input
-        run: npm run review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples -- --allow-empty
+        run: npm run review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples -- --manifest docs/evidence/transport-shock/free-proxy-real-event-review-manifest.json --min-samples 6 --min-known-disruption-samples 3 --min-zero-control-samples 3 --strict
 
       - name: Run free-proxy score-readiness gate monitor
         run: npm run monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate

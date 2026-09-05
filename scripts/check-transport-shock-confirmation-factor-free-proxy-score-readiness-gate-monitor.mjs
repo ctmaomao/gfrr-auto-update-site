@@ -133,7 +133,7 @@ function assertWorkflow() {
     "cron: '39 23 * * *'",
     'permissions:',
     'contents: read',
-    'npm run review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples -- --allow-empty',
+    'npm run review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples -- --manifest docs/evidence/transport-shock/free-proxy-real-event-review-manifest.json --min-samples 6 --min-known-disruption-samples 3 --min-zero-control-samples 3 --strict',
     'npm run monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate',
     'manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-readiness-gate-monitor-latest.json',
     'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
@@ -150,6 +150,7 @@ function assertWorkflow() {
   ]) {
     assert(!workflow.includes(forbidden), `Workflow contains forbidden marker: ${forbidden}`);
   }
+  assert(!workflow.includes('--allow-empty'), 'Scheduled manifest handoff must fail closed if its tracked evidence is missing.');
 }
 
 function assertAuthorityDocs() {

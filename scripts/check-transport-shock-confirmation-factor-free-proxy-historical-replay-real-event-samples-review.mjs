@@ -1,6 +1,7 @@
 import { runNode } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
+import { DEFAULT_MANIFEST_PATH } from './lib/free-proxy-evidence-manifest.mjs';
 
 const ROOT = process.cwd();
 const REVIEW_SCRIPT = 'scripts/review-transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples.mjs';
@@ -138,6 +139,57 @@ function assertEmptyReviewIsNonFatalWhenAllowed() {
   assert(review.status === 'empty', 'Empty allowed review should return empty.');
   assert(review.scoreWriteApproved === false, 'Empty review must not approve score write.');
   assert(review.productionWriteApproved === false, 'Empty review must not approve production write.');
+  assert(review.scoreIntegrationApproved === false, 'Empty review must explicitly deny score integration.');
+  assert(review.routeFreightConfirmation === 'not_connected', 'Empty review must explicitly keep route disconnected.');
+  assert(review.marketConfirmation === 'not_connected', 'Empty review must explicitly keep market disconnected.');
+  assert(review.falsePositiveRate === null && review.knownDisruptionDirectionalHitRate === null, 'Empty review rates must be unavailable, not zero or perfect.');
+  assert(Array.isArray(review.samples) && review.samples.length === 0, 'Empty review must include an empty samples array.');
+  return review;
+}
+
+function assertManifestHandoffAndGateBoundaries(emptyReview) {
+  const root = absolute('manual-artifacts/transport-shock-confirmation-factor');
+  fs.mkdirSync(root, { recursive: true });
+  const tempDir = fs.mkdtempSync(path.join(root, 'check-manifest-handoff-'));
+  const reviewPath = path.join(tempDir, 'review.json');
+  const gateScript = 'scripts/review-transport-shock-confirmation-factor-free-proxy-score-readiness-gate.mjs';
+  const gateFor = (review) => {
+    fs.writeFileSync(reviewPath, JSON.stringify(review));
+    return JSON.parse(runNode([gateScript, '--input', reviewPath, '--no-output', '--json']));
+  };
+  try {
+    const emptyGate = gateFor(emptyReview);
+    const ids = emptyGate.blockers.map((row) => row.id);
+    assert(!emptyGate.gatePassed, 'Empty input must not pass the gate.');
+    assert(ids.includes('real_event_sample_count_below_threshold'), 'Empty input must identify the real missing-sample blocker.');
+    for (const id of ['input_score_integration_approved_claimed', 'route_freight_confirmation_connected', 'market_confirmation_connected']) {
+      assert(!ids.includes(id), `Empty input must not invent a forbidden claim: ${id}`);
+    }
+    for (const [key, value, id] of [
+      ['scoreIntegrationApproved', true, 'input_score_integration_approved_claimed'],
+      ['routeFreightConfirmation', 'connected', 'route_freight_confirmation_connected'],
+      ['marketConfirmation', 'connected', 'market_confirmation_connected']
+    ]) {
+      const gate = gateFor({ ...emptyReview, [key]: value });
+      assert(!gate.gatePassed && gate.blockers.some((row) => row.id === id), `Actual forbidden ${key} must still block.`);
+    }
+    const review = JSON.parse(runNode([REVIEW_SCRIPT, '--manifest', DEFAULT_MANIFEST_PATH,
+      '--min-samples', '6', '--min-known-disruption-samples', '3', '--min-zero-control-samples', '3', '--strict', '--no-output', '--json']));
+    assert(review.evidenceInputMode === 'reviewed_manifest_metadata_only', 'Manifest must be explicit and isolated from ignored archives.');
+    assert(review.contributionBasis === 'manual_review_not_model_backtest', 'Manifest statistics must not claim model backtest evidence.');
+    const gate = gateFor(review);
+    assert(gate.gatePassed && gate.observed.usableSampleCount >= 6, 'Reviewed manifest must survive a checkout without local archives.');
+    assert(gate.scoreReadinessApproved === false && gate.scoreIntegrationApproved === false && gate.historicalBacktestPerformed === false, 'Passing metadata gate must not confer approval or backtest claims.');
+    for (const args of [['--input', INTAKE_FIXTURE], ['--input-dir', 'manual-artifacts/transport-shock-confirmation-factor'], ['--allow-empty']]) {
+      let refused = false;
+      try { runNode([REVIEW_SCRIPT, '--manifest', DEFAULT_MANIFEST_PATH, ...args, '--no-output']); } catch { refused = true; }
+      assert(refused, 'Manifest mode must reject mixed inputs and allow-empty.');
+    }
+  } finally {
+    // Only the freshly created, bounded test directory is removed.
+    assert(path.dirname(tempDir) === root, 'Temporary cleanup path escaped the test root.');
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 }
 
 function assertRuntimeRemainsUnwired() {
@@ -174,7 +226,7 @@ function main() {
   assertReviewScriptSafety();
   assertFixture();
   assertReviewOutput();
-  assertEmptyReviewIsNonFatalWhenAllowed();
+  assertManifestHandoffAndGateBoundaries(assertEmptyReviewIsNonFatalWhenAllowed());
   assertRuntimeRemainsUnwired();
   assertAuthorityDocs();
   console.log('Transport Shock Confirmation Factor free-proxy historical replay real-event samples review: PASS');
