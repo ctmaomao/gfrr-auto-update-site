@@ -2,7 +2,7 @@
 
 ## Status and authorization
 
-Owner requested this scoped correction on 2026-09-06 after reviewing the identified contradictions. The discussion and this acceptance baseline supply the pre-change design review for this documentation-only task; no external issue is posted. Future design/IA changes still follow DESIGN.md's issue and PR review procedure. Independent merge review remains applicable.
+Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304). That reviewer exception applies only to PR #304; general review requirements remain unchanged. The owner's 2026-09-06 scoped correction supplied the pre-change design review for this documentation-only task; no external issue was posted. Future design/IA changes still follow DESIGN.md's issue and PR review procedure.
 
 ## Decision, defined before the DESIGN.md edit
 

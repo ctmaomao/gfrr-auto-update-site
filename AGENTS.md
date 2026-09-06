@@ -44,9 +44,9 @@
 
 - Release/display version 为 v28.0.10；data.version / decisionModel.contractVersion 保留 v27.0。asset cache 读 scripts/app.js 的 APP_VERSION，不机械替换历史版本。
 - Worker 主 preview 为 /market.worker-preview.json；M-94 前端当前读 data/radar-data.json，scripts/modules/realtime.js 冻结且未接入，重接 overlay 需另开评审。
-- core secondary set 为 vix / gold / dxy / us10y / spx，只写 /market.secondary-preview.json，不参与 values.* 或主评分。不得绕过有效显示输入或在 render 重算 decision/execution/position。
+- core secondary set 为 vix / gold / dxy / us10y / spx，只写 /market.secondary-preview.json，不覆盖或参与任何 values.* 主值或主评分；secondarySources / secondaryDiagnostics / secondarySourceSummary 不得混入 /market.worker-preview.json。
 - v28.0G-4C Trading Economics freshness hard gate：Yahoo 与 TE 均须 fresh。tradingeconomics-observedAt-invalid / tradingeconomics-confirmation-stale 在 promotion 层 hard hold；observedAt failure does not make candidate ok false。PR #53 superseded；KV write guard deferred。
-- worker-health-snapshot 与 review:worker-health-snapshot 只读，不写 KV/数据或触发恢复/部署。Daily 输入仍为 realtime-data，不切 Worker；health warning 与 hard-fail 边界不混淆。
+- worker-health-snapshot、review:worker-health-snapshot 和 Worker health check 只读，不改 Worker runtime、payload contract、KV、data/realtime 产物或前端 fallback，不触发恢复/部署。Daily workflow 主输入保持 realtime-data；Daily vs Worker drift 仅 audit-only。Check Realtime Health 不恢复为 Worker-first runtime hard gate，realtime-data stale 不阻断主运行链路监控；health warning 与 hard-fail 边界不混淆。
 - External AI 仅独立展示，不影响 scoring/decision/execution/position。现行 Macro Risk / Bubble Watch 生产路径仍须成本授权、单次 provider call/no retry、validator/review/freshness；不覆盖 deterministic 输出，不晋升 manual artifacts，不打印凭证。
 - World Order 为独立 regime overlay，不是第七个模块；新增源需 source review / 独立接入授权。ACLED 仅手工 xlsx 标准化，不自动抓取或恢复旧 API；失败不伪造数据或清空可用缓存。
 - 宏观代理保留来源/时效/缺失披露。macroDrivers.employment 含 FRED CES0500000003 平均时薪，sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll} 失败降级。macroDrivers.consumerRetail 可展示 Redbook public HTML / BoA 公开摘要，不冒充原始卡数据。macroDrivers.commercialRealEstate 不得伪造为 CDX、私募信贷数据或非公开 CRE loan tape。M-74 后代理按对应源契约 display-only。
@@ -70,7 +70,7 @@ check:frontend-live-contracts 覆盖 DOM、null/zero 和 display-only macro cohe
 1. 不要把 `brentValidation.consensus.recommendedValue` 直接改成 Brent 主值。
 2. 不要放松 local fallback 安全闸门。
 3. 不要绕过 `effectiveDisplayInputs` 直接使用 raw realtime values。
-4. 不要在 render 层重新推导 `executionLock` / `positionGuidance`。
+4. 不要在 render 层重算 decision / execution / position，包括重新推导 `executionLock` / `positionGuidance`。
 5. 不要为了让检查通过而削弱 `validate-data.mjs`。
 6. 不要随意提交 `data/*.json` 或 `realtime/*.json` 作为临时修复。
 7. 不要大规模重写 `scripts/run-daily-pipeline.mjs`、`scripts/run-realtime.mjs`、`scripts/modules/decision.js`。
@@ -79,13 +79,8 @@ check:frontend-live-contracts 覆盖 DOM、null/zero 和 display-only macro cohe
 10. `scripts/app.js` 是高风险核心文件；如果修改它，最终必须通过 `node --check scripts/app.js`。
 11. 已授权实施任务应修改真实文件并验证；审计、设计和修改前审阅只交结论与建议，可提供短 diff。冲突文件编辑与 Git 操作按各自授权处理。
 12. 不要在未被要求时改变数据结构。
-13. 不要把 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary` 混入 `/market.worker-preview.json`。
-14. 不要让 VIX / Gold / DXY / US10Y / SPX secondary 覆盖或参与任何 `values.*` 主值。
-15. 不要让 Google Finance sourceProbe 进入 Brent consensus / promotion（Stooq Brent 诊断 sourceProbe 已于 F6 删除;此禁令保留作 anti-regression 守卫,与 `check-workflows.mjs` 的 F6 守卫一致）。
-16. 不要新增外部源却不加短超时、try/catch 和 diagnostics-only 失败隔离。
-17. 不要把 Daily workflow 的主输入从 `realtime-data` 改成 Worker endpoint；Daily vs Worker drift 只能作为 audit-only 信息。
-18. 不要让 Worker health check 修改 Worker runtime、payload contract、KV、data/realtime 产物或前端 fallback 逻辑。
-19. 不要把 Check Realtime Health 恢复成 Worker-first runtime hard gate；`realtime-data` stale 不应阻断主运行链路监控。
+13. 不要让 Google Finance sourceProbe 进入 Brent consensus / promotion（Stooq Brent 诊断 sourceProbe 已于 F6 删除;此禁令保留作 anti-regression 守卫,与 `check-workflows.mjs` 的 F6 守卫一致）。
+14. 不要新增外部源却不加短超时、try/catch 和 diagnostics-only 失败隔离。
 
 ## 4. 默认开发流程
 

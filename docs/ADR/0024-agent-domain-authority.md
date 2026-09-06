@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation authorized by owner on 2026-09-06; pending independent human review before merge. This is instruction/checker governance work, not a presentation patch. It does not authorize AI Git operations.
+Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304). That reviewer exception applies only to PR #304; general review requirements remain unchanged. The assertion-location decision itself grants no Git permission; current Git policy is ADR-0026.
 
 ## Context
 

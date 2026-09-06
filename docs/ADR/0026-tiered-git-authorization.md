@@ -2,7 +2,7 @@
 
 ## Status
 
-Owner explicitly accepted this policy on 2026-09-06. Effective for instruction execution now; normal independent review before merging repository changes remains required. This supersedes the generic owner-manual Git restriction in root AGENTS, its aliases, and earlier instruction-maintenance receipts/ADR wording. It does not change domain-specific provider, source-rights, credential, data-release or platform-trust requirements.
+Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304). That reviewer exception applies only to PR #304; general review requirements remain unchanged. Owner adoption on 2026-09-06 supersedes generic owner-manual Git restrictions and older receipt/ADR wording; domain-specific provider, source-rights, credential, data-release and platform-trust requirements remain unchanged.
 
 ## Decision
 

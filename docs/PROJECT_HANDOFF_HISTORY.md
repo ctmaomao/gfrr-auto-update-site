@@ -298,3 +298,64 @@ Historical detail belongs in [MILESTONE_INDEX.md](MILESTONE_INDEX.md), specific 
 ---
 
 ---
+
+<a id="instruction-maintenance-2026-09-07"></a>
+
+## 指令维护过程与发布前交接（归档于 2026-09-07）
+
+以下原文为 PR #304 合并前快照；已完成状态见[总回执](REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304)。
+
+### 2026-09-06 指令与技能维护
+
+- **当前 acceptance baseline**：owner 已明确采纳 Git 分级授权（ADR-0026）；本地常规 Git 可自主执行，远端/集成按任务授权，破坏性操作仍具体确认。保留必要验证与人工 contract review、付费/发布/source-rights 保障。
+- **当前实现**：领域 checker 解耦、普通文档轻量分流、个人维护源和只读升级检测已落地；neat-freak 保留精简定制版，选择吸收上游 v3 触发边界。全量 Markdown 复核和剩余瘦身建议见 [最终复核](REVIEW_2026-09-06_MARKDOWN_FINAL.md)。不改既有无关 .agents/ 与 skills-lock.json。
+- 前三轮执行证据保留在 [初轮](REVIEW_2026-09-06_INSTRUCTIONS.md)、[第二轮](REVIEW_2026-09-06_INSTRUCTIONS_PHASE2.md)、[第三轮](REVIEW_2026-09-06_INSTRUCTIONS_PHASE3.md)。其中旧 Git 手动要求/未启用轻量检查是当时状态，现行规则见根 AGENTS 与 ADR-0025/0026。
+- **本次文档整理 acceptance baseline**：owner 授权合并 Market Pricing / External AI 重复状态、原文归档历史交接；字体/颜色例外先按 [ADR-0027](ADR/0027-design-document-consistency.md) 限定为 token 定义和现有单条 #999 边框，再修正文档。未批准其它视觉漂移；当前进度见 [整理回执](REVIEW_2026-09-06_DOC_CONSOLIDATION.md)。
+
+- **ODP/Energy 后续整理 acceptance baseline**：owner 于本轮授权执行前轮建议；将 P3-19/P3-19a 实施历史原文迁出，保留当前授权、待办、回测预登记入口及既有 checker 标题依赖，不改 runtime/checker/审批门槛。结果见 [领域条目整理回执](REVIEW_2026-09-06_ENERGY_BACKLOG.md)。
+
+- **标题/schema 依赖迁移 acceptance baseline**：owner 授权继续处理剩余依赖；按 [ADR-0028](ADR/0028-energy-record-assertion-location.md) 将 68 个校验器的历史记录读取目标迁至原文归档，76 项标识及全部断言保留，删除 backlog 兼容索引。独立 checker 合并审阅保留，记录不扩大权限；见 [迁移回执](REVIEW_2026-09-06_ENERGY_ASSERTIONS.md)。
+
+- **本轮收尾 acceptance baseline**：owner 授权继续精简并 commit+push 本系列全部已完成的仓库改动。维护状态去快照计数、完成事项与旧 Open 条目原文归档；领域入口澄清阶段、删除空 ignore list 的解释负担，实际 ignore 理由与独立审阅保留。工作推送到独立任务分支，合并前人工 review 不被替代；见 [总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
+
+- **工作基线(2026-09-07)**: 本系列实现 `023500d9` 纳入 main `2a54303f` 后组合验收；最终主线 SHA 与 Pages 结果以 [PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 交付记录为准。
+- **当前任务状态(2026-09-07)**: 指令精简、验证分流、历史归档、授权 AI 审核与 Hook 实际启动验收已完成；owner 另行明确授权最新 main 验收、合并 PR 及其自动 Pages 发布，见[总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
+- **下一步建议(2026-09-07)**: 本次收尾按 PR/Actions 实际结果核对；不因旧“未授权合并”或 Hook 首次信任快照再次暂停。不扩展到新功能、数据生成、付费调用或额外 EdgeOne 发布。
+- **阻塞或等待(2026-09-07)**: 前次 BoA/EdgeOne/来源授权观察项仍有效，本轮不替代其验证或制造成本授权。
+
+<a id="instruction-closeout-pr304"></a>
+
+## PR #304 交付过程原文
+
+
+Owner 已授权完成建议并 commit+push。本系列仓库交付包含 AGENTS/CLAUDE 精简、领域规则承接、校验器文档读取解耦、按变更验证、设计例外、重复状态合并及 backlog 历史归档。此前各阶段回执是当时快照，其中“未 commit/push”不代表本轮最终交付状态。
+
+## 本轮整理
+
+维护状态只保留版本依据、前端/Worker/Daily 职责与现行契约入口，不手抄检查数量或旧健康快照。Completed 表、P3-17/18/20 和旧维护状态原文存入 [PROJECT_COMPLETED_HISTORY](PROJECT_COMPLETED_HISTORY.md)；原章节入口与当前待办保留。
+
+领域附件纠正旧 v28.0J “当前基线”描述，增加 Transport 手工条目的按需导航，原领域规则正文保留。AGENTS 删除“空 ignore list 也解释为何为空”的形式要求；实际 ignore 的理由、边界、解锁路径和人工合并审阅仍保留。此修改不增加操作权限。
+
+## 验证与交付
+
+- `npm run check:changed`：exit 0；本系列含治理/校验器变更，自动选择完整 `check:all`，全部通过。
+- `npm run check:docs`：exit 0；36 个指令/历史读取与验证分流测试通过，198 个 Markdown 文件的链接/锚点问题为 0。
+- 本轮原文保全核对：exit 0；5 个归档块逐字保留，其余 8 个 Open 条目不变，领域附件 158 条列表行不变，862 个基线文件核对未发现范围外修改。Backlog 从 104,554 降至 43,402 字节。
+- `git diff --check`：exit 0。Git SHA/远端核对结果在交付回复给出，提交和推送不代替独立人工合并审阅。
+
+使用独立任务分支 `codex/instruction-docs-maintenance`，从 fetch 时的最新 origin/main 建立；只提交本系列仓库文件，不混入用户原有 `.agents/`、`skills-lock.json` 或 ignored 手工产物。独立人工 checker/治理 review 完成前不合并 main。分支 push 不是生产部署。
+
+个人全局 AGENTS、技能与维护源位于仓库外，保留在现有个人维护来源，不复制到项目公开远端。`manage.py status --installed` exit 0，pending writes / conflicts / upstream review 均为 0；维护工具的 12 个单元测试通过（exit 0）。Hook 后续实证见下节。
+
+## 后续评审与 Hook 验收
+
+本系列实现为 `e268bef6`，评审准备为 `9158babb`，均已 push 并核对远端。Owner 随后明确授权：“我授权你帮我实际操作审核执行上述两项”。据此，由 AI 执行本次 PR #304 的审核与指定 Hook 信任/启动验收；这是仅针对这两项的执行人例外，不宣称独立人工签字，不扩展一般审核、其他 Hook 或合并/部署权限。
+
+- **审核完成，未发现阻断项**：[PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 的 ADR-0024 至 0028、权限和设计例外、文档分流、负向测试及范围已复核。73 个领域校验器反向替换后与 `ea1fecea` 完全相同，断言/阈值未变；check-workflows 的来源切换及根 serial trunk 检查单独核对。没有生产数据、运行时、前端、workflow 或依赖锁文件改动。轻量判定是保守启发式、链接解析不是完整 CommonMark，这些既有局限保留。
+- **信任操作完成**：在 Codex CLI `0.153.0` 原生审阅界面核对并信任唯一用户 SessionStart 命令。原生 hooks/list 复查为 enabled/trusted、异步、startup/resume、8 秒超时，无 warnings/errors；hash 保持 `sha256:94e4c828c2ba141e5807c83db488f1982fe42f7901b43749324a45216d47078d`。未直接编辑信任存储或使用 bypass 参数。
+- **真实启动执行通过**：原生 App Server 新建会话及最小首轮对话触发已安装脚本。会话 `01a07633-e994-7c41-a566-270bb4d31634` 的运行时 trace 记录 SessionStart/user/async 于 `2026-09-06T10:11:52.008374Z` 开始、`10:11:52.748339Z` 以 command_outcome=completed 结束。初期探针因未收到 hook/completed 通知而失败；后改为核对原生 command_runner trace，验证 exit 0。此证据来自生命周期执行，不是直接调用 handler。会话为 ephemeral、read-only，模型只返回固定 smoke 标识；未调用项目工具。
+- `9158babb` 的 [PR CI run 34017717539](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34017717539) 已成功，涵盖依赖审计、单元测试覆盖、完整检查和 Chromium smoke；后续验收记录提交按其最终 CI 状态另行报告。
+
+[官方 Hooks 文档](https://learn.chatgpt.com/docs/hooks)规定按当前定义审阅/信任及 SessionStart 生命周期。此次两项按明确授权完成；未来 Hook 定义改变仍需按平台要求重新审阅。原始 trace 留在本机，不上传个人会话日志；本次证据摘要存于个人维护来源的 activation-verification.json。
+
+2026-09-07 owner 进一步明确要求执行“最新 main 验收 → 合并 PR → 核对自动 Pages 发布”的收尾顺序，本次合并及其触发的 Pages 发布已获授权。先纳入 main `2a54303f` 的 6 次数据更新，仅 3 个 JSON 与其原文一致，保留用户未跟踪文件；在组合状态上运行完整检查和 PR CI，通过后合并。此次不触发额外 Daily/provider/EdgeOne 发布；最终合并 SHA、验证及 Pages run 结果记录在 [PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 的交付记录中，不据早期“未合并”快照恢复审批等待。

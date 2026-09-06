@@ -2,7 +2,7 @@
 
 ## Status
 
-Owner authorized refinement/adoption on 2026-09-06. Implemented locally; independent governance review before merge remains required. This supersedes only the universal local full-check requirement for ordinary prose in AGENTS §§5–6; ADR-0024's assertion-preserving migration remains unchanged.
+Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304). That reviewer exception applies only to PR #304; general review requirements remain unchanged. Supersedes only the universal local full-check requirement for ordinary prose in AGENTS §§5–6; ADR-0024's assertion-preserving migration remains unchanged.
 
 ## Decision
 
