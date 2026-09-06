@@ -123,8 +123,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -139,8 +139,8 @@ function assertAuthorityDocs() {
     assertIncludes(dataContract, marker, 'docs/DATA_CONTRACT.md');
   }
   assertIncludes(signalIntake, 'route-level-tanker-freight-thematic-card-brief-v1', 'docs/SIGNAL_INTAKE.md');
-  assertIncludes(backlog, 'Route-level tanker freight thematic card brief', 'docs/PROJECT_BACKLOG.md');
-  assertIncludes(agents, 'route-level tanker freight thematic card brief', 'AGENTS.md');
+  assertIncludes(backlog, 'Route-level tanker freight thematic card brief', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  assertIncludes(agents, 'route-level tanker freight thematic card brief', 'docs/AGENT_DOMAIN_BOUNDARIES.md');
   assert(packageJson.scripts['check:route-level-tanker-freight-thematic-card-brief'], 'package.json missing thematic card brief check script.');
   assertIncludes(checkSuite, 'check:route-level-tanker-freight-thematic-card-brief', 'scripts/check-suite.mjs');
 }

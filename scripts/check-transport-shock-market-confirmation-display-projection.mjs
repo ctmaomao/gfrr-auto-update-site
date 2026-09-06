@@ -147,8 +147,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -170,7 +170,7 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-market-confirmation-display-projection-v1'), 'SIGNAL_INTAKE missing market display projection marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor market-confirmation display projection'), 'PROJECT_BACKLOG missing market display projection marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor market-confirmation display projection'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing market display projection marker.');
   assert(agents.includes('Transport Shock Confirmation Factor market-confirmation display projection'), 'AGENTS missing market display projection boundary.');
   assert(packageJson.scripts['project:transport-shock-market-confirmation-display-projection'], 'package.json missing projection script.');
   assert(packageJson.scripts['check:transport-shock-market-confirmation-display-projection'], 'package.json missing projection check.');

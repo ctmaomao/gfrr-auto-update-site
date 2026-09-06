@@ -206,8 +206,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -227,8 +227,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-confirmation-factor-cross-confirmation-v1'), 'SIGNAL_INTAKE missing cross-confirmation marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor cross-confirmation review'), 'PROJECT_BACKLOG missing cross-confirmation marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor cross-confirmation review'), 'AGENTS.md missing cross-confirmation boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor cross-confirmation review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing cross-confirmation marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor cross-confirmation review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing cross-confirmation boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-cross-confirmation'], 'package.json missing review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-cross-confirmation'], 'package.json missing checker script.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-cross-confirmation'), 'check-suite missing cross-confirmation check.');

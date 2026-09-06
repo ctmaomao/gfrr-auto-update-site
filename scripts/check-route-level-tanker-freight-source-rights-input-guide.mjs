@@ -163,8 +163,8 @@ function assertProductionDataRemainsUnwired() {
 function assertAuthorityDocs() {
   const inputPrepDoc = readText(INPUT_PREP_DOC);
   const dataSources = readText('docs/DATA_SOURCES.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = readJson('package.json');
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -176,8 +176,8 @@ function assertAuthorityDocs() {
     assertIncludes(inputPrepDoc, marker, INPUT_PREP_DOC);
     assertIncludes(dataSources, marker, 'docs/DATA_SOURCES.md');
   }
-  assertIncludes(backlog, 'Route-level tanker freight source-rights input guide', 'docs/PROJECT_BACKLOG.md');
-  assertIncludes(agents, 'route-level tanker freight source-rights input guide', 'AGENTS.md');
+  assertIncludes(backlog, 'Route-level tanker freight source-rights input guide', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  assertIncludes(agents, 'route-level tanker freight source-rights input guide', 'docs/AGENT_DOMAIN_BOUNDARIES.md');
   assert(packageJson.scripts['guide:route-level-tanker-freight-source-rights-input'], 'package.json missing input guide script.');
   assert(packageJson.scripts['check:route-level-tanker-freight-source-rights-input-guide'], 'package.json missing input guide check script.');
   assertIncludes(checkSuite, 'check:route-level-tanker-freight-source-rights-input-guide', 'scripts/check-suite.mjs');

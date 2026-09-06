@@ -129,8 +129,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -144,8 +144,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('route-level-tanker-freight-production-display-projection-review-v1'), 'SIGNAL_INTAKE missing projection review marker.');
-  assert(backlog.includes('Route-level tanker freight production display projection review'), 'PROJECT_BACKLOG missing projection review marker.');
-  assert(agents.includes('route-level tanker freight production display projection review'), 'AGENTS.md missing projection review boundary.');
+  assert(backlog.includes('Route-level tanker freight production display projection review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing projection review marker.');
+  assert(agents.includes('route-level tanker freight production display projection review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing projection review boundary.');
   assert(packageJson.scripts['review:route-level-tanker-freight-production-display-projections'], 'package.json missing projection review script.');
   assert(packageJson.scripts['check:route-level-tanker-freight-production-display-projection-review'], 'package.json missing projection review check script.');
   assert(checkSuite.includes('check:route-level-tanker-freight-production-display-projection-review'), 'check-suite missing projection review check.');

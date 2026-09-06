@@ -151,8 +151,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -167,8 +167,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('route-level-tanker-freight-production-write-readiness-v1'), 'SIGNAL_INTAKE missing production write readiness marker.');
-  assert(backlog.includes('Route-level tanker freight production write readiness'), 'PROJECT_BACKLOG missing production write readiness marker.');
-  assert(agents.includes('route-level tanker freight production write readiness'), 'AGENTS.md missing production write readiness boundary.');
+  assert(backlog.includes('Route-level tanker freight production write readiness'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing production write readiness marker.');
+  assert(agents.includes('route-level tanker freight production write readiness'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing production write readiness boundary.');
   assert(packageJson.scripts['review:route-level-tanker-freight-production-write-readiness'], 'package.json missing production write readiness review script.');
   assert(packageJson.scripts['check:route-level-tanker-freight-production-write-readiness'], 'package.json missing production write readiness check script.');
   assert(checkSuite.includes('check:route-level-tanker-freight-production-write-readiness'), 'check-suite missing production write readiness check.');

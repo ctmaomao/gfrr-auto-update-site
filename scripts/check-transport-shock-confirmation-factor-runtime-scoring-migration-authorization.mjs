@@ -122,11 +122,11 @@ function assertRuntimeImplementationScopedForAuthorization() {
 }
 
 function assertAuthorityDocs() {
-  const agents = readText('AGENTS.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
   for (const marker of [
@@ -135,7 +135,7 @@ function assertAuthorityDocs() {
     'owner_thread_approval',
     'maxContributionPct=3'
   ]) {
-    assert(agents.includes(marker), `AGENTS.md missing marker: ${marker}`);
+    assert(agents.includes(marker), `docs/AGENT_DOMAIN_BOUNDARIES.md missing marker: ${marker}`);
     assert(dataSources.includes(marker), `DATA_SOURCES missing marker: ${marker}`);
   }
   for (const marker of [
@@ -147,7 +147,7 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('runtime_scoring_migration_authorized_capped_free_proxy'), 'SIGNAL_INTAKE missing authorization marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor runtime scoring migration authorization'), 'PROJECT_BACKLOG missing authorization marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor runtime scoring migration authorization'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing authorization marker.');
   assert(
     packageJson.scripts['check:transport-shock-confirmation-factor-runtime-scoring-migration-authorization'],
     'package.json missing authorization checker.'

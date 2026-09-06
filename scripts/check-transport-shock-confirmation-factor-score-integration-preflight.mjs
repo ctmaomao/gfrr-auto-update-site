@@ -174,8 +174,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -195,8 +195,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-confirmation-factor-score-integration-preflight-v1'), 'SIGNAL_INTAKE missing score-integration preflight marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor score-integration preflight'), 'PROJECT_BACKLOG missing score-integration preflight marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor score-integration preflight'), 'AGENTS.md missing score-integration preflight boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor score-integration preflight'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing score-integration preflight marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor score-integration preflight'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing score-integration preflight boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-score-integration-preflight'], 'package.json missing review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-score-integration-preflight'], 'package.json missing checker script.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-score-integration-preflight'), 'check-suite missing score-integration preflight check.');

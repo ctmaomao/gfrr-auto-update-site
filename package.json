@@ -173,7 +173,7 @@
     "check:macro-coherence-display-only": "node scripts/check-macro-coherence-display-only.mjs",
     "check:node-runtime": "node --check scripts/check-node-runtime.mjs && node scripts/check-node-runtime.mjs",
     "check:workflows": "node scripts/check-workflows.mjs && node --test tests/unit/edgeone-source-revision.test.mjs",
-    "check:docs": "node scripts/check-doc-links.mjs",
+    "check:docs": "node scripts/check-doc-links.mjs && node --test tests/unit/agent-domain-authority.test.mjs && node --test tests/unit/energy-record-authority.test.mjs && node --test tests/unit/doc-change-policy.test.mjs && node scripts/check-changed.mjs --links-only",
     "check:external-ai-output": "node scripts/check-external-ai-output.mjs",
     "check:external-ai-production-contract": "node --check scripts/check-external-ai-production-contract.mjs && node scripts/check-external-ai-production-contract.mjs",
     "check:external-ai-provenance-completeness": "node scripts/check-external-ai-provenance-completeness.mjs",
@@ -383,7 +383,8 @@
     "check:oil-news-event-watch": "node --check scripts/oil-directional/oil-news-claim-classifier.mjs && node --check scripts/oil-directional/build-oil-news-event-watch.mjs && node --check scripts/check-oil-news-event-watch-contract.mjs && node scripts/check-oil-news-event-watch-contract.mjs",
     "check:oil-thermal-targeted-probe": "node --check scripts/oil-directional/run-oil-thermal-targeted-probe.mjs && node --check scripts/check-oil-thermal-targeted-probe.mjs && node scripts/check-oil-thermal-targeted-probe.mjs",
     "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs && npm run check:firms-request-policy && npm run check:oil-thermal-targeted-probe",
-    "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs"
+    "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs",
+    "check:changed": "node scripts/check-changed.mjs"
   },
   "engines": {
     "node": ">=24 <25"

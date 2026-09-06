@@ -9,8 +9,8 @@
 如两份文档冲突:
 
 1. **Current Authority** beats everything else.
-2. Within Current Authority, the more specific/restrictive rule wins.
-3. Scope-conditional authority does NOT override Current Authority.
+2. 先核对路径、阶段和操作；明确记录的 reviewed supersession / owner-approved 窄范围例外仅在指定范围优先，无例外的同范围同状态冲突才取更严格者。检查通过不是授权。
+3. Scope-conditional authority 不自行覆盖 Current Authority；根规则明确引用的领域附件在对应范围执行，旧 helper 禁令不否定已记录的独立 runtime 授权。
 4. Historical Background NEVER overrides anything current.
 5. When in doubt, check `package.json` for the actual check commands and run them.
 
@@ -25,7 +25,7 @@
 | `CLAUDE.md` | AI 启动导航 (新增于 v28.0J-pre-split 后) |
 | `DESIGN.md` | 前端设计契约 (视觉/IA/色彩/字体/组件) |
 | `AGENTS.md` | AI 开发规则合约 (规则锚点,索引/历史已外迁) |
-| `package.json` | 所有 check 命令与 `check:all` 组成权威源；默认 `check:all` 为只读验证链，artifact / manual 生成命令必须显式 opt-in |
+| `package.json` | 所有 check 命令与 `check:all` 组成权威源；`check:all` 对生产数据只读；当前包含生成 ignored analyst input 的子命令，零文件写入任务先查副作用 |
 | `docs/PROJECT_BACKLOG.md` | 项目自我记忆 + 跨会话 active task |
 | `docs/DATA_SOURCES.md` | 10+ 外部数据源边界 (新增于 v28.0J-pre-split 后) |
 | `docs/ADR/README.md` | 重大架构决策索引 (新增于 v28.0J-pre-split 后) |
@@ -34,9 +34,11 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [AGENT_DOMAIN_BOUNDARIES.md](AGENT_DOMAIN_BOUNDARIES.md)：根 AGENTS.md 明确委托的领域规则附件；按任务读对应段落。原阶段约束只管各自路径，现行窄范围例外见附件开头；领域 checker 直接校验本附件，保留原断言，根只保留导航和通用规则。迁移决策见 [ADR-0024](ADR/0024-agent-domain-authority.md)。
+
 仅在对应 PR / 子系统范围内权威。**默认会话不应将其作为全项目规则。**
 
-> **2026-08-11 状态注**:External AI 早期 phase/scaffold 文档仅保留为历史设计记录；旧 `externalAiInterpretationLayer` 已退出现有前端与 scheduled refresh。当前唯一可见首页 AI 编辑层是 `macroRiskEditorialLayer`，以 `docs/MACRO_RISK_EDITORIAL_DESIGN.md`、ADR-0022、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md` 为准。Market Pricing 仍为 has_history / M-27 温度卡 live。
+> External AI / Market Pricing 阶段文档的状态与现行契约入口统一见[阶段状态说明](LEGACY_DOCUMENT_STATUS.md)，不在各导航入口重复维护快照。
 
 ### Market Pricing scope (M-14 → M-91)
 
@@ -163,6 +165,8 @@
 
 仅作为历史背景,绝不覆盖任何 current 规则:
 
+- [历史交接与审计表](PROJECT_HANDOFF_HISTORY.md)：从 backlog 原文迁出的日期记录，按需读取；不承载当前任务授权。
+
 - `docs/V27_BASELINE.md` — v27.x 历史基线
 - `docs/EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md` — readiness 历史审计
 - `docs/EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md` — readiness 历史审计
@@ -175,3 +179,26 @@
 - Recent milestones 已完成阶段文档(M-57 → M-59)— 文件未删,仅作历史实施背景保留:`M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md`、`M-58_REALTIME_BAND_FIELD_COMPLETION.md`、`M-59_GDELT_CLOUD_INTEGRATION.md`;M-60 / M-61 因仍承载现行保护边界而保留在 Conditional。
 - M-92 / M-93 today-summary-card + 普通用户 plain-summary 源审计 / spec 文档(`SUMMARY_VIEW_M92A_SOURCE_REVIEW.md`、`SUMMARY_VIEW_M92_GAP_ANALYSIS_V2.md`、`PLAIN_SUMMARY_M93A_V2_SOURCE_REVIEW.md`、`USER_LANGUAGE_AUDIT_M93_V1.md`)— 描述 2026-05 已 shipped、后被 M-94 V0 Path C 前端重写退场的 runtime path(checker / renderer / DOM 分别于 `5eff6ab`(stage 1)/ `c8229574`(stage 2)/ `91d06f3d` 退场);纯历史 pre-impl 审计/spec,2 个 spec doc 顶部带 STATUS banner。DESIGN / `M94_V0_DATA_CONTRACT.md` 的 plain-summary residual = M-94 cleanup debt,待 Batch 5余项 处理(`assets/styles.css` 的孤儿 `.plain-summary-section`/`.ps-kicker`/`.ps-story`/`.ps-meta` 选择器已于 `7f2ee0fd` 删除收口,2026-06-05;残留债仅剩 DESIGN / `M94_V0_DATA_CONTRACT.md` 文案)。
 - 所有已合并 milestone 的 scope-only doc (按 Conditional Authority 处理,但默认不主动加载;见 `docs/MILESTONE_INDEX.md` Archived 段)
+
+- [Energy / ODP / Transport 实施历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：P3-19/P3-19a 的逐阶段原文与证据，按需查阅；当前授权入口在 backlog 和领域附件，归档不取消仍有效的阶段约束。
+
+- [完成事项与维护快照归档](PROJECT_COMPLETED_HISTORY.md)：原 backlog Section 1/3、P3-17/18/20 日期化原文；当前状态与未关闭事项留在 backlog。
+
+## 指令维护验证策略
+
+- [ADR-0025](ADR/0025-proportionate-validation.md)：普通文档本地轻量检查适用边界；CI/部署完整验证保持。
+- [第三轮回执](REVIEW_2026-09-06_INSTRUCTIONS_PHASE3.md)：GPT-6 Astra 官方依据、规则精简、升级检测和信任步骤。
+
+- [Git 分级授权](ADR/0026-tiered-git-authorization.md)：owner 已采纳，替代通用手动 Git 要求。
+- [Markdown 最终复核](REVIEW_2026-09-06_MARKDOWN_FINAL.md)：全部项目 Markdown 扫描、neat-freak 上游判断和后续精简候选。
+
+- [阶段文档统一状态](LEGACY_DOCUMENT_STATUS.md)：Market Pricing / External AI 历史文件的共同状态说明；实际操作仍遵守对应现行契约。
+- [设计文档一致性决策](ADR/0027-design-document-consistency.md)：token 定义、单条旧边框例外及当前验证机制。
+- [文档整理回执](REVIEW_2026-09-06_DOC_CONSOLIDATION.md)：状态合并、历史归档和设计修订的保全证据。
+
+- [ODP/Energy backlog 整理回执](REVIEW_2026-09-06_ENERGY_BACKLOG.md)：现行状态、授权与历史分离，保全及验证结果。
+
+- [历史记录断言迁移](ADR/0028-energy-record-assertion-location.md)：Energy/Transport 阶段记录由原文归档承接，现行操作权限仍按领域契约。
+- [迁移回执](REVIEW_2026-09-06_ENERGY_ASSERTIONS.md)：机械差异、故障注入及完整验证结果。
+
+- [本系列提交收尾回执](REVIEW_2026-09-06_CLOSEOUT.md)：范围、验证、Git 交付与仓库外维护状态。

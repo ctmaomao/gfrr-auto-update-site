@@ -226,9 +226,9 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
   const index = readText('docs/INDEX.md');
-  const agents = readText('AGENTS.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const scoreContract = readText('docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_TO_SCORE_CONTRACT.md');
 
   for (const marker of [
@@ -250,9 +250,9 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-confirmation-factor-source-review-v1'), 'SIGNAL_INTAKE missing source-review marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor source-review'), 'PROJECT_BACKLOG missing source-review marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor source-review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing source-review marker.');
   assert(index.includes('docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_REVIEW.md'), 'INDEX missing source review doc.');
-  assert(agents.includes('Transport Shock Confirmation Factor source-review'), 'AGENTS.md missing source-review boundary.');
+  assert(agents.includes('Transport Shock Confirmation Factor source-review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing source-review boundary.');
   assert(scoreContract.includes('P-score-2 free proxy + Baltic Weekly source-review'), 'source-to-score contract missing P-score-2 path.');
 }
 

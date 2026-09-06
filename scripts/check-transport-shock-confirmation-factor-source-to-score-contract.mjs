@@ -193,8 +193,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -216,8 +216,8 @@ function assertAuthorityDocs() {
     assertIncludes(dataContract, marker, 'docs/DATA_CONTRACT.md');
   }
   assertIncludes(signalIntake, 'Transport Shock Confirmation Factor', 'docs/SIGNAL_INTAKE.md');
-  assertIncludes(backlog, 'Transport Shock Confirmation Factor source-to-score contract', 'docs/PROJECT_BACKLOG.md');
-  assertIncludes(agents, 'Transport Shock Confirmation Factor source-to-score contract', 'AGENTS.md');
+  assertIncludes(backlog, 'Transport Shock Confirmation Factor source-to-score contract', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  assertIncludes(agents, 'Transport Shock Confirmation Factor source-to-score contract', 'docs/AGENT_DOMAIN_BOUNDARIES.md');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-source-to-score-contract'], 'package.json missing transport shock contract check script.');
   assertIncludes(checkSuite, 'check:transport-shock-confirmation-factor-source-to-score-contract', 'scripts/check-suite.mjs');
 }

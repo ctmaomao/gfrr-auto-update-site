@@ -204,8 +204,8 @@ function assertRuntimeRemainsUnwired() {
 
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
   for (const marker of [
@@ -215,8 +215,8 @@ function assertAuthorityDocs() {
   ]) {
     assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
   }
-  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review'), 'PROJECT_BACKLOG missing real-event sample-set review marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review'), 'AGENTS.md missing real-event sample-set review boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing real-event sample-set review marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing real-event sample-set review boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples'], 'package.json missing real-event samples review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review'], 'package.json missing real-event samples review checker.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review'), 'check-suite missing real-event samples review checker.');

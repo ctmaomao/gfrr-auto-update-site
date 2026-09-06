@@ -23,7 +23,7 @@ const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
-const agentsText = readText('AGENTS.md');
+const agentsText = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
 
 const employment = radarData?.macroDrivers?.employment;
 const sourceStatuses = new Set(['live', 'fallback', 'missing']);
@@ -206,7 +206,7 @@ for (const marker of requiredSourceMarkers) {
 if (!agentsText.includes('macroDrivers.employment')
     || !agentsText.includes('FRED CES0500000003 平均时薪')
     || !agentsText.includes('sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll}')) {
-  fail('AGENTS.md missing M-73 employment boundary note');
+  fail('docs/AGENT_DOMAIN_BOUNDARIES.md missing M-73 employment boundary note');
 }
 
 if (errors.length > 0) {

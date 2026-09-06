@@ -7,11 +7,11 @@ const files = {
   monitor: read('scripts/monitor-transport-shock-confirmation-factor-score-impact-history.mjs'),
   packageJson: read('package.json'),
   checkSuite: read('scripts/check-suite.mjs'),
-  agents: read('AGENTS.md'),
+  agents: read('docs/AGENT_DOMAIN_BOUNDARIES.md'),
   dataSources: read('docs/DATA_SOURCES.md'),
   dataContract: read('docs/DATA_CONTRACT.md'),
   signalIntake: read('docs/SIGNAL_INTAKE.md'),
-  projectBacklog: read('docs/PROJECT_BACKLOG.md'),
+  energyHistory: read('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md'),
   radarData: read('data/radar-data.json'),
   decision: read('scripts/modules/decision.js'),
   crossValidation: read('scripts/modules/buildCrossValidationMatrix.js'),
@@ -64,7 +64,7 @@ for (const [fileKey, marker] of [
   ['dataSources', 'P-score-54 起,新增 Transport Shock score-impact history monitor'],
   ['dataContract', 'transport-shock-confirmation-factor-score-impact-history-monitor-v1'],
   ['signalIntake', 'Transport Shock Confirmation Factor score-impact history monitor'],
-  ['projectBacklog', 'Transport Shock Confirmation Factor score-impact history monitor']
+  ['energyHistory', 'Transport Shock Confirmation Factor score-impact history monitor']
 ]) {
   requireIncludes(fileKey, marker);
 }

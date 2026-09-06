@@ -21,7 +21,7 @@ PR0 只锁定契约与迁移纪律。后续实现必须另开 PR,按 serial trun
 - 改 `externalAiInterpretationLayer` 的 production data contract。
 - 改 scoring / decision / execution / position 任一路径。
 - 改 frontend 或 asset cache version。
-- 自主执行 `git add` / `git commit` / `git push` / branch / merge / rebase / stash 等 git 状态变更;需要提交时由 owner 手动执行。
+- 本次 input-contract 审阅不自动授权远端 Git 操作；本地 Git 与后续已授权操作按根 AGENTS.md 的 Git 分级授权执行（2026-09-06 owner supersession），provider/secret/生产边界不变。
 
 ---
 

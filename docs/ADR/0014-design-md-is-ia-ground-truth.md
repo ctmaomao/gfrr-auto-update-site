@@ -1,6 +1,6 @@
 # ADR-0014: DESIGN.md §4.1 is the IA ground truth; appendix sections have content boundaries
 
-- **Status:** Accepted
+- **Status:** Accepted; historical checker enforcement references and the process-section pointer superseded by [ADR-0027](0027-design-document-consistency.md). IA and appendix boundaries remain accepted.
 - **Date:** 2026-05-20
 - **Supersedes:** none (extends ADR-0004 with general IA contract framework)
 - **Related:** ADR-0004 (World Order is overlay), ADR-0011 (paper not dashboard design)

@@ -1,239 +1,69 @@
 # AGENTS.md — Global Financial Risk Radar AI 开发守则
 
-> 本文档供 Cursor、Codex、Claude Code 和其他 AI 工具接手本项目时优先阅读。目标是保护当前 v28.0J 稳定观察基线，避免误改核心数据链路、Worker-first 主链路、解释层边界、决策契约和部署保护网。
->
-> **完整拆分前快照见 git tag `v28.0J-pre-split`**。
-> 文档拆分时间:2026-05-18,目的是把规则、文档索引和 milestone 历史摘要分离。
+## 适用范围与优先级
+
+保护现有数据链、模型契约和部署保护网；普通任务采用最小可验证改动。用户当前明确指令优先于技能建议；系统、开发者和实际工具权限不由本文件改变。
+先判断规则点名的路径、阶段和操作。明确记录的 reviewed supersession / owner-approved 窄范围例外仅在指定范围优先；其它范围仍遵守原约束。同范围、同状态且无明确替代关系的冲突才取更严格者，只暂停受影响步骤并继续独立工作。
+文档权威分级见 [docs/INDEX.md](docs/INDEX.md)。旧阶段的“下一步”不是全项目当前任务；检查通过本身不构成批准。
+
+## 执行与批准
+
+授权任务连续推进至必要验证完成；常规选择自行判断，缺失关键信息才询问。只读审阅不写文件，设计授权不自动进入实施。批准沿用同任务有效范围，明确的临执行确认、owner 手动操作和费用重确认除外。仅暂停实际触及门槛的步骤，并先完成可独立准备的可审阅结果。
+发消息、部署、发布、删除、付费调用/交易及通知仍须对应明确授权；技能不提供这些权限，也不默认授权安装或更新。
+
+<a id="git-human-control"></a>
+
+## Git 分级授权
+
+决策记录见 [ADR-0026](docs/ADR/0026-tiered-git-authorization.md)。
+
+2026-09-06 owner 已批准以本节替代通用“Git 只能由 owner 手动执行”的要求；历史记录不撤销该授权。保持 serial trunk mode：基于 latest main、一次一个逻辑任务、no stacked PR；旧 PR 不追加其它任务。Git 权限按操作影响判断，不按模型名称或置信度放宽。
+
+- **本地常规操作自主执行**：可读取状态、fetch（不附带删除/prune）、创建任务分支或隔离 worktree、安全切换，以及只暂存本任务改动并在必要检查通过后本地 commit。同步当前分支仅允许工作区/索引干净时 fast-forward，该同步属于本地常规授权；无法快进则保留现场，先确定范围，不自动重写历史。
+- **远端/集成操作按任务授权执行**：push、集成功能分支的 merge 及其触发的部署/发布须有相应目标和动作的明确授权；有效授权可沿用，由 AI 执行，无需 owner 手动敲命令。合并前的独立人工 review 和生产验收要求仍保留。推送到 main 可能触发 Pages，不能把本地 commit 授权当作发布授权。
+- **破坏性操作保留具体确认**：强制推送、丢弃改动、重写共享历史、删除分支/worktree 等，先提供受影响对象与恢复方案，再取得针对具体操作的确认；不靠笼统“收尾”推断。
+
+执行前核对分支、目标、工作区与索引；保留用户和其它任务的改动，不使用全量暂存混入无关文件。无法安全区分改动时只暂停相关 Git 操作。允许 Git 操作不等于必须制造分支或提交；按当前任务需要执行。源权利、付费调用、凭证、数据发布和平台 Hook 信任等单独保障不变。
 
 ## Pre-read pointers
 
-本 AGENTS.md 只承载 **AI 开发规则**。索引与历史已外迁到独立文档,
-请按需访问:
+开始任务读本文件、[CLAUDE.md](CLAUDE.md) 和 [PROJECT_BACKLOG.md](docs/PROJECT_BACKLOG.md) 当前任务/最新交接。数据源任务必读 [DATA_SOURCES.md](docs/DATA_SOURCES.md) 对应段落；不全量加载历史。
 
-- **文档权威分级索引** → [`docs/INDEX.md`](docs/INDEX.md)
-  (Current / Conditional / Operating / Historical 四级)
-- **Milestone (M-XX / vXX.XX) 索引** → [`docs/MILESTONE_INDEX.md`](docs/MILESTONE_INDEX.md)
-  (Active + Recently Merged + Archived 三段,默认只读前两段)
-- **AI 启动导航** → [`CLAUDE.md`](CLAUDE.md)
-- **数据源边界** → [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md)
-- **重大架构决策** → [`docs/ADR/README.md`](docs/ADR/README.md)
-- **项目自我记忆 / 当前活跃任务** → [`docs/PROJECT_BACKLOG.md`](docs/PROJECT_BACKLOG.md)
+| 涉及改动 | 操作前必读 |
+|---|---|
+| 前端 HTML/CSS/SVG/rendering | [DESIGN.md](DESIGN.md) 全文及本文件 §2 |
+| Worker/Brent/health/realtime | [runtime](docs/AGENT_DOMAIN_BOUNDARIES.md#runtime)、[general](docs/AGENT_DOMAIN_BOUNDARIES.md#general)、[Operations Runbook](docs/OPERATIONS.md) |
+| External AI/DeepSeek | [external-ai](docs/AGENT_DOMAIN_BOUNDARIES.md#external-ai) 及其中规定的设计/输入输出/生产契约 |
+| 宏观源/World Order/ACLED | [sources](docs/AGENT_DOMAIN_BOUNDARIES.md#sources)、[DATA_SOURCES.md](docs/DATA_SOURCES.md) |
+| Energy/ODP/route freight | [energy](docs/AGENT_DOMAIN_BOUNDARIES.md#energy) 及对应 ODP/source-rights 契约 |
+| Transport 手工样本与工具 | [transport-manual](docs/AGENT_DOMAIN_BOUNDARIES.md#transport-manual) 对应点名工具，仍隔离于生产 |
+| Transport 已批准 runtime | [transport-runtime](docs/AGENT_DOMAIN_BOUNDARIES.md#transport-runtime)，不把 helper 通过当作 runtime 授权 |
+| JSON 字段/管线架构 | [DATA_CONTRACT.md](docs/DATA_CONTRACT.md)、[UNIFIED_DATA_PIPELINE_ARCHITECTURE.md](docs/UNIFIED_DATA_PIPELINE_ARCHITECTURE.md) |
 
-### Rule of Conflict Resolution (摘录,完整版见 `docs/INDEX.md`)
+## 1. 项目当前状态与跨任务硬边界
 
-1. **Current Authority** beats everything else.
-2. Within Current Authority, the more specific/restrictive rule wins.
-3. Scope-conditional authority does NOT override Current Authority.
-4. Historical Background NEVER overrides anything current.
-5. When in doubt, check `package.json` for the actual check commands and run them.
-
----
-
-## 1. 项目当前状态
-
-当前项目处于 v28.0J 稳定观察基线。v28.0J-2B post-deploy audit 已通过；当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `bofa-report-review-1`）。Worker-first 已是当前主运行路径：`/market.worker-preview.json` 是主 realtime payload，`/market.secondary-preview.json` 是独立 secondary diagnostics endpoint。
-
-维护重点是稳定性、可观测性、数据契约、Worker 隔离边界和小步改进。没有明确任务时，不应大规模重构，不应重写站点结构，不应把项目改成 demo 或简化版。
-
-当前关键边界：
-
-- 版本语义已收口为“双版本”:当前 release/display version 是 `v28.0.10`（package / release / 前端 ISSUE 显示 / 新 Daily 输出 `releaseVersion`）；根级 `data.version` 与 `decisionModel.contractVersion` 仍是兼容数据契约 `v27.0`，只有另开 reviewed contract migration 才能改。不得机械全局替换历史 `v27`。
-- Worker-first 主链路：worker 生成 `/market.worker-preview.json` 作为主 realtime payload。**M-94 V0 路径 C 重写后，前端入口改读 `data/radar-data.json` 静态快照，不再在前端跑 worker-first strict gate；`scripts/modules/realtime.js`（fetch + strict-gate 逻辑）按 M-94 要求保留但当前未接入重写后的前端、有意冻结（见 `docs/M94_V0_DATA_CONTRACT.md`）。是否在后续 stage 把 realtime overlay 重新接回前端属产品决策，须另开版本评审。**
-- serial trunk mode：所有任务基于 latest main，一次只推进一个逻辑任务，no stacked PR，旧 PR 不继续堆改。
-- `/market.secondary-preview.json` 只承载独立 secondary diagnostics，当前包含 VIX via Cboe、Gold via Yahoo `GC=F`、DXY via Yahoo `DX-Y.NYB`、US10Y via Yahoo `^TNX` 与 SPX via Yahoo `^GSPC`；不得污染主 preview。
-- 当前 core secondary set 为 `vix` / `gold` / `dxy` / `us10y` / `spx`。E-4 后应先观察 Worker health workflow 与 secondary freshness，暂停继续堆新 secondary source。
-- Brent 主逻辑为 FRED `DCOILBRENTEU` anchor + Yahoo `BZ=F` fresh confirmation + Trading Economics confirmation + D-6 extreme-move guard。
-- v28.0G-4A Trading Economics observedAt 仅为 audit-only；`tradingeconomics-observedAt-unparsed` 不得阻止 Brent promotion，Trading Economics freshness 不得在未另开 G-4B 前进入 hard gate。
-- v28.0G-4B decision 建议另开 G-4C 实现 Trading Economics freshness hard gate；G-4B does not change runtime behavior。G-4C 才能引入 `tradingeconomics-observedAt-invalid` / `tradingeconomics-confirmation-stale` hard hold reason；旧 PR #53 已 superseded，不得 merge 或 cherry-pick。
-- v28.0G-4C 已实现 Trading Economics freshness hard gate；Brent promotion 需要 Yahoo fresh + TE observedAt fresh。TE observedAt 不可解析或超过 48 小时应 hold promotion，但 observedAt failure does not make candidate ok false；hard hold 只在 promotion decision 层处理，D-6 confirmed-extreme-move 也要求 TE freshness fresh。
-- v28.0G-6 Operations Runbook / Decision Matrix 是运维判断入口；看 `docs/OPERATIONS.md`。PR #53 superseded；KV write guard deferred，先观察，不在未另开版本时加入复杂 runtime guard。
-- v28.0G-7A 只增强 `Check Worker Health` 只读输出，生成 `worker-health-snapshot` artifact；不得把 snapshot 当作网站输入，不得写 KV 或 data/realtime，不得改变 Worker Health fail 边界。
-- v28.0G-7B 新增本地只读 `review:worker-health-snapshot` helper，用于审阅下载后的 snapshot 并输出 PASS / WARN / FAIL；不得让它访问网络、写 KV、写 data/realtime 或替代 scheduled hard gate。
-- v28.0G-10 Data Check Expected-Skip Noise Cleanup：默认 `npm run check:data` 不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。需要原因用 `npm run check:data:verbose`，需要强制失败用 `npm run check:data:strict-live-alignment`。不得误解为删除 `validateRealtimeBaselineAlignment`。
-- v28.0H-1 / H-2 World Order Stress Overlay 是 regime overlay / 结构性状态修正器，不是第七个底层风险模块。用户可见文案必须克制：不得预测战争，不得输出战争概率，不得把结构性压力写成确定性事件；H-2 前端只读展示 `data/world-order-stress.json`，不直接调用外部 API，不接 `decisionModel`，不改 Worker runtime。
-- v28.0H-2B World Order marketConfirmation 输入优先级为 Worker-generated preview → local realtime → Daily baseline，并必须在 `data/world-order-stress.json.marketConfirmationInput` 记录来源、时间、关键市场值和 fallback reason；前端仍只读最终 JSON。
-- v28.0I 后，任何新增解释层 / 新信号 / 新数据源必须先检查 `docs/SYSTEM_UPGRADE_PLAN.md` 中的 v28.0I stable baseline 边界。
-- `dailyBrief`、`divergenceLayer`、`macroDrivers.consumer`、`macroDrivers.employment`、`macroDrivers.consumerRetail`、`macroDrivers.commercialRealEstate`、`consumer_vs_asset_pricing` 与 `brentPricingLayer` 均为解释层 / 审计层 / 展示层；不得直接接入 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
-- v28.0J 后，rule-based `aiInterpretationLayer` 不得被改成外部 AI 输出，除非另开版本并新增 API / output audit contract;它本身仍 `generatedByExternalAi=false`、`usesExternalAiApi=false`，不调用 DeepSeek / OpenAI / 外部 AI API。独立旧字段 `externalAiInterpretationLayer` 仅保留数据兼容，不再有首页可见消费者或 scheduled provider refresh；新的可见 DeepSeek 输出必须写入独立 `macroRiskEditorialLayer`，不得覆盖 rule-based 层或旧字段。
-- 不得让 AI 输出直接影响 scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
-- 任何 DeepSeek / OpenAI 接入必须从设计文档和审计 contract 开始，并先定义 timeout、fallback、source attribution 与禁用文案检查。
-- 任何 DeepSeek / OpenAI / external AI API implementation 必须先阅读 `docs/EXTERNAL_AI_API_DESIGN.md`；external AI output 不得直接影响 scoring / decision / execution / position，未来也必须作为单独 layer 设计，不得覆盖当前 rule-based `aiInterpretationLayer`。
-- v28.0K-1 的 `docs/fixtures/external-ai/*.json` 只允许作为 offline/manual prompt design samples；未来 external AI implementation 不得把这些 fixtures 当作 production data，不得导入 runtime。
-- v28.0K-2 新增 `npm run check:external-ai-output` 离线 validator；未来 external AI output 不得绕过该 validator 进入展示路径，validator 不调用外部 API、不导入 runtime。
-- `macroRiskEditorialLayer` 是首页 `MACRO RISK OVERVIEW` 内唯一可见的外部 AI 编辑层：`schemaVersion=macro-risk-editorial-production-v1`、`provider=deepseek`，由 `Macro Risk Editorial Refresh` 每日 00:05 UTC 在近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据上生成。必须保持 `qualityReview.promotionEligible=false`、`provenance.humanApproved=false`、`sourceDataUpdatedAt===radarData.updatedAt`、30 小时 freshness、每次最多一次 provider call/no retry；不得影响 scoring / 六大模块 / tail overlay / `decisionModel` / `executionLock` / `positionGuidance` / World Order / ODP / Bubble Watch。失败或陈旧时隐藏编辑层并沿用 deterministic macro overview。
-- `data/bubble-watch.json.summary.weekly_editorial` 是独立的 Bubble Watch DeepSeek 周度只读编辑层；唯一生产写入路径为 `Bubble Watch Weekly Editorial Refresh`。它不得覆盖确定性 `summary.verdict_desc`，不得影响 Core-23 / Shadow-4、主分、Stage / Trigger、verdict 或任何 GFRR scoring / decision / execution / position；provider/review/stale 失败时前端必须回退确定性正文，禁止手工编辑 production field。
-- v28.0K-3D Stable Observation Audit 是只读 gate；不得用它 auto-fix、auto-commit、auto-push、deploy 或触发 recovery。PASS 可允许规划 v28.0K-4，FAIL 阻止 v28.0K-4。
-- v28.0K-4A 后，任何 external AI API calls implementation 必须先阅读 `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`；manual API test 必须 opt-in、validator-gated，并与 production data / scoring / decision / execution / position 隔离。
-- v28.0K-4B 的 no-network dry-run scaffold 与 v28.0K-4C disabled adapter 是历史阶段基线；其绝对禁用语义已被后续 reviewed K-4D+ manual provider path 与当前 `Macro Risk Editorial Refresh` 生产路径取代。当前仍要求默认 dry-run、显式网络/成本确认、单次调用、validator + quality review 守门，且不得打印或提交 API key。
-- `scripts/external-ai/provider-adapters.mjs` 的真实 DeepSeek 调用只允许由已批准的 manual provider test、Bubble Watch weekly editorial 或 `Macro Risk Editorial Refresh` 路径触发；不得从 Daily、前端或其他 workflow 旁路调用，不得读取未显式注入的 key，也不得削弱 timeout、fallback、source attribution 或 output validator。
-- v28.0K-4D 的 DeepSeek manual artifact test 只能在用户明确要求且提供 `DEEPSEEK_API_KEY` 环境变量时运行；不得打印 API key，不得提交 `manual-artifacts/` 或其中的 output artifact，不得把 artifact 提升为生产数据或前端展示，除非另开 reviewed PR 且 validator 通过。
-- v28.0K-4E 的 manual input artifact 只能作为 ignored `manual-artifacts/` 手动输入；不得提交，不得当作 production data，不得复制进 `data/radar-data.json`，不得从 Daily、workflow 或自动流程触发 DeepSeek。
-- v28.0K-4E-1 后，paid DeepSeek live-data manual test 前应优先使用 compact input；若出现 timeout / aborted failure，不得反复重试，应先审阅 failure artifact 的 `requestDiagnostics`。
-- v28.0K-4E-2 后，不得通过削弱 unsafe wording validator 来让 external AI artifact 通过；unsafe wording 必须从所有 external AI output text fields 中排除，而不只是 `auditFlags`。
-- v28.0K-4E-3 后，live/local `radar-data.json` manual input 必须按站内结构化数据归因，不得写成 sample input；external AI output 不得复述具体 execution / position / exposure / cash buffer 字段。
-- v28.0K-4E-4 后，manual DeepSeek failure artifact 的 `provider_unavailable` 或 `provider_timeout` 不得反复付费重试；先审阅 `failureClassification` / diagnostics。failure artifact 不得进入 output promotion logic，也不得通过削弱 validator 让 failure artifact 通过。
-- v28.0K-4F 后，`check:external-ai-output` 通过不等于可晋升；还必须运行 `npm run review:external-ai-artifact`。不得晋升 provider failure artifact，不得晋升包含 execution / position language 的输出；`promotionEligible` 必须保持 false，直到另开 reviewed integration PR。
-- v28.0K-4G 后，任何 external AI work 前必须先读 `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`、`docs/EXTERNAL_AI_PROMPT_CONTRACT.md`、`docs/EXTERNAL_AI_API_DESIGN.md`、`docs/DATA_CONTRACT.md` 与 `docs/OPERATIONS.md`。不得 promotion manual artifacts，不得把 DeepSeek 接入 Daily 或 frontend，除非另开 reviewed design PR；不得削弱 validator / quality review gate；`provider_unavailable` / `provider_timeout` 后不得反复付费重试；`promotionEligible` 必须保持 false，直到独立 integration PR 明确改变。
-- v28.0L-0 后，任何 external AI production implementation 前必须先读 `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`。不得跳过 staged rollout；不得在 design PR 中加入 secrets / workflows / provider calls；不得未经 separate reviewed PR 就让 external AI 前端可见；external AI 仍不得影响 scoring / decision / execution / position。
-- v28.0L-1 后，readiness status 是 `partially_ready_for_disabled_skeleton_only`，不是 production-ready。不得跳过 L-2；不得在 L-1 或 L-2 实现 workflow / provider call / frontend；不得在 reviewed workflow_dispatch 阶段前添加 GitHub secret；不得通过 readiness docs 让 external AI production-visible。
-- v28.0L-2 skeleton 必须保持 disabled；不得把它改成读取 env vars、调用 provider、连接 Daily / frontend，或让 `maybeCreateExternalAiProductionLayer` 激活 provider。未来 activation 必须另开 L-3+ reviewed PR。
-- v28.0L-3 是 workflow design only；不得在 L-3 添加 workflow / provider call / secrets。第一个 workflow implementation 必须是 dry-run-only 且 no-secret / no-provider；不得从 L-3 直接跳到 provider-call workflow 或 Daily。Workflow artifacts 不是 production data，绝不得上传 secrets 或 raw provider headers。
-- v28.0L-3B dry-run workflow 必须保持 dry-run-only；不得加入 provider call、provider input、allow_network input、dry_run=false path、secret reference 或 provider output upload。不得把该 workflow 改成 production workflow；任何 provider-call workflow 必须另开 reviewed L-3C PR。
-- v28.0L-3C 是 provider-call workflow design only；不得把 L-3C design 改成 implementation，不得添加 secrets、provider-call workflow、workflow secret reference、SDKs、dependencies 或真实 DeepSeek call。不得修改 L-3B dry-run workflow 让它调用 provider，除非另开 reviewed implementation PR。未来 provider-call artifacts 仍不是 production data；即使未来 provider-call 成功，也不代表 frontend、Daily、production data、scoring、decision、execution 或 position readiness。
-- v28.0I compact cockpit layout 不得被后续改动破坏，除非另开版本评审；Global Risk Heatmap 必须继续独立显示，World Order Stress Overlay 仍是独立 regime overlay，不是第七个底层风险模块。
-- World Order 外部源失败必须降级 status / confidence，而不是清空旧可用缓存；GDELT partial / stale / error 必须可解释，不得伪装成功或输出 NaN / undefined。
-- World Order UI 必须清楚显示低置信 / 数据限制，不得把 proxy、stale、manual_required 或 not_configured 数据包装成高确定性结论。
-- World Order 用户可见 UI 文案必须中文化；source attribution 不得误导，多源 evidence 应尽量显示清楚来源组合。
-- SIPRI normalized example/template 数据不得当作真实宏观数据参与 scoring；只有 `quality.isRealData=true` 的真实手动标准化文件才能让 SIPRI 进入 `ok`。
-- M-63a/M-63b 后，ACLED 仅走 Open-license manual-xlsx workflow：operator 手动下载 aggregated xlsx，`scripts/world-order/sanitize-acled-weekly.mjs` 输出 `config/world-order-acled-regional-weekly.json`、`scripts/world-order/sanitize-acled-monthly.mjs` 输出 `config/world-order-acled-global-monthly.json`，`scripts/world-order/fetch-acled.mjs` 只读本地 JSON 并联合 weekly+monthly 输出 `ok` / `partial` / `manual_required` / `error`。旧 ACLED API adapter 已删除；不得恢复 `ACLED_API_KEY` / `ACLED_EMAIL` / `api.acleddata.com` / 自动访问 acleddata.com 的路径。`xlsx` 仅允许由 weekly/monthly sanitizer 按 ADR-0013 作为 devDependency 使用，不得被 runtime、check、workflow 或 frontend 导入。
-- M-63b 是 evidence-only ingestion：monthly metrics 通过 `fetch-acled.mjs` 进入 World Order overlay 的 evidence/summary 字段，不修改 `peaceDividendRetreat` 权重 (SIPRI 0.35 + GDELT 0.20 + ACLED 0.25 + module 0.20 保持)；任何 monthly→scoring weight 改动必须另开 M-63d source-review/backtest PR。
-- M-63c 已落地：ACLED weekly + monthly reminder workflows 在位（`acled-{weekly,monthly}-refresh-reminder.yml`），reminder-only 边界硬锁；workflow 不得 `actions/checkout`、不得 `npm install`、不得跑 sanitizer、不得对 `acleddata.com` 发任何网络请求；任何"reminder 升级为 auto-fetch"的提议必须另开 reviewed PR 并附 EULA §3.3 重新评估。
-- M-67 后,ISM PMI 来自 ismworld.org 公开报告页 (low-frequency monthly HTML parse with UA 'GFRRBot/1.0');保持 audit-only,不进 scoring/decision/execution/position;失败必须降级为 fallback/source_unavailable/parse_error,不得伪造或冒充替代指标。
-- M-73 后,`macroDrivers.employment` 在 M-68 ICSA/CCSA/JTSJOL 基础上加入 FRED CES0500000003 平均时薪、U6RATE 与公开行业 payroll basket 扩散代理；audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules；不进 `displayInputsBaseline` / `effectiveDisplayInputs`；不进 cross-validation matrix；新源失败必须降级 `sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll}` 为 `fallback` / `missing`,不得伪造或冒充 BLS proprietary diffusion index、职位质量明细或实时就业信号。
-- M-69 后,`macroDrivers.consumerRetail` (Chicago Fed CARTS + CARTSR via FRED) 为周频零售/消费 nowcast evidence 层；audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不接 CARTSP (价格指数,future scope only);**绝对不得**伪造为 Redbook 或 BoA raw card feed 数据,字段名/前端文案/notes 都不得暗示替代关系;Redbook + BoA raw card feed 为 P3-14 source-review candidates,不在 runtime 任何路径自动 fetch。
-- M-70 后,`macroDrivers.commercialRealEstate` (FRED DRCRELEXFACBS + CORCREXFACBS + SUBLPDRCSN/C/M) 为季频 CRE 信用压力 evidence 层;audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不扩写 `macroDrivers.credit`;除 M-84 public aggregate proxy 外,不接 loan balance/CRE exposure stock series;**绝对不得**伪造为 CDX、私募信贷数据或非公开 CRE loan tape,字段名/前端文案/notes 都不得暗示替代关系。
-- M-74 后,`macroDrivers.shippingFreight` (StockQ BDTI/BCTI/BDI public pages),`macroDrivers.policyExpectations` (FRED DFEDTARL/DFEDTARU/DFF + Yahoo ZQ=F + Federal Reserve SEP/FOMC statement),`macroDrivers.privateCreditProxy` (Yahoo BIZD + FRED HY OAS),以及 `macroDrivers.consumerRetail` MRTS segment basket / `macroDrivers.commercialRealEstate` VNQ/REM public proxies 均为 audit-only/display-only；不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules；不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得把 ZQ=F 写成 OIS forward,不得把 BIZD/HY OAS 写成 CDX 或 private credit marks,不得把 VNQ/REM 写成非公开 CRE loan tape。
-- M-77 后,`macroDrivers.policyExpectations` 可读取 Federal Reserve `fomcminutesYYYYMMDD.htm` 做 keyword NLP tone/topic count;`macroDrivers.consumerRetail` 可读取 BoA Consumer Checkpoint 公开 HTML 摘要;`brentPricingLayer.futuresCurve` 只读取 ICE Brent futures contract structure (`live_structure_only`)。三者仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得把 ICE structure-only 写成正式结算价期限结构,不得把 BoA public summary 写成 Redbook 或 BoA 原始卡明细,不得把 minutes keyword count 写成外部 AI/NLP 决策模型。
-- M-78 后,`macroDrivers.policyExpectations.fedFundsFuturesCurve` 可读取 Yahoo ZQ 月度 Fed funds futures proxy curve;`macroDrivers.privateCreditProxy` 可加入 FRED `BAMLC0A0CM` IG OAS cash-bond proxy;`brentPricingLayer.futuresPriceCurve` 可读取 Yahoo `BZ` 月度 Brent futures priced proxy。三者仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得把 ZQ futures curve 写成 OIS forward,不得把 HY/IG OAS 写成 CDX HY/IG,不得把 Yahoo BZ priced proxy 写成 ICE official settlement curve、Platts Dated Brent 或正式 Dated Brent。
-- M-79 后,`macroDrivers.consumerRetail.redbookRetailSalesYoY` 可读取 Trading Economics Redbook public HTML 摘要;`macroDrivers.policyExpectations.sofrFuturesCurve` 可读取 Yahoo `SR3` 月度 Three-Month SOFR futures proxy curve。两者仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得把 Redbook public HTML 写成 Redbook raw subscription feed 或 BoA raw card feed,不得把 SR3 SOFR futures 写成 OIS forward。
-- M-80 后,`macroDrivers.policyExpectations.oisForwardCurve` 可读取 CheckMySwap USD OIS public curve (DTCC/CFTC public swap data);`macroDrivers.commercialRealEstate.cmbsEtfPrice` 可读取 Yahoo `CMBS` ETF public proxy;`macroDrivers.privateCreditProxy.pbdcEtfPrice/seniorLoanEtfPrice` 可读取 Yahoo `PBDC` / `SRLN` listed public proxies。三者仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得把 CheckMySwap public curve 写成 proprietary dealer OIS forward,不得把 CMBS 写成 non-public CRE loan tape,不得把 PBDC/SRLN/BIZD 写成 CDX HY/IG 或 private credit marks。
-- M-81 后,`macroDrivers.privateCreditProxy.cdxHyPrice/cdxIgPrice` 可读取 ICE Clear Credit public CDX index settlement prices (`CDX-NAHY*-5Y` / `CDX-NAIG*-5Y`)。该字段仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得把 ICE public EOD settlement 写成 private credit marks、full licensed Markit history database、Bloomberg/FactSet/Refinitiv feed 或私募信贷估值。
-- M-82 后,`brentPricingLayer.iceFuturesPriceCurve` 可读取 ICE product-guide public contract-data 的 Brent futures delayed last-price curve。该字段仍为 audit-only/display-only;不得接入 `values.brent`、Brent promotion、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor 或 Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 Platts Dated Brent、正式 Dated Brent、official ICE settlement curve 或实物现货成交证据。
-- M-83 后,`macroDrivers.privateCreditProxy.intervalFundNavPrice` 可读取 Yahoo `CCLFX` public interval-fund NAV proxy (Cliffwater Corporate Lending Fund)。该字段仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 private credit marks、fundraising data、Cliffwater Direct Lending Index licensed dataset 或非公开私募贷款估值。
-- M-84 后,`macroDrivers.commercialRealEstate.creLoanBalance` 可读取 FRED `CREACBW027SBOG` public weekly aggregate bank CRE loan balance / exposure stock proxy。该字段仍为 audit-only/display-only;不得接入 scoring/decisionModel/executionLock/positionGuidance/Action Queue/Trigger Monitor/Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 non-public CRE loan tape、private CRE marks、loan-level exposure、CDX 或 私募信贷数据。
-- M-85 后,`brentPricingLayer.eiaBrentSpotProxy` 可读取 EIA Europe Brent Spot Price FOB public HTML (`RBRTE`)。该字段仍为 audit-only/display-only;不得接入 `values.brent`、Brent promotion、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor 或 Invalidation Rules;不进 `displayInputsBaseline` / `effectiveDisplayInputs`;不进 cross-validation matrix;不得写成 Platts Dated Brent、正式 Dated Brent 或实物现货成交证据。
-- Energy Stress Phase 2 后,`macroDrivers.energySpareCapacity` 可读取 EIA STEO `COPS_OPEC` OPEC surplus crude oil production capacity monthly estimate/forecast。该字段仍为 audit-only/display-only 慢变量;不得接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor、Invalidation Rules、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation matrix;不得写成实时物理闲置桶数、OPEC 官方配额执行、断供概率、战争概率或油价预测。无 key/网络/解析失败必须 fallback/missing/stale,不得伪造值。
-- P6A 后,`macroDrivers.energyInventoryBalance` 可读取 EIA STEO `PASC_OECD_T3` OECD commercial inventory、`T3_STCHANGE_WORLD` global net inventory withdrawals 与 `PATC_WORLD` global consumption monthly estimate/forecast。该字段仍为 audit-only/display-only 慢变量;不得接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor、Invalidation Rules、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation matrix;不得写成实时全球商业库存总量、Kpler/AIS oil-on-water 确认、OPEC 月报、断供概率、战争概率或油价预测。无 key/网络/解析失败必须 fallback/missing/stale,不得伪造值。
-- Energy Stress Phase 2 后,`macroDrivers.energyTransport` 可读取 IMF PortWatch `Daily_Chokepoints_Data` public ArcGIS FeatureServer,只保存 AIS-derived chokepoint compact 派生摘要(latest + 7d/30d averages + deviation),不得提交 raw AIS-derived 120 天历史。该字段仍为 audit-only/display-only;不得接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decisionModel、executionLock、positionGuidance、Action Queue、Trigger Monitor、Invalidation Rules、Brent promotion、World Order weights、Global Risk Heatmap 或 cross-validation matrix;不得写成官方贸易统计、实际油轮流量确认、封锁确认、断供概率、战争概率或油价预测。`transportShockCandidate` 只是 `transport-shock-candidate-v1` 可入分前候选审计层,固定 `eligibleForMainScore=false` 且 route/market confirmation 未接入,不得被当成今日总判断加权输入;route-level tanker freight source-review 仅登记 TD3C/TD8/TC5 等未来路线级油轮运费确认候选,route-level tanker freight proof-of-source 后只允许 route-level tanker freight manual artifact scaffold 与 route-level tanker freight manual sample collection/review 作为 dry-run-only / local manual / ignored artifact-only 审阅工具,route-level tanker freight display-only candidate contract 仍是 `contract_only_no_production_write`,route-level tanker freight production display projection 与 route-level tanker freight production display projection review 也只是 dry-run-only / manual-artifact projection/review,route-level tanker freight frontend display brief 只是 docs-only future UI contract,route-level tanker freight production write readiness 只是 manual/local pre-write gate 且 source-rights 仍 manual_review_required / productionWriteApproved=false,route-level tanker freight thematic card brief 只是 docs-only final UI target 且不新增路线级油轮运费独立卡,route-level tanker freight production writer contract design 只是 `contract_design_only_no_writer` 且不写生产字段/不允许 `confirmed`,route-level tanker freight source-rights approval gate 当前是 `manual_review_required_no_source_rights_approved` 且 `source_rights_and_redistribution_not_approved`,route-level tanker freight source-rights approval template 只是 `template_only_no_approval` 人工证据模板且不授予 source/live fetch/redistribution/production/frontend approval,route-level tanker freight source-rights artifact review 只是 local/manual ignored artifact reviewer 且 `gateUpdateApproved=false` / `productionWriteApproved=false`,route-level tanker freight source-rights gate update proposal 只是 dry-run ignored proposal 且 `writesGateFixture=false` / `productionWriteApproved=false`,route-level tanker freight source-rights gate update proposal review 只是 manual/local ignored reviewer 且 `applyApprovedByThisReview=false` / `writesGateFixture=false`,route-level tanker freight Baltic context policy 固定现有 Baltic Freight/StockQ BDTI/BCTI/BDI 只是 broad freight context 且删除/合并必须另开 deprecation review,route-level tanker freight disabled writer scaffold 只允许输出 ignored manual artifact 且 `disabled_no_production_write` / `productionWriteAttempted=false` / `not_connected`,当前不得 live fetch、不得写 production data、不得接 frontend/workflow/Worker、不得把 `routeFreightConfirmation` 从 `not_connected` 改成已确认。`usageTermsPinned=partial` / `redistributionCaveat=true` 必须保留;网络/schema/stale/core chokepoint 缺失必须 fallback/missing/stale,不得伪造值。
-- route-level tanker freight source-rights input prep 只是 manual/local ignored draft generator;`prepare:route-level-tanker-freight-source-rights-input` 默认只写 `manual-artifacts/route-level-tanker-freight/source-rights-input.json`,状态为 `draft_manual_input_no_approval`,所有 approval claims 默认 false,不得被当作 source-rights approval、production write approval、frontend approval 或主判断打分资格。
-- route-level tanker freight source-rights input guide 只是 read-only local helper;`guide:route-level-tanker-freight-source-rights-input` 只列出 source-rights input 的缺失 evidence / approval claims / next command,不得写文件、不得更新 gate、不得写 production data、不得接 frontend/workflow/Worker 或主判断打分。
-- ODP verdict history monitor 是 P64/P66 artifact-only 只读漂移监控;`oil-directional-verdict-history-monitor-p66` / `monitor:oil-directional-verdict-history` 只读 git history 中 committed `data/oil-directional-pressure.json`,输出 ignored `manual-artifacts/oil-directional/oil-directional-verdict-history-monitor-latest.json` 或 GitHub Summary,只汇总既有 final/physical bias、转移、divergence、confidence、data sufficiency、evidence age 与 global overlay 状态。P66 `persistentLowConfidence` 只在最近 7 个有效样本全部为 `low` 时作为正交观察提示；不得替换 primary status,不得单独令 `manualAction.requiredNow=true`,不得为消除提示而削弱 confidence caps/classifier。monitor 本身不得访问外部数据源网络；workflow 必须 `contents: read` + `fetch-depth: 0`,除 pinned Actions checkout/setup/upload 与 `npm ci` 外不得访问外部源,不得使用 secrets、不得触发 ODP/Daily/Worker refresh、不得 commit/push、不得写 production data、不得自行计算新 verdict/score、不得改变 ODP `finalBias`、Brent promotion、`values.*`、scoring、decision、execution、position、Global Risk Heatmap 或 cross-validation。
-- P65 后,Oil Thermal baseline preparation/rolling refresh/quality monitor 的默认 history window 为 240 commits / 240 samples,CLI 上限统一为 500,使既有 30-day `established_observation_window` 门槛在当前约 6–7 samples/day cadence 下可达。该变更只扩大 sanitized committed history 的审阅容量；P60 health gate、post-policy diagnostics gate、30-day threshold 与人工 promotion 边界不变。跨过 30 天不得自动写 `config/oil-thermal-watch-baseline.json`,不得自动晋升,不得改变 repeated-observation 数学、ODP `finalBias`、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
-- P68 后,Oil Thermal baseline quality 必须按全部已晋升设施的最短 `windowDays` 守门:`sourceReview.effectiveQualityWindowDays=min(facilities[].windowDays)`；全局 healthy history `sampleWindowDays` 只保留为审计跨度,不得单独触发 `established_observation_window`。只有全部已晋升设施均达到 30 天才可标记 established quality；新增设施或混合批次不得借用更老设施的历史成熟度。旧 P60 baseline 缺少新字段时只允许兼容读取 `sampleWindowDays`；下一次人工 promotion 必须写 `minimumFacilityWindowDays` / `maximumFacilityWindowDays` / `effectiveQualityWindowDays` / target counts。该修复不得自动写 production baseline,不得改变 baseline `status`、repeated/elevated 数学、P60 health gate、ODP `finalBias`、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
-- P67 Web NGrams sample-age 只允许前端在 P63 aggregate-health approval 上读取既有 `sampleGate.latestSelectedTimestamp` 与 `staleAfterHours`,显示“历史审阅样本截至日期 / 距今时长 / 是否超时效”。时间戳必须按 UTC `yyyyMMddHHmmss` 严格解析,无效或超过 1 小时未来值必须 fail-closed；不得把该行写成当前新闻 freshness、事件确认或油价方向证据,不得读取 headline/URL/snippet/body/raw response,不得改变 Oil News signal、ODP `finalBias`、`values.*`、scoring、decision、execution、position、Brent promotion、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor source-to-score contract 只是 P-score-1 合同层;`transport-shock-confirmation-factor-source-to-score-contract-v1` 可登记 PortWatch/StockQ/Oil News/Oil Thermal/Brent curve 现有证据与 Free Route-Linked Tanker Transport Pressure Proxy、Baltic Weekly Tanker Report public route-signal 两条候选输入,但该 contract 固定 `contract_only_no_shadow_score`:不得抓新源、不得写 production data、不得从 P-score-1 直接加前端卡、不得接 workflow/Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor source-review 只是 P-score-2 review-only;`transport-shock-confirmation-factor-source-review-v1` 只审阅 Free Route-Linked Tanker Transport Pressure Proxy 与 Baltic Weekly Tanker Report public route-signal 两个候选源族,该阶段结论 `source_review_ready_for_manual_sample_scaffold`,下一步只允许 ignored manual sample scaffold;不得 live fetch、不得写 production data、不得从 source-review 直接加前端卡、不得接 workflow/Worker、不得建立 shadow score、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor manual sample scaffold 只是 P-score-3 local/manual ignored artifact helper;`transport-shock-confirmation-factor-manual-sample-scaffold-v1` / `review:transport-shock-confirmation-factor-manual-sample` 只读 `manual-artifacts/transport-shock-confirmation-factor/` 或 fixture,只写 ignored manual artifact,不得联网、不得读 key/env、不得写 production data、不得从 manual artifact 直接加前端卡、不得接 workflow/Worker、不得建立 shadow score、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor manual samples review 只是 P-score-4 local/manual ignored artifact 聚合 helper;`transport-shock-confirmation-factor-manual-samples-review-v1` / `review:transport-shock-confirmation-factor-manual-samples` 只读 manual-sample review artifacts,只写 ignored manual artifact,不得联网、不得读 key/env、不得写 production data、不得从 manual artifact 直接加前端卡、不得接 workflow/Worker、不得建立 shadow score、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor shadow-score projection 只是 P-score-5 local/manual ignored artifact 投影 helper;`transport-shock-confirmation-factor-shadow-score-v1` / `project:transport-shock-confirmation-factor-shadow-score` 只读 manual samples review artifact,只写 ignored manual artifact,最多生成 capped `manual_route_signal_slice_only` candidateShadowScore,固定 `completeFactorScoreGenerated=false`、`productionShadowScoreGenerated=false`、`routeFreightConfirmation=not_connected`、`marketConfirmation=not_connected`、`eligibleForMainScore=false`;不得联网、不得读 key/env、不得写 production data、不得从 shadow artifact 直接加前端卡、不得接 workflow/Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor display projection 只是 P-score-6 local/manual ignored artifact 投影 helper;`transport-shock-confirmation-factor-display-projection-v1` / `project:transport-shock-confirmation-factor-display-projection` 只读 shadow-score projection artifact,只写 ignored manual artifact,最多生成 future `C1 通胀与能源` card-design candidate,固定 `directDisplayApproved=false`、`frontendDisplayApproved=false`、`productionDataWriteApproved=false`、`displayProjectionOnly=true`、`eligibleForMainScore=false`;不得联网、不得读 key/env、不得写 production data、不得从 projection artifact 直接实现前端卡、不得接 workflow/Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor frontend card 只是 P-score-7 前端展示层;`transport-shock-confirmation-factor-frontend-card-v1` / `renderTransportShockConfirmation` 只读 production payload 的 `macroDrivers.energyTransport.transportShockCandidate` 可选候选字段,缺失时必须 fail closed 为数据不足/候选字段待刷新;不得读取 `manual-artifacts/`、不得读取 P-score-5/P-score-6 projection artifact、不得写 production data、不得接 workflow/Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor production refresh verification 只是 P-score-8 只读核验层;`transport-shock-confirmation-factor-production-refresh-v1` / `check:transport-shock-confirmation-factor-production-refresh` 只验证 Daily writer live/fallback/missing 路径会写 `transportShockCandidate`,并只读 committed `data/radar-data.json`;payload 缺字段时先输出 `awaiting_production_refresh` / WATCH,只有可信 git history 可证明 writer activation 后连续 2 次 `chore: refresh radar data` Daily refresh commit 仍缺字段时才升级 FAIL;浅历史/无 git history 只能作为诊断,不得宣称 successful Daily refreshes。字段出现后校验 candidate-only 边界;不得触发 Daily、不得联网、不得写 production data、不得接 workflow/Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor production refresh monitor 只是 P-score-9 artifact-only reminder;`transport-shock-confirmation-factor-production-refresh-monitor-p10` / `monitor:transport-shock-confirmation-factor-production-refresh` / `transport-shock-confirmation-factor-production-refresh-monitor.yml` 只读 committed `data/radar-data.json`,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/production-refresh-monitor-latest.json` artifact 和 GitHub Summary,用于观察 Daily 是否写出 `transportShockCandidate`;workflow 必须用 full git history(`fetch-depth: 0`) 统计真实 Daily refresh commits,payload 缺字段且可信 history 证明连续 2 次 Daily refresh commit 后仍缺失时可 fail 为 `missing_candidate_daily_refresh_threshold_exceeded`;浅历史/无 git history 只能保持诊断/WATCH。不得注入 secrets、不得触发 Daily、不得联网抓源、不得 commit/push、不得写 production data、不得接 Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor history sample archive 只是 P-score-10 local/manual ignored artifact helper;`transport-shock-confirmation-factor-history-sample-archive-p10` / `archive:transport-shock-confirmation-factor-history-samples` 只从 git history 读取 committed `data/radar-data.json`,抽取已存在的 `macroDrivers.energyTransport.transportShockCandidate` compact 样本并写 ignored `manual-artifacts/transport-shock-confirmation-factor/history-samples/`;当前字段未刷出时允许 `--allow-empty` WARN;不得联网、不得触发 Daily、不得写 production data、不得接 workflow/Worker、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor history samples review 只是 P-score-11 local/manual ignored artifact reviewer;`transport-shock-confirmation-factor-history-samples-review-v1` / `review:transport-shock-confirmation-factor-history-samples` 只读 P-score-10 ignored history samples 或 fixtures,忽略 sidecar,聚合 sample window、latestDate/latestAgeDays、sourceStatus、candidate status/score/confidence;即使输出 `history_samples_review_ready_keep_display_only`,也不批准 production write、frontend display、shadow score、route freight confirmation、market confirmation、ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor frontend caveat 只是 P-score-12 display-only refinement;现有 C1 卡可以显示 `样本质量` / `数据龄`,但只能从 production `macroDrivers.energyTransport.latestAgeDays/sourceStatus` 与 `transportShockCandidate.confidence/routeFreightConfirmation/marketConfirmation` 派生;不得读取 ignored P-score-10/P-score-11 artifacts、不得生成 route/market confirmation、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor frontend scoring-gate row 只是 P-score-18 display-only refinement;现有 C1 卡可以显示 `入分闸门`,但只能从 production `transportShockCandidate.routeFreightConfirmation/marketConfirmation` 派生;不得读取 P-score-17 artifact 或 ignored manual artifacts、不得生成 route/market confirmation、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor frontend blocker row 只是 P-score-40 display-only refinement;现有 C1 卡可以显示 `阻塞项`,但只能从 production `transportShockCandidate.routeFreightConfirmation/marketConfirmation`、`macroDrivers.energyTransport.latestAgeDays` 与 `eligibleForMainScore` 派生路线级油轮运费未确认、市场确认未接入、PortWatch 数据龄偏滞后、主判断入分未批准等可读摘要;不得读取 ignored/manual artifacts、不得生成 route/market confirmation、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor score-readiness matrix 只是 P-score-13 local/manual ignored artifact hard gate;`transport-shock-confirmation-factor-score-readiness-v1` / `review:transport-shock-confirmation-factor-score-readiness` 只读 production radar/Oil News/Oil Thermal/ODP、可选 P-score-11 ignored history review artifact 与可选 score-integration preflight artifact,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/score-readiness-latest.json`;默认可为 `not_ready_for_score`,若 `transport-shock-confirmation-factor-score-integration-preflight-v1` 通过且无剩余 hard blocker,只可提示 `ready_for_score_design_review_no_score_write` 并要求另开 reviewed score-design PR;不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得批准 source-rights、不得生成 route/market confirmation、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor high-frequency confirmation review 只是 P-score-35 local/manual ignored artifact helper;`transport-shock-confirmation-factor-high-frequency-confirmation-v1` / `review:transport-shock-confirmation-factor-high-frequency-confirmation` 只读 Oil News claim ledger、可选 news manual gate 与 Oil Thermal watch/probe artifact,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/high-frequency-confirmation-latest.json`,用于区分 `newsRepeatedElevatedObservation`、`thermalRepeatedObservation` 与 `thermalElevatedRepeatedObservation`;news manual gate clear 只允许清新闻人工复核 blocker,不能替代热异常/设施确认;当前即使输出 `partial_progress_keep_display_only` 也不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得确认断供/事故/封锁/油价方向、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor news manual gate 只是 P-score-36 local/manual ignored artifact helper;`transport-shock-confirmation-factor-news-manual-gate-v1` / `review:transport-shock-confirmation-factor-news-manual-gate` 只读 Oil News claim-ledger review,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/news-manual-gate-latest.json`,把 sample sufficiency、repeated elevated samples、claim direction stability、source-tier risk 和 headline guard 拆成 `manualReviewBlockers`;即使 gateClear 未来为 true 也只允许进入 separate cross-confirmation review,不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor news operator review 只是 P-score-41 local/manual ignored artifact helper;`transport-shock-confirmation-factor-news-operator-review-v1` / `review:transport-shock-confirmation-factor-news-operator-review` 只读 Oil News claim-ledger review,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/news-operator-review-latest.json`;`reviewerType=codex_operator_delegate` 只允许把 mixed claims 解释为 axis-split review(优先使用 claim-ledger `axisSplit=security_risk_vs_supply_flow_split`),并把低置信高主张降级为 non-confirming context,从而让 news manual gate 进入 cross-confirmation review;不得联网、不得读 key/env、不得输出 raw headlines、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor news operator-review monitor 只是 P-score-42 local/manual ignored artifact monitor;`transport-shock-news-operator-review-monitor-p42` / `monitor:transport-shock-confirmation-factor-news-operator-review` 默认重建 Oil News claim-ledger refresh review 并运行 delegated operator review,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/news-operator-review-monitor-latest.json`;它按 claim-ledger `lastSampleAt` 做 freshness aging,超过 48h 必须提示 `news_operator_review_expired_re_review_required`;它只提示 news gate 是否仍可进入 cross-confirmation review,不得联网、不得读 key/env、不得输出 raw headlines、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/路线级运费/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor cross-confirmation review 只是 P-score-37/P-score-39/P-score-40 local/manual ignored artifact helper;`transport-shock-confirmation-factor-cross-confirmation-v1` / `review:transport-shock-confirmation-factor-cross-confirmation` 只读 production `transportShockCandidate`、P-score-36 news manual gate、P-score-35 high-frequency confirmation、manual/display-only market-confirmation projection、P-score-40 PortWatch freshness probe 与 ODP 周度锚,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/cross-confirmation-latest.json`,把 PortWatch freshness、route freight、market confirmation、news gate、high-frequency physical confirmation 与 ODP anchor 拆成 rows/hardBlockerIds;market projection ready 只能让 `market_confirmation` row 作为 supporting pass,PortWatch freshness probe ready 只能清理 `portwatch_physical_proxy_freshness`,不得把 production `marketConfirmation` 改成 connected;即使 future `crossConfirmationReady=true` 也只允许另开 score-design review,不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor score-integration preflight 只是 P-score-38 local/manual ignored artifact helper;`transport-shock-confirmation-factor-score-integration-preflight-v1` / `review:transport-shock-confirmation-factor-score-integration-preflight` 只读 free-proxy score-readiness gate、P-score-37 cross-confirmation artifact 与可选 P-score-47 free-proxy bridge preflight artifact,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/score-integration-preflight-latest.json`;只有 cross-confirmation 仅剩 `route_freight_confirmation` 且 bridge preflight 明确 `bridgePreflightPassed=true` / `remainingHardBlockerIds=[]` 时,才允许 preflightPassed 进入另开 reviewed score-design PR。其他 blocker 仍必须 blocked;ready 也不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor score-integration preflight monitor 只是 P-score-43 local/manual ignored artifact monitor;`transport-shock-score-integration-preflight-monitor-p43` / `monitor:transport-shock-confirmation-factor-score-integration-preflight` 只运行 P-score-38 preflight,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/score-integration-preflight-monitor-latest.json`;它把 `route_freight_confirmation` 标为 source-rights/authorized route freight required,把 `high_frequency_physical_confirmation` 标为 live physical confirmation required,用于说明剩余 blocker 不能靠 code-only change 清理;不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/路线级运费/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor PortWatch freshness probe 只是 P-score-40 local/manual ignored artifact helper;`transport-shock-confirmation-factor-portwatch-freshness-v1` / `review:transport-shock-confirmation-factor-portwatch-freshness` 只读 IMF PortWatch ArcGIS `Daily_Chokepoints_Data` 或 fixture/manual payload,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/portwatch-freshness-latest.json`;它只能判断 `portwatch_physical_proxy_freshness` 是否可重新复核,不得清理 route freight/news manual gate/high-frequency physical confirmation blockers,不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得确认通道/断供/事故/油价方向、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor score-readiness monitor 只是 P-score-14 artifact-only reminder;`transport-shock-score-readiness-monitor-p14` / `monitor:transport-shock-confirmation-factor-score-readiness` / `transport-shock-score-readiness-monitor.yml` 只运行 P-score-13 local review,只写 ignored monitor artifact 和 GitHub Summary,正常状态 `blockers_still_present`,未来即使出现 `score_ready_requires_separate_review` 也只能另开 reviewed score-design PR;不得注入 secrets、不得 live fetch、不得触发 Daily、不得 commit/push、不得写 production data、不得接 Worker/frontend、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor market-confirmation source-review 只是 P-score-15 review-only;`transport-shock-confirmation-factor-market-confirmation-source-review-v1` 只审阅已接入 display-only 的 Brent futures price curve proxy、ICE Brent structure context、EIA Brent spot proxy、ODP raw Brent/WTI/crack/curve evidence 与 Oil News market-reaction aggregate 作为未来 manual sample 候选,当前只允许下一步 ignored manual sample scaffold;不得新增 live fetch/data source、不得写 production data、不得接 workflow/Worker/frontend、不得把 `marketConfirmation` 从 `not_connected` 改为 connected、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor market-confirmation manual sample scaffold 只是 P-score-16 local/manual ignored artifact helper;`transport-shock-market-confirmation-manual-sample-scaffold-v1` / `review:transport-shock-market-confirmation-manual-sample` 只读人工样本或 fixture,只写 ignored manual artifact,聚合 Brent price-structure / Oil News market-reaction / ODP raw market-stress 观察;不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得把 `marketConfirmation` 从 `not_connected` 改为 connected、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor market-confirmation display projection 只是 P-score-17 local/manual ignored artifact helper;`transport-shock-market-confirmation-display-projection-v1` / `project:transport-shock-market-confirmation-display-projection` 只读 P-score-16 review artifact,只写 ignored manual artifact,最多生成 `manual_market_confirmation_review_ready_non_production` 展示设计候选;不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得把 `marketConfirmation` 从 `not_connected` 改为 connected、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。
-- Transport Shock Confirmation Factor free-proxy score design 只是 P-score-19 design-only 契约;`transport-shock-confirmation-factor-free-proxy-score-design-v1` 只定义无授权 TD/TC 路线级运费时的免费代理低权重候选路径,cap 固定 `maxFutureMainScoreContributionPct=3`,news-only / single-chokepoint-only / stale-PortWatch contribution 均为 0;不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。下一步只允许 P-score-20 artifact-only free-proxy score candidate projection。
-- Transport Shock Confirmation Factor free-proxy score candidate projection 只是 P-score-20 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-score-candidate-v1` / `project:transport-shock-confirmation-factor-free-proxy-score-candidate` 只读 P-score-19 design fixture 或 ignored manual artifact,并可读 P-score-13 score-readiness matrix artifact,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-candidate-latest.json`;缺 readiness 时保持 `free_proxy_score_candidate_blocked_no_score_write`、`candidateScoreContributionPct=0`,readiness 已为 `ready_for_score_design_review_no_score_write` 时只可输出 `free_proxy_score_candidate_ready_no_score_write` 与 capped `candidateScoreContributionPct=3`;所有状态都必须保持 `scoreWriteApproved=false`、`productionWriteApproved=false`、`mainScoreApproved=false`、`eligibleForMainScore=false`、`routeFreightConfirmation=not_connected`、`marketConfirmation=not_connected`;不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。下一步只允许 P-score-21 backtest/replay scaffold。
-- Transport Shock Confirmation Factor free-proxy score replay scaffold 只是 P-score-21 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-score-replay-v1` / `replay:transport-shock-confirmation-factor-free-proxy-score-candidate` 只读 P-score-20 candidate artifact 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-replay-latest.json`,固定 `free_proxy_score_replay_scaffold_pass_no_score_write`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;只验证 news-only / single-chokepoint-only / stale-PortWatch / blocked-candidate 零贡献控制和 ready-candidate 3% cap 控制,不得联网、不得读 key/env、不得写 production data、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。下一步只允许 P-score-22 historical replay sample design。
-- Transport Shock Confirmation Factor free-proxy historical replay design 只是 P-score-22 design-only 契约;`transport-shock-confirmation-factor-free-proxy-historical-replay-design-v1` / `check:transport-shock-confirmation-factor-free-proxy-historical-replay-design` 只定义后续历史回放样本族与 pass/fail 阈值,当前固定 `design_only_no_replay_execution`、`historicalBacktestPerformed=false`、`historicalReplayRunnerImplemented=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;不得联网、不得读 key/env、不得执行 replay、不得写 production data、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。下一步只允许 P-score-23 artifact-only historical replay sample scaffold。
-- Transport Shock Confirmation Factor free-proxy historical replay sample scaffold 只是 P-score-23 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-historical-replay-sample-review-v1` / `review:transport-shock-confirmation-factor-free-proxy-historical-replay-sample` 只读单条 manual sample 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-sample-review-latest.json`,当前固定 `sample_review_ready_keep_no_score_write`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;只验证样本形状、样本族、窗口、零贡献控制与 citation hash,不得联网、不得读 key/env、不得执行 replay、不得写 production data、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。下一步只允许 P-score-24 historical replay sample set review。
-- Transport Shock Confirmation Factor free-proxy historical replay sample set review 只是 P-score-24 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review-v1` / `review:transport-shock-confirmation-factor-free-proxy-historical-replay-samples` 只读 P-score-23 sample-review artifact 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-samples-review-latest.json`,当前固定 `historical_replay_sample_set_ready_keep_no_score_write`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;只聚合样本族覆盖、known disruption 覆盖、零贡献控制与 citation 不落原文,不得联网、不得读 key/env、不得执行 replay、不得写 production data、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap 或 cross-validation。下一步只允许 P-score-25 artifact-only historical replay runner design。
-- Transport Shock Confirmation Factor free-proxy historical replay runner design 只是 P-score-25 design-only 契约;`transport-shock-confirmation-factor-free-proxy-historical-replay-runner-design-v1` / `check:transport-shock-confirmation-factor-free-proxy-historical-replay-runner-design` 只定义未来 artifact-only runner 的允许输入、输出、required replay metrics、hard fail claims、false-positive rate 与 known-disruption hit-rate 阈值,当前固定 `runner_design_only_no_replay_execution`、`historicalReplayRunnerImplemented=false`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;不得联网、不得读 key/env、不得执行 replay、不得写 production data、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-26 artifact-only historical replay runner dry-run scaffold。
-- Transport Shock Confirmation Factor free-proxy historical replay runner dry-run scaffold 只是 P-score-26 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-historical-replay-runner-v1` / `replay:transport-shock-confirmation-factor-free-proxy-historical-replay` 只读 P-score-24 sample-set review artifact 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-runner-latest.json`,当前固定 `dry_run_pass_no_score_write`、`productionHistoricalReplayPerformed=false`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;只计算 false-positive rate、known-disruption hit-rate 与 max candidate contribution,不得联网、不得读 key/env、不得读取 production data、不得执行生产回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-27 historical replay runner fixture review。
-- Transport Shock Confirmation Factor free-proxy historical replay runner fixture review 只是 P-score-27 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-historical-replay-runner-review-v1` / `review:transport-shock-confirmation-factor-free-proxy-historical-replay-runner` 只读 P-score-26 runner artifact 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-runner-review-latest.json`,当前固定 `runner_fixture_review_pass_keep_no_score_write`、`productionHistoricalReplayPerformed=false`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;只验证 false-positive rate、known-disruption hit-rate、candidate contribution cap 与不入分边界,不得联网、不得读 key/env、不得读取 production data、不得执行生产回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-28 historical replay sample expansion / real sample archive。
-- Transport Shock Confirmation Factor free-proxy historical replay sample expansion 只是 P-score-28 fixture/manual artifact-only 质量门;`transport-shock-confirmation-factor-free-proxy-historical-replay-sample-expansion-v1` / `check:transport-shock-confirmation-factor-free-proxy-historical-replay-sample-expansion` 只验证 6 类 historical replay sample fixtures 与 expanded runner 输出,当前固定 `expanded_sample_family_coverage_pass_keep_no_score_write`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;不得联网、不得读 key/env、不得读取 production data、不得执行生产回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-29 manual real-event replay sample intake/archive helper。
-- Transport Shock Confirmation Factor free-proxy historical replay real-event sample intake 只是 P-score-29 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample-intake-v1` / `intake:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-sample` 只读人工真实事件候选样本或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples/`,当前固定 `real_event_sample_intake_ready_keep_no_score_write`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;输出只保留 source citation hash/domain hint,不得联网、不得读 key/env、不得读取 production data、不得执行生产回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-30 real-event sample-set aggregation/readiness review。
-- Transport Shock Confirmation Factor free-proxy historical replay real-event sample-set review 只是 P-score-30 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review-v1` / `review:transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples` 只读 P-score-29 sanitized intake artifact/sample-review archives,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-historical-replay-real-event-samples-review-latest.json`,当前固定 `real_event_sample_set_review_ready_keep_no_score_write`、`scoreReadinessApproved=false`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;不得联网、不得读 key/env、不得读取 production data、不得执行生产回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-31 score-readiness gate update using real-event sample-set review。
-- Transport Shock Confirmation Factor free-proxy score-readiness gate 只是 P-score-31 local/manual ignored artifact gate;`transport-shock-confirmation-factor-free-proxy-score-readiness-gate-v1` / `review:transport-shock-confirmation-factor-free-proxy-score-readiness-gate` 只读 P-score-30 real-event sample-set review artifact 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-readiness-gate-latest.json`,当前固定 `score_readiness_gate_collect_more_keep_no_score_write`、`scoreReadinessApproved=false`、`historicalBacktestPerformed=false`、`scoreIntegrationApproved=false`、`scoreWriteApproved=false`、`productionWriteApproved=false`、`eligibleForMainScore=false`;默认要求至少 6 个真实事件样本、3 个 known-disruption 样本、3 个 zero-control 样本、false-positive rate<=20% 与 known-disruption hit-rate>=60%;不得联网、不得读 key/env、不得读取 production data、不得执行生产回放或历史回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许 P-score-32 real-event sample target monitor/reminder 或继续补充真实事件样本。
-- Transport Shock Confirmation Factor free-proxy score-readiness gate monitor 只是 P-score-32 local/manual ignored artifact monitor;`transport-shock-free-proxy-score-readiness-gate-monitor-p32` / `monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate` 只运行 P-score-31 gate,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-readiness-gate-monitor-latest.json`,当前固定 `sample_targets_incomplete_collect_more`、`scoreWriteApproved=false`、`productionDataWriteApproved=false`、`scoreIntegrationApproved=false`、`eligibleForMainScore=false`;仅汇总 real-event/known-disruption/zero-control sample remaining 与 nextSamplePriorities,不得联网、不得读 key/env、不得读取 production data、不得执行生产回放或历史回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许继续补充真实事件样本或另开 P-score-33 workflow/reminder-only 自动监控。
-- Transport Shock Confirmation Factor free-proxy score-readiness gate monitor workflow 只是 P-score-33 reminder-only GitHub Actions workflow;`.github/workflows/transport-shock-free-proxy-score-readiness-gate-monitor.yml` 每天 23:39 UTC 或手动触发,只用 `contents: read`,先运行 P-score-30 显式 `--manifest docs/evidence/transport-shock/free-proxy-real-event-review-manifest.json` 生成临时 ignored input,再运行 P-score-32 monitor 并上传 ignored artifact;不得使用 secrets、不得 commit/push、不得触发 Daily、不得写 production data、不得接 frontend/Worker、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许继续补充真实事件样本或另开独立 score integration design review。
-- **2026-09-05 P30/P33 evidence handoff narrow extension**：owner授权修复本地/云端样本交接，P30除原有local/manual模式外仅允许显式读取上述唯一版本化脱敏manifest；manifest与`--input/--input-dir/--allow-empty`互斥，缺失或校验失败必须拒绝。只保存白名单人工样本元数据、source citation hash/domain hint与原review字节SHA-256，不提交原始archive、URL、引用正文或自由文本；原件哈希只用于追溯，不声称云端重新验证原件。`contributionBasis=manual_review_not_model_backtest`、全部生产/评分审批false及route/market `not_connected`硬锁；样本门槛通过不等于预测验证、生产回测或评分晋升。该扩展仅改变P33证据输入交接，不批准任何runtime连接或来源重分发权利。
-- Transport Shock free freight alternative source-review 只是 P-score-44 docs+fixture source-review;`transport-shock-free-freight-alternative-source-review-v1` 只把 IMF PortWatch、StockQ BDTI/BCTI、NOAA MarineCadastre AIS、Suez/Panama 官方统计、EIA/IEA chokepoint exposure、CME/ICE TD3C link/manual reference、Solactive wet freight index 与 Baltic daily TD/TC rights boundary 分类为免费代理/静态权重/link-only/blocked;状态固定 `source_review_free_alternatives_no_route_freight_confirmation`;不得批准 unauthorized scraping、不得 live fetch、不得写 production data、不得接 workflow/Worker/frontend、不得把 `routeFreightConfirmation` 从 `not_connected` 改成 connected、不得 score write、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock satellite handling policy 只是 P-score-45 docs+fixture policy-review;`transport-shock-satellite-handling-policy-v1` 固定状态 `policy_review_no_thermal_blocker_bypass`,用于规定 Oil Thermal / FIRMS 未出现 repeated elevated facility observation 时的处理:不得降低 FRP/置信度/半径/重复观测阈值,不得用 no-detection 证明无事故,不得清理 `high_frequency_physical_confirmation`、`routeFreightConfirmation` 或 score blocker。no-detection 只能作为降低设施事故主张置信度的负证据,可展示 `未见卫星热异常确认`;新闻/设施提及时只允许 `probe:oil-thermal-targeted` 生成 ignored `manual-artifacts/oil-thermal/` targeted probe plan,默认不联网、不读 MAP_KEY、不输出 raw title/headline/snippet/body/URL,只有显式 `--run-diagnosis` 才可跑 1/3/5 天 FIRMS manual diagnostics,不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock free-proxy score bridge review 只是 P-score-46 docs+fixture bridge-review;`transport-shock-free-proxy-score-bridge-review-v1` 固定状态 `bridge_review_route_freight_reclassified_high_frequency_still_blocked_no_score_write`,只允许未来 artifact-only preflight 把 `route_freight_confirmation` 视为低权重 free-proxy path 不要求的项,但不得清理 `routeFreightConfirmation=not_connected`,不得确认 licensed route-level tanker freight,不得绕过 `high_frequency_physical_confirmation`。`high_frequency_physical_confirmation` 仍只能由 repeated elevated thermal evidence 或另开的 reviewed thermal bypass policy 清理;不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock free-proxy bridge preflight 只是 P-score-47 local/manual ignored artifact helper;`transport-shock-free-proxy-bridge-preflight-v1` / `review:transport-shock-free-proxy-bridge-preflight` 只读 P46 bridge-review、free-proxy readiness gate 与 cross-confirmation artifacts,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-bridge-preflight-latest.json`。它可把 `route_freight_confirmation` 重分类为 `not_applicable_to_free_proxy_low_weight_path`,但保持 `routeFreightConfirmation=not_connected` 且 `routeFreightConfirmationCleared=false`;当前若只剩 `high_frequency_physical_confirmation`,状态为 `free_proxy_bridge_preflight_blocked_on_high_frequency_no_score_write`。不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor free-proxy score-write design review 只是 P-score-48 local/manual ignored artifact helper;`transport-shock-confirmation-factor-free-proxy-score-write-design-review-v1` / `review:transport-shock-confirmation-factor-free-proxy-score-write-design` 只读 P-score-20 candidate 与 P-score-21 replay artifact/fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-score-write-design-review-latest.json`。它只验证 `score_write_design_review_ready_no_production_write` 所需的 3% cap、news-only/single-chokepoint/stale-PortWatch 零贡献控制和 ready-candidate cap replay 控制,字段必须保持 `scoreWriteApproved=false`、`productionWriteApproved=false`、`scoreIntegrationApproved=false`、`eligibleForMainScore=false`,`historicalBacktestPerformed=false`;即使 ready 也只允许另开 reviewed runtime_score_integration_design_review,不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor runtime score integration design review 只是 P-score-49 local/manual ignored artifact helper;`transport-shock-confirmation-factor-runtime-score-integration-design-review-v1` / `review:transport-shock-confirmation-factor-runtime-score-integration-design` 只读 P-score-48 score-write design review artifact/fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/runtime-score-integration-design-review-latest.json`。它可输出 `runtime_score_integration_design_ready_no_production_write` 并列出 `feature_flag_default_off`、`hard_cap_three_pct`、fail-closed zero contribution、contract migration、rollback/kill-switch 等未来 runtime guard,但字段必须保持 `scoreWriteApproved=false`、`productionWriteApproved=false`、`scoreIntegrationApproved=false`、`runtimeIntegrationApproved=false`、`eligibleForMainScore=false`;不得写 production data、不得接 workflow/Worker/frontend、不得 score write、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。真正接入主分必须另开明确授权的 runtime scoring migration。
-- Transport Shock Confirmation Factor runtime scoring migration authorization 是 P-score-50 owner-approved 授权契约;`transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1` fixture 状态为 `runtime_scoring_migration_authorized_capped_free_proxy`,记录 `authorizedBy=owner_thread_approval`。它授权 `macroDrivers.energyTransport.transportShockCandidate` 的 free-proxy low-weight runtime scoring migration,且 `maxContributionPct=3`、`defaultContributionPct=0`、pressure-only、fail-closed;仍不授权 routeFreightConfirmation connected、marketConfirmation connected、ODP `finalBias` mutation、Brent promotion mutation、Global Risk Heatmap/cross-validation/Bubble Watch mutation。P-score-51 后,P-score-50 checker 证明运行时实现仍限定在该授权范围内。
-- Transport Shock Confirmation Factor runtime scoring migration implementation 是 P-score-51 运行时受限实现;生产 payload 可新增顶层 `transportShockScoringImpact` / `transport-shock-scoring-impact-v1`,只从 `macroDrivers.energyTransport.transportShockCandidate` 读取 PortWatch free proxy。只有 source live、latestAgeDays<=7、candidate status 为 watch/elevated_watch 且 `eligibleForMainScore=true` 时才允许 1/2/3 分正贡献,硬上限 +3,默认 fail-closed 0,不得降低主分。该规则特定覆盖早期 `eligibleForMainScore=false` 的可入分前候选边界;routeFreightConfirmation/marketConfirmation 仍必须 `not_connected`,且不得改变 ODP `finalBias`、Brent promotion、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor frontend score-impact row 是 P-score-52 前端细化;C1 `Transport Shock / 运输冲击确认因子` 卡可新增 `主分影响` 行,只读 production payload 顶层 `transportShockScoringImpact` 显示 0/+3 或 +1/+2/+3 capped contribution,并把 `入分闸门` / `阻塞项` 改成解释 runtime reason。该行不得读取 manual artifacts、不得自行计算 score、不得把 routeFreightConfirmation/marketConfirmation 改为 connected、不得确认封锁/断供/路线级油轮运费、不得改变 ODP `finalBias`、Brent promotion、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor frontend score attribution 是 P-score-53 前端归因层;`#homepage-risk-engines` 可显示 `Transport Shock 主分归因`,但只能复用 production payload 顶层 `transportShockScoringImpact` 的 capped score impact、reason 与 scoreBeforeTransport/scoreAfterTransport,不得自行计算 score、不得读取 manual artifacts、不得写 production data、不得连接 routeFreightConfirmation/marketConfirmation、不得改变 ODP `finalBias`、Brent promotion、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor score-impact history monitor 是 P-score-54 artifact-only 归因监控;`monitor:transport-shock-confirmation-factor-score-impact-history` 只读 git history 中 committed `data/radar-data.json` 的顶层 `transportShockScoringImpact`,输出 ignored `manual-artifacts/transport-shock-confirmation-factor/score-impact-history-latest.json` 或 GitHub Summary。它不得联网、不得触发 Daily、不得写 production data、不得自行计算新 score、不得连接 routeFreightConfirmation/marketConfirmation、不得改变 ODP `finalBias`、Brent promotion、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor runtime score policy review 是 P-score-55 artifact-only post-migration policy replay;`transport-shock-confirmation-factor-runtime-score-policy-review-v1` / `review:transport-shock-confirmation-factor-runtime-score-policy` 只读 production `data/radar-data.json` 或 tracked fixture,把顶层 `transportShockScoringImpact` 按授权规则复放:source live、latestAgeDays<=7、eligibleForMainScore、watch/elevated_watch、candidateScore threshold 75/60/50 对应 +3/+2/+1,否则 fail-closed 0。它只写 ignored `manual-artifacts/transport-shock-confirmation-factor/runtime-score-policy-review-latest.json`,不得改 runtime scoring、不得写 production data、不得扩权、不得连接 routeFreightConfirmation/marketConfirmation、不得改变 ODP `finalBias`、Brent promotion、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor runtime score policy monitor 是 P-score-56 artifact-only drift monitor;`transport-shock-runtime-score-policy-monitor-p56` / `monitor:transport-shock-confirmation-factor-runtime-score-policy` 包装 P-score-55 policy review 的 `--no-output --json` 路径,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/runtime-score-policy-monitor-latest.json`。它只报告 `zero_contribution_observed` / `nonzero_contribution_observed` / `policy_drift_detected`,不得改 runtime scoring、不得写 production data、不得扩权、不得连接 routeFreightConfirmation/marketConfirmation、不得改变 ODP `finalBias`、Brent promotion、Global Risk Heatmap、cross-validation 或 Bubble Watch。
-- Transport Shock Confirmation Factor free-proxy real-event sample input prep 只是 P-score-34 local/manual ignored artifact draft helper;`transport-shock-confirmation-factor-free-proxy-real-event-sample-input-prep-v1` / `prepare:transport-shock-confirmation-factor-free-proxy-real-event-sample-inputs` 只读 P-score-32 gate monitor artifact 或 fixture,只写 ignored `manual-artifacts/transport-shock-confirmation-factor/free-proxy-real-event-sample-input-prep-latest.json` 与可选 ignored draft templates,当前固定 `sample_input_prep_ready_operator_required`、`scoreWriteApproved=false`、`productionDataWriteApproved=false`、`scoreIntegrationApproved=false`、`eligibleForMainScore=false`;模板默认 `realEventCandidate=false`、`sourceRightsReviewed=false`,必须人工填源/复核后才能走 P-score-29 intake,不得联网、不得读 key/env、不得读取 production data、不得执行生产回放或历史回测、不得接 workflow/Worker/frontend、不得 score integration、不得自动入分、不得改变 ODP `finalBias`、Brent promotion、今日总判断打分、Global Risk Heatmap、cross-validation 或 Bubble Watch。下一步只允许人工补样本或另开 sample-pack review。
-- M-86 后,Macro Overview 前端必须把已接入的公开代理覆盖与正式/非公开源边界分开显示：`coverageNotes` 可说明 EIA/ICE/StockQ/ZQ/SR3/OIS/CDX/CRE/public retail 等公开代理已覆盖，`missingEvidence` 只保留真正未刷到的公开数据或 World Order 外部源限制；不得把 live public proxy 重新渲染成“缺失证据”，也不得把正式源边界写成高确定性真实源。
-- M-87 后,缺失源的 `null` / `undefined` / empty string 不得在 Brent display 或 cross-validation evidence 中被 `Number(...)` 隐式转成 `0.00` / `+0.0bp`;`check:null-zero-display-guards` 必须保留在 frontend visual suite 中。
-- World Order 外部数据刷新应先手动观察，再考虑 scheduled workflow；不要把 `build:world-order` 加入 `check:all`，H-4 的 `review:world-order` 只是本地只读人工审阅 helper。
-- World Order 新外部源不得直接进入 scoring；必须先通过 diagnosis / source review，再另开版本接入。
-- ReliefWeb 或任何新外部源不得直接进入 scoring；必须先通过 diagnosis / review，再另开 integration version。
-- 修改 World Order Stress schema / scoring / data product 时，必须确保 `npm run check:world-order` 和 `npm run check:all` 通过；`check:all` 只检查现有 JSON，不应默认运行 `build:world-order`。
-- frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或 `scripts/modules/*.js`，必须同步 bump 入口脚本和所有本地 JS module import query。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
-- Worker runtime 改动流程：Cursor 实现 → 本地 checks → 提交 / push → deploy preflight → `wrangler deploy` → live validation → 观察 1-2 轮 scheduled Check Worker Health。文档 / check 脚本改动通常不需要 deploy。
-- KV write guard deferred：只有持续 >800 writes/day、90% warning 或 429 时，才考虑 cron 调整、paid plan 或另开版本设计 guard。
-- Worker sourceProbe 现仅保留 2 路 Google Finance probe（diagnostic-only）；Stooq Brent 诊断 sourceProbe 已于 F6（2026-06-02）删除。D-8B findings 已确认 Google Finance probe 当前不可升级为 validation source，除非另开版本连续验证。（realtime `run-realtime.mjs` 的 `/q/l/?s=cb.f` Stooq Brent consensus 候选属另一路径,未受 F6 影响。）
-- VIX / Gold / DXY / US10Y / SPX secondary 当前只用于诊断，不影响 `values.*`、scoring、decision、healthScore、criticalMissing 或 unavailable。
-- Worker fetch timeout guard 已上线；后续新增外部源必须继承短超时、try/catch、diagnostics-only 和失败隔离原则。
-- Daily vs Worker Input Audit 只是 Summary 审计；Daily 仍消费 `origin/realtime-data:realtime/market.json`，不得在未另开版本评审时切到 Worker 作为 Daily 输入。
-- Worker-first Health Check 是只读监控；不得把健康检查脚本改成写 KV、写数据产物或触发 deploy。
-- Check Realtime Health 是 `realtime-data` fallback / Daily baseline freshness observer；stale / unavailable 只应 warning 与输出 `shouldRecover`，Worker-first runtime hard fail 由 Check Worker Health 承担。
-- v28.0G-3 只优化 health workflow Summary 文案；不得借此改变 fail 边界、workflow 触发、Worker runtime、前端或数据产物。
-- v28.0G-1 secondary freshness audit 只在 `check-worker-health` 中派生 `freshnessStatus` / `observedAgeHours` / `freshnessReason`；不得把这些字段当作 Worker payload contract，也不得让 stale warning 直接阻断 workflow。
-- HY OAS、real10y、credit spread proxy、liquidity proxy 和其它 macro stress indicators 都是 future candidates；不得直接进主链路，必须另开版本并先作为 isolated secondary diagnostic 观察。
-
-每次任务应尽量做到：
-
-- 单一目标。
-- 最小改动。
-- 可验证。
-- 可回滚。
-
-必须保留完整项目结构和现有主要模块，包括 realtime、health、decision、action queue、trigger monitor、invalidation rules、heatmap 和六大风险模块。
+- Release/display version 为 v28.0.10；data.version / decisionModel.contractVersion 保留 v27.0。asset cache 读 scripts/app.js 的 APP_VERSION，不机械替换历史版本。
+- Worker 主 preview 为 /market.worker-preview.json；M-94 前端当前读 data/radar-data.json，scripts/modules/realtime.js 冻结且未接入，重接 overlay 需另开评审。
+- core secondary set 为 vix / gold / dxy / us10y / spx，只写 /market.secondary-preview.json，不参与 values.* 或主评分。不得绕过有效显示输入或在 render 重算 decision/execution/position。
+- v28.0G-4C Trading Economics freshness hard gate：Yahoo 与 TE 均须 fresh。tradingeconomics-observedAt-invalid / tradingeconomics-confirmation-stale 在 promotion 层 hard hold；observedAt failure does not make candidate ok false。PR #53 superseded；KV write guard deferred。
+- worker-health-snapshot 与 review:worker-health-snapshot 只读，不写 KV/数据或触发恢复/部署。Daily 输入仍为 realtime-data，不切 Worker；health warning 与 hard-fail 边界不混淆。
+- External AI 仅独立展示，不影响 scoring/decision/execution/position。现行 Macro Risk / Bubble Watch 生产路径仍须成本授权、单次 provider call/no retry、validator/review/freshness；不覆盖 deterministic 输出，不晋升 manual artifacts，不打印凭证。
+- World Order 为独立 regime overlay，不是第七个模块；新增源需 source review / 独立接入授权。ACLED 仅手工 xlsx 标准化，不自动抓取或恢复旧 API；失败不伪造数据或清空可用缓存。
+- 宏观代理保留来源/时效/缺失披露。macroDrivers.employment 含 FRED CES0500000003 平均时薪，sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll} 失败降级。macroDrivers.consumerRetail 可展示 Redbook public HTML / BoA 公开摘要，不冒充原始卡数据。macroDrivers.commercialRealEstate 不得伪造为 CDX、私募信贷数据或非公开 CRE loan tape。M-74 后代理按对应源契约 display-only。
+- Transport 的 transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1 是既有 owner_thread_approval，状态 runtime_scoring_migration_authorized_capped_free_proxy、maxContributionPct=3；P51 transport-shock-scoring-impact-v1 只准现行 free-proxy gate 的 +1/+2/+3、默认 fail-closed 0。routeFreightConfirmation/marketConfirmation 仍 not_connected；不扩展 ODP/Brent promotion/Heatmap/cross-validation/Bubble Watch。
+- route-level tanker freight source-rights 和生产写入须独立批准，manual/preflight 成功不是授权。不降低 checker/validator 或篡改生产 JSON 让检查通过；不删除用户文件、数据、配置或日志。
+- 不引入未经批准的依赖；零生产依赖策略、新增须 ADR 保留。保持现有模块和架构；领域细则无损迁移至 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按上表读取。
+- 修改 index.html、scripts/app.js 或 scripts/modules/*.js 必须运行 `npm run bump:frontend-asset-version` 同步入口和本地 module import query；仅 Worker/docs/check/workflow/JSON 改动无需 bump。scripts/ 的 console.log 可能是 Actions 日志功能，不作为 debug 残留删除。
 
 ## 2. Frontend Design Contract — Mandatory Reading
 
-> **CRITICAL**: Before performing any frontend change (HTML / CSS / SVG / JS rendering modules), every AI agent (Codex, Cursor, Claude, or otherwise) MUST read `DESIGN.md` in full.
+任何 HTML/CSS/SVG/JS rendering 改动前必须完整阅读 DESIGN.md。非简单视觉改动先盘点当前颜色/字体/className 等受影响现状，并引用适用设计章节。
 
-### Required Acknowledgment in PR
+触及 index.html、assets/styles.css、scripts/modules/render*.js 或 SVG rendering 的 PR 描述必须包含：普通变更用 **“本 PR 符合 DESIGN.md 的所有规则”**；变更设计契约用 **“本 PR 申请变更 DESIGN.md 的 §X 节”**。
 
-Every PR that touches `index.html`, `assets/styles.css`, `scripts/modules/render*.js`, or any SVG rendering code MUST include one of these statements in the PR description:
+仅获前端展示授权时，不得更改 scoring/decision/execution/position、data/、启用 Market Pricing Temperature、增加 live fetch/生产写入或修改 .github/workflows/。专门后端/workflow 任务按独立授权执行；DESIGN.md 不授予业务/数据权限。
 
-- ✅ **"本 PR 符合 DESIGN.md 的所有规则"** — for routine changes
-- ⚠️ **"本 PR 申请变更 DESIGN.md 的 §X 节"** — for changes that modify the design contract itself
-
-### Required Pre-Change Research
-
-For non-trivial visual changes, the agent MUST:
-
-1. Read `DESIGN.md` and confirm which sections apply
-2. Generate a current-state inventory before making changes (e.g., color usage table, font-size baseline, className inventory)
-3. Cite specific DESIGN.md sections that govern the change
-
-### Boundary Reaffirmation
-
-`DESIGN.md` does NOT relax any data / business boundaries. The following remain absolutely prohibited:
-
-- Changing scoring / decision / execution / position logic
-- Modifying `data/` or `data/radar-data.json`
-- Enabling Market Pricing Temperature
-- Adding live fetch or production write
-- Modifying `.github/workflows/`
-
-When `DESIGN.md` and any other contract (e.g., Market Pricing governance) appear to conflict, **the more restrictive contract wins**.
-
-### Enforcement
-
-- `npm run check:frontend-live-contracts` enforces the live frontend display contracts: DOM id 契约 (`check:dom`)、null/zero 显示守卫、macro coherence (display-only)
-- `DESIGN.md` itself is the ground truth for IA 顺序 / 字体 / 视觉 (see `docs/ADR/0014-design-md-is-ia-ground-truth.md`); the dedicated `check:homepage-ia-contract` / `check:editorial-redesign-contract` checkers were retired in checker 精简 Phase 1+2, so IA/font contracts are now guarded by `DESIGN.md` + review, not a script
-- `npm run check:all` runs the default read-only validation chain defined in `package.json`; it includes `check:frontend-live-contracts`, `check:frontend-zh-copy`, and the read-only external AI contract checks, but excludes artifact-generating opt-in commands such as `check:external-ai:with-artifacts`
-
-PRs that fail these contracts MUST NOT be merged, regardless of how good the visual result looks.
+check:frontend-live-contracts 覆盖 DOM、null/zero 和 display-only macro coherence；IA/字体/视觉以 DESIGN.md + review 为准（ADR-0014），已退役的 homepage-ia/editorial-redesign checker 不再运行。适用契约未通过不得合并。完整套件及副作用见 §5。
 
 ## 3. 严格禁止的高风险行为
 
@@ -247,7 +77,7 @@ PRs that fail these contracts MUST NOT be merged, regardless of how good the vis
 8. 不要修改内部字段名：`dxy`、`rt-dxy`、`values.dxy`、`displayInputsBaseline.dxy`。
 9. 不要把用户可见文案改回：`十亿美元`、`美元指数`、`广义美元`、`Δ --`。
 10. `scripts/app.js` 是高风险核心文件；如果修改它，最终必须通过 `node --check scripts/app.js`。
-11. 不要只交 diff 或让用户手动合并冲突；必须直接修改真实仓库文件。
+11. 已授权实施任务应修改真实文件并验证；审计、设计和修改前审阅只交结论与建议，可提供短 diff。冲突文件编辑与 Git 操作按各自授权处理。
 12. 不要在未被要求时改变数据结构。
 13. 不要把 `secondarySources` / `secondaryDiagnostics` / `secondarySourceSummary` 混入 `/market.worker-preview.json`。
 14. 不要让 VIX / Gold / DXY / US10Y / SPX secondary 覆盖或参与任何 `values.*` 主值。
@@ -259,158 +89,64 @@ PRs that fail these contracts MUST NOT be merged, regardless of how good the vis
 
 ## 4. 默认开发流程
 
-每个任务按以下流程执行：
+1. 读取当前任务和适用规则，检查基线与工作区；不改用户已有无关改动。
+2. 完成授权范围内的实施、修复和必要检查，不因常规选择或步骤切换暂停。
+3. 检查失败先归因：本次引入且在范围内的失败必须修复；既有失败/环境阻塞报告证据，不扩大修复范围。必需检查未通过时不得声称全部完成或满足提交条件。
+4. 报告实际文件、检查命令/退出码及限制；Git 操作遵守前置分级授权。
 
-1. 理解任务边界。
-2. 只修改允许范围内文件。
-3. 不顺手改无关文件。
-4. 运行必要检查。
-5. 报告实际修改文件和检查结果。
-6. 等待人工确认后再提交。
+必要检查成功后才提交；报告实际执行的操作和结果，不因已授权的 Git 步骤再次暂停。
+默认验证不运行 Daily/realtime 生成脚本。获授权运行后核对产物差异；非目标产物只恢复本轮自身造成且可明确分离的内容，不覆盖用户数据，不运行未经授权的 Git 恢复命令。无法安全分离时保留现场，仅暂停相关写入并说明。
 
-不要把"检查命令"和"提交命令"混在同一轮要求里。如果检查失败，应先进入修复流程，不要继续提交。代码改动和 JSON 产物改动必须区分；运行 daily / realtime 生成脚本后，要确认是否产生 JSON 产物，除非任务明确要求，否则恢复 JSON 产物。
+## 5. 验证入口与副作用
 
-## 5. 当前完整检查命令
+本地交付/提交准备运行 `npm run check:changed`，自动比较整个工作区与 HEAD（含 staged、unstaged、未忽略的新文件）。`-- --plan` 仅预览，不能算验证通过。实现与判定边界见 [ADR-0025](docs/ADR/0025-proportionate-validation.md)。
 
-推荐完整检查：
+- 普通 Markdown 说明改动：文档链接/锚点、既有文档契约和 diff whitespace 检查。
+- 代码、配置、workflow、数据、AGENTS/CLAUDE/DESIGN/SKILL、ADR、规则/契约或被 checker 消费的文档，以及删除、命令示例和权限措辞：仍跑 `npm run check:all`。语义上影响行为、授权或契约的改动即使未被自动识别，也必须完整检查；不确定时取完整检查。
+- 发布/部署和明确点名的专项验收保持原要求。CI/Pages 仍跑 check:all；不能用轻量检查替代生产保护网。相同文件/输入已成功执行的检查不重复跑，除非出现新改动、失败或未解风险。无改动的只读审计不自动跑全套。
 
-```bash
-npm run check:all
-```
+`check:all` 组成以 package.json / scripts/check-suite.mjs 为准。对生产数据只读不等于零文件写入：external-ai 套件的 check:external-ai-manual-input:analyst 写 ignored manual-artifacts/external-ai/manual-input-analyst-latest.json；不是 provider 调用或生产写入授权。零文件写入审计不运行该生成项。
 
-实际顺序以 `package.json` 的 `scripts.check:all` 为准。不要在文档中复制完整链路或硬编码检查数量,避免与 `package.json` 漂移。
+## 6. 专项验证
 
-默认 `check:all` 是只读验证链;external AI 的 artifact / projection / manual-input 生成能力保留为显式 opt-in 命令,不属于日常默认验证。
-
-```text
-package.json scripts.check:all
-```
-
-含义：
-
-- `check:syntax`：自动扫描 `scripts/` 下 `.js / .mjs` 并执行语法检查。
-- `check:dom`：检查关键 DOM 挂载点。
-- `check:modules`：自动扫描 `scripts/modules/*.js` 并动态 import。
-- `check:frontend-live-contracts`：聚合当前前端 live display contract。
-- `check:frontend-zh-copy`：检查用户可见中文文案契约。
-- `check:external-ai`：默认只读 external AI contract / guard 检查;会写 artifact 的路径必须显式运行 `check:external-ai:with-artifacts` 或对应 manual/artifact 命令。
-- `check:workflows`：检查 GitHub Actions workflow 合约。
-- `check:docs`：检查 `README.md`、`AGENTS.md` 和 `docs/*.md` 中的本地 Markdown 链接；跳过 `http / https / mailto / 纯锚点`。
-- `check:data`：等价于 `node scripts/validate-data.mjs`，检查数据契约；local realtime / Daily baseline alignment 的 expected skip 默认静默。
-- `check:data:verbose`：输出 expected skip reason。
-- `check:data:strict-live-alignment`：把本地 realtime 与 `dailyRealtimeInput` 非同一快照视为失败。
-
-v28.0G-10 起，如果本地 realtime 与 `dailyRealtimeInput.updatedAt` 不匹配，默认 `check:data` 会静默跳过 live alignment 并继续其它检查；`Validation passed (release v28.0.10; data contract v27.0)` 表示发布版本与兼容数据契约均通过当前校验。
-
-## 6. 不同类型任务的检查要求
-
-| 任务类型 | 必须运行 |
-|---|---|
-| 只改 README / AGENTS / docs | `npm run check:docs` 和 `npm run check:all` |
-| 改 HTML | `npm run check:dom` 和 `npm run check:all` |
-| 改 JS / MJS | `npm run check:all` |
-| 改 workflow | `npm run check:workflows` 和 `npm run check:all` |
-| 改用户可见文案 | `npm run check:frontend-zh-copy` 和 `npm run check:all` |
-| 改数据契约 / validate | `npm run check:data` 和 `npm run check:all` |
-| 运行 daily / realtime 生成脚本 | 必须确认是否产生 JSON 产物；除非任务明确要求，否则恢复 JSON 产物 |
+按改动选最直接的专项检查；全套中已成功执行的专项计入验收：HTML 用 check:dom，workflow 用 check:workflows，文案用 check:frontend-zh-copy，数据契约用 check:data。data:verbose 用于解释 expected skip；仅明确要求严格时间对齐时使用 check:data:strict-live-alignment。
+Daily/realtime 生成操作仍须授权，按 §4 核对产物并保留用户改动。修改 scripts/app.js 仍须 node --check；前端 asset bump 规则不变。
 
 ## 7. 用户可见文案规则
 
-`dxy` 用户可见名称必须是：
-
-```text
-广义美元指数
-```
-
-ON RRP 用户可见单位必须是：
-
-```text
-亿美元
-```
-
-传导网络 delta 不可显示：
-
-```text
-Δ --
-```
-
-应显示：
-
-```text
-Δ +n / Δ -n / Δ 0
-```
-
-或：
-
-```text
-趋势待累计
-```
-
-### 7.1 中文优先(机器强制 · `check:frontend-zh-copy`)
-
-本站用户是**纯中文用户**。用户可见的前端显示文案**必须中文优先**,不得直显工程语言:
-
-- **禁**:工程模块/边界英文(`scoring` / `decisionModel` / `executionLock` / `positionGuidance` / `displayOnly` / `externalAiGenerated` / `promotionEligible` / `audit-only` / `display-only`)、snake_case 枚举(`multi_theater_stress` / `strong_confirmation` …)、裸 camelCase 字段名(`riskBias` / `crackSpread4wChange`)。边界免责文案统一简化成「仅供参考,不参与平台的风险打分与决策」。
-- **JS 设值的 data 枚举值要在 renderer 中文化**:把 `${wo.state}` 这类原始枚举值改成显 `labelZh`(中文)。
-- **放行**:报刊双语美学(刊头 / section kicker / 「中文 · English」副标题 / THIS ISSUE / AS OF)+ 金融标准缩写(VIX / PMI / HY OAS / BDI / WALCL …)+ 已登记的审计溯源标识符(External AI provenance / auditFlags 代号)。
-
-**强制**:`npm run check:frontend-zh-copy` 已并入 `check:all`。新增/改动前端显示**必跑**,踩工程英文/snake_case → CI 红。新增「允许英文」在 checker 的 `FORBIDDEN_TERMS` / `SNAKE_CASE_ALLOW` 显式登记,**不要放宽规则**。
+- dxy 显示为“广义美元指数”，ON RRP 单位为“亿美元”；delta 显示 Δ +n / Δ -n / Δ 0 或“趋势待累计”，禁止 Δ --。
+- 前端中文优先，禁止直接显示工程边界英文、snake_case 枚举或裸 camelCase 字段；使用 labelZh/中文映射。边界文案统一为“仅供参考,不参与平台的风险打分与决策”。
+- 报刊双语刊头/副标题、金融标准缩写以及已登记的审计溯源标识符可以保留。不要放宽 check:frontend-zh-copy；新增允许项须显式登记并遵循 §10 的 checker 评审要求。
+- 不把缺失值隐式转为 0；保留 check:null-zero-display-guards。新文案仍按 §6 验证。
 
 ## 8. 工作流与部署保护
 
-Pages deploy 当前分步骤运行：
-
-```text
-npm run check:all
-```
-
-Pages deploy 的实际验证入口以 `.github/workflows/deploy-static-site-to-pages.yml` 为准；当前入口是默认只读 `check:all`。
-
-Realtime / Daily workflow 也有 GitHub Actions Summary，用于人工审计 realtime 输出、Daily baseline、Decision Summary 和 Transmission Delta Summary。
+Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准，当前仍为 check:all；副作用见 §5。Realtime/Daily 的 Actions Summary 提供输出、baseline、Decision 与 Transmission Delta 的人工审计记录。
 
 ## 9. 推荐输出格式
 
-AI 完成任务后只输出：
+按用户请求交付。实施任务报告改动文件、结果、检查命令/退出码、未验证项和实际风险；审计任务报告证据与建议。可按需给短 diff，默认不贴整文件，不重复列举未涉及的高风险模块。
 
-1. 实际修改了哪些文件。
-2. 做了什么改动。
-3. 明确没有修改哪些高风险内容。
-4. 运行了哪些检查。
-5. 检查是否通过。
-6. 如有 warning，说明是否可接受。
-7. 不输出整文件源码。
-8. 不输出 patch / diff。
+如有未完成的验证或待 owner 操作/批准，明确说明；无需固定列四种状态。目标包括尚未执行的发布/合并时不得宣称全部完成；仅要求本地实现时不另造发布要求。授权工作和必要验证完成即交付，不因可选美化或无关历史问题延长任务。
 
 ## 10. `/goal` 自主循环 review 守则
 
 本节为 Codex `/goal` 等自主循环工具的人工 review 强制要求。`/goal` 跑完声明 complete + `check:all` 全绿,不等于可以 merge。merge 前必须人工核对以下三点;任一点失败必须先修复或回滚,不得跳过。
 
-- **方案一致性**:`/goal` 跑到中途 pause 请示时,用户拍板的方案(例如"走路线 1 不走路线 2")必须等于最终落地的代码。汇报里写"按方案 X 完成"不等于真的按方案 X 完成;必须打开实际文件核对实施清单与代码是否一致。常见的偏离是 pause 时同意路线 1,后续自主循环里"自己说服自己"改成路线 2 但汇报仍称走的是路线 1。
+- **方案一致性**：merge 前人工打开实际文件，核对实施清单与 owner 拍板的方案一致；不能以汇报声称一致代替检查，不能未经批准改走其它方案。
 - **Contract checker 完整性**:必须确认 `/goal` 没有为了让 `check:all` PASS 而擅自放宽现有 contract checker。检查方法:在受影响的 contract / checker 文件上跑 `git diff`,确认 assertion 没被删、没被改宽、没被加 skip。Contract checker 的 assertion 变更属于 ADR-level 决策,必须独立 reviewed PR,不得隐藏在 presentation patch 里。
-- **Ignore list 显性化**:任何新增的 coverage checker / contract checker 的 ignore list 必须在文件内对每一条 ignore 写明理由(为什么 ignore、对应哪个边界、unlock 路径)。空 ignore list 也必须在文件顶部注释说明"当前为何为空"。无注释的 ignore 是技术债,不得通过 review。
+- **Ignore list 显性化**:任何新增的 coverage checker / contract checker 的 ignore list 必须在文件内对每一条 ignore 写明理由(为什么 ignore、对应哪个边界、unlock 路径)。无注释的 ignore 是技术债,不得通过 review。
 
-触发 pause 后,Codex 必须把"用户拍板的方案"原文写进 PROJECT_BACKLOG.md 对应任务条目下,作为最终交付物的 acceptance baseline;后续 review 以此为准。
+实施或文档同步任务触发实际审批后，将用户拍板方案记录在 PROJECT_BACKLOG.md 对应任务作为 acceptance baseline；只读审计在回复中记录。记录不扩大授权，也无需为记录本身再次请示。
 
 `/goal` 指令模板默认 Done 条件中必须包含一条 self-audit step:在声明 complete 前自己跑一遍上述三点核对,把核对结果写进汇报,而不是只汇报 check:all 通过。
 
-10.4 **AI 不得自主执行 git 状态变更**
+### 10.4 Git 权限
 
-Codex / Claude Code 等 AI 工具在执行任何任务时，不得自主执行任何改变 git 状态的命令，即使任务上下文暗示需要。受限命令包括但不限于：git commit、git merge、git push、git reset、git rebase、git checkout -b、git stash、git cherry-pick、git revert、git tag。
-
-正确做法：发现 git 状态需要变更（如需要 commit 当前改动、需要 merge 远端、需要换分支、需要 stash WIP 等）时，必须 pause 并明确请示 owner，由 owner 在 PowerShell 手动执行 git 命令。AI 可以建议具体命令，但不得自主执行。
-
-例外：只读 git 命令可以自主执行用于审计，包括但不限于 git status、git diff、git log、git show、git branch --show-current、git ls-files、git remote -v。
-
-为什么需要这条规则：2026-05-23 M-92A source review 触发本规则。Codex 在没拍板的情况下自主跑了 git merge --ff-only origin/main、git add、git commit、git merge origin/main 等命令，把 V2 spec 和 merge commit 留在 M-91 旧分支上，污染了 git 历史。虽然没 push 到远端，但 owner 必须手动清理 reset + checkout + 新分支 + 重新 commit。本规则保护项目 serial trunk mode 纪律和 owner 对 git 历史的最终控制权。
+执行文件前部的 [Git 分级授权](#git-human-control)。本节保留旧章节入口，不重复定义权限。
 
 ---
 
-## 历史 milestone reminder
+## 历史与领域规则
 
-M-36V～M-62 逐版本 scope reminder、G-9B 工具描述、以及更早的 v28.0L-3B-1 audit-sync、
-L-3D readiness / L-3E implementation plan / L-3F provider-test workflow skeleton 等
-设计文档段落已从本文件移出。Section 1 仍保留正在生效的 K-* 和 L-0~L-3C 等边界规则。
-查阅位置:
-
-- **MILESTONE_INDEX.md Archived 段**: [`docs/MILESTONE_INDEX.md`](docs/MILESTONE_INDEX.md)
-- **完整快照**: `git show v28.0J-pre-split:AGENTS.md`
+历史索引见 [MILESTONE_INDEX.md](docs/MILESTONE_INDEX.md)，旧拆分快照可只读执行 `git show v28.0J-pre-split:AGENTS.md`。当前领域细则见 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按路径读取。

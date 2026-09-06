@@ -23,7 +23,7 @@ const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
-const agentsText = readText('AGENTS.md');
+const agentsText = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
 const backlogText = readText('docs/PROJECT_BACKLOG.md');
 
 const consumerRetail = radarData?.macroDrivers?.consumerRetail;
@@ -196,7 +196,7 @@ const hasConsumerRetailBoundary = agentsText.includes('macroDrivers.consumerReta
     || agentsText.includes('BoA Consumer Checkpoint 公开 HTML 摘要')
   );
 if (!hasConsumerRetailBoundary) {
-  fail('AGENTS.md missing M-69 consumerRetail boundary note');
+  fail('docs/AGENT_DOMAIN_BOUNDARIES.md missing M-69 consumerRetail boundary note');
 }
 
 if (!backlogText.includes('P3-14: Redbook + BoA Card 高频消费证据')

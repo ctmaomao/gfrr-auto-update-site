@@ -110,7 +110,7 @@ function assertAuthorityDocs() {
   assert(packageJson.scripts[MONITOR_COMMAND], `package.json missing ${MONITOR_COMMAND}.`);
   assert(packageJson.scripts[CHECK_COMMAND], `package.json missing ${CHECK_COMMAND}.`);
   assert(readText('scripts/check-suite.mjs').includes(CHECK_COMMAND), 'check-suite missing runtime score policy monitor checker.');
-  for (const file of ['AGENTS.md', 'docs/DATA_CONTRACT.md', 'docs/DATA_SOURCES.md', 'docs/SIGNAL_INTAKE.md', 'docs/PROJECT_BACKLOG.md']) {
+  for (const file of ['docs/AGENT_DOMAIN_BOUNDARIES.md', 'docs/DATA_CONTRACT.md', 'docs/DATA_SOURCES.md', 'docs/SIGNAL_INTAKE.md', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md']) {
     assertIncludes(readText(file), MONITOR_VERSION, file);
     assertIncludes(readText(file), 'P-score-56', file);
   }

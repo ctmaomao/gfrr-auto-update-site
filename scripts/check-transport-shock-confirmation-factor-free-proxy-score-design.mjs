@@ -151,8 +151,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -180,8 +180,8 @@ function assertAuthorityDocs() {
     assertIncludes(dataContract, marker, 'docs/DATA_CONTRACT.md');
   }
   assertIncludes(signalIntake, 'P-score-19 free-proxy score design', 'docs/SIGNAL_INTAKE.md');
-  assertIncludes(backlog, 'Transport Shock Confirmation Factor free-proxy score design', 'docs/PROJECT_BACKLOG.md');
-  assertIncludes(agents, 'Transport Shock Confirmation Factor free-proxy score design', 'AGENTS.md');
+  assertIncludes(backlog, 'Transport Shock Confirmation Factor free-proxy score design', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  assertIncludes(agents, 'Transport Shock Confirmation Factor free-proxy score design', 'docs/AGENT_DOMAIN_BOUNDARIES.md');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-score-design'], 'package.json missing free-proxy score design check.');
   assertIncludes(checkSuite, 'check:transport-shock-confirmation-factor-free-proxy-score-design', 'scripts/check-suite.mjs');
 }

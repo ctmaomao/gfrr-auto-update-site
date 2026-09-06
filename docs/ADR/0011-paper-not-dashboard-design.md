@@ -1,6 +1,6 @@
 # ADR-0011 — UI is editorial paper aesthetic, not SaaS dashboard
 
-**Status**: Accepted (v28.0N editorial restructure)
+**Status**: Accepted (v28.0N editorial restructure); historical checker enforcement references superseded by [ADR-0027](0027-design-document-consistency.md). The visual decision remains accepted.
 
 ## Context
 
