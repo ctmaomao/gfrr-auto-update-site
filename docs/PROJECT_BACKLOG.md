@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-07 首页 AI 判读不可用修复（P1）
+
+- **Acceptance baseline**：owner 要求分析并修复首页“AI 判读不可用”，尽量减少复发。本次只修既有新闻检索覆盖与跳过诊断，保留可信来源、逐事实引用、review、时间匹配、30 小时及单次 provider/no retry；不授权额外付费重跑或生产发布。
+- **实证原因**：9 月 6 日 run `34011529977` 两搜索源全部查询健康，但 30 条均为 `discovery_only`，因此 expected skip / DeepSeek 0 次 / production write 0；9 月 4/5 日为正常生成。9 月 6 日 23:11 UTC 自定义域名与 Pages 的 radar JSON SHA-256 均为 `db16cb4aec6ffc32be6ae423709c9847052a700af7984ba816a96f4d4baa7b61`，`updatedAt=2026-09-06T00:06:53.185Z` 且没有 `macroRiskEditorialLayer`。不是两部署通道缓存不一致；Daily 重建后没有新的合格判读可供展示。
+- **实现**：重新分配两个现有 Tavily 查询到已登记 Fed/BLS 官方日期发布（general + 域名限制），保留另外四个及 Brave 六个新闻查询、basic/5 条/短超时；不增加源、查询次数或付费重试。日期路径按官方实页核对，先过滤缺日期/旧/未来资料再聚类；skip 加 warning annotation。新回归覆盖真实 collector 请求参数、预算、来源健康失败、官方日期、同发布者不算独立印证及无可信源继续关闭。
+- **验证与待办**：`npm run check:changed` 自动执行完整 `npm run check:all`，exit 0；11 项新回归、collector 无网络 dry-run、真实 skip artifact 回放和 `git diff --check` 通过。现有 checker/validator/provider/writer/生产数据/workflow 无改动，无新增 ignore list；query reallocation 符合本次修复范围。修复尚未合并/发布，未调用搜索账户或 DeepSeek；真实 collector 恢复、生成和线上可见性仍需发布后单次成本授权验收，不把离线成功当生产恢复。
+
 ### 2026-09-06 指令与技能维护
 
 - **已完成**：指令/校验器解耦、验证分流、技能维护来源、历史归档及 Hook 验收已随 PR #304 合并并通过 Pages 验证；现行决策、限定执行人例外和历史证据统一见[总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
@@ -225,10 +232,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：main `8cc2e9cc`；PR #304 合并与 Pages 验收已完成，见[总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
-- **当前任务**：四项后续整理已实施；技能及锁文件迁入用户级目录，ADR 链接已完成验收，重复约束和导航已合并。最终检查及提交记录以本轮 PR 为准。
-- **下一步**：交付与检查结果查本轮 PR；合并按通用审阅要求处理，PR #304 的执行人例外不自动沿用。
-- **阻塞或等待**：本轮无实施阻塞；下列生产观察事项独立保留。
+- **工作基线**：从干净 main 快进至 `f7f1dec1`，本次分支 `codex/fix-macro-editorial-news-discovery`；保留既有维护成果。
+- **当前任务**：首页 AI 判读不可用已定位为 9 月 6 日零可信新闻跳过；查询重分配、日期保护和 warning 已完成本地实现，`check:changed` / 完整 `check:all` exit 0，11 项回归与 CLI dry-run/skip 回放通过。
+- **下一步**：交付本地修复；按通用独立人工 review、远端/发布及单次成本授权完成线上验收。检查通过不表示当前页面恢复，生产 live-layer check 因字段缺失按原契约 SKIP。
+- **阻塞或等待**：本地无实施阻塞；尚无本次远端/生产发布或额外付费重跑授权，不能宣称线上已恢复。下列生产观察事项独立保留。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 

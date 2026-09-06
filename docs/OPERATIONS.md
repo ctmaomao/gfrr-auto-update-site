@@ -132,6 +132,8 @@ scheduled workflow 始终运行远端 `main`，本地修改或仅 push 到 featu
 
 零可信新闻不允许进入 provider/review/write。若 artifact 显示 Tavily 与 Brave 的所有 topic 查询均为 `ok`，但当期确实只有 `discovery_only`，workflow 会在 provider 前记录 `SKIPPED_NO_CREDIBLE_NEWS` 并以 expected fail-closed skip 结束；这表示本期没有生成新判读，不是 refresh 成功。确认 Summary 中 `DeepSeek calls: 0`、`Production data writes: 0`，并允许 deterministic overview 继续兜底。若任一搜索源不是 `ok`、artifact/schema 异常或已进入 provider 后失败，仍按真实故障处理，不得改成 skip。
 
+2026-09-07 检索修复：零可信新闻 skip 同时产生 GitHub warning annotation，避免把绿色 workflow 误认为 AI 可用。Tavily 原六个查询中的两个定向查找 Fed/BLS 官方日期发布，其余四个及 Brave 六个仍查新闻；不增加请求预算或 DeepSeek 次数。只接受已登记日期路径且在窗口内的官方结果，不降低 cross-check/引用/质量/30 小时 gate。若仍 skip，核对实际返回的官方日期路径、时间过滤和 provider 状态；不能用旧发布或手工补引用恢复显示。详细检索范围见 [Macro Risk 来源契约](MACRO_RISK_EDITORIAL_DESIGN.md#42-新闻发现来源)。
+
 Tavily/Brave keys 由 Macro Risk、Bubble Watch 与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；按 31 天最坏情形，全部 scheduled flows 合计 737 requests/provider/month，另保留 200 次 manual/diagnostic reserve，由 `check:workflows` 阻止预算超过 1,000。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `http_402_payment_required`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，确认是否为共享月度额度耗尽；不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。等待月度 reset，或由 owner 在 provider dashboard 更新 plan/key。
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。

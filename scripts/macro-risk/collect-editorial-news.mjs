@@ -1,9 +1,11 @@
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { EDITORIAL_TOPICS } from './editorial-contract.mjs';
 import { EDITORIAL_QUERIES, buildNewsDiscovery } from './editorial-news.mjs';
 import { classifySearchRequestError } from './search-request-policy.mjs';
+import { buildTavilyEditorialSearch, normalizeTavilyEditorialResults } from './editorial-search-plan.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
 const DEFAULT_OUTPUT = `${PREFIX}news-discovery-latest.json`;
@@ -66,12 +68,13 @@ async function withKeys(keys, request) {
 }
 
 async function tavily(topic, query, keys) {
+  const body = buildTavilyEditorialSearch(topic, query, MAX_RESULTS);
   const json = await withKeys(keys, (key) => fetchJson('https://api.tavily.com/search', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT },
-    body: JSON.stringify({ query, topic: 'news', search_depth: 'basic', max_results: MAX_RESULTS, time_range: 'week', include_answer: false, include_raw_content: false })
+    body: JSON.stringify(body)
   }));
-  return (json?.results || []).map((item) => ({ provider: 'tavily', topic, title: item.title, url: item.url, publishedAt: item.published_date, snippet: item.content, searchScore: item.score }));
+  return normalizeTavilyEditorialResults(topic, json, body);
 }
 
 async function brave(topic, query, keys) {
@@ -82,7 +85,7 @@ async function brave(topic, query, keys) {
   return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: [item.description, ...(item.extra_snippets || [])].filter(Boolean).join(' ') }));
 }
 
-async function collectProvider(provider, keys) {
+export async function collectProvider(provider, keys) {
   if (keys.length === 0) return { rows: [], status: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] } };
   const rows = [];
   const queryRuns = [];
@@ -120,7 +123,7 @@ async function main() {
   console.log(`Macro risk editorial news ${options.allowNetwork ? 'live' : 'dry-run'}: status=${discovery.status}, stories=${discovery.stories.length}, output=${options.output}`);
 }
 
-main().catch((error) => {
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) main().catch((error) => {
   console.error(`Macro risk editorial news collection failed: ${error.message}`);
   process.exitCode = 1;
 });

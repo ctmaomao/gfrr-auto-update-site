@@ -44,6 +44,7 @@ async function reportWorkflowState(readiness) {
     ''
   ].join('\n'));
   if (!readiness.expectedSkip) return;
+  console.log('::warning title=Macro Risk AI not refreshed::No credible news survived the evidence gate. DeepSeek calls: 0; production writes: 0. Check the discovery artifact; workflow success does not mean AI availability.');
   await appendWorkflowFile('GITHUB_STEP_SUMMARY', [
     '### Macro Risk Editorial refresh skipped safely',
     '',
