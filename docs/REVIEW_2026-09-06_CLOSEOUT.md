@@ -28,4 +28,6 @@ Owner 已授权完成建议并 commit+push。本系列仓库交付包含 AGENTS/
 - **真实启动执行通过**：原生 App Server 新建会话及最小首轮对话触发已安装脚本。会话 `01a07633-e994-7c41-a566-270bb4d31634` 的运行时 trace 记录 SessionStart/user/async 于 `2026-09-06T10:11:52.008374Z` 开始、`10:11:52.748339Z` 以 command_outcome=completed 结束。初期探针因未收到 hook/completed 通知而失败；后改为核对原生 command_runner trace，验证 exit 0。此证据来自生命周期执行，不是直接调用 handler。会话为 ephemeral、read-only，模型只返回固定 smoke 标识；未调用项目工具。
 - `9158babb` 的 [PR CI run 34017717539](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34017717539) 已成功，涵盖依赖审计、单元测试覆盖、完整检查和 Chromium smoke；后续验收记录提交按其最终 CI 状态另行报告。
 
-[官方 Hooks 文档](https://learn.chatgpt.com/docs/hooks)规定按当前定义审阅/信任及 SessionStart 生命周期。此次两项按明确授权完成；未来 Hook 定义改变仍需按平台要求重新审阅。原始 trace 留在本机，不上传个人会话日志；本次证据摘要存于个人维护来源的 activation-verification.json。尚未合并或部署。
+[官方 Hooks 文档](https://learn.chatgpt.com/docs/hooks)规定按当前定义审阅/信任及 SessionStart 生命周期。此次两项按明确授权完成；未来 Hook 定义改变仍需按平台要求重新审阅。原始 trace 留在本机，不上传个人会话日志；本次证据摘要存于个人维护来源的 activation-verification.json。
+
+2026-09-07 owner 进一步明确要求执行“最新 main 验收 → 合并 PR → 核对自动 Pages 发布”的收尾顺序，本次合并及其触发的 Pages 发布已获授权。先纳入 main `2a54303f` 的 6 次数据更新，仅 3 个 JSON 与其原文一致，保留用户未跟踪文件；在组合状态上运行完整检查和 PR CI，通过后合并。此次不触发额外 Daily/provider/EdgeOne 发布；最终合并 SHA、验证及 Pages run 结果记录在 [PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 的交付记录中，不据早期“未合并”快照恢复审批等待。
