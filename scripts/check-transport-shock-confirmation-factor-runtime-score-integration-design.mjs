@@ -163,8 +163,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -185,8 +185,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-confirmation-factor-runtime-score-integration-design-review-v1'), 'SIGNAL_INTAKE missing runtime design marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor runtime score integration design review'), 'PROJECT_BACKLOG missing runtime design marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor runtime score integration design review'), 'AGENTS.md missing runtime design boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor runtime score integration design review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing runtime design marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor runtime score integration design review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing runtime design boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-runtime-score-integration-design'], 'package.json missing runtime design review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-runtime-score-integration-design'], 'package.json missing runtime design checker.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-runtime-score-integration-design'), 'check-suite missing runtime design checker.');

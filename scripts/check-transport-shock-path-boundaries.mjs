@@ -9,7 +9,7 @@ const CHECK_SUITE_PATH = 'scripts/check-suite.mjs';
 const AUTHORITY_DOCS = [
   'docs/DATA_CONTRACT.md',
   'docs/DATA_SOURCES.md',
-  'docs/PROJECT_BACKLOG.md',
+  'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md',
   'docs/OPERATIONS.md'
 ];
 

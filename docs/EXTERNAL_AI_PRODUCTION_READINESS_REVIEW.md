@@ -1,6 +1,6 @@
 # External AI Production Integration Readiness Review - v28.0L-3K
 
-> **STATUS (2026-08-11):** This document is preserved as a historical phase / scope record. The former `externalAiInterpretationLayer` visible panel and `External AI Production Refresh` workflow have been retired; that field now remains only for data compatibility and manual diagnostics. The current homepage DeepSeek output is the separately contracted `macroRiskEditorialLayer`, integrated into `MACRO RISK OVERVIEW` and governed by `docs/MACRO_RISK_EDITORIAL_DESIGN.md`, `docs/DATA_CONTRACT.md`, `docs/OPERATIONS.md`, and ADR-0022. Historical disabled/visible rollout wording below describes its named phase only. The rule-based `aiInterpretationLayer` remains separate, and no AI layer may affect scoring / decision / execution / position.
+> **STATUS:** Historical phase record; legacy AI retirement, current Macro Risk authority and no-scoring boundaries: [shared status and authority](LEGACY_DOCUMENT_STATUS.md#external-ai). Read that note before interpreting the phase-specific restrictions below.
 
 ## 1. Status
 

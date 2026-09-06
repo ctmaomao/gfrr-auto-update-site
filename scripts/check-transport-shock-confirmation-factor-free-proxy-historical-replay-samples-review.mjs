@@ -164,8 +164,8 @@ function assertRuntimeRemainsUnwired() {
 
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -176,8 +176,8 @@ function assertAuthorityDocs() {
   ]) {
     assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
   }
-  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay sample set review'), 'PROJECT_BACKLOG missing sample set review marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay sample set review'), 'AGENTS.md missing sample set review boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay sample set review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing sample set review marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay sample set review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing sample set review boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-free-proxy-historical-replay-samples'], 'package.json missing sample set review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review'], 'package.json missing sample set review checker script.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-historical-replay-samples-review'), 'check-suite missing sample set review check.');

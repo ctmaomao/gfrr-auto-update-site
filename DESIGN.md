@@ -1,8 +1,8 @@
 # DESIGN.md — Editorial Design Contract
 
-> **Version**: v2.1 (ADR-0023 narrative-first evidence-on-demand,2026-08-11)
+> **Version**: v2.2 (ADR-0027 documentation consistency,2026-09-06; visual layout unchanged)
 >
-> **本文档是设计合约。** 任何前端改动（无论由人工、Codex、Cursor、Claude 或其他 AI 执行）在动手之前都必须读完本文档，并在 PR 描述中声明"本 PR 符合 DESIGN.md 的所有规则"。M-94 V0 路径 C 启动后,违反本合约的视觉改动会被 Stage 6 新写的 frontend checker(`check-frontend-ia-m94v0` + `check-frontend-folded-default`)拦截。
+> **本文档是设计合约。** 任何前端改动（无论由人工、Codex、Cursor、Claude 或其他 AI 执行）在动手之前都必须读完本文档，并在 PR 描述中声明"本 PR 符合 DESIGN.md 的所有规则"。视觉/IA 由本合约与人工 review 约束；现行可执行检查见 §9.1，退役 checker 不再作为门禁。
 >
 > 本合约的视觉真实基准是参考网站 **The Bubble Watch / AI 泡沫监测**（Editorial Data Journalism 风格），不是任何 SaaS dashboard 或交易终端。
 
@@ -32,7 +32,7 @@ GFRR 是一份**每日更新的机构级风险简报**，不是实时监控大�
 
 ### 2.1 核心色板
 
-所有颜色必须通过 CSS 变量引用，**禁止直接写色值**。
+颜色使用处必须引用 CSS token。token 定义和文档色板可以写明色值；唯一已明确的旧声明例外见 §6.1。其它现有裸色值不因此自动获准（[ADR-0027](docs/ADR/0027-design-document-consistency.md)）。
 
 ```css
 :root {
@@ -103,7 +103,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 ```css
 :root {
   --font-display: "Playfair Display", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  --font-serif:   "Noto Serif SC", "Source Han Serif SC", "Songti SC", "PingFang SC", serif;
+  --font-serif:   "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
   --font-mono:    "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 ```
@@ -132,7 +132,7 @@ PingFang SC, Microsoft YaHei, Helvetica, Arial, Roboto, Open Sans
 
 ### 3.4 字体规则强制层
 
-所有 `font-family` 声明必须使用 `var(--font-*)` 变量，**禁止**直接写字体名字符串。
+字体使用处的 `font-family` 必须引用 `var(--font-*)`；只有 §3.1 的三个 token 定义可列字体名。PingFang SC 不在允许的 serif 栈中。
 
 ---
 
@@ -213,7 +213,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 
 1. 必须先开 issue 讨论变更理由
 2. 同步更新 `DESIGN.md` §4 与 M-94 数据契约
-3. 同步更新当前生效的 frontend IA checker
+3. 涉及现有自动检查覆盖的契约时，同步更新对应检查；未覆盖的 IA/视觉条款按本文件 review，不要求恢复退役 checker。
 4. 同步更新 `index.html` 静态骨架与对应 render module
 5. PR 必须包含 IA 变更的视觉对比截图
 
@@ -349,7 +349,7 @@ runtime block 的基准结构:
 
 适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。`#macro-risk-editorial` 是主路径内嵌 article，仅其来源账本使用局部 `<details>`，不属于 appendix。
 
-执行机制:`scripts/check-frontend-folded-default.mjs`(Stage 6 写)在 CI 中拦截任何包含 `<details ... open>` 的提交。
+执行机制：附录默认折叠由本节和人工 review 核对；宏观专业证据的静态/动态折叠由 `check:macro-overview-evidence-fold` 验证，已包含在 `check:frontend-live-contracts`。不声称它覆盖所有附录视觉约束。
 
 ```html
 <details id="detail-data" class="editorial-folded-content">
@@ -459,8 +459,10 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 | section 内部分隔 | `border-bottom: 1px solid var(--paper-line)` |
 | 强分隔（category-header） | `border-bottom: 2px solid var(--paper-ink)` |
 | 指标卡边框 | `border: 1px solid var(--paper-line-strong)` |
-| 卡片内 meta 分隔 | `border-top: 1px dashed #999` |
+| 既有 `.indicator-card .meta` 分隔 | `border-top: 1px dashed #999`（仅此旧声明例外） |
 | 状态条（指标卡顶部） | `4px` 高，色彩按 status 着色 |
+
+`#999` 例外仅限 assets/styles.css 中现有 `.indicator-card .meta` 的 border-top；不得推广至其它选择器或新组件。新边框继续使用允许的 token，未来迁移该旧声明须单独验证视觉差异。
 
 ### 6.2 圆角
 
@@ -512,7 +514,7 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 ### 7.2 文字标签
 
 - 颜色 `var(--paper-muted)`
-- 字体 IBM Plex Mono
+- 字体 `var(--font-mono)`（IBM Plex Mono 栈）
 - 字号 10-11px
 
 ### 7.3 热力图区域色（离散四档 + fallback）
@@ -550,8 +552,8 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 
 ### 8.2 结构禁令
 
-1. ❌ 改变 §4.1 的 IA 顺序（除非走 §4.2 流程）
-2. ❌ 添加新的一级 section 而不同步更新 §4.1 IA 顺序 / §5.6 视觉契约 与 `docs/ADR/0014-design-md-is-ia-ground-truth.md`,且未运行 `npm run check:frontend-live-contracts`
+1. ❌ 改变 §4.1 的 IA 顺序（除非走 §4.3 流程）
+2. ❌ 添加新的一级 section 而不同步更新 §4.1 IA 顺序 / §5.6 视觉契约、未按 ADR-0014 的边界记录新决策，或未运行 `npm run check:frontend-live-contracts`
 3. ❌ 把 Hero、AI 判读、WoW、阈值、趋势、四大驱动或市场温度改为折叠；ADR-0023 明确批准的局部 `#macro-professional-evidence` 除外
 4. ❌ 把"附录 section"提升到主路径
 5. ❌ 使用非标准的 className 派系（如 `editorial-heatmap-*`, `editorial-appendix-*`, `ia-detail-panel`, `advanced-panel` 作为顶层容器）
@@ -559,7 +561,7 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 ### 8.3 字体禁令
 
 1. ❌ 引入任何非 Bubble Watch 三栈的字体
-2. ❌ 在 CSS 中直接写字体名字符串（必须用 `var(--font-*)`）
+2. ❌ 在字体使用处直接写字体名字符串（使用 `var(--font-*)`；§3.1 的 token 定义除外）
 3. ❌ 加载额外的 Google Fonts 家族（即使是衬线字体）
 
 ### 8.4 数据 / 业务边界禁令（不可触碰）
@@ -581,9 +583,7 @@ M-94 V0 起,本站视觉权威基准为 `manual-artifacts/m94-v0/m94-v0-FINAL-mo
 1. **PR 描述必须明确声明**："本 PR 符合 DESIGN.md 的所有规则" 或 "本 PR 申请变更 DESIGN.md 的 §X 节"
 2. **如果是 DESIGN.md 变更**：必须先开 issue 讨论，PR 同时更新本文档
 3. **必须通过的检查**：
-   - `npm run check:all` 全绿
-   - M-94 V0 路径 C 期间(Stage 1-5):只需 `npm run check:all` 全绿
-   - M-94 V0 路径 C 完成后(Stage 6+):`npm run check:all` 全绿 + 新 frontend checker(`check-frontend-ia-m94v0` + `check-frontend-folded-default`)全绿
+   - `npm run check:all` 全绿，复用其中已执行的 `check:frontend-live-contracts` 专项；组成以 package.json / check-suite.mjs 为准。IA/字体/色彩未被脚本覆盖的条款仍须 review。
 4. **必须包含的 PR 描述内容**：
    - 视觉对比截图（before / after）
    - Headless Chrome 实测取样（关键 selector 的 background / color / font-family）
@@ -699,3 +699,4 @@ var(--font-mono)              /* IBM Plex Mono */
 | 2026-06 | IA 合约变更: 主题卡阵视觉顺序改为 C1/C2/C3/C4/C7/C8/C5/C6,将世界经济与中国宏观观察层置底,并新增 checker 锁定顺序 | PR #<待 owner 填> |
 | 2026-06 | 观察层反应徽章语义更新: `印证` 颜色跟随有效主判断等级,`背离` 保留反向证据方向色;同步 checker 行为样例 | PR #<待 owner 填> |
 | 2026-08 | ADR-0023: Macro Overview 改为叙事优先；WoW 紧随有效编辑层，五块确定性模型证据统一进入条件折叠区，AI 无资格时自动展开 | owner approved implementation |
+| 2026-09 | ADR-0027：明确 token 定义及单条旧边框例外，纠正字体示例和退役检查器说明；页面未改 | owner approved documentation correction |

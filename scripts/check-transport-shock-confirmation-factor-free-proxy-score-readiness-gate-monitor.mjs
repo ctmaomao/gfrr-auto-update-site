@@ -155,8 +155,8 @@ function assertWorkflow() {
 
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
   for (const marker of [
@@ -167,8 +167,8 @@ function assertAuthorityDocs() {
   ]) {
     assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
   }
-  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate monitor'), 'PROJECT_BACKLOG missing gate monitor marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate monitor'), 'AGENTS.md missing gate monitor boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate monitor'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing gate monitor marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate monitor'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing gate monitor boundary.');
   assert(packageJson.scripts['monitor:transport-shock-confirmation-factor-free-proxy-score-readiness-gate'], 'package.json missing gate monitor script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-score-readiness-gate-monitor'], 'package.json missing gate monitor checker.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-score-readiness-gate-monitor'), 'check-suite missing gate monitor checker.');

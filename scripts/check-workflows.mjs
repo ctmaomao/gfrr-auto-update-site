@@ -728,19 +728,19 @@ const workerHealthScriptFile = 'scripts/check-worker-health.mjs';
 const workerHealthSnapshotReviewScriptFile = 'scripts/review-worker-health-snapshot.mjs';
 const packageFile = 'package.json';
 const secondaryConsolidationDocs = [
-  'AGENTS.md',
+  'docs/AGENT_DOMAIN_BOUNDARIES.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
 const g4cRuntimeDocs = [
-  'AGENTS.md',
+  'docs/AGENT_DOMAIN_BOUNDARIES.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
 ];
 const releaseStateDocs = [
-  'AGENTS.md',
+  'docs/AGENT_DOMAIN_BOUNDARIES.md',
   'docs/DATA_CONTRACT.md',
   'docs/OPERATIONS.md',
   'workers/gfrr-realtime-worker/README.md',
@@ -1275,6 +1275,7 @@ if (fs.existsSync(dataContractFile)) {
 
 const readmeText = fs.existsSync('README.md') ? fs.readFileSync('README.md', 'utf8') : '';
 const agentsText = fs.existsSync('AGENTS.md') ? fs.readFileSync('AGENTS.md', 'utf8') : '';
+const agentDomainText = fs.existsSync('docs/AGENT_DOMAIN_BOUNDARIES.md') ? fs.readFileSync('docs/AGENT_DOMAIN_BOUNDARIES.md', 'utf8') : '';
 for (const needle of [
   'serial trunk mode',
   'latest main',
@@ -1289,8 +1290,8 @@ for (const needle of [
   'PR #53 superseded',
   'KV write guard deferred',
 ]) {
-  if (!readmeText.includes(needle) && !agentsText.includes(needle)) {
-    addRuntimeFailure('README.md / AGENTS.md', `missing G-6 repository marker "${needle}"`);
+  if (!readmeText.includes(needle) && !agentDomainText.includes(needle)) {
+    addRuntimeFailure('README.md / docs/AGENT_DOMAIN_BOUNDARIES.md', `missing G-6 repository marker "${needle}"`);
   }
 }
 

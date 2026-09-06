@@ -106,8 +106,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -121,8 +121,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('route-level-tanker-freight-display-contract-v1'), 'SIGNAL_INTAKE missing display contract marker.');
-  assert(backlog.includes('Route-level tanker freight display-only candidate contract'), 'PROJECT_BACKLOG missing display contract marker.');
-  assert(agents.includes('route-level tanker freight display-only candidate contract'), 'AGENTS.md missing display contract boundary.');
+  assert(backlog.includes('Route-level tanker freight display-only candidate contract'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing display contract marker.');
+  assert(agents.includes('route-level tanker freight display-only candidate contract'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing display contract boundary.');
   assert(packageJson.scripts['check:route-level-tanker-freight-display-contract'], 'package.json missing display contract check script.');
   assert(checkSuite.includes('check:route-level-tanker-freight-display-contract'), 'check-suite missing display contract check.');
 }

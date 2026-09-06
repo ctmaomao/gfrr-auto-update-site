@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { AGENT_DOMAIN_DOC, validateAgentDomainLinks } from './lib/agent-doc-authority.mjs';
 
 const ROOT = process.cwd();
 const README = 'README.md';
@@ -144,6 +145,8 @@ for (const file of markdownFiles) {
 }
 
 checkProjectBacklogFormat();
+const readOptional = (file) => fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+formatFailures.push(...validateAgentDomainLinks(readOptional(AGENTS), readOptional(AGENT_DOMAIN_DOC)));
 for (const message of formatFailures) {
   console.error(`Project backlog format check failed: ${message}`);
 }

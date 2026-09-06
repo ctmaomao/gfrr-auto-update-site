@@ -164,8 +164,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = readJson('package.json');
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -180,8 +180,8 @@ function assertAuthorityDocs() {
     assertIncludes(dataContract, marker, 'docs/DATA_CONTRACT.md');
   }
   assertIncludes(signalIntake, 'route-level-tanker-freight-source-rights-approval-template-v1', 'docs/SIGNAL_INTAKE.md');
-  assertIncludes(backlog, 'Route-level tanker freight source-rights approval template', 'docs/PROJECT_BACKLOG.md');
-  assertIncludes(agents, 'route-level tanker freight source-rights approval template', 'AGENTS.md');
+  assertIncludes(backlog, 'Route-level tanker freight source-rights approval template', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  assertIncludes(agents, 'route-level tanker freight source-rights approval template', 'docs/AGENT_DOMAIN_BOUNDARIES.md');
   assert(packageJson.scripts['check:route-level-tanker-freight-source-rights-approval-template'], 'package.json missing source-rights approval template check script.');
   assertIncludes(checkSuite, 'check:route-level-tanker-freight-source-rights-approval-template', 'scripts/check-suite.mjs');
 }

@@ -152,8 +152,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -174,8 +174,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-confirmation-factor-manual-samples-review-v1'), 'SIGNAL_INTAKE missing manual samples review marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor manual samples review'), 'PROJECT_BACKLOG missing manual samples review marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor manual samples review'), 'AGENTS.md missing manual samples review boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor manual samples review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing manual samples review marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor manual samples review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing manual samples review boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-manual-samples'], 'package.json missing review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-manual-samples-review'], 'package.json missing check script.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-manual-samples-review'), 'check-suite missing manual samples review check.');

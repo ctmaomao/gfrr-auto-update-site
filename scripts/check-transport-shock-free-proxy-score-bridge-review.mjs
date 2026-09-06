@@ -145,8 +145,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -165,7 +165,7 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-free-proxy-score-bridge-review-v1'), 'SIGNAL_INTAKE missing P46 marker.');
-  assert(backlog.includes('Transport Shock free-proxy score bridge review'), 'PROJECT_BACKLOG missing P46 marker.');
+  assert(backlog.includes('Transport Shock free-proxy score bridge review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing P46 marker.');
   assert(agents.includes('Transport Shock free-proxy score bridge review'), 'AGENTS missing P46 boundary.');
   assert(packageJson.scripts['check:transport-shock-free-proxy-score-bridge-review'], 'package.json missing P46 check script.');
   assert(checkSuite.includes('check:transport-shock-free-proxy-score-bridge-review'), 'check-suite missing P46 check.');

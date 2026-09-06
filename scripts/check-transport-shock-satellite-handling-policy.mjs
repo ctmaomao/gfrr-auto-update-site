@@ -162,8 +162,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -176,7 +176,7 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-satellite-handling-policy-v1'), 'SIGNAL_INTAKE missing P45 marker.');
-  assert(backlog.includes('Transport Shock satellite handling policy'), 'PROJECT_BACKLOG missing P45 marker.');
+  assert(backlog.includes('Transport Shock satellite handling policy'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing P45 marker.');
   assert(agents.includes('Transport Shock satellite handling policy'), 'AGENTS missing P45 boundary.');
   assert(packageJson.scripts['check:transport-shock-satellite-handling-policy'], 'package.json missing P45 check script.');
   assert(checkSuite.includes('check:transport-shock-satellite-handling-policy'), 'check-suite missing P45 check.');

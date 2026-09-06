@@ -145,8 +145,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
   for (const marker of [
@@ -158,8 +158,8 @@ function assertAuthorityDocs() {
   }
   assert(dataContract.includes('transport-shock-news-operator-review-monitor-p42'), 'DATA_CONTRACT missing monitor marker.');
   assert(signalIntake.includes('transport-shock-news-operator-review-monitor-p42'), 'SIGNAL_INTAKE missing monitor marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor news operator-review monitor'), 'PROJECT_BACKLOG missing monitor marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor news operator-review monitor'), 'AGENTS.md missing monitor marker.');
+  assert(backlog.includes('Transport Shock Confirmation Factor news operator-review monitor'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing monitor marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor news operator-review monitor'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing monitor marker.');
   assert(packageJson.scripts['monitor:transport-shock-confirmation-factor-news-operator-review'], 'package.json missing monitor script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-news-operator-review-monitor'], 'package.json missing monitor check script.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-news-operator-review-monitor'), 'check-suite missing monitor check.');

@@ -188,9 +188,9 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
   const index = readText('docs/INDEX.md');
-  const agents = readText('AGENTS.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
 
   for (const marker of [
     'Route-Level Tanker Freight Proof-of-Source Design',
@@ -209,9 +209,9 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.toLowerCase().includes('proof-of-source design'), 'SIGNAL_INTAKE missing proof-of-source marker.');
-  assert(backlog.includes('Route-level tanker freight proof-of-source design'), 'PROJECT_BACKLOG missing proof-of-source marker.');
+  assert(backlog.includes('Route-level tanker freight proof-of-source design'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing proof-of-source marker.');
   assert(index.includes('docs/ROUTE_LEVEL_TANKER_FREIGHT_PROOF_OF_SOURCE_DESIGN.md'), 'INDEX missing proof-of-source doc.');
-  assert(agents.includes('route-level tanker freight proof-of-source'), 'AGENTS.md missing proof-of-source boundary.');
+  assert(agents.includes('route-level tanker freight proof-of-source'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing proof-of-source boundary.');
 }
 
 function main() {

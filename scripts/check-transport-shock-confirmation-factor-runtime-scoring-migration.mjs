@@ -141,7 +141,7 @@ function assertAuthorityWiring() {
   );
   assertMarkers('docs/DATA_CONTRACT.md', ['transport-shock-scoring-impact-v1']);
   assertMarkers('docs/DATA_SOURCES.md', ['transport-shock-scoring-impact-v1']);
-  assertMarkers('AGENTS.md', ['transport-shock-scoring-impact-v1']);
+  assertMarkers('docs/AGENT_DOMAIN_BOUNDARIES.md', ['transport-shock-scoring-impact-v1']);
 }
 
 function main() {

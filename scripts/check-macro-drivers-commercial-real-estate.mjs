@@ -23,7 +23,7 @@ const radarData = JSON.parse(readText('data/radar-data.json'));
 const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
-const agentsText = readText('AGENTS.md');
+const agentsText = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
 const backlogText = readText('docs/PROJECT_BACKLOG.md');
 
 const cre = radarData?.macroDrivers?.commercialRealEstate;
@@ -201,7 +201,7 @@ for (const marker of requiredSourceMarkers) {
 }
 
 if (!agentsText.includes('macroDrivers.commercialRealEstate') || !agentsText.includes('伪造为 CDX、私募信贷数据或非公开 CRE loan tape')) {
-  fail('AGENTS.md missing M-70 commercialRealEstate boundary note');
+  fail('docs/AGENT_DOMAIN_BOUNDARIES.md missing M-70 commercialRealEstate boundary note');
 }
 
 if (!backlogText.includes('P3-15: CDX HY/IG + 私募信贷 fundraising')) {

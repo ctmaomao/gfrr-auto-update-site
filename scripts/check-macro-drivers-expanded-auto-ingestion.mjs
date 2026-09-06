@@ -98,7 +98,7 @@ const runDailyText = readText('scripts/run-daily-pipeline.mjs');
 const validateText = readText('scripts/validate-data.mjs');
 const dataContractText = readText('docs/DATA_CONTRACT.md');
 const dataSourcesText = readText('docs/DATA_SOURCES.md');
-const agentsText = readText('AGENTS.md');
+const agentsText = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
 
 const macroDrivers = radarData?.macroDrivers;
 if (!isPlainObject(macroDrivers)) fail('macroDrivers is missing or not an object');
@@ -360,7 +360,7 @@ for (const marker of [
   if (!dataSourcesText.includes(marker)) fail(`DATA_SOURCES missing M-74 marker: ${marker}`);
 }
 
-if (!agentsText.includes('M-74 后')) fail('AGENTS.md missing M-74 boundary note');
+if (!agentsText.includes('M-74 后')) fail('docs/AGENT_DOMAIN_BOUNDARIES.md missing M-74 boundary note');
 
 if (errors.length > 0) {
   console.error('Expanded macro-driver auto-ingestion check FAILED:');

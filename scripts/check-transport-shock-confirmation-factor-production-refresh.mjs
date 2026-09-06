@@ -146,11 +146,11 @@ function validateAuthorityDocs() {
       markers: ['transport-shock-confirmation-factor-production-refresh-v1', 'P-score-8']
     },
     {
-      file: 'docs/PROJECT_BACKLOG.md',
+      file: 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md',
       markers: ['P-score-8', 'check:transport-shock-confirmation-factor-production-refresh']
     },
     {
-      file: 'AGENTS.md',
+      file: 'docs/AGENT_DOMAIN_BOUNDARIES.md',
       markers: ['transport-shock-confirmation-factor-production-refresh-v1', 'check:transport-shock-confirmation-factor-production-refresh']
     },
     {

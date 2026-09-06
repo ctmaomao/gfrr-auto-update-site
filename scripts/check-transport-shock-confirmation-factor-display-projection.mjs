@@ -132,8 +132,8 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -154,8 +154,8 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.includes('transport-shock-confirmation-factor-display-projection-v1'), 'SIGNAL_INTAKE missing display projection marker.');
-  assert(backlog.includes('Transport Shock Confirmation Factor display projection'), 'PROJECT_BACKLOG missing display projection marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor display projection'), 'AGENTS.md missing display projection boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor display projection'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing display projection marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor display projection'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing display projection boundary.');
   assert(packageJson.scripts['project:transport-shock-confirmation-factor-display-projection'], 'package.json missing display projection script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-display-projection'], 'package.json missing display projection check.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-display-projection'), 'check-suite missing display projection check.');

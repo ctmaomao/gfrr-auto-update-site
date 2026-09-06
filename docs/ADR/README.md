@@ -33,6 +33,20 @@
 | [ADR-0022](0022-macro-risk-editorial-integrated-overview.md) | Macro Risk AI editorial is integrated into the main overview | Accepted |
 | [ADR-0023](0023-macro-overview-narrative-first-evidence-on-demand.md) | Macro overview uses a narrative-first, evidence-on-demand reading path | Accepted |
 
+## Pending human review
+
+| # | 标题 | 状态 |
+|---|---|---|
+| [ADR-0024](0024-agent-domain-authority.md) | Domain assertions follow delegated authority | Implementation authorized; pending independent merge review |
+
+| [ADR-0025](0025-proportionate-validation.md) | Proportionate local validation | Owner-authorized local implementation; pending merge review |
+
+| [ADR-0026](0026-tiered-git-authorization.md) | Tiered Git authorization | Owner accepted; independent merge review retained |
+
+| [ADR-0027](0027-design-document-consistency.md) | Scoped design-document consistency correction; partial supersession of ADR-0011/0014 enforcement references | Owner authorized; independent merge review retained |
+
+| [ADR-0028](0028-energy-record-assertion-location.md) | Historical Energy/Transport assertions follow their records | Owner authorized; independent checker merge review retained |
+
 ## Superseded
 
 (None yet)

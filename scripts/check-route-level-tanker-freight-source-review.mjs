@@ -210,9 +210,9 @@ function assertAuthorityDocs() {
   const dataSources = readText('docs/DATA_SOURCES.md');
   const dataContract = readText('docs/DATA_CONTRACT.md');
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
   const index = readText('docs/INDEX.md');
-  const agents = readText('AGENTS.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
 
   for (const marker of [
     'Route-Level Tanker Freight Confirmation Source Review',
@@ -234,9 +234,9 @@ function assertAuthorityDocs() {
     assert(dataContract.includes(marker), `DATA_CONTRACT missing marker: ${marker}`);
   }
   assert(signalIntake.toLowerCase().includes('route-level tanker freight confirmation source review'), 'SIGNAL_INTAKE missing source-review marker.');
-  assert(backlog.includes('Route-level tanker freight source-review'), 'PROJECT_BACKLOG missing route-level tanker freight source-review marker.');
+  assert(backlog.includes('Route-level tanker freight source-review'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing route-level tanker freight source-review marker.');
   assert(index.includes('docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_REVIEW.md'), 'INDEX missing route-level tanker freight source review doc.');
-  assert(agents.includes('route-level tanker freight source-review'), 'AGENTS.md missing route-level tanker freight boundary.');
+  assert(agents.includes('route-level tanker freight source-review'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing route-level tanker freight boundary.');
 }
 
 function main() {

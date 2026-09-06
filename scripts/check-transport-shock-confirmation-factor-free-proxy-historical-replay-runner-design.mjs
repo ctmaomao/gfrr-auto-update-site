@@ -114,8 +114,8 @@ function assertRuntimeRemainsUnwired() {
 
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
 
@@ -126,8 +126,8 @@ function assertAuthorityDocs() {
   ]) {
     assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
   }
-  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay runner design'), 'PROJECT_BACKLOG missing runner design marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay runner design'), 'AGENTS.md missing runner design boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy historical replay runner design'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing runner design marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy historical replay runner design'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing runner design boundary.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-historical-replay-runner-design'], 'package.json missing runner design checker script.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-historical-replay-runner-design'), 'check-suite missing runner design check.');
 }

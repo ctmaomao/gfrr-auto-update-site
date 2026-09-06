@@ -3,7 +3,13 @@
 > Milestone (M-XX 与 vXX.XX) 一行索引。本文件是 milestone 历史的默认入口;
 > `README.md` 只保留项目入口摘要,不再承载 milestone 流水账。
 >
-> **加载策略**:默认会话只读 ## Active 与 ## Recently Merged 段。
+> **加载策略**:默认会话只读 日期化会话交接和逐次审计表见 [历史归档](PROJECT_HANDOFF_HISTORY.md)，只在核对对应事件时读取；当前待办仍以 PROJECT_BACKLOG 为准。
+
+ODP/Energy/Transport 的逐阶段细节见 [P3-19/P3-19a 原文归档](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)；按当前 backlog 指针读取对应范围。
+
+旧 Completed 表与 P3-17/18/20 过程见[完成记录](PROJECT_COMPLETED_HISTORY.md)，不作为新任务入口。
+
+## Active 与 ## Recently Merged 段。
 > ## Archived 段仅在用户明确要求查阅历史时读取。
 > 这避免每次会话被 70+ 历史 milestone 文档污染。
 

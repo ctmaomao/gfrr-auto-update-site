@@ -132,8 +132,8 @@ function assertRuntimeRemainsUnwired() {
 
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
   for (const marker of [
@@ -144,8 +144,8 @@ function assertAuthorityDocs() {
   ]) {
     assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
   }
-  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy real-event sample input prep'), 'PROJECT_BACKLOG missing sample input prep marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor free-proxy real-event sample input prep'), 'AGENTS.md missing sample input prep boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy real-event sample input prep'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing sample input prep marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy real-event sample input prep'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing sample input prep boundary.');
   assert(packageJson.scripts['prepare:transport-shock-confirmation-factor-free-proxy-real-event-sample-inputs'], 'package.json missing prep script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-real-event-sample-input-prep'], 'package.json missing prep checker.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-real-event-sample-input-prep'), 'check-suite missing prep checker.');

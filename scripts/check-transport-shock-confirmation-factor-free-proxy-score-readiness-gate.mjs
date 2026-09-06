@@ -169,8 +169,8 @@ function assertRuntimeRemainsUnwired() {
 
 function assertAuthorityDocs() {
   const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/PROJECT_BACKLOG.md');
-  const agents = readText('AGENTS.md');
+  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
+  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
   const packageJson = JSON.parse(readText('package.json'));
   const checkSuite = readText('scripts/check-suite.mjs');
   for (const marker of [
@@ -181,8 +181,8 @@ function assertAuthorityDocs() {
   ]) {
     assert(signalIntake.includes(marker), `SIGNAL_INTAKE missing marker: ${marker}`);
   }
-  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate'), 'PROJECT_BACKLOG missing score-readiness gate marker.');
-  assert(agents.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate'), 'AGENTS.md missing score-readiness gate boundary.');
+  assert(backlog.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate'), 'ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY missing score-readiness gate marker.');
+  assert(agents.includes('Transport Shock Confirmation Factor free-proxy score-readiness gate'), 'docs/AGENT_DOMAIN_BOUNDARIES.md missing score-readiness gate boundary.');
   assert(packageJson.scripts['review:transport-shock-confirmation-factor-free-proxy-score-readiness-gate'], 'package.json missing gate review script.');
   assert(packageJson.scripts['check:transport-shock-confirmation-factor-free-proxy-score-readiness-gate'], 'package.json missing gate checker.');
   assert(checkSuite.includes('check:transport-shock-confirmation-factor-free-proxy-score-readiness-gate'), 'check-suite missing gate checker.');
