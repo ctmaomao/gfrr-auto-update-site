@@ -235,7 +235,7 @@ Add or update backlog items with these rules:
 
 - **工作基线(2026-09-06)**: `codex/instruction-docs-maintenance` 基于 fetch 后的 `origin/main`；本系列已完成仓库改动按 owner 授权统一 commit+push，具体 SHA/远端结果见交付回复。
 - **当前任务状态(2026-09-06)**: 指令、校验读取解耦、轻量验证分流和文档归档已实施；本轮清理当前状态/完成事项/旧 Open 记录。检查和发布范围见 [总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
-- **下一步建议(2026-09-06)**: 实现已 push 为 `e268bef6`；[PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 已准备独立人工 review。原生 hooks/list 确认检测 Hook 配置有效但仍 untrusted；CLI `/hooks` 信任当前定义后才能验收自然启动/恢复事件，具体 hash 与步骤见[总回执](REVIEW_2026-09-06_CLOSEOUT.md#后续评审与-hook-验收)。不以 AI 自审代替人工批准，不以直接调用 handler 代替生命周期验收。
+- **下一步建议(2026-09-06)**: Owner 明确授权 AI 实际执行本次两项验收；[PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 的 AI 审核完成、未发现阻断项，指定 Hook 已通过原生界面信任并取得真实启动完成 trace，见[总回执](REVIEW_2026-09-06_CLOSEOUT.md#后续评审与-hook-验收)。仅此两项采用执行人例外，不扩展一般审批或合并/部署权限；不再把首次信任列作待办。
 - **阻塞或等待(2026-09-06)**: 前次 BoA/EdgeOne/来源授权观察项仍有效，本轮不替代其验证或制造成本授权。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
@@ -243,6 +243,6 @@ Add or update backlog items with these rules:
 - BoA：下一次自然 Daily 查看脱敏 source diagnostic 与生产报告月份；此前一次 Daily 成本授权已使用，不能据此再调用。
 - EdgeOne：等待自然发布后核对 radar/World Order 数据；Pages 成功不替代自定义域名一致性证据。
 - ACLED 滞后地区/月表、StockQ/ARR 来源、Web v2 观察期及运输商业授权仍按 Section 2 的现行事项处理；不因历史归档自动关闭。
-- Hook 首次信任/新任务触发和本轮变更的独立 merge review 仍保留；具体范围见最新四字段交接。
+- 指令维护的审核与 Hook 验收已按本次明确授权完成；合并/部署不在此验收授权内。
 
 此前逐会话记录原文见 [历史交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-05)。仅在核对对应日期事件时读取；不把旧“下一步”恢复成当前任务。
