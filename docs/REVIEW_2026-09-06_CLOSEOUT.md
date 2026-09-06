@@ -18,3 +18,14 @@ Owner 已授权完成建议并 commit+push。本系列仓库交付包含 AGENTS/
 使用独立任务分支 `codex/instruction-docs-maintenance`，从 fetch 时的最新 origin/main 建立；只提交本系列仓库文件，不混入用户原有 `.agents/`、`skills-lock.json` 或 ignored 手工产物。独立人工 checker/治理 review 完成前不合并 main。分支 push 不是生产部署。
 
 个人全局 AGENTS、技能与维护源位于仓库外，保留在现有个人维护来源，不复制到项目公开远端。`manage.py status --installed` exit 0，pending writes / conflicts / upstream review 均为 0；维护工具的 12 个单元测试通过（exit 0）。Hook 首次信任/真实 SessionStart 激活仍未实证，必须与脚本自身测试区分。
+
+## 后续评审与 Hook 验收
+
+本系列实现已提交为 `e268bef6a14cfddae47d9970fe549bf736dff0a4` 并推送，远端 SHA 核对一致。Owner 随后要求继续完成两项剩余验收并 commit+push；这不撤销独立人工 review 或平台首次信任要求。
+
+- 已创建[独立评审草稿 PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304)，含 ADR-0024 至 0028、权限变化、设计例外、测试和需人工核对的差异。以 `ea1fecea` 为基线再次反向替换比对 73 个领域校验器：除了读取路径、诊断标签和一个对象键重命名，文件完全相同；断言及阈值未变。check-workflows 的来源迁移、原有 serial trunk 检查和新增文档分流另行自审。此证据是 AI 自审，尚无独立人工批准，不合并 main。
+- 首个 PR CI [run 34017545933](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34017545933) 已成功：依赖审计、单元测试覆盖、完整检查和 Chromium 浏览器 smoke 均通过。这验证了远端干净 checkout 的实现，不代替人工 review；后续提交另按其 CI 状态报告。
+- Codex CLI `0.153.0` 的原生 `hooks/list` 确认：唯一用户 SessionStart hook 已启用，异步、匹配 startup/resume、超时 8 秒，warnings/errors 为空；实际信任状态为 **untrusted**。本轮直接调用 handler 返回 `{}`、exit 0，12 个维护测试再次通过；这些不是生命周期触发成功的证据。
+- 待信任的定义 hash 为 `sha256:94e4c828c2ba141e5807c83db488f1982fe42f7901b43749324a45216d47078d`。在 CLI 输入 `/hooks`，审阅用户级 hooks.json 中运行 instruction-maintenance/session_start.py 的命令；仅信任这个确切定义。之后在一次自然新会话或恢复中核对平台的 SessionStart 完成事件及退出结果；无漂移时 handler 应保持安静，不能用“没看到提示”推断已执行。
+
+[官方 Hooks 文档](https://learn.chatgpt.com/docs/hooks)规定非 managed hook 在审阅并信任当前定义前跳过执行。没有改写信任存储、使用 bypass 参数、伪造事件或把直接脚本测试记为真实触发。PR 人工审阅与 CLI 信任是目前等待 owner 的具体动作；其余准备已完成。本段后续文档检查及 commit/push 结果在交付回复给出。

@@ -235,7 +235,7 @@ Add or update backlog items with these rules:
 
 - **工作基线(2026-09-06)**: `codex/instruction-docs-maintenance` 基于 fetch 后的 `origin/main`；本系列已完成仓库改动按 owner 授权统一 commit+push，具体 SHA/远端结果见交付回复。
 - **当前任务状态(2026-09-06)**: 指令、校验读取解耦、轻量验证分流和文档归档已实施；本轮清理当前状态/完成事项/旧 Open 记录。检查和发布范围见 [总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
-- **下一步建议(2026-09-06)**: CLI `/hooks` 首次审阅/信任本轮只读升级检测，再用新任务验证触发；ADR-0024/0025/0026/0027/0028 与 checker 差异仍须独立 merge review，Git 按已批准的分级规则执行。普通文档轻量分流现已实施；未来上游冲突出现时按维护源审阅，不预先覆盖。
+- **下一步建议(2026-09-06)**: 实现已 push 为 `e268bef6`；[PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 已准备独立人工 review。原生 hooks/list 确认检测 Hook 配置有效但仍 untrusted；CLI `/hooks` 信任当前定义后才能验收自然启动/恢复事件，具体 hash 与步骤见[总回执](REVIEW_2026-09-06_CLOSEOUT.md#后续评审与-hook-验收)。不以 AI 自审代替人工批准，不以直接调用 handler 代替生命周期验收。
 - **阻塞或等待(2026-09-06)**: 前次 BoA/EdgeOne/来源授权观察项仍有效，本轮不替代其验证或制造成本授权。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
