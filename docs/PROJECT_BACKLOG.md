@@ -27,16 +27,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-06 指令与技能维护
 
-- **当前 acceptance baseline**：owner 已明确采纳 Git 分级授权（ADR-0026）；本地常规 Git 可自主执行，远端/集成按任务授权，破坏性操作仍具体确认。保留必要验证与人工 contract review、付费/发布/source-rights 保障。
-- **当前实现**：领域 checker 解耦、普通文档轻量分流、个人维护源和只读升级检测已落地；neat-freak 保留精简定制版，选择吸收上游 v3 触发边界。全量 Markdown 复核和剩余瘦身建议见 [最终复核](REVIEW_2026-09-06_MARKDOWN_FINAL.md)。不改既有无关 .agents/ 与 skills-lock.json。
-- 前三轮执行证据保留在 [初轮](REVIEW_2026-09-06_INSTRUCTIONS.md)、[第二轮](REVIEW_2026-09-06_INSTRUCTIONS_PHASE2.md)、[第三轮](REVIEW_2026-09-06_INSTRUCTIONS_PHASE3.md)。其中旧 Git 手动要求/未启用轻量检查是当时状态，现行规则见根 AGENTS 与 ADR-0025/0026。
-- **本次文档整理 acceptance baseline**：owner 授权合并 Market Pricing / External AI 重复状态、原文归档历史交接；字体/颜色例外先按 [ADR-0027](ADR/0027-design-document-consistency.md) 限定为 token 定义和现有单条 #999 边框，再修正文档。未批准其它视觉漂移；当前进度见 [整理回执](REVIEW_2026-09-06_DOC_CONSOLIDATION.md)。
-
-- **ODP/Energy 后续整理 acceptance baseline**：owner 于本轮授权执行前轮建议；将 P3-19/P3-19a 实施历史原文迁出，保留当前授权、待办、回测预登记入口及既有 checker 标题依赖，不改 runtime/checker/审批门槛。结果见 [领域条目整理回执](REVIEW_2026-09-06_ENERGY_BACKLOG.md)。
-
-- **标题/schema 依赖迁移 acceptance baseline**：owner 授权继续处理剩余依赖；按 [ADR-0028](ADR/0028-energy-record-assertion-location.md) 将 68 个校验器的历史记录读取目标迁至原文归档，76 项标识及全部断言保留，删除 backlog 兼容索引。独立 checker 合并审阅保留，记录不扩大权限；见 [迁移回执](REVIEW_2026-09-06_ENERGY_ASSERTIONS.md)。
-
-- **本轮收尾 acceptance baseline**：owner 授权继续精简并 commit+push 本系列全部已完成的仓库改动。维护状态去快照计数、完成事项与旧 Open 条目原文归档；领域入口澄清阶段、删除空 ignore list 的解释负担，实际 ignore 理由与独立审阅保留。工作推送到独立任务分支，合并前人工 review 不被替代；见 [总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
+- **已完成**：指令/校验器解耦、验证分流、技能维护来源、历史归档及 Hook 验收已随 PR #304 合并并通过 Pages 验证；现行决策、限定执行人例外和历史证据统一见[总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
+- **本轮 acceptance baseline（2026-09-07）**：owner 要求完成四项后续整理：明确技能归属、更新 ADR 验收状态、合并根文件重复约束、收拢维护回执与交接；沿用本系列 commit+push 授权。不改变检查器、通用审核或生产发布权限。
 
 ### 2026-09-05 全模块完善（owner 授权逐项 commit + push）
 
@@ -233,16 +225,15 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线(2026-09-07)**: 本系列实现 `023500d9` 纳入 main `2a54303f` 后组合验收；最终主线 SHA 与 Pages 结果以 [PR #304](https://github.com/ctmaomao/gfrr-auto-update-site/pull/304) 交付记录为准。
-- **当前任务状态(2026-09-07)**: 指令精简、验证分流、历史归档、授权 AI 审核与 Hook 实际启动验收已完成；owner 另行明确授权最新 main 验收、合并 PR 及其自动 Pages 发布，见[总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
-- **下一步建议(2026-09-07)**: 本次收尾按 PR/Actions 实际结果核对；不因旧“未授权合并”或 Hook 首次信任快照再次暂停。不扩展到新功能、数据生成、付费调用或额外 EdgeOne 发布。
-- **阻塞或等待(2026-09-07)**: 前次 BoA/EdgeOne/来源授权观察项仍有效，本轮不替代其验证或制造成本授权。
+- **工作基线**：main `8cc2e9cc`；PR #304 合并与 Pages 验收已完成，见[总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
+- **当前任务**：四项后续整理已实施；技能及锁文件迁入用户级目录，ADR 链接已完成验收，重复约束和导航已合并。最终检查及提交记录以本轮 PR 为准。
+- **下一步**：交付与检查结果查本轮 PR；合并按通用审阅要求处理，PR #304 的执行人例外不自动沿用。
+- **阻塞或等待**：本轮无实施阻塞；下列生产观察事项独立保留。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 
 - BoA：下一次自然 Daily 查看脱敏 source diagnostic 与生产报告月份；此前一次 Daily 成本授权已使用，不能据此再调用。
 - EdgeOne：等待自然发布后核对 radar/World Order 数据；Pages 成功不替代自定义域名一致性证据。
 - ACLED 滞后地区/月表、StockQ/ARR 来源、Web v2 观察期及运输商业授权仍按 Section 2 的现行事项处理；不因历史归档自动关闭。
-- 指令维护的审核与 Hook 验收已完成；随后新增的合并/Pages 授权和最终结果按上方交接及 PR 记录读取。
 
 此前逐会话记录原文见 [历史交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-05)。仅在核对对应日期事件时读取；不把旧“下一步”恢复成当前任务。

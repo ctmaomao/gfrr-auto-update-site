@@ -184,21 +184,7 @@
 
 - [完成事项与维护快照归档](PROJECT_COMPLETED_HISTORY.md)：原 backlog Section 1/3、P3-17/18/20 日期化原文；当前状态与未关闭事项留在 backlog。
 
-## 指令维护验证策略
+## 指令维护入口
 
-- [ADR-0025](ADR/0025-proportionate-validation.md)：普通文档本地轻量检查适用边界；CI/部署完整验证保持。
-- [第三轮回执](REVIEW_2026-09-06_INSTRUCTIONS_PHASE3.md)：GPT-6 Astra 官方依据、规则精简、升级检测和信任步骤。
-
-- [Git 分级授权](ADR/0026-tiered-git-authorization.md)：owner 已采纳，替代通用手动 Git 要求。
-- [Markdown 最终复核](REVIEW_2026-09-06_MARKDOWN_FINAL.md)：全部项目 Markdown 扫描、neat-freak 上游判断和后续精简候选。
-
-- [阶段文档统一状态](LEGACY_DOCUMENT_STATUS.md)：Market Pricing / External AI 历史文件的共同状态说明；实际操作仍遵守对应现行契约。
-- [设计文档一致性决策](ADR/0027-design-document-consistency.md)：token 定义、单条旧边框例外及当前验证机制。
-- [文档整理回执](REVIEW_2026-09-06_DOC_CONSOLIDATION.md)：状态合并、历史归档和设计修订的保全证据。
-
-- [ODP/Energy backlog 整理回执](REVIEW_2026-09-06_ENERGY_BACKLOG.md)：现行状态、授权与历史分离，保全及验证结果。
-
-- [历史记录断言迁移](ADR/0028-energy-record-assertion-location.md)：Energy/Transport 阶段记录由原文归档承接，现行操作权限仍按领域契约。
-- [迁移回执](REVIEW_2026-09-06_ENERGY_ASSERTIONS.md)：机械差异、故障注入及完整验证结果。
-
-- [本系列提交收尾回执](REVIEW_2026-09-06_CLOSEOUT.md)：范围、验证、Git 交付与仓库外维护状态。
+- [指令维护总回执](REVIEW_2026-09-06_CLOSEOUT.md)：当前验收、现行 ADR 入口及按需读取的历史证据。阶段回执不逐篇预读。
+- [阶段文档统一状态](LEGACY_DOCUMENT_STATUS.md)：Market Pricing / External AI 阶段文件的共同状态；实际操作按对应现行契约。

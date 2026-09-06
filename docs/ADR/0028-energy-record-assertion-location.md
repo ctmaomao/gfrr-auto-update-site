@@ -2,7 +2,7 @@
 
 ## Status
 
-Owner authorized the next backlog simplification on 2026-09-06. Local implementation is authorized; independent governance/checker review before merge remains required by AGENTS.md §10. This decision grants no source, runtime, scoring, publication or Git permission.
+Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304). That reviewer exception applies only to PR #304; general review requirements remain unchanged. The decision grants no source, runtime, scoring, publication or Git permission.
 
 ## Context
 
