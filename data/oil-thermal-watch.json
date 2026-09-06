@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-09-06T11:00:12.954Z",
+  "generatedAt": "2026-09-06T15:29:31.659Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -9,8 +9,8 @@
     "VIIRS_NOAA21_NRT"
   ],
   "status": "ok",
-  "signalState": "baseline_established_no_repeated_signal",
-  "displayStatusZh": "观察层已接入",
+  "signalState": "baseline_repeated_watch",
+  "displayStatusZh": "重复观察待核",
   "sourceStatus": {
     "mapKey": "configured",
     "firms": "live",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-09-06T09:07:00Z",
-    "latestAgeHours": 1.9,
+    "latestAcqAt": "2026-09-06T10:49:00Z",
+    "latestAgeHours": 4.7,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -136,24 +136,24 @@
     ]
   },
   "aggregate": {
-    "rowCount": 64,
-    "latestAcqAt": "2026-09-06T09:07:00Z",
-    "maxFrp": 25.29,
+    "rowCount": 90,
+    "latestAcqAt": "2026-09-06T10:49:00Z",
+    "maxFrp": 40.63,
     "confidenceCounts": {
-      "n": 58,
-      "l": 3,
-      "h": 3
+      "n": 70,
+      "l": 13,
+      "h": 7
     },
-    "highConfidenceCount": 3,
+    "highConfidenceCount": 7,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
       "N": 38,
-      "D": 26
+      "D": 52
     },
-    "latestAgeHours": 1.9,
+    "latestAgeHours": 4.7,
     "facilityCount": 42,
-    "facilitiesWithDetections": 15,
+    "facilitiesWithDetections": 17,
     "requestCount": 126,
     "requestErrorCount": 0,
     "requestDiagnostics": {
@@ -177,12 +177,13 @@
       }
     },
     "baselineStatus": "established",
-    "repeatedObservationCount": 0,
+    "repeatedObservationCount": 1,
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 42,
     "facilitiesByAnomalyLevel": {
-      "none_observed": 27,
-      "low_signal": 15
+      "none_observed": 25,
+      "low_signal": 16,
+      "repeated_watch": 1
     }
   },
   "facilities": [
@@ -254,7 +255,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 2.4,
+      "latestAgeHours": 6.9,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -305,7 +306,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 2.1,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -392,7 +393,7 @@
       "sourceStatus": "live",
       "requestErrorCount": 0,
       "rowCount": 7,
-      "latestAcqAt": "2026-09-06T08:53:00Z",
+      "latestAcqAt": "2026-09-06T08:54:00Z",
       "maxFrp": 3.21,
       "confidenceCounts": {
         "n": 7
@@ -403,7 +404,7 @@
       "dayNightCounts": {
         "N": 7
       },
-      "latestAgeHours": 2.1,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -454,7 +455,7 @@
       "dayNightCounts": {
         "N": 10
       },
-      "latestAgeHours": 2.1,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -730,7 +731,7 @@
       "requestErrorCount": 0,
       "rowCount": 8,
       "latestAcqAt": "2026-09-06T08:54:00Z",
-      "maxFrp": 3.29,
+      "maxFrp": 3.3,
       "confidenceCounts": {
         "n": 8
       },
@@ -740,7 +741,7 @@
       "dayNightCounts": {
         "N": 8
       },
-      "latestAgeHours": 2.1,
+      "latestAgeHours": 6.6,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1058,19 +1059,23 @@
       "region": "Middle East / Iran",
       "assetType": "oil_terminal",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Kharg Island Terminal; desig_cd=TRMO; fc=S; cc_ft=IRN; adm1=IR-000; lat_dd=29.25; long_dd=50.328611; mod_dt_ft=2025-04-29T13:40:15.000Z; point converted to +/-0.05 degree FIRMS watch box. This is an oil-terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-09-06T10:02:00Z",
+      "maxFrp": 11.88,
+      "confidenceCounts": {
+        "n": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 1
+      },
+      "latestAgeHours": 5.5,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1083,19 +1088,19 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
-        "maxFrpAboveP95": false,
+        "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
+        "aboveBaselineStrength": true,
         "repeatedObservation": false,
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -1152,19 +1157,23 @@
       "region": "Middle East / Iran",
       "assetType": "refinery_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Abadan; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-06; lat_dd=30.3392; long_dd=48.3043; mod_dt_ft=2014-08-08T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. NIORDC contact/refineries pages separately list Abadan Oil Refining Company. This is a refinery-area proxy from the official Abadan place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 4,
+      "latestAcqAt": "2026-09-06T10:47:00Z",
+      "maxFrp": 12.23,
+      "confidenceCounts": {
+        "l": 4
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 4
+      },
+      "latestAgeHours": 4.7,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1177,8 +1186,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1188,8 +1197,8 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
       "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
     },
@@ -1246,23 +1255,23 @@
       "region": "Middle East / Iran",
       "assetType": "energy_processing_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Asaluyeh; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-18; lat_dd=27.47383219; long_dd=52.60782293; mod_dt_ft=2023-06-08T21:35:22.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a broad energy-processing area proxy from the official place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 10,
-      "latestAcqAt": "2026-09-06T09:05:00Z",
-      "maxFrp": 15.19,
+      "rowCount": 16,
+      "latestAcqAt": "2026-09-06T10:02:00Z",
+      "maxFrp": 21.27,
       "confidenceCounts": {
-        "l": 3,
-        "n": 7
+        "l": 7,
+        "n": 9
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 10
+        "D": 16
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1276,8 +1285,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1298,22 +1307,24 @@
       "region": "Middle East / Israel",
       "assetType": "refinery_area",
       "sourceNote": "NGA GNS country file Israel.txt; row full_name=Haifa Bay Area; desig_cd=VAL; fc=T; cc_ft=ISR; adm1=IL-HA; lat_dd=32.870326; long_dd=35.081473; mod_dt_ft=2014-08-25T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Bazan public page separately states Oil Refineries Ltd. is located in the Haifa Bay area. This is a refinery-area proxy from the official bay-area point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip",
-      "sourceAgreement": "2/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-09-06T00:26:00Z",
-      "maxFrp": 2.66,
+      "rowCount": 4,
+      "latestAcqAt": "2026-09-06T10:47:00Z",
+      "maxFrp": 3.16,
       "confidenceCounts": {
-        "n": 3
+        "n": 3,
+        "l": 1
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 3
+        "N": 3,
+        "D": 1
       },
-      "latestAgeHours": 10.6,
+      "latestAgeHours": 4.7,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1327,7 +1338,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 2,
+        "sourcesWithDetections": 3,
         "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1443,22 +1454,22 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "refinery_area_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Ruwais; desig_cd=PPL; fc=P; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1999-06-15T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 1,
-      "latestAcqAt": "2026-09-06T09:07:00Z",
+      "rowCount": 2,
+      "latestAcqAt": "2026-09-06T10:00:00Z",
       "maxFrp": 21.43,
       "confidenceCounts": {
-        "n": 1
+        "n": 2
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 1
+        "D": 2
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1472,21 +1483,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
         "aboveBaselineStrength": true,
-        "repeatedObservation": false,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "low_signal",
-      "anomalyLabelZh": "低信号",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
     },
     {
       "id": "me_uae_jebel_dhanna_terminal_area",
@@ -1541,22 +1552,22 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "export_terminal_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Das Island Terminal; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1993-12-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "3/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 2,
-      "latestAcqAt": "2026-09-06T09:07:00Z",
-      "maxFrp": 25.29,
+      "rowCount": 5,
+      "latestAcqAt": "2026-09-06T10:02:00Z",
+      "maxFrp": 26.04,
       "confidenceCounts": {
-        "n": 2
+        "n": 5
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 2
+        "D": 5
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 5.5,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -1570,8 +1581,8 @@
         "frpOver50CountP95": 4,
         "frpOver100CountP95": 1,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 3,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1654,7 +1665,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 6.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1846,7 +1857,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 6.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1897,7 +1908,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 6.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -1948,7 +1959,7 @@
       "dayNightCounts": {
         "D": 1
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 6.4,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -2128,20 +2139,21 @@
       "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 8,
-      "latestAcqAt": "2026-09-06T09:07:00Z",
-      "maxFrp": 25.28,
+      "rowCount": 16,
+      "latestAcqAt": "2026-09-06T10:47:00Z",
+      "maxFrp": 40.63,
       "confidenceCounts": {
-        "n": 5,
-        "h": 3
+        "n": 9,
+        "h": 6,
+        "l": 1
       },
-      "highConfidenceCount": 3,
+      "highConfidenceCount": 6,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 8
+        "D": 16
       },
-      "latestAgeHours": 1.9,
+      "latestAgeHours": 4.7,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -2180,21 +2192,22 @@
       "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 4,
-      "latestAcqAt": "2026-09-06T09:07:00Z",
-      "maxFrp": 8.05,
+      "rowCount": 6,
+      "latestAcqAt": "2026-09-06T10:49:00Z",
+      "maxFrp": 10.23,
       "confidenceCounts": {
-        "n": 4
+        "n": 5,
+        "h": 1
       },
-      "highConfidenceCount": 0,
+      "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
         "N": 3,
-        "D": 1
+        "D": 3
       },
-      "latestAgeHours": 1.9,
-      "rawSignalLevel": "low_signal",
+      "latestAgeHours": 4.7,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
