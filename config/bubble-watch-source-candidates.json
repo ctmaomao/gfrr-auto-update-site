@@ -286,13 +286,21 @@
     "arr_2nd_deriv": {
       "automationStatus": "hybrid_live",
       "primarySignal": "Second derivative of AI ARR / run-rate estimates",
+      "independentSourceReview": "docs/ARR_INDEPENDENT_SOURCE_REVIEW.md",
       "freeSourceCandidates": [
+        {
+          "source": "Anthropic official company run-rate disclosures",
+          "url": "https://www.anthropic.com/news/series-h",
+          "cadence": "event-driven",
+          "role": "offline candidate evidence; not connected to the production builder",
+          "limitations": "Automatic collection rights unresolved. Preserve publication date, underlying observation interval and lower-bound qualifier; financing, valuation and product revenue cannot substitute. Independent runtime review remains required."
+        },
         {
           "source": "Sacra / public reporting / company disclosures",
           "url": "https://sacra.com/",
           "cadence": "monthly",
           "role": "private-company revenue estimate evidence",
-          "limitations": "Usually estimate-driven and partly paywalled; not safe for hard automatic scoring yet."
+          "limitations": "Estimate-driven and partly paywalled. Sacra terms require written permission for automated website access; candidate listing is not a licence. No new collector or automatic scoring activation."
         },
         {
           "source": "Public company RPO / AI revenue disclosures via SEC or company IR",

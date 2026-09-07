@@ -121,6 +121,10 @@
 - `docs/M94_V0_DATA_CONTRACT.md` — M-94 V0 数据消费契约 v3.1 + 视觉权威基准(mock v2.1);文件自述「保持有效」,被 `AGENTS.md` 与 `DESIGN.md §5.6` 引用。前端 display-only,不动 scoring/decision/execution/position/Worker/pipeline。
 - `docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md` — 路径 C 前端重写 7-stage 计划参考(位于 `docs/m94-v0/` 子目录,非 `docs/` 顶层)。
 
+### Bubble Watch source review scope
+
+- `docs/ARR_INDEPENDENT_SOURCE_REVIEW.md` — ARR 来源权限与离线候选复核契约；无自动抓取或生产切换，不属于 External AI provider 调用。
+
 ### External AI scope
 
 - `docs/EXTERNAL_AI_API_DESIGN.md`

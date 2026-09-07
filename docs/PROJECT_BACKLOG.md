@@ -25,6 +25,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-07 ARR 独立来源接入改造（候选阶段）
+
+- **Acceptance baseline**：owner 明确批准 ARR 独立来源接入改造；沿用本系列逐项 commit+push。批准覆盖工程及来源审阅，不代替供应商许可，不增加付费调用；生产切换保留独立人工审阅。
+- **实施范围**：新增离线候选输入与复核命令 `review:bubble-watch-arr`，归属 artifact sanitizer；来源/公司/指标/金额类型、观察区间、发布日期分别校验。现有 SaaStr 4篇 runtime、45天门、curated、灯色/阈值及审计WARN分类不变。详见[独立来源复核](ARR_INDEPENDENT_SOURCE_REVIEW.md)。
+- **真实待办**：Sacra自动访问须书面许可，Anthropic新闻页自动采集权限未确认；本次未启用抓取或改生产。官方5月披露是47B run-rate下限、5月1–28日区间，不是65B融资额，也不能直接替换旧44B序列。候选工具完成不等于来源许可、可比序列或ARR生产新鲜度恢复。
+
 ### 2026-09-07 首页 AI 判读不可用修复（已恢复线上）
 
 - **Acceptance baseline**：owner 要求分析并修复首页“AI 判读不可用”，尽量减少复发。本次只修既有新闻检索覆盖与跳过诊断，保留可信来源、逐事实引用、review、时间匹配、30 小时及单次 provider/no retry。2026-09-07 在展示本地提交 `26d8cf1d`、验证结果和推送/合并/发布及一次 DeepSeek 刷新验收请求后，owner 回复“请也恢复线上”，确认执行该具体恢复方案；授权一次生产刷新、最多一次 DeepSeek，失败不得重复付费调用。
