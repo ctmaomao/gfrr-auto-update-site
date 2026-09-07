@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-07 新闻 shadow 标题主张防护
+
+- **Acceptance baseline**：owner 在只读质量审阅后批准下一刀实施，完成后单独 commit+push。范围为 shadow 标题主题相关性、否定/争议/假设句及英文词形；不改主源、质量阈值/分母、生产分类器或评分，不触发刷新/付费。原断言固化的 `attacks` 漏识别按 [ADR-0029](ADR/0029-web-ngrams-shadow-claim-guards.md) 显性修正，独立 checker/merge review 仍保留。
+- **实现**：Web 与已有 Tavily/Brave reference 共用标题防护；正文 bucket 不能借给无关标题，主题和方向须在同分句出现；不确定性保守弃权，主张加否认保留争议。classification v2 / telemetry v3 分离新旧计算口径，旧 v2 diagnostics 验证不放宽，历史不删除或重算；现有30天/120样本及全部门槛不变。
+- **验收与边界**：56 项真实标题/离线回归纳入原 classifier check，覆盖池塘恢复、主张加否认、否定/假设/演习/词形、两侧匹配、单 pair stub build、脱敏及旧 v2 cohort。第一轮 `check:changed` / `check:all` exit 0；提交前追加“未关闭/演习/驳斥报道”负例，最终版本重新全量验证，最终结果见任务回执。真实 git-history 回放保留231有效/0无效旧记录，新 v3 样本为0、切源门保持关闭。规则不是完整语义理解；不证明事件真实或来源准确率。
+- **后续独立事项**：同事件/地点绑定、转载及所有权去重、逐条支持链、TOC 日期语义；合并后的新口径观察与人工切源审阅仍待完成。本任务不自动实施后续事项。
+
 ### 2026-09-07 首页 AI 判读不可用修复（已恢复线上）
 
 - **Acceptance baseline**：owner 要求分析并修复首页“AI 判读不可用”，尽量减少复发。本次只修既有新闻检索覆盖与跳过诊断，保留可信来源、逐事实引用、review、时间匹配、30 小时及单次 provider/no retry。2026-09-07 在展示本地提交 `26d8cf1d`、验证结果和推送/合并/发布及一次 DeepSeek 刷新验收请求后，owner 回复“请也恢复线上”，确认执行该具体恢复方案；授权一次生产刷新、最多一次 DeepSeek，失败不得重复付费调用。
@@ -235,10 +242,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：main `b82b5374`，包含PR #306及生产刷新提交 `a7278071`；本次仅核对生产数据和同步验收记录。
-- **当前任务**：09-07自然Daily后BoA生产恢复及六份核心JSON双域名同步已验收；MCP应用连接和full重索引成功。首页AI先前的单次刷新及显示验收仍见Section 2独立记录。
-- **下一步**：复核Web v2同口径观察及其余来源依赖；不重复已用的Daily或provider单次授权。
-- **阻塞或等待**：BoA与本次发布同步不再等待；以下独立观察/来源事项尚未关闭，MCP局部解析与metadata_changed仍需源码回读。
+- **工作基线**：从 latest main `483ac323` 创建独立分支 `codex/oil-news-shadow-claim-guards`；ARR 分支保留，不堆叠其改动。
+- **当前任务**：新闻 shadow 标题防护及回归、classification v2 / telemetry v3 同口径隔离；授权完成必要检查后单独 commit+push，不包含 merge/生产刷新。
+- **下一步**：独立复核 ADR-0029 的 checker 语义修正；同事件匹配/支持链/日期后续工作及新口径观察保留，不重复已用的 Daily 或 provider 单次授权。
+- **阻塞或等待**：本轮 MCP `list_projects` 返回 `Transport closed`，源码回读继续，不覆盖过去成功连接的历史记录、不擅自改连接配置；合并、切源和外部来源门槛未解除。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 
