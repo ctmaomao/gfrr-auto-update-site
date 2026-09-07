@@ -41,12 +41,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-05 全模块完善（owner 授权逐项 commit + push）
 
+- **09-07自然刷新后验收**：Daily `34068954340` 成功，生产 `updatedAt=2026-09-07T00:10:36.294Z`；BoA八月报告已为live，三项每户同比为5.0%/6.3%/4.3%，MLF保持live，BDI污染值保持null/missing。EdgeOne `34072876721`成功后，cache-busted双域名六份核心JSON与本地main全部逐字节一致；关闭BoA生产恢复与本次发布同步等待。9月5日失败的具体云端原因仍无可追溯日志，不能倒推；以下日期记录保留当时状态。MCP应用内full重索引完成于09-07 01:46 UTC，24922节点/82152边、0 skipped、5处partial parse；metadata_changed仍保留源码回读。详细证据见[自然刷新后复核](REVIEW_2026-09-05_CLOSEOUT.md#2026-09-07-自然刷新后复核)。
 - **MCP连接已关闭故障项 / 最新状态**：应用内四项RPC（list_projects/index_status/search_graph/check_index_coverage）均成功，最新诊断函数可查询；10:07 UTC代码full索引为24726节点/81458边，0 skipped、5处partial parse。无需owner再执行Restart。以下09:47及更早记录中的“仍需重连”仅为当时故障历史，不是当前待办；metadata_changed与局部解析提示仍要求源码回读，不宣称索引绝对完整。
 - **BoA云端降级取证补齐**：一次授权Daily已确认五月fallback，但旧Promise.allSettled路径未记录具体错误。新增log-only `[BoA source diagnostic]`，只输出固定source/stage/classification与HTTP状态码，区分landing/report请求、报告发现及解析；绝不输出原始异常/URL/正文/headers。离线真实fetch入口回归覆盖四阶段、成功不告警、原先首试+两次重试不增加，错误继续抛给原fallback路径。未运行第二次Daily，不写production JSON；云端原因仍需下一次自然Daily日志证据，不能因诊断代码补齐就宣称BoA恢复。
 - **09-05追加授权执行**：一次Daily已成功（run `33958975125` / `9c93507d`），Wind=`skipped_no_candidates`，未付费兜底/未重跑。BDI污染值已清除、MLF已live；BoA云端仍五月fallback，本地八月probe成功但云端原因未记录，不能关闭恢复项。ACLED三份新周表+三份原样文件经main-only publisher提交`6a04c891`并成功刷新`f36faebd`（run `33958873350`）；六区实际日期为三份8月21日/三份8月14日，月表仍7月31日，weekly/monthly data_current不代表统一最新。Pages两份JSON逐字节一致，自定义域名等待原EdgeOne低频发布。MCP复用项目启动配置的官方CLI已恢复并full索引24799节点/81642边；应用连接仍需Restart，5处partial parse及coverage metadata_changed提示保留源码回读。执行记录优先于下列首轮待办描述，详见[追加授权回执](REVIEW_2026-09-05_CLOSEOUT.md#owner授权后的执行回执2026-09-05)。
 - 验收基线：逐项修复、完整校验后独立提交推送；不以降低质量/授权门槛制造完成状态。不承诺外部源永久可用或绝对零缺陷。9项独立提交与最新验证/剩余输入见 [2026-09-05验收清单](REVIEW_2026-09-05_CLOSEOUT.md)。
 - **StockQ 运价语义修复 / 已通过本地验收**：修复公开 HTML 隐藏指数值后，通用 summary-row fallback 将 `4.06%` 收益率误读成 `BDI=4.06`；改为页面身份 + 历史表头/列语义绑定、保留空列、最新日期及7天freshness gate，无可读新值时fallback/missing。隔离旧百分比误读签名/无日期/非正/非整数缓存，新报价缺涨跌幅时不拼接旧日期涨跌幅，同日冲突拒绝。独立review问题均已补回归；check:all、34单测、7浏览器smoke通过，纯logic回归接入原expanded-auto-ingestion check。live只读probe正确返回BDI missing，而非4.06；BDTI/BCTI仍为旧值fallback，源明文恢复未解决，生产JSON待自然Daily使用新parser刷新。
-- 后续仅保留真实依赖：BoA下一次自然Daily云端日志与生产恢复确认、EdgeOne自然发布后的线上对齐、ACLED滞后地区/月表新版操作者材料、StockQ/ARR新源证据、Web v2同口径观察与独立切换审阅、运输商业授权。MCP连接、运输交接、BoA/MLF/ARR解析、影子分类和发布代码修复不再列为待实施。
+- 后续仅保留真实依赖：ACLED滞后地区/月表新版操作者材料、StockQ/ARR新源证据、Web v2同口径观察与独立切换审阅、运输商业授权。BoA生产恢复和双域名同步已于09-07实证关闭；MCP连接、运输交接、BoA/MLF/ARR解析、影子分类和发布代码修复不再列为待实施。
 - **EdgeOne源快照 / 2026-09-05**：排队后显式checkout最新main，记录并锁定实际检查/构建的SHA，release提交不再误用触发事件SHA。保留3小时调度、无变化不发布、32天400次配额保护和独立静态仓库，未改DNS/域名。此前FIRMS成熟基线及两份市场历史/指标已经在自定义域名逐字节对齐；低频通道不是每笔高频数据提交立即发布。
 - **Web NGrams影子质量 / 2026-09-05**：旧历史223有效/208可用/35.81天，独立支持中位3.03%、跨provider为0，不能晋升；最新32候选仅2条明确方向，支持率低不只是匹配缺陷。确认reference旧英文classifier与Web五语classifier不一致，修复为shadow-only统一分类并补日期/域名安全与脱敏诊断。v2计算口径独立重新积累原30天/120样本资格；旧历史完整保留、不混算、不改阈值/分母/主源/评分。没有真实逐篇近期artifact时，不猜测漏配原因占比，不承诺修复后门槛会通过。
 - **ARR解析安全 / 2026-09-05**：修复无公司约束的通用ARR金额误归因及不存在日期被接受两项缺陷；只接受Anthropic与ARR/annualized run-rate直接绑定的主张，已审标题优先，唯一325206短续句按结构锁定、不硬编码金额。固定4个SaaStr来源ID与45天底层观察门保持；未补未经核实的新里程碑、未修改curated/production灯色，底层最新5月28日仍须降级。恢复自动新鲜来源仍需同口径新观察证据，不能只刷新页面抓取时间。
@@ -54,7 +55,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - 运输交接发布验证：`8ac9285d`，实际云run `33953468989`成功；下载的artifact为6/3/3、gatePassed=true、scoreIntegrationApproved=false、historicalBacktestPerformed=false，完成本地/clean-checkout一致性交接。
 - Market Pricing发布验证：`5eb2cb72`，Pages run `33953020935`成功，线上history/metrics两文件SHA-256均与9月4日提交快照一致。
 - **BoA消费证据 / 2026-09-05**：修复旧摘要措辞绑定导致的五月fallback，按官方PDF人工核实8月HTML简写仍是每户同比；新增精确语义配对与旧明确模板回归，不自动认可未来未知简写。最新官方链接按报告月份排序，新live限定62天月龄；UI显示本报告月份和旧值/缺失状态，静态示例数字退场，当前asset token为`bofa-report-review-1`；不改评分或原始卡数据边界。
-- BoA验收：实时只读probe为八月报告0.05/0.063/0.043，12项解析测试与11项浏览器测试通过；生产`radar-data.json`尚未刷新，需既有Daily使用新parser后再确认八月值已发布，不能把本地抓取成功当作生产数据刷新。
+- BoA验收：09-05实时只读probe为八月报告0.05/0.063/0.043，12项解析测试与11项浏览器测试通过；09-07自然Daily生产快照及双域名文件现已核对相同八月值，生产恢复已关闭。旧失败根因未记录，不将当前成功写成历史错误分类已查明。
 - **MLF查询与操作语义 / 2026-09-05**：确认primary搜索非空但全为逆回购时不会尝试备用MLF查询；修复为至多2次逻辑搜索，摘要先行、正文去重且全程上限6，正文优先明确MLF标题。逐操作绑定毛额/期限/利率，不能借其他工具或其他日期的字段；实际操作日期必须真实、非未来且45天内，新发布不能洗白旧操作，未披露利率为null。仍为EastMoney聚合公开新闻/display-only，不冒充PBOC原始公告，不改评分。 只读 live probe 已验证2026-08-25 / 5000亿元 / 12个月 / null利率；16项MLF负例和全量检查通过。生产radar快照仍须等待既有Daily刷新，不能把本地解析成功写成生产已恢复。
 - **Market Pricing 周线对齐 / 2026-09-05**：既有 Yahoo manual 路径先 dry-run 再提交 history，QQQ/NDX/IXIC 均更新至 2026-09-04（各522条10年周线）；离线重算每资产463条60周指标。strict freshness 为 PASS / 0 WARN，逐窗独立复算1389组均吻合，SPX未变。QQQ primary、NDX/IXIC auxiliary、display-only与自动化边界不变；正常滚动10年源窗口不承诺永久保留窗口外历史。
 - MCP历史取证：07:45 UTC曾full索引，08:47曾Transport closed并伴随裸CLI endpoint失败；后续已复用项目配置完成最后代码索引且应用RPC恢复，当前状态见本节顶部。历史失败不等于仍待重启，局部HTML/Markdown缺口仍需源码回读。
@@ -234,15 +235,13 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：PR #306 已合并，生产刷新提交 `a7278071`；本地已回到 main，保留修复分支。
-- **当前任务**：首页 AI 已恢复线上，单次生产刷新、Pages/EdgeOne 发布与双域名桌面/手机验收均完成，详见 Section 2 的 9 月 7 日记录。
-- **下一步**：本次恢复无剩余执行步骤；下一次自然调度的长期效果尚未观察，不重复消耗本次已用的一次 provider 授权。
-- **阻塞或等待**：本次恢复无阻塞；下列独立观察事项不因本次验收自动关闭。
+- **工作基线**：main `b82b5374`，包含PR #306及生产刷新提交 `a7278071`；本次仅核对生产数据和同步验收记录。
+- **当前任务**：09-07自然Daily后BoA生产恢复及六份核心JSON双域名同步已验收；MCP应用连接和full重索引成功。首页AI先前的单次刷新及显示验收仍见Section 2独立记录。
+- **下一步**：复核Web v2同口径观察及其余来源依赖；不重复已用的Daily或provider单次授权。
+- **阻塞或等待**：BoA与本次发布同步不再等待；以下独立观察/来源事项尚未关闭，MCP局部解析与metadata_changed仍需源码回读。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 
-- BoA：下一次自然 Daily 查看脱敏 source diagnostic 与生产报告月份；此前一次 Daily 成本授权已使用，不能据此再调用。
-- EdgeOne：等待自然发布后核对 radar/World Order 数据；Pages 成功不替代自定义域名一致性证据。
 - ACLED 滞后地区/月表、StockQ/ARR 来源、Web v2 观察期及运输商业授权仍按 Section 2 的现行事项处理；不因历史归档自动关闭。
 
 此前逐会话记录原文见 [历史交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-05)。仅在核对对应日期事件时读取；不把旧“下一步”恢复成当前任务。

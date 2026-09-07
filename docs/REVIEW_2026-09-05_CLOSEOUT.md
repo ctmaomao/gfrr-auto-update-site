@@ -2,6 +2,14 @@
 
 首轮取证截至2026-09-05 08:47 UTC，后续授权执行见下节。起点为最新main `67eae2a8`，按owner授权串行处理；9项代码/数据事项均已独立commit并push。此文是本轮验收，不承诺所有外部数据永久可用、未来需求完成或绝对零缺陷。
 
+## 2026-09-07 自然刷新后复核
+
+- 本次只读核对main `b82b5374`及既有自然排程，没有再次触发Daily、DeepSeek或Wind。下列09-05回执保留当时状态，本节更新其后已经解除的等待。
+- [Daily 34068954340](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34068954340)成功；生产updatedAt为`2026-09-07T00:10:36.294Z`，BoA报告月为八月、status为live，每户同比5.0%/上期6.3%/除油4.3%；MLF为live，BDI为null/missing。生产字段断言退出0。关闭BoA生产恢复等待；旧失败未记录的具体原因仍未知，新成功不追认历史错误分类。
+- [EdgeOne 34072876721](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34072876721)成功。09-07 01:46 UTC后cache-busted读取GitHub Pages和自定义域名的radar、World Order、ODP、Oil Thermal、Oil News、Bubble Watch：12次请求均HTTP200，六文件在两域名与本地提交全部逐字节一致，断言退出0。radar SHA-256为`e4f770af2af856b94fcf375639e76ab67784726784e38cbd45e1a53acf062760`；World Order为`e7f7ad83ab58a82b549bcf0c834eb4f15601ee7409a650f65c936bc8bd30d5fc`。关闭本次发布同步等待，未改变三小时节奏或DNS。
+- MCP应用内full重索引完成于`2026-09-07T01:46:04Z`，24922节点/82152边、0 skipped、5处partial parse。覆盖元数据仍返回metadata_changed；已对本次文档直接回读，不以重索引成功证明全部源码完整或元数据提示已消失。
+- StockQ仍BDTI/BCTI旧值fallback、BDI missing，不属于源可用性恢复；ACLED滞后地区/月表、ARR来源、Web v2观察和运输商业授权仍保留。
+
 ## Owner授权后的执行回执（2026-09-05）
 
 - Owner明确批准一次现有Daily（允许配置内Wind兜底）、提供六份手动下载ACLED周表，并要求重连MCP；其余观察期和来源授权门槛保留。
@@ -14,7 +22,7 @@
 - Pages runs `33958930869`（World Order）与`33959057073`（Daily）成功，cache-busted GitHub Pages两份JSON与本地committed文件逐字节一致。此时自定义域名仍为旧快照，等待既有EdgeOne三小时发布通道；不为本次数据刷新绕过配额保护。
 - MCP连接恢复已验证：应用内`list_projects`、`index_status`、`search_graph`与`check_index_coverage`均成功，不再仅CLI可用；查询命中`574fa753`新增的`createBofaFailureDiagnostic`。最新代码full索引完成于10:07 UTC，24726 nodes/81458 edges、0 skipped、5处partial parse。路径coverage仍给出metadata_changed提示，保留源码回读，不把图谱视为完整性证明。此前裸CLI的secure-coordination endpoint错误可通过复用现有项目完整启动配置避开；没有改配置、删除协调文件或终止其他进程，也未冒称执行过应用Restart。连接恢复与索引已关闭，不再要求owner重启。
 
-以下首轮记录中的“尚未执行Daily/尚未收到周表/MCP无法重索引”已由本节更新；未解除的BoA云端失败归因、StockQ/ARR来源、ACLED滞后地区/月表、新闻v2观察和运输商业授权继续保留。
+以下首轮记录中的“尚未执行Daily/尚未收到周表/MCP无法重索引”已由本节更新；BoA生产恢复与发布同步再由09-07复核关闭。旧BoA云端失败归因仍未知，StockQ/ARR来源、ACLED滞后地区/月表、新闻v2观察和运输商业授权继续保留。
 
 ## 已交付
 
@@ -76,9 +84,8 @@ FIRMS统计另有必要限制：29个设施至少一个p95发生变化，独立�
 
 | 事项 | 缺什么 / 下一步 | 本轮没有做什么 |
 |---|---|---|
-| 公共源生产恢复 | 等原Daily排程，或owner明确允许一次现有Daily手动刷新（可能启用已配置Wind付费兜底）；之后再核验生产BDI missing、BoA8月、MLF live | 未额外启动可能付费的Daily；未手改radar快照、未额外调用DeepSeek |
 | StockQ源可用性 | 静态HTML仍不含可合法直接解析的新报价，需要合规新源证据或源页面恢复 | 未解码混淆、未把收益率/过期数冒充新指数 |
-| ACLED | 操作者提供新版weekly/monthly汇总XLSX；现目录仍为8月15日文件/截至7月31日月表，生产latestWeek8月14日 | 未自动访问或下载ACLED；未仅凭文件mtime改观察日 |
+| ACLED | 已导入的六份周表为三地区8月21日、三地区8月14日，月表截至7月31日；仍需操作者提供滞后地区及月度新版汇总XLSX | 未自动访问或下载ACLED；未仅凭文件mtime改观察日 |
 | Web NGrams主源切换 | v2同口径30天/120可用样本及原质量门，随后独立人工cutover审阅；旧支持中位3.03%与0未过门 | 未降低阈值/改分母、未重算旧aggregate、未换主源；最新32候选仅2条明确方向，不能保证修复后就够格 |
 | ARR新鲜自动序列 | 新的同公司、同ARR/run-rate口径、可核实观察日期序列及来源审阅；固定SaaStr最后一条仍5月28日 | 未把季度收入、其他公司金额或抓取日期补作新里程碑；保留curated fallback |
 | 运输高置信与商业数据 | 原7类readiness阻塞、路线/市场确认及source-rights/重分发证据，需要独立评审 | 不改既有capped评分边界；不接未授权路线运费、正式现货/结算、raw card或私贷数据 |
