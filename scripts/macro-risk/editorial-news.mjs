@@ -171,7 +171,15 @@ function storyFromCluster(cluster) {
 }
 
 export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, windowStart, windowEnd }) {
-  const rows = (Array.isArray(rawStories) ? rawStories : []).map(normalizeProviderStory).filter(Boolean);
+  const start = Date.parse(`${windowStart}T00:00:00Z`);
+  const end = Math.min(Date.parse(`${windowEnd}T23:59:59.999Z`), Date.parse(generatedAt));
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) throw new Error('invalid news discovery window');
+  // Apply the window before clustering: an old/undated official result must not
+  // confer credibility on a current commentary with a similar title.
+  const rows = (Array.isArray(rawStories) ? rawStories : []).map(normalizeProviderStory).filter((row) => {
+    const publishedAt = Date.parse(row?.publishedAt || '');
+    return row && Number.isFinite(publishedAt) && publishedAt >= start && publishedAt <= end;
+  });
   const clusters = [];
   for (const row of rows) {
     const match = clusters.find((cluster) => cluster.topic === row.topic && cluster.rows.some((item) => sameStory(item, row)));

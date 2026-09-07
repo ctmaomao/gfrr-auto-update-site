@@ -977,7 +977,7 @@ public-suffix/所有权数据库，不把未知兄弟域宣称为已核实的不
 | `brentPricingLayer.futuresCurve` | ICE Brent futures public product page structure-only contracts |
 | `brentPricingLayer.iceFuturesPriceCurve` | ICE Brent futures public delayed last-price curve; Platts/official ICE settlement = not connected |
 | `brentPricingLayer.futuresPriceCurve` | Yahoo: BZ monthly futures priced proxy; Platts/official ICE settlement = not connected |
-| `macroRiskEditorialLayer` | Tavily/Brave 近 7 日 discovery（受资格约束的美国 `.gov` 根域/子域为 official）+ 站内结构化证据 + DeepSeek production；首页唯一可见外部 AI 编辑层，只读展示。双搜索健康但 0 credible news 时 provider 前 `SKIPPED_NO_CREDIBLE_NEWS`、0 DeepSeek call/0 write；真实失败时 deterministic overview + 自动展开专业证据 |
+| `macroRiskEditorialLayer` | Tavily/Brave 近 7 日 discovery（受资格约束的美国 `.gov` 根域/子域为 official）+ 站内结构化证据 + DeepSeek production；首页唯一可见外部 AI 编辑层，只读展示。Tavily 六个既有查询中的两个定向检索 Fed/BLS 官方日期发布，general + 已登记域名，其余仍 news；聚类前过滤缺日期/旧/未来结果，不增加查询预算，详见 [检索契约](MACRO_RISK_EDITORIAL_DESIGN.md#42-新闻发现来源)。双搜索健康但 0 credible news 时 provider 前 `SKIPPED_NO_CREDIBLE_NEWS` + warning、0 DeepSeek call/0 write；真实失败时 deterministic overview + 自动展开专业证据 |
 | `externalAiInterpretationLayer` | 历史数据兼容字段；无前端 consumer、无 scheduled provider refresh |
 | `worldOrderStress.marketConfirmation` | Worker preview → local realtime → Daily baseline (优先级) |
 | `worldOrderStress.dimensions.economicWeaponization` | OFAC + (GDELT) |

@@ -44,8 +44,10 @@
 
 ### 4.2 新闻发现来源
 
-- Tavily Search API，`topic=news`，近 7 日，每 topic 最多 5 条。
+- Tavily Search API，近 7 日、每 topic 最多 5 条、`search_depth=basic`。六个既有查询中，央行/通胀与增长/就业两项改用 `topic=general` + `include_domains` 定向检索已登记的 `federalreserve.gov` / `bls.gov`；其余四项仍为 `topic=news`。不增加调用次数、结果上限或 provider。
 - Brave News Search API，`freshness=pw`，相同 topic，每 topic 最多 5 条。
+- 定向 general 结果只接受这两个精确 host（可带 `www`）的已登记日期路径：Fed `newsevents/speech|pressreleases/<name>YYYYMMDD<letter>.htm`、BLS `news.release/archives/<series>_MMDDYYYY.htm`。日期必须是合法日历日期；不把索引更新时间、首页更新时间、摘要日期或抓取时间充作发布时间。其他格式保持不采纳，扩展须有来源证据与回归。
+- 所有结果在聚类前按本次近 7 日窗口与实际 `generatedAt` 过滤；缺日期、旧日期和未来值不能赋予事件簇官方/交叉印证资格。general search 的 `time_range` 可能按发布或更新筛选，因此不能单独作为新鲜度依据。API 参数依据 [Tavily Search 文档](https://docs.tavily.com/documentation/api-reference/endpoint/search)。
 - 受注册资格约束的美国 `.gov` 根域及其子域按政府官方来源标记为 `official`；名称中仅含
   `gov` 的普通商业域不得获得该标记。
 - production 只投影实际引用来源的 title / URL / domain / publishedAt / topic /
