@@ -47,6 +47,8 @@
 
 | [ADR-0028](0028-energy-record-assertion-location.md) | Historical Energy/Transport assertions follow their records | Owner authorized; independent checker merge review retained |
 
+| [ADR-0029](0029-web-ngrams-shadow-claim-guards.md) | Web shadow claim guards and same-definition requalification | Owner authorized implementation; independent checker/merge review pending |
+
 ## Superseded
 
 (None yet)

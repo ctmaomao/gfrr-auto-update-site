@@ -6,6 +6,8 @@ import {
 } from './oil-news-story-identity.mjs';
 
 export const WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT =
+  'gdelt-web-ngrams-cross-source-telemetry-shadow-v3';
+export const WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT =
   'gdelt-web-ngrams-cross-source-telemetry-shadow-v2';
 export const WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT =
   'gdelt-web-ngrams-cross-source-telemetry-shadow-v1';

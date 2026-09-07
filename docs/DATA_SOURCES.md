@@ -950,6 +950,18 @@ public-suffix/所有权数据库，不把未知兄弟域宣称为已核实的不
 样本，继续执行原30天/120样本及全部质量阈值；旧aggregate不能离线猜测重算，
 不能把修复前后观察混在一起宣称可晋升。
 
+2026-09-07 下一刀将上述分类改为
+`gdelt-web-ngrams-multilingual-classification-shadow-v2` / telemetry v3，
+见 [ADR-0029](ADR/0029-web-ngrams-shadow-claim-guards.md)。只在 shadow 两侧
+增加标题主题/同分句方向绑定、五语否定/不确定性防护和英文方向词形；无主题、
+否定、威胁、假设与未来表达保守弃权，明确主张加否认标为争议，不算方向性支持。
+不新增抓取、不修改生产 Oil News classifier；ignored 逐条产物仅增加固定
+`classificationGuardIds`，不保存原文。生产 cache 字段集合不变，现有版本字段
+标识 v3；v2 继续接受同样严格的 diagnostics 验证，但与更早历史一起只作审计
+留存，当前 readiness 仅统计 v3 同口径样本。原30天/120样本、阈值、分母及
+人工切换门不变。完整事件匹配、转载去重、支持链追溯与 TOC 日期语义尚未解决；
+不能把局部规则修复或测试通过称为来源切换达标。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |

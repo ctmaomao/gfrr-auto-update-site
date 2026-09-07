@@ -146,11 +146,13 @@ function compare({ title = 'Hormuz tanker attack', webDate = '2026-07-31T01:00:0
     referenceArticles: [reference, ...extraReferences] });
 }
 
-for (const title of ['Hormuz tanker attack', '霍尔木兹海峡油轮遭袭击', 'هجوم ناقلة نفط',
+// ADR-0029: affirmative inflections are equivalent; disputed/negated forms
+// remain negative controls in the dedicated shadow-claim regression suite.
+for (const title of ['Hormuz tanker attack', 'Hormuz tanker attacks', 'Hormuz tanker attacked', '霍尔木兹海峡油轮遭袭击', 'هجوم ناقلة نفط',
   'атака танкера', 'ataque petrolero']) {
   assert.equal(compare({ title }).aggregate.independentSupportCandidateCount, 1, title);
 }
-for (const title of ['Hormuz tanker attacks', 'Hormuz tanker attack and truce', 'Hormuz tanker context']) {
+for (const title of ['Hormuz tanker attack and truce', 'Hormuz tanker context']) {
   assert.equal(compare({ title }).aggregate.independentSupportCandidateCount, 0, title);
 }
 for (const [webDate, refDate, expected] of [
