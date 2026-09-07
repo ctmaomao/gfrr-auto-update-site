@@ -155,13 +155,15 @@ test('both sides of comparison use guards without changing the candidate denomin
   assert.equal(productionCache.candidateAggregate.candidateCount, 1);
   assert.equal(productionCache.crossSourceAggregate.referenceArticleCount, 2);
   assert.equal(productionCache.crossSourceAggregate.independentSupportRate, 0);
-  const positive = await buildWithTitles('Hormuz tanker attacked');
-  assert.equal(positive.productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 1);
+  // ADR-0030: two indexes returning the same headline are discovery overlap,
+  // not independent support. Distinct-publication positives live in the v4 suite.
+  const duplicate = await buildWithTitles('Hormuz tanker attacked');
+  assert.equal(duplicate.productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 0);
 });
-test('v2 remains strictly validated historical evidence; only v3 qualifies', async () => {
+test('v2 remains strictly validated historical evidence; only v4 qualifies', async () => {
   const { productionCache } = await buildWithTitles('Hormuz tanker attacked');
   const currentVersion = productionCache.crossSourceTelemetryContractVersion;
-  assert.equal(currentVersion, 'gdelt-web-ngrams-cross-source-telemetry-shadow-v3');
+  assert.equal(currentVersion, 'gdelt-web-ngrams-cross-source-telemetry-shadow-v4');
   const old = structuredClone(productionCache);
   old.crossSourceTelemetryContractVersion = 'gdelt-web-ngrams-cross-source-telemetry-shadow-v2';
   old.generatedAt = '2026-09-06T20:46:00Z';

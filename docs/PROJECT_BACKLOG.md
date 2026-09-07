@@ -25,7 +25,16 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-07 新闻同事件候选与脱敏支持链
+
+- **Acceptance baseline**：owner 批准合并 PR #307 后开始下一刀，沿用逐项 commit+push；#307 的 AI 替代人工审阅例外仅限该 PR。本任务保持 shadow-only，不改主源、评分、费用、阈值或分母；同事件/转载 checker 语义收紧单独记录于 [ADR-0030](ADR/0030-web-ngrams-event-support-provenance.md)，本次不自行合并下一 PR。
+- **实施**：标题同地点/对象族/事件类型及明确命名身份候选匹配；缺失/多义弃权，URL/标题去重；支持记录链接到固定哈希 ID 的脱敏 reference 表。公开 cache 仍只存既有 aggregate 字段，v4 与 v2/v3 历史隔离，历史仍严格校验，不改30天/120样本政策。
+- **验证入口**：原56条标题回归加28条事件/支持链回归、单 pair stub builder、无原文/URL/船名/非法日期泄露、老版本严格验证及新 cohort；纳入既有 `check:all`。必要检查成功后独立提交推送，最终结果见本任务回执。
+- **保留限制**：同地点/对象/事件类型不证明同一事实；无明确船名的相邻同类事件、改写转载及域名所有权仍有不确定性。TOC 发布时间语义未解决；生产刷新、新口径观察及独立切源审阅不能由本地测试替代。
+
 ### 2026-09-07 新闻 shadow 标题主张防护
+
+- **已合并**：owner 对 PR #307 明确批准仅此次由独立 AI 替代人工审阅；独立审阅固定 head `6adde1e0`、复跑56回归及专项，无阻断。PR 云端检查成功后于09-07 08:09 UTC合并 `e6baad93`；Pages `34099069198` 成功。未触发付费新闻刷新，未把此例外延伸到后续 PR。
 
 - **Acceptance baseline**：owner 在只读质量审阅后批准下一刀实施，完成后单独 commit+push。范围为 shadow 标题主题相关性、否定/争议/假设句及英文词形；不改主源、质量阈值/分母、生产分类器或评分，不触发刷新/付费。原断言固化的 `attacks` 漏识别按 [ADR-0029](ADR/0029-web-ngrams-shadow-claim-guards.md) 显性修正，独立 checker/merge review 仍保留。
 - **实现**：Web 与已有 Tavily/Brave reference 共用标题防护；正文 bucket 不能借给无关标题，主题和方向须在同分句出现；不确定性保守弃权，主张加否认保留争议。classification v2 / telemetry v3 分离新旧计算口径，旧 v2 diagnostics 验证不放宽，历史不删除或重算；现有30天/120样本及全部门槛不变。
@@ -242,10 +251,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：从 latest main `483ac323` 创建独立分支 `codex/oil-news-shadow-claim-guards`；ARR 分支保留，不堆叠其改动。
-- **当前任务**：新闻 shadow 标题防护及回归、classification v2 / telemetry v3 同口径隔离；授权完成必要检查后单独 commit+push，不包含 merge/生产刷新。
-- **下一步**：独立复核 ADR-0029 的 checker 语义修正；同事件匹配/支持链/日期后续工作及新口径观察保留，不重复已用的 Daily 或 provider 单次授权。
-- **阻塞或等待**：本轮 MCP `list_projects` 返回 `Transport closed`，源码回读继续，不覆盖过去成功连接的历史记录、不擅自改连接配置；合并、切源和外部来源门槛未解除。
+- **工作基线**：PR #307 已合并为 latest main `e6baad93`，Pages 成功；下一刀独立分支 `codex/oil-news-event-support-links`，不堆叠旧 PR。
+- **当前任务**：同事件候选与脱敏支持链、telemetry v4 cohort 隔离及回归，完成必要验证后单独 commit+push；不包含下一 PR 的 merge 或生产新闻刷新。
+- **下一步**：独立复核 ADR-0030 的 checker 收紧与支持链；TOC 日期语义、改写转载/所有权及新口径观察保留。
+- **阻塞或等待**：MCP `list_projects` 仍返回 `Transport closed`，使用源码回读；指定 reviewer 模型不可用后由另一独立 AI 完成 #307 审阅，用户例外仅适用于 #307，不豁免后续人工 review/切源/来源权利门。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 

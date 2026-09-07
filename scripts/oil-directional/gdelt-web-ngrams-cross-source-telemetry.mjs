@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { sameEventCandidateReason } from './oil-news-event-signature.mjs';
 import {
   classifyWebNgramsShadowArticle
 } from './gdelt-web-ngrams-shadow-classifier.mjs';
@@ -6,6 +8,8 @@ import {
 } from './oil-news-story-identity.mjs';
 
 export const WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT =
+  'gdelt-web-ngrams-cross-source-telemetry-shadow-v4';
+export const WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT =
   'gdelt-web-ngrams-cross-source-telemetry-shadow-v3';
 export const WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT =
   'gdelt-web-ngrams-cross-source-telemetry-shadow-v2';
@@ -14,6 +18,12 @@ export const WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT =
 
 const INDEPENDENT_PROVIDERS = Object.freeze(['tavily', 'brave']);
 const DIRECTIONAL_POLARITIES = new Set(['risk_escalation', 'risk_deescalation']);
+export const MAX_SUPPORT_REFERENCE_ROWS = 256;
+const hash = value => createHash('sha256').update(value).digest('hex');
+const REJECTION_REASONS = ['outside_metadata_window', 'direction_or_axis_mismatch',
+  'event_signature_unresolved', 'event_location_mismatch', 'event_target_mismatch',
+  'event_mechanism_mismatch', 'named_asset_unresolved_or_mismatch', 'duplicate_web_story',
+  'identity_missing', 'same_article_or_story', 'same_domain_family', 'duplicate_reference_story'];
 
 function roundRate(numerator, denominator) {
   return denominator > 0 ? Math.round((numerator / denominator) * 10000) / 10000 : null;
@@ -100,6 +110,8 @@ function buildReferenceRows(referenceArticles) {
     const identity = buildArticleIdentity(article);
     const classification = classifyWebNgramsShadowArticle(article);
     return [{
+      referenceId: hash(JSON.stringify([provider, identity.canonicalUrlHash,
+        identity.storyClusterHash, normalizeDomain(article?.domain), parseTime(article?.publishedAt)])),
       provider,
       domain: domainFromCanonicalUrl(identity.canonicalUrl) || normalizeDomain(article?.domain),
       publishedAt: article?.publishedAt || null,
@@ -107,7 +119,8 @@ function buildReferenceRows(referenceArticles) {
       canonicalUrlHash: identity.canonicalUrlHash,
       storyClusterHash: identity.storyClusterHash,
       claimAxis: classification.claimAxis,
-      claimPolarity: classification.claimPolarity
+      claimPolarity: classification.claimPolarity,
+      eventSignature: classification.eventSignature
     }];
   });
 }
@@ -120,7 +133,7 @@ function directionalMatch(webArticle, reference) {
   return true;
 }
 
-function articleTelemetry(webArticle, references, maxWindowHours, anchorMs) {
+function articleTelemetry(webArticle, references, maxWindowHours, anchorMs, duplicateWebStory) {
   const exactDiscoveryRows = references.filter((reference) => (
     dateState(webArticle.publishedAt, anchorMs) === 'validDateCount'
     && dateState(reference.publishedAt, anchorMs) === 'validDateCount'
@@ -134,7 +147,38 @@ function articleTelemetry(webArticle, references, maxWindowHours, anchorMs) {
     withinWindow(webArticle.publishedAt, reference.publishedAt, maxWindowHours, anchorMs)
   ));
   const directionalRows = comparableRows.filter((reference) => directionalMatch(webArticle, reference));
-  const independentRows = directionalRows.filter((reference) => independentDomains(webArticle.domain, reference.domain));
+  const rejectionCounts = Object.fromEntries(REJECTION_REASONS.map(reason => [reason, 0]));
+  const eligible = references.filter(reference => {
+    let reason = null;
+    if (!withinWindow(webArticle.publishedAt, reference.publishedAt, maxWindowHours, anchorMs)) reason = 'outside_metadata_window';
+    else if (!directionalMatch(webArticle, reference)) reason = 'direction_or_axis_mismatch';
+    else {
+      const eventReason = sameEventCandidateReason(webArticle.eventSignature, reference.eventSignature);
+      if (eventReason !== 'same_event_candidate') reason = eventReason;
+      else if (duplicateWebStory) reason = 'duplicate_web_story';
+      else if (!webArticle.canonicalUrlHash || !webArticle.storyClusterHash
+        || !reference.canonicalUrlHash || !reference.storyClusterHash) reason = 'identity_missing';
+      else if (webArticle.canonicalUrlHash === reference.canonicalUrlHash
+        || webArticle.storyClusterHash === reference.storyClusterHash) reason = 'same_article_or_story';
+      else if (!independentDomains(webArticle.domain, reference.domain)) reason = 'same_domain_family';
+    }
+    if (reason) rejectionCounts[reason] += 1;
+    return !reason;
+  });
+  // One deterministic publication per identical story. Do not transplant a
+  // provider label from a discarded syndication domain to the selected domain.
+  const storyPublications = new Map();
+  const independentRows = eligible.sort((a, b) => (
+    `${a.domain}|${a.canonicalUrlHash}|${a.provider}`.localeCompare(`${b.domain}|${b.canonicalUrlHash}|${b.provider}`)
+  )).filter(reference => {
+    const selected = storyPublications.get(reference.storyClusterHash);
+    if (selected && selected !== reference.canonicalUrlHash) {
+      rejectionCounts.duplicate_reference_story += 1;
+      return false;
+    }
+    storyPublications.set(reference.storyClusterHash, reference.canonicalUrlHash);
+    return true;
+  });
   const exactDiscoveryProviders = [...new Set(
     exactDiscoveryRows.map((row) => row.provider)
   )].sort();
@@ -153,6 +197,7 @@ function articleTelemetry(webArticle, references, maxWindowHours, anchorMs) {
     language: webArticle.language,
     claimAxis: webArticle.claimAxis,
     claimPolarity: webArticle.claimPolarity,
+    eventSignature: webArticle.eventSignature,
     windowComparable: comparableRows.length > 0,
     directionalWindowComparable: directionalRows.length > 0,
     exactDiscoveryProviders,
@@ -160,7 +205,17 @@ function articleTelemetry(webArticle, references, maxWindowHours, anchorMs) {
     independentSupportDomainCount: independentSupportDomains.size,
     independentSourceSupported: independentSupportDomains.size > 0,
     crossProviderSupported: independentSupportDomains.size >= 2
-      && INDEPENDENT_PROVIDERS.every((provider) => independentSupportProviders.includes(provider))
+      && independentRows.some(left => independentRows.some(right => (
+        left.provider !== right.provider && left.storyClusterHash !== right.storyClusterHash
+        && independentDomains(left.domain, right.domain)
+      ))),
+    rejectionCounts,
+    supportLinks: [...new Map(independentRows.map(reference => [reference.referenceId, {
+      referenceId: reference.referenceId,
+      relation: 'same_event_candidate',
+      metadataTimeDeltaHours: Math.round(Math.abs(parseTime(webArticle.publishedAt)
+        - parseTime(reference.publishedAt)) / 3600000 * 10000) / 10000
+    }])).values()].sort((a, b) => a.referenceId.localeCompare(b.referenceId))
   };
 }
 
@@ -180,14 +235,24 @@ export function buildWebNgramsCrossSourceTelemetry({
     throw new Error('Web NGrams cross-source maxWindowHours must be an integer from 1 to 168');
   }
   const webArticles = Array.isArray(webShadow?.articles) ? webShadow.articles : [];
+  if ((referenceArticles?.length || 0) > MAX_SUPPORT_REFERENCE_ROWS || webArticles.length > 2000) {
+    throw new Error('Web NGrams support audit input limit exceeded');
+  }
   const anchorMs = parseShadowTimestamp(webShadow?.timestamp);
   if (anchorMs === null) throw new Error('Web NGrams cross-source shadow timestamp must be a real UTC calendar timestamp');
   const references = buildReferenceRows(referenceArticles);
+  const webRepresentatives = new Map();
+  for (const article of [...webArticles].sort((a, b) => String(a.canonicalUrlHash).localeCompare(String(b.canonicalUrlHash)))) {
+    if (article.storyClusterHash && !webRepresentatives.has(article.storyClusterHash)) {
+      webRepresentatives.set(article.storyClusterHash, article);
+    }
+  }
   const articles = webArticles.map((article) => articleTelemetry(
     article,
     references,
     maxWindowHours,
-    anchorMs
+    anchorMs,
+    Boolean(article.storyClusterHash && webRepresentatives.get(article.storyClusterHash) !== article)
   ));
   const exactDiscoveryRows = articles.filter((article) => article.exactDiscoveryProviders.length > 0);
   const independentRows = articles.filter((article) => article.independentSourceSupported);
@@ -227,6 +292,18 @@ export function buildWebNgramsCrossSourceTelemetry({
       }
     },
     articles,
+    references: [...new Map(references.map(row => [row.referenceId, {
+      referenceId: row.referenceId, provider: row.provider, domain: row.domain,
+      canonicalUrlHash: row.canonicalUrlHash, storyClusterHash: row.storyClusterHash,
+      // Invalid raw date strings may contain arbitrary text: retain only the
+      // classification of the failure, never echo them into the audit artifact.
+      publishedAt: parseTime(row.publishedAt) === null ? null : new Date(parseTime(row.publishedAt)).toISOString(),
+      dateState: dateState(row.publishedAt, anchorMs),
+      claimAxis: row.claimAxis, claimPolarity: row.claimPolarity,
+      eventSignature: row.eventSignature
+    }])).values()].sort((a, b) => a.referenceId.localeCompare(b.referenceId)),
+    eventMatchingRule: 'same_title_location_target_mechanism_named_asset_when_present_candidate_only',
+    timeEvidenceRule: 'metadata_window_not_verified_original_publication_time',
     rawContentStored: false,
     discoveryOverlapIsEventConfirmation: false,
     independentSupportIsConfirmedEvent: false,

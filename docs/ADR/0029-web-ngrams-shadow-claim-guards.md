@@ -2,9 +2,12 @@
 
 ## Status
 
-Owner authorized implementation and task-branch commit/push on 2026-09-07 after
-the read-only news v2 review. Pending independent checker/merge review; this
-record does not approve source cutover, production scoring, paid calls or merge.
+Accepted and merged as `e6baad93` in [PR #307](https://github.com/ctmaomao/gfrr-auto-update-site/pull/307)
+on 2026-09-07 after the owner's explicit AI-instead-of-human review exception for
+this PR ONLY. Independent review of head `6adde1e0` against `483ac323`, including
+56 regressions and telemetry/cache/history checks, found no blockers. CI and
+Pages run `34099069198` passed. This exception does not extend to later PRs,
+source cutover, production scoring or paid calls.
 
 ## Context
 

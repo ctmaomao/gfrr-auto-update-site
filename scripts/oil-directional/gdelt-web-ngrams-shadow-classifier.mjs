@@ -1,3 +1,4 @@
+import { buildOilNewsEventSignature } from './oil-news-event-signature.mjs';
 import {
   CLAIM_AXES,
   EVENT_TYPES,
@@ -102,6 +103,7 @@ export function classifyWebNgramsShadowArticle(article) {
     claimAxis: claimAxis(type),
     claimPolarity: polarity,
     classificationGuardIds: guardIds,
+    eventSignature: buildOilNewsEventSignature(article?.title),
     directionalRuleIds: [...new Set(hits.map(({ rule }) => rule.id))].sort(),
     matchedRuleLanguages: [...new Set(hits.map(({ rule }) => rule.language))].sort(),
     matchedTermIds: Array.isArray(article?.matchedTermIds)
