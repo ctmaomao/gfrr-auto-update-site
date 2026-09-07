@@ -45,10 +45,26 @@ function mechanisms(text) {
 function assetHashes(text) {
   // Only explicit quoted vessel names / IMO identifiers, never arbitrary title
   // tokens. Missing names on either side cannot resolve a named-asset claim.
-  const names = [...text.matchAll(/\b(?:mv|mt|m\/v|m\/t|tanker|vessel)\s+["“']([^"”']{2,80})["”']/gu)]
-    .map(match => `vessel:${match[1].trim().replace(/\s+/gu, ' ')}`);
+  const closers = { '"': '"', '“': '”', "'": "'", '‘': '’', '«': '»' };
+  const names = [];
+  let unresolved = false;
+  for (const match of text.matchAll(/\b(?:mv|mt|m\/v|m\/t|tanker|vessel)\s+(?=["“'‘«”’»])/gu)) {
+    const start = match.index + match[0].length;
+    const closer = closers[text[start]];
+    const end = closer ? text.indexOf(closer, start + 1) : -1;
+    // Pair delimiters: an apostrophe inside a double-quoted name is not its
+    // closing quote. Ambiguous/malformed names abstain instead of becoming an
+    // unnamed event or a misleading shared prefix such as "Ocean".
+    if (end < 0 || end - start - 1 > 80 || /[\p{L}\p{N}]/u.test(text[end + 1] || '')) {
+      unresolved = true;
+      continue;
+    }
+    const name = text.slice(start + 1, end).trim().replace(/\s+/gu, ' ').replace(/[‘’]/gu, "'");
+    if (name.length < 2) unresolved = true;
+    else names.push(`vessel:${name}`);
+  }
   const imos = [...text.matchAll(/\bimo\s*[:#-]?\s*(\d{7})\b/gu)].map(match => `imo:${match[1]}`);
-  return [...new Set([...names, ...imos].map(digest))].sort();
+  return { hashes: [...new Set([...names, ...imos].map(digest))].sort(), unresolved };
 }
 
 export function buildOilNewsEventSignature(title) {
@@ -56,7 +72,7 @@ export function buildOilNewsEventSignature(title) {
   const locations = ids(text, LOCATIONS);
   const targetIds = targets(text);
   const mechanismIds = mechanisms(text);
-  const namedAssetHashes = assetHashes(text);
+  const { hashes: namedAssetHashes, unresolved: namedAssetUnresolved } = assetHashes(text);
   let state = 'comparable_candidate';
   if (!locations.length) state = 'location_missing';
   else if (locations.length !== 1) state = 'location_ambiguous';
@@ -64,7 +80,7 @@ export function buildOilNewsEventSignature(title) {
   else if (targetIds.length !== 1) state = 'target_ambiguous';
   else if (!mechanismIds.length) state = 'mechanism_missing';
   else if (mechanismIds.length !== 1) state = 'mechanism_ambiguous';
-  else if (namedAssetHashes.length > 1) state = 'named_asset_ambiguous';
+  else if (namedAssetUnresolved || namedAssetHashes.length > 1) state = 'named_asset_ambiguous';
   else {
     const clauses = text.replace(/\bu\.s\./gu, 'us').split(/[.!?;。！？；]|\b(?:but|while|whereas)\b|但是|然而/u);
     if (!clauses.some(clause => ids(clause, LOCATIONS).includes(locations[0])

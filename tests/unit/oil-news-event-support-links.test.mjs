@@ -86,6 +86,46 @@ test('named vessel conflicts or a missing counterpart abstain; names are hashed'
 test('multiple explicit vessel identities remain ambiguous', () => {
   assert.equal(buildOilNewsEventSignature('Attack on tanker "Alpha" and tanker "Beta" in Hormuz').state, 'named_asset_ambiguous');
 });
+
+test('different curly-single-quoted vessels cannot form a support link', () => {
+  const result = audit([web(row('Attack on tanker ‘Ocean Dawn’ in Hormuz'))],
+    [row('Tanker ‘Ocean Dusk’ attacked near Hormuz', 'a.example')]);
+  assert.equal(result.aggregate.independentSupportCandidateCount, 0);
+  assert.equal(result.articles[0].rejectionCounts.named_asset_unresolved_or_mismatch, 1);
+  assert.deepEqual(result.articles[0].supportLinks, []);
+});
+
+test('an internal apostrophe cannot truncate different double-quoted vessel names', () => {
+  const result = audit([web(row(`Attack on tanker "Ocean's Dawn" in Hormuz`))],
+    [row(`Tanker "Ocean's Dusk" attacked near Hormuz`, 'a.example')]);
+  assert.equal(result.aggregate.independentSupportCandidateCount, 0);
+  assert.equal(result.articles[0].rejectionCounts.named_asset_unresolved_or_mismatch, 1);
+  assert.notDeepEqual(result.articles[0].eventSignature.namedAssetHashes,
+    result.references[0].eventSignature.namedAssetHashes);
+  assert.equal(JSON.stringify(result).includes('ocean'), false);
+});
+
+test('same explicit vessel across paired quote styles retains actual support', () => {
+  for (const quoted of ['"Ocean Dawn"', '“Ocean Dawn”', "'Ocean Dawn'", '‘Ocean Dawn’', '«Ocean Dawn»']) {
+    const result = audit([web(row('Attack on tanker "Ocean Dawn" in Hormuz'))],
+      [row(`Tanker ${quoted} attacked near Hormuz`, 'a.example')]);
+    assert.equal(result.aggregate.independentSupportCandidateCount, 1, quoted);
+    assert.equal(result.articles[0].supportLinks.length, 1, quoted);
+  }
+  assert.equal(sameEventCandidateReason(
+    buildOilNewsEventSignature(`Attack on tanker "Ocean's Dawn" in Hormuz`),
+    buildOilNewsEventSignature('Tanker “Ocean’s Dawn” attacked near Hormuz')), 'same_event_candidate');
+});
+
+test('malformed or ambiguous named hints abstain rather than match unnamed events', () => {
+  for (const quoted of ['‘Ocean Dawn"', '"Ocean Dawn', '”Ocean Dawn”', '" "', `‘Ocean’s Dawn’`, '"' + 'x'.repeat(81) + '"']) {
+    const title = `Tanker ${quoted} attacked near Hormuz`;
+    assert.equal(buildOilNewsEventSignature(title).state, 'named_asset_ambiguous', quoted);
+    const result = audit([web()], [row(title, 'a.example')]);
+    assert.equal(result.aggregate.independentSupportCandidateCount, 0, quoted);
+    assert.deepEqual(result.articles[0].supportLinks, [], quoted);
+  }
+});
 test('identical Web/reference story is overlap, not independent support', () => {
   const result = audit([web()], [row(webTitle, 'a.example'), row(webTitle, 'b.example', 'brave')]);
   assert.equal(result.aggregate.exactDiscoveryMatchCount, 1);

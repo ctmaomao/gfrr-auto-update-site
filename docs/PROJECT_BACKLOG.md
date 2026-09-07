@@ -27,6 +27,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-07 新闻同事件候选与脱敏支持链
 
+- **本轮审阅（PR #308）**：owner 要求继续并审阅合并；合并动作已请求，但未沿用仅限 #307 的 AI 替代人工例外。独立 AI 对固定 `cc1ad868` 找到船名弯单引号漏识别/内部撇号截断 P2，本轮先修复成对引号与无法解析时弃权，追加4条回归（总88条）；修复后验证和独立复审结论以回执为准。TOC 另项保持未开始，不堆叠 PR。
 - **Acceptance baseline**：owner 批准合并 PR #307 后开始下一刀，沿用逐项 commit+push；#307 的 AI 替代人工审阅例外仅限该 PR。本任务保持 shadow-only，不改主源、评分、费用、阈值或分母；同事件/转载 checker 语义收紧单独记录于 [ADR-0030](ADR/0030-web-ngrams-event-support-provenance.md)，本次不自行合并下一 PR。
 - **实施**：标题同地点/对象族/事件类型及明确命名身份候选匹配；缺失/多义弃权，URL/标题去重；支持记录链接到固定哈希 ID 的脱敏 reference 表。公开 cache 仍只存既有 aggregate 字段，v4 与 v2/v3 历史隔离，历史仍严格校验，不改30天/120样本政策。
 - **验证入口**：原56条标题回归加28条事件/支持链回归、单 pair stub builder、无原文/URL/船名/非法日期泄露、老版本严格验证及新 cohort；纳入既有 `check:all`。必要检查成功后独立提交推送，最终结果见本任务回执。

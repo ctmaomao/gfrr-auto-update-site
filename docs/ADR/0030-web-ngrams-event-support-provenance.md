@@ -21,6 +21,10 @@ or domains. Aggregate counts did not expose the supporting pairs for review.
   may have an operational consequence (attack closes traffic). Explicit quoted
   vessel names / IMO identifiers are hashed; mismatched, missing counterpart or
   multiple named identities abstain. No raw entity names are persisted.
+  PR #308 independent AI review identified curved-single-quote omission and
+  apostrophe prefix collisions. Paired quote delimiters now retain complete
+  names; malformed/ambiguous quoted hints abstain. This technical review does
+  not reuse PR #307's one-off substitute-for-human authorization.
 - Require matching signatures in addition to ALL previous direction, axis,
   bucket, metadata-time and distinct-non-parent/child-host checks. This is a
   same-event candidate filter, never proof of event identity or factual truth.
@@ -66,8 +70,10 @@ No precision estimate or cutover approval follows from passing tests or elapsed 
 
 ## Verification
 
-Keep the existing checks and 56 title-guard tests. Add 28 initial regressions for
+Keep the existing checks and 56 title-guard tests. Add 32 regressions for
 cross-event mismatches, multilingual locations, named assets, duplicates, provider
 reuse, deterministic links, host families, malformed dates, input bounds, a
 single-pair stub builder, public-cache privacy and historical-version isolation.
+Four review regressions cover different curved-quoted names, internal apostrophes,
+same-vessel quote-style equivalence and malformed/ambiguous quoted hints.
 All run through the existing `check:all` path, without live queries.
