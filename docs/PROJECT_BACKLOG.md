@@ -25,12 +25,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
-### 2026-09-07 首页 AI 判读不可用修复（P1）
+### 2026-09-07 首页 AI 判读不可用修复（已恢复线上）
 
 - **Acceptance baseline**：owner 要求分析并修复首页“AI 判读不可用”，尽量减少复发。本次只修既有新闻检索覆盖与跳过诊断，保留可信来源、逐事实引用、review、时间匹配、30 小时及单次 provider/no retry。2026-09-07 在展示本地提交 `26d8cf1d`、验证结果和推送/合并/发布及一次 DeepSeek 刷新验收请求后，owner 回复“请也恢复线上”，确认执行该具体恢复方案；授权一次生产刷新、最多一次 DeepSeek，失败不得重复付费调用。
 - **实证原因**：9 月 6 日 run `34011529977` 两搜索源全部查询健康，但 30 条均为 `discovery_only`，因此 expected skip / DeepSeek 0 次 / production write 0；9 月 4/5 日为正常生成。9 月 6 日 23:11 UTC 自定义域名与 Pages 的 radar JSON SHA-256 均为 `db16cb4aec6ffc32be6ae423709c9847052a700af7984ba816a96f4d4baa7b61`，`updatedAt=2026-09-06T00:06:53.185Z` 且没有 `macroRiskEditorialLayer`。不是两部署通道缓存不一致；Daily 重建后没有新的合格判读可供展示。
 - **实现**：重新分配两个现有 Tavily 查询到已登记 Fed/BLS 官方日期发布（general + 域名限制），保留另外四个及 Brave 六个新闻查询、basic/5 条/短超时；不增加源、查询次数或付费重试。日期路径按官方实页核对，先过滤缺日期/旧/未来资料再聚类；skip 加 warning annotation。新回归覆盖真实 collector 请求参数、预算、来源健康失败、官方日期、同发布者不算独立印证及无可信源继续关闭。
-- **验证与待办**：`npm run check:changed` 自动执行完整 `npm run check:all`，exit 0；11 项新回归、collector 无网络 dry-run、真实 skip artifact 回放和 `git diff --check` 通过。现有 checker/validator/provider/writer/生产数据/workflow 无改动，无新增 ignore list；query reallocation 符合本次修复范围。修复尚未合并/发布，未调用搜索账户或 DeepSeek；真实 collector 恢复、生成和线上可见性仍需发布后单次成本授权验收，不把离线成功当生产恢复。
+- **验证**：`npm run check:changed` 自动执行完整 `npm run check:all`，exit 0；11 项新回归、collector 无网络 dry-run、真实 skip artifact 回放和 `git diff --check` 通过。[PR #306](https://github.com/ctmaomao/gfrr-auto-update-site/pull/306) 云端完整检查、覆盖率和浏览器 smoke 通过后合并为 `14df108a`。修复未改现有 checker/validator/provider/writer 断言，无新增 ignore list。
+- **线上验收（2026-09-07 01:27 UTC）**：[生产刷新 34072777981](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34072777981) 单次 DeepSeek 成功、无重试；实际找到两条 Fed 官方发布及一条 cross_checked 新闻，31 个引用来源、3574 字，review 为 warn（仅低于目标篇幅，兼容范围内）、0 blockers。提交 `a7278071` 只新增 AI 编辑层，删除该字段后前后 radar 数据语义完全相同。生成时间为 `01:22:53Z`；`sourceDataUpdatedAt` 与 `radarData.updatedAt` 均为当日 `00:10:36.294Z`。
+- **发布与显示**：[Pages 34072833987](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34072833987) 与 [EdgeOne release 34072876721](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34072876721) 成功；EdgeOne release `9325b8b2` 对应 source `a7278071`。两域名 radar JSON SHA-256 均为 `e4f770af2af856b94fcf375639e76ab67784726784e38cbd45e1a53acf062760`。两端各 1440px/390px 浏览器验证：AI 正文可见、不可用提示消失、确定性依据默认折叠、无横向溢出/脚本错误、新闻来源均 HTTPS。保留未来真实证据不足/超时/陈旧时的降级，不承诺永久可用；下一次自然调度尚未观察。
 
 ### 2026-09-06 指令与技能维护
 
@@ -232,10 +234,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：从干净 main 快进至 `f7f1dec1`，本次分支 `codex/fix-macro-editorial-news-discovery`；保留既有维护成果。
-- **当前任务**：首页 AI 判读不可用已定位为 9 月 6 日零可信新闻跳过；查询重分配、日期保护和 warning 已完成本地实现，`check:changed` / 完整 `check:all` exit 0，11 项回归与 CLI dry-run/skip 回放通过。
-- **下一步**：交付本地修复；按通用独立人工 review、远端/发布及单次成本授权完成线上验收。检查通过不表示当前页面恢复，生产 live-layer check 因字段缺失按原契约 SKIP。
-- **阻塞或等待**：owner 已确认本次远端/生产发布和一次生产刷新验收，正在执行；线上验收尚未完成，不能宣称已恢复。下列生产观察事项独立保留。
+- **工作基线**：PR #306 已合并，生产刷新提交 `a7278071`；本地已回到 main，保留修复分支。
+- **当前任务**：首页 AI 已恢复线上，单次生产刷新、Pages/EdgeOne 发布与双域名桌面/手机验收均完成，详见 Section 2 的 9 月 7 日记录。
+- **下一步**：本次恢复无剩余执行步骤；下一次自然调度的长期效果尚未观察，不重复消耗本次已用的一次 provider 授权。
+- **阻塞或等待**：本次恢复无阻塞；下列独立观察事项不因本次验收自动关闭。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 
