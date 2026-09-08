@@ -670,6 +670,8 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016 / ADR-0019)
 
+2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。官方 CC BY 4.0 CSV 已完成一次有界内存读取；公司/产品、ARR/run-rate/全年收入、日期及限定金额仍须分开核验。仅评审，不新增 runtime 抓取、不改变现有 SaaStr 路径或 Core-23；不购买或绕过 Sacra。
+
 第二页面「AI 泡沫监测」(`data/bubble-watch.json`,周一 cron)专属,display-only,不进 GFRR 主雷达 scoring/decision。Bubble Watch v2 的 27 张证据卡继续使用原有来源构建,但只让固定 Core-23 进入专题页内部主分/Stage/Trigger/分类共振;`private_secondary_marks` / `token_revenue_ratio` / `gpu_rental_price` / `frontier_progress` 为 Shadow-4,全部展示但不入分。正式页面刷新仍由 `refresh-bubble-watch.yml` 周一写入;`audit-bubble-watch-sources.yml` 周二至周五只做 source-health 只读审计,不提交数据、不触发 Pages,默认设置 `BUBBLE_WATCH_DISABLE_WIND=1` 避免 Wind 付费调用(仅手动 dispatch 勾选 paid Wind opt-in 时才注入 `WIND_API_KEY`)。复用既有 FRED API(`BAMLH0A0HYM2`/`DFF`/`CPIAUCSL`/`DFEDTARL`/`DFEDTARU`,`FRED_API_KEY`;本地无 key/接口失败时短窗口 `fredgraph.csv?cosd=...` 兜底)、Federal Reserve SEP 公开页与 Yahoo Chart(SPY/RSP/成份股/ZQ Fed funds futures closes)之外,新增:
 
 | 源 | 端点 | 喂养指标 | 边界 |
