@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-08 ARR Epoch 免费来源评审与隔离核验
+
+- **Acceptance baseline**：owner 明确不购买 Sacra，并批准 #310 独立 AI 审阅合并后直接做下一刀。该 PR 已于 06:40 UTC 合并为 `ec0cd27d`，[独立审阅回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/310#issuecomment-5580471956)无阻断；此次例外仅限 #310。新刀基于该 latest main，沿用单项 commit+push，范围为 Epoch 来源评审及一次性隔离验证，不改 ARR 生产链。
+- **当前任务**：[来源评审与核验结果](ARR_EPOCH_SOURCE_REVIEW.md)。官方 CC BY 4.0 程序读取依据确认，真实 CSV 一个有界 GET、40,898 bytes、67 行/18 列、Anthropic 18 行；原始表只在进程内存，不保存/发布引文，无付费或生产写入。
+- **下一步**：离线候选 sanitizer，分开公司/产品、run-rate/ARR/全年/季度、观测区间/报道日期及金额限定；再评审有界读取器与生产方法。当前不再以购买 Sacra 为前置条件，不把 39 天行日期直接当已核实的新鲜观测。
+- **阻塞与证据**：实测日期精度、金额限定与来源角色仍需逐条核验；自动更新、Core-23 切换及本 PR 合并审阅未完成。MCP `list_projects` 仍 `Transport closed`，源码回读；本轮不降低时效/许可/观察门槛。
+
 ### 2026-09-08 ACLED HDX/HAPI 月度候选来源评审
 
 - **Acceptance baseline**：owner 在调查后要求“请做下一刀”，本刀交付[来源评审与隔离验证设计](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)，沿用单项 commit+push。仅公开文档/目录元数据/现有源码与 JSON 对照，不开启数据正文下载、不发信、不恢复 ACLED API、不改生产；既有源权利与合并审阅要求保留，#309 例外不沿用。
@@ -268,10 +275,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：PR #307 已合并为 latest main `e6baad93`，Pages 成功；下一刀独立分支 `codex/oil-news-event-support-links`，不堆叠旧 PR。
-- **当前任务**：同事件候选与脱敏支持链、telemetry v4 cohort 隔离及回归，完成必要验证后单独 commit+push；不包含下一 PR 的 merge 或生产新闻刷新。
-- **下一步**：独立复核 ADR-0030 的 checker 收紧与支持链；TOC 日期语义、改写转载/所有权及新口径观察保留。
-- **阻塞或等待**：MCP `list_projects` 仍返回 `Transport closed`，使用源码回读；指定 reviewer 模型不可用后由另一独立 AI 完成 #307 审阅，用户例外仅适用于 #307，不豁免后续人工 review/切源/来源权利门。
+- **工作基线**：#310 经 owner 单次 AI 代人工批准和独立审阅后合并 `ec0cd27d`；docs-only 不在 Pages push paths，不额外 dispatch。下一刀独立分支 `codex/arr-epoch-source-review`，不堆叠旧 PR。
+- **当前任务**：Epoch 免费来源评审、真实 CSV 一次性内存核验及后续验收基线；必要检查后单项 commit+push，最终提交/PR 状态以回执为准。
+- **下一步**：离线候选 sanitizer 与逐条日期/口径审阅；持续读取器和生产方法另审。不购买 Sacra，不将 #310 合并授权延伸到本 PR。
+- **阻塞或等待**：MCP 仍 `Transport closed`，源码回读；CSV 可访问不等于 ARR 生产替代合格。ACLED 原评审中的发信状态属于当时快照，后续已按 owner 授权联系 ACLED/HDX，但发询问信不代表收到数据许可；本轮未重新检查邮箱答复。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 

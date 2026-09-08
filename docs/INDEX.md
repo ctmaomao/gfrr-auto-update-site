@@ -134,6 +134,8 @@
 
 ### World Order / Signal Intake scope
 
+ARR / Bubble Watch 独立候选入口：`docs/ARR_EPOCH_SOURCE_REVIEW.md` — Epoch 免费 CSV 来源评审及一次性隔离核验；未实现定时更新或生产切换，不继承第三方文章抓取权限。
+
 - `docs/WORLD_ORDER_STRESS.md`
 - `docs/WORLD_ORDER_SOURCE_REVIEW.md`
 - `docs/SIGNAL_INTAKE.md`
