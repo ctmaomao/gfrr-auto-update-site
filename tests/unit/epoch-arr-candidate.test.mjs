@@ -82,6 +82,30 @@ test('empty amounts are null while zero, small values and out-of-runtime-range v
   }
 });
 
+test('all three amount fields reject decimal precision loss and preserve ordinary controls', () => {
+  for (const [field, output, hold] of [
+    ['Annualized revenue (USD)', 'annualizedUsd', 'annualized_amount_invalid'],
+    ['Revenue amount (normalize to annual)', 'normalizedAnnualUsd', 'normalized_amount_invalid'],
+    ['Period revenue', 'periodRevenueUsd', 'period_amount_invalid']
+  ]) {
+    for (const value of ['9007199254740991.1', '65000000000.000001', '1.00000000000000001', '0.0000001', `0.${'0'.repeat(324)}1`]) {
+      const row = first({ [field]: value });
+      assert.equal(row.amounts[output], null, `${field}: ${value}`);
+      hasHold(row, hold);
+    }
+    for (const [value, expected] of [['65000000000.0', 65e9], ['9007199254740991.0', Number.MAX_SAFE_INTEGER], ['1.2500', 1.25], ['1.10', 1.1], ['0.0', 0], ['', null]]) {
+      const row = first({ [field]: value });
+      assert.equal(row.amounts[output], expected);
+      assert.ok(!row.holds.includes(hold));
+    }
+  }
+  const rows = review(csv([{}, { Id: 'different high precision amount', 'Annualized revenue (USD)': '65000000000.000001' }])).candidates;
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].amounts.annualizedUsd, 65e9);
+  assert.equal(rows[1].amounts.annualizedUsd, null);
+  for (const row of rows) assert.ok(!row.holds.includes('possible_duplicate_observation'));
+});
+
 test('date precision remains unknown including an apparently fresh month-end anchor', () => {
   for (const [date, age, status] of [['2026-07-25', 45, 'fresh'], ['2026-07-24', 46, 'stale']]) {
     const row = first({ Date: date });

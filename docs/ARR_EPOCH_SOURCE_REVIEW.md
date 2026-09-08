@@ -94,3 +94,7 @@ Owner 已批准仅 #311 独立 AI 替代人工审阅，通过后合并并继续�
 回归见 [`epoch-arr-candidate.test.mjs`](../tests/unit/epoch-arr-candidate.test.mjs)，使用自行编写的 synthetic CSV，包含 stdin CLI 无网络 dry-run，纳入既有 `check:bubble-watch` / `check:all`，没有删除或放宽旧断言。本轮未再下载真实 CSV，因此不声称已回放上节 67 行真实快照或完成逐条经济口径复核。
 
 下一步仍是单独审阅并实现固定官方 CSV 有界读取器及跨快照差异；持续运行、生产方法与切源另审。本次不修改 SaaStr builder、curated、生产 JSON、调度或 Core-23。
+
+### PR #312 精度复核修复
+
+独立审阅发现 `Number()` 对合法十进制输入可能静默丢位，单独检查 `MAX_SAFE_INTEGER` 不足以保护小数（如 `9007199254740991.1`、`65000000000.000001`）。三个金额列统一增加规范十进制往返检查：仅去掉小数末尾的零后必须与数字序列化一致，否则 null + 对应 amount invalid hold；极小数需指数序列化也保守拒绝，不将其变成零。正常 `.0`、0、空值及可往返的小数继续保留。追加三列边界及误判重复观测回归；此修复只属于 #312 的审阅收敛，不提前引入下一刀读取器。

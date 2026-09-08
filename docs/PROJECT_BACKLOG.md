@@ -31,6 +31,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **实施范围**：18 列严格有界 CSV、公司/产品与 run-rate/ARR/期间金额分离、未知精度与金额限定 hold、45 天行日期诊断、脱敏 hash、重复及冲突修订；stdin/stdout only，所有候选 productionEligible=false，无网络、评分、writer、调度或生产数据改动。[契约及用法](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-离线候选-sanitizer-实施)。
 - **验证**：15 项 synthetic 回归含 CLI dry-run 已通过；纳入既有 Bubble Watch 完整检查，不用合成样本冒充真实 CSV 回放。最终完整检查及提交/推送以本轮回执为准；MCP 调用仍 Transport closed，源码回读。
 - **后续边界**：先独立审阅本实施 PR；固定官方有界读取器、跨快照差异、逐条口径/日期限定复核和生产方法/切源继续分阶段。无新样本下载、付费或自动更新授权扩张。
+- **#312 审阅收敛**：owner 授权先审阅 #312 再做读取器/跨快照比较；独立复核在 `89a463c0` 发现 P2 金额十进制静默舍入（原 CI `34201485535` 通过但未覆盖该边界）。先补三个金额列的规范十进制往返校验，无法保留有效位时 null+invalid hold，新增精度/误去重回归；仍保持单项 PR，不叠加读取器。复审、最终检查及 commit+push 以本轮回执为准，合并前独立人工审阅或本次 AI 替代批准仍需满足。
 
 ### 2026-09-08 ARR Epoch 免费来源评审与隔离核验（已合并 #311）
 

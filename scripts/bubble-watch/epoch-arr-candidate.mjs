@@ -74,6 +74,12 @@ function normalizeRow(values, csvRow, asOfDate) {
     if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(value)) { holds.add(code); return null; }
     const parsed = Number(value);
     if (!Number.isFinite(parsed) || parsed > Number.MAX_SAFE_INTEGER) { holds.add(code); return null; }
+    // The candidate JSON must preserve every significant decimal digit. A safe
+    // integer bound alone misses rounded fractions near that bound or at 65B.
+    // Reject exponent-form serialization conservatively (including tiny nonzero
+    // amounts); it must not silently become zero or a different observation.
+    const canonicalDecimal = value.includes('.') ? value.replace(/0+$/u, '').replace(/\.$/u, '') : value;
+    if (String(parsed) !== canonicalDecimal) { holds.add(code); return null; }
     if (parsed === 0) holds.add('zero_amount');
     return parsed;
   };
