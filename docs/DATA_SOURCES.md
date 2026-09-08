@@ -670,7 +670,7 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016 / ADR-0019)
 
-2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。#312 离线 sanitizer 已合并，观测精度和金额限定保持 unknown/hold，productionEligible 恒 false；下一刀加入显式 opt-in 的固定官方 CSV 单次有界读取与 hash-only 跨快照修订比较，仍为 artifact-only、默认无网络、不自动写基线。一次新真实响应与原回执同 hash，跨版本差异由 synthetic 回归验证。未新增生产 runtime 抓取、不改变现有 SaaStr 路径或 Core-23；持续运行/持久化、真实逐条复核与生产切源仍待独立审阅，不购买或绕过 Sacra。
+2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。#312 sanitizer 与 #313 固定官方单次有界读取/hash-only 修订比较已合并；当前新增默认 dry-run、显式写入、固定 ignored 目录的只增不覆盖候选归档，不维护批准基线或 latest 指针。观测精度/金额限定仍 unknown/hold、productionEligible 恒 false；真实响应与旧回执同 hash，跨版本差异由 synthetic 回归验证。尚未启用低频调度或生产 runtime 抓取，不改变 SaaStr/Core-23；artifact 跨 run 留存、真实逐条复核与生产切源继续另审，不购买或绕过 Sacra。
 
 第二页面「AI 泡沫监测」(`data/bubble-watch.json`,周一 cron)专属,display-only,不进 GFRR 主雷达 scoring/decision。Bubble Watch v2 的 27 张证据卡继续使用原有来源构建,但只让固定 Core-23 进入专题页内部主分/Stage/Trigger/分类共振;`private_secondary_marks` / `token_revenue_ratio` / `gpu_rental_price` / `frontier_progress` 为 Shadow-4,全部展示但不入分。正式页面刷新仍由 `refresh-bubble-watch.yml` 周一写入;`audit-bubble-watch-sources.yml` 周二至周五只做 source-health 只读审计,不提交数据、不触发 Pages,默认设置 `BUBBLE_WATCH_DISABLE_WIND=1` 避免 Wind 付费调用(仅手动 dispatch 勾选 paid Wind opt-in 时才注入 `WIND_API_KEY`)。复用既有 FRED API(`BAMLH0A0HYM2`/`DFF`/`CPIAUCSL`/`DFEDTARL`/`DFEDTARU`,`FRED_API_KEY`;本地无 key/接口失败时短窗口 `fredgraph.csv?cosd=...` 兜底)、Federal Reserve SEP 公开页与 Yahoo Chart(SPY/RSP/成份股/ZQ Fed funds futures closes)之外,新增:
 

@@ -25,7 +25,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
-### 2026-09-08 ARR Epoch 有界读取与跨快照比较
+### 2026-09-08 ARR Epoch 本地候选快照归档
+
+- **Acceptance baseline**：owner 明确批准仅 #313 独立 AI 替代人工、通过后合并并继续下一刀。固定 `69dcdace` 独立评估无阻断、精确 CI `34205620671` 成功；08:53 UTC 合并 `3fd7f151`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/313#issuecomment-5582128852)。本刀基于该 latest main 单项 commit+push，不沿用 #313 例外合并本 PR。
+- **实施**：[本地候选归档及调度方案](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-本地候选快照归档)。固定 ignored 路径、默认 dry-run、显式 write、hash 命名、只新增不覆盖；锁/临时文件发布、旧文件身份校验、指定旧 hash 比较、128份/2 MiB 上限和损坏现场保留。不联网，不写 approved/latest 基线，不改生产或调度。
+- **验证边界**：10 项 synthetic 回归，写入与 CLI 在独立临时目录，不改变用户 ignored 档案；没有新增真实下载/候选落盘。完整检查及实际提交/推送以本轮回执为准；MCP 仍 Transport closed，源码回读。
+- **下一步**：独立审阅归档实现后，按现有周一 Bubble Watch 周期设计 candidate job 的跨 run artifact 留存和只读来源验证；不新建独立 cron、不借生产刷新测试，不因归档或 CI 通过而晋升经济口径/日期精度/评分。
+
+### 2026-09-08 ARR Epoch 有界读取与跨快照比较（已合并 #313）
 
 - **Acceptance baseline**：owner 明确批准仅 #312 由独立 AI 替代人工，通过后合并并继续本刀。固定 `ec1fcf3c` 复审 P2 已关闭、无阻断，CI `34204107683` 成功；08:27 UTC 合并 `15eb5e4d`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/312#issuecomment-5581783690)，Pages `34204613602` 成功。本刀基于 latest main 单项 commit+push，不沿用 #312 例外合并本 PR。
 - **实施**：[固定官方读取器与 hash-only 快照比较](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-有界读取与跨快照比较)。默认离线，opt-in 才单 GET/15 秒/1 MiB/无重定向/无凭证/无重试；旧快照严格校验，比较新增/删除/修订/多义键/重复次数，旧期更正也检测。同 hash 不刷新观测时间；不写基线、curated、生产 JSON，不启动调度或改评分。

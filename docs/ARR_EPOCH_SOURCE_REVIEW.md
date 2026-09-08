@@ -125,3 +125,34 @@ Live 模式拒绝 `currentCsv` 等多余字段，并在请求前校验旧快照�
 **本轮真实验收**：2026-09-08T08:33:01.244Z，一个 GET 成功，40,898 bytes、67 行、18 条 Anthropic、0 完全重复，SHA-256 仍为 `f0297f9f9c38bde55f0ff74b0f768dab82d05f1a09cb7ca30fe60dd8c8796b9e`，与 06:41 的历史回执一致。未保存原始文件/候选基线、未生产写入、未重试。本次证明当前真实响应能通过新读取器及 sanitizer；两次真实 hash 相同，不声称已经验证真实跨版本收入修订，跨版本差异目前由 synthetic 回归验证。
 
 测试见 [`epoch-arr-refresh.test.mjs`](../tests/unit/epoch-arr-refresh.test.mjs)，纳入既有 `check:bubble-watch` / `check:all`。下一阶段先审阅本实现，再决定可审计候选快照的持久化/低频调度及逐条经济口径复核；生产方法、45 天底层时效、来源切换和评分批准继续保留。
+
+## 2026-09-08 本地候选快照归档
+
+**Acceptance baseline**：owner 明确批准 #313 独立 AI 替代人工审阅、通过后合并并继续下一刀。固定 head `69dcdace` 评估为 merge / human_review_required，无阻断；精确 CI `34205620671` 成功，08:53 UTC 合并 `3fd7f151`，[独立审阅回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/313#issuecomment-5582128852)。本刀只实现本地候选持久化并给出低频接入方案，不启用调度、不追加实时下载、不采纳生产基线；#313 例外不扩展到本刀合并。
+
+新增 [`epoch-arr-archive.mjs`](../scripts/bubble-watch/epoch-arr-archive.mjs) 与 [`archive-epoch-arr-candidate.mjs`](../scripts/archive-epoch-arr-candidate.mjs)，归属仍为 `artifact_sanitizer_layer`。归档对象仅为 #313 的 `snapshot`，不是完整 report、更不是 CSV；旧字段、false productionEligible、unverified authenticity 及 hash/行数约束全部保留。
+
+- 目录锁定为仓库 `manual-artifacts/epoch-arr-candidates/snapshots/`（已被既有 `.gitignore` 忽略），文件名固定 `<fileHash>.json`。CLI 不接收 root/output/path、overwrite/prune 或网络参数；library 的 workspaceRoot 仅供可信集成/隔离测试，不能从 artifact 输入指定。
+- 默认 dry-run，不创建目录；显式 `--write` 才新增文件。内容规范化后先写独占随机临时文件并 fsync，再使用同目录 hard link 发布，目标存在时不覆盖；文件系统不支持时失败，不降级为覆盖写。独占 `.lock` 防止正常并发归档越过容量检查；结束只清理本次新建的临时文件与空锁目录。
+- 同 hash 同内容返回 already_archived，不重写、不中途刷新 mtime；同 hash 异内容拒绝。新修订使用新 hash 文件并存，不维护 latest/approved 指针。`--compare <64位旧hash>` 必须显式指定旧版，通过固定目录读取、校验文件名与内部身份后调用 #313 comparator；不会自动选择某一份为基线。
+- 拒绝 symlink/junction 目录或目标、异常目录项、残留锁/临时文件、损坏/超限旧文件及身份冲突。单文件上限 2 MiB、最多 128 个快照，满额停止，不自动删除历史。只读检查不认证文件真实性；也不将路径检查宣传为能抵抗本机恶意进程在检查后替换文件系统的沙箱。
+- 中断可能留下 `.lock` / `.pending-*`；下一次 fail-closed 保留现场。恢复须先人工检查目标/临时文件身份及完整性，提供具体对象与恢复方案后再授权清理，不由工具自动删除、覆盖或跳过损坏记录。所有报告仍 baselineUpdated=false、productionEligible=false，无网络/评分/生产写入。
+
+CLI 从 stdin 读取单个 snapshot JSON（不是外层 `{snapshot,report,...}`），示例命令：
+
+```powershell
+# 把已获准持有的 snapshot JSON 通过 stdin 传入；默认只预览。
+node scripts/archive-epoch-arr-candidate.mjs
+# 显式写入本地候选档案，不是生产基线晋升。
+node scripts/archive-epoch-arr-candidate.mjs --write
+# 比较指定的已归档旧版本；参数替换为真实 64 位小写 hash。
+node scripts/archive-epoch-arr-candidate.mjs --compare <previous-file-sha256>
+```
+
+入口也可用 `npm run archive:arr-epoch-candidate -- ...`。stdin 空白/坏 JSON、完整 reader report 或额外字段拒绝，错误只输出静态代码；只有需要保存 snapshot 时才显式写入。不会在本轮将真实候选偷偷保存成历史。本轮 10 项 synthetic 回归覆盖 dry-run、真实临时目录写入/不覆盖、修订并存/指定旧版比较、路径与 junction、损坏文件、锁/残留、容量及 CLI；CLI 在隔离复制目录执行，不依赖或改变用户已有 ignored 档案。
+
+### 低频调度接入方案（尚未实施或启用）
+
+后续单独 reviewed PR 优先复用现有 `Refresh Bubble Watch` 周一周期，在隔离 candidate job 中每周期最多一次固定官方 GET，并保持无收费凭证、contents:read、无 git/data 写入；不新建独立 cron，不手动触发可能带 Wind 的既有生产刷新来测试候选。候选失败与生产 refresh 分离，只报告待处理，不覆盖旧档案或修改灯色。
+
+GitHub runner 是临时环境，本地 ignored 档案不会自动跨 run 留存；接入前必须明确 artifact 保留期、只读选择同 workflow/main 的历史 artifact、完整 hash/schema/来源身份校验、过期/缺失时 baseline_required、容量及人工恢复策略。GitHub artifact 出处也不能把未经逐条复核的收入变成可信经济事实。定时权限、artifact 上传/取回、通知与生产切源仍待该独立接入审阅；本刀没有修改任何 workflow 或创建应用自动化。
