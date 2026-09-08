@@ -25,6 +25,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+以下各阶段的验收基线按当时范围保留；已合并阶段中的旧“下一步”、单次批准及 MCP 故障不是当前待执行指令。当前交付/等待以本节最新结论和末尾 Session Handoff 为准，不因归档或检查通过而自动晋升数据。
+
 ### 2026-09-08 StockQ / 运输免费来源复核
 
 - **Acceptance baseline**：沿用本轮逐项实施/验证/commit+push、独立 AI 审阅后合并授权；本项只做来源评审和真实基线核对，不购买、发信或新增 runtime。
@@ -35,20 +37,20 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 - **Acceptance baseline**：沿用本轮连续实施、每项独立 commit+push、AI 独立审阅通过后合并授权；基于 #317 合并 `e7a70307`，不借此批准新发布者抓取、付费或生产切源。
 - **已核实/实施**：[离线证据契约](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)。自然 run `34189473112` 已生成 v5；38 条 TOC 可比较但原文时间缺失、同方向支持候选为 0。新增有界 stdin/stdout 复核器，核对精确文章身份、发布时间/其它时钟、冲突、回溯及错误脱敏；全部质量/生产资格固定 false，不改分类器、telemetry 或旧 cohort。
-- **验证/下一步**：必要回归及完整检查后单项提交/独立审阅。原文证据包、具体合法读取通道和时间语义仍缺失；不制造正例、不补写旧观察期，保留 30 天/120 样本和全候选分母。随后完成 ACLED 回信状态、运输来源和当前交接同步。
+- **验证/下一步**：#318 已独立 AI 审阅并合并 `88e68caa`，新增 14 项回归和本地完整检查通过，CI `34219176654`、Pages `34219612651` 成功。原文证据包、具体合法读取通道和时间语义仍缺失；不制造正例、不补写旧观察期，保留 30 天/120 样本和全候选分母。当前离线工具交付完成，自动 resolver/质量晋升未完成。
 
 ### 2026-09-08 连续完善授权与 ARR 事实复核
 
 - **Acceptance baseline**：owner 明确授权依次完成 ARR 事实/方法、新闻原文时间依据、ACLED 授权回复、运输免费来源及相应文档同步；每项验证后独立 commit+push，独立 AI 审阅通过后合并。保持 latest main / serial trunk；不扩大第三方源权利、付费临执行确认、真实观察/质量门槛或实质生产验收。
 - **ARR 已完成的证据工作**：[18 行逐项判定与七篇原始公告复核](ARR_EPOCH_SOURCE_REVIEW.md#当前结论2026-09-08-逐条证据复核)。10:46 UTC 官方 CSV 单 GET，40,898 bytes / 67 行，hash 与之前相同；没有原文落盘或生产写入。5 月 15 日明确是插值，最新 7 月末仅给时间上界，金额含下限/近似，不能构成可靠四点斜率；保留当前方法与 45 天底层 freshness，不切生产。
-- **继续事项**：新闻 resolver 方案及自然刷新核查；ACLED/HDX 回复核查；运输免费来源权利/口径；同步最新交接。真实周一 artifact 验收沿用已创建的 `arr` 应用任务，不重复创建，不以 mock 或手动刷新代替。
+- **本轮收敛**：ARR 逐项复核 #317、新闻离线复核 #318、ACLED 联系状态 #319、运输来源结论 #320 已各自验证、commit+push、独立 AI 审阅并合并；当前仅同步交接。没有待实施的已明确可行生产切源；解锁需要真实数据/许可/观测证据，不继续制造通用抓取器或改低门槛。真实周一 artifact 验收沿用已创建的 `arr` 应用任务，不重复创建，不以 mock 或手动刷新代替。
 
-### 2026-09-08 ARR Epoch 周一候选接入
+### 2026-09-08 ARR Epoch 周一候选接入（已合并 #316）
 
 - **Acceptance baseline**：owner 明确要求“先独立审阅并合并 #315，再接入周一候选更新”；沿用每项 commit+push。#315 精确 head `37a660e7` 独立 AI 审阅通过，原 Linux crash 测试目录枚举顺序问题已修复，CI `34212973146` 全部成功；合并 `d3568a8f`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/315#issuecomment-5583317287)，Pages `34213453513` 成功。该单次 AI 合并例外不扩展到本刀。
 - **实施**：[周一候选接入](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-周一候选接入)。复用既有 Monday schedule，隔离只读 candidate job，首次 schedule run 才读取；固定官方 CSV 一次、hash-only artifact 30 天、同 workflow 成功 main 历史有界选择与完整取回校验、修订 Summary。无新 cron/生产值/评分/付费凭证或人工 dispatch；候选收集失败警告且不上传，不阻断现有 refresh。checkout/setup/upload 平台故障仍 hard fail，可能 hold 后续编辑层；不放宽原 workflow checker。
-- **验证**：新增离线回归覆盖完整 mock 跨 run、历史缺失/过期/修订、失败无上传、身份/权限/令牌隔离及有界超时；完整检查、实际提交/PR 以最终回执为准。本轮 MCP 查询可用，coverage 提示 metadata_changed 的文件已直接回读，未改配置。
-- **下一步/限制**：新 PR 独立审阅与合并门槛保留；真实 scheduled 上传/后续跨 run 下载尚未发生，不宣称已上线或真实跨版本验收。合并后的第一个成功周一周期可能 baseline_required，下一次才有历史比较；收入事实、日期精度、45 天底层时效及生产切源继续另审。
+- **验证**：#316 精确 head `579c88d8` 经该 PR 专属独立 AI 审阅，CI `34214841758` 全部通过，合并 `8408f647`，Pages `34215725692` 成功；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/316#issuecomment-5583728779)。离线回归覆盖 mock 跨 run、历史缺失/过期/修订、失败无上传、身份/权限/令牌隔离及有界超时。本轮 MCP 查询可用，coverage 提示 metadata_changed 的文件已直接回读，未改配置。
+- **下一步/限制**：实现已合并部署，真实 scheduled 上传/后续跨 run 下载尚未发生。最近已完成周一 run `34111922834` 是 9 月 7 日、早于合并，不能用它验收新 job。首个预期周期为 9 月 14 日，下一周期 9 月 21 日（须实际成功，不保证日历到期即完成）；既有 `arr` 验收任务负责核对，需本地应用/电脑可运行。首次可能 baseline_required；跨运行即使同 hash 也应如实验收无变化，不能伪称发生真实修订。收入事实、日期精度、45 天底层时效及生产切源仍未通过。
 
 ### 2026-09-08 ARR Epoch 跨运行产物交接（已合并 #315）
 
@@ -98,8 +100,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 - **Acceptance baseline**：owner 批准按建议连续实施、每步 commit+push。第一步按 [ADR-0031](ADR/0031-web-ngrams-time-provenance.md) 分离文件监测时间/TOC元数据时间/原文发布时间，严格日历校验；保留 shadow-only 支持链，不借用元数据充当原文时效，不改来源、评分、费用、阈值及分母。合并审阅、自然刷新与观察期门槛保留；#308 AI代人工例外不沿用。
 - **当前任务**：candidate v2 / classification v3 / telemetry v5；Web原文发布时间固定null，metadata候选支持单独留在ignored产物，公开支持计数保持0；旧v2/v3/v4严格校验并留存。既有正例迁移到metadata诊断，同时断言公开资格关闭；不删除原断言的身份/去重保护。
-- **下一步**：第一步提交后只读核对自然刷新版本、支持链和缓存隔离；生产v5验收须先合并本PR。新版本不借用旧观察窗，原文时间依据缺失不能靠等待30天自动解决，需另行审阅resolver方案。
-- **阻塞与证据**：MCP仍Transport closed，源码回读；本地验收及最终commit/push以回执为准。当前不触发Daily/Oil News刷新、不付费、不手改production JSON。
+- **当前验收**：自然 schedule run `34189473112` 已生成 v5，38 条 TOC 时间可比较、原文时间仍缺失、同方向支持候选为 0；不再等待首个 v5。后续离线原文证据复核器已合并 #318，见本节新事项。新版本不借用旧观察窗，原文时间缺失和支持链不足不能靠等待 30 天自动解决。
+- **保留限制**：最初 MCP Transport closed 为历史故障，本轮调用可用；不因此声称永久修复。没有合法对应原文证据和合格的新 cohort 前不做自动 resolver/切源；本轮不触发 Daily/Oil News 刷新、不付费、不手改 production JSON。
 
 ### 2026-09-07 新闻同事件候选与脱敏支持链
 
@@ -329,13 +331,22 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：#315 经本次独立 AI 审阅、精确 CI 通过后合并 `d3568a8f`；Pages `34213453513` 成功。下一刀独立分支 `codex/arr-epoch-monday-candidate`，不堆叠旧 PR。
-- **当前任务**：既有周一周期的隔离 Epoch candidate job 与有界历史选择、摘要和 hash-only 上传；必要检查后单项 commit+push，最终提交/PR 状态以回执为准。
-- **下一步**：独立审阅本接入 PR；合并后的真实 scheduled artifact 上传及后续跨 run 下载验收，再逐条审阅日期/口径与生产方法。不购买 Sacra，不将 #315 合并例外延伸到本 PR。
-- **阻塞或等待**：本轮 MCP 查询恢复可用，不等于历史连接故障永久解决；本轮未触发真实候选/生产刷新，生产切源仍未获准。ACLED 原评审中的发信状态属于当时快照，后续已按 owner 授权联系 ACLED/HDX，但发询问信不代表收到数据许可；本轮未重新检查邮箱答复。
+- **工作基线**：main `2cad8015`，#316–#320 均已合并；本项 `codex/source-review-handoff` 仅同步三份文档，依 owner 连续授权完成必要检查、单项 commit+push、独立 AI 审阅与合并，最终状态见 PR 回执。自动 thermal 数据提交 `cf555283` 已保留，没有混入本轮人工改动。
+- **当前任务**：本轮可做的四项实质工作已完成，交接同步后不再扩展无关任务。#317 ARR 事实复核不支持生产切换；#318 新闻离线工具完成但全部质量资格关闭；#319 ACLED 已发信未找到回复；#320 运输已查渠道未找到合格免费等价源。相应证据见下表。
+- **下一步**：等待并按既有 `arr` 任务验收真实 9 月 14/21 日周一候选上传与跨 run 取回；有权方 ACLED 回复和同版本月表、合法新闻原文证据/质量样本、具体合规运价源出现后再处理对应事项。没有这些条件，不重复发信、补写历史、手动刷新或购买/绕过 Sacra。
+- **阻塞或等待**：本轮 MCP 查询可用，未升级/修改配置；没有声称所有模块永久无缺陷。实际源权利、观察/质量、45 天 ARR 底层 freshness、费用及生产验收门槛保留。CI/Pages 成功证明本次变更检查与发布，不证明外部数据准确、新鲜或已获许可。
 
-### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
+| 本轮独立任务 | 实际提交 / 合并 | 精确 CI / 审阅证据 |
+|---|---|---|
+| ARR 逐行事实和生产方法复核 | `e81122a8` / #317 `e7a70307` | CI `34217707117`；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/317#issuecomment-5584059570) |
+| 新闻有界离线发布时间复核 | `245b1f13` / #318 `88e68caa` | CI `34219176654`；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/318#issuecomment-5584260254)，Pages `34219612651` 成功 |
+| ACLED 授权联系与输入状态 | `7952f2dd` / #319 `e6f47ecb` | CI `34219955752`；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/319#issuecomment-5584342889) |
+| 运输免费来源权利与适用性 | `8956a203` / #320 `2cad8015` | CI `34220592207`；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/320#issuecomment-5584430606) |
 
-- ACLED 滞后地区/月表、StockQ/ARR 来源、Web v2 观察期及运输商业授权仍按 Section 2 的现行事项处理；不因历史归档自动关闭。
+四项均经本地 `check:changed` 完整检查及云端 CI；docs-only 项不符合 Pages push 路径过滤，不额外触发部署。所有修改均有独立审阅，未放宽 checker 或添加未解释 ignore。
+
+### 未关闭的观察事项（本轮范围外状态不据旧记录推断）
+
+- ACLED 滞后地区/月表、StockQ/ARR 来源及新闻现行 v5 质量观察仍按 Section 2 处理；旧 v2/v3/v4 cohort 保留但不能借给 v5。其它卫星等观察事项没有因本轮文档收敛而被关闭，也未被替换为新的自动晋升授权。
 
 此前逐会话记录原文见 [历史交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-05)。仅在核对对应日期事件时读取；不把旧“下一步”恢复成当前任务。
