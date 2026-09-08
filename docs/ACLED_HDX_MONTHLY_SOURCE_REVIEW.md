@@ -4,10 +4,12 @@
 
 2026-09-08，owner 在来源调查后要求“请做下一刀”，对应本次**来源评审与隔离验证设计**，沿用逐项 commit + push。本文是可评审交付物，不是数据下载器、接入许可或生产切换决定。
 
-- 结论：HDX/HAPI 是值得继续验证的官方分发渠道；**六项月度指标尚未证明等价，完整自动替代暂不批准**。
+- 结论：HDX/HAPI 是值得继续验证的官方分发渠道；**月度接入链的六项指标（五项年度、一项月度）尚未证明等价，完整自动替代暂不批准**。
 - 本轮只读取公开文档、HDX 目录元数据和现有源码/已提交 JSON；没有读取远端数据正文、运行 sanitizer、注册应用标识、发送邮件或触发刷新。
 - `sourceComplianceStatus=unresolved`、`liveDataFetchApproved=false`、`productionDataWriteApproved=false`、`sourceCutoverApproved=false`。这些是评审状态，不新增 runtime 配置。
 - [AGENTS](../AGENTS.md)、[来源规则](AGENT_DOMAIN_BOUNDARIES.md#sources)、[M-63 操作契约](M-63_ACLED_INTEGRATION.md) 和现有 HDX metadata-only reminder 边界全部保留。PR #309 的单次 AI 代人工审阅例外不沿用。
+
+2026-09-08 补充 acceptance baseline：owner 明确确认 GFRR 为**个人非商业项目，无广告、付费订阅或客户服务**，并要求继续。用途事实已确认，不再重复询问；不是替 ACLED/OCHA 授权，也不扩大为发信、披露联系邮箱、接受付费协议、真实样本下载或生产发布。本次补充留在同一 PR #310。
 
 ## 已核对的现状
 
@@ -52,13 +54,25 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 这不是法律意见。区分平台允许机器访问、数据许可、owner 批准和公开发布权利，不能用其中一个替代其它项。
 
 1. **渠道依据已找到**：ACLED [FAQ](https://acleddata.com/faq-codebook-tools) 指向 HDX 的国家—月/年聚合数据；OCHA [HAPI 说明](https://centre.humdata.org/announcing-the-hdx-humanitarian-api/) 面向自动化访问。因此不将 HAPI 与浏览器抓取 ACLED 网站混为一谈。
-2. **用途待核实**：owner 尚未确认 GFRR 是否完全非商业、是否有客户服务/商业主体。不能仅由现有 `licenseLevel=open` 推断适用许可。已提出用途问题，未替 owner 填写身份或机构。
-3. **数据条款仍适用**：[ACLED EULA](https://acleddata.com/eula) §1.2、§3.1–3.3 涉及商业许可、可发布的转换成果、原始内容再分发及网站抓取限制；§7 涉及 AI 使用及防提取要求。[Content Usage Terms](https://acleddata.com/contentusage) 同样需要纳入公开仪表盘用途评估。非商业和署名不是自动满足全部条件。
-4. **HAPI 条款仍缺证据**：2026-09-08 访问 [HAPI Terms](https://data.humdata.org/hapi/terms) 得到 403。没有换代理、伪造身份或绕过限制；需取得可读取的现行条款或官方答复，不能按“未读到禁止条款”批准。
+2. **用途已由 owner 确认**：2026-09-08 确认为个人非商业，无广告、付费订阅或客户服务。依此按非商业用途继续评审，不从 `licenseLevel=open` 反推许可，也不额外声称具有学术机构身份。以后增加商业或代客用途须重新评审。
+3. **数据条款仍适用**：2026-09-08 重读 [ACLED EULA](https://acleddata.com/eula) 与 [Content Usage Terms](https://acleddata.com/contentusage)，两页标注更新日期均为 2025-07-08。EULA §1.2、§3.1–3.3 涉及商业许可、转换成果、再分发及网站抓取限制；§7 涉及 AI 使用及防提取。用途确认解决商业身份疑问，但公开成果仍须满足转换且不可还原等条件，不能把仅重排的仪表盘视为已合规。
+4. **HAPI 官方条款内容已补齐，入口部署一致性未核验**：原 [HAPI Terms](https://data.humdata.org/hapi/terms) 本日访问曾得到 403，重查仍未取得正文；随后按官方开源代码指向，读取 OCHA 官方站点的公开条款内容，完整取得 8 节，证据链见下文。没有换代理、伪造身份或获取受限数据；不再把条款正文标为“完全未读”，也不把公开源码默认分支当成线上部署版本证明。
 5. **公开 Git/JSON 也属于发布面**：未来不能只检查 UI 是否展示原表，还须检查 public repository、静态 JSON、Actions artifact 可见性及是否可还原数据。原始文件、国家级对照行与含邮箱的应用标识不得进入公开提交；现有发布范围本刀不扩展。
 6. **权限不迁移**：镜像不洗掉 ACLED 权利；Open 档不自动赋予原始事件 API。HAPI [应用标识要求](https://hdx-hapi.readthedocs.io/en/latest/getting-started/#generating-a-key) 需真实应用信息与 owner 批准的联系邮箱，本刀不生成，不使用示例/第三方标识。
 
 下一次来源评审应记录：适用条款 URL/版本日期、用途确认、允许的渠道/频率/存储期限/发布形式、剩余歧义及答复依据。只有有权方才能授予来源许可；owner 可以批准项目操作，不能代第三方授予数据权利。
+
+### HAPI 官方条款证据链与剩余缺口
+
+2026-09-08，通过 GitHub 官方仓库 `OCHA-DAP/hdx-ckan` 的默认分支 `dev`，固定到 commit `128d8406828e49f4a6fd24331f8f9a0d34cf171b`，核对以下读取链：
+
+1. [路由](https://github.com/OCHA-DAP/hdx-ckan/blob/128d8406828e49f4a6fd24331f8f9a0d34cf171b/ckanext-hdx_theme/ckanext/hdx_theme/views/landing_pages.py)将 `/hapi/terms/` 交给 `faq_read('hapi-terms')`；[配置](https://github.com/OCHA-DAP/hdx-ckan/blob/128d8406828e49f4a6fd24331f8f9a0d34cf171b/common-config-ini.txt)登记分类 `599` 及官方内容站示例地址。
+2. [FAQ 读取器](https://github.com/OCHA-DAP/hdx-ckan/blob/128d8406828e49f4a6fd24331f8f9a0d34cf171b/ckanext-hdx_theme/ckanext/hdx_theme/helpers/faq_wordpress.py)从公开分类和条目 JSON 加载正文；[条款模板](https://github.com/OCHA-DAP/hdx-ckan/blob/128d8406828e49f4a6fd24331f8f9a0d34cf171b/ckanext-hdx_theme/ckanext/hdx_theme/templates/faq_others/hapi-terms/main.html)渲染该内容。
+3. 实际只读 GET [官方分类 599](https://centre.humdata.org/custom-ufaq-category/599.json) 返回子分类 `600`（HAPI Terms of Service Content），count=8；[官方条目 600](https://centre.humdata.org/custom-ufaq-list/600.json) 返回 8 节，ID 为 `88585/88590/88595/88596/88597/88600/88605/88607`，数量一致。条目声明发布日均为 2024-06-06，最新 modified 为 2024-06-07（Data Logging and Analysis）；这不是另行推定的条款生效日期。
+
+八节分别涉及简介、接受条款、单次条数限制、请求频率、用户行为、日志与分析、免责声明及联系信息。其约束摘要：单次最多 10,000 条；请求按每秒一次节制；不得干扰服务；须带应用标识，OCHA 可记录 API 调用并分析使用情况；数据不代表 OCHA/联合国背书；疑问联系 `hdx@un.org`。内容没有给出 ACLED 数据的独立再分发许可或项目专属保留期限，不能拿平台条款覆盖资源级 ACLED 条款。八节中的旧简介范围也不能代替现行资源覆盖证据。
+
+这补齐了**官方公开条款内容**，但未证明不可读入口当前部署的全部呈现、附加链接与上述源码完全相同。实际数据读取前仍需在独立来源评审中处理该一致性缺口，并明确应用标识/邮箱、允许的本地保留和发布形式。询问信因此改为请官方确认适用性及是否有更新/补充，不再仅要求找一份完全未读的正文。
 
 ## 隔离验证设计（未执行真实数据验证）
 
@@ -83,7 +97,7 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 
 以下是**待批准的具体操作预算**，不是可执行命令，也不因本 PR 合并自动打开：
 
-- 优先 HAPI 官方 API 的单次小样本，预先核对现行 endpoint/schema、应用标识、所选国家/日期和资源版本；最多 2 个数据请求、合计 200 行/1 MiB、每请求 15 秒、零重试。不以 limit 命中推断完整覆盖；分页耗尽预算即返回“不完整”。
+- 优先 HAPI 官方 API 的单次小样本，预先核对现行 endpoint/schema、应用标识、所选国家/日期和资源版本；最多 2 个数据请求、合计 200 行/1 MiB、每请求 15 秒、零重试。请求串行、开始时间至少相隔 1 秒，不因平台上限 10,000 条而扩大本项目预算。不以 limit 命中推断完整覆盖；分页耗尽预算即返回“不完整”。
 - 401/403/429、重定向至未批准目标、正文类型异常、超时/体积超限即停止，不轮换身份/代理或转下载 CSV。数据只在受控本地 ignored artifact 中处理；未审阅的原文/异常不得进入日志。
 - 从 operator 合法持有、相同覆盖期且可追溯版本的月表选对照；先检查是否实际存在，缺失则等待，不执行 ACLED 网站自动下载。小样本只验证 schema、来源与候选口径，**不声称全球等价**。
 - 如无适用应用标识，CSV 不是自动兜底；另行确认特定 resource ID、容量和保留方式。当前 2026 CSV 约 21.4 MB，亦不能放入上述 1 MiB 试验预算。
@@ -110,13 +124,13 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 
 ## 待发送的授权与口径询问信草稿
 
-**未发送。** 收件渠道应由 owner 确认官方 Access 联系方式与 OCHA `hdx@un.org`；不同机构各答其职责。发送前填写真实用途和身份，不要把方括号保留或擅自声明非商业。批准本 PR 不等于批准发信。
+**未发送。** 收件渠道应由 owner 确认官方 Access 联系方式与 OCHA `hdx@un.org`；不同机构各答其职责。用途已据 owner 确认填入，署名与发件/应用联系邮箱仍待 owner 指定，不从 Git 配置提取或公开个人信息。批准本 PR 不等于批准发信。
 
 Subject: Clarification of ACLED aggregate data access via HDX/HAPI for GFRR
 
 Hello ACLED Access / HDX team,
 
-I maintain GFRR, a financial-risk dashboard. My actual use and organization are: [owner-confirmed personal/commercial status, organization if any, and whether this serves clients]. Please assess this use case rather than assuming it is non-commercial research.
+I maintain GFRR, a personal, non-commercial financial-risk dashboard. It has no advertisements, paid subscriptions, or client services. Please assess this stated use case; I am not claiming institutional academic status.
 
 We currently use manually downloaded ACLED aggregated workbooks. We would like to evaluate low-frequency programmatic access to ACLED-published HDX monthly resources or OCHA's HAPI conflict-events API/CSV, without scraping ACLED's website or accessing event-level data outside our entitlement.
 
@@ -124,14 +138,14 @@ Could you confirm the applicable terms and whether this access, local retention 
 
 For equivalence, please clarify the mapping to the six country-month/year products: political violence events (month and year), demonstrations, civilian-targeting events, reported fatalities, and reported civilian fatalities. In particular: mob violence classification; whether civilian_targeting fatalities correspond to civilian deaths; how total fatalities can be recovered without overlapping categories; national/admin coverage; missing versus zero; complete-month cutoffs; and retrospective version alignment. Is a supported weekly-admin aggregate endpoint or explicitly permitted weekly file-download mechanism available for our access level?
 
-Please provide current HAPI terms and any relevant resource-specific documentation. We will not assume a public URL grants redistribution rights or switch production before reviewing your response.
+We reviewed the eight HAPI terms sections published through OCHA's official content site (category 600, retrieved 8 September 2026), after the main terms page was inaccessible to our reader. Please confirm whether these remain applicable and provide any updates, additional terms, and relevant resource-specific documentation. We will not assume a public URL grants redistribution rights or switch production before reviewing your response.
 
 Thank you,
 [owner name and approved contact address]
 
 ## 本刀交付与后续判定
 
-- 已完成：源码/元数据对照、六项候选映射与缺口、来源权利问题清单、隔离预算与验收用例设计、未发送询问信。
-- 未完成且未冒充完成：现行 HAPI 条款读取、用途/许可确认、真实样本下载与数值对照、comparator 实现、生产更新和周表自动化。
-- 下一决策：先完成用途与条款确认，再批准特定的一次性隔离读取和实现；若六项无法等价，保留现有月表，不把部分代理覆盖当作无损替换。可另提独立辅助指标，但需新范围批准。
+- 已完成：源码/元数据对照、六项候选映射与缺口、owner 非商业用途确认、HAPI 官方公开八节条款及证据链读取、来源权利问题清单、隔离预算与验收用例设计、未发送询问信。
+- 未完成且未冒充完成：条款入口部署一致性及数据许可/发布适用性确认、应用联系邮箱批准、真实样本下载与数值对照、comparator 实现、生产更新和周表自动化。
+- 下一决策：先完成剩余条款适用性审阅与联系信息/必要发信批准，再批准特定的一次性隔离读取和实现；不重复索要已确认的非商业用途。若六项无法等价，保留现有月表，不把部分代理覆盖当作无损替换。可另提独立辅助指标，但需新范围批准。
 - 本文新增的是评审入口，不是 source approval；实际验证、commit、push、PR 与独立评审状态以对应回执为准。
