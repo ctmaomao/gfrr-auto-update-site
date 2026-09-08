@@ -77,3 +77,20 @@ Sacra 不再是本任务的付费方案，不注册账户、不购买、不调�
 4. **生产前单独审阅方法与发布**：明确是否保持/修改四点窗口、半月间隔、递增要求与金额上下界；验证日期区间及限定金额对斜率的影响，必要时弃权。保留 45 天底层时效、旧快照回退、出处/署名及修改披露；不导出第三方引文，不以人工候选覆盖 deterministic 输出。
 
 目前可继续做免费候选 sanitizer；不需要先购买 Sacra，也无需为本轮官方 CSV 读取额外索取书面许可。仍未完成：可靠的逐条口径/日期/限定词验证、持续自动更新实现、生产方法与来源切换审阅。不能把“CSV 可自动下载”说成“ARR 已实现全自动生产更新”。
+
+## 2026-09-08 离线候选 sanitizer 实施
+
+Owner 已批准仅 #311 独立 AI 替代人工审阅，通过后合并并继续校验器、测试及 commit+push。#311 固定 head `1fe16579` 审阅无阻断，已合并为 `709b234f`；[独立审阅回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/311#issuecomment-5581217720)。该例外不扩展到本次实施 PR。
+
+实现为 [`epoch-arr-candidate.mjs`](../scripts/bubble-watch/epoch-arr-candidate.mjs) 的纯离线函数和 [`review-epoch-arr-candidates.mjs`](../scripts/review-epoch-arr-candidates.mjs) 的 stdin/stdout CLI。用法：将**已获准持有**的 UTF-8 CSV 内容通过 stdin 传入 `node scripts/review-epoch-arr-candidates.mjs --as-of YYYY-MM-DD`（日期须替换成实际审阅日）；没有路径、URL、网络或写入参数。npm 入口为 `npm run review:arr-epoch-candidates -- --as-of YYYY-MM-DD`，机器解析 JSON 时直接调用 node，避免 npm 自身输出混入。
+
+- 输入固定为上述 18 列及顺序，最多 1 MiB、1,000 数据行、每格 16,384 字符；支持 BOM/CRLF、引号、逗号、转义和多行格。缺列、重复/未知/重排表头、坏引号、非法 UTF-8 或超限时整份拒绝，CLI 仅输出固定错误码并非零退出，不输出原始异常。
+- 仅投影 Anthropic；公司整体年化、归一年化、期间收入分别保留 USD 数字，不互相补位、不季度乘四。空值是 null，0 保留为 0 并 hold；run-rate、ARR、产品/全年/季度及未知枚举明确分开。金额范围只作现有 1–80B 运行边界提示，不修改该边界。
+- 日期只保留合法的表列日期与报道日期；缺失不填补，未来/倒置日期 hold。`dateAgeDiagnostic` 按原 45 天规则只描述**行日期年龄**，即使显示 fresh，观测区间仍为 null、precision 为 unknown，绝不表示底层观测已核实新鲜。
+- 限定词、预测/历史场景、来源证据、独立性始终 unknown/unverified；不会从 Notes 关键词有无推导精确点值。所有候选恒定 `productionEligible=false`，无斜率、灯色、评分或 writer。
+- 原输入与每行保留 SHA-256；完全重复合并并保留 CSV 记录序号，同描述键冲突修订同时保留，疑似同观测不同描述也 hold。只做单快照诊断，跨快照修订比较尚未实现。URL 仅本地检查 HTTPS 后保留 hash，不读取目标，不输出原 URL/Notes/Graph note/其它收入说明/原 Id。hash 是比对标识，不证明来源真实性、许可、独立性，也不提供加密保密保证；输入明确标记 `caller_supplied_unverified`。
+- 候选带 Epoch 数据集及 CC BY 4.0 归属提示、修改说明；这不是对任意 stdin 来源的认证，也不是生产署名投影或第三方全文再发布许可。结构成功退出 0 仅表示产生待审报告，不表示可晋升；无目标行明确 `no_target_rows`。
+
+回归见 [`epoch-arr-candidate.test.mjs`](../tests/unit/epoch-arr-candidate.test.mjs)，使用自行编写的 synthetic CSV，包含 stdin CLI 无网络 dry-run，纳入既有 `check:bubble-watch` / `check:all`，没有删除或放宽旧断言。本轮未再下载真实 CSV，因此不声称已回放上节 67 行真实快照或完成逐条经济口径复核。
+
+下一步仍是单独审阅并实现固定官方 CSV 有界读取器及跨快照差异；持续运行、生产方法与切源另审。本次不修改 SaaStr builder、curated、生产 JSON、调度或 Core-23。

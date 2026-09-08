@@ -25,12 +25,19 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
-### 2026-09-08 ARR Epoch 免费来源评审与隔离核验
+### 2026-09-08 ARR Epoch 离线候选 sanitizer
+
+- **Acceptance baseline**：owner 对“仅此次 #311 由独立 AI 替代人工、通过后合并并继续校验器/测试/commit+push”回复批准。固定 head `1fe16579` 独立审阅无阻断，精确 CI `34196276865` 成功，09-08 07:42 UTC 合并为 `709b234f`；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/311#issuecomment-5581217720)。基于该 latest main 开单项实施分支，不沿用 #311 例外合并本 PR。
+- **实施范围**：18 列严格有界 CSV、公司/产品与 run-rate/ARR/期间金额分离、未知精度与金额限定 hold、45 天行日期诊断、脱敏 hash、重复及冲突修订；stdin/stdout only，所有候选 productionEligible=false，无网络、评分、writer、调度或生产数据改动。[契约及用法](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-离线候选-sanitizer-实施)。
+- **验证**：15 项 synthetic 回归含 CLI dry-run 已通过；纳入既有 Bubble Watch 完整检查，不用合成样本冒充真实 CSV 回放。最终完整检查及提交/推送以本轮回执为准；MCP 调用仍 Transport closed，源码回读。
+- **后续边界**：先独立审阅本实施 PR；固定官方有界读取器、跨快照差异、逐条口径/日期限定复核和生产方法/切源继续分阶段。无新样本下载、付费或自动更新授权扩张。
+
+### 2026-09-08 ARR Epoch 免费来源评审与隔离核验（已合并 #311）
 
 - **Acceptance baseline**：owner 明确不购买 Sacra，并批准 #310 独立 AI 审阅合并后直接做下一刀。该 PR 已于 06:40 UTC 合并为 `ec0cd27d`，[独立审阅回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/310#issuecomment-5580471956)无阻断；此次例外仅限 #310。新刀基于该 latest main，沿用单项 commit+push，范围为 Epoch 来源评审及一次性隔离验证，不改 ARR 生产链。
 - **当前任务**：[来源评审与核验结果](ARR_EPOCH_SOURCE_REVIEW.md)。官方 CC BY 4.0 程序读取依据确认，真实 CSV 一个有界 GET、40,898 bytes、67 行/18 列、Anthropic 18 行；原始表只在进程内存，不保存/发布引文，无付费或生产写入。
 - **下一步**：离线候选 sanitizer，分开公司/产品、run-rate/ARR/全年/季度、观测区间/报道日期及金额限定；再评审有界读取器与生产方法。当前不再以购买 Sacra 为前置条件，不把 39 天行日期直接当已核实的新鲜观测。
-- **阻塞与证据**：实测日期精度、金额限定与来源角色仍需逐条核验；自动更新、Core-23 切换及本 PR 合并审阅未完成。MCP `list_projects` 仍 `Transport closed`，源码回读；本轮不降低时效/许可/观察门槛。
+- **阻塞与证据**：实测日期精度、金额限定与来源角色仍需逐条核验；自动更新与 Core-23 切换未完成。来源评审 PR #311 已独立审阅合并，当前实施见上节。MCP `list_projects` 仍 `Transport closed`，源码回读；本轮不降低时效/许可/观察门槛。
 
 ### 2026-09-08 ACLED HDX/HAPI 月度候选来源评审
 
