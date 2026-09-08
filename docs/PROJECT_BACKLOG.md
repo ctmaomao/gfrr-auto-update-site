@@ -25,7 +25,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
-### 2026-09-08 ARR Epoch 本地候选快照归档
+### 2026-09-08 ARR Epoch 跨运行产物交接
+
+- **Acceptance baseline**：owner 对跨运行留存/取回校验、再独立审阅低频更新、最后生产方法审阅的顺序回复“请开始，每完成一步就commit+push”。本刀基于 latest main `f72911b4`；#314 已获其专属独立 AI 审阅通过并合并，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/314#issuecomment-5582444449)，Pages `34208909617` 成功。本刀提交/推送，不沿用 #314 例外合并新 PR。
+- **实施**：[跨运行交接工具](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-跨运行产物交接工具)。hash-only 打包、30 天历史上限、显式 run/artifact ID、固定 GitHub 仓库/工作流、成功 main 首次运行与 main 祖先核对、ZIP digest/单文件格式/内部生产者绑定；默认离线，仅显式 opt-in 才最多 5 GET/15 秒、零重试，签名存储跳转不携带 GitHub token。无上传、生产写入、基线指针或调度。
+- **验证**：新增 14 项交接 synthetic 测试与 3 项归档真实子进程争用/写入故障/中断测试；只读核实官方 REST 契约及现有 workflow 身份，不将 mocked 下载称为真实跨 run 验收。完整检查和实际 commit/push 以本轮回执为准。MCP 仍 Transport closed，直接源码回读；没有另行修改本机配置。
+- **下一步/限制**：新 PR 独立审阅后，才接入既有周一 candidate job，明确 artifact 上传、保留和历史选择的实际运行授权；目前没有真实候选 artifact 被本工具上传/下载，不能称全自动链路已上线。收入口径/日期精度/生产切源及付费保障继续保留。
+
+### 2026-09-08 ARR Epoch 本地候选快照归档（已合并 #314）
 
 - **Acceptance baseline**：owner 明确批准仅 #313 独立 AI 替代人工、通过后合并并继续下一刀。固定 `69dcdace` 独立评估无阻断、精确 CI `34205620671` 成功；08:53 UTC 合并 `3fd7f151`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/313#issuecomment-5582128852)。本刀基于该 latest main 单项 commit+push，不沿用 #313 例外合并本 PR。
 - **实施**：[本地候选归档及调度方案](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-本地候选快照归档)。固定 ignored 路径、默认 dry-run、显式 write、hash 命名、只新增不覆盖；锁/临时文件发布、旧文件身份校验、指定旧 hash 比较、128份/2 MiB 上限和损坏现场保留。不联网，不写 approved/latest 基线，不改生产或调度。

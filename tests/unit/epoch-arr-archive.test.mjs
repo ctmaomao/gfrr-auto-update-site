@@ -3,7 +3,8 @@ import test from 'node:test';
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname, sep } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { EPOCH_ARR_HEADERS } from '../../scripts/bubble-watch/epoch-arr-candidate.mjs';
 import { buildEpochArrSnapshot } from '../../scripts/bubble-watch/epoch-arr-snapshot.mjs';
 import { archiveEpochArrSnapshot as archive, compareArchivedEpochArrSnapshot as compare, epochArchiveDiagnostic, EPOCH_ARCHIVE_LIMITS } from '../../scripts/bubble-watch/epoch-arr-archive.mjs';
@@ -30,6 +31,83 @@ function workspace(t) {
 }
 const directory = root => join(root, 'manual-artifacts', 'epoch-arr-candidates', 'snapshots');
 const options = root => ({ workspaceRoot: root, write: true });
+
+// Faults are injected only into isolated child processes' Node builtins, not via
+// a production writer option. Each child owns a temporary test workspace only.
+function childWriter(root, snapshot, fault = '') {
+  const moduleUrl = pathToFileURL(resolve('scripts/bubble-watch/epoch-arr-archive.mjs')).href;
+  const source = `
+    import fs from 'node:fs';
+    import { syncBuiltinESMExports } from 'node:module';
+    const realWrite = fs.writeFileSync, realFsync = fs.fsyncSync;
+    if (${JSON.stringify(fault)} === 'write') fs.writeFileSync = (fd, bytes) => { realWrite(fd, bytes.subarray(0, 10)); throw new Error('injected write'); };
+    if (${JSON.stringify(fault)} === 'link') fs.linkSync = () => { throw Object.assign(new Error('injected link'), { code: 'ENOTSUP' }); };
+    if (${JSON.stringify(fault)} === 'crash') fs.fsyncSync = fd => { realFsync(fd); process.exit(77); };
+    syncBuiltinESMExports();
+    const { archiveEpochArrSnapshot, epochArchiveDiagnostic } = await import(${JSON.stringify(moduleUrl)});
+    process.once('message', input => {
+      try { process.stdout.write(JSON.stringify(archiveEpochArrSnapshot(input.snapshot, { workspaceRoot: input.root, write: true }))); }
+      catch (error) { process.stdout.write(JSON.stringify({ code: epochArchiveDiagnostic(error) })); process.exitCode = 1; }
+      process.disconnect();
+    });
+    process.send('ready');`;
+  const child = spawn(process.execPath, ['--input-type=module', '-e', source], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+  let output = '', stderr = '';
+  child.stdout.on('data', bytes => { output += bytes; }); child.stderr.on('data', bytes => { stderr += bytes; });
+  const ready = new Promise((accept, reject) => { child.once('message', accept); child.once('error', reject); child.once('exit', () => reject(new Error('child exited before ready'))); });
+  const finished = new Promise((accept, reject) => {
+    const timer = setTimeout(() => { child.kill(); reject(new Error('child test timeout')); }, 10000);
+    child.once('error', error => { clearTimeout(timer); reject(error); });
+    child.once('exit', code => { clearTimeout(timer); accept({ code, output, stderr }); });
+  });
+  return { ready, finished, start: () => child.send({ root, snapshot }) };
+}
+
+test('real concurrent writers at capacity can publish at most one new snapshot', async t => {
+  const root = workspace(t), dir = directory(root); mkdirSync(dir, { recursive: true });
+  for (let i = 0; i < EPOCH_ARCHIVE_LIMITS.snapshots - 1; i++) writeFileSync(join(dir, `${i.toString(16).padStart(64, '0')}.json`), '{}');
+  const writers = Array.from({ length: 4 }, (_, i) => childWriter(root, make(`parallel-${i}`)));
+  await Promise.all(writers.map(writer => writer.ready)); writers.forEach(writer => writer.start());
+  const outcomes = await Promise.all(writers.map(writer => writer.finished));
+  assert.equal(outcomes.filter(result => result.code === 0).length, 1);
+  for (const result of outcomes) {
+    assert.equal(result.stderr, '');
+    // Directory enumeration may encounter the other writer's pending entry
+    // before its lock; either conservative refusal is valid, never a retry.
+    if (result.code !== 0) assert.match(JSON.parse(result.output).code, /^archive_(busy|capacity|unexpected_entry)$/u);
+  }
+  assert.equal(readdirSync(dir).length, 128);
+  assert.ok(readdirSync(dir).every(name => /^[a-f0-9]{64}\.json$/u.test(name)));
+});
+
+test('partial-write and unsupported-hardlink failures preserve prior files and remove only owned remnants', async t => {
+  for (const fault of ['write', 'link']) {
+    const root = workspace(t), old = make('old'), saved = archive(old, options(root));
+    const before = readFileSync(join(root, saved.relativePath));
+    const writer = childWriter(root, make('new'), fault); await writer.ready; writer.start();
+    const result = await writer.finished;
+    assert.equal(result.code, 1); assert.equal(result.stderr, ''); assert.equal(JSON.parse(result.output).code, 'archive_io_failed');
+    assert.deepEqual(readdirSync(directory(root)), [`${old.fileHash}.json`]);
+    assert.deepEqual(readFileSync(join(root, saved.relativePath)), before);
+  }
+});
+
+test('actual process exit after fsync leaves a complete pending file and lock for reviewed recovery', async t => {
+  const root = workspace(t), next = make(); const writer = childWriter(root, next, 'crash');
+  await writer.ready; writer.start(); const result = await writer.finished;
+  assert.equal(result.code, 77); assert.equal(result.stderr, '');
+  const entries = readdirSync(directory(root)).sort();
+  assert.equal(entries.length, 2); assert.ok(entries.includes('.lock'));
+  const pending = entries.find(name => name.startsWith('.pending-'));
+  const pendingBytes = readFileSync(join(directory(root), pending));
+  assert.deepEqual(JSON.parse(pendingBytes), next);
+  // Filesystem enumeration can see the pending entry before the lock. Both
+  // existing diagnostics must refuse the write and preserve recovery evidence.
+  assert.throws(() => archive(next, options(root)), /^Error: archive_(busy|unexpected_entry)$/u);
+  assert.deepEqual(readdirSync(directory(root)).sort(), entries);
+  assert.deepEqual(readFileSync(join(directory(root), pending)), pendingBytes);
+  assert.ok(statSync(join(directory(root), '.lock')).isDirectory());
+});
 
 test('default dry-run validates and plans without even creating directories', t => {
   const root = workspace(t), result = archive(make(), { workspaceRoot: root });
