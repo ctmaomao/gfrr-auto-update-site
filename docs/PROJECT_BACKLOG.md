@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-08 ACLED HDX/HAPI 月度候选来源评审
+
+- **Acceptance baseline**：owner 在调查后要求“请做下一刀”，本刀交付[来源评审与隔离验证设计](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)，沿用单项 commit+push。仅公开文档/目录元数据/现有源码与 JSON 对照，不开启数据正文下载、不发信、不恢复 ACLED API、不改生产；既有源权利与合并审阅要求保留，#309 例外不沿用。
+- **当前任务**：六个 metric 候选映射、事件分类/死亡数/版本/地理/完整月份差异、授权询问信草稿及有界隔离验证方案。HAPI API 与 CSV 是同源分发方式，不是独立事实印证；不伪装六份手工输入。
+- **下一步**：确认 GFRR 实际用途、取得适用 HAPI/ACLED 条款依据后，再批准一次性小样本读取及 comparator 实现；真实等价和生产自动化不因文档或 CI 通过而获批。
+- **阻塞与证据**：现有月表 as-of=2026-07-31；HDX 四个候选目录声明截止2026-08-28。HAPI Terms 本轮403，用途问题已提出、尚未答复；六项真实数值比较未执行。MCP仍Transport closed，已源码回读；未触发刷新/付费或改变旧数据。
+
 ### 2026-09-08 新闻 TOC 时间依据与后续验收
 
 - **Acceptance baseline**：owner 批准按建议连续实施、每步 commit+push。第一步按 [ADR-0031](ADR/0031-web-ngrams-time-provenance.md) 分离文件监测时间/TOC元数据时间/原文发布时间，严格日历校验；保留 shadow-only 支持链，不借用元数据充当原文时效，不改来源、评分、费用、阈值及分母。合并审阅、自然刷新与观察期门槛保留；#308 AI代人工例外不沿用。

@@ -138,6 +138,7 @@
 - `docs/WORLD_ORDER_SOURCE_REVIEW.md`
 - `docs/SIGNAL_INTAKE.md`
 - `docs/M-63_ACLED_INTEGRATION.md` — ACLED manual-xlsx 接入操作契约(**仍有效,非普通历史**):含 EULA §3.3 硬边界(禁 workflow/script/crawler/browser 自动访问 `acleddata.com`);`acled-{weekly,monthly}-refresh-reminder.yml` 仍指向其 Runbook(Section 3 + Section 9)。
+- `docs/ACLED_HDX_MONTHLY_SOURCE_REVIEW.md` — 2026-09-08 HDX/HAPI 月度候选来源评审与隔离验证设计；六项指标等价性及适用许可未通过，不授权真实数据下载、发信、自动刷新或生产替换。
 
 ### Architecture (conditional, not current operating contract)
 
