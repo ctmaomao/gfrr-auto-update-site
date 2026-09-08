@@ -1,4 +1,5 @@
 import { buildOilNewsEventSignature } from './oil-news-event-signature.mjs';
+import { normalizeAbsoluteNewsTime } from './oil-news-time.mjs';
 import {
   CLAIM_AXES,
   EVENT_TYPES,
@@ -18,7 +19,7 @@ import {
 } from './oil-news-query-taxonomy.mjs';
 
 export const WEB_NGRAMS_SHADOW_CLASSIFICATION_CONTRACT =
-  'gdelt-web-ngrams-multilingual-classification-shadow-v2';
+  'gdelt-web-ngrams-multilingual-classification-shadow-v3';
 
 // Shadow-only inflections: do not change discovery queries or the production
 // Oil News classifier. Explicit forms avoid substring/stemming false positives.
@@ -96,7 +97,11 @@ export function classifyWebNgramsShadowArticle(article) {
     canonicalUrlHash: article?.canonicalUrlHash || null,
     storyClusterHash: article?.storyClusterHash || null,
     domain: article?.domain || null,
-    publishedAt: article?.publishedAt || null,
+    publishedAt: article?.source === 'gdelt_web_ngrams' ? null : normalizeAbsoluteNewsTime(article?.publishedAt),
+    datasetObservedAt: normalizeAbsoluteNewsTime(article?.datasetObservedAt),
+    tocTimestamp: normalizeAbsoluteNewsTime(article?.tocTimestamp),
+    publicationTimeBasis: article?.source === 'gdelt_web_ngrams'
+      ? 'original_publication_time_unknown' : 'reference_reported_time_unverified',
     language,
     sourceTier: sourceTier(article?.domain),
     eventType: type,

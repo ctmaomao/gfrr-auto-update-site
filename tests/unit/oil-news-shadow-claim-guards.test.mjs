@@ -139,6 +139,10 @@ test('real disputed/unrelated and synthetic hypothetical titles never gain indep
     const { productionCache, observation } = await buildWithTitles(title);
     assert.equal(productionCache.crossSourceAggregate.independentSupportCandidateCount, 0);
     assert.equal(productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 0);
+    const metadata = observation.crossSourceTelemetry.metadataCandidateSupport;
+    assert.equal(metadata.aggregate.independentSupportCandidateCount, 0);
+    assert.equal(metadata.aggregate.crossProviderSupportCandidateCount, 0);
+    assert.equal(metadata.articles[0].rejectionCounts.direction_or_axis_mismatch, 2);
     assert.equal(productionCache.currentSignalEnhancement, false);
     assert.equal(productionCache.eventConfirmationSource, false);
     assert.equal(productionCache.eligibleForScoring, false);
@@ -151,19 +155,30 @@ test('real disputed/unrelated and synthetic hypothetical titles never gain indep
   }
 });
 test('both sides of comparison use guards without changing the candidate denominator', async () => {
-  const { productionCache } = await buildWithTitles('Hormuz tanker attacked', 'Officials deny a Hormuz tanker attack');
+  const { productionCache, observation } = await buildWithTitles('Hormuz tanker attacked', 'Officials deny a Hormuz tanker attack');
   assert.equal(productionCache.candidateAggregate.candidateCount, 1);
   assert.equal(productionCache.crossSourceAggregate.referenceArticleCount, 2);
   assert.equal(productionCache.crossSourceAggregate.independentSupportRate, 0);
+  const metadata = observation.crossSourceTelemetry.metadataCandidateSupport;
+  assert.equal(metadata.aggregate.webCandidateCount, 1);
+  assert.equal(metadata.aggregate.referenceArticleCount, 2);
+  assert.equal(metadata.aggregate.independentSupportRate, 0);
+  assert.equal(metadata.articles[0].rejectionCounts.direction_or_axis_mismatch, 2);
+  const reversed = await buildWithTitles('Officials deny a Hormuz tanker attack', 'Hormuz tanker attacked');
+  assert.equal(reversed.observation.crossSourceTelemetry.metadataCandidateSupport.aggregate.independentSupportRate, 0);
+  assert.equal(reversed.observation.crossSourceTelemetry.metadataCandidateSupport.articles[0].rejectionCounts.direction_or_axis_mismatch, 2);
   // ADR-0030: two indexes returning the same headline are discovery overlap,
-  // not independent support. Distinct-publication positives live in the v4 suite.
+  // not independent support. These checks now cover the v5 metadata path too.
   const duplicate = await buildWithTitles('Hormuz tanker attacked');
   assert.equal(duplicate.productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 0);
+  assert.equal(duplicate.observation.crossSourceTelemetry.metadataCandidateSupport.aggregate.crossProviderSupportCandidateCount, 0);
+  assert.equal(duplicate.observation.crossSourceTelemetry.metadataCandidateSupport.aggregate.independentSupportCandidateCount, 0);
+  assert.equal(duplicate.observation.crossSourceTelemetry.metadataCandidateSupport.aggregate.exactDiscoveryMatchCount, 1);
 });
-test('v2 remains strictly validated historical evidence; only v4 qualifies', async () => {
+test('v2 remains strictly validated historical evidence; only v5 is the current cohort', async () => {
   const { productionCache } = await buildWithTitles('Hormuz tanker attacked');
   const currentVersion = productionCache.crossSourceTelemetryContractVersion;
-  assert.equal(currentVersion, 'gdelt-web-ngrams-cross-source-telemetry-shadow-v4');
+  assert.equal(currentVersion, 'gdelt-web-ngrams-cross-source-telemetry-shadow-v5');
   const old = structuredClone(productionCache);
   old.crossSourceTelemetryContractVersion = 'gdelt-web-ngrams-cross-source-telemetry-shadow-v2';
   old.generatedAt = '2026-09-06T20:46:00Z';

@@ -2,9 +2,11 @@
 
 ## Status
 
-Owner authorized this next implementation after integrating PR #307, with the
-existing per-task commit/push authorization. Pending independent checker/merge
-review. The AI-instead-of-human exception applied ONLY to PR #307, not this change.
+Merged as PR #308 on 2026-09-08 (ac52ddda), after owner explicitly approved an
+independent AI substitute ONLY for #308. The independent review's quoted-vessel
+P2 was fixed and re-reviewed; exact-head CI and Pages 34176008763 passed. These
+one-PR exceptions do not authorize later PRs. Time semantics are refined by
+[ADR-0031](0031-web-ngrams-time-provenance.md); v4 remains historical evidence.
 
 ## Context
 

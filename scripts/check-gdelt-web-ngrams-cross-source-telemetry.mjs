@@ -82,10 +82,16 @@ const referenceArticles = [
   }
 ];
 
-const telemetry = buildWebNgramsCrossSourceTelemetry({
+const qualifiedTelemetry = buildWebNgramsCrossSourceTelemetry({
   webShadow,
   referenceArticles
 });
+// ADR-0031: preserve all matching/negative assertions on metadata candidates;
+// the original-publication path must independently remain unqualified.
+assert.equal(qualifiedTelemetry.aggregate.independentSupportCandidateCount, 0);
+assert.equal(qualifiedTelemetry.aggregate.crossProviderSupportCandidateCount, 0);
+assert.equal(qualifiedTelemetry.aggregate.diagnostics.web.missingDateCount, 2);
+const telemetry = { ...qualifiedTelemetry, ...qualifiedTelemetry.metadataCandidateSupport };
 
 assert.equal(telemetry.contractVersion, WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT);
 assert.equal(telemetry.status, 'cross_source_shadow_ready');
@@ -140,13 +146,16 @@ function compare({ title = 'Hormuz tanker attack', webDate = '2026-07-31T01:00:0
   refDate = '2026-07-31T02:00:00Z', webDomain = 'origin.example', refDomain = 'reference.example',
   extraReferences = [], timestamp = '20260731050000' } = {}) {
   const web = classifyWebNgramsShadowArticle({ ...buildArticleIdentity({ title, url: `https://${webDomain}/web-story` }), title, domain: webDomain, language: 'en',
-    publishedAt: webDate, buckets: ['chokepoint', 'tanker_shipping'] });
+    source: 'gdelt_web_ngrams', tocTimestamp: webDate, buckets: ['chokepoint', 'tanker_shipping'] });
   // ADR-0030: date/domain tests need a separate headline, not the identical
   // story now intentionally excluded from independent corroboration.
   const reference = { source: 'tavily', title: `Shipping bulletin: ${title}`, domain: refDomain, url: `https://${refDomain}/story`,
     publishedAt: refDate, buckets: ['chokepoint', 'tanker_shipping'] };
-  return buildWebNgramsCrossSourceTelemetry({ webShadow: { timestamp, articles: [web] },
+  const result = buildWebNgramsCrossSourceTelemetry({ webShadow: { timestamp, articles: [web] },
     referenceArticles: [reference, ...extraReferences] });
+  assert.equal(result.aggregate.independentSupportCandidateCount, 0);
+  assert.equal(result.aggregate.diagnostics.web.missingDateCount, 1);
+  return { ...result, ...result.metadataCandidateSupport };
 }
 
 // ADR-0029: affirmative inflections are equivalent; disputed/negated forms

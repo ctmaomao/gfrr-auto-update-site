@@ -40,19 +40,19 @@ function healthySample(index) {
         excludedReferenceArticleCount: 0,
         exactDiscoveryMatchCount: 0,
         exactDiscoveryMatchRate: 0,
-        independentSupportCandidateCount: 6,
-        independentSupportRate: 0.25,
-        crossProviderSupportCandidateCount: 3,
-        crossProviderSupportRate: 0.125,
+        independentSupportCandidateCount: 0,
+        independentSupportRate: 0,
+        crossProviderSupportCandidateCount: 0,
+        crossProviderSupportRate: 0,
         providerDiscoveryCounts: { tavily: 0, brave: 0 },
-        providerIndependentSupportCounts: { tavily: 6, brave: 3 },
+        providerIndependentSupportCounts: { tavily: 0, brave: 0 },
         diagnostics: {
-          web: { totalCount: 24, directionalCount: 8, validDateCount: 24,
-            missingDateCount: 0, invalidDateCount: 0, futureDateCount: 0 },
+          web: { totalCount: 24, directionalCount: 8, validDateCount: 0,
+            missingDateCount: 24, invalidDateCount: 0, futureDateCount: 0 },
           reference: { totalCount: 20, directionalCount: 8, validDateCount: 20,
             missingDateCount: 0, invalidDateCount: 0, futureDateCount: 0 },
-          comparison: { windowComparableWebCount: 24, directionalWindowComparableWebCount: 8,
-            independentDomainSupportedWebCount: 6 }
+          comparison: { windowComparableWebCount: 0, directionalWindowComparableWebCount: 0,
+            independentDomainSupportedWebCount: 0 }
         }
       },
       observationPolicy: {
@@ -84,12 +84,16 @@ const mature = evaluateWebNgramsShadowHistory(
 );
 assert.equal(mature.metrics.observationDays, 30);
 assert.equal(mature.metrics.usableSampleCount, 121);
-assert.equal(mature.qualityGatePassed, true);
-assert.equal(mature.readyForManualCutoverReview, true);
+// ADR-0031: maturity alone cannot fabricate original publication evidence.
+assert.equal(mature.qualityGatePassed, false);
+assert.equal(mature.readyForManualCutoverReview, false);
+assert.ok(mature.gates.find(gate => gate.name === 'observation_days').passed);
+assert.ok(mature.gates.find(gate => gate.name === 'usable_samples').passed);
+assert.equal(mature.gates.find(gate => gate.name === 'median_independent_support_rate').passed, false);
 assert.equal(mature.promotionEligible, false);
 assert.equal(mature.automaticCutoverApproved, false);
 assert.equal(mature.activeMode, 'gdelt_doc_primary_web_ngrams_shadow');
-assert.equal(mature.requiredNextStep, 'separate reviewed manual cutover PR');
+assert.match(mature.requiredNextStep, /original publication time remains unresolved/u);
 
 const immature = evaluateWebNgramsShadowHistory(
   Array.from({ length: 20 }, (_, index) => healthySample(index)),
@@ -103,12 +107,6 @@ assert.ok(immature.gates.some((gate) => gate.name === 'usable_samples' && !gate.
 const degradedSamples = Array.from({ length: 121 }, (_, index) => {
   const sample = healthySample(index);
   sample.cache.classificationAggregate.supportedLanguageCoverageRate = 0.4;
-  sample.cache.crossSourceAggregate.independentSupportCandidateCount = 1;
-  sample.cache.crossSourceAggregate.independentSupportRate = 0.0417;
-  sample.cache.crossSourceAggregate.crossProviderSupportCandidateCount = 0;
-  sample.cache.crossSourceAggregate.crossProviderSupportRate = 0;
-  sample.cache.crossSourceAggregate.providerIndependentSupportCounts = { tavily: 1, brave: 0 };
-  sample.cache.crossSourceAggregate.diagnostics.comparison.independentDomainSupportedWebCount = 1;
   return sample;
 });
 const degraded = evaluateWebNgramsShadowHistory(degradedSamples, policy);
@@ -159,7 +157,10 @@ assert.equal(mixed.gates.find(row => row.name === 'usable_samples').actual, 119)
 const oneHundredTwenty = Array.from({ length: 120 }, (_, i) => healthySample(i));
 assert.equal(evaluateWebNgramsShadowHistory(oneHundredTwenty, policy).qualityGatePassed, false);
 oneHundredTwenty[119] = healthySample(120);
-assert.equal(evaluateWebNgramsShadowHistory(oneHundredTwenty, policy).qualityGatePassed, true);
+const fullWindow = evaluateWebNgramsShadowHistory(oneHundredTwenty, policy);
+assert.equal(fullWindow.qualityGatePassed, false);
+assert.equal(fullWindow.gates.find(row => row.name === 'observation_days').passed, true);
+assert.equal(fullWindow.gates.find(row => row.name === 'usable_samples').passed, true);
 assert.equal(mature.qualityMetrics.observationDays, 30);
 assert.equal(mature.legacySampleCount, 0);
 

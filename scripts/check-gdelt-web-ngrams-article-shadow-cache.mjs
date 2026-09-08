@@ -85,7 +85,10 @@ assert.equal(live.productionCache.status, 'shadow_observation_ready');
 assert.equal(live.productionCache.sourceFile.selectedTimestamp, '20260731070000');
 assert.equal(live.productionCache.candidateAggregate.candidateCount, 2);
 assert.equal(live.productionCache.classificationAggregate.directionalArticleCount, 1);
-assert.equal(live.productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 1);
+// ADR-0031: metadata matches remain auditable but cannot qualify publication age.
+assert.equal(live.productionCache.crossSourceAggregate.crossProviderSupportCandidateCount, 0);
+assert.equal(live.observation.crossSourceTelemetry.metadataCandidateSupport.aggregate.crossProviderSupportCandidateCount, 1);
+assert.equal(live.productionCache.crossSourceAggregate.diagnostics.web.missingDateCount, 2);
 assertWebNgramsArticleShadowCache(live.productionCache);
 assert.equal(live.productionCache.crossSourceTelemetryContractVersion, WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT);
 assert.equal(live.productionCache.crossSourceAggregate.diagnostics.reference.validDateCount, 2);

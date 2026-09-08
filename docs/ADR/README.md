@@ -49,7 +49,9 @@
 
 | [ADR-0029](0029-web-ngrams-shadow-claim-guards.md) | Web shadow claim guards and same-definition requalification | Merged PR #307 after owner-authorized AI review, exception limited to #307 |
 
-| [ADR-0030](0030-web-ngrams-event-support-provenance.md) | Web event-candidate matching and sanitized support provenance | Owner authorized implementation; independent checker/merge review pending |
+| [ADR-0030](0030-web-ngrams-event-support-provenance.md) | Web event-candidate matching and sanitized support provenance | Merged PR #308 after owner-authorized AI review, exception limited to #308 |
+
+| [ADR-0031](0031-web-ngrams-time-provenance.md) | Separate TOC metadata from original-publication qualification | Owner authorized implementation; independent checker/merge review required |
 
 ## Superseded
 

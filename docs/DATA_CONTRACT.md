@@ -1347,6 +1347,15 @@ library/check-only；下一步才能把 sanitized telemetry 接入 shadow workfl
 
 ### GDELT Web NGrams automated article shadow cache (P69E)
 
+2026-09-08 时间语义后继契约见 [ADR-0031](ADR/0031-web-ngrams-time-provenance.md)：
+candidate v2 / classification v3 / telemetry v5 将 `datasetObservedAt`（文件监测时间）、
+`tocTimestamp`（TOC元数据时间）、`publishedAt`（当前Web路径固定null）分离。
+仅ignored observation保留逐篇时钟和 `metadataCandidateSupport`；公开cache仍只投影
+原文时间资格aggregate，所有Web日期缺失，支持计数为0。严格校验阻断把metadata
+aggregate放入v5公开cache。旧v2/v3/v4继续严格验证，历史不重贴版本、不重算；
+质量门仅用v5并保留原30天/120样本等全部阈值。未接入原文时间resolver之前，
+成熟窗口也不能自动取得切源资格。以下P69记录保留其原阶段含义。
+
 `build:oil-news-event-watch` 现在复用同一轮 Tavily/Brave transient provider
 results，并只做一次 timestamp-matched Web NGrams pair fetch；不再在 workflow
 中运行第二次 diagnosis/download。它同时更新原

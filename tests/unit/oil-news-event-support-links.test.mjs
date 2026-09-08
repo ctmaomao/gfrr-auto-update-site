@@ -17,12 +17,19 @@ function row(title, domain = 'web.example', source = 'tavily', extra = {}) {
     language: 'en', buckets: ['chokepoint', 'tanker_shipping'], ...extra };
 }
 function web(input = row(webTitle)) {
-  return classifyWebNgramsShadowArticle({ ...input, ...buildArticleIdentity(input) });
+  return classifyWebNgramsShadowArticle({ ...input, source: 'gdelt_web_ngrams',
+    tocTimestamp: input.publishedAt, ...buildArticleIdentity(input) });
 }
 const refs = () => [row('Tanker struck near Hormuz', 'a.example', 'tavily'),
   row('Hormuz attack disrupts shipping', 'b.example', 'brave')];
 function audit(webRows = [web()], referenceArticles = refs()) {
-  return buildWebNgramsCrossSourceTelemetry({ webShadow: { timestamp, articles: webRows }, referenceArticles });
+  const result = buildWebNgramsCrossSourceTelemetry({ webShadow: { timestamp, articles: webRows }, referenceArticles });
+  // ADR-0031: all previous identity/duplicate controls now test metadata-only
+  // candidate support, with an extra public no-qualification assertion each run.
+  assert.equal(result.aggregate.independentSupportCandidateCount, 0);
+  assert.equal(result.aggregate.crossProviderSupportCandidateCount, 0);
+  assert.equal(result.aggregate.diagnostics.web.missingDateCount, webRows.length);
+  return { ...result, ...result.metadataCandidateSupport };
 }
 
 test('positive support links resolve uniquely to actual provider rows without raw titles or URLs', () => {
@@ -43,7 +50,7 @@ test('positive support links resolve uniquely to actual provider rows without ra
   for (const secret of [webTitle, refs()[0].title, 'https://', '"title":', '"url":', '"body":']) {
     assert.equal(JSON.stringify(result).includes(secret), false);
   }
-  assert.equal(result.timeEvidenceRule, 'metadata_window_not_verified_original_publication_time');
+  assert.equal(result.timeEvidenceRule, 'original_publication_unknown_metadata_candidates_excluded_from_quality_gates');
   assert.equal(result.independentSupportIsConfirmedEvent, false);
 });
 
@@ -195,7 +202,8 @@ test('stubbed build persists support provenance only in ignored observation, not
         diagnostics: {}, attempts: [], discovery: { found: true, timestamp, attempts: [] } };
     } });
   assert.equal(fetchCount, 1);
-  assert.equal(result.observation.crossSourceTelemetry.articles[0].supportLinks.length, 2);
+  assert.equal(result.observation.crossSourceTelemetry.articles[0].supportLinks.length, 0);
+  assert.equal(result.observation.crossSourceTelemetry.metadataCandidateSupport.articles[0].supportLinks.length, 2);
   assert.equal(result.observation.crossSourceTelemetry.references.length, 2);
   assertWebNgramsArticleShadowCache(result.productionCache);
   const publicJson = JSON.stringify(result.productionCache);
@@ -204,7 +212,7 @@ test('stubbed build persists support provenance only in ignored observation, not
   }
   assert.equal(result.productionCache.currentSignalEnhancement, false);
   assert.equal(result.productionCache.eligibleForScoring, false);
-  const legacy = ['v2', 'v3'].map((version, i) => {
+  const legacy = ['v2', 'v3', 'v4'].map((version, i) => {
     const cache = structuredClone(result.productionCache);
     cache.generatedAt = `2026-09-07T09:1${i + 1}:00Z`;
     cache.crossSourceTelemetryContractVersion = `gdelt-web-ngrams-cross-source-telemetry-shadow-${version}`;
@@ -216,8 +224,8 @@ test('stubbed build persists support provenance only in ignored observation, not
   });
   const policy = JSON.parse(readFileSync('config/oil-news-discovery-policy.json', 'utf8'));
   const review = evaluateWebNgramsShadowHistory([...legacy, { cache: result.productionCache }], policy);
-  assert.equal(review.metrics.validSampleCount, 3);
-  assert.equal(review.legacySampleCount, 2);
+  assert.equal(review.metrics.validSampleCount, 4);
+  assert.equal(review.legacySampleCount, 3);
   assert.equal(review.qualityMetrics.usableSampleCount, 1);
   assert.equal(review.qualityGatePassed, false);
   assert.equal(review.automaticCutoverApproved, false);

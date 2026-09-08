@@ -973,6 +973,14 @@ public-suffix/所有权数据库，不把未知兄弟域宣称为已核实的不
 门不变。此为同事件候选过滤，不保证新闻真实性、改写转载识别或出版者所有权；
 TOC 仍仅作未核实原文发布日期的 metadata 时间窗口，日期语义另行审阅。
 
+2026-09-08 [ADR-0031](ADR/0031-web-ngrams-time-provenance.md) 将此不确定性落实为
+candidate v2 / classification v3 / telemetry v5。文件时间为 `datasetObservedAt`，
+严格TOC日期为 `tocTimestamp`，Web `publishedAt=null`，不从文件、抓取或reference
+日期补齐。原文时效未核实，所以公开quality aggregate不再计入metadata支持；
+同事件/去重/支持链接留在ignored `metadataCandidateSupport`，不进入晋升指标。
+公开cache字段集合不变；v2/v3/v4保留严格历史验证，质量门仅用v5。30天/120样本、
+阈值、分母不变，单纯等待不能填补原文时间证据。无新source/resolver/fetch批准。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |
