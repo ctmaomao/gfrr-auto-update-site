@@ -98,3 +98,30 @@ Owner 已批准仅 #311 独立 AI 替代人工审阅，通过后合并并继续�
 ### PR #312 精度复核修复
 
 独立审阅发现 `Number()` 对合法十进制输入可能静默丢位，单独检查 `MAX_SAFE_INTEGER` 不足以保护小数（如 `9007199254740991.1`、`65000000000.000001`）。三个金额列统一增加规范十进制往返检查：仅去掉小数末尾的零后必须与数字序列化一致，否则 null + 对应 amount invalid hold；极小数需指数序列化也保守拒绝，不将其变成零。正常 `.0`、0、空值及可往返的小数继续保留。追加三列边界及误判重复观测回归；此修复只属于 #312 的审阅收敛，不提前引入下一刀读取器。
+
+## 2026-09-08 有界读取与跨快照比较
+
+**Acceptance baseline**：owner 批准仅 #312 由独立 AI 替代人工审阅，通过后合并并实施本刀。固定 head `ec1fcf3c` 已复审无阻断，CI `34204107683` 成功；#312 合并为 `15eb5e4d`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/312#issuecomment-5581783690)，Pages `34204613602` 成功。本刀基于该 latest main，沿用单项 commit+push；#312 例外不延伸到本刀合并。
+
+实现仍属 `artifact_sanitizer_layer`，未来主消费者仍为既有 Bubble Watch `daily_history_layer`，不创建独立调度。新增 [`epoch-arr-reader.mjs`](../scripts/bubble-watch/epoch-arr-reader.mjs)、[`epoch-arr-snapshot.mjs`](../scripts/bubble-watch/epoch-arr-snapshot.mjs) 与 [`review-epoch-arr-refresh.mjs`](../scripts/review-epoch-arr-refresh.mjs)：
+
+- 读取器默认拒绝网络，显式 opt-in 才允许固定官方 CSV **一次 GET、15 秒全程 deadline、1 MiB 实际响应体上限、零重试**。无 Cookie/凭证/自定义 URL/调用方 headers；不跟随任何重定向，校验最终 URL、HTTP 200、CSV UTF-8 类型、声明长度及实际流式字节量。响应或 body 不合作时也有 deadline，清理不无限等待；错误只投影静态 code/HTTP 状态。
+- 成功后必须通过 #312 sanitizer，原文只存在进程内存，不保存 CSV，不抓 `Source 1/2/3`，不写生产、curated 或基线。失败保留全部既有状态；CLI 非零退出，而不是输出假的空成功。
+- `epoch-arr-revision-snapshot-v1` 只保存文件/行/描述键及九组规范字段的 SHA-256、行数和重复次数，**不含原始金额、日期、Notes 或 URL**。字段组为范围、指标、期间类型、金额、观测日期结构、报道日期、可信度、来源角色、来源引用 hash；瞬时审阅日/行龄不参与指纹，不能因再下载而为观测续命。
+- 导入旧快照必须满足固定 schema/sourceKey、false productionEligible、unverified authenticity、闭合字段集、hash 格式、行数/重复数对账；重复行 hash、超限或多余原文拒绝。同文件 hash 对应不同快照，或同原始行 hash 对应不同规范字段，属于身份冲突，整次比较失败。形状校验与 hash **不认证历史真实性或来源授权**，不得将外部伪造快照称为可信历史。
+- 比较完整 Anthropic 快照，而非只看最新日期：新增、删除、同描述键修订、重复次数变化、多义键分别记录；金额/日期/来源变化可定位字段组。仅 Notes 等未投影文字改变时保留 unprojected evidence revision；重新命名的描述键保守显示删除＋新增，不猜永久身份或 last-write-wins。只变换格式/被过滤公司内容也显示文件变化待审，不谎称整份证据未变。
+- 同文件 hash 返回 `unchanged_file`，但不更新观测日期、不写基线、不授予生产资格。无旧快照返回 `baseline_required`，不将第一次下载自动认定为批准基线。所有比较恒定 productionEligible=false；是否采纳新快照由后续独立流程决定。
+
+CLI 为 JSON stdin/stdout，入口 `npm run review:arr-epoch-refresh -- --as-of YYYY-MM-DD`；机器读取输出直接调用 node。默认离线 stdin 形状为 `{"previousSnapshot":null,"currentCsv":"已获准持有的完整 CSV 文本"}`；已有旧快照时只传上次输出的 `snapshot` 对象到 `previousSnapshot`，不是整个包装报告。输入上限 4 MiB，无文件路径/输出路径参数，不自动落盘。
+
+获准进行一次网络核验时，PowerShell 用法（日期替换为实际审阅日；不意味着可定时重复执行）：
+
+```powershell
+'{"previousSnapshot":null}' | node scripts/review-epoch-arr-refresh.mjs --as-of 2026-09-08 --allow-network
+```
+
+Live 模式拒绝 `currentCsv` 等多余字段，并在请求前校验旧快照。library 的 fetch 注入和缩短 timeout 仅服务离线测试，不能扩大固定 URL、15 秒或字节预算。没有新增 npm 依赖、生产 registry、工作流、源链接爬取或收费来源。
+
+**本轮真实验收**：2026-09-08T08:33:01.244Z，一个 GET 成功，40,898 bytes、67 行、18 条 Anthropic、0 完全重复，SHA-256 仍为 `f0297f9f9c38bde55f0ff74b0f768dab82d05f1a09cb7ca30fe60dd8c8796b9e`，与 06:41 的历史回执一致。未保存原始文件/候选基线、未生产写入、未重试。本次证明当前真实响应能通过新读取器及 sanitizer；两次真实 hash 相同，不声称已经验证真实跨版本收入修订，跨版本差异目前由 synthetic 回归验证。
+
+测试见 [`epoch-arr-refresh.test.mjs`](../tests/unit/epoch-arr-refresh.test.mjs)，纳入既有 `check:bubble-watch` / `check:all`。下一阶段先审阅本实现，再决定可审计候选快照的持久化/低频调度及逐条经济口径复核；生产方法、45 天底层时效、来源切换和评分批准继续保留。

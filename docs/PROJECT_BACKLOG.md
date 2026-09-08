@@ -25,7 +25,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
-### 2026-09-08 ARR Epoch 离线候选 sanitizer
+### 2026-09-08 ARR Epoch 有界读取与跨快照比较
+
+- **Acceptance baseline**：owner 明确批准仅 #312 由独立 AI 替代人工，通过后合并并继续本刀。固定 `ec1fcf3c` 复审 P2 已关闭、无阻断，CI `34204107683` 成功；08:27 UTC 合并 `15eb5e4d`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/312#issuecomment-5581783690)，Pages `34204613602` 成功。本刀基于 latest main 单项 commit+push，不沿用 #312 例外合并本 PR。
+- **实施**：[固定官方读取器与 hash-only 快照比较](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-有界读取与跨快照比较)。默认离线，opt-in 才单 GET/15 秒/1 MiB/无重定向/无凭证/无重试；旧快照严格校验，比较新增/删除/修订/多义键/重复次数，旧期更正也检测。同 hash 不刷新观测时间；不写基线、curated、生产 JSON，不启动调度或改评分。
+- **真实验收**：08:33 UTC 单次响应 40,898 bytes/67 行/18 条目标候选，hash 与 06:41 回执相同，无原文落盘或基线更新；不能称为真实跨版本修订回放。新增 15 项 synthetic 测试含请求/body deadline、源目标、隐私、历史修订、CLI dry-run；最终检查/commit/push 以回执为准。
+- **后续门槛**：本实现先独立审阅，再决定候选快照持久化和低频调度；逐条口径/日期精度/金额限定、生产方法与切源继续另审。本轮 MCP 仍 Transport closed，源码回读。
+
+### 2026-09-08 ARR Epoch 离线候选 sanitizer（已合并 #312）
 
 - **Acceptance baseline**：owner 对“仅此次 #311 由独立 AI 替代人工、通过后合并并继续校验器/测试/commit+push”回复批准。固定 head `1fe16579` 独立审阅无阻断，精确 CI `34196276865` 成功，09-08 07:42 UTC 合并为 `709b234f`；[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/311#issuecomment-5581217720)。基于该 latest main 开单项实施分支，不沿用 #311 例外合并本 PR。
 - **实施范围**：18 列严格有界 CSV、公司/产品与 run-rate/ARR/期间金额分离、未知精度与金额限定 hold、45 天行日期诊断、脱敏 hash、重复及冲突修订；stdin/stdout only，所有候选 productionEligible=false，无网络、评分、writer、调度或生产数据改动。[契约及用法](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-离线候选-sanitizer-实施)。
