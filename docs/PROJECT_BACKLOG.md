@@ -25,6 +25,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-08 StockQ / 运输免费来源复核
+
+- **Acceptance baseline**：沿用本轮逐项实施/验证/commit+push、独立 AI 审阅后合并授权；本项只做来源评审和真实基线核对，不购买、发信或新增 runtime。
+- **已完成**：[免费替代源当前结论](TRANSPORT_SHOCK_FREE_FREIGHT_ALTERNATIVE_SOURCE_REVIEW.md#2026-09-08-免费替代源复核结论)。核对 Baltic/CME/Solactive 权利、NOAA 时效与覆盖、Panama 统计语义、StockQ 公开入口；没有确认兼具免费、自动/公开使用权利、时效与口径等价的通道。已提交 shipping 数据的 BDTI/BCTI 为 8 月 10 日 fallback、BDI 缺失，不冒充已恢复。
+- **保留与解锁**：现行 PortWatch free proxy 及 P50/P51 最大 +3、默认 0 不变；路线/市场确认仍未接入，不删除既有 StockQ。需要具体资源许可和合格数据口径才能做新读取器；不以镜像、延迟报价或滞后美国 AIS 越过门槛。本项调查结束，等价来源接入仍未完成。
+
 ### 2026-09-08 新闻原文时间离线证据复核
 
 - **Acceptance baseline**：沿用本轮连续实施、每项独立 commit+push、AI 独立审阅通过后合并授权；基于 #317 合并 `e7a70307`，不借此批准新发布者抓取、付费或生产切源。
