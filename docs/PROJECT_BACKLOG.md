@@ -25,6 +25,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-08 连续完善授权与 ARR 事实复核
+
+- **Acceptance baseline**：owner 明确授权依次完成 ARR 事实/方法、新闻原文时间依据、ACLED 授权回复、运输免费来源及相应文档同步；每项验证后独立 commit+push，独立 AI 审阅通过后合并。保持 latest main / serial trunk；不扩大第三方源权利、付费临执行确认、真实观察/质量门槛或实质生产验收。
+- **ARR 已完成的证据工作**：[18 行逐项判定与七篇原始公告复核](ARR_EPOCH_SOURCE_REVIEW.md#当前结论2026-09-08-逐条证据复核)。10:46 UTC 官方 CSV 单 GET，40,898 bytes / 67 行，hash 与之前相同；没有原文落盘或生产写入。5 月 15 日明确是插值，最新 7 月末仅给时间上界，金额含下限/近似，不能构成可靠四点斜率；保留当前方法与 45 天底层 freshness，不切生产。
+- **继续事项**：新闻 resolver 方案及自然刷新核查；ACLED/HDX 回复核查；运输免费来源权利/口径；同步最新交接。真实周一 artifact 验收沿用已创建的 `arr` 应用任务，不重复创建，不以 mock 或手动刷新代替。
+
 ### 2026-09-08 ARR Epoch 周一候选接入
 
 - **Acceptance baseline**：owner 明确要求“先独立审阅并合并 #315，再接入周一候选更新”；沿用每项 commit+push。#315 精确 head `37a660e7` 独立 AI 审阅通过，原 Linux crash 测试目录枚举顺序问题已修复，CI `34212973146` 全部成功；合并 `d3568a8f`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/315#issuecomment-5583317287)，Pages `34213453513` 成功。该单次 AI 合并例外不扩展到本刀。
