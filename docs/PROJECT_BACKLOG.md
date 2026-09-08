@@ -25,7 +25,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
-### 2026-09-08 ARR Epoch 跨运行产物交接
+### 2026-09-08 ARR Epoch 周一候选接入
+
+- **Acceptance baseline**：owner 明确要求“先独立审阅并合并 #315，再接入周一候选更新”；沿用每项 commit+push。#315 精确 head `37a660e7` 独立 AI 审阅通过，原 Linux crash 测试目录枚举顺序问题已修复，CI `34212973146` 全部成功；合并 `d3568a8f`，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/315#issuecomment-5583317287)，Pages `34213453513` 成功。该单次 AI 合并例外不扩展到本刀。
+- **实施**：[周一候选接入](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-周一候选接入)。复用既有 Monday schedule，隔离只读 candidate job，首次 schedule run 才读取；固定官方 CSV 一次、hash-only artifact 30 天、同 workflow 成功 main 历史有界选择与完整取回校验、修订 Summary。无新 cron/生产值/评分/付费凭证或人工 dispatch；候选收集失败警告且不上传，不阻断现有 refresh。checkout/setup/upload 平台故障仍 hard fail，可能 hold 后续编辑层；不放宽原 workflow checker。
+- **验证**：新增离线回归覆盖完整 mock 跨 run、历史缺失/过期/修订、失败无上传、身份/权限/令牌隔离及有界超时；完整检查、实际提交/PR 以最终回执为准。本轮 MCP 查询可用，coverage 提示 metadata_changed 的文件已直接回读，未改配置。
+- **下一步/限制**：新 PR 独立审阅与合并门槛保留；真实 scheduled 上传/后续跨 run 下载尚未发生，不宣称已上线或真实跨版本验收。合并后的第一个成功周一周期可能 baseline_required，下一次才有历史比较；收入事实、日期精度、45 天底层时效及生产切源继续另审。
+
+### 2026-09-08 ARR Epoch 跨运行产物交接（已合并 #315）
 
 - **Acceptance baseline**：owner 对跨运行留存/取回校验、再独立审阅低频更新、最后生产方法审阅的顺序回复“请开始，每完成一步就commit+push”。本刀基于 latest main `f72911b4`；#314 已获其专属独立 AI 审阅通过并合并，[回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/314#issuecomment-5582444449)，Pages `34208909617` 成功。本刀提交/推送，不沿用 #314 例外合并新 PR。
 - **实施**：[跨运行交接工具](ARR_EPOCH_SOURCE_REVIEW.md#2026-09-08-跨运行产物交接工具)。hash-only 打包、30 天历史上限、显式 run/artifact ID、固定 GitHub 仓库/工作流、成功 main 首次运行与 main 祖先核对、ZIP digest/单文件格式/内部生产者绑定；默认离线，仅显式 opt-in 才最多 5 GET/15 秒、零重试，签名存储跳转不携带 GitHub token。无上传、生产写入、基线指针或调度。
@@ -304,10 +311,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：#310 经 owner 单次 AI 代人工批准和独立审阅后合并 `ec0cd27d`；docs-only 不在 Pages push paths，不额外 dispatch。下一刀独立分支 `codex/arr-epoch-source-review`，不堆叠旧 PR。
-- **当前任务**：Epoch 免费来源评审、真实 CSV 一次性内存核验及后续验收基线；必要检查后单项 commit+push，最终提交/PR 状态以回执为准。
-- **下一步**：离线候选 sanitizer 与逐条日期/口径审阅；持续读取器和生产方法另审。不购买 Sacra，不将 #310 合并授权延伸到本 PR。
-- **阻塞或等待**：MCP 仍 `Transport closed`，源码回读；CSV 可访问不等于 ARR 生产替代合格。ACLED 原评审中的发信状态属于当时快照，后续已按 owner 授权联系 ACLED/HDX，但发询问信不代表收到数据许可；本轮未重新检查邮箱答复。
+- **工作基线**：#315 经本次独立 AI 审阅、精确 CI 通过后合并 `d3568a8f`；Pages `34213453513` 成功。下一刀独立分支 `codex/arr-epoch-monday-candidate`，不堆叠旧 PR。
+- **当前任务**：既有周一周期的隔离 Epoch candidate job 与有界历史选择、摘要和 hash-only 上传；必要检查后单项 commit+push，最终提交/PR 状态以回执为准。
+- **下一步**：独立审阅本接入 PR；合并后的真实 scheduled artifact 上传及后续跨 run 下载验收，再逐条审阅日期/口径与生产方法。不购买 Sacra，不将 #315 合并例外延伸到本 PR。
+- **阻塞或等待**：本轮 MCP 查询恢复可用，不等于历史连接故障永久解决；本轮未触发真实候选/生产刷新，生产切源仍未获准。ACLED 原评审中的发信状态属于当时快照，后续已按 owner 授权联系 ACLED/HDX，但发询问信不代表收到数据许可；本轮未重新检查邮箱答复。
 
 ### 未关闭的观察事项（保留交接，不代表本轮已重新实证）
 

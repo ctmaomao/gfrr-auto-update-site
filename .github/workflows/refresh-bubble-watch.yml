@@ -18,6 +18,51 @@ permissions:
   contents: write
 
 jobs:
+  epoch-candidate:
+    # Candidate collection failures are reported below without upload. Runner
+    # and upload infrastructure failures retain the existing hard-fail policy.
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'schedule' && github.run_attempt == 1 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Collect isolated Epoch candidate
+        id: epoch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if node scripts/run-epoch-arr-weekly-candidate.mjs --allow-network; then
+            echo 'candidate_ready=true' >> "$GITHUB_OUTPUT"
+            echo 'Epoch candidate collected; waiting for artifact upload.'
+          else
+            echo '::warning::Epoch candidate collection failed; no candidate will be uploaded.'
+            echo 'ARR 周一候选收集失败；请查看脱敏诊断。未上传候选，旧产物、生产值和批准基线保持不变。' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Retain hash-only Epoch candidate
+        if: ${{ success() && steps.epoch.outputs.candidate_ready == 'true' && steps.epoch.outputs.artifact_path != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ steps.epoch.outputs.artifact_name }}
+          path: ${{ steps.epoch.outputs.artifact_path }}
+          retention-days: 30
+          if-no-files-found: error
+          overwrite: false
+      - name: Report candidate failure without changing production
+        if: ${{ failure() }}
+        run: |
+          echo '::warning::Epoch candidate update failed; no candidate baseline or production state was updated.'
+          echo 'ARR 周一候选更新失败；请查看候选步骤的脱敏诊断。旧产物、生产值和批准基线保持不变。' >> "$GITHUB_STEP_SUMMARY"
+
   refresh:
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
