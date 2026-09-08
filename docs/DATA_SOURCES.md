@@ -985,6 +985,12 @@ candidate v2 / classification v3 / telemetry v5。文件时间为 `datasetObserv
 公开cache字段集合不变；v2/v3/v4保留严格历史验证，质量门仅用v5。30天/120样本、
 阈值、分母不变，单纯等待不能填补原文时间证据。无新source/resolver/fetch批准。
 
+本轮后续仅实施[原文时间声明离线复核](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)：
+既有 `artifact_sanitizer_layer` 下的闭合 stdin/stdout 工具，不下载原文、不认证调用方
+提供的 publisher 类型或内容摘要、不回填生产 `publishedAt`，全部质量资格恒 false。
+自然 run `34189473112` 已生成 v5；该批38条候选不仅原文时间缺失，同方向支持候选
+也为0。合法读取通道及新质量 cohort 仍待实质审阅，不能由离线工具通过替代。
+
 ## 反向索引 (消费层 → 数据源)
 
 | 消费层 | 主要数据源 |

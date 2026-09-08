@@ -25,6 +25,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-08 新闻原文时间离线证据复核
+
+- **Acceptance baseline**：沿用本轮连续实施、每项独立 commit+push、AI 独立审阅通过后合并授权；基于 #317 合并 `e7a70307`，不借此批准新发布者抓取、付费或生产切源。
+- **已核实/实施**：[离线证据契约](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)。自然 run `34189473112` 已生成 v5；38 条 TOC 可比较但原文时间缺失、同方向支持候选为 0。新增有界 stdin/stdout 复核器，核对精确文章身份、发布时间/其它时钟、冲突、回溯及错误脱敏；全部质量/生产资格固定 false，不改分类器、telemetry 或旧 cohort。
+- **验证/下一步**：必要回归及完整检查后单项提交/独立审阅。原文证据包、具体合法读取通道和时间语义仍缺失；不制造正例、不补写旧观察期，保留 30 天/120 样本和全候选分母。随后完成 ACLED 回信状态、运输来源和当前交接同步。
+
 ### 2026-09-08 连续完善授权与 ARR 事实复核
 
 - **Acceptance baseline**：owner 明确授权依次完成 ARR 事实/方法、新闻原文时间依据、ACLED 授权回复、运输免费来源及相应文档同步；每项验证后独立 commit+push，独立 AI 审阅通过后合并。保持 latest main / serial trunk；不扩大第三方源权利、付费临执行确认、真实观察/质量门槛或实质生产验收。
