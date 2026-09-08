@@ -670,7 +670,7 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016 / ADR-0019)
 
-2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。#312 sanitizer 与 #313 固定官方单次有界读取/hash-only 修订比较已合并；当前新增默认 dry-run、显式写入、固定 ignored 目录的只增不覆盖候选归档，不维护批准基线或 latest 指针。观测精度/金额限定仍 unknown/hold、productionEligible 恒 false；真实响应与旧回执同 hash，跨版本差异由 synthetic 回归验证。尚未启用低频调度或生产 runtime 抓取，不改变 SaaStr/Core-23；artifact 跨 run 留存、真实逐条复核与生产切源继续另审，不购买或绕过 Sacra。
+2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。#312 sanitizer、#313 固定官方有界读取/hash-only 比较、#314 固定 ignored 目录只增不覆盖归档均已合并。当前新增跨 run hash-only 打包与默认离线的显式历史取回工具：固定 GitHub 仓库/工作流/main/run 身份、祖先/摘要/单文件 ZIP 校验，30 天历史上限；只有 opt-in 才最多 5 GET/15 秒，无上传或调度。来源交接验证不认证收入事实，不维护批准基线或 latest 指针。观测精度/金额限定仍 unknown/hold、productionEligible 恒 false；真实源响应同 hash，跨版本/远端交接仍为 synthetic 验证。生产 runtime 不变，不改变 SaaStr/Core-23；实际 artifact 留存/调度接入、真实逐条复核与生产切源继续另审，不购买或绕过 Sacra。
 
 第二页面「AI 泡沫监测」(`data/bubble-watch.json`,周一 cron)专属,display-only,不进 GFRR 主雷达 scoring/decision。Bubble Watch v2 的 27 张证据卡继续使用原有来源构建,但只让固定 Core-23 进入专题页内部主分/Stage/Trigger/分类共振;`private_secondary_marks` / `token_revenue_ratio` / `gpu_rental_price` / `frontier_progress` 为 Shadow-4,全部展示但不入分。正式页面刷新仍由 `refresh-bubble-watch.yml` 周一写入;`audit-bubble-watch-sources.yml` 周二至周五只做 source-health 只读审计,不提交数据、不触发 Pages,默认设置 `BUBBLE_WATCH_DISABLE_WIND=1` 避免 Wind 付费调用(仅手动 dispatch 勾选 paid Wind opt-in 时才注入 `WIND_API_KEY`)。复用既有 FRED API(`BAMLH0A0HYM2`/`DFF`/`CPIAUCSL`/`DFEDTARL`/`DFEDTARU`,`FRED_API_KEY`;本地无 key/接口失败时短窗口 `fredgraph.csv?cosd=...` 兜底)、Federal Reserve SEP 公开页与 Yahoo Chart(SPY/RSP/成份股/ZQ Fed funds futures closes)之外,新增:
 

@@ -156,3 +156,35 @@ node scripts/archive-epoch-arr-candidate.mjs --compare <previous-file-sha256>
 后续单独 reviewed PR 优先复用现有 `Refresh Bubble Watch` 周一周期，在隔离 candidate job 中每周期最多一次固定官方 GET，并保持无收费凭证、contents:read、无 git/data 写入；不新建独立 cron，不手动触发可能带 Wind 的既有生产刷新来测试候选。候选失败与生产 refresh 分离，只报告待处理，不覆盖旧档案或修改灯色。
 
 GitHub runner 是临时环境，本地 ignored 档案不会自动跨 run 留存；接入前必须明确 artifact 保留期、只读选择同 workflow/main 的历史 artifact、完整 hash/schema/来源身份校验、过期/缺失时 baseline_required、容量及人工恢复策略。GitHub artifact 出处也不能把未经逐条复核的收入变成可信经济事实。定时权限、artifact 上传/取回、通知与生产切源仍待该独立接入审阅；本刀没有修改任何 workflow 或创建应用自动化。
+
+## 2026-09-08 跨运行产物交接工具
+
+**Acceptance baseline**：owner 按建议批准开始、每步单独 commit+push；先实现交接工具与失败回归，低频 job 和生产切源留待独立审阅。本刀从 #314 合并提交 `f72911b4` 开始，[#314 独立回执](https://github.com/ctmaomao/gfrr-auto-update-site/pull/314#issuecomment-5582444449)和 Pages `34208909617` 均通过。#314 的 AI 代人工授权不延伸到新 PR。
+
+这一刀提供**未来跨运行留存的打包格式和取回工具**，没有启用云端留存/调度。仍为 `artifact_sanitizer_layer`，复用既有 Bubble Watch 周度所有权，不新建数据链。源 CSV reader/sanitizer、收入经济口径、45 天底层时效、生产 JSON、SaaStr/Core-23 均不改。
+
+- [`epoch-arr-artifact.mjs`](../scripts/bubble-watch/epoch-arr-artifact.mjs)：`epoch-arr-artifact-v1` 是闭合字段的 hash-only snapshot 包装。保存固定仓库/工作流、run ID/attempt/head SHA/运行创建时间及规范化 snapshot 摘要。自产 manifest 只是 `self_described_unverified`，不能单靠提交者填写的元数据认证出处。每运行建议一个 `epoch-arr-candidate-v1-RUN_ID-1` artifact，唯一内部文件 `epoch-arr-snapshot.json`，建议保留 30 天；该保留期尚未在任何 workflow 生效。
+- [`epoch-arr-artifact-reader.mjs`](../scripts/bubble-watch/epoch-arr-artifact-reader.mjs)：明确指定 run ID 和 artifact ID，不枚举/自动选择最新、不自动晋升基线。通过固定 GitHub API 依次读取 run、artifact、main 祖先比较、ZIP 下载跳转及 ZIP；最多 **5 GET、总 deadline 15 秒、零重试**。只有明确 `allowNetwork=true` 才联网。JSON 响应最大 1 MiB，ZIP 最大 3 MiB，解压后单文件最大 2 MiB。404/410、过期、损坏、错来源或校验失败均非零退出，不生成空成功或假比较；调用方应保留无可用历史状态，不选另一个文件静默补位。
+- 固定身份于 2026-09-08 只读 API 核实：仓库 ID `1214037901` / `ctmaomao/gfrr-auto-update-site`；workflow ID `293558804` / `.github/workflows/refresh-bubble-watch.yml`。run 必须本仓库与本 head repository、main、schedule/workflow_dispatch、completed/success，且 attempt=1；重跑归属未设计前明确拒绝。run 创建至核验最多 30 天，产物未过期且时间顺序有效。artifact 自身的 run/repository/branch/head 必须逐项匹配，再通过比较 API 确认该 SHA 属于当前 main 历史。分支标签不单独当作祖先证明，下载地址也不从 bundle 取用。
+- 下载 API 的 302 只允许已知 `productionresultssa` 加数字的 Azure Blob 主机、HTTPS、无用户信息/非默认端口/fragment；其他目的地或第二次跳转拒绝。GitHub token 只发固定 `api.github.com` 请求，不发签名 Blob 主机；签名 URL/token/上游错误原文不进入报告。新存储主机需要另审，不为兼容扩大成任意 Azure/任意 URL。CLI 仅在显式 live opt-in 后读取 `GH_TOKEN` 或 `GITHUB_TOKEN`；不调用 `gh auth token`、不读 Wind/DeepSeek 凭证。
+- [`epoch-arr-artifact-zip.mjs`](../scripts/bubble-watch/epoch-arr-artifact-zip.mjs) 是受限内存解码器，不是通用解压器：只有一个固定名称常规文件，接受 stored/deflated 与标准 data descriptor；拒绝目录/符号链接/路径变体、加密、多卷、多文件、ZIP64、截断、CRC/尺寸不符和额外压缩流数据。不创建任何路径。先验证下载 ZIP 与 API 的 `size_in_bytes` / SHA-256 digest，再解码并核对 bundle 生产者和 snapshot 摘要。
+- 取回成功仅给 `historical_candidate_ready` 和 `github_api_bound` 交接回执；这只说明通过 GitHub 元数据和字节绑定，**不认证 Epoch 收入事实**。snapshot 仍 `sourceAuthenticity=unverified` / `productionEligible=false`，报告仍 `baselineUpdated=false` / `observationDatesRefreshed=false`。输出 snapshot 可供既有 #313 comparator 使用；本工具不会自动比较、调用 #314 writer 或更新批准基线。
+
+依据：[GitHub artifact REST 契约](https://docs.github.com/en/rest/actions/artifacts)、[workflow run REST 契约](https://docs.github.com/en/rest/actions/workflow-runs)、[commit 比较契约](https://docs.github.com/en/rest/commits/commits#compare-two-commits)、[artifact 留存与 digest](https://docs.github.com/en/actions/tutorials/store-and-share-data)。源码与现有 run `34111922834` 的实际元数据核对匹配；本轮没有真实候选 artifact 下载，当前完整下载链由 mock 验证，不宣称与实际上传器格式已端到端验收。
+
+### 交接 CLI 与下一道门槛
+
+[`transfer-epoch-arr-artifact.mjs`](../scripts/transfer-epoch-arr-artifact.mjs) 只用 JSON stdin/stdout，不支持路径、上传、删除或写入选项。打包输入为 `{snapshot, producer}`，其中 producer 只含 `runId`、`runAttempt:1`、`headSha`、`createdAt`；未来 producer 必须来自该实际运行上下文，不从任意旧文件继承。输出 `payload` 字符串才是未来应放入 `epoch-arr-snapshot.json` 的内容，不能上传整个外层回执。
+
+```powershell
+# 打包：输入文件名是占位示例；只输出，不保存或上传。
+Get-Content -Raw -LiteralPath '已批准的打包输入.json' | node scripts/transfer-epoch-arr-artifact.mjs --pack
+# 取回计划：用真实已批准的 run/artifact ID 替换示例 ID，默认零网络。
+node scripts/transfer-epoch-arr-artifact.mjs --retrieve 41 52
+# 获准单次远端读取后才追加 --allow-network；本轮未执行此命令。
+node scripts/transfer-epoch-arr-artifact.mjs --retrieve 41 52 --allow-network
+```
+
+也可使用 `npm run transfer:arr-epoch-artifact -- ...`。未来独立 job 才负责固定文件落盘及上传器集成，并显式配置 `actions:read`（取回）/`contents:read`（祖先核对），不继承 production job 的写权限或 Wind 凭证。GitHub artifact 到期由平台保留策略处理，本地 #314 128 份容量限制不变，本工具不删除历史。定时接入时必须取得实际单次/低频调用与上传授权、独立 review，并验证真实 upload/download、过期恢复和来源隔离；不借手动触发生产刷新来验收候选。
+
+**回归**：新增 14 项交接测试，另给 #314 补 3 项子进程回归：四个真实进程在 127/128 容量边界竞争只准新增一份；部分写入/硬链接不支持时旧文件不变；fsync 后真实退出码 77 留下完整 pending 和锁，后续拒绝并保留现场。故障注入只替换测试子进程的 Node builtin，不给生产 writer 添加绕过/注入参数。无新依赖、checker 放宽、ignore、workflow 或生产数据修改。专项与完整检查以本轮最终回执为准。
