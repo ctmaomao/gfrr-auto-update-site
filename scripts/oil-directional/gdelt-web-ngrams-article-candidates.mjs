@@ -7,9 +7,10 @@ import {
   buildArticleIdentity,
   canonicalizeArticleUrl
 } from './oil-news-story-identity.mjs';
+import { normalizeAbsoluteNewsTime, parseNewsDatasetTimestamp } from './oil-news-time.mjs';
 
 export const WEB_NGRAMS_ARTICLE_CANDIDATE_CONTRACT =
-  'gdelt-web-ngrams-article-candidates-shadow-v1';
+  'gdelt-web-ngrams-article-candidates-shadow-v2';
 
 function* textLines(text) {
   const input = String(text || '');
@@ -31,11 +32,6 @@ function compactText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function parsePublishedAt(value) {
-  const parsed = Date.parse(String(value || ''));
-  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
-}
-
 function parseTocRows(tocText) {
   const rows = new Map();
   let validRowCount = 0;
@@ -48,8 +44,8 @@ function parseTocRows(tocText) {
       const docId = Number(row?.ID);
       const title = compactText(row?.title, 500);
       const canonicalUrl = canonicalizeArticleUrl(row?.url);
-      const publishedAt = parsePublishedAt(row?.date);
-      if (!Number.isInteger(docId) || docId < 0 || !title || !canonicalUrl || !publishedAt) {
+      const tocTimestamp = normalizeAbsoluteNewsTime(row?.date);
+      if (!Number.isInteger(docId) || docId < 0 || !title || !canonicalUrl || !tocTimestamp) {
         invalidRowCount += 1;
         continue;
       }
@@ -59,7 +55,7 @@ function parseTocRows(tocText) {
         title,
         url: canonicalUrl,
         domain: new URL(canonicalUrl).hostname,
-        publishedAt,
+        tocTimestamp,
         language: /^[a-z]{2,3}(?:-[a-z0-9]+)?$/iu.test(String(row?.lang || ''))
           ? String(row.lang).toLocaleLowerCase('en-US')
           : 'und'
@@ -122,8 +118,9 @@ export function buildWebNgramsArticleCandidates({
   termSet = WEB_NGRAMS_TERM_SET,
   maxCandidates = 500
 } = {}) {
-  if (!/^\d{14}$/u.test(String(timestamp || ''))) {
-    throw new Error('Web NGrams article candidate timestamp must be YYYYMMDDHHMMSS');
+  const datasetTime = parseNewsDatasetTimestamp(timestamp);
+  if (datasetTime === null) {
+    throw new Error('Web NGrams article candidate timestamp must be a real UTC YYYYMMDDHHMMSS');
   }
   if (!Number.isInteger(maxCandidates) || maxCandidates < 1 || maxCandidates > 2000) {
     throw new Error('Web NGrams maxCandidates must be an integer from 1 to 2000');
@@ -152,7 +149,12 @@ export function buildWebNgramsArticleCandidates({
       title: metadata.title,
       url: metadata.url,
       domain: metadata.domain,
-      publishedAt: metadata.publishedAt,
+      // TOC dates have no verified original-publication semantics. A dataset
+      // window, TOC metadata time and local generatedAt are distinct clocks.
+      datasetObservedAt: new Date(datasetTime).toISOString(),
+      tocTimestamp: metadata.tocTimestamp,
+      publishedAt: null,
+      publicationTimeBasis: 'original_publication_time_unknown',
       language: metadata.language,
       matchedTermIds: [...document.matchedTermIds].sort(),
       buckets: [...document.buckets].sort(),
@@ -173,7 +175,7 @@ export function buildWebNgramsArticleCandidates({
 
   const articles = [...byCanonicalUrl.values()]
     .sort((left, right) => (
-      Date.parse(right.publishedAt) - Date.parse(left.publishedAt)
+      Date.parse(right.tocTimestamp) - Date.parse(left.tocTimestamp)
       || right.mentionCount - left.mentionCount
       || left.domain.localeCompare(right.domain)
     ))
@@ -213,7 +215,10 @@ export function sanitizeWebNgramsArticleCandidates(candidateSet) {
     aggregate: candidateSet.aggregate,
     articles: candidateSet.articles.map((article) => ({
       domain: article.domain,
-      publishedAt: article.publishedAt,
+      datasetObservedAt: normalizeAbsoluteNewsTime(article.datasetObservedAt),
+      tocTimestamp: normalizeAbsoluteNewsTime(article.tocTimestamp),
+      publishedAt: null,
+      publicationTimeBasis: 'original_publication_time_unknown',
       language: article.language,
       matchedTermIds: article.matchedTermIds,
       buckets: article.buckets,

@@ -25,8 +25,16 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-08 新闻 TOC 时间依据与后续验收
+
+- **Acceptance baseline**：owner 批准按建议连续实施、每步 commit+push。第一步按 [ADR-0031](ADR/0031-web-ngrams-time-provenance.md) 分离文件监测时间/TOC元数据时间/原文发布时间，严格日历校验；保留 shadow-only 支持链，不借用元数据充当原文时效，不改来源、评分、费用、阈值及分母。合并审阅、自然刷新与观察期门槛保留；#308 AI代人工例外不沿用。
+- **当前任务**：candidate v2 / classification v3 / telemetry v5；Web原文发布时间固定null，metadata候选支持单独留在ignored产物，公开支持计数保持0；旧v2/v3/v4严格校验并留存。既有正例迁移到metadata诊断，同时断言公开资格关闭；不删除原断言的身份/去重保护。
+- **下一步**：第一步提交后只读核对自然刷新版本、支持链和缓存隔离；生产v5验收须先合并本PR。新版本不借用旧观察窗，原文时间依据缺失不能靠等待30天自动解决，需另行审阅resolver方案。
+- **阻塞与证据**：MCP仍Transport closed，源码回读；本地验收及最终commit/push以回执为准。当前不触发Daily/Oil News刷新、不付费、不手改production JSON。
+
 ### 2026-09-07 新闻同事件候选与脱敏支持链
 
+- **已合并**：owner仅对#308批准独立AI替代人工，P2修复后复审无阻断，88回归、本地完整检查与CI通过；2026-09-08 01:14:54 UTC合并ac52ddda，Pages 34176008763成功。未手动触发新闻刷新；以下是当时实施记录，不再表示#308待批准。
 - **本轮审阅（PR #308）**：owner 要求继续并审阅合并；合并动作已请求，但未沿用仅限 #307 的 AI 替代人工例外。独立 AI 对固定 `cc1ad868` 找到船名弯单引号漏识别/内部撇号截断 P2，本轮先修复成对引号与无法解析时弃权，追加4条回归（总88条）；修复后验证和独立复审结论以回执为准。TOC 另项保持未开始，不堆叠 PR。
 - **Acceptance baseline**：owner 批准合并 PR #307 后开始下一刀，沿用逐项 commit+push；#307 的 AI 替代人工审阅例外仅限该 PR。本任务保持 shadow-only，不改主源、评分、费用、阈值或分母；同事件/转载 checker 语义收紧单独记录于 [ADR-0030](ADR/0030-web-ngrams-event-support-provenance.md)，本次不自行合并下一 PR。
 - **实施**：标题同地点/对象族/事件类型及明确命名身份候选匹配；缺失/多义弃权，URL/标题去重；支持记录链接到固定哈希 ID 的脱敏 reference 表。公开 cache 仍只存既有 aggregate 字段，v4 与 v2/v3 历史隔离，历史仍严格校验，不改30天/120样本政策。

@@ -1,5 +1,6 @@
 import {
   WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT,
+  WEB_NGRAMS_V4_CROSS_SOURCE_TELEMETRY_CONTRACT,
   WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT,
   WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT,
   WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT
@@ -165,6 +166,7 @@ export function assertWebNgramsArticleShadowCache(cache) {
   if (telemetryVersion !== undefined && telemetryVersion !== WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT
       && telemetryVersion !== WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT
       && telemetryVersion !== WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT
+      && telemetryVersion !== WEB_NGRAMS_V4_CROSS_SOURCE_TELEMETRY_CONTRACT
       && telemetryVersion !== WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT) {
     throw new Error('Web NGrams article shadow telemetry version invalid');
   }
@@ -242,12 +244,20 @@ export function assertWebNgramsArticleShadowCache(cache) {
     throw new Error('Web NGrams unavailable shadow cache cannot claim a pair');
   }
   if (telemetryVersion === WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT
+      || telemetryVersion === WEB_NGRAMS_V4_CROSS_SOURCE_TELEMETRY_CONTRACT
       || telemetryVersion === WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT
       || telemetryVersion === WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT) {
     if (cache.crossSourceAggregate) assertDiagnostics(cache.crossSourceAggregate, candidateCount);
     else if (['shadow_observation_ready', 'shadow_partial_no_reference', 'no_candidates'].includes(cache.status)) {
       throw new Error('Web NGrams v2 telemetry aggregate missing');
     }
+  }
+  // v5 has no approved Web original-publication resolver. Metadata matches
+  // belong only to the ignored audit, never these public quality counters.
+  if (telemetryVersion === WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT && cache.crossSourceAggregate
+      && (cache.crossSourceAggregate.diagnostics.web.missingDateCount !== candidateCount
+        || cache.crossSourceAggregate.exactDiscoveryMatchCount !== 0)) {
+    throw new Error('Web NGrams v5 cannot qualify unverified original publication time');
   }
   const serialized = JSON.stringify(cache);
   for (const forbidden of [
@@ -256,6 +266,12 @@ export function assertWebNgramsArticleShadowCache(cache) {
     '"articles":',
     '"canonicalUrlHash":',
     '"storyClusterHash":',
+    '"metadataCandidateSupport":',
+    '"datasetObservedAt":',
+    '"tocTimestamp":',
+    '"publishedAt":',
+    '"supportLinks":',
+    '"references":',
     '"snippet":',
     '"body":',
     '"rawResponse":'
