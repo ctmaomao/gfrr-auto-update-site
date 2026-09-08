@@ -99,9 +99,14 @@ test('actual process exit after fsync leaves a complete pending file and lock fo
   const entries = readdirSync(directory(root)).sort();
   assert.equal(entries.length, 2); assert.ok(entries.includes('.lock'));
   const pending = entries.find(name => name.startsWith('.pending-'));
-  assert.deepEqual(JSON.parse(readFileSync(join(directory(root), pending))), next);
-  assert.throws(() => archive(next, options(root)), /archive_busy/u);
+  const pendingBytes = readFileSync(join(directory(root), pending));
+  assert.deepEqual(JSON.parse(pendingBytes), next);
+  // Filesystem enumeration can see the pending entry before the lock. Both
+  // existing diagnostics must refuse the write and preserve recovery evidence.
+  assert.throws(() => archive(next, options(root)), /^Error: archive_(busy|unexpected_entry)$/u);
   assert.deepEqual(readdirSync(directory(root)).sort(), entries);
+  assert.deepEqual(readFileSync(join(directory(root), pending)), pendingBytes);
+  assert.ok(statSync(join(directory(root), '.lock')).isDirectory());
 });
 
 test('default dry-run validates and plans without even creating directories', t => {
