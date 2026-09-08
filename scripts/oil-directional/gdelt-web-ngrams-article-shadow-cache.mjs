@@ -1,5 +1,6 @@
 import {
   WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT,
+  WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT,
   WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT,
   WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT
 } from './gdelt-web-ngrams-cross-source-telemetry.mjs';
@@ -163,6 +164,7 @@ export function assertWebNgramsArticleShadowCache(cache) {
   const telemetryVersion = cache.crossSourceTelemetryContractVersion;
   if (telemetryVersion !== undefined && telemetryVersion !== WEB_NGRAMS_LEGACY_CROSS_SOURCE_TELEMETRY_CONTRACT
       && telemetryVersion !== WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT
+      && telemetryVersion !== WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT
       && telemetryVersion !== WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT) {
     throw new Error('Web NGrams article shadow telemetry version invalid');
   }
@@ -240,6 +242,7 @@ export function assertWebNgramsArticleShadowCache(cache) {
     throw new Error('Web NGrams unavailable shadow cache cannot claim a pair');
   }
   if (telemetryVersion === WEB_NGRAMS_CROSS_SOURCE_TELEMETRY_CONTRACT
+      || telemetryVersion === WEB_NGRAMS_V3_CROSS_SOURCE_TELEMETRY_CONTRACT
       || telemetryVersion === WEB_NGRAMS_V2_CROSS_SOURCE_TELEMETRY_CONTRACT) {
     if (cache.crossSourceAggregate) assertDiagnostics(cache.crossSourceAggregate, candidateCount);
     else if (['shadow_observation_ready', 'shadow_partial_no_reference', 'no_candidates'].includes(cache.status)) {

@@ -234,7 +234,7 @@ export function evaluateWebNgramsShadowHistory(samples, policy) {
     automaticCutoverApproved: false,
     requiredNextStep: qualityGatePassed
       ? 'separate reviewed manual cutover PR'
-      : 'collect v3 shadow samples under unchanged 30-day/120-sample policy; legacy observations remain historical evidence only',
+      : 'collect v4 shadow samples under unchanged 30-day/120-sample policy; legacy observations remain historical evidence only',
     productionImpact: {
       writesProductionData: false,
       changesCurrentSignal: false,
@@ -262,9 +262,9 @@ function writeGitHubSummary(review) {
     `- All-history usable samples: **${review.metrics.usableSampleCount}**`,
     `- All-history observation days: **${review.metrics.observationDays}**`,
     `- Legacy samples (not requalified or recomputed): **${review.legacySampleCount}**`,
-    `- V3 quality usable samples: **${review.qualityMetrics.usableSampleCount}**`,
-    `- V3 quality observation days: **${review.qualityMetrics.observationDays}**`,
-    '- Gates below use only v3 quality observations; thresholds and source mode are unchanged.',
+    `- V4 quality usable samples: **${review.qualityMetrics.usableSampleCount}**`,
+    `- V4 quality observation days: **${review.qualityMetrics.observationDays}**`,
+    '- Gates below use only v4 quality observations; thresholds and source mode are unchanged.',
     `- Quality gate passed: **${review.qualityGatePassed}**`,
     '- Promotion eligible: **false** (manual reviewed cutover PR required)',
     '',
@@ -293,8 +293,8 @@ function main() {
     console.log(`usableSamples: ${review.metrics.usableSampleCount}`);
     console.log(`observationDays: ${review.metrics.observationDays}`);
     console.log(`legacySamples: ${review.legacySampleCount}`);
-    console.log(`v3QualityUsableSamples: ${review.qualityMetrics.usableSampleCount}`);
-    console.log(`v3QualityObservationDays: ${review.qualityMetrics.observationDays}`);
+    console.log(`v4QualityUsableSamples: ${review.qualityMetrics.usableSampleCount}`);
+    console.log(`v4QualityObservationDays: ${review.qualityMetrics.observationDays}`);
     console.log(`qualityGatePassed: ${review.qualityGatePassed}`);
     console.log('promotionEligible: false');
   }

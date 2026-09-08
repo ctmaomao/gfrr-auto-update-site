@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { buildArticleIdentity } from './oil-directional/oil-news-story-identity.mjs';
 import {
   buildWebNgramsArticleCandidates
 } from './oil-directional/gdelt-web-ngrams-article-candidates.mjs';
@@ -138,9 +139,11 @@ assert.throws(
 function compare({ title = 'Hormuz tanker attack', webDate = '2026-07-31T01:00:00Z',
   refDate = '2026-07-31T02:00:00Z', webDomain = 'origin.example', refDomain = 'reference.example',
   extraReferences = [], timestamp = '20260731050000' } = {}) {
-  const web = classifyWebNgramsShadowArticle({ title, domain: webDomain, language: 'en',
+  const web = classifyWebNgramsShadowArticle({ ...buildArticleIdentity({ title, url: `https://${webDomain}/web-story` }), title, domain: webDomain, language: 'en',
     publishedAt: webDate, buckets: ['chokepoint', 'tanker_shipping'] });
-  const reference = { source: 'tavily', title, domain: refDomain, url: `https://${refDomain}/story`,
+  // ADR-0030: date/domain tests need a separate headline, not the identical
+  // story now intentionally excluded from independent corroboration.
+  const reference = { source: 'tavily', title: `Shipping bulletin: ${title}`, domain: refDomain, url: `https://${refDomain}/story`,
     publishedAt: refDate, buckets: ['chokepoint', 'tanker_shipping'] };
   return buildWebNgramsCrossSourceTelemetry({ webShadow: { timestamp, articles: [web] },
     referenceArticles: [reference, ...extraReferences] });
@@ -148,11 +151,11 @@ function compare({ title = 'Hormuz tanker attack', webDate = '2026-07-31T01:00:0
 
 // ADR-0029: affirmative inflections are equivalent; disputed/negated forms
 // remain negative controls in the dedicated shadow-claim regression suite.
-for (const title of ['Hormuz tanker attack', 'Hormuz tanker attacks', 'Hormuz tanker attacked', '霍尔木兹海峡油轮遭袭击', 'هجوم ناقلة نفط',
-  'атака танкера', 'ataque petrolero']) {
+for (const title of ['Hormuz tanker attack', 'Hormuz tanker attacks', 'Hormuz tanker attacked', '霍尔木兹海峡油轮遭袭击', 'هجوم ناقلة نفط هرمز',
+  'атака танкера Ормуз', 'ataque petrolero Ormuz']) {
   assert.equal(compare({ title }).aggregate.independentSupportCandidateCount, 1, title);
 }
-for (const title of ['Hormuz tanker attack and truce', 'Hormuz tanker context']) {
+for (const title of ['Hormuz tanker attack and truce', 'Hormuz tanker context', 'هجوم ناقلة نفط', 'атака танкера', 'ataque petrolero']) {
   assert.equal(compare({ title }).aggregate.independentSupportCandidateCount, 0, title);
 }
 for (const [webDate, refDate, expected] of [
