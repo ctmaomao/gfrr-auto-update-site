@@ -15,11 +15,13 @@ const context = vm.createContext({
   setLeafText: (id, value) => { leaves[id] = String(value); },
   updateToneClass: (id, allowed, tone) => { if (tone) tones[id] = tone; },
   dimensionTone: (value) => value >= 70 ? 'high' : 'low',
-  confidenceLabel: (value) => value == null ? null : String(value),
   textValue: (value) => typeof value === 'string' && value.trim() || null,
   console: { error: (...args) => { throw new Error(args.join(' ')); } },
 });
-vm.runInContext(`${renderer.slice(start, end)}\nthis.render = renderWorldOrderStress;`, context);
+const numberHelper = renderer.match(/function asNumber\(value\) \{[\s\S]*?\n\}/u)?.[0];
+const confidenceHelper = renderer.slice(renderer.indexOf('function confidenceLabel('), renderer.indexOf('function renderDetailData('));
+assert(numberHelper && confidenceHelper, 'exercise actual numeric/confidence helpers');
+vm.runInContext(`${numberHelper}\n${confidenceHelper}\n${renderer.slice(start, end)}\nthis.render = renderWorldOrderStress;`, context);
 const render = (value) => context.render({ worldOrderStressData: value });
 const fixture = JSON.parse(readFileSync('data/world-order-stress.json', 'utf8'));
 const original = JSON.stringify(fixture);
@@ -27,6 +29,16 @@ render(fixture);
 assert.equal(JSON.stringify(fixture), original, 'display must not mutate production input');
 assert.match(leaves['wo-dim-peace-trend'], /SIPRI.*ACLED/);
 assert.doesNotMatch(leaves['wo-dim-conflict-trend'], /ACLED/);
+for (const trend of ['rising', 'stable', 'watching', 'falling']) {
+  render({ dimensions: { peaceDividendRetreat: { score: 80, trend, evidence: [{ source: 'SIPRI/ACLED' }] } } });
+  assert.equal(leaves['wo-dim-peace-trend'], 'SIPRI + ACLED · 当前快照');
+}
+for (const confidence of [null, undefined, '', false, '0', Number.NaN]) {
+  render({ confidence });
+  assert.equal(leaves['wo-detail-confidence'], '待确认', `invalid confidence ${confidence}`);
+}
+render({ confidence: 0 });
+assert.equal(leaves['wo-detail-confidence'], '低 (0.00)', 'valid numeric zero confidence is retained');
 
 for (const [state, expected] of Object.entries({ not_confirmed: '未确认', weak: '弱确认', partial_confirmed: '部分确认', high_confirmed: '较强确认', unknown: '待确认' })) {
   render({ dimensions: { marketConfirmation: { state } }, marketConfirmationInput: { healthScore: 100 } });
@@ -56,7 +68,7 @@ assert.doesNotMatch(leaves['wo-dim-market-trend'], /上行/);
 render({ score: '70', dimensions: { peaceDividendRetreat: { score: null, trend: 'unknown_enum', evidence: [{ source: 'new_source' }] } }, dominantDrivers: [{ dimensionKey: 'raw_field', score: 90 }] });
 assert.equal(leaves['wo-detail-score'], '—');
 assert.equal(leaves['wo-driver-1'], '—');
-assert.equal(leaves['wo-dim-peace-trend'], '来源待确认 · 趋势待确认');
+assert.equal(leaves['wo-dim-peace-trend'], '来源待确认 · 数据待确认');
 
 const html = readFileSync('index.html', 'utf8');
 const section = html.slice(html.indexOf('<details class="editorial-folded-content" id="world-order-stress-section"'), html.indexOf('<details class="editorial-folded-content" id="method-evidence"'));

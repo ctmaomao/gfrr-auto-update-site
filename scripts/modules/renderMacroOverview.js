@@ -2499,7 +2499,7 @@ function renderWorldOrderStress({ worldOrderStressData }) {
     setLeafText('wo-detail-intro-score', scoreText(wo.score));
     setLeafText('wo-detail-score', scoreText(wo.score));
     setLeafText('wo-detail-state', worldOrderStateLabel(wo.state, wo.labelZh));
-    const confidence = confidenceLabel(wo.confidence);
+    const confidence = Number.isFinite(wo.confidence) ? confidenceLabel(wo.confidence) : null;
     setLeafText('wo-detail-confidence', confidence || '待确认');
     const marketState = wo.dimensions?.marketConfirmation?.state;
     const marketLabel = ({ not_confirmed: '未确认', weak: '弱确认', partial_confirmed: '部分确认', high_confirmed: '较强确认' })[marketState] || '待确认';
@@ -2544,7 +2544,8 @@ function renderWorldOrderStress({ worldOrderStressData }) {
       const sourceLabels = { gdelt: 'GDELT', ofac: 'OFAC', sipri: 'SIPRI', acled: 'ACLED', modules: '既有模块代理', market: '市场代理' };
       const evidence = Array.isArray(dim.evidence) ? dim.evidence : [];
       const sources = [...new Set(evidence.flatMap((item) => String(item?.source || '').toLowerCase().split('/').map((source) => sourceLabels[source.split(':')[0]] || '来源待确认')))];
-      const trendText = key === 'marketConfirmation' ? marketLabel : ({ rising: '上行', falling: '回落', stable: '平稳' })[dim.trend] || '趋势待确认';
+      // Upstream trendFromScore buckets a current score; it is not a time delta.
+      const trendText = key === 'marketConfirmation' ? marketLabel : Number.isFinite(dim.score) ? '当前快照' : '数据待确认';
       setLeafText(`wo-dim-${slug}-trend`, `${sources.join(' + ') || '来源待确认'} · ${trendText}`);
     }
 
