@@ -170,6 +170,8 @@ ARR / Bubble Watch 独立候选入口：`docs/ARR_EPOCH_SOURCE_REVIEW.md` — Ep
 
 仅作为历史背景,绝不覆盖任何 current 规则:
 
+- [World Order 展示验收截图](evidence/world-order-narrative-20260909/README.md)：2026-09-09 当前快照解读修复的桌面/手机证据，不定义新的设计或数据契约。
+
 - [历史交接与审计表](PROJECT_HANDOFF_HISTORY.md)：从 backlog 原文迁出的日期记录，按需读取；不承载当前任务授权。
 
 - `docs/V27_BASELINE.md` — v27.x 历史基线
