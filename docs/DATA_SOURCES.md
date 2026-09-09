@@ -762,7 +762,7 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
-2026-09-08 候选评审入口：[HDX/HAPI 月度来源评审](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)。该文仅对照公开定义/目录元数据与现有六文件契约，提出隔离验证预算；适用许可、真实数值等价性、下载及生产门槛仍未通过，不替代下表 manual-xlsx / metadata-only 规则。
+2026-09-09 候选评审入口：[HDX/HAPI 月度来源评审](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)。ACLED 已回复并邀请截图审阅，英文截图与公开数据用途说明已续询；尚无项目成果认可或 HDX/HAPI 新接入许可。手工月表已独立更新至 2026-08-21，不代表自动替代完成。该候选的适用许可、真实数值等价性、正文下载及生产门槛仍未通过，不替代下表 manual-xlsx / metadata-only 规则。
 
 | 字段 | 值 |
 |---|---|
