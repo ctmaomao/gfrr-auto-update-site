@@ -4,8 +4,13 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  schedule:
-    - cron: "5 0 * * *"
+  workflow_run:
+    workflows:
+      - Build Daily Radar Data
+      - Refresh World Order Stress
+      - Refresh Oil Directional Pressure
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       allow_network:
@@ -79,10 +84,18 @@ jobs:
             exit 1
           fi
 
+      - name: Admit one refresh for current upstream data
+        id: admission
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/macro-risk/admit-editorial-refresh.mjs --reserve
+
       - name: Prepare transient artifact directory
+        if: steps.admission.outputs.refresh_allowed == 'true'
         run: mkdir -p manual-artifacts/macro-risk-editorial
 
       - name: Collect near-7-day macro news
+        if: steps.admission.outputs.refresh_allowed == 'true'
         env:
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
@@ -92,27 +105,28 @@ jobs:
 
       - name: Build compact editorial evidence pack
         id: build_input
+        if: steps.admission.outputs.refresh_allowed == 'true'
         run: npm run build:macro-risk-editorial-input -- --allow-expected-news-skip
 
       - name: Run one DeepSeek editorial call
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: npm run run:macro-risk-editorial-deepseek -- --allow-network
 
       - name: Review editorial quality
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         run: npm run review:macro-risk-editorial
 
       - name: Project production layer
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_SHA: ${{ github.sha }}
         run: npm run project:macro-risk-editorial
 
       - name: Upload sanitized editorial artifacts
-        if: always()
+        if: always() && steps.admission.outputs.refresh_allowed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: macro-risk-editorial-refresh-${{ github.run_id }}
@@ -127,7 +141,7 @@ jobs:
           retention-days: 3
 
       - name: Write production editorial layer
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         run: |
           npm run write:macro-risk-editorial -- \
             --input manual-artifacts/macro-risk-editorial/production-projection-latest.json \
@@ -136,13 +150,13 @@ jobs:
             --data-only
 
       - name: Validate final production data
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         run: |
           npm run check:macro-risk-editorial-live -- --require-layer
           npm run check:data
 
       - name: Protected path assertion
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         run: |
           set -euo pipefail
           changed_paths="$(git diff --name-only)"
@@ -161,7 +175,7 @@ jobs:
           fi
 
       - name: Commit refreshed macro editorial if changed
-        if: steps.build_input.outputs.editorial_ready == 'true'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         run: |
           set -euo pipefail
           if git diff --quiet -- data/radar-data.json; then
@@ -181,7 +195,7 @@ jobs:
           git push origin HEAD:main
 
       - name: Verify expected no-credible-news skip stayed side-effect free
-        if: steps.build_input.outputs.editorial_ready == 'false'
+        if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'false'
         run: |
           set -euo pipefail
           test ! -e manual-artifacts/macro-risk-editorial/editorial-input-latest.json

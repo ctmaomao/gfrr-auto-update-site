@@ -53,6 +53,8 @@
 
 | [ADR-0031](0031-web-ngrams-time-provenance.md) | Separate TOC metadata from original-publication qualification | Owner authorized implementation; independent checker/merge review required |
 
+| [ADR-0032](0032-macro-editorial-upstream-admission.md) | Macro editorial upstream completion and durable day/input admission | Owner-authorized implementation; independent merge review required |
+
 ## Superseded
 
 (None yet)

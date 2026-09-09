@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-09 Macro Risk 上游衔接与付费去重
+
+- **Acceptance baseline**：owner 批准一次现有刷新，随后要求判读与上游完成事件衔接并防止重复付费，减少空档；沿用本任务 commit+push、独立 AI 审阅及合并授权。来源、质量、30 小时时效及主评分隔离不变，不授权失败后的第二次付费重跑。
+- **已恢复**：run `34305832339` 单次 DeepSeek 成功、retry=0、31 来源；只写编辑层，data commit `1cc123d1`。Pages `34305911160` / EdgeOne `34305985797` 成功；两站实读 `status=valid`、`displayEnabled=true`，生成 03:07 UTC，与今日 00:25 UTC Daily 时间戳一致。
+- **实施**：[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)；去掉独立 cron，监听三项上游完成并核对当前就绪；discovery 前创建持久日/输入预算 refs，重复、失败、rerun、未知状态均不再付费。补 EdgeOne 的判读完成发布触发；不恢复旧 AI、不改变 Daily 构建、评分或前端兜底。
+- **验证/限制**：离线并发/partial reservation/手动与自动重复/上游不齐等回归及完整检查、精确 CI、独立审阅按 PR 回执；真实新完成事件和 Actions token 预算创建仍须下一合格自然周期验收。当前一次恢复不是新触发链已经自然运行的证据，不额外付费制造验收。
+
 ### 2026-09-09 World Order 当前快照解读修复
 
 - **Acceptance baseline**：owner 明确授权按顺序完成 World Order 展示修复、刷新/发布实际结果验收、FIRMS 晋升后质量复核及 ACLED 联系状态同步；每项必要验证后单独 commit+push、独立 AI 审阅通过后合并。本项只改展示，不动评分/权重、来源、付费、观察门槛或生产数据。
@@ -344,10 +351,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：main `54cad6f7`（#322 合并），包含并行手工 ACLED 发布 `02e8970b` / World Order 刷新 `2bf27d42`。本项在隔离工作区同步 ACLED 状态与本轮验收，保留原工作区两份 ACLED 配置改动；不混入本任务提交。沿用 owner 本轮逐项 commit+push、独立 AI 审阅及合并授权，来源/付费/观察门槛不变。
-- **当前任务**：World Order 展示修复已合并；刷新/发布与 FIRMS 质量复核未发现需要修改运行逻辑的缺陷，不制造空提交。最后同步 ACLED：官方已回复，英文截图/用途说明已发送，但免费自动接入及转换成果适用性仍待确认。相应数据日期以本次审计时点为准，不把旧状态或流程绿色当作新数据。
-- **下一步**：文档验证、独立审阅及合并完成后本轮收口；后续仍由既有 `arr` 任务验收真实 9 月 14/21 日候选上传与跨运行取回，等待 ACLED/HDX 资源级答复、合法新闻原文证据/质量样本和具体合规运价源。新月表已走独立手工发布，不能再写成所有月表均缺失；也不因此批准自动切源、重复发信、补写观察历史或付费刷新。
-- **阻塞或等待**：MCP 本轮调用可用，索引提示过期的相关文件已回读源码，未改本机配置。没有宣称所有模块永久无缺陷；实际源权利、观察/质量、45 天 ARR 底层 freshness、费用及后续生产变更验收门槛继续保留。
+- **工作基线**：main `1cc123d1`（一次获准 Macro Risk 恢复），此前 #322/#323 已合并；当前分支 `codex/macro-editorial-upstream-trigger` 在隔离工作区实施 ADR-0032。保留原工作区两份 ACLED 配置改动，不混入本任务提交。沿用任务 commit+push、独立 AI 审阅及合并授权；本次一次性付费批准已用于 `34305832339`，不再重试。
+- **当前任务**：Macro Risk 已恢复双站有效判读；现改造上游完成触发、持久日/输入去重和 EdgeOne 判读完成发布。完整检查、独立精确审阅与合并回执为交付证据，不声称尚未发生的新自然事件已验收。上一轮 World Order、FIRMS 与 ACLED 状态同步已完成。
+- **下一步**：当前 PR 验证/审阅/合并后，下一合格自然周期核对 admission、预算 refs、唯一 provider call 和双站数据。其它事项继续由既有 `arr` 任务验收 9 月 14/21 日候选，等待 ACLED/HDX 资源级答复、新闻质量证据及合规运价源；不由本任务重发信、改源或补写观察历史。
+- **阻塞或等待**：MCP 查询可用，索引未覆盖本分支新增文件时直接回读源码；未改本机配置。已保留所有来源/质量/30 小时判读 freshness/45 天 ARR freshness 和具体费用门槛。未来上游失败、队列/发布延迟、预算已用或 provider/质量失败仍可能回退，未承诺永久可用。
 
 ### 2026-09-09 刷新与卫星验收记录
 
