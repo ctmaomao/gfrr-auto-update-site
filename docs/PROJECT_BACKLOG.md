@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-09 ACLED 完整性与口径复核
+
+- **Acceptance baseline**：owner 今日确认部分官网周表仍截止 8 月 14 日，授权按建议完成本地遗留配置备份对齐、六地区覆盖保护、月度比较口径复核；沿用逐项 commit+push、独立 AI 审阅和合并授权。不改变真实来源日期、源许可、评分、观察期或付费门槛。
+- **本地对齐已完成**：两份旧配置 SHA-256 备份验证后安全快进至 `0f6e9bc4`。月表仅 preparedAt 不同；旧四地区周表不是待发布更新，已与已发布六地区版本对齐。备份保留在 ignored `manual-artifacts/acled-reconcile-20260909-044904/`，原始 XLSX 未改。
+- **周度保护**：[ADR-0033](ADR/0033-acled-weekly-completeness.md)；缺地区在解析/写入前失败，JSON 两数组严格六地区且唯一；保留 8/14 与 8/28 错峰日期，兼容浏览器重复下载后缀。完整检查与独立审阅/发布以精确 PR 回执为准。
+- **下一独立项**：月度最近 12 月比较排除 as-of 当月未完成月份，并核对连续日历覆盖；不把不完整月份或缺月视为完整周期。
+
 ### 2026-09-09 Macro Risk 上游衔接与付费去重
 
 - **Acceptance baseline**：owner 批准一次现有刷新，随后要求判读与上游完成事件衔接并防止重复付费，减少空档；沿用本任务 commit+push、独立 AI 审阅及合并授权。来源、质量、30 小时时效及主评分隔离不变，不授权失败后的第二次付费重跑。

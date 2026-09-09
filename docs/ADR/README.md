@@ -55,6 +55,8 @@
 
 | [ADR-0032](0032-macro-editorial-upstream-admission.md) | Macro editorial upstream completion and durable day/input admission | Owner-authorized implementation; independent merge review required |
 
+| [ADR-0033](0033-acled-weekly-completeness.md) | Complete weekly ACLED regional coverage with staggered official dates | Owner-authorized implementation; independent merge review required |
+
 ## Superseded
 
 (None yet)

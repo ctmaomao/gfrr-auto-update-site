@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import * as xlsx from 'xlsx';
 import { assertWorksheetDimensions, preflightXlsxInputs } from './xlsx-input-guard.mjs';
+import { selectWeeklyFiles, weeklyCoverageFailures } from './acled-weekly-coverage.mjs';
 
 xlsx.set_fs(fs);
 
@@ -28,15 +29,6 @@ const ZIP_LIMITS = Object.freeze({
   maxCompressionRatio: 32,
 });
 
-const expectedRegions = [
-  'Africa',
-  'Middle-East',
-  'Europe-Central-Asia',
-  'US-and-Canada',
-  'Latin-America-the-Caribbean',
-  'Asia-Pacific'
-];
-
 const expectedColumns = [
   'WEEK',
   'REGION',
@@ -52,8 +44,6 @@ const expectedColumns = [
   'CENTROID_LATITUDE',
   'CENTROID_LONGITUDE'
 ];
-
-const filenamePattern = /^(.+)_aggregated_data_up_to_week_of-(\d{4}-\d{2}-\d{2})(?:_.*)?\.xlsx$/u;
 
 function warn(message) {
   console.warn(`ACLED weekly sanitizer warning: ${message}`);
@@ -122,37 +112,6 @@ function listInputFiles() {
     .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.xlsx'))
     .map((entry) => entry.name)
     .sort((a, b) => a.localeCompare(b));
-}
-
-function selectRecognizedFiles(filenames) {
-  const byRegion = new Map();
-  for (const filename of filenames) {
-    const match = filename.match(filenamePattern);
-    if (!match) {
-      warn(`unknown filename pattern skipped: ${filename}`);
-      continue;
-    }
-    const [, region, fileWeek] = match;
-    if (!expectedRegions.includes(region)) {
-      warn(`unknown region skipped: ${region} (${filename})`);
-      continue;
-    }
-    const existing = byRegion.get(region) || [];
-    existing.push({ region, fileWeek, filename });
-    byRegion.set(region, existing);
-  }
-
-  const selected = [];
-  for (const region of expectedRegions) {
-    const entries = byRegion.get(region) || [];
-    if (entries.length === 0) continue;
-    entries.sort((a, b) => b.fileWeek.localeCompare(a.fileWeek) || a.filename.localeCompare(b.filename));
-    selected.push(entries[0]);
-    for (const skipped of entries.slice(1)) {
-      warn(`duplicate ${region} weekly file skipped in favor of ${entries[0].filename}: ${skipped.filename}`);
-    }
-  }
-  return selected;
 }
 
 function readWorkbookRows(entry, inputFiles) {
@@ -374,16 +333,9 @@ function main() {
     return;
   }
 
-  const selectedFiles = selectRecognizedFiles(filenames);
-  if (selectedFiles.length === 0) {
-    console.log('no input files,operator has not yet placed xlsx files');
-    return;
-  }
-
-  const missingRegions = expectedRegions.filter((region) => !selectedFiles.some((entry) => entry.region === region));
-  if (missingRegions.length > 0) {
-    warn(`missing expected regions: ${missingRegions.join(', ')}`);
-  }
+  const selectedFiles = selectWeeklyFiles(filenames, warn);
+  const coverageFailures = weeklyCoverageFailures(selectedFiles, 'selected weekly files');
+  if (coverageFailures.length > 0) fail(`${coverageFailures.join('; ')}; existing config preserved`);
 
   const inputFiles = preflightXlsxInputs({
     inputDir,

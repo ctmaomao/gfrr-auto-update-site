@@ -34,6 +34,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0033](ADR/0033-acled-weekly-completeness.md)：ACLED 周表六地区完整性与缺地区保留旧配置；保留官方错峰日期及原有来源授权。
+
 - [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)：Macro Risk 上游完成触发、持久日预算/输入去重及对应 workflow checker 变更；不放宽付费、来源、质量或展示契约。
 
 - [OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)：本地原文时间声明的闭合证据复核契约；无网络、生产或质量资格。

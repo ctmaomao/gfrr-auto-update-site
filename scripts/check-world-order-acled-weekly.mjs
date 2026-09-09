@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { weeklyCoverageFailures } from './world-order/acled-weekly-coverage.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -155,7 +156,7 @@ function validateFilesIngested(files) {
     addFailure('filesIngested must be an array');
     return;
   }
-  if (files.length < 1 || files.length > 6) addFailure('filesIngested length must be 1-6 when present');
+  weeklyCoverageFailures(files, 'filesIngested').forEach(addFailure);
   for (const [index, file] of files.entries()) {
     if (!isObject(file)) {
       addFailure(`filesIngested[${index}] must be an object`);
@@ -193,7 +194,7 @@ function validateRegional(regional) {
     addFailure('regionalLast4Weeks must be an array');
     return;
   }
-  if (regional.length < 1 || regional.length > 6) addFailure('regionalLast4Weeks length must be 1-6');
+  weeklyCoverageFailures(regional, 'regionalLast4Weeks').forEach(addFailure);
   for (const [index, item] of regional.entries()) {
     if (!isObject(item)) {
       addFailure(`regionalLast4Weeks[${index}] must be object`);
