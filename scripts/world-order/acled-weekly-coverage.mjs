@@ -21,7 +21,7 @@ export function selectWeeklyFiles(filenames, warn = () => {}) {
   const byRegion = new Map();
   for (const filename of filenames) {
     // Browser copy suffixes are metadata only; dates and region identity stay strict.
-    const match = filename.match(/^([^/\\]+)_aggregated_data_up_to_week_of-(\d{4}-\d{2}-\d{2})(?:[_ -][^/\\]*)?\.xlsx$/iu);
+    const match = filename.match(/^([^/\\]+)_aggregated_data_up_to_week_of-(\d{4}-\d{2}-\d{2})(?:[_ -][^/\\]*)?\.xlsx$/u);
     if (!match || !ACLED_WEEKLY_REGIONS.includes(match[1])) {
       warn(`unknown weekly filename skipped: ${filename}`);
       continue;

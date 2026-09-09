@@ -33,6 +33,9 @@ test('duplicates are selected deterministically and ignored names cannot satisfy
   assert.equal(warnings.length, 4);
   assert.ok(weeklyCoverageFailures(selected, 'selected').length > 0);
   assert.throws(() => selectWeeklyFiles([name('Africa', '2026-02-30')]), /invalid weekly filename date/u);
+  const upperExtension = ACLED_WEEKLY_REGIONS.map((region) => name(region).replace('.xlsx', '.XLSX'));
+  assert.equal(selectWeeklyFiles(upperExtension).length, 0);
+  assert.ok(weeklyCoverageFailures(selectWeeklyFiles(upperExtension), 'selected').length > 0);
 });
 
 // Exercise real CLIs in a disposable repo-shaped directory, never production configs.
