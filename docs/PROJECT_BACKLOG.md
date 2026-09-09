@@ -27,6 +27,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-09 全项目审计整改（逐步提交）
 
+- **第五步**：Daily 规则解释与 Bubble Watch HTML/SEP 解析抽离为纯函数，生成时间由 Daily 显式传入；抓取、打分、写入及失败语义保持原实现。9 组固定输入的旧输出摘要、HTML/SEP 正负向回归已纳入 check:all；旧源码逐段等价核对及现有 radar 数据输出逐字节比较通过。check:changed → check:all、单元覆盖率门槛和 diff 检查均退出 0；单元 366 pass / 1 既有本地原始样本缺失 skip / 0 fail。只新增验证入口，未放宽断言、增加 ignore 或改动生产数据。
 - **Acceptance baseline**：owner 要求按审计建议顺序逐项实施，每一步必要验证通过后 commit+push，再进入下一步。从 latest main 建立独立整改分支，保留原工作区 ACLED 改动；本轮推送功能分支，不包含合并、生产刷新、付费调用或 Worker 部署。
 - **顺序与验收**：①缺失值/市场输入可信性/首页加载修复及负向回归；②Node 24 补丁升级、实际运行版本门槛及 Playwright 常规升级；③AI 最终写入复验、实际 commit 溯源及既有网络请求超时/脱敏；④检查去重与当前运维入口整理；⑤Daily/Bubble Watch 纯函数渐进抽离及行为等价验证。每步运行 check:changed（代码变更触发完整套件），按范围补单元或浏览器检查。
 - **第四步**：两项 GDELT 检查移除 check:all 顶层重复调用，仍经 oil-directional 完整执行；展开 npm 调用 226→218、唯一检查集合无损失。P63 改验完整传递路径，独立检查器审阅见 [ADR-0035](ADR/0035-check-suite-deduplication.md)。README 收拢日常命令，Operations 明确静态首页/Worker/历史路径与 ignored 产物副作用，不删除历史文件。验证：调用图回归、P63 原行为检查、当前文档链接/契约及 check:changed → check:all 全部退出 0；没有丢失检查、新增 ignore 或生产改动。
@@ -361,10 +362,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：main `1cc123d1`（一次获准 Macro Risk 恢复），此前 #322/#323 已合并；当前分支 `codex/macro-editorial-upstream-trigger` 在隔离工作区实施 ADR-0032。保留原工作区两份 ACLED 配置改动，不混入本任务提交。沿用任务 commit+push、独立 AI 审阅及合并授权；本次一次性付费批准已用于 `34305832339`，不再重试。
-- **当前任务**：Macro Risk 已恢复双站有效判读；现改造上游完成触发、持久日/输入去重和 EdgeOne 判读完成发布。完整检查、独立精确审阅与合并回执为交付证据，不声称尚未发生的新自然事件已验收。上一轮 World Order、FIRMS 与 ACLED 状态同步已完成。
-- **下一步**：当前 PR 验证/审阅/合并后，下一合格自然周期核对 admission、预算 refs、唯一 provider call 和双站数据。其它事项继续由既有 `arr` 任务验收 9 月 14/21 日候选，等待 ACLED/HDX 资源级答复、新闻质量证据及合规运价源；不由本任务重发信、改源或补写观察历史。
-- **阻塞或等待**：MCP 查询可用，索引未覆盖本分支新增文件时直接回读源码；未改本机配置。已保留所有来源/质量/30 小时判读 freshness/45 天 ARR freshness 和具体费用门槛。未来上游失败、队列/发布延迟、预算已用或 provider/质量失败仍可能回退，未承诺永久可用。
+- **工作基线**：main 0f6e9bc4（#325 已合并）；隔离工作区 gfrr-audit-remediation，功能分支 codex/project-audit-remediation。原工作区两份 ACLED 配置改动保留。前四步已依次提交推送 405f139d、7d573ff8、f2f5c947、ed7d05d8。
+- **当前任务**：按全项目审计建议完成五步整改：输入/加载修复、运行时升级、最终写入与网络边界加固、检查/文档收敛、管线纯函数抽离；五步必要验证均已通过，第五步随本交接提交推送，最终 commit+push 以任务回执为准。
+- **下一步**：本轮交付限功能分支，五步最终提交/推送回执见任务回复。独立审阅、合并及生产验收继续遵守 AGENTS，不把本地通过或推送当作已经上线。既有 ARR 自然周期验收及来源/质量观察维持各自任务范围。
+- **阻塞或等待**：没有本轮实施阻塞；隔离工作区缺少真实事件 ignored 原始样本的一项既有单元测试跳过，其余验收见当前整改条目。不触发 Daily/realtime 生成、真实 AI 付费调用或 Worker 部署；保留源权利、freshness、评分隔离和人工审阅门槛。
 
 ### 2026-09-09 刷新与卫星验收记录
 
