@@ -122,8 +122,8 @@ jobs:
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_SHA: ${{ github.sha }}
-        run: npm run project:macro-risk-editorial
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)" npm run project:macro-risk-editorial
 
       - name: Upload sanitized editorial artifacts
         if: always() && steps.admission.outputs.refresh_allowed == 'true'
@@ -145,6 +145,7 @@ jobs:
         run: |
           npm run write:macro-risk-editorial -- \
             --input manual-artifacts/macro-risk-editorial/production-projection-latest.json \
+            --source-input manual-artifacts/macro-risk-editorial/editorial-input-latest.json \
             --target data/radar-data.json \
             --confirm-production-write \
             --data-only

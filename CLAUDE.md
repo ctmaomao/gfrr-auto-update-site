@@ -55,6 +55,7 @@ npm run check:dom         # DOM id 契约
 ## Architecture map
 
 - 数据管线: `docs/UNIFIED_DATA_PIPELINE_ARCHITECTURE.md` + `scripts/run-daily-pipeline.mjs`
+- 管线纯函数: `scripts/daily/rule-based-interpretation.mjs`（规则解释，显式生成时间）与 `scripts/bubble-watch/public-html-parsers.mjs`（HTML/SEP 解析）；等价回归入口 `npm run check:pipeline-pure-helpers`
 - 前端: `DESIGN.md` + `index.html` + `scripts/modules/*.js`
 - Realtime worker: `workers/gfrr-realtime-worker/README.md`
 

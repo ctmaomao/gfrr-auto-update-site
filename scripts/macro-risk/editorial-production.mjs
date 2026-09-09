@@ -8,6 +8,7 @@ import {
   validateEditorialReview,
   visibleEditorialText
 } from './editorial-contract.mjs';
+import { timestampAgeMinutes, isFutureTimestampAge } from '../health/timestamp-policy.mjs';
 
 const PRODUCTION_MAX_AGE_HOURS = 30;
 
@@ -185,9 +186,18 @@ export function validateEditorialProduction(layer, radarData, now = new Date()) 
   if (!['pass', 'warn'].includes(layer.qualityReview?.status)) errors.push('qualityReview.status must be pass or warn');
   if (layer.qualityReview?.promotionEligible !== false || layer.provenance?.humanApproved !== false) errors.push('promotion/human approval boundaries are invalid');
   if (!/^[a-f0-9]{64}$/u.test(layer.provenance?.inputDigest || '') || !/^[a-f0-9]{64}$/u.test(layer.provenance?.artifactDigest || '')) errors.push('provenance digests must be SHA-256');
+  if (!isRecord(layer.output)) errors.push('production output must be an object');
+  else {
+    const actualDigest = digest(layer.output);
+    if (layer.provenance?.artifactDigest !== actualDigest || layer.validation?.artifactDigest !== actualDigest) errors.push('production output digest mismatch');
+    if (layer.output.model !== layer.model || layer.output.sourceDataUpdatedAt !== layer.sourceDataUpdatedAt) errors.push('production output metadata mismatch');
+    if (layer.freshness?.artifactGeneratedAt !== layer.output.generatedAt) errors.push('production output timestamp mismatch');
+  }
   if (layer.freshness?.maxAgeHours !== PRODUCTION_MAX_AGE_HOURS || layer.freshness?.isStale !== false) errors.push('freshness contract is invalid');
-  const generatedAt = Date.parse(layer.generatedAt || '');
-  if (!Number.isFinite(generatedAt) || now.getTime() - generatedAt > PRODUCTION_MAX_AGE_HOURS * 60 * 60 * 1000) errors.push('production layer is stale');
+  for (const [label, timestamp] of [['layer', layer.generatedAt], ['output', layer.output?.generatedAt]]) {
+    const age = timestampAgeMinutes(timestamp, now.getTime());
+    if (age === null || isFutureTimestampAge(age) || age > PRODUCTION_MAX_AGE_HOURS * 60) errors.push(`production ${label} timestamp is invalid, future or stale`);
+  }
   const falseBoundaries = ['affectsGfrrScoring', 'affectsRiskModules', 'affectsTailRiskOverlay', 'affectsDecisionModel', 'affectsExecutionLock', 'affectsPositionGuidance', 'affectsWorldOrder', 'affectsOdp', 'affectsBubbleWatch'];
   if (layer.boundaries?.displayOnly !== true || layer.boundaries?.frontendDisplayApproved !== true || layer.boundaries?.notInvestmentAdvice !== true) errors.push('visible display boundaries are invalid');
   for (const key of falseBoundaries) if (layer.boundaries?.[key] !== false) errors.push(`boundaries.${key} must be false`);
@@ -198,11 +208,22 @@ export function validateEditorialProduction(layer, radarData, now = new Date()) 
     if (source?.kind === 'news' && (typeof source.url !== 'string' || !source.url.startsWith('https://'))) errors.push(`news source ${source.id} must use https`);
     if (Object.hasOwn(source || {}, 'snippet')) errors.push(`production source ${source.id} must not contain snippet`);
   }
+  const referenced = collectReferenceValues(layer.output);
+  if (!Array.isArray(layer.output?.sourceAttribution)) errors.push('production sourceAttribution must be an array');
+  for (const item of Array.isArray(layer.output?.sourceAttribution) ? layer.output.sourceAttribution : []) referenced.add(item?.sourceRefId);
+  for (const id of referenced) if (!ledgerIds.has(id)) errors.push(`production output source ${id} is absent from sourceLedger`);
   return { ok: errors.length === 0, errors };
 }
 
-export function applyEditorialProjection(radarData, layer, now = new Date()) {
+export function applyEditorialProjection(radarData, layer, now = new Date(), input = null) {
   assertValid(validateEditorialProduction(layer, radarData, now), 'macro risk editorial production write');
+  if (!isRecord(input) || input.fixtureOnly === true) throw new Error('production write requires original non-fixture compact input');
+  if (digest(input) !== layer.provenance.inputDigest) throw new Error('production input digest mismatch');
+  assertValid(validateEditorialOutput(layer.output, input), 'production final output revalidation');
+  const review = reviewEditorial({ input, output: layer.output, generatedAt: layer.qualityReview.reviewedAt });
+  const expected = projectEditorial({ input, output: layer.output, review, generatedAt: layer.generatedAt, sourceCommit: layer.provenance.sourceCommit, runId: layer.provenance.runId });
+  if (JSON.stringify(expected.sourceLedger) !== JSON.stringify(layer.sourceLedger)) throw new Error('production source ledger does not match original input');
+  if (JSON.stringify(expected.qualityReview) !== JSON.stringify(layer.qualityReview)) throw new Error('production quality review does not match final revalidation');
   const next = structuredClone(radarData);
   next.macroRiskEditorialLayer = layer;
   const before = structuredClone(radarData);

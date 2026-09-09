@@ -1022,7 +1022,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `world-order-evidence-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `audit-load-1`）。
 
 稳定边界：
 
@@ -1053,7 +1053,7 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 `output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–6,800 字，质量目标为 4,000–5,600 字；长度只统计前端实际展示的标题、日期、正文、数据限制与置信度说明，`sourceRefIds`、module 枚举、claim type、audit flags 等机器元数据不得计入可见正文。上限略高于 Bubble Watch 的 6,500 字，为六大模块和跨市场归因留冗余。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
 
-`sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。
+`sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。[ADR-0036](ADR/0036-final-editorial-write-revalidation.md) 起，最终写入还须携带原始 compact input，重算 input/output 摘要并复验完整输出、质量审阅与来源账本；投影和原输出的生成时间均必须有效、未超 30 小时且未超过共享未来时间容差。
 
 Provider prompt 必须把 `official` / `cross_checked` 新闻 source IDs 与 `discovery_only` IDs 分开枚举，并要求 `weeklyTimeline` 至少一个对象及全体事实对象引用并集实际包含至少 1 个可信新闻 ID。`sourceAttribution` 单独列出不等于事实对象引用；provider 忽略全部可信新闻时 review 必须 hard fail，adapter/writer 不得自动补引用或改写 AI 正文。
 
@@ -1475,26 +1475,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-world-order-evidence-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
+audit-load-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `world-order-evidence-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `audit-load-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=world-order-evidence-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=world-order-evidence-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `world-order-evidence-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=audit-load-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=audit-load-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `audit-load-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs world-order-evidence-1
-npm run bump:frontend-asset-version -- world-order-evidence-1
+node scripts/bump-frontend-asset-version.mjs audit-load-1
+npm run bump:frontend-asset-version -- audit-load-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `world-order-evidence-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `audit-load-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

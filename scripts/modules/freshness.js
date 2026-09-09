@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=world-order-evidence-1';
+﻿import { fmtNumSafe } from './config.js?v=audit-load-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

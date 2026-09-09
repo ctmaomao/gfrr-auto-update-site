@@ -6,6 +6,8 @@ import {
   safeJsonParse,
   sanitizeEvidence
 } from './normalize-world-order-inputs.mjs';
+import { canUseRealtimePayloadValues, FRESHNESS_WINDOWS } from '../modules/freshness.js';
+import { timestampAgeMinutes, isFutureTimestampAge } from '../health/timestamp-policy.mjs';
 
 export const WORKER_MARKET_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
 const MARKET_INPUT_SOURCES = new Set(['worker-generated-preview', 'local-realtime', 'daily-baseline', 'unavailable']);
@@ -15,16 +17,10 @@ const WORKER_MIN_HEALTH_SCORE = 85;
 const WORKER_MAX_CRITICAL_MISSING = 1;
 const WORKER_TIMEOUT_MS = 4500;
 
-function parseIsoTime(value) {
-  if (typeof value !== 'string') return null;
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : null;
-}
-
 function ageMinutesFromUpdatedAt(updatedAt) {
-  const timestamp = parseIsoTime(updatedAt);
-  if (timestamp === null) return null;
-  return Math.max(0, Math.round((Date.now() - timestamp) / 60000));
+  const age = timestampAgeMinutes(updatedAt);
+  if (age === null || isFutureTimestampAge(age)) return null;
+  return Math.max(0, age);
 }
 
 function normalizeValues(values = {}) {
@@ -90,9 +86,10 @@ function workerGateFailure(payload, httpStatus) {
   if (!payload || typeof payload !== 'object') return 'worker-invalid-payload';
   if (payload.sourceMode !== 'worker-generated-preview') return 'worker-source-mode-not-preview';
   if (payload.unavailable === true) return 'worker-unavailable';
-  const healthScore = Number(payload.healthScore);
+  if (!canUseRealtimePayloadValues(payload)) return 'worker-values-untrusted';
+  const healthScore = finiteOrNull(payload.healthScore);
   if (!Number.isFinite(healthScore) || healthScore < WORKER_MIN_HEALTH_SCORE) return 'worker-health-score-low';
-  const criticalMissing = Number(payload.criticalMissing);
+  const criticalMissing = finiteOrNull(payload.criticalMissing);
   if (!Number.isFinite(criticalMissing) || criticalMissing > WORKER_MAX_CRITICAL_MISSING) return 'worker-critical-missing-high';
   const ageMinutes = ageMinutesFromUpdatedAt(payload.updatedAt);
   if (ageMinutes === null) return 'worker-updatedAt-invalid';
@@ -132,6 +129,10 @@ async function fetchWorkerMarketInput() {
 }
 
 function buildLocalRealtimeInput(realtimePayload, fallbackReason) {
+  if (!canUseRealtimePayloadValues(realtimePayload)) return null;
+  const ageMinutes = ageMinutesFromUpdatedAt(realtimePayload.updatedAt);
+  // Reuse the existing fresh/aging window; stale caches cannot confirm current markets.
+  if (ageMinutes === null || ageMinutes > FRESHNESS_WINDOWS.aging) return null;
   const values = realtimePayload?.values;
   const brent = finiteOrNull(values?.brent);
   if (!values || typeof values !== 'object' || brent === null || brent <= 0) {
@@ -141,7 +142,7 @@ function buildLocalRealtimeInput(realtimePayload, fallbackReason) {
     source: 'local-realtime',
     path: 'realtime/market.json',
     updatedAt: typeof realtimePayload.updatedAt === 'string' ? realtimePayload.updatedAt : null,
-    ageMinutes: ageMinutesFromUpdatedAt(realtimePayload.updatedAt),
+    ageMinutes,
     healthScore: realtimePayload.healthScore,
     criticalMissing: realtimePayload.criticalMissing,
     values,
@@ -178,12 +179,13 @@ export async function selectMarketConfirmationInput({ dataPayload = {}, realtime
   const localInput = buildLocalRealtimeInput(realtimePayload, workerResult.reason);
   if (localInput) return localInput;
 
-  const dailyInput = buildDailyBaselineInput(dataPayload, localInput ? null : workerResult.reason || 'local-realtime-unavailable');
+  const fallbackReason = [workerResult.reason, 'local-realtime-unavailable-or-untrusted'].filter(Boolean).join('; ');
+  const dailyInput = buildDailyBaselineInput(dataPayload, fallbackReason);
   if (dailyInput) return dailyInput;
 
   return buildMarketConfirmationInput({
     source: 'unavailable',
-    fallbackReason: workerResult.reason || 'market-confirmation-input-unavailable'
+    fallbackReason
   });
 }
 

@@ -24,6 +24,8 @@ for (const marker of [
   'npm run review:macro-risk-editorial',
   'npm run project:macro-risk-editorial',
   'npm run write:macro-risk-editorial --',
+  '--source-input manual-artifacts/macro-risk-editorial/editorial-input-latest.json',
+  'GITHUB_SHA="$(git rev-parse HEAD)" npm run project:macro-risk-editorial',
   'npm run check:macro-risk-editorial-live -- --require-layer',
   'git add data/radar-data.json',
   'git push origin HEAD:main'

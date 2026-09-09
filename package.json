@@ -147,11 +147,11 @@
     "check:modules": "node scripts/check-module-imports.mjs",
     "check:realtime-js-frozen": "node --check scripts/check-realtime-js-frozen.mjs && node scripts/check-realtime-js-frozen.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "check:worker-syntax": "node scripts/check-worker-syntax.mjs",
+    "check:worker-syntax": "node scripts/check-worker-syntax.mjs && node --test tests/unit/worker-mirror-timeout.test.mjs tests/unit/gdelt-diagnostic-summary.test.mjs",
     "check:null-zero-display-guards": "node --check scripts/check-null-zero-display-guards.mjs && node scripts/check-null-zero-display-guards.mjs",
     "check:frontend-live-contracts": "node scripts/check-suite.mjs frontend-live-contracts",
     "check:dom": "node --check scripts/check-dom.mjs && node scripts/check-dom.mjs",
-    "check:frontend-loading-state": "node --check scripts/check-frontend-loading-state.mjs && node scripts/check-frontend-loading-state.mjs",
+    "check:frontend-loading-state": "node --check scripts/check-frontend-loading-state.mjs && node scripts/check-frontend-loading-state.mjs && node --test tests/unit/app-loading.test.mjs",
     "check:frontend-safe-dom-rendering": "node --check scripts/check-frontend-safe-dom-rendering.mjs && node scripts/check-frontend-safe-dom-rendering.mjs",
     "check:bubble-watch-dom": "node --check scripts/check-bubble-watch-dom.mjs && node scripts/check-bubble-watch-dom.mjs",
     "check:bubble-watch-weekly-editorial-contract": "node --check scripts/bubble-watch/weekly-editorial-contract.mjs && node --check scripts/check-bubble-watch-weekly-editorial-contract.mjs && node scripts/check-bubble-watch-weekly-editorial-contract.mjs",
@@ -171,9 +171,9 @@
     "check:macro-overview-display-helpers": "node --check scripts/check-macro-overview-display-helpers.mjs && node scripts/check-macro-overview-display-helpers.mjs",
     "check:macro-overview-evidence-fold": "node --check scripts/check-macro-overview-evidence-fold.mjs && node scripts/check-macro-overview-evidence-fold.mjs",
     "check:macro-coherence-display-only": "node scripts/check-macro-coherence-display-only.mjs",
-    "check:node-runtime": "node --check scripts/check-node-runtime.mjs && node scripts/check-node-runtime.mjs",
+    "check:node-runtime": "node --check scripts/check-node-runtime.mjs && node scripts/check-node-runtime.mjs && node --test tests/unit/node-runtime-policy.test.mjs",
     "check:workflows": "node scripts/check-workflows.mjs && node --test tests/unit/edgeone-source-revision.test.mjs",
-    "check:docs": "node scripts/check-doc-links.mjs && node --test tests/unit/agent-domain-authority.test.mjs && node --test tests/unit/energy-record-authority.test.mjs && node --test tests/unit/doc-change-policy.test.mjs && node scripts/check-changed.mjs --links-only",
+    "check:docs": "node scripts/check-doc-links.mjs && node --test tests/unit/agent-domain-authority.test.mjs && node --test tests/unit/energy-record-authority.test.mjs && node --test tests/unit/doc-change-policy.test.mjs && node scripts/check-changed.mjs --links-only && node --test tests/unit/check-suite-wiring.test.mjs",
     "check:external-ai-output": "node scripts/check-external-ai-output.mjs",
     "check:external-ai-production-contract": "node --check scripts/check-external-ai-production-contract.mjs && node scripts/check-external-ai-production-contract.mjs",
     "check:external-ai-provenance-completeness": "node scripts/check-external-ai-provenance-completeness.mjs",
@@ -265,7 +265,7 @@
     "test:e2e": "npm run build:pages-artifact && playwright test",
     "check:data:verbose": "node scripts/validate-data.mjs --verbose",
     "check:data:strict-live-alignment": "node scripts/validate-data.mjs --strict-live-alignment",
-    "check:all": "npm run check:syntax && npm run check:worker-syntax && npm run check:gdelt-cloud-fetcher-integration && npm run check:gdelt-source-policy && npm run check:gdelt-web-ngrams-diagnosis && npm run check:gdelt-web-ngrams-artifact-sanitizer && npm run check:gdelt-web-ngrams-sample-archive && npm run check:gdelt-web-ngrams-samples-review && npm run check:gdelt-web-ngrams-fallback-source-review && npm run check:gdelt-web-ngrams-production-display-fallback-contract && npm run check:gdelt-web-ngrams-sample-collector-workflow && npm run check:gdelt-web-ngrams-fallback-gate-review && npm run check:gdelt-web-ngrams-display-fallback-projection && npm run check:gdelt-web-ngrams-display-fallback-projection-review && npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design && npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold && npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review && npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness && npm run check:gdelt-web-ngrams-display-fallback-production-display-write && npm run check:gdelt-web-ngrams-frontend-aggregate-health && npm run check:gdelt-web-ngrams-automated-display-cache && npm run check:gdelt-cache-health && npm run check:modules && npm run check:realtime-js-frozen && npm run check:frontend-live-contracts && npm run check:node-runtime && npm run check:workflows && npm run check:docs && npm run check:external-ai && npm run check:macro-risk-editorial && npm run check:data && npm run check:realtime-local-schema && npm run check:main-score-wind-fallback && npm run check:brent && npm run check:macro-drivers && npm run check:narrative-density && npm run check:market-pricing && npm run check:world-order && npm run check:world-order-acled && npm run check:oil-directional && npm run check:bubble-watch && npm run check:frontend-zh-copy",
+    "check:all": "npm run check:syntax && npm run check:pipeline-pure-helpers && npm run check:worker-syntax && npm run check:gdelt-cloud-fetcher-integration && npm run check:gdelt-source-policy && npm run check:gdelt-web-ngrams-diagnosis && npm run check:gdelt-web-ngrams-artifact-sanitizer && npm run check:gdelt-web-ngrams-sample-archive && npm run check:gdelt-web-ngrams-samples-review && npm run check:gdelt-web-ngrams-fallback-source-review && npm run check:gdelt-web-ngrams-production-display-fallback-contract && npm run check:gdelt-web-ngrams-sample-collector-workflow && npm run check:gdelt-web-ngrams-fallback-gate-review && npm run check:gdelt-web-ngrams-display-fallback-projection && npm run check:gdelt-web-ngrams-display-fallback-projection-review && npm run check:gdelt-web-ngrams-display-fallback-writer-contract-design && npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-scaffold && npm run check:gdelt-web-ngrams-display-fallback-disabled-writer-review && npm run check:gdelt-web-ngrams-display-fallback-production-write-readiness && npm run check:gdelt-web-ngrams-display-fallback-production-display-write && npm run check:gdelt-cache-health && npm run check:modules && npm run check:realtime-js-frozen && npm run check:frontend-live-contracts && npm run check:node-runtime && npm run check:workflows && npm run check:docs && npm run check:external-ai && npm run check:macro-risk-editorial && npm run check:data && npm run check:realtime-local-schema && npm run check:main-score-wind-fallback && npm run check:brent && npm run check:macro-drivers && npm run check:narrative-density && npm run check:market-pricing && npm run check:world-order && npm run check:world-order-acled && npm run check:oil-directional && npm run check:bubble-watch && npm run check:frontend-zh-copy",
     "probe:acled-hdx-refresh": "node scripts/world-order/probe-acled-hdx-refresh.mjs",
     "acled:sanitize:weekly": "node scripts/world-order/sanitize-acled-weekly.mjs",
     "acled:sanitize:monthly": "node scripts/world-order/sanitize-acled-monthly.mjs",
@@ -390,13 +390,15 @@
     "check:oil-thermal-targeted-probe": "node --check scripts/oil-directional/run-oil-thermal-targeted-probe.mjs && node --check scripts/check-oil-thermal-targeted-probe.mjs && node scripts/check-oil-thermal-targeted-probe.mjs",
     "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs && npm run check:firms-request-policy && npm run check:oil-thermal-targeted-probe",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs",
-    "check:changed": "node scripts/check-changed.mjs"
+    "check:changed": "node scripts/check-changed.mjs",
+    "check:world-order-market-input": "node --test tests/unit/world-order-market-input.test.mjs",
+    "check:pipeline-pure-helpers": "node --test tests/unit/pure-pipeline-extraction.test.mjs"
   },
   "engines": {
-    "node": ">=24 <25"
+    "node": ">=24.20.0 <25"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.63.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

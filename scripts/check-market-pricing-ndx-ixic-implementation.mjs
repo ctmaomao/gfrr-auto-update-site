@@ -134,7 +134,7 @@ function assertPackageScripts() {
   assertEqual(
     JSON.stringify(pkg.devDependencies || {}),
     JSON.stringify({
-      '@playwright/test': '1.61.1',
+      '@playwright/test': '1.63.0',
       xlsx: 'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz'
     }),
     'package.json devDependencies stay on the reviewed test/sanitizer allowlist'
