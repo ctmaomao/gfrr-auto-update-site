@@ -120,6 +120,9 @@ const contracts = [
     file: '.github/workflows/publish-edgeone-release.yml',
     required: [
       'name: Publish EdgeOne Release Channel',
+      'workflows: [Macro Risk Editorial Refresh]',
+      'types: [completed]',
+      'branches: [main]',
       'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
       'RELEASE_REPOSITORY: ctmaomao/gfrr-edgeone-release',
       'workflow_dispatch:',
@@ -134,7 +137,7 @@ const contracts = [
       'SOURCE_SHA: ${{ steps.source_revision.outputs.sha }}',
       'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
       'git commit -m "chore: publish source ${SOURCE_SHA::12}"',
-      "if: ${{ github.ref == 'refs/heads/main' }}",
+      "if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}",
       'actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
       'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
       'node-version: 24',

@@ -1037,7 +1037,7 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 #### macroRiskEditorialLayer 当前生产契约（integrated visible read-only）
 
-`macroRiskEditorialLayer` 是根级可选字段，也是首页 `MACRO RISK OVERVIEW` 唯一可见的 DeepSeek 编辑层。生产 schema 固定为 `macro-risk-editorial-production-v1`；唯一写入路径为 `Macro Risk Editorial Refresh` workflow。该 workflow 每日 `00:05 UTC` 在 Daily / World Order / ODP 后运行，合并近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据，每次最多一次 DeepSeek 调用、无同 run 重试，`max_tokens=8000`、timeout 120 秒。
+`macroRiskEditorialLayer` 是根级可选字段，也是首页 `MACRO RISK OVERVIEW` 唯一可见的 DeepSeek 编辑层。生产 schema 固定为 `macro-risk-editorial-production-v1`；唯一写入路径为 `Macro Risk Editorial Refresh` workflow。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，该 workflow 在 Daily / World Order / ODP 的合格完成事件后核对本期上游就绪，先预留持久 UTC 日预算与 Daily 输入去重凭据，再合并近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据。每个 UTC 日和 Daily 输入最多一个尝试，每次最多一次 DeepSeek 调用、无重试，`max_tokens=8000`、timeout 120 秒；失败不释放已预留预算。旧独立 `00:05 UTC` cron 退役，手动入口也不绕过预算。
 
 新闻发现把受注册资格约束的美国 `.gov` 根域/子域标为 `official`，但不得把名称中仅含 `gov` 的普通域提升为官方来源。若 Tavily 与 Brave 全部 topic 查询均健康、却没有任何 `official` / `cross_checked` 新闻，workflow 必须在 provider 前以 `SKIPPED_NO_CREDIBLE_NEWS` fail-closed 结束：只保留脱敏 discovery artifact 与 GitHub Summary，不调用 DeepSeek、不创建 input/output/projection、不写生产数据。搜索源未完整健康、artifact 结构错误或后续 contract/review/provider/write 失败仍必须非零退出。
 

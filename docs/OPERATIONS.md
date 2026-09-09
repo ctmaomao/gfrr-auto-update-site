@@ -120,9 +120,11 @@ npm run check:macro-risk-editorial
 
 ### Macro editorial refresh / Daily timing
 
-GitHub Actions cron 使用 UTC。当前顺序为 `Build Daily Radar Data` 22:30、`Refresh World Order Stress` 23:00、`Refresh Oil Directional Pressure` 23:45、`Macro Risk Editorial Refresh` 00:05。Daily 不调用 DeepSeek；编辑 workflow 在主要站内数据完成后抓取近 7 日新闻、构建紧凑证据包并最多调用一次 DeepSeek。
+GitHub Actions cron 使用 UTC，但不保证准时或相对顺序。上游名义时刻仍为 `Build Daily Radar Data` 22:30、`Refresh World Order Stress` 23:00、`Refresh Oil Directional Pressure` 23:45。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，`Macro Risk Editorial Refresh` 改听这三项完成事件，不再另排 00:05 cron。只接受同库 main 的首次 scheduled 成功事件，回查最新上游及本期快照就绪后才允许新闻/AI 开销；未齐、乱序、失败或过旧均 hold，等后续合格事件。Daily 本身不调用 DeepSeek。
 
-`Macro Risk Editorial Refresh` 是 `macroRiskEditorialLayer` 的唯一生产写入路径。流程固定为 news discovery → compact input → one DeepSeek call → output contract → quality review → projection → guarded write → live layer check + `check:data` → protected-path assertion。只允许提交 `data/radar-data.json`；Pages 在 workflow 成功后自动部署。
+调用前以 create-only Git refs 持久预留 UTC 日预算和 Daily 输入键，路径固定 `refs/tags/macro-editorial-budget/v1/day-YYYY-MM-DD` / `input-<sha256>`。这只是保守尝试凭据，不是发布/成功证明；创建不确定、冲突或部分成功不允许调用，也不清除凭据。任何失败、零可信新闻或取消都不自动退还预算；手动 dispatch 的成本确认不绕过同日/同输入去重。严禁为恢复显示自动删除 tag、修改时间戳或重跑已消费周期。跨日仍相同 Daily 输入不重复调用；真正额外恢复需独立审阅与具体授权。无 `--reserve` 的 admission 是只读预检；已有匹配编辑层会在任何 GitHub 请求前跳过。
+
+`Macro Risk Editorial Refresh` 是 `macroRiskEditorialLayer` 的唯一生产写入路径。流程固定为 upstream/budget admission → news discovery → compact input → one DeepSeek call → output contract → quality review → projection → guarded write → live layer check + `check:data` → protected-path assertion。只允许提交 `data/radar-data.json`；Pages 与 EdgeOne 在 workflow 成功后检查/发布，EdgeOne 保留无变化跳过与发布配额。任何 admission skip 的 Summary 明确零 discovery/provider/production write；工作流绿色不能单独证明新判读生成。
 
 普通质量 `warn`（例如只有一条可信新闻或正文偏离 4,000–5,600 字目标但仍在 2,000–6,800 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
 
@@ -138,7 +140,7 @@ Tavily/Brave keys 由 Macro Risk、Bubble Watch 与 Oil News 共享。`Refresh O
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。
 
-如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端会因 `sourceDataUpdatedAt` 不匹配而暂时隐藏编辑层；这是 fail-closed 预期状态。不得为几分钟的调度间隔手工改时间戳或重复调用 provider。
+如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端仍会因编辑层缺失或时间不匹配而暂时隐藏；完成事件衔接减少独立 cron 空档，但不能保证上游、队列、provider 和发布始终及时。不要把旧判读重新贴到新时间戳；先查 admission reason、预算凭据与上游状态，不重复调用 provider。
 
 ### Bubble Watch weekly editorial refresh
 

@@ -34,6 +34,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)：Macro Risk 上游完成触发、持久日预算/输入去重及对应 workflow checker 变更；不放宽付费、来源、质量或展示契约。
+
 - [OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)：本地原文时间声明的闭合证据复核契约；无网络、生产或质量资格。
 
 - [AGENT_DOMAIN_BOUNDARIES.md](AGENT_DOMAIN_BOUNDARIES.md)：根 AGENTS.md 明确委托的领域规则附件；按任务读对应段落。原阶段约束只管各自路径，现行窄范围例外见附件开头；领域 checker 直接校验本附件，保留原断言，根只保留导航和通用规则。迁移决策见 [ADR-0024](ADR/0024-agent-domain-authority.md)。

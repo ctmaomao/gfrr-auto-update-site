@@ -9,7 +9,13 @@ const workflow = fs.readFileSync(path, 'utf8');
 
 for (const marker of [
   'name: Macro Risk Editorial Refresh',
-  'cron: "5 0 * * *"',
+  'workflow_run:',
+  'types: [completed]',
+  'branches: [main]',
+  '- Build Daily Radar Data',
+  '- Refresh World Order Stress',
+  '- Refresh Oil Directional Pressure',
+  'node scripts/macro-risk/admit-editorial-refresh.mjs --reserve',
   'environment: external-ai-production-refresh',
   'npm run check:macro-risk-editorial-workflow',
   'npm run collect:macro-risk-editorial-news -- --allow-network',
@@ -23,8 +29,17 @@ for (const marker of [
   'git push origin HEAD:main'
 ]) assert(workflow.includes(marker), `workflow missing ${marker}`);
 assert(workflow.includes('id: build_input'), 'workflow must expose compact-input readiness');
-assert(count(workflow, "if: steps.build_input.outputs.editorial_ready == 'true'") === 7, 'every provider/review/write step must require editorial readiness');
-assert(workflow.includes("if: steps.build_input.outputs.editorial_ready == 'false'") && workflow.includes('SKIPPED_NO_CREDIBLE_NEWS'), 'workflow must verify the expected no-credible-news skip is side-effect free');
+// ADR-0032 replaces only cron/order enforcement; all existing provider, source,
+// writer and cost assertions remain and now require durable budget admission.
+assert(!/^  schedule:/m.test(workflow) && !workflow.includes('cron:'), 'upstream completion replaces the independent paid cron');
+assert(count(workflow, "if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'") === 7, 'every provider/review/write step must require budget and editorial readiness');
+assert(workflow.includes("if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'false'") && workflow.includes('SKIPPED_NO_CREDIBLE_NEWS'), 'workflow must verify the admitted no-credible-news skip is side-effect free');
+for (const name of ['Prepare transient artifact directory', 'Collect near-7-day macro news', 'Build compact editorial evidence pack']) {
+  const step = workflow.split(`- name: ${name}`)[1]?.split('\n      - name:')[0];
+  assert(step?.includes("if: steps.admission.outputs.refresh_allowed == 'true'"), `${name} requires budget admission`);
+}
+assert(workflow.indexOf('id: admission') < workflow.indexOf('- name: Collect near-7-day macro news'), 'reserve before any search/provider expense');
+assert(workflow.includes('group: gfrr-main-writer-main') && workflow.includes('cancel-in-progress: false'), 'admission shares the serialized main writer lock');
 assert(count(workflow, 'npm run run:macro-risk-editorial-deepseek -- --allow-network') === 1, 'workflow must call DeepSeek exactly once');
 assert(workflow.includes('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'), 'workflow must inject DeepSeek key only at provider step');
 assert(count(workflow, 'DEEPSEEK_API_KEY:') === 1, 'DeepSeek key must be scoped to one step');
@@ -35,4 +50,4 @@ const pages = fs.readFileSync('.github/workflows/deploy-static-site-to-pages.yml
 assert(pages.includes('- Macro Risk Editorial Refresh'), 'Pages workflow must listen for macro editorial refresh completion');
 assert(!pages.includes('- External AI Production Refresh'), 'Pages workflow must not listen for retired external AI refresh');
 
-console.log('Macro risk editorial workflow PASS (daily 00:05 UTC, at most one paid call, source-quality skip before provider, fail-closed review/write, protected path, Pages trigger)');
+console.log('Macro risk editorial workflow PASS (upstream completion, durable day/input budget, source-quality skip before provider, fail-closed review/write, protected path, Pages trigger)');

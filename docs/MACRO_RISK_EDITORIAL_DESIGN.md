@@ -155,16 +155,16 @@
 
 新增 `Macro Risk Editorial Refresh`：
 
-1. 每日 `00:05 UTC` schedule，另保留 owner 手动成本确认入口。
+1. [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，以 Daily / World Order / ODP 成功完成事件替代独立 cron；仅同库 main、首次 scheduled 上游运行有自动资格，三项最新运行与本期快照就绪后才执行。另保留 owner 手动成本确认入口。
 2. checkout / fast-forward latest main。
 3. 读取完成后的 Daily Radar、World Order、ODP 和 market-pricing artifacts。
-4. 构建 bounded 新闻 discovery 与 compact input。
+4. 在 discovery 前创建持久日预算与 Daily 输入去重 refs；任一已存在、创建不确定或失败均不调用，失败不释放预算。已有匹配输入的编辑层直接跳过。然后构建 bounded 新闻 discovery 与 compact input。
 5. 单次 DeepSeek call。
 6. output validator + quality review。
 7. production projection + single-field writer。
 8. contract / writer guard / data / frontend scoped checks。
 9. protected path 只允许 `data/radar-data.json`。
-10. 字段变化时 commit / push main，并触发 Pages。
+10. 字段变化时 commit / push main；成功完成后触发 Pages 和 EdgeOne 的既有验证/发布路径，EdgeOne 保留无变化跳过和配额门槛。
 
 旧 `External AI Production Refresh` scheduled workflow 退役；原 protected environment 和
 `DEEPSEEK_API_KEY` 供新 workflow 复用，不新增或提交 secrets。
