@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { describeHistoricalValidation, historicalNumber, isHistoricalDate } from '../../scripts/daily/historical-validation.mjs';
-import { parseArgs, parseFredApiObservations, parseFredCsv } from '../../scripts/audit-main-score-backtest.mjs';
+import { parseArgs, parseFredApiObservations, parseFredCsv, fetchFredSeries, historicalQueryWindow, makeWeeklyDates } from '../../scripts/audit-main-score-backtest.mjs';
+import { buildHistoricalScoreInputs } from '../../scripts/daily/historical-score.mjs';
+import { readFileSync } from 'node:fs';
 
 test('calendar validation rejects rolled-over dates and missing values without losing zero', () => {
   for (const value of ['2026-02-29', '2026-13-01', '', undefined]) assert.equal(isHistoricalDate(value), false);
@@ -44,4 +46,41 @@ test('strict predictive request and invalid evaluation windows fail before netwo
   assert.throws(() => parseArgs(['--start-date', '2026-02-30']), /valid YYYY-MM-DD/);
   assert.throws(() => parseArgs(['--start-date', '2026-01-02', '--end-date', '2026-01-01']), /on or before/);
   assert.equal(parseArgs([]).allowNetwork, false);
+});
+
+test('API and CSV retain identical bounded warmup without adding evaluation dates', async () => {
+  const options = parseArgs(['--start-date', '2026-06-12', '--end-date', '2026-06-19']);
+  const window = historicalQueryWindow(options);
+  assert.equal(window.observationStartDate, '2026-05-01');
+  assert.equal(window.warmupDays, 42);
+  const observations = ['2026-04-30', '2026-05-01', '2026-05-15', '2026-06-05', '2026-06-11', '2026-06-12', '2026-06-19', '2026-06-20']
+    .map(date => ({ date, value: '100' }));
+  const api = await fetchFredSeries('DCOILBRENTEU', options, { apiKey: 'offline-placeholder', fetchTextImpl: async url => {
+    const params = new URL(url).searchParams;
+    assert.equal(params.get('observation_start'), '2026-05-01');
+    assert.equal(params.get('observation_end'), '2026-06-19');
+    return JSON.stringify({ observations });
+  } });
+  const csv = await fetchFredSeries('DCOILBRENTEU', options, { apiKey: '', fetchTextImpl: async () =>
+    'DATE,VALUE\n' + observations.map(row => `${row.date},${row.value}`).join('\n') });
+  assert.deepEqual(api.rows, csv.rows);
+  assert.equal(api.rows[0].date, '2026-05-01');
+  assert.equal(api.rows.at(-1).date, '2026-06-19');
+  assert.deepEqual(makeWeeklyDates(options.startDate, options.endDate), ['2026-06-12', '2026-06-19']);
+  const rules = JSON.parse(readFileSync(new URL('../../config/rules.json', import.meta.url)));
+  const values = { brent: 80, dxy: 115, vix: 18, hyOas: 3, us10y: 4, real10y: 1.8, walcl: 7000000, onRrp: 500, t10y2y: -0.1 };
+  const series = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, api.rows.map(row => ({ ...row, value }))]));
+  series.brent.find(row => row.date === '2026-06-11').value = 64;
+  series.onRrp.find(row => row.date === '2026-06-05').value = 1000;
+  series.walcl.find(row => row.date === '2026-05-15').value = 8000000;
+  series.t10y2y.find(row => row.date === '2026-06-05').value = -0.5;
+  const full = buildHistoricalScoreInputs(options.startDate, series, rules);
+  const trimmed = buildHistoricalScoreInputs(options.startDate, Object.fromEntries(Object.entries(series)
+    .map(([key, rows]) => [key, rows.filter(row => row.date >= options.startDate)])), rules);
+  assert.equal(full.rt.changes.brent1d, 25);
+  assert.equal(full.macroDrivers.fedLiquidity.onRrpWeekChange, -50);
+  assert.equal(full.macroDrivers.fedLiquidity.walcl4wChange, -12.5);
+  assert.equal(full.macroDrivers.curve.steepeningAlert, true);
+  assert.equal(trimmed.rt.changes.brent1d, null);
+  assert.equal(trimmed.macroDrivers.fedLiquidity.walcl4wChange, null);
 });
