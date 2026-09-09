@@ -12,6 +12,7 @@ const SUITES = {
     'check:macro-overview-display-helpers',
     'check:macro-overview-evidence-fold',
     'check:macro-coherence-display-only',
+    'check:world-order-display-narrative',
     'check:macro-risk-editorial-frontend'
   ],
   'external-ai': [

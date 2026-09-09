@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=bofa-report-review-1';
-import { formatOnRrpYiUsd } from './format.js?v=bofa-report-review-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=world-order-evidence-1';
+import { formatOnRrpYiUsd } from './format.js?v=world-order-evidence-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

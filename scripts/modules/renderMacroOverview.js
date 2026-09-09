@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=bofa-report-review-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=bofa-report-review-1';
+} from './config.js?v=world-order-evidence-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=world-order-evidence-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,10 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=bofa-report-review-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=bofa-report-review-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=bofa-report-review-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=bofa-report-review-1';
+} from './macroOverviewDisplayHelpers.js?v=world-order-evidence-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=world-order-evidence-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=world-order-evidence-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=world-order-evidence-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2492,37 +2492,40 @@ function renderDetailData({ radarData }) {
 
 function renderWorldOrderStress({ worldOrderStressData }) {
   try {
-    if (!worldOrderStressData) return;
-
-    const wo = worldOrderStressData;
-    if (asNumber(wo.score) !== null) {
-      setLeafText('wo-detail-intro-score', Math.round(wo.score));
-      setLeafText('wo-detail-score', Math.round(wo.score));
-    }
-    if (wo.labelZh || wo.state) setLeafText('wo-detail-state', wo.labelZh || '—');
-    const confidence = confidenceLabel(wo.confidence);
-    if (confidence) setLeafText('wo-detail-confidence', confidence);
-    const marketInput = wo.marketConfirmationInput || {};
-    if (marketInput.source || asNumber(marketInput.healthScore) !== null) {
-      const health = asNumber(marketInput.healthScore) !== null ? `健康度 ${Math.round(marketInput.healthScore)}/100` : '健康度 —';
-      setLeafText('wo-detail-market-confirmation', `${sourceModeZh(marketInput.source) || '来源未知'} · ${health}`);
-    }
+    // Always overwrite leaves: a missing/partial later snapshot must not retain
+    // a previous confirmation, source, driver or risk tone. Display only.
+    const wo = worldOrderStressData || {};
+    const scoreText = (value) => Number.isFinite(value) ? Math.round(value) : '—';
+    setLeafText('wo-detail-intro-score', scoreText(wo.score));
+    setLeafText('wo-detail-score', scoreText(wo.score));
+    setLeafText('wo-detail-state', worldOrderStateLabel(wo.state, wo.labelZh));
+    const confidence = Number.isFinite(wo.confidence) ? confidenceLabel(wo.confidence) : null;
+    setLeafText('wo-detail-confidence', confidence || '待确认');
+    const marketState = wo.dimensions?.marketConfirmation?.state;
+    const marketLabel = ({ not_confirmed: '未确认', weak: '弱确认', partial_confirmed: '部分确认', high_confirmed: '较强确认' })[marketState] || '待确认';
+    setLeafText('wo-detail-market-confirmation', marketLabel);
+    setLeafText('wo-detail-market-narrative', `当前市场确认：${marketLabel}。这是当前跨资产代理的确认程度，不表示较上期升档，也不证明市场已完成风险定价。来源健康度与市场确认强度分别解读。`);
     const modifier = wo.decisionModifier || {};
-    if (modifier.riskBias || asNumber(modifier.maxStateBoost) !== null) {
-      setLeafText('wo-detail-risk-bias', `风险偏置 ${riskBiasZh(modifier.riskBias)} · 最大升档 ${modifier.maxStateBoost ?? '—'}`);
-    }
+    const biasLabel = ({ upward: '上修偏置', neutral: '中性', downward: '下修偏置' })[modifier.riskBias] || '待确认';
+    setLeafText('wo-detail-risk-bias', `风险偏置 ${biasLabel} · 最大升档 ${scoreText(modifier.maxStateBoost)}`);
 
     // ACLED / GDELT data-freshness indicators — display-only; surfaces existing
     // world-order fields so an operator can confirm a manual ACLED refresh landed.
     // Does NOT change overlay scoring/weights/pipeline (ACLED/GDELT already feed
     // the overlay upstream; this only reads the resulting freshness fields).
     const acledSummary = wo.externalSources?.acled?.summary || {};
-    const woDateOrDash = (v) => (typeof v === 'string' && v.trim() ? v.trim() : '—');
+    const woDateOrDash = (v) => {
+      if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return '—';
+      const parsed = new Date(`${v}T00:00:00Z`);
+      return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === v ? v : '—';
+    };
     const woCountOrDash = (v) => (Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—');
     setLeafText('wo-detail-acled-latest-week', woDateOrDash(acledSummary.latestWeek));
     setLeafText('wo-detail-acled-events-4w', woCountOrDash(acledSummary.eventsLast4Weeks));
     setLeafText('wo-detail-acled-monthly-asof', woDateOrDash(acledSummary.monthlyAsOfDate));
     setLeafText('wo-detail-gdelt-conflict-events', woCountOrDash(wo.externalSources?.gdelt?.summary?.conflictEvents));
+    const freshnessLabel = (value) => ({ fresh: '新鲜', aging: '偏旧', stale: '过期', error: '读取失败', not_configured: '未配置', missing: '缺失' })[value] || '待确认';
+    setLeafText('wo-detail-source-freshness', `ACLED 周表时效：${freshnessLabel(acledSummary.sourceFreshness)}；月表时效：${freshnessLabel(acledSummary.monthlySourceFreshness)}。`);
 
     const dimMap = {
       peaceDividendRetreat: 'peace',
@@ -2533,35 +2536,26 @@ function renderWorldOrderStress({ worldOrderStressData }) {
       marketConfirmation: 'market',
     };
     for (const [key, slug] of Object.entries(dimMap)) {
-      const dim = wo.dimensions?.[key];
-      if (!dim) continue;
-      const tone = dimensionTone(dim.score);
+      const dim = wo.dimensions?.[key] || {};
+      const tone = Number.isFinite(dim.score) ? dimensionTone(dim.score) : null;
+      if (!tone) document.getElementById(`wo-dim-${slug}`)?.classList.remove('low', 'med', 'high', 'severe');
       updateToneClass(`wo-dim-${slug}`, ['low', 'med', 'high', 'severe'], tone);
-      if (asNumber(dim.score) !== null) setLeafText(`wo-dim-${slug}-score`, Math.round(dim.score));
-      const evidenceSource = key === 'marketConfirmation' && !dim.trend ? null : dim.evidence?.[0]?.source;
-      const sourceText = evidenceSource || dim.sourceLabel;
-      const trendText = ({ rising: '上行', falling: '回落', stable: '平稳' })[dim.trend] || dim.trend;
-      if (sourceText || trendText) {
-        if (sourceText && trendText) {
-          setLeafText(`wo-dim-${slug}-trend`, `${sourceText} · ${trendText}`);
-        } else if (sourceText) {
-          setLeafText(`wo-dim-${slug}-trend`, sourceText);
-        } else {
-          setLeafText(`wo-dim-${slug}-trend`, trendText);
-        }
-      }
+      setLeafText(`wo-dim-${slug}-score`, scoreText(dim.score));
+      const sourceLabels = { gdelt: 'GDELT', ofac: 'OFAC', sipri: 'SIPRI', acled: 'ACLED', modules: '既有模块代理', market: '市场代理' };
+      const evidence = Array.isArray(dim.evidence) ? dim.evidence : [];
+      const sources = [...new Set(evidence.flatMap((item) => String(item?.source || '').toLowerCase().split('/').map((source) => sourceLabels[source.split(':')[0]] || '来源待确认')))];
+      // Upstream trendFromScore buckets a current score; it is not a time delta.
+      const trendText = key === 'marketConfirmation' ? marketLabel : Number.isFinite(dim.score) ? '当前快照' : '数据待确认';
+      setLeafText(`wo-dim-${slug}-trend`, `${sources.join(' + ') || '来源待确认'} · ${trendText}`);
     }
 
-    const drivers = wo.dominantDrivers || [];
+    const drivers = Array.isArray(wo.dominantDrivers) ? wo.dominantDrivers : [];
     for (let i = 0; i < 3; i += 1) {
       const driver = drivers[i];
-      if (!driver) continue;
-      const driverLabel = textValue(driver.labelZh) || textValue(driver.dimensionKey) || `驱动 ${i + 1}`;
-      setLeafText(`wo-driver-${i + 1}`, `${driverLabel} · ${driver.score ?? '—'}`);
+      const driverLabel = driver && textValue(driver.labelZh);
+      setLeafText(`wo-driver-${i + 1}`, driverLabel ? `${driverLabel} · ${scoreText(driver.score)}` : '—');
     }
-    if (Array.isArray(wo.warnings) && wo.warnings.length > 0) {
-      setLeafText('wo-warning-boundary', wo.warnings[0]);
-    }
+    setLeafText('wo-warning-boundary', Array.isArray(wo.warnings) && textValue(wo.warnings[0]) || '该模块用于结构性风险识别，不构成战争预测或投资建议。');
   } catch (error) {
     console.error('[renderMacroOverview] renderWorldOrderStress failed:', error);
   }
