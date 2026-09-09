@@ -113,7 +113,7 @@ function msToDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-function makeWeeklyDates(startDate, endDate) {
+export function makeWeeklyDates(startDate, endDate) {
   const out = [];
   let currentMs = dateToMs(startDate);
   const endMs = dateToMs(endDate);
@@ -161,24 +161,29 @@ async function fetchText(url) {
   }
 }
 
-async function fetchJson(url) {
-  return JSON.parse(await fetchText(url));
+export function historicalQueryWindow(options) {
+  const warmupDays = 28 + Math.max(...Object.values(HISTORICAL_MAX_AGE_DAYS));
+  const observationStartDate = msToDate(dateToMs(options.startDate) - warmupDays * 86400000);
+  if (!isHistoricalDate(observationStartDate)) throw new Error('Historical warmup date is outside supported calendar range');
+  return { evaluationStartDate: options.startDate, evaluationEndDate: options.endDate, observationStartDate, warmupDays };
 }
 
-async function fetchFredSeries(seriesId, options) {
+export async function fetchFredSeries(seriesId, options, { fetchTextImpl = fetchText, apiKey = FRED_API_KEY } = {}) {
   const errors = [];
-  if (options.preferFredApi && FRED_API_KEY) {
+  const { observationStartDate } = historicalQueryWindow(options);
+  const withinQueryWindow = rows => rows.filter(row => row.date >= observationStartDate && row.date <= options.endDate);
+  if (options.preferFredApi && apiKey) {
     try {
       const params = new URLSearchParams({
         series_id: seriesId,
-        api_key: FRED_API_KEY,
+        api_key: apiKey,
         file_type: 'json',
-        observation_start: options.startDate,
+        observation_start: observationStartDate,
         observation_end: options.endDate,
         sort_order: 'asc'
       });
       return {
-        rows: parseFredApiObservations(await fetchJson(`${FRED_API_BASE}?${params.toString()}`)),
+        rows: withinQueryWindow(parseFredApiObservations(JSON.parse(await fetchTextImpl(`${FRED_API_BASE}?${params.toString()}`)))),
         fetchMode: 'fred_api'
       };
     } catch (error) {
@@ -187,8 +192,7 @@ async function fetchFredSeries(seriesId, options) {
   }
   try {
     const params = new URLSearchParams({ id: seriesId });
-    const rows = parseFredCsv(await fetchText(`${FRED_CSV_BASE}?${params.toString()}`))
-      .filter((row) => row.date >= options.startDate && row.date <= options.endDate);
+    const rows = withinQueryWindow(parseFredCsv(await fetchTextImpl(`${FRED_CSV_BASE}?${params.toString()}`)));
     return { rows, fetchMode: 'fred_csv', apiErrors: errors };
   } catch (error) {
     errors.push(`csv:${error instanceof Error ? error.message : String(error)}`);
@@ -532,6 +536,7 @@ async function main() {
   const report = {
     generatedAt: new Date().toISOString(),
     options,
+    inputWindow: historicalQueryWindow(options),
     verdict: failedEvents.length || !windFallbackPolicy.pass ? 'needs_review' : 'pass_with_limitations',
     verdictScope: 'retrospective_score_and_source_conflict_checks_only',
     validation: describeHistoricalValidation(rules, rows.map(row => row.date)),

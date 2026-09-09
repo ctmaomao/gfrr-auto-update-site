@@ -1615,3 +1615,5 @@ for operator review only and must not be copied into production data.
 需要严格预测证据时可加 `--require-predictive-evidence`，当前路径会在任何请求/输出前明确拒绝。解锁需要历史发布时间与修订 vintage、测试期之前冻结的规则及事先确定的预测目标/未使用样本；不通过改标签解锁。此次仅运行离线回归，未刷新历史报告或下载新数据。
 
 历史输入年龄闸门（audit-only）：日频 FRED 序列最多沿用 7 个日历日，周频 WALCL 最多 14 日；超过边界按缺失处理，包括变化率的前期基准。该宽容窗仅用于离线历史序列，不代表生产 freshness 或历史发布时间已验证；报告保留 `historicalInputPolicy`。
+
+历史查询预热：`inputWindow.observationStartDate` 为评价起点前 42 天（28 天计算窗口 + 最长 14 天年龄容差），API 与 CSV 使用同一保留区间；`sampleRows` 与事件统计仍只纳入原评价区间，预热不是新增训练/评价样本。缺少真实前期观察仍按缺失处理，不填造数据。
