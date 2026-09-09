@@ -573,12 +573,33 @@ function selectScheduledPreviewMode(nowMs) {
   return slot % 2 === 0 ? 'github-mirror-preview' : 'worker-generated-preview';
 }
 
-async function buildGitHubMirrorPreviewOrStatusPayload(scheduledAt) {
+async function fetchMirrorResponse(url, timeoutMs = 4000) {
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('GitHub mirror request deadline exceeded'));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([deadline, (async () => {
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      const text = response.ok ? await response.text() : null;
+      return { response, text };
+    })()]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function buildGitHubMirrorPreviewOrStatusPayload(scheduledAt) {
   const fetchUrl = `${GITHUB_REALTIME_URL}?t=${Date.now()}`;
   let response;
+  let text;
 
   try {
-    response = await fetch(fetchUrl, { cache: 'no-store' });
+    ({ response, text } = await fetchMirrorResponse(fetchUrl));
   } catch (err) {
     return buildStatusPayload(
       scheduledAt,
@@ -593,18 +614,6 @@ async function buildGitHubMirrorPreviewOrStatusPayload(scheduledAt) {
       scheduledAt,
       'http-error',
       `HTTP ${response.status}`,
-      'github-mirror-preview',
-    );
-  }
-
-  let text;
-  try {
-    text = await response.text();
-  } catch (err) {
-    return buildStatusPayload(
-      scheduledAt,
-      'fetch-error',
-      err instanceof Error ? err.message : String(err),
       'github-mirror-preview',
     );
   }

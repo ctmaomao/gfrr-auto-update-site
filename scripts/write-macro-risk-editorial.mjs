@@ -17,23 +17,24 @@ export function assertEditorialSafeTarget(targetPath) {
 }
 
 function parseArgs(argv) {
-  const options = { input: null, target: null, flags: new Set() };
+  const options = { input: null, sourceInput: null, target: null, flags: new Set() };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--input') options.input = argv[++index];
+    else if (arg === '--source-input') options.sourceInput = argv[++index];
     else if (arg === '--target') options.target = argv[++index];
     else if (REQUIRED_FLAGS.has(arg)) options.flags.add(arg);
     else throw new Error(`unsupported argument: ${arg}`);
   }
   for (const flag of REQUIRED_FLAGS) if (!options.flags.has(flag)) throw new Error(`missing required flag: ${flag}`);
-  if (!options.input || !options.target) throw new Error('missing required --input or --target path');
+  if (!options.input || !options.target || !options.sourceInput) throw new Error('missing required --input, --source-input or --target path');
   return options;
 }
 
-export function buildEditorialWriteResult(radarData, projection, now = new Date()) {
+export function buildEditorialWriteResult(radarData, projection, now = new Date(), sourceInput = null) {
   if (projection?.schemaVersion !== 'macro-risk-editorial-production-projection-v1') throw new Error('input must be a macro risk editorial production projection');
   if (projection.target !== 'data/radar-data.json.macroRiskEditorialLayer') throw new Error('projection target is invalid');
-  return applyEditorialProjection(radarData, projection.macroRiskEditorialLayer, now);
+  return applyEditorialProjection(radarData, projection.macroRiskEditorialLayer, now, sourceInput);
 }
 
 function writeJsonAtomically(filePath, value) {
@@ -49,7 +50,8 @@ function main() {
     const target = assertEditorialSafeTarget(options.target);
     const before = JSON.parse(fs.readFileSync(target, 'utf8'));
     const projection = JSON.parse(fs.readFileSync(options.input, 'utf8'));
-    const after = buildEditorialWriteResult(before, projection);
+    const sourceInput = JSON.parse(fs.readFileSync(options.sourceInput, 'utf8'));
+    const after = buildEditorialWriteResult(before, projection, new Date(), sourceInput);
     const changed = JSON.stringify(before.macroRiskEditorialLayer || null) !== JSON.stringify(after.macroRiskEditorialLayer);
     if (changed) writeJsonAtomically(target, after);
     console.log(`Macro risk editorial production write PASS (target=${target}, changed=${changed}, scoringChanged=false)`);

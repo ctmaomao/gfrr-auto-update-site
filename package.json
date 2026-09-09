@@ -147,7 +147,7 @@
     "check:modules": "node scripts/check-module-imports.mjs",
     "check:realtime-js-frozen": "node --check scripts/check-realtime-js-frozen.mjs && node scripts/check-realtime-js-frozen.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "check:worker-syntax": "node scripts/check-worker-syntax.mjs",
+    "check:worker-syntax": "node scripts/check-worker-syntax.mjs && node --test tests/unit/worker-mirror-timeout.test.mjs tests/unit/gdelt-diagnostic-summary.test.mjs",
     "check:null-zero-display-guards": "node --check scripts/check-null-zero-display-guards.mjs && node scripts/check-null-zero-display-guards.mjs",
     "check:frontend-live-contracts": "node scripts/check-suite.mjs frontend-live-contracts",
     "check:dom": "node --check scripts/check-dom.mjs && node scripts/check-dom.mjs",

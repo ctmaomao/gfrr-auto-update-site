@@ -57,7 +57,10 @@
 
 | [ADR-0033](0033-runtime-security-patch-baseline.md) | Actual Node security patch floor and reviewed test dependency upgrade | Owner-authorized implementation; independent merge review retained |
 
+| [ADR-0034](0034-final-editorial-write-revalidation.md) | Final editorial input/output/review validation and bounded diagnostics | Owner-authorized implementation; independent merge review retained |
+
 ## Superseded
+
 
 (None yet)
 

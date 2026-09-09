@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
 import { EDITORIAL_TOPICS, assertValid, validateEditorialInput, validateEditorialOutput, validateEditorialReview, visibleEditorialText } from './macro-risk/editorial-contract.mjs';
@@ -181,11 +182,43 @@ const layer = projectEditorial({ input, output: result.output, review, generated
 assertValid(validateEditorialProduction(layer, radarData, new Date('2026-08-11T06:05:00.000Z')), 'macro editorial production');
 assert(layer.sourceLedger.every((source) => !Object.hasOwn(source, 'snippet')), 'production ledger must remove news snippets');
 const projection = { schemaVersion: 'macro-risk-editorial-production-projection-v1', target: 'data/radar-data.json.macroRiskEditorialLayer', macroRiskEditorialLayer: layer };
-const next = buildEditorialWriteResult(radarData, projection, new Date('2026-08-11T06:05:00.000Z'));
+const next = buildEditorialWriteResult(radarData, projection, new Date('2026-08-11T06:05:00.000Z'), input);
 const beforeWithoutLayer = structuredClone(radarData); delete beforeWithoutLayer.macroRiskEditorialLayer;
 const afterWithoutLayer = structuredClone(next); delete afterWithoutLayer.macroRiskEditorialLayer;
 assert(JSON.stringify(beforeWithoutLayer) === JSON.stringify(afterWithoutLayer), 'writer changed data outside macroRiskEditorialLayer');
-assert(JSON.stringify(applyEditorialProjection(radarData, layer, new Date('2026-08-11T06:05:00.000Z'))) === JSON.stringify(next), 'pure writer paths disagree');
+assert(JSON.stringify(applyEditorialProjection(radarData, layer, new Date('2026-08-11T06:05:00.000Z'), input)) === JSON.stringify(next), 'pure writer paths disagree');
+
+
+function expectFinalWriteRejected(mutatedLayer, sourceInput = input) {
+  let rejected = false;
+  try { applyEditorialProjection(radarData, mutatedLayer, new Date('2026-08-11T06:05:00.000Z'), sourceInput); }
+  catch { rejected = true; }
+  assert(rejected, 'tampered or ungrounded projection must fail final write');
+}
+function updateOutputDigests(target) {
+  const hash = createHash('sha256').update(JSON.stringify(target.output)).digest('hex');
+  target.provenance.artifactDigest = hash;
+  target.validation.artifactDigest = hash;
+}
+const tampered = structuredClone(layer); tampered.output.headlineZh += '正文被更改';
+expectFinalWriteRejected(tampered);
+const unsafeFinal = structuredClone(layer); unsafeFinal.output.watchNext[0].conditionZh = '建议买入并加仓'; updateOutputDigests(unsafeFinal);
+expectFinalWriteRejected(unsafeFinal);
+const discoveryFinal = structuredClone(layer); discoveryFinal.output.weeklyTimeline[1].sourceRefIds = [discoveryOnlyStory.id]; updateOutputDigests(discoveryFinal);
+expectFinalWriteRejected(discoveryFinal);
+const unknownRefFinal = structuredClone(layer); unknownRefFinal.output.weeklyTimeline[0].sourceRefIds = ['news:invented']; updateOutputDigests(unknownRefFinal);
+expectFinalWriteRejected(unknownRefFinal);
+const ledgerFinal = structuredClone(layer); ledgerFinal.sourceLedger[0].sourceName = 'altered source';
+expectFinalWriteRejected(ledgerFinal);
+const reviewFinal = structuredClone(layer); reviewFinal.qualityReview.warnings = ['invented warning'];
+expectFinalWriteRejected(reviewFinal);
+const futureFinal = structuredClone(layer); futureFinal.generatedAt = '2099-01-01T00:00:00Z';
+expectFinalWriteRejected(futureFinal);
+const oldOutputFinal = structuredClone(layer); oldOutputFinal.output.generatedAt = '2020-01-01T00:00:00Z'; oldOutputFinal.freshness.artifactGeneratedAt = oldOutputFinal.output.generatedAt; updateOutputDigests(oldOutputFinal);
+expectFinalWriteRejected(oldOutputFinal);
+expectFinalWriteRejected(layer, null);
+expectFinalWriteRejected(layer, { ...input, generatedAt: '2026-08-11T06:06:00Z' });
+console.log('Macro risk final writer regression: PASS (10 tampering/input/time cases)');
 
 const scoreMutation = structuredClone(result.output); scoreMutation.boundaries.affectsGfrrScoring = true;
 assert(!validateEditorialOutput(scoreMutation, input).ok, 'score mutation negative test must fail');

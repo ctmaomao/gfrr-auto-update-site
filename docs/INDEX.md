@@ -34,6 +34,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0034](ADR/0034-final-editorial-write-revalidation.md)：最终编辑层写入复验与有界诊断；不放宽来源、付费、评分或部署权限。
+
 - [ADR-0033](ADR/0033-runtime-security-patch-baseline.md)：本轮实际 Node 补丁版本下限与 Playwright 精确升级；保留零生产依赖和独立合并审阅。
 
 - [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)：Macro Risk 上游完成触发、持久日预算/输入去重及对应 workflow checker 变更；不放宽付费、来源、质量或展示契约。
