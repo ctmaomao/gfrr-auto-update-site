@@ -79,9 +79,9 @@ The operator downloads these six regional aggregated files:
 
 - Africa
 - Middle-East
-- Europe-and-Central-Asia
-- United-States-and-Canada
-- Latin-America-and-the-Caribbean
+- Europe-Central-Asia
+- US-and-Canada
+- Latin-America-the-Caribbean
 - Asia-Pacific
 
 Expected filename pattern:
@@ -90,7 +90,9 @@ Expected filename pattern:
 <Region>_aggregated_data_up_to_week_of-YYYY-MM-DD_*.xlsx
 ```
 
-The sanitizer is strict about region spelling and capitalization. Unknown regions are skipped with a warning. Missing expected regions are allowed, because the operator may be running a partial import, but the warning must be reviewed.
+The sanitizer is strict about region spelling and capitalization. Unknown input files are skipped with a warning and cannot satisfy coverage. Per [ADR-0033](ADR/0033-acled-weekly-completeness.md), a nonempty batch must resolve to all six canonical regions before parsing or writing; incomplete batches fail and preserve the existing config. Committed `filesIngested` and `regionalLast4Weeks` each require the six regions exactly once. This supersedes the previous partial-import allowance. Browser copy suffixes such as `_0 (1)` and ` (1)` are accepted without renaming source files; duplicate regional files retain deterministic newest-date selection and warnings.
+
+Regional cutoffs may differ. `latestWeek` is the maximum, not evidence that every region reaches that date. On 2026-09-09 the owner confirmed the official site still ends some regions on 2026-08-14 while others reach 2026-08-28. Preserve those dates: upstream lag is not a local publication fault.
 
 Weekly cadence follows ACLED's Monday/Tuesday regional release rhythm. If the latest week is 30-90 days old, the sanitizer and check warn. If it is more than 90 days old, they fail. Future-dated input fails immediately.
 
@@ -431,7 +433,7 @@ Top-level fields:
 - `latestFullYear`: most recent fully-complete year (typically `asOfDate.year - 1`).
 - `filesIngested`: 6 entries, one per file (exactly 6 required).
 - `global`: cross-country annual aggregates for `latestFullYear`.
-- `monthlyTrend`: last-12m vs prior-12m window derived from the country-month-year file.
+- `monthlyTrend`: two consecutive complete 12-calendar-month windows from the country-month-year file, anchored before the `asOfDate` month ([ADR-0034](ADR/0034-acled-complete-month-windows.md)). The whole object is `null` if any of the required 24 months is missing.
 - `topEscalatingCountries`: up to 10 entries, sorted by YoY vs prior-3y average; noise floor `latestFullYearEvents >= 50`.
 - `topFatalitiesCountries`: up to 10 entries, sorted by latest-full-year fatalities.
 - `quality`: source metadata and confidence (same canonical strings as weekly).
@@ -448,12 +450,14 @@ Top-level fields:
 - `civilianFatalitiesLatestFullYear`
 - `civilianFatalitiesShareLatestFullYear` — civilian / total fatalities in `latestFullYear`, clamped `[0, 1]` or `null`
 
-`monthlyTrend` fields:
+`monthlyTrend` fields (when non-null):
 
-- `latest12mWindow`: `[startYYYY-MM, endYYYY-MM]` or `null`
-- `prior12mWindow`: `[startYYYY-MM, endYYYY-MM]` or `null`
+- `latest12mWindow`: `[startYYYY-MM, endYYYY-MM]`, ending immediately before the `asOfDate` month
+- `prior12mWindow`: the immediately preceding nonoverlapping 12 calendar months
 - `latest12mEvents`, `prior12mEvents`: non-negative integers
 - `latest12mVsPrior12mDelta`: `latest12m / prior12m - 1`, or `null` if `prior12m === 0`
+
+The as-of month is conservatively excluded even on month-end releases; a filename alone does not prove complete all-day ingestion. Explicit zero-month totals are valid, but missing months are never zero-filled or replaced with older observed months. All 24 calendar months must exist; this does not prove complete country coverage. For the 2026-08-21 batch, compare 2025-08–2026-07 against 2024-08–2025-07. Annual metrics and all scoring weights remain unchanged.
 
 `topEscalatingCountries[]` fields:
 

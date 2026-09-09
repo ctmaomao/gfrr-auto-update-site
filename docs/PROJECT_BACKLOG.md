@@ -27,14 +27,28 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-09 全项目审计整改（逐步提交）
 
+- **本次集成授权**：owner 明确要求同步最新 main、处理冲突、检查、PR/审阅并最终合并。保持既有独立人工审阅要求；此前只推送的范围限制由本次合并授权替代，真实付费、源刷新与 Worker 部署仍未授权。合并 b06a1781 时保留 ACLED 周/月保护、配置与生产产物；本任务 ADR 顺延为 0035/0036/0037，文档索引和 Backlog 双方内容均保留。整合后 check:changed → check:all、node --check scripts/app.js、单元覆盖率门槛及 diff 检查通过；单元 376 pass / 0 fail / 1 既有样本缺失 skip，桌面/手机浏览器 13/13。
+
 - **第五步**：Daily 规则解释与 Bubble Watch HTML/SEP 解析抽离为纯函数，生成时间由 Daily 显式传入；抓取、打分、写入及失败语义保持原实现。9 组固定输入的旧输出摘要、HTML/SEP 正负向回归已纳入 check:all；旧源码逐段等价核对及现有 radar 数据输出逐字节比较通过。check:changed → check:all、单元覆盖率门槛和 diff 检查均退出 0；单元 366 pass / 1 既有本地原始样本缺失 skip / 0 fail。只新增验证入口，未放宽断言、增加 ignore 或改动生产数据。
 - **Acceptance baseline**：owner 要求按审计建议顺序逐项实施，每一步必要验证通过后 commit+push，再进入下一步。从 latest main 建立独立整改分支，保留原工作区 ACLED 改动；本轮推送功能分支，不包含合并、生产刷新、付费调用或 Worker 部署。
 - **顺序与验收**：①缺失值/市场输入可信性/首页加载修复及负向回归；②Node 24 补丁升级、实际运行版本门槛及 Playwright 常规升级；③AI 最终写入复验、实际 commit 溯源及既有网络请求超时/脱敏；④检查去重与当前运维入口整理；⑤Daily/Bubble Watch 纯函数渐进抽离及行为等价验证。每步运行 check:changed（代码变更触发完整套件），按范围补单元或浏览器检查。
-- **第四步**：两项 GDELT 检查移除 check:all 顶层重复调用，仍经 oil-directional 完整执行；展开 npm 调用 226→218、唯一检查集合无损失。P63 改验完整传递路径，独立检查器审阅见 [ADR-0035](ADR/0035-check-suite-deduplication.md)。README 收拢日常命令，Operations 明确静态首页/Worker/历史路径与 ignored 产物副作用，不删除历史文件。验证：调用图回归、P63 原行为检查、当前文档链接/契约及 check:changed → check:all 全部退出 0；没有丢失检查、新增 ignore 或生产改动。
-- **第三步**：Macro Risk writer 强制原始 compact input、双摘要/完整输出/质量审阅/来源账本复验，实际 checkout SHA 溯源；Worker 固定镜像 4 秒请求/body deadline，手动 GDELT 诊断有界且仅输出状态/计数。见 [ADR-0034](ADR/0034-final-editorial-write-revalidation.md)。验证：10 项最终 writer 负向案例、Worker 成功/失败/请求与正文超时、诊断脱敏与 CLI 回归通过；check:changed → check:all、单元覆盖率门槛及 diff 检查均退出 0。既有 assertion 未删除/放宽，无新 ignore；未执行真实 provider、诊断 dispatch 或 Worker 部署。
-- **第二步**：本机 nvm 已安装并切换 Node 24.20.0（npm 11.19.0），保留旧版本；项目声明与实际 runtime 门槛收紧为 >=24.20.0 <25，Playwright 固定升级 1.63.0，SheetJS 保留官方 0.20.3。断言精确版本调整与原因见 [ADR-0033](ADR/0033-runtime-security-patch-baseline.md)。验证：check:changed → check:all、依赖 audit（0 已知漏洞）、单元覆盖率门槛及浏览器 13/13 均退出 0；无生产依赖或部署。
+- **第四步**：两项 GDELT 检查移除 check:all 顶层重复调用，仍经 oil-directional 完整执行；展开 npm 调用 226→218、唯一检查集合无损失。P63 改验完整传递路径，独立检查器审阅见 [ADR-0037](ADR/0037-check-suite-deduplication.md)。README 收拢日常命令，Operations 明确静态首页/Worker/历史路径与 ignored 产物副作用，不删除历史文件。验证：调用图回归、P63 原行为检查、当前文档链接/契约及 check:changed → check:all 全部退出 0；没有丢失检查、新增 ignore 或生产改动。
+- **第三步**：Macro Risk writer 强制原始 compact input、双摘要/完整输出/质量审阅/来源账本复验，实际 checkout SHA 溯源；Worker 固定镜像 4 秒请求/body deadline，手动 GDELT 诊断有界且仅输出状态/计数。见 [ADR-0036](ADR/0036-final-editorial-write-revalidation.md)。验证：10 项最终 writer 负向案例、Worker 成功/失败/请求与正文超时、诊断脱敏与 CLI 回归通过；check:changed → check:all、单元覆盖率门槛及 diff 检查均退出 0。既有 assertion 未删除/放宽，无新 ignore；未执行真实 provider、诊断 dispatch 或 Worker 部署。
+- **第二步**：本机 nvm 已安装并切换 Node 24.20.0（npm 11.19.0），保留旧版本；项目声明与实际 runtime 门槛收紧为 >=24.20.0 <25，Playwright 固定升级 1.63.0，SheetJS 保留官方 0.20.3。断言精确版本调整与原因见 [ADR-0035](ADR/0035-runtime-security-patch-baseline.md)。验证：check:changed → check:all、依赖 audit（0 已知漏洞）、单元覆盖率门槛及浏览器 13/13 均退出 0；无生产依赖或部署。
 - **第一步**：World Order 缺失值不再转 0；Worker 时间复用 5 分钟未来容差，本地 realtime 复用可信性门与 90 分钟 fresh/aging 上限。首页主数据就绪先渲染、附属 JSON 8 秒请求/body deadline 后独立降级。遵守 DESIGN §2/3/4/5.4，布局、颜色、字体、IA 和折叠契约不变。验证：check:changed → check:all、node --check scripts/app.js 均退出 0；单元 355 pass / 1 本地原始样本缺失 skip / 0 fail，覆盖率门槛通过；浏览器 13/13 通过。原 checker 断言未删减，未新增 ignore；生产 JSON、workflow、原工作区配置不变。
 
+
+### 2026-09-09 ACLED 周度测试发布兼容修复
+
+- #326 精确 PR CI 通过后，Pages `34313341031` 在新增 CLI 用例失败：Pages 不执行 npm ci，而测试间接要求 XLSX devDependency。生产数据与 guard 未受损，部署未发布。
+- #327 已合并 `e7082031`；修复测试 fixture：OS 临时目录、明确的 parser stub、任何 workbook read 都失败；继续跑真实 CLI 的无输入与缺地区覆盖保护，不 skip、不改生产依赖/checker/workflow。按 [ADR-0033 补充](ADR/0033-acled-weekly-completeness.md#deployment-regression-correction)在无 node_modules 的工作树完整验证通过，CI `34314059959` 和[独立审阅](https://github.com/ctmaomao/gfrr-auto-update-site/pull/327#issuecomment-5596203925)通过。Pages 恢复验收 run `34314283618`，不运行源刷新或付费 AI。
+
+### 2026-09-09 ACLED 完整性与口径复核
+
+- **Acceptance baseline**：owner 今日确认部分官网周表仍截止 8 月 14 日，授权按建议完成本地遗留配置备份对齐、六地区覆盖保护、月度比较口径复核；沿用逐项 commit+push、独立 AI 审阅和合并授权。不改变真实来源日期、源许可、评分、观察期或付费门槛。
+- **本地对齐已完成**：两份旧配置 SHA-256 备份验证后安全快进至 `0f6e9bc4`。月表仅 preparedAt 不同；旧四地区周表不是待发布更新，已与已发布六地区版本对齐。备份保留在 ignored `manual-artifacts/acled-reconcile-20260909-044904/`，原始 XLSX 未改。
+- **周度保护已合并**：[ADR-0033](ADR/0033-acled-weekly-completeness.md)；#326 合并 `16b24f99`，最终 `8cbe266e` 本地完整检查、CI `34313155765` 与[独立审阅](https://github.com/ctmaomao/gfrr-auto-update-site/pull/326#issuecomment-5596095328)通过。缺地区在解析/写入前失败，两数组严格六地区且唯一；保留 8/14 与 8/28 错峰日期和浏览器后缀，原始 XLSX 未改。
+- **月度口径实施**：[ADR-0034](ADR/0034-acled-complete-month-windows.md)；一律排除 as-of 所在月（包括月末），比较连续完整 12 月与此前 12 月，缺任何月份整体不可得，不补零/借位。原六文件只读重算，独立核对 227740 / 219054 得 0.039652；日期、年度指标与排名不变。完整检查、独立审阅及合并后 World Order 双站发布按精确 PR 回执验收，不额外触发付费 AI。
 
 ### 2026-09-09 Macro Risk 上游衔接与付费去重
 
@@ -362,10 +376,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：main 0f6e9bc4（#325 已合并）；隔离工作区 gfrr-audit-remediation，功能分支 codex/project-audit-remediation。原工作区两份 ACLED 配置改动保留。前四步已依次提交推送 405f139d、7d573ff8、f2f5c947、ed7d05d8。
-- **当前任务**：按全项目审计建议完成五步整改：输入/加载修复、运行时升级、最终写入与网络边界加固、检查/文档收敛、管线纯函数抽离；五步必要验证均已通过，第五步随本交接提交推送，最终 commit+push 以任务回执为准。
-- **下一步**：本轮交付限功能分支，五步最终提交/推送回执见任务回复。独立审阅、合并及生产验收继续遵守 AGENTS，不把本地通过或推送当作已经上线。既有 ARR 自然周期验收及来源/质量观察维持各自任务范围。
-- **阻塞或等待**：没有本轮实施阻塞；隔离工作区缺少真实事件 ignored 原始样本的一项既有单元测试跳过，其余验收见当前整改条目。不触发 Daily/realtime 生成、真实 AI 付费调用或 Worker 部署；保留源权利、freshness、评分隔离和人工审阅门槛。
+- **工作基线**：codex/project-audit-remediation 五步提交 405f139d、7d573ff8、f2f5c947、ed7d05d8、e0176b7a；本次合入 main b06a1781，保留已发布 ACLED 周/月保护及上游数据。原工作区现有改动未触碰。
+- **当前任务**：owner 已授权正确顺序完成整合、必要验证、PR/审阅并最终合并。文档冲突保留双方内容，本任务 ADR 顺延 0035/0036/0037；整合后完整检查、单元及浏览器验收通过；PR 精确 CI 与独立审阅尚待完成，尚未合并。
+- **下一步**：检查通过后提交推送整合结果并创建 PR；完成独立人工审阅要求后执行已授权合并，再核对 Pages 与生产静态入口。独立审阅和部署的实际回执以本次任务为准，不能把本地全绿视为已经上线。
+- **阻塞或等待**：目前没有代码整合阻塞；独立人工审阅尚待完成。真实源刷新、AI 付费调用和 Worker 部署不在本次授权范围；ARR/来源与新闻质量的既有观察事项仍由原任务处理。
 
 ### 2026-09-09 刷新与卫星验收记录
 

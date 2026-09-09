@@ -161,7 +161,7 @@
 4. 在 discovery 前创建持久日预算与 Daily 输入去重 refs；任一已存在、创建不确定或失败均不调用，失败不释放预算。已有匹配输入的编辑层直接跳过。然后构建 bounded 新闻 discovery 与 compact input。
 5. 单次 DeepSeek call。
 6. output validator + quality review。
-7. production projection + single-field writer；按 [ADR-0034](ADR/0034-final-editorial-write-revalidation.md)，writer 必须通过 `--source-input` 读取原始 compact input，重新核验 input/output 摘要、完整输出契约、质量审阅及来源账本。projection 记录实际检出的 commit。
+7. production projection + single-field writer；按 [ADR-0036](ADR/0036-final-editorial-write-revalidation.md)，writer 必须通过 `--source-input` 读取原始 compact input，重新核验 input/output 摘要、完整输出契约、质量审阅及来源账本。projection 记录实际检出的 commit。
 8. contract / writer guard / data / frontend scoped checks。
 9. protected path 只允许 `data/radar-data.json`。
 10. 字段变化时 commit / push main；成功完成后触发 Pages 和 EdgeOne 的既有验证/发布路径，EdgeOne 保留无变化跳过和配额门槛。

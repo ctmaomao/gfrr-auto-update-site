@@ -1,4 +1,4 @@
-# ADR-0034: Final editorial write revalidation
+# ADR-0036: Final editorial write revalidation
 
 - Status: Owner-authorized audit remediation; independent merge review retained.
 - Date: 2026-09-09.

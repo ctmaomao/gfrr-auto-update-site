@@ -34,11 +34,15 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
-- [ADR-0035](ADR/0035-check-suite-deduplication.md)：检查执行去重与传递覆盖校验；保留全部 leaf 断言和独立 checker/合并审阅。
+- [ADR-0037](ADR/0037-check-suite-deduplication.md)：检查执行去重与传递覆盖校验；保留全部 leaf 断言和独立 checker/合并审阅。
 
-- [ADR-0034](ADR/0034-final-editorial-write-revalidation.md)：最终编辑层写入复验与有界诊断；不放宽来源、付费、评分或部署权限。
+- [ADR-0036](ADR/0036-final-editorial-write-revalidation.md)：最终编辑层写入复验与有界诊断；不放宽来源、付费、评分或部署权限。
 
-- [ADR-0033](ADR/0033-runtime-security-patch-baseline.md)：本轮实际 Node 补丁版本下限与 Playwright 精确升级；保留零生产依赖和独立合并审阅。
+- [ADR-0035](ADR/0035-runtime-security-patch-baseline.md)：本轮实际 Node 补丁版本下限与 Playwright 精确升级；保留零生产依赖和独立合并审阅。
+
+- [ADR-0034](ADR/0034-acled-complete-month-windows.md)：ACLED 月度完整日历窗口、缺月不可得及对应 checker 收紧；不改年度指标和评分。
+
+- [ADR-0033](ADR/0033-acled-weekly-completeness.md)：ACLED 周表六地区完整性与缺地区保留旧配置；保留官方错峰日期及原有来源授权。
 
 - [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)：Macro Risk 上游完成触发、持久日预算/输入去重及对应 workflow checker 变更；不放宽付费、来源、质量或展示契约。
 

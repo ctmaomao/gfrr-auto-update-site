@@ -1,4 +1,4 @@
-# ADR-0035: Preserve checks while removing duplicate execution
+# ADR-0037: Preserve checks while removing duplicate execution
 
 - Status: Owner-authorized audit remediation; independent checker/merge review retained.
 - Date: 2026-09-09.

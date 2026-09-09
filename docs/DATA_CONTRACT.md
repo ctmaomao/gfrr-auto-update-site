@@ -1053,7 +1053,7 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 `output` 必须包含：标题与导语、3–5 条近 7 日脉络、总分解释、2–4 个关键张力、恰好 6 个模块判读、3–5 个跨资产观察、历史比较、3–5 个观察/失效条件、数据限制、来源归属、置信度与 audit boundaries。可见正文兼容范围为 2,000–6,800 字，质量目标为 4,000–5,600 字；长度只统计前端实际展示的标题、日期、正文、数据限制与置信度说明，`sourceRefIds`、module 枚举、claim type、audit flags 等机器元数据不得计入可见正文。上限略高于 Bubble Watch 的 6,500 字，为六大模块和跨市场归因留冗余。历史比较只能解释同期压力位置，不得写成危机概率或六个月提前预警。
 
-`sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。[ADR-0034](ADR/0034-final-editorial-write-revalidation.md) 起，最终写入还须携带原始 compact input，重算 input/output 摘要并复验完整输出、质量审阅与来源账本；投影和原输出的生成时间均必须有效、未超 30 小时且未超过共享未来时间容差。
+`sourceLedger` 只保存被引用的紧凑来源元数据；新闻必须为 HTTPS，production ledger 不得包含 snippet、raw provider response、headers、API key 或全文。`discovery_only` 新闻不得单独支撑事实性判断。writer 必须证明除 `macroRiskEditorialLayer` 外 `data/radar-data.json` 字节语义不变。[ADR-0036](ADR/0036-final-editorial-write-revalidation.md) 起，最终写入还须携带原始 compact input，重算 input/output 摘要并复验完整输出、质量审阅与来源账本；投影和原输出的生成时间均必须有效、未超 30 小时且未超过共享未来时间容差。
 
 Provider prompt 必须把 `official` / `cross_checked` 新闻 source IDs 与 `discovery_only` IDs 分开枚举，并要求 `weeklyTimeline` 至少一个对象及全体事实对象引用并集实际包含至少 1 个可信新闻 ID。`sourceAttribution` 单独列出不等于事实对象引用；provider 忽略全部可信新闻时 review 必须 hard fail，adapter/writer 不得自动补引用或改写 AI 正文。
 

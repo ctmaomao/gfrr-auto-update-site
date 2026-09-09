@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-09T02:29:43.274Z",
+  "updatedAt": "2026-09-09T05:25:13.889Z",
   "sourceMode": "computed_with_external_sources",
   "score": 68,
   "state": "multi_theater_stress",
@@ -11,12 +11,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-09T02:27:05.389Z",
-    "ageMinutes": 3,
+    "updatedAt": "2026-09-09T05:21:26.269Z",
+    "ageMinutes": 4,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 99.21,
-    "gold": 4373.2998,
+    "brent": 98.985,
+    "gold": 4388.2002,
     "vix": 15.3,
     "dxy": 118.0732,
     "hyOas": 2.68,
@@ -4887,13 +4887,13 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-fresh-cache-hit",
-        "attemptedAt": "2026-09-09T02:29:42.719Z"
+        "attemptedAt": "2026-09-09T05:25:12.933Z"
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-09T02:29:43.054Z",
+      "lastFetchedAt": "2026-09-09T05:25:13.684Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -4958,7 +4958,7 @@
         "politicalViolenceYoyDelta": 0.207613,
         "civilianTargetingShareLatestFullYear": 0.314758,
         "fatalitiesLatestFullYear": 247233,
-        "monthlyLatest12mVsPrior12mDelta": 0.023264,
+        "monthlyLatest12mVsPrior12mDelta": 0.039652,
         "monthlyAsOfDate": "2026-08-21",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
@@ -5058,16 +5058,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4373.3，显示避险或实际利率压力定价。",
-          "value": 4373.2998,
+          "summary": "基于 Worker 快变量，黄金当前值 4388.2，显示避险或实际利率压力定价。",
+          "value": 4388.2002,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 99.21，对地缘与供应风险有部分确认作用。",
-          "value": 99.21,
+          "summary": "基于 Worker 快变量，布伦特当前值 98.98，对地缘与供应风险有部分确认作用。",
+          "value": 98.985,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5075,7 +5075,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.0732/4373.2998",
+          "value": "118.0732/4388.2002",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5083,7 +5083,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7673.52/4373.2998",
+          "value": "7673.52/4388.2002",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -5091,7 +5091,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 99.21,
+          "value": 98.985,
           "direction": "up",
           "confidence": 0.65
         }

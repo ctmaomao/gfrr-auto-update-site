@@ -55,11 +55,15 @@
 
 | [ADR-0032](0032-macro-editorial-upstream-admission.md) | Macro editorial upstream completion and durable day/input admission | Owner-authorized implementation; independent merge review required |
 
-| [ADR-0033](0033-runtime-security-patch-baseline.md) | Actual Node security patch floor and reviewed test dependency upgrade | Owner-authorized implementation; independent merge review retained |
+| [ADR-0033](0033-acled-weekly-completeness.md) | Complete weekly ACLED regional coverage with staggered official dates | Owner-authorized implementation; independent merge review required |
 
-| [ADR-0034](0034-final-editorial-write-revalidation.md) | Final editorial input/output/review validation and bounded diagnostics | Owner-authorized implementation; independent merge review retained |
+| [ADR-0034](0034-acled-complete-month-windows.md) | ACLED consecutive complete-calendar-month trend windows | Owner-authorized implementation; independent merge review required |
 
-| [ADR-0035](0035-check-suite-deduplication.md) | Deduplicate execution while preserving transitive guard coverage | Owner-authorized implementation; independent checker/merge review retained |
+| [ADR-0035](0035-runtime-security-patch-baseline.md) | Actual Node security patch floor and reviewed test dependency upgrade | Owner-authorized implementation; independent merge review retained |
+
+| [ADR-0036](0036-final-editorial-write-revalidation.md) | Final editorial input/output/review validation and bounded diagnostics | Owner-authorized implementation; independent merge review retained |
+
+| [ADR-0037](0037-check-suite-deduplication.md) | Deduplicate execution while preserving transitive guard coverage | Owner-authorized implementation; independent checker/merge review retained |
 
 ## Superseded
 

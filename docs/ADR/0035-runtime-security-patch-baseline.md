@@ -1,4 +1,4 @@
-# ADR-0033: Runtime security patch baseline
+# ADR-0035: Runtime security patch baseline
 
 - Status: Owner-authorized implementation; independent merge review retained.
 - Date: 2026-09-09.
