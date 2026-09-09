@@ -873,6 +873,8 @@ async function fetchGdeltDocBroad(options) {
       timeoutMs: FETCH_TIMEOUT_MS,
       maxRetries: GDELT_LIVE_MAX_RETRIES,
       retryJitterMaxMs: GDELT_RETRY_JITTER_MAX_MS,
+      // A 429 is persisted into the existing 24-hour cooldown, not retried seconds later.
+      retryOnRateLimit: false,
       label: 'GDELT DOC broad oil-news cache'
     });
     const sanitizedDiagnostics = sanitizeGdeltDiagnostics(diagnostics);

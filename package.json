@@ -141,7 +141,7 @@
     "review:worker-health-snapshot": "node scripts/review-worker-health-snapshot.mjs",
     "bump:frontend-asset-version": "node scripts/bump-frontend-asset-version.mjs",
     "check:gdelt-cloud-fetcher-integration": "node --check scripts/check-gdelt-cloud-fetcher-integration.mjs && node scripts/check-gdelt-cloud-fetcher-integration.mjs",
-    "check:gdelt-source-policy": "node --check scripts/check-gdelt-source-policy.mjs && node scripts/check-gdelt-source-policy.mjs",
+    "check:gdelt-source-policy": "node --check scripts/check-gdelt-source-policy.mjs && node scripts/check-gdelt-source-policy.mjs && node --test tests/unit/gdelt-rate-limit-policy.test.mjs",
     "review:gdelt-cache-health": "node scripts/review-gdelt-cache-health.mjs",
     "check:gdelt-cache-health": "node --check scripts/gdelt/cache-health-context.mjs && node --check scripts/review-gdelt-cache-health.mjs && node scripts/review-gdelt-cache-health.mjs --no-output",
     "check:modules": "node scripts/check-module-imports.mjs",

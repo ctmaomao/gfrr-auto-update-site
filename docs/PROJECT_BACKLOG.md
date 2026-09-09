@@ -29,6 +29,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 - **Acceptance baseline**：owner 授权按顺序处理四项体检问题及重复实现精简，每项检查通过后 commit+push；授权本任务 PR 审阅与合并。沿用独立人工 review 和生产验收要求；不启动深度扫描或多轮代理，不触发真实源刷新、付费调用或 Worker 部署。
 - **顺序**：①回测复用生产评分函数并删除重复公式，披露历史输入缺口；②核实 GDELT 调用频率、减少限流下的无效请求并保留降级；③区分历史重演与样本外验证，增加时间隔离保障；④为评分和最终写入补充行为覆盖，保持原门槛。
+- **第二项实施**：已核对 6h workflow、24h fresh/error cooldown 和 72h stale fallback；限流源于 upstream 429，其他新闻源仍可用。仅 Oil News 禁止 429 的秒级重试，保留其他临时错误的一次重试及既有来源隔离。4 项 mock 回归验证实际调用者一次请求、冷却落盘与再次调用零请求；未调用真实源，check:changed → check:all 退出 0，既有断言未放宽。
 - **第一项实施**：生产 deriveRisk 仅增加导出和默认规则参数，计算公式不变；回测删除重复校准、尾部闸门和评分公式，复用生产函数。历史适配补齐 Brent 前一观察值变化、曲线陡峭化与 RRP 周变化；运输候选缺失保持 0 并显式披露，FRED spot/BAA 代理不冒充实时输入。8 组旧生产完整输出摘要与历史适配/未来值不干扰等 11 项测试通过；check:changed → check:all 退出 0，既有断言未放宽。
 
 ### 2026-09-09 全项目审计整改（逐步提交）
@@ -383,9 +384,9 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **工作基线**：本轮从 origin/main 17b97291 建立 codex/project-health-fixes-20260910；上一轮 PR #329 已合并，旧 PR 不追加任务。原工作区与生产数据保持原样。
-- **当前任务**：按 owner 2026-09-10 授权处理体检四项问题；第一项已删除重复评分实现，11 项专项测试及 check:changed → check:all 全部通过。
+- **当前任务**：按 owner 2026-09-10 授权处理体检四项问题；前两项已完成：重复评分精简和 GDELT 限流请求优化；各自专项测试及 check:changed → check:all 全部通过。
 - **下一步**：每项必要检查通过后 commit+push，再实施下一项；全部完成后创建本轮 PR，按既定独立 review 与 CI 门槛集成并核对生产验收。
-- **阻塞或等待**：第一项已通过完整检查；合并须有独立人工 review。未授权真实源刷新、付费调用或 Worker 部署，不启动深度扫描/多轮代理。
+- **阻塞或等待**：前两项已通过完整检查；合并须有独立人工 review。未授权真实源刷新、付费调用或 Worker 部署，不启动深度扫描/多轮代理。
 
 ### 2026-09-09 刷新与卫星验收记录
 

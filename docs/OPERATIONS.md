@@ -1385,6 +1385,8 @@ npm run review:market-pricing-freshness -- --strict
 
 ### GDELT P40 post-refresh context
 
+2026-09-10 起 Oil News 遇到 429 直接进入既有 24h cooldown，预期 diagnostics 为 `attempts=1/retryCount=0`。5xx/网络临时错误仍允许一次有界重试。使用自然刷新后的产物观察成功率；无需手动刷新来验收这一策略，不扩大 Tavily/Brave 调用频率。
+
 在 Oil News、Bubble Watch 或 World Order 自然刷新后运行 `npm run review:gdelt-cache-health -- --no-output --strict`。严格模式在任何 WATCH/WARN/FAIL 上非零退出；先看 `rows[].refreshContext` 和 `summary.postRefresh`,不要仅凭全局 WATCH 调整缓存政策:
 
 - `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在 classified error cooldown 内；先读 `lastFetchFailure.errorClass/cooldownHours`（429=24h、timeout/network=4h、5xx=6h、other=12h）,等待对应窗口到期后的自然刷新,不要手动连发 workflow。

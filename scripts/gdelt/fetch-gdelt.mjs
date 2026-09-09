@@ -288,7 +288,8 @@ async function fetchGdeltJson(url, {
   minIntervalMs = DEFAULT_GDELT_MIN_INTERVAL_MS,
   maxRetries = DEFAULT_GDELT_MAX_RETRIES,
   retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
-  retryJitterMaxMs = 0
+  retryJitterMaxMs = 0,
+  retryOnRateLimit = true
 } = {}) {
   const startedAtMs = Date.now();
   const attempts = [];
@@ -340,7 +341,7 @@ async function fetchGdeltJson(url, {
         }
       }
 
-      const retryable = response.status === 429 || response.status >= 500;
+      const retryable = (response.status === 429 && retryOnRateLimit) || response.status >= 500;
       if (retryable && attemptIndex < boundedRetries) {
         await sleep(retryDelayMs(retryAfterMs || DEFAULT_GDELT_RETRY_MS, retryJitterMaxMs));
         continue;
@@ -405,6 +406,7 @@ async function fetchGdeltDocJson({
   maxRetries = DEFAULT_GDELT_MAX_RETRIES,
   retryAfterCapMs = DEFAULT_GDELT_RETRY_AFTER_CAP_MS,
   retryJitterMaxMs = 0,
+  retryOnRateLimit = true,
   label = 'GDELT DOC'
 } = {}) {
   const params = queryParams instanceof URLSearchParams
@@ -421,7 +423,8 @@ async function fetchGdeltDocJson({
     minIntervalMs,
     maxRetries,
     retryAfterCapMs,
-    retryJitterMaxMs
+    retryJitterMaxMs,
+    retryOnRateLimit
   });
 }
 
