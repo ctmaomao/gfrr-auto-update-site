@@ -1,0 +1,301 @@
+{
+  "sourceCommit": "17b972915393271b58866c4d00954c5296c3299d",
+  "cases": [
+    {
+      "name": "normal",
+      "rt": {
+        "values": {
+          "brent": 80,
+          "dxy": 115,
+          "vix": 18,
+          "hyOas": 3,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": 0,
+          "onRrp": 500,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.2,
+          "t10y2yWeekChange": 0,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 1,
+          "sourceStatus": {
+            "igOas": "live"
+          }
+        }
+      },
+      "expectedSha256": "985f047d4023cb8ded1b20bf5d256b4bcb2476aee23090ca1aeac0806ba7e0cd",
+      "expectedScore": 31
+    },
+    {
+      "name": "defaults",
+      "rt": {},
+      "macroDrivers": {},
+      "expectedSha256": "dae77ec251a1ee69911a1180ffea869b44afce09a2f40f9787687048645d8ec2",
+      "expectedScore": 42
+    },
+    {
+      "name": "oil-jump",
+      "rt": {
+        "values": {
+          "brent": 80,
+          "dxy": 115,
+          "vix": 18,
+          "hyOas": 3,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        },
+        "changes": {
+          "brent1d": 20
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": 0,
+          "onRrp": 500,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.2,
+          "t10y2yWeekChange": 0,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 1,
+          "sourceStatus": {
+            "igOas": "live"
+          }
+        }
+      },
+      "expectedSha256": "88c572c06264fe777fee62a44128c78a12cb043399d096d66fc1a3ab89e2813a",
+      "expectedScore": 37
+    },
+    {
+      "name": "oil-fall",
+      "rt": {
+        "values": {
+          "brent": 80,
+          "dxy": 115,
+          "vix": 18,
+          "hyOas": 3,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        },
+        "changes": {
+          "brent1d": -20
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": 0,
+          "onRrp": 500,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.2,
+          "t10y2yWeekChange": 0,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 1,
+          "sourceStatus": {
+            "igOas": "live"
+          }
+        }
+      },
+      "expectedSha256": "985f047d4023cb8ded1b20bf5d256b4bcb2476aee23090ca1aeac0806ba7e0cd",
+      "expectedScore": 31
+    },
+    {
+      "name": "steepening",
+      "rt": {
+        "values": {
+          "brent": 80,
+          "dxy": 115,
+          "vix": 18,
+          "hyOas": 3,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": 0,
+          "onRrp": 500,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.2,
+          "t10y2yWeekChange": 0,
+          "sourceStatus": {
+            "t10y2y": "live"
+          },
+          "steepeningAlert": true
+        },
+        "credit": {
+          "igOas": 1,
+          "sourceStatus": {
+            "igOas": "live"
+          }
+        }
+      },
+      "expectedSha256": "2403619d5729465660fb99b58cffd866283583988d8be943ad51e73fd9050629",
+      "expectedScore": 33
+    },
+    {
+      "name": "tail-stress",
+      "rt": {
+        "values": {
+          "brent": 150,
+          "dxy": 115,
+          "vix": 70,
+          "hyOas": 12,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": 0,
+          "onRrp": 500,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.2,
+          "t10y2yWeekChange": 0,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 1,
+          "sourceStatus": {
+            "igOas": "live"
+          }
+        }
+      },
+      "expectedSha256": "18b68004087a1d01cbc2f3453892b5213d9e4566385e445e13fae55292051198",
+      "expectedScore": 82
+    },
+    {
+      "name": "transport",
+      "rt": {
+        "values": {
+          "brent": 80,
+          "dxy": 115,
+          "vix": 18,
+          "hyOas": 3,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": 0,
+          "onRrp": 500,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.2,
+          "t10y2yWeekChange": 0,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 1,
+          "sourceStatus": {
+            "igOas": "live"
+          }
+        },
+        "energyTransport": {
+          "sourceStatus": {
+            "chokepoints": "live"
+          },
+          "latestAgeDays": 1,
+          "transportShockCandidate": {
+            "score": 75,
+            "status": "watch",
+            "eligibleForMainScore": true
+          }
+        }
+      },
+      "expectedSha256": "e1109259ebff5309d8ae08340abd85f0eebc9b610a67666cede5460c3bc1463a",
+      "expectedScore": 34
+    },
+    {
+      "name": "missing-status",
+      "rt": {
+        "values": {
+          "brent": 80,
+          "dxy": 115,
+          "vix": 18,
+          "hyOas": 3,
+          "us10y": 4,
+          "real10y": 1.8,
+          "breakeven10y": 2.3,
+          "spx": 5300
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "onRrp": 0,
+          "sourceStatus": {
+            "onRrp": "missing"
+          }
+        },
+        "curve": {
+          "t10y2y": -1,
+          "sourceStatus": {
+            "t10y2y": "missing"
+          }
+        }
+      },
+      "expectedSha256": "9568e83e861dac6ce9e6211d66539d4f8627dfb839de09f3074efd72706a3f27",
+      "expectedScore": 34
+    }
+  ]
+}

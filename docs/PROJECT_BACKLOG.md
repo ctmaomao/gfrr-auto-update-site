@@ -25,6 +25,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-10 节制体检整改
+
+- **Acceptance baseline**：owner 授权按顺序处理四项体检问题及重复实现精简，每项检查通过后 commit+push；授权本任务 PR 审阅与合并。沿用独立人工 review 和生产验收要求；不启动深度扫描或多轮代理，不触发真实源刷新、付费调用或 Worker 部署。
+- **顺序**：①回测复用生产评分函数并删除重复公式，披露历史输入缺口；②核实 GDELT 调用频率、减少限流下的无效请求并保留降级；③区分历史重演与样本外验证，增加时间隔离保障；④为评分和最终写入补充行为覆盖，保持原门槛。
+- **第一项实施**：生产 deriveRisk 仅增加导出和默认规则参数，计算公式不变；回测删除重复校准、尾部闸门和评分公式，复用生产函数。历史适配补齐 Brent 前一观察值变化、曲线陡峭化与 RRP 周变化；运输候选缺失保持 0 并显式披露，FRED spot/BAA 代理不冒充实时输入。8 组旧生产完整输出摘要与历史适配/未来值不干扰等 11 项测试通过；check:changed → check:all 退出 0，既有断言未放宽。
+
 ### 2026-09-09 全项目审计整改（逐步提交）
 
 - **本次集成授权**：owner 明确要求同步最新 main、处理冲突、检查、PR/审阅并最终合并。owner 随后明确批准仅 PR #329 以独立 AI 审阅替代人工；仅在最终提交的独立审阅和 CI 通过后执行合并及自然触发的 Pages/EdgeOne 验收，不扩展到其它 PR。此前只推送的范围限制由本次合并授权替代，真实付费、源刷新与 Worker 部署仍未授权。合并 b06a1781 时保留 ACLED 周/月保护、配置与生产产物；本任务 ADR 顺延为 0035/0036/0037，文档索引和 Backlog 双方内容均保留。整合后 check:changed → check:all、node --check scripts/app.js、单元覆盖率门槛及 diff 检查通过；单元 376 pass / 0 fail / 1 既有样本缺失 skip，桌面/手机浏览器 13/13。
@@ -376,10 +382,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：codex/project-audit-remediation 五步提交 405f139d、7d573ff8、f2f5c947、ed7d05d8、e0176b7a；本次合入 main b06a1781，保留已发布 ACLED 周/月保护及上游数据。原工作区现有改动未触碰。
-- **当前任务**：owner 已授权正确顺序完成整合、必要验证、PR/审阅并最终合并。文档冲突保留双方内容，本任务 ADR 顺延 0035/0036/0037；整合后完整检查、单元及浏览器验收通过；PR #329 的 5e2a142e 精确 CI 34323090531 和无 node_modules 的 Pages 完整检查已通过；本次记录 owner 专属 AI 审阅替代批准，独立审阅最终提交后才能合并。
-- **下一步**：本次批准记录及必要修复沿用 [PR #329](https://github.com/ctmaomao/gfrr-auto-update-site/pull/329)，精确 CI/独立审阅/合并回执以该 PR 为准；完成本 PR 获准的独立 AI 审阅后执行已授权合并，再核对 Pages 与生产静态入口。独立审阅和部署的实际回执以本次任务为准，不能把本地全绿视为已经上线。
-- **阻塞或等待**：目前没有代码整合阻塞；本 PR 专属独立 AI 审阅进行中，最终提交 CI/审阅均通过后合并。真实源刷新、AI 付费调用和 Worker 部署不在本次授权范围；ARR/来源与新闻质量的既有观察事项仍由原任务处理。
+- **工作基线**：本轮从 origin/main 17b97291 建立 codex/project-health-fixes-20260910；上一轮 PR #329 已合并，旧 PR 不追加任务。原工作区与生产数据保持原样。
+- **当前任务**：按 owner 2026-09-10 授权处理体检四项问题；第一项已删除重复评分实现，11 项专项测试及 check:changed → check:all 全部通过。
+- **下一步**：每项必要检查通过后 commit+push，再实施下一项；全部完成后创建本轮 PR，按既定独立 review 与 CI 门槛集成并核对生产验收。
+- **阻塞或等待**：第一项已通过完整检查；合并须有独立人工 review。未授权真实源刷新、付费调用或 Worker 部署，不启动深度扫描/多轮代理。
 
 ### 2026-09-09 刷新与卫星验收记录
 

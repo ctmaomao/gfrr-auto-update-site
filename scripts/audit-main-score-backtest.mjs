@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { deriveHistoricalRisk } from './daily/historical-score.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/main-score-audit/main-score-backtest-latest.json';
 const DEFAULT_START_DATE = '2006-01-01';
@@ -214,163 +215,12 @@ function pctChange(current, previous) {
   return ((current - previous) / previous) * 100;
 }
 
-function normalizedCalibrationPoints(points) {
-  if (!Array.isArray(points)) return [];
-  return points
-    .map((point) => ({ value: Number(point?.value), risk: Number(point?.risk), label: point?.label || null }))
-    .filter((point) => Number.isFinite(point.value) && Number.isFinite(point.risk))
-    .sort((a, b) => a.value - b.value);
-}
-
-function riskFromCalibration(value, calibration, fallbackBase, fallbackScale) {
-  const fallbackRisk = clamp((value - fallbackBase) * fallbackScale);
-  const points = normalizedCalibrationPoints(calibration?.points);
-  if (!Number.isFinite(value) || points.length < 2) return fallbackRisk;
-  if (value <= points[0].value) return clamp(points[0].risk);
-  if (value >= points[points.length - 1].value) return clamp(points[points.length - 1].risk);
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const left = points[index];
-    const right = points[index + 1];
-    if (value >= left.value && value <= right.value) {
-      const span = right.value - left.value;
-      const pct = span > 0 ? (value - left.value) / span : 0;
-      return clamp(left.risk + (right.risk - left.risk) * pct);
-    }
-  }
-  return fallbackRisk;
-}
-
-function weightedAvg(entries) {
-  let weightSum = 0;
-  let valueSum = 0;
-  for (const [value, weight] of entries) {
-    if (Number.isFinite(value) && Number.isFinite(weight)) {
-      weightSum += weight;
-      valueSum += value * weight;
-    }
-  }
-  return weightSum > 0 ? valueSum / weightSum : null;
-}
-
-function buildTailRiskOverlay(inputs) {
-  const reasons = [];
-  let floor = null;
-  const add = (candidateFloor, key) => {
-    floor = Math.max(floor ?? 0, candidateFloor);
-    reasons.push(key);
-  };
-  if (inputs.vixRisk >= 95 && inputs.hyRisk >= 55) add(82, 'systemic_liquidity_credit_shock');
-  else if (inputs.vixRisk >= 85 && (inputs.hyRisk >= 45 || inputs.baseLiquidity >= 65 || inputs.bankingRisk >= 65)) add(72, 'systemic_liquidity_credit_watch');
-  if (inputs.oilRisk >= 85 && inputs.inflationRisk >= 60 && (inputs.vixRisk >= 45 || inputs.rateRisk >= 40 || inputs.dollarRisk >= 65)) add(68, 'energy_inflation_tail');
-  if ((inputs.curveInversionRisk ?? 0) >= 60 && inputs.vixRisk >= 70 && (inputs.bankingRisk >= 35 || (inputs.nimPressureRisk ?? 0) >= 70)) add(66, 'banking_curve_stress');
-  const baseScore = clamp(inputs.baseScore);
-  const overlayFloor = Number.isFinite(floor) ? clamp(floor) : null;
-  const adjustedScore = overlayFloor === null ? baseScore : clamp(Math.max(baseScore, overlayFloor));
-  return { applied: adjustedScore > baseScore, floor: overlayFloor, adjustedScore, scoreAdd: adjustedScore - baseScore, reasons };
-}
-
 function buildValuesForDate(date, seriesRows) {
   return Object.fromEntries(Object.keys(SERIES).map((key) => [key, latestOnOrBefore(seriesRows[key], date)?.value ?? null]));
 }
 
 function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
-  const values = buildValuesForDate(date, seriesRows);
-  if (valueOverrides && typeof valueOverrides === 'object') {
-    for (const [key, value] of Object.entries(valueOverrides)) {
-      if (Object.hasOwn(values, key) && Number.isFinite(value)) values[key] = value;
-    }
-  }
-  const rb = rules.riskBaselines;
-  const creditSpread = Number.isFinite(values.hyOas) ? values.hyOas : values.baa10y;
-  for (const key of ['brent', 'dxy', 'vix', 'us10y', 'real10y']) {
-    if (!Number.isFinite(values[key])) return null;
-  }
-  if (!Number.isFinite(creditSpread)) return null;
-  const brent = values.brent;
-  const dxy = values.dxy;
-  const vix = values.vix;
-  const hy = creditSpread;
-  const creditProxyUsed = !Number.isFinite(values.hyOas) && Number.isFinite(values.baa10y);
-  const us10y = values.us10y;
-  const real10y = values.real10y;
-  const breakeven = Number.isFinite(values.breakeven10y) ? values.breakeven10y : rules.defaults.breakeven10y;
-  const spx = Number.isFinite(values.spx) ? values.spx : rules.defaults.spx;
-
-  const oilRisk = clamp((brent - rb.brentBase) * rb.brentScale);
-  const dollarRisk = riskFromCalibration(dxy, rules.riskCalibrations?.dxyBroadDollar, rb.dxyBase, rb.dxyScale);
-  const hyRisk = clamp((hy - rb.hyBase) * rb.hyScale);
-  const vixRisk = clamp((vix - rb.vixBase) * rb.vixScale);
-  const rateRisk = clamp((us10y - rb.us10yBase) * rb.us10yScale);
-  const realRisk = clamp((real10y - rb.real10yBase) * rb.real10yScale);
-  const inflationRisk = clamp((breakeven - rb.breakevenBase) * rb.breakevenScale + oilRisk * rb.oilInflationWeight);
-  const spxRisk = clamp((5300 - spx) / 6);
-  const baseLiquidity = clamp((dollarRisk * 0.35) + (hyRisk * 0.35) + (vixRisk * 0.18) + (rateRisk * 0.12));
-  const baseDebt = clamp((realRisk * 0.45) + (rateRisk * 0.3) + (hyRisk * 0.25));
-  const baseBanking = clamp((hyRisk * 0.55) + (vixRisk * 0.2) + (dollarRisk * 0.25));
-
-  const walcl = values.walcl;
-  const walclAgo = latestOnOrBefore(seriesRows.walcl, addDays(date, -28))?.value ?? null;
-  const walcl4wChange = pctChange(walcl, walclAgo);
-  const onRrp = values.onRrp;
-  const t10y2y = values.t10y2y;
-  const igOas = values.igOas;
-  const baa10y = values.baa10y;
-  let fedAssetRisk = Number.isFinite(walcl4wChange) ? clamp((-walcl4wChange) * 18) : null;
-  let onRrpRisk = null;
-  const fedCfg = rules.macroDrivers.fedLiquidity;
-  if (Number.isFinite(onRrp)) {
-    if (onRrp < fedCfg.onRrpCriticalThreshold) onRrpRisk = 85;
-    else if (onRrp < fedCfg.onRrpTightThreshold) onRrpRisk = 55;
-    else onRrpRisk = 15;
-  }
-  const curveInversionRisk = Number.isFinite(t10y2y) ? (t10y2y < 0 ? clamp(Math.abs(t10y2y) * 80) : 10) : null;
-  const curveSteepeningRisk = null;
-  let igOasRisk = null;
-  const creditCfg = rules.macroDrivers.credit;
-  if (Number.isFinite(igOas)) {
-    if (igOas >= creditCfg.igOasCriticalThreshold) igOasRisk = 90;
-    else if (igOas >= creditCfg.igOasStressThreshold) igOasRisk = 70;
-    else if (igOas >= creditCfg.igOasWatchThreshold) igOasRisk = 45;
-    else igOasRisk = 20;
-  } else if (Number.isFinite(baa10y)) {
-    if (baa10y >= 3.0) igOasRisk = 90;
-    else if (baa10y >= 2.5) igOasRisk = 70;
-    else if (baa10y >= 2.0) igOasRisk = 45;
-    else igOasRisk = 20;
-  }
-  const nimPressureRisk = Number.isFinite(t10y2y) ? (t10y2y < -0.5 ? 75 : t10y2y < 0 ? 50 : 20) : null;
-  let reservePressure = null;
-  if (Number.isFinite(onRrp)) {
-    reservePressure = onRrp < fedCfg.onRrpCriticalThreshold ? 85 : onRrp < fedCfg.onRrpTightThreshold ? 50 : 15;
-  }
-
-  const sw = rules.moduleSubWeights;
-  const liquidity = clamp(weightedAvg([[baseLiquidity, sw.liquidity.baseWeight], [fedAssetRisk, sw.liquidity.fedAssetWeight], [onRrpRisk, sw.liquidity.onRrpWeight]]) ?? baseLiquidity);
-  const debt = clamp(weightedAvg([[baseDebt, sw.debt.baseWeight], [curveInversionRisk, sw.debt.curveInversionWeight], [curveSteepeningRisk, sw.debt.curveSteepeningWeight]]) ?? baseDebt);
-  const banking = clamp(weightedAvg([[baseBanking, sw.banking.baseWeight], [igOasRisk, sw.banking.igOasWeight], [nimPressureRisk, sw.banking.nimPressureWeight], [reservePressure, sw.banking.reservePressureWeight]]) ?? baseBanking);
-  const modules = {
-    geopolitical: clamp((oilRisk * 0.72) + (vixRisk * 0.28)),
-    energy: clamp(oilRisk * 0.82),
-    inflation: clamp((inflationRisk * 0.72) + (realRisk * 0.08)),
-    liquidity,
-    debt,
-    banking
-  };
-  const mw = rules.moduleWeights;
-  const baseScore = clamp(modules.geopolitical * mw.geopolitical + modules.energy * mw.energy + modules.inflation * mw.inflation + modules.liquidity * mw.liquidity + modules.debt * mw.debt + modules.banking * mw.banking);
-  const overlay = buildTailRiskOverlay({ baseScore, oilRisk, inflationRisk, vixRisk, hyRisk, rateRisk, dollarRisk, baseLiquidity, bankingRisk: banking, curveInversionRisk, nimPressureRisk });
-
-  return {
-    date,
-    score: overlay.adjustedScore,
-    baseScore,
-    overlayApplied: overlay.applied,
-    overlayFloor: overlay.floor,
-    overlayReasons: overlay.reasons,
-    modules,
-    inputs: { brent, dxy, vix, hyOas: hy, creditProxyUsed, us10y, real10y, breakeven10y: breakeven, spx },
-    components: { oilRisk, dollarRisk, hyRisk, vixRisk, rateRisk, realRisk, inflationRisk, spxRisk, fedAssetRisk, onRrpRisk, curveInversionRisk, igOasRisk, nimPressureRisk, reservePressure }
-  };
+  return deriveHistoricalRisk(date, seriesRows, rules, valueOverrides);
 }
 
 function percentile(values, pct) {
