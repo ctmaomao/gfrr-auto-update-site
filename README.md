@@ -21,12 +21,11 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 
 ## 运行结构
 
-- Worker-first 是主链路;前端通过 strict gate 选择 `/market.worker-preview.json`。
-- `realtime-data` 分支和本地 `realtime/market.json` 仅作为 fallback / Daily baseline 输入观察。
-- Daily pipeline 写入 `data/radar-data.json`、`data/radar-history.json` 和 `data/radar-history-full.json`。
-- `displayInputsBaseline` 是 baseline fallback 的结构化当前值来源。
-- 前端最终当前值由运行时 `data.__effectiveDisplayInputs` 合成;渲染层不得绕过它直接使用 raw realtime values。
-- `/market.secondary-preview.json` 是独立 secondary diagnostics endpoint,不得污染主 preview 或覆盖 `values.*`。
+- 首页由 `scripts/app.js` 读取 `data/radar-data.json` 静态快照，主数据就绪先呈现，附属 JSON 独立降级；不在浏览器重算主分或决策。
+- Daily 从 `realtime-data` 分支读取输入，写入 radar 数据与历史；`displayInputsBaseline` 保留结构化基线值。
+- Worker 独立生成 `/market.worker-preview.json`；它是 Worker 运行链的主预览，不是当前首页的直接数据入口。
+- `scripts/modules/realtime.js` 保留为冻结的历史 overlay 路径，当前未接入；重新接入须单独评审。
+- `/market.secondary-preview.json` 仅提供独立诊断，不覆盖主 preview 或 `values.*`。
 
 ## 数据边界
 
@@ -40,22 +39,18 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 
 ## 本地使用
 
-```bash
-npm install
-npm run check:all
-```
+使用 Node `>=24.20.0 <25`；在选定项目工作区执行 `npm ci` 安装锁定的开发依赖。
 
-常用定向检查:
+| 任务 | 入口 | 范围 |
+|---|---|---|
+| 日常修改后验证 | `npm run check:changed` | 自动选择文档或完整检查 |
+| 完整提交/发布保护检查 | `npm run check:all` | 对生产数据只读，但生成 ignored analyst input |
+| 单元行为与指定模块覆盖率 | `npm run test:unit:coverage` | 不是全仓覆盖率 |
+| 桌面/手机浏览器验收 | `npm run test:e2e` | 生成本地 `_site` 和测试结果；首次先安装锁定 Chromium |
+| 查看当前数据契约 | `npm run check:data` | 不刷新数据；expected skip 解释用 `check:data:verbose` |
+| 查看全部可用脚本 | `npm run` | 完整定义以 [package.json](package.json) 为准 |
 
-```bash
-npm run check:docs
-npm run check:data
-npm run check:data:verbose
-npm run check:data:strict-live-alignment
-npm run check:workflows
-```
-
-`package.json` 是所有检查命令和 `check:all` 组成的权威来源。运维细节、发布状态、milestone 历史和版本维护规则不放在 README,请进入下方文档。
+源刷新、手工样本、付费 AI、发布和历史诊断属于专项操作，按 [OPERATIONS](docs/OPERATIONS.md) 对应章节及 [AGENTS](AGENTS.md) 的授权边界执行。日常操作无需遍历全部历史脚本。
 
 ## 文档地图
 

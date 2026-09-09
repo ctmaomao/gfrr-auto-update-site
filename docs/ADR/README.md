@@ -59,8 +59,9 @@
 
 | [ADR-0034](0034-final-editorial-write-revalidation.md) | Final editorial input/output/review validation and bounded diagnostics | Owner-authorized implementation; independent merge review retained |
 
-## Superseded
+| [ADR-0035](0035-check-suite-deduplication.md) | Deduplicate execution while preserving transitive guard coverage | Owner-authorized implementation; independent checker/merge review retained |
 
+## Superseded
 
 (None yet)
 

@@ -10,15 +10,15 @@
 
 ## 1. 本地完整检查
 
-提交前优先运行：
+提交前优先运行（按变更选检查，代码/规则变更仍执行完整套件）：
 
 ```bash
-npm run check:all
+npm run check:changed
 ```
 
 该命令的实际组成以 `package.json` 的 `scripts.check:all` 为准。不要在运维文档中复制完整链路或硬编码检查数量,避免与 `package.json` 漂移。
 
-默认 `check:all` 是只读验证链。external AI 的 artifact / projection / manual-input 生成能力保留为显式 opt-in 命令,不属于日常默认验证。
+`check:all` 对生产数据只读，但 external-ai 套件包含 `check:external-ai-manual-input:analyst`，会生成 ignored `manual-artifacts/external-ai/manual-input-analyst-latest.json`。它不调用 provider、不写生产 JSON。要求零文件写入的审计不运行该生成项；其它 artifact/projection 命令仍按各自授权和副作用执行。
 
 PR 还必须通过可量化纯逻辑覆盖率和单一 Chromium 浏览器 smoke。首次本地运行浏览器 smoke 前安装项目锁定版本对应的 Chromium；测试只读取本地静态文件，不调用生产 AI、Worker 写接口或 KV：
 
@@ -30,7 +30,7 @@ npm run test:e2e
 
 `test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
 
-`check:data` 等价于 `node scripts/validate-data.mjs`。v28.0G-10 Data Check Expected-Skip Noise Cleanup 后，默认检查不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为 Worker-first runtime 已是主链路，本地 realtime 属于 fallback / Daily baseline，可能不是同一快照。
+`check:data` 等价于 `node scripts/validate-data.mjs`。默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为本地 realtime 与 Daily 已采纳的 baseline 可能不是同一快照。当前首页读取 Daily 静态数据，不能由这项 skip 推断 Worker 或页面健康。
 
 版本排查时不要把根级 `data.version` 当成产品发布号。当前 release/display version 是 `v28.0.10`，页面 ISSUE 与新 Daily 输出应使用 `releaseVersion`；根级 `data.version` 与 `decisionModel.contractVersion` 的 `v27.0` 是兼容数据契约标记。`check:data` 成功输出为 `Validation passed (release v28.0.10; data contract v27.0)`。
 
@@ -64,7 +64,7 @@ v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 c
 
 1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `audit-load-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
-3. 检查 Worker Health；Check Worker Health 仍是 Worker-first runtime hard gate。
+3. 单独检查 Worker Health；它只反映 Worker 运行链，不是当前静态首页的数据加载闸门。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
 5. 若页面显示 Daily Brief / Divergence Layer / Brent Pricing Layer fallback，先判断 Daily workflow 是否已在对应 contract 合并后运行并完成 Pages deploy。
 6. 若 Brent Pricing Layer 缺失，不要手工改 `data/*.json`；应触发或等待 Daily workflow 自然生成。
@@ -215,6 +215,8 @@ commit，或 reviewed data update 同时关闭 `displayEnabled` 与
 reasoning-content presence；artifact 不保存正文。`finishReason=length` 归类为
 `provider_output_truncated`。不得通过保存 raw response、放宽 output validator 或接受夹带
 任意前后文的 JSON 片段来“修复”生成失败。
+
+> 下方 Stable Observation / K-4 / L-3 手动阶段段落保留作历史诊断记录，不能据旧“disabled / 不添加 secret / 下一步”指令覆盖上方现行 Macro Risk 或 Bubble Watch 契约。当前阶段分类见 [LEGACY_DOCUMENT_STATUS](LEGACY_DOCUMENT_STATUS.md)。
 
 ## Stable Observation Audit
 
@@ -572,7 +574,11 @@ Operator guidance:
 
 ## 2. 页面显示“实时数据已过期”
 
-排查顺序：
+当前 M-94 首页先核对已加载的 `app.js` 缓存版本和 `data/radar-data.json.updatedAt`，再核对对应 Daily 与发布运行。主 JSON 缺失会进入 `gfrr-data-failed`；附属 JSON 缺失/8 秒超时只降级对应内容。Worker 健康和页面数据新鲜度分别核查，不把冻结的 realtime overlay 当作当前入口。
+
+### 历史 realtime overlay 排查（仅旧版本回放）
+
+以下 `__GFRR_RUNTIME__` 诊断属于保留的旧路径，当前首页未接入，不要求为获取它而恢复 overlay。历史排查顺序：
 
 1. 先看页面“数据健康状态”模块，确认 freshness、数据时效、实时数据来源和状态标记。
 2. 打开浏览器 Console。
@@ -591,7 +597,7 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-`odp-gdelt-web-ngrams-auto-1` 是当前前端 cache token；同一 Frontend Asset Cache Busting 机制用于处理 Android Chrome cached old module graph：普通窗口可能缓存旧 `scripts/app.js` / ES module graph，导致页面仍显示旧逻辑，例如 Brent 来源停留在 FRED 日度锚点；无痕窗口显示 Worker 独立生成 / 实时数据新鲜 / Yahoo + Trading Economics 双源确认，则说明线上 Worker-first runtime 正常，问题不在 Worker、DNS 或自定义域名。
+当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `audit-load-1`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
 
 当前处理方式：
 
@@ -602,7 +608,7 @@ scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `audit-load-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。本次 asset bump 对应 ODP 新闻事件观察中的 GDELT Web NGrams v2 自动 display-only 下载源状态、聚合计数与源文件时效展示；既有历史 sample-gate、FIRMS 脱敏请求健康与设施窗口质量行仍保留。该版本不新增 KV、不 deploy Worker、不改变评分/决策边界。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `audit-load-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
@@ -637,7 +643,7 @@ Build Realtime Market
 
 ## 4. Realtime Health Watchdog 排查
 
-Realtime Health Watchdog 是只读诊断工具，只检查 `realtime-data/realtime/market.json` 的 freshness，不生成数据、不修复数据、不参与评分。v28.0G-2 起，它是 GitHub `realtime-data` fallback / Daily baseline 的 freshness observer，不再作为 Worker-first runtime hard fail gate；主运行链路 hard fail 由 `Check Worker Health` 承担。
+Realtime Health Watchdog 是只读诊断工具，只检查 `realtime-data/realtime/market.json` 的 freshness，不生成数据、不修复数据、不参与评分。v28.0G-2 起，它是 GitHub `realtime-data` fallback / Daily baseline 的 freshness observer，不作为主运行链路硬门；`Check Worker Health` 仅承担 Worker 自身运行链的健康检查。
 
 v28.0G-3 起，GitHub Actions Summary 顶部会明确显示 `Realtime-data Health`、`Role: soft observer for fallback / Daily baseline`、当前 `Result` 和建议 `Action`。`stale` / `unavailable` 不代表 Worker-first runtime failure；若持续出现，再检查 `Build Realtime Market` 或 `realtime-data` 分支。
 
@@ -660,7 +666,7 @@ node scripts/check-realtime-health.mjs --github-output
 - GitHub Actions schedule 是否延迟或未触发。
 - workflow 权限是否异常。
 
-如果 `realtime-data` stale 但 `Check Worker Health` overall ok，页面主链路仍健康；若 `Check Worker Health` unhealthy，则优先排查 Worker runtime。
+`realtime-data` stale 与 Worker overall ok 可以同时发生；二者均不能单独证明静态首页健康。页面应核对实际 radar JSON 与发布结果；Worker unhealthy 则按 Worker 运行链排查。
 
 ### Realtime stale recovery
 
@@ -676,7 +682,7 @@ node scripts/check-worker-health.mjs --github-summary --fail-on-unhealthy
 
 该检查只读取 Cloudflare Worker endpoint，不写 KV，不写 `data/*.json` / `realtime/*.json`，也不改变前端、Daily 或 Worker runtime。
 
-v28.0G-3 起，GitHub Actions Summary 顶部会明确显示 `Worker-first Health Check`、`Role: hard gate for Cloudflare Worker runtime`、`Overall` 和建议 `Action`。只有该检查 unhealthy 才代表主运行链路 hard gate 失败，需要优先排查 Worker runtime。
+v28.0G-3 起，GitHub Actions Summary 顶部会明确显示 `Worker-first Health Check`、`Role: hard gate for Cloudflare Worker runtime`、`Overall` 和建议 `Action`。该检查 unhealthy 表示 Worker 健康闸门失败，应排查 Worker runtime；当前首页和 Daily 的输入状态另行核查。
 
 重点看 GitHub Actions Summary：
 
@@ -802,7 +808,7 @@ pending deltas: 0
 
 ## 8. Pages 部署失败排查
 
-`Deploy Static Site to Pages` 在上传 artifact 和部署前会自动运行默认只读验证链：
+`Deploy Static Site to Pages` 在上传 artifact 和部署前会自动运行完整验证链（生产数据只读，ignored analyst input 副作用见 §1）：
 
 ```bash
 npm run check:all
@@ -824,7 +830,7 @@ npm run build:pages-artifact
 
 GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions：`actions/checkout@v6`、`actions/setup-node@v6` 和 `actions/upload-artifact@v7`；`setup-node` 使用 `node-version: 24`。每个 workflow 必须设置 top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`。不要使用 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`、`FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`、Node 20 或 Node 25 作为默认项目 runtime。
 
-`build:pages-artifact` 只允许两张 HTML、`assets` 静态类型、`data/realtime` JSON、`scripts/app.js` 与 `scripts/modules/*.js`，并拒绝任意层级的隐藏配置、非白名单扩展或 symlink。`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行默认只读 `check:all`；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
+`build:pages-artifact` 只允许两张 HTML、`assets` 静态类型、`data/realtime` JSON、`scripts/app.js` 与 `scripts/modules/*.js`，并拒绝任意层级的隐藏配置、非白名单扩展或 symlink。`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行完整 `check:all`（含 ignored analyst input 生成项）；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
 
 ## 8A. EdgeOne 自定义域名低频发布通道
 

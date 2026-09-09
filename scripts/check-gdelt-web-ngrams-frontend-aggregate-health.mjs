@@ -292,8 +292,10 @@ function assertDocsAndPackage() {
     'package.json missing P63 check script.'
   );
   assert(
-    packageJson.scripts['check:all']?.includes('check:gdelt-web-ngrams-frontend-aggregate-health'),
-    'check:all missing P63 check.'
+    packageJson.scripts['check:all']?.includes('npm run check:oil-directional') &&
+    packageJson.scripts['check:oil-directional']?.includes('node scripts/check-suite.mjs oil-directional') &&
+    readFileSync('scripts/check-suite.mjs', 'utf8').match(/'oil-directional': \[([\s\S]*?)\n  \]/u)?.[1].includes("'check:gdelt-web-ngrams-frontend-aggregate-health'"),
+    'check:all must reach P63 through the oil-directional suite (ADR-0035).'
   );
 }
 
