@@ -151,7 +151,7 @@
     "check:null-zero-display-guards": "node --check scripts/check-null-zero-display-guards.mjs && node scripts/check-null-zero-display-guards.mjs",
     "check:frontend-live-contracts": "node scripts/check-suite.mjs frontend-live-contracts",
     "check:dom": "node --check scripts/check-dom.mjs && node scripts/check-dom.mjs",
-    "check:frontend-loading-state": "node --check scripts/check-frontend-loading-state.mjs && node scripts/check-frontend-loading-state.mjs",
+    "check:frontend-loading-state": "node --check scripts/check-frontend-loading-state.mjs && node scripts/check-frontend-loading-state.mjs && node --test tests/unit/app-loading.test.mjs",
     "check:frontend-safe-dom-rendering": "node --check scripts/check-frontend-safe-dom-rendering.mjs && node scripts/check-frontend-safe-dom-rendering.mjs",
     "check:bubble-watch-dom": "node --check scripts/check-bubble-watch-dom.mjs && node scripts/check-bubble-watch-dom.mjs",
     "check:bubble-watch-weekly-editorial-contract": "node --check scripts/bubble-watch/weekly-editorial-contract.mjs && node --check scripts/check-bubble-watch-weekly-editorial-contract.mjs && node scripts/check-bubble-watch-weekly-editorial-contract.mjs",
@@ -390,7 +390,8 @@
     "check:oil-thermal-targeted-probe": "node --check scripts/oil-directional/run-oil-thermal-targeted-probe.mjs && node --check scripts/check-oil-thermal-targeted-probe.mjs && node scripts/check-oil-thermal-targeted-probe.mjs",
     "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs && npm run check:firms-request-policy && npm run check:oil-thermal-targeted-probe",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs",
-    "check:changed": "node scripts/check-changed.mjs"
+    "check:changed": "node scripts/check-changed.mjs",
+    "check:world-order-market-input": "node --test tests/unit/world-order-market-input.test.mjs"
   },
   "engines": {
     "node": ">=24 <25"

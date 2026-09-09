@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=world-order-evidence-1';
+﻿import { formatFiniteNumber } from './format.js?v=audit-load-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

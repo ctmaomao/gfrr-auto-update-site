@@ -1,5 +1,5 @@
 ﻿// scripts/app.js — M-94 V0 路径 C · Stage 4b-1A 主 JS 入口
-// 职责:数据加载(5 个 JSON)+ issue-meta 填充 + 调用 renderMacroOverview
+// 职责:主数据优先加载(7 个 JSON)+ issue-meta 填充 + 调用 renderMacroOverview
 // 创建于 Stage 4a (2026-05-27),Stage 4b-1A 扩展
 
 import {
@@ -7,7 +7,7 @@ import {
   worldOrderStressUrl,
 } from './modules/config.js';
 
-const APP_VERSION = 'world-order-evidence-1';
+const APP_VERSION = 'audit-load-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -28,17 +28,29 @@ const ISSUE_META_FALLBACK = {
 
 // ---------------- 数据加载 ----------------
 
-async function fetchJson(url, label) {
+async function fetchJson(url, label, timeoutMs = 8000) {
+  const controller = new AbortController();
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('JSON request deadline exceeded'));
+    }, timeoutMs);
+  });
   try {
-    const response = await fetch(url, { cache: 'no-cache' });
-    if (!response.ok) {
-      console.error(`[app] Failed to fetch ${label}: HTTP ${response.status} ${response.statusText}`);
-      return null;
-    }
-    return await response.json();
+    return await Promise.race([deadline, (async () => {
+      const response = await fetch(url, { cache: 'no-cache', signal: controller.signal });
+      if (!response.ok) {
+        console.error(`[app] Failed to fetch ${label}: HTTP ${response.status} ${response.statusText}`);
+        return null;
+      }
+      return await response.json();
+    })()]);
   } catch (error) {
     console.error(`[app] Error loading ${label}:`, error);
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -67,10 +79,10 @@ function normalizeRadarReleaseVersion(radarData) {
   };
 }
 
-async function loadAllData() {
+async function loadAllData(onPrimaryReady) {
   // 并行 fetch 7 个 JSON 文件
-  const [radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData] = await Promise.all([
-    fetchJson(dataUrl, 'radar-data.json'),
+  const primary = fetchJson(dataUrl, 'radar-data.json');
+  const auxiliary = Promise.all([
     fetchJson(worldOrderStressUrl, 'world-order-stress.json'),
     fetchJson(MARKET_PRICING_METRICS_URL, 'market-pricing-metrics.json'),
     fetchJson(RADAR_HISTORY_URL, 'radar-history.json'),
@@ -78,6 +90,9 @@ async function loadAllData() {
     fetchJson(OIL_THERMAL_WATCH_URL, 'oil-thermal-watch.json'),
     fetchJson(OIL_NEWS_EVENT_WATCH_URL, 'oil-news-event-watch.json'),
   ]);
+  const radarData = await primary;
+  if (onPrimaryReady) await onPrimaryReady({ radarData: normalizeRadarReleaseVersion(radarData) });
+  const [worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData] = await auxiliary;
 
   if (!radarData) {
     console.error('[app] CRITICAL: radar-data.json failed to load. Issue meta + macro-overview will use fallback.');
@@ -191,8 +206,7 @@ function allRenderableDataPresent({ radarData }) {
 
 // ---------------- 主入口 ----------------
 
-async function main() {
-  const { radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData, oilThermalWatchData, oilNewsEventWatchData } = await loadAllData();
+async function renderLoadedData({ radarData, worldOrderStressData = null, marketPricingMetricsData = null, radarHistoryData = null, oilDirectionalData = null, oilThermalWatchData = null, oilNewsEventWatchData = null }) {
   const dataReady = allRenderableDataPresent({ radarData });
 
   // Stage 4a: 填充 issue-meta
@@ -202,7 +216,7 @@ async function main() {
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=world-order-evidence-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=audit-load-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {
@@ -235,6 +249,11 @@ async function main() {
     oilThermalWatchDataPresent: oilThermalWatchData !== null,
     oilNewsEventWatchDataPresent: oilNewsEventWatchData !== null,
   });
+}
+
+async function main() {
+  const data = await loadAllData(renderLoadedData);
+  await renderLoadedData(data);
 }
 
 // 启动

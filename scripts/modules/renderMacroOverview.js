@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=world-order-evidence-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=world-order-evidence-1';
+} from './config.js?v=audit-load-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=audit-load-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,10 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=world-order-evidence-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=world-order-evidence-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=world-order-evidence-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=world-order-evidence-1';
+} from './macroOverviewDisplayHelpers.js?v=audit-load-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=audit-load-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=audit-load-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=audit-load-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

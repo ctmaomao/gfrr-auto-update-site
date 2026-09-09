@@ -92,6 +92,7 @@ const SUITES = {
     'check:market-pricing-freshness'
   ],
   'world-order-acled': [
+    'check:world-order-market-input',
     'check:xlsx-security',
     'check:acled-operator-safety',
     'check:world-order-acled-hdx-probe',
