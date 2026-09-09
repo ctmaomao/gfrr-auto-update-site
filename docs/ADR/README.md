@@ -57,6 +57,8 @@
 
 | [ADR-0033](0033-acled-weekly-completeness.md) | Complete weekly ACLED regional coverage with staggered official dates | Owner-authorized implementation; independent merge review required |
 
+| [ADR-0034](0034-acled-complete-month-windows.md) | ACLED consecutive complete-calendar-month trend windows | Owner-authorized implementation; independent merge review required |
+
 ## Superseded
 
 (None yet)

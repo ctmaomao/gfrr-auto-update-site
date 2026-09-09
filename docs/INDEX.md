@@ -34,6 +34,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0034](ADR/0034-acled-complete-month-windows.md)：ACLED 月度完整日历窗口、缺月不可得及对应 checker 收紧；不改年度指标和评分。
+
 - [ADR-0033](ADR/0033-acled-weekly-completeness.md)：ACLED 周表六地区完整性与缺地区保留旧配置；保留官方错峰日期及原有来源授权。
 
 - [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)：Macro Risk 上游完成触发、持久日预算/输入去重及对应 workflow checker 变更；不放宽付费、来源、质量或展示契约。
