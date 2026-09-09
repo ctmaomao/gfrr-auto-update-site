@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { isSupportedNodeRuntime, NODE_ENGINE_RANGE } from './lib/node-runtime-policy.mjs';
 
 const failures = [];
 const warnings = [];
@@ -120,8 +121,11 @@ function checkWorkflow(file) {
 
 const packageJson = JSON.parse(readFile('package.json'));
 const engine = packageJson.engines?.node;
-if (engine !== '>=24 <25' && engine !== '24.x') {
-  fail('package.json engines.node must be >=24 <25 or 24.x');
+if (engine !== NODE_ENGINE_RANGE) {
+  fail(`package.json engines.node must be ${NODE_ENGINE_RANGE}`);
+}
+if (!isSupportedNodeRuntime(process.version)) {
+  fail(`actual runtime ${process.version} must satisfy ${NODE_ENGINE_RANGE}; executable=${process.execPath}`);
 }
 
 if (fs.existsSync('package-lock.json')) {
