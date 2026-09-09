@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { completeMonthlyWindows } from './world-order/acled-monthly-trend.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -201,7 +202,7 @@ function validateGlobal(global) {
   }
 }
 
-function validateMonthlyTrend(trend) {
+function validateMonthlyTrend(trend, asOfDate) {
   if (trend === null) return;
   if (!isObject(trend)) {
     addFailure('monthlyTrend must be object or null');
@@ -222,6 +223,16 @@ function validateMonthlyTrend(trend) {
   if (!isNonNegativeInteger(trend.prior12mEvents)) addFailure('monthlyTrend.prior12mEvents must be non-negative integer');
   if (trend.latest12mVsPrior12mDelta !== null && !Number.isFinite(trend.latest12mVsPrior12mDelta)) {
     addFailure('monthlyTrend.latest12mVsPrior12mDelta must be finite or null');
+  }
+  try {
+    const expected = completeMonthlyWindows(asOfDate);
+    for (const key of ['latest12mWindow', 'prior12mWindow']) {
+      if (JSON.stringify(trend[key]) !== JSON.stringify(expected[key])) addFailure(`monthlyTrend.${key} must use consecutive complete months before asOfDate month`);
+    }
+    const expectedDelta = trend.prior12mEvents === 0 ? null : Number((trend.latest12mEvents / trend.prior12mEvents - 1).toFixed(6));
+    if (trend.latest12mVsPrior12mDelta !== expectedDelta) addFailure('monthlyTrend delta must match window totals');
+  } catch {
+    addFailure('monthlyTrend requires valid asOfDate');
   }
 }
 
@@ -309,7 +320,7 @@ if (payload !== undefined) {
     validateLatestFullYear(payload.latestFullYear, payload.asOfDate);
     validateFilesIngested(payload.filesIngested);
     validateGlobal(payload.global);
-    validateMonthlyTrend(payload.monthlyTrend);
+    validateMonthlyTrend(payload.monthlyTrend, payload.asOfDate);
     validateTopEscalating(payload.topEscalatingCountries);
     validateTopFatalities(payload.topFatalitiesCountries);
     validateQuality(payload.quality);

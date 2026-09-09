@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "source": "acled-aggregated-manual-normalized-monthly",
   "sourceName": "ACLED Global Monthly Aggregated Data",
-  "preparedAt": "2026-09-09T02:25:32.086Z",
+  "preparedAt": "2026-09-09T05:04:26.515Z",
   "preparedBy": "manual",
   "asOfDate": "2026-08-21",
   "latestFullYear": 2025,
@@ -93,16 +93,16 @@
   },
   "monthlyTrend": {
     "latest12mWindow": [
-      "2025-09",
-      "2026-08"
+      "2025-08",
+      "2026-07"
     ],
     "prior12mWindow": [
-      "2024-09",
-      "2025-08"
+      "2024-08",
+      "2025-07"
     ],
-    "latest12mEvents": 223927,
-    "prior12mEvents": 218836,
-    "latest12mVsPrior12mDelta": 0.023264
+    "latest12mEvents": 227740,
+    "prior12mEvents": 219054,
+    "latest12mVsPrior12mDelta": 0.039652
   },
   "topEscalatingCountries": [
     {
@@ -213,7 +213,7 @@
     "sourceUrl": "https://acleddata.com/conflict-data/download-data-files",
     "licenseLevel": "open",
     "attribution": "ACLED (Armed Conflict Location & Event Data) — https://acleddata.com",
-    "methodologyNoteZh": "ACLED 全球年度/月度聚合由 operator 手动下载，本脚本只读取本地 xlsx。指标基于最近完整年份与 prior 3 年均值，配合 country-month-year 文件做 last-12m vs prior-12m 趋势，用于观察慢变量的年度结构性变化，与 weekly 高频信号互补。",
+    "methodologyNoteZh": "ACLED 全球年度/月度聚合由 operator 手动下载，本脚本只读取本地 xlsx。年度指标基于最近完整年份与前 3 年均值；月度趋势比较截止日所在月之前连续 12 个完整日历月与此前 12 个月，包括月末发布也排除截止日所在月。任一月份缺失则趋势不可得，不补零或借用更早月份。月份齐全不代表已确认每个国家的覆盖完整性。",
     "confidence": 0.85
   }
 }

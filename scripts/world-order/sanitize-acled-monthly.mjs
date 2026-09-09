@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import * as xlsx from 'xlsx';
 import { parseAcledMonthlyFilename } from './acled-monthly-filename.mjs';
+import { buildMonthlyTrend, parseMonthlyEventCount } from './acled-monthly-trend.mjs';
 import { assertWorksheetDimensions, preflightXlsxInputs } from './xlsx-input-guard.mjs';
 
 xlsx.set_fs(fs);
@@ -223,7 +224,7 @@ function parseMonthlyRows(entry, inputFiles) {
       country: normalizeString(row[0], 'Unknown'),
       month: parseMonthName(row[1], context),
       year: parseYear(row[2], context),
-      value: parseNonNegativeInteger(row[valueColumnIndex], `${context} ${entry.spec.valueColumn}`)
+      value: parseMonthlyEventCount(row[valueColumnIndex], `${context} ${entry.spec.valueColumn}`)
     };
   });
 }
@@ -299,36 +300,6 @@ function topFatalitiesCountries(rows, latestFullYear) {
     .sort((a, b) => b.fatalities - a.fatalities || a.country.localeCompare(b.country))
     .slice(0, TOP_RANK_LIMIT);
   return list;
-}
-
-function buildMonthlyTrend(rows) {
-  if (rows.length === 0) return null;
-  const totals = new Map();
-  for (const row of rows) {
-    const key = row.year * 100 + row.month;
-    totals.set(key, (totals.get(key) || 0) + row.value);
-  }
-  const sortedKeys = [...totals.keys()].sort((a, b) => b - a);
-  const last12 = sortedKeys.slice(0, 12);
-  const prior12 = sortedKeys.slice(12, 24);
-  if (last12.length < 12) {
-    warn(`monthly trend last12 window incomplete (have ${last12.length} months)`);
-  }
-  const last12Sum = last12.reduce((acc, key) => acc + totals.get(key), 0);
-  const prior12Sum = prior12.reduce((acc, key) => acc + totals.get(key), 0);
-  const delta = prior12Sum === 0 ? null : last12Sum / prior12Sum - 1;
-  function keyToLabel(key) {
-    const year = Math.floor(key / 100);
-    const month = key % 100;
-    return `${year}-${String(month).padStart(2, '0')}`;
-  }
-  return {
-    latest12mWindow: last12.length === 0 ? null : [keyToLabel(last12[last12.length - 1]), keyToLabel(last12[0])],
-    prior12mWindow: prior12.length === 0 ? null : [keyToLabel(prior12[prior12.length - 1]), keyToLabel(prior12[0])],
-    latest12mEvents: last12Sum,
-    prior12mEvents: prior12Sum,
-    latest12mVsPrior12mDelta: roundMetric(delta)
-  };
 }
 
 function validateAsOfFreshness(asOfDateIso) {
@@ -442,7 +413,7 @@ function buildPayload(parsedByMetric, selectedFiles) {
       civilianFatalitiesLatestFullYear: civilianFatalitiesLatest,
       civilianFatalitiesShareLatestFullYear: roundMetric(civilianFatalitiesShare)
     },
-    monthlyTrend: buildMonthlyTrend(politicalViolenceMonthly),
+    monthlyTrend: buildMonthlyTrend(politicalViolenceMonthly, asOfDate, warn),
     topEscalatingCountries: topEscalatingCountries(politicalViolence, latestFullYear),
     topFatalitiesCountries: topFatalitiesCountries(fatalities, latestFullYear),
     quality: {
@@ -450,7 +421,7 @@ function buildPayload(parsedByMetric, selectedFiles) {
       sourceUrl: SOURCE_URL,
       licenseLevel: LICENSE_LEVEL,
       attribution: ATTRIBUTION,
-      methodologyNoteZh: 'ACLED 全球年度/月度聚合由 operator 手动下载，本脚本只读取本地 xlsx。指标基于最近完整年份与 prior 3 年均值，配合 country-month-year 文件做 last-12m vs prior-12m 趋势，用于观察慢变量的年度结构性变化，与 weekly 高频信号互补。',
+      methodologyNoteZh: 'ACLED 全球年度/月度聚合由 operator 手动下载，本脚本只读取本地 xlsx。年度指标基于最近完整年份与前 3 年均值；月度趋势比较截止日所在月之前连续 12 个完整日历月与此前 12 个月，包括月末发布也排除截止日所在月。任一月份缺失则趋势不可得，不补零或借用更早月份。月份齐全不代表已确认每个国家的覆盖完整性。',
       confidence: 0.85
     }
   };

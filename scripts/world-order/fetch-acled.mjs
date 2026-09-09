@@ -183,9 +183,11 @@ function buildMonthlyEvidence(monthly, fields) {
       confidence: monthly.quality?.confidence ?? 0.85
     },
     {
-      labelZh: 'ACLED 最近 12 个月暴力事件趋势',
+      labelZh: 'ACLED 完整月份暴力事件趋势',
       source: 'ACLED manual xlsx (monthly)',
-      summary: `last-12m vs prior-12m 事件变化 ${monthlyDeltaText}。`,
+      summary: monthly.monthlyTrend === null
+        ? '连续完整月份数据不足，暂不提供 12 个月趋势比较。'
+        : `排除截止日所在月，连续完整月份 ${monthly.monthlyTrend?.latest12mWindow?.join(' 至 ') ?? 'n/a'} 对比 ${monthly.monthlyTrend?.prior12mWindow?.join(' 至 ') ?? 'n/a'}，事件变化 ${monthlyDeltaText}。`,
       value: fields.monthlyLatest12mVsPrior12mDelta,
       direction: Number.isFinite(fields.monthlyLatest12mVsPrior12mDelta) && fields.monthlyLatest12mVsPrior12mDelta > 0 ? 'risk_up' : 'neutral',
       confidence: monthly.quality?.confidence ?? 0.85

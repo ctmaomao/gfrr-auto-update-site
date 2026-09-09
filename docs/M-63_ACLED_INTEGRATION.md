@@ -433,7 +433,7 @@ Top-level fields:
 - `latestFullYear`: most recent fully-complete year (typically `asOfDate.year - 1`).
 - `filesIngested`: 6 entries, one per file (exactly 6 required).
 - `global`: cross-country annual aggregates for `latestFullYear`.
-- `monthlyTrend`: last-12m vs prior-12m window derived from the country-month-year file.
+- `monthlyTrend`: two consecutive complete 12-calendar-month windows from the country-month-year file, anchored before the `asOfDate` month ([ADR-0034](ADR/0034-acled-complete-month-windows.md)). The whole object is `null` if any of the required 24 months is missing.
 - `topEscalatingCountries`: up to 10 entries, sorted by YoY vs prior-3y average; noise floor `latestFullYearEvents >= 50`.
 - `topFatalitiesCountries`: up to 10 entries, sorted by latest-full-year fatalities.
 - `quality`: source metadata and confidence (same canonical strings as weekly).
@@ -450,12 +450,14 @@ Top-level fields:
 - `civilianFatalitiesLatestFullYear`
 - `civilianFatalitiesShareLatestFullYear` — civilian / total fatalities in `latestFullYear`, clamped `[0, 1]` or `null`
 
-`monthlyTrend` fields:
+`monthlyTrend` fields (when non-null):
 
-- `latest12mWindow`: `[startYYYY-MM, endYYYY-MM]` or `null`
-- `prior12mWindow`: `[startYYYY-MM, endYYYY-MM]` or `null`
+- `latest12mWindow`: `[startYYYY-MM, endYYYY-MM]`, ending immediately before the `asOfDate` month
+- `prior12mWindow`: the immediately preceding nonoverlapping 12 calendar months
 - `latest12mEvents`, `prior12mEvents`: non-negative integers
 - `latest12mVsPrior12mDelta`: `latest12m / prior12m - 1`, or `null` if `prior12m === 0`
+
+The as-of month is conservatively excluded even on month-end releases; a filename alone does not prove complete all-day ingestion. Explicit zero-month totals are valid, but missing months are never zero-filled or replaced with older observed months. All 24 calendar months must exist; this does not prove complete country coverage. For the 2026-08-21 batch, compare 2025-08–2026-07 against 2024-08–2025-07. Annual metrics and all scoring weights remain unchanged.
 
 `topEscalatingCountries[]` fields:
 

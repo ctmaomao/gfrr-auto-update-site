@@ -28,14 +28,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ### 2026-09-09 ACLED 周度测试发布兼容修复
 
 - #326 精确 PR CI 通过后，Pages `34313341031` 在新增 CLI 用例失败：Pages 不执行 npm ci，而测试间接要求 XLSX devDependency。生产数据与 guard 未受损，部署未发布。
-- 暂停下一项月度分支，先独立修复测试 fixture：OS 临时目录、明确的 parser stub、任何 workbook read 都失败；继续跑真实 CLI 的无输入与缺地区覆盖保护，不 skip、不改生产依赖/checker/workflow。按 [ADR-0033 补充](ADR/0033-acled-weekly-completeness.md#deployment-regression-correction)在无 node_modules 的工作树完整验证、独立审阅及合并后复核 Pages。
+- #327 已合并 `e7082031`；修复测试 fixture：OS 临时目录、明确的 parser stub、任何 workbook read 都失败；继续跑真实 CLI 的无输入与缺地区覆盖保护，不 skip、不改生产依赖/checker/workflow。按 [ADR-0033 补充](ADR/0033-acled-weekly-completeness.md#deployment-regression-correction)在无 node_modules 的工作树完整验证通过，CI `34314059959` 和[独立审阅](https://github.com/ctmaomao/gfrr-auto-update-site/pull/327#issuecomment-5596203925)通过。Pages 恢复验收 run `34314283618`，不运行源刷新或付费 AI。
 
 ### 2026-09-09 ACLED 完整性与口径复核
 
 - **Acceptance baseline**：owner 今日确认部分官网周表仍截止 8 月 14 日，授权按建议完成本地遗留配置备份对齐、六地区覆盖保护、月度比较口径复核；沿用逐项 commit+push、独立 AI 审阅和合并授权。不改变真实来源日期、源许可、评分、观察期或付费门槛。
 - **本地对齐已完成**：两份旧配置 SHA-256 备份验证后安全快进至 `0f6e9bc4`。月表仅 preparedAt 不同；旧四地区周表不是待发布更新，已与已发布六地区版本对齐。备份保留在 ignored `manual-artifacts/acled-reconcile-20260909-044904/`，原始 XLSX 未改。
-- **周度保护**：[ADR-0033](ADR/0033-acled-weekly-completeness.md)；缺地区在解析/写入前失败，JSON 两数组严格六地区且唯一；保留 8/14 与 8/28 错峰日期，兼容浏览器重复下载后缀。完整检查与独立审阅/发布以精确 PR 回执为准。
-- **下一独立项**：月度最近 12 月比较排除 as-of 当月未完成月份，并核对连续日历覆盖；不把不完整月份或缺月视为完整周期。
+- **周度保护已合并**：[ADR-0033](ADR/0033-acled-weekly-completeness.md)；#326 合并 `16b24f99`，最终 `8cbe266e` 本地完整检查、CI `34313155765` 与[独立审阅](https://github.com/ctmaomao/gfrr-auto-update-site/pull/326#issuecomment-5596095328)通过。缺地区在解析/写入前失败，两数组严格六地区且唯一；保留 8/14 与 8/28 错峰日期和浏览器后缀，原始 XLSX 未改。
+- **月度口径实施**：[ADR-0034](ADR/0034-acled-complete-month-windows.md)；一律排除 as-of 所在月（包括月末），比较连续完整 12 月与此前 12 月，缺任何月份整体不可得，不补零/借位。原六文件只读重算，独立核对 227740 / 219054 得 0.039652；日期、年度指标与排名不变。完整检查、独立审阅及合并后 World Order 双站发布按精确 PR 回执验收，不额外触发付费 AI。
 
 ### 2026-09-09 Macro Risk 上游衔接与付费去重
 
