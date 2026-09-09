@@ -28,7 +28,7 @@ npx --no-install playwright install chromium
 npm run test:e2e
 ```
 
-`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
+`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。2026-09-10 范围从 9 个扩至 12 个模块，新增历史评分适配、历史验证和 Macro Risk 最终投影写入；保留 95% / 90% / 95% 门槛并复用既有离线编辑层核心用例。Daily 主评分另有旧生产输出摘要和运输闸门边界测试，但不声称 11k 行 Daily 或整个仓库达到该覆盖率。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
 
 `check:data` 等价于 `node scripts/validate-data.mjs`。默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为本地 realtime 与 Daily 已采纳的 baseline 可能不是同一快照。当前首页读取 Daily 静态数据，不能由这项 skip 推断 Worker 或页面健康。
 
@@ -1385,6 +1385,8 @@ npm run review:market-pricing-freshness -- --strict
 
 ### GDELT P40 post-refresh context
 
+2026-09-10 起 Oil News 遇到 429 直接进入既有 24h cooldown，预期 diagnostics 为 `attempts=1/retryCount=0`。5xx/网络临时错误仍允许一次有界重试。使用自然刷新后的产物观察成功率；无需手动刷新来验收这一策略，不扩大 Tavily/Brave 调用频率。
+
 在 Oil News、Bubble Watch 或 World Order 自然刷新后运行 `npm run review:gdelt-cache-health -- --no-output --strict`。严格模式在任何 WATCH/WARN/FAIL 上非零退出；先看 `rows[].refreshContext` 和 `summary.postRefresh`,不要仅凭全局 WATCH 调整缓存政策:
 
 - `expected_error_cooldown_after_refresh`:较新的 Oil News production watch 已运行,但仍在 classified error cooldown 内；先读 `lastFetchFailure.errorClass/cooldownHours`（429=24h、timeout/network=4h、5xx=6h、other=12h）,等待对应窗口到期后的自然刷新,不要手动连发 workflow。
@@ -1605,3 +1607,9 @@ weaken the classifier or caps merely to clear the observation.
 The monitor never fetches sources, triggers refresh, writes production data,
 recalculates the classifier, or creates a new score. Its artifact is evidence
 for operator review only and must not be copied into production data.
+
+### 主评分历史回测的证据边界（2026-09-10）
+
+`audit:main-score-backtest` 复用生产评分公式，但历史数据是最新修订序列，规则是当前规则。报告 `validation` 固定披露非预测验证，并列出校准截止日前后样本数及规则 SHA-256；截止日之后的样本也不自动成为冻结样本外证据。`verdict` 仅适用于事后评分/来源冲突检查，不能解释为投资预测通过。
+
+需要严格预测证据时可加 `--require-predictive-evidence`，当前路径会在任何请求/输出前明确拒绝。解锁需要历史发布时间与修订 vintage、测试期之前冻结的规则及事先确定的预测目标/未使用样本；不通过改标签解锁。此次仅运行离线回归，未刷新历史报告或下载新数据。

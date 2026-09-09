@@ -9880,7 +9880,7 @@ export function buildTransportShockScoringImpact(energyTransport, scoreBeforeTra
   };
 }
 
-function deriveRisk(rt, macroDrivers) {
+export function deriveRisk(rt, macroDrivers, R = RULES) {
   const v = rt.values || {};
   const brent = v.brent ?? R.defaults.brent;
   const dxy = v.dxy ?? R.defaults.dxy;
