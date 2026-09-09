@@ -29,6 +29,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 - **Acceptance baseline**：owner 授权按顺序处理四项体检问题及重复实现精简，每项检查通过后 commit+push；授权本任务 PR 审阅与合并。沿用独立人工 review 和生产验收要求；不启动深度扫描或多轮代理，不触发真实源刷新、付费调用或 Worker 部署。
 - **顺序**：①回测复用生产评分函数并删除重复公式，披露历史输入缺口；②核实 GDELT 调用频率、减少限流下的无效请求并保留降级；③区分历史重演与样本外验证，增加时间隔离保障；④为评分和最终写入补充行为覆盖，保持原门槛。
+- **第四项实施**：补充最终写入 43 项 envelope/篡改/边界/不变性回归，保留并复用既有完整输出与 writer 正负向用例；补评分缺失/覆盖输入及运输阈值、封顶、失效闸门矩阵。覆盖率范围 9→12 个模块，原 95/90/95 门槛不变；删除回测遗留未使用函数及重复查找。专项 61 项通过；check:changed → check:all 退出 0。指定模块覆盖率 lines 99.85% / branches 93.18% / functions 97.80%，单元 441 pass / 0 fail / 1 既有原始样本缺失 skip。
 - **第三项实施**：历史回测报告增加规则摘要、校准截止日前后样本计数和明确的 retrospective/非预测状态；严格预测验证请求在网络和写入前拒绝。历史日期真实校验、缺失值不转零、观察值排序均有离线回归；真实 vintage 与冻结样本外数据尚未提供，不宣称预测验收完成。4 项专项测试及 check:changed → check:all 退出 0。
 - **第二项实施**：已核对 6h workflow、24h fresh/error cooldown 和 72h stale fallback；限流源于 upstream 429，其他新闻源仍可用。仅 Oil News 禁止 429 的秒级重试，保留其他临时错误的一次重试及既有来源隔离。4 项 mock 回归验证实际调用者一次请求、冷却落盘与再次调用零请求；未调用真实源，check:changed → check:all 退出 0，既有断言未放宽。
 - **第一项实施**：生产 deriveRisk 仅增加导出和默认规则参数，计算公式不变；回测删除重复校准、尾部闸门和评分公式，复用生产函数。历史适配补齐 Brent 前一观察值变化、曲线陡峭化与 RRP 周变化；运输候选缺失保持 0 并显式披露，FRED spot/BAA 代理不冒充实时输入。8 组旧生产完整输出摘要与历史适配/未来值不干扰等 11 项测试通过；check:changed → check:all 退出 0，既有断言未放宽。
@@ -385,9 +386,9 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **工作基线**：本轮从 origin/main 17b97291 建立 codex/project-health-fixes-20260910；上一轮 PR #329 已合并，旧 PR 不追加任务。原工作区与生产数据保持原样。
-- **当前任务**：按 owner 2026-09-10 授权处理体检四项问题；前三项已完成：重复评分精简、GDELT 限流优化和历史验证证据边界；各自专项测试及 check:changed → check:all 全部通过。
-- **下一步**：每项必要检查通过后 commit+push，再实施下一项；全部完成后创建本轮 PR，按既定独立 review 与 CI 门槛集成并核对生产验收。
-- **阻塞或等待**：前三项已通过完整检查；合并须有独立人工 review。未授权真实源刷新、付费调用或 Worker 部署，不启动深度扫描/多轮代理。
+- **当前任务**：按 owner 2026-09-10 授权处理体检四项问题；四项代码整改已完成：评分复用/精简、GDELT 限流优化、历史验证边界和关键行为覆盖；各项专项及 check:changed → check:all 全部通过，最终覆盖率门槛通过。
+- **下一步**：前 3 项已分别 commit+push；第 4 项验证通过后提交推送，创建本轮 PR 并核对 CI。按既定独立 review 门槛集成，再核对自然部署。
+- **阻塞或等待**：本地验证完成；合并仍须本轮 PR 的独立人工 review。真实历史 vintage/冻结样本外数据与 GDELT 自然运行效果仍需后续真实证据。未授权真实源刷新、付费调用或 Worker 部署，不启动深度扫描/多轮代理。
 
 ### 2026-09-09 刷新与卫星验收记录
 

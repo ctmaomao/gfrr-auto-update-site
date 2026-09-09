@@ -28,7 +28,7 @@ npx --no-install playwright install chromium
 npm run test:e2e
 ```
 
-`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
+`test:unit:coverage` 仅对命令中明确列出的核心纯逻辑文件执行 lines / branches / functions 门槛。2026-09-10 范围从 9 个扩至 12 个模块，新增历史评分适配、历史验证和 Macro Risk 最终投影写入；保留 95% / 90% / 95% 门槛并复用既有离线编辑层核心用例。Daily 主评分另有旧生产输出摘要和运输闸门边界测试，但不声称 11k 行 Daily 或整个仓库达到该覆盖率。`test:e2e` 先用与 Pages workflow 相同的 `build:pages-artifact` 生成 `_site` 白名单产物，再用一个全新 Chromium server/worker 验证桌面和手机的首页、Bubble Watch、缺失趋势日期、附属 JSON 缺失与 External AI fallback；不得复用 4173 端口上的旧 server。
 
 `check:data` 等价于 `node scripts/validate-data.mjs`。默认不再为 local realtime / `dailyRealtimeInput` 时间不一致输出 warning；这是 expected skip，因为本地 realtime 与 Daily 已采纳的 baseline 可能不是同一快照。当前首页读取 Daily 静态数据，不能由这项 skip 推断 Worker 或页面健康。
 

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { deriveHistoricalRisk } from './daily/historical-score.mjs';
+import { deriveHistoricalRisk, latestHistoricalRow } from './daily/historical-score.mjs';
 import { describeHistoricalValidation, historicalNumber, isHistoricalDate } from './daily/historical-validation.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/main-score-audit/main-score-backtest-latest.json';
@@ -113,10 +113,6 @@ function msToDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-function addDays(date, days) {
-  return msToDate(dateToMs(date) + days * 24 * 3600 * 1000);
-}
-
 function makeWeeklyDates(startDate, endDate) {
   const out = [];
   let currentMs = dateToMs(startDate);
@@ -200,30 +196,8 @@ async function fetchFredSeries(seriesId, options) {
   }
 }
 
-function latestOnOrBefore(rows, date) {
-  if (!Array.isArray(rows) || !rows.length) return null;
-  let left = 0;
-  let right = rows.length - 1;
-  let found = null;
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    if (rows[mid].date <= date) {
-      found = rows[mid];
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  return found;
-}
-
-function pctChange(current, previous) {
-  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null;
-  return ((current - previous) / previous) * 100;
-}
-
 function buildValuesForDate(date, seriesRows) {
-  return Object.fromEntries(Object.keys(SERIES).map((key) => [key, latestOnOrBefore(seriesRows[key], date)?.value ?? null]));
+  return Object.fromEntries(Object.keys(SERIES).map((key) => [key, latestHistoricalRow(seriesRows[key], date)?.value ?? null]));
 }
 
 function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
