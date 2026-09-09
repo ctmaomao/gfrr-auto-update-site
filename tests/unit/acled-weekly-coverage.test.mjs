@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -39,11 +40,15 @@ test('duplicates are selected deterministically and ignored names cannot satisfy
 });
 
 // Exercise real CLIs in a disposable repo-shaped directory, never production configs.
+// These admission tests must not depend on installed parser packages (Pages has none).
 test('CLI rejects partial batches before parsing and preserves config byte-for-byte', () => {
-  const parent = path.join(root, 'manual-artifacts');
-  fs.mkdirSync(parent, { recursive: true });
-  const fixture = fs.mkdtempSync(path.join(parent, 'acled-coverage-test-'));
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-acled-coverage-test-'));
   try {
+    const parserStub = path.join(fixture, 'node_modules/xlsx');
+    fs.mkdirSync(parserStub, { recursive: true });
+    fs.writeFileSync(path.join(parserStub, 'package.json'), JSON.stringify({ type: 'module', exports: './index.mjs' }));
+    // No workbook is parsed in this test. Any accidental parser call must fail.
+    fs.writeFileSync(path.join(parserStub, 'index.mjs'), "export function set_fs() {}\nexport function readFile() { throw new Error('UNEXPECTED_WORKBOOK_PARSE'); }\n");
     for (const relative of ['scripts/world-order/sanitize-acled-weekly.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/xlsx-input-guard.mjs', 'scripts/world-order/acled-weekly-coverage.mjs', 'scripts/check-world-order-acled-weekly.mjs']) {
       const dest = path.join(fixture, relative);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -72,7 +77,8 @@ test('CLI rejects partial batches before parsing and preserves config byte-for-b
     }
     fs.writeFileSync(output, original);
     const sanitizer = 'scripts/world-order/sanitize-acled-weekly.mjs';
-    assert.equal(run(sanitizer).status, 0); // No input remains a no-op.
+    const noInput = run(sanitizer);
+    assert.equal(noInput.status, 0, noInput.stderr); // No input remains a no-op.
     assert.equal(fs.readFileSync(output, 'utf8'), original);
     const input = path.join(fixture, 'manual-artifacts/world-order/acled-input/weekly');
     fs.mkdirSync(input, { recursive: true });
@@ -80,6 +86,7 @@ test('CLI rejects partial batches before parsing and preserves config byte-for-b
     const result = run(sanitizer);
     assert.equal(result.status, 1, result.stderr);
     assert.match(result.stderr, /exactly six regions.*existing config preserved/u);
+    assert.doesNotMatch(result.stderr, /UNEXPECTED_WORKBOOK_PARSE/u);
     assert.equal(fs.readFileSync(output, 'utf8'), original);
   } finally {
     // Only the exact mkdtemp-created fixture is removed; no user data is inside it.
