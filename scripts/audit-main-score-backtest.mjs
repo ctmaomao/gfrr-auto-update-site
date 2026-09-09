@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { deriveHistoricalRisk } from './daily/historical-score.mjs';
+import { describeHistoricalValidation, historicalNumber, isHistoricalDate } from './daily/historical-validation.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/main-score-audit/main-score-backtest-latest.json';
 const DEFAULT_START_DATE = '2006-01-01';
@@ -48,7 +50,7 @@ function round(value, digits = 4) {
   return Number(value.toFixed(digits));
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
     allowNetwork: false,
     output: DEFAULT_OUTPUT,
@@ -58,6 +60,9 @@ function parseArgs(argv) {
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === '--require-predictive-evidence') {
+      throw new Error('Predictive validation unavailable: this replay has latest-vintage data and current rules, not point-in-time data and a frozen out-of-sample model.');
+    }
     if (arg === '--allow-network') {
       options.allowNetwork = true;
       continue;
@@ -84,7 +89,7 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
   for (const [name, value] of Object.entries({ startDate: options.startDate, endDate: options.endDate })) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) throw new Error(`${name} must be YYYY-MM-DD.`);
+    if (!isHistoricalDate(value)) throw new Error(`${name} must be a valid YYYY-MM-DD date.`);
   }
   if (options.startDate > options.endDate) throw new Error('--start-date must be on or before --end-date.');
   return options;
@@ -123,24 +128,26 @@ function makeWeeklyDates(startDate, endDate) {
   return out;
 }
 
-function parseFredApiObservations(payload) {
+export function parseFredApiObservations(payload) {
   const observations = Array.isArray(payload?.observations) ? payload.observations : [];
   return observations
-    .map((item) => ({ date: item?.date, value: Number(item?.value) }))
-    .filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(String(row.date || '')) && Number.isFinite(row.value));
+    .map((item) => ({ date: item?.date, value: historicalNumber(item?.value) }))
+    .filter((row) => isHistoricalDate(row.date) && Number.isFinite(row.value))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function parseFredCsv(text) {
+export function parseFredCsv(text) {
   return String(text || '')
     .trim()
     .split(/\r?\n/)
     .slice(1)
     .map((line) => {
       const [date, rawValue] = line.split(',');
-      const value = Number(rawValue);
+      const value = historicalNumber(rawValue);
       return { date, value };
     })
-    .filter((row) => /^\d{4}-\d{2}-\d{2}$/.test(String(row.date || '')) && Number.isFinite(row.value));
+    .filter((row) => isHistoricalDate(row.date) && Number.isFinite(row.value))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 async function fetchText(url) {
@@ -552,9 +559,12 @@ async function main() {
     generatedAt: new Date().toISOString(),
     options,
     verdict: failedEvents.length || !windFallbackPolicy.pass ? 'needs_review' : 'pass_with_limitations',
+    verdictScope: 'retrospective_score_and_source_conflict_checks_only',
+    validation: describeHistoricalValidation(rules, rows.map(row => row.date)),
     limitations: [
       'Backtest uses FRED historical series only; intraday Brent public-consensus promotion cannot be replayed before this implementation.',
-      'HY/IG OAS exact FRED API coverage may be short in this environment; BAA10Y is used as a long-history credit-spread proxy only for this audit when exact OAS rows are unavailable.',
+      'HY OAS exact FRED coverage may be short; BAA10Y is an explicitly labeled HY proxy in this audit. Missing IG OAS stays missing.',
+      'Current calibrated rules and latest-vintage FRED data do not establish point-in-time or out-of-sample predictive validity; calibration overlap counts are reported explicitly.',
       'This audit tests score logic and historical regime behavior; it does not prove investable timing by itself.',
       'Wind fallback replay is a deterministic conflict-stress simulation over public historical data; it does not call Wind and does not assert Wind data accuracy.',
       'Raw Wind/public conflict stress is reported separately; automatic score switching is evaluated after score-impact guards reject large source-switch jumps for review or independent confirmation.'
@@ -586,7 +596,7 @@ async function main() {
   console.log(`[main-score-backtest] wrote ${path.relative(process.cwd(), outputPath)}`);
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(`[main-score-backtest] ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });
