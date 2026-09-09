@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `bofa-report-review-1` |
+| Cache version | `world-order-evidence-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -24,6 +24,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ---
 
 ## Section 2 · Open Backlog Items
+
+### 2026-09-09 World Order 当前快照解读修复
+
+- **Acceptance baseline**：owner 明确授权按顺序完成 World Order 展示修复、刷新/发布实际结果验收、FIRMS 晋升后质量复核及 ACLED 联系状态同步；每项必要验证后单独 commit+push、独立 AI 审阅通过后合并。本项只改展示，不动评分/权重、来源、付费、观察门槛或生产数据。
+- **实施**：修复固定升档、部分确认写成已确认、混合频率写成近 30 天、来源健康度冒充市场确认等问题；读取当前市场 state、ACLED 周/月日期与时效、各维度 evidence 来源。无历史比较不声称变化；缺失/再次渲染清除旧值与风险色。保留 DESIGN §2/3/4/5.4 的纸色、字体、IA 和默认折叠，无 CSS 变更。
+- **验证与下一步**：新增现行 renderer 行为回归并接入完整前端检查；完整本地检查、浏览器桌面/手机验收、精确 CI 与独立审阅按 PR 回执记录。合并后再做刷新/双发布渠道实际验收；不触发 Daily、付费或源抓取。
 
 以下各阶段的验收基线按当时范围保留；已合并阶段中的旧“下一步”、单次批准及 MCP 故障不是当前待执行指令。当前交付/等待以本节最新结论和末尾 Session Handoff 为准，不因归档或检查通过而自动晋升数据。
 

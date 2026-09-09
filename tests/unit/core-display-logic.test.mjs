@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=bofa-report-review-1';
+} from '../../scripts/modules/config.js?v=world-order-evidence-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

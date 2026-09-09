@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=bofa-report-review-1" />
+  <link rel="stylesheet" href="assets/styles.css?v=world-order-evidence-1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -929,47 +929,47 @@
       <div class="editorial-section-body">
         <div class="appendix-content">
       <div class="appendix-narrative">
-        <div class="appendix-narrative-intro">世界秩序压力层(World Order Stress)是结构性状态修正层(状态叠加,非底层评分模块)。它不参与平台的风险打分、决策与执行,但会通过叠加系数为今日判读添加"升档指针"。本期叠加升至 <span id="wo-detail-intro-score">70</span>，触发橙色升档。</div>
+        <div class="appendix-narrative-intro">世界秩序压力层(World Order Stress)是独立的结构性观察层，非底层评分模块。当前压力分数 <span id="wo-detail-intro-score">—</span>；仅供参考,不参与平台的风险打分与决策。这里展示当前快照，不据此推断较上期升档或回落。</div>
 
         <h4>1. 总体状态 <em>· Overall Regime</em></h4>
 
         <div class="wo-regime-banner">
           <div class="wo-kicker">CURRENT REGIME</div>
-          <div class="wo-state" id="wo-detail-state">多战区压力期</div>
-          <p class="wo-desc">压力分数 <span id="wo-detail-score">70</span> / 置信度 <span id="wo-detail-confidence">中</span> / 市场确认 <span id="wo-detail-market-confirmation">承压</span>。决策层修正系数 <span id="wo-detail-risk-bias">+5</span> 分应用于今日判读，体现为本期头版的升档指针。</p>
+          <div class="wo-state" id="wo-detail-state">状态待确认</div>
+          <p class="wo-desc">压力分数 <span id="wo-detail-score">—</span> / 置信度 <span id="wo-detail-confidence">待确认</span> / 市场确认 <span id="wo-detail-market-confirmation">待确认</span>。观察层参数：<span id="wo-detail-risk-bias">—</span>；不表示主分数加分或执行动作。</p>
         </div>
 
         <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX 波动率 / 黄金 / 广义美元指数 跨资产同步性)。各外部源的实际新鲜度见下方「数据新鲜度」行，市场确认状态见上方压力分数行。</p>
 
-        <p class="wo-freshness">数据新鲜度：ACLED 最新周 <code id="wo-detail-acled-latest-week">—</code>(近 4 周冲突事件 <span id="wo-detail-acled-events-4w">—</span>)· 月度截至 <code id="wo-detail-acled-monthly-asof">—</code> · GDELT 冲突事件 <span id="wo-detail-gdelt-conflict-events">—</span>。ACLED 为周频手动刷新源，跑完 Refresh World Order Stress 工作流后此处随之更新。</p>
+        <p class="wo-freshness">数据新鲜度：ACLED 最新周 <code id="wo-detail-acled-latest-week">—</code>(截至该周的近 4 周冲突事件 <span id="wo-detail-acled-events-4w">—</span>)· 月度截至 <code id="wo-detail-acled-monthly-asof">—</code> · GDELT 冲突事件 <span id="wo-detail-gdelt-conflict-events">—</span>。<span id="wo-detail-source-freshness">来源时效待确认。</span> ACLED 周表与月表需手动下载并导入；工作流成功不代表底层表格已经更新。</p>
 
         <h4>2. 六维度详情 <em>· Six Dimensions</em></h4>
 
         <div class="wo-dim-grid">
-          <div class="wo-dim med" id="wo-dim-peace"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score" id="wo-dim-peace-score">+1.2σ</div><div class="wd-trend" id="wo-dim-peace-trend">ACLED + SIPRI · 上行</div></div>
-          <div class="wo-dim high" id="wo-dim-bloc"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score" id="wo-dim-bloc-score">68</div><div class="wd-trend" id="wo-dim-bloc-trend">GDELT 阵营信号 · 上行</div></div>
-          <div class="wo-dim severe" id="wo-dim-conflict"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score" id="wo-dim-conflict-score">85</div><div class="wd-trend" id="wo-dim-conflict-trend">ACLED 30 天 · 上行 2 周</div></div>
-          <div class="wo-dim high" id="wo-dim-weaponization"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score" id="wo-dim-weaponization-score">+2.3σ</div><div class="wd-trend" id="wo-dim-weaponization-trend">OFAC 30 天 + GDELT · 上行</div></div>
-          <div class="wo-dim med" id="wo-dim-capital"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score" id="wo-dim-capital-score">52</div><div class="wd-trend" id="wo-dim-capital-trend">CFETS / 资本流向 · 平稳</div></div>
-          <div class="wo-dim high" id="wo-dim-market"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score" id="wo-dim-market-score">承压</div><div class="wd-trend" id="wo-dim-market-trend">波动率指数(VIX)/黄金(Gold)/广义美元指数(DXY)同步性 · 上行</div></div>
+          <div class="wo-dim" id="wo-dim-peace"><div class="wd-label">DIM 1</div><div class="wd-name">和平红利退潮</div><div class="wd-score" id="wo-dim-peace-score">—</div><div class="wd-trend" id="wo-dim-peace-trend">证据待确认</div></div>
+          <div class="wo-dim" id="wo-dim-bloc"><div class="wd-label">DIM 2</div><div class="wd-name">阵营化形成</div><div class="wd-score" id="wo-dim-bloc-score">—</div><div class="wd-trend" id="wo-dim-bloc-trend">证据待确认</div></div>
+          <div class="wo-dim" id="wo-dim-conflict"><div class="wd-label">DIM 3</div><div class="wd-name">多战区冲突</div><div class="wd-score" id="wo-dim-conflict-score">—</div><div class="wd-trend" id="wo-dim-conflict-trend">证据待确认</div></div>
+          <div class="wo-dim" id="wo-dim-weaponization"><div class="wd-label">DIM 4</div><div class="wd-name">经济武器化</div><div class="wd-score" id="wo-dim-weaponization-score">—</div><div class="wd-trend" id="wo-dim-weaponization-trend">证据待确认</div></div>
+          <div class="wo-dim" id="wo-dim-capital"><div class="wd-label">DIM 5</div><div class="wd-name">资本管制风险</div><div class="wd-score" id="wo-dim-capital-score">—</div><div class="wd-trend" id="wo-dim-capital-trend">证据待确认</div></div>
+          <div class="wo-dim" id="wo-dim-market"><div class="wd-label">DIM 6</div><div class="wd-name">市场确认度</div><div class="wd-score" id="wo-dim-market-score">—</div><div class="wd-trend" id="wo-dim-market-trend">证据待确认</div></div>
         </div>
 
-        <p>六个维度中，<strong>多战区冲突</strong> 和 <strong>经济武器化</strong> 是本期压力的核心驱动(各维度分值见上方实时维度卡)。这两个维度都处于<code>上行</code>状态，叠加产生了多战区压力状态。市场确认度从中性升至承压，说明<strong>市场已经开始定价</strong>这种结构性压力——这是叠加从未确认升档到已确认的关键证据。</p>
+        <p id="wo-detail-market-narrative">市场确认状态待确认，不能据此声称市场已完成风险定价。</p>
 
-        <h4>3. 主导驱动与降级条件 <em>· Drivers & De-escalation</em></h4>
+        <h4>3. 主导驱动与后续观察 <em>· Drivers & Follow-up</em></h4>
 
-        <p>本期主导驱动有 3 个：<code id="wo-driver-1">多战区压力 持续 2 周</code>、<code id="wo-driver-2">美国制裁清单(OFAC)制裁事件偏离度(z-score) +2.3σ</code>、<code id="wo-driver-3">全球新闻事件(GDELT)阵营信号 上行</code>。这三项都来自高频数据源(全球新闻事件(GDELT)每日、美国制裁清单(OFAC)每日、武装冲突事件数据(ACLED)每周)，说明本期升档不是基于年频数据(如斯德哥尔摩国际和平研究所(SIPRI)军费)的滞后判读，而是基于<strong>近 30 天的实际事件</strong>。</p>
+        <p>当前主要驱动(最多展示 3 项)：<code id="wo-driver-1">—</code>、<code id="wo-driver-2">—</code>、<code id="wo-driver-3">—</code>。这些名称与分值来自当前快照；各维度的证据来源见上方卡片，不能把混合频率的来源统一视为近 30 天新事件。</p>
 
         <ul class="trigger-list watch">
-          <li><strong>降级路径 A</strong>：多战区压力 持续 &lt; 1 周 + 美国制裁清单(OFAC)30日偏离度(z-score)回落到 +1σ 以下。</li>
-          <li><strong>降级路径 B</strong>：市场确认度从承压回到正常，跨资产同步性消散。</li>
-          <li><strong>升档路径</strong>：若 SIPRI 年度军费 + ACLED 冲突事件同时进入历史高位，可能从多战区压力升至战争经济压力。</li>
+          <li><strong>结构性观察</strong>：跟踪冲突、制裁及年度军费证据；频率不同，不能仅凭当前分值判断持续时间。</li>
+          <li><strong>市场观察</strong>：区分未确认、弱确认、部分确认与较强确认；来源健康度不等于市场确认强度。</li>
+          <li><strong>变化核对</strong>：升降档需比较同口径历史快照；本页不自行设定触发阈值或推导新的状态。</li>
         </ul>
 
         <div class="appendix-callout warn">
           <div class="callout-kicker">边界说明</div>
           <p id="wo-warning-boundary">该模块用于结构性风险识别，不构成战争预测或投资建议。</p>
-          <p>本状态层只通过风险偏置系数影响判读的强度修正，<strong>不直接参与风险打分或执行</strong>。即使叠加升至最高档，系统主分数仍然由 6 大底层模块决定。</p>
+          <p>本状态层仅供参考,不参与平台的风险打分与决策；不代表战争预测、供应中断确认或交易执行信号。来源过期、缺失或手动更新滞后时，应结合上方日期与限制阅读。</p>
         </div>
 
       </div>
@@ -1190,6 +1190,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=bofa-report-review-1"></script>
+  <script type="module" src="scripts/app.js?v=world-order-evidence-1"></script>
 </body>
 </html>

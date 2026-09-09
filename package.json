@@ -247,6 +247,7 @@
     "review:fomc-minutes-tone-quality": "node scripts/review-fomc-minutes-tone-quality.mjs",
     "check:macro-drivers-fomc-minutes-tone-quality": "node --check scripts/review-fomc-minutes-tone-quality.mjs && node --check scripts/check-fomc-minutes-tone-quality.mjs && node scripts/check-fomc-minutes-tone-quality.mjs && node scripts/review-fomc-minutes-tone-quality.mjs --no-output",
     "check:world-order-narrative-density": "node scripts/check-world-order-narrative-density.mjs",
+    "check:world-order-display-narrative": "node scripts/check-world-order-display-narrative.mjs",
     "check:risk-asset-mismatch-narrative-density": "node scripts/check-risk-asset-mismatch-narrative-density.mjs",
     "check:overheat-confirmation-narrative-density": "node scripts/check-overheat-confirmation-narrative-density.mjs",
     "check:external-ai": "node --check scripts/check-suite.mjs && node scripts/check-suite.mjs external-ai",
