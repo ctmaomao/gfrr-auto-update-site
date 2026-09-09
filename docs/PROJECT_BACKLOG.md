@@ -28,6 +28,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ### 2026-09-10 历史回测输入修复
 
 - **Acceptance baseline**：owner 授权依次修复历史值过期、查询预热窗口、默认值披露，每项验证后 commit+push；授权本任务 PR 及合并，并明确允许一次有界独立 AI 审阅替代人工。最终 head 审阅与 CI 通过后合并并验收自然 Pages；不调用真实源、付费 provider 或改生产评分/数据。
+- **第三项**：历史报告逐项披露 observationDate/ageDays/status 及 effectiveValue/valueOrigin/effectiveSourceKey/effectiveObservationDate；默认值、代理值和场景覆盖不冒充原始观察，原始缺失清单完整列出。inputCoverage 记录被排除日期、必需输入缺口与原因。21 项专项及 check:changed → check:all 退出 0；覆盖率 99.85% / 93.44% / 97.96%，单元 445 pass / 0 fail / 1 既有样本缺失 skip。
 - **第二项**：API 查询及 CSV 保留窗口统一提前 42 日（28 日变化 + 最长 14 日年龄容差），评价日期仍严格从原 startDate 开始；报告新增 inputWindow。离线 API/CSV 同窗测试恢复起日 Brent +25%、RRP -50%、WALCL -12.5% 和曲线陡峭化，不增加评价样本；专项 5 项及 check:changed → check:all 退出 0。
 - **第一项**：audit-only 日频序列最多沿用 7 个日历日，周频 WALCL 最多 14 日；容纳周末/节假日与一次缺周，不代表生产 freshness 或发布时间有效性。当前值、变化基准和冲突回放均用同一年龄闸门，过期必需输入跳过该评价日，过期可选输入保留缺失。18 项评分/历史专项及 check:changed → check:all 全部退出 0。
 
@@ -394,7 +395,7 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **工作基线**：PR #330 已合并 7e9d7891；本任务分支 codex/historical-audit-input-fixes 从该 latest main 创建，原工作区保留。
-- **当前任务**：依次修复历史过期输入、查询预热、默认值披露；前两项已通过专项及完整检查。
+- **当前任务**：依次修复历史过期输入、查询预热、默认值披露；三项代码修复均通过专项及完整检查，最终覆盖率门槛通过。
 - **下一步**：每项检查通过后分别 commit+push，最后创建 PR、有界独立 AI 审阅、CI 和合并部署验收。
 - **阻塞或等待**：owner 已授权本任务 PR 的单次独立 AI 替代审阅及合并；无需重复请示，不扩展真实源/付费刷新。
 

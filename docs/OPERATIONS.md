@@ -1617,3 +1617,5 @@ for operator review only and must not be copied into production data.
 历史输入年龄闸门（audit-only）：日频 FRED 序列最多沿用 7 个日历日，周频 WALCL 最多 14 日；超过边界按缺失处理，包括变化率的前期基准。该宽容窗仅用于离线历史序列，不代表生产 freshness 或历史发布时间已验证；报告保留 `historicalInputPolicy`。
 
 历史查询预热：`inputWindow.observationStartDate` 为评价起点前 42 天（28 天计算窗口 + 最长 14 天年龄容差），API 与 CSV 使用同一保留区间；`sampleRows` 与事件统计仍只纳入原评价区间，预热不是新增训练/评价样本。缺少真实前期观察仍按缺失处理，不填造数据。
+
+历史输入披露：每条 `sampleRows[].inputDiagnostics` 保留原始观察日期、日龄和 available/missing/stale；`effectiveValue` 与 `valueOrigin` 区分 historical/default/proxy/scenario_override/missing，默认值不伪造观察日期。`defaultedHistoricalInputs` 列出默认值，`unavailableHistoricalInputs` 列出原始输入缺口（即使用了代理或默认值仍保留）。`inputCoverage` 列出评价总数、有效数及被排除日期/必需输入/原始观察状态，防止过滤缺失样本后误报覆盖完整。上述字段只用于 ignored 历史审计报告，不进入生产数据契约。

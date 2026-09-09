@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { deriveHistoricalRisk, historicalObservation, HISTORICAL_MAX_AGE_DAYS } from './daily/historical-score.mjs';
+import { deriveHistoricalRisk, historicalObservation, HISTORICAL_MAX_AGE_DAYS, buildHistoricalReplay } from './daily/historical-score.mjs';
 import { describeHistoricalValidation, historicalNumber, isHistoricalDate } from './daily/historical-validation.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/main-score-audit/main-score-backtest-latest.json';
@@ -527,9 +527,7 @@ async function main() {
     };
   }
 
-  const rows = makeWeeklyDates(options.startDate, options.endDate)
-    .map((date) => deriveRiskForDate(date, seriesRows))
-    .filter(Boolean);
+  const { sampleRows: rows, inputCoverage } = buildHistoricalReplay(makeWeeklyDates(options.startDate, options.endDate), seriesRows, rules);
   const events = EVENT_WINDOWS.map((event) => summarizeEvent(rows, event));
   const failedEvents = events.filter((event) => !event.pass);
   const windFallbackPolicy = buildWindFallbackPolicyReplay(rows, seriesRows);
@@ -541,6 +539,7 @@ async function main() {
     verdictScope: 'retrospective_score_and_source_conflict_checks_only',
     validation: describeHistoricalValidation(rules, rows.map(row => row.date)),
     historicalInputPolicy: { maxAgeCalendarDays: HISTORICAL_MAX_AGE_DAYS, scope: 'audit_only_not_production_freshness' },
+    inputCoverage,
     limitations: [
       'Backtest uses FRED historical series only; intraday Brent public-consensus promotion cannot be replayed before this implementation.',
       'HY OAS exact FRED coverage may be short; BAA10Y is an explicitly labeled HY proxy in this audit. Missing IG OAS stays missing.',
