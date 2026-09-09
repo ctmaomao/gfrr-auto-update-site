@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { deriveRisk, buildTransportShockScoringImpact } from '../../scripts/run-daily-pipeline.mjs';
-import { buildHistoricalScoreInputs, deriveHistoricalRisk } from '../../scripts/daily/historical-score.mjs';
+import { buildHistoricalScoreInputs, deriveHistoricalRisk, historicalObservation } from '../../scripts/daily/historical-score.mjs';
 
 const rules = JSON.parse(readFileSync(new URL('../../config/rules.json', import.meta.url)));
 const baseline = JSON.parse(readFileSync(new URL('../fixtures/main-score-production-baseline.json', import.meta.url)));
@@ -19,7 +19,7 @@ for (const fixture of baseline.cases) {
 const date = '2026-06-12';
 const series = Object.fromEntries(Object.entries({ brent: 80, dxy: 115, vix: 18, hyOas: 3,
   us10y: 4, real10y: 1.8, breakeven10y: 2.3, spx: 5300, walcl: 7000000, onRrp: 500, t10y2y: -0.1, igOas: 1 })
-  .map(([key, value]) => [key, [{ date: '2026-05-01', value }, { date, value }]]));
+  .map(([key, value]) => [key, [{ date: '2026-06-05', value }, { date, value }]]));
 series.brent.splice(1, 0, { date: '2026-06-11', value: 64 });
 series.t10y2y[0].value = -0.5;
 series.onRrp[0].value = 1000;
@@ -39,6 +39,20 @@ test('historical adapter supplies oil daily change, curve steepening and RRP cha
 test('future observations cannot affect earlier scores', () => {
   const future = Object.fromEntries(Object.entries(series).map(([key, rows]) => [key, [...rows, { date: '2027-01-01', value: 999999 }]]));
   assert.deepEqual(deriveHistoricalRisk(date, future, rules), deriveHistoricalRisk(date, series, rules));
+});
+
+test('historical age boundaries allow calendar gaps but reject abandoned series', () => {
+  const rows = [{ date: '2026-06-05', value: 10 }];
+  assert.equal(historicalObservation(rows, '2026-06-07', 'brent').value, 10);
+  assert.equal(historicalObservation(rows, '2026-06-12', 'brent').value, 10);
+  assert.equal(historicalObservation(rows, '2026-06-13', 'brent').status, 'stale');
+  assert.equal(historicalObservation(rows, '2026-06-19', 'walcl').value, 10);
+  assert.equal(historicalObservation(rows, '2026-06-20', 'walcl').status, 'stale');
+  assert.equal(historicalObservation(rows, '2026-06-01', 'brent').status, 'missing');
+  assert.equal(historicalObservation([{ date, value: NaN }], date, 'brent').status, 'missing');
+  assert.equal(deriveHistoricalRisk('2030-01-01', series, rules), null);
+  const oldOptional = { ...series, igOas: [{ date: '2000-01-01', value: 99 }] };
+  assert.equal(buildHistoricalScoreInputs(date, oldOptional, rules).macroDrivers.credit.sourceStatus.igOas, 'missing');
 });
 
 test('missing required inputs fail closed and historical credit proxy is disclosed', () => {

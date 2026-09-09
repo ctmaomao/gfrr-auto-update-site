@@ -2,6 +2,11 @@ import { deriveRisk } from '../run-daily-pipeline.mjs';
 
 // Historical inputs are proxies; calculation parity does not imply point-in-time data parity.
 const SERIES_KEYS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y', 'breakeven10y', 'spx', 'walcl', 'onRrp', 't10y2y', 'igOas', 'baa10y'];
+// Audit-only calendar-day tolerances: daily series allow weekends/holidays;
+// weekly WALCL allows one missed weekly observation. Not production freshness.
+export const HISTORICAL_MAX_AGE_DAYS = Object.freeze(Object.fromEntries(
+  SERIES_KEYS.map(key => [key, key === 'walcl' ? 14 : 7])
+));
 const daysBefore = (date, days) => new Date(Date.parse(`${date}T00:00:00Z`) - days * 86400000).toISOString().slice(0, 10);
 const changePct = (current, previous) => Number.isFinite(current) && Number.isFinite(previous) && previous !== 0
   ? (current - previous) / previous * 100 : null;
@@ -16,8 +21,17 @@ export function latestHistoricalRow(rows = [], date) {
   return found;
 }
 
+export function historicalObservation(rows, date, key) {
+  const row = latestHistoricalRow(rows, date);
+  const ageDays = row ? (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${row.date}T00:00:00Z`)) / 86400000 : null;
+  const maxAgeDays = HISTORICAL_MAX_AGE_DAYS[key];
+  const status = !row || !Number.isFinite(row.value) ? 'missing'
+    : Number.isFinite(ageDays) && ageDays >= 0 && ageDays <= maxAgeDays ? 'available' : 'stale';
+  return { observationDate: row?.date ?? null, ageDays, maxAgeDays, status, value: status === 'available' ? row.value : null };
+}
+
 export function buildHistoricalScoreInputs(date, seriesRows, rules, valueOverrides = null) {
-  const at = (key, when = date) => latestHistoricalRow(seriesRows[key], when)?.value ?? null;
+  const at = (key, when = date) => historicalObservation(seriesRows[key], when, key).value;
   const values = Object.fromEntries(SERIES_KEYS.map(key => [key, at(key)]));
   for (const [key, value] of Object.entries(valueOverrides || {})) {
     if (Object.hasOwn(values, key) && Number.isFinite(value)) values[key] = value;

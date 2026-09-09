@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { deriveHistoricalRisk, latestHistoricalRow } from './daily/historical-score.mjs';
+import { deriveHistoricalRisk, historicalObservation, HISTORICAL_MAX_AGE_DAYS } from './daily/historical-score.mjs';
 import { describeHistoricalValidation, historicalNumber, isHistoricalDate } from './daily/historical-validation.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/main-score-audit/main-score-backtest-latest.json';
@@ -197,7 +197,7 @@ async function fetchFredSeries(seriesId, options) {
 }
 
 function buildValuesForDate(date, seriesRows) {
-  return Object.fromEntries(Object.keys(SERIES).map((key) => [key, latestHistoricalRow(seriesRows[key], date)?.value ?? null]));
+  return Object.fromEntries(Object.keys(SERIES).map((key) => [key, historicalObservation(seriesRows[key], date, key).value]));
 }
 
 function deriveRiskForDate(date, seriesRows, valueOverrides = null) {
@@ -535,6 +535,7 @@ async function main() {
     verdict: failedEvents.length || !windFallbackPolicy.pass ? 'needs_review' : 'pass_with_limitations',
     verdictScope: 'retrospective_score_and_source_conflict_checks_only',
     validation: describeHistoricalValidation(rules, rows.map(row => row.date)),
+    historicalInputPolicy: { maxAgeCalendarDays: HISTORICAL_MAX_AGE_DAYS, scope: 'audit_only_not_production_freshness' },
     limitations: [
       'Backtest uses FRED historical series only; intraday Brent public-consensus promotion cannot be replayed before this implementation.',
       'HY OAS exact FRED coverage may be short; BAA10Y is an explicitly labeled HY proxy in this audit. Missing IG OAS stays missing.',

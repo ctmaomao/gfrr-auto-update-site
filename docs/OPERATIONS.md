@@ -1613,3 +1613,5 @@ for operator review only and must not be copied into production data.
 `audit:main-score-backtest` 复用生产评分公式，但历史数据是最新修订序列，规则是当前规则。报告 `validation` 固定披露非预测验证，并列出校准截止日前后样本数及规则 SHA-256；截止日之后的样本也不自动成为冻结样本外证据。`verdict` 仅适用于事后评分/来源冲突检查，不能解释为投资预测通过。
 
 需要严格预测证据时可加 `--require-predictive-evidence`，当前路径会在任何请求/输出前明确拒绝。解锁需要历史发布时间与修订 vintage、测试期之前冻结的规则及事先确定的预测目标/未使用样本；不通过改标签解锁。此次仅运行离线回归，未刷新历史报告或下载新数据。
+
+历史输入年龄闸门（audit-only）：日频 FRED 序列最多沿用 7 个日历日，周频 WALCL 最多 14 日；超过边界按缺失处理，包括变化率的前期基准。该宽容窗仅用于离线历史序列，不代表生产 freshness 或历史发布时间已验证；报告保留 `historicalInputPolicy`。

@@ -25,6 +25,11 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-10 历史回测输入修复
+
+- **Acceptance baseline**：owner 授权依次修复历史值过期、查询预热窗口、默认值披露，每项验证后 commit+push；授权本任务 PR 及合并，并明确允许一次有界独立 AI 审阅替代人工。最终 head 审阅与 CI 通过后合并并验收自然 Pages；不调用真实源、付费 provider 或改生产评分/数据。
+- **第一项**：audit-only 日频序列最多沿用 7 个日历日，周频 WALCL 最多 14 日；容纳周末/节假日与一次缺周，不代表生产 freshness 或发布时间有效性。当前值、变化基准和冲突回放均用同一年龄闸门，过期必需输入跳过该评价日，过期可选输入保留缺失。18 项评分/历史专项及 check:changed → check:all 全部退出 0。
+
 ### 2026-09-10 节制体检整改
 
 - **PR #330 单次审阅授权**：owner 明确要求先合并本 PR，并允许一次有界的独立 AI 审阅替代人工；仅在最终 head 审阅通过和 CI 通过后合并，适用范围仅 PR #330。复查发现的历史值过期、起点预热数据和默认值披露另行处理，本次不混入修复；不降低审阅阻断标准，不扩展付费或源刷新权限。
@@ -387,10 +392,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：本轮从 origin/main 17b97291 建立 codex/project-health-fixes-20260910；上一轮 PR #329 已合并，旧 PR 不追加任务。原工作区与生产数据保持原样。
-- **当前任务**：按 owner 2026-09-10 授权处理体检四项问题；四项代码整改已完成：评分复用/精简、GDELT 限流优化、历史验证边界和关键行为覆盖；各项专项及 check:changed → check:all 全部通过，最终覆盖率门槛通过。
-- **下一步**：前 3 项已分别 commit+push；第 4 项验证通过后提交推送，创建本轮 PR 并核对 CI。按既定独立 review 门槛集成，再核对自然部署。
-- **阻塞或等待**：本地验证完成；合并仍须本轮 PR 的独立人工 review。真实历史 vintage/冻结样本外数据与 GDELT 自然运行效果仍需后续真实证据。未授权真实源刷新、付费调用或 Worker 部署，不启动深度扫描/多轮代理。
+- **工作基线**：PR #330 已合并 7e9d7891；本任务分支 codex/historical-audit-input-fixes 从该 latest main 创建，原工作区保留。
+- **当前任务**：依次修复历史过期输入、查询预热、默认值披露；第一项已通过专项及完整检查。
+- **下一步**：每项检查通过后分别 commit+push，最后创建 PR、有界独立 AI 审阅、CI 和合并部署验收。
+- **阻塞或等待**：owner 已授权本任务 PR 的单次独立 AI 替代审阅及合并；无需重复请示，不扩展真实源/付费刷新。
 
 ### 2026-09-09 刷新与卫星验收记录
 
