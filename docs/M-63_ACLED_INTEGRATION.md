@@ -79,9 +79,9 @@ The operator downloads these six regional aggregated files:
 
 - Africa
 - Middle-East
-- Europe-and-Central-Asia
-- United-States-and-Canada
-- Latin-America-and-the-Caribbean
+- Europe-Central-Asia
+- US-and-Canada
+- Latin-America-the-Caribbean
 - Asia-Pacific
 
 Expected filename pattern:
@@ -90,7 +90,9 @@ Expected filename pattern:
 <Region>_aggregated_data_up_to_week_of-YYYY-MM-DD_*.xlsx
 ```
 
-The sanitizer is strict about region spelling and capitalization. Unknown regions are skipped with a warning. Missing expected regions are allowed, because the operator may be running a partial import, but the warning must be reviewed.
+The sanitizer is strict about region spelling and capitalization. Unknown input files are skipped with a warning and cannot satisfy coverage. Per [ADR-0033](ADR/0033-acled-weekly-completeness.md), a nonempty batch must resolve to all six canonical regions before parsing or writing; incomplete batches fail and preserve the existing config. Committed `filesIngested` and `regionalLast4Weeks` each require the six regions exactly once. This supersedes the previous partial-import allowance. Browser copy suffixes such as `_0 (1)` and ` (1)` are accepted without renaming source files; duplicate regional files retain deterministic newest-date selection and warnings.
+
+Regional cutoffs may differ. `latestWeek` is the maximum, not evidence that every region reaches that date. On 2026-09-09 the owner confirmed the official site still ends some regions on 2026-08-14 while others reach 2026-08-28. Preserve those dates: upstream lag is not a local publication fault.
 
 Weekly cadence follows ACLED's Monday/Tuesday regional release rhythm. If the latest week is 30-90 days old, the sanitizer and check warn. If it is more than 90 days old, they fail. Future-dated input fails immediately.
 

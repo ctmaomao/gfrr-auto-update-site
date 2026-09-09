@@ -794,6 +794,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 **Aggregated download tracks**:
 
+Weekly publication requires all six canonical regions exactly once in both normalized arrays ([ADR-0033](ADR/0033-acled-weekly-completeness.md)). Missing regions stop the local sanitizer before overwrite; different official regional cutoff dates remain valid. `latestWeek` is only the maximum regional week, not uniform coverage. Owner verified on 2026-09-09 that the official source itself still ends three regions on 2026-08-14; do not manufacture newer dates or treat that lag as failed local publishing.
+
 | Track | Files | Scope |
 |---|---:|---|
 | Weekly regional | 6 | Africa;Middle East;Europe and Central Asia;United States and Canada;Latin America and the Caribbean;Asia-Pacific |
