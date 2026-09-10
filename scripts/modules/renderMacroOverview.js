@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=snapshot-age-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=snapshot-age-1';
+} from './config.js?v=event-units-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=event-units-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=snapshot-age-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=snapshot-age-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=snapshot-age-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=snapshot-age-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=snapshot-age-1';
+} from './macroOverviewDisplayHelpers.js?v=event-units-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=event-units-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=event-units-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=event-units-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=event-units-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

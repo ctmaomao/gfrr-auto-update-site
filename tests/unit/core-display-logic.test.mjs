@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=snapshot-age-1';
+} from '../../scripts/modules/config.js?v=event-units-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

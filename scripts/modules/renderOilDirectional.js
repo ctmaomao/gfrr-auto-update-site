@@ -797,14 +797,18 @@ function uniqueEventRegions(values) {
   }
   return out;
 }
-function renderLegacyOilEventNewsLayer(worldOrderStressData) {
+export function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   const gdelt = worldOrderStressData?.externalSources?.gdelt || {};
   const summary = gdelt.summary && typeof gdelt.summary === 'object' ? gdelt.summary : {};
   const status = typeof gdelt.status === 'string' ? gdelt.status : '';
-  const conflictEvents = Math.max(0, Math.round(firstNumber(summary.conflictEvents, summary.totalEvents, summary.totalArticles) ?? 0));
-  const sanctionsEvents = Math.max(0, Math.round(firstNumber(summary.sanctionsEvents) ?? 0));
-  const chokepointEvents = Math.max(0, Math.round(firstNumber(summary.blockadeOrChokepointEvents) ?? 0));
-  const totalArticles = Math.max(0, Math.round(firstNumber(summary.totalArticles, summary.totalEvents) ?? 0));
+  const count = (...values) => {
+    const value = values.find(value => typeof value === 'number' && Number.isFinite(value) && value >= 0);
+    return value === undefined ? null : Math.round(value);
+  };
+  const conflictEvents = count(summary.conflictEvents, summary.totalEvents);
+  const sanctionsEvents = count(summary.sanctionsEvents);
+  const chokepointEvents = count(summary.blockadeOrChokepointEvents);
+  const totalEvents = count(summary.totalEvents);
   const keyConflictRegions = uniqueEventRegions(summary.keyConflictRegions);
   const visibleRegions = uniqueEventRegions([
     ...keyConflictRegions,
@@ -829,9 +833,11 @@ function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   if (status === 'ok' && (chokepointEvents > 0 || sanctionsEvents > 0 || oilWatchRegions.length > 0 || conflictEvents > 0)) {
     statusText = '广义事件观察';
     tone = 'yellow';
-  } else if (status === 'ok') {
+  } else if (status === 'ok' && [conflictEvents, sanctionsEvents, chokepointEvents].every(value => value !== null)) {
     statusText = '未见事件压力';
     tone = 'green';
+  } else if (status === 'ok') {
+    statusText = conflictEvents === null ? '事件计数缺失' : '事件计数不完整';
   } else if (status === 'stale') {
     tone = 'yellow';
   }
@@ -840,14 +846,16 @@ function renderLegacyOilEventNewsLayer(worldOrderStressData) {
     ? `重点地区含 ${oilRegionText},作为能源事件背景观察。`
     : '未从广义摘要中识别出重点能源地区。';
   const directContext = chokepointEvents > 0 || sanctionsEvents > 0
-    ? `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents} 条需人工核验。`
+    ? `制裁 ${sanctionsEvents ?? '—'} / 通道 ${chokepointEvents ?? '—'} 起需人工核验。`
     : '当前摘要未给出制裁或通道中断的直接计数。';
 
   setLeafText('odp-news-event-status', statusText);
   setToneClass('odp-news-event-status', 'odp-news-event-status', tone);
-  setLeafText('odp-news-event-window', `${fetchedAt || '—'}${cached} · ${totalArticles} 条报道代理`);
-  setLeafText('odp-news-event-conflict', `${conflictEvents} 条 · ${regionText}`);
-  setLeafText('odp-news-event-sanctions', `制裁 ${sanctionsEvents} / 通道 ${chokepointEvents}`);
+  const eventWindowText = totalEvents === null ? '事件数未知' : `${totalEvents} 起事件（按国家汇总）`;
+  const conflictText = conflictEvents === null ? '事件数未知' : `${conflictEvents} 起事件`;
+  setLeafText('odp-news-event-window', `${fetchedAt || '—'}${cached} · ${eventWindowText} · 去重报道数未知`);
+  setLeafText('odp-news-event-conflict', `${conflictText} · ${regionText}`);
+  setLeafText('odp-news-event-sanctions', `制裁 ${sanctionsEvents ?? '—'} / 通道 ${chokepointEvents ?? '—'}`);
   setLeafText('odp-news-event-headline-gate', '专用闸门未接入');
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', 'yellow');
   setLeafText('odp-news-event-source-health', '广义 GDELT 摘要 · 专用三源未接入');

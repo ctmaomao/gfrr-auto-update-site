@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=snapshot-age-1';
+﻿import { fmtNumSafe } from './config.js?v=event-units-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

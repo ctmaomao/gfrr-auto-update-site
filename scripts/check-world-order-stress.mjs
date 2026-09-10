@@ -140,6 +140,12 @@ for (const sourceKey of sourceKeys) {
 
 const gdelt = payload.externalSources.gdelt;
 const gdeltSummary = gdelt.summary;
+const eventUnits = gdeltSummary.countUnit === 'country_event_aggregate';
+if (eventUnits) {
+  if (gdeltSummary.totalArticles !== null) fail('GDELT event-unit totalArticles must be null');
+  if (typeof gdeltSummary.articleCountReasonZh !== 'string' || !gdeltSummary.articleCountReasonZh.trim()) fail('GDELT event-unit articleCountReasonZh required');
+  if (gdeltSummary.totalEvents !== null && (!Number.isSafeInteger(gdeltSummary.totalEvents) || gdeltSummary.totalEvents < 0)) fail('GDELT event-unit totalEvents must be non-negative integer or null');
+}
 for (const key of ['successCount', 'failureCount', 'rateLimitedCount']) {
   if (!Number.isFinite(gdeltSummary[key])) fail(`externalSources.gdelt.summary.${key} must be finite number`);
 }
@@ -159,7 +165,11 @@ for (const [index, queryRun] of gdeltSummary.queriesRun.entries()) {
   if (!allowedGdeltQueryStatuses.has(queryRun.status)) {
     fail(`externalSources.gdelt.summary.queriesRun[${index}].status invalid`);
   }
-  if (!Number.isFinite(queryRun.articleCount)) {
+  if (eventUnits) {
+    if (queryRun.articleCount !== null) fail(`externalSources.gdelt.summary.queriesRun[${index}].articleCount must be null for event units`);
+    if (!('eventCount' in queryRun) || (queryRun.eventCount !== null && (!Number.isSafeInteger(queryRun.eventCount) || queryRun.eventCount < 0))) fail(`externalSources.gdelt.summary.queriesRun[${index}].eventCount must be non-negative integer or null`);
+    if (queryRun.status === 'ok' && (!Number.isSafeInteger(queryRun.eventCount) || queryRun.eventCount < 0)) fail('GDELT successful event query requires observed eventCount');
+  } else if (!Number.isFinite(queryRun.articleCount)) {
     fail(`externalSources.gdelt.summary.queriesRun[${index}].articleCount must be finite number`);
   }
 }
