@@ -230,20 +230,52 @@ function summarizeRows(rows) {
   };
 }
 
-function summarizeEvent(rows, event) {
-  const subset = rows.filter((row) => row.date >= event.start && row.date <= event.end);
+export function summarizeEvent(rows, event, options) {
+  // Use the evaluation grid's anchor, not surviving rows: missing samples must
+  // never shrink their own denominator. Require the whole named event window.
+  const weekMs = 7 * 86400000;
+  const anchor = dateToMs(options.startDate);
+  const first = anchor + Math.ceil((dateToMs(event.start) - anchor) / weekMs) * weekMs;
+  const expectedDates = makeWeeklyDates(msToDate(first), event.end);
+  const expectedSet = new Set(expectedDates);
+  const byDate = new Map(rows.filter(row => expectedSet.has(row.date)
+    && row.date >= options.startDate && row.date <= options.endDate
+    && Number.isFinite(row.score) && row.score >= 0 && row.score <= 100).map(row => [row.date, row]));
+  const subset = [...byDate.values()];
   const summary = summarizeRows(subset);
-  let pass = true;
+  let scorePass = true;
   let rule = null;
   if (Number.isFinite(event.minMaxScore)) {
-    pass = Number.isFinite(summary.max) && summary.max >= event.minMaxScore;
+    scorePass = Number.isFinite(summary.max) && summary.max >= event.minMaxScore;
     rule = `max >= ${event.minMaxScore}`;
   }
   if (Number.isFinite(event.maxAvgScore)) {
-    pass = Number.isFinite(summary.avg) && summary.avg <= event.maxAvgScore;
+    scorePass = scorePass && Number.isFinite(summary.avg) && summary.avg <= event.maxAvgScore;
     rule = `avg <= ${event.maxAvgScore}`;
   }
-  return { ...event, rule, pass, ...summary };
+  const outside = options.endDate < event.start || options.startDate > event.end;
+  const fullWindow = options.startDate <= event.start && options.endDate >= event.end;
+  const complete = expectedDates.length > 0 && subset.length === expectedDates.length;
+  const status = outside ? 'not_evaluated' : !fullWindow ? 'partial_window'
+    : !complete ? 'insufficient_coverage' : scorePass ? 'passed' : 'score_failed';
+  return { ...event, rule, status, pass: status === 'passed', scorePass: fullWindow && complete ? scorePass : null,
+    coverage: { expectedObservations: expectedDates.length, validObservations: subset.length,
+      requiredFraction: 1, fraction: expectedDates.length ? subset.length / expectedDates.length : null,
+      missingDates: expectedDates.filter(date => !byDate.has(date)), fullWindow }, ...summary };
+}
+
+export function eventResultGroups(events) {
+  return {
+    failedEvents: events.filter(event => event.status === 'score_failed').map(event => event.key),
+    notEvaluatedEvents: events.filter(event => event.status === 'not_evaluated').map(event => event.key),
+    incompleteEvents: events.filter(event => ['not_evaluated', 'partial_window', 'insufficient_coverage'].includes(event.status)).map(event => event.key),
+    unpassedEvents: events.filter(event => !event.pass).map(event => event.key)
+  };
+}
+
+export function auditVerdict(events, windFallbackPolicy) {
+  return events.length > 0 && events.every(event => event.pass === true) && windFallbackPolicy.pass === true
+    ? 'pass_with_limitations' : 'needs_review';
 }
 
 function adjustByPct(value, pct) {
@@ -338,7 +370,7 @@ function windAutomaticSwitchGuardReasons(baseRow, stressedRow) {
   return reasons;
 }
 
-function summarizeWindScenario(baseRows, stressedRows, scenario) {
+export function summarizeWindScenario(baseRows, stressedRows, scenario, options) {
   const byDate = new Map(stressedRows.map((row) => [row.date, row]));
   const deltas = [];
   const absDeltas = [];
@@ -402,10 +434,8 @@ function summarizeWindScenario(baseRows, stressedRows, scenario) {
       return automatic ? Math.abs(automatic.score - baseRow.score) : null;
     })
     .filter(Number.isFinite);
-  const eventSummaries = EVENT_WINDOWS.map((event) => summarizeEvent(automaticRows, event));
-  const rawEventSummaries = EVENT_WINDOWS.map((event) => summarizeEvent(stressedRows, event));
-  const failedEvents = eventSummaries.filter((event) => !event.pass).map((event) => event.key);
-  const rawFailedEvents = rawEventSummaries.filter((event) => !event.pass).map((event) => event.key);
+  const eventSummaries = EVENT_WINDOWS.map((event) => summarizeEvent(automaticRows, event, options));
+  const rawEventSummaries = EVENT_WINDOWS.map((event) => summarizeEvent(stressedRows, event, options));
   const observations = deltas.length;
   return {
     key: scenario.key,
@@ -427,13 +457,14 @@ function summarizeWindScenario(baseRows, stressedRows, scenario) {
       p95AbsScoreDelta: round(percentile(rawAbsDeltas, 95), 2),
       maxAbsScoreDelta: round(rawAbsDeltas.length ? Math.max(...rawAbsDeltas) : null, 2),
       tierFlipPct: round(observations ? rawTierFlips / observations * 100 : null, 2),
-      failedEvents: rawFailedEvents,
+      ...eventResultGroups(rawEventSummaries),
+      events: rawEventSummaries,
       largestDeltas: largestRawDeltas.slice(0, 10).map((row) => ({
         ...row,
         delta: round(row.delta, 2)
       }))
     },
-    failedEvents,
+    ...eventResultGroups(eventSummaries),
     events: eventSummaries,
     largestDeltas: largestDeltas.slice(0, 10).map((row) => ({
       ...row,
@@ -442,11 +473,11 @@ function summarizeWindScenario(baseRows, stressedRows, scenario) {
   };
 }
 
-function evaluateWindScenario(summary, thresholds, eventWindowsMustPass) {
+export function evaluateWindScenario(summary, thresholds, eventWindowsMustPass) {
   const failures = [];
   if (!summary.observations) failures.push(`${summary.key}:no_observations`);
-  if (eventWindowsMustPass && summary.failedEvents.length) {
-    failures.push(`${summary.key}:event_windows_failed:${summary.failedEvents.join(',')}`);
+  if (eventWindowsMustPass && summary.unpassedEvents.length) {
+    failures.push(`${summary.key}:event_windows_not_passed:${summary.unpassedEvents.join(',')}`);
   }
   if (Number.isFinite(thresholds.p95AbsScoreDeltaMax) && summary.p95AbsScoreDelta > thresholds.p95AbsScoreDeltaMax) {
     failures.push(`${summary.key}:p95_abs_delta>${thresholds.p95AbsScoreDeltaMax}`);
@@ -466,7 +497,7 @@ function evaluateWindScenario(summary, thresholds, eventWindowsMustPass) {
   return failures;
 }
 
-function buildWindFallbackPolicyReplay(baseRows, seriesRows) {
+function buildWindFallbackPolicyReplay(baseRows, seriesRows, options) {
   const replayCfg = mainScoreSourcePolicy.replayValidation || {};
   const thresholds = replayCfg.passThresholds || {};
   const eventWindowsMustPass = replayCfg.eventWindowsMustPass !== false;
@@ -479,7 +510,7 @@ function buildWindFallbackPolicyReplay(baseRows, seriesRows) {
         return deriveRiskForDate(baseRow.date, seriesRows, overrides);
       })
       .filter(Boolean);
-    const summary = summarizeWindScenario(baseRows, stressedRows, scenario);
+    const summary = summarizeWindScenario(baseRows, stressedRows, scenario, options);
     return {
       ...summary,
       pass: evaluateWindScenario(summary, thresholds, eventWindowsMustPass).length === 0
@@ -528,14 +559,13 @@ async function main() {
   }
 
   const { sampleRows: rows, inputCoverage } = buildHistoricalReplay(makeWeeklyDates(options.startDate, options.endDate), seriesRows, rules);
-  const events = EVENT_WINDOWS.map((event) => summarizeEvent(rows, event));
-  const failedEvents = events.filter((event) => !event.pass);
-  const windFallbackPolicy = buildWindFallbackPolicyReplay(rows, seriesRows);
+  const events = EVENT_WINDOWS.map((event) => summarizeEvent(rows, event, options));
+  const windFallbackPolicy = buildWindFallbackPolicyReplay(rows, seriesRows, options);
   const report = {
     generatedAt: new Date().toISOString(),
     options,
     inputWindow: historicalQueryWindow(options),
-    verdict: failedEvents.length || !windFallbackPolicy.pass ? 'needs_review' : 'pass_with_limitations',
+    verdict: auditVerdict(events, windFallbackPolicy),
     verdictScope: 'retrospective_score_and_source_conflict_checks_only',
     validation: describeHistoricalValidation(rules, rows.map(row => row.date)),
     historicalInputPolicy: { maxAgeCalendarDays: HISTORICAL_MAX_AGE_DAYS, scope: 'audit_only_not_production_freshness' },
@@ -559,7 +589,7 @@ async function main() {
     seriesStatus,
     distribution: summarizeRows(rows),
     events,
-    failedEvents: failedEvents.map((event) => event.key),
+    ...eventResultGroups(events),
     windFallbackPolicy,
     sampleRows: rows
   };
@@ -569,7 +599,7 @@ async function main() {
   console.log(`[main-score-backtest] verdict=${report.verdict}`);
   console.log(`[main-score-backtest] observations=${rows.length}, p50=${report.distribution.p50}, p90=${report.distribution.p90}, max=${report.distribution.max}`);
   for (const event of events) {
-    console.log(`[main-score-backtest] ${event.key}: pass=${event.pass}, avg=${event.avg}, max=${event.max}, overlay=${event.overlayAppliedPct}%`);
+    console.log(`[main-score-backtest] ${event.key}: status=${event.status}, pass=${event.pass}, coverage=${event.coverage.validObservations}/${event.coverage.expectedObservations}, avg=${event.avg}, max=${event.max}, overlay=${event.overlayAppliedPct}%`);
   }
   console.log(`[main-score-backtest] windFallbackPolicy=${windFallbackPolicy.pass ? 'pass' : 'needs_review'} scenarios=${windFallbackPolicy.scenarios.length}`);
   console.log(`[main-score-backtest] wrote ${path.relative(process.cwd(), outputPath)}`);

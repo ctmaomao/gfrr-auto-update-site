@@ -1619,3 +1619,5 @@ for operator review only and must not be copied into production data.
 历史查询预热：`inputWindow.observationStartDate` 为评价起点前 42 天（28 天计算窗口 + 最长 14 天年龄容差），API 与 CSV 使用同一保留区间；`sampleRows` 与事件统计仍只纳入原评价区间，预热不是新增训练/评价样本。缺少真实前期观察仍按缺失处理，不填造数据。
 
 历史输入披露：每条 `sampleRows[].inputDiagnostics` 保留原始观察日期、日龄和 available/missing/stale；`effectiveValue` 与 `valueOrigin` 区分 historical/default/proxy/scenario_override/missing，默认值不伪造观察日期。`defaultedHistoricalInputs` 列出默认值，`unavailableHistoricalInputs` 列出原始输入缺口（即使用了代理或默认值仍保留）。`inputCoverage` 列出评价总数、有效数及被排除日期/必需输入/原始观察状态，防止过滤缺失样本后误报覆盖完整。上述字段只用于 ignored 历史审计报告，不进入生产数据契约。
+
+历史事件验收（2026-09-10）：完整事件窗口必须覆盖原评价 startDate 所锚定的每个周采样点（100% 有效、唯一、0–100 有限评分）；缺失点不能从分母中删除。`status` 区分 `not_evaluated`（范围外）、`partial_window`（仅部分窗口）、`insufficient_coverage`（样本不足）、`score_failed` 和 `passed`。前四者 `pass=false`，覆盖不完整时 `scorePass=null`，不把未评价描述成评分失败。`failedEvents` 仅列评分未达标，`incompleteEvents`/`notEvaluatedEvents` 单独披露，`unpassedEvents` 用于全部未通过项的严格拦截。整体 verdict 和 Wind 自动/原始回放同步应用该门槛，任何必需事件不完整都不能视为全套验收通过；原分数阈值和 eventWindowsMustPass 不变。

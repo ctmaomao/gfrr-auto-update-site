@@ -25,6 +25,11 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-10 历史审计判定完整性
+
+- **Acceptance baseline**：owner 要求按复查建议合并修复事件样本不足仍通过、未评价与评分失败混淆；沿用本轮 commit+push、PR、一次有界独立 AI 替代审阅及合并授权。最终 head 审阅和 CI 通过后合并并验收自然 Pages，不调用真实源或付费服务。
+- **实施**：事件门槛要求完整窗口及原评价周网格的 100% 有效评分点，去重、无效/网格外评分不计覆盖；明确 passed/score_failed/not_evaluated/partial_window/insufficient_coverage。failedEvents 只列评分失败，unpassedEvents 保留全部未通过项；整体 verdict 与 Wind 自动/原始回放共用覆盖逻辑，局部或稀疏结果不能晋升为完整验收通过。原分数阈值、eventWindowsMustPass 和生产路径不变；7 项专项及 check:changed → check:all 全部退出 0，既有 checker 未放宽。
+
 ### 2026-09-10 历史回测输入修复
 
 - **Acceptance baseline**：owner 授权依次修复历史值过期、查询预热窗口、默认值披露，每项验证后 commit+push；授权本任务 PR 及合并，并明确允许一次有界独立 AI 审阅替代人工。最终 head 审阅与 CI 通过后合并并验收自然 Pages；不调用真实源、付费 provider 或改生产评分/数据。
@@ -394,10 +399,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：PR #330 已合并 7e9d7891；本任务分支 codex/historical-audit-input-fixes 从该 latest main 创建，原工作区保留。
-- **当前任务**：依次修复历史过期输入、查询预热、默认值披露；三项代码修复均通过专项及完整检查，最终覆盖率门槛通过。
-- **下一步**：每项检查通过后分别 commit+push，最后创建 PR、有界独立 AI 审阅、CI 和合并部署验收。
-- **阻塞或等待**：owner 已授权本任务 PR 的单次独立 AI 替代审阅及合并；无需重复请示，不扩展真实源/付费刷新。
+- **工作基线**：PR #331 已合并并验收；当前任务从 latest main 28470827 建立 codex/historical-audit-verdict，原工作区保留。
+- **当前任务**：事件覆盖门槛与未评价状态修复完成，7 项专项及完整检查通过。
+- **下一步**：必要检查通过后 commit+push，创建 PR，完成一次有界独立 AI 审阅、CI、合并与 Pages 验收。
+- **阻塞或等待**：沿用本轮修复/集成/有界 AI 替代审阅授权；不扩大真实源或付费调用范围。
 
 ### 2026-09-09 刷新与卫星验收记录
 
