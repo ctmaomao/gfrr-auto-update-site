@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build:
@@ -41,6 +42,8 @@ jobs:
         run: npm ci
 
       - name: Use latest realtime payload
+        # Only this initial read may fail; the following preflight is the mandatory generation gate.
+        continue-on-error: true
         run: |
           set -euo pipefail
           mkdir -p realtime
@@ -48,6 +51,12 @@ jobs:
           git show origin/realtime-data:realtime/market.json > realtime/market.json
           REALTIME_SHA="$(git rev-parse origin/realtime-data)"
           echo "GFRR_REALTIME_COMMIT_SHA=$REALTIME_SHA" >> "$GITHUB_ENV"
+
+      - name: Prepare trusted Daily input before generation
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/daily/prepare-realtime-input.mjs --recover
 
       - name: Audit Daily realtime input vs Worker preview
         run: node scripts/audit-daily-vs-worker.mjs --github-summary
