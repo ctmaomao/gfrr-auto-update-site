@@ -65,6 +65,8 @@
 
 | [ADR-0037](0037-check-suite-deduplication.md) | Deduplicate execution while preserving transitive guard coverage | Owner-authorized implementation; independent checker/merge review retained |
 
+| [ADR-0038](0038-acled-runtime-freshness.md) | ACLED runtime freshness and retained historical inputs | Owner-authorized; independent contract review required |
+
 ## Superseded
 
 (None yet)

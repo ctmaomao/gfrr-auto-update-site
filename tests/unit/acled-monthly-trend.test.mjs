@@ -72,7 +72,7 @@ test('monthly source count parser rejects blanks before they can become observed
 test('actual checker rejects partial-window claims, accepts null; fetcher preserves null', async () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-acled-month-trend-'));
   try {
-    for (const relative of ['scripts/check-world-order-acled-monthly.mjs', 'scripts/world-order/acled-monthly-trend.mjs', 'scripts/world-order/fetch-acled.mjs', 'scripts/world-order/normalize-world-order-inputs.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/acled-monthly-filename.mjs', 'scripts/world-order/xlsx-input-guard.mjs']) {
+    for (const relative of ['scripts/world-order/acled-freshness.mjs', 'scripts/check-world-order-acled-monthly.mjs', 'scripts/world-order/acled-monthly-trend.mjs', 'scripts/world-order/fetch-acled.mjs', 'scripts/world-order/normalize-world-order-inputs.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/acled-monthly-filename.mjs', 'scripts/world-order/xlsx-input-guard.mjs']) {
       const target = path.join(fixture, relative);
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.copyFileSync(path.join(root, relative), target);
@@ -83,12 +83,17 @@ test('actual checker rejects partial-window claims, accepts null; fetcher preser
     config.monthlyTrend = buildMonthlyTrend(rowsFor(config.asOfDate), config.asOfDate);
     const target = path.join(fixture, 'config/world-order-acled-global-monthly.json');
     fs.mkdirSync(path.dirname(target), { recursive: true });
-    const runCheck = (data) => {
+    const runCheck = (data, args = ['--runtime-history']) => {
       fs.writeFileSync(target, JSON.stringify(data));
-      return spawnSync(process.execPath, [path.join(fixture, 'scripts/check-world-order-acled-monthly.mjs')], { encoding: 'utf8', timeout: 20_000 });
+      // These fixtures verify historical structure/trend semantics, not whether today's operator can publish old input.
+      return spawnSync(process.execPath, [path.join(fixture, 'scripts/check-world-order-acled-monthly.mjs'), ...args], { encoding: 'utf8', timeout: 20_000 });
     };
     let result = runCheck(config);
     assert.equal(result.status, 0, result.stderr);
+    for(const args of [[],['--runtime-history']]) {
+      const invalid=runCheck({...config,asOfDate:'2026-02-30',monthlyTrend:null},args);
+      assert.equal(invalid.status,1);assert.match(invalid.stderr,/parseable|invalid/i);
+    }
     for (const mutate of [
       (trend) => { trend.latest12mWindow[1] = config.asOfDate.slice(0, 7); },
       (trend) => { trend.prior12mWindow[0] = '2020-01'; },

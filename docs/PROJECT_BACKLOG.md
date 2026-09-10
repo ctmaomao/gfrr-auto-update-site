@@ -27,6 +27,8 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-10 长期自主运行与数据真实性整改
 
+- **第三项实施 / ADR-0038**：ACLED 原始日期与数据保留，时间推移传递到 partial 状态、来源/证据置信度和警告；周度过期贡献按现行时效窗口衰减，失效贡献为零（排除证据，不代表和平）。World Order freshness bonus 仅对 ok 来源，整体置信度受可用来源比例封顶。默认 operator 检查仍拒绝过期输入；runtime 全套显式保留结构合格的历史文件，所有其它断言与原周/月回归保留，额外验证真实 scorer 的时间推进及未来/损坏拒绝。详见 [独立契约决策](ADR/0038-acled-runtime-freshness.md)；未改主雷达评分或抓取生产数据。
+- **第二项交付**：PR #336 已合并 `d17f6da7`，提交 `5b704ffc`；两项专项、本地完整检查、最终独立审阅与 CI `34446541219` 通过。
 - **第二项实施**：两条 realtime 写入流程在生成前共用 published-baseline loader，先 fetch realtime-data、固定提交，再加载该提交的原始缓存。输入不可读/结构异常/mock 时停止，不使用 checkout main 中的旧文件；保留 payload 和各叶子观察日期，既有信任/降级逻辑不变。恢复无需生成时不额外 fetch。离线覆盖新缓存覆盖旧文件、固定 SHA、防时间洗新、失败不覆盖和两条调用路径。
 - **第一项交付**：PR #335 已合并 `8e792e6a`，提交 `2a6b10d0`；本地完整检查及最终四项专项、独立审阅、CI `34445834938` 通过。自然 Daily 运行仍待验收，不重复付费触发。
 - **Acceptance baseline**：owner 明确授权完成本轮八项问题及相应 commit+push、PR、合并；沿用每项一次有界独立 AI 替代审阅，serial trunk、每项合并后才开始下一项。顺序：Daily 前置时效/恢复；realtime 最近成功缓存；ACLED 时效降级；GDELT 饱和/过期衰减；ACLED 同窗覆盖；首页快照时效；恢复路径校验一致性；事件/报道口径。评分与 checker 契约变更须独立 ADR/审阅，不通过弱化断言获得绿灯。
@@ -423,8 +425,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：`8e792e6a`（PR #335 已合并）；本轮 `codex/realtime-success-baseline` 基于 latest main，原工作区和历史分支保留。
-- **当前任务**：八项整改的第二项，两条 realtime 生成路径读取最新发布缓存；完整顺序及既有交付见 Section 2。
+- **工作基线**：`d17f6da7`（PR #336 已合并）；本轮 `codex/acled-freshness-contract` 基于 latest main，原工作区和历史分支保留。
+- **当前任务**：八项整改第三项，独立 ACLED 时效/运行检查契约 PR；完整顺序及既有交付见 Section 2。
 - **下一步**：必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，再开始下一项。实际提交/PR/部署回执保留在本任务回复和 PR，不能用本地通过代替自然运行验收。
 - **阻塞或等待**：Daily/GDELT 既有自然验收跟进继续每天北京时间 07:15 只读取证；不额外付费触发，不提前请求 GDELT，不把当前代码修复称为长期无人值守验证完成。
 

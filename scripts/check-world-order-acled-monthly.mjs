@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { completeMonthlyWindows } from './world-order/acled-monthly-trend.mjs';
+import { acledExpiryBlocks } from './world-order/acled-freshness.mjs';
+const runtimeHistory = process.argv.includes('--runtime-history');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,7 +65,7 @@ function isNonNegativeInteger(value) {
 
 function dateAgeDays(isoDate) {
   const target = new Date(`${isoDate}T00:00:00.000Z`);
-  if (!Number.isFinite(target.getTime())) return null;
+  if (!Number.isFinite(target.getTime()) || target.toISOString().slice(0, 10) !== isoDate) return null;
   const now = new Date();
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   return Math.floor((today.getTime() - target.getTime()) / 86_400_000);
@@ -116,7 +118,7 @@ function validateAsOfDate(value) {
     return;
   }
   if (ageDays < 0) addFailure(`asOfDate ${value} is in the future`);
-  else if (ageDays > 180) addFailure(`asOfDate ${value} is expired (${ageDays} days old)`);
+  else if (acledExpiryBlocks(ageDays, 'monthly', runtimeHistory)) addFailure(`asOfDate ${value} is expired (${ageDays} days old)`);
   else if (ageDays > 120) warnings.push(`asOfDate ${value} is stale (${ageDays} days old)`);
   else if (ageDays > 60) warnings.push(`asOfDate ${value} is aging (${ageDays} days old)`);
 }

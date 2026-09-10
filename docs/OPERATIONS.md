@@ -1614,6 +1614,8 @@ for operator review only and must not be copied into production data.
 
 ### 主评分历史回测的证据边界（2026-09-10）
 
+ACLED 长期运行时效以 [ADR-0038](ADR/0038-acled-runtime-freshness.md) 为准：原周/月 operator 检查保留严格过期门槛，完整运行套件用显式 runtime-history 模式保留结构合格历史并执行时间推进/贡献归零回归。不得把该模式用于跳过人工导入的新鲜度准入，也不把历史文件保留解释为来源仍新鲜。World Order 的 ACLED partial/警告/置信度衰减随观察日期生效；不进行自动 ACLED 抓取。
+
 `audit:main-score-backtest` 复用生产评分公式，但历史数据是最新修订序列，规则是当前规则。报告 `validation` 固定披露非预测验证，并列出校准截止日前后样本数及规则 SHA-256；截止日之后的样本也不自动成为冻结样本外证据。`verdict` 仅适用于事后评分/来源冲突检查，不能解释为投资预测通过。
 
 需要严格预测证据时可加 `--require-predictive-evidence`，当前路径会在任何请求/输出前明确拒绝。解锁需要历史发布时间与修订 vintage、测试期之前冻结的规则及事先确定的预测目标/未使用样本；不通过改标签解锁。此次仅运行离线回归，未刷新历史报告或下载新数据。
