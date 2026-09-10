@@ -67,6 +67,7 @@
 | [ADR-0038](0038-acled-runtime-freshness.md) | ACLED runtime freshness and retained historical inputs | Owner-authorized; independent contract review required |
 | [ADR-0039](0039-gdelt-pressure-scale.md) | Frozen GDELT pressure reference and post-normalization stale discount | Owner-authorized; independent model review required |
 | [ADR-0040](0040-acled-common-week-window.md) | ACLED shared contiguous weekly windows and legacy exclusion | Owner-authorized; independent contract review required |
+| [ADR-0041](0041-gdelt-event-and-article-units.md) | GDELT event and article quantity separation | Owner-authorized; independent review required |
 
 ## Superseded
 

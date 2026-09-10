@@ -56,9 +56,7 @@ function clampTone(value) {
 function hasReusableSummary(previousSource) {
   const summary = previousSource?.summary;
   if (!summary || typeof summary !== 'object') return false;
-  return Number(summary.totalEvents || summary.totalArticles || 0) > 0 ||
-    (Array.isArray(summary.regionsCovered) && summary.regionsCovered.length > 0) ||
-    (Array.isArray(summary.topCountries) && summary.topCountries.length > 0);
+  return Number.isSafeInteger(summary.totalEvents) && summary.totalEvents >= 0;
 }
 
 function dateString(date) {
@@ -80,9 +78,9 @@ function buildDateWindow(windowDays) {
 
 function emptyGdeltCloudSummary(extra = {}) {
   return buildEmptySummary({
-    totalEvents: 0,
-    totalArticles: 0,
-    conflictEvents: 0,
+    totalEvents: null,
+    totalArticles: null,
+    conflictEvents: null,
     sanctionsEvents: 0,
     blockadeOrChokepointEvents: 0,
     regionsCovered: [],
@@ -108,11 +106,12 @@ function emptyGdeltCloudSummary(extra = {}) {
   });
 }
 
-function buildQueryRun({ status, articleCount = 0, error = null }) {
+function buildQueryRun({ status, eventCount = null, error = null }) {
   return {
     label: 'GDELT Cloud conflict country summary',
     status,
-    articleCount,
+    eventCount,
+    articleCount: null,
     error
   };
 }
@@ -226,7 +225,12 @@ function normalizeCountryBucket(bucket) {
   const key = typeof bucket?.key === 'string' && bucket.key.trim().length
     ? bucket.key.trim()
     : 'Unknown';
-  const eventCount = finiteNumber(bucket?.event_count ?? bucket?.eventCount);
+  const rawEventCount = bucket?.event_count ?? bucket?.eventCount;
+  const eventCount = typeof rawEventCount === 'number' || (typeof rawEventCount === 'string' && /^\d+$/.test(rawEventCount))
+    ? Number(rawEventCount) : NaN;
+  if (!Number.isSafeInteger(eventCount) || eventCount < 0) {
+    throw new Error('GDELT Cloud country event_count must be a non-negative safe integer');
+  }
   const fatalityEventCount = finiteNumber(bucket?.fatality_event_count ?? bucket?.fatalityEventCount);
   const fatalities = finiteNumber(bucket?.fatalities ?? bucket?.fatality_count ?? bucket?.fatalityCount);
   return {
@@ -316,7 +320,7 @@ function attachCacheArtifact(sourceResult, cacheArtifact = null) {
 
 function buildCachedSourceResult({ cache, cacheState, attemptedAt, query }) {
   const cachedSummary = cache.summary || {};
-  const totalEvents = finiteNumber(cachedSummary.totalEvents || cachedSummary.totalArticles);
+  const totalEvents = Number.isFinite(cachedSummary.totalEvents) ? cachedSummary.totalEvents : null;
   const status = cacheState === 'fresh' ? 'ok' : 'stale';
   const cacheReason = cacheState === 'fresh'
     ? 'gdelt-cloud-fresh-cache-hit'
@@ -325,7 +329,7 @@ function buildCachedSourceResult({ cache, cacheState, attemptedAt, query }) {
     ...cachedSummary,
     requestsUsed: 0,
     apiBudget: API_BUDGET_NOTE,
-    queriesRun: [buildQueryRun({ status: 'ok', articleCount: totalEvents })],
+    queriesRun: [buildQueryRun({ status: 'ok', eventCount: totalEvents })],
     usedCachedSummary: true,
     cacheReason,
     attemptedAt,
@@ -339,7 +343,7 @@ function buildCachedSourceResult({ cache, cacheState, attemptedAt, query }) {
     evidence: [{
       labelZh: 'GDELT Cloud 冲突事件密度',
       source: 'GDELT Cloud v2 cache',
-      summary: `读取 ${cacheState === 'fresh' ? 'fresh' : 'stale'} cache: 近 ${query.windowDays} 天摘要为 ${totalEvents} 起冲突事件。`,
+      summary: `读取 ${cacheState === 'fresh' ? 'fresh' : 'stale'} cache: 近 ${query.windowDays} 天${totalEvents === null ? '事件计数不可用' : `按国家汇总 ${totalEvents} 起冲突事件`}。`,
       value: totalEvents,
       direction: totalEvents > 0 ? 'up' : 'neutral',
       confidence: cacheState === 'fresh' ? 0.65 : 0.25
@@ -387,7 +391,7 @@ function buildStaleCacheAfterFailure({ cache, attemptedAt, query, error, request
       labelZh: 'GDELT Cloud 冲突事件密度',
       source: 'GDELT Cloud v2 stale cache',
       summary: `GDELT Cloud 本轮请求失败，沿用本地 cache 摘要。`,
-      value: finiteNumber(cachedSummary.totalEvents || cachedSummary.totalArticles),
+      value: Number.isFinite(cachedSummary.totalEvents) ? cachedSummary.totalEvents : null,
       direction: 'neutral',
       confidence: 0.25
     }],
@@ -407,11 +411,15 @@ function buildStaleCacheAfterFailure({ cache, attemptedAt, query, error, request
   }));
 }
 
+export function parseGdeltCountryBuckets(parsed) {
+  if (!Array.isArray(parsed?.data)) throw new Error('GDELT Cloud response.data must be an array');
+  return parsed.data.map(normalizeCountryBucket).sort((a, b) => b.event_count - a.event_count);
+}
+
 function buildLiveSuccessResult({ attemptedAt, query, parsed }) {
-  const buckets = Array.isArray(parsed?.data)
-    ? parsed.data.map(normalizeCountryBucket).sort((a, b) => b.event_count - a.event_count)
-    : [];
+  const buckets = parseGdeltCountryBuckets(parsed);
   const totalEvents = buckets.reduce((sum, bucket) => sum + bucket.event_count, 0);
+  if (!Number.isSafeInteger(totalEvents)) throw new Error('GDELT Cloud totalEvents exceeds safe integer range');
   const fatalityEventCount = buckets.reduce((sum, bucket) => sum + bucket.fatality_event_count, 0);
   const fatalities = buckets.reduce((sum, bucket) => sum + bucket.fatalities, 0);
   const keyConflictRegions = buckets
@@ -422,7 +430,7 @@ function buildLiveSuccessResult({ attemptedAt, query, parsed }) {
 
   const summary = emptyGdeltCloudSummary({
     totalEvents,
-    totalArticles: totalEvents,
+    totalArticles: null,
     conflictEvents: totalEvents,
     sanctionsEvents: 0,
     blockadeOrChokepointEvents: 0,
@@ -436,7 +444,7 @@ function buildLiveSuccessResult({ attemptedAt, query, parsed }) {
     fatalities,
     keyConflictRegions,
     requestsUsed: 1,
-    queriesRun: [buildQueryRun({ status: 'ok', articleCount: totalEvents })],
+    queriesRun: [buildQueryRun({ status: 'ok', eventCount: totalEvents })],
     successCount: 1,
     failureCount: 0,
     rateLimitedCount: 0,
@@ -454,7 +462,7 @@ function buildLiveSuccessResult({ attemptedAt, query, parsed }) {
     evidence: [{
       labelZh: 'GDELT Cloud 冲突事件密度',
       source: 'GDELT Cloud v2',
-      summary: `近 ${query.windowDays} 天返回 ${totalEvents} 起冲突事件，覆盖 ${buckets.length} 个国家/地区。`,
+      summary: `近 ${query.windowDays} 天按国家汇总 ${totalEvents} 起冲突事件，覆盖 ${buckets.length} 个国家/地区；去重报道数未知。`,
       value: totalEvents,
       direction: totalEvents > 0 ? 'up' : 'neutral',
       confidence: totalEvents > 0 ? 0.75 : 0.35
@@ -472,7 +480,7 @@ function buildLiveSuccessResult({ attemptedAt, query, parsed }) {
   }));
 }
 
-export async function fetchGdeltCloudSummary({ config = {}, previousSource = null } = {}) {
+async function fetchGdeltCloudSummaryBase({ config = {}, previousSource = null } = {}) {
   const attemptedAt = isoNow();
 
   if (config.enabled === false) {
@@ -588,4 +596,22 @@ export async function fetchGdeltCloudSummary({ config = {}, previousSource = nul
       requestDiagnostics
     });
   }
+}
+
+export async function fetchGdeltCloudSummary(options = {}) {
+  const result = await fetchGdeltCloudSummaryBase(options);
+  // Apply to EVERY exit, including retained legacy caches and previous-source fallbacks.
+  // Country-level article counts do not establish a globally deduplicated article total.
+  const normalizeUnits = summary => ({
+    ...summary,
+    countUnit: 'country_event_aggregate',
+    totalArticles: null,
+    articleCountReasonZh: '当前接入没有可验证的去重报道总数；事件数不能替代报道数。',
+    queriesRun: (Array.isArray(summary?.queriesRun) ? summary.queriesRun : []).map(run => ({...run, articleCount: null}))
+  });
+  return {
+    ...result,
+    summary: normalizeUnits(result.summary),
+    ...(result.cacheArtifact ? {cacheArtifact:{...result.cacheArtifact,summary:normalizeUnits(result.cacheArtifact.summary)}} : {})
+  };
 }
