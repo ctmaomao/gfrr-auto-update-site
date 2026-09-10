@@ -46,6 +46,9 @@ jobs:
             sleep "$sleep_seconds"
           done
 
+      - name: Load published realtime baseline
+        run: node scripts/realtime/load-published-baseline.mjs
+
       - name: Generate realtime market
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

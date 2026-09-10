@@ -670,6 +670,8 @@ node scripts/check-realtime-health.mjs --github-output
 
 ### Realtime stale recovery
 
+正常 build 与 recovery 在生成前共用 `scripts/realtime/load-published-baseline.mjs` 读取固定 realtime-data 提交，避免读取 main 中长期不更新的 checkout 缓存。读取失败就停止该次生成；缓存时间和逐字段时间原样保留，不能把“刚读取”当作“刚观测”。恢复分支判为无需生成时不执行 loader。此入口会 fetch 并替换本地 `realtime/market.json`，不是只读检查命令。
+
 Daily 的 `Prepare trusted Daily input before generation` 在生成前复用 90 分钟信任窗口。不满足时最多请求一次既有免费 Build Realtime Market，最多轮询八次（每次间隔 15 秒，命令另有超时，step 上限 5 分钟），再验证所消费 payload/commit；失败在 Wind/Daily 生成之前结束，不自动重跑 Daily。离线 dry-run 可执行 `node scripts/daily/prepare-realtime-input.mjs --check-file realtime/market.json`，仅读文件；`--recover` 只接受 main GitHub workflow 环境。该流程不放宽输出 validator，也不覆盖单独的付费重确认规则。
 
 `Build Realtime Market` remains the primary realtime generation workflow. `Recover Stale Realtime Market` is a recovery workflow that first runs `check-realtime-health`; when realtime is fresh or aging, it skips generation, and when realtime is stale or unavailable, it runs `build:realtime` and pushes only `realtime/market.json` to the `realtime-data` branch. It does not change Brent primary value logic, scoring, decision output, or write to `main`.

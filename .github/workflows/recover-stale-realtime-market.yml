@@ -56,6 +56,10 @@ jobs:
         if: steps.health.outputs.shouldRecover == 'true'
         run: npm ci
 
+      - name: Load published realtime baseline
+        if: steps.health.outputs.shouldRecover == 'true'
+        run: node scripts/realtime/load-published-baseline.mjs
+
       - name: Generate realtime market
         if: steps.health.outputs.shouldRecover == 'true'
         run: npm run build:realtime
