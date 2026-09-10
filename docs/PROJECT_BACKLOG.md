@@ -27,6 +27,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-10 长期自主运行与数据真实性整改
 
+- **第七项实施**：恢复生成按正常生成注入既有FRED secret，发布前使用同一check:realtime-local-schema；仍仅shouldRecover=true执行，保留原同窗writer并发、最近发布缓存和输出范围保护。离线验证两条路径顺序/条件及实际schema拒绝负Brent，不调用源。
+- **第六项交付**：PR #340 已合并 `e988bf15`，提交 `5a6bdae5`；本地完整检查、5单元/3浏览器回归、最终独立审阅及 CI `34450656149` 通过。
+
 - **第六项实施**：首页刊头/Hero按当前时间展示每日快照年龄，超过36小时（24小时周期+12小时排程恢复余量）显示更新延迟/历史快照；旧健康度明确为采集时记录。页面每分钟更新提示，时间异常不冒充新鲜；附录健康文案标明采集时。仅展示时效，不重算主分/决策；遵守 DESIGN §2/3/4/5.3，复用既有字体、颜色和版面，asset同步为 snapshot-age-1。
 - **第五项交付**：PR #339 已合并 `43c8c7ff`，提交 `c644a4cf`；本地完整检查、专项、最终独立审阅及 CI `34449770394` 通过。
 
@@ -434,8 +437,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：`43c8c7ff`（PR #339 已合并）；本轮 `codex/homepage-snapshot-freshness` 基于 latest main，原工作区和历史分支保留。
-- **当前任务**：八项整改第六项，首页快照时效披露 PR；完整顺序及既有交付见 Section 2。
+- **工作基线**：`e988bf15`（PR #340 已合并）；本轮 `codex/realtime-recovery-parity` 基于 latest main，原工作区和历史分支保留。
+- **当前任务**：八项整改第七项，realtime 恢复流程配置与校验一致性 PR；完整顺序及既有交付见 Section 2。
 - **下一步**：必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，再开始下一项。实际提交/PR/部署回执保留在本任务回复和 PR，不能用本地通过代替自然运行验收。
 - **阻塞或等待**：Daily/GDELT 既有自然验收跟进继续每天北京时间 07:15 只读取证；不额外付费触发，不提前请求 GDELT，不把当前代码修复称为长期无人值守验证完成。
 

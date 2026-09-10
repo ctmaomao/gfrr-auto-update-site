@@ -62,7 +62,13 @@ jobs:
 
       - name: Generate realtime market
         if: steps.health.outputs.shouldRecover == 'true'
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: npm run build:realtime
+
+      - name: Validate realtime payload
+        if: steps.health.outputs.shouldRecover == 'true'
+        run: npm run check:realtime-local-schema
 
       - name: Verify recovery output scope
         if: steps.health.outputs.shouldRecover == 'true'
