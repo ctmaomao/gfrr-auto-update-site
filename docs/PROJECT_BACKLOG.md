@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-10 Daily PortWatch 比率越界隔离
+
+- **Acceptance baseline**：owner 要求检查新报错并修复项目问题；原修复基于 `28470827`，现同步至 `f3e545c2`；owner 追加授权本次独立 AI 验证，通过后远端推送及创建 PR。只修复既有 PortWatch 契约的采集隔离，不放宽 validator、不改评分公式/源/生产 JSON；不授权合并或付费刷新。
+- **故障证据**：Daily [34421206990](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34421206990)（事件 SHA `d03514ac`）生成成功后，`hormuz.capacityTankerVs30dPct=2.0893` 超过既有 decimal-ratio `[-2,2]` 契约，校验阻止提交。该比率可能是真实极端变化，不宣称上游错误；失败 run 没有 artifact，未保存原始 AIS 历史。两站实读仍为 9 月 9 日 `00:25:44.247Z` 的同一旧 Daily；其它 Pages 成功不代表 Daily 恢复。
+- **实施**：全部八个 chokepoint 的 count/capacity 比率在候选派生前检查，超出契约由原 resolver 捕获。仅沿用未超出 21 天展示缓存期限且比率合格的旧摘要，明确 fallback 并保留观测日期；无缓存/malformed 比率缓存返回 missing，过期仍 stale。fallback/missing/stale 的运输主分贡献为 0；7 天入分 gate 与最多 +3 不变。不截断为 +200%、不伪造 0、不重复请求；`fetchReason` 记录固定字段级原因。
+- **验证与交付**：新增 9 项离线真实 resolver 回归覆盖 `2.0893`、八咽喉两字段、边界/真实零/零分母、旧缓存保留/污染/过期及 fail-closed 入分，接入原 expanded ingestion 全套入口；`npm run check:changed` 实际选择完整 `check:all`、`git diff --check` 均退出 0。另在内存中将同一越界输入的 fallback/missing 结果交给未修改的完整生产 validator，两者均退出 0、运输贡献为 0，无生产文件写入。本地修复不等于线上恢复；推送/PR 已获授权，合并发布及一次可能调用 Wind 的 Daily 重跑仍需对应明确授权。
+
 ### 2026-09-10 历史审计判定完整性
 
 - **Acceptance baseline**：owner 要求按复查建议合并修复事件样本不足仍通过、未评价与评分失败混淆；沿用本轮 commit+push、PR、一次有界独立 AI 替代审阅及合并授权。最终 head 审阅和 CI 通过后合并并验收自然 Pages，不调用真实源或付费服务。
@@ -398,6 +405,13 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **工作基线**：`f3e545c2`；`codex/daily-portwatch-ratio-fix` 基于 latest main，保留 #332 历史审计修复及其交接记录；原本地修复提交 `de9c962d` 保留于旧分支。
+- **当前任务**：Daily `34421206990` 的 PortWatch 比率越界隔离完成；原基线 9 项专项、完整检查及离线生产校验通过，最新基线进行独立 AI 审阅与必要验证。
+- **下一步**：owner 已授权本次独立 AI 验证，通过后推送修复分支并创建 PR、核对远端 CI；未授权合并或手动 Daily。
+- **阻塞或等待**：未触发 Daily/provider；手动 Daily 带既有 Wind fallback，仍需对应一次费用/刷新授权。本次独立 AI 审阅用于推送前验证，不替代未获授权的合并步骤。
+
+### 2026-09-10 历史审计任务交接（#332 合并前记录）
 
 - **工作基线**：PR #331 已合并并验收；当前任务从 latest main 28470827 建立 codex/historical-audit-verdict，原工作区保留。
 - **当前任务**：事件覆盖门槛与未评价状态修复完成，7 项专项及完整检查通过。

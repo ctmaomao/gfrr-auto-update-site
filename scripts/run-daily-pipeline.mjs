@@ -7545,6 +7545,23 @@ function buildMissingEnergyTransport(reason = 'missing') {
   };
 }
 
+function outOfContractEnergyTransportRatio(chokepoints, reroutingProxy) {
+  // Match validate-data's existing decimal-ratio contract. A larger deviation
+  // may be real, but cannot enter this schema or the scoring path without review.
+  const invalid = (value) => value !== null && (!Number.isFinite(value) || value < -2 || value > 2);
+  for (const { key } of ENERGY_TRANSPORT_CHOKEPOINTS) {
+    for (const field of ['latestVs30dPct', 'capacityTankerVs30dPct']) {
+      if (invalid(chokepoints[key]?.[field])) return `${key}.${field}`;
+    }
+  }
+  if (reroutingProxy) {
+    for (const field of ['suezBabTankerVs30dPct', 'capeTankerVs30dPct']) {
+      if (invalid(reroutingProxy[field])) return `reroutingProxy.${field}`;
+    }
+  }
+  return null;
+}
+
 function normalizePreviousEnergyTransport(prevEnergyTransport, reason = 'fetch_failed') {
   if (!prevEnergyTransport || typeof prevEnergyTransport !== 'object') {
     return buildMissingEnergyTransport(reason);
@@ -7573,6 +7590,10 @@ function normalizePreviousEnergyTransport(prevEnergyTransport, reason = 'fetch_f
   )
     ? prevEnergyTransport.reroutingProxy
     : buildMissingEnergyTransport(reason).reroutingProxy;
+  const invalidRatio = outOfContractEnergyTransportRatio(previousChokepoints, reroutingProxy);
+  if (invalidRatio) {
+    return buildMissingEnergyTransport(`${reason};previous_ratio_out_of_contract:${invalidRatio}`);
+  }
   return {
     source: ENERGY_TRANSPORT_SOURCE,
     sourceUrl: ENERGY_TRANSPORT_SOURCE_URL,
@@ -7757,6 +7778,8 @@ export function buildEnergyTransportLayer(rows) {
       .sort((a, b) => b.date.localeCompare(a.date));
     chokepoints[definition.key] = buildEnergyTransportChokepoint(definition, perPortRows, latestDate);
   }
+  const invalidRatio = outOfContractEnergyTransportRatio(chokepoints);
+  if (invalidRatio) throw new Error(`portwatch:chokepoints ratio_out_of_contract:${invalidRatio}`);
   const missingCore = ENERGY_TRANSPORT_CORE_KEYS.filter((key) => (
     chokepoints[key]?.latest?.date !== latestDate ||
     !Number.isFinite(chokepoints[key]?.latest?.nTanker) ||
@@ -7791,7 +7814,7 @@ export function buildEnergyTransportLayer(rows) {
   };
 }
 
-async function resolveEnergyTransport(prevEnergyTransport) {
+export async function resolveEnergyTransport(prevEnergyTransport) {
   try {
     const payload = await fetchJsonText(
       buildEnergyTransportQueryUrl(),
