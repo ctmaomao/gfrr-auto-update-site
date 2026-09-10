@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `audit-load-1` |
+| Cache version | `snapshot-age-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -26,6 +26,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ## Section 2 · Open Backlog Items
 
 ### 2026-09-10 长期自主运行与数据真实性整改
+
+- **第六项实施**：首页刊头/Hero按当前时间展示每日快照年龄，超过36小时（24小时周期+12小时排程恢复余量）显示更新延迟/历史快照；旧健康度明确为采集时记录。页面每分钟更新提示，时间异常不冒充新鲜；附录健康文案标明采集时。仅展示时效，不重算主分/决策；遵守 DESIGN §2/3/4/5.3，复用既有字体、颜色和版面，asset同步为 snapshot-age-1。
+- **第五项交付**：PR #339 已合并 `43c8c7ff`，提交 `c644a4cf`；本地完整检查、专项、最终独立审阅及 CI `34449770394` 通过。
 
 - **第五项实施 / ADR-0040**：六区域最晚共同截止周、连续 12 周及末 4 周用于全部汇总；缺周拒绝且保留旧文件，原来源范围保留。新增同窗证据结构校验；旧汇总保留为历史但排除周度指标/评分并明确降级，待原始六表重新标准化恢复。见 [同窗契约](ADR/0040-acled-common-week-window.md)。
 - **第四项交付**：PR #338 已合并 `809e1776`，提交 `df9e6668`；本地完整检查、专项、最终独立审阅与 CI `34448923165` 通过。
@@ -431,8 +434,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：`809e1776`（PR #338 已合并）；本轮 `codex/acled-common-week-window` 基于 latest main，原工作区和历史分支保留。
-- **当前任务**：八项整改第五项，ACLED 六区域同窗与旧汇总失效隔离 PR；完整顺序及既有交付见 Section 2。
+- **工作基线**：`43c8c7ff`（PR #339 已合并）；本轮 `codex/homepage-snapshot-freshness` 基于 latest main，原工作区和历史分支保留。
+- **当前任务**：八项整改第六项，首页快照时效披露 PR；完整顺序及既有交付见 Section 2。
 - **下一步**：必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，再开始下一项。实际提交/PR/部署回执保留在本任务回复和 PR，不能用本地通过代替自然运行验收。
 - **阻塞或等待**：Daily/GDELT 既有自然验收跟进继续每天北京时间 07:15 只读取证；不额外付费触发，不提前请求 GDELT，不把当前代码修复称为长期无人值守验证完成。
 

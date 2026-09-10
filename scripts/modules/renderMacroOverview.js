@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=audit-load-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=audit-load-1';
+} from './config.js?v=snapshot-age-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=snapshot-age-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,10 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=audit-load-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=audit-load-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=audit-load-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=audit-load-1';
+} from './macroOverviewDisplayHelpers.js?v=snapshot-age-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=snapshot-age-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=snapshot-age-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=snapshot-age-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=snapshot-age-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -121,9 +122,7 @@ function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData,
 
     // big-footer DATA HEALTH
     const healthEl = $('hero-data-health');
-    if (healthEl && Number.isFinite(radarData.dailyRealtimeInput?.healthScore)) {
-      healthEl.textContent = `${radarData.dailyRealtimeInput.healthScore}/100 · 数据正常`;
-    }
+    if (healthEl) healthEl.textContent = snapshotDisplayHealth(radarData).heroLabel;
   } catch (error) {
     console.error('[renderMacroOverview] renderHero failed:', error);
   }
@@ -2322,9 +2321,7 @@ function renderDetailData({ radarData }) {
     const assetRows = radarData.assetReturnMap?.rows || [];
     const scenarios = radarData.scenarioTree || [];
 
-    if (asNumber(realtime.healthScore) !== null) {
-      setLeafText('detail-health-score', `健康度 ${Math.round(realtime.healthScore)}/100`);
-    }
+    setLeafText('detail-health-score', snapshotDisplayHealth(radarData).collectionLabel);
     if (realtime.sourceMode) setLeafText('detail-health-source-mode', `${sourceModeZh(realtime.sourceMode)}输入`);
     const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
     if (runAt) setLeafText('detail-health-run-at', runAt);
@@ -2332,9 +2329,7 @@ function renderDetailData({ radarData }) {
     if (realtime.branch) setLeafText('detail-health-branch', realtime.branch);
     if (realtime.commitSha) setLeafText('detail-health-commit', String(realtime.commitSha).slice(0, 8));
     if (runAt) setLeafText('detail-health-captured', runAt);
-    if (asNumber(realtime.healthScore) !== null) {
-      setLeafText('detail-health-score-dd', `${Math.round(realtime.healthScore)} / 100`);
-    }
+    setLeafText('detail-health-score-dd', snapshotDisplayHealth(radarData).collectionLabel);
 
     // Structural signals: WIRE count + active/none toggle (batch D — 0-signal safe)
     const structuralSignalCount = structuralSignals.length;
@@ -2380,11 +2375,12 @@ function renderDetailData({ radarData }) {
     // 数据健康整段叙述：健康 / 需关注 两态切换 (batch E)
     const sourceMode = String(realtime.sourceMode || '');
     const healthDegraded =
+      !Number.isFinite(realtime.healthScore) || realtime.healthScore < 0 || realtime.healthScore > 100 ||
       recovery.degradedMode === true ||
       (asNumber(warning.criticalCount) || 0) > 0 ||
       (asNumber(warning.warningCount) || 0) > 0 ||
       (sourceMode !== '' && sourceMode !== 'live');
-    setLeafText('detail-health-state-word', healthDegraded ? '需关注' : '正常');
+    setLeafText('detail-health-state-word', healthDegraded ? '采集时需关注' : '采集时正常');
     setToneClass('detail-health-score', '', healthDegraded ? 'warn' : 'ok');
     setToneClass('detail-health-callout', 'appendix-callout', healthDegraded ? 'warn' : 'ok');
     setHidden('detail-health-refresh-active', healthDegraded);

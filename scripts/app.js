@@ -6,8 +6,9 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=snapshot-age-1';
 
-const APP_VERSION = 'audit-load-1';
+const APP_VERSION = 'snapshot-age-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -17,6 +18,7 @@ const OIL_NEWS_EVENT_WATCH_URL = `./data/oil-news-event-watch.json?v=${APP_VERSI
 const DATA_LOADING_CLASS = 'gfrr-data-loading';
 const DATA_READY_CLASS = 'gfrr-data-ready';
 const DATA_FAILED_CLASS = 'gfrr-data-failed';
+let snapshotLabelTimer = null;
 
 const ISSUE_META_FALLBACK = {
   issue: '—',
@@ -161,6 +163,7 @@ function deriveIssueMeta(radarData) {
   return {
     issue: version,
     asOf: formatAsOfTimestamp(updatedAt),
+    snapshotLabel: snapshotDisplayHealth(radarData).mastheadLabel,
     cache: sourceMode,
     dataHealth: healthScore !== null ? String(healthScore) : ISSUE_META_FALLBACK.dataHealth,
     dataHealthMax: healthScore !== null ? '100' : ISSUE_META_FALLBACK.dataHealthMax,
@@ -182,13 +185,26 @@ function applyIssueMetaToDom(meta) {
     asOfEl.textContent = `AS OF ${meta.asOf}`;
   }
   if (cacheEl) {
-    cacheEl.textContent = `CACHE ${meta.cache} · DATA HEALTH ${meta.dataHealth}/${meta.dataHealthMax}`;
+    cacheEl.textContent = meta.snapshotLabel || '数据尚未载入 · 时效待确认';
   }
 }
 
 function markDataReady() {
   document.body?.classList.remove(DATA_LOADING_CLASS, DATA_FAILED_CLASS);
   document.body?.classList.add(DATA_READY_CLASS);
+}
+
+function watchSnapshotLabels(radarData) {
+  if (snapshotLabelTimer !== null) clearInterval(snapshotLabelTimer);
+  snapshotLabelTimer = null;
+  if (!radarData) return;
+  const refresh = () => {
+    applyIssueMetaToDom(deriveIssueMeta(radarData));
+    const hero = document.getElementById('hero-data-health');
+    if (hero) hero.textContent = snapshotDisplayHealth(radarData).heroLabel;
+  };
+  refresh();
+  snapshotLabelTimer = setInterval(refresh, 60_000);
 }
 
 function markDataUnavailable() {
@@ -216,7 +232,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=audit-load-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=snapshot-age-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {
@@ -235,7 +251,9 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
 
   if (dataReady && macroOverviewRendered) {
     markDataReady();
+    watchSnapshotLabels(radarData);
   } else {
+    watchSnapshotLabels(null);
     markDataUnavailable();
   }
 
