@@ -25,12 +25,21 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-10 恢复验收与交接同步
+
+- **Acceptance baseline**：owner 要求完成 Daily 恢复验收、GDELT 冷却后自然请求验收、过期交接同步三项，明确授权本任务 commit+push、PR 与合并；沿用一次有界独立 AI 替代人工审阅。执行前已说明 Daily 启用既有 Wind fallback 且可能进入 Macro Risk 准入，本轮仅触发一次手动 Daily；不追加付费重跑，不提前请求 GDELT，不放宽时效或评分契约。
+- **Daily 验收未完成**：[PR #333](https://github.com/ctmaomao/gfrr-auto-update-site/pull/333) 已合并为 `b06ef832`。手动 Daily [34441694224](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34441694224) 未再触发 PortWatch 比率错误，但在 Validate output 被 `dailyRealtimeInput live payload is stale: 258 minutes` 拦截，没有提交新 radar；消费的 realtime commit 为 `7f58847c`、时间 `2026-09-10T01:18:16.882Z`。这证明原错误未复现，不代表完整恢复；本次应先检查输入时效再触发 Daily。
+- **输入恢复**：随后一次不启用 Wind/AI 的 Build Realtime Market [34442028076](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34442028076) 生成、校验、推送成功；`realtime-data` commit `46609c7e` 的 `updatedAt=2026-09-10T05:40:49.84Z`、`sourceMode=live`、`healthScore=100`，读取时年龄 0.5 分钟。此前 build/recover 均数小时没有新 schedule run，但最近 run 成功、workflow active，排程间隔原因尚未确认；当前 Actions operational 不能证明此前没有延迟。输入恢复仍不等于 Daily/页面恢复，等待后续自然 Daily 的完整校验、提交和线上验收。
+- **GDELT 等待自然证据**：旧失败 `latestAttemptAt=2026-09-09T16:51:56.689Z`，24 小时冷却至北京时间 9 月 11 日 00:51:56。冷却缓存中的 `after 2 attempt(s)` 不能判为新代码回归；首次预计可请求的自然 news 排程为北京时间 9 月 11 日 02:37，实际执行可能延迟。验收须有更新的 attempt 时间；若新请求仍为 429，核对仅一次请求、零重试及冷却，同时检查 Tavily/Brave 隔离。只有 cooldown cache hit 不能关闭此项。
+- **后续跟进**：已在本任务设置 `Daily 与 GDELT 自然恢复验收` 跟进（`gdelt`），北京时间每日 07:15 仅查看两类工作流各最近两次自然运行及对应发布证据；不 dispatch、重跑或调用 provider，状态不变保持安静，全部取证完成后暂停。本轮一次手动 Daily 已用完，按 [Operations 单次运行边界](OPERATIONS.md) 等待自然排程；不因文档合并关闭两项运行验收。
+- **既有修复交付状态**：已核对 #330 / #331 / #332 / #333 均为 MERGED，merge commit 分别为 `7e9d7891` / `d03514ac` / `275af3be` / `b06ef832`。下方原实施记录保留，旧交接中的待推送、待审阅、待合并不再是当前任务。
+
 ### 2026-09-10 Daily PortWatch 比率越界隔离
 
-- **Acceptance baseline**：owner 要求检查新报错并修复项目问题；原修复基于 `28470827`，现同步至 `f3e545c2`；owner 追加授权本次独立 AI 验证，通过后远端推送及创建 PR。只修复既有 PortWatch 契约的采集隔离，不放宽 validator、不改评分公式/源/生产 JSON；不授权合并或付费刷新。
+- **Acceptance baseline（原实施阶段）**：owner 要求检查新报错并修复项目问题；原修复基于 `28470827`，同步至 `f3e545c2`；当时授权独立 AI 验证、通过后远端推送及创建 PR，未包括合并或付费刷新。只修复既有 PortWatch 契约的采集隔离，不放宽 validator、不改评分公式/源/生产 JSON。后续本任务合并及一次刷新授权与实际结果以上方恢复验收记录为准。
 - **故障证据**：Daily [34421206990](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34421206990)（事件 SHA `d03514ac`）生成成功后，`hormuz.capacityTankerVs30dPct=2.0893` 超过既有 decimal-ratio `[-2,2]` 契约，校验阻止提交。该比率可能是真实极端变化，不宣称上游错误；失败 run 没有 artifact，未保存原始 AIS 历史。两站实读仍为 9 月 9 日 `00:25:44.247Z` 的同一旧 Daily；其它 Pages 成功不代表 Daily 恢复。
 - **实施**：全部八个 chokepoint 的 count/capacity 比率在候选派生前检查，超出契约由原 resolver 捕获。仅沿用未超出 21 天展示缓存期限且比率合格的旧摘要，明确 fallback 并保留观测日期；无缓存/malformed 比率缓存返回 missing，过期仍 stale。fallback/missing/stale 的运输主分贡献为 0；7 天入分 gate 与最多 +3 不变。不截断为 +200%、不伪造 0、不重复请求；`fetchReason` 记录固定字段级原因。
-- **验证与交付**：新增 9 项离线真实 resolver 回归覆盖 `2.0893`、八咽喉两字段、边界/真实零/零分母、旧缓存保留/污染/过期及 fail-closed 入分，接入原 expanded ingestion 全套入口；`npm run check:changed` 实际选择完整 `check:all`、`git diff --check` 均退出 0。另在内存中将同一越界输入的 fallback/missing 结果交给未修改的完整生产 validator，两者均退出 0、运输贡献为 0，无生产文件写入。本地修复不等于线上恢复；推送/PR 已获授权，合并发布及一次可能调用 Wind 的 Daily 重跑仍需对应明确授权。
+- **验证与交付**：新增 9 项离线真实 resolver 回归覆盖 `2.0893`、八咽喉两字段、边界/真实零/零分母、旧缓存保留/污染/过期及 fail-closed 入分，接入原 expanded ingestion 全套入口；`npm run check:changed` 实际选择完整 `check:all`、`git diff --check` 均退出 0。另在内存中将同一越界输入的 fallback/missing 结果交给未修改的完整生产 validator，两者均退出 0、运输贡献为 0，无生产文件写入。PR #333 已合并；线上恢复仍以上方最新运行证据为准。
 
 ### 2026-09-10 历史审计判定完整性
 
@@ -406,12 +415,14 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：`f3e545c2`；`codex/daily-portwatch-ratio-fix` 基于 latest main，保留 #332 历史审计修复及其交接记录；原本地修复提交 `de9c962d` 保留于旧分支。
-- **当前任务**：Daily `34421206990` 的 PortWatch 比率越界隔离完成；原基线 9 项专项、完整检查及离线生产校验通过，最新基线进行独立 AI 审阅与必要验证。
-- **下一步**：owner 已授权本次独立 AI 验证，通过后推送修复分支并创建 PR、核对远端 CI；未授权合并或手动 Daily。
-- **阻塞或等待**：未触发 Daily/provider；手动 Daily 带既有 Wind fallback，仍需对应一次费用/刷新授权。本次独立 AI 审阅用于推送前验证，不替代未获授权的合并步骤。
+- **工作基线**：`b06ef832`（PR #333 已合并）；本轮文档同步分支 `codex/recovery-handoff`，原工作区和历史分支保留。
+- **当前任务**：三项恢复/交接工作。旧 PR #330–#333 均已合并；唯一手动 Daily `34441694224` 未再报 PortWatch 越界，但因旧 realtime 被拦截，未发布。Realtime 恢复 `34442028076` 成功，发布 `46609c7e`，不据此宣称 Daily 完成。
+- **下一步**：本轮文档经必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，实际提交/PR/部署回执保留在本任务回复和 PR。运行验收由 `Daily 与 GDELT 自然恢复验收` 每日北京时间 07:15 只读取证；自然 Daily 须成功提交并线上验证，GDELT 须出现晚于旧失败的新自然 attempt，分别满足后才关闭。
+- **阻塞或等待**：一次手动 Daily 已使用，不重复付费触发；GDELT 仍在旧 429 冷却，未取得新请求证据。Realtime 恢复只证明当前输入，排程间隔成因及持续恢复尚未确认。文档合并不等于两项运行验收完成；不修改现行时效 gate 或生产评分。
 
 ### 2026-09-10 历史审计任务交接（#332 合并前记录）
+
+以下保留合并前快照，非当前操作指令。PR #332 已合并为 `275af3be`；不重复执行其旧“下一步”。
 
 - **工作基线**：PR #331 已合并并验收；当前任务从 latest main 28470827 建立 codex/historical-audit-verdict，原工作区保留。
 - **当前任务**：事件覆盖门槛与未评价状态修复完成，7 项专项及完整检查通过。
