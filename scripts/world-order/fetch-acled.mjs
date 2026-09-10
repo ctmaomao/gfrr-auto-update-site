@@ -13,6 +13,7 @@
 
 import fs from 'node:fs';
 import { applyAcledFreshness } from './acled-freshness.mjs';
+import { applyAcledWeeklyWindowGuard } from './acled-weekly-window.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -329,7 +330,7 @@ async function fetchAcledSummaryBase({ config = {}, previousSource = null } = {}
     summary
   );
 
-  return buildSourceResult({
+  return applyAcledWeeklyWindowGuard(buildSourceResult({
     enabled: true,
     status: combinedStatus,
     lastFetchedAt,
@@ -337,7 +338,7 @@ async function fetchAcledSummaryBase({ config = {}, previousSource = null } = {}
     evidence,
     confidence: combinedConfidence,
     warnings
-  });
+  }), weekly.value);
 }
 
 export async function fetchAcledSummary(options = {}) {

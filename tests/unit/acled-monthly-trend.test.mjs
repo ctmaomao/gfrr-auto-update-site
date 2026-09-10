@@ -72,7 +72,7 @@ test('monthly source count parser rejects blanks before they can become observed
 test('actual checker rejects partial-window claims, accepts null; fetcher preserves null', async () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-acled-month-trend-'));
   try {
-    for (const relative of ['scripts/world-order/acled-freshness.mjs', 'scripts/check-world-order-acled-monthly.mjs', 'scripts/world-order/acled-monthly-trend.mjs', 'scripts/world-order/fetch-acled.mjs', 'scripts/world-order/normalize-world-order-inputs.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/acled-monthly-filename.mjs', 'scripts/world-order/xlsx-input-guard.mjs']) {
+    for (const relative of ['scripts/world-order/acled-weekly-coverage.mjs', 'scripts/world-order/acled-weekly-window.mjs', 'scripts/world-order/acled-freshness.mjs', 'scripts/check-world-order-acled-monthly.mjs', 'scripts/world-order/acled-monthly-trend.mjs', 'scripts/world-order/fetch-acled.mjs', 'scripts/world-order/normalize-world-order-inputs.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/acled-monthly-filename.mjs', 'scripts/world-order/xlsx-input-guard.mjs']) {
       const target = path.join(fixture, relative);
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.copyFileSync(path.join(root, relative), target);

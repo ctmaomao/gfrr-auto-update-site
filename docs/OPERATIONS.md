@@ -1627,3 +1627,7 @@ ACLED 长期运行时效以 [ADR-0038](ADR/0038-acled-runtime-freshness.md) 为�
 历史输入披露：每条 `sampleRows[].inputDiagnostics` 保留原始观察日期、日龄和 available/missing/stale；`effectiveValue` 与 `valueOrigin` 区分 historical/default/proxy/scenario_override/missing，默认值不伪造观察日期。`defaultedHistoricalInputs` 列出默认值，`unavailableHistoricalInputs` 列出原始输入缺口（即使用了代理或默认值仍保留）。`inputCoverage` 列出评价总数、有效数及被排除日期/必需输入/原始观察状态，防止过滤缺失样本后误报覆盖完整。上述字段只用于 ignored 历史审计报告，不进入生产数据契约。
 
 历史事件验收（2026-09-10）：完整事件窗口必须覆盖原评价 startDate 所锚定的每个周采样点（100% 有效、唯一、0–100 有限评分）；缺失点不能从分母中删除。`status` 区分 `not_evaluated`（范围外）、`partial_window`（仅部分窗口）、`insufficient_coverage`（样本不足）、`score_failed` 和 `passed`。前四者 `pass=false`，覆盖不完整时 `scorePass=null`，不把未评价描述成评分失败。`failedEvents` 仅列评分未达标，`incompleteEvents`/`notEvaluatedEvents` 单独披露，`unpassedEvents` 用于全部未通过项的严格拦截。整体 verdict 和 Wind 自动/原始回放同步应用该门槛，任何必需事件不完整都不能视为全套验收通过；原分数阈值和 eventWindowsMustPass 不变。
+
+### ACLED 同窗恢复
+
+若周度来源提示缺少六区域同窗证据，先核对既有手工六表，再按既有 ACLED operator 流程重新标准化/校验/发布；没有原始完整表不能从旧汇总反推共同窗口。缺周失败保留旧文件，不补零、不自动抓取；新产物的 `quality.weeklyWindow` 和共同截止日须核验。代码发布本身不代表周度数据已恢复。见 [ADR-0040](ADR/0040-acled-common-week-window.md)。

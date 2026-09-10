@@ -40,6 +40,7 @@ function sourceScore(sourceKey, source) {
     );
   }
   if (sourceKey === 'acled') {
+    if (summary.weeklyWindowAligned === false) return 0;
     if (source?.status === 'error') return 0;
     if (source?.status === 'manual_required') return 10;
     if (source?.status === 'partial' && !summary.latestWeek) return 30;

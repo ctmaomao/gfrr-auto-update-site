@@ -64,8 +64,9 @@
 | [ADR-0036](0036-final-editorial-write-revalidation.md) | Final editorial input/output/review validation and bounded diagnostics | Owner-authorized implementation; independent merge review retained |
 
 | [ADR-0037](0037-check-suite-deduplication.md) | Deduplicate execution while preserving transitive guard coverage | Owner-authorized implementation; independent checker/merge review retained |
-
 | [ADR-0038](0038-acled-runtime-freshness.md) | ACLED runtime freshness and retained historical inputs | Owner-authorized; independent contract review required |
+| [ADR-0039](0039-gdelt-pressure-scale.md) | Frozen GDELT pressure reference and post-normalization stale discount | Owner-authorized; independent model review required |
+| [ADR-0040](0040-acled-common-week-window.md) | ACLED shared contiguous weekly windows and legacy exclusion | Owner-authorized; independent contract review required |
 
 ## Superseded
 
@@ -77,5 +78,3 @@
 2. 文件名格式: `NNNN-kebab-case-title.md`,NNNN 紧接上一个编号
 3. 在本 README 的 Active 表追加一行
 4. 若推翻已有 ADR,把旧 ADR `Status` 改为 `Superseded by ADR-NNNN`,并把它从 Active 移到 Superseded
-
-| [ADR-0039](0039-gdelt-pressure-scale.md) | Frozen GDELT pressure reference and post-normalization stale discount | Owner-authorized; independent model review required |
