@@ -77,3 +77,5 @@
 2. 文件名格式: `NNNN-kebab-case-title.md`,NNNN 紧接上一个编号
 3. 在本 README 的 Active 表追加一行
 4. 若推翻已有 ADR,把旧 ADR `Status` 改为 `Superseded by ADR-NNNN`,并把它从 Active 移到 Superseded
+
+| [ADR-0039](0039-gdelt-pressure-scale.md) | Frozen GDELT pressure reference and post-normalization stale discount | Owner-authorized; independent model review required |
