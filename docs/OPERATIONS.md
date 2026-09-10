@@ -62,7 +62,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `audit-load-1`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `snapshot-age-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 单独检查 Worker Health；它只反映 Worker 运行链，不是当前静态首页的数据加载闸门。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -77,7 +77,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。旧 `externalAiInterpretationLayer` 只保留数据兼容；首页当前可见的 DeepSeek 输出是独立 `macroRiskEditorialLayer`。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `audit-load-1`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `snapshot-age-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -597,27 +597,27 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `audit-load-1`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
+当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `snapshot-age-1`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=audit-load-1
-scripts/app.js and active scripts/modules/*.js local imports → ?v=audit-load-1
+index.html app.js entry → ?v=snapshot-age-1
+scripts/app.js and active scripts/modules/*.js local imports → ?v=snapshot-age-1
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `audit-load-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `snapshot-age-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs audit-load-1
-npm run bump:frontend-asset-version -- audit-load-1
+node scripts/bump-frontend-asset-version.mjs snapshot-age-1
+npm run bump:frontend-asset-version -- snapshot-age-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `audit-load-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `snapshot-age-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
@@ -1631,3 +1631,7 @@ ACLED 长期运行时效以 [ADR-0038](ADR/0038-acled-runtime-freshness.md) 为�
 ### ACLED 同窗恢复
 
 若周度来源提示缺少六区域同窗证据，先核对既有手工六表，再按既有 ACLED operator 流程重新标准化/校验/发布；没有原始完整表不能从旧汇总反推共同窗口。缺周失败保留旧文件，不补零、不自动抓取；新产物的 `quality.weeklyWindow` 和共同截止日须核验。代码发布本身不代表周度数据已恢复。见 [ADR-0040](ADR/0040-acled-common-week-window.md)。
+
+### 首页快照年龄
+
+首页是每日简报。刊头和 Hero 每分钟按当前浏览器时间更新已发布时长，超过36小时显示更新延迟/历史快照；此阈值为24小时周期加12小时排程/恢复余量，仅供展示，不放宽Daily输入90分钟门槛或任何评分资格。健康度始终是采集时记录，不能代表当前上游在线。浏览器时钟错误也会影响提示；超过5分钟未来时间或无效日期显示待确认。查故障仍需核对线上JSON日期与自然workflow实际输出。

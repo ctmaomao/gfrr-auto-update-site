@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
+import { snapshotDisplayHealth } from '../../scripts/modules/snapshotFreshness.js';
 
 function harness(fetch) {
   const source = readFileSync(new URL('../../scripts/app.js', import.meta.url), 'utf8')
     .replace(/import\s*\{[^}]+\}\s*from\s*'\.\/modules\/config\.js';/u, '')
+    .replace(/import\s*\{ snapshotDisplayHealth \}\s*from\s*'\.\/modules\/snapshotFreshness\.js(?:\?[^']*)?';/u, '')
     .split('// 启动')[0];
   const context = vm.createContext({
-    fetch, AbortController, console: { error() {} },
+    fetch, snapshotDisplayHealth, AbortController, console: { error() {} },
     setTimeout: (fn, ms) => setTimeout(fn, Math.min(ms, 30)), clearTimeout,
     dataUrl: 'radar', worldOrderStressUrl: 'world',
   });
