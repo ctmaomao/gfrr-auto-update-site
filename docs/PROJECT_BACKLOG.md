@@ -25,6 +25,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-10 长期自主运行与数据真实性整改
+
+- **Acceptance baseline**：owner 明确授权完成本轮八项问题及相应 commit+push、PR、合并；沿用每项一次有界独立 AI 替代审阅，serial trunk、每项合并后才开始下一项。顺序：Daily 前置时效/恢复；realtime 最近成功缓存；ACLED 时效降级；GDELT 饱和/过期衰减；ACLED 同窗覆盖；首页快照时效；恢复路径校验一致性；事件/报道口径。评分与 checker 契约变更须独立 ADR/审阅，不通过弱化断言获得绿灯。
+- **范围**：不额外手动付费刷新，不自动接入新数据服务、不恢复 ACLED 自动抓取、不更改主评分公式。独立交付监控、准确性评价与来源自动化边界随后形成可实施的有界方案；自然运行证据未取得时不得宣称长期无人值守验收完成。
+- **第一项实施**：Daily 在可能付费的生成前，以既有 90 分钟输入窗口和信任门检查 realtime；不可用只 dispatch 一次既有免费 Build Realtime Market，并有界轮询新结果，失败中止本次 Daily。有效个别缺失叶子仍交既有 Wind invalid-leaf 策略，不制造完整替代 payload；固定所消费提交并保留输出校验。正常取数和原 workflow checker 均保留。新增四项离线回归覆盖初始取数失败可恢复、正常跳过、恢复成功、过期/未来/不可信拒绝、恢复失败及次数上限。
+
 ### 2026-09-10 恢复验收与交接同步
 
 - **Acceptance baseline**：owner 要求完成 Daily 恢复验收、GDELT 冷却后自然请求验收、过期交接同步三项，明确授权本任务 commit+push、PR 与合并；沿用一次有界独立 AI 替代人工审阅。执行前已说明 Daily 启用既有 Wind fallback 且可能进入 Macro Risk 准入，本轮仅触发一次手动 Daily；不追加付费重跑，不提前请求 GDELT，不放宽时效或评分契约。
@@ -415,10 +421,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：`b06ef832`（PR #333 已合并）；本轮文档同步分支 `codex/recovery-handoff`，原工作区和历史分支保留。
-- **当前任务**：三项恢复/交接工作。旧 PR #330–#333 均已合并；唯一手动 Daily `34441694224` 未再报 PortWatch 越界，但因旧 realtime 被拦截，未发布。Realtime 恢复 `34442028076` 成功，发布 `46609c7e`，不据此宣称 Daily 完成。
-- **下一步**：本轮文档经必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，实际提交/PR/部署回执保留在本任务回复和 PR。运行验收由 `Daily 与 GDELT 自然恢复验收` 每日北京时间 07:15 只读取证；自然 Daily 须成功提交并线上验证，GDELT 须出现晚于旧失败的新自然 attempt，分别满足后才关闭。
-- **阻塞或等待**：一次手动 Daily 已使用，不重复付费触发；GDELT 仍在旧 429 冷却，未取得新请求证据。Realtime 恢复只证明当前输入，排程间隔成因及持续恢复尚未确认。文档合并不等于两项运行验收完成；不修改现行时效 gate 或生产评分。
+- **工作基线**：`dae9fd59`（PR #334 已合并）；本轮 `codex/daily-input-preflight` 基于 latest main，原工作区和历史分支保留。
+- **当前任务**：八项长期自主运行/数据真实性整改的第一项，Daily 生成前检查与一次有界免费 realtime 恢复；详情和完整顺序见 Section 2 最新 acceptance baseline。
+- **下一步**：必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，再开始下一项。实际提交/PR/部署回执保留在本任务回复和 PR，不能用本地通过代替自然运行验收。
+- **阻塞或等待**：Daily/GDELT 既有自然验收跟进继续每天北京时间 07:15 只读取证；不额外付费触发，不提前请求 GDELT，不把当前代码修复称为长期无人值守验证完成。
 
 ### 2026-09-10 历史审计任务交接（#332 合并前记录）
 
