@@ -1,5 +1,6 @@
 import { classifyWorldOrderState } from './classify-world-order-state.mjs';
 import { acledFreshnessWeight } from './acled-freshness.mjs';
+import { scoreGdeltPressure, GDELT_SCORING_MODEL } from './gdelt-score.mjs';
 import {
   DIMENSION_KEYS,
   DIMENSION_LABELS_ZH,
@@ -12,18 +13,7 @@ import {
 function sourceScore(sourceKey, source) {
   const summary = source?.summary || {};
   if (sourceKey === 'gdelt') {
-    if (source?.status === 'error') return 0;
-    const statusMultiplier = source?.status === 'stale'
-      ? 0.35
-      : source?.status === 'partial'
-        ? 0.75
-        : 1;
-    return clampScore(statusMultiplier * (
-      (summary.conflictEvents || 0) * 1.4 +
-      (summary.sanctionsEvents || 0) * 1.2 +
-      (summary.blockadeOrChokepointEvents || 0) * 1.8 +
-      (summary.regionsCovered?.length || 0) * 5
-    ));
+    return scoreGdeltPressure(source);
   }
   if (sourceKey === 'ofac') {
     return clampScore(
@@ -303,6 +293,7 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
   }
 
   return {
+    scoringModel: GDELT_SCORING_MODEL,
     score: finalScore,
     state: classification.state,
     labelZh: classification.labelZh,
@@ -313,6 +304,6 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
       ? `世界秩序压力主要来自：${dominantDrivers.map((item) => item.labelZh).join('、')}。该层仅用于结构性风险识别。`
       : '世界秩序压力处于低位或证据不足，当前仅作为观察层保留。',
     decisionModifier,
-    warnings: [WORLD_ORDER_WARNING]
+    warnings: [`${WORLD_ORDER_WARNING} GDELT 压力已采用固定历史参考尺度；本版世界秩序分数与旧版不可直接比较，分数下降不代表现实风险下降。`]
   };
 }

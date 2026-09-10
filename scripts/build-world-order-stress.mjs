@@ -180,6 +180,7 @@ async function main() {
     version: '1.0.0',
     updatedAt: isoNow(),
     sourceMode,
+    scoringModel: scored.scoringModel,
     score: scored.score,
     state: scored.state,
     labelZh: scored.labelZh,

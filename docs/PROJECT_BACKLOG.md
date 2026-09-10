@@ -27,6 +27,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-10 长期自主运行与数据真实性整改
 
+- **第四项实施 / ADR-0039**：GDELT 保留原始权重，按 30 个真实历史日的固定中位参考尺度标准化，随后应用过期折扣；历史触顶恢复变化范围。新版 World Order 增加模型标识及不可跨版直接比较的警告，不宣称风险下降或预测准确性；主雷达公式不变。见 [模型依据](ADR/0039-gdelt-pressure-scale.md)。
+- **第三项交付**：PR #337 已合并 `de184bd0`，提交 `e6b57f8a`；本地完整检查、最终 ACLED 专项、独立审阅及 CI `34447779490` 通过。
+
 - **第三项实施 / ADR-0038**：ACLED 原始日期与数据保留，时间推移传递到 partial 状态、来源/证据置信度和警告；周度过期贡献按现行时效窗口衰减，失效贡献为零（排除证据，不代表和平）。World Order freshness bonus 仅对 ok 来源，整体置信度受可用来源比例封顶。默认 operator 检查仍拒绝过期输入；runtime 全套显式保留结构合格的历史文件，所有其它断言与原周/月回归保留，额外验证真实 scorer 的时间推进及未来/损坏拒绝。详见 [独立契约决策](ADR/0038-acled-runtime-freshness.md)；未改主雷达评分或抓取生产数据。
 - **第二项交付**：PR #336 已合并 `d17f6da7`，提交 `5b704ffc`；两项专项、本地完整检查、最终独立审阅与 CI `34446541219` 通过。
 - **第二项实施**：两条 realtime 写入流程在生成前共用 published-baseline loader，先 fetch realtime-data、固定提交，再加载该提交的原始缓存。输入不可读/结构异常/mock 时停止，不使用 checkout main 中的旧文件；保留 payload 和各叶子观察日期，既有信任/降级逻辑不变。恢复无需生成时不额外 fetch。离线覆盖新缓存覆盖旧文件、固定 SHA、防时间洗新、失败不覆盖和两条调用路径。
@@ -425,8 +428,8 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：`d17f6da7`（PR #336 已合并）；本轮 `codex/acled-freshness-contract` 基于 latest main，原工作区和历史分支保留。
-- **当前任务**：八项整改第三项，独立 ACLED 时效/运行检查契约 PR；完整顺序及既有交付见 Section 2。
+- **工作基线**：`de184bd0`（PR #337 已合并）；本轮 `codex/gdelt-score-sensitivity` 基于 latest main，原工作区和历史分支保留。
+- **当前任务**：八项整改第四项，独立 GDELT 参考尺度/时效折扣模型 PR；完整顺序及既有交付见 Section 2。
 - **下一步**：必要检查、一次有界独立 AI 审阅与 CI 后按已授权流程合并，再开始下一项。实际提交/PR/部署回执保留在本任务回复和 PR，不能用本地通过代替自然运行验收。
 - **阻塞或等待**：Daily/GDELT 既有自然验收跟进继续每天北京时间 07:15 只读取证；不额外付费触发，不提前请求 GDELT，不把当前代码修复称为长期无人值守验证完成。
 
