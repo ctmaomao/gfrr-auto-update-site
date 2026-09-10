@@ -2492,3 +2492,7 @@ Bubble Watch responsive/data-contract acceptance 由 `check:bubble-watch-respons
 ### World Order GDELT reference-scale metadata
 
 New World Order artifacts carry additive `scoringModel` metadata (`version`, `calibrationId`, `comparableToLegacy=false`); absent metadata denotes legacy output. The GDELT scale change is not directly comparable across versions and does not alter primary radar scoring. Evidence and limitations: [ADR-0039](ADR/0039-gdelt-pressure-scale.md).
+
+### ACLED common weekly windows
+
+Weekly sanitizer outputs add `quality.weeklyWindow` with a shared `latestWeek`, exact `weeks4`/`weeks12` and six canonical regions. Source-file ranges remain provenance. Legacy aggregates without this proof remain readable history; source summaries set `weeklyWindowAligned=false`, retain `reportedLatestWeek`, expose null weekly metrics and zero weekly scoring contribution. [ADR-0040](ADR/0040-acled-common-week-window.md) defines eligibility and migration.

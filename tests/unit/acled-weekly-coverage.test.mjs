@@ -49,7 +49,7 @@ test('CLI rejects partial batches before parsing and preserves config byte-for-b
     fs.writeFileSync(path.join(parserStub, 'package.json'), JSON.stringify({ type: 'module', exports: './index.mjs' }));
     // No workbook is parsed in this test. Any accidental parser call must fail.
     fs.writeFileSync(path.join(parserStub, 'index.mjs'), "export function set_fs() {}\nexport function readFile() { throw new Error('UNEXPECTED_WORKBOOK_PARSE'); }\n");
-    for (const relative of ['scripts/world-order/acled-freshness.mjs', 'scripts/world-order/sanitize-acled-weekly.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/xlsx-input-guard.mjs', 'scripts/world-order/acled-weekly-coverage.mjs', 'scripts/check-world-order-acled-weekly.mjs']) {
+    for (const relative of ['scripts/world-order/acled-weekly-window.mjs', 'scripts/world-order/acled-freshness.mjs', 'scripts/world-order/sanitize-acled-weekly.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/xlsx-input-guard.mjs', 'scripts/world-order/acled-weekly-coverage.mjs', 'scripts/check-world-order-acled-weekly.mjs']) {
       const dest = path.join(fixture, relative);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(path.join(root, relative), dest);

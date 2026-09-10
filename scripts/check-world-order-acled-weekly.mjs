@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { weeklyCoverageFailures } from './world-order/acled-weekly-coverage.mjs';
 import { acledExpiryBlocks } from './world-order/acled-freshness.mjs';
+import { weeklyWindowProblem } from './world-order/acled-weekly-window.mjs';
 const runtimeHistory = process.argv.includes('--runtime-history');
 
 const __filename = fileURLToPath(import.meta.url);
@@ -270,6 +271,11 @@ if (payload !== undefined) {
     validateRegional(payload.regionalLast4Weeks);
     validateHotZones(payload.hotZonesLast4Weeks);
     validateQuality(payload.quality);
+    const windowProblem = weeklyWindowProblem(payload);
+    if (windowProblem) {
+      if (payload.quality?.weeklyWindow) addFailure(`weeklyWindow: ${windowProblem}`);
+      else warnings.push('legacy weekly windows unverified; runtime excludes weekly contribution until re-sanitized');
+    }
     if (Array.isArray(payload.filesIngested) && Array.isArray(payload.regionalLast4Weeks) && payload.filesIngested.length !== payload.regionalLast4Weeks.length) {
       addFailure('filesIngested.length must equal regionalLast4Weeks.length');
     }

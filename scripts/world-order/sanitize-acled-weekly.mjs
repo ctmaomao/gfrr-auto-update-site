@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as xlsx from 'xlsx';
 import { assertWorksheetDimensions, preflightXlsxInputs } from './xlsx-input-guard.mjs';
 import { selectWeeklyFiles, weeklyCoverageFailures } from './acled-weekly-coverage.mjs';
+import { buildCommonWeeklyWindow } from './acled-weekly-window.mjs';
 
 xlsx.set_fs(fs);
 
@@ -268,7 +269,14 @@ function unchangedExceptPreparedAt(payload, filePath) {
   }
 }
 
-function buildPayload(aggregates, selectedFiles) {
+export function buildPayload(aggregates, selectedFiles) {
+  const weeklyWindow = buildCommonWeeklyWindow(aggregates);
+  const includedWeeks = new Set(weeklyWindow.weeks12);
+  aggregates = aggregates.map(aggregate => ({
+    ...aggregateRegion(aggregate.region, aggregate.rows.filter(row => includedWeeks.has(row.week))),
+    weekRange: aggregate.weekRange,
+    rowCount: aggregate.rowCount
+  }));
   const allRows = aggregates.flatMap((aggregate) => aggregate.rows);
   const allWeeksDescending = sortWeeksDescending(allRows);
   if (allWeeksDescending.length === 0) fail('no WEEK values found in recognized files');
@@ -316,11 +324,12 @@ function buildPayload(aggregates, selectedFiles) {
     })),
     hotZonesLast4Weeks: buildHotZones(allRows, allWeeksDescending.slice(0, 4)),
     quality: {
+      weeklyWindow,
       isRealData: true,
       sourceUrl: SOURCE_URL,
       licenseLevel: LICENSE_LEVEL,
       attribution: ATTRIBUTION,
-      methodologyNoteZh: 'ACLED 区域周度聚合文件由 operator 手动下载,本脚本只读取本地 xlsx。指标按最新 4 周与 12 周窗口汇总事件、死亡与平民受害事件,用于观察短期冲突密度变化；它不同于 SIPRI 年度军费慢变量。',
+      methodologyNoteZh: 'ACLED 区域周度聚合文件由 operator 手动下载,本脚本只读取本地 xlsx。六区域采用最晚共同截止周的连续 12 周网格，近 4 周为其末 4 周；缺周拒绝导入，不补零。全球、区域与热点使用相同窗口；原文件覆盖日期另行保留。',
       confidence: 0.85
     }
   };
