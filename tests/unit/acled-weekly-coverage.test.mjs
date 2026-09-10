@@ -49,7 +49,7 @@ test('CLI rejects partial batches before parsing and preserves config byte-for-b
     fs.writeFileSync(path.join(parserStub, 'package.json'), JSON.stringify({ type: 'module', exports: './index.mjs' }));
     // No workbook is parsed in this test. Any accidental parser call must fail.
     fs.writeFileSync(path.join(parserStub, 'index.mjs'), "export function set_fs() {}\nexport function readFile() { throw new Error('UNEXPECTED_WORKBOOK_PARSE'); }\n");
-    for (const relative of ['scripts/world-order/sanitize-acled-weekly.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/xlsx-input-guard.mjs', 'scripts/world-order/acled-weekly-coverage.mjs', 'scripts/check-world-order-acled-weekly.mjs']) {
+    for (const relative of ['scripts/world-order/acled-freshness.mjs', 'scripts/world-order/sanitize-acled-weekly.mjs', 'scripts/world-order/sanitize-acled-monthly.mjs', 'scripts/world-order/xlsx-input-guard.mjs', 'scripts/world-order/acled-weekly-coverage.mjs', 'scripts/check-world-order-acled-weekly.mjs']) {
       const dest = path.join(fixture, relative);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(path.join(root, relative), dest);
@@ -60,9 +60,18 @@ test('CLI rejects partial batches before parsing and preserves config byte-for-b
     fs.mkdirSync(path.dirname(output), { recursive: true });
     const original = JSON.stringify(config);
     fs.writeFileSync(output, original);
-    const run = (script) => spawnSync(process.execPath, [path.join(fixture, script)], { encoding: 'utf8', timeout: 20_000 });
+    const run = (script, args = []) => spawnSync(process.execPath, [path.join(fixture, script), ...args], { encoding: 'utf8', timeout: 20_000 });
     const checker = 'scripts/check-world-order-acled-weekly.mjs';
     assert.equal(run(checker).status, 0);
+    fs.writeFileSync(output, JSON.stringify({...config,latestWeek:'2020-01-03'}));
+    assert.equal(run(checker).status,1);
+    assert.equal(run(checker,['--runtime-history']).status,0);
+    fs.writeFileSync(output, JSON.stringify({...config,latestWeek:'2999-01-01'}));
+    assert.equal(run(checker,['--runtime-history']).status,1);
+    fs.writeFileSync(output, JSON.stringify({...config,latestWeek:'2026-02-30'}));
+    for(const args of [[],['--runtime-history']]) {
+      const result=run(checker,args);assert.equal(result.status,1);assert.match(result.stderr,/parseable/);
+    }
     for (const field of ['filesIngested', 'regionalLast4Weeks']) {
       for (const kind of ['missing', 'duplicate', 'unknown']) {
         const bad = structuredClone(config);
@@ -73,6 +82,7 @@ test('CLI rejects partial batches before parsing and preserves config byte-for-b
         const result = run(checker);
         assert.equal(result.status, 1, `${field}/${kind}: ${result.stderr}`);
         assert.match(result.stderr, /exactly (?:once|six)|unknown region/u);
+        assert.equal(run(checker,['--runtime-history']).status,1);
       }
     }
     fs.writeFileSync(output, original);

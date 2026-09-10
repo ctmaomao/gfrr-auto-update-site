@@ -12,6 +12,7 @@
 // may fetch from acleddata.com. This file therefore only reads local JSON.
 
 import fs from 'node:fs';
+import { applyAcledFreshness } from './acled-freshness.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -232,7 +233,7 @@ function buildCombinedNote(state, weekly, monthly, summary) {
   return `${parts.join('；')}。`;
 }
 
-export async function fetchAcledSummary({ config = {}, previousSource = null } = {}) {
+async function fetchAcledSummaryBase({ config = {}, previousSource = null } = {}) {
   void config;
   void previousSource;
 
@@ -337,4 +338,8 @@ export async function fetchAcledSummary({ config = {}, previousSource = null } =
     confidence: combinedConfidence,
     warnings
   });
+}
+
+export async function fetchAcledSummary(options = {}) {
+  return applyAcledFreshness(await fetchAcledSummaryBase(options));
 }

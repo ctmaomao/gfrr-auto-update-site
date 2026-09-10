@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { weeklyCoverageFailures } from './world-order/acled-weekly-coverage.mjs';
+import { acledExpiryBlocks } from './world-order/acled-freshness.mjs';
+const runtimeHistory = process.argv.includes('--runtime-history');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +52,7 @@ function isNonNegativeInteger(value) {
 
 function dateAgeDays(isoDate) {
   const latest = new Date(`${isoDate}T00:00:00.000Z`);
-  if (!Number.isFinite(latest.getTime())) return null;
+  if (!Number.isFinite(latest.getTime()) || latest.toISOString().slice(0, 10) !== isoDate) return null;
   const now = new Date();
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   return Math.floor((today.getTime() - latest.getTime()) / 86_400_000);
@@ -147,7 +149,7 @@ function validateLatestWeek(value) {
     return;
   }
   if (ageDays < 0) addFailure(`latestWeek ${value} is in the future`);
-  else if (ageDays > 90) addFailure(`latestWeek ${value} is expired (${ageDays} days old)`);
+  else if (acledExpiryBlocks(ageDays, 'weekly', runtimeHistory)) addFailure(`latestWeek ${value} is expired (${ageDays} days old)`);
   else if (ageDays > 30) warnings.push(`latestWeek ${value} is aging (${ageDays} days old)`);
 }
 

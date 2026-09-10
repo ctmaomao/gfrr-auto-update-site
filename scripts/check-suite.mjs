@@ -96,8 +96,8 @@ const SUITES = {
     'check:xlsx-security',
     'check:acled-operator-safety',
     'check:world-order-acled-hdx-probe',
-    'check:world-order-acled-weekly',
-    'check:world-order-acled-monthly'
+    'check:world-order-acled-weekly-runtime',
+    'check:world-order-acled-monthly-runtime'
   ],
   'oil-directional': [
     'check:oil-directional-contract',

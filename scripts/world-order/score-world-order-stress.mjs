@@ -1,4 +1,5 @@
 import { classifyWorldOrderState } from './classify-world-order-state.mjs';
+import { acledFreshnessWeight } from './acled-freshness.mjs';
 import {
   DIMENSION_KEYS,
   DIMENSION_LABELS_ZH,
@@ -51,7 +52,7 @@ function sourceScore(sourceKey, source) {
   if (sourceKey === 'acled') {
     if (source?.status === 'error') return 0;
     if (source?.status === 'manual_required') return 10;
-    if (source?.status === 'partial') return 30;  // reserved for PR β
+    if (source?.status === 'partial' && !summary.latestWeek) return 30;
     // status === 'ok'
     const s = source.summary || {};
     const deltaScore = Number.isFinite(s.eventsDelta4Vs12)
@@ -63,7 +64,8 @@ function sourceScore(sourceKey, source) {
     const civilianTargetingScore = Number.isFinite(s.civilianTargetingShareLast4Weeks)
       ? s.civilianTargetingShareLast4Weeks * 30
       : 0;
-    return clampScore(deltaScore + fatalitiesScore + civilianTargetingScore);
+    const freshnessWeight = summary.sourceFreshness ? acledFreshnessWeight(summary.sourceFreshness) : 1;
+    return clampScore(clampScore(deltaScore + fatalitiesScore + civilianTargetingScore) * freshnessWeight);
   }
   return 0;
 }
@@ -157,7 +159,7 @@ function buildAcledEvidence(source, acledScore) {
     return {
       labelZh: 'ACLED 周度/月度数据部分可用',
       source: 'acled',
-      summary: 'ACLED partial 状态预留给 M-63b：weekly 或 monthly 仅一侧可用时进入低置信观察。',
+      summary: summary.noteZh || 'ACLED 周度或月度资料不完整或已过期，仅保留有时效限制的历史参考。',
       value: acledScore,
       direction: 'neutral',
       confidence: source.confidence ?? 0.3
@@ -194,10 +196,11 @@ function confidenceFromSources(externalSources, marketConfirmation) {
   const base = sourceConfidences.length
     ? sourceConfidences.reduce((sum, value) => sum + value, 0) / sourceConfidences.length
     : 0;
-  const freshnessBonus = Object.values(externalSources).filter((source) => ['ok', 'partial'].includes(source.status)).length * 0.06;
+  const freshnessBonus = Object.values(externalSources).filter((source) => source.status === 'ok').length * 0.06;
   const marketBonus = (marketConfirmation.confidence || 0) * 0.2;
   const missingPenalty = Object.values(externalSources).filter((source) => ['manual_required', 'not_configured', 'error'].includes(source.status)).length * 0.08;
-  return clampConfidence(base + freshnessBonus + marketBonus - missingPenalty);
+  const availableFraction = sourceConfidences.length ? sourceConfidences.filter(value => value > 0).length / sourceConfidences.length : 0;
+  return Math.min(availableFraction, clampConfidence(base + freshnessBonus + marketBonus - missingPenalty));
 }
 
 export function scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules }) {
