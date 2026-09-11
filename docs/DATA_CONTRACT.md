@@ -1059,6 +1059,8 @@ Provider prompt 必须把 `official` / `cross_checked` 新闻 source IDs 与 `di
 
 当字段缺失、陈旧、时间错配或任一门控失败时，前端隐藏该编辑层并保留 deterministic macro overview；不得显示旧 `externalAiInterpretationLayer` 卡片。
 
+[ADR-0042](ADR/0042-editorial-retained-snapshot-expiry.md) 将普通全套检查中的保留快照检查与新写入验收分离。仅实际过期、原字节在记录生成时刻通过全部既有 production envelope 断言且当前前端隐藏的旧层可记为 `expired_hidden` warning；不等于新鲜或新写入合格。严格 live CLI、最终 writer 的当前时效与全部输出重验继续保留。
+
 #### externalAiInterpretationLayer legacy compatibility contract（no visible consumer）
 
 `externalAiInterpretationLayer` 曾是首页 visible read-only 层；现只保留 data compatibility 与手动诊断 contract。`External AI Production Refresh` scheduled workflow、`#external-ai-auxiliary` DOM、导航入口和 `renderExternalAi.js` 已移除。Daily 可继续 preserve 已有字段以避免破坏旧数据契约，但前端不得消费，生产也不得为它执行日常付费 refresh。其历史 validator/manual provider tooling 保留用于兼容审计，不得把旧 artifact 写入 `macroRiskEditorialLayer`。

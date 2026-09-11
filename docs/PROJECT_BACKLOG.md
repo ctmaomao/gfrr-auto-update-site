@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-11 重复 Actions 失败：旧 Macro Risk 判读过期隔离
+
+- **Acceptance baseline**：owner 要求检查并修复今天的大量报错；本轮独立处理旧判读时效阻断普通检查，不追加付费刷新。独立 AI 验证沿用本任务要求；2026-09-11 owner 随后明确授权将本轮修复推送、创建 PR，并在 CI 通过后合并到 main。本轮远端集成回执单独记录，不把旧 PR #333 的合并结果当成本轮已发布。
+- **证据**：最近窗口内 11 次 Thermal / Oil News / EdgeOne 失败均报 production layer/output timestamp stale，例如 [EdgeOne 34542189146](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34542189146)、[Thermal 34541033061](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34541033061)、[Oil News 34530501730](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34530501730)。另一次 Daily 34441694224 为 258 分钟输入过期，已有 #335 前置检查/免费恢复修复，仍待自然运行验收。
+- **实施**：[ADR-0042](ADR/0042-editorial-retained-snapshot-expiry.md) 显式分离 retained snapshot 检查与新写入验收；仅两生成时钟均过期、原字节历史结构重验合格且实际前端隐藏时警告放行无关更新。严格 validator/live CLI/producer workflow 与 30 小时门不变；损坏、未来、混合时效、摘要/引用/边界失败仍拒绝。无生产数据或渲染代码修改。
+- **本地验收**：`npm run check:changed` 执行完整 `check:all` 通过；最终 506 项单元/覆盖率、21 项过期专项及桌面 1440px/手机 390px 两项真实浏览器回归通过，退出码均为 0。独立 AI 审阅及测试夹具最终复核通过；严格 validator/writer/live CLI/producer workflow/renderer 的基线 diff 为空。验收时线上两域名仍为 9 月 9 日快照；本轮集成已获授权，等待远端 CI、合并和发布回执，不宣称线上恢复。
+
 ### 2026-09-10 长期自主运行与数据真实性整改
 
 - **第八项实施 / ADR-0041**：GDELT Cloud事件总数不再复制到报道总数，query记录eventCount，去重报道数null；live/旧缓存/失败回退及cache artifact统一投影且保留原日期，真实零事件可复用缓存。ODP旧摘要展示仅用明确事件字段，缺失不转零、不把报道数当事件数。World Order校验器以明确countUnit分流：旧数字断言保留，新格式严格要求报道null和有效事件计数；真实CLI覆盖新旧通过与混用拒绝。见 [数量口径](ADR/0041-gdelt-event-and-article-units.md)，主评分/ODP方向不变；DESIGN §2/3/4/5现有位置/字体/配色不变。
