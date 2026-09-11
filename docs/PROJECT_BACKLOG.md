@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-11 AI 判读恢复与引用预算
+
+- **Acceptance baseline**：owner 要求定位 AI 不可用、修复并手动跑一次；沿用本任务提交、推送、独立 AI 审阅和合并授权。单次 AI 调用已用于下列运行，不自动重试、不删除预算凭据。
+- **上游恢复**：World Order 因 ACLED partial 来源证据遗漏停留旧快照，导致 AI admission 等待。既有 PR #345 已修复；本轮手动运行 `34567306501` 成功，提交 `0663b691`，无需重复修改。
+- **调用结果**：手动 AI `34567451297` HTTP 200、finishReason=stop、一次调用/零重试，但唯一错误为 `output factual claim[15].sourceRefIds must be an array with length 1-12`，未写生产。脱敏产物未保留原始正文，不能确认具体为类型、空值或超量，也不得伪造修复后的正文。
+- **修复范围**：提示词明确既有 1–12 项字符串数组约束、2–6 项建议预算及历史比较引用范围，超限须收窄论断而非裁掉证据；新增 null/空数组/字符串/13 项真实 adapter mock 回归。生产 validator、引用支撑、时效、单次调用和日预算均不变。修复减少同类生成错误，不保证随机模型永不违约；本期 AI 仍不可用，下一次真实调用须符合现有预算与独立恢复授权。
+
 ### 2026-09-11 当下压力模型研究与前瞻整改
 
 - **Acceptance baseline**：owner 对七项模型风险授权全面整改，并明确主分目标为“当下市场与宏观压力”，预测与仓位分别验证；允许实施、推送、PR、CI 后集成及研究影子运行。本轮承接已完成的 `2a83f256` 实现修复，保持单一逻辑 PR，不堆叠分支。授权不等于验证通过，不按今天分数选择模型。

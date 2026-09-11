@@ -163,6 +163,25 @@ const body = JSON.parse(capturedRequest.request.body);
 assert(body.max_tokens === 8000 && body.response_format.type === 'json_object' && body.thinking.type === 'disabled', 'DeepSeek request bounds drifted');
 const providerSystemPrompt = body.messages.find((message) => message.role === 'system')?.content || '';
 const providerUserPrompt = body.messages.find((message) => message.role === 'user')?.content || '';
+assert(providerSystemPrompt.includes('1–12 个字符串') && providerUserPrompt.includes('1–12 项字符串数组') && providerUserPrompt.includes('禁止截断引用'), 'provider prompts must disclose the existing per-claim reference bound without citation trimming');
+// Regression for the 2026-09-11 provider contract failure: malformed or oversized
+// claim references must still fail after prompting, with one request and no repair.
+for (const refs of [null, [], 'site:score', Array(13).fill('site:score')]) {
+  const invalidOutput = structuredClone(output);
+  invalidOutput.historicalComparison.sourceRefIds = refs;
+  let calls = 0;
+  let failure;
+  try {
+    await requestEditorial({ input, apiKey: 'fixture', now: () => new Date('2026-08-11T06:02:00.000Z'),
+      fetchImpl: async () => { calls += 1; return { ok: true, status: 200, async json() {
+        return { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(invalidOutput) } }] };
+      } }; }
+    });
+  } catch (error) { failure = error; }
+  assert(calls === 1 && failure?.category === 'provider_output_contract_invalid', 'invalid claim references must fail closed without retry');
+  assert(failure.responseDiagnostics.contract.errors.some(message => message.includes('sourceRefIds must be an array with length 1-12')), 'claim reference limit must remain enforced');
+  assert(JSON.stringify(invalidOutput.historicalComparison.sourceRefIds) === JSON.stringify(refs), 'provider adapter must not truncate or repair claim references');
+}
 const discoveryOnlyStory = discovery.stories.find((story) => story.evidenceStatus === 'discovery_only');
 assert(discoveryOnlyStory, 'fixture must include a discovery_only story');
 assert(providerSystemPrompt.includes('可见正文预算') && providerSystemPrompt.includes('不计 sourceRefIds') && providerSystemPrompt.includes('weeklyTimeline 恰好 3') && providerSystemPrompt.includes('不超过 6,200'), 'provider system prompt must budget actual frontend prose with a safe global buffer');
