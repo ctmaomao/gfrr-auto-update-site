@@ -1,0 +1,78 @@
+name: Pressure Model Research Shadow
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 1 * * *'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pressure-model-shadow-main
+  cancel-in-progress: false
+
+jobs:
+  research:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify research contract
+        run: node --test tests/unit/pressure-model.test.mjs
+      - name: Resolve frozen cohort
+        id: cohort
+        shell: bash
+        run: echo "name=$(node scripts/research-pressure-model.mjs --print-cohort)" >> "$GITHUB_OUTPUT"
+      - name: Restore previous immutable cohort ledger
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COHORT_NAME: ${{ steps.cohort.outputs.name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p manual-artifacts/main-score-audit/pressure-model/previous
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$COHORT_NAME&per_page=100" --jq '.artifacts | map(select(.expired == false and .workflow_run.head_branch == "main")) | sort_by(.created_at) | last | .id // empty')
+          if [ -n "$artifact_id" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > manual-artifacts/main-score-audit/pressure-model/previous.zip
+            python - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path('manual-artifacts/main-score-audit/pressure-model')
+          with zipfile.ZipFile(root / 'previous.zip') as archive:
+              entries = [name for name in archive.namelist() if name == 'shadow-ledger.json']
+              if len(entries) != 1:
+                  raise RuntimeError('Previous cohort ledger missing or ambiguous')
+              (root / 'previous' / 'shadow-ledger.json').write_bytes(archive.read(entries[0]))
+          PY
+          fi
+      - name: Record live shadow and evaluate fixed candidates
+        run: node scripts/research-pressure-model.mjs --allow-network --record-shadow --previous-ledger manual-artifacts/main-score-audit/pressure-model/previous/shadow-ledger.json
+      - name: Retain derived report and cumulative ledger
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ steps.cohort.outputs.name }}
+          path: |
+            manual-artifacts/main-score-audit/pressure-model/report.json
+            manual-artifacts/main-score-audit/pressure-model/shadow-ledger.json
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Retain failure diagnostics separately from usable ledgers
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pressure-shadow-failure-${{ github.run_id }}
+          path: manual-artifacts/main-score-audit/pressure-model/report.json
+          retention-days: 14
+          if-no-files-found: warn

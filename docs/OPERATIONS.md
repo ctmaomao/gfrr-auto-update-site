@@ -6,6 +6,8 @@
 
 相关文档：
 
+- [当下压力模型研究](PRESSURE_MODEL_RESEARCH_2026_09_11.md)：`Pressure Model Research Shadow` 每日 01:15 UTC 在 main 只读运行；最多 15 个免费 FRED CSV 请求，无 paid provider、无生产写入/部署。成功的 cohort artifact 含派生 report 与累积 shadow-ledger；失败诊断单独保存。协议或实现变更后重新计 cohort，不能手工回填天数、覆写旧分数或把研究结果提交为 `data/radar-data.json`。即使最低前瞻样本齐全，仍必须独立评审后另做生产模型迁移。
+
 - [v27 稳定化基线](V27_BASELINE.md)：用于确认当前 v27.x 已完成升级、维护边界、保护网和下一阶段建议。
 - [External AI API Design](EXTERNAL_AI_API_DESIGN.md)：用于未来 DeepSeek / OpenAI / external AI API 接入前的设计、输出审计和 fallback 边界。
 - [External AI Prompt Contract](EXTERNAL_AI_PROMPT_CONTRACT.md)：用于未来 offline/manual prompt tests 的输入输出契约和非生产样例 fixture 边界。

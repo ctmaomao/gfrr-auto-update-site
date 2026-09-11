@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "pressure-model-research-v1",
+  "modelId": "pressure-v2-research-2026-09-11",
+  "objective": "contemporaneous_market_macro_pressure",
+  "status": "research_and_prospective_shadow_only",
+  "scope": "US-market-based global transmission proxies; not worldwide financial-system coverage",
+  "productionReplacementEnabled": false,
+  "calibratedProbability": false,
+  "positionSizingValidated": false,
+  "minimumTrainingWeeks": 104,
+  "variants": [
+    { "id": "equal_156", "windowWeeks": 156, "correlationAdjustment": false, "tailBlend": 0 },
+    { "id": "smooth_156", "windowWeeks": 156, "correlationAdjustment": false, "tailBlend": 0.25 },
+    { "id": "diversified_156", "windowWeeks": 156, "correlationAdjustment": true, "tailBlend": 0.25 },
+    { "id": "diversified_104", "windowWeeks": 104, "correlationAdjustment": true, "tailBlend": 0.25 },
+    { "id": "diversified_260", "windowWeeks": 260, "correlationAdjustment": true, "tailBlend": 0.25 },
+    { "id": "diversified_tail15", "windowWeeks": 156, "correlationAdjustment": true, "tailBlend": 0.15 },
+    { "id": "diversified_tail35", "windowWeeks": 156, "correlationAdjustment": true, "tailBlend": 0.35 }
+  ],
+  "channels": {
+    "credit": { "inputs": ["baa10y"], "transformation": "level", "minimumScale": 0.01 },
+    "volatility": { "inputs": ["vix"], "transformation": "log_level", "minimumScale": 0.01 },
+    "equity": { "inputs": ["spx"], "transformation": "drawdown_from_trailing_365_calendar_day_high", "minimumScale": 0.005 },
+    "rates": { "inputs": ["us10y"], "transformation": "absolute_28_calendar_day_change", "minimumScale": 0.01 },
+    "dollarFunding": { "inputs": ["dxy"], "transformation": "positive_28_calendar_day_log_change", "minimumScale": 0.005 },
+    "energyInflation": { "inputs": ["brent", "breakeven10y"], "transformation": "mean_of_scaled_oil_log_change_magnitude_and_breakeven_level", "minimumScale": 0.005, "secondaryMinimumScale": 0.01 }
+  },
+  "sources": {
+    "baa10y": { "seriesId": "BAA10Y", "maxAgeDays": 7, "assumedReleaseLagDays": 2 },
+    "vix": { "seriesId": "VIXCLS", "maxAgeDays": 7, "assumedReleaseLagDays": 1 },
+    "spx": { "seriesId": "SP500", "maxAgeDays": 7, "assumedReleaseLagDays": 1 },
+    "us10y": { "seriesId": "DGS10", "maxAgeDays": 7, "assumedReleaseLagDays": 1 },
+    "dxy": { "seriesId": "DTWEXBGS", "maxAgeDays": 10, "assumedReleaseLagDays": 7 },
+    "brent": { "seriesId": "DCOILBRENTEU", "maxAgeDays": 7, "assumedReleaseLagDays": 3 },
+    "breakeven10y": { "seriesId": "T10YIE", "maxAgeDays": 7, "assumedReleaseLagDays": 1 }
+  },
+  "benchmarks": { "stlfsi": "STLFSI4", "nfci": "NFCI" },
+  "legacyAdditionalAssumedReleaseLagDays": { "hyOas": 2, "igOas": 2, "real10y": 1, "walcl": 1, "onRrp": 0, "t10y2y": 1 },
+  "evaluation": {
+    "startDate": "2006-01-01",
+    "historicalCutoff": "2026-09-11",
+    "stressLabel": "benchmark_greater_than_zero",
+    "alertThreshold": 70,
+    "falseNegativeCost": 2,
+    "falsePositiveCost": 1,
+    "blockBootstrapWeeks": 13,
+    "bootstrapReplicates": 200,
+    "seed": 20260911,
+    "minimumProspectiveDays": 84,
+    "minimumDistinctProspectiveInputs": 40,
+    "minimumProspectiveBenchmarkWeeks": 12,
+    "promotionRequiresIndependentModelReview": true,
+    "historicalResultsAloneCanPromote": false
+  },
+  "excludedFromScore": ["onRrp", "walcl", "worldOrderStress", "externalAi", "transportShock", "regimeProbabilities"],
+  "limitations": [
+    "Public latest-vintage history with assumed release lags is not point-in-time history.",
+    "NFCI and STLFSI share market inputs; agreement is convergent evidence, not independent ground truth.",
+    "Fixed candidate grid is evaluated retrospectively, not a claim of an untouched historical experiment.",
+    "Threshold and cost choices are research operating conventions, not measured utility or optimal investor preferences.",
+    "Prospective elapsed-time gates cannot be satisfied by backfilling historical rows or rerunning the same input."
+  ]
+}
