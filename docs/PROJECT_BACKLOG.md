@@ -31,7 +31,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **证据与结论**：[复核报告](SCORE_TRANSITION_2026_09_11.md)。旧发布 9 月 9 日为 45，当前 68=基础 53+尾部保底 15；实际输入回放完全一致，FRED 官方确认 9 月 9 日 Brent=109.51。历史索引把漏跑后的上一记录当 1 日、7 条当 7 日，需改为精确 UTC 日历日，缺失不补零。
 - **实施**：新增日历比较纯函数，主计算公式不变；Hero/阈值不再把最终分称为原始分，并展示生产记录的基础分/尾部升档、独立 World Order 关系及 Brent 观测日。遵守 DESIGN §2/3/4/5.3，复用现有文本区域、字体和色彩；无新一级区块。
 - **本地验收**：`npm run check:changed` 实际执行完整 `check:all`、`npm run test:unit:coverage`（515 项）、`npm run test:e2e`（22 项）、`node --check scripts/app.js` 与 `git diff --check` 均退出 0。独立 AI 最终审阅通过；生产计算回放、真实 validator 接受缺失比较值、桌面/手机展示及前后同输入截图已核对。既有 checker 断言未放宽。
-- **状态**：本地修复及验证完成；生产数据未改，本轮尚未发布。之前 #343 的远端授权对应旧判读过期隔离，本次主分口径修复待单独远端授权。
+- **远端授权与状态**：2026-09-11 owner 明确授权将本次修复推送、创建 PR，并在 CI 通过后合并到 main；沿用已完成的独立 AI 复核。本地修复提交 `5d8f0518`，生产数据未改；等待本次 PR 的 CI、合并与 Pages 发布回执。新日历比较值等待后续自然 Daily 生成，不额外触发付费刷新。
 
 ### 2026-09-11 重复 Actions 失败：旧 Macro Risk 判读过期隔离
 
