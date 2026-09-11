@@ -91,7 +91,7 @@ export function buildAiInterpretationLayer(data, generatedAt) {
     aiFact('interpretation_layer_rule_based', '规则化解释层', '本层为规则化结构解释，不调用外部 AI API。', ['aiInterpretationLayer.mode', 'aiInterpretationLayer.boundaries'], 'high')
   ].filter(Boolean);
 
-  const consumerChange = Number(consumer?.threeMonthChange);
+  const consumerChange = consumer?.threeMonthChange;
   const dataInferences = [
     primaryDivergence
       ? aiInference(

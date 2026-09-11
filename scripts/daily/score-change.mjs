@@ -24,3 +24,21 @@ export function calendarScoreChanges(history, date, score) {
     return [`scoreChange${days}d`, change];
   }));
 }
+
+// Thirty calendar dates ending on the snapshot date; no interpolation or
+// carry-forward across missing days. Ambiguous dates are excluded.
+export function calendarScoreWindow(history, date, days = 30) {
+  const now = dayTime(date);
+  if (now === null || !Number.isInteger(days) || days < 1) throw new TypeError('Invalid score window');
+  const rows = new Map();
+  for (const row of Array.isArray(history) ? history : []) {
+    const time = dayTime(row?.date);
+    if (time === null || time > now || time <= now - days * DAY_MS) continue;
+    const score = Number.isFinite(row.score) && row.score >= 0 && row.score <= 100 ? row.score : null;
+    rows.set(time, rows.has(time) ? null : score);
+  }
+  const scores = [...rows.values()].filter(Number.isFinite);
+  return { avg30d: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null,
+    peak30d: scores.length ? Math.max(...scores) : null,
+    trough30d: scores.length ? Math.min(...scores) : null };
+}

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=acled-evidence-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=acled-evidence-1';
+} from './config.js?v=score-hardening-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=score-hardening-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=acled-evidence-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=acled-evidence-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=acled-evidence-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=acled-evidence-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=acled-evidence-1';
+} from './macroOverviewDisplayHelpers.js?v=score-hardening-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=score-hardening-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=score-hardening-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=score-hardening-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=score-hardening-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

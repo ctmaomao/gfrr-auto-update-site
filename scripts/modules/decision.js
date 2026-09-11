@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=acled-evidence-1';
-import { formatOnRrpYiUsd } from './format.js?v=acled-evidence-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=score-hardening-1';
+import { formatOnRrpYiUsd } from './format.js?v=score-hardening-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
@@ -45,7 +45,7 @@ export function countConsecutiveDays(values, predicate) {
 export function createScoreSeries(history = [], currentScore = null) {
   const historyScores = Array.isArray(history)
     ? history
-      .map((item) => Number(item?.score))
+      .map((item) => item?.score)
       .filter((score) => Number.isFinite(score))
     : [];
   if (!Number.isFinite(currentScore)) return historyScores;
@@ -54,6 +54,31 @@ export function createScoreSeries(history = [], currentScore = null) {
   if (lastScore === currentScore) return historyScores;
   return [...historyScores, currentScore];
 }
+
+// Only dated, contiguous observations establish a streak or a three-day delta.
+// Keep the legacy createScoreSeries export for callers that need an undated list.
+export function createCalendarScoreSeries(history, currentScore, updatedAt) {
+  const date = typeof updatedAt === 'string' ? updatedAt.slice(0, 10) : '';
+  const parseDay = value => {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) return null;
+    const time = Date.parse(`${value}T00:00:00Z`);
+    return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value ? time : null;
+  };
+  const today = parseDay(date);
+  if (today === null || !Number.isFinite(currentScore) || currentScore < 0 || currentScore > 100) return [];
+  const byDay = new Map();
+  for (const row of Array.isArray(history) ? history : []) {
+    const time = parseDay(row?.date);
+    if (time === null || time >= today) continue;
+    byDay.set(time, byDay.has(time) || !Number.isFinite(row.score) || row.score < 0 || row.score > 100 ? null : row.score);
+  }
+  const scores = [currentScore];
+  for (let time = today - 86400000; Number.isFinite(byDay.get(time)); time -= 86400000) scores.unshift(byDay.get(time));
+  return scores;
+}
+
+const structuralSourceUsable = status => status === 'live' || status === 'fallback';
+const formatScoreChange = value => Number.isFinite(value) ? `${value >= 0 ? '+' : ''}${value}` : '趋势待累计';
 
 // ============================================================
 // v27 新增：pipeline 输出读取器（优先级最高）
@@ -79,7 +104,7 @@ function readActiveStructuralSignals(data) {
         detail: s?.detail || '',
         reliability: s?.reliability || 'missing'
       }))
-      .filter((s) => s.key && s.reliability !== 'missing');
+      .filter((s) => s.key && structuralSourceUsable(s.reliability));
   }
   const fed = md.fedLiquidity || {};
   const fedStatus = fed.sourceStatus || {};
@@ -90,19 +115,19 @@ function readActiveStructuralSignals(data) {
   const rateVol = md.rateVol || {};
   const rateVolStatus = rateVol.sourceStatus || {};
   const active = [];
-  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing' && curve.t10y2y <= -0.5) {
+  if (Number.isFinite(curve.t10y2y) && structuralSourceUsable(curveStatus.t10y2y) && curve.t10y2y <= -0.5) {
     active.push({ key: 'curveDeepInversion', label: STRUCTURAL_SIGNAL_LABELS.curveDeepInversion, detail: `10年-2年利差 ${curve.t10y2y.toFixed(2)}`, reliability: curveStatus.t10y2y });
   }
-  if (Number.isFinite(curve.t10y2y) && curve.steepeningAlert && curveStatus.t10y2y !== 'missing') {
+  if (Number.isFinite(curve.t10y2y) && curve.steepeningAlert && structuralSourceUsable(curveStatus.t10y2y)) {
     active.push({ key: 'curveRapidSteepening', label: STRUCTURAL_SIGNAL_LABELS.curveRapidSteepening, detail: `周变化 ${curve.t10y2yWeekChange?.toFixed?.(2) ?? '--'}`, reliability: curveStatus.t10y2y });
   }
-  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing' && fed.onRrp < 100) {
+  if (Number.isFinite(fed.onRrp) && structuralSourceUsable(fedStatus.onRrp) && fed.onRrp < 100) {
     active.push({ key: 'onRrpCritical', label: STRUCTURAL_SIGNAL_LABELS.onRrpCritical, detail: `ON RRP ${formatOnRrpYiUsd(fed.onRrp)}`, reliability: fedStatus.onRrp });
   }
-  if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing' && fed.walcl4wChange <= -2) {
+  if (Number.isFinite(fed.walcl4wChange) && structuralSourceUsable(fedStatus.walcl) && fed.walcl4wChange <= -2) {
     active.push({ key: 'fedRapidContraction', label: STRUCTURAL_SIGNAL_LABELS.fedRapidContraction, detail: `4周变化 ${fed.walcl4wChange.toFixed(2)}%`, reliability: fedStatus.walcl });
   }
-  if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing' && credit.igOas >= 1.8) {
+  if (Number.isFinite(credit.igOas) && structuralSourceUsable(creditStatus.igOas) && credit.igOas >= 1.8) {
     active.push({ key: 'igOasStress', label: STRUCTURAL_SIGNAL_LABELS.igOasStress, detail: `IG OAS ${credit.igOas.toFixed(2)}%`, reliability: creditStatus.igOas });
   }
   if (Number.isFinite(rateVol.move) && (rateVolStatus.move === 'live' || rateVolStatus.move === 'fallback') && rateVol.move >= 140) {
@@ -121,7 +146,7 @@ function isAllStructuralSourcesMissing(data) {
   const rateVol = md.rateVol?.sourceStatus || {};
   const statuses = [fed.walcl, fed.onRrp, curve.t10y2y, credit.igOas, rateVol.move];
   if (!statuses.length) return true;
-  return statuses.every((s) => s === 'missing' || s === 'stale' || s == null);
+  return statuses.every((s) => !structuralSourceUsable(s));
 }
 
 // ============================================================
@@ -350,13 +375,13 @@ function scoreBumpFromRules(value, rules) {
 }
 
 export function buildStrategyStateMeta(data, history, metadata, healthDashboard) {
-  const totalRiskScore = Number(data?.score);
-  const scoreSeries = createScoreSeries(history, totalRiskScore);
-  const referenceScore = scoreSeries.length >= 4 ? scoreSeries[scoreSeries.length - 4] : scoreSeries[0];
-  const recent3dDelta = Number.isFinite(referenceScore) && Number.isFinite(totalRiskScore) ? totalRiskScore - referenceScore : 0;
-  const recent3dSpeed = Number.isFinite(recent3dDelta) ? Number((recent3dDelta / 3).toFixed(1)) : 0;
+  const totalRiskScore = Number.isFinite(data?.score) ? data.score : null;
+  const scoreSeries = createCalendarScoreSeries(history, totalRiskScore, data?.updatedAt);
+  const referenceScore = scoreSeries.length >= 4 ? scoreSeries[scoreSeries.length - 4] : null;
+  const recent3dDelta = Number.isFinite(referenceScore) && Number.isFinite(totalRiskScore) ? totalRiskScore - referenceScore : null;
+  const recent3dSpeed = Number.isFinite(recent3dDelta) ? Number((recent3dDelta / 3).toFixed(1)) : null;
   const moduleEntries = Object.entries(data?.modules || {})
-    .map(([key, value]) => ({ key, value: Number(value) }))
+    .map(([key, value]) => ({ key, value }))
     .filter((item) => Number.isFinite(item.value));
   const resonanceCount = moduleEntries.filter((item) => item.value >= 70).length;
   const severeResonanceCount = moduleEntries.filter((item) => item.value >= 80).length;
@@ -434,8 +459,8 @@ export function calculateStrategyStateEngine(data, history, metadata, healthDash
     {
       key: 'three-day-speed',
       label: '3日变化速度',
-      impact: stateMeta.recent3dDelta > 0 ? '恶化中' : stateMeta.recent3dDelta < 0 ? '缓解中' : '平稳',
-      reason: `近3日变化为 ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}（每日 ${stateMeta.recent3dSpeed}）。`
+      impact: !Number.isFinite(stateMeta.recent3dDelta) ? '趋势待累计' : stateMeta.recent3dDelta > 0 ? '恶化中' : stateMeta.recent3dDelta < 0 ? '缓解中' : '平稳',
+      reason: `近3日变化：${formatScoreChange(stateMeta.recent3dDelta)}（每日 ${stateMeta.recent3dSpeed ?? '待累计'}）。`
     },
     {
       key: 'module-resonance',
@@ -467,7 +492,7 @@ export function calculateStrategyStateEngine(data, history, metadata, healthDash
 
   const stateReason = [
     `策略状态判定为 ${({ Defensive: '防守(Defensive)', Caution: '谨慎(Caution)', Crisis: '危机(Crisis)', Neutral: '中性(Neutral)', Offensive: '进攻(Offensive)' })[strategyState] || strategyState}，状态分数 ${stateScore}。`,
-    `总风险 ${stateMeta.totalRiskScore ?? '--'}，3日变化 ${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta}，共振模块数 ${stateMeta.resonanceCount}。`,
+    `总风险 ${stateMeta.totalRiskScore ?? '--'}，3日变化 ${formatScoreChange(stateMeta.recent3dDelta)}，共振模块数 ${stateMeta.resonanceCount}。`,
     stateMeta.extremeThresholdCount
       ? `极端阈值已触发：${stateMeta.extremeThresholds.join('、')}。`
       : '当前无极端阈值触发。',
@@ -657,7 +682,7 @@ export function buildPositionGuidanceEngine(data, metadata, decisionState, domin
       adjustmentNotes: [
         `策略状态：${strategyState}（${decisionState?.stateLabel || '未标注'}）。`,
         `状态分数：${stateScore}。`,
-        `3日变化：${stateMeta.recent3dDelta >= 0 ? '+' : ''}${stateMeta.recent3dDelta || 0}；共振模块数：${stateMeta.resonanceCount || 0}。`,
+        `3日变化：${formatScoreChange(stateMeta.recent3dDelta)}；共振模块数：${stateMeta.resonanceCount || 0}。`,
         structuralLabels.length
           ? `结构信号：${structuralLabels.join('、')}。`
           : (stateMeta.allStructuralSourcesMissing ? '结构信号数据源全部不可用。' : '无结构信号激活。'),

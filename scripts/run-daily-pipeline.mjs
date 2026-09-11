@@ -11,7 +11,11 @@ import {
   buildUnavailableDailyBrief,
 } from './daily/daily-brief.mjs';
 import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
-import { calendarScoreChanges } from './daily/score-change.mjs';
+import { calendarScoreChanges, calendarScoreWindow } from './daily/score-change.mjs';
+import { scoreInput, validateScoreWeights, structuralSourceUsable } from './daily/score-input-contract.mjs';
+import { buildExposureGuidance } from './daily/exposure-guidance.mjs';
+import { requireStructuralObservation, structuralObservationUsable, requireStructuralContinuity, structuralLagValue, structuralValueUsable } from './daily/structural-freshness.mjs';
+import { allocateRegimePercentages } from './daily/regime-weights.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
@@ -1029,8 +1033,8 @@ function existingPublicFallbackIsFresh(realtimePayload, key) {
   return freshness.ok;
 }
 
-function mainScoreInputFallbackNeed(realtimePayload, key) {
-  const currentValue = Number(realtimePayload?.values?.[key]);
+export function mainScoreInputFallbackNeed(realtimePayload, key) {
+  const currentValue = parseMainScoreNumber(realtimePayload?.values?.[key]);
   if (!Number.isFinite(currentValue)) {
     return { needed: true, reason: 'current_value_missing_or_nonfinite', currentValue: null };
   }
@@ -5765,6 +5769,7 @@ function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
 }
 
 async function resolveFedLiquidity(prevFed) {
+  const sourceObservedAt = {};
   const status = {
     walcl: 'missing',
     onRrp: 'missing',
@@ -5778,6 +5783,7 @@ async function resolveFedLiquidity(prevFed) {
   let walcl4wChange = null;
   let onRrp = null;
   let onRrpWeekChange = null;
+  let onRrpWeekChangeStatus = 'missing';
   let effectiveFedFundsRate = null;
   let sofr = null;
   let reserveBalances = null;
@@ -5791,14 +5797,16 @@ async function resolveFedLiquidity(prevFed) {
 
   try {
     const rows = await fetchFredSeries('WALCL', 90);
+    sourceObservedAt.walcl = requireStructuralObservation(rows, 'walcl');
     walcl = latestValue(rows);
-    const ago = findValueAgo(rows, 28);
+    const ago = structuralLagValue(rows, 28, 7);
     if (Number.isFinite(walcl) && Number.isFinite(ago) && ago !== 0) {
       walcl4wChange = +(((walcl - ago) / ago) * 100).toFixed(3);
     }
     status.walcl = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevFed?.walcl)) {
+    if (structuralValueUsable(prevFed?.walcl, 'walcl') && structuralSourceUsable(prevFed?.sourceStatus?.walcl) && structuralObservationUsable(prevFed?.sourceObservedAt?.walcl, 'walcl')) {
+      sourceObservedAt.walcl = prevFed.sourceObservedAt.walcl;
       walcl = prevFed.walcl;
       walcl4wChange = Number.isFinite(prevFed.walcl4wChange) ? prevFed.walcl4wChange : null;
       status.walcl = 'fallback';
@@ -5809,16 +5817,21 @@ async function resolveFedLiquidity(prevFed) {
 
   try {
     const rows = await fetchFredSeries('RRPONTSYD', 30);
+    sourceObservedAt.onRrp = requireStructuralObservation(rows, 'onRrp');
     onRrp = latestValue(rows);
-    const ago = findValueAgo(rows, 7);
+    const ago = structuralLagValue(rows, 7, 3);
+    onRrpWeekChangeStatus = ago === 0 ? 'undefined_zero_baseline' : Number.isFinite(ago) ? 'observed' : 'missing';
     if (Number.isFinite(onRrp) && Number.isFinite(ago) && ago !== 0) {
       onRrpWeekChange = +(((onRrp - ago) / ago) * 100).toFixed(3);
     }
     status.onRrp = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevFed?.onRrp)) {
+    if (structuralValueUsable(prevFed?.onRrp, 'onRrp') && structuralSourceUsable(prevFed?.sourceStatus?.onRrp) && structuralObservationUsable(prevFed?.sourceObservedAt?.onRrp, 'onRrp')) {
+      sourceObservedAt.onRrp = prevFed.sourceObservedAt.onRrp;
       onRrp = prevFed.onRrp;
       onRrpWeekChange = Number.isFinite(prevFed.onRrpWeekChange) ? prevFed.onRrpWeekChange : null;
+      onRrpWeekChangeStatus = Number.isFinite(onRrpWeekChange) ? 'observed'
+        : prevFed.onRrpWeekChangeStatus === 'undefined_zero_baseline' ? 'undefined_zero_baseline' : 'missing';
       status.onRrp = 'fallback';
     } else {
       status.onRrp = 'missing';
@@ -5935,6 +5948,7 @@ async function resolveFedLiquidity(prevFed) {
     walcl4wChange: Number.isFinite(walcl4wChange) ? walcl4wChange : null,
     onRrp: Number.isFinite(onRrp) ? onRrp : null,
     onRrpWeekChange: Number.isFinite(onRrpWeekChange) ? onRrpWeekChange : null,
+    onRrpWeekChangeStatus,
     effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null,
     sofr: Number.isFinite(sofr) ? sofr : null,
     reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null,
@@ -5950,6 +5964,7 @@ async function resolveFedLiquidity(prevFed) {
     regime,
     onRrpLevel: rrpLevel,
     pressure,
+    sourceObservedAt,
     sourceStatus: status
   };
 }
@@ -6208,20 +6223,23 @@ async function resolvePolicyExpectations(prevPolicy) {
   };
 }
 
-async function resolveCurve(prevCurve) {
+export async function resolveCurve(prevCurve) {
+  const sourceObservedAt = {};
   const status = { t10y2y: 'missing' };
   let t10y2y = null;
   let weekChange = null;
   try {
     const rows = await fetchFredSeries('T10Y2Y', 30);
+    sourceObservedAt.t10y2y = requireStructuralObservation(rows, 't10y2y');
     t10y2y = latestValue(rows);
-    const ago = findValueAgo(rows, 7);
+    const ago = structuralLagValue(rows, 7, 3);
     if (Number.isFinite(t10y2y) && Number.isFinite(ago)) {
       weekChange = +(t10y2y - ago).toFixed(3);
     }
     status.t10y2y = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevCurve?.t10y2y)) {
+    if (structuralValueUsable(prevCurve?.t10y2y, 't10y2y') && structuralSourceUsable(prevCurve?.sourceStatus?.t10y2y) && structuralObservationUsable(prevCurve?.sourceObservedAt?.t10y2y, 't10y2y')) {
+      sourceObservedAt.t10y2y = prevCurve.sourceObservedAt.t10y2y;
       t10y2y = prevCurve.t10y2y;
       weekChange = Number.isFinite(prevCurve.t10y2yWeekChange) ? prevCurve.t10y2yWeekChange : null;
       status.t10y2y = 'fallback';
@@ -6239,6 +6257,7 @@ async function resolveCurve(prevCurve) {
     t10y2yWeekChange: Number.isFinite(weekChange) ? weekChange : null,
     regime,
     steepeningAlert,
+    sourceObservedAt,
     sourceStatus: status
   };
 }
@@ -6258,7 +6277,7 @@ function classifyMoveRegime(move) {
 // 合理性闸门 + freshness + fail-closed-with-visibility：坏值/超龄不让信号触发；取数失败仅在上一轮值仍
 // fresh 时 carry last-good（避免真危机因瞬时取数失败漏报），否则 fail-closed（move=null, 不触发）并写明 stale。
 // 仅 >=140 应激 / >=160 危机时进结构门控；平静（<140）零影响打分。
-async function resolveRateVol(prevRateVol) {
+export async function resolveRateVol(prevRateVol) {
   const cfg = R.macroDrivers.rateVol;
   const status = { move: 'missing' };
   let move = null;
@@ -6286,7 +6305,7 @@ async function resolveRateVol(prevRateVol) {
     const ageDays = (Date.now() - latestTs * 1000) / 86400000;
     moveUpdatedAt = new Date(latestTs * 1000).toISOString();
     moveAgeDays = +ageDays.toFixed(2);
-    if (ageDays > cfg.maxAgeDays) {
+    if (!Number.isFinite(ageDays) || ageDays < 0 || ageDays > cfg.maxAgeDays) {
       freshnessStatus = 'stale';
       status.move = 'stale';
       move = null;
@@ -6299,7 +6318,7 @@ async function resolveRateVol(prevRateVol) {
     const prevMove = Number(prevRateVol?.move);
     const prevTs = prevRateVol?.moveUpdatedAt ? Date.parse(prevRateVol.moveUpdatedAt) : NaN;
     const prevAgeDays = Number.isFinite(prevTs) ? (Date.now() - prevTs) / 86400000 : Infinity;
-    if (Number.isFinite(prevMove) && prevMove >= cfg.plausibleMin && prevMove <= cfg.plausibleMax && prevAgeDays <= cfg.maxAgeDays) {
+    if (Number.isFinite(prevMove) && prevMove >= cfg.plausibleMin && prevMove <= cfg.plausibleMax && prevAgeDays >= 0 && prevAgeDays <= cfg.maxAgeDays) {
       move = +prevMove.toFixed(2);
       moveUpdatedAt = prevRateVol.moveUpdatedAt;
       moveAgeDays = +prevAgeDays.toFixed(2);
@@ -6325,6 +6344,7 @@ async function resolveRateVol(prevRateVol) {
 }
 
 async function resolveCredit(prevCredit, hyOasLive) {
+  const sourceObservedAt = {};
   const status = { igOas: 'missing', sloos: 'missing', nfci: 'missing' };
   let igOas = null;
   let igOas1dChange = null;
@@ -6336,6 +6356,7 @@ async function resolveCredit(prevCredit, hyOasLive) {
   let nfci4wChange = null;
   try {
     const rows = await fetchFredSeries('BAMLC0A0CM', 30);
+    sourceObservedAt.igOas = requireStructuralObservation(rows, 'igOas');
     igOas = latestValue(rows);
     if (rows.length >= 2) {
       const prev = rows[rows.length - 2].value;
@@ -6345,7 +6366,8 @@ async function resolveCredit(prevCredit, hyOasLive) {
     }
     status.igOas = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevCredit?.igOas)) {
+    if (structuralValueUsable(prevCredit?.igOas, 'igOas') && structuralSourceUsable(prevCredit?.sourceStatus?.igOas) && structuralObservationUsable(prevCredit?.sourceObservedAt?.igOas, 'igOas')) {
+      sourceObservedAt.igOas = prevCredit.sourceObservedAt.igOas;
       igOas = prevCredit.igOas;
       igOas1dChange = Number.isFinite(prevCredit.igOas1dChange) ? prevCredit.igOas1dChange : null;
       status.igOas = 'fallback';
@@ -6430,6 +6452,7 @@ async function resolveCredit(prevCredit, hyOasLive) {
     nfci: Number.isFinite(nfci) ? nfci : null,
     nfci4wChange: Number.isFinite(nfci4wChange) ? nfci4wChange : null,
     nfciRegime: classifyNfciRegime(nfci),
+    sourceObservedAt,
     sourceStatus: status
   };
 }
@@ -9604,19 +9627,15 @@ async function fetchDisplayOnlyMacroDrivers(prevMd) {
 }
 
 // 判断结构信号数据源是否"全不可用"
-function isAllStructuralSourcesMissing(macroDrivers) {
+export function isAllStructuralSourcesMissing(macroDrivers) {
   const fed = macroDrivers?.fedLiquidity?.sourceStatus || {};
   const curve = macroDrivers?.curve?.sourceStatus || {};
   const credit = macroDrivers?.credit?.sourceStatus || {};
   const rateVol = macroDrivers?.rateVol?.sourceStatus || {};
-  return fed.walcl === 'missing'
-    && fed.onRrp === 'missing'
-    && curve.t10y2y === 'missing'
-    && credit.igOas === 'missing'
-    && rateVol.move !== 'live' && rateVol.move !== 'fallback';
+  return ![fed.walcl, fed.onRrp, curve.t10y2y, credit.igOas, rateVol.move].some(structuralSourceUsable);
 }
 
-function activeStructuralSignals(macroDrivers) {
+export function activeStructuralSignals(macroDrivers) {
   const active = [];
   const fed = macroDrivers?.fedLiquidity || {};
   const fedStatus = fed.sourceStatus || {};
@@ -9628,7 +9647,7 @@ function activeStructuralSignals(macroDrivers) {
   const rateVolStatus = rateVol.sourceStatus || {};
   const cfg = R.macroDrivers;
 
-  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing'
+  if (Number.isFinite(curve.t10y2y) && structuralSourceUsable(curveStatus.t10y2y)
       && curve.t10y2y <= cfg.curve.deepInversionThreshold) {
     active.push({
       key: 'curveDeepInversion',
@@ -9637,7 +9656,7 @@ function activeStructuralSignals(macroDrivers) {
       reliability: curveStatus.t10y2y
     });
   }
-  if (Number.isFinite(curve.t10y2y) && curve.steepeningAlert && curveStatus.t10y2y !== 'missing') {
+  if (Number.isFinite(curve.t10y2y) && curve.steepeningAlert && structuralSourceUsable(curveStatus.t10y2y)) {
     active.push({
       key: 'curveRapidSteepening',
       label: '曲线快速陡峭化',
@@ -9645,7 +9664,7 @@ function activeStructuralSignals(macroDrivers) {
       reliability: curveStatus.t10y2y
     });
   }
-  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing'
+  if (Number.isFinite(fed.onRrp) && structuralSourceUsable(fedStatus.onRrp)
       && fed.onRrp < cfg.fedLiquidity.onRrpCriticalThreshold) {
     active.push({
       key: 'onRrpCritical',
@@ -9654,7 +9673,7 @@ function activeStructuralSignals(macroDrivers) {
       reliability: fedStatus.onRrp
     });
   }
-  if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing'
+  if (Number.isFinite(fed.walcl4wChange) && structuralSourceUsable(fedStatus.walcl)
       && fed.walcl4wChange <= cfg.fedLiquidity.walcl4wRapidContractionAlert) {
     active.push({
       key: 'fedRapidContraction',
@@ -9663,7 +9682,7 @@ function activeStructuralSignals(macroDrivers) {
       reliability: fedStatus.walcl
     });
   }
-  if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing'
+  if (Number.isFinite(credit.igOas) && structuralSourceUsable(creditStatus.igOas)
       && credit.igOas >= cfg.credit.igOasStressThreshold) {
     active.push({
       key: 'igOasStress',
@@ -9845,7 +9864,7 @@ export function buildTransportShockScoringImpact(energyTransport, scoreBeforeTra
       && latestAgeDays >= 0
       && latestAgeDays <= TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS,
     eligibleForMainScore: candidate?.eligibleForMainScore === true,
-    candidateScorePositive: Number.isFinite(candidateScore) && candidateScore > 0,
+    candidateScorePositive: Number.isFinite(candidateScore) && candidateScore > 0 && candidateScore <= 100,
     pressureStatus,
     hardCapPct: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
     routeFreightConfirmationConnected: false,
@@ -9905,16 +9924,21 @@ export function buildTransportShockScoringImpact(energyTransport, scoreBeforeTra
 }
 
 export function deriveRisk(rt, macroDrivers, R = RULES) {
+  validateScoreWeights(R);
+  // The offline historical adapter has explicit provenance; it is not a live
+  // source status and is never accepted by execution/structural runtime gates.
+  const scoreSourceUsable = status => structuralSourceUsable(status) || status === 'historical';
   const v = rt.values || {};
-  const brent = v.brent ?? R.defaults.brent;
-  const dxy = v.dxy ?? R.defaults.dxy;
-  const vix = v.vix ?? R.defaults.vix;
-  const hy = v.hyOas ?? R.defaults.hyOas;
-  const us10y = v.us10y ?? R.defaults.us10y;
-  const real10y = v.real10y ?? R.defaults.real10y;
-  const breakeven = v.breakeven10y ?? 2.3;
-  const spx = v.spx ?? 5100;
-  const gold = v.gold ?? 2350;
+  const brent = scoreInput(v, 'brent', R.defaults);
+  const dxy = scoreInput(v, 'dxy', R.defaults);
+  const vix = scoreInput(v, 'vix', R.defaults);
+  const hy = scoreInput(v, 'hyOas', R.defaults);
+  const us10y = scoreInput(v, 'us10y', R.defaults);
+  const real10y = scoreInput(v, 'real10y', R.defaults);
+  const breakeven = scoreInput(v, 'breakeven10y', R.defaults);
+  const spx = scoreInput(v, 'spx', R.defaults);
+  const gold = scoreInput(v, 'gold', R.defaults);
+  const brentChange = scoreInput(rt.changes || {}, 'brent1d', { brent1d: 0 });
 
   const rb = R.riskBaselines;
   const oilRisk = clamp((brent - rb.brentBase) * rb.brentScale);
@@ -9932,9 +9956,10 @@ export function deriveRisk(rt, macroDrivers, R = RULES) {
   const inflationRisk = clamp((breakeven - rb.breakevenBase) * rb.breakevenScale + oilRisk * rb.oilInflationWeight);
   const spxRisk = clamp((5300 - spx) / 6);
 
-  const baseLiquidity = clamp((dollarRisk * 0.35) + (hyRisk * 0.35) + (vixRisk * 0.18) + (rateRisk * 0.12));
-  const baseDebt = clamp((realRisk * 0.45) + (rateRisk * 0.3) + (hyRisk * 0.25));
-  const baseBanking = clamp((hyRisk * 0.55) + (vixRisk * 0.2) + (dollarRisk * 0.25));
+  const mc = R.moduleComposition;
+  const baseLiquidity = clamp((dollarRisk * mc.liquidity.dollarRisk) + (hyRisk * mc.liquidity.hyRisk) + (vixRisk * mc.liquidity.vixRisk) + (rateRisk * mc.liquidity.rateRisk));
+  const baseDebt = clamp((realRisk * mc.debt.realRisk) + (rateRisk * mc.debt.rateRisk) + (hyRisk * mc.debt.hyRisk));
+  const baseBanking = clamp((hyRisk * mc.banking.hyRisk) + (vixRisk * mc.banking.vixRisk) + (dollarRisk * mc.banking.dollarRisk));
 
   const fed = macroDrivers?.fedLiquidity || {};
   const fedStatus = fed.sourceStatus || {};
@@ -9944,11 +9969,11 @@ export function deriveRisk(rt, macroDrivers, R = RULES) {
   const creditStatus = credit.sourceStatus || {};
 
   let fedAssetRisk = null;
-  if (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing') {
+  if (Number.isFinite(fed.walcl4wChange) && scoreSourceUsable(fedStatus.walcl)) {
     fedAssetRisk = clamp((-fed.walcl4wChange) * 18);
   }
   let onRrpRisk = null;
-  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') {
+  if (Number.isFinite(fed.onRrp) && scoreSourceUsable(fedStatus.onRrp)) {
     const cfg = R.macroDrivers.fedLiquidity;
     if (fed.onRrp < cfg.onRrpCriticalThreshold) onRrpRisk = 85;
     else if (fed.onRrp < cfg.onRrpTightThreshold) onRrpRisk = 55;
@@ -9958,7 +9983,7 @@ export function deriveRisk(rt, macroDrivers, R = RULES) {
 
   let curveInversionRisk = null;
   let curveSteepeningRisk = null;
-  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') {
+  if (Number.isFinite(curve.t10y2y) && scoreSourceUsable(curveStatus.t10y2y)) {
     if (curve.t10y2y < 0) curveInversionRisk = clamp(Math.abs(curve.t10y2y) * 80);
     else curveInversionRisk = 10;
     curveSteepeningRisk = curve.steepeningAlert ? 80 : clamp(Number.isFinite(curve.t10y2yWeekChange) ? curve.t10y2yWeekChange * 30 : 0);
@@ -9967,17 +9992,17 @@ export function deriveRisk(rt, macroDrivers, R = RULES) {
   let igOasRisk = null;
   let nimPressureRisk = null;
   let reservePressure = null;
-  if (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing') {
+  if (Number.isFinite(credit.igOas) && scoreSourceUsable(creditStatus.igOas)) {
     const cfg = R.macroDrivers.credit;
     if (credit.igOas >= cfg.igOasCriticalThreshold) igOasRisk = 90;
     else if (credit.igOas >= cfg.igOasStressThreshold) igOasRisk = 70;
     else if (credit.igOas >= cfg.igOasWatchThreshold) igOasRisk = 45;
     else igOasRisk = 20;
   }
-  if (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') {
+  if (Number.isFinite(curve.t10y2y) && scoreSourceUsable(curveStatus.t10y2y)) {
     nimPressureRisk = curve.t10y2y < -0.5 ? 75 : curve.t10y2y < 0 ? 50 : 20;
   }
-  if (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') {
+  if (Number.isFinite(fed.onRrp) && scoreSourceUsable(fedStatus.onRrp)) {
     const cfg = R.macroDrivers.fedLiquidity;
     reservePressure = fed.onRrp < cfg.onRrpCriticalThreshold ? 85
       : fed.onRrp < cfg.onRrpTightThreshold ? 50
@@ -10021,8 +10046,8 @@ export function deriveRisk(rt, macroDrivers, R = RULES) {
   );
 
   const modules = {
-    geopolitical: clamp((oilRisk * 0.72) + (vixRisk * 0.28)),
-    energy: clamp((oilRisk * 0.82) + Math.max(0, rt.changes?.brent1d || 0) * 2),
+    geopolitical: clamp((oilRisk * mc.geopolitical.oilRisk) + (vixRisk * mc.geopolitical.vixRisk)),
+    energy: clamp((oilRisk * 0.82) + Math.max(0, brentChange) * 2),
     inflation: clamp((inflationRisk * 0.72) + (realRisk * 0.08)),
     liquidity: newLiquidity,
     debt: newDebt,
@@ -10072,7 +10097,7 @@ export function deriveRisk(rt, macroDrivers, R = RULES) {
   };
 }
 
-function regimeProb(score, risk) {
+export function regimeProb(score, risk) {
   const raw = {
     disinflationaryGrowth: Math.max(1, 120 - risk.inflationRisk - risk.hyRisk),
     liquidityBull: Math.max(1, 115 - risk.dollarRisk - risk.vixRisk),
@@ -10081,10 +10106,7 @@ function regimeProb(score, risk) {
     monetaryDebasement: Math.max(1, risk.inflationRisk + (100 - risk.realRisk)),
     deflationaryBust: Math.max(1, risk.hyRisk + risk.vixRisk + risk.spxRisk)
   };
-  const sum = Object.values(raw).reduce((a, b) => a + b, 0);
-  const probs = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, clamp(v / sum * 100)]));
-  probs.stagflationShock = clamp(100 - (probs.disinflationaryGrowth + probs.liquidityBull + probs.crisisLiquiditySqueeze + probs.monetaryDebasement + probs.deflationaryBust));
-  return probs;
+  return allocateRegimePercentages(raw);
 }
 
 function regimeLabel(probs) {
@@ -10100,7 +10122,7 @@ function regimeLabel(probs) {
 }
 
 // v27 结构性门控分层判定（严格分层：红灯需要更苛刻条件）
-function evaluateStructuralGating(macroDrivers) {
+export function evaluateStructuralGating(macroDrivers) {
   const cfg = R.macroDrivers;
   const fed = macroDrivers?.fedLiquidity || {};
   const fedStatus = fed.sourceStatus || {};
@@ -10111,10 +10133,10 @@ function evaluateStructuralGating(macroDrivers) {
   const rateVol = macroDrivers?.rateVol || {};
   const rateVolStatus = rateVol.sourceStatus || {};
 
-  const t10y2y = (Number.isFinite(curve.t10y2y) && curveStatus.t10y2y !== 'missing') ? curve.t10y2y : null;
-  const onRrp = (Number.isFinite(fed.onRrp) && fedStatus.onRrp !== 'missing') ? fed.onRrp : null;
-  const walcl4w = (Number.isFinite(fed.walcl4wChange) && fedStatus.walcl !== 'missing') ? fed.walcl4wChange : null;
-  const igOas = (Number.isFinite(credit.igOas) && creditStatus.igOas !== 'missing') ? credit.igOas : null;
+  const t10y2y = (Number.isFinite(curve.t10y2y) && structuralSourceUsable(curveStatus.t10y2y)) ? curve.t10y2y : null;
+  const onRrp = (Number.isFinite(fed.onRrp) && structuralSourceUsable(fedStatus.onRrp)) ? fed.onRrp : null;
+  const walcl4w = (Number.isFinite(fed.walcl4wChange) && structuralSourceUsable(fedStatus.walcl)) ? fed.walcl4wChange : null;
+  const igOas = (Number.isFinite(credit.igOas) && structuralSourceUsable(creditStatus.igOas)) ? credit.igOas : null;
   const move = (Number.isFinite(rateVol.move) && (rateVolStatus.move === 'live' || rateVolStatus.move === 'fallback')) ? rateVol.move : null;
 
   // === 红灯：严格阈值，需要严重双压或单项极端值 ===
@@ -10161,7 +10183,7 @@ function evaluateStructuralGating(macroDrivers) {
   };
 }
 
-function lockEngine(score, risk, rt, gatingResult) {
+export function lockEngine(score, risk, rt, gatingResult) {
   const el = R.executionLock;
   const criticalDown = (rt.criticalMissing ?? 0) >= el.red.criticalMissingThreshold || (rt.cacheOnly ?? false);
 
@@ -10378,7 +10400,7 @@ function appendHistoryFull(prevFull, risk, lock, macro, macroDrivers, transmissi
     vix: risk.vix,
     dxy: risk.dxy,
     hyOas: risk.hy,
-    spx: finiteOrNull(realtime?.values?.spx),
+    spx: finiteOrNull(risk.spx),
     us10y: risk.us10y,
     real10y: risk.real10y,
     t10y2y: macroDrivers?.curve?.t10y2y ?? null,
@@ -10607,17 +10629,18 @@ async function buildFallback() {
 }
 
 async function build() {
-  if (!canUseRealtimePayloadValues(realtime)) return await buildFallback();
+  if (!canUseRealtimePayloadValues(realtime)) throw new Error('main_score_input_publication_hold:realtime_unavailable');
 
-  const hyOasLive = Number(realtime.values?.hyOas);
+  const hyOasLive = parseMainScoreNumber(realtime.values?.hyOas);
   const macroDrivers = await fetchMacroDrivers(prevData, Number.isFinite(hyOasLive) ? hyOasLive : null);
+  requireStructuralContinuity(prevData?.macroDrivers, macroDrivers);
   const allMacroMissing = isAllStructuralSourcesMissing(macroDrivers);
   const activeSignals = activeStructuralSignals(macroDrivers);
   const gatingResult = evaluateStructuralGating(macroDrivers);
   const mainScoreSourceResolution = await resolveMainScoreRuntimeSource(realtime, macroDrivers);
   const scoringRealtime = mainScoreSourceResolution.realtimePayload;
   const sourceModeLabel = SOURCE_MODE_CN[scoringRealtime.sourceMode] || scoringRealtime.sourceMode || '--';
-  const hyOasScoreInput = Number(scoringRealtime.values?.hyOas);
+  const hyOasScoreInput = parseMainScoreNumber(scoringRealtime.values?.hyOas);
 
   const risk = deriveRisk(scoringRealtime, macroDrivers);
   const previousTransmissionSource = resolvePreviousTransmissionSource(prevData, prevHistoryFull, prevHistory);
@@ -10625,13 +10648,12 @@ async function build() {
   const transmissionSnapshot = buildTransmissionSnapshot(transmissionDeltaResult.chain);
   const history = appendHistory(prevHistory, risk.score, transmissionSnapshot, worldOrderStressHistorySnapshot);
   const { scoreChange1d, scoreChange7d, scoreChange30d } = calendarScoreChanges(history, isoNow.slice(0, 10), risk.score);
-  const avg30d = clamp(avg(history.slice(-30).map(x => x.score)));
-  const peak30d = Math.max(...history.slice(-30).map(x => x.score));
-  const trough30d = Math.min(...history.slice(-30).map(x => x.score));
+  const { avg30d, peak30d, trough30d } = calendarScoreWindow(history, isoNow.slice(0, 10));
   const probs = regimeProb(risk.score, risk);
   const macro = regimeLabel(probs);
   const phase = risk.modules.liquidity >= 70 ? '流动性偏紧' : risk.modules.energy >= 75 ? '通胀冲击' : '风险缓和';
-  const lock = lockEngine(risk.score, risk, scoringRealtime, gatingResult);
+  const exposureGuidance = buildExposureGuidance(lockEngine(risk.score, risk, scoringRealtime, gatingResult), structuralBandShift(activeSignals));
+  const lock = exposureGuidance.lock;
   const allocs = targetAllocations(lock);
 
   const topRisks = [
@@ -10667,10 +10689,7 @@ async function build() {
       ? '仅允许微调，禁止新增进攻性仓位。'
       : '禁止新增，只允许减仓与防守。') + guidanceSuffix;
 
-  const baseBandByLock = lock.level === 'red' ? { lo: 20, hi: 40 } : lock.level === 'yellow' ? { lo: 38, hi: 53 } : { lo: 55, hi: 70 };
-  const shiftedLo = clampRange(Math.round(baseBandByLock.lo + structuralShift / 2), 0, 90);
-  const shiftedHi = clampRange(Math.round(baseBandByLock.hi + structuralShift / 2), 10, 100);
-  const totalExposureBandCN = `${shiftedLo}%-${shiftedHi}%`;
+  const totalExposureBandCN = exposureGuidance.totalExposureBand;
 
   // recovery.notes 构建 —— 若结构信号数据源全不可用则追加中文降级说明
   const recoveryNotes = scoringRealtime.notes && scoringRealtime.notes.length

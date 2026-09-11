@@ -7,6 +7,10 @@
 
 ## 主表 (按数据源驱动)
 
+2026-09-11 模型研究源（[ADR-0044](ADR/0044-contemporaneous-pressure-research.md)，owner 本轮整改授权）：`pressure-model-research-v1` 归属 `daily_history_layer` 的历史研究与 `artifact_sanitizer_layer` 的派生 artifact。候选复用 FRED BAA10Y/VIXCLS/SP500/DGS10/DTWEXBGS/DCOILBRENTEU/T10YIE；BAA10Y 保留自身信用利差口径。新增 STLFSI4/NFCI 只作研究参考标签，不能作为独立真值或主分新输入；均来自 Federal Reserve Banks，经公开 FRED CSV 获取并引用来源。既有六条历史对照源仅复放旧公式。每次最多 15 请求、单请求 15 秒、无重试/付费密钥；失败不补值。公开下载不提供原始历史再分发授权，因此 raw cache 仅 ignored 本地/临时 runner，Actions 只上传派生研究报告和候选 ledger，不上传原始全量序列。没有主分、Worker、前端或仓位接入。
+
+2026-09-11 结构评分源时效补充（[ADR-0043](ADR/0043-score-input-continuity.md)）：现有 FRED WALCL 采用原始观测日起 14 日上限，RRPONTSYD/T10Y2Y/BAMLC0A0CM 为 7 日，按 UTC 观测日零时计算，拒绝未来/无效日期。live 与缓存均遵守同一上限，缓存不得使用 radar.updatedAt 续期；没有原始日期的旧缓存不可复用入分。WALCL 四周参照允许距目标 7 日，其余一周变化允许 3 日，缺参照不生成假零。新增政策不扩展源范围或费用；此前可用的入分证据消失时保留旧发布，详见运行手册。其它 display-only 宏观源不因此自动获得评分资格。
+
 ### FRED — Federal Reserve Economic Data
 
 | 字段 | 值 |
