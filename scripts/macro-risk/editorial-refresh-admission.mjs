@@ -8,6 +8,15 @@ export const UPSTREAMS = [
 ];
 const MAX_AGE_MS = 30 * 3600000;
 const PREFIX = 'tags/macro-editorial-budget/v1/';
+// ADR-0045: owner-approved single recovery, not a reusable budget override.
+export const RECOVERY_20260911 = Object.freeze({
+  id: '2026-09-11-input-recovery-1',
+  sourceDataUpdatedAt: '2026-09-11T00:21:21.451Z',
+  radarDigest: '9a86808887b2ef1008615563fe33742297c0625429a436f9790405ec9330e5b1',
+  failedHeadSha: '0663b6916d63aa179b3988eb3113247cc44b9b70',
+  startsAt: '2026-09-11T06:00:00.000Z',
+  expiresAt: '2026-09-11T16:00:00.000Z', // End of the authorized Shanghai calendar day.
+});
 const hold = (reason) => ({ ready: false, reason });
 
 function timestamp(value) {
@@ -22,7 +31,7 @@ export function trustedUpstream(run) {
     && run?.status === 'completed' && run?.conclusion === 'success' && Number.isSafeInteger(run?.id);
 }
 
-export function planAdmission({ eventName, event, runAttempt, repository, ref, radar, world, oil, now }) {
+export function planAdmission({ eventName, event, runAttempt, repository, ref, radar, radarDigest, world, oil, now }) {
   if (repository !== REPOSITORY || ref !== 'refs/heads/main') return hold('untrusted_context');
   if (String(runAttempt) !== '1') return hold('rerun_requires_new_review');
   if (eventName === 'workflow_run') {
@@ -38,7 +47,17 @@ export function planAdmission({ eventName, event, runAttempt, repository, ref, r
   if (eventName === 'workflow_run' && (dates[1] < dates[0] || dates[2] < dates[0])) return hold('waiting_for_upstream_snapshots');
   const sourceDataUpdatedAt = new Date(dates[0]).toISOString();
   const inputKey = createHash('sha256').update(sourceDataUpdatedAt).digest('hex');
-  return { ready: true, reason: 'candidate', sourceDataUpdatedAt, refs: [`${PREFIX}day-${now.slice(0, 10)}`, `${PREFIX}input-${inputKey}`] };
+  const refs = [`${PREFIX}day-${now.slice(0, 10)}`, `${PREFIX}input-${inputKey}`];
+  const recoveryId = event?.inputs?.recovery_id;
+  if (recoveryId !== undefined && recoveryId !== '') {
+    const permit = RECOVERY_20260911;
+    if (eventName !== 'workflow_dispatch' || recoveryId !== permit.id
+      || at < Date.parse(permit.startsAt) || at >= Date.parse(permit.expiresAt)
+      || radar?.updatedAt !== permit.sourceDataUpdatedAt || radarDigest !== permit.radarDigest) return hold('recovery_not_authorized');
+    return { ready: true, reason: 'recovery_candidate', sourceDataUpdatedAt,
+      recoveryId, originalRefs: refs, refs: [`${PREFIX}recovery-${permit.id}`] };
+  }
+  return { ready: true, reason: 'candidate', sourceDataUpdatedAt, refs };
 }
 
 // Only GitHub metadata is read. No provider key, artifact body or untrusted code.
@@ -92,6 +111,15 @@ export async function admitRefresh({ plan, eventName, event, now, snapshots, hea
   }
   // Two independent ceilings: one attempt per UTC day AND per Daily input.
   // Read before reserving to avoid burning a day on an already-claimed input.
+  if (plan.recoveryId) {
+    // Keep both original reservations untouched; recovery is only for the
+    // reviewed failed attempt, and consumes its own create-only token first.
+    for (const ref of plan.originalRefs) {
+      const result = await api(`/git/ref/${ref}`);
+      if (result.status !== 200 || result.data?.ref !== `refs/${ref}`
+        || result.data?.object?.sha !== RECOVERY_20260911.failedHeadSha) throw new Error('original_budget_unverified');
+    }
+  }
   for (const ref of plan.refs) {
     const result = await api(`/git/ref/${ref}`);
     if (result.status === 200) return hold('budget_already_reserved');
@@ -104,5 +132,5 @@ export async function admitRefresh({ plan, eventName, event, now, snapshots, hea
     // response or partial reservation never admits a call and is never undone.
     if (result.status !== 201 || result.data?.ref !== `refs/${ref}` || result.data?.object?.sha !== headSha) throw new Error('budget_reservation_not_confirmed');
   }
-  return { ...plan, reason: 'budget_reserved' };
+  return { ...plan, reason: plan.recoveryId ? 'recovery_budget_reserved' : 'budget_reserved' };
 }

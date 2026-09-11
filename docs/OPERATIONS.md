@@ -124,6 +124,8 @@ npm run check:macro-risk-editorial
 
 ### Macro editorial refresh / Daily timing
 
+2026-09-11 owner 单次例外见 [ADR-0045](ADR/0045-editorial-single-recovery.md)：仅指定手动 recovery ID、当天截止前、固定 Daily 时间与内容摘要允许额外一次预留；旧 day/input refs 不动，独立 recovery ref 已存在或创建不确定即拒绝。其余调用仍执行以下普通预算规则。
+
 GitHub Actions cron 使用 UTC，但不保证准时或相对顺序。上游名义时刻仍为 `Build Daily Radar Data` 22:30、`Refresh World Order Stress` 23:00、`Refresh Oil Directional Pressure` 23:45。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，`Macro Risk Editorial Refresh` 改听这三项完成事件，不再另排 00:05 cron。只接受同库 main 的首次 scheduled 成功事件，回查最新上游及本期快照就绪后才允许新闻/AI 开销；未齐、乱序、失败或过旧均 hold，等后续合格事件。Daily 本身不调用 DeepSeek。
 
 调用前以 create-only Git refs 持久预留 UTC 日预算和 Daily 输入键，路径固定 `refs/tags/macro-editorial-budget/v1/day-YYYY-MM-DD` / `input-<sha256>`。这只是保守尝试凭据，不是发布/成功证明；创建不确定、冲突或部分成功不允许调用，也不清除凭据。任何失败、零可信新闻或取消都不自动退还预算；手动 dispatch 的成本确认不绕过同日/同输入去重。严禁为恢复显示自动删除 tag、修改时间戳或重跑已消费周期。跨日仍相同 Daily 输入不重复调用；真正额外恢复需独立审阅与具体授权。无 `--reserve` 的 admission 是只读预检；已有匹配编辑层会在任何 GitHub 请求前跳过。
