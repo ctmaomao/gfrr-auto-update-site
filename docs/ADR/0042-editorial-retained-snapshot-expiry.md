@@ -1,6 +1,6 @@
 # ADR-0042: Separate retained editorial expiry from new production acceptance
 
-Status: Local implementation and independent AI contract review passed on 2026-09-11; integration authorization and remote CI remain pending.
+Status: Local implementation and independent AI contract review passed on 2026-09-11; owner authorized push, PR and merge after successful CI. Remote CI and integration receipts remain pending.
 
 ## Context
 
