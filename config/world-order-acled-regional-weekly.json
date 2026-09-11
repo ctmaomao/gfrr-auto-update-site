@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "source": "acled-aggregated-manual-normalized-weekly",
   "sourceName": "ACLED Regional Weekly Aggregated Data",
-  "preparedAt": "2026-09-09T02:25:28.907Z",
+  "preparedAt": "2026-09-11T22:02:29.120Z",
   "preparedBy": "manual",
   "latestWeek": "2026-08-28",
   "filesIngested": [
@@ -26,21 +26,21 @@
     },
     {
       "region": "Europe-Central-Asia",
-      "filename": "Europe-Central-Asia_aggregated_data_up_to_week_of-2026-08-15.xlsx",
+      "filename": "Europe-Central-Asia_aggregated_data_up_to_week_of-2026-08-29.xlsx",
       "weekRange": [
         "2017-12-29",
-        "2026-08-14"
+        "2026-08-28"
       ],
-      "rowCount": 126070
+      "rowCount": 126795
     },
     {
       "region": "US-and-Canada",
-      "filename": "US-and-Canada_aggregated_data_up_to_week_of-2026-08-15.xlsx",
+      "filename": "US-and-Canada_aggregated_data_up_to_week_of-2026-08-29.xlsx",
       "weekRange": [
         "2018-11-09",
-        "2026-08-14"
+        "2026-08-28"
       ],
-      "rowCount": 24215
+      "rowCount": 24348
     },
     {
       "region": "Latin-America-the-Caribbean",
@@ -53,21 +53,21 @@
     },
     {
       "region": "Asia-Pacific",
-      "filename": "Asia-Pacific_aggregated_data_up_to_week_of-2026-08-15_0.xlsx",
+      "filename": "Asia-Pacific_aggregated_data_up_to_week_of-2026-08-29.xlsx",
       "weekRange": [
         "2009-12-25",
-        "2026-08-14"
+        "2026-08-28"
       ],
-      "rowCount": 218059
+      "rowCount": 219039
     }
   ],
   "global": {
-    "eventsLast4Weeks": 33482,
-    "eventsLast12Weeks": 101122,
-    "eventsDelta4Vs12": -0.006685,
-    "fatalitiesLast4Weeks": 12607,
-    "fatalitiesLast12Weeks": 39484,
-    "civilianTargetingShareLast4Weeks": 0.085359
+    "eventsLast4Weeks": 33738,
+    "eventsLast12Weeks": 101468,
+    "eventsDelta4Vs12": -0.002503,
+    "fatalitiesLast4Weeks": 12829,
+    "fatalitiesLast12Weeks": 39397,
+    "civilianTargetingShareLast4Weeks": 0.085215
   },
   "regionalLast4Weeks": [
     {
@@ -98,22 +98,22 @@
     },
     {
       "region": "Europe-Central-Asia",
-      "events": 12973,
-      "fatalities": 3804,
-      "civilianTargetingEvents": 38,
+      "events": 13077,
+      "fatalities": 3975,
+      "civilianTargetingEvents": 36,
       "topCountriesByEvents": [
         "Ukraine",
         "Russia",
         "Spain",
-        "Italy",
-        "France"
+        "France",
+        "Germany"
       ]
     },
     {
       "region": "US-and-Canada",
-      "events": 840,
-      "fatalities": 0,
-      "civilianTargetingEvents": 1,
+      "events": 878,
+      "fatalities": 24,
+      "civilianTargetingEvents": 2,
       "topCountriesByEvents": [
         "United States",
         "Pacific Ocean",
@@ -137,9 +137,9 @@
     },
     {
       "region": "Asia-Pacific",
-      "events": 6286,
-      "fatalities": 1562,
-      "civilianTargetingEvents": 358,
+      "events": 6400,
+      "fatalities": 1589,
+      "civilianTargetingEvents": 376,
       "topCountriesByEvents": [
         "India",
         "Pakistan",
@@ -153,26 +153,38 @@
     {
       "country": "Russia",
       "admin1": "Belgorod",
-      "events": 1198,
-      "fatalities": 28
+      "events": 2358,
+      "fatalities": 57
+    },
+    {
+      "country": "Ukraine",
+      "admin1": "Zaporizhia",
+      "events": 1763,
+      "fatalities": 416
+    },
+    {
+      "country": "Ukraine",
+      "admin1": "Donetsk",
+      "events": 1716,
+      "fatalities": 1331
+    },
+    {
+      "country": "Ukraine",
+      "admin1": "Kherson",
+      "events": 1163,
+      "fatalities": 1300
+    },
+    {
+      "country": "Ukraine",
+      "admin1": "Kharkiv",
+      "events": 939,
+      "fatalities": 326
     },
     {
       "country": "Palestine",
       "admin1": "West Bank",
       "events": 918,
       "fatalities": 12
-    },
-    {
-      "country": "Ukraine",
-      "admin1": "Donetsk",
-      "events": 914,
-      "fatalities": 678
-    },
-    {
-      "country": "Ukraine",
-      "admin1": "Zaporizhia",
-      "events": 906,
-      "fatalities": 212
     },
     {
       "country": "Lebanon",
@@ -182,41 +194,61 @@
     },
     {
       "country": "Ukraine",
-      "admin1": "Kherson",
-      "events": 584,
-      "fatalities": 536
-    },
-    {
-      "country": "Ukraine",
-      "admin1": "Kharkiv",
-      "events": 473,
-      "fatalities": 180
-    },
-    {
-      "country": "Ukraine",
       "admin1": "Sumy",
-      "events": 401,
-      "fatalities": 59
+      "events": 770,
+      "fatalities": 117
+    },
+    {
+      "country": "Ukraine",
+      "admin1": "Dnipropetrovsk",
+      "events": 426,
+      "fatalities": 201
     },
     {
       "country": "Palestine",
       "admin1": "Gaza Strip",
       "events": 392,
       "fatalities": 102
-    },
-    {
-      "country": "Yemen",
-      "admin1": "Taizz",
-      "events": 288,
-      "fatalities": 239
     }
   ],
   "quality": {
+    "weeklyWindow": {
+      "version": "common-week-grid-v1",
+      "latestWeek": "2026-08-28",
+      "weeks4": [
+        "2026-08-07",
+        "2026-08-14",
+        "2026-08-21",
+        "2026-08-28"
+      ],
+      "weeks12": [
+        "2026-06-12",
+        "2026-06-19",
+        "2026-06-26",
+        "2026-07-03",
+        "2026-07-10",
+        "2026-07-17",
+        "2026-07-24",
+        "2026-07-31",
+        "2026-08-07",
+        "2026-08-14",
+        "2026-08-21",
+        "2026-08-28"
+      ],
+      "regions": [
+        "Africa",
+        "Middle-East",
+        "Europe-Central-Asia",
+        "US-and-Canada",
+        "Latin-America-the-Caribbean",
+        "Asia-Pacific"
+      ]
+    },
     "isRealData": true,
     "sourceUrl": "https://acleddata.com/conflict-data/download-data-files",
     "licenseLevel": "open",
     "attribution": "ACLED (Armed Conflict Location & Event Data) — https://acleddata.com",
-    "methodologyNoteZh": "ACLED 区域周度聚合文件由 operator 手动下载,本脚本只读取本地 xlsx。指标按最新 4 周与 12 周窗口汇总事件、死亡与平民受害事件,用于观察短期冲突密度变化；它不同于 SIPRI 年度军费慢变量。",
+    "methodologyNoteZh": "ACLED 区域周度聚合文件由 operator 手动下载,本脚本只读取本地 xlsx。六区域采用最晚共同截止周的连续 12 周网格，近 4 周为其末 4 周；缺周拒绝导入，不补零。全球、区域与热点使用相同窗口；原文件覆盖日期另行保留。",
     "confidence": 0.85
   }
 }
