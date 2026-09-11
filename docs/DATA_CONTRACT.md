@@ -16,6 +16,12 @@
 
 旧 `data/radar-data.json` 快照若尚未由 Daily 重新生成，可能仍缺少 `releaseVersion`，且根级 `decisionLine` / `summary` 中保留旧发布文案。前端入口会在内存中做只读展示归一化；不要为了修正文案直接手工编辑 `data/*.json`。下次 Daily pipeline 会自然写入 `releaseVersion` 与 `versionSemantics`。
 
+## 综合分与日历比较
+
+`score` 是既有主模型最终分数，包含 `tailRiskOverlay` 的条件保底和已批准的 `transportShockScoringImpact`；六模块加权基础分以 `tailRiskOverlay.baseScore` 为准。前端仅解释已写入的分解，不重新计算分数。World Order 独立观察分不加进该值；模型分档不是市场见顶或危机概率预测。
+
+`scoreChange1d` / `scoreChange7d` / `scoreChange30d` 分别比较当前快照 UTC 日期之前恰好 1 / 7 / 30 个日历日的有效历史分数。目标日期缺失、重复或无效时为 `null`，不能改用上一条记录、补零或用周变化代替月变化；真实零分和零变化仍有效。相应趋势文案在比较缺失时显示“趋势待累计”。这修复漏跑后的记录偏移，不修改主评分公式、阈值、历史分数或生产数据。
+
 ## 总体数据链路
 
 当前数据链路为：
@@ -1022,7 +1028,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `event-units-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `score-explanation-1`）。
 
 稳定边界：
 
@@ -1477,26 +1483,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-event-units-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
+score-explanation-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `event-units-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `score-explanation-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=event-units-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=event-units-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `event-units-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=score-explanation-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=score-explanation-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `score-explanation-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs event-units-1
-npm run bump:frontend-asset-version -- event-units-1
+node scripts/bump-frontend-asset-version.mjs score-explanation-1
+npm run bump:frontend-asset-version -- score-explanation-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `event-units-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `score-explanation-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

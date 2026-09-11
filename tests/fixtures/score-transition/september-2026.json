@@ -1,0 +1,159 @@
+{
+  "description": "Recorded production scoring inputs only; no network/provider calls. Main-score replay, not a market forecast.",
+  "snapshots": [
+    {
+      "ref": "2cda57c4",
+      "updatedAt": "2026-09-09T00:25:44.247Z",
+      "realtimeCommit": "15d176a79ad19a48ae48af06abe8b74c1723c8e6",
+      "rt": {
+        "values": {
+          "brent": 96.02,
+          "dxy": 118.0732,
+          "hyOas": 2.68,
+          "vix": 15.3,
+          "spx": 7718.6,
+          "us10y": 4.78,
+          "us2y": 4.37,
+          "real10y": 2.43,
+          "breakeven10y": 2.37,
+          "gold": 4354.100098
+        },
+        "changes": {
+          "brent1d": 6.27,
+          "dxy1d": -0.0538,
+          "hyOas1d": 0,
+          "vix1d": 0.77,
+          "spx1d": -29.11,
+          "us10y1d": 0.01,
+          "us2y1d": 0.03,
+          "real10y1d": 0.01,
+          "breakeven10y1d": 0.02,
+          "gold1d": 0
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": -0.168,
+          "onRrp": 0.626,
+          "onRrpWeekChange": -13.655,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live",
+            "effectiveFedFundsRate": "live",
+            "sofr": "live",
+            "reserveBalances": "live",
+            "bgcr": "live",
+            "tgcr": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.41,
+          "steepeningAlert": false,
+          "t10y2yWeekChange": 0.01,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 0.81,
+          "sourceStatus": {
+            "igOas": "live",
+            "sloos": "live",
+            "nfci": "live"
+          }
+        }
+      },
+      "expected": {
+        "score": 45,
+        "modules": {
+          "geopolitical": 58,
+          "energy": 72,
+          "inflation": 51,
+          "liquidity": 34,
+          "debt": 31,
+          "banking": 27
+        },
+        "baseScore": 45,
+        "tailAdd": 0
+      },
+      "brentObservation": "2026-09-01"
+    },
+    {
+      "ref": "0d903238",
+      "updatedAt": "2026-09-11T00:21:21.451Z",
+      "realtimeCommit": "5b1c0ec27337cf062cd011d68fa8f3b0de3def74",
+      "rt": {
+        "values": {
+          "brent": 109.51,
+          "dxy": 118.0732,
+          "hyOas": 2.71,
+          "vix": 16.46,
+          "spx": 7636.36,
+          "us10y": 4.83,
+          "us2y": 4.43,
+          "real10y": 2.46,
+          "breakeven10y": 2.4,
+          "gold": 4319.5
+        },
+        "changes": {
+          "brent1d": 3.39,
+          "dxy1d": -0.0538,
+          "hyOas1d": 0.04,
+          "vix1d": 0.74,
+          "spx1d": -37.16,
+          "us10y1d": 0.03,
+          "us2y1d": 0.04,
+          "real10y1d": 0.03,
+          "breakeven10y1d": 0.03,
+          "gold1d": 0
+        }
+      },
+      "macroDrivers": {
+        "fedLiquidity": {
+          "walcl4wChange": -0.286,
+          "onRrp": 4.736,
+          "onRrpWeekChange": 574.644,
+          "sourceStatus": {
+            "walcl": "live",
+            "onRrp": "live",
+            "effectiveFedFundsRate": "live",
+            "sofr": "live",
+            "reserveBalances": "live",
+            "bgcr": "live",
+            "tgcr": "live"
+          }
+        },
+        "curve": {
+          "t10y2y": 0.39,
+          "steepeningAlert": false,
+          "t10y2yWeekChange": -0.04,
+          "sourceStatus": {
+            "t10y2y": "live"
+          }
+        },
+        "credit": {
+          "igOas": 0.81,
+          "sourceStatus": {
+            "igOas": "live",
+            "sloos": "live",
+            "nfci": "live"
+          }
+        }
+      },
+      "expected": {
+        "score": 68,
+        "modules": {
+          "geopolitical": 80,
+          "energy": 88,
+          "inflation": 59,
+          "liquidity": 36,
+          "debt": 32,
+          "banking": 28
+        },
+        "baseScore": 53,
+        "tailAdd": 15
+      },
+      "brentObservation": "2026-09-09"
+    }
+  ]
+}

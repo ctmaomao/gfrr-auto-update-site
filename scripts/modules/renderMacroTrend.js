@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=event-units-1';
+import { $ } from './config.js?v=score-explanation-1';
 
 function asNumber(value) {
   const n = Number(value);
@@ -422,7 +422,7 @@ function renderOverlayTrendStatus({ mode, radarData, worldOrderStressData, analy
   const suffixText = suffix ? ` · overlay ${suffix}` : '';
   const nowEl = $('threshold-now-line');
   if (nowEl) {
-    nowEl.textContent = `原始 ${mainText}(高风险预警) · overlay ${scoreText}${labelText}${suffixText}`;
+    nowEl.textContent = `模型综合分 ${mainText} · 世界秩序 ${scoreText}${labelText}(独立观察)${suffixText}`;
   }
   const marker = $('threshold-marker-override');
   if (marker) marker.hidden = false;

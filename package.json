@@ -395,7 +395,7 @@
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs",
     "check:changed": "node scripts/check-changed.mjs",
     "check:world-order-market-input": "node --test tests/unit/world-order-market-input.test.mjs",
-    "check:pipeline-pure-helpers": "node --test tests/unit/pure-pipeline-extraction.test.mjs tests/unit/main-score-parity.test.mjs tests/unit/historical-validation.test.mjs tests/unit/historical-event-verdict.test.mjs"
+    "check:pipeline-pure-helpers": "node --test tests/unit/pure-pipeline-extraction.test.mjs tests/unit/main-score-parity.test.mjs tests/unit/historical-validation.test.mjs tests/unit/historical-event-verdict.test.mjs tests/unit/score-transition.test.mjs"
   },
   "engines": {
     "node": ">=24.20.0 <25"
