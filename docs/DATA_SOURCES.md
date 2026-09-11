@@ -7,6 +7,8 @@
 
 ## 主表 (按数据源驱动)
 
+2026-09-11 结构评分源时效补充（[ADR-0043](ADR/0043-score-input-continuity.md)）：现有 FRED WALCL 采用原始观测日起 14 日上限，RRPONTSYD/T10Y2Y/BAMLC0A0CM 为 7 日，按 UTC 观测日零时计算，拒绝未来/无效日期。live 与缓存均遵守同一上限，缓存不得使用 radar.updatedAt 续期；没有原始日期的旧缓存不可复用入分。WALCL 四周参照允许距目标 7 日，其余一周变化允许 3 日，缺参照不生成假零。新增政策不扩展源范围或费用；此前可用的入分证据消失时保留旧发布，详见运行手册。其它 display-only 宏观源不因此自动获得评分资格。
+
 ### FRED — Federal Reserve Economic Data
 
 | 字段 | 值 |

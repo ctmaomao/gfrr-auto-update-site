@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `acled-evidence-1` |
+| Cache version | `score-hardening-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -24,6 +24,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ---
 
 ## Section 2 · Open Backlog Items
+
+### 2026-09-11 主评分系统综合复核与输入保护
+
+- **Acceptance baseline**：owner 要求再次综合检查主评分系统并修复问题与隐患，准确性优先。修复有证据的实现错误，开展当前规则重放与边界压力测试；不为改变当日分数任意调权重，不把公式一致作为预测校准，不手改生产数据或触发付费服务。本次尚无新的远端推送/合并授权。
+- **范围与实施**：[综合审计](SCORE_SYSTEM_AUDIT_2026_09_11.md) 和 [ADR-0043](ADR/0043-score-input-continuity.md)。配置消费、空值、时效、缓存原始日期、输入连续性、仓位目标、日历统计及冻结 fallback 的缺陷修复；已用证据丢失时 hold 发布并保留原快照时间。数值权重和尾部门槛不变，模型风险继续显性披露。DESIGN §2/3/4/5.3：沿用现有文本区域、字体/颜色/布局，未新增区块；仅缓存版本同步。
+- **本地验收**：八个既有完整生产输出 fixture 保持一致；新增 18 项边界回归通过。`npm run check:changed` 实际执行完整 `check:all`、`npm run test:unit:coverage`（545 项）、`npm run test:e2e`（22 项）、`node --check scripts/app.js`、`git diff --check` 均退出 0。最终独立 AI 复核通过并独立执行 18 项专项；已修复其指出的派生输入丢失及 ON RRP 零分母迁移问题。原 checker/配置权重/阈值/生产数据/workflow diff 为空。公共历史审计退出 0、1,079 样本、六窗口 `pass_with_limitations`，明确不是预测或样本外证据。未推送或部署；模型校准隐患仍见报告，不能称为全部解决。
 
 ### 2026-09-11 World Order 的 ACLED 降级证据遗漏
 

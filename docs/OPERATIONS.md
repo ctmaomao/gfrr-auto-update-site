@@ -2,6 +2,8 @@
 
 本文档用于日常维护排查。遇到页面数据过期、Daily 数据不一致、Brent 主值疑问、Transmission Delta 未显示或 Pages 部署失败时，优先按这里的顺序检查。
 
+2026-09-11 [ADR-0043](ADR/0043-score-input-continuity.md)：Daily 出现 `structural_input_publication_hold:<字段>` 表示此前参与评分/门控的结构值或变化失去可用证据；`all_unavailable` 为全部结构源缺失。`main_score_input_publication_hold:realtime_unavailable` 表示实时输入不可信。上述失败保留旧快照和其原始时间，不能据此判断风险下降。先检查原始观测日期、缓存年龄、FRED/MOVE响应与历史对照完整性；恢复源后走既有运行流程，不改旧 JSON 时间、不恢复无限缓存、不手动降分。首次升级后的旧缓存若无 `sourceObservedAt`，必须成功获取源后才能成为有效新缓存。此条只收紧 Daily 写入，不改变 Worker health 的只读/告警边界。
+
 相关文档：
 
 - [v27 稳定化基线](V27_BASELINE.md)：用于确认当前 v27.x 已完成升级、维护边界、保护网和下一阶段建议。
@@ -62,7 +64,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `acled-evidence-1`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `score-hardening-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 单独检查 Worker Health；它只反映 Worker 运行链，不是当前静态首页的数据加载闸门。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -77,7 +79,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。旧 `externalAiInterpretationLayer` 只保留数据兼容；首页当前可见的 DeepSeek 输出是独立 `macroRiskEditorialLayer`。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `acled-evidence-1`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `score-hardening-1`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -599,27 +601,27 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `acled-evidence-1`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
+当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `score-hardening-1`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=acled-evidence-1
-scripts/app.js and active scripts/modules/*.js local imports → ?v=acled-evidence-1
+index.html app.js entry → ?v=score-hardening-1
+scripts/app.js and active scripts/modules/*.js local imports → ?v=score-hardening-1
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `acled-evidence-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `score-hardening-1`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs acled-evidence-1
-npm run bump:frontend-asset-version -- acled-evidence-1
+node scripts/bump-frontend-asset-version.mjs score-hardening-1
+npm run bump:frontend-asset-version -- score-hardening-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `acled-evidence-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `score-hardening-1`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
