@@ -13,6 +13,11 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
+      recovery_id:
+        description: "Reviewed one-use recovery ID; empty keeps normal day/input budget"
+        type: string
+        required: false
+        default: ""
       allow_network:
         description: "Allow Tavily, Brave, and DeepSeek network calls"
         type: boolean

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { admitRefresh, githubClient, planAdmission } from './editorial-refresh-admission.mjs';
 
@@ -12,7 +13,8 @@ async function main() {
   const world = read('data/world-order-stress.json');
   const oil = read('data/oil-directional-pressure.json');
   const now = new Date().toISOString();
-  const context = { event, eventName: process.env.GITHUB_EVENT_NAME, runAttempt: process.env.GITHUB_RUN_ATTEMPT, repository: process.env.GITHUB_REPOSITORY, ref: process.env.GITHUB_REF, radar, world, oil, now };
+  const radarDigest = createHash('sha256').update(JSON.stringify(radar)).digest('hex');
+  const context = { event, eventName: process.env.GITHUB_EVENT_NAME, runAttempt: process.env.GITHUB_RUN_ATTEMPT, repository: process.env.GITHUB_REPOSITORY, ref: process.env.GITHUB_REF, radar, radarDigest, world, oil, now };
   const plan = planAdmission(context);
   const result = await admitRefresh({
     plan, event, eventName: context.eventName, now, snapshots: [radar.updatedAt, world.updatedAt, oil.builtAt],

@@ -25,6 +25,11 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-11 额外一次 AI 恢复授权
+
+- **Acceptance baseline**：owner 明确授权“今天针对本期输入，再做一次有界恢复：先审阅具体预算例外，再额外调用一次 DeepSeek”。执行 [ADR-0045](ADR/0045-editorial-single-recovery.md)：固定 Daily 时间及内容摘要、上海当日截止、手动 main 首次运行、原预算不动、独立一次性凭据；独立审阅与 CI 后才能调用。失败也不退款，不改变来源、输出、30 小时保护或评分。
+- **交付边界**：本轮仅一个额外恢复机会，不扩大为自动重试或任意预算绕过；成功须检查产物、写入、Pages/EdgeOne 实际内容，失败如实报告并停止调用。
+
 ### 2026-09-11 AI 判读恢复与引用预算
 
 - **Acceptance baseline**：owner 要求定位 AI 不可用、修复并手动跑一次；沿用本任务提交、推送、独立 AI 审阅和合并授权。单次 AI 调用已用于下列运行，不自动重试、不删除预算凭据。
