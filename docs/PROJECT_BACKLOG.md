@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-12 ACLED 周度 CLI 测试夹具修复
+
+- **Acceptance baseline**：owner 提供本地 weekly status 与 publish 失败日志；本轮修复已复现的测试数据问题，保留其新生成的六地区配置和原始 XLSX。推送、集成与 ACLED 数据发布尚待本任务明确授权，不沿用旧编辑层任务的授权。
+- **根因与实施**：旧测试复制当前 operator 配置后只改顶层 latestWeek；重新标准化带有 common-week-grid-v1 证据时，窗口日期未同步，真实 checker 报 window version/date mismatch。测试改用独立合成配置，正常、过期及未来日期均带一致的十二周网格和源覆盖；追加真实 CLI 对日期不一致的拒绝与旧格式警告验证，保留六地区完整性、解析前拒绝和原字节保留检查。生产 checker、sanitizer、发布保护均未改动。
+- **本地验证**：修复前复现同一错误；修复后 weekly aggregate 与四项测试通过，check:changed 实际执行完整 check:all 并退出 0，git diff --check 退出 0。用户配置 SHA-256 与修复前一致；生产 checker 与发布 guard 的 diff 为空。不以本地检查通过替代发布验收。
+- **操作状态**：修复分支 codex/acled-weekly-cli-fixture 基于 origin/main 7dc7f80f；用户配置仍为未提交改动，latestWeek=2026-08-28、eventsLast4Weeks=33738。git pull origin main 不切换当前分支；main 当前在另一个干净工作树 gfrr-acled-publish-20260909，发布前须处理分支位置并重新核对同步状态，不绕过 main-only guard。
+
 ### 2026-09-11 额外一次 AI 恢复授权
 
 - **Acceptance baseline**：owner 明确授权“今天针对本期输入，再做一次有界恢复：先审阅具体预算例外，再额外调用一次 DeepSeek”。执行 [ADR-0045](ADR/0045-editorial-single-recovery.md)：固定 Daily 时间及内容摘要、上海当日截止、手动 main 首次运行、原预算不动、独立一次性凭据；独立审阅与 CI 后才能调用。失败也不退款，不改变来源、输出、30 小时保护或评分。
@@ -489,6 +496,13 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **工作基线**：origin/main 7dc7f80f；当前 codex/acled-weekly-cli-fixture，保留用户 ACLED 周度配置改动和原始文件。
+- **当前任务**：周度 status 的 CLI 合成样本日期不一致已修复；代码只改 tests/unit/acled-weekly-coverage.test.mjs，专项和完整检查退出 0，生产校验及发布保护不变。
+- **下一步**：获远端操作授权后再推送、审阅、集成，随后从同步的 main 发布用户配置并核对 World Order 实际产物。
+- **阻塞或等待**：未推送、合并或发布 ACLED；main 被另一工作树占用，不能直接在当前目录切 main 或用功能分支绕过发布门禁。
+
+### 2026-09-10 GDELT 交接（历史）
 
 - **工作基线**：`d7882056`（PR #341 已合并）；本轮 `codex/gdelt-event-count-units` 基于 latest main，原工作区和历史分支保留。
 - **当前任务**：八项整改第八项，GDELT 事件/报道口径及最终验收交接 PR；完整顺序及既有交付见 Section 2。
