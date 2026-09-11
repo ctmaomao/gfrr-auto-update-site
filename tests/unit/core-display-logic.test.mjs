@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=event-units-1';
+} from '../../scripts/modules/config.js?v=score-explanation-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

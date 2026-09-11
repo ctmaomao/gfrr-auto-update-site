@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=event-units-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=event-units-1';
+} from './config.js?v=score-explanation-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=score-explanation-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=event-units-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=event-units-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=event-units-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=event-units-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=event-units-1';
+} from './macroOverviewDisplayHelpers.js?v=score-explanation-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=score-explanation-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=score-explanation-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=score-explanation-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=score-explanation-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -116,8 +116,8 @@ function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData,
 
     // big-footer WEEKLY CHANGE
     const weeklyEl = $('hero-weekly-change');
-    if (weeklyEl && Number.isFinite(radarData.scoreChange7d)) {
-      weeklyEl.textContent = `${fmtSigned(radarData.scoreChange7d)} (WoW)`;
+    if (weeklyEl) {
+      weeklyEl.textContent = Number.isFinite(radarData.scoreChange7d) ? `${fmtSigned(radarData.scoreChange7d)} (WoW)` : '趋势待累计';
     }
 
     // big-footer DATA HEALTH
@@ -139,7 +139,7 @@ function renderThresholdBlock({ radarData, worldOrderStressData }) {
     if (nowEl && Number.isFinite(radarData.score) && worldOrderStressData) {
       const woScore = worldOrderStressData.score;
       const woLabel = worldOrderStressData.labelZh || '';
-      nowEl.textContent = `原始 ${radarData.score}(高风险预警) · 世界秩序升档 ${Number.isFinite(woScore) ? woScore : '—'}(${woLabel})`;
+      nowEl.textContent = `模型综合分 ${radarData.score} · 世界秩序 ${Number.isFinite(woScore) ? woScore : '—'}(${woLabel},独立观察)`;
     }
 
     // 主 marker — left: ${score}%
@@ -2401,7 +2401,7 @@ function renderDetailData({ radarData }) {
     }
     if (fed.repoSpreadRegime) setLeafText('detail-fed-repo-regime', fed.repoSpreadRegime);
 
-    if (asNumber(time.scoreChange30d) !== null) setLeafText('detail-time-change', signedInteger(time.scoreChange30d));
+    setLeafText('detail-time-change', Number.isFinite(time.scoreChange30d) ? signedInteger(time.scoreChange30d) : '趋势待累计');
     if (asNumber(time.avg30d) !== null) setLeafText('detail-time-avg', Math.round(time.avg30d));
     if (asNumber(time.trough30d) !== null && asNumber(time.peak30d) !== null) {
       setLeafText('detail-time-range', `[${Math.round(time.trough30d)}, ${Math.round(time.peak30d)}]`);

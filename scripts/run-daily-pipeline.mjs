@@ -11,6 +11,7 @@ import {
   buildUnavailableDailyBrief,
 } from './daily/daily-brief.mjs';
 import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
+import { calendarScoreChanges } from './daily/score-change.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
@@ -10623,9 +10624,7 @@ async function build() {
   const transmissionDeltaResult = applyTransmissionDeltas(prevData.transmissionChain || {}, previousTransmissionSource);
   const transmissionSnapshot = buildTransmissionSnapshot(transmissionDeltaResult.chain);
   const history = appendHistory(prevHistory, risk.score, transmissionSnapshot, worldOrderStressHistorySnapshot);
-  const scoreChange1d = history.length >= 2 ? risk.score - history[history.length - 2].score : 0;
-  const scoreChange7d = history.length >= 8 ? risk.score - history[history.length - 8].score : 0;
-  const scoreChange30d = history.length >= 30 ? risk.score - history[Math.max(0, history.length - 30)].score : scoreChange7d;
+  const { scoreChange1d, scoreChange7d, scoreChange30d } = calendarScoreChanges(history, isoNow.slice(0, 10), risk.score);
   const avg30d = clamp(avg(history.slice(-30).map(x => x.score)));
   const peak30d = Math.max(...history.slice(-30).map(x => x.score));
   const trough30d = Math.min(...history.slice(-30).map(x => x.score));
@@ -10747,7 +10746,7 @@ async function build() {
     scoreChange1d,
     scoreChange7d,
     scoreChange30d,
-    trendLabel: scoreChange7d > R.trendThresholds.risingThreshold ? '风险上升' : scoreChange7d < R.trendThresholds.fallingThreshold ? '风险回落' : '高位震荡偏紧',
+    trendLabel: !Number.isFinite(scoreChange7d) ? '趋势待累计' : scoreChange7d > R.trendThresholds.risingThreshold ? '风险上升' : scoreChange7d < R.trendThresholds.fallingThreshold ? '风险回落' : '高位震荡偏紧',
     currentMacroRegime: macro,
     currentCrisisPhase: phase,
     nextCrisisPhase: phase === '流动性偏紧' ? '政策应对' : '风险缓和',
@@ -10845,7 +10844,7 @@ async function build() {
       trough30d,
       drawFromPeak: risk.score - peak30d,
       transmissionSpeed: clamp(avg([risk.modules.energy, risk.modules.inflation, risk.modules.liquidity])),
-      transmissionAcceleration: scoreChange7d > R.trendThresholds.acceleratingThreshold ? '加快' : scoreChange7d < R.trendThresholds.deceleratingThreshold ? '放缓' : '平稳',
+      transmissionAcceleration: !Number.isFinite(scoreChange7d) ? '趋势待累计' : scoreChange7d > R.trendThresholds.acceleratingThreshold ? '加快' : scoreChange7d < R.trendThresholds.deceleratingThreshold ? '放缓' : '平稳',
       dominantPath: risk.modules.energy >= risk.modules.liquidity ? '油价 → 通胀 → 利率 → 股票' : '美元 → 信用 → 流动性 → 股票',
       pathChanges: [
         { label: '油价→通胀', value: clamp(avg([risk.oilRisk, risk.inflationRisk])), delta: clamp((scoringRealtime.changes?.brent1d ?? 0) * 3, -9, 9) },

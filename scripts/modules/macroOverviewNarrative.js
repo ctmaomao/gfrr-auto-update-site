@@ -144,6 +144,25 @@ function scoreChangeText(value) {
   return `较上周 ${signed(n, 0)}`;
 }
 
+// Display only the producer's recorded decomposition. Inconsistent or missing
+// metadata must not be reconstructed from module scores in the frontend.
+export function scoreDecompositionText(radarData) {
+  const tail = radarData?.tailRiskOverlay;
+  const transport = radarData?.transportShockScoringImpact;
+  const values = [radarData?.score, tail?.baseScore, tail?.adjustedScore, tail?.scoreAdd];
+  if (!values.every(value => Number.isFinite(value) && value >= 0 && value <= 100)
+    || tail.adjustedScore - tail.baseScore !== tail.scoreAdd
+    || tail.applied !== (tail.scoreAdd > 0)) return '分数组成待确认。';
+  const contribution = transport === undefined ? 0 : transport?.contributionPct;
+  if (!Number.isFinite(contribution) || contribution < 0 || contribution > 3
+    || tail.adjustedScore + contribution !== radarData.score
+    || (transport !== undefined && (transport?.scoreBeforeTransport !== tail.adjustedScore
+      || transport?.scoreAfterTransport !== radarData.score))) return '分数组成待确认。';
+  const tailText = tail.applied ? `尾部风险规则升档 +${tail.scoreAdd} 至 ${tail.adjustedScore}` : '未触发尾部升档';
+  const transportText = contribution > 0 ? `,运输冲击 +${contribution}` : '';
+  return `六模块基础分 ${tail.baseScore},${tailText}${transportText}。`;
+}
+
 function evidence(key, labelZh, value, summaryZh, source, tone = 'neutral') {
   return { key, labelZh, value, summaryZh, source, tone };
 }
@@ -218,6 +237,12 @@ export function buildMacroOverviewEvidencePack({
   const woScore = finite(worldOrderStressData?.score);
   const woLabel = textValue(worldOrderStressData?.labelZh) || textValue(worldOrderStressData?.state) || '状态待确认';
   const brent = finite(baseline.brent ?? brentLayer.selectedBrent?.value);
+  const spotDate = brentLayer.publicSpotProxy?.observedAt;
+  const spotTime = typeof spotDate === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(spotDate) ? Date.parse(`${spotDate}T00:00:00Z`) : NaN;
+  const brentObservationDate = brentLayer.selectedBrent?.source === 'fred:DCOILBRENTEU'
+    && brentLayer.selectedBrent?.value === brent && brentLayer.publicSpotProxy?.value === brent
+    && Number.isFinite(spotTime) && new Date(spotTime).toISOString().slice(0, 10) === spotDate
+    && spotTime <= Date.parse(radarData?.updatedAt) ? spotDate : null;
   const vix = finite(baseline.vix);
   const hyOas = finite(baseline.hyOas ?? macroDrivers.credit?.hyOas);
   const us10y = finite(baseline.us10y);
@@ -266,6 +291,7 @@ export function buildMacroOverviewEvidencePack({
     },
     scorecard: {
       score,
+      decompositionText: scoreDecompositionText(radarData),
       bandZh: riskBandZh(score),
       scoreChange7d: finite(radarData?.scoreChange7d),
       scoreChangeText: scoreChangeText(radarData?.scoreChange7d),
@@ -277,6 +303,7 @@ export function buildMacroOverviewEvidencePack({
     },
     energyOil: {
       brent,
+      brentObservationDate,
       crack,
       crack4w,
       oil,
@@ -332,12 +359,13 @@ function buildSections(pack) {
     key: 'scorecard',
     titleZh: '总分与广度',
     sourceIndicators: ['radar-data.score', 'radar-data.modules', 'data/world-order-stress.json'],
-    summaryZh: `本期原始风险分 ${score.score ?? '—'}/100,${score.scoreChangeText},落在「${score.bandZh}」;六大模块 ${counts.red} 红 / ${counts.yellow} 黄 / ${counts.green} 绿,主压力集中在 ${topModuleText(counts)}。世界秩序压力 ${pack.worldOrder.score ?? '—'}(${pack.worldOrder.labelZh})让有效语气仍偏谨慎。`,
-    compactZh: `原始风险分 ${score.score ?? '—'}/100,${score.scoreChangeText};六大模块 ${counts.red} 红 / ${counts.yellow} 黄 / ${counts.green} 绿,世界秩序压力 ${pack.worldOrder.score ?? '—'}(${pack.worldOrder.labelZh})维持谨慎语气。`,
+    summaryZh: `本期模型综合分 ${score.score ?? '—'}/100,${score.scoreChangeText}。${score.decompositionText}「${score.bandZh}」是模型分档,不代表市场已经见顶。六大模块 ${counts.red} 红 / ${counts.yellow} 黄 / ${counts.green} 绿,主压力集中在 ${topModuleText(counts)}。世界秩序压力 ${pack.worldOrder.score ?? '—'}(${pack.worldOrder.labelZh})独立展示,不加到综合分。`,
+    compactZh: `模型综合分 ${score.score ?? '—'}/100,${score.scoreChangeText}。${score.decompositionText}模型分档不代表市场已经见顶。六大模块 ${counts.red} 红 / ${counts.yellow} 黄 / ${counts.green} 绿,世界秩序压力 ${pack.worldOrder.score ?? '—'}独立展示,不加到综合分。`,
   };
 
   const oil = pack.energyOil.oil;
   const oilOverlay = oil.globalOverlay;
+  const oilDate = pack.energyOil.brentObservationDate ? `布伦特现货观测日 ${pack.energyOil.brentObservationDate},不是当前时刻报价。` : '';
   const oilSection = {
     key: 'oil_directional_pressure',
     titleZh: '油价方向压力',
@@ -345,10 +373,12 @@ function buildSections(pack) {
     summaryZh: oil.available
       ? `油价是本期主叙事的关键证据:布伦特 ${fixed(pack.energyOil.brent, 1)},近 4 周 ${percent(oil.brentChangePct4w)},但 ODP 判为「${oil.finalBiasZh}」,物理层为「${oil.physicalBiasZh}」。商业原油库存较 5 年同期 ${percent(oil.crudeVs5yPct)},馏分油库存 ${percent(oil.distillateVs5yPct)},炼厂 4 周开工 ${fixed(oil.refineryUtilAvg4w, 1)}%;${oilOverlay ? `${oilOverlay.effectZh}(${oilOverlay.confirmationCount ?? 0} 项确认)` : '全球慢变量待确认'}。这意味着油价回落不能直接当作能源风险解除。`
       : `油价方向压力研判暂不可用,能源链条仅保留布伦特 ${fixed(pack.energyOil.brent, 1)} 与裂解价差 ${fixed(pack.energyOil.crack, 1)} 的公开代理观察。`,
-    compactZh: oil.available
+    compactZh: oilDate + (oil.available
       ? `油价表面近 4 周 ${percent(oil.brentChangePct4w)},但 ODP 为「${oil.finalBiasZh}」;商业原油库存 ${percent(oil.crudeVs5yPct)}、馏分油 ${percent(oil.distillateVs5yPct)},油价回落不能直接视为能源风险解除。`
-      : `ODP 暂不可用,能源链条仅保留布伦特与裂解价差观察。`,
+      : `ODP 暂不可用,能源链条仅保留布伦特与裂解价差观察。`),
   };
+
+  oilSection.summaryZh = oilDate + oilSection.summaryZh;
 
   const market = pack.marketCredit;
   const marketSection = {
