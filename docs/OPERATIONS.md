@@ -1640,6 +1640,8 @@ ACLED 长期运行时效以 [ADR-0038](ADR/0038-acled-runtime-freshness.md) 为�
 
 若周度来源提示缺少六区域同窗证据，先核对既有手工六表，再按既有 ACLED operator 流程重新标准化/校验/发布；没有原始完整表不能从旧汇总反推共同窗口。缺周失败保留旧文件，不补零、不自动抓取；新产物的 `quality.weeklyWindow` 和共同截止日须核验。代码发布本身不代表周度数据已恢复。见 [ADR-0040](ADR/0040-acled-common-week-window.md)。
 
+日常入口为 `npm run acled:publish:auto`，包含安全准备 main 与既有周/月发布链，无需先 pull 或手动运行两个 status。`npm run acled:publish:auto -- --dry-run` 只读本地状态；实际执行才 fetch、备份/暂存配置、释放其它干净工作树上的 main、在当前目录快进 main，并恢复配置。功能分支不合入 main，原 XLSX、分支和其它工作目录不删除；未推送 main、无关改动、已暂存内容、锁定/脏的 main 工作树或配置基线冲突均停止。备份、stash、并发锁恢复与完整操作说明见 [ACLED 手工输入](../manual-artifacts/world-order/acled-input/README.md#一条命令发布)。原 `acled:publish` 的 main-only guard、显式 main 推送和失败后不自动重试保持不变；新入口上线后才用于真实发布，不把本地预演或测试当生产验收。
+
 ### 首页快照年龄
 
 首页是每日简报。刊头和 Hero 每分钟按当前浏览器时间更新已发布时长，超过36小时显示更新延迟/历史快照；此阈值为24小时周期加12小时排程/恢复余量，仅供展示，不放宽Daily输入90分钟门槛或任何评分资格。健康度始终是采集时记录，不能代表当前上游在线。浏览器时钟错误也会影响提示；超过5分钟未来时间或无效日期显示待确认。查故障仍需核对线上JSON日期与自然workflow实际输出。
