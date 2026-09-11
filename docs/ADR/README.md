@@ -68,6 +68,7 @@
 | [ADR-0039](0039-gdelt-pressure-scale.md) | Frozen GDELT pressure reference and post-normalization stale discount | Owner-authorized; independent model review required |
 | [ADR-0040](0040-acled-common-week-window.md) | ACLED shared contiguous weekly windows and legacy exclusion | Owner-authorized; independent contract review required |
 | [ADR-0041](0041-gdelt-event-and-article-units.md) | GDELT event and article quantity separation | Owner-authorized; independent review required |
+| [ADR-0042](0042-editorial-retained-snapshot-expiry.md) | Retained editorial expiry versus strict production acceptance | Local checks and independent AI review passed; integration pending |
 
 ## Superseded
 

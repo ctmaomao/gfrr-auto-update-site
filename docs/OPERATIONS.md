@@ -132,6 +132,8 @@ GitHub Actions cron 使用 UTC，但不保证准时或相对顺序。上游名�
 
 scheduled workflow 始终运行远端 `main`，本地修改或仅 push 到 feature branch 都不会修复下一次定时任务。Actions 故障只有在修复提交已成为 `origin/main` 的祖先、精确 workflow 重跑成功且下游 Pages/写入边界核对完成后才算线上闭环；否则只能报告“本地修复完成，线上仍未生效”。
 
+旧 Macro Risk 判读只因超过 30 小时而阻断无关任务时，见 [ADR-0042](ADR/0042-editorial-retained-snapshot-expiry.md)：全套的 `check:macro-risk-editorial-runtime` 只读验证保留快照，满足历史结构与当前前端隐藏条件才发出 `expired_hidden` warning。该结果不表示 AI 刷新成功。新写入继续使用 `check:macro-risk-editorial-live -- --require-layer` 的当前时间严格验收；不能用 runtime 命令替代生产验收或为消除 warning 重写日期、删除旧层、擅自付费重跑。
+
 零可信新闻不允许进入 provider/review/write。若 artifact 显示 Tavily 与 Brave 的所有 topic 查询均为 `ok`，但当期确实只有 `discovery_only`，workflow 会在 provider 前记录 `SKIPPED_NO_CREDIBLE_NEWS` 并以 expected fail-closed skip 结束；这表示本期没有生成新判读，不是 refresh 成功。确认 Summary 中 `DeepSeek calls: 0`、`Production data writes: 0`，并允许 deterministic overview 继续兜底。若任一搜索源不是 `ok`、artifact/schema 异常或已进入 provider 后失败，仍按真实故障处理，不得改成 skip。
 
 2026-09-07 检索修复：零可信新闻 skip 同时产生 GitHub warning annotation，避免把绿色 workflow 误认为 AI 可用。Tavily 原六个查询中的两个定向查找 Fed/BLS 官方日期发布，其余四个及 Brave 六个仍查新闻；不增加请求预算或 DeepSeek 次数。只接受已登记日期路径且在窗口内的官方结果，不降低 cross-check/引用/质量/30 小时 gate。若仍 skip，核对实际返回的官方日期路径、时间过滤和 provider 状态；不能用旧发布或手工补引用恢复显示。详细检索范围见 [Macro Risk 来源契约](MACRO_RISK_EDITORIAL_DESIGN.md#42-新闻发现来源)。

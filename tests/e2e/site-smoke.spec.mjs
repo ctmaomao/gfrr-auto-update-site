@@ -116,6 +116,28 @@ function buildApprovedBubbleWeeklyEditorial(data, currentTimestamp) {
   };
 }
 
+for (const viewport of [DESKTOP, MOBILE]) {
+  test(`expired editorial preserves deterministic overview at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const pageErrors = capturePageErrors(page);
+    await page.route('**/data/radar-data.json', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      // Still approved and enabled in stored bytes; wall-clock age alone hides it.
+      data.macroRiskEditorialLayer = buildApprovedMacroRiskEditorial(data, new Date(Date.now() - 31 * 3600000).toISOString());
+      await route.fulfill({ response, json: data });
+    });
+    await page.goto('/index.html');
+    await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
+    await expect(page.locator('#macro-risk-editorial')).toBeHidden();
+    await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('data-editorial-state', 'deterministic-fallback');
+    await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('open', '');
+    await expect(page.locator('#homepage-today-judgment')).toBeVisible();
+    await expect(page.locator('#homepage-pressure-sources')).toBeVisible();
+    expect(pageErrors).toEqual([]);
+  });
+}
+
 async function gotoBubbleWatch(page) {
   const dataResponsePromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
