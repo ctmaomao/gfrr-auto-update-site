@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `score-explanation-1` |
+| Cache version | `acled-evidence-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -24,6 +24,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ---
 
 ## Section 2 · Open Backlog Items
+
+### 2026-09-11 World Order 的 ACLED 降级证据遗漏
+
+- **Acceptance baseline**：owner 报告 `Refresh World Order Stress - main (cb3aed2)` 失败，延续故障检查与修复范围；修复已证实的证据遗漏，保留时效、同窗、评分和 checker 约束，不重跑取数或手改生产数据。
+- **证据**：[失败运行 34548065660](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34548065660) 的生成和 `check:world-order` 成功；GDELT 为 ok、ACLED 为 partial，Commit 内完整检查报 `world_order_pressure_crossing missing source-status evidence: acled`，未提交新文件。前一次自然运行 34422897728 成功。失败候选 World Order 分为 61，属于未发布 overlay，不是主雷达分；无 artifact，不能恢复完整候选。旧发布 World Order 仍为 9 月 10 日 68。
+- **根因与实施**：矩阵只处理 ACLED ok/manual_required/not_configured，漏掉合法 partial/error 及其它非正常状态。补齐缺失证据说明，非 ok 状态不进入支持证据；不放宽 `check-world-order-narrative-density.mjs`。本地真实 ACLED 只读 loader 返回 partial，旧周度汇总缺少六区域同窗证据；另覆盖时钟推进到偏旧的 partial 分支，不把两种原因混为一谈。复用 DESIGN §2/3/4/5.5 的现有交叉验证结构，未改变样式或布局。
+- **本地验收**：新增 12 项回归在修复前 10 项失败、修复后全部通过，包含非正常/未知/缺失状态、健康分支、不可变输入和真实未修改 checker CLI。`npm run check:changed` 实际执行完整 `check:all`、527 项单元/覆盖率、22 项浏览器测试、`node --check scripts/app.js` 与 `git diff --check` 全部退出 0；独立 AI 审阅通过，原 checker 断言未改。两站实读仍为 9 月 10 日 `00:49:30.799Z`、World Order 68、历史 ACLED ok；本轮未推送或发布，修复上线及自然刷新成功前不声明恢复。
+- **远端授权**：2026-09-11 owner 明确授权将此次修复推送、创建 PR，并在 CI 通过后合并到 main。实施提交 `51b0539e`，沿用已通过的独立 AI 复核；等待对应 CI、合并与部署回执。不额外手动刷新 World Order 或调用付费服务，数据刷新恢复仍以自然运行证据为准。
 
 ### 2026-09-11 主分跳升的输入、计算与展示复核
 

@@ -905,7 +905,7 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
     missingEvidence.push(evidence('decision_modifier_risk_bias', riskBias, 'World Order modifier 当前未提高 riskBias，保持结构性解释层边界'));
   }
   if (externalSources.gdelt?.status === 'stale') missingEvidence.push(evidence('gdelt', 'stale', 'GDELT 当前为 stale'));
-  // M-63a fix-up: handle all ACLED status values (was only not_configured)
+  // Only healthy ACLED confirms pressure; every other state needs a visible limitation.
   if (externalSources.acled?.status === 'ok') {
     const acledSummary = externalSources.acled?.summary || {};
     const delta = Number.isFinite(acledSummary.eventsDelta4Vs12)
@@ -916,6 +916,17 @@ function buildWorldOrderNarrative(data, worldOrderStressData) {
     missingEvidence.push(evidence('acled', 'manual_required', 'ACLED xlsx 尚未由 operator 手动导入'));
   } else if (externalSources.acled?.status === 'not_configured') {
     missingEvidence.push(evidence('acled', 'not_configured', 'ACLED 尚未配置'));
+  } else {
+    const limitations = {
+      partial: 'ACLED 数据部分可用，时效或覆盖受限，不能作为完整的当前冲突确认',
+      stale: 'ACLED 数据已过期，仅作历史参考，不能确认当前冲突变化',
+      error: 'ACLED 数据异常，本轮无法据此确认当前冲突变化',
+      disabled: 'ACLED 数据源已禁用，本轮缺少该来源确认',
+    };
+    const status = externalSources.acled?.status;
+    const known = typeof status === 'string' && Object.hasOwn(limitations, status);
+    missingEvidence.push(evidence('acled', known ? status : 'unknown',
+      known ? limitations[status] : 'ACLED 数据状态待确认，不能作为当前冲突确认'));
   }
   if (sipriStatus === 'manual_required') missingEvidence.push(evidence('sipri', 'manual_required', 'SIPRI 慢变量仍需手动导入'));
   else if (sipriStatus === 'error') missingEvidence.push(evidence('sipri', 'error', 'SIPRI normalized 数据校验失败，请检查配置文件'));
