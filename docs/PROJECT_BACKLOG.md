@@ -27,13 +27,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-12 ACLED 自动准备 main 的发布入口
 
-- **Acceptance baseline**：owner 要求改进 pull、monthly status、weekly status、publish 四条指令，使以后自动准确推送 main；实施新增显式入口 acled:publish:auto，继续使用原 main-only 发布器，不把功能分支合入 main。当前需求授权本地实现和验证；修复推送/审阅/集成与本批生产发布尚待对应授权。
+- **Acceptance baseline**：owner 要求改进 pull、monthly status、weekly status、publish 四条指令，使以后自动准确推送 main；实施新增显式入口 acled:publish:auto，继续使用原 main-only 发布器，不把功能分支合入 main。2026-09-12 owner 明确授权推送两项修复、创建 PR、进行一次独立 AI 审阅，在最终提交的 CI 和审阅通过后合并，再处理分支并发布本批 ACLED 数据；本次独立 AI 审阅替代人工仅适用于此 PR，不扩大付费 AI、其它数据刷新或删除范围。
 - **实施**：只读预演；实际执行先取最新 origin/main，检查两边工作区/索引/历史，按允许路径备份并校验 ACLED 配置、保留 stash，安全释放其它干净工作树上的 main 并在当前目录快进，恢复配置原字节，再调用 main 的既有 status/发布器。保留其它工作目录、分支及 ignored XLSX；Git 公共目录锁阻止重复自动入口。无关改动、暂存、锁定/脏工作树、未推送 main、配置基线变化或未完成 Git 操作均停止，不强推或自动 rebase。
 - **验证**：临时本地 Git 仓库的 20 项测试全部通过，覆盖功能分支未合并提交、main 占用、远端更新、配置/原始文件保留、仅调用 main 发布器、失败不发布、未上线入口拦截和 Windows CRLF；已接入既有 check:acled-operator-safety。check:changed 实际执行完整 check:all、git diff --check 均退出 0；只读预演回执见本任务结果。生产发布器/guard/checker 断言未放宽；本批用户配置不混入实现提交。
 
 ### 2026-09-12 ACLED 周度 CLI 测试夹具修复
 
-- **Acceptance baseline**：owner 提供本地 weekly status 与 publish 失败日志；本轮修复已复现的测试数据问题，保留其新生成的六地区配置和原始 XLSX。推送、集成与 ACLED 数据发布尚待本任务明确授权，不沿用旧编辑层任务的授权。
+- **Acceptance baseline**：owner 提供本地 weekly status 与 publish 失败日志；本轮修复已复现的测试数据问题，保留其新生成的六地区配置和原始 XLSX。后续明确集成、独立 AI 审阅与数据发布授权见上方自动入口记录，不沿用旧编辑层任务的授权。
 - **根因与实施**：旧测试复制当前 operator 配置后只改顶层 latestWeek；重新标准化带有 common-week-grid-v1 证据时，窗口日期未同步，真实 checker 报 window version/date mismatch。测试改用独立合成配置，正常、过期及未来日期均带一致的十二周网格和源覆盖；追加真实 CLI 对日期不一致的拒绝与旧格式警告验证，保留六地区完整性、解析前拒绝和原字节保留检查。生产 checker、sanitizer、发布保护均未改动。
 - **本地验证**：修复前复现同一错误；修复后 weekly aggregate 与四项测试通过，check:changed 实际执行完整 check:all 并退出 0，git diff --check 退出 0。用户配置 SHA-256 与修复前一致；生产 checker 与发布 guard 的 diff 为空。不以本地检查通过替代发布验收。
 - **操作状态**：修复分支 codex/acled-weekly-cli-fixture 基于 origin/main 7dc7f80f；用户配置仍为未提交改动，latestWeek=2026-08-28、eventsLast4Weeks=33738。git pull origin main 不切换当前分支；main 当前在另一个干净工作树 gfrr-acled-publish-20260909，发布前须处理分支位置并重新核对同步状态，不绕过 main-only guard。
@@ -505,8 +505,8 @@ Add or update backlog items with these rules:
 
 - **工作基线**：origin/main 7dc7f80f；当前 codex/acled-weekly-cli-fixture，保留用户 ACLED 周度配置改动和原始文件。
 - **当前任务**：周度 CLI 测试修复已本地提交 8369580d；同一逻辑任务追加 acled:publish:auto 安全准备 main，使用原发布器，保留用户配置。实现与验证记录见 Section 2。
-- **下一步**：新增入口的 20 项专项与完整检查已通过；保存本地提交并只读预演，获远端操作授权后推送、审阅、集成，再用新入口发布并核对 World Order 实际产物。
-- **阻塞或等待**：未推送、合并或发布 ACLED；main 被另一工作树占用，不能直接在当前目录切 main 或用功能分支绕过发布门禁。
+- **下一步**：按本次明确授权推送并创建 PR，最终提交的一次独立 AI 审阅与 CI 通过后合并；再用新入口处理 main 占用、发布本批 ACLED，并核对 World Order 实际产物与部署。
+- **阻塞或等待**：远端审阅、CI、合并及本批发布待实际回执；main 仍在另一干净工作树，新入口获准保留目录/原文件并释放分支，不删除工作树或绕过 main-only guard。
 
 ### 2026-09-10 GDELT 交接（历史）
 
