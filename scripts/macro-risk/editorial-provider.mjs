@@ -43,6 +43,8 @@ export function buildEditorialSystemPrompt() {
 - 无法为 discovery_only 新闻找到独立支撑时，不得输出该新闻断言，应改用有依据的站内结构化事实。
 - 整份输出的事实对象引用集合必须至少实际引用 1 条 official/cross_checked 新闻；weeklyTimeline 至少一个对象必须引用可信新闻。只在 sourceAttribution 列出可信新闻不算合格。
 - 所有事实段落都必须提供 sourceRefIds，且只能使用输入 sourceRefs 中的 id。
+- 每个事实对象的 sourceRefIds 必须是含 1–12 个字符串的 JSON 数组，不能是字符串、null 或空数组；建议仅选 2–6 条直接支撑该段的来源，不得复制整个来源目录。
+- historicalComparison 同样遵守单段 1–12 条引用上限。若一段必须依赖超过 12 条来源，先收窄并重写论断，再核对每项事实均有支撑；不得机械截断引用或删除必要证据。
 - 历史比较必须同时写相似点与差异点，并明确不代表危机概率或时间预测。
 - 不得给出买卖、仓位、现金比例、目标价、止损、风险敞口或执行建议。
 - 不得复述输入中不存在的具体数字、日期或事实。
@@ -99,6 +101,7 @@ export function buildEditorialUserPrompt(input) {
 5. 若某个 sourceRefIds 含任一 discovery_only ID，同一个数组必须同时含至少一个可独立支撑 ID；仅在 sourceAttribution 中补 ID 无效。
 6. 禁止示例：{"sourceRefIds":["discovery_only_id"]}。合格示例：{"sourceRefIds":["discovery_only_id","site_structured_or_credible_news_id"]}。
 7. 无法满足时删除该 discovery_only 断言，改写为由站内结构化数据支撑的当前压力判断；不得编造支撑来源。
+8. 对每个事实对象确认 sourceRefIds 是 1–12 项字符串数组；优先 2–6 条直接相关来源，historicalComparison 也不能汇集全部来源。超过上限须先收窄并重写论断，再重新检查事实支撑；禁止截断引用或依赖 adapter/writer 修正。
 
 紧凑证据包：
 ${JSON.stringify(input)}`;
