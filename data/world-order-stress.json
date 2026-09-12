@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-11T22:33:02.756Z",
+  "updatedAt": "2026-09-12T00:53:40.037Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -16,21 +16,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-11T22:27:51.206Z",
-    "ageMinutes": 5.192466666666666,
+    "updatedAt": "2026-09-12T00:51:42.682Z",
+    "ageMinutes": 1.9558833333333334,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 109.51,
+    "brent": 104.21,
     "gold": 4349.7002,
     "vix": 17.84,
     "dxy": 118.0732,
     "hyOas": 2.7,
     "us10y": 4.95,
     "real10y": 2.55,
-    "spx": 7591.7,
-    "brentSource": "FRED:DCOILBRENTEU",
-    "brentPromotionApplied": false,
-    "brentPromotionReason": "fred-anchor-not-stale",
+    "spx": 7656.98,
+    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
+    "brentPromotionApplied": true,
+    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4877,7 +4877,7 @@
           "Myanmar",
           "Sudan"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "100 units/month free tier",
         "queriesRun": [
           {
@@ -4891,9 +4891,9 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-09-11T22:32:59.804Z",
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-09-12T00:53:39.373Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。"
       }
@@ -4901,7 +4901,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-11T22:33:00.388Z",
+      "lastFetchedAt": "2026-09-12T00:53:39.763Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 9,
@@ -4977,7 +4977,7 @@
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 62,
+      "score": 63,
       "labelZh": "和平红利退潮",
       "trend": "rising",
       "evidence": [
@@ -5075,8 +5075,8 @@
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 109.51，对地缘与供应风险有部分确认作用。",
-          "value": 109.51,
+          "summary": "基于 Worker 快变量，布伦特当前值 104.21，对地缘与供应风险有部分确认作用。",
+          "value": 104.21,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5092,17 +5092,17 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7591.7/4349.7002",
+          "value": "7656.98/4349.7002",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：fred-anchor-not-stale。",
-          "value": 109.51,
-          "direction": "neutral",
-          "confidence": 0.45
+          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
+          "value": 104.21,
+          "direction": "up",
+          "confidence": 0.65
         }
       ]
     }
