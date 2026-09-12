@@ -157,7 +157,7 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 3. #macro-risk-overview                   宏观风险判断总览
    └─ .macro-overview-shell
       ├─ #homepage-today-judgment         Hero / 今日判断
-      ├─ #macro-risk-editorial             本期宏观判读（DeepSeek 只读编辑层；失败时隐藏）
+      ├─ #macro-risk-editorial             宏观判读（本期合格 AI 优先；间隙可展示注明原日期的合格上一期）
       ├─ #wow-key-changes                 本期关键变化
       ├─ .threshold-block                 风险阈值尺
       ├─ .trend-block                     8 周趋势
@@ -345,7 +345,7 @@ runtime block 的基准结构:
 
 4 个 appendix `<details class="editorial-folded-content">` 元素**全部不带 `open` 属性**,初始渲染时全部为收起状态。任何把 `open` 属性加进 `index.html` 的改动都视为视觉契约违规。
 
-`#macro-professional-evidence.macro-evidence-fold` 同样不得在静态 HTML 中带 `open`。区别是它由 `renderMacroOverview` 按 AI 编辑层资格设置初始运行态：有效编辑层时保持收起；AI 判读不可用时自动展开（包括编辑层缺失、过期、mismatch、无资格或渲染失败）。此行为是 deterministic fallback，不把 AI 接入评分或模型计算。
+`#macro-professional-evidence.macro-evidence-fold` 同样不得在静态 HTML 中带 `open`。区别是它由 `renderMacroOverview` 按 AI 编辑层资格设置初始运行态：有效编辑层时保持收起；AI 判读不可用时自动展开（包括编辑层缺失、过期、mismatch、无资格或渲染失败）。此行为是 deterministic fallback，不把 AI 接入评分或模型计算。ADR-0046 的历史判读不属于有效本期 AI：历史可见时仍展开当前确定性依据，顶部明确标注上一期、原数据时间及原生成时间，说明正文与分数只对应原期；不显示实时指示点。
 
 适用范围:`#detail-data` / `#world-order-stress-section` / `#method-evidence` / `#execution-risk-detail`,以及 M-95+ 将来新增的任何 `<details class="editorial-folded-content">`。`#macro-risk-editorial` 是主路径内嵌 article，仅其来源账本使用局部 `<details>`，不属于 appendix。
 
@@ -663,7 +663,7 @@ var(--font-mono)              /* IBM Plex Mono */
 
 ```text
 #macro-risk-overview          宏观风险判断总览（红色带）
-  #macro-risk-editorial       本期宏观判读（DeepSeek 只读编辑层；校验失败时隐藏）
+  #macro-risk-editorial       宏观判读（本期优先；缺期时可展示注明原日期的合格历史）
   #wow-key-changes            本期关键变化（runtime 注入，不是顶级 section）
   #macro-professional-evidence 专业证据与模型诊断（AI 有效时默认收起；AI 失败时自动展开）
 #macro-thematic-cards         宏观主题卡阵（绿色带）

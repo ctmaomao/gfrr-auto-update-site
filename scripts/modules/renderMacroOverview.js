@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=score-hardening-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=score-hardening-1';
+} from './config.js?v=editorial-history-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=editorial-history-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=score-hardening-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=score-hardening-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=score-hardening-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=score-hardening-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=score-hardening-1';
+} from './macroOverviewDisplayHelpers.js?v=editorial-history-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=editorial-history-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=editorial-history-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=editorial-history-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=editorial-history-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -719,7 +719,9 @@ function syncProfessionalEvidenceDisclosure(editorialVisible) {
     'macro-professional-evidence-status',
     usesEditorial
       ? '完整模型依据 · 按需展开'
-      : 'AI 判读不可用 · 已展开确定性依据'
+      : $('macro-risk-editorial')?.dataset.editorialMode === 'previous'
+        ? '上一期 AI 判读供参考 · 已展开当期确定性依据'
+        : 'AI 判读不可用 · 已展开确定性依据'
   );
 }
 

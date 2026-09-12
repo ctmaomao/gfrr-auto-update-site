@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=score-hardening-1';
+} from '../../scripts/modules/config.js?v=editorial-history-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
