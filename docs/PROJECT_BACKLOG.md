@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-13 双站发布快照只读巡检
+
+- **Acceptance baseline**：沿用本轮 owner 完成可做事项及 commit/push、独立 AI 审阅、合并/上线验收授权。仅现有 Pages/custom 域名固定 6 个文件的只读巡检；没有 Daily/AI 重跑、来源接入、生产写入或自动恢复授权扩展。
+- **实施**：单轮 12 请求、并发 4、含正文 10 秒/2 MiB 上限、无跳转/重试；逐文件提交时间的交付宽限（Pages 1h，custom 按既有 3h 排程加余量为 4h）、固定 HEAD hash、跨站版本/内容比较、JSON 交付年龄与原来源日期分离。来源降级单列警告。main-only 每 6 小时 workflow，权限 contents:read，90 天脱敏 artifact；默认本地命令只预演。详见 [验收计划](AUTONOMY_ACCEPTANCE_PLAN.md)。
+- **验证**：离线测试与独立 AI 复核包括真实 HEAD 的六文件结构冒烟和两站不同发布节奏。2026-09-13T10:07:25Z 固定基线 `85181c98` 双站 12 请求无交付错误，版本 `editorial-history-1` 和正文 hash 一致；World/News 的来源降级明确记 warn，没有触发恢复。完整套件、远端 CI/集成与首次 workflow 回执待最终记录。
+- **剩余验收**：7 天基线、28 天可靠性与 GitHub 外监测环境尚未完成，不能以初次成功替代长期验收。
+
 ### 2026-09-12 AI 更新间隙保留上一期判读
 
 - **2026-09-13 集成授权**：owner 授权完成复核所列可完成工作及所需提交、推送、独立 AI 审阅、合并和发布。本项仅完成 #351：合入最新 main 时同时保留压力研究 vintage 检查、ADR-0047 与交接；最终提交须重新完整验证和独立审阅。其它三项另开串行 PR；不扩大付费调用、来源许可或观察期晋升。

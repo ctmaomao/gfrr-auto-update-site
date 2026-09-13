@@ -1,0 +1,43 @@
+name: Check Published Snapshots
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 2,8,14,20 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: published-snapshots
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout pinned baseline with file history
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Read the two published sites once
+        run: node scripts/check-published-snapshots.mjs --allow-network --github-summary
+      - name: Retain sanitized delivery evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: published-snapshots
+          path: manual-artifacts/publication-monitor/latest.json
+          if-no-files-found: warn
+          retention-days: 90
