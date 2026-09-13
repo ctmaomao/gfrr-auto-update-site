@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { validateResearchProtocol, scorePressure, observationAt, pressureFeatures, FEATURE_KEYS, digest } from '../../scripts/daily/pressure-model.mjs';
-import { auc, agreementMetrics, appendShadowLedger, shadowReadiness, validateShadowLedger } from '../../scripts/daily/pressure-evaluation.mjs';
-import { outputPath, parseResearchArgs, legacyAvailableSeries, evaluateResearch } from '../../scripts/research-pressure-model.mjs';
+import { auc, agreementMetrics, appendShadowLedger, shadowReadiness, validateShadowLedger, bootstrapAgreement } from '../../scripts/daily/pressure-evaluation.mjs';
+import { outputPath, parseResearchArgs, legacyAvailableSeries, evaluateResearch, implementationHash } from '../../scripts/research-pressure-model.mjs';
+import { describeRiskImplementation } from '../../scripts/run-daily-pipeline.mjs';
 
 const protocol=JSON.parse(fs.readFileSync('config/pressure-model-research.json','utf8'));
 const today='2026-09-11', DAY=86400000, end=Date.parse(`${today}T00:00:00Z`);
@@ -116,6 +117,7 @@ test('prospective records cannot be backfilled, overwritten, mixed across protoc
     parameters:Object.fromEntries(scores.map(row=>[row.variant,{calibration:row.calibration,weights:row.weights}]))};
   const record={date:today,recordedAt:now,sourceRetrievedAt:now,protocolHash:digest(protocol),implementationHash:'implementation',
     scoreInputs,inputHash:digest(scoreInputs),variant:variant.id,variantScores:Object.fromEntries(scores.map(row=>[row.variant,row.score])),
+    variantStatus:Object.fromEntries(scores.map(row=>[row.variant,{status:row.status,trainingWeeks:row.trainingWeeks,reasons:[]} ])),
     score:scores.find(row=>row.variant===variant.id).score};
   const first=appendShadowLedger(null,record,protocol,now);
   assert.deepEqual(appendShadowLedger(first,record,protocol,now),first);
@@ -161,4 +163,55 @@ test('frozen retrospective cutoff cannot silently expand as new shadow dates arr
   const result=evaluateResearch(cache,p,'2026-09-18',{});
   assert.equal(result.current.date,'2026-09-18');
   for(const rows of Object.values(result.weeklyScores)) assert.deepEqual(rows.map(row=>row.date),[today]);
+});
+
+function researchRecord(priorHistory) {
+  const now=today+'T10:00:00.000Z', inputs=pressureFeatures(sourceFixture(),today,protocol);
+  const candidates=protocol.variants.map(v=>scorePressure(inputs,priorHistory,protocol,v));
+  const scoreInputs={evidence:inputs.evidence,references:inputs.references,features:inputs.features,
+    parameters:Object.fromEntries(candidates.map(row=>[row.variant,Number.isFinite(row.score)?{calibration:row.calibration,weights:row.weights}:null]))};
+  return {date:today,recordedAt:now,sourceRetrievedAt:now,protocolHash:digest(protocol),implementationHash:'test-v2',
+    scoreInputs,inputHash:digest(scoreInputs),variant:variant.id,score:candidates.find(row=>row.variant===variant.id).score,
+    variantScores:Object.fromEntries(candidates.map(row=>[row.variant,row.score])),
+    variantStatus:Object.fromEntries(candidates.map(row=>[row.variant,{status:row.status,trainingWeeks:row.trainingWeeks,reasons:row.reasons||[]}]))};
+}
+
+test('one missing calibration week cannot discard six available candidates or fabricate the seventh',()=>{
+  const sparse=history.filter((_,i)=>i!==146), record=researchRecord(sparse);
+  assert.equal(record.variantScores.diversified_104,null);
+  assert.equal(record.variantStatus.diversified_104.trainingWeeks,103);
+  assert.equal(Object.values(record.variantScores).filter(Number.isFinite).length,6);
+  const ledger=appendShadowLedger(null,record,protocol,record.recordedAt);
+  assert.equal(ledger.schemaVersion,'pressure-shadow-ledger-v2');
+  assert.equal(ledger.records.length,1);
+  const fake=structuredClone(record);fake.variantScores.diversified_104=0;
+  assert.throws(()=>appendShadowLedger(null,fake,protocol,fake.recordedAt),/unavailable shadow variant/);
+});
+
+test('warm-up records retain observations with null scores and never pass matched-benchmark gates',()=>{
+  const record=researchRecord(history.slice(-3));
+  assert.equal(record.score,null);assert.ok(Object.values(record.variantScores).every(value=>value===null));
+  const ledger=appendShadowLedger(null,record,protocol,record.recordedAt);
+  assert.equal(shadowReadiness(ledger,protocol).benchmarkWeeksGatePassed,false);
+  const malformed=structuredClone(record);malformed.variantStatus.equal_156.trainingWeeks=104;
+  assert.throws(()=>appendShadowLedger(null,malformed,protocol,record.recordedAt),/unavailable shadow variant/);
+});
+
+test('research fingerprint ignores unrelated Daily text but includes score helpers and input validation',()=>{
+  const initial=implementationHash(),files=[];
+  const reader=file=>{files.push(file);return fs.readFileSync(file,'utf8')+(file==='scripts/run-daily-pipeline.mjs'?'\n// display-only change':'');};
+  assert.equal(implementationHash(reader),initial);
+  assert.ok(!files.includes('scripts/run-daily-pipeline.mjs'));
+  const dependency=describeRiskImplementation();dependency.functions.buildTailRiskOverlay+=' changed';
+  assert.notEqual(implementationHash(undefined,dependency),initial);
+  assert.notEqual(implementationHash(file=>fs.readFileSync(file,'utf8')+(file==='scripts/daily/historical-validation.mjs'?' changed':'')),initial);
+  for(const name of ['deriveRisk','clamp','clampRange','roundMetric','normalizeCalibrationPoints','interpolateRiskFromCalibration',
+    'buildTailRiskOverlay','buildTransportShockScoringImpact','scoreInput','validateScoreWeights','structuralSourceUsable']) assert.ok(dependency.functions[name]);
+});
+
+test('bootstrap discloses missing calendar weeks instead of calling paired rows continuous weeks',()=>{
+  const rows=Array.from({length:30},(_,i)=>({date:new Date(end-(31-i+(i<10?1:0))*7*DAY).toISOString().slice(0,10),score:i,benchmark:i-15}));
+  const result=bootstrapAgreement(rows,protocol.evaluation);
+  assert.equal(result.blockUnit,'paired_observations');assert.equal(result.calendarWeekBlocksProven,false);
+  assert.equal(result.calendarGaps.count,1);assert.equal(result.calendarGaps.maximumDays,14);
 });

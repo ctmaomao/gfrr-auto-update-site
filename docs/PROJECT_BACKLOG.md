@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-13 压力模型现阶段验收与研究采集修复
+
+- **Acceptance baseline**：owner 要求执行现在可完成的后续工作；沿用本任务模型研究、修复、独立 AI 验证、推送/PR/CI 后集成授权，主目标保持当下压力。另一个 PR #351 的 AI 展示任务保持原现场，本轮在基于 `5ba0de72` 的独立目录执行，不混入该 PR。
+- **实际验收**：9 月 12/13 日自然 Daily 均成功并真正发布；结构源原日期保留。v1 自然影子运行 `34676417031` 成功续接两日真实记录并通过旧版重放；此前 PR #347 已合并、两站发布与桌面/手机验收通过，修正旧条目仍写“待回执”的历史状态。
+- **问题与实施**：[ADR-0047](ADR/0047-pressure-evidence-continuity.md)、[后续报告](PRESSURE_MODEL_FOLLOWUP_2026_09_13.md)。修复整 Daily 文件 hash 误重置与单候选缺周阻断整条记录；v2 保留逐候选状态/null/有效分数，并提供同日期成对比较。增加历史版本严格审计、滚动校准漂移及有效观察块缺口披露。旧两天原样保留，新 v2 不借用旧时长；生产数值逻辑、阈值、数据及前端未改。
+- **本地验收**：`check:changed` 实际执行完整 `check:all`、22 项专项、`test:unit:coverage`、`git diff --check` 均退出 0；单元 591 项，590 通过，1 项既有本地真实原件测试因独立目录没有 ignored 原件而按原规则跳过，无失败。独立 AI 实际复核通过。双站实读时间与上述 Daily 一致，结构原日期和主分均一致。已完成有界 ALFRED/FRED 真实取数、离线复算与两天候选变化分解；SPX 历史版本不可用、一个 VIX 版本含未来观察并拒绝，完整 PIT 尚未成立。v2 远端 CI/集成/运行回执待记录。
+
 ### 2026-09-12 ACLED 自动准备 main 的发布入口
 
 - **Acceptance baseline**：owner 要求改进 pull、monthly status、weekly status、publish 四条指令，使以后自动准确推送 main；实施新增显式入口 acled:publish:auto，继续使用原 main-only 发布器，不把功能分支合入 main。2026-09-12 owner 明确授权推送两项修复、创建 PR、进行一次独立 AI 审阅，在最终提交的 CI 和审阅通过后合并，再处理分支并发布本批 ACLED 数据；本次独立 AI 审阅替代人工仅适用于此 PR，不扩大付费 AI、其它数据刷新或删除范围。
