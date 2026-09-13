@@ -882,7 +882,8 @@ documented attribution string and code is a contract violation.
 ### 2026-07-31 GDELT DOC resilience follow-up
 
 ODP Oil News 的 GDELT DOC broad query 继续保持 24h fresh / 72h stale 与
-fail-closed 边界,但 live path 允许严格一次有界重试,遵守 `Retry-After` 并增加
+fail-closed 边界。现行 2026-09-10 限流修复后，HTTP 429 或文本限流错误立即停止，
+不在本轮重试；其它可重试瞬时错误仍最多一次有界重试，遵守 `Retry-After` 并增加
 最多 1.5 秒 jitter。错误冷却按 429=24h、timeout/network=4h、5xx=6h、
 other=12h 分类；`lastFetchFailure` 让 stale-cache-after-error 后续刷新也遵守
 对应窗口。`data/gdelt-news-cache.json` 只新增最多 64 条 sanitized availability
@@ -891,7 +892,14 @@ history 与 7/30 天成功率,不得保存 URL、标题、正文、header 或 se
 News signal、ODP `finalBias`、scoring、decision、execution、position、Brent
 promotion、Global Risk Heatmap 或 cross-validation。
 
-同日 Web NGrams automated display-only 路径把既有 bounded diagnosis 接入
+2026-09-13 自然运行复核：9 月 11 日 00:38、12 日 04:56、13 日 05:18 UTC
+三次 DOC 尝试仍返回 429，但均为一次请求、零重试；后两次间隔分别为 28.30h、
+24.36h，符合既有冷却。最新 Oil News 的 Tavily/Brave 各 4/4 查询成功，DOC
+单独标 error，旧文章没有晋升为当前信号。此处关闭的是限流策略的自然执行验收，
+不是 DOC 可用性恢复：7 日 1/7、30 日 6/51 成功，仍需持续披露来源缺口。
+既有四项限流回归再次通过，不改请求频率/冷却值、不增加请求或新代理源。
+
+2026-07-31 的 Web NGrams automated display-only 路径把既有 bounded diagnosis 接入
 `Refresh Oil News Event Watch`:主 build 内的一次 pair fetch 直接更新
 `sourceCaches.gdeltWebNgramsFallback`，不再由 workflow 做第二次下载。production contract
 为 `gdelt-web-ngrams-display-fallback-cache-v2`,只保存源文件时间、可达状态和
