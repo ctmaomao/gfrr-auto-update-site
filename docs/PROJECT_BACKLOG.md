@@ -25,6 +25,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-13 GDELT DOC 冷却自然验收
+
+- **Acceptance baseline**：本轮第三项只复核现行策略的真实执行，按证据决定是否修改；owner 已授权分项提交/推送、独立 AI 审阅和合并。不为验收额外请求 GDELT，不增加付费调用或新来源。
+- **结论**：最新 committed `data/gdelt-news-cache.json` 三次新代码自然尝试（09-11T00:38:42Z、09-12T04:56:40Z、09-13T05:18:32Z）全部 429，但均 attempts=1/retryCount=0；相邻间隔 28.30h、24.36h，24h 冷却确已生效。09-09 的两次请求属于旧版本，不是回归。Oil News [34739967496](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34739967496) 成功不代表 DOC 恢复；Tavily/Brave 各 4/4 查询成功，来源隔离正常。
+- **处理**：保留既有代码/24h 冷却与 fail-closed，将 [来源台账](DATA_SOURCES.md#2026-07-31-gdelt-doc-resilience-follow-up) 的旧“一次重试”描述明确为非限流错误。四项既有离线限流测试退出 0，含真实 caller 持久化冷却与下次零请求；没有生产修改。
+- **关闭与保留**：关闭“新代码首次自然请求/零重试验收”待办；DOC 上游不可用仍为来源缺口，最新 7 日成功 1/7、30 日 6/51，不声称恢复，也不降低新闻 v5 质量/观察门槛。
+
 ### 2026-09-13 双站发布快照只读巡检
 
 - **Acceptance baseline**：沿用本轮 owner 完成可做事项及 commit/push、独立 AI 审阅、合并/上线验收授权。仅现有 Pages/custom 域名固定 6 个文件的只读巡检；没有 Daily/AI 重跑、来源接入、生产写入或自动恢复授权扩展。
