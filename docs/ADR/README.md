@@ -73,6 +73,7 @@
 | [ADR-0044](0044-contemporaneous-pressure-research.md) | Contemporaneous pressure research and prospective shadow | Research authorized; production model replacement remains evidence-gated |
 | [ADR-0045](0045-editorial-single-recovery.md) | One additional editorial recovery for a fixed 2026-09-11 input | Owner authorized; one-use reservation, expires at Shanghai midnight |
 | [ADR-0046](0046-editorial-previous-issue.md) | Dated previous Macro Risk issue during daily update gaps | Owner selected; implementation pending integration review |
+| [ADR-0047](0047-pressure-evidence-continuity.md) | Research cohort continuity, partial candidates and vintage audit | Owner authorized; research contract independently reviewed |
 
 ## Superseded
 

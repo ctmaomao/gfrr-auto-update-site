@@ -36,7 +36,11 @@ export function bootstrapAgreement(rows, evaluation) {
     const value=agreementMetrics(sample,evaluation).rankCorrelation;
     if(Number.isFinite(value)) estimates.push(value);
   }
+  const gaps=rows.slice(1).map((row,i)=>(Date.parse(row.date)-Date.parse(rows[i].date))/86400000).filter(days=>Number.isFinite(days)&&days>7);
   return {status:'retrospective_uncertainty_only',method:'circular_block_bootstrap',replicates:estimates.length,
+    blockUnit:'paired_observations',blockLength:evaluation.blockBootstrapWeeks,
+    calendarGaps:{count:gaps.length,maximumDays:gaps.length?Math.max(...gaps):0},
+    calendarWeekBlocksProven:rows.every((row,i)=>isHistoricalDate(row.date)&&(!i||Date.parse(row.date)-Date.parse(rows[i-1].date)===7*86400000)),
     rankCorrelation95:estimates.length>=20 ? [quantile(estimates,0.025),quantile(estimates,0.975)] : null};
 }
 
@@ -51,7 +55,7 @@ export function validateShadowLedger(previous, protocol, implementationHash, now
 }
 export function appendShadowLedger(previous, record, protocol, now = new Date().toISOString(), validateOnly = false) {
   const protocolHash=digest(protocol), records=previous?.records || [];
-  if(previous && (previous.schemaVersion!=='pressure-shadow-ledger-v1' || previous.protocolHash!==protocolHash || previous.implementationHash!==record.implementationHash)) throw new Error('Shadow protocol mismatch; preserve and start a distinct cohort');
+  if(previous && (previous.schemaVersion!=='pressure-shadow-ledger-v2' || previous.protocolHash!==protocolHash || previous.implementationHash!==record.implementationHash)) throw new Error('Shadow protocol mismatch; preserve and start a distinct cohort');
   const validateRecord=row=>{
     if(!isHistoricalDate(row.date)||!Number.isFinite(Date.parse(row.recordedAt))||row.recordedAt.slice(0,10)!==row.date
       ||Date.parse(row.recordedAt)>Date.parse(now)||!Number.isFinite(Date.parse(row.sourceRetrievedAt))
@@ -79,10 +83,17 @@ export function appendShadowLedger(previous, record, protocol, now = new Date().
       oil:Math.abs(Math.log(value('brent')/references.brent.value)),inflation:value('breakeven10y')};
     if(Object.entries(rebuilt).some(([key,value])=>!Number.isFinite(features?.[key])||Math.abs(value-features[key])>1e-12)) throw new Error('Shadow feature replay mismatch');
     for(const variant of protocol.variants) {
+      const state=row.variantStatus?.[variant.id];
+      if(state?.status==='warming_up') {
+        if(row.variantScores?.[variant.id]!==null||row.scoreInputs.parameters?.[variant.id]!==null
+          ||!Number.isInteger(state.trainingWeeks)||state.trainingWeeks<0||state.trainingWeeks>=protocol.minimumTrainingWeeks) throw new Error('Invalid unavailable shadow variant');
+        continue;
+      }
+      if(state?.status!=='research_only'||!Number.isInteger(state.trainingWeeks)||state.trainingWeeks<protocol.minimumTrainingWeeks) throw new Error('Invalid available shadow variant');
       const replay=replayPressureInputs(row.scoreInputs.features,row.scoreInputs.parameters?.[variant.id],variant);
       if(!Number.isFinite(row.variantScores?.[variant.id])||Math.abs(replay-row.variantScores[variant.id])>1e-9) throw new Error('Shadow score replay mismatch');
     }
-    if(!protocol.variants.some(v=>v.id===row.variant)||!Number.isFinite(row.score)||Math.abs(row.score-row.variantScores[row.variant])>1e-9) throw new Error('Shadow reference variant mismatch');
+    if(!protocol.variants.some(v=>v.id===row.variant)||row.score!==row.variantScores[row.variant]) throw new Error('Shadow reference variant mismatch');
   };
   const seen=new Set(); let priorHash=null,previousDate='';
   for(const row of records) {
@@ -92,12 +103,12 @@ export function appendShadowLedger(previous, record, protocol, now = new Date().
   if(previous&&records.length&&previous.createdAt!==records[0].recordedAt) throw new Error('Invalid cohort creation date');
   if(validateOnly) return;
   if(record.date!==now.slice(0,10)||record.recordedAt!==now||!Number.isFinite(Date.parse(now))) throw new Error('Shadow backfill/future recording forbidden');
-  if(record.protocolHash!==protocolHash||typeof record.inputHash!=='string'||!record.inputHash||typeof record.implementationHash!=='string'||!record.implementationHash||!Number.isFinite(record.score)) throw new Error('Invalid shadow record');
+  if(record.protocolHash!==protocolHash||typeof record.inputHash!=='string'||!record.inputHash||typeof record.implementationHash!=='string'||!record.implementationHash) throw new Error('Invalid shadow record');
   validateRecord(record);
   if(records.some(row=>row.date>record.date)) throw new Error('Shadow date regression');
   if(seen.has(record.date)) return structuredClone(previous);
   const next={...record,previousHash:priorHash}; next.recordHash=digest(next);
-  return {schemaVersion:'pressure-shadow-ledger-v1',protocolHash,implementationHash:record.implementationHash,createdAt:previous?.createdAt||now,records:[...records,next]};
+  return {schemaVersion:'pressure-shadow-ledger-v2',protocolHash,implementationHash:record.implementationHash,createdAt:previous?.createdAt||now,records:[...records,next]};
 }
 
 export function shadowReadiness(ledger, protocol, benchmarkWeeks = 0) {

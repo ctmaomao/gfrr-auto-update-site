@@ -6,15 +6,17 @@ import { pressureFeatures, scorePressure, validateResearchProtocol, digest, quan
 import { agreementMetrics, bootstrapAgreement, appendShadowLedger, shadowReadiness, validateShadowLedger } from './daily/pressure-evaluation.mjs';
 import { parseFredCsv } from './audit-main-score-backtest.mjs';
 import { deriveHistoricalRisk } from './daily/historical-score.mjs';
+import { describeRiskImplementation } from './run-daily-pipeline.mjs';
 import { isHistoricalDate } from './daily/historical-validation.mjs';
 
 const ROOT=path.resolve('manual-artifacts/main-score-audit/pressure-model');
 const LEGACY={hyOas:'BAMLH0A0HYM2',igOas:'BAMLC0A0CM',real10y:'DFII10',walcl:'WALCL',onRrp:'RRPONTSYD',t10y2y:'T10Y2Y'};
 const DAY=86400000;
-export function implementationHash() {
-  return digest(['scripts/daily/pressure-model.mjs','scripts/daily/pressure-evaluation.mjs','scripts/research-pressure-model.mjs',
-    'scripts/daily/historical-score.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/structural-freshness.mjs',
-    'scripts/run-daily-pipeline.mjs','config/rules.json'].map(file=>fs.readFileSync(file,'utf8').replaceAll('\r\n','\n')));
+export function implementationHash(readFile = file => fs.readFileSync(file,'utf8'), scoreImplementation = describeRiskImplementation()) {
+  return digest({files:['scripts/daily/pressure-model.mjs','scripts/daily/pressure-evaluation.mjs','scripts/research-pressure-model.mjs',
+    'scripts/daily/historical-score.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/historical-validation.mjs',
+    'config/rules.json'].map(file=>readFile(file).replaceAll('\r\n','\n')),
+    csvParser:parseFredCsv.toString().replaceAll('\r\n','\n'),scoreImplementation});
 }
 export function outputPath(file) {
   const target=path.resolve(file);
@@ -141,19 +143,20 @@ export async function main(argv=process.argv.slice(2)) {
   validateShadowLedger(existing,protocol,implementationHash(),new Date().toISOString());
   let ledger=existing;
   const selected=results.current.candidates.find(row=>row.variant==='diversified_156');
-  if(options.recordShadow&&Number.isFinite(selected?.score)) {
+  if(options.recordShadow&&results.current.features) {
     const recordedAt=new Date().toISOString();
     const scoreInputs={evidence:results.current.evidence,features:results.current.features,references:results.current.references,
-      parameters:Object.fromEntries(results.current.candidates.map(row=>[row.variant,{calibration:row.calibration,weights:row.weights}]))};
+      parameters:Object.fromEntries(results.current.candidates.map(row=>[row.variant,Number.isFinite(row.score)?{calibration:row.calibration,weights:row.weights}:null]))};
     const legacy=deriveHistoricalRisk(today,legacyAvailableSeries(cache.series,today,protocol),rules);
     ledger=appendShadowLedger(existing,{date:today,recordedAt,protocolHash:digest(protocol),implementationHash:implementationHash(),
       scoreInputs,inputHash:digest(scoreInputs),sourceRetrievedAt:cache.retrievedAt,score:selected.score,
       variant:selected.variant,channels:selected.channels,weights:selected.weights,calibration:selected.calibration,
       variantScores:Object.fromEntries(results.current.candidates.map(row=>[row.variant,row.score])),
+      variantStatus:Object.fromEntries(results.current.candidates.map(row=>[row.variant,{status:row.status,trainingWeeks:row.trainingWeeks??null,reasons:row.reasons||[]}])),
       legacy:{score:legacy?.score??null,reason:legacy?'lag_matched_public_history_replay_not_actual_production_snapshot':'unavailable',
         inputDiagnostics:legacy?.inputDiagnostics||{},components:legacy?.components||{},
         proxyInputs:legacy?.historicalProxyInputs||[],defaultedInputs:legacy?.defaultedHistoricalInputs||[],
-        modelHash:digest({rules,code:fs.readFileSync('scripts/run-daily-pipeline.mjs','utf8').replaceAll('\r\n','\n')})},
+        modelHash:digest({rules,implementation:describeRiskImplementation()})},
       sourceObservationDates:Object.fromEntries(Object.entries(results.current.evidence).map(([key,row])=>[key,row?.observationDate||null]))},protocol,recordedAt);
     writeJson(path.join(path.dirname(options.output),'shadow-ledger.json'),ledger);
   }
@@ -161,15 +164,23 @@ export async function main(argv=process.argv.slice(2)) {
   const prospective=Object.fromEntries([...protocol.variants.map(v=>v.id),'legacy_assumed_lags'].map(id=>[id,
     Object.fromEntries(Object.keys(protocol.benchmarks).map(key=>[key,compareRows(paired.map(row=>({date:row.date,score:id==='legacy_assumed_lags'?row.legacy.score:row.variantScores[id]})),cache.series[key]||[],protocol)]))]));
   const benchmarkWeeks=Math.min(...Object.values(prospective).flatMap(results=>Object.values(results).map(result=>result.overall.n)));
+  const pairwise=Object.fromEntries(protocol.variants.map(v=>{
+    const rows=(ledger?.records||[]).filter(row=>Number.isFinite(row.legacy?.score)&&Number.isFinite(row.variantScores?.[v.id]));
+    return [v.id,{availableRecords:rows.length,unavailableRecords:(ledger?.records.length||0)-rows.length,
+      benchmarks:Object.fromEntries(Object.keys(protocol.benchmarks).map(key=>[key,{
+        candidate:compareRows(rows.map(row=>({date:row.date,score:row.variantScores[v.id]})),cache.series[key]||[],protocol),
+        legacy:compareRows(rows.map(row=>({date:row.date,score:row.legacy.score})),cache.series[key]||[],protocol)}]))}];
+  }));
   const report={schemaVersion:'pressure-model-research-report-v1',generatedAt:new Date().toISOString(),protocolHash:digest(protocol),implementationHash:implementationHash(),
     modelId:protocol.modelId,validation:{historicalPointInTime:false,untouchedHistoricalTest:false,predictiveEvidence:false,
       probabilityCalibration:false,positionSizingValidation:false,benchmarkIndependence:false,automaticPromotion:false},
     sourceStatus:cache.sourceStatus,sourceRetrievedAt:cache.retrievedAt,limitations:protocol.limitations,...results,
-    prospectiveComparison:prospective,shadow:shadowReadiness(ledger,protocol,benchmarkWeeks),decision:'continue_prospective_shadow_no_production_replacement'};
+    prospectiveComparison:prospective,prospectivePairwiseComparison:pairwise,
+    shadow:shadowReadiness(ledger,protocol,benchmarkWeeks),decision:'continue_prospective_shadow_no_production_replacement'};
   writeJson(options.output,report);
   console.log(JSON.stringify({output:options.output,commonWeeks:results.diagnostics.commonWeeks,
     current:results.current.candidates.map(row=>({id:row.variant,score:row.score,status:row.status})),shadow:report.shadow}));
-  if(options.recordShadow&&!Number.isFinite(selected?.score)) throw new Error('Shadow unavailable: preserve previous ledger; no fabricated score');
+  if(options.recordShadow&&!results.current.features) throw new Error('Shadow unavailable: preserve previous ledger; no fabricated score');
   return report;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) main().catch(error=>{console.error(`[pressure-research] ${error.message}`);process.exitCode=1;});
