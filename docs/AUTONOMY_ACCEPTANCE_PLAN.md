@@ -1,6 +1,6 @@
 # 长期自主运行：八项整改后的验收与有界方案
 
-本文件是本轮整改的后续实施方案，不是已部署监控、准确性证明或新增服务授权。八项代码修复的具体回执见 [当前交接](PROJECT_BACKLOG.md#section-2--open-backlog-items)。保留现有源权利、单次付费授权、发布保护和人工来源边界。
+本文件记录整改的后续实施与验收边界，不是准确性证明或新增来源授权。八项代码修复的具体回执见 [当前交接](PROJECT_BACKLOG.md#section-2--open-backlog-items)。保留现有源权利、单次付费授权、发布保护和人工来源边界。
 
 ## 先验收已修复链路
 
@@ -16,7 +16,11 @@ Daily/GDELT已有本任务的自然运行跟进；不为补回执再调用付费
 
 ## 后续顺序一：监测用户实际收到的数据
 
-建议下一独立任务实现只读 `scripts/check-published-snapshots.mjs`，输入配置为现有 Pages/custom-domain 地址、当前主分支artifact及允许的发布延迟。单轮每站每文件最多一次请求，10秒请求与正文超时，总轮次上限；输出状态码、脚本版本、内容摘要、生成时间和异常类型，不打印凭证或原始新闻全文。
+2026-09-13 owner 已批准实施只读 `scripts/check-published-snapshots.mjs` 与 `Check Published Snapshots` workflow。默认命令只预演；`node scripts/check-published-snapshots.mjs --allow-network` 才实读固定 Pages/custom-domain 的首页、app.js 和四份 JSON，共 12 次请求、并发 4、每次含正文 10 秒、正文最大 2 MiB、无重试/跳转。workflow 仅 main，每 6 小时一次，也可手动只读验收；不安装依赖、不读取 secrets、不触发其它 workflow、不写生产数据。
+
+基线为 checkout HEAD 的固定内容和各文件最后提交时间；Pages 一小时、custom 四小时发布宽限不因其它文件提交重置。custom 依据现有 EdgeOne 数据发布每三小时排程加一小时交付余量，不把正常排程滞后误报为故障。超过宽限的 hash 不符报错；线上 JSON 生成时间比固定基线新时标为并发发布警告，仍检查坏 JSON、结构、未来时间与超过 36 小时的交付年龄。首页与脚本版本混用始终报错。36 小时是运营交付阈值，不修改任何源时效/评分契约。GitHub 运行需完整历史以取得逐文件时钟。
+
+输出为 ignored `manual-artifacts/publication-monitor/latest.json`、Actions Summary 和保存 90 天的 `published-snapshots` artifact；仅含固定标识符、状态码、版本、hash、原日期、年龄、异常类型，不含原始新闻正文/URL/凭证。投递故障 `fail` 退出 1；来源降级或发布过渡 `warn` 退出 0，但 Summary/artifact 明示，不把 job 绿等同来源全新。当前只使用 GitHub 自身运行失败通知，不添加外部收件人或重复提醒。
 
 先覆盖首页脚本、radar、World Order、ODP和专用Oil News。按各自既有源契约区分“生成时间”“观察时间”“发布日期”“缺失/降级”，不得用文件写入时间替代观测日期。将网络失败、过期、跨站版本差异、来源不可用分别报告。只报警不触发付费重跑、数据改写或自动降权发布。
 
