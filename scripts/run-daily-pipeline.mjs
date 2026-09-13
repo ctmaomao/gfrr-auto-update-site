@@ -9923,6 +9923,20 @@ export function buildTransportShockScoringImpact(energyTransport, scoreBeforeTra
   };
 }
 
+// Audit-only dependency manifest. Keep this list aligned with deriveRisk's
+// transitive score helpers; fetching, editorial and rendering are not score code.
+export function describeRiskImplementation() {
+  const functions = { deriveRisk, clamp, clampRange, roundMetric, normalizeCalibrationPoints,
+    interpolateRiskFromCalibration, buildTailRiskOverlay, buildTransportShockScoringImpact,
+    scoreInput, validateScoreWeights, structuralSourceUsable };
+  return {
+    functions: Object.fromEntries(Object.entries(functions).map(([name, fn]) => [name, fn.toString().replaceAll('\r\n', '\n')])),
+    transport: { contractVersion: TRANSPORT_SHOCK_SCORING_IMPACT_CONTRACT_VERSION,
+      maxContribution: TRANSPORT_SHOCK_RUNTIME_SCORING_MAX_CONTRIBUTION_PCT,
+      staleAfterDays: TRANSPORT_SHOCK_RUNTIME_SCORING_STALE_AFTER_DAYS }
+  };
+}
+
 export function deriveRisk(rt, macroDrivers, R = RULES) {
   validateScoreWeights(R);
   // The offline historical adapter has explicit provenance; it is not a live

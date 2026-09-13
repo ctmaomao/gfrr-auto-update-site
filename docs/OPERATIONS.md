@@ -6,6 +6,8 @@
 
 相关文档：
 
+- [9 月 13 日研究后续验收](PRESSURE_MODEL_FOLLOWUP_2026_09_13.md)：ledger v2 按候选保留 warm-up/null，完整输入仍必需。v1 两天记录保持原样；v2 合同/指纹上线后重新计真实时长，不手工拼接旧 cohort。Daily 无关展示改动不再改变评分指纹；新增评分依赖时必须维护 `describeRiskImplementation()`。历史版本审计为手动免费研究，不增加自动取数或生产写入。
+
 - [当下压力模型研究](PRESSURE_MODEL_RESEARCH_2026_09_11.md)：`Pressure Model Research Shadow` 每日 01:15 UTC 在 main 只读运行；最多 15 个免费 FRED CSV 请求，无 paid provider、无生产写入/部署。成功的 cohort artifact 含派生 report 与累积 shadow-ledger；失败诊断单独保存。协议或实现变更后重新计 cohort，不能手工回填天数、覆写旧分数或把研究结果提交为 `data/radar-data.json`。即使最低前瞻样本齐全，仍必须独立评审后另做生产模型迁移。
 
 - [v27 稳定化基线](V27_BASELINE.md)：用于确认当前 v27.x 已完成升级、维护边界、保护网和下一阶段建议。
