@@ -1,4 +1,5 @@
 import { buildAiInterpretationLayer } from './daily/rule-based-interpretation.mjs';
+import { preserveEditorialPreviousIssue } from './macro-risk/editorial-history.mjs';
 ﻿import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10622,6 +10623,7 @@ async function buildFallback() {
     ? { ...prevData.aiInterpretationLayer, generatedAt: isoNow }
     : buildAiInterpretationLayer(next, isoNow);
   preserveExternalAiInterpretationLayer(next);
+  preserveEditorialPreviousIssue(next, prevData, new Date(isoNow));
 
   const displayMacro = await fetchDisplayOnlyMacroDrivers(prevData?.macroDrivers || {});
   next.macroDrivers = { ...(next.macroDrivers || {}), ...displayMacro };
@@ -11130,6 +11132,7 @@ async function build() {
 
   data.aiInterpretationLayer = buildAiInterpretationLayer(data, isoNow);
   preserveExternalAiInterpretationLayer(data);
+  preserveEditorialPreviousIssue(data, prevData, new Date(isoNow));
 
   const historyFull = appendHistoryFull(prevHistoryFull, risk, lock, macro, macroDrivers, transmissionSnapshot, worldOrderStressHistorySnapshot);
   data.historyWindowFields = buildHistoryWindowFields(historyFull);

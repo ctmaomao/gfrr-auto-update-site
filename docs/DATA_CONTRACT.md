@@ -1032,7 +1032,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `score-hardening-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `editorial-history-1`）。
 
 稳定边界：
 
@@ -1047,7 +1047,7 @@ v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpreta
 
 #### macroRiskEditorialLayer 当前生产契约（integrated visible read-only）
 
-`macroRiskEditorialLayer` 是根级可选字段，也是首页 `MACRO RISK OVERVIEW` 唯一可见的 DeepSeek 编辑层。生产 schema 固定为 `macro-risk-editorial-production-v1`；唯一写入路径为 `Macro Risk Editorial Refresh` workflow。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，该 workflow 在 Daily / World Order / ODP 的合格完成事件后核对本期上游就绪，先预留持久 UTC 日预算与 Daily 输入去重凭据，再合并近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据。每个 UTC 日和 Daily 输入最多一个尝试，每次最多一次 DeepSeek 调用、无重试，`max_tokens=8000`、timeout 120 秒；失败不释放已预留预算。旧独立 `00:05 UTC` cron 退役，手动入口也不绕过预算。
+`macroRiskEditorialLayer` 是根级可选字段，也是首页 `MACRO RISK OVERVIEW` 当前一期的 DeepSeek 编辑层。生产 schema 固定为 `macro-risk-editorial-production-v1`；唯一写入路径为 `Macro Risk Editorial Refresh` workflow。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，该 workflow 在 Daily / World Order / ODP 的合格完成事件后核对本期上游就绪，先预留持久 UTC 日预算与 Daily 输入去重凭据，再合并近 7 日 Tavily/Brave 新闻与站内紧凑结构化证据。每个 UTC 日和 Daily 输入最多一个尝试，每次最多一次 DeepSeek 调用、无重试，`max_tokens=8000`、timeout 120 秒；失败不释放已预留预算。旧独立 `00:05 UTC` cron 退役，手动入口也不绕过预算。
 
 新闻发现把受注册资格约束的美国 `.gov` 根域/子域标为 `official`，但不得把名称中仅含 `gov` 的普通域提升为官方来源。若 Tavily 与 Brave 全部 topic 查询均健康、却没有任何 `official` / `cross_checked` 新闻，workflow 必须在 provider 前以 `SKIPPED_NO_CREDIBLE_NEWS` fail-closed 结束：只保留脱敏 discovery artifact 与 GitHub Summary，不调用 DeepSeek、不创建 input/output/projection、不写生产数据。搜索源未完整健康、artifact 结构错误或后续 contract/review/provider/write 失败仍必须非零退出。
 
@@ -1070,6 +1070,12 @@ Provider prompt 必须把 `official` / `cross_checked` 新闻 source IDs 与 `di
 当字段缺失、陈旧、时间错配或任一门控失败时，前端隐藏该编辑层并保留 deterministic macro overview；不得显示旧 `externalAiInterpretationLayer` 卡片。
 
 [ADR-0042](ADR/0042-editorial-retained-snapshot-expiry.md) 将普通全套检查中的保留快照检查与新写入验收分离。仅实际过期、原字节在记录生成时刻通过全部既有 production envelope 断言且当前前端隐藏的旧层可记为 `expired_hidden` warning；不等于新鲜或新写入合格。严格 live CLI、最终 writer 的当前时效与全部输出重验继续保留。
+
+#### macroRiskEditorialPreviousIssue 历史展示契约
+
+[ADR-0046](ADR/0046-editorial-previous-issue.md) 新增此根级可选字段，仅保存上一份生产 radar 快照中最新合格编辑层的原始 envelope。Daily 核对原快照对齐关系，重验原期时钟、Actions 来源、输出 SHA-256、引用账本及全部 production envelope 断言；普通 editorial 必需检查增加独立历史验收。保留原始生成/源数据日期，不改时效标记，不进入当前编辑层，也不参与输入就绪、评分、决策或执行。连续失败或周末继续保留；没有合格历史时仍使用确定性依据。
+
+历史正文允许超过 30 小时，但只能作为明确注明原日期的历史文章展示，不能证明当前时效；当前 AI 的匹配与 30 小时门控不变。页面当前一期合格时优先显示当前一期，否则历史模式显著说明原期数据和正文日期、原期分数以及“当前确定性依据已展开”，不显示实时指示点。任何失败/手工产物不得成为历史。初次保留在集成后的下一次成功 Daily 建立，不手工补写生产 JSON。
 
 #### externalAiInterpretationLayer legacy compatibility contract（no visible consumer）
 
@@ -1487,26 +1493,26 @@ Boundaries:
 
 ### Frontend asset cache version
 
-score-hardening-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
+editorial-history-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `score-hardening-1`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `editorial-history-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=score-hardening-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=score-hardening-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `score-hardening-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=editorial-history-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=editorial-history-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `editorial-history-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs score-hardening-1
-npm run bump:frontend-asset-version -- score-hardening-1
+node scripts/bump-frontend-asset-version.mjs editorial-history-1
+npm run bump:frontend-asset-version -- editorial-history-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `score-hardening-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `editorial-history-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

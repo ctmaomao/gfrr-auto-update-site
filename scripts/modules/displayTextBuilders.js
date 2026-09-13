@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=score-hardening-1';
+﻿import { fmtNumSafe } from './config.js?v=editorial-history-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -6,9 +6,9 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
-import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=score-hardening-1';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=editorial-history-1';
 
-const APP_VERSION = 'score-hardening-1';
+const APP_VERSION = 'editorial-history-1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -232,7 +232,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=score-hardening-1');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=editorial-history-1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

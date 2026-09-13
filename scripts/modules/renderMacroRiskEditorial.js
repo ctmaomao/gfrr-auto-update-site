@@ -50,6 +50,30 @@ export function isMacroRiskEditorialVisible(layer, radarData, now = new Date()) 
     && array(output.crossMarketAnalysis).length >= 3;
 }
 
+// A separately retained production issue is a dated historical article. Its
+// original clocks qualify its original display; they never qualify today's AI.
+export function isMacroRiskEditorialPreviousIssueVisible(layer, radarData, now = new Date()) {
+  if (!isRecord(layer) || !isRecord(radarData) || !Number.isFinite(now.getTime())) return false;
+  const clocks = [layer.sourceDataUpdatedAt, layer.generatedAt, layer.output?.generatedAt, radarData.updatedAt].map(value => Date.parse(value || ''));
+  if (!clocks.every(value => Number.isFinite(value) && value <= now.getTime())) return false;
+  const [sourceTime, generatedTime, outputTime, currentTime] = clocks;
+  if (sourceTime > currentTime || sourceTime > generatedTime || sourceTime > outputTime) return false;
+  if (Math.abs(generatedTime - outputTime) > MAX_AGE_HOURS * 3600000) return false;
+  if (layer.provenance?.generatedBy !== 'github_actions_workflow'
+      || !/^\d+$/u.test(String(layer.provenance?.runId ?? ''))
+      || !/^[a-f0-9]{40}$/u.test(layer.provenance?.sourceCommit || '')) return false;
+  if (!/^[a-f0-9]{64}$/u.test(layer.provenance?.inputDigest || '')
+      || !/^[a-f0-9]{64}$/u.test(layer.provenance?.artifactDigest || '')
+      || layer.validation?.artifactDigest !== layer.provenance.artifactDigest) return false;
+  if (layer.output?.model !== layer.model || layer.output?.sourceDataUpdatedAt !== layer.sourceDataUpdatedAt
+      || layer.freshness?.artifactGeneratedAt !== layer.output?.generatedAt
+      || layer.freshness?.sourceDataUpdatedAt !== layer.sourceDataUpdatedAt) return false;
+  for (const key of ['affectsWorldOrder', 'affectsOdp', 'affectsBubbleWatch']) {
+    if (layer.boundaries?.[key] !== false) return false;
+  }
+  return isMacroRiskEditorialVisible(layer, { updatedAt: layer.sourceDataUpdatedAt }, new Date(Math.max(generatedTime, outputTime)));
+}
+
 function sourceIndex(layer) {
   const ordered = array(layer.sourceLedger);
   return new Map(ordered.map((source, index) => [source.id, { source, number: index + 1 }]));
@@ -171,23 +195,32 @@ function renderSources(layer, output, index) {
   return details;
 }
 
-function renderEditorialContent(layer) {
+function renderEditorialContent(layer, previousIssue = false, radarData = null) {
   const output = layer.output;
   const index = sourceIndex(layer);
   const fragment = document.createDocumentFragment();
   const header = el('header', 'macro-editorial-header');
   const eyebrow = el('div', 'macro-editorial-eyebrow');
-  eyebrow.append(el('span', 'macro-editorial-live-dot', ''), document.createTextNode(' 本期宏观判读 · THIS ISSUE\'S VERDICT'));
+  if (previousIssue) eyebrow.append(document.createTextNode('上一期宏观判读 · 历史留存'));
+  else eyebrow.append(el('span', 'macro-editorial-live-dot', ''), document.createTextNode(' 本期宏观判读 · THIS ISSUE\'S VERDICT'));
   const badges = el('div', 'macro-editorial-badges');
   badges.append(el('span', '', 'DEEPSEEK'), el('span', '', '只读编辑层'), el('span', '', '不进评分'));
   const top = el('div', 'macro-editorial-header-top');
   top.append(eyebrow, badges);
-  header.append(top, el('h2', '', text(output.headlineZh)));
+  header.append(top);
+  if (previousIssue) {
+    const notice = el('p', 'macro-editorial-previous-notice');
+    notice.append(el('strong', '', layer.sourceDataUpdatedAt !== radarData?.updatedAt
+      ? '上一期判读，当前数据已更新。' : '上一期判读，暂未有新的合格 AI 判读。'),
+    document.createTextNode(` 原期数据：${formatUtc(layer.sourceDataUpdatedAt)}；原文生成：${formatUtc(layer.generatedAt)}。以下正文、分数及观察条件均对应原期，不代表本期最新判断；当前确定性依据已展开。`));
+    header.append(notice);
+  }
+  header.append(el('h2', '', text(output.headlineZh)));
   header.querySelector('h2').id = 'macro-editorial-title';
   header.append(el('p', 'macro-editorial-lead', text(output.leadZh)));
   const meta = el('div', 'macro-editorial-meta');
   meta.append(
-    el('span', '', `综合分 ${Number.isFinite(output.scoreSynthesis?.score) ? output.scoreSynthesis.score : '沿用站内'}`),
+    el('span', '', `${previousIssue ? '原期综合分' : '综合分'} ${Number.isFinite(output.scoreSynthesis?.score) ? output.scoreSynthesis.score : previousIssue ? '见原期正文' : '沿用站内'}`),
     el('span', '', `置信度 ${text(output.confidence?.level)} ${Number.isFinite(output.confidence?.score) ? Math.round(output.confidence.score) : '—'}/100`),
     el('span', '', `生成 ${formatUtc(layer.generatedAt)}`),
     el('span', '', `复核 ${text(layer.qualityReview?.status).toUpperCase()}`)
@@ -213,7 +246,9 @@ function renderEditorialContent(layer) {
   fragment.append(history, renderWatch(output, index));
 
   const footer = el('footer', 'macro-editorial-footer');
-  footer.append(el('p', '', `置信度说明：${text(output.confidence?.reasonZh)}`), el('p', '', '边界：本判读只解释当前宏观压力，不构成危机预测或投资建议，也不改变任何评分、决策与执行字段。'), renderSources(layer, output, index));
+  footer.append(el('p', '', `置信度说明：${text(output.confidence?.reasonZh)}`), el('p', '', previousIssue
+    ? '历史判读仅解释原期宏观压力。仅供参考,不参与平台的风险打分与决策。'
+    : '边界：本判读只解释当前宏观压力，不构成危机预测或投资建议，也不改变任何评分、决策与执行字段。'), renderSources(layer, output, index));
   fragment.append(footer);
   return fragment;
 }
@@ -222,20 +257,26 @@ export function renderMacroRiskEditorial({ radarData, now = new Date() }) {
   const root = document.getElementById('macro-risk-editorial');
   const content = document.getElementById('macro-editorial-content');
   if (!root || !content) return false;
-  const layer = radarData?.macroRiskEditorialLayer;
-  if (!isMacroRiskEditorialVisible(layer, radarData, now)) {
-    root.hidden = true;
-    content.replaceChildren();
-    return false;
+  const choices = [
+    { layer: radarData?.macroRiskEditorialLayer, current: true },
+    { layer: radarData?.macroRiskEditorialPreviousIssue, current: false },
+  ];
+  for (const { layer, current } of choices) {
+    const eligible = current ? isMacroRiskEditorialVisible(layer, radarData, now)
+      : isMacroRiskEditorialPreviousIssueVisible(layer, radarData, now);
+    if (!eligible) continue;
+    try {
+      content.replaceChildren(renderEditorialContent(layer, !current, radarData));
+      root.hidden = false;
+      root.dataset.editorialMode = current ? 'current' : 'previous';
+      // Only CURRENT AI can fold today's deterministic evidence.
+      return current;
+    } catch (error) {
+      console.error('[renderMacroRiskEditorial] render failed:', error);
+    }
   }
-  try {
-    content.replaceChildren(renderEditorialContent(layer));
-    root.hidden = false;
-    return true;
-  } catch (error) {
-    root.hidden = true;
-    content.replaceChildren();
-    console.error('[renderMacroRiskEditorial] render failed:', error);
-    return false;
-  }
+  root.hidden = true;
+  root.dataset.editorialMode = 'unavailable';
+  content.replaceChildren();
+  return false;
 }

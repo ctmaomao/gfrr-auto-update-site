@@ -10,7 +10,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `score-hardening-1` |
+| Cache version | `editorial-history-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -24,6 +24,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ---
 
 ## Section 2 · Open Backlog Items
+
+### 2026-09-12 AI 更新间隙保留上一期判读
+
+- **Acceptance baseline**：owner 明确选择“保留每日更新，间隙展示上一期 AI”。沿用每日更新和既有费用预算，原日期及“上一期判读，当前数据已更新”显著披露，当前确定性依据继续展开；新一期合格后优先展示，不改旧日期、不把历史观点当作当前观点。实施与验证按 [ADR-0046](ADR/0046-editorial-previous-issue.md)，尚未取得本次合并前独立审阅结果。
+- **现场证据**：周六 Daily 于 00:27 UTC 更新；00:29/00:55 admission 等待上游，AI 于 01:38 生成。运行 34665377398 一次调用、零重试并成功写入；检查时 Pages 与自定义域均已正常显示同一期。原因是上游就绪间隔及当前编辑层必须匹配 Daily 时间，不是周末停更。
+- **实施范围**：Daily 仅保留上一份生产快照中合格编辑层的原字节到可选历史字段；历史验收复验原期时钟、来源、摘要和展示边界，失败不覆盖合格旧期。前端同位置区分当前/历史/不可用；历史模式保留原期分数及日期说明，不折叠当前确定性依据。不修改 provider、预算、workflow、主分或生产 JSON。
+- **本地验收**：21 项历史保留单元回归、6 项桌面/手机浏览器验收、真实生产快照只读保留预演、check:changed 实际执行完整 check:all、node --check scripts/app.js、git diff --check 均退出 0。原有 checker 断言、provider/writer、预算、生产 JSON 与 workflow diff 为空；规则/决策模块只有 asset query 同步。1440/390 像素截图及 CSS 取样已核对，沿用 DESIGN §2/3 字体与色板。
+- **上线边界**：首次历史字段将在集成后下一次成功 Daily 自动建立，已打开的页面刷新后读取新数据。独立集成审阅、发布及线上历史模式验收未完成；本轮未调用付费 AI。
 
 ### 2026-09-12 ACLED 自动准备 main 的发布入口
 
