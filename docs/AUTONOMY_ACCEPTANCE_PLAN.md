@@ -22,6 +22,8 @@ Daily/GDELT已有本任务的自然运行跟进；不为补回执再调用付费
 
 输出为 ignored `manual-artifacts/publication-monitor/latest.json`、Actions Summary 和保存 90 天的 `published-snapshots` artifact；仅含固定标识符、状态码、版本、hash、原日期、年龄、异常类型，不含原始新闻正文/URL/凭证。投递故障 `fail` 退出 1；来源降级或发布过渡 `warn` 退出 0，但 Summary/artifact 明示，不把 job 绿等同来源全新。当前只使用 GitHub 自身运行失败通知，不添加外部收件人或重复提醒。
 
+首次上线验收已完成：[PR #353](https://github.com/ctmaomao/gfrr-auto-update-site/pull/353) 合并为 `782c0ab4`，main 运行 [34751353161](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34751353161) 的实际 artifact 已下载复核。2026-09-13T10:15:14Z 共 12 个 HTTP 200、两站版本/hash 一致、交付错误为零；ACLED/GDELT 来源降级正确保留为 warn。这里只完成实现、部署和首次探针验收，不是 7 天基线或 28 天可靠性达标；6 小时采样也不能精确重建采样间的中断时长。
+
 先覆盖首页脚本、radar、World Order、ODP和专用Oil News。按各自既有源契约区分“生成时间”“观察时间”“发布日期”“缺失/降级”，不得用文件写入时间替代观测日期。将网络失败、过期、跨站版本差异、来源不可用分别报告。只报警不触发付费重跑、数据改写或自动降权发布。
 
 验收用本地固定HTTP响应覆盖：超时、坏JSON、未来日期、旧正文新缓存头、同一版本内容不一致、单站失败；确认一次故障不会抹掉上一份可用数据。先进行7天只读基线，再用连续28天记录报告可用率、最长中断、Daily超过36小时的时长、来源覆盖率和失败类型。拟定服务目标为Daily快照在至少99%的观察时点不超过36小时；这是运营目标，未测量前不声明达标，不能代表金融判断准确率。

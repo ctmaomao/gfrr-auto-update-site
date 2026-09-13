@@ -25,37 +25,48 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 2 · Open Backlog Items
 
+### 2026-09-13 分项交付与状态收敛
+
+- **Acceptance baseline**：本轮第四项使用 neat-freak 仅同步受影响待办、验收计划和 ACLED 来源状态；沿用 owner 分项提交/推送、独立 AI 审阅与合并授权，不改个人记忆、全局指令、数据或历史原件。
+- **已完成**：#351 上一期 AI 展示集成与双站交付；#353 只读巡检实现、部署及首次真实 artifact；#354 GDELT 自然限流执行复核。下方补齐 #350/#352 既有交付，旧阶段“待合并/待发布”不再作为当前任务。
+- **不能提前关闭**：首次历史 AI 字段等待自然 Daily；ARR 新版周一链路最早等待 09-14 排程及后续跨运行证据；新闻 v5、压力研究 v2 和巡检 7/28 天分别累计自己的真实样本。ACLED/运输独立来源许可没有因本轮授权而获得第三方批准；不重复发信、付费请求或晋升基线。
+
 ### 2026-09-13 GDELT DOC 冷却自然验收
 
 - **Acceptance baseline**：本轮第三项只复核现行策略的真实执行，按证据决定是否修改；owner 已授权分项提交/推送、独立 AI 审阅和合并。不为验收额外请求 GDELT，不增加付费调用或新来源。
 - **结论**：最新 committed `data/gdelt-news-cache.json` 三次新代码自然尝试（09-11T00:38:42Z、09-12T04:56:40Z、09-13T05:18:32Z）全部 429，但均 attempts=1/retryCount=0；相邻间隔 28.30h、24.36h，24h 冷却确已生效。09-09 的两次请求属于旧版本，不是回归。Oil News [34739967496](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34739967496) 成功不代表 DOC 恢复；Tavily/Brave 各 4/4 查询成功，来源隔离正常。
 - **处理**：保留既有代码/24h 冷却与 fail-closed，将 [来源台账](DATA_SOURCES.md#2026-07-31-gdelt-doc-resilience-follow-up) 的旧“一次重试”描述明确为非限流错误。四项既有离线限流测试退出 0，含真实 caller 持久化冷却与下次零请求；没有生产修改。
 - **关闭与保留**：关闭“新代码首次自然请求/零重试验收”待办；DOC 上游不可用仍为来源缺口，最新 7 日成功 1/7、30 日 6/51，不声称恢复，也不降低新闻 v5 质量/观察门槛。
+- **交付**：[PR #354](https://github.com/ctmaomao/gfrr-auto-update-site/pull/354) 已合并 `21a7dc71`；提交 `7d423ede`、完整本地检查和独立 AI 审阅通过，精确 CI `34751585371` 成功。仅文档，无需额外数据刷新或部署。
 
 ### 2026-09-13 双站发布快照只读巡检
 
 - **Acceptance baseline**：沿用本轮 owner 完成可做事项及 commit/push、独立 AI 审阅、合并/上线验收授权。仅现有 Pages/custom 域名固定 6 个文件的只读巡检；没有 Daily/AI 重跑、来源接入、生产写入或自动恢复授权扩展。
 - **实施**：单轮 12 请求、并发 4、含正文 10 秒/2 MiB 上限、无跳转/重试；逐文件提交时间的交付宽限（Pages 1h，custom 按既有 3h 排程加余量为 4h）、固定 HEAD hash、跨站版本/内容比较、JSON 交付年龄与原来源日期分离。来源降级单列警告。main-only 每 6 小时 workflow，权限 contents:read，90 天脱敏 artifact；默认本地命令只预演。详见 [验收计划](AUTONOMY_ACCEPTANCE_PLAN.md)。
-- **验证**：离线测试与独立 AI 复核包括真实 HEAD 的六文件结构冒烟和两站不同发布节奏。2026-09-13T10:07:25Z 固定基线 `85181c98` 双站 12 请求无交付错误，版本 `editorial-history-1` 和正文 hash 一致；World/News 的来源降级明确记 warn，没有触发恢复。完整套件、远端 CI/集成与首次 workflow 回执待最终记录。
+- **验证与交付**：14 项离线测试、完整套件、独立 AI 审阅及精确 CI `34751187552` 通过；[PR #353](https://github.com/ctmaomao/gfrr-auto-update-site/pull/353) 提交 `cb86291c` 已合并为 `782c0ab4`。首次 main 运行 [34751353161](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34751353161) 成功，下载实查 artifact：10:15:14 UTC、固定基线 `782c0ab4`、12 个 HTTP 200、无交付错误，版本 `editorial-history-1` 和正文 hash 跨站一致；World/News 来源降级明确记 warn，没有触发恢复。此前本地 10:07:25 UTC 实读结果相同。
 - **剩余验收**：7 天基线、28 天可靠性与 GitHub 外监测环境尚未完成，不能以初次成功替代长期验收。
 
 ### 2026-09-12 AI 更新间隙保留上一期判读
 
 - **2026-09-13 集成授权**：owner 授权完成复核所列可完成工作及所需提交、推送、独立 AI 审阅、合并和发布。本项仅完成 #351：合入最新 main 时同时保留压力研究 vintage 检查、ADR-0047 与交接；最终提交须重新完整验证和独立审阅。其它三项另开串行 PR；不扩大付费调用、来源许可或观察期晋升。
-- **Acceptance baseline**：owner 明确选择“保留每日更新，间隙展示上一期 AI”。沿用每日更新和既有费用预算，原日期及“上一期判读，当前数据已更新”显著披露，当前确定性依据继续展开；新一期合格后优先展示，不改旧日期、不把历史观点当作当前观点。实施与验证按 [ADR-0046](ADR/0046-editorial-previous-issue.md)，尚未取得本次合并前独立审阅结果。
+- **Acceptance baseline**：owner 明确选择“保留每日更新，间隙展示上一期 AI”。沿用每日更新和既有费用预算，原日期及“上一期判读，当前数据已更新”显著披露，当前确定性依据继续展开；新一期合格后优先展示，不改旧日期、不把历史观点当作当前观点。实施与验证按 [ADR-0046](ADR/0046-editorial-previous-issue.md)，最终独立 AI 审阅已通过。
 - **现场证据**：周六 Daily 于 00:27 UTC 更新；00:29/00:55 admission 等待上游，AI 于 01:38 生成。运行 34665377398 一次调用、零重试并成功写入；检查时 Pages 与自定义域均已正常显示同一期。原因是上游就绪间隔及当前编辑层必须匹配 Daily 时间，不是周末停更。
 - **实施范围**：Daily 仅保留上一份生产快照中合格编辑层的原字节到可选历史字段；历史验收复验原期时钟、来源、摘要和展示边界，失败不覆盖合格旧期。前端同位置区分当前/历史/不可用；历史模式保留原期分数及日期说明，不折叠当前确定性依据。不修改 provider、预算、workflow、主分或生产 JSON。
 - **本地验收**：21 项历史保留单元回归、3 项浏览器测试（含 1440/390 宽度历史→当前两个阶段）、真实生产快照只读保留预演、check:changed 实际执行完整 check:all、node --check scripts/app.js、git diff --check 均退出 0。原有 checker 断言、provider/writer、预算、生产 JSON 与 workflow diff 为空；规则/决策模块只有 asset query 同步。1440/390 像素截图及 CSS 取样已核对，沿用 DESIGN §2/3 字体与色板。
-- **上线边界**：首次历史字段将在集成后下一次成功 Daily 自动建立，已打开的页面刷新后读取新数据。独立集成审阅、发布及线上历史模式验收未完成；本轮未调用付费 AI。
+- **集成交付**：[PR #351](https://github.com/ctmaomao/gfrr-auto-update-site/pull/351) 已于 09-13T09:57:59Z 合并。GitHub 合并接口故障期间，将已独立审阅且 CI `34750481820` 通过的同一提交 `85181c98` 正常快进推送 main，无强推或历史改写；GitHub 随后确认 MERGED。Pages `34750625423`、EdgeOne `34750625287` 成功，双站实际脚本版本和正文已核对。
+- **上线边界**：首次历史字段仍等待下一次成功自然 Daily 建立，不能以夹具浏览器通过冒充线上历史样本验收；本轮未调用付费 AI。
 
 ### 2026-09-13 压力模型现阶段验收与研究采集修复
 
 - **Acceptance baseline**：owner 要求执行现在可完成的后续工作；沿用本任务模型研究、修复、独立 AI 验证、推送/PR/CI 后集成授权，主目标保持当下压力。另一个 PR #351 的 AI 展示任务保持原现场，本轮在基于 `5ba0de72` 的独立目录执行，不混入该 PR。
 - **实际验收**：9 月 12/13 日自然 Daily 均成功并真正发布；结构源原日期保留。v1 自然影子运行 `34676417031` 成功续接两日真实记录并通过旧版重放；此前 PR #347 已合并、两站发布与桌面/手机验收通过，修正旧条目仍写“待回执”的历史状态。
 - **问题与实施**：[ADR-0047](ADR/0047-pressure-evidence-continuity.md)、[后续报告](PRESSURE_MODEL_FOLLOWUP_2026_09_13.md)。修复整 Daily 文件 hash 误重置与单候选缺周阻断整条记录；v2 保留逐候选状态/null/有效分数，并提供同日期成对比较。增加历史版本严格审计、滚动校准漂移及有效观察块缺口披露。旧两天原样保留，新 v2 不借用旧时长；生产数值逻辑、阈值、数据及前端未改。
-- **本地验收**：`check:changed` 实际执行完整 `check:all`、22 项专项、`test:unit:coverage`、`git diff --check` 均退出 0；单元 591 项，590 通过，1 项既有本地真实原件测试因独立目录没有 ignored 原件而按原规则跳过，无失败。独立 AI 实际复核通过。双站实读时间与上述 Daily 一致，结构原日期和主分均一致。已完成有界 ALFRED/FRED 真实取数、离线复算与两天候选变化分解；SPX 历史版本不可用、一个 VIX 版本含未来观察并拒绝，完整 PIT 尚未成立。v2 远端 CI/集成/运行回执待记录。
+- **本地验收**：`check:changed` 实际执行完整 `check:all`、22 项专项、`test:unit:coverage`、`git diff --check` 均退出 0；单元 591 项，590 通过，1 项既有本地真实原件测试因独立目录没有 ignored 原件而按原规则跳过，无失败。独立 AI 实际复核通过。双站实读时间与上述 Daily 一致，结构原日期和主分均一致。已完成有界 ALFRED/FRED 真实取数、离线复算与两天候选变化分解；SPX 历史版本不可用、一个 VIX 版本含未来观察并拒绝，完整 PIT 尚未成立。
+- **远端回执**：[PR #352](https://github.com/ctmaomao/gfrr-auto-update-site/pull/352) 已合并 `01a77891`，提交 `ad1b44e8` 的 CI `34730335762` 成功。新版真实影子运行 [34741965055](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34741965055) 成功：v2 cohort `pressure-shadow-a68f92b61895ef3b` 仅 1 条/1 个 distinct input、elapsedDays=0、benchmarkWeeks=0，所有门槛仍未通过；不借用 v1 旧两天。
 
 ### 2026-09-12 ACLED 自动准备 main 的发布入口
+
+- **当前回执**：[PR #350](https://github.com/ctmaomao/gfrr-auto-update-site/pull/350) 已合并 `4fcfedbb`，提交 `698937b7` 的 CI `34654123831` 成功。本批配置已发布 `b06aaaf4`，World Order [34654473322](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34654473322) 成功；09-13 最新产物与双站复核确认六地区同窗、周截止 08-28、月 as-of 08-21。周来源 aging/partial 如实保留，不是本地配置未发布。原始 XLSX、备份、stash 和历史工作树未在本轮清理。
 
 - **Acceptance baseline**：owner 要求改进 pull、monthly status、weekly status、publish 四条指令，使以后自动准确推送 main；实施新增显式入口 acled:publish:auto，继续使用原 main-only 发布器，不把功能分支合入 main。2026-09-12 owner 明确授权推送两项修复、创建 PR、进行一次独立 AI 审阅，在最终提交的 CI 和审阅通过后合并，再处理分支并发布本批 ACLED 数据；本次独立 AI 审阅替代人工仅适用于此 PR，不扩大付费 AI、其它数据刷新或删除范围。
 - **实施**：只读预演；实际执行先取最新 origin/main，检查两边工作区/索引/历史，按允许路径备份并校验 ACLED 配置、保留 stash，安全释放其它干净工作树上的 main 并在当前目录快进，恢复配置原字节，再调用 main 的既有 status/发布器。保留其它工作目录、分支及 ignored XLSX；Git 公共目录锁阻止重复自动入口。无关改动、暂存、锁定/脏工作树、未推送 main、配置基线变化或未完成 Git 操作均停止，不强推或自动 rebase。
@@ -66,7 +77,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 - **Acceptance baseline**：owner 提供本地 weekly status 与 publish 失败日志；本轮修复已复现的测试数据问题，保留其新生成的六地区配置和原始 XLSX。后续明确集成、独立 AI 审阅与数据发布授权见上方自动入口记录，不沿用旧编辑层任务的授权。
 - **根因与实施**：旧测试复制当前 operator 配置后只改顶层 latestWeek；重新标准化带有 common-week-grid-v1 证据时，窗口日期未同步，真实 checker 报 window version/date mismatch。测试改用独立合成配置，正常、过期及未来日期均带一致的十二周网格和源覆盖；追加真实 CLI 对日期不一致的拒绝与旧格式警告验证，保留六地区完整性、解析前拒绝和原字节保留检查。生产 checker、sanitizer、发布保护均未改动。
 - **本地验证**：修复前复现同一错误；修复后 weekly aggregate 与四项测试通过，check:changed 实际执行完整 check:all 并退出 0，git diff --check 退出 0。用户配置 SHA-256 与修复前一致；生产 checker 与发布 guard 的 diff 为空。不以本地检查通过替代发布验收。
-- **操作状态**：修复分支 codex/acled-weekly-cli-fixture 基于 origin/main 7dc7f80f；用户配置仍为未提交改动，latestWeek=2026-08-28、eventsLast4Weeks=33738。git pull origin main 不切换当前分支；main 当前在另一个干净工作树 gfrr-acled-publish-20260909，发布前须处理分支位置并重新核对同步状态，不绕过 main-only guard。
+- **历史操作状态**：本条最初基于 `7dc7f80f`，当时用户配置未提交且 main 在另一工作树。该问题已由上项 #350 与 `b06aaaf4` 发布解决；不再按旧分支位置重复操作，未来发布仍须现场核对 main-only guard。
 
 ### 2026-09-11 额外一次 AI 恢复授权
 
@@ -533,10 +544,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **工作基线**：origin/main 7dc7f80f；当前 codex/acled-weekly-cli-fixture，保留用户 ACLED 周度配置改动和原始文件。
-- **当前任务**：周度 CLI 测试修复已本地提交 8369580d；同一逻辑任务追加 acled:publish:auto 安全准备 main，使用原发布器，保留用户配置。实现与验证记录见 Section 2。
-- **下一步**：按本次明确授权推送并创建 PR，最终提交的一次独立 AI 审阅与 CI 通过后合并；再用新入口处理 main 占用、发布本批 ACLED，并核对 World Order 实际产物与部署。
-- **阻塞或等待**：远端审阅、CI、合并及本批发布待实际回执；main 仍在另一干净工作树，新入口获准保留目录/原文件并释放分支，不删除工作树或绕过 main-only guard。
+- **工作基线**：2026-09-13 收尾基于 main `21a7dc71`，分支 `codex/september-13-delivery-handoff`；此前 #351、#353、#354 均已分项验证/推送/独立审阅/合并。此文档提交自身的最终 SHA/CI/集成状态以对应 PR 回执为准。
+- **当前完成**：上一期 AI 连续展示代码和双站版本已交付；只读巡检首次真实 artifact 验收完成；GDELT 限流自然执行确认完成；#350 ACLED 发布与 #352 研究采集回执已补齐。没有在本轮补发邮件、额外 Daily/AI 刷新、清理用户数据或自动晋升。
+- **真实等待**：自然 Daily 的首次历史 AI 字段；09-14 及后续周一 ARR 上传/跨运行下载；新闻 v5 与压力 v2 新 cohort；巡检 7/28 天观测；ACLED 资源级许可与等价性。手工 ACLED 数据仍按原日期降级，不把文件生成时间当来源新鲜。
+- **后续触发条件**：只在新自然运行、足量样本、来源许可/数据或真实故障出现时继续对应事项。GitHub 外监测环境尚未选择，不能以本轮 GitHub 内巡检宣称独立容灾。卫星质量没有当前必须晋升的动作；既有观察门槛保留。
 
 ### 2026-09-10 GDELT 交接（历史）
 
@@ -573,6 +584,7 @@ Add or update backlog items with these rules:
 
 ### 未关闭的观察事项（本轮范围外状态不据旧记录推断）
 
-- ACLED 滞后地区/月表、StockQ/ARR 来源及新闻现行 v5 质量观察仍按 Section 2 处理；旧 v2/v3/v4 cohort 保留但不能借给 v5。其它卫星等观察事项没有因本轮文档收敛而被关闭，也未被替换为新的自动晋升授权。
+- 09-13 新闻 readiness [34745747003](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34745747003)：现行 v5 仅 19 usable/5.01 天，qualityGatePassed=false、promotionEligible=false；全历史汇总的 236 usable/43.83 天不能借给 v5 的 30 天/120 样本门槛。
+- 卫星质量 [34740216377](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/34740216377)：42/42 设施，当前/候选都为成熟观察窗，manualAction.requiredNow=false；不因候选时长继续增长自动晋升。ARR 最新周一运行仍是 09-07，新链路尚无后续周一真实证据。ACLED、StockQ/运输许可缺口按 Section 2 保留。
 
 此前逐会话记录原文见 [历史交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-05)。仅在核对对应日期事件时读取；不把旧“下一步”恢复成当前任务。
