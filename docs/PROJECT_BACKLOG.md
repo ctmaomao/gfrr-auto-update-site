@@ -6,6 +6,17 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-14 Bubble Watch 更新与参考站差异修复（进行中）
+
+- Owner acceptance baseline: 先修复已确认的 VC 旧观测冒充新日期、Neocloud 覆盖不足判绿、RPO 可比期间/缺失披露、广度真实来源/交易日，再运行正式刷新链路；已明确授权该链路既有 Wind 付费回退及一次下游 DeepSeek 判读，不重复询问费用、不另行重复 dispatch AI。
+- 2026-09-14 owner 明确授权本次由独立 AI reviewer 审阅 PR #356，通过后直接合并并正式刷新；本次例外不改变其它任务的人工 review 要求。独立 reviewer 已审阅代码 head `a7343d1673a7fe4e92d17dc225336d9501941099`，未发现阻断级问题，8 项纯单元用例及 diff 检查 exit 0；VC checker 修订与浏览器 fixture 修复均通过审阅。该 head 的 GitHub CI 34823284943 全绿，最终集成仍核对待合并 head 与检查状态。
+- [ADR-0048](ADR/0048-bubble-source-evidence-policy.md) 明示 VC checker 从历史数值下限改为原文重放的契约修订，须独立 review 后集成。Core-23/Shadow-4 与阈值不变。
+- 初查生产仍为 09-07、参考站为 09-13；当日 scheduled run 尚未启动，历史周一同任务曾延后数小时。免费隔离旧代码候选 30.4% / 45.7，与参考站 32% / 48 的差异来自计分集合及 insider/neocloud 状态，不是算术错误。
+- 初轮 `npm run check:changed` 执行完整 `check:all`、源证据回归用例、语法及 diff 检查均 exit 0。免费隔离 build exit 0，候选七项 Bubble Watch 契约通过；修复后为 30.4% / 47.8、stage 60 / trigger 38.5，Neocloud 按既有研究回退转黄，VC 采用约 70%，广度真实观察日 09-11，RPO 披露 3/4 家与 06-30 报告期。最后补充的严格季度间隔、窄句型及广度研究回退标签守卫另经单元测试，未再次运行整条网络构建。
+- [PR #356](https://github.com/ctmaomao/gfrr-auto-update-site/pull/356) 初轮 CI 34822582050 的 full suite 通过，浏览器 smoke 有 3 个既有宏观场景失败：样本仅令当期 AI 失效，未清除已批准新增的 `macroRiskEditorialPreviousIssue`，实际正确展示上一期，违背旧样本的隐藏预期。现补齐这 3 个无合格历史场景的数据模拟，保留全部原隐藏断言，既有 editorial-history 浏览器测试已覆盖 1440/390px 上一期显示、原日期/分数与当期依据展开的正向验收；生产 rendering 不变。
+- 最后一次本地全套 `check:changed` / `check:all`、8 项源证据用例、全部既有浏览器用例、文档与语法检查均 exit 0；远端须以最新 PR head 的 CI 结果为准。
+- 自查已核对四项实施与 acceptance baseline 一致；唯一既有 assertion 修订在 ADR-0048 明示，保留原文分母和 parser 断言，无新增 ignore/skip。正式刷新、下游判读和双站生产验收待独立 review 后执行。完整 27 项隔离对照保存在 ignored `manual-artifacts/bubble-compare-20260914/fixed-report.md`；最终分数以正式产物为准。
+
 | 项 | 当前依据 / 职责 |
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |

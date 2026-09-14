@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { assessUnderlyingObservationFreshness } from './bubble-watch/observation-freshness.mjs';
+import { extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
 import {
   evaluateInsiderLiveCoverage,
   INSIDER_PARTIAL_COVERAGE_POLICY
@@ -585,8 +586,11 @@ const vcAiShare = indicatorById.vc_ai_share;
 if (vcAiShare?.provenance?.mode === 'auto' && /Crunchbase News WordPress API/iu.test(vcAiShare.provenance?.detail?.source || '')) {
   const detail = vcAiShare.provenance.detail;
   check('contract', detail.parser === 'ai_sector_total_global_vc_sentence_v2', 'vc_ai_share Crunchbase 路径必须标注 v2 parser');
-  check('contract', Number(detail.aiFundingB) >= 200 && Number(detail.sharePct) >= 75,
-    `vc_ai_share Crunchbase 解析疑似误抓巨额轮次: aiFundingB=${detail.aiFundingB}, sharePct=${detail.sharePct}`);
+  // ADR-0048: validate original sector evidence, not Q1 2026's frozen numerical floor.
+  const replay = extractVcAiFundingShare(detail.evidenceText);
+  check('contract', replay && replay.aiFundingB === detail.aiFundingB && replay.sharePct === detail.sharePct
+    && detail.aiFundingB > 0 && detail.sharePct > 0 && detail.sharePct <= 100,
+    `vc_ai_share Crunchbase 数值必须可从全球 AI 行业占比原文重放: aiFundingB=${detail.aiFundingB}, sharePct=${detail.sharePct}`);
   check('contract', /total global venture funding/iu.test(detail.evidenceText || ''),
     'vc_ai_share evidenceText 必须来自 total global venture funding 句子');
 }
