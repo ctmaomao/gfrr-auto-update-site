@@ -6,7 +6,17 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
-### 2026-09-14 Bubble Watch 更新与参考站差异修复（进行中）
+### 2026-09-14 AI 基建信用利差图（本地实施，待公开数据许可与集成 review）
+
+- Owner acceptance baseline：在 Bubble Watch 的周度趋势之后、分类指标之前，按参考站 1:1 增加 HY / CCC / IG 一年信用利差三图。保持三列/720px 单列、20px gap、180px 图高、标题/数值/五观测间隔变化和 HY 350/500 虚线。此次复刻采用上游黄/红阈值线颜色，范围仅该独立页图表，不推广首页色板；沿用 DESIGN §4.4 独立页边界。
+- FRED 序列为 BAMLH0A0HYM2 / BAMLH0A3HYC / BAMLC0A0CM；CCC 与 IG 是市场代理，并非 Neocloud / hyperscaler 专属券篮子。嵌入现有 Bubble builder 的可选 credit_spreads，属于 daily_history_layer → frontend_display_layer；日度观测随既有周一刷新，不新增 provider、workflow、生产依赖或计分输入。
+- 数据复用前审阅 FRED 官方 ICE series notes：公开再发布须 ICE 书面许可。config/bubble-credit-spreads.json 默认关闭，只有 enabled=true 与 publicationRights=owner_confirmed 同时成立才运行生产收集。已询问 owner 许可覆盖情况；未确认前仅本地预览，不推送真实历史数据。
+- 单序列失败保留合格历史及原 fetchedAt；缺失不作零；拒绝未来/无效/倒序/重复日期、不足一年覆盖和来源倒退；展示按实际观测日独立判断超过 10 天，并披露 fallback/missing。增加源解析和浏览器回归，Core-23/Shadow-4、主分与判读输入不变。
+- 前任务 PR #356 的独立 AI review 例外仅覆盖该 PR，未沿用到本功能。验证与预览证据见 ignored manual-artifacts/bubble-credit-20260914/。
+
+### 2026-09-14 Bubble Watch 更新与参考站差异修复（已上线）
+
+- 完成记录：PR #356 合并 522c4e0，正式刷新 34827690283 成功，生产数据提交 26f7e99；Pages 34828000873 与 EdgeOne 34828119202 发布成功，三端 JSON SHA256 一致。正式主分 30.4%、压力 47.8、Stage 60、Trigger 38.5。下游编辑 34828000991 因可信新闻为零 expected skip，provider 调用与 AI 写入均为零。以下保留修订时审阅证据。
 
 - Owner acceptance baseline: 先修复已确认的 VC 旧观测冒充新日期、Neocloud 覆盖不足判绿、RPO 可比期间/缺失披露、广度真实来源/交易日，再运行正式刷新链路；已明确授权该链路既有 Wind 付费回退及一次下游 DeepSeek 判读，不重复询问费用、不另行重复 dispatch AI。
 - 2026-09-14 owner 明确授权本次由独立 AI reviewer 审阅 PR #356，通过后直接合并并正式刷新；本次例外不改变其它任务的人工 review 要求。独立 reviewer 已审阅代码 head `a7343d1673a7fe4e92d17dc225336d9501941099`，未发现阻断级问题，8 项纯单元用例及 diff 检查 exit 0；VC checker 修订与浏览器 fixture 修复均通过审阅。该 head 的 GitHub CI 34823284943 全绿，最终集成仍核对待合并 head 与检查状态。

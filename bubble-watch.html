@@ -136,6 +136,15 @@
   .trend-legend { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
   #trend-chart-wrap { position: relative; height: 220px; }
   #trend-chart-wrap svg { display: block; }
+  /* Upstream credit small multiples: same position, 20px gap and 180px plots. */
+  .credit-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  @media (max-width: 720px) { .credit-grid { grid-template-columns: 1fr; } }
+  .credit-label { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .credit-label b { color: var(--ink); letter-spacing: 0.08em; }
+  .credit-chart-wrap { position: relative; height: 180px; min-width: 0; }
+  .credit-chart-wrap svg { display: block; width: 100%; height: 180px; touch-action: pan-y; }
+  .credit-tooltip { position: absolute; display: none; background: var(--ink); color: var(--bg); font-family: "IBM Plex Mono", monospace; font-size: 11px; padding: 6px 9px; pointer-events: none; z-index: 5; line-height: 1.6; white-space: nowrap; }
+  .credit-notice { font-family: "IBM Plex Mono", monospace; color: var(--muted); font-size: 10px; line-height: 1.6; }
   #trend-tooltip { position: absolute; display: none; background: #1A1815; color: #FBF7F0; font-family: "IBM Plex Mono", monospace; font-size: 11px; padding: 6px 9px; pointer-events: none; white-space: nowrap; z-index: 5; line-height: 1.6; }
 
   /* Categories */
@@ -605,6 +614,8 @@ function render(data) {
       <div id="trend-chart-wrap"><div id="trend-tooltip"></div></div>
     </section>
 
+    ${creditSectionHtml(data.credit_spreads)}
+
     ${CATEGORY_ORDER.map(cat => {
       const items = indicators.filter(i => i.category === cat.key);
       if (!items.length) return '';
@@ -706,6 +717,7 @@ function render(data) {
   `;
 
   drawTrend(data);
+  drawCreditTrend(data.credit_spreads);
 }
 
 // 手写 SVG 双线趋势图(替代 Chart.js:免外部依赖,视觉对齐原页)
@@ -724,6 +736,82 @@ function smoothPath(pts) {
     d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
   }
   return d;
+}
+
+const CREDIT_PANELS = [
+  { key: 'hy', title: 'HY OAS', desc: '高收益债整体', detail: '美国整体高收益债券的期权调整利差', thresholds: [{ value: 350, color: '#F1C232' }, { value: 500, color: '#E63946' }] },
+  { key: 'ccc', title: 'CCC OAS', desc: 'Neocloud 评级尾部', detail: '美国 CCC 及以下评级债券的市场代理，并非 Neocloud 专属债券利差', thresholds: [] },
+  { key: 'ig', title: 'IG OAS', desc: 'Hyperscaler 发债基准', detail: '美国投资级公司债的市场代理，并非大型云厂商专属债券利差', thresholds: [] }
+];
+
+function creditPoints(credit, key) {
+  if (credit?.contractVersion !== 'bubble-credit-spreads-v1' || credit.boundary !== 'display_only_no_score_impact') return [];
+  const points = credit.series?.[key];
+  const today = new Date().toISOString().slice(0, 10);
+  if (!Array.isArray(points) || points.length < 6 || points.length > 370) return [];
+  if (!points.every((p, i) => p && typeof p.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.date)
+    && Number.isFinite(Date.parse(p.date)) && new Date(p.date).toISOString().slice(0, 10) === p.date
+    && p.date <= today && (!i || p.date > points[i - 1].date)
+    && typeof p.bps === 'number' && Number.isFinite(p.bps) && p.bps >= 0)) return [];
+  return points;
+}
+
+function creditSectionHtml(credit) {
+  if (!credit || credit.contractVersion !== 'bubble-credit-spreads-v1' || credit.boundary !== 'display_only_no_score_impact') return '';
+  const dates = CREDIT_PANELS.map(p => creditPoints(credit, p.key).at(-1)?.date).filter(Boolean);
+  const dateLabel = dates.length === 3 && new Set(dates).size === 1 ? `最新观测 ${dates[0]}` : '各序列观测日期见下方';
+  return `<section class="trend" id="credit-spreads">
+    <div class="trend-header"><h3>AI 基建信用利差 <em>· Credit Spreads · 1Y</em></h3>
+      <div class="trend-legend"><span>FRED 日度 · ${escapeHtml(dateLabel)}</span><span style="color:var(--muted)">HY 阈值: 350 黄 / 500 红</span></div></div>
+    <div class="credit-grid">${CREDIT_PANELS.map(p => {
+      const points = creditPoints(credit, p.key), last = points.at(-1);
+      const delta = last ? last.bps - points.at(-6).bps : null;
+      const status = credit.sources?.[p.key]?.status;
+      const stale = last && Date.now() - Date.parse(last.date) > 10 * 86400000;
+      const notice = !last ? '数据暂缺，等待下次更新' : status === 'fallback' ? `更新未完成，沿用 ${last.date} 观测${stale ? '（已超过 10 天）' : ''}`
+        : stale || status === 'stale' ? `观测已超过 10 天 · ${last.date}` : new Set(dates).size !== 1 || dates.length !== 3 ? `观测 ${last.date}` : '';
+      return `<div><div class="credit-label" title="${escapeHtml(p.detail)}；1bp = 0.01 个百分点；5日按五个有效观测间隔计算"><b>${p.title}</b><span>${p.desc}${last ? ` · ${last.bps}bp（5日${delta >= 0 ? '+' : ''}${delta}）` : ''}</span></div>
+        <div class="credit-chart-wrap" id="credit-${p.key}"></div>${notice ? `<div class="credit-notice">${escapeHtml(notice)}</div>` : ''}</div>`;
+    }).join('')}</div></section>`;
+}
+
+function drawCreditTrend(credit) {
+  for (const panel of CREDIT_PANELS) {
+    const wrap = document.getElementById(`credit-${panel.key}`), points = creditPoints(credit, panel.key);
+    if (!wrap || !points.length) continue;
+    const W = Math.max(220, wrap.clientWidth), H = 180, left = panel.key === 'ccc' ? 50 : panel.key === 'ig' ? 38 : 44, top = 10, bottom = 25, right = 3;
+    const values = [...points.map(p => p.bps), ...panel.thresholds.map(t => t.value)];
+    const low = Math.min(...values), high = Math.max(...values);
+    const rawStep = Math.max(1, (high - low) / 5), power = 10 ** Math.floor(Math.log10(rawStep));
+    const step = [1, 2, 5, 10].map(n => n * power).find(n => n >= rawStep);
+    let min = Math.floor(low / step) * step, max = Math.ceil(high / step) * step;
+    if (min === max) { min = Math.max(0, min - step); max += step; }
+    const x = i => left + i / (points.length - 1) * (W - left - right);
+    const y = value => top + (max - value) / (max - min) * (H - top - bottom);
+    let content = '';
+    for (let v = min; v <= max; v += step) content += `<line x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(0,0,0,0.05)"/><text x="${left-10}" y="${y(v)+3}" text-anchor="end">${v}bp</text>`;
+    content += `<path d="M${left},${top}V${H-bottom}H${W-right}" fill="none" stroke="rgba(0,0,0,0.1)"/>`;
+    // Match upstream's five category-axis ticks, retaining actual dates in tooltips.
+    for (let n = 0; n < 5; n++) { const i = Math.min(points.length - 1, n * Math.ceil(points.length / 5)); content += `<text x="${x(i)}" y="${H-7}" text-anchor="middle">${points[i].date.slice(0,7)}</text>`; }
+    for (const threshold of panel.thresholds) content += `<line class="credit-threshold" x1="${left}" x2="${W-right}" y1="${y(threshold.value)}" y2="${y(threshold.value)}" stroke="${threshold.color}" stroke-width="1" stroke-dasharray="4 4"/>`;
+    content += `<polyline class="credit-series" points="${points.map((p,i) => `${x(i).toFixed(2)},${y(p.bps).toFixed(2)}`).join(' ')}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round"/>`;
+    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" tabindex="0" aria-label="${panel.title} 一年信用利差趋势，最新 ${points.at(-1).date}：${points.at(-1).bps} 个基点" style="font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--ink)">${content}</svg><div class="credit-tooltip" role="status"></div>`;
+    const svg = wrap.querySelector('svg'), tooltip = wrap.querySelector('.credit-tooltip');
+    let selected = points.length - 1;
+    const show = index => {
+      selected = Math.min(points.length - 1, Math.max(0, index));
+      const p = points[selected];
+      tooltip.textContent = `${p.date} · ${p.bps} bps`;
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${Math.max(0, Math.min(W - tooltip.offsetWidth, x(selected) - 50))}px`;
+      tooltip.style.top = `${Math.max(0, y(p.bps) - 35)}px`;
+    };
+    svg.addEventListener('pointermove', event => { const rect = svg.getBoundingClientRect(); show(Math.round(((event.clientX - rect.left) * W / rect.width - left) / (W-left-right) * (points.length-1))); });
+    svg.addEventListener('pointerleave', () => { tooltip.style.display = 'none'; });
+    svg.addEventListener('focus', () => show(points.length - 1));
+    svg.addEventListener('blur', () => { tooltip.style.display = 'none'; });
+    svg.addEventListener('keydown', event => { if (['ArrowLeft','ArrowRight'].includes(event.key)) { event.preventDefault(); show(selected + (event.key === 'ArrowLeft' ? -1 : 1)); } });
+  }
 }
 
 function drawTrend(data) {
@@ -790,7 +878,7 @@ function drawTrend(data) {
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { if (lastData) drawTrend(lastData); }, 150);
+  resizeTimer = setTimeout(() => { if (lastData) { drawTrend(lastData); drawCreditTrend(lastData.credit_spreads); } }, 150);
 });
 
 async function load() {
