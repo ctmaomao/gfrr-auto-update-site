@@ -1046,3 +1046,10 @@ candidate v2 / classification v3 / telemetry v5。文件时间为 `datasetObserv
 | `worldOrderStress` GDELT narrative | GDELT Cloud v2 |
 | `data/oil-directional-pressure.json` (ODP, 独立文件) | EIA API v2 weekly petroleum (`PET.*.W`) + 复用 radar-data WTI market proxy(优先 `macroDrivers.inflationEnergy.wtiMarketProxy`,回退 FRED WTI spot)/Brent/crack/curve + radar-history-full Brent ~4w 价格方向(PR3 背离层) + radar-data `energyInventoryBalance` / `energySpareCapacity` / `energyTransport` 慢变量(P6B global overlay, display-only) |
 | `data/oil-directional-history.json` (ODP PR2 回测 cache) | EIA API v2 weekly petroleum (`PET.*.W`) 2014-至今 committed snapshot;仅 backtest replay,不进 live / scoring / Heatmap |
+
+### Bubble Watch AI 基建信用利差（2026-09-14，owner 已批准发布）
+
+- 来源审阅：FRED / ICE BofA 的 [HY](https://fred.stlouisfed.org/series/BAMLH0A0HYM2)、[CCC 及以下](https://fred.stlouisfed.org/series/BAMLH0A3HYC)、[投资级](https://fred.stlouisfed.org/series/BAMLC0A0CM)。源单位 Percent ×100 转 bp；日度收盘观测，月末可能包含周末。保留 366 天，随既有 Bubble 周一刷新。CCC/IG 是全市场评级代理，不是专属 AI 公司债篮子。
+- 免费 CSV 每序列 12 秒超时，单次抓取不重试，单序列失败隔离；保留已验证历史与原始抓取时间，观测超过 10 天明确提示，不以请求成功代替新鲜。无新生产依赖或付费 provider。
+- 三序列 ICE 官方 notes 明示公开再发布需事先书面许可；公开可访问和参考站已展示不等于本站获许可。owner 于 2026-09-14 明确要求承担风险并直接发布，本次窄范围配置为 enabled / owner_risk_accepted，不表示已取得 ICE 书面许可；不扩展到其它源。
+- 架构：现有 Bubble builder 的 daily_history_layer → 可选 credit_spreads → frontend_display_layer；独立于 Core-23/Shadow-4、判读和主站。

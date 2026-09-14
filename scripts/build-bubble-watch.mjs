@@ -16,6 +16,7 @@
 
 import { stripTags, decodeHtmlEntities, htmlToText, parseFedSepMedians } from './bubble-watch/public-html-parsers.mjs';
 import fs from 'node:fs';
+import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -4914,6 +4915,13 @@ function buildWowChanges(flips, indicators) {
 
 async function main() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  const creditConfig = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/bubble-credit-spreads.json'), 'utf8'));
+  const creditEnabled = creditPublicationEnabled(creditConfig);
+  let previousCredit;
+  if (creditEnabled && fs.existsSync(OUT_PATH)) {
+    previousCredit = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')).credit_spreads;
+  }
+  const creditSpreads = creditEnabled ? await collectCreditSpreads({ previous: previousCredit }) : null;
   const sourceCandidates = JSON.parse(fs.readFileSync(SOURCE_CANDIDATES_PATH, 'utf8'));
   const history = JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8'));
   const today = isoDate();
@@ -5113,6 +5121,7 @@ async function main() {
     scoring,
     indicators: publicIndicators.map(({ ...ind }) => ind),
     market_technical_heat: marketTechnicalHeat,
+    ...(creditSpreads ? { credit_spreads: creditSpreads } : {}),
     history_seed: comparableHistory.slice(-10).map((entry) => ({
       week: entry.week,
       red_pct: entry.core_red_pct,
