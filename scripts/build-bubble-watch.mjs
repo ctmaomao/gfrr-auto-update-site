@@ -26,6 +26,7 @@ import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-ev
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
 import { extractAnthropicArrB } from './bubble-watch/arr-milestone-parser.mjs';
 import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
+import { requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -383,11 +384,14 @@ async function fredGraphCsvObservations(seriesId, limit) {
   return rows; // 倒序:rows[0] 最新
 }
 
-async function yahooCloses(symbol, range = '6mo') {
+async function yahooCloses(symbol, range = '6mo', withDates = false) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
   const json = await fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': BROWSER_UA } });
   const result = json?.chart?.result?.[0];
-  const closes = (result?.indicators?.quote?.[0]?.close || []).filter((v) => Number.isFinite(v));
+  const observations = (result?.indicators?.quote?.[0]?.close || []).map((close, i) => ({
+    close, date: Number.isFinite(result?.timestamp?.[i]) ? new Date(result.timestamp[i] * 1000).toISOString().slice(0, 10) : null
+  })).filter(row => Number.isFinite(row.close));
+  const closes = withDates ? observations : observations.map(row => row.close);
   if (closes.length < 10) throw new Error(`Yahoo ${symbol} closes 不足 (${closes.length})`);
   return closes;
 }
@@ -900,10 +904,10 @@ const SA_RPO_METRICS = {
     cadence: 'quarterly'
   },
   ORCL: {
-    pathSuffix: 'financials/metrics/',
+    pathSuffix: 'financials/metrics/?p=quarterly',
     valueLabel: 'Remaining Performance Obligations (RPO)',
     growthLabel: 'Remaining Performance Obligations (RPO) Growth',
-    cadence: 'annual'
+    cadence: 'quarterly'
   }
 };
 
@@ -911,38 +915,9 @@ async function fetchStockAnalysisRpoMetric(ticker) {
   const cfg = SA_RPO_METRICS[ticker];
   if (!cfg) throw new Error(`未配置 StockAnalysis RPO ticker:${ticker}`);
   const html = await fetchSaMetricsPage(ticker, cfg.pathSuffix);
-  const minValues = cfg.cadence === 'quarterly' ? 5 : 2;
-  const values = parseSaMetricRow(html, cfg.valueLabel, 'money', minValues);
-  const growths = parseSaMetricRow(html, cfg.growthLabel, 'percent', 1);
-  const currentValueUsd = values[0];
-  const priorYearValueUsd = cfg.cadence === 'quarterly' ? values[4] : values[1];
-  if (!(currentValueUsd > 0 && priorYearValueUsd > 0)) throw new Error(`${ticker} StockAnalysis RPO 当前/同比基数无效`);
-  const computedYoyPct = ((currentValueUsd - priorYearValueUsd) / priorYearValueUsd) * 100;
-  const yoyPct = Number.isFinite(growths[0]) ? growths[0] : computedYoyPct;
-  let prevPeriodValueUsd = null;
-  let prevPeriodComparableUsd = null;
-  if (cfg.cadence === 'quarterly' && values[1] > 0 && values[5] > 0) {
-    prevPeriodValueUsd = values[1];
-    prevPeriodComparableUsd = values[5];
-  } else if (cfg.cadence === 'annual' && values[1] > 0 && Number.isFinite(growths[1])) {
-    prevPeriodValueUsd = values[1];
-    prevPeriodComparableUsd = values[1] / (1 + growths[1] / 100);
-  }
-  const prevYoyPct = prevPeriodValueUsd > 0 && prevPeriodComparableUsd > 0
-    ? ((prevPeriodValueUsd - prevPeriodComparableUsd) / prevPeriodComparableUsd) * 100
-    : null;
   return {
-    ticker,
-    source: `StockAnalysis ${cfg.pathSuffix}`,
-    cadence: cfg.cadence,
-    currentValueUsd,
-    priorYearValueUsd,
-    yoyPct,
-    prevPeriodValueUsd,
-    prevPeriodComparableUsd,
-    prevYoyPct,
-    parsedValues: values.length,
-    parsedGrowths: growths.length
+    ticker, source: `StockAnalysis ${cfg.pathSuffix}`, cadence: cfg.cadence,
+    ...parseRpoTable(html, cfg.valueLabel, parseSaCompactNumber, isoDate())
   };
 }
 
@@ -1258,6 +1233,10 @@ function classifyNumeric(value, redAbove, yellowAbove) {
 
 function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote) {
   if (rows.length < 2) throw new Error(`RPO 可用公司不足 (${rows.length})`);
+  if (rows.some(row => !(row.prevPeriodValueUsd > 0 && row.prevPeriodComparableUsd > 0))) throw new Error('RPO 当前与前期同比必须使用相同公司样本');
+  const excludedCompanies = ['MSFT', 'ORCL', 'AMZN', 'GOOGL'].filter(ticker => !rows.some(row => row.ticker === ticker));
+  const observationDates = rows.map(row => row.observationDate).filter(Boolean).sort();
+  const coverageNote = `实际覆盖 ${rows.length}/4 家${excludedCompanies.length ? `;${excludedCompanies.join('/')} 缺少可比报告期,未计入` : ''}。`;
   const latestYoySum = rows.reduce((sum, row) => ({
     now: sum.now + row.currentValueUsd,
     prev: sum.prev + row.priorYearValueUsd
@@ -1277,16 +1256,19 @@ function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote) {
   const companySummary = rows.map((row) => `${row.ticker} ${fmtPct(row.yoyPct, 0, true)}`).join(' / ');
   return {
     status,
+    ...(observationDates.length === rows.length ? { as_of: observationDates[0] } : {}),
     value_display: fmtPct(yoy, 0, true),
-    note: `${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
+    note: `${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${coverageNote}${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
     detail: {
       yoyPct: yoy,
       prevYoyPct: prevYoy,
       companies: rows.map((c) => c.ticker),
+      excludedCompanies,
       sourceTag,
       rows: rows.map((row) => ({
         ticker: row.ticker,
         cadence: row.cadence || 'quarterly',
+        observationDate: row.observationDate || null,
         currentValueB: Number((row.currentValueUsd / 1e9).toFixed(1)),
         priorYearValueB: Number((row.priorYearValueUsd / 1e9).toFixed(1)),
         yoyPct: Number(row.yoyPct.toFixed(1)),
@@ -1465,14 +1447,20 @@ const autoBuilders = {
   async breadth_50d() {
     try {
       const direct = await retry(fetchBarchartS5fiBreadth, 'Barchart $S5FI');
+      const dateText = direct.sessionDate;
+      const parsedDate = typeof dateText === 'string' && /(?:20\d{2}|\d{2}\/\d{2}\/\d{4})/u.test(dateText) ? Date.parse(dateText) : NaN;
+      const observationDate = Number.isFinite(parsedDate) ? new Date(parsedDate).toISOString().slice(0, 10) : null;
+      requireObservationDate(observationDate, isoDate(), 14, 'breadth');
       const status = direct.pct < 40 ? 'red' : direct.pct <= 60 ? 'yellow' : 'green';
       return {
         status,
         value_display: `≈${direct.pct.toFixed(0)}%`,
         source_name: 'Barchart $S5FI direct breadth index',
+        as_of: observationDate,
         note: `Barchart $S5FI 直接广度指数显示 S&P 500 收于 50 日均线上方比例 ${direct.pct.toFixed(1)}%${direct.sessionDate ? `(${direct.sessionDate})` : ''};该源为 S&P 500 50 日均线广度直接指数。阈值:<40% 红 / 40-60% 黄 / >60% 绿`,
         detail: {
           source: 'Barchart:$S5FI',
+          observationDate,
           pct: direct.pct,
           tradeTime: direct.tradeTime,
           sessionDate: direct.sessionDate,
@@ -1486,25 +1474,24 @@ const autoBuilders = {
     const symbols = constituents.map((s) => s.replace(/\./gu, '-'));
     const results = await mapPool(symbols, 5, async (symbol) => {
       try {
-        const closes = await yahooCloses(symbol, '6mo');
+        const observations = await yahooCloses(symbol, '6mo', true);
+        const closes = observations.map(row => row.close);
         if (closes.length < 51) return null;
         const sma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / 50;
         await new Promise((resolve) => setTimeout(resolve, 60));
-        return closes[closes.length - 1] > sma50 ? 1 : 0;
+        return { date: observations.at(-1).date, above: closes[closes.length - 1] > sma50 ? 1 : 0 };
       } catch {
         return null; // 单票失败跳过,样本量在下方守卫
       }
     });
-    const counted = results.filter((v) => v !== null).length;
-    const above = results.filter((v) => v === 1).length;
-    if (counted < Math.floor(symbols.length * 0.7)) throw new Error(`广度样本不足 (${counted}/${symbols.length})`);
-    const pct = (above / counted) * 100;
+    const { date, counted, above, pct } = alignedBreadth(results, symbols.length, isoDate());
     const status = pct < 40 ? 'red' : pct <= 60 ? 'yellow' : 'green';
     return {
       status,
       value_display: `≈${pct.toFixed(0)}%`,
+      as_of: date,
       note: `Barchart $S5FI 直接源暂不可用,回退 Yahoo Chart 全市场实算:S&P 500 成份股 ${counted} 只(Wikipedia 实时名单)中 ${above} 只收于 50 日均线上方,占比 ≈${pct.toFixed(1)}%。阈值:<40% 红 / 40-60% 黄 / >60% 绿`,
-      detail: { source: 'Yahoo Chart × Wikipedia constituents fallback', above, counted, pct }
+      detail: { source: 'Yahoo Chart × Wikipedia constituents fallback', observationDate: date, universeSize: symbols.length, above, counted, pct }
     };
   },
   async spy_vs_rsp_6m() {
@@ -1612,20 +1599,9 @@ const autoBuilders = {
       try {
         const units = await retry(() => edgarConcept(EDGAR_CIK[ticker], ['RevenueRemainingPerformanceObligation']), `EDGAR RPO ${ticker}`, 1);
         const s = deriveInstantSeries(units);
-        const n = s.length;
-        if (n >= 6 && s[n - 1]?.val > 0 && s[n - 5]?.val > 0) {
-          rows.push({
-            ticker,
-            source: 'SEC EDGAR companyconcept',
-            cadence: 'quarterly',
-            currentValueUsd: s[n - 1].val,
-            priorYearValueUsd: s[n - 5].val,
-            yoyPct: ((s[n - 1].val - s[n - 5].val) / s[n - 5].val) * 100,
-            prevPeriodValueUsd: s[n - 2]?.val,
-            prevPeriodComparableUsd: s[n - 6]?.val,
-            prevYoyPct: s[n - 2]?.val > 0 && s[n - 6]?.val > 0 ? ((s[n - 2].val - s[n - 6].val) / s[n - 6].val) * 100 : null
-          });
-        }
+        const newest = s.slice().reverse();
+        rows.push({ ticker, source: 'SEC EDGAR companyconcept', cadence: 'quarterly',
+          ...pairRpoPeriods(newest.map(row => row.end), newest.map(row => row.val), isoDate()) });
       } catch (error) {
         console.warn(`[bubble-watch] RPO ${ticker} 不可用: ${error.message}`);
       }
@@ -1642,7 +1618,7 @@ const autoBuilders = {
         console.warn(`[bubble-watch] StockAnalysis RPO ${ticker} 不可用: ${error.message}`);
       }
     }
-    return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', 'EDGAR 对当前运行环境不可达时采用免费公开二级源;Oracle 用年度 metrics,其余三家用季度 operating metrics。');
+    return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', '公开季度报告按实际期末日期匹配去年同期,缺失列不跳位。');
   },
   async fed_policy() {
     const [dff, cpi, lowerResult, upperResult, sepResult, yearEndFutureResult] = await Promise.all([
@@ -1724,26 +1700,23 @@ const autoBuilders = {
 
 // ---------- 研究口径 hybrid builders ----------
 
-async function fetchVcAiShareFromCrunchbase() {
-  const rows = await retry(() => crunchbaseWpSearch('AI venture funding 2026', 8), 'Crunchbase AI VC search', 1);
-  const picked = rows.find((row) => /venture funding records|AI boom|AI startups|funding/i.test(row.title)) || rows[0];
-  if (!picked?.id) throw new Error('Crunchbase AI VC 候选文章为空');
-  const post = await retry(() => crunchbaseWpPost(picked.id), 'Crunchbase AI VC post', 1);
-  const parsed = extractVcAiFundingShare(post.text);
-  if (!parsed) throw new Error('Crunchbase AI funding share 未解析到 AI sector 总额+占比');
+async function fetchVcAiShareFromCrunchbase(ctx = {}) {
+  const posts = await retry(() => crunchbaseWpPosts('AI venture funding', 20), 'Crunchbase AI VC posts', 1);
+  const { post, parsed, articleDate, observationDate } = selectVcObservation(posts, extractVcAiFundingShare, isoDate(), ctx.config?.curated?.vc_ai_share?.maxAgeDays || 120);
   const { aiFundingB, sharePct, totalFundingB, evidenceText } = parsed;
   if (!(aiFundingB > 1 && sharePct > 0 && sharePct <= 100)) throw new Error(`Crunchbase AI VC 数值越界 ${aiFundingB}/${sharePct}`);
   const status = classifyNumeric(sharePct, 50, 30);
-  const articleDate = post.date ? post.date.slice(0, 10) : 'date n/a';
   return {
     status,
     value_display: `~${sharePct.toFixed(0)}%`,
     source_name: 'Crunchbase News public article parser',
+    as_of: observationDate,
     note: `Crunchbase News 公开文章(${articleDate})解析:AI startup funding 约 $${aiFundingB.toFixed(0)}B,占全球 VC ${sharePct.toFixed(0)}%${Number.isFinite(totalFundingB) ? `,隐含/披露总额约 $${totalFundingB.toFixed(0)}B` : ''};>50% 仍属资金面红区。阈值:>50% 红 / 30-50% 黄 / <30% 绿`,
     detail: {
       source: 'Crunchbase News WordPress API',
-      url: post.link || picked.url,
+      url: post.link,
       articleDate,
+      observationDate,
       aiFundingB,
       totalFundingB,
       sharePct,
@@ -1751,50 +1724,6 @@ async function fetchVcAiShareFromCrunchbase() {
       evidenceText
     }
   };
-}
-
-function extractVcAiFundingShare(text) {
-  const normalized = String(text || '').replace(/\s+/gu, ' ').trim();
-  const sentences = normalized
-    .split(/(?<=[.!?。])\s+/u)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const preferred = sentences.find((sentence) => (
-    /\bAI\b/iu.test(sentence)
-    && /total global venture funding|global venture funding/iu.test(sentence)
-    && /sector|companies in the sector|going to companies/iu.test(sentence)
-  ));
-  const preferredMatch = preferred?.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,140}?([0-9]{1,3})%\s+of\s+total\s+global\s+venture\s+funding/iu);
-  if (preferredMatch) {
-    const sharePct = Number(preferredMatch[2]);
-    const aiFundingB = Number(preferredMatch[1]);
-    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
-    return { aiFundingB, sharePct, totalFundingB, evidenceText: preferred };
-  }
-
-  const explicit = normalized.match(/\bAI\b[^.]{0,160}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,160}?([0-9]{1,3})%\s+of\s+total\s+global\s+venture\s+funding/iu);
-  if (explicit) {
-    const sharePct = Number(explicit[2]);
-    const aiFundingB = Number(explicit[1]);
-    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
-    return { aiFundingB, sharePct, totalFundingB, evidenceText: explicit[0] };
-  }
-
-  const fallback = normalized.match(/AI startups received\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,120}?([0-9]{1,3})%/iu);
-  if (fallback) {
-    const sharePct = Number(fallback[2]);
-    const aiFundingB = Number(fallback[1]);
-    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
-    return { aiFundingB, sharePct, totalFundingB, evidenceText: fallback[0] };
-  }
-  return null;
-}
-
-function inferTotalVcFundingB(text, aiFundingB, sharePct) {
-  const totalMatch = String(text || '').match(/poured\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu)
-    || String(text || '').match(/global venture (?:investment|funding)[^.]{0,100}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu);
-  if (totalMatch) return Number(totalMatch[1]);
-  return aiFundingB / (sharePct / 100);
 }
 
 async function fetchAiIpoPipelineFromCrunchbase(ctx = {}) {
@@ -2406,7 +2335,7 @@ function sentenceMatches(text, companyRe, termRe) {
     .slice(0, 12);
 }
 
-async function fetchNeocloudCreditFromPublicMonitor() {
+async function fetchNeocloudCreditFromPublicMonitor(ctx = {}) {
   const pages = [
     { source: 'PRNewswire:CoreWeave', url: 'https://www.prnewswire.com/news/coreweave/' },
     { source: 'Lambda official blog', url: 'https://lambda.ai/blog/lambda-closes-1-billion-senior-secured-credit-facility' },
@@ -2420,18 +2349,24 @@ async function fetchNeocloudCreditFromPublicMonitor() {
   const negativeEvents = [];
   const financingEvents = [];
   const failures = [];
+  const datedEvidence = [];
   let checkedPages = 0;
   for (const page of pages) {
     try {
       const html = await fetchWithTimeout(page.url, { headers: { 'User-Agent': BROWSER_UA }, timeoutMs: 15000 });
       checkedPages += 1;
       const text = htmlToText(html);
-      for (const snippet of sentenceMatches(text, companyRe, negativeRe)) negativeEvents.push({ ...page, snippet: compactSnippet(snippet, 180) });
-      for (const snippet of sentenceMatches(text, companyRe, financingRe)) financingEvents.push({ ...page, snippet: compactSnippet(snippet, 180) });
+      const publishedAt = articlePublishedDate(html);
+      requireObservationDate(publishedAt, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21, 'neocloud');
+      const company = page.source.match(/CoreWeave|Lambda|Crusoe|Nebius/u)?.[0];
+      datedEvidence.push({ ...page, company, publishedAt });
+      for (const snippet of sentenceMatches(text, companyRe, negativeRe)) negativeEvents.push({ ...page, publishedAt, snippet: compactSnippet(snippet, 180) });
+      for (const snippet of sentenceMatches(text, companyRe, financingRe)) financingEvents.push({ ...page, publishedAt, snippet: compactSnippet(snippet, 180) });
     } catch (error) {
       failures.push({ source: page.source, reason: error.message });
     }
   }
+  const coverage = requireNeocloudCoverage(datedEvidence, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21);
   if (!checkedPages || !financingEvents.length) {
     throw new Error(`neocloud public credit monitor evidence 不足: checked=${checkedPages}, financing=${financingEvents.length}, failures=${failures.length}`);
   }
@@ -2440,11 +2375,13 @@ async function fetchNeocloudCreditFromPublicMonitor() {
     status,
     value_display: negativeEvents.length ? `${negativeEvents.length} 件` : '0 件',
     source_name: 'CoreWeave / Lambda / Crusoe / Nebius public credit-event monitor',
+    as_of: coverage.map(row => row.publishedAt).sort()[0],
     note: negativeEvents.length
       ? `公开 neocloud 信用事件监测命中 ${negativeEvents.length} 条违约/降级/困境融资线索,首条「${negativeEvents[0].snippet}」;按口径任何正式信用事件即红。`
       : `公开 neocloud 信用事件监测覆盖 CoreWeave/Lambda/Crusoe/Nebius 共 ${checkedPages} 个页面,未命中违约、降级或困境重组词;同时记录 ${financingEvents.length} 条融资/票据/credit facility 正常事件。该项不是完整评级数据库。判级:任何违约/降级=红 / 无正式事件=绿`,
     detail: {
       source: 'public neocloud credit-event monitor',
+      datedEvidence: coverage,
       checkedPages,
       failures,
       negativeEvents: negativeEvents.slice(0, 5),
@@ -4417,6 +4354,12 @@ function publicIndicatorNote(ind) {
 }
 
 function publicIndicatorSourceName(ind) {
+  if (ind.id === 'breadth_50d') {
+    const source = ind.provenance?.detail?.source || '';
+    if (source === 'Barchart:$S5FI') return 'Barchart $S5FI 市场广度';
+    if (source === 'Yahoo Chart × Wikipedia constituents fallback') return 'Yahoo 行情与维基百科成份股名单实算';
+    return normalizePublicBubbleCopy(ind.source_name);
+  }
   return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
 }
 
