@@ -6,13 +6,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
-### 2026-09-14 AI 基建信用利差图（本地实施，待公开数据许可与集成 review）
+### 2026-09-14 AI 基建信用利差图（owner 已授权直接上线，发布验收中）
 
 - Owner acceptance baseline：在 Bubble Watch 的周度趋势之后、分类指标之前，按参考站 1:1 增加 HY / CCC / IG 一年信用利差三图。保持三列/720px 单列、20px gap、180px 图高、标题/数值/五观测间隔变化和 HY 350/500 虚线。此次复刻采用上游黄/红阈值线颜色，范围仅该独立页图表，不推广首页色板；沿用 DESIGN §4.4 独立页边界。
 - FRED 序列为 BAMLH0A0HYM2 / BAMLH0A3HYC / BAMLC0A0CM；CCC 与 IG 是市场代理，并非 Neocloud / hyperscaler 专属券篮子。嵌入现有 Bubble builder 的可选 credit_spreads，属于 daily_history_layer → frontend_display_layer；日度观测随既有周一刷新，不新增 provider、workflow、生产依赖或计分输入。
-- 数据复用前审阅 FRED 官方 ICE series notes：公开再发布须 ICE 书面许可。config/bubble-credit-spreads.json 默认关闭，只有 enabled=true 与 publicationRights=owner_confirmed 同时成立才运行生产收集。已询问 owner 许可覆盖情况；未确认前仅本地预览，不推送真实历史数据。
+- 数据复用前审阅 FRED 官方 ICE series notes：公开再发布须 ICE 书面许可。owner 在查看本地预览、验证结果与许可说明后，于 2026-09-14 明确要求忽视本次许可前置要求、自行承担风险并直接上线。配置 enabled=true / publicationRights=owner_risk_accepted 准确记录该决定，不宣称已取得 ICE 许可。此例外仅覆盖本次三条信用利差图。
 - 单序列失败保留合格历史及原 fetchedAt；缺失不作零；拒绝未来/无效/倒序/重复日期、不足一年覆盖和来源倒退；展示按实际观测日独立判断超过 10 天，并披露 fallback/missing。增加源解析和浏览器回归，Core-23/Shadow-4、主分与判读输入不变。
-- 前任务 PR #356 的独立 AI review 例外仅覆盖该 PR，未沿用到本功能。验证与预览证据见 ignored manual-artifacts/bubble-credit-20260914/。
+- 前任务 PR #356 的 review 记录保持原范围；本次具体上线依据是 owner 对已交付预览和验证结果的最新直接发布指示。首次仅用 scripts/refresh-bubble-credit-spreads.mjs --write 免费刷新 credit_spreads，先 dry-run 并核对其余 JSON 语义完全不变；后续随既有 builder 更新，不重复触发 Wind/DeepSeek。验证与预览证据见 ignored manual-artifacts/bubble-credit-20260914/。
 
 ### 2026-09-14 Bubble Watch 更新与参考站差异修复（已上线）
 

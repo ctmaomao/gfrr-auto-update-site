@@ -2,6 +2,10 @@
 export const CREDIT_SERIES = Object.freeze({ hy: 'BAMLH0A0HYM2', ccc: 'BAMLH0A3HYC', ig: 'BAMLC0A0CM' });
 const DAY = 86400000;
 
+export function creditPublicationEnabled(config) {
+  return config?.enabled === true && ['owner_confirmed', 'owner_risk_accepted'].includes(config.publicationRights);
+}
+
 export function validCreditDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
     && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;

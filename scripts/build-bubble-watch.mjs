@@ -16,7 +16,7 @@
 
 import { stripTags, decodeHtmlEntities, htmlToText, parseFedSepMedians } from './bubble-watch/public-html-parsers.mjs';
 import fs from 'node:fs';
-import { collectCreditSpreads } from './bubble-watch/credit-spreads.mjs';
+import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -4916,7 +4916,7 @@ function buildWowChanges(flips, indicators) {
 async function main() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
   const creditConfig = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/bubble-credit-spreads.json'), 'utf8'));
-  const creditEnabled = creditConfig.enabled === true && creditConfig.publicationRights === 'owner_confirmed';
+  const creditEnabled = creditPublicationEnabled(creditConfig);
   let previousCredit;
   if (creditEnabled && fs.existsSync(OUT_PATH)) {
     previousCredit = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')).credit_spreads;

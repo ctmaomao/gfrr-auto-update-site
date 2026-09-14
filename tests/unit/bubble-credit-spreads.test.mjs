@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CREDIT_SERIES, parseCreditCsv, validateCreditPoints, collectCreditSpreads } from '../../scripts/bubble-watch/credit-spreads.mjs';
+import { CREDIT_SERIES, parseCreditCsv, validateCreditPoints, collectCreditSpreads, creditPublicationEnabled } from '../../scripts/bubble-watch/credit-spreads.mjs';
+
+test('Publication requires explicit enablement and recorded owner decision', () => {
+  for (const publicationRights of ['owner_confirmed', 'owner_risk_accepted']) {
+    assert.equal(creditPublicationEnabled({ enabled: true, publicationRights }), true);
+    assert.equal(creditPublicationEnabled({ enabled: false, publicationRights }), false);
+  }
+  for (const config of [undefined, {}, { enabled: true }, { enabled: true, publicationRights: 'pending_owner_confirmation' }]) assert.equal(creditPublicationEnabled(config), false);
+});
 
 const now = new Date('2026-09-14T10:00:00Z');
 const points = Array.from({ length: 260 }, (_, i) => ({ date: new Date(Date.UTC(2025, 8, 16) + Math.floor(i * 360 / 259) * 86400000).toISOString().slice(0, 10), bps: 270 + i % 5 }));
