@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, pairRpoPeriods, parseRpoTable } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
+import { selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, pairRpoPeriods, parseRpoTable } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
 
 const today = '2026-09-14';
 const sector = 'AI was the leading sector, with $210 billion going to companies in the sector, representing 70% of total global venture funding.';
@@ -43,6 +43,13 @@ test('Breadth uses one actual session and enforces aligned coverage', () => {
   assert.deepEqual(alignedBreadth([...rows, { date: '2026-09-10', above: 1 }, null], 10, today), { date: '2026-09-11', counted: 7, above: 3, pct: 3 / 7 * 100 });
   assert.throws(() => alignedBreadth(rows.slice(1), 10, today), /coverage_insufficient/);
   assert.throws(() => alignedBreadth(rows.map(row => ({ ...row, date: '2026-08-01' })), 10, today), /coverage_insufficient/);
+});
+test('Breadth labels the source actually used, including research fallback', () => {
+  const indicator = source => ({ provenance: { mode: 'auto', detail: { source } } });
+  assert.equal(breadthSourceLabel(indicator('Barchart:$S5FI')), 'Barchart $S5FI 市场广度');
+  assert.equal(breadthSourceLabel(indicator('Yahoo Chart × Wikipedia constituents fallback')), 'Yahoo 行情与维基百科成份股名单实算');
+  assert.equal(breadthSourceLabel({ source_name: 'Barchart $S5FI', provenance: { mode: 'auto_fallback' } }), '市场广度研究快照');
+  assert.equal(breadthSourceLabel(indicator('unrecognized')), '市场广度来源待核实');
 });
 const dates = ['2026-06-30', '2026-03-31', '2025-12-31', '2025-09-30', '2025-06-30', '2025-03-31'];
 test('RPO pairs calendar periods without shifting missing cells', () => {

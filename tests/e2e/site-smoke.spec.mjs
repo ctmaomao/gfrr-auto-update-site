@@ -125,6 +125,8 @@ for (const viewport of [DESKTOP, MOBILE]) {
       const data = await response.json();
       // Still approved and enabled in stored bytes; wall-clock age alone hides it.
       data.macroRiskEditorialLayer = buildApprovedMacroRiskEditorial(data, new Date(Date.now() - 31 * 3600000).toISOString());
+      // This case has no qualified historical issue; production may now retain one.
+      data.macroRiskEditorialPreviousIssue = null;
       await route.fulfill({ response, json: data });
     });
     await page.goto('/index.html');
@@ -344,6 +346,7 @@ test.describe('mobile smoke', () => {
         displayEnabled: false,
         status: 'fallback',
       };
+      radarData.macroRiskEditorialPreviousIssue = null;
       await route.fulfill({ response, json: radarData });
     });
 

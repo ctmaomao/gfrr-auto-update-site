@@ -26,7 +26,7 @@ import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-ev
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
 import { extractAnthropicArrB } from './bubble-watch/arr-milestone-parser.mjs';
 import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
-import { requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
+import { requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -4354,12 +4354,7 @@ function publicIndicatorNote(ind) {
 }
 
 function publicIndicatorSourceName(ind) {
-  if (ind.id === 'breadth_50d') {
-    const source = ind.provenance?.detail?.source || '';
-    if (source === 'Barchart:$S5FI') return 'Barchart $S5FI 市场广度';
-    if (source === 'Yahoo Chart × Wikipedia constituents fallback') return 'Yahoo 行情与维基百科成份股名单实算';
-    return normalizePublicBubbleCopy(ind.source_name);
-  }
+  if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
   return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
 }
 

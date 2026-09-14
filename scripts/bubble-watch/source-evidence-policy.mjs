@@ -84,6 +84,14 @@ export function alignedBreadth(results, universeSize, today, maxAgeDays = 14) {
   return { date: latest, above, counted: rows.length, pct: above / rows.length * 100 };
 }
 
+export function breadthSourceLabel(indicator) {
+  if (indicator.provenance?.mode !== 'auto') return '市场广度研究快照';
+  const source = indicator.provenance?.detail?.source;
+  if (source === 'Barchart:$S5FI') return 'Barchart $S5FI 市场广度';
+  if (source === 'Yahoo Chart × Wikipedia constituents fallback') return 'Yahoo 行情与维基百科成份股名单实算';
+  return '市场广度来源待核实';
+}
+
 export function parseRpoTable(html, label, parseNumber, today) {
   const tables = [...html.matchAll(/<table\b[^>]*>[\s\S]*?<\/table>/giu)].map(m => m[0]);
   for (const table of tables) {
