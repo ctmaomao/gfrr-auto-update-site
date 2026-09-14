@@ -1,6 +1,6 @@
 # ADR-0048: Bubble Watch source dates and evidence validation
 
-Status: proposed; implementation authorized on 2026-09-14, independent review required before integration.
+Status: accepted for PR #356 after owner-authorized independent AI review on 2026-09-14. The reviewer examined implementation head `a7343d1673a7fe4e92d17dc225336d9501941099`, found no blocking issue, and passed eight source-policy unit tests plus diff checks. The owner explicitly authorized this review substitution and direct merge/official refresh after acceptance; this exception is limited to PR #356. Final integration still requires passing CI for the merge candidate.
 
 ## Problem and decision
 
