@@ -196,3 +196,23 @@ Thank you,
 - 真实离线验收：仅重放前次保留的两份 JSON，exit 0、保存字节未变、声明范围完整；没有第二份真实快照，返回 baseline_required。13 项合成测试覆盖缺失/零、微秒、部分月、上限、冲突、跨版本、格式变化、CLI 超限/超时及脱敏。六指标等价、来源真实性、全球覆盖、时效与生产授权均不因通过而成立。
 
 下一刀可评审可复用有界采集器及第二快照预算，明确请求前后版本一致性；本工具不追加网络预算。完整年度/连续 24 月、另外五项指标与生产切源仍遵守前述独立门槛。
+
+## 有界采集与版本围栏（2026-09-16）
+
+Owner 在下一刀明确批准**仅此次三请求真实验收**：免费 HAPI，三次响应累计最多 1 MiB / 102 原始行，每请求（含正文）15 秒、零重试。此窄范围批准替代前次已耗尽的两请求操作预算，不授权自动续跑、官网访问、收费、生产或公开原始数据。方案已独立审阅；本轮读取官方 OpenAPI 0.9.14，核对 v2 参数，文档读取不属于数据采样请求。
+
+- [采集核心](../scripts/world-order/acled-hapi-collector.mjs) 仍归 artifact_sanitizer_layer，仅固定既有 `NZL / 2026-07 / admin0 / political_violence` 范围；不是六指标替换。依次读取固定资源 metadata、样本、同资源 metadata；起始时间至少间隔 1,100ms。固定 `https://hapi.humdata.org` 的两个 v2 路径，不接受其它 URL、分页、redirect 或 retry。401/403/429/非200、错误正文、超时、行数或字节超限立即停止。
+- 请求先累计流式字节再解析 JSON，三响应总计受限；metadata 各最多一行，sample 最多100行，命中100仍不完整。前后 provider/dataset/format/ID/name/source date/update/HAPI sync 分别校验，样本逐行绑定同资源；可见版本不同即拒绝候选。双读**不证明事务一致快照**，服务未提供不可变 revision 查询保障，保留 `atomicSnapshotProven=false`。
+- [CLI](../scripts/collect-acled-hapi-candidate.mjs) 的 `npm run collect:acled-hapi-candidate` 默认 dry-run，零数据请求；仅明确 `-- --live` 才读 stdin。输入精确为 `{approval, application, email, baseline}`，approval 固定 `pv-20260916-three-requests`；该标识只是本次实际批准的记录，不自行授予权限。baseline 为合法本地候选或 null，并在任何请求前复验相同范围；不自动更新基线。stdin 限4 MiB/5秒，联系信息仅通过 HAPI header 使用，不放 URL、argv、日志或候选。
+- 固定 ignored `manual-artifacts/acled-hapi-collector/pv-20260916-three-requests/`，拒绝重解析链接、路径参数、覆盖和已有 attempt；联网前独占保留 attempt 和预算。失败也保留尝试，不删除/改名目录重用同次批准。此防重是当前 checkout 的操作保护，不是跨所有机器或复制 checkout 的授权系统；禁止通过复制/改源码绕过本次预算。
+- 成功时原子保存一个 `candidate.private.json` 私有封装（current、baseline=null、metadataBeforeJson），stdout/receipt 只有汇总状态。离线工具输入必须取 `{current, baseline}` 两项，不能将附带前置元数据的存储封装直接当作其严格输入。失败不保存合格候选；不打印原始异常、单行值或邮箱。原始候选不得上传 GitHub/Actions artifact；生产 `config/`、`data/`、`realtime/` 和 workflow 均不修改。
+- 回归入口 `npm run check:acled-hapi-collector` 加入完整套件；测试使用合成响应和临时仓库，不消耗 HAPI 请求或写真实尝试目录。真实验收只在 dry-run、专项及独立代码审阅通过后执行，并记录结果；未取得第二真实快照前，不声称跨运行验收完成。
+
+后续自动化必须另行审阅持续采样范围、频率、版本退回/过期规则和保留预算；一次样本成功不能直接开启周期任务或覆盖手工月表。
+
+### 本次真实验收回执
+
+- 2026-09-15 22:04 UTC（本地09-16），独立代码审阅、12项合成回归和 dry-run 通过后，仅在本 checkout 执行一次。metadata/sample/metadata 三次均200，总计3行/3,047字节（1,341 + 365 + 1,341），零重试/分页/重定向，预算已耗尽。
+- 前后来源元数据一致；候选范围完整，保存候选用既有离线 CLI 复验 exit 0。与前次20:56样本的比较为 serialization_or_metadata_change：声明版本相同、事件及全部校验行字段变化数均0；进一步本地只读复核两个 JSON 的结构语义也分别相等，字节 hash 差别来自保存序列化格式，而非已观察到的数据修订。旧保存样本字节保持不变。
+- 实际仍 as-of08-28、来源更新09-03、HAPI同步09-07，不能把本次获取时间09-16或目录日期作为来源更新日。此次已完成第二份真实快照的同范围跨运行比较，**没有获得新来源版本、六指标等价或全球覆盖证据**。
+- 本地 ignored attempt、receipt 和候选封装已保留，未公开原始行/联系信息，不自动晋升baseline；`config/`、`data/`、`realtime/`、workflow 未修改。失败重跑、下一次真实采样和周期调度仍需相应独立预算/方案；本次不再执行任何数据请求。
