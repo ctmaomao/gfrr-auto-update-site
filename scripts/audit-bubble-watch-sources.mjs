@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 import {
   isExpectedPolicyDegradedLiveRow,
   isExpectedPolicyFallback,
-  isExpectedPolicyFetchFailure
+  isExpectedPolicyFetchFailure,
+  EVIDENCE_GAP_POLICIES
 } from './bubble-watch/source-health-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -118,16 +119,16 @@ function buildReport(data, buildResult, checkResult) {
   const fallbackRows = indicators.filter((row) => row.provenance?.mode !== 'auto' || row.stale === true);
   const expectedPaidSkips = fallbackRows.filter(isExpectedPaidSkip);
   const expectedCandidateOnly = fallbackRows.filter(isExpectedCandidateOnly);
-  const expectedPolicyFallbacks = fallbackRows.filter(isExpectedPolicyFallback);
+  const expectedPolicyFallbacks = fallbackRows.filter(row => isExpectedPolicyFallback(row, data.as_of_date));
   const unexpectedFallbackRows = fallbackRows.filter((row) =>
     !isExpectedPaidSkip(row) &&
     !isExpectedCandidateOnly(row) &&
-    !isExpectedPolicyFallback(row));
+    !isExpectedPolicyFallback(row, data.as_of_date));
   const fetchFailures = Array.isArray(data.meta?.fetch_failures) ? data.meta.fetch_failures : [];
   const unexpectedFetchFailures = fetchFailures.filter((failure) => {
     const policyFallback = expectedPolicyFallbacks.find((row) => row.id === failure.id);
     return !expectedPaidSkips.some((row) => row.id === failure.id) &&
-      !isExpectedPolicyFetchFailure(failure, policyFallback);
+      !isExpectedPolicyFetchFailure(failure, policyFallback, data.as_of_date);
   });
   const windRows = rows.filter((row) => /Wind/i.test(`${row.source_name || ''} ${row.source_tag || ''}`));
   const partialLiveRows = indicators
@@ -170,7 +171,7 @@ function buildReport(data, buildResult, checkResult) {
       windDisabledByDefault: !allowPaidWind,
       paidFallbackSkipAllowed: !allowPaidWind ? EXPECTED_PAID_FALLBACK_IDS : [],
       candidateOnlyAllowed: [...EXPECTED_CANDIDATE_ONLY_IDS],
-      policyFallbackAllowed: [{
+      policyFallbackAllowed: [...Object.entries(EVIDENCE_GAP_POLICIES).map(([id, policy]) => ({ id, reasonCode: policy.reasonCode, requiresFreshFallbackSnapshot: true, requiresAllSourcesHealthy: true })), {
         id: 'arr_2nd_deriv',
         reasonCode: 'arr_underlying_observation_stale',
         requiresFreshFallbackSnapshot: true
@@ -208,14 +209,16 @@ function buildReport(data, buildResult, checkResult) {
       value_display: row.value_display,
       asOfDate: row.provenance?.asOfDate || null,
       ageDays: row.provenance?.ageDays ?? null,
-      maxAgeDays: row.provenance?.maxAgeDays ?? null
+      maxAgeDays: row.provenance?.maxAgeDays ?? null,
+      evidenceGate: row.provenance?.evidenceGate || null
     })),
     unexpectedFallbackRows: unexpectedFallbackRows.map((row) => ({
       id: row.id,
       label: indicatorLabel(row),
       mode: row.provenance?.mode || null,
       stale: row.stale === true,
-      reason: row.provenance?.reason || null
+      reason: row.provenance?.reason || null,
+      evidenceGate: row.provenance?.evidenceGate || null
     })),
     fetchFailures,
     unexpectedFetchFailures,

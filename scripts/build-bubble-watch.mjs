@@ -17,6 +17,7 @@
 import { stripTags, decodeHtmlEntities, htmlToText, parseFedSepMedians } from './bubble-watch/public-html-parsers.mjs';
 import fs from 'node:fs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
+import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1100,7 +1101,7 @@ async function crunchbaseWpPost(id) {
   return { id: post.id || id, date: post.date || null, link: post.link || null, title, text };
 }
 
-async function crunchbaseWpPosts(query, perPage = 10) {
+async function crunchbaseWpPosts(query, perPage = 10, sourceChecks = null) {
   const params = new URLSearchParams({
     search: query,
     per_page: String(perPage),
@@ -1111,6 +1112,7 @@ async function crunchbaseWpPosts(query, perPage = 10) {
     headers: { 'User-Agent': BROWSER_UA }
   });
   if (!Array.isArray(rows)) throw new Error('Crunchbase posts 返回结构异常');
+  if (sourceChecks) sourceChecks.push(checkVcSourceResponse(rows, isoDate()));
   return rows.map((post) => ({
     id: post.id,
     date: post.date || null,
@@ -1702,8 +1704,15 @@ const autoBuilders = {
 // ---------- 研究口径 hybrid builders ----------
 
 async function fetchVcAiShareFromCrunchbase(ctx = {}) {
-  const posts = await retry(() => crunchbaseWpPosts('AI venture funding', 20), 'Crunchbase AI VC posts', 1);
-  const { post, parsed, articleDate, observationDate } = selectVcObservation(posts, extractVcAiFundingShare, isoDate(), ctx.config?.curated?.vc_ai_share?.maxAgeDays || 120);
+  const sourceChecks = [];
+  const posts = await retry(() => crunchbaseWpPosts('AI venture funding', 20, sourceChecks), 'Crunchbase AI VC posts', 1);
+  let observation;
+  try {
+    observation = selectVcObservation(posts, extractVcAiFundingShare, isoDate(), ctx.config?.curated?.vc_ai_share?.maxAgeDays || 120);
+  } catch (error) {
+    throw evidenceGapError(error, 'vc_ai_share', sourceChecks, isoDate());
+  }
+  const { post, parsed, articleDate, observationDate } = observation;
   const { aiFundingB, sharePct, totalFundingB, evidenceText } = parsed;
   if (!(aiFundingB > 1 && sharePct > 0 && sharePct <= 100)) throw new Error(`Crunchbase AI VC 数值越界 ${aiFundingB}/${sharePct}`);
   const status = classifyNumeric(sharePct, 50, 30);
@@ -2351,12 +2360,16 @@ async function fetchNeocloudCreditFromPublicMonitor(ctx = {}) {
   const financingEvents = [];
   const failures = [];
   const datedEvidence = [];
+  const sourceChecks = [];
   let checkedPages = 0;
   for (const page of pages) {
+    const sourceCheck = { source: page.source, status: 'fetch_failed' };
+    sourceChecks.push(sourceCheck);
     try {
       const html = await fetchWithTimeout(page.url, { headers: { 'User-Agent': BROWSER_UA }, timeoutMs: 15000 });
       checkedPages += 1;
       const text = htmlToText(html);
+      sourceCheck.status = checkNeocloudSourceContent(page.source, text).status;
       const publishedAt = articlePublishedDate(html);
       requireObservationDate(publishedAt, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21, 'neocloud');
       const company = page.source.match(/CoreWeave|Lambda|Crusoe|Nebius/u)?.[0];
@@ -2367,7 +2380,12 @@ async function fetchNeocloudCreditFromPublicMonitor(ctx = {}) {
       failures.push({ source: page.source, reason: error.message });
     }
   }
-  const coverage = requireNeocloudCoverage(datedEvidence, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21);
+  let coverage;
+  try {
+    coverage = requireNeocloudCoverage(datedEvidence, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21);
+  } catch (error) {
+    throw evidenceGapError(error, 'neocloud_credit', sourceChecks, isoDate());
+  }
   if (!checkedPages || !financingEvents.length) {
     throw new Error(`neocloud public credit monitor evidence 不足: checked=${checkedPages}, financing=${financingEvents.length}, failures=${failures.length}`);
   }
@@ -5013,7 +5031,9 @@ async function main() {
           const fallbackReason = windFallbackBuilder && !WIND_API_KEY
             ? `${candidate.automationStatus} source failed: ${error.message}; paid Wind final fallback skipped: WIND_API_KEY 未配置或已禁用`
             : `${candidate.automationStatus} source failed: ${error.message}`;
-          indicators.push(buildFallbackIndicator(def, entry, today, fallbackReason));
+          const fallbackIndicator = buildFallbackIndicator(def, entry, today, fallbackReason);
+          if (error.evidenceGate) fallbackIndicator.provenance.evidenceGate = error.evidenceGate;
+          indicators.push(fallbackIndicator);
           fallbackCount += 1;
           console.warn(`[bubble-watch] ${def.id}: ${candidate.automationStatus} FAILED → curated fallback (${error.message})`);
           continue;
