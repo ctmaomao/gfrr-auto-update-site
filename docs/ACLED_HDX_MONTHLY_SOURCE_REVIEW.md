@@ -216,3 +216,33 @@ Owner 在下一刀明确批准**仅此次三请求真实验收**：免费 HAPI�
 - 前后来源元数据一致；候选范围完整，保存候选用既有离线 CLI 复验 exit 0。与前次20:56样本的比较为 serialization_or_metadata_change：声明版本相同、事件及全部校验行字段变化数均0；进一步本地只读复核两个 JSON 的结构语义也分别相等，字节 hash 差别来自保存序列化格式，而非已观察到的数据修订。旧保存样本字节保持不变。
 - 实际仍 as-of08-28、来源更新09-03、HAPI同步09-07，不能把本次获取时间09-16或目录日期作为来源更新日。此次已完成第二份真实快照的同范围跨运行比较，**没有获得新来源版本、六指标等价或全球覆盖证据**。
 - 本地 ignored attempt、receipt 和候选封装已保留，未公开原始行/联系信息，不自动晋升baseline；`config/`、`data/`、`realtime/`、workflow 未修改。失败重跑、下一次真实采样和周期调度仍需相应独立预算/方案；本次不再执行任何数据请求。
+
+## 四槽候选试行（2026-09-16）
+
+Owner 已批准前轮独立评审提出的**四次低频候选采集试行**，替代“后续持续采样尚未批准”的本次范围门槛：PV/admin0、源as-of之前24完整日历月、每周最多一次且首次计入四次；每次三响应累计≤8MiB/10,002原始行（sample最多10,000、两个metadata各1），最多3请求，15秒/请求含正文、起始间隔≥1,100ms、零重试/分页/redirect；全试行≤12请求/32MiB。没有免费官网/API替换或生产授权。
+
+### 候选与数据边界
+
+- [候选核心](../scripts/world-order/acled-pilot.mjs) 和[本地记录](../scripts/world-order/acled-pilot-store.mjs) 归artifact_sanitizer_layer。新全返回范围契约逐国家复用既有小样本validator；原100行/1MiB/checker断言不改。只取同一PV资源/admin0，最多400个返回国家代码；sample命中10,000即hold，不截断后宣称完整。
+- 无官方完备国家清单，`globalCoverage=not_proven`；只统计返回国家是否具备24个月。缺月/null不补零，重叠月份逐键比较，新增/移出月份独立计数；国家消失、共同键丢失或同版本内容变化不能替换旧候选。无全球总量输出，不建立其它五指标的未经证明映射。
+- 首次读取metadata，只有来源as-of/资源更新时间/HAPI同步时间都未变且旧文件hash/结构/覆盖复验通过时，才只用一个请求返回metadata_only。它仅表示未检测到元数据版本变化，不证明正文没发生静默修订；保留旧dataFetchedAt、另记metadataCheckedAt。同步时间变化触发完整三请求路径。源as-of超过45天只检查metadata、不取正文，不刷新旧数据时效。
+- 新版本有数据时，再读metadata确认前后一致；该围栏仍不证明事务快照。同版本冲突、来源/同步版本倒退或国家范围异常缩减暂停；所有失败不覆盖旧候选。合格新候选可在私有档案中成为下一轮比较参照，**不是人工/生产基线晋升**。
+
+### 运行记录、保存与停止
+
+- [CLI](../scripts/run-acled-four-slot-pilot.mjs)：`npm run acled:pilot` 默认dry-run；`npm run acled:pilot -- --status` 仅读状态；`npm run acled:pilot -- --live` 最多执行当前槽一次。CLI只接受这三种模式，没有URL、输出目录、预算或日期覆盖参数。
+- 只准Git common-dir所在的canonical主checkout，拒绝linked worktree；固定ignored `manual-artifacts/acled-pv-four-slots-20260916/`。首attempt设置startedAt及28天后的绝对expiresAt，四个7天槽；相邻实际attempt还须间隔≥7天，漏槽不补、失败耗槽、到期无条件停止。先持有互斥`.lock`，再读状态、预留、占槽、请求、保存回执。进程崩溃留下锁或不完整attempt时拒绝续跑，不自动删除/恢复。
+- 原始sample、前后metadata分别按响应字节保存，再写hash manifest和脱敏receipt；不重复JSON封装原文。联网前预留8MiB+64KiB，实际落盘前再校验，含pending的总保存上限64MiB；不足就停止，不删除用户资料。完整receipt最后落盘，未完成归档不能成为下一轮有效候选。
+- ignored `contact-source.json` 只保存已批准本地联系文件的绝对路径，不复制邮箱；联系文件限4KiB、拒绝链接，应用标识只放HAPI请求头。不得在日志、argv、Git或远端artifact中展示联系信息或原始行。
+- 本线程每周heartbeat只执行CLI一次，not_due立即结束不补跑。任何CLI退出1或paused/locked/finished应暂停该heartbeat并报告；finalSlot结束也暂停。即使暂停调度失败，CLI的槽和截止保护仍禁止额外请求。不自动删除锁/状态、换目录/ID或改源码重用预算。
+- 本地定时执行需要机器开机、桌面应用运行及本项目可用；离线漏过的槽不会补采。依据[官方定时任务说明](https://learn.chatgpt.com/docs/automations?surface=app)。后续三次尚未实际执行时，不声明四槽试行完成；四周内无版本变化不算真实修订路径验收。
+
+### 验证入口
+
+`npm run check:acled-pilot` 使用合成数据与临时仓库，覆盖月份/层级/null/重复、metadata-only时钟、窗口与修订区分、HTTP/字节/行数/超时、四槽/到期/重复/漏跑、锁与中断、hash/容量/目录链接及linked worktree拒绝。已加入check:all；不联网、不操作真实试行记录。真实首槽须在专项、dry-run和独立代码审阅通过后执行；生产config/data/realtime/workflows始终隔离。
+
+### 首槽真实回执
+
+- 2026-09-15 22:53 UTC（本地09-16）完成首槽，三请求全部200、总1,863,079字节，原始行总5,234（metadata各1，sample5,232）。样本为218个返回国家代码×24个月，2024-08至2026-07；缺月、事件null、重复均0。来源as-of仍08-28，前后metadata一致，状态initial_candidate，不虚构同范围旧版作差异基线。
+- 当前只证明**返回国家范围的连续月覆盖**，未证明官方全球国家清单、领土等价或其它五指标映射；无全球数值总量/逐国家值公开。保存的原始响应和manifest只在ignored目录，复验hash通过。
+- 随即再次调用同CLI验收重复触发，返回not_due/零请求，未新增slot。startedAt=`2026-09-15T22:53:47.771Z`，expiresAt=`2026-10-13T22:53:47.771Z`；后续最多三个周槽，首槽已计入总预算。其它槽尚未实际执行，不能宣称四次试行全部完成。

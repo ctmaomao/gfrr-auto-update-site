@@ -776,6 +776,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 本次新增 `collect:acled-hapi-candidate`（默认 dry-run）的独立候选采集入口。owner 已另行批准一次三请求/102行/1MiB 的版本前后核验预算，仅本地私有候选；不扩展上文既有 reminder 或下表生产来源。详细 [预算与版本围栏](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#有界采集与版本围栏2026-09-16) 保留失败不重试、可见一致不等于事务快照和禁止自动续跑边界。
 
+最新owner批准为[四槽候选试行](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#四槽候选试行2026-09-16)：`acled:pilot` 默认dry-run，PV/admin0返回范围24完整月，每周最多一次共四次，单槽≤3请求/8MiB，合计≤12请求/32MiB；仅本地私有保存、metadata先行和绝对28天截止。此窄范围持续采样批准不改变既有小样本预算、生产manual-xlsx/reminder规则，也不证明全球或六指标等价。
+
 | 字段 | 值 |
 |---|---|
 | **License level** | `open`;owner 曾申请 Research tier 但被拒。Open level 允许 aggregated downloads 的 unlimited public access、non-commercial use,并要求 attribution |
