@@ -75,6 +75,8 @@
 | [ADR-0046](0046-editorial-previous-issue.md) | Dated previous Macro Risk issue during daily update gaps | Owner selected; implementation pending integration review |
 | [ADR-0047](0047-pressure-evidence-continuity.md) | Research cohort continuity, partial candidates and vintage audit | Owner authorized; research contract independently reviewed |
 
+| [ADR-0049](0049-bubble-evidence-gap-audit.md) | Bubble evidence-gap WARN versus source failure FAIL | Independent contract review passed; remote verification pending |
+
 ## Superseded
 
 (None yet)
