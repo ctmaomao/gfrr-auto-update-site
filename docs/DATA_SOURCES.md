@@ -772,7 +772,9 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 2026-09-16 候选评审入口：[HDX/HAPI 月度来源评审](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)。ACLED 09-15 已明确允许所披露个人非商业项目使用其 HDX/HAPI 聚合数据，条件为遵守 HDX 条款及归因 ACLED；现行 HDX/HAPI 条款已核验。经独立方案审阅完成一次隔离小样本（2 请求/2 行/1,706 字节），离线 schema/来源关联通过，数值等价仍不可判定：本地目标行缺失、来源版本未对齐。HAPI 实际响应仍关联 08-28 版本，而目录同资源 ID 已更新至 09-04，不能借目录日期刷新实际数据。仅本次隔离正文读取替代旧候选 metadata-only 等待；不自动续跑、不替代下表的生产 manual-xlsx / reminder metadata-only 规则，也未批准六指标映射、生产切源或官网抓取。
 
-后续离线工具 `review:acled-monthly-candidate` 已实现政治暴力国家月事件候选的保存字节/元数据绑定及跨快照修订分类，仅输出汇总诊断，不联网或写文件。已有样本重放通过，但缺第二份真实基线，六指标等价、全球覆盖、时效和生产切源均未认定；边界及输入契约见[离线候选说明](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#离线版本固定候选工具2026-09-16)。
+后续离线工具 `review:acled-monthly-candidate` 已实现政治暴力国家月事件候选的保存字节/元数据绑定及跨快照修订分类，仅输出汇总诊断，不联网或写文件。第二份真实同范围快照已由下述独立三请求验收取得并比较，无行内容变化，实际来源仍08-28；六指标等价、全球覆盖、时效和生产切源均未认定。边界及输入契约见[离线候选说明](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#离线版本固定候选工具2026-09-16)。
+
+本次新增 `collect:acled-hapi-candidate`（默认 dry-run）的独立候选采集入口。owner 已另行批准一次三请求/102行/1MiB 的版本前后核验预算，仅本地私有候选；不扩展上文既有 reminder 或下表生产来源。详细 [预算与版本围栏](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#有界采集与版本围栏2026-09-16) 保留失败不重试、可见一致不等于事务快照和禁止自动续跑边界。
 
 | 字段 | 值 |
 |---|---|

@@ -97,6 +97,7 @@ const SUITES = {
     'check:acled-operator-safety',
     'check:world-order-acled-hdx-probe',
     'check:acled-monthly-candidate',
+    'check:acled-hapi-collector',
     'check:world-order-acled-weekly-runtime',
     'check:world-order-acled-monthly-runtime'
   ],
