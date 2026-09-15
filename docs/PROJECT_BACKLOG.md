@@ -6,6 +6,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-16 ACLED HDX/HAPI 许可与隔离样本验收
+
+- **Acceptance baseline**：owner 在 ACLED 新回信分析后要求开始下一步；沿用本任务分项 commit+push 和独立 AI 审阅授权。本次仅来源许可/平台条款核验、一次 2 请求/200 行/1 MiB/15 秒/零重试的隔离验收；不切换生产、不自动访问 ACLED 官网、不扩展费用或公开原始数据。
+- **已执行**：ACLED 09-15 明确许可与新版 HDX/HAPI 条款已核验，独立来源方案审阅通过；两次真实请求共 2 行/1,706 字节。初次关联校验使用旧字段而停止，修正 v2 资源字段后仅离线复核通过，没有追加网络请求。本地合法 XLSX 只读原哈希保持。
+- **结论**：数据结构/来源关联通过；对应本地行缺失，且本地 08-21、HAPI 08-28、目录 09-04 三版不同，数值等价为 indeterminate。HAPI resource ID 稳定不证明版本同步。六指标整体替换与周表自动化未完成，官网抓取仍不允许。详见[来源评审](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)。
+- **下一步**：独立评审版本固定的月度候选适配方案及预算；部分可证明 evidence 不冒充六表无损替换。完整验证/提交/推送/最终独立审阅结果见本任务 PR 回执。本轮只同步三个相关文档，不混入并行 Bubble Watch 改动。
+
 ### 2026-09-14 AI 基建信用利差图（owner 已授权直接上线，发布验收中）
 
 - Owner acceptance baseline：在 Bubble Watch 的周度趋势之后、分类指标之前，按参考站 1:1 增加 HY / CCC / IG 一年信用利差三图。保持三列/720px 单列、20px gap、180px 图高、标题/数值/五观测间隔变化和 HY 350/500 虚线。此次复刻采用上游黄/红阈值线颜色，范围仅该独立页图表，不推广首页色板；沿用 DESIGN §4.4 独立页边界。
@@ -564,6 +571,13 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **ACLED 工作基线**：2026-09-16 从 main `45bd859d` 隔离至 `codex/acled-hapi-isolated-acceptance`，原目录并行 Bubble Watch 改动全部保留。
+- **ACLED 当前完成**：源方许可、现行平台条款及一次隔离真实读取已完成；初次字段校验停止后仅离线修正复核。按 neat-freak 只同步本来源评审、来源导航和交接，无生产/配置/workflow 改动。
+- **ACLED 下一步**：版本固定的月度候选设计与独立评审；不重复询问已取得的 HDX/HAPI 使用许可。
+- **ACLED 仍未完成**：同版本/全覆盖六指标等价、可复用适配和生产切源、周表自动化。以下 09-13 其它模块回执保留为历史，不据旧记录推定当前状态。
+
+### 2026-09-13 交接（历史）
 
 - **工作基线**：2026-09-13 收尾基于 main `21a7dc71`，分支 `codex/september-13-delivery-handoff`；此前 #351、#353、#354 均已分项验证/推送/独立审阅/合并。此文档提交自身的最终 SHA/CI/集成状态以对应 PR 回执为准。
 - **当前完成**：上一期 AI 连续展示代码和双站版本已交付；只读巡检首次真实 artifact 验收完成；GDELT 限流自然执行确认完成；#350 ACLED 发布与 #352 研究采集回执已补齐。没有在本轮补发邮件、额外 Daily/AI 刷新、清理用户数据或自动晋升。

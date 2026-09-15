@@ -2,7 +2,26 @@
 
 <a id="当前状态2026-09-08-授权联系复核"></a>
 
-## 当前状态：2026-09-13 官方回复复核与许可等待
+## 当前状态：2026-09-16 HDX/HAPI 许可确认与隔离验收
+
+### 本次 acceptance baseline（替代下文旧阶段的许可等待）
+
+- ACLED Access 于 2026-09-15 09:00:15 UTC 在已授权询问信线程明确答复：允许本项目使用 ACLED 在 HDX 公开的月度聚合数据或 HAPI 资源；下载遵守 HDX 平台条款，公开成果正确归因 ACLED。已核对来信认证。此答复不是对六项指标等价性的确认，也不授权官网自动抓取或付费 registry API。
+- Owner 随后要求开始下一步。本次只执行一次隔离验收：最多两个 HAPI 请求（一个数据、一个关联资源元数据），合计不超过 200 行 / 1 MiB，每次 15 秒、零重试、串行间隔至少 1 秒。先明确国家、月份、类别和行政层级，再检查实际返回；命中 limit、缺行、层级/版本不明均不得宣称完整。
+- 原“条款入口部署一致性”阻碍已核验关闭：旧条款入口实际 HTTP 301 指向 [新版官方 API 总览](https://docs.humdata.org/build/overview/hdx-api-overview)，沿官方文档索引完整读取 [现行 HAPI 条款](https://docs.humdata.org/about/hdx-terms-of-service/hapi-terms-of-service.md)、[HDX 平台条款](https://docs.humdata.org/about/hdx-terms-of-service.md) 和 [许可说明](https://docs.humdata.org/about/data-licenses.md)。HAPI 八节仍要求最多 10,000 行/请求、每秒最多一次、应用标识和使用日志；平台第 12 条仍要求遵守具体数据许可。页面未给明确版本生效日，记录读取日期而不自行推定。
+- 独立 AI 来源审阅通过此小样本方案；允许用 owner 已批准的应用联系信息在本机编码标识，仅通过 HAPI 请求头发送，不公开邮箱、可逆标识、私人邮件或原始数据行。样本仅保留本地 ignored artifact，不发信、不注册账户、不改生产或提醒链。
+- 当前状态拆分为 `sourcePermission=permitted_hdx_hapi_for_disclosed_project`、`isolatedSampleApproved=true`、`metricEquivalence=unverified`、`productionDataWriteApproved=false`、`sourceCutoverApproved=false`。新 baseline 仅替代旧阶段“未获 HDX/HAPI 许可 / 不执行隔离正文读取”表述；所有现行 manual-xlsx 生产规则及其它来源保障继续保留。
+
+### 本次实际验收结果
+
+- 2026-09-15 20:56 UTC（本地 09-16）完成一次小样本：`NZL / admin_level=0 / political_violence / 2026-07`，一个 conflict-events 请求和一个关联 resource 请求均 HTTP 200，共 2 行、1,706 字节。无重试、无分页、无 ACLED 官网请求；dry-run 在真实请求前执行。
+- 数据响应 SHA-256 为 `e1c18a5ff40dd01ae57b4febc4e7ffc5e98d3615b005437ede9545a59bfe92b2`；资源响应为 `952aede27f312607f609f9b3f7f7e1632014ab51c79acf31d5564facdfa18243`。原始行、联系信息及完整回执只在 ignored `manual-artifacts/acled-hapi-20260916/` 保留，不进入公开仓库。
+- 初次本地关联检查误用了旧 v1 示例的 `hdx_id`，在两个请求完成后报 `metadata_mismatch`。按实际 v2 的 `resource_hdx_id` 修正后，仅离线复核已保存响应：国家、月、类别、层级、整数及来源关联通过，未再次请求。没有将初次退出码 1 改称成功执行。
+- HAPI 关联的是 ACLED 的 PV XLSX 资源 `99a32d01-d0ca-4f57-a0f5-cb6b5f01f14f`，不是 HAPI 导出的年度 CSV。响应资源名 as-of **08-28**、资源更新时间 **09-03 10:29:54 UTC**、HAPI 更新时间 **09-07 01:33:17 UTC**。同日 CKAN 目录中这个相同资源 ID 已是 as-of **09-04**、更新时间 **09-10 10:25:01 UTC**；HAPI 导出 2026 CSV 的目录截止也是 09-04。这证明**相同 resource ID 或更新目录不等于实际 HAPI 响应已同步**，不得以目录最新日期覆盖响应来源日期。
+- 只读检查 operator 合法持有的 `number_of_political_violence_events_by_country-month-year_as-of-21Aug2026.xlsx`：SHA-256 `a3201b7350cd4a11064614f98f130e1bc97ba6cd073927ddbd90f4b5968b6949`，读取前后不变。文件的 worksheet dimension 声明为 A1；只读解析重新扫描实际单元格，保留 50,000 行/8 列边界，不改 XLSX 或现行 sanitizer。对应国家/月行未找到；不能把缺行当零或据此判等价。
+- 结论为 **schema/来源关联通过；数值等价 `indeterminate`**（本地对应行缺失、08-21/08-28/09-04 版本未对齐）。这不是解析错误已证明、六指标替代通过或全球完整覆盖。未改变 `config/`、`data/`、`realtime/`、workflow、生产 fetcher 或发布链。
+
+### 历史往来与手工发布回执（截至 2026-09-13）
 
 Owner 已提供联系邮箱并授权发信；本轮又明确授权逐项实施、验证、commit+push、独立 AI 审阅及合并。下文原始阶段的“不发信 / 联系信息待批准”只描述当时范围，不撤销后来授权，也不代表已取得第三方数据许可。
 
@@ -15,7 +34,7 @@ Owner 已提供联系邮箱并授权发信；本轮又明确授权逐项实施�
 - 手工更新的当前回执：#350 自动准备 main 入口已合并，09-11 22:32 UTC 配置发布 `b06aaaf4` 与 World Order `34654473322` 成功；09-13 产物及双站实读为六地区同窗、周截止 08-28、月 as-of 08-21，weekly aging/overall partial 如实保留。9 月 9 日部分地区仍 08-14 的记录是历史快照，不是当前本地配置待发布。此手工发布不是 HDX/HAPI 自动接入或同源版本等价验证。
 - 当前 HDX/HAPI 候选 `sourceComplianceStatus=unresolved`；该候选的正文读取、生产写入和切源仍未开启。等待资源级权限、公开转换/归因适用性及指标口径答复，不执行 HAPI 数据请求、应用标识注册或 comparator；不把六项指标编码成已批准映射。既有手工更新、缓存保留与观察门槛不变。
 
-## 状态与批准范围
+## 初始阶段状态与批准范围（2026-09-08 历史）
 
 2026-09-08，owner 在来源调查后要求“请做下一刀”，对应本次**来源评审与隔离验证设计**，沿用逐项 commit + push。本文是可评审交付物，不是数据下载器、接入许可或生产切换决定。
 
@@ -26,7 +45,7 @@ Owner 已提供联系邮箱并授权发信；本轮又明确授权逐项实施�
 
 2026-09-08 补充 acceptance baseline：owner 明确确认 GFRR 为**个人非商业项目，无广告、付费订阅或客户服务**，并要求继续。用途事实已确认，不再重复询问；不是替 ACLED/OCHA 授权，也不扩大为发信、披露联系邮箱、接受付费协议、真实样本下载或生产发布。本次补充留在同一 PR #310。
 
-## 已核对的现状
+## 初始代码与数据基线（2026-09-08 历史）
 
 基线为 main `235653a6c505d6ab4a7e5401d0ec15bb5b806cad`。现有 [monthly sanitizer](../scripts/world-order/sanitize-acled-monthly.mjs) 要求六个文件、共同 as-of 日期、严格表头及单一 `Sheet1`；只允许本地 XLSX 输入。单文件上限 1 MiB、批次 2 MiB、50,000 行、8 列；本次不修改这些保护。
 
@@ -71,13 +90,13 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 1. **渠道依据已找到**：ACLED [FAQ](https://acleddata.com/faq-codebook-tools) 指向 HDX 的国家—月/年聚合数据；OCHA [HAPI 说明](https://centre.humdata.org/announcing-the-hdx-humanitarian-api/) 面向自动化访问。因此不将 HAPI 与浏览器抓取 ACLED 网站混为一谈。
 2. **用途已由 owner 确认**：2026-09-08 确认为个人非商业，无广告、付费订阅或客户服务。依此按非商业用途继续评审，不从 `licenseLevel=open` 反推许可，也不额外声称具有学术机构身份。以后增加商业或代客用途须重新评审。
 3. **数据条款仍适用**：2026-09-08 重读 [ACLED EULA](https://acleddata.com/eula) 与 [Content Usage Terms](https://acleddata.com/contentusage)，两页标注更新日期均为 2025-07-08。EULA §1.2、§3.1–3.3 涉及商业许可、转换成果、再分发及网站抓取限制；§7 涉及 AI 使用及防提取。用途确认解决商业身份疑问，但公开成果仍须满足转换且不可还原等条件，不能把仅重排的仪表盘视为已合规。
-4. **HAPI 官方条款内容已补齐，入口部署一致性未核验**：原 [HAPI Terms](https://data.humdata.org/hapi/terms) 本日访问曾得到 403，重查仍未取得正文；随后按官方开源代码指向，读取 OCHA 官方站点的公开条款内容，完整取得 8 节，证据链见下文。没有换代理、伪造身份或获取受限数据；不再把条款正文标为“完全未读”，也不把公开源码默认分支当成线上部署版本证明。
+4. **HAPI 现行条款已核验**：09-08 的旧入口读取与源码证据链保留在下文；09-16 已沿实际官方跳转和索引完整读取新版平台/HAPI 条款，旧部署一致性缺口关闭。未换代理、伪造身份或访问受限资源。
 5. **公开 Git/JSON 也属于发布面**：未来不能只检查 UI 是否展示原表，还须检查 public repository、静态 JSON、Actions artifact 可见性及是否可还原数据。原始文件、国家级对照行与含邮箱的应用标识不得进入公开提交；现有发布范围本刀不扩展。
-6. **权限不迁移**：镜像不洗掉 ACLED 权利；Open 档不自动赋予原始事件 API。HAPI [应用标识要求](https://hdx-hapi.readthedocs.io/en/latest/getting-started/#generating-a-key) 需真实应用信息与 owner 批准的联系邮箱，本刀不生成，不使用示例/第三方标识。
+6. **权限不迁移**：镜像不洗掉 ACLED 权利；Open 档不自动赋予原始事件 API。09-16 实读 [HAPI OpenAPI](https://hapi.humdata.org/openapi.json) 为 0.9.14，现行路径 `/api/v2/coordination-context/conflict-events`，支持 `X-HDX-HAPI-APP-IDENTIFIER` 请求头；标识是应用名与邮箱的可逆编码，不是秘密 API key，不得公开。旧入门页的 v1 示例不当作当前接口。
 
 下一次来源评审应记录：适用条款 URL/版本日期、用途确认、允许的渠道/频率/存储期限/发布形式、剩余歧义及答复依据。只有有权方才能授予来源许可；owner 可以批准项目操作，不能代第三方授予数据权利。
 
-### HAPI 官方条款证据链与剩余缺口
+### HAPI 官方条款历史证据链（剩余入口缺口已于 09-16 关闭）
 
 2026-09-08，通过 GitHub 官方仓库 `OCHA-DAP/hdx-ckan` 的默认分支 `dev`，固定到 commit `128d8406828e49f4a6fd24331f8f9a0d34cf171b`，核对以下读取链：
 
@@ -87,9 +106,9 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 
 八节分别涉及简介、接受条款、单次条数限制、请求频率、用户行为、日志与分析、免责声明及联系信息。其约束摘要：单次最多 10,000 条；请求按每秒一次节制；不得干扰服务；须带应用标识，OCHA 可记录 API 调用并分析使用情况；数据不代表 OCHA/联合国背书；疑问联系 `hdx@un.org`。内容没有给出 ACLED 数据的独立再分发许可或项目专属保留期限，不能拿平台条款覆盖资源级 ACLED 条款。八节中的旧简介范围也不能代替现行资源覆盖证据。
 
-这补齐了**官方公开条款内容**，但未证明不可读入口当前部署的全部呈现、附加链接与上述源码完全相同。实际数据读取前仍需在独立来源评审中处理该一致性缺口，并明确应用标识/邮箱、允许的本地保留和发布形式。询问信因此改为请官方确认适用性及是否有更新/补充，不再仅要求找一份完全未读的正文。
+当时补齐了**官方公开条款内容**，但没有证明不可读入口当前部署的全部呈现。09-16 已直接读取现行官方条款并完成独立来源方案审阅，窄范围隔离读取按顶部 baseline 执行；不再把旧入口问题当作必须重复联系官方的阻碍。
 
-## 隔离验证设计（未执行真实数据验证）
+## 隔离验证设计（原方案与后续完整验收）
 
 ### 层归属与停止条件
 
@@ -103,14 +122,14 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 | freshnessCadence | 以实际数据截止期检查；目录标记 weekly update，统计粒度 monthly |
 | artifactOnlyBeforeProduction / sanitizerRequired / productionWriterRequired | 均为 true |
 | fallbackPolicy | 任何未知、超限、授权撤销或失败保留旧数据；不刷新其数据日期，不转用未批准渠道 |
-| sourceComplianceStatus | `unresolved` |
+| sourceComplianceStatus | 原方案为 `unresolved`；当前窄范围许可及执行状态见顶部 acceptance baseline |
 | affectsScoring / affectsDecisionModel / affectsExecutionLock / affectsPositionGuidance | 本提案均为 false；不改变现有 weekly overlay 的既有作用 |
 
 不在 reminder 中添加 checkout、安装或下载；不往现有生产 JSON 伪装写入六个 `filesIngested`、`preparedBy=manual` 或 `isRealData=true`。字段迁移和 writer 是后续独立事项。
 
 ### 授权后的一次性最小样本提案
 
-以下是**待批准的具体操作预算**，不是可执行命令，也不因本 PR 合并自动打开：
+以下是原具体操作预算；09-16 已按顶部窄范围批准完成一次试验，不因本 PR 合并自动续跑或扩大：
 
 - 优先 HAPI 官方 API 的单次小样本，预先核对现行 endpoint/schema、应用标识、所选国家/日期和资源版本；最多 2 个数据请求、合计 200 行/1 MiB、每请求 15 秒、零重试。请求串行、开始时间至少相隔 1 秒，不因平台上限 10,000 条而扩大本项目预算。不以 limit 命中推断完整覆盖；分页耗尽预算即返回“不完整”。
 - 401/403/429、重定向至未批准目标、正文类型异常、超时/体积超限即停止，不轮换身份/代理或转下载 CSV。数据只在受控本地 ignored artifact 中处理；未审阅的原文/异常不得进入日志。
@@ -135,11 +154,11 @@ HAPI 与 ACLED/HDX 同源；双路径数值一致是分发/变换验证，不是
 | 保护性回归 | 构造重复层级、三类重叠、部分月、缺月、缺年、未知分类、错误行、null/0、分页截断、超限、过期/未来、版本混用的负例；所有例子与真实事件隔离 |
 | 发布隔离 | 检查前后 `config/world-order-acled-*.json`、`data/`、`realtime/` 及 workflows 未变；无网络的 comparator 检查不触发 provider、publish、Git push 或来源切换 |
 
-需要显性处理的兼容性问题：现有 `buildMonthlyTrend` 选最近 12 个有记录月份和前 12 个，不验证连续完整月；`deriveLatestFullYear` 有缺年 fallback。未来新路径若加强完整期要求，必须独立说明行为差异并评审，不能一边改变窗口一边声称与旧算法完全等价。本刀不修改现行算法或 checker。
+兼容性基线已更新：旧评审中 `buildMonthlyTrend` 只选最近有记录月份的问题已由 [ADR-0034](ADR/0034-acled-complete-month-windows.md) 独立修复；当前生产要求 as-of 月之前的连续 24 个日历月，缺月整个趋势为 null。未来 comparator 必须对照该现行逻辑，并保留年度缺年/国家覆盖检查，不以旧算法作等价依据。本刀不修改现行算法或 checker。
 
 ## 已发送询问所用草稿（保留模板）
 
-**首次询问已发送；ACLED 已回复，英文材料续询仍待具体确认。** 实际状态见本文顶部；owner 已另行批准联系信息和发信，不能再把模板占位符当作缺少邮箱。下列是保留的首次询问模板，不是许可答复；个人署名/邮箱不公开，不因本次文档合并而重发或注册应用标识。
+**首次询问及续询已发送；09-15 的许可回复见本文顶部。** Owner 已另行批准联系信息和发信，不能再把模板占位符当作缺少邮箱。下列保留首次询问模板，不是许可答复；个人署名/邮箱不公开，不因本次文档合并而重发或注册账户。
 
 Subject: Clarification of ACLED aggregate data access via HDX/HAPI for GFRR
 
@@ -160,7 +179,7 @@ Thank you,
 
 ## 本刀交付与后续判定
 
-- 已完成：源码/元数据对照、六项候选映射与缺口、owner 非商业用途和联系信息确认、HAPI 官方公开八节条款及证据链读取、来源权利问题清单、隔离预算与验收用例设计、授权发信及本轮只读回信/本地文件状态核对。
-- 未完成且未冒充完成：条款入口部署一致性及数据许可/发布适用性确认、官方口径回复、真实样本下载与数值对照、comparator 实现、生产更新和周表自动化。
-- 下一决策：收到有权方回复后先核对具体渠道、频率、保留/公开形式及六项定义，再按获准资源和预算进入一次性隔离读取与比较；不重复索要已确认的非商业用途、邮箱或已执行的发信批准。若六项无法等价，保留现有月表，不把部分代理覆盖当作无损替换。没有答复或新对照原件时，本轮可做的状态核对已完成，不继续虚构数据接入。
-- 本文新增的是评审入口，不是 source approval；实际验证、commit、push、PR 与独立评审状态以对应回执为准。
+- 已完成：ACLED 对所披露项目 HDX/HAPI 用途的明确许可、现行平台条款核验、独立小样本方案审阅、两次有界真实请求、已有响应的离线 schema/来源关联与本地月表缺行复核。
+- 未完成：六项数值/定义/覆盖等价、同版本完整样本、可复用 comparator、生产更新和周表自动化。完整源码生产接入、调度及公开派生成果须另作独立实施/发布审阅；本轮不把“允许使用”扩大为无限制再分发。
+- 下一步是审阅**版本固定的月度候选适配方案**：显式区分目录与实际响应版本，独立采集/比较预算，保留三类非互斥、总死亡数无证明映射、缺行不作零和原始行不发布边界。可考虑只覆盖可证明的月度 evidence，但须明确这是部分来源改造而非六表无损替换；不能隐式实施。
+- 不再把已经取得的 HDX/HAPI 许可列为待联系事项；ACLED 官网自动抓取与免费直接 API 仍未获准。实际完整检查、commit、push、PR 与最终独立审阅状态以对应回执为准。
