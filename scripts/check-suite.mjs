@@ -96,6 +96,7 @@ const SUITES = {
     'check:xlsx-security',
     'check:acled-operator-safety',
     'check:world-order-acled-hdx-probe',
+    'check:acled-monthly-candidate',
     'check:world-order-acled-weekly-runtime',
     'check:world-order-acled-monthly-runtime'
   ],

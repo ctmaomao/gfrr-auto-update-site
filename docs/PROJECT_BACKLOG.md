@@ -6,6 +6,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-16 ACLED 离线版本固定候选
+
+- **Acceptance baseline**：owner 要求开始下一刀；承接前次方案，仅实现政治暴力国家月度事件数的本地 JSON 候选校验与跨快照比较，沿用分项 commit+push / 独立 AI 审阅授权。零网络、零新增下载预算、不写生产、不扩展其它五项映射。
+- **已实现**：保存字节双 SHA256、来源元数据及 UTC 微秒时间绑定；严格声明范围、完整月份、缺行/null/零、重复冲突和截断检查；同版本冲突与不同版本修订分开报告。输出只有汇总诊断，默认没有基线，不自动晋升。
+- **验证证据**：13 项专项回归通过；上次保留真实 JSON 离线 CLI 验收 exit 0，保存文件未变，结果为声明范围完整 / baseline_required。不是第二次采集，也不证明六指标或全球等价。完整检查和独立最终审阅见本次 PR 回执。
+- **下一步边界**：需要独立审阅可复用采集器的版本一致性与取样预算，取得第二份可比快照；生产写入、调度、六指标替换仍未完成。详见[来源评审](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#离线版本固定候选工具2026-09-16)。
+
 ### 2026-09-16 ACLED HDX/HAPI 许可与隔离样本验收
 
 - **Acceptance baseline**：owner 在 ACLED 新回信分析后要求开始下一步；沿用本任务分项 commit+push 和独立 AI 审阅授权。本次仅来源许可/平台条款核验、一次 2 请求/200 行/1 MiB/15 秒/零重试的隔离验收；不切换生产、不自动访问 ACLED 官网、不扩展费用或公开原始数据。

@@ -183,3 +183,16 @@ Thank you,
 - 未完成：六项数值/定义/覆盖等价、同版本完整样本、可复用 comparator、生产更新和周表自动化。完整源码生产接入、调度及公开派生成果须另作独立实施/发布审阅；本轮不把“允许使用”扩大为无限制再分发。
 - 下一步是审阅**版本固定的月度候选适配方案**：显式区分目录与实际响应版本，独立采集/比较预算，保留三类非互斥、总死亡数无证明映射、缺行不作零和原始行不发布边界。可考虑只覆盖可证明的月度 evidence，但须明确这是部分来源改造而非六表无损替换；不能隐式实施。
 - 不再把已经取得的 HDX/HAPI 许可列为待联系事项；ACLED 官网自动抓取与免费直接 API 仍未获准。实际完整检查、commit、push、PR 与最终独立审阅状态以对应回执为准。
+
+## 离线版本固定候选工具（2026-09-16）
+
+此节更新上节“comparator 未实现”的状态，仅覆盖政治暴力国家月度事件数；前述六指标完整等价验收仍未完成。owner 已批准本下一刀实施，独立方案审阅通过。工具属于 artifact_sanitizer_layer，不接入生产、调度或发布。
+
+- 实现：[纯候选模块](../scripts/world-order/acled-monthly-candidate.mjs)、[stdin CLI](../scripts/review-acled-monthly-candidate.mjs)、[合成回归](../tests/unit/acled-monthly-candidate.test.mjs)。入口 `npm run review:acled-monthly-candidate` 从 stdin 接收 JSON；`npm run check:acled-monthly-candidate` 已加入完整检查。没有文件路径、联网、凭证、写入或批准开关；不要将原始输入放进命令参数、日志或公开仓库。
+- 输入严格为 `{current, baseline}`，baseline 可为 null；每份快照为 `{pin, sampleJson, metadataJson}`，后两项是保存的 UTF-8 JSON 字符串。pin 的完整字段以模块 `PIN_KEYS` 为准：schemaVersion=`acled-hapi-pv-pin-v1`、两个保存字节 SHA256、固定 resource ID、资源文件名/asOfDate、resourceUpdatedAt、hapiUpdatedAt、fetchedAt、countries、months、requestLimit。格式化保存后的 hash 不等于原网络响应 hash，必须针对实际传入字符串计算。
+- 每份样本与元数据合计最多 1 MiB、100 原始行；最多 10 个唯一国家、24 个唯一月份、100 个预期国家月键。整个 stdin 在解析前限制 4 MiB、5 秒。明确声明范围不代表全球覆盖；命中请求行上限、缺行、事件数 null 或 as-of 当月都 hold，不补零。重复行先计原始行预算，所有校验字段完全相同才去重，冲突拒绝。
+- 时间严格校验真实 UTC 日历并保留微秒；来源覆盖、更新时间、HAPI 同步和获取时间分别记录。资源 ID/文件名/来源/版本元数据必须关联，且只接受 admin0 / political_violence。文件 hash 固定的是本地保存字节，元数据是声明证据，不认证上游，也不保证 HAPI 可重新获取该历史版本；不以目录新日期刷新样本。
+- 同范围完整快照才作逐键比较；相同声明版本但值或其它行字段变动报告 revision_conflict，不同声明版本报告 revision_difference。获取时间、HAPI 同步时间、JSON 顺序或空白变化本身不是来源修订。输出只有变化行数和状态，不含国家月键、事件值、明细 hash 或原文异常；不持久化或自动更新基线。
+- 真实离线验收：仅重放前次保留的两份 JSON，exit 0、保存字节未变、声明范围完整；没有第二份真实快照，返回 baseline_required。13 项合成测试覆盖缺失/零、微秒、部分月、上限、冲突、跨版本、格式变化、CLI 超限/超时及脱敏。六指标等价、来源真实性、全球覆盖、时效与生产授权均不因通过而成立。
+
+下一刀可评审可复用有界采集器及第二快照预算，明确请求前后版本一致性；本工具不追加网络预算。完整年度/连续 24 月、另外五项指标与生产切源仍遵守前述独立门槛。
