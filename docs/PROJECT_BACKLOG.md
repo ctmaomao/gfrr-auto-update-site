@@ -6,7 +6,16 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
-### 2026-09-14 AI 基建信用利差图（owner 已授权直接上线，发布验收中）
+### 2026-09-16 Bubble source-health 审计修复（验证中）
+
+- Owner acceptance baseline：修复 main 6732e894 的 Audit Bubble Watch Sources 失败。run 34957868183 的 build/check 均为 0，仅 VC 和 Neocloud 两条 ADR-0048 证据不足回退被旧审计分类器判为意外故障；前一成功 run 34586967372 尚未应用该证据保护。
+- [ADR-0049](ADR/0049-bubble-evidence-gap-audit.md) 明示新的窄范围审计分类：全部来源本轮健康、有效且带完整诊断，并使用日期/年龄重新验证的有效研究快照时报告 WARN；真实源故障和过期快照仍 FAIL。保留全部既有 checker 断言与评分/日期/覆盖门槛。
+- 本任务仅补充来源诊断与审计，不发布生成数据，不调用付费 Wind/DeepSeek；验证使用免费审计，并核对四个生产文件字节完全恢复。合并前需独立审阅本次契约修订。
+- 验证：独立 AI reviewer 初审指出 VC 标题可能代替正文的健康诊断漏洞，修复原始响应/日期/URL检查及 Neocloud 对应公司检查后复审通过。7 项回归、语法、完整 `check:changed` / `check:all` 均 exit 0。实际免费本地审计 build/check=0、结果 WARN、四个生产文件 SHA256 完全恢复；补强后六个来源实时内容检查均为 ok。待 PR CI 与新版 GitHub 免费审计通过后集成。
+
+### 2026-09-14 AI 基建信用利差图（已上线）
+
+- 已完成：PR #357 合并 d9ee2a52，Pages 34835506397 / EdgeOne 34835506324 成功；两站三图、27卡和主分30.4%一致，实际浏览器与数据哈希验收通过。
 
 - Owner acceptance baseline：在 Bubble Watch 的周度趋势之后、分类指标之前，按参考站 1:1 增加 HY / CCC / IG 一年信用利差三图。保持三列/720px 单列、20px gap、180px 图高、标题/数值/五观测间隔变化和 HY 350/500 虚线。此次复刻采用上游黄/红阈值线颜色，范围仅该独立页图表，不推广首页色板；沿用 DESIGN §4.4 独立页边界。
 - FRED 序列为 BAMLH0A0HYM2 / BAMLH0A3HYC / BAMLC0A0CM；CCC 与 IG 是市场代理，并非 Neocloud / hyperscaler 专属券篮子。嵌入现有 Bubble builder 的可选 credit_spreads，属于 daily_history_layer → frontend_display_layer；日度观测随既有周一刷新，不新增 provider、workflow、生产依赖或计分输入。
