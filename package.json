@@ -280,6 +280,8 @@
     "review:acled-monthly-candidate": "node scripts/review-acled-monthly-candidate.mjs",
     "collect:acled-hapi-candidate": "node scripts/collect-acled-hapi-candidate.mjs",
     "check:acled-hapi-collector": "node --test tests/unit/acled-hapi-collector.test.mjs",
+    "acled:pilot": "node scripts/run-acled-four-slot-pilot.mjs",
+    "check:acled-pilot": "node --test tests/unit/acled-pilot.test.mjs",
     "check:acled-monthly-candidate": "node --test tests/unit/acled-monthly-candidate.test.mjs",
     "check:world-order-acled-weekly": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs && node --test tests/unit/acled-weekly-coverage.test.mjs",
     "check:world-order-acled-weekly-runtime": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs --runtime-history && node --test tests/unit/acled-weekly-coverage.test.mjs tests/unit/acled-source-freshness.test.mjs",
