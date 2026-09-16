@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+已补[拒绝正文隔离取证准备](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#拒绝正文隔离取证准备2026-09-16)：有界完整响应可保留为不可晋升的quarantine，离线仅分类重复数量，不去重放行。本轮零新增HAPI请求，旧once不变；上次未保存的失败正文不能补回，真实重复原因仍未知。
+
 新增独立批准的[多国admin2返回范围验收](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#多国二级行政区返回范围验收2026-09-16)：固定2025-01/PV、最多3请求/8MiB/10,002行。实际第2请求因duplicate_row停止，sample4,595行未通过，未发送第3请求；仅失败回执，正文未保存，不臆测重复原因。此次once已消耗，不重试、不扩旧预算、不切生产。
 
 AFG二级行政区方案现已获独立批准并完成一次验收：[三请求回执](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#afg-二级行政区一次验收2026-09-16)。3请求/150,768字节，AFG2025-01返回398行（34个admin1/398个admin2），08-28版本私有hash复验通过；预算已消耗，禁止重跑/扩范围。`review:acled-geography -- --admin2`仅加载该单国单月证据，不改变全球缺口、不全国汇总或切源。此记录替代下段“AFG待批/未执行”的历史状态，其余边界不变。

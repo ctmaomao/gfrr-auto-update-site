@@ -13,6 +13,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-16 ACLED 拒绝正文隔离取证准备
+
+- **Acceptance baseline**：owner要求开始下一步；本轮仅实现私有quarantine和离线重复分类，不重新下载、不改变旧once ID/预算、不切生产。新的真实取证仍须独立预算批准。
+- **实施**：完整、合法UTF8/JSON envelope且行数/字节未超限的sample才可隔离保存；candidate snapshot仍null/status仍stopped。独立quarantine文件及hash manifest，候选读取器拒绝；`--review-quarantine`在基线/联系读取前完成零网络只读分类。原严格行校验只导出复用，不放宽断言。
+- **验证**：16项专项通过，覆盖相同/冲突/混合重复、非法行、满limit/超限/坏JSON/UTF8、围栏变化、hash破坏、候选隔离与once消耗。完整检查、独立审阅及CI见本次PR；本轮不执行live。
+- **剩余**：上次仅attempt/receipt，历史失败正文无法恢复，真实duplicate_row原因仍未知。本次只是取证能力准备；没有跨国覆盖、数值等价、自动上线或新下载结论。
+
 ### 2026-09-16 ACLED 多国二级行政区返回范围验收
 
 - **Acceptance baseline**：owner在独立方案审阅后明确批准固定2025-01/PV/admin2、不带国家筛选的一次独立采样：最多3免费HAPI请求，累计8MiB/10,002原始行，15秒每请求含正文、起始间隔≥1,100ms，零重试/分页/重定向。仅本地私有保存；不复用AFG、年度或四槽预算，不全国汇总或切源。
