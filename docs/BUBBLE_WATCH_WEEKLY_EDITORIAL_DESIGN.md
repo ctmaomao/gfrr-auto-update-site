@@ -233,3 +233,9 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
   cross-checked 新闻，因此 quality=`warn`、blockers=0、display eligible=true，限制已在页面披露。
   最终 Pages run `31462975922` 成功；真实桌面 DOM 无溢出，390px Playwright、来源 HTTPS、
   中文 confidence/quality/source labels 和 deterministic fallback 均通过。
+
+## 2026-09-16 补检与状态可见性扩展
+
+[ADR-0050](ADR/0050-bubble-editorial-followup.md) 增加周三 05:45 UTC 的一次有条件补检；只有本期、全周运行均已证实为健康新闻不足且从未进入 provider 时才可消费。先持久预留、后派发，收件 workflow 在共享锁内重验并记入 admittedRunId。手工状态刷新及 completed 事件不安排补检。付费失败、取消、证据缺失、已有判读、换期与 rerun 均 fail closed；原有 AI workflow 无 cron、不自动重试。
+
+独立 JSON 仅展示原因和预约账本；数据、分数与 AI 正文资格不变。EdgeOne 直接订阅 AI 完成，Pages/EdgeOne 同时订阅状态完成。搜寻预算最坏增加每 provider 每月 30 次，原 200 预留和 1,000 上限不变。
