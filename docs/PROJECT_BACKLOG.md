@@ -6,6 +6,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-16 ACLED 多国二级行政区返回范围验收
+
+- **Acceptance baseline**：owner在独立方案审阅后明确批准固定2025-01/PV/admin2、不带国家筛选的一次独立采样：最多3免费HAPI请求，累计8MiB/10,002原始行，15秒每请求含正文、起始间隔≥1,100ms，零重试/分页/重定向。仅本地私有保存；不复用AFG、年度或四槽预算，不全国汇总或切源。
+- **实施**：`collect:acled-admin2-scope`默认dry-run，先hash/schema复验年度与AFG基线，独立once占用后才请求；10,000样本行命中即停止，失败/中断不重跑。行政身份按国家隔离；AFG同版本双向完整字段比较，新增/消失/变化hold并保留证据。跨层仅比较国家月键，不判事件重复或互斥。
+- **验证/真实结果**：10项离线专项、dry-run及独立pre-live审阅通过。真实运行第2请求后duplicate_row停止：2次HTTP200，共1,723,981字节/4,596原始行（metadata1行、sample4,595行）；第3请求未发送，没有重试。仅保存attempt/失败receipt，失败正文未落盘，无法离线辨认重复是否冲突，不能宣称覆盖或对照验收通过。本次once已消耗，不借未用请求重跑。旧validators/生产数据/调度未改；完整检查与集成见本次PR。
+- **剩余**：本次只核对一个月的返回范围，未返回不等于无事件或不被覆盖；不同完整版本tuple记indeterminate。行政全集、48月多国覆盖、六表数值定义等价及周表自动渠道仍未完成；ARR/四槽自然观察保持。
+
 ### 2026-09-16 ACLED AFG 二级行政区一次验收
 
 - **Acceptance baseline**：owner明确批准本次AFG/2025-01/PV/admin2最多3免费请求、累计1MiB/1,002原始行、15秒每请求、零重试/分页/重定向；仅本地私有保存，不借用四槽预算、不全国汇总或上线。此答复替代下方小样本方案“待批准”的状态，不扩其它国家月份。

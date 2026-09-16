@@ -333,3 +333,19 @@ Owner明确批准了上节三请求预算。新增 `collect:acled-admin2` 默认
 `npm run review:acled-geography -- --admin2` 显式加载并复验独立档案，单列AFG/2025-01证据；来源日期不同则显示source_date_mismatch，损坏则失败，不用汇总回执代替原始验证。无参数不加载admin2，状态为not_loaded_for_review；全局admin0参考缺口、跨层互斥未验和禁止聚合保持。新增回归证明单国样本不能消除24代码参考缺口或升级globalCoverage/productionEligible。
 
 本次证实AFG在该版本admin2具有返回记录，与分层发布的解释一致，但尚未证明admin0缺失原因或两层互斥；不证明34/398就是官方全集，不证明其它23参考国家也齐全，不把2025-01扩为四年。下一阶段仍需完整行政区/月份覆盖和跨层互斥方案、合法同版本原件及其它类别定义证据。任何扩大国家/月范围或新下载须新预算，不能把本次三请求改成常驻任务；四槽、ARR及周表生产流程不变。
+
+## 多国二级行政区返回范围验收（2026-09-16）
+
+Owner明确批准独立方案：固定2025年1月、political_violence、admin2，不设置country筛选，仅获取该层返回范围。最多3免费HAPI请求（metadata→sample→metadata）、累计8MiB/10,002原始行；sample limit10,000且命中即hold，每请求含正文15秒、开始间隔≥1,100ms，零重试/分页/重定向。8MiB是探索上限，不承诺能取得全层数据；不扩AFG一次、年度一次和四槽试行预算。
+
+`npm run collect:acled-admin2-scope`默认dry-run不读档案或请求；`-- --live`先复验既有年度及AFG私有档案hash/schema，任一失败零网络停止。独立acled-admin2-scope-20260916目录原子占用，失败或中断也不重跑/换ID；仅在主checkout执行。联系资料仅请求头使用，不进入Git、argv或日志。快照验证完成时三响应与manifest私有保存，receipt最后写入，上限8MiB加64KiB控制文件，不删除旧资料；本次失败仅保存attempt/receipt。`-- --review`只离线复验，不读联系信息。
+
+严格字段/资源/月份/层级/计数校验，null fatalities不补零；行政码与同名冲突按国家命名空间检查，跨国复用代码不相互合并。报告只列返回国家及有限24参考集的returned/notReturned，不将未返回认定为无事件、不被覆盖或全球缺失。少于limit也不证明行政全集。
+
+跨档案比较使用完整可见版本tuple（as-of/sourceUpdatedAt/hapiUpdatedAt），不以相同as-of代替版本；不一致分别indeterminate，不静默跳过。相同版本下AFG按完整行政键双向核对全部验证字段（已验证月界格式规范化），新增/消失/身份或数值变化均comparison_hold，保存证据但不晋升。跨层仅检查该国家月在两层是否都返回；有交集不证明事件重复，无交集不证明长期互斥，禁止全国聚合/相加。任何结果productionEligible=false，原地理报告全球门槛及生产config/data/workflow不变。
+
+10项离线专项覆盖正常多国、返回缺口、跨国代码碰撞、同国冲突、满limit、AFG双向变化、精确版本差异、坏基线零请求、HTTP/正文超时/累计超限、once/hash/链接目录及CLI。专项、dry-run和独立pre-live审阅通过后执行一次真实请求。
+
+真实验收未通过：第2请求后reason=duplicate_row，2次HTTP200，共1,723,981字节/4,596原始行；metadata为1,341字节/1行，sample为1,722,640字节/4,595行。第3请求未发送，无重试；独立once已占用，不能把未用1请求用于重新下载或改筛选。失败回执留本地；当前实现拒绝无效snapshot，因此失败正文未保存，不能事后分析重复是否同值、冲突或上游映射问题，不据行数认定覆盖完整。未完成AFG双向及跨层比较，不新增国家覆盖结论，不修改旧候选、生产或观察任务。
+
+后续应先设计“拒绝正文隔离取证”：严格限额内保存失败响应为不可晋升的私有quarantine，并输出脱敏重复键数量/完全相同与冲突分类，不去重后冒充通过；经独立审阅和新取证预算批准后再执行，不能重放此次已消耗once。此方案尚未实施或获得新下载批准。
