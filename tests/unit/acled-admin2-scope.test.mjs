@@ -231,6 +231,36 @@ test('forensic failure consumes once and invalid baseline creates no attempt', a
     assert.equal((await runForensicAcceptance(root, contact, f.baselines)).networkRequests, 0);
   } finally { await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
 });
+test('identity diagnostics use exact connector patterns and retain unresolved projection duplicates', () => {
+  const f = mutate(fixture(), rows => {
+    const base = rows[0]; rows.splice(0);
+    for (const codes of [{ admin1_code: 'AFG-XXX', admin2_code: 'AFG-XXX-XXX' },
+      { admin1_code: '01', admin2_code: '01-XXX' }, { admin1_code: '999', admin2_code: '000' }]) {
+      rows.push({ ...base, ...codes }, { ...base, ...codes, admin2_name: 'Different', events: 1 });
+    }
+    rows.push({ ...base, admin2_code: 'PRIVATE-CODE' }, { ...base, admin2_code: 'PRIVATE-CODE' });
+    rows.push({ ...base, events: null });
+  });
+  const before = f.snapshot.sampleJson;
+  const report = reviewScopeQuarantine(f.snapshot, NOW), d = report.identityDiagnostic;
+  assert.deepEqual(d.rowPatterns, { countryConnector: 2, admin1Connector: 2, other: 4 });
+  assert.deepEqual(d.conflictingGroupPatterns, { countryConnector: 1, admin1Connector: 1, other: 1 });
+  assert.equal(d.nameKeyConflictingGroups, 0); assert.equal(d.nameKeyExtraRows, 1);
+  assert.equal(report.invalidRows, 1); assert.equal(report.duplicateRows, 4);
+  assert.equal(d.databaseIdentityReconstructed, false); assert.equal(d.deployedMappingVerified, false);
+  assert.equal(d.deduplicationAllowed, false); assert.equal(d.aggregationAllowed, false);
+  assert.equal(d.eventDisjointness, 'not_proven'); assert.equal(report.productionEligible, false);
+  assert.equal(f.snapshot.sampleJson, before);
+  for (const privateText of ['AFG', 'District', 'Different', '999', '000', 'PRIVATE-CODE']) assert.ok(!JSON.stringify(report).includes(privateText));
+});
+
+test('names do not conceal value conflicts or merge country namespaces', () => {
+  const f = mutate(fixture(), rows => rows.push({ ...rows[0], fatalities: 0 }, rows[0]));
+  const d = reviewScopeQuarantine(f.snapshot, NOW).identityDiagnostic;
+  assert.equal(d.nameKeyConflictingGroups, 1); assert.equal(d.nameKeyExtraRows, 2);
+  assert.deepEqual(d.conflictingGroupPatterns, { countryConnector: 0, admin1Connector: 0, other: 1 });
+});
+
 test('forensic CLI is dry by default, rejects overrides and preserves exact approved limits', () => {
   const dry = spawnSync(process.execPath, ['scripts/collect-acled-forensic.mjs'], { encoding: 'utf8' });
   assert.equal(dry.status, 0); const plan = JSON.parse(dry.stdout); assert.equal(plan.networkRequests, 0);

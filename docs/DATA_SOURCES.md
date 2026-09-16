@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+最新[行政身份离线诊断](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#行政身份离线诊断2026-09-16)解释了42组冲突的connector模式：4组国家/38组一级回退；加入名称后仍3条投影重复，不能直接去重或相加。仅复验既有私有档案，零新增请求；不证明隐藏身份、事件互斥或当前部署源码版本，不改变生产manual-xlsx路径。
+
 最新[独立重复取证](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#独立重复取证2026-09-16)已获单独批准并执行：2请求后重复保护停止，私有hash复验成功。4,595行/4,329行政键，3组相同重复、42组冲突；42组均有不同二级区名，26组事件数不同、24组死亡数不同。不是简单重复拷贝；不自动去重/改主键/相加。此次once已耗，不切生产；上游映射原因及同版本完整性仍未证明。
 
 已补[拒绝正文隔离取证准备](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#拒绝正文隔离取证准备2026-09-16)：有界完整响应可保留为不可晋升的quarantine，离线仅分类重复数量，不去重放行。本轮零新增HAPI请求，旧once不变；上次未保存的失败正文不能补回，真实重复原因仍未知。

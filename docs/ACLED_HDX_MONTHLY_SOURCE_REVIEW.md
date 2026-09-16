@@ -369,3 +369,19 @@ Owner随后明确批准一次独立取证：最多3免费请求/8MiB/10,002行�
 脱敏诊断：4,595行均通过单行校验，4,329个唯一行政键，重复额外行266；45个重复组中3组字段相同、42组存在冲突。另一次零网络hash预验后在内存按组核对字段，仅输出字段名和数量：42组admin2_name不同、26组events不同、24组fatalities不同、4组admin1_name不同，计数可重叠。重复组大小从2到108；未输出国家/行政键、名称原值或事件原值。分类器仍标记crossRowIdentityConsistency=not_assessed：上述是重复组字段差异，不是完整跨行身份校验。
 
 可确认本次响应的(country,admin1,admin2)键并非无歧义的唯一记录身份，不能将这些记录一律视为相同副本删除；但不能据此推断事件是否重叠、是否应相加或上游具体映射机制。metadataFence=not_completed，无后置版本围栏，不证明事务快照或旧失败正文与新正文逐字相等；同样行数/字节数也不能替代旧正文hash。源映射原因、官方行政全集、国家月总量及六表等价仍待核对。本次不改主键、不去重、不汇总、不发布、不刷新生产；下一步优先只读核验上游映射代码/说明及现有私有证据，不追加正文请求。
+
+## 行政身份离线诊断（2026-09-16）
+
+Owner授权继续完成可做事项；本阶段不新增数据请求，复用已保存forensic档案。`npm run collect:acled-forensic -- --review`在原hash/schema/限额复验后追加identityDiagnostic，仅输出计数和固定枚举，不读联系信息、不写文件、不生成候选。原严格collector重复/身份校验和全部预算不变。
+
+已核对的固定上游代码：
+
+- [connector构造及逐级回退](https://github.com/OCHA-DAP/hapi-pipelines/blob/17ef3c0f0c22b4fc8a34c1740101cdd5509385f3/src/hapi/pipelines/database/admins.py)：country-XXX/country-XXX-XXX为国家模式，admin1-XXX为一级模式。仅精确匹配这些字符串；999/000及其它编码不推定为占位或已核准行政身份。
+- [名称投影](https://github.com/OCHA-DAP/hdx-hapi/blob/1cf81b9591bf57b723fa550a0dd5cdb7e8f04995/hdx_hapi/endpoints/models/base.py)：标准名为空/UNSPECIFIED时用来源名替代，来源名字段本身不输出，代码不随名称改变。
+- [数据库身份](https://github.com/OCHA-DAP/hapi-sqlalchemy-schema/blob/28018ce492a24f5d62e412708a512021626d9fcf/src/hapi_schema/db_conflict_event.py)包含admin2_ref、两个provider名称、事件类别、期初；[层级视图](https://github.com/OCHA-DAP/hapi-sqlalchemy-schema/blob/28018ce492a24f5d62e412708a512021626d9fcf/src/hapi_schema/views.py)允许具有来源二级名称的connector为admin2。admin_level=2不保证实际二级代码已匹配。
+
+真实hash复验结果：4,595有效行，国家connector135行、一级connector184行、其它4,276行；42冲突组全部符合模式（4/38/0）。在国家/admin1/admin2代码键上再加入两个公开区名，仅作诊断，冲突组为0，额外重复仍3条。nameKeyExtraRows包含名称扩展键下超过首行的所有行，无论字段一致还是冲突；nameKeyConflictingGroups单列冲突，不能把额外行数自动当可删除行数。非法行仅计invalidRows，不纳入模式与键分类。
+
+此结果解释代码键冲突与源码机制相符，不证明当前部署使用这些commit，也不还原被隐藏的provider名称/admin2_ref。3条相同公开投影可能具有不同隐藏身份，原因尚未证明。保持deployedMappingVerified/databaseIdentityReconstructed/deduplicationAllowed/aggregationAllowed=false、eventDisjointness=not_proven及productionEligible=false；原metadataFence仍未完成。未去重、求和、改键、发布或切源。
+
+下一阶段须取得可验证的隐藏身份/事件互斥依据、合法同版本对照和全球覆盖证据，再独立评审适配；不能为“完成”跳过三条重复、六指标定义或周表来源缺口。既有四槽和ARR自然观察不提前。
