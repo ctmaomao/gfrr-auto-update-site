@@ -16,7 +16,7 @@ function parse(text, cap = SCOPE.bytes) {
   if (!exact(value, ['data']) || !Array.isArray(value.data)) fail('body_schema');
   return value.data;
 }
-function inspectRows(text) {
+export function inspectScopeRows(text) {
   const rows = parse(text), countries = new Map(), identities = new Map(), reverse = new Map(), seen = new Set(), provinces = new Set();
   if (!rows.length || rows.length >= SCOPE.sampleRows) fail('empty_or_limit_hit');
   const bind = (key, value) => { if (identities.has(key) && identities.get(key) !== value) fail('admin_identity_conflict'); identities.set(key, value); };
@@ -51,14 +51,14 @@ export function inspectScopeSnapshot(snapshot, now = new Date().toISOString()) {
   const before = pilotMetadata(snapshot.metadataBefore, snapshot.fetchedAt), after = pilotMetadata(snapshot.metadataAfter, snapshot.fetchedAt);
   if (before.asOf < '2025-02-01') fail('source_period_incomplete');
   if (JSON.stringify(before.version) !== JSON.stringify(after.version)) fail('metadata_changed');
-  return { ...inspectRows(snapshot.sampleJson), sourceAsOf: before.asOf, fetchedAt: snapshot.fetchedAt, atomicSnapshotProven: false };
+  return { ...inspectScopeRows(snapshot.sampleJson), sourceAsOf: before.asOf, fetchedAt: snapshot.fetchedAt, atomicSnapshotProven: false };
 }
 export async function collectScope(contact, baselines, deps = {}) {
   const now = deps.now ?? (() => new Date().toISOString()), tick = deps.tick ?? (() => performance.now());
   const wait = deps.wait ?? (ms => new Promise(resolve => setTimeout(resolve, ms))), fetcher = deps.fetchImpl ?? globalThis.fetch;
   const report = { schemaVersion: 'acled-admin2-scope-receipt-v1', status: 'stopped', requestCount: 0, totalBytes: 0, totalRows: 0,
     calls: [], productionEligible: false, sourceCutoverApproved: false };
-  let lastStart = -Infinity;
+  let lastStart = -Infinity, quarantine = null;
   try {
     const identifier = pilotContact(contact); pilotTime(now()); validateScopeBaselines(baselines, now());
     async function request(stage, params, rowCap) {
@@ -98,11 +98,18 @@ export async function collectScope(contact, baselines, deps = {}) {
     if (pilotTime(now()) - Date.parse(`${meta.asOf}T00:00:00Z`) > 45 * 86400000) fail('source_stale');
     const sampleJson = await request('sample', { admin_level: '2', event_type: 'political_violence',
       start_date: '2025-01-01', end_date: '2025-01-31', limit: '10000', offset: '0', output_format: 'json' }, SCOPE.sampleRows);
-    inspectRows(sampleJson);
+    // Capture only a complete, bounded JSON response. This is NOT a snapshot:
+    // there is no metadata-after fence and it must never enter candidate review.
+    quarantine = { metadataBefore, sampleJson, metadataAfter: null, fetchedAt: now() };
+    inspectScopeRows(sampleJson);
     const metadataAfter = await request('metadata_after', metadataParams, 1), snapshot = { metadataBefore, sampleJson, metadataAfter, fetchedAt: now() };
+    quarantine.metadataAfter = metadataAfter; quarantine.fetchedAt = snapshot.fetchedAt;
     report.coverage = inspectScopeSnapshot(snapshot, now());
     report.comparison = compareScopeBaselines(snapshot, baselines, now());
     report.status = report.comparison.afg.status === 'same_version_conflict' ? 'comparison_hold' : 'candidate_ready';
     return { report, snapshot };
-  } catch (error) { report.reason = error instanceof Stop ? error.message : 'request_or_validation_failure'; return { report, snapshot: null }; }
+  } catch (error) {
+    report.reason = error instanceof Stop ? error.message : 'request_or_validation_failure';
+    return { report, snapshot: null, ...(quarantine === null ? {} : { quarantine }) };
+  }
 }

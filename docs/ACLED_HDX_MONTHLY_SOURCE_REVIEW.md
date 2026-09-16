@@ -348,4 +348,14 @@ Owner明确批准独立方案：固定2025年1月、political_violence、admin2�
 
 真实验收未通过：第2请求后reason=duplicate_row，2次HTTP200，共1,723,981字节/4,596原始行；metadata为1,341字节/1行，sample为1,722,640字节/4,595行。第3请求未发送，无重试；独立once已占用，不能把未用1请求用于重新下载或改筛选。失败回执留本地；当前实现拒绝无效snapshot，因此失败正文未保存，不能事后分析重复是否同值、冲突或上游映射问题，不据行数认定覆盖完整。未完成AFG双向及跨层比较，不新增国家覆盖结论，不修改旧候选、生产或观察任务。
 
-后续应先设计“拒绝正文隔离取证”：严格限额内保存失败响应为不可晋升的私有quarantine，并输出脱敏重复键数量/完全相同与冲突分类，不去重后冒充通过；经独立审阅和新取证预算批准后再执行，不能重放此次已消耗once。此方案尚未实施或获得新下载批准。
+后续“拒绝正文隔离取证”能力现已实施准备，见下节；尚未获得新下载批准，不能重放此次已消耗once。历史失败正文仍未保存，不能用新能力补造旧证据。
+
+## 拒绝正文隔离取证准备（2026-09-16）
+
+Owner要求开始下一步，本轮只做能力准备和离线合成验收，零新增HAPI请求，不创建新once ID、不修改既有预算。`collectScope`在HTTP200、完整UTF8/JSON、正确envelope、累计8MiB/10,002行及sample≤10,000行通过后才保留待验证响应；超限、截断、坏UTF8/JSON、HTTP失败不留不完整正文。样本满limit可留取证但limitHit=true，仍不可验收。原行验证和去重失败行为不变；出错仍snapshot=null、status=stopped。
+
+仅失败响应写`quarantine-metadata-before.private.json`、`quarantine-sample.private.json`及实际取得时的`quarantine-metadata-after.private.json`；hash绑定于专用`quarantine-manifest.json`，receipt最后落盘。总存储上限沿用8MiB加64KiB；不写candidate文件，不从quarantine复制、修复或晋升。专用读取器复验hash/schema/限额及安全路径；原候选读取器拒绝stopped回执。
+
+`npm run collect:acled-admin2-scope -- --review-quarantine`仅离线读取固定隔离档案，不读联系信息/年度或AFG基线，不联网、不写文件。输出只含计数/固定枚举，无原始键、行政名称、事件值或异常文本。按国家＋admin1＋admin2键分类：全组字段相同为identicalDuplicateKeys，有任一不同为conflictingDuplicateKeys；一个混合组仅计冲突，duplicateRows为每组超过首行的数量。日期仅在严格月界验证后规范化；非法行单列invalidRows，不参与有效行重复分类，不冒充已接受数据。跨行身份一致性not_assessed；未去重、未汇总全国、无全球完整性结论。
+
+metadataFence区分未完成not_completed、实际后置元数据变化mismatch、无效invalid_after与可见字段匹配matched_visible_metadata；无论哪种均atomicSnapshotProven=false，不以before代替after证明稳定。16项专项通过；独立审阅、完整检查和CI依本次PR结果。上一失败目录只有attempt/receipt，没有quarantine可审，不能声称真实重复原因已查明。后续真实取证须新方案预算批准，本次实现不授予重跑许可。

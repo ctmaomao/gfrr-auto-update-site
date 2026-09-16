@@ -6,7 +6,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { SCOPE, collectScope, inspectScopeSnapshot } from '../../scripts/world-order/acled-admin2-scope-collector.mjs';
 import { compareScopeBaselines } from '../../scripts/world-order/acled-admin2-scope-review.mjs';
-import { runScopeAcceptance, reviewStoredScope } from '../../scripts/world-order/acled-admin2-scope-store.mjs';
+import { runScopeAcceptance, reviewStoredScope, readScopeCandidateForReview, reviewStoredScopeQuarantine } from '../../scripts/world-order/acled-admin2-scope-store.mjs';
+import { reviewScopeQuarantine } from '../../scripts/world-order/acled-admin2-quarantine.mjs';
 
 const NOW = '2026-09-16T00:00:00.000Z', ID = '99a32d01-d0ca-4f57-a0f5-cb6b5f01f14f';
 const contact = { application: 'Synthetic only', email: 'test@example.invalid' };
@@ -129,4 +130,68 @@ test('unsafe paths, forged snapshots and arbitrary CLI inputs fail; default does
   assert.equal(dry.status, 0); assert.equal(JSON.parse(dry.stdout).networkRequests, 0);
   const bad = spawnSync(process.execPath, ['scripts/collect-acled-admin2-scope.mjs', '--url', 'private'], { encoding: 'utf8' });
   assert.equal(bad.status, 1); assert.equal(bad.stderr, ''); assert.ok(!bad.stdout.includes('private'));
+});
+
+test('rejected duplicate response is quarantined, never repaired or returned as candidate', async () => {
+  const result = await collect(mutate(fixture(), rows => rows.push(rows[0])));
+  assert.equal(result.report.reason, 'duplicate_row'); assert.equal(result.report.status, 'stopped');
+  assert.equal(result.snapshot, null); assert.equal(result.calls.length, 2);
+  assert.ok(result.quarantine); const report = reviewScopeQuarantine(result.quarantine, NOW);
+  assert.equal(report.identicalDuplicateKeys, 1); assert.equal(report.conflictingDuplicateKeys, 0);
+  assert.equal(report.duplicateRows, 1); assert.equal(report.metadataFence, 'not_completed');
+  assert.equal(report.productionEligible, false);
+  for (const text of ['District', '0101', 'AFG', 'fatalities', contact.email]) assert.ok(!JSON.stringify(report).includes(text));
+});
+test('mixed variants classify the entire key as conflicting; invalid rows are separate', async () => {
+  const f = mutate(fixture(), rows => rows.push(rows[0], { ...rows[0], fatalities: 0 }, { ...rows[0], events: null }));
+  const result = await collect(f), report = reviewScopeQuarantine(result.quarantine, NOW);
+  assert.equal(report.identicalDuplicateKeys, 0); assert.equal(report.conflictingDuplicateKeys, 1);
+  assert.equal(report.duplicateRows, 2); assert.equal(report.invalidRows, 1); assert.equal(report.rawRows, 5);
+  assert.equal(report.classificationScope, 'individually_valid_rows_only');
+  assert.equal(report.crossRowIdentityConsistency, 'not_assessed');
+});
+test('limit-hit evidence remains quarantined; malformed, oversized and HTTP bodies are not saved', async () => {
+  const full = await collect(mutate(fixture(), rows => rows.push(...Array(9998).fill(rows[0]))));
+  assert.equal(full.report.reason, 'empty_or_limit_hit'); assert.equal(reviewScopeQuarantine(full.quarantine, NOW).limitHit, true);
+  const f = fixture();
+  for (const body of ['invalid', '{"other":[]}', f.snapshot.sampleJson.padEnd(SCOPE.bytes, ' ')]) {
+    const result = await collect(f, [response(f.snapshot.metadataBefore), response(body)]);
+    assert.equal(result.quarantine, undefined); assert.equal(result.snapshot, null);
+  }
+  const tooMany = await collect(mutate(fixture(), rows => rows.push(...Array(9999).fill(rows[0]))));
+  assert.equal(tooMany.quarantine, undefined);
+  assert.equal((await collect(f, [new Response('', { status: 403 })])).quarantine, undefined);
+  const badUtf8 = await collect(f, [response(f.snapshot.metadataBefore), new Response(new Uint8Array([255]), { headers: { 'content-type': 'application/json' } })]);
+  assert.equal(badUtf8.quarantine, undefined);
+});
+test('metadata-after mismatch is preserved without inventing a successful fence', async () => {
+  const f = fixture(); f.snapshot.metadataAfter = f.snapshot.metadataAfter.replace('01:33:17', '01:33:18');
+  const result = await collect(f);
+  assert.equal(result.report.reason, 'metadata_changed'); assert.equal(result.snapshot, null);
+  assert.equal(reviewScopeQuarantine(result.quarantine, NOW).metadataFence, 'mismatch');
+  assert.equal(result.quarantine.metadataAfter, f.snapshot.metadataAfter);
+  const http = await collect(fixture(), [response(f.snapshot.metadataBefore), response(f.snapshot.sampleJson), new Response('', { status: 500 })]);
+  assert.equal(reviewScopeQuarantine(http.quarantine, NOW).metadataFence, 'not_completed');
+});
+test('quarantine archive hashes are checked and candidate reader rejects it; once is consumed', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'gfrr-quarantine-'));
+  try {
+    await mkdir(path.join(root, 'manual-artifacts'));
+    const f = mutate(fixture(), rows => rows.push(rows[0])), ready = await collect(f);
+    assert.equal((await runScopeAcceptance(root, contact, f.baselines, { now: () => NOW, collect: async () => ready })).status, 'stopped');
+    const first = await reviewStoredScopeQuarantine(root, NOW); assert.equal(first.identicalDuplicateKeys, 1);
+    await assert.rejects(readScopeCandidateForReview(root, NOW), /candidate_missing/u);
+    const dir = path.join(root, 'manual-artifacts', SCOPE.id);
+    await assert.rejects(readFile(path.join(dir, 'manifest.json')));
+    await assert.rejects(readFile(path.join(dir, 'sample.private.json')));
+    assert.equal((await runScopeAcceptance(root, contact, f.baselines)).networkRequests, 0);
+    await writeFile(path.join(dir, 'quarantine-sample.private.json'), 'tampered');
+    await assert.rejects(reviewStoredScopeQuarantine(root, NOW), /quarantine_hash/u);
+  } finally { await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
+});
+test('quarantine rejects forged envelopes, future times and aggregate oversize', () => {
+  const f = fixture(), q = { ...f.snapshot, metadataAfter: null };
+  assert.throws(() => reviewScopeQuarantine({ ...q, approved: true }, NOW));
+  assert.throws(() => reviewScopeQuarantine({ ...q, fetchedAt: '2027-01-01T00:00:00.000Z' }, NOW));
+  assert.throws(() => reviewScopeQuarantine({ ...q, sampleJson: q.sampleJson.padEnd(SCOPE.bytes, ' ') }, NOW));
 });
