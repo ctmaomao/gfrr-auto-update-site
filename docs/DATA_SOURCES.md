@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+AFG二级行政区方案现已获独立批准并完成一次验收：[三请求回执](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#afg-二级行政区一次验收2026-09-16)。3请求/150,768字节，AFG2025-01返回398行（34个admin1/398个admin2），08-28版本私有hash复验通过；预算已消耗，禁止重跑/扩范围。`review:acled-geography -- --admin2`仅加载该单国单月证据，不改变全球缺口、不全国汇总或切源。此记录替代下段“AFG待批/未执行”的历史状态，其余边界不变。
+
 最新[地理及历史版本核验](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#地理覆盖与历史版本证据2026-09-16)：`review:acled-geography` 仅离线复验私有年度档案；36组名称/代码对吻合，24个有限参考国家代码未在admin0返回、8名称仍未解决，不证明全球或领土口径等价。OCHA来源分admin0/admin2，未证明互斥，禁止直接相加。已找到08-28历史metadata，但与09-04共用可变download URL，历史正文未取得。AFG/admin2新小样本预算另行询问，未执行、不借用既有预算；不改变生产来源。
 
 2026-09-16 候选评审入口：[HDX/HAPI 月度来源评审](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)。ACLED 09-15 已明确允许所披露个人非商业项目使用其 HDX/HAPI 聚合数据，条件为遵守 HDX 条款及归因 ACLED；现行 HDX/HAPI 条款已核验。经独立方案审阅完成一次隔离小样本（2 请求/2 行/1,706 字节），离线 schema/来源关联通过，数值等价仍不可判定：本地目标行缺失、来源版本未对齐。HAPI 实际响应仍关联 08-28 版本，而目录同资源 ID 已更新至 09-04，不能借目录日期刷新实际数据。仅本次隔离正文读取替代旧候选 metadata-only 等待；不自动续跑、不替代下表的生产 manual-xlsx / reminder metadata-only 规则，也未批准六指标映射、生产切源或官网抓取。
