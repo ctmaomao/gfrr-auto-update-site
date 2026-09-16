@@ -52,3 +52,19 @@ test('CLI rejects live, paths and arbitrary arguments without reading or request
   assert.equal(result.status, 1); assert.equal(result.stderr, '');
   assert.deepEqual(JSON.parse(result.stdout), { status: 'geography_review_unavailable', networkRequests: 0, productionEligible: false });
 });
+test('one admin2 sample supplies separate evidence, never fixes all admin0 gaps or global coverage', () => {
+  const annual = fixture(), meta = annual.metadataBefore;
+  const row = JSON.parse(annual.partitions[0]).data[0];
+  const admin2 = { metadataBefore: meta, metadataAfter: meta, fetchedAt: now, sampleJson: JSON.stringify({ data: [{ ...row,
+    location_code: 'AFG', location_name: 'Afghanistan', admin_level: 2, admin1_code: 'AF01', admin1_name: 'Synthetic',
+    admin2_code: 'AF0101', admin2_name: 'District', reference_period_start: '2025-01-01T00:00:00', reference_period_end: '2025-01-31T23:59:59'
+  }] }) };
+  const before = reviewAcledGeography(annual, now), after = reviewAcledGeography(annual, now, admin2);
+  assert.equal(after.admin2.status, 'single_country_month_sample_verified');
+  assert.equal(after.admin2.evidence.validRows, 1); assert.equal(after.admin2.evidence.geographicCompleteness, 'not_proven');
+  assert.deepEqual(after.referenceLocations, before.referenceLocations); assert.equal(after.globalCoverage, before.globalCoverage);
+  assert.equal(after.admin2.crossLevelOverlap, 'not_tested'); assert.equal(after.productionEligible, false);
+  admin2.metadataBefore = meta.replace('2026-08-28', '2026-08-21'); admin2.metadataAfter = admin2.metadataBefore;
+  assert.equal(reviewAcledGeography(annual, now, admin2).admin2.status, 'source_date_mismatch');
+  assert.throws(() => reviewAcledGeography(annual, now, { validRows: 398 }));
+});

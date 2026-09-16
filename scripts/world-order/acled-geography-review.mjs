@@ -1,4 +1,5 @@
 import { inspectAnnualSnapshot } from './acled-annual-collector.mjs';
+import { inspectAdmin2Snapshot } from './acled-admin2-collector.mjs';
 
 // Identity crosswalk only, never proof of equivalent territorial/event coverage.
 // Source labels: owner-held 21Aug2026 PV workbooks (hashes in source review).
@@ -57,7 +58,7 @@ export const UNRESOLVED_LABELS = Object.freeze([
   'Indian Ocean', 'Kosovo', 'Mediterranean Sea', 'Pacific Ocean', 'Southern Ocean'
 ]);
 
-export function reviewAcledGeography(snapshot, now = new Date().toISOString()) {
+export function reviewAcledGeography(snapshot, now = new Date().toISOString(), admin2Snapshot = null) {
   const coverage = inspectAnnualSnapshot(snapshot, now), codes = new Map(), names = new Map();
   for (const partition of snapshot.partitions) for (const row of JSON.parse(partition).data) {
     const code = row.location_code, name = row.location_name;
@@ -72,6 +73,7 @@ export function reviewAcledGeography(snapshot, now = new Date().toISOString()) {
     else if (codes.get(code) !== name) mismatchedAliases.push(code);
   }
   const notReturned = REFERENCE_LOCATIONS.filter(code => !codes.has(code));
+  const admin2Evidence = admin2Snapshot === null ? null : inspectAdmin2Snapshot(admin2Snapshot, now);
   return { schemaVersion: 'acled-geography-review-v1', status: 'not_ready_for_global_replacement',
     networkRequests: 0, productionEligible: false, sourceAsOf: coverage.sourceAsOf,
     referenceInventoryAsOf: '2026-08-21', referenceScope: 'previously_audited_pv_workbook_names_only',
@@ -81,6 +83,9 @@ export function reviewAcledGeography(snapshot, now = new Date().toISOString()) {
     referenceLocations: { inspected: REFERENCE_LOCATIONS.length, returned: REFERENCE_LOCATIONS.length - notReturned.length,
       admin0NotReturnedCodes: notReturned, scope: 'bounded_reference_subset_not_global_universe' },
     unresolvedSourceLabels: [...UNRESOLVED_LABELS],
-    admin2: { status: 'not_collected', crossLevelOverlap: 'not_tested', aggregation: 'not_authorized' },
+    admin2: { status: admin2Evidence === null ? 'not_loaded_for_review' : admin2Evidence.sourceAsOf === coverage.sourceAsOf
+      ? 'single_country_month_sample_verified' : 'source_date_mismatch',
+    ...(admin2Evidence === null ? {} : { evidence: admin2Evidence }),
+    crossLevelOverlap: 'not_tested', aggregation: 'not_authorized' },
     numericalEquivalence: 'not_tested', globalCoverage: notReturned.length ? 'admin0_reference_gap_confirmed' : 'not_proven' };
 }
