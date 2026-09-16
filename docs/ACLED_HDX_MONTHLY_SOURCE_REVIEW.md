@@ -249,7 +249,7 @@ Owner 已批准前轮独立评审提出的**四次低频候选采集试行**，�
 
 ## 替代验收与免手工目标（2026-09-16）
 
-本节24月缺口描述对应旧pilot输入；后续独立年度候选已补齐2022–2025时间覆盖，见文末。旧替代报告尚未接入该年度档案，不将候选完成冒充生产替代完成。
+本节24月缺口描述对应默认pilot输入；后续独立年度候选已补齐2022–2025时间覆盖，现可通过下文 `--annual` 显式接入报告，不将候选完成冒充生产替代完成。
 
 Owner 要求继续逐步达成免手工更新，ARR可同步优化。本阶段属于 `artifact_sanitizer_layer`，不扩大四槽预算或生产权限；四槽完成不是六指标等价的替代证据。
 
@@ -278,3 +278,18 @@ Owner批准固定PV/admin0 2022–2025，仅本地私有候选：元数据→202
 2026-09-16 02:49 UTC实际四请求全部200，总3,723,475字节、10,466原始行（10,464样本+2元数据），218返回国家代码各具备2022–2025完整48个月。前后元数据一致，sourceAsOf=2026-08-28，状态candidate_ready；随后的零网络保存档案复验为saved_candidate_verified。只证明返回范围完整，不证明全球覆盖、事务原子快照、两死亡指标语义或生产等价。
 
 9项专项测试覆盖固定预算/间隔、国家并集缺失、月/类别/层级/重复/null、元数据围栏、HTTP失败、累计字节/截断、实际15秒超时、once失败占用、哈希与路径保护。原validator断言不变；真实执行前独立AI审阅通过。原pilot和生产config/data/workflows未修改。
+
+### 年度报告接入与本地引用盘点
+
+2026-09-16 owner要求继续离线替代验收。`npm run review:acled-replacement -- --annual` 使用已保存的独立年度档案，不读取联系文件或创建请求/槽位。四份响应hash、metadata围栏与完整性均重新验证；损坏或缺失退出失败，不静默回退。默认无参数仍为原24月报告。
+
+年度信息单列 `annualCandidate`，保留独立sourceAsOf/fetchedAt/返回范围；只有与pilot来源日期一致时才用于PV年度时间覆盖。它不更新月度pilot数据时钟、不改变月度比较或其它四类别、不证明相同revision。真实运行的requiredYears和completeYearsInCandidate均为2022–2025、missingYears为空，但数值引用仍reference_missing，globalCoverage仍not_proven、productionEligible=false。历史档案不能代替后续新年度基线。
+
+本次只读检查项目manual-artifacts/world-order/acled-input/monthly中的两份08-21原件：
+
+- 月表 `number_of_political_violence_events_by_country-month-year_as-of-21Aug2026.xlsx`，Sheet1，COUNTRY/MONTH/YEAR/EVENTS，29,353数据行；SHA256 `a3201b7350cd4a11064614f98f130e1bc97ba6cd073927ddbd90f4b5968b6949`。
+- 年表 `number_of_political_violence_events_by_country-year_as-of-21Aug2026.xlsx`，Sheet1，COUNTRY/YEAR/EVENTS，2,765数据行；SHA256 `febdaf5130f7c5ac460f359ef05687248bca52a5921c4dbaa6be6a9ef689b06a`。
+
+两表读取前后hash不变；以只读扫描实际单元格处理错误的A1维度声明，不修写原件或生产sanitizer。两表各250个国家/地区名称，候选218代码的名称关系经双向检查无一名多码/一码多名，182名称精确对应。原表68名称和候选36名称无精确同名；这是映射线索，不是核准别名表，也不是68个真实缺国。未使用模糊匹配、补零或国家交集隐藏缺口，未公开原始逐行事件值。
+
+当前Downloads六份为周表，项目monthly六份为08-21；没有找到同08-28引用，因此未执行数值对照。下一阶段先核验国家名/代码与各行政层级覆盖，再准备合法同版本引用；不能把不同层级直接相加补齐，也不能把公开转换器的分层设计推断当作真实返回覆盖验收。以上盘点不请求新数据、不改变四槽/ARR调度、不发邮件或批准生产替代。
