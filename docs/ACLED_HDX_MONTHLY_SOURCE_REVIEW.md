@@ -293,3 +293,29 @@ Owner批准固定PV/admin0 2022–2025，仅本地私有候选：元数据→202
 两表读取前后hash不变；以只读扫描实际单元格处理错误的A1维度声明，不修写原件或生产sanitizer。两表各250个国家/地区名称，候选218代码的名称关系经双向检查无一名多码/一码多名，182名称精确对应。原表68名称和候选36名称无精确同名；这是映射线索，不是核准别名表，也不是68个真实缺国。未使用模糊匹配、补零或国家交集隐藏缺口，未公开原始逐行事件值。
 
 当前Downloads六份为周表，项目monthly六份为08-21；没有找到同08-28引用，因此未执行数值对照。下一阶段先核验国家名/代码与各行政层级覆盖，再准备合法同版本引用；不能把不同层级直接相加补齐，也不能把公开转换器的分层设计推断当作真实返回覆盖验收。以上盘点不请求新数据、不改变四槽/ARR调度、不发邮件或批准生产替代。
+
+## 地理覆盖与历史版本证据（2026-09-16）
+
+Owner要求完成剩余可做事项，本项仅 `artifact_sanitizer_layer` 离线报告及公开来源证据，不下载新ACLED正文、不发邮件或扩大生产权利。
+
+### 名称和代码
+
+以[OCHA国家分类表固定版本](https://github.com/OCHA-DAP/hdx-python-country/blob/ee175764b5550de2169cb98ef1c1c945c4d1658a/src/hdx/location/Countries%20%26%20Territories%20Taxonomy%20MVP%20-%20C%26T%20Taxonomy.csv)的preferred term/ISO3及[UN M49](https://unstats.un.org/unsd/methodology/m49/overview/)核对国家代码。36组原表名称→代码→候选标准名已登记于[地理报告](../scripts/world-order/acled-geography-review.mjs)，不使用模糊搜索；这只是身份交叉索引，不证明争议或特殊领土、年度边界、事件统计口径等价。VAT/SHN/TWN等也保留这一限制。
+
+`npm run review:acled-geography` 零参数、零网络、零写入，先读取并校验年度archive hash/schema/月份覆盖，再检验逐期一码多名/一名多码、标准名漂移。真实36个标准名/代码对全部吻合；以下24个有限参考代码未在当前admin0档案出现：AFG/BFA/BDI/CMR/CAF/TCD/COL/COD/ETH/HTI/LBN/MLI/MOZ/MMR/NER/NGA/PSE/SOM/SSD/SDN/SYR/UKR/VEN/YEM。这是本地原表已知名称对应的有限参考集，不是全球或HRP成员清单。即使全部返回也仍报告全球覆盖未证明。
+
+另8名称（Akrotiri and Dhekelia、Atlantic Ocean、French Southern and Antarctic Lands、Indian Ocean、Kosovo、Mediterranean Sea、Pacific Ocean、Southern Ocean）保持未解决。没有将其放入ignore、补零或静默剔除；海域不能映射为国家，特殊领土/代码还需源口径核验。报告只说明admin0参考缺口、admin2未采集/跨层重叠未验，不把未在admin0返回写成整个HAPI无数据。报告引用08-21名称盘点，不重新打开XLSX或公开原始事件数。
+
+### 行政层级证据
+
+[固定OCHA配置](https://github.com/OCHA-DAP/hdx-scraper-acled/blob/64b7855739249eccc7c52d0f6b64aca656929200/src/hdx/scraper/acled/config/project_configuration.yaml)列出Non_HRP、HRP_1、HRP_2；[转换代码](https://github.com/OCHA-DAP/hdx-scraper-acled/blob/64b7855739249eccc7c52d0f6b64aca656929200/src/hdx/scraper/acled/pipeline.py)按有无Admin1列赋admin2/admin0，没有把admin2汇总成admin0，也没有跨层互斥校验。这能解释分层风险，但不能证明当前部署、两层实际互斥或整体地理完备。后续不得把两层直接相加。
+
+### 历史文件可取得性
+
+本次只读[HDX历史元数据](https://data.humdata.org/api/3/action/package_activity_list?id=3e6bfc98-f837-495d-b8de-71e5ac026f59&limit=5)找到08-28版本记录：resource update为09-03 10:29:54、size44,096,516、声明hash `8378025004dd6dadb230581a143c224b`。[当前资源元数据](https://data.humdata.org/api/3/action/resource_show?id=99a32d01-d0ca-4f57-a0f5-cb6b5f01f14f)为09-04版：update09-10 10:25:01、size44,297,863、声明hash `ad06a8d31331d01252955d7aa0d0778a`。未从字段推断hash算法。
+
+两记录的download URL相同，指向该resource下不带日期的political-violence-events-and-fatalities.xlsx。故历史metadata不是不可变历史文件；不得改URL日期参数、重命名当前文件或结合旧metadata冒充08-28。尚未发现已验证的历史字节地址，不等于证明历史原件不存在。此处只读CKAN元数据，无HAPI数据请求或44MiB正文下载；它也不是六份官网产品的同版本等价证明。
+
+### 后续小样本方案（未执行）
+
+独立请求AFG/2025-01/PV/admin2，元数据→样本→元数据，最多3免费请求/累计1MiB/1,002原始行、15秒每请求含正文、至少1,100ms间隔、零重试/分页/重定向，私有一次性占用目录。命中1,000样本行即停止；空/错国家月份层级/缺行政代码/重复/元数据变化拒绝。尚需owner明确批准本次预算；原四槽和年度once预算不得借用。没有权威行政区全集时，样本有效不等于地理完整，不全国汇总、不与admin0相加或上线。

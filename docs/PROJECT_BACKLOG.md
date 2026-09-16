@@ -6,6 +6,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-16 ACLED 地理覆盖与历史版本证据
+
+- **Acceptance baseline**：owner要求继续完成剩余任务；本项为离线地理报告、公开代码/分类表及历史元数据研究，沿用逐项commit/push/独立AI审阅合并。新增正文请求预算仍须单独确认，不切源、不发邮件。
+- **已完成**：`review:acled-geography` 复验年度私有档案后，以固定OCHA taxonomy核验36个名称/代码对，真实36对均匹配；24个有明确代码的原表参考国家全部未在admin0候选返回，另8名称继续未解决。报告不输出事件值、不模糊归并、不把24代码集当全球清单、不以名称身份替代领土等价。6项回归及真实零网络复验通过，独立代码审阅通过。
+- **来源结论**：OCHA读取Non_HRP/HRP_1/HRP_2，无Admin1列设admin0，否则admin2；未发现跨层互斥校验或全国汇总。HDX历史元数据确有08-28，但与09-04共用download URL、声明hash/size不同，不能据旧metadata获取当前文件冒充旧版。同版本历史正文仍未取得。详见[地理及历史版本证据](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#地理覆盖与历史版本证据2026-09-16)。
+- **下一门槛**：已向owner提出独立AFG/2025-01/PV/admin2最多3请求、1MiB、1,002原始行、15秒、零重试的小样本预算；截至本记录尚未执行，等明确批准。无权威行政区清单时只能证明返回行有效，不证明地理完整，不全国汇总。完整全球/其它类别/六表同版本等价及周表自动渠道仍未完成；四槽与ARR真实等待不提前。
+
 ### 2026-09-16 ACLED 年度就绪报告与本地引用盘点
 
 - **Acceptance baseline**：owner要求继续下一步；仅离线核对合法原件、国家映射线索和年度报告接入。沿用分项commit/push/独立AI审阅合并，不增加下载预算，不发邮件或切换生产。
