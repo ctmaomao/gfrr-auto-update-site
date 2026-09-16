@@ -1,0 +1,45 @@
+name: Bubble Watch Editorial Follow-up
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_run:
+    workflows: [Bubble Watch Weekly Editorial Refresh]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '45 5 * * 3'
+  # Manual dispatch updates status only; it cannot consume a recheck slot.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gfrr-main-writer-main
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  followup:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Sync latest main
+        run: git pull --ff-only origin main
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+      - name: Verify follow-up guard
+        run: node --test tests/unit/bubble-editorial-followup.test.mjs
+      - name: Record status and reserve at most one Wednesday recheck
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/bubble-watch/run-editorial-followup.mjs --write

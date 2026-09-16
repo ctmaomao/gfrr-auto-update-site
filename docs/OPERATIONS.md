@@ -146,13 +146,18 @@ scheduled workflow 始终运行远端 `main`，本地修改或仅 push 到 featu
 
 2026-09-07 检索修复：零可信新闻 skip 同时产生 GitHub warning annotation，避免把绿色 workflow 误认为 AI 可用。Tavily 原六个查询中的两个定向查找 Fed/BLS 官方日期发布，其余四个及 Brave 六个仍查新闻；不增加请求预算或 DeepSeek 次数。只接受已登记日期路径且在窗口内的官方结果，不降低 cross-check/引用/质量/30 小时 gate。若仍 skip，核对实际返回的官方日期路径、时间过滤和 provider 状态；不能用旧发布或手工补引用恢复显示。详细检索范围见 [Macro Risk 来源契约](MACRO_RISK_EDITORIAL_DESIGN.md#42-新闻发现来源)。
 
-Tavily/Brave keys 由 Macro Risk、Bubble Watch 与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；按 31 天最坏情形，全部 scheduled flows 合计 737 requests/provider/month，另保留 200 次 manual/diagnostic reserve，由 `check:workflows` 阻止预算超过 1,000。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `http_402_payment_required`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，确认是否为共享月度额度耗尽；不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。等待月度 reset，或由 owner 在 provider dashboard 更新 plan/key。
+Tavily/Brave keys 由 Macro Risk、Bubble Watch 与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；按 31 天最坏情形，全部 scheduled flows 合计 767 requests/provider/month，另保留 200 次 manual/diagnostic reserve，由 `check:workflows` 阻止预算超过 1,000。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `http_402_payment_required`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，确认是否为共享月度额度耗尽；不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。等待月度 reset，或由 owner 在 provider dashboard 更新 plan/key。
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。
 
 如果 `radarData.updatedAt` 在 Daily 后变化而新判读尚未生成，前端仍会因编辑层缺失或时间不匹配而暂时隐藏；完成事件衔接减少独立 cron 空档，但不能保证上游、队列、provider 和发布始终及时。不要把旧判读重新贴到新时间戳；先查 admission reason、预算凭据与上游状态，不重复调用 provider。
 
 ### Bubble Watch weekly editorial refresh
+
+ADR-0050：周三 05:45 UTC 至多一次新闻补检；仅全周运行都能证实为本期 no-credible-news 零调用 skip 时，先持久预留，再派发既有 AI workflow。provider 失败、证据缺失、已有本期 AI、过期/换期不补跑。`Bubble Watch Editorial Follow-up` 手动运行仅更新状态，适用于零付费上线验收；不释放已预留额度，不重复派发不明结果。状态文件与最新数据期次不符时前端忽略，避免把旧失败套在本期。
+
+EdgeOne 现在直接订阅 Bubble AI 与状态 workflow 的成功完成，无需等待三小时周期。既有 publisher 全套检查不变。
+
 
 `Bubble Watch Weekly Editorial Refresh` 是
 `data/bubble-watch.json.summary.weekly_editorial` 的唯一生产写入路径。正常由周一

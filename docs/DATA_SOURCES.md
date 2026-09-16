@@ -1067,3 +1067,5 @@ candidate v2 / classification v3 / telemetry v5。文件时间为 `datasetObserv
 - 免费 CSV 每序列 12 秒超时，单次抓取不重试，单序列失败隔离；保留已验证历史与原始抓取时间，观测超过 10 天明确提示，不以请求成功代替新鲜。无新生产依赖或付费 provider。
 - 三序列 ICE 官方 notes 明示公开再发布需事先书面许可；公开可访问和参考站已展示不等于本站获许可。owner 于 2026-09-14 明确要求承担风险并直接发布，本次窄范围配置为 enabled / owner_risk_accepted，不表示已取得 ICE 书面许可；不扩展到其它源。
 - 架构：现有 Bubble builder 的 daily_history_layer → 可选 credit_spreads → frontend_display_layer；独立于 Core-23/Shadow-4、判读和主站。
+
+Bubble 周度新闻频率补充（ADR-0050）：周三允许一次有持久预留的新闻不足补检，复用相同六主题与双索引，不新增来源或放宽合格证据。单条官方来源可以合格；非官方需不同域名的同一故事聚类。不同域名并不保证报道独立，转载可能共用同一通讯社原稿；当前分类是检索层交叉确认，不能冒充事实真伪认证。

@@ -2519,3 +2519,9 @@ Weekly sanitizer outputs add `quality.weeklyWindow` with a shared `latestWeek`, 
 ### GDELT Cloud quantity units
 
 `totalEvents` is a country event aggregation; query diagnostics use `eventCount`. `totalArticles` / query `articleCount` are retained as null because no deduplicated global article count has been verified. `countUnit=country_event_aggregate` records scope. The legacy ODP reader never substitutes articles for events, and future source/cache output normalizes old mislabeled fields. [ADR-0041](ADR/0041-gdelt-event-and-article-units.md).
+
+### Bubble editorial follow-up status (ADR-0050)
+
+`data/bubble-watch-editorial-status.json` 是独立的运维展示状态与持久补检账本，schema 为 `bubble-watch-editorial-status-v1`。`asOfDate` / `checkedAt` / `sourceRunId` / `sourceRunCreatedAt` 定位原始检查；`reason` 限于 no_credible_news、search_failed、input_failed、provider_failed、validation_or_publish_failed、published、in_progress、unverified、not_started。`providerCalled` 为 true/false/null，未知不可伪装成零调用。`credibleCount` 为有证据的计数或 null。`reservations[UTC周一日期]` 保存 token、asOfDate、sourceRunId、reservedAt、admittedRunId，不随 Bubble builder 清空、不自动释放。空初始化不代表运行成功。
+
+仅 follow-up writer 和 AI workflow 的预留消费步骤可写此文件；原有 AI writer 仍只写 summary.weekly_editorial。浏览器仅使用同数据日期、七天内的脱敏原因，不用其授权 AI 展示或计算评分。原有 no-news workflow 自身仍零 production write；独立 status workflow 写入此诊断文件。

@@ -16,6 +16,18 @@ on:
         type: boolean
         required: true
         default: false
+      recheck_week:
+        description: 'Reserved recheck week (internal; empty for ordinary manual runs)'
+        type: string
+        default: ''
+      recheck_token:
+        description: 'Durable recheck reservation token'
+        type: string
+        default: ''
+      recheck_as_of:
+        description: 'Reserved Bubble data date'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -69,7 +81,22 @@ jobs:
           npm run check:bubble-watch-weekly-editorial-workflow
           npm run check:bubble-watch-weekly-editorial-provider-path
 
+      - name: Revalidate reserved recheck after acquiring writer lock
+        id: recheck_admission
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RECHECK_WEEK: ${{ inputs.recheck_week }}
+          RECHECK_TOKEN: ${{ inputs.recheck_token }}
+          RECHECK_AS_OF: ${{ inputs.recheck_as_of }}
+        run: |
+          if [ -z "$RECHECK_WEEK$RECHECK_TOKEN$RECHECK_AS_OF" ]; then
+            echo 'allowed=true' >> "$GITHUB_OUTPUT"
+          else
+            node scripts/bubble-watch/run-editorial-followup.mjs --admit --write
+          fi
+
       - name: Collect bounded weekly news context
+        if: steps.recheck_admission.outputs.allowed == 'true'
         env:
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
@@ -79,6 +106,7 @@ jobs:
 
       - name: Build compact provider input
         id: build_input
+        if: steps.recheck_admission.outputs.allowed == 'true'
         run: npm run build:bubble-watch-weekly-editorial-input -- --allow-expected-news-skip
 
       - name: Hard-check compact provider input

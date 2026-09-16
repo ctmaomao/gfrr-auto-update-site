@@ -9,6 +9,7 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
+| [ADR-0050](0050-bubble-editorial-followup.md) | Bubble editorial bounded midweek follow-up | Accepted |
 | [ADR-0001](0001-zero-dependencies.md) | Zero production dependencies | Accepted |
 | [ADR-0002](0002-worker-first-realtime.md) | Worker-first realtime as main runtime path | Accepted |
 | [ADR-0003](0003-secondary-does-not-affect-scoring.md) | Secondary diagnostics do not affect scoring | Accepted |

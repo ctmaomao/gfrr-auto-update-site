@@ -120,7 +120,7 @@ const contracts = [
     file: '.github/workflows/publish-edgeone-release.yml',
     required: [
       'name: Publish EdgeOne Release Channel',
-      'workflows: [Macro Risk Editorial Refresh]',
+      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up]',
       'types: [completed]',
       'branches: [main]',
       'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
@@ -631,7 +631,8 @@ const sharedSearchScheduledRequests =
   (31 * MACRO_EDITORIAL_TOPICS.length) +
   5 + // weekly Bubble Watch refresh: one CEO-news query per provider
   20 + // Tuesday-Friday source audit: at most 20 runs in a 31-day month
-  (5 * BUBBLE_EDITORIAL_TOPICS.length);
+  (5 * BUBBLE_EDITORIAL_TOPICS.length) +
+  (5 * BUBBLE_EDITORIAL_TOPICS.length); // At most one reserved Wednesday recheck per week (ADR-0050).
 const sharedSearchManualReserve = 200;
 const sharedSearchMonthlyLimit = 1000;
 if (sharedSearchScheduledRequests + sharedSearchManualReserve > sharedSearchMonthlyLimit) {
