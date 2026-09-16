@@ -359,3 +359,13 @@ Owner要求开始下一步，本轮只做能力准备和离线合成验收，零
 `npm run collect:acled-admin2-scope -- --review-quarantine`仅离线读取固定隔离档案，不读联系信息/年度或AFG基线，不联网、不写文件。输出只含计数/固定枚举，无原始键、行政名称、事件值或异常文本。按国家＋admin1＋admin2键分类：全组字段相同为identicalDuplicateKeys，有任一不同为conflictingDuplicateKeys；一个混合组仅计冲突，duplicateRows为每组超过首行的数量。日期仅在严格月界验证后规范化；非法行单列invalidRows，不参与有效行重复分类，不冒充已接受数据。跨行身份一致性not_assessed；未去重、未汇总全国、无全球完整性结论。
 
 metadataFence区分未完成not_completed、实际后置元数据变化mismatch、无效invalid_after与可见字段匹配matched_visible_metadata；无论哪种均atomicSnapshotProven=false，不以before代替after证明稳定。16项专项通过；独立审阅、完整检查和CI依本次PR结果。上一失败目录只有attempt/receipt，没有quarantine可审，不能声称真实重复原因已查明。后续真实取证须新方案预算批准，本次实现不授予重跑许可。
+
+## 独立重复取证（2026-09-16）
+
+Owner随后明确批准一次独立取证：最多3免费请求/8MiB/10,002行、15秒每请求、零重试，仅私有保存不上线。沿用固定2025-01/PV/admin2全部返回范围及1,100ms开始间隔、零分页/重定向。新`collect:acled-forensic`使用独立acled-admin2-forensic-20260916 once；不修改原scope/AFG/年度/四槽ID、预算或档案。默认dry-run，主checkout限定，基线hash/schema预验，attempt先占；成功响应也仅保存quarantine，无candidate文件。失败/中断也消耗本次机会，无目录覆盖、删除或重跑路径。
+
+19项专项、dry-run及独立pre-live审阅通过后仅执行一次live：2个HTTP200，累计1,723,981字节/4,596原始行；metadata1行/1,341字节、sample4,595行/1,722,640字节。collector在duplicate_row处停止，第3请求未发。新入口返回evidence_saved_not_candidate只代表取证保存成功；receipt中collection.status仍stopped。正文/元数据/manifest仅ignored私有目录，随后`npm run collect:acled-forensic -- --review`零网络hash复验通过。此次once已耗，剩余1个请求不构成重试授权。
+
+脱敏诊断：4,595行均通过单行校验，4,329个唯一行政键，重复额外行266；45个重复组中3组字段相同、42组存在冲突。另一次零网络hash预验后在内存按组核对字段，仅输出字段名和数量：42组admin2_name不同、26组events不同、24组fatalities不同、4组admin1_name不同，计数可重叠。重复组大小从2到108；未输出国家/行政键、名称原值或事件原值。分类器仍标记crossRowIdentityConsistency=not_assessed：上述是重复组字段差异，不是完整跨行身份校验。
+
+可确认本次响应的(country,admin1,admin2)键并非无歧义的唯一记录身份，不能将这些记录一律视为相同副本删除；但不能据此推断事件是否重叠、是否应相加或上游具体映射机制。metadataFence=not_completed，无后置版本围栏，不证明事务快照或旧失败正文与新正文逐字相等；同样行数/字节数也不能替代旧正文hash。源映射原因、官方行政全集、国家月总量及六表等价仍待核对。本次不改主键、不去重、不汇总、不发布、不刷新生产；下一步优先只读核验上游映射代码/说明及现有私有证据，不追加正文请求。

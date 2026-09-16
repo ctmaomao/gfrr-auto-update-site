@@ -13,6 +13,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-16 ACLED 独立重复取证
+
+- **Acceptance baseline**：owner明确批准独立取证最多3免费请求/8MiB/10,002行、15秒每请求、零重试，仅私有保存不上线；沿用2025-01/PV/admin2全部返回范围、1,100ms间隔、零分页/重定向。此授权只新增一次取证，不重置旧scope/AFG/年度/四槽预算。
+- **实施**：独立固定acled-admin2-forensic-20260916 once，复用原collector和quarantine分类器；成功响应也只保存取证文件，无candidate路径。主checkout、基线预验、hash、私有联系指针和失败耗用保持。
+- **验证/真实结果**：19项专项及dry-run、pre-live独立审阅通过。一次live实际2请求均200，共1,723,981字节/4,596行；sample4,595行因duplicate_row停止，第3请求未发。私有取证保存及零网络hash复验通过：4,329有效行政键、多余重复266行、3组相同重复、42组冲突、单行无效0。42冲突组均有不同admin2_name，其中26组events不同、24组fatalities不同、4组admin1_name不同（可重叠）。完整检查/CI/集成见本次PR。
+- **边界/下一步**：本次once已消耗，未用第3请求不是重试许可；metadataFence未完成。取证保存成功不等于源数据验收通过，不去重放行、不汇总全国或上线。新正文只能解释本次返回，不能补造旧版证据。行政键与区名存在歧义，需核对上游行政映射及原始粒度，不能直接改成按名称主键、求和或删行；原始形成原因尚未证明。
+
 ### 2026-09-16 ACLED 拒绝正文隔离取证准备
 
 - **Acceptance baseline**：owner要求开始下一步；本轮仅实现私有quarantine和离线重复分类，不重新下载、不改变旧once ID/预算、不切生产。新的真实取证仍须独立预算批准。

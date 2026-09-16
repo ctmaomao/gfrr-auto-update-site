@@ -8,6 +8,7 @@ import { SCOPE, collectScope, inspectScopeSnapshot } from '../../scripts/world-o
 import { compareScopeBaselines } from '../../scripts/world-order/acled-admin2-scope-review.mjs';
 import { runScopeAcceptance, reviewStoredScope, readScopeCandidateForReview, reviewStoredScopeQuarantine } from '../../scripts/world-order/acled-admin2-scope-store.mjs';
 import { reviewScopeQuarantine } from '../../scripts/world-order/acled-admin2-quarantine.mjs';
+import { FORENSIC, runForensicAcceptance, reviewForensicEvidence } from '../../scripts/world-order/acled-admin2-forensic.mjs';
 
 const NOW = '2026-09-16T00:00:00.000Z', ID = '99a32d01-d0ca-4f57-a0f5-cb6b5f01f14f';
 const contact = { application: 'Synthetic only', email: 'test@example.invalid' };
@@ -194,4 +195,48 @@ test('quarantine rejects forged envelopes, future times and aggregate oversize',
   assert.throws(() => reviewScopeQuarantine({ ...q, approved: true }, NOW));
   assert.throws(() => reviewScopeQuarantine({ ...q, fetchedAt: '2027-01-01T00:00:00.000Z' }, NOW));
   assert.throws(() => reviewScopeQuarantine({ ...q, sampleJson: q.sampleJson.padEnd(SCOPE.bytes, ' ') }, NOW));
+});
+
+test('new approved forensic once is isolated and never stores candidate files, even on valid input', async () => {
+  for (const duplicate of [false, true]) {
+    const root = await mkdtemp(path.join(tmpdir(), 'gfrr-forensic-'));
+    try {
+      const parent = path.join(root, 'manual-artifacts'); await mkdir(parent); await mkdir(path.join(parent, SCOPE.id));
+      await writeFile(path.join(parent, SCOPE.id, 'receipt.json'), 'old-spent-receipt');
+      const f = fixture(); if (duplicate) mutate(f, rows => rows.push(rows[0]));
+      const ready = await collect(f);
+      const report = await runForensicAcceptance(root, contact, f.baselines, { now: () => NOW, collect: async () => ready });
+      assert.equal(report.status, 'evidence_saved_not_candidate'); assert.equal(report.productionEligible, false);
+      assert.equal(report.diagnostic.identicalDuplicateKeys, duplicate ? 1 : 0);
+      assert.equal(report.collection.requestCount, duplicate ? 2 : 3);
+      assert.deepEqual(await reviewForensicEvidence(root, NOW), report.diagnostic);
+      await assert.rejects(readFile(path.join(parent, FORENSIC.id, 'manifest.json')));
+      await assert.rejects(readFile(path.join(parent, FORENSIC.id, 'sample.private.json')));
+      assert.equal(await readFile(path.join(parent, SCOPE.id, 'receipt.json'), 'utf8'), 'old-spent-receipt');
+      assert.equal((await runForensicAcceptance(root, contact, f.baselines)).status, 'already_attempted');
+      await writeFile(path.join(parent, FORENSIC.id, 'quarantine-sample.private.json'), 'bad');
+      await assert.rejects(reviewForensicEvidence(root, NOW), /artifact_hash/u);
+    } finally { await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
+  }
+});
+test('forensic failure consumes once and invalid baseline creates no attempt', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'gfrr-forensic-fail-'));
+  try {
+    const parent = path.join(root, 'manual-artifacts'); await mkdir(parent); const f = fixture();
+    await assert.rejects(runForensicAcceptance(root, contact, null));
+    await assert.rejects(readFile(path.join(parent, FORENSIC.id, 'attempt.json')));
+    const failed = await collect(f, [new Response('', { status: 403 })]);
+    assert.equal((await runForensicAcceptance(root, contact, f.baselines, { now: () => NOW, collect: async () => failed })).status, 'stopped');
+    await assert.rejects(reviewForensicEvidence(root, NOW), /evidence_missing/u);
+    assert.equal((await runForensicAcceptance(root, contact, f.baselines)).networkRequests, 0);
+  } finally { await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
+});
+test('forensic CLI is dry by default, rejects overrides and preserves exact approved limits', () => {
+  const dry = spawnSync(process.execPath, ['scripts/collect-acled-forensic.mjs'], { encoding: 'utf8' });
+  assert.equal(dry.status, 0); const plan = JSON.parse(dry.stdout); assert.equal(plan.networkRequests, 0);
+  assert.equal(plan.budget.id, 'acled-admin2-forensic-20260916');
+  assert.equal(plan.budget.requests, 3); assert.equal(plan.budget.bytes, 8388608); assert.equal(plan.budget.rows, 10002);
+  assert.equal(plan.budget.timeoutMs, 15000); assert.equal(plan.budget.spacingMs, 1100);
+  const bad = spawnSync(process.execPath, ['scripts/collect-acled-forensic.mjs', '--id', 'private'], { encoding: 'utf8' });
+  assert.equal(bad.status, 1); assert.equal(bad.stderr, ''); assert.ok(!bad.stdout.includes('private'));
 });
