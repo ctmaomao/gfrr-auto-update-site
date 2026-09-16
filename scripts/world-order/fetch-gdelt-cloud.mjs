@@ -18,7 +18,7 @@ import {
 
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_WINDOW_DAYS = 7;
-const API_BUDGET_NOTE = '100 units/month free tier';
+const API_BUDGET_NOTE = 'API access requires an active evaluation, paid plan or explicit account entitlement; quota and expiry must be checked in the account';
 const GDELT_CLOUD_USER_AGENT = 'gfrr-world-order-stress/1.0';
 
 export const GDELT_WORLD_ORDER_CACHE_SCHEMA_VERSION = 'gdelt-world-order-cache-p39';
@@ -159,7 +159,7 @@ function classifyCacheUsability(cache, { nowIso, windowDays }) {
 
 function isRateLimited(error) {
   const status = Number(error?.gdeltDiagnostics?.status || error?.status);
-  return status === 403 || status === 429;
+  return status === 429;
 }
 
 function buildFailureSummary({ attemptedAt, status, error, rateLimited = false, requestDiagnostics = null }) {
@@ -600,10 +600,18 @@ async function fetchGdeltCloudSummaryBase({ config = {}, previousSource = null }
 
 export async function fetchGdeltCloudSummary(options = {}) {
   const result = await fetchGdeltCloudSummaryBase(options);
+  const httpStatus = Number(result.summary?.requestDiagnostics?.status);
+  const accessWarning = {
+    401: 'GDELT Cloud 凭据未通过验证，请检查现有密钥是否有效。',
+    402: 'GDELT Cloud 请求被付费或额度门槛拒绝，请核对账户套餐、试用期限与余额。',
+    403: 'GDELT Cloud 拒绝访问，请核对账户权限、试用期限与套餐；此状态不等于限流，也不能单凭它断定试用已到期。'
+  }[httpStatus];
   // Apply to EVERY exit, including retained legacy caches and previous-source fallbacks.
   // Country-level article counts do not establish a globally deduplicated article total.
   const normalizeUnits = summary => ({
     ...summary,
+    apiBudget: API_BUDGET_NOTE,
+    ...(accessWarning ? { errors: [...(summary?.errors || []), accessWarning] } : {}),
     countUnit: 'country_event_aggregate',
     totalArticles: null,
     articleCountReasonZh: '当前接入没有可验证的去重报道总数；事件数不能替代报道数。',
@@ -611,6 +619,7 @@ export async function fetchGdeltCloudSummary(options = {}) {
   });
   return {
     ...result,
+    ...(accessWarning ? { warnings: [...(result.warnings || []), accessWarning] } : {}),
     summary: normalizeUnits(result.summary),
     ...(result.cacheArtifact ? {cacheArtifact:{...result.cacheArtifact,summary:normalizeUnits(result.cacheArtifact.summary)}} : {})
   };
