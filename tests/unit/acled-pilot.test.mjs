@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { PILOT, pilotMetadata, inspectPilotSnapshot, runPilotCollection } from '../../scripts/world-order/acled-pilot.mjs';
-import { executePilotSlot, pilotStoreStatus } from '../../scripts/world-order/acled-pilot-store.mjs';
+import { executePilotSlot, pilotStoreStatus, readPilotCandidateForReview } from '../../scripts/world-order/acled-pilot-store.mjs';
 
 const NOW = '2026-09-16T00:00:00.000Z', ID = '99a32d01-d0ca-4f57-a0f5-cb6b5f01f14f';
 const contact = { application: 'Synthetic test', email: 'test@example.invalid' };
@@ -149,10 +149,16 @@ test('stored snapshot is hash-verified before a metadata-only request; original 
   try {
     const ready = await collect(sample);
     await executePilotSlot(f.root, contact, { now: () => NOW, collect: async () => ready });
+    assert.deepEqual(await readPilotCandidateForReview(f.root, NOW), sample);
+    assert.equal((await pilotStoreStatus(f.dir, NOW)).usedSlots, 1);
+    await mkdir(path.join(f.dir, '.lock'));
+    await assert.rejects(readPilotCandidateForReview(f.root, NOW), /pilot_locked/u);
+    await rm(path.join(f.dir, '.lock'), { recursive: true });
     let loaded;
     await executePilotSlot(f.root, contact, { now: () => later(7), collect: async (_, previous) => { loaded = previous; return stopped(); } });
     assert.deepEqual(loaded, sample);
     await writeFile(path.join(f.dir, 'slot-0/sample.private.json'), 'bad');
+    await assert.rejects(readPilotCandidateForReview(f.root, later(14)), /artifact_hash/u);
     await assert.rejects(executePilotSlot(f.root, contact, { now: () => later(14) }), /artifact_hash/u);
   } finally { await f.cleanup(); }
 });
@@ -172,6 +178,7 @@ test('storage pre-reservation and linked directory rejection happen before netwo
     await symlink(outside, path.join(links.root, 'manual-artifacts'), 'junction');
     await assert.rejects(executePilotSlot(links.root, contact), /unsafe_directory/u);
     assert.equal((await pilotStoreStatus(links.dir)).status, 'paused');
+    await assert.rejects(readPilotCandidateForReview(links.root), /unsafe_directory/u);
   }
   finally { await links.cleanup(); await rm(outside, { recursive: true, force: true }); }
 });
