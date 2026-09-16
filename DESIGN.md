@@ -219,6 +219,8 @@ M-94 V0 起,首页按 `mock v2.1` 的报纸式阅读路径组织。主路径不�
 
 ### 4.4 第二页面(bubble-watch.html)与页面切换书签
 
+ADR-0050 / owner 2026-09-16 批准的窄范围补充（[讨论 #369](https://github.com/ctmaomao/gfrr-auto-update-site/issues/369)）：本页除下述专属数据外，可只读 `data/bubble-watch-editorial-status.json`，在 Hero 正文下显示脱敏刷新原因。状态必须同数据期次、七天内有效；状态获取失败不阻塞正文。沿用现有 muted/serif 小字，不新增 section、颜色或评分输入；不放宽 AI 正文的有效期与展示门槛。
+
 站点自 2026-06-11 起有两个独立页面(见 ADR-0016):
 
 - `index.html` — 全球金融风险雷达(本合约 §4.1-4.3 的 IA 锁定仅约束此页)。

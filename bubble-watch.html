@@ -66,6 +66,8 @@
 
   /* DeepSeek weekly editorial — read-only, evidence-linked long-form layer */
   section.weekly-editorial { margin-bottom: 48px; border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); padding: 30px 0 34px; }
+  .editorial-refresh-note { color: var(--muted); font-size: 13px; line-height: 1.7; margin-top: 12px; }
+  .editorial-refresh-note:empty { display: none; }
   .weekly-editorial-header { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 28px; align-items: end; margin-bottom: 28px; }
   .weekly-editorial-kicker { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--red); margin-bottom: 8px; }
   .weekly-editorial-header h3 { font-family: "Playfair Display", "Noto Serif SC", serif; font-size: clamp(27px, 4vw, 40px); line-height: 1.15; margin: 0; }
@@ -339,6 +341,37 @@ function eligibleWeeklyEditorial(data, nowMs = Date.now()) {
   return layer;
 }
 
+function editorialRefreshMessage(data, status, nowMs = Date.now()) {
+  if (eligibleWeeklyEditorial(data, nowMs)) return '';
+  const layer = data?.summary?.weekly_editorial;
+  if (layer && layer.asOfDate !== data.as_of_date) return 'AI 判读对应上一期数据，当前展示本期确定性判读。';
+  const generated = Date.parse(layer?.freshness?.artifactGeneratedAt || layer?.generatedAt || '');
+  if (Number.isFinite(generated) && nowMs - generated > 240 * 3_600_000) return 'AI 判读已超过 10 天有效期，当前展示确定性判读。';
+  const checked = Date.parse(status?.checkedAt || '');
+  const current = status?.schemaVersion === 'bubble-watch-editorial-status-v1'
+    && typeof status.checkedAt === 'string'
+    && status.asOfDate === data.as_of_date && Number.isFinite(checked)
+    && checked <= nowMs + 3_600_000 && nowMs - checked <= 7 * 86_400_000;
+  if (!current) return '本期暂无可展示的 AI 判读，当前展示确定性判读；刷新状态暂未核实。';
+  const messages = {
+    no_credible_news: '本期 AI 暂未生成：新闻检索成功，但尚无官方来源或跨来源确认的合格证据；未调用付费 AI。每周三至多补检一次。',
+    search_failed: '本期 AI 暂未生成：新闻检索服务异常，未通过输入检查。',
+    input_failed: '本期 AI 暂未生成：输入证据未通过检查。',
+    provider_failed: '本期 AI 调用未成功，不会自动再次付费重试。',
+    validation_or_publish_failed: 'AI 已调用，但输出审阅或发布检查未通过；不会自动再次付费重试。',
+    in_progress: '本期 AI 刷新正在进行，暂时展示确定性判读。',
+    published: '本期 AI 已生成，但当前未通过展示有效性检查，继续展示确定性判读。',
+    unverified: '本期 AI 暂不可用：运行证据不完整，无法确认具体原因；不会据此自动付费重试。',
+    not_started: '尚未找到本周 AI 刷新记录，当前展示确定性判读。'
+  };
+  const message = messages[status.reason] || messages.unverified;
+  const reservations = Object.values(status.reservations || {});
+  const reserved = reservations.find(item => item?.asOfDate === data.as_of_date);
+  const followup = status.reason === 'no_credible_news' && reserved
+    ? (reserved.admittedRunId === status.sourceRunId ? ' 本周补检已完成，仍未形成合格新闻证据。' : ' 本周补检额度已预留，不会重复安排。') : '';
+  return `${message}${followup} 最近核查：${status.checkedAt.slice(0, 16).replace('T', ' ')} UTC。`;
+}
+
 function renderWeeklyEditorial(layer) {
   if (!layer) return '';
   const output = layer.output || {};
@@ -500,7 +533,7 @@ function tierFromPct(p) {
 
 let lastData = null;
 
-function render(data) {
+function render(data, editorialStatus = null) {
   lastData = data;
   const s = data.summary;
   const indicators = data.indicators;
@@ -554,6 +587,7 @@ function render(data) {
           <div class="label">本周判读 · THIS WEEK'S VERDICT</div>
           <h2>${escapeHtml(heroHeadline)}</h2>
           <p>${escapeHtml(heroLead)}</p>
+          <div class="editorial-refresh-note" id="editorial-refresh-note" role="status">${escapeHtml(editorialRefreshMessage(data, editorialStatus))}</div>
         </div>
         <div class="footnote">
           <span>Issue ${issueNo} · ${escapeHtml(data.as_of_date)}${weeklyEditorial ? ` · 固定判读 ${escapeHtml(s.verdict_label)}` : ''}</span>
@@ -883,10 +917,19 @@ window.addEventListener('resize', () => {
 
 async function load() {
   try {
+    const statusPromise = fetch(`data/bubble-watch-editorial-status.json?t=${Date.now()}`, {
+      cache: 'no-store', signal: AbortSignal.timeout(3000)
+    }).then(response => response.ok ? response.json() : null).catch(() => null);
     const r = await fetch(`data/bubble-watch.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     render(data);
+    try {
+      const status = await statusPromise;
+      document.getElementById('editorial-refresh-note').textContent = editorialRefreshMessage(data, status);
+    } catch {
+      // Diagnostics must never replace successfully rendered primary data.
+    }
   } catch (e) {
     document.getElementById('root').innerHTML = `
       <div class="error">数据加载失败: ${escapeHtml(e.message)}<br>检查 data/bubble-watch.json 是否存在</div>

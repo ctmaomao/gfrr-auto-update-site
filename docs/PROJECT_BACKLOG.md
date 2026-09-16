@@ -1,10 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
 
-### 2026-09-16 Bubble AI 周内补检与刷新原因（实施中）
+### 2026-09-16 Bubble AI 周内补检与刷新原因
 
 - Owner acceptance baseline：增加一次周内补检、展示明确跳过原因、Bubble AI 更新直接触发自定义域名同步。周三 05:45 UTC 仅补检本期已证实零调用的新闻不足；每周最多一个持久预留，排队后复验，付费失败不重试。
 - 设计审阅要求：检查全周运行、先预留再派发、消费前再次取得共享 writer 锁并复核期次/调用历史；已纳入实现。ADR-0050 / issue #369 记录追加只读状态 JSON 的 DESIGN §4.4 窄例外。
-- 旧六段展示仍在独立本地分支，本轮不混入。无本轮额外付费调用；上线后只运行状态同步。现有 AI 输入、单次调用、引用/质量/新鲜度闸均保留。
+- 自动化/契约 PR #370 已独立审阅并合并（f025ca86），远端 check-all 通过；独立展示 PR 从该 latest main 开始。新增 6 项单元、9 项相关浏览器测试及 check:changed 全套通过；状态格式错误不能清空主页面。
+- 旧六段展示仍在独立本地分支，本轮不混入。无本轮额外付费调用；状态-only 生产验收 run 35059831745 成功，published / status_only / reservations={}，未派发新 AI。现有 AI 输入、单次调用、引用/质量/新鲜度闸均保留。
 
 Persistent project self-memory for open work, current status, and maintenance rules. Milestone history lives in [MILESTONE_INDEX.md](MILESTONE_INDEX.md); this file keeps only the actionable backlog and compact recent context.
 
