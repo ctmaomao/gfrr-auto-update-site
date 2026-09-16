@@ -249,6 +249,8 @@ Owner 已批准前轮独立评审提出的**四次低频候选采集试行**，�
 
 ## 替代验收与免手工目标（2026-09-16）
 
+本节24月缺口描述对应旧pilot输入；后续独立年度候选已补齐2022–2025时间覆盖，见文末。旧替代报告尚未接入该年度档案，不将候选完成冒充生产替代完成。
+
 Owner 要求继续逐步达成免手工更新，ARR可同步优化。本阶段属于 `artifact_sanitizer_layer`，不扩大四槽预算或生产权限；四槽完成不是六指标等价的替代证据。
 
 - [替代就绪报告](../scripts/world-order/acled-replacement-review.mjs) 分别列出六项的定义、时间覆盖、地理范围、数值对照与生产连接状态，不把部分通过压成一个绿色ready。`npm run review:acled-replacement` 零网络/零写入，读取当前固定私有pilot档案，复用hash/metadata围栏/锁检查，不读取联系文件，不预留或消耗槽位，不输出逐行值。
@@ -257,3 +259,22 @@ Owner 要求继续逐步达成免手工更新，ARR可同步优化。本阶段�
 - 当前CLI只接已有候选，不读XLSX或外部引用路径；真实执行为 `reference_missing`。本刀交付了比较核心及合成回归，**尚未完成手工XLSX逐行实际对照**。后续需从合法同版本原件在既有sanitizer边界内准备引用，不能从已汇总生产JSON倒造逐国家行。
 - 示威、平民受害事件尚无本次类别样本；civilian_targeting fatalities不自动等于平民死亡人数，总死亡数没有已证明映射。月数据不能替代周度行政区统计；未取得免费等价周源时，保留手工要求而不是悄悄移除模块。
 - 平台每线程只能绑定一个活动heartbeat，现已更新既有 `arr` 为“ARR 验收与 ACLED 候选试行”。ARR原证据/预算/9月21日等待保留，仅周一/二运行；ACLED仅周三/四20时检查，周四为夏令时或离线后的尚未用槽提供下一次检查机会，不补已过期槽。采集仍由CLI强制168小时间隔与绝对截止。各分支独立停止，全部结束才暂停整体；不是GitHub云端采集或正式发布安排。
+
+## 年度候选与公开筛选规则（2026-09-16）
+
+### 公开来源研究
+
+- [ACLED汇总下载目录](https://acleddata.com/conflict-data/download-data-files/aggregated-data)明确：总死亡年度表包含全部报告死亡；平民直接受害年度死亡表包含直接针对平民事件产生的报告死亡。后者不是所有战争平民死亡，也不是已证明可按任意事件类别死亡数相加复原的总量。
+- [HAPI类别定义](https://hdx-hapi.readthedocs.io/en/latest/data_usage_guides/enums/)说明三类非互斥；civilian_targeting简述为针对平民的暴力及针对平民的爆炸/远程暴力。[ACLED Codebook](https://acleddata.com/methodology/acled-codebook)对直接针对平民还讨论部分暴乱/暴民暴力及对抗议者过度使用武力。文档描述差异不能证明实际数据必然缺漏，也不能自行判定两张死亡表已经等价。
+- [OCHA转换器固定版本](https://github.com/OCHA-DAP/hdx-scraper-acled/blob/64b7855739249eccc7c52d0f6b64aca656929200/src/hdx/scraper/acled/pipeline.py)按上游数据集识别类别并转换聚合字段，不重新执行事件级筛选。其国家代码特殊处理说明返回代码数量不是全球覆盖证明；本次查看源码不代表确认线上部署版本。
+- 关联的[HAPI协调与背景指南](https://hdx-hapi.readthedocs.io/en/latest/data_usage_guides/coordination_and_context/)提供月度序列；更新频率不是周度统计粒度。[HDX Signals](https://centre.humdata.org/introducing-hdx-signals/)是提示服务，未证明能合法免费提供现有六地区周/admin1完整表。公开GitHub、社区及论坛检索未找到足以消除上述产品映射歧义的权威筛选配方。没有给ACLED发新邮件，没有抓取官网表格或增加数据请求。
+
+### 独立一次性年度验收
+
+Owner批准固定PV/admin0 2022–2025，仅本地私有候选：元数据→2022–2023→2024–2025→元数据，最多4请求、累计16MiB/20,002原始行、15秒每请求含正文、开始间隔至少1,100ms，零重试/分页/重定向。独立 `acled-pv-annual-20260916` once目录先占用，失败或中断也不重跑；不复用四槽预算、不加入heartbeat、不写生产。
+
+`npm run collect:acled-annual` 默认只输出dry-run。`-- --live`为此次已消耗的批准入口，不可换ID、删目录或重置预算；`-- --review`只离线读取私有四响应及manifest进行哈希和覆盖复验，无网络。CLI不接受任意URL/日期/预算，联系文件沿用既有私有指针，不在日志/argv/Git输出。保存上限为16MiB加64KiB控制文件，不自动清理资料。
+
+2026-09-16 02:49 UTC实际四请求全部200，总3,723,475字节、10,466原始行（10,464样本+2元数据），218返回国家代码各具备2022–2025完整48个月。前后元数据一致，sourceAsOf=2026-08-28，状态candidate_ready；随后的零网络保存档案复验为saved_candidate_verified。只证明返回范围完整，不证明全球覆盖、事务原子快照、两死亡指标语义或生产等价。
+
+9项专项测试覆盖固定预算/间隔、国家并集缺失、月/类别/层级/重复/null、元数据围栏、HTTP失败、累计字节/截断、实际15秒超时、once失败占用、哈希与路径保护。原validator断言不变；真实执行前独立AI审阅通过。原pilot和生产config/data/workflows未修改。

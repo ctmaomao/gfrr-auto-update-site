@@ -284,6 +284,8 @@
     "check:acled-pilot": "node --test tests/unit/acled-pilot.test.mjs",
     "review:acled-replacement": "node scripts/review-acled-replacement.mjs",
     "check:acled-replacement": "node --test tests/unit/acled-replacement-review.test.mjs",
+    "collect:acled-annual": "node scripts/collect-acled-annual.mjs",
+    "check:acled-annual": "node --test tests/unit/acled-annual.test.mjs",
     "check:acled-monthly-candidate": "node --test tests/unit/acled-monthly-candidate.test.mjs",
     "check:world-order-acled-weekly": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs && node --test tests/unit/acled-weekly-coverage.test.mjs",
     "check:world-order-acled-weekly-runtime": "node --check scripts/check-world-order-acled-weekly.mjs && node scripts/check-world-order-acled-weekly.mjs --runtime-history && node --test tests/unit/acled-weekly-coverage.test.mjs tests/unit/acled-source-freshness.test.mjs",

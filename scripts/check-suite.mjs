@@ -100,6 +100,7 @@ const SUITES = {
     'check:acled-hapi-collector',
     'check:acled-pilot',
     'check:acled-replacement',
+    'check:acled-annual',
     'check:world-order-acled-weekly-runtime',
     'check:world-order-acled-monthly-runtime'
   ],
