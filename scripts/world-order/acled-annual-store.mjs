@@ -36,7 +36,7 @@ export async function runAnnualAcceptance(root, contact, deps = {}) {
   for (const [name, text] of Object.entries(files)) await writeFile(path.join(dir, name), text, { flag: 'wx', mode: 0o600 });
   return result.report;
 }
-export async function reviewStoredAnnual(root, now = new Date().toISOString()) {
+export async function readAnnualCandidateForReview(root, now = new Date().toISOString()) {
   const parent = await safeDirectory(root, 'manual-artifacts');
   const dir = await safeDirectory(parent, ANNUAL.id);
   const receipt = JSON.parse(await readAnnualPrivateFile(path.join(dir, 'receipt.json'), 32768));
@@ -47,6 +47,11 @@ export async function reviewStoredAnnual(root, now = new Date().toISOString()) {
     const text = await readAnnualPrivateFile(path.join(dir, name), name.startsWith('metadata') ? 65536 : ANNUAL.bytes);
     if (manifest.hashes?.[name] !== digest(text)) throw new Error('artifact_hash'); texts.push(text);
   }
-  const coverage = inspectAnnualSnapshot({ metadataBefore: texts[0], partitions: texts.slice(1, 3), metadataAfter: texts[3], fetchedAt: manifest.fetchedAt }, now);
+  const snapshot = { metadataBefore: texts[0], partitions: texts.slice(1, 3), metadataAfter: texts[3], fetchedAt: manifest.fetchedAt };
+  inspectAnnualSnapshot(snapshot, now);
+  return snapshot;
+}
+export async function reviewStoredAnnual(root, now = new Date().toISOString()) {
+  const coverage = inspectAnnualSnapshot(await readAnnualCandidateForReview(root, now), now);
   return { status: 'saved_candidate_verified', networkRequests: 0, productionEligible: false, coverage };
 }

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { reviewAcledReplacement, comparePilotToReference } from '../../scripts/world-order/acled-replacement-review.mjs';
 import { pilotMetadata } from '../../scripts/world-order/acled-pilot.mjs';
+import { spawnSync } from 'node:child_process';
 
 const now = '2026-09-16T00:00:00.000Z';
 function fixture() {
@@ -73,5 +74,56 @@ test('malformed, duplicate, unsafe count, partial month and oversized reference 
     r => r.rows = Array(50001).fill(r.rows[0])]) {
     const { snapshot, reference } = fixture(); mutate(reference);
     assert.throws(() => comparePilotToReference(snapshot, reference, now));
+  }
+});
+
+function annualFixture() {
+  const { snapshot } = fixture();
+  const template = JSON.parse(snapshot.sampleJson).data[0];
+  return { metadataBefore: snapshot.metadataJson, metadataAfter: snapshot.metadataJson, fetchedAt: now,
+    partitions: [2022, 2024].map(year => JSON.stringify({ data: Array.from({ length: 24 }, (_, i) => {
+      const start = new Date(Date.UTC(year, i, 1)), end = new Date(Date.UTC(year, i + 1, 1) - 1000);
+      return { ...template, reference_period_start: start.toISOString().slice(0, 19), reference_period_end: end.toISOString().slice(0, 19) };
+    }) })) };
+}
+test('annual archive fills only annual temporal coverage without altering monthly comparison or eligibility', () => {
+  const { snapshot } = fixture(), annual = annualFixture(), before = JSON.stringify({ snapshot, annual });
+  const original = reviewAcledReplacement(snapshot, null, now);
+  const result = reviewAcledReplacement(snapshot, null, now, annual);
+  assert.deepEqual(result.completeYearsInCandidate, [2022, 2023, 2024, 2025]);
+  assert.deepEqual(result.missingYears, []);
+  assert.equal(result.metrics[1].temporalCoverage, 'returned_scope_four_years');
+  assert.deepEqual(result.metrics.filter((_, i) => i !== 1), original.metrics.filter((_, i) => i !== 1));
+  assert.deepEqual(result.comparison, original.comparison); assert.deepEqual(result.coverage, original.coverage);
+  assert.equal(result.productionEligible, false); assert.equal(result.status, 'not_ready_for_replacement');
+  assert.equal(result.annualCandidate.coverage.globalCoverage, 'not_proven');
+  assert.equal(result.annualCandidate.numericalComparison, 'reference_missing');
+  assert.equal(result.dataFetchedAt, original.dataFetchedAt);
+  assert.equal(JSON.stringify({ snapshot, annual }), before);
+  assert.ok(!JSON.stringify(result).includes('Synthetic'));
+  assert.ok(!JSON.stringify(result).includes('AAA'));
+});
+test('different annual source date cannot fill pilot baseline or silently refresh its clock', () => {
+  const { snapshot } = fixture(), annual = annualFixture();
+  annual.metadataBefore = annual.metadataBefore.replace('2026-08-28', '2026-08-21'); annual.metadataAfter = annual.metadataBefore;
+  const result = reviewAcledReplacement(snapshot, null, now, annual);
+  assert.equal(result.annualCandidate.status, 'source_date_mismatch');
+  assert.deepEqual(result.missingYears, [2022, 2023, 2024]);
+  assert.equal(result.sourceAsOf, '2026-08-28');
+});
+test('invalid annual archive never becomes a silent fallback or a trusted summary', () => {
+  const { snapshot } = fixture();
+  for (const annual of [{ completeYears: [2022, 2023, 2024, 2025] }, { ...annualFixture(), partitions: [] }])
+    assert.throws(() => reviewAcledReplacement(snapshot, null, now, annual));
+  const annual = annualFixture(), body = JSON.parse(annual.partitions[0]); body.data.pop();
+  annual.partitions[0] = JSON.stringify(body);
+  assert.throws(() => reviewAcledReplacement(snapshot, null, now, annual));
+});
+test('replacement CLI rejects network, reference path and unknown options with sanitized output', () => {
+  for (const args of [['--live'], ['--annual', '--live'], ['--reference', 'private.json']]) {
+    const result = spawnSync(process.execPath, ['scripts/review-acled-replacement.mjs', ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 1);
+    assert.deepEqual(JSON.parse(result.stdout), { status: 'review_unavailable', networkRequests: 0, productionEligible: false });
+    assert.equal(result.stderr, '');
   }
 });

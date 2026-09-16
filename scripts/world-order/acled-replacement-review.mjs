@@ -1,5 +1,6 @@
 import { inspectPilotSnapshot } from './acled-pilot.mjs';
 import { completeMonthlyWindows } from './acled-monthly-trend.mjs';
+import { inspectAnnualSnapshot } from './acled-annual-collector.mjs';
 
 // Offline artifact_sanitizer_layer. Equality is an observation, never permission
 // to publish, proof of matching source definitions, or global completeness.
@@ -45,21 +46,26 @@ export function comparePilotToReference(snapshot, reference, now) {
   matchedRows, changedRows, missingReference, missingCandidate, nullRows };
 }
 
-export function reviewAcledReplacement(snapshot, reference = null, now = new Date().toISOString()) {
+export function reviewAcledReplacement(snapshot, reference = null, now = new Date().toISOString(), annualSnapshot = null) {
   const checked = inspectPilotSnapshot(snapshot, now);
   const latestYear = Number(checked.meta.asOf.slice(0, 4)) - 1;
   const requiredYears = Array.from({ length: 4 }, (_, i) => latestYear - 3 + i);
-  const completeYears = requiredYears.filter(year => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`)
+  const pilotCompleteYears = requiredYears.filter(year => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`)
     .every(month => checked.meta.months.includes(month) && checked.countries.every(country => {
       const encoded = checked.rows.get(`${country}:${month}`);
       return encoded !== undefined && JSON.parse(encoded).events !== null;
     })));
+  // Revalidate raw annual input; never trust a caller-supplied coverage receipt.
+  // Keep its clock/scope separate: the historical archive cannot refresh pilot.
+  const annualCoverage = annualSnapshot === null ? null : inspectAnnualSnapshot(annualSnapshot, now);
+  const annualAligned = annualCoverage !== null && annualCoverage.sourceAsOf === checked.meta.asOf;
+  const completeYears = annualAligned ? requiredYears.filter(y => annualCoverage.completeYears.includes(y)) : pilotCompleteYears;
   const comparison = comparePilotToReference(snapshot, reference, now);
   const metrics = ['politicalViolenceMonthly', 'politicalViolence', 'demonstrations', 'civilianTargeting', 'civilianFatalities', 'fatalities']
     .map(metric => ({ metric,
       definition: metric === 'fatalities' ? 'no_proven_mapping' : metric === 'civilianFatalities' ? 'fatality_semantics_unproven' : 'equivalence_unproven',
       temporalCoverage: metric === 'politicalViolenceMonthly' ? (checked.summary.observedCoverageComplete ? 'returned_scope_24_months' : 'incomplete')
-        : metric === 'politicalViolence' ? (completeYears.length === 4 && checked.summary.observedCoverageComplete ? 'returned_scope_four_years' : 'four_year_baseline_missing') : 'category_not_collected',
+        : metric === 'politicalViolence' ? (completeYears.length === 4 && (annualAligned || checked.summary.observedCoverageComplete) ? 'returned_scope_four_years' : 'four_year_baseline_missing') : 'category_not_collected',
       geography: 'global_scope_unproven',
       numericalComparison: metric === 'politicalViolenceMonthly' ? comparison.status : 'not_compared',
       production: 'not_connected' }));
@@ -67,5 +73,9 @@ export function reviewAcledReplacement(snapshot, reference = null, now = new Dat
     productionEligible: false, sourceAsOf: checked.meta.asOf, dataFetchedAt: snapshot.fetchedAt,
     requiredYears, completeYearsInCandidate: completeYears, missingYears: requiredYears.filter(y => !completeYears.includes(y)),
     coverage: checked.summary, comparison, metrics,
+    ...(annualCoverage === null ? {} : { annualCandidate: {
+      status: annualAligned ? 'returned_scope_temporal_coverage_only' : 'source_date_mismatch',
+      coverage: annualCoverage, numericalComparison: 'reference_missing', production: 'not_connected'
+    } }),
     weekly: { status: 'not_replaceable_by_monthly_data', required: 'regional_weekly_admin_4_and_12_week_windows' } };
 }

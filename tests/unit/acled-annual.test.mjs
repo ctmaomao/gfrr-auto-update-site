@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ANNUAL, collectAnnualCandidate, inspectAnnualSnapshot } from '../../scripts/world-order/acled-annual-collector.mjs';
-import { runAnnualAcceptance, reviewStoredAnnual } from '../../scripts/world-order/acled-annual-store.mjs';
+import { runAnnualAcceptance, reviewStoredAnnual, readAnnualCandidateForReview } from '../../scripts/world-order/acled-annual-store.mjs';
 
 const NOW = '2026-09-16T00:00:00.000Z', ID = '99a32d01-d0ca-4f57-a0f5-cb6b5f01f14f';
 const contact = { application: 'Synthetic only', email: 'test@example.invalid' };
@@ -92,10 +92,12 @@ test('independent once ledger, hash review and failure reservation preserve prio
     const ready = await collect();
     assert.equal((await runAnnualAcceptance(root, contact, { now: () => NOW, collect: async () => ready })).status, 'candidate_ready');
     assert.equal((await reviewStoredAnnual(root, NOW)).status, 'saved_candidate_verified');
+    assert.deepEqual(await readAnnualCandidateForReview(root, NOW), ready.snapshot);
     assert.equal((await runAnnualAcceptance(root, contact, { collect: () => { throw Error('must_not_run'); } })).networkRequests, 0);
     assert.equal(await readFile(path.join(parent, 'existing-pilot-sentinel'), 'utf8'), 'unchanged');
     await writeFile(path.join(parent, ANNUAL.id, 'years-2022-2023.private.json'), 'bad');
     await assert.rejects(reviewStoredAnnual(root, NOW), /artifact_hash/u);
+    await assert.rejects(readAnnualCandidateForReview(root, NOW), /artifact_hash/u);
   } finally { await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
   const interrupted = await mkdtemp(path.join(tmpdir(), 'gfrr-acled-annual-'));
   try {
