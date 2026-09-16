@@ -234,7 +234,7 @@ Owner 已批准前轮独立评审提出的**四次低频候选采集试行**，�
 - 只准Git common-dir所在的canonical主checkout，拒绝linked worktree；固定ignored `manual-artifacts/acled-pv-four-slots-20260916/`。首attempt设置startedAt及28天后的绝对expiresAt，四个7天槽；相邻实际attempt还须间隔≥7天，漏槽不补、失败耗槽、到期无条件停止。先持有互斥`.lock`，再读状态、预留、占槽、请求、保存回执。进程崩溃留下锁或不完整attempt时拒绝续跑，不自动删除/恢复。
 - 原始sample、前后metadata分别按响应字节保存，再写hash manifest和脱敏receipt；不重复JSON封装原文。联网前预留8MiB+64KiB，实际落盘前再校验，含pending的总保存上限64MiB；不足就停止，不删除用户资料。完整receipt最后落盘，未完成归档不能成为下一轮有效候选。
 - ignored `contact-source.json` 只保存已批准本地联系文件的绝对路径，不复制邮箱；联系文件限4KiB、拒绝链接，应用标识只放HAPI请求头。不得在日志、argv、Git或远端artifact中展示联系信息或原始行。
-- 本线程每周heartbeat只执行CLI一次，not_due立即结束不补跑。任何CLI退出1或paused/locked/finished应暂停该heartbeat并报告；finalSlot结束也暂停。即使暂停调度失败，CLI的槽和截止保护仍禁止额外请求。不自动删除锁/状态、换目录/ID或改源码重用预算。
+- 本线程heartbeat每次唤醒至多执行采集CLI一次，not_due立即结束不补跑。任何CLI退出1或paused/locked/finished应停止ACLED分支并报告；finalSlot结束也停止该分支。按下文双任务安排，仅当ARR也完成或停止时才暂停共享heartbeat。即使停止调度失败，CLI的槽和截止保护仍禁止额外请求。不自动删除锁/状态、换目录/ID或改源码重用预算。
 - 本地定时执行需要机器开机、桌面应用运行及本项目可用；离线漏过的槽不会补采。依据[官方定时任务说明](https://learn.chatgpt.com/docs/automations?surface=app)。后续三次尚未实际执行时，不声明四槽试行完成；四周内无版本变化不算真实修订路径验收。
 
 ### 验证入口
@@ -246,3 +246,14 @@ Owner 已批准前轮独立评审提出的**四次低频候选采集试行**，�
 - 2026-09-15 22:53 UTC（本地09-16）完成首槽，三请求全部200、总1,863,079字节，原始行总5,234（metadata各1，sample5,232）。样本为218个返回国家代码×24个月，2024-08至2026-07；缺月、事件null、重复均0。来源as-of仍08-28，前后metadata一致，状态initial_candidate，不虚构同范围旧版作差异基线。
 - 当前只证明**返回国家范围的连续月覆盖**，未证明官方全球国家清单、领土等价或其它五指标映射；无全球数值总量/逐国家值公开。保存的原始响应和manifest只在ignored目录，复验hash通过。
 - 随即再次调用同CLI验收重复触发，返回not_due/零请求，未新增slot。startedAt=`2026-09-15T22:53:47.771Z`，expiresAt=`2026-10-13T22:53:47.771Z`；后续最多三个周槽，首槽已计入总预算。其它槽尚未实际执行，不能宣称四次试行全部完成。
+
+## 替代验收与免手工目标（2026-09-16）
+
+Owner 要求继续逐步达成免手工更新，ARR可同步优化。本阶段属于 `artifact_sanitizer_layer`，不扩大四槽预算或生产权限；四槽完成不是六指标等价的替代证据。
+
+- [替代就绪报告](../scripts/world-order/acled-replacement-review.mjs) 分别列出六项的定义、时间覆盖、地理范围、数值对照与生产连接状态，不把部分通过压成一个绿色ready。`npm run review:acled-replacement` 零网络/零写入，读取当前固定私有pilot档案，复用hash/metadata围栏/锁检查，不读取联系文件，不预留或消耗槽位，不输出逐行值。
+- 当前24个月2024-08至2026-07仅完整覆盖2025年度；[`fetch-acled.mjs`](../scripts/world-order/fetch-acled.mjs) 消费最新完整年与前三年均值，需2022–2025。缺年列表中的2024表示不完整（缺1–7月），不是2024全无数据。补完整年及其它类别需要独立采样方案，不能扩现有pilot参数绕过批准预算。
+- `comparePilotToReference` 接受只含 `asOfDate` 和规范化 `rows[{countryCode,month,events}]` 的本地引用对象（至多50,000行）。国家名→代码映射须先核验，不做模糊匹配；仅对候选月份的国家键并集逐键比较，引用额外国家也计入缺口。null不作零、重复拒绝、整数精确比较；不同as-of报告不可判定，相同as-of的值相等仍只报告 `values_equal_revision_unproven`，并非版本或定义等价。没有生产批准开关。
+- 当前CLI只接已有候选，不读XLSX或外部引用路径；真实执行为 `reference_missing`。本刀交付了比较核心及合成回归，**尚未完成手工XLSX逐行实际对照**。后续需从合法同版本原件在既有sanitizer边界内准备引用，不能从已汇总生产JSON倒造逐国家行。
+- 示威、平民受害事件尚无本次类别样本；civilian_targeting fatalities不自动等于平民死亡人数，总死亡数没有已证明映射。月数据不能替代周度行政区统计；未取得免费等价周源时，保留手工要求而不是悄悄移除模块。
+- 平台每线程只能绑定一个活动heartbeat，现已更新既有 `arr` 为“ARR 验收与 ACLED 候选试行”。ARR原证据/预算/9月21日等待保留，仅周一/二运行；ACLED仅周三/四20时检查，周四为夏令时或离线后的尚未用槽提供下一次检查机会，不补已过期槽。采集仍由CLI强制168小时间隔与绝对截止。各分支独立停止，全部结束才暂停整体；不是GitHub云端采集或正式发布安排。

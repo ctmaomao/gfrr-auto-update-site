@@ -84,6 +84,17 @@ export async function pilotStoreStatus(dir, now = new Date().toISOString()) {
       usedSlots: slots.length, startedAt: state?.startedAt ?? null, expiresAt: state?.expiresAt ?? null, networkRequests: 0 };
   } catch (e) { return { status: 'paused', reason: e instanceof PilotStop ? e.message : 'local_failure', networkRequests: 0 }; }
 }
+// Read-only review entry: reuses the persisted manifest/fence checks and never
+// reads contact-source.json, reserves a slot, writes state, or makes a request.
+export async function readPilotCandidateForReview(root, now = new Date().toISOString()) {
+  const artifacts = await safeDirectory(root, 'manual-artifacts');
+  const dir = await safeDirectory(artifacts, PILOT.id);
+  if (await exists(path.join(dir, '.lock'))) fail('pilot_locked');
+  const { previous } = await inspectState(dir, now);
+  if (!previous) fail('candidate_missing');
+  if (await exists(path.join(dir, '.lock'))) fail('pilot_locked');
+  return previous;
+}
 // root must be the canonical primary checkout, checked by the CLI before entry.
 // One lock covers state-read through receipt-write. A crash leaves it in place;
 // only an explicit reviewed recovery may remove that interrupted lock.

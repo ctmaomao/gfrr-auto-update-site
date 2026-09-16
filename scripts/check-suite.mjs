@@ -99,6 +99,7 @@ const SUITES = {
     'check:acled-monthly-candidate',
     'check:acled-hapi-collector',
     'check:acled-pilot',
+    'check:acled-replacement',
     'check:world-order-acled-weekly-runtime',
     'check:world-order-acled-monthly-runtime'
   ],
