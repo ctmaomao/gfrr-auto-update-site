@@ -101,6 +101,7 @@ const SUITES = {
     'check:acled-pilot',
     'check:acled-replacement',
     'check:acled-annual',
+    'check:acled-geography',
     'check:world-order-acled-weekly-runtime',
     'check:world-order-acled-monthly-runtime'
   ],
