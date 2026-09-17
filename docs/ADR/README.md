@@ -10,6 +10,7 @@
 | # | 标题 | 状态 |
 |---|---|---|
 | [ADR-0053](0053-pressure-score-remediation.md) | Pressure baseline unit correction and response diagnostics | Accepted |
+| [ADR-0054](0054-acled-private-batch-acceptance.md) | One private ACLED batch acceptance | Accepted; implementation review required |
 | [ADR-0050](0050-bubble-editorial-followup.md) | Bubble editorial bounded midweek follow-up | Accepted |
 | [ADR-0001](0001-zero-dependencies.md) | Zero production dependencies | Accepted |
 | [ADR-0002](0002-worker-first-realtime.md) | Worker-first realtime as main runtime path | Accepted |

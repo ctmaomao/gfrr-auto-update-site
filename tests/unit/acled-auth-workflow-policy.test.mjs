@@ -1,8 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, isReviewedAcledAuthWorkflow } from '../../scripts/acled-auth-workflow-policy.mjs';
+import { AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, BATCH_WORKFLOW_PATH, isReviewedAcledAuthWorkflow } from '../../scripts/acled-auth-workflow-policy.mjs';
 const approved = readFileSync('tests/fixtures/acled-auth-workflow-approved.txt', 'utf8');
+
+test('private batch exception is exact, isolated and cannot acquire write or schedule rights', () => {
+  const batch = readFileSync('tests/fixtures/acled-batch-workflow-approved.txt', 'utf8');
+  assert.equal(isReviewedAcledAuthWorkflow(BATCH_WORKFLOW_PATH, batch), true);
+  assert.equal(isReviewedAcledAuthWorkflow(BATCH_WORKFLOW_PATH, batch.replace(/\r?\n/gu, '\r\n')), true);
+  for (const file of [AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, '.github/workflows/refresh-world-order-stress.yml']) assert.equal(isReviewedAcledAuthWorkflow(file, batch), false);
+  for (const old of [approved, readFileSync('tests/fixtures/acled-detail-workflow-approved.txt', 'utf8')]) assert.equal(isReviewedAcledAuthWorkflow(BATCH_WORKFLOW_PATH, old), false);
+  for (const [a,b] of [['default: false','default: true'],['contents: read','contents: write'],['workflow_dispatch:','schedule:'],['github.run_attempt == 1','true'],['--live','--live --retry'],['--ignore-scripts',''],['ACLED_DOWNLOAD_PASSWORD','ACLED_API_KEY'],['timeout-minutes: 15','timeout-minutes: 150']]) assert.equal(isReviewedAcledAuthWorkflow(BATCH_WORKFLOW_PATH, batch.replace(a,b)), false);
+  assert.equal(isReviewedAcledAuthWorkflow(BATCH_WORKFLOW_PATH, batch + '\n# changed'), false);
+});
 test('ACLED credential exception is exact-path/exact-content and tolerates only line endings', () => {
   assert.equal(isReviewedAcledAuthWorkflow(AUTH_WORKFLOW_PATH, approved), true);
   assert.equal(isReviewedAcledAuthWorkflow(AUTH_WORKFLOW_PATH, approved.replace(/\r?\n/gu, '\r\n')), true);
