@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import vm from 'node:vm';
 import { deriveRisk, buildTransportShockScoringImpact } from '../../scripts/run-daily-pipeline.mjs';
 import { buildHistoricalScoreInputs, deriveHistoricalRisk, historicalObservation, prepareHistoricalValues, buildHistoricalReplay } from '../../scripts/daily/historical-score.mjs';
 
@@ -26,7 +27,7 @@ series.onRrp[0].value = 1000;
 
 test('historical adapter supplies oil daily change, curve steepening and RRP change', () => {
   const input = buildHistoricalScoreInputs(date, series, rules);
-  assert.equal(input.rt.changes.brent1d, 25);
+  assert.equal(input.rt.changes.brent1d, 16);
   assert.equal(input.macroDrivers.curve.steepeningAlert, true);
   assert.equal(input.macroDrivers.fedLiquidity.onRrpWeekChange, -50);
   const row = deriveHistoricalRisk(date, series, rules);
@@ -74,7 +75,53 @@ test('historical overrides accept only known finite values; absent optional inpu
   assert.equal(deriveHistoricalRisk('2000-01-01', series, rules), null);
   const zeroPrevious = structuredClone(series);
   zeroPrevious.brent[1].value = 0;
-  assert.equal(buildHistoricalScoreInputs(date, zeroPrevious, rules).rt.changes.brent1d, null);
+  assert.equal(buildHistoricalScoreInputs(date, zeroPrevious, rules).rt.changes.brent1d, 80);
+});
+
+// Execute only the actual, pure production series adapter. Importing the whole
+// realtime CLI would fetch sources and write production data at module load.
+const realtimeSource = readFileSync(new URL('../../scripts/run-realtime.mjs', import.meta.url), 'utf8');
+const adapterStart = realtimeSource.indexOf('function latest(');
+const adapterEnd = realtimeSource.indexOf('function readPrev(', adapterStart);
+assert.ok(adapterStart >= 0 && adapterEnd > adapterStart);
+const productionSeries = vm.runInNewContext(
+  `${realtimeSource.slice(adapterStart, adapterEnd)}\nbuildSeriesPayload`, {}, { timeout: 1000 });
+
+test('actual production series adapter and historical input agree through the full score', () => {
+  for (const [previous, current] of [[64,80],[121.25,130.8],[100,90],[80,80],[0,80],[80.12345,81.98765]]) {
+    const inputs = structuredClone(series);
+    inputs.brent = [{ date:'2026-06-11', value:previous }, { date, value:current }];
+    const production = productionSeries(inputs.brent);
+    const historical = buildHistoricalScoreInputs(date, inputs, rules);
+    assert.equal(historical.rt.changes.brent1d, production.change);
+    assert.equal(historical.inputDiagnostics.brent1d.unit, 'USD_per_barrel');
+    assert.deepEqual(deriveRisk({ ...historical.rt, changes:{brent1d:production.change} }, historical.macroDrivers),
+      deriveRisk(historical.rt, historical.macroDrivers));
+  }
+});
+
+test('oil observation changes retain Friday-to-Monday dates, missingness and scenario provenance', () => {
+  const inputs = structuredClone(series);
+  inputs.brent = [{date:'2026-06-05',value:80},{date:'2026-06-08',value:85}];
+  const monday = buildHistoricalScoreInputs('2026-06-08',inputs,rules);
+  assert.equal(monday.rt.changes.brent1d,5);
+  assert.equal(monday.inputDiagnostics.brent1d.observationDate,'2026-06-08');
+  assert.equal(monday.inputDiagnostics.brent1d.previousObservationDate,'2026-06-05');
+  assert.equal(buildHistoricalScoreInputs('2026-06-09',inputs,rules).rt.changes.brent1d,5);
+  const scenario = buildHistoricalScoreInputs('2026-06-08',inputs,rules,{brent:90});
+  assert.equal(scenario.rt.changes.brent1d,10);
+  assert.equal(scenario.inputDiagnostics.brent1d.valueOrigin,'scenario_override');
+  assert.equal(scenario.inputDiagnostics.brent1d.observationDate,null);
+  for(const rows of [[{date,value:80}],[{date:'2026-05-01',value:64},{date,value:80}]]) {
+    inputs.brent=rows;
+    const missing=buildHistoricalScoreInputs(date,inputs,rules);
+    assert.equal(missing.rt.changes.brent1d,null);
+    assert.equal(missing.inputDiagnostics.brent1d.value,null);
+    assert.equal(missing.inputDiagnostics.brent1d.effectiveValue,0);
+    assert.equal(missing.inputDiagnostics.brent1d.valueOrigin,'default');
+    assert.ok(missing.defaultedHistoricalInputs.includes('brent1d'));
+    assert.ok(missing.unavailableHistoricalInputs.includes('brent1d'));
+  }
 });
 
 test('transport thresholds, cap and fail-closed gates remain independent', () => {

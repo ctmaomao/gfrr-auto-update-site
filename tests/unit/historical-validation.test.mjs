@@ -77,7 +77,7 @@ test('API and CSV retain identical bounded warmup without adding evaluation date
   const full = buildHistoricalScoreInputs(options.startDate, series, rules);
   const trimmed = buildHistoricalScoreInputs(options.startDate, Object.fromEntries(Object.entries(series)
     .map(([key, rows]) => [key, rows.filter(row => row.date >= options.startDate)])), rules);
-  assert.equal(full.rt.changes.brent1d, 25);
+  assert.equal(full.rt.changes.brent1d, 16);
   assert.equal(full.macroDrivers.fedLiquidity.onRrpWeekChange, -50);
   assert.equal(full.macroDrivers.fedLiquidity.walcl4wChange, -12.5);
   assert.equal(full.macroDrivers.curve.steepeningAlert, true);
