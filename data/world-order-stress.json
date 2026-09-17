@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-17T01:04:40.806Z",
-  "sourceMode": "computed_with_partial_external_sources",
+  "updatedAt": "2026-09-17T03:54:23.399Z",
+  "sourceMode": "computed_with_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
     "calibrationId": "gdelt-cloud-2026-08-07-to-2026-09-10-v1",
@@ -11,17 +11,17 @@
   "state": "multi_theater_stress",
   "labelZh": "多战区压力期",
   "confidence": 1,
-  "freshness": "partial",
+  "freshness": "fresh",
   "marketConfirmationInput": {
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-17T01:03:15.120Z",
-    "ageMinutes": 1.4280833333333334,
+    "updatedAt": "2026-09-17T03:51:15.265Z",
+    "ageMinutes": 3.1355333333333335,
     "healthScore": 100,
     "criticalMissing": 0,
     "brent": 130.8,
-    "gold": 4295.2998,
+    "gold": 4296.3999,
     "vix": 17.2,
     "dxy": 118.2126,
     "hyOas": 2.76,
@@ -4927,8 +4927,8 @@
           "Taiwan",
           "Myanmar"
         ],
-        "requestsUsed": 1,
-        "apiBudget": "100 units/month free tier",
+        "requestsUsed": 0,
+        "apiBudget": "API access requires an active evaluation, paid plan or explicit account entitlement; quota and expiry must be checked in the account",
         "queriesRun": [
           {
             "label": "GDELT Cloud conflict country summary",
@@ -4941,9 +4941,9 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-09-17T01:04:37.753Z",
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-09-17T03:54:22.722Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。"
       }
@@ -4951,7 +4951,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-17T01:04:38.059Z",
+      "lastFetchedAt": "2026-09-17T03:54:23.139Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 9,
@@ -4998,19 +4998,19 @@
     },
     "acled": {
       "enabled": true,
-      "status": "partial",
-      "lastFetchedAt": "2026-09-11T22:02:29.120Z",
+      "status": "ok",
+      "lastFetchedAt": "2026-09-17T03:50:59.850Z",
       "summary": {
-        "eventsLast4Weeks": 33738,
-        "eventsLast12Weeks": 101468,
-        "eventsDelta4Vs12": -0.002503,
-        "fatalitiesLast4Weeks": 12829,
+        "eventsLast4Weeks": 34278,
+        "eventsLast12Weeks": 101743,
+        "eventsDelta4Vs12": 0.010723,
+        "fatalitiesLast4Weeks": 13000,
         "fatalitiesLast12Weeks": 39397,
-        "civilianTargetingShareLast4Weeks": 0.085215,
-        "latestWeek": "2026-08-28",
+        "civilianTargetingShareLast4Weeks": 0.084252,
+        "latestWeek": "2026-09-04",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
-        "sourceFreshness": "aging",
+        "sourceFreshness": "fresh",
         "politicalViolenceEventsLatestFullYear": 211629,
         "politicalViolenceYoyDelta": 0.207613,
         "civilianTargetingShareLatestFullYear": 0.314758,
@@ -5019,14 +5019,14 @@
         "monthlyAsOfDate": "2026-08-21",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-08-28，近4周事件相对12周均值变化 -0.3%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.8%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-04，近4周事件相对12周均值变化 1.1%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.8%。",
         "weeklyWindowAligned": true
       }
     }
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 63,
+      "score": 65,
       "labelZh": "和平红利退潮",
       "trend": "rising",
       "evidence": [
@@ -5039,12 +5039,12 @@
           "confidence": 0.85
         },
         {
-          "labelZh": "ACLED 周度/月度数据部分可用",
+          "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
           "source": "acled",
-          "summary": "周度覆盖 6 个区域，最新周 2026-08-28，近4周事件相对12周均值变化 -0.3%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 20.8%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
-          "value": 14,
+          "summary": "ACLED 手动周度聚合更新至 2026-09-04，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 1%。",
+          "value": 20,
           "direction": "neutral",
-          "confidence": 0.68
+          "confidence": 0.9
         }
       ]
     },
@@ -5116,8 +5116,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4295.3，显示避险或实际利率压力定价。",
-          "value": 4295.2998,
+          "summary": "基于 Worker 快变量，黄金当前值 4296.4，显示避险或实际利率压力定价。",
+          "value": 4296.3999,
           "direction": "up",
           "confidence": 0.75
         },
@@ -5133,7 +5133,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.2126/4295.2998",
+          "value": "118.2126/4296.3999",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5141,7 +5141,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7551.81/4295.2998",
+          "value": "7551.81/4296.3999",
           "direction": "mixed",
           "confidence": 0.45
         },
