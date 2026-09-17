@@ -76,3 +76,17 @@ jobs:
           path: manual-artifacts/main-score-audit/pressure-model/report.json
           retention-days: 14
           if-no-files-found: warn
+      # Preserve the validated model ledger before optional research reporting.
+      # Diagnostic failures remain visible but cannot erase that usable artifact.
+      - name: Analyze reference disagreements and observed score changes offline
+        run: node scripts/analyze-pressure-evidence.mjs
+      - name: Retain separate derived evidence diagnostics
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pressure-evidence-${{ github.run_id }}
+          path: |
+            manual-artifacts/main-score-audit/pressure-model/diagnostics/diagnostics.json
+            manual-artifacts/main-score-audit/pressure-model/diagnostics/summary.md
+          retention-days: 90
+          if-no-files-found: error
