@@ -20,6 +20,14 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 跳转分类与登录方式核验
+
+- **Acceptance baseline**：owner要求开始下一步；补充静态文件诊断的脱敏跳转分类及官方登录文档核验，不提交凭证、不跟随跳转、不启用定时下载或生产更新。本轮先完成离线实现；新的真实请求不复用此前已耗预算。
+- **已有证据**：PR #376 已合并；唯一实测 run 35181736628 返回 HTTP302 / redirect_not_followed / receivedBytes=0，未保存 Location，无法从旧日志确认跳转目的。旧 run 不重试。
+- **实施**：Location 仅在内存解析，输出 missing/invalid/unsafe/cross_origin/same_origin_login/same_origin_other 固定类别；不记录域名、路径、查询、片段或凭证。仅精确同源 /user/login 归入登录页，非 HTTPS/带凭证目标不作为可跟随链接。原单请求/15秒/8MiB/零重试/零重定向规则保留。
+- **官方文档证据**：[ACLED Getting started](https://acleddata.com/api-documentation/getting-started)明确提供 JSON cookie 登录和 OAuth 密码登录；这是 API 认证说明，不证明该 XLSX 路径可用同样认证，也不授予持续网站抓取许可。未读取或配置 GitHub 登录 Secrets。
+- **验收状态**：离线回归、完整检查及独立审阅以本次提交/PR回执为准；实际跳转目的和认证文件下载仍待新的一次验收，不把分类器实现当下载成功。
+
 ### 2026-09-17 ACLED 单文件云端下载诊断
 
 - **Acceptance baseline**：owner批准GitHub手动单文件验收，固定其提供的欧洲中亚2026-09-05 XLSX，匿名最多1 GET/8MiB/15秒，零重试/重定向。不携带账号密码、不解析行、不发布，不把浏览器客户端拦截当云端结论。

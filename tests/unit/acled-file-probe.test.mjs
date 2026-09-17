@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { FILE_PROBE, inspectProbeWorkbook, probeAcledFile } from '../../scripts/world-order/acled-file-probe.mjs';
+import { FILE_PROBE, classifyProbeRedirect, inspectProbeWorkbook, probeAcledFile } from '../../scripts/world-order/acled-file-probe.mjs';
 
 const names = ['[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels', 'xl/worksheets/sheet1.xml'];
 function zip(entries = names) {
@@ -21,6 +21,34 @@ function zip(entries = names) {
   return Buffer.concat([...locals, directory, end]);
 }
 const response = bytes => new Response(bytes, { headers: { 'content-type': 'application/octet-stream' } });
+
+test('redirect classification exposes only fixed categories, never URL components or credentials', async () => {
+  const cases = [
+    [null, 'missing'], ['', 'invalid'], [' /user/login', 'invalid'], ['https://[', 'invalid'],
+    ['/user/login?destination=PRIVATE#PRIVATE', 'same_origin_login'],
+    ['https://acleddata.com/user/login?token=PRIVATE', 'same_origin_login'],
+    ['/user/login/PRIVATE', 'same_origin_other'], ['/user/%6cogin', 'same_origin_other'],
+    ['/system/files/PRIVATE', 'same_origin_other'], ['?token=PRIVATE', 'same_origin_other'],
+    ['https://acleddata.com.evil.invalid/user/login', 'cross_origin'],
+    ['//example.invalid/PRIVATE', 'cross_origin'], ['https://acleddata.com:444/user/login', 'cross_origin'],
+    ['http://acleddata.com/user/login', 'unsafe'], ['javascript:PRIVATE', 'unsafe'],
+    ['https://PRIVATE:PRIVATE@acleddata.com/user/login', 'unsafe'],
+    ['/user/\nlogin', 'invalid'], ['\\\\example.invalid', 'invalid'], ['x'.repeat(4097), 'invalid'],
+  ];
+  for (const [location, expected] of cases) assert.equal(classifyProbeRedirect(location), expected);
+  for (const status of [301, 302, 303, 307, 308]) {
+    let calls = 0;
+    const report = await probeAcledFile({ fetchImpl: async (_, options) => {
+      calls++; assert.equal(options.redirect, 'manual');
+      return new Response('PRIVATE-BODY', { status, headers: { location: '/user/login?token=PRIVATE' } });
+    } });
+    assert.equal(calls, 1); assert.equal(report.redirectTarget, 'same_origin_login');
+    assert.equal(report.reason, 'redirect_not_followed'); assert.equal(report.receivedBytes, 0);
+    assert.doesNotMatch(JSON.stringify(report), /PRIVATE|token|user\/login/u);
+  }
+  const report = await probeAcledFile({ fetchImpl: async () => new Response(null, { status: 403, headers: { location: '/user/login' } }) });
+  assert.equal(Object.hasOwn(report, 'redirectTarget'), false);
+});
 
 test('fixed anonymous one-GET probe checks only bounded workbook container, never writes raw bytes', async () => {
   let calls = 0;
