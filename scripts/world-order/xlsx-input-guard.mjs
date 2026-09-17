@@ -11,7 +11,7 @@ function fail(label, message) {
   throw new Error(`${label}: ${message}`);
 }
 
-function inspectZip(buffer, limits, label) {
+export function inspectZip(buffer, limits, label) {
   let eocdOffset = -1;
   for (let offset = buffer.length - 22; offset >= Math.max(0, buffer.length - MAX_EOCD_SEARCH); offset -= 1) {
     if (buffer.readUInt32LE(offset) === EOCD_SIGNATURE) {

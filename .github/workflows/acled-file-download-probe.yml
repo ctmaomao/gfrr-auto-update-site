@@ -1,0 +1,42 @@
+name: ACLED Single File Download Probe
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute_once:
+        description: 'Execute one anonymous fixed-file GET (8 MiB / 15 seconds, no retry)'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acled-single-file-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == 1 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Offline plan
+        if: ${{ !inputs.execute_once }}
+        run: node scripts/probe-acled-file.mjs --dry-run
+      - name: Single anonymous download and container check
+        if: ${{ inputs.execute_once }}
+        run: node scripts/probe-acled-file.mjs --live

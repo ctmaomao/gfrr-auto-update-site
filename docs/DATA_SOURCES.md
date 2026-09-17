@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+2026-09-17 owner明确批准[单文件GitHub下载诊断](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#单文件云端下载诊断2026-09-17)：仅用户指定静态XLSX的一次匿名GET，8MiB/15秒，零重试/重定向、无凭证/原件保存/生产写入。此窄例外仅适用于新独立probe，不变更下表生产路径或既有reminder禁令；不是持续官网采集许可，也不扩HAPI预算。
+
 最新[行政身份离线诊断](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#行政身份离线诊断2026-09-16)解释了42组冲突的connector模式：4组国家/38组一级回退；加入名称后仍3条投影重复，不能直接去重或相加。仅复验既有私有档案，零新增请求；不证明隐藏身份、事件互斥或当前部署源码版本，不改变生产manual-xlsx路径。
 
 最新[独立重复取证](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#独立重复取证2026-09-16)已获单独批准并执行：2请求后重复保护停止，私有hash复验成功。4,595行/4,329行政键，3组相同重复、42组冲突；42组均有不同二级区名，26组事件数不同、24组死亡数不同。不是简单重复拷贝；不自动去重/改主键/相加。此次once已耗，不切生产；上游映射原因及同版本完整性仍未证明。
