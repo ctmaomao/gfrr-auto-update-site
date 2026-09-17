@@ -34,6 +34,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 周/月候选修订比较
+
+- **Acceptance baseline**：owner 要求开始受保护发布的下一步，沿用逐项提交、推送、独立 AI 审阅及合并授权。本步只做离线整对候选比较，不复用已耗下载预算、不启用调度或生产写入。
+- **实施**：有界 stdin 接口接收两份基线及两份候选 JSON 原文；忽略项仅 preparedAt，键序标准化但数组序保留。区分未变、日期推进、同日修订、日期倒退；返回精确基线字节哈希并支持重读后的 pin 比较，失配 hold。报告只含固定字段与摘要，不输出原件行或国家名称。所有结果 productionEligible=false，哈希比较不冒充锁或原子发布。
+- **本地实测**：十二份既有原件经隔离 sanitizer 后比较成功；周日期 09-04→09-05，仅 latestWeek/filesIngested/quality 变化，统计和行数未变；本地月表 08-21 与当前配置语义一致。12 原件与 2 配置共 14 文件哈希前后一致，临时原件清理确认。此处清单 URL 为离线身份用合成值，不证明新下载或云端 09-11 月表再次到站。
+- **验证/下一步**：专项覆盖原件不变、空缺/重复身份、日历/数值/大小、两种变化、字节级并发差异、脱敏和 stdin 超时；完整检查及独立审阅/CI 以本 PR 回执为准。详见 [候选比较接口与发布边界](ACLED_CONFIG_PAIR_REVIEW.md)。后续 writer 仍需共享锁内重读、现行 validators、双配置共同提交及来源/发布门槛。
+
 ### 2026-09-18 ACLED 整批验收回执与周日期修复
 
 - **Acceptance baseline**：沿用 owner 连续实施、独立 AI 审阅和集成授权；修复本次验收暴露的本地/云端日期差异，不重跑已耗用的一次下载，不直接修改生产配置。
