@@ -14,6 +14,9 @@ const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..', '..');
 const inputDir = path.join(root, 'manual-artifacts', 'world-order', 'acled-input', 'monthly');
 const outputPath = path.join(root, 'config', 'world-order-acled-global-monthly.json');
+const args = process.argv.slice(2);
+const dryRun = args.length === 1 && args[0] === '--dry-run';
+let warningCount = 0;
 
 const SOURCE = 'acled-aggregated-manual-normalized-monthly';
 const SOURCE_NAME = 'ACLED Global Monthly Aggregated Data';
@@ -88,6 +91,8 @@ const fileSpecs = [
 const slugByName = new Map(fileSpecs.map((spec) => [spec.slug, spec]));
 
 function warn(message) {
+  warningCount += 1;
+  if (dryRun) return; // Preserve diagnostics count without exposing filenames or source values.
   console.warn(`ACLED monthly sanitizer warning: ${message}`);
 }
 
@@ -428,14 +433,17 @@ function buildPayload(parsedByMetric, selectedFiles) {
 }
 
 function main() {
+  if (args.length > 0 && !dryRun) fail('unsupported arguments');
   const filenames = listInputFiles();
   if (filenames.length === 0) {
+    if (dryRun) { console.log(JSON.stringify({ status: 'no_input', productionWritten: false, networkRequests: 0 })); return; }
     console.log('no input files, operator has not yet placed monthly xlsx files');
     return;
   }
 
   const selectedFiles = selectRecognizedFiles(filenames);
   if (selectedFiles.length === 0) {
+    if (dryRun) { console.log(JSON.stringify({ status: 'no_recognized_input', productionWritten: false, networkRequests: 0 })); return; }
     console.log('no recognized files, operator has not yet placed monthly xlsx files');
     return;
   }
@@ -469,6 +477,14 @@ function main() {
   }
 
   const payload = buildPayload(parsedByMetric, selectedFiles);
+  if (dryRun) {
+    console.log(JSON.stringify({ status: 'validated_not_published', productionWritten: false, networkRequests: 0,
+      files: selectedFiles.length, rows: payload.filesIngested.reduce((sum, file) => sum + file.rowCount, 0),
+      asOfDate: payload.asOfDate, latestFullYear: payload.latestFullYear, warningCount,
+      monthlyTrendAvailable: payload.monthlyTrend !== null,
+      matchesCurrentConfig: unchangedExceptPreparedAt(payload, outputPath) }));
+    return;
+  }
   const relPath = path.relative(root, outputPath);
   const summary = `files=${selectedFiles.length}, asOfDate=${payload.asOfDate}, latestFullYear=${payload.latestFullYear}, pvEvents=${payload.global.politicalViolenceEventsLatestFullYear}`;
   if (unchangedExceptPreparedAt(payload, outputPath)) {
@@ -482,6 +498,7 @@ function main() {
 try {
   main();
 } catch (err) {
-  console.error(err instanceof Error ? err.message : String(err));
+  if (dryRun) console.error(JSON.stringify({ status: 'validation_failed', productionWritten: false, networkRequests: 0 }));
+  else console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 }

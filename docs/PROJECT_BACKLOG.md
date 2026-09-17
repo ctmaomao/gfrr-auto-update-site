@@ -20,6 +20,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 月度六表只读内容预演
+
+- **Acceptance baseline**：owner要求十二文件清单之后继续。本轮补齐现有monthly sanitizer的显式`--dry-run`，复用本地六原件及现有builder；不下载XLSX、读取Secrets、启用定时或写生产，默认无参数手工写入行为保持。
+- **实施/验证**：保留原六slug、同as-of、ZIP/行/表头/时效及趋势计算；写入前输出脱敏汇总、warningCount、monthlyTrendAvailable和忽略preparedAt的配置比较。无输入/无识别输入不称成功校验，错误固定JSON，未知参数在读输入前拒绝。合成CLI回归覆盖缺表、混合日期、缺月、非法值、正常写入兼容、原件/配置字节及mtime不变，接入两个月表检查入口。并未审定或修复所有既有年度统计/解析边界。
+- **真实证据**：6份现有原件共43,479行、as-of=2026-08-21、latestFullYear=2025，warningCount=0、monthlyTrendAvailable=true、matchesCurrentConfig=true，exit0。六原件和生产配置共7文件读取前后SHA256全部一致；不是取得新版或验证HAPI六指标等价。
+- **链接发现/下一步**：一次无凭据公开目录读取200、84,829字节（15秒/1MiB上限、无重试/跳转），当前严格双引号href静态XLSX提取结果为0；仅说明该提取方式未取得链接，不证明目录无文件或登录后一定可发现。未猜URL、未点击文件。后续需核对实际链接载体及必要的已认证目录读取，再评审十二文件有界下载/私有暂存与保护发布。既有认证单文件once和HAPI四槽不扩展。
+
 ### 2026-09-17 ACLED 周表与月度链路十二文件清单
 
 - **Acceptance baseline**：owner明确要求月度链路六文件一并纳入GitHub自动更新目标，并要求继续。完整目标为六地区周表加六指标文件（1月度、5年度），不是HAPI单指标候选试行替代。当前交付为离线清单身份校验，不启用下载、定时、凭证或生产写入。
@@ -716,9 +723,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **ACLED 工作基线**：2026-09-17 PR #380已合并为edc6e339，本轮分支`codex/acled-twelve-file-manifest`；只读官方目录，无新XLSX正文请求或生产写入。
-- **ACLED 当前完成**：既有认证文件验收及六区991,218行只读预演保持；本轮新增12文件离线身份清单，覆盖六区周表与月度链路全部六指标，不代表已经下载或内容验收。
-- **ACLED 下一步**：本轮必要检查和独立审阅后提交/集成；实际链接发现、月表只读预演、有界下载与私有暂存、修订复核和保护发布仍待实施。此前单次预算均已耗，不自行续跑。
+- **ACLED 工作基线**：2026-09-17 PR #381已合并为ebb46d67，本轮分支`codex/acled-monthly-readonly-preflight`；只读公开目录，无新XLSX正文请求或生产写入。
+- **ACLED 当前完成**：十二文件清单及周表预演已集成；本轮六份本地月度链路原件43,479行预演通过，配置一致，原件与配置hash不变，日期仍08-21，不称自动更新完成。
+- **ACLED 下一步**：本轮必要检查和独立审阅后提交/集成；实际链接载体/认证发现、有界下载与私有暂存、修订复核和保护发布仍待实施。此前单次预算均已耗，不自行续跑。
 - **ACLED 仍未完成**：GitHub持续XLSX下载/分析/发布与HAPI六指标替代均未上线。两条路线分开；既有四槽后续与ARR第二周期自然等待不变。以下09-13回执为历史。
 
 ### 2026-09-13 交接（历史）
