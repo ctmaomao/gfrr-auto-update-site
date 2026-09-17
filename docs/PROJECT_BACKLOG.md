@@ -20,6 +20,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 十二详情页一次认证发现授权
+
+- **Acceptance baseline**：owner明确批准独立一次最多14请求：登录、十二个已观察详情页、退出；HTML每页1MiB、控制响应各64KiB，每请求15秒、零重试/跳转。不下载XLSX、不保存页面正文、不写生产。失败也消耗本次机会，不借旧单文件或HAPI预算。
+- **事实**：公开目录的12链接是`/aggregated/`受限详情页，不是静态XLSX；一次未认证月表详情GET返回403、无跳转。尚未证明认证后可以提取文件链接。
+- **当前阶段**：[ADR-0052](ADR/0052-acled-detail-discovery-policy.md)精确工作流摘要例外先独立审阅，旧单文件例外和其它checker断言不变。本policy PR只提供fixture及规则，无实际workflow或凭证读取。
+- **下一步/限制**：policy集成后另交实现PR、离线边界测试、独立复审与CI；通过后仅一次GitHub真实验收并记录唯一run。不因批准推断持续下载、文件内容有效或生产切换。
+
 ### 2026-09-17 ACLED 月度六表只读内容预演
 
 - **Acceptance baseline**：owner要求十二文件清单之后继续。本轮补齐现有monthly sanitizer的显式`--dry-run`，复用本地六原件及现有builder；不下载XLSX、读取Secrets、启用定时或写生产，默认无参数手工写入行为保持。
@@ -723,9 +730,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **ACLED 工作基线**：2026-09-17 PR #381已合并为ebb46d67，本轮分支`codex/acled-monthly-readonly-preflight`；只读公开目录，无新XLSX正文请求或生产写入。
-- **ACLED 当前完成**：十二文件清单及周表预演已集成；本轮六份本地月度链路原件43,479行预演通过，配置一致，原件与配置hash不变，日期仍08-21，不称自动更新完成。
-- **ACLED 下一步**：本轮必要检查和独立审阅后提交/集成；实际链接载体/认证发现、有界下载与私有暂存、修订复核和保护发布仍待实施。此前单次预算均已耗，不自行续跑。
+- **ACLED 工作基线**：2026-09-17 PR #382已合并为fab66664，周/月只读预演均已集成；本轮`codex/acled-detail-discovery-policy`为独立规则阶段。
+- **ACLED 当前完成**：确认十二入口为受限详情页；owner新批准一次14请求发现预算，尚未执行。精确工作流摘要例外准备独立集成，无实际workflow或凭证读取。
+- **ACLED 下一步**：规则集成后实施并审阅固定十二页认证发现，CI通过后执行一次并记录run；不下载XLSX或发布。文件批量下载、私有暂存、修订与发布另行推进，旧已耗预算不恢复。
 - **ACLED 仍未完成**：GitHub持续XLSX下载/分析/发布与HAPI六指标替代均未上线。两条路线分开；既有四槽后续与ARR第二周期自然等待不变。以下09-13回执为历史。
 
 ### 2026-09-13 交接（历史）
