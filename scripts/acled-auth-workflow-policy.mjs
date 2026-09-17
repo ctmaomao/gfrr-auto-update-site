@@ -14,10 +14,15 @@ export const DETAIL_WORKFLOW_SHA256 = '70d2976abaf877ffff8eff7bc0373290396f721cd
 // Only these exact reviewed bytes may reference the two download Secrets.
 export const BATCH_WORKFLOW_PATH = '.github/workflows/acled-private-batch-acceptance.yml';
 export const BATCH_WORKFLOW_SHA256 = '483b33300f716ed397a42847841e130dc0b56a5a6f63650aa0f6aad39bc2c060';
+// ADR-0055: only the separately reviewed weekly/initial automatic workflow.
+// Its permanent pre-login claims and exact bounds cannot be transferred to reminders.
+export const AUTO_WORKFLOW_PATH = '.github/workflows/acled-auto-update.yml';
+export const AUTO_WORKFLOW_SHA256 = '205d1728a11ba7ed2bb859aea4031b77f033ea95b8005f66bca39b4863b59088';
 export function isReviewedAcledAuthWorkflow(file, text) {
   const expected = file === AUTH_WORKFLOW_PATH ? AUTH_WORKFLOW_SHA256
     : file === DETAIL_WORKFLOW_PATH ? DETAIL_WORKFLOW_SHA256
-      : file === BATCH_WORKFLOW_PATH ? BATCH_WORKFLOW_SHA256 : null;
+      : file === BATCH_WORKFLOW_PATH ? BATCH_WORKFLOW_SHA256
+        : file === AUTO_WORKFLOW_PATH ? AUTO_WORKFLOW_SHA256 : null;
   return expected !== null && typeof text === 'string'
     && createHash('sha256').update(text.replace(/\r\n/gu, '\n')).digest('hex') === expected;
 }

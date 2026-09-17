@@ -1,8 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, BATCH_WORKFLOW_PATH, isReviewedAcledAuthWorkflow } from '../../scripts/acled-auth-workflow-policy.mjs';
+import { AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, BATCH_WORKFLOW_PATH, AUTO_WORKFLOW_PATH, isReviewedAcledAuthWorkflow } from '../../scripts/acled-auth-workflow-policy.mjs';
 const approved = readFileSync('tests/fixtures/acled-auth-workflow-approved.txt', 'utf8');
+
+test('weekly automation policy is exact and never changes older one-use budgets', () => {
+  const automatic = readFileSync('tests/fixtures/acled-auto-workflow-approved.txt', 'utf8');
+  assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, automatic), true);
+  assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, automatic.replace(/\r?\n/gu, '\r\n')), true);
+  for (const file of [AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, BATCH_WORKFLOW_PATH, '.github/workflows/acled-weekly-refresh-reminder.yml']) assert.equal(isReviewedAcledAuthWorkflow(file, automatic), false);
+  for (const fixture of ['auth', 'detail', 'batch']) assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, readFileSync(`tests/fixtures/acled-${fixture}-workflow-approved.txt`, 'utf8')), false);
+  for (const [a,b] of [['default: false','default: true'], ['30 0 * * 1','30 0 * * *'], ['github.run_attempt == 1','true'], ['cancel-in-progress: false','cancel-in-progress: true'], ['persist-credentials: false','persist-credentials: true'], ['--ignore-scripts',''], ['--live','--live --retry'], ['timeout-minutes: 20','timeout-minutes: 200'], ['ACLED_DOWNLOAD_PASSWORD','ACLED_API_KEY']]) assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, automatic.replace(a,b)), false);
+  assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, automatic + '\n# changed'), false);
+});
 
 test('private batch exception is exact, isolated and cannot acquire write or schedule rights', () => {
   const batch = readFileSync('tests/fixtures/acled-batch-workflow-approved.txt', 'utf8');

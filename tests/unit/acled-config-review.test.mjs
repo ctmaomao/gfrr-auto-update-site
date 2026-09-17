@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { reviewAcledConfigPair, ACLED_CONFIG_REVIEW_LIMITS } from '../../scripts/world-order/acled-config-review.mjs';
 
@@ -12,6 +14,48 @@ function change(input, kind, fn, side = 'candidate') {
 }
 const review = input => reviewAcledConfigPair(input);
 const cli = input => spawnSync(process.execPath, ['scripts/review-acled-config-pair.mjs'], { input, encoding: 'utf8', timeout: 10000 });
+
+test('ADR-0055 admits only exact automatic provenance, without content or date exceptions', () => {
+  const input = fixture();
+  for (const kind of ['weekly', 'monthly']) change(input, kind, v => { v.preparedBy = 'github-actions-acled-auto'; });
+  assert.equal(review(input).status, 'review_required');
+  assert.deepEqual(review(input).weekly.changedSections, ['preparedBy']);
+  assert.equal(review(input).boundaries.productionEligible, false);
+  for (const value of [null, '', 'automatic', 'github-actions', {}, ['manual']]) {
+    const bad = structuredClone(input); change(bad, 'weekly', v => { v.preparedBy = value; });
+    assert.equal(review(bad).status, 'invalid');
+  }
+  change(input, 'monthly', v => { v.quality.isRealData = false; });
+  assert.equal(review(input).status, 'invalid');
+});
+
+test('both actual strict checkers accept automatic provenance and reject unknown provenance', t => {
+  const parent = fs.realpathSync(os.tmpdir());
+  const root = fs.mkdtempSync(path.join(parent, 'gfrr-provenance-test-'));
+  t.after(() => {
+    if (path.dirname(fs.realpathSync(root)) !== parent || !path.basename(root).startsWith('gfrr-provenance-test-')) throw new Error('unsafe cleanup');
+    fs.rmSync(root, { recursive: true });
+  });
+  const files = ['check-world-order-acled-weekly.mjs', 'check-world-order-acled-monthly.mjs',
+    'world-order/acled-weekly-coverage.mjs', 'world-order/acled-weekly-window.mjs',
+    'world-order/acled-freshness.mjs', 'world-order/acled-monthly-trend.mjs',
+    'world-order/sanitize-acled-weekly.mjs', 'world-order/sanitize-acled-monthly.mjs'];
+  for (const file of files) {
+    fs.mkdirSync(path.dirname(path.join(root, 'scripts', file)), { recursive: true });
+    fs.copyFileSync(`scripts/${file}`, path.join(root, 'scripts', file));
+  }
+  fs.mkdirSync(path.join(root, 'config'));
+  for (const kind of ['weekly', 'monthly']) {
+    const data = JSON.parse(saved[kind]);
+    for (const value of ['github-actions-acled-auto', 'unreviewed-automatic']) {
+      data.preparedBy = value; fs.writeFileSync(path.join(root, paths[kind]), JSON.stringify(data));
+      const run = spawnSync(process.execPath, [path.join(root, `scripts/check-world-order-acled-${kind}.mjs`)],
+        { cwd: root, timeout: 10000, encoding: 'utf8', env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot } });
+      assert.equal(run.status, value === 'github-actions-acled-auto' ? 0 : 1, run.stderr);
+      if (value !== 'github-actions-acled-auto') assert.match(run.stderr, /preparedBy must be approved/u);
+    }
+  }
+});
 
 test('unchanged pair ignores only preparedAt and object key ordering, preserving originals', () => {
   const input = fixture(), before = structuredClone(input);

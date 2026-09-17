@@ -48,6 +48,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 首次及周一持续自动化批准
+
+- **Acceptance baseline**：owner 明确回复“批准首次验收及每周自动运行”；新首次批次及每周一各最多 26 个免费请求、15秒/请求、零重试/跳转，临时私有原件、失败保留旧数据，沿用逐项提交推送/独立AI审阅合并及自动上线授权。旧 run 35277723078 仍已耗，不重跑。
+- **政策**：[ADR-0055](ADR/0055-acled-weekly-automation.md)及精确 workflow fixture 先独立评审；持久 initial/UTC 周 claim 先于登录，默认手工 dry-run，来源字段显式区分自动处理。用户执行授权不冒充官方自动访问许可，保留 EULA 风险说明。
+- **验证/后续**：本 policy 阶段不增加实际 workflow 或执行请求。后续接入下载/校验/原子发布、明确刷新衔接及 Pages/EdgeOne 读回；本地/远端检查和独立审阅以对应 PR 回执为准。前一步 PR #396 已合并 4d1756e7，完整 CI 35284695771 通过。
+
 ### 2026-09-18 ACLED 远端配对提交
 
 - **Acceptance baseline**：owner 要求本步后连续推进直至自动上线，沿用逐项提交推送、独立 AI 审阅及合并授权。实施远端原子提交组件；新首次下载与每周运行预算已另行明确询问，未回复前不执行真实 ACLED 请求。

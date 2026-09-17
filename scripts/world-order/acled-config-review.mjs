@@ -33,7 +33,8 @@ function parse(text, kind) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > ACLED_CONFIG_REVIEW_LIMITS.configBytes) reject();
   const v = JSON.parse(text);
   if (!exact(v, [...sections[kind], 'preparedAt']) || v.version !== '1.0.0'
-    || v.source !== `acled-aggregated-manual-normalized-${kind}` || v.preparedBy !== 'manual'
+    || v.source !== `acled-aggregated-manual-normalized-${kind}`
+    || !['manual', 'github-actions-acled-auto'].includes(v.preparedBy)
     || typeof v.preparedAt !== 'string' || !Number.isFinite(Date.parse(v.preparedAt))
     || !object(v.global) || !object(v.quality) || v.quality.isRealData !== true) reject();
   const date = day(v[kind === 'weekly' ? 'latestWeek' : 'asOfDate']);
