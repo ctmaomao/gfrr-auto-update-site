@@ -27,6 +27,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 云端整批一次验收
+
+- **Acceptance baseline**：owner在明确26请求预算提案后要求开始下一步；本轮落实单次GitHub登录/12详情/12文件/退出及私有校验，零重试/跳转，HTML12MiB、周文件64MiB/月文件2MiB、控制128KiB，15秒每请求，不发布。
+- **当前阶段**：[ADR-0054](ADR/0054-acled-private-batch-acceptance.md)独立policy PR限定精确新workflow摘要；既有例外、源权利和已耗预算不变。仅fixture及政策，尚无执行入口。
+- **验收**：规则回归、完整检查、独立AI审阅及CI通过后再交实现PR。完成后只派发一个新run，记录唯一ID；失败或结果不明不重复派发。
+- **限制**：不调度、不上传原件、不改生产。真实新文件内容与持续来源/发布仍不能由本policy通过推断。
+
 ### 2026-09-17 ACLED 十二详情页一次发现实现
 
 - **Acceptance baseline**：沿用紧邻批准的14请求一次验收，policy PR #383已独立审阅并合并fc8fb943。当前独立实现PR不改已审定workflow摘要，不增加下载、重试、正文保存或生产发布权限。
