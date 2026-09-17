@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+认证批次与私有标准化组件：`acled-session-batch.mjs`复用固定详情及批次限额，最多登录1/详情12/文件12/退出1；只在退出确认后返回完整buffers。`acled-private-validation.mjs`仅在唯一临时工作区运行现行两个sanitizer，不改生产，子进程不继承账号凭证，原件不进入artifact/cache/Git；清理失败不交候选。暂无CLI或workflow，新的真实预算及持续调度/发布边界保持独立评审。
+
 ACLED 十二文件传输核心 `scripts/world-order/acled-batch-reader.mjs` 为未接入执行入口的隔离组件：仅接受完整身份清单和显式注入transport，不读凭证或默认联网，不保存原件/写生产。周表16MiB每件/64MiB合计、月表1MiB每件/2MiB合计以及ZIP上限沿用现行sanitizer；最多12次串行文件请求、每次15秒、零重试/跳转。全部ZIP读取成功仍为contentValidated=false/productionEligible=false，不能代替工作簿及行校验。会话控制、云端私有暂存、真实预算及保护发布仍须接入评审，不扩大现行一次认证workflow或提醒权限。
 
 2026-09-17 owner独立批准一次详情页发现：登录POST＋最多12个已观察`/aggregated/`详情页GET＋退出POST；HTML每页1MiB、控制响应各64KiB、15秒/请求、零重试/跳转。规则[ADR-0052](ADR/0052-acled-detail-discovery-policy.md)已独立集成，只适用于精确摘要的新手动workflow；不续用旧文件预算。正文只在内存解析，只有十二项身份清单、月度文件as-of一致性及退出均通过才输出静态链接元数据；周表可不同日期，不证明同一事务版本，不读取XLSX或发布。持续自动抓取和生产替代未开启，原reminder及生产manual-xlsx规则保持。
