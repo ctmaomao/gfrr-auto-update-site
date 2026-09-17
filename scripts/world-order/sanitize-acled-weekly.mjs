@@ -14,6 +14,8 @@ const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..', '..');
 const inputDir = path.join(root, 'manual-artifacts', 'world-order', 'acled-input', 'weekly');
 const outputPath = path.join(root, 'config', 'world-order-acled-regional-weekly.json');
+const args = process.argv.slice(2);
+const dryRun = args.length === 1 && args[0] === '--dry-run';
 
 const SOURCE_URL = 'https://acleddata.com/conflict-data/download-data-files';
 const LICENSE_LEVEL = 'open';
@@ -47,6 +49,7 @@ const expectedColumns = [
 ];
 
 function warn(message) {
+  if (dryRun) return; // Read-only reports expose aggregate status, not input filenames/rows.
   console.warn(`ACLED weekly sanitizer warning: ${message}`);
 }
 
@@ -336,8 +339,13 @@ export function buildPayload(aggregates, selectedFiles) {
 }
 
 function main() {
+  if (args.length && !dryRun) fail('unsupported arguments');
   const filenames = listInputFiles();
   if (filenames.length === 0) {
+    if (dryRun) {
+      console.log(JSON.stringify({ status: 'no_input', productionWritten: false, networkRequests: 0 }));
+      return;
+    }
     console.log('no input files,operator has not yet placed xlsx files');
     return;
   }
@@ -356,6 +364,13 @@ function main() {
   });
   const aggregates = selectedFiles.map((entry) => aggregateRegion(entry.region, readWorkbookRows(entry, inputFiles)));
   const payload = buildPayload(aggregates, selectedFiles);
+  if (dryRun) {
+    console.log(JSON.stringify({ status: 'validated_not_published', productionWritten: false, networkRequests: 0,
+      regions: aggregates.length, rows: aggregates.reduce((sum, item) => sum + item.rowCount, 0),
+      latestWeek: payload.latestWeek, windowWeeks: payload.quality.weeklyWindow.weeks12.length,
+      matchesCurrentConfig: unchangedExceptPreparedAt(payload, outputPath) }));
+    return;
+  }
   const relPath = path.relative(root, outputPath);
   const summary = `regions=${aggregates.length}, latestWeek=${payload.latestWeek}`;
   if (unchangedExceptPreparedAt(payload, outputPath)) {
@@ -369,6 +384,10 @@ function main() {
 try {
   main();
 } catch (err) {
+  if (dryRun) {
+    console.error(JSON.stringify({ status: 'validation_failed', productionWritten: false, networkRequests: 0 }));
+    process.exit(1);
+  }
   console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 }
