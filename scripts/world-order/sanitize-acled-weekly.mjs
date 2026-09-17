@@ -121,7 +121,9 @@ function listInputFiles() {
 function readWorkbookRows(entry, inputFiles) {
   const filePath = inputFiles.get(entry.filename);
   const workbook = xlsx.readFile(filePath, {
-    cellDates: true,
+    // Excel date serials are calendar days, not local-midnight instants.
+    // Keep numeric cells numeric so excelSerialToIsoDate uses explicit UTC fields.
+    cellDates: false,
     sheets: 'Sheet1',
     sheetRows: MAX_DATA_ROWS + 2
   });
