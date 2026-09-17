@@ -71,9 +71,30 @@ export function buildHistoricalScoreInputs(date, seriesRows, rules, valueOverrid
   const weekChange = Number.isFinite(values.t10y2y) && Number.isFinite(priorCurve) ? values.t10y2y - priorCurve : null;
   const curveRules = rules.macroDrivers.curve;
   const brentRow = latestHistoricalRow(seriesRows.brent, date);
-  const brentPrevious = brentRow ? at('brent', daysBefore(brentRow.date, 1)) : null;
+  const previousObservation = brentRow
+    ? historicalObservation(seriesRows.brent, daysBefore(brentRow.date, 1), 'brent') : null;
+  const brentPrevious = previousObservation?.value ?? null;
+  // Production buildSeriesPayload uses an absolute USD/bbl difference rounded
+  // to four decimals, not a percentage return. Preserve the previous actual
+  // observation across weekends; do not manufacture a zero-price denominator.
+  const brentChange = Number.isFinite(brentPrevious)
+    ? Number((values.brent - brentPrevious).toFixed(4)) : null;
+  inputDiagnostics.brent1d = {
+    unit: 'USD_per_barrel', changeWindow: 'successive_available_observations',
+    observationDate: inputDiagnostics.brent.effectiveObservationDate,
+    previousObservationDate: previousObservation?.observationDate ?? null,
+    previousObservationStatus: previousObservation?.status ?? 'missing',
+    value: brentChange, effectiveValue: brentChange ?? 0,
+    valueOrigin: brentChange === null ? 'default'
+      : inputDiagnostics.brent.valueOrigin === 'scenario_override' ? 'scenario_override' : 'historical',
+    limitation: 'FRED spot observation change; not an intraday promotion or source-switch replay'
+  };
+  if (brentChange === null) {
+    defaultedHistoricalInputs.push('brent1d');
+    unavailableHistoricalInputs.push('brent1d');
+  }
   return {
-    rt: { values, changes: { brent1d: changePct(values.brent, brentPrevious) } },
+    rt: { values, changes: { brent1d: brentChange } },
     macroDrivers: {
       fedLiquidity: {
         walcl4wChange: changePct(values.walcl, at('walcl', daysBefore(date, 28))),

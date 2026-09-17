@@ -7,6 +7,8 @@
 
 ## 主表 (按数据源驱动)
 
+2026-09-17 [ADR-0053](ADR/0053-pressure-score-remediation.md)：历史 Brent 日变动修正为相邻实际观测的绝对 USD/桶差（四位小数），与生产适配器单位一致；保留原日期、缺失/过期前值及场景来源披露，不声称日内来源切换或完整历史发布版本重放。复用既有 15 源权限和请求上限，原始缓存仍 ignored；修正后的对照开始独立影子批次，旧累计不迁移。
+
 2026-09-13 [ADR-0047](ADR/0047-pressure-evidence-continuity.md)：复用上述七项研究输入，新增手动 ALFRED 历史版本审计入口，归属 `daily_history_layer` 的非生产研究；不接入 Daily/Worker。固定七个历史日，每期至多七个历史请求，另七个最新 FRED 对照；短超时、无重试、无付费凭证，默认离线。历史版本列名必须与请求一致，拒绝版本日后的观察，失败不以最新值补齐。原始数据仅 ignored，发布文档只含派生统计与缺口；版本日不证明当日具体时刻可见，源权利和完整面板限制见[验收报告](PRESSURE_MODEL_FOLLOWUP_2026_09_13.md)。
 
 2026-09-11 模型研究源（[ADR-0044](ADR/0044-contemporaneous-pressure-research.md)，owner 本轮整改授权）：`pressure-model-research-v1` 归属 `daily_history_layer` 的历史研究与 `artifact_sanitizer_layer` 的派生 artifact。候选复用 FRED BAA10Y/VIXCLS/SP500/DGS10/DTWEXBGS/DCOILBRENTEU/T10YIE；BAA10Y 保留自身信用利差口径。新增 STLFSI4/NFCI 只作研究参考标签，不能作为独立真值或主分新输入；均来自 Federal Reserve Banks，经公开 FRED CSV 获取并引用来源。既有六条历史对照源仅复放旧公式。每次最多 15 请求、单请求 15 秒、无重试/付费密钥；失败不补值。公开下载不提供原始历史再分发授权，因此 raw cache 仅 ignored 本地/临时 runner，Actions 只上传派生研究报告和候选 ledger，不上传原始全量序列。没有主分、Worker、前端或仓位接入。

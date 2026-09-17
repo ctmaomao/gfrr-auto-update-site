@@ -8,6 +8,7 @@ import { parseFredCsv } from './audit-main-score-backtest.mjs';
 import { deriveHistoricalRisk } from './daily/historical-score.mjs';
 import { describeRiskImplementation } from './run-daily-pipeline.mjs';
 import { isHistoricalDate } from './daily/historical-validation.mjs';
+import { pressureRemediationDiagnostics } from './daily/pressure-remediation.mjs';
 
 const ROOT=path.resolve('manual-artifacts/main-score-audit/pressure-model');
 const LEGACY={hyOas:'BAMLH0A0HYM2',igOas:'BAMLC0A0CM',real10y:'DFII10',walcl:'WALCL',onRrp:'RRPONTSYD',t10y2y:'T10Y2Y'};
@@ -15,7 +16,7 @@ const DAY=86400000;
 export function implementationHash(readFile = file => fs.readFileSync(file,'utf8'), scoreImplementation = describeRiskImplementation()) {
   return digest({files:['scripts/daily/pressure-model.mjs','scripts/daily/pressure-evaluation.mjs','scripts/research-pressure-model.mjs',
     'scripts/daily/historical-score.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/historical-validation.mjs',
-    'config/rules.json'].map(file=>readFile(file).replaceAll('\r\n','\n')),
+    'scripts/daily/pressure-remediation.mjs','config/rules.json'].map(file=>readFile(file).replaceAll('\r\n','\n')),
     csvParser:parseFredCsv.toString().replaceAll('\r\n','\n'),scoreImplementation});
 }
 export function outputPath(file) {
@@ -175,6 +176,7 @@ export async function main(argv=process.argv.slice(2)) {
     modelId:protocol.modelId,validation:{historicalPointInTime:false,untouchedHistoricalTest:false,predictiveEvidence:false,
       probabilityCalibration:false,positionSizingValidation:false,benchmarkIndependence:false,automaticPromotion:false},
     sourceStatus:cache.sourceStatus,sourceRetrievedAt:cache.retrievedAt,limitations:protocol.limitations,...results,
+    remediation:pressureRemediationDiagnostics(results.current,protocol),
     prospectiveComparison:prospective,prospectivePairwiseComparison:pairwise,
     shadow:shadowReadiness(ledger,protocol,benchmarkWeeks),decision:'continue_prospective_shadow_no_production_replacement'};
   writeJson(options.output,report);
