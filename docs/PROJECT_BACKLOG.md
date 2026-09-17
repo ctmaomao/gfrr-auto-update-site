@@ -48,6 +48,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 锁内复核与双配置待发布提交
+
+- **Acceptance baseline**：owner 要求接续 PR #393 的下一步，沿用独立 AI 审阅、提交推送及合并授权。本步实现本地候选提交准备，不将其混同生产写入或恢复已耗下载预算。
+- **实施**：复用 common-dir 发布锁，锁内核对 HEAD/本地 origin/main/干净工作区与真实索引指纹；重读双基线并检查已审候选字节哈希。固定父提交的完整 checker 扫描面快照中运行原 strict 周/月 checker；私有 index 继承完整父树、一次装入双配置、验证允许路径和精确 blob 后生成 commit 对象，不更新 ref/push/dispatch。清理失败撤销交付结果，不删除悬空对象或别人的改动。
+- **验证/下一步**：真实临时 Git 仓库回归覆盖成功、单轨变化、无变化、pins 不符、第二轨失败、锁竞争、环境覆盖、期间提交/暂存和清理失败。完整检查、独立审阅与 CI 以本 PR 回执为准。详见[提交准备边界](ACLED_PAIR_COMMIT_PREPARATION.md)。仍需生产 writer 的远端父提交复核、来源/发布门槛、非强推及刷新/部署验收；本地 tracking ref 不等于远端最新。
+
 ### 2026-09-18 ACLED 周/月候选修订比较
 
 - **Acceptance baseline**：owner 要求开始受保护发布的下一步，沿用逐项提交、推送、独立 AI 审阅及合并授权。本步只做离线整对候选比较，不复用已耗下载预算、不启用调度或生产写入。

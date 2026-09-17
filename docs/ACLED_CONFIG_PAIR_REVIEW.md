@@ -52,3 +52,8 @@ candidate with an unrelated old monthly candidate after a partial failure.
 
 The spent once-only cloud acceptance remains run 35277723078. This tool adds no
 request budget, schedule, workflow exception, source-cutover or writer authority.
+
+The next [paired commit preparation](ACLED_PAIR_COMMIT_PREPARATION.md) component
+now rechecks these pins under the shared local lock and creates an unreferenced
+commit after the existing strict validators. It still does not publish or provide
+a remote lease; production integration remains separate.

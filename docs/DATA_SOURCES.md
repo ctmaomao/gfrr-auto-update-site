@@ -774,6 +774,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+2026-09-18 [锁内双配置提交准备](ACLED_PAIR_COMMIT_PREPARATION.md)：共享本地锁内重读基线、候选 pin 校验、固定父提交快照运行原严格 checkers，以私有 index 生成完整周/月配对的本地 commit 对象。写临时文件和 Git 对象，但不更新工作区/索引/ref/远端；清理或并发变化失败不交付提交。没有新增下载、调度、来源授权或生产发布权限，后续仍需远端复核和发布验收。
+
 2026-09-18 新增[周/月配置整对修订比较](ACLED_CONFIG_PAIR_REVIEW.md)：离线有界输入，区分同日修订、日期推进/倒退和仅准备时间变化；基线精确字节哈希用于后续重读比对，不等于并发锁。只输出摘要、始终不准生产；不替代 sanitizer/发布 validator、来源许可或新鲜度校验，不改变现有一次 workflow 和已耗请求预算。
 
 2026-09-18 云端整批验收按[ADR-0054](ADR/0054-acled-private-batch-acceptance.md)独立一次26请求执行，`acled-private-batch-acceptance.yml`默认dry-run、只读权限、无schedule/artifact。CLI复核执行上下文，退出确认后才运行隔离标准化，输出`validated_not_published`仅说明两类sanitizer及清理通过；不更新生产配置或将preparedBy/source字段伪装成自动生产来源。[唯一 run 35277723078](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/35277723078)已成功：十二文件、26请求，周991218行/09-05、月43588行/09-11，退出与清理确认；本次预算已耗用，持续下载及发布尚未启用。验收发现手工周解析的本地时区偏移，现保留 Excel 日期序号并使用既有 UTC 转换；UTC/Auckland/Los Angeles 真实解析回归及旧选项负对照保护此修复，不直接重写旧生产日期。
