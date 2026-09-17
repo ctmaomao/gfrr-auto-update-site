@@ -20,6 +20,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 十二详情页一次发现实现
+
+- **Acceptance baseline**：沿用紧邻批准的14请求一次验收，policy PR #383已独立审阅并合并fc8fb943。当前独立实现PR不改已审定workflow摘要，不增加下载、重试、正文保存或生产发布权限。
+- **实施**：固定十二个已观察页面；复用安全Cookie与完整响应超时读取器，控制响应仍64KiB，新HTML模式1MiB且读取正文前拒绝非HTML。登录身份/令牌确认后串行GET，任一失败停止并退出；仅204空响应确认退出，失败保留sessionMayRemain。页面静态链接须精确同源、正确身份且唯一，完整十二链接再通过已有manifest同月度版本校验；不执行JS或跟随文件。
+- **验证/执行**：15项新旧专项通过，CLI默认dry-run并限定GitHub main/首次attempt/精确workflow；配置和原件不变。完整检查与独立审阅通过后才集成，再执行唯一真实run。首次attempt不是全局once，真实run ID需作为不可复用的执行回执记录；截至本段准备时尚未派发。
+- **下一步/限制**：输出只含状态/字节/身份和完全通过后的静态链接元数据；完整HTML、账号、Cookie/令牌不保存或打印。发现链接不证明文件有效、最新、持续源权利或可上线；后续XLSX批量获取/私有暂存/修订/发布仍未实现，旧预算不恢复。
+
 ### 2026-09-17 ACLED 十二详情页一次认证发现授权
 
 - **Acceptance baseline**：owner明确批准独立一次最多14请求：登录、十二个已观察详情页、退出；HTML每页1MiB、控制响应各64KiB，每请求15秒、零重试/跳转。不下载XLSX、不保存页面正文、不写生产。失败也消耗本次机会，不借旧单文件或HAPI预算。
@@ -730,9 +737,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **ACLED 工作基线**：2026-09-17 PR #382已合并为fab66664，周/月只读预演均已集成；本轮`codex/acled-detail-discovery-policy`为独立规则阶段。
-- **ACLED 当前完成**：确认十二入口为受限详情页；owner新批准一次14请求发现预算，尚未执行。精确工作流摘要例外准备独立集成，无实际workflow或凭证读取。
-- **ACLED 下一步**：规则集成后实施并审阅固定十二页认证发现，CI通过后执行一次并记录run；不下载XLSX或发布。文件批量下载、私有暂存、修订与发布另行推进，旧已耗预算不恢复。
+- **ACLED 工作基线**：规则PR #383已合并fc8fb943；本轮`codex/acled-detail-discovery`为独立实现，已批准14请求预算尚待执行。
+- **ACLED 当前完成**：固定十二页会话读取、HTML限额、链接身份、完整manifest和退出回执实现准备；15项新旧专项通过，无XLSX/生产写入。
+- **ACLED 下一步**：完成独立实现审阅、全套和CI后合并，唯一真实dispatch并记录run；验收不自动续跑，文件批量下载与发布仍单独推进。
 - **ACLED 仍未完成**：GitHub持续XLSX下载/分析/发布与HAPI六指标替代均未上线。两条路线分开；既有四槽后续与ARR第二周期自然等待不变。以下09-13回执为历史。
 
 ### 2026-09-13 交接（历史）

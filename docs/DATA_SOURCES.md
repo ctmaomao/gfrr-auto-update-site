@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+2026-09-17 owner独立批准一次详情页发现：登录POST＋最多12个已观察`/aggregated/`详情页GET＋退出POST；HTML每页1MiB、控制响应各64KiB、15秒/请求、零重试/跳转。规则[ADR-0052](ADR/0052-acled-detail-discovery-policy.md)已独立集成，只适用于精确摘要的新手动workflow；不续用旧文件预算。正文只在内存解析，只有十二项身份清单、月度文件as-of一致性及退出均通过才输出静态链接元数据；周表可不同日期，不证明同一事务版本，不读取XLSX或发布。持续自动抓取和生产替代未开启，原reminder及生产manual-xlsx规则保持。
+
 2026-09-17 owner进一步明确批准一次认证单文件验收：独立 `acled-authenticated-file-probe.yml`，最多登录POST＋固定XLSX GET＋退出POST，每请求15秒，文件8MiB、控制响应各64KiB，零重试/跳转。此窄例外只替代本次诊断的无凭证限制；不恢复API数据源、不改变生产manual-xlsx或reminder，也不是持续抓取许可。GitHub Secrets仅执行步骤注入，cookie/token/原件仅内存；失败保留现有生产数据，服务端会话未确认退出须报告。[官方登录](https://acleddata.com/api-documentation/getting-started)与[Drupal退出RPC](https://www.drupal.org/node/2720655)只提供协议依据，不证明实测成功。
 
 2026-09-17 owner明确批准[单文件GitHub下载诊断](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#单文件云端下载诊断2026-09-17)：仅用户指定静态XLSX的一次匿名GET，8MiB/15秒，零重试/重定向、无凭证/原件保存/生产写入。此窄例外仅适用于新独立probe，不变更下表生产路径或既有reminder禁令；不是持续官网采集许可，也不扩HAPI预算。
