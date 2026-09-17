@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-18 Pages 检查依赖修复
+
+- **Acceptance baseline**：owner 明确批准处理 Pages 部署阻塞，并另行固定压力模型最终评审标准。本步骤只补齐 Pages 检查环境；不修改 ACLED 源、生产配置或评分模型，不放宽原测试。
+- **原因与修复**：失败 run 35277708546 / 35278373302 在三个 ACLED 私有校验测试停止，发生在 PR #389 合并前后；Pages 未安装开发依赖，PR CI 则有 `npm ci`。补充 `npm ci --include=dev --ignore-scripts`，保持 lockfile 和依赖版本不变。
+- **验证**：新增缺失依赖回归，验证在 sanitizer 启动前 fail closed、清理本次私有目录且不交出候选。私有校验专项 5/5、`check:changed` 触发的完整 `check:all` 和 `git diff --check` 均退出 0；没有删改原断言。远端 CI/部署以本轮回执为准。
+- **后续**：修复进入 main 后须验收实际 Pages 部署；评分评审清单另行交付，不把修复网站部署当作模型通过验证。
+
 ### 2026-09-18 压力研究三项后续验收
 
 - **Acceptance baseline**：owner 明确“123 都做”：验收修正后的远端批次、逐次解释参考指标偏离、持续拆解输入与校准变化。冻结七候选、生产公式、阈值及模型指纹；独立后处理不重置累计，不增加数据源或付费调用。

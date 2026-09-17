@@ -63,6 +63,11 @@ jobs:
           cache: npm
           package-manager-cache: false
 
+      # The full suite invokes the existing XLSX sanitizers in private test workspaces.
+      # setup-node caches downloads; it does not install the locked dev dependencies.
+      - name: Install locked check dependencies
+        run: npm ci --include=dev --ignore-scripts
+
       - name: Run full check suite
         run: npm run check:all
 

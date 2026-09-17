@@ -29,6 +29,23 @@ test('real sanitizer failure is isolated, suppressed, and cleans only new privat
   paths.forEach((p, i) => assert.deepEqual(fs.readFileSync(p), originals[i]));
 });
 
+test('missing locked XLSX dependency fails before either sanitizer and cleans its private workspace', t => {
+  const before = listing(), realpath = fs.realpathSync;
+  let calls = 0;
+  t.mock.method(fs, 'realpathSync', target => {
+    if (path.basename(target) === 'xlsx' && path.basename(path.dirname(target)) === 'node_modules') {
+      throw Object.assign(new Error('dependency missing'), { code: 'ENOENT' });
+    }
+    return realpath(target);
+  });
+  t.mock.method(childProcess, 'spawnSync', () => { calls++; throw new Error('must not run'); });
+  const r = validateAcledPrivateBatch(files());
+  assert.equal(r.report.reason, 'private_validation_failed');
+  assert.equal(calls, 0); assert.equal(r.candidates, null);
+  assert.equal(r.report.cleanupConfirmed, true); assert.equal(r.report.rawFilesRetained, false);
+  assert.equal(r.report.productionWritten, false); assert.deepEqual(listing(), before);
+});
+
 test('second sanitizer failure never releases the first candidate', t => {
   const before = listing(); let calls = 0;
   t.mock.method(childProcess, 'spawnSync', (_exe, _args, options) => {

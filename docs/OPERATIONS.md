@@ -830,9 +830,12 @@ pending deltas: 0
 `Deploy Static Site to Pages` 在上传 artifact 和部署前会自动运行完整验证链（生产数据只读，ignored analyst input 副作用见 §1）：
 
 ```bash
+npm ci --include=dev --ignore-scripts
 npm run check:all
 npm run build:pages-artifact
 ```
+
+依赖安装使用现有 lockfile，包含开发依赖且不执行包生命周期脚本；`setup-node` 的 npm cache 不是 `node_modules`。完整检查中的 ACLED 私有校验会在临时目录调用现有 sanitizer，需要已锁定的 `xlsx`。若 PR CI 通过而 Pages 出现 `private_validation_failed`、预期 sanitizer 调用次数为 2 而实际为 0，先核对安装步骤，不跳过测试或扩大可接受错误。安装不等于下载 ACLED 数据或允许生产写入，Pages 产物仍使用原有白名单。
 
 失败时按类型排查：
 
