@@ -34,6 +34,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 整批验收回执与周日期修复
+
+- **Acceptance baseline**：沿用 owner 连续实施、独立 AI 审阅和集成授权；修复本次验收暴露的本地/云端日期差异，不重跑已耗用的一次下载，不直接修改生产配置。
+- **真实验收**：实现 PR #390 已合并 `3a199489`；唯一 run [35277723078](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/35277723078) 成功，26 请求、十二文件全部 HTTP 200、登录/退出确认。周表 6 文件/991218 行/2026-09-05，月表 6 文件/43588 行/2026-09-11；`validated_not_published`、临时原件清理确认、生产未写入。预算已耗用，不重复派发。
+- **修复证据**：现有欧洲周原件 XML 最大日期序号 46270 对应 2026-09-05；旧 `cellDates:true` 将本地零点转 UTC，在 Auckland 退到 09-04。保留 Excel 数值日期走既有显式 UTC 转换；真实解析器合成 OOXML 在 UTC/Auckland/Los Angeles 同日，旧选项负对照复现退一天。原件和生产配置不改写。
+- **验证/边界**：多时区回归纳入两个周度检查入口；完整检查、独立审阅及 CI 以本次 PR 回执为准。当前生产日期不因验收自动更新；后续仍需候选修订比较、并发基线保护、持续来源与发布验收，不能称为全自动上线完成。
+
 ### 2026-09-18 ACLED 云端整批一次验收
 
 - **实现进展**：policy PR #388已合并3776a0fe；独立实现接入精确workflow、默认dry-run且限定GitHub main/首次attempt/正确仓库与路径的CLI，成功只输出两类日期、行数和忽略preparedAt的候选摘要。不会保存候选配置、原件artifact或发布生产。
