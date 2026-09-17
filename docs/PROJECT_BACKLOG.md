@@ -20,6 +20,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 周表与月度链路十二文件清单
+
+- **Acceptance baseline**：owner明确要求月度链路六文件一并纳入GitHub自动更新目标，并要求继续。完整目标为六地区周表加六指标文件（1月度、5年度），不是HAPI单指标候选试行替代。当前交付为离线清单身份校验，不启用下载、定时、凭证或生产写入。
+- **实施**：`acled-download-manifest.mjs`接收外部提供的12条官网静态链接，要求恰好六区与六个现行monthly slug、无重复、monthly同as-of；仅接受HTTPS精确官网host及有界ASCII文件路径，拒绝认证信息、query/fragment、编码路径和非法日期。周表允许源日期不同，仍须内容sanitizer验证共同窗口；链接可识别不证明可下载、真实来源、新鲜度或发布许可。专项纳入两个月表检查入口，合成URL不是已发现的真实链接。
+- **核对来源**：2026-09-17只读[官方聚合目录](https://acleddata.com/conflict-data/download-data-files/aggregated-data)列出这12类。未请求XLSX正文、未读取Secrets；既有一次认证下载预算和HAPI四槽均不变。
+- **下一步/阻塞**：实际链接发现、月表只读内容预演、受限会话批量下载与临时私有文件、修订比较和保护发布仍待实施及验收；现行提醒workflow不升级，认证workflow精确摘要例外不扩展。持续源访问权利及真实执行预算须在对应接入评审明确。当前模块只返回identities_validated_only、contentValidated=false和productionEligible=false，不是下载器。
+
 ### 2026-09-17 ACLED 六区周表只读标准化预演
 
 - **Acceptance baseline**：owner要求认证下载成功后继续下一步。本轮复用私有本地六区文件，只读验证现有标准化链；不新增下载请求、不调用凭证、不启用定时或写生产。新增 `node scripts/world-order/sanitize-acled-weekly.mjs --dry-run`，原无参数手工写入行为保留。
@@ -709,9 +716,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **ACLED 工作基线**：2026-09-17 PR #378/#379已合并，main至`codex/acled-weekly-readonly-preflight`；本轮无新网络请求或生产写入。
-- **ACLED 当前完成**：一次云端认证文件下载/退出成功；同hash本地原件参与六区991,218行只读标准化，结果与当前配置一致。预演不输出原行或候选JSON。
-- **ACLED 下一步**：本轮独立审阅/完整检查/CI通过后合并；再设计六区及月表有界更新入口、私有暂存、修订复核与既有保护发布。此前单次预算均已耗，不自行续跑。
+- **ACLED 工作基线**：2026-09-17 PR #380已合并为edc6e339，本轮分支`codex/acled-twelve-file-manifest`；只读官方目录，无新XLSX正文请求或生产写入。
+- **ACLED 当前完成**：既有认证文件验收及六区991,218行只读预演保持；本轮新增12文件离线身份清单，覆盖六区周表与月度链路全部六指标，不代表已经下载或内容验收。
+- **ACLED 下一步**：本轮必要检查和独立审阅后提交/集成；实际链接发现、月表只读预演、有界下载与私有暂存、修订复核和保护发布仍待实施。此前单次预算均已耗，不自行续跑。
 - **ACLED 仍未完成**：GitHub持续XLSX下载/分析/发布与HAPI六指标替代均未上线。两条路线分开；既有四槽后续与ARR第二周期自然等待不变。以下09-13回执为历史。
 
 ### 2026-09-13 交接（历史）
