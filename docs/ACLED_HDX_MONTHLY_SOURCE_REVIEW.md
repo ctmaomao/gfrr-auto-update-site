@@ -4,6 +4,8 @@
 
 ## 当前状态：2026-09-16 HDX/HAPI 许可确认与隔离验收
 
+2026-09-17补充：owner批准独立单文件云端诊断，见[单文件云端下载诊断](#单文件云端下载诊断2026-09-17)。这不是HAPI追加采样，也不是六指标替代上线。
+
 ### 本次 acceptance baseline（替代下文旧阶段的许可等待）
 
 - ACLED Access 于 2026-09-15 09:00:15 UTC 在已授权询问信线程明确答复：允许本项目使用 ACLED 在 HDX 公开的月度聚合数据或 HAPI 资源；下载遵守 HDX 平台条款，公开成果正确归因 ACLED。已核对来信认证。此答复不是对六项指标等价性的确认，也不授权官网自动抓取或付费 registry API。
@@ -385,3 +387,13 @@ Owner授权继续完成可做事项；本阶段不新增数据请求，复用已
 此结果解释代码键冲突与源码机制相符，不证明当前部署使用这些commit，也不还原被隐藏的provider名称/admin2_ref。3条相同公开投影可能具有不同隐藏身份，原因尚未证明。保持deployedMappingVerified/databaseIdentityReconstructed/deduplicationAllowed/aggregationAllowed=false、eventDisjointness=not_proven及productionEligible=false；原metadataFence仍未完成。未去重、求和、改键、发布或切源。
 
 下一阶段须取得可验证的隐藏身份/事件互斥依据、合法同版本对照和全球覆盖证据，再独立评审适配；不能为“完成”跳过三条重复、六指标定义或周表来源缺口。既有四槽和ARR自然观察不提前。
+
+## 单文件云端下载诊断（2026-09-17）
+
+Owner要求以GitHub独立完成XLSX过渡链，并批准先做一次手动触发、单文件、无生产写入的云端验证。此项窄范围替代项目“任何workflow不得访问官网”的单次诊断限制；既有reminder、生产manual-xlsx和定时抓取禁令不变。用户提供的确切静态URL固定在`scripts/world-order/acled-file-probe.mjs`，文件为Europe-Central-Asia_aggregated_data_up_to_week_of-2026-09-05.xlsx，不枚举目录、猜日期或发现其它文件。
+
+`.github/workflows/acled-file-download-probe.yml`只有workflow_dispatch，默认execute_once=false；main-only、首次run attempt、contents:read、checkout不持久化凭证，无secret/cache/npm安装/artifact上传或生产脚本。`node scripts/probe-acled-file.mjs --dry-run`零网络；`--live`还在CLI复验GitHub上下文。复跑同run被拒绝，但新dispatch会产生新run，因此本轮必须只派发一次并记录run ID；该实现不是全局once账本，不可据此自行续跑。
+
+最多1匿名GET/8MiB，连接与正文合计15秒、零重试/重定向。非200/HTML/不接受的content-type/长度异常/超限直接停止；不记录响应正文、认证头、Cookie或Location。仅内存保留完整文件，复用未放宽的ZIPguard（256条目、单条64MiB、合计128MiB、压缩比500），检查必需OOXML部件名，拒绝重复部件和宏/外部链接部件。通过状态仅workbook_container_verified，rowValidation=not_performed；不保证XML语义、文件日期、地区完整、数据新鲜或数值正确。输出只有状态、HTTP状态、字节数、结构计数及成功时SHA256。
+
+此前浏览器ERR_BLOCKED_BY_CLIENT与未登录工具403分开记录，Downloads同名文件不是本次下载成功证据。云端结果以实际run日志为准；拒绝或登录页不通过换IP、cookie导出或新增secret绕过。现行[EULA §3.3](https://acleddata.com/eula)区分平台下载与禁止scraping/crawling；本诊断不将owner承担风险视为源方持续自动采集许可。登录方式和定时下载仍须另行评估，不能因一次匿名可读就宣称获准。GitHub自动化需使用Secrets而非仓库明文，但本轮完全不配置或读取凭证。

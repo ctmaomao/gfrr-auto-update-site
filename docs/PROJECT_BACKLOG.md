@@ -20,6 +20,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 单文件云端下载诊断
+
+- **Acceptance baseline**：owner批准GitHub手动单文件验收，固定其提供的欧洲中亚2026-09-05 XLSX，匿名最多1 GET/8MiB/15秒，零重试/重定向。不携带账号密码、不解析行、不发布，不把浏览器客户端拦截当云端结论。
+- **实施**：新增main-only workflow_dispatch，默认dry-run、contents只读、无npm安装/secret/artifact/cache。CLI复查main、仓库、事件与首次run attempt；正文仅内存，原ZIP安全断言不改，仅导出复用，必要OOXML部件检查不冒充内容校验。
+- **验证与执行**：8项合成回归及dry-run通过，包含审阅发现并修复的超时后主动取消流/迟到响应不再读取；完整检查、固定提交独立审阅、CI及唯一真实run ID以本次PR/执行回执记录。run_attempt=1只禁止同run重跑，不能阻止第二次dispatch；本轮只允许执行层派发一次，失败不重发。
+- **限制**：任何非200、HTML、格式异常、超限均停止且不输出正文。官网定时下载许可/登录方式、实际内容/地区/日期验证和生产更新仍未完成；HAPI替代问题与这条XLSX过渡链分开，旧预算和观察保持不变。
+
 ### 2026-09-16 ACLED 行政身份离线诊断
 
 - **Acceptance baseline**：owner要求连续完成可做工作并授权逐项提交/推送/独立AI审阅合并。本项仅固化现有私有证据诊断，零新增请求、不改变已耗once或生产主键，不去重/相加；来源权利、真实观察和临执行预算门槛不变。
@@ -680,10 +687,10 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **ACLED 工作基线**：2026-09-16 main `e8537476`（#373）至 `codex/acled-identity-diagnostics`，工作区起始干净；本项没有新下载。
-- **ACLED 当前完成**：现有私有取证hash复验及connector/名称投影离线诊断；42组冲突符合公开connector模式，名称扩展键剩3条相同投影重复。源码机制不等于当前部署已核实；不输出私有键值，不改生产校验。
-- **ACLED 下一步**：先解决隐藏身份与事件互斥、同版本完整引用；不得把名称扩展键直接作为新生产主键。具体剩余项见Section 1最新记录；已取得HDX/HAPI许可不重复申请。
-- **ACLED 仍未完成**：全球/六指标等价、生产切源、周表自动化；四槽后续与ARR第二周期须自然发生。以下09-13回执为历史，不据旧记录推定当前状态。
+- **ACLED 工作基线**：2026-09-17 latest main至`codex/acled-cloud-download-probe`，起始工作区干净，独立单文件无凭证诊断。
+- **ACLED 当前完成**：固定XLSX云端probe与8项回归准备；实际检查/PR/真实run结果以本次回执为准。原件不落盘或发布，ZIP容器通过不等于内容通过。
+- **ACLED 下一步**：独立审阅合并后仅一次GitHub dispatch验收；非200/登录页停止，不通过换出口、伪造会话或重跑绕过。取得真实结果后再评估受支持的认证方式。
+- **ACLED 仍未完成**：GitHub持续XLSX下载/分析/发布与HAPI六指标替代均未上线。两条路线分开；既有四槽后续与ARR第二周期自然等待不变。以下09-13回执为历史。
 
 ### 2026-09-13 交接（历史）
 
