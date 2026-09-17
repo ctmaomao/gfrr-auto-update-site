@@ -48,6 +48,12 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 远端配对提交
+
+- **Acceptance baseline**：owner 要求本步后连续推进直至自动上线，沿用逐项提交推送、独立 AI 审阅及合并授权。实施远端原子提交组件；新首次下载与每周运行预算已另行明确询问，未回复前不执行真实 ACLED 请求。
+- **实施**：默认不执行；执行与来源使用两项明确 caller 授权、固定 repo/main、远端父提交核对后运行已审本地双配置准备。GitHub expectedHeadOid 原子追加恰好两份配置，不强推；校验单父提交与完整树，不能把 GitHub 作者导致的 commit hash 差异误判为内容变化。最多 2 次 GitHub 请求、64KiB 响应/3MiB 请求、15秒/次、零重试。写入可能已发生后的所有异常返回 publication_unknown，不伪称未发布。
+- **验证/下一步**：7 项回归含真实 prepare 配合模拟远端树回执、冲突/校验失败、错误/超限/15秒超时、异步输入变化、脱敏与不重试；完整检查及独立审阅/CI 以本 PR 回执为准。无 CLI/workflow/真实发布；[远端发布说明](ACLED_PAIR_REMOTE_PUBLICATION.md)记录后续独立调度 policy、下载预算、刷新与部署验收要求。
+
 ### 2026-09-18 ACLED 锁内复核与双配置待发布提交
 
 - **Acceptance baseline**：owner 要求接续 PR #393 的下一步，沿用独立 AI 审阅、提交推送及合并授权。本步实现本地候选提交准备，不将其混同生产写入或恢复已耗下载预算。
