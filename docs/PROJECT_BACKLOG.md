@@ -20,6 +20,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 登录单文件一次验收
+
+- **Acceptance baseline**：owner已配置两个 ACLED_DOWNLOAD Secrets，并明确批准最多3请求（登录POST→指定XLSX GET→退出POST）；每请求15秒，文件8MiB、登录/退出各64KiB，零重试/跳转，仅内存、不发布。授权只供一次新run，不复用匿名或HAPI预算、不启用定时采集。
+- **已有证据**：PR #377 已合并；一次匿名run 35190625767确认HTTP302、same_origin_login，预算已耗。官方cookie登录协议存在，但是否适用指定XLSX仍待实测。
+- **实施**：独立main-only手动workflow，默认dry-run、Secret仅执行步骤注入；验证登录身份及安全Drupal会话cookie后才下载，复用原容器校验，随后单次退出。所有报告固定枚举，无响应正文、cookie、token、账号；不保存原件、无生产写入。run_attempt不是全局once，实际唯一run ID须记入PR回执。
+- **限制与验收**：登录中断或不合法响应可能已建立服务端会话但无法安全退出，明确sessionMayRemain；退出仅204空正文确认为成功，不追加请求。退出协议依据Drupal官方RPC文档，尚未实证ACLED部署支持；代码与离线/CI/独立审阅及实际run结果见本次PR回执。持续自动更新与行内容校验未完成。
+
 ### 2026-09-17 ACLED 跳转分类与登录方式核验
 
 - **Acceptance baseline**：owner要求开始下一步；补充静态文件诊断的脱敏跳转分类及官方登录文档核验，不提交凭证、不跟随跳转、不启用定时下载或生产更新。本轮先完成离线实现；新的真实请求不复用此前已耗预算。
