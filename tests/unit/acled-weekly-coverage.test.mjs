@@ -22,7 +22,7 @@ function weeklyConfig(latestWeek) {
     source: 'acled-aggregated-manual-normalized-weekly',
     sourceName: 'ACLED synthetic CLI test fixture',
     preparedAt: `${latestWeek}T00:00:00.000Z`,
-    preparedBy: 'test',
+    preparedBy: 'manual', // ADR-0055: fixture uses an admitted provenance value.
     latestWeek,
     filesIngested: ACLED_WEEKLY_REGIONS.map(region => ({
       region, filename: name(region, latestWeek), weekRange: [weeks12[0], latestWeek], rowCount: 12

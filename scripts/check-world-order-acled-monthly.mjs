@@ -317,6 +317,8 @@ if (payload !== undefined) {
   else {
     for (const key of topLevelKeys) requireKey(payload, key, 'root');
     if (payload.source !== SOURCE) addFailure(`source must be ${SOURCE}`);
+    // ADR-0055: exact acquisition provenance; legacy source ID is unchanged.
+    if (!['manual', 'github-actions-acled-auto'].includes(payload.preparedBy)) addFailure('preparedBy must be approved manual or automatic provenance');
     validateIsoTimestamp(payload.preparedAt, 'preparedAt');
     validateAsOfDate(payload.asOfDate);
     validateLatestFullYear(payload.latestFullYear, payload.asOfDate);

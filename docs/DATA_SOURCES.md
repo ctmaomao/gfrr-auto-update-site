@@ -774,6 +774,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+2026-09-18 owner 已明确批准首次验收及每周自动运行。[ADR-0055](ADR/0055-acled-weekly-automation.md)限定新 workflow 的预算、持久防重复、私有原件、自动 provenance 和双配置发布/部署验收；仅该 reviewed 路径替代下文旧 manual-only 获取限制。该批准不是 ACLED 官方官网自动访问许可；EULA §3.3 限制仍披露。旧提醒、API/HAPI 与一次预算不变，policy PR 本身不下载或上线。
+
 2026-09-18 [远端配对提交组件](ACLED_PAIR_REMOTE_PUBLICATION.md)在已审本地准备后使用 GitHub expectedHeadOid 原子追加双配置；需明确执行/来源使用授权，不凭哈希推断权限。默认零 I/O、无 CLI/workflow；最多两次有界 GitHub 请求，mutation 结果不明不重试。配置提交成功也不代表 World Order/站点刷新完成，未恢复旧 ACLED 预算或自动调度。
 
 2026-09-18 [锁内双配置提交准备](ACLED_PAIR_COMMIT_PREPARATION.md)：共享本地锁内重读基线、候选 pin 校验、固定父提交快照运行原严格 checkers，以私有 index 生成完整周/月配对的本地 commit 对象。写临时文件和 Git 对象，但不更新工作区/索引/ref/远端；清理或并发变化失败不交付提交。没有新增下载、调度、来源授权或生产发布权限，后续仍需远端复核和发布验收。
