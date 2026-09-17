@@ -26,7 +26,9 @@ export function sessionCookie(headers, now = Date.now()) {
 }
 
 // Full-response deadline, including bodies; late responses are cancelled without parsing.
-async function controlRequest(url, options, fetchImpl, timeoutMs) {
+export async function controlRequest(url, options, fetchImpl, timeoutMs, responseKind = 'control') {
+  if (!['control', 'html'].includes(responseKind)) throw new Error('response_kind');
+  const maxBytes = responseKind === 'html' ? 1048576 : AUTH_PROBE.controlMaxBytes;
   const controller = new AbortController(); let timer, reader, httpStatus = null, receivedBytes = 0;
   const fail = reason => ({ ok: false, reason, httpStatus, receivedBytes });
   const operation = async () => {
@@ -34,8 +36,12 @@ async function controlRequest(url, options, fetchImpl, timeoutMs) {
     if (controller.signal.aborted) { void response.body?.cancel().catch(() => {}); return fail('timeout'); }
     httpStatus = response.status;
     if (![200, 204].includes(httpStatus)) { void response.body?.cancel().catch(() => {}); return fail('http_not_ok'); }
+    if (responseKind === 'html' && (httpStatus !== 200
+      || (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() !== 'text/html')) {
+      void response.body?.cancel().catch(() => {}); return fail('not_html');
+    }
     const length = response.headers.get('content-length');
-    if (length !== null && (!/^\d+$/u.test(length) || Number(length) > AUTH_PROBE.controlMaxBytes)) {
+    if (length !== null && (!/^\d+$/u.test(length) || Number(length) > maxBytes)) {
       void response.body?.cancel().catch(() => {}); return fail('byte_limit');
     }
     const chunks = [];
@@ -46,7 +52,7 @@ async function controlRequest(url, options, fetchImpl, timeoutMs) {
         if (controller.signal.aborted) return fail('timeout');
         if (part.done) break;
         receivedBytes += part.value.byteLength;
-        if (receivedBytes > AUTH_PROBE.controlMaxBytes) return fail('byte_limit');
+        if (receivedBytes > maxBytes) return fail('byte_limit');
         chunks.push(Buffer.from(part.value));
       }
     }
