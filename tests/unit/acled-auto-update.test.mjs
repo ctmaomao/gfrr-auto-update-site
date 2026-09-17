@@ -34,8 +34,10 @@ function fixture(t, automatic = false) {
   for (const file of code.map(p => `scripts/${p}`).concat(Object.values(paths))) {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.copyFileSync(file, path.join(root, file));
   }
-  if (automatic) for (const file of Object.values(paths)) {
-    const data = JSON.parse(fs.readFileSync(path.join(root, file))); data.preparedBy = 'github-actions-acled-auto';
+  for (const file of Object.values(paths)) {
+    const data = JSON.parse(fs.readFileSync(path.join(root, file)));
+    // Fixture mode must not change after production switches to automatic input.
+    data.preparedBy = automatic ? 'github-actions-acled-auto' : 'manual';
     fs.writeFileSync(path.join(root, file), `${JSON.stringify(data, null, 2)}\n`);
   }
   git(['-c', 'core.autocrlf=false', 'add', '.']);

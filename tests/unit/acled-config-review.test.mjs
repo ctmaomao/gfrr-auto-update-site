@@ -17,6 +17,9 @@ const cli = input => spawnSync(process.execPath, ['scripts/review-acled-config-p
 
 test('ADR-0055 admits only exact automatic provenance, without content or date exceptions', () => {
   const input = fixture();
+  // Production may already be automatic after first publication. This case
+  // explicitly models the manual-to-automatic transition, not production state.
+  for (const kind of ['weekly', 'monthly']) change(input, kind, v => { v.preparedBy = 'manual'; }, 'baseline');
   for (const kind of ['weekly', 'monthly']) change(input, kind, v => { v.preparedBy = 'github-actions-acled-auto'; });
   assert.equal(review(input).status, 'review_required');
   assert.deepEqual(review(input).weekly.changedSections, ['preparedBy']);
