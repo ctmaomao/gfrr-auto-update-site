@@ -29,8 +29,11 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-18 ACLED 云端整批一次验收
 
+- **实现进展**：policy PR #388已合并3776a0fe；独立实现接入精确workflow、默认dry-run且限定GitHub main/首次attempt/正确仓库与路径的CLI，成功只输出两类日期、行数和忽略preparedAt的候选摘要。不会保存候选配置、原件artifact或发布生产。
+- **实施验收**：5项入口/编排回归通过，完整检查及独立审阅/CI后只派发一个真实run；后续实际run ID和结果记录在实现PR回执，不把首次attempt当作全局once保证。
+
 - **Acceptance baseline**：owner在明确26请求预算提案后要求开始下一步；本轮落实单次GitHub登录/12详情/12文件/退出及私有校验，零重试/跳转，HTML12MiB、周文件64MiB/月文件2MiB、控制128KiB，15秒每请求，不发布。
-- **当前阶段**：[ADR-0054](ADR/0054-acled-private-batch-acceptance.md)独立policy PR限定精确新workflow摘要；既有例外、源权利和已耗预算不变。仅fixture及政策，尚无执行入口。
+- **policy阶段记录**：[ADR-0054](ADR/0054-acled-private-batch-acceptance.md)独立policy PR限定精确新workflow摘要；既有例外、源权利和已耗预算不变。该PR仅fixture及政策，无执行入口；当前入口进展见上文实现记录。
 - **验收**：规则回归、完整检查、独立AI审阅及CI通过后再交实现PR。完成后只派发一个新run，记录唯一ID；失败或结果不明不重复派发。
 - **限制**：不调度、不上传原件、不改生产。真实新文件内容与持续来源/发布仍不能由本policy通过推断。
 
@@ -43,7 +46,7 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-17 ACLED 认证批次与私有标准化
 
-- **Acceptance baseline**：owner要求连续完成十二文件全自动目标，沿用逐项提交、推送、独立AI审阅和合并授权。本步骤实现单会话采集与私有标准化，不复用旧已耗预算、不启用定时或生产发布；新的26请求验收预算已单独提出，尚待答复。
+- **Acceptance baseline**：owner要求连续完成十二文件全自动目标，沿用逐项提交、推送、独立AI审阅和合并授权。本步骤实现单会话采集与私有标准化，不复用旧已耗预算、不启用定时或生产发布；本阶段提出的26请求预算后由09-18继续指令推进，当前状态见上文一次验收记录。
 - **实施**：注入transport的单次登录→12详情→12文件→退出，只有整批成功且退出确认才释放buffers；旧诊断入口不变。私有验证器创建唯一临时目录，复制七个现行标准化模块并链接锁定xlsx依赖，在隔离输入/输出运行两种sanitizer；子进程不继承凭证、日志不外传、限时120秒/类。失败不交出候选，清理仅本次目录，清理失败明确报告并撤销候选。
 - **验证/证据**：7项合成会话/暂存测试通过，包括第二类失败及清理失败撤销候选。十二份现有原件零网络预演通过，两种候选配置可生成，12原件及2生产配置共14个SHA256前后相同，临时原件清理确认。合成URL仅供离线身份匹配，不代表新下载或来源证明。完整检查/独立审阅/集成以PR回执为准。
 - **下一步/门槛**：云端精确workflow policy须独立PR；真实26请求、持续来源权利、生产修订/并发基线保护和发布验收尚未完成，不将本地旧文件成功等同于新版到站。
