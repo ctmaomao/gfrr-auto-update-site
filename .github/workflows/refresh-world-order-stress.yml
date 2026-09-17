@@ -1,10 +1,24 @@
 name: Refresh World Order Stress
+run-name: 'World Order refresh ${{ inputs.acled_config_commit || github.event_name }}'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   workflow_dispatch:
+    inputs:
+      acled_config_commit:
+        description: 'Optional published ACLED commit for source-free refresh/recovery'
+        type: string
+        default: ''
+      acled_weekly_sha256:
+        description: 'Exact published weekly config SHA256'
+        type: string
+        default: ''
+      acled_monthly_sha256:
+        description: 'Exact published monthly config SHA256'
+        type: string
+        default: ''
   schedule:
     - cron: '0 23 * * *'  # 30 min after Build Daily Radar Data (22:30 UTC)
 
@@ -15,11 +29,16 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   refresh:
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    env:
+      ACLED_CONFIG_COMMIT: ${{ inputs.acled_config_commit }}
+      ACLED_WEEKLY_SHA256: ${{ inputs.acled_weekly_sha256 }}
+      ACLED_MONTHLY_SHA256: ${{ inputs.acled_monthly_sha256 }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
@@ -37,6 +56,10 @@ jobs:
 
       - run: npm ci
 
+      - name: Verify published ACLED pair before refresh
+        if: ${{ inputs.acled_config_commit != '' || inputs.acled_weekly_sha256 != '' || inputs.acled_monthly_sha256 != '' }}
+        run: node scripts/verify-acled-refresh.mjs --before
+
       - name: Refresh world order stress
         env:
           GDELT_CLOUD_API_KEY: ${{ secrets.GDELT_CLOUD_API_KEY }}
@@ -44,6 +67,10 @@ jobs:
         run: npm run build:world-order
 
       - run: npm run check:world-order
+
+      - name: Verify derived ACLED projection
+        if: ${{ inputs.acled_config_commit != '' || inputs.acled_weekly_sha256 != '' || inputs.acled_monthly_sha256 != '' }}
+        run: node scripts/verify-acled-refresh.mjs --after
 
       - name: Commit
         run: |
@@ -55,3 +82,9 @@ jobs:
             git commit -m "chore: refresh world order stress"
             git push
           fi
+
+      - name: Dispatch custom-domain synchronization after verified ACLED refresh
+        if: ${{ inputs.acled_config_commit != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/verify-acled-refresh.mjs --edgeone

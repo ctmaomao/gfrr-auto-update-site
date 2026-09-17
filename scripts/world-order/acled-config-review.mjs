@@ -48,9 +48,12 @@ function parse(text, kind) {
     seen.add(f[id]);
     if (kind === 'weekly') {
       if (!Array.isArray(f.weekRange) || f.weekRange.length !== 2
-        || day(f.weekRange[0]) > day(f.weekRange[1]) || f.weekRange[1] < date) reject();
+        || day(f.weekRange[0]) > day(f.weekRange[1]) || f.weekRange[1] > date) reject();
     } else if (day(f.asOfDate) !== date) reject();
   }
+  // Sanitizer latestWeek is the maximum across regions, not a common cutoff.
+  // Retain real staggered dates while rejecting a falsely early/late maximum.
+  if (kind === 'weekly' && v.filesIngested.map(f => f.weekRange[1]).sort().at(-1) !== date) reject();
   // Ignore only top-level preparation time. Key order is not semantic, while
   // array order remains significant (ranked lists and windows must not be sorted).
   const { preparedAt, ...semantic } = v;

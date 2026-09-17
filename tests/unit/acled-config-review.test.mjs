@@ -90,8 +90,20 @@ test('new monthly date and file row changes are distinguished from date regressi
   let report = review(input);
   assert.equal(report.monthly.status, 'date_advanced'); assert.equal(report.monthly.rowCountChanges, 1);
   assert.equal(report.status, 'review_required'); assert.equal(report.boundaries.freshnessAssessed, false);
-  change(input, 'weekly', v => { v.latestWeek = '2000-01-01'; });
+  change(input, 'weekly', v => { v.latestWeek = '2000-01-01'; for (const f of v.filesIngested) f.weekRange = ['1999-01-01', '2000-01-01']; });
   report = review(input); assert.equal(report.status, 'date_regression_hold');
+});
+
+test('regional lag is preserved, while the declared maximum must match a real regional endpoint', () => {
+  const input = fixture();
+  change(input, 'weekly', v => { v.filesIngested[0].weekRange[1] = '2026-08-28'; });
+  assert.equal(review(input).status, 'review_required');
+  const tooEarly = structuredClone(input);
+  change(tooEarly, 'weekly', v => { v.latestWeek = '2026-08-28'; });
+  assert.equal(review(tooEarly).status, 'invalid');
+  const tooLate = structuredClone(input);
+  change(tooLate, 'weekly', v => { v.latestWeek = '2099-01-01'; });
+  assert.equal(review(tooLate).status, 'invalid');
 });
 
 test('exact baseline pins detect concurrent bytes changes including whitespace and preparation time', () => {
