@@ -1,0 +1,42 @@
+name: ACLED Private Batch Acceptance
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+on:
+  workflow_dispatch:
+    inputs:
+      execute_once:
+        description: 'One approved 26-request private acceptance; no publication'
+        type: boolean
+        default: false
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: acled-private-batch-acceptance
+  cancel-in-progress: false
+jobs:
+  accept:
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == 1 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Install locked development parser without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Offline plan
+        if: ${{ !inputs.execute_once }}
+        run: node scripts/accept-acled-batch.mjs --dry-run
+      - name: One private batch acceptance
+        if: ${{ inputs.execute_once }}
+        env:
+          ACLED_DOWNLOAD_USERNAME: ${{ secrets.ACLED_DOWNLOAD_USERNAME }}
+          ACLED_DOWNLOAD_PASSWORD: ${{ secrets.ACLED_DOWNLOAD_PASSWORD }}
+        run: node scripts/accept-acled-batch.mjs --live
