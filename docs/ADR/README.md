@@ -78,6 +78,8 @@
 
 | [ADR-0049](0049-bubble-evidence-gap-audit.md) | Bubble evidence-gap WARN versus source failure FAIL | Independent contract review passed; remote verification pending |
 
+| [ADR-0051](0051-acled-authenticated-probe-policy.md) | Exact-content ACLED authenticated diagnostic credential exception | Owner authorized; separate policy review |
+
 ## Superseded
 
 (None yet)
