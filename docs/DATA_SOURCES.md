@@ -770,6 +770,8 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
+2026-09-17 owner进一步明确批准一次认证单文件验收：独立 `acled-authenticated-file-probe.yml`，最多登录POST＋固定XLSX GET＋退出POST，每请求15秒，文件8MiB、控制响应各64KiB，零重试/跳转。此窄例外只替代本次诊断的无凭证限制；不恢复API数据源、不改变生产manual-xlsx或reminder，也不是持续抓取许可。GitHub Secrets仅执行步骤注入，cookie/token/原件仅内存；失败保留现有生产数据，服务端会话未确认退出须报告。[官方登录](https://acleddata.com/api-documentation/getting-started)与[Drupal退出RPC](https://www.drupal.org/node/2720655)只提供协议依据，不证明实测成功。
+
 2026-09-17 owner明确批准[单文件GitHub下载诊断](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#单文件云端下载诊断2026-09-17)：仅用户指定静态XLSX的一次匿名GET，8MiB/15秒，零重试/重定向、无凭证/原件保存/生产写入。此窄例外仅适用于新独立probe，不变更下表生产路径或既有reminder禁令；不是持续官网采集许可，也不扩HAPI预算。
 
 最新[行政身份离线诊断](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md#行政身份离线诊断2026-09-16)解释了42组冲突的connector模式：4组国家/38组一级回退；加入名称后仍3条投影重复，不能直接去重或相加。仅复验既有私有档案，零新增请求；不证明隐藏身份、事件互斥或当前部署源码版本，不改变生产manual-xlsx路径。
