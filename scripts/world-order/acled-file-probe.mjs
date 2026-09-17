@@ -9,6 +9,19 @@ export const FILE_PROBE = Object.freeze({
 const zipLimits = Object.freeze({ maxEntries: 256, maxEntryUncompressedBytes: 64 * 1024 * 1024,
   maxUncompressedBytes: 128 * 1024 * 1024, maxCompressionRatio: 500 });
 
+// Never expose a Location value: even its path can contain a session token.
+export function classifyProbeRedirect(location) {
+  if (location === null) return 'missing';
+  if (typeof location !== 'string' || !location.trim() || location.length > 4096
+    || /[\u0000-\u0020\u007f\\]/u.test(location)) return 'invalid';
+  try {
+    const target = new URL(location, FILE_PROBE.url);
+    if (target.protocol !== 'https:' || target.username || target.password) return 'unsafe';
+    if (target.origin !== new URL(FILE_PROBE.url).origin) return 'cross_origin';
+    return target.pathname === '/user/login' ? 'same_origin_login' : 'same_origin_other';
+  } catch { return 'invalid'; }
+}
+
 export function inspectProbeWorkbook(bytes) {
   if (!Buffer.isBuffer(bytes) || bytes.length > FILE_PROBE.maxBytes) throw new Error('file_size');
   const zip = inspectZip(bytes, zipLimits, 'probe');
@@ -40,7 +53,12 @@ export async function probeAcledFile({ fetchImpl = fetch, timeoutMs = FILE_PROBE
       headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'User-Agent': 'GFRR-single-file-diagnostic/1.0' } });
     if (controller.signal.aborted) { void response.body?.cancel().catch(() => {}); return stopped('timeout'); }
     httpStatus = response.status;
-    if (httpStatus !== 200) { void response.body?.cancel().catch(() => {}); return stopped(httpStatus >= 300 && httpStatus < 400 ? 'redirect_not_followed' : 'http_not_ok'); }
+    if (httpStatus !== 200) {
+      void response.body?.cancel().catch(() => {});
+      if (httpStatus >= 300 && httpStatus < 400) return { ...stopped('redirect_not_followed'),
+        redirectTarget: classifyProbeRedirect(response.headers.get('location')) };
+      return stopped('http_not_ok');
+    }
     const type = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
     if (!['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream', 'application/zip'].includes(type)) {
       void response.body?.cancel().catch(() => {}); return stopped('unexpected_content_type');
