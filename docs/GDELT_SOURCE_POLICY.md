@@ -30,6 +30,26 @@ Official GDELT references:
 
 ## Rules
 
+### Cloud access review (2026-09-16)
+
+The [current pricing policy](https://gdeltcloud.com/pricing) distinguishes free
+web/API Arena usage from authenticated API access. API keys require an active
+evaluation, paid plan or explicit account entitlement. Never infer a particular
+account's expiry from the marketing email date, a successful request, or its QU
+balance. The old 100 units/month free API description is obsolete.
+
+Cloud HTTP 401 indicates rejected credentials; 402 requires checking billing or
+quota; 403 indicates denied access, not proven trial expiry or rate limiting.
+Only 429 is classified as rate limited. Keep the single-attempt policy, original
+source timestamp and degraded cached/previous summary on failure. An old summary
+does not restore access or establish current coverage.
+
+New Situations/Stories evidence remains evaluation-only until source coverage,
+article provenance, cost and continued account access are assessed. Greater event
+volume after coverage changes must not automatically be interpreted as worsening
+conflict. No new production source, scoring input or recurring Monitor is enabled
+by this review.
+
 1. New GDELT calls must not be added directly to feature modules. They must first
    update this policy and pass `npm run check:gdelt-source-policy`.
 2. GDELT DOC / Cloud endpoints are low-frequency, cacheable sources. They must

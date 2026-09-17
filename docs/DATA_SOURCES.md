@@ -726,8 +726,8 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 | 字段 | 值 |
 |---|---|
-| **License** | 商业 + free tier;需 `GDELT_CLOUD_API_KEY` Bearer |
-| **Quota** | free tier 有限;P39 起 daily build 先读 `data/gdelt-world-order-cache.json`,12 小时内 manual rerun 不再 live 请求 |
+| **License** | 需 `GDELT_CLOUD_API_KEY` Bearer；2026-09-16 官网说明后台 API 需有效试用、付费套餐或明确账户授权，普通免费网页额度不等于 API 权限 |
+| **Quota** | 账户余额与期限须在账户中确认，不再假设每月 100 次免费 API；P39 起 daily build 先读 `data/gdelt-world-order-cache.json`,12 小时内 manual rerun 不再 live 请求 |
 | **Refresh 频率** | `refresh-world-order-stress.yml` (daily);cache 超窗后最多单次 live Cloud attempt |
 | **失败 fallback** | 12h fresh cache → live single attempt → 72h stale cache → previous `data/world-order-stress.json` GDELT summary;仍不可用时标记 `error` / `not_configured` |
 | **影响 scoring?** | **overlay only** — 进入 World Order Stress Overlay;**不进入** values / main scoring / decision / execution / position / ODP oil direction / Brent promotion / Global Risk Heatmap / cross-validation |
