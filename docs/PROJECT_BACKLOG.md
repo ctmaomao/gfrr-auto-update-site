@@ -20,12 +20,19 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-17 ACLED 六区周表只读标准化预演
+
+- **Acceptance baseline**：owner要求认证下载成功后继续下一步。本轮复用私有本地六区文件，只读验证现有标准化链；不新增下载请求、不调用凭证、不启用定时或写生产。新增 `node scripts/world-order/sanitize-acled-weekly.mjs --dry-run`，原无参数手工写入行为保留。
+- **实施**：完整执行原ZIP/大小、六区覆盖、表头/行、连续共同12周及新鲜度检查和同一payload builder；写入前返回固定摘要、与当前配置忽略preparedAt的比较。错误仅固定脱敏JSON，无输入明确no_input；不输出原行或候选JSON。测试覆盖正常模式、无输入、有效/变化/非法/缺区、字节与mtime不变，纳入两个周表检查入口。
+- **真实证据**：本地欧洲中亚原件SHA256为46ca8e5f16c4dd27204a0ec951fb4401c1df8cfa8d3a5f476751ef7a450fe2be，与云端run 35193588026完全相同。六区共991,218行，实际共同截止周2026-09-04、12周连续窗口；预演exit0、matchesCurrentConfig=true，生产配置前后hash相同。文件名09-05不是数据周日期，不擅自改为09-05。这里只证明通过现有sanitizer，不宣称所有历史校验缺陷已排除。
+- **剩余**：云端只实测欧洲中亚一表；六区自动发现/下载、月表自动路径、云端原件私有暂存与解析、内容修订复核及保护发布尚未接通。8MiB单文件验收预算不足覆盖已知Africa约12.4MB和Asia-Pacific约9.7MB，后续须独立有界批量方案，不机械复制旧探针扩源。当前不改workflow/Secrets/来源权利/生产数据。
+
 ### 2026-09-17 ACLED 登录单文件一次验收
 
 - **Acceptance baseline**：owner已配置两个 ACLED_DOWNLOAD Secrets，并明确批准最多3请求（登录POST→指定XLSX GET→退出POST）；每请求15秒，文件8MiB、登录/退出各64KiB，零重试/跳转，仅内存、不发布。授权只供一次新run，不复用匿名或HAPI预算、不启用定时采集。
-- **已有证据**：PR #377 已合并；一次匿名run 35190625767确认HTTP302、same_origin_login，预算已耗。官方cookie登录协议存在，但是否适用指定XLSX仍待实测。
+- **已有证据**：PR #377 已合并；一次匿名run 35190625767确认HTTP302、same_origin_login，预算已耗。规则PR #378与实现PR #379均已独立审阅合并，认证run 35193588026成功：登录200、文件200/5,570,323字节、退出204，正好3请求，sessionMayRemain=false。未保存原件或写生产，本次预算已耗，不重试。
 - **实施**：独立main-only手动workflow，默认dry-run、Secret仅执行步骤注入；验证登录身份及安全Drupal会话cookie后才下载，复用原容器校验，随后单次退出。所有报告固定枚举，无响应正文、cookie、token、账号；不保存原件、无生产写入。run_attempt不是全局once，实际唯一run ID须记入PR回执。
-- **限制与验收**：登录中断或不合法响应可能已建立服务端会话但无法安全退出，明确sessionMayRemain；退出仅204空正文确认为成功，不追加请求。退出协议依据Drupal官方RPC文档，尚未实证ACLED部署支持；代码与离线/CI/独立审阅及实际run结果见本次PR回执。持续自动更新与行内容校验未完成。
+- **限制与验收**：登录中断或不合法响应可能已建立服务端会话但无法安全退出，明确sessionMayRemain；退出仅204空正文确认为成功，不追加请求。本次实证ACLED部署支持该文件登录下载/退出；8项专项、完整检查、CI均通过，详见PR #379回执。持续自动更新未完成，行内容的本地复用预演见上节。
 
 ### 2026-09-17 ACLED 跳转分类与登录方式核验
 
@@ -702,9 +709,9 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **ACLED 工作基线**：2026-09-17 latest main至`codex/acled-cloud-download-probe`，起始工作区干净，独立单文件无凭证诊断。
-- **ACLED 当前完成**：固定XLSX云端probe与8项回归准备；实际检查/PR/真实run结果以本次回执为准。原件不落盘或发布，ZIP容器通过不等于内容通过。
-- **ACLED 下一步**：独立审阅合并后仅一次GitHub dispatch验收；非200/登录页停止，不通过换出口、伪造会话或重跑绕过。取得真实结果后再评估受支持的认证方式。
+- **ACLED 工作基线**：2026-09-17 PR #378/#379已合并，main至`codex/acled-weekly-readonly-preflight`；本轮无新网络请求或生产写入。
+- **ACLED 当前完成**：一次云端认证文件下载/退出成功；同hash本地原件参与六区991,218行只读标准化，结果与当前配置一致。预演不输出原行或候选JSON。
+- **ACLED 下一步**：本轮独立审阅/完整检查/CI通过后合并；再设计六区及月表有界更新入口、私有暂存、修订复核与既有保护发布。此前单次预算均已耗，不自行续跑。
 - **ACLED 仍未完成**：GitHub持续XLSX下载/分析/发布与HAPI六指标替代均未上线。两条路线分开；既有四槽后续与ARR第二周期自然等待不变。以下09-13回执为历史。
 
 ### 2026-09-13 交接（历史）
