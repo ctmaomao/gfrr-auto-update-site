@@ -1,6 +1,7 @@
 ﻿import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { isReviewedAcledAuthWorkflow } from './acled-auth-workflow-policy.mjs';
 
 import { DAILY_REFRESH_SCHEDULE_UTC } from './transport-shock-refresh-history.mjs';
 import { replaceJsonBatchSafely } from './run-daily-pipeline.mjs';
@@ -924,7 +925,11 @@ for (const file of workflowFiles) {
   }
 
   for (const [pattern, message] of forbiddenRuntimePatterns) {
-    if (pattern.test(text)) addRuntimeFailure(file, message);
+    // ADR-0051 exception only strips the two approved Secret references in the
+    // exact reviewed diagnostic workflow. All other forbidden patterns still run.
+    const checkedText = isReviewedAcledAuthWorkflow(file, text)
+      ? text.replace(/secrets\.ACLED_DOWNLOAD_(?:USERNAME|PASSWORD)/gu, 'approved_download_credential') : text;
+    if (pattern.test(checkedText)) addRuntimeFailure(file, message);
   }
 
   if (!hasNode24ActionsEnv(text)) {
