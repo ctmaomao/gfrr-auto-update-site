@@ -861,6 +861,7 @@ GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions�
 `.github/workflows/publish-edgeone-release.yml` 是唯一受审发布入口：
 
 - 每 3 小时的第 55 分钟运行，理论上最多 8 次/天、31 天最多 248 次；前端 HTML / CSS / JS 改动可额外即时发布。
+- 成功的 Macro Risk/Bubble editorial 及 ODP 完成事件也可唤醒发布；ODP 不依赖 AI 成功。上述 248 次仅是基础 cron，不是全部发布总量。每次仍按无变化 no-op 和最近 32 天 400 次总上限判断，不为即时事件绕过限额；见 [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)。
 - 每次先运行 `npm run check:all` 和 `npm run build:pages-artifact`，只同步 `_site` 白名单产物；产物无变化时不提交，因此不会触发 EdgeOne 构建。
 - 排队后 checkout 显式读取运行时最新 `main`，在安装/校验/构建前固定实际 source SHA；发布提交和 Summary 使用这个 SHA，而不是可能已旧的触发事件 SHA。校验后不再更新源 checkout，避免产物与已验证代码脱节；三小时正常批次延迟仍是有意保留的配额边界。
 - 专用仓库最近 32 天已有 400 次发布时 fail closed，保留至少 100 次额度缓冲；不要为了越过保护而改阈值或反复手动部署。
