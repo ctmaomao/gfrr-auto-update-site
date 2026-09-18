@@ -11,6 +11,8 @@ on:
         required: true
   schedule:
     - cron: '30 0 * * 1'
+    - cron: '30 0 * * 3'
+    - cron: '30 0 * * 5'
 permissions:
   contents: write
   actions: write
@@ -45,5 +47,6 @@ jobs:
         env:
           ACLED_DOWNLOAD_USERNAME: ${{ secrets.ACLED_DOWNLOAD_USERNAME }}
           ACLED_DOWNLOAD_PASSWORD: ${{ secrets.ACLED_DOWNLOAD_PASSWORD }}
+          ACLED_AUTO_SCHEDULE: ${{ github.event.schedule }}
           GH_TOKEN: ${{ github.token }}
         run: node scripts/run-acled-auto-update.mjs --live

@@ -12,6 +12,16 @@ const fixture = () => [
 const invalid = urls => assert.throws(() => validateAcledDownloadManifest(urls),
   { message: 'invalid_acled_download_manifest' });
 
+test('weekly scope requires exactly six weekly identities; default pair contract stays strict', () => {
+  const weekly = fixture().slice(0, 6);
+  assert.equal(validateAcledDownloadManifest(weekly, { scope: 'weekly' }).entries.length, 6);
+  invalid(weekly);
+  for (const urls of [fixture(), weekly.slice(1), [...weekly.slice(1), weekly[1]], fixture().slice(6), [...weekly.slice(1), fixture()[6]]]) {
+    assert.throws(() => validateAcledDownloadManifest(urls, { scope: 'weekly' }));
+  }
+  for (const scope of ['monthly', '', null, true]) assert.throws(() => validateAcledDownloadManifest(weekly, { scope }));
+});
+
 test('twelve identities, deterministic order, no authorization or content inference', () => {
   const urls = fixture(); const before = [...urls];
   const result = validateAcledDownloadManifest(urls);

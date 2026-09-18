@@ -51,8 +51,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 ### 2026-09-18 ACLED 周/月分频自动更新
 
 - **Acceptance baseline**：owner 已明确“同意，请实施”：北京时间周一/三/五08:30，周一周+月26请求，周三/五仅周14+14，每周上限54；每请求15秒、零重试/跳转，无变化不发布、失败保留旧数据。沿用独立AI审阅及commit/push/合并权限，不新增即时验收或initial预算。
-- **设计/当前步骤**：[ADR-0056](ADR/0056-acled-split-cadence.md)先独立更新精确workflow策略；后续实现仅周模式和三日claim，周一沿用旧键防重复。周模式月配置原始字节、日期和来源原样保留，仍运行双配置严格校验；旧提醒/API/HAPI/已耗initial不变。
-- **验证/下一步**：策略阶段只新增fixture与精确digest例外，不改活动workflow或取数。独立审阅/完整检查后串行接入、回归及远端dry-run；不把dry-run当作实际周内取数验收。
+- **策略/实现**：[ADR-0056](ADR/0056-acled-split-cadence.md)策略 PR #401 经独立AI审阅、完整本地检查与CI 35299316908通过后合并为73d81d51。后续独立实现接入精确cron+UTC日选择、仅周六文件模式和三日claim；周一沿用旧键，缺少schedule值或错日均停止。周模式月配置原始字节、日期和来源原样保留，仍运行双配置严格校验；旧提醒/API/HAPI/已耗initial不变。
+- **验证/下一步**：离线回归覆盖14请求无月URL、默认12文件不放宽、真实合成XLSX六区域标准化、原月字节贯穿CAS载荷、重复claim、无变化/失败不发布、旧月严格校验阻断。实现的完整检查、独立审阅、CI和远端dry-run以本轮PR回执为准；本轮不请求真实ACLED，不把dry-run当作实际周内取数验收，合并后等待自然计划槽。
+- **独立审阅修复**：既有刷新receipt要求两配置auto来源。周内若月配置被合法手工导入替换，提前以`monthly_baseline_receipt_hold`停止（claim/登录前零请求），不篡改provenance、不先提交后失败；周一完整采集可重新建立合格auto配对。当前生产两配置均auto，不受此边界影响；不放宽receipt/checker。
 - **前次已完成回执**：PR #400 已合并；无下载恢复35292372786、Pages35292641799、EdgeOne35292612778成功，双站与ff711c00完全一致（周09-05/月09-11）；[最终验收](https://github.com/ctmaomao/gfrr-auto-update-site/pull/400#issuecomment-5723348751)结束下列旧交接中的Pages待验状态。
 
 ### 2026-09-18 ACLED 自动更新整链接入

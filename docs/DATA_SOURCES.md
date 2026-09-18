@@ -774,7 +774,9 @@ P35 起,新增 [`GDELT_SOURCE_POLICY.md`](GDELT_SOURCE_POLICY.md) 与 `npm run c
 
 ### ACLED — Armed Conflict Location & Event Data
 
-2026-09-18 owner 已批准[周/月分频策略 ADR-0056](ADR/0056-acled-split-cadence.md)：北京时间周一08:30采集周+月，周三/五08:30仅周，每周最多54请求（26+14+14）。周内不重新下载月表、不刷新旧月数据日期，配对严格校验与来源限制保持。策略先独立审阅，实际切换以实现PR为准；不产生新的initial或即时取数预算。
+2026-09-18 owner 已批准[周/月分频策略 ADR-0056](ADR/0056-acled-split-cadence.md)：北京时间周一08:30采集周+月，周三/五08:30仅周，每周最多54请求（26+14+14）。策略PR #401已独立审阅合并；实现通过精确GitHub cron及UTC日选择模式，缺少schedule值/错日/重复槽停止。周内不请求月表页面或文件，不刷新旧月数据日期，月JSON按原字节配对发布；旧月严格校验失败仍阻断上线。来源限制保持，不产生新的initial或即时取数预算；上线以实现PR回执为准，dry-run不代表真实采集验收。
+
+既有自动刷新receipt要求两个配置的`preparedBy`均为auto。若月配置后来被手工导入替换，周内运行在claim和登录前以`monthly_baseline_receipt_hold`停止；不修改手工来源标记，也不放宽receipt。周一完整采集验证成功后可重新建立auto配对。此边界不消耗额外请求、不重试。
 
 [自动更新接入](ACLED_AUTOMATIC_UPDATE.md)复用已审十二文件标准化链，采用持久 initial/UTC周 claim 和双配置 CAS 提交。`preparedBy`显式标记自动处理，旧 source ID 仅兼容。随后携带提交及双哈希派发 World Order，生成前后校验后才接续 Pages/EdgeOne。策略 PR #397 已合并；真实首次下载与站点验收以运行回执为准，不能由代码测试通过推断。
 

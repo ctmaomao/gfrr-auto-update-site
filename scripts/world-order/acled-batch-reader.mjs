@@ -59,13 +59,13 @@ async function readOne(url, fetchImpl, maxBytes, timeoutMs) {
  * A future reviewed session owner must inject transport and handle login/logout.
  * Buffers are intentionally separate from the JSON-safe report; never log them.
  */
-export async function readAcledBatch({ urls, fetchImpl, timeoutMs = 15000 } = {}) {
+export async function readAcledBatch({ urls, fetchImpl, timeoutMs = 15000, scope = 'pair' } = {}) {
   const report = { status: 'stopped', requestCount: 0, files: [], contentValidated: false,
     productionEligible: false, productionWritten: false, rawFileSaved: false };
   const stopped = reason => ({ report: { ...report, reason }, workbooks: null });
   if (typeof fetchImpl !== 'function' || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15000) return stopped('invalid_context');
   let entries;
-  try { entries = validateAcledDownloadManifest(urls).entries; } catch { return stopped('invalid_manifest'); }
+  try { entries = validateAcledDownloadManifest(urls, { scope }).entries; } catch { return stopped('invalid_manifest'); }
   const totals = { weekly: { bytes: 0, expanded: 0 }, monthly: { bytes: 0, expanded: 0 } };
   const workbooks = [];
   for (const entry of entries) {
