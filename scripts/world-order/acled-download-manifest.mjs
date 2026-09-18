@@ -18,8 +18,8 @@ function reject() { throw new Error('invalid_acled_download_manifest'); }
  * Identity validity is NOT provenance, freshness, source permission or content proof.
  * Conservative ASCII paths intentionally fail closed on new upstream naming schemes.
  */
-export function validateAcledDownloadManifest(urls) {
-  if (!Array.isArray(urls) || urls.length !== 12) reject();
+export function validateAcledDownloadManifest(urls, { scope = 'pair' } = {}) {
+  if (!['pair', 'weekly'].includes(scope) || !Array.isArray(urls) || urls.length !== (scope === 'pair' ? 12 : 6)) reject();
   const entries = [];
   const identities = new Set();
   for (const raw of urls) {
@@ -45,9 +45,9 @@ export function validateAcledDownloadManifest(urls) {
     entries.push(entry);
   }
   for (const region of ACLED_WEEKLY_REGIONS) if (!identities.has(`weekly:${region}`)) reject();
-  for (const slug of ACLED_MONTHLY_SLUGS) if (!identities.has(`monthly:${slug}`)) reject();
+  if (scope === 'pair') for (const slug of ACLED_MONTHLY_SLUGS) if (!identities.has(`monthly:${slug}`)) reject();
   const monthlyDates = new Set(entries.filter(e => e.kind === 'monthly').map(e => e.sourceDate));
-  if (monthlyDates.size !== 1) reject();
+  if (monthlyDates.size !== (scope === 'pair' ? 1 : 0)) reject();
   // Weekly dates may differ; only the existing content sanitizer proves a common window.
   return { schemaVersion: 'acled-download-manifest-v1', status: 'identities_validated_only',
     networkRequests: 0, productionEligible: false, contentValidated: false,

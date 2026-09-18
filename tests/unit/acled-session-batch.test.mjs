@@ -30,6 +30,30 @@ function fake({ failPage = false, failFile = false, failLogout = false, badLogin
   } };
 }
 const run = f => collectAcledSessionBatch({ username, password, fetchImpl: f.fetchImpl, timeoutMs: 30 });
+
+test('weekly scope makes exactly 14 requests and never accesses monthly pages or files', async () => {
+  const f = fake();
+  const r = await collectAcledSessionBatch({ username, password, fetchImpl: f.fetchImpl, timeoutMs: 30, scope: 'weekly' });
+  assert.equal(r.report.status, 'authenticated_zip_batch_read');
+  assert.equal(r.report.requestCount, 14); assert.equal(f.calls.length, 14);
+  assert.equal(r.workbooks.length, 6); assert.ok(r.workbooks.every(w => w.kind === 'weekly'));
+  assert.ok(DETAIL_PAGES.filter(p => p.kind === 'monthly').every(p => !f.calls.includes(p.url) && !f.calls.includes(link(p))));
+  assert.equal(r.report.logout, 'confirmed'); assert.equal(r.report.sessionMayRemain, false);
+});
+
+test('weekly failures preserve no partial batch, logout once, invalid scope makes no requests', async () => {
+  for (const [flags, count] of [[{ failPage: true }, 3], [{ failFile: true }, 9], [{ failLogout: true }, 14], [{ hangFile: true }, 9]]) {
+    const f = fake(flags), r = await collectAcledSessionBatch({ username, password, fetchImpl: f.fetchImpl, timeoutMs: 30, scope: 'weekly' });
+    assert.equal(f.calls.length, count); assert.equal(r.report.requestCount, count); assert.equal(r.workbooks, null);
+    assert.equal(f.calls.filter(u => u.startsWith(AUTH_PROBE.logoutUrl)).length, 1);
+    assert.equal(r.report.sessionMayRemain, Boolean(flags.failLogout));
+  }
+  const f = fake();
+  for (const scope of ['monthly', 'all', null]) {
+    assert.equal((await collectAcledSessionBatch({ username, password, fetchImpl: f.fetchImpl, scope })).report.requestCount, 0);
+  }
+  assert.equal(f.calls.length, 0);
+});
 test('one session: 26 serial requests, whole batch released only after confirmed logout', async () => {
   const f = fake(), r = await run(f);
   assert.equal(f.calls.length, 26); assert.equal(r.report.requestCount, 26);

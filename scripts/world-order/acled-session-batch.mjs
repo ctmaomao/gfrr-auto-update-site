@@ -4,12 +4,12 @@ import { readAcledBatch } from './acled-batch-reader.mjs';
 
 // No default transport or execution entry point. Login, discovery, files and logout
 // share one short-lived session; only successful logout releases the full batch.
-export async function collectAcledSessionBatch({ username, password, fetchImpl, timeoutMs = 15000 } = {}) {
+export async function collectAcledSessionBatch({ username, password, fetchImpl, timeoutMs = 15000, scope = 'pair' } = {}) {
   const report = { status: 'stopped', requestCount: 0, login: 'not_attempted', logout: 'not_attempted',
     sessionMayRemain: false, pages: [], files: [], contentValidated: false, productionEligible: false,
     productionWritten: false, rawFileSaved: false };
   const result = { report, workbooks: null };
-  if (typeof fetchImpl !== 'function' || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15000
+  if (!['pair', 'weekly'].includes(scope) || typeof fetchImpl !== 'function' || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15000
     || ![username, password].every(v => typeof v === 'string' && v.length > 0 && v.length <= 1024 && !/[\x00-\x1f\x7f]/u.test(v))) {
     report.reason = 'invalid_context'; return result;
   }
@@ -32,7 +32,7 @@ export async function collectAcledSessionBatch({ username, password, fetchImpl, 
   let workbooks = null;
   try {
     const urls = [];
-    for (const page of DETAIL_PAGES) {
+    for (const page of DETAIL_PAGES.filter(p => scope === 'pair' || p.kind === 'weekly')) {
       report.requestCount++;
       const response = await controlRequest(page.url, { method: 'GET', headers: { Cookie: cookie, Accept: 'text/html' } }, fetchImpl, timeoutMs, 'html');
       report.pages.push({ kind: page.kind, identity: page.identity, httpStatus: response.httpStatus, bytes: response.receivedBytes });
@@ -41,7 +41,7 @@ export async function collectAcledSessionBatch({ username, password, fetchImpl, 
       catch { report.reason = 'detail_link_failed'; return result; }
     }
     const allowed = new Set(urls);
-    const batch = await readAcledBatch({ urls, timeoutMs, fetchImpl: (url, options) => {
+    const batch = await readAcledBatch({ urls, timeoutMs, scope, fetchImpl: (url, options) => {
       if (!allowed.has(url)) throw new Error('unexpected_target');
       return fetchImpl(url, { ...options, headers: { ...options.headers, Cookie: cookie } });
     } });

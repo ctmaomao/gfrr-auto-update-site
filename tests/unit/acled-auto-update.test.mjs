@@ -14,6 +14,7 @@ import { fetchAcledSummary } from '../../scripts/world-order/fetch-acled.mjs';
 import { compactObject } from '../../scripts/world-order/normalize-world-order-inputs.mjs';
 import { isReviewedAcledAuthWorkflow, AUTO_WORKFLOW_PATH } from '../../scripts/acled-auth-workflow-policy.mjs';
 import { isAcledRepositoryOrigin } from '../../scripts/world-order/acled-repository.mjs';
+import { acledAutoPlan, validAcledScheduledSlot } from '../../scripts/world-order/acled-auto-cadence.mjs';
 
 const sha = v => createHash('sha256').update(v).digest('hex');
 const paths = { weekly: 'config/world-order-acled-regional-weekly.json', monthly: 'config/world-order-acled-global-monthly.json' };
@@ -25,7 +26,7 @@ const json = value => new Response(JSON.stringify(value), { headers: { 'content-
 const pubHead = 'a'.repeat(40);
 const runResponse = () => json({ workflow_run_id: 42, run_url: 'https://api.github.com/repos/ctmaomao/gfrr-auto-update-site/actions/runs/42',
   html_url: 'https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/42' });
-function fixture(t, automatic = false) {
+function fixture(t, automatic = false, monthlyWhitespace = false, invalidMonthly = false) {
   const parent = fs.realpathSync(os.tmpdir()), root = fs.mkdtempSync(path.join(parent, 'gfrr-auto-test-'));
   t.after(() => { if (path.dirname(fs.realpathSync(root)) !== parent || !path.basename(root).startsWith('gfrr-auto-test-')) throw new Error('unsafe cleanup'); fs.rmSync(root, { recursive: true }); });
   const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true,
@@ -41,16 +42,18 @@ function fixture(t, automatic = false) {
     const data = JSON.parse(fs.readFileSync(path.join(root, file)));
     // Fixture mode must not change after production switches to automatic input.
     data.preparedBy = automatic ? 'github-actions-acled-auto' : 'manual';
-    fs.writeFileSync(path.join(root, file), `${JSON.stringify(data, null, 2)}\n`);
+    if (invalidMonthly && file === paths.monthly) data.global.fatalitiesLatestFullYear = -1;
+    fs.writeFileSync(path.join(root, file), `${JSON.stringify(data, null, monthlyWhitespace && file === paths.monthly ? '\t' : 2)}\n${monthlyWhitespace && file === paths.monthly ? '\n' : ''}`);
   }
   git(['-c', 'core.autocrlf=false', 'add', '.']);
   git(['-c', 'user.name=Test', '-c', 'user.email=test@localhost', '-c', 'commit.gpgsign=false', 'commit', '-m', 'fixture']);
   const head = git(['rev-parse', 'HEAD']); git(['update-ref', 'refs/remotes/origin/main', head]);
   const candidates = Object.fromEntries(Object.values(paths).map(file => [path.basename(file), JSON.parse(fs.readFileSync(path.join(root, file)))]));
   const calls = [], claims = new Set(); let prepared;
-  const collect = async () => { calls.push('collect'); return { report: { status: 'authenticated_zip_batch_read', requestCount: 26,
+  const collect = async ({ scope = 'pair' } = {}) => { calls.push('collect'); return { report: { status: 'authenticated_zip_batch_read', requestCount: scope === 'weekly' ? 14 : 26,
     logout: 'confirmed', sessionMayRemain: false }, workbooks: [Buffer.from('private')] }; };
-  const validate = () => { calls.push('validate'); return { report: { status: 'private_validation_passed', cleanupConfirmed: true }, candidates: structuredClone(candidates) }; };
+  const validate = (_workbooks, { scope = 'pair' } = {}) => { calls.push('validate'); return { report: { status: 'private_validation_passed', cleanupConfirmed: true },
+    candidates: structuredClone(Object.fromEntries(Object.entries(candidates).filter(([key]) => scope === 'pair' || key === path.basename(paths.weekly)))) }; };
   const fetchImpl = async (url, options) => {
     assert.equal(options.redirect, 'manual'); assert.ok(options.signal); const body = JSON.parse(options.body);
     if (url.endsWith('/dispatches')) { calls.push('dispatch'); assert.equal(body.ref, 'main'); assert.equal(options.headers['X-GitHub-Api-Version'], '2026-03-10'); return runResponse(); }
@@ -64,6 +67,7 @@ function fixture(t, automatic = false) {
     calls.push('publish'); assert.equal(body.variables.input.expectedHeadOid, head);
     assert.deepEqual(body.variables.input.fileChanges.additions.map(f => f.path), Object.values(paths));
     for (const f of body.variables.input.fileChanges.additions) assert.equal(JSON.parse(Buffer.from(f.contents, 'base64')).preparedBy, 'github-actions-acled-auto');
+    if (monthlyWhitespace) assert.equal(Buffer.from(body.variables.input.fileChanges.additions.find(f => f.path === paths.monthly).contents, 'base64').toString('utf8'), fs.readFileSync(path.join(root, paths.monthly), 'utf8'));
     return json({ data: { createCommitOnBranch: { commit: { oid: pubHead, tree: { oid: prepared.tree }, parents: { nodes: [{ oid: head }] } }, ref: { target: { oid: pubHead } } } } });
   };
   const publish = input => publishAcledPair({ ...input, prepare: v => { prepared = prepareAcledPairCommit(v); return prepared; } });
@@ -88,6 +92,93 @@ test('UTC Monday slots separate initial and weekly budgets, including year bound
   assert.equal(acledWeekSlot('2026-09-21T00:00:00Z'), '2026-09-21');
   assert.equal(acledWeekSlot('2027-01-01T00:00:00Z'), '2026-12-28');
   assert.throws(() => acledWeekSlot('invalid'));
+});
+
+test('exact schedule, UTC weekday and start threshold select only 26/14/14 budgets', () => {
+  let total = 0;
+  for (const [day, date, scope, maximum] of [[1, '2026-09-21', 'pair', 26], [3, '2026-09-23', 'weekly', 14], [5, '2026-09-25', 'weekly', 14]]) {
+    const scheduled = { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: `30 0 * * ${day}` };
+    assert.equal(acledAutoPlan(scheduled, `${date}T00:29:59Z`), null);
+    assert.deepEqual(acledAutoPlan(scheduled, `${date}T00:30:00Z`), { slot: date, scope, maxAcledRequests: maximum });
+    assert.equal(acledAutoPlan(scheduled, `${date}T23:59:59Z`).slot, date);
+    assert.equal(acledAutoPlan(scheduled, 'invalid'), null); total += maximum;
+  }
+  assert.equal(total, 54);
+  assert.equal(acledAutoPlan({ ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 5' }, '2027-01-01T00:30:00Z').slot, '2027-01-01');
+  assert.deepEqual(acledAutoPlan(env), { slot: 'initial', scope: 'pair', maxAcledRequests: 26 });
+  for (const slot of ['2026-09-21', '2026-09-23', '2026-09-25', '2027-01-01']) assert.equal(validAcledScheduledSlot(slot), true);
+  for (const slot of ['2026-09-22', '2026-09-24', '2026-09-26', '2026-09-27', '2026-02-30', 'bad', null]) assert.equal(validAcledScheduledSlot(slot), false);
+});
+
+test('missing schedule, wrong day, delayed cross-day and retry stop before GitHub or source access', async () => {
+  for (const overrides of [{}, { ACLED_AUTO_SCHEDULE: '30 0 * * *' }, { ACLED_AUTO_SCHEDULE: '30 0 * * 1' },
+    { ACLED_AUTO_SCHEDULE: '30 0 * * 3', GITHUB_RUN_ATTEMPT: '2' }]) {
+    const result = await runAcledAutoUpdate({ execute: true, env: { ...env, GITHUB_EVENT_NAME: 'schedule', ...overrides },
+      now: '2026-09-23T00:30:00Z', root: 'must-not-touch', fetchImpl: () => assert.fail('no requests'), collect: () => assert.fail('no source') });
+    assert.equal(result.status, 'execution_hold'); assert.equal(result.githubRequests, 0); assert.equal(result.acledRequests, 0);
+  }
+  for (const now of ['2026-09-23T00:29:59Z', '2026-09-24T00:30:00Z']) assert.equal(acledAutoPlan({ ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 3' }, now), null);
+});
+
+test('weekly-only strict publication preserves exact monthly bytes and pins; daily claims prevent repeat', async t => {
+  const f = fixture(t, true, true);
+  const original = fs.readFileSync(path.join(f.root, paths.monthly), 'utf8');
+  // Same filename/date revision must still publish; no artificial date advancement.
+  f.candidates[path.basename(paths.weekly)].preparedBy = 'manual';
+  f.candidates[path.basename(paths.weekly)].global.fatalitiesLast4Weeks += 1;
+  let observed;
+  const options = { ...f.options, env: { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 3' },
+    now: '2026-09-23T00:30:00Z', publish: input => { observed = input; return f.options.publish(input); } };
+  const r = await runAcledAutoUpdate(options);
+  assert.equal(r.status, 'refresh_dispatched_site_pending', JSON.stringify(r));
+  assert.equal(r.acledRequests, 14); assert.equal(r.githubRequests, 5);
+  assert.equal(observed.candidate.monthly, original);
+  assert.equal(observed.expectedBaselineSha256.monthly, sha(original));
+  assert.equal(r.receipt.acled_monthly_sha256, sha(original));
+  assert.equal(r.comparison.monthly.status, 'unchanged'); assert.equal(r.comparison.weekly.status, 'same_date_revision');
+  assert.deepEqual([...f.claims], ['refs/tags/acled-auto-attempt-v1/2026-09-23']);
+  f.calls.length = 0;
+  assert.equal((await runAcledAutoUpdate(options)).status, 'slot_unavailable'); assert.deepEqual(f.calls, ['claim-query']);
+  assert.equal(fs.readFileSync(path.join(f.root, paths.monthly), 'utf8'), original);
+  assert.equal(f.git(['status', '--porcelain']), '');
+});
+
+test('Friday weekly unchanged skips mutation; unexpected monthly candidate or request overrun holds', async t => {
+  const f = fixture(t, true);
+  const options = { ...f.options, env: { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 5' }, now: '2026-09-25T00:30:00Z' };
+  const r = await runAcledAutoUpdate(options);
+  assert.equal(r.status, 'unchanged', JSON.stringify(r)); assert.equal(r.acledRequests, 14);
+  assert.ok(!f.calls.includes('publish')); assert.ok(!f.calls.includes('dispatch'));
+  for (const mode of ['extra_candidate', 'overrun']) {
+    const g = fixture(t, true);
+    const result = await runAcledAutoUpdate({ ...options, ...g.options, env: options.env, now: options.now,
+      ...(mode === 'extra_candidate' ? { validate: () => ({ report: { status: 'private_validation_passed', cleanupConfirmed: true }, candidates: g.candidates }) }
+        : { collect: async () => ({ report: { status: 'authenticated_zip_batch_read', requestCount: 26, logout: 'confirmed', sessionMayRemain: false }, workbooks: [] }) }) });
+    assert.equal(result.status, mode === 'extra_candidate' ? 'validation_failed' : 'collection_failed');
+    assert.ok(!g.calls.includes('publish')); assert.ok(!g.calls.includes('dispatch'));
+  }
+});
+
+test('weekly update cannot bypass strict validation of the untouched monthly baseline', async t => {
+  const f = fixture(t, true, false, true);
+  f.candidates[path.basename(paths.weekly)].global.fatalitiesLast4Weeks += 1;
+  const result = await runAcledAutoUpdate({ ...f.options,
+    env: { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 3' }, now: '2026-09-23T00:30:00Z' });
+  assert.equal(result.status, 'hold', JSON.stringify(result)); assert.equal(result.acledRequests, 14);
+  assert.equal(result.configurationsPublished, false); assert.ok(f.calls.includes('publish-query'));
+  assert.ok(!f.calls.includes('publish')); assert.ok(!f.calls.includes('dispatch'));
+  assert.equal(f.git(['status', '--porcelain']), '');
+});
+
+test('manual monthly provenance holds before claim/login, never a post-publication receipt failure', async t => {
+  const f = fixture(t);
+  const original = fs.readFileSync(path.join(f.root, paths.monthly), 'utf8');
+  const r = await runAcledAutoUpdate({ ...f.options,
+    env: { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 3' }, now: '2026-09-23T00:30:00Z' });
+  assert.equal(r.status, 'monthly_baseline_receipt_hold');
+  assert.equal(r.githubRequests, 0); assert.equal(r.acledRequests, 0); assert.deepEqual(f.calls, []);
+  assert.equal(fs.readFileSync(path.join(f.root, paths.monthly), 'utf8'), original);
+  assert.equal(f.git(['status', '--porcelain']), '');
 });
 
 test('official checkout origin passes the full chain; only two exact HTTPS spellings are accepted', async t => {
@@ -119,7 +210,7 @@ test('real strict preparation, paired publication and exact refresh receipt run 
   assert.equal(JSON.stringify(f.candidates), before); assert.ok(!JSON.stringify(r).includes('secret_'));
   f.calls.length = 0; const again = await runAcledAutoUpdate(f.options);
   assert.equal(again.status, 'slot_unavailable'); assert.equal(again.acledRequests, 0); assert.deepEqual(f.calls, ['claim-query']);
-  const weekly = await runAcledAutoUpdate({ ...f.options, env: { ...env, GITHUB_EVENT_NAME: 'schedule' }, now: new Date('2026-09-21T00:30:00Z') });
+  const weekly = await runAcledAutoUpdate({ ...f.options, env: { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 1' }, now: new Date('2026-09-21T00:30:00Z') });
   assert.equal(weekly.status, 'refresh_dispatched_site_pending');
   assert.deepEqual([...f.claims].sort(), ['refs/tags/acled-auto-attempt-v1/2026-09-21', 'refs/tags/acled-auto-attempt-v1/initial']);
 });

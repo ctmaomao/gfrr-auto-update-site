@@ -1,4 +1,5 @@
 import { controlRequest } from './acled-authenticated-probe.mjs';
+import { validAcledScheduledSlot } from './acled-auto-cadence.mjs';
 
 const repo = 'ctmaomao/gfrr-auto-update-site';
 const api = `https://api.github.com/repos/${repo}`;
@@ -24,8 +25,7 @@ export function acledWeekSlot(now = new Date()) {
 export async function claimAcledSlot({ slot, expectedHead, token, fetchImpl = fetch } = {}) {
   const report = { status: 'claim_hold', requestCount: 0, mutationAttempted: false, retryAllowed: false };
   try {
-    if (!validToken(token) || !oid(expectedHead) || (slot !== 'initial'
-      && (typeof slot !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(slot) || acledWeekSlot(`${slot}T00:00:00Z`) !== slot))) return report;
+    if (!validToken(token) || !oid(expectedHead) || (slot !== 'initial' && !validAcledScheduledSlot(slot))) return report;
     const name = `refs/tags/acled-auto-attempt-v1/${slot}`;
     async function graphql(query, variables) {
       report.requestCount++;

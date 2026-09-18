@@ -6,8 +6,40 @@ import path from 'node:path';
 import childProcess from 'node:child_process';
 import { validateAcledPrivateBatch } from '../../scripts/world-order/acled-private-validation.mjs';
 import { DETAIL_PAGES } from '../../scripts/world-order/acled-detail-discovery.mjs';
+import { workbook } from '../fixtures/acled-weekly-workbook.mjs';
 const listing = () => fs.readdirSync(os.tmpdir()).filter(n => n.startsWith('gfrr-acled-private-')).sort();
 const files = () => DETAIL_PAGES.map(p => ({ url: `https://acleddata.com/system/files/2026-09/${p.kind === 'monthly' ? `number_of_${p.identity}_as-of-11Sep2026` : `${p.identity}_aggregated_data_up_to_week_of-2026-09-05`}.xlsx`, bytes: Buffer.from('PRIVATE_INVALID_FILE') }));
+
+test('six real synthetic XLSX inputs pass unchanged weekly sanitizer with no monthly processing', () => {
+  const before = listing();
+  const bytes = workbook((Date.parse('2026-09-05T00:00:00Z') - Date.UTC(1899, 11, 30)) / 86400000);
+  const weekly = files().filter(f => !f.url.includes('number_of_')).map(f => ({ ...f, bytes }));
+  const r = validateAcledPrivateBatch(weekly, { scope: 'weekly' });
+  assert.equal(r.report.status, 'private_validation_passed', JSON.stringify(r.report));
+  assert.equal(r.report.cleanupConfirmed, true); assert.equal(r.report.rawFilesRetained, false);
+  assert.deepEqual(Object.keys(r.candidates), ['world-order-acled-regional-weekly.json']);
+  const value = r.candidates['world-order-acled-regional-weekly.json'];
+  assert.equal(value.latestWeek, '2026-09-05'); assert.equal(value.filesIngested.length, 6);
+  assert.equal(value.filesIngested.reduce((sum, f) => sum + f.rowCount, 0), 72);
+  assert.deepEqual(listing(), before);
+});
+
+test('weekly private validation runs only weekly sanitizer and releases exactly one candidate', t => {
+  const before = listing(), calls = [];
+  t.mock.method(childProcess, 'spawnSync', (_exe, args, options) => {
+    calls.push(path.basename(args[0]));
+    assert.equal(fs.existsSync(path.join(options.cwd, 'manual-artifacts/world-order/acled-input/monthly')), false);
+    assert.equal(options.env.ACLED_DOWNLOAD_PASSWORD, undefined);
+    fs.writeFileSync(path.join(options.cwd, 'config/world-order-acled-regional-weekly.json'), '{}');
+    return { status: 0 };
+  });
+  const weekly = files().filter(f => !f.url.includes('number_of_'));
+  assert.equal(validateAcledPrivateBatch(weekly).report.reason, 'invalid_batch');
+  const r = validateAcledPrivateBatch(weekly, { scope: 'weekly' });
+  assert.equal(r.report.status, 'private_validation_passed'); assert.equal(r.report.cleanupConfirmed, true);
+  assert.deepEqual(Object.keys(r.candidates), ['world-order-acled-regional-weekly.json']);
+  assert.deepEqual(calls, ['sanitize-acled-weekly.mjs']); assert.deepEqual(listing(), before);
+});
 test('invalid batch cannot create a directory or touch production', () => {
   const before = listing();
   for (const input of [null, [], files().slice(1), files().map(f => ({ ...f, bytes: null }))]) {

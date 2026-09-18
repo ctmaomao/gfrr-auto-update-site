@@ -2,6 +2,7 @@ import { runAcledAutoUpdate } from './world-order/acled-auto-update.mjs';
 const args = process.argv.slice(2);
 if (!args.length || (args.length === 1 && args[0] === '--dry-run')) {
   console.log(JSON.stringify({ status: 'dry_run', acledRequests: 0, githubRequests: 0, maxAcledRequests: 26,
+    weeklyOnlyMaxAcledRequests: 14, recurringWeeklyMaxAcledRequests: 54,
     maxGithubRequests: 5, timeoutMsEach: 15000, retries: 0, redirects: 0, productionWritten: false }));
 } else if (args.length === 1 && args[0] === '--live') {
   const report = await runAcledAutoUpdate({ execute: true });
