@@ -50,6 +50,10 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-18 ACLED 自动更新整链接入
 
+- **真实回执/当前任务**：首次 35290763672 已完成 26 请求/12文件/退出与清理，永久 initial 现已耗用；双配置 `25619ed5`（周 09-05/月 09-11、均自动 provenance），自动刷新 35290886868 严格投影/完整检查通过并推送 `4d589e98`，派发 EdgeOne 35291164534。Pages 完成窗口未出现下游 run；API run name 为新动态标题而非既有监听名称。恢复固定名称作为最小兼容修复，仍需 source-free refresh 实证，不先断言平台因果。
+- **下一步/边界**：沿用 owner 自动上线与恢复授权，独立审阅/CI后用原双哈希及配置提交触发无 ACLED 请求的刷新，核对 Pages/EdgeOne 与线上摘要。保留原 listener、不增加重复 Pages dispatch、不修改已耗 claim；精确回执与恢复说明见[自动更新运行说明](ACLED_AUTOMATIC_UPDATE.md)。
+- **已验收站点**：EdgeOne 35291164534 成功，自定义域名 HTTP 200 且 world-order JSON 与 `4d589e98` 逐字节一致（周 09-05/月 09-11）；Pages 仍是旧 09-04/08-21，不能宣称双站完成。
+
 - **首次上线验收修复**：PR #398 已合并 `2b3dfc0b`，最终 CI 35289012332/独立 AI 审阅通过。初次派发 35289495733 在 preflight 停止，GitHub/ACLED 请求均为 0，initial claim 只读查询不存在；官方 checkout origin 没有 `.git` 后缀，与三处身份检查不兼容。独立修复仅接受固定同仓 HTTPS 的带/不带 `.git` 两种精确拼写，补整链与错误地址拒绝测试，不改变 workflow、预算、源/发布门槛；通过审阅和检查后使用尚未领取的首次预算，不重跑旧 run。
 - **刷新验收修复**：只读核对真实 builder 发现 published source 仅含 enabled/status/lastFetchedAt/summary，旧 verifier 却与 fetcher 内部八字段对象比较，必然误报。先按实际四字段契约投影 expected，再保留完整精确比较；测试直接执行现有 producer 的纯投影表达式，并验证完整 summary、日期、意外字段与 null/zero 不被放过。不改生产输出或模型。
 

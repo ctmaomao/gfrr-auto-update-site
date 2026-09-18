@@ -67,8 +67,41 @@ Do not rerun the acquisition job to repair refresh/deployment. In GitHub Actions
 open **Refresh World Order Stress**, run on main with the three receipt values:
 `acled_config_commit`, `acled_weekly_sha256`, `acled_monthly_sha256`. This uses no
 ACLED credentials or source requests; a newer/different pair fails before refresh.
-After a dispatch uncertainty, first inspect its matching run title containing the
-exact config commit; do not send another event until its outcome is resolved.
+The refresh retains the stable `Refresh World Order Stress` name used by existing
+completion listeners. The API-returned run ID is the primary receipt; a display
+title is not an identity proof. After a dispatch uncertainty, inspect the bounded
+dispatch-time/main run window and compare all three receipt inputs in the matching
+run's verification-step log before any recovery. Never select an arbitrary latest
+run or send another event until the uncertain outcome is resolved.
+
+## Initial live receipt (2026-09-18)
+
+Acquisition [35290763672](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/35290763672)
+completed with 26 requests, all 12 files HTTP 200, confirmed login/logout and
+private cleanup; no original files were retained. Its permanent initial slot is
+spent. The earlier preflight-only 35289495733 made zero requests and no claim.
+
+- Config commit: `25619ed575f4b902fe2127b8989c13256437a1d8` (exactly two config files).
+- Weekly: 6 files / 991218 rows / 2026-09-05;
+  SHA256 `6c7b4c34c3f9863a23c86500f3e63753891f41fee77c822dfdf3c8482dbc5f30`.
+- Monthly: 6 files / 43588 rows / 2026-09-11;
+  SHA256 `f2890327957a99f05099ddb4dd7a52bc21457185a8aed1bd03af091ab69188c2`.
+- Both inputs report `preparedBy=github-actions-acled-auto`.
+- Automatic refresh [35290886868](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/35290886868)
+  passed receipt/projection/full checks and pushed `4d589e98`, then dispatched
+  EdgeOne run 35291164534. Configuration/refresh success is not both-site proof.
+- EdgeOne 35291164534 succeeded. Custom-domain HTTP 200 readback matched the
+  exact `4d589e98` JSON bytes (SHA256
+  `a61f0ff3b65adc2cd1a4277842989392189da7533830ceb40026f3bafcb8030a`);
+  Pages still served the old weekly/monthly dates at that check.
+
+Pages did not appear in the bounded completion window. The run API exposed the
+new dynamic run title as `name`, unlike its stable listener name. Removing that
+dynamic name is a minimal compatibility repair, not a proven platform diagnosis;
+verify by a source-free refresh with the original receipt. Final recovery and
+two-site acceptance belong in the repair PR receipt; never redownload this batch.
+
+## Publication uncertainty
 
 `publication_unknown` requires read-only comparison of main's two config bytes
 against `candidateSha256` and expected parent before any recovery. If publication
