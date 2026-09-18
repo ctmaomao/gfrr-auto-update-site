@@ -48,6 +48,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 周/月分频自动更新
+
+- **Acceptance baseline**：owner 已明确“同意，请实施”：北京时间周一/三/五08:30，周一周+月26请求，周三/五仅周14+14，每周上限54；每请求15秒、零重试/跳转，无变化不发布、失败保留旧数据。沿用独立AI审阅及commit/push/合并权限，不新增即时验收或initial预算。
+- **设计/当前步骤**：[ADR-0056](ADR/0056-acled-split-cadence.md)先独立更新精确workflow策略；后续实现仅周模式和三日claim，周一沿用旧键防重复。周模式月配置原始字节、日期和来源原样保留，仍运行双配置严格校验；旧提醒/API/HAPI/已耗initial不变。
+- **验证/下一步**：策略阶段只新增fixture与精确digest例外，不改活动workflow或取数。独立审阅/完整检查后串行接入、回归及远端dry-run；不把dry-run当作实际周内取数验收。
+- **前次已完成回执**：PR #400 已合并；无下载恢复35292372786、Pages35292641799、EdgeOne35292612778成功，双站与ff711c00完全一致（周09-05/月09-11）；[最终验收](https://github.com/ctmaomao/gfrr-auto-update-site/pull/400#issuecomment-5723348751)结束下列旧交接中的Pages待验状态。
+
 ### 2026-09-18 ACLED 自动更新整链接入
 
 - **真实回执/当前任务**：首次 35290763672 已完成 26 请求/12文件/退出与清理，永久 initial 现已耗用；双配置 `25619ed5`（周 09-05/月 09-11、均自动 provenance），自动刷新 35290886868 严格投影/完整检查通过并推送 `4d589e98`，派发 EdgeOne 35291164534。Pages 完成窗口未出现下游 run；API run name 为新动态标题而非既有监听名称。恢复固定名称作为最小兼容修复，仍需 source-free refresh 实证，不先断言平台因果。

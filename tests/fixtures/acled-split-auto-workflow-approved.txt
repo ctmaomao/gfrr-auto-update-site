@@ -1,0 +1,52 @@
+name: ACLED Automatic Update
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+on:
+  workflow_dispatch:
+    inputs:
+      execute_initial:
+        description: 'Use the separately approved initial 26-request publication budget'
+        type: boolean
+        default: false
+        required: true
+  schedule:
+    - cron: '30 0 * * 1'
+    - cron: '30 0 * * 3'
+    - cron: '30 0 * * 5'
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: gfrr-main-writer-main
+  cancel-in-progress: false
+  queue: max
+jobs:
+  update:
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == 1 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Install locked parser without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Offline plan
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.execute_initial }}
+        run: node scripts/run-acled-auto-update.mjs --dry-run
+      - name: Claim budget, download, validate and publish pair
+        if: ${{ github.event_name == 'schedule' || inputs.execute_initial }}
+        env:
+          ACLED_DOWNLOAD_USERNAME: ${{ secrets.ACLED_DOWNLOAD_USERNAME }}
+          ACLED_DOWNLOAD_PASSWORD: ${{ secrets.ACLED_DOWNLOAD_PASSWORD }}
+          ACLED_AUTO_SCHEDULE: ${{ github.event.schedule }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/run-acled-auto-update.mjs --live
