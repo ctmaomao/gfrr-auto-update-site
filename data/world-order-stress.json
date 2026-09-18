@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-18T00:22:25.778Z",
+  "updatedAt": "2026-09-18T00:43:40.528Z",
   "sourceMode": "computed_with_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -16,12 +16,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-18T00:21:18.873Z",
-    "ageMinutes": 1.11505,
+    "updatedAt": "2026-09-18T00:39:18.285Z",
+    "ageMinutes": 4.3707,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 103.935,
-    "gold": 4354.6001,
+    "brent": 103.9,
+    "gold": 4360.5,
     "vix": 17.71,
     "dxy": 118.2126,
     "hyOas": 2.7,
@@ -4927,7 +4927,7 @@
           "Israel",
           "Taiwan"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "API access requires an active evaluation, paid plan or explicit account entitlement; quota and expiry must be checked in the account",
         "queriesRun": [
           {
@@ -4941,9 +4941,9 @@
         "successCount": 1,
         "failureCount": 0,
         "rateLimitedCount": 0,
-        "usedCachedSummary": false,
-        "cacheReason": null,
-        "attemptedAt": "2026-09-18T00:22:22.207Z",
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt-cloud-fresh-cache-hit",
+        "attemptedAt": "2026-09-18T00:43:39.886Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。"
       }
@@ -4951,7 +4951,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-18T00:22:22.591Z",
+      "lastFetchedAt": "2026-09-18T00:43:40.254Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 10,
@@ -5117,16 +5117,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4354.6，显示避险或实际利率压力定价。",
-          "value": 4354.6001,
+          "summary": "基于 Worker 快变量，黄金当前值 4360.5，显示避险或实际利率压力定价。",
+          "value": 4360.5,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 103.94，对地缘与供应风险有部分确认作用。",
-          "value": 103.935,
+          "summary": "基于 Worker 快变量，布伦特当前值 103.9，对地缘与供应风险有部分确认作用。",
+          "value": 103.9,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5134,7 +5134,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "118.2126/4354.6001",
+          "value": "118.2126/4360.5",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5142,7 +5142,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7637.76/4354.6001",
+          "value": "7637.76/4360.5",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -5150,7 +5150,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 103.935,
+          "value": 103.9,
           "direction": "up",
           "confidence": 0.65
         }
