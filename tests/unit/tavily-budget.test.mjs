@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { createGithubLedger, createTavilyBudget, emptyLedger, POLICY, readTavilyUsage, reserveCredit, summarizeLedger, validateLedger } from '../../scripts/lib/tavily-budget.mjs';
+import { createGithubLedger, createTavilyBudget, emptyLedger, POLICY, readTavilyUsage, reserveCredit, summarizeLedger, validateLedger, verifyBudgetStatus } from '../../scripts/lib/tavily-budget.mjs';
 import { collectProvider as macro } from '../../scripts/macro-risk/collect-editorial-news.mjs';
 import { collectProvider as bubble } from '../../scripts/bubble-watch/collect-weekly-editorial-news.mjs';
 import { createSearchKeyPool } from '../../scripts/lib/search-key-pool.mjs';
@@ -20,6 +20,29 @@ function memory(entries = []) {
   } };
 }
 function gate(store, options = {}) { return createTavilyBudget({ store, readUsage: async () => usage(), now: () => clock, ...options }); }
+
+test('deployment probe reads deduplicated meters and reports holds without reserving, searching or exposing keys', async () => {
+  const store = memory();
+  store.write = () => assert.fail('read-only probe must not write');
+  let reads = 0;
+  const status = await verifyBudgetStatus({ store, keys: [context.key, context.key], now: () => clock,
+    readUsage: async () => { reads++; const meter = usage(); meter.account.plan_usage = 1000; return meter; } });
+  assert.equal(reads, 1);
+  assert.equal(status.searches, 0);
+  assert.equal(status.writes, 0);
+  assert.equal(status.reservedCredits, 0);
+  assert.equal(status.meters[0].admission.automated, 'tavily_budget_account_limit');
+  assert.equal(status.meters[0].admission.manual, 'tavily_budget_account_limit');
+  assert.ok(!JSON.stringify(status).includes(context.key));
+  await assert.rejects(verifyBudgetStatus({ store, keys: [], now: () => clock }), /key_missing/);
+  await assert.rejects(verifyBudgetStatus({ store, keys: [context.key], now: () => clock, readUsage: async () => ({}) }), /usage_unknown/);
+  const workflow = readFileSync('.github/workflows/tavily-budget-status.yml', 'utf8');
+  assert.ok(workflow.includes('contents: read'));
+  assert.ok(workflow.includes('persist-credentials: false'));
+  assert.ok(workflow.includes('review-tavily-budget.mjs --verify'));
+  assert.ok(!workflow.includes('contents: write'));
+  assert.ok(!workflow.includes('schedule:'));
+});
 
 test('usage report groups by key, UTC day, mode and consumer without treating missing receipts as zero billing', () => {
   const ledger = { ...emptyLedger(), entries: [row(), row({ state: 'reserved', reportedCredits: null }),

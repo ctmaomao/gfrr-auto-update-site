@@ -2,7 +2,7 @@
 
 ## Status
 
-Owner-authorized implementation on 2026-09-18; independent review and publication authorization remain required. No remote ledger has been initialized and no search has been dispatched by this implementation task.
+Owner-authorized implementation and subsequent explicit publication authorization on 2026-09-18 ("请上线生效"); independent review remains required before merge. Deployment evidence is recorded in the project backlog. No paid search is authorized as a deployment test.
 
 ## Context
 
@@ -34,3 +34,5 @@ The Epoch weekly integration pins the entire existing Bubble production job. Thi
 Rollback must preserve the ledger and disabled/restricted search posture. A revert must not silently restore unbudgeted calls or delete accounting history. No added production dependency, frontend change, subscription or live AI/ACLED request is part of this decision.
 
 Console tooltip verification: clicking the single key usage ring showed `1000 / 1000`; the account usage information tooltip states that its total includes active and deleted keys. These are aggregate counters, not per-request billing records.
+
+Deployment acceptance adds a manual-only, main-only `Tavily Budget Status` workflow with `contents: read` and checkout credential persistence disabled. It uses the existing Actions key only to call official `/usage` and read the ledger through `review:tavily-budget -- --verify`; it cannot initialize, reserve or search. Quota exhaustion is a successful verification of a hold, while unavailable/malformed state fails verification. Reported eligibility is an advisory snapshot, never authorization to bypass atomic reservation. This permits live verification without exposing a key locally or consuming search credits.

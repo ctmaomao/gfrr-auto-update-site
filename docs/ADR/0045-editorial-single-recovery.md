@@ -1,6 +1,6 @@
 # ADR-0045: One additional editorial attempt for the 2026-09-11 input
 
-Status: owner authorized; independent review and CI required before invocation.
+Status: executable exception retired by [ADR-0058](0058-retire-expired-editorial-recovery.md); historical authorization and spent refs retained.
 
 The owner explicitly authorized one additional paid DeepSeek attempt today for the current input after failed run 34567451297 and prompt fix PR #348. This is a narrow exception to ADR-0032, not a reusable override or a refund.
 

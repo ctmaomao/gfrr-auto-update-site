@@ -144,6 +144,32 @@ export async function readTavilyUsage(key, fetchImpl = fetch) {
   return response.json;
 }
 
+// Deployment/status probe only. It performs GETs, never reserves or searches;
+// admission below remains advisory until the real request atomically reserves.
+export async function verifyBudgetStatus({ store, keys, readUsage = readTavilyUsage, now = Date.now }) {
+  if (!keys.length) fail('tavily_budget_key_missing');
+  const { head, ledger } = await store.read();
+  const summary = summarizeLedger(ledger, now());
+  const meters = [];
+  for (const key of [...new Set(keys)]) {
+    const usage = validateUsage(await readUsage(key));
+    const keyId = createHash('sha256').update(key).digest('hex').slice(0, 16);
+    const admission = {};
+    for (const mode of ['automated', 'manual']) {
+      try {
+        reserveCredit(ledger, { id: randomUUID(), time: new Date(now()).toISOString(), consumer: 'oil-news',
+          mode, runId: 'local', keyId, credits: 1, state: 'reserved', accountUsageBefore: usage.planUsage, reportedCredits: null }, usage, now());
+        admission[mode] = 'eligible_snapshot_only';
+      } catch (error) {
+        if (!['tavily_budget_project_limit', 'tavily_budget_account_limit'].includes(error.budgetCode)) throw error;
+        admission[mode] = error.budgetCode;
+      }
+    }
+    meters.push({ keyId, ...usage, admission });
+  }
+  return { operation: 'read_only_verification', searches: 0, writes: 0, head, policy: POLICY, ...summary, meters };
+}
+
 export function createTavilyBudget({ store, readUsage, now = Date.now, id = randomUUID, report = () => {} }) {
   let stopped = false;
   return async ({ key, payload, consumer, mode = 'manual', runId = 'local' }, request) => {

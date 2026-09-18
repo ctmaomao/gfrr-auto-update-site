@@ -1,0 +1,30 @@
+name: Tavily Budget Status
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify official usage and shared ledger without searching
+        env:
+          TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+        run: node scripts/review-tavily-budget.mjs --verify

@@ -8,15 +8,6 @@ export const UPSTREAMS = [
 ];
 const MAX_AGE_MS = 30 * 3600000;
 const PREFIX = 'tags/macro-editorial-budget/v1/';
-// ADR-0045: owner-approved single recovery, not a reusable budget override.
-export const RECOVERY_20260911 = Object.freeze({
-  id: '2026-09-11-input-recovery-1',
-  sourceDataUpdatedAt: '2026-09-11T00:21:21.451Z',
-  radarDigest: '9a86808887b2ef1008615563fe33742297c0625429a436f9790405ec9330e5b1',
-  failedHeadSha: '0663b6916d63aa179b3988eb3113247cc44b9b70',
-  startsAt: '2026-09-11T06:00:00.000Z',
-  expiresAt: '2026-09-11T16:00:00.000Z', // End of the authorized Shanghai calendar day.
-});
 const hold = (reason) => ({ ready: false, reason });
 
 function timestamp(value) {
@@ -31,7 +22,7 @@ export function trustedUpstream(run) {
     && run?.status === 'completed' && run?.conclusion === 'success' && Number.isSafeInteger(run?.id);
 }
 
-export function planAdmission({ eventName, event, runAttempt, repository, ref, radar, radarDigest, world, oil, now }) {
+export function planAdmission({ eventName, event, runAttempt, repository, ref, radar, world, oil, now }) {
   if (repository !== REPOSITORY || ref !== 'refs/heads/main') return hold('untrusted_context');
   if (String(runAttempt) !== '1') return hold('rerun_requires_new_review');
   if (eventName === 'workflow_run') {
@@ -39,6 +30,8 @@ export function planAdmission({ eventName, event, runAttempt, repository, ref, r
   } else if (eventName === 'workflow_dispatch') {
     if (![true, 'true'].includes(event?.inputs?.allow_network) || ![true, 'true'].includes(event?.inputs?.acknowledge_cost)) return hold('manual_authorization_missing');
   } else return hold('ineligible_event');
+  // ADR-0058: the expired one-off route is closed even for its old date/input.
+  if (event?.inputs?.recovery_id !== undefined && event.inputs.recovery_id !== '') return hold('recovery_retired');
   const at = Date.parse(now);
   const dates = [radar?.updatedAt, world?.updatedAt, oil?.builtAt].map(timestamp);
   if (!Number.isFinite(at) || dates.some((date) => !Number.isFinite(date) || date > at || at - date > MAX_AGE_MS)) return hold('snapshot_not_fresh');
@@ -48,15 +41,7 @@ export function planAdmission({ eventName, event, runAttempt, repository, ref, r
   const sourceDataUpdatedAt = new Date(dates[0]).toISOString();
   const inputKey = createHash('sha256').update(sourceDataUpdatedAt).digest('hex');
   const refs = [`${PREFIX}day-${now.slice(0, 10)}`, `${PREFIX}input-${inputKey}`];
-  const recoveryId = event?.inputs?.recovery_id;
-  if (recoveryId !== undefined && recoveryId !== '') {
-    const permit = RECOVERY_20260911;
-    if (eventName !== 'workflow_dispatch' || recoveryId !== permit.id
-      || at < Date.parse(permit.startsAt) || at >= Date.parse(permit.expiresAt)
-      || radar?.updatedAt !== permit.sourceDataUpdatedAt || radarDigest !== permit.radarDigest) return hold('recovery_not_authorized');
-    return { ready: true, reason: 'recovery_candidate', sourceDataUpdatedAt,
-      recoveryId, originalRefs: refs, refs: [`${PREFIX}recovery-${permit.id}`] };
-  }
+
   return { ready: true, reason: 'candidate', sourceDataUpdatedAt, refs };
 }
 
@@ -92,6 +77,7 @@ export function githubClient({ token, fetchImpl = fetch }) {
 
 export async function admitRefresh({ plan, eventName, event, now, snapshots, headSha, api, reserve = false }) {
   if (!plan.ready) return plan;
+  if (plan.recoveryId !== undefined || plan.originalRefs !== undefined) return hold('recovery_retired');
   if (!/^[a-f0-9]{40}$/.test(headSha)) throw new Error('invalid_checkout_sha');
   if (eventName === 'workflow_run') {
     const trigger = await api(`/actions/runs/${event.workflow_run.id}`);
@@ -111,15 +97,6 @@ export async function admitRefresh({ plan, eventName, event, now, snapshots, hea
   }
   // Two independent ceilings: one attempt per UTC day AND per Daily input.
   // Read before reserving to avoid burning a day on an already-claimed input.
-  if (plan.recoveryId) {
-    // Keep both original reservations untouched; recovery is only for the
-    // reviewed failed attempt, and consumes its own create-only token first.
-    for (const ref of plan.originalRefs) {
-      const result = await api(`/git/ref/${ref}`);
-      if (result.status !== 200 || result.data?.ref !== `refs/${ref}`
-        || result.data?.object?.sha !== RECOVERY_20260911.failedHeadSha) throw new Error('original_budget_unverified');
-    }
-  }
   for (const ref of plan.refs) {
     const result = await api(`/git/ref/${ref}`);
     if (result.status === 200) return hold('budget_already_reserved');
@@ -132,5 +109,5 @@ export async function admitRefresh({ plan, eventName, event, now, snapshots, hea
     // response or partial reservation never admits a call and is never undone.
     if (result.status !== 201 || result.data?.ref !== `refs/${ref}` || result.data?.object?.sha !== headSha) throw new Error('budget_reservation_not_confirmed');
   }
-  return { ...plan, reason: plan.recoveryId ? 'recovery_budget_reserved' : 'budget_reserved' };
+  return { ...plan, reason: 'budget_reserved' };
 }

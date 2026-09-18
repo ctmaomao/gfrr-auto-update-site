@@ -9,7 +9,10 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
-| [ADR-0059](0059-tavily-runtime-budget.md) | Shared Tavily runtime usage ledger and budget | Owner-authorized implementation; review and publication pending |
+| [ADR-0059](0059-tavily-runtime-budget.md) | Shared Tavily runtime usage ledger and budget | Implementation and publication authorized; independent review pending |
+| [ADR-0058](0058-retire-expired-editorial-recovery.md) | Retire expired editorial recovery and reconcile current handoff | Owner-authorized simplification; independent review required |
+| [ADR-0056](0056-acled-split-cadence.md) | ACLED Monday/Wednesday/Friday split cadence | Accepted; narrow recurring-cadence supersession of ADR-0055 |
+| [ADR-0055](0055-acled-weekly-automation.md) | ACLED protected automatic acquisition/publication | Accepted; recurring cadence updated by ADR-0056 |
 | [ADR-0057](0057-publication-current-main-and-odp-tail.md) | Checked latest-main Pages and bounded ODP publication trigger | Owner-authorized remediation; independent review required |
 | [ADR-0053](0053-pressure-score-remediation.md) | Pressure baseline unit correction and response diagnostics | Accepted |
 | [ADR-0054](0054-acled-private-batch-acceptance.md) | One private ACLED batch acceptance | Accepted; implementation review required |
@@ -76,7 +79,6 @@
 | [ADR-0042](0042-editorial-retained-snapshot-expiry.md) | Retained editorial expiry versus strict production acceptance | Local checks and independent AI review passed; integration pending |
 | [ADR-0043](0043-score-input-continuity.md) | Score input validity, structural continuity and publication holds | Implementation hardening independently reviewed; integration authorized |
 | [ADR-0044](0044-contemporaneous-pressure-research.md) | Contemporaneous pressure research and prospective shadow | Research authorized; production model replacement remains evidence-gated |
-| [ADR-0045](0045-editorial-single-recovery.md) | One additional editorial recovery for a fixed 2026-09-11 input | Owner authorized; one-use reservation, expires at Shanghai midnight |
 | [ADR-0046](0046-editorial-previous-issue.md) | Dated previous Macro Risk issue during daily update gaps | Owner selected; implementation pending integration review |
 | [ADR-0047](0047-pressure-evidence-continuity.md) | Research cohort continuity, partial candidates and vintage audit | Owner authorized; research contract independently reviewed |
 
@@ -87,7 +89,7 @@
 
 ## Superseded
 
-(None yet)
+| [ADR-0045](0045-editorial-single-recovery.md) | One-use 2026-09-11 editorial recovery | Executable route retired by ADR-0058; spent refs retained |
 
 ## How to add a new ADR
 

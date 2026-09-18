@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { admitRefresh, githubClient, planAdmission, REPOSITORY, UPSTREAMS, RECOVERY_20260911 } from '../../scripts/macro-risk/editorial-refresh-admission.mjs';
+import { admitRefresh, githubClient, planAdmission, REPOSITORY, UPSTREAMS } from '../../scripts/macro-risk/editorial-refresh-admission.mjs';
 
 const now = '2026-09-09T03:00:00.000Z';
 const sha = 'a'.repeat(40);
 const runs = UPSTREAMS.map(([name, file], index) => ({ id: index + 1, name, path: `.github/workflows/${file}`, repository: { full_name: REPOSITORY }, head_repository: { full_name: REPOSITORY }, head_branch: 'main', event: 'schedule', run_attempt: 1, status: 'completed', conclusion: 'success', created_at: `2026-09-09T0${index}:00:00Z`, updated_at: `2026-09-09T0${index}:20:00Z` }));
 const context = () => ({ eventName: 'workflow_run', event: { action: 'completed', workflow_run: structuredClone(runs[2]) }, runAttempt: '1', repository: REPOSITORY, ref: 'refs/heads/main', now, radar: { updatedAt: '2026-09-09T00:10:00Z' }, world: { updatedAt: '2026-09-09T01:10:00Z' }, oil: { builtAt: '2026-09-09T02:10:00Z' } });
 const options = (ctx = context()) => ({ plan: planAdmission(ctx), eventName: ctx.eventName, event: ctx.event, now: ctx.now, snapshots: [ctx.radar.updatedAt, ctx.world.updatedAt, ctx.oil.builtAt], headSha: sha, reserve: true });
+const RECOVERY_20260911 = Object.freeze({ id: '2026-09-11-input-recovery-1', sourceDataUpdatedAt: '2026-09-11T00:21:21.451Z', radarDigest: '9a86808887b2ef1008615563fe33742297c0625429a436f9790405ec9330e5b1', expiresAt: '2026-09-11T16:00:00.000Z' }); // Historical test input, never a runtime permit.
 function recoveryContext() {
   return { ...context(), eventName: 'workflow_dispatch',
     event: { inputs: { allow_network: true, acknowledge_cost: true, recovery_id: RECOVERY_20260911.id } },
@@ -14,33 +15,13 @@ function recoveryContext() {
     radarDigest: RECOVERY_20260911.radarDigest,
     world: { updatedAt: '2026-09-11T05:47:31.958Z' }, oil: { builtAt: '2026-09-11T01:29:41.501Z' } };
 }
-function recoveryApi({ badOriginal = false, uncertain = false } = {}) {
-  const plan = planAdmission(recoveryContext());
-  const original = new Map(plan.originalRefs.map(ref => [`refs/${ref}`, RECOVERY_20260911.failedHeadSha]));
-  const refs = new Map(original), methods = [];
-  return { refs, original, methods, api: async (path, method = 'GET', body) => {
-    methods.push(method);
-    if (method === 'POST') {
-      if (refs.has(body.ref)) return { status: 422 };
-      refs.set(body.ref, body.sha);
-      if (uncertain) throw new Error('uncertain_recovery_write');
-      return { status: 201, data: { ref: body.ref, object: { sha: body.sha } } };
-    }
-    const ref = `refs/${path.slice('/git/ref/'.length)}`;
-    if (badOriginal && original.has(ref)) return { status: 403 };
-    return refs.has(ref) ? { status: 200, data: { ref, object: { sha: refs.get(ref) } } } : { status: 404 };
-  } };
-}
-
-test('reviewed recovery adds exactly one reservation without changing old day/input tokens', async () => {
-  const ctx = recoveryContext(), state = recoveryApi();
-  assert.equal((await admitRefresh({ ...options(ctx), api: state.api })).reason, 'recovery_budget_reserved');
-  assert.equal(state.refs.size, 3);
-  for (const [ref, value] of state.original) assert.equal(state.refs.get(ref), value);
-  assert.equal((await admitRefresh({ ...options(ctx), api: state.api })).reason, 'budget_already_reserved');
-  delete ctx.event.inputs.recovery_id;
-  assert.equal((await admitRefresh({ ...options(ctx), api: state.api })).reason, 'budget_already_reserved');
-  assert.ok(state.methods.every(method => ['GET', 'POST'].includes(method)));
+test('retired recovery rejects even the formerly authorized input with zero metadata mutations', async () => {
+  const ctx = recoveryContext();
+  assert.equal(planAdmission(ctx).reason, 'recovery_retired');
+  const api = () => assert.fail('retired recovery must not access budget refs');
+  for (const reserve of [false, true]) {
+    assert.equal((await admitRefresh({ ...options(ctx), api, reserve })).reason, 'recovery_retired');
+  }
 });
 
 test('recovery rejects wrong day/input/digest/id/context, reruns and missing acknowledgements', () => {
@@ -56,24 +37,14 @@ test('recovery rejects wrong day/input/digest/id/context, reruns and missing ack
   ]) { const ctx = recoveryContext(); change(ctx); assert.equal(planAdmission(ctx).ready, false); }
 });
 
-test('recovery dry run, unknown original budget and uncertain reservation stay fail-closed', async () => {
-  const ctx = recoveryContext(), dry = recoveryApi();
-  assert.equal((await admitRefresh({ ...options(ctx), api: dry.api, reserve: false })).reason, 'dry_run_would_reserve');
-  assert.equal(dry.refs.size, 2);
-  const bad = recoveryApi({ badOriginal: true });
-  await assert.rejects(admitRefresh({ ...options(ctx), api: bad.api }), /original_budget_unverified/);
-  assert.equal(bad.refs.size, 2);
-  const uncertain = recoveryApi({ uncertain: true });
-  await assert.rejects(admitRefresh({ ...options(ctx), api: uncertain.api }), /uncertain_recovery_write/);
-  assert.equal((await admitRefresh({ ...options(ctx), api: uncertain.api })).reason, 'budget_already_reserved');
+test('forged old recovery plans cannot bypass normal admission', async () => {
+  for (const extra of [{ recoveryId: RECOVERY_20260911.id }, { originalRefs: [] }]) {
+    const opts = options();
+    assert.equal((await admitRefresh({ ...opts, plan: { ...opts.plan, ...extra },
+      api: () => assert.fail('no request admitted') })).reason, 'recovery_retired');
+  }
 });
 
-test('concurrent recovery callers admit at most one paid attempt', async () => {
-  const state = recoveryApi();
-  const results = await Promise.allSettled([1, 2].map(() => admitRefresh({ ...options(recoveryContext()), api: state.api })));
-  assert.equal(results.filter(r => r.status === 'fulfilled' && r.value.ready).length, 1);
-  assert.equal(state.refs.size, 3);
-});
 function mockApi({ alteredRuns = runs, failPost = 0 } = {}) {
   const refs = new Set();
   const calls = [];

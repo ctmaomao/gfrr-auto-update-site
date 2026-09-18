@@ -34,6 +34,9 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0058](ADR/0058-retire-expired-editorial-recovery.md)：关闭已过期恢复执行入口，保留历史授权与已耗预算；当前交接精简不解除长期观察或来源限制。
+- [ADR-0055](ADR/0055-acled-weekly-automation.md) / [ADR-0056](ADR/0056-acled-split-cadence.md)：ACLED 自动链与现行周一/三/五分频；具体预算、源权利及已耗 initial 按原决策保留。
+
 - [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)：Pages 实际源码固定与 ODP 成功后的单一发布触发；保留 EdgeOne 配额和独立 checker 审阅。
 
 - [HEALTH_REMEDIATION_2026_09_18.md](HEALTH_REMEDIATION_2026_09_18.md)：本轮健康整改顺序、已验旧问题及外部待验边界；不替代既有费用、源权利和发布契约。

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { createGithubLedger, POLICY, readTavilyUsage, summarizeLedger } from './lib/tavily-budget.mjs';
+import { createGithubLedger, POLICY, readTavilyUsage, summarizeLedger, verifyBudgetStatus } from './lib/tavily-budget.mjs';
 
 const args = process.argv.slice(2);
 try {
@@ -15,6 +15,10 @@ try {
       }
     }
     console.log(JSON.stringify({ operation: 'read_only_usage', ...sanitized }));
+  } else if (args.length === 1 && args[0] === '--verify') {
+    const keys = (process.env.TAVILY_API_KEYS || process.env.TAVILY_API_KEY || '').split(/[\s,;]+/u).filter(Boolean);
+    console.log(JSON.stringify(await verifyBudgetStatus({ keys,
+      store: createGithubLedger({ token: process.env.TAVILY_BUDGET_GITHUB_TOKEN }) })));
   } else if (args.length === 1 && args[0] === '--plan') {
     console.log(JSON.stringify({ policy: POLICY, searches: 0, writes: 0, requiresInitialization: true }));
   } else if (args.length === 0 || (args.length === 1 && args[0] === '--initialize')) {
