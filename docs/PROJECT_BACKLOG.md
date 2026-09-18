@@ -48,6 +48,13 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ## Section 1 · 维护状态
 
+### 2026-09-18 ACLED 自动更新整链接入
+
+- **Acceptance baseline**：沿用已明确批准的首次及每周26请求预算、受保护发布及独立AI审阅合并。策略 PR #397 已合并 43f2e571，CI 35286780031 全部通过；本实现不改精确 workflow fixture、预算、旧提醒或评分契约。
+- **实施**：main首attempt校验、持久claim先于登录、既有12文件采集/退出/私有标准化清理、自动provenance、配对CAS发布；返回精确刷新run ID。World Order以提交/双哈希核对输入，校验完整ACLED投影后提交，再派发EdgeOne；Pages沿用完成事件。CLI dry-run零I/O不等同整workflow零网络。
+- **最小正确性修复**：独立审阅确认比较器旧日期条件与 sanitizer 相反；修正为各区域结束日期不晚于 latestWeek，且区域最大值恰等于 latestWeek，允许真实地区滞后、拒绝伪造偏早/偏晚最大周。原严格内容、新鲜度与共同窗口校验不改。
+- **验证/验收**：合成整链、真实本地Git严格准备、重复claim、丢失响应、退出/清理失败、未知发布/派发、来源及零值保护均纳入测试。完整检查及独立审阅/远端CI后仅执行本次initial；实际结果另记。不将配置提交或派发成功当作网站验收。详见[运行与恢复](ACLED_AUTOMATIC_UPDATE.md)。
+
 ### 2026-09-18 ACLED 首次及周一持续自动化批准
 
 - **Acceptance baseline**：owner 明确回复“批准首次验收及每周自动运行”；新首次批次及每周一各最多 26 个免费请求、15秒/请求、零重试/跳转，临时私有原件、失败保留旧数据，沿用逐项提交推送/独立AI审阅合并及自动上线授权。旧 run 35277723078 仍已耗，不重跑。

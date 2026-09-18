@@ -1,15 +1,17 @@
-// ACLED data adapter — manual xlsx workflow (M-63a weekly, M-63b monthly)
+// ACLED local JSON adapter — normalized XLSX (M-63a weekly, M-63b monthly).
+// ADR-0055 permits a separate owner-approved acquisition workflow. This runtime
+// remains local-only; legacy source identifiers do not describe acquisition.
 //
 // This file used to contain an ACLED API adapter. That code path was removed in M-63a
 // because the project owner was denied Research/Partner tier API access. ACLED data is
-// now ingested via manual xlsx downloads sanitized by scripts/world-order/sanitize-acled-weekly.mjs
+// ingested via XLSX downloads sanitized by scripts/world-order/sanitize-acled-weekly.mjs
 // (M-63a) and scripts/world-order/sanitize-acled-monthly.mjs (M-63b).
 //
 // To recover the API adapter code if Research tier access is ever obtained:
 //   git show <commit-prior-to-m-63a-merge>:scripts/world-order/fetch-acled.mjs
 //
-// Per ACLED EULA §3.3 ("Scraping and crawling the Site is prohibited"), no automation
-// may fetch from acleddata.com. This file therefore only reads local JSON.
+// ACLED EULA §3.3 restrictions and the owner-approved acquisition exception are
+// documented separately in ADR-0055. This runtime only reads local JSON.
 
 import fs from 'node:fs';
 import { applyAcledFreshness } from './acled-freshness.mjs';
@@ -148,7 +150,7 @@ function buildWeeklyEvidence(weekly, summary) {
   return [
     {
       labelZh: 'ACLED 周度冲突事件聚合',
-      source: 'ACLED manual xlsx (weekly)',
+      source: weekly.preparedBy === 'github-actions-acled-auto' ? 'ACLED 自动处理聚合表（周度）' : 'ACLED manual xlsx (weekly)',
       summary: `近 4 周事件 ${summary.eventsLast4Weeks ?? 'n/a'} 起，死亡 ${summary.fatalitiesLast4Weeks ?? 'n/a'}，覆盖 ${summary.regionsTracked} 个区域。`,
       value: summary.eventsLast4Weeks,
       direction: Number.isFinite(summary.eventsDelta4Vs12) && summary.eventsDelta4Vs12 > 0 ? 'risk_up' : 'neutral',
@@ -156,7 +158,7 @@ function buildWeeklyEvidence(weekly, summary) {
     },
     {
       labelZh: 'ACLED 平民受害事件占比',
-      source: 'ACLED manual xlsx (weekly)',
+      source: weekly.preparedBy === 'github-actions-acled-auto' ? 'ACLED 自动处理聚合表（周度）' : 'ACLED manual xlsx (weekly)',
       summary: `近 4 周平民受害事件占比 ${Number.isFinite(summary.civilianTargetingShareLast4Weeks) ? Math.round(summary.civilianTargetingShareLast4Weeks * 100) : 'n/a'}%。`,
       value: summary.civilianTargetingShareLast4Weeks,
       direction: Number.isFinite(summary.civilianTargetingShareLast4Weeks) && summary.civilianTargetingShareLast4Weeks >= 0.2 ? 'risk_up' : 'neutral',
@@ -178,7 +180,7 @@ function buildMonthlyEvidence(monthly, fields) {
   return [
     {
       labelZh: 'ACLED 年度暴力事件（最新完整年）',
-      source: 'ACLED manual xlsx (monthly)',
+      source: monthly.preparedBy === 'github-actions-acled-auto' ? 'ACLED 自动处理聚合表（月度）' : 'ACLED manual xlsx (monthly)',
       summary: `${fields.monthlyLatestFullYear ?? 'n/a'} 年政治暴力事件 ${fields.politicalViolenceEventsLatestFullYear ?? 'n/a'} 起，相对前 3 年均值变化 ${yoyText}。`,
       value: fields.politicalViolenceEventsLatestFullYear,
       direction: Number.isFinite(fields.politicalViolenceYoyDelta) && fields.politicalViolenceYoyDelta > 0 ? 'risk_up' : 'neutral',
@@ -186,7 +188,7 @@ function buildMonthlyEvidence(monthly, fields) {
     },
     {
       labelZh: 'ACLED 完整月份暴力事件趋势',
-      source: 'ACLED manual xlsx (monthly)',
+      source: monthly.preparedBy === 'github-actions-acled-auto' ? 'ACLED 自动处理聚合表（月度）' : 'ACLED manual xlsx (monthly)',
       summary: monthly.monthlyTrend === null
         ? '连续完整月份数据不足，暂不提供 12 个月趋势比较。'
         : `排除截止日所在月，连续完整月份 ${monthly.monthlyTrend?.latest12mWindow?.join(' 至 ') ?? 'n/a'} 对比 ${monthly.monthlyTrend?.prior12mWindow?.join(' 至 ') ?? 'n/a'}，事件变化 ${monthlyDeltaText}。`,
@@ -196,7 +198,7 @@ function buildMonthlyEvidence(monthly, fields) {
     },
     {
       labelZh: 'ACLED 年度平民受害事件占比',
-      source: 'ACLED manual xlsx (monthly)',
+      source: monthly.preparedBy === 'github-actions-acled-auto' ? 'ACLED 自动处理聚合表（月度）' : 'ACLED manual xlsx (monthly)',
       summary: `${fields.monthlyLatestFullYear ?? 'n/a'} 年平民受害事件占比 ${civilianShareText}。`,
       value: fields.civilianTargetingShareLatestFullYear,
       direction: Number.isFinite(fields.civilianTargetingShareLatestFullYear) && fields.civilianTargetingShareLatestFullYear >= 0.25 ? 'risk_up' : 'neutral',
