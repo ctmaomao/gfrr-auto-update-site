@@ -9,6 +9,7 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
+| [ADR-0059](0059-tavily-runtime-budget.md) | Shared Tavily runtime usage ledger and budget | Implementation and publication authorized; independent review pending |
 | [ADR-0058](0058-retire-expired-editorial-recovery.md) | Retire expired editorial recovery and reconcile current handoff | Owner-authorized simplification; independent review required |
 | [ADR-0056](0056-acled-split-cadence.md) | ACLED Monday/Wednesday/Friday split cadence | Accepted; narrow recurring-cadence supersession of ADR-0055 |
 | [ADR-0055](0055-acled-weekly-automation.md) | ACLED protected automatic acquisition/publication | Accepted; recurring cadence updated by ADR-0056 |

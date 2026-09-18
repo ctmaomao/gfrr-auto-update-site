@@ -97,6 +97,7 @@ jobs:
       - name: Collect near-7-day macro news
         if: steps.admission.outputs.refresh_allowed == 'true'
         env:
+          TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}

@@ -98,6 +98,7 @@ jobs:
       - name: Collect bounded weekly news context
         if: steps.recheck_admission.outputs.allowed == 'true'
         env:
+          TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
         run: |

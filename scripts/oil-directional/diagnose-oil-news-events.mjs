@@ -6,6 +6,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
+import { withTavilyBudget } from '../lib/tavily-budget.mjs';
 import { classifySearchRequestError } from '../lib/search-request-policy.mjs';
 
 const DIAGNOSIS_VERSION = 'oil-news-events-diagnosis-p28';
@@ -385,7 +386,7 @@ async function fetchWithTimeout(url, fetchOptions = {}) {
       headers: fetchOptions.headers || {},
       body: fetchOptions.body,
       signal: controller.signal,
-      redirect: 'follow'
+      redirect: fetchOptions.redirect || 'follow'
     });
     const text = await response.text();
     if (!response.ok) {
@@ -973,8 +974,10 @@ async function fetchTavily(querySpec, options, requestWithKeys) {
     include_usage: true
   };
   return requestWithKeys(async (key) => {
-      const json = await fetchWithTimeout('https://api.tavily.com/search', {
+      const budget = options.budget || withTavilyBudget;
+      const json = await budget({ key, payload, consumer: 'oil-news' }, () => fetchWithTimeout('https://api.tavily.com/search', {
         method: 'POST',
+        redirect: 'error',
         asJson: true,
         headers: {
           Authorization: `Bearer ${key}`,
@@ -984,7 +987,7 @@ async function fetchTavily(querySpec, options, requestWithKeys) {
         body: JSON.stringify(payload),
         timeoutMs: FETCH_TIMEOUT_MS,
         label: 'Tavily'
-      });
+      }));
       const rows = Array.isArray(json?.results) ? json.results : [];
       return rows.map((item) => normalizeArticle({
         source: 'tavily',

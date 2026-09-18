@@ -6,6 +6,7 @@ import { EDITORIAL_TOPICS } from './editorial-contract.mjs';
 import { EDITORIAL_QUERIES, buildNewsDiscovery } from './editorial-news.mjs';
 import { classifySearchRequestError } from './search-request-policy.mjs';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
+import { withTavilyBudget } from '../lib/tavily-budget.mjs';
 import { buildTavilyEditorialSearch, normalizeTavilyEditorialResults } from './editorial-search-plan.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
@@ -60,13 +61,14 @@ async function fetchJson(url, init) {
   }
 }
 
-async function tavily(topic, query, requestWithKeys) {
+async function tavily(topic, query, requestWithKeys, budget) {
   const body = buildTavilyEditorialSearch(topic, query, MAX_RESULTS);
-  const json = await requestWithKeys((key) => fetchJson('https://api.tavily.com/search', {
+  const json = await requestWithKeys((key) => budget({ key, payload: body, consumer: 'macro-editorial' }, () => fetchJson('https://api.tavily.com/search', {
     method: 'POST',
+    redirect: 'error',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT },
     body: JSON.stringify(body)
-  }));
+  })));
   return normalizeTavilyEditorialResults(topic, json, body);
 }
 
@@ -78,14 +80,14 @@ async function brave(topic, query, requestWithKeys) {
   return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: [item.description, ...(item.extra_snippets || [])].filter(Boolean).join(' ') }));
 }
 
-export async function collectProvider(provider, keys) {
+export async function collectProvider(provider, keys, { budget = withTavilyBudget } = {}) {
   if (keys.length === 0) return { rows: [], status: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] } };
   const rows = [];
   const queryRuns = [];
   const requestWithKeys = createSearchKeyPool(keys);
   for (const topic of EDITORIAL_TOPICS) {
     try {
-      const results = provider === 'tavily' ? await tavily(topic, EDITORIAL_QUERIES[topic], requestWithKeys) : await brave(topic, EDITORIAL_QUERIES[topic], requestWithKeys);
+      const results = provider === 'tavily' ? await tavily(topic, EDITORIAL_QUERIES[topic], requestWithKeys, budget) : await brave(topic, EDITORIAL_QUERIES[topic], requestWithKeys);
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });
     } catch (error) {

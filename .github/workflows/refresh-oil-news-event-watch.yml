@@ -40,6 +40,7 @@ jobs:
 
       - name: Refresh oil news event watch
         env:
+          TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
         run: npm run build:oil-news-event-watch

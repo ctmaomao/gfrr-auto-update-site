@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
+import { withTavilyBudget } from '../lib/tavily-budget.mjs';
 
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { EDITORIAL_TOPICS } from './weekly-editorial-contract.mjs';
@@ -61,6 +62,7 @@ function resolveWindow(asOfDate) {
 }
 
 function safeError(error) {
+  if (/^tavily_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return error.budgetCode;
   if (error?.name === 'AbortError') return 'request_timeout';
   const message = String(error?.message || 'request_failed');
   const http = message.match(/HTTP\s+(\d{3})/u);
@@ -87,25 +89,21 @@ async function fetchJson(url, init, label) {
   }
 }
 
-async function fetchTavily(topic, query, requestWithKeys) {
-  const json = await requestWithKeys((key) => fetchJson('https://api.tavily.com/search', {
+async function fetchTavily(topic, query, requestWithKeys, budget) {
+  const payload = {
+    query, topic: 'news', search_depth: 'basic', max_results: MAX_RESULTS,
+    time_range: 'week', include_answer: false, include_raw_content: false, include_usage: true
+  };
+  const json = await requestWithKeys((key) => budget({ key, payload, consumer: 'bubble-editorial' }, () => fetchJson('https://api.tavily.com/search', {
     method: 'POST',
+    redirect: 'error',
     headers: {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
       'User-Agent': USER_AGENT
     },
-    body: JSON.stringify({
-      query,
-      topic: 'news',
-      search_depth: 'basic',
-      max_results: MAX_RESULTS,
-      time_range: 'week',
-      include_answer: false,
-      include_raw_content: false,
-      include_usage: false
-    })
-  }, 'Tavily'));
+    body: JSON.stringify(payload)
+  }, 'Tavily')));
   return (Array.isArray(json?.results) ? json.results : []).map((item) => ({
     provider: 'tavily',
     topic,
@@ -146,7 +144,7 @@ async function fetchBrave(topic, query, requestWithKeys) {
   }));
 }
 
-export async function collectProvider(provider, keys) {
+export async function collectProvider(provider, keys, { budget = withTavilyBudget } = {}) {
   const rows = [];
   const queryRuns = [];
   if (keys.length === 0) {
@@ -159,7 +157,7 @@ export async function collectProvider(provider, keys) {
   for (const topic of EDITORIAL_TOPICS) {
     try {
       const results = provider === 'tavily'
-        ? await fetchTavily(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys)
+        ? await fetchTavily(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys, budget)
         : await fetchBrave(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys);
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });

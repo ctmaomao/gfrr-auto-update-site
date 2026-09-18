@@ -17,6 +17,7 @@
 import { stripTags, decodeHtmlEntities, htmlToText, parseFedSepMedians } from './bubble-watch/public-html-parsers.mjs';
 import { mean, standardDeviation, pctReturn, closesByDate, commonDatesForSeries, sliceCommonCloses, dailyReturnsFromCloses, covariance, correlation, betaToBenchmark, rsi14, bollingerPctB } from './bubble-watch/market-statistics.mjs';
 import fs from 'node:fs';
+import { withTavilyBudget } from './lib/tavily-budget.mjs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
 import os from 'node:os';
@@ -3481,31 +3482,37 @@ async function tavilySearch(payload) {
   let lastError = null;
   for (let i = 0; i < TAVILY_API_KEYS.length; i++) {
     const key = TAVILY_API_KEYS[i];
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
     try {
-      const res = await fetch('https://api.tavily.com/search', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
-          'User-Agent': UA
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
+      return await withTavilyBudget({ key, payload, consumer: 'bubble-ceo' }, async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        try {
+          const res = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            redirect: 'error',
+            headers: {
+              Authorization: `Bearer ${key}`,
+              'Content-Type': 'application/json',
+              'User-Agent': UA
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+          const text = await res.text();
+          if (!res.ok) throw new Error(`Tavily HTTP ${res.status}`);
+          try {
+            return JSON.parse(text);
+          } catch (parseError) {
+            throw new Error(`Tavily JSON parse failed: ${parseError.message}`);
+          }
+        } finally {
+          clearTimeout(timer);
+        }
       });
-      const text = await res.text();
-      if (!res.ok) throw new Error(`Tavily HTTP ${res.status}`);
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        throw new Error(`Tavily JSON parse failed: ${parseError.message}`);
-      }
     } catch (error) {
+      if (error?.budgetCode) throw error;
       lastError = error;
       console.warn(`[bubble-watch] Tavily CEO hedging search key ${i + 1}/${TAVILY_API_KEYS.length} failed: ${error.message}`);
-    } finally {
-      clearTimeout(timer);
     }
   }
   throw lastError || new Error('Tavily Search API failed');

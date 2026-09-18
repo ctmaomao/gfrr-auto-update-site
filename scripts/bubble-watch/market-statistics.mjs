@@ -94,4 +94,3 @@ export function bollingerPctB(closes) {
   const lower = ma - (2 * sd);
   return (closes[closes.length - 1] - lower) / (upper - lower);
 }
-

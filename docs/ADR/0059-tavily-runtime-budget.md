@@ -1,0 +1,38 @@
+# ADR-0059: Shared Tavily usage ledger and runtime budget
+
+## Status
+
+Owner-authorized implementation and subsequent explicit publication authorization on 2026-09-18 ("请上线生效"); independent review remains required before merge. Deployment evidence is recorded in the project backlog. No paid search is authorized as a deployment test.
+
+## Context
+
+The owner confirmed the Researcher account has consumed 1,000 credits and requested actual shared accounting and enforcement now. The authenticated console exposed one masked key at 100%, account usage 1,000/1,000, pay-as-you-go disabled, no invoices or upcoming payment periods, and an enabled 80% email alert. No daily/request ledger or concrete free-plan reset date was visible in Overview, Billing or Settings.
+
+The existing workflow checker models 767 scheduled requests plus a 200-request manual allowance; it neither observes the bill nor enforces that manual allowance. Basic search costs one credit. All four production Tavily call sites must share a runtime authority, including Bubble source audits and local tools. Reference: [Tavily pricing](https://docs.tavily.com/documentation/api-credits) and [read-only usage API](https://docs.tavily.com/documentation/api-reference/endpoint/usage).
+
+## Decision
+
+- One isolated `tavily-usage-ledger` branch in the fixed `ctmaomao/gfrr-auto-update-site` repository holds only `usage.json`. It never stores queries, news bodies, keys, response headers or site data. Entries contain UUID, UTC time, consumer, execution mode/run ID, non-reversible key fingerprint, reserved cost, observed account use, outcome and optional provider-reported credits.
+- Explicit initialization is separate from search. A missing, invalid, oversized or unavailable ledger is a hold, never a reset. The CLI's `--plan` writes nothing; `--initialize` creates the isolated branch only after publication approval. Existing history is retained, not deleted when the window rolls.
+- Before every basic search, read official `/usage` and atomically reserve one credit in the ledger. Limit all project calls to 950 per rolling 31 days, automated calls to 800, manual calls to 150; retain 50 credits of account headroom. The rolling interval deliberately does not guess a billing reset date. Upgrading a plan does not raise these project limits. The unchanged static checker remains an additional schedule regression gate; runtime limits are stricter.
+- GitHub trees/commits use the exact read head as sole parent and update the ledger ref with `force:false`. Only confirmed CAS conflicts retry metadata, at most three times. Unknown writes stop before search. No automatic search retry, refunds or removal of uncertain reservations. Timeout, process termination and partial completion remain conservatively charged.
+- All four production request sites use the same wrapper. Readiness, credible-news requirements, AI cost permissions, no-retry rules, scoring and cadence are unchanged. Budget holds cannot fall through to another key. Brave and other independent sources keep existing fallback behavior.
+- Each consuming Actions step receives its existing `github.token` only for ledger accounting. The Bubble source audit changes from contents-read to contents-write solely for the isolated ledger; it still does not write or publish production data. The fixed repository/ref adapter, tests and independent review are the enforcement boundary; GitHub's token itself is repository-wide. Local calls require explicitly supplied `TAVILY_BUDGET_GITHUB_TOKEN` and use this same authority, not a separate local counter.
+- `schedule`/`workflow_run` count as automated; explicit dispatch and local tools count as manual, including a bot-dispatched Bubble recheck. Failed requests retain one reserved credit even when provider billing may be zero. Provider-reported cost is a separate metric, never used to refund uncertain calls.
+- Persist completion where possible; retain a pending reservation on failure and stop further Tavily calls in that process. A later invocation still counts it. Usage/ledger requests have 15-second deadlines, 2 MiB response caps, no redirects, sanitized errors and no network retries. Official usage snapshots may lag and cannot prevent unrelated applications from spending the same account; the project rolling cap is independently enforced.
+
+## Consequences and verification
+
+This trades a bounded number of GitHub metadata operations and read-only usage checks for enforceable cross-run accounting. It cannot reconstruct historical local/external requests or change a depleted account. Retained ledger size has a conservative ceiling and fails closed when full, requiring reviewed archival. First deployment requires reviewed code plus explicit ledger initialization; current exhausted account remains held even after that initialization.
+
+Live `/usage` response compatibility and GitHub ledger writes have not been exercised in this task; transport and concurrency verification uses offline fixtures based on the documented API. Before enabling scheduled searches, validate the official read-only meter using an owner-supplied ignored key file and verify the initialized ledger. A missing or incompatible response remains a hold.
+
+Regression coverage includes simultaneous last-credit races, uncertain reservation writes, missing receipts, absent/corrupt state, clock rollback, account/key/automated/manual limits, calendar changes, unexpected provider cost, key rotation, secret redaction, real collector holds and workflow wiring. Existing assertion strength is preserved; old request-only fixtures inject a fake accounting boundary, while separate new tests exercise the actual budget.
+
+The Epoch weekly integration pins the entire existing Bubble production job. This separate runtime-budget change adds exactly one environment line to that job: `TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}` in its search step. Accordingly, its exact SHA-256 baseline changes from `b1262782f9934962cfea3392daa3d1cae52ccf93980956793077c4f5931db3cb` to `d377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96`. The full-job equality assertion remains, with added checks that the candidate job has no budget token and the production job has exactly one. No normalization exception, skipped assertion or wildcard is introduced. This explicit contract-baseline change requires independent ADR-level review before merge; passing local tests does not provide that review. The Epoch candidate retains its exact read-only permissions and behavior.
+
+Rollback must preserve the ledger and disabled/restricted search posture. A revert must not silently restore unbudgeted calls or delete accounting history. No added production dependency, frontend change, subscription or live AI/ACLED request is part of this decision.
+
+Console tooltip verification: clicking the single key usage ring showed `1000 / 1000`; the account usage information tooltip states that its total includes active and deleted keys. These are aggregate counters, not per-request billing records.
+
+Deployment acceptance adds a manual-only, main-only `Tavily Budget Status` workflow with `contents: read` and checkout credential persistence disabled. It uses the existing Actions key only to call official `/usage` and read the ledger through `review:tavily-budget -- --verify`; it cannot initialize, reserve or search. Quota exhaustion is a successful verification of a hold, while unavailable/malformed state fails verification. Reported eligibility is an advisory snapshot, never authorization to bypass atomic reservation. This permits live verification without exposing a key locally or consuming search credits.

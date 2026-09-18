@@ -16,6 +16,8 @@ export function createSearchKeyPool(keys, onQuota = (category) => {
     for (const key of uniqueKeys) {
       if (paused.has(key)) { lastError = paused.get(key); continue; }
       try { return await request(key); } catch (error) {
+        // A shared budget hold must not try another key to evade the account cap.
+        if (error?.budgetCode) throw error;
         lastError = error;
         const category = classifySearchRequestError(error);
         if (QUOTA_ERRORS.has(category)) {

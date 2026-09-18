@@ -1660,3 +1660,18 @@ ACLED 长期运行时效以 [ADR-0038](ADR/0038-acled-runtime-freshness.md) 为�
 ### Realtime 恢复路径校验
 
 正常与恢复生成都使用既有 FRED_API_KEY 配置及 check:realtime-local-schema 发布前门禁。恢复只在 shouldRecover=true 时执行，结构校验失败不得提交；此校验不代替Daily输入的时效与信任检查。未手动触发真实恢复，运行效果以随后自然执行且实际生成的回执为准，skip不计恢复验收。
+
+
+## Tavily actual usage budget
+
+The static schedule estimate is not a bill. [ADR-0059](ADR/0059-tavily-runtime-budget.md) adds a shared runtime ledger on the isolated `tavily-usage-ledger` branch. Its deployment remains pending review/publication authorization. All local and Actions Tavily searches require `TAVILY_BUDGET_GITHUB_TOKEN`; Actions receive `github.token` in the search step only. Do not print a token, paste it into commands or store it in the repository. Existing local credential-file guidance applies.
+
+`npm run review:tavily-budget -- --plan` is offline and writes nothing. With a securely supplied token, `npm run review:tavily-budget` reads rolling usage by consumer, key fingerprint, UTC day and execution mode. Each group separates reservations, outcomes, reported credits and requests without a receipt. Only after explicit publication authorization, `npm run review:tavily-budget -- --initialize` creates the missing ledger; it refuses existing state and performs no search. Never delete/recreate the branch to regain quota.
+
+The runtime cap is 950 reserved basic searches per rolling 31 days (800 automatic, 150 manual), independently checking official account/key balance and leaving 50 account credits. The existing 200-request static manual estimate does not override the stricter 150 runtime cap. No calendar reset is inferred. A budget hold remains a source-health error; other sources may proceed, but no fabricated news or AI output is permitted. Pending/failed requests retain reservations. Official reported cost and conservative reserved cost are different metrics; no claim of exact historical billing reconciliation is made.
+
+The console audit found one key at 100%, pay-as-you-go disabled and an enabled 80% email alert. Overview/Billing/Settings did not expose a detailed usage ledger or free-plan period dates. The official read-only `/usage` endpoint exposes key/account counters by service, not a documented billing-period timestamp. `node scripts/review-tavily-budget.mjs --usage-only --key-file <ignored-local-file>` reads only numeric counters; no search or ledger mutation. Do not use account usage to fabricate past per-consumer attribution.
+
+Console tooltip verification: clicking the single key usage ring showed `1000 / 1000`; the account usage information tooltip states that its total includes active and deleted keys. These are aggregate counters, not per-request billing records.
+
+After integration, dispatch **Tavily Budget Status** on `main` for read-only live acceptance using existing Actions secrets. Its `--verify` mode reads official meters and the ledger, outputs only allowlisted counters/key fingerprints/advisory admission, and performs zero searches or writes. Exhausted quota reports `tavily_budget_account_limit`; malformed or unavailable meters fail the check. Publication and initialization were explicitly authorized by the owner on 2026-09-18; independent review still precedes merge.

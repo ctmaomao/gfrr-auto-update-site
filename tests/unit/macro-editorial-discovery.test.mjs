@@ -1,3 +1,5 @@
+// Search-only fixtures inject the accounting boundary; budget tests exercise real reservations.
+const budget = async (_context, request) => request();
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { collectProvider } from '../../scripts/macro-risk/collect-editorial-news.mjs';
@@ -98,7 +100,7 @@ test('actual Tavily collector uses six requests, recovers primary evidence witho
       content: 'Synthetic bounded test snippet', ...(body.topic === 'general' ? {} : { published_date: '2026-09-03T10:00:00Z' })
     }] }));
   });
-  const collected = await collectProvider('tavily', ['synthetic-test-key']);
+  const collected = await collectProvider('tavily', ['synthetic-test-key'], { budget });
   assert.equal(calls.length, 6);
   assert.equal(collected.status.status, 'ok');
   assert.equal(collected.rows.length, 6);
@@ -125,7 +127,7 @@ test('actual Brave collector keeps its six news searches', async (t) => {
 test('malformed responses and HTTP errors remain source-health failures, not expected skips', async (t) => {
   for (const response of [() => new Response('{}'), () => new Response('{}', { status: 432 })]) {
     const mock = t.mock.method(globalThis, 'fetch', async () => response());
-    const collected = await collectProvider('tavily', ['synthetic-test-key']);
+    const collected = await collectProvider('tavily', ['synthetic-test-key'], { budget });
     assert.equal(collected.status.status, 'error');
     assert.equal(collected.status.failureCount, 6);
     const d = buildNewsDiscovery({ ...window, rawStories: collected.rows, sourceStatus: { ...healthy, tavily: collected.status } });

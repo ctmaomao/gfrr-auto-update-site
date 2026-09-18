@@ -1,5 +1,14 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-18 Tavily 统一用量与实际限额
+
+- **Acceptance baseline**：owner要求登录核查Tavily控制台，并立即实现统一用量记录和实际预算限制；owner随后明确要求“请上线生效”，授权本任务推送、集成和账本初始化；独立审阅要求仍保留，不新增付费搜索验收。
+- **实施**：见 [ADR-0059](ADR/0059-tavily-runtime-budget.md)。四个Tavily入口共享独立GitHub账本，调用前读取官方用量并CAS预留；滚动31天950、自动800、手动150，账户保留50。缺失/损坏/不确定账本停止，失败不退额，不改频率/可信新闻或DeepSeek门槛。
+- **验证**：`npm run check:changed` 执行完整 `check:all`，最终退出0；预算与密钥池专项25/25、Macro发现专项11/11、Epoch工作流专项16/16、文档检查和 `git diff --check` 均通过。新增回归覆盖并发末额度、未知写入、损坏/丢失账本、账户/模式限额、时钟、密钥轮换和实际collector零请求阻断。首次全套发现生产job哈希锁定；ADR明确记录仅新增账本token行的精确基线更新，保持严格等式并增加candidate无token断言，待独立审阅。无真实搜索、无生产数据写入；真实用量API/远端账本联调未执行。
+- **上线准备**：已合入main的#406/#407并保留其实现；集成后完整 `check:changed`/`check:all` 退出0，预算专项26/26、workflow专项23/23通过。账本已获授权初始化并读回，初始head `243e31503736db230ed528bfb2624efb3b7e3b34`、记录0；新增只读状态workflow供合并后验证官方用量，零搜索/零预留。
+- **待办**：完成独立人工审阅、远端CI、集成和只读用量验收后上线（上线授权已取得，账本已初始化）；账户1000/1000不因代码修复恢复。控制台单key圆环可点击显示1000/1000，总量包含已删除key；无可见请求明细/明确免费周期日期。
+
+
 Current project state and open work. Dated implementation/approval receipts are preserved without deletion in [2026-09-18 handoff archive](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health). Historical next steps are not current tasks or renewed budgets.
 
 ## Section 1 · 维护状态
