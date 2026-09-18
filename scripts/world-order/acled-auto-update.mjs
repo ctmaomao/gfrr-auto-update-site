@@ -5,6 +5,7 @@ import { validateAcledPrivateBatch } from './acled-private-validation.mjs';
 import { reviewAcledConfigPair } from './acled-config-review.mjs';
 import { publishAcledPair } from './acled-pair-publication.mjs';
 import { acledWeekSlot, claimAcledSlot, dispatchAcledFollowup } from './acled-auto-github.mjs';
+import { isAcledRepositoryOrigin } from './acled-repository.mjs';
 
 const files = { weekly: 'config/world-order-acled-regional-weekly.json', monthly: 'config/world-order-acled-global-monthly.json' };
 const sha = v => createHash('sha256').update(v).digest('hex');
@@ -31,7 +32,7 @@ export async function runAcledAutoUpdate({ execute = false, env = process.env, r
       encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
       env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, GIT_OPTIONAL_LOCKS: '0', GIT_NO_REPLACE_OBJECTS: '1' } });
     if (git(['branch', '--show-current']).trim() !== 'main'
-      || git(['remote', 'get-url', 'origin']).trim() !== 'https://github.com/ctmaomao/gfrr-auto-update-site.git'
+      || !isAcledRepositoryOrigin(git(['remote', 'get-url', 'origin']).trim())
       || git(['status', '--porcelain', '--untracked-files=all'])) return report;
     const expectedHead = git(['rev-parse', 'HEAD']).trim();
     if (git(['rev-parse', 'refs/remotes/origin/main']).trim() !== expectedHead) return report;

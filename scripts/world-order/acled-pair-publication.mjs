@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { prepareAcledPairCommit } from './acled-pair-commit.mjs';
 import { controlRequest } from './acled-authenticated-probe.mjs';
+import { isAcledRepositoryOrigin } from './acled-repository.mjs';
 
 const REPO = 'ctmaomao/gfrr-auto-update-site';
 const URL = 'https://api.github.com/graphql';
@@ -30,7 +31,7 @@ export async function publishAcledPair({ execute = false, publicationApproved = 
       encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
       env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, GIT_OPTIONAL_LOCKS: '0', GIT_NO_REPLACE_OBJECTS: '1' } }).trim();
     if (git(['branch', '--show-current']) !== 'main'
-      || git(['remote', 'get-url', 'origin']) !== `https://github.com/${REPO}.git`) return report;
+      || !isAcledRepositoryOrigin(git(['remote', 'get-url', 'origin']))) return report;
     async function graphql(query, variables) {
       const body = JSON.stringify({ query, variables });
       if (Buffer.byteLength(body) > 3 * 1024 * 1024) throw new Error();

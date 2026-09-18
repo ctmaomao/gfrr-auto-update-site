@@ -50,6 +50,9 @@ Persistent project self-memory for open work, current status, and maintenance ru
 
 ### 2026-09-18 ACLED 自动更新整链接入
 
+- **首次上线验收修复**：PR #398 已合并 `2b3dfc0b`，最终 CI 35289012332/独立 AI 审阅通过。初次派发 35289495733 在 preflight 停止，GitHub/ACLED 请求均为 0，initial claim 只读查询不存在；官方 checkout origin 没有 `.git` 后缀，与三处身份检查不兼容。独立修复仅接受固定同仓 HTTPS 的带/不带 `.git` 两种精确拼写，补整链与错误地址拒绝测试，不改变 workflow、预算、源/发布门槛；通过审阅和检查后使用尚未领取的首次预算，不重跑旧 run。
+- **刷新验收修复**：只读核对真实 builder 发现 published source 仅含 enabled/status/lastFetchedAt/summary，旧 verifier 却与 fetcher 内部八字段对象比较，必然误报。先按实际四字段契约投影 expected，再保留完整精确比较；测试直接执行现有 producer 的纯投影表达式，并验证完整 summary、日期、意外字段与 null/zero 不被放过。不改生产输出或模型。
+
 - **Acceptance baseline**：沿用已明确批准的首次及每周26请求预算、受保护发布及独立AI审阅合并。策略 PR #397 已合并 43f2e571，CI 35286780031 全部通过；本实现不改精确 workflow fixture、预算、旧提醒或评分契约。
 - **实施**：main首attempt校验、持久claim先于登录、既有12文件采集/退出/私有标准化清理、自动provenance、配对CAS发布；返回精确刷新run ID。World Order以提交/双哈希核对输入，校验完整ACLED投影后提交，再派发EdgeOne；Pages沿用完成事件。CLI dry-run零I/O不等同整workflow零网络。
 - **最小正确性修复**：独立审阅确认比较器旧日期条件与 sanitizer 相反；修正为各区域结束日期不晚于 latestWeek，且区域最大值恰等于 latestWeek，允许真实地区滞后、拒绝伪造偏早/偏晚最大周。原严格内容、新鲜度与共同窗口校验不改。

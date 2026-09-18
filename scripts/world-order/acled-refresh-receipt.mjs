@@ -3,6 +3,8 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { validAcledReceipt } from './acled-auto-github.mjs';
+import { isAcledRepositoryOrigin } from './acled-repository.mjs';
+import { compactObject } from './normalize-world-order-inputs.mjs';
 
 export function checkAcledRefreshReceipt({ root, receipt } = {}) {
   try {
@@ -14,7 +16,7 @@ export function checkAcledRefreshReceipt({ root, receipt } = {}) {
       return raw ? result : result.trim();
     };
     if (git(['branch', '--show-current']) !== 'main'
-      || git(['remote', 'get-url', 'origin']) !== 'https://github.com/ctmaomao/gfrr-auto-update-site.git') return false;
+      || !isAcledRepositoryOrigin(git(['remote', 'get-url', 'origin']))) return false;
     git(['merge-base', '--is-ancestor', receipt.acled_config_commit, 'HEAD']);
     for (const [kind, name] of [['weekly', 'regional-weekly'], ['monthly', 'global-monthly']]) {
       const relative = `config/world-order-acled-${name}.json`, file = path.join(root, relative);
@@ -32,6 +34,13 @@ function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
   if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(k => [k, canonical(value[k])]));
   return value;
+}
+// Matches build-world-order-stress.mjs externalSources serialization. Internal
+// evidence/confidence/reuse/warnings belong to scoring/other output paths, not
+// this published source object. Compare every published field and summary key.
+export function projectAcledPublishedSource(source) {
+  return compactObject({ enabled: source.enabled, status: source.status,
+    lastFetchedAt: source.lastFetchedAt, summary: source.summary });
 }
 export function acledSourceMatches(actual, expected) {
   return !!actual && !!expected && actual.enabled === true && expected.enabled === true
