@@ -121,7 +121,9 @@ const contracts = [
     file: '.github/workflows/publish-edgeone-release.yml',
     required: [
       'name: Publish EdgeOne Release Channel',
-      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up]',
+      // ADR-0057 retains all editorial triggers and adds the daily ODP tail so
+      // a blocked AI refresh cannot delay deterministic energy publication.
+      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure]',
       'types: [completed]',
       'branches: [main]',
       'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',

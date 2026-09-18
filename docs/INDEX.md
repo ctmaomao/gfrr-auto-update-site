@@ -34,6 +34,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)：Pages 实际源码固定与 ODP 成功后的单一发布触发；保留 EdgeOne 配额和独立 checker 审阅。
+
 - [HEALTH_REMEDIATION_2026_09_18.md](HEALTH_REMEDIATION_2026_09_18.md)：本轮健康整改顺序、已验旧问题及外部待验边界；不替代既有费用、源权利和发布契约。
 
 - [PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)：当前冻结压力研究的人工评审口径、完整证据清单与结论模板；沿用 ADR-0044/0047 的收集门槛，不改变运行时闸门或授予生产替换权限。
