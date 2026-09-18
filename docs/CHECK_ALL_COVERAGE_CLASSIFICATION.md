@@ -6,7 +6,7 @@
 
 动机：2026-09-18 健康审计中，可达范围被连续误判两次（51 → 223 → 227）。误判源于静态 grep 与不完整套件展开，而非脚本本身有问题。**显性登记这 17 项，可防止后续再次误判覆盖范围。**
 
-本文件为设计提案。**不修改任何 checker 断言、不改变 `check:all` 组成、不新增保护网。** 落地需独立评审与授权。
+本文件的覆盖分类仍是设计基线。只读观察器已独立落地；**不修改任何 checker 断言、不改变 `check:all` 组成、不新增保护网。**
 
 ## 1. 口径定义
 
@@ -37,8 +37,8 @@
 | 类别 | 项数 | 脚本 |
 |---|---|---|
 | 重复别名 | 2 | `check:external-ai:contract`、`check:external-ai:with-artifacts` |
-| 参数变体 | 2 | `check:data:verbose`、`check:data:strict-live-alignment` |
-| 已被其它入口执行 | 8 | `check:bubble-watch-dom`、`check:world-order-acled-weekly`、`check:world-order-acled-monthly`、`check:external-ai-provider-adapters`、`check:external-ai-production-projection`、`check:brent-promotion-audit-fields`、`check:brent-crack-spread`、`check:brent-public-proxy-source-review` |
+| 参数变体 | 4 | `check:data:verbose`、`check:data:strict-live-alignment`、`check:bubble-watch-weekly-editorial-live-input`、`check:macro-risk-editorial-live` |
+| 已被其它入口执行 | 5 | `check:bubble-watch-dom`、`check:world-order-acled-weekly`、`check:world-order-acled-monthly`、`check:external-ai-provider-adapters`、`check:external-ai-production-projection` |
 | 设计上排除 · 需要网络或写入前置放行 | 2 | `check:worker-health`、`check:external-ai-production-publish` |
 | 设计上排除 · 写入或需手工制品 | 3 | `check:external-ai-manual-scaffold`、`check:external-ai-manual-input`、`check:external-ai-manual-input:compact` |
 | 本地开发者工具 | 1 | `check:changed` |
@@ -55,14 +55,16 @@
 | `check:external-ai:contract` | 命令体与 `check:external-ai` 完全相同（`node --check scripts/check-suite.mjs && node scripts/check-suite.mjs external-ai`），后者已在 `check:all` | 保留为显式别名；登记理由，不纳入 |
 | `check:external-ai:with-artifacts` | 同上，指向 `external-ai-with-artifacts` 套件，属制品在场时的强化变体 | 保留为显式别名；登记理由，不纳入 |
 
-### 2.2 参数变体（2 项）
+### 2.2 参数变体（4 项）
 
 | 脚本 | 证据 | 处理 |
 |---|---|---|
 | `check:data:verbose` | `node scripts/validate-data.mjs --verbose`，与已纳入的 `check:data` 同一脚本，仅增加 expected-skip 解释 | 不纳入。`AGENTS.md` §6 已规定其用途为「解释 expected skip」 |
 | `check:data:strict-live-alignment` | `node scripts/validate-data.mjs --strict-live-alignment` | 不纳入。`AGENTS.md` §6 规定「仅明确要求严格时间对齐时使用」 |
+| `check:bubble-watch-weekly-editorial-live-input` | live 输入专用变体 | 不纳入。属于需要 live 输入的专项手动变体，不改变离线主检查覆盖 |
+| `check:macro-risk-editorial-live` | live 输入专用变体 | 不纳入。属于需要 live 输入的专项手动变体，不改变离线主检查覆盖 |
 
-### 2.3 已被其它入口实际执行（8 项）
+### 2.3 已被其它入口实际执行（5 项）
 
 | 脚本 | 由谁执行 | 证据 |
 |---|---|---|
@@ -71,11 +73,7 @@
 | `check:world-order-acled-monthly` | `check:world-order-acled-monthly-runtime`（同上） | 执行同 3 个测试文件：`acled-monthly-trend` / `acled-download-manifest` / `acled-monthly-dry-run` |
 | `check:external-ai-provider-adapters` | `check:external-ai-manual-scaffold` | 后者显式调用 `npm run check:external-ai-provider-adapters` |
 | `check:external-ai-production-projection` | `external-ai-with-artifacts` 套件 | 该套件成员列表含此项；`check:all` → `check:external-ai` → `external-ai` 套件亦含同名制品变体 |
-| `check:brent-promotion-audit-fields` | `brent` 套件 | `check:brent`（在 `check:all`）→ `SUITES.brent` 成员 |
-| `check:brent-crack-spread` | `brent` 套件 | 同上 |
-| `check:brent-public-proxy-source-review` | `brent` 套件 | 同上 |
-
-> 说明：`check:brent-*` 三项在修正 1 之前被误判为不可达，原因是套件键 `brent:` 无引号，展开正则漏匹配。此处登记正是为了固化该结论。
+> 说明：`check:brent-*` 三项已由 `check:all` 的 `brent` 套件覆盖；此前把它们列入未达清单属于解析错误。观察器直接读取套件对象，因此兼容无引号键。
 
 ### 2.4 设计上排除：需要网络或写入前置放行（2 项）
 
@@ -108,7 +106,7 @@
 
 - 使用 §1.1 的权威展开算法计算可达集合；
 - 输出：可达数 / 总数 / 未可达清单（稳定排序）；
-- 对未可达项，与白名单比对；白名单外的项即失败；
+- 对未可达项，与分类基线比对并显示未分类项；观察器本身永远退出 0，不把分类变成合并阻断；
 - 只读，不执行被检查的脚本本身，无网络、无文件写入。
 
 ### 3.3 白名单显性化要求
@@ -123,14 +121,14 @@
 unlock 路径：若未来引入可控 mock/stub 传输层，可移入 check:all
 ```
 
-### 3.4 建议的白名单初始内容
+### 3.4 当前分类基线
 
-即本文件 §2 的 17 项，逐条附上述三字段。
+即本文件 §2 的 17 项，逐条附分类。实现位于 `scripts/review-check-all-coverage.mjs`，命令为 `npm run review:check-all-coverage`；它复用 `tests/unit/check-suite-wiring.test.mjs` 的套件展开口径，仅读取 `package.json` 与 `scripts/check-suite.mjs`，不运行被审阅脚本、不联网、不写文件。
 
 ### 3.5 验收条件
 
-- 白名单内项被移除时，检查器能报出「未登记的新增不可达项」；
-- 白名单内项实际变为可达时，检查器能报出「已过期的白名单条目」；
+- 分类基线外出现新的不可达项时，检查器显示「未分类」；
+- 已分类项实际变为可达时，该项从未达清单中消失；
 - `check:all` 自身不被判为不可达；
 - 断言不得包含 skip 或宽泛 ignore。
 
@@ -142,9 +140,9 @@ unlock 路径：若未来引入可控 mock/stub 传输层，可移入 check:all
 
 ## 4. 待决问题
 
-1. 该 meta-checker 应纳入 `check:all` 还是 `check:docs`？建议纳入 `check:docs`（文档/接线一致性范畴）。
+1. 该 meta-checker 是否纳入 `check:all` 或 `check:docs`？当前保持独立观察命令，待基线稳定后另行评审。
 2. `check:worker-health` 是否值得引入可控 mock 传输层以纳入离线套件？属可选增强，非缺陷修复。
-3. 17 项白名单是按「名称」还是「名称 + 类别」登记？建议含类别，便于后续统计排除原因分布。
+3. 17 项分类是按「名称」还是「名称 + 类别」登记？当前观察器输出名称与类别，便于后续统计排除原因分布。
 
 ## 关联文档
 
