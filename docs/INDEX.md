@@ -34,6 +34,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [HEALTH_REMEDIATION_2026_09_18.md](HEALTH_REMEDIATION_2026_09_18.md)：本轮健康整改顺序、已验旧问题及外部待验边界；不替代既有费用、源权利和发布契约。
+
 - [PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)：当前冻结压力研究的人工评审口径、完整证据清单与结论模板；沿用 ADR-0044/0047 的收集门槛，不改变运行时闸门或授予生产替换权限。
 
 - [ADR-0037](ADR/0037-check-suite-deduplication.md)：检查执行去重与传递覆盖校验；保留全部 leaf 断言和独立 checker/合并审阅。

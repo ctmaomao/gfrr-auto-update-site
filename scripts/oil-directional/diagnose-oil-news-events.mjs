@@ -5,6 +5,8 @@ import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
+import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
+import { classifySearchRequestError } from '../lib/search-request-policy.mjs';
 
 const DIAGNOSIS_VERSION = 'oil-news-events-diagnosis-p28';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/oil-news-events-diagnosis-latest.json';
@@ -959,10 +961,7 @@ async function fetchGdeltDocBroad(options) {
   }
 }
 
-async function fetchTavily(querySpec, options, keys) {
-  if (!keys.length) {
-    throw new Error('TAVILY_API_KEYS not configured');
-  }
+async function fetchTavily(querySpec, options, requestWithKeys) {
   const payload = {
     query: querySpec.query,
     topic: 'news',
@@ -973,9 +972,7 @@ async function fetchTavily(querySpec, options, keys) {
     include_raw_content: false,
     include_usage: true
   };
-  let lastError = null;
-  for (const [index, key] of keys.entries()) {
-    try {
+  return requestWithKeys(async (key) => {
       const json = await fetchWithTimeout('https://api.tavily.com/search', {
         method: 'POST',
         asJson: true,
@@ -986,7 +983,7 @@ async function fetchTavily(querySpec, options, keys) {
         },
         body: JSON.stringify(payload),
         timeoutMs: FETCH_TIMEOUT_MS,
-        label: `Tavily key ${index + 1}`
+        label: 'Tavily'
       });
       const rows = Array.isArray(json?.results) ? json.results : [];
       return rows.map((item) => normalizeArticle({
@@ -999,18 +996,10 @@ async function fetchTavily(querySpec, options, keys) {
         snippet: item.content,
         score: Number.isFinite(item.score) ? item.score : null
       }));
-    } catch (error) {
-      lastError = error;
-      console.warn(`[oil-news-events] Tavily key ${index + 1}/${keys.length} failed: ${error.message}`);
-    }
-  }
-  throw lastError || new Error('Tavily Search API failed');
+  });
 }
 
-async function fetchBrave(querySpec, options, keys) {
-  if (!keys.length) {
-    throw new Error('BRAVE_API_KEYS not configured');
-  }
+async function fetchBrave(querySpec, options, requestWithKeys) {
   const params = new URLSearchParams({
     q: querySpec.query,
     freshness: options.windowDays <= 7 ? 'pw' : 'pm',
@@ -1020,9 +1009,7 @@ async function fetchBrave(querySpec, options, keys) {
     ui_lang: 'en-US',
     extra_snippets: 'true'
   });
-  let lastError = null;
-  for (const [index, key] of keys.entries()) {
-    try {
+  return requestWithKeys(async (key) => {
       const json = await fetchWithTimeout(`https://api.search.brave.com/res/v1/news/search?${params}`, {
         asJson: true,
         headers: {
@@ -1032,7 +1019,7 @@ async function fetchBrave(querySpec, options, keys) {
           'X-Subscription-Token': key
         },
         timeoutMs: FETCH_TIMEOUT_MS,
-        label: `Brave key ${index + 1}`
+        label: 'Brave'
       });
       const rows = Array.isArray(json?.results) ? json.results : [];
       return rows.map((item) => {
@@ -1047,12 +1034,7 @@ async function fetchBrave(querySpec, options, keys) {
           snippet: `${item.description || ''} ${extra}`.trim()
         });
       });
-    } catch (error) {
-      lastError = error;
-      console.warn(`[oil-news-events] Brave key ${index + 1}/${keys.length} failed: ${error.message}`);
-    }
-  }
-  throw lastError || new Error('Brave News Search API failed');
+  });
 }
 
 function normalizeArticle({ source, querySpec, title, url, sourceName, publishedAt, snippet, score = null }) {
@@ -1194,13 +1176,14 @@ async function collectSource(source, options, keyState) {
     };
   }
 
+  const requestWithKeys = createSearchKeyPool(keyState._keys[source] || []);
   for (const querySpec of QUERY_SET) {
     try {
       let rows;
       if (source === 'tavily') {
-        rows = await fetchTavily(querySpec, options, keyState._keys.tavily);
+        rows = await fetchTavily(querySpec, options, requestWithKeys);
       } else if (source === 'brave') {
-        rows = await fetchBrave(querySpec, options, keyState._keys.brave);
+        rows = await fetchBrave(querySpec, options, requestWithKeys);
       } else {
         throw new Error(`Unsupported source: ${source}`);
       }
@@ -1218,7 +1201,7 @@ async function collectSource(source, options, keyState) {
         queryId: querySpec.id,
         label: querySpec.label,
         status: 'error',
-        error: compactSnippet(error.message, 180)
+        error: classifySearchRequestError(error)
       });
     }
   }

@@ -5,6 +5,7 @@ import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-he
 import { EDITORIAL_TOPICS } from './editorial-contract.mjs';
 import { EDITORIAL_QUERIES, buildNewsDiscovery } from './editorial-news.mjs';
 import { classifySearchRequestError } from './search-request-policy.mjs';
+import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { buildTavilyEditorialSearch, normalizeTavilyEditorialResults } from './editorial-search-plan.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
@@ -59,17 +60,9 @@ async function fetchJson(url, init) {
   }
 }
 
-async function withKeys(keys, request) {
-  let lastError;
-  for (const key of keys) {
-    try { return await request(key); } catch (error) { lastError = error; }
-  }
-  throw lastError || new Error('provider_not_configured');
-}
-
-async function tavily(topic, query, keys) {
+async function tavily(topic, query, requestWithKeys) {
   const body = buildTavilyEditorialSearch(topic, query, MAX_RESULTS);
-  const json = await withKeys(keys, (key) => fetchJson('https://api.tavily.com/search', {
+  const json = await requestWithKeys((key) => fetchJson('https://api.tavily.com/search', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT },
     body: JSON.stringify(body)
@@ -77,9 +70,9 @@ async function tavily(topic, query, keys) {
   return normalizeTavilyEditorialResults(topic, json, body);
 }
 
-async function brave(topic, query, keys) {
+async function brave(topic, query, requestWithKeys) {
   const params = new URLSearchParams({ q: query, freshness: 'pw', count: String(MAX_RESULTS), country: 'US', search_lang: 'en', ui_lang: 'en-US', extra_snippets: 'true' });
-  const json = await withKeys(keys, (key) => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+  const json = await requestWithKeys((key) => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
     headers: { Accept: 'application/json', 'Accept-Encoding': 'gzip', 'User-Agent': USER_AGENT, 'X-Subscription-Token': key }
   }));
   return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: [item.description, ...(item.extra_snippets || [])].filter(Boolean).join(' ') }));
@@ -89,9 +82,10 @@ export async function collectProvider(provider, keys) {
   if (keys.length === 0) return { rows: [], status: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] } };
   const rows = [];
   const queryRuns = [];
+  const requestWithKeys = createSearchKeyPool(keys);
   for (const topic of EDITORIAL_TOPICS) {
     try {
-      const results = provider === 'tavily' ? await tavily(topic, EDITORIAL_QUERIES[topic], keys) : await brave(topic, EDITORIAL_QUERIES[topic], keys);
+      const results = provider === 'tavily' ? await tavily(topic, EDITORIAL_QUERIES[topic], requestWithKeys) : await brave(topic, EDITORIAL_QUERIES[topic], requestWithKeys);
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });
     } catch (error) {
