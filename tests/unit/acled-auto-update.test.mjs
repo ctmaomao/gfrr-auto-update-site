@@ -193,6 +193,10 @@ test('refresh receipt requires ancestor and exact pair bytes; projection checks 
 
 test('refresh workflow keeps input hashes out of shell, verifies before/after and dispatches EdgeOne only after commit', () => {
   const source = fs.readFileSync('.github/workflows/refresh-world-order-stress.yml', 'utf8');
+  const pages = fs.readFileSync('.github/workflows/deploy-static-site-to-pages.yml', 'utf8');
+  assert.match(source, /^name: Refresh World Order Stress\r?$/mu);
+  assert.doesNotMatch(source, /^run-name:/mu, 'keep the stable name used by workflow_run listeners');
+  assert.match(pages, /^      - Refresh World Order Stress\r?$/mu);
   assert.ok(source.indexOf('--before') < source.indexOf('npm run build:world-order'));
   assert.ok(source.indexOf('--after') < source.indexOf('git push'));
   assert.ok(source.indexOf('--edgeone') > source.indexOf('git push'));
