@@ -1,5 +1,7 @@
 import fs from 'node:fs/promises';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
+import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { EDITORIAL_TOPICS } from './weekly-editorial-contract.mjs';
@@ -85,21 +87,8 @@ async function fetchJson(url, init, label) {
   }
 }
 
-async function fetchWithKeyRotation(keys, label, request) {
-  let lastError = null;
-  for (const [index, key] of keys.entries()) {
-    try {
-      return await request(key);
-    } catch (error) {
-      lastError = error;
-      console.warn(`[bubble-watch-weekly-editorial] ${label} key ${index + 1}/${keys.length} failed: ${safeError(error)}`);
-    }
-  }
-  throw lastError || new Error(`${label} unavailable`);
-}
-
-async function fetchTavily(topic, query, keys) {
-  const json = await fetchWithKeyRotation(keys, 'Tavily', (key) => fetchJson('https://api.tavily.com/search', {
+async function fetchTavily(topic, query, requestWithKeys) {
+  const json = await requestWithKeys((key) => fetchJson('https://api.tavily.com/search', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${key}`,
@@ -128,7 +117,7 @@ async function fetchTavily(topic, query, keys) {
   }));
 }
 
-async function fetchBrave(topic, query, keys) {
+async function fetchBrave(topic, query, requestWithKeys) {
   const params = new URLSearchParams({
     q: query,
     freshness: 'pw',
@@ -138,7 +127,7 @@ async function fetchBrave(topic, query, keys) {
     ui_lang: 'en-US',
     extra_snippets: 'true'
   });
-  const json = await fetchWithKeyRotation(keys, 'Brave', (key) => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+  const json = await requestWithKeys((key) => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -157,7 +146,7 @@ async function fetchBrave(topic, query, keys) {
   }));
 }
 
-async function collectProvider(provider, keys) {
+export async function collectProvider(provider, keys) {
   const rows = [];
   const queryRuns = [];
   if (keys.length === 0) {
@@ -166,11 +155,12 @@ async function collectProvider(provider, keys) {
       status: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] }
     };
   }
+  const requestWithKeys = createSearchKeyPool(keys);
   for (const topic of EDITORIAL_TOPICS) {
     try {
       const results = provider === 'tavily'
-        ? await fetchTavily(topic, WEEKLY_EDITORIAL_QUERIES[topic], keys)
-        : await fetchBrave(topic, WEEKLY_EDITORIAL_QUERIES[topic], keys);
+        ? await fetchTavily(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys)
+        : await fetchBrave(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys);
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });
     } catch (error) {
@@ -230,7 +220,7 @@ async function main() {
   console.log(`Bubble Watch weekly news ${options.allowNetwork ? 'live' : options.fixture ? 'fixture' : 'dry-run'}: status=${discovery.status}, stories=${discovery.stories.length}, output=${options.output}`);
 }
 
-main().catch((error) => {
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) main().catch((error) => {
   console.error(`Bubble Watch weekly news collection failed: ${safeMainError(error)}`);
   process.exitCode = 1;
 });

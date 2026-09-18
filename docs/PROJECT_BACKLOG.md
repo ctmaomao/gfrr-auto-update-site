@@ -1,5 +1,10 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-18 整体健康整改
+
+- **Acceptance baseline**：owner 要求先核实 Node、Macro 最终复验、请求保护和开发依赖四项旧问题，再按顺序实施整体体检建议；沿用逐项 commit/push、独立 AI 有界审阅及合并授权。具体范围、旧问题实测及待验边界见[执行清单](HEALTH_REMEDIATION_2026_09_18.md)。
+- **当前步骤**：新闻搜索额度隔离；不新增付费调用，不修改可信新闻、AI 成本或时效保护。
+
 ### 2026-09-18 Pages 检查依赖修复
 
 - **Acceptance baseline**：owner 明确批准处理 Pages 部署阻塞，并另行固定压力模型最终评审标准。本步骤只补齐 Pages 检查环境；不修改 ACLED 源、生产配置或评分模型，不放宽原测试。
