@@ -2,10 +2,14 @@
 
 ## Scope
 
-[ADR-0055](ADR/0055-acled-weekly-automation.md) and policy PR #397 authorize one
-new initial run and a Monday 00:30 UTC run each week. The exact reviewed workflow
-is `acled-auto-update.yml`. It collects six weekly regional and six monthly-chain
-files using the existing account Secrets; no HAPI/API replacement is implied.
+[ADR-0055](ADR/0055-acled-weekly-automation.md) defines the protected automatic
+chain; [ADR-0056](ADR/0056-acled-split-cadence.md), implemented by PR #402,
+sets the current Monday/Wednesday/Friday 00:30 UTC cadence. Monday collects six
+weekly and six monthly files (at most 26 requests); Wednesday/Friday collect only
+the six weekly files (14 each), retaining the exact monthly baseline bytes.
+The weekly ceiling is 54 requests. The sole initial slot is already spent.
+The exact reviewed workflow is `acled-auto-update.yml`, using existing account
+Secrets; no HAPI/API replacement or additional catch-up budget is implied.
 This document describes implementation; actual initial and site acceptance must
 be recorded separately, not inferred from tests.
 
@@ -17,7 +21,7 @@ it is **not** zero network or zero filesystem activity. No ACLED access occurs.
 
 1. Verify main/origin, clean checkout, pinned pair and execution context.
 2. Query and atomically create a permanent `acled-auto-attempt-v1/initial` or UTC
-   Monday tag before login. Existing, failed or ambiguous claims stop. Manual
+   schedule-date tag before login (Monday keeps its old key). Existing, failed or ambiguous claims stop. Manual
    `execute_initial=true` can never mint a second initial slot.
 3. Reuse bounded session collection, confirmed logout, private validation and
    cleanup. A failure does not return partial files or candidates for publication.
@@ -100,6 +104,21 @@ new dynamic run title as `name`, unlike its stable listener name. Removing that
 dynamic name is a minimal compatibility repair, not a proven platform diagnosis;
 verify by a source-free refresh with the original receipt. Final recovery and
 two-site acceptance belong in the repair PR receipt; never redownload this batch.
+
+### Current acceptance after recovery
+
+PR #400 completed the source-free recovery and two-site acceptance; the initial
+Pages mismatch above is a historical receipt, not a current pending task.
+The 2026-09-18T03:59:50Z bounded publication probe again found both World Order
+files identical to main `8f63fa23`, with no delivery error. No ACLED request was
+made by that probe.
+
+Split-cadence PR #402 is merged. Run 35300766848 is a successful **dry-run**, not
+a live scheduled acquisition. As of this review, no new split-cadence natural
+run receipt exists; the first next nominal slot is Monday 2026-09-21 00:30 UTC.
+GitHub schedules can be delayed. Verify mode/request count, permanent date claim,
+logout/cleanup, no-change or exact publication receipt, and both-site projection
+after a natural slot. Do not repeat the spent initial run to manufacture proof.
 
 ## Publication uncertainty
 
