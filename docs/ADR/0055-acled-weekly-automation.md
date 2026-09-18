@@ -70,6 +70,25 @@ remain. These fields never assert official permission or uniform regional dates.
 
 ## Verification and rollback
 
+### Checkout identity clarification (separate reviewed repair)
+
+Initial dispatch 35289495733 stopped before any GitHub claim or ACLED request
+because official checkout sets the HTTPS origin without `.git`. The fixed-repo
+identity checks accept exactly `https://github.com/ctmaomao/gfrr-auto-update-site`
+and the same string plus `.git`; no other protocol, host, owner, repository,
+credentials, query or suffix is accepted. Main, clean-tree, pins, CAS, claim and
+all request limits remain unchanged. The failed preflight made zero requests and
+the initial claim is absent; a new first-attempt dispatch may use that still
+unclaimed budget after repair, not rerun a spent acquisition or delete a claim.
+
+The refresh verifier compares the full **published** ACLED source contract:
+`enabled`, `status`, `lastFetchedAt` and every key in `summary`, using the existing
+producer's compact serialization. Internal fetcher evidence/confidence/reuse/
+warnings are not serialized at that location; comparing those extra fields to
+the published object would always fail. Exact comparison is retained after this
+explicit projection, including unexpected published keys, dates and null/zero.
+No production serialization, model, formula or checker assertion is changed.
+
 Exact-byte mutation tests, provenance allowlist regressions and full checks precede
 independent review of this policy. Integration additionally needs synthetic whole
 chain failures, persistent duplicate claims, real initial acceptance and both-site

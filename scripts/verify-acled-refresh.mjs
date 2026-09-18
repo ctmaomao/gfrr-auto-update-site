@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { checkAcledRefreshReceipt, acledSourceMatches } from './world-order/acled-refresh-receipt.mjs';
+import { checkAcledRefreshReceipt, acledSourceMatches, projectAcledPublishedSource } from './world-order/acled-refresh-receipt.mjs';
 import { fetchAcledSummary } from './world-order/fetch-acled.mjs';
 import { dispatchAcledFollowup } from './world-order/acled-auto-github.mjs';
 const args = process.argv.slice(2);
@@ -14,7 +14,7 @@ if (args.length === 1 && ['--before', '--after', '--edgeone'].includes(args[0])
       const file = 'data/world-order-stress.json';
       if (fs.statSync(file).size > 2 * 1024 * 1024) throw new Error();
       const actual = JSON.parse(fs.readFileSync(file, 'utf8')).externalSources?.acled;
-      const expected = await fetchAcledSummary();
+      const expected = projectAcledPublishedSource(await fetchAcledSummary());
       report.status = acledSourceMatches(actual, expected) ? 'projection_verified' : 'projection_hold';
     } catch { report.status = 'projection_hold'; }
     if (args[0] === '--edgeone' && report.status === 'projection_verified') {

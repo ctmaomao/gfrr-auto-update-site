@@ -9,8 +9,11 @@ import { runAcledAutoUpdate, acledAutoContext } from '../../scripts/world-order/
 import { acledWeekSlot, claimAcledSlot, dispatchAcledFollowup } from '../../scripts/world-order/acled-auto-github.mjs';
 import { publishAcledPair } from '../../scripts/world-order/acled-pair-publication.mjs';
 import { prepareAcledPairCommit } from '../../scripts/world-order/acled-pair-commit.mjs';
-import { checkAcledRefreshReceipt, acledSourceMatches } from '../../scripts/world-order/acled-refresh-receipt.mjs';
+import { checkAcledRefreshReceipt, acledSourceMatches, projectAcledPublishedSource } from '../../scripts/world-order/acled-refresh-receipt.mjs';
+import { fetchAcledSummary } from '../../scripts/world-order/fetch-acled.mjs';
+import { compactObject } from '../../scripts/world-order/normalize-world-order-inputs.mjs';
 import { isReviewedAcledAuthWorkflow, AUTO_WORKFLOW_PATH } from '../../scripts/acled-auth-workflow-policy.mjs';
+import { isAcledRepositoryOrigin } from '../../scripts/world-order/acled-repository.mjs';
 
 const sha = v => createHash('sha256').update(v).digest('hex');
 const paths = { weekly: 'config/world-order-acled-regional-weekly.json', monthly: 'config/world-order-acled-global-monthly.json' };
@@ -87,6 +90,24 @@ test('UTC Monday slots separate initial and weekly budgets, including year bound
   assert.throws(() => acledWeekSlot('invalid'));
 });
 
+test('official checkout origin passes the full chain; only two exact HTTPS spellings are accepted', async t => {
+  const base = 'https://github.com/ctmaomao/gfrr-auto-update-site';
+  for (const value of [base, `${base}.git`]) assert.equal(isAcledRepositoryOrigin(value), true);
+  for (const value of [null, undefined, '', `${base}/`, `${base}?x=1`, `${base}.git#main`,
+    `${base}-other`, base.replace('https:', 'http:'), base.replace('github.com', 'github.com.evil.test'),
+    base.replace('github.com', 'user@github.com'), base.replace('ctmaomao', 'other'),
+    'git@github.com:ctmaomao/gfrr-auto-update-site.git']) assert.equal(isAcledRepositoryOrigin(value), false);
+  const f = fixture(t);
+  f.git(['remote', 'set-url', 'origin', base]);
+  const result = await runAcledAutoUpdate(f.options);
+  assert.equal(result.status, 'refresh_dispatched_site_pending', JSON.stringify(result));
+  assert.deepEqual(f.calls, ['claim-query', 'claim', 'collect', 'validate', 'publish-query', 'publish', 'dispatch']);
+  f.calls.length = 0;
+  f.git(['remote', 'set-url', 'origin', `${base}-other`]);
+  assert.equal((await runAcledAutoUpdate(f.options)).status, 'execution_hold');
+  assert.deepEqual(f.calls, []);
+});
+
 test('real strict preparation, paired publication and exact refresh receipt run in order; repeat consumes no source requests', async t => {
   const f = fixture(t), before = JSON.stringify(f.candidates);
   const r = await runAcledAutoUpdate(f.options);
@@ -152,6 +173,11 @@ test('refresh receipt requires ancestor and exact pair bytes; projection checks 
   const receipt = { acled_config_commit: f.head, acled_weekly_sha256: sha(fs.readFileSync(path.join(f.root, paths.weekly))),
     acled_monthly_sha256: sha(fs.readFileSync(path.join(f.root, paths.monthly))) };
   assert.equal(checkAcledRefreshReceipt({ root: f.root, receipt }), true);
+  f.git(['remote', 'set-url', 'origin', 'https://github.com/ctmaomao/gfrr-auto-update-site']);
+  assert.equal(checkAcledRefreshReceipt({ root: f.root, receipt }), true);
+  f.git(['remote', 'set-url', 'origin', 'https://github.com/other/gfrr-auto-update-site']);
+  assert.equal(checkAcledRefreshReceipt({ root: f.root, receipt }), false);
+  f.git(['remote', 'set-url', 'origin', 'https://github.com/ctmaomao/gfrr-auto-update-site']);
   assert.equal(checkAcledRefreshReceipt({ root: f.root, receipt: { ...receipt, acled_config_commit: pubHead } }), false);
   fs.appendFileSync(path.join(f.root, paths.monthly), '\n');
   assert.equal(checkAcledRefreshReceipt({ root: f.root, receipt }), false);
@@ -172,4 +198,26 @@ test('refresh workflow keeps input hashes out of shell, verifies before/after an
   assert.ok(source.indexOf('--edgeone') > source.indexOf('git push'));
   assert.match(source, /ACLED_CONFIG_COMMIT: \$\{\{ inputs\.acled_config_commit \}\}/u);
   assert.ok(!source.includes('secrets.ACLED_DOWNLOAD')); assert.ok(!source.includes('run: ${{ inputs.'));
+});
+
+test('refresh compares the real builder publication contract, not its internal source-only fields', async () => {
+  const builder = fs.readFileSync('scripts/build-world-order-stress.mjs', 'utf8');
+  const expression = builder.match(/externalSources: (Object\.fromEntries\([\s\S]*?\n    \)),\n    dimensions:/u)?.[1];
+  assert.ok(expression, 'actual producer projection must remain discoverable; review any contract change');
+  // Evaluate only the local producer's pure projection, never its main/fetchers.
+  const serialize = new Function('SOURCE_KEYS', 'externalSources', `return ${expression};`);
+  const source = await fetchAcledSummary(); // local JSON only
+  const actual = compactObject(serialize(['acled'], { acled: source })).acled;
+  const expected = projectAcledPublishedSource(source);
+  assert.equal(acledSourceMatches(actual, source), false, 'old raw-object comparison must reproduce the defect');
+  assert.equal(acledSourceMatches(actual, expected), true);
+  assert.deepEqual(Object.keys(expected).sort(), ['enabled', 'lastFetchedAt', 'status', 'summary']);
+  assert.equal(acledSourceMatches({ ...actual, lastFetchedAt: '2000-01-01T00:00:00Z' }, expected), false);
+  assert.equal(acledSourceMatches({ ...actual, summary: { ...actual.summary, latestWeek: '2000-01-01' } }, expected), false);
+  assert.equal(acledSourceMatches({ ...actual, unexpected: true }, expected), false);
+  const zeroSource = { ...source, summary: { ...source.summary, eventsLast4Weeks: 0, absentMetric: null } };
+  const zeroExpected = projectAcledPublishedSource(zeroSource);
+  assert.equal(zeroExpected.summary.eventsLast4Weeks, 0); assert.equal(zeroExpected.summary.absentMetric, null);
+  assert.equal(acledSourceMatches({ ...zeroExpected, summary: { ...zeroExpected.summary, eventsLast4Weeks: null } }, zeroExpected), false);
+  assert.match(fs.readFileSync('scripts/verify-acled-refresh.mjs', 'utf8'), /projectAcledPublishedSource\(await fetchAcledSummary\(\)\)/u);
 });
