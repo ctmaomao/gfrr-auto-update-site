@@ -21,6 +21,7 @@ export function buildTavilyEditorialSearch(topic, query, maxResults = 5) {
     time_range: 'week',
     include_answer: false,
     include_raw_content: false,
+    include_usage: true,
     ...(primary ? { include_domains: [primary.domain] } : {})
   };
 }

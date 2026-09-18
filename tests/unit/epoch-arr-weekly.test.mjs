@@ -217,9 +217,13 @@ test('workflow isolates candidate permissions, schedule and successful upload fr
   assert.equal((candidate.match(/candidate_ready=true/gu) || []).length, 1);
   assert.equal((workflow.match(/cron:/gu) || []).length, 1); assert.ok(workflow.includes("cron: '30 5 * * 1'"));
   // Freeze only this integration's existing production job, normalized to LF.
-  // Baseline d3568a8f; a later production-job change requires separate review.
+  // ADR-0059 updates baseline d3568a8f solely for the search-step ledger token.
+  // This exact new baseline requires independent review with ADR-0059 before merge.
+  // Any later production-job change still requires separate review.
   // No runtime git-history dependency (shallow checkout/source ZIP also works).
-  assert.equal(artifactHash(workflow.split('\n  refresh:')[1]), 'b1262782f9934962cfea3392daa3d1cae52ccf93980956793077c4f5931db3cb');
+  assert.equal(artifactHash(workflow.split('\n  refresh:')[1]), 'd377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96');
+  assert.ok(!candidate.includes('TAVILY_BUDGET_GITHUB_TOKEN'));
+  assert.equal((workflow.split('\n  refresh:')[1].match(/TAVILY_BUDGET_GITHUB_TOKEN:/gu) || []).length, 1);
 });
 
 test('CLI rejects path, write and manual context arguments before live work with static diagnostics', () => {

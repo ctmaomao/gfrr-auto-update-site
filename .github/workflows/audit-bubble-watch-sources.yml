@@ -20,7 +20,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  # Search accounting writes only the isolated tavily-usage-ledger branch.
+  contents: write
 
 jobs:
   audit:
@@ -40,6 +41,7 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.allow_paid_wind != true }}
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
         run: node scripts/audit-bubble-watch-sources.mjs --github-summary
@@ -48,6 +50,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_paid_wind == true }}
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
           WIND_API_KEY: ${{ secrets.WIND_API_KEY }}

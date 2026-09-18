@@ -8,6 +8,7 @@ const HTTP_ERROR_CATEGORIES = Object.freeze({
 });
 
 export function classifySearchRequestError(error) {
+  if (/^tavily_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return error.budgetCode;
   if (error?.name === 'AbortError') return 'request_timeout';
 
   const status = Number.isInteger(error?.httpStatus)

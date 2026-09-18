@@ -1,3 +1,5 @@
+// Search-only fixtures inject the accounting boundary; budget tests exercise real reservations.
+const budget = async (_context, request) => request();
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -38,13 +40,13 @@ for (const [name, collect] of [['macro', macro], ['bubble', bubble]]) test(`${na
   let calls = 0;
   t.mock.method(console, 'warn', () => {});
   t.mock.method(globalThis, 'fetch', async () => { calls++; return new Response('secret', { status: 432 }); });
-  const result = await collect('tavily', ['synthetic-key']);
+  const result = await collect('tavily', ['synthetic-key'], { budget });
   assert.equal(calls, 1);
   assert.equal(result.status.status, 'error');
   assert.equal(result.status.failureCount, result.status.queryRuns.length);
   assert.ok(result.status.queryRuns.every(row => row.status === 'error' && row.error.includes('432')));
   assert.ok(!JSON.stringify(result).includes('secret'));
-  await collect('tavily', ['synthetic-key']);
+  await collect('tavily', ['synthetic-key'], { budget });
   assert.equal(calls, 2, 'next invocation must probe again');
 });
 
@@ -71,7 +73,7 @@ test('oil real collector isolates quota failure from healthy Brave without expos
     assert.ok(url.includes('search.brave.com')); braveCalls++;
     return Response.json({ results: [] });
   });
-  const result = await runDiagnosis({ allowNetwork: true, sources: ['tavily', 'brave'], windowDays: 7, maxResults: 5, writeOutput: false });
+  const result = await runDiagnosis({ budget, allowNetwork: true, sources: ['tavily', 'brave'], windowDays: 7, maxResults: 5, writeOutput: false });
   assert.equal(tavilyCalls, 1);
   assert.ok(braveCalls > 1);
   assert.equal(result.sourceResults.find(row => row.source === 'tavily').status, 'error');
