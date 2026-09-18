@@ -44,6 +44,16 @@ test('deployment probe reads deduplicated meters and reports holds without reser
   assert.ok(!workflow.includes('schedule:'));
 });
 
+test('disabled paygo counters returned as null are normalized to zero', async () => {
+  const meter = usage();
+  meter.account.paygo_usage = null;
+  meter.account.paygo_limit = null;
+  const status = await verifyBudgetStatus({ store: memory(), keys: [context.key], now: () => clock,
+    readUsage: async () => meter });
+  assert.equal(status.meters[0].paygoUsage, 0);
+  assert.equal(status.meters[0].paygoLimit, 0);
+});
+
 test('usage report groups by key, UTC day, mode and consumer without treating missing receipts as zero billing', () => {
   const ledger = { ...emptyLedger(), entries: [row(), row({ state: 'reserved', reportedCredits: null }),
     row({ keyId: 'b'.repeat(16), mode: 'manual', consumer: 'bubble-ceo', state: 'failed', reportedCredits: null, time: '2026-09-17T01:00:00.000Z' }),

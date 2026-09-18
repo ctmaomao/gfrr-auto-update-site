@@ -37,10 +37,15 @@ export function validateLedger(ledger, now) {
 export function validateUsage(json) {
   const a = json?.account;
   const k = json?.key;
+  // Tavily returns null for pay-as-you-go counters when that feature is
+  // disabled. Null is an explicit disabled state, while other malformed or
+  // missing fields remain a fail-closed hold.
+  const paygoUsage = a?.paygo_usage === null ? 0 : a?.paygo_usage;
+  const paygoLimit = a?.paygo_limit === null ? 0 : a?.paygo_limit;
   if (!a || !k || !count(a.plan_usage) || !count(a.plan_limit) || a.plan_limit < 1
-    || !count(a.paygo_usage) || !count(a.paygo_limit) || !count(k.usage) || !count(k.limit) || k.limit < 1) fail('tavily_budget_usage_unknown');
+    || !count(paygoUsage) || !count(paygoLimit) || !count(k.usage) || !count(k.limit) || k.limit < 1) fail('tavily_budget_usage_unknown');
   // Account limits are authoritative; upgrading the account never raises project limits.
-  return { planUsage: a.plan_usage, planLimit: a.plan_limit, keyUsage: k.usage, keyLimit: k.limit };
+  return { planUsage: a.plan_usage, planLimit: a.plan_limit, paygoUsage, paygoLimit, keyUsage: k.usage, keyLimit: k.limit };
 }
 
 export function summarizeLedger(ledger, now = Date.now()) {
