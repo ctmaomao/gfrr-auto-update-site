@@ -2,6 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, BATCH_WORKFLOW_PATH, AUTO_WORKFLOW_PATH, isReviewedAcledAuthWorkflow } from '../../scripts/acled-auth-workflow-policy.mjs';
+
+test('split cadence admits only its exact reviewed workflow at the original path', () => {
+  const split = readFileSync('tests/fixtures/acled-split-auto-workflow-approved.txt', 'utf8');
+  assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, split), true);
+  assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, split.replace(/\r?\n/gu, '\r\n')), true);
+  for (const path of [AUTH_WORKFLOW_PATH, DETAIL_WORKFLOW_PATH, BATCH_WORKFLOW_PATH,
+    '.github/workflows/acled-weekly-refresh-reminder.yml', '.github/workflows/acled-copy.yml']) {
+    assert.equal(isReviewedAcledAuthWorkflow(path, split), false);
+  }
+  for (const [a, b] of [['30 0 * * 3', '30 0 * * *'], ['30 0 * * 5', '30 0 * * 6'],
+    ['default: false', 'default: true'], ['github.run_attempt == 1', 'true'],
+    ['github.event.schedule', 'inputs.schedule'], ['--live', '--live --weekly'],
+    ['persist-credentials: false', 'persist-credentials: true'], ['--ignore-scripts', ''],
+    ['timeout-minutes: 20', 'timeout-minutes: 200'], ['ACLED_DOWNLOAD_PASSWORD', 'ACLED_API_KEY']]) {
+    assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, split.replace(a, b)), false);
+  }
+  assert.equal(isReviewedAcledAuthWorkflow(AUTO_WORKFLOW_PATH, split + '\n# altered'), false);
+});
 const approved = readFileSync('tests/fixtures/acled-auth-workflow-approved.txt', 'utf8');
 
 test('weekly automation policy is exact and never changes older one-use budgets', () => {

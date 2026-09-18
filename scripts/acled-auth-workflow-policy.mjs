@@ -18,11 +18,17 @@ export const BATCH_WORKFLOW_SHA256 = '483b33300f716ed397a42847841e130dc0b56a5a6f
 // Its permanent pre-login claims and exact bounds cannot be transferred to reminders.
 export const AUTO_WORKFLOW_PATH = '.github/workflows/acled-auto-update.yml';
 export const AUTO_WORKFLOW_SHA256 = '205d1728a11ba7ed2bb859aea4031b77f033ea95b8005f66bca39b4863b59088';
+// ADR-0056: exact Mon pair / Wed+Fri weekly-only cadence, not arbitrary schedules.
+// The original digest remains an explicit rollback-compatible lower-frequency
+// version at the SAME path; both use the SAME permanent Monday/initial claims.
+// It grants no extra slot or caller. Any other bytes still need policy review.
+export const SPLIT_AUTO_WORKFLOW_SHA256 = '5a281ebbe63b9f71105a56a698536f7abfac66d1f9c67b063f80749530b291d7';
 export function isReviewedAcledAuthWorkflow(file, text) {
   const expected = file === AUTH_WORKFLOW_PATH ? AUTH_WORKFLOW_SHA256
     : file === DETAIL_WORKFLOW_PATH ? DETAIL_WORKFLOW_SHA256
       : file === BATCH_WORKFLOW_PATH ? BATCH_WORKFLOW_SHA256
         : file === AUTO_WORKFLOW_PATH ? AUTO_WORKFLOW_SHA256 : null;
-  return expected !== null && typeof text === 'string'
-    && createHash('sha256').update(text.replace(/\r\n/gu, '\n')).digest('hex') === expected;
+  if (expected === null || typeof text !== 'string') return false;
+  const digest = createHash('sha256').update(text.replace(/\r\n/gu, '\n')).digest('hex');
+  return digest === expected || (file === AUTO_WORKFLOW_PATH && digest === SPLIT_AUTO_WORKFLOW_SHA256);
 }
