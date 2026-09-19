@@ -45,6 +45,8 @@
 
 - [CHECK_ALL_COVERAGE_CLASSIFICATION.md](CHECK_ALL_COVERAGE_CLASSIFICATION.md)：`check:all` 可达范围口径、17 项未纳入脚本的逐条分类及 meta-checker 需求草案；设计提案，不改变 `check:all` 组成或任何现有断言。
 
+- [FRONTEND_ASSET_VERSION_CHECK_DESIGN.md](FRONTEND_ASSET_VERSION_CHECK_DESIGN.md)：前端 asset 版本是否已 bump 的只读检查器设计与实测验证；补 `check:all` 对 asset bump 规则无强制手段的缺口，含作用域、基线定位与两阶段落地建议。设计提案，不改前端代码或现有断言。
+
 - [PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)：当前冻结压力研究的人工评审口径、完整证据清单与结论模板；沿用 ADR-0044/0047 的收集门槛，不改变运行时闸门或授予生产替换权限。
 
 - [ADR-0037](ADR/0037-check-suite-deduplication.md)：检查执行去重与传递覆盖校验；保留全部 leaf 断言和独立 checker/合并审阅。
