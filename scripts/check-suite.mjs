@@ -188,6 +188,7 @@ const SUITES = {
     'check:oil-news-claim-ledger-review',
     'check:oil-thermal-watch',
     'check:oil-directional-zh-copy',
+    'check:odp-news-source-health',
     'check:firms-facilities-review',
     'check:firms-thermal-review',
     'check:firms-thermal-baseline-review',
