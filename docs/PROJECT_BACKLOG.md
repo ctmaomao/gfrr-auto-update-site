@@ -5,7 +5,7 @@
 - **Acceptance baseline**：owner 要求评估项目健康度/强壮度并打分；随后授权把修正后的审计结论与 `check:all` 覆盖分类写入 `docs/`，并明确授权补记本 backlog 条目作为后续整改基线。审计全程只读：未运行源刷新、未付费调用、未写生产数据、未部署、未改任何 checker 断言或 `check:all` 组成。
 - **结论**：综合 **7.6 / 10**（加权 7.625）。**未发现已证实的、可利用的高危漏洞**；主要问题性质为工程债务与外部依赖韧性。评分口径、实测证据表、修正记录与方法学边界见 [健康度审计](HEALTH_AUDIT_2026_09_18.md)。
 - **验证**：`npm run check:all` 退出 0（展开 139 个叶子命令，约 363s）；`npm run test:unit:coverage` 896/896 通过退出 0；`npm run check:market-pricing-freshness` PASS；`npm audit` 0 漏洞；`npm run check:docs` 退出 0（246 个 md、0 链接/锚点问题）。改动范围为 2 个新增文档 + `INDEX.md` 登记 + 本条目；`git status` 显示 `scripts/`、`data/`、`.github/`、`package.json`、`index.html` 改动数为 0。
-- **覆盖口径修正**：`check:all` 可达 `check:*` 为 **227 / 244**，未纳入 **17 项**，逐条分类与 meta-checker 需求见 [覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md)。此次审计中该数字曾被连续误判两次（51 → 223 → 227），误因均为静态 grep 与不完整套件展开；17 项例外经核对**全部可解释，不存在未记录的覆盖缺口**。
+- **覆盖口径修正**：`check:all` 可达 `check:*` 为 **227 / 244**（2026-09-19 新增 `check:odp-news-source-health` 后为 228 / 245），未纳入 **17 项**，逐条分类与 meta-checker 需求见 [覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md)。此次审计中该数字曾被连续误判两次（51 → 223 → 227），误因均为静态 grep 与不完整套件展开；17 项例外经核对**全部可解释，不存在未记录的覆盖缺口**。
 - **待办（本审计派生，尚未实施，各自需独立授权与评审）**：
   1. `check:all` 覆盖 meta-checker——按 [覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md) §3 落地只读检查器，17 项白名单逐条附理由、边界与 unlock 路径；建议纳入 `check:docs`。
   2. 巨型冻结文件的渐进拆分——对 `scripts/run-daily-pipeline.mjs`（11,212 行 / 435 个函数）等热点，沿用已验证的「提取纯函数 + 新旧输出等价比对」模式，并考虑制度化为改动时的强制伴随项。**不解除 `AGENTS.md` §3 的禁止大规模重写保护。**
@@ -33,7 +33,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `oil-news-quota-status-1` |
+| Cache version | `odp-news-source-attribution-2` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
