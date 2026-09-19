@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
 import test from 'node:test';
+import { parseSuiteObject } from '../../scripts/review-check-all-coverage.mjs';
 
 test('full checks reach both GDELT guards exactly once; standalone oil checks retain them', () => {
   const { scripts } = JSON.parse(readFileSync('package.json', 'utf8'));
-  const source = readFileSync('scripts/check-suite.mjs', 'utf8');
-  const suites = vm.runInNewContext(`${source.slice(source.indexOf('const SUITES'), source.indexOf('const suiteName'))}\nSUITES`);
+  const suites = parseSuiteObject(readFileSync('scripts/check-suite.mjs', 'utf8'));
   function expand(name, stack = []) {
     assert(!stack.includes(name), `cyclic check dependency ${name}`);
     assert.equal(typeof scripts[name], 'string', `missing check ${name}`);

@@ -24,8 +24,49 @@ const EXCEPTION_CLASSIFICATIONS = {
   'check:changed': '本地开发者工具'
 };
 
-function loadSuites(source) {
-  return vm.runInNewContext(`${source.slice(source.indexOf('const SUITES'), source.indexOf('const suiteName'))}\nSUITES`);
+/**
+ * Extract the `const SUITES = {...}` object literal and evaluate it.
+ *
+ * Deliberately brace-balanced rather than sliced between two literal markers:
+ * a marker-based slice silently breaks whenever other text in this file contains
+ * the same literals, which is exactly the fragility that made the coverage
+ * baseline hard to trust in the first place.
+ *
+ * The parsed value is round-tripped through JSON so callers receive ordinary
+ * current-realm objects and arrays; `vm` otherwise yields foreign-realm values
+ * whose prototypes differ, which breaks strict deep equality in tests.
+ */
+export function parseSuiteObject(source) {
+  const start = source.indexOf('const SUITES');
+  if (start === -1) throw new Error("scripts/check-suite.mjs must declare 'const SUITES'");
+  const open = source.indexOf('{', start);
+  if (open === -1) throw new Error("'const SUITES' must be an object literal");
+
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  for (let index = open; index < source.length; index += 1) {
+    const char = source[index];
+    if (quote !== null) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+      continue;
+    }
+    if (char === '{') depth += 1;
+    else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        const parsed = vm.runInNewContext(`(${source.slice(open, index + 1)})`);
+        return JSON.parse(JSON.stringify(parsed));
+      }
+    }
+  }
+  throw new Error('unbalanced braces in the SUITES object literal');
 }
 
 export function buildCoverageReport({ scripts, suites }) {
@@ -71,7 +112,7 @@ export function buildCoverageReport({ scripts, suites }) {
 
 export function readRepositoryReport() {
   const packageJson = JSON.parse(readFileSync(new URL('package.json', ROOT), 'utf8'));
-  const suites = loadSuites(readFileSync(new URL('scripts/check-suite.mjs', ROOT), 'utf8'));
+  const suites = parseSuiteObject(readFileSync(new URL('scripts/check-suite.mjs', ROOT), 'utf8'));
   return buildCoverageReport({ scripts: packageJson.scripts, suites });
 }
 

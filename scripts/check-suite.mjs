@@ -1,5 +1,10 @@
 import { spawnSync } from 'node:child_process';
 
+// Suite keys and members are quoted for consistency. Consumers evaluate this object
+// literal with `parseSuiteObject` (in scripts/review-check-all-coverage.mjs), which is
+// brace-balanced and therefore insensitive to surrounding comments and formatting, and
+// also assert membership via `readText(...).includes("'<script name>'")`. An omitted or
+// malformed suite key fails loudly: the lookup below returns undefined and the run stops.
 const SUITES = {
   'frontend-live-contracts': [
     'check:frontend-loading-state',
@@ -38,7 +43,7 @@ const SUITES = {
     'check:external-ai-manual-scaffold',
     'check:external-ai-production-provider-path'
   ],
-  brent: [
+  'brent': [
     'check:brent-promotion-audit-fields',
     'check:brent-crack-spread',
     'check:brent-public-proxy-source-review'

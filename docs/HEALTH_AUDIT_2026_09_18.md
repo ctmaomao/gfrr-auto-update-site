@@ -59,9 +59,17 @@ Owner 要求对仓库做整体健康度/强壮度评估并打分。本文件记�
 | 轮次 | 结论 | 错误原因 |
 |---|---|---|
 | 首版审计 | 51 / 244 可达 | 只匹配 `npm run X` 文本，未展开 `check-suite.mjs` 的套件成员列表（成员为纯字符串，经 `spawnSync` 调用） |
-| 首次复核 | 223 / 244 可达 | 展开套件时正则要求键带引号，漏掉无引号键 `brent:`，漏入其 3 个成员 |
+| 首次复核 | 223 / 244 可达 | 复核脚本用的展开正则要求套件键带引号，漏掉当时唯一无引号的键 `brent:`，漏入其 3 个成员 |
 | 第二次复核 | 226 / 244 可达 | 已补上 `brent` 套件；仍与项目权威算法相差 1，源于入口自身是否计入可达集合 |
 | **定稿** | **227 / 244 可达** | 直接复用 `tests/unit/check-suite-wiring.test.mjs` 的权威展开算法（入口自身计入） |
+
+根因说明：引号不一致只是**触发条件**，真正的缺陷是当时两个消费方都用
+
+```js
+source.slice(source.indexOf('const SUITES'), source.indexOf('const suiteName'))
+```
+
+按字面量切片。它会在文件中任何其它位置出现同名字面量时静默产出空切片。该脆弱点已修复：改为 `parseSuiteObject` 的括号配平解析（`scripts/review-check-all-coverage.mjs`），并对「字面量出现在对象之前」与跨 realm 相等性补充了回归测试。`check-suite.mjs` 的 9 个套件键已统一为带引号，并就地注释说明解析方式与失败行为。
 
 首版据此提出的「保护网的心理安全感大于其实际密度」**不成立**，已撤销。实际结论是覆盖面接近完整，17 项例外均可解释（见分类提案）。
 
@@ -96,7 +104,7 @@ Owner 要求对仓库做整体健康度/强壮度评估并打分。本文件记�
 - 三个线上站点仅验证 HTTP 200，未做内容级或数据一致性比对。
 - `check:all` 在 CI（GitHub Actions）环境的通过情况仅依据历史运行记录，未在本轮触发。
 - 浏览器验收（`npm run test:e2e`）本轮未执行；`HEALTH_REMEDIATION_2026_09_18.md` 记录的 34 项浏览器验收为上一轮回执。
-- `review:*` / `monitor:*` / `audit:*` 类共 72 个手动入口未逐项核验。
+- `review:*`（55）/ `monitor:*`（9）/ `audit:*`（5）共 69 个手动入口未逐项核验；非 `check:*` 脚本总计 171 个，`review|monitor|audit|diagnose|probe|analyze` 类合计 75 个。口径取前者时须注明只含三个前缀。
 - 未跟踪的本地残留目录（`manual-artifacts` 815 MB、`.codex` 257 MB、`.codebase-memory` 112 MB）未做内容级清理判定。
 - 未评估 Worker 运行时、KV 内容、EdgeOne 发布通道的实际线上状态。
 
