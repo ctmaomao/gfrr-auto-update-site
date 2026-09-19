@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-news-source-attribution-2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-news-source-attribution-2';
+} from './config.js?v=odp-news-source-attribution-3';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-news-source-attribution-3';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=odp-news-source-attribution-2';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-news-source-attribution-2';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=odp-news-source-attribution-2';
-import { renderTrendSvg } from './renderMacroTrend.js?v=odp-news-source-attribution-2';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=odp-news-source-attribution-2';
+} from './macroOverviewDisplayHelpers.js?v=odp-news-source-attribution-3';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-news-source-attribution-3';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=odp-news-source-attribution-3';
+import { renderTrendSvg } from './renderMacroTrend.js?v=odp-news-source-attribution-3';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=odp-news-source-attribution-3';
 
 // ---------- 阈值 + 派生 helper ----------
 

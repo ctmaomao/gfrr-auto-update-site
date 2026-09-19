@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-news-source-attribution-2';
+﻿import { fmtNumSafe } from './config.js?v=odp-news-source-attribution-3';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
