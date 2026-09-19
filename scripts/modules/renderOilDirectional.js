@@ -906,9 +906,23 @@ function newsSourceCount(data) {
 function newsDegradedSources(data) {
   const status = data?.sourceStatus || {};
   return NEWS_SOURCE_HEALTH_FIELDS
-    .map(([key, label]) => ({ label, state: status[key] }))
+    .map(([key, label]) => ({
+      label: newsSourceQuotaExhausted(data, key) ? `${label}额度耗尽` : label,
+      state: status[key],
+    }))
     .filter((source) => source.state && source.state !== 'live')
     .map((source) => `${source.label}${newsSourceStateZh(source.state)}`);
+}
+function newsSourceQuotaExhausted(data, key) {
+  const runs = data?.sourceStatus?.details?.[key]?.queryRuns;
+  if (!Array.isArray(runs)) return false;
+  return runs.some((run) => {
+    const error = typeof run?.error === 'string' ? run.error.toLowerCase() : '';
+    return error === 'http_432_plan_limit'
+      || error === 'quota_exhausted'
+      || error === 'budget_exhausted'
+      || error === 'plan_limit';
+  });
 }
 function newsQueryCoverageText(data) {
   const coverage = data?.queryCoverage || {};
@@ -917,7 +931,7 @@ function newsQueryCoverageText(data) {
   if (!queryCount || successCount === null) return '查询覆盖待核';
   return `查询 ${successCount}/${queryCount} 成功`;
 }
-function newsSourceHealthText(data) {
+export function newsSourceHealthText(data) {
   const total = newsSourceCount(data);
   const liveSources = Number.isFinite(data?.aggregate?.liveSourceCount)
     ? Math.round(data.aggregate.liveSourceCount)

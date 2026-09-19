@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fetchGdeltCloudSummary,parseGdeltCountryBuckets} from '../../scripts/world-order/fetch-gdelt-cloud.mjs';
-import {renderLegacyOilEventNewsLayer} from '../../scripts/modules/renderOilDirectional.js';
+import {renderLegacyOilEventNewsLayer, newsSourceHealthText} from '../../scripts/modules/renderOilDirectional.js';
 
 test('live, legacy fresh/stale cache and fallback retain event units without inventing article totals',async()=>{
   const directory=fs.mkdtempSync(path.join(os.tmpdir(),'gfrr-event-units-'));
@@ -106,4 +106,22 @@ test('actual legacy renderer separates events, unknown article totals and genuin
     renderLegacyOilEventNewsLayer({externalSources:{gdelt:{status:'ok',summary:{totalEvents:0,conflictEvents:0,sanctionsEvents:0,blockadeOrChokepointEvents:0}}}});
     assert.equal(nodes.get('odp-news-event-status').textContent,'未见事件压力');
   } finally {if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}
+});
+
+test('oil news source health names an exhausted Tavily plan without exposing provider responses',()=>{
+  const text = newsSourceHealthText({
+    status: 'partial',
+    sourceStatus: {
+      gdeltDoc: 'error',
+      tavily: 'error',
+      brave: 'live',
+      details: {
+        tavily: {queryRuns: [{error: 'http_432_plan_limit'}]},
+      },
+    },
+    aggregate: {liveSourceCount: 1, configuredSourceCount: 3},
+    queryCoverage: {queryCount: 9, querySuccessCount: 4},
+  });
+  assert.match(text, /Tavily额度耗尽降级/u);
+  assert.doesNotMatch(text, /432|plan_limit/u);
 });
