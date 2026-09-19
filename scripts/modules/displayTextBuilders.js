@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=editorial-history-1';
+﻿import { fmtNumSafe } from './config.js?v=oil-news-quota-status-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -1,5 +1,19 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-18 整体健康度只读审计与验收基线
+
+- **Acceptance baseline**：owner 要求评估项目健康度/强壮度并打分；随后授权把修正后的审计结论与 `check:all` 覆盖分类写入 `docs/`，并明确授权补记本 backlog 条目作为后续整改基线。审计全程只读：未运行源刷新、未付费调用、未写生产数据、未部署、未改任何 checker 断言或 `check:all` 组成。
+- **结论**：综合 **7.6 / 10**（加权 7.625）。**未发现已证实的、可利用的高危漏洞**；主要问题性质为工程债务与外部依赖韧性。评分口径、实测证据表、修正记录与方法学边界见 [健康度审计](HEALTH_AUDIT_2026_09_18.md)。
+- **验证**：`npm run check:all` 退出 0（展开 139 个叶子命令，约 363s）；`npm run test:unit:coverage` 896/896 通过退出 0；`npm run check:market-pricing-freshness` PASS；`npm audit` 0 漏洞；`npm run check:docs` 退出 0（246 个 md、0 链接/锚点问题）。改动范围为 2 个新增文档 + `INDEX.md` 登记 + 本条目；`git status` 显示 `scripts/`、`data/`、`.github/`、`package.json`、`index.html` 改动数为 0。
+- **覆盖口径修正**：`check:all` 可达 `check:*` 为 **227 / 244**，未纳入 **17 项**，逐条分类与 meta-checker 需求见 [覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md)。此次审计中该数字曾被连续误判两次（51 → 223 → 227），误因均为静态 grep 与不完整套件展开；17 项例外经核对**全部可解释，不存在未记录的覆盖缺口**。
+- **待办（本审计派生，尚未实施，各自需独立授权与评审）**：
+  1. `check:all` 覆盖 meta-checker——按 [覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md) §3 落地只读检查器，17 项白名单逐条附理由、边界与 unlock 路径；建议纳入 `check:docs`。
+  2. 巨型冻结文件的渐进拆分——对 `scripts/run-daily-pipeline.mjs`（11,212 行 / 435 个函数）等热点，沿用已验证的「提取纯函数 + 新旧输出等价比对」模式，并考虑制度化为改动时的强制伴随项。**不解除 `AGENTS.md` §3 的禁止大规模重写保护。**
+  3. `LICENSE`（已完成，MIT 仅覆盖代码；第三方数据边界见 README 与 DATA_SOURCES.md）、`SECURITY.md`（已完成，报告与披露边界见根目录文件）、lint/format 配置、CSP 评估。
+  4. 外部额度耗尽的用户可见「来源降级」状态，避免静默缺失。
+  5. Pages 部署重试的可观测性：四次重试均带 `continue-on-error`，建议在 Summary 中显式保留初次失败、重试次数与总耗时。
+- **未验证项**：线上站点仅验证 HTTP 200，未做内容级或数据一致性比对；未在本轮触发远端 CI；`npm run test:e2e` 未执行（34 项浏览器验收为上一轮回执）；`review:*` / `monitor:*` / `audit:*` 等手动入口未逐项核验；本地未跟踪残留目录未做内容级清理判定。
+
 ### 2026-09-18 Tavily 统一用量与实际限额
 
 - **Acceptance baseline**：owner要求登录核查Tavily控制台，并立即实现统一用量记录和实际预算限制；owner随后明确要求“请上线生效”，授权本任务推送、集成和账本初始化；独立审阅要求仍保留，不新增付费搜索验收。
@@ -19,7 +33,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `editorial-history-1` |
+| Cache version | `oil-news-quota-status-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -215,7 +229,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **当前任务**：2026-09-18 健康整改，逐项状态和实测见 [执行清单](HEALTH_REMEDIATION_2026_09_18.md)。#403 / #404 / #406 已合并；最后纯函数提取 PR 以精确 head 的独立审阅、CI 与合并回执为准。
-- **运行边界**：不补发付费 AI，不重跑已耗 ACLED 下载，不删除预算 refs、用户原件或历史；每一项保留原验收保护。
-- **待验**：自然计划运行与长期模型观察、外部额度恢复仍未完成。网站发布须核对实际 run 和双站哈希，不能用本地通过替代。
+- **当前任务**：2026-09-18 健康整改，逐项状态和实测见 [执行清单](HEALTH_REMEDIATION_2026_09_18.md)。#403 / #404 / #406 已合并；最后纯函数提取 PR 以精确 head 的独立审阅、CI 与合并回执为准。同日的**只读整体健康度审计**（7.6/10）与 `check:all` 覆盖分类已获 owner 授权写入 docs 并登记于本文件顶部日期条目；其 5 项派生待办尚未实施。
+- **运行边界**：不补发付费 AI，不重跑已耗 ACLED 下载，不删除预算 refs、用户原件或历史；每一项保留原验收保护。审计派生的整改项各自需要独立授权与评审，不因本次登记自动获得实施、推送或发布许可。
+- **待验**：自然计划运行与长期模型观察、外部额度恢复仍未完成。网站发布须核对实际 run 和双站哈希，不能用本地通过替代。审计的未验证项（线上内容级比对、远端 CI、浏览器验收、手动入口、本地残留清理）保持未验，不得据审计文档推断为已通过。
 - **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health)，不重新执行其中的旧“下一步”。

@@ -1,4 +1,4 @@
-﻿# Global Financial Risk Radar 数据契约说明
+# Global Financial Risk Radar 数据契约说明
 
 本文档定义 Global Financial Risk Radar 当前数据链路中的 canonical 字段、fallback 字段与验证/调试字段。后续升级应优先遵守这些契约，避免显示值、验证层、历史兼容字段被误用或误删。
 
@@ -1032,7 +1032,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `editorial-history-1`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-news-quota-status-1`）。
 
 稳定边界：
 
@@ -1493,26 +1493,28 @@ Boundaries:
 
 ### Frontend asset cache version
 
-editorial-history-1 Frontend Asset Cache Busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。本轮触发原因是BoA消费证据行新增独立报告月份/旧值/缺失提示；cache busting用于避免浏览器沿用旧renderer/module graph，保留既有ODP新闻及宏观证据展示。
+前端 asset cache busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。cache busting 用于避免浏览器沿用旧 renderer / module graph。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `editorial-history-1`）。
+各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）。
+
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-news-quota-status-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=editorial-history-1`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=editorial-history-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `editorial-history-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=oil-news-quota-status-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=oil-news-quota-status-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `oil-news-quota-status-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs editorial-history-1
-npm run bump:frontend-asset-version -- editorial-history-1
+node scripts/bump-frontend-asset-version.mjs oil-news-quota-status-1
+npm run bump:frontend-asset-version -- oil-news-quota-status-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `editorial-history-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `oil-news-quota-status-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

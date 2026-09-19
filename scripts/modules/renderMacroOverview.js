@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=editorial-history-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=editorial-history-1';
+} from './config.js?v=oil-news-quota-status-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=oil-news-quota-status-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=editorial-history-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=editorial-history-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=editorial-history-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=editorial-history-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=editorial-history-1';
+} from './macroOverviewDisplayHelpers.js?v=oil-news-quota-status-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=oil-news-quota-status-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=oil-news-quota-status-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=oil-news-quota-status-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-news-quota-status-1';
 
 // ---------- 阈值 + 派生 helper ----------
 

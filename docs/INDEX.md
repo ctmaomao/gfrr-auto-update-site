@@ -30,6 +30,8 @@
 | `docs/DATA_SOURCES.md` | 10+ 外部数据源边界 (新增于 v28.0J-pre-split 后) |
 | `docs/ADR/README.md` | 重大架构决策索引 (新增于 v28.0J-pre-split 后) |
 
+安全漏洞报告流程见仓库根目录 [`SECURITY.md`](../SECURITY.md)；该文件只约束报告渠道与披露边界，不替代领域数据来源条款。
+
 ---
 
 ## Conditional Authority (authoritative only within their scope)
@@ -40,6 +42,12 @@
 - [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)：Pages 实际源码固定与 ODP 成功后的单一发布触发；保留 EdgeOne 配额和独立 checker 审阅。
 
 - [HEALTH_REMEDIATION_2026_09_18.md](HEALTH_REMEDIATION_2026_09_18.md)：本轮健康整改顺序、已验旧问题及外部待验边界；不替代既有费用、源权利和发布契约。
+
+- [HEALTH_AUDIT_2026_09_18.md](HEALTH_AUDIT_2026_09_18.md)：2026-09-18 只读健康度审计的实测证据、评分明细与修正记录（含两处已撤销的误判）；不修改 checker、数据或发布契约，仅作可复用基线。
+
+- [CHECK_ALL_COVERAGE_CLASSIFICATION.md](CHECK_ALL_COVERAGE_CLASSIFICATION.md)：`check:all` 可达范围口径、17 项未纳入脚本的逐条分类及 meta-checker 需求草案；设计提案，不改变 `check:all` 组成或任何现有断言。
+
+- [FRONTEND_ASSET_VERSION_CHECK_DESIGN.md](FRONTEND_ASSET_VERSION_CHECK_DESIGN.md)：前端 asset 版本是否已 bump 的只读检查器设计与实测验证；补 `check:all` 对 asset bump 规则无强制手段的缺口，含作用域、基线定位与两阶段落地建议。设计提案，不改前端代码或现有断言。
 
 - [PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)：当前冻结压力研究的人工评审口径、完整证据清单与结论模板；沿用 ADR-0044/0047 的收集门槛，不改变运行时闸门或授予生产替换权限。
 

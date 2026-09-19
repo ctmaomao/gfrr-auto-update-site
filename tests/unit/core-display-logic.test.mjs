@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=editorial-history-1';
+} from '../../scripts/modules/config.js?v=oil-news-quota-status-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

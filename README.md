@@ -8,6 +8,14 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 - <https://radar.gfrfinradar.uk/>
 - AI 泡沫监测: <https://ctmaomao.github.io/gfrr-auto-update-site/bubble-watch.html>
 
+## 许可证与数据边界
+
+- **代码**:[MIT](LICENSE)。本项目自行编写的源代码与文档按 MIT 授权,可自由使用、修改和再分发。
+- **第三方数据**:MIT **不覆盖** `data/`、`realtime/` 及文档中引用的外部数据、指标和内容。各来源仍按其自身条款约束,本项目不代替来源方授予任何权利。
+- **典型限制**:ACLED 数据受其 EULA 约束(§3.3 禁止对站点爬取/抓取,§7 含 AI/ML 用途限制);FRED、IMF PortWatch、ICE、EIA 等来源各自附带许可与再分发条件。本项目对部分来源只保存派生聚合摘要而非原始序列。
+- **完整边界**:逐源条款、允许的使用方式与不得写成的表述见 [DATA_SOURCES](docs/DATA_SOURCES.md);ACLED 专项约束见 [M-63](docs/M-63_ACLED_INTEGRATION.md)。
+- **免责**:本站输出为宏观风险观察与审计记录,**不构成投资建议**,不保证数据完整性、时效性或适用于任何特定用途。
+
 ## 核心定位
 
 本项目回答:

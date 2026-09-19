@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=editorial-history-1';
+﻿import { formatFiniteNumber } from './format.js?v=oil-news-quota-status-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
