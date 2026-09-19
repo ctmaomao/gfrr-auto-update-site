@@ -9,7 +9,7 @@
 - **待办（本审计派生，尚未实施，各自需独立授权与评审）**：
   1. `check:all` 覆盖 meta-checker——按 [覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md) §3 落地只读检查器，17 项白名单逐条附理由、边界与 unlock 路径；建议纳入 `check:docs`。
   2. 巨型冻结文件的渐进拆分——对 `scripts/run-daily-pipeline.mjs`（11,212 行 / 435 个函数）等热点，沿用已验证的「提取纯函数 + 新旧输出等价比对」模式，并考虑制度化为改动时的强制伴随项。**不解除 `AGENTS.md` §3 的禁止大规模重写保护。**
-  3. `LICENSE`（公开仓库的法律与协作缺口，优先级最高）、`SECURITY.md`、lint/format 配置、CSP 评估。
+  3. `LICENSE`（已完成，MIT 仅覆盖代码；第三方数据边界见 README 与 DATA_SOURCES.md）、`SECURITY.md`（已完成，报告与披露边界见根目录文件）、lint/format 配置、CSP 评估。
   4. 外部额度耗尽的用户可见「来源降级」状态，避免静默缺失。
   5. Pages 部署重试的可观测性：四次重试均带 `continue-on-error`，建议在 Summary 中显式保留初次失败、重试次数与总耗时。
 - **未验证项**：线上站点仅验证 HTTP 200，未做内容级或数据一致性比对；未在本轮触发远端 CI；`npm run test:e2e` 未执行（34 项浏览器验收为上一轮回执）；`review:*` / `monitor:*` / `audit:*` 等手动入口未逐项核验；本地未跟踪残留目录未做内容级清理判定。

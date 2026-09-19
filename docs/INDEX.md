@@ -30,6 +30,8 @@
 | `docs/DATA_SOURCES.md` | 10+ 外部数据源边界 (新增于 v28.0J-pre-split 后) |
 | `docs/ADR/README.md` | 重大架构决策索引 (新增于 v28.0J-pre-split 后) |
 
+安全漏洞报告流程见仓库根目录 [`SECURITY.md`](../SECURITY.md)；该文件只约束报告渠道与披露边界，不替代领域数据来源条款。
+
 ---
 
 ## Conditional Authority (authoritative only within their scope)
