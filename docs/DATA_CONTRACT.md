@@ -1495,7 +1495,7 @@ Boundaries:
 
 前端 asset cache busting 只定义前端静态资源版本契约，不改变 Worker runtime、Brent promotion、sourceProbe、secondary diagnostics、KV 或 `data/*.json` / `realtime/*.json`。cache busting 用于避免浏览器沿用旧 renderer / module graph。
 
-各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支。
+各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
 当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-news-source-attribution-3`）。
 
