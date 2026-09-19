@@ -910,6 +910,10 @@ function newsSourceCount(data) {
 const NEWS_SOURCE_EXHAUSTION_LABELS = [
   ['tavily_budget_account_limit', '额度耗尽'],
   ['tavily_budget_project_limit', '额度耗尽'],
+  // The project's own rolling 31-day ledger capacity being reached is quota
+  // unavailability from the reader's point of view, so it shares the exhaustion
+  // wording rather than the generic degraded state.
+  ['tavily_budget_ledger_full', '额度耗尽'],
   ['tavily_budget_session_stopped', '采集已暂停'],
 ];
 function newsSourceExhaustionLabel(data, key) {

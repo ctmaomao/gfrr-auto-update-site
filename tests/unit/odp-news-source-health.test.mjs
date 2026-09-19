@@ -24,9 +24,17 @@ const build = (error, sourceKey = 'tavily') => ({
   queryCoverage: { queryCount: 9, querySuccessCount: 6 },
 });
 
-test('account and project ledger limits are reported as exhaustion', () => {
+test('account, project and ledger capacity limits are all reported as exhaustion', () => {
   assert.match(newsSourceHealthText(build('tavily_budget_account_limit')), /Tavily额度耗尽降级/u);
   assert.match(newsSourceHealthText(build('tavily_budget_project_limit')), /Tavily额度耗尽降级/u);
+  // The project's own rolling 31-day ledger cap is quota unavailability for the reader,
+  // so it is attributed as exhaustion rather than left generic.
+  assert.match(newsSourceHealthText(build('tavily_budget_ledger_full')), /Tavily额度耗尽降级/u);
+});
+
+test('a ledger-full line is not mistaken for a paused collection session', () => {
+  const text = newsSourceHealthText(build('tavily_budget_ledger_full'));
+  assert.doesNotMatch(text, /采集已暂停/u);
 });
 
 test('a stopped collection session is reported as paused, not as exhaustion', () => {
@@ -37,11 +45,11 @@ test('a stopped collection session is reported as paused, not as exhaustion', ()
 
 test('other ledger failures keep the generic degraded wording instead of guessing a cause', () => {
   for (const other of [
-    'tavily_budget_ledger_full',
     'tavily_budget_credentials_missing',
     'tavily_budget_invalid_ledger',
     'tavily_budget_contention',
     'tavily_budget_store_unavailable',
+    'tavily_budget_usage_unavailable',
   ]) {
     const text = newsSourceHealthText(build(other));
     assert.match(text, /Tavily降级/u, other);
