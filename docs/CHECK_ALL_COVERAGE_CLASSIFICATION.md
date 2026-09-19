@@ -17,13 +17,13 @@
 - 递归展开 `npm run <name>` 形式的引用；
 - 递归展开 `node scripts/check-suite.mjs <suite>`，其成员取自 `check-suite.mjs` 的 `SUITES`；
 - 入口自身计入可达集合；
-- 遇环报错。
+- 遇环处理：`tests/unit/check-suite-wiring.test.mjs` 报错（`assert(!stack.includes(name))`）；只读审阅器 `scripts/review-check-all-coverage.mjs` **不报错**，改为记录 `cycle: …` 诊断后继续，以保持观察模式始终可完成。
 
 ### 1.2 实测结果
 
 | 指标 | 值 |
 |---|---|
-| npm 脚本总数 | 414 |
+| npm 脚本总数 | 415 |
 | `check:*` 脚本总数 | 244 |
 | 从 `check:all` 可达的 `check:*` | **227** |
 | 未可达的 `check:*` | **17** |
@@ -47,6 +47,8 @@
 > 注意：`check:external-ai-manual-input` 及其 `:compact` 变体同时被 `check:external-ai-manual-scaffold` 调用，但因其主要属性是产生 ignored 写入，归类为「写入或需手工制品」，不重复计入「已被其它入口执行」。
 
 ## 2. 分类明细
+
+各类的「理由 / 边界 / unlock 路径」与 `scripts/review-check-all-coverage.mjs` 的 `EXCEPTION_CATEGORIES` 一一对应，并由单元测试强制同步（新增未登记分类或被归类为「未分类」会失败）。各类的完整三字段说明见 §3.3 格式；下表给出逐脚本的证据与处理。
 
 ### 2.1 重复别名（2 项）
 

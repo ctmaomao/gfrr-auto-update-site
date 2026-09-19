@@ -2,7 +2,36 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { buildCoverageReport, parseSuiteObject } from '../../scripts/review-check-all-coverage.mjs';
+import { buildCoverageReport, parseSuiteObject, readRepositoryReport, EXCEPTION_CATEGORIES, EXCEPTION_CLASSIFICATIONS } from '../../scripts/review-check-all-coverage.mjs';
+
+test('every exception classification has a category with reason, boundary and unlock path', () => {
+  // AGENTS.md §10 forbids unexplained ignores. A classification whose category has no
+  // rationale entry would produce an unactionable report, so the two maps must stay in
+  // sync instead of drifting silently when a new exception is classified.
+  const categories = new Set(Object.values(EXCEPTION_CLASSIFICATIONS));
+  for (const category of categories) {
+    assert.ok(EXCEPTION_CATEGORIES[category], `missing rationale for category: ${category}`);
+  }
+  for (const [category, rationale] of Object.entries(EXCEPTION_CATEGORIES)) {
+    for (const field of ['reason', 'boundary', 'unlock']) {
+      assert.ok(rationale[field]?.trim(), `${category} must define ${field}`);
+    }
+  }
+  assert.strictEqual(Object.keys(EXCEPTION_CLASSIFICATIONS).length, 17);
+  assert.ok(!categories.has('未分类'));
+});
+
+test('repository exceptions are exactly the classified set, each with a rationale', () => {
+  const report = readRepositoryReport();
+  assert.deepStrictEqual(
+    [...report.unreachable].sort(),
+    Object.keys(EXCEPTION_CLASSIFICATIONS).sort()
+  );
+  for (const item of report.classifications) {
+    assert.notStrictEqual(item.category, '未分类', `${item.name} must be classified`);
+    assert.ok(item.rationale, `${item.name} must resolve a rationale`);
+  }
+});
 
 test('suite parsing is brace-balanced and ignores literal markers elsewhere in the file', () => {
   // Regression: a marker-based slice between 'const SUITES' and a later literal broke
