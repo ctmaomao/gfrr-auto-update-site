@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=oil-news-quota-status-1';
+import { $ } from './config.js?v=odp-news-source-attribution-3';
 
 function asNumber(value) {
   const n = Number(value);

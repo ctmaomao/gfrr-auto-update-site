@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=oil-news-quota-status-1';
+﻿import { formatFiniteNumber } from './format.js?v=odp-news-source-attribution-3';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

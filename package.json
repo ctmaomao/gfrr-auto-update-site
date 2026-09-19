@@ -415,6 +415,7 @@
     "check:oil-thermal-targeted-probe": "node --check scripts/oil-directional/run-oil-thermal-targeted-probe.mjs && node --check scripts/check-oil-thermal-targeted-probe.mjs && node scripts/check-oil-thermal-targeted-probe.mjs",
     "check:oil-thermal-watch": "node --check scripts/oil-directional/build-oil-thermal-watch.mjs && node --check scripts/check-oil-thermal-watch-contract.mjs && node scripts/check-oil-thermal-watch-contract.mjs && npm run check:firms-request-policy && npm run check:oil-thermal-targeted-probe",
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs",
+    "check:odp-news-source-health": "node --check scripts/modules/renderOilDirectional.js && node --test tests/unit/odp-news-source-health.test.mjs",
     "check:changed": "node scripts/check-changed.mjs",
     "check:world-order-market-input": "node --test tests/unit/world-order-market-input.test.mjs",
     "check:pipeline-pure-helpers": "node --test tests/unit/pure-pipeline-extraction.test.mjs tests/unit/main-score-parity.test.mjs tests/unit/historical-validation.test.mjs tests/unit/historical-event-verdict.test.mjs tests/unit/score-transition.test.mjs tests/unit/score-system-hardening.test.mjs tests/unit/pressure-model.test.mjs tests/unit/pressure-vintages.test.mjs tests/unit/pressure-remediation.test.mjs tests/unit/pressure-evidence-diagnostics.test.mjs",

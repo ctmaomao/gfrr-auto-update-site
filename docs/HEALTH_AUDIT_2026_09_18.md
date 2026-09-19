@@ -29,7 +29,7 @@ Owner 要求对仓库做整体健康度/强壮度评估并打分。本文件记�
 | 8 | CI 成功率 | `gh run list --limit 500` | 472 成功 / 22 失败 / 4 skipped / 2 cancelled = **94.4%** |
 | 9 | Action 锁定 | 扫描全部 39 个 workflow | 全部使用完整 commit SHA 并附版本注释 |
 | 10 | workflow 权限 | 扫描 `permissions:` 块 | 39 / 39 有显式最小权限块 |
-| 11 | `check:*` 可达性 | 见 [分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md) §1.1 的权威展开算法 | **227 / 244 可达，17 项不可达** |
+| 11 | `check:*` 可达性 | 见 [分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md) §1.1 的权威展开算法 | **227 / 244 可达，17 项不可达**（2026-09-19 新增 `check:odp-news-source-health` 后为 228 / 245） |
 | 12 | 市场定价时效 | `node scripts/check-market-pricing-freshness.mjs` | PASS（qqq:2026-09-11 / ndx:2026-09-04 / ixic:2026-09-04），exit 0 |
 | 13 | 危险 DOM API | `git grep innerHTML` 限定生产渲染代码 | 0 命中 |
 
@@ -61,7 +61,7 @@ Owner 要求对仓库做整体健康度/强壮度评估并打分。本文件记�
 | 首版审计 | 51 / 244 可达 | 只匹配 `npm run X` 文本，未展开 `check-suite.mjs` 的套件成员列表（成员为纯字符串，经 `spawnSync` 调用） |
 | 首次复核 | 223 / 244 可达 | 复核脚本用的展开正则要求套件键带引号，漏掉当时唯一无引号的键 `brent:`，漏入其 3 个成员 |
 | 第二次复核 | 226 / 244 可达 | 已补上 `brent` 套件；仍与项目权威算法相差 1，源于入口自身是否计入可达集合 |
-| **定稿** | **227 / 244 可达** | 直接复用 `tests/unit/check-suite-wiring.test.mjs` 的权威展开算法（入口自身计入） |
+| **定稿** | **227 / 244 可达** | 直接复用 `tests/unit/check-suite-wiring.test.mjs` 的权威展开算法（入口自身计入）。2026-09-19 新增 `check:odp-news-source-health` 后为 228 / 245 |
 
 根因说明：引号不一致只是**触发条件**，真正的缺陷是当时两个消费方都用
 
