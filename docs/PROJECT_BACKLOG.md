@@ -1,5 +1,15 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-21 Macro Risk Editorial 失败归因与来源降级分类
+
+- **Acceptance baseline**：owner 报告 `Macro Risk Editorial Refresh #80`（run `35552064845`，commit `23328fd`）失败，要求判断是项目缺陷还是偶发、能否彻底修复；owner 随后授权「代码加固：额度预检 + 明确失败分类」，并授权账本重建/初始化。本任务只做只读归因与实际可行的分类加固：不新增订阅、不付费调用、不放宽可信新闻门槛、不改 checker 断言、不部署、不改 workflow。
+- **归因（只读，证据取自远端 run / artifact / 仓库只读探针）**：**不是代码缺陷，也不是偶发**。Tavily 账户实际用量 `planUsage=1007 / planLimit=1000`（只读探针 run `35326505710`，`paygoLimit=0`）。`scripts/lib/tavily-budget.mjs` 在发网络请求前即以 `tavily_budget_account_limit` 拒绝，6 个查询全部失败（首条为账户额度，其余 `tavily_budget_session_stopped`）；Brave 6/6 成功但 30 条故事全部 `discovery_only`，`credibleCount=0`。现行契约要求两个 provider 健康才允许 `expectedSkip`，故按 `news_source_health_incomplete` 硬失败（`check-macro-risk-editorial-core.mjs` 明示断言「source-health failures must remain hard failures」）。自 2026-09-17 起每天被 admit 的那一次运行 09-17/18/19/21 失败、09-20 成功；09-17 是另一种模式（质量审查 `displayEligible=false`，第 13 步失败）。额度不恢复则红叉按设计持续。
+- **owner 原始方案的「预检拦截」子项经证据否决，未实施**：run `35482258943`（2026-09-20）在 `tavily=error`、`liveProviderCount=1` 下**成功刷新**，唯一可信故事来自 Brave（`federalreserve.gov`，`official`）。因此「Tavily 额度耗尽即判定 run 必然失败并抢在占用 day/input 配额前拦截」会误杀 Brave 单独可完成的合法刷新，属回归，不予采纳。
+- **实施**：`scripts/macro-risk/editorial-news.mjs` 新增 `describeProviderHealth` / `formatProviderHealth`，只输出有界、已分类的 provider 诊断码（正则白名单；未分类值降级 `unrecognized`，缺失为 `missing`；因 `sourceStatus` 不在 discovery 校验契约内，额外做形状与计数防护）。`scripts/macro-risk/build-editorial-input.mjs` 在「0 可信故事 + provider 健康不完整」时以 `news_source_health_incomplete` 明确分类失败并写 step summary，替代原先误导性的 `input requires at least one official or cross_checked news story`。红叉、fail-closed 与 `expectedSkip` 语义均不变；`compactNews` 保留排序在前的可信故事，故该分支与旧校验失败路径等价。
+- **验证**：`node --check` 三个改动文件退出 0；离线端到端三例——degraded 退出 1 且 stderr 命名 `tavily_budget_account_limit`、healthy-0 可信仍以 `no_credible_news` 干净跳过退出 0、含可信故事 happy path `PASS` 退出 0；`describeProviderHealth` 13 项断言（含不安全值不外泄、`PRIVATE` 不出现）全部通过。新增用例落在 `tests/unit/macro-editorial-discovery.test.mjs`，属 `check:macro-risk-editorial-core` 的受控集合。
+- **未验证 / 未提交**：本机沙箱内 `node --test` 无法 spawn 子进程（`spawn EPERM`，未改动的 `editorial-production.test.mjs` 同样失败，属环境限制），故 `npm run check:changed` / `check:all` **未完成**；改动仅在本地分支 `codex/macro-editorial-degraded-source-classification`，**未 commit / push / PR**，未触发远端 CI。合入前须补跑完整检查、独立审阅与 CI。
+- **待 owner 决定**：①Tavily 容量——唯一能让红叉转绿的动作，属计费操作，且与现行「不新增订阅、不放宽可信新闻门槛」立场冲突，需 owner 明确取舍；②「失败运行不占用当天 day/input 配额」需改动被测试锁定的「预留不可退」不变量，属 ADR 级；③账本 `tavily-usage-ledger` 经本项目 `validateLedger` 校验为**合法空基线**，且与 `emptyLedger()` 逐字节相同（分支仅 1 个无父提交 `243e3150`，2026-09-18T07:55:42Z，与上一轮记录一致），故重建/初始化为 no-op，09-18 前条目字段无法从日志忠实还原、伪造条目属禁止行为——**未执行**无意义的远端重置。
+
 ### 2026-09-18 整体健康度只读审计与验收基线
 
 - **Acceptance baseline**：owner 要求评估项目健康度/强壮度并打分；随后授权把修正后的审计结论与 `check:all` 覆盖分类写入 `docs/`，并明确授权补记本 backlog 条目作为后续整改基线。审计全程只读：未运行源刷新、未付费调用、未写生产数据、未部署、未改任何 checker 断言或 `check:all` 组成。
@@ -229,7 +239,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **当前任务**：2026-09-18 健康整改，逐项状态和实测见 [执行清单](HEALTH_REMEDIATION_2026_09_18.md)。#403 / #404 / #406 已合并；最后纯函数提取 PR 以精确 head 的独立审阅、CI 与合并回执为准。同日的**只读整体健康度审计**（7.6/10）与 `check:all` 覆盖分类已获 owner 授权写入 docs 并登记于本文件顶部日期条目；其 5 项派生待办尚未实施。
-- **运行边界**：不补发付费 AI，不重跑已耗 ACLED 下载，不删除预算 refs、用户原件或历史；每一项保留原验收保护。审计派生的整改项各自需要独立授权与评审，不因本次登记自动获得实施、推送或发布许可。
-- **待验**：自然计划运行与长期模型观察、外部额度恢复仍未完成。网站发布须核对实际 run 和双站哈希，不能用本地通过替代。审计的未验证项（线上内容级比对、远端 CI、浏览器验收、手动入口、本地残留清理）保持未验，不得据审计文档推断为已通过。
-- **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health)，不重新执行其中的旧“下一步”。
+- **当前任务**：2026-09-21 Macro Risk Editorial 失败归因与来源降级分类（见本文件顶部同日条目）。唯一根因是 Tavily 账户额度耗尽（`1007/1000`），属外部计费条件而非代码缺陷，且自 2026-09-17 起按设计每日失败；本轮已实施 fail-closed 的明确失败分类，红叉与契约不变。分支 `codex/macro-editorial-degraded-source-classification` 尚未 commit / push / PR。
+- **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛；不改 checker 断言、不删预算 refs、不写账本远端内容、不动 workflow；2026-09-18 健康整改的授权范围不因本轮登记扩大。
+- **待验**：本机 `npm run check:changed` / `check:all` 未完成（沙箱 `node --test` spawn EPERM），未 commit / push / PR，未触发远端 CI。Tavily 额度恢复取决于 owner 计费取舍；额度耗尽期被 admit 的运行会继续按契约红叉（09-20 由 Brave 单独提供一条官方故事而成功，证明红叉不等价于必然失败）。
+- **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health-latest)，不重新执行其中的旧“下一步”。
