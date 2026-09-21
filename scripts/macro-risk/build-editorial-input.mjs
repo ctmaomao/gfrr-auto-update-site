@@ -4,7 +4,7 @@ import process from 'node:process';
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { assertValid, validateEditorialInput, validateNewsDiscovery } from './editorial-contract.mjs';
 import { buildEditorialInput } from './editorial-input.mjs';
-import { assessEditorialNewsReadiness } from './editorial-news.mjs';
+import { assessEditorialNewsReadiness, describeProviderHealth, formatProviderHealth } from './editorial-news.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
 const defaults = {
@@ -69,6 +69,25 @@ async function main() {
     await reportWorkflowState(readiness);
     console.log(`Macro risk editorial input SKIP (reason=${readiness.reason}, providers=${readiness.providerStatuses.join('/')}, stories=${readiness.storyCount}, DeepSeekCalls=0, productionDataWrites=0)`);
     return;
+  }
+  if (!readiness.editorialReady) {
+    // Zero credible stories with incomplete provider health is a source-health
+    // failure, not a bad evidence pack. Name the classified cause here instead of
+    // letting the compact-input validator report a generic missing-story error,
+    // so an exhausted search budget is distinguishable from a broken index.
+    const health = describeProviderHealth(discovery);
+    await appendWorkflowFile('GITHUB_STEP_SUMMARY', [
+      '### Macro Risk Editorial refresh failed closed',
+      '',
+      `- Classification: \`${readiness.reason}\``,
+      `- Search providers: ${formatProviderHealth(health)}`,
+      `- Sanitized stories: ${readiness.storyCount} (official=${readiness.officialCount}, cross_checked=${readiness.crossCheckedCount})`,
+      '- DeepSeek calls: 0',
+      '- Production data writes: 0',
+      '- Deterministic Macro Risk Overview remains the published fallback.',
+      ''
+    ].join('\n'));
+    throw new Error(`${readiness.reason}: no official or cross_checked news survived the evidence gate; providers=${formatProviderHealth(health)}; stories=${readiness.storyCount}`);
   }
   const [radarData, worldOrder, marketPricing, radarHistory, oilDirectional, oilNews] = await Promise.all([
     readJson(options.radarData), readJson(options.worldOrder), readJson(options.marketPricing), readJson(options.radarHistory), readJson(options.oilDirectional), readJson(options.oilNews)

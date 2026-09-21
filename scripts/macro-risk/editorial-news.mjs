@@ -119,6 +119,33 @@ export function assessEditorialNewsReadiness(discovery) {
   };
 }
 
+// Search error codes are classified before they reach the artifact, but
+// sourceStatus is not part of the validated discovery contract, so re-check the
+// shape here: only bounded codes may be echoed into Actions logs or summaries.
+const DIAGNOSTIC_CODE = /^[a-z0-9][a-z0-9_]{1,63}$/u;
+
+export function describeProviderHealth(discovery) {
+  return ['tavily', 'brave'].map((provider) => {
+    const status = discovery?.sourceStatus?.[provider] || {};
+    const runs = Array.isArray(status.queryRuns) ? status.queryRuns : [];
+    const count = (value) => (Number.isSafeInteger(value) && value >= 0 ? value : 0);
+    return {
+      provider,
+      status: typeof status.status === 'string'
+        ? (DIAGNOSTIC_CODE.test(status.status) ? status.status : 'unrecognized')
+        : 'missing',
+      successCount: count(status.successCount),
+      failureCount: count(status.failureCount),
+      errors: [...new Set(runs.map((run) => run?.error).filter((code) => typeof code === 'string' && DIAGNOSTIC_CODE.test(code)))].sort()
+    };
+  });
+}
+
+export function formatProviderHealth(health) {
+  return health.map(({ provider, status, failureCount, errors }) =>
+    `${provider}=${status}(failed=${failureCount}${errors.length ? `, errors=${errors.join('|')}` : ''})`).join('; ');
+}
+
 export function normalizeProviderStory(raw) {
   if (!raw || !EDITORIAL_TOPICS.includes(raw.topic) || !['tavily', 'brave'].includes(raw.provider)) return null;
   const url = canonicalizeNewsUrl(raw.url);
