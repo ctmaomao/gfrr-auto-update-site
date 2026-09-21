@@ -91,6 +91,18 @@ function isOfficialDomain(domain) {
   return OFFICIAL_DOMAIN_SUFFIXES.some((suffix) => domain === suffix || domain.endsWith(`.${suffix}`));
 }
 
+// A budget hold is raised by this repository's own guard before any provider
+// request (ADR-0059), so it says nothing about index or source health. It is the
+// only failure class that may downgrade an empty refresh to an expected skip
+// (ADR-0060): real provider failures must stay hard failures.
+const BUDGET_HOLD_CODE = /^tavily_budget_[a-z_]+$/u;
+
+function providerHeldByBudget(status) {
+  const runs = Array.isArray(status?.queryRuns) ? status.queryRuns : [];
+  const failures = runs.filter((run) => run?.status === 'error');
+  return failures.length > 0 && failures.every((run) => BUDGET_HOLD_CODE.test(run?.error || ''));
+}
+
 export function assessEditorialNewsReadiness(discovery) {
   const stories = Array.isArray(discovery?.stories) ? discovery.stories : [];
   const officialCount = stories.filter((story) => story?.evidenceStatus === 'official').length;
@@ -107,10 +119,17 @@ export function assessEditorialNewsReadiness(discovery) {
       && new Set(runs.map((run) => run?.topic)).size === EDITORIAL_TOPICS.length
       && runs.every((run) => EDITORIAL_TOPICS.includes(run?.topic) && run?.status === 'ok');
   });
+  // Every unhealthy provider must be held by our own budget guard. One real
+  // provider failure anywhere keeps the collection a source-health failure.
+  const budgetHeld = providers.some(providerHeldByBudget);
+  const holdsAreOnlyBudget = providers.every((status) => status.status === 'ok' || providerHeldByBudget(status));
+  const budgetSkip = credibleCount === 0 && !searchProvidersHealthy && budgetHeld && holdsAreOnlyBudget;
   return {
     editorialReady: credibleCount > 0,
-    expectedSkip: credibleCount === 0 && searchProvidersHealthy,
-    reason: credibleCount > 0 ? null : searchProvidersHealthy ? 'no_credible_news' : 'news_source_health_incomplete',
+    expectedSkip: credibleCount === 0 && (searchProvidersHealthy || budgetSkip),
+    reason: credibleCount > 0
+      ? null
+      : searchProvidersHealthy ? 'no_credible_news' : budgetSkip ? 'search_budget_exhausted' : 'news_source_health_incomplete',
     credibleCount,
     officialCount,
     crossCheckedCount,

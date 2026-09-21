@@ -149,28 +149,39 @@ test('without keys collector performs no network requests', async (t) => {
 // Shape of the 2026-09-21 production failure: the durable Tavily account budget
 // refused the first query and stopped the session, so only Brave returned news
 // and none of it was official or cross-checked.
-function degradedDiscovery() {
-  const rawStories = EDITORIAL_TOPICS.map((topic, index) => ({ provider: 'brave', topic,
+function commentaryStories() {
+  return EDITORIAL_TOPICS.map((topic, index) => ({ provider: 'brave', topic,
     title: `Commentary ${index} on current macro conditions`, url: `https://outlet-${index}.example.com/story`,
     publishedAt: '2026-09-03T10:00:00Z' }));
-  return buildNewsDiscovery({ ...window, rawStories, sourceStatus: {
+}
+const healthyProviderStatus = () => ({ status: 'ok', successCount: 6, failureCount: 0,
+  queryRuns: EDITORIAL_TOPICS.map((topic) => ({ topic, status: 'ok', resultCount: 1 })) });
+
+function budgetHeldDiscovery() {
+  return buildNewsDiscovery({ ...window, rawStories: commentaryStories(), sourceStatus: {
     tavily: { status: 'error', successCount: 0, failureCount: 6, queryRuns: EDITORIAL_TOPICS.map((topic, index) => ({
       topic, status: 'error', resultCount: 0,
       error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped'
     })) },
-    brave: { status: 'ok', successCount: 6, failureCount: 0,
-      queryRuns: EDITORIAL_TOPICS.map((topic) => ({ topic, status: 'ok', resultCount: 1 })) }
+    brave: healthyProviderStatus()
+  } });
+}
+
+// Same empty outcome, but the index really failed: this must stay a hard failure.
+function brokenProviderDiscovery(error = 'http_432_plan_limit') {
+  return buildNewsDiscovery({ ...window, rawStories: commentaryStories(), sourceStatus: {
+    tavily: { status: 'error', successCount: 0, failureCount: 6,
+      queryRuns: EDITORIAL_TOPICS.map((topic) => ({ topic, status: 'error', resultCount: 0, error })) },
+    brave: healthyProviderStatus()
   } });
 }
 
 test('degraded no-credible discovery reports bounded classified provider diagnostics', () => {
-  const discovery = degradedDiscovery();
+  const discovery = budgetHeldDiscovery();
   const readiness = assessEditorialNewsReadiness(discovery);
   assert.equal(discovery.status, 'insufficient');
   assert.deepEqual(validateNewsDiscovery(discovery).errors, []);
   assert.equal(readiness.editorialReady, false);
-  assert.equal(readiness.expectedSkip, false);
-  assert.equal(readiness.reason, 'news_source_health_incomplete');
   assert.deepEqual(describeProviderHealth(discovery), [
     { provider: 'tavily', status: 'error', successCount: 0, failureCount: 6,
       errors: ['tavily_budget_account_limit', 'tavily_budget_session_stopped'] },
@@ -192,15 +203,60 @@ test('provider diagnostics never echo unclassified or unbounded provider text', 
   assert.ok(!formatProviderHealth(health).includes('PRIVATE'));
 });
 
-test('degraded no-credible discovery fails closed naming the cause, not a generic input error', () => {
+// ADR-0060: a hold raised by our own budget guard before any request skips, while
+// every real provider failure keeps the hard failure.
+for (const error of ['http_432_plan_limit', 'http_429_rate_limited', 'request_timeout', 'invalid_json', 'network_error']) {
+  test(`a real provider failure (${error}) stays a source-health hard failure`, () => {
+    const readiness = assessEditorialNewsReadiness(brokenProviderDiscovery(error));
+    assert.equal(readiness.editorialReady, false);
+    assert.equal(readiness.expectedSkip, false);
+    assert.equal(readiness.reason, 'news_source_health_incomplete');
+  });
+}
+
+test('a pre-network budget hold with zero credible news becomes an explicit budget skip', () => {
+  const readiness = assessEditorialNewsReadiness(budgetHeldDiscovery());
+  assert.equal(readiness.editorialReady, false);
+  assert.equal(readiness.expectedSkip, true);
+  assert.equal(readiness.reason, 'search_budget_exhausted');
+  assert.equal(readiness.credibleCount, 0);
+});
+
+test('a budget hold never masks a second real provider failure or a missing key', () => {
+  const held = budgetHeldDiscovery();
+  const withBrokenBrave = { ...held, sourceStatus: { ...held.sourceStatus, brave: { status: 'error' } } };
+  assert.equal(assessEditorialNewsReadiness(withBrokenBrave).reason, 'news_source_health_incomplete');
+  const withMixedTavily = { ...held, sourceStatus: { ...held.sourceStatus, tavily: {
+    status: 'error', successCount: 0, failureCount: 6,
+    queryRuns: [...held.sourceStatus.tavily.queryRuns.slice(1), { topic: EDITORIAL_TOPICS[0], status: 'error', resultCount: 0, error: 'http_401_unauthorized' }] } } };
+  assert.equal(assessEditorialNewsReadiness(withMixedTavily).reason, 'news_source_health_incomplete');
+  const withoutBraveKey = { ...held, sourceStatus: { ...held.sourceStatus, brave: { status: 'not_configured', successCount: 0, failureCount: 6, queryRuns: [] } } };
+  assert.equal(assessEditorialNewsReadiness(withoutBraveKey).reason, 'news_source_health_incomplete');
+});
+
+test('a real provider failure fails closed naming the cause, not a generic input error', () => {
   const file = join(mkdtempSync(join(tmpdir(), 'gfrr-macro-editorial-')), 'news-discovery.json');
-  writeFileSync(file, JSON.stringify(degradedDiscovery()));
+  writeFileSync(file, JSON.stringify(brokenProviderDiscovery()));
   const result = spawnSync(process.execPath,
     ['scripts/macro-risk/build-editorial-input.mjs', '--discovery', file, '--allow-expected-news-skip'],
     { encoding: 'utf8', windowsHide: true, timeout: 20000 });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /news_source_health_incomplete/);
-  assert.match(result.stderr, /tavily_budget_account_limit/);
+  assert.match(result.stderr, /http_432_plan_limit/);
   assert.doesNotMatch(result.stderr, /requires at least one official or cross_checked news story/);
   assert.doesNotMatch(result.stdout, /editorial input PASS/);
+});
+
+test('a budget hold skips green with its own classification and no artifact', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'gfrr-macro-editorial-'));
+  const file = join(dir, 'news-discovery.json');
+  writeFileSync(file, JSON.stringify(budgetHeldDiscovery()));
+  const result = spawnSync(process.execPath,
+    ['scripts/macro-risk/build-editorial-input.mjs', '--discovery', file, '--allow-expected-news-skip'],
+    { encoding: 'utf8', windowsHide: true, timeout: 20000 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /SKIP \(classification=SKIPPED_SEARCH_BUDGET_EXHAUSTED, reason=search_budget_exhausted/);
+  assert.match(result.stdout, /tavily_budget_account_limit/);
+  assert.doesNotMatch(result.stdout, /editorial input PASS/);
+  assert.doesNotMatch(result.stderr, /news_source_health_incomplete/);
 });
