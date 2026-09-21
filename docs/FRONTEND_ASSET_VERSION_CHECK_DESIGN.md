@@ -133,37 +133,61 @@ function findBumpCommit(git, appJsPath) {
 4. **不替代部署验收。** 通过本检查器不等于线上已更新；`OPERATIONS.md` 的线上版本核对（比较已加载 `app.js?v=…` token）仍须执行。
 5. **不能自动修复。** 检查器只报告，不代为选择新版本名——版本名应由提交者按其改动语义命名。
 
-## 7. 建议的落地形态（分两阶段）
+## 7. 落地形态与实施记录
 
-按 `AGENTS.md` §10 与 ADR-0037 的既有模式，**先观测、后强制**：
+按 `AGENTS.md` §10 与 ADR-0037 的既有模式，**先观测、后强制**。
 
-### 阶段 1（推荐先做）：只读审阅器
+### 阶段 1（已实施）：只读审阅器
 
-- 新增 `scripts/review-frontend-asset-version.mjs` 与 `npm run review:frontend-asset-version`
-- 只打印基线、作用域内改动文件与结论；**始终 exit 0**
-- 不进入 `check:all`，无网络、无文件写入
-- 目的：让规则日常可见，建立"改动前端即想起 bump"的习惯
+- `scripts/review-frontend-asset-version.mjs` 与 `npm run review:frontend-asset-version`
+- 打印工作区/HEAD 版本、作用域、改动文件与结论；**始终 exit 0**
+- 无网络、无文件写入
 
-### 阶段 2（独立提案，需单独评审）：强制项
+### 阶段 2（已实施）：强制项
 
-仅当阶段 1 稳定、且确认无误报后，再提案进入 `check:all`。此时必须单独评审，因为它会**改变合并流程**——每次前端改动都会被拦下，且新增 fail-closed 断言属 §10 所指的 checker 断言变更。
+`scripts/check-frontend-asset-version.mjs` + `npm run check:frontend-asset-version`，纳入 `frontend-live-contracts` 套件。
+
+检查**两种**漏 bump 形态，缺一不可：
+
+| 形态 | 判定 | 退出 |
+|---|---|---|
+| 工作区有未 bump 的前端改动 | `unbumped_frontend_changes` | 1 |
+| 已提交历史中，最后一次 bump 之后仍有前端改动 | `unbumped_committed_frontend_changes` | 1 |
+| 干净工作区且历史已 bump | `ok` | 0 |
+| 无法判定（`app_version_missing` / `shallow_history_fallback`） | WATCH | 0 |
+
+- 只检查工作区是不够的：**已提交的漏 bump 无法从干净工作区看出**，而那正是本规则在 PR #410 中被违反的形态（模块改动已合入、版本未变、工作区干净）。实测该形态在初版检查器下报 PASS。
+- CI 的工作区按定义为干净，因此工作区形态的门禁在**本地提交前**生效；已提交形态的门禁在 CI 中生效。
+- 无法判定时输出 `WATCH` 并 exit 0：环境限制不得伪装成策略违规。
+
+### 实施中发现的偏差（对照本提案原文）
+
+1. **`git log -S` 不可用于定位基线**（§8 待决问题 1 已预警，但实现仍踩中）。`git log -S 'APP_VERSION ='` 返回**首次引入该字面量**的提交（`stage-4a-1`，2026-05-27），而非最近一次值变更，导致 `isVersionBumped` 恒真、检测被完全抑制：改模块不 bump 也报 PASS。现改为**逐提交与自身直接父提交比较版本值**——这是唯一能识别"引入当前值的那个提交"的比较方式；若改为与子提交比较，则会返回"最后一个仍持有旧值的提交"，其 diff 根本不含 bump。
+2. **判定语义必须是「工作区 vs HEAD」，不能是「工作区 vs 上一个版本」**。一旦 bump 已提交，后两者按定义相等，于是此后每次改动都被判为"已 bump"。这与第 1 点叠加，使检查器在任何真实仓库形态下都无法触发。
+3. **只检查工作区不足以覆盖已上线的缺陷形态**。初版修正后仍对 PR #410 的真实缺陷提交 `f88b2c6c` 报 PASS——因为那是个**已提交**的漏 bump，工作区是干净的。实测驱动补上了「最后一次 bump 之后仍有前端改动」这一已提交形态检查。
+3. **作用域从 bump 工具解析而来**，而非在检查器内重申。`check-realtime-js-frozen` L55 锁定了该工具的 `FROZEN_FRONTEND_MODULE_FILES` 字面量，因此不能把它抽成共享模块（那会削弱既有断言）；改为解析其声明，工具不可读时回落到检查器自带副本并在输出中标注降级。
+4. **`assets/styles.css` 不纳入作用域**：其 `?v=` token 写在 `index.html` 上，改 CSS 会经 `index.html` 的 token 变化被 cache-bust，CSS 文件本身不需 token。（本提案早期讨论中曾误将其列入。）
+5. **`bubble-watch.html` 作为 known limitation 报告，不阻断**：它是单文件页，无可 bump 的外部资源引用，因此其缓存无法被失效。这修复了前版"干净状态也打印该提示"的误导性噪声。
+
+### 前置版本（PR #413）的缺陷
+
+前版实现被实测证明在必须失败的情形下返回 PASS，未合并。除上述 1、2 两点外，还包含：引用不存在的字段 `changedScopeFiles`、`else if (isShallow)` 不可达分支、`committedScopeChanges` 计算后未参与判定、以及一个**只有单提交的 fixture**——该 fixture 恰好让 `-S` 返回正确基线，因此掩盖了真实仓库下的失败。现测试改用**多版本历史 fixture**（含两次连续 bump），并直接断言退出码。
 
 ## 8. 待决问题
 
-1. 是否同时实现 §3.4 的 token 一致性断言，还是先只做新鲜度检查？
-2. （已核实，建议**采用保守全集**）作用域是否应从"全部 `scripts/modules/*.js` 去冻结"改为"从 `app.js` 实际 import 图可达的模块"？
+1. 是否同时实现 §3.4 的 token 一致性断言，还是先只做新鲜度检查？（当前实现只做新鲜度）
+2. （已核实，采用**保守全集**）作用域以 bump 工具声明为准，不走 import 图：
 
-   实测结论——**建议维持保守全集**，不走 import 图：
-
-   - 从 `app.js` 出发的可达集为 10 个模块：`buildCrossValidationMatrix`、`config`、`format`、`macroOverviewDisplayHelpers`、`macroOverviewNarrative`、`renderMacroOverview`、`renderMacroRiskEditorial`、`renderMacroTrend`、`renderOilDirectional`、`snapshotFreshness`。
-   - 6 个不可达模块为 `decision.js`、`displayStatusThresholds.js`、`displayTextBuilders.js`、`freshness.js`、`health.js`、`realtime.js`。其中 `realtime.js` 已冻结；`decision.js` / `health.js` / `freshness.js` / `displayTextBuilders.js` 的引用方是冻结的 `realtime.js` 与各 checker，**均不在线上服务路径**；`displayStatusThresholds.js` 无任何引用方。
-   - 但 bump 工具会重写这些模块内的 `?v=` token（实测 `config.js`、`decision.js`、`displayTextBuilders.js`、`freshness.js`、`health.js` 均报 `changed`）。因此以工具作用域为准可避免检查器与工具口径不一致。
-   - **实现警示**：若将来改用 import 图，静态正则会漏掉多行 import 语句。本仓库 `renderMacroOverview.js` 的 `config.js` 与 `macroOverviewDisplayHelpers.js` 即为跨行 `import { … } from '…'` 形式，按行匹配会漏判。另需注意 `renderOilDirectional.js` 当前**没有任何 import**（自包含大文件），因此其内部 token 变化不影响可达性判定。
+   - 从 `app.js` 出发的可达集为 10 个模块；`realtime.js` 已冻结；`decision.js` / `health.js` / `freshness.js` / `displayTextBuilders.js` 的引用方是冻结模块与各 checker，**均不在线上服务路径**；`displayStatusThresholds.js` 无任何引用方。
+   - 但 bump 工具会重写这些模块内的 `?v=` token（实测 `config.js`、`decision.js`、`displayTextBuilders.js`、`freshness.js`、`health.js` 均报 `changed`），因此以工具作用域为准可避免口径不一致。
+   - **实现警示**：若将来改用 import 图，静态正则会漏掉多行 import（`renderMacroOverview.js` 的 `config.js` 与 `macroOverviewDisplayHelpers.js` 即跨行形式）。`renderOilDirectional.js` 当前**没有任何 import**（自包含）。
 
 3. 阶段 1 的输出是否需要在 PR 上可见（例如接入 `check-all-pr.yml` 的 Summary）？
+4. `bubble-watch.html` 的缓存缺口是否要建立 token 机制（会改动页面 URL 结构），或维持 known limitation？
 
 ## 关联文档
 
 - `AGENTS.md` §1（asset bump 规则）· `docs/DATA_CONTRACT.md` §Frontend asset cache version
 - `scripts/bump-frontend-asset-version.mjs` · `docs/OPERATIONS.md`（线上版本核对步骤）
+- [check:all 覆盖分类提案](CHECK_ALL_COVERAGE_CLASSIFICATION.md)（本检查纳入后计数为 229 / 246）
 - [2026-09-18 项目健康度审计](HEALTH_AUDIT_2026_09_18.md)

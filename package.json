@@ -417,6 +417,8 @@
     "check:oil-directional-zh-copy": "node --check scripts/check-oil-directional-zh-copy.mjs && node scripts/check-oil-directional-zh-copy.mjs",
     "check:odp-news-source-health": "node --check scripts/modules/renderOilDirectional.js && node --test tests/unit/odp-news-source-health.test.mjs",
     "check:changed": "node scripts/check-changed.mjs",
+    "review:frontend-asset-version": "node scripts/review-frontend-asset-version.mjs",
+    "check:frontend-asset-version": "node --check scripts/review-frontend-asset-version.mjs && node --check scripts/check-frontend-asset-version.mjs && node --test tests/unit/frontend-asset-version.test.mjs && node scripts/check-frontend-asset-version.mjs",
     "check:world-order-market-input": "node --test tests/unit/world-order-market-input.test.mjs",
     "check:pipeline-pure-helpers": "node --test tests/unit/pure-pipeline-extraction.test.mjs tests/unit/main-score-parity.test.mjs tests/unit/historical-validation.test.mjs tests/unit/historical-event-verdict.test.mjs tests/unit/score-transition.test.mjs tests/unit/score-system-hardening.test.mjs tests/unit/pressure-model.test.mjs tests/unit/pressure-vintages.test.mjs tests/unit/pressure-remediation.test.mjs tests/unit/pressure-evidence-diagnostics.test.mjs",
     "research:pressure-model": "node scripts/research-pressure-model.mjs",
