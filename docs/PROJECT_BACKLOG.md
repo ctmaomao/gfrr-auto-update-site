@@ -7,8 +7,9 @@
 - **owner 原始方案的「预检拦截」子项经证据否决，未实施**：run `35482258943`（2026-09-20）在 `tavily=error`、`liveProviderCount=1` 下**成功刷新**，唯一可信故事来自 Brave（`federalreserve.gov`，`official`）。因此「Tavily 额度耗尽即判定 run 必然失败并抢在占用 day/input 配额前拦截」会误杀 Brave 单独可完成的合法刷新，属回归，不予采纳。
 - **实施**：`scripts/macro-risk/editorial-news.mjs` 新增 `describeProviderHealth` / `formatProviderHealth`，只输出有界、已分类的 provider 诊断码（正则白名单；未分类值降级 `unrecognized`，缺失为 `missing`；因 `sourceStatus` 不在 discovery 校验契约内，额外做形状与计数防护）。`scripts/macro-risk/build-editorial-input.mjs` 在「0 可信故事 + provider 健康不完整」时以 `news_source_health_incomplete` 明确分类失败并写 step summary，替代原先误导性的 `input requires at least one official or cross_checked news story`。红叉、fail-closed 与 `expectedSkip` 语义均不变；`compactNews` 保留排序在前的可信故事，故该分支与旧校验失败路径等价。
 - **验证**：`node --check` 三个改动文件退出 0；离线端到端三例——degraded 退出 1 且 stderr 命名 `tavily_budget_account_limit`、healthy-0 可信仍以 `no_credible_news` 干净跳过退出 0、含可信故事 happy path `PASS` 退出 0；`describeProviderHealth` 13 项断言（含不安全值不外泄、`PRIVATE` 不出现）全部通过。新增用例落在 `tests/unit/macro-editorial-discovery.test.mjs`，属 `check:macro-risk-editorial-core` 的受控集合。
-- **未验证 / 未提交**：本机沙箱内 `node --test` 无法 spawn 子进程（`spawn EPERM`，未改动的 `editorial-production.test.mjs` 同样失败，属环境限制），故 `npm run check:changed` / `check:all` **未完成**；改动仅在本地分支 `codex/macro-editorial-degraded-source-classification`，**未 commit / push / PR**，未触发远端 CI。合入前须补跑完整检查、独立审阅与 CI。
-- **待 owner 决定**：①Tavily 容量——唯一能让红叉转绿的动作，属计费操作，且与现行「不新增订阅、不放宽可信新闻门槛」立场冲突，需 owner 明确取舍；②「失败运行不占用当天 day/input 配额」需改动被测试锁定的「预留不可退」不变量，属 ADR 级；③账本 `tavily-usage-ledger` 经本项目 `validateLedger` 校验为**合法空基线**，且与 `emptyLedger()` 逐字节相同（分支仅 1 个无父提交 `243e3150`，2026-09-18T07:55:42Z，与上一轮记录一致），故重建/初始化为 no-op，09-18 前条目字段无法从日志忠实还原、伪造条目属禁止行为——**未执行**无意义的远端重置。
+- **验证 / 交付**：`npm run check:changed` 以完整 `check:all` 运行 **exit 0**；`npm run check:macro-risk-editorial-core` **57/57 通过**（原 54，本任务 +3）；`node --check` 三个改动文件退出 0，`git diff --check` 干净。本机沙箱默认禁止 `node --test` spawn 子进程（`spawn EPERM`，未改动的 `editorial-production.test.mjs` 同样受限，属环境限制），升级权限后跑通。已本地提交 `e8d715dd`（fix）/ `9531f010`（docs），push 分支 `codex/macro-editorial-degraded-source-classification` 并开 PR **#412**；远端 CI `check-all` **pass 5m44s**（run `35579154540`）。
+- **未完成**：独立人工审阅、合并授权与 Pages 验收均未取得（合并与发布未授权）。owner 已追加授权的方案 D 未实施，须待 #412 合并后按 serial trunk 另起分支（不叠 PR）。
+- **待 owner 决定**：①Tavily 容量——唯一能让红叉转绿的动作，属计费操作，且与现行「不新增订阅、不放宽可信新闻门槛」立场冲突，需 owner 明确取舍；②方案 D（已授权未实施）：把 `tavily_budget_*` 预网络拒绝归为显式 skip，属契约变更，需 ADR + 独立 reviewed PR，须同时提供替代告警通道，且必须保持 HTTP 4xx/5xx、超时、解析失败、缺 key 仍为硬失败；③「失败运行不占用当天 day/input 配额」需改动被测试锁定的「预留不可退」不变量，属 ADR 级；④账本 `tavily-usage-ledger` 经本项目 `validateLedger` 校验为**合法空基线**，且与 `emptyLedger()` 逐字节相同（分支仅 1 个无父提交 `243e3150`，2026-09-18T07:55:42Z，与上一轮记录一致），故重建/初始化为 no-op，09-18 前条目字段无法从日志忠实还原、伪造条目属禁止行为——**未执行**无意义的远端重置。
 
 ### 2026-09-18 整体健康度只读审计与验收基线
 
@@ -239,7 +240,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **当前任务**：2026-09-21 Macro Risk Editorial 失败归因与来源降级分类（见本文件顶部同日条目）。唯一根因是 Tavily 账户额度耗尽（`1007/1000`），属外部计费条件而非代码缺陷，且自 2026-09-17 起按设计每日失败；本轮已实施 fail-closed 的明确失败分类，红叉与契约不变。分支 `codex/macro-editorial-degraded-source-classification` 尚未 commit / push / PR。
+- **当前任务**：2026-09-21 Macro Risk Editorial 失败归因与来源降级分类（见本文件顶部同日条目）。唯一根因是 Tavily 账户额度耗尽（`1007/1000`），属外部计费条件而非代码缺陷，且自 2026-09-17 起按设计每日失败；本轮已实施 fail-closed 的明确失败分类，红叉与契约不变。PR **#412** 已开且 CI `check-all` pass，等独立审阅与合并授权；owner 追加授权的方案 D 待 #412 合并后另起分支实施（不叠 PR）。
 - **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛；不改 checker 断言、不删预算 refs、不写账本远端内容、不动 workflow；2026-09-18 健康整改的授权范围不因本轮登记扩大。
-- **待验**：本机 `npm run check:changed` / `check:all` 未完成（沙箱 `node --test` spawn EPERM），未 commit / push / PR，未触发远端 CI。Tavily 额度恢复取决于 owner 计费取舍；额度耗尽期被 admit 的运行会继续按契约红叉（09-20 由 Brave 单独提供一条官方故事而成功，证明红叉不等价于必然失败）。
+- **待验**：本地完整检查与远端 CI `check-all` 均已通过；仍待独立人工审阅、合并授权与 Pages 验收，不得据本地或 CI 通过推断为已发布。Tavily 额度恢复取决于 owner 计费取舍；额度耗尽期被 admit 的运行会继续按契约红叉（09-20 由 Brave 单独提供一条官方故事而成功，证明红叉不等价于必然失败）。
 - **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health-latest)，不重新执行其中的旧“下一步”。
