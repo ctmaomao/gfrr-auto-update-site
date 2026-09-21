@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=oil-news-quota-status-1';
-import { formatOnRrpYiUsd } from './format.js?v=oil-news-quota-status-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=odp-news-source-attribution-3';
+import { formatOnRrpYiUsd } from './format.js?v=odp-news-source-attribution-3';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

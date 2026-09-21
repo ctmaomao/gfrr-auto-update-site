@@ -903,26 +903,39 @@ function newsSourceCount(data) {
     ? data.sources.length
     : NEWS_SOURCE_HEALTH_FIELDS.length;
 }
+// Exact ledger codes that justify naming a cause next to the source label. Anything
+// else keeps the generic source-degraded wording instead of guessing an attribution.
+// Codes are emitted by scripts/lib/tavily-budget.mjs and preserved verbatim into
+// sourceStatus.details.<source>.queryRuns[].error by scripts/lib/search-request-policy.mjs.
+const NEWS_SOURCE_EXHAUSTION_LABELS = [
+  ['tavily_budget_account_limit', '额度耗尽'],
+  ['tavily_budget_project_limit', '额度耗尽'],
+  // The project's own rolling 31-day ledger capacity being reached is quota
+  // unavailability from the reader's point of view, so it shares the exhaustion
+  // wording rather than the generic degraded state.
+  ['tavily_budget_ledger_full', '额度耗尽'],
+  ['tavily_budget_session_stopped', '采集已暂停'],
+];
+function newsSourceExhaustionLabel(data, key) {
+  const runs = data?.sourceStatus?.details?.[key]?.queryRuns;
+  if (!Array.isArray(runs)) return null;
+  for (const run of runs) {
+    const code = typeof run?.error === 'string' ? run.error.trim().toLowerCase() : '';
+    if (!code) continue;
+    const match = NEWS_SOURCE_EXHAUSTION_LABELS.find(([ledgerCode]) => ledgerCode === code);
+    if (match) return match[1];
+  }
+  return null;
+}
 function newsDegradedSources(data) {
   const status = data?.sourceStatus || {};
   return NEWS_SOURCE_HEALTH_FIELDS
-    .map(([key, label]) => ({
-      label: newsSourceQuotaExhausted(data, key) ? `${label}额度耗尽` : label,
-      state: status[key],
-    }))
+    .map(([key, label]) => {
+      const attribution = newsSourceExhaustionLabel(data, key);
+      return { label: attribution ? `${label}${attribution}` : label, state: status[key] };
+    })
     .filter((source) => source.state && source.state !== 'live')
     .map((source) => `${source.label}${newsSourceStateZh(source.state)}`);
-}
-function newsSourceQuotaExhausted(data, key) {
-  const runs = data?.sourceStatus?.details?.[key]?.queryRuns;
-  if (!Array.isArray(runs)) return false;
-  return runs.some((run) => {
-    const error = typeof run?.error === 'string' ? run.error.toLowerCase() : '';
-    return error === 'http_432_plan_limit'
-      || error === 'quota_exhausted'
-      || error === 'budget_exhausted'
-      || error === 'plan_limit';
-  });
 }
 function newsQueryCoverageText(data) {
   const coverage = data?.queryCoverage || {};
