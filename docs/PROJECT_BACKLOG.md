@@ -1,5 +1,15 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-21 预算拒绝改为显式 skip（ADR-0060）
+
+- **Acceptance baseline**：owner 在 PR #412 合并、Pages 部署成功后，追加授权「方案 D：把 `tavily_budget_*` 预网络拒绝归为显式 skip」，并选择 serial trunk 时序（#412 合并后再从最新 main 另起分支，不叠 PR）。本任务不改订阅、不付费调用、不放宽可信新闻门槛、不新增 provider 频率、不部署。
+- **决策**：见 [ADR-0060](ADR/0060-budget-hold-explicit-skip.md)。只修正 ADR-0059 的 readiness/expected-skip 条款：本仓库自身在**发请求前**给出的预算拒绝（`tavily_budget_*`）不含索引/来源健康信息，在 0 可信故事时归为显式 skip（`reason=search_budget_exhausted`，`SKIPPED_SEARCH_BUDGET_EXHAUSTED`）；**只有全部不健康 provider 都是预算拒绝时才降级**，任何真实 provider 失败（HTTP 4xx/5xx、超时、解析失败、未分类错误、缺 key 未运行）仍保持 `news_source_health_incomplete` 硬失败。**不引入任何预留前拦截**（该子项已被 run `35482258943` 反证否决，见上一条目）。范围仅限 Macro Risk；Bubble Watch 同类情况留作独立决策。
+- **实施**：`scripts/macro-risk/editorial-news.mjs` 增加预算拒绝识别与三分支 reason；`scripts/macro-risk/build-editorial-input.mjs` 按 reason 输出 skip 分类，并在 warning 与 step summary 中写入**有界诊断码**（`search_budget_exhausted` 时必含 `tavily_budget_account_limit`），使绿灯 run 也不隐藏预算耗尽；workflow 的 skip 校验步骤改为同时覆盖两类 skip（保留 `SKIPPED_NO_CREDIBLE_NEWS` 标记）。
+- **checker 完整性（§10 自查）**：**未删除或放宽任何断言**。`check-macro-risk-editorial-core.mjs` 原有「source-health failures must remain hard failures」断言原样保留，并**新增 5 条**：预算拒绝→skip、预算拒绝不得掩盖第二个真实失败、预算集合内混入真实拒绝仍硬失败、缺 key 仍硬失败、预算 skip 不计入 readiness。
+- **验证**：`check:macro-risk-editorial-core` **65/65 通过**（该套件此前 57，本任务 +8），`node --check` 全部改动文件退出 0。新增用例覆盖 5 种真实失败码仍硬失败、预算 skip 分类、混合失败、缺 key、以及 CLI 端到端两类结果（预算→退出 0 且输出分类与代码；真实失败→退出 1 且命名根因）。
+- **已接受的残余风险（ADR-0060 明确记录）**：红叉消失后，额度耗尽不再自发告警；仓库内信号只有每日 `::warning`、step summary 与 skip 分类，需人工查看。读者侧效果是 AI 栏位在 freshness 窗口过后 fail-closed 消失（`renderMacroRiskEditorial.js` 要求 `freshness.isStale === false`），读者无法区分「未刷新」与「从未存在」——与既有待办「外部额度耗尽的用户可见『来源降级』状态」同源。
+- **告警通道刻意留待决策**：给 `tavily-budget-status.yml` 加 `schedule:` **并不能**产生告警——ADR-0059 把额度耗尽定义为**成功**的 hold 验证，该 workflow 在账户耗尽时仍退出 0，只在不可用/畸形状态才失败。要成为告警需新增 required-eligibility 模式并改 schedule，属推翻 ADR-0059 部分条款的独立决策，本任务未做。
+
 ### 2026-09-21 Macro Risk Editorial 失败归因与来源降级分类
 
 - **Acceptance baseline**：owner 报告 `Macro Risk Editorial Refresh #80`（run `35552064845`，commit `23328fd`）失败，要求判断是项目缺陷还是偶发、能否彻底修复；owner 随后授权「代码加固：额度预检 + 明确失败分类」，并授权账本重建/初始化。本任务只做只读归因与实际可行的分类加固：不新增订阅、不付费调用、不放宽可信新闻门槛、不改 checker 断言、不部署、不改 workflow。
@@ -8,8 +18,8 @@
 - **实施**：`scripts/macro-risk/editorial-news.mjs` 新增 `describeProviderHealth` / `formatProviderHealth`，只输出有界、已分类的 provider 诊断码（正则白名单；未分类值降级 `unrecognized`，缺失为 `missing`；因 `sourceStatus` 不在 discovery 校验契约内，额外做形状与计数防护）。`scripts/macro-risk/build-editorial-input.mjs` 在「0 可信故事 + provider 健康不完整」时以 `news_source_health_incomplete` 明确分类失败并写 step summary，替代原先误导性的 `input requires at least one official or cross_checked news story`。红叉、fail-closed 与 `expectedSkip` 语义均不变；`compactNews` 保留排序在前的可信故事，故该分支与旧校验失败路径等价。
 - **验证**：`node --check` 三个改动文件退出 0；离线端到端三例——degraded 退出 1 且 stderr 命名 `tavily_budget_account_limit`、healthy-0 可信仍以 `no_credible_news` 干净跳过退出 0、含可信故事 happy path `PASS` 退出 0；`describeProviderHealth` 13 项断言（含不安全值不外泄、`PRIVATE` 不出现）全部通过。新增用例落在 `tests/unit/macro-editorial-discovery.test.mjs`，属 `check:macro-risk-editorial-core` 的受控集合。
 - **验证 / 交付**：`npm run check:changed` 以完整 `check:all` 运行 **exit 0**；`npm run check:macro-risk-editorial-core` **57/57 通过**（原 54，本任务 +3）；`node --check` 三个改动文件退出 0，`git diff --check` 干净。本机沙箱默认禁止 `node --test` spawn 子进程（`spawn EPERM`，未改动的 `editorial-production.test.mjs` 同样受限，属环境限制），升级权限后跑通。已本地提交 `e8d715dd`（fix）/ `9531f010`（docs），push 分支 `codex/macro-editorial-degraded-source-classification` 并开 PR **#412**；远端 CI `check-all` **pass 5m44s**（run `35579154540`）。
-- **未完成**：独立人工审阅、合并授权与 Pages 验收均未取得（合并与发布未授权）。owner 已追加授权的方案 D 未实施，须待 #412 合并后按 serial trunk 另起分支（不叠 PR）。
-- **待 owner 决定**：①Tavily 容量——唯一能让红叉转绿的动作，属计费操作，且与现行「不新增订阅、不放宽可信新闻门槛」立场冲突，需 owner 明确取舍；②方案 D（已授权未实施）：把 `tavily_budget_*` 预网络拒绝归为显式 skip，属契约变更，需 ADR + 独立 reviewed PR，须同时提供替代告警通道，且必须保持 HTTP 4xx/5xx、超时、解析失败、缺 key 仍为硬失败；③「失败运行不占用当天 day/input 配额」需改动被测试锁定的「预留不可退」不变量，属 ADR 级；④账本 `tavily-usage-ledger` 经本项目 `validateLedger` 校验为**合法空基线**，且与 `emptyLedger()` 逐字节相同（分支仅 1 个无父提交 `243e3150`，2026-09-18T07:55:42Z，与上一轮记录一致），故重建/初始化为 no-op，09-18 前条目字段无法从日志忠实还原、伪造条目属禁止行为——**未执行**无意义的远端重置。
+- **交付与后续**：PR **#412 已合并**为 main `7fe5f73d`（merge commit），推送到 main 触发 Pages 部署 run `35582873249` **success**；独立人工审阅未另行取证。owner 追加授权的方案 D 已在 `codex/macro-editorial-budget-skip` 实施（见上方 ADR-0060 条目），等独立审阅与合并。
+- **待 owner 决定**：①Tavily 容量——唯一能让红叉不再依赖代码降级的动作，属计费操作，且与现行「不新增订阅、不放宽可信新闻门槛」立场冲突，需 owner 明确取舍；②方案 D 已按 ADR-0060 实施并经 owner 追加授权；③「失败运行不占用当天 day/input 配额」需改动被测试锁定的「预留不可退」不变量，属 ADR 级；④额度耗尽的主动告警需新增 required-eligibility 模式，属 ADR 级；⑤账本 `tavily-usage-ledger` 经本项目 `validateLedger` 校验为**合法空基线**，且与 `emptyLedger()` 逐字节相同（分支仅 1 个无父提交 `243e3150`，2026-09-18T07:55:42Z，与上一轮记录一致），故重建/初始化为 no-op，09-18 前条目字段无法从日志忠实还原、伪造条目属禁止行为——**未执行**无意义的远端重置。
 
 ### 2026-09-18 整体健康度只读审计与验收基线
 
@@ -240,7 +250,7 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
-- **当前任务**：2026-09-21 Macro Risk Editorial 失败归因与来源降级分类（见本文件顶部同日条目）。唯一根因是 Tavily 账户额度耗尽（`1007/1000`），属外部计费条件而非代码缺陷，且自 2026-09-17 起按设计每日失败；本轮已实施 fail-closed 的明确失败分类，红叉与契约不变。PR **#412** 已开且 CI `check-all` pass，等独立审阅与合并授权；owner 追加授权的方案 D 待 #412 合并后另起分支实施（不叠 PR）。
-- **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛；不改 checker 断言、不删预算 refs、不写账本远端内容、不动 workflow；2026-09-18 健康整改的授权范围不因本轮登记扩大。
-- **待验**：本地完整检查与远端 CI `check-all` 均已通过；仍待独立人工审阅、合并授权与 Pages 验收，不得据本地或 CI 通过推断为已发布。Tavily 额度恢复取决于 owner 计费取舍；额度耗尽期被 admit 的运行会继续按契约红叉（09-20 由 Brave 单独提供一条官方故事而成功，证明红叉不等价于必然失败）。
+- **当前任务**：预算拒绝改为显式 skip（ADR-0060，见本文件顶部同日条目），是已合并 PR #412 的 owner 追加授权后续。前序归因确认 Tavily 账户额度耗尽（`1007/1000`）是唯一根因、属外部计费条件；#412 已合并为 main `7fe5f73d` 且 Pages 部署 run `35582873249` 成功。本轮按 ADR-0060 把本仓库自身在发请求前的预算拒绝归为显式 skip，真实 provider 失败仍硬失败；分支 `codex/macro-editorial-budget-skip` 等独立审阅与合并。
+- **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛、不新增 provider 频率、不加 workflow schedule、不删预算 refs、不写账本远端内容；未删除或放宽任何 checker 断言（§10 自查见顶部条目）；2026-09-18 健康整改的授权范围不因本轮登记扩大。
+- **待验**：本轮改动的本地完整检查与远端 CI 以实际回执为准；仍待独立人工审阅与合并授权，不得据本地通过推断为已发布。已接受的残余风险：额度耗尽不再自发告警，仅剩每日 `::warning`、step summary 与手动只读探针，读者侧 AI 栏位在 freshness 窗口后 fail-closed 消失。下一步取决 owner：Tavily 容量取舍，或新增 required-eligibility 主动告警（ADR 级）。
 - **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health-latest)，不重新执行其中的旧“下一步”。

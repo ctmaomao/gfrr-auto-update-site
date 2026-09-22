@@ -196,7 +196,7 @@ jobs:
           git commit -m "chore: refresh macro risk editorial"
           git push origin HEAD:main
 
-      - name: Verify expected no-credible-news skip stayed side-effect free
+      - name: Verify expected skip stayed side-effect free
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'false'
         run: |
           set -euo pipefail
@@ -205,4 +205,7 @@ jobs:
           test ! -e manual-artifacts/macro-risk-editorial/deepseek-failure-latest.json
           test ! -e manual-artifacts/macro-risk-editorial/production-projection-latest.json
           git diff --quiet --exit-code
-          echo "SKIPPED_NO_CREDIBLE_NEWS: no DeepSeek call and no production write."
+          # ADR-0060: both skip classes are side-effect free. A budget hold is not
+          # a failure here, but it is reported as its own classification so a green
+          # run never hides an exhausted search budget.
+          echo "SKIPPED_NO_CREDIBLE_NEWS or SKIPPED_SEARCH_BUDGET_EXHAUSTED (reason=${{ steps.build_input.outputs.skip_reason }}): no DeepSeek call and no production write."

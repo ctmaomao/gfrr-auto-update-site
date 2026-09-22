@@ -75,6 +75,27 @@ assert(!healthyNoCredibleReadiness.editorialReady && healthyNoCredibleReadiness.
 const degradedNoCredibleReadiness = assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery, sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, brave: { status: 'error' } } });
 assert(!degradedNoCredibleReadiness.expectedSkip && degradedNoCredibleReadiness.reason === 'news_source_health_incomplete', 'source-health failures must remain hard failures');
 
+// ADR-0060: only a pre-network hold raised by our own budget guard may downgrade
+// an empty refresh to a skip. Real provider failures must still hard-fail, and a
+// budget hold must never mask one.
+const budgetHeldStatus = {
+  status: 'error', successCount: 0, failureCount: EDITORIAL_TOPICS.length,
+  queryRuns: EDITORIAL_TOPICS.map((topic, index) => ({ topic, status: 'error', resultCount: 0,
+    error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped' }))
+};
+const budgetHeldReadiness = assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
+  sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, tavily: budgetHeldStatus } });
+assert(budgetHeldReadiness.expectedSkip && budgetHeldReadiness.reason === 'search_budget_exhausted', 'a pre-network budget hold with zero credible news must be an explicit budget skip');
+assert(assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
+  sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, tavily: budgetHeldStatus, brave: { status: 'error' } } }).reason === 'news_source_health_incomplete', 'a budget hold must not mask a second real provider failure');
+assert(assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
+  sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, tavily: { ...budgetHeldStatus,
+    queryRuns: [...budgetHeldStatus.queryRuns.slice(1), { topic: EDITORIAL_TOPICS[0], status: 'error', resultCount: 0, error: 'http_432_plan_limit' }] } } }).reason === 'news_source_health_incomplete', 'a real provider rejection inside a budget-held collection must remain a hard failure');
+assert(assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
+  sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, brave: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] } } }).reason === 'news_source_health_incomplete', 'a missing provider key must remain a hard failure, never a budget skip');
+assert(assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
+  sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, tavily: budgetHeldStatus } }).editorialReady === false, 'a budget skip still reports no editorial readiness');
+
 const searchStatusCases = new Map([
   [401, 'http_401_unauthorized'],
   [402, 'http_402_payment_required'],
