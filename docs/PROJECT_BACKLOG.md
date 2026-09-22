@@ -254,4 +254,3 @@ Add or update backlog items with these rules:
 - **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛、不新增 provider 频率、不加 workflow schedule、不删预算 refs、不写账本远端内容；未删除或放宽任何 checker 断言（§10 自查见顶部条目）；2026-09-18 健康整改的授权范围不因本轮登记扩大。
 - **待验**：本轮改动的本地完整检查与远端 CI 以实际回执为准；仍待独立人工审阅与合并授权，不得据本地通过推断为已发布。已接受的残余风险：额度耗尽不再自发告警，仅剩每日 `::warning`、step summary 与手动只读探针，读者侧 AI 栏位在 freshness 窗口后 fail-closed 消失。下一步取决 owner：Tavily 容量取舍，或新增 required-eligibility 主动告警（ADR 级）。
 - **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health-latest)，不重新执行其中的旧“下一步”。
-- **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health-latest)，不重新执行其中的旧“下一步”。
