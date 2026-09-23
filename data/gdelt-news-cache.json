@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-09-22T17:13:36.630Z",
+  "generatedAt": "2026-09-23T17:25:31.162Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,13 +50,13 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 10803,
+    "elapsedMs": 10994,
     "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-09-22T17:13:25.826Z",
+    "latestAttemptAt": "2026-09-23T17:25:20.166Z",
     "lastLiveSuccessAt": "2026-09-08T16:49:16.510Z",
     "latestOutcome": "rate_limited",
     "windows": {
@@ -67,22 +67,13 @@
         "successRatePct": 0
       },
       "days30": {
-        "attemptCount": 48,
+        "attemptCount": 49,
         "successCount": 1,
-        "failureCount": 47,
-        "successRatePct": 2.1
+        "failureCount": 48,
+        "successRatePct": 2
       }
     },
     "history": [
-      {
-        "attemptedAt": "2026-08-13T03:11:27.041Z",
-        "outcome": "success",
-        "attempts": 1,
-        "retryCount": 0,
-        "status": 200,
-        "errorCode": null,
-        "elapsedMs": 14767
-      },
       {
         "attemptedAt": "2026-08-14T05:17:46.189Z",
         "outcome": "timeout",
@@ -649,11 +640,20 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 10803
+      },
+      {
+        "attemptedAt": "2026-09-23T17:25:20.166Z",
+        "outcome": "rate_limited",
+        "attempts": 1,
+        "retryCount": 0,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 10994
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-09-22T17:13:25.826Z",
+    "at": "2026-09-23T17:25:20.166Z",
     "errorClass": "rate_limited",
     "cooldownHours": 24
   },
