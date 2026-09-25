@@ -9,6 +9,7 @@
 - **验证**：`check:macro-risk-editorial-core` **65/65 通过**（该套件此前 57，本任务 +8），`node --check` 全部改动文件退出 0。新增用例覆盖 5 种真实失败码仍硬失败、预算 skip 分类、混合失败、缺 key、以及 CLI 端到端两类结果（预算→退出 0 且输出分类与代码；真实失败→退出 1 且命名根因）。
 - **已接受的残余风险（ADR-0060 明确记录）**：红叉消失后，额度耗尽不再自发告警；仓库内信号只有每日 `::warning`、step summary 与 skip 分类，需人工查看。读者侧效果是 AI 栏位在 freshness 窗口过后 fail-closed 消失（`renderMacroRiskEditorial.js` 要求 `freshness.isStale === false`），读者无法区分「未刷新」与「从未存在」——与既有待办「外部额度耗尽的用户可见『来源降级』状态」同源。
 - **告警通道刻意留待决策**：给 `tavily-budget-status.yml` 加 `schedule:` **并不能**产生告警——ADR-0059 把额度耗尽定义为**成功**的 hold 验证，该 workflow 在账户耗尽时仍退出 0，只在不可用/畸形状态才失败。要成为告警需新增 required-eligibility 模式并改 schedule，属推翻 ADR-0059 部分条款的独立决策，本任务未做。
+- **交付回执（2026-09-22）**：独立预合并审阅按 AGENTS.md §10 三点核对通过（方案与 ADR-0060 逐条一致；`check-macro-risk-editorial-core.mjs` 纯新增 +21/−0、原硬失败断言保留；未新增 ignore）。审阅另用 run `35677768492`（#83）真实 artifact 离线回放：`reason=search_budget_exhausted`、`expectedSkip=true`、`credibleCount=0/30`，CLI 退出 0 且未生成 input artifact。审阅发现 `docs/PROJECT_BACKLOG.md` Session Handoff 存在重复的「历史检索」行，已在同一任务内删除（commit `68cf404e`）。合并前分支已 merged 最新 main `e84576ae`（仅数据文件位移，无冲突），`npm run check:all` 本地 **exit 0**、CI `check-all`（run `35712622376`）**pass 6m13s**。PR **#415** 已合并为 main `451076f3`，Pages 部署 run `35713230139` **success**。下次自然 run（约 09-23 02:00 UTC）用于观察绿灯 skip 分类是否符合预期；读者侧 AI 栏位仍受 freshness 窗口约束。
 
 ### 2026-09-21 Macro Risk Editorial 失败归因与来源降级分类
 
@@ -253,4 +254,6 @@ Add or update backlog items with these rules:
 - **当前任务**：预算拒绝改为显式 skip（ADR-0060，见本文件顶部同日条目），是已合并 PR #412 的 owner 追加授权后续。前序归因确认 Tavily 账户额度耗尽（`1007/1000`）是唯一根因、属外部计费条件；#412 已合并为 main `7fe5f73d` 且 Pages 部署 run `35582873249` 成功。本轮按 ADR-0060 把本仓库自身在发请求前的预算拒绝归为显式 skip，真实 provider 失败仍硬失败；分支 `codex/macro-editorial-budget-skip` 等独立审阅与合并。
 - **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛、不新增 provider 频率、不加 workflow schedule、不删预算 refs、不写账本远端内容；未删除或放宽任何 checker 断言（§10 自查见顶部条目）；2026-09-18 健康整改的授权范围不因本轮登记扩大。
 - **待验**：本轮改动的本地完整检查与远端 CI 以实际回执为准；仍待独立人工审阅与合并授权，不得据本地通过推断为已发布。已接受的残余风险：额度耗尽不再自发告警，仅剩每日 `::warning`、step summary 与手动只读探针，读者侧 AI 栏位在 freshness 窗口后 fail-closed 消失。下一步取决 owner：Tavily 容量取舍，或新增 required-eligibility 主动告警（ADR 级）。
+- **交付回执（2026-09-22）**：PR **#415**（ADR-0060 预算拒绝显式 skip）已合入 main `451076f3`；合并前完成 §10 三点核对、`check:all` 本地 exit 0 与 CI `check-all` pass，并通过 run `35677768492` 真实 artifact 离线回放验证分类与零副作用；Pages 部署 run `35713230139` success。Tavily 额度（`1007/1000`）本身仍未恢复，本 PR 只把自有闸门拒绝从红叉改为显式绿灯 skip。
+- **下一步**：观察约 09-23 02:00 UTC 的自然 run 是否按 `SKIPPED_SEARCH_BUDGET_EXHAUSTED` 绿跑并写明原因；产能恢复取决于 owner 的 Tavily 计费取舍，主动告警需按 ADR-0060 单独立项（required-eligibility 模式 + schedule）。
 - **历史检索**：仅在核对具体旧事件时读取 [完整旧交接](PROJECT_HANDOFF_HISTORY.md#handoff-2026-09-18-health-latest)，不重新执行其中的旧“下一步”。
