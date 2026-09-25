@@ -249,13 +249,70 @@ test('a shallow clone is WATCH, never a silent pass', (t) => {
 });
 
 test('the real repository scope stays consistent with the bump tool', () => {
-  // Deliberately avoids asserting the transient working/HEAD version equality: on this
-  // repository that holds only between commits, so it would fail a developer who is
-  // mid-bump and block the commit the rule requires.
+  // Scope only. Status classification is asserted exclusively against fixtures: a real
+  // checkout's state depends on history depth and on where the developer is in their own
+  // edit/bump cycle, so asserting a status here would fail legitimate situations. A
+  // shallow clone, for example, correctly reports shallow_history_fallback (WATCH), and
+  // enumerating allowed statuses would turn that into a failing test that blocks the very
+  // gate it is meant to feed.
   const result = evaluateFrontendAssetVersionStatus();
-  assert.ok(result.workingVersion);
+  const scope = getFrontendScope();
+  assert.deepStrictEqual(result.scopeFiles, [...scope.entryFiles, ...scope.loadedModules]);
+  assert.ok(result.scopeFiles.includes('index.html'));
+  assert.ok(result.scopeFiles.includes('scripts/app.js'));
   assert.ok(result.scopeFiles.includes('scripts/modules/renderOilDirectional.js'));
   assert.ok(!result.scopeFiles.includes('scripts/modules/realtime.js'));
+  assert.deepStrictEqual(result.frozenModules, ['scripts/modules/realtime.js']);
   assert.equal(result.scopeDerivedFromBumpHelper, true);
-  assert.ok(['ok', 'unbumped_frontend_changes', 'unbumped_committed_frontend_changes'].includes(result.status));
+});
+
+test('the full check entry point ends in WATCH, not failure, inside a shallow clone', (t) => {
+  // The scope test previously asserted an allowed status list that omitted
+  // shallow_history_fallback, so in a shallow clone it failed before the checker ever ran
+  // and `npm run check:frontend-asset-version` exited 1: the reported status and the gate's
+  // own exit code contradicted each other at the entry point. This reproduces that entry
+  // sequence with a self-contained spec, so copying it into the clone cannot recurse.
+  const source = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(source, 'scripts/modules/health.js'), 'export const a = 2;\n');
+  commitAll(source, 'module change without bump');
+
+  const shallow = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-asset-entry-'));
+  t.after(() => fs.rmSync(shallow, { recursive: true, force: true }));
+  git(shallow, ['clone', '--quiet', '--depth', '1', `file://${source.replace(/\\/gu, '/')}`, '.']);
+
+  // Deliver the checker plus a spec that asserts only what holds at ANY history depth.
+  fs.copyFileSync(
+    path.join(process.cwd(), 'scripts/check-frontend-asset-version.mjs'),
+    path.join(shallow, 'scripts/check-frontend-asset-version.mjs'),
+  );
+  fs.copyFileSync(
+    path.join(process.cwd(), 'scripts/review-frontend-asset-version.mjs'),
+    path.join(shallow, 'scripts/review-frontend-asset-version.mjs'),
+  );
+  const specPath = path.join(shallow, 'tests/unit/entry-depth-invariant.test.mjs');
+  fs.mkdirSync(path.dirname(specPath), { recursive: true });
+  fs.writeFileSync(specPath, [
+    "import test from 'node:test';",
+    "import assert from 'node:assert/strict';",
+    "import { getFrontendScope, evaluateFrontendAssetVersionStatus } from '../../scripts/review-frontend-asset-version.mjs';",
+    "test('scope is depth invariant and status is not asserted here', () => {",
+    "  const scope = getFrontendScope();",
+    '  assert.deepStrictEqual(scope.frozenModules, ["scripts/modules/realtime.js"]);',
+    '  assert.ok(scope.loadedModules.includes("scripts/modules/health.js"));',
+    "  const result = evaluateFrontendAssetVersionStatus();",
+    "  assert.ok(typeof result.status === 'string' && result.status.length > 0);",
+    '});',
+  ].join('\n'));
+
+  const tests = spawnSync(process.execPath, ['--test', 'tests/unit/entry-depth-invariant.test.mjs'], {
+    cwd: shallow, encoding: 'utf8',
+  });
+  assert.equal(tests.status, 0, `depth-invariant spec must pass in a shallow clone:\n${tests.stdout}${tests.stderr}`);
+
+  const checker = spawnSync(process.execPath, ['scripts/check-frontend-asset-version.mjs'], {
+    cwd: shallow, encoding: 'utf8',
+  });
+  assert.equal(checker.status, 0);
+  assert.match(checker.stderr, /WATCH/u);
+  assert.match(checker.stderr, /shallow_history_fallback/u);
 });
