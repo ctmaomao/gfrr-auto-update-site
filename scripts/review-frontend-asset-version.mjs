@@ -97,17 +97,36 @@ export function extractAppVersion(source) {
  * diff does not contain the bump at all, and `git log -S 'APP_VERSION ='` answers a
  * different question again — it reports where the string was introduced in 2026-05-27,
  * which suppressed detection entirely.
+ *
+ * Returns `decidable: false` when the walk stops at a history boundary rather than a real
+ * root commit, which is the case in a shallow clone. A boundary must never be reported as
+ * "this commit introduced the version": the commit that actually did may simply be absent,
+ * and treating the boundary as the origin makes every scope file look like it changed
+ * after the bump — or, worse, looks in-sync when the real change is the boundary commit.
  */
 function findVersionChangeCommit(git, rev = 'HEAD') {
   const commits = (git(['rev-list', rev]) || '').split('\n').filter(Boolean);
+  // True when this repository is shallow, so an unreadable parent means "history boundary"
+  // rather than "root commit".
+  const shallow = git(['rev-parse', '--is-shallow-repository']) === 'true';
+
   for (const commit of commits) {
     const version = extractAppVersion(git(['show', `${commit}:${APP_JS}`]));
     if (version === null) continue;
+    // `git rev-parse <commit>^` is the boundary test: at a shallow boundary the parent
+    // object is absent, so it fails. Comparing against an absent parent instead would treat
+    // the boundary as a version introduction, which reported `ok` for a depth=1 clone whose
+    // only commit was an unbumped frontend change.
     const parent = git(['rev-parse', `${commit}^`]);
-    if (parent === null) return { commit, version };
-    if (extractAppVersion(git(['show', `${parent}:${APP_JS}`])) !== version) return { commit, version };
+    if (parent === null) {
+      if (shallow) return { commit: null, version: null, decidable: false };
+      return { commit, version, decidable: true };
+    }
+    if (extractAppVersion(git(['show', `${parent}:${APP_JS}`])) !== version) {
+      return { commit, version, decidable: true };
+    }
   }
-  return { commit: null, version: null };
+  return { commit: null, version: null, decidable: !shallow };
 }
 
 export function evaluateFrontendAssetVersionStatus(options = {}) {
@@ -151,8 +170,12 @@ export function evaluateFrontendAssetVersionStatus(options = {}) {
   // Committed history: scope files touched after the last version change were merged
   // without a bump, which is precisely the defect that reached production once already.
   // A clean working tree says nothing about this, so it is checked separately.
+  //
+  // Skipped when the working tree already carries a bump that HEAD does not: the developer
+  // is repairing exactly that omission, and requiring them to commit the bump before the
+  // check will pass would invert the normal order of work (commit and verify together).
   let committedScopeChanges = [];
-  if (versionChange.commit !== null) {
+  if (versionChange.commit !== null && !versionBumped) {
     const diff = git(['diff', '--name-only', `${versionChange.commit}..HEAD`]);
     if (diff !== null) {
       committedScopeChanges = diff.split('\n').filter(Boolean).filter((file) => scopeSet.has(file));
@@ -180,9 +203,11 @@ export function evaluateFrontendAssetVersionStatus(options = {}) {
     status = 'unbumped_committed_frontend_changes';
     offending = committedScopeChanges;
     reason = `Frontend scope files changed after the last APP_VERSION bump (${versionChange.version}): ${offending.join(', ')}.`;
-  } else if (versionChange.commit === null && isShallow) {
+  } else if (!versionChange.decidable) {
+    // A history boundary, not a real root commit: the introducing commit may be absent
+    // entirely, so nothing here can be attributed either way.
     status = 'shallow_history_fallback';
-    reason = 'Shallow history: could not locate the last version change; no committed frontend change can be attributed.';
+    reason = 'History boundary reached without locating the version change (shallow clone?); committed frontend changes cannot be attributed.';
   }
 
   return {
@@ -194,6 +219,7 @@ export function evaluateFrontendAssetVersionStatus(options = {}) {
     headVersion,
     versionChangeVersion: versionChange.version,
     versionChangeCommit: versionChange.commit,
+    versionChangeDecidable: versionChange.decidable,
     changedScopeFiles: offending,
     workingScopeChanges,
     committedScopeChanges,

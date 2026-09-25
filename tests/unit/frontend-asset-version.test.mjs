@@ -193,11 +193,69 @@ test('extractAppVersion reads only the version constant', () => {
   assert.equal(extractAppVersion(null), null);
 });
 
-test('the real repository is currently in sync', () => {
-  const result = evaluateFrontendAssetVersionStatus();
+test('a working-tree bump that HEAD does not have is accepted', (t) => {
+  // The normal order of work: edit, bump, then run the checks, then commit. Asserting
+  // "working version equals HEAD version" here would fail precisely for that developer
+  // and block the commit the rule asks for, so the fixture asserts the intended outcome.
+  const root = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(root, 'scripts/modules/health.js'), 'export const a = 2;\n');
+  fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'bump-4';\n");
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
   assert.equal(result.status, 'ok', result.reason);
+  assert.equal(result.versionBumped, true);
+  assert.notEqual(result.workingVersion, result.headVersion);
+  assert.equal(runChecker(root).status, 0);
+});
+
+test('an uncommitted bump repairs an earlier committed omission', (t) => {
+  // Commit the module change without a bump, then bump in the working tree. Requiring the
+  // bump to be committed first would force the developer to commit twice and would fail a
+  // tree that is actively fixing the very problem this checker reports.
+  const root = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(root, 'scripts/modules/health.js'), 'export const a = 2;\n');
+  commitAll(root, 'module change without bump');
+
+  const before = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(before.status, 'unbumped_committed_frontend_changes');
+  assert.equal(runChecker(root).status, 1);
+
+  fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'bump-4';\n");
+  const after = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(after.status, 'ok', after.reason);
+  assert.deepStrictEqual(after.committedScopeChanges, []);
+  assert.equal(runChecker(root).status, 0);
+});
+
+test('a shallow clone is WATCH, never a silent pass', (t) => {
+  // With depth=1 the parent object is absent and the boundary commit looks like a version
+  // introduction, which previously reported ok even for a repo whose HEAD commit was an
+  // unbumped frontend change.
+  const source = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(source, 'scripts/modules/health.js'), 'export const a = 2;\n');
+  commitAll(source, 'module change without bump');
+
+  const shallow = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-asset-shallow-'));
+  t.after(() => fs.rmSync(shallow, { recursive: true, force: true }));
+  git(shallow, ['clone', '--quiet', '--depth', '1', `file://${source.replace(/\\/gu, '/')}`, '.']);
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: shallow });
+  assert.equal(result.isShallow, true);
+  assert.equal(result.status, 'shallow_history_fallback', result.reason);
+  assert.equal(result.versionChangeDecidable, false);
+  assert.deepStrictEqual(result.committedScopeChanges, []);
+  assert.equal(runChecker(shallow).status, 0);
+  assert.match(runChecker(shallow).stderr, /WATCH/u);
+});
+
+test('the real repository scope stays consistent with the bump tool', () => {
+  // Deliberately avoids asserting the transient working/HEAD version equality: on this
+  // repository that holds only between commits, so it would fail a developer who is
+  // mid-bump and block the commit the rule requires.
+  const result = evaluateFrontendAssetVersionStatus();
   assert.ok(result.workingVersion);
-  assert.equal(result.workingVersion, result.headVersion);
   assert.ok(result.scopeFiles.includes('scripts/modules/renderOilDirectional.js'));
   assert.ok(!result.scopeFiles.includes('scripts/modules/realtime.js'));
+  assert.equal(result.scopeDerivedFromBumpHelper, true);
+  assert.ok(['ok', 'unbumped_frontend_changes', 'unbumped_committed_frontend_changes'].includes(result.status));
 });
