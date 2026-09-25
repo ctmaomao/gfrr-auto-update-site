@@ -171,6 +171,7 @@ function findBumpCommit(git, appJsPath) {
    - 正常「改完 → bump → 跑检查 → 提交」会被误拦：原测试断言「工作区版本 == HEAD 版本」,而该等式只在提交之间成立,于是开发者按规则 bump 后反而无法通过。现改用 fixture 断言合法状态。
    - 「提交时漏 bump、随后在工作区补 bump」被判为违规：已提交判定未考虑工作区已更新版本。现该情形视为已修复。
    - 浅克隆把无法判定报成 PASS：边界提交的父对象缺失被当作版本引入点，depth=1 且 HEAD 即未 bump 改动的仓库得到 `ok`。现区分真实根提交与历史边界，输出 WATCH。
+   - **状态判定不得用真实仓库断言**：「真实仓库 scope」测试曾用允许状态列表校验真实 checkout 的状态，而该列表未含 `shallow_history_fallback`。于是在浅克隆中单测先失败、`npm run check:frontend-asset-version` 退出 1，而检查器本身返回 WATCH/exit 0——**入口处自相矛盾**。现该测试只断言作用域；状态判定一律交给 fixture，并新增「depth=1 克隆内跑完整入口序列」的回归。
 3. **作用域从 bump 工具解析而来**，而非在检查器内重申。`check-realtime-js-frozen` L55 锁定了该工具的 `FROZEN_FRONTEND_MODULE_FILES` 字面量，因此不能把它抽成共享模块（那会削弱既有断言）；改为解析其声明，工具不可读时回落到检查器自带副本并在输出中标注降级。
 4. **`assets/styles.css` 不纳入作用域**：其 `?v=` token 写在 `index.html` 上，改 CSS 会经 `index.html` 的 token 变化被 cache-bust，CSS 文件本身不需 token。（本提案早期讨论中曾误将其列入。）
 5. **`bubble-watch.html` 作为 known limitation 报告，不阻断**：它是单文件页，无可 bump 的外部资源引用，因此其缓存无法被失效。这修复了前版"干净状态也打印该提示"的误导性噪声。
