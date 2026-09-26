@@ -2,9 +2,18 @@
 //
 // Purpose: AGENTS.md §1 requires bumping the frontend asset version whenever
 // index.html, scripts/app.js or a currently loaded scripts/modules/*.js changes.
-// Nothing enforced that rule, and the miss is silent: the page keeps serving a
-// cached module graph, so a shipped change is simply invisible to returning
-// visitors (that is exactly what PR #410 had to repair after the fact).
+// Nothing enforced that rule. The version parameter changes the resource URL, so a client
+// holding the new entry point requests the new resources instead of depending on the old
+// URL expiring; it does not guarantee immediate deployment propagation or refresh an
+// already-open page. The JSON fetches in app.js instead pass `cache: 'no-cache'`, which
+// requires revalidation before a cached response may be reused.
+//
+// Measured 2026-09-26: GitHub Pages serves max-age=600 for every asset, and the EdgeOne
+// host serves `public, must-revalidate, max-age=0`. A missing bump is therefore a
+// reliability gap inside the cache window, not permanent invisibility. Identical HTTP
+// cache headers do not imply identical caching behaviour in every respect: within one page
+// environment a repeated `import()` also reuses the already-loaded module instance, which
+// is a mechanism outside the HTTP cache policy.
 //
 // Design notes, both learned the hard way:
 //
