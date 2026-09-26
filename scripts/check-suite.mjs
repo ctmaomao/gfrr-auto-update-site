@@ -18,7 +18,8 @@ const SUITES = {
     'check:macro-overview-evidence-fold',
     'check:macro-coherence-display-only',
     'check:world-order-display-narrative',
-    'check:macro-risk-editorial-frontend'
+    'check:macro-risk-editorial-frontend',
+    'check:frontend-asset-version'
   ],
   'external-ai': [
     'check:external-ai-manual-workflow',

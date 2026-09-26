@@ -53,7 +53,7 @@
 - Transport 的 transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1 是既有 owner_thread_approval，状态 runtime_scoring_migration_authorized_capped_free_proxy、maxContributionPct=3；P51 transport-shock-scoring-impact-v1 只准现行 free-proxy gate 的 +1/+2/+3、默认 fail-closed 0。routeFreightConfirmation/marketConfirmation 仍 not_connected；不扩展 ODP/Brent promotion/Heatmap/cross-validation/Bubble Watch。
 - route-level tanker freight source-rights 和生产写入须独立批准，manual/preflight 成功不是授权。不降低 checker/validator 或篡改生产 JSON 让检查通过；不删除用户文件、数据、配置或日志。
 - 不引入未经批准的依赖；零生产依赖策略、新增须 ADR 保留。保持现有模块和架构；领域细则无损迁移至 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按上表读取。
-- 修改 index.html、scripts/app.js 或 scripts/modules/*.js 必须运行 `npm run bump:frontend-asset-version` 同步入口和本地 module import query；仅 Worker/docs/check/workflow/JSON 改动无需 bump。scripts/ 的 console.log 可能是 Actions 日志功能，不作为 debug 残留删除。
+- 修改 index.html、scripts/app.js 或 scripts/modules/*.js 必须运行 `npm run bump:frontend-asset-version` 同步入口和本地 module import query；仅 Worker/docs/check/workflow/JSON 改动无需 bump。该规则由 `check:frontend-asset-version`（`check:all` 内）强制：工作区或已提交历史中存在未 bump 的前端改动时 fail；无法判定时只输出 WATCH，不伪装成违规。检查器作用域直接解析 `bump-frontend-asset-version.mjs` 的声明，不在此重述。scripts/ 的 console.log 可能是 Actions 日志功能，不作为 debug 残留删除。
 
 ## 2. Frontend Design Contract — Mandatory Reading
 
