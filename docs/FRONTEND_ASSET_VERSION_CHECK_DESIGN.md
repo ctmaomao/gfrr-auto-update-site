@@ -1,12 +1,12 @@
-# 前端 asset 版本检查器设计提案（只读）
+# 前端 asset 版本检查器设计记录
 
 ## 目的
 
 `AGENTS.md` §1 与 `docs/DATA_CONTRACT.md` 都要求：修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步执行 `npm run bump:frontend-asset-version`。
 
-**但没有任何 checker 强制这条规则。** `check:all` 全绿不能保证缓存 token 已更新。
+**当时没有任何 checker 强制这条规则**，`check:all` 全绿不能保证缓存 token 已更新。本文件最初为此提出的设计已于 2026-09-26 落地（阶段 1 与阶段 2，见 §7），因此下面出现"提案"字样的段落应按**当时的设计论证**阅读，而非当前待办。
 
-本文件给出一个只读检查器的设计与验证证据。**不修改任何现有 checker 断言、不改变 `check:all` 组成、不改动前端代码或数据。** 落地需独立评审与授权。
+本文件记录该检查器的设计依据、实测验证与实施中的偏差。它**不修改任何现有 checker 断言、不改变 `check:all` 组成、不改动前端代码或数据**；后续变更仍须独立评审与授权。
 
 ## 1. 触发本提案的实际缺陷
 
@@ -18,12 +18,30 @@
 | 线上 `radar.gfrfinradar.uk/scripts/app.js` | `editorial-history-1`（相同） |
 | 线上 `renderOilDirectional.js` 含新函数 | **False** |
 
-由于 `app.js` 以 `?v=${APP_VERSION}` 动态导入模块，版本 token 不变意味着回访者会复用浏览器缓存的旧模块图，新提示**永不出现**。该提交通过了当时执行的全部检查：
+由于 `app.js` 以 `?v=${APP_VERSION}` 动态导入模块，版本 token 不变意味着引用 URL 不变，客户端可能在缓存过期前继续复用旧模块图，更新的可见性因此依赖 HTTP 缓存行为。该提交通过了当时执行的全部检查：
 
 - 额度状态回归测试 5/5
 - `check:frontend-live-contracts`、`check:frontend-zh-copy`
 - 完整 `check:all`
 - `git diff --check`
+
+> **缓存行为的准确边界（2026-09-26 实测更正）**：两个站点均返回时间约束的缓存头，这些响应头**不支持**"缺少 bump 会导致回访者永久取得旧资源"的结论。
+>
+> | 站点 | `Cache-Control` |
+> |---|---|
+> | GitHub Pages（含 CSS 与模块） | `max-age=600` |
+> | `radar.gfrfinradar.uk`（EdgeOne） | `public, must-revalidate, max-age=0` |
+>
+> 两点由此澄清：
+>
+> 1. **本次实测中 JS 模块与 CSS 的 HTTP 缓存策略相同**（GitHub Pages 下同为 `max-age=600`），因此不能据此认为"CSS 比 JS 更危险"。但**相同的 HTTP 缓存头不等于全部缓存行为相同**：在同一页面环境内，重复 `import()` 还会复用已加载的模块实例，这是 HTTP 缓存策略之外的机制。
+>
+>    早期版本的本文件曾写"新提示永不出现""旧模块图长期复用"，**该论断过强，已更正**：缺少 bump 影响的是更新的**可靠性**（在过期窗口内可能仍取到旧文件），而非永久可见性。
+> 2. **ES module 的 `import()` 无法指定 `cache` 选项**，而 `app.js` 的数据请求使用 `cache: 'no-cache'`。
+>
+> **统一表述（三处共用，避免再次漂移）**：
+>
+> > 版本参数改变资源 URL，使取得新版入口的客户端请求新版本资源，减少对旧 URL 缓存过期的依赖；它不保证部署即时传播或已打开页面自动更新。JSON 请求的 `cache: 'no-cache'` 要求缓存复用前重新验证。
 
 即：**现有保护网在结构上无法发现这类缺陷。** 修复见 `9e81019c`。
 
@@ -136,6 +154,15 @@ function findBumpCommit(git, appJsPath) {
 ## 7. 落地形态与实施记录
 
 按 `AGENTS.md` §10 与 ADR-0037 的既有模式，**先观测、后强制**。
+
+### 覆盖边界：仅修改 `assets/styles.css`
+
+当前检查器不覆盖仅修改 `assets/styles.css` 的情形。此时引用 URL 的版本参数保持不变，更新依赖 HTTP 缓存过期与重新验证。此项作为现行覆盖边界记录；是否将 CSS 纳入触发集，另行评审。
+
+补充两点供后续评审参考：
+
+- **触发集与工具改写集是两件事**：若将来要求 CSS 改动触发 bump，不必让 bump 工具改写 CSS 文件本身——工具更新 `index.html` 中的 CSS URL 参数即可达到失效效果。
+- **本次实测中 CSS 与 JS 的 HTTP 缓存策略相同**（GitHub Pages 同为 `max-age=600`）；这不代表其全部缓存机制相同。因此本项并非"CSS 比 JS 更危险"，而是两者同属一个触发集判定问题。
 
 ### 阶段 1（已实施）：只读审阅器
 

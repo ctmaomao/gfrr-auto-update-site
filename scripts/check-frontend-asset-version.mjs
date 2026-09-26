@@ -32,5 +32,5 @@ console.error(`- APP_VERSION is still ${result.workingVersion ?? 'unknown'}`);
 if (result.changedScopeFiles.length > 0) {
   for (const file of result.changedScopeFiles) console.error(`- changed without a bump: ${file}`);
 }
-console.error('- Frontend files are loaded with ?v=${APP_VERSION}, so an unbumped change stays behind the cached module graph and is invisible to returning visitors.');
+console.error('- Frontend files are imported with ?v=${APP_VERSION}. The version parameter changes the resource URL, so a client holding the new entry point requests the new resources rather than depending on the old URL expiring; it does not guarantee immediate deployment propagation or refresh an already-open page.');
 process.exit(1);
