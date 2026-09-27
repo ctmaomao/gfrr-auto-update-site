@@ -1504,7 +1504,7 @@ Boundaries:
 - `index.html` 入口 module script 必须指向 `app.js?v=odp-news-source-attribution-3`。
 - `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-news-source-attribution-3`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
 - 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-news-source-attribution-3`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
-- frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。
+- frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：

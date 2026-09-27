@@ -38,7 +38,9 @@ function buildTemplateRepo() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-asset-version-template-'));
   git(root, ['init', '-b', 'main']);
   fs.mkdirSync(path.join(root, 'scripts/modules'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'index.html'), '<html></html>\n');
+  fs.mkdirSync(path.join(root, 'assets'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'index.html'), '<html><link rel="stylesheet" href="assets/styles.css?v=import-1"></html>\n');
+  fs.writeFileSync(path.join(root, 'assets/styles.css'), 'body { margin: 0; }\n');
   fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'import-1';\n");
   fs.writeFileSync(path.join(root, 'scripts/modules/health.js'), 'export const a = 1;\n');
   fs.writeFileSync(path.join(root, 'scripts/modules/realtime.js'), '// @frozen M-94 V0 Path C\n');
@@ -141,6 +143,44 @@ test('an index.html-only change without a bump FAILS', (t) => {
   fs.writeFileSync(path.join(root, 'index.html'), '<html><body>changed</body></html>\n');
   assert.equal(evaluateFrontendAssetVersionStatus({ repoRoot: root }).status, 'unbumped_frontend_changes');
   assert.equal(runChecker(root).status, 1);
+});
+
+test('a stylesheet-only change without a bump FAILS', (t) => {
+  // The stylesheet holds no token of its own: the token is on the index.html reference,
+  // and the bump tool rewrites it because index.html is one of its fixedFiles. So the
+  // stylesheet belongs to the trigger set even though the tool never rewrites the file,
+  // which is why including it needs no tool change. Before this, a stylesheet-only change
+  // was reported PASS.
+  const root = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(root, 'assets/styles.css'), 'body { margin: 1px; }\n');
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(result.status, 'unbumped_frontend_changes');
+  assert.deepStrictEqual(result.changedScopeFiles, ['assets/styles.css']);
+  assert.deepStrictEqual(result.workingScopeChanges, ['assets/styles.css']);
+  assert.equal(runChecker(root).status, 1);
+});
+
+test('a stylesheet-only change accompanied by a bump PASSES', (t) => {
+  const root = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(root, 'assets/styles.css'), 'body { margin: 1px; }\n');
+  fs.writeFileSync(path.join(root, 'index.html'), '<html><link rel="stylesheet" href="assets/styles.css?v=bump-4"></html>\n');
+  fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'bump-4';\n");
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(result.status, 'ok', result.reason);
+  assert.equal(result.versionBumped, true);
+  assert.equal(runChecker(root).status, 0);
+});
+
+test('the stylesheet only joins the scope when it exists', (t) => {
+  // The fixture shape is not guaranteed to carry a stylesheet, so the prerequisite must
+  // not turn a missing file into a policy violation.
+  const root = makeRepoWithHistory(t);
+  fs.rmSync(path.join(root, 'assets/styles.css'));
+  const scope = getFrontendScope(root);
+  assert.ok(!scope.assetFiles.includes('assets/styles.css'));
+  assert.equal(runChecker(root).status, 0);
 });
 
 test('a clean working tree passes regardless of history depth', (t) => {
@@ -257,12 +297,14 @@ test('the real repository scope stays consistent with the bump tool', () => {
   // gate it is meant to feed.
   const result = evaluateFrontendAssetVersionStatus();
   const scope = getFrontendScope();
-  assert.deepStrictEqual(result.scopeFiles, [...scope.entryFiles, ...scope.loadedModules]);
+  assert.deepStrictEqual(result.scopeFiles, [...scope.entryFiles, ...scope.assetFiles, ...scope.loadedModules]);
   assert.ok(result.scopeFiles.includes('index.html'));
   assert.ok(result.scopeFiles.includes('scripts/app.js'));
+  assert.ok(result.scopeFiles.includes('assets/styles.css'));
   assert.ok(result.scopeFiles.includes('scripts/modules/renderOilDirectional.js'));
   assert.ok(!result.scopeFiles.includes('scripts/modules/realtime.js'));
   assert.deepStrictEqual(result.frozenModules, ['scripts/modules/realtime.js']);
+  assert.deepStrictEqual(scope.assetFiles, ['assets/styles.css']);
   assert.equal(result.scopeDerivedFromBumpHelper, true);
 });
 

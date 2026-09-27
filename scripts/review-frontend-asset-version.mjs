@@ -39,6 +39,12 @@ const REQUIRED_ENTRY_FILES = ['index.html', APP_JS];
 // degraded run still classifies the same files, and surfaced via `derivedFromHelper`.
 const FALLBACK_ENTRY_FILES = ['index.html', APP_JS];
 const FALLBACK_FROZEN_MODULES = ['scripts/modules/realtime.js'];
+// The stylesheet carries no version token of its own: the token lives on the index.html
+// reference (`assets/styles.css?v=...`). The bump tool already rewrites that reference,
+// because index.html is one of its fixedFiles and the `?v=` rule rewrites both links
+// there, so the stylesheet itself never needs to be rewritten. It is still a frontend
+// asset whose change must invalidate the reference, so it is part of the trigger set.
+const STYLESHEET = 'assets/styles.css';
 // Standalone single-file page: it has no external asset reference, therefore no
 // query token to bump. Reported as a known limitation rather than silently ignored.
 const NO_TOKEN_PAGES = ['bubble-watch.html'];
@@ -88,7 +94,12 @@ export function getFrontendScope(repoRoot = process.cwd()) {
       .sort()
     : [];
 
-  return { entryFiles, loadedModules, frozenModules: [...frozenSet].sort(), derivedFromHelper };
+  // The stylesheet is included only when it exists, so a fixture without one still gets a
+  // usable scope. Its token is not in the file: the bump tool rewrites the index.html
+  // reference instead, which is why including it here does not require a tool change.
+  const assetFiles = fs.existsSync(path.join(repoRoot, STYLESHEET)) ? [STYLESHEET] : [];
+
+  return { entryFiles, loadedModules, assetFiles, frozenModules: [...frozenSet].sort(), derivedFromHelper };
 }
 
 export function extractAppVersion(source) {
@@ -153,7 +164,7 @@ export function evaluateFrontendAssetVersionStatus(options = {}) {
   };
 
   const scope = getFrontendScope(repoRoot);
-  const scopeFiles = [...scope.entryFiles, ...scope.loadedModules];
+  const scopeFiles = [...scope.entryFiles, ...scope.assetFiles, ...scope.loadedModules];
   const scopeSet = new Set(scopeFiles);
   const appJsPath = path.join(repoRoot, APP_JS);
 
