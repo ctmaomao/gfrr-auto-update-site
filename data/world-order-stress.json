@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-26T01:10:22.780Z",
+  "updatedAt": "2026-09-27T01:04:41.279Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
     "calibrationId": "gdelt-cloud-2026-08-07-to-2026-09-10-v1",
     "comparableToLegacy": false
   },
-  "score": 55,
+  "score": 53,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
   "confidence": 0.94,
@@ -16,11 +16,11 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-26T01:09:31.186Z",
-    "ageMinutes": 0.8598833333333333,
+    "updatedAt": "2026-09-27T01:03:50.285Z",
+    "ageMinutes": 0.8498833333333333,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 114.89,
+    "brent": 104.41,
     "gold": 4286.2002,
     "vix": 14.21,
     "dxy": 119.5133,
@@ -28,9 +28,9 @@
     "us10y": 5.18,
     "real10y": 2.85,
     "spx": 7743.41,
-    "brentSource": "FRED:DCOILBRENTEU",
-    "brentPromotionApplied": false,
-    "brentPromotionReason": "confirmation-divergence-above-2pct",
+    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
+    "brentPromotionApplied": true,
+    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4945,8 +4945,8 @@
         "failureCount": 1,
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
-        "cacheReason": "gdelt-cloud-request-failed-using-local-cache",
-        "attemptedAt": "2026-09-26T01:10:20.769Z",
+        "cacheReason": "gdelt-cloud-request-failed-using-previous-summary",
+        "attemptedAt": "2026-09-27T01:04:39.397Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4963,7 +4963,7 @@
           "minIntervalMs": 8000,
           "maxRetries": 0,
           "retryAfterCapSeconds": 15,
-          "elapsedMs": 1645,
+          "elapsedMs": 1682,
           "errorCode": "http_error"
         }
       }
@@ -4971,7 +4971,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-26T01:10:21.257Z",
+      "lastFetchedAt": "2026-09-27T01:04:39.647Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 10,
@@ -5130,7 +5130,7 @@
       ]
     },
     "marketConfirmation": {
-      "score": 52,
+      "score": 45,
       "labelZh": "市场确认",
       "state": "partial_confirmed",
       "evidence": [
@@ -5145,10 +5145,10 @@
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 114.89，对地缘与供应风险有部分确认作用。",
-          "value": 114.89,
+          "summary": "基于 Worker 快变量，布伦特当前值 104.41，对地缘与供应风险有部分确认作用。",
+          "value": 104.41,
           "direction": "up",
-          "confidence": 0.75
+          "confidence": 0.55
         },
         {
           "labelZh": "美元与黄金同步偏强",
@@ -5169,10 +5169,10 @@
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：confirmation-divergence-above-2pct。",
-          "value": 114.89,
-          "direction": "neutral",
-          "confidence": 0.45
+          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
+          "value": 104.41,
+          "direction": "up",
+          "confidence": 0.65
         }
       ]
     }
