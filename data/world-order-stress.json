@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-28T01:23:06.725Z",
+  "updatedAt": "2026-09-28T05:46:07.954Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -16,12 +16,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-28T01:21:46.789Z",
-    "ageMinutes": 1.3322333333333334,
+    "updatedAt": "2026-09-28T05:46:01.599Z",
+    "ageMinutes": 0.1059,
     "healthScore": 100,
     "criticalMissing": 0,
     "brent": 114.89,
-    "gold": 4220.2998,
+    "gold": 4184.5,
     "vix": 14.21,
     "dxy": 119.5133,
     "hyOas": 2.8,
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-request-failed-using-previous-summary",
-        "attemptedAt": "2026-09-28T01:23:05.137Z",
+        "attemptedAt": "2026-09-28T05:46:06.500Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4963,7 +4963,7 @@
           "minIntervalMs": 8000,
           "maxRetries": 0,
           "retryAfterCapSeconds": 15,
-          "elapsedMs": 1349,
+          "elapsedMs": 1264,
           "errorCode": "http_error"
         }
       }
@@ -4971,7 +4971,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-28T01:23:05.366Z",
+      "lastFetchedAt": "2026-09-28T05:46:06.673Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 10,
@@ -5020,7 +5020,7 @@
     "acled": {
       "enabled": true,
       "status": "partial",
-      "lastFetchedAt": "2026-09-25T05:15:55.974Z",
+      "lastFetchedAt": "2026-09-28T05:45:49.771Z",
       "summary": {
         "eventsLast4Weeks": 34597,
         "eventsLast12Weeks": 103028,
@@ -5032,15 +5032,15 @@
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
         "sourceFreshness": "aging",
-        "politicalViolenceEventsLatestFullYear": 213153,
-        "politicalViolenceYoyDelta": 0.216088,
-        "civilianTargetingShareLatestFullYear": 0.315604,
-        "fatalitiesLatestFullYear": 248710,
-        "monthlyLatest12mVsPrior12mDelta": 0.050966,
-        "monthlyAsOfDate": "2026-09-11",
+        "politicalViolenceEventsLatestFullYear": 213419,
+        "politicalViolenceYoyDelta": 0.217205,
+        "civilianTargetingShareLatestFullYear": 0.31522,
+        "fatalitiesLatestFullYear": 248686,
+        "monthlyLatest12mVsPrior12mDelta": 0.050447,
+        "monthlyAsOfDate": "2026-09-18",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-12，近4周事件相对12周均值变化 0.7%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.6%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-12，近4周事件相对12周均值变化 0.7%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
         "weeklyWindowAligned": true
       }
     }
@@ -5062,7 +5062,7 @@
         {
           "labelZh": "ACLED 周度/月度数据部分可用",
           "source": "acled",
-          "summary": "周度覆盖 6 个区域，最新周 2026-09-12，近4周事件相对12周均值变化 0.7%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.6%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
+          "summary": "周度覆盖 6 个区域，最新周 2026-09-12，近4周事件相对12周均值变化 0.7%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
           "value": 15,
           "direction": "neutral",
           "confidence": 0.68
@@ -5137,8 +5137,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4220.3，显示避险或实际利率压力定价。",
-          "value": 4220.2998,
+          "summary": "基于 Worker 快变量，黄金当前值 4184.5，显示避险或实际利率压力定价。",
+          "value": 4184.5,
           "direction": "up",
           "confidence": 0.75
         },
@@ -5154,7 +5154,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "119.5133/4220.2998",
+          "value": "119.5133/4184.5",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5162,7 +5162,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7743.41/4220.2998",
+          "value": "7743.41/4184.5",
           "direction": "mixed",
           "confidence": 0.45
         },
