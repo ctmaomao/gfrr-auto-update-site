@@ -72,7 +72,7 @@ bump 工具 `scripts/bump-frontend-asset-version.mjs` 是**写工具**，不参�
 | 集合 | 内容 |
 |---|---|
 | 入口文件 | `index.html`、`scripts/app.js` |
-| 样式表 | `assets/styles.css`（仅在文件存在时纳入） |
+| 样式表 | `assets/styles.css`（**固定纳入**，不依赖文件当前是否存在；删除该文件同样计入） |
 | 已加载模块 | `scripts/modules/*.js` **排除** `scripts/modules/realtime.js`（`FROZEN_FRONTEND_MODULE_FILES`，M-94 后冻结未接入） |
 
 触发集必须与 bump 工具的改写能力一致，否则会产生误报（要求 bump 一个工具根本不会改的文件）或漏报。

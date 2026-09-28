@@ -71,6 +71,27 @@ function makeRepoWithHistory(t) {
   return root;
 }
 
+/**
+ * Fixture whose history never contained the stylesheet at all, so the "never present" case
+ * is exercised as an initial state rather than as a deletion. Deleting the file from the
+ * other fixture is a *change*, which is a different scenario and would fail for a
+ * different reason.
+ */
+function makeRepoWithoutStylesheet(t) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-asset-version-nocss-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  git(root, ['init', '-b', 'main']);
+  fs.mkdirSync(path.join(root, 'scripts/modules'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'index.html'), '<html></html>\n');
+  fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'nocss-1';\n");
+  fs.writeFileSync(path.join(root, 'scripts/modules/health.js'), 'export const a = 1;\n');
+  fs.writeFileSync(path.join(root, 'scripts/modules/realtime.js'), '// @frozen M-94 V0 Path C\n');
+  commitAll(root, 'initial import without a stylesheet');
+  fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'nocss-2';\n");
+  commitAll(root, 'bump to nocss-2');
+  return root;
+}
+
 function runChecker(root) {
   return spawnSync(process.execPath, [path.resolve(CHECKER)], { cwd: root, encoding: 'utf8' });
 }
@@ -217,9 +238,10 @@ test('a committed stylesheet change followed by a committed bump PASSES', (t) =>
   assert.equal(runChecker(root).status, 0);
 });
 
-test('a repository that never contained the stylesheet is unaffected', (t) => {
-  // The path is a fixed member of the trigger set, so a repository without the file must
-  // simply produce no Git difference for it rather than a violation.
+test('a committed stylesheet deletion without a bump FAILS', (t) => {
+  // Renamed from a case that claimed to cover "never contained the stylesheet": it starts
+  // from a fixture that HAS the file, so it actually exercises a committed deletion, which
+  // is a change and fails for that reason. The genuine absent-from-history case is below.
   const root = makeRepoWithHistory(t);
   fs.rmSync(path.join(root, 'assets/styles.css'));
   commitAll(root, 'remove stylesheet entirely');
@@ -227,7 +249,24 @@ test('a repository that never contained the stylesheet is unaffected', (t) => {
   const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
   assert.deepStrictEqual(getFrontendScope(root).assetFiles, ['assets/styles.css']);
   assert.equal(result.status, 'unbumped_committed_frontend_changes');
+  assert.deepStrictEqual(result.committedScopeChanges, ['assets/styles.css']);
   assert.equal(runChecker(root).status, 1, 'the removal is itself an unbumped frontend change');
+});
+
+test('a repository whose history never contained the stylesheet is unaffected', (t) => {
+  // The path is a fixed member of the trigger set, so a repository without the file must
+  // produce no Git difference for it rather than a violation. This starts from a history
+  // with no stylesheet at all, so nothing about the path is a change.
+  const root = makeRepoWithoutStylesheet(t);
+  assert.ok(!fs.existsSync(path.join(root, 'assets/styles.css')));
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.deepStrictEqual(getFrontendScope(root).assetFiles, ['assets/styles.css']);
+  assert.deepStrictEqual(result.workingScopeChanges, []);
+  assert.deepStrictEqual(result.committedScopeChanges, []);
+  assert.equal(result.status, 'ok', result.reason);
+  assert.equal(runChecker(root).status, 0);
+  assert.match(runChecker(root).stdout, /PASS/u);
 });
 
 test('a clean working tree passes regardless of history depth', (t) => {
