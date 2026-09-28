@@ -173,14 +173,61 @@ test('a stylesheet-only change accompanied by a bump PASSES', (t) => {
   assert.equal(runChecker(root).status, 0);
 });
 
-test('the stylesheet only joins the scope when it exists', (t) => {
-  // The fixture shape is not guaranteed to carry a stylesheet, so the prerequisite must
-  // not turn a missing file into a policy violation.
+test('deleting the tracked stylesheet without a bump FAILS', (t) => {
+  // Conditioning membership on the file's current existence let a deletion escape the gate:
+  // removing a tracked assets/styles.css dropped it from the trigger set and the check
+  // returned PASS. The path is now a fixed member whether or not the file is present.
   const root = makeRepoWithHistory(t);
   fs.rmSync(path.join(root, 'assets/styles.css'));
+
   const scope = getFrontendScope(root);
-  assert.ok(!scope.assetFiles.includes('assets/styles.css'));
+  assert.deepStrictEqual(scope.assetFiles, ['assets/styles.css']);
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(result.status, 'unbumped_frontend_changes');
+  assert.deepStrictEqual(result.workingScopeChanges, ['assets/styles.css']);
+  assert.equal(runChecker(root).status, 1);
+});
+
+test('a committed stylesheet change without a bump FAILS even though the tree is clean', (t) => {
+  // The committed-history half of the gate, for the stylesheet specifically: a clean tree
+  // cannot reveal an already merged change, and the earlier stylesheet tests only covered
+  // uncommitted edits.
+  const root = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(root, 'assets/styles.css'), 'body { margin: 3px; }\n');
+  commitAll(root, 'stylesheet change without bump');
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(result.status, 'unbumped_committed_frontend_changes');
+  assert.deepStrictEqual(result.committedScopeChanges, ['assets/styles.css']);
+  assert.deepStrictEqual(result.workingScopeChanges, []);
+  assert.equal(runChecker(root).status, 1);
+});
+
+test('a committed stylesheet change followed by a committed bump PASSES', (t) => {
+  const root = makeRepoWithHistory(t);
+  fs.writeFileSync(path.join(root, 'assets/styles.css'), 'body { margin: 3px; }\n');
+  commitAll(root, 'stylesheet change');
+  fs.writeFileSync(path.join(root, 'scripts/app.js'), "const APP_VERSION = 'bump-4';\n");
+  commitAll(root, 'bump after the fact');
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.equal(result.status, 'ok', result.reason);
+  assert.deepStrictEqual(result.committedScopeChanges, []);
   assert.equal(runChecker(root).status, 0);
+});
+
+test('a repository that never contained the stylesheet is unaffected', (t) => {
+  // The path is a fixed member of the trigger set, so a repository without the file must
+  // simply produce no Git difference for it rather than a violation.
+  const root = makeRepoWithHistory(t);
+  fs.rmSync(path.join(root, 'assets/styles.css'));
+  commitAll(root, 'remove stylesheet entirely');
+
+  const result = evaluateFrontendAssetVersionStatus({ repoRoot: root });
+  assert.deepStrictEqual(getFrontendScope(root).assetFiles, ['assets/styles.css']);
+  assert.equal(result.status, 'unbumped_committed_frontend_changes');
+  assert.equal(runChecker(root).status, 1, 'the removal is itself an unbumped frontend change');
 });
 
 test('a clean working tree passes regardless of history depth', (t) => {

@@ -94,10 +94,15 @@ export function getFrontendScope(repoRoot = process.cwd()) {
       .sort()
     : [];
 
-  // The stylesheet is included only when it exists, so a fixture without one still gets a
-  // usable scope. Its token is not in the file: the bump tool rewrites the index.html
-  // reference instead, which is why including it here does not require a tool change.
-  const assetFiles = fs.existsSync(path.join(repoRoot, STYLESHEET)) ? [STYLESHEET] : [];
+  // The stylesheet is a fixed member of the trigger set, listed whether or not the file is
+  // currently present. Conditioning it on existence let a deletion escape the gate
+  // entirely: removing a tracked assets/styles.css dropped it from the scope and the check
+  // returned PASS. A repository that never contained the file simply produces no Git
+  // difference for the path, so no existence test is needed for that case.
+  //
+  // Its token is not in the file — the bump tool rewrites the index.html reference — which
+  // is why joining the trigger set requires no tool change.
+  const assetFiles = [STYLESHEET];
 
   return { entryFiles, loadedModules, assetFiles, frozenModules: [...frozenSet].sort(), derivedFromHelper };
 }
