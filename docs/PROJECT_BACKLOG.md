@@ -1,5 +1,15 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-29 lint 试点依赖批准（PR 1：依赖契约变更）
+
+- **Acceptance baseline**：owner 批准「PR 1：安装精确版本 `eslint@10.11.0`、`globals@17.12.0`，同步 package、锁文件、精确 allowlist 和决策记录；完成必要验证后提交、推送并创建独立 PR。此次不授权合并，不启动 PR 2」。
+- **批准范围**：仅依赖契约。`package.json` 的 `devDependencies` 由 2 项增至 4 项；`package-lock.json` 据实重生成；`scripts/check-market-pricing-ndx-ixic-implementation.mjs` 的 `devDependencies` 断言同步新增两项，**保留精确集合相等**（不改为子集判断、不允许任意开发依赖）。注释与错误消息同时指向 ADR-0013 与本条记录——ADR-0013 允许"开发期 linter"这一**类别**，本身不批准这两个包及其版本。
+- **依据**：ADR-0013 允许开发期 linter/formatter 作为 `devDependencies`，条件是仅被开发期脚本使用、不被 Actions 生产路径或浏览器侧代码导入、PR 描述引用该 ADR 并说明理由。
+- **实测数据（据实，非估算）**：新增 78 个包；`npm ci` 重装共 82 包；`audit` 报 0 漏洞；锁文件包条目 4 → 82，大小 2.2 KB → 36 KB，`lockfileVersion` 保持 3；`@playwright/test`、`playwright`、`playwright-core`、`xlsx` 四项锁条目逐字节未变；解析版本确认 `eslint 10.11.0` / `globals 17.12.0`。
+- **验证**：`check:market-pricing-ndx-ixic-implementation` PASS；`check:xlsx-security` PASS（其断言仅针对 `xlsx`，不受影响）；`npm ci` 在隔离目录退出 0（证明锁文件与 `package.json` 同步）；`npm run check:all` 退出 0。
+- **明确不包含**：不加 lint 配置、不加 `lint` 脚本、不改 `check:all`、不接入任何 workflow。以上属 PR 2，且需 PR 1 经独立复核并合并后，从最新 main 另起。本次不授权合并。
+- **未改动**：`README.md`（其"执行 `npm ci` 安装锁定的开发依赖"表述仍然成立，不为留痕额外改动）；ADR-0001/0013 无"仅两个 devDependency"类表述，无需同步。
+
 ### 2026-09-26 CSS 纳入前端 asset bump 触发集
 
 - **Acceptance baseline**：owner 授权按「选项 B」实施：把 `assets/styles.css` 纳入前端 asset bump 触发集。范围限定为检查器触发集与规则/文档，**不改 bump 工具**、不改历史定位算法、不做性能优化（该优化排在第 3 项后另开任务）。PR #419。
