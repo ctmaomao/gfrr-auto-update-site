@@ -131,13 +131,24 @@ function assertPackageScripts() {
   }
   assert(!pkg.scripts?.[REMOVED_SOURCE_REVIEW_SCRIPT], `package.json must remove ${REMOVED_SOURCE_REVIEW_SCRIPT}`);
   assert(!pkg.dependencies || Object.keys(pkg.dependencies).length === 0, 'package.json must not add runtime dependencies');
+  // Exact set equality, deliberately not a subset test: every entry below is an individually
+  // reviewed decision, so an unreviewed addition must fail rather than slip through.
+  //
+  // Provenance for each entry:
+  //   - `xlsx` / `@playwright/test`: ADR-0013 (dev-time sanitizers and test runners).
+  //   - `eslint` / `globals`: the 2026-09-29 lint-pilot approval recorded in
+  //     docs/PROJECT_BACKLOG.md. ADR-0013 permits the *category* (development-time linters);
+  //     it does not by itself approve these two packages or their versions. Adding an entry
+  //     therefore requires both that record and this assertion to be updated together.
   assertEqual(
     JSON.stringify(pkg.devDependencies || {}),
     JSON.stringify({
       '@playwright/test': '1.63.0',
+      eslint: '10.11.0',
+      globals: '17.12.0',
       xlsx: 'https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz'
     }),
-    'package.json devDependencies stay on the reviewed test/sanitizer allowlist'
+    'package.json devDependencies stay on the reviewed test/sanitizer/lint allowlist (ADR-0013 plus the 2026-09-29 lint-pilot entry in docs/PROJECT_BACKLOG.md)'
   );
 }
 
