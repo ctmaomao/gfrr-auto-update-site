@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-28T05:46:07.954Z",
+  "updatedAt": "2026-09-29T02:28:09.921Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -16,18 +16,18 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-28T05:46:01.599Z",
-    "ageMinutes": 0.1059,
+    "updatedAt": "2026-09-29T02:27:47.382Z",
+    "ageMinutes": 0.37561666666666665,
     "healthScore": 100,
     "criticalMissing": 0,
     "brent": 114.89,
-    "gold": 4184.5,
+    "gold": 4134,
     "vix": 14.21,
-    "dxy": 119.5133,
-    "hyOas": 2.8,
-    "us10y": 5.18,
-    "real10y": 2.85,
-    "spx": 7743.41,
+    "dxy": 120.33,
+    "hyOas": 2.93,
+    "us10y": 5.17,
+    "real10y": 2.83,
+    "spx": 7683.69,
     "brentSource": "FRED:DCOILBRENTEU",
     "brentPromotionApplied": false,
     "brentPromotionReason": "confirmation-divergence-above-2pct",
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-request-failed-using-previous-summary",
-        "attemptedAt": "2026-09-28T05:46:06.500Z",
+        "attemptedAt": "2026-09-29T02:28:08.220Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4963,7 +4963,7 @@
           "minIntervalMs": 8000,
           "maxRetries": 0,
           "retryAfterCapSeconds": 15,
-          "elapsedMs": 1264,
+          "elapsedMs": 1419,
           "errorCode": "http_error"
         }
       }
@@ -4971,10 +4971,10 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-28T05:46:06.673Z",
+      "lastFetchedAt": "2026-09-29T02:28:08.713Z",
       "summary": {
         "recentActionsCount": 18,
-        "listUpdatesCount": 10,
+        "listUpdatesCount": 9,
         "enforcementActionsCount": 2,
         "guidanceCount": 7,
         "highRiskPrograms": [
@@ -4984,7 +4984,7 @@
           "Venezuela",
           "Belarus"
         ],
-        "lastUpdated": "September 24, 2026",
+        "lastUpdated": "September 28, 2026",
         "sourceFreshness": "fresh",
         "errors": []
       }
@@ -5078,14 +5078,14 @@
           "labelZh": "阵营化与关键通道压力",
           "source": "GDELT/OFAC",
           "summary": "由关键区域报道、制裁清单更新与高风险项目共同估算。",
-          "value": 100,
+          "value": 99,
           "direction": "up",
           "confidence": 0.55
         }
       ]
     },
     "multiTheaterConflict": {
-      "score": 32,
+      "score": 33,
       "labelZh": "多战区冲突",
       "trend": "watching",
       "evidence": [
@@ -5100,7 +5100,7 @@
       ]
     },
     "economicWeaponization": {
-      "score": 75,
+      "score": 74,
       "labelZh": "经济金融武器化",
       "trend": "rising",
       "evidence": [
@@ -5108,7 +5108,7 @@
           "labelZh": "制裁与金融限制活动",
           "source": "OFAC/GDELT",
           "summary": "由 OFAC 近期行动与 GDELT 制裁主题共同估算。",
-          "value": 100,
+          "value": 99,
           "direction": "up",
           "confidence": 0.6
         }
@@ -5123,7 +5123,7 @@
           "labelZh": "金融限制与流动性压力组合",
           "source": "OFAC/GDELT/modules",
           "summary": "用于识别资本管制、金融抑制或跨境限制风险的代理信号。",
-          "value": 100,
+          "value": 99,
           "direction": "up",
           "confidence": 0.5
         }
@@ -5137,8 +5137,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4184.5，显示避险或实际利率压力定价。",
-          "value": 4184.5,
+          "summary": "基于 Worker 快变量，黄金当前值 4134，显示避险或实际利率压力定价。",
+          "value": 4134,
           "direction": "up",
           "confidence": 0.75
         },
@@ -5154,7 +5154,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "119.5133/4184.5",
+          "value": "120.33/4134",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5162,7 +5162,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7743.41/4184.5",
+          "value": "7683.69/4134",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -5181,7 +5181,7 @@
     {
       "key": "economicWeaponization",
       "labelZh": "经济金融武器化",
-      "score": 75
+      "score": 74
     },
     {
       "key": "capitalControlRisk",
