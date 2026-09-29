@@ -1,5 +1,15 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-26 CSS 纳入前端 asset bump 触发集
+
+- **Acceptance baseline**：owner 授权按「选项 B」实施：把 `assets/styles.css` 纳入前端 asset bump 触发集。范围限定为检查器触发集与规则/文档，**不改 bump 工具**、不改历史定位算法、不做性能优化（该优化排在第 3 项后另开任务）。PR #419。
+- **决策依据**：只读历史核查（窗口 2026-06-01 起，比较提交与其父提交的树内 `APP_VERSION`）显示所查样本中 42/42 触及 `assets/styles.css` 的提交同时改变了 `APP_VERSION`。**该计数仅描述所查提交样本**，比较"提交与父提交"不等同完整集成单元判定，**不据此推断发布历史**（无 push 审计、部署记录或用户侧证据）。
+- **实施**：`scripts/review-frontend-asset-version.mjs` 触发集固定加入 `assets/styles.css`；`AGENTS.md` §1 规则点名补入，并说明该文件自身不带版本参数（参数在 `index.html` 引用上，由 bump 工具改写），因此纳入触发集无需改动工具；`docs/DATA_CONTRACT.md` 同步触发集描述；`docs/FRONTEND_ASSET_VERSION_CHECK_DESIGN.md` §3.1 由「作用域」改为「触发集」，覆盖边界段改写为决定记录。
+- **复核修正**：独立复核发现三处问题并已修复——(1) 原按文件是否存在决定纳入，导致**删除已跟踪样式表时退出触发集并返回 PASS**，现改为路径无条件属于触发集；(2) 缺少"已提交 CSS 未 bump"的 FAIL 回归，现补上并区分未提交修改、已提交遗漏、删除、从未存在四种形态；(3) 文档曾把"提交与父提交比较"表述为"集成单元判定"并推导"从未单独发布"，已限定为所查样本范围。
+- **验证**：`npm run check:all` 退出 0；`check:frontend-asset-version` 22/22 通过；`git diff --check` 清洁。真实仓库行为：干净 HEAD PASS（scope 18 files）；仅改 CSS 不 bump FAIL exit 1；同场景 bump 后 PASS；删除已跟踪 CSS FAIL exit 1。
+- **已观察未处理**：该检查器在完整仓库上较慢（版本变更查找约 273 次 `git` 调用，实测约 12.6s），非本次引入，列为独立优化项。
+- **不改动**：未触碰 scoring/decision/execution/position、`data/`、workflows、前端渲染代码；未运行源刷新、未付费调用、未部署。
+
 ### 2026-09-21 预算拒绝改为显式 skip（ADR-0060）
 
 - **Acceptance baseline**：owner 在 PR #412 合并、Pages 部署成功后，追加授权「方案 D：把 `tavily_budget_*` 预网络拒绝归为显式 skip」，并选择 serial trunk 时序（#412 合并后再从最新 main 另起分支，不叠 PR）。本任务不改订阅、不付费调用、不放宽可信新闻门槛、不新增 provider 频率、不部署。
