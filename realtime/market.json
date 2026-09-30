@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-09-30T14:52:55.112Z",
-  "asOf": "2026-09-30T14:52:55.112Z",
+  "updatedAt": "2026-09-30T18:34:38.245Z",
+  "asOf": "2026-09-30T18:34:38.245Z",
   "ageMinutes": 0,
   "freshnessLevel": "fresh",
   "unavailable": false,
@@ -11,14 +11,14 @@
   "criticalMissing": 0,
   "fallbackCount": 0,
   "secondarySourceCount": 0,
-  "lastSuccessAt": "2026-09-30T14:52:55.112Z",
-  "freshnessPreparedAt": "2026-09-30T14:52:55.112Z",
+  "lastSuccessAt": "2026-09-30T18:34:38.245Z",
+  "freshnessPreparedAt": "2026-09-30T18:34:38.245Z",
   "freshnessPending": true,
   "notes": [
     "实时数据源刷新成功。"
   ],
   "values": {
-    "brent": 114.89,
+    "brent": 113.96,
     "dxy": 120.33,
     "hyOas": 3.08,
     "vix": 16.04,
@@ -27,10 +27,10 @@
     "us2y": 4.92,
     "real10y": 2.9,
     "breakeven10y": 2.35,
-    "gold": 4172.700195
+    "gold": 4153.799805
   },
   "changes": {
-    "brent1d": -1.26,
+    "brent1d": -6.01,
     "dxy1d": -0.2221,
     "hyOas1d": 0.06,
     "vix1d": -0.03,
@@ -56,13 +56,13 @@
   "sourceDetails": {
     "brent": {
       "ok": true,
-      "value": 114.89,
+      "value": 113.96,
       "source": "fred:DCOILBRENTEU",
-      "timestamp": "2026-09-22",
+      "timestamp": "2026-09-29",
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 744776
+      "ageSeconds": 153279
     },
     "dxy": {
       "ok": true,
@@ -72,7 +72,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 485576
+      "ageSeconds": 498879
     },
     "hyOas": {
       "ok": true,
@@ -82,7 +82,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 139976
+      "ageSeconds": 153279
     },
     "vix": {
       "ok": true,
@@ -92,7 +92,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 139976
+      "ageSeconds": 153279
     },
     "spx": {
       "ok": true,
@@ -102,7 +102,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 139977
+      "ageSeconds": 153279
     },
     "us10y": {
       "ok": true,
@@ -112,7 +112,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 226376
+      "ageSeconds": 239679
     },
     "us2y": {
       "ok": true,
@@ -122,7 +122,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 226376
+      "ageSeconds": 239679
     },
     "real10y": {
       "ok": true,
@@ -132,7 +132,7 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 226377
+      "ageSeconds": 239679
     },
     "breakeven10y": {
       "ok": true,
@@ -142,23 +142,23 @@
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 139977
+      "ageSeconds": 153279
     },
     "gold": {
       "ok": true,
-      "value": 4172.700195,
+      "value": 4153.799805,
       "source": "goldapi:XAU",
       "timestamp": "2026-09-30",
       "fallbackUsed": false,
       "error": null,
       "freshnessPrepared": true,
-      "ageSeconds": 53576
+      "ageSeconds": 66879
     }
   },
   "fieldFreshness": {
     "brent": {
-      "observedAt": "2026-09-22",
-      "ageMinutes": 12413,
+      "observedAt": "2026-09-29",
+      "ageMinutes": 2555,
       "freshnessLevel": "unavailable",
       "isStale": true
     }
@@ -169,7 +169,7 @@
         "source": "ice",
         "value": null,
         "observedAt": null,
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "delayed-15m",
         "available": false,
         "reason": "parse-failed:value",
@@ -185,7 +185,7 @@
         "source": "barchart",
         "value": null,
         "observedAt": null,
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "delayed-10m",
         "available": false,
         "reason": "parse-failed:page-structure",
@@ -201,7 +201,7 @@
         "source": "stooq",
         "value": null,
         "observedAt": null,
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "delayed-eod",
         "available": false,
         "reason": "fetch-failed:http-404",
@@ -217,7 +217,7 @@
         "source": "marketwatch",
         "value": null,
         "observedAt": null,
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "delayed-10m",
         "available": false,
         "reason": "fetch-failed:http-401",
@@ -231,9 +231,9 @@
       },
       {
         "source": "oilprice",
-        "value": 103.57,
+        "value": 103.63,
         "observedAt": null,
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "delayed-web",
         "available": true,
         "reason": null,
@@ -247,9 +247,9 @@
       },
       {
         "source": "yahoo",
-        "value": 98.68,
-        "observedAt": "2026-09-30T14:42:45.000Z",
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "value": 98.2,
+        "observedAt": "2026-09-30T18:24:37.000Z",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "delayed-15m",
         "available": true,
         "reason": null,
@@ -263,9 +263,9 @@
       },
       {
         "source": "fred-anchor",
-        "value": 114.89,
-        "observedAt": "2026-09-22",
-        "fetchedAt": "2026-09-30T14:52:55.112Z",
+        "value": 113.96,
+        "observedAt": "2026-09-29",
+        "fetchedAt": "2026-09-30T18:34:38.245Z",
         "delayClass": "daily-anchor",
         "available": true,
         "reason": null,
@@ -320,15 +320,15 @@
     },
     "promotion": {
       "applied": false,
-      "reason": "consensus-recommended-value-invalid",
+      "reason": "fred-anchor-fresh-enough",
       "selectedValue": null,
       "selectedSource": null,
       "selectedObservedAt": null,
       "selectedCandidateObservedAt": null,
       "anchorSource": "fred:DCOILBRENTEU",
-      "anchorValue": 114.89,
-      "anchorObservedAt": "2026-09-22",
-      "anchorAgeHours": 206.88,
+      "anchorValue": 113.96,
+      "anchorObservedAt": "2026-09-29",
+      "anchorAgeHours": 42.58,
       "anchorStaleHoursThreshold": 72,
       "anchorDivergencePct": null,
       "consensusConfidence": "low",
