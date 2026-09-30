@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-09-29 lint 试点首测（PR 2：手动 lint 试点）
+
+- **Acceptance baseline**：owner 授权启动 PR 2（承接已合并的 PR 1 / #420）。授权范围为**手动 lint 试点**：落三套分离 ESLint 配置、加手动入口、完成首次**全量**扫描并交付报告。**明确边界：不接入 `check:all`、不接入任何 workflow、不启用 autofix、不批量格式化、不修改业务代码**（含不修复首测发现的诊断）。
+- **报告入口**：[LINT_PILOT_FIRST_RUN.md](LINT_PILOT_FIRST_RUN.md)。首次全量扫描实测：645 文件（去重）、152 条诊断（`no-unused-vars` 120 / `no-undef` 31 / `no-dupe-keys` 1）、配置错误 0、解析失败 0、原始退出码 1。按目录 `scripts/` 116、`tests/` 32、`workers/` 4。
+- **分类口径**：`no-undef` 31 项全部落在 `tests/e2e/**` 的 Playwright 浏览器求值回调内（`page.evaluate()` 19 项、`locator(...).evaluate()` 12 项），属**跨上下文诊断**独立单列，不计入确认缺陷，也**不**据此论证环境隔离生效——隔离改由配置层面证据支持（`--print-config` 实测 Node/browser/worker 三套 globals 互不混入）。120 项 `no-unused-vars` 归入**待判断**（其中 43 项带 `_` 前缀；命名只是统计特征，不等于已确认有意未使用）。1 项 `no-dupe-keys` 为**已确认的重复键问题**（`replay-transport-shock-confirmation-factor-free-proxy-score-candidate.mjs:260`，两处值相同，**尚未证明造成输出错误**）。
+- **两个未决项（本试点未处理，需独立决策）**：(1) `^_` 前缀忽略约定是否采用——全仓 42 处 `_` 前缀声明，但无配置无文档；是否采用与这些绑定是否确属有意未使用是两个独立判断。(2) `bubble-watch.html` 的 1 个内联 `<script>` 列为已知盲区，未引入 HTML 插件。
+- **验证**：`npm run check:all` 退出 0（新配置未扰动现有保护网）；`npm run lint` 退出 1 并报 152 问题（首测预期，未通过抑制变绿）；`npm run check:docs` 退出 0（250 md、0 链接问题，报告已登记 `docs/INDEX.md`）；`git diff --check` 清洁。CI `check-all` SUCCESS。
+
 ### 2026-09-29 lint 试点依赖批准（PR 1：依赖契约变更）
 
 - **Acceptance baseline**：owner 批准「PR 1：安装精确版本 `eslint@10.11.0`、`globals@17.12.0`，同步 package、锁文件、精确 allowlist 和决策记录；完成必要验证后提交、推送并创建独立 PR。此次不授权合并，不启动 PR 2」。
