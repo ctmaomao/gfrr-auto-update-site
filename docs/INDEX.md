@@ -51,6 +51,8 @@
 
 - [PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)：当前冻结压力研究的人工评审口径、完整证据清单与结论模板；沿用 ADR-0044/0047 的收集门槛，不改变运行时闸门或授予生产替换权限。
 
+- [LINT_PILOT_FIRST_RUN.md](LINT_PILOT_FIRST_RUN.md)：lint 试点首次全量扫描报告（645 文件、152 条诊断、配置错误 0、解析失败 0），含跨上下文诊断单列与三分类；仅为报告，未接入 `check:all` 或任何 workflow，不预设修复或忽略。
+
 - [ADR-0037](ADR/0037-check-suite-deduplication.md)：检查执行去重与传递覆盖校验；保留全部 leaf 断言和独立 checker/合并审阅。
 
 - [ADR-0036](ADR/0036-final-editorial-write-revalidation.md)：最终编辑层写入复验与有界诊断；不放宽来源、付费、评分或部署权限。
