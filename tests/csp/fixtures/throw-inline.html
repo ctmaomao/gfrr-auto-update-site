@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>CSP control · unhashed inline script</title>
+</head>
+<body>
+  <p id="marker-inline-script">waiting</p>
+  <script>
+    document.getElementById('marker-inline-script').textContent = 'unhashed-inline-ran';
+    window.__cspUnhashedInlineRan = true;
+  </script>
+</body>
+</html>

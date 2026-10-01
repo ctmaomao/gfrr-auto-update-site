@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>CSP control · allowed inline script and style</title>
+  <style>
+    /* hashed by the candidate policy: must never violate and must always apply */
+    #marker-allowed-style { display: none; }
+  </style>
+</head>
+<body>
+  <p id="marker-allowed">waiting</p>
+  <p id="marker-allowed-style">hashed-style-block-marker</p>
+  <script>
+    document.getElementById('marker-allowed').textContent = 'allowed-inline-ran';
+    window.__cspAllowedInlineRan = true;
+  </script>
+</body>
+</html>

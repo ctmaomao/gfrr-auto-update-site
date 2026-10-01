@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>CSP control · unhashed inline style block</title>
+  <style>
+    /* deliberately unhashed: must violate style-src-elem */
+    #marker-style-block { display: none; }
+  </style>
+</head>
+<body>
+  <p id="marker-style-block">style-block-marker</p>
+</body>
+</html>
