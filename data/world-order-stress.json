@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-09-30T05:48:37.488Z",
+  "updatedAt": "2026-10-01T01:47:42.259Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
     "calibrationId": "gdelt-cloud-2026-08-07-to-2026-09-10-v1",
     "comparableToLegacy": false
   },
-  "score": 53,
+  "score": 54,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
   "confidence": 1,
@@ -16,21 +16,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-09-30T05:45:57.806Z",
-    "ageMinutes": 2.66135,
+    "updatedAt": "2026-10-01T01:45:57.583Z",
+    "ageMinutes": 1.7445833333333334,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 96.075,
-    "gold": 4176.8999,
-    "vix": 16.07,
+    "brent": 113.96,
+    "gold": 4162.7002,
+    "vix": 16.04,
     "dxy": 120.33,
-    "hyOas": 3.02,
-    "us10y": 5.24,
-    "real10y": 2.9,
-    "spx": 7670.84,
-    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
-    "brentPromotionApplied": true,
-    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
+    "hyOas": 3.08,
+    "us10y": 5.26,
+    "real10y": 2.91,
+    "spx": 7651.54,
+    "brentSource": "FRED:DCOILBRENTEU",
+    "brentPromotionApplied": false,
+    "brentPromotionReason": "fred-anchor-not-stale",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-request-failed-using-previous-summary",
-        "attemptedAt": "2026-09-30T05:48:35.826Z",
+        "attemptedAt": "2026-10-01T01:47:40.030Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4963,7 +4963,7 @@
           "minIntervalMs": 8000,
           "maxRetries": 0,
           "retryAfterCapSeconds": 15,
-          "elapsedMs": 1402,
+          "elapsedMs": 1844,
           "errorCode": "http_error"
         }
       }
@@ -4971,11 +4971,11 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-09-30T05:48:35.993Z",
+      "lastFetchedAt": "2026-10-01T01:47:40.711Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
-        "enforcementActionsCount": 2,
+        "enforcementActionsCount": 1,
         "guidanceCount": 7,
         "highRiskPrograms": [
           "Russia",
@@ -4984,7 +4984,7 @@
           "Venezuela",
           "Belarus"
         ],
-        "lastUpdated": "September 29, 2026",
+        "lastUpdated": "September 30, 2026",
         "sourceFreshness": "fresh",
         "errors": []
       }
@@ -5070,7 +5070,7 @@
       ]
     },
     "blocFormation": {
-      "score": 55,
+      "score": 54,
       "labelZh": "阵营化与联盟硬化",
       "trend": "watching",
       "evidence": [
@@ -5078,7 +5078,7 @@
           "labelZh": "阵营化与关键通道压力",
           "source": "GDELT/OFAC",
           "summary": "由关键区域报道、制裁清单更新与高风险项目共同估算。",
-          "value": 95,
+          "value": 92,
           "direction": "up",
           "confidence": 0.55
         }
@@ -5100,7 +5100,7 @@
       ]
     },
     "economicWeaponization": {
-      "score": 72,
+      "score": 70,
       "labelZh": "经济金融武器化",
       "trend": "rising",
       "evidence": [
@@ -5108,14 +5108,14 @@
           "labelZh": "制裁与金融限制活动",
           "source": "OFAC/GDELT",
           "summary": "由 OFAC 近期行动与 GDELT 制裁主题共同估算。",
-          "value": 95,
+          "value": 92,
           "direction": "up",
           "confidence": 0.6
         }
       ]
     },
     "capitalControlRisk": {
-      "score": 63,
+      "score": 62,
       "labelZh": "资本管制与金融抑制风险",
       "trend": "rising",
       "evidence": [
@@ -5123,38 +5123,38 @@
           "labelZh": "金融限制与流动性压力组合",
           "source": "OFAC/GDELT/modules",
           "summary": "用于识别资本管制、金融抑制或跨境限制风险的代理信号。",
-          "value": 95,
+          "value": 92,
           "direction": "up",
           "confidence": 0.5
         }
       ]
     },
     "marketConfirmation": {
-      "score": 45,
+      "score": 52,
       "labelZh": "市场确认",
       "state": "partial_confirmed",
       "evidence": [
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4176.9，显示避险或实际利率压力定价。",
-          "value": 4176.8999,
+          "summary": "基于 Worker 快变量，黄金当前值 4162.7，显示避险或实际利率压力定价。",
+          "value": 4162.7002,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 96.08，对地缘与供应风险有部分确认作用。",
-          "value": 96.075,
+          "summary": "基于 Worker 快变量，布伦特当前值 113.96，对地缘与供应风险有部分确认作用。",
+          "value": 113.96,
           "direction": "up",
-          "confidence": 0.55
+          "confidence": 0.75
         },
         {
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "120.33/4176.8999",
+          "value": "120.33/4162.7002",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5162,17 +5162,17 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7670.84/4176.8999",
+          "value": "7651.54/4162.7002",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 96.075,
-          "direction": "up",
-          "confidence": 0.65
+          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：fred-anchor-not-stale。",
+          "value": 113.96,
+          "direction": "neutral",
+          "confidence": 0.45
         }
       ]
     }
@@ -5181,12 +5181,12 @@
     {
       "key": "economicWeaponization",
       "labelZh": "经济金融武器化",
-      "score": 72
+      "score": 70
     },
     {
       "key": "capitalControlRisk",
       "labelZh": "资本管制与金融抑制风险",
-      "score": 63
+      "score": 62
     },
     {
       "key": "peaceDividendRetreat",
