@@ -209,7 +209,9 @@ test('a tampered policy in the staged document fails the check', () => {
   writeFileSync(resolve(outDir, 'edgeone.json'), JSON.stringify(document, null, 2));
   const check = checkStagingDirectory({ stagingDir: outDir, configPath: CONFIG_PATH });
   assert.equal(check.ok, false);
-  assert.ok(check.problems.some((problem) => /script-src hashes do not match/u.test(problem)));
+  // `--check` regenerates the whole document, so a rewritten policy is caught by the document
+  // comparison; the hash comparison against the staged pages is reported by the review suite.
+  assert.ok(check.problems.some((problem) => /differs from the document regenerated/u.test(problem)));
 });
 
 // ---------------------------------------------------------------------------
@@ -267,11 +269,11 @@ test('read-back passes for a single expected report-only header', () => {
 test('read-back keeps two same-named headers instead of merging or dropping them', () => {
   const other = POLICY.replace("script-src-attr 'none'", "script-src-attr 'unsafe-inline'");
   const result = evaluateHeaders([[REPORT_ONLY_HEADER, POLICY], [REPORT_ONLY_HEADER, other]], { expectedPolicy: POLICY });
-  assert.equal(result.reportOnly.length, 2);
+  // Both raw values are preserved in order, and the duplicate itself is a failure — reporting it
+  // only as a note previously let a duplicated header pass the verdict.
   assert.deepEqual(result.reportOnly, [POLICY, other]);
-  assert.ok(result.notes.some((note) => /2 same-named/u.test(note)));
-  // Both raw values were preserved, so the mismatch is reported rather than hidden by merging.
   assert.equal(result.ok, false);
+  assert.ok(result.findings.some((finding) => /duplicate Content-Security-Policy-Report-Only/u.test(finding)));
 });
 
 test('read-back fails on a missing header, an enforced header, and a wrong value', () => {

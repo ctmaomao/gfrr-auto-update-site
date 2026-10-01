@@ -75,6 +75,15 @@
 - **验证（阶段 1，均在本地）**：手动回归 `node --test tests/csp/edgeone-staging.test.mjs` **18/18 通过**（含双向校验的漏 hash / 多 hash / 错放指令、路径安全七类拒绝与非空目录拒绝、`enabled:false` 文档形态、被篡改策略导致 `--check` 失败、读回工具的重复同名头保留与启用/关闭态判定）；本地自检：真实 `_site` 生成 → `production` **387 字符且不含任何 fixture hash**、`verification` 495 字符、`--check` PASS、暂存值 == production；既有 harness 未受影响——完整 fresh 三模式 4/7/7 passed、`crossModeMismatches: 0`，且**策略指纹仍为 `e61142d2777df172`**（证明重构后策略文本逐字节不变）。
 - **未验证/未启动**：release 仓库 **Git 构建通道**是否同样消费 `edgeone.json`（阶段 2，另行授权，可先用隔离项目）；生产接线（阶段 3，另行授权；**一旦并入现有生产 workflow，合并后即可随 push 或排程发布响应头**，不得视为"仅安装工具"）；生产响应头、生产持久化决策、报告接收端、CI 接入均未启动。
 
+- **复核后修复（2026-10-01，owner 复核 `93272177` 提出五点，均以普通追加提交修复）**：
+  1. **真实读回丢重复头**：`fetchHeaderPairs()` 原用 `res.headers`，Node 会把两个同名 CSP 头合并成一个逗号连接值，工具因此报 `sameNameCount: 1`。改为从 **`res.rawHeaders`** 构造原始配对，并新增**真实本地 HTTP 服务**的回归（不再只测手工 JSON fixture）。
+  2. **相同重复头仍判 PASS**：重复原先只写入 `notes`。现无论两个值是否相同，重复一律记为 **FAIL**，同时**保留并报告全部原始值**。
+  3. **空 hash 集合仍通过**：双向校验接受"两边都为空"。现 `validatePolicyHashesAgainstPages()` 对空预期直接报错；`deriveExpectedHashSources()` 拒绝缺少内联块或清单为空的页面；`buildEdgeoneJson()` 拒绝空页面集与空 hash 来源。
+  4. **最终目录校验不完整**：原仅查顶层条目。现对**输入与最终目录递归**拒绝符号链接/junction，逐文件核对 **size + SHA-256** 内容一致性，并拒绝多余嵌套文件；路径保护新增**解析已有父目录中的链接/junction**（`resolveThroughExistingAncestors`），避免通过链接别名落入受保护目录。
+  5. **`--check` 未核对完整配置**：现从**最终目录的页面 + 配置重新生成预期文档**，再整体比较结构与策略（改写 `connect-src` 等非 hash 指令会被判失败）；头名识别改为**不区分大小写**（小写强制 `content-security-policy` 不再漏掉）；同时拒绝文档中出现两条 Report-Only 条目。
+  - **回归**：新增 `tests/csp/edgeone-staging-review.test.mjs`（**17 项**，手动入口）覆盖上述五点；原 `tests/csp/edgeone-staging.test.mjs` 的两处旧断言按新语义更新（重复头判 FAIL、篡改策略由"整份文档比较"捕获），两组共 **35/35 通过**。既有 harness 未受影响（完整 fresh 三模式 4/7/7 passed、`crossModeMismatches: 0`、策略指纹仍为 `e61142d2777df172`）；真实 `_site` 生成 + `--check` 均 PASS。
+  - **范围未变**：未改 workflow、未接入 CI、未上传或发布、未修改生产项目或 release 分支。
+
 ### 2026-09-29 lint 试点首测（PR 2：手动 lint 试点）
 
 - **Acceptance baseline**：owner 授权启动 PR 2（承接已合并的 PR 1 / #420）。授权范围为**手动 lint 试点**：落三套分离 ESLint 配置、加手动入口、完成首次**全量**扫描并交付报告。**明确边界：不接入 `check:all`、不接入任何 workflow、不启用 autofix、不批量格式化、不修改业务代码**（含不修复首测发现的诊断）。

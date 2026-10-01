@@ -10,24 +10,26 @@
 // the generator clears its target directory. The path rules below refuse the filesystem root, the
 // repository root, protected repository directories, any overlap with the input artifact in either
 // direction, and an existing non-empty target that was not explicitly confirmed with `--force`.
-import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  INLINE_HASH_SOURCE_FILES,
   REPORT_ONLY_HEADER,
   buildEdgeoneJson,
-  derivePageHashes,
-  parsePolicy,
+  deriveExpectedHashSources,
+  isEnforcedCspHeaderName,
+  isReportOnlyCspHeaderName,
   validateCspConfig,
-  validatePolicyHashesAgainstPages,
+  walkFiles,
 } from './lib/edgeone-csp-policy.mjs';
 
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const DEFAULT_ARTIFACT_DIR = resolve(REPO_ROOT, '_site');
 export const DEFAULT_CONFIG_PATH = resolve(REPO_ROOT, 'config', 'edgeone', 'csp-report-only.json');
-/** Pages whose inline blocks supply the hashes. Keep in sync with the published entry points. */
-export const HASH_SOURCE_PAGES = ['bubble-watch.html'];
+/** Pages whose inline blocks supply the hashes. Owned by the shared policy module. */
+export const HASH_SOURCE_PAGES = INLINE_HASH_SOURCE_FILES;
 const PROTECTED_DIRECTORIES = ['config', 'scripts', 'tests', '.git', '.github', 'data', 'assets'];
 
 export function isInside(parent, child) {
@@ -35,23 +37,51 @@ export function isInside(parent, child) {
   return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
 }
 
+/**
+ * Resolves an existing ancestor chain so a symlinked or junctioned alias cannot be used to reach a
+ * protected location: `link/to/repo/scripts` must be refused just like the real path.
+ */
+export function resolveThroughExistingAncestors(target) {
+  let current = resolve(target);
+  const missing = [];
+  while (!existsSync(current)) {
+    const parent = dirname(current);
+    if (parent === current) break;
+    missing.unshift(current.slice(parent.length).replace(/^[\\/]+/u, ''));
+    current = parent;
+  }
+  let real;
+  try {
+    real = realpathSync(current);
+  } catch {
+    real = current;
+  }
+  return missing.length ? resolve(real, ...missing) : real;
+}
+
 export function assertSafeOutDir(outDir, { artifactDir }) {
   const fail = (message) => { throw new Error(`refusing --out-dir: ${message}`); };
   if (typeof outDir !== 'string' || !outDir.trim()) fail('a value is required');
-  const target = resolve(outDir);
+  const requested = resolve(outDir);
+  const target = resolveThroughExistingAncestors(requested);
   if (target === resolve(target, sep)) fail('the filesystem root is not a valid target');
   if (target === REPO_ROOT) fail('the repository root is not a valid target');
+  if (isInside(requested, REPO_ROOT)) fail('the repository must not live inside the target directory');
   for (const directory of PROTECTED_DIRECTORIES) {
     const protectedPath = resolve(REPO_ROOT, directory);
-    if (target === protectedPath || isInside(protectedPath, target)) {
-      fail(`"${directory}" is a protected repository directory`);
+    for (const candidate of new Set([requested, target])) {
+      if (candidate === protectedPath || isInside(protectedPath, candidate)) {
+        fail(`"${directory}" is a protected repository directory`);
+      }
     }
   }
   const artifact = resolve(artifactDir);
-  if (isInside(target, artifact) || isInside(artifact, target)) {
-    fail('the target must not overlap the input artifact directory in either direction');
+  for (const candidate of new Set([requested, target])) {
+    if (isInside(candidate, artifact) || isInside(artifact, candidate)) {
+      fail('the target must not overlap the input artifact directory in either direction');
+    }
   }
-  return target;
+  return requested;
 }
 
 function assertTargetIsReplaceable(target, { force }) {
@@ -66,120 +96,150 @@ function assertTargetIsReplaceable(target, { force }) {
   }
 }
 
-function validateStagingTree(stagingDir, { artifactDir }) {
-  for (const entry of readdirSync(stagingDir, { withFileTypes: true })) {
-    const path = resolve(stagingDir, entry.name);
-    if (entry.isSymbolicLink() || lstatSync(path).isSymbolicLink()) {
-      throw new Error(`staging tree contains a symbolic link: ${path}`);
+/** Recursively rejects symlinks (and junctions) anywhere in a tree. */
+export function assertNoSymlinks(directory, label) {
+  const walk = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const path = resolve(current, entry.name);
+      if (entry.isSymbolicLink() || lstatSync(path).isSymbolicLink()) {
+        throw new Error(`${label} contains a symbolic link: ${path}`);
+      }
+      if (entry.isDirectory()) walk(path);
     }
-  }
-  const expected = ['edgeone.json', ...readdirSync(artifactDir)];
-  const actual = readdirSync(stagingDir).sort();
-  const missing = expected.filter((name) => !actual.includes(name));
-  const extra = actual.filter((name) => !expected.includes(name));
-  if (missing.length) throw new Error(`staging tree is missing: ${missing.join(', ')}`);
-  if (extra.length) throw new Error(`staging tree has unexpected top-level entries: ${extra.join(', ')}`);
+  };
+  walk(resolve(directory));
+}
 
-  // Re-validate against the pages in the FINAL tree, not the source artifact: the object that gets
-  // published has to be the object that was verified.
-  const pages = HASH_SOURCE_PAGES.map((file) => derivePageHashes(stagingDir, file));
-  return pages;
+/** root-relative path -> byte size, for every regular file in the tree. */
+export function fileInventory(directory) {
+  const root = resolve(directory);
+  const inventory = new Map();
+  for (const file of walkFiles(root)) inventory.set(file, statSync(resolve(root, file)).size);
+  return inventory;
+}
+
+/**
+ * Validates the final staging tree against the artifact it was copied from:
+ *   - no symlinks anywhere, in the input OR the final tree;
+ *   - the final tree is exactly the artifact's inventory plus `edgeone.json`;
+ *   - every copied file is byte-identical (same size and same content hash).
+ */
+export function validateStagingTree(stagingDir, { artifactDir }) {
+  const target = resolve(stagingDir);
+  const source = resolve(artifactDir);
+  assertNoSymlinks(source, 'input artifact');
+  assertNoSymlinks(target, 'staging tree');
+
+  const input = fileInventory(source);
+  const staged = new Set(walkFiles(target).map((file) => file.replace(/^edgeone\.json$/u, 'edgeone.json')));
+  const problems = [];
+
+  for (const [file, size] of input) {
+    if (!staged.has(file)) { problems.push(`missing from staging: ${file}`); continue; }
+    const path = resolve(target, file);
+    const stagedSize = statSync(path).size;
+    if (stagedSize !== size) { problems.push(`size mismatch for ${file} (${stagedSize} != ${size})`); continue; }
+    const a = createHash('sha256').update(readFileSync(resolve(source, file))).digest('hex');
+    const b = createHash('sha256').update(readFileSync(path)).digest('hex');
+    if (a !== b) problems.push(`content mismatch for ${file}`);
+  }
+  for (const file of staged) {
+    if (file === 'edgeone.json') continue;
+    if (!input.has(file)) problems.push(`unexpected file in staging: ${file}`);
+  }
+  if (!staged.has('edgeone.json')) problems.push('missing edgeone.json in staging');
+  if (problems.length) throw new Error(`staging tree validation failed: ${problems.join('; ')}`);
+  return { fileCount: input.size, files: [...input.keys()] };
 }
 
 export function fingerprintDirectory(directory) {
   const hash = createHash('sha256');
-  const walk = (current) => {
-    for (const entry of readdirSync(current, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (entry.name.startsWith('.')) continue;
-      const path = resolve(current, entry.name);
-      if (entry.isDirectory()) walk(path);
-      else {
-        hash.update(`path:${relative(directory, path).split(sep).join('/')}\u0000`);
-        hash.update(readFileSync(path));
-        hash.update('\u0000');
-      }
-    }
-  };
-  walk(resolve(directory));
+  const root = resolve(directory);
+  for (const file of walkFiles(root)) {
+    hash.update(`path:${file}\u0000`);
+    hash.update(readFileSync(resolve(root, file)));
+    hash.update('\u0000');
+  }
   return hash.digest('hex');
+}
+
+/** Builds the exact document the configuration requires for a given tree, or throws. */
+export function expectedDocumentFor(stagingDir, config) {
+  if (!config.enabled) return { json: { headers: [] }, state: 'disabled', policy: null };
+  const { pages } = deriveExpectedHashSources(stagingDir);
+  return buildEdgeoneJson({ config, pages });
 }
 
 export function buildStagingDirectory({ outDir, artifactDir = DEFAULT_ARTIFACT_DIR, configPath = DEFAULT_CONFIG_PATH, force = false }) {
   const target = assertSafeOutDir(outDir, { artifactDir });
   if (!existsSync(artifactDir)) throw new Error(`artifact directory does not exist: ${artifactDir}`);
+  assertNoSymlinks(artifactDir, 'input artifact');
   assertTargetIsReplaceable(target, { force });
 
   const config = validateCspConfig(JSON.parse(readFileSync(configPath, 'utf8')));
-  const { json, state, policy } = buildEdgeoneJson({ config, pages: [] });
 
   rmSync(target, { recursive: true, force: true });
   mkdirSync(target, { recursive: true });
   cpSync(resolve(artifactDir), target, { recursive: true });
 
-  // Enabled: derive hashes from the staged pages and rebuild so the published object is the
-  // verified object. Disabled: emit the valid document with no CSP header rule.
-  let finalJson = json;
-  let finalPolicy = policy;
-  if (config.enabled) {
-    const stagedPages = HASH_SOURCE_PAGES.map((file) => derivePageHashes(target, file));
-    const built = buildEdgeoneJson({ config, pages: stagedPages });
-    finalJson = built.json;
-    finalPolicy = built.policy;
-    const check = validatePolicyHashesAgainstPages(finalPolicy, stagedPages);
-    if (!check.ok) throw new Error(`generated policy failed verification: ${check.problems.join('; ')}`);
-  }
-  writeFileSync(resolve(target, 'edgeone.json'), `${JSON.stringify(finalJson, null, 2)}\n`);
+  // The published object has to be the verified object, so the document is generated from the
+  // FINAL staged pages and then verified against them.
+  const { json, state, policy } = expectedDocumentFor(target, config);
+  writeFileSync(resolve(target, 'edgeone.json'), `${JSON.stringify(json, null, 2)}\n`);
 
-  const pages = validateStagingTree(target, { artifactDir });
-  return { stagingDir: target, state, policy: finalPolicy, pages, fingerprint: fingerprintDirectory(target) };
+  const tree = validateStagingTree(target, { artifactDir });
+  return { stagingDir: target, state, policy, tree, fingerprint: fingerprintDirectory(target) };
 }
 
-/** Validates an existing staging directory without regenerating it. */
+/**
+ * Validates an existing staging directory by REGENERATING the expected document from the
+ * configuration and the pages in that directory, then comparing structure and policy in full.
+ * Comparing hashes alone would accept a document whose other directives were rewritten.
+ */
 export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_PATH }) {
   const target = resolve(stagingDir);
   if (!existsSync(target)) throw new Error(`staging directory does not exist: ${target}`);
   const config = validateCspConfig(JSON.parse(readFileSync(configPath, 'utf8')));
-  const document = JSON.parse(readFileSync(resolve(target, 'edgeone.json'), 'utf8'));
-  const rules = Array.isArray(document.headers) ? document.headers : [];
+  assertNoSymlinks(target, 'staging tree');
   const problems = [];
 
-  const cspRules = rules.filter((rule) => (rule.headers ?? []).some((header) => header.key === REPORT_ONLY_HEADER));
-  if (!config.enabled) {
-    if (cspRules.length) problems.push('configuration is disabled but the document carries a CSP header rule');
-    if (rules.some((rule) => (rule.headers ?? []).some((header) => header.key === 'Content-Security-Policy'))) {
-      problems.push('document carries an enforced Content-Security-Policy header');
-    }
-    return { ok: problems.length === 0, state: 'disabled', problems, fingerprint: fingerprintDirectory(target) };
+  const documentPath = resolve(target, 'edgeone.json');
+  if (!existsSync(documentPath)) return { ok: false, state: config.enabled ? 'enabled' : 'disabled', problems: ['edgeone.json is missing'], fingerprint: null };
+  const document = JSON.parse(readFileSync(documentPath, 'utf8'));
+
+  let expected;
+  try {
+    expected = expectedDocumentFor(target, config);
+  } catch (error) {
+    return { ok: false, state: config.enabled ? 'enabled' : 'disabled', problems: [`cannot derive the expected document: ${error.message}`], fingerprint: fingerprintDirectory(target) };
   }
 
-  if (cspRules.length !== 1) problems.push(`expected exactly one Report-Only rule, found ${cspRules.length}`);
-  const entries = cspRules.flatMap((rule) => (rule.headers ?? []).filter((header) => header.key === REPORT_ONLY_HEADER));
-  if (entries.length !== 1) problems.push(`expected exactly one Report-Only header entry, found ${entries.length}`);
-  for (const rule of rules) {
-    for (const header of rule.headers ?? []) {
-      if (header.key === 'Content-Security-Policy') problems.push('document carries an enforced Content-Security-Policy header');
-      if (header.key === REPORT_ONLY_HEADER && rule.source !== config.source) {
-        problems.push(`Report-Only rule source is "${rule.source}", expected "${config.source}"`);
-      }
-    }
+  const rules = Array.isArray(document.headers) ? document.headers : null;
+  if (!rules) problems.push('edgeone.json has no headers array');
+  const allHeaders = (rules ?? []).flatMap((rule) => rule.headers ?? []);
+  for (const header of allHeaders) {
+    if (isEnforcedCspHeaderName(header.key)) problems.push(`document carries an enforced ${header.key} header`);
   }
-  const policy = entries[0]?.value ?? '';
-  if (!problems.length) {
-    try {
-      parsePolicy(policy);
-    } catch (error) {
-      problems.push(`policy is not parseable: ${error.message}`);
-    }
-    if (policy.length > 1000) problems.push(`policy is ${policy.length} characters, over the 1000 limit`);
-    const pages = HASH_SOURCE_PAGES.map((file) => derivePageHashes(target, file));
-    const check = validatePolicyHashesAgainstPages(policy, pages);
-    problems.push(...check.problems);
+  const reportOnly = allHeaders.filter((header) => isReportOnlyCspHeaderName(header.key));
+  if (reportOnly.length > 1) problems.push(`document carries ${reportOnly.length} Report-Only header entries`);
+
+  if (!config.enabled) {
+    if (reportOnly.length) problems.push('configuration is disabled but the document carries a CSP header rule');
+    return { ok: problems.length === 0, state: 'disabled', problems, fingerprint: fingerprintDirectory(target) };
+  }
+  if (rules && JSON.stringify(document) !== JSON.stringify(expected.json)) {
+    problems.push('document differs from the document regenerated from this configuration and these pages');
+  }
+  if (reportOnly.length !== 1) problems.push(`expected exactly one Report-Only header entry, found ${reportOnly.length}`);
+  const policy = reportOnly[0]?.value ?? '';
+  if (policy && JSON.stringify(policy) !== JSON.stringify(expected.policy)) {
+    problems.push('policy text differs from the regenerated policy');
   }
   return {
     ok: problems.length === 0,
     state: 'enabled',
     problems,
-    policy,
+    policy: expected.policy,
     fingerprint: fingerprintDirectory(target),
   };
 }
@@ -234,8 +294,7 @@ function main() {
     if (result.state === 'enabled') {
       console.log(`  header: ${REPORT_ONLY_HEADER}`);
       console.log(`  policy (${result.policy.length} chars): ${result.policy}`);
-      console.log(`  hashes derived from: ${HASH_SOURCE_PAGES.join(', ')}`
-        + ` (${result.pages.reduce((total, page) => total + page.scriptHashes.length + page.styleHashes.length, 0)} hash sources)`);
+      console.log(`  hashes derived from: ${HASH_SOURCE_PAGES.join(', ')} (${result.tree.fileCount} artifact files copied)`);
     } else {
       console.log('  header: omitted (configuration disabled); wrote a valid edgeone.json with no CSP rule');
     }

@@ -10,8 +10,8 @@
 // fixtures, and the header name is a constant so a "report-only" configuration can never silently
 // become an enforced one.
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { relative, resolve, sep } from 'node:path';
 
 export const GOOGLE_FONTS_STYLESHEET = 'https://fonts.googleapis.com';
 export const GOOGLE_FONTS_FILES = 'https://fonts.gstatic.com';
@@ -55,14 +55,64 @@ export function extractInlineBodies(html, tagName) {
   return [...String(html).matchAll(pattern)].map((match) => match[1]);
 }
 
-/** Derives the expected hash sources for one file from the path that will be published. */
-export function derivePageHashes(root, file) {
-  const html = readFileSync(resolve(root, file), 'utf8');
-  return {
-    file,
-    scriptHashes: extractInlineBodies(html, 'script').map(sha256Source),
-    styleHashes: extractInlineBodies(html, 'style').map(sha256Source),
+/** Filenames whose inline blocks must supply hashes. */
+export const INLINE_HASH_SOURCE_FILES = ['bubble-watch.html'];
+
+/** Recursively lists regular files under `root`, as sorted root-relative POSIX paths. */
+export function walkFiles(root) {
+  const rootPath = resolve(root);
+  const files = [];
+  const walk = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const path = resolve(current, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else files.push(relative(rootPath, path).split(sep).join('/'));
+    }
   };
+  walk(rootPath);
+  return files.sort();
+}
+
+/** Header names are compared case-insensitively: a lowercase enforced header must not slip past. */
+export function isEnforcedCspHeaderName(name) {
+  return String(name).toLowerCase() === 'content-security-policy';
+}
+
+export function isReportOnlyCspHeaderName(name) {
+  return String(name).toLowerCase() === REPORT_ONLY_HEADER.toLowerCase();
+}
+
+/**
+ * Derives the expected hash sources for one page from the path that will be published.
+ *
+ * `requireInlineBlocks` (default true) rejects a page that has no inline `<script>`/`<style>` at
+ * all. Without it a page whose inline content disappeared would contribute an empty hash set and
+ * the policy would silently lose both hashes.
+ */
+export function derivePageHashes(root, file, { requireInlineBlocks = true } = {}) {
+  const html = readFileSync(resolve(root, file), 'utf8');
+  const scriptHashes = extractInlineBodies(html, 'script').map(sha256Source);
+  const styleHashes = extractInlineBodies(html, 'style').map(sha256Source);
+  if (requireInlineBlocks) {
+    if (!scriptHashes.length) throw new Error(`${file} has no inline <script> block to hash`);
+    if (!styleHashes.length) throw new Error(`${file} has no inline <style> block to hash`);
+  }
+  return { file, scriptHashes, styleHashes };
+}
+
+/**
+ * The hash-source inventory for the configured pages. Throws when a page or its inline blocks are
+ * missing, and refuses to return an empty inventory: "no expected hashes" must never be satisfied
+ * by "no hashes in the policy".
+ */
+export function deriveExpectedHashSources(root, files = INLINE_HASH_SOURCE_FILES) {
+  const pages = files.map((file) => derivePageHashes(root, file));
+  const script = pages.flatMap((page) => page.scriptHashes);
+  const style = pages.flatMap((page) => page.styleHashes);
+  if (!script.length || !style.length) {
+    throw new Error('expected hash sources are empty; refusing to treat an empty hash set as valid');
+  }
+  return { pages, script, style };
 }
 
 /**
@@ -181,6 +231,11 @@ export function validatePolicyHashesAgainstPages(policy, pages) {
   const expectedScript = pages.flatMap((page) => page.scriptHashes);
   const expectedStyle = pages.flatMap((page) => page.styleHashes);
 
+  // An empty expectation cannot be satisfied by an empty policy: that is exactly the "every hash
+  // silently dropped" case this verification exists to catch.
+  if (!expectedScript.length) problems.push('no expected script hashes were derived from the published pages');
+  if (!expectedStyle.length) problems.push('no expected style hashes were derived from the published pages');
+
   const scriptSources = hashSourcesIn(directives.get('script-src') ?? '');
   const styleSources = hashSourcesIn(directives.get('style-src-elem') ?? '');
 
@@ -211,8 +266,12 @@ export function buildEdgeoneJson({ config, pages }) {
   if (!config.enabled) {
     return { json: { headers: [] }, state: 'disabled', policy: null };
   }
+  if (!pages.length) throw new Error('edgeone CSP config: no pages were supplied to derive hashes from');
   const scriptHashes = pages.flatMap((page) => page.scriptHashes);
   const styleHashes = pages.flatMap((page) => page.styleHashes);
+  if (!scriptHashes.length || !styleHashes.length) {
+    throw new Error('edgeone CSP config: derived hash sources are empty; refusing to emit a policy without them');
+  }
   const policy = serializePolicy(config, { scriptHashes, styleHashes });
   if (policy.length > MAX_POLICY_LENGTH) {
     throw new Error(`edgeone CSP config: policy is ${policy.length} characters, over the ${MAX_POLICY_LENGTH} limit`);

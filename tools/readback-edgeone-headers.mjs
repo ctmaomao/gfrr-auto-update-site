@@ -56,7 +56,11 @@ export function evaluateHeaders(pairs, { expectedState = 'enabled', expectedPoli
   }
 
   if (!reportOnly.length) findings.push(`missing ${REPORT_ONLY_HEADER} header`);
-  if (reportOnly.length > 1) notes.push(`response carries ${reportOnly.length} same-named ${REPORT_ONLY_HEADER} headers (kept and reported, not merged)`);
+  // More than one same-named header is a FAILURE, whether or not the values are identical: simply
+  // reporting it as a note let a duplicate pass the verdict.
+  if (reportOnly.length > 1) {
+    findings.push(`duplicate ${REPORT_ONLY_HEADER} headers: ${reportOnly.length} values received; every value is preserved and reported`);
+  }
   for (const [index, value] of reportOnly.entries()) {
     if (expectedPolicy && value !== expectedPolicy) findings.push(`value #${index + 1} differs from the generated policy`);
     try {
@@ -95,12 +99,21 @@ function readPairsFromStdin() {
   return pairsFromHeadersObject(document);
 }
 
+/** Converts a flat raw-header array (`[name, value, name, value, …]`) into pairs. */
+export function pairsFromRawHeaders(rawHeaders) {
+  const pairs = [];
+  for (let index = 0; index + 1 < rawHeaders.length; index += 2) pairs.push([rawHeaders[index], rawHeaders[index + 1]]);
+  return pairs;
+}
+
 export function fetchHeaderPairs(url) {
   return new Promise((resolvePromise, rejectPromise) => {
     const client = url.startsWith('https:') ? request : httpRequest;
     const req = client(url, { method: 'GET', headers: { accept: '*/*' } }, (res) => {
       res.resume();
-      res.on('end', () => resolvePromise({ status: res.statusCode, pairs: pairsFromHeadersObject(res.headers) }));
+      // `res.headers` collapses repeated headers into one comma-joined value, which destroys the
+      // duplicates this tool must report. `rawHeaders` preserves every occurrence.
+      res.on('end', () => resolvePromise({ status: res.statusCode, pairs: pairsFromRawHeaders(res.rawHeaders) }));
       res.on('error', rejectPromise);
     });
     req.on('error', rejectPromise);
