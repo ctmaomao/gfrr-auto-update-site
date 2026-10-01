@@ -5,8 +5,9 @@
 //   node --test tests/csp/edgeone-staging-review.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import {
@@ -21,12 +22,52 @@ import {
   buildStagingDirectory,
   checkStagingDirectory,
   fileInventory,
+  manifestFromArtifact,
   validateStagingTree,
+  writeManifest,
 } from '../../scripts/build-edgeone-release-artifact.mjs';
 import { evaluateHeaders, fetchHeaderPairs, pairsFromRawHeaders } from '../../tools/readback-edgeone-headers.mjs';
 
 const CONFIG_PATH = resolve(import.meta.dirname, '..', '..', 'config', 'edgeone', 'csp-report-only.json');
+const CLI_PATH = resolve(import.meta.dirname, '..', '..', 'scripts', 'build-edgeone-release-artifact.mjs');
 const readConfig = () => JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+const rmSyncQuiet = (path) => rmSync(path, { force: true, recursive: true });
+
+function writeConfig(tag, config) {
+  const path = resolve(mkdtempSync(resolve(tmpdir(), `eo-cfg-${tag}-`)), 'config.json');
+  writeFileSync(path, JSON.stringify(config, null, 2));
+  return path;
+}
+
+/**
+ * Creates a link for the symlink-rejection cases. Directory symlinks need elevation or Developer
+ * Mode on Windows, so this falls back to a junction (`mklink /J`), which does not. Returns the link
+ * path, or null when the environment cannot create either — an unexecuted assertion is reported as
+ * skipped, never as passing.
+ */
+function tryCreateLink({ targetDir, linkDir, linkName, linkTarget, kind }) {
+  const link = resolve(linkDir, linkName);
+  if (kind === 'file') {
+    try {
+      symlinkSync(linkTarget, link);
+      return link;
+    } catch {
+      return null;
+    }
+  }
+  try {
+    symlinkSync(linkTarget, link, 'junction');
+    return link;
+  } catch {
+    /* fall through to mklink */
+  }
+  try {
+    execFileSync('cmd', ['/c', 'mklink', '/J', link, linkTarget], { stdio: 'ignore' });
+    return link;
+  } catch {
+    return null;
+  }
+}
 
 const PAGE = '<html><head><style>\n  #a { display: none; }\n</style></head><body><script>\n  window.x = 1;\n</script></body></html>';
 
@@ -147,18 +188,56 @@ test('generating a policy from an empty page set is refused', () => {
 // Fix 4 — recursive tree validation and copy integrity
 // ---------------------------------------------------------------------------
 
-test('validateStagingTree detects a symlink anywhere in the input tree', () => {
+test('validateStagingTree detects a symlink or junction anywhere in the input tree', (t) => {
   const dir = makeTree('input-link');
-  symlinkSync(resolve(dir, 'bubble-watch.html'), resolve(dir, 'alias.html'));
+  const link = tryCreateLink({
+    targetDir: dir,
+    linkDir: dir,
+    linkName: 'alias.html',
+    linkTarget: resolve(dir, 'bubble-watch.html'),
+    kind: 'file',
+  });
+  if (!link) {
+    t.skip('this environment cannot create file symlinks (EPERM) and a file junction does not exist');
+    return;
+  }
   assert.throws(() => validateStagingTree(dir, { artifactDir: dir }), /contains a symbolic link/u);
 });
 
-test('validateStagingTree detects a nested symlink in the final tree', () => {
+test('validateStagingTree detects a nested directory junction in the final tree', (t) => {
   const source = makeTree('final-src');
   const target = makeTree('final-link');
-  mkdirSync(resolve(target, 'nested'), { recursive: true });
   writeFileSync(resolve(target, 'bubble-watch.html'), PAGE);
-  symlinkSync(resolve(target, 'bubble-watch.html'), resolve(target, 'nested', 'alias.html'));
+  const link = tryCreateLink({
+    targetDir: target,
+    linkDir: target,
+    linkName: 'nested',
+    linkTarget: source,
+    kind: 'dir',
+  });
+  if (!link) {
+    t.skip('this environment cannot create directory symlinks or junctions');
+    return;
+  }
+  assert.throws(() => validateStagingTree(target, { artifactDir: source }), /contains a symbolic link/u);
+});
+
+test('assertNoSymlinks rejects a junction used as a tree entry', (t) => {
+  const source = makeTree('junction-src');
+  const target = makeTree('junction-dst');
+  mkdirSync(resolve(target, 'assets'), { recursive: true });
+  writeFileSync(resolve(target, 'assets', 'a.css'), 'body{}');
+  const link = tryCreateLink({
+    targetDir: target,
+    linkDir: target,
+    linkName: 'linked-assets',
+    linkTarget: resolve(target, 'assets'),
+    kind: 'dir',
+  });
+  if (!link) {
+    t.skip('this environment cannot create directory symlinks or junctions');
+    return;
+  }
   assert.throws(() => validateStagingTree(target, { artifactDir: source }), /contains a symbolic link/u);
 });
 
@@ -188,6 +267,10 @@ test('fileInventory covers nested paths', () => {
 
 function buildStaging(tag, config = readConfig()) {
   const artifact = makeTree(`${tag}-artifact`);
+  // Give the artifact a second file so nested-path handling is exercised too.
+  mkdirSync(resolve(artifact, 'assets'), { recursive: true });
+  writeFileSync(resolve(artifact, 'assets', 'site.css'), 'body{}');
+  writeFileSync(resolve(artifact, 'index.html'), '<html>entry</html>');
   const configPath = resolve(mkdtempSync(resolve(tmpdir(), `eo-${tag}-cfg-`)), 'config.json');
   writeFileSync(configPath, JSON.stringify(config, null, 2));
   const outDir = resolve(mkdtempSync(resolve(tmpdir(), `eo-${tag}-out-`)), 'staging');
@@ -195,40 +278,42 @@ function buildStaging(tag, config = readConfig()) {
   return { outDir, configPath, artifact };
 }
 
+const checkWithAnchor = (stagingDir, configPath, artifactDir) => checkStagingDirectory({ stagingDir, configPath, artifactDir });
+
 test('check rejects a document whose non-hash directive was rewritten', () => {
-  const { outDir, configPath } = buildStaging('rewrite');
+  const { outDir, configPath, artifact } = buildStaging('rewrite');
   const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
   document.headers[0].headers[0].value = document.headers[0].headers[0].value.replace("connect-src 'self'", "connect-src 'self' https://example.com");
   writeFileSync(resolve(outDir, 'edgeone.json'), `${JSON.stringify(document, null, 2)}\n`);
-  const result = checkStagingDirectory({ stagingDir: outDir, configPath });
+  const result = checkWithAnchor(outDir, configPath, artifact);
   assert.equal(result.ok, false);
   assert.ok(result.problems.some((problem) => /differs from the document regenerated/u.test(problem)));
 });
 
 test('check rejects a lower-case enforced CSP header', () => {
-  const { outDir, configPath } = buildStaging('lowercase');
+  const { outDir, configPath, artifact } = buildStaging('lowercase');
   const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
   document.headers[0].headers.push({ key: 'content-security-policy', value: "default-src 'none'" });
   writeFileSync(resolve(outDir, 'edgeone.json'), `${JSON.stringify(document, null, 2)}\n`);
-  const result = checkStagingDirectory({ stagingDir: outDir, configPath });
+  const result = checkWithAnchor(outDir, configPath, artifact);
   assert.equal(result.ok, false);
   assert.ok(result.problems.some((problem) => /enforced/u.test(problem)));
 });
 
 test('check refuses a directory holding two Report-Only entries', () => {
-  const { outDir, configPath } = buildStaging('two-entries');
+  const { outDir, configPath, artifact } = buildStaging('two-entries');
   const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
   document.headers[0].headers.push(document.headers[0].headers[0]);
   writeFileSync(resolve(outDir, 'edgeone.json'), `${JSON.stringify(document, null, 2)}\n`);
-  const result = checkStagingDirectory({ stagingDir: outDir, configPath });
+  const result = checkWithAnchor(outDir, configPath, artifact);
   assert.equal(result.ok, false);
   assert.ok(result.problems.some((problem) => /Report-Only header entries/u.test(problem)));
 });
 
 test('check fails when the staged page loses its inline blocks', () => {
-  const { outDir, configPath } = buildStaging('lost-inline');
+  const { outDir, configPath, artifact } = buildStaging('lost-inline');
   writeFileSync(resolve(outDir, 'bubble-watch.html'), '<html><body>stripped</body></html>');
-  const result = checkStagingDirectory({ stagingDir: outDir, configPath });
+  const result = checkWithAnchor(outDir, configPath, artifact);
   assert.equal(result.ok, false);
   assert.ok(result.problems.some((problem) => /cannot derive the expected document|no inline/u.test(problem)));
 });
@@ -245,4 +330,124 @@ test('withAdditionalHashes keeps the shared template and appends only what is as
   assert.equal(base.includes("'sha256-CCC='"), false);
   assert.ok(extended.includes("'sha256-CCC='"));
   assert.equal(extended.split(';').length, base.split(';').length, 'no directive may be added or dropped');
+});
+
+// ---------------------------------------------------------------------------
+// Review round 2 — structure must be anchored, and the disabled state must be
+// compared in full rather than short-circuited
+// ---------------------------------------------------------------------------
+
+test('check requires a trusted expectation and says so when none was supplied', () => {
+  const { outDir, configPath } = buildStaging('anchor-required');
+  const withoutAnchor = checkStagingDirectory({ stagingDir: outDir, configPath });
+  assert.equal(withoutAnchor.ok, false);
+  assert.equal(withoutAnchor.checkedStructure, false);
+  assert.ok(withoutAnchor.problems.some((problem) => /no trusted expectation was supplied/u.test(problem)));
+
+  const withAnchor = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: resolve(outDir, '..', 'artifact-missing') });
+  assert.equal(withAnchor.ok, false, 'a non-existent artifact directory cannot serve as the anchor');
+});
+
+test('check rejects an extra file and a missing file against the artifact directory', () => {
+  const { outDir, configPath, artifact } = buildStaging('extra-file');
+  assert.equal(checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact }).ok, true);
+
+  writeFileSync(resolve(outDir, 'unexpected.js'), 'console.log(1)');
+  const extra = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
+  assert.equal(extra.ok, false);
+  assert.ok(extra.problems.some((problem) => /unexpected file in staging/u.test(problem)));
+});
+
+test('check rejects a missing file and a content difference', () => {
+  const { outDir, configPath, artifact } = buildStaging('missing-file');
+  writeFileSync(resolve(outDir, 'index.html'), '<html>entry</html>');
+  writeFileSync(resolve(artifact, 'index.html'), '<html>entry</html>');
+  assert.equal(checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact }).ok, true);
+
+  writeFileSync(resolve(outDir, 'extra-only-in-source.txt'), 'x');
+  writeFileSync(resolve(artifact, 'extra-only-in-source.txt'), 'x');
+  assert.equal(checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact }).ok, true);
+
+  rmSyncQuiet(resolve(outDir, 'extra-only-in-source.txt'));
+  const missing = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
+  assert.equal(missing.ok, false);
+  assert.ok(missing.problems.some((problem) => /missing from staging/u.test(problem)));
+
+  writeFileSync(resolve(outDir, 'index.html'), '<html>tampered</html>');
+  const changed = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
+  assert.equal(changed.ok, false);
+  assert.ok(changed.problems.some((problem) => /size mismatch|content mismatch/u.test(problem)));
+});
+
+test('check works from a written manifest as the trusted expectation', () => {
+  const { outDir, configPath, artifact } = buildStaging('manifest');
+  const manifestPath = resolve(mkdtempSync(resolve(tmpdir(), 'eo-manifest-')), 'manifest.json');
+  const manifest = writeManifest(artifact, manifestPath);
+  assert.equal(manifest.format, 'edgeone-staging-manifest-v1');
+  assert.equal(checkStagingDirectory({ stagingDir: outDir, configPath, manifestPath }).ok, true);
+
+  writeFileSync(resolve(outDir, 'unexpected.js'), 'x');
+  const extra = checkStagingDirectory({ stagingDir: outDir, configPath, manifestPath });
+  assert.equal(extra.ok, false);
+  assert.ok(extra.problems.some((problem) => /unexpected file in staging/u.test(problem)));
+});
+
+test('the CLI --check enforces the trusted expectation end to end', () => {
+  const { outDir, configPath, artifact } = buildStaging('cli-check');
+  const run = (args) => {
+    try {
+      return { code: 0, out: execFileSync(process.execPath, [CLI_PATH, ...args], { encoding: 'utf8' }) };
+    } catch (error) {
+      return { code: error.status, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
+    }
+  };
+  const base = ['--check', '--out-dir', outDir, '--config', configPath, '--artifact-dir', artifact];
+  assert.equal(run(base).code, 0);
+
+  writeFileSync(resolve(outDir, 'unexpected.js'), 'console.log(1)');
+  const extra = run(base);
+  assert.equal(extra.code, 1);
+  assert.match(extra.out, /unexpected file in staging/u);
+
+  const withoutAnchor = run(['--check', '--out-dir', outDir, '--config', configPath]);
+  assert.equal(withoutAnchor.code, 1);
+  assert.match(withoutAnchor.out, /no trusted expectation was supplied/u);
+});
+
+test('the disabled state is compared in full and rejects an undeclared rule', () => {
+  const configPath = writeConfig('disabled-full', { ...readConfig(), enabled: false });
+  const artifact = makeTree('disabled-full-artifact');
+  const outDir = resolve(mkdtempSync(resolve(tmpdir(), 'eo-disabled-full-')), 'staging');
+  buildStagingDirectory({ outDir, artifactDir: artifact, configPath, force: true });
+  assert.equal(checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact }).ok, true);
+
+  const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
+  document.redirects = [{ source: '/*', destination: '/index.html', statusCode: 302 }];
+  writeFileSync(resolve(outDir, 'edgeone.json'), `${JSON.stringify(document, null, 2)}\n`);
+  const result = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
+  assert.equal(result.ok, false);
+  assert.equal(result.state, 'disabled');
+  assert.ok(result.problems.some((problem) => /differs from the document regenerated/u.test(problem)));
+  assert.ok(result.problems.some((problem) => /declares "redirects"/u.test(problem)));
+});
+
+test('the disabled state also rejects an added header rule it never declared', () => {
+  const configPath = writeConfig('disabled-extra-header', { ...readConfig(), enabled: false });
+  const artifact = makeTree('disabled-extra-artifact');
+  const outDir = resolve(mkdtempSync(resolve(tmpdir(), 'eo-disabled-extra-')), 'staging');
+  buildStagingDirectory({ outDir, artifactDir: artifact, configPath, force: true });
+  const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
+  document.headers = [{ source: '/*', headers: [{ key: 'X-Frame-Options', value: 'DENY' }] }];
+  writeFileSync(resolve(outDir, 'edgeone.json'), `${JSON.stringify(document, null, 2)}\n`);
+  const result = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
+  assert.equal(result.ok, false);
+  assert.ok(result.problems.some((problem) => /differs from the document regenerated/u.test(problem)));
+});
+
+test('manifestFromArtifact records size and hash for every file', () => {
+  const artifact = makeTree('manifest-src', { 'bubble-watch.html': PAGE, 'assets/a/b.css': 'body{}' });
+  const manifest = manifestFromArtifact(artifact);
+  assert.equal(manifest.fileCount, 2);
+  assert.deepEqual(manifest.files.map((entry) => entry.path).sort(), ['assets/a/b.css', 'bubble-watch.html']);
+  for (const entry of manifest.files) assert.match(entry.sha256, /^[0-9a-f]{64}$/u);
 });

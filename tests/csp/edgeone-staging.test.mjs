@@ -174,7 +174,8 @@ test('staging generation copies the artifact, injects the config, and passes its
   assert.ok(result.policy.length > 0);
   const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
   assert.equal(document.headers[0].headers[0].key, REPORT_ONLY_HEADER);
-  const check = checkStagingDirectory({ stagingDir: outDir, configPath: CONFIG_PATH });
+  // `--check` needs a trusted expectation to detect missing/extra files, so the artifact is passed.
+  const check = checkStagingDirectory({ stagingDir: outDir, configPath: CONFIG_PATH, artifactDir: artifact });
   assert.deepEqual(check.problems, []);
   assert.equal(check.ok, true);
 });
@@ -186,7 +187,7 @@ test('staging generation for the disabled configuration omits the rule and still
   buildStagingDirectory({ outDir, artifactDir: artifact, configPath, force: true });
   const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
   assert.deepEqual(document.headers, []);
-  const check = checkStagingDirectory({ stagingDir: outDir, configPath });
+  const check = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
   assert.equal(check.ok, true);
   assert.equal(check.state, 'disabled');
 });
@@ -195,7 +196,7 @@ test('a disabled configuration is rejected by the check when the document still 
   const artifact = makeArtifact('stage-mismatch');
   const outDir = resolve(mkdtempSync(resolve(tmpdir(), 'eo-stage-mismatch-')), 'staging');
   buildStagingDirectory({ outDir, artifactDir: artifact, configPath: CONFIG_PATH, force: true });
-  const check = checkStagingDirectory({ stagingDir: outDir, configPath: writeConfig('off2', makeConfig({ enabled: false })) });
+  const check = checkStagingDirectory({ stagingDir: outDir, configPath: writeConfig('off2', makeConfig({ enabled: false })), artifactDir: artifact });
   assert.equal(check.ok, false);
   assert.ok(check.problems.some((problem) => /disabled but the document carries/u.test(problem)));
 });
@@ -207,7 +208,7 @@ test('a tampered policy in the staged document fails the check', () => {
   const document = JSON.parse(readFileSync(resolve(outDir, 'edgeone.json'), 'utf8'));
   document.headers[0].headers[0].value = document.headers[0].headers[0].value.replace(/script-src [^;]+/u, "script-src 'self'");
   writeFileSync(resolve(outDir, 'edgeone.json'), JSON.stringify(document, null, 2));
-  const check = checkStagingDirectory({ stagingDir: outDir, configPath: CONFIG_PATH });
+  const check = checkStagingDirectory({ stagingDir: outDir, configPath: CONFIG_PATH, artifactDir: artifact });
   assert.equal(check.ok, false);
   // `--check` regenerates the whole document, so a rewritten policy is caught by the document
   // comparison; the hash comparison against the staged pages is reported by the review suite.

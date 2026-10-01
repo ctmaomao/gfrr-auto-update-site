@@ -28,9 +28,95 @@ import {
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const DEFAULT_ARTIFACT_DIR = resolve(REPO_ROOT, '_site');
 export const DEFAULT_CONFIG_PATH = resolve(REPO_ROOT, 'config', 'edgeone', 'csp-report-only.json');
+export const MANIFEST_FORMAT = 'edgeone-staging-manifest-v1';
 /** Pages whose inline blocks supply the hashes. Owned by the shared policy module. */
 export const HASH_SOURCE_PAGES = INLINE_HASH_SOURCE_FILES;
 const PROTECTED_DIRECTORIES = ['config', 'scripts', 'tests', '.git', '.github', 'data', 'assets'];
+const CONFIG_DECLARED_TOP_LEVEL_KEYS = ['headers'];
+
+/**
+ * Deterministic JSON with recursively sorted object keys. Document comparison must not depend on
+ * key insertion order, but must still reject any field or rule the configuration never declared.
+ */
+export function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+/** Compares two documents ignoring key order. */
+export function documentsEqual(a, b) {
+  return canonicalJson(a) === canonicalJson(b);
+}
+
+function sha256File(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+/**
+ * A trusted expectation for what the staging tree must contain: every file of the input artifact,
+ * with its size and content hash. Produced either from an artifact directory or from a written
+ * manifest, so `--check` has a real anchor instead of silently accepting any tree.
+ */
+export function manifestFromArtifact(artifactDir) {
+  const root = resolve(artifactDir);
+  const files = walkFiles(root).map((file) => ({
+    path: file,
+    size: statSync(resolve(root, file)).size,
+    sha256: sha256File(resolve(root, file)),
+  }));
+  return { format: MANIFEST_FORMAT, fileCount: files.length, files };
+}
+
+export function writeManifest(artifactDir, manifestPath) {
+  const manifest = manifestFromArtifact(artifactDir);
+  writeFileSync(resolve(manifestPath), `${JSON.stringify(manifest, null, 2)}\n`);
+  return manifest;
+}
+
+export function readManifest(manifestPath) {
+  const manifest = JSON.parse(readFileSync(resolve(manifestPath), 'utf8'));
+  if (manifest?.format !== MANIFEST_FORMAT || !Array.isArray(manifest.files)) {
+    throw new Error(`manifest ${manifestPath} is not a ${MANIFEST_FORMAT} document`);
+  }
+  return manifest;
+}
+
+/**
+ * Validates the staging tree against a trusted expectation (artifact directory or manifest).
+ * Reports missing files, extra files, size differences and content differences.
+ */
+export function validateStagingAgainstExpectation(stagingDir, expectation) {
+  const target = resolve(stagingDir);
+  const expected = 'files' in expectation
+    ? new Map(expectation.files.map((entry) => [entry.path, entry]))
+    : (() => {
+      const root = resolve(expectation.artifactDir);
+      return new Map(walkFiles(root).map((file) => [file, {
+        path: file,
+        size: statSync(resolve(root, file)).size,
+        sha256: sha256File(resolve(root, file)),
+      }]));
+    })();
+
+  const problems = [];
+  const staged = new Set(walkFiles(target));
+  for (const [file, entry] of expected) {
+    if (!staged.has(file)) { problems.push(`missing from staging: ${file}`); continue; }
+    const path = resolve(target, file);
+    const size = statSync(path).size;
+    if (size !== entry.size) { problems.push(`size mismatch for ${file} (${size} != ${entry.size})`); continue; }
+    if (sha256File(path) !== entry.sha256) problems.push(`content mismatch for ${file}`);
+  }
+  for (const file of staged) {
+    if (file === 'edgeone.json') continue;
+    if (!expected.has(file)) problems.push(`unexpected file in staging: ${file}`);
+  }
+  if (!staged.has('edgeone.json')) problems.push('missing edgeone.json in staging');
+  return { ok: problems.length === 0, problems, expectedFileCount: expected.size };
+}
 
 export function isInside(parent, child) {
   const rel = relative(resolve(parent), resolve(child));
@@ -129,27 +215,9 @@ export function validateStagingTree(stagingDir, { artifactDir }) {
   const source = resolve(artifactDir);
   assertNoSymlinks(source, 'input artifact');
   assertNoSymlinks(target, 'staging tree');
-
-  const input = fileInventory(source);
-  const staged = new Set(walkFiles(target).map((file) => file.replace(/^edgeone\.json$/u, 'edgeone.json')));
-  const problems = [];
-
-  for (const [file, size] of input) {
-    if (!staged.has(file)) { problems.push(`missing from staging: ${file}`); continue; }
-    const path = resolve(target, file);
-    const stagedSize = statSync(path).size;
-    if (stagedSize !== size) { problems.push(`size mismatch for ${file} (${stagedSize} != ${size})`); continue; }
-    const a = createHash('sha256').update(readFileSync(resolve(source, file))).digest('hex');
-    const b = createHash('sha256').update(readFileSync(path)).digest('hex');
-    if (a !== b) problems.push(`content mismatch for ${file}`);
-  }
-  for (const file of staged) {
-    if (file === 'edgeone.json') continue;
-    if (!input.has(file)) problems.push(`unexpected file in staging: ${file}`);
-  }
-  if (!staged.has('edgeone.json')) problems.push('missing edgeone.json in staging');
-  if (problems.length) throw new Error(`staging tree validation failed: ${problems.join('; ')}`);
-  return { fileCount: input.size, files: [...input.keys()] };
+  const result = validateStagingAgainstExpectation(target, { artifactDir: source });
+  if (!result.ok) throw new Error(`staging tree validation failed: ${result.problems.join('; ')}`);
+  return { fileCount: result.expectedFileCount, files: walkFiles(source) };
 }
 
 export function fingerprintDirectory(directory) {
@@ -196,51 +264,87 @@ export function buildStagingDirectory({ outDir, artifactDir = DEFAULT_ARTIFACT_D
  * configuration and the pages in that directory, then comparing structure and policy in full.
  * Comparing hashes alone would accept a document whose other directives were rewritten.
  */
-export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_PATH }) {
+export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_PATH, artifactDir = null, manifestPath = null, trustAnchorSupplied = false }) {
   const target = resolve(stagingDir);
   if (!existsSync(target)) throw new Error(`staging directory does not exist: ${target}`);
   const config = validateCspConfig(JSON.parse(readFileSync(configPath, 'utf8')));
   assertNoSymlinks(target, 'staging tree');
+  const state = config.enabled ? 'enabled' : 'disabled';
   const problems = [];
 
+  // 1. Structure: compare against a trusted expectation when one is available. The result must be
+  //    READ, not merely produced — calling the validator and discarding its problems would report a
+  //    tree with extra or missing files as passing.
+  let hasAnchor = trustAnchorSupplied;
+  let structure = null;
+  try {
+    if (manifestPath) {
+      structure = validateStagingAgainstExpectation(target, readManifest(manifestPath));
+      hasAnchor = true;
+    } else if (artifactDir) {
+      assertNoSymlinks(artifactDir, 'input artifact');
+      structure = validateStagingAgainstExpectation(target, { artifactDir });
+      hasAnchor = true;
+    }
+  } catch (error) {
+    problems.push(error.message);
+    hasAnchor = true;
+  }
+  if (structure && !structure.ok) problems.push(...structure.problems);
+  if (!hasAnchor) {
+    problems.push('no trusted expectation was supplied: pass --artifact-dir or --manifest '
+      + '(otherwise missing and extra files cannot be detected)');
+  }
+
   const documentPath = resolve(target, 'edgeone.json');
-  if (!existsSync(documentPath)) return { ok: false, state: config.enabled ? 'enabled' : 'disabled', problems: ['edgeone.json is missing'], fingerprint: null };
+  if (!existsSync(documentPath)) {
+    problems.push('edgeone.json is missing');
+    return { ok: false, state, problems, fingerprint: null, checkedStructure: hasAnchor };
+  }
   const document = JSON.parse(readFileSync(documentPath, 'utf8'));
 
+  // 2. Document: regenerate what the configuration requires and compare in FULL, for BOTH states.
+  //    The disabled state is not exempt: a valid `{ headers: [] }` document must not carry a rule
+  //    the configuration never declared.
   let expected;
   try {
     expected = expectedDocumentFor(target, config);
   } catch (error) {
-    return { ok: false, state: config.enabled ? 'enabled' : 'disabled', problems: [`cannot derive the expected document: ${error.message}`], fingerprint: fingerprintDirectory(target) };
+    problems.push(`cannot derive the expected document: ${error.message}`);
+    return { ok: false, state, problems, fingerprint: fingerprintDirectory(target), checkedStructure: hasAnchor };
+  }
+  if (!documentsEqual(document, expected.json)) {
+    problems.push('document differs from the document regenerated from this configuration and these pages');
   }
 
   const rules = Array.isArray(document.headers) ? document.headers : null;
   if (!rules) problems.push('edgeone.json has no headers array');
+  for (const key of Object.keys(document)) {
+    if (!CONFIG_DECLARED_TOP_LEVEL_KEYS.includes(key)) {
+      problems.push(`document declares "${key}", which the configuration does not`);
+    }
+  }
   const allHeaders = (rules ?? []).flatMap((rule) => rule.headers ?? []);
   for (const header of allHeaders) {
     if (isEnforcedCspHeaderName(header.key)) problems.push(`document carries an enforced ${header.key} header`);
   }
   const reportOnly = allHeaders.filter((header) => isReportOnlyCspHeaderName(header.key));
   if (reportOnly.length > 1) problems.push(`document carries ${reportOnly.length} Report-Only header entries`);
+  if (config.enabled) {
+    if (reportOnly.length !== 1) problems.push(`expected exactly one Report-Only header entry, found ${reportOnly.length}`);
+    const policy = reportOnly[0]?.value ?? '';
+    if (policy && !documentsEqual(policy, expected.policy)) problems.push('policy text differs from the regenerated policy');
+  } else if (reportOnly.length) {
+    problems.push('configuration is disabled but the document carries a CSP header rule');
+  }
 
-  if (!config.enabled) {
-    if (reportOnly.length) problems.push('configuration is disabled but the document carries a CSP header rule');
-    return { ok: problems.length === 0, state: 'disabled', problems, fingerprint: fingerprintDirectory(target) };
-  }
-  if (rules && JSON.stringify(document) !== JSON.stringify(expected.json)) {
-    problems.push('document differs from the document regenerated from this configuration and these pages');
-  }
-  if (reportOnly.length !== 1) problems.push(`expected exactly one Report-Only header entry, found ${reportOnly.length}`);
-  const policy = reportOnly[0]?.value ?? '';
-  if (policy && JSON.stringify(policy) !== JSON.stringify(expected.policy)) {
-    problems.push('policy text differs from the regenerated policy');
-  }
   return {
     ok: problems.length === 0,
-    state: 'enabled',
+    state,
     problems,
     policy: expected.policy,
     fingerprint: fingerprintDirectory(target),
+    checkedStructure: hasAnchor,
   };
 }
 
@@ -256,6 +360,8 @@ function parseArgs(argv) {
     else if (arg === '--out-dir') options.outDir = argv[++index];
     else if (arg === '--artifact-dir') options.artifactDir = argv[++index];
     else if (arg === '--config') options.configPath = argv[++index];
+    else if (arg === '--manifest') options.manifestPath = argv[++index];
+    else if (arg === '--write-manifest') options.writeManifest = argv[++index];
     else throw new Error(`unknown argument: ${arg}`);
   }
   return options;
@@ -263,31 +369,43 @@ function parseArgs(argv) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
-  if (!options.addConfig && !options.check) {
-    console.error('Nothing to do. Pass --add-config to generate a staging directory, or --check to validate one.');
+  if (!options.addConfig && !options.check && !options.writeManifest) {
+    console.error('Nothing to do. Pass --add-config to generate a staging directory, --check to validate one,');
+    console.error('or --write-manifest <path> to record a trusted manifest of --artifact-dir.');
     process.exit(2);
   }
-  let outDir = options.outDir;
-  if (!outDir && options.fromEnv) outDir = process.env.EDGEONE_STAGING_DIR;
-  if (!outDir) {
-    console.error('An explicit target is required: pass --out-dir <path> or --from-env with EDGEONE_STAGING_DIR set.');
-    process.exit(2);
-  }
+  const artifactDir = options.artifactDir ? resolve(options.artifactDir) : DEFAULT_ARTIFACT_DIR;
+  const configPath = options.configPath ? resolve(options.configPath) : DEFAULT_CONFIG_PATH;
 
   try {
+    if (options.writeManifest) {
+      const manifest = writeManifest(artifactDir, options.writeManifest);
+      console.log(`edgeone staging manifest: ${resolve(options.writeManifest)}`);
+      console.log(`  format: ${manifest.format}`);
+      console.log(`  files: ${manifest.fileCount}`);
+      process.exit(0);
+    }
+    let outDir = options.outDir;
+    if (!outDir && options.fromEnv) outDir = process.env.EDGEONE_STAGING_DIR;
+    if (!outDir) {
+      console.error('An explicit target is required: pass --out-dir <path> or --from-env with EDGEONE_STAGING_DIR set.');
+      process.exit(2);
+    }
+
     if (options.check) {
-      const result = checkStagingDirectory({ stagingDir: outDir, configPath: options.configPath ?? DEFAULT_CONFIG_PATH });
-      console.log(`edgeone staging check: ${result.ok ? 'PASS' : 'FAIL'} (state=${result.state})`);
+      const result = checkStagingDirectory({
+        stagingDir: outDir,
+        configPath,
+        artifactDir: options.artifactDir ? artifactDir : null,
+        manifestPath: options.manifestPath ? resolve(options.manifestPath) : null,
+        trustAnchorSupplied: Boolean(options.artifactDir || options.manifestPath),
+      });
+      console.log(`edgeone staging check: ${result.ok ? 'PASS' : 'FAIL'} (state=${result.state}, structure=${result.checkedStructure ? 'checked against a trusted expectation' : 'NOT checked'})`);
       console.log(`  fingerprint: ${result.fingerprint}`);
       for (const problem of result.problems) console.error(`  - ${problem}`);
       process.exit(result.ok ? 0 : 1);
     }
-    const result = buildStagingDirectory({
-      outDir,
-      artifactDir: options.artifactDir ? resolve(options.artifactDir) : DEFAULT_ARTIFACT_DIR,
-      configPath: options.configPath ? resolve(options.configPath) : DEFAULT_CONFIG_PATH,
-      force: options.force,
-    });
+    const result = buildStagingDirectory({ outDir, artifactDir, configPath, force: options.force });
     console.log(`edgeone staging directory: ${result.stagingDir}`);
     console.log(`  state: ${result.state}`);
     console.log(`  fingerprint: ${result.fingerprint}`);

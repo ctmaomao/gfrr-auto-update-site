@@ -84,6 +84,12 @@
   - **回归**：新增 `tests/csp/edgeone-staging-review.test.mjs`（**17 项**，手动入口）覆盖上述五点；原 `tests/csp/edgeone-staging.test.mjs` 的两处旧断言按新语义更新（重复头判 FAIL、篡改策略由"整份文档比较"捕获），两组共 **35/35 通过**。既有 harness 未受影响（完整 fresh 三模式 4/7/7 passed、`crossModeMismatches: 0`、策略指纹仍为 `e61142d2777df172`）；真实 `_site` 生成 + `--check` 均 PASS。
   - **范围未变**：未改 workflow、未接入 CI、未上传或发布、未修改生产项目或 release 分支。
 
+- **复核后修复（第二轮，2026-10-01 于 `81fb3732`）**：
+  1. **`--check` 未验证完整目录**：原先只比策略，既未调用结构校验、也无法判断"缺失/多余"。现 `--check` 必须提供**可信锚点**——`--artifact-dir`（对输入产物）或 `--manifest`（`edgeone-staging-manifest-v1`，逐文件 size + SHA-256，可用 `--write-manifest` 生成）；未提供锚点时**明确判失败**并在输出标注 `structure=NOT checked`。结构比较会报告缺失、多余、大小与内容差异。**此前的实现缺陷是"调用校验函数但丢弃其结果"**（只调用、未读取 `problems`），现已读取并上报。回归经 `checkStagingDirectory()` 与 **CLI** 两条路径验证（含多余文件、缺失文件、内容篡改、manifest 锚点、无锚点）。
+  2. **关闭态提前返回、绕过整份文档比较**：现启用与关闭**都**从最终页面与配置重新生成预期文档并**整体比较**（键序无关的规范化比较），且拒绝配置未声明的顶层字段；关闭态文档中出现重定向、或出现未声明的头规则，都会被判失败。
+  3. **符号链接用例在 Windows 上 `symlink EPERM`**：原两项测试在创建 fixture 时即失败，属环境阻塞而非产品断言。现改为**优先真实符号链接、失败回退目录 junction（`mklink /J`，无需提权）**；两者都无法创建时用例**显式 `skip`**，绝不把未执行记为通过。本机实测 junction 路径生效。
+  - **回归**：`tests/csp/edgeone-staging-review.test.mjs` 扩至 **26 项**（0 skipped）、`edgeone-staging.test.mjs` **18 项**、`generation-gate.test.mjs` **10 项**，合计 **54 项全绿**；真实 `_site` 生成 + 带锚点 `--check` 端到端 PASS。**范围未变**：未改 workflow、未接入 CI、未上传或发布、未修改生产项目或 release 分支。
+
 ### 2026-09-29 lint 试点首测（PR 2：手动 lint 试点）
 
 - **Acceptance baseline**：owner 授权启动 PR 2（承接已合并的 PR 1 / #420）。授权范围为**手动 lint 试点**：落三套分离 ESLint 配置、加手动入口、完成首次**全量**扫描并交付报告。**明确边界：不接入 `check:all`、不接入任何 workflow、不启用 autofix、不批量格式化、不修改业务代码**（含不修复首测发现的诊断）。
