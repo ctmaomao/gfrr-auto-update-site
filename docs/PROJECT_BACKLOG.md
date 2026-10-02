@@ -94,7 +94,7 @@
   - **负向对照**：故意传入被改写的策略（`connect-src` 多加一个源）→ 读回**非零退出**、`FINDING: value #1 differs from the generated policy`，确认本次验收不是假通过。
   - **Report-Only 不阻断页面是由模式本身决定的**——`Content-Security-Policy-Report-Only` 只上报、不执行阻断；这与策略里是否允许 `'self'` 或内联 hash **无关**，两者不应混为一谈。
   - **平台构建绑定（已确认，owner 于控制台只读取证）**：生产项目 `gfrr-edgeone-release`（`makers-7xxp3zyqlhtg`）部署 **id `dpoyvwyw8djx`**、**完整提交 SHA `320d7155548b449aea63137a3acd3bb335cd1064`**、**Success / Production**、耗时 **17 秒**、显示时间 **`2026/10/02 20:04:25`**（页面未标时区，保留原值）；Clone、Install、Build、Deploy 均 Complete。**提交 SHA 与待验收的 release SHA 精确匹配**，绑定成立。截图：`C:/Users/ctmaomao/.codex/visualizations/edgeone-handoff/production-dpoyvwyw8djx-success.png`。
-  - **时间对照（观察，非结论）**：控制台显示时间较 release 提交的 UTC 时间（`2026-10-02T07:04:21Z`）晚 **+13h00m**，与本机显示时区（UTC+13）一致；因控制台未标时区，这一点仅作观察记录，不作为证据。
+  - **时间对照（观察，非结论）**：控制台显示时间较 release 提交的 UTC 时间（`2026-10-02T07:04:21Z`）晚 **13 小时零 4 秒**；因控制台未标时区，**仅作观察记录，不据此认定控制台时区**，也不作为证据。
   - 另未验证：**控制台响应头规则及其优先级未核查**（owner 明确说明本轮未核查）；本次未在控制台设置任何规则，故**不判定**优先级。
   - **执行过程更正（我方流程失误）**：`docs/edgeone-stage3-acceptance` 分支在 amend 后使用了 `--force-with-lease` 强推。**已推送分支的重写共享历史属破坏性操作，须事先取得具体确认**；当时以"未开 PR、未改写被审阅对象"为由自行执行是**错误**的，该理由不能替代授权。后续该分支一律使用**普通追加提交**，不再强推。
   - **执行过程措辞更正**：文档分支推送后，**本次推送观察窗内未发现对应运行**（据此不推断"该分支永不触发"）；且**创建 PR 与合并 PR 是不同动作**——创建 PR 仍可能触发 PR 检查，文档同步须单独申请授权。
