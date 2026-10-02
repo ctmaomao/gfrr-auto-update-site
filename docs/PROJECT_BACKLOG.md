@@ -2,12 +2,12 @@
 
 ### 2026-10-02 GDELT 零订阅费用迁移：Cloud 停用与免费候选验证
 
-- **Acceptance baseline**：owner 明确不付费，并选择「先停止 Cloud 自动请求，保留明确过期的历史证据；验证免费数据候选，评分替换另行评审」。不申请续费/试用、不新增依赖、不删除密钥，不进行生产数据写入或远端发布。
+- **Acceptance baseline**：owner 明确不付费，并选择「先停止 Cloud 自动请求，保留明确过期的历史证据；验证免费数据候选，评分替换另行评审」。不申请续费/试用、不新增依赖、不删除密钥，不手动生成或写入生产数据。随后 owner 明确要求 AI 审核本任务，无问题则合并发布 commit+push；本次审核授权仅适用于此任务，不改变通用人工审阅要求。
 - **当前任务 / 实施**：`gdelt.accessPolicy=free_only` 在 Cloud 网络调用和 fresh-cache 路径之前生效；带有效原时间的旧摘要保持 stale，缺失/无日期/未来日期不伪造零或新时间；不生成 Cloud cache artifact。现行 World Order 过期折扣与所有评分公式保持原样。免费 DOC / Web NGrams 消费者未改动。
 - **最后基线 / 改动**：隔离 worktree `gdelt-free-only`，任务分支 `codex/gdelt-free-only`，基于 main `20e1d435`；原工作区 EdgeOne 文档改动保留。改动为 rules、Cloud adapter、其现有单测及源策略/本交接；免费候选结论见 [审阅](GDELT_FREE_SOURCE_REVIEW_2026_10_02.md)。
-- **下一步**：独立审阅本地结果后另行授权远端集成；免费源替换观察分须另行设计/评审，不得从免费或一次 smoke 通过推断同口径、稳定供数或 production readiness。
+- **下一步**：按本次 owner 授权完成 PR CI、合并至 main 与现有发布流程验收；免费源替换观察分须另行设计/评审，不得从免费或一次 smoke 通过推断同口径、稳定供数或 production readiness。
 - **本地验收**：`node --test tests/unit/gdelt-cloud-access.test.mjs` 2/2 通过、退出 0；`npm run check:changed` 选择 full 并完成 `check:all`、退出 0；`git diff --check` 退出 0。现有快照离线 smoke 为零网络请求，保留 1629 计数、原时间与观察分 21。免费 Web NGrams live smoke 初次最近窗口 404，后续成功读取文件 `20261002074600`，只证明当时可达，不晋升评分。
-- **自审 / 剩余边界**：实际文件符合上述 acceptance baseline；未修改 checker/assertion/ignore list、评分公式、workflow 或生产 JSON。未触发 World Order/Daily/realtime 刷新或付费调用。生产暂停仍待独立人工审阅与代码集成，未声称线上已停用。
+- **审核 / 剩余边界**：实际文件符合上述 acceptance baseline；未修改 checker/assertion/ignore list、评分公式、workflow 或生产 JSON。审核确认定时 World Order 入口使用本配置，免费路径隔离不变；手动 API secret diagnostic 不受此配置控制，本次不运行。未触发 World Order/Daily/realtime 刷新或付费调用；无阻断发现。发布完成前不声称线上已停用。
 
 ### 2026-09-30 CSP 投递能力只读核查 + 隔离验证入口落地
 
