@@ -1,0 +1,27 @@
+# EdgeOne CSP report receiver — NOT DEPLOYED
+#
+# This configuration exists so the design is reviewable, but nothing here has been applied to any
+# Cloudflare account. Creating the Worker and the Durable Object namespace is stage B and needs its
+# own authorization: it creates resources, consumes account quota shared with other workers, and can
+# incur charges. Do not run `wrangler deploy` from this directory without that authorization.
+#
+# Deliberately absent: any `routes` entry (no production hostname is attached in the local phase) and
+# any cron trigger (cleanup runs from the Durable Object alarm, not from a Worker schedule).
+
+name = "gfrr-csp-report-receiver"
+main = "src/index.js"
+compatibility_date = "2026-04-28"
+
+# Deployment state. The Durable Object is SQLite-backed, which is the only backend available on the
+# Workers Free plan; a migration entry will be required when deployment is authorised.
+[observability]
+enabled = false   # Worker logs are opt-in; enabling them is a privacy decision of its own.
+
+[[durable_objects.bindings]]
+name = "CSP_RECEIVER"
+class_name = "CspReceiverObject"
+
+# Uncomment only at stage B, together with the migration that creates the namespace.
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["CspReceiverObject"]

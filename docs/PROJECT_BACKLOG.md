@@ -120,6 +120,16 @@
 - **边界（写入 PR）**：本步骤**覆盖所断言的结构与所执行的步骤场景，不证明所有发布行为正确**；**PR 检查不能替代生产验收** —— 真实发布只由 `publish-edgeone-release.yml` 在 main 触发。
 - **待确认**：**Ubuntu runner 上 bash 是否可用、该步骤的实跑结果与耗时**，均待 PR 实跑后据实记录。
 
+#### 2026-10-02 CSP 报告接收端 · A 部分本地实施（acceptance baseline）
+
+- **owner 批准范围**：**A 部分，D-C 方案、零新增依赖**、按已收束的设计与验收基线实施；**B（Cloudflare 隔离资源与平台行为验证）与 C（线上策略加 `report-uri`/`report-to`）分别授权**，本次均未启动。
+- **实现（新增，未部署）**：`workers/gfrr-csp-report-receiver/` —— `src/constants.js`、`normalize.js`、`storage.js`、`health.js`、`index.js`、`receiver-object.js`，以及 `wrangler.toml`（**明确标注 NOT DEPLOYED**；`observability.enabled = false`；**无 routes、无 cron**；migrations 段保持注释）。
+- **测试（手动入口，不接入 CI）**：`tests/csp/receiver-schema.test.mjs`（10）、`receiver-object.test.mjs`（21）、`receiver-entry.test.mjs`（12）—— **合计 43 项全绿**，全部跑在 `node:sqlite` 内存库（Node v24.21.0 / SQLite 3.53.4）上，**零新增依赖**。
+- **已落实的验收口径**：预算判定在**所有写入之前**且按**整批**判定（含等于/超过边界、空 planned 不写账本）；`used = obs_rows + ledger_rows`（**累计更新次数**，可大于行数）；overflow **新建或更新均计 1 行写**；分类上限溢出与容量不足**同入 overflow**；截断标记**首次 INSERT 亦置位且不回落**；跨日 **UPSERT** 建账本行；**跨表回滚**（触发器注入失败后 obs 与 ledger 同时回滚）；清理**恰好保留 R 桶**且 obs/ledger 同步删除、幂等、失败重抛原始异常；健康检查**水位与调度两条独立判定**（调度不依赖水位）、读取失败报 **"无法确认"**；入口层 405/415/413（含**无 Content-Length 的流式闸**）/400/429 分支。
+- **本机新发现（须在参数评审时解决）**：**可达的正常行键空间只有 60**（4 指令 × 6 blocked × 3 doc，且 `cross-origin`/`other` 都归一为 `other`），**远小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`。因此这两个候选值**无法经正常路径触发**；容量与 overflow 分支在测试中通过**注入 `bucketRowCap`** 才得以覆盖。**参数需与键空间重新对齐**。
+- **明确未覆盖（属 B 阶段）**：平台计量（游标 `rowsWritten`/`rowsRead` 是否为权威计费值）、免费层额度与超限形态、alarm 实际触发与指数退避/最多六次重试、CPU 预算下的载荷上限、跨源投递（`no-cors`/`cors`）与 `Reporting-Endpoints`、Workers Logs 保留期与 IP、跨 DO 共享额度。**D-C 与 D-A 都不能替代这些验证。**
+- **保留的边界**：拒绝/丢弃计数**仅作本次处理诊断**，不新增持久化统计行、不承诺跨请求累计、不默认写平台日志；`RESERVE` 类口径只降低摄入预算，**不是平台额度预留保证**。
+
 ### 2026-10-01 EdgeOne 发布暂存目录生成器（阶段 1 · 本地工具）
 
 - **Acceptance baseline**：owner 授权「按修正后的范围开始阶段 1 本地实施」——配置、共享策略派生、暂存目录生成与校验、**手动**响应头读回工具、**手动**回归，以及本设计与 acceptance baseline 记入 backlog。边界：**不改 workflow、不自动接入 CI、不上传或发布、不修改生产项目或 release 分支**；读回工具测试优先使用本地 HTTP fixture（重复头保留、启用态与关闭态判定）。
