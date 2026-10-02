@@ -19,6 +19,7 @@ import {
   withAdditionalHashes,
 } from '../../scripts/lib/edgeone-csp-policy.mjs';
 import {
+  REPO_ROOT,
   buildStagingDirectory,
   checkStagingDirectory,
   fileInventory,
@@ -450,4 +451,178 @@ test('manifestFromArtifact records size and hash for every file', () => {
   assert.equal(manifest.fileCount, 2);
   assert.deepEqual(manifest.files.map((entry) => entry.path).sort(), ['assets/a/b.css', 'bubble-watch.html']);
   for (const entry of manifest.files) assert.match(entry.sha256, /^[0-9a-f]{64}$/u);
+});
+
+// ---------------------------------------------------------------------------
+// Stage 3 — the production publish workflow
+//
+// Asserting that `--check` returns non-zero is not enough: the point is that the publish step is
+// never reached. So these cases run the workflow's OWN generation step (extracted from the
+// workflow file, not re-written here) under bash with injected failures, and separately assert
+// that the publication step carries no bypass condition.
+// ---------------------------------------------------------------------------
+
+const WORKFLOW_PATH = resolve(import.meta.dirname, '..', '..', '.github', 'workflows', 'publish-edgeone-release.yml');
+
+function readWorkflowSteps() {
+  const text = readFileSync(WORKFLOW_PATH, 'utf8');
+  const lines = text.split('\n');
+  const steps = [];
+  let current = null;
+  for (const line of lines) {
+    const nameMatch = /^\s{6}- name:\s*(.+?)\s*$/u.exec(line);
+    if (nameMatch) {
+      current = { name: nameMatch[1], indent: 6, lines: [] };
+      steps.push(current);
+      continue;
+    }
+    if (!current) continue;
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+    const indent = line.length - line.trimStart().length;
+    // A sibling key of the same step (`run:`, `if:`, `env:`, …) or the next step's block content.
+    if (indent > current.indent && current.lines.length === 0 && /^(run|if|uses|with|env|id):/u.test(trimmed)) {
+      current.lines.push(line);
+    } else if (indent > current.indent) {
+      current.lines.push(line);
+    }
+  }
+  return { text, steps };
+}
+
+function stepRunScript(stepName) {
+  const { steps } = readWorkflowSteps();
+  const step = steps.find((entry) => entry.name === stepName);
+  assert.ok(step, `workflow has no step named "${stepName}"`);
+  const runIndex = step.lines.findIndex((line) => /^\s+run:\s*\|/u.test(line));
+  assert.notEqual(runIndex, -1, `step "${stepName}" has no block run script`);
+  const body = step.lines.slice(runIndex + 1);
+  const indent = Math.min(...body.filter((line) => line.trim()).map((line) => line.length - line.trimStart().length));
+  return `${body.map((line) => line.slice(indent)).join('\n')}\n`;
+}
+
+function bashPath(winPath) {
+  // Git Bash accepts /c/... drive paths for POSITIONAL arguments.
+  const normalized = resolve(winPath).replaceAll('\\', '/');
+  const match = /^([A-Za-z]):\/(.*)$/u.exec(normalized);
+  return match ? `/${match[1].toLowerCase()}/${match[2]}` : normalized;
+}
+
+// Git Bash leaves Windows-style values of inherited ENVIRONMENT variables alone (verified with a
+// probe), but rewrites drive-style paths it sees as arguments. The runner's own variables are
+// Windows paths, so the tests set those natively and only use the POSIX form where the extracted
+// script would pass a path as an argument on a real Ubuntu runner.
+function runnerEnv(scratchDir, summaryPath) {
+  return {
+    RUNNER_TEMP: resolve(scratchDir),
+    GITHUB_WORKSPACE: resolve(REPO_ROOT),
+    GITHUB_STEP_SUMMARY: resolve(summaryPath),
+  };
+}
+
+function runInBash(script, env) {
+  const bash = 'C:\\Program Files\\Git\\bin\\bash.exe';
+  try {
+    const out = execFileSync(bash, ['--noprofile', '--norc', '-c', script], {
+      encoding: 'utf8',
+      cwd: REPO_ROOT,
+      env: { ...process.env, MSYS_NO_PATHCONV: '1', ...env },
+    });
+    return { code: 0, out };
+  } catch (error) {
+    return { code: error.status, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
+  }
+}
+
+test('the workflow publishes from the staging tree and keeps the .git/ exclusion', () => {
+  const { text } = readWorkflowSteps();
+  assert.match(text, /rsync -a --delete --exclude='\.git\/' "\$RUNNER_TEMP\/edgeone-staging\/" "\$release_dir\/"/u);
+  assert.doesNotMatch(text, /rsync[^\n]*"\$GITHUB_WORKSPACE\/_site\/"/u, 'the publish step must no longer sync _site directly');
+  for (const path of ["'scripts/build-edgeone-release-artifact.mjs'", "'scripts/lib/edgeone-csp-policy.mjs'", "'config/edgeone/**'"]) {
+    assert.ok(text.includes(path), `push.paths must include ${path}`);
+  }
+});
+
+test('the generation step runs before the publication step and carries no bypass condition', () => {
+  const { text, steps } = readWorkflowSteps();
+  const generationIndex = steps.findIndex((step) => step.name === 'Build EdgeOne release staging tree');
+  const publicationIndex = steps.findIndex((step) => step.name === 'Publish changed artifact with quota guard');
+  assert.notEqual(generationIndex, -1);
+  assert.notEqual(publicationIndex, -1);
+  assert.ok(generationIndex < publicationIndex, 'generation must precede publication');
+
+  for (const name of ['Build allowlisted static artifact', 'Build EdgeOne release staging tree', 'Publish changed artifact with quota guard']) {
+    const step = steps.find((entry) => entry.name === name);
+    const block = step.lines.join('\n');
+    assert.doesNotMatch(block, /continue-on-error/u, `${name} must not use continue-on-error`);
+    assert.doesNotMatch(block, /^\s+if:/mu, `${name} must not carry a step-level if condition`);
+  }
+  // The only `if: always()` in the job is the pre-existing deploy-key cleanup, which runs after the
+  // publish step and cannot rescue it.
+  const alwaysSteps = [...text.matchAll(/^\s{6}- name:\s*(.+?)\s*\n\s{8}if:\s*always\(\)/gmu)].map((match) => match[1]);
+  assert.deepEqual(alwaysSteps, ['Remove release deploy key']);
+});
+
+test('the generation step tolerates a failing generator: pipefail keeps the step non-zero', () => {
+  const script = stepRunScript('Build EdgeOne release staging tree');
+  assert.match(script, /set -eo pipefail|set -euo pipefail/u, 'the step must set pipefail');
+  assert.match(script, /\| tee -a "\$GITHUB_STEP_SUMMARY"/u);
+
+  const scratch = mkdtempSync(resolve(tmpdir(), 'eo-steptest-'));
+  const summary = resolve(scratch, 'summary.md');
+  writeFileSync(summary, '');
+
+  // Generation failure: point GITHUB_WORKSPACE at a directory with no config/edgeone, so
+  // `--add-config` exits non-zero and the pipeline must not swallow it.
+  const emptyWorkspace = mkdtempSync(resolve(tmpdir(), 'eo-emptyws-'));
+  const missingConfig = runInBash(script, {
+    ...runnerEnv(scratch, summary),
+    GITHUB_WORKSPACE: resolve(emptyWorkspace),
+  });
+  assert.notEqual(missingConfig.code, 0, 'a failing generation step must exit non-zero through tee');
+  assert.match(missingConfig.out, /edgeone staging build failed/u);
+  const summaryAfterFailure = readFileSync(summary, 'utf8');
+  assert.match(summaryAfterFailure, /### EdgeOne staging tree/u, 'tee must still capture what the generator printed');
+});
+
+test('the generation step fails when the generated tree is tampered with before the check', () => {
+  const script = stepRunScript('Build EdgeOne release staging tree');
+  assert.ok(script.includes('--check'), 'the extracted step must contain the --check invocation');
+  const scratch = mkdtempSync(resolve(tmpdir(), 'eo-steptest2-'));
+  const summary = resolve(scratch, 'summary.md');
+  writeFileSync(summary, '');
+  // The step regenerates the staging tree before checking it, so tampering has to be introduced
+  // between those two commands. This runs the check half against a staging tree that carries an
+  // extra file, which the check must reject.
+  const staging = resolve(scratch, 'edgeone-staging');
+  const artifactDir = resolve(REPO_ROOT, '_site');
+  buildStagingDirectory({ outDir: staging, artifactDir, configPath: CONFIG_PATH, force: true });
+  writeFileSync(resolve(staging, 'unexpected.js'), 'console.log(1)');
+
+  const checkOnly = [
+    'set -euo pipefail',
+    'set -o pipefail',
+    'staging="$RUNNER_TEMP/edgeone-staging"',
+    'config="$GITHUB_WORKSPACE/config/edgeone/csp-report-only.json"',
+    `{ node scripts/build-edgeone-release-artifact.mjs --check --artifact-dir "$GITHUB_WORKSPACE/_site" --config "$config" --out-dir "$staging"; echo 'end'; } | tee -a "$GITHUB_STEP_SUMMARY"`,
+  ].join('\n');
+  const result = runInBash(checkOnly, runnerEnv(scratch, summary));
+  assert.notEqual(result.code, 0, 'a failing check must exit non-zero through tee');
+  assert.match(result.out, /unexpected file in staging/u);
+});
+
+test('the generation step succeeds on the real artifact and prints evidence into the summary', () => {
+  const script = stepRunScript('Build EdgeOne release staging tree');
+  const scratch = mkdtempSync(resolve(tmpdir(), 'eo-steptest3-'));
+  const summary = resolve(scratch, 'summary.md');
+  writeFileSync(summary, '');
+  const result = runInBash(script, runnerEnv(scratch, summary));
+  assert.equal(result.code, 0, `generation step should pass on the real artifact:\n${result.out}`);
+  const summaryText = readFileSync(summary, 'utf8');
+  assert.match(summaryText, /fingerprint: [0-9a-f]{64}/u, 'the summary must carry the staging fingerprint');
+  assert.match(summaryText, /policy \(\d+ chars\): default-src/u, 'the summary must carry the policy text');
+  // The generator does NOT print a policy sha256 or a total staged-file count; those are derived at
+  // acceptance time from the published policy. Assert the absence so the receipt cannot claim them.
+  assert.doesNotMatch(summaryText, /policy sha256/iu);
+  assert.doesNotMatch(summaryText, /staged file count/iu);
 });

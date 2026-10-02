@@ -64,6 +64,28 @@
   - **本地副作用**：CLI 在仓库根写入 `.edgeone/anonymous.json`（未 gitignore、未提交，含认领信息，内容不得提交）；CLI 装在仓库外临时目录，非项目依赖。
 - **分支与提交（2026-10-01）**：已在**最新 `main`** 上另起独立任务分支 `codex/csp-local-verification`（自 `origin/main`、基点 `d6a9ab5f`；迁移前 HEAD `57dc3b75` 是 `origin/main` 的祖先，两者差异仅 7 个 `data/*.json`，与本任务文件不重叠，故改动安全迁移、未覆盖任何现场）。该分支上的本地提交：**`9460cc4a`**（15 文件，+1330/−20）；其范围为 `docs/PROJECT_BACKLOG.md`、`tests/e2e/serve.mjs`、`tests/csp/`（13 文件），`package.json` 与 `scripts/check-suite.mjs` **未改动**。本任务**未触碰** `data/`、workflow、生产配置或响应头。提交前在该基线上重跑：手动回归 10/10 通过、完整 fresh 三模式 4/7/7 passed（`complete — 4 keys × 3 modes`、`crossModeMismatches: 0`）、既有 CI 单测入口 `test:unit:coverage` **945/945 通过 exit 0**、完整 `check:changed` exit 0。**推送未执行**（未授权）。
 
+### 2026-10-02 EdgeOne 隔离 Git 通道验证（阶段 2）与生产接线（阶段 3）
+
+- **Acceptance baseline（阶段 2）**：owner 授权"专用隔离仓库 + Git 集成项目、最多两次构建、失败不自动重试、保留资源与证据"。范围：验证 release 仓库的 **Git 构建通道**是否按同样方式消费 `edgeone.json`，以及整树同步后配置是否持续生效。**不使用**生产 release 仓库 `gfrr-edgeone-release`、不触达生产项目。
+- **阶段 2 结果（owner 由另一执行体完成，本会话独立核验）**：隔离仓库 `ctmaomao/gfrr-edgeone-staging`（私有）；EdgeOne **Git 集成**项目 `gfrr-csp-staging`；两次构建（#1 `dpxamp67uwem` 17s、#2 `dpc0htz1nohv` 18s）；批次 1 `8afe433`、批次 2 `72597e2b`；Actions run 36967191763 success。
+  - **我方独立核验（只读）**：隔离仓库远端 `main` = `72597e2bfb86e640dd6c1c04368f6b6f1bd65c74`（与回执一致）；仓库当前仅含暂存树 + `edgeone.json` + `staging-probe.txt`，**`.github/` 与 `_staging-inputs/` 确已被整树同步删除**；7 次读回全部 `status=200`、`ok=true`、恰好一条 Report-Only、**0 条强制头**、`sameNameCount=1`；7 条头的值**逐字相同**且 sha256 = `e328e22383e6c4a029df316693acce4f4e5244dea49487d72b05e6bb74f4f0ca`（387 字符，与本地冻结值一致）；`probe.txt` = `staging-probe 2026-10-02T05:02:59Z` 且 `probe-observation-4` 的 body 逐字匹配。
+  - **额外发现（增强可信度）**：`probe-observation-1..3` 在 05:03:05/20/36 均为 **404**，05:03:52 才 200——如实记录了**部署传播延迟**。因此"发布 workflow 成功推送 release 仓库"**不等于** EdgeOne 已完成部署，读回必须在确认构建成功后进行。
+  - **我无法独立核实的部分**：EdgeOne 侧**构建总数与 build id**（`dpxamp67uwem` / `dpc0htz1nohv`、17s/18s）来自平台控制台，我没有 EdgeOne 凭据，仅依回执枚举；证据中可确认的只有 1 个部署 id 与稳定域。故"2 次、未超预算"记为**依回执**。首次失败 run `36965383153` 与修复分支 `codex/repair-staging-publish`（`a431e63`、`3f10ab9`）同样仅依回执；其中"重跑前取得 renewed owner authorization"我无法从证据核验。
+  - **证据位置**：`test-results/edgeone-git-channel-20261002/`（gitignored）：`completion-receipt.md`、`success-evidence/`（7 份读回 JSON、策略全文、暂存树清单、探针观察）、`repair-receipt.md`、`actions-evidence/`、`rehearsal/`。资源与证据按 owner 决定**保留，暂不清理**。
+  - **读回工具的准确边界（据实表述）**：**响应头由读回工具验证；响应体由额外的 probe observation 验证**——`tools/readback-edgeone-headers.mjs` 目前**不采集响应体**，故探针内容不是由该工具证明的。本轮**不扩展**该工具。
+- **Acceptance baseline（阶段 3）**：owner 授权"实施：生产 workflow 接线、必要回归与 backlog 同步"，**生成器接口不改**。声明后果修正为：**合并后可能触发发布；检查、同步、推送与 EdgeOne 部署成功后才会投递线上头**——故合并授权本身仍须涵盖生产启用后果。
+- **阶段 3 实施**：`.github/workflows/publish-edgeone-release.yml`
+  1. `push.paths` 增补 `scripts/build-edgeone-release-artifact.mjs`、`scripts/lib/edgeone-csp-policy.mjs`、`config/edgeone/**`（保留两个具体脚本路径，**不**放宽为 `scripts/lib/**`；措辞收窄为"**未纳入触发集的派生逻辑改动**可能不触发"——配置变更已由 `config/edgeone/**` 覆盖）。
+  2. 新增步骤 **Build EdgeOne release staging tree**（在 `Build allowlisted static artifact` 之后、deploy key 之前）：在源码 checkout 中直接运行生成器（只有**输出**在 `$RUNNER_TEMP/edgeone-staging`，故**无脚本根路径漂移**，无需可变 `REPO_ROOT`／setter／惰性默认值），`--add-config` 与 `--check` 的输出以 `{ ...; } | tee -a "$GITHUB_STEP_SUMMARY"` 收集，配合 `set -euo pipefail` + `set -o pipefail`，**生成或校验失败不会被 `tee` 掩盖**。
+  3. `rsync` 源由 `$GITHUB_WORKSPACE/_site/` 改为 `$RUNNER_TEMP/edgeone-staging/`，**`.git/` 排除原样保留**。
+  4. **不变**：配额闸门（400 次/32 天）、`git diff --cached --quiet` 的 no-op 分支、deploy key 配置与 `if: always()` 清理、`SOURCE_SHA` 核对、`check:all` 位置与顺序；**Pages 产物白名单与 `build-pages-artifact.mjs` 不动**（独立暂存目录不需要改白名单）。
+- **阶段 3 回归**：`tests/csp/edgeone-staging-review.test.mjs` 扩至 **31 项**（手动入口，不接入 CI），新增 5 项：发布源改为暂存树且保留 `.git/` 排除、生成步骤先于发布步骤且**无 `if:` 绕过**（唯一 `if: always()` 是既有 deploy key 清理）、**从 workflow 抽取真实 run 块在 Git Bash 中执行**并注入失败——生成失败与校验失败**经 `tee` 后仍非零退出**、真实产物下步骤成功且摘要含指纹与策略全文。断言另确认摘要**不含** "policy sha256"／"staged file count"：生成器当前**不输出**策略 SHA-256 与最终暂存文件总数，这些须在验收时从本次发布策略计算，不得写成生成器已有输出。既有 18 项与 generation-gate 10 项仍全绿；`check:workflows` exit 0；完整 fresh harness 4/7/7 passed（策略指纹仍 `e61142d2777df172`）。
+- **验收口径（阶段 3，尚未执行）**：
+  - **本地**：配置缺失/无效、关闭态文档形态、策略篡改、目录差异**复用已有回归**，只为新增行为（生成失败后不得进入同步与推送）补用例；**失败口径 = "非零退出 + 后续步骤阻断"**，**不声称**磁盘上绝不残留暂存树。
+  - **生产（需单独授权）**：恰好一条 Report-Only，其值 == **该次已发布暂存树派生的策略**（逐字比对；**387 是冻结版本实测值，不是验收常量**）；无强制头；记录源 SHA、**release SHA（成功推送后明确输出）**、暂存树指纹、策略全文与摘要（**来自本次实际生成**）、EdgeOne 构建 id 与时间；**先确认构建成功再读回**并保存全部原始头值。
+  - **关闭与回滚**：回滚预案采用 **① 关闭 CSP、保留接线**（预案选择；实际关闭、发布与构建仍需授权）。措辞更正：关闭**可能产生新的 release 提交并触发构建，以实际差异、触发及运行记录为准**（不承诺"必定新增一次发布/构建"）。**撤回 workflow 接线本身不会立即移除线上头**；但恢复后的 workflow 再次成功用纯 `_site` 执行 `rsync --delete`、提交并完成 EdgeOne 部署时会删除 release 树中的 `edgeone.json`，**最终头是否消失仍须读回确认**，且**不能排除控制台另有配置**。
+- **未启动**：阶段 3 的推送、合并与生产发布；生产响应头仍未启用；生产持久化方案、报告接收端、CI 接入未启动。
+
 ### 2026-10-01 EdgeOne 发布暂存目录生成器（阶段 1 · 本地工具）
 
 - **Acceptance baseline**：owner 授权「按修正后的范围开始阶段 1 本地实施」——配置、共享策略派生、暂存目录生成与校验、**手动**响应头读回工具、**手动**回归，以及本设计与 acceptance baseline 记入 backlog。边界：**不改 workflow、不自动接入 CI、不上传或发布、不修改生产项目或 release 分支**；读回工具测试优先使用本地 HTTP fixture（重复头保留、启用态与关闭态判定）。
