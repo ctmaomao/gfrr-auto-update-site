@@ -49,3 +49,19 @@ jobs:
 
       - name: Run browser smoke
         run: npm run test:e2e
+
+      # The EdgeOne staging regressions are named explicitly rather than by glob so fixture,
+      # helper and Playwright spec files under tests/csp/ can never be picked up by accident.
+      # This runs after the browser smoke step on purpose: that step builds `_site`, which these
+      # cases read. A failure there blocks this step — there is no `always()` or continue-on-error.
+      # `GF_REQUIRE_BASH` makes a missing shell a failure instead of a skip, because the
+      # bash-driven cases are the whole reason these suites run in CI: skipping them would report
+      # success while the publish workflow's step semantics were never exercised.
+      - name: Run EdgeOne staging regressions
+        env:
+          GF_REQUIRE_BASH: '1'
+        run: |
+          node --test \
+            tests/csp/edgeone-staging.test.mjs \
+            tests/csp/edgeone-staging-review.test.mjs \
+            tests/csp/generation-gate.test.mjs
