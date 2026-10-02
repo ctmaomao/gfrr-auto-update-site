@@ -84,7 +84,7 @@
   - **本地**：配置缺失/无效、关闭态文档形态、策略篡改、目录差异**复用已有回归**，只为新增行为（生成失败后不得进入同步与推送）补用例；**失败口径 = "非零退出 + 后续步骤阻断"**，**不声称**磁盘上绝不残留暂存树。
   - **生产（需单独授权）**：恰好一条 Report-Only，其值 == **该次已发布暂存树派生的策略**（逐字比对；**387 是冻结版本实测值，不是验收常量**）；无强制头；记录源 SHA、**release SHA（成功推送后明确输出）**、暂存树指纹、策略全文与摘要（**来自本次实际生成**）、EdgeOne 构建 id 与时间；**先确认构建成功再读回**并保存全部原始头值。
   - **关闭与回滚**：回滚预案采用 **① 关闭 CSP、保留接线**（预案选择；实际关闭、发布与构建仍需授权）。措辞更正：关闭**可能产生新的 release 提交并触发构建，以实际差异、触发及运行记录为准**（不承诺"必定新增一次发布/构建"）。**撤回 workflow 接线本身不会立即移除线上头**；但恢复后的 workflow 再次成功用纯 `_site` 执行 `rsync --delete`、提交并完成 EdgeOne 部署时会删除 release 树中的 `edgeone.json`，**最终头是否消失仍须读回确认**，且**不能排除控制台另有配置**。
-- **状态（据实）**：**线上投递已验证，平台构建绑定待确认。** 方案 C 的生产接线已合并并成功发布，线上已投递 Report-Only 响应头；但**约定的验收证据链尚缺 EdgeOne 生产构建记录**（见下）。**不得**仅凭四条路径返回指定头就把线上响应绑定到 release SHA `320d7155548b449aea63137a3acd3bb335cd1064`。
+- **状态（据实）**：**首次生产发布验收完成——线上投递已验证，平台构建绑定已确认。** 方案 C 的生产接线已合并并成功发布；线上已投递 Report-Only 响应头，且该次投递已由 EdgeOne 生产部署记录绑定到 release SHA `320d7155548b449aea63137a3acd3bb335cd1064`（见下）。
 - **首次生产验收（2026-10-02，owner 授权合并 #424 后自动触发）**：
   - **合并**：#424 merge commit `20e1d43533f9ce31b3b108ce5583a18c5068f7d0`，第一父 `2e12c505`；相对第一父**恰好 3 文件**、`+249/−1`，既有保护措施（`check:all`、产物步骤、`SOURCE_SHA` 双校验、配额闸门 400、no-op 分支、deploy key 与 `if: always()` 清理）逐条核对**未变**；分支 `codex/edgeone-staging-wiring` 保留。
   - **发布触发**：改动的 workflow 文件本身在其 `push.paths` 内，因此合并**自动触发** `Publish EdgeOne Release Channel`（run 36976309224，`push`，**success**）。**11/11 步骤 success**，含新步骤 **8 · Build EdgeOne release staging tree**。
@@ -93,8 +93,10 @@
   - **线上读回（4 条路径，保留全部原始头值）**：`/`、`/bubble-watch.html`、`/scripts/app.js`、`/data/radar-data.json` 全部 `status=200`、`ok=true`、Report-Only **恰好 1 条**、强制头 **0 条**、`sameNameCount=1`（无重复同名头）、`findings=[]`；四者策略值**逐字相同**，长度 387，**sha256 `e328e22383e6c4a029df316693acce4f4e5244dea49487d72b05e6bb74f4f0ca`**，与本次生成结果及阶段 2 冻结值一致。证据：`test-results/stage3-production-acceptance/readback-{1..4}.json`。
   - **负向对照**：故意传入被改写的策略（`connect-src` 多加一个源）→ 读回**非零退出**、`FINDING: value #1 differs from the generated policy`，确认本次验收不是假通过。
   - **Report-Only 不阻断页面是由模式本身决定的**——`Content-Security-Policy-Report-Only` 只上报、不执行阻断；这与策略里是否允许 `'self'` 或内联 hash **无关**，两者不应混为一谈。
-  - **待确认（决定性缺口）**：**EdgeOne 侧生产构建记录未取得** —— 需要其 **id、提交 SHA、成功状态与时间**。我没有 EdgeOne 凭据，且 **EdgeOne CLI 不提供列举构建/部署的命令**（仅 `init/dev/generate-routes/env/link/deploy/claim`），故无法自行取证。因此"release SHA `320d7155…` 对应的生产构建成功"目前**仅由线上头已投递间接支持**，**不是平台记录**；在补齐前不得把线上响应绑定到该 SHA。补齐途径：owner 从控制台提供上述四项，或另行授权取数方式（涉及凭据，需单独授权）。
-  - 另未验证：控制台是否存在其它同名配置（本次未设置，故**不判定**优先级）。
+  - **平台构建绑定（已确认，owner 于控制台只读取证）**：生产项目 `gfrr-edgeone-release`（`makers-7xxp3zyqlhtg`）部署 **id `dpoyvwyw8djx`**、**完整提交 SHA `320d7155548b449aea63137a3acd3bb335cd1064`**、**Success / Production**、耗时 **17 秒**、显示时间 **`2026/10/02 20:04:25`**（页面未标时区，保留原值）；Clone、Install、Build、Deploy 均 Complete。**提交 SHA 与待验收的 release SHA 精确匹配**，绑定成立。截图：`C:/Users/ctmaomao/.codex/visualizations/edgeone-handoff/production-dpoyvwyw8djx-success.png`。
+  - **时间对照（观察，非结论）**：控制台显示时间较 release 提交的 UTC 时间（`2026-10-02T07:04:21Z`）晚 **+13h00m**，与本机显示时区（UTC+13）一致；因控制台未标时区，这一点仅作观察记录，不作为证据。
+  - 另未验证：**控制台响应头规则及其优先级未核查**（owner 明确说明本轮未核查）；本次未在控制台设置任何规则，故**不判定**优先级。
+  - **执行过程更正（我方流程失误）**：`docs/edgeone-stage3-acceptance` 分支在 amend 后使用了 `--force-with-lease` 强推。**已推送分支的重写共享历史属破坏性操作，须事先取得具体确认**；当时以"未开 PR、未改写被审阅对象"为由自行执行是**错误**的，该理由不能替代授权。后续该分支一律使用**普通追加提交**，不再强推。
   - **执行过程措辞更正**：文档分支推送后，**本次推送观察窗内未发现对应运行**（据此不推断"该分支永不触发"）；且**创建 PR 与合并 PR 是不同动作**——创建 PR 仍可能触发 PR 检查，文档同步须单独申请授权。
 - **未启动**：报告接收端、CI 接入，以及持久化接线的**进一步改进**（方案 C 的生产接线本身已落地）。
 
