@@ -30,6 +30,22 @@ Official GDELT references:
 
 ## Rules
 
+### Zero-subscription policy (2026-10-02)
+
+Owner selected `config/world-order-rules.json` → `gdelt.accessPolicy=free_only`.
+World Order skips Cloud before checking a key or the fresh-cache path. It retains
+only dated historical evidence, labels it stale, records zero requests, and does
+not emit a cache artifact or renew its source timestamp. Existing stale-score
+discounts remain unchanged; this is not a new scoring model or a fresh feed.
+Missing/undated evidence stays unavailable, never a manufactured zero count.
+The legacy Cloud adapter and credentials remain in place for compatibility;
+their existence does not enable a Cloud call under this policy.
+
+Free DOC and Web NGrams consumers keep their current budgets and isolation.
+Web NGrams is a candidate for observation, not a replacement for Cloud country
+conflict-event counts. Its live availability must be checked separately.
+See [free-source review](GDELT_FREE_SOURCE_REVIEW_2026_10_02.md).
+
 ### Cloud access review (2026-09-16)
 
 The [current pricing policy](https://gdeltcloud.com/pricing) distinguishes free

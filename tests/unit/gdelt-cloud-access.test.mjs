@@ -1,6 +1,74 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { fetchGdeltCloudSummary } from '../../scripts/world-order/fetch-gdelt-cloud.mjs';
+import { scoreGdeltPressure } from '../../scripts/world-order/gdelt-score.mjs';
+
+test('free-only policy blocks Cloud with a key and preserves dated stale evidence without renewing cache', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.GDELT_CLOUD_API_KEY;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-free-only-'));
+  const cachePath = path.join(dir, 'cache.json');
+  const previous = {
+    enabled: true, status: 'stale', lastFetchedAt: '2026-09-23T01:14:09.713Z',
+    summary: { totalEvents: 17, conflictEvents: 17, regionsCovered: ['Ukraine'] },
+    evidence: [], confidence: 0.25
+  };
+  const before = structuredClone(previous);
+  let calls = 0;
+  try {
+    process.env.GDELT_CLOUD_API_KEY = 'test-only-not-a-real-key';
+    globalThis.fetch = async () => { calls++; throw new Error('Cloud must not be called'); };
+    const cache = {
+      schemaVersion: 'gdelt-world-order-cache-p39', module: 'gdelt-world-order-cache',
+      cacheScope: 'world_order_gdelt_cloud', status: 'ok',
+      lastFetchedAt: new Date().toISOString(),
+      query: { id: 'gdelt_world_order_conflict_country_summary', windowDays: 7 },
+      summary: { totalEvents: 0, conflictEvents: 0, regionsCovered: [] }
+    };
+    fs.writeFileSync(cachePath, JSON.stringify(cache));
+    const cacheBefore = fs.readFileSync(cachePath, 'utf8');
+    const config = { accessPolicy: 'free_only', cachePath };
+    const result = await fetchGdeltCloudSummary({ config, previousSource: previous });
+    assert.equal(result.status, 'stale');
+    assert.equal(result.lastFetchedAt, previous.lastFetchedAt);
+    assert.equal(result.summary.totalEvents, 17);
+    assert.equal(scoreGdeltPressure(result), scoreGdeltPressure(previous));
+    assert.equal(result.summary.requestsUsed, 0);
+    assert.equal(result.summary.failureCount, 0);
+    assert.equal(result.summary.queriesRun[0].status, 'skipped');
+    assert.equal(result.summary.requestDiagnostics.status, null);
+    assert.equal(result.cacheArtifact, undefined);
+    assert.match(result.warnings.join(' '), /零订阅费用/);
+    assert.deepEqual(previous, before);
+    assert.equal(fs.readFileSync(cachePath, 'utf8'), cacheBefore);
+    const cached = await fetchGdeltCloudSummary({ config });
+    assert.equal(cached.status, 'stale', 'even a fresh Cloud cache is historical in free-only mode');
+    assert.equal(cached.summary.totalEvents, 0, 'real zero is retained');
+    assert.equal(cached.lastFetchedAt, cache.lastFetchedAt);
+    assert.equal(cached.cacheArtifact, undefined);
+    fs.unlinkSync(cachePath);
+    for (const previousSource of [null, { ...previous, lastFetchedAt: null },
+      { ...previous, lastFetchedAt: '2999-01-01T00:00:00Z' }]) {
+      const absent = await fetchGdeltCloudSummary({ config, previousSource });
+      assert.equal(absent.status, 'not_configured');
+      assert.equal(absent.lastFetchedAt, null);
+      assert.equal(absent.summary.totalEvents, null);
+      assert.equal(absent.confidence, 0);
+    }
+    assert.equal(calls, 0);
+    const rules = JSON.parse(fs.readFileSync(new URL('../../config/world-order-rules.json', import.meta.url)));
+    assert.equal(rules.gdelt.accessPolicy, 'free_only');
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.GDELT_CLOUD_API_KEY;
+    else process.env.GDELT_CLOUD_API_KEY = originalKey;
+    if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+    fs.rmdirSync(dir);
+  }
+});
 
 test('Cloud access failures preserve dated evidence, distinguish 403 from 429 and never retry', async () => {
   const originalFetch = globalThis.fetch;
