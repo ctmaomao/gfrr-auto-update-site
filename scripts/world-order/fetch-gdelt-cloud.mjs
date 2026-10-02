@@ -494,6 +494,45 @@ async function fetchGdeltCloudSummaryBase({ config = {}, previousSource = null }
     });
   }
 
+  // The owner chose zero subscription costs. Do not let a key or a fresh
+  // legacy cache bypass this policy, and do not renew the Cloud cache clock.
+  if (config.accessPolicy === 'free_only') {
+    const cache = readGdeltWorldOrderCache(config.cachePath);
+    const dated = source => hasReusableSummary(source)
+      && typeof source.lastFetchedAt === 'string'
+      && Number.isFinite(Date.parse(source.lastFetchedAt))
+      && Date.parse(source.lastFetchedAt) <= Date.parse(attemptedAt);
+    const retained = dated(previousSource) ? previousSource
+      : dated(cache) ? cache : null;
+    const note = '已按零订阅费用策略暂停 GDELT Cloud 自动请求；旧摘要仅保留为过期证据，免费来源尚未替换观察分。';
+    return buildSourceResult({
+      enabled: true,
+      status: retained ? 'stale' : 'not_configured',
+      lastFetchedAt: retained?.lastFetchedAt ?? null,
+      summary: emptyGdeltCloudSummary({
+        ...(retained?.summary || {}),
+        requestsUsed: 0,
+        successCount: 0,
+        failureCount: 0,
+        rateLimitedCount: 0,
+        requestDiagnostics: sanitizeGdeltDiagnostics({}),
+        queriesRun: [buildQueryRun({ status: 'skipped' })],
+        usedCachedSummary: Boolean(retained),
+        cacheReason: 'gdelt-cloud-free-only-hold',
+        attemptedAt,
+        errors: [note]
+      }),
+      evidence: [{
+        labelZh: 'GDELT Cloud 历史证据', source: 'GDELT Cloud v2',
+        summary: note, value: retained?.summary.totalEvents ?? null,
+        direction: 'neutral', confidence: retained ? 0.25 : 0
+      }],
+      confidence: retained ? 0.25 : 0,
+      reusedPrevious: Boolean(retained),
+      warnings: [note]
+    });
+  }
+
   const timeoutMs = Number.isFinite(Number(config.timeoutMs)) ? Number(config.timeoutMs) : DEFAULT_TIMEOUT_MS;
   const { dateStart, dateEnd, windowDays } = buildDateWindow(config.windowDays);
   const query = buildQueryMetadata({ dateStart, dateEnd, windowDays });
