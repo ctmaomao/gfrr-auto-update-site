@@ -464,9 +464,10 @@ test('manifestFromArtifact records size and hash for every file', () => {
 // ---------------------------------------------------------------------------
 
 const WORKFLOW_PATH = resolve(import.meta.dirname, '..', '..', '.github', 'workflows', 'publish-edgeone-release.yml');
+const PR_WORKFLOW_PATH = resolve(import.meta.dirname, '..', '..', '.github', 'workflows', 'check-all-pr.yml');
 
-function readWorkflowSteps() {
-  const text = readFileSync(WORKFLOW_PATH, 'utf8');
+function readWorkflowSteps(path = WORKFLOW_PATH) {
+  const text = readFileSync(path, 'utf8');
   const lines = text.split('\n');
   const steps = [];
   let current = null;
@@ -716,4 +717,52 @@ test('a shell that exists and exits 0 without BASH_VERSION is rejected', () => {
 test('a usable shell is accepted and reported with its candidate path', () => {
   const guard = bashGuard({ env: { GF_BASH: '/bin/bash' }, run: () => '5.2.21\n' });
   assert.deepEqual(guard, { ok: true, candidate: '/bin/bash' });
+});
+
+// ---------------------------------------------------------------------------
+// The wiring itself. Without these, a future edit could drop GF_REQUIRE_BASH and the CI step would
+// silently skip the bash-driven cases while still reporting a green check.
+// ---------------------------------------------------------------------------
+
+const CI_SUITE_FILES = [
+  'tests/csp/edgeone-staging.test.mjs',
+  'tests/csp/edgeone-staging-review.test.mjs',
+  'tests/csp/generation-gate.test.mjs',
+];
+
+test('the PR workflow runs exactly the three staging suites and requires bash', () => {
+  const { steps } = readWorkflowSteps(PR_WORKFLOW_PATH);
+  const step = steps.find((entry) => entry.name === 'Run EdgeOne staging regressions');
+  assert.ok(step, 'check-all-pr.yml must run the EdgeOne staging regressions');
+  const block = step.lines.join('\n');
+
+  // Every suite is named explicitly, and nothing else is: a glob would sweep in fixtures/helpers.
+  for (const file of CI_SUITE_FILES) {
+    assert.ok(block.includes(file), `the step must name ${file}`);
+  }
+  const named = [...block.matchAll(/tests\/csp\/[\w.-]+/gu)].map((match) => match[0]);
+  assert.deepEqual([...new Set(named)].sort(), [...CI_SUITE_FILES].sort(),
+    'the step must name these suites and no other tests/csp path');
+
+  // A missing shell must fail in CI rather than skip; dropping this env var would hide that.
+  assert.match(block, /GF_REQUIRE_BASH:\s*'1'/u, 'the step must set GF_REQUIRE_BASH=1');
+  assert.match(block, /node --test/u);
+});
+
+test('the regression step is positioned after the browser smoke step and cannot bypass it', () => {
+  const { text, steps } = readWorkflowSteps(PR_WORKFLOW_PATH);
+  const smokeIndex = steps.findIndex((entry) => entry.name === 'Run browser smoke');
+  const regressionIndex = steps.findIndex((entry) => entry.name === 'Run EdgeOne staging regressions');
+  assert.notEqual(smokeIndex, -1);
+  assert.notEqual(regressionIndex, -1);
+  assert.ok(regressionIndex > smokeIndex, 'the regressions read _site, so the smoke step must run first');
+
+  const step = steps[regressionIndex];
+  const block = step.lines.join('\n');
+  assert.doesNotMatch(block, /continue-on-error/u);
+  assert.doesNotMatch(block, /^\s+if:/mu, 'the step must not carry a bypassing condition');
+  // No `always()`/`!cancelled()` anywhere in this workflow may rescue the new step.
+  const conditionalSteps = [...text.matchAll(/^\s{6}- name:\s*(.+?)\s*\n\s{8}if:\s*(.+)$/gmu)]
+    .map((match) => `${match[1]} -> ${match[2].trim()}`);
+  assert.deepEqual(conditionalSteps, [], `no step in check-all-pr.yml may be conditionally rescued: ${conditionalSteps.join('; ')}`);
 });

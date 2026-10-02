@@ -22,10 +22,12 @@ function defaultRun(command, args, options) {
 }
 
 /**
- * True only when the candidate really runs as bash. A path that merely exists, or a process that
- * exits 0, is not sufficient: `BASH_VERSION` must print something shaped like a bash version. That
- * rejects a different shell or a random program that happens to exit 0 and print usage text, which
- * an "output is non-empty" check would have accepted.
+ * True when the candidate answers the expected probe: it runs the given command and prints
+ * something shaped like a bash version from `BASH_VERSION`. This is not a strict bash identity
+ * proof — it shows the candidate responded to the probe as bash would — which is sufficient for a
+ * controlled test seam while still rejecting a missing shell and a program that merely exists and
+ * exits 0 printing unrelated output. Bounded by a timeout so a hanging candidate cannot stall the
+ * suite.
  */
 export function shellUsable(candidate, run = defaultRun) {
   try {

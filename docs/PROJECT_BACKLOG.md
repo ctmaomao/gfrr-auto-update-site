@@ -107,7 +107,18 @@
   - 另未验证：**控制台响应头规则及其优先级未核查**（owner 明确说明本轮未核查）；本次未在控制台设置任何规则，故**不判定**优先级。
   - **执行过程更正（我方流程失误）**：`docs/edgeone-stage3-acceptance` 分支在 amend 后使用了 `--force-with-lease` 强推。**已推送分支的重写共享历史属破坏性操作，须事先取得具体确认**；当时以"未开 PR、未改写被审阅对象"为由自行执行是**错误**的，该理由不能替代授权。后续该分支一律使用**普通追加提交**，不再强推。
   - **执行过程措辞更正**：文档分支推送后，**本次推送观察窗内未发现对应运行**（据此不推断"该分支永不触发"）；且**创建 PR 与合并 PR 是不同动作**——创建 PR 仍可能触发 PR 检查，文档同步须单独申请授权。
-- **未启动**：报告接收端、CI 接入，以及持久化接线的**进一步改进**（方案 C 的生产接线本身已落地）。
+- **未启动**：报告接收端，以及持久化接线的**进一步改进**（方案 C 的生产接线本身已落地）。
+
+#### 2026-10-02 CI 接入（PR 专用步骤 · acceptance baseline）
+
+- **owner 批准的范围**：让 EdgeOne 关键回归**在 PR 中自动执行**，同时**保持数据刷新与生产发布的 `check:all` 组成不变**。范围限定为 **PR 专用步骤**；不新增 `check:` 脚本、不改覆盖率入口与门槛/include、不改 Pages 产物白名单、不改生产发布 workflow。
+- **实现**：`.github/workflows/check-all-pr.yml` 新增步骤 **Run EdgeOne staging regressions**，位置在 `Run browser smoke` **之后**（该步骤构建这些用例会读取的 `_site`），**明确点名三个文件**而非 glob，`env: GF_REQUIRE_BASH: '1'`，**无 `always()` / continue-on-error**。新增 `tests/csp/shell-guard.mjs`（`resolveBash` / `shellUsable` / `bashGuard`）；三个 bash 驱动用例接入守卫，路径转换仅 Windows。
+- **关键决定（owner 拍板）**：**CI 缺 Bash 必须失败，不得 skip** —— 这些 bash 用例正是接入目的，跳过会让 PR 检查在关键覆盖缺失时仍显示成功。**本地不支持时可显式 skip 并打印原因**（仅 `GF_REQUIRE_BASH` 未设置时）。**`GF_BASH` 作为受控测试接缝**，只作测试输入，不从页面、产物或任何已发布内容读取。
+- **表述的边界**：`shellUsable()` 的版本格式检查**只证明候选命令响应了预期探针**，**不宜称为严格的 Bash 身份认证**；作为受控测试接缝足够。
+- **本机实测（非 CI）**：正常环境 `39 pass / 0 fail / 0 skip`；`GF_BASH` 无效且未设 `GF_REQUIRE_BASH` → `34 pass / 3 skip`、退出 0；`GF_BASH` 无效且设 `GF_REQUIRE_BASH=1` → `3 fail`、退出非零。依赖 bash 的用例经代码核查为 **3 项**。三套合并本机约 1.8 s —— **CI 增量耗时待实跑确认**。
+- **接线本身的回归**：断言三文件清单（且**不含**其它 `tests/csp` 路径）、`GF_REQUIRE_BASH=1`、步骤位于 browser smoke 之后、无 `continue-on-error` / 步骤级 `if:` / 任何 `always()` 类救援条件。**避免日后漏掉环境变量导致 CI 静默 skip。**
+- **边界（写入 PR）**：本步骤**覆盖所断言的结构与所执行的步骤场景，不证明所有发布行为正确**；**PR 检查不能替代生产验收** —— 真实发布只由 `publish-edgeone-release.yml` 在 main 触发。
+- **待确认**：**Ubuntu runner 上 bash 是否可用、该步骤的实跑结果与耗时**，均待 PR 实跑后据实记录。
 
 ### 2026-10-01 EdgeOne 发布暂存目录生成器（阶段 1 · 本地工具）
 
