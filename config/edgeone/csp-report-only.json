@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "source": "/*",
+  "notes": "Candidate Content-Security-Policy-Report-Only for the GFRR reader pages, delivered through edgeone.json on the EdgeOne release channel. Hash placeholders are replaced at build time from the pages that are actually being published, so the hashes cannot drift from the inline blocks. This file must always exist and always validate: `enabled: false` produces a valid edgeone.json that omits the CSP header rule (never an empty header value), and a missing or invalid file is a build failure rather than an implicit removal of the header. The emitted header name is a constant (report-only); this configuration can never produce an enforced Content-Security-Policy header.",
+  "directives": {
+    "default-src": "'none'",
+    "script-src": "'self' {{scriptHashes}}",
+    "script-src-attr": "'none'",
+    "style-src-elem": "'self' {{styleHashes}} https://fonts.googleapis.com",
+    "style-src-attr": "'unsafe-inline'",
+    "font-src": "https://fonts.gstatic.com",
+    "connect-src": "'self'",
+    "img-src": "'self' data:",
+    "base-uri": "'none'",
+    "form-action": "'none'",
+    "object-src": "'none'"
+  }
+}
