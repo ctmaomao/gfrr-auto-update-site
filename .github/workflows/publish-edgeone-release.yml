@@ -150,7 +150,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: publish source ${SOURCE_SHA::12}"
           git push origin main
+          # Record the release commit that the platform will build from. A successful push here does
+          # NOT mean EdgeOne has deployed: the response header can only be bound to this SHA once the
+          # corresponding EdgeOne build is confirmed and read back.
+          release_sha=$(git rev-parse HEAD)
           echo "Published checked source ${SOURCE_SHA} to ${RELEASE_REPOSITORY}." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release commit: ${release_sha}" >> "$GITHUB_STEP_SUMMARY"
+          echo "EdgeOne build has not been confirmed by this workflow; bind this SHA after the build succeeds." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove release deploy key
         if: always()

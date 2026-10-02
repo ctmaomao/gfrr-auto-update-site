@@ -626,3 +626,21 @@ test('the generation step succeeds on the real artifact and prints evidence into
   assert.doesNotMatch(summaryText, /policy sha256/iu);
   assert.doesNotMatch(summaryText, /staged file count/iu);
 });
+
+test('the publish step records the release commit SHA only after a successful push', () => {
+  const { steps } = readWorkflowSteps();
+  const step = steps.find((entry) => entry.name === 'Publish changed artifact with quota guard');
+  assert.ok(step);
+  const block = step.lines.join('\n');
+  const pushIndex = block.indexOf('git push origin main');
+  assert.notEqual(pushIndex, -1, 'the publish step must push');
+  // The full SHA (not the 12-char abbreviation used in the commit subject) goes to the summary, and
+  // only after the push succeeded, so the record cannot describe a push that never happened.
+  assert.match(block, /release_sha=\$\(git rev-parse HEAD\)/u);
+  assert.match(block, /echo "Release commit: \$\{release_sha\}" >> "\$GITHUB_STEP_SUMMARY"/u);
+  const recordIndex = block.indexOf('release_sha=$(git rev-parse HEAD)');
+  assert.ok(recordIndex > pushIndex, 'the release SHA must be captured after the push succeeds');
+  assert.doesNotMatch(block, /release_sha=.*\{\{12\}\}/u, 'the recorded SHA must not be abbreviated');
+  // A successful push must not be presented as a completed deployment.
+  assert.match(block, /EdgeOne build has not been confirmed/u);
+});
