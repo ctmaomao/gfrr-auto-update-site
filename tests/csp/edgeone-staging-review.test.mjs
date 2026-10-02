@@ -28,6 +28,7 @@ import {
   writeManifest,
 } from '../../scripts/build-edgeone-release-artifact.mjs';
 import { evaluateHeaders, fetchHeaderPairs, pairsFromRawHeaders } from '../../tools/readback-edgeone-headers.mjs';
+import { bashGuard, resolveBash, shellUsable } from './shell-guard.mjs';
 
 const CONFIG_PATH = resolve(import.meta.dirname, '..', '..', 'config', 'edgeone', 'csp-report-only.json');
 const CLI_PATH = resolve(import.meta.dirname, '..', '..', 'scripts', 'build-edgeone-release-artifact.mjs');
@@ -463,9 +464,10 @@ test('manifestFromArtifact records size and hash for every file', () => {
 // ---------------------------------------------------------------------------
 
 const WORKFLOW_PATH = resolve(import.meta.dirname, '..', '..', '.github', 'workflows', 'publish-edgeone-release.yml');
+const PR_WORKFLOW_PATH = resolve(import.meta.dirname, '..', '..', '.github', 'workflows', 'check-all-pr.yml');
 
-function readWorkflowSteps() {
-  const text = readFileSync(WORKFLOW_PATH, 'utf8');
+function readWorkflowSteps(path = WORKFLOW_PATH) {
+  const text = readFileSync(path, 'utf8');
   const lines = text.split('\n');
   const steps = [];
   let current = null;
@@ -502,10 +504,27 @@ function stepRunScript(stepName) {
 }
 
 function bashPath(winPath) {
-  // Git Bash accepts /c/... drive paths for POSITIONAL arguments.
+  // Git Bash accepts /c/... drive paths for POSITIONAL arguments. On other platforms the path is
+  // already usable as-is, so no conversion is applied.
+  if (process.platform !== 'win32') return resolve(winPath);
   const normalized = resolve(winPath).replaceAll('\\', '/');
   const match = /^([A-Za-z]):\/(.*)$/u.exec(normalized);
   return match ? `/${match[1].toLowerCase()}/${match[2]}` : normalized;
+}
+
+/**
+ * Applies the resolved guard to a test context: returns the shell when it is usable, otherwise
+ * fails in CI or skips locally. Returns null when the caller must stop before touching bash.
+ */
+function requireBash(t) {
+  const guard = bashGuard();
+  if (guard.ok) return guard.candidate;
+  if (guard.mustFail) {
+    assert.fail(`${guard.reason}; GF_REQUIRE_BASH=1 forbids skipping the bash-driven workflow cases`);
+  }
+  console.error(`[csp] skipping a bash-driven workflow case: ${guard.reason}`);
+  t.skip(guard.reason);
+  return null;
 }
 
 // Git Bash leaves Windows-style values of inherited ENVIRONMENT variables alone (verified with a
@@ -520,9 +539,7 @@ function runnerEnv(scratchDir, summaryPath) {
   };
 }
 
-function runInBash(script, env) {
-  const bash = 'C:\\Program Files\\Git\\bin\\bash.exe';
-  try {
+function runInBash(script, env, bash = resolveBash()) {  try {
     const out = execFileSync(bash, ['--noprofile', '--norc', '-c', script], {
       encoding: 'utf8',
       cwd: REPO_ROOT,
@@ -563,7 +580,9 @@ test('the generation step runs before the publication step and carries no bypass
   assert.deepEqual(alwaysSteps, ['Remove release deploy key']);
 });
 
-test('the generation step tolerates a failing generator: pipefail keeps the step non-zero', () => {
+test('the generation step tolerates a failing generator: pipefail keeps the step non-zero', (t) => {
+  const bash = requireBash(t);
+  if (!bash) return;
   const script = stepRunScript('Build EdgeOne release staging tree');
   assert.match(script, /set -eo pipefail|set -euo pipefail/u, 'the step must set pipefail');
   assert.match(script, /\| tee -a "\$GITHUB_STEP_SUMMARY"/u);
@@ -578,14 +597,16 @@ test('the generation step tolerates a failing generator: pipefail keeps the step
   const missingConfig = runInBash(script, {
     ...runnerEnv(scratch, summary),
     GITHUB_WORKSPACE: resolve(emptyWorkspace),
-  });
+  }, bash);
   assert.notEqual(missingConfig.code, 0, 'a failing generation step must exit non-zero through tee');
   assert.match(missingConfig.out, /edgeone staging build failed/u);
   const summaryAfterFailure = readFileSync(summary, 'utf8');
   assert.match(summaryAfterFailure, /### EdgeOne staging tree/u, 'tee must still capture what the generator printed');
 });
 
-test('the generation step fails when the generated tree is tampered with before the check', () => {
+test('the generation step fails when the generated tree is tampered with before the check', (t) => {
+  const bash = requireBash(t);
+  if (!bash) return;
   const script = stepRunScript('Build EdgeOne release staging tree');
   assert.ok(script.includes('--check'), 'the extracted step must contain the --check invocation');
   const scratch = mkdtempSync(resolve(tmpdir(), 'eo-steptest2-'));
@@ -606,17 +627,19 @@ test('the generation step fails when the generated tree is tampered with before 
     'config="$GITHUB_WORKSPACE/config/edgeone/csp-report-only.json"',
     `{ node scripts/build-edgeone-release-artifact.mjs --check --artifact-dir "$GITHUB_WORKSPACE/_site" --config "$config" --out-dir "$staging"; echo 'end'; } | tee -a "$GITHUB_STEP_SUMMARY"`,
   ].join('\n');
-  const result = runInBash(checkOnly, runnerEnv(scratch, summary));
+  const result = runInBash(checkOnly, runnerEnv(scratch, summary), bash);
   assert.notEqual(result.code, 0, 'a failing check must exit non-zero through tee');
   assert.match(result.out, /unexpected file in staging/u);
 });
 
-test('the generation step succeeds on the real artifact and prints evidence into the summary', () => {
+test('the generation step succeeds on the real artifact and prints evidence into the summary', (t) => {
+  const bash = requireBash(t);
+  if (!bash) return;
   const script = stepRunScript('Build EdgeOne release staging tree');
   const scratch = mkdtempSync(resolve(tmpdir(), 'eo-steptest3-'));
   const summary = resolve(scratch, 'summary.md');
   writeFileSync(summary, '');
-  const result = runInBash(script, runnerEnv(scratch, summary));
+  const result = runInBash(script, runnerEnv(scratch, summary), bash);
   assert.equal(result.code, 0, `generation step should pass on the real artifact:\n${result.out}`);
   const summaryText = readFileSync(summary, 'utf8');
   assert.match(summaryText, /fingerprint: [0-9a-f]{64}/u, 'the summary must carry the staging fingerprint');
@@ -643,4 +666,103 @@ test('the publish step records the release commit SHA only after a successful pu
   assert.doesNotMatch(block, /release_sha=.*\{\{12\}\}/u, 'the recorded SHA must not be abbreviated');
   // A successful push must not be presented as a completed deployment.
   assert.match(block, /EdgeOne build has not been confirmed/u);
+});
+
+// ---------------------------------------------------------------------------
+// Shell-seam regressions. These exercise the decision function directly with injected runners, so
+// they never re-invoke the test runner as a subprocess (no recursion) and never depend on whether
+// this machine actually has bash.
+// ---------------------------------------------------------------------------
+
+test('resolveBash prefers GF_BASH, then Git Bash on Windows, then the system bash', () => {
+  assert.equal(resolveBash({ GF_BASH: '/opt/custom/bash' }, 'linux'), '/opt/custom/bash');
+  assert.equal(resolveBash({}, 'win32'), 'C:\\Program Files\\Git\\bin\\bash.exe');
+  assert.equal(resolveBash({}, 'linux'), 'bash');
+});
+
+test('shellUsable requires a real bash version, not merely successful output', () => {
+  assert.equal(shellUsable('/x/bash', () => '5.2.21(1)-release\n'), true);
+  assert.equal(shellUsable('/x/bash', () => '   \n'), false, 'empty output is not bash');
+  assert.equal(shellUsable('/x/bash', () => 'usage: something-else\n'), false, 'usage text is not a version');
+  assert.equal(shellUsable('/x/bash', () => 'zsh 5.9\n'), false, 'another shell is not bash');
+  assert.equal(shellUsable('/x/bash', () => { throw new Error('ENOENT'); }), false);
+  assert.equal(shellUsable('/x/bash', () => { throw new Error('ETIMEDOUT'); }), false);
+});
+
+test('a missing shell fails when GF_REQUIRE_BASH is set, and skips with a reason otherwise', () => {
+  const throwing = () => { throw new Error('ENOENT'); };
+
+  const ci = bashGuard({ env: { GF_BASH: '/nope', GF_REQUIRE_BASH: '1' }, run: throwing });
+  assert.equal(ci.ok, false);
+  assert.equal(ci.mustFail, true, 'CI must not skip the bash-driven cases');
+  assert.match(ci.reason, /no usable bash/u);
+  assert.match(ci.reason, /\/nope/u, 'the reason must name the candidate that was tried');
+
+  const local = bashGuard({ env: { GF_BASH: '/nope' }, run: throwing });
+  assert.equal(local.ok, false);
+  assert.equal(local.mustFail, false, 'a local environment without bash may skip explicitly');
+  assert.match(local.reason, /no usable bash/u);
+});
+
+test('a shell that exists and exits 0 without BASH_VERSION is rejected', () => {
+  // `run` succeeds and returns output, but the output is not a bash version string.
+  const notBash = () => 'usage: something-else\n';
+  assert.equal(shellUsable('/x/not-a-shell', notBash), false);
+  const guard = bashGuard({ env: { GF_BASH: '/x/not-a-shell', GF_REQUIRE_BASH: '1' }, run: notBash });
+  assert.equal(guard.ok, false);
+  assert.equal(guard.mustFail, true);
+  assert.match(guard.reason, /BASH_VERSION not reported/u);
+});
+
+test('a usable shell is accepted and reported with its candidate path', () => {
+  const guard = bashGuard({ env: { GF_BASH: '/bin/bash' }, run: () => '5.2.21\n' });
+  assert.deepEqual(guard, { ok: true, candidate: '/bin/bash' });
+});
+
+// ---------------------------------------------------------------------------
+// The wiring itself. Without these, a future edit could drop GF_REQUIRE_BASH and the CI step would
+// silently skip the bash-driven cases while still reporting a green check.
+// ---------------------------------------------------------------------------
+
+const CI_SUITE_FILES = [
+  'tests/csp/edgeone-staging.test.mjs',
+  'tests/csp/edgeone-staging-review.test.mjs',
+  'tests/csp/generation-gate.test.mjs',
+];
+
+test('the PR workflow runs exactly the three staging suites and requires bash', () => {
+  const { steps } = readWorkflowSteps(PR_WORKFLOW_PATH);
+  const step = steps.find((entry) => entry.name === 'Run EdgeOne staging regressions');
+  assert.ok(step, 'check-all-pr.yml must run the EdgeOne staging regressions');
+  const block = step.lines.join('\n');
+
+  // Every suite is named explicitly, and nothing else is: a glob would sweep in fixtures/helpers.
+  for (const file of CI_SUITE_FILES) {
+    assert.ok(block.includes(file), `the step must name ${file}`);
+  }
+  const named = [...block.matchAll(/tests\/csp\/[\w.-]+/gu)].map((match) => match[0]);
+  assert.deepEqual([...new Set(named)].sort(), [...CI_SUITE_FILES].sort(),
+    'the step must name these suites and no other tests/csp path');
+
+  // A missing shell must fail in CI rather than skip; dropping this env var would hide that.
+  assert.match(block, /GF_REQUIRE_BASH:\s*'1'/u, 'the step must set GF_REQUIRE_BASH=1');
+  assert.match(block, /node --test/u);
+});
+
+test('the regression step is positioned after the browser smoke step and cannot bypass it', () => {
+  const { text, steps } = readWorkflowSteps(PR_WORKFLOW_PATH);
+  const smokeIndex = steps.findIndex((entry) => entry.name === 'Run browser smoke');
+  const regressionIndex = steps.findIndex((entry) => entry.name === 'Run EdgeOne staging regressions');
+  assert.notEqual(smokeIndex, -1);
+  assert.notEqual(regressionIndex, -1);
+  assert.ok(regressionIndex > smokeIndex, 'the regressions read _site, so the smoke step must run first');
+
+  const step = steps[regressionIndex];
+  const block = step.lines.join('\n');
+  assert.doesNotMatch(block, /continue-on-error/u);
+  assert.doesNotMatch(block, /^\s+if:/mu, 'the step must not carry a bypassing condition');
+  // No `always()`/`!cancelled()` anywhere in this workflow may rescue the new step.
+  const conditionalSteps = [...text.matchAll(/^\s{6}- name:\s*(.+?)\s*\n\s{8}if:\s*(.+)$/gmu)]
+    .map((match) => `${match[1]} -> ${match[2].trim()}`);
+  assert.deepEqual(conditionalSteps, [], `no step in check-all-pr.yml may be conditionally rescued: ${conditionalSteps.join('; ')}`);
 });
