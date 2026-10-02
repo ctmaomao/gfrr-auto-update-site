@@ -22,6 +22,9 @@ on:
       - 'scripts/app.js'
       - 'scripts/modules/**'
       - 'scripts/build-pages-artifact.mjs'
+      - 'scripts/build-edgeone-release-artifact.mjs'
+      - 'scripts/lib/edgeone-csp-policy.mjs'
+      - 'config/edgeone/**'
       - '.github/workflows/publish-edgeone-release.yml'
 
 permissions:
@@ -67,6 +70,27 @@ jobs:
       - name: Build allowlisted static artifact
         run: npm run build:pages-artifact
 
+      # The EdgeOne channel gets its own staging tree: the shared Pages artifact plus the generated
+      # `edgeone.json`. Keeping the config out of `_site` leaves the Pages artifact untouched, and
+      # generating it here means the published config cannot be silently deleted by the whole-tree
+      # sync below. `tee` only copies what the generator actually printed; `pipefail` (already set
+      # by `set -euo pipefail`) keeps a generation or validation failure from being masked by it.
+      - name: Build EdgeOne release staging tree
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          staging="$RUNNER_TEMP/edgeone-staging"
+          config="$GITHUB_WORKSPACE/config/edgeone/csp-report-only.json"
+          {
+            echo '### EdgeOne staging tree'
+            echo '```text'
+            node scripts/build-edgeone-release-artifact.mjs \
+              --add-config --artifact-dir "$GITHUB_WORKSPACE/_site" --config "$config" --out-dir "$staging"
+            node scripts/build-edgeone-release-artifact.mjs \
+              --check --artifact-dir "$GITHUB_WORKSPACE/_site" --config "$config" --out-dir "$staging"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Configure release deploy key
         env:
           EDGEONE_RELEASE_DEPLOY_KEY: ${{ secrets.EDGEONE_RELEASE_DEPLOY_KEY }}
@@ -100,7 +124,10 @@ jobs:
             git -C "$release_dir" checkout -B main FETCH_HEAD
           fi
 
-          rsync -a --delete --exclude='.git/' "$GITHUB_WORKSPACE/_site/" "$release_dir/"
+          # Same command as before; only the source moves from the shared Pages artifact to the
+          # EdgeOne staging tree, which additionally carries the generated edgeone.json. The `.git/`
+          # exclusion stays: without it the sync would delete the release checkout's own metadata.
+          rsync -a --delete --exclude='.git/' "$RUNNER_TEMP/edgeone-staging/" "$release_dir/"
           cd "$release_dir"
           git add -A
 
@@ -123,7 +150,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: publish source ${SOURCE_SHA::12}"
           git push origin main
+          # Record the release commit that the platform will build from. A successful push here does
+          # NOT mean EdgeOne has deployed: the response header can only be bound to this SHA once the
+          # corresponding EdgeOne build is confirmed and read back.
+          release_sha=$(git rev-parse HEAD)
           echo "Published checked source ${SOURCE_SHA} to ${RELEASE_REPOSITORY}." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release commit: ${release_sha}" >> "$GITHUB_STEP_SUMMARY"
+          echo "EdgeOne build has not been confirmed by this workflow; bind this SHA after the build succeeds." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove release deploy key
         if: always()
