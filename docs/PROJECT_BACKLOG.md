@@ -126,7 +126,11 @@
 - **实现（新增，未部署）**：`workers/gfrr-csp-report-receiver/` —— `src/constants.js`、`normalize.js`、`storage.js`、`health.js`、`index.js`、`receiver-object.js`，以及 `wrangler.toml`（**明确标注 NOT DEPLOYED**；`observability.enabled = false`；**无 routes、无 cron**；migrations 段保持注释）。
 - **测试（手动入口，不接入 CI）**：`tests/csp/receiver-schema.test.mjs`（10）、`receiver-object.test.mjs`（21）、`receiver-entry.test.mjs`（12）—— **合计 43 项全绿**，全部跑在 `node:sqlite` 内存库（Node v24.21.0 / SQLite 3.53.4）上，**零新增依赖**。
 - **已落实的验收口径**：预算判定在**所有写入之前**且按**整批**判定（含等于/超过边界、空 planned 不写账本）；`used = obs_rows + ledger_rows`（**累计更新次数**，可大于行数）；overflow **新建或更新均计 1 行写**；分类上限溢出与容量不足**同入 overflow**；截断标记**首次 INSERT 亦置位且不回落**；跨日 **UPSERT** 建账本行；**跨表回滚**（触发器注入失败后 obs 与 ledger 同时回滚）；清理**恰好保留 R 桶**且 obs/ledger 同步删除、幂等、失败重抛原始异常；健康检查**水位与调度两条独立判定**（调度不依赖水位）、读取失败报 **"无法确认"**；入口层 405/415/413（含**无 Content-Length 的流式闸**）/400/429 分支。
-- **本机新发现（须在参数评审时解决）**：**可达的正常行键空间只有 60**（4 指令 × 6 blocked × 3 doc，且 `cross-origin`/`other` 都归一为 `other`），**远小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`。因此这两个候选值**无法经正常路径触发**；容量与 overflow 分支在测试中通过**注入 `bucketRowCap`** 才得以覆盖。**参数需与键空间重新对齐**。
+- **复核修正一 · 聚合键维度**：主键实为 `(bucket, directive, blocked, doc, policy_tag, mechanism)`，**`mechanism` 与 `policyTag` 均已保留**。键空间公式为
+  `|DIRECTIVES| × |BLOCKED| × |DOCS| × (1 + 已知策略版本数) × |MECHANISMS|`；本地 fixture（已知策略表为空）实测 = **144**（**单机制 72**）。
+  先前回复中"可达键空间只有 60"的说法**不准确**，已按实测更正。
+- **复核修正二 · `cross-origin` 曾丢失独立分类**：原 `mapBlocked` 只识别 `inline`/`eval`/`data`/`self`，绝对 URI 落到 `other`，**偏离既定分类**。已修正为：非 `data:`/`self` 的绝对 URI（`scheme://` 或 `//`）→ `cross-origin`，并新增断言覆盖该映射与 `//host` 形态。
+- **参数与键空间的不一致（待参数评审）**：144 **小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`，故这两个候选值**无法经正常路径触发**；容量与 overflow 分支靠**注入 `bucketRowCap`** 覆盖 —— 这**只证明该参数值下的行为，不证明默认 512 可达**。键空间只有在已知策略表超过 1 项时才会越过 200。
 - **明确未覆盖（属 B 阶段）**：平台计量（游标 `rowsWritten`/`rowsRead` 是否为权威计费值）、免费层额度与超限形态、alarm 实际触发与指数退避/最多六次重试、CPU 预算下的载荷上限、跨源投递（`no-cors`/`cors`）与 `Reporting-Endpoints`、Workers Logs 保留期与 IP、跨 DO 共享额度。**D-C 与 D-A 都不能替代这些验证。**
 - **保留的边界**：拒绝/丢弃计数**仅作本次处理诊断**，不新增持久化统计行、不承诺跨请求累计、不默认写平台日志；`RESERVE` 类口径只降低摄入预算，**不是平台额度预留保证**。
 

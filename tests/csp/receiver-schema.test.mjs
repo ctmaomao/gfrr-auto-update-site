@@ -40,7 +40,9 @@ test('normalisation maps unknown and hostile values onto the catch-all members',
   assert.equal(mapDirective('<script>alert(1)</script>'), 'other');
   assert.equal(mapBlocked('inline'), 'inline');
   assert.equal(mapBlocked('data:font/woff'), 'data');
-  assert.equal(mapBlocked('https://evil.example/x'), 'other');
+  assert.equal(mapBlocked('https://evil.example/x'), 'cross-origin', 'another origin keeps its own category');
+  assert.equal(mapBlocked('//evil.example/x'), 'cross-origin');
+  assert.equal(mapBlocked('not a uri at all'), 'other');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/index.html'), 'index');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/bubble-watch.html?x=1#y'), 'bubble-watch');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/private/secret-path.html'), 'other');

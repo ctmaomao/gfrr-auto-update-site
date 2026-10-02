@@ -52,28 +52,29 @@ const keyOf = (directive, blocked, doc, policyTag = 'unknown', mechanism = 'lega
  */
 /**
  * Enumerates the NORMALISED key space for normal rows, by running every combination of the closed
- * enums through the real normalisation. It is computed rather than assumed because some raw values
- * collapse: `cross-origin` and `other` both normalise to `other`, so the reachable space is smaller
- * than DIRECTIVES x BLOCKED x DOCS.
+ * enums through the real normalisation, for BOTH mechanisms.
  *
- * `policy_tag` is `unknown` unless a payload matches the finite known table (empty in local tests).
+ * The aggregate key keeps all five dimensions (bucket, directive, blocked, doc, policy_tag,
+ * mechanism), so `mechanism` is part of the space. `policy_tag` is `unknown` here only because the
+ * finite known policy table is empty in local tests; a populated table of `k` known versions
+ * multiplies the space by `k + 1`.
  */
-const keySpace = (mechanism = 'legacy') => {
+const keySpace = (mechanisms = ['legacy', 'reporting']) => {
   const directives = ['script-src', 'script-src-attr', 'style-src-elem', 'other'];
-  const blocked = ['inline', 'self', 'cross-origin', 'eval', 'data', 'other'];
+  const blocked = ['inline', 'self', 'https://evil.example/x', 'eval', 'data:font/woff', 'other'];
   const docs = ['index', 'bubble-watch', 'other'];
   const keys = new Set();
-  for (const doc of docs) {
-    for (const block of blocked) {
-      for (const directive of directives) {
-        const normalised = mapBlocked(block);
-        keys.add(keyOf(mapDirective(directive), normalised, doc, 'unknown', mechanism));
+  for (const mechanism of mechanisms) {
+    for (const doc of docs) {
+      for (const block of blocked) {
+        for (const directive of directives) {
+          keys.add(keyOf(mapDirective(directive), mapBlocked(block), doc, 'unknown', mechanism));
+        }
       }
     }
   }
   return [...keys].sort();
 };
-
 /** A Reporting API item. Arrays only ever carry this shape; a legacy body is one report per call. */
 const reportingItem = ({ directive = 'script-src', blocked = 'inline', document = 'https://x.test/index.html', extra = {} } = {}) => ({
   type: 'csp-violation',
@@ -91,11 +92,20 @@ const reportingItem = ({ directive = 'script-src', blocked = 'inline', document 
  * exactly one report per request.
  */
 const payloadForKeys = (keys) => {
+  // A key holds NORMALISED enum members, so the raw value has to be the one that produces the
+  // member: sending the member itself back would map `cross-origin` to `other` and collapse keys.
+  const rawBlocked = {
+    inline: 'inline',
+    self: 'self',
+    'cross-origin': 'https://evil.example/x',
+    eval: 'eval',
+    data: 'data:font/woff',
+    other: 'not-a-uri',
+  };
   const docFor = (doc) => (doc === 'index' ? 'index.html' : `${doc}.html`);
-  const blockedFor = (blocked) => (blocked === 'data' ? 'data:font/woff' : blocked);
   return keys.map((key) => {
     const { directive, blocked, doc } = splitKey(key);
-    return reportingItem({ directive, blocked: blockedFor(blocked), document: `https://x.test/${docFor(doc)}` });
+    return reportingItem({ directive, blocked: rawBlocked[blocked] ?? 'not-a-uri', document: `https://x.test/${docFor(doc)}` });
   });
 };
 
@@ -147,19 +157,28 @@ test('normalisation happens before key counting, so raw values cannot exhaust th
   assert.equal(plan.get(keyOf('other', 'other', 'index', 'unknown', 'reporting')), 500);
 });
 
-test('the closed key space is far smaller than the declared input-key and bucket caps', () => {
-  // Recorded deliberately: the reachable normal-row key space is far below
-  // LIMITS.MAX_INPUT_KEYS_PER_BATCH (200) and BUCKET_ROW_CAP (512), so neither candidate value can
-  // be exercised through the normal path. The parameters must be reconciled before they mean
-  // anything; the mechanisms themselves are asserted in the following cases.
-  const keys = keySpace('reporting');
-  assert.ok(keys.length <= 72, `reachable key space is ${keys.length}`);
-  assert.ok(keys.length < LIMITS.MAX_INPUT_KEYS_PER_BATCH, 'input-key bound exceeds the reachable key space');
-  assert.ok(keys.length < LIMITS.BUCKET_ROW_CAP, 'bucket cap exceeds the reachable key space');
+test('the reachable key space is smaller than the declared input-key and bucket caps', () => {
+  // Recorded deliberately. The aggregate key keeps all five dimensions, so the normal-row space is
+  // |DIRECTIVES| x |BLOCKED| x |DOCS| x (1 + known policy versions) x |MECHANISMS|. With the local
+  // fixtures (empty known table) that is 4 x 6 x 3 x 1 x 2 = 144.
+  const both = keySpace();
+  assert.equal(both.length, 144);
+
+  // 144 is below BOTH candidate caps, so neither can be reached through the normal path today. The
+  // capacity branch is therefore covered by injecting `bucketRowCap`, which proves the branch for
+  // that parameter value but NOT that the default 512 is reachable.
+  assert.ok(both.length < LIMITS.BUCKET_ROW_CAP, `key space ${both.length} vs BUCKET_ROW_CAP`);
+  assert.ok(both.length < LIMITS.MAX_INPUT_KEYS_PER_BATCH, `key space ${both.length} vs MAX_INPUT_KEYS_PER_BATCH`);
+
+  // The same arithmetic shows how little headroom there is: the space crosses 200 only once the
+  // known policy table holds more than one entry.
+  const perMechanism = both.length / 2;
+  assert.equal(perMechanism * 2, both.length);
 });
 
 test('the distinct-key bound keeps exactly the declared number of keys', () => {
-  const keys = keySpace('reporting');
+  const keys = keySpace(['reporting']);
+  assert.equal(keys.length, 72);
   const { plan, diagnostics } = buildPlan(payloadForKeys(keys));
   assert.equal(plan.size, Math.min(keys.length, LIMITS.MAX_INPUT_KEYS_PER_BATCH));
   assert.equal(diagnostics.droppedKeys, Math.max(keys.length - LIMITS.MAX_INPUT_KEYS_PER_BATCH, 0));

@@ -41,11 +41,15 @@ export function mapDirective(value) {
 
 /** Maps the blocked resource onto the fixed enum, without keeping the raw value. */
 export function mapBlocked(value) {
-  const text = String(value ?? '').toLowerCase();
+  const text = String(value ?? '').toLowerCase().trim();
   if (text === 'inline') return 'inline';
   if (text === 'eval') return 'eval';
   if (text === 'data' || text.startsWith('data:')) return 'data';
   if (text === 'self' || text.startsWith('self')) return 'self';
+  // `cross-origin` keeps its own category, as the design requires: a resource blocked on another
+  // origin is diagnostically different from one that cannot be classified. The spec already
+  // truncates such a blocked URI to scheme+host+port, so only the shape is inspected here.
+  if (/^[a-z][a-z0-9+.-]*:\/\//u.test(text) || text.startsWith('//')) return 'cross-origin';
   return 'other';
 }
 
