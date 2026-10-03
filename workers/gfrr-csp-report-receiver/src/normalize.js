@@ -39,18 +39,76 @@ export function mapDirective(value) {
   return DIRECTIVES.includes(normalised) ? normalised : 'other';
 }
 
-/** Maps the blocked resource onto the fixed enum, without keeping the raw value. */
-export function mapBlocked(value) {
-  const text = String(value ?? '').toLowerCase().trim();
+/**
+ * Maps the blocked resource onto the fixed enum, without keeping the raw value.
+ *
+ * `cross-origin` requires comparing ORIGINS, not URL shapes: a same-origin resource can perfectly
+ * well appear as an absolute URL. So the blocked value is resolved against the page, and only a
+ * different origin maps to `cross-origin`. Anything that cannot be resolved reliably — or a report
+ * with no usable page URL — falls back to `other` rather than being guessed at.
+ */
+export function mapBlocked(value, documentUrl) {
+  const raw = String(value ?? '').trim();
+  const text = raw.toLowerCase();
   if (text === 'inline') return 'inline';
   if (text === 'eval') return 'eval';
   if (text === 'data' || text.startsWith('data:')) return 'data';
-  if (text === 'self' || text.startsWith('self')) return 'self';
-  // `cross-origin` keeps its own category, as the design requires: a resource blocked on another
-  // origin is diagnostically different from one that cannot be classified. The spec already
-  // truncates such a blocked URI to scheme+host+port, so only the shape is inspected here.
-  if (/^[a-z][a-z0-9+.-]*:\/\//u.test(text) || text.startsWith('//')) return 'cross-origin';
-  return 'other';
+
+  const pageOrigin = parseOrigin(documentUrl);
+  const blockedOrigin = parseBlockedOrigin(raw, documentUrl);
+
+  // `self` is its own category; the rest needs two origins to compare.
+  if (text === 'self') return 'self';
+  if (pageOrigin === null || !blockedOrigin.ok) return 'other';
+  return (blockedOrigin.origin ?? pageOrigin) === pageOrigin ? 'self' : 'cross-origin';
+}
+
+/**
+ * Resolves the blocked value to an origin, or `origin: null` for something that is page-relative.
+ *
+ * Order matters:
+ *  1. an absolute URL (it has a scheme) is used as-is;
+ *  2. otherwise the value must be an EXPLICIT path (`/`, `./`, `../`) — resolving a bare word like
+ *     `nonsense` against the page would succeed and report a bogus same-origin match;
+ *  3. a protocol-relative value (`//host`) is resolved against the page, which is what gives it the
+ *     page's scheme; it is cross-origin when the host differs.
+ */
+function parseBlockedOrigin(value, documentUrl) {
+  if (value === '' || /[\s<>"'`]/u.test(value)) return { ok: false };
+  if (/^[a-z][a-z0-9+.-]*:/iu.test(value)) {
+    try {
+      return { ok: true, origin: new URL(value).origin };
+    } catch {
+      return { ok: false };
+    }
+  }
+  if (value.startsWith('//')) {
+    if (documentUrl === undefined || documentUrl === null || String(documentUrl).trim() === '') {
+      return { ok: false };
+    }
+    try {
+      return { ok: true, origin: new URL(value, documentUrl).origin };
+    } catch {
+      return { ok: false };
+    }
+  }
+  if (!value.startsWith('/') && !value.startsWith('./') && !value.startsWith('../')) return { ok: false };
+  return { ok: true, origin: null };
+}
+
+/** Origin of a URL, resolved against `base` when the value is relative. `null` when unusable. */
+function parseOrigin(value, base) {
+  const raw = String(value ?? '').trim();
+  if (raw === '') return null;
+  try {
+    return new URL(raw, base).origin;
+  } catch {
+    try {
+      return new URL(raw).origin;
+    } catch {
+      return null;
+    }
+  }
 }
 
 /**
@@ -164,7 +222,7 @@ export function normaliseItem(item, { knownTags = [] } = {}) {
   const disposition = String(dispositionRaw ?? '').toLowerCase() === 'enforce' ? 'enforce' : 'report';
   const key = [
     mapDirective(directiveRaw),
-    mapBlocked(blockedRaw),
+    mapBlocked(blockedRaw, documentRaw),
     mapDoc(documentRaw),
     mapPolicyTag(knownTags, policyRaw),
     mechanism,

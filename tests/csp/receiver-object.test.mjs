@@ -10,7 +10,7 @@ import { LIMITS, addDays, bucketFor } from '../../workers/gfrr-csp-report-receiv
 import {
   applySchema, cleanup, commitBatch, ingest, planBatch, readUsed, splitKey,
 } from '../../workers/gfrr-csp-report-receiver/src/storage.js';
-import { buildPlan, mapBlocked, mapDirective, readBodyWithinLimit } from '../../workers/gfrr-csp-report-receiver/src/normalize.js';
+import { buildPlan, mapBlocked, mapDirective, mapDoc, readBodyWithinLimit } from '../../workers/gfrr-csp-report-receiver/src/normalize.js';
 import { evaluateHealth } from '../../workers/gfrr-csp-report-receiver/src/health.js';
 
 const fresh = () => {
@@ -51,7 +51,20 @@ const keyOf = (directive, blocked, doc, policyTag = 'unknown', mechanism = 'lega
  * shape. So the reachable key space is DIRECTIVES x BLOCKED x DOCS.
  */
 /**
- * Enumerates the NORMALISED key space for normal rows, by running every combination of the closed
+ * Blocked values paired with the page they are judged against. `cross-origin` cannot be produced
+ * without a page origin to compare with, so each raw value carries its own document.
+ */
+const BLOCKED_SAMPLES = [
+  ['inline', 'https://x.test/index.html'],
+  ['self', 'https://x.test/index.html'],
+  ['https://evil.example/x', 'https://x.test/index.html'],
+  ['eval', 'https://x.test/index.html'],
+  ['data:font/woff', 'https://x.test/index.html'],
+  ['not-a-uri', 'https://x.test/index.html'],
+];
+
+/**
+ * Enumerates the NORMALISED key space for normal rows by running every combination of the closed
  * enums through the real normalisation, for BOTH mechanisms.
  *
  * The aggregate key keeps all five dimensions (bucket, directive, blocked, doc, policy_tag,
@@ -61,14 +74,21 @@ const keyOf = (directive, blocked, doc, policyTag = 'unknown', mechanism = 'lega
  */
 const keySpace = (mechanisms = ['legacy', 'reporting']) => {
   const directives = ['script-src', 'script-src-attr', 'style-src-elem', 'other'];
-  const blocked = ['inline', 'self', 'https://evil.example/x', 'eval', 'data:font/woff', 'other'];
   const docs = ['index', 'bubble-watch', 'other'];
   const keys = new Set();
   for (const mechanism of mechanisms) {
     for (const doc of docs) {
-      for (const block of blocked) {
+      for (const [blockedRaw, baseDocument] of BLOCKED_SAMPLES) {
+        // The page must match the document class under test, so the sample's own page is retargeted.
+        const document = baseDocument.replace('index.html', doc === 'index' ? 'index.html' : `${doc}.html`);
         for (const directive of directives) {
-          keys.add(keyOf(mapDirective(directive), mapBlocked(block), doc, 'unknown', mechanism));
+          keys.add(keyOf(
+            mapDirective(directive),
+            mapBlocked(blockedRaw, document),
+            mapDoc(document),
+            'unknown',
+            mechanism,
+          ));
         }
       }
     }

@@ -129,7 +129,12 @@
 - **复核修正一 · 聚合键维度**：主键实为 `(bucket, directive, blocked, doc, policy_tag, mechanism)`，**`mechanism` 与 `policyTag` 均已保留**。键空间公式为
   `|DIRECTIVES| × |BLOCKED| × |DOCS| × (1 + 已知策略版本数) × |MECHANISMS|`；本地 fixture（已知策略表为空）实测 = **144**（**单机制 72**）。
   先前回复中"可达键空间只有 60"的说法**不准确**，已按实测更正。
-- **复核修正二 · `cross-origin` 曾丢失独立分类**：原 `mapBlocked` 只识别 `inline`/`eval`/`data`/`self`，绝对 URI 落到 `other`，**偏离既定分类**。已修正为：非 `data:`/`self` 的绝对 URI（`scheme://` 或 `//`）→ `cross-origin`，并新增断言覆盖该映射与 `//host` 形态。
+- **复核修正二 · `cross-origin` 曾丢失独立分类，且第一次修法仍不正确**：原 `mapBlocked` 只识别 `inline`/`eval`/`data`/`self`，绝对 URI 落到 `other`，**偏离既定分类**。第一次修正按 **URL 形态**判定（`scheme://` 或 `//`）**仍然错误** —— 绝对 URL 只能证明形式，**同源资源也会以绝对 URL 出现**。最终实现改为**解析并比较 origin**：
+  - 被阻止资源与报告页面的 origin **相同 → `self`**；**不同 → `cross-origin`**；
+  - **无法可靠解析、或缺少页面来源 → `other`**（不猜测）；
+  - 协议相对（`//host`）以页面为 base 解析（否则会被误当作路径而判成同源）；裸词（如 `nonsense`）**拒绝**，因为 `new URL(value, page)` 会把任意文本当相对路径并给出假同源；
+  - **原始 URL 仍不落库**。
+  回归覆盖：**同源绝对 URL**、**跨源绝对 URL**、**协议相对（同源与跨源各一）**、同主机不同 scheme、页面相对路径、不可解析值与无页面来源。
 - **参数与键空间的不一致（待参数评审）**：144 **小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`，故这两个候选值**无法经正常路径触发**；容量与 overflow 分支靠**注入 `bucketRowCap`** 覆盖 —— 这**只证明该参数值下的行为，不证明默认 512 可达**。键空间只有在已知策略表超过 1 项时才会越过 200。
 - **明确未覆盖（属 B 阶段）**：平台计量（游标 `rowsWritten`/`rowsRead` 是否为权威计费值）、免费层额度与超限形态、alarm 实际触发与指数退避/最多六次重试、CPU 预算下的载荷上限、跨源投递（`no-cors`/`cors`）与 `Reporting-Endpoints`、Workers Logs 保留期与 IP、跨 DO 共享额度。**D-C 与 D-A 都不能替代这些验证。**
 - **保留的边界**：拒绝/丢弃计数**仅作本次处理诊断**，不新增持久化统计行、不承诺跨请求累计、不默认写平台日志；`RESERVE` 类口径只降低摄入预算，**不是平台额度预留保证**。

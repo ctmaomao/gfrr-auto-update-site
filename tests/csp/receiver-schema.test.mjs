@@ -40,12 +40,31 @@ test('normalisation maps unknown and hostile values onto the catch-all members',
   assert.equal(mapDirective('<script>alert(1)</script>'), 'other');
   assert.equal(mapBlocked('inline'), 'inline');
   assert.equal(mapBlocked('data:font/woff'), 'data');
-  assert.equal(mapBlocked('https://evil.example/x'), 'cross-origin', 'another origin keeps its own category');
-  assert.equal(mapBlocked('//evil.example/x'), 'cross-origin');
+  assert.equal(mapBlocked('https://evil.example/x'), 'other', 'without a page origin nothing can be judged');
+  assert.equal(mapBlocked('//evil.example/x'), 'other');
   assert.equal(mapBlocked('not a uri at all'), 'other');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/index.html'), 'index');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/bubble-watch.html?x=1#y'), 'bubble-watch');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/private/secret-path.html'), 'other');
+});
+
+test('cross-origin is decided by comparing origins, not by the shape of the URL', () => {
+  const page = 'https://radar.gfrfinradar.uk/index.html';
+
+  // An absolute URL is NOT evidence of another origin: this one is the same origin.
+  assert.equal(mapBlocked('https://radar.gfrfinradar.uk/scripts/app.js', page), 'self');
+  // A genuinely different origin.
+  assert.equal(mapBlocked('https://evil.example/x', page), 'cross-origin');
+  // Protocol-relative resolves against the page scheme, so this one is the same origin.
+  assert.equal(mapBlocked('//radar.gfrfinradar.uk/scripts/app.js', page), 'self');
+  // Protocol-relative pointing elsewhere is cross-origin.
+  assert.equal(mapBlocked('//evil.example/x', page), 'cross-origin');
+  // A different scheme on the same host is a different origin.
+  assert.equal(mapBlocked('http://radar.gfrfinradar.uk/x', page), 'cross-origin');
+  // A path is same-origin; a page-relative URL without a page origin cannot be judged.
+  assert.equal(mapBlocked('/scripts/app.js', page), 'self');
+  assert.equal(mapBlocked('nonsense', page), 'other');
+  assert.equal(mapBlocked('https://evil.example/x', undefined), 'other', 'no page origin means no guess');
 });
 
 test('a policy tag is only ever derived from the finite known table', () => {
