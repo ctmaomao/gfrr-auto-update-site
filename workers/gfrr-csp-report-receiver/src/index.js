@@ -1,7 +1,11 @@
-// Entry point for the CSP report receiver.
+// Entry module for the Worker (see wrangler.toml `main`).
 //
 // LOCAL PHASE: this file is written and reviewed but NOT deployed. Deployment is stage B and needs
 // its own authorization, because it creates Cloudflare resources and can consume account quota.
+//
+// This module deliberately does NOT import `cloudflare:workers`: it holds the parts that must stay
+// testable in Node. The Durable Object class, which has to extend the runtime's base class, lives in
+// worker-entry.js — the file that is actually bound as the Worker entry.
 //
 // Responsibilities kept here, before any Durable Object is touched:
 //   * method and content-type gating;
@@ -12,9 +16,6 @@
 //     persisted, so no rejection is ever recorded by bypassing the ingest budget it just hit.
 import { LIMITS } from './constants.js';
 import { buildPlan, buildPolicyTable, readBodyWithinLimit } from './normalize.js';
-
-// The Durable Object class must be reachable from the entry module named in wrangler.toml.
-export { CspReceiverObject } from './receiver-object.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 
@@ -82,12 +83,3 @@ export async function handleHealth(env, { now = Date.now } = {}) {
   const health = await stub.health({ now: now() });
   return json(health, health.status === 'unknown' ? 503 : 200);
 }
-
-export default {
-  async fetch(request, env) {
-    const { pathname } = new URL(request.url);
-    if (pathname === '/csp-report') return handleReport(request, env);
-    if (pathname === '/health') return handleHealth(env);
-    return json({ ok: false, error: 'not-found' }, 404);
-  },
-};

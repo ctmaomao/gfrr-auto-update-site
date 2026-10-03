@@ -124,7 +124,8 @@
 
 - **owner 批准范围**：**A 部分，D-C 方案、零新增依赖**、按已收束的设计与验收基线实施；**B（Cloudflare 隔离资源与平台行为验证）与 C（线上策略加 `report-uri`/`report-to`）分别授权**，本次均未启动。
 - **实现（新增，未部署）**：`workers/gfrr-csp-report-receiver/` —— `src/constants.js`、`normalize.js`、`storage.js`、**`storage-adapter.js`**、`health.js`、`index.js`、`receiver-object.js`，以及 `wrangler.toml`（**明确标注 NOT DEPLOYED**；`observability.enabled = false`；**无 routes、无 cron**；migrations 段保持注释）。
-- **测试（手动入口，不接入 CI）**：`tests/csp/receiver-schema.test.mjs`（13）、`receiver-object.test.mjs`（31）、`receiver-entry.test.mjs`（12）—— **合计 56 项全绿**，全部跑在 `node:sqlite` 内存库（Node v24.21.0 / SQLite 3.53.4）上，**零新增依赖**。DO 用例使用**伪造的平台接口**（`storage.sql.exec` 返回行数组 + `storage.transactionSync`，并**拒绝 BEGIN/COMMIT**），使适配器本身也被覆盖。
+- **测试（手动入口，不接入 CI）**：`tests/csp/receiver-schema.test.mjs`（13）、`receiver-object.test.mjs`（32）、`receiver-entry.test.mjs`（12）—— **合计 57 项全绿**，全部跑在 `node:sqlite` 内存库（Node v24.21.0 / SQLite 3.53.4）上，**零新增依赖**。DO 用例使用**伪造的平台接口**（`storage.sql.exec` 返回行数组 + `storage.transactionSync`，并**拒绝 BEGIN/COMMIT**），使适配器本身也被覆盖。
+- **既有 CSP 回归的如实计数**：**66 通过 / 0 失败 / 1 跳过**（跳过项为输入树文件符号链接用例，本环境 `EPERM`，不可报成"67 项全部执行"）。
 - **已落实的验收口径**：预算判定在**所有写入之前**且按**整批**判定（含等于/超过边界、空 planned 不写账本）；`used = obs_rows + ledger_rows`（**累计更新次数**，可大于行数）；overflow **新建或更新均计 1 行写**；分类上限溢出与容量不足**同入 overflow**；截断标记**首次 INSERT 亦置位且不回落**；跨日 **UPSERT** 建账本行；**跨表回滚**（触发器注入失败后 obs 与 ledger 同时回滚）；清理**恰好保留 R 桶**且 obs/ledger 同步删除、幂等、失败重抛原始异常；健康检查**水位与调度两条独立判定**（调度不依赖水位）、读取失败报 **"无法确认"**；入口层 405/415/413（含**无 Content-Length 的流式闸**）/400/429 分支。
 - **复核修正一 · 聚合键维度**：主键实为 `(bucket, directive, blocked, doc, policy_tag, mechanism)`，**`mechanism` 与 `policyTag` 均已保留**。键空间公式为
   `|DIRECTIVES| × |BLOCKED| × |DOCS| × (1 + 已知策略版本数) × |MECHANISMS|`。
@@ -145,6 +146,8 @@
   6. **[P2] 健康检查写入并修复调度**：原 `health()` 调用 `initialise()` 会写 meta 并在缺 alarm 时排程。现拆为 `ensureSchema()`（仅首次、只建表与补缺失 meta 键）与 `ensureAlarm()`（**仅 ingest 调用**）；`health()` **只读**，并新增回归断言"一次 health 调用不改变 meta、不改变 alarm 且仍报告 `schedule-missing`"。
   7. **[P2] 已知策略版本无法分类**：原返回 8 位 FNV 摘要，而允许集是 `p1..p4/unknown`，命中反而被丢弃。现 `buildPolicyTable()` 把配置的策略文本哈希为有限 tag，`mapPolicyTag()` 只返回该 tag 或 `unknown`；回归断言"已知策略被正确分类为 `p1` 而非丢弃"。
 - **测试与记录更正（同轮复核指出）**：回滚回归原先在**第一条 obs INSERT 之前**就失败，不能证明部分写入后回滚；现用触发器让**第二条** obs 写入失败（首条已写入），并断言**首条确已撤销且 ledger 亦回滚**。键空间数字按上条更正为 **180 / 90**。
+- **第二轮复核（`a7286bbe`）[P1] · RPC 基类缺失，已修**：`index.js` 调用 `stub.ingest()` / `stub.health()`，但对象类是普通类。平台要求**继承内置 `DurableObject`** 才能把公共方法暴露为 RPC，仅"从入口导出类"不够。修法：`receiver-object.js` 改为导出**工厂 `createCspReceiverObject(Base)`**（在构造函数中 `super(ctx, env)`），平台侧由**新增的 `worker-entry.js`** 注入真基类；`wrangler.toml` 的 `main` 改为 `src/worker-entry.js`（**唯一** `import 'cloudflare:workers'` 的模块），`index.js` 只保留可测逻辑与 `fetch` 处理函数。
+  - 由此保持 **D-C 可在 Node 中测试**：本地用例用普通基类 `LocalBase` 调用同一工厂，**零新增依赖**；新增回归断言"类确实继承注入的基类、`super(ctx, env)` 被调用且三个方法存在"。
 - **参数与键空间的不一致（待参数评审）**：144 **小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`，故这两个候选值**无法经正常路径触发**；容量与 overflow 分支靠**注入 `bucketRowCap`** 覆盖 —— 这**只证明该参数值下的行为，不证明默认 512 可达**。键空间只有在已知策略表超过 1 项时才会越过 200。
 - **明确未覆盖（属 B 阶段）**：平台计量（游标 `rowsWritten`/`rowsRead` 是否为权威计费值）、免费层额度与超限形态、alarm 实际触发与指数退避/最多六次重试、CPU 预算下的载荷上限、跨源投递（`no-cors`/`cors`）与 `Reporting-Endpoints`、Workers Logs 保留期与 IP、跨 DO 共享额度。**D-C 与 D-A 都不能替代这些验证。**
 - **保留的边界**：拒绝/丢弃计数**仅作本次处理诊断**，不新增持久化统计行、不承诺跨请求累计、不默认写平台日志；`RESERVE` 类口径只降低摄入预算，**不是平台额度预留保证**。

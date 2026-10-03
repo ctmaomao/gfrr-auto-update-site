@@ -9,7 +9,9 @@
 # any cron trigger (cleanup runs from the Durable Object alarm, not from a Worker schedule).
 
 name = "gfrr-csp-report-receiver"
-main = "src/index.js"
+# The entry module is the only one that imports `cloudflare:workers`; it exports both the fetch
+# handler and the Durable Object class (which must extend the runtime's `DurableObject` for RPC).
+main = "src/worker-entry.js"
 compatibility_date = "2026-04-28"
 
 # Deployment state. The Durable Object is SQLite-backed, which is the only backend available on the

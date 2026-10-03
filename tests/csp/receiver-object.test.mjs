@@ -14,8 +14,23 @@ import { createNodeSqliteAdapter } from '../../workers/gfrr-csp-report-receiver/
 import {
   buildPlan, buildPolicyTable, mapBlocked, mapDirective, mapDoc, readBodyWithinLimit,
 } from '../../workers/gfrr-csp-report-receiver/src/normalize.js';
-import { CspReceiverObject, nextCleanupAt } from '../../workers/gfrr-csp-report-receiver/src/receiver-object.js';
+import { createCspReceiverObject, nextCleanupAt } from '../../workers/gfrr-csp-report-receiver/src/receiver-object.js';
 import { evaluateHealth } from '../../workers/gfrr-csp-report-receiver/src/health.js';
+
+/**
+ * Local stand-in for the platform's `DurableObject` base class. Records the arguments it is
+ * constructed with so the test can prove the object calls `super(ctx, env)`.
+ */
+class LocalBase {
+  constructor(ctx, env) {
+    this.baseCtx = ctx;
+    this.baseEnv = env;
+    this.baseConstructed = true;
+  }
+}
+
+/** The class under test, built exactly as the platform entry builds it — only the base differs. */
+const CspReceiverObject = createCspReceiverObject(LocalBase);
 
 const fresh = () => {
   const db = new DatabaseSync(':memory:');
@@ -494,6 +509,25 @@ function seedExpired(object, bucket = '2026-09-01') {
   object.adapter.run(`INSERT INTO obs(bucket,directive,blocked,doc,policy_tag,mechanism,reports,ops,reports_incomplete)
                       VALUES(?,?,?,?,?,?,1,1,0)`, bucket, directive, blocked, doc, policyTag, mechanism);
 }
+
+test('the object class extends the supplied base class and forwards ctx and env', () => {
+  // The platform entry passes the runtime's `DurableObject`; if the class did not extend it, Durable
+  // Object RPC would not expose `ingest`/`health` at all. That requirement is asserted here against
+  // a stand-in base, so it is covered without needing the Workers runtime.
+  const { ctx } = makeContext();
+  const env = { marker: 'env' };
+  const object = new CspReceiverObject(ctx, env);
+
+  assert.equal(Object.getPrototypeOf(CspReceiverObject.prototype).constructor, LocalBase,
+    'the class must inherit from the injected base');
+  assert.equal(object instanceof LocalBase, true);
+  assert.equal(object.baseConstructed, true, 'the base constructor ran');
+  assert.equal(object.baseCtx, ctx, 'ctx is forwarded to super()');
+  assert.equal(object.baseEnv, env, 'env is forwarded to super()');
+  assert.equal(typeof object.ingest, 'function');
+  assert.equal(typeof object.health, 'function');
+  assert.equal(typeof object.alarm, 'function');
+});
 
 test('the daily cleanup is rescheduled to the NEXT day, not the day after', () => {
   const sameDay = Date.parse('2026-10-10T00:05:00.000Z');
