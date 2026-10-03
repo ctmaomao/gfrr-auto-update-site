@@ -125,7 +125,10 @@
 - **owner 批准范围**：**A 部分，D-C 方案、零新增依赖**、按已收束的设计与验收基线实施；**B（Cloudflare 隔离资源与平台行为验证）与 C（线上策略加 `report-uri`/`report-to`）分别授权**，本次均未启动。
 - **实现（新增，未部署）**：`workers/gfrr-csp-report-receiver/` —— `src/constants.js`、`normalize.js`、`storage.js`、**`storage-adapter.js`**、`health.js`、`index.js`、`receiver-object.js`，以及 `wrangler.toml`（**明确标注 NOT DEPLOYED**；`observability.enabled = false`；**无 routes、无 cron**；migrations 段保持注释）。
 - **测试（手动入口，不接入 CI）**：`tests/csp/receiver-schema.test.mjs`（13）、`receiver-object.test.mjs`（32）、`receiver-entry.test.mjs`（12）—— **合计 57 项全绿**，全部跑在 `node:sqlite` 内存库（Node v24.21.0 / SQLite 3.53.4）上，**零新增依赖**。DO 用例使用**伪造的平台接口**（`storage.sql.exec` 返回行数组 + `storage.transactionSync`，并**拒绝 BEGIN/COMMIT**），使适配器本身也被覆盖。
-- **既有 CSP 回归的如实计数**：**66 通过 / 0 失败 / 1 跳过**（跳过项为输入树文件符号链接用例，本环境 `EPERM`，不可报成"67 项全部执行"）。
+- **既有 CSP 回归的如实计数（并列记录，不相互替换）**：
+  - **本机（实施者）运行：67 通过 / 0 失败 / 0 跳过** —— 本环境可创建文件符号链接，故输入树符号链接用例**实际执行**。
+  - **独立复核者运行：66 通过 / 0 失败 / 1 跳过** —— 该环境创建文件符号链接返回 `EPERM`，文件符号链接无 junction 等价物，故跳过。
+  - 差异**仅来自环境**，两数并列，**不得**用其中一方替换另一方，也**不得**把跳过那次报成"全部执行"。
 - **已落实的验收口径**：预算判定在**所有写入之前**且按**整批**判定（含等于/超过边界、空 planned 不写账本）；`used = obs_rows + ledger_rows`（**累计更新次数**，可大于行数）；overflow **新建或更新均计 1 行写**；分类上限溢出与容量不足**同入 overflow**；截断标记**首次 INSERT 亦置位且不回落**；跨日 **UPSERT** 建账本行；**跨表回滚**（触发器注入失败后 obs 与 ledger 同时回滚）；清理**恰好保留 R 桶**且 obs/ledger 同步删除、幂等、失败重抛原始异常；健康检查**水位与调度两条独立判定**（调度不依赖水位）、读取失败报 **"无法确认"**；入口层 405/415/413（含**无 Content-Length 的流式闸**）/400/429 分支。
 - **复核修正一 · 聚合键维度**：主键实为 `(bucket, directive, blocked, doc, policy_tag, mechanism)`，**`mechanism` 与 `policyTag` 均已保留**。键空间公式为
   `|DIRECTIVES| × |BLOCKED| × |DOCS| × (1 + 已知策略版本数) × |MECHANISMS|`。
