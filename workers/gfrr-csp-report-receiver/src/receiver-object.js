@@ -2,63 +2,67 @@
 //
 // LOCAL PHASE: written and reviewed, NOT deployed (stage B needs its own authorization).
 //
-// The object deliberately holds all writes to ONE instance: the design uses a single object rather
-// than a sharded set, because there is no load evidence that sharding is needed and a single object
-// keeps the update path serial and the key space bounded.
+// The object deliberately holds all writes in ONE instance: there is no load evidence that sharding
+// is needed, and a single object keeps the update path serial and the key space bounded.
 //
-// Storage model (see storage.js for the SQL):
-//   obs                one row per normalised key, plus a single overflow row per bucket
-//   obs_write_ledger   obs_rows + ledger_rows for the bucket; `used` is their sum
-//   meta               schema version, retention, cleanup watermark and start marker
-//
-// The budget checked here is an application-side INGEST budget. It is not a platform reservation,
-// it does not cap total platform spend, and it cannot speak for other workers on the account.
-import { LIMITS, bucketFor } from './constants.js';
+// Platform specifics are isolated here:
+//   * storage goes through `createDurableObjectAdapter`, so the SQL in storage.js runs unchanged
+//     against the Durable Object SQL API (which has no `prepare()` and forbids BEGIN/COMMIT);
+//   * atomicity comes from `storage.transactionSync()`, exposed through the adapter;
+//   * `ctx.storage.getAlarm()` / `setAlarm()` drive the daily cleanup.
+import { LIMITS, bucketFor, CLEANUP_AT_UTC_MINUTE } from './constants.js';
 import { evaluateHealth } from './health.js';
-import { applySchema, cleanup, commitBatch, planBatch, readUsed } from './storage.js';
+import { createDurableObjectAdapter } from './storage-adapter.js';
+import { applySchema, cleanup, commitBatch, META_DEFAULTS, planBatch, readUsed, SQL } from './storage.js';
+
+/**
+ * Next daily cleanup instant.
+ *
+ * If today's slot is still ahead, that is the next run; otherwise the run belongs to the following
+ * day. Advancing by exactly one day from the day boundary — never two — is asserted by a regression.
+ */
+export function nextCleanupAt(fromMs) {
+  const base = Date.parse(`${bucketFor(fromMs)}T00:00:00.000Z`);
+  const todaySlot = base + CLEANUP_AT_UTC_MINUTE * 60 * 1000;
+  return todaySlot > fromMs ? todaySlot : todaySlot + 24 * 60 * 60 * 1000;
+}
 
 export class CspReceiverObject {
   constructor(ctx, env) {
     this.ctx = ctx;
     this.env = env;
-    this.sql = ctx.storage.sql;
-    this.ready = false;
+    this.adapter = createDurableObjectAdapter(ctx.storage);
+    this.schemaReady = false;
   }
 
-  /** Creates the schema and the first cleanup alarm once per object lifetime. */
-  async initialise() {
-    if (this.ready) return;
-    applySchema(this.sql);
-    // INSERT OR IGNORE: a restart must not reset the cleanup watermark or any failure marker.
-    for (const [key, value] of [
-      ['schema_version', '1'],
-      ['retention_days', String(LIMITS.RETENTION_DAYS)],
-      ['cleanup_started_at', ''],
-      ['last_cleaned_bucket', ''],
-      ['cleanup_attempts', '0'],
-    ]) {
-      this.sql.prepare(`INSERT OR IGNORE INTO meta(k,v) VALUES(?,?)`).run(key, value);
+  /** Creates tables and seeds missing meta keys. Writes only what is absent, never overwrites. */
+  ensureSchema() {
+    if (this.schemaReady) return;
+    applySchema(this.adapter);
+    for (const [key, value] of META_DEFAULTS) {
+      this.adapter.run(SQL.insertMeta, key, value);
     }
+    this.schemaReady = true;
+  }
+
+  /** Schedules the daily cleanup if none is pending. Only the ingest path calls this. */
+  async ensureAlarm(now = Date.now()) {
     if ((await this.ctx.storage.getAlarm()) === null) {
-      await this.ctx.storage.setAlarm(nextCleanupAt(Date.now()));
+      await this.ctx.storage.setAlarm(nextCleanupAt(now));
     }
-    this.ready = true;
   }
 
-  /**
-   * Plans and commits one batch. Planning happens before any write, and the budget decision covers
-   * the whole batch.
-   */
+  /** Plans and commits one batch. The budget decision covers the whole batch, ledger included. */
   async ingest({ entries, receivedAt }) {
-    await this.initialise();
+    this.ensureSchema();
+    await this.ensureAlarm(receivedAt);
     const bucket = bucketFor(receivedAt);
-    const plan = new Map(entries);
-    const request = planBatch(this.sql, bucket, plan);
+    const request = planBatch(this.adapter, bucket, new Map(entries));
     if (request.action !== 'commit') return request;
     try {
-      commitBatch(this.sql, request);
+      commitBatch(this.adapter, request);
     } catch (error) {
-      // Nothing is persisted for a failed batch: both observation and ledger writes roll back.
+      // Nothing is persisted for a failed batch: the transaction rolls both tables back.
       return { action: 'error', reason: 'commit-failed', message: String(error?.message ?? error) };
     }
     return {
@@ -69,50 +73,63 @@ export class CspReceiverObject {
     };
   }
 
-  /** Alarm handler: idempotent retention cleanup, then scheduling the next run. */
+  /** Alarm handler: idempotent cleanup, then schedule the next run even if it failed. */
   async alarm() {
-    await this.initialise();
+    this.ensureSchema();
     const now = Date.now();
-    this.sql.prepare(`INSERT INTO meta(k,v) VALUES('cleanup_started_at',?)
-                      ON CONFLICT(k) DO UPDATE SET v = excluded.v`).run(String(now));
+    this.adapter.run(`INSERT INTO meta(k,v) VALUES('cleanup_started_at',?)
+                      ON CONFLICT(k) DO UPDATE SET v = excluded.v`, String(now));
+
+    let cleanupError = null;
     try {
-      cleanup(this.sql, now, {
-        retentionDays: Number(this.sql.prepare("SELECT v FROM meta WHERE k='retention_days'").get()?.v ?? LIMITS.RETENTION_DAYS),
-      });
+      const retentionDays = Number(
+        this.adapter.one("SELECT v FROM meta WHERE k='retention_days'")?.v ?? LIMITS.RETENTION_DAYS,
+      );
+      cleanup(this.adapter, now, { retentionDays });
       // Success clears the start marker so a stale value cannot look like an in-flight run.
-      this.sql.prepare(`UPDATE meta SET v = '' WHERE k = 'cleanup_started_at'`).run();
-      this.sql.prepare(`INSERT INTO meta(k,v) VALUES('cleanup_completed_at',?)
-                        ON CONFLICT(k) DO UPDATE SET v = excluded.v`).run(String(now));
-      this.sql.prepare(`INSERT INTO meta(k,v) VALUES('cleanup_attempts','0')
-                        ON CONFLICT(k) DO UPDATE SET v = '0'`).run();
+      this.adapter.run(`UPDATE meta SET v = '' WHERE k = 'cleanup_started_at'`);
+      this.adapter.run(`INSERT INTO meta(k,v) VALUES('cleanup_completed_at',?)
+                        ON CONFLICT(k) DO UPDATE SET v = excluded.v`, String(now));
+      this.adapter.run(`INSERT INTO meta(k,v) VALUES('cleanup_attempts','0')
+                        ON CONFLICT(k) DO UPDATE SET v = '0'`);
     } catch (error) {
-      // The failure counter is best effort; the ORIGINAL error is always rethrown so the platform's
-      // own limited retry still happens and the failure is not swallowed.
+      cleanupError = error;
+      // Best effort only: recording the failure must never replace the failure itself.
       try {
-        this.sql.prepare(`INSERT INTO meta(k,v) VALUES('cleanup_attempts','1')
-                          ON CONFLICT(k) DO UPDATE SET v = CAST(CAST(v AS INTEGER) + 1 AS TEXT)`).run();
-        this.sql.prepare(`INSERT INTO meta(k,v) VALUES('last_error',?)
-                          ON CONFLICT(k) DO UPDATE SET v = excluded.v`).run(String(error?.message ?? error));
+        this.adapter.run(`INSERT INTO meta(k,v) VALUES('cleanup_attempts','1')
+                          ON CONFLICT(k) DO UPDATE SET v = CAST(CAST(v AS INTEGER) + 1 AS TEXT)`);
+        this.adapter.run(`INSERT INTO meta(k,v) VALUES('last_error',?)
+                          ON CONFLICT(k) DO UPDATE SET v = excluded.v`, String(error?.message ?? error));
       } catch {
-        // Ignored on purpose: recording the failure must never mask the failure itself.
+        // Ignored on purpose.
       }
-      throw error;
-    } finally {
-      // Schedule the next run whether or not cleanup succeeded; a failed run keeps the marker so the
-      // external check can tell "in flight" from "stuck".
-      await this.ctx.storage.setAlarm(nextCleanupAt(now + 24 * 60 * 60 * 1000));
     }
+
+    let scheduleError = null;
+    try {
+      await this.ctx.storage.setAlarm(nextCleanupAt(now));
+    } catch (error) {
+      scheduleError = error;
+    }
+
+    if (cleanupError) {
+      // The cleanup failure stays the primary error; a scheduling failure is attached, not swapped in.
+      if (scheduleError) cleanupError.scheduleError = String(scheduleError?.message ?? scheduleError);
+      throw cleanupError;
+    }
+    if (scheduleError) throw scheduleError;
   }
 
-  /** Read-only health. A read failure is reported as "cannot confirm", never as healthy. */
+  /**
+   * Read-only health. It never writes meta, never schedules an alarm and never repairs anything:
+   * a health check that rearranged state could hide the very scheduling loss it is meant to report.
+   */
   async health({ now }) {
     try {
-      await this.initialise();
-      const read = (key) => this.sql.prepare('SELECT v FROM meta WHERE k = ?').get(key)?.v ?? null;
-      const lastCleaned = read('last_cleaned_bucket');
-      const startedAt = read('cleanup_started_at');
+      const lastCleaned = this.adapter.one("SELECT v FROM meta WHERE k='last_cleaned_bucket'")?.v ?? null;
+      const startedAt = this.adapter.one("SELECT v FROM meta WHERE k='cleanup_started_at'")?.v ?? null;
       const alarmAt = await this.ctx.storage.getAlarm();
-      const used = readUsed(this.sql, bucketFor(now));
+      const used = readUsed(this.adapter, bucketFor(now));
       return {
         ...evaluateHealth({
           now,
@@ -127,10 +144,4 @@ export class CspReceiverObject {
       return { status: 'unknown', alerts: ['cannot-confirm'], message: String(error?.message ?? error) };
     }
   }
-}
-
-/** Next daily cleanup instant, in milliseconds. */
-export function nextCleanupAt(fromMs) {
-  const day = bucketFor(fromMs);
-  return Date.parse(`${day}T00:00:00.000Z`) + 24 * 60 * 60 * 1000 + 10 * 60 * 1000;
 }

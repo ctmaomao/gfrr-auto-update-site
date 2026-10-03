@@ -11,7 +11,10 @@
 //   * per-request diagnostics only. Reject and drop counts are reported for THIS call and are not
 //     persisted, so no rejection is ever recorded by bypassing the ingest budget it just hit.
 import { LIMITS } from './constants.js';
-import { buildPlan, readBodyWithinLimit } from './normalize.js';
+import { buildPlan, buildPolicyTable, readBodyWithinLimit } from './normalize.js';
+
+// The Durable Object class must be reachable from the entry module named in wrangler.toml.
+export { CspReceiverObject } from './receiver-object.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 
@@ -23,7 +26,11 @@ function acceptsContentType(value) {
   return type === 'application/csp-report' || type === 'application/reports+json';
 }
 
-export async function handleReport(request, env, { now = Date.now, knownTags = [] } = {}) {
+/**
+ * @param policyTexts known policy versions; hashed once into the finite tag table. Empty in the
+ *        local phase, which is why `policy_tag` is `unknown` there.
+ */
+export async function handleReport(request, env, { now = Date.now, policyTexts = [] } = {}) {
   if (request.method !== 'POST') {
     return json({ ok: false, error: 'method-not-allowed' }, 405);
   }
@@ -47,7 +54,9 @@ export async function handleReport(request, env, { now = Date.now, knownTags = [
     return json({ ok: false, error: 'malformed-json' }, 400);
   }
 
-  const { plan, diagnostics, malformed } = buildPlan(payload, { knownTags });
+  const { plan, diagnostics, malformed } = buildPlan(payload, {
+    policyTable: buildPolicyTable(policyTexts),
+  });
   if (malformed) return json({ ok: false, error: 'unrecognised-payload' }, 400);
 
   // An empty plan is a noop: no ledger row and no observation write.
@@ -58,6 +67,7 @@ export async function handleReport(request, env, { now = Date.now, knownTags = [
   const stub = env.CSP_RECEIVER.get(env.CSP_RECEIVER.idFromName('singleton'));
   const result = await stub.ingest({
     // A Map cannot cross the RPC boundary; rebuild it inside the object.
+    // Each entry carries `{reports, incomplete}` so a batch-merge clamp survives into storage.
     entries: [...plan.entries()],
     receivedAt: now(),
   });

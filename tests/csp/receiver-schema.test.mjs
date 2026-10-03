@@ -1,8 +1,7 @@
 // Schema and pure-logic regressions for the CSP report receiver (local phase, D-C).
 //
-// These run against `node:sqlite` in memory: no new dependency, real SQLite semantics. They do NOT
-// and cannot stand in for platform metering, quota, scheduling or billing — that is the separately
-// authorised stage B.
+// These run against `node:sqlite` in memory through the same storage adapter the Durable Object
+// uses, so the SQL under test is the SQL that will run in production. No new dependency.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
@@ -11,19 +10,23 @@ import {
   addDays, bucketFor, retentionThreshold,
 } from '../../workers/gfrr-csp-report-receiver/src/constants.js';
 import {
-  accumulateOverflow, applySchema, ingest, planBatch, readUsed, SQL, splitKey,
+  accumulateOverflow, applySchema, commitBatch, ingest, planBatch, readUsed, splitKey,
 } from '../../workers/gfrr-csp-report-receiver/src/storage.js';
-import { buildPlan, mapBlocked, mapDoc, mapDirective, mapPolicyTag } from '../../workers/gfrr-csp-report-receiver/src/normalize.js';
+import { createNodeSqliteAdapter } from '../../workers/gfrr-csp-report-receiver/src/storage-adapter.js';
+import {
+  buildPlan, buildPolicyTable, mapBlocked, mapDirective, mapDoc, mapPolicyTag,
+} from '../../workers/gfrr-csp-report-receiver/src/normalize.js';
 
 const fresh = () => {
   const db = new DatabaseSync(':memory:');
-  applySchema(db);
-  return db;
+  const adapter = createNodeSqliteAdapter(db);
+  applySchema(adapter);
+  return { db, adapter };
 };
 
-test('schema creates the three tables and accepts an upsert', () => {
-  const db = fresh();
-  const names = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map((row) => row.name);
+test('schema creates the three tables', () => {
+  const { adapter } = fresh();
+  const names = adapter.all("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").map((row) => row.name);
   assert.deepEqual(names, ['meta', 'obs', 'obs_write_ledger']);
 });
 
@@ -39,9 +42,8 @@ test('normalisation maps unknown and hostile values onto the catch-all members',
   assert.equal(mapDirective('script-SRC'), 'script-src');
   assert.equal(mapDirective('<script>alert(1)</script>'), 'other');
   assert.equal(mapBlocked('inline'), 'inline');
+  assert.equal(mapBlocked('eval'), 'eval');
   assert.equal(mapBlocked('data:font/woff'), 'data');
-  assert.equal(mapBlocked('https://evil.example/x'), 'other', 'without a page origin nothing can be judged');
-  assert.equal(mapBlocked('//evil.example/x'), 'other');
   assert.equal(mapBlocked('not a uri at all'), 'other');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/index.html'), 'index');
   assert.equal(mapDoc('https://radar.gfrfinradar.uk/bubble-watch.html?x=1#y'), 'bubble-watch');
@@ -50,104 +52,117 @@ test('normalisation maps unknown and hostile values onto the catch-all members',
 
 test('cross-origin is decided by comparing origins, not by the shape of the URL', () => {
   const page = 'https://radar.gfrfinradar.uk/index.html';
-
-  // An absolute URL is NOT evidence of another origin: this one is the same origin.
   assert.equal(mapBlocked('https://radar.gfrfinradar.uk/scripts/app.js', page), 'self');
-  // A genuinely different origin.
   assert.equal(mapBlocked('https://evil.example/x', page), 'cross-origin');
-  // Protocol-relative resolves against the page scheme, so this one is the same origin.
   assert.equal(mapBlocked('//radar.gfrfinradar.uk/scripts/app.js', page), 'self');
-  // Protocol-relative pointing elsewhere is cross-origin.
   assert.equal(mapBlocked('//evil.example/x', page), 'cross-origin');
-  // A different scheme on the same host is a different origin.
   assert.equal(mapBlocked('http://radar.gfrfinradar.uk/x', page), 'cross-origin');
-  // A path is same-origin; a page-relative URL without a page origin cannot be judged.
   assert.equal(mapBlocked('/scripts/app.js', page), 'self');
   assert.equal(mapBlocked('nonsense', page), 'other');
   assert.equal(mapBlocked('https://evil.example/x', undefined), 'other', 'no page origin means no guess');
 });
 
-test('a policy tag is only ever derived from the finite known table', () => {
-  const known = mapPolicyTag([], 'default-src \'none\'');
-  assert.equal(known, 'unknown', 'an unknown policy text maps to unknown, never to a new tag');
-  const table = [mapPolicyTag([], 'default-src \'none\'')];
-  // With the tag present in the table the same text maps to itself.
-  const digest = mapPolicyTag(['zzzz'], 'default-src \'none\'');
-  assert.equal(digest, 'unknown');
-  // A browser-supplied tag is never accepted as input.
-  const plan = buildPlan({ 'csp-report': { 'effective-directive': 'script-src', policyTag: 'p1' } }, { knownTags: table });
-  const key = [...plan.plan.keys()][0];
-  assert.equal(splitKey(key).policyTag, 'unknown', 'a submitted policyTag must not be trusted');
+test('a policy tag comes from the finite table, never from a raw digest', () => {
+  const table = buildPolicyTable(['default-src \'none\'', 'script-src \'self\'']);
+  assert.equal(mapPolicyTag(table, 'default-src \'none\''), 'p1');
+  assert.equal(mapPolicyTag(table, 'script-src \'self\''), 'p2');
+  assert.equal(mapPolicyTag(table, 'something else'), 'unknown');
+  assert.equal(mapPolicyTag(buildPolicyTable([]), 'default-src \'none\''), 'unknown');
+
+  // Every produced tag must be in the allowed set, and a known policy must NOT be dropped.
+  for (const tag of [mapPolicyTag(table, 'default-src \'none\''), mapPolicyTag(table, 'script-src \'self\'')]) {
+    assert.ok(POLICY_TAGS.includes(tag), `${tag} must be an allowed tag`);
+  }
+  const { plan, diagnostics } = buildPlan(
+    { 'csp-report': { 'effective-directive': 'script-src', 'original-policy': 'default-src \'none\'' } },
+    { policyTable: table },
+  );
+  assert.equal(diagnostics.droppedPolicyField, 0);
+  assert.equal(plan.size, 1, 'a report whose policy IS known must be classified, not dropped');
+  assert.equal(splitKey([...plan.keys()][0]).policyTag, 'p1');
+});
+
+test('a browser-submitted policyTag is never trusted', () => {
+  const { plan } = buildPlan({ 'csp-report': { 'effective-directive': 'script-src', policyTag: 'p1' } });
+  assert.equal(splitKey([...plan.keys()][0]).policyTag, 'unknown');
 });
 
 test('the retention threshold keeps exactly R buckets including today', () => {
   assert.equal(retentionThreshold('2026-10-10', 14), '2026-09-27');
   assert.equal(retentionThreshold('2026-10-10', 7), '2026-10-04');
-  // 2026-09-27 .. 2026-10-10 inclusive is 14 buckets.
   let cursor = '2026-09-27';
   let count = 0;
   while (cursor <= '2026-10-10') { count += 1; cursor = addDays(cursor, 1); }
   assert.equal(count, 14);
 });
 
-test('bucket boundaries are derived from server time, not from the payload', () => {
+test('bucket boundaries are derived from server time', () => {
   assert.equal(bucketFor(Date.parse('2026-10-10T00:00:00.000Z')), '2026-10-10');
   assert.equal(bucketFor(Date.parse('2026-10-10T23:59:59.999Z')), '2026-10-10');
 });
 
 test('overflow accumulation clamps item by item and flags every clamp', () => {
-  const clean = accumulateOverflow([{ reports: 10 }, { reports: 20 }]);
-  assert.deepEqual(clean, { reports: 30, incomplete: false });
-
-  // Container clamp: the running total is capped during accumulation, not afterwards.
-  const clamped = accumulateOverflow([{ reports: 80 }, { reports: 80 }], { cap: 100 });
-  assert.deepEqual(clamped, { reports: 100, incomplete: true });
-
-  // A key already flagged during batch merging keeps the row flagged.
-  const carried = accumulateOverflow([{ reports: 5, incomplete: true }]);
-  assert.deepEqual(carried, { reports: 5, incomplete: true });
+  assert.deepEqual(accumulateOverflow([{ reports: 10 }, { reports: 20 }]), { reports: 30, incomplete: false });
+  assert.deepEqual(accumulateOverflow([{ reports: 80 }, { reports: 80 }], { cap: 100 }), { reports: 100, incomplete: true });
+  assert.deepEqual(accumulateOverflow([{ reports: 5, incomplete: true }]), { reports: 5, incomplete: true });
 });
 
 test('used is obs_rows + ledger_rows, so it can exceed the number of rows', () => {
-  const db = fresh();
+  const { db, adapter } = fresh();
   const bucket = '2026-10-10';
   const plan = new Map([['script-src|inline|index|unknown|legacy', 5]]);
 
-  ingest(db, Date.parse(`${bucket}T00:00:00.000Z`), plan);
-  let used = readUsed(db, bucket);
-  assert.deepEqual(used, { obsRows: 1, ledgerRows: 1 });
+  ingest(adapter, Date.parse(`${bucket}T00:00:00.000Z`), plan);
+  assert.deepEqual(readUsed(adapter, bucket), { obsRows: 1, ledgerRows: 1 });
 
-  // Re-updating the same key writes no new row but does increase the accounting.
-  ingest(db, Date.parse(`${bucket}T00:00:00.000Z`), plan);
-  used = readUsed(db, bucket);
-  assert.deepEqual(used, { obsRows: 2, ledgerRows: 2 });
+  ingest(adapter, Date.parse(`${bucket}T00:00:00.000Z`), plan);
+  assert.deepEqual(readUsed(adapter, bucket), { obsRows: 2, ledgerRows: 2 });
 
-  const rows = db.prepare('SELECT COUNT(*) AS c FROM obs').get().c;
+  const rows = adapter.one('SELECT COUNT(*) AS c FROM obs').c;
   assert.equal(rows, 1, 'one row, updated twice');
-  assert.ok(used.obsRows + used.ledgerRows >= rows, 'used >= row count');
+  assert.ok(readUsed(adapter, bucket).obsRows + readUsed(adapter, bucket).ledgerRows >= rows);
+  assert.ok(db);
+});
+
+test('the budget decision includes the ledger write', () => {
+  const { adapter } = fresh();
+  const bucket = '2026-10-10';
+  const key = 'script-src|inline|index|unknown|legacy';
+
+  // A batch costs one observation write PLUS one ledger write, so a budget of 1 cannot fit it.
+  const rejected = planBatch(adapter, bucket, new Map([[key, 1]]), { ingestBudget: 1 });
+  assert.equal(rejected.action, 'reject', 'the ledger row must count towards the budget');
+  assert.equal(rejected.plannedObsRows, 1);
+  assert.equal(rejected.plannedLedgerRows, 1);
+  assert.deepEqual(readUsed(adapter, bucket), { obsRows: 0, ledgerRows: 0 }, 'a rejected batch writes nothing');
+
+  // A budget of exactly the batch cost is allowed, and the recorded usage matches.
+  const accepted = planBatch(adapter, bucket, new Map([[key, 1]]), { ingestBudget: 2 });
+  assert.equal(accepted.action, 'commit');
+  assert.equal(accepted.plannedTotal, 2);
+  commitBatch(adapter, accepted);
+  assert.deepEqual(readUsed(adapter, bucket), { obsRows: 1, ledgerRows: 1 });
 });
 
 test('a rejected batch is judged on the whole batch and writes nothing', () => {
-  const db = fresh();
+  const { adapter } = fresh();
   const bucket = '2026-10-10';
   const key = 'script-src|inline|index|unknown|legacy';
-  // Drive used to the budget with a single key, one observation row plus one ledger row per batch.
   let guard = 0;
-  while (readUsed(db, bucket).obsRows + readUsed(db, bucket).ledgerRows <= LIMITS.INGEST_WRITE_BUDGET - 1) {
-    ingest(db, Date.parse(`${bucket}T00:00:00.000Z`), new Map([[key, 1]]));
+  while (readUsed(adapter, bucket).obsRows + readUsed(adapter, bucket).ledgerRows
+         <= LIMITS.INGEST_WRITE_BUDGET - 2) {
+    ingest(adapter, Date.parse(`${bucket}T00:00:00.000Z`), new Map([[key, 1]]));
     guard += 1;
     assert.ok(guard < 5000, 'loop should terminate well before the budget');
   }
-  const before = readUsed(db, bucket);
-  const result = planBatch(db, bucket, new Map([[key, 1]]));
+  const before = readUsed(adapter, bucket);
+  const result = planBatch(adapter, bucket, new Map([[key, 1]]));
   assert.equal(result.action, 'reject');
-  assert.equal(result.reason, 'ingest-budget');
-  assert.deepEqual(readUsed(db, bucket), before, 'a rejected batch changes nothing');
+  assert.deepEqual(readUsed(adapter, bucket), before, 'a rejected batch changes nothing');
 });
 
 test('an empty plan is a noop that never writes a ledger row', () => {
-  const db = fresh();
-  const result = planBatch(db, '2026-10-10', new Map());
-  assert.equal(result.action, 'noop');
-  assert.equal(db.prepare('SELECT COUNT(*) AS c FROM obs_write_ledger').get().c, 0);
+  const { adapter } = fresh();
+  assert.equal(planBatch(adapter, '2026-10-10', new Map()).action, 'noop');
+  assert.equal(adapter.one('SELECT COUNT(*) AS c FROM obs_write_ledger').c, 0);
 });

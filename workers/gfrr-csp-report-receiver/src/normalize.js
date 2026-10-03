@@ -131,53 +131,89 @@ export function mapDoc(value) {
 }
 
 /**
- * Derives the internal policy tag. The report's own value is only ever hashed and looked up in the
- * finite known table; a value the table does not know becomes `unknown`. A browser-submitted
- * `policyTag` is never trusted, and a truncated value is never used for classification.
+ * Maps a report body onto the finite known policy-version table.
+ *
+ * The table is built from the configured policy texts: `buildPolicyTable` hashes each known version
+ * once and assigns it a short tag (`p1`, `p2`, ...). A report's own policy text is hashed and looked
+ * up, so the stored `policy_tag` is always one of the allowed tags or `unknown`. A raw digest is
+ * never stored or accepted, and a browser-submitted `policyTag` is never trusted.
  */
-export function mapPolicyTag(knownTags, policyText) {
-  if (typeof policyText !== 'string' || policyText.length === 0) return 'unknown';
-  const digest = digestHex(policyText).slice(0, 16);
-  return knownTags.includes(digest) ? digest : 'unknown';
+export function buildPolicyTable(policyTexts = []) {
+  const table = new Map();
+  policyTexts.forEach((text, index) => {
+    if (typeof text === 'string' && text.length > 0) {
+      table.set(fnv1a32(text), `p${index + 1}`);
+    }
+  });
+  return table;
 }
 
-function digestHex(text) {
-  // Kept dependency-free: FNV-1a over the policy text, used only as a table lookup key.
+/** Resolves a report's policy text to a tag from the finite table, or `unknown`. */
+export function mapPolicyTag(policyTable, policyText) {
+  if (typeof policyText !== 'string' || policyText.length === 0) return 'unknown';
+  return policyTable.get(fnv1a32(policyText)) ?? 'unknown';
+}
+
+/** 32-bit FNV-1a, dependency-free: used only as a lookup key, never stored. */
+export function fnv1a32(text) {
   let hash = 0x811c9dc5;
   for (let index = 0; index < text.length; index += 1) {
     hash ^= text.charCodeAt(index);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  return hash.toString(16).padStart(8, '0');
+  return hash;
 }
 
-const KEY_FIELDS = ['effectiveDirective', 'disposition'];
+const isPlainObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * Pulls the report bodies out of either payload shape.
- * legacy    : `{ "csp-report": { ... } }` — no Reporting API wrapper, so no `type` field.
- * reporting : `[ { type, body, age, user_agent }, ... ]` — only `csp-violation` items count.
+ *
+ * legacy    : `{ "csp-report": { ... } }` — no Reporting API wrapper, so no `type` field, and the
+ *             inner value must be an object (a string or number there is malformed, not a report).
+ * reporting : `[ { type, body, age, user_agent }, ... ]` — only `csp-violation` items count, the
+ *             array is bounded by MAX_ARRAY_ITEMS, and a non-object `body` is rejected.
  */
-export function extractItems(payload) {
+export function extractItems(payload, { maxArrayItems = LIMITS.MAX_ARRAY_ITEMS } = {}) {
   if (Array.isArray(payload)) {
     const items = [];
     let droppedNotCsp = 0;
-    for (const entry of payload) {
-      if (!entry || typeof entry !== 'object') { droppedNotCsp += 1; continue; }
+    let droppedBodyShape = 0;
+    const considered = payload.slice(0, maxArrayItems);
+    const droppedArrayOverflow = payload.length - considered.length;
+    for (const entry of considered) {
+      if (!isPlainObject(entry)) { droppedBodyShape += 1; continue; }
       if (entry.type !== 'csp-violation') { droppedNotCsp += 1; continue; }
-      items.push({ mechanism: 'reporting', body: entry.body ?? {} });
+      if (!isPlainObject(entry.body)) { droppedBodyShape += 1; continue; }
+      items.push({ mechanism: 'reporting', body: entry.body });
     }
-    return { items, droppedNotCsp };
+    return { items, droppedNotCsp, droppedArrayOverflow, droppedBodyShape };
   }
-  if (payload && typeof payload === 'object' && payload['csp-report'] && typeof payload['csp-report'] === 'object') {
-    return { items: [{ mechanism: 'legacy', body: payload['csp-report'] }], droppedNotCsp: 0 };
+  if (isPlainObject(payload) && payload['csp-report'] !== undefined) {
+    if (!isPlainObject(payload['csp-report'])) {
+      return { items: [], droppedNotCsp: 0, droppedArrayOverflow: 0, droppedBodyShape: 1, malformed: true };
+    }
+    return { items: [{ mechanism: 'legacy', body: payload['csp-report'] }], droppedNotCsp: 0, droppedArrayOverflow: 0, droppedBodyShape: 0 };
   }
-  return { items: [], droppedNotCsp: 0, malformed: true };
+  return { items: [], droppedNotCsp: 0, droppedArrayOverflow: 0, droppedBodyShape: 0, malformed: true };
 }
 
-function pick(body, names) {
-  for (const name of names) {
-    if (body[name] !== undefined && body[name] !== null) return body[name];
+/**
+ * Field aliases, tried in order. The RFC/legacy hyphenated name comes first, then the Reporting API
+ * camelCase name, so a single resolution order covers both wire formats without mixing them.
+ */
+const FIELD_ALIASES = {
+  directive: ['effective-directive', 'effectiveDirective', 'violated-directive', 'violatedDirective'],
+  blocked: ['blocked-uri', 'blockedURL'],
+  document: ['document-uri', 'documentURL'],
+  disposition: ['disposition'],
+  policy: ['original-policy', 'originalPolicy'],
+};
+
+/** Returns the first alias that is present and non-null. */
+function pick(body, field) {
+  for (const alias of FIELD_ALIASES[field]) {
+    if (body[alias] !== undefined && body[alias] !== null) return body[alias];
   }
   return undefined;
 }
@@ -186,27 +222,32 @@ function pick(body, names) {
  * Normalises one report body into the internal shape.
  *
  * Field handling differs by kind:
+ *  - a MISSING or non-string effective directive REJECTS the item: without it the report cannot be
+ *    classified, and defaulting it to `other` would invent a category;
  *  - a critical classification field that is too long REJECTS the item (truncating it would
  *    classify against a mangled value);
  *  - an optional field that is not stored (`sample`, `referrer`) is ignored outright;
  *  - a URL-shaped field that is too long is rejected, never truncated-then-classified.
  */
-export function normaliseItem(item, { knownTags = [] } = {}) {
+export function normaliseItem(item, { policyTable = new Map() } = {}) {
   const { mechanism, body } = item;
-  for (const field of KEY_FIELDS) {
-    const value = pick(body, field === 'effectiveDirective'
-      ? ['effective-directive', 'effectiveDirective']
-      : ['disposition']);
-    if (value !== undefined && typeof value === 'string' && value.length > LIMITS.MAX_FIELD_LENGTH) {
-      return { dropped: 'critical-field-too-long' };
-    }
+
+  const directiveRaw = pick(body, 'directive');
+  if (typeof directiveRaw !== 'string' || directiveRaw.trim() === '') {
+    return { dropped: 'missing-directive' };
+  }
+  if (directiveRaw.length > LIMITS.MAX_FIELD_LENGTH) {
+    return { dropped: 'critical-field-too-long' };
   }
 
-  const directiveRaw = pick(body, ['effective-directive', 'effectiveDirective', 'violated-directive']);
-  const blockedRaw = pick(body, ['blocked-uri', 'blockedURL']);
-  const documentRaw = pick(body, ['document-uri', 'documentURL']);
-  const dispositionRaw = pick(body, ['disposition']);
-  const policyRaw = pick(body, ['original-policy', 'originalPolicy']);
+  const dispositionRaw = pick(body, 'disposition');
+  if (typeof dispositionRaw === 'string' && dispositionRaw.length > LIMITS.MAX_FIELD_LENGTH) {
+    return { dropped: 'critical-field-too-long' };
+  }
+
+  const blockedRaw = pick(body, 'blocked');
+  const documentRaw = pick(body, 'document');
+  const policyRaw = pick(body, 'policy');
 
   for (const raw of [blockedRaw, documentRaw]) {
     if (typeof raw === 'string' && raw.length > LIMITS.MAX_FIELD_LENGTH) {
@@ -224,47 +265,60 @@ export function normaliseItem(item, { knownTags = [] } = {}) {
     mapDirective(directiveRaw),
     mapBlocked(blockedRaw, documentRaw),
     mapDoc(documentRaw),
-    mapPolicyTag(knownTags, policyRaw),
+    mapPolicyTag(policyTable, policyRaw),
     mechanism,
   ].join('|');
-
-  if (!MECHANISMS.includes(mechanism)) return { dropped: 'bad-mechanism' };
-  if (!DIRECTIVES.includes(key.split('|')[0])) return { dropped: 'bad-directive' };
-  if (!BLOCKED.includes(key.split('|')[1])) return { dropped: 'bad-blocked' };
-  if (!DOCS.includes(key.split('|')[2])) return { dropped: 'bad-doc' };
-  if (!POLICY_TAGS.includes(key.split('|')[3])) return { dropped: 'bad-policy-tag' };
 
   return { key, disposition };
 }
 
 /**
- * Parses a payload and merges it into a plan of `Map<key, reports>`.
+ * Parses a payload and merges it into a plan of `Map<key, {reports, incomplete}>`.
  *
  * Normalisation happens first; only then are distinct keys counted and bounded, so raw values that
  * all collapse to the same normalised key cannot consume the input budget.
+ *
+ * The per-key value carries an `incomplete` flag: a clamp during batch merging must survive into
+ * storage, otherwise a saturated count looks exact when it is only a lower bound.
  */
-export function buildPlan(payload, { knownTags = [] } = {}) {
-  const { items, droppedNotCsp, malformed } = extractItems(payload);
-  const diagnostics = { droppedNotCsp, droppedCriticalField: 0, droppedUrlField: 0, droppedPolicyField: 0, droppedKeys: 0, truncatedKeys: 0 };
-  if (malformed) return { plan: new Map(), diagnostics, malformed: true };
+export function buildPlan(payload, {
+  policyTable = new Map(),
+  maxArrayItems = LIMITS.MAX_ARRAY_ITEMS,
+  maxReportsPerKey = LIMITS.MAX_REPORTS_PER_KEY_PER_BATCH,
+} = {}) {
+  const extracted = extractItems(payload, { maxArrayItems });
+  const diagnostics = {
+    droppedNotCsp: extracted.droppedNotCsp ?? 0,
+    droppedArrayOverflow: extracted.droppedArrayOverflow ?? 0,
+    droppedBodyShape: extracted.droppedBodyShape ?? 0,
+    droppedMissingDirective: 0,
+    droppedCriticalField: 0,
+    droppedUrlField: 0,
+    droppedPolicyField: 0,
+    droppedKeys: 0,
+    truncatedKeys: 0,
+  };
+  if (extracted.malformed) return { plan: new Map(), diagnostics, malformed: true };
 
   const merged = new Map();
-  for (const item of items) {
-    const result = normaliseItem(item, { knownTags });
+  for (const item of extracted.items) {
+    const result = normaliseItem(item, { policyTable });
     if (result.dropped) {
-      if (result.dropped === 'critical-field-too-long') diagnostics.droppedCriticalField += 1;
+      if (result.dropped === 'missing-directive') diagnostics.droppedMissingDirective += 1;
+      else if (result.dropped === 'critical-field-too-long') diagnostics.droppedCriticalField += 1;
       else if (result.dropped === 'url-field-too-long') diagnostics.droppedUrlField += 1;
       else if (result.dropped === 'policy-field-too-long') diagnostics.droppedPolicyField += 1;
       continue;
     }
-    const previous = merged.get(result.key) ?? 0;
-    // Each item contributes exactly one report. The per-key bound applies to the merged total, so a
-    // clamp here means the key's count is a lower bound and is reported as such.
-    if (previous + 1 > LIMITS.MAX_REPORTS_PER_KEY_PER_BATCH) {
+    const previous = merged.get(result.key) ?? { reports: 0, incomplete: false };
+    // Each item contributes exactly one report. The per-key bound applies to the merged total; a
+    // clamp keeps the reports seen so far and marks the count as a lower bound.
+    if (previous.reports + 1 > maxReportsPerKey) {
       diagnostics.truncatedKeys += 1;
+      merged.set(result.key, { reports: previous.reports, incomplete: true });
       continue;
     }
-    merged.set(result.key, previous + 1);
+    merged.set(result.key, { reports: previous.reports + 1, incomplete: previous.incomplete });
   }
 
   // Bound the distinct normalised keys; deterministic order keeps runs reproducible.
