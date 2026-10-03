@@ -120,6 +120,41 @@
 - **边界（写入 PR）**：本步骤**覆盖所断言的结构与所执行的步骤场景，不证明所有发布行为正确**；**PR 检查不能替代生产验收** —— 真实发布只由 `publish-edgeone-release.yml` 在 main 触发。
 - **待确认**：**Ubuntu runner 上 bash 是否可用、该步骤的实跑结果与耗时**，均待 PR 实跑后据实记录。
 
+#### 2026-10-02 CSP 报告接收端 · A 部分本地实施（acceptance baseline）
+
+- **owner 批准范围**：**A 部分，D-C 方案、零新增依赖**、按已收束的设计与验收基线实施；**B（Cloudflare 隔离资源与平台行为验证）与 C（线上策略加 `report-uri`/`report-to`）分别授权**，本次均未启动。
+- **实现（新增，未部署）**：`workers/gfrr-csp-report-receiver/` —— `src/constants.js`、`normalize.js`、`storage.js`、**`storage-adapter.js`**、`health.js`、`index.js`、`receiver-object.js`，以及 `wrangler.toml`（**明确标注 NOT DEPLOYED**；`observability.enabled = false`；**无 routes、无 cron**；migrations 段保持注释）。
+- **测试（手动入口，不接入 CI）**：`tests/csp/receiver-schema.test.mjs`（13）、`receiver-object.test.mjs`（32）、`receiver-entry.test.mjs`（12）—— **合计 57 项全绿**，全部跑在 `node:sqlite` 内存库（Node v24.21.0 / SQLite 3.53.4）上，**零新增依赖**。DO 用例使用**伪造的平台接口**（`storage.sql.exec` 返回行数组 + `storage.transactionSync`，并**拒绝 BEGIN/COMMIT**），使适配器本身也被覆盖。
+- **既有 CSP 回归的如实计数（并列记录，不相互替换）**：
+  - **本机（实施者）运行：67 通过 / 0 失败 / 0 跳过** —— 本环境可创建文件符号链接，故输入树符号链接用例**实际执行**。
+  - **独立复核者运行：66 通过 / 0 失败 / 1 跳过** —— 该环境创建文件符号链接返回 `EPERM`，文件符号链接无 junction 等价物，故跳过。
+  - 差异**仅来自环境**，两数并列，**不得**用其中一方替换另一方，也**不得**把跳过那次报成"全部执行"。
+- **已落实的验收口径**：预算判定在**所有写入之前**且按**整批**判定（含等于/超过边界、空 planned 不写账本）；`used = obs_rows + ledger_rows`（**累计更新次数**，可大于行数）；overflow **新建或更新均计 1 行写**；分类上限溢出与容量不足**同入 overflow**；截断标记**首次 INSERT 亦置位且不回落**；跨日 **UPSERT** 建账本行；**跨表回滚**（触发器注入失败后 obs 与 ledger 同时回滚）；清理**恰好保留 R 桶**且 obs/ledger 同步删除、幂等、失败重抛原始异常；健康检查**水位与调度两条独立判定**（调度不依赖水位）、读取失败报 **"无法确认"**；入口层 405/415/413（含**无 Content-Length 的流式闸**）/400/429 分支。
+- **复核修正一 · 聚合键维度**：主键实为 `(bucket, directive, blocked, doc, policy_tag, mechanism)`，**`mechanism` 与 `policyTag` 均已保留**。键空间公式为
+  `|DIRECTIVES| × |BLOCKED| × |DOCS| × (1 + 已知策略版本数) × |MECHANISMS|`。
+  本地 fixture（已知策略表为空）实测：**单机制 90**（5 指令 × 6 blocked × 3 doc）、**两机制合计 180**。
+  （先前回复中"60"与随后"144/72"两次数字**均不准确**：前者漏了 `mechanism` 与独立 `cross-origin`，后者把 `DIRECTIVES` 少算一项（实际 5 项，含 `other`）。现按实测更正为 **180 / 90**。）
+- **复核修正二 · `cross-origin` 曾丢失独立分类，且第一次修法仍不正确**：原 `mapBlocked` 只识别 `inline`/`eval`/`data`/`self`，绝对 URI 落到 `other`，**偏离既定分类**。第一次修正按 **URL 形态**判定（`scheme://` 或 `//`）**仍然错误** —— 绝对 URL 只能证明形式，**同源资源也会以绝对 URL 出现**。最终实现改为**解析并比较 origin**：
+  - 被阻止资源与报告页面的 origin **相同 → `self`**；**不同 → `cross-origin`**；
+  - **无法可靠解析、或缺少页面来源 → `other`**（不猜测）；
+  - 协议相对（`//host`）以页面为 base 解析（否则会被误当作路径而判成同源）；裸词（如 `nonsense`）**拒绝**，因为 `new URL(value, page)` 会把任意文本当相对路径并给出假同源；
+  - **原始 URL 仍不落库**。
+  回归覆盖：**同源绝对 URL**、**跨源绝对 URL**、**协议相对（同源与跨源各一）**、同主机不同 scheme、页面相对路径、不可解析值与无页面来源。
+- **独立复核（第三方，`5b7b861a`）发现的七项缺陷，全部已修**：
+  1. **[P1] 预算漏计 ledger**：判定为 `used + plannedObsRows`，未加 `plannedLedgerRows`（预算设 1 时单键批次仍提交，实际用量 2）。现按 `used + plannedObsRows + plannedLedgerRows` 判定，并新增边界回归（预算 1 拒绝、预算 2 通过且记账一致）。
+  2. **[P1] 与真实 DO API 不兼容**：原实现直接用 `ctx.storage.sql` + Node 风格 `prepare().run/get/all()`，并执行 `BEGIN/COMMIT`（平台禁止）。现引入 **`storage-adapter.js`**：统一 `run/one/all/exec/transaction`，DO 侧用 `sql.exec(query, ...bindings)` 与 **`transactionSync()`**，本地侧用 `node:sqlite`；`index.js` **导出 `CspReceiverObject`** 以满足绑定。DO 用例的 fake 现在**模仿平台接口并拒绝事务控制语句**，适配器本身被覆盖。
+  3. **[P1] 数组上限未执行 / 缺关键字段仍被接受**：`MAX_ARRAY_ITEMS` 从未使用（101 项全部计入）；`{"csp-report":{}}` 也生成有效计划。现**解析后按上限截断并计入 `droppedArrayOverflow`**；**缺失或非字符串的 effective directive → 拒绝**（`droppedMissingDirective`），不再默认成 `other`；**非对象 `body`（数字/字符串）→ 拒绝**（`droppedBodyShape`），legacy 内层非对象视为 malformed。
+  4. **[P1] 截断标记仍会丢失**：批内钳制只增诊断，未把标记传入存储；首次 INSERT 亦漏置标记。现计划值改为 `{reports, incomplete}` 并贯通到存储，`upsertObs` 的 **INSERT 与 UPDATE 两条路径都计算标记**。
+  5. **[P1] alarm 重排跳过一天 / 错误被覆盖**：`nextCleanupAt()` 先加一天再被调用方再加一天（10-10 00:10 重排到 10-12 00:10）。现为"当日 slot 未过则用当日，否则次日"，回归断言恰好次日；`finally` 中 `setAlarm()` 失败会覆盖删除异常，现改为**清理异常始终为主错误**，调度失败附加在 `scheduleError` 上。
+  6. **[P2] 健康检查写入并修复调度**：原 `health()` 调用 `initialise()` 会写 meta 并在缺 alarm 时排程。现拆为 `ensureSchema()`（仅首次、只建表与补缺失 meta 键）与 `ensureAlarm()`（**仅 ingest 调用**）；`health()` **只读**，并新增回归断言"一次 health 调用不改变 meta、不改变 alarm 且仍报告 `schedule-missing`"。
+  7. **[P2] 已知策略版本无法分类**：原返回 8 位 FNV 摘要，而允许集是 `p1..p4/unknown`，命中反而被丢弃。现 `buildPolicyTable()` 把配置的策略文本哈希为有限 tag，`mapPolicyTag()` 只返回该 tag 或 `unknown`；回归断言"已知策略被正确分类为 `p1` 而非丢弃"。
+- **测试与记录更正（同轮复核指出）**：回滚回归原先在**第一条 obs INSERT 之前**就失败，不能证明部分写入后回滚；现用触发器让**第二条** obs 写入失败（首条已写入），并断言**首条确已撤销且 ledger 亦回滚**。键空间数字按上条更正为 **180 / 90**。
+- **第二轮复核（`a7286bbe`）[P1] · RPC 基类缺失，已修**：`index.js` 调用 `stub.ingest()` / `stub.health()`，但对象类是普通类。平台要求**继承内置 `DurableObject`** 才能把公共方法暴露为 RPC，仅"从入口导出类"不够。修法：`receiver-object.js` 改为导出**工厂 `createCspReceiverObject(Base)`**（在构造函数中 `super(ctx, env)`），平台侧由**新增的 `worker-entry.js`** 注入真基类；`wrangler.toml` 的 `main` 改为 `src/worker-entry.js`（**唯一** `import 'cloudflare:workers'` 的模块），`index.js` 只保留可测逻辑与 `fetch` 处理函数。
+  - 由此保持 **D-C 可在 Node 中测试**：本地用例用普通基类 `LocalBase` 调用同一工厂，**零新增依赖**；新增回归断言"类确实继承注入的基类、`super(ctx, env)` 被调用且三个方法存在"。
+- **参数与键空间的不一致（待参数评审）**：144 **小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`，故这两个候选值**无法经正常路径触发**；容量与 overflow 分支靠**注入 `bucketRowCap`** 覆盖 —— 这**只证明该参数值下的行为，不证明默认 512 可达**。键空间只有在已知策略表超过 1 项时才会越过 200。
+- **明确未覆盖（属 B 阶段）**：平台计量（游标 `rowsWritten`/`rowsRead` 是否为权威计费值）、免费层额度与超限形态、alarm 实际触发与指数退避/最多六次重试、CPU 预算下的载荷上限、跨源投递（`no-cors`/`cors`）与 `Reporting-Endpoints`、Workers Logs 保留期与 IP、跨 DO 共享额度。**D-C 与 D-A 都不能替代这些验证。**
+- **保留的边界**：拒绝/丢弃计数**仅作本次处理诊断**，不新增持久化统计行、不承诺跨请求累计、不默认写平台日志；`RESERVE` 类口径只降低摄入预算，**不是平台额度预留保证**。
+
 ### 2026-10-01 EdgeOne 发布暂存目录生成器（阶段 1 · 本地工具）
 
 - **Acceptance baseline**：owner 授权「按修正后的范围开始阶段 1 本地实施」——配置、共享策略派生、暂存目录生成与校验、**手动**响应头读回工具、**手动**回归，以及本设计与 acceptance baseline 记入 backlog。边界：**不改 workflow、不自动接入 CI、不上传或发布、不修改生产项目或 release 分支**；读回工具测试优先使用本地 HTTP fixture（重复头保留、启用态与关闭态判定）。
