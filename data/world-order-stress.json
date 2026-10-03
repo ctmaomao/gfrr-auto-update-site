@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-02T01:59:41.787Z",
+  "updatedAt": "2026-10-03T01:42:16.269Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -10,24 +10,24 @@
   "score": 53,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
-  "confidence": 1,
+  "confidence": 0.94,
   "freshness": "partial",
   "marketConfirmationInput": {
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-02T01:57:39.706Z",
-    "ageMinutes": 2.034666666666667,
+    "updatedAt": "2026-10-03T01:39:37.818Z",
+    "ageMinutes": 2.640833333333333,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 102.285,
-    "gold": 4150.1001,
-    "vix": 16.34,
+    "brent": 102.35,
+    "gold": 4141.7998,
+    "vix": 16.39,
     "dxy": 120.33,
-    "hyOas": 3.12,
-    "us10y": 5.29,
-    "real10y": 2.93,
-    "spx": 7666.45,
+    "hyOas": 3.24,
+    "us10y": 5.24,
+    "real10y": 2.88,
+    "spx": 7722.72,
     "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
     "brentPromotionApplied": true,
     "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
@@ -40,8 +40,7 @@
       "lastFetchedAt": "2026-09-23T01:14:09.713Z",
       "summary": {
         "errors": [
-          "HTTP 请求失败：HTTP 403",
-          "GDELT Cloud 拒绝访问，请核对账户权限、试用期限与套餐；此状态不等于限流，也不能单凭它断定试用已到期。"
+          "已按零订阅费用策略暂停 GDELT Cloud 自动请求；旧摘要仅保留为过期证据，免费来源尚未替换观察分。"
         ],
         "totalEvents": 1629,
         "totalArticles": null,
@@ -4930,53 +4929,53 @@
           "Taiwan",
           "Myanmar"
         ],
-        "requestsUsed": 1,
+        "requestsUsed": 0,
         "apiBudget": "API access requires an active evaluation, paid plan or explicit account entitlement; quota and expiry must be checked in the account",
         "queriesRun": [
           {
             "label": "GDELT Cloud conflict country summary",
-            "status": "error",
+            "status": "skipped",
             "eventCount": null,
             "articleCount": null,
-            "error": "HTTP 请求失败：HTTP 403"
+            "error": null
           }
         ],
         "successCount": 0,
-        "failureCount": 1,
+        "failureCount": 0,
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
-        "cacheReason": "gdelt-cloud-request-failed-using-previous-summary",
-        "attemptedAt": "2026-10-02T01:59:40.164Z",
+        "cacheReason": "gdelt-cloud-free-only-hold",
+        "attemptedAt": "2026-10-03T01:42:15.875Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
           "provider": "gdelt",
-          "endpointType": "cloud",
-          "label": "GDELT Cloud conflict country summary",
-          "status": 403,
-          "attempts": 1,
+          "endpointType": "unknown",
+          "label": "GDELT",
+          "status": null,
+          "attempts": 0,
           "retryCount": 0,
           "rateLimited": false,
           "timeout": false,
           "retryAfterSeconds": null,
-          "timeoutMs": 30000,
-          "minIntervalMs": 8000,
-          "maxRetries": 0,
-          "retryAfterCapSeconds": 15,
-          "elapsedMs": 1397,
-          "errorCode": "http_error"
+          "timeoutMs": null,
+          "minIntervalMs": null,
+          "maxRetries": null,
+          "retryAfterCapSeconds": null,
+          "elapsedMs": null,
+          "errorCode": null
         }
       }
     },
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-02T01:59:40.336Z",
+      "lastFetchedAt": "2026-10-03T01:42:16.039Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
         "enforcementActionsCount": 1,
-        "guidanceCount": 6,
+        "guidanceCount": 5,
         "highRiskPrograms": [
           "Russia",
           "Iran",
@@ -4984,7 +4983,7 @@
           "Venezuela",
           "Belarus"
         ],
-        "lastUpdated": "October 01, 2026",
+        "lastUpdated": "October 02, 2026",
         "sourceFreshness": "fresh",
         "errors": []
       }
@@ -5019,7 +5018,7 @@
     },
     "acled": {
       "enabled": true,
-      "status": "ok",
+      "status": "partial",
       "lastFetchedAt": "2026-09-30T05:48:19.750Z",
       "summary": {
         "eventsLast4Weeks": 35386,
@@ -5031,7 +5030,7 @@
         "latestWeek": "2026-09-19",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
-        "sourceFreshness": "fresh",
+        "sourceFreshness": "aging",
         "politicalViolenceEventsLatestFullYear": 213419,
         "politicalViolenceYoyDelta": 0.217205,
         "civilianTargetingShareLatestFullYear": 0.31522,
@@ -5040,14 +5039,14 @@
         "monthlyAsOfDate": "2026-09-18",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-19，近4周事件相对12周均值变化 2.0%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。",
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-19，近4周事件相对12周均值变化 2.0%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
         "weeklyWindowAligned": true
       }
     }
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 57,
+      "score": 56,
       "labelZh": "和平红利退潮",
       "trend": "watching",
       "evidence": [
@@ -5060,12 +5059,12 @@
           "confidence": 0.85
         },
         {
-          "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
+          "labelZh": "ACLED 周度/月度数据部分可用",
           "source": "acled",
-          "summary": "ACLED 手动周度聚合更新至 2026-09-19，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 2%。",
-          "value": 21,
+          "summary": "周度覆盖 6 个区域，最新周 2026-09-19，近4周事件相对12周均值变化 2.0%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
+          "value": 16,
           "direction": "neutral",
-          "confidence": 0.9
+          "confidence": 0.68
         }
       ]
     },
@@ -5137,16 +5136,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4150.1，显示避险或实际利率压力定价。",
-          "value": 4150.1001,
+          "summary": "基于 Worker 快变量，黄金当前值 4141.8，显示避险或实际利率压力定价。",
+          "value": 4141.7998,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 102.28，对地缘与供应风险有部分确认作用。",
-          "value": 102.285,
+          "summary": "基于 Worker 快变量，布伦特当前值 102.35，对地缘与供应风险有部分确认作用。",
+          "value": 102.35,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5154,7 +5153,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "120.33/4150.1001",
+          "value": "120.33/4141.7998",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5162,7 +5161,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7666.45/4150.1001",
+          "value": "7722.72/4141.7998",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -5170,7 +5169,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 102.285,
+          "value": 102.35,
           "direction": "up",
           "confidence": 0.65
         }
@@ -5191,7 +5190,7 @@
     {
       "key": "peaceDividendRetreat",
       "labelZh": "和平红利退潮",
-      "score": 57
+      "score": 56
     }
   ],
   "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、资本管制与金融抑制风险、和平红利退潮。该层仅用于结构性风险识别。",
