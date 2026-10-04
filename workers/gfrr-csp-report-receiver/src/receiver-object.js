@@ -1,6 +1,7 @@
 // Durable Object holding the aggregated observations.
 //
-// LOCAL PHASE: written and reviewed, NOT deployed (stage B needs its own authorization).
+// Deployment and verification status live in docs/PROJECT_BACKLOG.md. Further stage B platform
+// changes and stage C production reporting each require separate authorization.
 //
 // The object deliberately holds all writes in ONE instance: there is no load evidence that sharding
 // is needed, and a single object keeps the update path serial and the key space bounded.
@@ -131,13 +132,36 @@ export function createCspReceiverObject(Base) {
     }
 
     /**
-     * Read-only health. It never writes meta, never schedules an alarm and never repairs anything:
-     * a health check that rearranged state could hide the very scheduling loss it is meant to report.
+     * Read-only health: ZERO storage writes and ZERO schedule repair.
+     *
+     * An earlier revision called `ensureSchema()` here. That was wrong even though it only used
+     * `CREATE TABLE IF NOT EXISTS` and `INSERT OR IGNORE`: creating tables and seeding five meta keys
+     * IS a write, and "does not overwrite existing values" is not the same as "does not write".
+     * A health check that mutates storage can also hide the scheduling loss it exists to report.
+     *
+     * The fresh-object case is handled by probing for the tables instead of creating them:
+     *   * no tables yet  -> `uninitialized`, which is a distinct state and NOT health;
+     *   * tables present -> the normal evaluation;
+     *   * a real read failure -> `unknown` / `cannot-confirm`, never masked as health.
      */
     async health({ now }) {
+      let lastCleaned = null;
+      let startedAt = null;
       try {
-        const lastCleaned = this.adapter.one("SELECT v FROM meta WHERE k='last_cleaned_bucket'")?.v ?? null;
-        const startedAt = this.adapter.one("SELECT v FROM meta WHERE k='cleanup_started_at'")?.v ?? null;
+        if (!this.tablesPresent()) {
+          return {
+            status: 'uninitialized',
+            alerts: ['not-initialized'],
+            message: 'no tables yet: the object has never ingested a report',
+          };
+        }
+        lastCleaned = this.adapter.one("SELECT v FROM meta WHERE k='last_cleaned_bucket'")?.v ?? null;
+        startedAt = this.adapter.one("SELECT v FROM meta WHERE k='cleanup_started_at'")?.v ?? null;
+      } catch (error) {
+        return { status: 'unknown', alerts: ['cannot-confirm'], message: String(error?.message ?? error) };
+      }
+
+      try {
         const alarmAt = await this.ctx.storage.getAlarm();
         const used = readUsed(this.adapter, bucketFor(now));
         return {
@@ -153,6 +177,14 @@ export function createCspReceiverObject(Base) {
       } catch (error) {
         return { status: 'unknown', alerts: ['cannot-confirm'], message: String(error?.message ?? error) };
       }
+    }
+
+    /** True when the observation tables exist. Pure read: it never creates anything. */
+    tablesPresent() {
+      const row = this.adapter.one(
+        "SELECT COUNT(*) AS c FROM sqlite_master WHERE type = 'table' AND name = 'obs'",
+      );
+      return (row?.c ?? 0) > 0;
     }
   };
 }
