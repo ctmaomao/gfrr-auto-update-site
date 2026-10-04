@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-03T01:42:16.269Z",
+  "updatedAt": "2026-10-04T02:22:30.914Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -16,11 +16,11 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-03T01:39:37.818Z",
-    "ageMinutes": 2.640833333333333,
+    "updatedAt": "2026-10-04T02:21:37.496Z",
+    "ageMinutes": 0.8902666666666667,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 102.35,
+    "brent": 102.125,
     "gold": 4141.7998,
     "vix": 16.39,
     "dxy": 120.33,
@@ -30,7 +30,7 @@
     "spx": 7722.72,
     "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
     "brentPromotionApplied": true,
-    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
+    "brentPromotionReason": "promoted-confirmed-extreme-move-with-fresh-yahoo-and-tradingeconomics-confirmation",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4945,7 +4945,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-03T01:42:15.875Z",
+        "attemptedAt": "2026-10-04T02:22:30.523Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4970,7 +4970,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-03T01:42:16.039Z",
+      "lastFetchedAt": "2026-10-04T02:22:30.684Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -5144,8 +5144,8 @@
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 102.35，对地缘与供应风险有部分确认作用。",
-          "value": 102.35,
+          "summary": "基于 Worker 快变量，布伦特当前值 102.13，对地缘与供应风险有部分确认作用。",
+          "value": 102.125,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5168,8 +5168,8 @@
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 102.35,
+          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-confirmed-extreme-move-with-fresh-yahoo-and-tradingeconomics-confirmation。",
+          "value": 102.125,
           "direction": "up",
           "confidence": 0.65
         }
