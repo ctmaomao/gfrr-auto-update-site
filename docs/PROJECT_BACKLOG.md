@@ -75,6 +75,14 @@
 
 ### 2026-10-02 EdgeOne 隔离 Git 通道验证（阶段 2）与生产接线（阶段 3）
 
+- **CSP 接收端 · 已部署与未部署的区分（本地收尾时固定，避免状态混淆）**：
+  - **已在线上生效·有平台实测依据**：`health()` 的**零写入只读修复**（`receiver-object.js`：以纯读 `tablesPresent()` 探测建表状态，`uninitialized` 与 `unknown` 分离，不再调用 `ensureSchema()`）。**证据**：线上 **`8c86987a-c1ec-4c4b-9939-8774976aa0e3`** 的 `/health` 对全新对象返回 **`200 uninitialized`**（旧版 `9ed15463` 返回 **503 `no such table`**）。**该部署的构建来源提交未从本地记录核实**，故不在此断言由哪个提交部署。
+  - **未部署**：**CORS 修复**（`index.js` 的 `parseAllowedOrigins` / `corsHeaders` / `handlePreflight`，`worker-entry.js` 的 `CORS_ALLOWED_ORIGINS` 接线）。本地 **15 项**回归通过，**未部署**；线上 `CORS_ALLOWED_ORIGINS` **未设置**（空白名单）。**不得**把 CORS 修复表述为已上线。
+  - **Wrangler 配置修复（同分支，部署来源未唯一绑定）**：提交 `b14622d4` 使用 `[exports.CspReceiverObject]` 声明 SQLite 生命周期；`main = "src/worker-entry.js"` 在 A 阶段已经存在，不是该提交新增。此前回执记录该配置 dry-run 通过且 B 已成功部署，但本地证据未唯一绑定部署的构建来源提交，故既不把此配置断言为“未部署”，也不声称已完成配置字节与线上版本的绑定。
+  - **状态逐项区分**：平台响应支持健康修复已生效；CORS 修复未部署；Wrangler 部署来源的提交绑定未核实。本轮不重新查询平台。
+  - **2026-10-04 本地收尾 acceptance baseline**：owner 授权核对六项改动、完成必要本地检查并仅作本地提交；保留 `test-results/` 中预算、一次性 marker 与证据，不重跑平台脚本，不推送、不建 PR、不部署、不启动 C。当前分支 `fix/csp-receiver-wrangler-exports` 基于 `334623c2`，HEAD 为 `b14622d4`；只读 fetch 时 `origin/main = 40c19e52`，另有 13 个数据刷新提交。本轮保留当前分支历史，不混入数据更新；未来 PR 前仍需基于届时最新 main 完成整合与验证。
+  - **2026-10-04 PR 准备 acceptance baseline（本轮授权）**：owner 明确授权整合最新 main、必要验证、推送 CSP 修复任务分支并创建 PR；保留原分支、预算、marker 和证据，禁止强推、合并、部署、重跑平台测试或启动 C。新分支 `codex/csp-receiver-health-cors` 基于只读 fetch 确认的 `origin/main = 40c19e52`，将 `b14622d4` 与 `2188b182` 的同任务改动整合为一个本地提交；原分支及两个原提交均保留。PR 相对该 main 仅包含接收端源码/配置、本地回归和本条验收记录，不包含数据刷新差异。
+
 - **Acceptance baseline（阶段 2）**：owner 授权"专用隔离仓库 + Git 集成项目、最多两次构建、失败不自动重试、保留资源与证据"。范围：验证 release 仓库的 **Git 构建通道**是否按同样方式消费 `edgeone.json`，以及整树同步后配置是否持续生效。**不使用**生产 release 仓库 `gfrr-edgeone-release`、不触达生产项目。
 - **阶段 2 结果（owner 由另一执行体完成，本会话独立核验）**：隔离仓库 `ctmaomao/gfrr-edgeone-staging`（私有）；EdgeOne **Git 集成**项目 `gfrr-csp-staging`；两次构建（#1 `dpxamp67uwem` 17s、#2 `dpc0htz1nohv` 18s）；批次 1 `8afe433`、批次 2 `72597e2b`；Actions run 36967191763 success。
   - **我方独立核验（只读）**：隔离仓库远端 `main` = `72597e2bfb86e640dd6c1c04368f6b6f1bd65c74`（与回执一致）；仓库当前仅含暂存树 + `edgeone.json` + `staging-probe.txt`，**`.github/` 与 `_staging-inputs/` 确已被整树同步删除**；7 次读回全部 `status=200`、`ok=true`、恰好一条 Report-Only、**0 条强制头**、`sameNameCount=1`；7 条头的值**逐字相同**且 sha256 = `e328e22383e6c4a029df316693acce4f4e5244dea49487d72b05e6bb74f4f0ca`（387 字符，与本地冻结值一致）；`probe.txt` = `staging-probe 2026-10-02T05:02:59Z` 且 `probe-observation-4` 的 body 逐字匹配。
@@ -151,6 +159,27 @@
 - **测试与记录更正（同轮复核指出）**：回滚回归原先在**第一条 obs INSERT 之前**就失败，不能证明部分写入后回滚；现用触发器让**第二条** obs 写入失败（首条已写入），并断言**首条确已撤销且 ledger 亦回滚**。键空间数字按上条更正为 **180 / 90**。
 - **第二轮复核（`a7286bbe`）[P1] · RPC 基类缺失，已修**：`index.js` 调用 `stub.ingest()` / `stub.health()`，但对象类是普通类。平台要求**继承内置 `DurableObject`** 才能把公共方法暴露为 RPC，仅"从入口导出类"不够。修法：`receiver-object.js` 改为导出**工厂 `createCspReceiverObject(Base)`**（在构造函数中 `super(ctx, env)`），平台侧由**新增的 `worker-entry.js`** 注入真基类；`wrangler.toml` 的 `main` 改为 `src/worker-entry.js`（**唯一** `import 'cloudflare:workers'` 的模块），`index.js` 只保留可测逻辑与 `fetch` 处理函数。
   - 由此保持 **D-C 可在 Node 中测试**：本地用例用普通基类 `LocalBase` 调用同一工厂，**零新增依赖**；新增回归断言"类确实继承注入的基类、`super(ctx, env)` 被调用且三个方法存在"。
+- **第三轮复核 · CORS 预检缺口（本地已修，未部署）**：修复前 `index.js` 对**任何非 POST**（含浏览器预检 `OPTIONS`）返回 **405**，响应头只有 `content-type` 与 `cache-control: no-store`。legacy `report-uri` 为 **no-cors**、无预检依赖；跨源 Reporting API 的预检按该代码会失败。这不是对真实浏览器已发送预检的实测，也不解释本地 Reporting API 零到达的根因。
+  - **第三轮复核修正（凭据与 legacy 表述）**：规范采用 **`credentials: same-origin`**，故**Reporting API 的跨源报告不携带凭据，同源报告可能携带**；本接收端的白名单只约束跨源读取，**不启用 `Access-Control-Allow-Credentials`** 正是使"非通配白名单"在此严格安全的前提。另更正：**接收端未因 CORS 阻止 legacy 摄入**（`report-uri` 无预检依赖），但**真实浏览器投递仍未验证**，不得表述为"修复前后都能送达"。
+  - **证据限制（如实保留）**：该结论由**源码**与**既有 GET → 405 的平台实测**支持；本轮**未实际发送 `OPTIONS`**，因此"预检被 405 拒绝"是**推断**而非实测。
+  - **修法**：`index.js` 新增 `parseAllowedOrigins` / `corsHeaders` / `handlePreflight`，并让 POST 路径（**含全部既有错误响应**）统一经 `jsonResponse` 附加 CORS 头，保留 `cache-control: no-store`。
+  - **CORS 策略（明确记录）**：允许来源取 **`CORS_ALLOWED_ORIGINS`**（逗号分隔）**精确白名单**，**默认空**（未配置即无任何跨源来源被允许）；**不使用 `*`**、**不回显请求来源**；允许方法仅 **POST、OPTIONS**，允许请求头仅 **`content-type`**；**不启用凭据**（无 `Access-Control-Allow-Credentials`）；`Access-Control-Max-Age` 取 **600 秒**；应答 `Vary: origin`；`Access-Control-Allow-Origin` 只返回**唯一命中的来源**；命中来源时另返回 `Access-Control-Expose-Headers: retry-after`。未列入的来源 / 非法方法 / 越界请求头 → **204 且不带 CORS 头**（浏览器判为预检失败）。
+  - **`/health` 有意不开放跨源**：它是运维端点，开放浏览器来源只会无收益地暴露聚合用量；仍返回 `no-store`、无 CORS 头。
+  - **OPTIONS 零副作用**：预检**不调用 DO、不建表、不写账本、不排程**（回归用记录型 stub 断言零调用）；POST 的媒体类型、体积（声明 + 流式）、JSON、预算闸门**均未改动**。
+  - **回归**：新增 `tests/csp/receiver-cors.test.mjs`（**15 项**）覆盖合法/非法预检、越界方法或请求头、缺失 `Origin`、白名单空默认、POST 与**包括 413 与 429 在内的**错误响应的 CORS 头一致性（含命中来源时的 `Access-Control-Expose-Headers: retry-after`）、无 `Origin` 时不加头、`OPTIONS` 零 DO 调用、legacy 与 Reporting 两格式仍摄入、既有 405/415/413/400 闸门不变、`health` 零写入且无 CORS 头、白名单解析（含通配符不匹配）。接收端合计 **74 项**（15 + 59）全绿。
+  - **明确不构成**：本地模拟通过**不能**记为**真实浏览器投递通过**；`report-to` 的端到端投递、真实预检往返、以及 `Reporting-Endpoints` 行为仍未验证。修复的**部署**与**浏览器平台测试**需分别授权。
+- **B 阶段部分验证 · legacy 浏览器链路（平台运行 1 次，已复核通过）**：owner 授权「运行已审阅脚本一次，最多 10 次尝试（报告 ≤8、健康 ≤2），累计从 18/500 续用」。
+  - **目标版本**：现有 `gfrr-csp-report-receiver`，线上 **`8c86987a-c1ec-4c4b-9939-8774976aa0e3`**；**本轮未部署**。
+  - **实测**：4 次尝试（**2 次健康读取 + 2 次报告提交**，均 200）；页面产生 **2 条** CSP 违例（`script-src-elem`、`script-src-attr`）；两次提交均 `ok:true / action:"commit" / stored:1`；**`ingestUsed` 0 → 4**；累计预算 **22/500（剩余 478）**；7 项判据全通过；`reportTasksPeak = 2`（两份报告**同时在飞、各自独立预占**）；任务全部收尾后才释放共享锁；一次性 marker 保留；共享锁已释放。
+  - **验证边界（必须同时陈述）**：本测试证明的是「**浏览器生成报告 ＋ 测试驱动转发至 Worker**」，**不等于浏览器原生直连投递**（驱动以 `route.fetch()` 自取响应再交付）；`report-to`/Reporting API **未启用故未验证**；`OPTIONS`、重定向、浏览器重试**本 run 均未发生（各 0）→ 未覆盖**；CORS 修复**未部署**、白名单仍为空。
+  - **措辞更正（复核指出）**：`scopeViolations = 0` 表示**没有越界的浏览器请求**；两次获准的 `/health` **本就位于报告路径之外**，且两次**均不经过浏览器路由**（由 Node `fetch` 发出，不进入 `context.route` 处理器），故不参与该计数，也**未**被当作范围内的调用。**时序**：浏览器拦截（`context.route`）**先建立**，随后才发**前置** `/health`（**页面加载之前**）；**后置** `/health` 在**报告处理完成之后**发出。因此"两次读取均在拦截建立之前"**不准确**。
+  - **状态**：**B 仅此一项可收束**，**不代表 B 全部完成，也不构成 C 的启动依据**；原生直连、Reporting API、CORS 部署及其余未验证项继续保留。**本脚本为一次性运行，不重跑。**
+- **B 阶段 · Reporting API（`report-to`）本地有界归因（owner 授权第 1 项；已按建议停止继续归因）**：在**受测配置**下（本地页面 `127.0.0.1:8765` 仅设 `report-to`；端点分别取跨源 `127.0.0.1:8766` 与**同源** `/csp-report-to`；窗口 **180 秒**；无头 Chromium `153.0.8010.12`），**准确结论**为：
+  > **Reporting API 报告仍为 `Queued`、已完成尝试数为 0、接收端零到达；端点成功注册尚未确立；未投递原因不明。**
+  - **观测事实**：页面产生 2 条违规、Observer 记录 2 条；CDP `reportingApiReportAdded = 2`，`destination = "gfrr"`（**只证明报告关联该目标名称**）；`completedAttempts = 0`；`Reporting-Endpoints` 响应头文本可见；接收端到达 **0**（跨源与同源**均**如此）；`reportUpdated` 在约 120 s 后停止变化。
+  - **不得据此排除的事项（规范将响应头解析、URL 校验与端点构建列为独立步骤）**：响应头可见 **≠** 端点已解析或已注册；**不可达 HTTPS 端点零到达不能排除"端点不可达"**；**无该头也零到达不能排除"注册缺失"**；**180 秒零到达只能说明延长至该窗口仍未成功，不能彻底排除调度延迟**；**同源同样失败说明跨源 CORS 不是全部结果的充分解释，不等于排除所有来源或预检问题**。
+  - **阳性对照的范围**：legacy `report-uri` 在 15 秒内 2 次到达，仅证明**夹具能产生违规且 legacy 能到达**，**不证明 Reporting API 的注册与发送装置正常**。
+  - **状态**：owner 选择**维持现状、停止继续归因**；**本轮未发任何平台请求**；真实预算 **22/500**、一次性 marker 与证据**保留**；**未部署 CORS、未扩展平台测试、未启动 C**。若日后重启该线索，需**不同性质**的手段并**另行授权**。
 - **参数与键空间的不一致（待参数评审）**：144 **小于** `MAX_INPUT_KEYS_PER_BATCH=200` 与 `BUCKET_ROW_CAP=512`，故这两个候选值**无法经正常路径触发**；容量与 overflow 分支靠**注入 `bucketRowCap`** 覆盖 —— 这**只证明该参数值下的行为，不证明默认 512 可达**。键空间只有在已知策略表超过 1 项时才会越过 200。
 - **明确未覆盖（属 B 阶段）**：平台计量（游标 `rowsWritten`/`rowsRead` 是否为权威计费值）、免费层额度与超限形态、alarm 实际触发与指数退避/最多六次重试、CPU 预算下的载荷上限、跨源投递（`no-cors`/`cors`）与 `Reporting-Endpoints`、Workers Logs 保留期与 IP、跨 DO 共享额度。**D-C 与 D-A 都不能替代这些验证。**
 - **保留的边界**：拒绝/丢弃计数**仅作本次处理诊断**，不新增持久化统计行、不承诺跨请求累计、不默认写平台日志；`RESERVE` 类口径只降低摄入预算，**不是平台额度预留保证**。
@@ -459,6 +488,13 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **当前任务（2026-10-04）**：CSP 修复 PR 准备；owner 已授权整合最新 main、验证、推送任务分支并建 PR。当前分支 `codex/csp-receiver-health-cors` 基于 `40c19e52`，包含 Wrangler 生命周期配置、health 只读探测、CORS 和本地回归；原分支 `fix/csp-receiver-wrangler-exports` 及 `b14622d4`、`2188b182` 保留。
+- **基线与改动**：health 修复有既有平台响应依据，CORS 修复未部署；部署来源提交未唯一绑定。相对最新 main 的差异仅限本任务七个文件；不修改生产数据或现有 checker。
+- **验证与边界**：接收端回归 74/74 通过；既有 CSP 暂存/生成闸门 66 通过、1 个文件符号链接用例因 `EPERM` 跳过；整合最新 main 后的完整 `check:changed` / `check:all` 结果见本次交付回执。真实预算 22/500、一次性 marker 与证据保留，不重跑平台脚本；推送及 PR 按本轮授权执行，以交付回执为准，不部署，C 未获授权。
+- **下一步与阻塞**：本轮创建 PR 后停止，待独立 review；不合并、不部署、不启动 C。B 仅 legacy“浏览器生成报告＋驱动转发”部分验收有效，原生直连、Reporting API 及其它平台维度继续未验证。
+
+### 前序交接（2026-09-22，保留作历史）
 
 - **当前任务**：预算拒绝改为显式 skip（ADR-0060，见本文件顶部同日条目），是已合并 PR #412 的 owner 追加授权后续。前序归因确认 Tavily 账户额度耗尽（`1007/1000`）是唯一根因、属外部计费条件；#412 已合并为 main `7fe5f73d` 且 Pages 部署 run `35582873249` 成功。本轮按 ADR-0060 把本仓库自身在发请求前的预算拒绝归为显式 skip，真实 provider 失败仍硬失败；分支 `codex/macro-editorial-budget-skip` 等独立审阅与合并。
 - **运行边界**：不新增订阅、不付费重试、不放宽可信新闻或 DeepSeek 门槛、不新增 provider 频率、不加 workflow schedule、不删预算 refs、不写账本远端内容；未删除或放宽任何 checker 断言（§10 自查见顶部条目）；2026-09-18 健康整改的授权范围不因本轮登记扩大。

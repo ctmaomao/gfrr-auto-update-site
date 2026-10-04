@@ -586,19 +586,68 @@ test('a successful alarm clears the start marker and schedules the next run', as
   assert.ok(getAlarm() !== null, 'a follow-up alarm is scheduled');
 });
 
-test('health is read-only: it writes nothing and schedules nothing', async () => {
+test('health on a brand-new object reports uninitialized without writing anything', async () => {
+  // The first deployment failed here: health read `meta` on an object that had never initialised and
+  // answered `no such table`. Tables are created by ingest, so health must PROBE, not create.
   const { ctx, getAlarm } = makeContext();
+  const object = new CspReceiverObject(ctx, {});
+  assert.equal(object.adapter.all("SELECT name FROM sqlite_master WHERE type='table'").length, 0,
+    'the fresh object must have no tables');
+
+  const alarmBefore = getAlarm();
+  const result = await object.health({ now: Date.parse('2026-10-10T12:00:00.000Z') });
+
+  assert.equal(result.status, 'uninitialized');
+  assert.deepEqual(result.alerts, ['not-initialized']);
+  assert.notEqual(result.status, 'healthy', 'an uninitialised object is not healthy');
+  assert.equal(object.adapter.all("SELECT name FROM sqlite_master WHERE type='table'").length, 0,
+    'health must not create any table');
+  assert.equal(getAlarm(), alarmBefore, 'health must not schedule an alarm');
+});
+
+test('health distinguishes an uninitialized object from a real read failure', async () => {
+  const { ctx } = makeContext();
   const object = new CspReceiverObject(ctx, {});
   object.ensureSchema();
 
-  const metaBefore = JSON.stringify(object.adapter.all('SELECT k, v FROM meta ORDER BY k'));
+  // A real read failure must stay `unknown`, never health and never `uninitialized`.
+  const delegate = object.adapter;
+  object.adapter = {
+    ...delegate,
+    one(statement, ...bindings) {
+      if (/sqlite_master/u.test(statement)) return delegate.one(statement, ...bindings);
+      throw new Error('read-exploded');
+    },
+  };
+  const result = await object.health({ now: Date.parse('2026-10-10T12:00:00.000Z') });
+  assert.equal(result.status, 'unknown');
+  assert.deepEqual(result.alerts, ['cannot-confirm']);
+  assert.match(result.message, /read-exploded/u);
+});
+
+test('health is read-only: it writes nothing and schedules nothing', async () => {
+  const { ctx, getAlarm } = makeContext();
+  const object = new CspReceiverObject(ctx, {});
+  // Initialise through ingest, a write path; health itself must not create the schema.
+  await object.ingest({
+    entries: [[keyOf('script-src', 'inline', 'index'), { reports: 1, incomplete: false }]],
+    receivedAt: Date.parse('2026-10-10T05:00:00.000Z'),
+  });
   const alarmBefore = getAlarm();
+
+  const metaBefore = JSON.stringify(object.adapter.all('SELECT k, v FROM meta ORDER BY k'));
+  const tablesBefore = JSON.stringify(object.adapter.all("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"));
   const result = await object.health({ now: Date.parse('2026-10-10T12:00:00.000Z') });
 
   assert.equal(typeof result.status, 'string');
   assert.equal(getAlarm(), alarmBefore, 'health must not schedule an alarm');
   assert.equal(JSON.stringify(object.adapter.all('SELECT k, v FROM meta ORDER BY k')), metaBefore,
     'health must not write meta');
+  assert.equal(
+    JSON.stringify(object.adapter.all("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")),
+    tablesBefore,
+    'health must not create tables',
+  );
   assert.ok(result.alerts.includes('cleanup-never-ran'), 'a missing watermark is still reported');
 });
 
