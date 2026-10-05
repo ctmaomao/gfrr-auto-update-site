@@ -2,17 +2,17 @@
   "version": "1.0.0",
   "source": "acled-aggregated-manual-normalized-monthly",
   "sourceName": "ACLED Global Monthly Aggregated Data",
-  "preparedAt": "2026-09-28T05:45:50.599Z",
+  "preparedAt": "2026-10-05T06:05:56.333Z",
   "preparedBy": "github-actions-acled-auto",
-  "asOfDate": "2026-09-18",
+  "asOfDate": "2026-09-25",
   "latestFullYear": 2025,
   "filesIngested": [
     {
       "slug": "demonstration_events_by_country-year",
       "metric": "demonstrations",
       "granularity": "country-year",
-      "filename": "number_of_demonstration_events_by_country-year_as-of-18Sep2026.xlsx",
-      "asOfDate": "2026-09-18",
+      "filename": "number_of_demonstration_events_by_country-year_as-of-25Sep2026.xlsx",
+      "asOfDate": "2026-09-25",
       "yearRange": [
         1997,
         2026
@@ -23,32 +23,32 @@
       "slug": "events_targeting_civilians_by_country-year",
       "metric": "civilianTargeting",
       "granularity": "country-year",
-      "filename": "number_of_events_targeting_civilians_by_country-year_as-of-18Sep2026.xlsx",
-      "asOfDate": "2026-09-18",
+      "filename": "number_of_events_targeting_civilians_by_country-year_as-of-25Sep2026.xlsx",
+      "asOfDate": "2026-09-25",
       "yearRange": [
         1997,
         2026
       ],
-      "rowCount": 2726
+      "rowCount": 2727
     },
     {
       "slug": "political_violence_events_by_country-month-year",
       "metric": "politicalViolenceMonthly",
       "granularity": "country-month-year",
-      "filename": "number_of_political_violence_events_by_country-month-year_as-of-18Sep2026.xlsx",
-      "asOfDate": "2026-09-18",
+      "filename": "number_of_political_violence_events_by_country-month-year_as-of-25Sep2026.xlsx",
+      "asOfDate": "2026-09-25",
       "yearRange": [
         1997,
         2026
       ],
-      "rowCount": 29473
+      "rowCount": 29483
     },
     {
       "slug": "political_violence_events_by_country-year",
       "metric": "politicalViolence",
       "granularity": "country-year",
-      "filename": "number_of_political_violence_events_by_country-year_as-of-18Sep2026.xlsx",
-      "asOfDate": "2026-09-18",
+      "filename": "number_of_political_violence_events_by_country-year_as-of-25Sep2026.xlsx",
+      "asOfDate": "2026-09-25",
       "yearRange": [
         1997,
         2026
@@ -59,20 +59,20 @@
       "slug": "reported_civilian_fatalities_by_country-year",
       "metric": "civilianFatalities",
       "granularity": "country-year",
-      "filename": "number_of_reported_civilian_fatalities_by_country-year_as-of-18Sep2026.xlsx",
-      "asOfDate": "2026-09-18",
+      "filename": "number_of_reported_civilian_fatalities_by_country-year_as-of-25Sep2026.xlsx",
+      "asOfDate": "2026-09-25",
       "yearRange": [
         1997,
         2026
       ],
-      "rowCount": 2726
+      "rowCount": 2727
     },
     {
       "slug": "reported_fatalities_by_country-year",
       "metric": "fatalities",
       "granularity": "country-year",
-      "filename": "number_of_reported_fatalities_by_country-year_as-of-18Sep2026.xlsx",
-      "asOfDate": "2026-09-18",
+      "filename": "number_of_reported_fatalities_by_country-year_as-of-25Sep2026.xlsx",
+      "asOfDate": "2026-09-25",
       "yearRange": [
         1997,
         2026
@@ -81,15 +81,15 @@
     }
   ],
   "global": {
-    "politicalViolenceEventsLatestFullYear": 213419,
-    "politicalViolenceEventsPrior3YearAverage": 175335.333333,
-    "politicalViolenceYoyDelta": 0.217205,
+    "politicalViolenceEventsLatestFullYear": 213425,
+    "politicalViolenceEventsPrior3YearAverage": 175338.333333,
+    "politicalViolenceYoyDelta": 0.217218,
     "demonstrationsLatestFullYear": 161461,
-    "civilianTargetingEventsLatestFullYear": 67274,
-    "civilianTargetingShareLatestFullYear": 0.31522,
-    "fatalitiesLatestFullYear": 248686,
-    "civilianFatalitiesLatestFullYear": 75894,
-    "civilianFatalitiesShareLatestFullYear": 0.30518
+    "civilianTargetingEventsLatestFullYear": 67277,
+    "civilianTargetingShareLatestFullYear": 0.315225,
+    "fatalitiesLatestFullYear": 248609,
+    "civilianFatalitiesLatestFullYear": 75818,
+    "civilianFatalitiesShareLatestFullYear": 0.304969
   },
   "monthlyTrend": {
     "latest12mWindow": [
@@ -100,9 +100,9 @@
       "2024-09",
       "2025-08"
     ],
-    "latest12mEvents": 231633,
-    "prior12mEvents": 220509,
-    "latest12mVsPrior12mDelta": 0.050447
+    "latest12mEvents": 231724,
+    "prior12mEvents": 220512,
+    "latest12mVsPrior12mDelta": 0.050845
   },
   "topEscalatingCountries": [
     {
@@ -119,15 +119,15 @@
     },
     {
       "country": "Russia",
-      "latestFullYearEvents": 16741,
+      "latestFullYearEvents": 16742,
       "prior3YearAverageEvents": 5542,
-      "yoyDelta": 2.020751
+      "yoyDelta": 2.020931
     },
     {
       "country": "Iran",
-      "latestFullYearEvents": 603,
+      "latestFullYearEvents": 604,
       "prior3YearAverageEvents": 210,
-      "yoyDelta": 1.871429
+      "yoyDelta": 1.87619
     },
     {
       "country": "Libya",
@@ -169,7 +169,7 @@
   "topFatalitiesCountries": [
     {
       "country": "Ukraine",
-      "fatalities": 78403
+      "fatalities": 78404
     },
     {
       "country": "Sudan",
@@ -180,12 +180,12 @@
       "fatalities": 16904
     },
     {
-      "country": "Nigeria",
-      "fatalities": 15893
-    },
-    {
       "country": "Myanmar",
       "fatalities": 15824
+    },
+    {
+      "country": "Nigeria",
+      "fatalities": 15816
     },
     {
       "country": "Somalia",
@@ -193,7 +193,7 @@
     },
     {
       "country": "Brazil",
-      "fatalities": 9082
+      "fatalities": 9084
     },
     {
       "country": "Syria",
@@ -201,7 +201,7 @@
     },
     {
       "country": "Mexico",
-      "fatalities": 8126
+      "fatalities": 8123
     },
     {
       "country": "Democratic Republic of Congo",
