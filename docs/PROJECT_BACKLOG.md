@@ -489,6 +489,13 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
+- **2026-10-04 CSP CORS 平台验证 acceptance baseline 与结果（覆盖下方 PR 准备的旧交接状态）**：owner 授权更新现有隔离 Worker 最多一次，仅允许 `http://127.0.0.1:8765`，平台验证最多 10 次请求、累计上限 500，从 22 续用；异常即停、不重试、不接受费用，保留资源与证据，不启动 C。#430 已按 owner 对该 PR 的明确人工 review 例外合并，源代码为 `0d977272`。
+  - **部署**：现有 `gfrr-csp-report-receiver` 更新一次（exit 0），版本 `a96ec4ba-d522-4a87-8cbb-3ff3ca8134a3`；`--keep-vars --var CORS_ALLOWED_ORIGINS:http://127.0.0.1:8765`，保留其它变量。未修改仓库 wrangler 配置；不把本次仅供本地测试的允许来源用于生产页面。部署列表确认最新记录 100% 指向该版本；客户端请求时间与平台 Created 字段不用于证明精确生效时序。
+  - **平台序列**：一次运行，8/8 通过、exit 0：两次 `/health` 200；允许来源的 OPTIONS 204 且精确 CORS 头；未列来源、PUT、越界请求头的 OPTIONS 各 204 且无 CORS 头；允许来源 Reporting 格式 POST 200/commit/stored=1；未列来源空批次 POST 200/stored=0 且无 CORS 头。`ingestUsed` 4→6；预算 22→30/500（剩余 470），请求前预占落盘，共享锁释放，新一次性 marker 保留。
+  - **本地门禁与证据**：新增 ignored `test-results/codex-cors-platform.mjs` 与回归，6/6 通过（发送前计数、失败停止、重复运行不覆盖、损坏预算、预算不足、锁冲突）；语法及部署 dry-run exit 0。部署输出、新 marker 与 `codex-cors-platform-evidence.json` 保留；前轮 legacy marker/证据不覆盖、不重跑。授权预算文件仅按本轮预占更新。
+  - **验收边界**：本轮是 Node HTTP 对接收端的 CORS 契约验证，非浏览器原生 Reporting API 投递、非浏览器预检自动往返证明；`report-to` 注册与端到端、原生直连、alarm 实际触发/清理/重试、平台计量维度仍未验证。此前“CORS 未部署”是历史状态，本轮后已部署但只有上述测试 origin 获准。费用判断沿用 owner 已确认的 Free 计划，本轮无升级/付费功能操作、无费用信号，未独立核查订阅或账单。C 仍未授权、未启动；该平台验证轮不推送、不建 PR、不清资源。
+  - **2026-10-05 文档 PR acceptance baseline**：owner 另行授权整合最新 main、必要验证、推送验收记录分支并创建文档 PR；禁止合并、部署、重跑平台测试或启动 C。新分支 `codex/csp-cors-validation-record` 基于 `5f57f548`，只整合本条验收记录；原记录分支与 `35dd9021` 保留，预算 30/500、所有一次性 marker 与证据保留。#430 的人工 review 例外不扩展到本 PR。
+
 - **当前任务（2026-10-04）**：CSP 修复 PR 准备；owner 已授权整合最新 main、验证、推送任务分支并建 PR。当前分支 `codex/csp-receiver-health-cors` 基于 `40c19e52`，包含 Wrangler 生命周期配置、health 只读探测、CORS 和本地回归；原分支 `fix/csp-receiver-wrangler-exports` 及 `b14622d4`、`2188b182` 保留。
 - **基线与改动**：health 修复有既有平台响应依据，CORS 修复未部署；部署来源提交未唯一绑定。相对最新 main 的差异仅限本任务七个文件；不修改生产数据或现有 checker。
 - **验证与边界**：接收端回归 74/74 通过；既有 CSP 暂存/生成闸门 66 通过、1 个文件符号链接用例因 `EPERM` 跳过；整合最新 main 后的完整 `check:changed` / `check:all` 结果见本次交付回执。真实预算 22/500、一次性 marker 与证据保留，不重跑平台脚本；推送及 PR 按本轮授权执行，以交付回执为准，不部署，C 未获授权。
