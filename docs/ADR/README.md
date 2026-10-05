@@ -9,6 +9,7 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
+| [ADR-0061](0061-csp-optional-report-uri.md) | Optional CSP report-uri with one exact receiver endpoint | Local implementation authorized; independent contract review required; production activation excluded |
 | [ADR-0060](0060-budget-hold-explicit-skip.md) | Pre-network search budget holds are explicit editorial skips | Owner-authorized implementation; amends the ADR-0059 readiness clause; independent review required |
 | [ADR-0059](0059-tavily-runtime-budget.md) | Shared Tavily runtime usage ledger and budget | Implementation and publication authorized; independent review pending |
 | [ADR-0058](0058-retire-expired-editorial-recovery.md) | Retire expired editorial recovery and reconcile current handoff | Owner-authorized simplification; independent review required |

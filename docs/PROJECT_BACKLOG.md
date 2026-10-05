@@ -489,6 +489,11 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
+- **2026-10-05 CSP 可选 report-uri 支持 acceptance baseline**：owner 在 C 准备交付后要求“请开始下一步”；按前序明确边界，仅本地实现独立评审的严格策略支持，不应用启用补丁、不推送/PR/合并/部署/启动 C，不发接收端请求，不新增依赖/费用或扩大 #430/#431 review 例外。隐私、公开流量、平台额度/日志/alarm 与 C 授权缺口继续保留。
+  - **最后基线 / 改动**：干净 `codex/csp-c-preparation` HEAD `3d64d491`，非 prune fetch 确认 latest main 仍 `b307a5b748dd`；新本地分支 `codex/csp-report-uri-support` 从 main 起，旧分支及全部原提交保留，不叠加准备文档历史。改共享策略模块、新增手动回归、[ADR-0061](ADR/0061-csp-optional-report-uri.md)/索引及本交接；生产配置、接收端、workflow、checker、package/套件与数据不动。
+  - **当前任务 / 判据**：required 指令清单原样，optional report-uri 仅接受指定单个 HTTPS 端点的精确字节；拒绝空值、多值、其它 URL、query/fragment、凭据及注入。缺省策略/文档逐字不变，显式移除端点恢复原策略，关闭态仍合法空 headers。保留原 hash/长度/目录锚点/全文比较断言，不新增 skip 或 ignore。手动回归与完整 check:changed 实际日志、退出结果、证据文件哈希核对保存在 `test-results/csp-report-uri-support-20261005/`，以交付回执为准。
+  - **下一步 / 阻塞**：本地支持完成后仅供独立契约 review，ADR 状态不冒充 accepted；远端 push/PR 需明确授权，merge 仍需独立人工 review 及相应动作授权。C 配置启用、真实页面 URL/query 传输、公众流量/费用边界、观察窗口/预算/负责人、失败停止/回滚尚未批准。本轮不验证平台；真实预算与旧 marker/证据/工具保留，不能把应用计数当平台额度。
+
 - **2026-10-04 CSP CORS 平台验证 acceptance baseline 与结果（覆盖下方 PR 准备的旧交接状态）**：owner 授权更新现有隔离 Worker 最多一次，仅允许 `http://127.0.0.1:8765`，平台验证最多 10 次请求、累计上限 500，从 22 续用；异常即停、不重试、不接受费用，保留资源与证据，不启动 C。#430 已按 owner 对该 PR 的明确人工 review 例外合并，源代码为 `0d977272`。
   - **部署**：现有 `gfrr-csp-report-receiver` 更新一次（exit 0），版本 `a96ec4ba-d522-4a87-8cbb-3ff3ca8134a3`；`--keep-vars --var CORS_ALLOWED_ORIGINS:http://127.0.0.1:8765`，保留其它变量。未修改仓库 wrangler 配置；不把本次仅供本地测试的允许来源用于生产页面。部署列表确认最新记录 100% 指向该版本；客户端请求时间与平台 Created 字段不用于证明精确生效时序。
   - **平台序列**：一次运行，8/8 通过、exit 0：两次 `/health` 200；允许来源的 OPTIONS 204 且精确 CORS 头；未列来源、PUT、越界请求头的 OPTIONS 各 204 且无 CORS 头；允许来源 Reporting 格式 POST 200/commit/stored=1；未列来源空批次 POST 200/stored=0 且无 CORS 头。`ingestUsed` 4→6；预算 22→30/500（剩余 470），请求前预占落盘，共享锁释放，新一次性 marker 保留。
