@@ -490,6 +490,7 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **2026-10-05 CSP 可选 report-uri 支持 acceptance baseline**：owner 在 C 准备交付后要求“请开始下一步”；按前序明确边界，仅本地实现独立评审的严格策略支持，不应用启用补丁、不推送/PR/合并/部署/启动 C，不发接收端请求，不新增依赖/费用或扩大 #430/#431 review 例外。隐私、公开流量、平台额度/日志/alarm 与 C 授权缺口继续保留。
+  - **2026-10-05 PR 阶段追加授权（仅替代上条本地阶段的 push/PR 禁止）**：owner 明确授权推送 `codex/csp-report-uri-support` 并创建以 `main` 为目标的独立 PR。审阅对象为 `ed32aded` 的严格可选端点支持、手动回归、ADR-0061/索引和本任务交接；本轮仅补此授权记录。fetch 确认 main 仍为 `b307a5b748dd`，工作区/索引干净，未发现已有同分支 PR；无需整合其它提交。继续禁止合并、部署、生产配置启用、启动 C、平台请求或重跑一次性脚本；独立人工契约 review 和隐私/费用/验收/回滚批准仍保留，#430/#431 例外不扩展。必要检查、实际推送和 PR URL 以本轮交付回执为准。
   - **最后基线 / 改动**：干净 `codex/csp-c-preparation` HEAD `3d64d491`，非 prune fetch 确认 latest main 仍 `b307a5b748dd`；新本地分支 `codex/csp-report-uri-support` 从 main 起，旧分支及全部原提交保留，不叠加准备文档历史。改共享策略模块、新增手动回归、[ADR-0061](ADR/0061-csp-optional-report-uri.md)/索引及本交接；生产配置、接收端、workflow、checker、package/套件与数据不动。
   - **当前任务 / 判据**：required 指令清单原样，optional report-uri 仅接受指定单个 HTTPS 端点的精确字节；拒绝空值、多值、其它 URL、query/fragment、凭据及注入。缺省策略/文档逐字不变，显式移除端点恢复原策略，关闭态仍合法空 headers。保留原 hash/长度/目录锚点/全文比较断言，不新增 skip 或 ignore。手动回归与完整 check:changed 实际日志、退出结果、证据文件哈希核对保存在 `test-results/csp-report-uri-support-20261005/`，以交付回执为准。
   - **下一步 / 阻塞**：本地支持完成后仅供独立契约 review，ADR 状态不冒充 accepted；远端 push/PR 需明确授权，merge 仍需独立人工 review 及相应动作授权。C 配置启用、真实页面 URL/query 传输、公众流量/费用边界、观察窗口/预算/负责人、失败停止/回滚尚未批准。本轮不验证平台；真实预算与旧 marker/证据/工具保留，不能把应用计数当平台额度。
