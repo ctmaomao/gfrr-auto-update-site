@@ -340,6 +340,805 @@
         "当前无过期指标。",
         "历史页面仅用于周度结构对照；本期正文由当前指标重新生成。"
       ]
+    },
+    "weekly_editorial": {
+      "schemaVersion": "bubble-watch-weekly-editorial-production-v1",
+      "status": "valid",
+      "displayEnabled": true,
+      "generatedAt": "2026-10-06T04:56:30.052Z",
+      "updatedAt": "2026-10-06T04:56:30.052Z",
+      "asOfDate": "2026-10-05",
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "mode": "external_ai_weekly_editorial",
+      "sourceMode": "weekly_news_and_site_structured_compact_v1",
+      "output": {
+        "schemaVersion": "bubble-watch-weekly-editorial-output-v1",
+        "generatedAt": "2026-10-06T04:56:29.706Z",
+        "asOfDate": "2026-10-05",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "mode": "external_ai_weekly_editorial",
+        "headlineZh": "红灯比例升至34.8% 双轴判读维持高风险预警",
+        "leadZh": "本期固定核心 23 项计数为 8 红 / 8 黄 / 7 绿，红灯比例由 30.4% 升至 34.8%，翻灯两项：数据中心 ABS 利差黄转红、AI 行业 Token 月度环比绿转黄。两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 46.2（引线点燃），基础判读落在中度警戒，有效判读为高风险预警。压力集中在估值与资金两端，信用端高收益债利差仍处绿灯，需求端云厂商递延收入与企业部署维持绿灯。本期更像需求兑现与烧钱、集中融资并存的观察窗口，而非信用断裂式顶部。",
+        "weeklyTimeline": [
+          {
+            "date": "2026-09-24",
+            "titleZh": "Oracle就Project Jupiter发不可抗力通知",
+            "detailZh": "据结构化数据，Oracle 9/24 就 Project Jupiter 向开发方 Stack Infrastructure 与同时持有该项目债权/股权的 Blue Owl 正式发出不可抗力通知；若 2.45GW 燃料电池电厂与 Green Chile 天然气管道不能如期到位，租金支付或递延长达三年。项目仅完成约 26%、落后原计划 7 个月，$180 亿银团贷款维持 89-91 美分。该事件使数据中心 ABS 利差由黄转红，但贷款价格未进一步下跌，压力更多体现为法律主张与工期风险。",
+            "sourceRefIds": [
+              "indicator:dc_abs_spread"
+            ]
+          },
+          {
+            "date": "2026-10-01",
+            "titleZh": "加州总检察长向OpenAI送达调查传票",
+            "detailZh": "据加州总检察长办公室新闻稿，Bonta 于 9/30 就持续调查向 OpenAI 送达调查传票。该来源为官方新闻稿，仅说明存在调查程序，未披露调查范围、结论或时间表。结构化数据中会计造假/round-tripping 事件仍为 0 件绿灯，两者口径不同：前者是监管调查程序，后者是公开执法公告中的正式会计欺诈事件，不能互相替代。",
+            "sourceRefIds": [
+              "news:accounting_regulatory:ba49dca3bf0adb",
+              "indicator:accounting_events"
+            ]
+          },
+          {
+            "date": "2026-10-05",
+            "titleZh": "Morningstar称AI融资合作对信用偏正面",
+            "detailZh": "据 Morningstar 报道，Nvidia 近期与华尔街机构的合作可能通过降低企业与政府的前期资金要求，扩大 AI 基础设施投资，该机构认为这对 Nvidia 与数据中心运营商信用偏正面。此为机构观点，与结构化数据中数据中心 ABS 利差红灯、Neocloud 杠杆抬升黄灯并存，说明信用端并非单向恶化，但该报道为摘要，未提供完整测算与条款细节。",
+            "sourceRefIds": [
+              "news:ai_financing_credit:50b4951d45ac35",
+              "indicator:dc_abs_spread",
+              "indicator:neocloud_credit"
+            ]
+          }
+        ],
+        "scorecardSynthesisZh": "固定核心 23 项本周为 8 红 / 8 黄 / 7 绿，红灯比例 34.8%，加权风险分 52.2，Stage 60 亢奋 Euphoria，Trigger 46.2 引线点燃，有效判读高风险预警。27 张展示卡合计 8 红 / 10 黄 / 9 绿，其中 4 项为影子观察，不进入主分与升级规则。本期翻灯两项：数据中心 ABS 利差黄转红、AI 行业 Token 月度环比绿转黄。红灯集中在 CAPE 41.4、前 5 大权重约 28.3%、Big5 资本开支/经营现金流约 83%、AI 占 VC 投资比重约 80% TTM、NVDA 客户投资/收入比约 41%、S&P 50 日均线上方比例约 25%、数据中心 ABS 利差、Fed 政策方向。",
+        "scorecardSourceIndicatorIds": [
+          "cape",
+          "top5_weight",
+          "mag4_fcf_yoy",
+          "vc_ai_share",
+          "nvda_invest_revenue",
+          "breadth_50d",
+          "dc_abs_spread",
+          "fed_policy",
+          "token_volume_mom",
+          "hy_oas",
+          "cloud_rpo_growth",
+          "enterprise_deploy"
+        ],
+        "keyTensions": [
+          {
+            "titleZh": "估值拉伸与NVDA自身倍数偏低并存",
+            "detailZh": "一面是 CAPE 41.4 红灯、距 2000 年峰值约 6%，前 5 大权重约 28.3% 红灯，指数层面估值与集中度均处历史极值区。另一面是 NVDA 远期 PE 约 19x 绿灯，远期盈利持续上修使自身倍数处于历史区间低位。两者并不矛盾：压力来自指数定价与权重结构，而非单一龙头当前盈利倍数。",
+            "sourceIndicatorIds": [
+              "cape",
+              "top5_weight",
+              "nvda_fpe"
+            ],
+            "sourceRefIds": [
+              "indicator:cape",
+              "indicator:top5_weight",
+              "indicator:nvda_fpe"
+            ]
+          },
+          {
+            "titleZh": "烧钱强度与需求兑现同时走强",
+            "detailZh": "资金面三项红灯：Big5 资本开支/经营现金流约 83%、AI 占 VC 投资比重约 80% TTM、NVDA 客户投资/收入比约 41%，均指向外部融资依赖与循环融资特征。需求面则有多项绿灯：云厂商递延收入增速 +152%、企业生产环境部署率 72%、AI 收入增速二阶导加速。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。",
+            "sourceIndicatorIds": [
+              "mag4_fcf_yoy",
+              "vc_ai_share",
+              "nvda_invest_revenue",
+              "cloud_rpo_growth",
+              "enterprise_deploy",
+              "arr_2nd_deriv"
+            ],
+            "sourceRefIds": [
+              "indicator:mag4_fcf_yoy",
+              "indicator:vc_ai_share",
+              "indicator:nvda_invest_revenue",
+              "indicator:cloud_rpo_growth",
+              "indicator:enterprise_deploy",
+              "indicator:arr_2nd_deriv"
+            ]
+          }
+        ],
+        "categoryAnalysis": [
+          {
+            "category": "valuation",
+            "detailZh": "估值端 2/3 红。CAPE 41.4 红灯，距 2000 年互联网泡沫峰值 44.19 约 6%，earnings yield 约 2.4%；前 5 大权重约 28.3% 红灯，贴近 2000 年集中度极值区。NVDA 远期 PE 约 19x 绿灯，说明龙头自身倍数并非主要源头。影子项 AI 私募二级市场标价黄灯：Anthropic 二级报价隐含约 8885.4 亿美元，较 Series H 折价 7.9%，连续第 3 周折价但边际收窄；OpenAI 侧 Forge 报价连续第 5 周未动。",
+            "sourceIndicatorIds": [
+              "cape",
+              "top5_weight",
+              "nvda_fpe",
+              "private_secondary_marks"
+            ],
+            "sourceRefIds": [
+              "indicator:cape",
+              "indicator:top5_weight",
+              "indicator:nvda_fpe",
+              "indicator:private_secondary_marks"
+            ]
+          },
+          {
+            "category": "capital",
+            "detailZh": "资金面 3/4 红，是本期核心压力。Big5 资本开支/经营现金流约 83% 红灯，上年同期 61.9%，2/5 家 capex 已超过 OCF；AI 占 VC 投资比重约 80% TTM / 65% YTD 红灯，两种口径不完全可比但方向一致；NVDA 客户投资/收入比约 41% 红灯，远超 Lucent 1999 循环融资峰值 24%。Hyperscaler 资本开支增速 +75% 黄灯，滚动 4 季合计 5110 亿美元，开支仍在加速扩张。",
+            "sourceIndicatorIds": [
+              "mag4_fcf_yoy",
+              "vc_ai_share",
+              "nvda_invest_revenue",
+              "hyperscaler_capex_yoy"
+            ],
+            "sourceRefIds": [
+              "indicator:mag4_fcf_yoy",
+              "indicator:vc_ai_share",
+              "indicator:nvda_invest_revenue",
+              "indicator:hyperscaler_capex_yoy"
+            ]
+          },
+          {
+            "category": "market_structure",
+            "detailZh": "市场结构压力仍高。S&P 50 日均线上方比例约 25% 红灯，502 只成份股中仅 124 只收于均线上方；市值加权 vs 等权重 +8.6% 黄灯，6 个月 SPY +16.8% 对 RSP +8.2%，头部独涨、广度未跟上。AI 龙头内部人卖买比黄灯，NVDA/PLTR/AVGO 近 12 个月累计卖出 19 亿美元、买入不足 100 万美元，卖压方向偏高，但覆盖受限、极端倍数不能与完整周期直接比较。AI 一级市场发行升温黄灯，已挂牌与明确待发公司数仍不足以构成洪流。",
+            "sourceIndicatorIds": [
+              "breadth_50d",
+              "spy_vs_rsp_6m",
+              "insider_sell_buy",
+              "ai_ipo_pipeline"
+            ],
+            "sourceRefIds": [
+              "indicator:breadth_50d",
+              "indicator:spy_vs_rsp_6m",
+              "indicator:insider_sell_buy",
+              "indicator:ai_ipo_pipeline"
+            ]
+          },
+          {
+            "category": "credit",
+            "detailZh": "信用端分化明显。高收益债利差 324 bps 绿灯，低于长期均值约 394 bps，信用市场对 AI capex 烧钱仍未定价压力，是当前最支撑多头的指标。数据中心 ABS 利差红灯，Oracle 不可抗力通知使压力由贷款折价升级为正式法律主张，但 180 亿美元银团贷款维持 89-91 美分，未进一步下跌。全口径外部融资/Capex 比约 52% 黄灯，2025-2028 数据中心总 capex 约 2.9 万亿美元，隐含外部融资缺口约 1.5 万亿美元。Neocloud 信用事件黄灯，0 起评级动作但杠杆再抬升，CoreWeave 可转债最终定于 42 亿美元。",
+            "sourceIndicatorIds": [
+              "hy_oas",
+              "dc_abs_spread",
+              "debt_capex_ratio",
+              "neocloud_credit"
+            ],
+            "sourceRefIds": [
+              "indicator:hy_oas",
+              "indicator:dc_abs_spread",
+              "indicator:debt_capex_ratio",
+              "indicator:neocloud_credit"
+            ]
+          },
+          {
+            "category": "fundamentals",
+            "detailZh": "基本面多空交织。AI 行业 Token 月度环比减速 +42.8% 黄灯，较上一窗口 +61.0% 放缓，该口径仅反映公开模型平台活动。云厂商递延收入增速 +152% 绿灯，MSFT/AMZN/GOOGL RPO 合计 1.69 万亿美元，需求仍在兑现。企业生产环境部署率 72% 绿灯，AI 收入增速二阶导加速绿灯，打破连续 7 期停滞，但该数字来自媒体转载而非公司直接披露。影子项 Token 增速/收入增速约 5.9x 黄灯、GPU 租赁现货价绿灯、前沿模型能力进展绿灯。",
+            "sourceIndicatorIds": [
+              "token_volume_mom",
+              "cloud_rpo_growth",
+              "enterprise_deploy",
+              "arr_2nd_deriv",
+              "token_revenue_ratio",
+              "gpu_rental_price",
+              "frontier_progress"
+            ],
+            "sourceRefIds": [
+              "indicator:token_volume_mom",
+              "indicator:cloud_rpo_growth",
+              "indicator:enterprise_deploy",
+              "indicator:arr_2nd_deriv",
+              "indicator:token_revenue_ratio",
+              "indicator:gpu_rental_price",
+              "indicator:frontier_progress"
+            ]
+          },
+          {
+            "category": "macro",
+            "detailZh": "宏观端偏紧。Fed 政策方向红灯，目标区间 3.75-4.00%，SEP 点阵图当前年 median 4.1%，年末 Fed funds futures 隐含 4.07%，CPI 同比 3.7%，判定年末路径隐含加息，对极度拉伸估值构成更直接压制。资本开支指引市场反应绿灯，多窗口相对 QQQ 未显示系统性惩罚高 capex 公司。CEO 表态对冲程度黄灯，Altman 关于 AI 成本压力的表态被多篇引用，但尚未看到 CEO 集体承认过热或暂停投入。会计造假/round-tripping 事件 0 件绿灯。",
+            "sourceIndicatorIds": [
+              "fed_policy",
+              "capex_reaction",
+              "ceo_hedging",
+              "accounting_events"
+            ],
+            "sourceRefIds": [
+              "indicator:fed_policy",
+              "indicator:capex_reaction",
+              "indicator:ceo_hedging",
+              "indicator:accounting_events"
+            ]
+          }
+        ],
+        "historicalComparison": {
+          "period": "1999-06 互联网泡沫顶前 9 个月",
+          "detailZh": "当前 Core 颜色向量与 1999-06 相似度 73%（22 项分母），与 2000-02 同为 73%，与 2021-11 成长股/SPAC 顶 66%，与 2007-10 金融危机股市顶 53%。相似之处在于估值拉伸、集中度极值与资金集中。差异在于当前信用端高收益债利差 324 bps 仍处绿灯，云厂商递延收入 +152% 与企业部署 72% 显示需求仍在兑现，而 2000 年前后更多是盈利缺失与信用逐步恶化。历史相似度只是当前 Core 颜色向量对照，不是破裂概率或时间预测。",
+          "sourceIndicatorIds": [
+            "cape",
+            "top5_weight",
+            "hy_oas",
+            "cloud_rpo_growth",
+            "enterprise_deploy"
+          ],
+          "sourceRefIds": [
+            "indicator:cape",
+            "indicator:top5_weight",
+            "indicator:hy_oas",
+            "indicator:cloud_rpo_growth",
+            "indicator:enterprise_deploy"
+          ]
+        },
+        "watchNextWeek": [
+          {
+            "conditionZh": "观察数据中心 ABS 利差与 Oracle Project Jupiter 贷款价格是否进一步走阔或跌破 89 美分区间。",
+            "invalidationZh": "若贷款价格回升且无新增法律主张，则信用端压力升级的解读需弱化。",
+            "sourceIndicatorIds": [
+              "dc_abs_spread",
+              "neocloud_credit"
+            ]
+          },
+          {
+            "conditionZh": "观察 S&P 50 日均线上方比例能否回到 40% 以上，以及市值加权与等权重差距是否收窄至 5% 以内。",
+            "invalidationZh": "若广度继续低于 40% 且差距扩大，则市场结构压力维持高位。",
+            "sourceIndicatorIds": [
+              "breadth_50d",
+              "spy_vs_rsp_6m"
+            ]
+          },
+          {
+            "conditionZh": "观察 AI 行业 Token 月度环比是否继续减速，以及云厂商递延收入增速是否维持加速。",
+            "invalidationZh": "若 Token 环比回升且递延收入维持 +152% 附近，则需求减速的担忧需下调。",
+            "sourceIndicatorIds": [
+              "token_volume_mom",
+              "cloud_rpo_growth"
+            ]
+          }
+        ],
+        "dataGaps": [
+          "专业媒体摘要仅支持注明出处的报道或机构观点，不代表独立核实；不得补写未提供的正文。",
+          "部分搜索结果仅为 discovery_only，不得单独支撑事实性判断。",
+          "AI 私募二级市场标价、Token 增速/收入增速、GPU 租赁现货价、前沿模型能力进展为影子观察，不进入主分或升级规则。",
+          "新闻搜索结果会重复转载、标题党化或延迟收录；本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。"
+        ],
+        "sourceAttribution": [
+          {
+            "sourceRefId": "indicator:dc_abs_spread",
+            "claimType": "site_structured_data",
+            "noteZh": "数据中心证券样本与 ABS 基准，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "news:accounting_regulatory:ba49dca3bf0adb",
+            "claimType": "official_news_context",
+            "noteZh": "加州总检察长办公室新闻稿，官方来源，仅说明调查程序。"
+          },
+          {
+            "sourceRefId": "indicator:accounting_events",
+            "claimType": "site_structured_data",
+            "noteZh": "SEC / DOJ 执法公告，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "news:ai_financing_credit:50b4951d45ac35",
+            "claimType": "cross_checked_news_context",
+            "noteZh": "Morningstar 报道，多域交叉确认，属机构观点。"
+          },
+          {
+            "sourceRefId": "indicator:neocloud_credit",
+            "claimType": "site_structured_data",
+            "noteZh": "Neocloud 公开融资与信用事件，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:cape",
+            "claimType": "site_structured_data",
+            "noteZh": "CAPE 历史估值序列，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:top5_weight",
+            "claimType": "site_structured_data",
+            "noteZh": "SPY 持仓集中度，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:nvda_fpe",
+            "claimType": "site_structured_data",
+            "noteZh": "NVDA 远期估值，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:mag4_fcf_yoy",
+            "claimType": "site_structured_data",
+            "noteZh": "公开季度现金流，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:vc_ai_share",
+            "claimType": "site_structured_data",
+            "noteZh": "VC 市场季度研究，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:nvda_invest_revenue",
+            "claimType": "site_structured_data",
+            "noteZh": "公开投资承诺与收入，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:cloud_rpo_growth",
+            "claimType": "site_structured_data",
+            "noteZh": "云厂商订单与 backlog 披露，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:enterprise_deploy",
+            "claimType": "site_structured_data",
+            "noteZh": "企业 AI 部署调查，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:arr_2nd_deriv",
+            "claimType": "site_structured_data",
+            "noteZh": "公开 ARR 里程碑，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:private_secondary_marks",
+            "claimType": "site_structured_data",
+            "noteZh": "Forge / Caplight 私募二级标价，影子观察项。"
+          },
+          {
+            "sourceRefId": "indicator:hyperscaler_capex_yoy",
+            "claimType": "site_structured_data",
+            "noteZh": "公开季度现金流，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:breadth_50d",
+            "claimType": "site_structured_data",
+            "noteZh": "Yahoo 行情与维基百科成份股名单实算，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:spy_vs_rsp_6m",
+            "claimType": "site_structured_data",
+            "noteZh": "市值加权与等权重 ETF，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:insider_sell_buy",
+            "claimType": "site_structured_data",
+            "noteZh": "内部人交易披露，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:ai_ipo_pipeline",
+            "claimType": "site_structured_data",
+            "noteZh": "一级市场公开报道，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:hy_oas",
+            "claimType": "site_structured_data",
+            "noteZh": "ICE BofA 高收益债利差，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:debt_capex_ratio",
+            "claimType": "site_structured_data",
+            "noteZh": "数据中心融资缺口研究，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:token_volume_mom",
+            "claimType": "site_structured_data",
+            "noteZh": "公开模型平台用量，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:token_revenue_ratio",
+            "claimType": "site_structured_data",
+            "noteZh": "公开模型平台用量与价格口径，影子观察项。"
+          },
+          {
+            "sourceRefId": "indicator:gpu_rental_price",
+            "claimType": "site_structured_data",
+            "noteZh": "Thunder Compute / getdeploying，影子观察项。"
+          },
+          {
+            "sourceRefId": "indicator:frontier_progress",
+            "claimType": "site_structured_data",
+            "noteZh": "METR / Epoch AI / ARC Prize，影子观察项。"
+          },
+          {
+            "sourceRefId": "indicator:fed_policy",
+            "claimType": "site_structured_data",
+            "noteZh": "Fed 点阵图/期货/FRED，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:capex_reaction",
+            "claimType": "site_structured_data",
+            "noteZh": "公开财报与相对收益窗口，站点结构化数据。"
+          },
+          {
+            "sourceRefId": "indicator:ceo_hedging",
+            "claimType": "site_structured_data",
+            "noteZh": "公开新闻与高管表态，站点结构化数据。"
+          }
+        ],
+        "confidence": {
+          "level": "medium",
+          "score": 62,
+          "reasonZh": "核心 23 项结构化数据覆盖完整且无过期指标，但部分新闻为摘要或 discovery_only，私募二级与 Token 口径为影子观察，信用事件细节依赖单一结构化来源，故置信度中等。"
+        },
+        "auditFlags": [
+          "display_only",
+          "validator_required",
+          "no_score_impact"
+        ],
+        "boundaries": {
+          "displayOnly": true,
+          "commentaryOnly": true,
+          "externalAiGenerated": true,
+          "usesExternalAiApi": true,
+          "affectsBubbleWatchScoring": false,
+          "affectsCore23": false,
+          "affectsShadow4": false,
+          "affectsStageTrigger": false,
+          "affectsGfrrScoring": false,
+          "affectsDecisionModel": false,
+          "affectsExecutionLock": false,
+          "affectsPositionGuidance": false,
+          "notInvestmentAdvice": true
+        }
+      },
+      "sourceLedger": [
+        {
+          "id": "indicator:cape",
+          "kind": "indicator",
+          "sourceName": "CAPE 历史估值序列",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "cape"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:top5_weight",
+          "kind": "indicator",
+          "sourceName": "SPY 持仓集中度",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "top5_weight"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:nvda_fpe",
+          "kind": "indicator",
+          "sourceName": "NVDA 远期估值",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "nvda_fpe"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:private_secondary_marks",
+          "kind": "indicator",
+          "sourceName": "Forge / Caplight 私募二级标价",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "private_secondary_marks"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:hyperscaler_capex_yoy",
+          "kind": "indicator",
+          "sourceName": "公开季度现金流",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "hyperscaler_capex_yoy"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:mag4_fcf_yoy",
+          "kind": "indicator",
+          "sourceName": "公开季度现金流",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "mag4_fcf_yoy"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:vc_ai_share",
+          "kind": "indicator",
+          "sourceName": "VC 市场季度研究",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "vc_ai_share"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:nvda_invest_revenue",
+          "kind": "indicator",
+          "sourceName": "公开投资承诺与收入",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "nvda_invest_revenue"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:breadth_50d",
+          "kind": "indicator",
+          "sourceName": "Yahoo 行情与维基百科成份股名单实算",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "breadth_50d"
+          ],
+          "asOfDate": "2026-10-02"
+        },
+        {
+          "id": "indicator:spy_vs_rsp_6m",
+          "kind": "indicator",
+          "sourceName": "市值加权与等权重 ETF",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "spy_vs_rsp_6m"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:insider_sell_buy",
+          "kind": "indicator",
+          "sourceName": "内部人交易披露",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "insider_sell_buy"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:ai_ipo_pipeline",
+          "kind": "indicator",
+          "sourceName": "一级市场公开报道",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "ai_ipo_pipeline"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:hy_oas",
+          "kind": "indicator",
+          "sourceName": "ICE BofA 高收益债利差",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "hy_oas"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:dc_abs_spread",
+          "kind": "indicator",
+          "sourceName": "数据中心证券样本与 ABS 基准",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "dc_abs_spread"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:debt_capex_ratio",
+          "kind": "indicator",
+          "sourceName": "数据中心融资缺口研究",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "debt_capex_ratio"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:neocloud_credit",
+          "kind": "indicator",
+          "sourceName": "Neocloud 公开融资与信用事件",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "neocloud_credit"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:token_volume_mom",
+          "kind": "indicator",
+          "sourceName": "公开模型平台用量",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "token_volume_mom"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:token_revenue_ratio",
+          "kind": "indicator",
+          "sourceName": "公开模型平台用量与价格口径",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "token_revenue_ratio"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:gpu_rental_price",
+          "kind": "indicator",
+          "sourceName": "Thunder Compute / getdeploying",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "gpu_rental_price"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:arr_2nd_deriv",
+          "kind": "indicator",
+          "sourceName": "公开 ARR 里程碑",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "arr_2nd_deriv"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:enterprise_deploy",
+          "kind": "indicator",
+          "sourceName": "企业 AI 部署调查",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "enterprise_deploy"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:cloud_rpo_growth",
+          "kind": "indicator",
+          "sourceName": "云厂商订单与 backlog 披露",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "cloud_rpo_growth"
+          ],
+          "asOfDate": "2026-06-30"
+        },
+        {
+          "id": "indicator:frontier_progress",
+          "kind": "indicator",
+          "sourceName": "METR / Epoch AI / ARC Prize",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "frontier_progress"
+          ],
+          "asOfDate": "2026-09-27"
+        },
+        {
+          "id": "indicator:accounting_events",
+          "kind": "indicator",
+          "sourceName": "SEC / DOJ 执法公告",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "accounting_events"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:fed_policy",
+          "kind": "indicator",
+          "sourceName": "Fed 点阵图/期货/FRED",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "fed_policy"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:capex_reaction",
+          "kind": "indicator",
+          "sourceName": "公开财报与相对收益窗口",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "capex_reaction"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "indicator:ceo_hedging",
+          "kind": "indicator",
+          "sourceName": "公开新闻与高管表态",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "ceo_hedging"
+          ],
+          "asOfDate": "2026-10-05"
+        },
+        {
+          "id": "news:accounting_regulatory:ba49dca3bf0adb",
+          "kind": "news",
+          "sourceName": "oag.ca.gov",
+          "sourceClass": "official",
+          "title": "As Part of Ongoing Investigation, Attorney General Bonta Serves Investigative Subpoena on OpenAI | State of California - Department of Justice - Office of the Attorney General",
+          "url": "https://oag.ca.gov/news/press-releases/part-ongoing-investigation-attorney-general-bonta-serves-investigative-subpoena",
+          "domain": "oag.ca.gov",
+          "publishedAt": "2026-10-01T05:49:52.000Z",
+          "contentScope": "excerpt",
+          "topic": "accounting_regulatory",
+          "providers": [
+            "brave"
+          ],
+          "supportingDomains": [
+            "oag.ca.gov"
+          ]
+        },
+        {
+          "id": "news:ai_financing_credit:50b4951d45ac35",
+          "kind": "news",
+          "sourceName": "Morningstar",
+          "sourceClass": "cross_checked",
+          "title": "AI Financing Partnerships Are Credit-Positive for Nvidia and Data Center Operators | Morningstar",
+          "url": "https://morningstar.com/bonds/ai-financing-partnerships-are-credit-positive-nvidia-data-center-operators",
+          "domain": "morningstar.com",
+          "publishedAt": "2026-10-05T00:00:00.000Z",
+          "contentScope": "excerpt",
+          "topic": "ai_financing_credit",
+          "providers": [
+            "brave"
+          ],
+          "supportingDomains": [
+            "dbrs.morningstar.com",
+            "morningstar.com"
+          ]
+        }
+      ],
+      "validation": {
+        "validator": "check:bubble-watch-weekly-editorial-contract",
+        "status": "pass",
+        "validatedAt": "2026-10-06T04:56:30.052Z",
+        "artifactDigest": "d46860c2953cf0d1af11b4933f5d0660c19bdb867e5fbf6afe30bdfb31a823a7"
+      },
+      "qualityReview": {
+        "status": "warn",
+        "recommendation": "approved_for_read_only_display",
+        "promotionEligible": false,
+        "reviewedAt": "2026-10-06T04:56:29.877Z",
+        "dimensions": {
+          "structuralContract": "pass",
+          "sourceReferenceIntegrity": "pass",
+          "newsEvidenceQuality": "pass",
+          "scoreBoundaryIntegrity": "pass",
+          "unsafeWording": "pass",
+          "incrementalEditorialValue": "warn",
+          "fallbackReadiness": "pass"
+        },
+        "warnings": [
+          "可见判读长度 5888 字，超出 1800–4200 字兼容窗口"
+        ]
+      },
+      "provenance": {
+        "generatedBy": "github_actions_workflow",
+        "humanApproved": false,
+        "inputDigest": "afe58d603c8585f6faa52038a22146050e20d0089f6313226c05f64520bd0041",
+        "editorialFormat": "full",
+        "artifactDigest": "d46860c2953cf0d1af11b4933f5d0660c19bdb867e5fbf6afe30bdfb31a823a7",
+        "sourceCommit": "789659636021caf864d6f71ed680b596d17dbaf7",
+        "runId": "37415989576",
+        "newsDiscoveryStatus": "ok",
+        "liveNewsProviderCount": 2
+      },
+      "freshness": {
+        "artifactGeneratedAt": "2026-10-06T04:56:29.706Z",
+        "sourceAsOfDate": "2026-10-05",
+        "maxAgeHours": 240,
+        "isStale": false
+      },
+      "fallback": {
+        "available": true,
+        "source": "bubble-watch-narrative-v2",
+        "field": "summary.verdict_desc"
+      },
+      "boundaries": {
+        "displayOnly": true,
+        "commentaryOnly": true,
+        "externalAiGenerated": true,
+        "usesExternalAiApi": true,
+        "frontendDisplayApproved": true,
+        "affectsBubbleWatchScoring": false,
+        "affectsCore23": false,
+        "affectsShadow4": false,
+        "affectsStageTrigger": false,
+        "affectsGfrrScoring": false,
+        "affectsDecisionModel": false,
+        "affectsExecutionLock": false,
+        "affectsPositionGuidance": false,
+        "notInvestmentAdvice": true
+      }
     }
   },
   "scoring": {
