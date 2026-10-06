@@ -16,6 +16,7 @@
 //     persisted, so no rejection is ever recorded by bypassing the ingest budget it just hit.
 import { LIMITS } from './constants.js';
 import { buildPlan, buildPolicyTable, readBodyWithinLimit } from './normalize.js';
+import { trialIsOpen, trialClosedResponse } from './trial-window.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 
@@ -129,7 +130,7 @@ function acceptsContentType(value) {
  *        local phase, which is why `policy_tag` is `unknown` there.
  * @param allowedOrigins CORS allowlist for the report endpoint.
  */
-export async function handleReport(request, env, { now = Date.now, policyTexts = [], allowedOrigins = new Set() } = {}) {
+export async function handleReport(request, env, { now = Date.now, policyTexts = [], allowedOrigins = new Set(), admit = () => true } = {}) {
   if (request.method === 'OPTIONS') {
     // Preflight is answered from the policy alone; the Durable Object is never touched.
     return handlePreflight(request, { allowedOrigins });
@@ -148,6 +149,8 @@ export async function handleReport(request, env, { now = Date.now, policyTexts =
   }
 
   const body = await readBodyWithinLimit(request.body, LIMITS.MAX_BODY_BYTES);
+  // A slow upload must not open a new RPC after the acceptance window has ended.
+  if (!admit()) return trialClosedResponse();
   if (!body.ok) return jsonResponse({ ok: false, error: body.reason }, 413, request, allowedOrigins);
 
   let payload;
@@ -167,6 +170,7 @@ export async function handleReport(request, env, { now = Date.now, policyTexts =
     return jsonResponse({ ok: true, stored: 0, diagnostics }, 200, request, allowedOrigins);
   }
 
+  if (!admit()) return trialClosedResponse();
   const stub = env.CSP_RECEIVER.get(env.CSP_RECEIVER.idFromName('singleton'));
   const result = await stub.ingest({
     // A Map cannot cross the RPC boundary; rebuild it inside the object.
@@ -192,5 +196,26 @@ export async function handleHealth(env, { now = Date.now } = {}) {
   return new Response(JSON.stringify(health), {
     status: health.status === 'unknown' ? 503 : 200,
     headers: JSON_HEADERS,
+  });
+}
+
+/** Public runtime routing; leaf handlers above remain directly testable without platform access. */
+export async function handleReceiverRequest(request, env, { now = Date.now } = {}) {
+  const { pathname } = new URL(request.url);
+  if (pathname !== '/csp-report' && pathname !== '/health') {
+    return new Response(JSON.stringify({ ok: false, error: 'not-found' }), { status: 404, headers: JSON_HEADERS });
+  }
+  // Before reading any body or obtaining any Durable Object stub, including /health and OPTIONS.
+  if (!trialIsOpen(env, now())) return trialClosedResponse();
+  if (pathname === '/health') {
+    if (request.method !== 'GET') {
+      return new Response(JSON.stringify({ ok: false, error: 'method-not-allowed' }), { status: 405, headers: JSON_HEADERS });
+    }
+    return handleHealth(env, { now });
+  }
+  return handleReport(request, env, {
+    now,
+    allowedOrigins: parseAllowedOrigins(env?.CORS_ALLOWED_ORIGINS),
+    admit: () => trialIsOpen(env, now()),
   });
 }
