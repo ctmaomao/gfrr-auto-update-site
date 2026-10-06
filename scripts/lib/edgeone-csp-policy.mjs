@@ -36,6 +36,12 @@ export const POLICY_DIRECTIVE_ORDER = [
   'object-src',
 ];
 
+// Optional reporting requires separate review (ADR-0061); it is not an activation default.
+// Keep the required directive inventory above unchanged. Only this exact single endpoint is
+// representable: byte equality deliberately rejects URL normalization, lists and header injection.
+export const REPORT_URI_ENDPOINT = 'https://gfrr-csp-report-receiver.gfrrriskradar2026.workers.dev/csp-report';
+const OPTIONAL_REPORT_DIRECTIVE = 'report-uri';
+
 /** EdgeOne caps a header value at 1000 characters. */
 export const MAX_POLICY_LENGTH = 1000;
 
@@ -147,10 +153,15 @@ export function validateCspConfig(config) {
   }
 
   const names = Object.keys(config.directives);
-  const unknown = names.filter((name) => !POLICY_DIRECTIVE_ORDER.includes(name));
+  const unknown = names.filter((name) => !POLICY_DIRECTIVE_ORDER.includes(name) && name !== OPTIONAL_REPORT_DIRECTIVE);
   if (unknown.length) fail(`unknown directive name(s): ${unknown.join(', ')}`);
   const missing = POLICY_DIRECTIVE_ORDER.filter((name) => !names.includes(name));
   if (missing.length) fail(`missing directive(s): ${missing.join(', ')}`);
+
+  if (Object.hasOwn(config.directives, OPTIONAL_REPORT_DIRECTIVE)
+      && config.directives[OPTIONAL_REPORT_DIRECTIVE] !== REPORT_URI_ENDPOINT) {
+    fail('report-uri must be the exact approved single HTTPS endpoint');
+  }
 
   const seen = { [SCRIPT_HASH_PLACEHOLDER]: [], [STYLE_HASH_PLACEHOLDER]: [] };
   for (const [name, value] of Object.entries(config.directives)) {
@@ -189,6 +200,9 @@ export function serializePolicy(config, { scriptHashes = [], styleHashes = [] } 
     if (!value) throw new Error(`edgeone CSP config: directive "${name}" serialized to an empty value`);
     return `${name} ${value}`;
   });
+  if (Object.hasOwn(config.directives, OPTIONAL_REPORT_DIRECTIVE)) {
+    parts.push(`${OPTIONAL_REPORT_DIRECTIVE} ${config.directives[OPTIONAL_REPORT_DIRECTIVE]}`);
+  }
   return parts.join('; ');
 }
 
