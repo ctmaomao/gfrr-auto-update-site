@@ -5,7 +5,8 @@
 - **Acceptance baseline**：owner 同意执行来源审查方案：补齐官方识别，接受专业媒体/研究机构的注明出处单源证据，信息有限时允许简版；保留不编造、引用、时效、评分隔离及单次费用保护。仅本地实施与验证，不自动授权 push/merge/发布或真实付费补跑。
 - **最后基线 / 改动**：隔离 worktree bubble-editorial-evidence，分支 codex/bubble-editorial-evidence，基于 latest origin/main `9c2d15d4`；原 CSP 工作区不改动。ADR-0062 明确记录本次 checker/contract 变更，不隐藏在 presentation patch。
 - **当前任务**：本地实施与验收完成。来源分类、归因/摘要检查、简版 contract/prompt/review、来源中文标签已接线；新测试加入既有 news 检查入口。简版省略分类后发现 scorecard-only 指标在 production 回读丢失，已补齐该引用投影/回读并保留未知指标拒绝。未写生产 JSON。
-- **下一步 / 阻塞**：本地交付，准备独立契约 review；线上生效需远端发布授权，真实 AI 补跑需明确成本授权。本地提交不等于上线。
+- **追加授权与审阅（2026-10-06）**：owner 已授权推送并创建 PR #434，随后明确委托 AI 代审、无阻断问题则合并部署，并授权一次 DeepSeek 付费补跑；仅适用于本任务，不改变通用人工 review 要求。实际 diff 已核对来源准入、归因、简版及生产回读边界。远端首轮 CI 完整检查通过，但两项浏览器用例仍断言旧提示文案；已同步为含专业媒体摘要的新文案，保留其余布局/回退断言，须复验后合并。
+- **下一步 / 阻塞**：等待修复后的完整检查与 PR CI；通过后按追加授权合并、验收部署并单次补跑。真实生成/生产发布结果以 Actions 与线上内容为准，不以离线重放代替。
 - **验证**：`npm run check:changed` 选择 full 并完成 `check:all`，退出 0；新增单测 7/7、既有 contract/provider/news 负例保留，退出 0；`npx --no-install playwright test tests/e2e/site-smoke.spec.mjs --grep "Bubble Watch"` 6/6，退出 0；文档链接、中文/DOM 与 `git diff --check` 退出 0。完整套件只生成既有 ignored 手工输入，不调用真实 provider。
 - **本周候选离线重放**：run `37310071904` 已保存 30 条候选重分类为 official=1、attributed_media=4、discovery_only=25，readiness=true；FT 订阅提示保持不能支撑正文。该重放仅复核已保存候选，不代表真实 AI 输出验收。
 - **自审**：实际文件符合 owner 方案；契约新增类别及简版 min/count/confidence 变更在 ADR-0062 显性记录，未隐蔽删除既有负例或加 skip/ignore；评分、data/realtime、workflow/core 前端均无差异。页面仅文案/来源类别映射与空时间线标题处理，本 PR 符合 DESIGN.md 的所有规则。`check:frontend-asset-version` PASS，单文件 Bubble HTML 无 cache-bust 的既有限制保留；不改高风险入口制造无关 bump。自然语言归因/事实蕴含仍须审阅，机器检查不声称完整事实核验。
