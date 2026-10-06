@@ -489,6 +489,11 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
+- **2026-10-06 CSP 受控验收 acceptance baseline**：owner 批准按建议先完成本地保护与受控合成验收，生产报告保持关闭、优先保护共享 realtime 额度；不视为接受真实访客 URL/query 外传、公开试运行、接收端部署/平台请求或费用批准。独立分支 `codex/csp-controlled-acceptance` 基于 latest main `9c2d15d4`，不继续给已合并 #432 追加任务，其 review/远端操作例外不扩展。
+  - **最后基线 / 改动**：新增默认关闭、固定最长 30 分钟 HTTP admission，覆盖报告与 health，慢上传到期复判；worker-entry 接到测试过的统一路由，Wrangler 候选默认 false。新增手动窗口回归和 localhost-only native Chromium + 内存 SQLite 验收，零依赖/CI/checker/生产配置/data/realtime/KV/SQL schema 或预算断言改动；旧证据/资源/分支保留。
+  - **当前任务 / 判据**：接收端回归 81/81 pass；本地两份 native legacy 合成报告、2 聚合行、账本 4；关闭与过期拒绝后无新增写入。本轮完整 check:changed 与结果以 `test-results/csp-controlled-acceptance-20261006/` 回执为准；真实平台预算仍 34/500，本轮接收端平台请求 0。
+  - **下一步 / 阻塞**：[受控验收与剩余门槛](CSP_CONTROLLED_ACCEPTANCE_2026_10_06.md)。Cloudflare 控制台已核实 Free、日志/跟踪/Issues 关闭且无导出，EdgeOne 已核实 Free 与 228/500 构建快照、生产 release `89a45fbc` 绑定成功构建 `dpqhva02894o`；DO 有一次 alarm 调用但 watermark/重排/删除仍未验。候选供独立 review；push/新 PR/合并/最多两次现有隔离 Worker 更新及最多八次受控请求都需对应明确授权，不消费旧一次性许可、不重跑旧工具，C 始终关闭。
+
 - **2026-10-05 CSP 可选 report-uri 支持 acceptance baseline**：owner 在 C 准备交付后要求“请开始下一步”；按前序明确边界，仅本地实现独立评审的严格策略支持，不应用启用补丁、不推送/PR/合并/部署/启动 C，不发接收端请求，不新增依赖/费用或扩大 #430/#431 review 例外。隐私、公开流量、平台额度/日志/alarm 与 C 授权缺口继续保留。
   - **2026-10-06 review 替代与合并批准（仅限 PR #432）**：owner 明确要求“请代替我做独立人工契约review”，本次以未参与实施的独立 AI 审阅代理替代 #432 的人工契约检查，如实标明非真实人工；固定审阅 head `5fc6f492`，未发现阻塞缺陷，§10 方案/断言/ignore 三项通过，exact-head CI run `37287355267` success。owner 随后在确认隐私/公开流量/费用/启用验收问题仍未解决且不阻塞支持代码合并后，批准按计划合并 #432 到 main 并接受其自动触发既有 Pages/EdgeOne 流程。本次仅替代本任务早期 merge/既有发布禁止，不授权 C 启用、报告端点写入生产配置、接收端部署/请求、付费功能/升级或资源/分支/证据删除，也不扩展到其它 PR。
   - **2026-10-06 合并准备基线**：latest main `1c7efc05` 相对原基线仅七个数据文件更新，已普通 merge 到任务分支，支持代码/测试/配置字节不变；本轮仅追加本授权与审阅回执。新增 head 的本地完整检查、独立增量审阅、远端 CI 和实际 merge/自动发布结果以交付回执为准。预算仍 34/500，原证据和资源保留；C 相关隐私、流量、费用和启用验收缺口继续单列，不因支持代码合并而关闭。

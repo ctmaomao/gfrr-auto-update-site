@@ -14,6 +14,14 @@ name = "gfrr-csp-report-receiver"
 main = "src/worker-entry.js"
 compatibility_date = "2026-04-28"
 
+# A deployment of this candidate closes public ingestion by default. Opening a <=30-minute
+# window needs a separate bounded platform-test approval and exact UTC timestamps with .sssZ.
+# Keep the existing loopback-only CORS variable; do not grant production origins implicitly.
+[vars]
+CSP_TRIAL_ENABLED = "false"
+CSP_TRIAL_START_AT = ""
+CSP_TRIAL_END_AT = ""
+
 # Worker logs are opt-in; enabling them is a privacy decision of its own.
 [observability]
 enabled = false
