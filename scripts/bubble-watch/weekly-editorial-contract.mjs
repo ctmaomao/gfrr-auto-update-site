@@ -1,3 +1,4 @@
+import { isLimitedEvidence, validMediaStory } from './editorial-evidence-policy.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'bubble-watch-weekly-news-discovery-v1';
 export const INPUT_SCHEMA = 'bubble-watch-weekly-editorial-input-v1';
 export const OUTPUT_SCHEMA = 'bubble-watch-weekly-editorial-output-v1';
@@ -148,7 +149,7 @@ export function visibleEditorialText(output) {
   return collectStrings(visible).join('\n');
 }
 
-export function validateNewsDiscovery(discovery) {
+export function validateNewsDiscovery(discovery, options = {}) {
   const errors = [];
   const root = requireRecord(discovery, 'news discovery', errors);
   if (root.schemaVersion !== NEWS_DISCOVERY_SCHEMA) errors.push(`news discovery.schemaVersion must be ${NEWS_DISCOVERY_SCHEMA}`);
@@ -169,12 +170,14 @@ export function validateNewsDiscovery(discovery) {
   for (const [index, story] of stories.entries()) {
     if (!EDITORIAL_TOPICS.includes(story?.topic)) errors.push(`news discovery.stories[${index}].topic is not registered`);
     perTopic.set(story?.topic, (perTopic.get(story?.topic) || 0) + 1);
-    if (!['official', 'cross_checked', 'discovery_only'].includes(story?.evidenceStatus)) errors.push(`news discovery.stories[${index}].evidenceStatus is invalid`);
+    if (!['official', 'cross_checked', 'attributed_media', 'discovery_only'].includes(story?.evidenceStatus)) errors.push(`news discovery.stories[${index}].evidenceStatus is invalid`);
     requireString(story?.title, `news discovery.stories[${index}].title`, errors, { min: 4, max: 220 });
     requireString(story?.url, `news discovery.stories[${index}].url`, errors, { min: 8, max: 2048 });
     if (typeof story?.url === 'string' && !story.url.startsWith('https://')) errors.push(`news discovery.stories[${index}].url must use https`);
     const providers = requireArray(story?.providers, `news discovery.stories[${index}].providers`, errors, { min: 1, max: 2 });
     if (providers.some((provider) => !['tavily', 'brave'].includes(provider))) errors.push(`news discovery.stories[${index}].providers contains unsupported provider`);
+    if (story?.evidenceStatus === 'attributed_media' && !validMediaStory(story, options)) errors.push(`news discovery.stories[${index}] attributed_media requires a reviewed publisher, dated excerpt and matching URL`);
+    if (story?.evidenceStatus === 'attributed_media' && !options.metadataOnly && (String(story.publishedAt).slice(0, 10) < root.windowStart || String(story.publishedAt).slice(0, 10) > root.windowEnd)) errors.push(`news discovery.stories[${index}] media date is outside the evidence window`);
     if (story?.evidenceStatus === 'cross_checked') {
       const domains = requireArray(story?.supportingDomains, `news discovery.stories[${index}].supportingDomains`, errors, { min: 2, max: 8 });
       if (new Set(domains).size < 2) errors.push(`news discovery.stories[${index}] cross_checked requires two independent domains`);
@@ -196,7 +199,7 @@ export function validateNewsDiscovery(discovery) {
   return { ok: errors.length === 0, errors, storyIds };
 }
 
-export function validateWeeklyEditorialInput(input) {
+export function validateWeeklyEditorialInput(input, options = {}) {
   const errors = [];
   const root = requireRecord(input, 'input', errors);
   if (root.schemaVersion !== INPUT_SCHEMA) errors.push(`input.schemaVersion must be ${INPUT_SCHEMA}`);
@@ -217,7 +220,7 @@ export function validateWeeklyEditorialInput(input) {
   }
 
   const news = requireRecord(root.newsContext, 'input.newsContext', errors);
-  const newsResult = validateNewsDiscovery(news);
+  const newsResult = validateNewsDiscovery(news, options);
   errors.push(...newsResult.errors.map((error) => `input prerequisite: ${error}`));
   const storyIds = newsResult.storyIds;
 
@@ -243,10 +246,10 @@ export function validateWeeklyEditorialInput(input) {
   return { ok: errors.length === 0, errors, factIds, indicatorIds, sourceRefIds };
 }
 
-export function validateWeeklyEditorialOutput(output, input) {
+export function validateWeeklyEditorialOutput(output, input, options = {}) {
   const errors = [];
   const root = requireRecord(output, 'output', errors);
-  const inputResult = validateWeeklyEditorialInput(input);
+  const inputResult = validateWeeklyEditorialInput(input, options);
   errors.push(...inputResult.errors.map((error) => `input prerequisite: ${error}`));
 
   if (root.schemaVersion !== OUTPUT_SCHEMA) errors.push(`output.schemaVersion must be ${OUTPUT_SCHEMA}`);
@@ -257,9 +260,10 @@ export function validateWeeklyEditorialOutput(output, input) {
   requireString(root.leadZh, 'output.leadZh', errors, { min: 40, max: 800 });
   requireString(root.scorecardSynthesisZh, 'output.scorecardSynthesisZh', errors, { min: 30, max: 1000 });
 
-  const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: 2, max: 8 });
-  const tensions = requireArray(root.keyTensions, 'output.keyTensions', errors, { min: 2, max: 6 });
-  const categories = requireArray(root.categoryAnalysis, 'output.categoryAnalysis', errors, { min: 4, max: 6 });
+  const limited = options.metadataOnly && typeof options.limitedEvidence === 'boolean' ? options.limitedEvidence : isLimitedEvidence(input);
+  const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: limited ? 0 : 2, max: 8 });
+  const tensions = requireArray(root.keyTensions, 'output.keyTensions', errors, { min: limited ? 1 : 2, max: 6 });
+  const categories = requireArray(root.categoryAnalysis, 'output.categoryAnalysis', errors, { min: limited ? 2 : 4, max: 6 });
   requireArray(root.watchNextWeek, 'output.watchNextWeek', errors, { min: 2, max: 6 });
   requireArray(root.dataGaps, 'output.dataGaps', errors, { min: 1, max: 12 });
   const attributions = requireArray(root.sourceAttribution, 'output.sourceAttribution', errors, { min: 1, max: 80 });
@@ -290,6 +294,22 @@ export function validateWeeklyEditorialOutput(output, input) {
     for (const indicatorId of indicators) {
       referencedIndicatorIds.add(indicatorId);
     }
+    const claimText = [claim.titleZh, claim.detailZh].filter(Boolean).join(' ');
+    for (const refId of refs) {
+      const story = newsById.get(refId);
+      if (story?.contentScope === 'title_only') errors.push(`output factual claim[${index}] cites title-only news; omit unsupported detail`);
+      if (story?.evidenceStatus === 'attributed_media') {
+        if (!claimText.includes(story.sourceName) || !/据|报道|认为|分析|指出|研判/u.test(claimText)) errors.push(`output factual claim[${index}] must attribute media statements to ${story.sourceName}`);
+        // Input-stage check only: production retains source metadata, never search excerpts.
+        if (typeof story.snippet === 'string') {
+          const evidence = `${story.title} ${story.snippet}`;
+          const numbers = claimText.match(/\d+(?:[.,]\d+)*(?:%|％)?/gu) || [];
+          if (numbers.some((number) => !evidence.includes(number))) errors.push(`output factual claim[${index}] adds numbers absent from the supplied media excerpt`);
+          const quotes = [...claimText.matchAll(/[“「]([^”」]+)[”」]/gu)].map((match) => match[1]);
+          if (quotes.some((quote) => !evidence.includes(quote))) errors.push(`output factual claim[${index}] adds a quotation absent from the supplied media excerpt`);
+        }
+      }
+    }
     const discoveryRefs = refs.filter((refId) => newsById.get(refId)?.evidenceStatus === 'discovery_only');
     const corroboratingRefs = refs.filter((refId) => !discoveryRefs.includes(refId));
     if (discoveryRefs.length > 0 && corroboratingRefs.length === 0 && indicators.length === 0) {
@@ -305,7 +325,10 @@ export function validateWeeklyEditorialOutput(output, input) {
     if (!attributionIds.has(sourceRefId)) errors.push(`output source ${sourceRefId} lacks sourceAttribution`);
   }
 
+  if (limited && !requireSafeArray(root.dataGaps).some((gap) => /新闻|证据|覆盖/u.test(gap))) errors.push('limited editorial must disclose news evidence coverage');
+  if ([...referencedSourceIds].some((id) => newsById.get(id)?.evidenceStatus === 'attributed_media') && !requireSafeArray(root.dataGaps).some((gap) => /摘要|媒体|观点|来源|核实/u.test(gap))) errors.push('media editorial must disclose excerpt or institutional-opinion limitations');
   const confidence = requireRecord(root.confidence, 'output.confidence', errors);
+  if (limited && (confidence.level === 'high' || confidence.score > 70)) errors.push('limited editorial confidence must be low/medium and at most 70');
   if (!['low', 'medium', 'high'].includes(confidence.level)) errors.push('output.confidence.level is invalid');
   if (!Number.isFinite(confidence.score) || confidence.score < 0 || confidence.score > 100) errors.push('output.confidence.score must be 0-100');
 
@@ -314,7 +337,7 @@ export function validateWeeklyEditorialOutput(output, input) {
   for (const key of FALSE_OUTPUT_BOUNDARIES) requireExactBoolean(boundaries, key, false, 'output.boundaries', errors);
 
   const visibleText = visibleEditorialText(root);
-  if (visibleText.length < 1200 || visibleText.length > 6500) errors.push('output visible editorial text must be 1200-6500 characters');
+  if (visibleText.length < (limited ? 600 : 1200) || visibleText.length > 6500) errors.push('output visible editorial text must be 600-6500 characters for limited evidence, otherwise 1200-6500');
   for (const pattern of UNSAFE_TEXT_PATTERNS) {
     if (pattern.test(visibleText)) errors.push(`output contains unsafe wording matching ${pattern}`);
   }

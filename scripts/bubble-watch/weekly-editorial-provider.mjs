@@ -83,7 +83,7 @@ function deterministicAttribution(source) {
       ? 'official_news_context'
       : sourceClass === 'cross_checked'
         ? 'cross_checked_news_context'
-        : 'discovery_only_news_context';
+        : sourceClass === 'attributed_media' ? 'attributed_media_news_context' : 'discovery_only_news_context';
   const suffix = claimType === 'site_structured_data' ? '站内结构化数据' : '周度新闻上下文';
   return {
     sourceRefId: source.id,
@@ -178,7 +178,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
         thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: buildWeeklyEditorialSystemPrompt() },
+          { role: 'system', content: buildWeeklyEditorialSystemPrompt(input) },
           { role: 'user', content: buildWeeklyEditorialUserPrompt(input) }
         ]
       }),

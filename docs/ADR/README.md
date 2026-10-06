@@ -9,6 +9,7 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
+| [ADR-0062](0062-bubble-editorial-attributed-media.md) | Bubble 周度专业媒体归因与有限证据简版 | Owner-approved implementation baseline; independent review required |
 | [ADR-0061](0061-csp-optional-report-uri.md) | Optional CSP report-uri with one exact receiver endpoint | Local implementation authorized; independent contract review required; production activation excluded |
 | [ADR-0060](0060-budget-hold-explicit-skip.md) | Pre-network search budget holds are explicit editorial skips | Owner-authorized implementation; amends the ADR-0059 readiness clause; independent review required |
 | [ADR-0059](0059-tavily-runtime-budget.md) | Shared Tavily runtime usage ledger and budget | Implementation and publication authorized; independent review pending |

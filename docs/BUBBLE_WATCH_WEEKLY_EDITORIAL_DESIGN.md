@@ -55,7 +55,7 @@
 6. `accounting_regulatory`
 
 Collector 必须按 canonical URL + title fingerprint 去重。官方来源可标 `official`；至少两个
-独立 domain 的同一 story cluster 可标 `cross_checked`；其余只能 `discovery_only`，不得作为
+不同 domain 的同一 story cluster 可标 `cross_checked`（不同域名不保证报道独立）；经登记的专业媒体可标 `attributed_media`，必须有有效日期、至少 80 字符可用摘要并逐段归因；其余只能 `discovery_only`，不得作为
 AI `facts` 的唯一依据。
 
 ## 5. Contract family
@@ -123,12 +123,12 @@ AI `facts` 的唯一依据。
 - `schemaVersion = bubble-watch-weekly-editorial-review-v1`
 - 状态 `pass | warn | fail`。
 - `warn` 只用于非安全类质量维度，例如分类覆盖略低，或 Tavily/Brave 都成功但
-  本周只形成 1 条 official/cross_checked 新闻。后一种情形必须在 `dataGaps`
+  本周只形成 1 条 official/cross_checked/attributed_media 新闻。后一种情形必须在 `dataGaps`
   披露覆盖限制，其余事实性段落必须同时引用站内指标；可展示但必须披露 warning。
 - `fail` 包括 invalid refs、unsafe copy、来源不足、结构错误、评分越权、外部验证虚构或
-  provider failure；两个索引均无可用结果或 official/cross_checked 为 0 也必须 fail，
+  provider failure；两个索引均无可用结果或 official/cross_checked/attributed_media 为 0 也必须 fail，
   不得 production write。
-- 上述 official/cross_checked 为 0 仍是 provider/review/write 的 hard stop。仅当 Tavily 与
+- 上述 official/cross_checked/attributed_media 为 0 仍是 provider/review/write 的 hard stop。仅当 Tavily 与
   Brave 的全部 6 个 topic 查询均为 `ok`、但本期确实只有 `discovery_only` 时，workflow 可在
   provider 前记录 `SKIPPED_NO_CREDIBLE_NEWS` 并成功结束；该 expected skip 必须保持
   DeepSeek calls=0、production writes=0，并继续显示 deterministic fallback。任一搜索源不健康、
@@ -239,3 +239,12 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 [ADR-0050](ADR/0050-bubble-editorial-followup.md) 增加周三 05:45 UTC 的一次有条件补检；只有本期、全周运行均已证实为健康新闻不足且从未进入 provider 时才可消费。先持久预留、后派发，收件 workflow 在共享锁内重验并记入 admittedRunId。手工状态刷新及 completed 事件不安排补检。付费失败、取消、证据缺失、已有判读、换期与 rerun 均 fail closed；原有 AI workflow 无 cron、不自动重试。
 
 独立 JSON 仅展示原因和预约账本；数据、分数与 AI 正文资格不变。EdgeOne 直接订阅 AI 完成，Pages/EdgeOne 同时订阅状态完成。搜寻预算最坏增加每 provider 每月 30 次，原 200 预留和 1,000 上限不变。
+
+## 2026-10-06 owner-approved 窄范围替代（ADR-0062）
+
+本节在新闻资格、简版内容数量及长度上替代此前仅 official/cross_checked 的门槛；其它保护不变。
+专业媒体单源摘要可以支持注明出处的报道/机构观点，不冒充交叉确认。官方清单补登记加州司法部。
+标题或付费墙提示不得支撑正文；数字和引述须在实际输入摘要中出现，不补写不可见正文。
+少于两条可用新闻时启用简版：时间线 0–8、矛盾 1–6、分类 2–6、至少 5 项指标和 2 条观察条件；可见长度 600–6500，生成目标 600–1800 字。新闻覆盖缺口必须披露，置信度 low/medium 且不超过 70。完整版本保留原数量和 1200–6500 长度门槛。
+生产仅保留来源类别、名称及 contentScope 元数据，不保存摘要；摘要数字/引述检查发生在 provider 输出和 projection 前，生产回读只复核来源元数据、归因与既有输出契约，不声称重新核验未保存的摘要。自动化只能检查归因标记、数字/引述与结构，无法证明自然语言完全蕴含于原文。
+零可用新闻仍不调用 provider；单次调用、费用、引用、unsafe、时效、writer 与评分隔离保护不变。

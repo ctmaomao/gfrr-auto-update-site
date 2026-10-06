@@ -1,18 +1,21 @@
+import { isUsableNews, isLimitedEvidence } from './editorial-evidence-policy.mjs';
 import { EDITORIAL_CATEGORIES, OUTPUT_SCHEMA } from './weekly-editorial-contract.mjs';
 
-export function buildWeeklyEditorialSystemPrompt() {
+export function buildWeeklyEditorialSystemPrompt(input) {
+  const limited = Boolean(input) && isLimitedEvidence(input);
   return [
     'You are the Chinese-language weekly editor for the Bubble Watch evidence dashboard.',
     'Return exactly one JSON object. Do not use markdown or code fences.',
     'Use only the supplied compact input. You cannot browse, fetch, or independently verify anything.',
     'Search snippets are discovery context, not full articles. A discovery_only source can never be the sole support for a factual paragraph.',
+    'attributed_media permits a single reviewed publisher excerpt: name sourceName and use 据/报道/认为/分析 in every paragraph citing it. Preserve opinions and uncertainty; disclose media-excerpt limitations in dataGaps. Never add numbers, quotations or unseen article details. title_only items cannot support factual paragraphs.',
     'Do not invent dates, figures, quotations, companies, events, source IDs, indicator IDs, causality, forecasts, or external verification.',
     'Explain the existing Bubble Watch scorecard. Never alter an indicator status, Core-23/Shadow-4 membership, primary score, weighted score, Stage, Trigger, similarity, or verdict label.',
     'Write restrained Chinese analysis, not investment advice. Never recommend buying, selling, positions, exposure, cash allocation, execution, targets, timing a crash, or certainty that a bubble will burst.',
     'Every factual timeline/category/tension/history item must cite sourceRefIds from input.sourceRefs. Indicator-based claims must also use sourceIndicatorIds from input.structuredFacts.',
     `Cover these categories when evidence exists: ${EDITORIAL_CATEGORIES.join(', ')}.`,
-    'Target 2,600-3,400 visible Chinese characters, calibrated to the reference site recent five-issue average of about 2,947 characters and a 3,278-character observed maximum. Prefer evidence density over repetition and finish the complete JSON object within the token budget.',
-    'Hard output caps: headlineZh <= 36 Chinese characters; leadZh <= 200; scorecardSynthesisZh <= 240; exactly 3 weeklyTimeline items with titleZh <= 24 and detailZh <= 150; exactly 2 keyTensions with titleZh <= 24 and detailZh <= 180; exactly 6 categoryAnalysis items with detailZh <= 140; historicalComparison.detailZh <= 200; exactly 3 watchNextWeek items with conditionZh <= 90 and invalidationZh <= 80; 2-4 dataGaps <= 80 each; confidence.reasonZh <= 140.',
+    limited ? 'Target 600-1,800 visible Chinese characters for limited evidence. Omit unsupported sections, disclose news coverage, and do not pad to a long-form target.' : 'Target 2,600-3,400 visible Chinese characters, calibrated to the reference site recent five-issue average of about 2,947 characters and a 3,278-character observed maximum. Prefer evidence density over repetition and finish the complete JSON object within the token budget.',
+    limited ? 'Hard output caps: headlineZh <= 36; leadZh <= 200; scorecardSynthesisZh <= 240; weeklyTimeline 0-3 supported items; keyTensions 1-2; categoryAnalysis 2-6 supported categories; historicalComparison.detailZh <= 200; watchNextWeek 2-3; dataGaps must disclose news coverage; confidence low/medium with score <=70. Keep at least 5 different indicator references.' : 'Hard output caps: headlineZh <= 36 Chinese characters; leadZh <= 200; scorecardSynthesisZh <= 240; exactly 3 weeklyTimeline items with titleZh <= 24 and detailZh <= 150; exactly 2 keyTensions with titleZh <= 24 and detailZh <= 180; exactly 6 categoryAnalysis items for full coverage; limited evidence permits 2-6 supported categories with detailZh <= 140; historicalComparison.detailZh <= 200; exactly 3 watchNextWeek items with conditionZh <= 90 and invalidationZh <= 80; 2-4 dataGaps <= 80 each; confidence.reasonZh <= 140.',
     'sourceAttribution is not part of the visible-character target. Include exactly one sourceAttribution row for every unique sourceRefId used anywhere in the output, up to the contract maximum of 80 rows; do not omit referenced indicator:* sources to meet a shorter attribution count.',
     'Never continue expanding a field after its cap. Close every array/object and return syntactically complete JSON before using extra detail.',
     'The output must use these exact machine fields:',
@@ -33,7 +36,7 @@ export function buildWeeklyEditorialSystemPrompt() {
       historicalComparison: { period: 'historical period', detailZh: 'similarities and differences', sourceIndicatorIds: ['indicator ID'], sourceRefIds: ['stable source ID'] },
       watchNextWeek: [{ conditionZh: 'observable condition', invalidationZh: 'what would weaken the interpretation', sourceIndicatorIds: ['indicator ID'] }],
       dataGaps: ['specific limitation'],
-      sourceAttribution: [{ sourceRefId: 'stable source ID', claimType: 'site_structured_data, official_news_context, cross_checked_news_context, or discovery_only_news_context', noteZh: 'short attribution note' }],
+      sourceAttribution: [{ sourceRefId: 'stable source ID', claimType: 'site_structured_data, official_news_context, cross_checked_news_context, attributed_media_news_context, or discovery_only_news_context', noteZh: 'short attribution note' }],
       confidence: { level: 'low or medium or high', score: 'integer 0-100, never a 0-1 probability', reasonZh: 'reason tied to coverage and gaps' },
       auditFlags: ['display_only', 'validator_required', 'no_score_impact'],
       boundaries: {
@@ -56,22 +59,23 @@ export function buildWeeklyEditorialSystemPrompt() {
 }
 
 export function buildWeeklyEditorialUserPrompt(input) {
-  const credibleStories = (input?.newsContext?.stories || []).filter((story) => ['official', 'cross_checked'].includes(story?.evidenceStatus));
+  const credibleStories = (input?.newsContext?.stories || []).filter((story) => isUsableNews(story));
   const coverageConstraint = credibleStories.length <= 1
-    ? `Only ${credibleStories.length} official/cross_checked news story is available${credibleStories.length === 1 ? ` (${credibleStories[0].id})` : ''}. In weeklyTimeline, use at most ${credibleStories.length} news story as a primary factual event. Build the remaining timeline items from structuredFacts, previousComparison, and deterministic scorecard changes; cite matching indicator:* sourceRefIds and sourceIndicatorIds. Never use discovery_only news as sole support.`
+    ? `Only ${credibleStories.length} usable official/cross_checked/attributed_media news story is available${credibleStories.length === 1 ? ` (${credibleStories[0].id})` : ''}. In weeklyTimeline, use at most ${credibleStories.length} news story as a primary factual event. Build the remaining timeline items from structuredFacts, previousComparison, and deterministic scorecard changes; cite matching indicator:* sourceRefIds and sourceIndicatorIds. Never use discovery_only news as sole support.`
     : 'Prefer official/cross_checked news for timeline events. If a discovery_only item is mentioned, corroborate it with matching structuredFacts plus indicator:* sourceRefIds and sourceIndicatorIds.';
   return [
     'Produce this week\'s Chinese Bubble Watch editorial from the compact evidence pack below.',
     'Organize the content through the structured fields: weekly timeline, fixed scorecard, key tensions, six-category analysis, historical differences, next-week watch conditions, and data gaps.',
     'Do not repeat the deterministic narrative verbatim. Add synthesis only where the input supports it.',
     coverageConstraint,
+    isLimitedEvidence(input) ? 'Limited evidence: write a concise 600-1,800 character editorial; this overrides the normal length target and exact item counts. weeklyTimeline may have 0-3 supported items, keyTensions 1-2, categoryAnalysis 2-6. Omit unsupported sections, disclose news coverage in dataGaps, confidence must be low/medium with score <=70. Keep at least 5 different indicator references and 2 watch conditions. Do not pad.' : 'Use full coverage only where evidence supports it; omit unsupported news details.',
     'Use sourceRefIds and sourceIndicatorIds exactly as supplied. Return one JSON object only.',
     JSON.stringify(input)
   ].join('\n\n');
 }
 
 export function validateWeeklyEditorialPrompt(input) {
-  const combined = `${buildWeeklyEditorialSystemPrompt()}\n${buildWeeklyEditorialUserPrompt(input)}`;
+  const combined = `${buildWeeklyEditorialSystemPrompt(input)}\n${buildWeeklyEditorialUserPrompt(input)}`;
   const requiredMarkers = [
     'Use only the supplied compact input',
     'cannot browse',
