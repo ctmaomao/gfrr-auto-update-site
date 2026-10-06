@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-10-05T15:12:42.964Z",
+  "generatedAt": "2026-10-06T18:34:55.158Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,21 +50,21 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 11504,
+    "elapsedMs": 11680,
     "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-10-05T15:12:31.458Z",
+    "latestAttemptAt": "2026-10-06T18:34:43.477Z",
     "lastLiveSuccessAt": "2026-10-03T05:40:39.857Z",
     "latestOutcome": "rate_limited",
     "windows": {
       "days7": {
-        "attemptCount": 7,
+        "attemptCount": 8,
         "successCount": 1,
-        "failureCount": 6,
-        "successRatePct": 14.3
+        "failureCount": 7,
+        "successRatePct": 12.5
       },
       "days30": {
         "attemptCount": 32,
@@ -74,15 +74,6 @@
       }
     },
     "history": [
-      {
-        "attemptedAt": "2026-08-23T02:12:21.673Z",
-        "outcome": "rate_limited",
-        "attempts": 2,
-        "retryCount": 1,
-        "status": 429,
-        "errorCode": "rate_limited",
-        "elapsedMs": 28441
-      },
       {
         "attemptedAt": "2026-08-24T04:24:27.482Z",
         "outcome": "rate_limited",
@@ -649,11 +640,20 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 11504
+      },
+      {
+        "attemptedAt": "2026-10-06T18:34:43.477Z",
+        "outcome": "rate_limited",
+        "attempts": 1,
+        "retryCount": 0,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 11680
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-10-05T15:12:31.458Z",
+    "at": "2026-10-06T18:34:43.477Z",
     "errorClass": "rate_limited",
     "cooldownHours": 24
   },
