@@ -108,7 +108,7 @@ sparsePromptInput.newsContext.stories = [
   ...input.newsContext.stories.filter((story) => story.evidenceStatus === 'discovery_only')
 ];
 const sparseUserPrompt = buildWeeklyEditorialUserPrompt(sparsePromptInput);
-assert(sparseUserPrompt.includes('Only 1 official/cross_checked news story is available'), 'sparse-news prompt must state the credible-story budget');
+assert(sparseUserPrompt.includes('Only 1 usable official/cross_checked/attributed_media news story is available'), 'sparse-news prompt must state the credible-story budget');
 assert(sparseUserPrompt.includes('Build the remaining timeline items from structuredFacts'), 'sparse-news prompt must route remaining timeline items to structured facts');
 assert(sparseUserPrompt.includes('Never use discovery_only news as sole support'), 'sparse-news prompt must retain discovery-only guard');
 const oneCredibleReview = reviewWeeklyEditorial({ input: oneCredibleInput, output: oneCredibleOutput, generatedAt: '2026-08-11T00:04:00.000Z' });

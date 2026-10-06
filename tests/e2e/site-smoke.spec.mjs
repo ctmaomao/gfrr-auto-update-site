@@ -377,3 +377,30 @@ test.describe('mobile smoke', () => {
     expect(pageErrors).toEqual([]);
   });
 });
+
+for (const viewport of [DESKTOP, MOBILE]) {
+  test(`Bubble Watch attributed media limited edition at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const errors = capturePageErrors(page);
+    await page.route('**/data/bubble-watch.json*', async (route) => {
+      const response = await route.fetch();
+      const data = await response.json();
+      const layer = buildApprovedBubbleWeeklyEditorial(data, new Date().toISOString());
+      layer.output.weeklyTimeline = [];
+      layer.output.categoryAnalysis = layer.output.categoryAnalysis.slice(0, 2);
+      layer.output.dataGaps = ['本期仅有一条专业媒体摘要，新闻覆盖有限，展示简版判读。'];
+      layer.sourceLedger[1] = { id: 'news:earnings-sample', kind: 'news', sourceName: 'Morningstar', sourceClass: 'attributed_media', title: '融资信用分析', url: 'https://morningstar.com/bonds/ai-credit', domain: 'morningstar.com', contentScope: 'excerpt' };
+      layer.qualityReview.status = 'warn';
+      data.summary.weekly_editorial = layer;
+      await route.fulfill({ response, json: data });
+    });
+    await page.goto('/bubble-watch.html');
+    await expect(page.locator('#weekly-editorial')).toBeVisible();
+    await expect(page.locator('#weekly-editorial')).toContainText('专业媒体报道或机构观点');
+    await expect(page.locator('#weekly-editorial')).not.toContainText('attributed_media');
+    await expect(page.locator('#weekly-editorial')).not.toContainText('周内时间线');
+    await expect(page.locator('.editorial-category-grid .editorial-plain-item')).toHaveCount(2);
+    await expectNoHorizontalOverflow(page);
+    expect(errors).toEqual([]);
+  });
+}

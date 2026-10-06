@@ -354,7 +354,7 @@ function editorialRefreshMessage(data, status, nowMs = Date.now()) {
     && checked <= nowMs + 3_600_000 && nowMs - checked <= 7 * 86_400_000;
   if (!current) return '本期暂无可展示的 AI 判读，当前展示确定性判读；刷新状态暂未核实。';
   const messages = {
-    no_credible_news: '本期 AI 暂未生成：新闻检索成功，但尚无官方来源或跨来源确认的合格证据；未调用付费 AI。每周三至多补检一次。',
+    no_credible_news: '本期 AI 暂未生成：新闻检索成功，但尚无可用的官方、跨来源确认或专业媒体摘要证据；未调用付费 AI。每周三至多补检一次。',
     search_failed: '本期 AI 暂未生成：新闻检索服务异常，未通过输入检查。',
     input_failed: '本期 AI 暂未生成：输入证据未通过检查。',
     provider_failed: '本期 AI 调用未成功，不会自动再次付费重试。',
@@ -390,6 +390,7 @@ function renderWeeklyEditorial(layer) {
     site_structured_proxy: '站内结构化代理',
     official: '官方来源',
     cross_checked: '交叉确认',
+    attributed_media: '专业媒体报道或机构观点',
     discovery_only: '仅新闻发现'
   };
   const confidenceScore = Number.isFinite(confidence.score)
@@ -413,7 +414,7 @@ function renderWeeklyEditorial(layer) {
 
       <div class="weekly-editorial-scorecard">${escapeHtml(output.scorecardSynthesisZh)}</div>
 
-      <h4>周内时间线 <em>· WEEKLY TIMELINE</em></h4>
+      ${(output.weeklyTimeline || []).length ? `<h4>周内时间线 <em>· WEEKLY TIMELINE</em></h4>` : ''}
       <div class="editorial-timeline">
         ${(output.weeklyTimeline || []).map(item => `
           <div class="editorial-timeline-item">
@@ -428,7 +429,7 @@ function renderWeeklyEditorial(layer) {
         ${(output.keyTensions || []).map(item => `<div class="editorial-plain-item"><div class="editorial-item-title">${escapeHtml(item.titleZh)}</div><div class="editorial-item-detail">${escapeHtml(item.detailZh)}</div></div>`).join('')}
       </div>
 
-      <h4>六类证据 <em>· CATEGORY READ</em></h4>
+      <h4>分类证据 <em>· CATEGORY READ</em></h4>
       <div class="editorial-category-grid">
         ${(output.categoryAnalysis || []).map(item => `<div class="editorial-plain-item"><div class="category-name">${escapeHtml(categoryNames[item.category] || item.category)}</div><div class="editorial-item-detail">${escapeHtml(item.detailZh)}</div></div>`).join('')}
       </div>

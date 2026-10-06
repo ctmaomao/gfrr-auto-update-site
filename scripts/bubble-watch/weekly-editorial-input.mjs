@@ -49,7 +49,8 @@ function buildNewsSourceRefs(discovery) {
   return (Array.isArray(discovery?.stories) ? discovery.stories : []).map((story) => ({
     id: story.id,
     kind: 'news',
-    sourceName: story.domain,
+    sourceName: story.sourceName || story.domain,
+    contentScope: story.contentScope || null,
     sourceClass: story.evidenceStatus,
     title: story.title,
     url: story.url,

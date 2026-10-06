@@ -174,9 +174,9 @@ Provider 请求固定 `max_tokens=8000`，可见正文目标 2,600–3,400 中�
 生产顺序固定为：bounded Tavily + Brave discovery → compact input validation → 一次
 DeepSeek JSON request → output validation → quality review → projection → guarded writer →
 `check:bubble-watch` + `check:all` → exact-path assertion → 只提交
-`data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；official/cross-checked 为 0
+`data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；可用 official/cross-checked/attributed_media 为 0
 时禁止进入 provider/review/write。若 Tavily 与 Brave 的全部 6 个 topic 查询均为 `ok`、但确实
-没有可信新闻，workflow 以 `SKIPPED_NO_CREDIBLE_NEWS` expected skip 结束，Summary 必须显示
+没有可用新闻证据，workflow 以 `SKIPPED_NO_CREDIBLE_NEWS` expected skip 结束，Summary 必须显示
 DeepSeek calls=0、production writes=0；任一搜索源异常仍 hard fail。只有 1 条时可以继续，
 但 discovery 必须标记 `partial`、quality review 必须
 `warn`、`dataGaps` 必须披露，其余 discovery-only 事实段落必须同时引用站内指标。discovery、input、
@@ -1675,3 +1675,7 @@ The console audit found one key at 100%, pay-as-you-go disabled and an enabled 8
 Console tooltip verification: clicking the single key usage ring showed `1000 / 1000`; the account usage information tooltip states that its total includes active and deleted keys. These are aggregate counters, not per-request billing records.
 
 After integration, dispatch **Tavily Budget Status** on `main` for read-only live acceptance using existing Actions secrets. Its `--verify` mode reads official meters and the ledger, outputs only allowlisted counters/key fingerprints/advisory admission, and performs zero searches or writes. Exhausted quota reports `tavily_budget_account_limit`; malformed or unavailable meters fail the check. Publication and initialization were explicitly authorized by the owner on 2026-09-18; independent review still precedes merge.
+
+### Bubble 周度判读来源调整（2026-10-06）
+
+按 [ADR-0062](ADR/0062-bubble-editorial-attributed-media.md) 接受专业媒体单源摘要，保留出处及机构观点语气。可用新闻不足两条时允许披露缺口的简版；付费墙/标题不支持正文、零可用证据仍 skip。部署与任何真实 AI 补跑仍按独立授权执行。

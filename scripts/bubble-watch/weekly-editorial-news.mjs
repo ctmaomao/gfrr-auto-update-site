@@ -1,3 +1,4 @@
+import { contentScope, isOfficialDomain, isUsableNews, publisherName, validMediaStory } from './editorial-evidence-policy.mjs';
 import { createHash } from 'node:crypto';
 
 import { EDITORIAL_TOPICS, NEWS_DISCOVERY_SCHEMA } from './weekly-editorial-contract.mjs';
@@ -18,8 +19,8 @@ export function assessWeeklyEditorialNewsReadiness(discovery) {
     && status.successCount === EDITORIAL_TOPICS.length
     && status.failureCount === 0);
   const stories = Array.isArray(discovery?.stories) ? discovery.stories : [];
-  const credibleCount = stories.filter((story) => ['official', 'cross_checked'].includes(story?.evidenceStatus)).length;
-  const editorialReady = ['ok', 'partial'].includes(discovery?.status)
+  const credibleCount = stories.filter(isUsableNews).length;
+  const editorialReady = searchProvidersHealthy && ['ok', 'partial'].includes(discovery?.status)
     && discovery?.liveProviderCount === 2
     && credibleCount >= 1;
   let reason = null;
@@ -38,24 +39,6 @@ export function assessWeeklyEditorialNewsReadiness(discovery) {
     searchProvidersHealthy
   };
 }
-
-const OFFICIAL_DOMAIN_SUFFIXES = Object.freeze([
-  'sec.gov',
-  'justice.gov',
-  'federalreserve.gov',
-  'nvidia.com',
-  'microsoft.com',
-  'aboutamazon.com',
-  'amazon.com',
-  'abc.xyz',
-  'investor.fb.com',
-  'meta.com',
-  'openai.com',
-  'anthropic.com',
-  'oracle.com',
-  'amd.com',
-  'broadcom.com'
-]);
 
 const TRACKING_PARAMS = new Set([
   'fbclid',
@@ -129,10 +112,6 @@ function parsePublishedAt(value) {
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
 }
 
-function isOfficialDomain(domain) {
-  return OFFICIAL_DOMAIN_SUFFIXES.some((suffix) => domain === suffix || domain.endsWith(`.${suffix}`));
-}
-
 export function normalizeProviderStory(raw) {
   if (!raw || !EDITORIAL_TOPICS.includes(raw.topic) || !['tavily', 'brave'].includes(raw.provider)) return null;
   const url = canonicalizeNewsUrl(raw.url);
@@ -188,7 +167,10 @@ function storyFromCluster(cluster) {
   const providers = [...new Set(cluster.rows.map((row) => row.provider))].sort();
   const supportingDomains = [...new Set(cluster.rows.map((row) => row.domain))].sort();
   const official = cluster.rows.some((row) => isOfficialDomain(row.domain));
-  const evidenceStatus = official ? 'official' : supportingDomains.length >= 2 ? 'cross_checked' : 'discovery_only';
+  const scope = contentScope(preferred);
+  const sourceName = publisherName(preferred.domain) || preferred.domain;
+  const media = validMediaStory({ ...preferred, contentScope: scope, sourceName });
+  const evidenceStatus = official ? 'official' : supportingDomains.length >= 2 ? 'cross_checked' : media ? 'attributed_media' : 'discovery_only';
   return {
     id: stableStoryId(cluster.topic, preferred.title, preferred.url),
     topic: cluster.topic,
@@ -199,7 +181,9 @@ function storyFromCluster(cluster) {
     snippet: preferred.snippet,
     providers,
     supportingDomains,
-    evidenceStatus
+    evidenceStatus,
+    contentScope: scope,
+    sourceName
   };
 }
 
@@ -209,8 +193,9 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
     .filter(Boolean);
   const stories = clusterStories(normalized)
     .map(storyFromCluster)
+    .map((story) => story.evidenceStatus === 'attributed_media' && (story.publishedAt.slice(0, 10) < windowStart || story.publishedAt.slice(0, 10) > windowEnd) ? { ...story, evidenceStatus: 'discovery_only' } : story)
     .sort((left, right) => {
-      const statusRank = { official: 0, cross_checked: 1, discovery_only: 2 };
+      const statusRank = { official: 0, cross_checked: 1, attributed_media: 2, discovery_only: 3 };
       return statusRank[left.evidenceStatus] - statusRank[right.evidenceStatus]
         || String(right.publishedAt || '').localeCompare(String(left.publishedAt || ''));
     })
@@ -220,7 +205,7 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
   const statuses = sourceStatus || {};
   const liveProviderCount = ['tavily', 'brave'].filter((provider) => ['ok', 'partial'].includes(statuses[provider]?.status)).length;
   const fullProviderCount = ['tavily', 'brave'].filter((provider) => statuses[provider]?.status === 'ok').length;
-  const usableCount = stories.filter((story) => story.evidenceStatus !== 'discovery_only').length;
+  const usableCount = stories.filter(isUsableNews).length;
   const status = fullProviderCount === 2 && usableCount >= 2
     ? 'ok'
     : liveProviderCount > 0 && usableCount > 0
@@ -228,8 +213,10 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
       : 'insufficient';
   const dataGaps = [];
   if (liveProviderCount < 2) dataGaps.push('新闻发现未获得 Tavily 与 Brave 两个索引的完整成功响应。');
-  if (usableCount === 0) dataGaps.push('本周期未形成 official 或 cross_checked 新闻证据。');
-  if (usableCount === 1) dataGaps.push('本周期仅形成 1 条 official/cross_checked 新闻证据；其余事实性段落必须同时引用站内结构化指标并披露新闻覆盖限制。');
+  if (usableCount === 0) dataGaps.push('本周期未形成可用的官方、跨来源确认或专业媒体摘要证据。');
+  if (usableCount === 1) dataGaps.push('本周期仅形成 1 条可用新闻证据；采用简版判读并披露新闻覆盖限制。');
+  if (stories.some((story) => story.evidenceStatus === 'attributed_media')) dataGaps.push('专业媒体摘要仅支持注明出处的报道或机构观点，不代表独立核实；不得补写未提供的正文。');
+  if (stories.some((story) => story.contentScope === 'title_only')) dataGaps.push('部分候选仅有标题或订阅提示，不用于正文事实推断。');
   if (stories.some((story) => story.evidenceStatus === 'discovery_only')) dataGaps.push('部分搜索结果仅为 discovery_only，不得单独支撑事实性判断。');
 
   return {

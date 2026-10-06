@@ -17,7 +17,7 @@ for (const width of [1440, 390]) {
     const directory = 'manual-artifacts/bubble-followup';
     fs.mkdirSync(directory, { recursive: true });
     await page.goto('/bubble-watch.html');
-    await expect(page.locator('#editorial-refresh-note')).toContainText('尚无官方来源或跨来源确认');
+    await expect(page.locator('#editorial-refresh-note')).toContainText('尚无可用的官方、跨来源确认或专业媒体摘要证据');
     await expect(page.locator('.weekly-editorial')).toHaveCount(0);
     await expect(page.locator('section.category article.indicator')).toHaveCount(27);
     await page.locator('.verdict').screenshot({ path: `${directory}/after-${width}.png` });

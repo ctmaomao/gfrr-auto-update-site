@@ -1,3 +1,4 @@
+import { isUsableNews, isLimitedEvidence } from './editorial-evidence-policy.mjs';
 import { createHash } from 'node:crypto';
 
 import {
@@ -52,6 +53,7 @@ function compactProductionSource(source) {
   if (typeof source.url === 'string') base.url = source.url;
   if (typeof source.domain === 'string') base.domain = source.domain;
   if (typeof source.publishedAt === 'string') base.publishedAt = source.publishedAt;
+  if (typeof source.contentScope === 'string') base.contentScope = source.contentScope;
   if (typeof source.topic === 'string') base.topic = source.topic;
   if (Array.isArray(source.providers)) base.providers = source.providers;
   if (Array.isArray(source.supportingDomains)) base.supportingDomains = source.supportingDomains;
@@ -75,13 +77,17 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
   const newsById = new Map((input?.newsContext?.stories || []).map((story) => [story.id, story]));
   const referencedSources = collectReferenceValues(output, 'sourceRefIds');
   const referencedIndicators = collectReferenceValues(output, 'sourceIndicatorIds');
-  const credibleNewsRefs = [...referencedSources].filter((refId) => ['official', 'cross_checked'].includes(newsById.get(refId)?.evidenceStatus));
+  const credibleNewsRefs = [...referencedSources].filter((refId) => isUsableNews(newsById.get(refId)));
   if (credibleNewsRefs.length < 1) {
     dimensions.newsEvidenceQuality = 'fail';
-    blockers.push('至少需要 1 条官方或交叉确认的新闻引用');
+    blockers.push('至少需要 1 条有可用摘要的官方、交叉确认或注明出处的专业媒体新闻引用');
   } else if (credibleNewsRefs.length === 1) {
     dimensions.newsEvidenceQuality = 'warn';
-    warnings.push('本周期仅使用 1 条官方或交叉确认新闻；其余事实性判断均需站内指标共同支撑');
+    warnings.push('本周期仅使用 1 条可用新闻；采用简版判读并披露证据覆盖限制');
+  }
+  if ([...referencedSources].some((refId) => newsById.get(refId)?.evidenceStatus === 'attributed_media')) {
+    dimensions.newsEvidenceQuality = dimensions.newsEvidenceQuality === 'fail' ? 'fail' : 'warn';
+    warnings.push('部分新闻来自专业媒体摘要或机构观点，尚未独立核实；按注明出处的有限内容展示。');
   }
   if (input?.newsContext?.status === 'partial') {
     dimensions.newsEvidenceQuality = 'warn';
@@ -92,14 +98,18 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
     blockers.push('周度判读必须综合至少 5 项不同的 Bubble Watch 指标');
   }
   const categories = new Set((output?.categoryAnalysis || []).map((item) => item.category));
-  if (categories.size < 5) {
+  if (isLimitedEvidence(input) && output?.dataGaps?.some((gap) => /新闻|证据|覆盖/u.test(gap))) {
+    dimensions.incrementalEditorialValue = 'warn';
+    warnings.push('新闻证据有限，展示简版判读；省略无依据的栏目，不补写新闻。');
+  } else if (categories.size < 5) {
     dimensions.incrementalEditorialValue = categories.size < 4 ? 'fail' : 'warn';
     (categories.size < 4 ? blockers : warnings).push(`category coverage is ${categories.size}/6`);
   }
   const visibleLength = visibleEditorialText(output).length;
-  if (visibleLength < 1800 || visibleLength > 4200) {
+  const [minLength, maxLength] = isLimitedEvidence(input) ? [600, 1800] : [1800, 4200];
+  if (visibleLength < minLength || visibleLength > maxLength) {
     dimensions.incrementalEditorialValue = dimensions.incrementalEditorialValue === 'fail' ? 'fail' : 'warn';
-    warnings.push(`可见判读长度 ${visibleLength} 字，超出 1,800–4,200 字兼容窗口`);
+    warnings.push(`可见判读长度 ${visibleLength} 字，超出 ${minLength}–${maxLength} 字兼容窗口`);
   }
   if (!Array.isArray(output?.weeklyTimeline) || output.weeklyTimeline.length < 3) {
     dimensions.incrementalEditorialValue = 'warn';
@@ -149,6 +159,7 @@ export function projectWeeklyEditorial({ input, output, review, generatedAt = ne
   const referencedSourceIds = new Set(collectReferenceValues(output, 'sourceRefIds'));
   for (const item of output.sourceAttribution || []) referencedSourceIds.add(item.sourceRefId);
   for (const indicatorId of collectReferenceValues(output, 'sourceIndicatorIds')) referencedSourceIds.add(`indicator:${indicatorId}`);
+  for (const indicatorId of output.scorecardSourceIndicatorIds || []) referencedSourceIds.add(`indicator:${indicatorId}`);
   const sourceLedger = (input.sourceRefs || [])
     .filter((source) => referencedSourceIds.has(source.id))
     .map(compactProductionSource);
@@ -185,6 +196,7 @@ export function projectWeeklyEditorial({ input, output, review, generatedAt = ne
       generatedBy: 'github_actions_workflow',
       humanApproved: false,
       inputDigest: digest(input),
+      editorialFormat: isLimitedEvidence(input) ? 'limited' : 'full',
       artifactDigest,
       sourceCommit,
       runId,
@@ -223,6 +235,7 @@ export function projectWeeklyEditorial({ input, output, review, generatedAt = ne
 
 function syntheticInputFromProduction(layer, bubbleWatch) {
   const referencedIndicators = collectReferenceValues(layer.output, 'sourceIndicatorIds');
+  for (const indicatorId of layer.output.scorecardSourceIndicatorIds || []) referencedIndicators.add(indicatorId);
   const indicatorSources = new Map(layer.sourceLedger.filter((source) => source.kind === 'indicator').map((source) => [source.id, source]));
   const structuredFacts = [...referencedIndicators].map((indicatorId) => {
     const indicator = bubbleWatch.indicators.find((item) => item.id === indicatorId);
@@ -244,7 +257,9 @@ function syntheticInputFromProduction(layer, bubbleWatch) {
     publishedAt: source.publishedAt,
     providers: source.providers,
     supportingDomains: source.supportingDomains,
-    evidenceStatus: source.sourceClass
+    evidenceStatus: source.sourceClass,
+    sourceName: source.sourceName,
+    contentScope: source.contentScope
   }));
   const sourceRefs = layer.sourceLedger.filter((source) => source.kind !== 'indicator' || indicatorSources.has(source.id));
   return {
@@ -317,7 +332,7 @@ export function validateWeeklyEditorialProduction(layer, bubbleWatch) {
   }
   try {
     const syntheticInput = syntheticInputFromProduction(layer, bubbleWatch);
-    const outputResult = validateWeeklyEditorialOutput(layer.output, syntheticInput);
+    const outputResult = validateWeeklyEditorialOutput(layer.output, syntheticInput, { metadataOnly: true, limitedEvidence: layer.provenance?.editorialFormat === 'limited' });
     errors.push(...outputResult.errors.map((error) => `production output: ${error}`));
   } catch (error) {
     errors.push(`production output validation failed: ${error.message}`);
