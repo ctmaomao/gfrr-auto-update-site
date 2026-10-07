@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-07T02:03:46.646Z",
+  "updatedAt": "2026-10-07T06:16:37.509Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
@@ -10,18 +10,18 @@
   "score": 52,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
-  "confidence": 0.94,
+  "confidence": 1,
   "freshness": "partial",
   "marketConfirmationInput": {
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-07T02:03:39.019Z",
-    "ageMinutes": 0.1271,
+    "updatedAt": "2026-10-07T06:15:44.513Z",
+    "ageMinutes": 0.88325,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 101.32,
-    "gold": 4146.6001,
+    "brent": 101.295,
+    "gold": 4135.2998,
     "vix": 15.52,
     "dxy": 121.3848,
     "hyOas": 3.12,
@@ -4945,7 +4945,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-07T02:03:46.056Z",
+        "attemptedAt": "2026-10-07T06:16:36.986Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4970,7 +4970,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-07T02:03:46.308Z",
+      "lastFetchedAt": "2026-10-07T06:16:37.234Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -5018,19 +5018,19 @@
     },
     "acled": {
       "enabled": true,
-      "status": "partial",
-      "lastFetchedAt": "2026-10-05T06:05:55.795Z",
+      "status": "ok",
+      "lastFetchedAt": "2026-10-07T06:16:14.280Z",
       "summary": {
-        "eventsLast4Weeks": 35386,
-        "eventsLast12Weeks": 104091,
-        "eventsDelta4Vs12": 0.019858,
-        "fatalitiesLast4Weeks": 14585,
-        "fatalitiesLast12Weeks": 41417,
-        "civilianTargetingShareLast4Weeks": 0.084468,
-        "latestWeek": "2026-09-19",
+        "eventsLast4Weeks": 36265,
+        "eventsLast12Weeks": 106057,
+        "eventsDelta4Vs12": 0.025816,
+        "fatalitiesLast4Weeks": 15933,
+        "fatalitiesLast12Weeks": 42674,
+        "civilianTargetingShareLast4Weeks": 0.081787,
+        "latestWeek": "2026-09-26",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
-        "sourceFreshness": "aging",
+        "sourceFreshness": "fresh",
         "politicalViolenceEventsLatestFullYear": 213425,
         "politicalViolenceYoyDelta": 0.217218,
         "civilianTargetingShareLatestFullYear": 0.315225,
@@ -5039,14 +5039,14 @@
         "monthlyAsOfDate": "2026-09-25",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-19，近4周事件相对12周均值变化 2.0%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-09-26，近4周事件相对12周均值变化 2.6%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。",
         "weeklyWindowAligned": true
       }
     }
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 56,
+      "score": 57,
       "labelZh": "和平红利退潮",
       "trend": "watching",
       "evidence": [
@@ -5059,12 +5059,12 @@
           "confidence": 0.85
         },
         {
-          "labelZh": "ACLED 周度/月度数据部分可用",
+          "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
           "source": "acled",
-          "summary": "周度覆盖 6 个区域，最新周 2026-09-19，近4周事件相对12周均值变化 2.0%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
-          "value": 16,
+          "summary": "ACLED 手动周度聚合更新至 2026-09-26，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 3%。",
+          "value": 22,
           "direction": "neutral",
-          "confidence": 0.68
+          "confidence": 0.9
         }
       ]
     },
@@ -5136,16 +5136,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4146.6，显示避险或实际利率压力定价。",
-          "value": 4146.6001,
+          "summary": "基于 Worker 快变量，黄金当前值 4135.3，显示避险或实际利率压力定价。",
+          "value": 4135.2998,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 101.32，对地缘与供应风险有部分确认作用。",
-          "value": 101.32,
+          "summary": "基于 Worker 快变量，布伦特当前值 101.3，对地缘与供应风险有部分确认作用。",
+          "value": 101.295,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5153,7 +5153,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "121.3848/4146.6001",
+          "value": "121.3848/4135.2998",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5161,7 +5161,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7818.93/4146.6001",
+          "value": "7818.93/4135.2998",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -5169,7 +5169,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 101.32,
+          "value": 101.295,
           "direction": "up",
           "confidence": 0.65
         }
@@ -5190,7 +5190,7 @@
     {
       "key": "peaceDividendRetreat",
       "labelZh": "和平红利退潮",
-      "score": 56
+      "score": 57
     }
   ],
   "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、资本管制与金融抑制风险、和平红利退潮。该层仅用于结构性风险识别。",
