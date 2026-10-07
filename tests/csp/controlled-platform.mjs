@@ -147,7 +147,7 @@ export async function runSequence({ auth, closedReadback, statePath, outDir, mar
         }, 200, 'open');
         assert.equal(result.ok, true); assert.equal(result.action, 'commit'); assert.equal(result.stored, 1);
       } catch (error) { latch(error); throw error; }
-    });
+    }, { onFailure: latch });
     check(); assert.equal(seen.size, 2);
     const after = health(await attempt('open-health-after', '/health', {}, 200, 'open'));
     assert.equal(after.ingestUsed - before.ingestUsed, 4, 'unattributable ledger delta stops');
@@ -165,12 +165,17 @@ export async function runSequence({ auth, closedReadback, statePath, outDir, mar
   }
 }
 
-/** Native reports stay on localhost; every platform send goes through the counted callback. */
-export async function nativeRelay(forward) {
-  const { chromium } = await import('@playwright/test');
-  let browser, failure = null;
+/** Shared handler for real HTTP and deferred-body regression tests. */
+export function createRelayHandler(forward, { onFailure = () => {} } = {}) {
+  let failure = null;
   const pending = new Set(), seen = new Set();
-  const server = createServer(async (req, res) => {
+  const fail = error => {
+    if (failure) return;
+    failure = error;
+    // Notify the sending layer immediately, including while other uploads/RPCs are in flight.
+    onFailure(error);
+  };
+  const handler = async (req, res) => {
     try {
       const url = new URL(req.url, ORIGIN);
       if (req.method === 'GET' && ['/index.html', '/bubble-watch.html'].includes(url.pathname)) {
@@ -180,17 +185,35 @@ export async function nativeRelay(forward) {
       }
       if (req.method !== 'POST' || url.pathname !== '/csp-report' || failure) { res.writeHead(404); res.end(); return; }
       const task = (async () => {
-        const body = await readBodyWithinLimit(Readable.toWeb(req), 16_384);
-        assert.ok(body.ok); const payload = JSON.parse(body.text);
-        const doc = new URL(payload['csp-report']['document-uri']);
-        assert.equal(doc.origin, ORIGIN); assert.ok(['/index.html', '/bubble-watch.html'].includes(doc.pathname));
-        assert.equal(doc.search, '?synthetic=fiction-only'); assert.ok(!seen.has(doc.pathname)); seen.add(doc.pathname);
-        await forward(payload);
+        try {
+          const body = await readBodyWithinLimit(Readable.toWeb(req), 16_384);
+          if (failure) throw failure;
+          assert.ok(body.ok); const payload = JSON.parse(body.text);
+          const doc = new URL(payload['csp-report']['document-uri']);
+          assert.equal(doc.origin, ORIGIN); assert.ok(['/index.html', '/bubble-watch.html'].includes(doc.pathname));
+          assert.equal(doc.search, '?synthetic=fiction-only'); assert.ok(!seen.has(doc.pathname)); seen.add(doc.pathname);
+          if (failure) throw failure;
+          await forward(payload);
+        } catch (error) {
+          // Latch in THIS continuation, before rejecting task: an outer await-catch is too late
+          // when another body-completion continuation is already queued in the same microtask turn.
+          fail(error);
+          throw error;
+        }
       })();
       pending.add(task);
       try { await task; res.writeHead(204); res.end(); } finally { pending.delete(task); }
-    } catch (error) { failure ??= error; res.writeHead(500); res.end(); }
-  });
+    } catch (error) { fail(error); res.writeHead(500); res.end(); }
+  };
+  return { handler, pending, seen, get failure() { return failure; } };
+}
+
+/** Native reports stay on localhost; every platform send goes through the counted callback. */
+export async function nativeRelay(forward, { onFailure = () => {} } = {}) {
+  const { chromium } = await import('@playwright/test');
+  let browser;
+  const relay = createRelayHandler(forward, { onFailure });
+  const server = createServer(relay.handler);
   try {
     await new Promise((done, reject) => { server.once('error', reject); server.listen(8765, '127.0.0.1', done); });
     browser = await chromium.launch({ headless: true });
@@ -199,12 +222,12 @@ export async function nativeRelay(forward) {
     const page = await context.newPage();
     for (const name of ['index', 'bubble-watch']) await page.goto(ORIGIN + '/' + name + '.html?synthetic=fiction-only', { timeout: 10_000 });
     const deadline = Date.now() + 10_000;
-    while (!failure && (seen.size < 2 || pending.size) && Date.now() < deadline) await sleep(50);
-    if (failure) throw failure;
-    assert.equal(seen.size, 2); assert.equal(pending.size, 0);
+    while (!relay.failure && (relay.seen.size < 2 || relay.pending.size) && Date.now() < deadline) await sleep(50);
+    if (relay.failure) throw relay.failure;
+    assert.equal(relay.seen.size, 2); assert.equal(relay.pending.size, 0);
   } finally {
     if (browser) await browser.close();
-    await Promise.allSettled([...pending]);
+    await Promise.allSettled([...relay.pending]);
     await new Promise(done => server.close(done));
   }
 }

@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { TARGET, ORIGIN, sourceFingerprint, harnessFingerprint, deploymentPlan, runSequence, nativeRelay } from './controlled-platform.mjs';
+import { PassThrough, Readable } from 'node:stream';
+import { TARGET, ORIGIN, sourceFingerprint, harnessFingerprint, deploymentPlan, runSequence, nativeRelay, createRelayHandler } from './controlled-platform.mjs';
 
 const base = Date.parse('2026-10-06T08:00:00.000Z');
 const closed = { ok: false, status: 'unknown', error: 'trial-closed' };
@@ -112,4 +113,65 @@ test('real native Chromium reports remain local and pass through the counted fak
   const evidence = await runSequence(f.options);
   assert.equal(f.calls(), 7); assert.equal(evidence.outcome, 'controlled-sequence-pass');
   assert.equal(evidence.nativeDirectVerified, false);
+});
+
+function request(stream) { stream.method = 'POST'; stream.url = '/csp-report'; return stream; }
+function sink() { return { status: null, writeHead(status) { this.status = status; }, end() {} }; }
+test('a malformed concurrent body latches before a slow valid body completes; no later forward', async () => {
+  let forwards = 0, notifications = 0;
+  const relay = createRelayHandler(async () => { forwards++; }, { onFailure: () => { notifications++; } });
+  const slow = request(new PassThrough()), slowResponse = sink(), badResponse = sink();
+  const reading = relay.handler(slow, slowResponse);
+  await relay.handler(request(Readable.from([Buffer.from('{')])), badResponse);
+  assert.equal(notifications, 1); assert.ok(relay.failure); assert.equal(forwards, 0);
+  slow.end(JSON.stringify(payload('index')));
+  await reading;
+  assert.equal(forwards, 0); assert.equal(notifications, 1);
+  assert.equal(badResponse.status, 500); assert.equal(slowResponse.status, 500);
+  assert.equal(relay.pending.size, 0);
+});
+test('same-turn body completions notify parse failure before another continuation can forward', async () => {
+  const events = [];
+  const relay = createRelayHandler(async () => { events.push('forward'); }, {
+    onFailure: error => { assert.ok(error instanceof SyntaxError); events.push('failure-notified'); },
+  });
+  const badResponse = sink(), validResponse = sink();
+  // Neither handler is awaited before starting the other: both body reads complete together.
+  await Promise.all([
+    relay.handler(request(Readable.from([Buffer.from('{')])), badResponse),
+    relay.handler(request(Readable.from([Buffer.from(JSON.stringify(payload('index')))])), validResponse),
+  ]);
+  assert.deepEqual(events, ['failure-notified']);
+  assert.equal(badResponse.status, 500); assert.equal(validResponse.status, 500);
+  assert.equal(relay.pending.size, 0);
+});
+test('local parse failure immediately aborts an in-flight transport and blocks another slow report', async () => {
+  const f = setup(); const original = f.options.fetchImpl;
+  let reportSends = 0, aborted = false, signal;
+  let reachedTransport;
+  const transportStarted = new Promise(done => { reachedTransport = done; });
+  f.options.fetchImpl = async (url, init) => {
+    if (init.method !== 'POST') return original(url, init);
+    reportSends++; signal = init.signal; reachedTransport();
+    return new Promise((_, reject) => {
+      signal.addEventListener('abort', () => { aborted = true; reject(new Error('synthetic aborted transport')); }, { once: true });
+    });
+  };
+  f.options.sendNative = async (forward, options) => {
+    const relay = createRelayHandler(forward, options);
+    const active = relay.handler(request(Readable.from([Buffer.from(JSON.stringify(payload('index')))])), sink());
+    await transportStarted;
+    const slow = request(new PassThrough());
+    const reading = relay.handler(slow, sink());
+    await relay.handler(request(Readable.from([Buffer.from('{')])), sink());
+    assert.equal(signal.aborted, true); assert.equal(aborted, true);
+    slow.end(JSON.stringify(payload('bubble-watch')));
+    await Promise.all([active, reading]);
+    assert.equal(reportSends, 1); assert.equal(relay.pending.size, 0);
+    throw relay.failure;
+  };
+  await assert.rejects(runSequence(f.options));
+  assert.equal(reportSends, 1); assert.equal(f.evidence().attempts.length, 3);
+  assert.equal(f.evidence().outcome, 'stopped'); assert.equal(f.budget().cumulative, 42);
+  assert.ok(existsSync(f.options.statePath + '.lock')); // no refund or premature release
 });

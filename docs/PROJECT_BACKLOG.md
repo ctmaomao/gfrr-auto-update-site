@@ -502,6 +502,7 @@ Add or update backlog items with these rules:
 ## 🔄 Session Handoff (最新)
 
 - **2026-10-07 CSP 平台准备 acceptance baseline**：owner 在 #433 合并后批准开始本地准备并要求继续：明确保留 loopback CORS、准备受预算约束的新脚本与本地验证；不部署、不发接收端请求、不接受费用、不启动 C。独立分支 `codex/csp-platform-preparation` 基于 latest main `ddcc2af9`，#433 的 push/review/merge/发布例外不延伸。
+  - **独立审阅与修复批准（2026-10-07）**：owner 明确授权新的独立 AI reviewer 只读审阅 `2f4644ed`；发现 P2：本地错误只存在 relay 私有状态，另一已开始的慢正文仍可能启动平台发送，虽不突破八次预算但违反异常即停。随后 owner 要求修复；增量审阅进一步复现同批正文完成时外层 await-catch 通知过晚的变体，最终将通知移到内部 task catch 同步执行。只修复共同失败通知和读体后/forward 前门控，新增三项纯内存并发回归，不扩大到部署、平台请求或生产 C。11/11 pass、0 skip；新完整检查与同候选独立增量复核以 `test-results/csp-platform-relay-fix-20261007/` 回执/交付汇报为准，旧 8/8 及原证据保留为历史结果。
   - **前轮完成**：#433 已按 owner 授权及新独立 AI 代审合并为 `ddcc2af9`；exact-head CI `37414141043` success。仅 docs/tests/receiver 文件，未命中 Pages/EdgeOne release push 路径；未由本合并执行接收端部署。旧受控候选交接保留为当时记录。
   - **本轮实施 / 判据**：[平台准备方案](CSP_PLATFORM_PREPARATION_2026_10_07.md)；`tests/csp/controlled-platform.mjs` 默认无网络计划，明确 `--keep-vars` + loopback CORS，真实执行需新批准和 reviewed Worker/harness 指纹。采用 localhost native → 白名单 relay → 隔离 Worker，不冒充原生直连验收；预算发送前预占 8 个名额、不退额，固定 7 次序列、异常锁存/无 retry。仅新增手动入口及回归，无 runtime/SQL/预算断言/CI/checker/ignore/data/生产 CSP 改动。
   - **验收与边界**：本地 8/8 pass，含真实 Chromium + fake 平台 transport；既有 Wrangler 4.147.0 closed/open 编译 dry-run 均 exit 0，无安装/升级或资源更新。完整 check:changed 以 `test-results/csp-platform-preparation-20261006/` 最终回执为准。真实预算仍 34/500，真实平台请求 0；两个版本更新与最多八次请求仅供下一轮明确批准。原生直连、raw watermark/alarm/删除、共享平台额度与生产 C 门槛仍独立待验。

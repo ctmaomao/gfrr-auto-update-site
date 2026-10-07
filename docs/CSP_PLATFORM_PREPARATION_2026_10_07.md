@@ -86,6 +86,8 @@ readback 结构：`reviewed:true`、固定 target、sourceFingerprint、version 
 node --test tests/csp/controlled-platform.test.mjs
 ```
 
-8/8 pass、0 skip，含真实 localhost Chromium + fake 平台 transport；没有真实平台请求。证据目录 `test-results/csp-platform-preparation-20261006/` 保留起始日名称，2026-10-07 继续交付；最终完整检查以该目录日志/回执为准。无新增依赖、CI 接线、checkers 或 ignore list，不修改旧断言、真实账本、markers 或证据。
+原始候选 `2f4644ed` 的 8/8 pass、0 skip 保留为历史结果，证据目录 `test-results/csp-platform-preparation-20261006/` 保留起始日名称。独立 AI 审阅发现本地失败后另一条慢正文仍可能转发的 P2；owner 于 2026-10-07 授权修复。增量复核另发现两份正文同批完成时，外层 await-catch 的通知仍晚于另一条 continuation。最终修复在内部任务 catch 中同步锁存错误，立即通知发送层 latch/AbortController，并在正文读取后和 forward 前复查共享失败状态。新增三项纯内存并发回归，验证慢请求不再转发、同批完成的错误先于转发锁存、已在飞 transport 立即收到 abort、失败仍保留预算和锁；修复后 11/11 pass、0 skip，仍含真实 localhost Chromium + fake 平台 transport，没有真实平台请求。
+
+修复验收和独立增量复核以 `test-results/csp-platform-relay-fix-20261007/` 的最终日志/回执与交付汇报为准；脚本指纹已变化，旧计划/回执不能用于新版执行。没有新增依赖、CI 接线、checkers 或 ignore list；保留旧断言、真实账本、markers 与证据。Abort 是对已启动客户端请求的取消请求，不能证明平台已收到的 RPC 被撤销；失败后不再启动新的平台发送。
 
 本候选不解除真实 URL/query 传输、公开流量/共享额度、生产 C 启用或回滚审批门槛。
