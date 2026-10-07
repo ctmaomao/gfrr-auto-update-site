@@ -501,6 +501,11 @@ Add or update backlog items with these rules:
 
 ## 🔄 Session Handoff (最新)
 
+- **2026-10-07 CSP 第二批入口 acceptance baseline**：owner 在关闭恢复和只读审计后要求告知下一步并直接开始；本轮本地实施 [第二批准备](CSP_PLATFORM_BATCH2_PREPARATION_2026_10_07.md)，基于 latest main `f60c2a52` 的独立分支 `codex/csp-platform-batch2-preparation`。不解除旧锁、不部署/请求/接受费用、不启用 C，#435 的发布授权不延伸。
+  - **最后基线**：#435 已合并 `f60c2a52`，exact-head CI 与 Pages/EdgeOne 发布流程通过。前批预算预占 34→42 后仅关闭 health 503；PowerShell DateTime 转换导致开窗参数不规范，读回拒绝并停止，锁/marker/证据保留。另获批准的一次恢复已核实 `da71cbf7` 100%、false/空时间、loopback CORS、日志关闭。
+  - **本轮改动 / 判据**：新增固定 batch2 CLI、前批证据与 runner/hash 绑定、42→50 的八次预占、新路径和 UTC 原样参数数组准备；复用七次受控序列，原 CLI 继续严格默认 34，旧断言不改。旧共享锁存在时零发送、零预算变动，不新增锁恢复代码。必要测试/完整检查和本地提交以本轮交付回执为准。
+  - **当前证据 / 下一步**：Data Studio 两项只读 SELECT 已确认原始 watermark=2026-10-07、cleanup_completed=00:10:00.284 UTC、attempts=0，obs/ledger 无过期行；平台读额度和审计记录不等同接收端 HTTP 预算。next alarm 和实际过期删除尚未验证。新的独立 review、远端操作、具体锁恢复和第二批平台额度/更新范围仍需对应授权；真实预算保持 42/500。
+
 - **2026-10-07 CSP 平台准备 acceptance baseline**：owner 在 #433 合并后批准开始本地准备并要求继续：明确保留 loopback CORS、准备受预算约束的新脚本与本地验证；不部署、不发接收端请求、不接受费用、不启动 C。独立分支 `codex/csp-platform-preparation` 基于 latest main `ddcc2af9`，#433 的 push/review/merge/发布例外不延伸。
   - **独立审阅与修复批准（2026-10-07）**：owner 明确授权新的独立 AI reviewer 只读审阅 `2f4644ed`；发现 P2：本地错误只存在 relay 私有状态，另一已开始的慢正文仍可能启动平台发送，虽不突破八次预算但违反异常即停。随后 owner 要求修复；增量审阅进一步复现同批正文完成时外层 await-catch 通知过晚的变体，最终将通知移到内部 task catch 同步执行。只修复共同失败通知和读体后/forward 前门控，新增三项纯内存并发回归，不扩大到部署、平台请求或生产 C。11/11 pass、0 skip；新完整检查与同候选独立增量复核以 `test-results/csp-platform-relay-fix-20261007/` 回执/交付汇报为准，旧 8/8 及原证据保留为历史结果。
   - **前轮完成**：#433 已按 owner 授权及新独立 AI 代审合并为 `ddcc2af9`；exact-head CI `37414141043` success。仅 docs/tests/receiver 文件，未命中 Pages/EdgeOne release push 路径；未由本合并执行接收端部署。旧受控候选交接保留为当时记录。

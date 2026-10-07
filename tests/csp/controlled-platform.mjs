@@ -28,27 +28,28 @@ export function sourceFingerprint() {
 export function harnessFingerprint() {
   return createHash('sha256').update(readFileSync(new URL('./controlled-platform.mjs', import.meta.url))).digest('hex');
 }
-export function deploymentPlan(startAt, endAt) {
+export function deploymentPlan(startAt, endAt, cumulativeBefore = 34) {
+  assert.ok([34, 42].includes(cumulativeBefore), 'only the two reviewed batch baselines are supported');
   const variables = { CSP_TRIAL_ENABLED: 'true', CSP_TRIAL_START_AT: startAt, CSP_TRIAL_END_AT: endAt };
   const start = Date.parse(startAt), end = Date.parse(endAt);
   assert.ok(trialIsOpen(variables, start) && end - start <= 5 * 60_000, 'fixed window must be valid and <=5 minutes');
   const common = ['deploy', '--config', 'workers/gfrr-csp-report-receiver/wrangler.toml', '--keep-vars', '--var', 'CORS_ALLOWED_ORIGINS:' + ORIGIN];
   return {
     target: TARGET, sourceFingerprint: sourceFingerprint(), harnessFingerprint: harnessFingerprint(), approved: false,
-    cumulativeBefore: 34, reserve: MAX_ATTEMPTS, cumulativeAfter: 42, limit: 500,
+    cumulativeBefore, reserve: MAX_ATTEMPTS, cumulativeAfter: cumulativeBefore + MAX_ATTEMPTS, limit: 500,
     closedArgs: [...common, '--var', 'CSP_TRIAL_ENABLED:false', 'CSP_TRIAL_START_AT:', 'CSP_TRIAL_END_AT:'],
     openArgs: [...common, '--var', 'CSP_TRIAL_ENABLED:true', 'CSP_TRIAL_START_AT:' + startAt, 'CSP_TRIAL_END_AT:' + endAt],
     startAt, endAt, maxUpdates: 2,
     delivery: 'native localhost CSP report -> budgeted Node relay -> existing Worker; NOT native direct delivery',
   };
 }
-function validateAuthorization(auth, now) {
+function validateAuthorization(auth, now, cumulativeBefore) {
   assert.equal(auth.approved, true, 'separate owner approval required');
   assert.equal(auth.target, TARGET); assert.equal(auth.sourceFingerprint, sourceFingerprint());
   assert.equal(auth.harnessFingerprint, harnessFingerprint(), 'reviewed harness bytes must match');
-  assert.equal(auth.maxRequests, MAX_ATTEMPTS); assert.equal(auth.cumulativeBefore, 34); assert.equal(auth.limit, 500);
+  assert.equal(auth.maxRequests, MAX_ATTEMPTS); assert.equal(auth.cumulativeBefore, cumulativeBefore); assert.equal(auth.limit, 500);
   assert.equal(auth.delivery, 'local-native-relay');
-  deploymentPlan(auth.startAt, auth.endAt);
+  deploymentPlan(auth.startAt, auth.endAt, cumulativeBefore);
   assert.ok(Date.parse(auth.startAt) >= now && Date.parse(auth.startAt) - now <= 120_000, 'start must be within next two minutes');
   assert.ok(Date.parse(auth.endAt) - now <= 5 * 60_000, 'whole remaining sequence must fit five minutes');
 }
@@ -67,8 +68,10 @@ export function validateReadback(record, auth, enabled) {
 
 /** Tests inject time, transport and native producer. CLI supplies only the fixed live target. */
 export async function runSequence({ auth, closedReadback, statePath, outDir, markerPath,
-  waitForOpen, sendNative, fetchImpl = fetch, now = Date.now, pause = sleep }) {
-  validateAuthorization(auth, now()); validateReadback(closedReadback, auth, false);
+  waitForOpen, sendNative, fetchImpl = fetch, now = Date.now, pause = sleep, cumulativeBefore = 34 }) {
+  assert.ok([34, 42].includes(cumulativeBefore));
+  const cumulativeAfter = cumulativeBefore + MAX_ATTEMPTS;
+  validateAuthorization(auth, now(), cumulativeBefore); validateReadback(closedReadback, auth, false);
   const lockPath = statePath + '.lock';
   let locked = false, ownsOut = false, failure = null;
   const controller = new AbortController();
@@ -81,16 +84,16 @@ export async function runSequence({ auth, closedReadback, statePath, outDir, mar
     const lock = openSync(lockPath, 'wx'); locked = true;
     try { writeFileSync(lock, JSON.stringify({ pid: process.pid, purpose: 'controlled CSP acceptance' })); fsyncSync(lock); } finally { closeSync(lock); }
     const initial = JSON.parse(readFileSync(statePath, 'utf8'));
-    assert.equal(initial.limit, 500); assert.equal(initial.cumulative, 34, 'budget drift stops without sending');
+    assert.equal(initial.limit, 500); assert.equal(initial.cumulative, cumulativeBefore, 'budget drift stops without sending');
     mkdirSync(outDir); ownsOut = true;
-    save(markerPath, { sourceFingerprint: auth.sourceFingerprint, initial: 34, reserved: 8 }, true);
+    save(markerPath, { sourceFingerprint: auth.sourceFingerprint, initial: cumulativeBefore, reserved: 8 }, true);
     // Reserve ALL eight slots durably before ANY request; unused slots are never refunded.
-    save(statePath, { ...initial, cumulative: 42, updatedAt: new Date(now()).toISOString() });
+    save(statePath, { ...initial, cumulative: cumulativeAfter, updatedAt: new Date(now()).toISOString() });
     evidence.reserved = 8; persist();
     async function attempt(label, path, init, expected, window) {
       check();
       const current = JSON.parse(readFileSync(statePath, 'utf8'));
-      assert.equal(current.cumulative, 42, 'shared budget changed'); assert.equal(current.limit, 500);
+      assert.equal(current.cumulative, cumulativeAfter, 'shared budget changed'); assert.equal(current.limit, 500);
       assert.ok(evidence.attempts.length < MAX_ATTEMPTS, 'attempt ceiling');
       const at = now(), start = Date.parse(auth.startAt), end = Date.parse(auth.endAt);
       assert.ok(window === 'closed' ? at < start : window === 'open' ? at >= start && at < end : at >= end && at <= end + 15_000,
