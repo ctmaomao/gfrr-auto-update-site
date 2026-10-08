@@ -1,5 +1,27 @@
 # ARR：Epoch AI 免费来源评审与隔离核验
 
+## 2026-10-08 候选专用元数据诊断
+
+Owner 已明确批准实施、独立 AI 审阅后合并，并执行一次只读诊断。
+入口 `node scripts/diagnose-epoch-arr-metadata.mjs` 默认零网络；合并后本次
+授权执行 `--allow-network`。固定事故为 35591049191（首次跨周期失败），
+SHA/日期/仓库/workflow/main/schedule/attempt=1 均绑定，不接受 URL、run、
+token 或输出路径参数。既有 token 仅从进程环境读取，不输出或放入 argv。
+
+仅三个 GitHub 元数据 GET 共用 15 秒，每响应至多 1 MiB，零重试/分页/
+重定向；不读 Epoch CSV、ZIP、日志或源正文，不写文件/产物/生产状态。
+本入口检查已完成的历史运行，复用原 previous-run 身份 validator；定时采集
+要求 in_progress 的 gate 保持原样。历史列表可出现已完成的事故自身，仅在
+完整身份绑定后排除该项，其它未来/重复/不完整列表仍拒绝。保持最近前一
+周期选择，不遇坏历史回退更旧产物。当前 artifact 缺失或过期必须注明 now，
+不把平台今天的状态误写成事故当时状态。
+
+回执只含固定阶段、HTTP 状态、计数、run/artifact IDs 及元数据分类，
+`historicalFailureReproduced=false`、`artifactDigestVerified=false`、所有生产
+影响标志 false。当前元数据通过不能证明当时 API/token 状态；真实运行
+原因仍需自然 schedule 的 #437 脱敏诊断或其它可验证历史证据。
+此次授权不恢复 HAPI/heartbeat，不增加生产工作流或请求预算。
+
 ## 2026-10-08 运行障碍与诊断修复
 
 9 月 14 日真实候选档案已通过取回验收，但 9 月 28 日 run 36417986867

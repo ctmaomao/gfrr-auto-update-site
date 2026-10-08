@@ -6,7 +6,7 @@ const diagnostics = new WeakMap();
 // URLs, response bodies and arbitrary error properties never reach the CLI.
 export const epochHistoryDiagnostic = error => diagnostics.get(error) || null;
 const fail = () => { throw new Error('weekly_history_invalid'); };
-function runIdentity(run, current = false) {
+export function validateEpochWeeklyRunIdentity(run, current = false) {
   if (!run || !artifactId(run.id) || run.workflow_id !== p.workflowId || run.path !== p.workflowPath
     || run.repository?.id !== p.repositoryId || run.repository?.full_name !== p.repository
     || run.head_repository?.id !== p.repositoryId || run.head_repository?.full_name !== p.repository
@@ -52,7 +52,7 @@ export async function discoverEpochWeeklyHistory({ allowNetwork = false, runId, 
   }
   const work = async () => {
     const run = await request(`/actions/runs/${runId}`);
-    stage = 'current_identity'; runIdentity(run, true);
+    stage = 'current_identity'; validateEpochWeeklyRunIdentity(run, true);
     stage = 'current_binding';
     if (run.id !== runId || run.head_sha !== headSha || artifactTime(run.created_at) > time
       || time - artifactTime(run.created_at) > p.retentionDays * 86400000) fail();
@@ -74,7 +74,7 @@ export async function discoverEpochWeeklyHistory({ allowNetwork = false, runId, 
     // runs after the selected run/artifact fails identity or integrity checks.
     const previous = [...listing.workflow_runs].sort((a, b) => artifactTime(b.created_at) - artifactTime(a.created_at) || b.id - a.id)[0];
     if (!previous) return result('history_missing');
-    stage = 'previous_identity'; runIdentity(previous);
+    stage = 'previous_identity'; validateEpochWeeklyRunIdentity(previous);
     if (time - artifactTime(previous.created_at) > p.retentionDays * 86400000) return result('history_expired');
     stage = 'artifacts_request';
     const artifacts = await request(`/actions/runs/${previous.id}/artifacts?per_page=100`);

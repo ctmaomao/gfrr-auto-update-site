@@ -12,6 +12,7 @@ import { buildEpochArrSnapshot } from '../../scripts/bubble-watch/epoch-arr-snap
 import { EPOCH_ARTIFACT_POLICY as p, packEpochArrArtifact, artifactHash, validateEpochArrArtifact } from '../../scripts/bubble-watch/epoch-arr-artifact.mjs';
 import { collectEpochWeeklyCandidate as collect, epochWeeklyContext } from '../../scripts/bubble-watch/epoch-arr-weekly.mjs';
 import { discoverEpochWeeklyHistory as discover, epochHistoryDiagnostic } from '../../scripts/bubble-watch/epoch-arr-weekly-history.mjs';
+import { diagnoseEpochMetadata, EPOCH_METADATA_INCIDENT as incident } from '../../scripts/bubble-watch/epoch-arr-metadata-diagnostic.mjs';
 
 const now = '2026-09-14T06:00:00Z', sha = 'a'.repeat(40), oldSha = 'b'.repeat(40);
 const env = { GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: p.repository, GITHUB_REPOSITORY_ID: String(p.repositoryId),
@@ -49,6 +50,84 @@ function fixture() {
     artifacts: { total_count: 1, artifacts: [artifact] }, csv: csv() };
 }
 const blob = 'https://productionresultssa19.blob.core.windows.net/object?sig=PRIVATE_SIGNED_URL';
+
+function diagnosticFixture() {
+  const f = fixture();
+  f.current = { ...f.current, id: incident.runId, head_sha: incident.headSha, created_at: incident.createdAt,
+    status: 'completed', conclusion: 'success' };
+  f.previous.created_at = '2026-09-14T10:49:10Z';
+  f.artifact.created_at = '2026-09-14T10:49:23Z'; f.artifact.expires_at = '2026-10-14T10:49:22Z';
+  f.runs = { total_count: 2, workflow_runs: [f.current, f.previous] };
+  return f;
+}
+function diagnosticTransport(f, override = () => null) {
+  const calls = [];
+  return { calls, fetchImpl: async (url, opts) => {
+    calls.push({ url, opts });
+    const altered = override(url, calls.length); if (altered) return altered;
+    const value = url.endsWith(`/runs/${incident.runId}`) ? f.current : url.includes('/workflows/') ? f.runs
+      : url.endsWith('/runs/41/artifacts?per_page=100') ? f.artifacts : null;
+    assert.ok(value, 'diagnostic must not access source, ZIP, dispatch or unknown routes');
+    return response(url, JSON.stringify(value));
+  } };
+}
+
+test('metadata-only incident diagnostic has three bounded GETs and authenticates completed incident without impersonation', async () => {
+  const f = diagnosticFixture(), t = diagnosticTransport(f);
+  const r = await diagnoseEpochMetadata({ allowNetwork: true, token: 'PRIVATE_TOKEN', now: '2026-10-08T00:00:00Z', ...t });
+  assert.equal(r.status, 'metadata_inspected'); assert.equal(r.historyStatus, 'artifact_metadata_valid_now');
+  assert.equal(r.previousRunId, 41); assert.equal(r.artifactId, 52); assert.equal(r.networkCalls, 3);
+  assert.equal(f.current.status, 'completed'); assert.equal(r.historicalFailureReproduced, false);
+  assert.equal(r.artifactDigestVerified, false); assert.equal(r.productionEligible, false);
+  assert.ok(!JSON.stringify(r).includes('PRIVATE'));
+  for (const c of t.calls) {
+    assert.equal(c.opts.method, 'GET'); assert.equal(c.opts.redirect, 'manual');
+    assert.equal(c.opts.credentials, 'omit'); assert.equal(c.opts.headers.Authorization, 'Bearer PRIVATE_TOKEN');
+  }
+  const expired = await diagnoseEpochMetadata({ allowNetwork: true, now: '2026-10-15T00:00:00Z', ...diagnosticTransport(diagnosticFixture()) });
+  assert.equal(expired.historyStatus, 'artifact_expired_now');
+  assert.equal(expired.artifactExpiredAtIncident, false);
+});
+
+test('incident diagnostic rejects identity, incomplete or conflicting histories and artifact corruption without retry', async () => {
+  for (const mutate of [f => { f.current.event = 'workflow_dispatch'; }, f => { f.current.head_sha = sha; },
+    f => { f.runs.total_count = 101; }, f => { f.runs.workflow_runs.push(f.previous); f.runs.total_count = 3; },
+    f => { f.previous.created_at = '2026-09-22T00:00:00Z'; }, f => { f.previous.run_attempt = 2; },
+    f => { f.artifacts.total_count = 2; }, f => { f.artifact.workflow_run.head_sha = sha; },
+    f => { f.artifact.created_at = '2026-09-22T00:00:00Z'; }]) {
+    const f = diagnosticFixture(); mutate(f); const t = diagnosticTransport(f);
+    const r = await diagnoseEpochMetadata({ allowNetwork: true, ...t });
+    assert.equal(r.status, 'diagnostic_failed'); assert.ok(t.calls.length <= 3);
+  }
+});
+
+test('incident diagnostic refuses HTTP/redirect/body/JSON failures and bounded timeout without exposing private errors', async () => {
+  for (const make of [url => response(url, 'PRIVATE_BODY', 'text/html', 403),
+    url => response(url, 'PRIVATE_BODY', 'text/html', 429),
+    url => response(url, null, 'application/json', 302, { location: 'https://example.org/PRIVATE' }),
+    url => response(url, 'PRIVATE_BAD_JSON'),
+    url => response(url, '{}', 'application/json', 200, { 'content-length': String(p.metadataBytes + 1) }),
+    url => response(url, 'x'.repeat(p.metadataBytes + 1))]) {
+    const t = diagnosticTransport(diagnosticFixture(), make);
+    const r = await diagnoseEpochMetadata({ allowNetwork: true, ...t });
+    assert.equal(r.status, 'diagnostic_failed'); assert.equal(r.networkCalls, 1);
+    assert.ok(!JSON.stringify(r).includes('PRIVATE'));
+  }
+  let signal;
+  const r = await diagnoseEpochMetadata({ allowNetwork: true, timeoutMs: 10,
+    fetchImpl: (url, opts) => { signal = opts.signal; return new Promise(() => {}); } });
+  assert.equal(r.code, 'metadata_timeout'); assert.equal(r.networkCalls, 1); assert.equal(signal.aborted, true);
+});
+
+test('incident diagnostic defaults to zero network and CLI has no URL/run/token/write override', async () => {
+  const r = await diagnoseEpochMetadata({ fetchImpl: () => { throw new Error('network forbidden'); } });
+  assert.equal(r.status, 'dry_run_no_network'); assert.equal(r.networkCalls, 0);
+  for (const args of [[], ['--run', '41'], ['--token', 'PRIVATE_TOKEN'], ['--write'], ['--url', 'PRIVATE_URL']]) {
+    const child = spawnSync(process.execPath, ['scripts/diagnose-epoch-arr-metadata.mjs', ...args], { encoding: 'utf8', windowsHide: true });
+    assert.equal(child.status, args.length ? 1 : 0); assert.equal(child.stderr, '');
+    assert.ok(!child.stdout.includes('PRIVATE')); assert.equal(JSON.parse(child.stdout).productionEligible, false);
+  }
+});
 function response(url, body, type = 'application/json', status = 200, extra = {}) {
   const result = new Response(body, { status, headers: { 'content-type': type, ...extra } });
   Object.defineProperty(result, 'url', { value: url }); return result;
