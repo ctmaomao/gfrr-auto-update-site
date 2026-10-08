@@ -1125,3 +1125,12 @@ Bubble 周度新闻频率补充（ADR-0050）：周三允许一次有持久预�
 ### Bubble 周度专业媒体证据（2026-10-06）
 
 owner 批准 [ADR-0062](ADR/0062-bubble-editorial-attributed-media.md)：已有 Tavily/Brave 返回的 Morningstar、FT、Bloomberg、CNBC、Reuters、WSJ、The Information 内容可登记为 attributed_media。精确域名及子域名匹配不等于全部路径无条件合格：社区、论坛、评论与 sponsored 路径不进入该类别；有效日期和至少 80 字符可用摘要仍必需。不新增抓取源或搜索请求，不抓取付费全文。加州司法部 oag.ca.gov 精确登记为官方机构；不得泛化到所有 gov 域名。
+
+The 2026-10-08 second-stage `research:gdelt-events` is a separate manual, ignored
+historical research archive under the same artifact_sanitizer_layer. Daily groups
+retain hashed ID membership and file digests, no raw source content. Quarantine
+never qualifies a full count or enables scoring; 49 source days support 30 training
+windows, six embargo end dates and seven subsequent holdout windows. This is
+source/calibration preparation only; no production source writer, automation or
+Cloud request. Definition, cache validation and budgets are documented in
+[GDELT Events review](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md#phase-2-research-archive-and-calibration-preparation).

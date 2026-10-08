@@ -159,3 +159,113 @@ reviewed incremental caching; this manual probe intentionally retains no raw
 files/cache and re-downloads its explicit window. The strict missing-row/root-code
 treatment needs review using broader observations before selecting calibration
 and a runtime contract. A desired pass rate is not grounds to weaken these gates.
+
+## Phase 2: research archive and calibration preparation
+
+Owner's “请开始下一阶段” continues local source review and calibration preparation.
+The original strict candidate parser, freshness gate and tests are unchanged.
+A separate `gdelt-events-research-v2-roots18-20-global` research contract records
+malformed rows as quarantined, never guesses their category, and never labels a
+quarantined window statistically qualified. Production eligibility and calibration
+approval remain false, even for a complete clean historical cohort.
+
+Official definitions: [GDELT V2 codebook](https://data.gdeltproject.org/documentation/GDELT-Event_Codebook-V2.0.pdf)
+and [GDELT 2.0 announcement](https://blog.gdeltproject.org/gdelt-2-0-our-global-world-in-realtime/).
+The primary candidate counts roots 18–20 (assault, fighting, unconventional mass
+violence), with roots 15–20 broad material conflict and QuadClass 3 verbal conflict
+as separate sensitivity series. Global ActionGeo FIPS geography is retained;
+US/domestic events are not silently excluded. Both actor-country codes present
+and different define an exploratory cross-actor-country series, not verified
+interstate war. All series count coded records, not confirmed physical incidents.
+
+```powershell
+npm run research:gdelt-events
+npm run research:gdelt-events -- --allow-network --end 20261007 --days 7
+```
+
+Default mode reads sanitized local archives, performs offline review and writes
+nothing. Live mode downloads at most seven complete UTC source days, 672 files;
+serial/no retry/15-second timeout/128 MiB/20-minute/two-million selected-record
+limits apply per invocation. Each day retains at most 200,000 selected IDs.
+Previously validated days are reused without a request. Missing/failed files do
+not become archived complete days. Daily filenames are immutable (`wx`); invalid
+existing caches stop execution, rather than being overwritten or deleted.
+Output paths are fixed beneath ignored
+`manual-artifacts/world-order/gdelt-events/research-v2/`; no workflow is added.
+
+Daily archives contain aggregate groups and hashed event-ID membership for exact
+cross-day deduplication. They contain no raw IDs, names, actor-country strings,
+URLs, coordinates, articles, ZIP or TSV. Hashes are deterministic identifiers,
+not an anonymization guarantee against someone with the public source. Each file
+has source SHA256/byte provenance; each archive has a payload digest and semantic
+validation. The digest detects accidental corruption, not independent authenticity.
+Quarantine reason counts and hashed IDs preserve ambiguity evidence. If a valid ID
+also appears among quarantined rows, or duplicates contradict, qualification holds.
+A completed historical day need not pass today's freshness check; historical
+qualification cannot claim current live freshness or authorize production.
+
+The calibration plan requires 49 consecutive source days: 30 rolling seven-day
+training windows, six embargo end dates, then seven held-out window end dates.
+For an end of 2026-10-07, source days are 2026-08-20–10-07; training end dates are
+08-26–09-24; holdout end dates are 10-01–10-07. Training and holdout underlying
+source dates do not overlap. Training windows overlap internally, so this is not
+30 independent samples or a predictive backtest. A proposed reference scale is
+the training median; it stays null unless all 30 training and seven holdout windows
+are complete, clean and nonambiguous. A nonpositive median also holds the scale.
+The existing saturation formula is replayed only as an offline descriptive
+candidate, not a forecast or production score. Cloud comparisons explicitly mark
+count-unit/window equivalence unverified; historical date overlap proves neither.
+No old Cloud scale is reused. DOC/Web NGrams cannot fill missing Events counts.
+
+The source review has also recorded a later clock observation: local receipt
+2026-10-08T04:17:39.404Z, HTTP Date 04:17:57Z, export index 04:15:00Z. At that
+observation the index was no longer future. This does not establish the reason
+for earlier future labels; the strict production-candidate future-time hold remains.
+
+### Second-stage live evidence: latest completed week
+
+UTC 2026-10-01–10-07: 672/672 files downloaded, 44,421,232 compressed bytes,
+213,493 ms, no transport failures/retries. Seven daily research archives retain
+697,966 source rows; two rows on 10-06 are quarantined as `event_code` failures.
+The valid subset has broad material=93,057; roots 18–20 violence=51,817;
+cross-actor-country violence=9,307; verbal=89,964; violence with unknown
+ActionGeo country=1,748. No contradictory or cross-day duplicate selected IDs
+were observed. These figures are valid-subset coded-record counts, not qualified
+whole-week counts or real incident totals. `qualifiedViolenceCount=null`;
+`statisticallyQualified=false`; production eligibility remains false.
+
+### Complete historical replay and handoff
+
+All 49 UTC days (2026-08-20–10-07) are archived: 4,704 files,
+304,305,977 compressed bytes, 4,818,952 rows. No missing day/file or transport
+failure was observed across the seven bounded collection invocations. Three rows
+are quarantined: one `event_code` failure on 09-08 and two on 10-06.
+Training end dates 09-08–09-14 are held; 23/30 training windows qualify.
+Holdout end dates 10-06–10-07 are held; 5/7 holdout windows qualify.
+The descriptive valid-subset training median is 49,529, not an approved reference
+scale. The proposed scale and all normalized replay scores remain null.
+Eleven Cloud dates overlap; no claim of matching count units/window semantics is
+made. Latest-week violence locations are led by FIPS US=16,620 of 51,817, showing
+that roots 18–20 still include substantial domestic coverage. Do not relabel this
+series as a count of wars or silently remove US to create a desired result.
+
+Final complete report is ignored
+`manual-artifacts/world-order/gdelt-events/research-v2/review-20261007-1791451103532.json`.
+The final replay reused 49 validated caches with requests=0 and bytes=0. The
+source byte count above is historical acquisition volume, not final replay traffic.
+All collection commands exited 0: this means download/archive success, not source
+qualification or model approval. Original strict candidate quality gates hold.
+
+Validation: `check:changed` selected full and `check:all` exited 0. After the final
+research coverage-summary/type guards and ambiguity regression were added,
+research tests 5/5 and `check:gdelt-source-policy` 16/16 were rechecked, exit 0.
+Existing assertions/checker/ignore lists and production config/data/workflows
+have no changes. New research flags cannot authorize runtime writes or scoring.
+
+Recommended next review: agree whether the product should show a precisely
+labelled classified-news-record proxy with unknown-row disclosure; separately
+review the statistical policy for unknown categories and a new fitted scale if
+scoring is desired. The observed three malformed records are evidence for that
+review, not permission to weaken any existing gate. Until then, source sampling
+is usable and reproducible, but World Order production replacement remains held.
+No push, merge, deployment, scheduled sampling or production writes occurred.

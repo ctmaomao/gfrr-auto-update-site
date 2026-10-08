@@ -621,3 +621,15 @@ npm run check:all
 
 This policy does not approve any GDELT signal for core scoring, execution,
 position guidance, or oil-price direction by itself.
+
+## World Order Events research archive (2026-10-08)
+
+`research:gdelt-events` reuses the dedicated public-file transport for manual
+historical review only. The original strict candidate contract remains unchanged.
+Research quarantine records failures without replacing unknown records with zero
+or categories; any affected window cannot fit a reference scale. Offline mode
+reads only ignored sanitized archives and writes nothing; explicit live mode is
+bounded to seven complete days per invocation with immutable daily caches.
+No new endpoint allowlist entry, retry, credential access, production writer or
+scheduled task is introduced. See the
+[research contract](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md#phase-2-research-archive-and-calibration-preparation).
