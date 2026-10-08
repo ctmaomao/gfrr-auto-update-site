@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-08 ARR 候选专用只读诊断入口
+
+- **Acceptance baseline**：owner 明确批准实施候选专用诊断入口、独立 AI 审阅通过后合并，并执行一次免费 GitHub 元数据诊断。三 GET/15 秒、每响应 1 MiB、零重试；不请求 Epoch CSV/ZIP，不写生产，不复活旧 HAPI/heartbeat。
+- **最后基线 / 改动**：latest main `819b1baf`，分支 `codex/arr-candidate-metadata-diagnostic`。新增固定事故 35591049191 的已完成运行诊断和 stdout CLI，复用原身份 validator，原定时 in_progress gate 不变。#437 已合并 `a7c736d6`，独立审阅/CI 通过。
+- **当前任务**：离线专项 22/22、`check:changed`（完整 `check:all`）与独立 AI 审阅均通过，退出 0；提交后等待 CI，通过即按 owner 批准合并并执行一次真实只读诊断。未放宽 checker/ignore、未新增依赖或工作流。
+- **下一步 / 阻塞**：诊断结果仅反映当前元数据，不能认证历史网络响应、ZIP digest 或收入事实。根据真实回执定位后续修复；跨周期验收及生产来源切换仍未完成。
+
 ### 2026-10-08 ACLED 自动更新验收与 ARR 历史诊断
 
 - **Acceptance baseline**：owner 要求核实周/月 XLSX 更新并依次解决 ARR、HAPI 与暂停障碍。本轮先核实既有生产链，补 ARR 脱敏诊断；不重置 HAPI 锁/预算、不补跑候选或付费刷新、不降低校验、不自动晋升来源。
