@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-07T06:16:37.509Z",
+  "updatedAt": "2026-10-08T02:29:14.157Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-pressure-v2",
     "calibrationId": "gdelt-cloud-2026-08-07-to-2026-09-10-v1",
     "comparableToLegacy": false
   },
-  "score": 52,
+  "score": 54,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
   "confidence": 1,
@@ -16,21 +16,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-07T06:15:44.513Z",
-    "ageMinutes": 0.88325,
+    "updatedAt": "2026-10-08T02:27:38.703Z",
+    "ageMinutes": 1.5908833333333334,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 101.295,
-    "gold": 4135.2998,
-    "vix": 15.52,
+    "brent": 125.44,
+    "gold": 4138.1001,
+    "vix": 15.01,
     "dxy": 121.3848,
-    "hyOas": 3.12,
-    "us10y": 5.31,
-    "real10y": 2.95,
-    "spx": 7818.93,
-    "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
-    "brentPromotionApplied": true,
-    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
+    "hyOas": 3.03,
+    "us10y": 5.27,
+    "real10y": 2.91,
+    "spx": 7801.77,
+    "brentSource": "FRED:DCOILBRENTEU",
+    "brentPromotionApplied": false,
+    "brentPromotionReason": "fred-anchor-not-stale",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4945,7 +4945,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-07T06:16:36.986Z",
+        "attemptedAt": "2026-10-08T02:29:13.580Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4970,7 +4970,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-07T06:16:37.234Z",
+      "lastFetchedAt": "2026-10-08T02:29:13.933Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -5129,31 +5129,31 @@
       ]
     },
     "marketConfirmation": {
-      "score": 45,
+      "score": 52,
       "labelZh": "市场确认",
       "state": "partial_confirmed",
       "evidence": [
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4135.3，显示避险或实际利率压力定价。",
-          "value": 4135.2998,
+          "summary": "基于 Worker 快变量，黄金当前值 4138.1，显示避险或实际利率压力定价。",
+          "value": 4138.1001,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 101.3，对地缘与供应风险有部分确认作用。",
-          "value": 101.295,
+          "summary": "基于 Worker 快变量，布伦特当前值 125.44，对地缘与供应风险有部分确认作用。",
+          "value": 125.44,
           "direction": "up",
-          "confidence": 0.55
+          "confidence": 0.75
         },
         {
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "121.3848/4135.2998",
+          "value": "121.3848/4138.1001",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5161,17 +5161,17 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7818.93/4135.2998",
+          "value": "7801.77/4138.1001",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 101.295,
-          "direction": "up",
-          "confidence": 0.65
+          "summary": "Worker Brent 来源：FRED:DCOILBRENTEU；promotion=未应用；原因：fred-anchor-not-stale。",
+          "value": 125.44,
+          "direction": "neutral",
+          "confidence": 0.45
         }
       ]
     }
