@@ -120,6 +120,27 @@ GitHub schedules can be delayed. Verify mode/request count, permanent date claim
 logout/cleanup, no-change or exact publication receipt, and both-site projection
 after a natural slot. Do not repeat the spent initial run to manufacture proof.
 
+## 2026-10-08 scheduled production acceptance
+
+The split schedule has now produced real successful acquisitions, not merely
+dry-runs. Monday run `37270618845` (2026-10-05) downloaded all six weekly and six
+monthly files with 26 requests and advanced the monthly as-of to 2026-09-25.
+Wednesday run `37580479475` (2026-10-07) downloaded six weekly files with 14
+requests, advanced latestWeek to 2026-09-26, and retained the exact monthly
+SHA256 `38baeb540a7bf1a23ee6f11c6599638fdebc00f6d9b39b021ea2f2f5dbd23064`.
+Both receipts confirm logout and private cleanup. Wednesday published config
+commit `ba5bbe9fd9ddecd1baff37314d42b58aa015cab3` and dispatched refresh
+`37580603150`, which succeeded. The main, Pages and custom-domain World Order
+files all returned HTTP 200 and identical SHA256
+`c0abf846f83853715a82f134f7569c6751ed4999cb710b6dec4444f685b3d4ac`
+at the October 8 readback, with ACLED status=ok and those same weekly/monthly dates.
+This is delivery acceptance of the acquired data, not a promise that ACLED has
+published newer data or that future scheduled slots cannot fail.
+
+The stopped local HAPI pilot is a separate alternative-source experiment. Its
+September 30 HTTP 429 and expired monitoring deadline do not disable this XLSX
+chain. No HAPI requests, lock resets or acquisition reruns were used here.
+
 ## Publication uncertainty
 
 `publication_unknown` requires read-only comparison of main's two config bytes

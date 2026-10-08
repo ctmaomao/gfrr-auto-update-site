@@ -11,7 +11,7 @@ import { EPOCH_ARR_CSV_URL } from '../../scripts/bubble-watch/epoch-arr-reader.m
 import { buildEpochArrSnapshot } from '../../scripts/bubble-watch/epoch-arr-snapshot.mjs';
 import { EPOCH_ARTIFACT_POLICY as p, packEpochArrArtifact, artifactHash, validateEpochArrArtifact } from '../../scripts/bubble-watch/epoch-arr-artifact.mjs';
 import { collectEpochWeeklyCandidate as collect, epochWeeklyContext } from '../../scripts/bubble-watch/epoch-arr-weekly.mjs';
-import { discoverEpochWeeklyHistory as discover } from '../../scripts/bubble-watch/epoch-arr-weekly-history.mjs';
+import { discoverEpochWeeklyHistory as discover, epochHistoryDiagnostic } from '../../scripts/bubble-watch/epoch-arr-weekly-history.mjs';
 
 const now = '2026-09-14T06:00:00Z', sha = 'a'.repeat(40), oldSha = 'b'.repeat(40);
 const env = { GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: p.repository, GITHUB_REPOSITORY_ID: String(p.repositoryId),
@@ -196,6 +196,40 @@ test('metadata deadline bounds stalled request and stalled body even if cleanup 
   }
 });
 
+test('history diagnostics distinguish bounded request and validation stages without relaxing rejection', async () => {
+  const cases = [
+    ['current_request', 403, 1, () => {}, url => response(url, 'PRIVATE_BODY', 'text/html', 403)],
+    ['history_request', 503, 2, () => {}, url => url.includes('/workflows/') ? response(url, 'PRIVATE_BODY', 'text/html', 503) : null],
+    ['artifacts_request', 429, 3, () => {}, url => url.includes('/runs/41/artifacts?') ? response(url, 'PRIVATE_BODY', 'text/html', 429) : null],
+    ['current_identity', 200, 1, f => { f.current.workflow_id = 1; }],
+    ['current_binding', 200, 1, f => { f.current.head_sha = oldSha; }],
+    ['history_completeness', 200, 2, f => { f.runs.total_count = 101; }],
+    ['history_order', 200, 2, f => { f.previous.created_at = now; }],
+    ['previous_identity', 200, 2, f => { f.previous.run_attempt = 2; }],
+    ['artifacts_completeness', 200, 3, f => { f.artifacts.total_count = 101; }],
+    ['artifact_selection', 200, 3, f => { f.artifacts.artifacts.push(f.artifact); f.artifacts.total_count = 2; }],
+    ['artifact_identity', 200, 3, f => { f.artifact.workflow_run.head_sha = sha; }],
+    ['artifact_time', 200, 3, f => { f.artifact.expires_at = 'PRIVATE_BAD_DATE'; }]
+  ];
+  for (const [stage, httpStatus, networkCalls, mutate, intercept] of cases) {
+    const f = fixture(); mutate(f); const t = transport(f, intercept);
+    await assert.rejects(collect({ ...options, ...t }), error => {
+      assert.equal(error.message, 'weekly_history_invalid');
+      assert.deepEqual(epochHistoryDiagnostic(error), { stage, httpStatus, networkCalls });
+      assert.ok(Object.isFrozen(epochHistoryDiagnostic(error)));
+      return true;
+    });
+    assert.equal(t.calls.length, networkCalls);
+    assert.ok(t.calls.every(call => call.url !== EPOCH_ARR_CSV_URL));
+  }
+  assert.equal(epochHistoryDiagnostic(Object.assign(new Error('PRIVATE_ERROR'), { stage: 'PRIVATE_PATH', httpStatus: 403 })), null);
+  const t = transport(fixture(), () => { throw new Error('PRIVATE_URL_TOKEN_BODY'); });
+  await assert.rejects(collect({ ...options, ...t }), error => {
+    assert.deepEqual(epochHistoryDiagnostic(error), { stage: 'current_request', httpStatus: null, networkCalls: 1 });
+    assert.ok(!JSON.stringify(error).includes('PRIVATE')); return true;
+  });
+});
+
 test('source failure never produces upload payload or retries and does not leak raw CSV/error', async () => {
   const f = fixture(); f.runs = { total_count: 0, workflow_runs: [] };
   const t = transport(f, url => url === EPOCH_ARR_CSV_URL ? response(url, 'PRIVATE_ERROR', 'text/html', 500) : null);
@@ -258,6 +292,10 @@ function runMockedCli(files, fault = '') {
     let calls = 0;
     globalThis.fetch = async (url, options) => {
       calls++; if (calls > 3) throw new Error('unexpected request');
+      if (${JSON.stringify(fault)} === 'history-http') {
+        const response = new Response('PRIVATE_HTTP_BODY', {status:429,headers:{'content-type':'text/plain'}});
+        Object.defineProperty(response,'url',{value:url}); return response;
+      }
       const csv = url === ${JSON.stringify(EPOCH_ARR_CSV_URL)};
       const body = csv ? ${JSON.stringify(f.csv)} : JSON.stringify(url.endsWith('/runs/99') ? ${JSON.stringify(f.current)} : {total_count:0,workflow_runs:[]});
       const response = new Response(body, {headers:{'content-type':csv?'text/csv':'application/json'}});
@@ -279,6 +317,17 @@ function runMockedCli(files, fault = '') {
     env: { ...process.env, ...env, RUNNER_ENVIRONMENT: 'github-hosted', RUNNER_OS: 'Linux', RUNNER_TEMP: files.root,
       GITHUB_OUTPUT: files.output, GITHUB_STEP_SUMMARY: files.summary } });
 }
+
+test('real CLI exposes trusted history diagnostics on failure without upload output or private errors', t => {
+  const files = runnerWorkspace(t), child = runMockedCli(files, 'history-http');
+  assert.equal(child.status, 1); assert.equal(child.stderr, '');
+  const result = JSON.parse(child.stdout);
+  assert.equal(result.code, 'weekly_history_invalid');
+  assert.deepEqual(result.historyDiagnostic, { stage: 'current_request', httpStatus: 429, networkCalls: 1 });
+  assert.equal(result.productionEligible, false); assert.equal(result.baselineUpdated, false);
+  assert.equal(readFileSync(files.output, 'utf8'), '');
+  assert.ok(!child.stdout.includes('PRIVATE'));
+});
 
 test('real CLI writes only the hash-only payload into fresh runner temp and exposes successful upload outputs', t => {
   const files = runnerWorkspace(t), child = runMockedCli(files);
