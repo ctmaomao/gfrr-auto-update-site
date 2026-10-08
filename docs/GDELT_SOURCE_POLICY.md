@@ -30,6 +30,17 @@ Official GDELT references:
 
 ## Rules
 
+### Raw Events candidate (2026-10-08)
+
+Owner approved public raw Events source evaluation for World Order. The dedicated
+shared transport `scripts/gdelt/events-download.mjs` serves only fixed-host public
+files. `diagnose:gdelt-events` defaults offline and writes only ignored sanitized
+aggregates after explicit network opt-in. Seven-day qualification requires all
+672 intervals, valid dates/CRC/schema, consistent event IDs and fresh source time.
+This candidate does not enable scoring, production writes, new scheduled fetches,
+Cloud access, or new DOC/Web NGrams calls. See
+[candidate registration and review](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md).
+
 ### Zero-subscription policy (2026-10-02)
 
 Owner selected `config/world-order-rules.json` → `gdelt.accessPolicy=free_only`.

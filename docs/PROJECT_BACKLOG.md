@@ -28,6 +28,13 @@
 - **当前任务**：ARR 37309378856 仍 candidate_failed/weekly_history_invalid。现存日志没有失败阶段，当前元数据不证明历史调用当时状态，根因未确认。增加固定阶段/HTTP 状态/请求计数，保留所有拒绝断言与预算；HAPI 四槽保持停止，作为备用源研究，不再阻塞已验收 XLSX 自动更新。
 - **下一步 / 阻塞**：本修复通过验证和独立 review 后才合并；下一次自然周一候选可提供诊断，不制造 schedule 或复用旧预算。原 heartbeat 保持暂停，旧截止任务不伪装恢复；跨周期验收仍未完成，生产来源切换仍未批准。
 - **验证**：ARR 专项 18/18、`npm run check:changed`（实际执行完整 `check:all`）及 `git diff --check` 均退出 0；CLI dry-run 零网络。新增离线失败阶段及真实 CLI 脱敏回归；未删除/放宽 checker 断言、未新增依赖或 ignore。不以离线通过声称线上根因已修复。
+### 2026-10-08 World Order 免费 Events 候选
+
+- **Acceptance baseline**：owner 同意原始 Events 做统计、DOC/Web NGrams 辅助观察的免费路线；先独立采样验证覆盖、去重、运行成本和分类，再替换 World Order 输入。本轮实施免费公开文件候选工具及源审阅，不恢复 Cloud，不付费，不改生产评分或 JSON，不新增定时任务/发布；评分替换须经过实际数据校准与独立评审。
+- **最后基线 / 改动**：分支 `codex/gdelt-events-candidate`、隔离 worktree `gdelt-events-candidate`，基于 latest origin/main `0ceefbe3`。原 main 与上一任务 `gdelt-cloud-stop` 未提交改动均保留，不堆叠旧任务。新增 Events 公共文件 transport、受限 ZIP reader、61 列投影/七日聚合、手动 CLI 与现有来源检查中的离线回归。
+- **当前任务**：采集候选与源/校准审阅已落地。完整窗口 UTC 2026-09-30～10-06：673 请求、44,247,857 bytes、189,056 ms；671/672 文件通过。一份文件两条上游 root=`--` 记录被严格拒绝；索引标签出现未来时间也被 freshness hold。通过文件子集记录物质冲突 92,023、言语冲突 88,921、未知发生地 3,056；不是合格全周计数，七日 qualified count 与 score 均 null。末轮 4 文件 no-output smoke 退出 0，保留全周失败证据。候选显性区分新收录事件记录、新闻篇数、真实冲突次数，缺文件不记零，不提供死亡/评分。源注册、分类/地域分布和新尺度评审见 [审阅](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md)。
+- **验证 / 自审**：新增单测 7/7（含实际 `--` 异常回归、历史窗口不可冒充当前）退出 0；`check:changed` 选择 full 并完成 `check:all`、退出 0；末轮 CLI 总记录预算/参数与历史窗口保护修订后，重新执行 `check:gdelt-source-policy` 11/11、退出 0。四个新增模块语法检查、文档与 `git diff --check` 退出 0。full live probe 退出 1 是如实的数据质量/覆盖阻断，不是工具崩溃；默认 offline/无写入和小样本 live smoke 退出 0。实际文件符合先验证再接线的方案；既有 checker/assertion/ignore 未放宽，生产评分/JSON/工作流无改动，无 Cloud/付费请求。源码本地交付检查成功不代表真实来源七日资格通过。
+- **下一步 / 阻塞**：第一阶段本地实施与验证完成。生产替换仍需解决异常记录/来源时钟语义，固定冲突类别与国家范围，积累同定义完整观测及后续 holdout，再独立校准/模型审阅；不能复用旧 Cloud 尺度或以放宽解析凑齐覆盖。未授权 push/merge/发布，不自动创建每日采样任务；本轮先验证再接线的阶段边界保持。
 
 ### 2026-10-06 Bubble 周度判读来源与简版改进
 

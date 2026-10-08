@@ -741,6 +741,14 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### GDELT site-wide source policy
 
+2026-10-08 owner 同意免费原始 Events 统计候选，先验证再替换 World Order 输入。
+`diagnose:gdelt-events` 归属 artifact_sanitizer_layer，默认无网络/无写入，显式
+`--allow-network` 仅抓公开文件并写 ignored 七日候选报告；全周需 672 时段齐全。
+国家使用 ActionGeo FIPS、按事件编号去重，区分物质/言语冲突及采集/发生日期；
+计数不是人工核实的实际冲突次数。评分、生产 JSON、自动 workflow 均未接入。
+来源注册、预算、校准与晋升条件见
+[Events 候选审阅](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md)。
+
 2026-10-02 owner 选择零订阅费用路线：World Order 的
 `gdelt.accessPolicy=free_only` 在密钥读取和 fresh-cache 路径前阻断 Cloud 请求。
 仅保留带原始采集时间的历史摘要并标为 stale，沿用现行过期折扣；不重新校准
