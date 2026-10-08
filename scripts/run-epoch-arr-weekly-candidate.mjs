@@ -1,6 +1,7 @@
 import { appendFileSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { collectEpochWeeklyCandidate, epochWeeklyContext } from './bubble-watch/epoch-arr-weekly.mjs';
+import { epochHistoryDiagnostic } from './bubble-watch/epoch-arr-weekly-history.mjs';
 
 try {
   const args = process.argv.slice(2);
@@ -30,6 +31,6 @@ try {
   // Never interpolate raw upstream errors, paths, credentials or source rows.
   const safe = /^(?:weekly_(?:context|options|runner|history|comparison)_invalid|weekly_history_timeout|weekly_artifact_[a-z_]+|weekly_source_[a-z_]+)$/u;
   const code = typeof error?.message === 'string' && safe.test(error.message) ? error.message : 'weekly_candidate_failed';
-  process.stdout.write(`${JSON.stringify({ status: 'candidate_failed', code, productionEligible: false, baselineUpdated: false })}\n`);
+  process.stdout.write(`${JSON.stringify({ status: 'candidate_failed', code, historyDiagnostic: epochHistoryDiagnostic(error), productionEligible: false, baselineUpdated: false })}\n`);
   process.exitCode = 1;
 }

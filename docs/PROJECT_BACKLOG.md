@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-08 ACLED 自动更新验收与 ARR 历史诊断
+
+- **Acceptance baseline**：owner 要求核实周/月 XLSX 更新并依次解决 ARR、HAPI 与暂停障碍。本轮先核实既有生产链，补 ARR 脱敏诊断；不重置 HAPI 锁/预算、不补跑候选或付费刷新、不降低校验、不自动晋升来源。
+- **最后基线 / 改动**：基于 latest main `0ceefbe3`，分支 `codex/arr-history-diagnostics`。周一 37270618845 已下载 12 文件/26 请求、月表推进到 2026-09-25；周三 37580479475 已下载 6 周文件/14 请求、周表推进到 2026-09-26；两次登录退出与私有清理均确认。10 月 8 日 main、Pages、自定义域 World Order 字节 SHA256 同为 `c0abf846f83853715a82f134f7569c6751ed4999cb710b6dec4444f685b3d4ac`，ACLED status=ok。
+- **当前任务**：ARR 37309378856 仍 candidate_failed/weekly_history_invalid。现存日志没有失败阶段，当前元数据不证明历史调用当时状态，根因未确认。增加固定阶段/HTTP 状态/请求计数，保留所有拒绝断言与预算；HAPI 四槽保持停止，作为备用源研究，不再阻塞已验收 XLSX 自动更新。
+- **下一步 / 阻塞**：本修复通过验证和独立 review 后才合并；下一次自然周一候选可提供诊断，不制造 schedule 或复用旧预算。原 heartbeat 保持暂停，旧截止任务不伪装恢复；跨周期验收仍未完成，生产来源切换仍未批准。
+- **验证**：ARR 专项 18/18、`npm run check:changed`（实际执行完整 `check:all`）及 `git diff --check` 均退出 0；CLI dry-run 零网络。新增离线失败阶段及真实 CLI 脱敏回归；未删除/放宽 checker 断言、未新增依赖或 ignore。不以离线通过声称线上根因已修复。
+
 ### 2026-10-06 Bubble 周度判读来源与简版改进
 
 - **Acceptance baseline**：owner 同意执行来源审查方案：补齐官方识别，接受专业媒体/研究机构的注明出处单源证据，信息有限时允许简版；保留不编造、引用、时效、评分隔离及单次费用保护。仅本地实施与验证，不自动授权 push/merge/发布或真实付费补跑。

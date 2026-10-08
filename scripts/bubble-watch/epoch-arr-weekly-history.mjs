@@ -1,6 +1,10 @@
 import { EPOCH_ARTIFACT_POLICY as p, artifactId, artifactTime, epochArtifactName } from './epoch-arr-artifact.mjs';
 
 const API = `https://api.github.com/repos/${p.repository}`;
+const diagnostics = new WeakMap();
+// Only errors created here can expose diagnostic fields; upstream messages,
+// URLs, response bodies and arbitrary error properties never reach the CLI.
+export const epochHistoryDiagnostic = error => diagnostics.get(error) || null;
 const fail = () => { throw new Error('weekly_history_invalid'); };
 function runIdentity(run, current = false) {
   if (!run || !artifactId(run.id) || run.workflow_id !== p.workflowId || run.path !== p.workflowPath
@@ -22,13 +26,15 @@ export async function discoverEpochWeeklyHistory({ allowNetwork = false, runId, 
   const time = artifactTime(now), controller = new AbortController(), readers = new Set();
   const headers = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2026-03-10', 'User-Agent': 'GFRR-Epoch-weekly-candidate' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  let calls = 0, timer;
+  let calls = 0, timer, stage = 'current_request', httpStatus = null;
   const active = () => { if (controller.signal.aborted) fail(); };
   const deadline = new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('weekly_history_timeout')); }, timeoutMs); });
   async function request(route) {
+    httpStatus = null;
     active(); if (++calls > 3) fail();
     const url = `${API}${route}`;
     const response = await fetchImpl(url, { method: 'GET', redirect: 'manual', credentials: 'omit', cache: 'no-store', headers, signal: controller.signal });
+    httpStatus = Number.isInteger(response.status) && response.status >= 100 && response.status <= 599 ? response.status : null;
     active();
     if (response.status !== 200 || response.redirected || response.url !== url
       || !/^application\/(?:json|vnd\.github\+json)(?:\s*;.*)?$/iu.test(response.headers.get('content-type') || '') || !response.body) fail();
@@ -45,15 +51,20 @@ export async function discoverEpochWeeklyHistory({ allowNetwork = false, runId, 
     return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
   }
   const work = async () => {
-    const run = await request(`/actions/runs/${runId}`); runIdentity(run, true);
+    const run = await request(`/actions/runs/${runId}`);
+    stage = 'current_identity'; runIdentity(run, true);
+    stage = 'current_binding';
     if (run.id !== runId || run.head_sha !== headSha || artifactTime(run.created_at) > time
       || time - artifactTime(run.created_at) > p.retentionDays * 86400000) fail();
     const producer = { runId, runAttempt: 1, headSha, createdAt: run.created_at };
     const since = new Date(time - p.retentionDays * 86400000).toISOString().slice(0, 10);
+    stage = 'history_request';
     const listing = await request(`/actions/workflows/${p.workflowId}/runs?branch=main&event=schedule&status=success&created=${since}..${now.slice(0, 10)}&exclude_pull_requests=true&per_page=100`);
     const result = (historyStatus, selection = null) => ({ producer, historyStatus, selection, networkCalls: calls });
+    stage = 'history_completeness';
     if (!Array.isArray(listing.workflow_runs) || !Number.isSafeInteger(listing.total_count)
       || listing.total_count < 0 || listing.workflow_runs.length !== listing.total_count || listing.total_count > 100) fail();
+    stage = 'history_order';
     const seen = new Set();
     for (const item of listing.workflow_runs) {
       if (!artifactId(item.id) || seen.has(item.id) || artifactTime(item.created_at) >= artifactTime(run.created_at)) fail();
@@ -63,24 +74,33 @@ export async function discoverEpochWeeklyHistory({ allowNetwork = false, runId, 
     // runs after the selected run/artifact fails identity or integrity checks.
     const previous = [...listing.workflow_runs].sort((a, b) => artifactTime(b.created_at) - artifactTime(a.created_at) || b.id - a.id)[0];
     if (!previous) return result('history_missing');
-    runIdentity(previous);
+    stage = 'previous_identity'; runIdentity(previous);
     if (time - artifactTime(previous.created_at) > p.retentionDays * 86400000) return result('history_expired');
+    stage = 'artifacts_request';
     const artifacts = await request(`/actions/runs/${previous.id}/artifacts?per_page=100`);
+    stage = 'artifacts_completeness';
     if (!Array.isArray(artifacts.artifacts) || !Number.isSafeInteger(artifacts.total_count) || artifacts.total_count < 0
       || artifacts.total_count > 100 || artifacts.artifacts.length !== artifacts.total_count) fail();
+    stage = 'artifact_selection';
     const matching = artifacts.artifacts.filter(item => typeof item.name === 'string' && item.name.startsWith('epoch-arr-candidate-v1-'));
     if (!matching.length) return result('artifact_missing');
     if (matching.length !== 1) fail();
+    stage = 'artifact_identity';
     const artifact = matching[0], identity = artifact.workflow_run;
     if (!artifactId(artifact.id) || artifact.name !== epochArtifactName(previous.id) || identity?.id !== previous.id
       || identity.repository_id !== p.repositoryId || identity.head_repository_id !== p.repositoryId
       || identity.head_branch !== 'main' || identity.head_sha !== previous.head_sha || typeof artifact.expired !== 'boolean') fail();
+    stage = 'artifact_time';
     const expires = artifactTime(artifact.expires_at), created = artifactTime(artifact.created_at);
     if (created < artifactTime(previous.created_at) || created >= artifactTime(run.created_at) || expires <= created) fail();
     if (artifact.expired || expires <= time) return result('history_expired');
     return result('selected_pending_validation', { runId: previous.id, artifactId: artifact.id });
   };
   try { return await Promise.race([work(), deadline]); }
-  catch { throw new Error(controller.signal.aborted ? 'weekly_history_timeout' : 'weekly_history_invalid'); }
+  catch {
+    const error = new Error(controller.signal.aborted ? 'weekly_history_timeout' : 'weekly_history_invalid');
+    diagnostics.set(error, Object.freeze({ stage, httpStatus, networkCalls: calls }));
+    throw error;
+  }
   finally { clearTimeout(timer); controller.abort(); for (const reader of readers) void reader.cancel().catch(() => {}); }
 }
