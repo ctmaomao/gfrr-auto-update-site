@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-09 CSP 原生直连与原始 alarm 取证候选
+
+- **Acceptance baseline**：owner 要求继续独立直连入口/只读 alarm 候选并持续完成可做的实施验证；仅本地准备，不复用已耗尽平台批准，不授权 push/PR/merge/新开窗/付费/真实访客传输或删除。
+- **最后基线 / 改动**：latest main `26667970`，分支 `codex/csp-native-direct-preparation`。默认 health 不变，显式 inspection 返回实际 getAlarm/五个原始 meta；新独立手动入口固定 50→58 八槽、原生 Chromium 发送前同步门及新指纹/前批 lineage。
+- **当前任务**：本地候选与必要验证已完成：新增手动回归 12/12、既有相关回归 86/86、`check:changed`（实际完整 `check:all`）、cached Wrangler dry-run 均退出 0；自审方案一致、旧断言未放宽、无新增 ignore。第二批七请求 pass、关闭版本 `09dd66b1` 与预算 50/500 保留为历史证据，不冒充本轮平台读回。不新增依赖或 CI/checker 接线，独立 review 尚待执行。
+- **下一步 / 阻塞**：独立 review 和远端操作需本候选批准；新平台批次须最多三更新（新源关闭部署、开窗、关闭）、八槽/五分钟的新批准。自然实际删除最早资格 2026-10-17 UTC，仍须前后证据；不缩短保留期或注入过期数据。隐私、公开流量/共享额度与生产 C 仍待独立决定，见 [执行候选](CSP_NATIVE_DIRECT_PREPARATION_2026_10_09.md)。
+
 ### 2026-10-08 ARR 候选专用只读诊断入口
 
 - **Acceptance baseline**：owner 明确批准实施候选专用诊断入口、独立 AI 审阅通过后合并，并执行一次免费 GitHub 元数据诊断。三 GET/15 秒、每响应 1 MiB、零重试；不请求 Epoch CSV/ZIP，不写生产，不复活旧 HAPI/heartbeat。
