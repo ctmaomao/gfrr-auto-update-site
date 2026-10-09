@@ -144,7 +144,7 @@ export function createCspReceiverObject(Base) {
      *   * tables present -> the normal evaluation;
      *   * a real read failure -> `unknown` / `cannot-confirm`, never masked as health.
      */
-    async health({ now }) {
+    async health({ now, inspect = false }) {
       let lastCleaned = null;
       let startedAt = null;
       try {
@@ -164,6 +164,19 @@ export function createCspReceiverObject(Base) {
       try {
         const alarmAt = await this.ctx.storage.getAlarm();
         const used = readUsed(this.adapter, bucketFor(now));
+        // Opt-in operational evidence only; the default health payload stays unchanged.
+        // Return raw meta values, including null for absent keys, rather than inventing dates.
+        const observations = inspect ? {
+          contract: 'csp-retention-inspection-v1', observedAt: now, alarmAt: alarmAt ?? null,
+          ...Object.fromEntries(this.adapter.all(
+            "SELECT k,v FROM meta WHERE k IN ('last_cleaned_bucket','cleanup_completed_at','cleanup_started_at','cleanup_attempts','retention_days')",
+          ).map(row => [row.k, row.v])),
+        } : null;
+        if (observations) {
+          for (const key of ['last_cleaned_bucket', 'cleanup_completed_at', 'cleanup_started_at', 'cleanup_attempts', 'retention_days']) {
+            observations[key] ??= null;
+          }
+        }
         return {
           ...evaluateHealth({
             now,
@@ -173,6 +186,7 @@ export function createCspReceiverObject(Base) {
           }),
           ingestUsed: used.obsRows + used.ledgerRows,
           ingestBudget: LIMITS.INGEST_WRITE_BUDGET,
+          ...(observations ? { observations } : {}),
         };
       } catch (error) {
         return { status: 'unknown', alerts: ['cannot-confirm'], message: String(error?.message ?? error) };

@@ -190,9 +190,9 @@ export async function handleReport(request, env, { now = Date.now, policyTexts =
  * origins would expose aggregate usage to any listed page for no benefit. A browser therefore cannot
  * read it cross-origin, which is the intended policy rather than an oversight.
  */
-export async function handleHealth(env, { now = Date.now } = {}) {
+export async function handleHealth(env, { now = Date.now, inspect = false } = {}) {
   const stub = env.CSP_RECEIVER.get(env.CSP_RECEIVER.idFromName('singleton'));
-  const health = await stub.health({ now: now() });
+  const health = await stub.health({ now: now(), ...(inspect ? { inspect: true } : {}) });
   return new Response(JSON.stringify(health), {
     status: health.status === 'unknown' ? 503 : 200,
     headers: JSON_HEADERS,
@@ -211,7 +211,9 @@ export async function handleReceiverRequest(request, env, { now = Date.now } = {
     if (request.method !== 'GET') {
       return new Response(JSON.stringify({ ok: false, error: 'method-not-allowed' }), { status: 405, headers: JSON_HEADERS });
     }
-    return handleHealth(env, { now });
+    // Same short trial admission and no-CORS policy; no separate public diagnostic route.
+    const inspect = new URL(request.url).searchParams.get('inspect') === 'retention-v1';
+    return handleHealth(env, { now, inspect });
   }
   return handleReport(request, env, {
     now,
