@@ -14,7 +14,7 @@ import { applySchema } from '../../workers/gfrr-csp-report-receiver/src/storage.
 import { createCspReceiverObject } from '../../workers/gfrr-csp-report-receiver/src/receiver-object.js';
 import { handleReceiverRequest } from '../../workers/gfrr-csp-report-receiver/src/index.js';
 import { nativeDirect, validateNativeRequest } from './native-direct.mjs';
-import { nativePlan, runNativeSequence, validateInspection } from './controlled-native-platform.mjs';
+import { nativePlan, runNativeSequence, validateInspection, inspectionEvidence } from './controlled-native-platform.mjs';
 import { ORIGIN, TARGET } from './controlled-platform.mjs';
 
 const base = Date.parse('2026-10-09T12:00:00.000Z');
@@ -71,6 +71,36 @@ test('raw observation validation rejects missing/past alarm, absent completion, 
     r => { r.observations.retention_days = '1'; }, r => { r.observations.last_cleaned_bucket = '2026-99-99'; },
     r => { r.expectedWatermark = '2026-10-01'; }, r => { r.status = 'unknown'; }]) {
     const raw = inspection(); mutate(raw); assert.throws(() => validateInspection(raw, base + 1000));
+  }
+});
+
+test('inspection evidence omits arbitrary response fields and invalid secret-shaped metadata',()=>{
+  const body=inspection();body.message='PRIVATE_MESSAGE';body.url='https://private.test/?token=PRIVATE_TOKEN';
+  body.observations.retention_days='PRIVATE_TOKEN';body.observations.unexpected='PRIVATE_TOKEN';
+  body.alerts=['schedule-overdue','PRIVATE_MESSAGE'];
+  const result=inspectionEvidence(body,base);const text=JSON.stringify(result);
+  assert.ok(!text.includes('PRIVATE_'));assert.ok(!text.includes('private.test'));
+  assert.equal(result.observations.retention_days,'[invalid]');assert.deepEqual(result.alerts,['schedule-overdue','[invalid]']);
+  assert.match(result.responseFingerprint,/^[0-9a-f]{64}$/u);assert.equal(result.validationPassed,false);
+});
+
+test('rejected inspection is durably retained before native transport without weakening its gate',async()=>{
+  for(const kind of ['alert','missing-alarm']){
+    const f=fixture();const fetchImpl=f.options.fetchImpl;let nativeCalls=0;
+    f.options.fetchImpl=async(...args)=>{
+      const response=await fetchImpl(...args);if(!args[0].includes('?inspect='))return response;
+      const body=await response.json();if(kind==='alert'){body.status='alert';body.alerts=['schedule-overdue'];}
+      else body.observations.alarmAt=null;
+      body.message='PRIVATE_MESSAGE';return new Response(JSON.stringify(body),{status:200,headers:{'cache-control':'no-store'}});
+    };
+    f.options.sendNative=async()=>{nativeCalls++;};
+    await assert.rejects(runNativeSequence(f.options));const result=JSON.parse(readFileSync(join(f.options.outDir,'result.json')));
+    assert.equal(result.outcome,'stopped');assert.equal(result.attempts.length,2);assert.equal(nativeCalls,0);
+    assert.equal(result.inspectionReadbacks.before.validationPassed,false);
+    if(kind==='alert')assert.deepEqual(result.inspectionReadbacks.before.alerts,['schedule-overdue']);
+    else assert.equal(result.inspectionReadbacks.before.observations.alarmAt,null);
+    assert.ok(!JSON.stringify(result).includes('PRIVATE_MESSAGE'));
+    assert.equal(f.budget().cumulative,58);assert.equal(existsSync(f.options.statePath+'.lock'),true);
   }
 });
 
