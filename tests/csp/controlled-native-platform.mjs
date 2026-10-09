@@ -64,6 +64,27 @@ export function validateInspection(body, at) {
   return { ingestUsed: body.ingestUsed, expectedWatermark: body.expectedWatermark, observations: raw };
 }
 
+// Persist only known operational fields. Never retain arbitrary response text, messages or URLs.
+export function inspectionEvidence(body, at) {
+  const value = body && typeof body === 'object' ? body : {};
+  const raw = value.observations && typeof value.observations === 'object' ? value.observations : {};
+  const integer = v => v === null ? null : Number.isSafeInteger(v) ? v : '[invalid]';
+  const date = v => v === null ? null : typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(v) ? v : '[invalid]';
+  const numericText = v => v === null ? null : typeof v === 'string' && /^(?:|\d{1,16})$/u.test(v) ? v : '[invalid]';
+  const knownAlerts = ['not-initialized', 'cannot-confirm', 'cleanup-never-ran', 'cleanup-possibly-in-flight',
+    'cleanup-watermark-stale', 'schedule-possibly-in-flight', 'schedule-missing', 'schedule-overdue', 'cleanup-stuck'];
+  return { at, responseFingerprint: hash(JSON.stringify(body)), validationPassed: false,
+    status: ['healthy', 'alert', 'unknown', 'uninitialized'].includes(value.status) ? value.status : '[invalid]',
+    // Cap diagnostic output only; validateInspection still receives the complete original array.
+    alerts: Array.isArray(value.alerts) ? value.alerts.slice(0, 16).map(v => knownAlerts.includes(v) ? v : '[invalid]') : '[invalid]',
+    alertCount: Array.isArray(value.alerts) ? value.alerts.length : null,
+    ingestUsed: integer(value.ingestUsed), ingestBudget: integer(value.ingestBudget), expectedWatermark: date(value.expectedWatermark),
+    observations: { contract: raw.contract === 'csp-retention-inspection-v1' ? raw.contract : '[invalid]',
+      observedAt: integer(raw.observedAt), alarmAt: integer(raw.alarmAt), last_cleaned_bucket: date(raw.last_cleaned_bucket),
+      cleanup_completed_at: numericText(raw.cleanup_completed_at), cleanup_started_at: numericText(raw.cleanup_started_at),
+      cleanup_attempts: numericText(raw.cleanup_attempts), retention_days: numericText(raw.retention_days) } };
+}
+
 export async function runNativeSequence({ auth, previous, closedReadback, statePath, markerPath, outDir,
   waitForOpen, sendNative = nativeDirect, fetchImpl = fetch, now = Date.now, pause = sleep }) {
   const startedAt = now(), deadlineAt = startedAt + TOTAL_MS;
@@ -76,6 +97,13 @@ export async function runNativeSequence({ auth, previous, closedReadback, stateP
   const check = () => { if (failure) throw failure; assert.ok(now() < deadlineAt, 'five-minute total deadline'); };
   const latch = error => { failure ??= error; controller.abort(); };
   const persist = () => { if (ownsOut) save(resolve(outDir, 'result.json'), evidence); };
+  function inspect(body, label) {
+    const at = now(), readback = inspectionEvidence(body, at);
+    evidence.inspectionReadbacks ??= {}; evidence.inspectionReadbacks[label] = readback;
+    persist(); // Even a rejected health response must leave bounded, non-sensitive diagnostics.
+    const validated = validateInspection(body, at);
+    readback.validationPassed = true; persist(); return validated;
+  }
   let deadlineTimer;
   const deadlineFailure = new Promise((unused, reject) => {
     deadlineTimer = setTimeout(() => { const error = new Error('five-minute total deadline'); latch(error); reject(error); },
@@ -119,7 +147,7 @@ export async function runNativeSequence({ auth, previous, closedReadback, stateP
     const open = await bounded(waitForOpen()); check(); validateReadback(open, auth, true); assert.notEqual(open.version, closedReadback.version);
     evidence.versions = { closed: closedReadback.version, open: open.version };
     if (now() < Date.parse(auth.startAt)) await bounded(pause(Date.parse(auth.startAt) - now()));
-    const before = validateInspection(await attempt('open-inspection-before', '/health?inspect=retention-v1', {}, 200, 'open'), now());
+    const before = inspect(await attempt('open-inspection-before', '/health?inspect=retention-v1', {}, 200, 'open'), 'before');
     const docs = new Set();
     await bounded(sendNative({
       signal: controller.signal,
@@ -137,7 +165,7 @@ export async function runNativeSequence({ auth, previous, closedReadback, stateP
         catch (error) { latch(error); record.passed = false; persist(); throw error; }
       }, onFailure: latch,
     })); check(); assert.equal(docs.size, 2);
-    const after = validateInspection(await attempt('open-inspection-after', '/health?inspect=retention-v1', {}, 200, 'open'), now());
+    const after = inspect(await attempt('open-inspection-after', '/health?inspect=retention-v1', {}, 200, 'open'), 'after');
     assert.equal(after.ingestUsed - before.ingestUsed, 4, 'unexpected public/concurrent ingestion');
     evidence.inspection = { before, after }; evidence.nativeDirectVerified = true;
     evidence.rawCleanupWatermarkVerified = true; evidence.nextAlarmVerified = true; persist();

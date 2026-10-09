@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-09 CSP 原生直连批次停止与 inspection 诊断
+
+- **Acceptance baseline**：owner 要求开始已提议的新批次：既有隔离 Worker 八槽 50→58、最多三更新、整个请求序列不超过五分钟、仅合成报告；不升级/新资源/生产 C/删除/重试。PR #439 已合并 `aae12fe3`；不匹配现有站点发布路径，不自动部署 CSP Worker。
+- **实际回执**：三次更新后已恢复关闭版本 `b9524593-ac3a-4508-a38a-df5c1a8303d8`，trial=false/空时间、loopback/原 namespace、日志追踪关闭。仅 closed health 503 和 open inspection before 200 两次请求；inspection 内容断言失败，runner exit 1，未发送原生报告。累计 58/500、不退额；失败锁/marker/全部旧证据保留。native/getAlarm/删除均未通过验收。
+- **当前任务**：本次原 CLI 未保存失败 inspection 字段，仅 AssertionError，具体根因未确定。已补本地 fsync 脱敏快照与验证 verdict；保留全部原内容断言，未知字段/消息/URL 不落盘，不改 Worker 或清理。分支 `codex/csp-native-inspection-diagnostics` 基于 latest main `a6724d5a`；手动回归 19/19、`check:changed`（完整 `check:all`）均退出 0。自审原断言未放宽、无新增 ignore、Worker 无差异；新的独立审阅待批准。该离线模拟不冒充真实失败原因。
+- **下一步 / 阻塞**：独立审阅修复与远端操作仍需对应批准；新取证批次须新路径/指纹/58 基线及具体授权，失败锁恢复另须可恢复方案/具体批准。三次平台更新和本批次八槽批准已耗尽，不补跑。隐私、公开流量/费用与生产 C 仍保留门槛，见 [停止回执](CSP_NATIVE_DIRECT_TRIAL_2026_10_09.md)。
+
 ### 2026-10-09 CSP 原生直连与原始 alarm 取证候选
 
 - **Acceptance baseline**：owner 要求继续独立直连入口/只读 alarm 候选并持续完成可做的实施验证；追加明确批准新的独立 AI reviewer 只读代审、推送 `codex/csp-native-direct-preparation` 并创建以 main 为目标的独立 PR。不复用已耗尽平台批准，不授权 merge/部署/新开窗/付费/真实访客传输或删除。
