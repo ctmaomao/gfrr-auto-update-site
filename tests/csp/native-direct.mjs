@@ -33,7 +33,7 @@ export function validateNativeRequest(request, target = TARGET + '/csp-report') 
 }
 
 /** Original bytes go from Chromium to the target; no route.fetch(), Node forwarding or rewriting. */
-export async function nativeDirect({ beforeSend, afterResponse, onFailure, target = TARGET + '/csp-report' }) {
+export async function nativeDirect({ beforeSend, afterResponse, onFailure, signal, target = TARGET + '/csp-report' }) {
   const { chromium } = await import('playwright');
   let browser, context, failure = null, timer;
   const pending = new Set(), seen = new Set(), completed = new Set(), records = new Map();
@@ -41,6 +41,7 @@ export async function nativeDirect({ beforeSend, afterResponse, onFailure, targe
     if (!failure) { failure = error; onFailure(error); void context?.close().catch(() => {}); }
   };
   const check = () => { if (failure) throw failure; };
+  const aborted = () => fail(new Error('shared sequence aborted'));
   const server = createServer((req, res) => {
     if (!docs.some(doc => req.url === '/' + doc + '.html?synthetic=fiction-only')) { res.writeHead(404); res.end(); return; }
     res.writeHead(200, { 'content-type': 'text/html', 'content-security-policy-report-only':
@@ -51,6 +52,9 @@ export async function nativeDirect({ beforeSend, afterResponse, onFailure, targe
     await new Promise((done, reject) => { server.once('error', reject); server.listen(8765, '127.0.0.1', done); });
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
+    signal?.addEventListener('abort', aborted, { once: true });
+    if (signal?.aborted) aborted();
+    check();
     await context.route('**/*', async route => {
       const request = route.request();
       if (request.url() !== target) {
@@ -105,6 +109,7 @@ export async function nativeDirect({ beforeSend, afterResponse, onFailure, targe
     check(); assert.equal(seen.size, 2); assert.equal(completed.size, 2);
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', aborted);
     if (browser) await browser.close();
     await new Promise(done => server.close(done));
   }

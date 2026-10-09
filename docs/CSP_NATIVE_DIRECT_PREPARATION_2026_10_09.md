@@ -2,7 +2,7 @@
 
 ## 批准基线与现状
 
-Owner 要求继续实施独立直连入口、只读 alarm 取证候选，并持续完成可独立推进的准备和验证。本轮基于 latest main `26667970`，分支 `codex/csp-native-direct-preparation`；仅本地候选、手动回归和审阅材料。没有新平台批次、push/PR/merge/部署、真实访客传输、付费升级或删除授权。此前各批次的一次性批准不复用。
+Owner 要求继续实施独立直连入口、只读 alarm 取证候选，并持续完成可独立推进的准备和验证。本轮基于 latest main `26667970`，分支 `codex/csp-native-direct-preparation`。后续明确批准新的独立 AI reviewer 只读代审本候选、推送该分支并创建以 main 为目标的独立 PR；没有新平台批次、merge/部署、真实访客传输、付费升级或删除授权。此前各批次的一次性批准不复用。
 
 第二批真实 relay 序列已通过七次请求检查；八次预占后预算为 50/500，未用额度不退回，已恢复关闭版本 `09dd66b1-697a-4e8f-a04a-941edb0f744f`。此处为 10 月 8 日执行回执，非本轮平台读回。所有旧授权、marker、预算、归档锁和证据保留。本轮不运行任何 live CLI。
 
@@ -30,6 +30,8 @@ node --test tests/csp/native-direct.test.mjs
 默认计划 approved=false、无网络、不改共享预算。固定 batch/account/target、50/500 基线、八次预占至 58/500；绑定新 runner/producer、已有 shared harness、Worker 源指纹和第二批成功 result SHA256。仅接受固定的新 `test-results/csp-native-direct-{authorization,closed-readback,open-readback,once}.json` 和 `csp-native-direct-live/`；共享原预算/锁，不自动恢复任何锁。
 
 七次请求为 closed health、open inspection before、两份 native report、open inspection after、expired report、expired health。所有发送先持久记录，不重试/不退额；失败保留八次预占、marker、输出和锁，成功只释放本序列自己的锁。下一次 alarm 必须实际为未来毫秒，原始完成时间与清理日/retention 必须一致，started 空、attempts=0，否则停止。
+
+独立审阅指出开窗结束后的两次过期检查可能越过五分钟总边界，候选已补统一截止时间：从序列入口起计 300 秒，授权 endAt 必须至少预留 25 秒。每次发送及响应完成均核对总截止；所有等待、Node 响应读取和原生 producer 受同一 deadline/AbortSignal 约束，超时关闭浏览器 context 并保留失败账本/锁。手动回归覆盖拒绝完整五分钟开窗、迟到响应、第二份原生发送、过期检查和最大合法窗口，以及真实 localhost Chromium 的共享取消；不能用开窗时间替代整个序列验收。
 
 未来平台执行须新的具体批准：八次请求槽 50→58、现有 Worker 最多 **三次** 更新（关闭态部署含 inspection 的候选、开窗、显式关闭）、整个请求序列最长五分钟、现有 loopback origin/namespace/日志关闭、Free、无升级/新资源/生产 C。新源尚未部署，不能把上一批关闭版本冒充含新 inspection 字段的候选。部署前后仍需独立控制面读回；sourceFingerprint 仅标识本地字节，不是远端源码认证。参数必须经 JSON.parse + Node argv 数组保留 UTC 毫秒/Z。CLI 自身不执行任何部署。
 

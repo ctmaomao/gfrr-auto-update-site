@@ -15,6 +15,8 @@ const root = resolve(import.meta.dirname, '../..');
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 export const runnerFingerprint = () => hash(readFileSync(new URL(import.meta.url)));
 const sleep = ms => new Promise(done => setTimeout(done, ms));
+const TOTAL_MS = 300_000;
+const EXPIRY_RESERVE_MS = 25_000;
 function save(path, value, exclusive = false) {
   const fd = openSync(path, exclusive ? 'wx' : 'w');
   try { writeFileSync(fd, JSON.stringify(value, null, 2) + '\n'); fsyncSync(fd); } finally { closeSync(fd); }
@@ -45,7 +47,8 @@ export function validateNativeAuthorization(auth, previous, now) {
   ]);
   nativePlan(auth.startAt, auth.endAt);
   assert.ok(Date.parse(auth.startAt) >= now && Date.parse(auth.startAt) - now <= 120_000);
-  assert.ok(Date.parse(auth.endAt) - now <= 5 * 60_000);
+  assert.ok(Date.parse(auth.endAt) - now <= TOTAL_MS - EXPIRY_RESERVE_MS,
+    'reserve 25 seconds for both expired checks within the five-minute total');
 }
 export function validateInspection(body, at) {
   assert.equal(body.status, 'healthy'); assert.deepEqual(body.alerts, []); assert.equal(body.ingestBudget, 2500);
@@ -63,15 +66,24 @@ export function validateInspection(body, at) {
 
 export async function runNativeSequence({ auth, previous, closedReadback, statePath, markerPath, outDir,
   waitForOpen, sendNative = nativeDirect, fetchImpl = fetch, now = Date.now, pause = sleep }) {
-  validateNativeAuthorization(auth, previous, now()); validateReadback(closedReadback, auth, false);
+  const startedAt = now(), deadlineAt = startedAt + TOTAL_MS;
+  validateNativeAuthorization(auth, previous, startedAt); validateReadback(closedReadback, auth, false);
   const lockPath = statePath + '.lock'; assert.ok(!existsSync(lockPath), 'shared lock requires separate manual recovery');
   let locked = false, ownsOut = false, failure = null;
   const controller = new AbortController();
-  const evidence = { outcome: 'running', delivery: 'native-browser-direct', attempts: [], nativeDirectVerified: false,
+  const evidence = { outcome: 'running', delivery: 'native-browser-direct', startedAt, deadlineAt, attempts: [], nativeDirectVerified: false,
     rawCleanupWatermarkVerified: false, nextAlarmVerified: false, deletionVerified: false };
-  const check = () => { if (failure) throw failure; };
+  const check = () => { if (failure) throw failure; assert.ok(now() < deadlineAt, 'five-minute total deadline'); };
   const latch = error => { failure ??= error; controller.abort(); };
   const persist = () => { if (ownsOut) save(resolve(outDir, 'result.json'), evidence); };
+  let deadlineTimer;
+  const deadlineFailure = new Promise((unused, reject) => {
+    deadlineTimer = setTimeout(() => { const error = new Error('five-minute total deadline'); latch(error); reject(error); },
+      Math.max(0, deadlineAt - now()));
+    deadlineTimer.unref();
+  });
+  // The shared rejection also bounds waits/producers that do not themselves honor AbortSignal.
+  const bounded = promise => Promise.race([promise, deadlineFailure]);
   function begin(label, path, method, phase) {
     check(); const state = JSON.parse(readFileSync(statePath)); assert.equal(state.cumulative, 58); assert.equal(state.limit, 500);
     assert.ok(evidence.attempts.length < 8);
@@ -90,8 +102,9 @@ export async function runNativeSequence({ auth, previous, closedReadback, stateP
   async function attempt(label, path, init, expected, phase) {
     const record = begin(label, path, init.method ?? 'GET', phase);
     try {
-      const response = await fetchImpl(TARGET + path, { ...init, redirect: 'manual', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]) });
-      const body = await readBodyWithinLimit(response.body, 16_384); assert.ok(body.ok);
+      const response = await bounded(fetchImpl(TARGET + path, { ...init, redirect: 'manual', signal: AbortSignal.any([controller.signal,
+        AbortSignal.timeout(Math.max(1, Math.min(10_000, deadlineAt - now())))]) }));
+      const body = await bounded(readBodyWithinLimit(response.body, 16_384)); assert.ok(body.ok);
       return complete(record, { status: response.status, headers: Object.fromEntries(response.headers), text: body.text }, expected, phase !== 'open');
     } catch (error) { latch(error); record.passed = false; persist(); throw error; }
   }
@@ -103,12 +116,13 @@ export async function runNativeSequence({ auth, previous, closedReadback, stateP
     save(markerPath, { batch: BATCH, initial: 50, reserved: 8, sourceFingerprint: auth.sourceFingerprint }, true);
     save(statePath, { ...state, cumulative: 58, updatedAt: new Date(now()).toISOString() }); evidence.reserved = 8; persist();
     await attempt('closed-health', '/health', {}, 503, 'closed');
-    const open = await waitForOpen(); check(); validateReadback(open, auth, true); assert.notEqual(open.version, closedReadback.version);
+    const open = await bounded(waitForOpen()); check(); validateReadback(open, auth, true); assert.notEqual(open.version, closedReadback.version);
     evidence.versions = { closed: closedReadback.version, open: open.version };
-    if (now() < Date.parse(auth.startAt)) await pause(Date.parse(auth.startAt) - now());
+    if (now() < Date.parse(auth.startAt)) await bounded(pause(Date.parse(auth.startAt) - now()));
     const before = validateInspection(await attempt('open-inspection-before', '/health?inspect=retention-v1', {}, 200, 'open'), now());
     const docs = new Set();
-    await sendNative({
+    await bounded(sendNative({
+      signal: controller.signal,
       beforeSend(doc) {
         check(); assert.ok(['index', 'bubble-watch'].includes(doc) && !docs.has(doc)); docs.add(doc);
         return begin('native-direct-' + doc, '/csp-report', 'POST', 'open');
@@ -122,18 +136,20 @@ export async function runNativeSequence({ auth, previous, closedReadback, stateP
         }
         catch (error) { latch(error); record.passed = false; persist(); throw error; }
       }, onFailure: latch,
-    }); check(); assert.equal(docs.size, 2);
+    })); check(); assert.equal(docs.size, 2);
     const after = validateInspection(await attempt('open-inspection-after', '/health?inspect=retention-v1', {}, 200, 'open'), now());
     assert.equal(after.ingestUsed - before.ingestUsed, 4, 'unexpected public/concurrent ingestion');
     evidence.inspection = { before, after }; evidence.nativeDirectVerified = true;
     evidence.rawCleanupWatermarkVerified = true; evidence.nextAlarmVerified = true; persist();
-    if (now() < Date.parse(auth.endAt)) await pause(Date.parse(auth.endAt) - now() + 100);
+    if (now() < Date.parse(auth.endAt)) await bounded(pause(Date.parse(auth.endAt) - now() + 100));
     await attempt('expired-report', '/csp-report', { method: 'POST', headers: { 'content-type': 'application/csp-report' }, body: '{}' }, 503, 'expired');
     await attempt('expired-health', '/health', {}, 503, 'expired');
     assert.equal(evidence.attempts.length, 7); evidence.outcome = 'native-direct-sequence-pass'; persist();
     rmSync(lockPath); locked = false; return evidence;
   } catch (error) {
     latch(error); evidence.outcome = 'stopped'; evidence.error = error.name; evidence.lockRetained = locked; persist(); throw error;
+  } finally {
+    clearTimeout(deadlineTimer);
   }
 }
 async function main(args) {

@@ -99,7 +99,7 @@ function fixture() {
   const options = { auth, previous, closedReadback:readback(false), statePath,markerPath,outDir,
     now:()=>clock,pause:async ms=>{clock+=ms;},waitForOpen:async()=>readback(true),
     fetchImpl:async(url,init)=>{calls++;assert.equal(JSON.parse(readFileSync(statePath)).cumulative,58);
-      assert.equal(init.redirect,'manual');const closed=clock<base+1000||clock>=base+5000;
+      assert.equal(init.redirect,'manual');const closed=clock<Date.parse(auth.startAt)||clock>=Date.parse(auth.endAt);
       const body=closed?{ok:false,status:'unknown',error:'trial-closed'}:{...inspection(clock),ingestUsed:used};
       return new Response(JSON.stringify(body),{status:closed?503:200,headers:{'cache-control':'no-store'}});},
     sendNative:async gate=>{for(const doc of ['index','bubble-watch']){const record=gate.beforeSend(doc);calls++;
@@ -141,6 +141,64 @@ test('default/unknown CLI cannot create a live native batch',()=>{
   for(const args of [['--live'],['--target',TARGET],['--live','--authorization','test-results/csp-platform-batch2-authorization.json']]){
     const child=spawnSync(process.execPath,[script,...args],{encoding:'utf8'});assert.notEqual(child.status,0);assert.equal(child.stdout,'');
   }
+});
+
+test('a full five-minute active window is rejected before reservation or transport',async()=>{
+  const f=fixture();f.options.auth.endAt=new Date(base+300000).toISOString();
+  await assert.rejects(runNativeSequence(f.options),/reserve 25 seconds/);
+  assert.equal(f.calls(),0);assert.equal(f.budget().cumulative,50);
+  assert.equal(existsSync(f.options.statePath+'.lock'),false);
+});
+
+test('total deadline rejects a late response and prevents every subsequent send',async()=>{
+  const f=fixture(),fetchImpl=f.options.fetchImpl;
+  f.options.fetchImpl=async(...args)=>{const response=await fetchImpl(...args);f.clock(base+300000);return response;};
+  await assert.rejects(runNativeSequence(f.options),/five-minute total deadline/);
+  assert.equal(f.calls(),1);assert.equal(f.budget().cumulative,58);
+  const result=JSON.parse(readFileSync(join(f.options.outDir,'result.json')));
+  assert.equal(result.outcome,'stopped');assert.equal(result.attempts[0].passed,false);
+  assert.equal(existsSync(f.options.statePath+'.lock'),true);
+});
+
+test('total deadline blocks native continuation and expiry checks while retaining the reservation',async()=>{
+  for(const phase of ['native','expiry']){
+    const f=fixture();let nativeSends=0;
+    if(phase==='native')f.options.sendNative=async gate=>{
+      const record=gate.beforeSend('index');nativeSends++;
+      gate.afterResponse(record,{status:200,headers:{'cache-control':'no-store'},bodyInspectable:false});
+      f.clock(base+300000);gate.beforeSend('bubble-watch');nativeSends++;
+    };
+    else f.options.pause=async ms=>{f.clock(ms===1000?base+1000:base+300000);};
+    await assert.rejects(runNativeSequence(f.options),/five-minute total deadline/);
+    assert.equal(phase==='native'?nativeSends:f.calls(),phase==='native'?1:5);
+    const result=JSON.parse(readFileSync(join(f.options.outDir,'result.json')));
+    assert.equal(result.outcome,'stopped');assert.ok(!result.attempts.some(r=>r.label.startsWith('expired-')));
+    assert.equal(f.budget().cumulative,58);assert.equal(existsSync(f.options.statePath+'.lock'),true);
+  }
+});
+
+test('maximum accepted active window leaves time for both completed expiry requests',async()=>{
+  const f=fixture(),fetchImpl=f.options.fetchImpl;
+  f.options.auth.endAt=new Date(base+275000).toISOString();
+  f.options.fetchImpl=async(...args)=>{
+    const response=await fetchImpl(...args);
+    if(f.calls()>=6)f.clock(base+275100+(f.calls()-5)*5000);
+    return response;
+  };
+  const result=await runNativeSequence(f.options);
+  assert.equal(result.outcome,'native-direct-sequence-pass');assert.equal(result.attempts.length,7);
+  assert.equal(result.deadlineAt,base+300000);assert.ok(result.attempts.every(r=>r.at<result.deadlineAt));
+});
+
+test('shared abort stops real Chromium before the second fictional report',async()=>{
+  let reports=0,permitted=0;const controller=new AbortController();
+  const collector=createServer((req,res)=>{req.resume();reports++;res.writeHead(200,{'cache-control':'no-store'});res.end();});
+  await new Promise((done,reject)=>{collector.once('error',reject);collector.listen(8766,'127.0.0.1',done);});
+  try{
+    await assert.rejects(nativeDirect({target:'http://127.0.0.1:8766/csp-report',signal:controller.signal,
+      beforeSend:doc=>{permitted++;return {doc};},afterResponse:()=>controller.abort(),onFailure:()=>{}}));
+    assert.equal(reports,1);assert.equal(permitted,1);
+  }finally{await new Promise(done=>collector.close(done));}
 });
 
 test('real Chromium sends original report bytes directly to localhost; synchronous denial sends zero',async()=>{
