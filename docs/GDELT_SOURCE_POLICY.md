@@ -633,3 +633,11 @@ bounded to seven complete days per invocation with immutable daily caches.
 No new endpoint allowlist entry, retry, credential access, production writer or
 scheduled task is introduced. See the
 [research contract](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md#phase-2-research-archive-and-calibration-preparation).
+
+## 量化接入设计（2026-10-10）
+
+Owner 要求 Events 参与 World Order 量化分析。本阶段新增完全离线的
+`replay:gdelt-events-score-impact`，仅在 artifact_sanitizer_layer 做区间尺度与两个
+冲突通道的反事实影响回放；不改变 source review 的生产授权。未知分类保留上下界，
+旧严格资格和单点尺度 hold 不变。设计、结果与独立生产迁移门槛见
+[评分接入设计](GDELT_EVENTS_SCORING_INTEGRATION_DESIGN_2026_10_10.md)。

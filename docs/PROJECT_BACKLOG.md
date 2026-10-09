@@ -28,6 +28,14 @@
 - **当前任务**：ARR 37309378856 仍 candidate_failed/weekly_history_invalid。现存日志没有失败阶段，当前元数据不证明历史调用当时状态，根因未确认。增加固定阶段/HTTP 状态/请求计数，保留所有拒绝断言与预算；HAPI 四槽保持停止，作为备用源研究，不再阻塞已验收 XLSX 自动更新。
 - **下一步 / 阻塞**：本修复通过验证和独立 review 后才合并；下一次自然周一候选可提供诊断，不制造 schedule 或复用旧预算。原 heartbeat 保持暂停，旧截止任务不伪装恢复；跨周期验收仍未完成，生产来源切换仍未批准。
 - **验证**：ARR 专项 18/18、`npm run check:changed`（实际执行完整 `check:all`）及 `git diff --check` 均退出 0；CLI dry-run 零网络。新增离线失败阶段及真实 CLI 脱敏回归；未删除/放宽 checker 断言、未新增依赖或 ignore。不以离线通过声称线上根因已修复。
+### 2026-10-10 免费 Events 量化评分接入设计与离线回放
+
+- **Acceptance baseline**：owner 否定仅展示，明确要求免费数据进入 World Order 量化分析，并批准开始评分接入设计/离线影响回放。研究候选进入冲突通道，不扩成所有金融维度；本轮不写生产、不改线上评分、不自动授权发布。
+- **最后基线 / 改动**：同一 `codex/gdelt-events-candidate` 研究分支延续，前两阶段提交保留。评分依赖与最新 World Order 快照提交 `60f58f24c0e2e39bfc5629cb5e57f28a19c50343` 完全一致；该提交的规则、雷达数据与 World Order 快照复算 parity 通过。新增区间拟合/两通道反事实研究、完全离线 CLI、负例与设计文档，不修改现行 runtime/checker/校准。
+- **当前任务**：49 日原预定训练/隔离/检验方案保持；未知行全取最坏上界，研究尺度界 49,529–49,529.5，原 strict 单点尺度仍 null。固定近期背景下，两个冲突通道候选 52→56（状态不变），尺度 ×0.5～1.5 后 55～58；两条未知行未改变整数分或状态。新尺度替换全部通道得 59，旧尺度直接塞免费计数得 71，均不推荐。不能将此反事实结果当成历史预测验证或现实风险上升。
+- **验证 / 保护网**：`check:changed` 选择 full 并完成 `check:all`，退出 0；末轮缓存总预算/未来日守卫与不确定状态负例补充后，来源入口 20/20、研究专项 4/4、文档/语法/whitespace 再验退出 0。实际离线回放与 bounded smoke 退出 0、requests=0；默认运行前后报告数 2→2，无报告写入。旧严格资格、原模型、checker/assertion/ignore、data、frontend、workflow diff 均为空；研究报告 productionEligible/scoringConnected=false、approvedPointScale=null。
+- **下一步 / 剩余边界**：完成检查后本地交付设计。独立审阅两个冲突通道的区间认证、新尺度与失败/时效政策，再实施生产迁移。三条非冲突 Cloud 通道尚未迁移，不能宣称全模块替换；长周期新闻量/地域混杂验证仍缺，不以本轮小样本认证金融预测能力。未 push/merge/部署。
+
 ### 2026-10-08 World Order 免费 Events 候选
 
 - **Acceptance baseline**：owner 同意原始 Events 做统计、DOC/Web NGrams 辅助观察的免费路线；先独立采样验证覆盖、去重、运行成本和分类，再替换 World Order 输入。本轮实施免费公开文件候选工具及源审阅，不恢复 Cloud，不付费，不改生产评分或 JSON，不新增定时任务/发布；评分替换须经过实际数据校准与独立评审。

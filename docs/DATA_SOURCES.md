@@ -1134,3 +1134,11 @@ windows, six embargo end dates and seven subsequent holdout windows. This is
 source/calibration preparation only; no production source writer, automation or
 Cloud request. Definition, cache validation and budgets are documented in
 [GDELT Events review](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md#phase-2-research-archive-and-calibration-preparation).
+
+### 免费 Events 量化接入研究（2026-10-10）
+
+`replay:gdelt-events-score-impact` 是 artifact_sanitizer_layer 的无网络研究入口，
+仅消费 ignored sanitized 历史缓存和固定 Git 基线；默认无写入，显式报告写入也仅限
+ignored research-v2。研究候选进入和平红利退潮/多战区冲突两个通道的反事实计算，
+不晋升为生产源，不替代制裁、阵营或资本管制证据，不改变原 strict qualification。
+来源与量化政策见[设计审阅](GDELT_EVENTS_SCORING_INTEGRATION_DESIGN_2026_10_10.md)。
