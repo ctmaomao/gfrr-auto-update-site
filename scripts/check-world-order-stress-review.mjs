@@ -116,7 +116,8 @@ const weakMarketScored = scoreWorldOrderStress({
   externalSources: currentPayload.externalSources,
   marketConfirmation: { state: 'weak', score: 36 },
   dataPayload: JSON.parse(readText('data/radar-data.json')),
-  rules: JSON.parse(readText('config/world-order-rules.json'))
+  // This fixture tests the legacy market modifier, independent of Events availability.
+  rules: { ...JSON.parse(readText('config/world-order-rules.json')), gdeltEvents: { enabled: false } }
 });
 assert(weakMarketScored.decisionModifier.riskBias === 'neutral', 'weak market must keep neutral risk bias');
 assert(weakMarketScored.decisionModifier.maxStateBoost === 0, 'weak market must keep zero state boost');

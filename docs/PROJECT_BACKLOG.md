@@ -1,5 +1,14 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-10 World Order 免费 Events 统计接线
+
+- **Acceptance baseline**：owner 在两个冲突通道与区间设计后要求“请继续下一步”，执行本地 production adapter、评分接线、增量缓存与验证；独立审阅及 push/merge/发布另按对应授权执行。设计依据及显性合同变更见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。
+- **分支与范围**：codex/gdelt-events-scoring-integration 基于 latest main 776c3432，移入前三阶段研究提交，原研究分支/缓存保留；不混入另一 worktree 的 Cloud-stop 任务。新 gdeltEvents 只替换和平红利退潮、多战区冲突输入；三财务/阵营通道保留历史 Cloud，free_only 不变。
+- **实施**：冻结尺度区间、完整七日/ID/未知区间/一致整数/时效保护，独立生产缓存首次全周后每日增量；失败最多沿用 72h 原窗口，否则写入前 hold。ACLED receipt 路径新源零请求。前端沿用既有 metadata/字体/折叠结构，披露窗口/范围/未知行和旧财务代理；本 PR 符合 DESIGN.md 的所有规则。
+- **验证**：新增合成 producer/评分与发布合同回归 7/7、来源入口 27/27、桌面 1440px/手机 390px 浏览器 2/2；check:changed 选择 full 并完成 check:all，最终退出 0。本轮引入的 LF 换行与嵌套模板文案识别问题已修复，原 ACLED/中文断言未放宽；复验通过。本轮不运行真实 build:world-order，不改 data/realtime，不把研究归档晋升生产缓存，无付费调用。
+- **自审**：实际文件符合两个冲突通道方案；原严格 parser/资格与 Cloud 校准无 diff；checker 仅显性新增新模型验证，市场 modifier fixture 独立保留全部原断言；无新 skip/ignore 或生产依赖。前端核心模块仅缓存查询参数变化；生产 data/realtime 无 diff。
+- **下一步**：本地实施与必要验证完成，保留审阅提交。固定 Oct-09 背景和已采样 51,817～51,819 暴力记录的离线接线复核为 52→56、状态不变，和平红利 57→63、多战区 33→54，其他三维及市场维度不变；是口径迁移，不是线上新风险判断。独立 review、远端集成与线上首次冷启动、增量/失败验收未执行，不能称已上线。
+
 ### 2026-10-09 CSP 原生直连批次停止与 inspection 诊断
 
 - **Acceptance baseline**：owner 要求开始已提议的新批次：既有隔离 Worker 八槽 50→58、最多三更新、整个请求序列不超过五分钟、仅合成报告；不升级/新资源/生产 C/删除/重试。PR #439 已合并 `aae12fe3`；不匹配现有站点发布路径，不自动部署 CSP Worker。
@@ -357,7 +366,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `odp-news-source-attribution-3` |
+| Cache version | `gdelt-events-conflict-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

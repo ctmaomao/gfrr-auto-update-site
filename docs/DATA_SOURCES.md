@@ -1142,3 +1142,7 @@ Cloud request. Definition, cache validation and budgets are documented in
 ignored research-v2。研究候选进入和平红利退潮/多战区冲突两个通道的反事实计算，
 不晋升为生产源，不替代制裁、阵营或资本管制证据，不改变原 strict qualification。
 来源与量化政策见[设计审阅](GDELT_EVENTS_SCORING_INTEGRATION_DESIGN_2026_10_10.md)。
+
+### 免费 Events 冲突统计 runtime 合同
+
+2026-10-10 本地接线见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)：独立 gdeltEvents 从公开原始 Events 文件取得完整七日 roots 18–20 全球新闻编码记录及未知行上下界，仅进入 World Order 两个冲突维度。固定尺度 49,529～49,529.5，端点须得到相同整数通道分数；覆盖/ID/时间失败 hold。DOC/Web NGrams 不填充计数；其余三维仍含历史 Cloud 代理。独立生产缓存不得复制研究缓存，免费来源不需要凭据，原 Cloud free_only 不变；本地代码通过不代表已部署。

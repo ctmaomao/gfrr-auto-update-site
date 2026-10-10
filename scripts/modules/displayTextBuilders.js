@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=odp-news-source-attribution-3';
+﻿import { fmtNumSafe } from './config.js?v=gdelt-events-conflict-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

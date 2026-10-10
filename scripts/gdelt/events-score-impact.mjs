@@ -32,6 +32,8 @@ export function normalizedBounds(count, scale, factor = 1) {
     upper: 100 * count.upper / (count.upper + scale.lower * factor) };
 }
 export function buildImpactContext({ sources, market, data, rules, published }) {
+  // Historical Cloud comparison deliberately excludes the new runtime source.
+  rules = { ...rules, gdeltEvents: { enabled: false } };
   const baseline = scoreWorldOrderStress({ externalSources: sources, marketConfirmation: market, dataPayload: data, rules });
   if (baseline.score !== published.score || baseline.state !== published.state
     || [...DIMENSION_KEYS, 'marketConfirmation'].some(k => baseline.dimensions[k].score !== published.dimensions?.[k]?.score)) {

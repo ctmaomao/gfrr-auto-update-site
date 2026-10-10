@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=odp-news-source-attribution-3';
+﻿import { formatFiniteNumber } from './format.js?v=gdelt-events-conflict-1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
