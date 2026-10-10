@@ -1,3 +1,4 @@
+import { EVENTS_MODEL, validateEventsSource } from './world-order/gdelt-events-score.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -94,6 +95,11 @@ for (const phrase of forbiddenPhrases) {
 const payload = JSON.parse(text);
 for (const key of ['version', 'updatedAt', 'sourceMode', 'score', 'state', 'labelZh', 'confidence', 'freshness', 'marketConfirmationInput', 'externalSources', 'dimensions', 'dominantDrivers', 'systemInterpretationZh', 'decisionModifier', 'warnings']) {
   if (!(key in payload)) fail(`${key} missing`);
+}
+if (payload.scoringModel?.version === EVENTS_MODEL.version || payload.externalSources?.gdeltEvents) {
+  if (payload.scoringModel?.calibrationId !== EVENTS_MODEL.calibrationId || payload.scoringModel?.version !== EVENTS_MODEL.version) fail('Events model/source mismatch');
+  validateEventsSource(payload.externalSources.gdeltEvents, Date.parse(payload.updatedAt));
+  if (payload.confidence > payload.externalSources.gdeltEvents.confidence) fail('Events confidence cap exceeded');
 }
 assertScore(payload.score, 'score');
 assertConfidence(payload.confidence, 'confidence');

@@ -1,3 +1,4 @@
+import { EVENTS_MODEL, validateEventsSource } from './gdelt-events-score.mjs';
 import { classifyWorldOrderState } from './classify-world-order-state.mjs';
 import { acledFreshnessWeight } from './acled-freshness.mjs';
 import { scoreGdeltPressure, GDELT_SCORING_MODEL } from './gdelt-score.mjs';
@@ -194,8 +195,12 @@ function confidenceFromSources(externalSources, marketConfirmation) {
   return Math.min(availableFraction, clampConfidence(base + freshnessBonus + marketBonus - missingPenalty));
 }
 
-export function scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules }) {
+export function scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules, gdeltEvents, nowMs = Date.now() }) {
   const gdeltScore = sourceScore('gdelt', externalSources.gdelt);
+  const eventsEnabled = rules.gdeltEvents?.enabled === true;
+  const conflictScore = eventsEnabled ? validateEventsSource(gdeltEvents, nowMs) : gdeltScore;
+  const eventsEvidence = eventsEnabled ? buildEvidence('免费新闻编码暴力记录', 'gdeltEvents',
+    `完整七日窗口 ${gdeltEvents.summary.windowStartDay} 至 ${gdeltEvents.summary.windowEndDay}，暴力记录 ${gdeltEvents.summary.violenceLower} 至 ${gdeltEvents.summary.violenceUpper}；隔离未知行 ${gdeltEvents.summary.quarantinedRows}。不是人工核实的事件数。`, conflictScore, gdeltEvents.confidence) : null;
   const ofacScore = sourceScore('ofac', externalSources.ofac);
   const sipriScore = sourceScore('sipri', externalSources.sipri);
   const acledScore = sourceScore('acled', externalSources.acled);
@@ -203,12 +208,13 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
 
   const dimensions = {
     peaceDividendRetreat: {
-      score: clampScore((sipriScore * 0.35) + (gdeltScore * 0.20) + (acledScore * 0.25) + (moduleScore * 0.20)),
+      score: clampScore((sipriScore * 0.35) + (conflictScore * 0.20) + (acledScore * 0.25) + (moduleScore * 0.20)),
       labelZh: DIMENSION_LABELS_ZH.peaceDividendRetreat,
       trend: 'watching',
       evidence: sanitizeEvidence([
         buildSipriEvidence(externalSources.sipri, sipriScore),
-        buildAcledEvidence(externalSources.acled, acledScore)
+        buildAcledEvidence(externalSources.acled, acledScore),
+        ...(eventsEvidence ? [eventsEvidence] : [])
       ])
     },
     blocFormation: {
@@ -220,11 +226,11 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
       ])
     },
     multiTheaterConflict: {
-      score: clampScore((gdeltScore * 0.7) + (moduleScore * 0.3)),
+      score: clampScore((conflictScore * 0.7) + (moduleScore * 0.3)),
       labelZh: DIMENSION_LABELS_ZH.multiTheaterConflict,
       trend: 'watching',
       evidence: sanitizeEvidence([
-        buildEvidence('多区域冲突报道密度', 'GDELT/modules', '由 GDELT 与既有地缘模块估算；ACLED 仅进入和平红利退潮维度。', gdeltScore, 0.55)
+        ...(eventsEvidence ? [eventsEvidence] : [buildEvidence('多区域冲突报道密度', 'GDELT/modules', '由 GDELT 与既有地缘模块估算；ACLED 仅进入和平红利退潮维度。', gdeltScore, 0.55)])
       ])
     },
     economicWeaponization: {
@@ -268,7 +274,7 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
     moduleScore * (Number(scoreWeights.existingRiskModules) || 0.1)
   );
   const classification = classifyWorldOrderState(finalScore);
-  const confidence = confidenceFromSources(externalSources, marketConfirmation);
+  const confidence = Math.min(confidenceFromSources(externalSources, marketConfirmation), eventsEnabled ? gdeltEvents.confidence : 1);
 
   const dominantDrivers = DIMENSION_KEYS
     .map((key) => ({ key, labelZh: dimensions[key].labelZh, score: dimensions[key].score }))
@@ -294,7 +300,7 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
   }
 
   return {
-    scoringModel: GDELT_SCORING_MODEL,
+    scoringModel: eventsEnabled ? EVENTS_MODEL : GDELT_SCORING_MODEL,
     score: finalScore,
     state: classification.state,
     labelZh: classification.labelZh,
@@ -305,6 +311,6 @@ export function scoreWorldOrderStress({ externalSources, marketConfirmation, dat
       ? `世界秩序压力主要来自：${dominantDrivers.map((item) => item.labelZh).join('、')}。该层仅用于结构性风险识别。`
       : '世界秩序压力处于低位或证据不足，当前仅作为观察层保留。',
     decisionModifier,
-    warnings: [`${WORLD_ORDER_WARNING} GDELT 压力已采用固定历史参考尺度；本版世界秩序分数与旧版不可直接比较，分数下降不代表现实风险下降。`]
+    warnings: eventsEnabled ? [`${WORLD_ORDER_WARNING} 免费 Events 已进入和平红利退潮与多战区冲突统计；统计的是全球新闻编码记录，不等于真实冲突次数。新旧分数不可直接比较；其余三个维度仍保留注明时效的历史 Cloud 代理，置信度受限。`, ...gdeltEvents.warnings] : [`${WORLD_ORDER_WARNING} GDELT 压力已采用固定历史参考尺度；本版世界秩序分数与旧版不可直接比较，分数下降不代表现实风险下降。`]
   };
 }

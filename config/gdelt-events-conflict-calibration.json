@@ -1,0 +1,20 @@
+{
+  "id": "gdelt-events-roots18-20-20260820-20261007-interval-v1",
+  "modelVersion": "gdelt-events-conflict-interval-v1",
+  "definitionId": "gdelt-events-research-v2-roots18-20-global",
+  "scaleLower": 49529,
+  "scaleUpper": 49529.5,
+  "trainingFirstEndDay": "20260826",
+  "trainingLastEndDay": "20260924",
+  "holdoutFirstEndDay": "20261001",
+  "holdoutLastEndDay": "20261007",
+  "trainingWindows": 30,
+  "embargoEndDays": 6,
+  "holdoutWindows": 7,
+  "method": "Frozen medians of complete-window classified-count lower bounds and worst-case unknown-row upper bounds; no online refit",
+  "publicationRule": "Both endpoints must round to the same integer conflict-channel score; missing files, conflicting or ambiguous IDs hold",
+  "countUnit": "unique_news_coded_violent_event_records",
+  "countrySystem": "FIPS_ActionGeo",
+  "scope": ["peaceDividendRetreat", "multiTheaterConflict"],
+  "comparableToCloud": false
+}

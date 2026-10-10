@@ -1032,7 +1032,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-news-source-attribution-3`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `gdelt-events-conflict-1`）。
 
 稳定边界：
 
@@ -1497,24 +1497,24 @@ Boundaries:
 
 各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `odp-news-source-attribution-3`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `gdelt-events-conflict-1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=odp-news-source-attribution-3`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=odp-news-source-attribution-3`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `odp-news-source-attribution-3`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=gdelt-events-conflict-1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=gdelt-events-conflict-1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `gdelt-events-conflict-1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs odp-news-source-attribution-3
-npm run bump:frontend-asset-version -- odp-news-source-attribution-3
+node scripts/bump-frontend-asset-version.mjs gdelt-events-conflict-1
+npm run bump:frontend-asset-version -- gdelt-events-conflict-1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `odp-news-source-attribution-3`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `gdelt-events-conflict-1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -2531,3 +2531,7 @@ Weekly sanitizer outputs add `quality.weeklyWindow` with a shared `latestWeek`, 
 ### Bubble 周度来源与简版判读补充（ADR-0062）
 
 新闻 sourceLedger 可保留 sourceName 与 contentScope（excerpt/title_only），禁止保存 snippet 的规则不变。专业媒体列表、80 字符摘要要求、归因、摘要数字/引述检查、简版数量与长度的现行权威规则见 [ADR-0062](ADR/0062-bubble-editorial-attributed-media.md) 和周度设计的 2026-10-06 窄范围替代节。
+
+### World Order Events 可选来源
+
+新模型 gdelt-events-conflict-interval-v1 要求 externalSources.gdeltEvents：enabled/status/lastFetchedAt/confidence、summary 的 schema/calibration/definition、windowStartDay/windowEndDay、672 downloadedFiles、quarantinedRows、零 conflictingIds/ambiguousIds、violenceLower/Upper、channelScoreLower/Upper/channelScore、strictQualification、latestTimestamp 与缓存原因。新旧分数不可直接比较。新源 confidence ≤0.55，stale ≤0.25；保留原 acquisition，72h 后 hold。旧模型历史 JSON 不强制补字段。仅两个冲突维度读新源；其余三维、主模型及交叉验证源证据保持既有路径。见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。

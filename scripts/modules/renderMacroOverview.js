@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=odp-news-source-attribution-3';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=odp-news-source-attribution-3';
+} from './config.js?v=gdelt-events-conflict-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=gdelt-events-conflict-1';
 import {
   brentModeZh,
   moduleTone,
@@ -17,11 +17,11 @@ import {
   sourceModeZh,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=odp-news-source-attribution-3';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=odp-news-source-attribution-3';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=odp-news-source-attribution-3';
-import { renderTrendSvg } from './renderMacroTrend.js?v=odp-news-source-attribution-3';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=odp-news-source-attribution-3';
+} from './macroOverviewDisplayHelpers.js?v=gdelt-events-conflict-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=gdelt-events-conflict-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=gdelt-events-conflict-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=gdelt-events-conflict-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=gdelt-events-conflict-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2521,9 +2521,15 @@ function renderWorldOrderStress({ worldOrderStressData }) {
     setLeafText('wo-detail-acled-latest-week', woDateOrDash(acledSummary.latestWeek));
     setLeafText('wo-detail-acled-events-4w', woCountOrDash(acledSummary.eventsLast4Weeks));
     setLeafText('wo-detail-acled-monthly-asof', woDateOrDash(acledSummary.monthlyAsOfDate));
-    setLeafText('wo-detail-gdelt-conflict-events', woCountOrDash(wo.externalSources?.gdelt?.summary?.conflictEvents));
+    const eventsSource = wo.externalSources?.gdeltEvents;
+    const eventsSummary = eventsSource?.summary;
+    setLeafText('wo-detail-gdelt-conflict-events', eventsSummary
+      ? `${woCountOrDash(eventsSummary.violenceLower)}～${woCountOrDash(eventsSummary.violenceUpper)}（免费编码记录）`
+      : `${woCountOrDash(wo.externalSources?.gdelt?.summary?.conflictEvents)}（历史 Cloud）`);
     const freshnessLabel = (value) => ({ fresh: '新鲜', aging: '偏旧', stale: '过期', error: '读取失败', not_configured: '未配置', missing: '缺失' })[value] || '待确认';
-    setLeafText('wo-detail-source-freshness', `ACLED 周表时效：${freshnessLabel(acledSummary.sourceFreshness)}；月表时效：${freshnessLabel(acledSummary.monthlySourceFreshness)}。`);
+    const eventsFreshnessNote = eventsSummary
+      ? `免费记录窗口：${eventsSummary.windowStartDay}～${eventsSummary.windowEndDay}；${eventsSource.status === 'stale' ? '沿用历史窗口' : '完整七日文件'}，未知隔离 ${woCountOrDash(eventsSummary.quarantinedRows)} 行，仅计入两个冲突维度；其余三维仍含历史 Cloud 代理。` : '';
+    setLeafText('wo-detail-source-freshness', `ACLED 周表时效：${freshnessLabel(acledSummary.sourceFreshness)}；月表时效：${freshnessLabel(acledSummary.monthlySourceFreshness)}。${eventsFreshnessNote}`);
 
     const dimMap = {
       peaceDividendRetreat: 'peace',
@@ -2539,7 +2545,7 @@ function renderWorldOrderStress({ worldOrderStressData }) {
       if (!tone) document.getElementById(`wo-dim-${slug}`)?.classList.remove('low', 'med', 'high', 'severe');
       updateToneClass(`wo-dim-${slug}`, ['low', 'med', 'high', 'severe'], tone);
       setLeafText(`wo-dim-${slug}-score`, scoreText(dim.score));
-      const sourceLabels = { gdelt: 'GDELT', ofac: 'OFAC', sipri: 'SIPRI', acled: 'ACLED', modules: '既有模块代理', market: '市场代理' };
+      const sourceLabels = { gdeltevents: '免费 Events', gdelt: 'GDELT', ofac: 'OFAC', sipri: 'SIPRI', acled: 'ACLED', modules: '既有模块代理', market: '市场代理' };
       const evidence = Array.isArray(dim.evidence) ? dim.evidence : [];
       const sources = [...new Set(evidence.flatMap((item) => String(item?.source || '').toLowerCase().split('/').map((source) => sourceLabels[source.split(':')[0]] || '来源待确认')))];
       // Upstream trendFromScore buckets a current score; it is not a time delta.

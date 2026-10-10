@@ -1,5 +1,16 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-10 World Order 免费 Events 统计接线
+
+- **Acceptance baseline**：owner 在两个冲突通道与区间设计后要求“请继续下一步”，执行本地 production adapter、评分接线、增量缓存与验证；独立审阅及 push/merge/发布另按对应授权执行。设计依据及显性合同变更见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。
+- **追加授权（2026-10-10）**：owner 明确委托独立 AI 代审；通过后授权本任务推送 PR、合并 main 和上线。延续既有免费来源授权，首次线上采集与验收仅用免费 Events，不触发付费 AI/Cloud 或其它任务发布。
+- **独立 AI 代审**：独立 reviewer 审阅最新 main d0fdd3cf 合并后的任务差异，通过且无阻断发现；独立离线 Events 测试 23/23、退出 0。真实首轮 672 文件与后续增量命中仍须线上验收，审阅不认证金融预测能力。
+- **CI 修复**：PR #444 首次 measured unit 测试暴露旧验证器 fixture 缺少新增 import 依赖；仅补复制新校准 JSON 与 scripts/gdelt，原断言/负例保留。独立增量 review 通过，相关测试 4/4、退出 0；发布仍等待修复后的完整检查及 CI。
+- **分支与范围**：codex/gdelt-events-scoring-integration 基于 latest main 776c3432，移入前三阶段研究提交，原研究分支/缓存保留；不混入另一 worktree 的 Cloud-stop 任务。新 gdeltEvents 只替换和平红利退潮、多战区冲突输入；三财务/阵营通道保留历史 Cloud，free_only 不变。
+- **实施**：冻结尺度区间、完整七日/ID/未知区间/一致整数/时效保护，独立生产缓存首次全周后每日增量；失败最多沿用 72h 原窗口，否则写入前 hold。ACLED receipt 路径新源零请求。前端沿用既有 metadata/字体/折叠结构，披露窗口/范围/未知行和旧财务代理；本 PR 符合 DESIGN.md 的所有规则。
+- **验证**：新增合成 producer/评分与发布合同回归 7/7、来源入口 27/27、桌面 1440px/手机 390px 浏览器 2/2；check:changed 选择 full 并完成 check:all，最终退出 0。本轮引入的 LF 换行与嵌套模板文案识别问题已修复，原 ACLED/中文断言未放宽；复验通过。本轮不运行真实 build:world-order，不改 data/realtime，不把研究归档晋升生产缓存，无付费调用。
+- **自审**：实际文件符合两个冲突通道方案；原严格 parser/资格与 Cloud 校准无 diff；checker 仅显性新增新模型验证，市场 modifier fixture 独立保留全部原断言；无新 skip/ignore 或生产依赖。前端核心模块仅缓存查询参数变化；生产 data/realtime 无 diff。
+- **下一步**：本地实施与必要验证完成，保留审阅提交。固定 Oct-09 背景和已采样 51,817～51,819 暴力记录的离线接线复核为 52→56、状态不变，和平红利 57→63、多战区 33→54，其他三维及市场维度不变；是口径迁移，不是线上新风险判断。独立 review、远端集成与线上首次冷启动、增量/失败验收未执行，不能称已上线。
 ### 2026-10-09 CSP 独立 inspection 取证准备
 
 - **Acceptance baseline**：owner 批准 #441 合并及随后具体归档失败锁；原字节/九项证据核对，58/500不退，不重跑。随后要求持续完成准备至授权门槛；本新候选不继承旧review、push/merge或平台批准。
@@ -34,6 +45,29 @@
 - **当前任务**：ARR 37309378856 仍 candidate_failed/weekly_history_invalid。现存日志没有失败阶段，当前元数据不证明历史调用当时状态，根因未确认。增加固定阶段/HTTP 状态/请求计数，保留所有拒绝断言与预算；HAPI 四槽保持停止，作为备用源研究，不再阻塞已验收 XLSX 自动更新。
 - **下一步 / 阻塞**：本修复通过验证和独立 review 后才合并；下一次自然周一候选可提供诊断，不制造 schedule 或复用旧预算。原 heartbeat 保持暂停，旧截止任务不伪装恢复；跨周期验收仍未完成，生产来源切换仍未批准。
 - **验证**：ARR 专项 18/18、`npm run check:changed`（实际执行完整 `check:all`）及 `git diff --check` 均退出 0；CLI dry-run 零网络。新增离线失败阶段及真实 CLI 脱敏回归；未删除/放宽 checker 断言、未新增依赖或 ignore。不以离线通过声称线上根因已修复。
+### 2026-10-10 免费 Events 量化评分接入设计与离线回放
+
+- **Acceptance baseline**：owner 否定仅展示，明确要求免费数据进入 World Order 量化分析，并批准开始评分接入设计/离线影响回放。研究候选进入冲突通道，不扩成所有金融维度；本轮不写生产、不改线上评分、不自动授权发布。
+- **最后基线 / 改动**：同一 `codex/gdelt-events-candidate` 研究分支延续，前两阶段提交保留。评分依赖与最新 World Order 快照提交 `60f58f24c0e2e39bfc5629cb5e57f28a19c50343` 完全一致；该提交的规则、雷达数据与 World Order 快照复算 parity 通过。新增区间拟合/两通道反事实研究、完全离线 CLI、负例与设计文档，不修改现行 runtime/checker/校准。
+- **当前任务**：49 日原预定训练/隔离/检验方案保持；未知行全取最坏上界，研究尺度界 49,529–49,529.5，原 strict 单点尺度仍 null。固定近期背景下，两个冲突通道候选 52→56（状态不变），尺度 ×0.5～1.5 后 55～58；两条未知行未改变整数分或状态。新尺度替换全部通道得 59，旧尺度直接塞免费计数得 71，均不推荐。不能将此反事实结果当成历史预测验证或现实风险上升。
+- **验证 / 保护网**：`check:changed` 选择 full 并完成 `check:all`，退出 0；末轮缓存总预算/未来日守卫与不确定状态负例补充后，来源入口 20/20、研究专项 4/4、文档/语法/whitespace 再验退出 0。实际离线回放与 bounded smoke 退出 0、requests=0；默认运行前后报告数 2→2，无报告写入。旧严格资格、原模型、checker/assertion/ignore、data、frontend、workflow diff 均为空；研究报告 productionEligible/scoringConnected=false、approvedPointScale=null。
+- **下一步 / 剩余边界**：完成检查后本地交付设计。独立审阅两个冲突通道的区间认证、新尺度与失败/时效政策，再实施生产迁移。三条非冲突 Cloud 通道尚未迁移，不能宣称全模块替换；长周期新闻量/地域混杂验证仍缺，不以本轮小样本认证金融预测能力。未 push/merge/部署。
+
+### 2026-10-08 World Order 免费 Events 候选
+
+- **Acceptance baseline**：owner 同意原始 Events 做统计、DOC/Web NGrams 辅助观察的免费路线；先独立采样验证覆盖、去重、运行成本和分类，再替换 World Order 输入。本轮实施免费公开文件候选工具及源审阅，不恢复 Cloud，不付费，不改生产评分或 JSON，不新增定时任务/发布；评分替换须经过实际数据校准与独立评审。
+- **最后基线 / 改动**：分支 `codex/gdelt-events-candidate`、隔离 worktree `gdelt-events-candidate`，基于 latest origin/main `0ceefbe3`。原 main 与上一任务 `gdelt-cloud-stop` 未提交改动均保留，不堆叠旧任务。新增 Events 公共文件 transport、受限 ZIP reader、61 列投影/七日聚合、手动 CLI 与现有来源检查中的离线回归。
+- **当前任务**：采集候选与源/校准审阅已落地。完整窗口 UTC 2026-09-30～10-06：673 请求、44,247,857 bytes、189,056 ms；671/672 文件通过。一份文件两条上游 root=`--` 记录被严格拒绝；索引标签出现未来时间也被 freshness hold。通过文件子集记录物质冲突 92,023、言语冲突 88,921、未知发生地 3,056；不是合格全周计数，七日 qualified count 与 score 均 null。末轮 4 文件 no-output smoke 退出 0，保留全周失败证据。候选显性区分新收录事件记录、新闻篇数、真实冲突次数，缺文件不记零，不提供死亡/评分。源注册、分类/地域分布和新尺度评审见 [审阅](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md)。
+- **验证 / 自审**：新增单测 7/7（含实际 `--` 异常回归、历史窗口不可冒充当前）退出 0；`check:changed` 选择 full 并完成 `check:all`、退出 0；末轮 CLI 总记录预算/参数与历史窗口保护修订后，重新执行 `check:gdelt-source-policy` 11/11、退出 0。四个新增模块语法检查、文档与 `git diff --check` 退出 0。full live probe 退出 1 是如实的数据质量/覆盖阻断，不是工具崩溃；默认 offline/无写入和小样本 live smoke 退出 0。实际文件符合先验证再接线的方案；既有 checker/assertion/ignore 未放宽，生产评分/JSON/工作流无改动，无 Cloud/付费请求。源码本地交付检查成功不代表真实来源七日资格通过。
+- **下一步 / 阻塞**：第一阶段本地实施与验证完成。生产替换仍需解决异常记录/来源时钟语义，固定冲突类别与国家范围，积累同定义完整观测及后续 holdout，再独立校准/模型审阅；不能复用旧 Cloud 尺度或以放宽解析凑齐覆盖。未授权 push/merge/发布，不自动创建每日采样任务；本轮先验证再接线的阶段边界保持。
+
+### 2026-10-08 World Order Events 第二阶段：研究归档与校准准备
+
+- **Acceptance baseline**：owner 明确要求“请开始下一阶段”，延续免费 Events 来源分类、历史采样和校准准备；同一任务分支继续本地实施，不扩大到生产评分接线、定时任务或发布。
+- **实施**：独立 research-v2 合同保留原严格 parser/qualification，坏行只隔离；每日 96 文件完整归档，保留汇总组/哈希 ID/文件摘要，缺文件不记零，既有缓存不覆盖。研究主序列为 CAMEO roots 18–20，15–20/言语/跨演员国家作为对照，保留全球发生地范围。49 日支持 30 个训练窗口、6 日隔离和 7 个后续检验窗口；坏行、缺失或歧义阻断尺度，所有生产批准仍 false。
+- **当前验证**：`check:changed` full / `check:all` 退出 0；末轮研究缓存类型校验与覆盖摘要补充后，研究单测 5/5、来源入口 16/16 再验退出 0。最新 UTC 10-01～10-07：672 文件、44,421,232 bytes、213,493 ms；两条异常、暴力有效子集 51,817。完整 08-20～10-07 历史回放：49/49 日、4,704 文件、304,305,977 bytes、4,818,952 行；09-08 一条、10-06 两条 event_code 异常。训练 23/30、holdout 5/7 合格，尺度 null；有效子集训练中位数 49,529 仅作描述。最终重放复用 49 日缓存，requests=0。全部下载 batch 退出 0，无传输失败；源数据资格阻断不伪装为通过。
+- **阶段结果 / 下一步**：第二阶段本地归档/分类/回放准备完成。生产仍未接线；须独立审定“全球新闻编码记录”指标语义、少量未知分类的披露/质量政策及新尺度，不能把坏行当零、采用旧 Cloud 阈值或直接把 valid subset 晋升为合格全周统计。该审定属于下一阶段，不由本次工具通过自动批准。
+- **保护网自审**：既有 source checker、原严格 parser/测试、Cloud 校准、生产数据与工作流 diff 均为空；没有新 skip/ignore 或依赖。ignored 每日缓存已核对。未 push/merge/发布。
 
 ### 2026-10-06 Bubble 周度判读来源与简版改进
 
@@ -340,7 +374,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `odp-news-source-attribution-3` |
+| Cache version | `gdelt-events-conflict-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

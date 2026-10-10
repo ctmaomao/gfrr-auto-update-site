@@ -741,6 +741,14 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### GDELT site-wide source policy
 
+2026-10-08 owner 同意免费原始 Events 统计候选，先验证再替换 World Order 输入。
+`diagnose:gdelt-events` 归属 artifact_sanitizer_layer，默认无网络/无写入，显式
+`--allow-network` 仅抓公开文件并写 ignored 七日候选报告；全周需 672 时段齐全。
+国家使用 ActionGeo FIPS、按事件编号去重，区分物质/言语冲突及采集/发生日期；
+计数不是人工核实的实际冲突次数。评分、生产 JSON、自动 workflow 均未接入。
+来源注册、预算、校准与晋升条件见
+[Events 候选审阅](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md)。
+
 2026-10-02 owner 选择零订阅费用路线：World Order 的
 `gdelt.accessPolicy=free_only` 在密钥读取和 fresh-cache 路径前阻断 Cloud 请求。
 仅保留带原始采集时间的历史摘要并标为 stale，沿用现行过期折扣；不重新校准
@@ -1117,3 +1125,24 @@ Bubble 周度新闻频率补充（ADR-0050）：周三允许一次有持久预�
 ### Bubble 周度专业媒体证据（2026-10-06）
 
 owner 批准 [ADR-0062](ADR/0062-bubble-editorial-attributed-media.md)：已有 Tavily/Brave 返回的 Morningstar、FT、Bloomberg、CNBC、Reuters、WSJ、The Information 内容可登记为 attributed_media。精确域名及子域名匹配不等于全部路径无条件合格：社区、论坛、评论与 sponsored 路径不进入该类别；有效日期和至少 80 字符可用摘要仍必需。不新增抓取源或搜索请求，不抓取付费全文。加州司法部 oag.ca.gov 精确登记为官方机构；不得泛化到所有 gov 域名。
+
+The 2026-10-08 second-stage `research:gdelt-events` is a separate manual, ignored
+historical research archive under the same artifact_sanitizer_layer. Daily groups
+retain hashed ID membership and file digests, no raw source content. Quarantine
+never qualifies a full count or enables scoring; 49 source days support 30 training
+windows, six embargo end dates and seven subsequent holdout windows. This is
+source/calibration preparation only; no production source writer, automation or
+Cloud request. Definition, cache validation and budgets are documented in
+[GDELT Events review](GDELT_EVENTS_CANDIDATE_REVIEW_2026_10_08.md#phase-2-research-archive-and-calibration-preparation).
+
+### 免费 Events 量化接入研究（2026-10-10）
+
+`replay:gdelt-events-score-impact` 是 artifact_sanitizer_layer 的无网络研究入口，
+仅消费 ignored sanitized 历史缓存和固定 Git 基线；默认无写入，显式报告写入也仅限
+ignored research-v2。研究候选进入和平红利退潮/多战区冲突两个通道的反事实计算，
+不晋升为生产源，不替代制裁、阵营或资本管制证据，不改变原 strict qualification。
+来源与量化政策见[设计审阅](GDELT_EVENTS_SCORING_INTEGRATION_DESIGN_2026_10_10.md)。
+
+### 免费 Events 冲突统计 runtime 合同
+
+2026-10-10 本地接线见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)：独立 gdeltEvents 从公开原始 Events 文件取得完整七日 roots 18–20 全球新闻编码记录及未知行上下界，仅进入 World Order 两个冲突维度。固定尺度 49,529～49,529.5，端点须得到相同整数通道分数；覆盖/ID/时间失败 hold。DOC/Web NGrams 不填充计数；其余三维仍含历史 Cloud 代理。独立生产缓存不得复制研究缓存，免费来源不需要凭据，原 Cloud free_only 不变；本地代码通过不代表已部署。

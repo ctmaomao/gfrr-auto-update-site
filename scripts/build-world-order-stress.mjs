@@ -1,3 +1,4 @@
+import { fetchGdeltEvents } from './world-order/fetch-gdelt-events.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -119,6 +120,8 @@ function printBuildSummary(output) {
   if (gdelt.status === 'stale' || gdelt.status === 'partial') {
     console.log(`GDELT reason: ${shortNote(gdeltSummary.cacheReason || (Array.isArray(gdeltSummary.errors) ? gdeltSummary.errors.join('; ') : null))}`);
   }
+  const events = output.externalSources?.gdeltEvents;
+  if (events) console.log(`GDELT Events: ${events.status} requests=${events.diagnostics?.requests ?? 0} window=${events.summary.windowEndDay} quarantined=${events.summary.quarantinedRows}`);
   console.log(`OFAC: ${fmtText(ofac.status)} recentActions=${fmtValue(ofacSummary.recentActionsCount)} listUpdates=${fmtValue(ofacSummary.listUpdatesCount)}`);
   console.log(`SIPRI: ${fmtText(sipri.status)} updatedYear=${fmtValue(sipriSummary.updatedYear)} note=${shortNote(sipriSummary.noteZh)}`);
   console.log(`ACLED: ${fmtText(acled.status)} enabled=${acled.enabled === true}`);
@@ -159,9 +162,12 @@ async function main() {
   const gdelt = stripBuildOnlyFields(gdeltRaw);
 
   const externalSources = normalizeSourceMap({ gdelt, ofac, sipri, acled });
+  const sourceFreeRefresh = ['ACLED_CONFIG_COMMIT', 'ACLED_WEEKLY_SHA256', 'ACLED_MONTHLY_SHA256'].some(key => Boolean(process.env[key]?.trim()));
+  const gdeltEvents = await fetchGdeltEvents({ config: rules.gdeltEvents,
+    previousSource: previous?.externalSources?.gdeltEvents, allowNetwork: !sourceFreeRefresh, root });
   const marketConfirmationInput = await selectMarketConfirmationInput({ dataPayload, realtimePayload });
   const marketConfirmation = buildMarketConfirmation({ marketConfirmationInput, rules });
-  const scored = scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules });
+  const scored = scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules, gdeltEvents });
   const freshness = freshnessFromSources(externalSources);
   const sourceMode = freshness === 'fresh'
     ? 'computed_with_external_sources'
@@ -205,6 +211,8 @@ async function main() {
     warnings
   });
 
+  if (gdeltEvents) output.externalSources.gdeltEvents = gdeltEvents;
+  // Scoring validates the Events source before any production artifact is written.
   fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`);
   if (gdeltCacheArtifact) {
     fs.writeFileSync(gdeltCacheOutputPath, `${JSON.stringify(compactObject(gdeltCacheArtifact), null, 2)}\n`);

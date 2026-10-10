@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=odp-news-source-attribution-3';
+} from '../../scripts/modules/config.js?v=gdelt-events-conflict-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
