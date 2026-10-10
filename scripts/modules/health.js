@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=gdelt-events-conflict-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=gdelt-events-conflict-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=freight-observation-status-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=freight-observation-status-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
