@@ -1,5 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-09 CSP 独立 inspection 取证准备
+
+- **Acceptance baseline**：owner 批准 #441 合并及随后具体归档失败锁；原字节/九项证据核对，58/500不退，不重跑。随后要求持续完成准备至授权门槛；本新候选不继承旧review、push/merge或平台批准。
+- **当前任务**：latest main `2875b755`，分支 `codex/csp-inspection-probe-preparation`。新增独立GET-only入口与离线回归，新路径/新指纹及真实failed-result/归档锁/移动回执lineage，固定三槽58→61；原内容validator保持不变，内容拒绝前落盘脱敏诊断，不改Worker/SQL/alarm/retention/生产配置。
+- **下一步 / 门槛**：完成离线/完整检查和自审后，请求新的独立AI只读review；远端push/独立PR及merge分别需对应批准。实际平台开窗/显式关闭最多两更新、三GET/五分钟须新具体批准，暂时公开端点及共享额度风险仍存在。详见[准备方案](CSP_INSPECTION_PROBE_PREPARATION_2026_10_09.md)。
+
 ### 2026-10-09 CSP 原生直连批次停止与 inspection 诊断
 
 - **Acceptance baseline**：owner 要求开始已提议的新批次：既有隔离 Worker 八槽 50→58、最多三更新、整个请求序列不超过五分钟、仅合成报告；不升级/新资源/生产 C/删除/重试。PR #439 已合并 `aae12fe3`；不匹配现有站点发布路径，不自动部署 CSP Worker。
