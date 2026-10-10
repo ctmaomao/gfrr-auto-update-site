@@ -3,11 +3,18 @@
 ### 2026-10-10 World Order 免费 Events 统计接线
 
 - **Acceptance baseline**：owner 在两个冲突通道与区间设计后要求“请继续下一步”，执行本地 production adapter、评分接线、增量缓存与验证；独立审阅及 push/merge/发布另按对应授权执行。设计依据及显性合同变更见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。
+- **追加授权（2026-10-10）**：owner 明确委托独立 AI 代审；通过后授权本任务推送 PR、合并 main 和上线。延续既有免费来源授权，首次线上采集与验收仅用免费 Events，不触发付费 AI/Cloud 或其它任务发布。
+- **独立 AI 代审**：独立 reviewer 审阅最新 main d0fdd3cf 合并后的任务差异，通过且无阻断发现；独立离线 Events 测试 23/23、退出 0。真实首轮 672 文件与后续增量命中仍须线上验收，审阅不认证金融预测能力。
 - **分支与范围**：codex/gdelt-events-scoring-integration 基于 latest main 776c3432，移入前三阶段研究提交，原研究分支/缓存保留；不混入另一 worktree 的 Cloud-stop 任务。新 gdeltEvents 只替换和平红利退潮、多战区冲突输入；三财务/阵营通道保留历史 Cloud，free_only 不变。
 - **实施**：冻结尺度区间、完整七日/ID/未知区间/一致整数/时效保护，独立生产缓存首次全周后每日增量；失败最多沿用 72h 原窗口，否则写入前 hold。ACLED receipt 路径新源零请求。前端沿用既有 metadata/字体/折叠结构，披露窗口/范围/未知行和旧财务代理；本 PR 符合 DESIGN.md 的所有规则。
 - **验证**：新增合成 producer/评分与发布合同回归 7/7、来源入口 27/27、桌面 1440px/手机 390px 浏览器 2/2；check:changed 选择 full 并完成 check:all，最终退出 0。本轮引入的 LF 换行与嵌套模板文案识别问题已修复，原 ACLED/中文断言未放宽；复验通过。本轮不运行真实 build:world-order，不改 data/realtime，不把研究归档晋升生产缓存，无付费调用。
 - **自审**：实际文件符合两个冲突通道方案；原严格 parser/资格与 Cloud 校准无 diff；checker 仅显性新增新模型验证，市场 modifier fixture 独立保留全部原断言；无新 skip/ignore 或生产依赖。前端核心模块仅缓存查询参数变化；生产 data/realtime 无 diff。
 - **下一步**：本地实施与必要验证完成，保留审阅提交。固定 Oct-09 背景和已采样 51,817～51,819 暴力记录的离线接线复核为 52→56、状态不变，和平红利 57→63、多战区 33→54，其他三维及市场维度不变；是口径迁移，不是线上新风险判断。独立 review、远端集成与线上首次冷启动、增量/失败验收未执行，不能称已上线。
+### 2026-10-09 CSP 独立 inspection 取证准备
+
+- **Acceptance baseline**：owner 批准 #441 合并及随后具体归档失败锁；原字节/九项证据核对，58/500不退，不重跑。随后要求持续完成准备至授权门槛；本新候选不继承旧review、push/merge或平台批准。
+- **当前任务**：latest main `2875b755`，分支 `codex/csp-inspection-probe-preparation`。新增独立GET-only入口与离线回归，新路径/新指纹及真实failed-result/归档锁/移动回执lineage，固定三槽58→61；原内容validator保持不变，内容拒绝前落盘脱敏诊断，不改Worker/SQL/alarm/retention/生产配置。
+- **下一步 / 门槛**：完成离线/完整检查和自审后，请求新的独立AI只读review；远端push/独立PR及merge分别需对应批准。实际平台开窗/显式关闭最多两更新、三GET/五分钟须新具体批准，暂时公开端点及共享额度风险仍存在。详见[准备方案](CSP_INSPECTION_PROBE_PREPARATION_2026_10_09.md)。
 
 ### 2026-10-09 CSP 原生直连批次停止与 inspection 诊断
 
