@@ -5,6 +5,7 @@
 - **Acceptance baseline**：owner 在两个冲突通道与区间设计后要求“请继续下一步”，执行本地 production adapter、评分接线、增量缓存与验证；独立审阅及 push/merge/发布另按对应授权执行。设计依据及显性合同变更见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。
 - **追加授权（2026-10-10）**：owner 明确委托独立 AI 代审；通过后授权本任务推送 PR、合并 main 和上线。延续既有免费来源授权，首次线上采集与验收仅用免费 Events，不触发付费 AI/Cloud 或其它任务发布。
 - **独立 AI 代审**：独立 reviewer 审阅最新 main d0fdd3cf 合并后的任务差异，通过且无阻断发现；独立离线 Events 测试 23/23、退出 0。真实首轮 672 文件与后续增量命中仍须线上验收，审阅不认证金融预测能力。
+- **CI 修复**：PR #444 首次 measured unit 测试暴露旧验证器 fixture 缺少新增 import 依赖；仅补复制新校准 JSON 与 scripts/gdelt，原断言/负例保留。独立增量 review 通过，相关测试 4/4、退出 0；发布仍等待修复后的完整检查及 CI。
 - **分支与范围**：codex/gdelt-events-scoring-integration 基于 latest main 776c3432，移入前三阶段研究提交，原研究分支/缓存保留；不混入另一 worktree 的 Cloud-stop 任务。新 gdeltEvents 只替换和平红利退潮、多战区冲突输入；三财务/阵营通道保留历史 Cloud，free_only 不变。
 - **实施**：冻结尺度区间、完整七日/ID/未知区间/一致整数/时效保护，独立生产缓存首次全周后每日增量；失败最多沿用 72h 原窗口，否则写入前 hold。ACLED receipt 路径新源零请求。前端沿用既有 metadata/字体/折叠结构，披露窗口/范围/未知行和旧财务代理；本 PR 符合 DESIGN.md 的所有规则。
 - **验证**：新增合成 producer/评分与发布合同回归 7/7、来源入口 27/27、桌面 1440px/手机 390px 浏览器 2/2；check:changed 选择 full 并完成 check:all，最终退出 0。本轮引入的 LF 换行与嵌套模板文案识别问题已修复，原 ACLED/中文断言未放宽；复验通过。本轮不运行真实 build:world-order，不改 data/realtime，不把研究归档晋升生产缓存，无付费调用。

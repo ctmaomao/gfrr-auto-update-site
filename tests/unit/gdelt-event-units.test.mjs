@@ -63,7 +63,9 @@ test('real World Order validator accepts the explicit unit migration and rejects
     fs.mkdirSync(path.join(fixture,'scripts/lib'));fs.copyFileSync(new URL('../../scripts/lib/check-script-helpers.mjs',import.meta.url),path.join(fixture,'scripts/lib/check-script-helpers.mjs'));
     for(const name of ['check-world-order-stress.mjs','check-world-order-stress-review.mjs','review-world-order-stress.mjs'])fs.copyFileSync(new URL(`../../scripts/${name}`,import.meta.url),path.join(fixture,'scripts',name));
     fs.cpSync(new URL('../../scripts/world-order',import.meta.url),path.join(fixture,'scripts/world-order'),{recursive:true});
-    fs.mkdirSync(path.join(fixture,'config'));fs.copyFileSync(new URL('../../config/gdelt-score-calibration.json',import.meta.url),path.join(fixture,'config/gdelt-score-calibration.json'));
+    fs.cpSync(new URL('../../scripts/gdelt',import.meta.url),path.join(fixture,'scripts/gdelt'),{recursive:true});
+    fs.mkdirSync(path.join(fixture,'config'));
+    for(const name of ['gdelt-score-calibration.json','gdelt-events-conflict-calibration.json'])fs.copyFileSync(new URL(`../../config/${name}`,import.meta.url),path.join(fixture,'config',name));
     fs.mkdirSync(path.join(fixture,'data'));
     fs.copyFileSync(new URL('../../data/radar-data.json',import.meta.url),path.join(fixture,'data/radar-data.json'));
     fs.copyFileSync(new URL('../../config/world-order-rules.json',import.meta.url),path.join(fixture,'config/world-order-rules.json'));
