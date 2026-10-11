@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0065](ADR/0065-node24-cache-action.md)：World Order 缓存 Action 的 Node 24 固定版本及显性 checker 收紧；不改变缓存、源权利或预算边界。
+
 - [ADR-0058](ADR/0058-retire-expired-editorial-recovery.md)：关闭已过期恢复执行入口，保留历史授权与已耗预算；当前交接精简不解除长期观察或来源限制。
 - [ADR-0055](ADR/0055-acled-weekly-automation.md) / [ADR-0056](ADR/0056-acled-split-cadence.md)：ACLED 自动链与现行周一/三/五分频；具体预算、源权利及已耗 initial 按原决策保留。
 
