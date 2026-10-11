@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=freight-observation-status-1';
+} from '../../scripts/modules/config.js?v=baltic-public-ticker-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
@@ -191,5 +191,20 @@ test('shared display helpers cover every color, trend and DOM fallback branch', 
     assert.deepEqual($('target'), { id: 'target' });
   } finally {
     delete globalThis.document;
+  }
+});
+
+
+test('freight provider attribution uses exact contracts and never exposes source enums', () => {
+  const official = 'BalticExchangePublicTicker';
+  for (const [source, label] of [
+    [`${official}:BDTI; ${official}:BCTI; ${official}:BDI`, '波罗的海交易所公开行情'],
+    ['StockQ:BDTI; StockQ:BCTI; StockQ:BDI', 'StockQ 转引'],
+    [`${official}:BDTI; StockQ:BCTI; ${official}:BDI`, '交易所公开行情 / StockQ 转引'],
+    ['Unknown:BDTI', '来源待核'], [null, '来源待核'],
+  ]) {
+    const result = shippingFreightDisplay({ source });
+    assert.equal(result.providerLabel, label);
+    assert.doesNotMatch(result.providerLabel, /BalticExchangePublicTicker|:BDTI|snake_case/u);
   }
 });

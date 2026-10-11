@@ -4,8 +4,10 @@
 
 - **Acceptance baseline**：owner 明确要求免费自动采集、缓存及网站发布，个人研究、接受风险，不以官方许可/订阅为本任务前置；仅 BDI/BDTI/BCTI 聚合背景，参见 [ADR-0067](ADR/0067-baltic-public-ticker.md)。沿用分项提交/推送/PR/合并及有界独立 AI 代审；不绕过登录/验证码/付费墙，不改路线级确认或评分，不增加依赖/收费调用。
 - **最后基线**：origin/main 3a9ee712，前序四项已合并；#448 CI 5m35s 通过，安装失败码修复已在 main，路径过滤无需发布网站；调度间隔根因仍未知。
-- **当前任务**：已确认官方首页公共 ticker 返回三个日期绑定指数；先独立来源契约 PR，保持旧快照兼容和未知来源拒绝。
-- **下一步 / 边界**：契约审阅并合并后启用一次请求/逐项隔离的 Daily 采集与来源披露，运行必要检查后发布与两站验收；不手改生产 JSON，不运行付费 AI。
+- **契约回执**：PR #449 已合并 d1c9322b；完整本地检查、有界独立 AI 审阅及 CI 6m27s 通过。三个 checker 仅显性迁移来源和静态提供方 marker，数值/日期/比例/状态、DOM/card count 和路线边界保护保留；未知来源仍拒绝。
+- **当前实施**：公共 ticker 优先、逐项回退、缓存来源保留及中文提供方披露；首次有界 bootstrap 通过真实生产 resolver 与既有原子写入，仅恢复 shippingFreight，不手改值、不运行整条 Daily/付费 AI。来源原始日保留，不把抓取日期标为更新日期；主评分/decision/history/realtime/路线确认不变。本 PR 符合 DESIGN.md 的所有规则（§3 字体、§5.5 既有卡片、§8.4 另行明确授权的数据恢复）。
+- **恢复实测**：真实 resolver 的 dry-run 与一次 write 均退出 0，BDTI=7964、BCTI=2403、BDI=2917，原观测日均为 2026-10-09。写前操作已独立审阅，ignored 原字节备份保留，深比较确认其它生产数据未变；前端版本 `baltic-public-ticker-1`。相关单测 21/21、桌面/手机新旧场景 4/4 通过；仍须完整检查和 PR 生产验收。
+- **下一步 / 边界**：完整检查、最终独立审阅后提交/推送/PR/合并，并核对两站真实数据与桌面/手机展示。API 无可用性承诺，失败仍降级；首次自然 Daily 调度回执尚待运行，不宣称已经验收。
 
 
 ### 2026-10-11 有界健康整改（当前）
@@ -402,7 +404,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `freight-observation-status-1` |
+| Cache version | `baltic-public-ticker-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isUsableFreightCache, parseStockqFreight } from '../../scripts/daily/stockq-freight.mjs';
-import { normalizePreviousShippingFreight, combineShippingFreightResults } from '../../scripts/run-daily-pipeline.mjs';
+import { normalizePreviousShippingFreight, combineShippingFreightResults, resolveShippingFreight } from '../../scripts/run-daily-pipeline.mjs';
 
 const options = { nowMs: Date.parse('2026-09-05T07:00:00Z') };
 const row = (date, value, change = '4.06%') => `<tr><td>${date}</td><td>${value}</td><td>${change}</td></tr>`;
@@ -53,4 +53,66 @@ test('shipping fallback rejects the legacy percentage-as-index and does not mix 
   const fresh = combineShippingFreightResults(previous, Array.from({ length: 3 }, () => ({ status: 'fulfilled', value: { value: 2800, dailyChangePct: null, updatedAt: '2026-09-04T00:00:00Z' } })));
   assert.equal(fresh.balticDirtyTankerDailyChangePct, null);
   assert.equal(fresh.sourceStatus.dryBulk, 'live');
+});
+
+
+test('public ticker cache keeps its origin and date through total outage and partial fallback', () => {
+  const official = 'BalticExchangePublicTicker';
+  const previous = { source: `${official}:BDTI; ${official}:BCTI; ${official}:BDI`,
+    balticDirtyTankerIndex: 7964, balticDirtyTankerDailyChangePct: 0.014,
+    balticDirtyTankerUpdatedAt: '2026-10-09T00:00:00Z',
+    balticCleanTankerIndex: 2403, balticCleanTankerDailyChangePct: null,
+    balticCleanTankerUpdatedAt: '2026-10-09T00:00:00Z',
+    balticDryIndex: 2917, balticDryDailyChangePct: -0.018,
+    balticDryUpdatedAt: '2026-10-09T00:00:00Z', updatedAt: '2026-10-09T00:00:00Z' };
+  const failed = { status: 'rejected' };
+  const cached = combineShippingFreightResults(previous, [failed, failed, failed]);
+  assert.equal(cached.source, previous.source);
+  assert.equal(cached.balticDirtyTankerUpdatedAt, previous.balticDirtyTankerUpdatedAt);
+  assert.equal(cached.balticDryIndex, 2917);
+  assert.deepEqual(cached.sourceStatus, { dirtyTanker: 'fallback', cleanTanker: 'fallback', dryBulk: 'fallback' });
+  const mixed = combineShippingFreightResults(previous, [failed,
+    { status: 'fulfilled', value: { provider: 'StockQ', value: 2400, dailyChangePct: null, updatedAt: '2026-10-10T00:00:00Z' } },
+    { status: 'fulfilled', value: { provider: official, value: 2900, dailyChangePct: null, updatedAt: '2026-10-10T00:00:00Z' } }]);
+  assert.equal(mixed.source, `${official}:BDTI; StockQ:BCTI; ${official}:BDI`);
+  assert.equal(mixed.balticDirtyTankerUpdatedAt, previous.balticDirtyTankerUpdatedAt);
+  assert.equal(mixed.balticCleanTankerDailyChangePct, null);
+  assert.equal(mixed.sourceStatus.dirtyTanker, 'fallback');
+  const invalid = normalizePreviousShippingFreight({ ...previous, source: 'Unknown:BDTI' });
+  assert.equal(invalid.balticDryIndex, null);
+  assert.equal(invalid.sourceStatus.dryBulk, 'missing');
+});
+
+test('Daily resolver performs one ticker read and only falls back for a missing index', async () => {
+  const originalFetch = globalThis.fetch;
+  const day = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const ticker = ['BDTI', 'BCTI', 'BDI'].map((symbol, i) => ({
+    indexName: symbol, indexDataSetName: symbol,
+    indexDataSetTitle: ['Baltic Dirty Tanker Index', 'Baltic Clean Tanker Index', 'Baltic Dry Index'][i],
+    current: { value: [7964, 2403, 2917][i], indexDate: `${day}T16:00:00` },
+  }));
+  let omitClean = false;
+  const calls = [];
+  globalThis.fetch = async url => {
+    calls.push(String(url));
+    if (String(url) === 'https://blacksun-api.balticexchange.com/api/ticker') {
+      return new Response(JSON.stringify(omitClean ? ticker.filter(x => x.indexName !== 'BCTI') : ticker),
+        { headers: { 'content-type': 'application/json' } });
+    }
+    assert.match(String(url), /BCTI/u);
+    return new Response(`<title>Baltic Clean Tanker Index - StockQ</title><table><tr><td>Date</td><td>Index</td><td>Change%</td></tr><tr><td>${day.replaceAll('-', '/')}</td><td>2400</td><td></td></tr></table>`);
+  };
+  try {
+    const fresh = await resolveShippingFreight(null);
+    assert.equal(calls.length, 1);
+    assert.equal(fresh.balticDryIndex, 2917);
+    assert.equal(fresh.balticDryDailyChangePct, null);
+    assert.deepEqual(fresh.sourceStatus, { dirtyTanker: 'live', cleanTanker: 'live', dryBulk: 'live' });
+    calls.length = 0; omitClean = true;
+    const mixed = await resolveShippingFreight(fresh);
+    assert.equal(calls.length, 2);
+    assert.equal(mixed.balticCleanTankerIndex, 2400);
+    assert.equal(mixed.source, 'BalticExchangePublicTicker:BDTI; StockQ:BCTI; BalticExchangePublicTicker:BDI');
+    assert.equal(mixed.balticCleanTankerUpdatedAt.slice(0, 10), day);
+  } finally { globalThis.fetch = originalFetch; }
 });

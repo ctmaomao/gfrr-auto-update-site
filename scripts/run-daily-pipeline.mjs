@@ -1,3 +1,5 @@
+import { fetchBalticFreight } from './daily/baltic-freight.mjs';
+import { freightSourceString, freightProvidersFromSource, isFreightSource } from './daily/freight-source-contract.mjs';
 import { buildAiInterpretationLayer } from './daily/rule-based-interpretation.mjs';
 import { preserveEditorialPreviousIssue } from './macro-risk/editorial-history.mjs';
 ﻿import fs from 'fs';
@@ -2231,6 +2233,7 @@ async function fetchStockqIndex(symbol, label) {
     symbol,
     label,
     ...parseStockqFreight(html, symbol),
+    provider: 'StockQ',
     url
   };
 }
@@ -8396,6 +8399,7 @@ function normalizePreviousCommercialRealEstate(prevCre) {
 
 export function normalizePreviousShippingFreight(prevShippingFreight) {
   if (!prevShippingFreight || typeof prevShippingFreight !== 'object') return buildMissingShippingFreight();
+  if (prevShippingFreight.source !== undefined && !isFreightSource(prevShippingFreight.source)) return buildMissingShippingFreight();
   const dirty = isUsableFreightCache(prevShippingFreight.balticDirtyTankerIndex, prevShippingFreight.balticDirtyTankerUpdatedAt, prevShippingFreight.balticDirtyTankerDailyChangePct) ? prevShippingFreight.balticDirtyTankerIndex : null;
   const clean = isUsableFreightCache(prevShippingFreight.balticCleanTankerIndex, prevShippingFreight.balticCleanTankerUpdatedAt, prevShippingFreight.balticCleanTankerDailyChangePct) ? prevShippingFreight.balticCleanTankerIndex : null;
   const dry = isUsableFreightCache(prevShippingFreight.balticDryIndex, prevShippingFreight.balticDryUpdatedAt, prevShippingFreight.balticDryDailyChangePct) ? prevShippingFreight.balticDryIndex : null;
@@ -8431,8 +8435,8 @@ export function normalizePreviousShippingFreight(prevShippingFreight) {
       dryBulk: dry !== null ? 'fallback' : 'missing'
     },
     updatedAt: typeof prevShippingFreight.updatedAt === 'string' ? prevShippingFreight.updatedAt : null,
-    source: SHIPPING_FREIGHT_SOURCE,
-    notes: ['BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。']
+    source: prevShippingFreight.source || SHIPPING_FREIGHT_SOURCE,
+    notes: ['BDTI/BCTI/BDI 沿用各自原缓存来源与观测日期；仅作广义运费背景，不是路线级确认。']
   };
 }
 
@@ -8589,11 +8593,23 @@ function normalizePreviousConsumer(prevConsumer) {
 }
 
 export async function resolveShippingFreight(prevShippingFreight) {
-  const results = await Promise.allSettled([
-    fetchStockqIndex('BDTI', 'Baltic Dirty Tanker Index'),
-    fetchStockqIndex('BCTI', 'Baltic Clean Tanker Index'),
-    fetchStockqIndex('BDI', 'Baltic Dry Index')
-  ]);
+  let publicTicker;
+  try {
+    publicTicker = await fetchBalticFreight();
+  } catch {
+    console.warn('[shippingFreight] Public ticker unavailable; retaining independent source fallbacks.');
+  }
+  const fallbacks = [
+    () => fetchStockqIndex('BDTI', 'Baltic Dirty Tanker Index'),
+    () => fetchStockqIndex('BCTI', 'Baltic Clean Tanker Index'),
+    () => fetchStockqIndex('BDI', 'Baltic Dry Index')
+  ];
+  const results = await Promise.allSettled(fallbacks.map(async (readFallback, index) => {
+    const leg = publicTicker?.[index];
+    if (leg?.status === 'fulfilled') return leg.value;
+    if (publicTicker) console.warn(`[shippingFreight] Index ${index + 1} unavailable in public ticker; trying existing fallback.`);
+    return readFallback();
+  }));
   return combineShippingFreightResults(prevShippingFreight, results);
 }
 
@@ -8643,8 +8659,9 @@ export function combineShippingFreightResults(prevShippingFreight, results) {
     freightStressRegime: classifyCompositeFreightRegime(tankerFreightRegime, cleanTankerFreightRegime, dryBulkFreightRegime),
     sourceStatus: status,
     updatedAt: latestIsoDate(dirty?.updatedAt, clean?.updatedAt, dry?.updatedAt, fallback.updatedAt),
-    source: SHIPPING_FREIGHT_SOURCE,
-    notes: ['BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。']
+    source: freightSourceString([dirty, clean, dry].map((leg, index) =>
+      leg ? leg.provider || 'StockQ' : freightProvidersFromSource(fallback.source)[index])),
+    notes: ['BDTI/BCTI/BDI 优先来自波罗的海交易所首页公开行情；不可用时独立回退 StockQ 或保留原缓存来源与日期。仅作广义运费展示，不是路线级确认。', '上期有效且相邻时才计算涨跌幅；缺失不变零，不以抓取日期更新观测日。']
   };
 }
 

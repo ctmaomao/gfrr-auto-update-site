@@ -1465,28 +1465,29 @@
       ]
     },
     "shippingFreight": {
-      "balticDirtyTankerIndex": 2644,
-      "balticDirtyTankerDailyChangePct": 0.0049,
-      "balticDirtyTankerUpdatedAt": "2026-08-10T00:00:00.000Z",
-      "balticCleanTankerIndex": 1387,
-      "balticCleanTankerDailyChangePct": -0.0212,
-      "balticCleanTankerUpdatedAt": "2026-08-10T00:00:00.000Z",
-      "balticDryIndex": null,
-      "balticDryDailyChangePct": null,
-      "balticDryUpdatedAt": null,
+      "balticDirtyTankerIndex": 7964,
+      "balticDirtyTankerDailyChangePct": 0.01426388181355076,
+      "balticDirtyTankerUpdatedAt": "2026-10-09T00:00:00.000Z",
+      "balticCleanTankerIndex": 2403,
+      "balticCleanTankerDailyChangePct": 0.007547169811320753,
+      "balticCleanTankerUpdatedAt": "2026-10-09T00:00:00.000Z",
+      "balticDryIndex": 2917,
+      "balticDryDailyChangePct": -0.01883619239825096,
+      "balticDryUpdatedAt": "2026-10-09T00:00:00.000Z",
       "tankerFreightRegime": "高压",
       "cleanTankerFreightRegime": "高压",
-      "dryBulkFreightRegime": "未知",
+      "dryBulkFreightRegime": "观察",
       "freightStressRegime": "高压",
       "sourceStatus": {
-        "dirtyTanker": "fallback",
-        "cleanTanker": "fallback",
-        "dryBulk": "missing"
+        "dirtyTanker": "live",
+        "cleanTanker": "live",
+        "dryBulk": "live"
       },
-      "updatedAt": "2026-08-10T00:00:00.000Z",
-      "source": "StockQ:BDTI; StockQ:BCTI; StockQ:BDI",
+      "updatedAt": "2026-10-09T00:00:00.000Z",
+      "source": "BalticExchangePublicTicker:BDTI; BalticExchangePublicTicker:BCTI; BalticExchangePublicTicker:BDI",
       "notes": [
-        "BDTI/BCTI/BDI 来自公开 StockQ 页面转引 Baltic index；shipping/freight audit-only / display-only。"
+        "BDTI/BCTI/BDI 优先来自波罗的海交易所首页公开行情；不可用时独立回退 StockQ 或保留原缓存来源与日期。仅作广义运费展示，不是路线级确认。",
+        "上期有效且相邻时才计算涨跌幅；缺失不变零，不以抓取日期更新观测日。"
       ]
     },
     "employment": {

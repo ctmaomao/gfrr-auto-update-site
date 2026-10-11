@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=freight-observation-status-1';
-import { formatOnRrpYiUsd } from './format.js?v=freight-observation-status-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=baltic-public-ticker-1';
+import { formatOnRrpYiUsd } from './format.js?v=baltic-public-ticker-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
