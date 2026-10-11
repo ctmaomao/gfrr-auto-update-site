@@ -1,5 +1,23 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-11 有界健康整改（当前）
+
+- **Acceptance baseline**：owner 要求按已审阅的优先级逐项完成：1）集成已有运费展示修复；2）升级 World Order 缓存 Action 并核实 Node 24；3）减少同一源码的 Pages 重复发布；4）有限排查备用实时调度延迟，仅在确认可修复原因时改动。任务包含独立审阅、必要检查、分项提交/推送/PR/合并及对应生产验收；沿用本审计任务的有界独立 AI 代审授权。保留全部时效/预算/发布保护，不新增来源、付费采集、CSP 批次或大型重构。
+- **当前步骤**：运费修复 `ebca3e74` 已无冲突合入最新 main `0c0f5535`；该 main 相对原基线只有生产数据刷新。变更仅展示与交接，源报价仍旧或缺失，不改变评分、源解析或生产 JSON。本 PR 符合 DESIGN.md 的所有规则。
+- **验证与门槛**：整合后 `check:changed` 实际执行完整 `check:all`，退出 0；桌面 1440px/手机 390px 运费回归 2/2，退出 0。有界独立 AI 审阅绑定 `4ddd2ba9` 的运行时代码，无阻断；七天临界值/超界 1ms/未来日期/非法日历/null 阴性检查退出 0。两站上线前四个视口均复现缺失 BDI=0、旧报价被标印证，卡片纸色/墨色/serif 字体不变。只增加本条交接，不改变已审 runtime blob；远端 CI、双站版本与修复后实际显示仍待验。第 2～4 项未实施，不把后续步骤写成完成。
+
+### 2026-10-10 健康整改收口与来源有限核查（前序回执）
+
+- **Acceptance baseline**：owner 在有界复核后批准按顺序执行：先同步交接，随后核查 StockQ 运费的日期与显示，最后核查 ARR 回退原因；仅修复有证据的问题，保留缺失、时效与来源资格保护。不启动 CSP 平台批次，不调用付费来源，不新增源或大规模重构。
+- **最后基线**：最新远端 main `251f3dfc`。运行时补丁检查、最终 AI 写入复验、额度故障隔离、发布一致性、前端 asset 门禁、PR 单测覆盖率/浏览器验收及既有局部纯函数提取已落地。10 月 10 日两站首页、app.js、雷达与 World Order 数据哈希分别一致；这是发布一致性证据，不是全部来源事实认证。
+- **CSP 冻结**：收口决定替代以下历史 CSP 条目的“下一步”。保留代码、资源、预算、失败锁与证据，不再把原生直连、自然删除验收、校准本机时间或生产采集启用当作必须完成的任务。最后已有关闭回执为 `productionActivation=false`、trial=false/空时间、累计 61/500；本轮不重新查询平台配置。自定义域名只有 Report-Only 头且无报告地址；关闭采集不等于删除资源或保证零平台消耗。以后重启需重新限定任务及平台/隐私/费用授权。
+- **已纠正的旧待验**：ACLED 10 月 5、7 日自动更新已有真实下载/校验/退出与私有清理回执，10 月 9 日上游未变化；不再保留“首个自然槽待验”。#444 已合并 `81f7ba3f`，免费 Events 已进入两个冲突通道并发布；其他历史代理仍有降级，不把它说成全量替换。
+- **StockQ 核查与修复**：三个既有公开页面各一次 GET、8 秒/1 MiB/零重试，均 HTTP 200；现有 parser 仍拒绝不可取得的最新明文报价，不解码隐藏报价或放宽日期绑定。浏览器复现旧油轮样本被标“实时/印证”、缺失 BDI 被显示 0；仅修复卡片：缺失保持“—”，逐项显示原观测日期与沿用旧值/缺失，旧或不完整样本只作背景，不参与当前印证；静态初始值也改为待加载。前端版本由工具更新为 `freight-observation-status-1`，保留评分/生产 JSON/源解析不变。本 PR 符合 DESIGN.md 的所有规则（§3 字体、§4/5.5 既有卡片、§8.4 数据隔离）。
+- **ARR 收口**：生产回退保留 9 月 27 日原样本，SaaStr 底层里程碑过旧的 45 天保护正确生效。一次已有固定元数据诊断退出 0，三个 GET、当前 artifact 元数据有效；不能复现或认证历史 `weekly_history_invalid` 根因，不切源、不改断言。后续仅在已有自然记录出现具体证据时处理，详见 [ARR 有限核查](ARR_EPOCH_SOURCE_REVIEW.md#2026-10-10-有限核查收口)。
+- **验证 / 下一步**：`npm run check:changed` 实际选择完整 `check:all`，退出 0；StockQ/显示单测 11/11、ARR 回归 22/22、桌面 1440px/手机 390px 浏览器 2/2，均退出 0；`node --check scripts/app.js` 和 `git diff --check` 退出 0。前后取样背景/文字/字体一致，无水平溢出；data/realtime/workflow/CSP receiver/frozen realtime 模块无差异，未放宽旧断言或新增 ignore。两项核查与本地修复完成，尚未发布；来源恢复与 ARR 历史根因仍未确认，不冒称已解决。暂无依据开启新整改。CSP/lint 强制化/大型管线拆分不进入本轮。
+
+### 前序任务记录（历史；不自动执行其中的“下一步”）
+
 ### 2026-10-10 World Order 免费 Events 统计接线
 
 - **Acceptance baseline**：owner 在两个冲突通道与区间设计后要求“请继续下一步”，执行本地 production adapter、评分接线、增量缓存与验证；独立审阅及 push/merge/发布另按对应授权执行。设计依据及显性合同变更见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。
@@ -374,7 +392,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `gdelt-events-conflict-1` |
+| Cache version | `freight-observation-status-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
@@ -569,6 +587,13 @@ Add or update backlog items with these rules:
 ---
 
 ## 🔄 Session Handoff (最新)
+
+- **最后基线 / 改动**：2026-10-10，基于 main `251f3dfc` 的 `codex/health-closeout-source-check`；本轮同步整改与 CSP 冻结状态，保留以下历史记录。
+- **当前任务**：本地收口完成：StockQ 卡片缺失不显示 0、旧日期及来源状态明确、旧样本只作背景；ARR 有限核查完成且保留未确认根因。完整 check:changed/check:all、11 项显示/StockQ单测、22 项 ARR 回归、2 项桌面/手机浏览器检查均退出 0。
+- **下一步**：本轮交付本地提交，尚未推送/合并/上线；不存在需要自动启动的下一轮整改。发布须按 Git 分级授权与独立审阅执行；不重启 CSP、不补跑生产或付费来源。
+- **阻塞 / 运行边界**：没有需要解除的 CSP 阻塞，采集线已冻结。来源不可用不允许伪造值或刷新原观测日期；ARR 候选不因诊断成功而晋升生产，不调用付费提供方。
+
+### 前序交接（历史）
 
 - **2026-10-07 CSP 第二批入口 acceptance baseline**：owner 在关闭恢复和只读审计后要求告知下一步并直接开始；本轮本地实施 [第二批准备](CSP_PLATFORM_BATCH2_PREPARATION_2026_10_07.md)，基于 latest main `f60c2a52` 的独立分支 `codex/csp-platform-batch2-preparation`。不解除旧锁、不部署/请求/接受费用、不启用 C，#435 的发布授权不延伸。
   - **最后基线**：#435 已合并 `f60c2a52`，exact-head CI 与 Pages/EdgeOne 发布流程通过。前批预算预占 34→42 后仅关闭 health 503；PowerShell DateTime 转换导致开窗参数不规范，读回拒绝并停止，锁/marker/证据保留。另获批准的一次恢复已核实 `da71cbf7` 100%、false/空时间、loopback CORS、日志关闭。

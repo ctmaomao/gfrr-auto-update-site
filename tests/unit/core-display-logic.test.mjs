@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=gdelt-events-conflict-1';
+} from '../../scripts/modules/config.js?v=freight-observation-status-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
@@ -21,6 +21,48 @@ import {
   shouldApplyRealtimeOverlay,
 } from '../../scripts/modules/freshness.js';
 import { formatFiniteNumber, formatOnRrpYiUsd } from '../../scripts/modules/format.js';
+import { shippingFreightDisplay } from '../../scripts/modules/macroOverviewDisplayHelpers.js';
+
+test('freight missing values remain missing and old quotes keep their original dates', () => {
+  const source = { balticDirtyTankerIndex: 2644, balticDirtyTankerUpdatedAt: '2026-08-10T00:00:00Z',
+    balticDirtyTankerDailyChangePct: 0.0049, balticCleanTankerIndex: 1387,
+    balticCleanTankerUpdatedAt: '2026-08-10T00:00:00Z', balticDryIndex: null,
+    balticDryUpdatedAt: null, sourceStatus: { dirtyTanker: 'fallback', cleanTanker: 'fallback', dryBulk: 'missing' } };
+  const before = JSON.stringify(source);
+  const result = shippingFreightDisplay(source, Date.parse('2026-10-10T00:00:00Z'));
+  assert.equal(result.number, '—');
+  assert.match(result.detail, /BDTI 2644 \+0\.49% · 2026-08-10 沿用旧值/u);
+  assert.match(result.detail, /BDI — · 缺少可用报价/u);
+  assert.doesNotMatch(result.detail, /BDI 0|实时|已更新/u);
+  assert.equal(result.allFresh, false);
+  assert.equal(result.sourceLabel, '沿用旧值');
+  assert.equal(JSON.stringify(source), before);
+});
+
+test('freight current evidence requires all three valid fresh observations', () => {
+  const now = Date.parse('2026-10-10T00:00:00Z');
+  const source = { sourceStatus: { dirtyTanker: 'live', cleanTanker: 'live', dryBulk: 'live' } };
+  for (const prefix of ['balticDirtyTanker', 'balticCleanTanker', 'balticDry']) {
+    source[`${prefix}Index`] = 2000;
+    source[`${prefix}UpdatedAt`] = '2026-10-09T00:00:00Z';
+    source[`${prefix}DailyChangePct`] = null;
+  }
+  assert.equal(shippingFreightDisplay(source, now).allFresh, true);
+  assert.doesNotMatch(shippingFreightDisplay(source, now).detail, /0\.00%/u);
+  source.balticDryUpdatedAt = '2026-08-10T00:00:00Z';
+  assert.equal(shippingFreightDisplay(source, now).allFresh, false);
+  assert.equal(shippingFreightDisplay(source, now).sourceLabel, '来源不完整');
+  for (const date of [null, 'invalid', '2026-02-30T00:00:00Z', '2026-10-11T00:00:00Z']) {
+    source.balticDryUpdatedAt = date;
+    assert.equal(shippingFreightDisplay(source, now).number, '—');
+  }
+  source.balticDryUpdatedAt = '2026-10-09T00:00:00Z';
+  for (const value of [null, undefined, '', '0', 0, -1, NaN]) {
+    source.balticDryIndex = value;
+    assert.equal(shippingFreightDisplay(source, now).number, '—');
+  }
+  assert.equal(shippingFreightDisplay(null, now).hasValue, false);
+});
 
 test('threshold classification covers normal, absolute, inverse and overlay policies', () => {
   assert.equal(finite(null), null);

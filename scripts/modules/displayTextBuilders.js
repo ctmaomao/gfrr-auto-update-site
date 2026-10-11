@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=gdelt-events-conflict-1';
+﻿import { fmtNumSafe } from './config.js?v=freight-observation-status-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

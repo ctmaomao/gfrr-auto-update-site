@@ -70,3 +70,40 @@ export function riskBiasZh(value) {
   const text = textValue(value);
   return text ? (RISK_BIAS_LABELS[text] || text) : '—';
 }
+
+// Display only: use each leg's original observation date and never coerce null to zero.
+export function shippingFreightDisplay(source, nowMs = Date.now()) {
+  const sf = source || {};
+  const legs = [
+    ['BDTI', 'balticDirtyTanker', 'dirtyTanker'],
+    ['BCTI', 'balticCleanTanker', 'cleanTanker'],
+    ['BDI', 'balticDry', 'dryBulk'],
+  ].map(([label, prefix, key]) => {
+    const value = sf[`${prefix}Index`];
+    const timestamp = sf[`${prefix}UpdatedAt`];
+    const time = typeof timestamp === 'string' ? Date.parse(timestamp) : NaN;
+    const dated = typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T/u.test(timestamp)
+      && Number.isFinite(time) && Number.isFinite(nowMs) && time <= nowMs
+      && new Date(time).toISOString().slice(0, 10) === timestamp.slice(0, 10);
+    const status = sf.sourceStatus?.[key];
+    const usable = Number.isSafeInteger(value) && value > 0 && dated
+      && ['live', 'fallback'].includes(status);
+    if (!usable) return { value: null, fresh: false, text: `${label} — · 缺少可用报价` };
+    const fresh = status === 'live' && nowMs - time <= 7 * 86400000;
+    const change = sf[`${prefix}DailyChangePct`];
+    const delta = Number.isFinite(change)
+      ? ` ${change >= 0 ? '+' : ''}${(change * 100).toFixed(2)}%` : '';
+    return { value, fresh,
+      text: `${label} ${value}${delta} · ${timestamp.slice(0, 10)} ${fresh ? '已更新' : '沿用旧值'}` };
+  });
+  const allFresh = legs.every(leg => leg.fresh);
+  const hasValue = legs.some(leg => leg.value !== null);
+  return {
+    number: legs[2].value === null ? '—' : String(legs[2].value),
+    detail: legs.map(leg => leg.text).join(' · '),
+    allFresh,
+    hasValue,
+    sourceLabel: allFresh ? '已更新' : !hasValue ? '来源不可用'
+      : legs.some(leg => leg.fresh) ? '来源不完整' : '沿用旧值',
+  };
+}

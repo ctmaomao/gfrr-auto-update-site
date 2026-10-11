@@ -1,5 +1,14 @@
 # ARR：Epoch AI 免费来源评审与隔离核验
 
+## 2026-10-10 有限核查收口
+
+按 owner 的健康整改收口安排，检查既有生产回退和已有运行记录，并执行一次现成的只读元数据诊断；未请求 Epoch CSV/ZIP、未运行生产 builder、未补跑候选或付费来源。
+
+- 生产 `arr_2nd_deriv` 保留 2026-09-27 样本，模式为 `auto_fallback`；原因是 SaaStr 最新可解析里程碑 2026-05-28 超过 45 天底层时效门槛。自动抓取日期不替代里程碑日期，当前回退不能被误称为实时自动收入数据。
+- 10 月 5 日 run 37309378856 的候选步骤明确返回 `candidate_failed/weekly_history_invalid`，即使 workflow 总体 success，也不表示候选已成功更新。
+- `node scripts/diagnose-epoch-arr-metadata.mjs --allow-network` 退出 0：三个 GET、HTTP 200，事故 run 35591049191 对应前周期 34835056458 的 artifact 10342734705 分类为 `artifact_metadata_valid_now`、`artifactExpiredAtIncident=false`。这只确认当前元数据；`historicalFailureReproduced=false`、`artifactDigestVerified=false`、`productionEligible=false`，没有证明事故当时的失败阶段或收入事实。
+- 不修改历史身份、摘要、时效断言，不猜测 token/ZIP/收入变化的根因。已有分阶段诊断可由下一次自然周一记录提供证据；不创建新监控、不把等待自然记录列为本轮必须完成的任务。若没有新的可验证失败证据，候选保持未晋升，生产继续合法回退及缺失披露。
+
 ## 2026-10-08 候选专用元数据诊断
 
 Owner 已明确批准实施、独立 AI 审阅后合并，并执行一次只读诊断。

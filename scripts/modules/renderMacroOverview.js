@@ -8,20 +8,21 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=gdelt-events-conflict-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=gdelt-events-conflict-1';
+} from './config.js?v=freight-observation-status-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=freight-observation-status-1';
 import {
   brentModeZh,
   moduleTone,
   riskBiasZh,
   sourceModeZh,
+  shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=gdelt-events-conflict-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=gdelt-events-conflict-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=gdelt-events-conflict-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=gdelt-events-conflict-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=gdelt-events-conflict-1';
+} from './macroOverviewDisplayHelpers.js?v=freight-observation-status-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=freight-observation-status-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=freight-observation-status-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=freight-observation-status-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=freight-observation-status-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1969,27 +1970,17 @@ function renderShippingFreight({ radarData }) {
   try {
     const sf = radarData?.macroDrivers?.shippingFreight;
     if (!sf) return;
-    const ss = sf.sourceStatus || {};
-    const anyLive = ss.dirtyTanker === 'live' || ss.cleanTanker === 'live' || ss.dryBulk === 'live';
-    const anyFallback = ss.dirtyTanker === 'fallback' || ss.cleanTanker === 'fallback' || ss.dryBulk === 'fallback';
-    const status = anyLive ? 'live' : (anyFallback ? 'fallback' : 'missing');
+    const display = shippingFreightDisplay(sf);
     const reaction = setObservationReaction(
       'c1-freight-status',
       'c1-freight-badge',
       radarData,
-      status === 'missing' ? 'unavailable' : signalFromFreightRegime(sf.freightStressRegime)
+      !display.hasValue ? 'unavailable' : display.allFresh ? signalFromFreightRegime(sf.freightStressRegime) : 'neutral'
     );
-    const bdi = asNumber(sf.balticDryIndex);
-    setLeafText('c1-freight-number', bdi !== null ? bdi.toFixed(0) : '—');
-    const leg = (idxVal, chgVal, label) => {
-      const v = asNumber(idxVal);
-      if (v === null) return `${label} —`;
-      const c = asNumber(chgVal);
-      return c !== null ? `${label} ${v.toFixed(0)} ${signedFixed(c * 100, 2)}%` : `${label} ${v.toFixed(0)}`;
-    };
-    const regime = sf.freightStressRegime ? ` · ${sf.freightStressRegime}` : '';
-    const suffix = status === 'fallback' ? ' · 回退' : '';
-    const detail = `${leg(sf.balticDirtyTankerIndex, sf.balticDirtyTankerDailyChangePct, 'BDTI')} · ${leg(sf.balticCleanTankerIndex, sf.balticCleanTankerDailyChangePct, 'BCTI')} · ${leg(sf.balticDryIndex, sf.balticDryDailyChangePct, 'BDI')}${regime}${suffix}`;
+    setLeafText('c1-freight-number', display.number);
+    setLeafText('c1-freight-source-state', display.sourceLabel);
+    const regime = display.allFresh && sf.freightStressRegime ? ` · ${sf.freightStressRegime}` : '';
+    const detail = `${display.detail}${regime}`;
     setLeafText('c1-freight-aux', reactionText(reaction, detail));
   } catch (error) {
     console.error('[renderMacroOverview] renderShippingFreight failed:', error);
