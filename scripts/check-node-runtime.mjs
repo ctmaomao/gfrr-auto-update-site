@@ -23,6 +23,10 @@ const expectedNode24Actions = new Map([
   ['actions/github-script', 'ed597411d8f924073f98dfc5c65a23a2325f34cd'],
   ['actions/upload-pages-artifact', 'fc324d3547104276b827a68afc52ff2a11cc49c9'],
   ['actions/deploy-pages', 'cd2ce8fcbc39b97be8ca5fce6e763baed58fa128'],
+  // Official v6.1.0 action.yml files declare node24; runner >= 2.327.1.
+  ['actions/cache', '55cc8345863c7cc4c66a329aec7e433d2d1c52a9'],
+  ['actions/cache/restore', '55cc8345863c7cc4c66a329aec7e433d2d1c52a9'],
+  ['actions/cache/save', '55cc8345863c7cc4c66a329aec7e433d2d1c52a9'],
 ]);
 
 function actionStatus(actionRef) {
