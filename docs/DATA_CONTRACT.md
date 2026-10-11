@@ -1,5 +1,8 @@
 # Global Financial Risk Radar 数据契约说明
 
+> 2026-10-11 窄范围接入修订：[ADR-0067](ADR/0067-baltic-public-ticker.md) 允许在既有 shippingFreight 广义展示层使用官方首页公共 ticker 的 BDI/BDTI/BCTI；保留 StockQ 缓存来源，source 仅允许两个提供方按三指数固定顺序的八种组合。旧 StockQ-only 描述在此范围由该 ADR 替代。owner 接受风险不等于第三方授权；其它来源、路线级 source-rights/manual fixtures、评分和 not_connected 边界不变。契约 PR 不启用采集或写生产数据。
+
+
 本文档定义 Global Financial Risk Radar 当前数据链路中的 canonical 字段、fallback 字段与验证/调试字段。后续升级应优先遵守这些契约，避免显示值、验证层、历史兼容字段被误用或误删。
 
 2026-09-11 [ADR-0043](ADR/0043-score-input-continuity.md)：`macroDrivers.fedLiquidity.sourceObservedAt.{walcl,onRrp}`、`curve.sourceObservedAt.t10y2y`、`credit.sourceObservedAt.igOas` 为 additive 原始 FRED 观测日期（`YYYY-MM-DD`），不能用生成时间续期。旧快照允许没有这些字段，但不能把无日期旧值用作新的有效缓存。已有入分结构证据/变化丢失或实时输入不可用时，Daily 保留原生产文件和原时间并报 publication hold；不生成虚假降档。`avg30d/peak30d/trough30d` 以 UTC 当日及前 29 日的有效唯一观测计算，缺失不填零，无有效观测时 null。

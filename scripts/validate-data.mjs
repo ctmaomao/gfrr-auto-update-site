@@ -1,3 +1,4 @@
+import { isFreightSource } from './daily/freight-source-contract.mjs';
 ﻿import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -107,7 +108,6 @@ const VALID_CRE_SOURCES = new Set([
 const VALID_CRE_STRESS_REGIMES = new Set(['恶化', '紧绷', '稳定', '宽松', '改善', '未知']);
 const VALID_CRE_PUBLIC_MARKET_PROXY_REGIMES = new Set(['市场压力上升', '观察', '平稳', '未知']);
 const SHIPPING_FREIGHT_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing']);
-const VALID_SHIPPING_FREIGHT_SOURCE = 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI';
 const VALID_FREIGHT_REGIMES = new Set(['高压', '观察', '快速回落', '正常', '未知']);
 const ENERGY_SPARE_CAPACITY_SOURCE_STATUSES = new Set(['live', 'fallback', 'missing', 'stale']);
 const VALID_ENERGY_SPARE_CAPACITY_SOURCE = 'EIA:STEO:COPS_OPEC';
@@ -835,7 +835,7 @@ function validateMacroDriversShippingFreight(dataPayload) {
     assert(Object.hasOwn(freight.sourceStatus, key), `macroDrivers.shippingFreight.sourceStatus.${key} is missing`);
     assert(SHIPPING_FREIGHT_SOURCE_STATUSES.has(freight.sourceStatus[key]), `macroDrivers.shippingFreight.sourceStatus.${key} must be live, fallback, or missing`);
   }
-  assert(freight.source === VALID_SHIPPING_FREIGHT_SOURCE, `macroDrivers.shippingFreight.source must be ${VALID_SHIPPING_FREIGHT_SOURCE}`);
+  assert(isFreightSource(freight.source), 'macroDrivers.shippingFreight.source must match an exact ADR-0067 aggregate origin combination');
   assertArray(freight.notes, 'macroDrivers.shippingFreight.notes');
   freight.notes.forEach((item, index) => assertString(item, `macroDrivers.shippingFreight.notes[${index}]`));
 }

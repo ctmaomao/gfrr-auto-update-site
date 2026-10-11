@@ -1,3 +1,4 @@
+import { isFreightSource } from './daily/freight-source-contract.mjs';
 import { assertAllFalse as allFalse, assertAllTrue as allTrue, assertIncludes, readJson } from './lib/check-script-helpers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -76,7 +77,7 @@ function assertFrontendState() {
     'c1-freight-aux',
     'Baltic Freight',
     '波罗的海运费',
-    'StockQ BDTI/BCTI/BDI'
+    'BDTI/BCTI/BDI' // ADR-0067: provider attribution is now snapshot-dependent.
   ]) {
     assertIncludes(html, marker, 'index.html');
   }
@@ -92,7 +93,7 @@ function assertProductionDataState() {
   const radar = readJson('data/radar-data.json');
   const freight = radar?.macroDrivers?.shippingFreight;
   assert(freight && typeof freight === 'object', 'macroDrivers.shippingFreight must remain present.');
-  assert(freight.source === 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI', 'shippingFreight source string drifted.');
+  assert(isFreightSource(freight.source), 'shippingFreight source must match an exact ADR-0067 aggregate origin combination.');
   assert(!radar?.macroDrivers?.energyTransport?.routeFreightConfirmation, 'Production routeFreightConfirmation field is not approved yet.');
   const candidate = radar?.macroDrivers?.energyTransport?.transportShockCandidate;
   if (candidate) {
