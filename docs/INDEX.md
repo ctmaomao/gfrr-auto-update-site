@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0066](ADR/0066-pages-publication-coalescing.md)：同一 main 源码的保守 Pages 发布去重；保留完整检查、失败时正常发布、手动强制与全部旧触发。
+
 - [ADR-0065](ADR/0065-node24-cache-action.md)：World Order 缓存 Action 的 Node 24 固定版本及显性 checker 收紧；不改变缓存、源权利或预算边界。
 
 - [ADR-0058](ADR/0058-retire-expired-editorial-recovery.md)：关闭已过期恢复执行入口，保留历史授权与已耗预算；当前交接精简不解除长期观察或来源限制。

@@ -5,6 +5,11 @@ env:
 
 on:
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even when this main revision is already published'
+        type: boolean
+        default: true
   workflow_run:
     workflows:
       - Build Daily Radar Data
@@ -46,8 +51,42 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  publication_check:
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+    outputs:
+      # An inspection failure must never suppress normal checked publication.
+      should_deploy: ${{ steps.review.outcome != 'success' || steps.review.outputs.should_deploy != 'false' }}
+    steps:
+      - name: Checkout publication candidate
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Setup publication review Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Review existing Pages publication
+        id: review
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.force_deploy }}
+        run: |
+          export SOURCE_SHA="$(git rev-parse HEAD)"
+          node scripts/review-pages-deployment.mjs
+
+  deploy:
+    needs: publication_check
+    if: ${{ !cancelled() && (needs.publication_check.result != 'success' || needs.publication_check.outputs.should_deploy != 'false') && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry_1.outputs.page_url || steps.deployment_retry_2.outputs.page_url || steps.deployment_retry_3.outputs.page_url }}

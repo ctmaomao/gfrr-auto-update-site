@@ -9,6 +9,7 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
+| [ADR-0066](0066-pages-publication-coalescing.md) | 同一 main 源码的保守 Pages 发布去重 | Owner-authorized; independent publication review required |
 | [ADR-0065](0065-node24-cache-action.md) | World Order 缓存 Action 固定 Node 24 版本 | Owner-authorized; independent checker review required |
 | [ADR-0062](0062-bubble-editorial-attributed-media.md) | Bubble 周度专业媒体归因与有限证据简版 | Owner-approved implementation baseline; independent review required |
 | [ADR-0061](0061-csp-optional-report-uri.md) | Optional CSP report-uri with one exact receiver endpoint | Local implementation authorized; independent contract review required; production activation excluded |
