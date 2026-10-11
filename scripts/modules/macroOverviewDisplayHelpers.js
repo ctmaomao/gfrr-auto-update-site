@@ -99,6 +99,10 @@ export function shippingFreightDisplay(source, nowMs = Date.now()) {
   const allFresh = legs.every(leg => leg.fresh);
   const hasValue = legs.some(leg => leg.value !== null);
   return {
+    providerLabel: /^(?:StockQ|BalticExchangePublicTicker):BDTI; (?:StockQ|BalticExchangePublicTicker):BCTI; (?:StockQ|BalticExchangePublicTicker):BDI$/u.test(sf.source || '')
+      ? sf.source.includes('StockQ:') && sf.source.includes('BalticExchangePublicTicker:') ? '交易所公开行情 / StockQ 转引'
+        : sf.source.includes('BalticExchangePublicTicker:') ? '波罗的海交易所公开行情' : 'StockQ 转引'
+      : '来源待核',
     number: legs[2].value === null ? '—' : String(legs[2].value),
     detail: legs.map(leg => leg.text).join(' · '),
     allFresh,

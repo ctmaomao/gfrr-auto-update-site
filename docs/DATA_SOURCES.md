@@ -1,5 +1,7 @@
 ﻿# Data Sources
 
+> 2026-10-11 Runtime 恢复：PR #449 已独立审阅并合并来源契约。Daily 的 `resolveShippingFreight` 优先读取官方首页公共 ticker，单次 GET / 8 秒 / 64 KiB / 零重试 / 禁止重定向；失败按指数回退 StockQ 或原缓存，保留真实观测日及来源。只缓存三指数紧凑摘要，不采集路线报价或留存完整原始响应。首次恢复通过同一 resolver 与既有原子写入函数，仅更新 shippingFreight，不运行完整 Daily 或收费 AI。后续沿用既有每日更新频率，不新增 schedule。
+
 > 2026-10-11 窄范围接入修订：[ADR-0067](ADR/0067-baltic-public-ticker.md) 允许在既有 shippingFreight 广义展示层使用官方首页公共 ticker 的 BDI/BDTI/BCTI；保留 StockQ 缓存来源，source 仅允许两个提供方按三指数固定顺序的八种组合。旧 StockQ-only 描述在此范围由该 ADR 替代。owner 接受风险不等于第三方授权；其它来源、路线级 source-rights/manual fixtures、评分和 not_connected 边界不变。契约 PR 不启用采集或写生产数据。
 
 

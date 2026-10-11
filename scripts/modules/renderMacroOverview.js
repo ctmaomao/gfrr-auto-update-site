@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=freight-observation-status-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=freight-observation-status-1';
+} from './config.js?v=baltic-public-ticker-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=baltic-public-ticker-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,11 +18,11 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=freight-observation-status-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=freight-observation-status-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=freight-observation-status-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=freight-observation-status-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=freight-observation-status-1';
+} from './macroOverviewDisplayHelpers.js?v=baltic-public-ticker-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=baltic-public-ticker-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=baltic-public-ticker-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=baltic-public-ticker-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=baltic-public-ticker-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1979,6 +1979,7 @@ function renderShippingFreight({ radarData }) {
     );
     setLeafText('c1-freight-number', display.number);
     setLeafText('c1-freight-source-state', display.sourceLabel);
+    setLeafText('c1-freight-provider', display.providerLabel);
     const regime = display.allFresh && sf.freightStressRegime ? ` · ${sf.freightStressRegime}` : '';
     const detail = `${display.detail}${regime}`;
     setLeafText('c1-freight-aux', reactionText(reaction, detail));
