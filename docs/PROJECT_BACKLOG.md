@@ -5,7 +5,8 @@
 - **Acceptance baseline**：owner 要求按已审阅的优先级逐项完成：1）集成已有运费展示修复；2）升级 World Order 缓存 Action 并核实 Node 24；3）减少同一源码的 Pages 重复发布；4）有限排查备用实时调度延迟，仅在确认可修复原因时改动。任务包含独立审阅、必要检查、分项提交/推送/PR/合并及对应生产验收；沿用本审计任务的有界独立 AI 代审授权。保留全部时效/预算/发布保护，不新增来源、付费采集、CSP 批次或大型重构。
 - **第一项回执**：PR #445 已合并 `77a21f8b`；完整本地检查、独立 AI 审阅和 CI 通过，Pages/EdgeOne 发布成功。两站 1440px/390px 真实页面均显示 BDI“—”、油轮原日期 2026-08-10/沿用旧值、背景徽章；无水平溢出或页面异常，纸色/墨色/serif 字体保持。只修显示，不宣称源报价恢复。本 PR 符合 DESIGN.md 的所有规则。
 - **第二项回执**：PR #446 已合并 `937697da`，按 [ADR-0065](ADR/0065-node24-cache-action.md) 固定官方 Node 24 cache Action，保持缓存与 receipt 隔离。专项/完整本地检查、独立 AI 审阅及 CI 均通过，旧 SHA/浮动 tag 阴性回归有效；不额外采集，实际升级后的缓存命中仍待自然运行日志。
-- **当前步骤与门槛**：第三项基于 main `937697da`，按 [ADR-0066](ADR/0066-pages-publication-coalescing.md) 增加保守只读 Pages 去重，信息未知仍正常发布，手动默认强制；原触发、完整检查、SHA 固定、重试及 EdgeOne 预算不变。新测试纳入现有 workflow 检查，不删旧断言或新增 ignore。原型七组回归及一次真实元数据 GET-only 判断通过；最终完整检查、独立审阅、CI 和线上 skip 验收待执行。第四项尚未收口。
+- **第三项回执**：PR #447 已合并 `d0591bec`，按 [ADR-0066](ADR/0066-pages-publication-coalescing.md) 保守去重；原触发、完整检查、SHA 固定、重试及 EdgeOne 预算保留。独立审阅抓到并修正依赖失败时的隐式 success() 跳过问题，增量复核通过；本地完整检查与 CI 均通过。[38110081134](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38110081134) 首次完整发布成功；唯一受控 force_deploy=false 验收 [38110383986](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38110383986) 预检七秒、明确 reuse、deploy skipped，均绑定 d0591bec。两站 app.js HTTP 200、归一化内容与 main 一致，平台去重已验收。
+- **第四项当前**：六次相邻备用实时构建全部 success、创建后 3～4 秒启动、13～23 秒完成；触发间隔 173～395 分钟是真延迟，但平台根因未确认，保留 cron/时效/告警/恢复。按既有 Actions 排查范围修正同一工作流中另一个已复现错误：依赖安装三次失败的退出码被 if 覆盖成 0，在 else 立即保存；不是调度根因。旧脚本负例确实失败，修正后回归 2/2、check:changed 完整 check:all 退出 0，独立有界 AI 审阅无阻断；提交后等待 CI 与合并；不额外调度生成或修改生产数据。详情见 [有限调度回执](OPERATIONS.md#2026-10-11-备用实时调度的有限核查回执)。
 
 ### 2026-10-10 健康整改收口与来源有限核查（前序回执）
 

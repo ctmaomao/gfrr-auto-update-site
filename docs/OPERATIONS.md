@@ -681,6 +681,23 @@ node scripts/check-realtime-health.mjs --github-output
 - GitHub Actions schedule 是否延迟或未触发。
 - workflow 权限是否异常。
 
+### 2026-10-11 备用实时调度的有限核查回执
+
+固定核查 10 月 10～11 日六次相邻 Build Realtime Market（下表均 UTC）；不是持续监控或全部历史审计。工作流为 active，main 保留每十分钟错峰 cron；六次实际创建后 3～4 秒启动、job 执行 13～23 秒，全部 success，但相邻创建间隔为 173～395 分钟。
+
+| 创建时间 | 运行记录 | 结果 |
+|---|---|---|
+| 10-10 00:58:31 | [38011298146](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38011298146) | success |
+| 10-10 06:59:36 | [38032851877](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38032851877) | success |
+| 10-10 13:34:56 | [38056267927](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38056267927) | success |
+| 10-10 18:00:06 | [38074004457](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38074004457) | success |
+| 10-10 21:35:57 | [38088238843](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38088238843) | success |
+| 10-11 00:29:08 | [38098578194](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38098578194) | success |
+
+[00:50 恢复任务](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/38099810603) 成功，判断快照 21 分钟、fresh，正确跳过生成，job 六秒完成。记录支持“实际触发稀疏、执行链在这些样本中正常”；没有证实持续断更、长时间 runner 排队、权限失败或 writer 占用是原因。[GitHub schedule 官方说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) 允许高负载下延迟甚至丢弃部分调度，但本案没有平台根因回执，不能直接归因于某次平台事故。保持原 cron、90 分钟信任窗口、告警和恢复，不靠延长阈值或新增定时服务掩盖延迟。
+
+同一工作流的安装重试另有可复现错误：if 结束后读取 `$?` 会取得 if 的 0；连续三次安装失败也可能放行。修正是在 else 内立即保存 npm 失败码，保留三次/20与40秒等待，最终以原码退出。回归运行真实 shell 块、合成 npm/sleep，不安装、不联网、不生成数据；旧实现负例失败（0≠17），修正后覆盖首次成功、末次恢复和三次失败。此错误不曾出现在上述成功样本，也不是已确认的调度延迟根因；不人为制造生产安装失败来验收。
+
 `realtime-data` stale 与 Worker overall ok 可以同时发生；二者均不能单独证明静态首页健康。页面应核对实际 radar JSON 与发布结果；Worker unhealthy 则按 Worker 运行链排查。
 
 ### Realtime stale recovery
