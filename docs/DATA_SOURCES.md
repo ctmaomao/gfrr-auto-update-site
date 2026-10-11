@@ -1,5 +1,8 @@
 ﻿# Data Sources
 
+> 2026-10-11 窄范围接入修订：[ADR-0067](ADR/0067-baltic-public-ticker.md) 允许在既有 shippingFreight 广义展示层使用官方首页公共 ticker 的 BDI/BDTI/BCTI；保留 StockQ 缓存来源，source 仅允许两个提供方按三指数固定顺序的八种组合。旧 StockQ-only 描述在此范围由该 ADR 替代。owner 接受风险不等于第三方授权；其它来源、路线级 source-rights/manual fixtures、评分和 not_connected 边界不变。契约 PR 不启用采集或写生产数据。
+
+
 > 项目所有外部数据源的边界手册。
 > 任何新增数据源前必读;任何"为什么 X 不该影响 scoring"的疑问先查本文。
 >

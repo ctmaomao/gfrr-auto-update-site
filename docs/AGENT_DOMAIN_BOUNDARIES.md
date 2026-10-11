@@ -1,5 +1,8 @@
 # Agent domain boundaries
 
+> 2026-10-11 窄范围接入修订：[ADR-0067](ADR/0067-baltic-public-ticker.md) 允许在既有 shippingFreight 广义展示层使用官方首页公共 ticker 的 BDI/BDTI/BCTI；保留 StockQ 缓存来源，source 仅允许两个提供方按三指数固定顺序的八种组合。旧 StockQ-only 描述在此范围由该 ADR 替代。owner 接受风险不等于第三方授权；其它来源、路线级 source-rights/manual fixtures、评分和 not_connected 边界不变。契约 PR 不启用采集或写生产数据。
+
+
 > 本文件是根 AGENTS.md 明确委托的领域规则附件，修改对应路径前必须读相关段落；不要求全量加载。原条目保留，迁移不改变生产行为或审批。
 > 阶段规则只约束点名的路径/helper；其“下一步”不是整个项目的当前任务。明确记录的窄范围例外只覆盖指定路径，不自动解锁旧 helper。
 

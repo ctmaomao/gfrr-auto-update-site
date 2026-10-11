@@ -1,3 +1,4 @@
+import { isFreightSource } from './daily/freight-source-contract.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildEnergyTransportLayer } from './run-daily-pipeline.mjs';
@@ -116,7 +117,7 @@ if (isPlainObject(freight)) {
     'balticDryDailyChangePct'
   ]);
   assertStatusKeys(freight, 'macroDrivers.shippingFreight', ['dirtyTanker', 'cleanTanker', 'dryBulk']);
-  if (freight.source !== 'StockQ:BDTI; StockQ:BCTI; StockQ:BDI') fail('macroDrivers.shippingFreight.source is not the approved M-74 source string');
+  if (!isFreightSource(freight.source)) fail('macroDrivers.shippingFreight.source is not an exact ADR-0067 aggregate origin combination');
 }
 
 const energySpareCapacity = macroDrivers?.energySpareCapacity;

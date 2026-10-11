@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0067](ADR/0067-baltic-public-ticker.md)：owner 批准的 BDI/BDTI/BCTI 公开聚合指数接入与严格来源迁移；不授权路线级确认或其它来源。
+
 - [ADR-0066](ADR/0066-pages-publication-coalescing.md)：同一 main 源码的保守 Pages 发布去重；保留完整检查、失败时正常发布、手动强制与全部旧触发。
 
 - [ADR-0065](ADR/0065-node24-cache-action.md)：World Order 缓存 Action 的 Node 24 固定版本及显性 checker 收紧；不改变缓存、源权利或预算边界。
