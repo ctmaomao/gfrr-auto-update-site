@@ -30,3 +30,19 @@ test('ODP completion can publish without AI success while EdgeOne budget and coa
   assert.ok(workflow.includes('if [ "$release_count" -ge 400 ]; then'));
   assert.ok(workflow.includes('cancel-in-progress: false'));
 });
+
+test('Pages reuse is bounded to read-only metadata and inspection failure preserves checked publication', () => {
+  const workflow = readFileSync('.github/workflows/deploy-static-site-to-pages.yml', 'utf8');
+  const review = workflow.slice(workflow.indexOf('  publication_check:'), workflow.indexOf('\n  deploy:'));
+  assert.match(workflow, /force_deploy:\s+description:[^\n]+\s+type: boolean\s+default: true/u);
+  assert.match(review, /permissions:\s+contents: read\s+actions: read\s+deployments: read/u);
+  assert.doesNotMatch(review, /(?:contents|pages|id-token): write/u);
+  assert.ok(review.includes("steps.review.outcome != 'success' || steps.review.outputs.should_deploy != 'false'"));
+  assert.match(review, /id: review\s+continue-on-error: true/u);
+  assert.ok(review.includes("github.event_name == 'workflow_dispatch' && inputs.force_deploy"));
+  assert.ok(review.includes('export SOURCE_SHA="$(git rev-parse HEAD)"'));
+  assert.ok(review.includes('node scripts/review-pages-deployment.mjs'));
+  assert.match(workflow, /deploy:\s+needs: publication_check/u);
+  assert.ok(workflow.includes("!cancelled() && (needs.publication_check.result != 'success' || needs.publication_check.outputs.should_deploy != 'false')"));
+  assert.equal((workflow.match(/run: npm run check:all/gu) ?? []).length, 1);
+});
