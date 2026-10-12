@@ -2,28 +2,28 @@
   "_comment": "AI 泡沫监测(Bubble Watch)curated 层:本文件是 15 项编辑/研究类指标的唯一人工口径来源,以及 12 项自动指标的 fail-closed 回退快照。自动指标实时抓取失败时沿用此处快照并按 maxAgeDays 标 STALE;编辑类指标更新本文件即可(改 value/status/note + asOfDate)。本层 display-only,不进 GFRR scoring/decision。",
   "curated": {
     "private_secondary_marks": {
-      "status": "yellow",
-      "value_display": "分歧·折价续存(第3周)",
-      "note": "Anthropic 二级报价（StockAnalysis/Hiive 关联口径）$1,050.01/股、隐含 $8885.4 亿，较 $9650 亿 Series H 折价 7.9%（上期 -8.27%，边际连续第 2 周收窄，但已连续第 3 周处于折价）；Forge Global 页面仍未挂出报价（自 5/11 冻结）。OpenAI 侧 Forge $721.85 连续第 5 周逐位未动（suspect_static）。本期最大新进展是叙事而非价格：Anthropic 已把 IPO 由 10 月推迟到 11 月、估值讨论上探 $2 万亿、年底营收目标喊到 $1100 亿，但公开 S-1 至今未见于 EDGAR。因无第二个实时平台确认折价，维持黄灯。",
-      "asOfDate": "2026-09-27",
+      "status": "red",
+      "value_display": "Anthropic -7.54% / OpenAI +12.43%",
+      "note": "本轮打开 Clarity 标价：Anthropic 10/12 $1,054.39、隐含 $892.25B，对最近一级 $965B 折价 7.54%；OpenAI 10/11 $813.72、隐含 $957.9B，对 $852B 溢价 12.43%。任一旗舰折价超过 5% 按规则转红；首期统一 Clarity 序列，不与旧 Forge 标价算环比。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "vc_ai_share": {
       "status": "red",
-      "value_display": "≈80% (TTM) / 65% (YTD)",
-      "note": "PitchBook《Q3 2026 VC Quantitative Perspectives》（9/22 发布）给出 AI 占过去 12 个月（TTM）创投交易额近 80%；注意口径与上期引用的「YTD 65%」不同（滚动 12 月 vs 年初至今），不完全可比，但方向一致、集中度未见缓解。报告同时提出创投「流动性悖论」——退出金额创纪录但基金分配处于历史低位。CB Insights 交叉印证 Q2 单季 AI 占比 >70%、企业投资人占美国 AI 创投交易额 87.9%。无论口径如何，远超 50 红线，红灯不变。",
-      "asOfDate": "2026-09-27",
+      "value_display": "64.2%",
+      "note": "10/5 发布的全球 Q3 数据：AI $102B / 总 VC $159B = 64.2%（报道约 64%），仍超过 50% 红线。主序列由 PitchBook 美国切为 Crunchbase 全球季度，首期不算跨口径环比。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 120,
       "cadence": "quarterly",
       "syncedFromUpstream": true
     },
     "ai_ipo_pipeline": {
-      "status": "red",
-      "value_display": "洪流·首破10家门槛(Anthropic仍推迟)",
-      "note": "管道本期首次越过「洪流」阈值：Nscale 9/18 正式向 SEC 递交 S-1（纽交所 NSCL，GS/JPM/MS 主承销）；SoftBank 旗下 SB Energy 9/1 已交表（目标估值约 $500 亿，H1 净亏 $32 亿但合同储备 $4390 亿）；数据中心运营商 Switch 已秘密递交（目标 $500-800 亿，最快 11 月挂牌）。加上 Vantage（探索中，约 $1000 亿）、CyrusOne（2027 年）、Blue Owl DC REIT、DataBank、EdgeCore、DayOne（秘密递交）、Lambda（洽谈 $30 亿 Pre-IPO 轮）、Crusoe（评估中）、Cerebras（已挂牌），管道内不同阶段的名字已达约 13 家，首次突破 10 家红线。与此形成对照：Anthropic 自己的公开 S-1 截至 9/26 仍未现身 EDGAR，挂牌继续从 10 月推迟到 11 月；OpenAI 明确表示 2026 年内不会上市。",
-      "asOfDate": "2026-09-27",
+      "status": "yellow",
+      "value_display": "5家递表/近程·探索项另列",
+      "note": "本期核对递表与近程名单5家：DayOne、Nscale、SB Energy、Switch、Anthropic；SB Energy已推迟营销且新日期未公布，其余4家探索项目不混入已确定的六个月管道。DayOne 10/5公开递表是原名单的阶段推进，Firmus 10/9撤回IPO；上期约13家混入已上市、仅探索及2027未定期项目，不能沿用为已确认洪流。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -31,35 +31,35 @@
     "dc_abs_spread": {
       "status": "red",
       "value_display": "走阔·Oracle发正式不可抗力通知",
-      "note": "本期由「贷款折价」升级为「正式法律主张」：Oracle 9/24 就 Project Jupiter 向开发方 Stack Infrastructure 与同时持有该项目债权/股权的 Blue Owl 正式发出不可抗力通知，若 2.45GW 燃料电池电厂与「Green Chile」天然气管道（已推迟至 2027 年 2 月）不能如期到位，租金支付或递延长达三年；新墨西哥州最高法院 9/17 已解除许可禁令，但项目仅完成约 26%、落后原计划 7 个月，$180 亿银团贷款维持 89-91 美分（与上期持平，未进一步下跌）。压力已外溢到信用提供方股价：Blue Owl 收 $9.32（较 8 月高点 -27%），Apollo $121、Blackstone $118 同步走弱。Data Center Watch 统计 Q2 单季 $680 亿数据中心项目因当地反对被阻或延后，H1 累计近 $2000 亿。一级市场未关门：Blackstone/QTS 约 $10 亿数据中心 ABS（7 座超大规模数据中心）Fitch 已出预评级，预计 10/5 当周完成。",
-      "asOfDate": "2026-09-27",
+      "note": "本轮已读QTS预售与定价报道搜索，但未核实本期实际ABS利差及可比50bps变化；旧Oracle贷款89–91美分不能证明ABS利差走阔。保留9/25旧值并标stale，红灯只为历史沿用，不声称本期ABS压力已验证。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "debt_capex_ratio": {
       "status": "yellow",
-      "value_display": "≈56% (53-60%)",
-      "note": "周度增量：CoreWeave 可转债在两周内从最初 $30 亿一路上调至 9/22 最终交割的 $42 亿（超原计划 40%，较上期记录的 $37 亿再上修 $5 亿）；另新增 Lambda $9.26 亿优先担保 Term Loan B（9/22 交割，为一家投资级客户的 GPU 部署融资）。无单笔 ≥$100 亿新 deal。台账可追溯流水由 $2087.2 亿升至 $2101.5 亿、20 笔（含在市未定价的 Broadcom $700 亿）。分子仍沿用 9/6 完整对账中枢 $6000 亿（区间 $5700-6500 亿），分母 $1.08 万亿 → 比值 55.6%，取 56%，与上期持平。交叉印证：高盛 9/25 将 2027E 全行业 hyperscaler capex 预测由 $1.01 万亿上调至 $1.2 万亿（+50%），分母侧仍在加速抬升，若对账跟不上 capex 扩张步伐，比值有被动走低的风险。距 70% 红线 14pt，下次完整对账 10/4 后进行。",
-      "asOfDate": "2026-09-27",
+      "value_display": "≈56% (53–60%)",
+      "note": "10/2–10/12扫描无新增已核实债务deal；Broadcom同一8月融资指示70→60B，不重复加$60B；Lambda 10/1$1B在周窗外待对账补录，SpaceX拟2027融资不计2026已发。台账$200.147B含在市，折年$256.329B/全口径capex≈23.73%为下限；仍按既有600/1080=55.6%定档，MS年度570B锚已重读，完整对账未完成且逾期8天。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 120,
       "cadence": "low-frequency-research",
       "syncedFromUpstream": true
     },
     "neocloud_credit": {
-      "status": "yellow",
-      "value_display": "观察(0起评级动作·杠杆再抬升)",
-      "note": "本期仍无穆迪/标普/惠誉对 CoreWeave、Nebius、Nscale、Lambda、Crusoe 的评级下调、违约或不良交换确认行动，维持观察黄灯。但杠杆持续攀升：CoreWeave 可转债从最初提出的 $30 亿（9/17）两次上调，最终于 9/22 交割前定于 $42 亿（超原计划 40%），2033 年到期、票息 2.875%、转股价约 $97.85（较 9/17 收盘 $79.88 溢价 22.5%），使其 2026 年以来累计可转债发行超 $100 亿；现有 DDTL 5.0 贷款评级仍是 Ba2(穆迪)/BB+(惠誉)，投机级未变。Lambda 另于 9/22 完成 $9.26 亿优先担保 Term Loan B，为一家投资级客户的 GPU 部署融资。市场仍在用股价、转股溢价与信贷利差定价压力，评级机构尚未跟进。",
-      "asOfDate": "2026-09-27",
+      "status": "green",
+      "value_display": "本轮扫描未见确认事件/正式Watch",
+      "note": "近90天对CoreWeave、Nebius、Nscale、Lambda、Crusoe开展具名降级/违约/不良交换及正式Watch检索，已读公司公告和可访问评级页，未发现符合定义的事件。CoreWeave贷款Ba2/BB+与Lambda贷款Baa2是背景，不把高杠杆、股价下跌或股票分析师降级当作正式信用Watch；Moody/S&P访问缺口明示，结果是尽职扫描结论。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "token_volume_mom": {
-      "status": "green",
-      "value_display": "沿用+74.2%（数据源不可用）",
-      "note": "沿用 2026-09-19 值（数据源暂不可用）：OpenRouter 官方 datasets API 本期需 Bearer token 鉴权，沙箱与直连均未获取到有效凭证；本应于本次 routine 运行前 2 小时完成的 GitHub Actions 定时 prefetch，截至运行时仍未触发/未推送，prefetch 文件仍是上上期 9/20 快照，已超 3 天新鲜度窗口不可用；备源（openrouter.ai/rankings 页面）为客户端渲染、无法解析出底层绝对量。value 沿用 +74.2%、as_of 保留 2026-09-19，不前移。",
-      "asOfDate": "2026-09-27",
+      "status": "yellow",
+      "value_display": "+41.3%",
+      "note": "截至10/11，近30日646.2T / 前30日457.4T tokens，MoM +41.3%。绝对需求扩大，但增速从上次实际观测9/19的74.2%下降，按减速黄灯；不是流量收缩。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 45,
       "cadence": "monthly-research",
       "syncedFromUpstream": true
@@ -75,9 +75,9 @@
     },
     "gpu_rental_price": {
       "status": "green",
-      "value_display": "稳定·中位价持平,另一指数月环比+22%",
-      "note": "AIMultiple 指数 9/22 更新的 H100/H200/B200 中位租金（$3.25/$4.40/$6.52/hr）与前一周快照完全相同，价格持稳无新变化；另一独立指数（Ornn，经 SemiAnalysis 生态引用）显示 H100 价格截至 9/7 月环比 +22% 至 $3.28/hr，方向是涨、与「供过于求」叙事相反。旧代 GPU（V100/P100/K80）从 $1.77 跌至 $0.95，但不影响主流芯片判读。可用性方面 MI300X 仅 7%、B300 11%、H100 33%，与上周一致，新一代芯片仍紧张，无 >15% 跌幅证据。",
-      "asOfDate": "2026-09-27",
+      "value_display": "$3.49/GPU/hr",
+      "note": "本期 GetDeploying 77 条在库 on-demand 配置中筛出 33 条单卡 H100 报价、16 家提供商，中位 $3.49/GPU/hr。全站 on-demand 90 日趋势 Flat 为稳定的辅助证据；该趋势未专门限定本单卡样本。首期切换 AIMultiple→GetDeploying，不对旧 $3.25 算环比；挂牌可租价，不是成交现货价。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -85,8 +85,8 @@
     "arr_2nd_deriv": {
       "status": "green",
       "value_display": "加速·打破7期停滞",
-      "note": "打破连续 7 期数据停滞：据 NYT 9/18 报道（经 Bloomberg/Axios 转载），Anthropic 年化营收步伐预计将在 2026 年内突破 $1000 亿，较 7 月披露的 $650 亿在约七周内增长过半，隐含月增量约 $17.5-23 亿，高于此前「$170 亿→$90 亿」的衰减读数，指向重新加速而非减速。需要注意：此数字来自媒体转载而非公司直接对投资者的披露（不同于 7 月 $650 亿那次），且 Anthropic 公开 S-1 截至 9/23（Forbes）仍处保密提交状态、未见于 EDGAR，IPO 窗口已从 10 月推迟到 11 月。OpenAI 侧无新数据，仍锚定 8 月的 $400 亿。综合看，Anthropic 一侧的加速信号足以将本指标由黄转绿，但可信度略低于公司直接披露，需下期 S-1 公开后核实。",
-      "asOfDate": "2026-09-27",
+      "note": "本轮取得OpenAI9月实际年化收入近$50B（10/8Reuters报道，净口径），Anthropic仍为7月底$65B（8/17报道；5月公司披露$47B），两者日期各保留。$70B→$50B是gross/net展示纠正，不是收入下降；Anthropic年末$100B目标不再冒充已实现加速。旧绿灯依据预测，OpenAI旧$40B口径及完整最近3个月同口径序列未核实，无法可靠重算二阶导或综合方向；沿用9/18历史显示及颜色并计stale，部分新锚另记raw，不伪称current。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 45,
       "cadence": "monthly-research",
       "syncedFromUpstream": true
@@ -94,44 +94,44 @@
     "enterprise_deploy": {
       "status": "green",
       "value_display": "72%",
-      "note": "本周未检索到 McKinsey、Gartner、IDC 或 Deloitte 发布的新一期企业 AI 部署调查。重新核实的数字与上期一致：McKinsey Q1 2026 的 72% 续为主锚（2024 年 55%），Presenc AI Global 2000 口径 78%；Gartner/IDC 侧数字同样未变（80% 企业应用嵌入 agent，仅 31% 真正投产；预计 2026 年底 40% 企业应用带任务型 agent）。Deloitte 2026 年度报告基础调研实际完成于 2025 年 8-9 月，非本周新数据。部署广、价值捕获窄的裂口仍在，但采用率本身离 65% 黄线还有 7pt，绿灯不变。",
-      "asOfDate": "2026-09-27",
+      "note": "沿用 2026-09-27 历史值 72%，但本期不能核实为生产部署率：主源 Digital Applied 于 2026-10-04 明确撤回旧版缺乏依据的部署、行业、试点失败率等数据表，现页没有 72%。McKinsey 2026-08-25 官方调查给出 AI 常规使用近九成、企业级 scaling 44%（大型企业 54%），这些不同分母/部署阶段不能替换既定生产部署率，也不能把被撤回数据标 current。本条计入 stale。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 120,
       "cadence": "quarterly",
       "syncedFromUpstream": true
     },
     "frontier_progress": {
       "status": "green",
-      "value_display": "加速·双旗舰发布+ARC-AGI-2新SOTA",
-      "note": "上期报告的「零发布、零 SOTA」未能延续。Anthropic 9/22 发布 Claude Opus 5.5、xAI 9/21 发布 Grok 4.7；ARC Prize 官网 9/22 验证 Opus 5.5 在 ARC-AGI-2 拿下 98.5%（v1 半私有集）/93.3%（v2 半私有集），较此前最佳 ~73%（独立方案）大幅跃升，接近该基准饱和。HLE（带工具）方面 Opus 5.5 以 67.7% 小幅超越 Fable 5.1 的 65.6%，刷新该子榜 SOTA。ARC-AGI-3 仍是 GPT-6 Astra 62.7%（Opus 5.5 尚未跑该榜）、FrontierMath Tier-4 仍是 GPT-6 Astra 自报 97.6%（Epoch 官方独立验证上限仍为 87.8%，未变），METR 时间跨度页面自 5/8 起未再更新。本期有实质、可查日期的能力进展（尤其 ARC-AGI-2），绿灯不变，上期「停滞观察」的担忧本期解除。",
-      "asOfDate": "2026-09-27",
+      "value_display": "ECI +5.26 / 季均4.2625",
+      "note": "主锚首期由METR切换ECI：SOTA Opus5.5为167.33（9/22），90日增幅5.26、一年季均4.2625，比值1.234≥0.5，维持绿灯。困难基准有进展但FrontierMath已饱和，改跟踪Erdos难题约2.94%；90日核验至少7次旗舰发布/限制预览，能力与降本叙事并存。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 35,
       "cadence": "monthly-research",
       "syncedFromUpstream": true
     },
     "accounting_events": {
       "status": "green",
-      "value_display": "0 (Burry新增具体数字·Nscale披露持续经营疑虑)",
-      "note": "仍无针对 AI 龙头的已确认会计造假认定或 SEC 执法立案，计数 0，绿灯不变。但争议进一步具体化：Michael Burry 9/24-25 发布最新分析，列出各厂商未起租/未确认租约义务规模——Alphabet 约 $9000 亿、Meta 约 $7000 亿、Microsoft 超 $3000 亿（近期几乎翻三倍）、Amazon $2670 亿（9 个月内 +81%），并批评微软将数据中心资产使用寿命由 15 年延长至 25 年「太精明了」。同期 Nscale 的 $350 亿 IPO 招股书披露此前存在「持续经营」重大疑虑，靠 Nvidia 9/15 的 $31 亿可转债贷款才暂时缓解——这是本期唯一带具体名字的会计/披露警示，但仍属合规披露范畴而非坐实造假。",
-      "asOfDate": "2026-09-27",
+      "value_display": "0·本周扫描未见新确认事件",
+      "note": "10/2–10/12检索并实际检查SEC新闻稿、诉讼公告及Reuters报道，未见符合本指标的新确认造假或正式调查事件。OpenAI约$500亿与约$700亿run-rate口径争议单列为披露风险，不等于已确认造假；空列表只代表本次尽职扫描结果。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "capex_reaction": {
       "status": "yellow",
-      "value_display": "偶发惩罚(ORCL再跌6% / AMD+10%)",
-      "note": "反应本期继续分化而非全面遭抛售，与上期结论一致。Oracle 9/24 再跌 6% 至 $136.73（呼应上期 9/18 的 -3.8%，均属公司特定的现金流/债务成本担忧——营运现金流 $230 亿但自由现金流 -$54 亿，利息费用同比 +55% 至 $14 亿），同期 CoreWeave 几乎持平、Snowflake 仅跌 1%、云计算 ETF（SKYY）持平，惩罚仍局限于 Oracle 个股。与此同时纳指 9/22 创收盘新高（+2.3%）：美光（+2.4%，分析师上调评级）、AMD（+10%，市值突破 $1 万亿）、Intel（+12%）均因 AI 芯片/内存需求乐观情绪大涨，Meta 因新推出的 AI 购物助手 Muse 走红而股价飙升——表明只要需求叙事可信，capex/AI 新闻仍能获得奖励。维持黄灯不变。",
-      "asOfDate": "2026-09-27",
+      "value_display": "偶发惩罚（GOOGL/META受罚，AMZN获奖）",
+      "note": "更正为最近一轮财报上调capex后的首个完整交易日、收盘对收盘并扣QQQ：GOOGL7/23相对-5.23个百分点、META7/30相对-11.25个百分点、AMZN7/31相对+14.67个百分点，反应分化判黄。7/31是最新合格事件日，并非本周新事件；财报还包含收入、利润等信息，不将超额收益全部归因于capex。旧9/24个股波动不属于capex指引事件，弃用于此锚，不作跨口径WoW。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "ceo_hedging": {
-      "status": "yellow",
-      "value_display": "分化持续·黄仁勋再反驳+特朗普称阴谋论",
-      "note": "本周未出现 CEO 对 AI 泡沫的新一轮广泛承认，维持黄灯，与上期基本持平。黄仁勋 9/25 在 CNN/Ezra Klein 访谈中继续反驳「AI 失控」说法，直言 OpenAI「没有钱」（收入仅百亿美元级却要支撑万亿级基础设施），延续其反泡沫叙事；同一周特朗普将 AI 安全担忧称为「针对 AI 和数据中心的阴谋」，呼应黄仁勋立场，形成官方+行业双重压泡沫叙事的新组合。9/24 白宫特朗普-习近平国宴上奥特曼、黄仁勋、库克、马斯克等确认出席，但公开报道未见任何关于泡沫/估值的实质发言。背景：9/14 Anthropic 的 Amodei 联合马斯克、Hassabis、奥特曼呼吁「放慢前沿模型开发步伐」曾一度打压 AI 股，但该事件发生在本观察窗口之前，仅作背景不计入本期新增证据。",
-      "asOfDate": "2026-09-27",
+      "status": "green",
+      "value_display": "60日扫描未见新过热承认",
+      "note": "按近60天扫描五位指定CEO，本轮未核实窗口内符合题义的新过热承认。Pichai“irrationality”原访谈为2025/11/18、Dimon近期文章引用4/6旧信，均不能按转载日期刷新；Altman 10月安全风险谈话不计金融泡沫表态，上期“分化持续”的旧泛化叙事不替代本次具名扫描。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -140,33 +140,33 @@
   "autoFallback": {
     "cape": {
       "status": "red",
-      "value_display": "41.48",
-      "note": "multpl.com 页面顶部读数 41.48（9/25 收盘 4pm EDT，日内 +0.23/+0.56%），较上期 40.94 回升 0.54、结束此前两期的连续小幅回落。仍高于 35 红线约 18.5%，处 1881 年以来 98.8 分位、历史均值 17.42 的 2.38 倍，仅次于 1999-2000 峰值 44.19。",
-      "asOfDate": "2026-09-27",
+      "value_display": "41.87",
+      "note": "10/9 收盘 CAPE 41.87，仍高于 35 红线；较上期 41.48 小幅升高。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "top5_weight": {
       "status": "red",
-      "value_display": "27.86%",
-      "note": "SSGA SPY 官方持仓直读（slickcharts 仍 403，本期 prefetch 未就位改由本地直连 SSGA）：前五单类合计 27.86%（NVDA 8.19 / AAPL 7.38 / MSFT 5.57 / AMZN 3.69 / GOOGL 3.03），较上期 28.01% 小幅回落 0.15pt，NVDA 逆势 +0.12pt 但被 AAPL -0.13pt 等抵消；含 Alphabet 双类 30.29%（上期 30.48%），top10 38.82%（上期 38.49%）。仍是 2000 年峰值约 18% 的 1.55 倍。",
-      "asOfDate": "2026-09-27",
+      "value_display": "28.35%",
+      "note": "SSGA SPY前五单类持仓8.34+7.43+5.80+3.73+3.05=28.35%，不合并Alphabet双类；缓存观测日10/12，仍超过25%红线。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "nvda_fpe": {
       "status": "green",
-      "value_display": "≈19-23x",
-      "note": "StockAnalysis 9/25 收盘给出前瞻 P/E 18.68（股价 $225.07，较上期 18.45/$222.27 小幅回升）；FinanceCharts 25.64（9/21 读数，数值未变）、GuruFocus 24.50（连续多周停在 8/19）仍为滞后读数，三源均值约 22.9x。绝对水平仍远低于 1999 年 MSFT 的 60x，是当前向量与 2000-02 最大的一处不同。",
-      "asOfDate": "2026-09-27",
+      "value_display": "18.96x",
+      "note": "10/9 收盘价 $229.28，对应 forward PE 18.96 倍；低于 30 黄线，远期盈利估值提供反向证据。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "hyperscaler_capex_yoy": {
       "status": "yellow",
-      "value_display": "+77% (2027E 上修至 +50%)",
-      "note": "高盛 9/25 把五大云厂商 2027E AI 资本开支预测由上期 $1.01 万亿上调至 $1.2 万亿（同比 +50%，高于市场共识 $1.1 万亿），并指出要回本需要每年约 $3000 亿 AI 收入；追踪的 7 家建设方过去四季度合计资本开支 $6570 亿（Mag4 占 $5430 亿），无一家削减指引，Oracle 维持 FY27 $95B 毛/$70B 净资本开支不变。金额侧 2026E 台账仍是 big4 $7250 亿（+77%）。9/18 定价的 Meta 关联 $12 亿数据中心垂圾债获 4 倍超额认购，显示举债扩产的资金链未断。仍是无一家下调、口径持续上修，加速本身即黄。",
-      "asOfDate": "2026-09-27",
+      "value_display": "+87.03%（Q2 实际）",
+      "note": "更正为四家同一日历季度的实际现金 PP&E：2026Q2 $165.050B，2025Q2 $88.246B，同比 +87.03%。不含融资租赁，Amazon 资产出售/激励不冲减；各公司真实披露日为 7/22、7/29、7/30，as_of 取最后披露日 7/30，并非本周新财报。旧 80/77% 为全年预测口径，不能与本次实数计算 WoW。Meta 和 Alphabet 上调年度支出、Amazon 指引上调至 $220B、Microsoft 年度指引持平；扩张加速仍判黄。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 30,
       "syncedFromUpstream": true
     },
@@ -182,16 +182,16 @@
     "nvda_invest_revenue": {
       "status": "red",
       "value_display": "≈43-45%",
-      "note": "分母 LTM 收入 $302.97 亿（StockAnalysis，对应 7/26 止 Q2 FY27，与上期 $305 亿基本一致，下次读点 11/17 Q3 FY27）。分子新增具体证据：Nvidia 支持的 AI 云商 Nscale 9/18 提交 IPO 招股书（目标估值 $350 亿），披露 Nvidia 已于 9/15 出资 $31 亿认购可转换票据、另有 $10 亿承诺预计 11 月中到位并于 IPO 时转股——招股书同时披露公司曾有「持续经营重大疑虑」警示。这在已追踪的 ~$400 亿股权承诺（OpenAI $300 亿+Anthropic 最高 $100 亿+xAI 最高 $20 亿）之外新增约 $31-41 亿敞口，广义比率较上期 ~43% 略升。Sona 的 $3.6 万亿循环融资图谱持续引发讨论（Axios 9/21「too interconnected to fail」跟进）。Ohio SPV $1050 亿担保上限本期无变化。",
-      "asOfDate": "2026-09-27",
+      "note": "沿用9/24历史≈43-45%及红灯，但本期全口径分子未完成核对，计stale，不能宣称第25期红灯已获核实。LTM收入$302.97B已核实；Reuters核实OpenAI$30B/Anthropic$10B，仅40B÷302.97B=13.20%，不能用缩窄分子替代全清单。Nscale官方9/25全融资为$3.36B（初始$2.36B由多家参与），NVIDIA明确另承诺$1B，初始份额未披露；旧$3.1B全轮金额误归NVDA。Ohio条件担保另列，未知贷款/其他投资增量未补齐，二阶扩张或收敛不能核实。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 30,
       "syncedFromUpstream": true
     },
     "breadth_50d": {
       "status": "red",
-      "value_display": "26.44%（盘中低点 25.44）",
-      "note": "S5FI 由上期收盘 27.83 进一步下探至 9/24 盘中新低 25.44（单日 -11.7%），9/25 反弹 3.93% 收 26.44，周环比再跌约 4.9%；独立宽口径数据源（thetrading.tools）交叉印证：全市场约 4750 只股票中仅 28.2% 站上 50 日线（上期 31.4%）、41.2% 站上 200 日线（上期 43.2%），50 日宽度处历史第 6 百分位。广度持续恶化，本周只是一次性反弹，尚未看到实质性企稳。",
-      "asOfDate": "2026-09-27",
+      "value_display": "34.93%",
+      "note": "10/9 收盘 34.93% 高于 50 日均线，较上期 26.44% 回升，但仍低于 40% 红线，指数强势尚未扩散到多数成分股。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
@@ -205,33 +205,33 @@
     },
     "insider_sell_buy": {
       "status": "red",
-      "value_display": "11595x (买盘近零)",
-      "note": "GitHub Actions 定时 prefetch 本期未就位，改为直连 SEC EDGAR 重新聚合 12 家、窗口 8/28-9/27、共 173 份：卖出 $14.128 亿 / 买入 $12.18 万，比值 11595x（买盘近零，value 取上限 99）。卖出绝对额环比 +58.3%（$8.928 亿→$14.128 亿），为台账最高单周读数，主因 Broadcom 单周新增 $2.500 亿卖出（此前两期均为零）与 NVDA 由 $6.607 亿升至 $9.676 亿（+46.5%）；MSFT $6415 万与买盘 $12.18 万均与上期逐位相同，因两周窗口重叠、期内无新增交易所致，非取数失败。结构仍高度集中：NVDA 占 68%、AVGO 18%、AMD 4%。",
-      "asOfDate": "2026-09-27",
+      "value_display": "186.8x",
+      "note": "12家公司30日公开市场卖出 $673.6M / 买入 $3.6M，比值186.8x；买盘并非零，保留实际比值，仍高于20x红线。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "hy_oas": {
       "status": "green",
-      "value_display": "280 bps",
-      "note": "FRED API key 本期不可用，改用 FRED 官方网页快照：BAMLH0A0HYM2 = 280bps（观测日 9/24），较上期 270bps 走阔 10bps；TradingEconomics 与 govspending.org 镜像同源同值，交叉印证成立；Convex 镜像 9/21 读数 266bps 略低，方向一致抬升。距 350 黄线仍有 70bps 空间，绿灯不变——指数级信用仍与项目级信用（Oracle 贷款、breadth 崩塌）的裂化脱钩。",
-      "asOfDate": "2026-09-27",
+      "value_display": "315 bps",
+      "note": "FRED真实观测日10/8：HY OAS 315bps，较上期280走阔35bps，仍低于350黄线；信用压力尚未形成整体确认。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "fed_policy": {
-      "status": "red",
-      "value_display": "10/28再加息定价升至73-76%",
-      "note": "Fed 理事 Michael Barr 9/23 明确表态「大概率仍需进一步加息」以压制顽固通胀，叠加标普全球制造业与服务业 PMI 初值双双升至四年多高点；CME FedWatch 对 10/28 再加息 25bp 的定价一周内从上期 59.7% 跳升至 73-76%（部分平台报 85%）。10 年美债 9/26 触及 5.23%，为 2007 年以来最高，较上期 5.006% 继续走高。政策方向已是红灯，本期是红灯内部幅度的进一步恶化。",
-      "asOfDate": "2026-09-27",
+      "status": "yellow",
+      "value_display": "维持 81.6% / 加息 18.4%",
+      "note": "10/12 05:15 EDT 更新：10/28 下次会议维持 3.75%-4.00% 概率 81.6%，加息 18.4%；高利率维持仍为主导预期，按黄灯。78.2%/21.8% 是该表的前周列；12 月远期加息预期不替代下次会议口径。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "cloud_rpo_growth": {
       "status": "green",
       "value_display": "强劲·连续第2期无新读数",
-      "note": "沿用 2026-09-10 值（数据源暂不可用）：本期仍无 Oracle、Microsoft、Google、AWS 任何新季度 RPO/backlog 披露，连续第 2 期无新读数，as_of 不前移。台账维持：Oracle Q1 FY27 RPO $6640 亿（+46% YoY）、OCI 收入 +121%；MSFT 商业 RPO $6780 亿（+84% YoY）；AWS $4960 亿（久期 6.4 年）；Google backlog $5140 亿，四家合计约 $2.3 万亿。搜索中出现的其他数字（如 Oracle $4550 亿/$6380 亿）核实后均为不同财季的旧报道，非本期新披露，已剔除。下一批硬数据集中在 10 月下旬至 11 月初（MSFT/GOOGL/AMZN Q3），Oracle 下一次约在 12 月。",
-      "asOfDate": "2026-09-27",
+      "note": "本轮重新打开 Oracle、Microsoft IR 及 Amazon/Alphabet 10-Q，核实最新披露仍为 Oracle 9/10 RPO $664B、MSFT 7/29 $678B（+84%）、AWS 6/30 $496B（久期6.4年）、Google Cloud $513.9B（旧台账514为四舍五入），合计$2.3529T；未见新的季度主锚，value/status/as_of/双语显示值原样保留，计 current。不同公司披露边界及各分项日期仍明确；MSFT下一财报已正式公告10/28，其他具体日期未核实。",
+      "asOfDate": "2026-10-12",
       "maxAgeDays": 90,
       "syncedFromUpstream": true
     }
@@ -253,8 +253,8 @@
     "sourceUrl": "https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json",
     "sourceKind": "latest",
     "snapshotName": null,
-    "upstreamAsOf": "2026-09-27",
+    "upstreamAsOf": "2026-10-12",
     "adoptedCount": 24,
-    "syncedAt": "2026-09-28T11:49:59.922Z"
+    "syncedAt": "2026-10-12T13:20:27.829Z"
   }
 }
