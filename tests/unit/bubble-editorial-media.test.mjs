@@ -9,8 +9,9 @@ import { buildNewsDiscovery, assessWeeklyEditorialNewsReadiness } from '../../sc
 import { validateNewsDiscovery, validateWeeklyEditorialOutput, visibleEditorialText } from '../../scripts/bubble-watch/weekly-editorial-contract.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { buildWeeklyEditorialSystemPrompt } from '../../scripts/bubble-watch/weekly-editorial-prompt.mjs';
-import { requestWeeklyEditorial } from '../../scripts/bubble-watch/weekly-editorial-provider.mjs';
+import { requestWeeklyEditorial, buildWeeklyEditorialReplayCandidate } from '../../scripts/bubble-watch/weekly-editorial-provider.mjs';
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from '../../scripts/bubble-watch/weekly-editorial-claim-diagnostics.mjs';
+import { claimNumericSupport } from '../../scripts/bubble-watch/weekly-editorial-numeric-grounding.mjs';
 import { reviewWeeklyEditorial, projectWeeklyEditorial, applyWeeklyEditorialProjection } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
 const read = (path) => JSON.parse(fs.readFileSync(new URL(`../../${path}`, import.meta.url)));
 const sourceStatus = Object.fromEntries(['tavily', 'brave'].map((name) => [name, { status: 'ok', successCount: 6, failureCount: 0 }]));
@@ -208,7 +209,7 @@ test('provider receives quantitative-source separation and complete length budge
       calls++;
       const messages = JSON.parse(request.body).messages;
       const prompt = messages[0].content;
-      assert.match(prompt, /EVERY numeric token.*EACH cited media title\/snippet/u);
+      assert.match(prompt, /indicatorId AND matching indicator:\* sourceRefId are both cited in that same item/u);
       assert.match(prompt, /separate indicator-only item/u);
       assert.match(prompt, /In BOTH full and limited formats: each categoryAnalysis.detailZh <= 140/u);
       assert.match(prompt, /sourceRefIds, sourceIndicatorIds and confidence.level count too/u);
@@ -220,7 +221,7 @@ test('provider receives quantitative-source separation and complete length budge
   }
 });
 
-test('site quantitative claims remain separate from qualitative media claims; mixed refs cannot excuse unsupported numbers', () => {
+test('ordinary indicator codes produce review hints while mixed refs cannot excuse unsupported financial figures', () => {
   const { input, output, story } = scenario();
   const item = output.categoryAnalysis[0];
   item.sourceRefIds = ['indicator:fed_policy'];
@@ -229,6 +230,9 @@ test('site quantitative claims remain separate from qualitative media claims; mi
   assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
   item.sourceRefIds.push(story.id);
   item.detailZh = `据Morningstar分析，${item.detailZh}`;
+  assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
+  assert.ok(validateWeeklyEditorialOutput(output, input).warnings.length);
+  item.detailZh = '据Morningstar分析，收入达999999亿美元。';
   assert.ok(validateWeeklyEditorialOutput(output, input).errors.some(error => error.includes('adds numbers absent')));
   item.detailZh = '据Morningstar分析，融资可改善信用获取，但需求与偿还风险仍存在；结合站内政策约束作定性比较，机构观点尚未独立核实。';
   assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
@@ -341,14 +345,227 @@ test('failure diagnostics identify claim path and offending numbers without prov
   assert.equal(JSON.stringify(diagnoseMediaClaims(output, leakedInput, { secret })).includes(secret), false);
 });
 
-test('numeric diagnostics preserve monetary units but cannot approve a translated amount', () => {
+test('numeric diagnostics allow exact monetary equivalence but retain units and reject unequal amounts', () => {
   const { input, story } = scenario();
   story.title = 'Revenue report';
   story.snippet = 'Annualized revenue was roughly $50 billion at the end of September, according to the supplied public excerpt.';
-  const output = { weeklyTimeline: [{ detailZh: '据Morningstar报道，年化收入约500亿美元。', sourceRefIds: [story.id] }] };
+  const output = { weeklyTimeline: [{ detailZh: '据Morningstar报道，年化收入约501亿美元。', sourceRefIds: [story.id] }] };
   const source = diagnoseMediaClaims(output, input).claims[0].sources[0];
-  assert.deepEqual(source.claimNumberFacts, [{ number: '500', unit: '亿美元', dollarSign: false }]);
+  assert.deepEqual(source.claimNumberFacts, [{ number: '501', unit: '亿美元', dollarSign: false }]);
   assert.deepEqual(source.evidenceNumberFacts, [{ number: '50', unit: 'billion', dollarSign: true }]);
-  assert.deepEqual(source.unsupportedNumbers, ['500']);
+  assert.deepEqual(source.unsupportedNumbers, ['501']);
   assert.deepEqual(normalizeMediaClaimNames(output, input), output, 'diagnostic units must not alter or silently admit a numerical claim');
+  output.weeklyTimeline[0].detailZh = '据Morningstar报道，年化收入约500亿美元。';
+  assert.equal(diagnoseMediaClaims(output, input).failedClaimCount, 0);
+});
+
+function numericProbe(claimText, evidence, extras = {}) {
+  const story = { id: 'news:test', title: '', snippet: evidence, evidenceStatus: 'attributed_media', contentScope: 'excerpt' };
+  return claimNumericSupport({ detailZh: claimText, sourceRefIds: [story.id], ...extras.claim }, { newsContext: { stories: [story] }, structuredFacts: [], ...extras.input });
+}
+
+test('typed numeric equivalence matrix covers money, scales, decimals, signs, rates, calendar and ranges', () => {
+  const pairs = [
+    ['500亿美元', '$50 billion'], ['500亿美元', 'USD 50.00 billion'], ['1,000万美元', '$10 million'],
+    ['1万亿美元', 'US$1 trillion'], ['500亿元', 'CNY 50 billion'], ['5亿欧元', 'EUR 500 million'],
+    ['5亿英镑', '£500 million'], ['500 亿 美元', 'usd 50 billion'], ['美元500亿', 'USD 50 billion'],
+    ['1000', '1,000'], ['50.0%', '50%'], ['0.5%', '50 basis points'], ['50基点', '0.50%'],
+    ['-0.5%', '−50bps'], ['+6.3%', '6.30%'], ['9月底', 'at the end of September'], ['9月', 'end of Sept.'],
+    ['5月', 'in May'], ['3月', 'March 2026'], ['2026年', 'Q4 2026 outlook'],
+    ['2026年10月12日', '2026-10-12'], ['10月', '2026-10-12'], ['50日', '50-day moving average'],
+    ['35%与40%', '35-40%'], ['100亿至200亿美元', '$10-20 billion'],
+    ['1999年和2000年', '1999-2000'], ['500亿美元', '＄５０ billion']
+    , ['500亿美元', '$50bn'], ['500亿美元', '$50B'], ['1亿美元', '$100m'], ['1亿美元', '$100M'],
+    ['1000美元', '$1k'], ['500亿港元', 'HK$50 billion'], ['500亿澳元', 'AUD 50 billion'],
+    ['500亿日元', 'JPY 50 billion'], ['0.5个百分点', '50bps'], ['50基点', '0.5 percentage points'],
+    ['5个百分点', '5 percentage points'], ['4季度', 'Q4 outlook'], ['S5FI', 'S5FI index'],
+    ['GPT4', 'GPT-4'], ['2026年9月30日', 'September 30, 2026'], ['2026-09-30', '30 Sep 2026'],
+    ['9月30日', '2026-09-30'], ['4.28%', '4.280%'], ['1000000000000000000美元', 'USD 1000000000000000000'],
+    ['5000兆瓦', '5 GW'], ['5000 MW', '5 gigawatts'], ['5万千瓦', '50 MW'], ['1瓦', '1000 mW'],
+    ['80 GB', '80GB'], ['5 MWh', '5MWh']
+  ];
+  for (const [claim, evidence] of pairs) assert.deepEqual(numericProbe(claim, evidence).unsupported, [], `${claim} <= ${evidence}`);
+});
+
+test('typed numeric rejection matrix rejects substring matches, missing units, currencies, rounding, signs, dates and evasion', () => {
+  const pairs = [
+    ['50', '150'], ['35%', '135%'], ['500亿美元', '$50 million'], ['500亿元', '$50 billion'],
+    ['500亿美元', 'EUR 50 billion'], ['500亿美元', 'HK$50 billion'], ['500亿美元', 'A$50 billion'],
+    ['500亿美元', 'Canadian revenue of $50 billion'], ['500亿美元', 'USD 50 billion EUR'],
+    ['35%', '34.9%'], ['6.3%', '-6.3%'], ['0.5%', '50%'], ['5个百分点', '5%'],
+    ['50%', '50 dollars'], ['50', '$50 billion'], ['500亿美元', '$51 billion'],
+    ['9月', 'in October'], ['5月', 'may improve demand'], ['3月', 'stocks march higher'],
+    ['2026年10月11日', '2026-10-12'], ['2026年2月30日', '2026-02-28'],
+    ['50', '1,50'], ['1000', '1e3'], ['五百亿美元', '$50 billion'], ['百分之五十', '50%'],
+    ['37%', '35-40%'], ['150亿美元', '$10-20 billion']
+    , ['50美元', '$50bn'], ['50美元', '$50M'], ['5', 'S5FI index'], ['4', 'GPT-4'],
+    ['3季度', 'Q4 outlook'], ['5%', '5 percentage points'], ['5个百分点', '5%'],
+    ['50美元', '$50%'], ['50美元', '$50元'], ['500亿美元', 'Singapore $50 billion'],
+    ['2026年9月29日', 'September 30, 2026'], ['2月30日', '2026-02-28'], ['1000000000000000001美元', 'USD 1000000000000000000'],
+    ['50 GW', '50 MW'], ['50兆瓦', '50千瓦'], ['50 TB', '50 GB'], ['50 GB', '50 GiB'],
+    ['50 MWh', '50 MW'], ['50美元', '$50MW'], ['5', '5 GB']
+  ];
+  for (const [claim, evidence] of pairs) assert.ok(numericProbe(claim, evidence).unsupported.length > 0, `${claim} must not borrow ${evidence}`);
+});
+
+test('mixed source numerical evidence requires the same claim paired indicator id and source ref; no global pooling', () => {
+  const fact = { indicatorId: 'breadth_50d', factZh: '50日均线上方比例≈35%。', sourceRefIds: ['indicator:breadth_50d'] };
+  const input = { structuredFacts: [fact] };
+  const claim = { sourceRefIds: ['news:test', 'indicator:breadth_50d'], sourceIndicatorIds: ['breadth_50d'] };
+  assert.deepEqual(numericProbe('站内50日广度35%', 'Market breadth remains poor.', { claim, input }).unsupported, []);
+  for (const bad of [{ ...claim, sourceIndicatorIds: [] }, { ...claim, sourceRefIds: ['news:test'] }, { ...claim, sourceIndicatorIds: ['another_indicator'] }]) {
+    assert.ok(numericProbe('35%', 'Market breadth remains poor.', { claim: bad, input }).unsupported.length);
+  }
+  assert.ok(numericProbe('35%', 'Market breadth remains poor.', { input }).unsupported.length);
+  assert.ok(numericProbe('36%', 'Market breadth remains poor.', { claim, input }).unsupported.length);
+  const discoveryOnly = { newsContext: { stories: [{ id: 'news:test', evidenceStatus: 'discovery_only', contentScope: 'excerpt', snippet: '35%', title: '' }] } };
+  assert.ok(numericProbe('35%', '', { input: discoveryOnly }).unsupported.length);
+  assert.ok(numericProbe('35%', 'breadth', { claim, input: { structuredFacts: [{ ...fact, sourceRefIds: ['indicator:another'] }] } }).unsupported.length);
+});
+
+test('full validator/provider/review/projection accepts equivalent revenue and explicitly cited site breadth without changing data', async () => {
+  const { input, output, story, bubble } = scenario();
+  // Pin fixture quantities: a normal future production-data refresh must not change this regression's expected figures.
+  input.structuredFacts.find(fact => fact.indicatorId === 'breadth_50d').factZh = '50日均线上方比例约35%，证据仅为站内测试指标。';
+  input.structuredFacts.find(fact => fact.indicatorId === 'spy_vs_rsp_6m').factZh = '市值加权相对等权重领先6.3%，证据仅为站内测试指标。';
+  story.title = 'Revenue and breadth report';
+  story.snippet = 'Annualized revenue was roughly $50 billion at the end of September. Market breadth remained poor, according to the supplied public excerpt.';
+  output.weeklyTimeline[0].titleZh = '收入与需求';
+  output.weeklyTimeline[0].detailZh = '据Morningstar报道，9月底年化收入约500亿美元，需求与持续投入仍需对照，摘要不能代替独立核实。';
+  output.weeklyTimeline[0].sourceRefIds = [story.id];
+  const item = output.categoryAnalysis[2];
+  item.sourceRefIds = [story.id, 'indicator:breadth_50d', 'indicator:spy_vs_rsp_6m'];
+  item.sourceIndicatorIds = ['breadth_50d', 'spy_vs_rsp_6m'];
+  item.detailZh = '据Morningstar分析，市场广度偏弱；站内50日均线上方比例约35%，市值加权相对等权重领先6.3%，不同证据分别归因，保留摘要限制。';
+  for (const id of item.sourceRefIds) if (!output.sourceAttribution.some(ref => ref.sourceRefId === id)) output.sourceAttribution.push({ sourceRefId: id, claimType: id.startsWith('indicator:') ? 'site_structured_data' : 'attributed_media_news_context', noteZh: '测试中的已引用来源。' });
+  assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
+  let calls = 0;
+  const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+    calls++;
+    return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
+  } });
+  assert.equal(calls, 1);
+  const review = reviewWeeklyEditorial({ input, output: result.output });
+  assert.equal(review.frontendDisplayEligible, true);
+  const layer = projectWeeklyEditorial({ input, output: result.output, review });
+  const next = applyWeeklyEditorialProjection(bubble, layer);
+  delete next.summary.weekly_editorial;
+  const before = structuredClone(bubble); delete before.summary.weekly_editorial;
+  assert.deepEqual(next, before);
+  const bad = structuredClone(output); bad.weeklyTimeline[0].detailZh = bad.weeklyTimeline[0].detailZh.replace('500', '501');
+  assert.ok(validateWeeklyEditorialOutput(bad, input).errors.some(error => error.includes('adds numbers absent')));
+});
+
+test('literal quotations use only the same item cited evidence; multiple credited media do not need identical excerpts', () => {
+  const { input, output, story } = scenario();
+  story.snippet = 'This source states that financing remains costly while demand and repayment risks are unresolved. This is a public excerpt for a local fixture.';
+  const second = { ...story, id: 'news:quote-second', sourceName: 'Financial Times', domain: 'ft.com', url: 'https://ft.com/content/quote', snippet: 'This other source states that demand remains uncertain and conclusions require further evidence. This is a local fixture public excerpt.' };
+  input.newsContext.stories.push(second);
+  input.sourceRefs.push({ ...input.sourceRefs.find(ref => ref.id === story.id), ...second });
+  output.weeklyTimeline[0].sourceRefIds = [story.id, second.id];
+  output.weeklyTimeline[0].detailZh = '据Morningstar分析，摘要称“financing remains costly”；Financial Times指出“demand remains uncertain”。分别归因于被引来源，保持摘要和机构观点限制。';
+  output.sourceAttribution.push({ sourceRefId: second.id, claimType: 'attributed_media_news_context', noteZh: '测试中的第二条被引媒体。' });
+  assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
+  const wrong = structuredClone(output); wrong.weeklyTimeline[0].detailZh += '“unsupported claim phrase”';
+  assert.ok(validateWeeklyEditorialOutput(wrong, input).errors.some(error => error.includes('adds a quotation')));
+  assert.ok(diagnoseMediaClaims(wrong, input).claims[0].sources[0].unsupportedQuoteCount > 0);
+  const missing = structuredClone(output); missing.weeklyTimeline[0].sourceRefIds = [story.id];
+  assert.ok(validateWeeklyEditorialOutput(missing, input).errors.some(error => error.includes('adds a quotation')));
+});
+
+test('compact evidence retains the collector excerpt tail rather than making it invisible to numeric proof', () => {
+  const bubble = read('data/bubble-watch.json');
+  const tail = ' Financing evidence at the end: USD 50 billion.';
+  const discovery = discoveryFor([row(undefined, { snippet: 'A credible institutional financing discussion. '.repeat(5) + tail })]);
+  const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+  assert.ok(input.newsContext.stories[0].snippet.includes('USD 50 billion'));
+  assert.ok(Buffer.byteLength(JSON.stringify(input)) <= 60 * 1024);
+});
+
+test('unsafe wording in visible source notes or other output text cannot bypass the commentary boundary', () => {
+  const { input, output } = scenario();
+  for (const mutate of [o => { o.sourceAttribution[0].noteZh = '建议买入。'; }, o => { o.extraExplanation = '一定会崩盘。'; }]) {
+    const bad = structuredClone(output); mutate(bad);
+    assert.ok(validateWeeklyEditorialOutput(bad, input).errors.some(error => error.includes('unsafe wording')));
+  }
+});
+
+test('a rejected provider response retains a bounded redacted replay candidate without raw HTTP or automatic promotion', async () => {
+  const { input, output, story } = scenario();
+  const secret = 'fixture-private-781236985401';
+  output.weeklyTimeline[0].sourceRefIds = [story.id];
+  output.weeklyTimeline[0].detailZh = `据Morningstar报道，收入999999亿美元。${secret}`;
+  output.headers = { authorization: secret };
+  output.rawResponse = { body: 'PRIVATE_HTTP_ENVELOPE' };
+  const snapshot = JSON.stringify(output);
+  let calls = 0;
+  await assert.rejects(requestWeeklyEditorial({ input, apiKey: secret, fetchImpl: async () => {
+    calls++;
+    return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
+  } }), error => {
+    const candidate = error.replayCandidate;
+    assert.equal(candidate.replayOnly, true);
+    assert.equal(candidate.productionEligible, false);
+    assert.equal(candidate.redactionsApplied, true);
+    assert.equal(candidate.omittedFields, 2);
+    assert.equal(candidate.bounded, false);
+    const serialized = JSON.stringify(candidate);
+    assert.equal(serialized.includes(secret), false);
+    assert.equal(serialized.includes('PRIVATE_HTTP_ENVELOPE'), false);
+    assert.ok(serialized.includes('999999'));
+    assert.equal(validateWeeklyEditorialOutput({ replayCandidate: candidate }, input).ok, false, 'failure envelope is never a production output');
+    assert.ok(Buffer.byteLength(serialized) <= 128 * 1024);
+    return true;
+  });
+  assert.equal(calls, 1);
+  assert.equal(JSON.stringify(output), snapshot);
+  const huge = { ...output, dataGaps: Array(9).fill('字'.repeat(20_000)) };
+  assert.equal(buildWeeklyEditorialReplayCandidate(huge, input, secret), null, 'large replay candidate must not defeat artifact byte budget');
+});
+
+test('real replay CLI is read-only, input-digest bound and has no provider/write flags', () => {
+  const { input, output } = scenario();
+  const failure = { replayCandidate: buildWeeklyEditorialReplayCandidate(output, input) };
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-bubble-replay-'));
+  assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+  const inputPath = path.join(directory, 'input.json'), failurePath = path.join(directory, 'failure.json');
+  const cli = fileURLToPath(new URL('../../scripts/bubble-watch/replay-weekly-editorial-failure.mjs', import.meta.url));
+  const run = extra => spawnSync(process.execPath, [cli, '--input', inputPath, '--failure', failurePath, ...extra], { cwd: directory, encoding: 'utf8', timeout: 10_000 });
+  try {
+    fs.writeFileSync(inputPath, JSON.stringify(input)); fs.writeFileSync(failurePath, JSON.stringify(failure));
+    const result = run([]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).apiCallCount, 0);
+    assert.equal(JSON.parse(result.stdout).productionEligible, false);
+    assert.equal(JSON.parse(result.stdout).exactReplay, true);
+    assert.equal(run(['--allow-network']).status, 1);
+    assert.equal(run(['--output', 'production.json']).status, 1);
+    assert.equal(fs.readFileSync(inputPath, 'utf8'), JSON.stringify(input));
+    assert.equal(fs.readFileSync(failurePath, 'utf8'), JSON.stringify(failure));
+    assert.deepEqual(fs.readdirSync(directory).sort(), ['failure.json', 'input.json']);
+    failure.replayCandidate.inputDigestShort = 'not-the-same-input';
+    fs.writeFileSync(failurePath, JSON.stringify(failure));
+    assert.equal(run([]).status, 1);
+  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+});
+
+
+test('numeric display policy blocks financial inventions but treats stylistic and non-financial differences as review hints', () => {
+  for (const [claim, evidence] of [['9月底', 'in September'], ['Core-23', 'Market conditions'], ['5个百分点', '5%'], ['5%', '5 percentage points'], ['五百亿美元', '$50 billion'], ['50 GW', '50 MW'], ['2026年2月30日', '2026-02-28']]) {
+    assert.deepEqual(numericProbe(claim, evidence).blockers, [], claim);
+  }
+  for (const [claim, evidence] of [['500亿美元', '$51 billion'], ['500亿元', '$50 billion'], ['35%', '34.9%'], ['37%', '35-40%'], ['50美元', '$50MW']]) {
+    assert.ok(numericProbe(claim, evidence).blockers.length, claim);
+  }
+  const { input, output } = scenario();
+  output.weeklyTimeline[0].detailZh = '据Morningstar分析，Core-23框架支持观察；9月底的表达仍需核对原始日期，媒体观点尚未独立核实。';
+  const validation = validateWeeklyEditorialOutput(output, input);
+  assert.deepEqual(validation.errors, []);
+  assert.ok(validation.warnings.length);
+  const review = reviewWeeklyEditorial({ input, output });
+  assert.equal(review.frontendDisplayEligible, true);
+  assert.equal(review.status, 'warn');
+  assert.ok(review.warnings.some(warning => warning.includes('日期、代码')));
+  const layer = projectWeeklyEditorial({ input, output, review });
+  assert.ok(layer.qualityReview.warnings.some(warning => warning.includes('日期、代码')));
 });

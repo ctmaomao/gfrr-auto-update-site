@@ -1,4 +1,5 @@
 // Inspect only public, validated news metadata. Never retain provider prose or raw excerpts.
+import { claimNumericSupport, claimEvidenceTexts } from './weekly-editorial-numeric-grounding.mjs';
 const ALIASES = Object.freeze({
   'The Wall Street Journal': '(?:WSJ|华尔街日报)',
   'Financial Times': '(?:FT|金融时报)',
@@ -51,22 +52,25 @@ export function diagnoseMediaClaims(output, input, { secret = '' } = {}) {
   for (const [claimIndex, { claim, path }] of rows(output).entries()) {
     // Remove the injected credential before extracting even numeric tokens from a malicious response.
     const text = secret ? textOf(claim).replaceAll(secret, '') : textOf(claim);
-    const numbers = numericTokens(text);
     const sources = [];
     for (const id of Array.isArray(claim?.sourceRefIds) ? claim.sourceRefIds : []) {
       const story = stories.get(id);
       if (story?.evidenceStatus !== 'attributed_media') continue;
       const rawEvidence = `${story.title} ${story.snippet}`;
       const evidence = secret ? rawEvidence.replaceAll(secret, '') : rawEvidence;
-      const unsupported = typeof story.snippet === 'string' ? numbers.filter(number => !evidence.includes(number)) : [];
+      const safeClaim = { ...claim, titleZh: text, detailZh: '' };
+      const safeInput = { ...input, structuredFacts: (input.structuredFacts || []).map(fact => ({ ...fact, factZh: secret ? fact.factZh?.replaceAll(secret, '') : fact.factZh })), newsContext: { ...input.newsContext, stories: input.newsContext.stories.map(row => ({ ...row, title: secret ? row.title?.replaceAll(secret, '') : row.title, snippet: secret ? row.snippet?.replaceAll(secret, '') : row.snippet })) } };
+      const unsupported = typeof story.snippet === 'string' ? [...new Set(claimNumericSupport(safeClaim, safeInput).unsupported.map(atom => atom.number))] : [];
+      const unsupportedQuoteCount = [...text.matchAll(/[“「]([^”」]+)[”」]/gu)].filter(match => !claimEvidenceTexts(safeClaim, safeInput).some(evidenceText => evidenceText.includes(match[1]))).length;
       const namePresent = text.includes(story.sourceName);
       const verbPresent = attributionVerb.test(text);
-      if (namePresent && verbPresent && unsupported.length === 0) continue;
+      if (namePresent && verbPresent && unsupported.length === 0 && unsupportedQuoteCount === 0) continue;
       sources.push({
         sourceRefId: story.id, sourceName: story.sourceName,
         sourceNamePresent: namePresent, attributionVerbPresent: verbPresent,
         unsupportedNumberCount: unsupported.length,
         unsupportedNumbers: unsupported.slice(0, 8).map(number => number.slice(0, 32)),
+        unsupportedQuoteCount,
         claimNumberFacts: numberFacts(text),
         evidenceNumberCount: numericTokens(evidence).length,
         evidenceNumbers: numericTokens(evidence).slice(0, 8).map(number => number.slice(0, 32)),

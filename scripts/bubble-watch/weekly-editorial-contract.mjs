@@ -1,4 +1,5 @@
 import { isLimitedEvidence, validMediaStory } from './editorial-evidence-policy.mjs';
+import { claimNumericSupport, claimEvidenceTexts } from './weekly-editorial-numeric-grounding.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'bubble-watch-weekly-news-discovery-v1';
 export const INPUT_SCHEMA = 'bubble-watch-weekly-editorial-input-v1';
 export const OUTPUT_SCHEMA = 'bubble-watch-weekly-editorial-output-v1';
@@ -248,6 +249,7 @@ export function validateWeeklyEditorialInput(input, options = {}) {
 
 export function validateWeeklyEditorialOutput(output, input, options = {}) {
   const errors = [];
+  const warnings = new Set();
   const root = requireRecord(output, 'output', errors);
   const inputResult = validateWeeklyEditorialInput(input, options);
   errors.push(...inputResult.errors.map((error) => `input prerequisite: ${error}`));
@@ -302,11 +304,11 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
         if (!claimText.includes(story.sourceName) || !/据|报道|认为|分析|指出|研判/u.test(claimText)) errors.push(`output factual claim[${index}] must attribute media statements to ${story.sourceName}`);
         // Input-stage check only: production retains source metadata, never search excerpts.
         if (typeof story.snippet === 'string') {
-          const evidence = `${story.title} ${story.snippet}`;
-          const numbers = claimText.match(/\d+(?:[.,]\d+)*(?:%|％)?/gu) || [];
-          if (numbers.some((number) => !evidence.includes(number))) errors.push(`output factual claim[${index}] adds numbers absent from the supplied media excerpt`);
+          const numericSupport = claimNumericSupport(claim, input);
+          if (numericSupport.hints.length) warnings.add('部分日期、代码、普通数量或比例表述未能精确匹配引用证据；这些内容需结合来源复核，不作为独立事实依据。');
+          if (numericSupport.blockers.length) errors.push(`output factual claim[${index}] adds numbers absent from the supplied media excerpt or explicitly cited indicators`);
           const quotes = [...claimText.matchAll(/[“「]([^”」]+)[”」]/gu)].map((match) => match[1]);
-          if (quotes.some((quote) => !evidence.includes(quote))) errors.push(`output factual claim[${index}] adds a quotation absent from the supplied media excerpt`);
+          if (quotes.some((quote) => !claimEvidenceTexts(claim, input).some(text => text.includes(quote)))) errors.push(`output factual claim[${index}] adds a quotation absent from the supplied media excerpt or explicitly cited indicators`);
         }
       }
     }
@@ -339,11 +341,11 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
   const visibleText = visibleEditorialText(root);
   if (visibleText.length < (limited ? 600 : 1200) || visibleText.length > 6500) errors.push('output visible editorial text must be 600-6500 characters for limited evidence, otherwise 1200-6500');
   for (const pattern of UNSAFE_TEXT_PATTERNS) {
-    if (pattern.test(visibleText)) errors.push(`output contains unsafe wording matching ${pattern}`);
+    if (pattern.test(collectStrings(root).join('\n'))) errors.push(`output contains unsafe wording matching ${pattern}`);
   }
   if (timeline.some((item) => typeof item?.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(item.date))) errors.push('output timeline dates must use YYYY-MM-DD');
 
-  return { ok: errors.length === 0, errors, visibleTextLength: visibleText.length };
+  return { ok: errors.length === 0, errors, warnings: [...warnings], visibleTextLength: visibleText.length };
 }
 
 export function validateWeeklyEditorialReview(review) {

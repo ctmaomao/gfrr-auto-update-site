@@ -5,6 +5,7 @@ import {
 } from '../external-ai/provider-adapters.mjs';
 import { assertValid, validateWeeklyEditorialInput, validateWeeklyEditorialOutput } from './weekly-editorial-contract.mjs';
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from './weekly-editorial-claim-diagnostics.mjs';
+import { shortHash } from '../lib/check-script-helpers.mjs';
 import {
   buildWeeklyEditorialSystemPrompt,
   buildWeeklyEditorialUserPrompt,
@@ -20,6 +21,35 @@ export const WEEKLY_EDITORIAL_PROVIDER_CONFIG = Object.freeze({
   maxCallsPerRun: 1,
   retryCount: 0
 });
+
+export function buildWeeklyEditorialReplayCandidate(output, input, secret = '') {
+  // Diagnostic candidate only: never retain HTTP envelopes, arbitrary root fields or credentials.
+  const fields = ['schemaVersion', 'generatedAt', 'asOfDate', 'provider', 'model', 'mode', 'headlineZh', 'leadZh', 'weeklyTimeline', 'scorecardSynthesisZh', 'scorecardSourceIndicatorIds', 'keyTensions', 'categoryAnalysis', 'historicalComparison', 'watchNextWeek', 'dataGaps', 'sourceAttribution', 'confidence', 'auditFlags', 'boundaries'];
+  let redactionsApplied = false;
+  let omittedFields = 0;
+  let bounded = false;
+  let nodes = 0;
+  function clean(value, depth = 0) {
+    if (++nodes > 4000 || depth > 12) { bounded = true; return null; }
+    if (typeof value === 'string') {
+      const safe = secret ? value.replaceAll(secret, '[REDACTED]') : value;
+      if (safe !== value) redactionsApplied = true;
+      if (safe.length > 20_000) bounded = true;
+      return safe.slice(0, 20_000);
+    }
+    if (Array.isArray(value)) return value.map(item => clean(item, depth + 1));
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => { if (/^(?:headers|authorization|apiKey|api_key|rawResponse|rawContent|reasoning_content)$/iu.test(key)) { omittedFields++; return false; } return true; })
+      .map(([key, item]) => { if (secret && key.includes(secret)) { redactionsApplied = true; key = '[REDACTED_KEY]'; } return [key, clean(item, depth + 1)]; }));
+    return value;
+  }
+  const selected = Object.fromEntries(fields.filter(key => Object.hasOwn(output, key)).map(key => [key, output[key]]));
+  omittedFields += Object.keys(output).filter(key => !fields.includes(key)).length;
+  const candidate = { schemaVersion: 'bubble-weekly-editorial-replay-only-v1', replayOnly: true, productionEligible: false,
+    inputDigestShort: shortHash(input, 16), output: clean(selected), redactionsApplied, omittedFields, bounded };
+  if (Buffer.byteLength(JSON.stringify(candidate)) > 128 * 1024) return null;
+  return candidate;
+}
 
 function responseDiagnostics(responseJson, status = null) {
   const firstChoice = Array.isArray(responseJson?.choices) ? responseJson.choices[0] : null;
@@ -245,6 +275,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
   if (!outputValidation.ok) {
     const error = new Error('DeepSeek weekly editorial output failed contract validation');
     error.category = 'provider_output_contract_invalid';
+    error.replayCandidate = buildWeeklyEditorialReplayCandidate(normalizedOutput, input, apiKey);
     error.responseDiagnostics = {
       ...responseDiagnostics(responseJson, response?.status || null),
       contract: {
