@@ -1,5 +1,14 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-13 Bubble 同期评分差异与 CEO 证据修复
+
+- **Acceptance baseline**：owner 要求比较本站与 aibubble-cn，分析原因并修复确证问题。保留已批准独立口径，不为匹配参考分数改 Core-23、灯色保护或其它指标；不继承别的任务 push/merge/发布、付费调用授权。
+- **追加授权**：owner 明确要求“请修复推送上线”，授权本任务 push、PR、合并与发布。独立人工 review 门槛仍保留；已请求 owner 确认是否采用独立 AI 代审，未获确认前不替代人工。无新增付费调用授权。
+- **最后基线 / 改动**：latest origin/main `5339b4d4`，干净工作区新建 `codex/bubble-score-evidence-review`。只改 builder 的 CEO 证据/正文、既有 source-evidence-policy 与单测、来源文档及本记录；[同期核查](BUBBLE_SCORE_COMPARISON_2026_10_13.md) 记录两站 10/12 第28期数据与差异。
+- **当前任务**：30.4%=7/23 与参考36%=9/25，最终均高风险预警。五项灯色差异中已复现 CEO 一般报道数、editor 职称与无证据具体表态归因；统一四来源的具名金融谨慎语义过滤，新闻量本身不升黄，正文只描述线索。保留多源/置信度保护；摘要识别不保证完整原始访谈或转载原日期核验。
+- **验证 / 下一步**：既有专项单测含本轮四组回归 12/12 通过，syntax 退出0；`npm run check:changed` 完成 full `check:all`、退出0（含 Bubble 专项119项与390px浏览器验收）。实际 builder 正文离线 smoke 退出0；生产保留的两源各5条摘要抽样仅 Tavily=0、Brave=2条合格线索，不能据部分摘要重算完整分数。自审确认其它评分/数据/workflow/checker 无diff、无新增skip/ignore。未运行生产生成/付费调用、未改生产数据；未推送/合并/发布，不宣称线上分数已更新。
+
+
 ### 2026-10-13 Bubble 数字依据系统修复与免费回放
 
 - **Acceptance baseline**：owner 要求修复最新数字误拦并检查同类问题，避免逐个问题付费试错；本轮无 DeepSeek 调用。按 [ADR-0068](ADR/0068-bubble-claim-numeric-equivalence.md) 作为独立契约 PR 显式审阅现有 assertion/预期变更，沿用同任务 push/代审/合并授权；owner 随后要求避免门槛过细：金融金额/无依据比例继续阻断，日期/代码/普通数量/非精确解析表达改为中文提示，保留有效信息；不自动发布失败候选。

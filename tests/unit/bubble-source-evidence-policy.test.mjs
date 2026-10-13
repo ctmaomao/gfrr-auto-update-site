@@ -1,6 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, pairRpoPeriods, parseRpoTable } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
+import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, pairRpoPeriods, parseRpoTable } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
+
+test('CEO news volume without attributed financial caution cannot change the light', () => {
+  assert.deepEqual(classifyCeoCautionCounts(20, 0), { status: 'green', display: '无' });
+  assert.equal(classifyCeoCautionCounts(1, 1).status, 'yellow');
+  assert.equal(classifyCeoCautionCounts(12, 3).status, 'red');
+  assert.equal(classifyCeoCautionCounts(11, 3).status, 'yellow');
+});
+
+test('CEO evidence rejects deployed editor, analyst, safety and spending leads', () => {
+  for (const text of [
+    'Why AI bubble fears are not keeping this Amazon boss up at night. Brian Sozzi Executive Editor.',
+    'Michael Burry believes the AI bubble will burst after one season of revenue disappointment.',
+    'Altman expects rapid AI growth; analysts warn about an AI bubble.',
+    'Jamie Dimon says hyperscaler AI spending may hit $1 trillion in 2027.',
+    'Altman warned about AI safety risks. Analysts discuss the AI bubble.',
+    'OpenAI CEO interviewed about the AI bubble.',
+    'Ray Dalio discussed AI investment returns.'
+  ]) assert.equal(hasNamedCeoFinancialCaution(text), false, text);
+});
+
+test('CEO evidence accepts named attributed financial caution in English and Chinese', () => {
+  for (const text of [
+    'Ray Dalio warned that artificial intelligence is a classic bubble nearing a bursting point.',
+    'Altman admitted that AI investment is in a bubble.',
+    '黄仁勋警告人工智能过度投资风险。'
+  ]) assert.equal(hasNamedCeoFinancialCaution(text), true, text);
+});
+
+test('CEO evidence rejects denial and explicitly recycled quotation context', () => {
+  for (const text of [
+    'Altman warned investors but said AI is not a bubble.',
+    'Dimon warned of an AI bubble in an old letter quoted again today.',
+    'Pichai acknowledged irrational AI investment last year.',
+    '奥特曼承认市场担忧，但否认人工智能是泡沫。'
+  ]) assert.equal(hasNamedCeoFinancialCaution(text), false, text);
+});
 
 const today = '2026-09-14';
 const sector = 'AI was the leading sector, with $210 billion going to companies in the sector, representing 70% of total global venture funding.';

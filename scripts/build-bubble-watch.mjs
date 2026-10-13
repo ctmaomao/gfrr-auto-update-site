@@ -30,7 +30,7 @@ import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-ev
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
 import { extractAnthropicArrB } from './bubble-watch/arr-milestone-parser.mjs';
 import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
-import { requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
+import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -3070,9 +3070,7 @@ async function fetchDcAbsSpreadFromWind() {
 }
 
 function classifyCeoHedgingEvidence(relevantCount, executiveHitCount) {
-  if (relevantCount >= 12 && executiveHitCount >= 3) return { status: 'red', display: '普遍' };
-  if (relevantCount >= 3 || executiveHitCount >= 1) return { status: 'yellow', display: '部分' };
-  return { status: 'green', display: '无' };
+  return classifyCeoCautionCounts(relevantCount, executiveHitCount);
 }
 
 const CEO_HEDGING_STATUS_RANK = { green: 0, yellow: 1, red: 2 };
@@ -3263,36 +3261,17 @@ function writeGdeltBubbleWatchCache({
 }
 
 function buildCeoHedgingPublicNarrative(entries, status) {
-  const evidenceText = collectCeoHedgingEvidenceText(entries);
-  const hasAltman = /\bAltman\b|OpenAI/iu.test(evidenceText);
-  const hasPichai = /\bPichai\b|Google|Alphabet/iu.test(evidenceText);
-  const hasDimon = /\bDimon\b|JPMorgan|JPM/iu.test(evidenceText);
-  const hasSemi = /\bNvidia|Broadcom|AMD|semiconductor|chip\b/iu.test(evidenceText);
-  const hasCapex = /\bcapex|data center|overbuild|spending|cost|budget|huge issue\b/iu.test(evidenceText);
-  const hasValuation = /\bbubble|valuation|irrational|mania|burst|dot-com|stock market\b/iu.test(evidenceText);
-
-  const lead = status === 'red'
-    ? '对冲表态明显扩散'
+  const sources = entries.filter(entry => entry?.result);
+  const counts = sources.map(entry => {
+    const value = getCeoHedgingResultCounts(entry.result);
+    return `${entry.source}：相关报道 ${value.articleCount ?? 0} 条，具名金融泡沫谨慎表态线索 ${value.executiveHitCount ?? 0} 条`;
+  });
+  const conclusion = status === 'green'
+    ? '本轮可用摘要未检出合格的具名谨慎表态线索，维持绿灯；不等于所有高管均未表达担忧。'
     : status === 'yellow'
-      ? '对冲表态继续升温'
-      : '对冲表态暂未扩散';
-  const signals = [];
-  if (hasAltman) signals.push('Altman 关于 AI 成本压力的表态被多篇引用');
-  if (hasPichai) signals.push('Google/Alphabet 相关高管线索进入泡沫讨论');
-  if (hasDimon) signals.push('Dimon 等金融高管的泡沫风险表述被市场关注');
-  if (hasSemi) signals.push('AI 股与半导体波动带出估值疑虑');
-  if (hasCapex) signals.push('数据中心投入、capex 回报和过建风险被反复讨论');
-  if (hasValuation) signals.push('多篇新闻围绕 AI bubble、估值和回撤风险展开');
-  const evidenceSentence = signals.length
-    ? signals.slice(0, 3).join('；')
-    : '近期新闻集中讨论 AI bubble、估值压力和资本开支可持续性';
-  if (status === 'red') {
-    return `${lead}:${evidenceSentence}。高管/市场领袖承认过热的频率与强度已明显偏高,升至红灯。`;
-  }
-  if (status === 'yellow') {
-    return `${lead}:${evidenceSentence}。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。`;
-  }
-  return `${lead}:${evidenceSentence}。当前公开表态仍以市场讨论和分析师质疑为主,缺少直接高管共振,维持绿灯。`;
+      ? '检出部分具名谨慎表态线索，维持黄灯；搜索摘要不等于已核验的完整访谈。'
+      : '多源检出较多具名谨慎表态线索，按既有多源与置信度保护判级。';
+  return `${counts.join('；')}。${conclusion}转载日期不等于原始表态日期，未核验的旧引述不作为本期新表态事实。`;
 }
 
 function serializeCeoHedgingConfirmation(entry) {
@@ -3442,10 +3421,9 @@ async function fetchGdeltDocCeoHedgingArticles() {
 
 async function fetchCeoHedgingFromGdeltPublic() {
   const { articles, request, attempts, cacheStatus, cacheGeneratedAt, liveFailure, requestDiagnostics } = await fetchGdeltDocCeoHedgingArticles();
-  const executiveRe = /\b(CEO|chief executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
   const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex)\b/iu;
   const relevant = articles.filter((a) => overheatRe.test(`${a.title || ''} ${a.url || ''}`));
-  const executiveHits = relevant.filter((a) => executiveRe.test(`${a.title || ''} ${a.url || ''}`));
+  const executiveHits = relevant.filter((a) => hasNamedCeoFinancialCaution(a.title || ''));
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
   const windowText = request.timespan === '14d' ? '近 14 天' : '近 30 天';
   const cacheText = cacheStatus === 'fresh'
@@ -3563,13 +3541,12 @@ async function fetchCeoHedgingFromWindNews(gdeltError) {
   if (!items.length) throw new Error('Wind CEO hedging news 返回空列表');
   const aiRe = /\bAI\b|人工智能/iu;
   const overheatRe = /泡沫|过热|非理性|担忧|质疑|风险|破裂|bubble|overbuild|overheated|irrational|mania|capex/iu;
-  const executiveRe = /CEO|首席执行官|高管|黄仁勋|Altman|奥特曼|Nadella|纳德拉|Pichai|皮查伊|Zuckerberg|扎克伯格|Ellison|埃里森|Dalio|达利欧/iu;
   const cautionRe = /担忧|质疑|警告|风险|破裂|放缓|非理性|泡沫|bubble|overheated|irrational/iu;
   const relevant = items.filter((item) => {
     const text = `${item.title || ''} ${item.content || ''}`;
     return aiRe.test(text) && overheatRe.test(text);
   });
-  const executiveHits = relevant.filter((item) => executiveRe.test(`${item.title || ''} ${item.content || ''}`));
+  const executiveHits = relevant.filter((item) => hasNamedCeoFinancialCaution(`${item.title || ''} ${item.content || ''}`));
   const cautionHits = relevant.filter((item) => cautionRe.test(`${item.title || ''} ${item.content || ''}`));
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
   const narrative = status === 'red'
@@ -3613,13 +3590,12 @@ async function fetchCeoHedgingFromTavilyPublic(gdeltError, mode = 'fallback') {
   const results = Array.isArray(json?.results) ? json.results : [];
   if (!results.length) throw new Error('Tavily CEO hedging news 返回空列表');
   const aiRe = /\bAI\b|artificial intelligence|Nvidia|OpenAI|Microsoft|Meta|Google|Alphabet|Oracle|Broadcom|AMD|Tesla/iu;
-  const executiveRe = /\b(CEO|chief executive|executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
   const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex|spending boom|data center glut)\b/iu;
   const relevant = results.filter((item) => {
     const text = `${item.title || ''} ${item.content || ''} ${item.url || ''}`;
     return aiRe.test(text) && overheatRe.test(text);
   });
-  const executiveHits = relevant.filter((item) => executiveRe.test(`${item.title || ''} ${item.content || ''}`));
+  const executiveHits = relevant.filter((item) => hasNamedCeoFinancialCaution(`${item.title || ''} ${item.content || ''}`));
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
   const isCrossCheck = mode === 'cross_check';
   return {
@@ -3667,7 +3643,6 @@ async function fetchCeoHedgingFromBraveNews(gdeltError, mode = 'fallback') {
   const results = Array.isArray(json?.results) ? json.results : [];
   if (!results.length) throw new Error('Brave CEO hedging news 返回空列表');
   const aiRe = /\bAI\b|artificial intelligence|Nvidia|OpenAI|Microsoft|Meta|Google|Alphabet|Oracle|Broadcom|AMD|Tesla/iu;
-  const executiveRe = /\b(CEO|chief executive|executive|Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su)\b/iu;
   const overheatRe = /\b(bubble|overbuild|overbuilt|overheated|irrational|mania|capex|spending boom|data center glut)\b/iu;
   const relevant = results.filter((item) => {
     const extra = Array.isArray(item.extra_snippets) ? item.extra_snippets.join(' ') : '';
@@ -3676,7 +3651,7 @@ async function fetchCeoHedgingFromBraveNews(gdeltError, mode = 'fallback') {
   });
   const executiveHits = relevant.filter((item) => {
     const extra = Array.isArray(item.extra_snippets) ? item.extra_snippets.join(' ') : '';
-    return executiveRe.test(`${item.title || ''} ${item.description || ''} ${extra}`);
+    return hasNamedCeoFinancialCaution(`${item.title || ''} ${item.description || ''} ${extra}`);
   });
   const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
   const isCrossCheck = mode === 'cross_check';

@@ -168,3 +168,21 @@ export function pairRpoPeriods(dates, values, today) {
     prevYoyPct: (previous.value / previous.prior - 1) * 100,
     observationDate: dates[0], previousObservationDate: dates[1], parsedValues: values.filter(Number.isFinite).length };
 }
+// Search snippets are leads, not transcripts. Generic titles (including Executive
+// Editor), analyst commentary and company names cannot establish CEO caution.
+export function hasNamedCeoFinancialCaution(text) {
+  const value = String(text || '');
+  const names = '(?:Altman|Nadella|Huang|Musk|Zuckerberg|Pichai|Ellison|Hock Tan|Lisa Su|Dimon|Dalio|奥特曼|纳德拉|黄仁勋|马斯克|扎克伯格|皮查伊|埃里森|戴蒙|达利欧)';
+  const financial = /\b(?:AI|artificial intelligence)\b.{0,80}\b(?:bubble|overbuild|overheated|irrational|mania|overinvestment)\b|\b(?:bubble|overbuild|overheated|irrational|mania|overinvestment)\b.{0,80}\b(?:AI|artificial intelligence)\b|(?:AI|人工智能).{0,40}(?:泡沫|过热|过度投资)/iu;
+  const attributed = new RegExp(`${names}(?:\\s+(?:has|had|also|recently|publicly|reportedly)){0,3}\\s*(?:warn(?:s|ed)?|caution(?:s|ed)?|admit(?:s|ted)?|acknowledg(?:es?|ed)|警告|担忧|承认)`, 'iu');
+  // Negated caution and recycled quotations cannot confer a current signal.
+  const rejected = /\b(?:no|not|isn['’]?t|aren['’]?t)\s+(?:an?\s+)?(?:AI\s+)?bubble\b|\b(?:dismiss(?:es|ed)?|den(?:y|ies|ied))\b|\b(?:not worried|aren['’]?t worried|isn['’]?t worried|last year|old letter|previous letter)\b|(?:不担忧|否认|并非泡沫|不是泡沫|去年|旧信)/iu;
+  return value.split(/[.!?。！？;；]+/u).some(sentence =>
+    financial.test(sentence) && attributed.test(sentence) && !rejected.test(sentence));
+}
+
+export function classifyCeoCautionCounts(relevantCount, executiveHitCount) {
+  if (relevantCount >= 12 && executiveHitCount >= 3) return { status: 'red', display: '普遍' };
+  if (executiveHitCount >= 1) return { status: 'yellow', display: '部分' };
+  return { status: 'green', display: '无' };
+}
