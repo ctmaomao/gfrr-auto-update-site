@@ -193,3 +193,62 @@ test('limited system prompt reaches the provider without the conflicting long-fo
   } });
   assert.equal(calls, 1);
 });
+
+test('provider receives quantitative-source separation and complete length budgets in both formats', async () => {
+  for (const full of [false, true]) {
+    const { input, output } = scenario();
+    if (full) {
+      const second = { ...input.newsContext.stories[0], id: 'news:second-media', sourceName: 'Financial Times', domain: 'ft.com', url: 'https://ft.com/content/ai-credit' };
+      input.newsContext.stories.push(second);
+      input.sourceRefs.push({ ...input.sourceRefs.find(ref => ref.id === input.newsContext.stories[0].id), ...second });
+    }
+    let calls = 0;
+    await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
+      calls++;
+      const messages = JSON.parse(request.body).messages;
+      const prompt = messages[0].content;
+      assert.match(prompt, /EVERY numeric token.*EACH cited media title\/snippet/u);
+      assert.match(prompt, /separate indicator-only item/u);
+      assert.match(prompt, /In BOTH full and limited formats: each categoryAnalysis.detailZh <= 140/u);
+      assert.match(prompt, /sourceRefIds, sourceIndicatorIds and confidence.level count too/u);
+      assert.ok(prompt.includes(full ? 'Target 2,600-3,400' : 'Target 600-1,800'));
+      assert.ok(messages[1].content.lastIndexOf('Final preflight before returning JSON') > messages[1].content.indexOf(JSON.stringify(input)), 'final constraints must follow the compact input');
+      return { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(output) } }] }) };
+    } });
+    assert.equal(calls, 1);
+  }
+});
+
+test('site quantitative claims remain separate from qualitative media claims; mixed refs cannot excuse unsupported numbers', () => {
+  const { input, output, story } = scenario();
+  const item = output.categoryAnalysis[0];
+  item.sourceRefIds = ['indicator:fed_policy'];
+  item.sourceIndicatorIds = ['fed_policy'];
+  item.detailZh = '站内固定 Core-23 记分卡采用既有规则，不因新闻解释改变；政策约束与估值压力仍需持续核对，不能据此推断市场转折。';
+  assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
+  item.sourceRefIds.push(story.id);
+  item.detailZh = `据Morningstar分析，${item.detailZh}`;
+  assert.ok(validateWeeklyEditorialOutput(output, input).errors.some(error => error.includes('adds numbers absent')));
+  item.detailZh = '据Morningstar分析，融资可改善信用获取，但需求与偿还风险仍存在；结合站内政策约束作定性比较，机构观点尚未独立核实。';
+  assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
+});
+
+test('provider rejects the incident-sized 6581-character response without truncation or a second call', async () => {
+  const { input, output } = scenario();
+  output.dataGaps.push('证据覆盖限制：');
+  output.dataGaps[output.dataGaps.length - 1] += '限'.repeat(6581 - visibleEditorialText(output).length);
+  assert.equal(visibleEditorialText(output).length, 6581);
+  const snapshot = JSON.stringify(output);
+  let calls = 0;
+  await assert.rejects(requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+    calls++;
+    return { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(output) } }] }) };
+  } }), error => {
+    assert.equal(error.category, 'provider_output_contract_invalid');
+    assert.equal(error.responseDiagnostics.contract.visibleTextLength, 6581);
+    assert.ok(error.responseDiagnostics.contract.errors.some(message => message.includes('1200-6500')));
+    return true;
+  });
+  assert.equal(calls, 1);
+  assert.equal(JSON.stringify(output), snapshot);
+});
