@@ -74,7 +74,7 @@ function buildCompactNewsContext(discovery) {
     .slice(0, MAX_INPUT_NEWS_STORIES)
     .map((story) => ({
       ...story,
-      snippet: compactText(story.snippet, 180)
+      snippet: compactText(story.snippet, 360)
     }));
   const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
     status: status?.status || 'unavailable',

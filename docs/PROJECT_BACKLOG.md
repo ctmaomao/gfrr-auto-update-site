@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-13 Bubble 数字依据系统修复与免费回放
+
+- **Acceptance baseline**：owner 要求修复最新数字误拦并检查同类问题，避免逐个问题付费试错；本轮无 DeepSeek 调用。按 [ADR-0068](ADR/0068-bubble-claim-numeric-equivalence.md) 作为独立契约 PR 显式审阅现有 assertion/预期变更，沿用同任务 push/代审/合并授权；owner 随后要求避免门槛过细：金融金额/无依据比例继续阻断，日期/代码/普通数量/非精确解析表达改为中文提示，保留有效信息；不自动发布失败候选。
+- **最后基线 / 改动**：latest origin/main `58b0e0c3`，分支 `codex/bubble-grounding-equivalence`。以同段所引合格新闻及配对指标事实为依据，精确十进制/类型/币种/量级匹配，更新生成提示和诊断；保留有界 360 字符摘要。补齐来源备注等全部输出字符串的既有 unsafe 模式扫描。新增失败候选脱敏保存与只读 digest-bound 回放入口，不改 workflow、来源准入、生产 JSON 或评分。
+- **故障证据**：run `38344215167` 的 4287 字输出因时间线的 `9 / 500亿美元`（CNBC 摘要有 September / $50 billion）及分类段落 `50 / 35% / 6.3% / 5` 被拒。35%/6.3% 在输入的站内指标存在；旧原文和指标引用列表未保存，不能声称完整旧段落已通过新规则。别名和篇幅已通过，本轮定位跨来源/数值字面机制。
+- **同类审查 / 验收**：最终专项 27/27（0 skip）通过；数值匹配矩阵覆盖币种/量级/缩写、百分比/百分点/基点、符号、格式、月份/日历日期、区间端点、代码内数字、不等值/舍入/错币种/无关引用/中文金融数词绕过；另有多媒体字面引述、摘要尾部、配对事实、provider→review→projection→writer 不变性、隐藏文案、脱敏候选、真正只读回放 CLI 正反例。真实输入离线重建的 live CLI 通过：47408 bytes / 6 可用新闻 / asOf 2026-10-12，零 API、零生产写入。最终 `npm run check:changed` 选择 full，`check:all` exit 0；`git diff --check` exit 0。新增普通数字/表达差异 warning 经 review/projection 保留且不阻断显示的验收。
+- **下一步 / 边界**：本地完整检查完成；固定提交契约代审、独立 PR、CI 后合并。旧 candidate 无法恢复，当前正文仍未发布；未来 candidate 可用于免费排障，不能手工 promotion。未知来源、金融不等值、无引用、禁用文案、期次时效/费用/生产 writer 保持拒绝；检查不等于语义事实核验，也不保证模型/外部服务永不失败。
+
 ### 2026-10-13 Bubble 失败段落诊断与媒体名称规范化
 
 - **Acceptance baseline**：owner 要求继续诊断和修复 run `38340687380`；本轮离线实施，不续用已消耗的单次付费授权。保留数字/引述 validator、来源资格、生产 writer 与费用保护。

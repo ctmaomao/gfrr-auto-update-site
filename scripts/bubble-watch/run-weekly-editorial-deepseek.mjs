@@ -74,6 +74,7 @@ async function main() {
         retryCount: 0,
         response: error.responseDiagnostics || null
       },
+      replayCandidate: error.replayCandidate || null,
       productionImpact: {
         outputWritten: false,
         productionDataWritten: false,

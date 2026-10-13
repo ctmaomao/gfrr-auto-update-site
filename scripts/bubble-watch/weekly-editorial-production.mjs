@@ -62,12 +62,12 @@ function compactProductionSource(source) {
 
 export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().toISOString() }) {
   const validation = validateWeeklyEditorialOutput(output, input);
-  const warnings = [];
+  const warnings = [...(validation.warnings || [])];
   const blockers = [...validation.errors];
   const dimensions = {
     structuralContract: validation.ok ? 'pass' : 'fail',
     sourceReferenceIntegrity: validation.ok ? 'pass' : 'fail',
-    newsEvidenceQuality: 'pass',
+    newsEvidenceQuality: warnings.length ? 'warn' : 'pass',
     scoreBoundaryIntegrity: validation.ok ? 'pass' : 'fail',
     unsafeWording: validation.ok ? 'pass' : 'fail',
     incrementalEditorialValue: 'pass',

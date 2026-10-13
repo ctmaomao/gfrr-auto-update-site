@@ -9,7 +9,7 @@ export function buildWeeklyEditorialSystemPrompt(input) {
     'Use only the supplied compact input. You cannot browse, fetch, or independently verify anything.',
     'Search snippets are discovery context, not full articles. A discovery_only source can never be the sole support for a factual paragraph.',
     'attributed_media permits a single reviewed publisher excerpt: name sourceName and use 据/报道/认为/分析 in every paragraph citing it. Preserve opinions and uncertainty; disclose media-excerpt limitations in dataGaps. Never add numbers, quotations or unseen article details. title_only items cannot support factual paragraphs.',
-    'Separate media claims from site quantitative claims. For any weeklyTimeline/keyTensions/categoryAnalysis/historicalComparison item citing attributed_media, EVERY numeric token in titleZh + detailZh must appear literally in EACH cited media title/snippet, even when indicator:* refs are also present. This includes years, percentages and the 23 in Core-23. Do not attach media refs merely as background to a numerical site claim. Put site numbers in scorecardSynthesisZh or a separate indicator-only item with matching indicator:* sourceRefIds and sourceIndicatorIds. For mixed qualitative analysis, omit numeric detail rather than spell unsupported numbers in Chinese. Timeline date belongs in its date field, not repeated in the media paragraph.',
+    'Financial amounts and rates must be supported by approved news actually cited in that item, or by a structuredFact whose indicatorId AND matching indicator:* sourceRefId are both cited in that same item. Mixed media and site analysis is allowed; distinguish reported facts from site indicators. Exact equivalent units are allowed (USD 50 billion = 500亿美元; 50 basis points = 0.5%; end of September = 9月底). Preserve currency, sign and percentage meaning; do not round, infer FX, invent a date, use unrelated evidence, or borrow numbers from discovery_only. Put site numbers in scorecardSynthesisZh or a separate indicator-only item when a mixed claim lacks matching indicator refs. Use Arabic digits for financial amounts and percentages. Never spell unsupported numbers in Chinese to evade checks.',
     'Do not invent dates, figures, quotations, companies, events, source IDs, indicator IDs, causality, forecasts, or external verification.',
     'Explain the existing Bubble Watch scorecard. Never alter an indicator status, Core-23/Shadow-4 membership, primary score, weighted score, Stage, Trigger, similarity, or verdict label.',
     'Write restrained Chinese analysis, not investment advice. Never recommend buying, selling, positions, exposure, cash allocation, execution, targets, timing a crash, or certainty that a bubble will burst.',
@@ -31,7 +31,7 @@ export function buildWeeklyEditorialSystemPrompt(input) {
       mode: 'external_ai_weekly_editorial',
       headlineZh: 'short verdict headline',
       leadZh: 'weekly lead paragraph',
-      weeklyTimeline: [{ date: 'YYYY-MM-DD', titleZh: 'event', detailZh: 'meaning and limits', sourceRefIds: ['stable source ID'] }],
+      weeklyTimeline: [{ date: 'YYYY-MM-DD', titleZh: 'event', detailZh: 'meaning and limits', sourceRefIds: ['stable source ID'], sourceIndicatorIds: ['indicator ID when citing site facts; otherwise empty array'] }],
       scorecardSynthesisZh: 'explain fixed Core-23 and Stage/Trigger without changing them',
       scorecardSourceIndicatorIds: ['indicator ID'],
       keyTensions: [{ titleZh: 'tension', detailZh: 'both sides', sourceIndicatorIds: ['indicator ID'], sourceRefIds: ['stable source ID'] }],
@@ -74,7 +74,7 @@ export function buildWeeklyEditorialUserPrompt(input) {
     isLimitedEvidence(input) ? 'Limited evidence: write a concise 600-1,800 character editorial; this overrides the normal length target and exact item counts. weeklyTimeline may have 0-3 supported items, keyTensions 1-2, categoryAnalysis 2-6. Omit unsupported sections, disclose news coverage in dataGaps, confidence must be low/medium with score <=70. Keep at least 5 different indicator references and 2 watch conditions. Do not pad.' : 'Use full coverage only where evidence supports it; omit unsupported news details.',
     'Use sourceRefIds and sourceIndicatorIds exactly as supplied. Return one JSON object only.',
     JSON.stringify(input),
-    'Final preflight before returning JSON: keep each category detail <=140 characters and obey all system field budgets. For every media-citing item, compare every numeral in its title/detail against EACH cited media excerpt; move unsupported site numerals to an indicator-only item, never conceal them with Chinese numerals. Keep only claim-specific references. Count reference IDs and dates in the total length target. Complete the JSON; do not fill space or add unsupported detail.'
+    'Final preflight before returning JSON: keep each category detail <=140 characters and obey all system field budgets. Ground financial amounts and rates in this item’s cited approved news or explicitly paired indicator ID/source ref. Exact unit equivalents are allowed, unsupported rounding and currency swaps are not. Keep only claim-specific references. Count reference IDs and dates in the total length target. Complete the JSON; do not fill space or add unsupported detail.'
   ].join('\n\n');
 }
 
