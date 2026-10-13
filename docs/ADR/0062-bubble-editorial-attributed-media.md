@@ -20,3 +20,7 @@
 不改评分、决策、执行、仓位、数据源请求数量、workflow、生产 JSON、单次调用/不重试、费用批准、freshness、unsafe/未知引用与 writer 路径保护。零可用新闻仍 expected skip，搜索服务异常仍 hard fail。
 
 新增回归覆盖官方漏识别/相似域名、单源媒体准入、标题与订阅提示拒绝、归因/数字/引述/未知引用负例、简版缺口和置信度、生产账本无摘要及 writer 不修改其余数据。保留现有负例，不增加 skip/ignore。本任务是独立契约变更，合并前仍须独立 review；本地全绿不代表上线或真实 provider 成功。
+
+## 2026-10-13 生产前检查一致性补齐
+
+Owner 要求修复 run `38255581612` 暴露的遗漏：生产前 live-input CLI 仍只计 official/cross_checked，阻止全部为 attributed_media 的有效输入。该 CLI 改为复用既有 `isUsableNews`；至少一条可用新闻的断言保留，与 collector/readiness/review 同遵守本 ADR，不新增源、不修改摘要、日期或归因资格。CLI 真实子进程回归加入既有媒体检查入口，正例须单源媒体通过，负例须验证媒体资格、双搜索健康、live 模式、期次、大小及禁用字段保护仍有效，不加 skip/ignore。上线、独立审阅和真实补跑授权仍分别适用。

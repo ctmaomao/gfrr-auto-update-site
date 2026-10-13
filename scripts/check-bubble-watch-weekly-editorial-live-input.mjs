@@ -3,6 +3,7 @@ import process from 'node:process';
 
 import { assertValid, validateNewsDiscovery, validateWeeklyEditorialInput } from './bubble-watch/weekly-editorial-contract.mjs';
 import { assessWeeklyEditorialNewsReadiness } from './bubble-watch/weekly-editorial-news.mjs';
+import { isUsableNews } from './bubble-watch/editorial-evidence-policy.mjs';
 
 const DEFAULT_DISCOVERY = 'manual-artifacts/bubble-watch-weekly-editorial/news-discovery-latest.json';
 const DEFAULT_INPUT = 'manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json';
@@ -49,8 +50,8 @@ function main() {
   assertValid(validateWeeklyEditorialInput(input), 'live weekly editorial input');
   const readiness = assessWeeklyEditorialNewsReadiness(discovery);
   if (!readiness.editorialReady) throw new Error(`production provider call is not ready: ${readiness.reason}`);
-  const credibleStories = discovery.stories.filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus));
-  if (credibleStories.length < 1) throw new Error('production provider call requires at least one official/cross_checked story');
+  const credibleStories = discovery.stories.filter(isUsableNews);
+  if (credibleStories.length < 1) throw new Error('production provider call requires at least one usable official/cross_checked/attributed_media story');
   if (input.fixtureOnly !== false || input.inputMode !== 'live_site_compact_evidence_pack') throw new Error('production provider call rejects fixture/non-live input');
   if (input.asOfDate !== bubbleWatch.as_of_date) throw new Error('provider input asOfDate must match current Bubble Watch data');
   const inputBytes = Buffer.byteLength(JSON.stringify(input));

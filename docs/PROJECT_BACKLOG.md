@@ -1,5 +1,14 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-13 Bubble 专业媒体生产前检查遗漏修复
+
+- **Acceptance baseline**：owner 要求按审计建议修复并补回归测试；使生产前输入检查遵守已批准的 ADR-0062 专业媒体规则，不新增或进一步放宽来源准入。本轮仅本地代码及验证，不重复调用付费 AI，不自动写入生产判读。
+- **最后基线 / 改动**：复用本任务隔离 worktree，分支 `codex/bubble-live-input-media`，基于 latest `origin/main` 的 `44b3de41`；原 Baltic 工作区及已合并 PR #434 保留。修改实际 CLI 的遗漏分类过滤，复用 `isUsableNews`，保留至少一条可用新闻的断言及其它 live-input 保护。
+- **故障证据**：本周 run `38255581612` 的两新闻服务均 6/6 成功，discovery 有 10 条 attributed_media，压缩输入保留 8 条，输入 validator 通过；旧 CLI 仍要求 official/cross_checked，导致零 DeepSeek 调用的 input_failed。两站基础数据均已更新为 2026-10-12，AI 正文缺失。
+- **回归范围**：既有媒体测试入口新增三组真实 CLI 子进程测试，覆盖单源媒体、官方/交叉确认通过；标题、付费墙、短摘要、相似域名、错误来源名、越界日期、discovery-only、搜索异常拒绝；fixture/non-live、期次不符、60 KiB 和禁用字段保护。每次检查限定私有临时目录并核对不生成额外产物、不改输入。既有负例、费用、评分、输出 validator、workflow 和生产 JSON 不变。
+- **验收回执**：专项 10/10、实际 `check:changed` 选择 full 并完成 `check:all`、本周保存输入的真实 CLI 离线复验均退出 0。离线复验显示 10 条可用新闻、44,795 bytes、期次 2026-10-12；私有输入原字节不变且无额外产物。新正例在修改 CLI 前以线上同一旧门槛报错，修复后通过。
+- **自审 / 下一步**：实际差异符合补齐既有政策的范围；至少一条可用新闻断言及原负例保留，没有新增 skip/ignore，没有生产数据、workflow、依赖或评分改动。本地实施与必要验证完成；提交不代表已部署，本期真实付费补跑仍需单独授权。
+
 ### 2026-10-11 Baltic 运费来源恢复（当前）
 
 - **Acceptance baseline**：owner 明确要求免费自动采集、缓存及网站发布，个人研究、接受风险，不以官方许可/订阅为本任务前置；仅 BDI/BDTI/BCTI 聚合背景，参见 [ADR-0067](ADR/0067-baltic-public-ticker.md)。沿用分项提交/推送/PR/合并及有界独立 AI 代审；不绕过登录/验证码/付费墙，不改路线级确认或评分，不增加依赖/收费调用。
