@@ -3,10 +3,11 @@
 ### 2026-10-13 Bubble 同期评分差异与 CEO 证据修复
 
 - **Acceptance baseline**：owner 要求比较本站与 aibubble-cn，分析原因并修复确证问题。保留已批准独立口径，不为匹配参考分数改 Core-23、灯色保护或其它指标；不继承别的任务 push/merge/发布、付费调用授权。
-- **追加授权**：owner 明确要求“请修复推送上线”，授权本任务 push、PR、合并与发布。独立人工 review 门槛仍保留；已请求 owner 确认是否采用独立 AI 代审，未获确认前不替代人工。无新增付费调用授权。
+- **追加授权**：owner 明确要求“请修复推送上线”，授权本任务 push、PR、合并与发布。owner 已明确授权独立 AI 代审，无阻断且 CI 通过后合并上线。无新增付费调用授权。
 - **最后基线 / 改动**：latest origin/main `5339b4d4`，干净工作区新建 `codex/bubble-score-evidence-review`。只改 builder 的 CEO 证据/正文、既有 source-evidence-policy 与单测、来源文档及本记录；[同期核查](BUBBLE_SCORE_COMPARISON_2026_10_13.md) 记录两站 10/12 第28期数据与差异。
 - **当前任务**：30.4%=7/23 与参考36%=9/25，最终均高风险预警。五项灯色差异中已复现 CEO 一般报道数、editor 职称与无证据具体表态归因；统一四来源的具名金融谨慎语义过滤，新闻量本身不升黄，正文只描述线索。保留多源/置信度保护；摘要识别不保证完整原始访谈或转载原日期核验。
-- **验证 / 下一步**：既有专项单测含本轮四组回归 12/12 通过，syntax 退出0；`npm run check:changed` 完成 full `check:all`、退出0（含 Bubble 专项119项与390px浏览器验收）。实际 builder 正文离线 smoke 退出0；生产保留的两源各5条摘要抽样仅 Tavily=0、Brave=2条合格线索，不能据部分摘要重算完整分数。自审确认其它评分/数据/workflow/checker 无diff、无新增skip/ignore。未运行生产生成/付费调用、未改生产数据；未推送/合并/发布，不宣称线上分数已更新。
+- **独立审阅 / 补修**：固定 `67c9006f` 审阅复现同一句内 CEO 安全风险与分析师泡沫警告被串联计数；已收紧为同一归因分句，金融泡沫必须位于具名表态动词的对象中，补八个跨分句/反向关联否例及两项直接归因正例。独立 reviewer 对最终 helper/test 文件hash复核通过，专项12/12及实际builder合并/正文八例集成验证退出0；最终`check:changed`重新完成完整`check:all`、退出0。未修改checker/assertion/ignore，等待最终提交PR CI后合并发布。
+- **验证 / 下一步**：既有专项单测含本轮四组回归 12/12 通过，syntax 退出0；`npm run check:changed` 完成 full `check:all`、退出0（含 Bubble 专项119项与390px浏览器验收）。实际 builder 正文离线 smoke 退出0；生产保留的两源各5条摘要抽样仅 Tavily=0、Brave=2条合格线索，不能据部分摘要重算完整分数。自审确认其它评分/数据/workflow/checker 无diff、无新增skip/ignore。未运行生产生成/付费调用、未改生产数据；已推送并创建PR #455，最终版本待CI/合并/发布。静态站不执行builder，本次发布更新周度生成程序；原数据保持，下一次既有周度刷新应用修复，不宣称线上分数已更新。
 
 
 ### 2026-10-13 Bubble 数字依据系统修复与免费回放

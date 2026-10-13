@@ -177,8 +177,18 @@ export function hasNamedCeoFinancialCaution(text) {
   const attributed = new RegExp(`${names}(?:\\s+(?:has|had|also|recently|publicly|reportedly)){0,3}\\s*(?:warn(?:s|ed)?|caution(?:s|ed)?|admit(?:s|ted)?|acknowledg(?:es?|ed)|警告|担忧|承认)`, 'iu');
   // Negated caution and recycled quotations cannot confer a current signal.
   const rejected = /\b(?:no|not|isn['’]?t|aren['’]?t)\s+(?:an?\s+)?(?:AI\s+)?bubble\b|\b(?:dismiss(?:es|ed)?|den(?:y|ies|ied))\b|\b(?:not worried|aren['’]?t worried|isn['’]?t worried|last year|old letter|previous letter)\b|(?:不担忧|否认|并非泡沫|不是泡沫|去年|旧信)/iu;
-  return value.split(/[.!?。！？;；]+/u).some(sentence =>
-    financial.test(sentence) && attributed.test(sentence) && !rejected.test(sentence));
+  return value.split(/[.!?。！？;；]+/u).some(sentence => {
+    if (rejected.test(sentence)) return false;
+    return sentence.split(/[,，:：]+|\b(?:while|whereas|but|although|however|and|as)\b|(?:但是|然而|而分析师|并且)/iu).some(clause => {
+      const attribution = attributed.exec(clause);
+      // Only the object of this named person's speech can qualify. A nearby
+      // analyst's bubble warning must not attach to a CEO's safety/demand remark.
+      if (attribution === null) return false;
+      const object = clause.slice(attribution.index + attribution[0].length);
+      const otherSpeaker = /\b(?:analysts?|commentators?|researchers?|experts?|critics?|investors?|reporters?)\b.{0,40}\b(?:warn(?:s|ed|ing)?|say(?:s|ing)?|said|believ(?:e|es|ed)|call(?:s|ed)?|describ(?:e|es|ed))\b|(?:分析师|评论员|研究员|投资者).{0,20}(?:警告|认为|表示|称)/iu;
+      return !otherSpeaker.test(object) && financial.test(object);
+    });
+  });
 }
 
 export function classifyCeoCautionCounts(relevantCount, executiveHitCount) {

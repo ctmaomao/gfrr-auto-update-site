@@ -16,6 +16,14 @@ test('CEO evidence rejects deployed editor, analyst, safety and spending leads',
     'Altman expects rapid AI growth; analysts warn about an AI bubble.',
     'Jamie Dimon says hyperscaler AI spending may hit $1 trillion in 2027.',
     'Altman warned about AI safety risks. Analysts discuss the AI bubble.',
+    'Altman warned about AI safety risks, while analysts warned of an AI bubble.',
+    'Analysts warned of an AI bubble, while Altman acknowledged strong demand.',
+    'Altman warned about AI safety risks and analysts warned of an AI bubble.',
+    'Altman acknowledged strong demand as analysts warned of an AI bubble.',
+    'Altman warned about AI safety risks with commentators warning of an AI bubble.',
+    '奥特曼警告人工智能安全风险以及分析师认为人工智能泡沫正在破裂。',
+    'AI bubble analysts interviewed Altman who warned about safety risks.',
+    '奥特曼警告人工智能安全风险，而分析师警告人工智能泡沫。',
     'OpenAI CEO interviewed about the AI bubble.',
     'Ray Dalio discussed AI investment returns.'
   ]) assert.equal(hasNamedCeoFinancialCaution(text), false, text);
@@ -25,6 +33,8 @@ test('CEO evidence accepts named attributed financial caution in English and Chi
   for (const text of [
     'Ray Dalio warned that artificial intelligence is a classic bubble nearing a bursting point.',
     'Altman admitted that AI investment is in a bubble.',
+    'Altman has recently warned that AI investment is in a bubble.',
+    'Altman warned analysts about an AI bubble.',
     '黄仁勋警告人工智能过度投资风险。'
   ]) assert.equal(hasNamedCeoFinancialCaution(text), true, text);
 });
