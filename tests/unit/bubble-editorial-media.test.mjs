@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { buildNewsDiscovery, assessWeeklyEditorialNewsReadiness } from '../../scripts/bubble-watch/weekly-editorial-news.mjs';
 import { validateNewsDiscovery, validateWeeklyEditorialOutput, visibleEditorialText } from '../../scripts/bubble-watch/weekly-editorial-contract.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
@@ -11,7 +15,82 @@ const read = (path) => JSON.parse(fs.readFileSync(new URL(`../../${path}`, impor
 const sourceStatus = Object.fromEntries(['tavily', 'brave'].map((name) => [name, { status: 'ok', successCount: 6, failureCount: 0 }]));
 const snippet = 'Morningstar analysts believe AI infrastructure financing could improve credit access while leaving demand and repayment risks unresolved. This is an institutional opinion rather than independent confirmation.';
 const row = (url = 'https://morningstar.com/bonds/ai-credit', extra = {}) => ({ provider: 'brave', topic: 'ai_financing_credit', title: 'AI financing credit assessment', url, snippet, publishedAt: '2026-10-02', ...extra });
-const discoveryFor = (rows) => buildNewsDiscovery({ rawStories: rows, sourceStatus, generatedAt: '2026-10-05T12:31:15Z', windowStart: '2026-09-26', windowEnd: '2026-10-05' });
+const discoveryFor = (rows) => buildNewsDiscovery({ rawStories: rows, sourceStatus: structuredClone(sourceStatus), generatedAt: '2026-10-05T12:31:15Z', windowStart: '2026-09-26', windowEnd: '2026-10-05' });
+
+function livePack(rows = [row()]) {
+  const bubble = read('data/bubble-watch.json');
+  const discovery = discoveryFor(rows);
+  const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+  return { bubble, discovery, input };
+}
+
+function runLiveCheck(pack) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-bubble-live-input-'));
+  // Cleanup is limited to the private directory this test created under the OS temp root.
+  assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+  const files = { discovery: 'discovery.json', input: 'input.json', 'bubble-watch': 'bubble.json' };
+  const values = { discovery: pack.discovery, input: pack.input, 'bubble-watch': pack.bubble };
+  try {
+    for (const [flag, name] of Object.entries(files)) fs.writeFileSync(path.join(directory, name), JSON.stringify(values[flag]));
+    const result = spawnSync(process.execPath, [
+      fileURLToPath(new URL('../../scripts/check-bubble-watch-weekly-editorial-live-input.mjs', import.meta.url)),
+      ...Object.entries(files).flatMap(([flag, name]) => [`--${flag}`, path.join(directory, name)])
+    ], { cwd: directory, encoding: 'utf8', timeout: 10_000 });
+    assert.equal(result.error, undefined);
+    assert.deepEqual(fs.readdirSync(directory).sort(), Object.values(files).sort(), 'input checker must not generate provider/output artifacts');
+    for (const [flag, name] of Object.entries(files)) assert.equal(fs.readFileSync(path.join(directory, name), 'utf8'), JSON.stringify(values[flag]), 'input checker must not write its inputs');
+    return result;
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+test('actual live-input CLI admits media-only evidence and preserves official/cross-checked admission', () => {
+  for (const rows of [[row()], [row('https://oag.ca.gov/news/press-releases/openai')], [row('https://example.org/news/ai'), row('https://example.net/news/ai')]]) {
+    const pack = livePack(rows);
+    assert.equal(pack.discovery.stories.length, 1);
+    const result = runLiveCheck(pack);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /live input PASS.*credibleStories=1/u);
+  }
+});
+
+test('actual live-input CLI rejects invalid media, discovery-only evidence and unhealthy search', () => {
+  const cases = [
+    [d => { d.stories[0].contentScope = 'title_only'; }, /dated excerpt/u],
+    [d => { d.stories[0].snippet = 'Subscribe to unlock this article. '.repeat(5); }, /dated excerpt/u],
+    [d => { d.stories[0].snippet = 'A headline'; }, /dated excerpt/u],
+    [d => { d.stories[0].domain = 'morningstar.com.example.org'; d.stories[0].url = 'https://morningstar.com.example.org/news'; }, /reviewed publisher/u],
+    [d => { d.stories[0].sourceName = 'Another publisher'; }, /matching URL/u],
+    [d => { d.stories[0].publishedAt = '2025-10-02'; }, /outside the evidence window/u],
+    [d => { d.stories[0].evidenceStatus = 'discovery_only'; }, /no_credible_news/u],
+    [d => { d.sourceStatus.brave = { status: 'partial', successCount: 5, failureCount: 1 }; }, /search_provider_unhealthy/u]
+  ];
+  for (const [mutate, expected] of cases) {
+    const pack = livePack();
+    mutate(pack.discovery);
+    pack.input = buildWeeklyEditorialInput({ bubbleWatch: pack.bubble, discovery: pack.discovery });
+    const result = runLiveCheck(pack);
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, expected);
+  }
+});
+
+test('actual live-input CLI retains live-mode, date alignment, size and forbidden-field guards', () => {
+  const cases = [
+    [i => { i.fixtureOnly = true; i.inputMode = 'fixture_compact_evidence_pack'; }, /rejects fixture\/non-live input/u],
+    [i => { i.asOfDate = '2026-01-01'; }, /asOfDate must match/u],
+    [i => { i.narrativeBaseline.verdictDescZh = 'x'.repeat(65_000); }, /exceeds 60 KiB/u],
+    [i => { i.contextSnapshots.authorization = 'fixture-only'; }, /forbidden keys: authorization/u]
+  ];
+  for (const [mutate, expected] of cases) {
+    const pack = livePack();
+    mutate(pack.input);
+    const result = runLiveCheck(pack);
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(result.stderr, expected);
+  }
+});
 test('California DOJ is official; unrelated and lookalike domains stay untrusted', () => {
   const d = discoveryFor([row('https://oag.ca.gov/news/press-releases/openai')]);
   assert.equal(d.stories[0].evidenceStatus, 'official');
