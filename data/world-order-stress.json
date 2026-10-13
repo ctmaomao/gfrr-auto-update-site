@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-12T06:23:28.094Z",
+  "updatedAt": "2026-10-13T03:20:31.905Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-events-conflict-interval-v1",
@@ -17,18 +17,18 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-12T06:21:30.977Z",
-    "ageMinutes": 1.9519333333333333,
+    "updatedAt": "2026-10-13T03:16:07.403Z",
+    "ageMinutes": 4.40835,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 103.59,
-    "gold": 4184.7002,
-    "vix": 15.41,
+    "brent": 105.045,
+    "gold": 4181.2002,
+    "vix": 14.84,
     "dxy": 121.3848,
     "hyOas": 3.15,
     "us10y": 5.22,
     "real10y": 2.87,
-    "spx": 7811.54,
+    "spx": 7807.24,
     "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
     "brentPromotionApplied": true,
     "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-12T06:23:27.259Z",
+        "attemptedAt": "2026-10-13T03:20:30.867Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4971,7 +4971,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-12T06:23:27.603Z",
+      "lastFetchedAt": "2026-10-13T03:20:31.066Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -5272,14 +5272,14 @@
         },
         "latestTimestamp": "20261012020000",
         "usedCachedSummary": true,
-        "cacheReason": "events_source_free_refresh"
+        "cacheReason": "gdelt_events_index_time_hold"
       },
       "warnings": [
         "免费事件来源未完成最新窗口，沿用注明原日期的历史统计。"
       ],
       "diagnostics": {
-        "requests": 0,
-        "bytes": 0,
+        "requests": 1,
+        "bytes": 319,
         "cachedDays": 0,
         "downloadedDays": 0,
         "failures": []
@@ -5386,16 +5386,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4184.7，显示避险或实际利率压力定价。",
-          "value": 4184.7002,
+          "summary": "基于 Worker 快变量，黄金当前值 4181.2，显示避险或实际利率压力定价。",
+          "value": 4181.2002,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 103.59，对地缘与供应风险有部分确认作用。",
-          "value": 103.59,
+          "summary": "基于 Worker 快变量，布伦特当前值 105.05，对地缘与供应风险有部分确认作用。",
+          "value": 105.045,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5403,7 +5403,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "121.3848/4184.7002",
+          "value": "121.3848/4181.2002",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5411,7 +5411,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7811.54/4184.7002",
+          "value": "7807.24/4181.2002",
           "direction": "mixed",
           "confidence": 0.45
         },
@@ -5419,7 +5419,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 103.59,
+          "value": 105.045,
           "direction": "up",
           "confidence": 0.65
         }
