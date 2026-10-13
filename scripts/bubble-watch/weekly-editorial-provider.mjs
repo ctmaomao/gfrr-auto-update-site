@@ -4,6 +4,7 @@ import {
   DEEPSEEK_CHAT_ENDPOINT
 } from '../external-ai/provider-adapters.mjs';
 import { assertValid, validateWeeklyEditorialInput, validateWeeklyEditorialOutput } from './weekly-editorial-contract.mjs';
+import { normalizeMediaClaimNames, diagnoseMediaClaims } from './weekly-editorial-claim-diagnostics.mjs';
 import {
   buildWeeklyEditorialSystemPrompt,
   buildWeeklyEditorialUserPrompt,
@@ -230,7 +231,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
 
   const generatedAt = now().toISOString();
   const normalizedOutput = {
-    ...output,
+    ...normalizeMediaClaimNames(output, input),
     schemaVersion: 'bubble-watch-weekly-editorial-output-v1',
     generatedAt,
     asOfDate: input.asOfDate,
@@ -249,7 +250,8 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
       contract: {
         errorCount: outputValidation.errors.length,
         visibleTextLength: outputValidation.visibleTextLength,
-        errors: outputValidation.errors.slice(0, 24).map((item) => String(item).slice(0, 240))
+        errors: outputValidation.errors.slice(0, 24).map((item) => String(item).slice(0, 240)),
+        mediaClaims: diagnoseMediaClaims(normalizedOutput, input, { secret: apiKey })
       }
     };
     throw error;

@@ -10,6 +10,7 @@ import { validateNewsDiscovery, validateWeeklyEditorialOutput, visibleEditorialT
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { buildWeeklyEditorialSystemPrompt } from '../../scripts/bubble-watch/weekly-editorial-prompt.mjs';
 import { requestWeeklyEditorial } from '../../scripts/bubble-watch/weekly-editorial-provider.mjs';
+import { normalizeMediaClaimNames, diagnoseMediaClaims } from '../../scripts/bubble-watch/weekly-editorial-claim-diagnostics.mjs';
 import { reviewWeeklyEditorial, projectWeeklyEditorial, applyWeeklyEditorialProjection } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
 const read = (path) => JSON.parse(fs.readFileSync(new URL(`../../${path}`, import.meta.url)));
 const sourceStatus = Object.fromEntries(['tavily', 'brave'].map((name) => [name, { status: 'ok', successCount: 6, failureCount: 0 }]));
@@ -251,4 +252,103 @@ test('provider rejects the incident-sized 6581-character response without trunca
   });
   assert.equal(calls, 1);
   assert.equal(JSON.stringify(output), snapshot);
+});
+
+function wsjScenario() {
+  const pack = scenario();
+  Object.assign(pack.story, { sourceName: 'The Wall Street Journal', domain: 'wsj.com', url: 'https://wsj.com/finance/ai-credit' });
+  Object.assign(pack.input.sourceRefs.find(ref => ref.id === pack.story.id), { sourceName: pack.story.sourceName, domain: pack.story.domain, url: pack.story.url });
+  for (const claim of [...pack.output.weeklyTimeline, ...pack.output.keyTensions, ...pack.output.categoryAnalysis, pack.output.historicalComparison]) {
+    if (claim.sourceRefIds.includes(pack.story.id)) claim.detailZh = claim.detailZh.replace('Morningstar', 'WSJ');
+  }
+  return pack;
+}
+
+test('provider canonicalizes only explicitly attributed aliases of the already cited media', async () => {
+  for (const [name, alias, domain] of [
+    ['The Wall Street Journal', 'WSJ', 'wsj.com'], ['The Wall Street Journal', '《华尔街日报》', 'wsj.com'],
+    ['Financial Times', 'FT', 'ft.com'], ['Financial Times', '金融时报', 'ft.com'],
+    ['Morningstar', '晨星', 'morningstar.com'], ['Reuters', '路透社', 'reuters.com'], ['Bloomberg', '彭博社', 'bloomberg.com']
+  ]) {
+    const { input, output, story } = wsjScenario();
+    Object.assign(story, { sourceName: name, domain, url: `https://${domain}/finance/ai-credit` });
+    Object.assign(input.sourceRefs.find(ref => ref.id === story.id), { sourceName: name, domain, url: story.url });
+    for (const claim of [...output.weeklyTimeline, ...output.keyTensions, ...output.categoryAnalysis, output.historicalComparison]) claim.detailZh = claim.detailZh.replace('WSJ', alias);
+    assert.ok(validateWeeklyEditorialOutput(output, input).errors.some(error => error.includes('must attribute')));
+    const snapshot = JSON.stringify(output);
+    let calls = 0;
+    const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+      calls++;
+      return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
+    } });
+    assert.equal(calls, 1);
+    assert.deepEqual(validateWeeklyEditorialOutput(result.output, input).errors, []);
+    assert.equal(JSON.stringify(output), snapshot);
+    assert.ok(result.output.weeklyTimeline[0].detailZh.includes(`据${name}分析`));
+    assert.deepEqual(result.output.weeklyTimeline[0].sourceRefIds, output.weeklyTimeline[0].sourceRefIds);
+    assert.doesNotThrow(() => projectWeeklyEditorial({ input, output: result.output, review: reviewWeeklyEditorial({ input, output: result.output }) }));
+  }
+});
+
+test('alias normalization cannot invent attribution, modify quotations, touch numbers or admit a lookalike name', () => {
+  const { input, output, story } = wsjScenario();
+  for (const text of ['融资条件改善，但需求风险仍存在。', '据WSJExample分析，信用条件改变。', '据Reuters分析，信用条件改变。', '“据WSJ分析，融资999999亿美元。”', '"据WSJ分析，融资999999亿美元。"']) {
+    output.weeklyTimeline[0].detailZh = text;
+    const next = normalizeMediaClaimNames(output, input);
+    assert.equal(next.weeklyTimeline[0].detailZh, text);
+    assert.equal(validateWeeklyEditorialOutput(next, input).ok, false);
+  }
+  output.weeklyTimeline[0].detailZh = '据WSJ分析，融资999999亿美元。';
+  const next = normalizeMediaClaimNames(output, input);
+  assert.equal(next.weeklyTimeline[0].detailZh, '据The Wall Street Journal分析，融资999999亿美元。');
+  assert.ok(validateWeeklyEditorialOutput(next, input).errors.some(error => error.includes('adds numbers absent')));
+  output.weeklyTimeline[0].sourceRefIds = ['news:unknown'];
+  assert.equal(normalizeMediaClaimNames(output, input).weeklyTimeline[0].detailZh, output.weeklyTimeline[0].detailZh);
+  assert.equal(validateWeeklyEditorialOutput(normalizeMediaClaimNames(output, input), input).ok, false);
+  assert.ok(story.id.startsWith('news:'));
+});
+
+test('failure diagnostics identify claim path and offending numbers without provider prose, excerpts, unknown refs or credentials', async () => {
+  const { input, output, story } = wsjScenario();
+  const secret = '781236985401';
+  output.weeklyTimeline[0].detailZh = `据WSJ分析，融资999999亿美元。 PRIVATE_PROSE_MARKER ${secret}`;
+  output.weeklyTimeline[0].sourceRefIds.push('news:UNKNOWN_REF_PRIVATE_MARKER');
+  let calls = 0;
+  await assert.rejects(requestWeeklyEditorial({ input, apiKey: secret, fetchImpl: async () => {
+    calls++;
+    return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
+  } }), error => {
+    assert.equal(error.category, 'provider_output_contract_invalid');
+    const diagnostics = error.responseDiagnostics.contract.mediaClaims;
+    const first = diagnostics.claims.find(claim => claim.claimPath === 'weeklyTimeline[0]');
+    assert.equal(first.claimIndex, 0);
+    assert.equal(first.sources[0].sourceRefId, story.id);
+    assert.equal(first.sources[0].sourceNamePresent, true);
+    assert.deepEqual(first.sources[0].unsupportedNumbers, ['999999']);
+    assert.deepEqual(first.sources[0].claimNumberFacts, [{ number: '999999', unit: '亿美元', dollarSign: false }]);
+    const serialized = JSON.stringify(diagnostics);
+    for (const hidden of [secret, 'PRIVATE_PROSE_MARKER', 'UNKNOWN_REF_PRIVATE_MARKER', input.newsContext.stories[0].snippet]) assert.equal(serialized.includes(hidden), false);
+    return true;
+  });
+  assert.equal(calls, 1);
+  const many = normalizeMediaClaimNames(output, input);
+  many.weeklyTimeline = Array.from({ length: 100 }, () => structuredClone(many.weeklyTimeline[0]));
+  const diagnostics = diagnoseMediaClaims(many, input, { secret });
+  assert.equal(diagnostics.claims.length, 12);
+  assert.equal(diagnostics.failedClaimCount, 100);
+  const leakedInput = structuredClone(input);
+  leakedInput.newsContext.stories[0].snippet += ` ${secret}`;
+  assert.equal(JSON.stringify(diagnoseMediaClaims(output, leakedInput, { secret })).includes(secret), false);
+});
+
+test('numeric diagnostics preserve monetary units but cannot approve a translated amount', () => {
+  const { input, story } = scenario();
+  story.title = 'Revenue report';
+  story.snippet = 'Annualized revenue was roughly $50 billion at the end of September, according to the supplied public excerpt.';
+  const output = { weeklyTimeline: [{ detailZh: '据Morningstar报道，年化收入约500亿美元。', sourceRefIds: [story.id] }] };
+  const source = diagnoseMediaClaims(output, input).claims[0].sources[0];
+  assert.deepEqual(source.claimNumberFacts, [{ number: '500', unit: '亿美元', dollarSign: false }]);
+  assert.deepEqual(source.evidenceNumberFacts, [{ number: '50', unit: 'billion', dollarSign: true }]);
+  assert.deepEqual(source.unsupportedNumbers, ['500']);
+  assert.deepEqual(normalizeMediaClaimNames(output, input), output, 'diagnostic units must not alter or silently admit a numerical claim');
 });
