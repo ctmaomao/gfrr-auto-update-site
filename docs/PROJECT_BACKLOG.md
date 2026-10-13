@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-13 Bubble 失败段落诊断与媒体名称规范化
+
+- **Acceptance baseline**：owner 要求继续诊断和修复 run `38340687380`；本轮离线实施，不续用已消耗的单次付费授权。保留数字/引述 validator、来源资格、生产 writer 与费用保护。
+- **最后基线 / 改动**：latest origin/main `c2c16102`，复用隔离 worktree，分支 `codex/bubble-claim-diagnostics`。新增 bounded claim 诊断 helper、provider 接入、既有媒体回归及本记录；仅对已引用 attributed_media 的明确归因短语规范媒体名称（WSJ/华尔街日报等），不补虚构来源、不改数字、不改引述、不删段落。
+- **诊断证据 / 限制**：上次输出 3957 字、HTTP 200、三个错误位于前两个时间线项；脱敏 artifact 不含失败原文，无法恢复实际数字/名称。已复现别名误拒绝；本期 CNBC 摘要含 `$50 billion`，译成 `500亿美元` 也会被现行逐字规则拒绝，但不能据此断言上次模型用了该译法。数值换算属于待独立审阅的契约选择，本轮不暗中放宽。
+- **当前任务 / 验收**：新增四项 provider/helper 离线回归（七种名称正例、未知/相似名称及引述/数字负例、段落编号/数字对比/单位/诊断上限/凭证不泄漏），专项 17/17、provider/quality/writer 路径及 `check:changed` 的完整 `check:all` 均退出 0。失败 artifact 新增只含已验证来源元数据、段落路径和数字 token/白名单单位的 bounded 诊断，不保存完整模型原文/摘要/未知引用或凭证；最后诊断与测试补齐后专项/provider 路径复验通过。
+- **下一步 / 边界**：实际 diff 代审、提交并沿用同任务 push/合并/部署授权上线诊断；未付费、未生成或写入生产 JSON。历史失败无法靠新诊断补回，后续真实运行需新费用授权；不能声明实际数字错误已修复或本期判读已刷新。自审确认 validator/assertion 未修改、无 skip/ignore，数据/评分/workflow 不变。
+
 ### 2026-10-13 Bubble 输出引用与篇幅提示修复
 
 - **Acceptance baseline**：owner 要求修复本次输出失败，检查及代审无问题后推送、合并部署，并授权一次新的 DeepSeek 付费补跑；失败不自动再次调用。保留 ADR-0062 的媒体数字/引述依据和原 6500 字上限，不改 validator 或生产字段。
