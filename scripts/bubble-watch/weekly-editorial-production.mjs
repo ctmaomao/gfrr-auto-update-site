@@ -1,3 +1,4 @@
+import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { isUsableNews, isLimitedEvidence } from './editorial-evidence-policy.mjs';
 import { createHash } from 'node:crypto';
 
@@ -178,6 +179,7 @@ export function projectWeeklyEditorial({ input, output, review, generatedAt = ne
     sourceMode: 'weekly_news_and_site_structured_compact_v1',
     output,
     sourceLedger,
+    ...(input.scoringSnapshot?.contractVersion === 'bubble-watch-v3' ? { sourceScoringSnapshot: structuredClone(input.scoringSnapshot) } : {}),
     validation: {
       validator: 'check:bubble-watch-weekly-editorial-contract',
       status: 'pass',
@@ -266,10 +268,8 @@ function syntheticInputFromProduction(layer, bubbleWatch) {
     schemaVersion: 'bubble-watch-weekly-editorial-input-v1',
     generatedAt: layer.generatedAt,
     asOfDate: layer.asOfDate,
-    scoringSnapshot: {
-      contractVersion: 'bubble-watch-v2',
-      coreIndicatorCount: 23,
-      shadowIndicatorCount: 4
+    scoringSnapshot: bubbleWatch?.contractVersion === 'bubble-watch-v3' ? layer.sourceScoringSnapshot : {
+      contractVersion: 'bubble-watch-v2', coreIndicatorCount: 23, shadowIndicatorCount: 4
     },
     structuredFacts,
     newsContext: {
@@ -310,6 +310,11 @@ export function validateWeeklyEditorialProduction(layer, bubbleWatch) {
   if (layer.schemaVersion !== PRODUCTION_SCHEMA) errors.push(`schemaVersion must be ${PRODUCTION_SCHEMA}`);
   if (layer.status !== 'valid') errors.push('status must be valid');
   if (layer.displayEnabled !== true) errors.push('displayEnabled must be true');
+  if (bubbleWatch?.contractVersion === 'bubble-watch-v3') {
+    try {
+      if (JSON.stringify(layer.sourceScoringSnapshot) !== JSON.stringify(buildEditorialScoringSnapshot(bubbleWatch))) errors.push('source scoring snapshot differs from current qualified evidence');
+    } catch (error) { errors.push(`source scoring snapshot invalid: ${error.message}`); }
+  }
   if (layer.asOfDate !== bubbleWatch?.as_of_date) errors.push('asOfDate must match Bubble Watch as_of_date');
   if (layer.provider !== 'deepseek' || layer.mode !== 'external_ai_weekly_editorial') errors.push('provider/mode must identify DeepSeek weekly editorial');
   if (layer.validation?.status !== 'pass') errors.push('validation.status must be pass');
