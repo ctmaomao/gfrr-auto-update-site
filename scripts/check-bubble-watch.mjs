@@ -10,6 +10,8 @@
 //   6. history    — 历史文件与 latest 对齐,history_seed 尾点一致
 //   7. public-copy — 前台卡片文案不得暴露 builder/provenance/fallback/proxy 等工程语言
 
+import { CORE_LAYOUT, SHADOW_IDS as EVIDENCE_SHADOW_IDS, modelRevision, replayEvidenceScores, validateEvidenceScoreFields, isRegisteredEvidenceGap } from './bubble-watch/evidence-score-contract.mjs';
+import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +31,10 @@ import {
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
+const data = JSON.parse(read('data/bubble-watch.json'));
+const isV3 = data.contractVersion === 'bubble-watch-v3';
+const evidenceRevision = modelRevision(data.scoring?.model_version);
+const methodConfig = JSON.parse(read('config/bubble-watch-methods.json'));
 
 const failures = [];
 function check(group, cond, message) {
@@ -54,7 +60,7 @@ const CORE_IDS = [
 const SHADOW_IDS = ['private_secondary_marks', 'token_revenue_ratio', 'gpu_rental_price', 'frontier_progress'];
 const CORE_ID_SET = new Set(CORE_IDS);
 const SHADOW_ID_SET = new Set(SHADOW_IDS);
-const SCORING_MODEL_VERSION = 'bubble-watch-v2-core23-shadow4';
+const SCORING_MODEL_VERSION = isV3 ? data.scoring?.model_version : 'bubble-watch-v2-core23-shadow4';
 const CURATED_ORIGIN_IDS = [
   'private_secondary_marks', 'vc_ai_share', 'ai_ipo_pipeline', 'dc_abs_spread', 'debt_capex_ratio', 'neocloud_credit',
   'token_volume_mom', 'token_revenue_ratio', 'gpu_rental_price', 'arr_2nd_deriv', 'enterprise_deploy', 'frontier_progress',
@@ -88,8 +94,8 @@ const TECHNICAL_HEAT_IDS = [
   'sma_200_deviation',
   'correlation_beta_60d'
 ];
-const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
-const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
+const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部', pending: '判读待确认' };
+const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top', pending: 'Evidence Pending' };
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v2';
 const VISIBLE_COPY_FORBIDDEN_PATTERNS = [
   { re: /\blocal_proxy_confidence_v1\b/iu, label: 'local_proxy_confidence_v1' },
@@ -105,7 +111,6 @@ const VISIBLE_COPY_FORBIDDEN_PATTERNS = [
   { re: /\bAPI\b/iu, label: 'API implementation wording' }
 ];
 
-const data = JSON.parse(read('data/bubble-watch.json'));
 const history = JSON.parse(read('data/bubble-watch-history.json'));
 const pageHtml = read('bubble-watch.html');
 const indexHtml = read('index.html');
@@ -117,8 +122,13 @@ const curatedConfig = JSON.parse(read('config/bubble-watch-curated.json'));
 const gdeltBubbleCache = JSON.parse(read('data/gdelt-bubble-watch-cache.json'));
 
 // ---- 1. contract ----
-check('contract', data.contractVersion === 'bubble-watch-v2', `contractVersion 异常: ${data.contractVersion}`);
-check('contract', history.contractVersion === 'bubble-watch-history-v2', `history contractVersion 异常: ${history.contractVersion}`);
+check('contract', methodConfig.contractVersion === 'bubble-qualified-methods-v1'
+  && Number.isInteger(methodConfig.activeRevision) && methodConfig.activeRevision >= 0 && methodConfig.activeRevision <= 4
+  && Array.isArray(methodConfig.approvedAbsSourceReviews)
+  && (methodConfig.absObservation === null || (typeof methodConfig.absObservation === 'object' && !Array.isArray(methodConfig.absObservation))),
+  'qualified method deployment configuration invalid');
+check('contract', data.contractVersion === 'bubble-watch-v2' || isV3, `contractVersion 异常: ${data.contractVersion}`);
+check('contract', history.contractVersion === (isV3 ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2'), `history contractVersion 异常: ${history.contractVersion}`);
 check('contract', Number.isInteger(data.issue_number) && data.issue_number > 0, `issue_number 异常: ${data.issue_number}`);
 check('contract', /^\d{4}-\d{2}-\d{2}$/u.test(data.as_of_date || ''), `as_of_date 异常: ${data.as_of_date}`);
 check('contract', Array.isArray(data.indicators) && data.indicators.length === EXPECTED_IDS.length,
@@ -129,14 +139,14 @@ for (const ind of data.indicators || []) {
   ids.add(ind.id);
   check('contract', CATEGORIES.includes(ind.category), `${ind.id} category 非法: ${ind.category}`);
   check('contract', AXES.includes(ind.axis), `${ind.id} axis 非法: ${ind.axis}`);
-  check('contract', STATUSES.includes(ind.status), `${ind.id} status 非法: ${ind.status}`);
+  check('contract', STATUSES.includes(ind.status) || (isV3 && isRegisteredEvidenceGap(ind, { revision: evidenceRevision, asOfDate: data.as_of_date })), `${ind.id} status 非法: ${ind.status}`);
   const expectedRole = CORE_ID_SET.has(ind.id) ? 'core' : SHADOW_ID_SET.has(ind.id) ? 'shadow' : null;
   check('contract', ind.score_role === expectedRole, `${ind.id} score_role ${ind.score_role} ≠ ${expectedRole}`);
   for (const field of ['name_en', 'name_zh', 'value_display', 'note', 'threshold_text', 'source_name']) {
     check('contract', typeof ind[field] === 'string' && ind[field].length > 0, `${ind.id} 缺 ${field}`);
   }
   check('contract', typeof ind.stale === 'boolean', `${ind.id} stale 非 boolean`);
-  check('contract', /^\d{4}-\d{2}-\d{2}$/u.test(ind.as_of || ''), `${ind.id} as_of 缺失/异常`);
+  check('contract', (/^\d{4}-\d{2}-\d{2}$/u.test(ind.as_of || '') || (isV3 && isRegisteredEvidenceGap(ind, { revision: evidenceRevision, asOfDate: data.as_of_date }))), `${ind.id} as_of 缺失/异常`);
   check('contract', ['auto', 'curated', 'auto_fallback'].includes(ind.provenance?.mode), `${ind.id} provenance.mode 非法`);
 }
 check('contract', EXPECTED_IDS.every((id) => ids.has(id)) && ids.size === EXPECTED_IDS.length,
@@ -164,31 +174,54 @@ for (const field of ['affectsValues', 'affectsScoring', 'affectsDecisionModel', 
 }
 
 const s = data.summary || {};
+let evidenceReplay = null;
+if (isV3) {
+  const errors = validateEvidenceScoreFields(data);
+  for (const error of errors) check('contract', false, error);
+  try { evidenceReplay = replayEvidenceScores(data.indicators, evidenceRevision); } catch (error) { check('contract', false, error.message); }
+  // r2-r4 have math contracts, but cannot publish until their source policies
+  // have had separate review and the deployment configuration activates them.
+  check('contract', evidenceRevision === 1 && methodConfig.activeRevision === 1,
+    'v3 method revision is not supported/activated by the reviewed source policy');
+  const abs = indicatorById.dc_abs_spread;
+  const qualified = qualifyDataCenterSpread(methodConfig.absObservation, data.as_of_date, methodConfig.approvedAbsSourceReviews);
+  check('contract', abs?.status === qualified.status, 'ABS status differs from qualified direct spread evidence');
+  if (qualified.status !== 'unknown') check('contract', abs.as_of === qualified.asOf, 'ABS original observation date mismatch');
+}
+const matchesPoint = (value, expected) => expected === null ? value === null
+  : typeof value === 'number' && Number.isFinite(value) && Math.abs(value - expected) < 0.06;
+const hasCoreGaps = isV3 && (evidenceReplay?.unknownIds.length || 0) > 0;
+
 const red = (data.indicators || []).filter((i) => i.status === 'red').length;
 const yellow = (data.indicators || []).filter((i) => i.status === 'yellow').length;
 const green = (data.indicators || []).filter((i) => i.status === 'green').length;
+const unknown = (data.indicators || []).filter((i) => i.status === 'unknown').length;
 const coreRed = coreIndicators.filter((i) => i.status === 'red').length;
 const coreYellow = coreIndicators.filter((i) => i.status === 'yellow').length;
 const coreGreen = coreIndicators.filter((i) => i.status === 'green').length;
 check('contract', s.total_indicators === EXPECTED_IDS.length, `summary.total_indicators ${s.total_indicators}`);
 check('contract', s.red_count === red && s.yellow_count === yellow && s.green_count === green,
   `summary 展示计数 ${s.red_count}/${s.yellow_count}/${s.green_count} ≠ 实算 ${red}/${yellow}/${green}`);
-check('contract', Math.abs(s.display_red_pct - (red / EXPECTED_IDS.length) * 100) < 0.06, `display_red_pct ${s.display_red_pct} 复算不符`);
-check('contract', Math.abs(s.display_weighted_risk_score - ((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100) < 0.06,
+if (isV3) check('contract', s.unknown_count === unknown && red + yellow + green + unknown === 27,
+  'v3 display counts must retain pending cards outside green/yellow/red');
+check('contract', matchesPoint(s.display_red_pct, hasCoreGaps ? null : (red / EXPECTED_IDS.length) * 100), `display_red_pct ${s.display_red_pct} 复算不符`);
+check('contract', matchesPoint(s.display_weighted_risk_score, hasCoreGaps ? null : ((red + 0.5 * yellow) / EXPECTED_IDS.length) * 100),
   `display_weighted_risk_score ${s.display_weighted_risk_score} 复算不符`);
 check('contract', s.scoring_total_indicators === CORE_IDS.length, `summary.scoring_total_indicators ${s.scoring_total_indicators}`);
 check('contract', s.scoring_red_count === coreRed && s.scoring_yellow_count === coreYellow && s.scoring_green_count === coreGreen,
   `summary 核心计数 ${s.scoring_red_count}/${s.scoring_yellow_count}/${s.scoring_green_count} ≠ 实算 ${coreRed}/${coreYellow}/${coreGreen}`);
 check('contract', s.primary_score_pct === s.red_pct, `primary_score_pct ${s.primary_score_pct} 必须等于 red_pct ${s.red_pct}`);
 check('contract', s.primary_score_basis === 'core_red_light_ratio', `primary_score_basis 异常: ${s.primary_score_basis}`);
-check('contract', Math.abs(s.red_pct - (coreRed / CORE_IDS.length) * 100) < 0.06, `red_pct ${s.red_pct} Core-23 复算不符`);
-check('contract', Math.abs(s.weighted_risk_score - ((coreRed + 0.5 * coreYellow) / CORE_IDS.length) * 100) < 0.06,
+check('contract', matchesPoint(s.red_pct, isV3 ? evidenceReplay?.primary : (coreRed / CORE_IDS.length) * 100), `red_pct ${s.red_pct} Core-23 复算不符`);
+check('contract', matchesPoint(s.weighted_risk_score, isV3 ? evidenceReplay?.pressure : ((coreRed + 0.5 * coreYellow) / CORE_IDS.length) * 100),
   `weighted_risk_score ${s.weighted_risk_score} Core-23 复算不符`);
 function replayAxisScore(axis) {
   const items = coreIndicators.filter((item) => item.axis === axis);
+  if (isV3 && items.some(item => item.status === 'unknown')) return null;
   return Number((items.reduce((sum, item) => sum + STATUS_SCORE[item.status], 0) / items.length).toFixed(1));
 }
 function replayAxisLabel(axis, score) {
+  if (score === null) return ['待确认', 'Pending'];
   if (axis === 'stage') {
     if (score < 30) return ['早期 Displacement', 'Displacement'];
     if (score < 50) return ['扩张 Boom', 'Boom'];
@@ -204,21 +237,21 @@ const replayStage = replayAxisScore('stage');
 const replayTrigger = replayAxisScore('trigger');
 const [stageLabelZh, stageLabelEn] = replayAxisLabel('stage', replayStage);
 const [triggerLabelZh, triggerLabelEn] = replayAxisLabel('trigger', replayTrigger);
-check('contract', Math.abs(s.stage_score - replayStage) < 0.06, `stage_score ${s.stage_score} 复算不符 ${replayStage}`);
-check('contract', Math.abs(s.trigger_score - replayTrigger) < 0.06, `trigger_score ${s.trigger_score} 复算不符 ${replayTrigger}`);
+check('contract', matchesPoint(s.stage_score, replayStage), `stage_score ${s.stage_score} 复算不符 ${replayStage}`);
+check('contract', matchesPoint(s.trigger_score, replayTrigger), `trigger_score ${s.trigger_score} 复算不符 ${replayTrigger}`);
 check('contract', s.stage_label === stageLabelZh && s.stage_label_en === stageLabelEn, 'stage label 与区间不符');
 check('contract', s.trigger_label === triggerLabelZh && s.trigger_label_en === triggerLabelEn, 'trigger label 与区间不符');
 for (const category of CATEGORIES) {
   const items = coreIndicators.filter((item) => item.category === category);
   const replay = Number((items.reduce((sum, item) => sum + STATUS_SCORE[item.status], 0) / items.length).toFixed(1));
-  check('contract', Math.abs(s.category_scores?.[category] - replay) < 0.06, `category_scores.${category} 复算不符`);
+  check('contract', matchesPoint(s.category_scores?.[category], isV3 ? evidenceReplay?.categories[category].point : replay), `category_scores.${category} 复算不符`);
 }
-const previousComparable = [...(history.entries || [])].reverse().find((entry) => entry.date !== data.as_of_date && entry.statuses);
+const previousComparable = [...(history.entries || [])].reverse().find((entry) => entry.date !== data.as_of_date && entry.statuses && (!isV3 || entry.scoring_model_version === SCORING_MODEL_VERSION));
 let replayDeteriorated = 0;
 let replayImproved = 0;
 for (const item of coreIndicators) {
   const previous = previousComparable?.statuses?.[item.id];
-  if (!previous || previous === item.status) continue;
+  if (!STATUSES.includes(previous) || !STATUSES.includes(item.status) || previous === item.status) continue;
   const delta = STATUSES.indexOf(previous) - STATUSES.indexOf(item.status);
   if (delta > 0) replayDeteriorated += delta;
   else replayImproved -= delta;
@@ -235,6 +268,11 @@ check('contract', typeof s.verdict_desc === 'string' && s.verdict_desc.length >=
 check('contract', verdictDescBytes >= 900 && verdictDescBytes <= 2600, `verdict_desc 字节数 ${verdictDescBytes} 不在 900-2600 预算内`);
 check('contract', !String(s.verdict_desc || '').includes('加权风险分'), 'verdict_desc 不得把加权辅助压力写成主风险分');
 check('contract', s.verdict_desc_source === NARRATIVE_ENGINE_VERSION, `verdict_desc_source 异常: ${s.verdict_desc_source}`);
+if (hasCoreGaps) {
+  check('contract', JSON.stringify(s.narrative_plan?.evidenceGaps) === JSON.stringify(evidenceReplay.unknownIds), 'narrative must disclose exact missing core evidence');
+  check('contract', /待确认/u.test(s.verdict_desc || ''), 'pending evidence narrative disclosure missing');
+  check('contract', !(s.narrative_plan?.evidenceHighlights || []).some(item => evidenceReplay.unknownIds.includes(item.id)), 'unknown cards cannot be confirmed narrative highlights');
+}
 check('contract', s.narrative_plan?.version === NARRATIVE_ENGINE_VERSION, 'summary.narrative_plan.version 缺失/异常');
 check('contract', s.narrative_plan?.sourceMode === 'local_indicator_evidence_pack', 'summary.narrative_plan.sourceMode 必须为 local_indicator_evidence_pack');
 check('contract', s.narrative_plan?.upstreamVerdictPolicy === 'calibration_only_never_copied', 'summary.narrative_plan 上游正文策略异常');
@@ -641,21 +679,21 @@ function tierFromPct(p) {
   if (p >= 25) return 'caution';
   return 'observation';
 }
-const baseTier = tierFromPct(s.red_pct);
+const baseTier = isV3 ? evidenceReplay?.baseTier : tierFromPct(s.red_pct);
 const resonant = CATEGORIES.filter((cat) => {
   const items = coreIndicators.filter((i) => i.category === cat);
   if (!items.length) return false;
   return items.filter((i) => i.status === 'red').length / items.length >= 0.5;
 });
 const tierRank = { observation: 0, caution: 1, alert: 2, top: 3 };
-let effTier = baseTier;
-if (resonant.length >= 2 && tierRank[effTier] < tierRank.alert) effTier = 'alert';
+let effTier = isV3 ? evidenceReplay?.effectiveTier : baseTier;
+if (!isV3 && resonant.length >= 2 && tierRank[effTier] < tierRank.alert) effTier = 'alert';
 const twoAxisTarget = replayStage >= 60 && replayTrigger >= 65
   ? 'top'
   : replayStage >= 60 && replayTrigger >= 50
     ? 'alert'
     : null;
-const twoAxisUpgrade = twoAxisTarget && tierRank[twoAxisTarget] > tierRank[effTier] ? twoAxisTarget : null;
+const twoAxisUpgrade = isV3 ? evidenceReplay?.twoAxisUpgrade : twoAxisTarget && tierRank[twoAxisTarget] > tierRank[effTier] ? twoAxisTarget : null;
 if (twoAxisUpgrade) effTier = twoAxisUpgrade;
 check('scoring', s.verdict_label === TIER_LABEL_ZH[effTier], `verdict_label「${s.verdict_label}」≠ replay「${TIER_LABEL_ZH[effTier]}」`);
 check('scoring', s.verdict_label_en === TIER_LABEL_EN[effTier], `verdict_label_en「${s.verdict_label_en}」≠ replay`);
@@ -674,7 +712,7 @@ check('scoring', promotion.minimum_observation_weeks === 52 && promotion.minimum
 check('scoring', JSON.stringify(promotion.required_reviews) === JSON.stringify([
   'historical_proxy_or_backfill', 'non_redundancy_ablation', 'out_of_sample_target_improvement', 'separate_contract_migration'
 ]), 'Shadow promotion required_reviews 漂移');
-check('scoring', data.scoring?.override_active === (effTier !== baseTier), 'scoring.override_active 与 replay 不符');
+check('scoring', data.scoring?.override_active === (isV3 ? evidenceReplay?.overrideActive : effTier !== baseTier), 'scoring.override_active 与 replay 不符');
 check('scoring', data.scoring?.two_axis_upgrade === twoAxisUpgrade, 'scoring.two_axis_upgrade 与 replay 不符');
 check('scoring', typeof data.scoring?.override_rules?.two_axis_alert === 'string' && typeof data.scoring?.override_rules?.two_axis_top === 'string',
   'scoring.override_rules 缺两轴升级规则');
@@ -734,10 +772,33 @@ check('history', last.scoring_model_version === SCORING_MODEL_VERSION
   && last.display_risk_score === s.display_weighted_risk_score,
   'history 尾项 v2 core/display 字段与 summary 不符');
 check('history', last.statuses && Object.keys(last.statuses).length === EXPECTED_IDS.length, 'history 尾项 statuses 不全');
+if (isV3) {
+  check('history', data.indicators.every(item => last.statuses?.[item.id] === item.status), 'history latest statuses differ from current evidence');
+  for (const entry of entries.filter(row => modelRevision(row.scoring_model_version))) {
+    try {
+      const revision = modelRevision(entry.scoring_model_version);
+      const cards = [
+        ...CORE_LAYOUT.map(([id, axis, category]) => ({ id, axis, category, ...(entry.gap_metadata?.[id] || {}), id, axis, category, score_role: 'core', status: entry.statuses?.[id] })),
+        ...EVIDENCE_SHADOW_IDS.map(id => ({ id, score_role: 'shadow', status: entry.statuses?.[id] }))
+      ];
+      for (const [id, gap] of Object.entries(entry.gap_metadata || {})) {
+        check('history', entry.statuses?.[id] === 'unknown' && Object.keys(gap).every(key => ['as_of', 'stale', 'evidence_gap', 'provenance'].includes(key)), 'history gap metadata cannot override frozen identity or light');
+      }
+      const replay = replayEvidenceScores(cards, revision);
+      for (const card of cards.filter(item => item.status === 'unknown')) check('history', isRegisteredEvidenceGap(card, { revision, asOfDate: entry.date }), `Invalid historical gap: ${card.id}`);
+      check('history', entry.core_red_pct === replay.primary && entry.red_pct === replay.primary && entry.core_risk_score === replay.pressure && entry.risk_score === replay.pressure, 'v3 history points differ from own status replay');
+      for (const [key, expected] of Object.entries({ primary: replay.primaryRange, pressure: replay.pressureRange, stage: replay.stageRange, trigger: replay.triggerRange })) {
+        check('history', JSON.stringify(entry.score_bounds?.[key]) === JSON.stringify(expected), `v3 history ${key} bounds differ from own replay`);
+      }
+      check('history', entry.effective_tier === replay.effectiveTier && JSON.stringify(entry.tier_range) === JSON.stringify(replay.tierRange)
+        && JSON.stringify(entry.unknown_core_ids) === JSON.stringify(replay.unknownIds), 'v3 history verdict/gaps differ from own replay');
+    } catch (error) { check('history', false, `v3 history cannot replay: ${error.message}`); }
+  }
+}
 const seed = data.history_seed || [];
-check('history', seed.length >= 1 && seed.length <= 10, `history_seed 长度异常 ${seed.length}`);
-check('history', seed.length && seed[seed.length - 1].week === last.week, 'history_seed 尾点与 history 尾项不符');
-const replayableCoreEntries = entries.filter((entry) => CORE_IDS.every((id) => STATUSES.includes(entry.statuses?.[id])));
+check('history', seed.length >= (isV3 ? 0 : 1) && seed.length <= 10, `history_seed 长度异常 ${seed.length}`);
+check('history', isV3 ? (!seed.length || Number.isFinite(seed[seed.length - 1].red_pct)) : seed.length && seed[seed.length - 1].week === last.week, 'history_seed 尾点与 history 尾项不符');
+const replayableCoreEntries = entries.filter((entry) => (!isV3 || entry.scoring_model_version === SCORING_MODEL_VERSION) && CORE_IDS.every((id) => STATUSES.includes(entry.statuses?.[id])));
 check('history', seed.length === Math.min(10, replayableCoreEntries.length),
   `history_seed ${seed.length} 项 ≠ Core-23 可回放周次 ${Math.min(10, replayableCoreEntries.length)}`);
 check('history', seed.every((entry) => entry.model_version === SCORING_MODEL_VERSION), 'history_seed 混入非 v2 模型点');

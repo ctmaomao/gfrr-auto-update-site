@@ -1,0 +1,197 @@
+{
+  "asOfDate": "2026-10-12",
+  "modelVersion": "bubble-watch-v2-core23-shadow4",
+  "source": "https://radar.gfrfinradar.uk/data/bubble-watch.json",
+  "purpose": "Frozen offline comparison; never a runtime source",
+  "indicators": [
+    {
+      "id": "cape",
+      "axis": "stage",
+      "category": "valuation",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "top5_weight",
+      "axis": "stage",
+      "category": "valuation",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "nvda_fpe",
+      "axis": "stage",
+      "category": "valuation",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "private_secondary_marks",
+      "axis": "trigger",
+      "category": "valuation",
+      "score_role": "shadow",
+      "status": "red"
+    },
+    {
+      "id": "hyperscaler_capex_yoy",
+      "axis": "stage",
+      "category": "capital",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "mag4_fcf_yoy",
+      "axis": "trigger",
+      "category": "capital",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "vc_ai_share",
+      "axis": "stage",
+      "category": "capital",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "nvda_invest_revenue",
+      "axis": "stage",
+      "category": "capital",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "breadth_50d",
+      "axis": "trigger",
+      "category": "market_structure",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "spy_vs_rsp_6m",
+      "axis": "trigger",
+      "category": "market_structure",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "insider_sell_buy",
+      "axis": "trigger",
+      "category": "market_structure",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "ai_ipo_pipeline",
+      "axis": "stage",
+      "category": "market_structure",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "hy_oas",
+      "axis": "trigger",
+      "category": "credit",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "dc_abs_spread",
+      "axis": "trigger",
+      "category": "credit",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "debt_capex_ratio",
+      "axis": "stage",
+      "category": "credit",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "neocloud_credit",
+      "axis": "trigger",
+      "category": "credit",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "token_volume_mom",
+      "axis": "trigger",
+      "category": "fundamentals",
+      "score_role": "core",
+      "status": "yellow"
+    },
+    {
+      "id": "token_revenue_ratio",
+      "axis": "trigger",
+      "category": "fundamentals",
+      "score_role": "shadow",
+      "status": "green"
+    },
+    {
+      "id": "gpu_rental_price",
+      "axis": "trigger",
+      "category": "fundamentals",
+      "score_role": "shadow",
+      "status": "green"
+    },
+    {
+      "id": "arr_2nd_deriv",
+      "axis": "trigger",
+      "category": "fundamentals",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "enterprise_deploy",
+      "axis": "stage",
+      "category": "fundamentals",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "cloud_rpo_growth",
+      "axis": "trigger",
+      "category": "fundamentals",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "frontier_progress",
+      "axis": "trigger",
+      "category": "fundamentals",
+      "score_role": "shadow",
+      "status": "green"
+    },
+    {
+      "id": "accounting_events",
+      "axis": "trigger",
+      "category": "macro",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "fed_policy",
+      "axis": "trigger",
+      "category": "macro",
+      "score_role": "core",
+      "status": "red"
+    },
+    {
+      "id": "capex_reaction",
+      "axis": "trigger",
+      "category": "macro",
+      "score_role": "core",
+      "status": "green"
+    },
+    {
+      "id": "ceo_hedging",
+      "axis": "stage",
+      "category": "macro",
+      "score_role": "core",
+      "status": "yellow"
+    }
+  ]
+}
