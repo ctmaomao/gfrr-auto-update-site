@@ -1,6 +1,7 @@
+import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { INPUT_SCHEMA } from './weekly-editorial-contract.mjs';
 
-const STATUS_ZH = Object.freeze({ red: '红灯', yellow: '黄灯', green: '绿灯' });
+const STATUS_ZH = Object.freeze({ red: '红灯', yellow: '黄灯', green: '绿灯', unknown: '待确认' });
 const MAX_INPUT_NEWS_PER_TOPIC = 2;
 const MAX_INPUT_NEWS_STORIES = 12;
 
@@ -154,7 +155,7 @@ function buildHistoricalContext(summary) {
 }
 
 export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch, discovery, generatedAt = new Date().toISOString(), fixtureOnly = false }) {
-  if (bubbleWatch?.contractVersion !== 'bubble-watch-v2') throw new Error('Bubble Watch input must use bubble-watch-v2');
+  if (!['bubble-watch-v2', 'bubble-watch-v3'].includes(bubbleWatch?.contractVersion)) throw new Error('Bubble Watch input must use registered v2 or v3');
   if (!Array.isArray(bubbleWatch.indicators) || bubbleWatch.indicators.length !== 27) throw new Error('Bubble Watch input must contain 27 indicators');
   const summary = bubbleWatch.summary || {};
   const indicators = bubbleWatch.indicators;
@@ -163,6 +164,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
   const newsContext = buildCompactNewsContext(discovery);
   const staleIndicators = indicators.filter((indicator) => indicator.stale === true).map((indicator) => indicator.name_zh || indicator.id);
   const dataGaps = [
+    ...(indicators.some(i => i.status === 'unknown') ? [`待确认指标: ${indicators.filter(i => i.status === 'unknown').map(i => i.name_zh || i.id).join('、')}；点值为空，保留固定23分母上下界。`] : []),
     ...(Array.isArray(discovery?.dataGaps) ? discovery.dataGaps : []),
     ...(staleIndicators.length > 0 ? [`过期指标: ${staleIndicators.join('、')}`] : []),
     ...compactList(summary.narrative_plan?.limitations, 5, 260),
@@ -191,22 +193,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
     asOfDate: bubbleWatch.as_of_date,
     inputMode: fixtureOnly ? 'fixture_compact_evidence_pack' : 'live_site_compact_evidence_pack',
     fixtureOnly,
-    scoringSnapshot: {
-      contractVersion: bubbleWatch.contractVersion,
-      modelVersion: bubbleWatch.scoring?.model_version,
-      coreIndicatorCount: summary.scoring_total_indicators,
-      shadowIndicatorCount: indicators.filter((indicator) => indicator.score_role === 'shadow').length,
-      coreRedCount: summary.scoring_red_count,
-      coreYellowCount: summary.scoring_yellow_count,
-      coreGreenCount: summary.scoring_green_count,
-      primaryScorePct: summary.primary_score_pct,
-      weightedRiskScore: summary.weighted_risk_score,
-      stageScore: summary.stage_score,
-      stageLabelZh: summary.stage_label,
-      triggerScore: summary.trigger_score,
-      triggerLabelZh: summary.trigger_label,
-      verdictLabelZh: summary.verdict_label
-    },
+    scoringSnapshot: buildEditorialScoringSnapshot(bubbleWatch),
     narrativeBaseline: {
       source: summary.verdict_desc_source,
       verdictDescZh: compactText(summary.verdict_desc, 2800),

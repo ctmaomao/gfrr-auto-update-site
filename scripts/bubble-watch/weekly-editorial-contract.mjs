@@ -1,3 +1,4 @@
+import { validateEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { isLimitedEvidence, validMediaStory } from './editorial-evidence-policy.mjs';
 import { claimNumericSupport, claimEvidenceTexts } from './weekly-editorial-numeric-grounding.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'bubble-watch-weekly-news-discovery-v1';
@@ -208,7 +209,7 @@ export function validateWeeklyEditorialInput(input, options = {}) {
   requireString(root.asOfDate, 'input.asOfDate', errors, { min: 10, max: 10 });
 
   const scoring = requireRecord(root.scoringSnapshot, 'input.scoringSnapshot', errors);
-  if (scoring.contractVersion !== 'bubble-watch-v2') errors.push('input scoring contract must remain bubble-watch-v2');
+  errors.push(...validateEditorialScoringSnapshot(scoring, root.asOfDate, Array.isArray(root.structuredFacts) ? root.structuredFacts : []));
   if (scoring.coreIndicatorCount !== 23) errors.push('input coreIndicatorCount must be 23');
   if (scoring.shadowIndicatorCount !== 4) errors.push('input shadowIndicatorCount must be 4');
 
@@ -261,6 +262,7 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
   requireString(root.headlineZh, 'output.headlineZh', errors, { min: 8, max: 80 });
   requireString(root.leadZh, 'output.leadZh', errors, { min: 40, max: 800 });
   requireString(root.scorecardSynthesisZh, 'output.scorecardSynthesisZh', errors, { min: 30, max: 1000 });
+  if (input?.scoringSnapshot?.contractVersion === 'bubble-watch-v3' && root.scorecardSynthesisZh !== input.scoringSnapshot.scorecardDisclosureZh) errors.push('output qualified scorecard must copy the supplied deterministic disclosure exactly');
 
   const limited = options.metadataOnly && typeof options.limitedEvidence === 'boolean' ? options.limitedEvidence : isLimitedEvidence(input);
   const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: limited ? 0 : 2, max: 8 });
