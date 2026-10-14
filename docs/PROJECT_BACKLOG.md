@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-13 Bubble 四项口径依次修订
+
+- **Acceptance baseline**：owner 在四项方法审阅后要求按 ABS → 内部人交易 → capex → Fed 顺序修订。按 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 保留固定 Core-23/Shadow-4及原分档/升级规则，缺证据用待确认与区间，不缩分母、不转为绿/0；先独立契约 PR，后逐项 runtime。owner 已明确授权四项独立 AI 代审，审阅无阻断且 CI 通过后逐项推送、合并上线；无新增付费调用授权。
+- **最后基线 / 改动**：main c1723265、工作区干净，任务分支 codex/bubble-evidence-contract。CEO #455 已完成独立审阅/CI/合并/Pages及EdgeOne发布检查，两站内容一致；本轮不重写 CEO 修复。契约候选新增固定分母区间 helper、合格ABS利差资格、离线冻结快照与回归，尚未接 builder/前端/生产数据。
+- **当前任务**：共同契约与第一项ABS准备；没有合格美国数据中心可比利差时，通用中国收益率只能作背景，核心保持待确认。冻结10/12快照回放主分30.4–34.8、压力45.7–50.0、Trigger34.6–42.3，Stage60.0，最低/最高有效档位均为高风险预警；不声称是新报价或预测能力验证。
+- **验证 / 下一步**：14项契约/ABS/实际checker VM测试通过；81种四缺口补全均在界内，影子灯色不改变核心区间。独立AI代审发现的基准日期来源、历史重放及metadata覆盖均已修复，最终文件SHA256复核无阻断；正文缺口披露必需且原650字/字节预算保留。`npm run check:changed` 完成 full `check:all`、退出0，包含390px验收；`git diff --check`退出0。先提交独立契约PR并等待CI，再按顺序接入四项；未生成生产数据、未调用付费API。
+
+
 ### 2026-10-13 Bubble 同期评分差异与 CEO 证据修复
 
 - **Acceptance baseline**：owner 要求比较本站与 aibubble-cn，分析原因并修复确证问题。保留已批准独立口径，不为匹配参考分数改 Core-23、灯色保护或其它指标；不继承别的任务 push/merge/发布、付费调用授权。

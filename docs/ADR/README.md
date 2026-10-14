@@ -9,6 +9,7 @@
 
 | # | 标题 | 状态 |
 |---|---|---|
+| [ADR-0069](0069-bubble-qualified-evidence-and-score-bounds.md) | Bubble 四项证据资格与固定分母区间 | Owner-authorized implementation; contract review pending |
 | [ADR-0068](0068-bubble-claim-numeric-equivalence.md) | Bubble 金融数字依据与提示分级 | Owner-authorized repair; independent contract review required |
 | [ADR-0067](0067-baltic-public-ticker.md) | 公开 Baltic 聚合指数与准确来源迁移 | Owner-authorized; independent contract review before runtime |
 | [ADR-0066](0066-pages-publication-coalescing.md) | 同一 main 源码的保守 Pages 发布去重 | Owner-authorized; independent publication review required |
