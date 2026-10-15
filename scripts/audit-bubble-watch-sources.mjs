@@ -154,6 +154,11 @@ function buildReport(data, buildResult, checkResult) {
   for (const row of indicators.filter(item => item.status === 'unknown')) {
     warnings.push(`Qualified evidence pending: ${row.id} (${row.evidence_gap?.reasonCode || 'unregistered'})`);
   }
+  if (indicators.some(row => row.id === 'insider_sell_buy'
+    && row.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1'
+    && row.provenance?.detail?.coverageStatus === 'returned_sample_completeness_unverified')) {
+    warnings.push('Insider returned-sample statistics do not establish complete SEC window coverage');
+  }
   // The independent checker still hard-fails any unregistered or malformed gap.
   const hardFail = buildResult.code !== 0 ||
     checkResult.code !== 0 ||

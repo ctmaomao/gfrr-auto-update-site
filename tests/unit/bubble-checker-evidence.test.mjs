@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { GAP_REASONS, replayEvidenceScores } from '../../scripts/bubble-watch/evidence-score-contract.mjs';
+import { INSIDER_BASKET, insiderWindowUrl, qualifyInsiderWindows } from '../../scripts/bubble-watch/qualified-insider.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const checkerUrl = new URL('../../scripts/check-bubble-watch.mjs', import.meta.url);
@@ -104,4 +105,30 @@ test('real checker accepts registered v3 pending bounds and rejects false point/
     const changed=structuredClone(files); mutate(changed['data/bubble-watch-history.json'].entries.at(-1));
     assert.equal(run(changed,config).code,1);
   }
+});
+
+test('real checker admits only activated r2 with replayable returned-sample proof', () => {
+  const files=pendingFiles(), data=files['data/bubble-watch.json'], today=data.as_of_date;
+  const checkedAt=`${today}T13:22:04.262Z`;
+  const transaction=(code,value)=>({txDate:today,txCode:code,valueUsd:value,isOpenMarket:true,priceNote:null});
+  const report=qualifyInsiderWindows(INSIDER_BASKET.map(symbol=>({symbol,responseTicker:symbol,
+    sourceUrl:insiderWindowUrl(symbol,today),responseBuiltAt:checkedAt,
+    transactions:[transaction('S','10000000'),transaction('P','1000000')]})),today,checkedAt);
+  Object.assign(report,{sourceFailures:[],sourceAttribution:'Data: XOOMAR; Insider trade data: SEC.',sourceAttributionUrl:'https://xoomar.com',
+    collectionPolicy:{actualRequests:12,maximumRequests:12,minimumStartSpacingMs:6500,requestTimeoutMs:12000,responseMaxBytes:1048576,applicationRetries:0}});
+  const insider=data.indicators.find(row=>row.id==='insider_sell_buy');
+  Object.assign(insider,{status:'yellow',as_of:today,stale:false,provenance:{mode:'auto',checkedAt,detail:report}});
+  data.scoring.model_version='bubble-watch-v3-core23-shadow4-r2';
+  files['data/bubble-watch-history.json'].entries.at(-1).scoring_model_version=data.scoring.model_version;
+  const config={contractVersion:'bubble-qualified-methods-v1',activeRevision:2,approvedAbsSourceReviews:[],absObservation:null};
+  const valid=run(files,config);assert.equal(valid.code,0,valid.logs);
+  for(const mutate of [row=>{row.status='red';},row=>{row.provenance.detail.totals[30].ratio=999;},
+    row=>{row.provenance.detail.companies[0].rawTransactions=[];},row=>{row.provenance.detail.collectionPolicy.applicationRetries=1;}]) {
+    const changed=structuredClone(files);mutate(changed['data/bubble-watch.json'].indicators.find(row=>row.id==='insider_sell_buy'));
+    const result=run(changed,config);assert.equal(result.code,1);assert.match(result.logs,/insider qualified source/u);
+  }
+  assert.equal(run(files,{...config,activeRevision:1}).code,1);
+  const future=structuredClone(files);future['data/bubble-watch.json'].scoring.model_version='bubble-watch-v3-core23-shadow4-r3';
+  const rejected=run(future,{...config,activeRevision:3});assert.equal(rejected.code,1);
+  assert.match(rejected.logs,/not supported\/activated/u);
 });
