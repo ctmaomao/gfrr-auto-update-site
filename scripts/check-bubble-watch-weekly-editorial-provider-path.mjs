@@ -77,6 +77,7 @@ const replacements = new Map([
 ]);
 let providerOutput = replaceExactStrings(sampleOutput, replacements);
 providerOutput.asOfDate = input.asOfDate;
+if (input.scoringSnapshot.contractVersion === 'bubble-watch-v3') providerOutput.scorecardSynthesisZh = input.scoringSnapshot.scorecardDisclosureZh;
 providerOutput.sourceAttribution = providerOutput.sourceAttribution.map((item) => {
   const story = discovery.stories.find((candidate) => candidate.id === item.sourceRefId);
   if (!story) return item;

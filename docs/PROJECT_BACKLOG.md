@@ -2,6 +2,9 @@
 
 ### 2026-10-13 Bubble 四项口径依次修订
 
+- **ABS r1 当前交接（2026-10-15）**：#456固定分母缺口契约与#457 AI兼容契约已独立代审、CI通过、合并main a1643b8a。当前分支codex/bubble-abs-qualified-runtime实现首项ABS及双v2/v3展示；已通过真实候选checker七组、actual-builder零网络/写入边界/不可续期anchor与source-audit WARN四项回归、13项桌面/390px浏览器回归。已获用户持续发布授权，用既有builder显式定向生成两份Bubble JSON（不是手改）；截至10/15保留其余26项原观测，Core7红/7黄/8绿/1待确认，主分30.4–34.8%、压力45.7–50.0、Stage60、Trigger34.6–42.3，保证档位高风险预警。新版源码/数据尚未推送；独立代审已复核26卡完整一致、16条历史保留、重复文案修复及缺口WARN未放宽hard-fail。`check:changed`完成完整`check:all`、退出0；仍待最终固定提交复核、CI及部署验收。后续顺序仍内部人→capex→Fed，无新付费授权。
+
+
 - **Acceptance baseline**：owner 在四项方法审阅后要求按 ABS → 内部人交易 → capex → Fed 顺序修订。按 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 保留固定 Core-23/Shadow-4及原分档/升级规则，缺证据用待确认与区间，不缩分母、不转为绿/0；先独立契约 PR，后逐项 runtime。owner 已明确授权四项独立 AI 代审，审阅无阻断且 CI 通过后逐项推送、合并上线；无新增付费调用授权。
 - **最后基线 / 改动**：main c1723265、工作区干净，任务分支 codex/bubble-evidence-contract。CEO #455 已完成独立审阅/CI/合并/Pages及EdgeOne发布检查，两站内容一致；本轮不重写 CEO 修复。契约候选新增固定分母区间 helper、合格ABS利差资格、离线冻结快照与回归，尚未接 builder/前端/生产数据。
 - **当前任务**：共同契约 #456 已由固定提交独立AI复核，CI `38538146776` 通过并合并 `fa487f3e`；当前 `codex/bubble-editorial-evidence-contract` 单独准备 AI v3 输入/投影兼容，activeRevision仍0。随后第一项ABS接入；没有合格美国数据中心可比利差时，通用中国收益率只能作背景，核心保持待确认。冻结10/12快照回放主分30.4–34.8、压力45.7–50.0、Trigger34.6–42.3，Stage60.0，最低/最高有效档位均为高风险预警；不声称是新报价或预测能力验证。

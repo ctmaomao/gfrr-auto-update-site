@@ -53,6 +53,10 @@
     font-family: "Playfair Display", serif; font-size: clamp(80px, 14vw, 144px);
     font-weight: 900; line-height: 0.9; letter-spacing: -0.04em;
   }
+  .big-number .value.range .bound { display:block; font-size:0.75em; }
+  .big-number .range-connector { display:block; font:12px "IBM Plex Mono", monospace; letter-spacing:0; margin:6px 0; }
+  .status-bar.unknown, .badge.unknown { background:var(--muted); }
+  .axis-uncertainty { position:absolute; top:0; bottom:0; border:2px solid var(--ink); background:transparent; }
   .big-number .value sup { font-size: 0.4em; vertical-align: super; }
   .big-number .breakdown { font-family: "IBM Plex Mono", monospace; font-size: 12px; margin-top: 12px; opacity: 0.7; line-height: 1.6; }
   .big-number .footer { border-top: 1px solid rgba(251,247,240,0.2); padding-top: 12px; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.15em; opacity: 0.5; }
@@ -321,6 +325,7 @@ function safeHttpsUrl(value) {
 
 function eligibleWeeklyEditorial(data, nowMs = Date.now()) {
   const layer = data?.summary?.weekly_editorial;
+  if (data.contractVersion === 'bubble-watch-v3' && layer && !qualifiedEditorialMatchesData(layer, data)) return null;
   if (!layer || layer.schemaVersion !== 'bubble-watch-weekly-editorial-production-v1') return null;
   if (layer.status !== 'valid' || layer.displayEnabled !== true) return null;
   if (layer.asOfDate !== data.as_of_date || layer.output?.asOfDate !== data.as_of_date) return null;
@@ -460,7 +465,7 @@ function renderWeeklyEditorial(layer) {
 }
 
 function statusBadge(status) {
-  const map = { red: '● RED', yellow: '◐ YELLOW', green: '○ GREEN' };
+  const map = { red: '● RED', yellow: '◐ YELLOW', green: '○ GREEN', unknown:'待确认' };
   return `<span class="badge ${status}">${map[status] || status}</span>`;
 }
 
@@ -534,6 +539,28 @@ function tierFromPct(p) {
 
 let lastData = null;
 
+function scoreText(point, range) {
+  if (typeof point === 'number' && Number.isFinite(point)) return point.toFixed(1);
+  if (range && Number.isFinite(range.lower) && Number.isFinite(range.upper)) return `${range.lower.toFixed(1)}–${range.upper.toFixed(1)}`;
+  return '待确认';
+}
+function axisMarker(point, range) {
+  if (typeof point === 'number' && Number.isFinite(point)) return `<div class="marker" style="left:${Math.min(Math.max(point,0.5),99.5)}%"></div>`;
+  if (range && Number.isFinite(range.lower) && Number.isFinite(range.upper)) return `<div class="axis-uncertainty" style="left:${range.lower}%;width:${range.upper-range.lower}%" aria-label="待确认区间"></div>`;
+  return '';
+}
+function qualifiedEditorialMatchesData(layer, data) {
+  const snapshot=layer.sourceScoringSnapshot, proof=snapshot?.qualifiedEvidence;
+  if (!proof || proof.contractVersion!==data.contractVersion || proof.as_of_date!==data.as_of_date || snapshot.modelVersion!==data.scoring?.model_version) return false;
+  if (layer.output?.scorecardSynthesisZh !== snapshot.scorecardDisclosureZh) return false;
+  const required=['primary_score_pct','red_pct','weighted_risk_score','stage_score','trigger_score','scoring_unknown_count','scoring_total_indicators','scoring_red_count','scoring_yellow_count','scoring_green_count','primary_score_range_pct','weighted_risk_score_range','stage_score_range','trigger_score_range','category_scores','category_score_ranges','verdict_label'];
+  if (required.some(key=>JSON.stringify(proof.summary?.[key])!==JSON.stringify(data.summary?.[key]))) return false;
+  for (const key of ['model_version','effective_tier','base_tier','override_active','two_axis_upgrade','tier_range','unknown_core_ids']) if(JSON.stringify(proof.scoring?.[key])!==JSON.stringify(data.scoring?.[key])) return false;
+  if (!Array.isArray(proof.indicators) || proof.indicators.length!==27) return false;
+  const byId=new Map(data.indicators.map(i=>[i.id,i]));
+  return proof.indicators.every(i=>{ const current=byId.get(i.id); return current && ['id','axis','category','score_role','status','as_of','stale'].every(key=>JSON.stringify(i[key])===JSON.stringify(current[key])) && (i.status!=='unknown' || (JSON.stringify(i.evidence_gap)===JSON.stringify(current.evidence_gap) && i.provenance?.checkedAt===current.provenance?.checkedAt)); });
+}
+
 function render(data, editorialStatus = null) {
   lastData = data;
   const s = data.summary;
@@ -541,15 +568,15 @@ function render(data, editorialStatus = null) {
   const coreCount = s.scoring_total_indicators ?? indicators.filter(item => item.score_role === 'core').length;
   const shadowCount = indicators.filter(item => item.score_role === 'shadow').length;
   const issueNo = String(data.issue_number).padStart(3, '0');
-  const headlineColor = s.red_pct >= 60 ? '#E63946' : s.red_pct >= 40 ? '#E89B3C' : s.red_pct >= 25 ? '#F1C232' : 'var(--bg)';
+  const headlineColor = s.red_pct === null ? 'var(--bg)' : s.red_pct >= 60 ? '#E63946' : s.red_pct >= 40 ? '#E89B3C' : s.red_pct >= 25 ? '#F1C232' : 'var(--bg)';
 
   // override 检测:原始档位(red_pct)vs 生效档位(verdict_label)
-  const baseTier = tierFromPct(s.red_pct);
+  const baseTier = data.contractVersion === 'bubble-watch-v3' ? data.scoring.base_tier : tierFromPct(s.red_pct);
   const effTier = TIER_FROM_LABEL_ZH[s.verdict_label] || baseTier;
-  const overrideActive = effTier !== baseTier;
+  const overrideActive = data.contractVersion === 'bubble-watch-v3' ? data.scoring.override_active : effTier !== baseTier;
 
   const meta = data.meta || {};
-  const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径`;
+  const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径${meta.qualified_refresh ? `；本次核验数据中心ABS利差，其余${meta.qualified_refresh.carriedObservationCount}张卡沿用原观测日期` : ''}`;
   const weeklyEditorial = eligibleWeeklyEditorial(data);
   const heroHeadline = weeklyEditorial?.output?.headlineZh || s.verdict_label;
   const heroLead = weeklyEditorial?.output?.leadZh || s.verdict_desc;
@@ -574,14 +601,14 @@ function render(data, editorialStatus = null) {
       <div class="big-number">
         <div class="label">风险温度 · CORE RED LIGHT RATIO</div>
         <div>
-          <div class="value" style="color:${headlineColor}">${s.red_pct.toFixed(1)}<sup>%</sup></div>
+          <div class="value${s.red_pct === null ? ' range' : ''}" style="color:${headlineColor}">${s.red_pct === null ? `<span class="bound">${s.primary_score_range_pct.lower.toFixed(1)}<sup>%</sup></span><span class="range-connector">至</span><span class="bound">${s.primary_score_range_pct.upper.toFixed(1)}<sup>%</sup></span>` : `${s.red_pct.toFixed(1)}<sup>%</sup>`}</div>
           <div class="breakdown">
-            固定核心: ${s.scoring_red_count} 红 / ${s.scoring_yellow_count} 黄 / ${s.scoring_green_count} 绿<br/>
-            全部展示: ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿 · ${shadowCount} 项影子观察<br/>
+            固定核心: ${s.scoring_red_count} 红 / ${s.scoring_yellow_count} 黄 / ${s.scoring_green_count} 绿${s.scoring_unknown_count ? ` / ${s.scoring_unknown_count} 待确认` : ''}<br/>
+            全部展示: ${s.red_count} 红 / ${s.yellow_count} 黄 / ${s.green_count} 绿${s.unknown_count ? ` / ${s.unknown_count} 待确认` : ''} · ${shadowCount} 项影子观察<br/>
             阈值: 25% 黄 / 40% 橙 / 60% 红${overrideActive ? `<br/>原始档位 ${TIER_LABEL_ZH[baseTier]} · 综合判读 ${escapeHtml(s.verdict_label)}` : ''}
           </div>
         </div>
-        <div class="footer">PRIMARY SCORE: ${s.scoring_red_count} / CORE-${coreCount} RED = ${s.red_pct.toFixed(1)}%</div>
+        <div class="footer">PRIMARY SCORE: ${s.scoring_red_count} / CORE-${coreCount} RED · ${scoreText(s.red_pct,s.primary_score_range_pct)}%${s.scoring_unknown_count ? ' · 区间非概率' : ''}</div>
       </div>
       <div class="verdict">
         <div>
@@ -599,32 +626,32 @@ function render(data, editorialStatus = null) {
 
     ${renderWeeklyEditorial(weeklyEditorial)}
 
-    ${(s.stage_score != null && s.trigger_score != null) ? `
+    ${((s.stage_score != null || s.stage_score_range) && (s.trigger_score != null || s.trigger_score_range)) ? `
     <section class="axes">
       <div class="axes-header">
         <h3>两轴判读 <em>· Stage × Trigger</em></h3>
-        <div class="now">固定核心判读 · 泡沫成熟度 ${s.stage_score.toFixed(0)} · 破裂临近度 ${s.trigger_score.toFixed(0)}</div>
+        <div class="now">固定核心判读 · 泡沫成熟度 ${Number.isFinite(s.stage_score) ? s.stage_score.toFixed(0) : scoreText(s.stage_score,s.stage_score_range)} · 破裂临近度 ${Number.isFinite(s.trigger_score) ? s.trigger_score.toFixed(0) : scoreText(s.trigger_score,s.trigger_score_range)}</div>
       </div>
       <div class="axes-grid">
         <div class="axis-block">
-          <div class="axis-label"><span>泡沫成熟度 · STAGE</span><span class="axis-score">${s.stage_score.toFixed(1)} · ${escapeHtml(s.stage_label)}</span></div>
+          <div class="axis-label"><span>泡沫成熟度 · STAGE</span><span class="axis-score">${scoreText(s.stage_score,s.stage_score_range)} · ${escapeHtml(s.stage_label)}</span></div>
           <div class="axis-bar">
             <div class="zone t-green" style="flex:30"><span class="zone-label">早期</span><span class="zone-pct">0–30</span></div>
             <div class="zone t-yellow" style="flex:20"><span class="zone-label">扩张</span><span class="zone-pct">30–50</span></div>
             <div class="zone t-orange" style="flex:20"><span class="zone-label">亢奋</span><span class="zone-pct">50–70</span></div>
             <div class="zone t-red" style="flex:30"><span class="zone-label">极端</span><span class="zone-pct">≥70</span></div>
-            <div class="marker" style="left:${Math.min(Math.max(s.stage_score, 0.5), 99.5)}%"></div>
+            ${axisMarker(s.stage_score,s.stage_score_range)}
           </div>
           <div class="axis-desc">慢变量：估值 · 资金结构 · 发行热度 · 叙事——回答“泡沫有多大”</div>
         </div>
         <div class="axis-block">
-          <div class="axis-label"><span>破裂临近度 · TRIGGER</span><span class="axis-score">${s.trigger_score.toFixed(1)} · ${escapeHtml(s.trigger_label)}</span></div>
+          <div class="axis-label"><span>破裂临近度 · TRIGGER</span><span class="axis-score">${scoreText(s.trigger_score,s.trigger_score_range)} · ${escapeHtml(s.trigger_label)}</span></div>
           <div class="axis-bar">
             <div class="zone t-green" style="flex:25"><span class="zone-label">引线未燃</span><span class="zone-pct">0–25</span></div>
             <div class="zone t-yellow" style="flex:20"><span class="zone-label">零星火花</span><span class="zone-pct">25–45</span></div>
             <div class="zone t-orange" style="flex:20"><span class="zone-label">引线点燃</span><span class="zone-pct">45–65</span></div>
             <div class="zone t-red" style="flex:35"><span class="zone-label">破裂进行中</span><span class="zone-pct">≥65</span></div>
-            <div class="marker" style="left:${Math.min(Math.max(s.trigger_score, 0.5), 99.5)}%"></div>
+            ${axisMarker(s.trigger_score,s.trigger_score_range)}
           </div>
           <div class="axis-desc">快变量：信用利差 · 市场广度 · 内部人 · 收入动量 · 宏观政策——回答“引线是否点燃”</div>
         </div>
@@ -632,7 +659,7 @@ function render(data, editorialStatus = null) {
       ${(s.similarity && s.similarity.length) ? `
       <div class="similarity-row">
         <span class="sim-label">核心历史相似度</span>
-        ${s.similarity.map((x, i) => `<span class="sim-chip${i === 0 ? ' top' : ''}">${escapeHtml(x.period)} ${escapeHtml(x.label_zh)} <b>${x.match_pct}%</b></span>`).join('')}
+        ${s.similarity.map((x, i) => `<span class="sim-chip${i === 0 ? ' top' : ''}">${escapeHtml(x.period)} ${escapeHtml(x.label_zh)} <b>${x.match_pct}%</b> · ${x.denominator}项</span>`).join('')}
       </div>` : ''}
       ${s.momentum ? `<div class="momentum-row">核心本周边际：<b class="worse">${s.momentum.deteriorated} 级恶化</b> · <b class="better">${s.momentum.improved} 级好转</b>（净 ${s.momentum.net > 0 ? '+' : ''}${s.momentum.net}）</div>` : ''}
     </section>` : ''}
@@ -687,7 +714,7 @@ function render(data, editorialStatus = null) {
                 <div class="note">${escapeHtml(ind.note)}</div>
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>
-                  <span>${escapeHtml(ind.source_name)}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''}</span>
+                  <span>${escapeHtml(ind.source_name)}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ind.evidence_gap ? ` · 观测暂缺，核验于${escapeHtml(ind.evidence_gap.checkedDate)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''}</span>
                 </div>
               </article>
             `;}).join('')}
@@ -852,7 +879,8 @@ function drawCreditTrend(credit) {
 function drawTrend(data) {
   const seed = data.history_seed || [];
   const wrap = document.getElementById('trend-chart-wrap');
-  if (!wrap || !seed.length) return;
+  if (!wrap) return;
+  if (!seed.length) { wrap.innerHTML='<p class="trend-gap">新口径完整可比观测待累计；缺口不画成零分，旧模型不拼接为趋势。</p>'; return; }
   const W = Math.max(320, wrap.clientWidth);
   const H = 220;
   const padL = 44, padR = 14, padT = 10, padB = 26;
