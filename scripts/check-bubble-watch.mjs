@@ -14,6 +14,7 @@ import { CORE_LAYOUT, SHADOW_IDS as EVIDENCE_SHADOW_IDS, modelRevision, replayEv
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { validateInsiderPublication } from './bubble-watch/qualified-insider-publication.mjs';
 import { validateCapexEventPublication } from './bubble-watch/capex-event-evidence.mjs';
+import {validateFedMarketPathPublication} from './bubble-watch/qualified-fed-publication.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -182,8 +183,8 @@ if (isV3) {
   for (const error of errors) check('contract', false, error);
   try { evidenceReplay = replayEvidenceScores(data.indicators, evidenceRevision); } catch (error) { check('contract', false, error.message); }
   // r3 is pending-only: no complete latest-event adapter or numeric rule admitted.
-  // r4 remains fenced until its separate source review and activation.
-  check('contract', [1, 2, 3].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
+  // r4 admits only the separately reviewed 3/6-month daily-bar proxy proof.
+  check('contract', [1, 2, 3, 4].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
     'v3 method revision is not supported/activated by the reviewed source policy');
   const abs = indicatorById.dc_abs_spread;
   const qualified = qualifyDataCenterSpread(methodConfig.absObservation, data.as_of_date, methodConfig.approvedAbsSourceReviews);
@@ -194,6 +195,9 @@ if (isV3) {
   }
   if (evidenceRevision >= 3) {
     for (const error of validateCapexEventPublication(indicatorById.capex_reaction, data.as_of_date)) check('contract', false, `capex qualified source: ${error}`);
+  }
+  if (evidenceRevision >= 4) {
+    for (const error of validateFedMarketPathPublication(indicatorById.fed_policy, data.as_of_date)) check('contract', false, error);
   }
 }
 const matchesPoint = (value, expected) => expected === null ? value === null
@@ -509,8 +513,9 @@ check('contract', isExpectedPolicyDegradedLiveRow({
 }) === false,
   'source audit 不得把低于 5x 或 ratio replay 不一致的 partial coverage 分类为 WARN');
 check('contract', buildSrc.includes('fetchLatestFedSepMedians') && buildSrc.includes('fetchYearEndFedFundsFuture') && buildSrc.includes('fed_policy_path_v2'),
-  'fed_policy 必须保留 Fed SEP + 年末 Fed funds futures 政策路径证据');
-check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',
+  'legacy fed_policy 必须保留SEP/年末路径代码；r4核心改用独立3/6月证据');
+// ADR-0069: r4 proof supersedes the legacy SEP/year-end provenance version.
+if (!isV3 || evidenceRevision < 4) check('contract', indicatorById.fed_policy?.provenance?.detail?.policyPathEvidenceVersion === 'fed_policy_path_v2',
   'fed_policy provenance 缺 fed_policy_path_v2 审计版本');
 check('contract', buildSrc.includes('isCoreAiAccountingEnforcementEvent'),
   'accounting_events 必须使用会计执法语义分类器');

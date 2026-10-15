@@ -164,6 +164,9 @@ function buildReport(data, buildResult, checkResult) {
   for (const sample of insiderSamples?.provenance?.detail?.rejectedSamples || []) {
     warnings.push(`Insider returned sample excluded: ${sample.symbol} (${sample.reason})`);
   }
+  if (indicators.some(row=>row.id==='fed_policy' && row.provenance?.detail?.policy==='fed_market_path_collection_v1')) {
+    warnings.push('Fed market path uses delayed New York date-label daily-bar prices and scheduled-meeting assumptions; not CME settlement or meeting probabilities');
+  }
   // The independent checker still hard-fails any unregistered or malformed gap.
   const hardFail = buildResult.code !== 0 ||
     checkResult.code !== 0 ||
