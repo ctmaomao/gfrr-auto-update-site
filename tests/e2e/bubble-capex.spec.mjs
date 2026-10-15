@@ -1,0 +1,21 @@
+import {test,expect} from '@playwright/test';
+import {buildQualifiedAbsFixture} from '../helpers/bubble-qualified-builder.mjs';
+for(const width of [1440,390])test(`capex event evidence pending at ${width}px`,async({page})=>{
+ const r=await buildQualifiedAbsFixture({revision:3,clock:'2026-10-15T12:00:00Z'});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width,height:1000});
+ await page.route('**/data/bubble-watch.json*',route=>route.fulfill({json:r.output}));
+ await page.goto('/bubble-watch.html');
+ const card=page.locator('article.indicator').filter({hasText:'资本开支公告事件反应'});
+ await expect(card).toHaveCount(1);await expect(card.locator('.badge.unknown')).toHaveCount(1);
+ await expect(card).toContainText('固定MSFT、META、AMZN、GOOGL四家公司');
+ await expect(card).toContainText('这不表示没有支出上调或没有市场惩罚');
+ await expect(card).not.toContainText('观测日期:2026-10-15');
+ await expect(card).toContainText('观测暂缺，核验于2026-10-15');
+ await expect(page.locator('.headline .big-number .bound')).toHaveText(['30.4%','39.1%']);
+ await expect(page.locator('.headline .breakdown')).toContainText('2 待确认');
+ await expect(page.locator('body')).toContainText('本次核验数据中心ABS利差、内部人交易、资本开支事件，其余24张卡沿用原观测日期');
+ await expect(page.locator('section.category article.indicator')).toHaveCount(27);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ expect(errors).toEqual([]);
+});

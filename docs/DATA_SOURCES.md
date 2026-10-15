@@ -685,13 +685,13 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016 / ADR-0019)
 
-2026-10-15 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) r1：`dc_abs_spread` 不再用中国通用ABS绝对收益率代替美国数据中心信用利差。合格输入须分别通过来源准入与核心代表性批准，债券/同日基准各有获审出处并匹配币种、债项、分层、期限及4/12周比较日期。当前审阅注册表为空，故核心保留“待确认”，不是红/黄/绿；现有Wind方法保留作旧模型兼容，不再喂养r1核心灯色。r2内部人本轮接入；capex/Fed仍待迁移。
+2026-10-15 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) r1：`dc_abs_spread` 不再用中国通用ABS绝对收益率代替美国数据中心信用利差。合格输入须分别通过来源准入与核心代表性批准，债券/同日基准各有获审出处并匹配币种、债项、分层、期限及4/12周比较日期。当前审阅注册表为空，故核心保留“待确认”，不是红/黄/绿；现有Wind方法保留作旧模型兼容，不再喂养r1核心灯色。r2内部人已上线；r3本轮接入capex事件缺口，Fed仍待迁移。
 
-定向迁移入口 `node scripts/build-bubble-watch.mjs --refresh-qualified-only` 默认仅写ignored候选；r1零网络，r2仅发起下述12家公司匿名有界请求，不调用付费provider；显式 `--publish-qualified` 才生成两份Bubble生产文件，须沿任务发布授权、候选检查及独立审阅执行。它保留未迁移卡原始观测/出处及已审图表（r1为26卡，r2为25卡），不触发Wind、新闻或全链采集；`meta.qualified_refresh.fullRefreshAsOfDate`继承最近完整刷新日期，不能逐次续期，超过35天/未来/无效日期拒绝且零写入。完整周度刷新成功才建立新的完整包日期；各来源自身的更严时效门保持。
+定向迁移入口 `node scripts/build-bubble-watch.mjs --refresh-qualified-only` 默认仅写ignored候选；r1零网络，r2/r3仅发起下述12家公司匿名有界请求，不调用付费provider；显式 `--publish-qualified` 才生成两份Bubble生产文件，须沿任务发布授权、候选检查及独立审阅执行。它保留未迁移卡原始观测/出处及已审图表（r1为26卡，r2为25卡，r3为24卡），不触发Wind、新闻或全链采集；`meta.qualified_refresh.fullRefreshAsOfDate`继承最近完整刷新日期，不能逐次续期，超过35天/未来/无效日期拒绝且零写入。完整周度刷新成功才建立新的完整包日期；各来源自身的更严时效门保持。
 
 r2内部人来源契约已由#459独立审阅合并，本轮runtime启用activeRevision=2：固定12家公司，显式Xoomar90日查询，30/90日聚合只代表已返回P/S样本；镜像完整性未核实，因此最多黄灯，其余待确认。2000条是客户端有界请求上限，不能证明SEC完整性。金额缺失/区间近似拒绝整家公司，十进制定点累计；响应生成时间不冒充原交易/底层更新日。匿名12请求按至少6500ms间隔、12秒/1MiB/零重试/不跟重定向，401/403/429停止。页面在内部人卡可见XOOMAR链接和SEC说明，仅发布少量聚合图表/统计数字，不发布原始行/姓名。准入出处、算法和未连接完整来源的解锁路径见[ADR-0069 r2](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r2-内部人来源契约独立-pr)；上表三标的/分母下限路径仅作为旧版本兼容保留。
 
-r3来源资格本轮独立建立：尚未有获审的完整官方latest季度财报事件目录与同口径指引/首完整交易日/QQQ价格面板，核心只能待确认。微软租赁重分类不能冒充削减，Meta下限提高不能写成上限提高；本轮阅读未构成四家公司实时最新事件验证。旧滚动窗口/Wind新闻统计仅保留旧模型兼容，不补位r3事件。空准入状态没有数值判灯路径，非空适配器须另行ADR/checker审阅；当前activeRevision仍2。见[ADR-0069 r3](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r3-资本开支事件缺口契约独立-pr)。
+r3来源资格已由#461独立审阅合并，本轮runtime启用activeRevision=3：尚未有获审的完整官方latest季度财报事件目录与同口径指引/首完整交易日/QQQ价格面板，核心只能待确认。微软租赁重分类不能冒充削减，Meta下限提高不能写成上限提高；本轮阅读未构成四家公司实时最新事件验证。旧滚动窗口/Wind新闻统计仅保留旧模型兼容，不补位r3事件。空准入状态没有数值判灯路径，非空适配器须另行ADR/checker审阅；r3不调用新capex源，已迁移内部人继续有界采集，其余24卡沿用；非空事件适配器仍未准入。见[ADR-0069 r3](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r3-资本开支事件缺口契约独立-pr)。
 
 
 2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。#312 sanitizer、#313 固定官方有界读取/hash-only 比较、#314 固定 ignored 归档、#315 固定 GitHub 身份/祖先/摘要/ZIP 的跨 run 交接、#316 既有周一 schedule 的隔离 candidate job 均已独立审阅合并。candidate job 为 contents:read/actions:read，首次 schedule run 才读一个官方 CSV；hash-only artifact 保留 30 天，不含原始金额/日期/URL/Notes。仅从同 workflow 成功 schedule/main 的 30 天历史有界选择，完整身份校验后比较；缺失/过期 baseline_required，坏历史拒绝、不偷偷退更旧版本。最多 9 个应用 GET，元数据/历史取回/CSV 三阶段各最多 15 秒，无应用重试；不含 Actions checkout/upload 平台传输。来源交接不认证收入事实，不维护批准基线/latest，不因下载更新观测日期或资格。#316 CI `34214841758`、Pages `34215725692` 已成功；真实 scheduled 上传/跨 run 下载仍待后续周一验收，不能以 CI/mock 代替。#317 已逐条复核 18 行及七篇官方公告，发现插值、日期上界及金额限定，尚不能建立可靠四点斜率；不改变 SaaStr/Core-23、生产值、付费调用或既有刷新 job。观测精度/金额限定仍 unknown/hold、productionEligible 恒 false；45 天底层时效及生产切源门槛保留，不购买或绕过 Sacra。
