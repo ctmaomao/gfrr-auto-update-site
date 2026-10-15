@@ -2,7 +2,7 @@
   "contractVersion": "bubble-watch-v3",
   "issue_number": 28,
   "as_of_date": "2026-10-15",
-  "generated_at": "2026-10-15T00:17:32.963Z",
+  "generated_at": "2026-10-15T07:09:34.078Z",
   "summary": {
     "total_indicators": 27,
     "red_count": 8,
@@ -86,32 +86,32 @@
         "period": "1999-06",
         "label_zh": "互联网泡沫顶前 9 个月",
         "label_en": "9 months before dot-com top",
-        "match_pct": 76,
-        "denominator": 21,
+        "match_pct": 75,
+        "denominator": 20,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2000-02",
         "label_zh": "互联网泡沫顶前 1 个月",
         "label_en": "1 month before dot-com top",
-        "match_pct": 71,
-        "denominator": 21,
+        "match_pct": 73,
+        "denominator": 20,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2021-11",
         "label_zh": "成长股/SPAC 顶",
         "label_en": "Growth/SPAC top",
-        "match_pct": 71,
-        "denominator": 21,
+        "match_pct": 73,
+        "denominator": 20,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2007-10",
         "label_zh": "金融危机股市顶",
         "label_en": "GFC equity top",
-        "match_pct": 47,
-        "denominator": 15,
+        "match_pct": 43,
+        "denominator": 14,
         "basis": "core_calibrated_indicators_only"
       }
     ],
@@ -247,7 +247,7 @@
         },
         {
           "id": "insider_sell_buy",
-          "note_summary": "SEC EDGAR 不可达标的 NVDA/PLTR/AVGO 已改用 Xoomar public Form 4 HTTPS mirror。NVDA / PLTR / AVGO 近 12 个月范围内最新可得 Form 4:累计卖出 $2.2B、买入 $0M,卖买比 ≈>99x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿 备用样本存在记录上限且买入金额接近零，卖压方向偏高，但极端倍数不能与完整周期聚合直接比较，因此保守维持黄灯。"
+          "note_summary": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-10-15，30日返回样本卖出约5.88亿美元、买入约448.3万美元，卖买比约131.2倍；90日返回样本卖出约19.00亿美元、买入约448.3万美元，卖买比约423.8倍。最近已返回P/S交易日2026-10-13；接口响应生成于2026-10-15，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露225笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
         },
         {
           "id": "ai_ipo_pipeline",
@@ -280,7 +280,7 @@
     }
   },
   "scoring": {
-    "model_version": "bubble-watch-v3-core23-shadow4-r1",
+    "model_version": "bubble-watch-v3-core23-shadow4-r2",
     "primary_universe": "core",
     "core_indicator_ids": [
       "cape",
@@ -804,120 +804,401 @@
       "axis": "trigger",
       "category": "market_structure",
       "name_en": "AI Insider Sell/Buy Ratio",
-      "name_zh": "AI 龙头内部人卖买比",
-      "threshold_text": ">20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)",
-      "source_name": "内部人交易披露",
+      "name_zh": "内部人交易30/90日样本",
+      "threshold_text": "有效返回≥8家；任一窗口卖买≥5倍=黄（买入不足100万美元时，卖出≥500万美元）；其余待确认",
+      "source_name": "SEC Form 4公开披露 · XOOMAR返回样本",
       "status": "yellow",
-      "value_display": "高卖压·覆盖受限",
-      "note": "SEC EDGAR 不可达标的 NVDA/PLTR/AVGO 已改用 Xoomar public Form 4 HTTPS mirror。NVDA / PLTR / AVGO 近 12 个月范围内最新可得 Form 4:累计卖出 $2.2B、买入 $0M,卖买比 ≈>99x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿 备用样本存在记录上限且买入金额接近零，卖压方向偏高，但极端倍数不能与完整周期聚合直接比较，因此保守维持黄灯。",
-      "as_of": "2026-10-12",
+      "as_of": "2026-10-13",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-10-12T13:20:53.034Z",
+        "checkedAt": "2026-10-15T07:09:34.066Z",
         "detail": {
-          "buyUsd": 373570,
-          "sellUsd": 2169421365.6607995,
-          "ratio": 2169.4213656607994,
-          "sources": [
+          "status": "yellow",
+          "policy": "insider_fixed_12_30_90_v1",
+          "windowStartDate": "2026-07-18",
+          "windowEndDate": "2026-10-15",
+          "basket": [
+            "NVDA",
+            "MSFT",
+            "AMZN",
+            "GOOGL",
+            "META",
+            "ORCL",
+            "AVGO",
+            "AMD",
+            "PLTR",
+            "CRM",
+            "NOW",
+            "SMCI"
+          ],
+          "checkedAt": "2026-10-15T07:09:34.066Z",
+          "latestTransactionDate": "2026-10-13",
+          "coverageStatus": "returned_sample_completeness_unverified",
+          "validResponseSymbols": [
+            "NVDA",
+            "MSFT",
+            "AMZN",
+            "GOOGL",
+            "ORCL",
+            "AVGO",
+            "AMD",
+            "PLTR",
+            "CRM",
+            "NOW",
+            "SMCI"
+          ],
+          "inWindowTradeSymbols": [
+            "NVDA",
+            "MSFT",
+            "AMZN",
+            "GOOGL",
+            "ORCL",
+            "AVGO",
+            "AMD",
+            "PLTR",
+            "CRM",
+            "NOW",
+            "SMCI"
+          ],
+          "returnedEmptySymbols": [],
+          "missingSymbols": [
+            "META"
+          ],
+          "companies": [
             {
               "symbol": "NVDA",
-              "source": "Xoomar public Form 4 HTTPS mirror",
-              "sourceMode": "xoomar_form4_fallback",
-              "buyUsd": 0,
-              "sellUsd": 1378182581.6094997,
-              "filingCount": null,
-              "transactionCount": 32,
-              "updatedAt": "2026-10-12T13:20:50.611Z",
-              "coverageStart": "2026-05-27",
-              "recordCount": 63,
-              "recordLimitReached": false
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:08:14.952Z",
+              "returnedRecordCount": 37,
+              "oldestReturnedDate": "2026-08-05",
+              "newestReturnedDate": "2026-10-07",
+              "latestIncludedTransactionDate": "2026-09-21",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "314582260.4427",
+                  "transactionCount": 8,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 8
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "967599313.4595",
+                  "transactionCount": 25,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 25
+                }
+              }
             },
             {
-              "symbol": "PLTR",
-              "source": "Xoomar public Form 4 HTTPS mirror",
-              "sourceMode": "xoomar_form4_fallback",
-              "buyUsd": 0,
-              "sellUsd": 257535613.1712999,
-              "filingCount": null,
-              "transactionCount": 92,
-              "updatedAt": "2026-10-12T13:20:51.462Z",
-              "coverageStart": "2026-04-15",
-              "recordCount": 108,
-              "recordLimitReached": false
+              "symbol": "MSFT",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:08:21.415Z",
+              "returnedRecordCount": 44,
+              "oldestReturnedDate": "2026-08-04",
+              "newestReturnedDate": "2026-10-13",
+              "latestIncludedTransactionDate": "2026-10-13",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "3984302.9925",
+                  "transactionCount": 3,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 3
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "75404853.9724",
+                  "transactionCount": 19,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 19
+                }
+              }
+            },
+            {
+              "symbol": "AMZN",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:08:27.925Z",
+              "returnedRecordCount": 45,
+              "oldestReturnedDate": "2026-08-03",
+              "newestReturnedDate": "2026-10-01",
+              "latestIncludedTransactionDate": "2026-10-01",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "251500",
+                  "transactionCount": 1,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 1
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "365033942.6132",
+                  "transactionCount": 27,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 27
+                }
+              }
+            },
+            {
+              "symbol": "GOOGL",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:08:34.435Z",
+              "returnedRecordCount": 172,
+              "oldestReturnedDate": "2026-07-25",
+              "newestReturnedDate": "2026-09-30",
+              "latestIncludedTransactionDate": "2026-09-30",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "28257.35",
+                  "transactionCount": 1,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 1
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "232894.35",
+                  "transactionCount": 4,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 4
+                }
+              }
+            },
+            {
+              "symbol": "ORCL",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:08:47.448Z",
+              "returnedRecordCount": 38,
+              "oldestReturnedDate": "2026-09-15",
+              "newestReturnedDate": "2026-09-29",
+              "latestIncludedTransactionDate": "2026-09-29",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "3483800",
+                  "sellUsd": "5342123.36",
+                  "transactionCount": 4,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 4
+                },
+                "90": {
+                  "buyUsd": "3483800",
+                  "sellUsd": "5342123.36",
+                  "transactionCount": 4,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 4
+                }
+              }
             },
             {
               "symbol": "AVGO",
-              "source": "Xoomar public Form 4 HTTPS mirror",
-              "sourceMode": "xoomar_form4_fallback",
-              "buyUsd": 373570,
-              "sellUsd": 533703170.88,
-              "filingCount": null,
-              "transactionCount": 70,
-              "updatedAt": "2026-10-12T13:20:52.309Z",
-              "coverageStart": "2026-06-11",
-              "recordCount": 89,
-              "recordLimitReached": false
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:08:53.964Z",
+              "returnedRecordCount": 19,
+              "oldestReturnedDate": "2026-09-15",
+              "newestReturnedDate": "2026-09-23",
+              "latestIncludedTransactionDate": "2026-09-23",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "250006183.62",
+                  "transactionCount": 16,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 16
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "250006183.62",
+                  "transactionCount": 16,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 16
+                }
+              }
+            },
+            {
+              "symbol": "AMD",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:09:00.464Z",
+              "returnedRecordCount": 123,
+              "oldestReturnedDate": "2026-08-09",
+              "newestReturnedDate": "2026-09-15",
+              "latestIncludedTransactionDate": "2026-09-15",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "0",
+                  "transactionCount": 0,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 0
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "105533672.27",
+                  "transactionCount": 77,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 77
+                }
+              }
+            },
+            {
+              "symbol": "PLTR",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:09:06.980Z",
+              "returnedRecordCount": 45,
+              "oldestReturnedDate": "2026-08-05",
+              "newestReturnedDate": "2026-10-09",
+              "latestIncludedTransactionDate": "2026-10-09",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "5079837.15",
+                  "transactionCount": 4,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 4
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "103459937.4883",
+                  "transactionCount": 38,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 38
+                }
+              }
+            },
+            {
+              "symbol": "CRM",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:09:13.494Z",
+              "returnedRecordCount": 38,
+              "oldestReturnedDate": "2026-07-22",
+              "newestReturnedDate": "2026-09-22",
+              "latestIncludedTransactionDate": "2026-09-18",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "999450.8496",
+                  "sellUsd": "0",
+                  "transactionCount": 1,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 1
+                },
+                "90": {
+                  "buyUsd": "999450.8496",
+                  "sellUsd": "1172746.1022",
+                  "transactionCount": 3,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 3
+                }
+              }
+            },
+            {
+              "symbol": "NOW",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:09:19.993Z",
+              "returnedRecordCount": 64,
+              "oldestReturnedDate": "2026-08-07",
+              "newestReturnedDate": "2026-08-31",
+              "latestIncludedTransactionDate": "2026-08-31",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "0",
+                  "transactionCount": 0,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 0
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "1937914.2198",
+                  "transactionCount": 4,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 4
+                }
+              }
+            },
+            {
+              "symbol": "SMCI",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-07-18&to=2026-10-15&limit=2000",
+              "responseBuiltAt": "2026-10-15T07:09:26.488Z",
+              "returnedRecordCount": 48,
+              "oldestReturnedDate": "2026-08-10",
+              "newestReturnedDate": "2026-10-07",
+              "latestIncludedTransactionDate": "2026-10-07",
+              "localRecordLimitReached": false,
+              "windows": {
+                "30": {
+                  "buyUsd": "0",
+                  "sellUsd": "9004000",
+                  "transactionCount": 2,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 2
+                },
+                "90": {
+                  "buyUsd": "0",
+                  "sellUsd": "24441167.4",
+                  "transactionCount": 8,
+                  "scheduledCount": 0,
+                  "scheduleUnknownCount": 8
+                }
+              }
             }
           ],
-          "fallbackSymbols": [
-            "NVDA",
-            "PLTR",
-            "AVGO"
-          ],
-          "primaryFailures": [
-            {
-              "symbol": "NVDA",
-              "reason": "HTTP 403 for https://data.sec.gov/submissions/CIK0001045810.json"
+          "totals": {
+            "30": {
+              "buyUsd": "4483250.8496",
+              "sellUsd": "588278464.9152",
+              "transactionCount": 40,
+              "scheduledCount": 0,
+              "scheduleUnknownCount": 40,
+              "ratio": 131.21694160113455,
+              "buyDenominatorSufficient": true
             },
+            "90": {
+              "buyUsd": "4483250.8496",
+              "sellUsd": "1900164748.8554",
+              "transactionCount": 225,
+              "scheduledCount": 0,
+              "scheduleUnknownCount": 225,
+              "ratio": 423.8363661995256,
+              "buyDenominatorSufficient": true
+            }
+          },
+          "denominatorFloorApplied": false,
+          "moneyArithmetic": "fixed_decimal_usd_12_places_ratio_display_approximate",
+          "coverageBasis": "explicit_90d_request_returned_records_only_completeness_unverified",
+          "responseClockMeaning": "response_generation_not_underlying_sec_refresh",
+          "schedulePolicy": "retain_reported_plan_flags_never_assume_unscheduled_or_discount_sales",
+          "rejectedSamples": [
             {
-              "symbol": "PLTR",
-              "reason": "SEC Form 4 skipped after prior HTTP 403 from shared runner egress"
-            },
-            {
-              "symbol": "AVGO",
-              "reason": "SEC Form 4 skipped after prior HTTP 403 from shared runner egress"
+              "symbol": "META",
+              "reason": "duplicate_transaction"
             }
           ],
           "sourceFailures": [],
-          "coverageStatus": "full",
-          "coverageReasonCode": "insider_full_live_coverage",
-          "requestedSymbols": [
-            "NVDA",
-            "PLTR",
-            "AVGO"
-          ],
-          "successfulSymbols": [
-            "NVDA",
-            "PLTR",
-            "AVGO"
-          ],
-          "missingSymbols": [],
-          "minimumSuccessfulSymbols": 2,
-          "minimumPartialRatio": 5,
-          "partialCoveragePolicy": "insider-form4-partial-live-coverage-v1",
-          "proxyConfidenceCalibration": {
-            "applied": true,
-            "policy": "local_proxy_confidence_v1",
-            "rule": "内部人卖买比使用 SEC Form 4 官方披露;买入近零导致的极端 ratio 最多按黄灯发布。",
-            "rawStatus": "red",
-            "rawValueDisplay": "≫20x",
-            "publishedStatus": "yellow",
-            "publishedValueDisplay": "高卖压·覆盖受限",
-            "displayAnchor": null
-          },
-          "templateCompatibilityCalibration": {
-            "applied": true,
-            "policy": "local_proxy_confidence_v1",
-            "rule": "内部人卖买比使用 SEC Form 4 官方披露;买入近零导致的极端 ratio 最多按黄灯发布。",
-            "rawStatus": "red",
-            "rawValueDisplay": "≫20x",
-            "publishedStatus": "yellow",
-            "publishedValueDisplay": "高卖压·覆盖受限",
-            "displayAnchor": null
+          "sourceAttribution": "Data: XOOMAR; Insider trade data: SEC.",
+          "sourceAttributionUrl": "https://xoomar.com",
+          "collectionPolicy": {
+            "actualRequests": 12,
+            "maximumRequests": 12,
+            "minimumStartSpacingMs": 6500,
+            "requestTimeoutMs": 12000,
+            "responseMaxBytes": 1048576,
+            "applicationRetries": 0
           }
         }
-      }
+      },
+      "value_display": "高卖压·覆盖受限",
+      "note": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-10-15，30日返回样本卖出约5.88亿美元、买入约448.3万美元，卖买比约131.2倍；90日返回样本卖出约19.00亿美元、买入约448.3万美元，卖买比约423.8倍。最近已返回P/S交易日2026-10-13；接口响应生成于2026-10-15，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露225笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
     },
     {
       "id": "ai_ipo_pipeline",
@@ -1041,7 +1322,7 @@
       },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T00:17:32.960Z",
+        "checkedAt": "2026-10-15T07:09:34.074Z",
         "detail": {
           "status": "unknown",
           "reasonCode": "dc_abs_direct_spread_unavailable",
@@ -5310,11 +5591,12 @@
     "builder": "scripts/build-bubble-watch.mjs",
     "qualified_refresh": {
       "indicatorIds": [
-        "dc_abs_spread"
+        "dc_abs_spread",
+        "insider_sell_buy"
       ],
       "fullRefreshAsOfDate": "2026-10-12",
-      "carriedFromIssueDate": "2026-10-12",
-      "carriedObservationCount": 26,
+      "carriedFromIssueDate": "2026-10-15",
+      "carriedObservationCount": 25,
       "paidCalls": 0
     },
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",
@@ -5323,15 +5605,8 @@
     "fallback_count": 3,
     "hybrid_count": 1,
     "paid_wind_fallback_count": 0,
-    "proxy_confidence_calibration_count": 4,
+    "proxy_confidence_calibration_count": 3,
     "proxy_confidence_calibrations": [
-      {
-        "id": "insider_sell_buy",
-        "rawStatus": "red",
-        "publishedStatus": "yellow",
-        "policy": "local_proxy_confidence_v1",
-        "displayAnchor": null
-      },
       {
         "id": "ai_ipo_pipeline",
         "rawStatus": "red",
@@ -5366,15 +5641,8 @@
         }
       }
     ],
-    "template_compatibility_calibration_count": 4,
+    "template_compatibility_calibration_count": 3,
     "template_compatibility_calibrations": [
-      {
-        "id": "insider_sell_buy",
-        "rawStatus": "red",
-        "publishedStatus": "yellow",
-        "policy": "local_proxy_confidence_v1",
-        "displayAnchor": null
-      },
       {
         "id": "ai_ipo_pipeline",
         "rawStatus": "red",
@@ -5435,7 +5703,7 @@
     },
     "fetch_failures": [],
     "fred_key_present": true,
-    "wind_key_present": true,
+    "wind_key_present": false,
     "upstream_sync": {
       "checked": true,
       "reachable": true,
@@ -5449,7 +5717,7 @@
       "summaryAvailable": true,
       "summaryAdopted": false,
       "summaryUsage": "not_used_for_production_narrative",
-      "carriedFromIssueDate": "2026-10-12"
+      "carriedFromIssueDate": "2026-10-15"
     }
   }
 }

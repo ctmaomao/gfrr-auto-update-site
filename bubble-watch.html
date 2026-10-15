@@ -576,7 +576,9 @@ function render(data, editorialStatus = null) {
   const overrideActive = data.contractVersion === 'bubble-watch-v3' ? data.scoring.override_active : effTier !== baseTier;
 
   const meta = data.meta || {};
-  const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径${meta.qualified_refresh ? `；本次核验数据中心ABS利差，其余${meta.qualified_refresh.carriedObservationCount}张卡沿用原观测日期` : ''}`;
+  const qualifiedLabels = { dc_abs_spread:'数据中心ABS利差', insider_sell_buy:'内部人交易', capex_reaction:'资本开支事件', fed_policy:'Fed市场路径' };
+  const qualifiedNames = (meta.qualified_refresh?.indicatorIds || []).map(id=>qualifiedLabels[id]).filter(Boolean).join('、');
+  const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径${meta.qualified_refresh ? `；本次核验${qualifiedNames || '专题证据'}，其余${meta.qualified_refresh.carriedObservationCount}张卡沿用原观测日期` : ''}`;
   const weeklyEditorial = eligibleWeeklyEditorial(data);
   const heroHeadline = weeklyEditorial?.output?.headlineZh || s.verdict_label;
   const heroLead = weeklyEditorial?.output?.leadZh || s.verdict_desc;
@@ -714,7 +716,7 @@ function render(data, editorialStatus = null) {
                 <div class="note">${escapeHtml(ind.note)}</div>
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>
-                  <span>${escapeHtml(ind.source_name)}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ind.evidence_gap ? ` · 观测暂缺，核验于${escapeHtml(ind.evidence_gap.checkedDate)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''}</span>
+                  <span>${escapeHtml(ind.source_name)}${ind.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1' ? ' · <a href="https://xoomar.com/markets/api/insiders" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Data: XOOMAR</a> · 内部人交易数据来源：SEC' : ''}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ind.evidence_gap ? ` · 观测暂缺，核验于${escapeHtml(ind.evidence_gap.checkedDate)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''}</span>
                 </div>
               </article>
             `;}).join('')}

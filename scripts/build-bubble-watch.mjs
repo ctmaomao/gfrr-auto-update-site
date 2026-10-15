@@ -1,5 +1,7 @@
 import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
+import { collectInsiderWindows } from './bubble-watch/insider-window-collector.mjs';
+import { buildQualifiedInsiderIndicator } from './bubble-watch/insider-indicator.mjs';
 import { summarizeEvidence, evidenceHistoryFields } from './bubble-watch/evidence-publication.mjs';
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
@@ -71,10 +73,11 @@ const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution',
 const AXIS_SCORE = { green: 0, yellow: 50, red: 100 };
 const QUALIFIED_METHODS = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/bubble-watch-methods.json'), 'utf8'));
 const EVIDENCE_REVISION = QUALIFIED_METHODS.activeRevision;
+const QUALIFIED_INDICATOR_IDS = METHOD_ORDER.slice(0, EVIDENCE_REVISION);
 const QUALIFIED_REFRESH_ONLY = process.argv.includes('--refresh-qualified-only');
 const QUALIFIED_PUBLISH = process.argv.includes('--publish-qualified');
 if (QUALIFIED_PUBLISH && !QUALIFIED_REFRESH_ONLY) throw new Error('Qualified publish requires --refresh-qualified-only');
-if (QUALIFIED_REFRESH_ONLY && EVIDENCE_REVISION !== 1) throw new Error('Qualified-only refresh currently supports reviewed ABS revision 1');
+if (QUALIFIED_REFRESH_ONLY && ![1,2].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1 or 2');
 const BUBBLE_WATCH_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-v3' : 'bubble-watch-v2';
 const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2';
 const SCORING_MODEL_VERSION = EVIDENCE_REVISION ? evidenceModelVersion(EVIDENCE_REVISION) : 'bubble-watch-v2-core23-shadow4';
@@ -4270,6 +4273,7 @@ function publicIndicatorNote(ind) {
 
 function publicIndicatorSourceName(ind) {
   if (ind.evidence_gap?.policy === 'bubble-qualified-evidence-v1') return ind.source_name;
+  if (ind.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1') return ind.source_name;
   if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
   return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
 }
@@ -4871,6 +4875,15 @@ async function main() {
   let paidWindFallbackCount = 0;
 
   for (const def of INDICATOR_DEFS) {
+    if (EVIDENCE_REVISION >= 2 && def.id === 'insider_sell_buy') {
+      const report = await collectInsiderWindows({ today });
+      indicators.push(buildQualifiedInsiderIndicator(baseIndicator(def), report, today));
+      for (const failure of report.sourceFailures) {
+        fetchFailures.push({ id: def.id, reason: `${failure.symbol}:${failure.reason}` });
+      }
+      autoCount += 1;
+      continue;
+    }
     if (EVIDENCE_REVISION >= 1 && def.id === 'dc_abs_spread') {
       const evidence = qualifyDataCenterSpread(QUALIFIED_METHODS.absObservation, today, QUALIFIED_METHODS.approvedAbsSourceReviews);
       const missing = evidence.status === 'unknown';
@@ -5015,9 +5028,11 @@ async function main() {
     }
   }
 
+  if (EVIDENCE_REVISION >= 2 && isoDate() !== today) throw new Error('Qualified collection crossed its UTC window date; no publication');
+
   // 历史:同 ISO 周覆盖,新周追加 + issue 自增
   const publicIndicators = QUALIFIED_REFRESH_ONLY
-    ? indicators.map(item => item.id === 'dc_abs_spread' ? applyPublicIndicatorCopy([item])[0] : item)
+    ? indicators.map(item => QUALIFIED_INDICATOR_IDS.includes(item.id) ? applyPublicIndicatorCopy([item])[0] : item)
     : applyPublicIndicatorCopy(indicators);
   const entries = [...history.entries];
   const prevRaw = [...entries].reverse().find((entry) => (
@@ -5110,7 +5125,7 @@ async function main() {
     wow_changes: buildWowChanges(flips, publicIndicators),
     meta: {
       builder: 'scripts/build-bubble-watch.mjs',
-      ...(QUALIFIED_REFRESH_ONLY ? {qualified_refresh:{indicatorIds:['dc_abs_spread'],fullRefreshAsOfDate,carriedFromIssueDate:previousQualifiedOutput.as_of_date,carriedObservationCount:26,paidCalls:0}} : {}),
+      ...(QUALIFIED_REFRESH_ONLY ? {qualified_refresh:{indicatorIds:QUALIFIED_INDICATOR_IDS,fullRefreshAsOfDate,carriedFromIssueDate:previousQualifiedOutput.as_of_date,carriedObservationCount:27-QUALIFIED_INDICATOR_IDS.length,paidCalls:0}} : {}),
       boundary: 'display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位',
       auto_count: autoCount,
       curated_count: curatedCount,
