@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { GAP_REASONS, replayEvidenceScores } from '../../scripts/bubble-watch/evidence-score-contract.mjs';
+import {capexEventEvidenceHold} from '../../scripts/bubble-watch/capex-event-evidence.mjs';
 import { INSIDER_BASKET, insiderWindowUrl, qualifyInsiderWindows } from '../../scripts/bubble-watch/qualified-insider.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -107,7 +108,7 @@ test('real checker accepts registered v3 pending bounds and rejects false point/
   }
 });
 
-test('real checker admits only activated r2 with replayable returned-sample proof', () => {
+function insiderFiles() {
   const files=pendingFiles(), data=files['data/bubble-watch.json'], today=data.as_of_date;
   const checkedAt=`${today}T13:22:04.262Z`;
   const transaction=(code,value)=>({txDate:today,txCode:code,valueUsd:value,isOpenMarket:true,priceNote:null});
@@ -120,6 +121,11 @@ test('real checker admits only activated r2 with replayable returned-sample proo
   Object.assign(insider,{status:'yellow',as_of:today,stale:false,provenance:{mode:'auto',checkedAt,detail:report}});
   data.scoring.model_version='bubble-watch-v3-core23-shadow4-r2';
   files['data/bubble-watch-history.json'].entries.at(-1).scoring_model_version=data.scoring.model_version;
+  return files;
+}
+
+test('real checker admits only activated r2 with replayable returned-sample proof', () => {
+  const files=insiderFiles();
   const config={contractVersion:'bubble-qualified-methods-v1',activeRevision:2,approvedAbsSourceReviews:[],absObservation:null};
   const valid=run(files,config);assert.equal(valid.code,0,valid.logs);
   for(const mutate of [row=>{row.status='red';},row=>{row.provenance.detail.totals[30].ratio=999;},
@@ -128,7 +134,43 @@ test('real checker admits only activated r2 with replayable returned-sample proo
     const result=run(changed,config);assert.equal(result.code,1);assert.match(result.logs,/insider qualified source/u);
   }
   assert.equal(run(files,{...config,activeRevision:1}).code,1);
-  const future=structuredClone(files);future['data/bubble-watch.json'].scoring.model_version='bubble-watch-v3-core23-shadow4-r3';
-  const rejected=run(future,{...config,activeRevision:3});assert.equal(rejected.code,1);
+  const future=structuredClone(files);future['data/bubble-watch.json'].scoring.model_version='bubble-watch-v3-core23-shadow4-r4';
+  const rejected=run(future,{...config,activeRevision:4});assert.equal(rejected.code,1);
   assert.match(rejected.logs,/not supported\/activated/u);
+});
+
+
+test('real checker admits r3 only as an activated fixed-four event gap and replays its bounds',()=>{
+  const files=insiderFiles(),d=files['data/bubble-watch.json'],today=d.as_of_date;
+  const card=d.indicators.find(i=>i.id==='capex_reaction');
+  Object.assign(card,{status:'unknown',as_of:null,stale:false,
+    provenance:{mode:'auto',checkedAt:`${today}T13:22:04.262Z`,detail:capexEventEvidenceHold(today)},
+    evidence_gap:{policy:'bubble-qualified-evidence-v1',reasonCode:'capex_qualified_event_unavailable',checkedDate:today}});
+  const r=replayEvidenceScores(d.indicators,3),s=d.summary;
+  Object.assign(s,{primary_score_pct:r.primary,red_pct:r.primary,weighted_risk_score:r.pressure,
+    primary_score_range_pct:r.primaryRange,weighted_risk_score_range:r.pressureRange,
+    stage_score:r.stage,trigger_score:r.trigger,stage_score_range:r.stageRange,trigger_score_range:r.triggerRange,
+    scoring_unknown_count:r.counts.unknown,unknown_count:r.counts.unknown,
+    scoring_red_count:r.counts.red,scoring_yellow_count:r.counts.yellow,scoring_green_count:r.counts.green,
+    category_scores:Object.fromEntries(Object.entries(r.categories).map(([k,v])=>[k,v.point])),
+    category_score_ranges:Object.fromEntries(Object.entries(r.categories).map(([k,v])=>[k,{lower:v.lower,upper:v.upper}]))});
+  for(const status of ['red','yellow','green'])s[`${status}_count`]=d.indicators.filter(i=>i.status===status).length;
+  s.narrative_plan.evidenceGaps=r.unknownIds;
+  s.narrative_plan.evidenceHighlights=s.narrative_plan.evidenceHighlights.filter(i=>!r.unknownIds.includes(i.id));
+  s.verdict_desc='资本开支事件待确认。'+s.verdict_desc;
+  Object.assign(d.scoring,{model_version:r.modelVersion,base_tier:r.baseTier,effective_tier:r.effectiveTier,
+    override_active:r.overrideActive,two_axis_upgrade:r.twoAxisUpgrade,tier_range:r.tierRange,unknown_core_ids:r.unknownIds});
+  const last=files['data/bubble-watch-history.json'].entries.at(-1);
+  Object.assign(last,{scoring_model_version:r.modelVersion,statuses:Object.fromEntries(d.indicators.map(i=>[i.id,i.status])),
+    score_bounds:{primary:r.primaryRange,pressure:r.pressureRange,stage:r.stageRange,trigger:r.triggerRange},
+    effective_tier:r.effectiveTier,tier_range:r.tierRange,unknown_core_ids:r.unknownIds,
+    gap_metadata:Object.fromEntries(d.indicators.filter(i=>i.status==='unknown').map(i=>[i.id,{as_of:i.as_of,stale:i.stale,evidence_gap:i.evidence_gap,provenance:i.provenance}]))});
+  const config={contractVersion:'bubble-qualified-methods-v1',activeRevision:3,approvedAbsSourceReviews:[],absObservation:null};
+  const valid=run(files,config);assert.equal(valid.code,0,valid.logs);
+  for(const mutate of [c=>c.status='green',c=>c.provenance.detail.latestConfirmed=true,
+    c=>c.provenance.detail.qualifiedEvents.push({symbol:'MSFT'}),c=>c.provenance.detail.companies.pop()]){
+    const changed=structuredClone(files);mutate(changed['data/bubble-watch.json'].indicators.find(i=>i.id==='capex_reaction'));
+    const result=run(changed,config);assert.equal(result.code,1);assert.match(result.logs,/capex qualified source/u);
+  }
+  assert.equal(run(files,{...config,activeRevision:2}).code,1);
 });

@@ -13,6 +13,7 @@
 import { CORE_LAYOUT, SHADOW_IDS as EVIDENCE_SHADOW_IDS, modelRevision, replayEvidenceScores, validateEvidenceScoreFields, isRegisteredEvidenceGap } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { validateInsiderPublication } from './bubble-watch/qualified-insider-publication.mjs';
+import { validateCapexEventPublication } from './bubble-watch/capex-event-evidence.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -180,9 +181,9 @@ if (isV3) {
   const errors = validateEvidenceScoreFields(data);
   for (const error of errors) check('contract', false, error);
   try { evidenceReplay = replayEvidenceScores(data.indicators, evidenceRevision); } catch (error) { check('contract', false, error.message); }
-  // r3-r4 have math contracts, but cannot publish until their source policies
-  // have had separate review and the deployment configuration activates them.
-  check('contract', [1, 2].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
+  // r3 is pending-only: no complete latest-event adapter or numeric rule admitted.
+  // r4 remains fenced until its separate source review and activation.
+  check('contract', [1, 2, 3].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
     'v3 method revision is not supported/activated by the reviewed source policy');
   const abs = indicatorById.dc_abs_spread;
   const qualified = qualifyDataCenterSpread(methodConfig.absObservation, data.as_of_date, methodConfig.approvedAbsSourceReviews);
@@ -190,6 +191,9 @@ if (isV3) {
   if (qualified.status !== 'unknown') check('contract', abs.as_of === qualified.asOf, 'ABS original observation date mismatch');
   if (evidenceRevision >= 2) {
     for (const error of validateInsiderPublication(indicatorById.insider_sell_buy, data.as_of_date)) check('contract', false, error);
+  }
+  if (evidenceRevision >= 3) {
+    for (const error of validateCapexEventPublication(indicatorById.capex_reaction, data.as_of_date)) check('contract', false, `capex qualified source: ${error}`);
   }
 }
 const matchesPoint = (value, expected) => expected === null ? value === null
@@ -589,12 +593,13 @@ if (indicatorById.fed_policy?.provenance?.detail?.classificationReason === 'poli
 check('contract', buildSrc.includes('fetchBarchartS5fiBreadth') && buildSrc.includes('Barchart:$S5FI'),
   'breadth_50d 必须优先尝试 Barchart $S5FI 直接广度源');
 check('contract', buildSrc.includes('capexResearchConfirmationAnchor') && buildSrc.includes('capex_market_repricing_research_confirmation_v1'),
-  'capex_reaction 必须允许新鲜上游研究周报确认系统性重定价证据');
+  'legacy capex_reaction 必须保留研究周报确认路径；r3不据此判灯');
 check('contract', buildSrc.includes('capex_reaction_multi_window_v1') && buildSrc.includes('windowEvidence') && buildSrc.includes('systemicWindowCount'),
-  'capex_reaction 必须使用多窗口价格反应公式,避免单一 21 日相对收益噪音');
+  'legacy capex_reaction 必须保留多窗口公式；r3使用独立事件资格');
 const capexReaction = indicatorById.capex_reaction;
 const capexResearchConfirmation = capexReaction?.provenance?.detail?.upstreamResearchConfirmation;
-if (capexResearchConfirmation?.confirmationPolicy === 'capex_market_repricing_research_confirmation_v1'
+// ADR-0069 supersedes rolling-return/research classification only for r3+.
+if ((!isV3 || evidenceRevision < 3) && capexResearchConfirmation?.confirmationPolicy === 'capex_market_repricing_research_confirmation_v1'
   && Number(capexReaction?.provenance?.detail?.systemicWindowCount) >= 2) {
   check('contract', capexReaction.status === 'red' && capexReaction.value_display === '系统性惩罚',
     'capex_reaction 本地多窗口价格代理红灯且上游研究确认时不得降档为黄灯');

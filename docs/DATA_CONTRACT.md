@@ -2475,6 +2475,8 @@ v3历史按模型epoch保留原记录，不再重贴旧灯色模型；每个当�
 
 r2来源契约已由#459独立审阅合并，本轮runtime启用activeRevision=2；未来r3/r4仍不得提前发布。r2内部人provenance.detail仅允许固定12家公司30/90日返回样本的聚合证明、查询URL、响应生成/采集/交易日期、计划披露计数及有界请求审计。金额以最多12位小数美元字符串保存，BigInt复算状态，倍数为近似展示；不使用分母下限。完整性未核实的镜像只能黄灯/unknown。成功空数组保留0条观测和null交易日，失败/缺价/近似记录不补零。卡片as_of为最近合格P/S交易日，窗口截止日与responseBuiltAt分别披露；原始交易行、姓名及手工完整确认字段拒绝，详见[ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md)。
 
+r3独立事件缺口契约准备中，activeRevision仍2；获审后仅准`capex_latest_earnings_event_hold_v1`的unknown/null原观测、固定四家公司和零合格事件精确证明，不允许新增审批/最新声明、价格或数值阈值字段。当前没有获审完整latest目录适配器；缺口检查时间不是原公告日期。未来非空事件及判灯算法须另行ADR/checker独立审阅；后续runtime才启用r3，不能以滚动收益或新闻计数补位。详见[ADR-0069 r3](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r3-资本开支事件缺口契约独立-pr)。
+
 
 `data/bubble-watch.json` + `data/bubble-watch-history.json` 是第二页面「AI 泡沫监测」(`bubble-watch.html`)的专属数据,由 `scripts/build-bubble-watch.mjs` 周一 cron(`refresh-bubble-watch.yml`)生成,**display-only**:不进 scoring / decisionModel / executionLock / positionGuidance / `values.*` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;主站 `scripts/app.js` 与 `index.html` 不得读取(`check:bubble-watch` boundary leaf 机器强制)。周二至周五的 `.github/workflows/audit-bubble-watch-sources.yml` 只是 source-health 只读审计:调用 `scripts/audit-bubble-watch-sources.mjs`,运行 builder 后恢复生产文件,只上传 artifact,不 commit、不 deploy;scheduled 默认 `BUBBLE_WATCH_DISABLE_WIND=1`,只有手动 dispatch paid opt-in 才可注入 `WIND_API_KEY`。
 
