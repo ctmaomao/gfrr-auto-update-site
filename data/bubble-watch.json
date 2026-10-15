@@ -2,7 +2,7 @@
   "contractVersion": "bubble-watch-v3",
   "issue_number": 28,
   "as_of_date": "2026-10-15",
-  "generated_at": "2026-10-15T07:49:49.178Z",
+  "generated_at": "2026-10-15T21:32:06.294Z",
   "summary": {
     "total_indicators": 27,
     "red_count": 8,
@@ -86,32 +86,32 @@
         "period": "1999-06",
         "label_zh": "互联网泡沫顶前 9 个月",
         "label_en": "9 months before dot-com top",
-        "match_pct": 74,
-        "denominator": 19,
+        "match_pct": 72,
+        "denominator": 18,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2000-02",
         "label_zh": "互联网泡沫顶前 1 个月",
         "label_en": "1 month before dot-com top",
-        "match_pct": 74,
-        "denominator": 19,
+        "match_pct": 72,
+        "denominator": 18,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2021-11",
         "label_zh": "成长股/SPAC 顶",
         "label_en": "Growth/SPAC top",
-        "match_pct": 71,
-        "denominator": 19,
+        "match_pct": 69,
+        "denominator": 18,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2007-10",
         "label_zh": "金融危机股市顶",
         "label_en": "GFC equity top",
-        "match_pct": 43,
-        "denominator": 14,
+        "match_pct": 46,
+        "denominator": 13,
         "basis": "core_calibrated_indicators_only"
       }
     ],
@@ -279,7 +279,7 @@
     }
   },
   "scoring": {
-    "model_version": "bubble-watch-v3-core23-shadow4-r3",
+    "model_version": "bubble-watch-v3-core23-shadow4-r4",
     "primary_universe": "core",
     "core_indicator_ids": [
       "cape",
@@ -812,7 +812,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T07:49:49.166Z",
+        "checkedAt": "2026-10-15T21:32:03.954Z",
         "detail": {
           "status": "yellow",
           "policy": "insider_fixed_12_30_90_v1",
@@ -832,7 +832,7 @@
             "NOW",
             "SMCI"
           ],
-          "checkedAt": "2026-10-15T07:49:49.166Z",
+          "checkedAt": "2026-10-15T21:32:03.954Z",
           "latestTransactionDate": "2026-10-13",
           "coverageStatus": "returned_sample_completeness_unverified",
           "validResponseSymbols": [
@@ -869,7 +869,7 @@
             {
               "symbol": "NVDA",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:48:30.113Z",
+              "responseBuiltAt": "2026-10-15T21:30:42.660Z",
               "returnedRecordCount": 37,
               "oldestReturnedDate": "2026-08-05",
               "newestReturnedDate": "2026-10-07",
@@ -895,7 +895,7 @@
             {
               "symbol": "MSFT",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:48:36.580Z",
+              "responseBuiltAt": "2026-10-15T21:30:49.136Z",
               "returnedRecordCount": 44,
               "oldestReturnedDate": "2026-08-04",
               "newestReturnedDate": "2026-10-13",
@@ -921,7 +921,7 @@
             {
               "symbol": "AMZN",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:48:43.074Z",
+              "responseBuiltAt": "2026-10-15T21:30:55.637Z",
               "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-03",
               "newestReturnedDate": "2026-10-01",
@@ -947,7 +947,7 @@
             {
               "symbol": "GOOGL",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:48:49.584Z",
+              "responseBuiltAt": "2026-10-15T21:31:02.145Z",
               "returnedRecordCount": 172,
               "oldestReturnedDate": "2026-07-25",
               "newestReturnedDate": "2026-09-30",
@@ -973,7 +973,7 @@
             {
               "symbol": "ORCL",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:02.606Z",
+              "responseBuiltAt": "2026-10-15T21:31:15.159Z",
               "returnedRecordCount": 38,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-29",
@@ -999,7 +999,7 @@
             {
               "symbol": "AVGO",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:09.114Z",
+              "responseBuiltAt": "2026-10-15T21:31:21.669Z",
               "returnedRecordCount": 19,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-23",
@@ -1025,7 +1025,7 @@
             {
               "symbol": "AMD",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:15.616Z",
+              "responseBuiltAt": "2026-10-15T21:31:28.179Z",
               "returnedRecordCount": 123,
               "oldestReturnedDate": "2026-08-09",
               "newestReturnedDate": "2026-09-15",
@@ -1051,7 +1051,7 @@
             {
               "symbol": "PLTR",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:22.123Z",
+              "responseBuiltAt": "2026-10-15T21:31:34.692Z",
               "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-05",
               "newestReturnedDate": "2026-10-09",
@@ -1077,7 +1077,7 @@
             {
               "symbol": "CRM",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:28.629Z",
+              "responseBuiltAt": "2026-10-15T21:31:41.205Z",
               "returnedRecordCount": 38,
               "oldestReturnedDate": "2026-07-22",
               "newestReturnedDate": "2026-09-22",
@@ -1103,7 +1103,7 @@
             {
               "symbol": "NOW",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:35.166Z",
+              "responseBuiltAt": "2026-10-15T21:31:47.700Z",
               "returnedRecordCount": 64,
               "oldestReturnedDate": "2026-08-07",
               "newestReturnedDate": "2026-08-31",
@@ -1129,7 +1129,7 @@
             {
               "symbol": "SMCI",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:49:41.674Z",
+              "responseBuiltAt": "2026-10-15T21:31:54.203Z",
               "returnedRecordCount": 48,
               "oldestReturnedDate": "2026-08-10",
               "newestReturnedDate": "2026-10-07",
@@ -1322,7 +1322,7 @@
       },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T07:49:49.174Z",
+        "checkedAt": "2026-10-15T21:32:03.962Z",
         "detail": {
           "status": "unknown",
           "reasonCode": "dc_abs_direct_spread_unavailable",
@@ -1814,51 +1814,231 @@
       "axis": "trigger",
       "category": "macro",
       "name_en": "Fed Policy Direction",
-      "name_zh": "Fed 政策方向",
-      "threshold_text": "加息=红 / 通胀压力=黄 / 降息=绿",
-      "source_name": "Fed 点阵图/期货/FRED",
+      "name_zh": "Fed 3/6个月隐含路径",
+      "threshold_text": "任一3/6月路径较同期EFFR高≥15基点=红；两者低≥15基点=绿；其余黄，证据不齐待确认",
+      "source_name": "Yahoo联邦基金期货日线代理 · FRED实际EFFR · Fed会议日历",
       "status": "red",
-      "value_display": "年末路径隐含加息",
-      "note": "Fed 政策路径显示:目标区间 3.75-4.00%(mid 3.875%);SEP 点阵图当前年 median 4.1%(2026-09-16);ZQZ26.CBT 年末 Fed funds futures 隐含 4.08%;有效联邦基金利率 3.88%(60 日漂移 +25bp)、CPI 同比 3.7%(2026-08-01 口径)→ 判定「年末路径隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制。判级:加息=红 / 通胀压力=黄 / 降息=绿",
-      "as_of": "2026-10-12",
+      "value_display": "3/6个月路径偏上",
+      "as_of": "2026-10-13",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-10-12T13:21:40.695Z",
+        "checkedAt": "2026-10-15T21:32:06.287Z",
         "detail": {
-          "policyPathEvidenceVersion": "fed_policy_path_v2",
-          "dff": 3.88,
-          "drift60dBp": 25,
-          "cpiYoy": 3.712958105838858,
-          "cpiDate": "2026-08-01",
-          "targetLower": 3.75,
-          "targetUpper": 4,
-          "targetMid": 3.875,
-          "sepDotPlot": {
-            "sepProjectionDate": "2026-09-16",
-            "sepUrl": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260916.htm",
-            "dotPlotMedianCurrentYear": 4.1,
-            "dotPlotMedianNextYear": 4.1
+          "policy": "fed_market_path_collection_v1",
+          "checkedAt": "2026-10-15T21:32:06.287Z",
+          "sourceEvidence": {
+            "calendar": {
+              "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+              "checkedAt": "2026-10-15T21:32:04.542Z",
+              "lastUpdated": "2026-10-07",
+              "years": {
+                "2026": [
+                  "2026-01-28",
+                  "2026-03-18",
+                  "2026-04-29",
+                  "2026-06-17",
+                  "2026-07-29",
+                  "2026-09-16",
+                  "2026-10-28",
+                  "2026-12-09"
+                ],
+                "2027": [
+                  "2027-01-27",
+                  "2027-03-17",
+                  "2027-04-28",
+                  "2027-06-09",
+                  "2027-07-28",
+                  "2027-09-15",
+                  "2027-10-27",
+                  "2027-12-08"
+                ]
+              }
+            },
+            "baseline": {
+              "series": "DFF",
+              "sourceUrl": "https://fred.stlouisfed.org/series/DFF",
+              "observedAt": "2026-10-13",
+              "value": "3.88",
+              "checkedAt": "2026-10-15T21:32:04.615Z"
+            },
+            "quotes": [
+              {
+                "month": "2027-01",
+                "symbol": "ZQF27.CBT",
+                "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQF27.CBT?range=10d&interval=1d",
+                "exchangeName": "CBT",
+                "instrumentType": "FUTURE",
+                "exchangeTimezoneName": "America/New_York",
+                "dataGranularity": "1d",
+                "timestamp": 1791864000,
+                "rawClose": 95.83999633789062,
+                "reportedVolume": 75391
+              },
+              {
+                "month": "2027-02",
+                "symbol": "ZQG27.CBT",
+                "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQG27.CBT?range=10d&interval=1d",
+                "exchangeName": "CBT",
+                "instrumentType": "FUTURE",
+                "exchangeTimezoneName": "America/New_York",
+                "dataGranularity": "1d",
+                "timestamp": 1791864000,
+                "rawClose": 95.75,
+                "reportedVolume": 37753
+              },
+              {
+                "month": "2027-04",
+                "symbol": "ZQJ27.CBT",
+                "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQJ27.CBT?range=10d&interval=1d",
+                "exchangeName": "CBT",
+                "instrumentType": "FUTURE",
+                "exchangeTimezoneName": "America/New_York",
+                "dataGranularity": "1d",
+                "timestamp": 1791864000,
+                "rawClose": 95.56999969482422,
+                "reportedVolume": 17792
+              },
+              {
+                "month": "2027-05",
+                "symbol": "ZQK27.CBT",
+                "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQK27.CBT?range=10d&interval=1d",
+                "exchangeName": "CBT",
+                "instrumentType": "FUTURE",
+                "exchangeTimezoneName": "America/New_York",
+                "dataGranularity": "1d",
+                "timestamp": 1791864000,
+                "rawClose": 95.48500061035156,
+                "reportedVolume": 14047
+              }
+            ]
           },
-          "yearEndFedFundsFuture": {
-            "symbol": "ZQZ26.CBT",
-            "price": 95.91999816894531,
-            "impliedRate": 4.08,
-            "updatedAt": "2026-10-12T04:00:00.000Z"
+          "result": {
+            "policy": "fed_3_6_calendar_month_yahoo_daily_proxy_v1",
+            "status": "red",
+            "quoteLabelDate": "2026-10-13",
+            "baselineObservedAt": "2026-10-13",
+            "normalizedQuotes": [
+              {
+                "month": "2027-01",
+                "symbol": "ZQF27.CBT",
+                "labelDate": "2026-10-13",
+                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
+                "rawClose": 95.83999633789062,
+                "normalizedPrice": "95.8400",
+                "priceUnits": "958400",
+                "reportedVolume": 75391,
+                "normalizationPolicy": "remote_zq_0p005_v1"
+              },
+              {
+                "month": "2027-02",
+                "symbol": "ZQG27.CBT",
+                "labelDate": "2026-10-13",
+                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
+                "rawClose": 95.75,
+                "normalizedPrice": "95.7500",
+                "priceUnits": "957500",
+                "reportedVolume": 37753,
+                "normalizationPolicy": "remote_zq_0p005_v1"
+              },
+              {
+                "month": "2027-04",
+                "symbol": "ZQJ27.CBT",
+                "labelDate": "2026-10-13",
+                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
+                "rawClose": 95.56999969482422,
+                "normalizedPrice": "95.5700",
+                "priceUnits": "955700",
+                "reportedVolume": 17792,
+                "normalizationPolicy": "remote_zq_0p005_v1"
+              },
+              {
+                "month": "2027-05",
+                "symbol": "ZQK27.CBT",
+                "labelDate": "2026-10-13",
+                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
+                "rawClose": 95.48500061035156,
+                "normalizedPrice": "95.4850",
+                "priceUnits": "954850",
+                "reportedVolume": 14047,
+                "normalizationPolicy": "remote_zq_0p005_v1"
+              }
+            ],
+            "paths": [
+              {
+                "months": 3,
+                "targetDate": "2027-01-15",
+                "chain": [
+                  "2027-01",
+                  "2027-02"
+                ],
+                "anchor": "2027-02",
+                "segment": "before_effective_date",
+                "rate": {
+                  "numerator": "124400",
+                  "denominator": "3",
+                  "unit": "0.0001_percent"
+                },
+                "delta": {
+                  "numerator": "8000",
+                  "denominator": "3",
+                  "unit": "0.0001_percent"
+                },
+                "expectedRatePct": 4.1466666666666665,
+                "deltaBp": 26.666666666666668
+              },
+              {
+                "months": 6,
+                "targetDate": "2027-04-15",
+                "chain": [
+                  "2027-04",
+                  "2027-05"
+                ],
+                "anchor": "2027-05",
+                "segment": "before_effective_date",
+                "rate": {
+                  "numerator": "309675",
+                  "denominator": "7",
+                  "unit": "0.0001_percent"
+                },
+                "delta": {
+                  "numerator": "38075",
+                  "denominator": "7",
+                  "unit": "0.0001_percent"
+                },
+                "expectedRatePct": 4.423928571428572,
+                "deltaBp": 54.392857142857146
+              }
+            ],
+            "thresholdBp": 15
           },
-          "sepGap": 0.225,
-          "yearEndGap": 0.205,
-          "classificationReason": "policy_path_above_current_target",
-          "sourceStatus": {
-            "targetRange": "live",
-            "sepDotPlot": "live",
-            "yearEndFedFundsFuture": "live",
-            "dff": "live",
-            "cpi": "live"
-          },
-          "sourceFailures": []
+          "sourceFailures": [],
+          "qualityIssues": [],
+          "attemptedSources": [
+            "calendar",
+            "DFF",
+            "ZQF27.CBT",
+            "ZQG27.CBT",
+            "ZQJ27.CBT",
+            "ZQK27.CBT"
+          ],
+          "collectionPolicy": {
+            "actualRequests": 6,
+            "maximumRequests": 10,
+            "requestTimeoutMs": 12000,
+            "calendarMaxBytes": 1048576,
+            "csvMaxBytes": 65536,
+            "quoteMaxBytes": 1048576,
+            "applicationRetries": 0,
+            "redirects": "error"
+          }
         }
-      }
+      },
+      "note": "快照日2026-10-15，同期实际有效联邦基金利率3.88%（原观测日2026-10-13）；3个月目标日2027-01-15，隐含有效利率约4.147%，较同期实际利率+26.7基点；6个月目标日2027-04-15，隐含有效利率约4.424%，较同期实际利率+54.4基点。期货共同纽约日线标签2026-10-13，保留原日期。采用3/6个日历月、月末截日；月平均利率按会议前后分段及后续非会议月锚定推导。仅支持已审会议日期及次日生效假设，日历变更、来源失败或报价不合格均待确认。Yahoo日线标签结束至少24小时、距今不超过7日且报告成交量为正；成交量不证明同步成交。该代理不是CME官方结算或实时行情，也不是下次会议加息/降息概率或政策目标区间。期货风险溢价、临时会议及非会议因素可能使实际路径偏离。灯号使用未舍入精确值，展示约数不参与阈值；不沿用年末点阵图、通胀或旧灯号。"
     },
     {
       "id": "capex_reaction",
@@ -1876,7 +2056,7 @@
       "note": "固定MSFT、META、AMZN、GOOGL四家公司。目前尚未具备可核验最新季度财报目录、同口径前后指引、首次披露时间及首个完整正常交易日个股与QQQ价格的完整面板，因此保持待确认。这不表示没有支出上调或没有市场惩罚。租赁会计重分类不能直接当作投入改变，区间下限提高也不等于上限提高；财报同时包含收入、利润等信息，公告后相对收益不能全归因于资本开支。滚动多窗口收益、新闻条数及研究评论均不替代本项事件证据；季度之间的资本开支更新尚未完整覆盖。",
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T07:49:49.174Z",
+        "checkedAt": "2026-10-15T21:32:06.290Z",
         "detail": {
           "policy": "capex_latest_earnings_event_hold_v1",
           "adapterStatus": "not_admitted",
@@ -5453,11 +5633,12 @@
       "indicatorIds": [
         "dc_abs_spread",
         "insider_sell_buy",
-        "capex_reaction"
+        "capex_reaction",
+        "fed_policy"
       ],
       "fullRefreshAsOfDate": "2026-10-12",
       "carriedFromIssueDate": "2026-10-15",
-      "carriedObservationCount": 24,
+      "carriedObservationCount": 23,
       "paidCalls": 0
     },
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",
