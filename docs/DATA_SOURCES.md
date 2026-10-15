@@ -1,4 +1,4 @@
-﻿# Data Sources
+# Data Sources
 
 > 2026-10-11 Runtime 恢复：PR #449 已独立审阅并合并来源契约。Daily 的 `resolveShippingFreight` 优先读取官方首页公共 ticker，单次 GET / 8 秒 / 64 KiB / 零重试 / 禁止重定向；失败按指数回退 StockQ 或原缓存，保留真实观测日及来源。只缓存三指数紧凑摘要，不采集路线报价或留存完整原始响应。首次恢复通过同一 resolver 与既有原子写入函数，仅更新 shippingFreight，不运行完整 Daily 或收费 AI。后续沿用既有每日更新频率，不新增 schedule。
 
@@ -693,7 +693,7 @@ r2内部人来源契约已由#459独立审阅合并，本轮runtime启用activeR
 
 r3来源资格已由#461独立审阅合并，本轮runtime启用activeRevision=3：尚未有获审的完整官方latest季度财报事件目录与同口径指引/首完整交易日/QQQ价格面板，核心只能待确认。微软租赁重分类不能冒充削减，Meta下限提高不能写成上限提高；本轮阅读未构成四家公司实时最新事件验证。旧滚动窗口/Wind新闻统计仅保留旧模型兼容，不补位r3事件。空准入状态没有数值判灯路径，非空适配器须另行ADR/checker审阅；r3不调用新capex源，已迁移内部人继续有界采集，其余24卡沿用；非空事件适配器仍未准入。见[ADR-0069 r3](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r3-资本开支事件缺口契约独立-pr)。
 
-r4本轮独立审阅Fed 3/6月来源契约，activeRevision仍3：既有Yahoo Chart远月期货历史日线close代理、FRED DFF同期实际EFFR、Fed官方完整会议日历，均免费有界读取，不新增账号/密钥/收费源/依赖。纽约午夜标签及推导区间不是交易所session/结算；24小时额外隔离、共同标签≤7天、正量、远月tick、完整会议回推链和同期基准均须通过。最多10次、12秒、零重试/重定向及流式字节上限；旧SEP/CPI/年末合约不得补位。原日期不由采集时钟续期，非获审年度/有效日/支持域保留待确认；已合格也审计WARN代理限制，真实源失败仍hard FAIL。来源原文、精度、边界与解锁范围见[ADR-0069 r4](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r4-fed-市场路径来源契约独立-pr)。
+r4已由独立契约#463审阅合并，本轮runtime启用activeRevision4，接入Fed 3/6月路径：既有Yahoo Chart远月期货历史日线close代理、FRED DFF同期实际EFFR、Fed官方完整会议日历，均免费有界读取，不新增账号/密钥/收费源/依赖。纽约午夜标签及推导区间不是交易所session/结算；24小时额外隔离、共同标签≤7天、正量、远月tick、完整会议回推链和同期基准均须通过。最多10次、12秒、零重试/重定向及流式字节上限；旧SEP/CPI/年末合约不得补位。原日期不由采集时钟续期，非获审年度/有效日/支持域保留待确认；已合格也审计WARN代理限制，真实源失败仍hard FAIL。来源原文、精度、边界与解锁范围见[ADR-0069 r4](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r4-fed-市场路径来源契约独立-pr)。
 
 
 2026-09-08 ARR 免费候选：[Epoch AI 来源评审与隔离核验](ARR_EPOCH_SOURCE_REVIEW.md)。#312 sanitizer、#313 固定官方有界读取/hash-only 比较、#314 固定 ignored 归档、#315 固定 GitHub 身份/祖先/摘要/ZIP 的跨 run 交接、#316 既有周一 schedule 的隔离 candidate job 均已独立审阅合并。candidate job 为 contents:read/actions:read，首次 schedule run 才读一个官方 CSV；hash-only artifact 保留 30 天，不含原始金额/日期/URL/Notes。仅从同 workflow 成功 schedule/main 的 30 天历史有界选择，完整身份校验后比较；缺失/过期 baseline_required，坏历史拒绝、不偷偷退更旧版本。最多 9 个应用 GET，元数据/历史取回/CSV 三阶段各最多 15 秒，无应用重试；不含 Actions checkout/upload 平台传输。来源交接不认证收入事实，不维护批准基线/latest，不因下载更新观测日期或资格。#316 CI `34214841758`、Pages `34215725692` 已成功；真实 scheduled 上传/跨 run 下载仍待后续周一验收，不能以 CI/mock 代替。#317 已逐条复核 18 行及七篇官方公告，发现插值、日期上界及金额限定，尚不能建立可靠四点斜率；不改变 SaaStr/Core-23、生产值、付费调用或既有刷新 job。观测精度/金额限定仍 unknown/hold、productionEligible 恒 false；45 天底层时效及生产切源门槛保留，不购买或绕过 Sacra。

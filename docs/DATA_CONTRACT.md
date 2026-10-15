@@ -2469,15 +2469,15 @@ M-5(design-only):future `marketPricingTemperatureLayer` 须 display-only、须�
 
 ## bubble-watch 专题数据契约 (ADR-0016 / ADR-0019)
 
-[ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 已批准 v3 固定Core-23/Shadow-4证据缺口契约，r1迁移ABS，r2已接入内部人；r3本轮接入capex事件缺口，Fed仍未启用。仅已登记且已迁移核心项可为unknown，附精确reasonCode、检查日、auto检查时间；缺观测日null。主分/压力及受影响的轴/分类点值null，后端发布原固定分母的上下界；区间不是概率。原分档/共振升级规则不变，两端有效档位一致才发布保证档位，否则“判读待确认”。v2按以下旧契约兼容读取，不把unknown转换成零或绿灯。
+[ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 已批准 v3 固定Core-23/Shadow-4证据缺口契约，r1迁移ABS，r2已接入内部人；r3已接入capex事件缺口，r4本轮在独立来源契约#463合并后启用Fed 3/6月市场路径。仅已登记且已迁移核心项可为unknown，附精确reasonCode、检查日、auto检查时间；缺观测日null。主分/压力及受影响的轴/分类点值null，后端发布原固定分母的上下界；区间不是概率。原分档/共振升级规则不变，两端有效档位一致才发布保证档位，否则“判读待确认”。v2按以下旧契约兼容读取，不把unknown转换成零或绿灯。
 
 v3历史按模型epoch保留原记录，不再重贴旧灯色模型；每个当前模型最多滚动16条，点趋势最多10个同模型完整观测，初期可空且页面明确“待累计”。定向更新保留完整刷新anchor及各卡原日期，不能续期旧包。AI输入/生产投影必须保存可重放计分快照并与当期数据绑定，v3评分段逐字使用确定性披露，旧或篡改编辑层回退正文。页面直接展示后端区间和中性待确认，不重算评分。
 
-r2来源契约已由#459独立审阅合并，本轮runtime启用activeRevision=2；未来r4仍不得提前发布。r2内部人provenance.detail仅允许固定12家公司30/90日返回样本的聚合证明、查询URL、响应生成/采集/交易日期、计划披露计数及有界请求审计。金额以最多12位小数美元字符串保存，BigInt复算状态，倍数为近似展示；不使用分母下限。完整性未核实的镜像只能黄灯/unknown。成功空数组保留0条观测和null交易日，失败/缺价/近似记录不补零。卡片as_of为最近合格P/S交易日，窗口截止日与responseBuiltAt分别披露；原始交易行、姓名及手工完整确认字段拒绝，详见[ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md)。
+r2来源契约已由#459独立审阅合并；r4已由独立契约#463审阅合并，本轮runtime启用activeRevision=4。r2内部人provenance.detail仅允许固定12家公司30/90日返回样本的聚合证明、查询URL、响应生成/采集/交易日期、计划披露计数及有界请求审计。金额以最多12位小数美元字符串保存，BigInt复算状态，倍数为近似展示；不使用分母下限。完整性未核实的镜像只能黄灯/unknown。成功空数组保留0条观测和null交易日，失败/缺价/近似记录不补零。卡片as_of为最近合格P/S交易日，窗口截止日与responseBuiltAt分别披露；原始交易行、姓名及手工完整确认字段拒绝，详见[ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md)。
 
 r3独立事件缺口契约#461已合并，本轮runtime启用activeRevision=3，仅准`capex_latest_earnings_event_hold_v1`的unknown/null原观测、固定四家公司和零合格事件精确证明，不允许新增审批/最新声明、价格或数值阈值字段。当前没有获审完整latest目录适配器；缺口检查时间不是原公告日期。未来非空事件及判灯算法须另行ADR/checker独立审阅；r3不能以滚动收益或新闻计数补位。详见[ADR-0069 r3](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r3-资本开支事件缺口契约独立-pr)。
 
-r4本轮独立来源契约保持activeRevision=3。Fed核心将仅接受3/6日历月路径的完整公开输入/有理数结果/请求预算重放，不接受旧SEP或年末版本字段补位。纽约日标签历史close代理不称CME结算，原日标签、推导标签结束、同期DFF原观测、官方日历原更新和核验时钟分离；缺口使用`fed_market_path_unavailable`且原观测null。未来时钟、额外原始/凭证字段、篡改路径/阈值或重试预算拒绝。详见[ADR-0069 r4](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r4-fed-市场路径来源契约独立-pr)，runtime后续另接。
+r4独立来源契约#463已合并，本轮runtime启用activeRevision=4。Fed核心仅接受3/6日历月路径的完整公开输入/有理数结果/请求预算重放，不接受旧SEP或年末版本字段补位。纽约日标签历史close代理不称CME结算，原日标签、推导标签结束、同期DFF原观测、官方日历原更新和核验时钟分离；缺口使用`fed_market_path_unavailable`且原观测null。未来时钟、额外原始/凭证字段、篡改路径/阈值或重试预算拒绝。详见[ADR-0069 r4](ADR/0069-bubble-qualified-evidence-and-score-bounds.md#r4-fed-市场路径来源契约独立-pr)，runtime使用同一严格证明接入。
 
 
 `data/bubble-watch.json` + `data/bubble-watch-history.json` 是第二页面「AI 泡沫监测」(`bubble-watch.html`)的专属数据,由 `scripts/build-bubble-watch.mjs` 周一 cron(`refresh-bubble-watch.yml`)生成,**display-only**:不进 scoring / decisionModel / executionLock / positionGuidance / `values.*` / `displayInputsBaseline` / `effectiveDisplayInputs` / cross-validation;主站 `scripts/app.js` 与 `index.html` 不得读取(`check:bubble-watch` boundary leaf 机器强制)。周二至周五的 `.github/workflows/audit-bubble-watch-sources.yml` 只是 source-health 只读审计:调用 `scripts/audit-bubble-watch-sources.mjs`,运行 builder 后恢复生产文件,只上传 artifact,不 commit、不 deploy;scheduled 默认 `BUBBLE_WATCH_DISABLE_WIND=1`,只有手动 dispatch paid opt-in 才可注入 `WIND_API_KEY`。
@@ -2520,7 +2520,7 @@ Bubble Watch responsive/data-contract acceptance 由 `check:bubble-watch-respons
 
 `breadth_50d` 优先读取 Barchart `$S5FI`(S&P 500 Stocks Above 50-Day Average)直接广度指数;该源与上游模板站的 S5FI 口径对齐。Barchart 页面解析失败时才回退到 Wikipedia S&P 500 成份股名单 + Yahoo Chart 单票 50 日均线实算。无论直接源或 fallback,该指标只影响 Bubble Watch display-only 卡片,不进入 GFRR 主评分、decision、execution 或 position。
 
-`fed_policy` 当前审计版本为 `provenance.detail.policyPathEvidenceVersion="fed_policy_path_v2"`:目标区间来自 FRED `DFEDTARL/DFEDTARU`,有效联邦基金利率来自 `DFF`,通胀压力来自 `CPIAUCSL`,政策路径证据来自 Federal Reserve SEP federal funds median 与 Yahoo 年末 ZQ Fed funds futures proxy。SEP 或年末 futures 明显高于当前 target mid 时可发布红灯「年末路径隐含加息」,该标签只描述年末路径,不得写成下一次会议的确定性加息预测;缺失 SEP/futures 时降级回 DFF+CPI 口径,但不得把 CPI 单一压力伪装成明确加息路径。
+v2及r1–r3兼容期的 `fed_policy` 审计版本为 `provenance.detail.policyPathEvidenceVersion="fed_policy_path_v2"`:目标区间来自 FRED `DFEDTARL/DFEDTARU`,有效联邦基金利率来自 `DFF`,通胀压力来自 `CPIAUCSL`,政策路径证据来自 Federal Reserve SEP federal funds median 与 Yahoo 年末 ZQ Fed funds futures proxy。SEP 或年末 futures 明显高于当前 target mid 时可发布红灯「年末路径隐含加息」,该标签只描述年末路径,不得写成下一次会议的确定性加息预测;缺失 SEP/futures 时降级回 DFF+CPI 口径,但不得把 CPI 单一压力伪装成明确加息路径。
 
 **代理源置信度校准**: `insider_sell_buy`、`ai_ipo_pipeline`、`capex_reaction`、`ceo_hedging`、`token_revenue_ratio`、`enterprise_deploy` 属于容易被单一路径新闻/搜索/平台代理源推高或误降的指标。若自动结果更严重,且未达到本地二次确认门槛(独立 Form-4/SEC 聚合、具体发行/待发公司数、直接指引惩罚证据或新鲜上游研究周报确认的系统性市场重定价、多唯一高管直接表态、OpenRouter 高覆盖且显著越线、第二调查源确认低部署率等),发布 `status/value_display` 必须按 `local_proxy_confidence_v1` 多源/样本规则校准;自动原始判级和值保留在 `provenance.detail.proxyConfidenceCalibration.rawStatus/rawValueDisplay`,兼容别名 `templateCompatibilityCalibration` 仅供旧本地读者过渡,并在 `meta.proxy_confidence_calibration_count` 与 `meta.proxy_confidence_calibrations[]` 汇总。`insider_sell_buy` 若备用样本触及记录上限且买入分母接近零,校准后的公开值必须显示「高卖压·覆盖受限」,并说明极端原始倍数不可与完整周期聚合直接比较。该机制不是 fetch failure,不得记入 `fallback_count`;`capex_reaction` 可将新鲜上游红灯周报作为本地多窗口价格代理红灯的研究确认锚。上游/curated 快照只可在 `maxAgeDays` 内作为显示值锚点;过期后必须按 STALE 暴露或显示自动代理原始值。
 

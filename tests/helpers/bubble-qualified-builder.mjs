@@ -1,10 +1,11 @@
+import {transport as fedTransport} from './bubble-fed-source-fixtures.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const builderUrl=new URL('../../scripts/build-bubble-watch.mjs',import.meta.url);
-export async function buildQualifiedAbsFixture({publish=false,baselineOutput=null,baselineHistory=null,clock='2026-10-13T12:00:00Z',revision=1,insiderHttpStatus=200,duplicateSymbol=null}={}) {
+export async function buildQualifiedAbsFixture({publish=false,baselineOutput=null,baselineHistory=null,clock='2026-10-13T12:00:00Z',revision=1,insiderHttpStatus=200,duplicateSymbol=null,fedOptions={}}={}) {
   const source=fs.readFileSync(builderUrl,'utf8');
   const bundle=JSON.parse(fs.readFileSync(new URL('../../docs/fixtures/bubble-watch/legacy-contract-bundle.json',import.meta.url)));
   const methods={contractVersion:'bubble-qualified-methods-v1',activeRevision:revision,approvedAbsSourceReviews:[],absObservation:null};
@@ -17,7 +18,8 @@ export async function buildQualifiedAbsFixture({publish=false,baselineOutput=nul
     if(match[1].trim().startsWith('{')) for(const key of match[1].replace(/[{}]/gu,'').split(',').map(s=>s.trim()).filter(Boolean)) {
       const [name,alias=name]=key.split(/\s+as\s+/u);
       bindings[alias]=name==='collectInsiderWindows' && revision>=2
-        ? args=>module[name]({...args,fetchFn:insiderFetch,now:()=>virtualTime,sleep:async ms=>{virtualTime+=ms;}}) : module[name];
+        ? args=>module[name]({...args,fetchFn:insiderFetch,now:()=>virtualTime,sleep:async ms=>{virtualTime+=ms;}})
+        : name==='collectFedMarketPath' && revision>=4 ? args=>module[name]({...args,fetchFn:fedFetch,now:()=>virtualTime}) : module[name];
     } else bindings[match[1].trim()]=module.default;
   }
   const writes=new Map(), logs=[];
@@ -40,6 +42,8 @@ export async function buildQualifiedAbsFixture({publish=false,baselineOutput=nul
     if(symbol===duplicateSymbol) rows.splice(1,0,structuredClone(rows[0]));
     return Response.json({source:'xoomar.com',meta:{source:'SEC'},updatedAt:new RealDate(virtualTime).toISOString(),data:{ticker:symbol,transactions:rows}});
   };
+  const fedSource=fedTransport(fedOptions);
+  const fedFetch=async(url,options)=>{networkCalls++;requestStarts.push(virtualTime);return fedSource.fetchFn(url,options);};
   const key=file=>path.relative(root,file).replaceAll('\\','/');
   const fakeFs={...fs,
     readFileSync(file,...args){const name=key(file);if(Object.hasOwn(files,name))return JSON.stringify(files[name]);return fs.readFileSync(file,...args);},

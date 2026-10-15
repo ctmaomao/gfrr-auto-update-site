@@ -3,6 +3,8 @@ import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { collectInsiderWindows } from './bubble-watch/insider-window-collector.mjs';
 import { buildQualifiedInsiderIndicator } from './bubble-watch/insider-indicator.mjs';
 import { buildCapexEventIndicator } from './bubble-watch/capex-event-indicator.mjs';
+import { collectFedMarketPath } from './bubble-watch/fed-market-path-collector.mjs';
+import { buildQualifiedFedIndicator } from './bubble-watch/fed-path-indicator.mjs';
 import { summarizeEvidence, evidenceHistoryFields } from './bubble-watch/evidence-publication.mjs';
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
@@ -78,7 +80,7 @@ const QUALIFIED_INDICATOR_IDS = METHOD_ORDER.slice(0, EVIDENCE_REVISION);
 const QUALIFIED_REFRESH_ONLY = process.argv.includes('--refresh-qualified-only');
 const QUALIFIED_PUBLISH = process.argv.includes('--publish-qualified');
 if (QUALIFIED_PUBLISH && !QUALIFIED_REFRESH_ONLY) throw new Error('Qualified publish requires --refresh-qualified-only');
-if (QUALIFIED_REFRESH_ONLY && ![1,2,3].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2 or 3');
+if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3 or 4');
 const BUBBLE_WATCH_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-v3' : 'bubble-watch-v2';
 const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2';
 const SCORING_MODEL_VERSION = EVIDENCE_REVISION ? evidenceModelVersion(EVIDENCE_REVISION) : 'bubble-watch-v2-core23-shadow4';
@@ -4274,7 +4276,7 @@ function publicIndicatorNote(ind) {
 
 function publicIndicatorSourceName(ind) {
   if (ind.evidence_gap?.policy === 'bubble-qualified-evidence-v1') return ind.source_name;
-  if (ind.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1') return ind.source_name;
+  if (['insider_fixed_12_30_90_v1','fed_market_path_collection_v1'].includes(ind.provenance?.detail?.policy)) return ind.source_name;
   if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
   return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
 }
@@ -4876,6 +4878,15 @@ async function main() {
   let paidWindFallbackCount = 0;
 
   for (const def of INDICATOR_DEFS) {
+    if (EVIDENCE_REVISION >= 4 && def.id === 'fed_policy') {
+      const report = await collectFedMarketPath({ today });
+      indicators.push(buildQualifiedFedIndicator(baseIndicator(def), report, today));
+      for (const failure of report.sourceFailures) {
+        fetchFailures.push({ id: def.id, reason: `${failure.source}:${failure.reason}` });
+      }
+      autoCount += 1;
+      continue;
+    }
     if (EVIDENCE_REVISION >= 3 && def.id === 'capex_reaction') {
       indicators.push(buildCapexEventIndicator(baseIndicator(def), today));
       autoCount += 1;
