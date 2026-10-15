@@ -2,7 +2,10 @@
 
 ### 2026-10-13 Bubble 四项口径依次修订
 
-- **ABS r1 当前交接（2026-10-15）**：#456固定分母缺口契约与#457 AI兼容契约已独立代审、CI通过、合并main a1643b8a。当前分支codex/bubble-abs-qualified-runtime实现首项ABS及双v2/v3展示；已通过真实候选checker七组、actual-builder零网络/写入边界/不可续期anchor与source-audit WARN四项回归、13项桌面/390px浏览器回归。已获用户持续发布授权，用既有builder显式定向生成两份Bubble JSON（不是手改）；截至10/15保留其余26项原观测，Core7红/7黄/8绿/1待确认，主分30.4–34.8%、压力45.7–50.0、Stage60、Trigger34.6–42.3，保证档位高风险预警。新版源码/数据尚未推送；独立代审已复核26卡完整一致、16条历史保留、重复文案修复及缺口WARN未放宽hard-fail。`check:changed`完成完整`check:all`、退出0；仍待最终固定提交复核、CI及部署验收。后续顺序仍内部人→capex→Fed，无新付费授权。
+- **ABS r1 集成回执（2026-10-15）**：#458已独立AI代审并合并main `1a537a96`，最终head `cac8622d`，CI `38662293072`成功。新增nullable区间导致旧信用利差测试toFixed报错，已补上下界断言；修复后45项其余浏览器+4项信用利差通过，完整check:changed/check:all退出0。两份生产JSON由builder定向生成，保留其余26卡及旧历史；Core7红/7黄/8绿/1待确认，主分30.4–34.8、压力45.7–50、Stage60、Trigger34.6–42.3。Pages `38662963407` 与EdgeOne `38662963464`均成功；两公网JSON逐字节等于生成产物，SHA256 `24e7387d480247f50e2f47abbc51605d94bc6ee39905cc3686ba20857dd527c7`，均v3-r1/asof10-15；两站1440/390px真实浏览器均27卡/1待确认/上下界正确、无脚本错误或横向溢出，ABS已上线验收。
+- **r2当前任务 / 最后基线**：基于latest main `1a537a96`，独立分支 `codex/bubble-insider-window-contract`只准备纯来源资格、免费有界采集、聚合证明validator及checker准入。activeRevision仍1，builder/生产JSON/前端未改，未启用r2。原型独立审阅纠正“日期跨度=完整窗口”与“响应生成日=源更新日”，并核对官方显式from/to/limit接口及十进制字符串；定点金额边界、空样本/缺价、失败隔离和实际checker已通过首轮11项测试。一次NVDA免费只读核验返回37条/9788bytes，金额均字符串，交易日期8/5–10/7；未保存原始行/姓名，不代表固定篮子生产采集。
+- **r2验证 / 自审**：独立AI审阅发现的单笔同时买卖证明已收紧，并验证90减30日差集金额/笔数/计划计数；16项定向测试及最终完整check:changed/check:all均退出0。实际文件符合批准方案；checker仅新增明确评审的r2资格准入，旧断言/源故障hard-fail未放宽，无skip/ignore、无生产数据/前端/builder改动。复审无剩余阻断。
+- **下一步 / 门槛**：固定提交复核后push此独立契约PR，CI通过再合并；随后接r2实际运行和可见署名，保留未核实完整性的最多黄灯/否则待确认及固定23分母。真实来源故障仍hard FAIL，合格样本也明确WARN。其后capex→Fed，各步独立审阅/CI/发布验收；本任务已有四项AI代审、推送合并上线授权，无新付费授权。
 
 
 - **Acceptance baseline**：owner 在四项方法审阅后要求按 ABS → 内部人交易 → capex → Fed 顺序修订。按 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 保留固定 Core-23/Shadow-4及原分档/升级规则，缺证据用待确认与区间，不缩分母、不转为绿/0；先独立契约 PR，后逐项 runtime。owner 已明确授权四项独立 AI 代审，审阅无阻断且 CI 通过后逐项推送、合并上线；无新增付费调用授权。

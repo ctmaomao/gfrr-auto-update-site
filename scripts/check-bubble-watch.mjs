@@ -12,6 +12,7 @@
 
 import { CORE_LAYOUT, SHADOW_IDS as EVIDENCE_SHADOW_IDS, modelRevision, replayEvidenceScores, validateEvidenceScoreFields, isRegisteredEvidenceGap } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
+import { validateInsiderPublication } from './bubble-watch/qualified-insider-publication.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -179,14 +180,17 @@ if (isV3) {
   const errors = validateEvidenceScoreFields(data);
   for (const error of errors) check('contract', false, error);
   try { evidenceReplay = replayEvidenceScores(data.indicators, evidenceRevision); } catch (error) { check('contract', false, error.message); }
-  // r2-r4 have math contracts, but cannot publish until their source policies
+  // r3-r4 have math contracts, but cannot publish until their source policies
   // have had separate review and the deployment configuration activates them.
-  check('contract', evidenceRevision === 1 && methodConfig.activeRevision === 1,
+  check('contract', [1, 2].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
     'v3 method revision is not supported/activated by the reviewed source policy');
   const abs = indicatorById.dc_abs_spread;
   const qualified = qualifyDataCenterSpread(methodConfig.absObservation, data.as_of_date, methodConfig.approvedAbsSourceReviews);
   check('contract', abs?.status === qualified.status, 'ABS status differs from qualified direct spread evidence');
   if (qualified.status !== 'unknown') check('contract', abs.as_of === qualified.asOf, 'ABS original observation date mismatch');
+  if (evidenceRevision >= 2) {
+    for (const error of validateInsiderPublication(indicatorById.insider_sell_buy, data.as_of_date)) check('contract', false, error);
+  }
 }
 const matchesPoint = (value, expected) => expected === null ? value === null
   : typeof value === 'number' && Number.isFinite(value) && Math.abs(value - expected) < 0.06;
