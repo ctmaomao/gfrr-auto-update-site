@@ -1,3 +1,4 @@
+import { buildEditorialScoringSnapshot } from '../../scripts/bubble-watch/editorial-score-snapshot.mjs';
 import { readFileSync } from 'node:fs';
 
 const SAMPLE_WEEKLY_EDITORIAL_OUTPUT = JSON.parse(readFileSync('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json', 'utf8'));
@@ -8,7 +9,10 @@ export function buildApprovedBubbleWeeklyEditorial(data, currentTimestamp) {
     generatedAt: currentTimestamp,
     asOfDate: data.as_of_date,
   };
+  const qualified = data.contractVersion === 'bubble-watch-v3' ? buildEditorialScoringSnapshot(data) : null;
+  if (qualified) output.scorecardSynthesisZh = qualified.scorecardDisclosureZh;
   return {
+    ...(qualified ? {sourceScoringSnapshot:qualified} : {}),
     schemaVersion: 'bubble-watch-weekly-editorial-production-v1',
     status: 'valid',
     displayEnabled: true,

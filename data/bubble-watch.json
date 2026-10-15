@@ -1,65 +1,109 @@
 {
-  "contractVersion": "bubble-watch-v2",
+  "contractVersion": "bubble-watch-v3",
   "issue_number": 28,
-  "as_of_date": "2026-10-12",
-  "generated_at": "2026-10-12T13:22:04.262Z",
+  "as_of_date": "2026-10-15",
+  "generated_at": "2026-10-15T00:17:32.963Z",
   "summary": {
     "total_indicators": 27,
     "red_count": 8,
-    "yellow_count": 8,
+    "yellow_count": 7,
     "green_count": 11,
-    "display_red_pct": 29.6,
-    "display_weighted_risk_score": 44.4,
+    "unknown_count": 1,
+    "display_red_pct": null,
+    "display_weighted_risk_score": null,
     "scoring_total_indicators": 23,
     "scoring_red_count": 7,
-    "scoring_yellow_count": 8,
+    "scoring_yellow_count": 7,
     "scoring_green_count": 8,
-    "primary_score_pct": 30.4,
+    "scoring_unknown_count": 1,
+    "primary_score_pct": null,
     "primary_score_basis": "core_red_light_ratio",
-    "red_pct": 30.4,
-    "weighted_risk_score": 47.8,
+    "red_pct": null,
+    "weighted_risk_score": null,
+    "primary_score_range_pct": {
+      "lower": 30.4,
+      "upper": 34.8
+    },
+    "weighted_risk_score_range": {
+      "lower": 45.7,
+      "upper": 50
+    },
     "stage_score": 60,
+    "stage_score_range": {
+      "lower": 60,
+      "upper": 60
+    },
     "stage_label": "亢奋 Euphoria",
     "stage_label_en": "Euphoria",
-    "trigger_score": 38.5,
-    "trigger_label": "零星火花",
-    "trigger_label_en": "Sparks",
-    "momentum": {
-      "deteriorated": 0,
-      "improved": 2,
-      "net": -2
+    "trigger_score": null,
+    "trigger_score_range": {
+      "lower": 34.6,
+      "upper": 42.3
     },
+    "trigger_label": "待确认",
+    "trigger_label_en": "Pending",
     "category_scores": {
       "valuation": 66.7,
       "capital": 87.5,
       "market_structure": 62.5,
-      "credit": 25,
+      "credit": null,
       "fundamentals": 12.5,
       "macro": 37.5
+    },
+    "category_score_ranges": {
+      "valuation": {
+        "lower": 66.7,
+        "upper": 66.7
+      },
+      "capital": {
+        "lower": 87.5,
+        "upper": 87.5
+      },
+      "market_structure": {
+        "lower": 62.5,
+        "upper": 62.5
+      },
+      "credit": {
+        "lower": 12.5,
+        "upper": 37.5
+      },
+      "fundamentals": {
+        "lower": 12.5,
+        "upper": 12.5
+      },
+      "macro": {
+        "lower": 37.5,
+        "upper": 37.5
+      }
+    },
+    "momentum": {
+      "deteriorated": 0,
+      "improved": 0,
+      "net": 0
     },
     "similarity": [
       {
         "period": "1999-06",
         "label_zh": "互联网泡沫顶前 9 个月",
         "label_en": "9 months before dot-com top",
-        "match_pct": 77,
-        "denominator": 22,
+        "match_pct": 76,
+        "denominator": 21,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2000-02",
         "label_zh": "互联网泡沫顶前 1 个月",
         "label_en": "1 month before dot-com top",
-        "match_pct": 73,
-        "denominator": 22,
+        "match_pct": 71,
+        "denominator": 21,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2021-11",
         "label_zh": "成长股/SPAC 顶",
         "label_en": "Growth/SPAC top",
-        "match_pct": 70,
-        "denominator": 22,
+        "match_pct": 71,
+        "denominator": 21,
         "basis": "core_calibrated_indicators_only"
       },
       {
@@ -67,257 +111,83 @@
         "label_zh": "金融危机股市顶",
         "label_en": "GFC equity top",
         "match_pct": 47,
-        "denominator": 16,
+        "denominator": 15,
         "basis": "core_calibrated_indicators_only"
       }
     ],
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "固定核心 23 项本周计数 7 红 / 8 黄 / 8 绿，红灯比例由 34.8% 降至 30.4%。27 张展示卡合计 8 红 / 8 黄 / 11 绿，其中 4 项为影子观察、不进入判读。本期翻灯 2 项: 「数据中心 ABS 利差」红转黄、「Neocloud 信用事件」黄转绿；两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 38.5（零星火花）；基础判读落在「中度警戒」，有效判读为「高风险预警」。市场结构压力仍高: S&P 50 日均线上方比例 ≈35%（红）、市值加权 vs 等权重 +6.3%（黄） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 高卖压·覆盖受限（黄），风险偏好并非完全健康。资金面仍是核心压力: Big5 资本开支/经营现金流 ≈83%（红）、AI 占 VC 投资比重 64.2%（红）、NVDA 客户投资/收入比 ≈41%（红）；同时，云厂商递延收入增速 +152%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。信用端仍托底: 高收益债利差 315 bps（绿）、数据中心 ABS 利差 稳定（黄）、Neocloud 信用事件 本轮扫描未见确认事件/正式Watch（绿）；宏观端则是 Fed 政策方向 年末路径隐含加息（红），叠加 资本开支指引市场反应 奖励（绿）。这让本期更像高风险观察，而不是信用断裂式顶部。因此，尽管红灯比例仍在「中度警戒」区间，双类压力共振（估值 2/3 红（CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈28.4%）；资金面 3/4 红（Big5 资本开支/经营现金流 ≈83%、AI 占 VC 投资比重 64.2%、NVDA 客户投资/收入比 ≈41%））抬高综合判读。红灯集中在 CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈28.4%、Big5 资本开支/经营现金流 ≈83%、AI 占 VC 投资比重 64.2%、NVDA 客户投资/收入比 ≈41%、S&P 50 日均线上方比例 ≈35%、Fed 政策方向 年末路径隐含加息；有效判读维持「高风险预警」。",
+    "verdict_desc": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、8项绿灯、1项待确认。核心红灯比例为30.4–34.8%，辅助压力为45.7–50.0。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为60.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为41.9（红灯）；前 5 大权重占比为≈28.4%（红灯）；NVDA 远期 PE为≈19x（绿灯）；Hyperscaler 资本开支增速为+75%（黄灯）；Big5 资本开支/经营现金流为≈83%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为34.6–42.3。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
     "verdict_desc_source": "bubble-watch-narrative-v2",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v2",
       "sourceMode": "local_indicator_evidence_pack",
       "upstreamVerdictPolicy": "calibration_only_never_copied",
-      "categorySnapshots": [
-        {
-          "key": "valuation",
-          "zh": "估值",
-          "en": "VALUATION",
-          "total": 3,
-          "red": 2,
-          "yellow": 0,
-          "green": 1,
-          "redItems": [
-            "cape",
-            "top5_weight"
-          ],
-          "yellowItems": [],
-          "greenItems": [
-            "nvda_fpe"
-          ]
-        },
-        {
-          "key": "capital",
-          "zh": "资金面",
-          "en": "CAPITAL",
-          "total": 4,
-          "red": 3,
-          "yellow": 1,
-          "green": 0,
-          "redItems": [
-            "mag4_fcf_yoy",
-            "vc_ai_share",
-            "nvda_invest_revenue"
-          ],
-          "yellowItems": [
-            "hyperscaler_capex_yoy"
-          ],
-          "greenItems": []
-        },
-        {
-          "key": "market_structure",
-          "zh": "市场结构",
-          "en": "MARKET STRUCTURE",
-          "total": 4,
-          "red": 1,
-          "yellow": 3,
-          "green": 0,
-          "redItems": [
-            "breadth_50d"
-          ],
-          "yellowItems": [
-            "spy_vs_rsp_6m",
-            "insider_sell_buy",
-            "ai_ipo_pipeline"
-          ],
-          "greenItems": []
-        },
-        {
-          "key": "credit",
-          "zh": "信用",
-          "en": "CREDIT",
-          "total": 4,
-          "red": 0,
-          "yellow": 2,
-          "green": 2,
-          "redItems": [],
-          "yellowItems": [
-            "dc_abs_spread",
-            "debt_capex_ratio"
-          ],
-          "greenItems": [
-            "hy_oas",
-            "neocloud_credit"
-          ]
-        },
-        {
-          "key": "fundamentals",
-          "zh": "基本面",
-          "en": "FUNDAMENTALS",
-          "total": 4,
-          "red": 0,
-          "yellow": 1,
-          "green": 3,
-          "redItems": [],
-          "yellowItems": [
-            "token_volume_mom"
-          ],
-          "greenItems": [
-            "arr_2nd_deriv",
-            "enterprise_deploy",
-            "cloud_rpo_growth"
-          ]
-        },
-        {
-          "key": "macro",
-          "zh": "宏观",
-          "en": "MACRO",
-          "total": 4,
-          "red": 1,
-          "yellow": 1,
-          "green": 2,
-          "redItems": [
-            "fed_policy"
-          ],
-          "yellowItems": [
-            "ceo_hedging"
-          ],
-          "greenItems": [
-            "accounting_events",
-            "capex_reaction"
-          ]
-        }
-      ],
-      "evidenceHighlights": [
-        {
-          "indicator_id": "dc_abs_spread",
-          "category": "credit",
-          "status": "yellow",
-          "value_display": "稳定",
-          "note_summary": "数据中心 ABS/类 REITs 样本 8 只,最新样本 奥飞一期2026-1(2026-08-10);中国:资产支持证券到期收益率(AAA):6个月 最新 1.43%,4 周 -2.5bp、12 周 +0.7bp;新闻证据 3 条,支持词 0/压力词 0。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差"
-        },
-        {
-          "indicator_id": "neocloud_credit",
-          "category": "credit",
-          "status": "green",
-          "value_display": "本轮扫描未见确认事件/正式Watch",
-          "note_summary": "近90天对CoreWeave、Nebius、Nscale、Lambda、Crusoe开展具名降级/违约/不良交换及正式Watch检索，已读公司公告和可访问评级页，未发现符合定义的事件。CoreWeave贷款Ba2/BB+与Lambda贷款Baa2是背景，不把高杠杆、股价下跌或股票分析师降级当作正式信用Watch；Moody/S&P访问缺口明示，结果是尽职扫描结论。（沿用最近一期可用样本）"
-        },
-        {
-          "indicator_id": "breadth_50d",
-          "category": "market_structure",
-          "status": "red",
-          "value_display": "≈35%",
-          "note_summary": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 175 只收于 50 日均线上方,占比 ≈34.9%"
-        },
-        {
-          "indicator_id": "spy_vs_rsp_6m",
-          "category": "market_structure",
-          "status": "yellow",
-          "value_display": "+6.3%",
-          "note_summary": "公开市场价格显示 6 个月回报:SPY +14.6% vs 等权重 RSP +8.3%,市值加权领先 +6.3%——头部独涨、广度未跟上"
-        },
-        {
-          "indicator_id": "ai_ipo_pipeline",
-          "category": "market_structure",
-          "status": "yellow",
-          "value_display": "5家递表/近程·探索项另列",
-          "note_summary": "Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；公开申报确认样本暂缺;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)"
-        },
-        {
-          "indicator_id": "cloud_rpo_growth",
-          "category": "fundamentals",
-          "status": "green",
-          "value_display": "+152%",
-          "note_summary": "公开订单披露显示 MSFT/AMZN/GOOGL RPO / 云 backlog 合计 $1.69T,同比 +152.3%(上一披露期同比 +144.6%,未见减速);分公司:MSFT +84% / AMZN +154% / GOOGL +380%。实际覆盖 3/4 家;ORCL 缺少可比报告期,未计入。公开季度报告按实际期末日期匹配去年同期,缺失列不跳位"
-        },
-        {
-          "indicator_id": "hyperscaler_capex_yoy",
-          "category": "capital",
-          "status": "yellow",
-          "value_display": "+75%",
-          "note_summary": "公开季报现金流显示 AMZN/MSFT/GOOGL/META 滚动 4 季 capex 合计 $511B,同比 +75.3%(上年同期 $291B);开支仍在加速扩张"
-        },
-        {
-          "indicator_id": "mag4_fcf_yoy",
-          "category": "capital",
-          "status": "red",
-          "value_display": "≈83%",
-          "note_summary": "公开季报现金流显示 AMZN/MSFT/GOOGL/META/ORCL 滚动 4 季经营现金流 $707B、cash capex $586B,capex/OCF ≈82.9%(上年同期 61.9%,变化 +21.0%);2/5 家 capex 已超过 OCF。该口径采用 Epoch/Apollo 式 hyperscaler 现金流覆盖率,比单纯 FCF YoY 更敏感"
-        },
-        {
-          "indicator_id": "nvda_invest_revenue",
-          "category": "capital",
-          "status": "red",
-          "value_display": "≈41%",
-          "note_summary": "分子=公开披露投资承诺 累计股权投资承诺 $110B+(含 OpenAI $30B)+ GPU 抵押债务 $15B+(2026-06-07 口径,$125B);分母=公开季报现金流显示 NVDA LTM 收入 $303.0B;比率 ≈41.3%,仍远超 Lucent 1999 循环融资峰值 24%"
-        },
-        {
-          "indicator_id": "hy_oas",
-          "category": "credit",
-          "status": "green",
-          "value_display": "315 bps",
-          "note_summary": "FRED 显示 ICE BofA 高收益债 OAS = 3.15%(315 bps,2026-10-08);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标"
-        },
-        {
-          "indicator_id": "fed_policy",
-          "category": "macro",
-          "status": "red",
-          "value_display": "年末路径隐含加息",
-          "note_summary": "Fed 政策路径显示:目标区间 3.75-4.00%(mid 3.875%);SEP 点阵图当前年 median 4.1%(2026-09-16);ZQZ26.CBT 年末 Fed funds futures 隐含 4.08%;有效联邦基金利率 3.88%(60 日漂移 +25bp)、CPI 同比 3.7%(2026-08-01 口径)→ 判定「年末路径隐含加息」,政策路径高于当前目标区间,对极度拉伸估值构成更直接压制"
-        },
-        {
-          "indicator_id": "capex_reaction",
-          "category": "macro",
-          "status": "green",
-          "value_display": "奖励",
-          "note_summary": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +77.3%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 +7.5%(1/4)、126日 -3.1%(3/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本"
-        }
-      ],
       "sections": [
         {
           "key": "scorecard",
-          "role": "lead",
-          "sourceIndicators": [],
-          "summaryZh": "固定核心 23 项本周计数 7 红 / 8 黄 / 8 绿，红灯比例由 34.8% 降至 30.4%。27 张展示卡合计 8 红 / 8 黄 / 11 绿，其中 4 项为影子观察、不进入判读。本期翻灯 2 项: 「数据中心 ABS 利差」红转黄、「Neocloud 信用事件」黄转绿；两轴判读为泡沫成熟度 60.0（亢奋 Euphoria）、破裂临近度 38.5（零星火花）；基础判读落在「中度警戒」，有效判读为「高风险预警」。"
-        },
-        {
-          "key": "market_structure",
-          "role": "breadth_and_risk_appetite",
           "sourceIndicators": [
-            "breadth_50d",
-            "spy_vs_rsp_6m",
-            "insider_sell_buy"
-          ],
-          "summaryZh": "市场结构压力仍高: S&P 50 日均线上方比例 ≈35%（红）、市值加权 vs 等权重 +6.3%（黄） 显示广度和权重差距尚未同时转弱；但 AI 龙头内部人卖买比 高卖压·覆盖受限（黄），风险偏好并非完全健康。"
-        },
-        {
-          "key": "capital_fundamentals",
-          "role": "demand_vs_cash_burn",
-          "sourceIndicators": [
+            "cape",
+            "top5_weight",
+            "nvda_fpe",
+            "hyperscaler_capex_yoy",
             "mag4_fcf_yoy",
             "vc_ai_share",
             "nvda_invest_revenue",
-            "cloud_rpo_growth"
+            "breadth_50d",
+            "spy_vs_rsp_6m",
+            "insider_sell_buy",
+            "ai_ipo_pipeline",
+            "hy_oas",
+            "debt_capex_ratio",
+            "neocloud_credit",
+            "token_volume_mom",
+            "arr_2nd_deriv",
+            "enterprise_deploy",
+            "cloud_rpo_growth",
+            "accounting_events",
+            "fed_policy",
+            "capex_reaction",
+            "ceo_hedging"
           ],
-          "summaryZh": "资金面仍是核心压力: Big5 资本开支/经营现金流 ≈83%（红）、AI 占 VC 投资比重 64.2%（红）、NVDA 客户投资/收入比 ≈41%（红）；同时，云厂商递延收入增速 +152%（绿） 说明需求仍在兑现。结论不是需求崩塌，而是需求兑现与烧钱、集中融资并存。"
+          "summaryZh": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、8项绿灯、1项待确认。核心红灯比例为30.4–34.8%，辅助压力为45.7–50.0。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
         },
         {
-          "key": "credit_macro",
-          "role": "financing_conditions_and_policy",
+          "key": "stage",
           "sourceIndicators": [
+            "cape",
+            "top5_weight",
+            "nvda_fpe",
+            "hyperscaler_capex_yoy",
+            "vc_ai_share",
+            "nvda_invest_revenue",
+            "ai_ipo_pipeline",
+            "debt_capex_ratio",
+            "enterprise_deploy",
+            "ceo_hedging"
+          ],
+          "summaryZh": "泡沫成熟度为60.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为41.9（红灯）；前 5 大权重占比为≈28.4%（红灯）；NVDA 远期 PE为≈19x（绿灯）；Hyperscaler 资本开支增速为+75%（黄灯）；Big5 资本开支/经营现金流为≈83%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。"
+        },
+        {
+          "key": "trigger",
+          "sourceIndicators": [
+            "mag4_fcf_yoy",
+            "breadth_50d",
+            "spy_vs_rsp_6m",
+            "insider_sell_buy",
             "hy_oas",
-            "dc_abs_spread",
             "neocloud_credit",
+            "token_volume_mom",
+            "arr_2nd_deriv",
+            "cloud_rpo_growth",
+            "accounting_events",
             "fed_policy",
             "capex_reaction"
           ],
-          "summaryZh": "信用端仍托底: 高收益债利差 315 bps（绿）、数据中心 ABS 利差 稳定（黄）、Neocloud 信用事件 本轮扫描未见确认事件/正式Watch（绿）；宏观端则是 Fed 政策方向 年末路径隐含加息（红），叠加 资本开支指引市场反应 奖励（绿）。这让本期更像高风险观察，而不是信用断裂式顶部。"
+          "summaryZh": "破裂临近度为34.6–42.3。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差待确认；现有材料不足以给出这些指标的单一灯色。"
         },
         {
-          "key": "override_conclusion",
-          "role": "final_judgment",
+          "key": "verdict",
           "sourceIndicators": [
             "cape",
             "top5_weight",
@@ -327,879 +197,90 @@
             "breadth_50d",
             "fed_policy"
           ],
-          "summaryZh": "因此，尽管红灯比例仍在「中度警戒」区间，双类压力共振（估值 2/3 红（CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈28.4%）；资金面 3/4 红（Big5 资本开支/经营现金流 ≈83%、AI 占 VC 投资比重 64.2%、NVDA 客户投资/收入比 ≈41%））抬高综合判读。红灯集中在 CAPE 周期调整 PE 41.9、前 5 大权重占比 ≈28.4%、Big5 资本开支/经营现金流 ≈83%、AI 占 VC 投资比重 64.2%、NVDA 客户投资/收入比 ≈41%、S&P 50 日均线上方比例 ≈35%、Fed 政策方向 年末路径隐含加息；有效判读维持「高风险预警」。"
+          "summaryZh": "综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。"
+        },
+        {
+          "key": "limitations",
+          "sourceIndicators": [],
+          "summaryZh": "上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。"
+        }
+      ],
+      "evidenceGaps": [
+        "dc_abs_spread"
+      ],
+      "evidenceHighlights": [
+        {
+          "id": "cape",
+          "note_summary": "multpl.com 最新可得数据 CAPE = 41.87,距 2000 年互联网泡沫峰值 44.19 约 5%;earnings yield ≈ 2.4%。阈值:>35 红 / 25-35 黄 / <25 绿"
+        },
+        {
+          "id": "top5_weight",
+          "note_summary": "SPY 持仓表最新可得数据:前 5 大权重 NVDA / AAPL / MSFT / AMZN / GOOGL 合计 ≈28.4%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿"
+        },
+        {
+          "id": "nvda_fpe",
+          "note_summary": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 19.0x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿"
+        },
+        {
+          "id": "hyperscaler_capex_yoy",
+          "note_summary": "公开季报现金流显示 AMZN/MSFT/GOOGL/META 滚动 4 季 capex 合计 $511B,同比 +75.3%(上年同期 $291B);开支仍在加速扩张。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿"
+        },
+        {
+          "id": "mag4_fcf_yoy",
+          "note_summary": "公开季报现金流显示 AMZN/MSFT/GOOGL/META/ORCL 滚动 4 季经营现金流 $707B、cash capex $586B,capex/OCF ≈82.9%(上年同期 61.9%,变化 +21.0%);2/5 家 capex 已超过 OCF。该口径采用 Epoch/Apollo 式 hyperscaler 现金流覆盖率,比单纯 FCF YoY 更敏感。阈值:≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿"
+        },
+        {
+          "id": "vc_ai_share",
+          "note_summary": "10/5 发布的全球 Q3 数据：AI $102B / 总 VC $159B = 64.2%（报道约 64%），仍超过 50% 红线。主序列由 PitchBook 美国切为 Crunchbase 全球季度，首期不算跨口径环比。（沿用最近一期可用样本）"
+        },
+        {
+          "id": "nvda_invest_revenue",
+          "note_summary": "分子=公开披露投资承诺 累计股权投资承诺 $110B+(含 OpenAI $30B)+ GPU 抵押债务 $15B+(2026-06-07 口径,$125B);分母=公开季报现金流显示 NVDA LTM 收入 $303.0B;比率 ≈41.3%,仍远超 Lucent 1999 循环融资峰值 24%。阈值:>30% 红 / 15-30% 黄 / <15% 绿"
+        },
+        {
+          "id": "breadth_50d",
+          "note_summary": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 175 只收于 50 日均线上方,占比 ≈34.9%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
+        },
+        {
+          "id": "spy_vs_rsp_6m",
+          "note_summary": "公开市场价格显示 6 个月回报:SPY +14.6% vs 等权重 RSP +8.3%,市值加权领先 +6.3%——头部独涨、广度未跟上。阈值:>10% 红 / 5-10% 黄 / <5% 绿"
+        },
+        {
+          "id": "insider_sell_buy",
+          "note_summary": "SEC EDGAR 不可达标的 NVDA/PLTR/AVGO 已改用 Xoomar public Form 4 HTTPS mirror。NVDA / PLTR / AVGO 近 12 个月范围内最新可得 Form 4:累计卖出 $2.2B、买入 $0M,卖买比 ≈>99x(买入不足 $1M 时按 $1M 下限折算);2000 年顶部极值约 23x。阈值:>20x 红 / 5-20x 黄 / <5x 绿 备用样本存在记录上限且买入金额接近零，卖压方向偏高，但极端倍数不能与完整周期聚合直接比较，因此保守维持黄灯。"
+        },
+        {
+          "id": "ai_ipo_pipeline",
+          "note_summary": "Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；公开申报确认样本暂缺;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。"
+        },
+        {
+          "id": "hy_oas",
+          "note_summary": "FRED 显示 ICE BofA 高收益债 OAS = 3.15%(315 bps,2026-10-08);长期均值约 394 bps——信用市场对 AI capex 烧钱仍未定价压力,是当前最支撑多头的指标。阈值:>500 红 / 350-500 黄 / <350 绿"
+        },
+        {
+          "id": "debt_capex_ratio",
+          "note_summary": "Morgan Stanley 公开研究页解析:2025-2028 数据中心总 capex 约 $2.9T,其中 hyperscaler cash flows 覆盖约 $1.4T,隐含外部融资缺口约 $1.5T,占 capex ≈52%;债务/类债子项(公司债、ABS/CMBS、private credit/JV debt)约 $1.15T,占 capex ≈40%。本项以外部融资缺口/Capex 为主口径,不是单一债券发行额。阈值:>60% 红 / 30-60% 黄 / <30% 绿"
+        },
+        {
+          "id": "neocloud_credit",
+          "note_summary": "近90天对CoreWeave、Nebius、Nscale、Lambda、Crusoe开展具名降级/违约/不良交换及正式Watch检索，已读公司公告和可访问评级页，未发现符合定义的事件。CoreWeave贷款Ba2/BB+与Lambda贷款Baa2是背景，不把高杠杆、股价下跌或股票分析师降级当作正式信用Watch；Moody/S&P访问缺口明示，结果是尽职扫描结论。（沿用最近一期可用样本）"
+        },
+        {
+          "id": "token_volume_mom",
+          "note_summary": "公开模型平台用量显示:最近 4 周合计 612.44T tokens,较前 4 周 +36.5%;上一窗口为 +73.1%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿"
+        },
+        {
+          "id": "arr_2nd_deriv",
+          "note_summary": "本轮取得OpenAI9月实际年化收入近$50B（10/8Reuters报道，净口径），Anthropic仍为7月底$65B（8/17报道；5月公司披露$47B），两者日期各保留。$70B→$50B是gross/net展示纠正，不是收入下降；Anthropic年末$100B目标不再冒充已实现加速。旧绿灯依据预测，OpenAI旧$40B口径及完整最近3个月同口径序列未核实，无法可靠重算二阶导或综合方向；沿用9/18历史显示及颜色并计stale，部分新锚另记raw，不伪称current。（沿用最近一期可用样本）"
         }
       ],
       "limitations": [
-        "21 项公开数据口径、6 项研究口径。",
-        "4 项新闻或调查口径采用多源确认,灯色按样本强度保守发布。",
-        "黄灯压力读数 47.8% 仅按固定核心 23 项计算并用于趋势观察,不改变红灯比例阈值。",
-        "AI 私募二级市场标价、Token 增速/收入增速、GPU 租赁现货价、前沿模型能力进展为影子观察,不进入主分或升级规则。",
-        "当前无过期指标。",
-        "历史页面仅用于周度结构对照；本期正文由当前指标重新生成。"
+        "上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。"
       ]
-    },
-    "weekly_editorial": {
-      "schemaVersion": "bubble-watch-weekly-editorial-production-v1",
-      "status": "valid",
-      "displayEnabled": true,
-      "generatedAt": "2026-10-13T05:54:03.392Z",
-      "updatedAt": "2026-10-13T05:54:03.392Z",
-      "asOfDate": "2026-10-12",
-      "provider": "deepseek",
-      "model": "deepseek-v4-flash",
-      "mode": "external_ai_weekly_editorial",
-      "sourceMode": "weekly_news_and_site_structured_compact_v1",
-      "output": {
-        "schemaVersion": "bubble-watch-weekly-editorial-output-v1",
-        "generatedAt": "2026-10-13T05:54:03.015Z",
-        "asOfDate": "2026-10-12",
-        "provider": "deepseek",
-        "model": "deepseek-v4-flash",
-        "mode": "external_ai_weekly_editorial",
-        "headlineZh": "红灯比例回落至30.4%，亢奋与零星火花并存",
-        "leadZh": "本期固定核心23项为7红/8黄/8绿，红灯比例由34.8%降至30.4%；两轴判读为泡沫成熟度60.0（亢奋 Euphoria）、破裂临近度38.5（零星火花），有效判读维持「高风险预警」。翻灯2项：数据中心ABS利差红转黄、Neocloud信用事件黄转绿。资金面与估值压力仍在，信用端与需求兑现提供对冲，本期更像高风险观察而非信用断裂式顶部。",
-        "weeklyTimeline": [
-          {
-            "date": "2026-10-08",
-            "titleZh": "OpenAI年化收入近500亿美元",
-            "detailZh": "据CNBC报道，OpenAI向投资者称9月底年化收入约500亿美元，NVDA、ORCL、CoreWeave等AI股当日走低。该报道为媒体口径，非公司审计确认收入。",
-            "sourceRefIds": [
-              "news:ai_demand_fundamentals:0b0f1a3d5c4115",
-              "indicator:arr_2nd_deriv"
-            ],
-            "sourceIndicatorIds": [
-              "arr_2nd_deriv"
-            ]
-          },
-          {
-            "date": "2026-10-07",
-            "titleZh": "AI巨头寻求大额债务融资",
-            "detailZh": "据The Wall Street Journal报道，ORCL、Broadcom与SpaceX寻求为AI芯片支付安排大额债务融资，Broadcom为OpenAI定制芯片安排逾500亿美元融资。该报道为媒体披露，融资是否落地未确认。",
-            "sourceRefIds": [
-              "news:ai_financing_credit:788e1f3bea5fee",
-              "indicator:debt_capex_ratio"
-            ],
-            "sourceIndicatorIds": [
-              "debt_capex_ratio"
-            ]
-          },
-          {
-            "date": "2026-10-12",
-            "titleZh": "Intel与Broadcom警告资本瓶颈",
-            "detailZh": "据CNBC报道，Intel与Broadcom首席执行官警告，资本获取可能成为AI热潮的主要约束，即便算力基础设施需求仍超过供给。属高管观点，非已发生事实。",
-            "sourceRefIds": [
-              "news:ai_financing_credit:3c4b61e3da6d1e",
-              "indicator:ceo_hedging"
-            ],
-            "sourceIndicatorIds": [
-              "ceo_hedging"
-            ]
-          }
-        ],
-        "scorecardSynthesisZh": "固定核心23项本周7红/8黄/8绿，红灯比例30.4%；27张展示卡8红/8黄/11绿，其中4项影子观察不进入判读。两轴为成熟度60.0（亢奋）、临近度38.5（零星火花），有效判读「高风险预警」。黄灯压力读数47.8%仅用于趋势观察，不改变红灯阈值；影子项不进入主分或升级规则。",
-        "scorecardSourceIndicatorIds": [
-          "cape",
-          "top5_weight",
-          "mag4_fcf_yoy",
-          "vc_ai_share",
-          "nvda_invest_revenue",
-          "breadth_50d",
-          "fed_policy",
-          "dc_abs_spread",
-          "neocloud_credit"
-        ],
-        "keyTensions": [
-          {
-            "titleZh": "需求兑现与烧钱并存",
-            "detailZh": "云厂商递延收入增速+152%（绿）、企业生产部署率72%（绿）显示需求仍在兑现；但Big5资本开支/经营现金流≈83%（红）、AI占VC投资比重64.2%（红）说明资金消耗同步放大。两者并存，不构成需求崩塌结论。",
-            "sourceIndicatorIds": [
-              "cloud_rpo_growth",
-              "enterprise_deploy",
-              "mag4_fcf_yoy",
-              "vc_ai_share"
-            ],
-            "sourceRefIds": [
-              "indicator:cloud_rpo_growth",
-              "indicator:enterprise_deploy",
-              "indicator:mag4_fcf_yoy",
-              "indicator:vc_ai_share"
-            ]
-          },
-          {
-            "titleZh": "信用托底与融资缺口",
-            "detailZh": "高收益债利差315bps（绿）、Neocloud信用事件未见确认（绿）显示信用端尚未定价压力；但全口径外部融资/Capex比≈52%（黄），叠加The Wall Street Journal报道的大额债务融资安排，融资缺口仍是中期观察点。",
-            "sourceIndicatorIds": [
-              "hy_oas",
-              "neocloud_credit",
-              "debt_capex_ratio"
-            ],
-            "sourceRefIds": [
-              "indicator:hy_oas",
-              "indicator:neocloud_credit",
-              "indicator:debt_capex_ratio",
-              "news:ai_financing_credit:788e1f3bea5fee"
-            ]
-          }
-        ],
-        "categoryAnalysis": [
-          {
-            "category": "valuation",
-            "detailZh": "CAPE 41.9（红）、前5大权重≈28.4%（红）显示估值与集中度压力；NVDA远期PE≈19x（绿）说明龙头自身倍数不高。影子项AI私募二级标价红：Anthropic折价7.54%、OpenAI溢价12.43%。",
-            "sourceIndicatorIds": [
-              "cape",
-              "top5_weight",
-              "nvda_fpe",
-              "private_secondary_marks"
-            ],
-            "sourceRefIds": [
-              "indicator:cape",
-              "indicator:top5_weight",
-              "indicator:nvda_fpe",
-              "indicator:private_secondary_marks"
-            ]
-          },
-          {
-            "category": "capital",
-            "detailZh": "Hyperscaler资本开支增速+75%（黄）、Big5资本开支/经营现金流≈83%（红）、AI占VC投资64.2%（红）、NVDA客户投资/收入比≈41%（红）。据The Wall Street Journal报道，ORCL、Broadcom与SpaceX寻求大额债务融资，资本获取成为焦点。",
-            "sourceIndicatorIds": [
-              "hyperscaler_capex_yoy",
-              "mag4_fcf_yoy",
-              "vc_ai_share",
-              "nvda_invest_revenue"
-            ],
-            "sourceRefIds": [
-              "indicator:hyperscaler_capex_yoy",
-              "indicator:mag4_fcf_yoy",
-              "indicator:vc_ai_share",
-              "indicator:nvda_invest_revenue",
-              "news:ai_financing_credit:788e1f3bea5fee"
-            ]
-          },
-          {
-            "category": "market_structure",
-            "detailZh": "S&P 50日均线上方比例≈35%（红）、市值加权vs等权重+6.3%（黄）、AI龙头内部人卖买比高卖压·覆盖受限（黄）、AI一级发行5家递表（黄）。据Morningstar报道，指数新高由AI龙头带动，广度极差。",
-            "sourceIndicatorIds": [
-              "breadth_50d",
-              "spy_vs_rsp_6m",
-              "insider_sell_buy",
-              "ai_ipo_pipeline"
-            ],
-            "sourceRefIds": [
-              "indicator:breadth_50d",
-              "indicator:spy_vs_rsp_6m",
-              "indicator:insider_sell_buy",
-              "indicator:ai_ipo_pipeline",
-              "news:market_structure_valuation:4cbb767f451b4b"
-            ]
-          },
-          {
-            "category": "credit",
-            "detailZh": "高收益债利差315bps（绿）、Neocloud信用事件未见确认（绿）、数据中心ABS利差稳定（黄）、全口径外部融资/Capex比≈52%（黄）。信用端尚未定价AI烧钱压力，但融资缺口方向需持续跟踪。",
-            "sourceIndicatorIds": [
-              "hy_oas",
-              "neocloud_credit",
-              "dc_abs_spread",
-              "debt_capex_ratio"
-            ],
-            "sourceRefIds": [
-              "indicator:hy_oas",
-              "indicator:neocloud_credit",
-              "indicator:dc_abs_spread",
-              "indicator:debt_capex_ratio"
-            ]
-          },
-          {
-            "category": "fundamentals",
-            "detailZh": "Token月度环比减速+36.5%（黄）、Token增速/收入增速≈1.1x（绿）、GPU租赁中位$3.49/GPU/hr（绿）、ARR二阶导加速（绿）、企业部署率72%（绿）、云递延收入+152%（绿）。需求兑现仍在，但用量增速放缓。",
-            "sourceIndicatorIds": [
-              "token_volume_mom",
-              "token_revenue_ratio",
-              "gpu_rental_price",
-              "arr_2nd_deriv",
-              "enterprise_deploy",
-              "cloud_rpo_growth"
-            ],
-            "sourceRefIds": [
-              "indicator:token_volume_mom",
-              "indicator:token_revenue_ratio",
-              "indicator:gpu_rental_price",
-              "indicator:arr_2nd_deriv",
-              "indicator:enterprise_deploy",
-              "indicator:cloud_rpo_growth"
-            ]
-          },
-          {
-            "category": "macro",
-            "detailZh": "Fed政策方向年末路径隐含加息（红）、资本开支指引市场反应奖励（绿）、CEO表态对冲部分（黄）、会计造假事件0件（绿）。据fool.com报道，Fed会议纪要指向关税、地缘与AI基建为通胀来源，政策路径对高估值构成压制。",
-            "sourceIndicatorIds": [
-              "fed_policy",
-              "capex_reaction",
-              "ceo_hedging",
-              "accounting_events"
-            ],
-            "sourceRefIds": [
-              "indicator:fed_policy",
-              "indicator:capex_reaction",
-              "indicator:ceo_hedging",
-              "indicator:accounting_events",
-              "news:macro_policy:bc792d5ab76dda"
-            ]
-          }
-        ],
-        "historicalComparison": {
-          "period": "1999-06 互联网泡沫顶前9个月",
-          "detailZh": "当前Core颜色向量与1999-06相似度77%（22项分母），与2000-02为73%、2021-11为70%、2007-10为47%。相似度只是颜色向量对照，不是破裂概率或时间预测。差异在于当前信用利差315bps偏松、云递延收入+152%显示需求兑现，与历史顶部阶段的信用与需求背离。",
-          "sourceIndicatorIds": [
-            "hy_oas",
-            "cloud_rpo_growth",
-            "cape",
-            "top5_weight"
-          ],
-          "sourceRefIds": [
-            "indicator:hy_oas",
-            "indicator:cloud_rpo_growth",
-            "indicator:cape",
-            "indicator:top5_weight"
-          ]
-        },
-        "watchNextWeek": [
-          {
-            "conditionZh": "高收益债利差是否维持350bps以下、数据中心ABS利差是否4周走阔≥15bp",
-            "invalidationZh": "若利差快速走阔或出现Neocloud正式信用事件，信用托底判断减弱",
-            "sourceIndicatorIds": [
-              "hy_oas",
-              "dc_abs_spread",
-              "neocloud_credit"
-            ]
-          },
-          {
-            "conditionZh": "S&P 50日均线上方比例能否回到40%以上、市值加权vs等权重差距是否收窄",
-            "invalidationZh": "若广度继续低于40%且权重差距扩大，市场结构压力上升",
-            "sourceIndicatorIds": [
-              "breadth_50d",
-              "spy_vs_rsp_6m"
-            ]
-          },
-          {
-            "conditionZh": "云厂商递延收入与Token用量增速能否维持、Big5资本开支/经营现金流是否突破更高区间",
-            "invalidationZh": "若递延收入减速或现金流覆盖率恶化，需求兑现与烧钱并存格局改变",
-            "sourceIndicatorIds": [
-              "cloud_rpo_growth",
-              "token_volume_mom",
-              "mag4_fcf_yoy"
-            ]
-          }
-        ],
-        "dataGaps": [
-          "专业媒体摘要仅支持注明出处的报道或机构观点，不代表独立核实，不得补写未提供正文。",
-          "部分搜索结果仅为discovery_only，不得单独支撑事实性判断。",
-          "AI私募二级标价、Token增速/收入增速、GPU租赁价、前沿模型进展为影子观察，不进入主分。",
-          "新闻搜索存在重复转载与延迟收录，本层不确认航道中断、制裁影响或油价方向。"
-        ],
-        "sourceAttribution": [
-          {
-            "sourceRefId": "news:ai_demand_fundamentals:0b0f1a3d5c4115",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "CNBC报道，单一署名媒体摘要。"
-          },
-          {
-            "sourceRefId": "indicator:arr_2nd_deriv",
-            "claimType": "site_structured_data",
-            "noteZh": "公开ARR里程碑，部分沿用历史样本。"
-          },
-          {
-            "sourceRefId": "news:ai_financing_credit:788e1f3bea5fee",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "WSJ报道，单一署名媒体摘要。"
-          },
-          {
-            "sourceRefId": "indicator:debt_capex_ratio",
-            "claimType": "site_structured_data",
-            "noteZh": "数据中心融资缺口研究。"
-          },
-          {
-            "sourceRefId": "news:ai_financing_credit:3c4b61e3da6d1e",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "CNBC报道，单一署名媒体摘要。"
-          },
-          {
-            "sourceRefId": "indicator:ceo_hedging",
-            "claimType": "site_structured_data",
-            "noteZh": "公开新闻与高管表态。"
-          },
-          {
-            "sourceRefId": "indicator:cloud_rpo_growth",
-            "claimType": "site_structured_data",
-            "noteZh": "云厂商订单与backlog披露。"
-          },
-          {
-            "sourceRefId": "indicator:enterprise_deploy",
-            "claimType": "site_structured_data",
-            "noteZh": "企业AI部署调查。"
-          },
-          {
-            "sourceRefId": "indicator:mag4_fcf_yoy",
-            "claimType": "site_structured_data",
-            "noteZh": "公开季度现金流，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:vc_ai_share",
-            "claimType": "site_structured_data",
-            "noteZh": "VC市场季度研究，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:hy_oas",
-            "claimType": "site_structured_data",
-            "noteZh": "ICE BofA高收益债利差，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:neocloud_credit",
-            "claimType": "site_structured_data",
-            "noteZh": "Neocloud公开融资与信用事件扫描。"
-          },
-          {
-            "sourceRefId": "indicator:cape",
-            "claimType": "site_structured_data",
-            "noteZh": "CAPE历史估值序列，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:top5_weight",
-            "claimType": "site_structured_data",
-            "noteZh": "SPY持仓集中度，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:nvda_fpe",
-            "claimType": "site_structured_data",
-            "noteZh": "NVDA远期估值，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:private_secondary_marks",
-            "claimType": "site_structured_data",
-            "noteZh": "私募二级标价，影子观察项。"
-          },
-          {
-            "sourceRefId": "indicator:hyperscaler_capex_yoy",
-            "claimType": "site_structured_data",
-            "noteZh": "公开季度现金流，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:nvda_invest_revenue",
-            "claimType": "site_structured_data",
-            "noteZh": "公开投资承诺与收入，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:breadth_50d",
-            "claimType": "site_structured_data",
-            "noteZh": "行情与成份股名单实算，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:spy_vs_rsp_6m",
-            "claimType": "site_structured_data",
-            "noteZh": "市值加权与等权重ETF，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:insider_sell_buy",
-            "claimType": "site_structured_data",
-            "noteZh": "内部人交易披露，覆盖受限。"
-          },
-          {
-            "sourceRefId": "indicator:ai_ipo_pipeline",
-            "claimType": "site_structured_data",
-            "noteZh": "一级市场公开报道，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "news:market_structure_valuation:4cbb767f451b4b",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "Morningstar报道，单一署名媒体摘要。"
-          },
-          {
-            "sourceRefId": "indicator:dc_abs_spread",
-            "claimType": "site_structured_data",
-            "noteZh": "数据中心证券样本与ABS基准。"
-          },
-          {
-            "sourceRefId": "indicator:token_volume_mom",
-            "claimType": "site_structured_data",
-            "noteZh": "公开模型平台用量，站点结构化数据。"
-          },
-          {
-            "sourceRefId": "indicator:token_revenue_ratio",
-            "claimType": "site_structured_data",
-            "noteZh": "公开模型平台用量与价格口径，影子观察项。"
-          },
-          {
-            "sourceRefId": "indicator:gpu_rental_price",
-            "claimType": "site_structured_data",
-            "noteZh": "GPU租赁挂牌价，影子观察项。"
-          },
-          {
-            "sourceRefId": "indicator:fed_policy",
-            "claimType": "site_structured_data",
-            "noteZh": "Fed点阵图/期货/FRED。"
-          },
-          {
-            "sourceRefId": "indicator:capex_reaction",
-            "claimType": "site_structured_data",
-            "noteZh": "公开财报与相对收益窗口。"
-          },
-          {
-            "sourceRefId": "indicator:accounting_events",
-            "claimType": "site_structured_data",
-            "noteZh": "SEC/DOJ执法公告扫描。"
-          },
-          {
-            "sourceRefId": "news:macro_policy:bc792d5ab76dda",
-            "claimType": "cross_checked_news_context",
-            "noteZh": "fool.com报道，多源交叉确认，仅摘要。"
-          }
-        ],
-        "confidence": {
-          "level": "medium",
-          "score": 62,
-          "reasonZh": "核心23项与结构化指标覆盖较全，信用与需求端证据明确；但媒体摘要仅支持注明出处报道，影子项与部分口径沿用历史样本，故维持中等置信。"
-        },
-        "auditFlags": [
-          "display_only",
-          "validator_required",
-          "no_score_impact"
-        ],
-        "boundaries": {
-          "displayOnly": true,
-          "commentaryOnly": true,
-          "externalAiGenerated": true,
-          "usesExternalAiApi": true,
-          "affectsBubbleWatchScoring": false,
-          "affectsCore23": false,
-          "affectsShadow4": false,
-          "affectsStageTrigger": false,
-          "affectsGfrrScoring": false,
-          "affectsDecisionModel": false,
-          "affectsExecutionLock": false,
-          "affectsPositionGuidance": false,
-          "notInvestmentAdvice": true
-        }
-      },
-      "sourceLedger": [
-        {
-          "id": "indicator:cape",
-          "kind": "indicator",
-          "sourceName": "CAPE 历史估值序列",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "cape"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:top5_weight",
-          "kind": "indicator",
-          "sourceName": "SPY 持仓集中度",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "top5_weight"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:nvda_fpe",
-          "kind": "indicator",
-          "sourceName": "NVDA 远期估值",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "nvda_fpe"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:private_secondary_marks",
-          "kind": "indicator",
-          "sourceName": "Forge / Caplight 私募二级标价",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "private_secondary_marks"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:hyperscaler_capex_yoy",
-          "kind": "indicator",
-          "sourceName": "公开季度现金流",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "hyperscaler_capex_yoy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:mag4_fcf_yoy",
-          "kind": "indicator",
-          "sourceName": "公开季度现金流",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "mag4_fcf_yoy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:vc_ai_share",
-          "kind": "indicator",
-          "sourceName": "VC 市场季度研究",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "vc_ai_share"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:nvda_invest_revenue",
-          "kind": "indicator",
-          "sourceName": "公开投资承诺与收入",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "nvda_invest_revenue"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:breadth_50d",
-          "kind": "indicator",
-          "sourceName": "Yahoo 行情与维基百科成份股名单实算",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "breadth_50d"
-          ],
-          "asOfDate": "2026-10-09"
-        },
-        {
-          "id": "indicator:spy_vs_rsp_6m",
-          "kind": "indicator",
-          "sourceName": "市值加权与等权重 ETF",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "spy_vs_rsp_6m"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:insider_sell_buy",
-          "kind": "indicator",
-          "sourceName": "内部人交易披露",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "insider_sell_buy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:ai_ipo_pipeline",
-          "kind": "indicator",
-          "sourceName": "一级市场公开报道",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "ai_ipo_pipeline"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:hy_oas",
-          "kind": "indicator",
-          "sourceName": "ICE BofA 高收益债利差",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "hy_oas"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:dc_abs_spread",
-          "kind": "indicator",
-          "sourceName": "数据中心证券样本与 ABS 基准",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "dc_abs_spread"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:debt_capex_ratio",
-          "kind": "indicator",
-          "sourceName": "数据中心融资缺口研究",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "debt_capex_ratio"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:neocloud_credit",
-          "kind": "indicator",
-          "sourceName": "Neocloud 公开融资与信用事件",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "neocloud_credit"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:token_volume_mom",
-          "kind": "indicator",
-          "sourceName": "公开模型平台用量",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "token_volume_mom"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:token_revenue_ratio",
-          "kind": "indicator",
-          "sourceName": "公开模型平台用量与价格口径",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "token_revenue_ratio"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:gpu_rental_price",
-          "kind": "indicator",
-          "sourceName": "Thunder Compute / getdeploying",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "gpu_rental_price"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:arr_2nd_deriv",
-          "kind": "indicator",
-          "sourceName": "公开 ARR 里程碑",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "arr_2nd_deriv"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:enterprise_deploy",
-          "kind": "indicator",
-          "sourceName": "企业 AI 部署调查",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "enterprise_deploy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:cloud_rpo_growth",
-          "kind": "indicator",
-          "sourceName": "云厂商订单与 backlog 披露",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "cloud_rpo_growth"
-          ],
-          "asOfDate": "2026-06-30"
-        },
-        {
-          "id": "indicator:accounting_events",
-          "kind": "indicator",
-          "sourceName": "SEC / DOJ 执法公告",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "accounting_events"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:fed_policy",
-          "kind": "indicator",
-          "sourceName": "Fed 点阵图/期货/FRED",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "fed_policy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:capex_reaction",
-          "kind": "indicator",
-          "sourceName": "公开财报与相对收益窗口",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "capex_reaction"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:ceo_hedging",
-          "kind": "indicator",
-          "sourceName": "公开新闻与高管表态",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "ceo_hedging"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "news:macro_policy:bc792d5ab76dda",
-          "kind": "news",
-          "sourceName": "fool.com",
-          "sourceClass": "cross_checked",
-          "title": "Fed Chair Kevin Warsh and the FOMC Just Fired a Warning Shot at the Second-Priciest Stock Market in History | The Motley Fool",
-          "url": "https://fool.com/investing/2026/10/12/fed-chair-kevin-warsh-fomc-fired-warning-shot-at-second-priciest-stock-market-in-history",
-          "domain": "fool.com",
-          "publishedAt": "2026-10-12T08:06:02.000Z",
-          "contentScope": "excerpt",
-          "topic": "macro_policy",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "fool.com",
-            "theglobeandmail.com"
-          ]
-        },
-        {
-          "id": "news:market_structure_valuation:4cbb767f451b4b",
-          "kind": "news",
-          "sourceName": "Morningstar",
-          "sourceClass": "attributed_media",
-          "title": "Q4 2026 US Stock Market Outlook: Individual Stock Selection Looks Increasingly Important",
-          "url": "https://global.morningstar.com/en-nd/markets/q4-us-2026-stock-market-outlook-individual-stock-selection-looks-increasingly-important",
-          "domain": "global.morningstar.com",
-          "publishedAt": "2026-10-12T08:54:21.000Z",
-          "contentScope": "excerpt",
-          "topic": "market_structure_valuation",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "global.morningstar.com"
-          ]
-        },
-        {
-          "id": "news:ai_financing_credit:3c4b61e3da6d1e",
-          "kind": "news",
-          "sourceName": "CNBC",
-          "sourceClass": "attributed_media",
-          "title": "Intel, Broadcom CEOs warn capital crunch could become AI's biggest bottleneck",
-          "url": "https://cnbc.com/2026/10/12/intel-broadcom-ceos-warn-capital-crunch-could-become-ai-bottleneck.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-10-12T08:27:52.000Z",
-          "contentScope": "excerpt",
-          "topic": "ai_financing_credit",
-          "providers": [
-            "brave"
-          ],
-          "supportingDomains": [
-            "cnbc.com"
-          ]
-        },
-        {
-          "id": "news:ai_demand_fundamentals:0b0f1a3d5c4115",
-          "kind": "news",
-          "sourceName": "CNBC",
-          "sourceClass": "attributed_media",
-          "title": "Nvidia, Oracle, CoreWeave and other AI stocks sink on OpenAI revenue report",
-          "url": "https://cnbc.com/2026/10/08/open-ai-revenue-nvidia-oracle-coreweave.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-10-08T18:14:54.000Z",
-          "contentScope": "excerpt",
-          "topic": "ai_demand_fundamentals",
-          "providers": [
-            "brave"
-          ],
-          "supportingDomains": [
-            "cnbc.com"
-          ]
-        },
-        {
-          "id": "news:ai_financing_credit:788e1f3bea5fee",
-          "kind": "news",
-          "sourceName": "The Wall Street Journal",
-          "sourceClass": "attributed_media",
-          "title": "Exclusive | Oracle, Broadcom and SpaceX Seek Blockbuster Debt Deals To Pay for AI Chips - WSJ",
-          "url": "https://wsj.com/tech/oracle-broadcom-and-spacex-seek-blockbuster-debt-deals-to-pay-for-ai-chips-848e8032",
-          "domain": "wsj.com",
-          "publishedAt": "2026-10-07T21:01:00.000Z",
-          "contentScope": "excerpt",
-          "topic": "ai_financing_credit",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "wsj.com"
-          ]
-        }
-      ],
-      "validation": {
-        "validator": "check:bubble-watch-weekly-editorial-contract",
-        "status": "pass",
-        "validatedAt": "2026-10-13T05:54:03.392Z",
-        "artifactDigest": "8bf4c2f496a2c6109f9c640ba8f7cbc8c58a84a48c75b16aa286ce5e5c5d6295"
-      },
-      "qualityReview": {
-        "status": "warn",
-        "recommendation": "approved_for_read_only_display",
-        "promotionEligible": false,
-        "reviewedAt": "2026-10-13T05:54:03.214Z",
-        "dimensions": {
-          "structuralContract": "pass",
-          "sourceReferenceIntegrity": "pass",
-          "newsEvidenceQuality": "warn",
-          "scoreBoundaryIntegrity": "pass",
-          "unsafeWording": "pass",
-          "incrementalEditorialValue": "warn",
-          "fallbackReadiness": "pass"
-        },
-        "warnings": [
-          "部分新闻来自专业媒体摘要或机构观点，尚未独立核实；按注明出处的有限内容展示。",
-          "可见判读长度 4258 字，超出 1800–4200 字兼容窗口"
-        ]
-      },
-      "provenance": {
-        "generatedBy": "github_actions_workflow",
-        "humanApproved": false,
-        "inputDigest": "3e678d0554a19a7f803c134a87f5bdfbc13e341806d30718e75514998bc51e24",
-        "editorialFormat": "full",
-        "artifactDigest": "8bf4c2f496a2c6109f9c640ba8f7cbc8c58a84a48c75b16aa286ce5e5c5d6295",
-        "sourceCommit": "2a64059db8e8403762811dd0f000afdf2cffbcd9",
-        "runId": "38353679397",
-        "newsDiscoveryStatus": "ok",
-        "liveNewsProviderCount": 2
-      },
-      "freshness": {
-        "artifactGeneratedAt": "2026-10-13T05:54:03.015Z",
-        "sourceAsOfDate": "2026-10-12",
-        "maxAgeHours": 240,
-        "isStale": false
-      },
-      "fallback": {
-        "available": true,
-        "source": "bubble-watch-narrative-v2",
-        "field": "summary.verdict_desc"
-      },
-      "boundaries": {
-        "displayOnly": true,
-        "commentaryOnly": true,
-        "externalAiGenerated": true,
-        "usesExternalAiApi": true,
-        "frontendDisplayApproved": true,
-        "affectsBubbleWatchScoring": false,
-        "affectsCore23": false,
-        "affectsShadow4": false,
-        "affectsStageTrigger": false,
-        "affectsGfrrScoring": false,
-        "affectsDecisionModel": false,
-        "affectsExecutionLock": false,
-        "affectsPositionGuidance": false,
-        "notInvestmentAdvice": true
-      }
     }
   },
   "scoring": {
-    "model_version": "bubble-watch-v2-core23-shadow4",
+    "model_version": "bubble-watch-v3-core23-shadow4-r1",
     "primary_universe": "core",
     "core_indicator_ids": [
       "cape",
@@ -1249,30 +330,23 @@
         "trigger": "13/26-week NDX or fixed AI-basket max drawdown >=20%"
       }
     },
-    "base_tier": "caution",
+    "base_tier": null,
     "effective_tier": "alert",
-    "override_active": true,
-    "override_rule": "固定核心 23 项的双类红灯共振或 Stage × Trigger 共振可升级判读;主分仍为核心红灯比例",
-    "override_rules": {
-      "category_resonance": "红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」",
-      "two_axis_alert": "stage ≥60 且 trigger ≥50 → 至少「高风险预警」",
-      "two_axis_top": "stage ≥60 且 trigger ≥65 → 「系统性顶部」"
-    },
+    "override_active": false,
     "two_axis_upgrade": null,
-    "resonant_categories": [
-      {
-        "key": "valuation",
-        "zh": "估值",
-        "red": 2,
-        "total": 3
-      },
-      {
-        "key": "capital",
-        "zh": "资金面",
-        "red": 3,
-        "total": 4
-      }
-    ]
+    "tier_range": {
+      "lower": "alert",
+      "upper": "alert"
+    },
+    "unknown_core_ids": [
+      "dc_abs_spread"
+    ],
+    "override_rule": "固定核心23项；缺证据保留区间，原分类与两轴共振规则不变",
+    "override_rules": {
+      "category_resonance": "红灯占比≥50%的分类≥2个→至少高风险预警",
+      "two_axis_alert": "stage≥60且trigger≥50→至少高风险预警",
+      "two_axis_top": "stage≥60且trigger≥65→系统性顶部"
+    }
   },
   "indicators": [
     {
@@ -1954,147 +1028,24 @@
       "name_en": "Data Center ABS Spread",
       "name_zh": "数据中心 ABS 利差",
       "threshold_text": "走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿",
-      "source_name": "数据中心证券样本与 ABS 基准",
-      "status": "yellow",
-      "value_display": "稳定",
-      "note": "数据中心 ABS/类 REITs 样本 8 只,最新样本 奥飞一期2026-1(2026-08-10);中国:资产支持证券到期收益率(AAA):6个月 最新 1.43%,4 周 -2.5bp、12 周 +0.7bp;新闻证据 3 条,支持词 0/压力词 0。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿",
-      "as_of": "2026-10-12",
+      "source_name": "美国数据中心可比利差观察（合格观测暂缺）",
+      "status": "unknown",
+      "value_display": "待确认",
+      "note": "本期未获得已审且可比的美国数据中心ABS债券与同日基准报价，因此保留待确认。中国通用ABS绝对收益率不替代美国数据中心信用利差，新闻、票息及旧期红灯也不补位。",
+      "as_of": null,
       "stale": false,
+      "evidence_gap": {
+        "policy": "bubble-qualified-evidence-v1",
+        "reasonCode": "dc_abs_direct_spread_unavailable",
+        "checkedDate": "2026-10-15"
+      },
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-10-12T13:21:04.438Z",
+        "checkedAt": "2026-10-15T00:17:32.960Z",
         "detail": {
-          "source": "Wind MCP paid optional",
-          "directDataCenterYieldAvailable": false,
-          "sampleRows": [
-            {
-              "windCode": "121643.SZ",
-              "shortName": "奥飞一期2026-1",
-              "issueDate": "2026-08-10",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
-            },
-            {
-              "windCode": "268025.SH",
-              "shortName": "有孚网络",
-              "issueDate": "2026-03-04",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
-            },
-            {
-              "windCode": "267786.SH",
-              "shortName": "世纪乌兰",
-              "issueDate": "2026-01-26",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
-            },
-            {
-              "windCode": "267759.SH",
-              "shortName": "世纪泓源",
-              "issueDate": "2026-01-20",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
-            },
-            {
-              "windCode": "266616.SH",
-              "shortName": "G互联25A",
-              "issueDate": "2025-10-31",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
-            },
-            {
-              "windCode": "121607.SZ",
-              "shortName": "R润泽01",
-              "issueDate": "2025-07-22",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "REITs类-公募REITs-新型基础设施REITs-数据中心"
-            },
-            {
-              "windCode": "265749.SH",
-              "shortName": "R万国01",
-              "issueDate": "2025-07-22",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "REITs类-公募REITs-新型基础设施REITs-数据中心"
-            },
-            {
-              "windCode": "264635.SH",
-              "shortName": "25万数1A",
-              "issueDate": "2025-03-19",
-              "issueAmountB": null,
-              "couponRate": null,
-              "valuationYield": null,
-              "latestYield": null,
-              "assetClass": "持有型不动产-企业ABS-持有型不动产-数据中心"
-            }
-          ],
-          "benchmark": {
-            "name": "中国:资产支持证券到期收益率(AAA):6个月",
-            "code": "M1016265",
-            "latest": {
-              "date": "20261012",
-              "value": 1.432
-            },
-            "p4w": {
-              "date": "20260914",
-              "value": 1.4566
-            },
-            "p12w": {
-              "date": "20260720",
-              "value": 1.4253
-            },
-            "change4wBp": -2.4599999999999955,
-            "change12wBp": 0.6699999999999928,
-            "observationCount": 438
-          },
-          "news": {
-            "itemCount": 3,
-            "supportCount": 0,
-            "pressureCount": 0,
-            "yieldRangePct": null,
-            "issueTotalB": null,
-            "recentDataCenterIssueB": null,
-            "topTitles": [
-              {
-                "title": "万国数据2025年第1期数据中心ABS成功发行 规模达16.09亿元",
-                "date": "2025-03-10",
-                "relevance": 0.3534
-              },
-              {
-                "title": "国金资管数据中心ABS项目获上交所受理 拟发行23.39亿元",
-                "date": "2026-08-31",
-                "relevance": 0.3436
-              },
-              {
-                "title": "国金资管-世纪乌兰数据中心ABS项目更新为已受理 拟发行23.39亿元",
-                "date": "2026-09-17",
-                "relevance": 0.3427
-              }
-            ]
-          },
-          "sourceCandidateStatus": "hybrid_paid_optional",
-          "sourceCandidatePrimarySignal": "Data-center ABS / secured-debt spread direction",
-          "curatedFallbackAsOfDate": "2026-10-12"
+          "status": "unknown",
+          "reasonCode": "dc_abs_direct_spread_unavailable",
+          "qualificationFailure": "wrong_market_or_subject"
         }
       }
     },
@@ -6332,85 +5283,45 @@
       }
     }
   },
-  "history_seed": [
-    {
-      "week": "08-10",
-      "red_pct": 26.1,
-      "risk_score": 43.5,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "08-17",
-      "red_pct": 26.1,
-      "risk_score": 43.5,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "08-24",
-      "red_pct": 26.1,
-      "risk_score": 45.7,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "08-31",
-      "red_pct": 26.1,
-      "risk_score": 45.7,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "09-07",
-      "red_pct": 26.1,
-      "risk_score": 45.7,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "09-14",
-      "red_pct": 30.4,
-      "risk_score": 47.8,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "09-21",
-      "red_pct": 30.4,
-      "risk_score": 50,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "09-28",
-      "red_pct": 30.4,
-      "risk_score": 47.8,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "10-05",
-      "red_pct": 34.8,
-      "risk_score": 52.2,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    },
-    {
-      "week": "10-12",
-      "red_pct": 30.4,
-      "risk_score": 47.8,
-      "model_version": "bubble-watch-v2-core23-shadow4"
-    }
-  ],
+  "history_seed": [],
   "wow_changes": [
     {
-      "type": "status_downgrade",
-      "note": "「数据中心 ABS 利差」由红转黄:当前 稳定。数据中心 ABS/类 REITs 样本 8 只,最新样本 奥飞一期2026-1(2026-08-10);中国:资产支持证券到期收益率(AAA):6个月 最新 1.43%,4 周 -2.5bp、12 周 +0.7bp;新闻证据 3 条,支持词 0/压力词 0。样本券最新估值利差/收益率字段多为空，因此只判断融资条件方向，不当作正式数据中心专属连续利差。判级:4 周走阔 ≥50bp=红 / ≥15bp 或压力词升温=黄 / 12 周收窄且需求证据充足=绿"
+      "type": "flat",
+      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +77.3%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 +7.5%(1/4)、126日 -3.1%(3/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿"
     },
     {
-      "type": "status_downgrade",
-      "note": "「Neocloud 信用事件」由黄转绿:当前 本轮扫描未见确认事件/正式Watch。近90天对CoreWeave、Nebius、Nscale、Lambda、Crusoe开展具名降级/违约/不良交换及正式Watch检索，已读公司公告和可访问评级页，未发现符合定义的事件。CoreWeave贷款Ba2/BB+与Lambda贷款Baa2是背景，不把高杠杆、股价下跌或股票分析师降级当作正式信用Watch；Moody/S&P访问缺口明示，结果是尽职扫描结论。（沿用最近一期可用样本）"
+      "type": "flat",
+      "note": "Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；公开申报确认样本暂缺;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。"
+    },
+    {
+      "type": "flat",
+      "note": "本期未获得已审且可比的美国数据中心ABS债券与同日基准报价，因此保留待确认。中国通用ABS绝对收益率不替代美国数据中心信用利差，新闻、票息及旧期红灯也不补位。"
+    },
+    {
+      "type": "flat",
+      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 19.0x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿"
+    },
+    {
+      "type": "flat",
+      "note": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 175 只收于 50 日均线上方,占比 ≈34.9%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
     }
   ],
   "meta": {
     "builder": "scripts/build-bubble-watch.mjs",
+    "qualified_refresh": {
+      "indicatorIds": [
+        "dc_abs_spread"
+      ],
+      "fullRefreshAsOfDate": "2026-10-12",
+      "carriedFromIssueDate": "2026-10-12",
+      "carriedObservationCount": 26,
+      "paidCalls": 0
+    },
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",
     "auto_count": 21,
     "curated_count": 3,
     "fallback_count": 3,
-    "hybrid_count": 9,
+    "hybrid_count": 1,
     "paid_wind_fallback_count": 0,
     "proxy_confidence_calibration_count": 4,
     "proxy_confidence_calibrations": [
@@ -6522,20 +5433,7 @@
         "frontier_progress"
       ]
     },
-    "fetch_failures": [
-      {
-        "id": "vc_ai_share",
-        "reason": "hybrid_live_source_failed: vc_current_period_unconfirmed: no recent single-period global AI share evidence"
-      },
-      {
-        "id": "neocloud_credit",
-        "reason": "hybrid_live_source_failed: neocloud_current_coverage_unconfirmed: missing recent dated coverage for CoreWeave/Lambda/Crusoe/Nebius"
-      },
-      {
-        "id": "arr_2nd_deriv",
-        "reason": "hybrid_live_source_failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 137d old (max 45d)"
-      }
-    ],
+    "fetch_failures": [],
     "fred_key_present": true,
     "wind_key_present": true,
     "upstream_sync": {
@@ -6550,7 +5448,8 @@
       "snapshotIndexUrl": null,
       "summaryAvailable": true,
       "summaryAdopted": false,
-      "summaryUsage": "not_used_for_production_narrative"
+      "summaryUsage": "not_used_for_production_narrative",
+      "carriedFromIssueDate": "2026-10-12"
     }
   }
 }

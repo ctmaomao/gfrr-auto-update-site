@@ -1,3 +1,6 @@
+import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores } from './bubble-watch/evidence-score-contract.mjs';
+import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
+import { summarizeEvidence, evidenceHistoryFields } from './bubble-watch/evidence-publication.mjs';
 // build-bubble-watch.mjs — AI 泡沫监测(The Bubble Watch)周度数据管线
 //
 // 27 项展示指标 × 6 分类:固定 Core-23 计分 + Shadow-4 观察。12 项自动实时接入(FRED / Yahoo Chart / SEC EDGAR /
@@ -66,9 +69,15 @@ const STATUS_ZH = { green: '绿', yellow: '黄', red: '红' };
 const TIER_LABEL_ZH = { observation: '观察期', caution: '中度警戒', alert: '高风险预警', top: '系统性顶部' };
 const TIER_LABEL_EN = { observation: 'Observation', caution: 'Moderate Caution', alert: 'High Risk Alert', top: 'Systemic Top' };
 const AXIS_SCORE = { green: 0, yellow: 50, red: 100 };
-const BUBBLE_WATCH_CONTRACT_VERSION = 'bubble-watch-v2';
-const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = 'bubble-watch-history-v2';
-const SCORING_MODEL_VERSION = 'bubble-watch-v2-core23-shadow4';
+const QUALIFIED_METHODS = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/bubble-watch-methods.json'), 'utf8'));
+const EVIDENCE_REVISION = QUALIFIED_METHODS.activeRevision;
+const QUALIFIED_REFRESH_ONLY = process.argv.includes('--refresh-qualified-only');
+const QUALIFIED_PUBLISH = process.argv.includes('--publish-qualified');
+if (QUALIFIED_PUBLISH && !QUALIFIED_REFRESH_ONLY) throw new Error('Qualified publish requires --refresh-qualified-only');
+if (QUALIFIED_REFRESH_ONLY && EVIDENCE_REVISION !== 1) throw new Error('Qualified-only refresh currently supports reviewed ABS revision 1');
+const BUBBLE_WATCH_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-v3' : 'bubble-watch-v2';
+const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2';
+const SCORING_MODEL_VERSION = EVIDENCE_REVISION ? evidenceModelVersion(EVIDENCE_REVISION) : 'bubble-watch-v2-core23-shadow4';
 const NARRATIVE_ENGINE_VERSION = 'bubble-watch-narrative-v2';
 const CORE_INDICATOR_IDS = [
   'cape', 'top5_weight', 'nvda_fpe',
@@ -4260,6 +4269,7 @@ function publicIndicatorNote(ind) {
 }
 
 function publicIndicatorSourceName(ind) {
+  if (ind.evidence_gap?.policy === 'bubble-qualified-evidence-v1') return ind.source_name;
   if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
   return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
 }
@@ -4355,6 +4365,10 @@ function computeSimilarity(indicators) {
     let matched = 0;
     let denominator = 0;
     for (const [id, row] of Object.entries(HISTORICAL_CALIBRATION_ROWS)) {
+      // Refitted indicators lack comparable historical inputs: ABS needs matched bond spreads,
+      // insiders need fixed 30/90d coverage, capex needs guidance events, Fed needs a 3/6m market curve.
+      // Unlock each only after a reviewed historical calibration for that definition.
+      if (EVIDENCE_REVISION && METHOD_ORDER.slice(0, EVIDENCE_REVISION).includes(id)) continue;
       const historical = row[periodIndex];
       const status = current.get(id);
       if (!historical || !status) continue;
@@ -4642,6 +4656,7 @@ function buildVerdictDescFromNarrativePlan(plan, fallbackDesc) {
 }
 
 function computeSummary(indicators, today, prevEntry, meta) {
+  if (EVIDENCE_REVISION) return summarizeEvidence(indicators, today, prevEntry, { revision: EVIDENCE_REVISION, promotionPolicy: SHADOW_PROMOTION_POLICY, similarity: computeSimilarity(indicators.filter(i => i.score_role === 'core')) });
   const total = indicators.length;
   const displayRed = indicators.filter((i) => i.status === 'red').length;
   const displayYellow = indicators.filter((i) => i.status === 'yellow').length;
@@ -4819,6 +4834,20 @@ function buildWowChanges(flips, indicators) {
 // ---------- 主流程 ----------
 
 async function main() {
+  const previousQualifiedOutput = QUALIFIED_REFRESH_ONLY ? JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')) : null;
+  const fullRefreshAsOfDate = QUALIFIED_REFRESH_ONLY
+    ? previousQualifiedOutput.meta?.qualified_refresh
+      ? previousQualifiedOutput.meta.qualified_refresh.fullRefreshAsOfDate
+      : previousQualifiedOutput.as_of_date
+    : null;
+  if (QUALIFIED_REFRESH_ONLY) {
+    const stamp = typeof fullRefreshAsOfDate === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(fullRefreshAsOfDate)
+      ? Date.parse(`${fullRefreshAsOfDate}T00:00:00Z`) : NaN;
+    const age = (Date.parse(`${isoDate()}T00:00:00Z`) - stamp) / 86400000;
+    if (!Number.isFinite(age) || age < 0 || age > 35 || new Date(stamp).toISOString().slice(0,10) !== fullRefreshAsOfDate) {
+      throw new Error('Qualified refresh requires an immutable complete-refresh anchor within 35 days');
+    }
+  }
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
   const creditConfig = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/bubble-credit-spreads.json'), 'utf8'));
   const creditEnabled = creditPublicationEnabled(creditConfig);
@@ -4826,11 +4855,11 @@ async function main() {
   if (creditEnabled && fs.existsSync(OUT_PATH)) {
     previousCredit = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')).credit_spreads;
   }
-  const creditSpreads = creditEnabled ? await collectCreditSpreads({ previous: previousCredit }) : null;
+  const creditSpreads = QUALIFIED_REFRESH_ONLY ? previousQualifiedOutput.credit_spreads : creditEnabled ? await collectCreditSpreads({ previous: previousCredit }) : null;
   const sourceCandidates = JSON.parse(fs.readFileSync(SOURCE_CANDIDATES_PATH, 'utf8'));
   const history = JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8'));
   const today = isoDate();
-  const upstreamSync = await syncCuratedFromUpstream(config);
+  const upstreamSync = QUALIFIED_REFRESH_ONLY ? { ...previousQualifiedOutput.meta.upstream_sync, carriedFromIssueDate:previousQualifiedOutput.as_of_date } : await syncCuratedFromUpstream(config);
   const ctx = { config, sourceCandidates };
 
   const indicators = [];
@@ -4842,6 +4871,37 @@ async function main() {
   let paidWindFallbackCount = 0;
 
   for (const def of INDICATOR_DEFS) {
+    if (EVIDENCE_REVISION >= 1 && def.id === 'dc_abs_spread') {
+      const evidence = qualifyDataCenterSpread(QUALIFIED_METHODS.absObservation, today, QUALIFIED_METHODS.approvedAbsSourceReviews);
+      const missing = evidence.status === 'unknown';
+      indicators.push({ ...baseIndicator(def), status:evidence.status,
+        source_name: missing ? '美国数据中心可比利差观察（合格观测暂缺）' : '已审美国数据中心债项及同日基准报价',
+        value_display: missing ? '待确认' : `${evidence.spreadBp.toFixed(1)} bp`,
+        note: missing ? '本期未获得已审且可比的美国数据中心ABS债券与同日基准报价，因此保留待确认。中国通用ABS绝对收益率不替代美国数据中心信用利差，新闻、票息及旧期红灯也不补位。'
+          : `同债项及分层的匹配利差${evidence.spreadBp.toFixed(1)}bp，4周变化${evidence.change4wBp.toFixed(1)}bp，12周变化${evidence.change12wBp.toFixed(1)}bp；原观测日${evidence.asOf}。单个样本的市场代表性以已审范围为限。`,
+        as_of:missing ? null : evidence.asOf, stale:false,
+        ...(missing ? { evidence_gap:{ policy:'bubble-qualified-evidence-v1', reasonCode:evidence.reasonCode, checkedDate:today } } : {}),
+        provenance:{ mode:'auto', checkedAt:new Date().toISOString(), detail:evidence }
+      });
+      autoCount += 1;
+      hybridCount += 1;
+      continue;
+    }
+    if (QUALIFIED_REFRESH_ONLY) {
+      const previous = previousQualifiedOutput.indicators.find(item => item.id === def.id);
+      if (!previous || previous.axis !== def.axis || previous.category !== def.category || previous.score_role !== baseIndicator(def).score_role) throw new Error(`Cannot carry incompatible evidence: ${def.id}`);
+      const carried = structuredClone(previous);
+      if (carried.provenance.mode !== 'auto') {
+        const age = Math.max(0, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${carried.provenance.asOfDate}T00:00:00Z`)) / 86400000));
+        carried.stale = age > carried.provenance.maxAgeDays;
+      }
+      indicators.push(carried);
+      if (carried.provenance.mode === 'auto') autoCount += 1;
+      else if (carried.provenance.mode === 'curated') curatedCount += 1;
+      else if (carried.provenance.mode === 'auto_fallback') fallbackCount += 1;
+      else throw new Error(`Unknown carried evidence origin: ${def.id}`);
+      continue;
+    }
     if (def.mode === 'curated') {
       const entry = config.curated[def.id];
       if (!entry) throw new Error(`config curated 缺指标 ${def.id}`);
@@ -4956,17 +5016,19 @@ async function main() {
   }
 
   // 历史:同 ISO 周覆盖,新周追加 + issue 自增
-  const publicIndicators = applyPublicIndicatorCopy(indicators);
+  const publicIndicators = QUALIFIED_REFRESH_ONLY
+    ? indicators.map(item => item.id === 'dc_abs_spread' ? applyPublicIndicatorCopy([item])[0] : item)
+    : applyPublicIndicatorCopy(indicators);
   const entries = [...history.entries];
   const prevRaw = [...entries].reverse().find((entry) => (
-    isoWeekKey(entry.date) !== isoWeekKey(today) && replayCoreHistoryEntry(entry)
+    isoWeekKey(entry.date) !== isoWeekKey(today) && (EVIDENCE_REVISION ? entry.scoring_model_version === SCORING_MODEL_VERSION : replayCoreHistoryEntry(entry))
   )) || null;
   const prevReplay = replayCoreHistoryEntry(prevRaw);
-  const prevForWow = prevRaw ? { ...prevRaw, red_pct: prevReplay.core_red_pct, risk_score: prevReplay.core_risk_score } : null;
+  const prevForWow = EVIDENCE_REVISION ? prevRaw : prevRaw ? { ...prevRaw, red_pct: prevReplay.core_red_pct, risk_score: prevReplay.core_risk_score } : null;
   const meta = { autoCount, curatedCount, fallbackCount, hybridCount };
   const { summary, scoring, flips } = computeSummary(publicIndicators, today, prevForWow, meta);
-  let marketTechnicalHeat = null;
-  try {
+  let marketTechnicalHeat = QUALIFIED_REFRESH_ONLY ? previousQualifiedOutput.market_technical_heat : null;
+  if (!QUALIFIED_REFRESH_ONLY) try {
     marketTechnicalHeat = await buildMarketTechnicalHeatPanel();
   } catch (error) {
     console.warn(`[bubble-watch] market technical heat panel failed: ${error.message}`);
@@ -4974,8 +5036,10 @@ async function main() {
   }
 
   const lastIssue = entries.reduce((a, e) => Math.max(a, e.issue_number || 0), 0);
-  const sameWeekIdx = entries.findIndex((e) => isoWeekKey(e.date) === isoWeekKey(today));
-  const issueNumber = sameWeekIdx >= 0 ? entries[sameWeekIdx].issue_number || lastIssue : lastIssue + 1;
+  const sameWeekIdx = entries.findIndex((e) => isoWeekKey(e.date) === isoWeekKey(today) && (!EVIDENCE_REVISION || e.scoring_model_version === SCORING_MODEL_VERSION));
+  const sameCalendarWeek = entries.find(entry => isoWeekKey(entry.date) === isoWeekKey(today));
+  const issueNumber = sameWeekIdx >= 0 ? entries[sameWeekIdx].issue_number || lastIssue
+    : sameCalendarWeek ? sameCalendarWeek.issue_number || lastIssue : lastIssue + 1;
   const newEntry = {
     date: today,
     week: today.slice(5),
@@ -4989,12 +5053,20 @@ async function main() {
     display_risk_score: summary.display_weighted_risk_score,
     stage_score: summary.stage_score,
     trigger_score: summary.trigger_score,
-    statuses: Object.fromEntries(publicIndicators.map((i) => [i.id, i.status]))
+    statuses: Object.fromEntries(publicIndicators.map((i) => [i.id, i.status])),
+    ...(EVIDENCE_REVISION ? evidenceHistoryFields(publicIndicators, replayEvidenceScores(publicIndicators, EVIDENCE_REVISION)) : {})
   };
   if (sameWeekIdx >= 0) entries[sameWeekIdx] = newEntry;
   else entries.push(newEntry);
-  while (entries.length > 16) entries.shift();
-  const normalizedEntries = entries.map((entry) => {
+  // Keep each published model epoch intact when another definition starts.
+  // The active epoch retains the existing 16-observation rolling bound.
+  if (EVIDENCE_REVISION) {
+    while (entries.filter(entry => entry.scoring_model_version === SCORING_MODEL_VERSION).length > 16) {
+      entries.splice(entries.findIndex(entry => entry.scoring_model_version === SCORING_MODEL_VERSION), 1);
+    }
+  } else while (entries.length > 16) entries.shift();
+  const normalizedEntries = EVIDENCE_REVISION ? entries : entries.map((entry) => {
+    if (/^bubble-watch-v3-/u.test(entry.scoring_model_version || '')) return entry;
     const replay = replayCoreHistoryEntry(entry);
     return replay ? { ...entry, scoring_model_version: SCORING_MODEL_VERSION, ...replay } : entry;
   });
@@ -5038,6 +5110,7 @@ async function main() {
     wow_changes: buildWowChanges(flips, publicIndicators),
     meta: {
       builder: 'scripts/build-bubble-watch.mjs',
+      ...(QUALIFIED_REFRESH_ONLY ? {qualified_refresh:{indicatorIds:['dc_abs_spread'],fullRefreshAsOfDate,carriedFromIssueDate:previousQualifiedOutput.as_of_date,carriedObservationCount:26,paidCalls:0}} : {}),
       boundary: 'display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位',
       auto_count: autoCount,
       curated_count: curatedCount,
@@ -5068,14 +5141,21 @@ async function main() {
     }
   };
 
-  fs.writeFileSync(OUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
-  fs.writeFileSync(HISTORY_PATH, `${JSON.stringify({
-    ...history,
-    contractVersion: BUBBLE_WATCH_HISTORY_CONTRACT_VERSION,
-    note: 'AI 泡沫监测周度历史。2026-07-15 起采用 Bubble Watch v2 Core-23 + Shadow-4;旧 red_pct/risk_score 保留原发布口径,core_* 字段为固定 Core-23 可比回放。history_seed 只使用可完整回放 Core-23 的周次。本文件由 scripts/build-bubble-watch.mjs 维护,请勿手改。',
-    entries: normalizedEntries
-  }, null, 2)}\n`);
-  console.log(`[bubble-watch] OK — issue ${issueNumber}, core ${summary.scoring_red_count}红/${summary.scoring_yellow_count}黄/${summary.scoring_green_count}绿, display ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, primary ${summary.red_pct}%, stage ${summary.stage_score}, trigger ${summary.trigger_score}, verdict ${summary.verdict_label}${scoring.override_active ? '(综合升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
+  const historyOutput = {
+    ...history, contractVersion:BUBBLE_WATCH_HISTORY_CONTRACT_VERSION,
+    note: EVIDENCE_REVISION ? 'AI泡沫监测周度历史；v3保留缺口区间，不同模型原记录不重写，趋势仅使用同模型完整点值。' : history.note,
+    entries:normalizedEntries
+  };
+  if (QUALIFIED_REFRESH_ONLY && !QUALIFIED_PUBLISH) {
+    const candidatePath = path.join(ROOT, 'manual-artifacts/bubble-qualified-refresh-candidate.json');
+    fs.mkdirSync(path.dirname(candidatePath), {recursive:true});
+    fs.writeFileSync(candidatePath, `${JSON.stringify({output,history:historyOutput},null,2)}\n`);
+    console.log('[bubble-watch] qualified dry-run: ignored candidate only; production unchanged');
+  } else {
+    fs.writeFileSync(OUT_PATH, `${JSON.stringify(output,null,2)}\n`);
+    fs.writeFileSync(HISTORY_PATH, `${JSON.stringify(historyOutput,null,2)}\n`);
+  }
+  console.log(`[bubble-watch] OK — issue ${issueNumber}, core ${summary.scoring_red_count}红/${summary.scoring_yellow_count}黄/${summary.scoring_green_count}绿, display ${summary.red_count}红/${summary.yellow_count}黄/${summary.green_count}绿, primary ${summary.red_pct === null ? `${summary.primary_score_range_pct.lower}–${summary.primary_score_range_pct.upper}` : summary.red_pct}%, stage ${summary.stage_score}, trigger ${summary.trigger_score === null ? `${summary.trigger_score_range.lower}–${summary.trigger_score_range.upper}` : summary.trigger_score}, verdict ${summary.verdict_label}${scoring.override_active ? '(综合升级)' : ''}, auto/hybrid ${autoCount}, curated ${curatedCount}, fallback ${fallbackCount}`);
 }
 
 main().catch((error) => {

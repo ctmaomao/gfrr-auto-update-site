@@ -20,7 +20,8 @@ const row = (url = 'https://morningstar.com/bonds/ai-credit', extra = {}) => ({ 
 const discoveryFor = (rows) => buildNewsDiscovery({ rawStories: rows, sourceStatus: structuredClone(sourceStatus), generatedAt: '2026-10-05T12:31:15Z', windowStart: '2026-09-26', windowEnd: '2026-10-05' });
 
 function livePack(rows = [row()]) {
-  const bubble = read('data/bubble-watch.json');
+  // Freeze the published v2 baseline; qualified v3 is covered by bubble-editorial-score/runtime tests.
+  const bubble = structuredClone(read('docs/fixtures/bubble-watch/legacy-contract-bundle.json').files['data/bubble-watch.json']);
   const discovery = discoveryFor(rows);
   const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
   return { bubble, discovery, input };
@@ -122,7 +123,8 @@ test('paywall text, community pages, missing dates and tiny snippets cannot admi
   }
 });
 function scenario() {
-  const bubble = read('data/bubble-watch.json');
+  // Freeze the published v2 baseline; qualified v3 is covered by bubble-editorial-score/runtime tests.
+  const bubble = structuredClone(read('docs/fixtures/bubble-watch/legacy-contract-bundle.json').files['data/bubble-watch.json']);
   const discovery = discoveryFor([row()]);
   const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
   const output = read('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json');
@@ -130,6 +132,7 @@ function scenario() {
   const replace = (v) => typeof v === 'string' && v.startsWith('news:') ? story.id : Array.isArray(v) ? v.map(replace) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k,x]) => [k, replace(x)])) : v;
   const adapted = replace(output);
   adapted.asOfDate = input.asOfDate;
+  if (input.scoringSnapshot.contractVersion === 'bubble-watch-v3') adapted.scorecardSynthesisZh = input.scoringSnapshot.scorecardDisclosureZh;
   adapted.confidence = { level: 'medium', score: 60, reasonZh: '新闻证据有限，综合站内指标并保留覆盖限制。' };
   adapted.dataGaps = ['仅有一条专业媒体摘要，新闻覆盖有限，机构观点尚未独立确认。'];
   const claims = [...adapted.weeklyTimeline, ...adapted.keyTensions, ...adapted.categoryAnalysis, adapted.historicalComparison];
@@ -474,7 +477,8 @@ test('literal quotations use only the same item cited evidence; multiple credite
 });
 
 test('compact evidence retains the collector excerpt tail rather than making it invisible to numeric proof', () => {
-  const bubble = read('data/bubble-watch.json');
+  // Freeze the published v2 baseline; qualified v3 is covered by bubble-editorial-score/runtime tests.
+  const bubble = structuredClone(read('docs/fixtures/bubble-watch/legacy-contract-bundle.json').files['data/bubble-watch.json']);
   const tail = ' Financing evidence at the end: USD 50 billion.';
   const discovery = discoveryFor([row(undefined, { snippet: 'A credible institutional financing discussion. '.repeat(5) + tail })]);
   const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });

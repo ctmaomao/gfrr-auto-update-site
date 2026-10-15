@@ -151,6 +151,10 @@ function buildReport(data, buildResult, checkResult) {
       reasonCode: row.provenance?.detail?.coverageReasonCode || null
     }));
   const warnings = sourceWarningLines(buildResult.text);
+  for (const row of indicators.filter(item => item.status === 'unknown')) {
+    warnings.push(`Qualified evidence pending: ${row.id} (${row.evidence_gap?.reasonCode || 'unregistered'})`);
+  }
+  // The independent checker still hard-fails any unregistered or malformed gap.
   const hardFail = buildResult.code !== 0 ||
     checkResult.code !== 0 ||
     unexpectedFallbackRows.length > 0 ||

@@ -1,3 +1,4 @@
+import { buildQualifiedAbsFixture } from '../helpers/bubble-qualified-builder.mjs';
 import { buildApprovedBubbleWeeklyEditorial } from '../helpers/bubble-editorial-fixture.mjs';
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
@@ -110,14 +111,23 @@ async function expectBubbleWatchContract(page, data) {
   await expect(page.locator('section.category article.indicator')).toHaveCount(27);
   await expect(page.locator('.score-role.core')).toHaveCount(23);
   await expect(page.locator('.score-role.shadow')).toHaveCount(4);
-  await expect(page.locator('.big-number .value')).toContainText(data.summary.red_pct.toFixed(1));
+  if (data.summary.red_pct === null) {
+    expect(data.contractVersion).toBe('bubble-watch-v3');
+    await expect(page.locator('.big-number .value .bound')).toHaveText([
+      `${data.summary.primary_score_range_pct.lower.toFixed(1)}%`, `${data.summary.primary_score_range_pct.upper.toFixed(1)}%`
+    ]);
+    await expect(page.locator('.badge.unknown')).toHaveCount(data.summary.scoring_unknown_count);
+  } else await expect(page.locator('.big-number .value')).toContainText(data.summary.red_pct.toFixed(1));
   await expect(page.locator('.big-number .footer')).toContainText(
     `${data.summary.scoring_red_count} / CORE-${data.summary.scoring_total_indicators}`
   );
   await expect(page.locator('.axes-header .now')).toContainText(
-    `泡沫成熟度 ${data.summary.stage_score.toFixed(0)} · 破裂临近度 ${data.summary.trigger_score.toFixed(0)}`
+    `泡沫成熟度 ${data.summary.stage_score === null ? `${data.summary.stage_score_range.lower.toFixed(1)}–${data.summary.stage_score_range.upper.toFixed(1)}` : data.summary.stage_score.toFixed(0)} · 破裂临近度 ${data.summary.trigger_score === null ? `${data.summary.trigger_score_range.lower.toFixed(1)}–${data.summary.trigger_score_range.upper.toFixed(1)}` : data.summary.trigger_score.toFixed(0)}`
   );
-  await expect(page.locator('#trend-chart-wrap svg')).toHaveAttribute('aria-label', /Core-23/u);
+  if (data.contractVersion === 'bubble-watch-v3' && !data.history_seed.length) {
+    await expect(page.locator('#trend-chart-wrap')).toContainText('完整可比观测待累计');
+    await expect(page.locator('#trend-chart-wrap svg')).toHaveCount(0);
+  } else await expect(page.locator('#trend-chart-wrap svg')).toHaveAttribute('aria-label', /Core-23/u);
   await expect(page.locator('body')).not.toContainText('undefined');
   await expect(page.locator('body')).not.toContainText('[object Object]');
 }
@@ -402,5 +412,46 @@ for (const viewport of [DESKTOP, MOBILE]) {
     await expect(page.locator('.editorial-category-grid .editorial-plain-item')).toHaveCount(2);
     await expectNoHorizontalOverflow(page);
     expect(errors).toEqual([]);
+  });
+}
+
+for (const viewport of [DESKTOP, MOBILE]) {
+  test(`Bubble qualified ABS bounds retain 27 cards and fit ${viewport.width}px`,async({page})=>{
+    await page.setViewportSize(viewport);
+    const errors=capturePageErrors(page);
+    const {output}=await buildQualifiedAbsFixture();
+    await page.route('**/data/bubble-watch.json?*',route=>route.fulfill({json:output}));
+    await page.goto('/bubble-watch.html');
+    await expectBubbleWatchContract(page,output);
+    await expectNoHorizontalOverflow(page);
+    await expect(page.locator('.axis-uncertainty')).toHaveCount(1);
+    await expect(page.locator('article.indicator').filter({hasText:'数据中心 ABS 利差'})).toContainText('观测暂缺');
+    expect(errors).toEqual([]);
+  });
+  test(`Bubble legacy v2 point remains readable at ${viewport.width}px`,async({page})=>{
+    await page.setViewportSize(viewport);
+    const bundle=JSON.parse(readFileSync('docs/fixtures/bubble-watch/legacy-contract-bundle.json','utf8'));
+    const data=bundle.files['data/bubble-watch.json'];
+    await page.route('**/data/bubble-watch.json?*',route=>route.fulfill({json:data}));
+    await page.goto('/bubble-watch.html');
+    await expectBubbleWatchContract(page,data);
+    await expectNoHorizontalOverflow(page);
+    await expect(page.locator('.badge.unknown')).toHaveCount(0);
+  });
+}
+
+for (const mutation of ['scorecard','checking-clock','same-day-model']) {
+  test(`Bubble v3 rejects stale editorial binding: ${mutation}`,async({page})=>{
+    const {output}=await buildQualifiedAbsFixture();
+    const layer=buildApprovedBubbleWeeklyEditorial(output,new Date().toISOString());
+    if(mutation==='scorecard') layer.output.scorecardSynthesisZh='主分为0%，缺口已全部按绿灯计入。';
+    if(mutation==='checking-clock') layer.sourceScoringSnapshot.qualifiedEvidence.indicators.find(i=>i.id==='dc_abs_spread').provenance.checkedAt='2026-10-13T00:00:00Z';
+    if(mutation==='same-day-model') layer.sourceScoringSnapshot.modelVersion='bubble-watch-v3-core23-shadow4-r2';
+    output.summary.weekly_editorial=layer;
+    await page.route('**/data/bubble-watch.json?*',route=>route.fulfill({json:output}));
+    await page.goto('/bubble-watch.html');
+    await expect(page.locator('#weekly-editorial')).toHaveCount(0);
+    await expect(page.locator('.verdict h2')).toHaveText(output.summary.verdict_label);
+    await expect(page.locator('.big-number .value .bound')).toHaveCount(2);
   });
 }
