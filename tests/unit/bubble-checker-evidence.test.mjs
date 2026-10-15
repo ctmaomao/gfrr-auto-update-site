@@ -5,6 +5,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { GAP_REASONS, replayEvidenceScores } from '../../scripts/bubble-watch/evidence-score-contract.mjs';
+import {FED_MEETINGS,FED_CALENDAR_URL,fedQuotePlan,fedFutureSymbol,qualifyFedMarketPath} from '../../scripts/bubble-watch/qualified-fed-path.mjs';
+import {FED_PATH_LABELS,FED_THRESHOLD_TEXT} from '../../scripts/bubble-watch/qualified-fed-publication.mjs';
 import {capexEventEvidenceHold} from '../../scripts/bubble-watch/capex-event-evidence.mjs';
 import { INSIDER_BASKET, insiderWindowUrl, qualifyInsiderWindows } from '../../scripts/bubble-watch/qualified-insider.mjs';
 
@@ -134,19 +136,25 @@ test('real checker admits only activated r2 with replayable returned-sample proo
     const result=run(changed,config);assert.equal(result.code,1);assert.match(result.logs,/insider qualified source/u);
   }
   assert.equal(run(files,{...config,activeRevision:1}).code,1);
-  const future=structuredClone(files);future['data/bubble-watch.json'].scoring.model_version='bubble-watch-v3-core23-shadow4-r4';
+  const future=structuredClone(files);future['data/bubble-watch.json'].scoring.model_version='bubble-watch-v3-core23-shadow4-r5';
   const rejected=run(future,{...config,activeRevision:4});assert.equal(rejected.code,1);
   assert.match(rejected.logs,/not supported\/activated/u);
 });
 
 
-test('real checker admits r3 only as an activated fixed-four event gap and replays its bounds',()=>{
+function capexFiles(){
   const files=insiderFiles(),d=files['data/bubble-watch.json'],today=d.as_of_date;
   const card=d.indicators.find(i=>i.id==='capex_reaction');
   Object.assign(card,{status:'unknown',as_of:null,stale:false,
     provenance:{mode:'auto',checkedAt:`${today}T13:22:04.262Z`,detail:capexEventEvidenceHold(today)},
     evidence_gap:{policy:'bubble-qualified-evidence-v1',reasonCode:'capex_qualified_event_unavailable',checkedDate:today}});
-  const r=replayEvidenceScores(d.indicators,3),s=d.summary;
+  d.summary.verdict_desc='资本开支事件待确认。'+d.summary.verdict_desc;
+  applyFixtureRevision(files,3);
+  return files;
+}
+function applyFixtureRevision(files,revision){
+  const d=files['data/bubble-watch.json'];
+  const r=replayEvidenceScores(d.indicators,revision),s=d.summary;
   Object.assign(s,{primary_score_pct:r.primary,red_pct:r.primary,weighted_risk_score:r.pressure,
     primary_score_range_pct:r.primaryRange,weighted_risk_score_range:r.pressureRange,
     stage_score:r.stage,trigger_score:r.trigger,stage_score_range:r.stageRange,trigger_score_range:r.triggerRange,
@@ -157,7 +165,6 @@ test('real checker admits r3 only as an activated fixed-four event gap and repla
   for(const status of ['red','yellow','green'])s[`${status}_count`]=d.indicators.filter(i=>i.status===status).length;
   s.narrative_plan.evidenceGaps=r.unknownIds;
   s.narrative_plan.evidenceHighlights=s.narrative_plan.evidenceHighlights.filter(i=>!r.unknownIds.includes(i.id));
-  s.verdict_desc='资本开支事件待确认。'+s.verdict_desc;
   Object.assign(d.scoring,{model_version:r.modelVersion,base_tier:r.baseTier,effective_tier:r.effectiveTier,
     override_active:r.overrideActive,two_axis_upgrade:r.twoAxisUpgrade,tier_range:r.tierRange,unknown_core_ids:r.unknownIds});
   const last=files['data/bubble-watch-history.json'].entries.at(-1);
@@ -165,6 +172,10 @@ test('real checker admits r3 only as an activated fixed-four event gap and repla
     score_bounds:{primary:r.primaryRange,pressure:r.pressureRange,stage:r.stageRange,trigger:r.triggerRange},
     effective_tier:r.effectiveTier,tier_range:r.tierRange,unknown_core_ids:r.unknownIds,
     gap_metadata:Object.fromEntries(d.indicators.filter(i=>i.status==='unknown').map(i=>[i.id,{as_of:i.as_of,stale:i.stale,evidence_gap:i.evidence_gap,provenance:i.provenance}]))});
+}
+
+test('real checker admits r3 only as an activated fixed-four event gap and replays its bounds',()=>{
+  const files=capexFiles();
   const config={contractVersion:'bubble-qualified-methods-v1',activeRevision:3,approvedAbsSourceReviews:[],absObservation:null};
   const valid=run(files,config);assert.equal(valid.code,0,valid.logs);
   for(const mutate of [c=>c.status='green',c=>c.provenance.detail.latestConfirmed=true,
@@ -173,4 +184,37 @@ test('real checker admits r3 only as an activated fixed-four event gap and repla
     const result=run(changed,config);assert.equal(result.code,1);assert.match(result.logs,/capex qualified source/u);
   }
   assert.equal(run(files,{...config,activeRevision:2}).code,1);
+});
+
+
+function fedFiles(pending=false){
+ const files=capexFiles(),data=files['data/bubble-watch.json'],today=data.as_of_date,checkedAt=`${today}T11:00:00Z`;
+ const calendar={sourceUrl:FED_CALENDAR_URL,checkedAt,lastUpdated:'2026-10-07',years:Object.fromEntries(Object.entries(FED_MEETINGS).map(([y,days])=>[y,days.map(d=>`${y}-${d}`)]))};
+ const plan=fedQuotePlan(today,calendar,checkedAt),quoteDate=new Date(Date.parse(`${today}T00:00:00Z`)-3*86400000).toISOString().slice(0,10);
+ const input={calendar,baseline:{series:'DFF',sourceUrl:'https://fred.stlouisfed.org/series/DFF',observedAt:quoteDate,value:'4.00',checkedAt},
+  quotes:plan.requiredMonths.map(month=>({month,symbol:fedFutureSymbol(month),sourceUrl:`https://query1.finance.yahoo.com/v8/finance/chart/${fedFutureSymbol(month)}?range=10d&interval=1d`,
+   exchangeName:'CBT',instrumentType:'FUTURE',exchangeTimezoneName:'America/New_York',dataGranularity:'1d',timestamp:Date.parse(`${quoteDate}T04:00:00Z`)/1000,rawClose:95.8,reportedVolume:100}))};
+ const report={policy:'fed_market_path_collection_v1',checkedAt,sourceEvidence:input,result:qualifyFedMarketPath(input,today,checkedAt),sourceFailures:[],qualityIssues:[],
+  attemptedSources:['calendar','DFF',...plan.requiredMonths.map(fedFutureSymbol)],collectionPolicy:{actualRequests:plan.requiredMonths.length+2,maximumRequests:10,requestTimeoutMs:12000,calendarMaxBytes:1048576,csvMaxBytes:65536,quoteMaxBytes:1048576,applicationRetries:0,redirects:'error'}};
+ if(pending){Object.assign(report,{sourceEvidence:{calendar:null,baseline:null,quotes:[]},sourceFailures:[{source:'calendar',reason:'http_403'}],attemptedSources:['calendar']});report.collectionPolicy.actualRequests=1;report.result=qualifyFedMarketPath(report.sourceEvidence,today,checkedAt);}
+ const card=data.indicators.find(i=>i.id==='fed_policy');
+ Object.assign(card,{status:report.result.status,as_of:pending?null:report.result.quoteLabelDate,stale:false,name_zh:'Fed 3/6个月市场路径',
+  value_display:FED_PATH_LABELS[report.result.status],threshold_text:FED_THRESHOLD_TEXT,source_name:'联邦基金期货历史日线 · FRED实际EFFR',
+  note:'纽约日期标签的历史日线价格代理，不是CME官方结算价，也不是下次会议概率。',provenance:{mode:'auto',checkedAt,detail:report}});
+ if(pending){card.evidence_gap={policy:'bubble-qualified-evidence-v1',reasonCode:'fed_market_path_unavailable',checkedDate:today};data.summary.verdict_desc='Fed 3/6个月市场路径待确认。'+data.summary.verdict_desc;}
+ applyFixtureRevision(files,4);return files;
+}
+test('real checker replays activated r4 proxy proof and refuses year-end/clock/rational/request tampering',()=>{
+ const files=fedFiles(),config={contractVersion:'bubble-qualified-methods-v1',activeRevision:4,approvedAbsSourceReviews:[],absObservation:null};
+ const valid=run(files,config);assert.equal(valid.code,0,valid.logs);
+ for(const mutate of [c=>c.value_display='年末路径隐含加息',c=>c.provenance.detail.result.paths[0].delta.numerator='0',
+ c=>c.provenance.detail.sourceEvidence.quotes[0].rawRows=[],c=>c.provenance.detail.collectionPolicy.applicationRetries=1,
+ c=>{c.provenance.detail.checkedAt='2026-10-13T13:00:00Z';c.provenance.checkedAt=c.provenance.detail.checkedAt;}]){
+  const changed=structuredClone(files);mutate(changed['data/bubble-watch.json'].indicators.find(i=>i.id==='fed_policy'));
+  const result=run(changed,config);assert.equal(result.code,1);assert.match(result.logs,/fed qualified source/u);
+ }
+ assert.equal(run(files,{...config,activeRevision:3}).code,1);
+ const pending=fedFiles(true),accepted=run(pending,config);assert.equal(accepted.code,0,accepted.logs);
+ const falseZero=structuredClone(pending);falseZero['data/bubble-watch.json'].summary.primary_score_pct=0;
+ assert.equal(run(falseZero,config).code,1);
 });
