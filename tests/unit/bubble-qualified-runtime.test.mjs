@@ -63,9 +63,11 @@ test('source health warns about pending evidence while retaining checker hard fa
   assert.equal(context.report(data,healthy,{code:1}).status,'fail');
   data.indicators[0].status='green';assert.equal(context.report(data,healthy,healthy).status,'pass');
   data.indicators=[{id:'insider_sell_buy',status:'yellow',provenance:{mode:'auto',detail:{
-    policy:'insider_fixed_12_30_90_v1',coverageStatus:'returned_sample_completeness_unverified'
+    policy:'insider_fixed_12_30_90_v1',coverageStatus:'returned_sample_completeness_unverified',
+    rejectedSamples:[{symbol:'META',reason:'duplicate_transaction'}]
   }}}];
   assert.equal(context.report(data,healthy,healthy).status,'warn');
+  assert.ok(context.report(data,healthy,healthy).sourceWarnings.some(line=>/META.*duplicate_transaction/u.test(line)));
   data.meta.fetch_failures=[{id:'insider_sell_buy',reason:'http_403'}];
   assert.equal(context.report(data,healthy,healthy).status,'fail');
 });

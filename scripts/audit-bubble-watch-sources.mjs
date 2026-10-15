@@ -159,6 +159,11 @@ function buildReport(data, buildResult, checkResult) {
     && row.provenance?.detail?.coverageStatus === 'returned_sample_completeness_unverified')) {
     warnings.push('Insider returned-sample statistics do not establish complete SEC window coverage');
   }
+  const insiderSamples=indicators.find(row=>row.id === 'insider_sell_buy'
+    && row.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1');
+  for (const sample of insiderSamples?.provenance?.detail?.rejectedSamples || []) {
+    warnings.push(`Insider returned sample excluded: ${sample.symbol} (${sample.reason})`);
+  }
   // The independent checker still hard-fails any unregistered or malformed gap.
   const hardFail = buildResult.code !== 0 ||
     checkResult.code !== 0 ||
