@@ -9,7 +9,14 @@ function creditFixture() {
 async function open(page, credit) {
   await page.route('**/data/bubble-watch.json*', route => route.fulfill({ json: { ...baseline, credit_spreads: credit } }));
   await page.goto('/bubble-watch.html');
-  await expect(page.locator('.big-number .value')).toContainText(baseline.summary.red_pct.toFixed(1));
+  if (baseline.summary.red_pct === null) {
+    const bounds = baseline.summary.primary_score_range_pct;
+    await expect(page.locator('.big-number .value')).toContainText(bounds.lower.toFixed(1));
+    await expect(page.locator('.big-number .value')).toContainText(bounds.upper.toFixed(1));
+    await expect(page.locator('.big-number .value')).toContainText('至');
+  } else {
+    await expect(page.locator('.big-number .value')).toContainText(baseline.summary.red_pct.toFixed(1));
+  }
 }
 for (const width of [1440, 390]) test(`Credit module order, series, hover and keyboard at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 1000 });
