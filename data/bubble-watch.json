@@ -2,31 +2,31 @@
   "contractVersion": "bubble-watch-v3",
   "issue_number": 28,
   "as_of_date": "2026-10-15",
-  "generated_at": "2026-10-15T07:09:34.078Z",
+  "generated_at": "2026-10-15T07:49:49.178Z",
   "summary": {
     "total_indicators": 27,
     "red_count": 8,
     "yellow_count": 7,
-    "green_count": 11,
-    "unknown_count": 1,
+    "green_count": 10,
+    "unknown_count": 2,
     "display_red_pct": null,
     "display_weighted_risk_score": null,
     "scoring_total_indicators": 23,
     "scoring_red_count": 7,
     "scoring_yellow_count": 7,
-    "scoring_green_count": 8,
-    "scoring_unknown_count": 1,
+    "scoring_green_count": 7,
+    "scoring_unknown_count": 2,
     "primary_score_pct": null,
     "primary_score_basis": "core_red_light_ratio",
     "red_pct": null,
     "weighted_risk_score": null,
     "primary_score_range_pct": {
       "lower": 30.4,
-      "upper": 34.8
+      "upper": 39.1
     },
     "weighted_risk_score_range": {
       "lower": 45.7,
-      "upper": 50
+      "upper": 54.3
     },
     "stage_score": 60,
     "stage_score_range": {
@@ -38,7 +38,7 @@
     "trigger_score": null,
     "trigger_score_range": {
       "lower": 34.6,
-      "upper": 42.3
+      "upper": 50
     },
     "trigger_label": "待确认",
     "trigger_label_en": "Pending",
@@ -48,7 +48,7 @@
       "market_structure": 62.5,
       "credit": null,
       "fundamentals": 12.5,
-      "macro": 37.5
+      "macro": null
     },
     "category_score_ranges": {
       "valuation": {
@@ -73,7 +73,7 @@
       },
       "macro": {
         "lower": 37.5,
-        "upper": 37.5
+        "upper": 62.5
       }
     },
     "momentum": {
@@ -86,24 +86,24 @@
         "period": "1999-06",
         "label_zh": "互联网泡沫顶前 9 个月",
         "label_en": "9 months before dot-com top",
-        "match_pct": 75,
-        "denominator": 20,
+        "match_pct": 74,
+        "denominator": 19,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2000-02",
         "label_zh": "互联网泡沫顶前 1 个月",
         "label_en": "1 month before dot-com top",
-        "match_pct": 73,
-        "denominator": 20,
+        "match_pct": 74,
+        "denominator": 19,
         "basis": "core_calibrated_indicators_only"
       },
       {
         "period": "2021-11",
         "label_zh": "成长股/SPAC 顶",
         "label_en": "Growth/SPAC top",
-        "match_pct": 73,
-        "denominator": 20,
+        "match_pct": 71,
+        "denominator": 19,
         "basis": "core_calibrated_indicators_only"
       },
       {
@@ -117,7 +117,7 @@
     ],
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、8项绿灯、1项待确认。核心红灯比例为30.4–34.8%，辅助压力为45.7–50.0。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为60.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为41.9（红灯）；前 5 大权重占比为≈28.4%（红灯）；NVDA 远期 PE为≈19x（绿灯）；Hyperscaler 资本开支增速为+75%（黄灯）；Big5 资本开支/经营现金流为≈83%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为34.6–42.3。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
+    "verdict_desc": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、7项绿灯、2项待确认。核心红灯比例为30.4–39.1%，辅助压力为45.7–54.3。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为60.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为41.9（红灯）；前 5 大权重占比为≈28.4%（红灯）；NVDA 远期 PE为≈19x（绿灯）；Hyperscaler 资本开支增速为+75%（黄灯）；Big5 资本开支/经营现金流为≈83%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为34.6–50.0。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差、资本开支公告事件反应待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
     "verdict_desc_source": "bubble-watch-narrative-v2",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v2",
@@ -147,10 +147,9 @@
             "cloud_rpo_growth",
             "accounting_events",
             "fed_policy",
-            "capex_reaction",
             "ceo_hedging"
           ],
-          "summaryZh": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、8项绿灯、1项待确认。核心红灯比例为30.4–34.8%，辅助压力为45.7–50.0。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
+          "summaryZh": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、7项绿灯、2项待确认。核心红灯比例为30.4–39.1%，辅助压力为45.7–54.3。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
         },
         {
           "key": "stage",
@@ -181,10 +180,9 @@
             "arr_2nd_deriv",
             "cloud_rpo_growth",
             "accounting_events",
-            "fed_policy",
-            "capex_reaction"
+            "fed_policy"
           ],
-          "summaryZh": "破裂临近度为34.6–42.3。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差待确认；现有材料不足以给出这些指标的单一灯色。"
+          "summaryZh": "破裂临近度为34.6–50.0。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差、资本开支公告事件反应待确认；现有材料不足以给出这些指标的单一灯色。"
         },
         {
           "key": "verdict",
@@ -206,7 +204,8 @@
         }
       ],
       "evidenceGaps": [
-        "dc_abs_spread"
+        "dc_abs_spread",
+        "capex_reaction"
       ],
       "evidenceHighlights": [
         {
@@ -280,7 +279,7 @@
     }
   },
   "scoring": {
-    "model_version": "bubble-watch-v3-core23-shadow4-r2",
+    "model_version": "bubble-watch-v3-core23-shadow4-r3",
     "primary_universe": "core",
     "core_indicator_ids": [
       "cape",
@@ -339,7 +338,8 @@
       "upper": "alert"
     },
     "unknown_core_ids": [
-      "dc_abs_spread"
+      "dc_abs_spread",
+      "capex_reaction"
     ],
     "override_rule": "固定核心23项；缺证据保留区间，原分类与两轴共振规则不变",
     "override_rules": {
@@ -812,7 +812,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T07:09:34.066Z",
+        "checkedAt": "2026-10-15T07:49:49.166Z",
         "detail": {
           "status": "yellow",
           "policy": "insider_fixed_12_30_90_v1",
@@ -832,7 +832,7 @@
             "NOW",
             "SMCI"
           ],
-          "checkedAt": "2026-10-15T07:09:34.066Z",
+          "checkedAt": "2026-10-15T07:49:49.166Z",
           "latestTransactionDate": "2026-10-13",
           "coverageStatus": "returned_sample_completeness_unverified",
           "validResponseSymbols": [
@@ -869,7 +869,7 @@
             {
               "symbol": "NVDA",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:08:14.952Z",
+              "responseBuiltAt": "2026-10-15T07:48:30.113Z",
               "returnedRecordCount": 37,
               "oldestReturnedDate": "2026-08-05",
               "newestReturnedDate": "2026-10-07",
@@ -895,7 +895,7 @@
             {
               "symbol": "MSFT",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:08:21.415Z",
+              "responseBuiltAt": "2026-10-15T07:48:36.580Z",
               "returnedRecordCount": 44,
               "oldestReturnedDate": "2026-08-04",
               "newestReturnedDate": "2026-10-13",
@@ -921,7 +921,7 @@
             {
               "symbol": "AMZN",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:08:27.925Z",
+              "responseBuiltAt": "2026-10-15T07:48:43.074Z",
               "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-03",
               "newestReturnedDate": "2026-10-01",
@@ -947,7 +947,7 @@
             {
               "symbol": "GOOGL",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:08:34.435Z",
+              "responseBuiltAt": "2026-10-15T07:48:49.584Z",
               "returnedRecordCount": 172,
               "oldestReturnedDate": "2026-07-25",
               "newestReturnedDate": "2026-09-30",
@@ -973,7 +973,7 @@
             {
               "symbol": "ORCL",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:08:47.448Z",
+              "responseBuiltAt": "2026-10-15T07:49:02.606Z",
               "returnedRecordCount": 38,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-29",
@@ -999,7 +999,7 @@
             {
               "symbol": "AVGO",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:08:53.964Z",
+              "responseBuiltAt": "2026-10-15T07:49:09.114Z",
               "returnedRecordCount": 19,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-23",
@@ -1025,7 +1025,7 @@
             {
               "symbol": "AMD",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:09:00.464Z",
+              "responseBuiltAt": "2026-10-15T07:49:15.616Z",
               "returnedRecordCount": 123,
               "oldestReturnedDate": "2026-08-09",
               "newestReturnedDate": "2026-09-15",
@@ -1051,7 +1051,7 @@
             {
               "symbol": "PLTR",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:09:06.980Z",
+              "responseBuiltAt": "2026-10-15T07:49:22.123Z",
               "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-05",
               "newestReturnedDate": "2026-10-09",
@@ -1077,7 +1077,7 @@
             {
               "symbol": "CRM",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:09:13.494Z",
+              "responseBuiltAt": "2026-10-15T07:49:28.629Z",
               "returnedRecordCount": 38,
               "oldestReturnedDate": "2026-07-22",
               "newestReturnedDate": "2026-09-22",
@@ -1103,7 +1103,7 @@
             {
               "symbol": "NOW",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:09:19.993Z",
+              "responseBuiltAt": "2026-10-15T07:49:35.166Z",
               "returnedRecordCount": 64,
               "oldestReturnedDate": "2026-08-07",
               "newestReturnedDate": "2026-08-31",
@@ -1129,7 +1129,7 @@
             {
               "symbol": "SMCI",
               "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T07:09:26.488Z",
+              "responseBuiltAt": "2026-10-15T07:49:41.674Z",
               "returnedRecordCount": 48,
               "oldestReturnedDate": "2026-08-10",
               "newestReturnedDate": "2026-10-07",
@@ -1322,7 +1322,7 @@
       },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T07:09:34.074Z",
+        "checkedAt": "2026-10-15T07:49:49.174Z",
         "detail": {
           "status": "unknown",
           "reasonCode": "dc_abs_direct_spread_unavailable",
@@ -1866,187 +1866,47 @@
       "axis": "trigger",
       "category": "macro",
       "name_en": "Capex Guidance Reaction",
-      "name_zh": "资本开支指引市场反应",
-      "threshold_text": "系统性惩罚=红 / 偶发=黄 / 奖励=绿",
-      "source_name": "公开财报与相对收益窗口",
-      "status": "green",
-      "value_display": "奖励",
-      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +77.3%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 +7.5%(1/4)、126日 -3.1%(3/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿",
-      "as_of": "2026-10-12",
+      "name_zh": "资本开支公告事件反应",
+      "threshold_text": "固定四家公司；最新财报、可比指引上调及匹配交易日证据齐备后再判读",
+      "source_name": "公司季度财报及公告后价格 · 事件证据待核",
+      "status": "unknown",
+      "as_of": null,
       "stale": false,
+      "value_display": "待确认",
+      "note": "固定MSFT、META、AMZN、GOOGL四家公司。目前尚未具备可核验最新季度财报目录、同口径前后指引、首次披露时间及首个完整正常交易日个股与QQQ价格的完整面板，因此保持待确认。这不表示没有支出上调或没有市场惩罚。租赁会计重分类不能直接当作投入改变，区间下限提高也不等于上限提高；财报同时包含收入、利润等信息，公告后相对收益不能全归因于资本开支。滚动多窗口收益、新闻条数及研究评论均不替代本项事件证据；季度之间的资本开支更新尚未完整覆盖。",
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-10-12T13:21:41.322Z",
+        "checkedAt": "2026-10-15T07:49:49.174Z",
         "detail": {
-          "source": "StockAnalysis quarterly cash-flow + Yahoo Chart",
-          "benchmarkWindows": {
-            "21d": {
-              "qqq": 6,
-              "spy": 2.7
-            },
-            "63d": {
-              "qqq": 5.6,
-              "spy": 3.9
-            },
-            "126d": {
-              "qqq": 22.9,
-              "spy": 14.6
-            }
-          },
-          "avgCapexYoy": 77.31616036180895,
-          "avgExcessQqq": 7.484572294809802,
-          "avgExcessSpy": 9.114224635562724,
-          "punishedCount": 1,
-          "penaltyWindowCount": 1,
-          "systemicWindowCount": 0,
-          "capexStillAccelerating": true,
-          "windowEvidence": [
-            {
-              "days": 21,
-              "avgExcessQqq": 1.5,
-              "avgExcessSpy": 4.8,
-              "punishedCount": 0,
-              "severePunishedCount": 0,
-              "marketPenalty": false,
-              "systemicPenalty": false
-            },
-            {
-              "days": 63,
-              "avgExcessQqq": 7.5,
-              "avgExcessSpy": 9.1,
-              "punishedCount": 1,
-              "severePunishedCount": 0,
-              "marketPenalty": false,
-              "systemicPenalty": false
-            },
-            {
-              "days": 126,
-              "avgExcessQqq": -3.1,
-              "avgExcessSpy": 5.2,
-              "punishedCount": 3,
-              "severePunishedCount": 3,
-              "marketPenalty": true,
-              "systemicPenalty": false
-            }
+          "policy": "capex_latest_earnings_event_hold_v1",
+          "adapterStatus": "not_admitted",
+          "status": "unknown",
+          "scope": "latest_quarterly_earnings_guidance_fixed_four",
+          "companies": [
+            "MSFT",
+            "META",
+            "AMZN",
+            "GOOGL"
           ],
-          "formulaVersion": "capex_reaction_multi_window_v1",
-          "capexRows": [
-            {
-              "ticker": "MSFT",
-              "latestCapexB": 35.8,
-              "latestYoyPct": 109.6,
-              "t4qYoyPct": 79.6
-            },
-            {
-              "ticker": "META",
-              "latestCapexB": 30.1,
-              "latestYoyPct": 82.1,
-              "t4qYoyPct": 71.2
-            },
-            {
-              "ticker": "AMZN",
-              "latestCapexB": 54.2,
-              "latestYoyPct": 68.4,
-              "t4qYoyPct": 60.7
-            },
-            {
-              "ticker": "GOOGL",
-              "latestCapexB": 44.9,
-              "latestYoyPct": 100.1,
-              "t4qYoyPct": 97.7
-            }
+          "qualifiedEventCount": 0,
+          "qualifiedEvents": [],
+          "missingRequirements": [
+            "complete_official_latest_earnings_listing",
+            "reviewed_comparable_guidance_raise",
+            "first_guidance_disclosure_timestamp",
+            "first_full_regular_session_calendar",
+            "matched_stock_and_qqq_prices"
           ],
-          "reactionRows": [
-            {
-              "ticker": "MSFT",
-              "windowReturns": {
-                "21d": {
-                  "ret": 8.7,
-                  "excessVsQqq": 2.6,
-                  "excessVsSpy": 5.9
-                },
-                "63d": {
-                  "ret": 36.9,
-                  "excessVsQqq": 31.3,
-                  "excessVsSpy": 32.9
-                },
-                "126d": {
-                  "ret": 44.3,
-                  "excessVsQqq": 21.3,
-                  "excessVsSpy": 29.7
-                }
-              }
-            },
-            {
-              "ticker": "META",
-              "windowReturns": {
-                "21d": {
-                  "ret": 11.5,
-                  "excessVsQqq": 5.5,
-                  "excessVsSpy": 8.8
-                },
-                "63d": {
-                  "ret": 9.4,
-                  "excessVsQqq": 3.9,
-                  "excessVsSpy": 5.5
-                },
-                "126d": {
-                  "ret": 14.1,
-                  "excessVsQqq": -8.8,
-                  "excessVsSpy": -0.5
-                }
-              }
-            },
-            {
-              "ticker": "AMZN",
-              "windowReturns": {
-                "21d": {
-                  "ret": 4.2,
-                  "excessVsQqq": -1.8,
-                  "excessVsSpy": 1.4
-                },
-                "63d": {
-                  "ret": 6.1,
-                  "excessVsQqq": 0.6,
-                  "excessVsSpy": 2.2
-                },
-                "126d": {
-                  "ret": 10.1,
-                  "excessVsQqq": -12.9,
-                  "excessVsSpy": -4.5
-                }
-              }
-            },
-            {
-              "ticker": "GOOGL",
-              "windowReturns": {
-                "21d": {
-                  "ret": 5.7,
-                  "excessVsQqq": -0.3,
-                  "excessVsSpy": 3
-                },
-                "63d": {
-                  "ret": -0.2,
-                  "excessVsQqq": -5.8,
-                  "excessVsSpy": -4.2
-                },
-                "126d": {
-                  "ret": 10.8,
-                  "excessVsQqq": -12.1,
-                  "excessVsSpy": -3.7
-                }
-              }
-            }
-          ],
-          "proxyConfidenceCalibration": {
-            "applied": false,
-            "reason": "strong_confirmation_or_no_calibration_needed",
-            "policy": "local_proxy_confidence_v1"
-          },
-          "sourceCandidateStatus": "hybrid_live",
-          "sourceCandidatePrimarySignal": "Market reaction to AI capex guidance",
-          "curatedFallbackAsOfDate": "2026-10-12"
+          "checkedDate": "2026-10-15",
+          "numericThresholdStatus": "not_admitted",
+          "legacyRollingReturnsEligible": false,
+          "newsCountEligible": false
         }
+      },
+      "evidence_gap": {
+        "policy": "bubble-qualified-evidence-v1",
+        "reasonCode": "capex_qualified_event_unavailable",
+        "checkedDate": "2026-10-15"
       }
     },
     {
@@ -5568,7 +5428,7 @@
   "wow_changes": [
     {
       "type": "flat",
-      "note": "公开季度现金流显示 MSFT/META/AMZN/GOOGL 滚动 4 季 capex 同比均值 +77.3%;Yahoo 多窗口相对 QQQ:21日 +1.5%(0/4 跑输>5pct)、63日 +7.5%(1/4)、126日 -3.1%(3/4)。该项观察市场是否跨窗口系统性惩罚高 capex 公司,不是单一短期相对收益噪音或逐字财报指引文本。判级:多窗口系统性惩罚=红 / 中长窗口选择性惩罚=黄 / 奖励=绿"
+      "note": "固定MSFT、META、AMZN、GOOGL四家公司。目前尚未具备可核验最新季度财报目录、同口径前后指引、首次披露时间及首个完整正常交易日个股与QQQ价格的完整面板，因此保持待确认。这不表示没有支出上调或没有市场惩罚。租赁会计重分类不能直接当作投入改变，区间下限提高也不等于上限提高；财报同时包含收入、利润等信息，公告后相对收益不能全归因于资本开支。滚动多窗口收益、新闻条数及研究评论均不替代本项事件证据；季度之间的资本开支更新尚未完整覆盖。"
     },
     {
       "type": "flat",
@@ -5592,11 +5452,12 @@
     "qualified_refresh": {
       "indicatorIds": [
         "dc_abs_spread",
-        "insider_sell_buy"
+        "insider_sell_buy",
+        "capex_reaction"
       ],
       "fullRefreshAsOfDate": "2026-10-12",
       "carriedFromIssueDate": "2026-10-15",
-      "carriedObservationCount": 25,
+      "carriedObservationCount": 24,
       "paidCalls": 0
     },
     "boundary": "display-only:独立专题页数据,不进 GFRR 打分/决策/执行/仓位",

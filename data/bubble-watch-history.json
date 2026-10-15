@@ -885,6 +885,134 @@
           }
         }
       }
+    },
+    {
+      "date": "2026-10-15",
+      "week": "10-15",
+      "issue_number": 28,
+      "red_pct": null,
+      "risk_score": null,
+      "scoring_model_version": "bubble-watch-v3-core23-shadow4-r3",
+      "core_red_pct": null,
+      "core_risk_score": null,
+      "display_red_pct": null,
+      "display_risk_score": null,
+      "stage_score": 60,
+      "trigger_score": null,
+      "statuses": {
+        "cape": "red",
+        "top5_weight": "red",
+        "nvda_fpe": "green",
+        "private_secondary_marks": "red",
+        "hyperscaler_capex_yoy": "yellow",
+        "mag4_fcf_yoy": "red",
+        "vc_ai_share": "red",
+        "nvda_invest_revenue": "red",
+        "breadth_50d": "red",
+        "spy_vs_rsp_6m": "yellow",
+        "insider_sell_buy": "yellow",
+        "ai_ipo_pipeline": "yellow",
+        "hy_oas": "green",
+        "dc_abs_spread": "unknown",
+        "debt_capex_ratio": "yellow",
+        "neocloud_credit": "green",
+        "token_volume_mom": "yellow",
+        "token_revenue_ratio": "green",
+        "gpu_rental_price": "green",
+        "arr_2nd_deriv": "green",
+        "enterprise_deploy": "green",
+        "cloud_rpo_growth": "green",
+        "frontier_progress": "green",
+        "accounting_events": "green",
+        "fed_policy": "red",
+        "capex_reaction": "unknown",
+        "ceo_hedging": "yellow"
+      },
+      "score_bounds": {
+        "primary": {
+          "lower": 30.4,
+          "upper": 39.1
+        },
+        "pressure": {
+          "lower": 45.7,
+          "upper": 54.3
+        },
+        "stage": {
+          "lower": 60,
+          "upper": 60
+        },
+        "trigger": {
+          "lower": 34.6,
+          "upper": 50
+        }
+      },
+      "tier_range": {
+        "lower": "alert",
+        "upper": "alert"
+      },
+      "effective_tier": "alert",
+      "unknown_core_ids": [
+        "dc_abs_spread",
+        "capex_reaction"
+      ],
+      "gap_metadata": {
+        "dc_abs_spread": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "bubble-qualified-evidence-v1",
+            "reasonCode": "dc_abs_direct_spread_unavailable",
+            "checkedDate": "2026-10-15"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-10-15T07:49:49.174Z",
+            "detail": {
+              "status": "unknown",
+              "reasonCode": "dc_abs_direct_spread_unavailable",
+              "qualificationFailure": "wrong_market_or_subject"
+            }
+          }
+        },
+        "capex_reaction": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "bubble-qualified-evidence-v1",
+            "reasonCode": "capex_qualified_event_unavailable",
+            "checkedDate": "2026-10-15"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-10-15T07:49:49.174Z",
+            "detail": {
+              "policy": "capex_latest_earnings_event_hold_v1",
+              "adapterStatus": "not_admitted",
+              "status": "unknown",
+              "scope": "latest_quarterly_earnings_guidance_fixed_four",
+              "companies": [
+                "MSFT",
+                "META",
+                "AMZN",
+                "GOOGL"
+              ],
+              "qualifiedEventCount": 0,
+              "qualifiedEvents": [],
+              "missingRequirements": [
+                "complete_official_latest_earnings_listing",
+                "reviewed_comparable_guidance_raise",
+                "first_guidance_disclosure_timestamp",
+                "first_full_regular_session_calendar",
+                "matched_stock_and_qqq_prices"
+              ],
+              "checkedDate": "2026-10-15",
+              "numericThresholdStatus": "not_admitted",
+              "legacyRollingReturnsEligible": false,
+              "newsCountEligible": false
+            }
+          }
+        }
+      }
     }
   ]
 }
