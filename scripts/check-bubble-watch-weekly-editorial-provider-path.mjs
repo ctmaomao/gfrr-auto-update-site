@@ -144,7 +144,7 @@ assert(requestBody.max_tokens === 8000, 'DeepSeek max_tokens must remain 8000');
 assert(requestBody.response_format?.type === 'json_object', 'DeepSeek response_format must remain json_object');
 assert(requestBody.thinking?.type === 'disabled', 'DeepSeek thinking must remain disabled for bounded editorial call');
 assert(requestBody.messages[0].content.includes('Target 2,600-3,400 visible Chinese characters'), 'DeepSeek prompt must retain the calibrated visible-length target');
-assert(requestBody.messages[0].content.includes('Hard output caps:') && requestBody.messages[0].content.includes('exactly 6 categoryAnalysis'), 'DeepSeek prompt must retain explicit completion caps');
+assert(requestBody.messages[0].content.includes('no exact item counts, minimum indicator count or per-paragraph character quotas') && requestBody.messages[0].content.includes('6,500'), 'DeepSeek prompt must keep the overall safety budget without editorial quotas');
 assert(requestBody.messages[0].content.includes('integer 0-100, never a 0-1 probability'), 'DeepSeek prompt must require percentage-scale confidence');
 assert(!requestBody.messages[1].content.includes('\n  "schemaVersion"'), 'DeepSeek user prompt must serialize compact JSON without pretty-print expansion');
 assert(!JSON.stringify(providerResult).includes('fixture-secret-never-serialized'), 'provider result must not serialize API key');
@@ -310,7 +310,7 @@ assert(envelopeError?.responseDiagnostics?.httpStatus === 502, 'invalid response
 let contractCalls = 0;
 let contractError = null;
 try {
-  const invalidContractOutput = { ...providerOutput, headlineZh: '短' };
+  const invalidContractOutput = { ...providerOutput, headlineZh: null };
   await requestWeeklyEditorial({
     input,
     apiKey: 'fixture-key',

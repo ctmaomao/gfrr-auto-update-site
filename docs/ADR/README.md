@@ -97,6 +97,8 @@
 
 | [ADR-0070](0070-bubble-capex-event-inspection.md) | Bounded capex event inspection, no production admission | Independent review required |
 
+| [ADR-0071](0071-bubble-editorial-essential-gates.md) | Essential editorial gates; presentation warnings | Independent contract review required |
+
 ## Superseded
 
 | [ADR-0045](0045-editorial-single-recovery.md) | One-use 2026-09-11 editorial recovery | Executable route retired by ADR-0058; spent refs retained |

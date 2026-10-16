@@ -95,16 +95,16 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
     warnings.push('本周期新闻发现覆盖有限；页面数据限制必须保留这一说明');
   }
   if (referencedIndicators.size < 5) {
-    dimensions.incrementalEditorialValue = 'fail';
-    blockers.push('周度判读必须综合至少 5 项不同的 Bubble Watch 指标');
+    dimensions.incrementalEditorialValue = 'warn';
+    warnings.push('本期综合指标少于 5 项，判读覆盖有限。');
   }
   const categories = new Set((output?.categoryAnalysis || []).map((item) => item.category));
   if (isLimitedEvidence(input) && output?.dataGaps?.some((gap) => /新闻|证据|覆盖/u.test(gap))) {
     dimensions.incrementalEditorialValue = 'warn';
     warnings.push('新闻证据有限，展示简版判读；省略无依据的栏目，不补写新闻。');
   } else if (categories.size < 5) {
-    dimensions.incrementalEditorialValue = categories.size < 4 ? 'fail' : 'warn';
-    (categories.size < 4 ? blockers : warnings).push(`category coverage is ${categories.size}/6`);
+    dimensions.incrementalEditorialValue = 'warn';
+    warnings.push(`本期栏目覆盖 ${categories.size}/6，不补写无依据内容。`);
   }
   const visibleLength = visibleEditorialText(output).length;
   const [minLength, maxLength] = isLimitedEvidence(input) ? [600, 1800] : [1800, 4200];

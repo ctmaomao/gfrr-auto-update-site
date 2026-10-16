@@ -1,6 +1,7 @@
+import { claimQuoteSupport } from './weekly-editorial-quote-support.mjs';
 import { validateEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { isLimitedEvidence, validMediaStory } from './editorial-evidence-policy.mjs';
-import { claimNumericSupport, claimEvidenceTexts } from './weekly-editorial-numeric-grounding.mjs';
+import { claimNumericSupport } from './weekly-editorial-numeric-grounding.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'bubble-watch-weekly-news-discovery-v1';
 export const INPUT_SCHEMA = 'bubble-watch-weekly-editorial-input-v1';
 export const OUTPUT_SCHEMA = 'bubble-watch-weekly-editorial-output-v1';
@@ -259,16 +260,16 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
   if (root.provider !== 'deepseek') errors.push('output.provider must be deepseek');
   if (root.mode !== 'external_ai_weekly_editorial') errors.push('output.mode must be external_ai_weekly_editorial');
   if (root.asOfDate !== input?.asOfDate) errors.push('output.asOfDate must equal input.asOfDate');
-  requireString(root.headlineZh, 'output.headlineZh', errors, { min: 8, max: 80 });
-  requireString(root.leadZh, 'output.leadZh', errors, { min: 40, max: 800 });
-  requireString(root.scorecardSynthesisZh, 'output.scorecardSynthesisZh', errors, { min: 30, max: 1000 });
+  requireString(root.headlineZh, 'output.headlineZh', errors, { min: 1, max: 80 });
+  requireString(root.leadZh, 'output.leadZh', errors, { min: 1, max: 800 });
+  requireString(root.scorecardSynthesisZh, 'output.scorecardSynthesisZh', errors, { min: 1, max: 1000 });
   if (input?.scoringSnapshot?.contractVersion === 'bubble-watch-v3' && root.scorecardSynthesisZh !== input.scoringSnapshot.scorecardDisclosureZh) errors.push('output qualified scorecard must copy the supplied deterministic disclosure exactly');
 
   const limited = options.metadataOnly && typeof options.limitedEvidence === 'boolean' ? options.limitedEvidence : isLimitedEvidence(input);
-  const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: limited ? 0 : 2, max: 8 });
-  const tensions = requireArray(root.keyTensions, 'output.keyTensions', errors, { min: limited ? 1 : 2, max: 6 });
-  const categories = requireArray(root.categoryAnalysis, 'output.categoryAnalysis', errors, { min: limited ? 2 : 4, max: 6 });
-  requireArray(root.watchNextWeek, 'output.watchNextWeek', errors, { min: 2, max: 6 });
+  const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: 0, max: 8 });
+  const tensions = requireArray(root.keyTensions, 'output.keyTensions', errors, { min: 0, max: 6 });
+  const categories = requireArray(root.categoryAnalysis, 'output.categoryAnalysis', errors, { min: 0, max: 6 });
+  requireArray(root.watchNextWeek, 'output.watchNextWeek', errors, { min: 1, max: 6 });
   requireArray(root.dataGaps, 'output.dataGaps', errors, { min: 1, max: 12 });
   const attributions = requireArray(root.sourceAttribution, 'output.sourceAttribution', errors, { min: 1, max: 80 });
 
@@ -303,14 +304,15 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
       const story = newsById.get(refId);
       if (story?.contentScope === 'title_only') errors.push(`output factual claim[${index}] cites title-only news; omit unsupported detail`);
       if (story?.evidenceStatus === 'attributed_media') {
-        if (!claimText.includes(story.sourceName) || !/据|报道|认为|分析|指出|研判/u.test(claimText)) errors.push(`output factual claim[${index}] must attribute media statements to ${story.sourceName}`);
+        if (!claimText.includes(story.sourceName) || !/据|报道|认为|分析|指出|研判/u.test(claimText)) warnings.add('部分段落省略媒体名称或归因措辞；请结合该段结构化来源引用复核，媒体摘要不等于独立核实。');
         // Input-stage check only: production retains source metadata, never search excerpts.
         if (typeof story.snippet === 'string') {
           const numericSupport = claimNumericSupport(claim, input);
           if (numericSupport.hints.length) warnings.add('部分日期、代码、普通数量或比例表述未能精确匹配引用证据；这些内容需结合来源复核，不作为独立事实依据。');
           if (numericSupport.blockers.length) errors.push(`output factual claim[${index}] adds numbers absent from the supplied media excerpt or explicitly cited indicators`);
-          const quotes = [...claimText.matchAll(/[“「]([^”」]+)[”」]/gu)].map((match) => match[1]);
-          if (quotes.some((quote) => !claimEvidenceTexts(claim, input).some(text => text.includes(quote)))) errors.push(`output factual claim[${index}] adds a quotation absent from the supplied media excerpt or explicitly cited indicators`);
+          const quotes = claimQuoteSupport(claim,input);
+          if (quotes.unsupportedDirectQuoteCount) errors.push(`output factual claim[${index}] claims an unsupported verbatim quotation`);
+          else if (quotes.unsupportedQuoteCount) warnings.add('部分引号、术语或译述未与引用摘要逐字匹配；不视为已核实的原文引语。');
         }
       }
     }
@@ -329,8 +331,8 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
     if (!attributionIds.has(sourceRefId)) errors.push(`output source ${sourceRefId} lacks sourceAttribution`);
   }
 
-  if (limited && !requireSafeArray(root.dataGaps).some((gap) => /新闻|证据|覆盖/u.test(gap))) errors.push('limited editorial must disclose news evidence coverage');
-  if ([...referencedSourceIds].some((id) => newsById.get(id)?.evidenceStatus === 'attributed_media') && !requireSafeArray(root.dataGaps).some((gap) => /摘要|媒体|观点|来源|核实/u.test(gap))) errors.push('media editorial must disclose excerpt or institutional-opinion limitations');
+  if (limited && !requireSafeArray(root.dataGaps).some((gap) => /新闻|证据|覆盖/u.test(gap))) warnings.add('新闻证据覆盖有限，请结合来源与数据限制阅读。');
+  if ([...referencedSourceIds].some((id) => newsById.get(id)?.evidenceStatus === 'attributed_media') && !requireSafeArray(root.dataGaps).some((gap) => /摘要|媒体|观点|来源|核实/u.test(gap))) warnings.add('专业媒体摘要或机构观点尚未独立核实，请结合来源复核。');
   const confidence = requireRecord(root.confidence, 'output.confidence', errors);
   if (limited && (confidence.level === 'high' || confidence.score > 70)) errors.push('limited editorial confidence must be low/medium and at most 70');
   if (!['low', 'medium', 'high'].includes(confidence.level)) errors.push('output.confidence.level is invalid');
@@ -341,7 +343,8 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
   for (const key of FALSE_OUTPUT_BOUNDARIES) requireExactBoolean(boundaries, key, false, 'output.boundaries', errors);
 
   const visibleText = visibleEditorialText(root);
-  if (visibleText.length < (limited ? 600 : 1200) || visibleText.length > 6500) errors.push('output visible editorial text must be 600-6500 characters for limited evidence, otherwise 1200-6500');
+  if (visibleText.length > 6500) errors.push('output visible editorial text must not exceed 6500 characters');
+  if (visibleText.length < (limited ? 600 : 1200)) warnings.add('本期判读较短，优先保留有依据的内容，不强行补足篇幅。');
   for (const pattern of UNSAFE_TEXT_PATTERNS) {
     if (pattern.test(collectStrings(root).join('\n'))) errors.push(`output contains unsafe wording matching ${pattern}`);
   }

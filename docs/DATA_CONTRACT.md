@@ -2551,3 +2551,8 @@ Weekly sanitizer outputs add `quality.weeklyWindow` with a shared `latestWeek`, 
 ### World Order Events 可选来源
 
 新模型 gdelt-events-conflict-interval-v1 要求 externalSources.gdeltEvents：enabled/status/lastFetchedAt/confidence、summary 的 schema/calibration/definition、windowStartDay/windowEndDay、672 downloadedFiles、quarantinedRows、零 conflictingIds/ambiguousIds、violenceLower/Upper、channelScoreLower/Upper/channelScore、strictQualification、latestTimestamp 与缓存原因。新旧分数不可直接比较。新源 confidence ≤0.55，stale ≤0.25；保留原 acquisition，72h 后 hold。旧模型历史 JSON 不强制补字段。仅两个冲突维度读新源；其余三维、主模型及交叉验证源证据保持既有路径。见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。
+
+
+### Bubble weekly editorial essential gates
+
+[ADR-0071](ADR/0071-bubble-editorial-essential-gates.md) narrowly replaces literal publisher-name/verb repetition, all-quotation matching and minimum editorial length/coverage/count admission with Chinese quality warnings. Explicit verbatim markers still require same-item cited literal support; financial numbers, source eligibility/structured references, unsafe wording, exact qualified score disclosure, schema/types/maxima, freshness, writer and cost gates remain. Short supported commentary may display with warnings; this does not verify every prose claim or permit unseen article detail. Failed-candidate replay remains diagnostic/non-production and cannot refresh the site.
