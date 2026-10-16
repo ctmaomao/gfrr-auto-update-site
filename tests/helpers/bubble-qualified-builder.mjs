@@ -1,3 +1,4 @@
+import {transport as quarterlyTransport} from './bubble-capex-quarterly-fixtures.mjs';
 import {transport as fedTransport} from './bubble-fed-source-fixtures.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -5,7 +6,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const builderUrl=new URL('../../scripts/build-bubble-watch.mjs',import.meta.url);
-export async function buildQualifiedAbsFixture({publish=false,baselineOutput=null,baselineHistory=null,clock='2026-10-13T12:00:00Z',revision=1,insiderHttpStatus=200,duplicateSymbol=null,fedOptions={}}={}) {
+export async function buildQualifiedAbsFixture({publish=false,baselineOutput=null,baselineHistory=null,clock='2026-10-13T12:00:00Z',revision=1,insiderHttpStatus=200,duplicateSymbol=null,fedOptions={},quarterlyOptions={}}={}) {
   const source=fs.readFileSync(builderUrl,'utf8');
   const bundle=JSON.parse(fs.readFileSync(new URL('../../docs/fixtures/bubble-watch/legacy-contract-bundle.json',import.meta.url)));
   const methods={contractVersion:'bubble-qualified-methods-v1',activeRevision:revision,approvedAbsSourceReviews:[],absObservation:null};
@@ -19,6 +20,7 @@ export async function buildQualifiedAbsFixture({publish=false,baselineOutput=nul
       const [name,alias=name]=key.split(/\s+as\s+/u);
       bindings[alias]=name==='collectInsiderWindows' && revision>=2
         ? args=>module[name]({...args,fetchFn:insiderFetch,now:()=>virtualTime,sleep:async ms=>{virtualTime+=ms;}})
+        : name==='collectQuarterlyCapexPanel' && revision>=5 ? args=>module[name]({...args,fetchFn:quarterlyFetch,now:()=>virtualTime})
         : name==='collectFedMarketPath' && revision>=4 ? args=>module[name]({...args,fetchFn:fedFetch,now:()=>virtualTime}) : module[name];
     } else bindings[match[1].trim()]=module.default;
   }
@@ -42,6 +44,8 @@ export async function buildQualifiedAbsFixture({publish=false,baselineOutput=nul
     if(symbol===duplicateSymbol) rows.splice(1,0,structuredClone(rows[0]));
     return Response.json({source:'xoomar.com',meta:{source:'SEC'},updatedAt:new RealDate(virtualTime).toISOString(),data:{ticker:symbol,transactions:rows}});
   };
+  const quarterlySource=quarterlyTransport(quarterlyOptions);
+  const quarterlyFetch=async(url,options)=>{networkCalls++;requestStarts.push(virtualTime);return quarterlySource.fetchFn(url,options);};
   const fedSource=fedTransport(fedOptions);
   const fedFetch=async(url,options)=>{networkCalls++;requestStarts.push(virtualTime);return fedSource.fetchFn(url,options);};
   const key=file=>path.relative(root,file).replaceAll('\\','/');
