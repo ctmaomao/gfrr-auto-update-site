@@ -27,11 +27,11 @@ const RANK = { observation: 0, caution: 1, alert: 2, top: 3 };
 const SCORE = { green: 0, yellow: 50, red: 100 };
 const round = value => Number(value.toFixed(1));
 export const evidenceModelVersion = revision => {
-  if (!Number.isInteger(revision) || revision < 1 || revision > 4) throw new Error('Invalid evidence revision');
+  if (!Number.isInteger(revision) || revision < 1 || revision > 5) throw new Error('Invalid evidence revision');
   return `bubble-watch-v3-core23-shadow4-r${revision}`;
 };
 export function modelRevision(version) {
-  const match = /^bubble-watch-v3-core23-shadow4-r([1-4])$/u.exec(version || '');
+  const match = /^bubble-watch-v3-core23-shadow4-r([1-5])$/u.exec(version || '');
   return match ? Number(match[1]) : null;
 }
 function realDay(value) {
@@ -40,7 +40,7 @@ function realDay(value) {
   return Number.isFinite(stamp) && new Date(stamp).toISOString().slice(0, 10) === value;
 }
 export function isRegisteredEvidenceGap(item, { revision, asOfDate } = {}) {
-  if (!Number.isInteger(revision) || revision < 1 || revision > 4 || !realDay(asOfDate)) return false;
+  if (!Number.isInteger(revision) || revision < 1 || revision > 5 || !realDay(asOfDate)) return false;
   const gap = item?.evidence_gap;
   const checked = item?.provenance?.checkedAt;
   const stamp = typeof checked === 'string' ? Date.parse(checked) : NaN;

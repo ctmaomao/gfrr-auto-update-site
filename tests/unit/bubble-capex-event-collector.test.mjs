@@ -138,7 +138,7 @@ test('lease additions cannot masquerade as finance lease principal payments',()=
 test('manual workflow retains read-only main scope and uploads only derived panel',()=>{
  const workflow=fs.readFileSync(new URL('../../.github/workflows/inspect-bubble-capex-events.yml',import.meta.url),'utf8');
  assert.match(workflow,/on:\s+workflow_dispatch:/u);assert.match(workflow,/contents: read/u);assert.match(workflow,/github.ref == 'refs\/heads\/main'/u);
- assert.match(workflow,/persist-credentials: false/u);assert.match(workflow,/node scripts\/collect-bubble-capex-events.mjs --allow-network --write/u);
+ assert.match(workflow,/persist-credentials: false/u);assert.match(workflow,/node scripts\/collect-bubble-capex-events.mjs --quarterly --allow-network --write/u);
  assert.match(workflow,/path: manual-artifacts\/bubble-capex-event-panel-latest.json/u);
  assert.doesNotMatch(workflow,/schedule:|push:|pull_request:|secrets\.|contents: write|id-token:|deepseek|build-bubble-watch|git push/iu);
  assert.equal((workflow.match(/uses: actions\/upload-artifact/gu)||[]).length,1);

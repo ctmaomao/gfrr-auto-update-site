@@ -14,6 +14,7 @@ import { CORE_LAYOUT, SHADOW_IDS as EVIDENCE_SHADOW_IDS, modelRevision, replayEv
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { validateInsiderPublication } from './bubble-watch/qualified-insider-publication.mjs';
 import { validateCapexEventPublication } from './bubble-watch/capex-event-evidence.mjs';
+import { validateQuarterlyCapexPublication } from './bubble-watch/capex-quarterly-publication.mjs';
 import {validateFedMarketPathPublication} from './bubble-watch/qualified-fed-publication.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -126,7 +127,7 @@ const gdeltBubbleCache = JSON.parse(read('data/gdelt-bubble-watch-cache.json'));
 
 // ---- 1. contract ----
 check('contract', methodConfig.contractVersion === 'bubble-qualified-methods-v1'
-  && Number.isInteger(methodConfig.activeRevision) && methodConfig.activeRevision >= 0 && methodConfig.activeRevision <= 4
+  && Number.isInteger(methodConfig.activeRevision) && methodConfig.activeRevision >= 0 && methodConfig.activeRevision <= 5
   && Array.isArray(methodConfig.approvedAbsSourceReviews)
   && (methodConfig.absObservation === null || (typeof methodConfig.absObservation === 'object' && !Array.isArray(methodConfig.absObservation))),
   'qualified method deployment configuration invalid');
@@ -184,7 +185,7 @@ if (isV3) {
   try { evidenceReplay = replayEvidenceScores(data.indicators, evidenceRevision); } catch (error) { check('contract', false, error.message); }
   // r3 is pending-only: no complete latest-event adapter or numeric rule admitted.
   // r4 admits only the separately reviewed 3/6-month daily-bar proxy proof.
-  check('contract', [1, 2, 3, 4].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
+  check('contract', [1, 2, 3, 4, 5].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
     'v3 method revision is not supported/activated by the reviewed source policy');
   const abs = indicatorById.dc_abs_spread;
   const qualified = qualifyDataCenterSpread(methodConfig.absObservation, data.as_of_date, methodConfig.approvedAbsSourceReviews);
@@ -193,7 +194,9 @@ if (isV3) {
   if (evidenceRevision >= 2) {
     for (const error of validateInsiderPublication(indicatorById.insider_sell_buy, data.as_of_date)) check('contract', false, error);
   }
-  if (evidenceRevision >= 3) {
+  if (evidenceRevision >= 5) {
+    for (const error of validateQuarterlyCapexPublication(indicatorById.capex_reaction, data.as_of_date)) check('contract', false, `capex quarterly source: ${error}`);
+  } else if (evidenceRevision >= 3) {
     for (const error of validateCapexEventPublication(indicatorById.capex_reaction, data.as_of_date)) check('contract', false, `capex qualified source: ${error}`);
   }
   if (evidenceRevision >= 4) {
