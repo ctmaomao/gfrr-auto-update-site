@@ -357,7 +357,14 @@ function editorialRefreshMessage(data, status, nowMs = Date.now()) {
     && typeof status.checkedAt === 'string'
     && status.asOfDate === data.as_of_date && Number.isFinite(checked)
     && checked <= nowMs + 3_600_000 && nowMs - checked <= 7 * 86_400_000;
-  if (!current) return '本期暂无可展示的 AI 判读，当前展示确定性判读；刷新状态暂未核实。';
+  if (!current) {
+    const evidenceUpdated = data?.contractVersion === 'bubble-watch-v3' && !layer
+      && Array.isArray(data.meta?.qualified_refresh?.indicatorIds)
+      && data.meta.qualified_refresh.indicatorIds.length > 0;
+    return evidenceUpdated
+      ? '本期证据已更新，AI 周评尚未同步；当前展示确定性判读。刷新状态暂未核实。'
+      : '本期暂无可展示的 AI 判读，当前展示确定性判读；刷新状态暂未核实。';
+  }
   const messages = {
     no_credible_news: '本期 AI 暂未生成：新闻检索成功，但尚无可用的官方、跨来源确认或专业媒体摘要证据；未调用付费 AI。每周三至多补检一次。',
     search_failed: '本期 AI 暂未生成：新闻检索服务异常，未通过输入检查。',

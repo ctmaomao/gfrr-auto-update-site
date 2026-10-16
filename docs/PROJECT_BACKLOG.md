@@ -1,5 +1,10 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-16 资本开支事件采集器与 Actions 后续
+
+- **Acceptance baseline**：owner 要求尝试补齐固定MSFT/META/AMZN/GOOGL的完整事件采集器，并按只读审计建议处理Actions。沿用四项独立AI审阅/CI后推送合并上线授权；新增数值capex准入仍需独立ADR/checker PR，不能放宽r3 hold或以旧事件补最新。owner已单独授权最多一次DeepSeek调用、不重试；已执行run38842647919，在provider_output_contract_invalid失败后停止，诊断待归因，不追加付费。
+- **当前任务**：基于latest main `927bf6e4`，先修复定向更新后周评未同步的显示提示，沿用DESIGN §4.4原muted/serif状态行，不改门槛/评分/生产JSON或触发付费。已有真实失败与坏状态提示保留。免费Pressure Shadow手动验收run `38842091229`已成功，missing=[]，Brent最新10-14/原规则可用，24条历史账本保留，不放宽有效期、不回填。周评提示完整check:changed/check:all和61项浏览器均退出0（ignored bubble-editorial-notice-check.log/browser.log），独立预审无阻断；最终提交复核及CI待执行。随后独立实现capex来源枚举、可比指引/首次时间/交易日/匹配价格证据与回归，实际缺口继续unknown。
+
 ### 2026-10-13 Bubble 四项口径依次修订
 
 - **r4 runtime（2026-10-16 NZ）**：独立来源/checker契约#463固定head `bc56ad60`经独立AI终审、CI `38809252815`成功后合并`78c40b1e`。基于该latest-main接入真实Fed collector/formatter、启用activeRevision4；在旧SEP/年末/CPI/付费补位之前截断，异常保留待确认与真实来源失败，完整23分母不变。17项新旧builder定向回归通过（含6项新增），运行草案已独立预审无阻断；真实候选及正式产物已由builder分别重新采集，实际checker七组/23卡与19旧历史/锚点比较退出0，HTTP故障为空；Fed真实6请求、DFF原值3.88%及共同标签均10-13、目标2027-01-15/04-15，路径约4.1466667/4.4239286%、差+26.6667/+54.3929bp、红灯。内部人11合格/黄灯，ABS和capex待确认；主分30.4–39.1、Stage60、Trigger34.6–50。产物已独立复审无阻断；完整check:changed/check:all与59项全浏览器均退出0（ignored bubble-fed-runtime-check.log/bubble-fed-all-browser.log），doclinks/diffcheck0。自审实际文件符合方案，checker/独立源契约/核心计分无diff、无新增skip/ignore。后台main fbe4248c仅油市温度数据更新，无Bubble重叠；后续固定提交代审、CI/上线与两公网回执见最终运行PR，合并前仍待验收。无新付费调用。

@@ -65,6 +65,21 @@ test('Bubble status request failure cannot hide deterministic content', async ({
   await expect(page.locator('#editorial-refresh-note')).toContainText('刷新状态暂未核实');
 });
 
+for (const width of [1440, 390]) test(`qualified evidence update explains unsynchronized weekly AI at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 1000 });
+  const data = structuredClone(base);
+  data.meta.qualified_refresh = { indicatorIds: ['dc_abs_spread', 'insider_sell_buy', 'capex_reaction', 'fed_policy'] };
+  const previousStatus = { ...makeStatus('published'), asOfDate: '2026-10-12' };
+  await page.route('**/data/bubble-watch.json?*', route => route.fulfill(json(data)));
+  await page.route('**/data/bubble-watch-editorial-status.json?*', route => route.fulfill(json(previousStatus)));
+  await page.goto('/bubble-watch.html');
+  await expect(page.locator('#editorial-refresh-note')).toContainText('本期证据已更新，AI 周评尚未同步');
+  await expect(page.locator('#editorial-refresh-note')).toContainText('刷新状态暂未核实');
+  await expect(page.locator('.weekly-editorial')).toHaveCount(0);
+  await expect(page.locator('section.category article.indicator')).toHaveCount(27);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+});
+
 test('Bubble expiry and current AI take precedence over diagnostic status', async ({ page }) => {
   const data = structuredClone(source);
   const layer = buildApprovedBubbleWeeklyEditorial(data, new Date().toISOString());
