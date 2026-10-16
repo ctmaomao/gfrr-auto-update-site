@@ -277,6 +277,1316 @@
       "limitations": [
         "上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。"
       ]
+    },
+    "weekly_editorial": {
+      "schemaVersion": "bubble-watch-weekly-editorial-production-v1",
+      "status": "valid",
+      "displayEnabled": true,
+      "generatedAt": "2026-10-16T09:05:21.466Z",
+      "updatedAt": "2026-10-16T09:05:21.466Z",
+      "asOfDate": "2026-10-16",
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "mode": "external_ai_weekly_editorial",
+      "sourceMode": "weekly_news_and_site_structured_compact_v1",
+      "output": {
+        "schemaVersion": "bubble-watch-weekly-editorial-output-v1",
+        "generatedAt": "2026-10-16T09:05:21.076Z",
+        "asOfDate": "2026-10-16",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "mode": "external_ai_weekly_editorial",
+        "headlineZh": "高风险预警维持：估值与资金红灯未退，信用与需求仍提供缓冲",
+        "leadZh": "截至2026-10-16，本站固定核心23项中7项红灯、8项黄灯、7项绿灯、1项待确认。泡沫成熟度60.0，破裂临近度38.5–46.2，综合判读为高风险预警。本周市场层面出现全球科技股回调与利率路径上移的报道，但信用利差与需求侧指标尚未同步转红，两轴证据继续分化。",
+        "weeklyTimeline": [
+          {
+            "date": "2026-10-13",
+            "titleZh": "存储芯片股回调，AI交易出现裂缝",
+            "detailZh": "有媒体报道存储芯片股下跌、AI交易承压。该报道为媒体摘要，仅支持其所述市场情绪，不构成对本站灯色的独立核实。",
+            "sourceRefIds": [
+              "news:market_structure_valuation:a2db04f1f722e8"
+            ],
+            "sourceIndicatorIds": []
+          },
+          {
+            "date": "2026-10-14",
+            "titleZh": "通胀数据偏热，纳斯达克显著收低",
+            "detailZh": "有报道称高于预期的通胀数据令纳斯达克收低，市场对美联储进一步加息的担忧上升，甲骨文、CoreWeave等对借贷成本敏感的AI股承压。该报道为媒体摘要，不替代本站利率路径指标。",
+            "sourceRefIds": [
+              "news:macro_policy:4b77e69aaa9fda"
+            ],
+            "sourceIndicatorIds": []
+          },
+          {
+            "date": "2026-10-14",
+            "titleZh": "微软据报考虑Azure部门约20%成本削减",
+            "detailZh": "有报道称微软在AI数据中心支出高企背景下考虑Azure相关成本削减，并提及同业已采取人员缩减以保护现金流。该条为交叉核对报道摘要，未提供可核验的完整财务口径。",
+            "sourceRefIds": [
+              "news:ai_capex_earnings:a5ff0cb593c326"
+            ],
+            "sourceIndicatorIds": []
+          },
+          {
+            "date": "2026-10-15",
+            "titleZh": "亚洲科技股走弱，SK海力士跌超10%",
+            "detailZh": "有报道称全球科技硬件股抛售加深，SK海力士跌超10%、三星电子跌7.1%，担忧集中于美联储加息与AI投资融资。该条为媒体摘要，仅支持其所述行情与情绪。",
+            "sourceRefIds": [
+              "news:macro_policy:ebebcb2c997eaf"
+            ],
+            "sourceIndicatorIds": []
+          },
+          {
+            "date": "2026-10-15",
+            "titleZh": "全球AI与半导体股本周市值缩水逾1万亿美元",
+            "detailZh": "有报道称20只市值最大的全球AI与半导体股本周合计缩水超过1万亿美元，英伟达、AMD、英特尔、戴尔等下跌。该数字来自媒体摘要，本站未独立核实。",
+            "sourceRefIds": [
+              "news:market_structure_valuation:1f997c90812af4"
+            ],
+            "sourceIndicatorIds": []
+          },
+          {
+            "date": "2026-10-14",
+            "titleZh": "联邦基金期货隐含路径较实际利率上移",
+            "detailZh": "本站指标显示，快照日同期实际有效联邦基金利率3.88%，3个月目标日隐含有效利率约4.181%，较实际利率高约30.1个基点；6个月目标日隐含约4.459%，高约57.9个基点。该代理不是CME官方结算或实时行情。",
+            "sourceRefIds": [
+              "indicator:fed_policy"
+            ],
+            "sourceIndicatorIds": [
+              "fed_policy"
+            ]
+          },
+          {
+            "date": "2026-10-12",
+            "titleZh": "私募二级标价：Anthropic折价、OpenAI溢价",
+            "detailZh": "本站影子指标显示，Anthropic标价对最近一级折价7.54%，OpenAI溢价12.43%；任一旗舰折价超过5%按规则转红。该序列为首期统一口径，不与旧序列算环比。",
+            "sourceRefIds": [
+              "indicator:private_secondary_marks"
+            ],
+            "sourceIndicatorIds": [
+              "private_secondary_marks"
+            ]
+          }
+        ],
+        "scorecardSynthesisZh": "固定核心23项，主分30.4–34.8%，辅助压力47.8–52.2；泡沫成熟度60.0，破裂临近度38.5–46.2。数据中心ABS利差待确认，点值保留为空，不按绿灯或零分处理；上下界是数学边界，不是概率。综合判读：高风险预警。",
+        "scorecardSourceIndicatorIds": [
+          "cape",
+          "top5_weight",
+          "nvda_fpe",
+          "hyperscaler_capex_yoy",
+          "mag4_fcf_yoy",
+          "vc_ai_share",
+          "nvda_invest_revenue",
+          "breadth_50d",
+          "spy_vs_rsp_6m",
+          "insider_sell_buy",
+          "ai_ipo_pipeline",
+          "hy_oas",
+          "dc_abs_spread",
+          "debt_capex_ratio",
+          "neocloud_credit",
+          "token_volume_mom",
+          "arr_2nd_deriv",
+          "enterprise_deploy",
+          "cloud_rpo_growth",
+          "accounting_events",
+          "fed_policy",
+          "capex_reaction",
+          "ceo_hedging"
+        ],
+        "keyTensions": [
+          {
+            "titleZh": "估值红灯与个股估值绿灯并存",
+            "detailZh": "CAPE为41.9、前5大权重约28.4%，均处红灯；但NVDA远期PE约19x为绿灯。指数层面集中度与单一龙头估值回答不同问题，不能互相抵消。",
+            "sourceIndicatorIds": [
+              "cape",
+              "top5_weight",
+              "nvda_fpe"
+            ],
+            "sourceRefIds": [
+              "indicator:cape",
+              "indicator:top5_weight",
+              "indicator:nvda_fpe"
+            ]
+          },
+          {
+            "titleZh": "资本开支加速与现金流覆盖压力",
+            "detailZh": "Hyperscaler滚动4季capex合计5110亿美元、同比+75.3%为黄灯；Big5 capex/经营现金流约82.9%为红灯，2/5家capex已超过经营现金流。扩张仍在加速，但内部现金流覆盖度下降。",
+            "sourceIndicatorIds": [
+              "hyperscaler_capex_yoy",
+              "mag4_fcf_yoy"
+            ],
+            "sourceRefIds": [
+              "indicator:hyperscaler_capex_yoy",
+              "indicator:mag4_fcf_yoy"
+            ]
+          },
+          {
+            "titleZh": "信用价格平静与市场广度恶化",
+            "detailZh": "高收益债利差315个基点、低于长期均值约394个基点，为绿灯；但S&P 50日均线上方比例约35%为红灯，市值加权相对等权重6个月领先6.3%为黄灯。信用价格与市场广度回答不同问题，不能将股价上涨直接解释为信用风险消失。",
+            "sourceIndicatorIds": [
+              "hy_oas",
+              "breadth_50d",
+              "spy_vs_rsp_6m"
+            ],
+            "sourceRefIds": [
+              "indicator:hy_oas",
+              "indicator:breadth_50d",
+              "indicator:spy_vs_rsp_6m"
+            ]
+          },
+          {
+            "titleZh": "需求侧绿灯与用量增速减速",
+            "detailZh": "云厂商RPO合计1.69万亿美元、同比+152.3%为绿灯，企业生产部署率72%为绿灯；但token月度环比降至+36.5%，由上一窗口+73.1%减速，为黄灯。需求存量与增量节奏需分开观察。",
+            "sourceIndicatorIds": [
+              "cloud_rpo_growth",
+              "enterprise_deploy",
+              "token_volume_mom"
+            ],
+            "sourceRefIds": [
+              "indicator:cloud_rpo_growth",
+              "indicator:enterprise_deploy",
+              "indicator:token_volume_mom"
+            ]
+          },
+          {
+            "titleZh": "利率路径上移与信用事件缺席",
+            "detailZh": "联邦基金期货隐含3/6个月路径较实际利率上移，为红灯；Neocloud具名信用事件扫描未见确认事件，为绿灯。融资成本预期上升与已实现信用事件是不同层面的证据。",
+            "sourceIndicatorIds": [
+              "fed_policy",
+              "neocloud_credit"
+            ],
+            "sourceRefIds": [
+              "indicator:fed_policy",
+              "indicator:neocloud_credit"
+            ]
+          }
+        ],
+        "categoryAnalysis": [
+          {
+            "category": "valuation",
+            "detailZh": "CAPE 41.9、前5大权重约28.4%均为红灯，指数估值与集中度处于历史高位区；NVDA远期PE约19x为绿灯，显示龙头自身倍数并非主要压力源。影子项私募二级标价红灯，Anthropic折价7.54%、OpenAI溢价12.43%，首期统一序列不与旧口径算环比。",
+            "sourceIndicatorIds": [
+              "cape",
+              "top5_weight",
+              "nvda_fpe",
+              "private_secondary_marks"
+            ],
+            "sourceRefIds": [
+              "indicator:cape",
+              "indicator:top5_weight",
+              "indicator:nvda_fpe",
+              "indicator:private_secondary_marks"
+            ]
+          },
+          {
+            "category": "capital",
+            "detailZh": "Hyperscaler滚动4季capex合计5110亿美元、同比+75.3%为黄灯；Big5 capex/经营现金流约82.9%为红灯；AI占VC投资比重64.2%为红灯；NVDA客户投资/收入比约41.3%为红灯，高于Lucent 1999年循环融资峰值24%。资金投入强度仍是成熟度主要来源。",
+            "sourceIndicatorIds": [
+              "hyperscaler_capex_yoy",
+              "mag4_fcf_yoy",
+              "vc_ai_share",
+              "nvda_invest_revenue"
+            ],
+            "sourceRefIds": [
+              "indicator:hyperscaler_capex_yoy",
+              "indicator:mag4_fcf_yoy",
+              "indicator:vc_ai_share",
+              "indicator:nvda_invest_revenue"
+            ]
+          },
+          {
+            "category": "market_structure",
+            "detailZh": "S&P 50日均线上方比例约35%为红灯；市值加权相对等权重6个月领先6.3%为黄灯；内部人交易样本卖买比偏高但窗口完整性未核实，最多保守黄灯；AI一级市场发行热度升温但未构成洪流，维持黄灯。广度与发行活动均未给出绿灯。",
+            "sourceIndicatorIds": [
+              "breadth_50d",
+              "spy_vs_rsp_6m",
+              "insider_sell_buy",
+              "ai_ipo_pipeline"
+            ],
+            "sourceRefIds": [
+              "indicator:breadth_50d",
+              "indicator:spy_vs_rsp_6m",
+              "indicator:insider_sell_buy",
+              "indicator:ai_ipo_pipeline"
+            ]
+          },
+          {
+            "category": "credit",
+            "detailZh": "高收益债利差315个基点、低于长期均值约394个基点，为绿灯；全口径外部融资/Capex比约52%为黄灯；Neocloud具名信用事件扫描未见确认事件，为绿灯；数据中心ABS利差待确认，点值保留为空，不按绿灯或零分处理。信用价格尚未定价压力，但融资缺口与待确认项需并列阅读。",
+            "sourceIndicatorIds": [
+              "hy_oas",
+              "debt_capex_ratio",
+              "neocloud_credit",
+              "dc_abs_spread"
+            ],
+            "sourceRefIds": [
+              "indicator:hy_oas",
+              "indicator:debt_capex_ratio",
+              "indicator:neocloud_credit",
+              "indicator:dc_abs_spread"
+            ]
+          },
+          {
+            "category": "fundamentals",
+            "detailZh": "云厂商RPO合计1.69万亿美元、同比+152.3%为绿灯；企业生产部署率72%为绿灯；token月度环比+36.5%较上一窗口+73.1%减速，为黄灯；token增速/估算支出增速约1.1x为绿灯；GPU租赁中位价3.49美元/GPU/小时为绿灯；AI收入二阶导沿用历史显示并计stale，部分新锚另记。需求侧整体仍偏绿，但增量节奏出现减速。",
+            "sourceIndicatorIds": [
+              "cloud_rpo_growth",
+              "enterprise_deploy",
+              "token_volume_mom",
+              "token_revenue_ratio",
+              "gpu_rental_price",
+              "arr_2nd_deriv"
+            ],
+            "sourceRefIds": [
+              "indicator:cloud_rpo_growth",
+              "indicator:enterprise_deploy",
+              "indicator:token_volume_mom",
+              "indicator:token_revenue_ratio",
+              "indicator:gpu_rental_price",
+              "indicator:arr_2nd_deriv"
+            ]
+          },
+          {
+            "category": "macro",
+            "detailZh": "联邦基金期货隐含3/6个月路径较实际利率上移，为红灯；资本开支财报关联反应为黄灯，固定四家面板中3家上调、2家受罚、1家获奖励；CEO表态对冲程度为部分，维持黄灯；会计造假/round-tripping事件为0件，为绿灯，但仅说明公开执法监测未见新红灯。宏观轴同时包含利率压力与尚未确认的治理风险。",
+            "sourceIndicatorIds": [
+              "fed_policy",
+              "capex_reaction",
+              "ceo_hedging",
+              "accounting_events"
+            ],
+            "sourceRefIds": [
+              "indicator:fed_policy",
+              "indicator:capex_reaction",
+              "indicator:ceo_hedging",
+              "indicator:accounting_events"
+            ]
+          }
+        ],
+        "historicalComparison": {
+          "period": "1999-06 互联网泡沫顶前9个月",
+          "detailZh": "当前Core颜色向量与1999-06相似度72%（18项可比），与2000-02同为72%，与2021-11为69%，与2007-10为46%。相似度只是颜色向量对照，不是破裂概率或时间预测。差异在于当前信用利差与需求侧指标仍提供缓冲，而历史阶段的市场广度与融资结构证据并不完全一致。",
+          "sourceIndicatorIds": [
+            "cape",
+            "top5_weight",
+            "hy_oas",
+            "breadth_50d"
+          ],
+          "sourceRefIds": [
+            "indicator:cape",
+            "indicator:top5_weight",
+            "indicator:hy_oas",
+            "indicator:breadth_50d"
+          ]
+        },
+        "watchNextWeek": [
+          {
+            "conditionZh": "观察数据中心ABS利差是否取得已审且可比的美国数据中心债券与同日基准报价，以补全待确认槽位。",
+            "invalidationZh": "若仍无可比报价，该槽位继续保留为空，不按绿灯或零分处理。",
+            "sourceIndicatorIds": [
+              "dc_abs_spread"
+            ]
+          },
+          {
+            "conditionZh": "观察高收益债利差是否维持低于350个基点，以及S&P 50日均线上方比例是否回升至40%以上。",
+            "invalidationZh": "若利差走阔或广度继续低于40%，信用与市场结构的缓冲叙述将减弱。",
+            "sourceIndicatorIds": [
+              "hy_oas",
+              "breadth_50d"
+            ]
+          },
+          {
+            "conditionZh": "观察token月度环比是否重新加速，以及云厂商RPO增速是否维持。",
+            "invalidationZh": "若用量增速继续减速且订单增速回落，需求侧绿灯的支撑将减弱。",
+            "sourceIndicatorIds": [
+              "token_volume_mom",
+              "cloud_rpo_growth"
+            ]
+          },
+          {
+            "conditionZh": "观察联邦基金期货隐含路径与实际有效利率的差值是否收窄。",
+            "invalidationZh": "若隐含路径继续上移，利率压力对高估值与高杠杆主体的传导风险上升。",
+            "sourceIndicatorIds": [
+              "fed_policy"
+            ]
+          }
+        ],
+        "dataGaps": [
+          "数据中心ABS利差待确认，点值为空，保留固定23分母上下界。",
+          "专业媒体摘要仅支持注明出处的报道或机构观点，不代表独立核实；未补写未提供的正文。",
+          "部分搜索结果仅为discovery_only，未单独支撑事实性判断。",
+          "上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间；四项影子观察继续展示但不进入主分、两轴或分类共振。",
+          "旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。",
+          "新闻搜索结果会重复转载、标题党化或延迟收录；本层不确认霍尔木兹关闭、航道中断、油轮流向、炼厂事故、断供、制裁影响或油价方向。"
+        ],
+        "sourceAttribution": [
+          {
+            "sourceRefId": "news:market_structure_valuation:a2db04f1f722e8",
+            "claimType": "attributed_media_news_context",
+            "noteZh": "Bloomberg媒体摘要，仅支持其所述市场情绪"
+          },
+          {
+            "sourceRefId": "news:macro_policy:4b77e69aaa9fda",
+            "claimType": "attributed_media_news_context",
+            "noteZh": "Reuters媒体摘要，仅支持其所述行情与利率担忧"
+          },
+          {
+            "sourceRefId": "news:ai_capex_earnings:a5ff0cb593c326",
+            "claimType": "cross_checked_news_context",
+            "noteZh": "交叉核对报道摘要，未提供完整财务口径"
+          },
+          {
+            "sourceRefId": "news:macro_policy:ebebcb2c997eaf",
+            "claimType": "attributed_media_news_context",
+            "noteZh": "CNBC媒体摘要，仅支持其所述行情与情绪"
+          },
+          {
+            "sourceRefId": "news:market_structure_valuation:1f997c90812af4",
+            "claimType": "attributed_media_news_context",
+            "noteZh": "CNBC媒体摘要，市值缩水数字未独立核实"
+          },
+          {
+            "sourceRefId": "indicator:fed_policy",
+            "claimType": "site_structured_data",
+            "noteZh": "本站联邦基金期货隐含路径指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:private_secondary_marks",
+            "claimType": "site_structured_data",
+            "noteZh": "本站私募二级标价影子指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:cape",
+            "claimType": "site_structured_data",
+            "noteZh": "本站CAPE指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:top5_weight",
+            "claimType": "site_structured_data",
+            "noteZh": "本站前5大权重指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:nvda_fpe",
+            "claimType": "site_structured_data",
+            "noteZh": "本站NVDA远期PE指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:hyperscaler_capex_yoy",
+            "claimType": "site_structured_data",
+            "noteZh": "本站Hyperscaler资本开支增速指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:mag4_fcf_yoy",
+            "claimType": "site_structured_data",
+            "noteZh": "本站Big5资本开支/经营现金流指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:hy_oas",
+            "claimType": "site_structured_data",
+            "noteZh": "本站高收益债利差指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:breadth_50d",
+            "claimType": "site_structured_data",
+            "noteZh": "本站S&P 50日均线上方比例指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:spy_vs_rsp_6m",
+            "claimType": "site_structured_data",
+            "noteZh": "本站市值加权与等权重指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:cloud_rpo_growth",
+            "claimType": "site_structured_data",
+            "noteZh": "本站云厂商RPO增速指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:enterprise_deploy",
+            "claimType": "site_structured_data",
+            "noteZh": "本站企业部署率指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:token_volume_mom",
+            "claimType": "site_structured_data",
+            "noteZh": "本站token月度环比指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:neocloud_credit",
+            "claimType": "site_structured_data",
+            "noteZh": "本站Neocloud信用事件指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:vc_ai_share",
+            "claimType": "site_structured_data",
+            "noteZh": "本站AI占VC投资比重指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:nvda_invest_revenue",
+            "claimType": "site_structured_data",
+            "noteZh": "本站NVDA客户投资/收入比指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:insider_sell_buy",
+            "claimType": "site_structured_data",
+            "noteZh": "本站内部人交易样本指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:ai_ipo_pipeline",
+            "claimType": "site_structured_data",
+            "noteZh": "本站AI一级市场发行指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:debt_capex_ratio",
+            "claimType": "site_structured_data",
+            "noteZh": "本站外部融资/Capex比指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:dc_abs_spread",
+            "claimType": "site_structured_data",
+            "noteZh": "本站数据中心ABS利差待确认指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:token_revenue_ratio",
+            "claimType": "site_structured_data",
+            "noteZh": "本站token增速/收入增速影子指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:gpu_rental_price",
+            "claimType": "site_structured_data",
+            "noteZh": "本站GPU租赁价格影子指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:arr_2nd_deriv",
+            "claimType": "site_structured_data",
+            "noteZh": "本站AI收入二阶导指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:capex_reaction",
+            "claimType": "site_structured_data",
+            "noteZh": "本站资本开支财报关联反应指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:ceo_hedging",
+            "claimType": "site_structured_data",
+            "noteZh": "本站CEO表态对冲程度指标结构化数据"
+          },
+          {
+            "sourceRefId": "indicator:accounting_events",
+            "claimType": "site_structured_data",
+            "noteZh": "本站会计事件指标结构化数据"
+          }
+        ],
+        "confidence": {
+          "level": "medium",
+          "score": 62,
+          "reasonZh": "核心23项中22项有合格观测，1项待确认；新闻层提供市场情绪与利率担忧的媒体摘要，但多为摘要而非独立核实，且部分搜索结果为discovery_only。上下界为数学边界，不构成概率判断。"
+        },
+        "auditFlags": [
+          "display_only",
+          "validator_required",
+          "no_score_impact"
+        ],
+        "boundaries": {
+          "displayOnly": true,
+          "commentaryOnly": true,
+          "externalAiGenerated": true,
+          "usesExternalAiApi": true,
+          "affectsBubbleWatchScoring": false,
+          "affectsCore23": false,
+          "affectsShadow4": false,
+          "affectsStageTrigger": false,
+          "affectsGfrrScoring": false,
+          "affectsDecisionModel": false,
+          "affectsExecutionLock": false,
+          "affectsPositionGuidance": false,
+          "notInvestmentAdvice": true
+        }
+      },
+      "sourceLedger": [
+        {
+          "id": "indicator:cape",
+          "kind": "indicator",
+          "sourceName": "CAPE 历史估值序列",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "cape"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:top5_weight",
+          "kind": "indicator",
+          "sourceName": "SPY 持仓集中度",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "top5_weight"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:nvda_fpe",
+          "kind": "indicator",
+          "sourceName": "NVDA 远期估值",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "nvda_fpe"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:private_secondary_marks",
+          "kind": "indicator",
+          "sourceName": "Forge / Caplight 私募二级标价",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "private_secondary_marks"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:hyperscaler_capex_yoy",
+          "kind": "indicator",
+          "sourceName": "公开季度现金流",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "hyperscaler_capex_yoy"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:mag4_fcf_yoy",
+          "kind": "indicator",
+          "sourceName": "公开季度现金流",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "mag4_fcf_yoy"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:vc_ai_share",
+          "kind": "indicator",
+          "sourceName": "VC 市场季度研究",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "vc_ai_share"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:nvda_invest_revenue",
+          "kind": "indicator",
+          "sourceName": "公开投资承诺与收入",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "nvda_invest_revenue"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:breadth_50d",
+          "kind": "indicator",
+          "sourceName": "Yahoo 行情与维基百科成份股名单实算",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "breadth_50d"
+          ],
+          "asOfDate": "2026-10-09"
+        },
+        {
+          "id": "indicator:spy_vs_rsp_6m",
+          "kind": "indicator",
+          "sourceName": "市值加权与等权重 ETF",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "spy_vs_rsp_6m"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:insider_sell_buy",
+          "kind": "indicator",
+          "sourceName": "SEC Form 4公开披露 · XOOMAR返回样本",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "insider_sell_buy"
+          ],
+          "asOfDate": "2026-10-13"
+        },
+        {
+          "id": "indicator:ai_ipo_pipeline",
+          "kind": "indicator",
+          "sourceName": "一级市场公开报道",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "ai_ipo_pipeline"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:hy_oas",
+          "kind": "indicator",
+          "sourceName": "ICE BofA 高收益债利差",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "hy_oas"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:dc_abs_spread",
+          "kind": "indicator",
+          "sourceName": "美国数据中心可比利差观察（合格观测暂缺）",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "dc_abs_spread"
+          ]
+        },
+        {
+          "id": "indicator:debt_capex_ratio",
+          "kind": "indicator",
+          "sourceName": "数据中心融资缺口研究",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "debt_capex_ratio"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:neocloud_credit",
+          "kind": "indicator",
+          "sourceName": "Neocloud 公开融资与信用事件",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "neocloud_credit"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:token_volume_mom",
+          "kind": "indicator",
+          "sourceName": "公开模型平台用量",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "token_volume_mom"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:token_revenue_ratio",
+          "kind": "indicator",
+          "sourceName": "公开模型平台用量与价格口径",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "token_revenue_ratio"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:gpu_rental_price",
+          "kind": "indicator",
+          "sourceName": "Thunder Compute / getdeploying",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "gpu_rental_price"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:arr_2nd_deriv",
+          "kind": "indicator",
+          "sourceName": "公开 ARR 里程碑",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "arr_2nd_deriv"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:enterprise_deploy",
+          "kind": "indicator",
+          "sourceName": "企业 AI 部署调查",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "enterprise_deploy"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:cloud_rpo_growth",
+          "kind": "indicator",
+          "sourceName": "云厂商订单与 backlog 披露",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "cloud_rpo_growth"
+          ],
+          "asOfDate": "2026-06-30"
+        },
+        {
+          "id": "indicator:accounting_events",
+          "kind": "indicator",
+          "sourceName": "SEC / DOJ 执法公告",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "accounting_events"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "indicator:fed_policy",
+          "kind": "indicator",
+          "sourceName": "Yahoo联邦基金期货日线代理 · FRED实际EFFR · Fed会议日历",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "fed_policy"
+          ],
+          "asOfDate": "2026-10-14"
+        },
+        {
+          "id": "indicator:capex_reaction",
+          "kind": "indicator",
+          "sourceName": "Stock Analysis季度电话会整理 · 公司公告 · Yahoo/QQQ",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "capex_reaction"
+          ],
+          "asOfDate": "2026-07-30"
+        },
+        {
+          "id": "indicator:ceo_hedging",
+          "kind": "indicator",
+          "sourceName": "公开新闻与高管表态",
+          "sourceClass": "site_structured",
+          "indicatorIds": [
+            "ceo_hedging"
+          ],
+          "asOfDate": "2026-10-12"
+        },
+        {
+          "id": "news:ai_capex_earnings:a5ff0cb593c326",
+          "kind": "news",
+          "sourceName": "fr.tradingview.com",
+          "sourceClass": "cross_checked",
+          "title": "Microsoft Weighs 20% Cost Cuts In Azure Vertical Amid Soaring AI Data Center Spending: Report — Actualités TradingView",
+          "url": "https://fr.tradingview.com/news/stocktwits:04d6c2a6f094b:0-microsoft-weighs-20-cost-cuts-in-azure-vertical-amid-soaring-ai-data-center-spending-report",
+          "domain": "fr.tradingview.com",
+          "publishedAt": "2026-10-14T09:00:00.000Z",
+          "contentScope": "excerpt",
+          "topic": "ai_capex_earnings",
+          "providers": [
+            "tavily"
+          ],
+          "supportingDomains": [
+            "finance.yahoo.com",
+            "fr.tradingview.com"
+          ]
+        },
+        {
+          "id": "news:macro_policy:ebebcb2c997eaf",
+          "kind": "news",
+          "sourceName": "CNBC",
+          "sourceClass": "attributed_media",
+          "title": "SK Hynix shares plunge 10% amid Asia tech rout as Fed rate hike fears, AI funding worries mount - CNBC",
+          "url": "https://cnbc.com/2026/10/15/sk-hynix-samsung-softbank-stocks-asia-tech-rout-ai-funding-worries.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-10-15T00:42:30.000Z",
+          "contentScope": "excerpt",
+          "topic": "macro_policy",
+          "providers": [
+            "tavily"
+          ],
+          "supportingDomains": [
+            "cnbc.com"
+          ]
+        },
+        {
+          "id": "news:market_structure_valuation:1f997c90812af4",
+          "kind": "news",
+          "sourceName": "CNBC",
+          "sourceClass": "attributed_media",
+          "title": "AI stocks tumble in global tech rout on AI funding worries",
+          "url": "https://cnbc.com/2026/10/15/sk-hynix-samsung-softbank-stocks-asia-tech-rout-ai-funding-worries.html",
+          "domain": "cnbc.com",
+          "publishedAt": "2026-10-15T00:42:30.000Z",
+          "contentScope": "excerpt",
+          "topic": "market_structure_valuation",
+          "providers": [
+            "brave"
+          ],
+          "supportingDomains": [
+            "cnbc.com"
+          ]
+        },
+        {
+          "id": "news:macro_policy:4b77e69aaa9fda",
+          "kind": "news",
+          "sourceName": "Reuters",
+          "sourceClass": "attributed_media",
+          "title": "Nasdaq ends sharply lower as hot inflation data stirs rate-hike worries - Reuters",
+          "url": "https://reuters.com/business/sp-500-dow-futures-rise-ahead-big-bank-results-cpi-data-2026-10-14",
+          "domain": "reuters.com",
+          "publishedAt": "2026-10-14T23:33:39.000Z",
+          "contentScope": "excerpt",
+          "topic": "macro_policy",
+          "providers": [
+            "tavily"
+          ],
+          "supportingDomains": [
+            "reuters.com"
+          ]
+        },
+        {
+          "id": "news:market_structure_valuation:a2db04f1f722e8",
+          "kind": "news",
+          "sourceName": "Bloomberg",
+          "sourceClass": "attributed_media",
+          "title": "Cracks Grow Across the AI Trade as Memory-Chip Stocks Tumble - Bloomberg.com",
+          "url": "https://bloomberg.com/news/articles/2026-10-13/cracks-grow-across-the-ai-trade-as-memory-chip-stocks-tumble",
+          "domain": "bloomberg.com",
+          "publishedAt": "2026-10-13T09:38:45.000Z",
+          "contentScope": "excerpt",
+          "topic": "market_structure_valuation",
+          "providers": [
+            "tavily"
+          ],
+          "supportingDomains": [
+            "bloomberg.com"
+          ]
+        }
+      ],
+      "sourceScoringSnapshot": {
+        "contractVersion": "bubble-watch-v3",
+        "modelVersion": "bubble-watch-v3-core23-shadow4-r5",
+        "coreIndicatorCount": 23,
+        "shadowIndicatorCount": 4,
+        "coreRedCount": 7,
+        "coreYellowCount": 8,
+        "coreGreenCount": 7,
+        "primaryScorePct": null,
+        "weightedRiskScore": null,
+        "stageScore": 60,
+        "stageLabelZh": "亢奋 Euphoria",
+        "triggerScore": null,
+        "triggerLabelZh": "待确认",
+        "verdictLabelZh": "高风险预警",
+        "qualifiedEvidence": {
+          "contractVersion": "bubble-watch-v3",
+          "as_of_date": "2026-10-16",
+          "indicators": [
+            {
+              "id": "cape",
+              "axis": "stage",
+              "category": "valuation",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "top5_weight",
+              "axis": "stage",
+              "category": "valuation",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "nvda_fpe",
+              "axis": "stage",
+              "category": "valuation",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "private_secondary_marks",
+              "axis": "trigger",
+              "category": "valuation",
+              "score_role": "shadow",
+              "status": "red",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "hyperscaler_capex_yoy",
+              "axis": "stage",
+              "category": "capital",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "mag4_fcf_yoy",
+              "axis": "trigger",
+              "category": "capital",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "vc_ai_share",
+              "axis": "stage",
+              "category": "capital",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "nvda_invest_revenue",
+              "axis": "stage",
+              "category": "capital",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "breadth_50d",
+              "axis": "trigger",
+              "category": "market_structure",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-09",
+              "stale": false
+            },
+            {
+              "id": "spy_vs_rsp_6m",
+              "axis": "trigger",
+              "category": "market_structure",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "insider_sell_buy",
+              "axis": "trigger",
+              "category": "market_structure",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-13",
+              "stale": false
+            },
+            {
+              "id": "ai_ipo_pipeline",
+              "axis": "stage",
+              "category": "market_structure",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "hy_oas",
+              "axis": "trigger",
+              "category": "credit",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "dc_abs_spread",
+              "axis": "trigger",
+              "category": "credit",
+              "score_role": "core",
+              "status": "unknown",
+              "as_of": null,
+              "stale": false,
+              "evidence_gap": {
+                "policy": "bubble-qualified-evidence-v1",
+                "reasonCode": "dc_abs_direct_spread_unavailable",
+                "checkedDate": "2026-10-16"
+              },
+              "provenance": {
+                "mode": "auto",
+                "checkedAt": "2026-10-16T08:36:29.026Z"
+              }
+            },
+            {
+              "id": "debt_capex_ratio",
+              "axis": "stage",
+              "category": "credit",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "neocloud_credit",
+              "axis": "trigger",
+              "category": "credit",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "token_volume_mom",
+              "axis": "trigger",
+              "category": "fundamentals",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "token_revenue_ratio",
+              "axis": "trigger",
+              "category": "fundamentals",
+              "score_role": "shadow",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "gpu_rental_price",
+              "axis": "trigger",
+              "category": "fundamentals",
+              "score_role": "shadow",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "arr_2nd_deriv",
+              "axis": "trigger",
+              "category": "fundamentals",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "enterprise_deploy",
+              "axis": "stage",
+              "category": "fundamentals",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "cloud_rpo_growth",
+              "axis": "trigger",
+              "category": "fundamentals",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-06-30",
+              "stale": false
+            },
+            {
+              "id": "frontier_progress",
+              "axis": "trigger",
+              "category": "fundamentals",
+              "score_role": "shadow",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "accounting_events",
+              "axis": "trigger",
+              "category": "macro",
+              "score_role": "core",
+              "status": "green",
+              "as_of": "2026-10-12",
+              "stale": false
+            },
+            {
+              "id": "fed_policy",
+              "axis": "trigger",
+              "category": "macro",
+              "score_role": "core",
+              "status": "red",
+              "as_of": "2026-10-14",
+              "stale": false
+            },
+            {
+              "id": "capex_reaction",
+              "axis": "trigger",
+              "category": "macro",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-07-30",
+              "stale": false
+            },
+            {
+              "id": "ceo_hedging",
+              "axis": "stage",
+              "category": "macro",
+              "score_role": "core",
+              "status": "yellow",
+              "as_of": "2026-10-12",
+              "stale": false
+            }
+          ],
+          "summary": {
+            "primary_score_pct": null,
+            "red_pct": null,
+            "weighted_risk_score": null,
+            "stage_score": 60,
+            "trigger_score": null,
+            "scoring_unknown_count": 1,
+            "scoring_total_indicators": 23,
+            "scoring_red_count": 7,
+            "scoring_yellow_count": 8,
+            "scoring_green_count": 7,
+            "primary_score_range_pct": {
+              "lower": 30.4,
+              "upper": 34.8
+            },
+            "weighted_risk_score_range": {
+              "lower": 47.8,
+              "upper": 52.2
+            },
+            "stage_score_range": {
+              "lower": 60,
+              "upper": 60
+            },
+            "trigger_score_range": {
+              "lower": 38.5,
+              "upper": 46.2
+            },
+            "category_scores": {
+              "valuation": 66.7,
+              "capital": 87.5,
+              "market_structure": 62.5,
+              "credit": null,
+              "fundamentals": 12.5,
+              "macro": 50
+            },
+            "category_score_ranges": {
+              "valuation": {
+                "lower": 66.7,
+                "upper": 66.7
+              },
+              "capital": {
+                "lower": 87.5,
+                "upper": 87.5
+              },
+              "market_structure": {
+                "lower": 62.5,
+                "upper": 62.5
+              },
+              "credit": {
+                "lower": 12.5,
+                "upper": 37.5
+              },
+              "fundamentals": {
+                "lower": 12.5,
+                "upper": 12.5
+              },
+              "macro": {
+                "lower": 50,
+                "upper": 50
+              }
+            },
+            "verdict_label": "高风险预警"
+          },
+          "scoring": {
+            "model_version": "bubble-watch-v3-core23-shadow4-r5",
+            "effective_tier": "alert",
+            "base_tier": null,
+            "override_active": false,
+            "two_axis_upgrade": null,
+            "tier_range": {
+              "lower": "alert",
+              "upper": "alert"
+            },
+            "unknown_core_ids": [
+              "dc_abs_spread"
+            ]
+          }
+        },
+        "coreUnknownCount": 1,
+        "primaryScoreRangePct": {
+          "lower": 30.4,
+          "upper": 34.8
+        },
+        "weightedRiskScoreRange": {
+          "lower": 47.8,
+          "upper": 52.2
+        },
+        "stageScoreRange": {
+          "lower": 60,
+          "upper": 60
+        },
+        "triggerScoreRange": {
+          "lower": 38.5,
+          "upper": 46.2
+        },
+        "scorecardDisclosureZh": "固定核心23项，主分30.4–34.8%，辅助压力47.8–52.2；泡沫成熟度60.0，破裂临近度38.5–46.2。数据中心ABS利差待确认，点值保留为空，不按绿灯或零分处理；上下界是数学边界，不是概率。综合判读：高风险预警。"
+      },
+      "validation": {
+        "validator": "check:bubble-watch-weekly-editorial-contract",
+        "status": "pass",
+        "validatedAt": "2026-10-16T09:05:21.466Z",
+        "artifactDigest": "3cd6eb2bc7bd640aee7fd7afc88ee468d3699bd3cb646b64dc7923ec22d0c896"
+      },
+      "qualityReview": {
+        "status": "warn",
+        "recommendation": "approved_for_read_only_display",
+        "promotionEligible": false,
+        "reviewedAt": "2026-10-16T09:05:21.278Z",
+        "dimensions": {
+          "structuralContract": "pass",
+          "sourceReferenceIntegrity": "pass",
+          "newsEvidenceQuality": "warn",
+          "scoreBoundaryIntegrity": "pass",
+          "unsafeWording": "pass",
+          "incrementalEditorialValue": "warn",
+          "fallbackReadiness": "pass"
+        },
+        "warnings": [
+          "部分段落省略媒体名称或归因措辞；请结合该段结构化来源引用复核，媒体摘要不等于独立核实。",
+          "部分新闻来自专业媒体摘要或机构观点，尚未独立核实；按注明出处的有限内容展示。",
+          "可见判读长度 5332 字，超出 1800–4200 字兼容窗口"
+        ]
+      },
+      "provenance": {
+        "generatedBy": "github_actions_workflow",
+        "humanApproved": false,
+        "inputDigest": "7e53268b50e7ddfbde6ca11b85717813fd3862eb0d71146685c8595731f4fb59",
+        "editorialFormat": "full",
+        "artifactDigest": "3cd6eb2bc7bd640aee7fd7afc88ee468d3699bd3cb646b64dc7923ec22d0c896",
+        "sourceCommit": "30974ba488ba08f0e287f8c870251eccff30c2b5",
+        "runId": "38877872062",
+        "newsDiscoveryStatus": "ok",
+        "liveNewsProviderCount": 2
+      },
+      "freshness": {
+        "artifactGeneratedAt": "2026-10-16T09:05:21.076Z",
+        "sourceAsOfDate": "2026-10-16",
+        "maxAgeHours": 240,
+        "isStale": false
+      },
+      "fallback": {
+        "available": true,
+        "source": "bubble-watch-narrative-v2",
+        "field": "summary.verdict_desc"
+      },
+      "boundaries": {
+        "displayOnly": true,
+        "commentaryOnly": true,
+        "externalAiGenerated": true,
+        "usesExternalAiApi": true,
+        "frontendDisplayApproved": true,
+        "affectsBubbleWatchScoring": false,
+        "affectsCore23": false,
+        "affectsShadow4": false,
+        "affectsStageTrigger": false,
+        "affectsGfrrScoring": false,
+        "affectsDecisionModel": false,
+        "affectsExecutionLock": false,
+        "affectsPositionGuidance": false,
+        "notInvestmentAdvice": true
+      }
     }
   },
   "scoring": {
