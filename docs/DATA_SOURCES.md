@@ -1164,3 +1164,10 @@ ignored research-v2。研究候选进入和平红利退潮/多战区冲突两个
 ### 免费 Events 冲突统计 runtime 合同
 
 2026-10-10 本地接线见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)：独立 gdeltEvents 从公开原始 Events 文件取得完整七日 roots 18–20 全球新闻编码记录及未知行上下界，仅进入 World Order 两个冲突维度。固定尺度 49,529～49,529.5，端点须得到相同整数通道分数；覆盖/ID/时间失败 hold。DOC/Web NGrams 不填充计数；其余三维仍含历史 Cloud 代理。独立生产缓存不得复制研究缓存，免费来源不需要凭据，原 Cloud free_only 不变；本地代码通过不代表已部署。
+
+
+## Bubble capex manual event inspection
+
+[ADR-0070](ADR/0070-bubble-capex-event-inspection.md) adds `scripts/collect-bubble-capex-events.mjs`: fixed MSFT/META/AMZN/GOOGL, SEC submissions → issuer-bound earnings EX-99.1 → original publication metadata → Nasdaq regular-session window → matched Yahoo stock/QQQ adjusted-close diagnostics. SEC API enumeration is not complete IR/call/interim guidance discovery; lease additions are not principal payments and range floor increases are not whole-range increases. First guidance disclosure remains unverified. No raw source HTML is uploaded; derived facts/digests remain ignored artifacts. All scoring/production eligibility remains false and r3 capex hold is unchanged.
+
+The collector defaults offline; only explicit `--allow-network` makes up to 36 free requests/9 per company, with 12s timeout, 3MiB response and 18MiB cumulative streaming thresholds, zero retry/redirect, global exhaustion stop and 401/403/429 host circuits. [Inspect Bubble Capex Events](../.github/workflows/inspect-bubble-capex-events.yml) is manual/main-only/read-only and retains only the derived panel. Missing timestamps, inaccessible SEC materials or incomplete discovery remain visible gaps; source access success alone does not admit a capex light. Source mechanics and the reviewed 2026 Nasdaq calendar are linked in ADR-0070.

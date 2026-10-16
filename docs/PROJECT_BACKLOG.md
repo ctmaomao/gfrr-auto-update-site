@@ -3,7 +3,9 @@
 ### 2026-10-16 资本开支事件采集器与 Actions 后续
 
 - **Acceptance baseline**：owner 要求尝试补齐固定MSFT/META/AMZN/GOOGL的完整事件采集器，并按只读审计建议处理Actions。沿用四项独立AI审阅/CI后推送合并上线授权；新增数值capex准入仍需独立ADR/checker PR，不能放宽r3 hold或以旧事件补最新。owner已单独授权最多一次DeepSeek调用、不重试；已执行run38842647919，在provider_output_contract_invalid失败后停止，诊断待归因，不追加付费。
-- **当前任务**：基于latest main `927bf6e4`，先修复定向更新后周评未同步的显示提示，沿用DESIGN §4.4原muted/serif状态行，不改门槛/评分/生产JSON或触发付费。已有真实失败与坏状态提示保留。免费Pressure Shadow手动验收run `38842091229`已成功，missing=[]，Brent最新10-14/原规则可用，24条历史账本保留，不放宽有效期、不回填。周评提示完整check:changed/check:all和61项浏览器均退出0（ignored bubble-editorial-notice-check.log/browser.log），独立预审无阻断；最终提交复核及CI待执行。随后独立实现capex来源枚举、可比指引/首次时间/交易日/匹配价格证据与回归，实际缺口继续unknown。
+- **最后基线 / 改动**：周评提示#465固定head `525da50c`独立代审无阻断，CI `38842969591`成功后合并`14054a27`；完整检查/61项浏览器退出0。Pages `38843797138`成功且公网390px核验27卡/真实AI失败提示/无溢出或脚本错误；EdgeOne publisher `38843797093`成功产生release `03f36960`，平台部署`dp4d01p6gev6`却在上传完成后失败，公网仍旧版；同版本一次redeploy待验收。免费研究run `38842091229`成功，missing=[]，Brent最新10-14，24条账本保留；不改有效期或生产。一次DeepSeek run `38842647919` HTTP200但时间线含输入无依据的“七巨头”引号，provider_output_contract_invalid，未写生产且不重试；AI周评仍未恢复。
+- **当前任务**：新分支`codex/bubble-capex-event-collector`基于latest main `14054a27`，按[ADR-0070](ADR/0070-bubble-capex-event-inspection.md)实现四家SEC枚举/附件/指引/原时间/交易日/股价QQQ诊断链、默认离线CLI和手工main-only只读workflow。独立预审指出的金额串联、累计预算不停、租赁本金口径已修，17项回归退出0；SEC分片读取所有相交官方分片，不凭7日间隙推完整。仍缺电话会/IR/临时指引完整覆盖和首次时间证明；所有产物只在ignored诊断，scoring/productionEligible=false，r3 hold/checker/生产JSON不变。
+- **验证 / 下一步**：完整`check:changed`/`check:all`退出0（ignored `bubble-capex-collector-check.log`），17项专项独立通过，doclinks/diffcheck通过。自审实际文件符合诊断方案，旧checker/断言/ignore/生产/builder无diff；待固定提交独立复核/CI后合并，仅一次免费main采集核验runner实际可达性。源码或元数据不可达时记录真实缺口，不伪称四家面板完整、不自动续费DeepSeek。
 
 ### 2026-10-13 Bubble 四项口径依次修订
 
