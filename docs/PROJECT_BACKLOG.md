@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-16 r5 最新季度 capex 正式接入
+
+- **Acceptance baseline**：owner要求完成四家事件面板并确认资本开支，沿用独立AI代审/CI后推送合并上线。依照已独立审阅[ADR-0072](ADR/0072-bubble-quarterly-capex-panel.md)启用r5；旧r3/r4与Core23边界保留，四项证据重新复核，其余23卡和旧模型历史不改；不自动付费、不晋升ignoredpanel。
+- **最后基线 / 改动**：来源/checker PR#469固定2b76803d独立终审无阻断，CI38873107194成功并合并3462602d。main只读采集38873908425成功：19请求/0失败/四家qualified，runner artifact12034401877完整独立replay通过，黄灯/3上调2受罚1奖励，价格与本地事实一致。新分支codex/bubble-capex-quarterly-runtime基于3462602d，activeRevision5、builder新分支与中文四家明细formatter；保留新来源实际署名，不再被旧通用标签覆盖。
+- **当前任务**：新旧builder15项、AI评分snapshot6项定向回归退出0，覆盖候选/写入、23卡/旧历史保留、HTTP403/新季度hold与真实sourceFailures、红绿黄路径及r4周评不能重标r5；真实免费candidate与正式--publish-qualified均由builder分别重新采集完成（不是晋升ignoredpanel）；实际checker七组退出0，23其余卡、20旧历史、信用/技术图表及10/12anchor深比较保留；仅两目标生产JSON变化，sourceFailures=[]。capex黄/原事件日7/30，内部人11合格黄、Fed10/14标签红；主分30.4–34.8/压力47.8–52.2/Trigger38.5–46.2，Stage60/高风险预警。真实candidate独立复审无阻断；新增1440/390px r5卡片E2E退出0。当前r4 DeepSeek单次run38869878705已成功、两站可见；新r5会使旧snapshot失效，不改原文或费用授权。owner已被明确告知刷新执行顺序提前的问题，追加费用须等具体新输入验收后重新确认。
+- **下一步 / 门槛**：候选实际checker/其余卡/历史/时钟/来源diff独立复核，再由builder重新采集正式产物；完整check:changed/check:all（bubble-quarterly-runtime-check.log）及63项全浏览器（bubble-quarterly-runtime-all-browser.log）均退出0，实际正式产物已独立复核无阻断；最终语法/diff0。自审实际实现与方案一致，源/checker/核心计分契约无diff、旧断言保留，无新增skip/ignore。r5紧凑输入/真实CLI输入门槛用前次成功的有界新闻免费验证：53937字节/8可用新闻/0API；未来生产工作流仍重新采集。固定提交review/CI后合并部署，两公网核对；新费用回答仍待owner，不读ignoredpanel补生产、不新增provider调用。
+
 ### 2026-10-16 最新季度 capex 面板来源契约与 AI 恢复
 
 - **Acceptance baseline**：owner要求补齐四家事件面板并确认capex、简化DeepSeek过细门控；沿用独立AI代审/推送合并上线。按[ADR-0072](ADR/0072-bubble-quarterly-capex-panel.md)明确观察季度财报电话会关联反应，不声称全球首次指引或因果；先独立来源/回放契约PR，后runtime。owner另授权修复后一次DeepSeek、失败不重试。

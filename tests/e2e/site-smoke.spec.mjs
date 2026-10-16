@@ -428,6 +428,15 @@ for (const viewport of [DESKTOP, MOBILE]) {
     await expect(page.locator('article.indicator').filter({hasText:'数据中心 ABS 利差'})).toContainText('观测暂缺');
     expect(errors).toEqual([]);
   });
+  test(`Bubble r5 quarterly capex shows four companies and source limits at ${viewport.width}px`,async({page})=>{
+    await page.setViewportSize(viewport);const errors=capturePageErrors(page);
+    const {output}=await buildQualifiedAbsFixture({revision:5,clock:'2026-10-15T12:00:00Z'});
+    await page.route('**/data/bubble-watch.json?*',route=>route.fulfill({json:output}));await page.goto('/bubble-watch.html');
+    await expectBubbleWatchContract(page,output);const card=page.locator('article.indicator').filter({hasText:'资本开支财报关联反应'});
+    await expect(card.locator('.badge.yellow')).toHaveCount(1);
+    for(const text of ['MSFT','META','AMZN','GOOGL','租赁重分类','仅下限提高','二手电话会','Stock Analysis季度电话会整理','2026-07-30'])await expect(card).toContainText(text);
+    await expectNoHorizontalOverflow(page);expect(errors).toEqual([]);
+  });
   test(`Bubble legacy v2 point remains readable at ${viewport.width}px`,async({page})=>{
     await page.setViewportSize(viewport);
     const bundle=JSON.parse(readFileSync('docs/fixtures/bubble-watch/legacy-contract-bundle.json','utf8'));

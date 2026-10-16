@@ -84,3 +84,16 @@ test('genuine fully observed zero remains zero rather than pending',()=>{
   assert.match(snapshot.scorecardDisclosureZh,/主分0\.0%/u);
   assert.deepEqual(validateEditorialScoringSnapshot(snapshot,d.as_of_date),[]);
 });
+test('an r4 commentary cannot be relabeled r5, even when dates and score numbers are unchanged',()=>{
+ const bubble=qualifiedBubble();bubble.scoring.model_version='bubble-watch-v3-core23-shadow4-r4';
+ const fixture=read('docs/fixtures/bubble-watch-weekly-editorial/sample-input-v1.json'),review=read('docs/fixtures/bubble-watch-weekly-editorial/sample-review-v1.json');
+ const input=buildWeeklyEditorialInput({bubbleWatch:bubble,discovery:fixture.newsContext,generatedAt:'2026-10-13T00:00:00Z'});
+ const output=read('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json');output.asOfDate=input.asOfDate;output.scorecardSynthesisZh=input.scoringSnapshot.scorecardDisclosureZh;
+ const layer=projectWeeklyEditorial({input,output,review});assert.equal(validateWeeklyEditorialProduction(layer,bubble).ok,true);
+ const next=structuredClone(bubble);next.scoring.model_version='bubble-watch-v3-core23-shadow4-r5';assert.equal(validateWeeklyEditorialProduction(layer,next).ok,false);
+ assert.equal(layer.sourceScoringSnapshot.modelVersion,'bubble-watch-v3-core23-shadow4-r4');
+ const nextInput=buildWeeklyEditorialInput({bubbleWatch:next,discovery:fixture.newsContext,generatedAt:'2026-10-13T00:00:00Z'});
+ const nextOutput=structuredClone(output);nextOutput.scorecardSynthesisZh=nextInput.scoringSnapshot.scorecardDisclosureZh;
+ const nextLayer=projectWeeklyEditorial({input:nextInput,output:nextOutput,review});assert.equal(validateWeeklyEditorialProduction(nextLayer,next).ok,true);
+ assert.equal(nextLayer.sourceScoringSnapshot.modelVersion,'bubble-watch-v3-core23-shadow4-r5');
+});

@@ -1,32 +1,32 @@
 {
   "contractVersion": "bubble-watch-v3",
   "issue_number": 28,
-  "as_of_date": "2026-10-15",
-  "generated_at": "2026-10-15T21:32:06.294Z",
+  "as_of_date": "2026-10-16",
+  "generated_at": "2026-10-16T08:36:36.059Z",
   "summary": {
     "total_indicators": 27,
     "red_count": 8,
-    "yellow_count": 7,
+    "yellow_count": 8,
     "green_count": 10,
-    "unknown_count": 2,
+    "unknown_count": 1,
     "display_red_pct": null,
     "display_weighted_risk_score": null,
     "scoring_total_indicators": 23,
     "scoring_red_count": 7,
-    "scoring_yellow_count": 7,
+    "scoring_yellow_count": 8,
     "scoring_green_count": 7,
-    "scoring_unknown_count": 2,
+    "scoring_unknown_count": 1,
     "primary_score_pct": null,
     "primary_score_basis": "core_red_light_ratio",
     "red_pct": null,
     "weighted_risk_score": null,
     "primary_score_range_pct": {
       "lower": 30.4,
-      "upper": 39.1
+      "upper": 34.8
     },
     "weighted_risk_score_range": {
-      "lower": 45.7,
-      "upper": 54.3
+      "lower": 47.8,
+      "upper": 52.2
     },
     "stage_score": 60,
     "stage_score_range": {
@@ -37,8 +37,8 @@
     "stage_label_en": "Euphoria",
     "trigger_score": null,
     "trigger_score_range": {
-      "lower": 34.6,
-      "upper": 50
+      "lower": 38.5,
+      "upper": 46.2
     },
     "trigger_label": "待确认",
     "trigger_label_en": "Pending",
@@ -48,7 +48,7 @@
       "market_structure": 62.5,
       "credit": null,
       "fundamentals": 12.5,
-      "macro": null
+      "macro": 50
     },
     "category_score_ranges": {
       "valuation": {
@@ -72,8 +72,8 @@
         "upper": 12.5
       },
       "macro": {
-        "lower": 37.5,
-        "upper": 62.5
+        "lower": 50,
+        "upper": 50
       }
     },
     "momentum": {
@@ -117,7 +117,7 @@
     ],
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、7项绿灯、2项待确认。核心红灯比例为30.4–39.1%，辅助压力为45.7–54.3。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为60.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为41.9（红灯）；前 5 大权重占比为≈28.4%（红灯）；NVDA 远期 PE为≈19x（绿灯）；Hyperscaler 资本开支增速为+75%（黄灯）；Big5 资本开支/经营现金流为≈83%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为34.6–50.0。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差、资本开支公告事件反应待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
+    "verdict_desc": "截至2026-10-16，固定核心23项中有7项红灯、8项黄灯、7项绿灯、1项待确认。核心红灯比例为30.4–34.8%，辅助压力为47.8–52.2。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为60.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为41.9（红灯）；前 5 大权重占比为≈28.4%（红灯）；NVDA 远期 PE为≈19x（绿灯）；Hyperscaler 资本开支增速为+75%（黄灯）；Big5 资本开支/经营现金流为≈83%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为38.5–46.2。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
     "verdict_desc_source": "bubble-watch-narrative-v2",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v2",
@@ -147,9 +147,10 @@
             "cloud_rpo_growth",
             "accounting_events",
             "fed_policy",
+            "capex_reaction",
             "ceo_hedging"
           ],
-          "summaryZh": "截至2026-10-15，固定核心23项中有7项红灯、7项黄灯、7项绿灯、2项待确认。核心红灯比例为30.4–39.1%，辅助压力为45.7–54.3。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
+          "summaryZh": "截至2026-10-16，固定核心23项中有7项红灯、8项黄灯、7项绿灯、1项待确认。核心红灯比例为30.4–34.8%，辅助压力为47.8–52.2。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
         },
         {
           "key": "stage",
@@ -180,9 +181,10 @@
             "arr_2nd_deriv",
             "cloud_rpo_growth",
             "accounting_events",
-            "fed_policy"
+            "fed_policy",
+            "capex_reaction"
           ],
-          "summaryZh": "破裂临近度为34.6–50.0。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差、资本开支公告事件反应待确认；现有材料不足以给出这些指标的单一灯色。"
+          "summaryZh": "破裂临近度为38.5–46.2。S&P 50 日均线上方比例为≈35%（红灯）；市值加权 vs 等权重为+6.3%（黄灯）；高收益债利差为315 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。数据中心 ABS 利差待确认；现有材料不足以给出这些指标的单一灯色。"
         },
         {
           "key": "verdict",
@@ -204,8 +206,7 @@
         }
       ],
       "evidenceGaps": [
-        "dc_abs_spread",
-        "capex_reaction"
+        "dc_abs_spread"
       ],
       "evidenceHighlights": [
         {
@@ -246,7 +247,7 @@
         },
         {
           "id": "insider_sell_buy",
-          "note_summary": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-10-15，30日返回样本卖出约5.88亿美元、买入约448.3万美元，卖买比约131.2倍；90日返回样本卖出约19.00亿美元、买入约448.3万美元，卖买比约423.8倍。最近已返回P/S交易日2026-10-13；接口响应生成于2026-10-15，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露225笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
+          "note_summary": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-10-16，30日返回样本卖出约5.87亿美元、买入约448.3万美元，卖买比约130.9倍；90日返回样本卖出约19.00亿美元、买入约448.3万美元，卖买比约423.8倍。最近已返回P/S交易日2026-10-13；接口响应生成于2026-10-16，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露225笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
         },
         {
           "id": "ai_ipo_pipeline",
@@ -276,1342 +277,10 @@
       "limitations": [
         "上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。"
       ]
-    },
-    "weekly_editorial": {
-      "schemaVersion": "bubble-watch-weekly-editorial-production-v1",
-      "status": "valid",
-      "displayEnabled": true,
-      "generatedAt": "2026-10-16T07:53:20.995Z",
-      "updatedAt": "2026-10-16T07:53:20.995Z",
-      "asOfDate": "2026-10-15",
-      "provider": "deepseek",
-      "model": "deepseek-v4-flash",
-      "mode": "external_ai_weekly_editorial",
-      "sourceMode": "weekly_news_and_site_structured_compact_v1",
-      "output": {
-        "schemaVersion": "bubble-watch-weekly-editorial-output-v1",
-        "generatedAt": "2026-10-16T07:53:20.642Z",
-        "asOfDate": "2026-10-15",
-        "provider": "deepseek",
-        "model": "deepseek-v4-flash",
-        "mode": "external_ai_weekly_editorial",
-        "headlineZh": "高风险预警维持：估值与资金双热，信用价格尚未确认压力",
-        "leadZh": "截至2026-10-15，固定核心23项中7红、7黄、7绿、2项待确认，泡沫成熟度60.0，破裂临近度34.6–50.0，综合判读仍为高风险预警。本周公开报道显示AI相关股票出现全球性回撤，同时高收益债利差仍处绿灯区间，价格信号与信用信号继续分化。本刊只解释既有记分卡，不改变任何灯色、档位或结论。",
-        "weeklyTimeline": [
-          {
-            "date": "2026-10-13",
-            "titleZh": "存储芯片股走弱，AI交易出现裂痕",
-            "detailZh": "Bloomberg报道称AI交易承压、存储芯片股下挫，市场对主题可持续性的疑虑上升。该报道为媒体摘要，仅支持其自身描述，不构成对指数或个股点位的独立核实。",
-            "sourceRefIds": [
-              "news:market_structure_valuation:a2db04f1f722e8"
-            ],
-            "sourceIndicatorIds": []
-          },
-          {
-            "date": "2026-10-14",
-            "titleZh": "通胀数据偏热，纳斯达克显著收低",
-            "detailZh": "Reuters报道称高于预期的通胀数据令纳斯达克大幅收低，市场对美联储进一步加息的押注升温，Oracle、CoreWeave等对借贷成本敏感的AI相关股票承压。该摘要不提供具体点位或幅度。",
-            "sourceRefIds": [
-              "news:macro_policy:4b77e69aaa9fda"
-            ],
-            "sourceIndicatorIds": []
-          },
-          {
-            "date": "2026-10-14",
-            "titleZh": "Fink提示数据中心停建风险",
-            "detailZh": "CNBC报道BlackRock的Larry Fink警告称，若数据中心建设出现某种暂停，可能引发经济放缓。这是机构负责人的观点表达，不是对建设进度或宏观结果的确认。",
-            "sourceRefIds": [
-              "news:ai_capex_earnings:6e5c75c687dffb"
-            ],
-            "sourceIndicatorIds": []
-          },
-          {
-            "date": "2026-10-15",
-            "titleZh": "亚洲科技股急跌，AI融资担忧扩散",
-            "detailZh": "CNBC报道称全球科技硬件股抛售加深，SK Hynix跌超10%、三星电子跌7.1%，市场担忧美联储加息与AI投资融资。同一报道另称20只全球市值最大的AI与半导体股本周合计蒸发逾1万亿美元市值。上述为媒体摘要口径，未经本站独立核实。",
-            "sourceRefIds": [
-              "news:macro_policy:ebebcb2c997eaf",
-              "news:market_structure_valuation:1f997c90812af4"
-            ],
-            "sourceIndicatorIds": []
-          },
-          {
-            "date": "2026-10-15",
-            "titleZh": "Blackstone将AI列为核心押注方向",
-            "detailZh": "Bloomberg报道称Blackstone总裁Jon Gray把AI视为其职业生涯最大押注，机构在数据中心、云业务与AI实验室均有布局。该报道反映机构观点与配置方向，不构成对回报或风险的验证。",
-            "sourceRefIds": [
-              "news:ai_capex_earnings:d4cba265dbc926"
-            ],
-            "sourceIndicatorIds": []
-          }
-        ],
-        "scorecardSynthesisZh": "固定核心23项，主分30.4–39.1%，辅助压力45.7–54.3；泡沫成熟度60.0，破裂临近度34.6–50.0。数据中心ABS利差、资本开支反应待确认，点值保留为空，不按绿灯或零分处理；上下界是数学边界，不是概率。综合判读：高风险预警。",
-        "scorecardSourceIndicatorIds": [
-          "cape",
-          "top5_weight",
-          "nvda_fpe",
-          "private_secondary_marks",
-          "hyperscaler_capex_yoy",
-          "mag4_fcf_yoy",
-          "vc_ai_share",
-          "nvda_invest_revenue",
-          "breadth_50d",
-          "spy_vs_rsp_6m",
-          "insider_sell_buy",
-          "ai_ipo_pipeline",
-          "hy_oas",
-          "dc_abs_spread",
-          "debt_capex_ratio",
-          "neocloud_credit",
-          "token_volume_mom",
-          "token_revenue_ratio",
-          "gpu_rental_price",
-          "arr_2nd_deriv",
-          "enterprise_deploy",
-          "cloud_rpo_growth",
-          "frontier_progress",
-          "accounting_events",
-          "fed_policy",
-          "capex_reaction",
-          "ceo_hedging"
-        ],
-        "keyTensions": [
-          {
-            "titleZh": "估值集中与个股估值分化",
-            "detailZh": "CAPE为41.9、前5大权重约28.4%，均处红灯，指向整体估值与集中度压力；但NVDA远期PE约19x为绿灯，说明指数层面的昂贵与个别龙头的倍数并不指向同一结论。两类指标回答不同问题，不能互相抵消。",
-            "sourceIndicatorIds": [
-              "cape",
-              "top5_weight",
-              "nvda_fpe"
-            ],
-            "sourceRefIds": [
-              "indicator:cape",
-              "indicator:top5_weight",
-              "indicator:nvda_fpe"
-            ]
-          },
-          {
-            "titleZh": "信用价格平静与融资缺口扩大",
-            "detailZh": "高收益债利差315 bps为绿灯，信用市场尚未对AI资本开支定价压力；同时全口径外部融资/Capex比约52%为黄灯，Big5资本开支/经营现金流约83%为红灯。价格未动不等于融资结构没有变化，两者应分别跟踪。",
-            "sourceIndicatorIds": [
-              "hy_oas",
-              "debt_capex_ratio",
-              "mag4_fcf_yoy"
-            ],
-            "sourceRefIds": [
-              "indicator:hy_oas",
-              "indicator:debt_capex_ratio",
-              "indicator:mag4_fcf_yoy"
-            ]
-          },
-          {
-            "titleZh": "需求侧绿灯与用量增速减速",
-            "detailZh": "云厂商递延收入增速+152%、企业生产部署率72%等需求侧指标为绿灯；但Token月度环比降至+36.5%，由上一窗口+73.1%回落，判为减速黄灯。需求存量与边际增速方向不同，不能只取其一。",
-            "sourceIndicatorIds": [
-              "cloud_rpo_growth",
-              "enterprise_deploy",
-              "token_volume_mom"
-            ],
-            "sourceRefIds": [
-              "indicator:cloud_rpo_growth",
-              "indicator:enterprise_deploy",
-              "indicator:token_volume_mom"
-            ]
-          },
-          {
-            "titleZh": "宏观利率路径与信用利差背离",
-            "detailZh": "Fed 3/6个月隐含路径偏上为红灯，3个月隐含有效利率约4.147%、6个月约4.424%，均高于同期实际有效联邦基金利率3.88%；而高收益债利差仍为绿灯。利率预期收紧与信用价格宽松并存，是本周最明显的跨类别张力。",
-            "sourceIndicatorIds": [
-              "fed_policy",
-              "hy_oas"
-            ],
-            "sourceRefIds": [
-              "indicator:fed_policy",
-              "indicator:hy_oas"
-            ]
-          }
-        ],
-        "categoryAnalysis": [
-          {
-            "category": "valuation",
-            "detailZh": "CAPE 41.9为红灯，前5大权重约28.4%为红灯，私募二级标价中Anthropic对最近一级折价7.54%触发红灯；NVDA远期PE约19x为绿灯。整体估值与集中度偏热，但龙头个股倍数与私募标价方向不一致，需分开阅读。",
-            "sourceIndicatorIds": [
-              "cape",
-              "top5_weight",
-              "nvda_fpe",
-              "private_secondary_marks"
-            ],
-            "sourceRefIds": [
-              "indicator:cape",
-              "indicator:top5_weight",
-              "indicator:nvda_fpe",
-              "indicator:private_secondary_marks"
-            ]
-          },
-          {
-            "category": "capital",
-            "detailZh": "Hyperscaler资本开支增速+75%为黄灯，AI占VC投资比重64.2%为红灯，NVDA客户投资/收入比约41%为红灯，Big5资本开支/经营现金流约83%为红灯。资金投入与循环融资强度仍是本轮最集中的红灯区域。",
-            "sourceIndicatorIds": [
-              "hyperscaler_capex_yoy",
-              "vc_ai_share",
-              "nvda_invest_revenue",
-              "mag4_fcf_yoy"
-            ],
-            "sourceRefIds": [
-              "indicator:hyperscaler_capex_yoy",
-              "indicator:vc_ai_share",
-              "indicator:nvda_invest_revenue",
-              "indicator:mag4_fcf_yoy"
-            ]
-          },
-          {
-            "category": "market_structure",
-            "detailZh": "S&P 50日均线上方比例约35%为红灯，市值加权对等权重6个月领先+6.3%为黄灯，内部人卖买比样本偏高但覆盖受限为黄灯，AI一级发行升温为黄灯。广度偏弱与头部集中并存，发行热度尚未构成洪流。",
-            "sourceIndicatorIds": [
-              "breadth_50d",
-              "spy_vs_rsp_6m",
-              "insider_sell_buy",
-              "ai_ipo_pipeline"
-            ],
-            "sourceRefIds": [
-              "indicator:breadth_50d",
-              "indicator:spy_vs_rsp_6m",
-              "indicator:insider_sell_buy",
-              "indicator:ai_ipo_pipeline"
-            ]
-          },
-          {
-            "category": "credit",
-            "detailZh": "高收益债利差315 bps为绿灯，Neocloud信用事件扫描未见确认事件为绿灯，全口径外部融资/Capex比约52%为黄灯；数据中心ABS利差因缺少已审可比报价保留待确认。信用价格目前未显示压力，但融资缺口与ABS证据缺口需并列观察。",
-            "sourceIndicatorIds": [
-              "hy_oas",
-              "neocloud_credit",
-              "debt_capex_ratio",
-              "dc_abs_spread"
-            ],
-            "sourceRefIds": [
-              "indicator:hy_oas",
-              "indicator:neocloud_credit",
-              "indicator:debt_capex_ratio",
-              "indicator:dc_abs_spread"
-            ]
-          },
-          {
-            "category": "fundamentals",
-            "detailZh": "云厂商递延收入增速+152%、企业生产部署率72%、AI收入增速二阶导与前沿能力进展为绿灯；Token月度环比+36.5%为减速黄灯，Token增速/收入增速约1.1x、GPU租赁中位价3.49美元/GPU/小时为绿灯。需求侧存量仍强，边际用量增速回落是主要观察点。",
-            "sourceIndicatorIds": [
-              "cloud_rpo_growth",
-              "enterprise_deploy",
-              "arr_2nd_deriv",
-              "frontier_progress",
-              "token_volume_mom",
-              "token_revenue_ratio",
-              "gpu_rental_price"
-            ],
-            "sourceRefIds": [
-              "indicator:cloud_rpo_growth",
-              "indicator:enterprise_deploy",
-              "indicator:arr_2nd_deriv",
-              "indicator:frontier_progress",
-              "indicator:token_volume_mom",
-              "indicator:token_revenue_ratio",
-              "indicator:gpu_rental_price"
-            ]
-          },
-          {
-            "category": "macro",
-            "detailZh": "Fed 3/6个月隐含路径偏上为红灯，CEO表态对冲程度为部分黄灯，会计造假/round-tripping事件为0件绿灯；资本开支公告事件反应因缺少完整面板保留待确认。利率预期与高管表态构成宏观侧的主要压力来源。",
-            "sourceIndicatorIds": [
-              "fed_policy",
-              "ceo_hedging",
-              "accounting_events",
-              "capex_reaction"
-            ],
-            "sourceRefIds": [
-              "indicator:fed_policy",
-              "indicator:ceo_hedging",
-              "indicator:accounting_events",
-              "indicator:capex_reaction"
-            ]
-          }
-        ],
-        "historicalComparison": {
-          "period": "1999-06 与 2021-11",
-          "detailZh": "Core校准指标向量对照显示，1999-06相似度72%（18项分母）、2021-11为69%（18项分母）、2007-10为46%（13项分母）。相似度只是颜色向量对照，不是破裂概率或时间预测。与1999年相比，当前信用利差与需求侧指标提供一定支持；与2021年相比，本轮资金投入与循环融资特征更突出，但历史对照不能替代当期证据。",
-          "sourceIndicatorIds": [
-            "cape",
-            "top5_weight",
-            "hy_oas",
-            "mag4_fcf_yoy",
-            "cloud_rpo_growth"
-          ],
-          "sourceRefIds": [
-            "indicator:cape",
-            "indicator:top5_weight",
-            "indicator:hy_oas",
-            "indicator:mag4_fcf_yoy",
-            "indicator:cloud_rpo_growth"
-          ]
-        },
-        "watchNextWeek": [
-          {
-            "conditionZh": "观察数据中心ABS利差是否取得已审且可比的美国数据中心债券与同日基准报价，以补全该项待确认状态。",
-            "invalidationZh": "若仍无可比报价，该项继续保留待确认，不按绿灯或零分处理。",
-            "sourceIndicatorIds": [
-              "dc_abs_spread"
-            ]
-          },
-          {
-            "conditionZh": "观察MSFT、META、AMZN、GOOGL最新季度财报目录、同口径指引与公告后首个完整交易日价格面板是否齐备。",
-            "invalidationZh": "若面板仍不完整，资本开支公告事件反应继续待确认，不推断市场惩罚或奖励。",
-            "sourceIndicatorIds": [
-              "capex_reaction"
-            ]
-          },
-          {
-            "conditionZh": "观察高收益债利差是否仍低于350 bps，以及Fed隐含路径相对实际有效利率的偏离是否收窄。",
-            "invalidationZh": "若利差走阔或路径偏离收窄，需重新评估信用与利率两类信号的组合含义。",
-            "sourceIndicatorIds": [
-              "hy_oas",
-              "fed_policy"
-            ]
-          },
-          {
-            "conditionZh": "观察Token月度环比是否延续减速，以及云厂商递延收入增速是否维持加速。",
-            "invalidationZh": "若用量增速回升或递延收入减速，需求侧判断需相应调整。",
-            "sourceIndicatorIds": [
-              "token_volume_mom",
-              "cloud_rpo_growth"
-            ]
-          }
-        ],
-        "dataGaps": [
-          "数据中心ABS利差、资本开支公告事件反应两项待确认，点值为空，固定23分母上下界保留。",
-          "专业媒体摘要仅支持注明出处的报道或机构观点，不代表独立核实，不得补写未提供的正文。",
-          "部分搜索结果仅为discovery_only，不得单独支撑事实性判断。",
-          "上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。",
-          "四项影子观察继续展示但不进入主分、两轴或分类共振。",
-          "旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。",
-          "内部人交易样本覆盖受限，统计可能遗漏尚未申报或后续更正，不等同全市场净卖出。",
-          "新闻搜索结果会重复转载、标题党化或延迟收录，本层不确认供应中断或油价方向。"
-        ],
-        "sourceAttribution": [
-          {
-            "sourceRefId": "news:market_structure_valuation:a2db04f1f722e8",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "Bloomberg媒体摘要，仅支持其自身描述。"
-          },
-          {
-            "sourceRefId": "news:macro_policy:4b77e69aaa9fda",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "Reuters媒体摘要，仅支持其自身描述。"
-          },
-          {
-            "sourceRefId": "news:ai_capex_earnings:6e5c75c687dffb",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "CNBC媒体摘要，机构观点非事实确认。"
-          },
-          {
-            "sourceRefId": "news:macro_policy:ebebcb2c997eaf",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "CNBC媒体摘要，仅支持其自身描述。"
-          },
-          {
-            "sourceRefId": "news:market_structure_valuation:1f997c90812af4",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "CNBC媒体摘要，市值蒸发口径未经独立核实。"
-          },
-          {
-            "sourceRefId": "news:ai_capex_earnings:d4cba265dbc926",
-            "claimType": "attributed_media_news_context",
-            "noteZh": "Bloomberg媒体摘要，机构配置方向非回报验证。"
-          },
-          {
-            "sourceRefId": "indicator:cape",
-            "claimType": "site_structured_data",
-            "noteZh": "CAPE历史估值序列，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:top5_weight",
-            "claimType": "site_structured_data",
-            "noteZh": "SPY持仓集中度，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:nvda_fpe",
-            "claimType": "site_structured_data",
-            "noteZh": "NVDA远期估值，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:hy_oas",
-            "claimType": "site_structured_data",
-            "noteZh": "ICE BofA高收益债利差，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:debt_capex_ratio",
-            "claimType": "site_structured_data",
-            "noteZh": "数据中心融资缺口研究，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:mag4_fcf_yoy",
-            "claimType": "site_structured_data",
-            "noteZh": "公开季度现金流，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:cloud_rpo_growth",
-            "claimType": "site_structured_data",
-            "noteZh": "云厂商订单与backlog披露，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:enterprise_deploy",
-            "claimType": "site_structured_data",
-            "noteZh": "企业AI部署调查，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:token_volume_mom",
-            "claimType": "site_structured_data",
-            "noteZh": "公开模型平台用量，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:fed_policy",
-            "claimType": "site_structured_data",
-            "noteZh": "联邦基金期货日线代理与FRED实际EFFR，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:private_secondary_marks",
-            "claimType": "site_structured_data",
-            "noteZh": "私募二级标价，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:hyperscaler_capex_yoy",
-            "claimType": "site_structured_data",
-            "noteZh": "公开季度现金流，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:vc_ai_share",
-            "claimType": "site_structured_data",
-            "noteZh": "VC市场季度研究，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:nvda_invest_revenue",
-            "claimType": "site_structured_data",
-            "noteZh": "公开投资承诺与收入，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:breadth_50d",
-            "claimType": "site_structured_data",
-            "noteZh": "行情与成份股名单实算，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:spy_vs_rsp_6m",
-            "claimType": "site_structured_data",
-            "noteZh": "市值加权与等权重ETF，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:insider_sell_buy",
-            "claimType": "site_structured_data",
-            "noteZh": "SEC Form 4公开披露样本，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:ai_ipo_pipeline",
-            "claimType": "site_structured_data",
-            "noteZh": "一级市场公开报道，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:neocloud_credit",
-            "claimType": "site_structured_data",
-            "noteZh": "Neocloud公开融资与信用事件，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:dc_abs_spread",
-            "claimType": "site_structured_data",
-            "noteZh": "美国数据中心可比利差观察，合格观测暂缺。"
-          },
-          {
-            "sourceRefId": "indicator:arr_2nd_deriv",
-            "claimType": "site_structured_data",
-            "noteZh": "公开ARR里程碑，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:frontier_progress",
-            "claimType": "site_structured_data",
-            "noteZh": "前沿模型能力进展，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:token_revenue_ratio",
-            "claimType": "site_structured_data",
-            "noteZh": "公开模型平台用量与价格口径，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:gpu_rental_price",
-            "claimType": "site_structured_data",
-            "noteZh": "GPU租赁挂牌价样本，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:ceo_hedging",
-            "claimType": "site_structured_data",
-            "noteZh": "公开新闻与高管表态，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:accounting_events",
-            "claimType": "site_structured_data",
-            "noteZh": "SEC/DOJ执法公告，站点结构化指标。"
-          },
-          {
-            "sourceRefId": "indicator:capex_reaction",
-            "claimType": "site_structured_data",
-            "noteZh": "公司季度财报及公告后价格，事件证据待核。"
-          }
-        ],
-        "confidence": {
-          "level": "medium",
-          "score": 62,
-          "reasonZh": "核心23项中21项有当期或近期合格观测，两项待确认保留在固定分母内；新闻侧仅有媒体摘要与discovery_only，无法独立核实价格与融资细节，故置信度中等。"
-        },
-        "auditFlags": [
-          "display_only",
-          "validator_required",
-          "no_score_impact"
-        ],
-        "boundaries": {
-          "displayOnly": true,
-          "commentaryOnly": true,
-          "externalAiGenerated": true,
-          "usesExternalAiApi": true,
-          "affectsBubbleWatchScoring": false,
-          "affectsCore23": false,
-          "affectsShadow4": false,
-          "affectsStageTrigger": false,
-          "affectsGfrrScoring": false,
-          "affectsDecisionModel": false,
-          "affectsExecutionLock": false,
-          "affectsPositionGuidance": false,
-          "notInvestmentAdvice": true
-        }
-      },
-      "sourceLedger": [
-        {
-          "id": "indicator:cape",
-          "kind": "indicator",
-          "sourceName": "CAPE 历史估值序列",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "cape"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:top5_weight",
-          "kind": "indicator",
-          "sourceName": "SPY 持仓集中度",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "top5_weight"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:nvda_fpe",
-          "kind": "indicator",
-          "sourceName": "NVDA 远期估值",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "nvda_fpe"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:private_secondary_marks",
-          "kind": "indicator",
-          "sourceName": "Forge / Caplight 私募二级标价",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "private_secondary_marks"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:hyperscaler_capex_yoy",
-          "kind": "indicator",
-          "sourceName": "公开季度现金流",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "hyperscaler_capex_yoy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:mag4_fcf_yoy",
-          "kind": "indicator",
-          "sourceName": "公开季度现金流",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "mag4_fcf_yoy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:vc_ai_share",
-          "kind": "indicator",
-          "sourceName": "VC 市场季度研究",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "vc_ai_share"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:nvda_invest_revenue",
-          "kind": "indicator",
-          "sourceName": "公开投资承诺与收入",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "nvda_invest_revenue"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:breadth_50d",
-          "kind": "indicator",
-          "sourceName": "Yahoo 行情与维基百科成份股名单实算",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "breadth_50d"
-          ],
-          "asOfDate": "2026-10-09"
-        },
-        {
-          "id": "indicator:spy_vs_rsp_6m",
-          "kind": "indicator",
-          "sourceName": "市值加权与等权重 ETF",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "spy_vs_rsp_6m"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:insider_sell_buy",
-          "kind": "indicator",
-          "sourceName": "SEC Form 4公开披露 · XOOMAR返回样本",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "insider_sell_buy"
-          ],
-          "asOfDate": "2026-10-13"
-        },
-        {
-          "id": "indicator:ai_ipo_pipeline",
-          "kind": "indicator",
-          "sourceName": "一级市场公开报道",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "ai_ipo_pipeline"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:hy_oas",
-          "kind": "indicator",
-          "sourceName": "ICE BofA 高收益债利差",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "hy_oas"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:dc_abs_spread",
-          "kind": "indicator",
-          "sourceName": "美国数据中心可比利差观察（合格观测暂缺）",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "dc_abs_spread"
-          ]
-        },
-        {
-          "id": "indicator:debt_capex_ratio",
-          "kind": "indicator",
-          "sourceName": "数据中心融资缺口研究",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "debt_capex_ratio"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:neocloud_credit",
-          "kind": "indicator",
-          "sourceName": "Neocloud 公开融资与信用事件",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "neocloud_credit"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:token_volume_mom",
-          "kind": "indicator",
-          "sourceName": "公开模型平台用量",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "token_volume_mom"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:token_revenue_ratio",
-          "kind": "indicator",
-          "sourceName": "公开模型平台用量与价格口径",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "token_revenue_ratio"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:gpu_rental_price",
-          "kind": "indicator",
-          "sourceName": "Thunder Compute / getdeploying",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "gpu_rental_price"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:arr_2nd_deriv",
-          "kind": "indicator",
-          "sourceName": "公开 ARR 里程碑",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "arr_2nd_deriv"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:enterprise_deploy",
-          "kind": "indicator",
-          "sourceName": "企业 AI 部署调查",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "enterprise_deploy"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:cloud_rpo_growth",
-          "kind": "indicator",
-          "sourceName": "云厂商订单与 backlog 披露",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "cloud_rpo_growth"
-          ],
-          "asOfDate": "2026-06-30"
-        },
-        {
-          "id": "indicator:frontier_progress",
-          "kind": "indicator",
-          "sourceName": "METR / Epoch AI / ARC Prize",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "frontier_progress"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:accounting_events",
-          "kind": "indicator",
-          "sourceName": "SEC / DOJ 执法公告",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "accounting_events"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "indicator:fed_policy",
-          "kind": "indicator",
-          "sourceName": "Yahoo联邦基金期货日线代理 · FRED实际EFFR · Fed会议日历",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "fed_policy"
-          ],
-          "asOfDate": "2026-10-13"
-        },
-        {
-          "id": "indicator:capex_reaction",
-          "kind": "indicator",
-          "sourceName": "公司季度财报及公告后价格 · 事件证据待核",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "capex_reaction"
-          ]
-        },
-        {
-          "id": "indicator:ceo_hedging",
-          "kind": "indicator",
-          "sourceName": "公开新闻与高管表态",
-          "sourceClass": "site_structured",
-          "indicatorIds": [
-            "ceo_hedging"
-          ],
-          "asOfDate": "2026-10-12"
-        },
-        {
-          "id": "news:ai_capex_earnings:d4cba265dbc926",
-          "kind": "news",
-          "sourceName": "Bloomberg",
-          "sourceClass": "attributed_media",
-          "title": "Blackstone’s Jon Gray Plots Once-in-a-Century Bet on the AI Boom - Bloomberg.com",
-          "url": "https://bloomberg.com/news/articles/2026-10-15/blackstone-s-huge-ai-bet-runs-from-data-centers-to-google-and-nvidia-deals",
-          "domain": "bloomberg.com",
-          "publishedAt": "2026-10-15T15:25:59.000Z",
-          "contentScope": "excerpt",
-          "topic": "ai_capex_earnings",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "bloomberg.com"
-          ]
-        },
-        {
-          "id": "news:macro_policy:ebebcb2c997eaf",
-          "kind": "news",
-          "sourceName": "CNBC",
-          "sourceClass": "attributed_media",
-          "title": "SK Hynix shares plunge 10% amid Asia tech rout as Fed rate hike fears, AI funding worries mount - CNBC",
-          "url": "https://cnbc.com/2026/10/15/sk-hynix-samsung-softbank-stocks-asia-tech-rout-ai-funding-worries.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-10-15T00:42:30.000Z",
-          "contentScope": "excerpt",
-          "topic": "macro_policy",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "cnbc.com"
-          ]
-        },
-        {
-          "id": "news:market_structure_valuation:1f997c90812af4",
-          "kind": "news",
-          "sourceName": "CNBC",
-          "sourceClass": "attributed_media",
-          "title": "AI stocks tumble in global tech rout on AI funding worries",
-          "url": "https://cnbc.com/2026/10/15/sk-hynix-samsung-softbank-stocks-asia-tech-rout-ai-funding-worries.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-10-15T00:42:30.000Z",
-          "contentScope": "excerpt",
-          "topic": "market_structure_valuation",
-          "providers": [
-            "brave"
-          ],
-          "supportingDomains": [
-            "cnbc.com"
-          ]
-        },
-        {
-          "id": "news:macro_policy:4b77e69aaa9fda",
-          "kind": "news",
-          "sourceName": "Reuters",
-          "sourceClass": "attributed_media",
-          "title": "Nasdaq ends sharply lower as hot inflation data stirs rate-hike worries - Reuters",
-          "url": "https://reuters.com/business/sp-500-dow-futures-rise-ahead-big-bank-results-cpi-data-2026-10-14",
-          "domain": "reuters.com",
-          "publishedAt": "2026-10-14T23:33:39.000Z",
-          "contentScope": "excerpt",
-          "topic": "macro_policy",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "reuters.com"
-          ]
-        },
-        {
-          "id": "news:ai_capex_earnings:6e5c75c687dffb",
-          "kind": "news",
-          "sourceName": "CNBC",
-          "sourceClass": "attributed_media",
-          "title": "BlackRock's Larry Fink warns a data center moratorium could trigger a recession - CNBC",
-          "url": "https://cnbc.com/2026/10/14/blackrocks-fink-warns-data-center-moratorium-could-spark-a-recession.html",
-          "domain": "cnbc.com",
-          "publishedAt": "2026-10-14T15:10:54.000Z",
-          "contentScope": "excerpt",
-          "topic": "ai_capex_earnings",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "cnbc.com"
-          ]
-        },
-        {
-          "id": "news:market_structure_valuation:a2db04f1f722e8",
-          "kind": "news",
-          "sourceName": "Bloomberg",
-          "sourceClass": "attributed_media",
-          "title": "Cracks Grow Across the AI Trade as Memory-Chip Stocks Tumble - Bloomberg.com",
-          "url": "https://bloomberg.com/news/articles/2026-10-13/cracks-grow-across-the-ai-trade-as-memory-chip-stocks-tumble",
-          "domain": "bloomberg.com",
-          "publishedAt": "2026-10-13T09:38:45.000Z",
-          "contentScope": "excerpt",
-          "topic": "market_structure_valuation",
-          "providers": [
-            "tavily"
-          ],
-          "supportingDomains": [
-            "bloomberg.com"
-          ]
-        }
-      ],
-      "sourceScoringSnapshot": {
-        "contractVersion": "bubble-watch-v3",
-        "modelVersion": "bubble-watch-v3-core23-shadow4-r4",
-        "coreIndicatorCount": 23,
-        "shadowIndicatorCount": 4,
-        "coreRedCount": 7,
-        "coreYellowCount": 7,
-        "coreGreenCount": 7,
-        "primaryScorePct": null,
-        "weightedRiskScore": null,
-        "stageScore": 60,
-        "stageLabelZh": "亢奋 Euphoria",
-        "triggerScore": null,
-        "triggerLabelZh": "待确认",
-        "verdictLabelZh": "高风险预警",
-        "qualifiedEvidence": {
-          "contractVersion": "bubble-watch-v3",
-          "as_of_date": "2026-10-15",
-          "indicators": [
-            {
-              "id": "cape",
-              "axis": "stage",
-              "category": "valuation",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "top5_weight",
-              "axis": "stage",
-              "category": "valuation",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "nvda_fpe",
-              "axis": "stage",
-              "category": "valuation",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "private_secondary_marks",
-              "axis": "trigger",
-              "category": "valuation",
-              "score_role": "shadow",
-              "status": "red",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "hyperscaler_capex_yoy",
-              "axis": "stage",
-              "category": "capital",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "mag4_fcf_yoy",
-              "axis": "trigger",
-              "category": "capital",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "vc_ai_share",
-              "axis": "stage",
-              "category": "capital",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "nvda_invest_revenue",
-              "axis": "stage",
-              "category": "capital",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "breadth_50d",
-              "axis": "trigger",
-              "category": "market_structure",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-09",
-              "stale": false
-            },
-            {
-              "id": "spy_vs_rsp_6m",
-              "axis": "trigger",
-              "category": "market_structure",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "insider_sell_buy",
-              "axis": "trigger",
-              "category": "market_structure",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-13",
-              "stale": false
-            },
-            {
-              "id": "ai_ipo_pipeline",
-              "axis": "stage",
-              "category": "market_structure",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "hy_oas",
-              "axis": "trigger",
-              "category": "credit",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "dc_abs_spread",
-              "axis": "trigger",
-              "category": "credit",
-              "score_role": "core",
-              "status": "unknown",
-              "as_of": null,
-              "stale": false,
-              "evidence_gap": {
-                "policy": "bubble-qualified-evidence-v1",
-                "reasonCode": "dc_abs_direct_spread_unavailable",
-                "checkedDate": "2026-10-15"
-              },
-              "provenance": {
-                "mode": "auto",
-                "checkedAt": "2026-10-15T21:32:03.962Z"
-              }
-            },
-            {
-              "id": "debt_capex_ratio",
-              "axis": "stage",
-              "category": "credit",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "neocloud_credit",
-              "axis": "trigger",
-              "category": "credit",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "token_volume_mom",
-              "axis": "trigger",
-              "category": "fundamentals",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "token_revenue_ratio",
-              "axis": "trigger",
-              "category": "fundamentals",
-              "score_role": "shadow",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "gpu_rental_price",
-              "axis": "trigger",
-              "category": "fundamentals",
-              "score_role": "shadow",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "arr_2nd_deriv",
-              "axis": "trigger",
-              "category": "fundamentals",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "enterprise_deploy",
-              "axis": "stage",
-              "category": "fundamentals",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "cloud_rpo_growth",
-              "axis": "trigger",
-              "category": "fundamentals",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-06-30",
-              "stale": false
-            },
-            {
-              "id": "frontier_progress",
-              "axis": "trigger",
-              "category": "fundamentals",
-              "score_role": "shadow",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "accounting_events",
-              "axis": "trigger",
-              "category": "macro",
-              "score_role": "core",
-              "status": "green",
-              "as_of": "2026-10-12",
-              "stale": false
-            },
-            {
-              "id": "fed_policy",
-              "axis": "trigger",
-              "category": "macro",
-              "score_role": "core",
-              "status": "red",
-              "as_of": "2026-10-13",
-              "stale": false
-            },
-            {
-              "id": "capex_reaction",
-              "axis": "trigger",
-              "category": "macro",
-              "score_role": "core",
-              "status": "unknown",
-              "as_of": null,
-              "stale": false,
-              "evidence_gap": {
-                "policy": "bubble-qualified-evidence-v1",
-                "reasonCode": "capex_qualified_event_unavailable",
-                "checkedDate": "2026-10-15"
-              },
-              "provenance": {
-                "mode": "auto",
-                "checkedAt": "2026-10-15T21:32:06.290Z"
-              }
-            },
-            {
-              "id": "ceo_hedging",
-              "axis": "stage",
-              "category": "macro",
-              "score_role": "core",
-              "status": "yellow",
-              "as_of": "2026-10-12",
-              "stale": false
-            }
-          ],
-          "summary": {
-            "primary_score_pct": null,
-            "red_pct": null,
-            "weighted_risk_score": null,
-            "stage_score": 60,
-            "trigger_score": null,
-            "scoring_unknown_count": 2,
-            "scoring_total_indicators": 23,
-            "scoring_red_count": 7,
-            "scoring_yellow_count": 7,
-            "scoring_green_count": 7,
-            "primary_score_range_pct": {
-              "lower": 30.4,
-              "upper": 39.1
-            },
-            "weighted_risk_score_range": {
-              "lower": 45.7,
-              "upper": 54.3
-            },
-            "stage_score_range": {
-              "lower": 60,
-              "upper": 60
-            },
-            "trigger_score_range": {
-              "lower": 34.6,
-              "upper": 50
-            },
-            "category_scores": {
-              "valuation": 66.7,
-              "capital": 87.5,
-              "market_structure": 62.5,
-              "credit": null,
-              "fundamentals": 12.5,
-              "macro": null
-            },
-            "category_score_ranges": {
-              "valuation": {
-                "lower": 66.7,
-                "upper": 66.7
-              },
-              "capital": {
-                "lower": 87.5,
-                "upper": 87.5
-              },
-              "market_structure": {
-                "lower": 62.5,
-                "upper": 62.5
-              },
-              "credit": {
-                "lower": 12.5,
-                "upper": 37.5
-              },
-              "fundamentals": {
-                "lower": 12.5,
-                "upper": 12.5
-              },
-              "macro": {
-                "lower": 37.5,
-                "upper": 62.5
-              }
-            },
-            "verdict_label": "高风险预警"
-          },
-          "scoring": {
-            "model_version": "bubble-watch-v3-core23-shadow4-r4",
-            "effective_tier": "alert",
-            "base_tier": null,
-            "override_active": false,
-            "two_axis_upgrade": null,
-            "tier_range": {
-              "lower": "alert",
-              "upper": "alert"
-            },
-            "unknown_core_ids": [
-              "dc_abs_spread",
-              "capex_reaction"
-            ]
-          }
-        },
-        "coreUnknownCount": 2,
-        "primaryScoreRangePct": {
-          "lower": 30.4,
-          "upper": 39.1
-        },
-        "weightedRiskScoreRange": {
-          "lower": 45.7,
-          "upper": 54.3
-        },
-        "stageScoreRange": {
-          "lower": 60,
-          "upper": 60
-        },
-        "triggerScoreRange": {
-          "lower": 34.6,
-          "upper": 50
-        },
-        "scorecardDisclosureZh": "固定核心23项，主分30.4–39.1%，辅助压力45.7–54.3；泡沫成熟度60.0，破裂临近度34.6–50.0。数据中心ABS利差、资本开支反应待确认，点值保留为空，不按绿灯或零分处理；上下界是数学边界，不是概率。综合判读：高风险预警。"
-      },
-      "validation": {
-        "validator": "check:bubble-watch-weekly-editorial-contract",
-        "status": "pass",
-        "validatedAt": "2026-10-16T07:53:20.995Z",
-        "artifactDigest": "a4611623e01d29b66d3874b19044739575af540a383abecb77003be42bb91220"
-      },
-      "qualityReview": {
-        "status": "warn",
-        "recommendation": "approved_for_read_only_display",
-        "promotionEligible": false,
-        "reviewedAt": "2026-10-16T07:53:20.825Z",
-        "dimensions": {
-          "structuralContract": "pass",
-          "sourceReferenceIntegrity": "pass",
-          "newsEvidenceQuality": "warn",
-          "scoreBoundaryIntegrity": "pass",
-          "unsafeWording": "pass",
-          "incrementalEditorialValue": "warn",
-          "fallbackReadiness": "pass"
-        },
-        "warnings": [
-          "部分新闻来自专业媒体摘要或机构观点，尚未独立核实；按注明出处的有限内容展示。",
-          "可见判读长度 4958 字，超出 1800–4200 字兼容窗口"
-        ]
-      },
-      "provenance": {
-        "generatedBy": "github_actions_workflow",
-        "humanApproved": false,
-        "inputDigest": "25647fab9bb18832d60d5cdbfee25e742c4e72e1b999600070f27a6510b40098",
-        "editorialFormat": "full",
-        "artifactDigest": "a4611623e01d29b66d3874b19044739575af540a383abecb77003be42bb91220",
-        "sourceCommit": "5d8910a43bd8eccc346b9126fc68b21f740cfaf3",
-        "runId": "38869878705",
-        "newsDiscoveryStatus": "ok",
-        "liveNewsProviderCount": 2
-      },
-      "freshness": {
-        "artifactGeneratedAt": "2026-10-16T07:53:20.642Z",
-        "sourceAsOfDate": "2026-10-15",
-        "maxAgeHours": 240,
-        "isStale": false
-      },
-      "fallback": {
-        "available": true,
-        "source": "bubble-watch-narrative-v2",
-        "field": "summary.verdict_desc"
-      },
-      "boundaries": {
-        "displayOnly": true,
-        "commentaryOnly": true,
-        "externalAiGenerated": true,
-        "usesExternalAiApi": true,
-        "frontendDisplayApproved": true,
-        "affectsBubbleWatchScoring": false,
-        "affectsCore23": false,
-        "affectsShadow4": false,
-        "affectsStageTrigger": false,
-        "affectsGfrrScoring": false,
-        "affectsDecisionModel": false,
-        "affectsExecutionLock": false,
-        "affectsPositionGuidance": false,
-        "notInvestmentAdvice": true
-      }
     }
   },
   "scoring": {
-    "model_version": "bubble-watch-v3-core23-shadow4-r4",
+    "model_version": "bubble-watch-v3-core23-shadow4-r5",
     "primary_universe": "core",
     "core_indicator_ids": [
       "cape",
@@ -1670,8 +339,7 @@
       "upper": "alert"
     },
     "unknown_core_ids": [
-      "dc_abs_spread",
-      "capex_reaction"
+      "dc_abs_spread"
     ],
     "override_rule": "固定核心23项；缺证据保留区间，原分类与两轴共振规则不变",
     "override_rules": {
@@ -2144,12 +812,12 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T21:32:03.954Z",
+        "checkedAt": "2026-10-16T08:36:29.019Z",
         "detail": {
           "status": "yellow",
           "policy": "insider_fixed_12_30_90_v1",
-          "windowStartDate": "2026-07-18",
-          "windowEndDate": "2026-10-15",
+          "windowStartDate": "2026-07-19",
+          "windowEndDate": "2026-10-16",
           "basket": [
             "NVDA",
             "MSFT",
@@ -2164,7 +832,7 @@
             "NOW",
             "SMCI"
           ],
-          "checkedAt": "2026-10-15T21:32:03.954Z",
+          "checkedAt": "2026-10-16T08:36:29.019Z",
           "latestTransactionDate": "2026-10-13",
           "coverageStatus": "returned_sample_completeness_unverified",
           "validResponseSymbols": [
@@ -2200,8 +868,8 @@
           "companies": [
             {
               "symbol": "NVDA",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:30:42.660Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:09.123Z",
               "returnedRecordCount": 37,
               "oldestReturnedDate": "2026-08-05",
               "newestReturnedDate": "2026-10-07",
@@ -2226,11 +894,11 @@
             },
             {
               "symbol": "MSFT",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:30:49.136Z",
-              "returnedRecordCount": 44,
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:15.639Z",
+              "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-04",
-              "newestReturnedDate": "2026-10-13",
+              "newestReturnedDate": "2026-10-15",
               "latestIncludedTransactionDate": "2026-10-13",
               "localRecordLimitReached": false,
               "windows": {
@@ -2252,8 +920,8 @@
             },
             {
               "symbol": "AMZN",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:30:55.637Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:22.091Z",
               "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-03",
               "newestReturnedDate": "2026-10-01",
@@ -2278,11 +946,11 @@
             },
             {
               "symbol": "GOOGL",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:02.145Z",
-              "returnedRecordCount": 172,
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:28.603Z",
+              "returnedRecordCount": 180,
               "oldestReturnedDate": "2026-07-25",
-              "newestReturnedDate": "2026-09-30",
+              "newestReturnedDate": "2026-10-13",
               "latestIncludedTransactionDate": "2026-09-30",
               "localRecordLimitReached": false,
               "windows": {
@@ -2304,8 +972,8 @@
             },
             {
               "symbol": "ORCL",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:15.159Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:41.623Z",
               "returnedRecordCount": 38,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-29",
@@ -2314,10 +982,10 @@
               "windows": {
                 "30": {
                   "buyUsd": "3483800",
-                  "sellUsd": "5342123.36",
-                  "transactionCount": 4,
+                  "sellUsd": "3819296.28",
+                  "transactionCount": 3,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 4
+                  "scheduleUnknownCount": 3
                 },
                 "90": {
                   "buyUsd": "3483800",
@@ -2330,8 +998,8 @@
             },
             {
               "symbol": "AVGO",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:21.669Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:48.117Z",
               "returnedRecordCount": 19,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-23",
@@ -2356,8 +1024,8 @@
             },
             {
               "symbol": "AMD",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:28.179Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:35:54.644Z",
               "returnedRecordCount": 123,
               "oldestReturnedDate": "2026-08-09",
               "newestReturnedDate": "2026-09-15",
@@ -2382,8 +1050,8 @@
             },
             {
               "symbol": "PLTR",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:34.692Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:36:01.148Z",
               "returnedRecordCount": 45,
               "oldestReturnedDate": "2026-08-05",
               "newestReturnedDate": "2026-10-09",
@@ -2408,8 +1076,8 @@
             },
             {
               "symbol": "CRM",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:41.205Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:36:07.644Z",
               "returnedRecordCount": 38,
               "oldestReturnedDate": "2026-07-22",
               "newestReturnedDate": "2026-09-22",
@@ -2434,8 +1102,8 @@
             },
             {
               "symbol": "NOW",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:47.700Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:36:14.152Z",
               "returnedRecordCount": 64,
               "oldestReturnedDate": "2026-08-07",
               "newestReturnedDate": "2026-08-31",
@@ -2460,8 +1128,8 @@
             },
             {
               "symbol": "SMCI",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-07-18&to=2026-10-15&limit=2000",
-              "responseBuiltAt": "2026-10-15T21:31:54.203Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-07-19&to=2026-10-16&limit=2000",
+              "responseBuiltAt": "2026-10-16T08:36:20.673Z",
               "returnedRecordCount": 48,
               "oldestReturnedDate": "2026-08-10",
               "newestReturnedDate": "2026-10-07",
@@ -2488,11 +1156,11 @@
           "totals": {
             "30": {
               "buyUsd": "4483250.8496",
-              "sellUsd": "588278464.9152",
-              "transactionCount": 40,
+              "sellUsd": "586755637.8352",
+              "transactionCount": 39,
               "scheduledCount": 0,
-              "scheduleUnknownCount": 40,
-              "ratio": 131.21694160113455,
+              "scheduleUnknownCount": 39,
+              "ratio": 130.8772713192149,
               "buyDenominatorSufficient": true
             },
             "90": {
@@ -2530,7 +1198,7 @@
         }
       },
       "value_display": "高卖压·覆盖受限",
-      "note": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-10-15，30日返回样本卖出约5.88亿美元、买入约448.3万美元，卖买比约131.2倍；90日返回样本卖出约19.00亿美元、买入约448.3万美元，卖买比约423.8倍。最近已返回P/S交易日2026-10-13；接口响应生成于2026-10-15，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露225笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
+      "note": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-10-16，30日返回样本卖出约5.87亿美元、买入约448.3万美元，卖买比约130.9倍；90日返回样本卖出约19.00亿美元、买入约448.3万美元，卖买比约423.8倍。最近已返回P/S交易日2026-10-13；接口响应生成于2026-10-16，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露225笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
     },
     {
       "id": "ai_ipo_pipeline",
@@ -2650,11 +1318,11 @@
       "evidence_gap": {
         "policy": "bubble-qualified-evidence-v1",
         "reasonCode": "dc_abs_direct_spread_unavailable",
-        "checkedDate": "2026-10-15"
+        "checkedDate": "2026-10-16"
       },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T21:32:03.962Z",
+        "checkedAt": "2026-10-16T08:36:29.026Z",
         "detail": {
           "status": "unknown",
           "reasonCode": "dc_abs_direct_spread_unavailable",
@@ -3151,18 +1819,18 @@
       "source_name": "Yahoo联邦基金期货日线代理 · FRED实际EFFR · Fed会议日历",
       "status": "red",
       "value_display": "3/6个月路径偏上",
-      "as_of": "2026-10-13",
+      "as_of": "2026-10-14",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T21:32:06.287Z",
+        "checkedAt": "2026-10-16T08:36:30.765Z",
         "detail": {
           "policy": "fed_market_path_collection_v1",
-          "checkedAt": "2026-10-15T21:32:06.287Z",
+          "checkedAt": "2026-10-16T08:36:30.765Z",
           "sourceEvidence": {
             "calendar": {
               "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-              "checkedAt": "2026-10-15T21:32:04.542Z",
+              "checkedAt": "2026-10-16T08:36:29.282Z",
               "lastUpdated": "2026-10-07",
               "years": {
                 "2026": [
@@ -3190,9 +1858,9 @@
             "baseline": {
               "series": "DFF",
               "sourceUrl": "https://fred.stlouisfed.org/series/DFF",
-              "observedAt": "2026-10-13",
+              "observedAt": "2026-10-14",
               "value": "3.88",
-              "checkedAt": "2026-10-15T21:32:04.615Z"
+              "checkedAt": "2026-10-16T08:36:29.352Z"
             },
             "quotes": [
               {
@@ -3203,9 +1871,9 @@
                 "instrumentType": "FUTURE",
                 "exchangeTimezoneName": "America/New_York",
                 "dataGranularity": "1d",
-                "timestamp": 1791864000,
-                "rawClose": 95.83999633789062,
-                "reportedVolume": 75391
+                "timestamp": 1791950400,
+                "rawClose": 95.80500030517578,
+                "reportedVolume": 236033
               },
               {
                 "month": "2027-02",
@@ -3215,9 +1883,9 @@
                 "instrumentType": "FUTURE",
                 "exchangeTimezoneName": "America/New_York",
                 "dataGranularity": "1d",
-                "timestamp": 1791864000,
-                "rawClose": 95.75,
-                "reportedVolume": 37753
+                "timestamp": 1791950400,
+                "rawClose": 95.70999908447266,
+                "reportedVolume": 99961
               },
               {
                 "month": "2027-04",
@@ -3227,9 +1895,9 @@
                 "instrumentType": "FUTURE",
                 "exchangeTimezoneName": "America/New_York",
                 "dataGranularity": "1d",
-                "timestamp": 1791864000,
-                "rawClose": 95.56999969482422,
-                "reportedVolume": 17792
+                "timestamp": 1791950400,
+                "rawClose": 95.53500366210938,
+                "reportedVolume": 40991
               },
               {
                 "month": "2027-05",
@@ -3239,71 +1907,71 @@
                 "instrumentType": "FUTURE",
                 "exchangeTimezoneName": "America/New_York",
                 "dataGranularity": "1d",
-                "timestamp": 1791864000,
-                "rawClose": 95.48500061035156,
-                "reportedVolume": 14047
+                "timestamp": 1791950400,
+                "rawClose": 95.44999694824219,
+                "reportedVolume": 28587
               }
             ]
           },
           "result": {
             "policy": "fed_3_6_calendar_month_yahoo_daily_proxy_v1",
             "status": "red",
-            "quoteLabelDate": "2026-10-13",
-            "baselineObservedAt": "2026-10-13",
+            "quoteLabelDate": "2026-10-14",
+            "baselineObservedAt": "2026-10-14",
             "normalizedQuotes": [
               {
                 "month": "2027-01",
                 "symbol": "ZQF27.CBT",
-                "labelDate": "2026-10-13",
-                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
-                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
-                "rawClose": 95.83999633789062,
-                "normalizedPrice": "95.8400",
-                "priceUnits": "958400",
-                "reportedVolume": 75391,
+                "labelDate": "2026-10-14",
+                "sourceTimestamp": "2026-10-14T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-15T04:00:00.000Z",
+                "rawClose": 95.80500030517578,
+                "normalizedPrice": "95.8050",
+                "priceUnits": "958050",
+                "reportedVolume": 236033,
                 "normalizationPolicy": "remote_zq_0p005_v1"
               },
               {
                 "month": "2027-02",
                 "symbol": "ZQG27.CBT",
-                "labelDate": "2026-10-13",
-                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
-                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
-                "rawClose": 95.75,
-                "normalizedPrice": "95.7500",
-                "priceUnits": "957500",
-                "reportedVolume": 37753,
+                "labelDate": "2026-10-14",
+                "sourceTimestamp": "2026-10-14T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-15T04:00:00.000Z",
+                "rawClose": 95.70999908447266,
+                "normalizedPrice": "95.7100",
+                "priceUnits": "957100",
+                "reportedVolume": 99961,
                 "normalizationPolicy": "remote_zq_0p005_v1"
               },
               {
                 "month": "2027-04",
                 "symbol": "ZQJ27.CBT",
-                "labelDate": "2026-10-13",
-                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
-                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
-                "rawClose": 95.56999969482422,
-                "normalizedPrice": "95.5700",
-                "priceUnits": "955700",
-                "reportedVolume": 17792,
+                "labelDate": "2026-10-14",
+                "sourceTimestamp": "2026-10-14T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-15T04:00:00.000Z",
+                "rawClose": 95.53500366210938,
+                "normalizedPrice": "95.5350",
+                "priceUnits": "955350",
+                "reportedVolume": 40991,
                 "normalizationPolicy": "remote_zq_0p005_v1"
               },
               {
                 "month": "2027-05",
                 "symbol": "ZQK27.CBT",
-                "labelDate": "2026-10-13",
-                "sourceTimestamp": "2026-10-13T04:00:00.000Z",
-                "derivedLabelEndAt": "2026-10-14T04:00:00.000Z",
-                "rawClose": 95.48500061035156,
-                "normalizedPrice": "95.4850",
-                "priceUnits": "954850",
-                "reportedVolume": 14047,
+                "labelDate": "2026-10-14",
+                "sourceTimestamp": "2026-10-14T04:00:00.000Z",
+                "derivedLabelEndAt": "2026-10-15T04:00:00.000Z",
+                "rawClose": 95.44999694824219,
+                "normalizedPrice": "95.4500",
+                "priceUnits": "954500",
+                "reportedVolume": 28587,
                 "normalizationPolicy": "remote_zq_0p005_v1"
               }
             ],
             "paths": [
               {
                 "months": 3,
-                "targetDate": "2027-01-15",
+                "targetDate": "2027-01-16",
                 "chain": [
                   "2027-01",
                   "2027-02"
@@ -3311,21 +1979,21 @@
                 "anchor": "2027-02",
                 "segment": "before_effective_date",
                 "rate": {
-                  "numerator": "124400",
-                  "denominator": "3",
+                  "numerator": "1128850",
+                  "denominator": "27",
                   "unit": "0.0001_percent"
                 },
                 "delta": {
-                  "numerator": "8000",
-                  "denominator": "3",
+                  "numerator": "81250",
+                  "denominator": "27",
                   "unit": "0.0001_percent"
                 },
-                "expectedRatePct": 4.1466666666666665,
-                "deltaBp": 26.666666666666668
+                "expectedRatePct": 4.180925925925926,
+                "deltaBp": 30.09259259259259
               },
               {
                 "months": 6,
-                "targetDate": "2027-04-15",
+                "targetDate": "2027-04-16",
                 "chain": [
                   "2027-04",
                   "2027-05"
@@ -3333,17 +2001,17 @@
                 "anchor": "2027-05",
                 "segment": "before_effective_date",
                 "rate": {
-                  "numerator": "309675",
+                  "numerator": "312125",
                   "denominator": "7",
                   "unit": "0.0001_percent"
                 },
                 "delta": {
-                  "numerator": "38075",
+                  "numerator": "40525",
                   "denominator": "7",
                   "unit": "0.0001_percent"
                 },
-                "expectedRatePct": 4.423928571428572,
-                "deltaBp": 54.392857142857146
+                "expectedRatePct": 4.458928571428571,
+                "deltaBp": 57.892857142857146
               }
             ],
             "thresholdBp": 15
@@ -3370,7 +2038,7 @@
           }
         }
       },
-      "note": "快照日2026-10-15，同期实际有效联邦基金利率3.88%（原观测日2026-10-13）；3个月目标日2027-01-15，隐含有效利率约4.147%，较同期实际利率+26.7基点；6个月目标日2027-04-15，隐含有效利率约4.424%，较同期实际利率+54.4基点。期货共同纽约日线标签2026-10-13，保留原日期。采用3/6个日历月、月末截日；月平均利率按会议前后分段及后续非会议月锚定推导。仅支持已审会议日期及次日生效假设，日历变更、来源失败或报价不合格均待确认。Yahoo日线标签结束至少24小时、距今不超过7日且报告成交量为正；成交量不证明同步成交。该代理不是CME官方结算或实时行情，也不是下次会议加息/降息概率或政策目标区间。期货风险溢价、临时会议及非会议因素可能使实际路径偏离。灯号使用未舍入精确值，展示约数不参与阈值；不沿用年末点阵图、通胀或旧灯号。"
+      "note": "快照日2026-10-16，同期实际有效联邦基金利率3.88%（原观测日2026-10-14）；3个月目标日2027-01-16，隐含有效利率约4.181%，较同期实际利率+30.1基点；6个月目标日2027-04-16，隐含有效利率约4.459%，较同期实际利率+57.9基点。期货共同纽约日线标签2026-10-14，保留原日期。采用3/6个日历月、月末截日；月平均利率按会议前后分段及后续非会议月锚定推导。仅支持已审会议日期及次日生效假设，日历变更、来源失败或报价不合格均待确认。Yahoo日线标签结束至少24小时、距今不超过7日且报告成交量为正；成交量不证明同步成交。该代理不是CME官方结算或实时行情，也不是下次会议加息/降息概率或政策目标区间。期货风险溢价、临时会议及非会议因素可能使实际路径偏离。灯号使用未舍入精确值，展示约数不参与阈值；不沿用年末点阵图、通胀或旧灯号。"
     },
     {
       "id": "capex_reaction",
@@ -3378,47 +2046,537 @@
       "axis": "trigger",
       "category": "macro",
       "name_en": "Capex Guidance Reaction",
-      "name_zh": "资本开支公告事件反应",
-      "threshold_text": "固定四家公司；最新财报、可比指引上调及匹配交易日证据齐备后再判读",
-      "source_name": "公司季度财报及公告后价格 · 事件证据待核",
-      "status": "unknown",
-      "as_of": null,
+      "name_zh": "资本开支财报关联反应",
+      "threshold_text": "固定四家最新季度；指引上调后自身下跌且较QQQ落后超过5个百分点计为受罚，三家及以上红灯；绿灯须至少两家上调且全部自身上涨、领先QQQ超过5个百分点",
+      "source_name": "Stock Analysis季度电话会整理 · 公司公告 · Yahoo/QQQ",
+      "status": "yellow",
+      "as_of": "2026-07-30",
       "stale": false,
-      "value_display": "待确认",
-      "note": "固定MSFT、META、AMZN、GOOGL四家公司。目前尚未具备可核验最新季度财报目录、同口径前后指引、首次披露时间及首个完整正常交易日个股与QQQ价格的完整面板，因此保持待确认。这不表示没有支出上调或没有市场惩罚。租赁会计重分类不能直接当作投入改变，区间下限提高也不等于上限提高；财报同时包含收入、利润等信息，公告后相对收益不能全归因于资本开支。滚动多窗口收益、新闻条数及研究评论均不替代本项事件证据；季度之间的资本开支更新尚未完整覆盖。",
+      "value_display": "偶发惩罚或反应分化",
+      "note": "固定四家面板已核验；3家上调，2家受罚、1家获奖励。微软（MSFT，2026财年第四季度）：2026年经济投入预期未变，租赁重分类后账面约1750亿美元，不计为上调；2026-07-29至2026-07-30收盘，个股+15.51%、QQQ+3.30%，相对+12.21个百分点。Meta（META，2026年第二季度）：2026年含融资租赁本金的指引从1250–1450亿美元变为1300–1450亿美元，仅下限提高；2026-07-29至2026-07-30收盘，个股-7.95%、QQQ+3.30%，相对-11.25个百分点。亚马逊（AMZN，2026年第二季度）：2026年现金资本开支从2000亿美元变为2200亿美元（金额来自具名二手电话会整理）；2026-07-30至2026-07-31收盘，个股+15.32%、QQQ+0.65%，相对+14.67个百分点。Alphabet（GOOGL，2026年第二季度）：2026年公司报告口径资本开支从1800–1900亿美元变为1950–2050亿美元（金额来自具名二手电话会整理）；2026-07-22至2026-07-23收盘，个股-7.13%、QQQ-1.90%，相对-5.23个百分点。微软分类及Meta指引经公司材料核对；Amazon和Alphabet金额采用具名二手电话会文本，公司材料用于财报事件身份和时段核验。观察最新季度财报电话会关联反应，未完整追踪季度之间的临时指引，也不证明首次披露时点或资本开支因果。个股收益还受到收入、利润和其他财报信息影响。固定四家样本，不缩减分母；价格为当前版本复权历史收盘价，不是当时可得的历史回测。",
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-10-15T21:32:06.290Z",
+        "checkedAt": "2026-10-16T08:36:36.051Z",
         "detail": {
-          "policy": "capex_latest_earnings_event_hold_v1",
-          "adapterStatus": "not_admitted",
-          "status": "unknown",
-          "scope": "latest_quarterly_earnings_guidance_fixed_four",
+          "schemaVersion": "bubble-quarterly-capex-panel-v1",
+          "policy": "capex_latest_quarterly_call_association_v1",
+          "asOfDate": "2026-10-16",
+          "checkedAt": "2026-10-16T08:36:36.051Z",
           "companies": [
-            "MSFT",
-            "META",
-            "AMZN",
-            "GOOGL"
+            {
+              "symbol": "MSFT",
+              "status": "qualified",
+              "gaps": [],
+              "catalog": {
+                "id": "647770-q4-2026",
+                "quarter": "Q4 2026",
+                "scope": "latest_published_quarter_in_stockanalysis_catalog",
+                "sourceDigest": "94836f2b0219f87948ccc6641054bb04ba5a7a199241c7189a355ad18707eea2",
+                "sourceUrl": "https://stockanalysis.com/stocks/msft/transcripts/"
+              },
+              "guidance": {
+                "status": "economic_investment_unchanged",
+                "year": 2026,
+                "basis": "lease_reclassification",
+                "reportedCurrent": [
+                  175,
+                  175
+                ],
+                "previous": null,
+                "current": null,
+                "currency": "USD",
+                "unit": "billion",
+                "periodBasis": "calendar_year",
+                "clauseDigest": "4434424d91a40c49bb71602aced68f1331d431336f2e30df12735ca37bfd2ac5",
+                "documentDigest": "05a436b16bc66916eed1c9905a192f6b9c80a8fc1ef8a3197b25bb813f4f45e8",
+                "sourceRole": "secondary_attributed_call_transcript",
+                "sourceUrl": "https://stockanalysis.com/stocks/msft/transcripts/647770-q4-2026/"
+              },
+              "timing": {
+                "eventDate": "2026-07-29",
+                "anchorAt": "2026-07-29T21:30:00Z",
+                "anchorKind": "official_scheduled_quarterly_call",
+                "primaryDigest": "da56d4547099e8a443895fa4db11c6dab500363a6fb82239b34e148f009e01bd",
+                "scheduleDigest": "22218aaa3e362a2f1ef6fc8aebf018cc8d3f5a8e47e5ee3c3447702b15833814",
+                "firstGuidanceDisclosureVerified": false,
+                "capexCausalityEstablished": false,
+                "primaryUrl": "https://www.microsoft.com/en-us/investor/events/fy-2026/earnings-fy-2026-q4",
+                "scheduleUrl": "https://news.microsoft.com/source/2026/07/08/microsoft-announces-quarterly-earnings-release-date-68/"
+              },
+              "window": {
+                "policy": "us_cash_regular_2026_v1",
+                "beforeDate": "2026-07-29",
+                "afterDate": "2026-07-30",
+                "association": "latest_quarterly_earnings_call",
+                "capexCausalityEstablished": false,
+                "anchorAt": "2026-07-29T21:30:00Z"
+              },
+              "prices": {
+                "policy": "yahoo_latest_vintage_adjusted_close_pair_v1",
+                "stock": [
+                  {
+                    "date": "2026-07-29",
+                    "rawClose": 390.5400085449219,
+                    "adjustedClose": 389.8061828613281,
+                    "volume": 47209000,
+                    "timestamp": 1785331800
+                  },
+                  {
+                    "date": "2026-07-30",
+                    "rawClose": 451.1000061035156,
+                    "adjustedClose": 450.2524108886719,
+                    "volume": 110160700,
+                    "timestamp": 1785418200
+                  }
+                ],
+                "qqq": [
+                  {
+                    "date": "2026-07-29",
+                    "rawClose": 661.72998046875,
+                    "adjustedClose": 661.0411376953125,
+                    "volume": 57233300,
+                    "timestamp": 1785331800
+                  },
+                  {
+                    "date": "2026-07-30",
+                    "rawClose": 683.5499877929688,
+                    "adjustedClose": 682.8384399414062,
+                    "volume": 66753700,
+                    "timestamp": 1785418200
+                  }
+                ],
+                "stockReturnPct": 15.506739165511707,
+                "qqqReturnPct": 3.297419933967949,
+                "excessReturnPp": 12.209319231543759,
+                "scoringEligible": false
+              }
+            },
+            {
+              "symbol": "META",
+              "status": "qualified",
+              "gaps": [],
+              "catalog": {
+                "id": "657318-q2-2026",
+                "quarter": "Q2 2026",
+                "scope": "latest_published_quarter_in_stockanalysis_catalog",
+                "sourceDigest": "aa1716501e2eaa0cbe3b04de5b5c9bd41acf9f08e8804c3f894afd6f46f14ec6",
+                "sourceUrl": "https://stockanalysis.com/stocks/meta/transcripts/"
+              },
+              "guidance": {
+                "year": 2026,
+                "basis": "includes_finance_lease_principal",
+                "current": [
+                  130,
+                  145
+                ],
+                "previous": [
+                  125,
+                  145
+                ],
+                "status": "lower_bound_raised",
+                "currency": "USD",
+                "unit": "billion",
+                "periodBasis": "calendar_year",
+                "clauseDigest": "6419ab9d77bd5e82f8ccccf743dc4bc583de47447cb413a4be6cb25009eb55eb",
+                "documentDigest": "c67cfc3b1a1d788d0d08880a845442ef0b5497d3dd42d124883bebabb9f06f44",
+                "sourceRole": "secondary_attributed_call_transcript",
+                "sourceUrl": "https://stockanalysis.com/stocks/meta/transcripts/657318-q2-2026/"
+              },
+              "timing": {
+                "eventDate": "2026-07-29",
+                "anchorAt": "2026-07-29T20:30:00Z",
+                "anchorKind": "official_scheduled_quarterly_call",
+                "primaryDigest": "6d64b314082e39314e556133899473d431cc3118c223771062ccaf10f3767868",
+                "firstGuidanceDisclosureVerified": false,
+                "capexCausalityEstablished": false,
+                "primaryUrl": "https://www.prnewswire.com/news-releases/meta-reports-second-quarter-2026-results-302838214.html"
+              },
+              "window": {
+                "policy": "us_cash_regular_2026_v1",
+                "beforeDate": "2026-07-29",
+                "afterDate": "2026-07-30",
+                "association": "latest_quarterly_earnings_call",
+                "capexCausalityEstablished": false,
+                "anchorAt": "2026-07-29T20:30:00Z"
+              },
+              "prices": {
+                "policy": "yahoo_latest_vintage_adjusted_close_pair_v1",
+                "stock": [
+                  {
+                    "date": "2026-07-29",
+                    "rawClose": 585.6099853515625,
+                    "adjustedClose": 585.148193359375,
+                    "volume": 22371100,
+                    "timestamp": 1785331800
+                  },
+                  {
+                    "date": "2026-07-30",
+                    "rawClose": 539.030029296875,
+                    "adjustedClose": 538.60498046875,
+                    "volume": 42271500,
+                    "timestamp": 1785418200
+                  }
+                ],
+                "qqq": [
+                  {
+                    "date": "2026-07-29",
+                    "rawClose": 661.72998046875,
+                    "adjustedClose": 661.0411376953125,
+                    "volume": 57233300,
+                    "timestamp": 1785331800
+                  },
+                  {
+                    "date": "2026-07-30",
+                    "rawClose": 683.5499877929688,
+                    "adjustedClose": 682.8384399414062,
+                    "volume": 66753700,
+                    "timestamp": 1785418200
+                  }
+                ],
+                "stockReturnPct": -7.954089821830824,
+                "qqqReturnPct": 3.297419933967949,
+                "excessReturnPp": -11.251509755798772,
+                "scoringEligible": false
+              }
+            },
+            {
+              "symbol": "AMZN",
+              "status": "qualified",
+              "gaps": [],
+              "catalog": {
+                "id": "657334-q2-2026",
+                "quarter": "Q2 2026",
+                "scope": "latest_published_quarter_in_stockanalysis_catalog",
+                "sourceDigest": "116ee97b2c956c38ddc3734e5e1452fa9f4415cb89f74dc21d258d20e2a15dc4",
+                "sourceUrl": "https://stockanalysis.com/stocks/amzn/transcripts/"
+              },
+              "guidance": {
+                "year": 2026,
+                "basis": "cash_capex",
+                "current": [
+                  220,
+                  220
+                ],
+                "previous": [
+                  200,
+                  200
+                ],
+                "status": "raised",
+                "currency": "USD",
+                "unit": "billion",
+                "periodBasis": "calendar_year",
+                "clauseDigest": "54bfb25beecf2c6f77bfaa6fce7693e1c7df6f7b1b9fb2140e79a7373373129e",
+                "documentDigest": "bba21873de0e2bb1785142df03607f96e0b574a879eeb0eb1d124a7674234a90",
+                "sourceRole": "secondary_attributed_call_transcript",
+                "sourceUrl": "https://stockanalysis.com/stocks/amzn/transcripts/657334-q2-2026/"
+              },
+              "timing": {
+                "eventDate": "2026-07-30",
+                "anchorAt": "2026-07-30T21:00:00Z",
+                "anchorKind": "official_scheduled_quarterly_call",
+                "primaryDigest": "50930e3deabdc4426d81cb34fba18d8a97a794c8519c2bd53c7a7f3d1e597a2f",
+                "scheduleDigest": "30180b030ff2bf7f098d8d6a15293f1e7b221096fe13a325921547b94d725866",
+                "firstGuidanceDisclosureVerified": false,
+                "capexCausalityEstablished": false,
+                "primaryUrl": "https://www.aboutamazon.com/news/company-news/amazon-earnings-q2-2026-report",
+                "scheduleUrl": "https://press.aboutamazon.com/2026/7/amazon-com-to-webcast-second-quarter-2026-financial-results-conference-call"
+              },
+              "window": {
+                "policy": "us_cash_regular_2026_v1",
+                "beforeDate": "2026-07-30",
+                "afterDate": "2026-07-31",
+                "association": "latest_quarterly_earnings_call",
+                "capexCausalityEstablished": false,
+                "anchorAt": "2026-07-30T21:00:00Z"
+              },
+              "prices": {
+                "policy": "yahoo_latest_vintage_adjusted_close_pair_v1",
+                "stock": [
+                  {
+                    "date": "2026-07-30",
+                    "rawClose": 235.5,
+                    "adjustedClose": 235.5,
+                    "volume": 101839800,
+                    "timestamp": 1785418200
+                  },
+                  {
+                    "date": "2026-07-31",
+                    "rawClose": 271.5799865722656,
+                    "adjustedClose": 271.5799865722656,
+                    "volume": 129054800,
+                    "timestamp": 1785504600
+                  }
+                ],
+                "qqq": [
+                  {
+                    "date": "2026-07-30",
+                    "rawClose": 683.5499877929688,
+                    "adjustedClose": 682.8384399414062,
+                    "volume": 66753700,
+                    "timestamp": 1785418200
+                  },
+                  {
+                    "date": "2026-07-31",
+                    "rawClose": 687.989990234375,
+                    "adjustedClose": 687.2738647460938,
+                    "volume": 50540500,
+                    "timestamp": 1785504600
+                  }
+                ],
+                "stockReturnPct": 15.320588778032107,
+                "qqqReturnPct": 0.6495569881900698,
+                "excessReturnPp": 14.671031789842036,
+                "scoringEligible": false
+              }
+            },
+            {
+              "symbol": "GOOGL",
+              "status": "qualified",
+              "gaps": [],
+              "catalog": {
+                "id": "657320-q2-2026",
+                "quarter": "Q2 2026",
+                "scope": "latest_published_quarter_in_stockanalysis_catalog",
+                "sourceDigest": "2f7e6faf7c4adab96c4e11b4e2f66fa7d029177b7f9679ad94e5c3f3d25aa7dc",
+                "sourceUrl": "https://stockanalysis.com/stocks/googl/transcripts/"
+              },
+              "guidance": {
+                "year": 2026,
+                "basis": "issuer_reported_annual_capex",
+                "current": [
+                  195,
+                  205
+                ],
+                "previous": [
+                  180,
+                  190
+                ],
+                "status": "raised",
+                "currency": "USD",
+                "unit": "billion",
+                "periodBasis": "calendar_year",
+                "clauseDigest": "b3624533b36783b23d3392a44103edba4bb4b61ba6db6867d227f62ff50af48b",
+                "documentDigest": "1f65b7cdb55bd58b171e5c8190f415c25b9427b60c3ee3e762869d956296ee78",
+                "sourceRole": "secondary_attributed_call_transcript",
+                "sourceUrl": "https://stockanalysis.com/stocks/googl/transcripts/657320-q2-2026/"
+              },
+              "timing": {
+                "eventDate": "2026-07-22",
+                "anchorAt": "2026-07-22T20:45:00Z",
+                "anchorKind": "official_call_remarks_publication",
+                "primaryDigest": "11f5102c1e8dfd0995c38b65a197ae6f7d5fffe79cd56bf66cee9732dbcf6e37",
+                "firstGuidanceDisclosureVerified": false,
+                "capexCausalityEstablished": false,
+                "primaryUrl": "https://blog.google/company-news/inside-google/message-ceo/alphabet-earnings-q2-2026/"
+              },
+              "window": {
+                "policy": "us_cash_regular_2026_v1",
+                "beforeDate": "2026-07-22",
+                "afterDate": "2026-07-23",
+                "association": "latest_quarterly_earnings_call",
+                "capexCausalityEstablished": false,
+                "anchorAt": "2026-07-22T20:45:00Z"
+              },
+              "prices": {
+                "policy": "yahoo_latest_vintage_adjusted_close_pair_v1",
+                "stock": [
+                  {
+                    "date": "2026-07-22",
+                    "rawClose": 342.0899963378906,
+                    "adjustedClose": 341.8702392578125,
+                    "volume": 39334100,
+                    "timestamp": 1784727000
+                  },
+                  {
+                    "date": "2026-07-23",
+                    "rawClose": 317.69000244140625,
+                    "adjustedClose": 317.4859313964844,
+                    "volume": 69419700,
+                    "timestamp": 1784813400
+                  }
+                ],
+                "qqq": [
+                  {
+                    "date": "2026-07-22",
+                    "rawClose": 705.3499755859375,
+                    "adjustedClose": 704.61572265625,
+                    "volume": 23692200,
+                    "timestamp": 1784727000
+                  },
+                  {
+                    "date": "2026-07-23",
+                    "rawClose": 691.9600219726562,
+                    "adjustedClose": 691.23974609375,
+                    "volume": 44028600,
+                    "timestamp": 1784813400
+                  }
+                ],
+                "stockReturnPct": -7.1326208196026535,
+                "qqqReturnPct": -1.898336374339682,
+                "excessReturnPp": -5.234284445262972,
+                "scoringEligible": false
+              }
+            }
           ],
-          "qualifiedEventCount": 0,
-          "qualifiedEvents": [],
-          "missingRequirements": [
-            "complete_official_latest_earnings_listing",
-            "reviewed_comparable_guidance_raise",
-            "first_guidance_disclosure_timestamp",
-            "first_full_regular_session_calendar",
-            "matched_stock_and_qqq_prices"
+          "decision": {
+            "status": "yellow",
+            "raisedCount": 3,
+            "punishedCount": 2,
+            "rewardedCount": 1
+          },
+          "requests": [
+            {
+              "url": "https://stockanalysis.com/stocks/msft/transcripts/",
+              "checkedAt": "2026-10-16T08:36:30.769Z",
+              "status": "ok",
+              "bytes": 595543,
+              "sha256": "94836f2b0219f87948ccc6641054bb04ba5a7a199241c7189a355ad18707eea2"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/msft/transcripts/647770-q4-2026/",
+              "checkedAt": "2026-10-16T08:36:30.834Z",
+              "status": "ok",
+              "bytes": 331301,
+              "sha256": "05a436b16bc66916eed1c9905a192f6b9c80a8fc1ef8a3197b25bb813f4f45e8"
+            },
+            {
+              "url": "https://www.microsoft.com/en-us/investor/events/fy-2026/earnings-fy-2026-q4",
+              "checkedAt": "2026-10-16T08:36:30.869Z",
+              "status": "ok",
+              "bytes": 273854,
+              "sha256": "da56d4547099e8a443895fa4db11c6dab500363a6fb82239b34e148f009e01bd"
+            },
+            {
+              "url": "https://news.microsoft.com/source/2026/07/08/microsoft-announces-quarterly-earnings-release-date-68/",
+              "checkedAt": "2026-10-16T08:36:31.380Z",
+              "status": "ok",
+              "bytes": 136722,
+              "sha256": "22218aaa3e362a2f1ef6fc8aebf018cc8d3f5a8e47e5ee3c3447702b15833814"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/meta/transcripts/",
+              "checkedAt": "2026-10-16T08:36:31.733Z",
+              "status": "ok",
+              "bytes": 389430,
+              "sha256": "aa1716501e2eaa0cbe3b04de5b5c9bd41acf9f08e8804c3f894afd6f46f14ec6"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/meta/transcripts/657318-q2-2026/",
+              "checkedAt": "2026-10-16T08:36:31.763Z",
+              "status": "ok",
+              "bytes": 328414,
+              "sha256": "c67cfc3b1a1d788d0d08880a845442ef0b5497d3dd42d124883bebabb9f06f44"
+            },
+            {
+              "url": "https://www.prnewswire.com/news-releases/meta-reports-second-quarter-2026-results-302838214.html",
+              "checkedAt": "2026-10-16T08:36:31.793Z",
+              "status": "ok",
+              "bytes": 363612,
+              "sha256": "6d64b314082e39314e556133899473d431cc3118c223771062ccaf10f3767868"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/amzn/transcripts/",
+              "checkedAt": "2026-10-16T08:36:31.868Z",
+              "status": "ok",
+              "bytes": 388202,
+              "sha256": "116ee97b2c956c38ddc3734e5e1452fa9f4415cb89f74dc21d258d20e2a15dc4"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/amzn/transcripts/657334-q2-2026/",
+              "checkedAt": "2026-10-16T08:36:31.899Z",
+              "status": "ok",
+              "bytes": 277068,
+              "sha256": "bba21873de0e2bb1785142df03607f96e0b574a879eeb0eb1d124a7674234a90"
+            },
+            {
+              "url": "https://www.aboutamazon.com/news/company-news/amazon-earnings-q2-2026-report",
+              "checkedAt": "2026-10-16T08:36:31.931Z",
+              "status": "ok",
+              "bytes": 260735,
+              "sha256": "50930e3deabdc4426d81cb34fba18d8a97a794c8519c2bd53c7a7f3d1e597a2f"
+            },
+            {
+              "url": "https://press.aboutamazon.com/2026/7/amazon-com-to-webcast-second-quarter-2026-financial-results-conference-call",
+              "checkedAt": "2026-10-16T08:36:32.493Z",
+              "status": "ok",
+              "bytes": 144459,
+              "sha256": "30180b030ff2bf7f098d8d6a15293f1e7b221096fe13a325921547b94d725866"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/googl/transcripts/",
+              "checkedAt": "2026-10-16T08:36:32.611Z",
+              "status": "ok",
+              "bytes": 443497,
+              "sha256": "2f7e6faf7c4adab96c4e11b4e2f66fa7d029177b7f9679ad94e5c3f3d25aa7dc"
+            },
+            {
+              "url": "https://stockanalysis.com/stocks/googl/transcripts/657320-q2-2026/",
+              "checkedAt": "2026-10-16T08:36:32.640Z",
+              "status": "ok",
+              "bytes": 321301,
+              "sha256": "1f65b7cdb55bd58b171e5c8190f415c25b9427b60c3ee3e762869d956296ee78"
+            },
+            {
+              "url": "https://blog.google/company-news/inside-google/message-ceo/alphabet-earnings-q2-2026/",
+              "checkedAt": "2026-10-16T08:36:32.667Z",
+              "status": "ok",
+              "bytes": 989188,
+              "sha256": "11f5102c1e8dfd0995c38b65a197ae6f7d5fffe79cd56bf66cee9732dbcf6e37"
+            },
+            {
+              "url": "https://query1.finance.yahoo.com/v8/finance/chart/QQQ?period1=1784678400&period2=1785628800&interval=1d&events=div%2Csplits",
+              "checkedAt": "2026-10-16T08:36:33.681Z",
+              "status": "ok",
+              "bytes": 2062,
+              "sha256": "b42c5374afcc5e4f617b906c9d4a4da53049418f141dcbfb6f123fc4299c6c39"
+            },
+            {
+              "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?period1=1784678400&period2=1785628800&interval=1d&events=div%2Csplits",
+              "checkedAt": "2026-10-16T08:36:34.037Z",
+              "status": "ok",
+              "bytes": 2057,
+              "sha256": "38eb5b154e5241021d9c6e82eb0fa0cad19ddc742aa5397aecfd986a36589fa0"
+            },
+            {
+              "url": "https://query1.finance.yahoo.com/v8/finance/chart/META?period1=1784678400&period2=1785628800&interval=1d&events=div%2Csplits",
+              "checkedAt": "2026-10-16T08:36:34.391Z",
+              "status": "ok",
+              "bytes": 1999,
+              "sha256": "8829ccc1834684dc6da00d74a099006ee2efce0fbf6b9fd409a86b5689e97dcf"
+            },
+            {
+              "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMZN?period1=1784678400&period2=1785628800&interval=1d&events=div%2Csplits",
+              "checkedAt": "2026-10-16T08:36:34.730Z",
+              "status": "ok",
+              "bytes": 2065,
+              "sha256": "40718bd6ffbb85445314ab7368907d1c4cb709127bb52ee724d310040a280f73"
+            },
+            {
+              "url": "https://query1.finance.yahoo.com/v8/finance/chart/GOOGL?period1=1784678400&period2=1785628800&interval=1d&events=div%2Csplits",
+              "checkedAt": "2026-10-16T08:36:35.134Z",
+              "status": "ok",
+              "bytes": 2052,
+              "sha256": "084201dc3be9aa521bdeafe8b71716ee6130f257cd6c1d97959bfa82fdf7f444"
+            }
           ],
-          "checkedDate": "2026-10-15",
-          "numericThresholdStatus": "not_admitted",
-          "legacyRollingReturnsEligible": false,
-          "newsCountEligible": false
+          "sourceFailures": [],
+          "scope": "reviewed_latest_quarterly_call_fixed_four",
+          "firstGuidanceDiscoveryComplete": false,
+          "scoringEligible": false,
+          "productionEligible": false,
+          "budget": {
+            "actualRequests": 19,
+            "maximumRequests": 20,
+            "responseMaxBytes": 2097152,
+            "totalMaxBytes": 12582912,
+            "totalBytes": 5253561,
+            "totalBudgetExhausted": false,
+            "requestTimeoutMs": 12000,
+            "applicationRetries": 0,
+            "redirects": "error"
+          },
+          "limitation": "Quarterly earnings association only; secondary catalog/transcripts; no complete interim-guidance tape, first-disclosure claim or capex causality. Prices use latest-vintage adjusted historical daily closes."
         }
-      },
-      "evidence_gap": {
-        "policy": "bubble-qualified-evidence-v1",
-        "reasonCode": "capex_qualified_event_unavailable",
-        "checkedDate": "2026-10-15"
       }
     },
     {
@@ -6940,7 +6098,7 @@
   "wow_changes": [
     {
       "type": "flat",
-      "note": "固定MSFT、META、AMZN、GOOGL四家公司。目前尚未具备可核验最新季度财报目录、同口径前后指引、首次披露时间及首个完整正常交易日个股与QQQ价格的完整面板，因此保持待确认。这不表示没有支出上调或没有市场惩罚。租赁会计重分类不能直接当作投入改变，区间下限提高也不等于上限提高；财报同时包含收入、利润等信息，公告后相对收益不能全归因于资本开支。滚动多窗口收益、新闻条数及研究评论均不替代本项事件证据；季度之间的资本开支更新尚未完整覆盖。"
+      "note": "固定四家面板已核验；3家上调，2家受罚、1家获奖励。微软（MSFT，2026财年第四季度）：2026年经济投入预期未变，租赁重分类后账面约1750亿美元，不计为上调；2026-07-29至2026-07-30收盘，个股+15.51%、QQQ+3.30%，相对+12.21个百分点。Meta（META，2026年第二季度）：2026年含融资租赁本金的指引从1250–1450亿美元变为1300–1450亿美元，仅下限提高；2026-07-29至2026-07-30收盘，个股-7.95%、QQQ+3.30%，相对-11.25个百分点。亚马逊（AMZN，2026年第二季度）：2026年现金资本开支从2000亿美元变为2200亿美元（金额来自具名二手电话会整理）；2026-07-30至2026-07-31收盘，个股+15.32%、QQQ+0.65%，相对+14.67个百分点。Alphabet（GOOGL，2026年第二季度）：2026年公司报告口径资本开支从1800–1900亿美元变为1950–2050亿美元（金额来自具名二手电话会整理）；2026-07-22至2026-07-23收盘，个股-7.13%、QQQ-1.90%，相对-5.23个百分点。微软分类及Meta指引经公司材料核对；Amazon和Alphabet金额采用具名二手电话会文本，公司材料用于财报事件身份和时段核验。观察最新季度财报电话会关联反应，未完整追踪季度之间的临时指引，也不证明首次披露时点或资本开支因果。个股收益还受到收入、利润和其他财报信息影响。固定四家样本，不缩减分母；价格为当前版本复权历史收盘价，不是当时可得的历史回测。"
     },
     {
       "type": "flat",

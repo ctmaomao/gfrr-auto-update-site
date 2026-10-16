@@ -1,3 +1,5 @@
+import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
+import { buildQuarterlyCapexIndicator } from './bubble-watch/capex-quarterly-indicator.mjs';
 import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { collectInsiderWindows } from './bubble-watch/insider-window-collector.mjs';
@@ -80,7 +82,7 @@ const QUALIFIED_INDICATOR_IDS = METHOD_ORDER.slice(0, EVIDENCE_REVISION);
 const QUALIFIED_REFRESH_ONLY = process.argv.includes('--refresh-qualified-only');
 const QUALIFIED_PUBLISH = process.argv.includes('--publish-qualified');
 if (QUALIFIED_PUBLISH && !QUALIFIED_REFRESH_ONLY) throw new Error('Qualified publish requires --refresh-qualified-only');
-if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3 or 4');
+if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4,5].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3, 4 or 5');
 const BUBBLE_WATCH_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-v3' : 'bubble-watch-v2';
 const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2';
 const SCORING_MODEL_VERSION = EVIDENCE_REVISION ? evidenceModelVersion(EVIDENCE_REVISION) : 'bubble-watch-v2-core23-shadow4';
@@ -4276,7 +4278,7 @@ function publicIndicatorNote(ind) {
 
 function publicIndicatorSourceName(ind) {
   if (ind.evidence_gap?.policy === 'bubble-qualified-evidence-v1') return ind.source_name;
-  if (['insider_fixed_12_30_90_v1','fed_market_path_collection_v1'].includes(ind.provenance?.detail?.policy)) return ind.source_name;
+  if (['insider_fixed_12_30_90_v1','fed_market_path_collection_v1','capex_latest_quarterly_call_association_v1'].includes(ind.provenance?.detail?.policy)) return ind.source_name;
   if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
   return PUBLIC_SOURCE_LABELS[ind.id] || normalizePublicBubbleCopy(ind.source_name);
 }
@@ -4883,6 +4885,15 @@ async function main() {
       indicators.push(buildQualifiedFedIndicator(baseIndicator(def), report, today));
       for (const failure of report.sourceFailures) {
         fetchFailures.push({ id: def.id, reason: `${failure.source}:${failure.reason}` });
+      }
+      autoCount += 1;
+      continue;
+    }
+    if (EVIDENCE_REVISION >= 5 && def.id === 'capex_reaction') {
+      const report = await collectQuarterlyCapexPanel({ allowNetwork: true, today });
+      indicators.push(buildQuarterlyCapexIndicator(baseIndicator(def), report, today));
+      for (const failure of report.sourceFailures) {
+        fetchFailures.push({ id: def.id, reason: `${new URL(failure.url).hostname}:${failure.reason}` });
       }
       autoCount += 1;
       continue;
