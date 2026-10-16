@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-10-15T17:18:33.055Z",
+  "generatedAt": "2026-10-16T21:38:13.441Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,20 +50,20 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 12636,
+    "elapsedMs": 10178,
     "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-10-15T17:18:20.419Z",
+    "latestAttemptAt": "2026-10-16T21:38:03.261Z",
     "lastLiveSuccessAt": "2026-10-03T05:40:39.857Z",
     "latestOutcome": "rate_limited",
     "windows": {
       "days7": {
-        "attemptCount": 8,
+        "attemptCount": 9,
         "successCount": 0,
-        "failureCount": 8,
+        "failureCount": 9,
         "successRatePct": 0
       },
       "days30": {
@@ -74,15 +74,6 @@
       }
     },
     "history": [
-      {
-        "attemptedAt": "2026-08-29T13:59:36.622Z",
-        "outcome": "network_error",
-        "attempts": 2,
-        "retryCount": 1,
-        "status": null,
-        "errorCode": "network_error",
-        "elapsedMs": 27322
-      },
       {
         "attemptedAt": "2026-08-29T19:29:47.765Z",
         "outcome": "network_error",
@@ -649,11 +640,20 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 12636
+      },
+      {
+        "attemptedAt": "2026-10-16T21:38:03.261Z",
+        "outcome": "rate_limited",
+        "attempts": 1,
+        "retryCount": 0,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 10178
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-10-15T17:18:20.419Z",
+    "at": "2026-10-16T21:38:03.261Z",
     "errorClass": "rate_limited",
     "cooldownHours": 24
   },
