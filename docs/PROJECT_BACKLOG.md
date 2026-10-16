@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-16 完整 capex 面板与 DeepSeek 门控简化
+
+- **Acceptance baseline**：owner明确要求继续补齐完整四家事件面板并确认capex，修复DeepSeek引用失败、尽量简化过严过细门控。沿用独立AI代审/推送合并上线；checker变更独立ADR/PR。先AI契约，后capex来源/面板，serial trunk；上一轮一次付费已耗尽，不追加provider调用、不晋升失败candidate。
+- **最后基线 / 改动**：main `940cf65f`，#466已固定代审/CI38844845852/合并/Pages38845490759成功。免费采集38845494545首条SEC403，1请求即熔断，零reports/零生产；#465两站提示已验收，EdgeOne同版本redeploy dps5tc3ss2bu成功。当前新分支`codex/bubble-editorial-gate-simplification`，按[ADR-0071](ADR/0071-bubble-editorial-essential-gates.md)将写作形式改warning，保留关键事实/身份/类型/评分/安全/时效/费用保护。
+- **当前任务**：29项媒体回归、provider/quality/writer专项及完整check:changed/check:all退出0（ignored bubble-gates-check.log；真实阻断诊断优先回归与production metadata回读已通过）；真实run38842647919原输入+原candidate只读digest-bound精确回放ok=true/3704字符/0API/productionEligible=false，保留术语引号与非金融表述提示，不改原文。capex新探测MSFT官方call与AMZN官方release可直取200，META/GOOGL主IR403；已发现官方CDN文档，继续核验，不把新闻二手线索当合格事件。
+- **下一步 / 门槛**：实际assertiondiff独立复审无剩余阻断，待固定提交复核/CI后合并；capex独立实施完整面板与来源不足披露。未获得新成本授权，不实际刷新AI；未形成真实四家可比/时点/价格证明前不改capex灯色。
+
 ### 2026-10-16 资本开支事件采集器与 Actions 后续
 
 - **Acceptance baseline**：owner 要求尝试补齐固定MSFT/META/AMZN/GOOGL的完整事件采集器，并按只读审计建议处理Actions。沿用四项独立AI审阅/CI后推送合并上线授权；新增数值capex准入仍需独立ADR/checker PR，不能放宽r3 hold或以旧事件补最新。owner已单独授权最多一次DeepSeek调用、不重试；已执行run38842647919，在provider_output_contract_invalid失败后停止，诊断待归因，不追加付费。

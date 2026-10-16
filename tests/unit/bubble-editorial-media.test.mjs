@@ -12,7 +12,7 @@ import { buildWeeklyEditorialSystemPrompt } from '../../scripts/bubble-watch/wee
 import { requestWeeklyEditorial, buildWeeklyEditorialReplayCandidate } from '../../scripts/bubble-watch/weekly-editorial-provider.mjs';
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from '../../scripts/bubble-watch/weekly-editorial-claim-diagnostics.mjs';
 import { claimNumericSupport } from '../../scripts/bubble-watch/weekly-editorial-numeric-grounding.mjs';
-import { reviewWeeklyEditorial, projectWeeklyEditorial, applyWeeklyEditorialProjection } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
+import { reviewWeeklyEditorial, projectWeeklyEditorial, applyWeeklyEditorialProjection, validateWeeklyEditorialProduction } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
 const read = (path) => JSON.parse(fs.readFileSync(new URL(`../../${path}`, import.meta.url)));
 const sourceStatus = Object.fromEntries(['tavily', 'brave'].map((name) => [name, { status: 'ok', successCount: 6, failureCount: 0 }]));
 const snippet = 'Morningstar analysts believe AI infrastructure financing could improve credit access while leaving demand and repayment risks unresolved. This is an institutional opinion rather than independent confirmation.';
@@ -155,9 +155,9 @@ test('attributed media output passes review and production metadata roundtrip wi
   const before = structuredClone(bubble); delete before.summary.weekly_editorial;
   assert.deepEqual(next, before);
 });
-test('media attribution, invented numbers, quotes, unknown refs and title-only detail fail', () => {
+test('financial invention, explicit false verbatim claims, unknown refs and title-only detail fail', () => {
   const { input, output, story } = scenario();
-  for (const text of ['融资已获得全面确认。', '据Morningstar分析，融资达到999999亿美元。', '据Morningstar分析，“融资风险已经消失”。']) {
+  for (const text of ['据Morningstar分析，融资达到999999亿美元。', '据Morningstar分析，原话：“融资风险已经消失”。']) {
     const bad = structuredClone(output); bad.weeklyTimeline[0].sourceRefIds = [story.id]; bad.weeklyTimeline[0].detailZh = text;
     assert.equal(validateWeeklyEditorialOutput(bad, input).ok, false);
   }
@@ -182,7 +182,8 @@ test('limited edition omits unsupported sections, retains disclosures and confid
   const high = structuredClone(output); high.confidence.score = 95;
   assert.equal(validateWeeklyEditorialOutput(high, input).ok, false);
   const hidden = structuredClone(output); hidden.dataGaps = ['其他限制'];
-  assert.equal(validateWeeklyEditorialOutput(hidden, input).ok, false);
+  assert.equal(validateWeeklyEditorialOutput(hidden, input).ok, true);
+  assert.ok(validateWeeklyEditorialOutput(hidden,input).warnings.some(w=>w.includes('覆盖有限')));
 });
 
 test('limited system prompt reaches the provider without the conflicting long-form minimum', async () => {
@@ -199,7 +200,7 @@ test('limited system prompt reaches the provider without the conflicting long-fo
   assert.equal(calls, 1);
 });
 
-test('provider receives quantitative-source separation and complete length budgets in both formats', async () => {
+test('provider receives quantitative-source separation and concise non-quota guidance in both formats', async () => {
   for (const full of [false, true]) {
     const { input, output } = scenario();
     if (full) {
@@ -214,7 +215,7 @@ test('provider receives quantitative-source separation and complete length budge
       const prompt = messages[0].content;
       assert.match(prompt, /indicatorId AND matching indicator:\* sourceRefId are both cited in that same item/u);
       assert.match(prompt, /separate indicator-only item/u);
-      assert.match(prompt, /In BOTH full and limited formats: each categoryAnalysis.detailZh <= 140/u);
+      assert.match(prompt, /no exact item counts, minimum indicator count or per-paragraph character quotas/u);
       assert.match(prompt, /sourceRefIds, sourceIndicatorIds and confidence.level count too/u);
       assert.ok(prompt.includes(full ? 'Target 2,600-3,400' : 'Target 600-1,800'));
       assert.ok(messages[1].content.lastIndexOf('Final preflight before returning JSON') > messages[1].content.indexOf(JSON.stringify(input)), 'final constraints must follow the compact input');
@@ -254,7 +255,7 @@ test('provider rejects the incident-sized 6581-character response without trunca
   } }), error => {
     assert.equal(error.category, 'provider_output_contract_invalid');
     assert.equal(error.responseDiagnostics.contract.visibleTextLength, 6581);
-    assert.ok(error.responseDiagnostics.contract.errors.some(message => message.includes('1200-6500')));
+    assert.ok(error.responseDiagnostics.contract.errors.some(message => message.includes('6500')));
     return true;
   });
   assert.equal(calls, 1);
@@ -281,7 +282,7 @@ test('provider canonicalizes only explicitly attributed aliases of the already c
     Object.assign(story, { sourceName: name, domain, url: `https://${domain}/finance/ai-credit` });
     Object.assign(input.sourceRefs.find(ref => ref.id === story.id), { sourceName: name, domain, url: story.url });
     for (const claim of [...output.weeklyTimeline, ...output.keyTensions, ...output.categoryAnalysis, output.historicalComparison]) claim.detailZh = claim.detailZh.replace('WSJ', alias);
-    assert.ok(validateWeeklyEditorialOutput(output, input).errors.some(error => error.includes('must attribute')));
+    assert.ok(validateWeeklyEditorialOutput(output, input).warnings.some(warning => warning.includes('归因措辞')));
     const snapshot = JSON.stringify(output);
     let calls = 0;
     const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
@@ -297,13 +298,13 @@ test('provider canonicalizes only explicitly attributed aliases of the already c
   }
 });
 
-test('alias normalization cannot invent attribution, modify quotations, touch numbers or admit a lookalike name', () => {
+test('alias normalization preserves prose and financial blockers while missing textual names are warnings', () => {
   const { input, output, story } = wsjScenario();
   for (const text of ['融资条件改善，但需求风险仍存在。', '据WSJExample分析，信用条件改变。', '据Reuters分析，信用条件改变。', '“据WSJ分析，融资999999亿美元。”', '"据WSJ分析，融资999999亿美元。"']) {
     output.weeklyTimeline[0].detailZh = text;
     const next = normalizeMediaClaimNames(output, input);
     assert.equal(next.weeklyTimeline[0].detailZh, text);
-    assert.equal(validateWeeklyEditorialOutput(next, input).ok, false);
+    assert.equal(validateWeeklyEditorialOutput(next, input).ok, text.includes('999999') ? false : true);
   }
   output.weeklyTimeline[0].detailZh = '据WSJ分析，融资999999亿美元。';
   const next = normalizeMediaClaimNames(output, input);
@@ -459,7 +460,7 @@ test('full validator/provider/review/projection accepts equivalent revenue and e
   assert.ok(validateWeeklyEditorialOutput(bad, input).errors.some(error => error.includes('adds numbers absent')));
 });
 
-test('literal quotations use only the same item cited evidence; multiple credited media do not need identical excerpts', () => {
+test('terminology quotations warn while explicitly verbatim claims still require cited literal evidence', () => {
   const { input, output, story } = scenario();
   story.snippet = 'This source states that financing remains costly while demand and repayment risks are unresolved. This is a public excerpt for a local fixture.';
   const second = { ...story, id: 'news:quote-second', sourceName: 'Financial Times', domain: 'ft.com', url: 'https://ft.com/content/quote', snippet: 'This other source states that demand remains uncertain and conclusions require further evidence. This is a local fixture public excerpt.' };
@@ -470,10 +471,14 @@ test('literal quotations use only the same item cited evidence; multiple credite
   output.sourceAttribution.push({ sourceRefId: second.id, claimType: 'attributed_media_news_context', noteZh: '测试中的第二条被引媒体。' });
   assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
   const wrong = structuredClone(output); wrong.weeklyTimeline[0].detailZh += '“unsupported claim phrase”';
-  assert.ok(validateWeeklyEditorialOutput(wrong, input).errors.some(error => error.includes('adds a quotation')));
+  assert.equal(validateWeeklyEditorialOutput(wrong, input).ok,true);
+  assert.ok(validateWeeklyEditorialOutput(wrong,input).warnings.some(w=>w.includes('逐字匹配')));
+  const direct=structuredClone(output);direct.weeklyTimeline[0].detailZh+='原话是：“unsupported claim phrase”';
+  assert.ok(validateWeeklyEditorialOutput(direct,input).errors.some(e=>e.includes('unsupported verbatim quotation')));
   assert.ok(diagnoseMediaClaims(wrong, input).claims[0].sources[0].unsupportedQuoteCount > 0);
   const missing = structuredClone(output); missing.weeklyTimeline[0].sourceRefIds = [story.id];
-  assert.ok(validateWeeklyEditorialOutput(missing, input).errors.some(error => error.includes('adds a quotation')));
+  assert.equal(validateWeeklyEditorialOutput(missing,input).ok,true);
+  assert.ok(validateWeeklyEditorialOutput(missing,input).warnings.some(w=>w.includes('逐字匹配')));
 });
 
 test('compact evidence retains the collector excerpt tail rather than making it invisible to numeric proof', () => {
@@ -572,4 +577,31 @@ test('numeric display policy blocks financial inventions but treats stylistic an
   assert.ok(review.warnings.some(warning => warning.includes('日期、代码')));
   const layer = projectWeeklyEditorial({ input, output, review });
   assert.ok(layer.qualityReview.warnings.some(warning => warning.includes('日期、代码')));
+});
+
+test('short supported editorial and terminology quotes survive provider review and projection as warnings',async()=>{
+ const {input,output,bubble}=scenario();
+ output.weeklyTimeline[0].detailZh='市场对“七巨头”之外的融资扩张保持关注，摘要内容仍须结合来源复核。';
+ output.weeklyTimeline=output.weeklyTimeline.slice(0,1);output.keyTensions=[];output.categoryAnalysis=output.categoryAnalysis.slice(0,1);
+ output.headlineZh='本期观察';output.leadZh='证据有限，保留可核实内容。';output.watchNextWeek=output.watchNextWeek.slice(0,1);
+ output.weeklyTimeline[0].sourceIndicatorIds=[];
+ const result=validateWeeklyEditorialOutput(output,input);assert.equal(result.ok,true,JSON.stringify(result.errors));assert.ok(result.warnings.length>0);
+ let calls=0;const response=await requestWeeklyEditorial({input,apiKey:'fixture-key',fetchImpl:async()=>{calls++;return{ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};}});
+ const review=reviewWeeklyEditorial({input,output:response.output});assert.equal(calls,1);assert.equal(review.frontendDisplayEligible,true);assert.equal(review.status,'warn');
+ const layer=projectWeeklyEditorial({input,output:response.output,review});assert.ok(layer.qualityReview.warnings.some(w=>w.includes('逐字匹配')));
+ assert.equal(validateWeeklyEditorialProduction(layer,bubble).ok,true);
+ assert.doesNotThrow(()=>applyWeeklyEditorialProjection(bubble,layer));
+ const numeric=structuredClone(output);numeric.weeklyTimeline[0].detailZh+='融资999999亿美元。';assert.equal(validateWeeklyEditorialOutput(numeric,input).ok,false);
+ const unknown=structuredClone(output);unknown.weeklyTimeline[0].sourceRefIds=['news:unknown'];assert.equal(validateWeeklyEditorialOutput(unknown,input).ok,false);
+ const direct=structuredClone(output);direct.weeklyTimeline[0].detailZh+='原文：“不存在的原句”';assert.equal(validateWeeklyEditorialOutput(direct,input).ok,false);
+ const diagnostics=diagnoseMediaClaims(output,input);assert.equal(diagnostics.failedClaimCount,0);assert.ok(diagnostics.warningClaimCount>0);
+});
+
+test('bounded diagnostics prioritize real financial blockers over preceding presentation warnings',()=>{
+ const {input,output,story}=scenario();
+ const warning={detailZh:'“七巨头”融资仍需观察。',sourceRefIds:[story.id]};
+ output.weeklyTimeline=Array.from({length:12},()=>structuredClone(warning));
+ output.weeklyTimeline.push({detailZh:'融资999999亿美元。',sourceRefIds:[story.id]});
+ const d=diagnoseMediaClaims(output,input);assert.equal(d.failedClaimCount,1);assert.equal(d.warningClaimCount,12);assert.equal(d.claims.length,12);
+ assert.equal(d.claims[0].claimPath,'weeklyTimeline[12]');assert.equal(d.claims[0].sources[0].blocking,true);
 });

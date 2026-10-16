@@ -1,5 +1,6 @@
+import { claimQuoteSupport } from './weekly-editorial-quote-support.mjs';
 // Inspect only public, validated news metadata. Never retain provider prose or raw excerpts.
-import { claimNumericSupport, claimEvidenceTexts } from './weekly-editorial-numeric-grounding.mjs';
+import { claimNumericSupport } from './weekly-editorial-numeric-grounding.mjs';
 const ALIASES = Object.freeze({
   'The Wall Street Journal': '(?:WSJ|华尔街日报)',
   'Financial Times': '(?:FT|金融时报)',
@@ -61,7 +62,9 @@ export function diagnoseMediaClaims(output, input, { secret = '' } = {}) {
       const safeClaim = { ...claim, titleZh: text, detailZh: '' };
       const safeInput = { ...input, structuredFacts: (input.structuredFacts || []).map(fact => ({ ...fact, factZh: secret ? fact.factZh?.replaceAll(secret, '') : fact.factZh })), newsContext: { ...input.newsContext, stories: input.newsContext.stories.map(row => ({ ...row, title: secret ? row.title?.replaceAll(secret, '') : row.title, snippet: secret ? row.snippet?.replaceAll(secret, '') : row.snippet })) } };
       const unsupported = typeof story.snippet === 'string' ? [...new Set(claimNumericSupport(safeClaim, safeInput).unsupported.map(atom => atom.number))] : [];
-      const unsupportedQuoteCount = [...text.matchAll(/[“「]([^”」]+)[”」]/gu)].filter(match => !claimEvidenceTexts(safeClaim, safeInput).some(evidenceText => evidenceText.includes(match[1]))).length;
+      const quotes=claimQuoteSupport(safeClaim,safeInput);
+      const {unsupportedQuoteCount,unsupportedDirectQuoteCount}=quotes;
+      const blockingNumberCount=typeof story.snippet==='string'?claimNumericSupport(safeClaim,safeInput).blockers.length:0;
       const namePresent = text.includes(story.sourceName);
       const verbPresent = attributionVerb.test(text);
       if (namePresent && verbPresent && unsupported.length === 0 && unsupportedQuoteCount === 0) continue;
@@ -70,14 +73,15 @@ export function diagnoseMediaClaims(output, input, { secret = '' } = {}) {
         sourceNamePresent: namePresent, attributionVerbPresent: verbPresent,
         unsupportedNumberCount: unsupported.length,
         unsupportedNumbers: unsupported.slice(0, 8).map(number => number.slice(0, 32)),
-        unsupportedQuoteCount,
+        unsupportedQuoteCount, unsupportedDirectQuoteCount, blockingNumberCount,
+        blocking: blockingNumberCount>0 || unsupportedDirectQuoteCount>0,
         claimNumberFacts: numberFacts(text),
         evidenceNumberCount: numericTokens(evidence).length,
         evidenceNumbers: numericTokens(evidence).slice(0, 8).map(number => number.slice(0, 32)),
         evidenceNumberFacts: numberFacts(evidence)
       });
     }
-    if (sources.length) failures.push({ claimIndex, claimPath: path, mediaSourceFailureCount: sources.length, sources: sources.slice(0, 4) });
+    if (sources.length) failures.push({ claimIndex, claimPath: path, mediaSourceFailureCount: sources.filter(s=>s.blocking).length, mediaSourceWarningCount: sources.filter(s=>!s.blocking).length, sources: sources.slice(0, 4) });
   }
-  return { failedClaimCount: failures.length, claims: failures.slice(0, 12) };
+  return { failedClaimCount: failures.filter(c=>c.mediaSourceFailureCount>0).length, warningClaimCount: failures.filter(c=>c.mediaSourceWarningCount>0).length, claims: [...failures.filter(c=>c.mediaSourceFailureCount>0),...failures.filter(c=>c.mediaSourceFailureCount===0)].slice(0, 12) };
 }
