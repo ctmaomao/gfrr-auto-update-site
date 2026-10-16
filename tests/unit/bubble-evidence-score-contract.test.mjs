@@ -31,6 +31,13 @@ const payload = (items, revision = 1) => {
       base_tier: r.baseTier, override_active: r.overrideActive, two_axis_upgrade: r.twoAxisUpgrade }
   };
 };
+test('r5 changes capex qualification without adding a fifth migration slot or changing Core23',()=>{
+ const items=gap(recorded,['dc_abs_spread']);
+ const r=replayEvidenceScores(items,5);
+ assert.equal(r.modelVersion,'bubble-watch-v3-core23-shadow4-r5');assert.equal(r.counts.red+r.counts.yellow+r.counts.green+r.counts.unknown,23);
+ assert.equal(r.unknownIds.length,1);assert.deepEqual(r.primaryRange,{lower:30.4,upper:34.8});
+ assert.throws(()=>replayEvidenceScores(items,6),/Invalid evidence revision/u);
+});
 
 test('full evidence preserves fixed-denominator primary and genuine zero', () => {
   const zero = replayEvidenceScores(greenCards());
@@ -104,7 +111,7 @@ test('unknown, null, duplicate, moved-axis and prematurely migrated states fail 
     gap(recorded, ['fed_policy'])
   ]) assert.throws(() => replayEvidenceScores(items, 1));
   assert.throws(() => evidenceModelVersion(0));
-  assert.throws(() => evidenceModelVersion(5));
+  assert.throws(() => evidenceModelVersion(6));
 });
 
 test('contract rejects invented point scores, changed denominator, bounds, counts and verdict', () => {

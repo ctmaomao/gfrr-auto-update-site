@@ -28,9 +28,9 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - name: Verify isolated event collection contract
-        run: node --test tests/unit/bubble-capex-event-collector.test.mjs
+        run: node --test tests/unit/bubble-capex-event-collector.test.mjs tests/unit/bubble-capex-quarterly-panel.test.mjs
       - name: Collect bounded free diagnostic panel
-        run: node scripts/collect-bubble-capex-events.mjs --allow-network --write
+        run: node scripts/collect-bubble-capex-events.mjs --quarterly --allow-network --write
       - name: Retain derived evidence and source failures
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

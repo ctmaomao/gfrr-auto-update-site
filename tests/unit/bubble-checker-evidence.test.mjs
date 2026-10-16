@@ -8,6 +8,9 @@ import { GAP_REASONS, replayEvidenceScores } from '../../scripts/bubble-watch/ev
 import {FED_MEETINGS,FED_CALENDAR_URL,fedQuotePlan,fedFutureSymbol,qualifyFedMarketPath} from '../../scripts/bubble-watch/qualified-fed-path.mjs';
 import {FED_PATH_LABELS,FED_THRESHOLD_TEXT} from '../../scripts/bubble-watch/qualified-fed-publication.mjs';
 import {capexEventEvidenceHold} from '../../scripts/bubble-watch/capex-event-evidence.mjs';
+import {collectQuarterlyCapexPanel} from '../../scripts/bubble-watch/capex-quarterly-panel.mjs';
+import {quarterlyCapexHold,QUARTERLY_CAPEX_LABELS,QUARTERLY_CAPEX_SOURCE,QUARTERLY_CAPEX_THRESHOLD} from '../../scripts/bubble-watch/capex-quarterly-publication.mjs';
+import {transport as quarterlyTransport} from '../helpers/bubble-capex-quarterly-fixtures.mjs';
 import { INSIDER_BASKET, insiderWindowUrl, qualifyInsiderWindows } from '../../scripts/bubble-watch/qualified-insider.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -217,4 +220,27 @@ test('real checker replays activated r4 proxy proof and refuses year-end/clock/r
  const pending=fedFiles(true),accepted=run(pending,config);assert.equal(accepted.code,0,accepted.logs);
  const falseZero=structuredClone(pending);falseZero['data/bubble-watch.json'].summary.primary_score_pct=0;
  assert.equal(run(falseZero,config).code,1);
+});
+test('real checker admits r5 quarterly replay only after explicit activation, retaining old r4 hold',async()=>{
+ const files=fedFiles(),data=files['data/bubble-watch.json'],today=data.as_of_date;
+ const t=quarterlyTransport(),report=await collectQuarterlyCapexPanel({allowNetwork:true,today,now:()=>Date.parse(today+'T11:00:00Z'),fetchFn:t.fetchFn});
+ const card=data.indicators.find(i=>i.id==='capex_reaction');
+ Object.assign(card,{status:report.decision.status,as_of:'2026-07-30',stale:false,value_display:QUARTERLY_CAPEX_LABELS[report.decision.status],source_name:QUARTERLY_CAPEX_SOURCE,threshold_text:QUARTERLY_CAPEX_THRESHOLD,provenance:{mode:'auto',checkedAt:report.checkedAt,detail:report}});delete card.evidence_gap;
+ applyFixtureRevision(files,5);
+ const config={contractVersion:'bubble-qualified-methods-v1',activeRevision:5,approvedAbsSourceReviews:[],absObservation:null};
+ const accepted=run(files,config);assert.equal(accepted.code,0,accepted.logs);
+ assert.equal(run(files,{...config,activeRevision:4}).code,1);
+ for(const mutate of [c=>c.status='red',c=>c.provenance.detail.decision.status='red',c=>c.provenance.detail.companies.pop(),c=>c.provenance.detail.requests[0].sha256='0'.repeat(64),c=>c.provenance.detail.rawBody='raw',c=>c.provenance.detail.companies[0].guidance.rawHtml='raw',c=>c.provenance.detail.requests[0].authorization='private']){
+  const f=structuredClone(files);mutate(f['data/bubble-watch.json'].indicators.find(i=>i.id==='capex_reaction'));const rejected=run(f,config);assert.equal(rejected.code,1);assert.match(rejected.logs,/capex quarterly source/u);
+ }
+ const pending=structuredClone(files),p=pending['data/bubble-watch.json'].indicators.find(i=>i.id==='capex_reaction');
+ Object.assign(p,{status:'unknown',as_of:null,value_display:QUARTERLY_CAPEX_LABELS.unknown,provenance:{mode:'auto',checkedAt:report.checkedAt,detail:quarterlyCapexHold(today)},evidence_gap:{policy:'bubble-qualified-evidence-v1',reasonCode:'capex_qualified_event_unavailable',checkedDate:today}});applyFixtureRevision(pending,5);
+ const held=run(pending,config);assert.equal(held.code,0,held.logs);
+ const falseProof=structuredClone(pending);falseProof['data/bubble-watch.json'].indicators.find(i=>i.id==='capex_reaction').provenance.detail.manualApproved=true;assert.equal(run(falseProof,config).code,1);
+});
+for(const status of ['red','green'])test(`real r5 checker replays ${status} capex into fixed Core23 and existing score bounds`,async()=>{
+ const files=fedFiles(),data=files['data/bubble-watch.json'],today=data.as_of_date,t=quarterlyTransport({priceMode:status});
+ const report=await collectQuarterlyCapexPanel({allowNetwork:true,today,now:()=>Date.parse(today+'T11:00:00Z'),fetchFn:t.fetchFn});assert.equal(report.decision.status,status);
+ const c=data.indicators.find(i=>i.id==='capex_reaction');Object.assign(c,{status,as_of:'2026-07-30',value_display:QUARTERLY_CAPEX_LABELS[status],source_name:QUARTERLY_CAPEX_SOURCE,threshold_text:QUARTERLY_CAPEX_THRESHOLD,provenance:{mode:'auto',checkedAt:report.checkedAt,detail:report}});delete c.evidence_gap;applyFixtureRevision(files,5);
+ const accepted=run(files,{contractVersion:'bubble-qualified-methods-v1',activeRevision:5,approvedAbsSourceReviews:[],absObservation:null});assert.equal(accepted.code,0,accepted.logs);
 });

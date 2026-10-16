@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-16 最新季度 capex 面板来源契约与 AI 恢复
+
+- **Acceptance baseline**：owner要求补齐四家事件面板并确认capex、简化DeepSeek过细门控；沿用独立AI代审/推送合并上线。按[ADR-0072](ADR/0072-bubble-quarterly-capex-panel.md)明确观察季度财报电话会关联反应，不声称全球首次指引或因果；先独立来源/回放契约PR，后runtime。owner另授权修复后一次DeepSeek、失败不重试。
+- **最后基线 / 改动**：AI契约#468固定0c6d6d50独立终审无阻断、CI38852598441成功，合并b08932b1；原失败candidate免费原文回放3704字符通过，未晋升。新付费run38869878705一次成功、全套检查通过并写入本期周评；Pages38870529542/EdgeOne publisher38870529548成功，两公网JSON SHA256e9051553一致；390/1440px均27卡、AI真实可见、无脚本错误或溢出。新分支codex/bubble-capex-quarterly-panel，基于b08932b1；新增季度collector/独立replay/正式r5publication validator与回归，手工只读workflow切换季度来源，旧SEC诊断保留；独立checker显式识别r5，但activeRevision仍4，旧r3/r4hold原样保留，不改builder/生产数据。
+- **当前任务**：真实19GET、0失败、四家最新季度材料/时点/价格齐全；微软经济投入未变且租赁重分类，Meta下限上调，Amazon现金200→220与Alphabet180–190→195–205为具名二手电话会事实，不冒称全部官方确认。三家上调、两家惩罚、一家奖励，诊断黄灯；首次披露/因果/生产资格仍false。独立预审复算事实/价格一致；目录只看首条漏洞已修，追加新季度和同季歧义hold，补回放篡改/实际预算耗尽反例。28项新旧专项退出0；后续加入r5 known/严格canonical empty hold/真实checker VM/未来时钟/固定预算反例，28项三组准入专项退出0（含真实r5红/黄/绿/unknown、原始全文/凭证字段拒绝和±5pp有理数边界）；独立最终草案审阅无剩余阻断。真实19份原始响应已私有保留，从原字节离线重新走collector的四家companies/decision深比较完全一致，独立reviewer重放同样通过。
+- **下一步 / 门槛**：真实19份原字节回放、完整check:changed/check:all（bubble-quarterly-admission-check.log）及语法/docs/diffcheck均退出0；自审实际checkerdiff仅已说明r5准入/新分支，旧断言/旧hold保留，无新增skip/ignore、无builder/activeRevision/生产diff。固定提交独立复核/CI后合并；仅一次免费main采集验收。r5正式判灯仍须独立runtime/checker admission，不能晋升ignoredpanel；若评分snapshot变化，旧AI不能悄然改标签复用。新增单次DeepSeek授权已耗，不再调用。
+
 ### 2026-10-16 完整 capex 面板与 DeepSeek 门控简化
 
 - **Acceptance baseline**：owner明确要求继续补齐完整四家事件面板并确认capex，修复DeepSeek引用失败、尽量简化过严过细门控。沿用独立AI代审/推送合并上线；checker变更独立ADR/PR。先AI契约，后capex来源/面板，serial trunk；上一轮一次付费已耗尽，不追加provider调用、不晋升失败candidate。

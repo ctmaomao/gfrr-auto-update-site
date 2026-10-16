@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0072 — Latest quarterly capex panel](0072-bubble-quarterly-capex-panel.md): owner-authorized source/association contract; independent review required before runtime.
+
 | # | 标题 | 状态 |
 |---|---|---|
 | [ADR-0069](0069-bubble-qualified-evidence-and-score-bounds.md) | Bubble 四项证据资格与固定分母区间 | Owner-authorized implementation; contract review pending |
