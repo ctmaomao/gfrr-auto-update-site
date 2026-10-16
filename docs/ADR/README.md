@@ -95,6 +95,8 @@
 | [ADR-0051](0051-acled-authenticated-probe-policy.md) | Exact-content ACLED authenticated diagnostic credential exception | Owner authorized; separate policy review |
 | [ADR-0052](0052-acled-detail-discovery-policy.md) | One-use authenticated twelve-page discovery exception | Owner authorized; separate policy review |
 
+| [ADR-0070](0070-bubble-capex-event-inspection.md) | Bounded capex event inspection, no production admission | Independent review required |
+
 ## Superseded
 
 | [ADR-0045](0045-editorial-single-recovery.md) | One-use 2026-09-11 editorial recovery | Executable route retired by ADR-0058; spent refs retained |

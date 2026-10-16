@@ -1700,3 +1700,10 @@ After integration, dispatch **Tavily Budget Status** on `main` for read-only liv
 ### World Order 免费 Events 增量维护
 
 本地候选接线见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)。现有每日 World Order workflow 恢复专用 Actions cache，首次 672 exports，正常后续 96 exports/日；不复制 manual-artifacts。失败保留原日期最多 72h，未取得合格源即写前暂停，不手改生产 JSON。任意 ACLED receipt 输入会禁止新 Events 网络/缓存写入；冷启动时此路径暂停。回滚 gdeltEvents.enabled=false 恢复旧 free_only 路径，不恢复付费调用、不删除数据。生产发布后须核对 source 672、窗口最近完整 UTC 日、计数上下界/未知数、两维变化及另外三维不被替换；随后验证增量 requests 与失败缓存日期不续期。
+
+
+## Manual Bubble capex event inspection
+
+See [ADR-0070](ADR/0070-bubble-capex-event-inspection.md). Dry-run `node scripts/collect-bubble-capex-events.mjs` makes zero network requests and writes nothing. For an authorized free inspection, use `Inspect Bubble Capex Events` on main (manual dispatch), or `node scripts/collect-bubble-capex-events.mjs --allow-network --write` locally. The only output is ignored `manual-artifacts/bubble-capex-event-panel-latest.json`; workflow artifact retention is 14 days. No provider/key, production builder, scoring write or deployment is invoked.
+
+Inspect each company's SEC enumeration scope, selected report identity, guidance comparison, publication-clock/session/price gaps and `sourceFailures`. HTTP/timeout/content failures exit 1 and retain derived diagnostics. A successful inspection with evidence gaps does not imply a complete event panel: first guidance disclosure across calls/IR/interim changes is still unverified, and both scoring/production eligibility stay false. Do not retry blocked hosts, substitute SEC acceptance time or promote this artifact into production. Any numeric admission is a separate reviewed contract migration.
