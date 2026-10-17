@@ -95,7 +95,7 @@ function latestRecord(records) {
 function riskBandZh(score) {
   const n = finite(score);
   if (n === null) return '数据待确认';
-  if (n >= 60) return '系统性顶部';
+  if (n >= 60) return '高压力区';
   if (n >= 40) return '高风险预警';
   if (n >= 25) return '中度警戒';
   return '观察期';

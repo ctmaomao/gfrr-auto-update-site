@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { deriveRisk } from '../../scripts/run-daily-pipeline.mjs';
 import { calendarScoreChanges } from '../../scripts/daily/score-change.mjs';
-import { scoreDecompositionText, scoreAttributionText, buildMacroOverviewVerdictBody } from '../../scripts/modules/macroOverviewNarrative.js';
+import { scoreDecompositionText, scoreAttributionText, buildMacroOverviewVerdictBody, buildMacroOverviewHeadline } from '../../scripts/modules/macroOverviewNarrative.js';
+import { __testObservationReaction } from '../../scripts/modules/renderMacroOverview.js';
 
 const { snapshots } = JSON.parse(readFileSync(new URL('../fixtures/score-transition/september-2026.json', import.meta.url), 'utf8'));
 
@@ -118,6 +119,36 @@ test('prominent attribution preserves recorded zero, positive and unknown contri
   const zero = { score: 0, tailRiskOverlay: { baseScore: 0, adjustedScore: 0, scoreAdd: 0, applied: false },
     transportShockScoringImpact: { contributionPct: 0, scoreBeforeTransport: 0, scoreAfterTransport: 0 } };
   assert.equal(scoreAttributionText(zero), '基础分 0 + 尾部调整 0 + 运输贡献 0 = 综合分 0。');
+});
+
+test('main pressure label has exact unchanged boundaries and observation tones without a market-top claim', () => {
+  for (const [score, label, tone] of [
+    [0, '观察期', 'yellow'], [24.99, '观察期', 'yellow'],
+    [25, '中度警戒', 'yellow'], [39.99, '中度警戒', 'yellow'],
+    [40, '高风险预警', 'orange'], [59, '高风险预警', 'orange'], [59.99, '高风险预警', 'orange'],
+    [60, '高压力区', 'red'], [100, '高压力区', 'red'],
+  ]) {
+    const data = { score };
+    const before = JSON.stringify(data);
+    assert.equal(buildMacroOverviewHeadline({ radarData: data }), label);
+    assert.deepEqual(__testObservationReaction(data, 'stress'), {
+      tone, label: score < 25 ? '背离' : '印证', phrase: `${score < 25 ? '背离' : '印证'}${label}`,
+    });
+    assert.equal(JSON.stringify(data), before);
+  }
+  assert.deepEqual(__testObservationReaction({ score: 71 }, 'benign'), { tone: 'green', label: '背离', phrase: '背离高压力区' });
+  for (const score of [null, undefined, '', NaN]) {
+    assert.equal(buildMacroOverviewHeadline({ radarData: { score } }), '判读待确认');
+    assert.deepEqual(__testObservationReaction({ score }, 'stress'), { tone: 'neutral', label: '背景', phrase: '背景观察' });
+  }
+});
+
+test('World Order keeps its existing display upgrade without altering the raw main score', () => {
+  const radarData = { score: 24 }, worldOrderStressData = { score: 65 };
+  const before = JSON.stringify({ radarData, worldOrderStressData });
+  assert.equal(buildMacroOverviewHeadline({ radarData, worldOrderStressData }), '高风险预警');
+  assert.deepEqual(__testObservationReaction(radarData, 'stress', worldOrderStressData), { tone: 'orange', label: '印证', phrase: '印证高风险预警' });
+  assert.equal(JSON.stringify({ radarData, worldOrderStressData }), before);
 });
 
 test('spot date requires matching source and value, valid calendar date and no future observation', () => {

@@ -36,4 +36,8 @@ Owner 在本轮审计后要求“好的，请按你的建议分步骤整改”�
 
 基线 main a914e470，两站 2026-10-17T00:40:55.691Z 的 71 分完整复算为 57 + 11 + 3；固定其余输入 Brent 102.24→102.25 导致 55→71。最新历史共同样本为 355 周；9 月缓存的 359 周复算仅作为固定快照复验，两者分开报告。
 
-当前分支 codex/score-display-attribution。必要验收包括空值/真实零/矛盾归因回归、1440px/390px 浏览器与样式取样、check:changed 所选完整检查、app.js 语法和 diff whitespace。分数公式、生产数据、workflow、旧 checker 断言及 ignore 不变；完整检查通过并不构成发布或模型替换批准。
+第一步 A 提交38487b10，经独立review、完整本地检查和CI39019876170通过后，[PR#472](https://github.com/ctmaomao/gfrr-auto-update-site/pull/472)已合并main 6afe45c4；Pages39020281543/EdgeOne39020281553成功，两公网1440/390px真实浏览器确认新归因、71分不变且无脚本错误/溢出。10项定向单元、6项桌面/手机浏览器及样式取样通过；分数公式、生产数据、workflow、旧checker断言及ignore均未改。
+
+第一步 B 分支 codex/pressure-label-contract 基于该合并后main；按[ADR-0073](ADR/0073-main-radar-pressure-display-labels.md)实施专用标签契约迁移。最高档精确旧→新替换将独立review；25/40/60阈值、颜色、WorldOrder既有展示行为、Bubble Watch和生产模型保持。必要验收包括59/60/100和缺失边界、观察层关系、Hero/标尺标签映射、1440px/390px浏览器、完整检查与实际patch独立review。检查通过并不构成生产评分替换批准。
+
+B本地验收：实际完整差异独立review无阻断；12单元、11关系/5gold、6浏览器、完整check:changed/check:all、app.js语法与diff均退出0。1440/390px前后主分同为71，标题/最高档为高压力区，marker为综合分71，样式取样一致、无脚本错误或溢出。新增缺失边界暴露的Number(null)展示误转0已局部修正并记录在ADR；旧9关系案例保留、两新案例增加，无双标签接受/skip/ignore。远端CI与发布仍按PR回执核验。

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=score-attribution-1';
+﻿import { fmtNumSafe } from './config.js?v=pressure-label-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

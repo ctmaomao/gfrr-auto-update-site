@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [ADR-0073](ADR/0073-main-radar-pressure-display-labels.md) — 主雷达同期压力最高档精确标签迁移，保留阈值/颜色/World Order展示行为及Bubble Watch隔离；不更换生产评分模型。
+
 - [SCORE_REMEDIATION_2026_10_17.md](SCORE_REMEDIATION_2026_10_17.md) — 本轮主雷达判读整改的 owner 验收基线、分步实施和独立契约/模型评审门槛；不授权自动更换生产评分。
 
 - [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) — Bubble 四项迁移及固定 Core-23 区间；契约候选待审，不启用 runtime。

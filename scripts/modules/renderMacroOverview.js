@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=score-attribution-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=score-attribution-1';
+} from './config.js?v=pressure-label-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=pressure-label-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,12 +18,12 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=score-attribution-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=score-attribution-1';
-import { scoreAttributionText } from './macroOverviewNarrative.js?v=score-attribution-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=score-attribution-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=score-attribution-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=score-attribution-1';
+} from './macroOverviewDisplayHelpers.js?v=pressure-label-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=pressure-label-1';
+import { scoreAttributionText } from './macroOverviewNarrative.js?v=pressure-label-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=pressure-label-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=pressure-label-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=pressure-label-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -153,7 +153,7 @@ function renderThresholdBlock({ radarData, worldOrderStressData }) {
       mainMarkerEl.style.left = `${radarData.score}%`;
       const labelSpan = mainMarkerEl.querySelector('.marker-label');
       if (labelSpan) {
-        labelSpan.textContent = `原始 ${radarData.score}`;
+        labelSpan.textContent = `综合分 ${radarData.score}`;
       }
     }
 
@@ -784,9 +784,11 @@ const observationReactionContext = {
 };
 
 function scoreRiskBand(score) {
-  const value = asNumber(score);
+  // Main scores are numeric producer values. Missing/malformed values must not
+  // become a zero-score observation through Number(null) or Number('').
+  const value = Number.isFinite(score) ? score : null;
   if (value === null) return { key: 'unknown', label: '判读待确认', tone: 'neutral' };
-  if (value >= 60) return { key: 'systemic_top', label: '系统性顶部', tone: 'red' };
+  if (value >= 60) return { key: 'systemic_top', label: '高压力区', tone: 'red' };
   if (value >= 40) return { key: 'high_risk', label: '高风险预警', tone: 'orange' };
   if (value >= 25) return { key: 'moderate_watch', label: '中度警戒', tone: 'yellow' };
   return { key: 'watch', label: '观察期', tone: 'green' };

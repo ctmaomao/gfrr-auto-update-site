@@ -15,6 +15,7 @@ for (const width of [1440, 390]) {
       await page.goto('/index.html');
       await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
       await expect(page.locator('#hero-score-value')).toHaveText('71/100');
+      await expect(page.locator('#hero-verdict-headline')).toHaveText('高压力区');
       await expect(page.locator('#hero-score-attribution')).toHaveText(contribution === null
         ? '分数组成待确认。' : '基础分 57 + 尾部调整 11 + 运输贡献 3 = 综合分 71。');
       const layout = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
@@ -44,6 +45,11 @@ for (const width of [1440, 390]) {
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#hero-score-value')).toHaveText('68/100');
+    await expect(page.locator('#hero-verdict-headline')).toHaveText('高压力区');
+    await expect(page.locator('.threshold-header h4')).toContainText('同期压力标尺');
+    await expect(page.locator('.threshold-bar .t-red .zone-label')).toHaveText('高压力区');
+    await expect(page.locator('#threshold-marker-main .marker-label')).toHaveText('综合分 68');
+    await expect(page.locator('#hero-verdict-body')).not.toContainText('系统性顶部');
     await expect(page.locator('#hero-score-attribution')).toHaveText('基础分 53 + 尾部调整 15 + 运输贡献 0 = 综合分 68。');
     await expect(page.locator('#homepage-today-judgment .big-left')).toContainText('同期压力指标，不是危机概率或市场见顶预测。');
     await expect(page.locator('#homepage-today-judgment .big-left')).toContainText('模块共享部分输入，不等于独立确认。');
