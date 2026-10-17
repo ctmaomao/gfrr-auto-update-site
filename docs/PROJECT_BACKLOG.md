@@ -3,9 +3,9 @@
 ### 2026-10-17 主雷达判读分步整改
 
 - **Acceptance baseline**：owner在只读审计后批准“按你的建议分步骤整改”。按[本轮方案](SCORE_REMEDIATION_2026_10_17.md)先显著展示生产分数归因与同期压力边界，再独立迁移“系统性顶部”名称，保留既定影子研究与模型替换门槛；不为降低今日数字调参，不继承其它任务的远端/费用批准。
-- **最后基线 / 改动**：干净 main 从50f36bb0快进至origin/main a914e470，任务分支codex/score-display-attribution。两站10/17生产71=57基础+11尾部+3运输，实际Daily输入复算一致；只读研究产物30日/17组不同输入/4基准周，不足替换条件。
-- **当前任务**：第一步A已在现有Hero显示可靠分数组成、同期压力含义与模块共享输入提示。10项单元、6项1440/390px浏览器退出0；真实数据前后截图/样式取样一致、无pageerror或横向溢出，证据在ignored manual-artifacts/score-attribution-2026-10-17/。导入写法按旧契约修正后，check:changed所选完整check:all退出0；独立review无阻断，旧断言和ignore未改，评分/数据/workflow无diff，附带模块仅官方cache bump。第一步B的ADR方案已独立预审，采用专用原子契约迁移PR，不额外拆纯文档PR；未提前更名或修改checker。
-- **下一步 / 门槛**：owner已明确授权本次issue、独立AI审阅及分项推送合并上线；[讨论#471](https://github.com/ctmaomao/gfrr-auto-update-site/issues/471)已建立，A独立只读review与完整复验进行中。A通过后先独立提交/CI/合并/两站验收；B按DESIGN §9.1及AGENTS §10独立ADR/契约review/PR后迁移前端。生产评分替换仍须84日/40组/12周与独立模型评审，不自动付费。
+- **最后基线 / 改动**：A分支提交38487b10独立review无阻断，CI39019876170成功（含覆盖率/完整检查/全浏览器），[PR#472](https://github.com/ctmaomao/gfrr-auto-update-site/pull/472)合并main 6afe45c4；Pages39020281543/EdgeOne39020281553发布成功，两公网1440/390px真实浏览器确认score-attribution-1、71=57+11+3、无pageerror/溢出，A已验收。B分支codex/pressure-label-contract基于该latest main，按独立预审[ADR-0073](ADR/0073-main-radar-pressure-display-labels.md)原子迁移最高档名称。影子研究30日/17组不同输入/4基准周仍不足替换条件。
+- **当前任务**：A完成归因、同期压力及模块共享输入说明并已上线验收。B实施高压力区、同期压力标尺/综合分marker，两个checker精确替换并保留旧约束；新增null/zero关系案例，修正展示层null误转0，ADR显性记录。B实际完整diff独立review无阻断，独立12单元/11关系/5gold/叙事checker/语法/diff退出0；check:changed所选完整check:all、6项1440/390浏览器与真实前后样式/截图均退出0，无pageerror/溢出。自审方案一致，checker只精确迁移并增加边界、旧约束保留，无新增版本开关/skip/ignore；评分/生产数据/workflow/Bubble无diff。
+- **下一步 / 门槛**：owner已明确授权本次issue、独立AI审阅及分项推送合并上线；[讨论#471](https://github.com/ctmaomao/gfrr-auto-update-site/issues/471)已建立。核验A两站；B专用契约PR严格替换两checker最高档字面期望与最少consumer/HTML，保留全部阈值/颜色/WorldOrder行为、旧约束强度及Bubble隔离；完整检查/独立review/CI后合并上线。生产评分替换仍须84日/40组/12周与独立模型评审，不自动付费。
 
 ### 2026-10-16 r5 最新季度 capex 正式接入
 
@@ -506,7 +506,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `score-attribution-1` |
+| Cache version | `pressure-label-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

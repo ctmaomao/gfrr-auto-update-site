@@ -383,7 +383,8 @@ runtime block 的基准结构:
 - Transport Shock 卡片可显示 `主分影响` 行,只展示 `transportShockScoringImpact` 的当前贡献与 +3 上限;routeFreightConfirmation/marketConfirmation 仍必须保持独立边界。
 - `#homepage-risk-engines` 可显示 `Transport Shock 主分归因`,但只能复用顶层 `transportShockScoringImpact` 的 capped score impact、reason 与 scoreBeforeTransport/scoreAfterTransport;不得由前端自行计算主分或连接 route / market confirmation。
 - 每张卡必须只显示公开代理 / 审计层 / 展示层证据,不得暗示正式源或非公开数据已接入
-- 观察层反应徽章必须表达“与有效主判断的关系”: `印证` 的颜色跟随有效主判断等级(观察期=绿 / 中度警戒=黄 / 高风险预警=橙 / 系统性顶部=红);`背离` 的颜色表达反向证据方向(缓和反证=绿,压力反证=黄);`背景` 与 `数据不足` 保持中性 / pending
+- 观察层反应徽章必须表达“与有效主判断的关系”: `印证` 的颜色跟随有效主判断等级(观察期=绿 / 中度警戒=黄 / 高风险预警=橙 / 高压力区=红);`背离` 的颜色表达反向证据方向(缓和反证=绿,压力反证=黄);`背景` 与 `数据不足` 保持中性 / pending
+- [ADR-0073](docs/ADR/0073-main-radar-pressure-display-labels.md) / [讨论 #471](https://github.com/ctmaomao/gfrr-auto-update-site/issues/471)：主雷达最高档为“高压力区”，仅修正同期压力的展示语义，25/40/60阈值、颜色、主分与既有World Order展示升档不变。Hero、标尺与观察层使用一致的标签映射；展示升档时有效Hero档位仍可不同于主分标尺。Bubble Watch自有分档、历史和既有AI原文不重标。
 
 **mini-grid / mini-card**:
 - `#homepage-pressure-sources` 与 `#homepage-risk-engines` 使用 `.mini-grid`

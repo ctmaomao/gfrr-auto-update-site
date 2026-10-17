@@ -29,7 +29,7 @@ const requiredMarkers = [
   "'c6-omo-status'",
   "'c6-house-status'",
   'signalFromEquityChange(changePct)',
-  "key: 'systemic_top', label: '系统性顶部', tone: 'red'",
+  "key: 'systemic_top', label: '高压力区', tone: 'red'",
   "key: 'high_risk', label: '高风险预警', tone: 'orange'",
   "key: 'moderate_watch', label: '中度警戒', tone: 'yellow'",
   "key: 'watch', label: '观察期', tone: 'green'",
@@ -74,6 +74,18 @@ const {
 
 const cases = [
   {
+    name: '缺失主分 + stress = 中性背景',
+    radarData: { score: null },
+    signal: 'stress',
+    expected: { tone: 'neutral', label: '背景', phrase: '背景观察' }
+  },
+  {
+    name: '真实零分 + stress = 黄色背离',
+    radarData: { score: 0 },
+    signal: 'stress',
+    expected: { tone: 'yellow', label: '背离', phrase: '背离观察期' }
+  },
+  {
     name: '观察期 + benign = 绿色印证',
     radarData: { score: 20 },
     signal: 'benign',
@@ -92,10 +104,10 @@ const cases = [
     expected: { tone: 'orange', label: '印证', phrase: '印证高风险预警' }
   },
   {
-    name: '系统性顶部 + stress = 红色印证',
+    name: '高压力区 + stress = 红色印证',
     radarData: { score: 62 },
     signal: 'stress',
-    expected: { tone: 'red', label: '印证', phrase: '印证系统性顶部' }
+    expected: { tone: 'red', label: '印证', phrase: '印证高压力区' }
   },
   {
     name: '世界秩序升档 + stress = 橙色印证',

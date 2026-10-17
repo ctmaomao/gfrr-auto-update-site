@@ -50,7 +50,7 @@ function assertConciseHeadline(headline) {
   assert(!headline.includes('最大背离'), 'hero headline must not carry divergence detail');
   assert(!headline.includes('→'), 'hero headline must not carry risk-chain arrows');
   assert(!headline.includes('；'), 'hero headline must not be a compound sentence');
-  const allowed = new Set(['系统性顶部', '高风险预警', '中度警戒', '观察期', '判读待确认']);
+  const allowed = new Set(['高压力区', '高风险预警', '中度警戒', '观察期', '判读待确认']);
   assert(allowed.has(headline), `hero headline must be a short verdict label, got '${headline}'`);
 }
 
