@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=baltic-public-ticker-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=baltic-public-ticker-1';
+} from './config.js?v=score-attribution-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=score-attribution-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,11 +18,12 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=baltic-public-ticker-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=baltic-public-ticker-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=baltic-public-ticker-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=baltic-public-ticker-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=baltic-public-ticker-1';
+} from './macroOverviewDisplayHelpers.js?v=score-attribution-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=score-attribution-1';
+import { scoreAttributionText } from './macroOverviewNarrative.js?v=score-attribution-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=score-attribution-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=score-attribution-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=score-attribution-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -60,6 +61,9 @@ function renderHero({ radarData, worldOrderStressData, marketPricingMetricsData,
         valueEl.append(denominator);
       }
     }
+
+    const attributionEl = $('hero-score-attribution');
+    if (attributionEl) attributionEl.textContent = scoreAttributionText(radarData);
 
     // big-left .breakdown — 派生 X 红 / Y 黄 / Z 绿
     const breakdown = deriveModuleBreakdown(radarData.modules);

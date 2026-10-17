@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { deriveRisk } from '../../scripts/run-daily-pipeline.mjs';
 import { calendarScoreChanges } from '../../scripts/daily/score-change.mjs';
-import { scoreDecompositionText, buildMacroOverviewVerdictBody } from '../../scripts/modules/macroOverviewNarrative.js';
+import { scoreDecompositionText, scoreAttributionText, buildMacroOverviewVerdictBody } from '../../scripts/modules/macroOverviewNarrative.js';
 
 const { snapshots } = JSON.parse(readFileSync(new URL('../fixtures/score-transition/september-2026.json', import.meta.url), 'utf8'));
 
@@ -91,6 +91,33 @@ test('display does not reconstruct missing or contradictory score breakdowns', (
   }
   const data = displayData(); data.scoreChange7d = null;
   assert.match(buildMacroOverviewVerdictBody({ radarData: data }), /周变化待确认/u);
+});
+
+test('prominent attribution preserves recorded zero, positive and unknown contributions without mutating inputs', () => {
+  const data = displayData();
+  const legacy = structuredClone(data);
+  delete legacy.transportShockScoringImpact;
+  assert.equal(scoreAttributionText(legacy), '分数组成待确认。');
+  data.transportShockScoringImpact = { contributionPct: 0, scoreBeforeTransport: 68, scoreAfterTransport: 68 };
+  assert.equal(scoreAttributionText(data), '基础分 53 + 尾部调整 15 + 运输贡献 0 = 综合分 68。');
+  data.score = 71;
+  data.transportShockScoringImpact = { contributionPct: 3, scoreBeforeTransport: 68, scoreAfterTransport: 71 };
+  const before = JSON.stringify(data);
+  assert.equal(scoreAttributionText(data), '基础分 53 + 尾部调整 15 + 运输贡献 3 = 综合分 71。');
+  assert.equal(JSON.stringify(data), before);
+  for (const mutate of [
+    value => { value.tailRiskOverlay.baseScore = null; },
+    value => { value.tailRiskOverlay.scoreAdd = 0; },
+    value => { value.transportShockScoringImpact.contributionPct = null; },
+    value => { value.transportShockScoringImpact.contributionPct = 4; },
+    value => { value.score = 70; },
+  ]) {
+    const invalid = structuredClone(data); mutate(invalid);
+    assert.equal(scoreAttributionText(invalid), '分数组成待确认。');
+  }
+  const zero = { score: 0, tailRiskOverlay: { baseScore: 0, adjustedScore: 0, scoreAdd: 0, applied: false },
+    transportShockScoringImpact: { contributionPct: 0, scoreBeforeTransport: 0, scoreAfterTransport: 0 } };
+  assert.equal(scoreAttributionText(zero), '基础分 0 + 尾部调整 0 + 运输贡献 0 = 综合分 0。');
 });
 
 test('spot date requires matching source and value, valid calendar date and no future observation', () => {

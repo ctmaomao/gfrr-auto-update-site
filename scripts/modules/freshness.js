@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=baltic-public-ticker-1';
+﻿import { fmtNumSafe } from './config.js?v=score-attribution-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
