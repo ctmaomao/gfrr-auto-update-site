@@ -163,6 +163,15 @@ export function scoreDecompositionText(radarData) {
   return `六模块基础分 ${tail.baseScore},${tailText}${transportText}。`;
 }
 
+// A short attribution beside the published score, using recorded contributions
+// only. Legacy payloads without transport metadata retain an unknown breakdown.
+export function scoreAttributionText(radarData) {
+  if (!radarData?.transportShockScoringImpact
+    || scoreDecompositionText(radarData) === '分数组成待确认。') return '分数组成待确认。';
+  const tail = radarData.tailRiskOverlay;
+  return `基础分 ${tail.baseScore} + 尾部调整 ${tail.scoreAdd} + 运输贡献 ${radarData.transportShockScoringImpact.contributionPct} = 综合分 ${radarData.score}。`;
+}
+
 function evidence(key, labelZh, value, summaryZh, source, tone = 'neutral') {
   return { key, labelZh, value, summaryZh, source, tone };
 }

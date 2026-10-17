@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [SCORE_REMEDIATION_2026_10_17.md](SCORE_REMEDIATION_2026_10_17.md) — 本轮主雷达判读整改的 owner 验收基线、分步实施和独立契约/模型评审门槛；不授权自动更换生产评分。
+
 - [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) — Bubble 四项迁移及固定 Core-23 区间；契约候选待审，不启用 runtime。
 
 - [ADR-0067](ADR/0067-baltic-public-ticker.md)：owner 批准的 BDI/BDTI/BCTI 公开聚合指数接入与严格来源迁移；不授权路线级确认或其它来源。
