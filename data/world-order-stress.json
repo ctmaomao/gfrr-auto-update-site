@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-17T01:02:31.417Z",
+  "updatedAt": "2026-10-18T00:37:19.364Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-events-conflict-interval-v1",
@@ -11,17 +11,17 @@
   "score": 56,
   "state": "bloc_fragmentation",
   "labelZh": "阵营化与脱钩期",
-  "confidence": 0.55,
+  "confidence": 0.25,
   "freshness": "partial",
   "marketConfirmationInput": {
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-17T00:57:04.362Z",
-    "ageMinutes": 5.4508833333333335,
+    "updatedAt": "2026-10-18T00:33:26.823Z",
+    "ageMinutes": 3.87565,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 109.845,
+    "brent": 109.93,
     "gold": 4166.1001,
     "vix": 16.46,
     "dxy": 121.6023,
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-17T01:01:52.264Z",
+        "attemptedAt": "2026-10-18T00:37:18.456Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4971,7 +4971,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-17T01:01:52.501Z",
+      "lastFetchedAt": "2026-10-18T00:37:18.643Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -5045,9 +5045,9 @@
     },
     "gdeltEvents": {
       "enabled": true,
-      "status": "ok",
+      "status": "stale",
       "lastFetchedAt": "2026-10-17T01:02:30.742Z",
-      "confidence": 0.55,
+      "confidence": 0.25,
       "summary": {
         "schemaVersion": "gdelt-events-conflict-source-v1",
         "calibrationId": "gdelt-events-roots18-20-20260820-20261007-interval-v1",
@@ -5275,17 +5275,17 @@
           "MA": 1
         },
         "latestTimestamp": "20261017010000",
-        "usedCachedSummary": false,
-        "cacheReason": null
+        "usedCachedSummary": true,
+        "cacheReason": "gdelt_events_index_time_hold"
       },
       "warnings": [
-        "免费来源统计的是新闻编码记录，不等于人工核实的冲突次数；仅进入世界秩序的两个冲突通道。"
+        "免费事件来源未完成最新窗口，沿用注明原日期的历史统计。"
       ],
       "diagnostics": {
-        "requests": 289,
-        "bytes": 23517057,
-        "cachedDays": 4,
-        "downloadedDays": 3,
+        "requests": 1,
+        "bytes": 319,
+        "cachedDays": 0,
+        "downloadedDays": 0,
         "failures": []
       }
     }
@@ -5318,7 +5318,7 @@
           "summary": "完整七日窗口 20261010 至 20261016，暴力记录 54152 至 54152；隔离未知行 0。不是人工核实的事件数。",
           "value": 52,
           "direction": "up",
-          "confidence": 0.55
+          "confidence": 0.25
         }
       ]
     },
@@ -5348,7 +5348,7 @@
           "summary": "完整七日窗口 20261010 至 20261016，暴力记录 54152 至 54152；隔离未知行 0。不是人工核实的事件数。",
           "value": 52,
           "direction": "up",
-          "confidence": 0.55
+          "confidence": 0.25
         }
       ]
     },
@@ -5398,8 +5398,8 @@
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 109.84，对地缘与供应风险有部分确认作用。",
-          "value": 109.845,
+          "summary": "基于 Worker 快变量，布伦特当前值 109.93，对地缘与供应风险有部分确认作用。",
+          "value": 109.93,
           "direction": "up",
           "confidence": 0.55
         },
@@ -5423,7 +5423,7 @@
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
           "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 109.845,
+          "value": 109.93,
           "direction": "up",
           "confidence": 0.65
         }
@@ -5456,7 +5456,7 @@
   },
   "warnings": [
     "该模块用于结构性风险识别，不构成战争预测或投资建议。 免费 Events 已进入和平红利退潮与多战区冲突统计；统计的是全球新闻编码记录，不等于真实冲突次数。新旧分数不可直接比较；其余三个维度仍保留注明时效的历史 Cloud 代理，置信度受限。",
-    "免费来源统计的是新闻编码记录，不等于人工核实的冲突次数；仅进入世界秩序的两个冲突通道。",
+    "免费事件来源未完成最新窗口，沿用注明原日期的历史统计。",
     "该模块用于结构性风险识别，不构成战争预测或投资建议。"
   ]
 }
