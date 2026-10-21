@@ -4580,5 +4580,879 @@
       "firstDate": "2026-05-29",
       "lastDate": "2026-10-21"
     }
+  },
+  "macroRiskEditorialLayer": {
+    "schemaVersion": "macro-risk-editorial-production-v1",
+    "status": "valid",
+    "displayEnabled": true,
+    "generatedAt": "2026-10-21T02:09:29.227Z",
+    "updatedAt": "2026-10-21T02:09:29.227Z",
+    "sourceDataUpdatedAt": "2026-10-21T00:45:22.811Z",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "mode": "external_ai_macro_risk_editorial",
+    "sourceMode": "near_7d_news_and_site_structured_compact_v1",
+    "output": {
+      "headlineZh": "能源—通胀—利率链条高位固化：GFRR 68 分下的滞胀冲击与信用背离",
+      "leadZh": "本期 GFRR 综合风险分数为 68/100，1 日、7 日与 30 日变化均为 0，趋势标签为高位震荡偏紧，宏观状态为滞胀冲击、危机阶段为通胀冲击。分数本身不构成危机概率，只描述当前压力位置。主风险链清晰：布伦特 126.55 美元/桶叠加 BDTI 7271 的航运高压，能源模块 84 分与地缘政治模块 85 分构成双高引擎；10 年期美债 5.15%、实际利率 2.80%，把能源冲击向利率端传导；通胀模块 59 分居中，说明压力尚未完全扩散到核心通胀读数。关键张力在于：高收益债 OAS 仅 3.29%、IG OAS 0.87%、NFCI -0.499，信用与金融条件仍偏宽松，VIX 18.44 亦未确认风险扩散；标普 500 7690.73 点与黄金 4119.30 美元并存，显示市场同时定价增长韧性与通胀对冲。证据边界必须说明：本周期仅 1 条 official 新闻（美联储 H.15 利率发布），其余判断由站内结构化数据支撑；石油新闻观察为事件升高待核、状态 partial，石油方向物理链判读为 false_down_physical_stress 且置信度 low，因此能源价格验证层仍需继续观察，不能把新闻热度等同于供应中断确认。",
+      "weeklyTimeline": [
+        {
+          "date": "2026-10-14",
+          "titleZh": "美联储 H.15 利率发布，长端定价锚再被确认",
+          "detailZh": "美联储理事会发布 H.15 选定利率日度数据，为 10 年期美债 5.15%、实际利率 2.80% 的站内读数提供官方利率语境。该发布本身不解释水平高低，但确认了政策利率与市场利率的公开锚点仍在更新，使能源向利率传导的链条具备可核对的定价基础。",
+          "sourceRefIds": [
+            "news:central_bank_inflation:6150904a40ef2d",
+            "site:market:us10y",
+            "site:market:real10y",
+            "site:macro:policy"
+          ]
+        },
+        {
+          "date": "2026-10-19",
+          "titleZh": "综合分数自 71 回落至 68 并连续三日持平",
+          "detailZh": "站内 14 个日度样本显示，综合分数在 10 月 15 日至 18 日维持 71，10 月 19 日起降至 68 并延续至 10 月 21 日。这是同期压力轨迹的横向比较，说明压力从更高位小幅回落但未解除，不构成提前预警或时间预测。",
+          "sourceRefIds": [
+            "site:context:history",
+            "site:score"
+          ]
+        },
+        {
+          "date": "2026-10-20",
+          "titleZh": "石油新闻事件观察升至待核，物理链判读仍为低置信",
+          "detailZh": "站内石油新闻事件观察状态为 partial、事件升高待核，唯一文章数 60；同时石油方向物理链判读为 false_down_physical_stress、置信度 low、数据充分性 full。两者组合意味着新闻热度上升但物理供应压力未被确认，能源定价背离观察因此保留。",
+          "sourceRefIds": [
+            "site:context:oil-news",
+            "site:context:odp",
+            "site:daily:divergence"
+          ]
+        }
+      ],
+      "scoreSynthesis": {
+        "assessmentZh": "68/100 的读数是既有规则结果，本期只解释不重算。其含义是压力处于高位区间但未继续抬升：1 日、7 日、30 日变化均为 0，14 个日度样本区间为 68–71，最新值位于区间下沿。结构上，能源 84 与地缘政治 85 贡献主要压力，通胀 59 居中，流动性 47、债务 40、银行 38 相对温和，形成“上游极紧、下游未确认”的哑铃形态。这一形态与滞胀冲击、通胀冲击的阶段标签一致：冲击源在能源与地缘，传导端在长端利率，而信用与银行模块尚未同步恶化。因此分数应被读作当前压力的横截面定位，而非未来危机概率；其稳定性本身也提示，单靠现有读数不足以判断方向突破。",
+        "sourceRefIds": [
+          "site:score",
+          "site:context:history",
+          "site:module:energy",
+          "site:module:geopolitical",
+          "site:module:inflation",
+          "site:module:liquidity"
+        ]
+      },
+      "keyTensions": [
+        {
+          "titleZh": "能源与地缘双高，但信用与波动率未确认",
+          "detailZh": "能源 84 分、地缘政治 85 分处于模块前列，布伦特 126.55 美元/桶与 BDTI 7271 的高压运输状态相互印证，指向上游成本与航运摩擦仍在。但同一时点，高收益债 OAS 3.29%、IG OAS 0.87%、信用状态偏宽松，VIX 18.44 亦未显示风险扩散，NFCI -0.499 说明金融条件整体平稳。这一张力是本期最重要的判读分歧：若能源压力是真实的，信用与波动率为何没有同步反应？可能的解释包括信用市场定价的是增长韧性而非成本冲击、或能源价格验证层尚未完成确认。站内把最大背离标记为能源定价背离观察，并提示 Brent audit / promotion 字段仍需观察，因此不能把双高模块直接读作全面风险扩散。",
+          "sourceRefIds": [
+            "site:module:energy",
+            "site:module:geopolitical",
+            "site:market:brent",
+            "site:macro:freight",
+            "site:market:hyOas",
+            "site:macro:credit",
+            "site:market:vix",
+            "site:macro:liquidity",
+            "site:daily:divergence"
+          ]
+        },
+        {
+          "titleZh": "长端利率与实际利率高企，通胀预期却相对锚定",
+          "detailZh": "10 年期美债收益率 5.15%、10 年期实际利率 2.80%，而 10 年盈亏平衡通胀仅 2.35%，三者组合说明长端压力更多来自实际利率而非通胀预期失锚。这与通胀模块 59 分的中等读数一致：能源冲击尚未被市场读作持续性通胀，政策预期中值 3.875%、有效利率 3.88%、前端期货隐含 3.92%，前端定价也未见明显宽松押注。张力在于，若能源价格继续上行并获得多源确认，实际利率高企与成本冲击叠加会压缩需求端，而盈亏平衡通胀的稳定又意味着市场尚未为二次通胀定价。这一组合使“能源→通胀→利率”链条的第三段存在时滞，判读上应保留而非提前确认。",
+          "sourceRefIds": [
+            "site:market:us10y",
+            "site:market:real10y",
+            "site:market:breakeven10y",
+            "site:module:inflation",
+            "site:macro:policy",
+            "site:daily:risk-chain"
+          ]
+        }
+      ],
+      "moduleAnalysis": [
+        {
+          "module": "energy",
+          "labelZh": "能源",
+          "score": 84,
+          "assessmentZh": "能源模块 84 分是本期最高压力源之一。布伦特 126.55 美元/桶处于偏高区间，BDTI 7271、BCTI 2593、BDI 2593 的综合运输状态为高压，说明成本压力不仅在原油报价，也在运费与航线摩擦。站内石油新闻事件观察为事件升高待核、状态 partial，唯一文章数 60，但石油方向物理链判读为 false_down_physical_stress、置信度 low，二者组合提示新闻热度尚未转化为物理供应确认。因此能源模块的高分应读作价格与运输层面的持续压力，而非供应中断的既成事实；能源定价背离观察仍需保留。",
+          "sourceRefIds": [
+            "site:module:energy",
+            "site:market:brent",
+            "site:macro:freight",
+            "site:context:oil-news",
+            "site:context:odp",
+            "site:daily:divergence"
+          ]
+        },
+        {
+          "module": "geopolitical",
+          "labelZh": "地缘政治",
+          "score": 85,
+          "assessmentZh": "地缘政治模块 85 分为六模块之首。站内 World Order Stress 为 57/100，状态为阵营化与脱钩期，新鲜度 partial，且该层不进入六大模块评分，因此只能作为背景语境而非模块分数的直接解释。模块高分与能源高分同向，说明地缘摩擦被定价为供应与运输风险的来源，而非孤立事件。需要强调的是，本周期新闻证据仅 1 条 official 利率发布，地缘判断主要由站内结构化数据支撑；新闻观察中的事件升高待核状态不应被读作冲突升级确认，模块分数也不构成战争概率或事件预测。",
+          "sourceRefIds": [
+            "site:module:geopolitical",
+            "site:context:world-order",
+            "site:module:energy",
+            "site:context:oil-news"
+          ]
+        },
+        {
+          "module": "inflation",
+          "labelZh": "通胀",
+          "score": 59,
+          "assessmentZh": "通胀模块 59 分处于中位，是能源冲击与利率压力之间的缓冲层。10 年盈亏平衡通胀 2.35% 相对锚定，说明市场尚未把能源价格读作持续性通胀；平均时薪同比 0.0302 与 U6 7.6% 的组合也未显示工资端失控。但密歇根消费者信心 51.7 偏低，CARTS 实际零售同比 0.0166 偏弱，显示成本压力正在挤压实际购买力。通胀模块的中位读数因此应读作“传导进行中但未完成”，而非压力解除；若能源继续上行并获得多源确认，该模块是最可能被重新定价的一环。",
+          "sourceRefIds": [
+            "site:module:inflation",
+            "site:market:breakeven10y",
+            "site:macro:employment",
+            "site:macro:consumer",
+            "site:market:brent"
+          ]
+        },
+        {
+          "module": "liquidity",
+          "labelZh": "流动性",
+          "score": 47,
+          "assessmentZh": "流动性模块 47 分相对温和。ON RRP 0.227、准备金 3022140、NFCI -0.499，状态为平稳，说明数量与价格两端的金融条件均未显示紧张。广义美元指数 121.4048 偏高，理论上对全球美元融资形成约束，但 NFCI 的平稳读数提示这一约束尚未转化为境内流动性压力。模块分数与信用状态偏宽松相互印证，构成本期“上游紧、下游松”判读的关键一环。需要保留的边界是：流动性平稳不等于融资环境将放松，美元高位与长端利率高企仍是潜在约束。",
+          "sourceRefIds": [
+            "site:module:liquidity",
+            "site:macro:liquidity",
+            "site:market:dxy",
+            "site:macro:credit"
+          ]
+        },
+        {
+          "module": "debt",
+          "labelZh": "债务",
+          "score": 40,
+          "assessmentZh": "债务模块 40 分处于偏低区间，但需结合利率水平解读。10 年期美债 5.15%、实际利率 2.80% 意味着存量债务的再融资成本处于高位，模块分数偏低更多反映当前拖欠与核销读数尚未恶化，而非债务可持续性无虞。商业地产拖欠率 1.53%、核销率 0.14%、CMBS ETF 47.57，显示该细分领域压力可控；私募信贷公开代理 BDC ETF 11.81、PBDC ETF 24.75、高级贷款 ETF 39.98 亦未显示折价压力。判读上应把债务模块读作“低读数、高敏感”，对长端利率进一步上行保持观察。",
+          "sourceRefIds": [
+            "site:module:debt",
+            "site:market:us10y",
+            "site:market:real10y",
+            "site:macro:cre",
+            "site:macro:private-credit"
+          ]
+        },
+        {
+          "module": "banking",
+          "labelZh": "银行",
+          "score": 38,
+          "assessmentZh": "银行模块 38 分为六模块最低，与信用状态偏宽松、HY OAS 3.29%、IG OAS 0.87% 的读数一致，说明当前银行与信用端尚未确认压力扩散。准备金 3022140 与 NFCI -0.499 的平稳状态也支持这一判断。但低读数本身包含信息：它意味着若能源与利率压力继续传导，银行模块存在从低位补升的空间，而非已经消化冲击。判读上应避免把低分读作风险解除，而应读作传导链条尚未抵达的环节；后续观察重点在于信用利差与波动率是否同步扩张。",
+          "sourceRefIds": [
+            "site:module:banking",
+            "site:macro:credit",
+            "site:market:hyOas",
+            "site:macro:liquidity",
+            "site:market:vix"
+          ]
+        }
+      ],
+      "crossMarketAnalysis": [
+        {
+          "assetZh": "原油与航运",
+          "observationZh": "布伦特 126.55 美元/桶处于偏高区间，BDTI 7271、BCTI 2593、BDI 2593 综合状态高压，能源与运输成本同向。石油新闻事件观察为事件升高待核、状态 partial，物理链判读为 false_down_physical_stress、置信度 low。",
+          "implicationZh": "价格与运费同向说明成本压力具备实体基础，但物理供应未被确认，能源定价背离观察因此保留。判读上应把原油与航运读作持续压力源，而非供应中断的既成事实。",
+          "sourceRefIds": [
+            "site:market:brent",
+            "site:macro:freight",
+            "site:context:oil-news",
+            "site:context:odp",
+            "site:daily:divergence"
+          ]
+        },
+        {
+          "assetZh": "美债与美元",
+          "observationZh": "10 年期美债 5.15%、实际利率 2.80%、盈亏平衡通胀 2.35%，广义美元指数 121.4048。政策预期中值 3.875%、有效利率 3.88%、前端期货隐含 3.92%，前端未见明显宽松押注。",
+          "implicationZh": "长端压力更多来自实际利率而非通胀预期失锚，美元高位对全球融资形成约束。这一组合使能源向利率的传导具备时滞，判读上应保留而非提前确认第三段链条。",
+          "sourceRefIds": [
+            "site:market:us10y",
+            "site:market:real10y",
+            "site:market:breakeven10y",
+            "site:market:dxy",
+            "site:macro:policy"
+          ]
+        },
+        {
+          "assetZh": "信用、波动率与权益",
+          "observationZh": "HY OAS 3.29%、IG OAS 0.87%、信用状态偏宽松，VIX 18.44 未显示风险扩散；标普 500 7690.73 点，纳斯达克100 ETF 最新收盘 709.8、60 期均线 653.0522、Z 分数 0.9784；黄金 4119.30 美元。",
+          "implicationZh": "信用与波动率未确认上游压力，权益定价仍偏韧性，黄金高位则显示对冲需求并存。判读上应把这一组合读作“压力未扩散”，而非风险解除；权益定价环境代理仅作背景，不构成估值结论。",
+          "sourceRefIds": [
+            "site:market:hyOas",
+            "site:macro:credit",
+            "site:market:vix",
+            "site:market:spx",
+            "site:context:market-pricing",
+            "site:market:gold"
+          ]
+        }
+      ],
+      "historicalComparison": {
+        "periodZh": "2026-10-08 至 2026-10-21 的 14 个日度样本",
+        "similaritiesZh": "当前 68 分与样本区间 68–71 的下沿位置相似，压力形态同样表现为上游能源与地缘偏高、下游信用与银行偏低。样本内分数在 71 与 68 之间切换，说明压力高位震荡而非单向抬升，与本期“高位震荡偏紧”的趋势标签一致。能源—通胀—利率的主链条在样本期内保持稳定，未出现模块排序的逆转，这为横向比较提供了连续性基础。",
+        "differencesZh": "与样本前期相比，本期新增了石油新闻事件观察升至待核、物理链判读为低置信的组合，能源定价背离观察被明确标记，这是样本期内未强调的维度。同时，本期仅有 1 条 official 新闻证据，新闻支撑密度低于常规周报，判断更多依赖站内结构化数据。这些差异意味着当前读数的证据结构更薄，横向比较应更谨慎。以上比较不代表危机概率或时间预测。",
+        "sourceRefIds": [
+          "site:context:history",
+          "site:score",
+          "site:daily:divergence",
+          "site:context:oil-news",
+          "site:context:odp",
+          "news:central_bank_inflation:6150904a40ef2d"
+        ]
+      },
+      "watchNext": [
+        {
+          "conditionZh": "布伦特继续上行并获得多源确认",
+          "whyItMattersZh": "这是站内既有触发条件之一，直接检验能源定价背离是否收敛，并决定能源→通胀→利率链条是否进入第三段。",
+          "invalidationZh": "布伦特回落且验证层不再提示压力",
+          "sourceRefIds": [
+            "site:daily:triggers",
+            "site:daily:invalidations",
+            "site:market:brent",
+            "site:daily:divergence"
+          ]
+        },
+        {
+          "conditionZh": "美国 10 年期收益率继续上行",
+          "whyItMattersZh": "长端与实际利率已处高位，进一步上行会同时压缩债务再融资空间与权益定价环境，是利率端的关键确认。",
+          "invalidationZh": "美国 10 年期收益率回落",
+          "sourceRefIds": [
+            "site:daily:triggers",
+            "site:daily:invalidations",
+            "site:market:us10y",
+            "site:market:real10y"
+          ]
+        },
+        {
+          "conditionZh": "HY OAS 或 VIX 明显扩张",
+          "whyItMattersZh": "信用与波动率是当前未确认压力的两个环节，明显扩张意味着上游压力开始向下游扩散，改变哑铃形态。",
+          "invalidationZh": "VIX / HY OAS 未扩张且综合风险分数下降",
+          "sourceRefIds": [
+            "site:daily:triggers",
+            "site:daily:invalidations",
+            "site:market:hyOas",
+            "site:market:vix"
+          ]
+        }
+      ],
+      "dataGaps": [
+        "Brent 实物价格与期限结构尚未纳入本期数据，能源定价背离观察缺少实物端确认。",
+        "本周期仅 1 条 official 新闻证据，其余判断依赖站内结构化数据，新闻支撑密度偏低。"
+      ],
+      "sourceAttribution": [
+        {
+          "sourceRefId": "news:central_bank_inflation:6150904a40ef2d",
+          "claimType": "official_news_context",
+          "noteZh": "美联储 H.15 选定利率日度发布，为长端利率与政策利率语境提供官方锚点。"
+        },
+        {
+          "sourceRefId": "site:market:us10y",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:real10y",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:policy",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:context:history",
+          "claimType": "site_structured_data",
+          "noteZh": "14 个日度样本区间 68–71，用于同期压力轨迹比较。"
+        },
+        {
+          "sourceRefId": "site:score",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 综合分数 68/100 及 1 日、7 日、30 日变化，仅解释不重算。"
+        },
+        {
+          "sourceRefId": "site:context:oil-news",
+          "claimType": "site_structured_data",
+          "noteZh": "石油新闻事件观察为事件升高待核、状态 partial，不等于供应中断确认。"
+        },
+        {
+          "sourceRefId": "site:context:odp",
+          "claimType": "site_structured_data",
+          "noteZh": "石油方向物理链判读为 false_down_physical_stress，置信度 low。"
+        },
+        {
+          "sourceRefId": "site:daily:divergence",
+          "claimType": "site_structured_data",
+          "noteZh": "最大背离为能源定价背离观察，Brent 验证层仍需观察。"
+        },
+        {
+          "sourceRefId": "site:module:energy",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:module:geopolitical",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:module:inflation",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:module:liquidity",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:brent",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:freight",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:hyOas",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:credit",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:vix",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:liquidity",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:breakeven10y",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:daily:risk-chain",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:context:world-order",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:employment",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:consumer",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:dxy",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:module:debt",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:cre",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:private-credit",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:module:banking",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:spx",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:context:market-pricing",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:market:gold",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:daily:triggers",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:daily:invalidations",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        }
+      ],
+      "confidence": {
+        "level": "medium",
+        "score": 72,
+        "reasonZh": "站内结构化数据完整且新鲜度高，但本周期仅 1 条 official 新闻证据，部分新闻为 discovery_only 不得单独支撑判断，能源实物端数据缺失，故置信度定为中等。"
+      },
+      "auditFlags": [
+        "current_pressure_not_forecast",
+        "read_only_editorial",
+        "source_attributed"
+      ],
+      "boundaries": {
+        "displayOnly": true,
+        "commentaryOnly": true,
+        "externalAiGenerated": true,
+        "usesExternalAiApi": true,
+        "notInvestmentAdvice": true,
+        "affectsGfrrScoring": false,
+        "affectsRiskModules": false,
+        "affectsTailRiskOverlay": false,
+        "affectsDecisionModel": false,
+        "affectsExecutionLock": false,
+        "affectsPositionGuidance": false,
+        "affectsWorldOrder": false,
+        "affectsOdp": false,
+        "affectsBubbleWatch": false
+      },
+      "schemaVersion": "macro-risk-editorial-output-v1",
+      "generatedAt": "2026-10-21T02:09:28.870Z",
+      "sourceDataUpdatedAt": "2026-10-21T00:45:22.811Z",
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "mode": "external_ai_macro_risk_editorial"
+    },
+    "sourceLedger": [
+      {
+        "id": "site:score",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:score"
+        ]
+      },
+      {
+        "id": "site:module:energy",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:module:energy"
+        ]
+      },
+      {
+        "id": "site:module:geopolitical",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:module:geopolitical"
+        ]
+      },
+      {
+        "id": "site:module:inflation",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:module:inflation"
+        ]
+      },
+      {
+        "id": "site:module:liquidity",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:module:liquidity"
+        ]
+      },
+      {
+        "id": "site:module:debt",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:module:debt"
+        ]
+      },
+      {
+        "id": "site:module:banking",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:module:banking"
+        ]
+      },
+      {
+        "id": "site:market:brent",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:brent"
+        ]
+      },
+      {
+        "id": "site:market:dxy",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:dxy"
+        ]
+      },
+      {
+        "id": "site:market:vix",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:vix"
+        ]
+      },
+      {
+        "id": "site:market:hyOas",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:hyOas"
+        ]
+      },
+      {
+        "id": "site:market:us10y",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:us10y"
+        ]
+      },
+      {
+        "id": "site:market:real10y",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:real10y"
+        ]
+      },
+      {
+        "id": "site:market:breakeven10y",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:breakeven10y"
+        ]
+      },
+      {
+        "id": "site:market:gold",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:gold"
+        ]
+      },
+      {
+        "id": "site:market:spx",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:market:spx"
+        ]
+      },
+      {
+        "id": "site:daily:risk-chain",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:daily:risk-chain"
+        ]
+      },
+      {
+        "id": "site:daily:divergence",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:daily:divergence"
+        ]
+      },
+      {
+        "id": "site:daily:triggers",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:daily:triggers"
+        ]
+      },
+      {
+        "id": "site:daily:invalidations",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:daily:invalidations"
+        ]
+      },
+      {
+        "id": "site:macro:liquidity",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:liquidity"
+        ]
+      },
+      {
+        "id": "site:macro:policy",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:policy"
+        ]
+      },
+      {
+        "id": "site:macro:credit",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:credit"
+        ]
+      },
+      {
+        "id": "site:macro:employment",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:employment"
+        ]
+      },
+      {
+        "id": "site:macro:consumer",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:consumer"
+        ]
+      },
+      {
+        "id": "site:macro:freight",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:freight"
+        ]
+      },
+      {
+        "id": "site:macro:cre",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:cre"
+        ]
+      },
+      {
+        "id": "site:macro:private-credit",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T00:45:22.811Z",
+        "factIds": [
+          "fact:macro:private-credit"
+        ]
+      },
+      {
+        "id": "site:context:world-order",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T01:15:58.441Z",
+        "factIds": [
+          "fact:context:world-order"
+        ]
+      },
+      {
+        "id": "site:context:market-pricing",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-16",
+        "factIds": [
+          "fact:context:market-pricing"
+        ]
+      },
+      {
+        "id": "site:context:history",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21",
+        "factIds": [
+          "fact:context:history"
+        ]
+      },
+      {
+        "id": "site:context:odp",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-21T02:03:46.866Z",
+        "factIds": [
+          "fact:context:odp"
+        ]
+      },
+      {
+        "id": "site:context:oil-news",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-20T21:54:12.834Z",
+        "factIds": [
+          "fact:context:oil-news"
+        ]
+      },
+      {
+        "id": "news:central_bank_inflation:6150904a40ef2d",
+        "kind": "news",
+        "sourceName": "federalreserve.gov",
+        "sourceClass": "official",
+        "title": "Federal Reserve Board - H.15 - Selected Interest Rates (Daily) - October 19, 2026",
+        "url": "https://federalreserve.gov/releases/h15",
+        "domain": "federalreserve.gov",
+        "publishedAt": "2026-10-14T12:18:28.000Z",
+        "topic": "central_bank_inflation",
+        "providers": [
+          "brave"
+        ],
+        "supportingDomains": [
+          "federalreserve.gov"
+        ]
+      }
+    ],
+    "validation": {
+      "validator": "check:macro-risk-editorial-contract",
+      "status": "pass",
+      "validatedAt": "2026-10-21T02:09:29.227Z",
+      "artifactDigest": "ecc96e922cc2ccb56dc7a0aaa8a8cbc4ce7d765afd2e39fb9321bfeb92585cf6"
+    },
+    "qualityReview": {
+      "status": "warn",
+      "recommendation": "approved_for_read_only_display",
+      "promotionEligible": false,
+      "reviewedAt": "2026-10-21T02:09:29.051Z",
+      "dimensions": {
+        "structuralContract": "pass",
+        "sourceReferenceIntegrity": "pass",
+        "newsEvidenceQuality": "warn",
+        "scoringBoundaryIntegrity": "pass",
+        "unsafeWording": "pass",
+        "editorialDepth": "pass",
+        "deterministicFallback": "pass"
+      },
+      "warnings": [
+        "本期只引用 1 条可信新闻，其余段落依赖站内结构化证据",
+        "近 7 日新闻发现为 partial，页面必须保留数据限制"
+      ]
+    },
+    "provenance": {
+      "generatedBy": "github_actions_workflow",
+      "humanApproved": false,
+      "inputDigest": "d96a062643d720e0b543791f356782134dce1cae042d771a0ca0a5a6d5abf424",
+      "artifactDigest": "ecc96e922cc2ccb56dc7a0aaa8a8cbc4ce7d765afd2e39fb9321bfeb92585cf6",
+      "sourceCommit": "8587e00ec3b7b78a16527c387abd5e8e36aa16fd",
+      "runId": "39531304707",
+      "newsDiscoveryStatus": "partial",
+      "liveNewsProviderCount": 2
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-10-21T02:09:28.870Z",
+      "sourceDataUpdatedAt": "2026-10-21T00:45:22.811Z",
+      "maxAgeHours": 30,
+      "isStale": false
+    },
+    "fallback": {
+      "available": true,
+      "source": "deterministic_macro_overview",
+      "target": "#macro-risk-overview"
+    },
+    "boundaries": {
+      "displayOnly": true,
+      "commentaryOnly": true,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
+      "frontendDisplayApproved": true,
+      "affectsGfrrScoring": false,
+      "affectsRiskModules": false,
+      "affectsTailRiskOverlay": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false,
+      "affectsWorldOrder": false,
+      "affectsOdp": false,
+      "affectsBubbleWatch": false,
+      "notInvestmentAdvice": true
+    }
   }
 }
