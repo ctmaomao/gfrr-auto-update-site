@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-10-20T17:28:44.155Z",
+  "generatedAt": "2026-10-21T17:36:28.975Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "error",
   "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "requestMode": "rate_limited_last_usable_cache_preserved",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -50,39 +50,30 @@
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 8186,
+    "elapsedMs": 10366,
     "errorCode": "rate_limited"
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-10-20T17:28:35.969Z",
+    "latestAttemptAt": "2026-10-21T17:36:18.609Z",
     "lastLiveSuccessAt": "2026-10-03T05:40:39.857Z",
     "latestOutcome": "rate_limited",
     "windows": {
       "days7": {
-        "attemptCount": 7,
+        "attemptCount": 8,
         "successCount": 0,
-        "failureCount": 7,
+        "failureCount": 8,
         "successRatePct": 0
       },
       "days30": {
-        "attemptCount": 32,
+        "attemptCount": 33,
         "successCount": 1,
-        "failureCount": 31,
-        "successRatePct": 3.1
+        "failureCount": 32,
+        "successRatePct": 3
       }
     },
     "history": [
-      {
-        "attemptedAt": "2026-08-31T06:01:32.354Z",
-        "outcome": "network_error",
-        "attempts": 2,
-        "retryCount": 1,
-        "status": null,
-        "errorCode": "network_error",
-        "elapsedMs": 17065
-      },
       {
         "attemptedAt": "2026-08-31T19:13:42.312Z",
         "outcome": "network_error",
@@ -649,11 +640,20 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 8186
+      },
+      {
+        "attemptedAt": "2026-10-21T17:36:18.609Z",
+        "outcome": "rate_limited",
+        "attempts": 1,
+        "retryCount": 0,
+        "status": 429,
+        "errorCode": "rate_limited",
+        "elapsedMs": 10366
       }
     ]
   },
   "lastFetchFailure": {
-    "at": "2026-10-20T17:28:35.969Z",
+    "at": "2026-10-21T17:36:18.609Z",
     "errorClass": "rate_limited",
     "cooldownHours": 24
   },
