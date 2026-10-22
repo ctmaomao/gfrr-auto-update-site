@@ -601,7 +601,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 - SLOOS 为季度频率慢变量（年发布 4 次），fallback 路径沿用上一季度数据
 - `sloosTighteningLargeFirms` 与 `sloosTighteningSmallFirms` 来自同一 SLOOS 调查，共享 `sourceStatus.sloos`
 - `regime`（信用市场制度）与 `sloosRegime`（贷款标准制度）独立分类，可同时显示
-- NFCI 0 轴方向与 igOas/hyOas 相反：NFCI 正值=金融状况收紧（不利于信用），NFCI 负值=金融状况宽松（有利于信用）。显示层应使用文字标签（`偏紧`/`偏松`）避免数值方向混淆。
+- NFCI 与 igOas/hyOas 均为数值越高越紧（同向；NFCI 0 轴与 OAS 水平不同）：NFCI 正值=金融状况收紧，负值=宽松。显示层应使用文字标签（`偏紧`/`偏松`）避免数值方向混淆。
 - NFCI 周频数据（每周三发布上周五数据），fallback 路径使用上轮值。
 
 ### brentPricingLayer 公开代理价格层 contract

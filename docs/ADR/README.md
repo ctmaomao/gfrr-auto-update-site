@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0074 — NFCI direction contract correction](0074-nfci-direction-contract.md): owner-authorized implementation; Codex design AI review passed; human merge review pending.
+
 - [ADR-0073 — Main radar pressure display labels](0073-main-radar-pressure-display-labels.md): owner-authorized dedicated label-contract migration; ADR design independently reviewed, implementation review required before integration.
 
 - [ADR-0072 — Latest quarterly capex panel](0072-bubble-quarterly-capex-panel.md): owner-authorized source/association contract; independent review required before runtime.

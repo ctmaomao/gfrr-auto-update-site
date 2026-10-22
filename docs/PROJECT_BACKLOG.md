@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-22 NFCI 方向契约修正（契约，AI 审核；HOLD 不变）
+
+- **Acceptance baseline**：owner 授权 A（NFCI 方向契约）窄改；基于 clean `origin/main` e4d4c76a 的 worktree `nfci-contract`。只改 ADR-0074、ADR README、DATA_CONTRACT/DATA_SOURCES 的 NFCI 方向句、checker 1 个 marker、真实模块测试、package 追加测试、本 backlog 条。不改 runtime/score/data/workflow/deps；不实施 B（回购 null 文案）。
+- **当前**：NFCI 与 IG/HY OAS 均为数值越高越紧；0 轴水平不同；正=收紧、负=宽松。runtime `classifyNfciRegime` 已正确，文档/checker 旧句为错误契约。ADR 状态 owner-authorized implementation、Codex 设计 AI review 通过、human merge review pending，不称 Accepted。
+- **下一步 / 验证**：标准新增 NFCI **3/3**、ACLED 环境复测 **7/7** 均 0 skip；完整 `check:changed` **r2 exit0，mode full/files 8（含 check:all）**，日志 `codex-check-changed-r2.log`/`.exit`；NFCI checker、doc-links、`node --check`、`git diff --check` 均通过。首轮环境 exit1（clean worktree 缺 `node_modules/xlsx`）如实保留；复用主 repo 锁定依赖后 ACLED 7/7，再跑全套 r2。human merge review 仍 pending。
+- **阻塞**：human merge review 未完成；不得合并/部署。B 待独立 ADR-0075，且因 buildCross 属 frontend 需 asset bump，不与 A 混合。
+
 ### 2026-10-17 主雷达判读分步整改
 
 - **Acceptance baseline**：owner在只读审计后批准“按你的建议分步骤整改”。按[本轮方案](SCORE_REMEDIATION_2026_10_17.md)先显著展示生产分数归因与同期压力边界，再独立迁移“系统性顶部”名称，保留既定影子研究与模型替换门槛；不为降低今日数字调参，不继承其它任务的远端/费用批准。

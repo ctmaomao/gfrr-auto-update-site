@@ -73,7 +73,7 @@
 | `CMBS` | iShares CMBS ETF public proxy | macroDrivers.commercialRealEstate | M-80 |
 | `ICE:CDX-index-settlement-public` | ICE Clear Credit public CDX index EOD settlement price | macroDrivers.privateCreditProxy | M-81 |
 
-**注意**: NFCI 正值=收紧、负值=宽松,**方向与 IG/HY OAS 相反**。误判方向会让 cross-validation 完全反向。
+**注意**: NFCI 正值=收紧、负值=宽松,**与 IG/HY OAS 同向（数值越高越紧）**；NFCI 的 0 轴与 OAS 水平不同。误判方向会让 cross-validation 完全反向。
 
 **M-69/M-77/M-79 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 使用 `CARTS` / `CARTSR`、MRTS 细分零售、BoA Consumer Checkpoint 公开 HTML 摘要与 Trading Economics Redbook public HTML 摘要。BoA Consumer Checkpoint 不是 Redbook；Redbook public HTML 不是 Redbook raw subscription feed；两者都不是 BoA 原始卡明细或非公开 raw feed。
 
