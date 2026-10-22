@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=repo-null-1';
+﻿import { fmtNumSafe } from './config.js?v=repo-bp-unit-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

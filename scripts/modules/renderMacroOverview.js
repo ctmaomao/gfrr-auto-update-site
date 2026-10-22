@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=repo-null-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=repo-null-1';
+} from './config.js?v=repo-bp-unit-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=repo-bp-unit-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,12 +18,12 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=repo-null-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=repo-null-1';
-import { scoreAttributionText } from './macroOverviewNarrative.js?v=repo-null-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=repo-null-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=repo-null-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=repo-null-1';
+} from './macroOverviewDisplayHelpers.js?v=repo-bp-unit-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=repo-bp-unit-1';
+import { scoreAttributionText } from './macroOverviewNarrative.js?v=repo-bp-unit-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=repo-bp-unit-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=repo-bp-unit-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=repo-bp-unit-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -627,7 +627,8 @@ function renderMacroDriversPillars({ radarData }) {
     const credit = radarData?.macroDrivers?.credit || {};
 
     const reserveT = asNumber(fed.reserveBalances) !== null ? (asNumber(fed.reserveBalances) / 1000000).toFixed(2) : '—';
-    const repoBp = signedFixedWithZero(asNumber(fed.bgcrSofrSpread), 0);
+    const repoSpread = Number.isFinite(fed.bgcrSofrSpread) ? fed.bgcrSofrSpread : undefined;
+    const repoBp = signedFixedWithZero(Number.isFinite(repoSpread) ? repoSpread * 100 : undefined, 0);
     setLeafText('pillar-1-text', `${fed.regime || '—'}。美联储总资产(WALCL) / 银行准备金 ${reserveT}T / 回购利差(BGCR-SOFR) ${repoBp}bp / 隔夜利率锚(SOFR-EFFR)锚定。隔夜逆回购: ${fed.onRrpLevel || '—'}。`);
 
     const policySpread = asNumber(policy.futureMinusTargetMid);
