@@ -96,7 +96,7 @@ const requiredContractMarkers = [
   'nfci4wChange',
   'nfciRegime',
   'sourceStatus',
-  'NFCI 0 轴方向与 igOas/hyOas 相反',
+  'NFCI 与 igOas/hyOas 均为数值越高越紧',
   '`偏紧`/`偏松`',
   '不参与 scoring、decisionModel、executionLock 或 positionGuidance'
 ];
