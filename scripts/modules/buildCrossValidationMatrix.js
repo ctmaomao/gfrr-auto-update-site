@@ -690,7 +690,7 @@ function buildLiquidityTighteningNarrative(data) {
 
   // M-50: repo_stress moves from hardcoded missing evidence to BGCR-SOFR spread classification.
   if (bgcrSofrSpread === null) {
-    missingEvidence.push(evidence('repo_stress', null, 'BGCR/TGCR 回购利差指标未接入'));
+    missingEvidence.push(evidence('repo_stress', null, 'BGCR/TGCR 回购利差证据不足，待核验'));
   } else {
     const bp = bgcrSofrSpread * 100;
     const absBp = Math.abs(bp);

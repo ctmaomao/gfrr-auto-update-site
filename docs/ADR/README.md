@@ -7,7 +7,9 @@
 
 ## Active
 
-- [ADR-0074 — NFCI direction contract correction](0074-nfci-direction-contract.md): owner-authorized implementation; Codex design AI review passed; human merge review pending.
+- [ADR-0075 — Repo spread null wording contract](0075-repo-spread-null-wording.md): owner-authorized implementation (B design r2); pre-merge review by owner-selected Codex+DeepSeek cross-AI review (not human review); not Accepted.
+
+- [ADR-0074 — NFCI direction contract correction](0074-nfci-direction-contract.md): owner-authorized implementation; owner-selected Codex+DeepSeek cross-AI pre-merge review complete (not human review); PR #475 merged at 8c2622ff; not Accepted.
 
 - [ADR-0073 — Main radar pressure display labels](0073-main-radar-pressure-display-labels.md): owner-authorized dedicated label-contract migration; ADR design independently reviewed, implementation review required before integration.
 
