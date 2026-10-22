@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-23 回购利差 bp 单位契约 D0（契约，frontend bump；页面已验收，待完整检查）
+
+- **Acceptance baseline**：owner 已在本次已授权整改序列内批准独立 D0 合同包（AGENTS §10 要求 checker 断言变更独立 reviewed PR）；基于 clean `624e55c2` 的 worktree `repo-bp-unit`。只改：`renderMacroDriversPillars` 两行（%→bp 换算）、`check-null-zero-display-guards.mjs` 唯一 required 替换 + 新增 forbidden 旧未换算表达式（其余断言全保留、无 skip/ignore）、ADR-0076 + ADR README 一行、新真实渲染测试、package 追加测试、一次 asset bump `repo-bp-unit-1` 机械文件、backlog 本条、review-evidence 截图与 README。不改 DATA_CONTRACT 数值含义/DESIGN/评分/data/workflow/deps，不做日期资格、D 展示、F、NFCI 或四层。
+- **当前**：两行采用严格数值资格：仅 `Number.isFinite(fed.bgcrSofrSpread)` 才取值（DATA_CONTRACT 为 number|null），再 `signedFixedWithZero(Number.isFinite(repoSpread) ? repoSpread * 100 : undefined, 0)`。`-0.02` 显示 `-2bp`、`0.02` 显示 `+2bp`、`0` 显示 `+0bp`；null/undefined/空串/NaN/false/[]/{} 与数字字符串均 `—bp`，不伪造 0bp。`asNumber` 全局 helper 未改（实测 null/空串→0，故用 undefined sentinel）。新测试 VM 提取真实 render 与 `asNumber`/`signedFixed`/`signedFixedWithZero`，含 malformed 类型与意外 catch 直接 fail。
+- **下一步 / 验证**：before/after 1440/390 已进 `docs/review-evidence/repo-bp-unit-20261023/`（JPEG，同真实旧快照）。本地专项 `node --check`、`check:null-zero-display-guards`、frontend asset version、doc-links、`git diff --check` 通过；Codex 标准 `node --test` **3/3 通过、无 skip**，当前 scope **22/0**（after 图未进包时）。完整 `check:changed`/`check:all` 与 CI 尚未跑，由 Codex 执行，不预称通过。
+- **阻塞 / 限制**：未部署、未跑 Daily/realtime/provider/网络，未写 data，未 Git 写；交叉 AI 审阅替代人审（非人审、不扩全项目），既有 push/merge/两站授权沿用，无新增付费/评分迁移权限。
+- **页面验收实际已过（2026-10-23）**：同一真实旧快照 2026-10-21 00:45 UTC（非当前市场、非准确率）；1440 scrollWidth 1425、390 scrollWidth 375、nav 13、主分 68/100；pillar 由 `-0bp` 变 `-2bp`；app `repo-bp-unit-1`；paper `rgb(251, 247, 240)`、正文 `rgb(58, 53, 48)`、`Noto Serif SC / Source Han Serif SC / Songti SC / serif`。详细 facts 见 ignored `manual-artifacts/repo-bp-review/browser-acceptance.json`；server 已停、viewport 已恢复。
+
 ### 2026-10-23 原始观察日期链路（契约，数据 metadata；待合并）
 
 - **Acceptance baseline**：owner 授权 C（原始观察日期包）窄改；基于 clean `875beb25`（PR #476 合并后 main）的 worktree `source-observation`。只改 `source-observation.mjs`（新）、pipeline 1 import + 5 函数、`source-observation.test.mjs`（新）、DATA_CONTRACT optional 日期段、package 追加测试、报告 + INDEX 一行、本 backlog 条（共 8 文件）。不改 DATA_SOURCES、NFCI 方向/回购 null 文案、前端/asset bump、checker、data/scoring/decision/workflow/realtime/deps。
@@ -529,7 +537,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `repo-null-1` |
+| Cache version | `repo-bp-unit-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

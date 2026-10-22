@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0076 — Repo spread basis-point display unit correction](0076-repo-spread-bp-unit.md): owner-authorized implementation (D0 unit-contract); owner-selected Codex+DeepSeek cross-AI pre-merge review (not human review); not Accepted.
+
 - [ADR-0075 — Repo spread null wording contract](0075-repo-spread-null-wording.md): owner-authorized implementation (B design r2); pre-merge review by owner-selected Codex+DeepSeek cross-AI review (not human review); not Accepted.
 
 - [ADR-0074 — NFCI direction contract correction](0074-nfci-direction-contract.md): owner-authorized implementation; owner-selected Codex+DeepSeek cross-AI pre-merge review complete (not human review); PR #475 merged at 8c2622ff; not Accepted.

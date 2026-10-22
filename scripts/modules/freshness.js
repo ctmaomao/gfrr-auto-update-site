@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=repo-null-1';
+﻿import { fmtNumSafe } from './config.js?v=repo-bp-unit-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
