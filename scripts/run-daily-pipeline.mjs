@@ -22,6 +22,7 @@ import { allocateRegimePercentages } from './daily/regime-weights.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
+import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay } from './daily/source-observation.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -5773,6 +5774,7 @@ function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
 }
 
 async function resolveFedLiquidity(prevFed) {
+  const nowIso = new Date().toISOString();
   const sourceObservedAt = {};
   const status = {
     walcl: 'missing',
@@ -5798,6 +5800,7 @@ async function resolveFedLiquidity(prevFed) {
   let tgcrUpdatedAt = null;
   let repoRatesSource = null;
   let nyFedSecuredRates = null;
+  let sofrSource = null;
 
   try {
     const rows = await fetchFredSeries('WALCL', 90);
@@ -5845,11 +5848,15 @@ async function resolveFedLiquidity(prevFed) {
   // M-41: DFF gives direct Effective Federal Funds Rate evidence for the policy driver.
   try {
     const rows = await fetchFredSeries('DFF', 30);
-    effectiveFedFundsRate = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    effectiveFedFundsRate = obs.value;
+    sourceObservedAt.effectiveFedFundsRate = obs.date;
     status.effectiveFedFundsRate = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevFed?.effectiveFedFundsRate)) {
-      effectiveFedFundsRate = prevFed.effectiveFedFundsRate;
+    const fb = fallbackObservation(prevFed?.effectiveFedFundsRate, prevFed?.sourceObservedAt?.effectiveFedFundsRate, nowIso);
+    if (fb.value !== null) {
+      effectiveFedFundsRate = fb.value;
+      sourceObservedAt.effectiveFedFundsRate = fb.date;
       status.effectiveFedFundsRate = 'fallback';
     } else {
       status.effectiveFedFundsRate = 'missing';
@@ -5859,11 +5866,17 @@ async function resolveFedLiquidity(prevFed) {
   // M-41: SOFR gives direct overnight secured funding evidence for fragility review.
   try {
     const rows = await fetchFredSeries('SOFR', 30);
-    sofr = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    sofr = obs.value;
+    sourceObservedAt.sofr = obs.date;
+    sofrSource = 'FRED:SOFR';
     status.sofr = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevFed?.sofr)) {
-      sofr = prevFed.sofr;
+    const fb = fallbackObservation(prevFed?.sofr, prevFed?.sourceObservedAt?.sofr, nowIso);
+    if (fb.value !== null) {
+      sofr = fb.value;
+      sourceObservedAt.sofr = fb.date;
+      sofrSource = ['FRED:SOFR', 'NYFED:secured-rates-latest'].includes(prevFed?.sofrSource) ? prevFed.sofrSource : null;
       status.sofr = 'fallback';
     } else {
       status.sofr = 'missing';
@@ -5873,15 +5886,19 @@ async function resolveFedLiquidity(prevFed) {
   // M-42: WRESBAL gives bank reserve-buffer quantity evidence; same weekly H.4.1 cadence as WALCL.
   try {
     const rows = await fetchFredSeries('WRESBAL', 90);
-    reserveBalances = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    reserveBalances = obs.value;
+    sourceObservedAt.reserveBalances = obs.date;
     const ago = findValueAgo(rows, 28);
     if (Number.isFinite(reserveBalances) && Number.isFinite(ago) && ago !== 0) {
       reserveBalances4wChange = +(((reserveBalances - ago) / ago) * 100).toFixed(3);
     }
     status.reserveBalances = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevFed?.reserveBalances)) {
-      reserveBalances = prevFed.reserveBalances;
+    const fb = fallbackObservation(prevFed?.reserveBalances, prevFed?.sourceObservedAt?.reserveBalances, nowIso);
+    if (fb.value !== null) {
+      reserveBalances = fb.value;
+      sourceObservedAt.reserveBalances = fb.date;
       reserveBalances4wChange = Number.isFinite(prevFed.reserveBalances4wChange)
         ? prevFed.reserveBalances4wChange
         : null;
@@ -5905,12 +5922,14 @@ async function resolveFedLiquidity(prevFed) {
 
   if (bgcrRecord) {
     bgcr = bgcrRecord.percentRate;
-    bgcrUpdatedAt = `${bgcrRecord.effectiveDate}T00:00:00Z`;
+    const bgcrDate = parseObservationDate(`${bgcrRecord.effectiveDate}T00:00:00Z`, nowIso);
+    bgcrUpdatedAt = bgcrDate ? `${bgcrDate}T00:00:00Z` : null;
     repoRatesSource = NY_FED_SECURED_RATES_SOURCE;
     status.bgcr = 'live';
   } else if (Number.isFinite(prevFed?.bgcr)) {
     bgcr = prevFed.bgcr;
-    bgcrUpdatedAt = typeof prevFed.bgcrUpdatedAt === 'string' ? prevFed.bgcrUpdatedAt : null;
+    const bgcrPrevDate = parseObservationDate(prevFed.bgcrUpdatedAt, nowIso);
+    bgcrUpdatedAt = bgcrPrevDate ? `${bgcrPrevDate}T00:00:00Z` : null;
     repoRatesSource = typeof prevFed.repoRatesSource === 'string' ? prevFed.repoRatesSource : null;
     status.bgcr = 'fallback';
   } else {
@@ -5919,12 +5938,14 @@ async function resolveFedLiquidity(prevFed) {
 
   if (tgcrRecord) {
     tgcr = tgcrRecord.percentRate;
-    tgcrUpdatedAt = `${tgcrRecord.effectiveDate}T00:00:00Z`;
+    const tgcrDate = parseObservationDate(`${tgcrRecord.effectiveDate}T00:00:00Z`, nowIso);
+    tgcrUpdatedAt = tgcrDate ? `${tgcrDate}T00:00:00Z` : null;
     repoRatesSource = NY_FED_SECURED_RATES_SOURCE;
     status.tgcr = 'live';
   } else if (Number.isFinite(prevFed?.tgcr)) {
     tgcr = prevFed.tgcr;
-    tgcrUpdatedAt = typeof prevFed.tgcrUpdatedAt === 'string' ? prevFed.tgcrUpdatedAt : null;
+    const tgcrPrevDate = parseObservationDate(prevFed.tgcrUpdatedAt, nowIso);
+    tgcrUpdatedAt = tgcrPrevDate ? `${tgcrPrevDate}T00:00:00Z` : null;
     repoRatesSource = typeof prevFed.repoRatesSource === 'string' ? prevFed.repoRatesSource : repoRatesSource;
     status.tgcr = 'fallback';
   } else {
@@ -5933,13 +5954,23 @@ async function resolveFedLiquidity(prevFed) {
 
   if (!Number.isFinite(sofr) && nyFedSofrRecord) {
     sofr = nyFedSofrRecord.percentRate;
+    sourceObservedAt.sofr = parseObservationDate(`${nyFedSofrRecord.effectiveDate}T00:00:00Z`, nowIso);
+    sofrSource = 'NYFED:secured-rates-latest';
     status.sofr = 'live';
   }
 
-  const bgcrSofrSpread = Number.isFinite(bgcr) && Number.isFinite(sofr)
+  const bgcrSofrSameDay = sameObservationDay(bgcrUpdatedAt, sourceObservedAt.sofr);
+  const tgcrSofrSameDay = sameObservationDay(tgcrUpdatedAt, sourceObservedAt.sofr);
+  const repoSpreadDateStatus = {
+    bgcrSofr: !Number.isFinite(bgcr) || !Number.isFinite(sofr) || bgcrSofrSameDay === null ? 'unknown'
+      : bgcrSofrSameDay ? 'same_day' : 'mismatch',
+    tgcrSofr: !Number.isFinite(tgcr) || !Number.isFinite(sofr) || tgcrSofrSameDay === null ? 'unknown'
+      : tgcrSofrSameDay ? 'same_day' : 'mismatch',
+  };
+  const bgcrSofrSpread = Number.isFinite(bgcr) && Number.isFinite(sofr) && repoSpreadDateStatus.bgcrSofr === 'same_day'
     ? +(bgcr - sofr).toFixed(4)
     : null;
-  const tgcrSofrSpread = Number.isFinite(tgcr) && Number.isFinite(sofr)
+  const tgcrSofrSpread = Number.isFinite(tgcr) && Number.isFinite(sofr) && repoSpreadDateStatus.tgcrSofr === 'same_day'
     ? +(tgcr - sofr).toFixed(4)
     : null;
 
@@ -5962,6 +5993,8 @@ async function resolveFedLiquidity(prevFed) {
     bgcrUpdatedAt,
     tgcrUpdatedAt,
     repoRatesSource,
+    sofrSource,
+    repoSpreadDateStatus,
     bgcrSofrSpread,
     tgcrSofrSpread,
     repoSpreadRegime: classifyRepoSpreadRegime(bgcrSofrSpread),
@@ -6348,8 +6381,11 @@ export async function resolveRateVol(prevRateVol) {
 }
 
 async function resolveCredit(prevCredit, hyOasLive) {
+  const nowIso = new Date().toISOString();
   const sourceObservedAt = {};
   const status = { igOas: 'missing', sloos: 'missing', nfci: 'missing' };
+  status.sloosLarge = 'missing';
+  status.sloosSmall = 'missing';
   let igOas = null;
   let igOas1dChange = null;
   let sloosTighteningLargeFirms = null;
@@ -6382,21 +6418,28 @@ async function resolveCredit(prevCredit, hyOasLive) {
   // Uses 180-day lookback because SLOOS is quarterly (need to capture latest + previous quarter).
   try {
     const rows = await fetchFredSeries('DRTSCILM', 180);
-    sloosTighteningLargeFirms = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    sloosTighteningLargeFirms = obs.value;
+    sourceObservedAt.sloosLarge = obs.date;
     const ago = findValueAgo(rows, 90);
     if (Number.isFinite(sloosTighteningLargeFirms) && Number.isFinite(ago)) {
       sloosTighteningLargeQoQ = +(sloosTighteningLargeFirms - ago).toFixed(1);
     }
     status.sloos = 'live';
+    status.sloosLarge = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevCredit?.sloosTighteningLargeFirms)) {
-      sloosTighteningLargeFirms = prevCredit.sloosTighteningLargeFirms;
+    const fb = fallbackObservation(prevCredit?.sloosTighteningLargeFirms, prevCredit?.sourceObservedAt?.sloosLarge, nowIso);
+    if (fb.value !== null) {
+      sloosTighteningLargeFirms = fb.value;
+      sourceObservedAt.sloosLarge = fb.date;
       sloosTighteningLargeQoQ = Number.isFinite(prevCredit.sloosTighteningLargeQoQ)
         ? prevCredit.sloosTighteningLargeQoQ
         : null;
       status.sloos = 'fallback';
+      status.sloosLarge = 'fallback';
     } else {
       status.sloos = 'missing';
+      status.sloosLarge = 'missing';
     }
   }
 
@@ -6404,17 +6447,25 @@ async function resolveCredit(prevCredit, hyOasLive) {
   // Same SLOOS survey, separate series. If first fetch succeeded, this should too.
   try {
     const rows = await fetchFredSeries('DRTSCIS', 180);
-    sloosTighteningSmallFirms = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    sloosTighteningSmallFirms = obs.value;
+    sourceObservedAt.sloosSmall = obs.date;
     const ago = findValueAgo(rows, 90);
     if (Number.isFinite(sloosTighteningSmallFirms) && Number.isFinite(ago)) {
       sloosTighteningSmallQoQ = +(sloosTighteningSmallFirms - ago).toFixed(1);
     }
+    status.sloosSmall = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevCredit?.sloosTighteningSmallFirms)) {
-      sloosTighteningSmallFirms = prevCredit.sloosTighteningSmallFirms;
+    const fb = fallbackObservation(prevCredit?.sloosTighteningSmallFirms, prevCredit?.sourceObservedAt?.sloosSmall, nowIso);
+    if (fb.value !== null) {
+      sloosTighteningSmallFirms = fb.value;
+      sourceObservedAt.sloosSmall = fb.date;
       sloosTighteningSmallQoQ = Number.isFinite(prevCredit.sloosTighteningSmallQoQ)
         ? prevCredit.sloosTighteningSmallQoQ
         : null;
+      status.sloosSmall = 'fallback';
+    } else {
+      status.sloosSmall = 'missing';
     }
   }
 
@@ -6422,15 +6473,19 @@ async function resolveCredit(prevCredit, hyOasLive) {
   // 60-day lookback covers ~8 weeks for 4-week change calculation.
   try {
     const rows = await fetchFredSeries('NFCI', 60);
-    nfci = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    nfci = obs.value;
+    sourceObservedAt.nfci = obs.date;
     const ago = findValueAgo(rows, 28);
     if (Number.isFinite(nfci) && Number.isFinite(ago)) {
       nfci4wChange = +(nfci - ago).toFixed(3);
     }
     status.nfci = 'live';
   } catch (_err) {
-    if (Number.isFinite(prevCredit?.nfci)) {
-      nfci = prevCredit.nfci;
+    const fb = fallbackObservation(prevCredit?.nfci, prevCredit?.sourceObservedAt?.nfci, nowIso);
+    if (fb.value !== null) {
+      nfci = fb.value;
+      sourceObservedAt.nfci = fb.date;
       nfci4wChange = Number.isFinite(prevCredit.nfci4wChange) ? prevCredit.nfci4wChange : null;
       status.nfci = 'fallback';
     } else {
@@ -6772,6 +6827,11 @@ function buildMissingCommercialRealEstate() {
     sloosCreConstructionTightening: null,
     sloosCreMultifamilyTightening: null,
     sloosCreTighteningMax: null,
+    creDelinquencyUpdatedAt: null,
+    creChargeOffUpdatedAt: null,
+    sloosCreNonfarmNonresidentialUpdatedAt: null,
+    sloosCreConstructionUpdatedAt: null,
+    sloosCreMultifamilyUpdatedAt: null,
     reitEtfPrice: null,
     reitEtf4wChange: null,
     reitEtfUpdatedAt: null,
@@ -8310,7 +8370,7 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
   };
 }
 
-function normalizePreviousCommercialRealEstate(prevCre) {
+function normalizePreviousCommercialRealEstate(prevCre, nowIso = new Date().toISOString()) {
   if (!prevCre || typeof prevCre !== 'object') return buildMissingCommercialRealEstate();
   const creDelinquencyRate = Number.isFinite(prevCre.creDelinquencyRate) ? prevCre.creDelinquencyRate : null;
   const creDelinquencyRateQoQChange = Number.isFinite(prevCre.creDelinquencyRateQoQChange) ? prevCre.creDelinquencyRateQoQChange : null;
@@ -8342,6 +8402,16 @@ function normalizePreviousCommercialRealEstate(prevCre) {
   const creLoanBalance = Number.isFinite(prevCre.creLoanBalance) ? prevCre.creLoanBalance : null;
   const creLoanBalance4wChange = Number.isFinite(prevCre.creLoanBalance4wChange) ? prevCre.creLoanBalance4wChange : null;
   const creLoanBalanceYoY = Number.isFinite(prevCre.creLoanBalanceYoY) ? prevCre.creLoanBalanceYoY : null;
+  const creDelinquencyUpdatedAtRaw = parseObservationDate(prevCre.creDelinquencyUpdatedAt, nowIso);
+  const creChargeOffUpdatedAtRaw = parseObservationDate(prevCre.creChargeOffUpdatedAt, nowIso);
+  const sloosCreNonfarmNonresidentialUpdatedAtRaw = parseObservationDate(prevCre.sloosCreNonfarmNonresidentialUpdatedAt, nowIso);
+  const sloosCreConstructionUpdatedAtRaw = parseObservationDate(prevCre.sloosCreConstructionUpdatedAt, nowIso);
+  const sloosCreMultifamilyUpdatedAtRaw = parseObservationDate(prevCre.sloosCreMultifamilyUpdatedAt, nowIso);
+  const creDelinquencyUpdatedAt = creDelinquencyUpdatedAtRaw ? `${creDelinquencyUpdatedAtRaw}T00:00:00Z` : null;
+  const creChargeOffUpdatedAt = creChargeOffUpdatedAtRaw ? `${creChargeOffUpdatedAtRaw}T00:00:00Z` : null;
+  const sloosCreNonfarmNonresidentialUpdatedAt = sloosCreNonfarmNonresidentialUpdatedAtRaw ? `${sloosCreNonfarmNonresidentialUpdatedAtRaw}T00:00:00Z` : null;
+  const sloosCreConstructionUpdatedAt = sloosCreConstructionUpdatedAtRaw ? `${sloosCreConstructionUpdatedAtRaw}T00:00:00Z` : null;
+  const sloosCreMultifamilyUpdatedAt = sloosCreMultifamilyUpdatedAtRaw ? `${sloosCreMultifamilyUpdatedAtRaw}T00:00:00Z` : null;
   return {
     creDelinquencyRate,
     creDelinquencyRateQoQChange,
@@ -8351,6 +8421,11 @@ function normalizePreviousCommercialRealEstate(prevCre) {
     sloosCreConstructionTightening,
     sloosCreMultifamilyTightening,
     sloosCreTighteningMax,
+    creDelinquencyUpdatedAt,
+    creChargeOffUpdatedAt,
+    sloosCreNonfarmNonresidentialUpdatedAt,
+    sloosCreConstructionUpdatedAt,
+    sloosCreMultifamilyUpdatedAt,
     reitEtfPrice,
     reitEtf4wChange,
     reitEtfUpdatedAt: typeof prevCre.reitEtfUpdatedAt === 'string' ? prevCre.reitEtfUpdatedAt : null,
@@ -9248,7 +9323,8 @@ async function resolveConsumerRetail(prevConsumerRetail) {
 }
 
 async function resolveCommercialRealEstate(prevCre) {
-  const fallback = normalizePreviousCommercialRealEstate(prevCre);
+  const nowIso = new Date().toISOString();
+  const fallback = normalizePreviousCommercialRealEstate(prevCre, nowIso);
   const status = {
     delinquency: 'missing',
     chargeOff: 'missing',
@@ -9312,60 +9388,65 @@ async function resolveCommercialRealEstate(prevCre) {
 
   if (delinquencyResult.status === 'fulfilled') {
     const rows = delinquencyResult.value;
-    creDelinquencyRate = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    creDelinquencyRate = obs.value;
     creDelinquencyRateQoQChange = calculateLatestDelta(rows);
-    creDelinquencyUpdatedAt = latestDateIso(rows);
+    creDelinquencyUpdatedAt = obs.date ? `${obs.date}T00:00:00Z` : null;
     status.delinquency = 'live';
   } else if (Number.isFinite(fallback.creDelinquencyRate)) {
     creDelinquencyRate = fallback.creDelinquencyRate;
     creDelinquencyRateQoQChange = fallback.creDelinquencyRateQoQChange;
-    creDelinquencyUpdatedAt = fallback.updatedAt;
+    creDelinquencyUpdatedAt = fallback.creDelinquencyUpdatedAt;
     status.delinquency = 'fallback';
   }
 
   if (chargeOffResult.status === 'fulfilled') {
     const rows = chargeOffResult.value;
-    creChargeOffRate = latestValue(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    creChargeOffRate = obs.value;
     creChargeOffRateQoQChange = calculateLatestDelta(rows);
-    creChargeOffUpdatedAt = latestDateIso(rows);
+    creChargeOffUpdatedAt = obs.date ? `${obs.date}T00:00:00Z` : null;
     status.chargeOff = 'live';
   } else if (Number.isFinite(fallback.creChargeOffRate)) {
     creChargeOffRate = fallback.creChargeOffRate;
     creChargeOffRateQoQChange = fallback.creChargeOffRateQoQChange;
-    creChargeOffUpdatedAt = fallback.updatedAt;
+    creChargeOffUpdatedAt = fallback.creChargeOffUpdatedAt;
     status.chargeOff = 'fallback';
   }
 
   if (sloosNonfarmNonresidentialResult.status === 'fulfilled') {
     const rows = sloosNonfarmNonresidentialResult.value;
-    sloosCreNonfarmNonresidentialTightening = latestValue(rows);
-    sloosCreNonfarmNonresidentialUpdatedAt = latestDateIso(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    sloosCreNonfarmNonresidentialTightening = obs.value;
+    sloosCreNonfarmNonresidentialUpdatedAt = obs.date ? `${obs.date}T00:00:00Z` : null;
     status.sloosNonfarmNonresidential = 'live';
   } else if (Number.isFinite(fallback.sloosCreNonfarmNonresidentialTightening)) {
     sloosCreNonfarmNonresidentialTightening = fallback.sloosCreNonfarmNonresidentialTightening;
-    sloosCreNonfarmNonresidentialUpdatedAt = fallback.updatedAt;
+    sloosCreNonfarmNonresidentialUpdatedAt = fallback.sloosCreNonfarmNonresidentialUpdatedAt;
     status.sloosNonfarmNonresidential = 'fallback';
   }
 
   if (sloosConstructionResult.status === 'fulfilled') {
     const rows = sloosConstructionResult.value;
-    sloosCreConstructionTightening = latestValue(rows);
-    sloosCreConstructionUpdatedAt = latestDateIso(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    sloosCreConstructionTightening = obs.value;
+    sloosCreConstructionUpdatedAt = obs.date ? `${obs.date}T00:00:00Z` : null;
     status.sloosConstruction = 'live';
   } else if (Number.isFinite(fallback.sloosCreConstructionTightening)) {
     sloosCreConstructionTightening = fallback.sloosCreConstructionTightening;
-    sloosCreConstructionUpdatedAt = fallback.updatedAt;
+    sloosCreConstructionUpdatedAt = fallback.sloosCreConstructionUpdatedAt;
     status.sloosConstruction = 'fallback';
   }
 
   if (sloosMultifamilyResult.status === 'fulfilled') {
     const rows = sloosMultifamilyResult.value;
-    sloosCreMultifamilyTightening = latestValue(rows);
-    sloosCreMultifamilyUpdatedAt = latestDateIso(rows);
+    const obs = latestDatedObservation(rows, nowIso);
+    sloosCreMultifamilyTightening = obs.value;
+    sloosCreMultifamilyUpdatedAt = obs.date ? `${obs.date}T00:00:00Z` : null;
     status.sloosMultifamily = 'live';
   } else if (Number.isFinite(fallback.sloosCreMultifamilyTightening)) {
     sloosCreMultifamilyTightening = fallback.sloosCreMultifamilyTightening;
-    sloosCreMultifamilyUpdatedAt = fallback.updatedAt;
+    sloosCreMultifamilyUpdatedAt = fallback.sloosCreMultifamilyUpdatedAt;
     status.sloosMultifamily = 'fallback';
   }
 
@@ -9444,6 +9525,11 @@ async function resolveCommercialRealEstate(prevCre) {
     sloosCreConstructionTightening: Number.isFinite(sloosCreConstructionTightening) ? +sloosCreConstructionTightening.toFixed(3) : null,
     sloosCreMultifamilyTightening: Number.isFinite(sloosCreMultifamilyTightening) ? +sloosCreMultifamilyTightening.toFixed(3) : null,
     sloosCreTighteningMax,
+    creDelinquencyUpdatedAt,
+    creChargeOffUpdatedAt,
+    sloosCreNonfarmNonresidentialUpdatedAt,
+    sloosCreConstructionUpdatedAt,
+    sloosCreMultifamilyUpdatedAt,
     reitEtfPrice: Number.isFinite(reitEtfPrice) ? reitEtfPrice : null,
     reitEtf4wChange: Number.isFinite(reitEtf4wChange) ? reitEtf4wChange : null,
     reitEtfUpdatedAt,
