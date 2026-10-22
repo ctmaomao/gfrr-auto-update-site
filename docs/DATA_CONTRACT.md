@@ -394,6 +394,11 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `sloosCreConstructionTightening` | number \| null | net % | FRED:SUBLPDRCSC（季频） | SLOOS 建设 / 土地开发 CRE 贷款标准净收紧 |
 | `sloosCreMultifamilyTightening` | number \| null | net % | FRED:SUBLPDRCSM（季频） | SLOOS multifamily CRE 贷款标准净收紧 |
 | `sloosCreTighteningMax` | number \| null | net % | 派生 | 三条 SLOOS CRE 子类中的最大净收紧值 |
+| `creDelinquencyUpdatedAt` | string \| null (optional) | ISO 8601 | FRED:DRCRELEXFACBS | 逾期观察季度起始日；legacy null |
+| `creChargeOffUpdatedAt` | string \| null (optional) | ISO 8601 | FRED:CORCREXFACBS | 核销观察季度起始日；legacy null |
+| `sloosCreNonfarmNonresidentialUpdatedAt` | string \| null (optional) | ISO 8601 | FRED:SUBLPDRCSN | 非农 CRE SLOOS 观察季度起始日 |
+| `sloosCreConstructionUpdatedAt` | string \| null (optional) | ISO 8601 | FRED:SUBLPDRCSC | 建造 CRE SLOOS 观察季度起始日 |
+| `sloosCreMultifamilyUpdatedAt` | string \| null (optional) | ISO 8601 | FRED:SUBLPDRCSM | 多户 CRE SLOOS 观察季度起始日 |
 | `reitEtfPrice` / `reitEtf4wChange` | number \| null | price / ratio | Yahoo:VNQ | 公开 REIT ETF 代理的价格与 4 周变化 |
 | `mortgageReitEtfPrice` / `mortgageReitEtf4wChange` | number \| null | price / ratio | Yahoo:REM | mortgage REIT ETF 代理的价格与 4 周变化 |
 | `cmbsEtfPrice` / `cmbsEtf4wChange` | number \| null | price / ratio | Yahoo:CMBS | commercial mortgage-backed securities ETF public proxy 的价格与 4 周变化 |
@@ -418,6 +423,7 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.commercialRealEstate.*`。
+- 5 个逐项 `*UpdatedAt` 为 ISO UTC 零点日期标签（`YYYY-MM-DDT00:00:00Z`）的 observation period；组 `updatedAt` 只是子源最新日期，不能替代逐项季度日期。fallback 逐项沿用上一份对应日期，缺失/非法保持 null，不借组日期续期。新增字段部署后下一次 Daily 自然生成，当前 data 仍可能缺日期。
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
 - 本字段层不扩写 `macroDrivers.credit`；现有 credit 子树继续只覆盖 HY/IG cash-bond OAS、C&I SLOOS 与 NFCI。
 - 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用 CDX、私募信贷或非公开 loan tape 冒充 CRE 信用压力。
@@ -552,6 +558,11 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 | `onRrpLevel` | string enum | n/a | 派生 | `告急` \| `收紧` \| `快速消耗` \| `充裕` \| `未知` |
 | `pressure` | number | 0-100 | 派生 | 综合流动性压力评分 |
 | `sourceStatus` | object | n/a | 拉取状态 | `{ walcl, onRrp, effectiveFedFundsRate, sofr, reserveBalances, bgcr, tgcr }` 每项为 `live` \| `fallback` \| `missing` |
+| `sourceObservedAt.effectiveFedFundsRate` | string \| null (optional) | ISO 8601 | FRED:DFF | DFF 值与本次取值同一行的 observation date；legacy 快照可为 null |
+| `sourceObservedAt.sofr` | string \| null (optional) | ISO 8601 | FRED:SOFR 或 NYFED:secured-rates-latest | SOFR 值与本次取值同一行的 observation date；不借组 updatedAt |
+| `sourceObservedAt.reserveBalances` | string \| null (optional) | ISO 8601 | FRED:WRESBAL | WRESBAL 最新观测日；legacy 可为 null |
+| `sofrSource` | string \| null (optional) | n/a | 固定 | `FRED:SOFR` 或 `NYFED:secured-rates-latest`；与 `sourceObservedAt.sofr` 同源 |
+| `repoSpreadDateStatus` | object (optional) | n/a | 派生 | `{ bgcrSofr: 'same_day' \| 'mismatch' \| 'unknown', tgcrSofr: ... }`；逐腿独立 |
 
 边界：
 
@@ -565,6 +576,15 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 - 若 NY Fed API 不可用且无 fallback，`bgcr` / `tgcr` / spread 必须保持 `null`，前端不得渲染为 `0.00` 或 `+0bp`。
 - BGCR/TGCR 历史从 2018-04 起，作为 NY Fed 与 SOFR 同步发布的回购参考利率。
 - 正常市场中 `|bgcrSofrSpread|` 长期 < 5bp，`repoSpreadRegime` 通常显示 `正常`，仅压力事件期间跳出。
+
+- 新增 `sourceObservedAt.*` / `sofrSource` / `repoSpreadDateStatus` 均为 optional，部署后下一次 Daily 自然生成；当前已发布 data 仍可能缺日期，缺失显示未知，不视为 0/健康。
+- `sourceObservedAt.*` 明确为 `YYYY-MM-DD`；BGCR/TGCR 与 CRE 的 `*UpdatedAt` 为 ISO UTC 零点日期标签 `YYYY-MM-DDT00:00:00Z`。
+- `repoSpreadRegime` 只由 BGCR 腿决定；TGCR 错日只清 `tgcrSofrSpread`，不改变 `repoSpreadRegime`。
+- 日期仅表示 observation period，不是 publication/PIT；不得用 `updatedAt` 续期。BGCR/TGCR 与 SOFR 仅在同一 observation date 时才计算相应 spread，否则该腿 null、regime 未知。
+- `sourceStatus.*` 只表示 fetch 状态，不是日期核验：fetch 成功即可能为 `live` 而 `sourceObservedAt` 仍为 null；日期缺失/非法一律按 unknown 处理，不得由 status 推断日期有效。
+- FRED SOFR 值 finite 时 NYFed 记录不替换（即使其 `effectiveDate` 与 BGCR/TGCR 同日），因此该腿可保守为 null/`未知`；NYFed SOFR 仅在 FRED 无 finite 值时兜底，并按自身日期参与同日 gate。
+- optional 字段在 catch-all 降级或旧快照中缺席时同样视为 unknown/missing；不得用组 `updatedAt` 或另一腿日期补齐。
+- 日期 helper 以本次 run 的 US 日期标签/UTC 日期（`YYYY-MM-DD`）为准，不做通用时区 instant 归一化；带偏移的跨日标签可能被判为 unknown。
 
 **单位差异说明 (v28.0M-42)**：
 
@@ -594,12 +614,18 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 | `nfci4wChange` | number \| null (optional) | 标准分 | 派生 | NFCI 4周变化（v28.0M-48 起） |
 | `nfciRegime` | string enum (optional) | n/a | 派生（基于 NFCI 绝对值） | `显著收紧` \| `温和收紧` \| `中性` \| `温和宽松` \| `显著宽松` \| `未知`（v28.0M-48 起） |
 | `sourceStatus` | object | n/a | 拉取状态 | `{ igOas: 'live'\|'fallback'\|'missing', sloos: 'live'\|'fallback'\|'missing', nfci: 'live'\|'fallback'\|'missing' }` |
+| `sourceObservedAt.nfci` | string \| null (optional) | ISO 8601 | FRED:NFCI | NFCI 值与本次取值同一行的 observation date |
+| `sourceObservedAt.sloosLarge` | string \| null (optional) | ISO 8601 | FRED:DRTSCILM | 大企业 SLOOS 观察季度起始日 |
+| `sourceObservedAt.sloosSmall` | string \| null (optional) | ISO 8601 | FRED:DRTSCIS | 小企业 SLOOS 观察季度起始日 |
+| `sourceStatus.sloosLarge` / `sloosSmall` | enum (optional) | n/a | 拉取状态 | `live` \| `fallback` \| `missing`；不替换 `sourceStatus.sloos` |
 
 边界：
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`
 - `sloos*` 字段标记为 optional 以保持向后兼容性
 - SLOOS 为季度频率慢变量（年发布 4 次），fallback 路径沿用上一季度数据
-- `sloosTighteningLargeFirms` 与 `sloosTighteningSmallFirms` 来自同一 SLOOS 调查，共享 `sourceStatus.sloos`
+- `sloosTighteningLargeFirms` 与 `sloosTighteningSmallFirms` 来自同一 SLOOS 调查，共享 `sourceStatus.sloos`；该共享字段保留兼容语义，新增 `sloosLarge`/`sloosSmall` 为独立状态，消费前须契约评审
+- 新增 `sourceObservedAt.{nfci,sloosLarge,sloosSmall}` 为 optional，部署后下一次 Daily 自然生成；legacy 快照缺失保持 null，不借组 `updatedAt`。
+- `sourceStatus.sloosLarge`/`sloosSmall` 同样只是 fetch 状态，不验证日期；optional 日期缺席视为 unknown/legacy null，不得由共享 `sourceStatus.sloos` 反推独立腿日期。
 - `regime`（信用市场制度）与 `sloosRegime`（贷款标准制度）独立分类，可同时显示
 - NFCI 与 igOas/hyOas 均为数值越高越紧（同向；NFCI 0 轴与 OAS 水平不同）：NFCI 正值=金融状况收紧，负值=宽松。显示层应使用文字标签（`偏紧`/`偏松`）避免数值方向混淆。
 - NFCI 周频数据（每周三发布上周五数据），fallback 路径使用上轮值。

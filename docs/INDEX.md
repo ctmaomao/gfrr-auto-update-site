@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [SOURCE_OBSERVATION_REPAIR_2026_10_22.md](SOURCE_OBSERVATION_REPAIR_2026_10_22.md) — 原始观察日期链路：DFF/SOFR/WRESBAL、NFCI/SLOOS 大/小、CRE 5 项逐项 observation date 与逐腿同日 gate；不改原始指标值/主分/决策，但派生回购利差新增同日资格，错日/未知可置 null 并改变证据矩阵；观察日≠publication/PIT。
+
 - [ADR-0073](ADR/0073-main-radar-pressure-display-labels.md) — 主雷达同期压力最高档精确标签迁移，保留阈值/颜色/World Order展示行为及Bubble Watch隔离；不更换生产评分模型。
 
 - [SCORE_REMEDIATION_2026_10_17.md](SCORE_REMEDIATION_2026_10_17.md) — 本轮主雷达判读整改的 owner 验收基线、分步实施和独立契约/模型评审门槛；不授权自动更换生产评分。

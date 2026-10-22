@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-23 原始观察日期链路（契约，数据 metadata；待合并）
+
+- **Acceptance baseline**：owner 授权 C（原始观察日期包）窄改；基于 clean `875beb25`（PR #476 合并后 main）的 worktree `source-observation`。只改 `source-observation.mjs`（新）、pipeline 1 import + 5 函数、`source-observation.test.mjs`（新）、DATA_CONTRACT optional 日期段、package 追加测试、报告 + INDEX 一行、本 backlog 条（共 8 文件）。不改 DATA_SOURCES、NFCI 方向/回购 null 文案、前端/asset bump、checker、data/scoring/decision/workflow/realtime/deps。
+- **当前**：Fed DFF/SOFR/WRESBAL 同条日期 + `sofrSource`；BGCR/TGCR 逐腿 `repoSpreadDateStatus` 与独立 spread gate（TGCR 错日不影响 BGCR/regime）；Credit NFCI/SLOOS 大/小独立日期与状态（保留 `sourceStatus.sloos`）；CRE 5 项 `*UpdatedAt` 逐项保留/fallback。新增字段均为 optional，部署后下一次 Daily 自然生成。
+- **下一步 / 验证**：`node --check`、`node tests/unit/source-observation.test.mjs`（r1 6/6；r2 扩为 9/9 pass、0 skip；真实 node:test harness 进程内）、`validate-data`、NFCI/fed-repo/null-zero checker、doc-links、`git diff --check` 均通过；`node --test` 在本 Harness `spawn EPERM` 如实记录，完整 `check:changed` 由 Codex 运行。
+- **阻塞 / 限制**：未部署、未重生成 data，线上快照暂无新字段；观察日≠publication/PIT；`accuracy=not_assessed`；未跑 Daily/realtime/provider/网络，未写 data，未 Git 提交。已合 B 为 PR #476（`875beb25`）；owner 交叉 AI 审阅例外适用于本次已授权整改序列（非人审、不扩成全项目），合并/部署按既有授权 + 交叉 AI 审阅 + CI + 专项验收后推进，无新增付费/评分迁移权限。
+- **r2 修订（2026-10-23）**：补 Credit IG 分支 `latestValue` + live 断言、真实 `classifyRepoSpreadRegime`（BGCR mismatch/TGCR same-day、unknown 腿、真实 0）、FRED SOFR off-date/有限 fallback 与 NYFed same-day 案例；报告/合同窄说明 FRED 优先不替换、`sourceStatus`≠日期核验、optional 缺席视为 unknown、helper 仅 US 日期标签。生产代码/package/INDEX 未改；hash 已变，完整 `check:changed` 需 Codex 重跑。
+
 ### 2026-10-22 回购利差 null 文案契约（契约，frontend bump；待合并）
 
 - **Acceptance baseline**：owner 授权 B（回购 null 文案）窄改；基于 clean `8c2622ff`（PR #475 合并后 main）的 worktree `repo-null-contract`。只改 `buildCrossValidationMatrix.js` 的 null 分支 detail、`check-fed-liquidity-repo-spread.mjs` 1 个 marker、ADR-0075 + ADR README、真实模块测试、package 追加测试、asset bump 机械版本行、本 backlog 条。保留 `missingEvidence`/`value: null` 形状、5/10/25bp 档位与正负对称分类及全部其它断言；不改 DATA_CONTRACT/DATA_SOURCES 语义、`buildMacroDrivers`/`renderMacroOverview`/四层、data/scoring/workflow/realtime/deps，不改 `check-null-zero-display-guards.mjs`。
