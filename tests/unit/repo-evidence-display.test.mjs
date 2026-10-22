@@ -3,21 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import {
-  classifyRepoEvidence,
-  repoEvidenceLabel,
-  repoEvidenceNote,
-  buildMacroOverviewNarrativePlan,
-} from '../../scripts/modules/macroOverviewNarrative.js';
-import * as narrativeModule from '../../scripts/modules/macroOverviewNarrative.js';
-import * as configModule from '../../scripts/modules/config.js';
-import * as displayHelpers from '../../scripts/modules/macroOverviewDisplayHelpers.js';
-import * as matrixModule from '../../scripts/modules/buildCrossValidationMatrix.js';
-import * as riskEditorialModule from '../../scripts/modules/renderMacroRiskEditorial.js';
-import * as trendModule from '../../scripts/modules/renderMacroTrend.js';
-import * as snapshotModule from '../../scripts/modules/snapshotFreshness.js';
 
-const RENDER = fileURLToPath(new URL('../../scripts/modules/renderMacroOverview.js', import.meta.url));
+const RENDER_URL = new URL('../../scripts/modules/renderMacroOverview.js', import.meta.url);
+const RENDER = fileURLToPath(RENDER_URL);
 const INDEX = fileURLToPath(new URL('../../index.html', import.meta.url));
 
 // Inline fixed synthetic representative fixture; not a historical observation.
@@ -73,17 +61,46 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-// Real render module, with only the DOM sink and unrelated imported display helpers
-// stubbed. Local numeric helpers (asNumber/currentValue/signedFixed...) and every
-// local render function are evaluated from the actual source, so a missing dependency
-// surfaces as a thrown error instead of being swallowed.
-function buildRenderApi() {
+// Real render module: imports are parsed from the actual source and loaded with their
+// exact specifiers (including the bumped ?v= query), so this test shares the same module
+// instances as the app/core tests. Only document/DOM sinks are simulated below.
+const IMPORT_RE = /import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"]\s*;?/g;
+
+async function loadRealBindings(source) {
+  const bySpecifier = new Map();
+  for (const match of source.matchAll(IMPORT_RE)) {
+    const names = match[1].split(',').map((name) => name.trim()).filter(Boolean);
+    const specifier = match[2];
+    if (!bySpecifier.has(specifier)) bySpecifier.set(specifier, new Set());
+    for (const name of names) bySpecifier.get(specifier).add(name);
+  }
+  const bindings = {};
+  const modules = new Map();
+  for (const [specifier, names] of bySpecifier) {
+    const url = new URL(specifier, RENDER_URL).href;
+    const module = await import(url);
+    modules.set(specifier, module);
+    for (const name of names) {
+      if (!(name in module)) throw new Error(`missing real export ${name} from ${specifier}`);
+      bindings[name] = module[name];
+    }
+  }
+  // Same narrative module instance as the render imports; expose its plan builder only
+  // for the narrative unit assertions (it is not a render import).
+  for (const module of modules.values()) {
+    if ('buildMacroOverviewNarrativePlan' in module) {
+      bindings.buildMacroOverviewNarrativePlan = module.buildMacroOverviewNarrativePlan;
+    }
+  }
+  return bindings;
+}
+
+async function buildRenderApi() {
   const source = fs.readFileSync(RENDER, 'utf8');
   const body = source
     .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?[ \t]*$/gm, '')
     .replace(/^export[ \t]+/gm, '');
-  const importNames = [...source.matchAll(/^import\s+([\s\S]*?)from\s+['"][^'"]+['"];?[ \t]*$/gm)]
-    .flatMap((match) => match[1].replace(/[{}]/g, '').split(',').map((name) => name.trim()).filter(Boolean));
+  const bindings = await loadRealBindings(source);
   const elements = new Map();
   const fakeElement = (id) => ({
     id,
@@ -110,41 +127,26 @@ function buildRenderApi() {
     if (!elements.has(id)) elements.set(id, fakeElement(id));
     return elements.get(id);
   };
+  const documentStub = {
+    getElementById: elementFor,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    createElement: (tag) => fakeElement(`created-${tag}`),
+  };
+  // Real config.js `$` resolves document from the Node global, so install the sink here.
+  globalThis.document = documentStub;
   const sandbox = {
-    document: {
-      getElementById: elementFor,
-      querySelector: () => null,
-      querySelectorAll: () => [],
-      createElement: (tag) => fakeElement(`created-${tag}`),
-    },
-    $: elementFor,
+    document: documentStub,
     console: { error: (...args) => { throw new Error(`unexpected catch: ${args.map(String).join(' ')}`); } },
     setTimeout: () => {},
     clearTimeout: () => {},
     window: {},
+    ...bindings,
   };
-  const realBindings = {
-    ...configModule,
-    ...displayHelpers,
-    ...matrixModule,
-    ...narrativeModule,
-    ...riskEditorialModule,
-    ...trendModule,
-    ...snapshotModule,
-  };
-  for (const name of importNames) {
-    if (name === '$') {
-      sandbox[name] = elementFor;
-    } else if (name in realBindings) {
-      sandbox[name] = realBindings[name];
-    } else {
-      throw new Error(`renderMacroOverview import has no real binding: ${name}`);
-    }
-  }
   const context = vm.createContext(sandbox);
   vm.runInContext(`${body}\n({ renderDetailData, renderC2GlobalLiquidity, renderMacroDriversPillars, deriveNarratives, asNumber, currentValue, signedFixedWithZero, signedFixed })`, context, { filename: 'renderMacroOverview.vm.js' });
   const api = vm.runInContext('({ renderDetailData, renderC2GlobalLiquidity, renderMacroDriversPillars, deriveNarratives, asNumber, currentValue, signedFixedWithZero, signedFixed })', context);
-  return { api, elements, elementFor };
+  return { api, bindings, elements, elementFor };
 }
 
 function withRepo(overrides) {
@@ -155,7 +157,8 @@ function withRepo(overrides) {
 
 const SAME_DAY = { bgcrSofr: 'same_day', tgcrSofr: 'mismatch' };
 
-test('repo helper keeps 0 valid and gates on date/regime; TGCR is independent', () => {
+test('repo helper keeps 0 valid and gates on date/regime; TGCR is independent', async () => {
+  const { classifyRepoEvidence } = (await buildRenderApi()).bindings;
   assert.deepEqual(
     classifyRepoEvidence(fed({ bgcrSofrSpread: 0, repoSpreadRegime: '正常', repoSpreadDateStatus: { bgcrSofr: 'same_day', tgcrSofr: 'mismatch' } })),
     { status: 'confirmed_normal', spreadBp: 0, regime: '正常' }
@@ -172,7 +175,8 @@ test('repo helper keeps 0 valid and gates on date/regime; TGCR is independent', 
   }
 });
 
-test('narrative policy text is pending/normal/stress scoped, not whole-market claim', () => {
+test('narrative policy text is pending/normal/stress scoped, not whole-market claim', async () => {
+  const { buildMacroOverviewNarrativePlan } = (await buildRenderApi()).bindings;
   const pendingPlan = buildMacroOverviewNarrativePlan({ radarData: { macroDrivers: { fedLiquidity: fed() } } });
   const pending = pendingPlan.sections.find((s) => s.key === 'policy_liquidity');
   assert.match(pending.summaryZh, /不能确认隔夜压力/);
@@ -194,8 +198,8 @@ test('narrative policy text is pending/normal/stress scoped, not whole-market cl
   assert.doesNotMatch(stress.summaryZh, /不是隔夜市场失序/);
 });
 
-test('real deriveNarratives keeps n1-n7 score/isActive and scopes the repo state', () => {
-  const { api } = buildRenderApi();
+test('real deriveNarratives keeps n1-n7 score/isActive and scopes the repo state', async () => {
+  const { api } = await buildRenderApi();
   const baseline = api.deriveNarratives({
     radarData: clone(FIXTURE),
     worldOrderStressData: {},
@@ -228,8 +232,9 @@ test('real deriveNarratives keeps n1-n7 score/isActive and scopes the repo state
   assert.doesNotMatch(pending.description, /三层均无压力|2019-09 信号目前不存在/);
 });
 
-test('real C2 and detail leaves render normal/stress/pending/zero repeatedly and clear stale state', () => {
-  const { api, elementFor } = buildRenderApi();
+test('real C2 and detail leaves render normal/stress/pending/zero repeatedly and clear stale state', async () => {
+  const { api, bindings, elementFor } = await buildRenderApi();
+  const { classifyRepoEvidence } = bindings;
   const sequence = [
     { bgcrSofrSpread: 0, repoSpreadRegime: '正常', repoSpreadDateStatus: SAME_DAY },
     { bgcrSofrSpread: 0.3, repoSpreadRegime: '压力', repoSpreadDateStatus: SAME_DAY },
@@ -251,8 +256,8 @@ test('real C2 and detail leaves render normal/stress/pending/zero repeatedly and
   }
 });
 
-test('real pillar uses D0 strict conversion only when qualified and stays neutral otherwise', () => {
-  const { api, elementFor } = buildRenderApi();
+test('real pillar uses D0 strict conversion only when qualified and stays neutral otherwise', async () => {
+  const { api, elementFor } = await buildRenderApi();
   const sequence = [
     { bgcrSofrSpread: -0.02, repoSpreadRegime: '正常', repoSpreadDateStatus: SAME_DAY, expected: '-2bp' },
     { bgcrSofrSpread: 0.02, repoSpreadRegime: '正常', repoSpreadDateStatus: SAME_DAY, expected: '+2bp' },

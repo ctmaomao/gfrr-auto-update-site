@@ -37,3 +37,10 @@
 - 测试内联 fixture 替代动态 `data/radar-data.json`（真实浏览器仍读真实数据）；所有 import 真实 binding 否则抛错，无 `()=>0` 后备；C2/detail/pillar 增加 pending→normal 真 0 恢复；n1–n7 基线对账保留。
 - 8 图仍为 n7/C2 视图（未受附录窄句影响），附录 r2 由 Codex 另做专项浏览器验收并在 delta review 覆盖；不第二次 bump，不改 matrix/evidenceHighlights/其它 null formatter。
 - 附录 r2 真实验收（Codex Chrome，2026-10-23）：1440/390 均显示待核验、class 为空、墨色；main 68、nav 13、scroll 1425/375；证据 `d-r2-appendix-{1440,390}.jpg` 与 facts 在原 root 合同目录，不入本包正式截图；server 已停、视口已恢复。
+
+## 6. r3 CI 覆盖率阻断修复（仅测试加载方式）
+
+- CI PR479（39866467077）失败：1173 tests / 1172 pass / 0 fail / 1 skip，functions 90.57 < 95，`config.js` funcs 0%。
+- 根因复现：本测试静态 import 无 query 的 `config.js` 等模块，而 core/页面使用 `?v=repo-evidence-release-1`；同文件两个模块实例，未使用实例拉低 funcs。最小复现 15/15 pass 但 config funcs 0、all-files 50。
+- 修复：从 render 源码解析 import specifier，按 render file URL resolve 并 dynamic import 实际带 query 的模块；每个 import 必须存在真实 export，缺失即 throw；仅 document/DOM sink 模拟；不硬编码 v、无 `()=>0`、不静态无 query 再引重复图。未改生产代码/checker/workflow/package/bump。
+- 修复后同一命令：15/15 pass，config funcs 100、all-files 100；标准合并两文件 9/9。完整 CI 覆盖率由 Codex 复跑。
