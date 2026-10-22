@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { classifyRepoEvidence } from '../../scripts/modules/macroOverviewNarrative.js';
 
 const RENDER = fileURLToPath(new URL('../../scripts/modules/renderMacroOverview.js', import.meta.url));
 
@@ -24,6 +25,7 @@ function extract(name) {
 function buildSandbox() {
   const calls = [];
   const sandbox = {
+    classifyRepoEvidence,
     setLeafText: (id, value) => calls.push([id, String(value)]),
     console: {
       error: (...args) => {
@@ -43,7 +45,13 @@ function buildSandbox() {
 }
 
 function radarDataFor(bgcrSofrSpread) {
-  const fedLiquidity = { regime: '正常', reserveBalances: 3620000, onRrpLevel: '充裕' };
+  const fedLiquidity = {
+    regime: '正常',
+    reserveBalances: 3620000,
+    onRrpLevel: '充裕',
+    repoSpreadRegime: '正常',
+    repoSpreadDateStatus: { bgcrSofr: 'same_day', tgcrSofr: 'mismatch' },
+  };
   if (bgcrSofrSpread !== undefined) fedLiquidity.bgcrSofrSpread = bgcrSofrSpread;
   return {
     macroDrivers: {
@@ -73,18 +81,20 @@ test('real pillar renders percentage-point spread as bps instead of a rounded 0'
   assert.doesNotMatch(renderPillarOne(0.02), /\+0bp/);
 });
 
-test('real pillar keeps missing spread null-safe and never fabricates 0bp', () => {
+test('real pillar keeps missing spread pending and never fabricates 0bp', () => {
   for (const missing of [null, undefined, '', Number.NaN]) {
     const text = renderPillarOne(missing);
-    assert.match(text, /回购利差\(BGCR-SOFR\) —bp/, `missing case ${String(missing)}`);
+    assert.match(text, /回购利差\(BGCR-SOFR\) 待核验/, `missing case ${String(missing)}`);
+    assert.doesNotMatch(text, /[+-]?\d+bp/, `missing case ${String(missing)} must not render bp`);
     assert.doesNotMatch(text, /[+-]0bp/, `missing case ${String(missing)} must not render 0bp`);
   }
 });
 
-test('real pillar rejects malformed non-number spread shapes as missing', () => {
+test('real pillar rejects malformed non-number spread shapes as pending', () => {
   for (const malformed of [false, [], {}, '0.02', '-0.02', '0']) {
     const text = renderPillarOne(malformed);
-    assert.match(text, /回购利差\(BGCR-SOFR\) —bp/, `malformed case ${String(malformed)}`);
+    assert.match(text, /回购利差\(BGCR-SOFR\) 待核验/, `malformed case ${String(malformed)}`);
+    assert.doesNotMatch(text, /[+-]?\d+bp/, `malformed case ${String(malformed)} must not render bp`);
     assert.doesNotMatch(text, /[+-]0bp/, `malformed case ${String(malformed)} must not render 0bp`);
   }
   // Keep the real numeric helpers as the render dependency; assert only contract-valid

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=repo-bp-unit-1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=repo-bp-unit-1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=repo-evidence-release-1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=repo-evidence-release-1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

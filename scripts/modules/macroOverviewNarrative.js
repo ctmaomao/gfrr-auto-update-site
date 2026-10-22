@@ -29,6 +29,38 @@ const FINAL_BIAS_ZH = {
   insufficient_data: '数据不足暂不判断',
 };
 
+const REPO_REGIMES = new Set(['正常', '轻微偏离', '压力', '危机水平']);
+
+export function classifyRepoEvidence(fedLiquidity = {}) {
+  const spread = fedLiquidity?.bgcrSofrSpread;
+  const regime = fedLiquidity?.repoSpreadRegime;
+  const sameDay = fedLiquidity?.repoSpreadDateStatus?.bgcrSofr === 'same_day';
+  if (!Number.isFinite(spread) || !sameDay || !REPO_REGIMES.has(regime)) {
+    return { status: 'pending', spreadBp: null, regime: null };
+  }
+  return {
+    status: regime === '正常' ? 'confirmed_normal' : 'confirmed_stress',
+    spreadBp: +(spread * 100).toFixed(1),
+    regime,
+  };
+}
+
+export function repoEvidenceLabel(fedLiquidity = {}) {
+  const evidence = classifyRepoEvidence(fedLiquidity);
+  return evidence.status === 'pending' ? '待核验' : evidence.regime;
+}
+
+export function repoEvidenceNote(fedLiquidity = {}) {
+  const evidence = classifyRepoEvidence(fedLiquidity);
+  if (evidence.status === 'pending') {
+    return '该回购利差待核验：值缺失或非同一观测日，不能确认正常或压力。';
+  }
+  if (evidence.status === 'confirmed_normal') {
+    return '该回购利差处于既有正常档；仅描述该利差，不代表三层整体或历史事件。';
+  }
+  return `该回购利差处于既有「${evidence.regime}」档；仅描述该利差，不代表三层整体或历史事件。`;
+}
+
 const PHYSICAL_BIAS_ZH = {
   strong_bullish: '物理链强紧张',
   moderate_bullish: '物理链偏紧',
@@ -342,6 +374,7 @@ export function buildMacroOverviewEvidencePack({
       onRrpLevel: textValue(fed.onRrpLevel),
       repoSpreadRegime: textValue(fed.repoSpreadRegime),
       bgcrSofrSpread: finite(fed.bgcrSofrSpread),
+      repoEvidence: classifyRepoEvidence(fed),
     },
     worldOrder: {
       score: woScore,
@@ -400,12 +433,23 @@ function buildSections(pack) {
 
   const policy = pack.policyLiquidity;
   const policyTone = policy.minutesPolicyTone || policy.policyTone || '—';
+  const repoEvidence = policy.repoEvidence || classifyRepoEvidence(policy);
+  const repoPolicyText = repoEvidence.status === 'confirmed_normal'
+    ? `该回购利差处于既有正常档（${signedBp(policy.bgcrSofrSpread, 0)}），单一利差不能断言整个隔夜市场无失序`
+    : repoEvidence.status === 'confirmed_stress'
+      ? `该回购利差处于既有「${repoEvidence.regime}」档（${signedBp(policy.bgcrSofrSpread, 0)}），仅描述该利差压力档，不替代总判断`
+      : '回购利差/日期未核验（值缺失或非同日），不能确认隔夜压力，也不能确认正常';
+  const repoCompactText = repoEvidence.status === 'confirmed_normal'
+    ? '该回购利差处于正常档，不足以单独确认隔夜市场无失序'
+    : repoEvidence.status === 'confirmed_stress'
+      ? `该利差处于${repoEvidence.regime}档，仅描述该利差`
+      : '回购利差待核验，不能确认正常或压力';
   const policySection = {
     key: 'policy_liquidity',
     titleZh: '政策与流动性',
     sourceIndicators: ['macroDrivers.policyExpectations', 'macroDrivers.fedLiquidity', 'displayInputsBaseline.us10y'],
-    summaryZh: `政策端仍不宽松:美联储语气 ${policyTone},期货隐含与目标中值差 ${signedBp(policy.futureMinusTargetMid, 1)},OIS 1 年 ${fixed(policy.oisForwardRate, 2)}%;10 年美债 ${fixed(policy.us10y, 2)}%,实际利率 ${fixed(policy.real10y, 2)}%,DXY ${fixed(policy.dxy, 1)}。流动性层面,逆回购水位为「${policy.onRrpLevel || '—'}」,但 BGCR-SOFR ${signedBp(policy.bgcrSofrSpread, 0)}、回购状态「${policy.repoSpreadRegime || '—'}」,更像资金水位偏紧,不是隔夜市场失序。`,
-    compactZh: `政策端仍偏紧:美联储语气 ${policyTone},10Y ${fixed(policy.us10y, 2)}%、实际利率 ${fixed(policy.real10y, 2)}%、DXY ${fixed(policy.dxy, 1)};逆回购偏低但回购利差正常,不是隔夜失序。`,
+    summaryZh: `政策端仍不宽松:美联储语气 ${policyTone},期货隐含与目标中值差 ${signedBp(policy.futureMinusTargetMid, 1)},OIS 1 年 ${fixed(policy.oisForwardRate, 2)}%;10 年美债 ${fixed(policy.us10y, 2)}%,实际利率 ${fixed(policy.real10y, 2)}%,DXY ${fixed(policy.dxy, 1)}。流动性层面,逆回购水位为「${policy.onRrpLevel || '—'}」,${repoPolicyText}。`,
+    compactZh: `政策端仍偏紧:美联储语气 ${policyTone},10Y ${fixed(policy.us10y, 2)}%、实际利率 ${fixed(policy.real10y, 2)}%、DXY ${fixed(policy.dxy, 1)};${repoCompactText}。`,
   };
 
   const triggerText = pack.triggers.slice(0, 2).map((item) => item.replace(/[。；;\s]+$/u, '')).join('；');

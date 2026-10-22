@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=repo-bp-unit-1';
+} from '../../scripts/modules/config.js?v=repo-evidence-release-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
