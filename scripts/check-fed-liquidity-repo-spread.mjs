@@ -103,7 +103,7 @@ for (const marker of runDailyMarkers) {
 
 const matrixMarkers = [
   'const bgcrSofrSpread = finite(fed.bgcrSofrSpread);',
-  'BGCR/TGCR 回购利差指标未接入',
+  'BGCR/TGCR 回购利差证据不足，待核验',
   '回购市场压力显著确认流动性收紧',
   '回购市场正常运行，不支持流动性收紧叙事',
   'SLOOS 大型企业贷款标准净收紧'

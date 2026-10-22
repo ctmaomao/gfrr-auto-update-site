@@ -1,11 +1,19 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-22 回购利差 null 文案契约（契约，frontend bump；待合并）
+
+- **Acceptance baseline**：owner 授权 B（回购 null 文案）窄改；基于 clean `8c2622ff`（PR #475 合并后 main）的 worktree `repo-null-contract`。只改 `buildCrossValidationMatrix.js` 的 null 分支 detail、`check-fed-liquidity-repo-spread.mjs` 1 个 marker、ADR-0075 + ADR README、真实模块测试、package 追加测试、asset bump 机械版本行、本 backlog 条。保留 `missingEvidence`/`value: null` 形状、5/10/25bp 档位与正负对称分类及全部其它断言；不改 DATA_CONTRACT/DATA_SOURCES 语义、`buildMacroDrivers`/`renderMacroOverview`/四层、data/scoring/workflow/realtime/deps，不改 `check-null-zero-display-guards.mjs`。
+- **当前**：null/undefined/空串/NaN 下 `repo_stress` 仍为 `missingEvidence`、`value: null`，detail 改为 `BGCR/TGCR 回购利差证据不足，待核验`；真实 `0` 仍为“回购市场正常运行”；±5/±10/±25bp 及近侧分类不变；缺失态无 `repo_zero_stress`、无 `+0.0bp`。asset bump 一次使用 `repo-null-1`，实际机械文件以 `git status` 清单为准（版本行 only，无 DOM/CSS 语义改动）；`scripts/modules/realtime.js` 冻结未动。
+- **下一步 / 验证**：`node --test tests/unit/repo-spread-null-semantics.test.mjs`、`node --check`、`node scripts/check-fed-liquidity-repo-spread.mjs`、frontend asset version checker、doc-links、`git diff --check`；完整 `check:changed`/`check:all` 由 Codex 执行。Harness `node --test` 若 `spawn EPERM` 如实记录，不以隔离运行冒充标准 runner。
+- **限制 / 推进**：未执行人审（由 owner 交叉 AI 审阅替代）。本任务既有推送/合并/两站部署授权持续有效；完成交叉 AI 审阅、CI 及专项验收后按顺序推进，无新增付费或评分迁移权限。本轮仅本地冻结，未运行 Daily/realtime/provider/网络，未写 data，未做 Git 写。F02（NFCI“方向反转”用户可见文案）与 F03（`nfciToneFromRegime` 标签覆盖）为后续独立 display 修复，仅登记、不在 B 内实施。
+
 ### 2026-10-22 NFCI 方向契约修正（契约，AI 审核；HOLD 不变）
 
 - **Acceptance baseline**：owner 授权 A（NFCI 方向契约）窄改；基于 clean `origin/main` e4d4c76a 的 worktree `nfci-contract`。只改 ADR-0074、ADR README、DATA_CONTRACT/DATA_SOURCES 的 NFCI 方向句、checker 1 个 marker、真实模块测试、package 追加测试、本 backlog 条。不改 runtime/score/data/workflow/deps；不实施 B（回购 null 文案）。
-- **当前**：NFCI 与 IG/HY OAS 均为数值越高越紧；0 轴水平不同；正=收紧、负=宽松。runtime `classifyNfciRegime` 已正确，文档/checker 旧句为错误契约。ADR 状态 owner-authorized implementation、Codex 设计 AI review 通过、human merge review pending，不称 Accepted。
-- **下一步 / 验证**：标准新增 NFCI **3/3**、ACLED 环境复测 **7/7** 均 0 skip；完整 `check:changed` **r2 exit0，mode full/files 8（含 check:all）**，日志 `codex-check-changed-r2.log`/`.exit`；NFCI checker、doc-links、`node --check`、`git diff --check` 均通过。首轮环境 exit1（clean worktree 缺 `node_modules/xlsx`）如实保留；复用主 repo 锁定依赖后 ACLED 7/7，再跑全套 r2。human merge review 仍 pending。
-- **阻塞**：human merge review 未完成；不得合并/部署。B 待独立 ADR-0075，且因 buildCross 属 frontend 需 asset bump，不与 A 混合。
+- **当前**：NFCI 与 IG/HY OAS 均为数值越高越紧；0 轴水平不同；正=收紧、负=宽松。runtime `classifyNfciRegime` 已正确，文档/checker 旧句为错误契约。ADR 状态 owner-authorized implementation、Codex 设计 AI review 通过；合并前 review 由 owner 指定的 Codex+DeepSeek 交叉 AI 审阅完成（非人审），PR #475 已合并于 `8c2622ff`，不称 Accepted。
+- **下一步 / 验证**：标准新增 NFCI **3/3**、ACLED 环境复测 **7/7** 均 0 skip；完整 `check:changed` **r2 exit0，mode full/files 8（含 check:all）**，日志 `codex-check-changed-r2.log`/`.exit`；NFCI checker、doc-links、`node --check`、`git diff --check` 均通过。首轮环境 exit1（clean worktree 缺 `node_modules/xlsx`）如实保留；复用主 repo 锁定依赖后 ACLED 7/7，再跑全套 r2。合并前人工 review 未执行，由 owner 指定的交叉 AI 审阅替代。
+- **阻塞**：无。A 已合并（`8c2622ff`）；合并前人工 review 未执行，由 owner 交叉 AI 审阅替代。既有推送/合并/两站部署授权持续有效，按交叉 AI 审阅、CI、专项验收顺序推进，无新增付费或评分迁移权限。B 走独立 ADR-0075（frontend，需 asset bump），不与 A 混合。
+- **合并前 review 替代（owner 2026-10-22）**：owner 指令“请你和deepseek代替我进行交叉审阅”；适用于本次已授权整改序列的合并前人工 review（覆盖本序列内 A、B 及后续日期/展示等整改项，不只 A/B），由 Codex+DeepSeek 交叉 AI 审阅执行；不构成人审、不扩展成全项目例外，不新增付费或评分迁移权限；本任务既有推送/合并/两站部署授权持续有效。
 
 ### 2026-10-17 主雷达判读分步整改
 
@@ -513,7 +521,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `pressure-label-1` |
+| Cache version | `repo-null-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
