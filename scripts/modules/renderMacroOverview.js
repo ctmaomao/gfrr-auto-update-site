@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=repo-bp-unit-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=repo-bp-unit-1';
+} from './config.js?v=repo-evidence-release-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=repo-evidence-release-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,12 +18,12 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=repo-bp-unit-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=repo-bp-unit-1';
-import { scoreAttributionText } from './macroOverviewNarrative.js?v=repo-bp-unit-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=repo-bp-unit-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=repo-bp-unit-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=repo-bp-unit-1';
+} from './macroOverviewDisplayHelpers.js?v=repo-evidence-release-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=repo-evidence-release-1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=repo-evidence-release-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=repo-evidence-release-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=repo-evidence-release-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=repo-evidence-release-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -520,8 +520,13 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   const igOas = asNumber(radarData?.macroDrivers?.credit?.igOas);
   const nfci = asNumber(radarData?.macroDrivers?.credit?.nfci);
   const onRrpLevel = radarData?.macroDrivers?.fedLiquidity?.onRrpLevel || '';
-  const repoSpreadRegime = radarData?.macroDrivers?.fedLiquidity?.repoSpreadRegime || '';
-  const has2019Signal = onRrpLevel === '告急' && repoSpreadRegime !== '正常';
+  const repoEvidence = classifyRepoEvidence(radarData?.macroDrivers?.fedLiquidity);
+  const onRrpKnown = ['告急', '收紧', '快速消耗', '充裕'].includes(onRrpLevel);
+  const has2019Signal = !onRrpKnown
+    ? null
+    : onRrpLevel === '告急'
+      ? (repoEvidence.status === 'confirmed_stress' ? true : repoEvidence.status === 'pending' ? null : false)
+      : false;
 
   const n1Score = Math.round(energy ?? 0);
   const n1Active = n1Score >= 65;
@@ -538,6 +543,17 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   const n6Active = n6Score >= 50;
   const n7Score = Math.round(liquidity ?? 0);
   const n7Active = n7Score >= 60;
+  const repoStateText = repoEvidence.status === 'confirmed_normal'
+    ? '该回购利差处于既有正常档'
+    : repoEvidence.status === 'confirmed_stress'
+      ? `该回购利差处于既有「${repoEvidence.regime}」档`
+      : '该回购利差待核验';
+  const liquidityGateText = n7Active ? '流动性模块已触发主线条件' : '流动性模块未触发主线条件';
+  const signalObservationText = has2019Signal === true
+    ? '2019-09 组合观察条件满足（非历史概率）。'
+    : has2019Signal === null
+      ? '2019-09 组合条件无法确认。'
+      : '2019-09 组合条件未满足。';
 
   return [
     {
@@ -599,9 +615,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       name: '流动性收紧',
       score: n7Score,
       isActive: n7Active,
-      description: n7Active
-        ? `水位 / 回购 / 隔夜出现压力。${has2019Signal ? '2019-09 信号目前存在' : '2019-09 信号目前不存在'}。`
-        : `水位 / 回购 / 隔夜三层均无压力。${has2019Signal ? '2019-09 信号目前存在' : '2019-09 信号目前不存在'}。`,
+      description: `${liquidityGateText}；${repoStateText}。${signalObservationText}`,
     },
   ];
 }
@@ -629,7 +643,9 @@ function renderMacroDriversPillars({ radarData }) {
     const reserveT = asNumber(fed.reserveBalances) !== null ? (asNumber(fed.reserveBalances) / 1000000).toFixed(2) : '—';
     const repoSpread = Number.isFinite(fed.bgcrSofrSpread) ? fed.bgcrSofrSpread : undefined;
     const repoBp = signedFixedWithZero(Number.isFinite(repoSpread) ? repoSpread * 100 : undefined, 0);
-    setLeafText('pillar-1-text', `${fed.regime || '—'}。美联储总资产(WALCL) / 银行准备金 ${reserveT}T / 回购利差(BGCR-SOFR) ${repoBp}bp / 隔夜利率锚(SOFR-EFFR)锚定。隔夜逆回购: ${fed.onRrpLevel || '—'}。`);
+    const repoEvidence = classifyRepoEvidence(fed);
+    const repoText = repoEvidence.status === 'pending' ? '待核验' : `${repoBp}bp`;
+    setLeafText('pillar-1-text', `${fed.regime || '—'}。美联储总资产(WALCL) / 银行准备金 ${reserveT}T / 回购利差(BGCR-SOFR) ${repoText} / 隔夜利率(SOFR/EFFR)需结合原始日期核验。隔夜逆回购: ${fed.onRrpLevel || '—'}。`);
 
     const policySpread = asNumber(policy.futureMinusTargetMid);
     const policyBp = signedFixedWithZero(policySpread !== null ? policySpread * 100 : null, 1);
@@ -1641,7 +1657,8 @@ function renderC2GlobalLiquidity({ radarData }) {
     if (asNumber(fed.bgcr) !== null && asNumber(fed.tgcr) !== null) {
       setLeafText('c2-liquidity-bgcr-tgcr', `${fed.bgcr.toFixed(2)}% / ${fed.tgcr.toFixed(2)}%`);
     }
-    if (fed.repoSpreadRegime) setLeafText('c2-liquidity-repo-regime', fed.repoSpreadRegime);
+    setLeafText('c2-liquidity-repo-regime', repoEvidenceLabel(fed));
+    setLeafText('c2-liquidity-repo-note', repoEvidenceNote(fed));
 
     const diff = asNumber(policy.futureMinusTargetMid);
     const fedTone = fedPathTone(diff);
@@ -2400,7 +2417,7 @@ function renderDetailData({ radarData }) {
     if (asNumber(fed.sofr) !== null && asNumber(fed.effectiveFedFundsRate) !== null) {
       setLeafText('detail-fed-sofr-effr', `${fed.sofr.toFixed(2)}%/${fed.effectiveFedFundsRate.toFixed(2)}%`);
     }
-    if (fed.repoSpreadRegime) setLeafText('detail-fed-repo-regime', fed.repoSpreadRegime);
+    setLeafText('detail-fed-repo-regime', repoEvidenceLabel(fed));
 
     setLeafText('detail-time-change', Number.isFinite(time.scoreChange30d) ? signedInteger(time.scoreChange30d) : '趋势待累计');
     if (asNumber(time.avg30d) !== null) setLeafText('detail-time-avg', Math.round(time.avg30d));
