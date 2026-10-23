@@ -1,6 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
-### 2026-10-23 回购证据展示收口 D（契约，frontend bump；n7/C2 与附录 r2 两视口均已验收，待完整检查）
+### 2026-10-23 四层风险证据展示 E（展示，frontend bump；after 已验收，冻结待完整检查）
+
+- **Acceptance baseline**：owner 授权四层展示；基于 `6a2329fa` main 的 worktree `four-lane-release`。范围：新增 `fourLaneReadout.js`/`renderFourLaneReadout.js`、Hero `<dl id="hero-four-lanes">`、仅 `hero-four-lanes/hero-lane-*` CSS（含 `[hidden]`）、render import/call、两个展示 test、自含报告/INDEX/backlog、一次 `four-lane-release-1`。不复制 separation test/axis fixture/research CLI；不改 data/workflow/checker assertions/评分/decision/冻结 realtime/依赖。
+- **当前**：四行 display-only，总分 null；tail floor 明写“原模型保底阈值”；transport applied=false/0 不计警报并保留未触发/阻塞；tail 缺失/非法/有效空三态分离，部分未知保留已知计数并标“部分记录待核验”；源日期严格且不晚于快照，VIX 日期未知不借 updatedAt；真 0 有效；重复/null render 清空并隐藏；`.hero-four-lanes[hidden]` 防 grid 覆盖。当前 2026-10-23 00:48 快照：transport applied=false/0、tail floor 68；主分 68/nav13 由 before facts 记录。
+- **下一步 / 验证**：两个 test 3+5 通过、node syntax/diff 通过；after 1440/390 已验收（4 行、主分 68/nav13、scroll 1425/375、serif/ink/warm 保持），四图+README 已登记 `docs/review-evidence/four-lane-20261023/`；完整 check/coverage/独立 review 由 Codex 执行。不预称 full/CI。
+- **阻塞 / 限制**：仅展示、非准确率；before/after 同真实 2026-10-23T00:48:31.687Z 快照（17 JSON hashes 基线）；未跑 Daily/网络/数据写/Git；after 已完成，正式冻结待全套通过。
+
+### 2026-10-23 回购证据展示收口 D（契约，frontend bump；已合并 PR479 / CI success，历史 r1–r3 记录）
 
 - **Acceptance baseline**：owner 授权 D（回购证据展示收口）；基于 `702fa47b` main 的 worktree `repo-evidence-release`。范围：`macroOverviewNarrative.js`（helper + label/note + policy 文案）、`renderMacroOverview.js`（pillar/C2/附录/n7 hunk）、`index.html`（C2 note id、分类 intro、回购初始态）、新真实渲染测试、D0 单测按新资格补 fixture、报告 + INDEX 一行、本 backlog 条、before/after 八图与 README、一次 asset bump `repo-evidence-release-1`。不改 matrix/pipeline/data/workflow/checker assertions/评分/冻结 realtime/依赖。
 - **当前**：`classifyRepoEvidence` 仅 finite（真 0 有效）+ BGCR `same_day` + 既有 regime 才判读，TGCR 独立；pillar 保留 D0 两行严格数值与 ×100 并实际使用 `repoBp`，pending 为“待核验”；C2 与附录总是写限定 label/note；n7 三态不称“三层均无压力/2019-09 不存在”；n7 score/isActive 不变。index 无 CSS/IA 改动。**r2（N1/N2/N3/N7）**：附录同段改“美元流动性分项资料：模块状态…”“SOFR/EFFR 参考读数”，repo 去掉固定 `class="ok"`；测试改内联固定合成 fixture（非历史观测；不读动态 data），import 无真实 binding 即 throw，补 pending→normal(0) 恢复与附录静态断言；不改 matrix/evidenceHighlights/其它 null formatter，不第二次 bump。
@@ -545,7 +552,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `repo-evidence-release-1` |
+| Cache version | `four-lane-release-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=repo-evidence-release-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=repo-evidence-release-1';
+} from './config.js?v=four-lane-release-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=four-lane-release-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,12 +18,13 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=repo-evidence-release-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=repo-evidence-release-1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=repo-evidence-release-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=repo-evidence-release-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=repo-evidence-release-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=repo-evidence-release-1';
+} from './macroOverviewDisplayHelpers.js?v=four-lane-release-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=four-lane-release-1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=four-lane-release-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=four-lane-release-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=four-lane-release-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=four-lane-release-1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=four-lane-release-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2717,6 +2718,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
 
   // Stage 4b-1A: Hero + threshold + pressure-sources
   renderHero({ radarData, worldOrderStressData, marketPricingMetricsData, oilDirectionalData });
+  renderFourLaneReadout({ radarData });
   renderThresholdBlock({ radarData, worldOrderStressData });
   renderPressureSources({ radarData });
 
