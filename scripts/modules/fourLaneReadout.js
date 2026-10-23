@@ -5,7 +5,7 @@
 // tail-overlay floor and is rendered as such by renderFourLaneReadout. Missing
 // or invalid records must stay distinguishable from a valid empty list.
 
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=four-lane-release-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=nfci-display-release-1';
 
 const NUM = (v) => typeof v === 'number' && Number.isFinite(v);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

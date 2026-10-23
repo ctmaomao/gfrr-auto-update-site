@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [NFCI_DISPLAY_REPAIR_2026_10_23.md](NFCI_DISPLAY_REPAIR_2026_10_23.md) — NFCI 展示映射与缺失态：canonical 五档 tone + 既有 alias；C3 严格 finite、缺失/未知 pending 且每次重写；pillar/n6 仅文本缺失 `—`，n6 score/isActive 旧绑定原样；静态卡中性、方向文案修正；不改评分/data/workflow/checker。
+
 - [FOUR_LANE_RISK_READING_2026_10_22.md](FOUR_LANE_RISK_READING_2026_10_22.md) — 四层风险证据展示：Hero 内连续金融压力/结构脆弱性/独立冲击/数据可信度四行；总分 null、tail floor 明写原模型保底阈值、transport 未触发不计警报、tail 缺失/非法/空区分；仅展示，不改主分/评分/data/workflow/checker。
 
 - [REPO_EVIDENCE_DISPLAY_2026_10_22.md](REPO_EVIDENCE_DISPLAY_2026_10_22.md) — 回购证据展示收口：统一 `classifyRepoEvidence` 资格（finite+同日+既有 regime）驱动 pillar/C2/附录/n7/policy；pending 不称正常/无压力，正常/压力仅描述该利差；n7 score/isActive 与主分不变；不改评分/data/workflow/pipeline/checker。

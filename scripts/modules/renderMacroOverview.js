@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=four-lane-release-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=four-lane-release-1';
+} from './config.js?v=nfci-display-release-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=nfci-display-release-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,13 +18,13 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=four-lane-release-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=four-lane-release-1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=four-lane-release-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=four-lane-release-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=four-lane-release-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=four-lane-release-1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=four-lane-release-1';
+} from './macroOverviewDisplayHelpers.js?v=nfci-display-release-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=nfci-display-release-1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=nfci-display-release-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=nfci-display-release-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=nfci-display-release-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=nfci-display-release-1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=nfci-display-release-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -520,6 +520,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   const hyOas = asNumber(radarData?.macroDrivers?.credit?.hyOas);
   const igOas = asNumber(radarData?.macroDrivers?.credit?.igOas);
   const nfci = asNumber(radarData?.macroDrivers?.credit?.nfci);
+  const nfciDisplay = Number.isFinite(radarData?.macroDrivers?.credit?.nfci) ? radarData.macroDrivers.credit.nfci : null;
   const onRrpLevel = radarData?.macroDrivers?.fedLiquidity?.onRrpLevel || '';
   const repoEvidence = classifyRepoEvidence(radarData?.macroDrivers?.fedLiquidity);
   const onRrpKnown = ['告急', '收紧', '快速消耗', '充裕'].includes(onRrpLevel);
@@ -608,8 +609,8 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       score: n6Score,
       isActive: n6Active,
       description: n6Active
-        ? `高收益债利差(HY OAS) ${hyOas !== null ? hyOas.toFixed(2) : '—'}% / 投资级利差(IG OAS) ${igOas !== null ? igOas.toFixed(2) : '—'}% / 金融条件指数(NFCI) ${signedFixed(nfci, 2)}。信用层进入边际收紧。`
-        : `高收益债利差(HY OAS) ${hyOas !== null ? hyOas.toFixed(2) : '—'}% / 投资级利差(IG OAS) ${igOas !== null ? igOas.toFixed(2) : '—'}% / 金融条件指数(NFCI) ${signedFixed(nfci, 2)}。压力初现但远未到告警阈值。`,
+        ? `高收益债利差(HY OAS) ${hyOas !== null ? hyOas.toFixed(2) : '—'}% / 投资级利差(IG OAS) ${igOas !== null ? igOas.toFixed(2) : '—'}% / 金融条件指数(NFCI) ${nfciDisplay !== null ? signedFixed(nfciDisplay, 2) : '—'}。信用层进入边际收紧。`
+        : `高收益债利差(HY OAS) ${hyOas !== null ? hyOas.toFixed(2) : '—'}% / 投资级利差(IG OAS) ${igOas !== null ? igOas.toFixed(2) : '—'}% / 金融条件指数(NFCI) ${nfciDisplay !== null ? signedFixed(nfciDisplay, 2) : '—'}。压力初现但远未到告警阈值。`,
     },
     {
       shortName: '流动性收紧',
@@ -659,8 +660,10 @@ function renderMacroDriversPillars({ radarData }) {
 
     const hy = asNumber(credit.hyOas);
     const ig = asNumber(credit.igOas);
-    const nfci = asNumber(credit.nfci);
-    setLeafText('pillar-4-text', `高收益债利差(HY OAS) ${hy !== null ? hy.toFixed(2) : '—'}% / 投资级利差(IG OAS) ${ig !== null ? ig.toFixed(2) : '—'}% / 金融条件指数(NFCI) ${signedFixed(nfci, 2)} (${credit.nfciRegime || '—'}) / 银行信贷调查(SLOOS) ${credit.sloosRegime || '—'}。`);
+    const nfci = Number.isFinite(credit.nfci) ? credit.nfci : null;
+    const nfciTone = nfciToneFromRegime(credit.nfciRegime);
+    const nfciRegimeText = nfci !== null && nfciTone !== null ? credit.nfciRegime : '待核验';
+    setLeafText('pillar-4-text', `高收益债利差(HY OAS) ${hy !== null ? hy.toFixed(2) : '—'}% / 投资级利差(IG OAS) ${ig !== null ? ig.toFixed(2) : '—'}% / 金融条件指数(NFCI) ${nfci !== null ? signedFixed(nfci, 2) : '—'} (${nfciRegimeText}) / 银行信贷调查(SLOOS) ${credit.sloosRegime || '—'}。`);
   } catch (error) {
     console.error('[renderMacroOverview] renderMacroDriversPillars failed:', error);
   }
@@ -1760,9 +1763,9 @@ function creditIgTone(value) {
 }
 
 function nfciToneFromRegime(regime) {
-  if (regime === '显著宽松' || regime === '宽松') return 'green';
-  if (regime === '中性' || regime === '边际收紧') return 'yellow';
-  if (regime === '收紧' || regime === '紧张') return 'red';
+  if (regime === '显著宽松' || regime === '温和宽松' || regime === '宽松') return 'green';
+  if (regime === '中性' || regime === '温和收紧' || regime === '边际收紧') return 'yellow';
+  if (regime === '显著收紧' || regime === '收紧' || regime === '紧张') return 'red';
   return null;
 }
 
@@ -1856,17 +1859,18 @@ function renderC3CreditCorporate({ radarData }) {
       setLeafText('c3-ig-aux', `1 日变化 ${formatBps(igChange, 0)} · 投资级/高收益比 ${igHyRatio.toFixed(2)}`);
     }
 
-    const nfciTone = nfciToneFromRegime(credit.nfciRegime);
-    setIndicatorStatus('c3-nfci-status', 'c3-nfci-badge', nfciTone);
-    const nfci = asNumber(credit.nfci);
-    if (nfci !== null) setLeafText('c3-nfci-number', nfci.toFixed(3));
-    const nfciChange = asNumber(credit.nfci4wChange);
-    if (nfciChange !== null && credit.nfciRegime) {
-      setLeafText('c3-nfci-aux', `4 周变化 ${signedNumber(nfciChange, 3)} · 状态: ${credit.nfciRegime}`);
-    }
-    if (nfci !== null && credit.nfciRegime) {
-      setLeafText('c3-nfci-note', `金融条件指数(NFCI)汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。方向反转：正值=收紧。当前 ${nfci.toFixed(3)},${credit.nfciRegime}。`);
-    }
+    const nfci = Number.isFinite(credit.nfci) ? credit.nfci : null;
+    const nfciChange = Number.isFinite(credit.nfci4wChange) ? credit.nfci4wChange : null;
+    const nfciRegime = typeof credit.nfciRegime === 'string' ? credit.nfciRegime : null;
+    const nfciTone = nfciToneFromRegime(nfciRegime);
+    const nfciKnown = nfci !== null && nfciTone !== null;
+    const nfciStatusTone = nfciKnown ? nfciTone : 'pending';
+    setToneClass('c3-nfci-status', 'status-bar', nfciStatusTone);
+    setBadge('c3-nfci-badge', nfciStatusTone, nfciStatusTone === 'pending' ? '待核验' : null);
+    setLeafText('c3-nfci-number', nfci !== null ? nfci.toFixed(3) : '—');
+    setLeafText('c3-nfci-aux', `4 周变化 ${nfciChange !== null ? signedNumber(nfciChange, 3) : '—'} · 状态: ${nfciKnown ? nfciRegime : '待核验'}`);
+    const nfciNoteState = nfci === null ? '当前读数缺失，待核验' : nfciKnown ? `当前 ${nfci.toFixed(3)}，${nfciRegime}` : `当前 ${nfci.toFixed(3)}，档位待核验`;
+    setLeafText('c3-nfci-note', `金融条件指数(NFCI)汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。正值表示较历史平均偏紧，负值表示偏松。${nfciNoteState}。`);
 
     const privateTone = privateCreditToneFromRegime(privateCredit.privateCreditProxyRegime);
     setIndicatorStatus('c3-private-status', 'c3-private-badge', privateTone);
