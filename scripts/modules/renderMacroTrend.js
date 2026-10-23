@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=repo-evidence-release-1';
+import { $ } from './config.js?v=four-lane-release-1';
 
 function asNumber(value) {
   const n = Number(value);

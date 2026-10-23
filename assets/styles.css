@@ -507,6 +507,18 @@
   #hero-odp-ref-verdict { color: var(--paper-ink); font-weight: 600; }
   .hero-odp-ref a { color: var(--risk-red); text-decoration: none; border-bottom: 1px solid transparent; }
   .hero-odp-ref a:hover { border-bottom-color: var(--risk-red); }
+  /* Four-lane evidence rows (Hero internal; display-only, no cards) */
+  .hero-four-lanes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 16px 0 18px 0; padding: 12px 0 0 0; border-top: 1px solid var(--paper-line); }
+  .hero-four-lanes[hidden] { display: none; }
+  .hero-lane-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); grid-template-areas: "label status" "label detail"; gap: 2px 10px; padding: 6px 0; border-bottom: 1px solid var(--paper-line); min-width: 0; }
+  .hero-lane-row:last-child { border-bottom: none; }
+  .hero-lane-label { grid-area: label; font-family: var(--font-mono); font-size: 11px; line-height: 1.5; letter-spacing: 0.08em; color: var(--paper-muted); text-transform: uppercase; margin: 0; }
+  .hero-lane-status { grid-area: status; font-family: var(--font-serif); font-size: 14px; line-height: 1.5; color: var(--paper-ink); font-weight: 600; margin: 0; }
+  .hero-lane-detail { grid-area: detail; font-family: var(--font-serif); font-size: 13px; line-height: 1.6; color: var(--paper-muted); margin: 0; overflow-wrap: anywhere; }
+  @media (max-width: 600px) {
+    .hero-four-lanes { grid-template-columns: 1fr; gap: 0; }
+    .hero-lane-row { grid-template-columns: 84px minmax(0, 1fr); }
+  }
   #oil-directional-pressure .section-title.red { color: var(--risk-red); }
   #oil-directional-pressure .section-title.yellow { color: var(--risk-yellow); }
   #oil-directional-pressure .section-title.green { color: var(--risk-green); }
