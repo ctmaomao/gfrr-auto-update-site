@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=four-lane-release-1';
-import { formatOnRrpYiUsd } from './format.js?v=four-lane-release-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=nfci-display-release-1';
+import { formatOnRrpYiUsd } from './format.js?v=nfci-display-release-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

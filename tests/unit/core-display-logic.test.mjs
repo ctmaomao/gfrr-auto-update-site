@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=four-lane-release-1';
+} from '../../scripts/modules/config.js?v=nfci-display-release-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

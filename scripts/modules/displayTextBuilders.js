@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=four-lane-release-1';
+﻿import { fmtNumSafe } from './config.js?v=nfci-display-release-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

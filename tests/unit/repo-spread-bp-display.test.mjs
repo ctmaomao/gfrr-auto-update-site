@@ -37,6 +37,7 @@ function buildSandbox() {
     extract('asNumber'),
     extract('signedFixed'),
     extract('signedFixedWithZero'),
+    extract('nfciToneFromRegime'),
     extract('renderMacroDriversPillars'),
     'renderMacroDriversPillars',
   ].join('\n\n');

@@ -1,10 +1,17 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-23 NFCI 展示映射与缺失态 F（展示，frontend bump；after 已验收，冻结待完整检查）
+
+- **Acceptance baseline**：owner 授权 F（NFCI 展示收口）；实施 DeepSeek，检查由 Codex 组织，独立审阅 DeepSeek（非 owner 人审）。基于 `552a0c13` latest main、worktree `nfci-display-release`。范围：`renderMacroOverview.js` 的 tone/C3/pillar/n6 文本、NFCI 静态卡、新真实 test、package 追加、自含报告/INDEX/backlog、一次 `nfci-display-release-1`。不改 data/pipeline/decision/scoring/workflow/frozen realtime/checker/deps；G 其它字段不并入。
+- **当前**：canonical 五档 tone + legacy alias；C3 number/aux/note/status/badge 每次重写，`Number.isFinite` 真 0 有效、无效/未知 pending（既有 pending 样式）；pillar 与 n6 描述缺失 `—`；n6 旧 `asNumber` 绑定原样供 `n6Raw/n6Score/n6Active`，新增 `nfciDisplay` 仅描述；静态卡中性、“正值偏紧/负值偏松”、meta 五档；保留 checker required `signedFixed(nfci, 2)` 于真实合格分支。当前 2026-10-23T00:48:31.687Z：NFCI -0.496/4w +0.032/温和宽松；before 主分 68/nav13/n6 32、scroll 1425/375、YELLOW；after 同主分/nav/n6，status-bar green、serif/ink/warm 保持。**r2**：Codex 完整 `test:unit:coverage` r1 exit1（1185 tests/1181 pass/3 fail/1 existing skip；三个 fail 均为旧 D0 real pillar 缺 `nfciToneFromRegime`）；仅在旧 test VM source 增加真实 `extract('nfciToneFromRegime')`，原 assertions/fixtures/3 case/catch 不动；F 4 + D0 3 标准进程内 7/7，coverage/full 待 Codex 复跑。
+- **下一步 / 验证**：`node tests/unit/nfci-display.test.mjs` **4/4**、旧 `repo-spread-bp-display` **3/3**、合并标准 runner **7/7**、`node --check` render/test/app、doc-links/diff 通过；after 1440/390 四图+README 已登记 `docs/review-evidence/nfci-display-20261023/`（before390 为父版本预览重拍，非 F 工作区事前捕获；invalid framing 不入正式证据）；完整 coverage/full 由 Codex 复跑，不预称 PASS。
+- **阻塞 / 限制**：仅展示、非准确率；17 JSON hashes 基线；未跑 Daily/网络/数据写/Git；coverage r1 失败已记录并窄修，full 尚未启动。
+
 ### 2026-10-23 四层风险证据展示 E（展示，frontend bump；after 已验收，冻结待完整检查）
 
 - **Acceptance baseline**：owner 授权四层展示；基于 `6a2329fa` main 的 worktree `four-lane-release`。范围：新增 `fourLaneReadout.js`/`renderFourLaneReadout.js`、Hero `<dl id="hero-four-lanes">`、仅 `hero-four-lanes/hero-lane-*` CSS（含 `[hidden]`）、render import/call、两个展示 test、自含报告/INDEX/backlog、一次 `four-lane-release-1`。不复制 separation test/axis fixture/research CLI；不改 data/workflow/checker assertions/评分/decision/冻结 realtime/依赖。
 - **当前**：四行 display-only，总分 null；tail floor 明写“原模型保底阈值”；transport applied=false/0 不计警报并保留未触发/阻塞；tail 缺失/非法/有效空三态分离，部分未知保留已知计数并标“部分记录待核验”；源日期严格且不晚于快照，VIX 日期未知不借 updatedAt；真 0 有效；重复/null render 清空并隐藏；`.hero-four-lanes[hidden]` 防 grid 覆盖。当前 2026-10-23 00:48 快照：transport applied=false/0、tail floor 68；主分 68/nav13 由 before facts 记录。
-- **下一步 / 验证**：两个 test 3+5 通过、node syntax/diff 通过；after 1440/390 已验收（4 行、主分 68/nav13、scroll 1425/375、serif/ink/warm 保持），四图+README 已登记 `docs/review-evidence/four-lane-20261023/`；完整 check/coverage/独立 review 由 Codex 执行。不预称 full/CI。
+- **下一步 / 验证**：两个 test 3+5 通过、node syntax/diff 通过；after 1440/390 已验收（4 行、主分 68/nav13、scroll 1425/375、serif/ink/warm 保持），四图+README 已登记 `docs/review-evidence/four-lane-20261023/`；完整 check/coverage 由 Codex 组织检查，独立审阅由 DeepSeek 完成；不预称 full/CI。
 - **阻塞 / 限制**：仅展示、非准确率；before/after 同真实 2026-10-23T00:48:31.687Z 快照（17 JSON hashes 基线）；未跑 Daily/网络/数据写/Git；after 已完成，正式冻结待全套通过。
 
 ### 2026-10-23 回购证据展示收口 D（契约，frontend bump；已合并 PR479 / CI success，历史 r1–r3 记录）
@@ -552,7 +559,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `four-lane-release-1` |
+| Cache version | `nfci-display-release-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
