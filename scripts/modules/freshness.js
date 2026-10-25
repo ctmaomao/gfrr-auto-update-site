@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=nfci-display-release-1';
+﻿import { fmtNumSafe } from './config.js?v=c2-c3-null-display-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

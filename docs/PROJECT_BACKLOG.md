@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-23 C2/C3 缺失态展示 G（展示，frontend bump；after 已登记，冻结待完整检查）
+
+- **Acceptance baseline**：owner 授权 G（C2 流动性/政策 + C3 HY/IG/CRE 字段）；实施 DeepSeek，Codex 做 after/full/coverage/独立 review。基于 `f6307052` latest main、worktree `c2-c3-null-display`。范围：`renderMacroOverview.js` 选中字段、`index.html` HY/IG note + CRE meta 3 处窄 hunk、新真实 test/package append、自含报告/INDEX/backlog、一次 `c2-c3-null-display-1`。不改 DXY/gold/curve/铜金/其它全局 asNumber、F NFCI/score/n6/decision/data/workflow/source/frozen realtime/checker/dep。
+- **CRE 同卡窄修依据**：真实基线 CRE 违约 1.53/核销 0.143/SLOOS max -3.7、producer `creStressRegime=稳定`、GREEN；静态 meta “阈值 >1.5% 红”与 producer 组合规则不符，`creToneFromRegime` 漏 canonical 紧绷/改善/宽松。仅同卡 canonical（恶化 red、紧绷 yellow、稳定/改善/宽松 green，观察 yellow/压力 red alias，未知 pending），meta 改“既有组合档位：违约 / 核销 / 信贷标准”；不改 producer 阈值/公式/重算 grade；checker 无 assertion 变更。
+- **当前**：C2/C3 选中字段本地 `Number.isFinite`，逐叶总是重写；成对腿/amount/change 分别保留有效值，缺失 `—`；HY 保持 effective→baseline→credit 顺序且逐候选 finite，ready 周变化 changeBp/changePct 逐腿保留；缺 leaf 不用 0 顶替、不重算 producer aggregate，未知/缺失 badge 中文“待核验”；`c2-fed-path-aux` 改为“市场定价与目标中值差”（数值/单位/tone 不变）；F NFCI/输入主分 n1–n7 保持。当前 2026-10-23T00:48:31.687Z 所有目标字段有值，before main 68/nav13/n6 32、scroll 1425/375；合成缺失非真实触发。after Oct24 同 17 JSON 快照：main68/nav13/n6 32、NFCI -0.496 GREEN、CRE 1.53 GREEN、目标 top≈0、无横溢；before/after 8 图+README 已登记 `docs/review-evidence/c2-c3-null-20261023/`。
+- **下一步 / 验证**：新 test **6/6**、F 4/4、旧 D0 3/3、node --check、null-zero/CRE/dom/zh-copy/doc-links/diff 通过；证据/README 已登记；full/coverage/独立 review 待 Codex。不预称 full/CI。
+- **阻塞 / 限制**：仅展示、非准确率；17 JSON hashes 基线；当前全有值，missing 仅合成测试；未跑 Daily/网络/数据写/Git；未 full/commit/push。
+
 ### 2026-10-23 NFCI 展示映射与缺失态 F（展示，frontend bump；after 已验收，冻结待完整检查）
 
 - **Acceptance baseline**：owner 授权 F（NFCI 展示收口）；实施 DeepSeek，检查由 Codex 组织，独立审阅 DeepSeek（非 owner 人审）。基于 `552a0c13` latest main、worktree `nfci-display-release`。范围：`renderMacroOverview.js` 的 tone/C3/pillar/n6 文本、NFCI 静态卡、新真实 test、package 追加、自含报告/INDEX/backlog、一次 `nfci-display-release-1`。不改 data/pipeline/decision/scoring/workflow/frozen realtime/checker/deps；G 其它字段不并入。
@@ -559,7 +567,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `nfci-display-release-1` |
+| Cache version | `c2-c3-null-display-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

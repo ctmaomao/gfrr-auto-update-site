@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [C2_C3_NULL_DISPLAY_2026_10_23.md](C2_C3_NULL_DISPLAY_2026_10_23.md) — C2/C3 缺失态：选中流动性/政策与 HY/IG/CRE 字段本地 strict finite、逐叶重写、成对腿保留有效值；HY 保留 effective→baseline→credit fallback；CRE canonical 组合档位与 3 处窄文案修正；F NFCI/评分/data/workflow/checker 不动；before/after 8 图已登记，full/coverage/review 待。
+
 - [NFCI_DISPLAY_REPAIR_2026_10_23.md](NFCI_DISPLAY_REPAIR_2026_10_23.md) — NFCI 展示映射与缺失态：canonical 五档 tone + 既有 alias；C3 严格 finite、缺失/未知 pending 且每次重写；pillar/n6 仅文本缺失 `—`，n6 score/isActive 旧绑定原样；静态卡中性、方向文案修正；不改评分/data/workflow/checker。
 
 - [FOUR_LANE_RISK_READING_2026_10_22.md](FOUR_LANE_RISK_READING_2026_10_22.md) — 四层风险证据展示：Hero 内连续金融压力/结构脆弱性/独立冲击/数据可信度四行；总分 null、tail floor 明写原模型保底阈值、transport 未触发不计警报、tail 缺失/非法/空区分；仅展示，不改主分/评分/data/workflow/checker。
