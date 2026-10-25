@@ -1,0 +1,21 @@
+# Policy-spread display review evidence (I, r2)
+
+- **r2 recapture.** Four actual JPEGs and two facts JSON, captured 2026-10-25 UTC:
+  - before desktop `2026-10-25T07:30:14.683Z`, mobile `07:30:29.554Z`;
+  - after desktop `2026-10-25T07:30:30.651Z`, mobile `07:30:45.452Z`.
+- Before is a read-only **git archive f71 baseline replay** in local port 8775 with the same 17 JSON snapshot; after is the current I page on local port 8774. Both use snapshot `2026-10-25T00:26:37.771Z`; 17 JSON hashes unchanged.
+- Target `#card-c2-fed-path`: desktop top `0.125`, mobile top `0.375`, scrollWidth `1425`/`375`, both no horizontal overflow. Facts: main **68/100**, nav **13**, n6 **分数 35 · 潜伏**, matrix **71**, policy **+0.7bp**.
+- The earlier 14:46 four-image set is **not valid r2 evidence** (B1 timing/framing defect); its six image/facts files are preserved only in ignored `manual-artifacts/policy-spread-review/evidence-r1/`, not represented as current evidence.
+- Images show only the C2 Fed Path card and page layout; they do not prove WoW#4/pillar-2 text or Hero/nav/n6. Those are recorded in both facts JSON and DOM:
+  - after WoW4 `美联储(Fed)政策定价差 +0.7bp（近月期货隐含利率与目标区间中值差）。`;
+  - after pillar2 `近月联邦基金期货隐含利率与目标区间中值差 +0.7bp,政策基调: 平衡。`;
+  - after card `美联储政策定价差(Fed Path)`, `目标区间中值`, note implied−target-range midpoint, meta `现行观察阈值 |价差|≥50bp 红`.
+- Images:
+  - `before-policy-1440.jpg` 1425×990, sha256 `5dee1e7371d74c7f21df3ae9b0a685cc0afa09d3653f6c074d09d3ecc1ea53fe`
+  - `before-policy-390.jpg` 375×812, sha256 `d3baaf262deb8b8483d6e636ef6d89432b8bc171ca33a102fe42c40e887eaf6d`
+  - `after-policy-1440.jpg` 1425×990, sha256 `74ad6b59d88aa85e3c5d625c410223532b333f2d933a67e1c8caa8fc498d6d37`
+  - `after-policy-390.jpg` 375×812, sha256 `6407e0ada56edad5ff4fe5847e7f8853a7a1823271c86bc01d73fd9d5c0465f1`
+- Facts:
+  - `before-policy-facts.json` sha256 `d1bed729695114a16f883822fce4ac3c7e0eff0f67434df46ac55300fca772a7`
+  - `after-policy-facts.json` sha256 `073419ab215627783a12d7ac45514a373f75b4c76ebfc7527002cac3151037e5`
+- Verification state: full `check:changed` already exit 0 and coverage 1202 tests/1201 pass/0 fail/1 existing skip, funcs 97.96/lines 99.85/branches 94.10, run on the same 21 code paths before these evidence-only changes; CI/two-site deployment still pending. r2 changes only docs/JPEG/facts, not runtime code/tests/checkers/version.

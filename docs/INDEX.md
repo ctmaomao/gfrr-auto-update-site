@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [POLICY_SPREAD_DISPLAY_2026_10_25.md](POLICY_SPREAD_DISPLAY_2026_10_25.md) — I 政策价差展示：C2 Fed Path 标题/aux/note/meta/目标区间中值与本卡中性占位；WoW#4 政策价差观察；pillar2 strict finite 政策文字；不改 checker/score/data/其它 WoW/HY；r2 before/after 4 图+facts 已登记（图只证政策卡/布局），full/coverage exit0、CI 待。
+
 - [MATRIX_REPO_QUALIFICATION_2026_10_25.md](MATRIX_REPO_QUALIFICATION_2026_10_25.md) — H 矩阵回购资格：三消费者复用 D helper + 未舍入 raw 档位一致性；pending 各自 missing；四 checker 断言窄修；before/after 4 图已登记（合法图像素相同、detail 未渲染）；主分/矩阵分别验收；不改 D/pipeline/score/data/workflow/F/G/其它 consumer。
 
 - [C2_C3_NULL_DISPLAY_2026_10_23.md](C2_C3_NULL_DISPLAY_2026_10_23.md) — C2/C3 缺失态：选中流动性/政策与 HY/IG/CRE 字段本地 strict finite、逐叶重写、成对腿保留有效值；HY 保留 effective→baseline→credit fallback；CRE canonical 组合档位与 3 处窄文案修正；F NFCI/评分/data/workflow/checker 不动；before/after 8 图已登记，full/coverage/review 待。

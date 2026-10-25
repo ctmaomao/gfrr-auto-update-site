@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=matrix-repo-qualification-1';
+﻿import { fmtNumSafe } from './config.js?v=policy-spread-display-1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
