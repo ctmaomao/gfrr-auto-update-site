@@ -2,7 +2,7 @@
 // No scoring: the tail floor is annotated as the old model's floor, not a new
 // pressure score; transport that is not applied is not counted as an alert.
 
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=nfci-display-release-1';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=c2-c3-null-display-1';
 
 const ROWS = [
   { key: 'continuous', label: '连续金融压力' },

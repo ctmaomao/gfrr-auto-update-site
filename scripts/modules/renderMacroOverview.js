@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=nfci-display-release-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=nfci-display-release-1';
+} from './config.js?v=c2-c3-null-display-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=c2-c3-null-display-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,13 +18,13 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=nfci-display-release-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=nfci-display-release-1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=nfci-display-release-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=nfci-display-release-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=nfci-display-release-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=nfci-display-release-1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=nfci-display-release-1';
+} from './macroOverviewDisplayHelpers.js?v=c2-c3-null-display-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=c2-c3-null-display-1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=c2-c3-null-display-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=c2-c3-null-display-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=c2-c3-null-display-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=c2-c3-null-display-1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=c2-c3-null-display-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1205,6 +1205,17 @@ function setIndicatorStatus(statusId, badgeId, tone) {
   setBadge(badgeId, tone);
 }
 
+// Local opt-in qualification for the G C2/C3 nullable fields only. Do not replace
+// the global asNumber: scoring and unrelated readers keep their existing behavior.
+function strictFiniteDisplay(value) {
+  return Number.isFinite(value) ? value : null;
+}
+
+function setPendingIndicator(statusId, badgeId) {
+  setToneClass(statusId, 'status-bar', 'pending');
+  setBadge(badgeId, 'pending', '待核验');
+}
+
 // ---------- Stage 5b: C1 Inflation & Energy ----------
 
 function renderC1InflationEnergy({ radarData }) {
@@ -1641,54 +1652,49 @@ function renderC2GlobalLiquidity({ radarData }) {
     }
 
     const liquidityTone = liquidityToneFromRegime(fed.regime);
-    setIndicatorStatus('c2-liquidity-status', 'c2-liquidity-badge', liquidityTone);
-    const reserves = asNumber(fed.reserveBalances);
-    if (reserves !== null) setLeafText('c2-liquidity-number', formatT(reserves));
-    if (fed.regime) setLeafText('c2-liquidity-aux', `银行准备金 · 状态: ${fed.regime}`);
-    const walcl = asNumber(fed.walcl);
-    if (walcl !== null && asNumber(fed.walcl4wChange) !== null) {
-      setLeafText('c2-liquidity-walcl', `${formatT(walcl)}T · 4w ${formatPct(fed.walcl4wChange, 1)}`);
-    }
-    if (reserves !== null && asNumber(fed.reserveBalances4wChange) !== null) {
-      setLeafText('c2-liquidity-reserves', `${formatT(reserves)}T · 4w ${formatPct(fed.reserveBalances4wChange, 1)}`);
-    }
-    if (asNumber(fed.onRrp) !== null && asNumber(fed.onRrpWeekChange) !== null) {
-      setLeafText('c2-liquidity-rrp', `${formatM(fed.onRrp)} · WoW ${formatPct(fed.onRrpWeekChange, 1)}`);
-    }
-    if (asNumber(fed.sofr) !== null && asNumber(fed.effectiveFedFundsRate) !== null) {
-      setLeafText('c2-liquidity-sofr-effr', `${fed.sofr.toFixed(2)}% / ${fed.effectiveFedFundsRate.toFixed(2)}%`);
-    }
-    if (asNumber(fed.bgcr) !== null && asNumber(fed.tgcr) !== null) {
-      setLeafText('c2-liquidity-bgcr-tgcr', `${fed.bgcr.toFixed(2)}% / ${fed.tgcr.toFixed(2)}%`);
-    }
+    if (liquidityTone) setIndicatorStatus('c2-liquidity-status', 'c2-liquidity-badge', liquidityTone);
+    else setPendingIndicator('c2-liquidity-status', 'c2-liquidity-badge');
+    const reserves = strictFiniteDisplay(fed.reserveBalances);
+    const reserves4w = strictFiniteDisplay(fed.reserveBalances4wChange);
+    const onRrp = strictFiniteDisplay(fed.onRrp);
+    const onRrpWeek = strictFiniteDisplay(fed.onRrpWeekChange);
+    const walcl = strictFiniteDisplay(fed.walcl);
+    const walcl4w = strictFiniteDisplay(fed.walcl4wChange);
+    const sofr = strictFiniteDisplay(fed.sofr);
+    const effr = strictFiniteDisplay(fed.effectiveFedFundsRate);
+    const bgcr = strictFiniteDisplay(fed.bgcr);
+    const tgcr = strictFiniteDisplay(fed.tgcr);
+    setLeafText('c2-liquidity-number', reserves !== null ? formatT(reserves) : '—');
+    setLeafText('c2-liquidity-aux', `银行准备金 · 状态: ${liquidityTone ? fed.regime : '待核验'}`);
+    setLeafText('c2-liquidity-walcl', `${walcl !== null ? `${formatT(walcl)}T` : '—'} · 4w ${walcl4w !== null ? formatPct(walcl4w, 1) : '—'}`);
+    setLeafText('c2-liquidity-reserves', `${reserves !== null ? `${formatT(reserves)}T` : '—'} · 4w ${reserves4w !== null ? formatPct(reserves4w, 1) : '—'}`);
+    setLeafText('c2-liquidity-rrp', `${onRrp !== null ? formatM(onRrp) : '—'} · WoW ${onRrpWeek !== null ? formatPct(onRrpWeek, 1) : '—'}`);
+    setLeafText('c2-liquidity-sofr-effr', `${sofr !== null ? `${sofr.toFixed(2)}%` : '—'} / ${effr !== null ? `${effr.toFixed(2)}%` : '—'}`);
+    setLeafText('c2-liquidity-bgcr-tgcr', `${bgcr !== null ? `${bgcr.toFixed(2)}%` : '—'} / ${tgcr !== null ? `${tgcr.toFixed(2)}%` : '—'}`);
     setLeafText('c2-liquidity-repo-regime', repoEvidenceLabel(fed));
     setLeafText('c2-liquidity-repo-note', repoEvidenceNote(fed));
 
-    const diff = asNumber(policy.futureMinusTargetMid);
-    const fedTone = fedPathTone(diff);
-    setIndicatorStatus('c2-fed-path-status', 'c2-fed-path-badge', fedTone);
-    if (diff !== null) {
-      const diffBp = diff * 100;
-      const signedBp = `${diffBp >= 0 ? '+' : ''}${diffBp.toFixed(1)}`;
-      setLeafText('c2-fed-path-number', signedBp);
-      setLeafText('c2-fed-path-aux', `market vs 委员分歧 · ${signedBp}bp`);
-    }
-    if (asNumber(policy.targetMid) !== null) setLeafText('c2-fed-path-target', `${policy.targetMid.toFixed(2)}%`);
-    if (asNumber(policy.fedFundsFutureFrontPrice) !== null && asNumber(policy.fedFundsFutureImpliedRate) !== null) {
-      setLeafText('c2-fed-path-front', `${policy.fedFundsFutureFrontPrice.toFixed(2)} → ${policy.fedFundsFutureImpliedRate.toFixed(2)}%`);
-    }
-    if (asNumber(policy.fedFundsFuturesCurve?.frontMinusBack) !== null) {
-      setLeafText('c2-fed-path-zq', `front ${formatBps(policy.fedFundsFuturesCurve.frontMinusBack, 0)}`);
-    }
-    if (asNumber(policy.sofrFuturesCurve?.frontMinusBack) !== null) {
-      setLeafText('c2-fed-path-sr3', `front ${formatBps(policy.sofrFuturesCurve.frontMinusBack, 0)}`);
-    }
-    if (asNumber(policy.oisForwardCurve?.oneYearRate) !== null) {
-      setLeafText('c2-fed-path-ois', `${policy.oisForwardCurve.oneYearRate.toFixed(2)}%`);
-    }
-    if (asNumber(policy.dotPlotMedianCurrentYear) !== null) {
-      setLeafText('c2-fed-path-dot', `${policy.dotPlotMedianCurrentYear.toFixed(2)}%`);
-    }
+    const diff = strictFiniteDisplay(policy.futureMinusTargetMid);
+    const fedTone = diff !== null ? fedPathTone(diff) : null;
+    if (fedTone) setIndicatorStatus('c2-fed-path-status', 'c2-fed-path-badge', fedTone);
+    else setPendingIndicator('c2-fed-path-status', 'c2-fed-path-badge');
+    const diffbp = diff !== null ? diff * 100 : null;
+    const signedBp = diffbp !== null ? `${diffbp >= 0 ? '+' : ''}${diffbp.toFixed(1)}` : '—';
+    setLeafText('c2-fed-path-number', signedBp);
+    setLeafText('c2-fed-path-aux', `市场定价与目标中值差 · ${diffbp !== null ? `${signedBp}bp` : '—'}`);
+    const targetMid = strictFiniteDisplay(policy.targetMid);
+    setLeafText('c2-fed-path-target', targetMid !== null ? `${targetMid.toFixed(2)}%` : '—');
+    const frontPrice = strictFiniteDisplay(policy.fedFundsFutureFrontPrice);
+    const frontrate = strictFiniteDisplay(policy.fedFundsFutureImpliedRate);
+    setLeafText('c2-fed-path-front', `${frontPrice !== null ? frontPrice.toFixed(2) : '—'} → ${frontrate !== null ? `${frontrate.toFixed(2)}%` : '—'}`);
+    const zqFront = strictFiniteDisplay(policy.fedFundsFuturesCurve?.frontMinusBack);
+    setLeafText('c2-fed-path-zq', `front ${zqFront !== null ? formatBps(zqFront, 0) : '—'}`);
+    const sr3Front = strictFiniteDisplay(policy.sofrFuturesCurve?.frontMinusBack);
+    setLeafText('c2-fed-path-sr3', `front ${sr3Front !== null ? formatBps(sr3Front, 0) : '—'}`);
+    const ois1y = strictFiniteDisplay(policy.oisForwardCurve?.oneYearRate);
+    setLeafText('c2-fed-path-ois', ois1y !== null ? `${ois1y.toFixed(2)}%` : '—');
+    const dotMedian = strictFiniteDisplay(policy.dotPlotMedianCurrentYear);
+    setLeafText('c2-fed-path-dot', dotMedian !== null ? `${dotMedian.toFixed(2)}%` : '—');
     if (policy.policyTone && policy.minutesPolicyTone) {
       setLeafText('c2-fed-path-tone', `${policy.policyTone} / ${policy.minutesPolicyTone}`);
     }
@@ -1777,9 +1783,9 @@ function privateCreditToneFromRegime(regime) {
 }
 
 function creToneFromRegime(regime) {
-  if (regime === '稳定') return 'green';
-  if (regime === '观察') return 'yellow';
-  if (regime === '压力' || regime === '恶化') return 'red';
+  if (regime === '恶化' || regime === '压力') return 'red';
+  if (regime === '紧绷' || regime === '观察') return 'yellow';
+  if (regime === '稳定' || regime === '改善' || regime === '宽松') return 'green';
   return null;
 }
 
@@ -1832,32 +1838,40 @@ function renderC3CreditCorporate({ radarData }) {
     const privateCredit = radarData.macroDrivers?.privateCreditProxy || {};
     const cre = radarData.macroDrivers?.commercialRealEstate || {};
 
-    const hyOas = currentValue(radarData, 'hyOas') ?? asNumber(credit.hyOas);
-    const hyTone = creditHyTone(hyOas);
-    setIndicatorStatus('c3-hy-status', 'c3-hy-badge', hyTone);
+    const hyCandidates = [
+      radarData?.__effectiveDisplayInputs?.hyOas,
+      radarData?.displayInputsBaseline?.hyOas,
+      credit.hyOas,
+    ];
+    const hyOas = hyCandidates.find((value) => Number.isFinite(value)) ?? null;
+    const hyTone = hyOas !== null ? creditHyTone(hyOas) : null;
+    if (hyTone) setIndicatorStatus('c3-hy-status', 'c3-hy-badge', hyTone);
+    else setPendingIndicator('c3-hy-status', 'c3-hy-badge');
     const hyOasWoW = radarData.historyWindowFields?.hyOasWoW;
-    if (hyOas !== null) {
-      setLeafText('c3-hy-number', hyOas.toFixed(2));
-      const changeBp = asNumber(hyOasWoW?.changeBp);
-      const changePct = signedPercentFromDecimal(hyOasWoW?.changePct, 1);
-      if (hyOasWoW?.windowStatus === 'ready' && changeBp !== null && changePct) {
-        setLeafText('c3-hy-aux', `高收益债利差(HY OAS) ${hyOas.toFixed(2)}% · 周变化(WoW) ${formatSignedBpValue(changeBp, 0)} / ${changePct}`);
-      } else if (hyOasWoW) {
-        setLeafText('c3-hy-aux', `高收益债利差(HY OAS) ${hyOas.toFixed(2)}% · 周变化(WoW) ${formatWindowProgress(hyOasWoW)}`);
-      } else {
-        setLeafText('c3-hy-aux', `高收益债利差(HY OAS) ${hyOas.toFixed(2)}% · 周变化(WoW)字段未接入`);
-      }
+    const changeBp = strictFiniteDisplay(hyOasWoW?.changeBp);
+    const changePct = strictFiniteDisplay(hyOasWoW?.changePct);
+    const hyValueText = hyOas !== null ? `${hyOas.toFixed(2)}%` : '—';
+    let hyAux = `高收益债利差(HY OAS) ${hyValueText}`;
+    if (hyOasWoW?.windowStatus === 'ready') {
+      const bpText = changeBp !== null ? formatSignedBpValue(changeBp, 0) : '—';
+      const pctText = changePct !== null ? signedPercentFromDecimal(changePct, 1) : '—';
+      hyAux += ` · 周变化(WoW) ${bpText} / ${pctText}`;
+    } else if (hyOasWoW) {
+      hyAux += ` · 周变化(WoW) ${formatWindowProgress(hyOasWoW)}`;
+    } else {
+      hyAux += ' · 周变化(WoW)字段未接入';
     }
+    setLeafText('c3-hy-number', hyOas !== null ? hyOas.toFixed(2) : '—');
+    setLeafText('c3-hy-aux', hyAux);
 
-    const igOas = asNumber(credit.igOas);
-    const igTone = creditIgTone(igOas);
-    setIndicatorStatus('c3-ig-status', 'c3-ig-badge', igTone);
-    if (igOas !== null) setLeafText('c3-ig-number', igOas.toFixed(2));
-    const igChange = asNumber(credit.igOas1dChange);
-    const igHyRatio = asNumber(credit.igHyRatio);
-    if (igChange !== null && igHyRatio !== null) {
-      setLeafText('c3-ig-aux', `1 日变化 ${formatBps(igChange, 0)} · 投资级/高收益比 ${igHyRatio.toFixed(2)}`);
-    }
+    const igOas = strictFiniteDisplay(credit.igOas);
+    const igTone = igOas !== null ? creditIgTone(igOas) : null;
+    if (igTone) setIndicatorStatus('c3-ig-status', 'c3-ig-badge', igTone);
+    else setPendingIndicator('c3-ig-status', 'c3-ig-badge');
+    setLeafText('c3-ig-number', igOas !== null ? igOas.toFixed(2) : '—');
+    const igChange = strictFiniteDisplay(credit.igOas1dChange);
+    const igHyRatio = strictFiniteDisplay(credit.igHyRatio);
+    setLeafText('c3-ig-aux', `1 日变化 ${igChange !== null ? formatBps(igChange, 0) : '—'} · 投资级/高收益比 ${igHyRatio !== null ? igHyRatio.toFixed(2) : '—'}`);
 
     const nfci = Number.isFinite(credit.nfci) ? credit.nfci : null;
     const nfciChange = Number.isFinite(credit.nfci4wChange) ? credit.nfci4wChange : null;
@@ -1900,19 +1914,24 @@ function renderC3CreditCorporate({ radarData }) {
     if (privateCredit.privateCreditProxyRegime) setLeafText('c3-private-regime', privateCredit.privateCreditProxyRegime);
 
     const creTone = creToneFromRegime(cre.creStressRegime);
-    setIndicatorStatus('c3-cre-status', 'c3-cre-badge', creTone);
-    const delinquency = asNumber(cre.creDelinquencyRate);
-    if (delinquency !== null) setLeafText('c3-cre-number', delinquency.toFixed(2));
-    const delinquencyChange = asNumber(cre.creDelinquencyRateQoQChange);
-    if (delinquencyChange !== null && cre.creStressRegime) {
-      setLeafText('c3-cre-aux', `商业地产贷款违约率 · QoQ ${formatBps(delinquencyChange, 0)} · 状态: ${cre.creStressRegime}`);
-    }
-    if (delinquency !== null) setLeafText('c3-cre-delinquency', `${delinquency.toFixed(2)}%`);
-    if (asNumber(cre.creChargeOffRate) !== null) setLeafText('c3-cre-chargeoff', `${cre.creChargeOffRate.toFixed(2)}%`);
-    if (asNumber(cre.sloosCreNonfarmNonresidentialTightening) !== null) setLeafText('c3-cre-sloos-nonfarm', signedNumber(cre.sloosCreNonfarmNonresidentialTightening, 1));
-    if (asNumber(cre.sloosCreConstructionTightening) !== null) setLeafText('c3-cre-sloos-construction', signedNumber(cre.sloosCreConstructionTightening, 1));
-    if (asNumber(cre.sloosCreMultifamilyTightening) !== null) setLeafText('c3-cre-sloos-multifamily', signedNumber(cre.sloosCreMultifamilyTightening, 1));
-    if (asNumber(cre.sloosCreTighteningMax) !== null) setLeafText('c3-cre-sloos-max', signedNumber(cre.sloosCreTighteningMax, 1));
+    if (creTone) setIndicatorStatus('c3-cre-status', 'c3-cre-badge', creTone);
+    else setPendingIndicator('c3-cre-status', 'c3-cre-badge');
+    const delinquency = strictFiniteDisplay(cre.creDelinquencyRate);
+    const delinquencyChange = strictFiniteDisplay(cre.creDelinquencyRateQoQChange);
+    const chargeOff = strictFiniteDisplay(cre.creChargeOffRate);
+    const sloosNonfarm = strictFiniteDisplay(cre.sloosCreNonfarmNonresidentialTightening);
+    const sloosConstruction = strictFiniteDisplay(cre.sloosCreConstructionTightening);
+    const sloosMultifamily = strictFiniteDisplay(cre.sloosCreMultifamilyTightening);
+    const sloosMax = strictFiniteDisplay(cre.sloosCreTighteningMax);
+    const creRegimeText = creTone ? cre.creStressRegime : '待核验';
+    setLeafText('c3-cre-number', delinquency !== null ? delinquency.toFixed(2) : '—');
+    setLeafText('c3-cre-aux', `商业地产贷款违约率 · QoQ ${delinquencyChange !== null ? formatBps(delinquencyChange, 0) : '—'} · 状态: ${creRegimeText}`);
+    setLeafText('c3-cre-delinquency', delinquency !== null ? `${delinquency.toFixed(2)}%` : '—');
+    setLeafText('c3-cre-chargeoff', chargeOff !== null ? `${chargeOff.toFixed(2)}%` : '—');
+    setLeafText('c3-cre-sloos-nonfarm', sloosNonfarm !== null ? signedNumber(sloosNonfarm, 1) : '—');
+    setLeafText('c3-cre-sloos-construction', sloosConstruction !== null ? signedNumber(sloosConstruction, 1) : '—');
+    setLeafText('c3-cre-sloos-multifamily', sloosMultifamily !== null ? signedNumber(sloosMultifamily, 1) : '—');
+    setLeafText('c3-cre-sloos-max', sloosMax !== null ? signedNumber(sloosMax, 1) : '—');
   } catch (error) {
     console.error('[renderMacroOverview] renderC3CreditCorporate failed:', error);
   }
