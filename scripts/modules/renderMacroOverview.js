@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=matrix-repo-qualification-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=matrix-repo-qualification-1';
+} from './config.js?v=policy-spread-display-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=policy-spread-display-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,13 +18,13 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=matrix-repo-qualification-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=matrix-repo-qualification-1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=matrix-repo-qualification-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=matrix-repo-qualification-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=matrix-repo-qualification-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=matrix-repo-qualification-1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=matrix-repo-qualification-1';
+} from './macroOverviewDisplayHelpers.js?v=policy-spread-display-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=policy-spread-display-1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=policy-spread-display-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=policy-spread-display-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=policy-spread-display-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=policy-spread-display-1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=policy-spread-display-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -450,12 +450,13 @@ function renderWowSection({ radarData, worldOrderStressData }) {
       setLeafText('wow-item-3-text', `世界秩序压力(World Order)当前为 ${worldOrderStateLabel(woState, woLabel)},结构性压力持续。`);
       setLeafText('wow-item-3-source', '世界秩序状态变化');
     }
-    const futureMinusTargetMid = asNumber(radarData.macroDrivers?.policyExpectations?.futureMinusTargetMid);
-    if (futureMinusTargetMid !== null) {
-      const bp = futureMinusTargetMid * 100;
-      setLeafText('wow-item-4-text', `美联储(Fed)政策路径分歧 ${signedFixed(bp, 1)}bp,市场定价与目标中位仍有偏差。`);
-      setLeafText('wow-item-4-source', '美联储(Fed)政策路径分歧');
-    }
+    const policySpreadRaw = radarData.macroDrivers?.policyExpectations?.futureMinusTargetMid;
+    const futureMinusTargetMid = Number.isFinite(policySpreadRaw) ? policySpreadRaw : null;
+    const policyBp = futureMinusTargetMid !== null ? futureMinusTargetMid * 100 : null;
+    setLeafText('wow-item-4-text', policyBp !== null
+      ? `美联储(Fed)政策定价差 ${signedFixed(policyBp, 1)}bp（近月期货隐含利率与目标区间中值差）。`
+      : '美联储(Fed)政策定价差 待核验（近月期货隐含利率与目标区间中值差）。');
+    setLeafText('wow-item-4-source', '美联储(Fed)政策定价差');
     const initialClaims = asNumber(radarData.macroDrivers?.employment?.initialClaims);
     if (initialClaims !== null) {
       setLeafText('wow-item-5-text', `首次申请稳在 ${(initialClaims / 1000).toFixed(0)}k,就业扩散仍需观察。`);
@@ -649,10 +650,11 @@ function renderMacroDriversPillars({ radarData }) {
     const repoText = repoEvidence.status === 'pending' ? '待核验' : `${repoBp}bp`;
     setLeafText('pillar-1-text', `${fed.regime || '—'}。美联储总资产(WALCL) / 银行准备金 ${reserveT}T / 回购利差(BGCR-SOFR) ${repoText} / 隔夜利率(SOFR/EFFR)需结合原始日期核验。隔夜逆回购: ${fed.onRrpLevel || '—'}。`);
 
-    const policySpread = asNumber(policy.futureMinusTargetMid);
-    const policyBp = signedFixedWithZero(policySpread !== null ? policySpread * 100 : null, 1);
+    const policySpread = Number.isFinite(policy.futureMinusTargetMid) ? policy.futureMinusTargetMid : null;
+    const policyBpRaw = policySpread !== null ? policySpread * 100 : null;
+    const policyBp = policyBpRaw !== null ? `${signedFixedWithZero(policyBpRaw, 1)}bp` : '待核验';
     const toneZh = ({ hawkish: '鹰派', dovish: '鸽派', neutral: '中性' })[policy.policyTone] || policy.policyTone || '—';
-    setLeafText('pillar-2-text', `市场与委员分歧。期货隐含与目标中值差 ${policyBp}bp,政策基调: ${toneZh}。`);
+    setLeafText('pillar-2-text', `近月联邦基金期货隐含利率与目标区间中值差 ${policyBp},政策基调: ${toneZh}。`);
 
     const curveSpread = asNumber(curve.t10y2y);
     const curveBp = signedFixedWithZero(curveSpread !== null ? curveSpread * 100 : null, 0);

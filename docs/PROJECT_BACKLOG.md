@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-25 政策价差展示 I（展示，frontend bump；after r2 已登记，full/coverage exit0，CI 待）
+
+- **Acceptance baseline**：owner 授权 I（G N1 政策价差语义）；实施 DeepSeek，Codex+DeepSeek cross-AI review（非人工）。基于 H 合并 `f71a3e12`、branch `codex/policy-spread-display-20261025`、worktree `c2-c3-null-display`。范围仅 C2 Fed Path 静态标题/aux/note/meta/目标区间中值与中性占位、WoW#4 静态 tag/text/source+动态 leaf、pillar2 政策文字及该字段 strict finite；不改 checker/score/data/pipeline/workflow/F/G/H 逻辑/D helper/NFCI/其它 WoW/HY/卡/聚合。
+- **Before facts**：正式 `docs/review-evidence/policy-spread-20261025/before-policy-facts.json`、`before-policy-{1440,390}.jpg`；before 为 git-archive f71 基线重放（local8775，同 17 JSON）；snapshot `2026-10-25T00:26:37.771Z`、17 JSON hashes；main68/n635/nav13/matrix71，policy +0.7bp；target `#card-c2-fed-path` desktop/mobile top .125/.375、scroll1425/375、两宽无横溢；图只证明政策卡/布局，Hero/其它文本用 facts/DOM。
+- **当前**：C2 标题“美联储政策定价差(Fed Path)”、aux“市场定价与目标中值差”、note 说明隐含−目标区间中值、meta“现行观察阈值 |价差|≥50bp 红”、目标标签“目标区间中值”，本卡静态占位 —/pending；删 1999/2000/2022 与委员预期。WoW#4 `is-flat`“政策价差观察”，动态 strict finite、缺失/非法待核验、true0 有效；pillar2 strict finite，保留 `policySpread !== null ? policySpread * 100 : null` 真实中间变量，显式缺失待核验。一次 `policy-spread-display-1` bump，历史版本保留。
+- **下一步 / 验证**：I test 5/5、旧 G/F/D0/H 意图保持、node --check/nullzero/dom/zh/assets/docs/diff 通过；r2 证据 `docs/review-evidence/policy-spread-20261025/` 已替换为正确的 4 JPEG+2 facts（before git-archive f71 replay 8775/after current 8774，UTC 07:30:14–45，desktop/mobile top .125/.375、scroll1425/375、无横溢；图只证政策卡/布局，WoW/pillar/Hero用 facts/DOM）；full exit0、coverage 1202/1201/0/1 funcs97.96 lines99.85 branches94.10（同 21 code paths，r2 仅证据/文档）；CI/两站待，crossreview r1 证据问题已修、r2 待审。
+- **阻塞 / 限制**：CI/两站与 r2 evidence review 待；图片不证明 Hero/nav/n6/另两处文字；N2/N3 非阻塞项保持；无 Daily/网络/数据写/Git。
+
 ### 2026-10-25 Matrix 回购资格 H（契约，frontend bump；after 已登记，冻结待完整检查）
 
 - **Acceptance baseline**：owner 授权 issue #483 的独立 H 契约包；实施 DeepSeek，pre-merge review 为 owner-selected Codex+DeepSeek cross-AI review（非人工 review）；不夹 I/G 展示。基于 G 合并 `0ec3dc5d`、branch `codex/matrix-repo-qualification-20261025`、worktree `c2-c3-null-display`。范围仅 matrix 三消费者 + `check-fed` 三 marker + `check-null-zero` 第四处已审 assertion（`H-checker-addendum.md`/issue comment 6391801684）；不改 D helper/finite/pipeline/score/data/workflow/F/G display/其它 consumer/dep。
@@ -576,7 +584,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `matrix-repo-qualification-1` |
+| Cache version | `policy-spread-display-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
