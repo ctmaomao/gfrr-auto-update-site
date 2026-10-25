@@ -15,8 +15,12 @@ function read(filePath) {
   return fs.readFileSync(filePath, 'utf8');
 }
 
-function matrixFor(bgcrSofrSpread) {
-  const fedLiquidity = bgcrSofrSpread === undefined ? {} : { bgcrSofrSpread };
+function matrixFor(bgcrSofrSpread, { regime = '正常', sameDay = true } = {}) {
+  const fedLiquidity = bgcrSofrSpread === undefined ? {} : {
+    bgcrSofrSpread,
+    repoSpreadRegime: regime,
+    repoSpreadDateStatus: { bgcrSofr: sameDay ? 'same_day' : 'mismatch' },
+  };
   return buildCrossValidationMatrix({
     displayInputsBaseline: {},
     macroDrivers: {
@@ -72,8 +76,8 @@ test('a real zero spread stays the normal classification, not missing evidence',
   assert.equal(rows.length, 1);
   assert.equal(rows[0].bucket, 'contradictingEvidence');
   assert.equal(rows[0].value, '+0.0bp');
-  assert.match(rows[0].detail, /回购市场正常运行/);
-  assert.match(rows[0].detail, /不支持流动性收紧叙事/);
+  assert.match(rows[0].detail, /该回购利差处于既有正常档/);
+  assert.match(rows[0].detail, /不支持由该利差推断流动性收紧/);
   assert.equal(
     narrative.missingEvidence.some((row) => row.source === 'repo_stress'),
     false,
@@ -83,24 +87,24 @@ test('a real zero spread stays the normal classification, not missing evidence',
 
 test('5/10/25bp thresholds, near sides and positive/negative symmetry are unchanged', () => {
   const tiers = [
-    { spread: 0.049, bucket: 'contradictingEvidence', text: '回购市场正常运行' },
-    { spread: 0.05, bucket: 'supportingEvidence', text: '轻微偏离正常' },
-    { spread: 0.099, bucket: 'supportingEvidence', text: '轻微偏离正常' },
-    { spread: 0.1, bucket: 'supportingEvidence', text: '回购市场出现压力分层' },
-    { spread: 0.249, bucket: 'supportingEvidence', text: '回购市场出现压力分层' },
-    { spread: 0.25, bucket: 'supportingEvidence', text: '达到危机水平' },
-    { spread: 0.3, bucket: 'supportingEvidence', text: '回购市场压力显著确认' },
-    { spread: -0.049, bucket: 'contradictingEvidence', text: '回购市场正常运行' },
-    { spread: -0.05, bucket: 'supportingEvidence', text: '轻微偏离正常' },
-    { spread: -0.099, bucket: 'supportingEvidence', text: '轻微偏离正常' },
-    { spread: -0.1, bucket: 'supportingEvidence', text: '回购市场出现压力分层' },
-    { spread: -0.249, bucket: 'supportingEvidence', text: '回购市场出现压力分层' },
-    { spread: -0.25, bucket: 'supportingEvidence', text: '达到危机水平' },
-    { spread: -0.3, bucket: 'supportingEvidence', text: '回购市场压力显著确认' },
+    { spread: 0.049, regime: '正常', bucket: 'contradictingEvidence', text: '该回购利差处于既有正常档' },
+    { spread: 0.05, regime: '轻微偏离', bucket: 'supportingEvidence', text: '该回购利差处于既有「轻微偏离」档' },
+    { spread: 0.099, regime: '轻微偏离', bucket: 'supportingEvidence', text: '该回购利差处于既有「轻微偏离」档' },
+    { spread: 0.1, regime: '压力', bucket: 'supportingEvidence', text: '该回购利差处于既有「压力」档' },
+    { spread: 0.249, regime: '压力', bucket: 'supportingEvidence', text: '该回购利差处于既有「压力」档' },
+    { spread: 0.25, regime: '危机水平', bucket: 'supportingEvidence', text: '该回购利差处于既有「危机水平」档' },
+    { spread: 0.3, regime: '危机水平', bucket: 'supportingEvidence', text: '该回购利差处于既有「危机水平」档' },
+    { spread: -0.049, regime: '正常', bucket: 'contradictingEvidence', text: '该回购利差处于既有正常档' },
+    { spread: -0.05, regime: '轻微偏离', bucket: 'supportingEvidence', text: '该回购利差处于既有「轻微偏离」档' },
+    { spread: -0.099, regime: '轻微偏离', bucket: 'supportingEvidence', text: '该回购利差处于既有「轻微偏离」档' },
+    { spread: -0.1, regime: '压力', bucket: 'supportingEvidence', text: '该回购利差处于既有「压力」档' },
+    { spread: -0.249, regime: '压力', bucket: 'supportingEvidence', text: '该回购利差处于既有「压力」档' },
+    { spread: -0.25, regime: '危机水平', bucket: 'supportingEvidence', text: '该回购利差处于既有「危机水平」档' },
+    { spread: -0.3, regime: '危机水平', bucket: 'supportingEvidence', text: '该回购利差处于既有「危机水平」档' },
   ];
 
-  for (const { spread, bucket, text } of tiers) {
-    const rows = repoRows(matrixFor(spread));
+  for (const { spread, regime, bucket, text } of tiers) {
+    const rows = repoRows(matrixFor(spread, { regime }));
     assert.equal(rows.length, 1, `one repo_stress row for ${spread}`);
     assert.equal(rows[0].bucket, bucket, `bucket for ${spread}`);
     assert.match(rows[0].detail, new RegExp(text), `detail tier for ${spread}`);
@@ -119,9 +123,9 @@ test('matrix sentence and checker marker agree while retained classification ass
   assert.equal(checkerText.includes(OLD_DETAIL), false, 'checker must not lock the old wording');
 
   for (const marker of [
-    'const bgcrSofrSpread = finite(fed.bgcrSofrSpread);',
-    '回购市场压力显著确认流动性收紧',
-    '回购市场正常运行，不支持流动性收紧叙事',
+    'const bgcrSofrSpread = Number.isFinite(fed.bgcrSofrSpread) ? fed.bgcrSofrSpread : null;',
+    '该回购利差处于既有「危机水平」档，支持流动性收紧观察',
+    '该回购利差处于既有正常档，不支持由该利差推断流动性收紧',
     'SLOOS 大型企业贷款标准净收紧',
   ]) {
     assert.ok(matrixText.includes(marker), `retained matrix marker missing: ${marker}`);

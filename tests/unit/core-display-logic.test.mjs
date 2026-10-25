@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=c2-c3-null-display-1';
+} from '../../scripts/modules/config.js?v=matrix-repo-qualification-1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

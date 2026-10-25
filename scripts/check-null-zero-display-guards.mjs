@@ -65,10 +65,21 @@ function assertRepoMissingStaysMissing() {
     !renderedEvidence.includes('BGCR-SOFR +0.0bp'),
     'missing BGCR-SOFR spread must not render as BGCR-SOFR +0.0bp.'
   );
-  assert(
-    !rows.some((row) => row.source === 'repo_zero_stress'),
-    'missing BGCR-SOFR spread must not create repo_zero_stress evidence.'
-  );
+  const pendingPairs = [
+    ['risk_asset_mismatch', 'repo_vix_mismatch'],
+    ['overheat_confirmation', 'repo_zero_stress'],
+    ['liquidity_tightening', 'repo_stress'],
+  ];
+  for (const [narrativeId, source] of pendingPairs) {
+    const matches = rows.filter((row) => row.narrative === narrativeId && row.source === source);
+    assert(matches.length === 1, `missing ${source} should have exactly one evidence row for ${narrativeId}.`);
+    assert(matches[0].bucket === 'missingEvidence', `missing ${source} must stay in missingEvidence for ${narrativeId}.`);
+    assert(matches[0].value === null, `missing ${source} must keep a null value for ${narrativeId}.`);
+    assert(
+      !rows.some((row) => row.source === source && (row.bucket === 'supportingEvidence' || row.bucket === 'contradictingEvidence')),
+      `missing ${source} must not create support/contradiction for ${narrativeId}.`
+    );
+  }
   assert(
     !rows.some((row) => row.source === 'repo_stress' && row.value === '+0.0bp'),
     'missing BGCR-SOFR spread must not create repo_stress +0.0bp evidence.'

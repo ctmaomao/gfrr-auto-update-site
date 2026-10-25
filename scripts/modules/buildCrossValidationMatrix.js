@@ -1,3 +1,5 @@
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=matrix-repo-qualification-1';
+
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',
   partial_confirmation: '部分确认',
@@ -12,6 +14,27 @@ const BUCKET_LABELS = {
   cold: '显著偏冷',
   'extreme-cold': '极度偏冷',
 };
+
+function expectedMatrixRepoRegime(rawBp) {
+  const absBp = Math.abs(rawBp);
+  if (absBp < 5) return '正常';
+  if (absBp < 10) return '轻微偏离';
+  if (absBp < 25) return '压力';
+  return '危机水平';
+}
+
+function matrixRepoEvidence(fedLiquidity = {}) {
+  const repo = classifyRepoEvidence(fedLiquidity);
+  const raw = fedLiquidity?.bgcrSofrSpread;
+  const rawBp = Number.isFinite(raw) ? raw * 100 : null;
+  const expected = rawBp === null ? null : expectedMatrixRepoRegime(rawBp);
+  return {
+    repo,
+    rawBp,
+    expected,
+    qualified: repo.status !== 'pending' && rawBp !== null && repo.regime === expected,
+  };
+}
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
@@ -252,8 +275,9 @@ function buildRiskAssetMismatchNarrative(data, metric) {
   const nfci = finite(credit.nfci);
   const igHyRatio = finite(credit.igHyRatio);
   const t10y2y = finite(curve.t10y2y);
-  const bgcrSofrSpread = finite(fedLiquidity.bgcrSofrSpread);
+  const bgcrSofrSpread = Number.isFinite(fedLiquidity.bgcrSofrSpread) ? fedLiquidity.bgcrSofrSpread : null;
   const bgcrSofrBp = bgcrSofrSpread !== null ? bgcrSofrSpread * 100 : null;
+  const repo = matrixRepoEvidence(fedLiquidity);
 
   const supportingEvidence = [];
   const missingEvidence = [];
@@ -357,26 +381,28 @@ function buildRiskAssetMismatchNarrative(data, metric) {
     }
   }
 
-  if (bgcrSofrBp !== null && vix !== null) {
+  if (!repo.qualified) {
+    missingEvidence.push(evidence('repo_vix_mismatch', null, 'BGCR-SOFR 同日/档位未核验，待核验'));
+  } else if (bgcrSofrBp !== null && vix !== null) {
     const absBp = Math.abs(bgcrSofrBp);
     const bpDisplay = `${bgcrSofrBp >= 0 ? '+' : ''}${bgcrSofrBp.toFixed(1)}bp`;
     if (absBp >= 15 && vix < 16) {
       supportingEvidence.push(evidence(
         'repo_vix_mismatch',
         `BGCR-SOFR ${bpDisplay} / VIX ${formatNumber(vix, 2)}`,
-        `回购市场显著压力 (BGCR-SOFR ${bpDisplay}) 但波动率市场极度平静 (VIX ${formatNumber(vix, 2)})，融资紧张与波动率显著错配`
+        `该回购利差处于既有「${repo.repo.regime}」档（BGCR-SOFR ${bpDisplay}）但波动率市场极度平静 (VIX ${formatNumber(vix, 2)})，该利差与波动率读数明显背离`
       ));
     } else if (absBp >= 5 && vix < 20) {
       supportingEvidence.push(evidence(
         'repo_vix_mismatch',
         `BGCR-SOFR ${bpDisplay} / VIX ${formatNumber(vix, 2)}`,
-        `回购市场出现压力 (BGCR-SOFR ${bpDisplay}) 但波动率市场平静 (VIX ${formatNumber(vix, 2)})，融资与波动错配迹象`
+        `该回购利差处于既有「${repo.repo.regime}」档（BGCR-SOFR ${bpDisplay}）但波动率市场平静 (VIX ${formatNumber(vix, 2)})，该利差与波动率读数出现背离`
       ));
     } else if (absBp < 3 && vix > 25) {
       contradictingEvidence.push(evidence(
         'repo_vix_mismatch',
         `BGCR-SOFR ${bpDisplay} / VIX ${formatNumber(vix, 2)}`,
-        `回购市场正常 (BGCR-SOFR ${bpDisplay}) 且波动率市场已警觉 (VIX ${formatNumber(vix, 2)})，方向一致非错配`
+        `该回购利差处于既有正常档（BGCR-SOFR ${bpDisplay}）且波动率市场已警觉 (VIX ${formatNumber(vix, 2)})，方向一致非错配`
       ));
     }
   }
@@ -421,8 +447,9 @@ function buildOverheatNarrative(metric, data) {
   const umichChange = finite(consumer.threeMonthChange);
   const sloos = finite(credit.sloosTighteningLargeFirms);
   const nfci = finite(credit.nfci);
-  const bgcrSofrSpread = finite(fedLiquidity.bgcrSofrSpread);
+  const bgcrSofrSpread = Number.isFinite(fedLiquidity.bgcrSofrSpread) ? fedLiquidity.bgcrSofrSpread : null;
   const bgcrSofrBp = bgcrSofrSpread !== null ? bgcrSofrSpread * 100 : null;
+  const repo = matrixRepoEvidence(fedLiquidity);
 
   const supportingEvidence = [];
   const missingEvidence = [];
@@ -544,19 +571,21 @@ function buildOverheatNarrative(metric, data) {
     // -8 to +6: no-op
   }
 
-  // M-53 NEW: BGCR-SOFR repo zero stress (3-tier)
-  // Supporting: |bp| < 3 (zero stress, abundant liquidity)
+  // M-53 NEW: BGCR-SOFR repo limited spread evidence (3-tier)
+  // Supporting: |bp| < 3, limited spread evidence
   // No-op: 3-10 bp
   // Contradicting: |bp| >= 10 (repo stress)
-  if (bgcrSofrBp !== null) {
+  if (!repo.qualified) {
+    missingEvidence.push(evidence('repo_zero_stress', null, 'BGCR-SOFR 同日/档位未核验，待核验'));
+  } else if (bgcrSofrBp !== null) {
     const absBp = Math.abs(bgcrSofrBp);
     const bpDisplay = `${bgcrSofrBp >= 0 ? '+' : ''}${bgcrSofrBp.toFixed(1)}bp`;
     if (absBp < 3) {
       supportingEvidence.push(evidence('repo_zero_stress', bpDisplay,
-        `回购市场零压力 (BGCR-SOFR ${bpDisplay})，流动性充裕，过热土壤`));
+        `该回购利差处于既有正常档（BGCR-SOFR ${bpDisplay}），为过热观察提供有限支持`));
     } else if (absBp >= 10) {
       contradictingEvidence.push(evidence('repo_zero_stress', bpDisplay,
-        `回购市场压力 (BGCR-SOFR ${bpDisplay})，融资紧张，反驳过热`));
+        `该回购利差处于既有「${repo.repo.regime}」档（BGCR-SOFR ${bpDisplay}），是过热叙事的反向证据`));
     }
     // 3-10 bp: no-op
   }
@@ -672,8 +701,9 @@ function buildLiquidityTighteningNarrative(data) {
   const dxy = finite(inputs.dxy);
   const t10y2y = finite(curve.t10y2y);
   const walcl4wChange = finite(fed.walcl4wChange);
-  const bgcrSofrSpread = finite(fed.bgcrSofrSpread);
-  const repoSpreadRegime = typeof fed.repoSpreadRegime === 'string' ? fed.repoSpreadRegime : null;
+  const bgcrSofrSpread = Number.isFinite(fed.bgcrSofrSpread) ? fed.bgcrSofrSpread : null;
+  const bgcrSofrBp = bgcrSofrSpread !== null ? bgcrSofrSpread * 100 : null;
+  const repo = matrixRepoEvidence(fed);
   const sloosTighteningLargeFirms = finite(credit.sloosTighteningLargeFirms);
   const sloosTighteningSmallFirms = finite(credit.sloosTighteningSmallFirms);
   const supportingEvidence = [];
@@ -689,37 +719,36 @@ function buildLiquidityTighteningNarrative(data) {
   if (walcl4wChange !== null && walcl4wChange > 50) contradictingEvidence.push(evidence('walcl4wChange', formatNumber(walcl4wChange, 1), '美联储(Fed)资产负债表 4 周扩张超过 50B'));
 
   // M-50: repo_stress moves from hardcoded missing evidence to BGCR-SOFR spread classification.
-  if (bgcrSofrSpread === null) {
+  if (!repo.qualified) {
     missingEvidence.push(evidence('repo_stress', null, 'BGCR/TGCR 回购利差证据不足，待核验'));
   } else {
-    const bp = bgcrSofrSpread * 100;
+    const bp = bgcrSofrBp;
     const absBp = Math.abs(bp);
     const bpDisplay = `${bp >= 0 ? '+' : ''}${bp.toFixed(1)}bp`;
-    const regimeText = repoSpreadRegime ? `（${repoSpreadRegime}）` : '';
 
     if (absBp >= 25) {
       supportingEvidence.push(evidence(
         'repo_stress',
         bpDisplay,
-        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，达到危机水平，回购市场压力显著确认流动性收紧`
+        `该回购利差处于既有「危机水平」档，支持流动性收紧观察（BGCR-SOFR ${bpDisplay}）`
       ));
     } else if (absBp >= 10) {
       supportingEvidence.push(evidence(
         'repo_stress',
         bpDisplay,
-        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，回购市场出现压力分层，支持流动性收紧观察`
+        `该回购利差处于既有「${repo.repo.regime}」档（BGCR-SOFR ${bpDisplay}），仅描述该利差，支持流动性收紧观察`
       ));
     } else if (absBp >= 5) {
       supportingEvidence.push(evidence(
         'repo_stress',
         bpDisplay,
-        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，轻微偏离正常，回购市场有轻微摩擦`
+        `该回购利差处于既有「${repo.repo.regime}」档（BGCR-SOFR ${bpDisplay}），仅描述该利差，支持流动性收紧观察`
       ));
     } else {
       contradictingEvidence.push(evidence(
         'repo_stress',
         bpDisplay,
-        `BGCR-SOFR 利差 ${bpDisplay}${regimeText}，回购市场正常运行，不支持流动性收紧叙事`
+        `该回购利差处于既有正常档，不支持由该利差推断流动性收紧（BGCR-SOFR ${bpDisplay}）`
       ));
     }
   }
