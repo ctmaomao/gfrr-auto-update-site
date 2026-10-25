@@ -102,10 +102,10 @@ for (const marker of runDailyMarkers) {
 // contract v3.0 sec 0.4 ironclad rule 6.
 
 const matrixMarkers = [
-  'const bgcrSofrSpread = finite(fed.bgcrSofrSpread);',
+  'const bgcrSofrSpread = Number.isFinite(fed.bgcrSofrSpread) ? fed.bgcrSofrSpread : null;',
   'BGCR/TGCR 回购利差证据不足，待核验',
-  '回购市场压力显著确认流动性收紧',
-  '回购市场正常运行，不支持流动性收紧叙事',
+  '该回购利差处于既有「危机水平」档，支持流动性收紧观察',
+  '该回购利差处于既有正常档，不支持由该利差推断流动性收紧',
   'SLOOS 大型企业贷款标准净收紧'
 ];
 

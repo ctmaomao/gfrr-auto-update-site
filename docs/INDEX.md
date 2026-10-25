@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [MATRIX_REPO_QUALIFICATION_2026_10_25.md](MATRIX_REPO_QUALIFICATION_2026_10_25.md) — H 矩阵回购资格：三消费者复用 D helper + 未舍入 raw 档位一致性；pending 各自 missing；四 checker 断言窄修；before/after 4 图已登记（合法图像素相同、detail 未渲染）；主分/矩阵分别验收；不改 D/pipeline/score/data/workflow/F/G/其它 consumer。
+
 - [C2_C3_NULL_DISPLAY_2026_10_23.md](C2_C3_NULL_DISPLAY_2026_10_23.md) — C2/C3 缺失态：选中流动性/政策与 HY/IG/CRE 字段本地 strict finite、逐叶重写、成对腿保留有效值；HY 保留 effective→baseline→credit fallback；CRE canonical 组合档位与 3 处窄文案修正；F NFCI/评分/data/workflow/checker 不动；before/after 8 图已登记，full/coverage/review 待。
 
 - [NFCI_DISPLAY_REPAIR_2026_10_23.md](NFCI_DISPLAY_REPAIR_2026_10_23.md) — NFCI 展示映射与缺失态：canonical 五档 tone + 既有 alias；C3 严格 finite、缺失/未知 pending 且每次重写；pillar/n6 仅文本缺失 `—`，n6 score/isActive 旧绑定原样；静态卡中性、方向文案修正；不改评分/data/workflow/checker。

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=c2-c3-null-display-1';
-import { formatOnRrpYiUsd } from './format.js?v=c2-c3-null-display-1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=matrix-repo-qualification-1';
+import { formatOnRrpYiUsd } from './format.js?v=matrix-repo-qualification-1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

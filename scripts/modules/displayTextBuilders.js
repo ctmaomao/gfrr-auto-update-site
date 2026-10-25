@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=c2-c3-null-display-1';
+﻿import { fmtNumSafe } from './config.js?v=matrix-repo-qualification-1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

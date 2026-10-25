@@ -1,5 +1,14 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-10-25 Matrix 回购资格 H（契约，frontend bump；after 已登记，冻结待完整检查）
+
+- **Acceptance baseline**：owner 授权 issue #483 的独立 H 契约包；实施 DeepSeek，pre-merge review 为 owner-selected Codex+DeepSeek cross-AI review（非人工 review）；不夹 I/G 展示。基于 G 合并 `0ec3dc5d`、branch `codex/matrix-repo-qualification-20261025`、worktree `c2-c3-null-display`。范围仅 matrix 三消费者 + `check-fed` 三 marker + `check-null-zero` 第四处已审 assertion（`H-checker-addendum.md`/issue comment 6391801684）；不改 D helper/finite/pipeline/score/data/workflow/F/G display/其它 consumer/dep。
+- **Before facts**：中央 `manual-artifacts/matrix-repo-review/before-baseline.json`/`before-matrix.json`；snapshot `2026-10-25T00:26:37.771Z`、17 JSON hashes；main 68、n6 35、matrix 71（5 strong/0 partial/2 contradiction）；repo -2bp/正常/same_day；risk 2/0/0 no repo，overheat 6/0/0 limited normal，liquidity 3/1/0 normal contradiction。before 图 target `#homepage-cross-validation`；未重拍。
+- **当前**：三消费者 raw finite + `classifyRepoEvidence` 同日/known régime + local raw `<5/[5,10)/[10,25)/>=25` consistency；pending 各 key 只进 missing；risk 15/5/<3、overheat <3/≥10、liquidity 25/10/5 原阈值；文案只描述该利差。check-fed 三 marker、check-null-zero 四 assertion 已替换，其余断言保留；old test 4 cases 意图保留，新 dynamic test 6/6 并由 `check:pipeline-pure-helpers` 执行；一次 `matrix-repo-qualification-1` bump，E/F/G 历史字符串保留。
+- **下一步 / 验证**：focused matrix new 6/6、old 4/4、check-fed/null-zero/risk/overheat/syntax/docs/diff 通过；after 4 图+README 已登记 `docs/review-evidence/matrix-repo-20261025/`（合法前后图像素相同、detail 未直接渲染；390 top 0.34375、scroll375、两宽无横溢；main68/n635/nav13/matrix71）；Codex 做 full `check:changed`（含 check:all）、measured coverage、独立 review、CI/两站。不预称 full/CI。
+- **聚合限制（已知，不在 H 修）**：合法快照 matrix 71/main 68；合成移除 liquidity 的 repo 反向证据后，剩 3 个 support 使其评 strong，matrix 可到 86；这是既有 count/assessment 算法限制，合成-only，不是 risk/accuracy 提升。H 不改聚合/阈值；后续独立研究可评估缺失证据下确认强度/覆盖披露，不能夹带进本批。
+- **阻塞 / 限制**：full/coverage 未跑；matrix consistency 与主分分开，合成 pending 非真实触发/准确率；合法 before/after 图像素相同且 detail 未直接渲染，不能称图显示文字变更；无 Daily/网络/数据写/Git。
+
 ### 2026-10-23 C2/C3 缺失态展示 G（展示，frontend bump；after 已登记，冻结待完整检查）
 
 - **Acceptance baseline**：owner 授权 G（C2 流动性/政策 + C3 HY/IG/CRE 字段）；实施 DeepSeek，Codex 做 after/full/coverage/独立 review。基于 `f6307052` latest main、worktree `c2-c3-null-display`。范围：`renderMacroOverview.js` 选中字段、`index.html` HY/IG note + CRE meta 3 处窄 hunk、新真实 test/package append、自含报告/INDEX/backlog、一次 `c2-c3-null-display-1`。不改 DXY/gold/curve/铜金/其它全局 asNumber、F NFCI/score/n6/decision/data/workflow/source/frozen realtime/checker/dep。
@@ -567,7 +576,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `c2-c3-null-display-1` |
+| Cache version | `matrix-repo-qualification-1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

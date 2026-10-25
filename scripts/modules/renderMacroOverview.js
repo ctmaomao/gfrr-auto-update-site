@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=c2-c3-null-display-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=c2-c3-null-display-1';
+} from './config.js?v=matrix-repo-qualification-1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=matrix-repo-qualification-1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,13 +18,13 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=c2-c3-null-display-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=c2-c3-null-display-1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=c2-c3-null-display-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=c2-c3-null-display-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=c2-c3-null-display-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=c2-c3-null-display-1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=c2-c3-null-display-1';
+} from './macroOverviewDisplayHelpers.js?v=matrix-repo-qualification-1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=matrix-repo-qualification-1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=matrix-repo-qualification-1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=matrix-repo-qualification-1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=matrix-repo-qualification-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=matrix-repo-qualification-1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=matrix-repo-qualification-1';
 
 // ---------- 阈值 + 派生 helper ----------
 
