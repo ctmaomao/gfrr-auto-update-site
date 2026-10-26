@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-26T00:58:12.247Z",
+  "updatedAt": "2026-10-26T05:12:12.519Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-events-conflict-interval-v1",
@@ -17,12 +17,12 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-26T00:57:33.820Z",
-    "ageMinutes": 0.6404166666666666,
+    "updatedAt": "2026-10-26T05:09:33.222Z",
+    "ageMinutes": 2.654933333333333,
     "healthScore": 100,
     "criticalMissing": 0,
     "brent": 115.22,
-    "gold": 3987.5,
+    "gold": 4016.1001,
     "vix": 19.03,
     "dxy": 121.4048,
     "hyOas": 3.4,
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-26T00:58:11.235Z",
+        "attemptedAt": "2026-10-26T05:12:11.912Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4971,7 +4971,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-26T00:58:11.486Z",
+      "lastFetchedAt": "2026-10-26T05:12:12.129Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 8,
@@ -5021,7 +5021,7 @@
     "acled": {
       "enabled": true,
       "status": "partial",
-      "lastFetchedAt": "2026-10-21T05:06:55.170Z",
+      "lastFetchedAt": "2026-10-26T05:11:53.506Z",
       "summary": {
         "eventsLast4Weeks": 38712,
         "eventsLast12Weeks": 109119,
@@ -5033,12 +5033,12 @@
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
         "sourceFreshness": "aging",
-        "politicalViolenceEventsLatestFullYear": 213441,
-        "politicalViolenceYoyDelta": 0.217286,
-        "civilianTargetingShareLatestFullYear": 0.3153,
-        "fatalitiesLatestFullYear": 248638,
-        "monthlyLatest12mVsPrior12mDelta": 0.071006,
-        "monthlyAsOfDate": "2026-10-09",
+        "politicalViolenceEventsLatestFullYear": 213638,
+        "politicalViolenceYoyDelta": 0.216795,
+        "civilianTargetingShareLatestFullYear": 0.315281,
+        "fatalitiesLatestFullYear": 248749,
+        "monthlyLatest12mVsPrior12mDelta": 0.071402,
+        "monthlyAsOfDate": "2026-10-16",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
         "noteZh": "周度覆盖 6 个区域，最新周 2026-10-10，近4周事件相对12周均值变化 6.4%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
@@ -5279,14 +5279,14 @@
         },
         "latestTimestamp": "20261025004500",
         "usedCachedSummary": true,
-        "cacheReason": "gdelt_events_index_time_hold"
+        "cacheReason": "events_source_free_refresh"
       },
       "warnings": [
         "免费事件来源未完成最新窗口，沿用注明原日期的历史统计。"
       ],
       "diagnostics": {
-        "requests": 1,
-        "bytes": 319,
+        "requests": 0,
+        "bytes": 0,
         "cachedDays": 0,
         "downloadedDays": 0,
         "failures": []
@@ -5393,8 +5393,8 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 3987.5，显示避险或实际利率压力定价。",
-          "value": 3987.5,
+          "summary": "基于 Worker 快变量，黄金当前值 4016.1，显示避险或实际利率压力定价。",
+          "value": 4016.1001,
           "direction": "up",
           "confidence": 0.75
         },
@@ -5410,7 +5410,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "121.4048/3987.5",
+          "value": "121.4048/4016.1001",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5418,7 +5418,7 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7757.17/3987.5",
+          "value": "7757.17/4016.1001",
           "direction": "mixed",
           "confidence": 0.45
         },
