@@ -19,6 +19,7 @@
 6. 输入保留 collector 的 360 字符有界摘要，仍受真实 live-input 的 60 KiB hard gate，超过预算在付费前失败。更新提示与 bounded 诊断使其遵循同一证明函数，避免生成规则/validator/诊断再次分叉。
 7. 现行 unsafe 文案规则检查全部输出字符串，包含前端实际显示的 `sourceAttribution.noteZh`，不再只检查篇幅统计字段；不新增禁止文案模式。
 8. 契约拒绝后的 normalized candidate 放入现有 failure artifact 的 `replayCandidate`，标记 `replayOnly=true / productionEligible=false`，绑定原输入 digest。仅保留已定义的输出顶层字段，移除 HTTP/凭证类字段并遮蔽本次注入的 key；限制 4000 nodes、12 层、每字符串 20000 字符及整份 128 KiB，截断/移除/遮蔽均显式记录。它是待检查的生成正文，不是原始 HTTP response 或可发布输出，可能含模型错误，沿用现有 artifact 三天保留期。
+   - 2026-10-31 保留期窄修订（不改任何 assertion）：常规 `bubble-watch-weekly-editorial-<run_id>` 集合仍为 3 天；**仅失败运行**额外上传 `bubble-watch-weekly-editorial-failure-<run_id>`（只含 `editorial-input-latest.json` 与 `deepseek-failure-latest.json`）并保留 **30 天**。说明：30 天是**本次 Actions 排障修复授权范围内由实施方选定、经 Codex AI 审核**的实施方案，不是 owner 亲自挑选的天数，也不构成人工 review。此修订只影响证据留存，不构成正文恢复、promotion 或生产验收授权。
 9. `node scripts/bubble-watch/replay-weekly-editorial-failure.mjs --input <原输入文件> --failure <失败记录>` 只读原输入和候选、复核 digest，再运行当前 validator；不读 key/env、不联网、不生成 output/projection，不调用 writer。输出始终 `productionEligible=false`，完整或已脱敏回放的区别显式显示。免费复验不构成 promotion 授权，禁止从候选绕过唯一生产 workflow 发布。旧失败没有保存正文时仍无法补回，不再为重现校验错误单独付费。
 
 ## 验收与保留边界

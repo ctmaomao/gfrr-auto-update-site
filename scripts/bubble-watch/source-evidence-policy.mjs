@@ -145,6 +145,35 @@ function inferTotalVcFundingB(text, aiFundingB, sharePct) {
 }
 
 
+// The four registered cloud companies. Kept in one place so the coverage gate, the
+// excluded-company disclosure and the builder iterate the same list.
+export const RPO_COMPANIES = Object.freeze(['MSFT', 'ORCL', 'AMZN', 'GOOGL']);
+export const MIN_RPO_COMPANIES = 2;
+
+const RPO_REASON_LIMIT = 110;
+
+function compactRpoReason(reason) {
+  return String(reason || 'unavailable').replace(/\s+/gu, ' ').trim().slice(0, RPO_REASON_LIMIT);
+}
+
+// Auditable coverage line for a failed RPO chain: which company, which source tier and
+// why. This only explains a fail-closed result; it never supplies or infers a value.
+export function describeRpoCoverage({ companies = RPO_COMPANIES, used = [], failures = [] } = {}) {
+  const rows = companies.map((ticker) => {
+    if (used.includes(ticker)) return `${ticker}=ok`;
+    const own = failures.filter((failure) => failure?.ticker === ticker);
+    if (!own.length) return `${ticker}=unavailable`;
+    return `${ticker}=${own.map((failure) => `${failure.source || 'source'}:${compactRpoReason(failure.reason)}`).join(' | ')}`;
+  });
+  return rows.join('; ').slice(0, 600);
+}
+
+export function assertRpoCoverage(rows, failures = []) {
+  if (rows.length >= MIN_RPO_COMPANIES) return;
+  const coverage = describeRpoCoverage({ used: rows.map((row) => row.ticker), failures });
+  throw new Error(`RPO 可用公司不足 (${rows.length}/${RPO_COMPANIES.length}): ${coverage}`.slice(0, 800));
+}
+
 export function pairRpoPeriods(dates, values, today) {
   if (dates.length < 2 || dates.length !== values.length) throw new Error('RPO period/value count mismatch');
   for (const date of dates) requireObservationDate(date, today, Number.MAX_SAFE_INTEGER, 'RPO_period');
@@ -157,7 +186,10 @@ export function pairRpoPeriods(dates, values, today) {
     const matches = dates.map((d, i) => ({ i, days: Math.abs(Date.parse(d) - Date.parse(target)) / 86400000 })).filter(x => x.days <= 7);
     if (matches.length !== 1) throw new Error('RPO prior-year period is unavailable or ambiguous');
     const value = values[index], prior = values[matches[0].i];
-    if (!(Number.isFinite(value) && Number.isFinite(prior) && value > 0 && prior > 0)) throw new Error('RPO comparable value is missing');
+    // The two real gaps are reported separately: a not-yet-reported latest column is not
+    // the same failure as a missing prior-year comparable, and neither may be skipped.
+    if (!(Number.isFinite(value) && value > 0)) throw new Error(`RPO latest period value is unavailable (${date})`);
+    if (!(Number.isFinite(prior) && prior > 0)) throw new Error(`RPO comparable value is missing (${date} vs ${target})`);
     return { value, prior };
   };
   requireObservationDate(dates[0], today, 120, 'RPO');

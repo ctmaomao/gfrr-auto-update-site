@@ -40,7 +40,8 @@ import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-ev
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
 import { extractAnthropicArrB } from './bubble-watch/arr-milestone-parser.mjs';
 import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
-import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
+import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare, assertRpoCoverage, RPO_COMPANIES } from './bubble-watch/source-evidence-policy.mjs';
+import { describeEdgarIdentity, resolveEdgarIdentity } from './bubble-watch/edgar-contact.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'bubble-watch-curated.json');
@@ -52,8 +53,11 @@ const FED_BASE_URL = 'https://www.federalreserve.gov';
 const FED_CALENDAR_URL = 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm';
 
 const UA = 'gfrr-bubble-watch/1.0 (+https://github.com/ctmaomao/gfrr-auto-update-site)';
-// SEC EDGAR 要求 UA 携带联系方式(无邮箱式 UA 会 403)
-const EDGAR_UA = 'gfrr-auto-update-site bubble-watch ctmaomao@users.noreply.github.com';
+// SEC EDGAR 要求 UA 携带声明的可投递联系身份。联系身份只能由独立注入的配置提供，
+// 未配置/格式不合法时保留既有 UA（不在仓库硬编码新的个人地址，也不做替身替换）。
+const EDGAR_FALLBACK_UA = 'gfrr-auto-update-site bubble-watch ctmaomao@users.noreply.github.com';
+const EDGAR_IDENTITY = resolveEdgarIdentity(process.env, EDGAR_FALLBACK_UA);
+const EDGAR_UA = EDGAR_IDENTITY.userAgent;
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const FETCH_TIMEOUT_MS = 20000;
 const FRED_API_KEY = (process.env.FRED_API_KEY || '').trim();
@@ -1253,10 +1257,11 @@ function classifyNumeric(value, redAbove, yellowAbove) {
   return 'green';
 }
 
-function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote) {
-  if (rows.length < 2) throw new Error(`RPO 可用公司不足 (${rows.length})`);
-  if (rows.some(row => !(row.prevPeriodValueUsd > 0 && row.prevPeriodComparableUsd > 0))) throw new Error('RPO 当前与前期同比必须使用相同公司样本');
-  const excludedCompanies = ['MSFT', 'ORCL', 'AMZN', 'GOOGL'].filter(ticker => !rows.some(row => row.ticker === ticker));
+function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote, failures = []) {
+  assertRpoCoverage(rows, failures);
+  const incomplete = rows.filter(row => !(row.prevPeriodValueUsd > 0 && row.prevPeriodComparableUsd > 0)).map(row => row.ticker);
+  if (incomplete.length) throw new Error(`RPO 当前与前期同比必须使用相同公司样本 (${incomplete.join('/')})`);
+  const excludedCompanies = RPO_COMPANIES.filter(ticker => !rows.some(row => row.ticker === ticker));
   const observationDates = rows.map(row => row.observationDate).filter(Boolean).sort();
   const coverageNote = `实际覆盖 ${rows.length}/4 家${excludedCompanies.length ? `;${excludedCompanies.join('/')} 缺少可比报告期,未计入` : ''}。`;
   const latestYoySum = rows.reduce((sum, row) => ({
@@ -1615,7 +1620,11 @@ const autoBuilders = {
     };
   },
   async cloud_rpo_growth() {
-    const companies = ['MSFT', 'ORCL', 'AMZN', 'GOOGL'];
+    const companies = [...RPO_COMPANIES];
+    // Per-company, per-tier failure reasons are collected only to explain a fail-closed
+    // result. They never supply, shift or infer a value, and the coverage/sample gates
+    // stay unchanged.
+    const failures = [];
     const rows = [];
     for (const ticker of companies) {
       try {
@@ -1625,11 +1634,12 @@ const autoBuilders = {
         rows.push({ ticker, source: 'SEC EDGAR companyconcept', cadence: 'quarterly',
           ...pairRpoPeriods(newest.map(row => row.end), newest.map(row => row.val), isoDate()) });
       } catch (error) {
+        failures.push({ ticker, source: 'edgar', reason: error.message });
         console.warn(`[bubble-watch] RPO ${ticker} 不可用: ${error.message}`);
       }
     }
     if (rows.length >= 2) {
-      return summarizeRpoGrowthPanel(rows, 'SEC EDGAR companyconcept', '美国公司 XBRL instant RPO 字段可达。');
+      return summarizeRpoGrowthPanel(rows, 'SEC EDGAR companyconcept', '美国公司 XBRL instant RPO 字段可达。', failures);
     }
     console.warn(`[bubble-watch] EDGAR RPO 样本不足(${rows.length}),改走 StockAnalysis/Fiscal.ai metrics 镜像`);
     const publicRows = [];
@@ -1637,10 +1647,11 @@ const autoBuilders = {
       try {
         publicRows.push(await retry(() => fetchStockAnalysisRpoMetric(ticker), `StockAnalysis RPO ${ticker}`, 1));
       } catch (error) {
+        failures.push({ ticker, source: 'stockanalysis', reason: error.message });
         console.warn(`[bubble-watch] StockAnalysis RPO ${ticker} 不可用: ${error.message}`);
       }
     }
-    return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', '公开季度报告按实际期末日期匹配去年同期,缺失列不跳位。');
+    return summarizeRpoGrowthPanel(publicRows, 'StockAnalysis/Fiscal.ai metrics 镜像', '公开季度报告按实际期末日期匹配去年同期,缺失列不跳位。', failures);
   },
   async fed_policy() {
     const [dff, cpi, lowerResult, upperResult, sepResult, yearEndFutureResult] = await Promise.all([
@@ -4843,6 +4854,8 @@ function buildWowChanges(flips, indicators) {
 // ---------- 主流程 ----------
 
 async function main() {
+  // Log only the resolution mode, never the user agent or contact value.
+  console.log(`[bubble-watch] SEC EDGAR declared contact: ${describeEdgarIdentity(process.env)}`);
   const previousQualifiedOutput = QUALIFIED_REFRESH_ONLY ? JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')) : null;
   const fullRefreshAsOfDate = QUALIFIED_REFRESH_ONLY
     ? previousQualifiedOutput.meta?.qualified_refresh

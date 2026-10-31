@@ -1,4 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
+### 2026-10-31 Bubble 源链与周评排障（DeepSeek 实施，Codex 审核；生产验收待）
+
+- **Acceptance baseline**：owner 要求“请让deepseek修复，你审核”。DeepSeek Harness 实施、Codex AI 独立审核（非人工 review）。隔离分支 `codex/bubble-source-repair-20261031` 基于 `d1cf5248`；不改原工作区、生产数据/评分/decision/position、既有 checker/assertion、来源资格、≥2 家 RPO/120 天/同期规则；未授权 push/merge/deploy、生产周评付费重跑或新来源接入。
+- **原因 / 改动**：RPO 镜像只有 MSFT 合格；AMZN 超龄、GOOGL 最新列空、ORCL 缺同比值；SEC 同机 UA 对照结果只作线索，不推断普遍拦截规则。新增独立注入的 SEC 声明联系身份（仅审计 workflow 接线，生产 refresh job 保持冻结）、逐公司失败原因；缺配置保留原安全回退。周评旧候选不可取得，具体坏正文未知；仅失败运行额外保留原输入+脱敏失败证据 30 天，常规成功 artifact 仍 3 天；只读 replay 增加固定诊断码，不调用 provider、不推广候选。
+- **验证 / 审核**：Codex 标准 `node --test` 对 RPO/EDGAR 联系/周评 media 三文件 **48/48 PASS、0 skip、exit 0**（包含 DeepSeek Harness 因 spawn EPERM 未能执行的既有 CLI 用例）；源码 diff 确认旧 assertion 保留，production/config/realtime/Worker/lockfile 无 diff。首轮完整 `check:changed` exit 1 暴露 refresh job 哈希冻结冲突，已撤出该 job 的 env 改动，原断言/哈希未改；修订后四文件标准测试 **70/70 PASS、0 skip、exit 0**，完整 `npm run check:changed`（含 `check:all`）复跑 **exit 0**；证据在 ignored `manual-artifacts/actions-repair-20261031/`。
+- **上线授权续记**：owner 随后要求“请继续直到故障排除，需要上线的修订和功能上线”，授权本任务必要的 push/PR/merge/deploy 与线上验收；“请不要用deepseek”继续有效。独立人工 review、contract checker 独立 reviewed PR 和费用门槛仍保留。owner 后续澄清“不使用 DeepSeek”仅限制代码修复，并明确授权本次最多一次生产周评调用及相应费用，失败不自动重试；该费用许可不扩展到其它 provider 调用。SEC 独立联系 secret 已配置（仅记录名称/状态，不记录值）；免费审计可先在修复分支执行。
+- **2026-10-31 后续尝试**：owner 要求“请尝试”，随后明确“请不要用deepseek”；后续仅 Codex 执行，未再调用 DeepSeek。owner 已提供并同意 SEC 使用联系邮箱（地址不入库）。四次有界、无重试/重定向的 SEC RPO 请求均 HTTP 200；按现有生产 series 函数与 pairRpoPeriods，MSFT/ORCL/GOOGL 合格，AMZN 旧数据仍拒绝。本机 3/4 通过不代表 Actions 恢复。独立接线提案为 ignored `production-wiring-independent.patch`，只在构建步骤加一行 secret；双哈希保留去掉该精确行后的旧基线并固定新 job，Epoch candidate 不变；`git apply --check` exit 0，未应用。
+- **剩余**：生产 refresh 接线仍需独立 ADR/PR review，不能混入源链补丁；邮箱本机验证已完成，GitHub secret 未配置、GitHub runner/生产验收待做，不能宣称生产 RPO 已恢复。10/26 周评仍未补发，具体拒绝原因仍无法确认；生产周评一次调用与本任务 Git 远端/发布已获对应授权，尚未执行；人工 review 与线上验收仍待完成。上次 ODP 本地补丁不夹带本任务。现有任务已快进同步 main `106d6bf9`，13 个任务文件保持（backlog 仅 LF 规范化）；该基线完整 `check:changed`（含 `check:all`）exit 0。源链 PR 先行，生产接线独立 PR 后续；合并前人工 review 与 CI/线上验收仍待完成。
 
 ### 2026-10-25 政策价差展示 I（展示，frontend bump；after r2 已登记，full/coverage exit0，CI 待）
 

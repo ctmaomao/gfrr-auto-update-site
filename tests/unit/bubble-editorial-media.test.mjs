@@ -13,6 +13,7 @@ import { requestWeeklyEditorial, buildWeeklyEditorialReplayCandidate } from '../
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from '../../scripts/bubble-watch/weekly-editorial-claim-diagnostics.mjs';
 import { claimNumericSupport } from '../../scripts/bubble-watch/weekly-editorial-numeric-grounding.mjs';
 import { reviewWeeklyEditorial, projectWeeklyEditorial, applyWeeklyEditorialProjection, validateWeeklyEditorialProduction } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
+import { replayWeeklyEditorialFailure } from '../../scripts/bubble-watch/replay-weekly-editorial-failure.mjs';
 const read = (path) => JSON.parse(fs.readFileSync(new URL(`../../${path}`, import.meta.url)));
 const sourceStatus = Object.fromEntries(['tavily', 'brave'].map((name) => [name, { status: 'ok', successCount: 6, failureCount: 0 }]));
 const snippet = 'Morningstar analysts believe AI infrastructure financing could improve credit access while leaving demand and repayment risks unresolved. This is an institutional opinion rather than independent confirmation.';
@@ -604,4 +605,75 @@ test('bounded diagnostics prioritize real financial blockers over preceding pres
  output.weeklyTimeline.push({detailZh:'融资999999亿美元。',sourceRefIds:[story.id]});
  const d=diagnoseMediaClaims(output,input);assert.equal(d.failedClaimCount,1);assert.equal(d.warningClaimCount,12);assert.equal(d.claims.length,12);
  assert.equal(d.claims[0].claimPath,'weeklyTimeline[12]');assert.equal(d.claims[0].sources[0].blocking,true);
+});
+
+test('retained failure evidence replays offline and replay failures expose fixed reason codes only', () => {
+  const { input, output } = scenario();
+  // One isolated contract violation plus a marker that must never appear in replay output.
+  const marker = 'PRIVATE-REPLAY-MARKER-781236985401';
+  const broken = structuredClone(output);
+  broken.asOfDate = '2020-01-01';
+  broken.leadZh = `${broken.leadZh} ${marker}`;
+  const candidate = buildWeeklyEditorialReplayCandidate(broken, input);
+  assert.equal(candidate.productionEligible, false);
+
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-bubble-replay-codes-'));
+  const paths = { inputPath: path.join(directory, 'input.json'), failurePath: path.join(directory, 'failure.json') };
+  const writeFailure = (value) => fs.writeFileSync(paths.failurePath, JSON.stringify(value));
+  const serialized = (outcome) => JSON.stringify(outcome.payload);
+  try {
+    fs.writeFileSync(paths.inputPath, JSON.stringify(input));
+    writeFailure({ schemaVersion: 'bubble-watch-weekly-editorial-provider-failure-v1', replayCandidate: candidate });
+
+    // A retained candidate must reproduce the contract failure with zero API calls and no prose echo.
+    const reproduced = replayWeeklyEditorialFailure(paths);
+    assert.equal(reproduced.code, 1);
+    assert.equal(reproduced.payload.diagnosticOnly, true);
+    assert.equal(reproduced.payload.productionEligible, false);
+    assert.equal(reproduced.payload.apiCallCount, 0);
+    assert.equal(reproduced.payload.ok, false);
+    assert.equal(reproduced.payload.exactReplay, true);
+    assert.equal(reproduced.payload.reason, 'replay_found_contract_errors');
+    assert.ok(reproduced.payload.errors.some((error) => error.includes('asOfDate')), serialized(reproduced));
+    assert.equal(serialized(reproduced).includes(marker), false);
+
+    // Distinct fixed codes for the ways evidence can be missing or mismatched.
+    writeFailure({ schemaVersion: 'bubble-watch-weekly-editorial-provider-failure-v1' });
+    assert.equal(replayWeeklyEditorialFailure(paths).payload.reason, 'missing_replay_candidate');
+
+    writeFailure({ replayCandidate: { ...candidate, inputDigestShort: 'not-the-same-input' } });
+    assert.equal(replayWeeklyEditorialFailure(paths).payload.reason, 'input_digest_mismatch');
+
+    fs.writeFileSync(paths.failurePath, '{not json');
+    assert.equal(replayWeeklyEditorialFailure(paths).payload.reason, 'missing_or_unreadable_failure');
+
+    fs.writeFileSync(paths.failurePath, JSON.stringify({ replayCandidate: candidate }));
+    fs.rmSync(paths.inputPath, { force: true });
+    const missingInput = replayWeeklyEditorialFailure(paths);
+    assert.equal(missingInput.payload.reason, 'missing_or_unreadable_input');
+    assert.equal(serialized(missingInput).includes(marker), false);
+
+    // Unreadable input also covers a contract-invalid input artifact, without echoing it.
+    const readFile = () => JSON.stringify({ schemaVersion: 'wrong' });
+    assert.equal(replayWeeklyEditorialFailure({ ...paths, readFile }).payload.reason, 'input_contract_invalid');
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('only failed weekly-editorial runs get the longer failure-evidence retention', () => {
+  const workflow = fs.readFileSync('.github/workflows/bubble-watch-weekly-editorial-refresh.yml', 'utf8');
+  const [, failureStep] = workflow.split('Retain failure evidence for triage');
+  assert.ok(failureStep, 'failure evidence upload step must exist');
+  assert.match(failureStep, /if: \$\{\{ failure\(\) \}\}/u);
+  assert.match(failureStep, /bubble-watch-weekly-editorial-failure-\$\{\{ github\.run_id \}\}/u);
+  assert.match(failureStep, /deepseek-failure-latest\.json/u);
+  assert.match(failureStep, /editorial-input-latest\.json/u);
+  assert.equal(failureStep.includes('deepseek-output-latest.json'), false);
+  assert.match(failureStep, /retention-days: 30/u);
+  assert.equal(failureStep.includes('retention-days: 3\n'), false);
+  // The always-uploaded bundle keeps its reviewed 3-day retention for successful runs.
+  const normalStep = workflow.split('Upload sanitized editorial artifacts')[1]?.split('Retain failure evidence for triage')[0] || '';
+  assert.match(normalStep, /if: \$\{\{ always\(\) \}\}/u);
+  assert.match(normalStep, /retention-days: 3/u);
 });
