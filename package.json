@@ -432,6 +432,11 @@
   "engines": {
     "node": ">=24.20.0 <25"
   },
+  "overrides": {
+    "eslint": {
+      "minimatch": "11.0.1"
+    }
+  },
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "eslint": "10.11.0",
