@@ -1,4 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
+### 2026-10-31 SEC 声明联系身份的生产接线（独立 ADR-0079 / PR，Codex 实施审核）
+
+- **Acceptance baseline**：owner 要求持续排障并上线必要修订，明确授权 Codex 代替 owner 完成本任务审核；记录为 AI review，不伪称独立人工。源链 PR #487 已在完整 CI（audit、measured tests、check:all、browser smoke、EdgeOne regressions）成功后合并为 `8ef2f4de`。新分支 `codex/bubble-sec-production-contact-20261031` 从该 latest main 创建，保持 serial trunk/no stacked PR。
+- **窄范围契约迁移**：仅生产 build step 增加一行 `BUBBLE_WATCH_EDGAR_CONTACT` 独立 secret；Epoch/global/job-wide 不注入。原冻结哈希 `d377b5ab...f96` 保留为去掉该精确行后的基线，完整新 job 额外固定为 `2cb68867...80b`，其余断言不删、不 skip；本迁移独立 reviewed PR，不夹在 #487。builder/来源/120 天/≥2 家/同期样本规则及 GF scoring 等均不改。
+- **隐私 / 运行范围**：联系身份用于既有全部 SEC 调用，不限 RPO；owner 已明确同意。secret 已配置，实际地址不入库、不记录 UA。缺少或非法配置仍走原安全回退。此接线不新增来源、权限、费用调用、数据生成或人工产物晋升。
+- **验证 / 下一步**：精确一行 workflow diff、旧/新双哈希和 candidate 不变已点检；focused **70/70、0 skip、exit 0**；`check:workflows` 与完整 `check:changed`（含 `check:all`）均 **exit 0**。CI、合并和最终发布验收继续推进。源链 main 免费复验 run `41186541466` 已成功，build/check exit 0、unexpected failure 0、RPO SEC auto/fresh；#487 Pages run `41186529361` 成功，未派发完整生产刷新，避免意外新增 DeepSeek 调用。周评 run `41185575584` 在 provider 前因 Tavily 950/1000 与 50-credit reserve 被拦住，调用数 0，费用授权仍未使用；不放宽预算或双检索健康规则。
+
 ### 2026-10-31 Bubble 源链与周评排障（DeepSeek 实施，Codex 审核；生产验收待）
 
 - **Acceptance baseline**：owner 要求“请让deepseek修复，你审核”。DeepSeek Harness 实施、Codex AI 独立审核（非人工 review）。隔离分支 `codex/bubble-source-repair-20261031` 基于 `d1cf5248`；不改原工作区、生产数据/评分/decision/position、既有 checker/assertion、来源资格、≥2 家 RPO/120 天/同期规则；未授权 push/merge/deploy、生产周评付费重跑或新来源接入。

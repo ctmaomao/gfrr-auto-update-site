@@ -41,7 +41,7 @@ test('a well-formed declared contact replaces the identity without exposing it i
   }
 });
 
-test('builder and the audit workflow wire the contact separately; the production refresh job stays frozen', () => {
+test('builder and audit/production steps wire only the separately declared SEC contact', () => {
   const builder = fs.readFileSync('scripts/build-bubble-watch.mjs', 'utf8');
   assert.match(builder, /resolveEdgarIdentity\(process\.env, EDGAR_FALLBACK_UA\)/u);
   assert.match(builder, /describeEdgarIdentity\(process\.env\)/u);
@@ -50,15 +50,15 @@ test('builder and the audit workflow wire the contact separately; the production
   assert.equal(builder.includes('EDGAR_FALLBACK_UA = \'gfrr-auto-update-site bubble-watch ctmaomao@users.noreply.github.com\''), true);
   assert.equal((builder.match(/gfrr-auto-update-site bubble-watch ctmaomao@users\.noreply\.github\.com/gu) || []).length, 1);
 
-  // Only the read-only audit workflow injects the identity. The production refresh job is
-  // hash-frozen by tests/unit/epoch-arr-weekly.test.mjs and must not gain this env line
-  // here: wiring production requires its own ADR-reviewed change (and a new frozen hash).
+  // ADR-0079 separately reviews the production step-local env line. No global/candidate injection.
   const audit = fs.readFileSync('.github/workflows/audit-bubble-watch-sources.yml', 'utf8');
   assert.equal((audit.match(/BUBBLE_WATCH_EDGAR_CONTACT: \$\{\{ secrets\.BUBBLE_WATCH_EDGAR_CONTACT \}\}/gu) || []).length, 2);
   assert.equal(/echo[^\n]*BUBBLE_WATCH_EDGAR_CONTACT/u.test(audit), false);
   assert.equal(/printenv|env \|/u.test(audit), false);
 
-  const refresh = fs.readFileSync('.github/workflows/refresh-bubble-watch.yml', 'utf8');
-  assert.equal(refresh.includes('BUBBLE_WATCH_EDGAR_CONTACT'), false, 'production refresh is not wired; requires an independent ADR-reviewed change');
-  assert.equal(/secrets\.BUBBLE_WATCH_EDGAR_CONTACT/u.test(refresh), false, 'production refresh must not reference the contact secret');
+  const refresh = fs.readFileSync('.github/workflows/refresh-bubble-watch.yml', 'utf8').replaceAll('\r\n', '\n');
+  const contactLine = '          BUBBLE_WATCH_EDGAR_CONTACT: ${{ secrets.BUBBLE_WATCH_EDGAR_CONTACT }}';
+  assert.equal(refresh.split(contactLine).length - 1, 1);
+  assert.ok(refresh.includes('      - name: Refresh bubble watch data\n        env:\n' + contactLine + '\n'));
+  assert.equal(refresh.split('\n  refresh:')[0].includes('BUBBLE_WATCH_EDGAR_CONTACT'), false);
 });

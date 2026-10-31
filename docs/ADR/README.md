@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0079 — Bubble SEC declared-contact production wiring](0079-bubble-sec-declared-contact-production-wiring.md): separate production wiring PR after #487; owner-designated Codex review; runtime acceptance pending.
+
 - [ADR-0078 — ESLint minimatch security override](0078-eslint-minimatch-security-override.md): CI blocker repair; development-only dependency override; audit/syntax/full checks pass; owner-designated Codex review before merge.
 
 - [ADR-0077 — Matrix repo-spread evidence qualification](0077-matrix-repo-evidence-qualification.md): owner-authorized implementation (H contract, issue #483); owner-selected Codex+DeepSeek cross-AI review (not human review); implementation in progress; not Accepted.
