@@ -44,6 +44,8 @@ jobs:
           TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          # Declared SEC EDGAR contact (separate identity secret). Unset -> existing UA.
+          BUBBLE_WATCH_EDGAR_CONTACT: ${{ secrets.BUBBLE_WATCH_EDGAR_CONTACT }}
         run: node scripts/audit-bubble-watch-sources.mjs --github-summary
 
       - name: Audit Bubble Watch sources (paid Wind opt-in)
@@ -54,6 +56,8 @@ jobs:
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
           WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
+          # Declared SEC EDGAR contact (separate identity secret). Unset -> existing UA.
+          BUBBLE_WATCH_EDGAR_CONTACT: ${{ secrets.BUBBLE_WATCH_EDGAR_CONTACT }}
         run: node scripts/audit-bubble-watch-sources.mjs --github-summary --allow-paid-wind
 
       - name: Upload Bubble Watch source-health report

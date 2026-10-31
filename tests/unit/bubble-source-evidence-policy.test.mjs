@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, pairRpoPeriods, parseRpoTable } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
+import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, pairRpoPeriods, parseRpoTable, describeRpoCoverage, assertRpoCoverage, MIN_RPO_COMPANIES, RPO_COMPANIES } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
 
 test('CEO news volume without attributed financial caution cannot change the light', () => {
   assert.deepEqual(classifyCeoCautionCounts(20, 0), { status: 'green', display: '无' });
@@ -112,4 +112,92 @@ test('RPO HTML parser preserves blanks and ignores a similar NTM row', () => {
   const parse = value => value === '-' ? null : Number(value);
   assert.equal(parseRpoTable(table([300, 240, '-', 160, 150, 120]), 'RPO', parse, today).yoyPct, 100);
   assert.throws(() => parseRpoTable(table([300, 240, 200, 160, '-', 120]), 'RPO', parse, today), /missing/);
+});
+
+// --- Real-response regression for the cloud_rpo_growth mirror chain (fetched 2026-10-31) ---
+// Dates and cell text below are copied from the public StockAnalysis responses (bounded
+// read-only evidence kept in the ignored repair artifact); response sha256 prefixes:
+//   MSFT  f4175b3cef6b  https://stockanalysis.com/stocks/msft/metrics/
+//   AMZN  d70b522105e0  https://stockanalysis.com/stocks/amzn/metrics/
+//   GOOGL 820c9bf66d79  https://stockanalysis.com/stocks/googl/metrics/
+//   ORCL  2b1727a44c13  https://stockanalysis.com/stocks/orcl/financials/metrics/?p=quarterly
+// These cases pin the fail-closed reasons so a future "fix" cannot quietly accept the
+// same gaps; they are regression fixtures, never production inputs.
+const RPO_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const rpoHeaderText = (iso) => {
+  const [year, month, day] = iso.split('-').map(Number);
+  return `${RPO_MONTHS[month - 1]} ${day}, ${year}`;
+};
+function realRpoTable(label, datesIn, cells) {
+  const header = `<tr><th class="text-left">Period Ending</th>${datesIn.map(date => `<th class="whitespace-nowrap">${rpoHeaderText(date)}</th>`).join('')}</tr>`;
+  const dataRow = `<tr><td class="x">${label}</td>${cells.map(value => `<td>${value}</td>`).join('')}</tr>`;
+  return `<table>${header}${dataRow}</table>`;
+}
+// Mirrors parseSaCompactNumber from build-bubble-watch.mjs (not exported by the CLI).
+const saNumber = (value) => {
+  const raw = String(value || '').replace(/\s+/gu, '').replace(/,/gu, '');
+  if (!raw || raw === '-' || /upgrade/iu.test(raw)) return null;
+  const match = raw.match(/^(-?[0-9]+(?:\.[0-9]+)?)([KMBT])?$/iu);
+  if (!match) return null;
+  return Number(match[1]) * ({ K: 1e3, M: 1e6, B: 1e9, T: 1e12 }[(match[2] || '').toUpperCase()] || 1);
+};
+const amznDates = ['2026-06-30', '2026-03-31', '2025-12-31', '2025-09-30', '2025-06-30', '2025-03-31', '2024-12-31', '2024-09-30'];
+const amznValues = ['496.00B', '364.00B', '244.00B', '200.00B', '195.00B', '189.00B', '177.00B', '164.00B'];
+
+test('real 2026-10-31 mirror rows reproduce the RPO fail-closed reasons without inventing values', () => {
+  // MSFT: complete current + prior-year pair; still valid.
+  const msft = parseRpoTable(realRpoTable('Commercial Remaining Performance Obligations',
+    ['2026-09-30', '2026-06-30', '2026-03-31', '2025-12-31', '2025-09-30', '2025-06-30', '2025-03-31', '2024-12-31'],
+    ['677.00B', '678.00B', '627.00B', '625.00B', '392.00B', '368.00B', '315.00B', '298.00B']),
+  'Commercial Remaining Performance Obligations', saNumber, '2026-10-31');
+  assert.equal(msft.observationDate, '2026-09-30');
+  assert.ok(Math.abs(msft.yoyPct - 72.704) < 0.01);
+
+  // AMZN: purely a freshness boundary (120d passes on 10-28, 121d fails on 10-29).
+  const amzn = realRpoTable('AWS Remaining Performance Obligations', amznDates, amznValues);
+  assert.equal(parseRpoTable(amzn, 'AWS Remaining Performance Obligations', saNumber, '2026-10-28').observationDate, '2026-06-30');
+  assert.throws(() => parseRpoTable(amzn, 'AWS Remaining Performance Obligations', saNumber, '2026-10-29'),
+    /RPO_observation_stale: 2026-06-30 \(121d > 120d\)/);
+
+  // GOOGL: the newest header column is a placeholder, not an observation; it must not be skipped.
+  const googl = realRpoTable('Remaining Performance Obligations',
+    ['2026-09-30', '2026-06-30', '2026-03-31', '2025-12-31', '2025-09-30', '2025-06-30', '2025-03-31', '2024-12-31'],
+    ['-', '519.50B', '467.60B', '242.80B', '157.70B', '108.20B', '92.40B', '93.20B']);
+  assert.throws(() => parseRpoTable(googl, 'Remaining Performance Obligations', saNumber, '2026-10-31'),
+    /RPO latest period value is unavailable \(2026-09-30\)/);
+
+  // ORCL: only one reported column, so no same-period prior-year comparable exists.
+  const orcl = realRpoTable('Remaining Performance Obligations (RPO)',
+    ['2026-08-31', '2026-05-31', '2026-02-28', '2025-11-30', '2025-08-31', '2025-05-31', '2025-02-28', '2024-11-30'],
+    ['664.00B', '', '', '', '', '', '', '']);
+  assert.throws(() => parseRpoTable(orcl, 'Remaining Performance Obligations (RPO)', saNumber, '2026-10-31'),
+    /RPO comparable value is missing \(2026-08-31 vs 2025-08-31\)/);
+  assert.equal(saNumber(''), null);
+  assert.equal(saNumber('-'), null);
+});
+
+test('RPO coverage gate keeps the >=2 company rule and records per-company source reasons', () => {
+  assert.equal(MIN_RPO_COMPANIES, 2);
+  assert.deepEqual([...RPO_COMPANIES], ['MSFT', 'ORCL', 'AMZN', 'GOOGL']);
+  const failures = [
+    { ticker: 'ORCL', source: 'edgar', reason: 'HTTP 403 for https://data.sec.gov/api/xbrl/companyconcept/CIK0001341439/us-gaap/RevenueRemainingPerformanceObligation.json' },
+    { ticker: 'ORCL', source: 'stockanalysis', reason: 'RPO comparable value is missing (2026-08-31 vs 2025-08-31)' },
+    { ticker: 'AMZN', source: 'stockanalysis', reason: 'RPO_observation_stale: 2026-06-30 (121d > 120d)' },
+    { ticker: 'GOOGL', source: 'stockanalysis', reason: 'RPO latest period value is unavailable (2026-09-30)' }
+  ];
+  assert.throws(() => assertRpoCoverage([{ ticker: 'MSFT' }], failures), (error) => {
+    assert.match(error.message, /RPO 可用公司不足 \(1\/4\)/u);
+    assert.match(error.message, /MSFT=ok/u);
+    assert.match(error.message, /ORCL=edgar:HTTP 403/u);
+    assert.match(error.message, /stockanalysis:RPO comparable value is missing/u);
+    assert.match(error.message, /AMZN=stockanalysis:RPO_observation_stale/u);
+    assert.match(error.message, /GOOGL=stockanalysis:RPO latest period value is unavailable/u);
+    assert.ok(error.message.length <= 800);
+    assert.equal(/undefined/u.test(error.message), false);
+    return true;
+  });
+  assert.doesNotThrow(() => assertRpoCoverage([{ ticker: 'MSFT' }, { ticker: 'AMZN' }], failures));
+  const unbounded = describeRpoCoverage({ failures: Array.from({ length: 4 }, (_, i) => ({ ticker: 'ORCL', source: 'stockanalysis', reason: 'x'.repeat(500) + `\n${i}` })) });
+  assert.ok(unbounded.length <= 600);
+  assert.equal(/\n/u.test(unbounded), false);
 });

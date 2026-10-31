@@ -201,3 +201,17 @@ jobs:
             manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json
           if-no-files-found: warn
           retention-days: 3
+
+      # Failed runs keep only their diagnostic evidence for longer: the weekly cadence and
+      # the midweek triage window are longer than the 3-day bundle above. Successful runs
+      # are not extended.
+      - name: Retain failure evidence for triage
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: bubble-watch-weekly-editorial-failure-${{ github.run_id }}
+          path: |
+            manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json
+            manual-artifacts/bubble-watch-weekly-editorial/deepseek-failure-latest.json
+          if-no-files-found: warn
+          retention-days: 30
