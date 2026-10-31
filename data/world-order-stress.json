@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-10-30T02:23:46.378Z",
+  "updatedAt": "2026-10-31T01:59:28.167Z",
   "sourceMode": "computed_with_partial_external_sources",
   "scoringModel": {
     "version": "gdelt-events-conflict-interval-v1",
@@ -17,21 +17,21 @@
     "source": "worker-generated-preview",
     "sourceUrl": "https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json",
     "path": null,
-    "updatedAt": "2026-10-30T02:21:08.323Z",
-    "ageMinutes": 2.6342333333333334,
+    "updatedAt": "2026-10-31T01:57:08.237Z",
+    "ageMinutes": 2.33215,
     "healthScore": 100,
     "criticalMissing": 0,
-    "brent": 113.2,
-    "gold": 4010,
-    "vix": 16.91,
+    "brent": 112.665,
+    "gold": 3876.3999,
+    "vix": 17.2,
     "dxy": 121.3202,
-    "hyOas": 3.14,
-    "us10y": 5.05,
-    "real10y": 2.67,
+    "hyOas": 3.26,
+    "us10y": 4.98,
+    "real10y": 2.63,
     "spx": 7743.98,
     "brentSource": "yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor",
     "brentPromotionApplied": true,
-    "brentPromotionReason": "promoted-confirmed-extreme-move-with-fresh-yahoo-and-tradingeconomics-confirmation",
+    "brentPromotionReason": "promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation",
     "fallbackReason": null
   },
   "externalSources": {
@@ -4946,7 +4946,7 @@
         "rateLimitedCount": 0,
         "usedCachedSummary": true,
         "cacheReason": "gdelt-cloud-free-only-hold",
-        "attemptedAt": "2026-10-30T02:23:45.398Z",
+        "attemptedAt": "2026-10-31T01:59:27.335Z",
         "countUnit": "country_event_aggregate",
         "articleCountReasonZh": "当前接入没有可验证的去重报道总数；事件数不能替代报道数。",
         "requestDiagnostics": {
@@ -4971,7 +4971,7 @@
     "ofac": {
       "enabled": true,
       "status": "ok",
-      "lastFetchedAt": "2026-10-30T02:23:45.624Z",
+      "lastFetchedAt": "2026-10-31T01:59:27.455Z",
       "summary": {
         "recentActionsCount": 18,
         "listUpdatesCount": 7,
@@ -5020,7 +5020,7 @@
     },
     "acled": {
       "enabled": true,
-      "status": "ok",
+      "status": "partial",
       "lastFetchedAt": "2026-10-28T06:01:46.903Z",
       "summary": {
         "eventsLast4Weeks": 39857,
@@ -5032,7 +5032,7 @@
         "latestWeek": "2026-10-17",
         "regionsTracked": 6,
         "hotZonesTopCount": 10,
-        "sourceFreshness": "fresh",
+        "sourceFreshness": "aging",
         "politicalViolenceEventsLatestFullYear": 213638,
         "politicalViolenceYoyDelta": 0.216795,
         "civilianTargetingShareLatestFullYear": 0.315281,
@@ -5041,7 +5041,7 @@
         "monthlyAsOfDate": "2026-10-16",
         "monthlyLatestFullYear": 2025,
         "monthlySourceFreshness": "fresh",
-        "noteZh": "周度覆盖 6 个区域，最新周 2026-10-17，近4周事件相对12周均值变化 7.9%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。",
+        "noteZh": "周度覆盖 6 个区域，最新周 2026-10-17，近4周事件相对12周均值变化 7.9%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
         "weeklyWindowAligned": true
       }
     },
@@ -5290,7 +5290,7 @@
   },
   "dimensions": {
     "peaceDividendRetreat": {
-      "score": 64,
+      "score": 62,
       "labelZh": "和平红利退潮",
       "trend": "rising",
       "evidence": [
@@ -5303,12 +5303,12 @@
           "confidence": 0.85
         },
         {
-          "labelZh": "ACLED 周度冲突事件显示和平红利退潮压力",
+          "labelZh": "ACLED 周度/月度数据部分可用",
           "source": "acled",
-          "summary": "ACLED 手动周度聚合更新至 2026-10-17，覆盖 6 个区域，近 4 周事件相对 12 周均值变化 8%。",
-          "value": 27,
+          "summary": "周度覆盖 6 个区域，最新周 2026-10-17，近4周事件相对12周均值变化 7.9%；月度最新完整年 2025 年政治暴力事件相对前 3 年均值 21.7%。 数据已偏旧或过期，当前仅作有时效限制的历史参考。",
+          "value": 20,
           "direction": "neutral",
-          "confidence": 0.9
+          "confidence": 0.68
         },
         {
           "labelZh": "免费新闻编码暴力记录",
@@ -5388,16 +5388,16 @@
         {
           "labelZh": "黄金处于偏强区间",
           "source": "market:gold",
-          "summary": "基于 Worker 快变量，黄金当前值 4010，显示避险或实际利率压力定价。",
-          "value": 4010,
+          "summary": "基于 Worker 快变量，黄金当前值 3876.4，显示避险或实际利率压力定价。",
+          "value": 3876.3999,
           "direction": "up",
           "confidence": 0.75
         },
         {
           "labelZh": "能源价格压力偏高",
           "source": "market:brent",
-          "summary": "基于 Worker 快变量，布伦特当前值 113.2，对地缘与供应风险有部分确认作用。",
-          "value": 113.2,
+          "summary": "基于 Worker 快变量，布伦特当前值 112.67，对地缘与供应风险有部分确认作用。",
+          "value": 112.665,
           "direction": "up",
           "confidence": 0.75
         },
@@ -5405,7 +5405,7 @@
           "labelZh": "美元与黄金同步偏强",
           "source": "market:dxy-gold",
           "summary": "美元与黄金同步偏强时，可能反映安全资产需求与金融压力并存。",
-          "value": "121.3202/4010",
+          "value": "121.3202/3876.3999",
           "direction": "up",
           "confidence": 0.6
         },
@@ -5413,15 +5413,15 @@
           "labelZh": "股市与黄金同步偏强",
           "source": "market:spx-gold",
           "summary": "股市与黄金同步偏强更像市场分歧确认，说明结构性风险尚未完全进入风险资产定价。",
-          "value": "7743.98/4010",
+          "value": "7743.98/3876.3999",
           "direction": "mixed",
           "confidence": 0.45
         },
         {
           "labelZh": "布伦特来源确认",
           "source": "market:brent-validation",
-          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-confirmed-extreme-move-with-fresh-yahoo-and-tradingeconomics-confirmation。",
-          "value": 113.2,
+          "summary": "Worker Brent 来源：yahoo:BZ=F+tradingeconomics:brent-crude-oil-average promoted over stale FRED anchor；promotion=已应用；原因：promoted-stale-fred-anchor-with-fresh-yahoo-and-tradingeconomics-confirmation。",
+          "value": 112.665,
           "direction": "up",
           "confidence": 0.65
         }
@@ -5435,17 +5435,17 @@
       "score": 73
     },
     {
-      "key": "peaceDividendRetreat",
-      "labelZh": "和平红利退潮",
-      "score": 64
-    },
-    {
       "key": "capitalControlRisk",
       "labelZh": "资本管制与金融抑制风险",
       "score": 64
+    },
+    {
+      "key": "peaceDividendRetreat",
+      "labelZh": "和平红利退潮",
+      "score": 62
     }
   ],
-  "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、和平红利退潮、资本管制与金融抑制风险。该层仅用于结构性风险识别。",
+  "systemInterpretationZh": "世界秩序压力主要来自：经济金融武器化、资本管制与金融抑制风险、和平红利退潮。该层仅用于结构性风险识别。",
   "decisionModifier": {
     "enabled": true,
     "riskBias": "neutral",
