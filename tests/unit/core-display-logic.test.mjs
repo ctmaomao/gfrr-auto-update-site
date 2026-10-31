@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=policy-spread-display-1';
+} from '../../scripts/modules/config.js?v=separated-readout-20261031';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

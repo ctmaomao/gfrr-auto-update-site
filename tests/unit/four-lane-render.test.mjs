@@ -62,9 +62,9 @@ const render = (radarData, now = NOW) => {
 test('renderer renders four rows, qualifies the old floor, and does not count blocked transport', () => {
   const rows = render(clone(BASE));
   assert.equal(host.hidden, false);
-  assert.deepEqual(rows.map((row) => row.label), ['连续金融压力', '结构脆弱性', '独立冲击警报', '数据可信度']);
+  assert.deepEqual(rows.map((row) => row.label), ['六模块基础读数', '结构脆弱性', '尾部与运输警报', '数据可信度']);
   assert.equal(rows[2].status, '1 条快照记录');
-  assert.match(rows[2].detail, /原模型保底阈值 68/);
+  assert.match(rows[2].detail, /综合分下限 68/);
   assert.doesNotMatch(rows[2].detail, /尾部冲击 68（/);
   assert.match(rows[2].detail, /未触发\/阻塞，不计入警报/);
   assert.doesNotMatch(rows[2].status, /2 条/);

@@ -2,12 +2,12 @@
 // No scoring: the tail floor is annotated as the old model's floor, not a new
 // pressure score; transport that is not applied is not counted as an alert.
 
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=policy-spread-display-1';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=separated-readout-20261031';
 
 const ROWS = [
-  { key: 'continuous', label: '连续金融压力' },
+  { key: 'continuous', label: '六模块基础读数' },
   { key: 'fragility', label: '结构脆弱性' },
-  { key: 'shock', label: '独立冲击警报' },
+  { key: 'shock', label: '尾部与运输警报' },
   { key: 'credibility', label: '数据可信度' },
 ];
 
@@ -19,11 +19,12 @@ function numberText(value, unit) {
 }
 
 function continuousDetail(lane) {
-  return lane.evidence.map((item) => {
+  const evidence = lane.evidence.map((item) => {
     const value = numberText(item.value, item.unit);
     const date = item.date ? item.date : '观察日未知';
     return `${item.label} ${value}（${date}）`;
   }).join(' · ');
+  return `${lane.note} ${evidence}`;
 }
 
 function transportKnown(lane) {
@@ -36,6 +37,11 @@ function tailPartial(lane) {
 
 function shockStatusText(lane) {
   if (lane.snapshotStatus === 'invalid') return '冲击记录未知';
+  const record = lane.scoreRecord;
+  if (record.known) {
+    const partial = tailPartial(lane) ? ' · 部分记录待核验' : '';
+    return `${record.historical ? '历史记录 · ' : ''}尾部保底 +${record.tailAdd} · 运输 +${record.transportAdd}${partial}`;
+  }
   const knownTransport = transportKnown(lane);
   const count = lane.tail.length + (knownTransport && lane.transport.applied === true ? 1 : 0);
   const partial = tailPartial(lane) || !knownTransport;
@@ -47,7 +53,7 @@ function shockStatusText(lane) {
 }
 
 function shockDetail(lane) {
-  const parts = lane.tail.map((item) => `${item.label} 原模型保底阈值 ${item.floor}（${item.status}）`);
+  const parts = lane.tail.map((item) => `${item.label}（综合分下限 ${item.floor}；${item.status}）`);
   if (!lane.tailKnown) {
     parts.push('尾部记录未知');
   } else if (lane.tailRecordCount === 0) {
@@ -61,6 +67,8 @@ function shockDetail(lane) {
   else if (lane.transport.counted && lane.transport.applied !== true) transport += ' · 未触发/阻塞，不计入警报';
   else if (!lane.transport.counted) transport += '（未列入警报）';
   parts.push(transport);
+  if (lane.tail.length > 1) parts.push('多项条件共用保底，不逐项累加');
+  parts.push('加分已包含在综合分中；触发条件不等于实际加分');
   return parts.join(' · ');
 }
 
