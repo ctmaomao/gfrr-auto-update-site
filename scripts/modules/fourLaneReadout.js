@@ -5,7 +5,8 @@
 // tail-overlay floor and is rendered as such by renderFourLaneReadout. Missing
 // or invalid records must stay distinguishable from a valid empty list.
 
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=policy-spread-display-1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=separated-readout-20261031-r2';
+import { scoreAttributionText } from './macroOverviewNarrative.js?v=separated-readout-20261031-r2';
 
 const NUM = (v) => typeof v === 'number' && Number.isFinite(v);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -128,10 +129,31 @@ export function buildFourLaneReadout(radarData, nowMs = Date.now()) {
     status: transportStatus,
   };
 
+  // Reuse the existing published-attribution consistency gate. Read recorded
+  // values only; never reconstruct a new score from modules or alert floors.
+  const decompositionKnown = consistent && snapshotTs !== null && snapshot.status !== 'invalid'
+    && scoreAttributionText(radarData) !== '分数组成待确认。';
+  const scoreRecord = {
+    known: decompositionKnown,
+    base: decompositionKnown ? radarData.tailRiskOverlay.baseScore : null,
+    tailAdd: decompositionKnown ? radarData.tailRiskOverlay.scoreAdd : null,
+    transportAdd: decompositionKnown ? contribution : null,
+    total: decompositionKnown ? radarData.score : null,
+    historical: snapshot.status === 'stale',
+  };
+
   return {
     flags: { displayOnly: true, fourTier: null, accuracy: 'not_assessed', productionReplacement: 'HOLD' },
     lanes: {
-      continuous: { total: null, headline: '综合读数待验证', evidence },
+      continuous: {
+        total: null,
+        recordedBase: scoreRecord.base,
+        headline: decompositionKnown
+          ? `${scoreRecord.historical ? '历史快照 · ' : ''}${scoreRecord.base}/100`
+          : '基础读数待确认',
+        note: '含能源、通胀等成分，尚未验证为纯金融压力；不单独套用综合分档。',
+        evidence,
+      },
       fragility: {
         total: null,
         headline: '未建立总分',
@@ -142,7 +164,7 @@ export function buildFourLaneReadout(radarData, nowMs = Date.now()) {
         ],
         localEvidence: [],
       },
-      shock: { tail: tailAlerts, tailKnown, tailRecordCount, transport: transportAlert, snapshotStatus: snapshot.status },
+      shock: { tail: tailAlerts, tailKnown, tailRecordCount, scoreRecord, transport: transportAlert, snapshotStatus: snapshot.status },
       credibility: {
         snapshot: { status: snapshot.status, ageHours: snapshot.ageHours, label: snapshot.freshnessLabel },
         coverage: { present: coverage, total: 9, label: `${coverage}/9 项已发布数值` },

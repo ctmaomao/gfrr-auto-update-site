@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=policy-spread-display-1';
+﻿import { fmtNumSafe } from './config.js?v=separated-readout-20261031-r2';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

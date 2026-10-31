@@ -18,6 +18,13 @@
 - **周评线上恢复尝试**：获授权的 manual run `41185575584` 在 compact input 前因 `search_provider_unhealthy` 失败，DeepSeek 步骤 skipped，已核对 provider calls=0。只读 Tavily meter run `41185739681` 成功，searches=0/writes=0；官方 plan/key usage 均 950/1000、paygo 0/0，项目 rolling reserved 640（automated 592/manual 48），账户剩 50 credits 全部属于现行保留额，因此 `tavily_budget_account_limit` 正常拦截。不能放宽双检索来源或预算闸门；一次 DeepSeek 费用许可仍未使用，待额度/配置恢复后再验收。
 - **剩余**：生产 refresh 接线仍需独立 ADR/PR review，不能混入源链补丁；邮箱本机验证已完成，GitHub secret 未配置、GitHub runner/生产验收待做，不能宣称生产 RPO 已恢复。10/26 周评仍未补发，具体拒绝原因仍无法确认；生产周评一次调用与本任务 Git 远端/发布已获对应授权，尚未执行；人工 review 与线上验收仍待完成。上次 ODP 本地补丁不夹带本任务。现有任务已快进同步 main `106d6bf9`，13 个任务文件保持（backlog 仅 LF 规范化）；该基线完整 `check:changed`（含 `check:all`）exit 0。源链 PR 先行，生产接线独立 PR 后续；合并前人工 review 与 CI/线上验收仍待完成。
 
+### 2026-10-31 六模块基础读数与实际加分分离（独立展示补丁）
+
+- **Acceptance baseline**：owner 要求 Codex 自行实施并连续推进；DeepSeek 暂停，除非再次明确授权。沿用评分整改的展示范围，只读已发布基础分/尾部增量/运输贡献，不新增模型或分档，不改 scoring/decision/data/workflow/checker assertions。旧 root 本地补丁已验；本轮基于 latest main `5d63d596` 独立整合，保留已合并的未知记录/阻塞运输/版本化实例保护。本 PR 符合 DESIGN.md 的所有规则（§2/3/4/5.3/6/9），不改 CSS、颜色、字体或 IA。PR #488 形成实际固定差异后，owner 明确回复“授权独立 Codex 代审”，作为本补丁人工 review 的窄范围替代；这是本次授权回执，不改变通用人工 review 规则。
+- **最后基线 / 改动**：干净 worktree 复用 `four-lane-release`，新分支 `codex/separated-score-display-20261031`；仅两个四栏模块、两个已注册 unit 测试、此交接、前端缓存版本及局部验收证据。基础分标明含能源/通胀、不套用综合分档；警报 floor 明确“综合分下限”，实际增量只取已发布且自洽的归因，多条件不逐项累加；缺失与真实零保持区分。
+- **当前任务 / 验证**：首版25/25、helper/renderer/app语法、完整 `check:changed` mode=full/files26（含check:all）通过，UTC08:51:40–08:59:52 exit0，固定提交`4546e59e`形成PR #488。独立Codex审阅复跑25/25，确认原有 missing/empty/partial/blocked/invalid 断言和14项机械缓存替换保留，提出1项P2：正尾部增量配空原因列表时缺少异常提示。已修复为“部分记录待核验／尾部警报原因待确认”，保持有效基础数字，新增正增量/真实零增量空原因区分；专项26/26通过，最终缓存为`separated-readout-20261031-r2`。after-r2仍用同一2026-10-31快照，综合68=基础57+尾部11+运输0；1440/390四行/nav13/无溢出或脚本异常，样式不变；证据见 `docs/review-evidence/separated-score-display-20261031/`。旧完整检查只代表首版，修订后的完整验证/固定差异复审和CI结果以PR #488后续回执为准。
+- **下一步 / 门槛**：本次独立AI代审授权已记录；PR #488保持草稿，修订通过完整检查、独立复审和CI后按既有发布授权合并/两站验收。data/workflow/checker无diff，原root1356文件保留；不运行Daily/realtime/付费provider，不替换生产评分。独立AI审阅不冒充实际人审；研究准确率 not_assessed，模型迁移 HOLD。
+
 ### 2026-10-25 政策价差展示 I（展示，frontend bump；after r2 已登记，full/coverage exit0，CI 待）
 
 - **Acceptance baseline**：owner 授权 I（G N1 政策价差语义）；实施 DeepSeek，Codex+DeepSeek cross-AI review（非人工）。基于 H 合并 `f71a3e12`、branch `codex/policy-spread-display-20261025`、worktree `c2-c3-null-display`。范围仅 C2 Fed Path 静态标题/aux/note/meta/目标区间中值与中性占位、WoW#4 静态 tag/text/source+动态 leaf、pillar2 政策文字及该字段 strict finite；不改 checker/score/data/pipeline/workflow/F/G/H 逻辑/D helper/NFCI/其它 WoW/HY/卡/聚合。
@@ -61,7 +68,7 @@
 
 - **Acceptance baseline**：owner 授权 D（回购证据展示收口）；基于 `702fa47b` main 的 worktree `repo-evidence-release`。范围：`macroOverviewNarrative.js`（helper + label/note + policy 文案）、`renderMacroOverview.js`（pillar/C2/附录/n7 hunk）、`index.html`（C2 note id、分类 intro、回购初始态）、新真实渲染测试、D0 单测按新资格补 fixture、报告 + INDEX 一行、本 backlog 条、before/after 八图与 README、一次 asset bump `repo-evidence-release-1`。不改 matrix/pipeline/data/workflow/checker assertions/评分/冻结 realtime/依赖。
 - **当前**：`classifyRepoEvidence` 仅 finite（真 0 有效）+ BGCR `same_day` + 既有 regime 才判读，TGCR 独立；pillar 保留 D0 两行严格数值与 ×100 并实际使用 `repoBp`，pending 为“待核验”；C2 与附录总是写限定 label/note；n7 三态不称“三层均无压力/2019-09 不存在”；n7 score/isActive 不变。index 无 CSS/IA 改动。**r2（N1/N2/N3/N7）**：附录同段改“美元流动性分项资料：模块状态…”“SOFR/EFFR 参考读数”，repo 去掉固定 `class="ok"`；测试改内联固定合成 fixture（非历史观测；不读动态 data），import 无真实 binding 即 throw，补 pending→normal(0) 恢复与附录静态断言；不改 matrix/evidenceHighlights/其它 null formatter，不第二次 bump。
-- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=repo-evidence-release-1` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
+- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=separated-readout-20261031-r2` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
 - **下一步 / 验证**：`node --check`、`node tests/unit/repo-evidence-display.test.mjs`（6/6，真实 C2/detail/pillar/derive 模块 harness + 内联 fixture）、`node tests/unit/repo-spread-bp-display.test.mjs`（3/3）、标准 `node --test --experimental-test-isolation=none` 合并 9/9 exit0、`check-null-zero-display-guards`、`check-macro-overview-narrative`、`check-dom`、`check-frontend-zh-copy`、`check-frontend-asset-version`、doc-links、`git diff --check`；n7/C2 八图已验收（主分 68/100、n7 47、nav 13、1440/390 scroll 1425/375、pillar/C2/detail 待核验、warm/serif 不变）；附录 r2 已由 Codex 两视口验收（1440/390 待核验、class 空、墨色；main 68/nav 13/scroll 1425/375；facts 原 root 合同目录，不入本包截图）；完整 `check:changed`/`check:all` 由 Codex 重跑，不预称通过。
 - **阻塞 / 限制**：before/after 为同一真实旧快照 2026-10-21（非当前市场、非准确率）；未跑 Daily/realtime/provider/网络，未写 data，未 Git 写；交叉 AI 审阅替代人审（非人审、不扩全项目）。
 
@@ -602,7 +609,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `policy-spread-display-1` |
+| Cache version | `separated-readout-20261031-r2` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

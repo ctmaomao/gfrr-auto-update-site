@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=policy-spread-display-1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=policy-spread-display-1';
+} from './config.js?v=separated-readout-20261031-r2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=separated-readout-20261031-r2';
 import {
   brentModeZh,
   moduleTone,
@@ -18,13 +18,13 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=policy-spread-display-1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=policy-spread-display-1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=policy-spread-display-1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=policy-spread-display-1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=policy-spread-display-1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=policy-spread-display-1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=policy-spread-display-1';
+} from './macroOverviewDisplayHelpers.js?v=separated-readout-20261031-r2';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=separated-readout-20261031-r2';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=separated-readout-20261031-r2';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=separated-readout-20261031-r2';
+import { renderTrendSvg } from './renderMacroTrend.js?v=separated-readout-20261031-r2';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=separated-readout-20261031-r2';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=separated-readout-20261031-r2';
 
 // ---------- 阈值 + 派生 helper ----------
 
