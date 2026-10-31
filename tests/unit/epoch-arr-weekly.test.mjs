@@ -334,7 +334,13 @@ test('workflow isolates candidate permissions, schedule and successful upload fr
   // This exact new baseline requires independent review with ADR-0059 before merge.
   // Any later production-job change still requires separate review.
   // No runtime git-history dependency (shallow checkout/source ZIP also works).
-  assert.equal(artifactHash(workflow.split('\n  refresh:')[1]), 'd377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96');
+  // Proposed ADR-0079: exactly one step-local SEC contact env line is permitted.
+  // Retain the original job hash after removing that exact line; pin the full new job too.
+  const production = workflow.split('\n  refresh:')[1];
+  const approvedContactLine = '          BUBBLE_WATCH_EDGAR_CONTACT: ${{ secrets.BUBBLE_WATCH_EDGAR_CONTACT }}\n';
+  assert.equal(production.split(approvedContactLine).length - 1, 1);
+  assert.equal(artifactHash(production.replace(approvedContactLine, '')), 'd377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96');
+  assert.equal(artifactHash(production), '2cb6886717d47a0546037b9587eb33e9d80bace7d230cc906c36fc599d16f80b');
   assert.ok(!candidate.includes('TAVILY_BUDGET_GITHUB_TOKEN'));
   assert.equal((workflow.split('\n  refresh:')[1].match(/TAVILY_BUDGET_GITHUB_TOKEN:/gu) || []).length, 1);
 });

@@ -85,6 +85,7 @@ jobs:
 
       - name: Refresh bubble watch data
         env:
+          BUBBLE_WATCH_EDGAR_CONTACT: ${{ secrets.BUBBLE_WATCH_EDGAR_CONTACT }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
