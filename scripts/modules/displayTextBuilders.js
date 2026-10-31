@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=separated-readout-20261031';
+﻿import { fmtNumSafe } from './config.js?v=separated-readout-20261031-r2';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

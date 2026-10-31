@@ -231,3 +231,23 @@ test('renderer distinguishes unknown reasons, zero increment and missing payload
   assert.match(renderedText(noIncrement, Date.parse('2026-10-31T12:00:00Z')).text, /历史记录/u);
   assert.equal(renderedText(undefined).hidden, true);
 });
+
+test('positive tail addition with empty reasons is partial; true zero with empty reasons is valid', () => {
+  const missingReason = publishedSnapshot();
+  missingReason.tailRiskOverlay.reasons = [];
+  const out = renderedText(missingReason);
+  assert.match(out.text, /53\/100/u);
+  assert.match(out.text, /尾部保底 \+15.*部分记录待核验/u);
+  assert.match(out.text, /尾部警报原因待确认/u);
+  assert.doesNotMatch(out.text, /快照未记录尾部触发/u);
+
+  const zero = publishedSnapshot();
+  zero.score = 56;
+  zero.tailRiskOverlay = { baseScore: 53, adjustedScore: 53, scoreAdd: 0, applied: false, reasons: [] };
+  zero.transportShockScoringImpact.scoreBeforeTransport = 53;
+  zero.transportShockScoringImpact.scoreAfterTransport = 56;
+  const validEmpty = renderedText(zero);
+  assert.match(validEmpty.text, /尾部保底 \+0/u);
+  assert.match(validEmpty.text, /快照未记录尾部触发/u);
+  assert.doesNotMatch(validEmpty.text, /部分记录待核验|尾部警报原因待确认/u);
+});

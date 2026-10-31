@@ -2,7 +2,7 @@
 // No scoring: the tail floor is annotated as the old model's floor, not a new
 // pressure score; transport that is not applied is not counted as an alert.
 
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=separated-readout-20261031';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=separated-readout-20261031-r2';
 
 const ROWS = [
   { key: 'continuous', label: '六模块基础读数' },
@@ -32,7 +32,8 @@ function transportKnown(lane) {
 }
 
 function tailPartial(lane) {
-  return lane.tailKnown !== true || (lane.tailRecordCount !== null && lane.tailRecordCount > lane.tail.length);
+  return lane.tailKnown !== true || (lane.tailRecordCount !== null && lane.tailRecordCount > lane.tail.length)
+    || (lane.scoreRecord.known && lane.scoreRecord.tailAdd > 0 && lane.tailRecordCount === 0);
 }
 
 function shockStatusText(lane) {
@@ -57,7 +58,8 @@ function shockDetail(lane) {
   if (!lane.tailKnown) {
     parts.push('尾部记录未知');
   } else if (lane.tailRecordCount === 0) {
-    parts.push('快照未记录尾部触发');
+    parts.push(lane.scoreRecord.known && lane.scoreRecord.tailAdd > 0
+      ? '尾部警报原因待确认' : '快照未记录尾部触发');
   } else if (lane.tailRecordCount > lane.tail.length) {
     parts.push(`${lane.tailRecordCount - lane.tail.length} 条尾部记录无法校验`);
   }
