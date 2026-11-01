@@ -6,9 +6,10 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
-import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=separated-readout-20261031-r2';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=ofr-primary-20261101-r1';
+import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=ofr-primary-20261101-r1';
 
-const APP_VERSION = 'separated-readout-20261031-r2';
+const APP_VERSION = 'ofr-primary-20261101-r1';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -194,7 +195,7 @@ function markDataReady() {
   document.body?.classList.add(DATA_READY_CLASS);
 }
 
-function watchSnapshotLabels(radarData) {
+function watchSnapshotLabels(radarData, worldOrderStressData = null) {
   if (snapshotLabelTimer !== null) clearInterval(snapshotLabelTimer);
   snapshotLabelTimer = null;
   if (!radarData) return;
@@ -202,6 +203,7 @@ function watchSnapshotLabels(radarData) {
     applyIssueMetaToDom(deriveIssueMeta(radarData));
     const hero = document.getElementById('hero-data-health');
     if (hero) hero.textContent = snapshotDisplayHealth(radarData).heroLabel;
+    renderOfrPrimary({ radarData, worldOrderStressData });
   };
   refresh();
   snapshotLabelTimer = setInterval(refresh, 60_000);
@@ -232,7 +234,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=separated-readout-20261031-r2');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=ofr-primary-20261101-r1');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {
@@ -251,7 +253,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
 
   if (dataReady && macroOverviewRendered) {
     markDataReady();
-    watchSnapshotLabels(radarData);
+    watchSnapshotLabels(radarData, worldOrderStressData);
   } else {
     watchSnapshotLabels(null);
     markDataUnavailable();

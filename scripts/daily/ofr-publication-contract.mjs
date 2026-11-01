@@ -127,7 +127,7 @@ export function retireLegacyAdvice(data, mainPressureReadout, { retiredAt = main
   output.independentWarnings = { structuralSignals: structuredClone(data.independentWarnings?.structuralSignals ?? data.decisionModel?.structuralSignals ?? []), scope: 'input_conditions_not_position_instructions' };
   // The old warningSystem mixed collection diagnostics with allocation commands.
   // Keep collection counters and raw structural observations, not those commands.
-  output.warningSystem = { status: '数据与独立警报', criticalCount: data.warningSystem?.criticalCount ?? null, warningCount: data.warningSystem?.warningCount ?? null, watchCount: output.independentWarnings.structuralSignals.length, alerts: output.independentWarnings.structuralSignals.map(s => ({ title: s.label, condition: s.detail, driver: '独立结构观察' })), rules: [] };
+  output.warningSystem = { status: '数据与独立警报', ...(finite(data.warningSystem?.criticalCount) ? { criticalCount: data.warningSystem.criticalCount } : {}), ...(finite(data.warningSystem?.warningCount) ? { warningCount: data.warningSystem.warningCount } : {}), watchCount: output.independentWarnings.structuralSignals.length, alerts: output.independentWarnings.structuralSignals.map(s => ({ title: s.label, condition: s.detail, driver: '独立结构观察' })), rules: [] };
   output.decisionModel = retiredDecision(); output.tradingSystem = retiredTrading();
   for (const key of ['positionGuidance', 'riskControl', 'rotation', 'assetRotation']) if (Object.hasOwn(output, key)) output[key] = retiredObject();
   output.assetReturnMap = { ...retiredObject(), horizon: '不提供收益或回撤预测', rows: [] };

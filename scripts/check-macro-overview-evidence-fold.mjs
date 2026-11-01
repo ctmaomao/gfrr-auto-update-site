@@ -111,7 +111,10 @@ assert(pkg.includes('"check:macro-overview-evidence-fold"'), 'package.json must 
 assert(suite.includes("'check:macro-overview-evidence-fold'"), 'frontend-live-contracts must include the evidence-fold check');
 for (const marker of [
   "page.locator('#macro-professional-evidence')",
-  "toHaveAttribute('data-editorial-state', 'editorial-visible')",
+  // ADR-0080 / #490: the old editorial has no OFR contract. Replace its former
+  // current-article test requirement with explicit pending-readout coverage;
+  // keep all IA, DOM, disclosure and deterministic fallback assertions above.
+  "page.locator('#hero-verdict-headline')).toHaveText('官方读数待更新')",
   "toHaveAttribute('data-editorial-state', 'deterministic-fallback')",
 ]) {
   assert(e2e.includes(marker), `e2e evidence-fold coverage missing: ${marker}`);

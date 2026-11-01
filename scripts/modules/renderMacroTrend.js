@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=separated-readout-20261031-r2';
+import { $ } from './config.js?v=ofr-primary-20261101-r1';
 
 function asNumber(value) {
   const n = Number(value);
