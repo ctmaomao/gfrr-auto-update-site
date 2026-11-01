@@ -1,5 +1,18 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-01 OFR发布契约与消费者迁移（最终上线已授权，发布验收中）
+
+- **Acceptance baseline**：owner正式退役旧公开状态/仓位/风险预算/动作建议、保留历史审计；授权讨论#490、分项PR推送及独立Codex代审。本地基于latest main `0524f164`准备契约和全消费者补丁；#491冻结为准备包，不堆叠远端PR。完整补丁可审后最终merge/deploy另确认；无DeepSeek、付费调用或生产数据生成。
+- **最终上线授权 / acceptance baseline续记**：owner明确回复“授权按上述顺序合并上线（推荐）”，批准按#491准备包→独立迁移契约PR（CI通过后）顺序合并，单次免费抓取官方OFR、仅写新读数和旧建议退役字段，并部署GitHub Pages及radar.gfrfinradar.uk；不额外派发Daily、Wind或DeepSeek。沿用本任务独立Codex代审替代人审；原数据/旧分审计/历史/源安全闸门保留，实际首次输出仍须validator及差异审阅，失败不自动重试或回填。该回执在本任务指定范围替代下文“最终上线待确认”，不是其它任务或付费授权。#491已于2026-11-01合并为b537a779；当前独立契约分支基于该latest main顺序整合，尚未声称两站验收完成。
+
+- **契约**：新增OFR发表组件、失败/缓存/超龄与无值分离、旧建议纯投影退役、严格增量validator；DESIGN §5.3/5.5定向替代旧主分阈值/关系，不改变13锚点或视觉系统。保留原公式/历史、原数据与安全闸门；预警系统中旧交易文案亦退役，结构观察独立保留。
+- **执行状态**：发布契约`9439bfaa`经独立Codex r2复审GO；消费者已本地接入Daily main、Hero/趋势/时效计时器、独立观察关系、退役附录和旧AI admission hold，未运行生产Daily/付费网络。45项专项通过；首次完整E2E按新契约更新旧预期后81/81通过，unit coverage 1260项（1259 pass / 1既有skip / 0 fail），固定覆盖99.85/94.10/97.96%。最终源码的响应式趋势修订、完整check:changed、独立消费者审阅仍在进行，不预称生产完成。实际回执在主root ignored `manual-artifacts/main-score-audit/pressure-model/ofr-contract-migration-2026-11-01/`。
+
+- **验收收口（本地，未上线）**：最终`npm run check:changed`（完整check:all）exit0；45专项pass、81/81全站E2E通过，最终响应式源码14项OFR E2E及修正后的stale/cached/missing 6项均exit0；固定目标coverage检查exit0（1259 pass / 1既有skip / 0 fail），真实CSV投影在原validator全断言通过，3个旧解释层缺席warning按契约保留。独立Codex固定46文件r2补丁`2227ac98…dfa0033`复审GO，缓存lastKnown缺陷与stale fixture误标均关闭；唯一checker断言替代已显式登记于ADR-0080，不隐藏为展示变更。
+- **保护 / 发布状态**：root和研究worktree共2754文件哈希、HEAD/暂存/完整status保持；`data/realtime/config/worker runtime/workflow`无变更。#491仍为准备draft，固定头7de607cb的Check All PR run41280913858已success；完整迁移只在本地分支准备及授权范围内供审，遵守no stacked PR。最终合并两站上线及首次生产刷新验收仍待owner确认；不把旧68与OFR原值的数值差当准确率提升。
+
+- **迁移后输入的发布验收补充**：实际退役JSON进程只读投影下，完整`check:changed`/check:all exit0；独立Pages产物全站E2E 81/81、unit coverage 1263项（1262 pass / 1既有skip / 0 fail），固定目标覆盖99.85/93.98/97.96%。据实发现并修复旧AI provenance checker强制字段缺席冲突：新增完整退役契约分支，旧断言逐字保留；独立Codex已审8文件补丁f3328c57…51ac879并复跑CLI 3/3通过。原生产JSON、历史、费用路径未写未调用；当前完整审阅分支`codex/ofr-migration-review-20261101`，最终merge/deploy仍待owner确认。
+
 ### 2026-11-01 OFR主读数替代（旧建议退役已批准；独立审阅与分项PR）
 
 - **Acceptance baseline**：owner要求替代方案和研究推荐持续推进至需要实质决策；Codex直接实施，不调用DeepSeek。准备可审阅代码/契约/消费者清单/本地预览，保留旧模型协议，不将来源测量发布等同于自研模型胜出。 owner随后明确选择“正式退役旧建议，保留历史审计”，并授权本次讨论issue、独立Codex代审（替代本次人工review）及分项PR推送；最终合并上线待完整迁移补丁可审后另确认。
@@ -76,7 +89,7 @@
 
 - **Acceptance baseline**：owner 授权 D（回购证据展示收口）；基于 `702fa47b` main 的 worktree `repo-evidence-release`。范围：`macroOverviewNarrative.js`（helper + label/note + policy 文案）、`renderMacroOverview.js`（pillar/C2/附录/n7 hunk）、`index.html`（C2 note id、分类 intro、回购初始态）、新真实渲染测试、D0 单测按新资格补 fixture、报告 + INDEX 一行、本 backlog 条、before/after 八图与 README、一次 asset bump `repo-evidence-release-1`。不改 matrix/pipeline/data/workflow/checker assertions/评分/冻结 realtime/依赖。
 - **当前**：`classifyRepoEvidence` 仅 finite（真 0 有效）+ BGCR `same_day` + 既有 regime 才判读，TGCR 独立；pillar 保留 D0 两行严格数值与 ×100 并实际使用 `repoBp`，pending 为“待核验”；C2 与附录总是写限定 label/note；n7 三态不称“三层均无压力/2019-09 不存在”；n7 score/isActive 不变。index 无 CSS/IA 改动。**r2（N1/N2/N3/N7）**：附录同段改“美元流动性分项资料：模块状态…”“SOFR/EFFR 参考读数”，repo 去掉固定 `class="ok"`；测试改内联固定合成 fixture（非历史观测；不读动态 data），import 无真实 binding 即 throw，补 pending→normal(0) 恢复与附录静态断言；不改 matrix/evidenceHighlights/其它 null formatter，不第二次 bump。
-- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=separated-readout-20261031-r2` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
+- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=ofr-primary-20261101-r1` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
 - **下一步 / 验证**：`node --check`、`node tests/unit/repo-evidence-display.test.mjs`（6/6，真实 C2/detail/pillar/derive 模块 harness + 内联 fixture）、`node tests/unit/repo-spread-bp-display.test.mjs`（3/3）、标准 `node --test --experimental-test-isolation=none` 合并 9/9 exit0、`check-null-zero-display-guards`、`check-macro-overview-narrative`、`check-dom`、`check-frontend-zh-copy`、`check-frontend-asset-version`、doc-links、`git diff --check`；n7/C2 八图已验收（主分 68/100、n7 47、nav 13、1440/390 scroll 1425/375、pillar/C2/detail 待核验、warm/serif 不变）；附录 r2 已由 Codex 两视口验收（1440/390 待核验、class 空、墨色；main 68/nav 13/scroll 1425/375；facts 原 root 合同目录，不入本包截图）；完整 `check:changed`/`check:all` 由 Codex 重跑，不预称通过。
 - **阻塞 / 限制**：before/after 为同一真实旧快照 2026-10-21（非当前市场、非准确率）；未跑 Daily/realtime/provider/网络，未写 data，未 Git 写；交叉 AI 审阅替代人审（非人审、不扩全项目）。
 
@@ -617,7 +630,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `separated-readout-20261031-r2` |
+| Cache version | `ofr-primary-20261101-r1` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

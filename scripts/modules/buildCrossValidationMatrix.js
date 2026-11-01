@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=separated-readout-20261031-r2';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=ofr-primary-20261101-r1';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

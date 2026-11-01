@@ -39,3 +39,17 @@
 owner明确选择“正式退役旧建议，保留历史审计”，并授权“本次issue、独立Codex代审及分项PR推送”。[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)已创建。本记录在本任务范围替代上文旧建议保留/退役的待决状态；旧仓位/状态/风险预算/动作建议正式按退役方向准备，原数据、独立警报、历史审计及数据安全闸门保留。最终merge/deploy尚未授权。
 
 独立Codex审阅固定准备提交fa888920：无阻断，独立27项测试/真实CSV复算通过；这是AI审阅，不是实际人工review。其指出总指数修订比较不覆盖贡献项，现将返回结果明确标为`scope=total_index_only`及`contributionsCompared=false`，新增同总值/不同贡献反例；贡献项若未来公开，须另行跟踪其修订，不能把总指数未改称全部字段未改。旧冻结实验和原checker断言均保留。
+
+## 消费者契约迁移与检查替代
+
+发布契约固定本地提交`9439bfaa`已获独立Codex r2复审（7文件，原lastKnown缓存漏洞已修）；完整check:changed及11项专项通过。最终消费者作为明确的契约迁移补丁准备，不伪称普通展示改动。唯一既有checker断言替代在`check-macro-overview-evidence-fold.mjs`：原“E2E须包含当前旧AI稿可见态断言”改为“E2E须覆盖OFR缺席时的待更新主位”，保留13导航、5证据块、原静态/运行态折叠、安全边界与fallback断言；旧稿本身的校验器不放宽。配套E2E改测旧AI不可移植、新主位不得旧分回退及独立OFR趋势。须随实际差异独立审阅，以契约迁移PR发布，不夹带进普通presentation PR。
+
+## 迁移后真实形状的全套校验兼容
+
+对实际退役JSON投影运行完整保护网时，旧`check-external-ai-provenance-completeness.mjs`仍强求已退役的`externalAiInterpretationLayer.provenance`。现新增严格的模型分支：必须先通过完整`validateOfrPublicationIfPresent`（新主读数、完整退役对象、无旧AI字段/仓位/风险预算），才接受旧字段缺席；半套字段、仅mode标志或旧AI复活都拒绝。原旧模型全部溯源断言及disabled-fallback分支不改，新增CLI stdin正反例验证。该变化是本次明确契约迁移的一部分，须独立审阅，不作为宽泛skip。
+
+旧主位/旧AI过渡E2E fixture显式去除新模型入口，避免正式数据迁移后测试错误地把合法OFR当旧分回退；新主位场景额外使用损坏的旧评分历史，验证它既不能生成也不能污染OFR趋势。真实生产数据文件未写，完整校验以进程只读fixture及独立Pages测试产物运行。
+
+## 最终生产发布授权（2026-11-01）
+
+owner在完整补丁035fb41e可审、独立Codex复审与迁移后JSON全套检查通过后，明确“授权按上述顺序合并上线（推荐）”。本ADR方向现获本任务生产合并/发布批准：#491先合，再以独立迁移契约PR经CI整合；首发只作一次免费官方OFR抓取及新读数/旧建议退役字段写入，保留原score/快照日期/市场数据/历史与安全闸门；实际JSON校验和差异审阅后部署两站。此前Proposed/待最终确认文字保留为阶段记录，由本段在该范围替代；不授权额外Daily、Wind、DeepSeek、付费调用、其它新源或协议重标。首次生产与两站验收以实际回执决定，不由批准本身声明完成。

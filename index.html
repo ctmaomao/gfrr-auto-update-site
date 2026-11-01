@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=separated-readout-20261031-r2" />
+  <link rel="stylesheet" href="assets/styles.css?v=ofr-primary-20261101-r1" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -60,15 +60,15 @@
 
       <article class="editorial-big-number" id="homepage-today-judgment">
         <div class="big-left">
-          <div class="label">TODAY JUDGMENT · 今日总判断</div>
+          <div class="label">FINANCIAL STRESS · 金融压力</div>
           <div class="big-left-score">
-            <div class="value" id="hero-score-value">—<sup>/100</sup></div>
-            <div class="breakdown" id="hero-score-attribution">分数组成待确认。</div>
+            <div class="value ofr-primary-value" id="hero-score-value">—</div>
+            <div class="breakdown" id="hero-score-attribution">官方OFR读数待更新。</div>
             <div class="breakdown">
-              同期压力指标，不是危机概率或市场见顶预测。<br/>
-              6 底层模块中 <span id="hero-breakdown-counts"><strong>— 红 / — 黄 / — 绿</strong></span><br/>
-              模块共享部分输入，不等于独立确认。<br/>
-              世界秩序升档(overlay): <span id="hero-overlay-score">—</span>
+              官方发表指数，不是危机概率或见顶预测。<br/>
+              专业证据： <span id="hero-breakdown-counts"><strong>— 红 / — 黄 / — 绿</strong></span><br/>
+              原六模块单列为旧模型诊断。<br/>
+              世界秩序独立观察： <span id="hero-overlay-score">—</span>
             </div>
           </div>
         </div>
@@ -80,7 +80,7 @@
           <p class="hero-odp-ref">能源方向 <em>· 独立能源专题,仅供观察,不进打分</em>:<span id="hero-odp-ref-verdict">—</span> <a href="#oil-directional-pressure">查看 →</a></p>
         </div>
         <div class="big-footer">
-          <div><div class="k">DOMINANT RISK CHAIN · 主导风险链</div><div class="v" id="hero-dominant-chain">—</div></div>
+          <div><div class="k">OBSERVATION DATE · 实际观察日</div><div class="v" id="hero-dominant-chain">—</div></div>
           <div><div class="k">WEEKLY CHANGE · 周变化</div><div class="v" id="hero-weekly-change">—</div></div>
           <div><div class="k">DATA HEALTH · 数据健康</div><div class="v" id="hero-data-health">—</div></div>
         </div>
@@ -105,10 +105,11 @@
 
       <div class="threshold-block">
         <div class="threshold-header">
-          <h4>同期压力标尺 <em>· Threshold Scale</em></h4>
+          <h4>读数解释 <em>· Reading Guide</em></h4>
           <div class="now" id="threshold-now-line">等待最新数据</div>
         </div>
-        <div class="threshold-bar-wrap">
+        <p id="ofr-scale-note">OFR原值相对0说明历史平均位置；辅助百分位不是危机概率。</p>
+        <div class="threshold-bar-wrap legacy-model-retired" hidden inert>
           <div class="threshold-bar">
             <div class="zone t-green"  style="flex:25"><span class="zone-label">观察期</span><span class="zone-pct">0–25</span></div>
             <div class="zone t-yellow" style="flex:15"><span class="zone-label">中度警戒</span><span class="zone-pct">25–40</span></div>
@@ -122,16 +123,12 @@
 
       <div class="trend-block">
         <div class="trend-block-header">
-          <h4>8 周趋势 <em>· 8-Week Trend</em></h4>
-          <div class="trend-legend">
-            <span><span class="score-key">●</span> 风险分 Score</span>
-            <span><span class="overlay-key">●</span> 升档层 Overlay</span>
-            <span>风险分 /100 · 阈值线 25/40/60/80</span>
-            <span id="trend-overlay-mode">升档层(Overlay)等待数据</span>
-          </div>
+          <h4>OFR近期原值 <em>· Published Observations</em></h4>
+          <div class="trend-legend"><span>官方总指数 · 0为历史平均参考 · 非危机阈值</span><span id="trend-overlay-mode">约两个月有日期观察；历史可能修订，不是首次发布版本</span></div>
         </div>
         <div class="trend-svg-wrap">
-          <svg viewBox="0 0 800 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="8 week score and overlay trend chart">
+          <svg id="ofr-trend-svg" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OFR金融压力原值趋势"></svg>
+          <div class="legacy-model-retired" hidden inert><svg viewBox="0 0 800 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="8 week score and overlay trend chart">
             <rect class="trend-canvas" x="0" y="0" width="800" height="220"/>
             <g class="trend-grid">
               <line class="trend-grid-line" x1="44" y1="10" x2="786" y2="10"/>
@@ -187,7 +184,7 @@
               <text id="trend-x-6" class="trend-x-label" x="680" y="214" text-anchor="middle">05-30</text>
               <text id="trend-x-7" class="trend-x-label is-now" x="786" y="214" text-anchor="end">06-07</text>
             </g>
-          </svg>
+          </svg></div>
         </div>
       </div>
 
@@ -240,6 +237,7 @@
           <span class="macro-evidence-count">5 EVIDENCE BLOCKS</span>
         </summary>
         <div class="macro-evidence-content">
+        <p class="section-note" id="legacy-model-diagnostics-note">旧模型诊断与独立证据：以下六模块、阈值和传导分数保留供核对，不是OFR分解，不生成当前状态或仓位建议。</p>
 
       <div class="runtime-block" id="homepage-pressure-sources">
         <div class="runtime-block-header">
@@ -470,6 +468,7 @@
         <span class="section-note">六大模块加权映射为区域风险。地理投影层。</span>
       </header>
       <div class="editorial-section-body">
+      <p class="section-note">旧模型分区诊断，仅供核对；不是OFR的地区分解，也不是当前仓位信号。</p>
         <div class="heatmap-grid">
           <div class="heatmap-cell med" id="heatmap-cell-us"><span class="region" id="heatmap-us-region">美国</span><span class="risk-score" id="heatmap-us-score">RISK 45</span><span class="note" id="heatmap-us-note">融资偏紧 + 实际利率 2.18%</span></div>
           <div class="heatmap-cell high" id="heatmap-cell-europe"><span class="region" id="heatmap-europe-region">欧洲</span><span class="risk-score" id="heatmap-europe-score">RISK 62</span><span class="note" id="heatmap-europe-note">能源敏感 + 增长拖累</span></div>
@@ -819,9 +818,10 @@
           <div class="callout-kicker">现状判读</div>
           <p id="detail-health-callout-active">数据健康正常，无需触发回退机制。</p>
           <p id="detail-health-callout-none" hidden>数据健康需关注，当前存在非实时、降级或回退信号。</p>
-          <p><span id="detail-health-live-note-active">系统所有关键数据源处于实时状态，今日主判断的所有证据均可被审计追溯。</span><span id="detail-health-live-note-none" hidden>部分关键数据源未处于实时状态，今日部分证据可能来自非实时、缓存或回退输入，请谨慎解读。</span><span id="detail-health-structural-note-active">唯一需要观察的是 <span id="detail-health-structural-signal">逆回购准备金告急</span>，它已自动把决策层状态分提升 10 分。</span><span id="detail-health-structural-note-none" hidden>当前无激活结构信号，决策层未因结构信号加码。</span></p>
+          <p><span id="detail-health-live-note-active">系统所有关键数据源处于实时状态，今日主判断的所有证据均可被审计追溯。</span><span id="detail-health-live-note-none" hidden>部分关键数据源未处于实时状态，今日部分证据可能来自非实时、缓存或回退输入，请谨慎解读。</span><span id="detail-health-structural-note-active">唯一需要观察的是 <span id="detail-health-structural-signal">逆回购准备金告急</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
         </div>
 
+        <div class="legacy-model-retired" hidden inert>
         <h4>2. 30 日时间维度与传导速度 <em>· Time Dimension</em></h4>
         <p>过去 30 天综合风险分数总变化 <code id="detail-time-change">0</code>，均值 <code id="detail-time-avg">55</code>，高低区间 <code id="detail-time-range">[53, 58]</code>，距 30 日高点回撤 <code id="detail-time-drawdown">−2</code>。这是典型的<strong>高位震荡</strong>形态：分数没有继续上行，但也没有显著回落到 40 分以下的"中度警戒"带。</p>
         <p>趋势解释字段写的是<strong>滚动风险曲线(混合实时驱动)</strong>，说明本期分数的稳定不是因为数据停滞，而是快变量(实时)与慢变量(月度/季度)在<strong>同向支撑</strong>当前的 56 分判读。传导速度 <code class="warn" id="detail-time-speed">65</code>(0-100 标尺)，加速度判断<code class="ok" id="detail-time-accel">平稳</code>。这意味着冲击虽然在向下游传导，但传导节奏没有再加速。</p>
@@ -855,7 +855,8 @@
 
         <p>上图显示，能源向通胀、通胀向利率、美元向信用、利率向股票、流动性向估值五条链路分别处在不同压力区间。右侧括号中的变化值用于判断 30 日加速或回落；当前主判断因此保留"观察语气"，而不是把单一链条直接定性为系统性危机。</p>
 
-        <h4>3. 机构级宏观传导网络 <em>· Transmission Network</em></h4>
+        </div>
+        <h4>3. 旧模型宏观传导诊断 <em>· Transmission Network</em></h4>
         <p>系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 <code class="danger" id="detail-chain-stress">79</code>，路径置信度 <code id="detail-chain-confidence">88</code>，主导冲击为<strong id="detail-chain-lead-shock">战争 / 油价</strong>，主导资产影响为<strong id="detail-chain-dominant-impact">全球股票承压</strong>。</p>
 
         <div class="flow-strip">
@@ -892,6 +893,8 @@
           </aside>
         </div>
 
+        <p>旧模型的资产收益预测和情景概率已退役；历史发布记录保留供审计。</p>
+        <div class="legacy-model-retired" hidden inert>
         <h4>4. 资产收益矩阵与情景概率 <em>· Asset Map & Scenarios</em></h4>
         <p>未来 1 个月决策区间(按当前确定性排序)，系统给出 8 类资产的预期收益区间和回撤风险：</p>
 
@@ -922,6 +925,7 @@
 
       </div>
         </div>
+</div>
       </div>
     </details>
 
@@ -994,9 +998,10 @@
         <h4>1. 阅读路径 <em>· Reading Path</em></h4>
         <p>首页采用四层结构：<strong>结论 → 原因 → 证据 → 展开详情</strong>。上方 8 runtime block 是<strong>结论层</strong>，给出今日总判断、压力来源、信号分层、四大驱动、市场温度、风险引擎、交叉验证和本期变化。8 主题卡阵是<strong>证据层</strong>，把同样的信息按"读者最容易理解的主题"重新组织。本附录区是<strong>原始材料层</strong>，保留所有可审计的细节字段。</p>
 
-        <h4>2. 评分方法 <em>· Scoring Method</em></h4>
-        <p>综合风险分数 = 6 底层模块加权(能源 Energy / 地缘 Geopolitical / 通胀 Inflation / 流动性 Liquidity / 债务 Debt / 银行 Banking)，每模块 0-100。当前权重：能源 0.25 / 地缘 0.20 / 通胀 0.15 / 流动性 0.15 / 债务 0.15 / 银行 0.10。每模块的阈值分为红 RED (≥70) / 黄 YELLOW (40-69) / 绿 GREEN (&lt;40)。</p>
-        <p>World Order Stress 是<strong>结构性状态修正层</strong>，不参与风险打分。它通过风险偏置系数为状态分应用 +0 / +5 / +10 的升档修正。</p>
+        <h4>2. 当前测量与旧模型审计 <em>· Measurement & Audit</em></h4>
+        <p>主位采用<a href="https://www.financialresearch.gov/financial-stress-index/" target="_blank" rel="noopener noreferrer">美国财政部金融研究办公室OFR金融压力指数</a>已发表的总指数原值，披露实际观察日与约两个营业日发布滞后。严格过去十年百分位仅表示历史相对位置，不是危机概率。来源可能修订；观察值不直接判断泡沫或市场顶部，也不产生仓位建议。</p>
+        <p>以下为已退役主分的审计口径，不是OFR构成：旧综合风险分数 = 6 底层模块加权(能源 Energy / 地缘 Geopolitical / 通胀 Inflation / 流动性 Liquidity / 债务 Debt / 银行 Banking)，每模块 0-100。当前权重：能源 0.25 / 地缘 0.20 / 通胀 0.15 / 流动性 0.15 / 债务 0.15 / 银行 0.10。每模块的阈值分为红 RED (≥70) / 黄 YELLOW (40-69) / 绿 GREEN (&lt;40)。</p>
+        <p>World Order Stress 是独立结构观察；能源尾部、运输及世界秩序不抬高OFR，不生成交易或仓位状态。</p>
 
         <h4>3. 证据分层 <em>· Evidence Layers</em></h4>
         <p>所有证据按性质分 5 类，避免把推断、假设或噪音包装成已验证事实：</p>
@@ -1011,7 +1016,7 @@
         <h4>4. 数据边界 <em>· Data Boundary</em></h4>
         <p><strong>Market Pricing Temperature</strong> 由本地统计文件驱动；页面只读取统计结果并做分桶展示，不参与平台的风险打分与决策。</p>
         <p><strong>Brent 公开代理价格层</strong>仅用于审计观察，<code>不等同于 Platts Dated Brent</code>。当前为公开现货代理模式，现货代理与期货代理之间的价差仅作为反向证据呈现，不改变 Brent 主显示值。</p>
-        <p><strong>本期宏观判读</strong> 是嵌入总览的 DeepSeek 只读编辑层，综合近 7 日可信新闻与站内结构化数据；它不参与平台风险打分、六大模块、决策或执行。仅在契约校验与质量复核通过后展示，否则沿用上方规则生成的今日总判断。</p>
+        <p><strong>本期宏观判读</strong> 是嵌入总览的 DeepSeek 只读编辑层，综合近 7 日可信新闻与站内结构化数据；它不参与平台风险打分、六大模块、决策或执行。旧稿使用原评分口径。迁移期间停止展示与刷新，待独立的新测量解释契约审阅后再考虑恢复；当前以官方测量说明及独立证据为准。</p>
         <p><strong>所有数据治理</strong>：前端为只读展示层，不写入数据管线、清洗器或工作流，也不进行生产数据写入。</p>
 
         <h4>5. 非投资建议声明 <em>· Not Advice</em></h4>
@@ -1029,9 +1034,11 @@
     <details class="editorial-folded-content" id="execution-risk-detail">
       <summary>
         <span><span class="fold-marker"></span> 执行与风控详情 <em>· Execution Risk Detail</em></span>
-        <span class="fold-label">展开/收起 · 执行灯 + 触发器 + 目标仓位 + 行为纪律</span>
+        <span class="fold-label">展开/收起 · 旧建议退役说明与历史审计</span>
       </summary>
       <div class="editorial-section-body">
+        <p id="advice-retirement-notice">旧模型的状态、仓位比例、风险预算、动作队列和交易阈值建议已正式退役。本站保留压力观测、独立警报、原始数据及历史审计；OFR读数不生成仓位指令。</p>
+        <div id="legacy-advice-body" class="legacy-model-retired" hidden inert>
         <div class="appendix-content">
       <div class="appendix-narrative">
         <div class="appendix-narrative-intro">本附录展示作者本人的执行框架。<strong>这些规则只针对作者自己</strong>，不构成对任何人的投资建议。决策头、执行灯、预警规则、动作清单、仓位区间、硬阈值风控与行为纪律保留为高级详情。</div>
@@ -1170,6 +1177,7 @@
 
       </div>
         </div>
+</div>
       </div>
     </details>
 
@@ -1177,7 +1185,7 @@
       <div class="method-grid">
         <div>
           <h4>METHOD · 方法论</h4>
-          <div>6 底层模块加权 0-100。每模块阈值分红/黄/绿三档。世界秩序压力(World Order)为结构性状态修正层,不参与风险打分。详见上方"方法说明"附录(默认折叠,点击展开)。</div>
+          <div>主读数为OFR官方金融压力指数原值；十年历史百分位仅作辅助位置，非危机概率。六模块与旧评分仅作审计诊断，能源尾部、运输和世界秩序独立观察。来源、日期与限制见方法说明。</div>
         </div>
         <div>
           <h4>BOUNDARY · 边界</h4>
@@ -1189,11 +1197,11 @@
         </div>
         <div>
           <h4>DISCLAIMER · 免责</h4>
-          <div>框架研究,非投资建议。所有"动作清单 / 目标仓位 / 风控阈值"仅供作者本人使用。<br/><a href="https://radar.gfrfinradar.uk/" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:inherit;border-bottom:1px solid currentColor;text-decoration:none;padding-bottom:1px;">https://radar.gfrfinradar.uk/</a></div>
+          <div>金融压力与独立风险观察，非投资建议。旧动作清单、目标仓位和交易阈值已退役；保留历史审计，不生成当前仓位指令。<br/><a href="https://radar.gfrfinradar.uk/" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:inherit;border-bottom:1px solid currentColor;text-decoration:none;padding-bottom:1px;">https://radar.gfrfinradar.uk/</a></div>
         </div>
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=separated-readout-20261031-r2"></script>
+  <script type="module" src="scripts/app.js?v=ofr-primary-20261101-r1"></script>
 </body>
 </html>

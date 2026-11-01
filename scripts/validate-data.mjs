@@ -1,4 +1,5 @@
 import { isFreightSource } from './daily/freight-source-contract.mjs';
+import { validateOfrPublicationIfPresent } from './daily/ofr-publication-contract.mjs';
 ﻿import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -3330,6 +3331,7 @@ validateMainScoreSourcePolicy(data);
 validateRealtimeBaselineAlignment(data, realtime);
 validateBrentValidation(realtime);
 validateVersionSemantics(data);
+validateOfrPublicationIfPresent(data);
 validateDecisionContract(data);
 validateTransmissionDeltaContract(data, history, historyFull);
 console.log(`Validation passed (release ${RELEASE_VERSION}; data contract ${DATA_CONTRACT_VERSION})`);

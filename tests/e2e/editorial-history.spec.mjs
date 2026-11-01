@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { editorialHistoryFixture } from '../fixtures/macro-editorial-history.mjs';
 
 for (const width of [1440, 390]) {
-  test(`previous editorial bridges a multi-day update gap at ${width}px`, async ({ page }, testInfo) => {
+  test(`legacy current and previous editorials cannot explain OFR at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -14,6 +14,8 @@ for (const width of [1440, 390]) {
     await page.route('**/data/radar-data.json', async route => {
       const response = await route.fetch();
       const data = await response.json();
+      // Exercise a legacy publication during cutover, not the current OFR input.
+      delete data.mainPressureReadout; delete data.advicePolicy;
       data.updatedAt = now;
       data.macroRiskEditorialPreviousIssue = history;
       delete data.macroRiskEditorialLayer;
@@ -27,33 +29,19 @@ for (const width of [1440, 390]) {
     });
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
-    await expect(page.locator('#macro-risk-editorial')).toBeVisible();
-    await expect(page.locator('#macro-risk-editorial')).toHaveAttribute('data-editorial-mode', 'previous');
-    await expect(page.locator('.macro-editorial-previous-notice')).toContainText('上一期判读，当前数据已更新');
-    await expect(page.locator('.macro-editorial-previous-notice')).toContainText(originalDate.slice(0, 10));
-    await expect(page.locator('.macro-editorial-previous-notice')).toContainText('不代表本期最新判断');
-    await expect(page.locator('.macro-editorial-meta')).toContainText('原期综合分 42');
-    await expect(page.locator('.macro-editorial-live-dot')).toHaveCount(0);
+    await expect(page.locator('#macro-risk-editorial')).toBeHidden();
+    await expect(page.locator('.macro-editorial-previous-notice')).toHaveCount(0);
     await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('open', '');
-    await expect(page.locator('#macro-professional-evidence-status')).toContainText('上一期 AI 判读供参考');
     await expect(page.locator('#homepage-pressure-sources')).toBeVisible();
-    await expect(page.locator('body')).not.toContainText('AI 判读不可用');
+    await expect(page.locator('#hero-score-value')).toHaveText('—');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
     expect(overflow).toBe(false);
-    await page.locator('.macro-editorial-header').screenshot({ path: testInfo.outputPath('previous-issue.png') });
-    const style = await page.locator('.macro-editorial-previous-notice').evaluate(node => {
-      const css = getComputedStyle(node);
-      return { color: css.color, fontFamily: css.fontFamily, borderColor: css.borderTopColor, background: getComputedStyle(node.parentElement).background };
-    });
-    await testInfo.attach('history-style', { body: JSON.stringify(style), contentType: 'application/json' });
-
     fresh = true;
     await page.reload();
-    await expect(page.locator('#macro-risk-editorial')).toHaveAttribute('data-editorial-mode', 'current');
-    await expect(page.locator('#macro-editorial-title')).toContainText('新一期已生成');
+    await expect(page.locator('#macro-risk-editorial')).toBeHidden();
+    await expect(page.locator('#macro-editorial-title')).toHaveCount(0);
     await expect(page.locator('.macro-editorial-previous-notice')).toHaveCount(0);
-    await expect(page.locator('#macro-professional-evidence')).not.toHaveAttribute('open', '');
-    await page.locator('.macro-editorial-header').screenshot({ path: testInfo.outputPath('current-issue.png') });
+    await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('open', '');
     expect(errors).toEqual([]);
   });
 }

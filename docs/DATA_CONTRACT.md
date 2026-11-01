@@ -1,5 +1,17 @@
 # Global Financial Risk Radar 数据契约说明
 
+## OFR主压力读数与旧建议退役（ADR-0080，迁移契约）
+
+本节为[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)对应的窄范围契约：owner已决定正式退役旧公开建议、保留历史审计；准备代码不自动批准生产合并。根`version`与`decisionModel.contractVersion`仍为`v27.0`。
+
+- `mainPressureReadout.contractVersion=ofr-primary-pressure-observation-v1`，`modelId=ofr_fsi_published_index`。`index.value`是OFR官方总指数原值，允许负数/真实0；没有有效本期值为null。`source`记录官方归因、原观察日、真实抓取时刻、原CSV SHA256；不将抓取/发布时刻当观察日。仅发布总指数，不发布尚未覆盖修订比较的贡献项。
+- 状态为`available/cached/stale/missing_current/unavailable`。`currentEligible`仅available为true；失败回退保留原日期/哈希/抓取时刻，不伪造fresh；年龄按日历日重算，超过7日退出当前资格。首轮失败不借旧综合分/0作替身。这个7日屏障不是官方交易日release clock。前端还须按查看当日校验年龄。
+- 百分位仅严格过去十年midrank辅助位置，排除当前/未来，至少2000条、首条距离窗口起点不超过7日、最大空档不超过14日；不合格仅百分位为null。周差取约一周前有效观察，披露实际端点；缺失不补0。紧凑趋势至多64条有日期原值，不拼接旧雷达历史。
+- `scoreRole=legacy_model_audit_only`；根`score`和旧历史继续是旧公式，不能被OFR覆盖、作为新主分或直接比较。`legacyModelAudit`记录旧分、基础分、原数据时间和历史位置；旧模块/尾部/运输贡献仍属旧模型诊断，不是OFR加分或分解。独立结构信号转存`independentWarnings.structuralSignals`，原数据采集与安全闸门不变。
+- `advicePolicy.contractVersion=legacy-score-advice-retirement-v1`，`mode=retired`，明确`ofrToPositionMapping=null`、保留历史/安全闸门。`decisionModel`为`ObservationOnly`，省略`stateScore`，仓位对象只含退役状态/说明，动作队列为空数组；`tradingSystem`不提供配置比例、风险预算、执行限制或交易阈值。旧`assetMatrix/scenarioTree/scenarios`为空；资产预测/情景概率退役，旧危机阶段和模型置信度不作为当前读数发布。
+- `warningSystem`旧执行建议和门控规则退役，保留采集计数与独立结构观察；实际采集安全记录仍在`dailyRealtimeInput/recovery`等原字段。旧AI/规则判读及上一期稿不移植到新读数，当前投影中省略；Git发布历史保留。旧AI刷新admission遇迁移契约须在搜索/预留费用前hold，不能因正文缺席自动付费补稿。
+- `validateOfrPublicationIfPresent`为新增严格校验：两个新入口字段均缺席时保持旧有效负载的全部既有校验；任一出现必须满足完整新契约。不得通过删除旧validator断言实现兼容。新组件不输出危机概率、顶部标签、仓位建议或World Order升档。
+
 > 2026-10-11 Runtime 恢复：来源契约 PR #449 合并后，既有 Daily 接入公共 ticker。`macroDrivers.shippingFreight` 字段形状不变，source 按三指数真实提供方登记；无时区的 indexDate 仅保留观测日，UTC 零点代表日历日期而非原始发布时间。有效较早 previous 在七日内才产生涨跌比例，否则 null。首次有界 bootstrap 仅更新该对象，主评分、decision、顶层更新时刻、history、realtime 和路线级 not_connected 均不修改。
 
 > 2026-10-11 窄范围接入修订：[ADR-0067](ADR/0067-baltic-public-ticker.md) 允许在既有 shippingFreight 广义展示层使用官方首页公共 ticker 的 BDI/BDTI/BCTI；保留 StockQ 缓存来源，source 仅允许两个提供方按三指数固定顺序的八种组合。旧 StockQ-only 描述在此范围由该 ADR 替代。owner 接受风险不等于第三方授权；其它来源、路线级 source-rights/manual fixtures、评分和 not_connected 边界不变。契约 PR 不启用采集或写生产数据。
@@ -1063,7 +1075,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `separated-readout-20261031-r2`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `ofr-primary-20261101-r1`）。
 
 稳定边界：
 
@@ -1528,24 +1540,24 @@ Boundaries:
 
 各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `separated-readout-20261031-r2`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `ofr-primary-20261101-r1`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=separated-readout-20261031-r2`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=separated-readout-20261031-r2`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `separated-readout-20261031-r2`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=ofr-primary-20261101-r1`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=ofr-primary-20261101-r1`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `ofr-primary-20261101-r1`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs separated-readout-20261031-r2
-npm run bump:frontend-asset-version -- separated-readout-20261031-r2
+node scripts/bump-frontend-asset-version.mjs ofr-primary-20261101-r1
+npm run bump:frontend-asset-version -- ofr-primary-20261101-r1
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `separated-readout-20261031-r2`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `ofr-primary-20261101-r1`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
