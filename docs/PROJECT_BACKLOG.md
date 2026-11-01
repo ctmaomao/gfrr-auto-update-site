@@ -1,4 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
+
+### 2026-11-01 OFR主读数替代（旧建议退役已批准；独立审阅与分项PR）
+
+- **Acceptance baseline**：owner要求替代方案和研究推荐持续推进至需要实质决策；Codex直接实施，不调用DeepSeek。准备可审阅代码/契约/消费者清单/本地预览，保留旧模型协议，不将来源测量发布等同于自研模型胜出。 owner随后明确选择“正式退役旧建议，保留历史审计”，并授权本次讨论issue、独立Codex代审（替代本次人工review）及分项PR推送；最终合并上线待完整迁移补丁可审后另确认。
+- **最后基线 / 改动**：复用干净four-lane-release，新分支`codex/ofr-primary-migration-20261101`基于latest main `1857c251`；原root及研究worktree不动。新增未接runtime的OFR适配器、单元测试、ADR-0080 Proposed和迁移清单，追加测试/索引/来源登记；不改评分/data/workflow/前端/旧checker/依赖。
+- **当前任务 / 验证**：准备官方原值/观察日/日期对齐变化、严格过去十年辅助百分位、原始哈希/修订比较及bounded失败隔离；实际验证和本地预览回执见主root ignored `manual-artifacts/main-score-audit/pressure-model/ofr-primary-migration-2026-11-01/`。只有执行后回执才算通过；当前不声称生产完成或独立人审。
+- **下一步 / 门槛**：按已批准方向退役旧分数推导的公开状态/仓位/风险预算/动作建议，历史与安全闸门保留；[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)已创建。独立Codex已审阅fa888920无阻断、27项复跑通过；明确总指数修订比较边界，补充贡献变化反例，实际修订后再次独立审阅。推进独立契约与完整消费者迁移；没有OFR到仓位映射，不沿用25/40/60阈值，不改旧七候选84/40/12，最终合并上线另确认。
+
 ### 2026-10-31 SEC 声明联系身份的生产接线（独立 ADR-0079 / PR，Codex 实施审核）
 
 - **Acceptance baseline**：owner 要求持续排障并上线必要修订，明确授权 Codex 代替 owner 完成本任务审核；记录为 AI review，不伪称独立人工。源链 PR #487 已在完整 CI（audit、measured tests、check:all、browser smoke、EdgeOne regressions）成功后合并为 `8ef2f4de`。新分支 `codex/bubble-sec-production-contact-20261031` 从该 latest main 创建，保持 serial trunk/no stacked PR。
