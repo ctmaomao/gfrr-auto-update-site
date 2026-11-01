@@ -36,7 +36,7 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
-- [OFR_PRIMARY_MIGRATION_2026_11_01.md](OFR_PRIMARY_MIGRATION_2026_11_01.md) — OFR主读数替代的准备/迁移提案；仅约束本次未接runtime适配器与研究，旧建议退役、DESIGN/checker迁移和生产激活待具体决策，不覆盖现行评分或七候选协议。
+- [OFR_PRIMARY_MIGRATION_2026_11_01.md](OFR_PRIMARY_MIGRATION_2026_11_01.md) — OFR主读数替代的准备/迁移提案；仅约束本次未接runtime适配器与研究，owner已选择旧建议退役，DESIGN/checker迁移须实际审阅，生产合并激活待确认，不覆盖现行评分或七候选协议。
 
 - [POLICY_SPREAD_DISPLAY_2026_10_25.md](POLICY_SPREAD_DISPLAY_2026_10_25.md) — I 政策价差展示：C2 Fed Path 标题/aux/note/meta/目标区间中值与本卡中性占位；WoW#4 政策价差观察；pillar2 strict finite 政策文字；不改 checker/score/data/其它 WoW/HY；r2 before/after 4 图+facts 已登记（图只证政策卡/布局），full/coverage exit0、CI 待。
 

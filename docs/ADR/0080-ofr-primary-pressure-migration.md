@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed — owner 已授权准备替代方案与研究；实际生产迁移、旧建议退役方式及独立审阅尚待具体决策。** 本补丁仅实施未接入的解析/读数适配器、回归测试与可审阅迁移契约，不修改任何现行评分、DESIGN、checker断言、Daily、前端、生产JSON或workflow。
+**Owner-selected direction / contract review in progress — owner已选择正式退役旧公开建议，并授权本次讨论issue、独立Codex代审及分项PR推送；最终合并部署待完整迁移补丁可审后确认。** 本补丁仅实施未接入的解析/读数适配器、回归测试与可审阅迁移契约，不修改任何现行评分、DESIGN、checker断言、Daily、前端、生产JSON或workflow。
 
 ## Context
 
@@ -33,3 +33,9 @@
 ## Consequences
 
 主位含义明确、有可核对来源，但存在来源集中、发布延迟、历史修订及宏观/流动性覆盖局限。派生百分位随参照窗口变化；不将平静期相对高位当危机。不承诺替换即获得危机预测准确率。部署资格需看实际补丁及审阅，不由本提案或检查通过自动取得。
+
+## 2026-11-01 owner定案与审阅回执
+
+owner明确选择“正式退役旧建议，保留历史审计”，并授权“本次issue、独立Codex代审及分项PR推送”。[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)已创建。本记录在本任务范围替代上文旧建议保留/退役的待决状态；旧仓位/状态/风险预算/动作建议正式按退役方向准备，原数据、独立警报、历史审计及数据安全闸门保留。最终merge/deploy尚未授权。
+
+独立Codex审阅固定准备提交fa888920：无阻断，独立27项测试/真实CSV复算通过；这是AI审阅，不是实际人工review。其指出总指数修订比较不覆盖贡献项，现将返回结果明确标为`scope=total_index_only`及`contributionsCompared=false`，新增同总值/不同贡献反例；贡献项若未来公开，须另行跟踪其修订，不能把总指数未改称全部字段未改。旧冻结实验和原checker断言均保留。

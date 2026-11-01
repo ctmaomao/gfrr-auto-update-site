@@ -103,6 +103,10 @@ test('snapshot revisions distinguish numeric changes from null/zero availability
   assert.deepEqual(result.priorDatesNotReturned, ['2026-10-22']); assert.equal(previous[0].value, null);
 });
 const fixedClock = () => '2026-11-01T12:00:00.000Z';
+test('revision report explicitly covers total index only when contributions change', () => {
+  const result = compareOfrSnapshots([{ date: '2026-10-28', value: 1, contributions: { Credit: 0.1 } }], [{ date: '2026-10-28', value: 1, contributions: { Credit: 0.2 } }]);
+  assert.equal(result.scope, 'total_index_only'); assert.equal(result.contributionsCompared, false); assert.deepEqual(result.changes, []);
+});
 test('bounded source success is exactly one official request and no side-effecting writer', async () => {
   let count = 0;
   const result = await fetchOfrSnapshot({ clock: fixedClock, fetchImpl: async (url, options) => { count++; assert.equal(url, OFR_CSV_URL); assert.equal(options.redirect, 'error'); assert.ok(options.signal); return new Response(csv(line('2026-10-28', -1))); } });

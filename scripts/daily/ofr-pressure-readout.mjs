@@ -98,7 +98,7 @@ export function compareOfrSnapshots(previousRows, rows) {
   validateOfrRows(previousRows); validateOfrRows(rows);
   const old = new Map(previousRows.map(r => [r.date, r.value]));
   const now = new Map(rows.map(r => [r.date, r.value]));
-  return { overlappingDates: rows.filter(r => old.has(r.date)).length, changes: rows.filter(r => old.has(r.date) && old.get(r.date) !== r.value).map(r => ({ date: r.date, before: old.get(r.date), after: r.value, kind: old.get(r.date) === null || r.value === null ? 'availability_change' : 'numeric_revision' })), priorDatesNotReturned: previousRows.filter(r => !now.has(r.date)).map(r => r.date), missingDateMeaning: 'not_automatically_withdrawn_or_calm' };
+  return { scope: 'total_index_only', contributionsCompared: false, overlappingDates: rows.filter(r => old.has(r.date)).length, changes: rows.filter(r => old.has(r.date) && old.get(r.date) !== r.value).map(r => ({ date: r.date, before: old.get(r.date), after: r.value, kind: old.get(r.date) === null || r.value === null ? 'availability_change' : 'numeric_revision' })), priorDatesNotReturned: previousRows.filter(r => !now.has(r.date)).map(r => r.date), missingDateMeaning: 'not_automatically_withdrawn_or_calm' };
 }
 export function buildOfrReadout(rows, { asOf, retrievedAt, snapshotSha256 }) {
   validateOfrRows(rows);
