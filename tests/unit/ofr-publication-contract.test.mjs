@@ -64,6 +64,7 @@ test('retirement preserves raw inputs, source safety and independent warnings, w
   const old = legacy(), before = structuredClone(old), output = retireLegacyAdvice(old, live(-1));
   assert.deepEqual(old, before); assert.deepEqual(output.macroDrivers, old.macroDrivers);
   assert.equal(output.warningSystem.status, '数据与独立警报'); assert.deepEqual(output.warningSystem.rules, []); assert.deepEqual(output.tailRiskOverlay, old.tailRiskOverlay);
+  assert.equal(Object.hasOwn(output.warningSystem, 'criticalCount'), false);
   assert.equal(output.score, 68); assert.equal(output.legacyModelAudit.score, 68); assert.equal(output.scoreRole, 'legacy_model_audit_only');
   assert.deepEqual(output.independentWarnings.structuralSignals, old.decisionModel.structuralSignals);
   assert.equal(output.decisionModel.strategyState, 'ObservationOnly'); assert.equal(Object.hasOwn(output.decisionModel, 'stateScore'), false);

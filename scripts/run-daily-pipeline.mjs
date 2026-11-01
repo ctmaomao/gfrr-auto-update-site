@@ -23,6 +23,7 @@ import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
 import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay } from './daily/source-observation.mjs';
+import { prepareOfrPublication } from './daily/publish-ofr-pressure.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11301,6 +11302,10 @@ export function replaceJsonBatchSafely(entries, replaceFile = fs.renameSync) {
 
 async function main() {
   const built = await build();
+  // Existing build gates and legacy history calculation complete first. The
+  // official pressure component uses its own clock; the old score is audit-only.
+  const previous = fs.existsSync(dataPath) ? JSON.parse(fs.readFileSync(dataPath, 'utf8')) : null;
+  built.data = await prepareOfrPublication(built.data, { previous });
   fs.mkdirSync(dataDir, { recursive: true });
   replaceJsonBatchSafely([
     [histPath, built.history],

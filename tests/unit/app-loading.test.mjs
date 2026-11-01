@@ -8,6 +8,7 @@ function harness(fetch) {
   const source = readFileSync(new URL('../../scripts/app.js', import.meta.url), 'utf8')
     .replace(/import\s*\{[^}]+\}\s*from\s*'\.\/modules\/config\.js';/u, '')
     .replace(/import\s*\{ snapshotDisplayHealth \}\s*from\s*'\.\/modules\/snapshotFreshness\.js(?:\?[^']*)?';/u, '')
+    .replace(/import\s*\{ renderOfrPrimary \}\s*from\s*'\.\/modules\/renderOfrPrimary\.js(?:\?[^']*)?';/u, '')
     .split('// 启动')[0];
   const context = vm.createContext({
     fetch, snapshotDisplayHealth, AbortController, console: { error() {} },

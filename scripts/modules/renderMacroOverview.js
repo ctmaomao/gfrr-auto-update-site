@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=separated-readout-20261031-r2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=separated-readout-20261031-r2';
+} from './config.js?v=ofr-primary-20261101-r1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=ofr-primary-20261101-r1';
 import {
   brentModeZh,
   moduleTone,
@@ -18,13 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=separated-readout-20261031-r2';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=separated-readout-20261031-r2';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=separated-readout-20261031-r2';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=separated-readout-20261031-r2';
-import { renderTrendSvg } from './renderMacroTrend.js?v=separated-readout-20261031-r2';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=separated-readout-20261031-r2';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=separated-readout-20261031-r2';
+} from './macroOverviewDisplayHelpers.js?v=ofr-primary-20261101-r1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=ofr-primary-20261101-r1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=ofr-primary-20261101-r1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=ofr-primary-20261101-r1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=ofr-primary-20261101-r1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=ofr-primary-20261101-r1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=ofr-primary-20261101-r1';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=ofr-primary-20261101-r1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -830,7 +831,10 @@ function mainRiskBand(radarData, worldOrderStressData = observationReactionConte
   return band;
 }
 
-function observationReaction(radarData, signal, worldOrderStressData = observationReactionContext.worldOrderStressData) {
+function observationReaction(radarData, signal, worldOrderStressData = observationReactionContext.worldOrderStressData, mode = 'legacy_audit') {
+  if (mode === 'ofr_primary') return signal === 'unavailable'
+    ? { tone: 'pending', label: '数据不足', phrase: '独立观察待核验' }
+    : { tone: 'neutral', label: '背景', phrase: '独立背景观察' };
   const band = mainRiskBand(radarData, worldOrderStressData);
   if (signal === 'unavailable') {
     return { tone: 'pending', label: '数据不足', phrase: '主判断关系待确认' };
@@ -852,7 +856,7 @@ function observationReaction(radarData, signal, worldOrderStressData = observati
 }
 
 function setObservationReaction(statusId, badgeId, radarData, signal) {
-  const reaction = observationReaction(radarData, signal);
+  const reaction = observationReaction(radarData, signal, null, 'ofr_primary');
   setToneClass(statusId, 'status-bar', reaction.tone);
   setBadge(badgeId, reaction.tone, reaction.label);
   return reaction;
@@ -2359,7 +2363,7 @@ function renderDetailData({ radarData }) {
     if (!radarData) return;
 
     const realtime = radarData.dailyRealtimeInput || {};
-    const structuralSignals = radarData.decisionModel?.structuralSignals || [];
+    const structuralSignals = radarData.independentWarnings?.structuralSignals ?? radarData.decisionModel?.structuralSignals ?? [];
     const time = radarData.timeDimension || {};
     const chain = radarData.transmissionChain || {};
     const assetRows = radarData.assetReturnMap?.rows || [];
@@ -2740,11 +2744,12 @@ function renderExecutionRiskDetail({ radarData }) {
 
 export function renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData }) {
   observationReactionContext.worldOrderStressData = worldOrderStressData || null;
+  // Old editorial has no OFR input contract. This local display projection also
+  // fails closed while an old JSON snapshot is served during deployment.
+  radarData = radarData ? { ...radarData, macroRiskEditorialLayer: null, macroRiskEditorialPreviousIssue: null } : null;
 
   // Stage 4b-1A: Hero + threshold + pressure-sources
-  renderHero({ radarData, worldOrderStressData, marketPricingMetricsData, oilDirectionalData });
-  renderFourLaneReadout({ radarData });
-  renderThresholdBlock({ radarData, worldOrderStressData });
+  renderOfrPrimary({ radarData, worldOrderStressData });
   renderPressureSources({ radarData });
 
   // Stage 4b-1B: market-temperature + risk-engines + wow-section
@@ -2753,7 +2758,6 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   renderWowSection({ radarData, worldOrderStressData });
 
   // Stage 4b-2: trend SVG + signal-layers + macro-drivers + cross-validation
-  renderTrendSvg({ radarData, radarHistoryData, worldOrderStressData });
   renderSignalLayers({ radarData, worldOrderStressData, marketPricingMetricsData });
   renderMacroDriversPillars({ radarData });
   renderCrossValidation({ radarData, worldOrderStressData, marketPricingMetricsData });
@@ -2783,7 +2787,8 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   // Integrated read-only editorial + deterministic evidence fallback + execution-risk appendix narratives
   const editorialVisible = renderMacroRiskEditorial({ radarData });
   syncProfessionalEvidenceDisclosure(editorialVisible);
-  renderExecutionRiskDetail({ radarData });
+  // Old execution renderer is retained for historical diagnostics only. Current
+  // UI uses the static retirement notice and never reads those advice fields.
 
   console.log('[renderMacroOverview] Stage 5d-2 renders complete (all Stage 5 frontend binding complete)');
 }

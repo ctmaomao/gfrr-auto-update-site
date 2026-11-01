@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=separated-readout-20261031-r2';
+} from '../../scripts/modules/config.js?v=ofr-primary-20261101-r1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

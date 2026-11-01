@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=separated-readout-20261031-r2';
+﻿import { fmtNumSafe } from './config.js?v=ofr-primary-20261101-r1';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

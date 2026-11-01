@@ -24,6 +24,8 @@
 
 ### OFR — Financial Stress Index（未激活准备）
 
+**本地消费者接入修订（未批准上线）**：准备包#491保留下面原阶段登记。owner已选择退役旧公开建议，当前在独立本地契约/消费者补丁中准备既有Daily main写入前的单次官方抓取及`mainPressureReadout`发布，不执行生产Daily或晋升ignored快照。最终合并上线仍待完整补丁确认。只发布总指数/十年辅助位置/有日期趋势，贡献项不公开；保留原观察日、真实收据和SHA。源码中的runtime接线不代表当前线上已激活，Worker、浏览器外部fetch和旧评分契约不改变。
+
 [ADR-0080](ADR/0080-ofr-primary-pressure-migration.md)与[迁移清单](OFR_PRIMARY_MIGRATION_2026_11_01.md)登记未接runtime的OFR派生指数适配器。sourceKey=`ofr_fsi_published_index`，sourceDomain=`financialresearch.gov`，assignedLayer/primaryOwnerLayer=`daily_history_layer`，sanitizer=`artifact_sanitizer_layer`；freshnessCadence为官方每日、数据约两个营业日前，当前仅一次人工artifact试跑，不新增schedule。artifactOnlyBeforeProduction=true、sanitizerRequired=true、productionWriterRequired=true；sourceComplianceStatus=`public_derived_index_reviewed_activation_pending`。当前affectsScoring/affectsDecisionModel/affectsExecutionLock/affectsPositionGuidance均false，生产接入/主位替换需具体方案批准。只取官方公开发表的FSI/贡献，原始CSV仅本地ignored，不抓取或再分发33项底层专有数据，不使用官方徽章/背书。单请求15秒/6MB、无重试、拒绝重定向，schema或超时隔离失败；7日历日年龄为保守候选屏障，不冒充精确营业日发布时间。最新一期缺失不冒充零/旧值；失效保留原观察日，不回退为旧综合分。未经批准不进入Daily/Worker/浏览器，不晋升本地artifact到生产。
 
 ### FRED — Federal Reserve Economic Data

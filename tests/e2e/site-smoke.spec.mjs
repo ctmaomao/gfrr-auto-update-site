@@ -171,10 +171,12 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#issue-meta-issue')).toContainText('ISSUE v28.0.10');
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-thematic-cards')).toBeVisible();
-    await expect(page.locator('#macro-risk-editorial')).toBeVisible();
-    await expect(page.locator('#macro-editorial-title')).toContainText('风险缓和仍有条件');
-    await expect(page.locator('.macro-editorial-module-card')).toHaveCount(6);
-    await expect(page.locator('.macro-editorial-market-card')).toHaveCount(3);
+    // ADR-0080: even an approved legacy article cannot explain the new primary.
+    await expect(page.locator('#macro-risk-editorial')).toBeHidden();
+    await expect(page.locator('.macro-editorial-module-card')).toHaveCount(0);
+    await expect(page.locator('.macro-editorial-market-card')).toHaveCount(0);
+    await expect(page.locator('#hero-score-value')).toHaveText('—');
+    await expect(page.locator('#hero-verdict-headline')).toHaveText('官方读数待更新');
     await expect(page.locator('#external-ai-auxiliary')).toHaveCount(0);
     const primaryOrder = await page.locator('.macro-overview-shell').evaluate((shell) => [...shell.children].map((element) => element.id || element.className));
     expect(primaryOrder.slice(0, 8)).toEqual([
@@ -188,10 +190,8 @@ test.describe('desktop smoke', () => {
       'macro-professional-evidence',
     ]);
     const evidence = page.locator('#macro-professional-evidence');
-    await expect(evidence).toHaveAttribute('data-editorial-state', 'editorial-visible');
-    await expect(evidence).not.toHaveAttribute('open', '');
-    await expect(page.locator('#homepage-pressure-sources')).toBeHidden();
-    await evidence.locator('> summary').click();
+    await expect(evidence).toHaveAttribute('data-editorial-state', 'deterministic-fallback');
+    await expect(evidence).toHaveAttribute('open', '');
     await expect(page.locator('#homepage-pressure-sources')).toBeVisible();
     await expect(page.locator('#homepage-signal-layers .narrative-item')).toHaveCount(7);
     await expect(page.locator('#homepage-risk-engines .mini-card')).toHaveCount(6);
@@ -249,8 +249,10 @@ test.describe('desktop smoke', () => {
 
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
-    await expect(page.locator('#trend-line-score')).toHaveAttribute('aria-label', /Risk score trend/u);
-    await expect(page.locator('#trend-line-score')).not.toHaveAttribute('aria-label', /null/u);
+    await expect(page.locator('#trend-line-score')).toBeHidden();
+    await expect(page.locator('#trend-line-score')).toHaveAttribute('points', '');
+    await expect(page.locator('#ofr-trend-svg')).toContainText('OFR有日期的趋势待累计');
+    await expect(page.locator('#ofr-trend-svg polyline')).toHaveCount(0);
     expect(consoleErrors).toEqual([]);
   });
 
@@ -331,7 +333,7 @@ test.describe('mobile smoke', () => {
     await expect(page.locator('#trend-line-overlay')).toHaveAttribute('points', '');
     await expect(page.locator('#trend-dots-score circle')).toHaveCount(0);
     await expect(page.locator('#trend-dots-overlay circle')).toHaveCount(0);
-    await expect(page.locator('#trend-overlay-mode')).toHaveText('升档层(Overlay)数据不足');
+    await expect(page.locator('#trend-overlay-mode')).toContainText('不是首次发布版本');
     await expectNoHorizontalOverflow(page);
     expect(missingRequests).toBe(6);
     expect(pageErrors).toEqual([]);

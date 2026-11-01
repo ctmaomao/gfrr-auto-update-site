@@ -2,7 +2,7 @@
 
 本任务把替代方案推进到实际代码和可审阅契约，不再增加待选自研模型。owner已批准退役旧公开建议，并授权本次issue、独立Codex代审及分项PR推送；当前生产激活为false，最终合并上线另行确认。依据[ADR-0080](ADR/0080-ofr-primary-pressure-migration.md)；它仍是Proposed，没有改写现行规则。
 
-## 已准备的实际补丁
+## 准备包#491的固定范围（历史阶段记录）
 
 - `scripts/daily/ofr-pressure-readout.mjs`：官方CSV严格解析、原值/观察日/时效、日期对齐周变化、只用过去数据的十年辅助百分位、旧/新总指数snapshot修订比较（贡献项未比较）、单次15秒/6MB/无重试/拒绝重定向抓取函数。
 - `tests/unit/ofr-pressure-readout.test.mjs`：真实零/负数/缺失、schema/date、窗口缺口、时间顺序、revision、HTTP/schema/超限故障隔离。使用明确标记的合成单元fixture，不发布为市场数据。
@@ -42,3 +42,19 @@
 4. 分清压力、市场功能和长期脆弱性；独立状态研究继续，不把OFR符号或本站阈值生成真值。保留旧候选前瞻协议及失败记录，不回填或清空批次。
 
 参考：[OFR定义](https://www.financialresearch.gov/financial-stress-index/)、[法律说明](https://www.financialresearch.gov/legal-notices/)、[指标迁移论文](https://www.financialresearch.gov/working-papers/files/OFRwp-23-07-transition-to-alternative-reference-rates-in-ofr-financial-stress-index.pdf)。源集中和两营业日左右时差必须显式展示；官方指标也不保证所有市场状态正确。
+
+## 当前本地完整消费者补丁（未合并、未上线）
+
+- 发布投影与严格validator退役旧公开建议；`publish-ofr-pressure.mjs`仅在既有Daily安全/连续性build完成后单次抓取，失败保留原日期缓存或缺失，不改旧公式/历史/Worker/冻结realtime。未运行真实Daily。
+- 新`renderOfrPrimary.js`及入口计时器迁移主位、辅助十年位置、独立原值趋势和四层说明。旧JSON没有OFR时待更新；负值、0、缓存、过期、缺失分开处理，持续打开也重核源龄。六模块/传导明确为旧模型诊断，World Order不升档OFR。
+- 执行、旧主分时间维度与资产预测模板保留兼容锚点，静态hidden/inert且CSS强制不显示，当前入口不调用旧执行renderer。结构观察与采集安全记录保留；旧AI当前/历史稿不移植，新admission在预算/检索前hold。
+- 唯一既有checker断言替代已在ADR-0080显式登记；旧validator断言全部保留。既有E2E旧主位/旧AI展示预期按契约替代，新增两视口七状态；旧模型与历史AI资格单元测试仍保留。
+- 本地真实CSV投影1440/390主位-1.829、13导航、无横溢或pageerror；不是生产观测、新发布vintage或准确率结果。完整检查、coverage、最终E2E及固定差异独立审阅以实际回执为准。
+
+## 首次发布及回退边界
+
+完整前端退役保护和Daily代码一起部署；初始旧JSON使主位待更新且无旧建议，下一次正常Daily通过原安全闸门后才写OFR。不得为迁移启动付费provider、额外调度或降低闸门。OFR故障保留有日期旧观察或待更新，不复活旧综合分；原CSV仅ignored，公开归因/日期/字节摘要/统计/紧凑观察，Git版本留存已发表组件。
+
+故障时优先保留退役界面、隔离失效OFR并显示待更新；不直接退回会恢复仓位指令的旧HTML/旧建议版本。代码回退须审阅完整差异，保留退役保护和原始/历史数据。最终合并、两站部署及生产验收待完整补丁可审后owner确认。
+
+受控前后界面和两视口验收见[视觉记录](review-evidence/ofr-primary-20261101/README.md)。

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 for (const width of [1440, 390]) {
   for (const contribution of [3, null]) {
-    test(`prominent attribution handles ${contribution === null ? 'missing' : 'positive'} transport at ${width}px`, async ({ page }) => {
+    test(`retired attribution cannot drive OFR primary with ${contribution === null ? 'missing' : 'positive'} transport at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1000 });
       await page.route('**/data/radar-data.json', async route => {
         const response = await route.fetch();
@@ -14,10 +14,11 @@ for (const width of [1440, 390]) {
       });
       await page.goto('/index.html');
       await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
-      await expect(page.locator('#hero-score-value')).toHaveText('71/100');
-      await expect(page.locator('#hero-verdict-headline')).toHaveText('高压力区');
-      await expect(page.locator('#hero-score-attribution')).toHaveText(contribution === null
-        ? '分数组成待确认。' : '基础分 57 + 尾部调整 11 + 运输贡献 3 = 综合分 71。');
+      await expect(page.locator('#hero-score-value')).toHaveText('—');
+      await expect(page.locator('#hero-verdict-headline')).toHaveText('官方读数待更新');
+      await expect(page.locator('#hero-score-attribution')).toHaveText('官方读数待更新');
+      await expect(page.locator('#hero-verdict-body')).not.toContainText('71');
+      await expect(page.locator('#hero-four-lanes')).not.toContainText('运输贡献 3');
       const layout = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
       expect(layout.scroll).toBeLessThanOrEqual(layout.width + 1);
     });
@@ -44,23 +45,18 @@ for (const width of [1440, 390]) {
     });
     await page.goto('/index.html');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
-    await expect(page.locator('#hero-score-value')).toHaveText('68/100');
-    await expect(page.locator('#hero-verdict-headline')).toHaveText('高压力区');
-    await expect(page.locator('.threshold-header h4')).toContainText('同期压力标尺');
-    await expect(page.locator('.threshold-bar .t-red .zone-label')).toHaveText('高压力区');
-    await expect(page.locator('#threshold-marker-main .marker-label')).toHaveText('综合分 68');
+    await expect(page.locator('#hero-score-value')).toHaveText('—');
+    await expect(page.locator('#hero-verdict-headline')).toHaveText('官方读数待更新');
+    await expect(page.locator('.threshold-header h4')).toContainText('读数解释');
+    await expect(page.locator('.threshold-bar-wrap')).toBeHidden();
     await expect(page.locator('#hero-verdict-body')).not.toContainText('系统性顶部');
-    await expect(page.locator('#hero-score-attribution')).toHaveText('基础分 53 + 尾部调整 15 + 运输贡献 0 = 综合分 68。');
-    await expect(page.locator('#homepage-today-judgment .big-left')).toContainText('同期压力指标，不是危机概率或市场见顶预测。');
-    await expect(page.locator('#homepage-today-judgment .big-left')).toContainText('模块共享部分输入，不等于独立确认。');
-    await expect(page.locator('#hero-verdict-body')).toContainText('六模块基础分 53,尾部风险规则升档 +15 至 68');
-    await expect(page.locator('#hero-verdict-body')).toContainText('现货观测日 2026-09-09');
-    await expect(page.locator('#hero-verdict-body')).not.toContainText('原始风险分');
+    await expect(page.locator('#hero-score-attribution')).toHaveText('官方读数待更新');
+    await expect(page.locator('#homepage-today-judgment .big-left')).toContainText('原六模块单列为旧模型诊断');
+    await expect(page.locator('#hero-verdict-body')).not.toContainText('尾部风险规则升档');
     await expect(page.locator('#hero-weekly-change')).toHaveText('趋势待累计');
-    await expect(page.locator('#detail-time-change')).toHaveText('趋势待累计');
-    await expect(page.locator('#threshold-now-line')).toContainText('模型综合分 68');
-    await expect(page.locator('#threshold-now-line')).not.toContainText('高风险预警');
-    await expect(page.locator('#threshold-now-line')).not.toContainText('原始');
+    await expect(page.locator('#detail-time-change')).toBeHidden();
+    await expect(page.locator('#threshold-now-line')).toHaveText('十年历史位置待累计');
+    await expect(page.locator('#legacy-model-diagnostics-note')).toContainText('不是OFR分解');
     const layout = await page.evaluate(() => ({ width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
     expect(layout.scroll).toBeLessThanOrEqual(layout.width + 1);
     expect(errors).toEqual([]);

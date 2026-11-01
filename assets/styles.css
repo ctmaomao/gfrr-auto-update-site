@@ -787,3 +787,9 @@
   @media (hover: none) { .page-bookmarks .pbm { transform: translateY(calc(-100% + 36px)); } }
   @media (prefers-reduced-motion: reduce) { .page-bookmarks .pbm { transition: none; } }
   @media print { .page-bookmarks { display: none; } }
+
+/* ADR-0080: raw OFR observations and formally retired legacy advice. */
+.legacy-model-retired[hidden] { display: none !important; }
+#hero-score-value.ofr-primary-value { font-size: clamp(48px, 7vw, 96px); }
+.ofr-trend-line { fill: none; stroke: var(--paper-ink); stroke-width: 2; }
+.ofr-trend-label { font-family: var(--font-mono); font-size: 11px; fill: var(--paper-muted); }
