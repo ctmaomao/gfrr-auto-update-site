@@ -9,6 +9,8 @@
 - **验收收口（本地，未上线）**：最终`npm run check:changed`（完整check:all）exit0；45专项pass、81/81全站E2E通过，最终响应式源码14项OFR E2E及修正后的stale/cached/missing 6项均exit0；固定目标coverage检查exit0（1259 pass / 1既有skip / 0 fail），真实CSV投影在原validator全断言通过，3个旧解释层缺席warning按契约保留。独立Codex固定46文件r2补丁`2227ac98…dfa0033`复审GO，缓存lastKnown缺陷与stale fixture误标均关闭；唯一checker断言替代已显式登记于ADR-0080，不隐藏为展示变更。
 - **保护 / 发布状态**：root和研究worktree共2754文件哈希、HEAD/暂存/完整status保持；`data/realtime/config/worker runtime/workflow`无变更。#491仍为准备draft，固定头7de607cb的Check All PR run41280913858已success；完整迁移只在本地分支准备及授权范围内供审，遵守no stacked PR。最终合并两站上线及首次生产刷新验收仍待owner确认；不把旧68与OFR原值的数值差当准确率提升。
 
+- **迁移后输入的发布验收补充**：实际退役JSON进程只读投影下，完整`check:changed`/check:all exit0；独立Pages产物全站E2E 81/81、unit coverage 1263项（1262 pass / 1既有skip / 0 fail），固定目标覆盖99.85/93.98/97.96%。据实发现并修复旧AI provenance checker强制字段缺席冲突：新增完整退役契约分支，旧断言逐字保留；独立Codex已审8文件补丁f3328c57…51ac879并复跑CLI 3/3通过。原生产JSON、历史、费用路径未写未调用；当前完整审阅分支`codex/ofr-migration-review-20261101`，最终merge/deploy仍待owner确认。
+
 ### 2026-11-01 OFR主读数替代（旧建议退役已批准；独立审阅与分项PR）
 
 - **Acceptance baseline**：owner要求替代方案和研究推荐持续推进至需要实质决策；Codex直接实施，不调用DeepSeek。准备可审阅代码/契约/消费者清单/本地预览，保留旧模型协议，不将来源测量发布等同于自研模型胜出。 owner随后明确选择“正式退役旧建议，保留历史审计”，并授权本次讨论issue、独立Codex代审（替代本次人工review）及分项PR推送；最终合并上线待完整迁移补丁可审后另确认。
