@@ -1,9 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
 
-### 2026-11-01 OFR发布契约与消费者迁移（最终上线已授权，发布验收中）
+### 2026-11-01 OFR发布契约与消费者迁移（已上线，两站验收通过）
 
 - **Acceptance baseline**：owner正式退役旧公开状态/仓位/风险预算/动作建议、保留历史审计；授权讨论#490、分项PR推送及独立Codex代审。本地基于latest main `0524f164`准备契约和全消费者补丁；#491冻结为准备包，不堆叠远端PR。完整补丁可审后最终merge/deploy另确认；无DeepSeek、付费调用或生产数据生成。
 - **最终上线授权 / acceptance baseline续记**：owner明确回复“授权按上述顺序合并上线（推荐）”，批准按#491准备包→独立迁移契约PR（CI通过后）顺序合并，单次免费抓取官方OFR、仅写新读数和旧建议退役字段，并部署GitHub Pages及radar.gfrfinradar.uk；不额外派发Daily、Wind或DeepSeek。沿用本任务独立Codex代审替代人审；原数据/旧分审计/历史/源安全闸门保留，实际首次输出仍须validator及差异审阅，失败不自动重试或回填。该回执在本任务指定范围替代下文“最终上线待确认”，不是其它任务或付费授权。#491已于2026-11-01合并为b537a779；当前独立契约分支基于该latest main顺序整合，尚未声称两站验收完成。
+
+- **上线实证 / 当前结果**：#491→#492依次合并为b537a779 / 09412f1c，#492 CI41287010876全success。实际首发数据经完整检查exit0和独立Codex复审GO，仅`data/radar-data.json`提交3d6a57a3；原score68/更新时间01:20:15Z/市场数据/历史保留，旧建议退役。单次官方免费抓取收据08:09:43.189Z、观察日2026-10-28、FSI -1.829、周差+0.146、十年百分位56.103286（非概率）；同字节不算新增市场观测。Pages41288432294和EdgeOne41288517907均success，专用release仓库7977be31对应source3d6a57a3。2026-11-01 08:28Z两站实际HTML/app/radar/bubble四类哈希一致，radar SHA0774afa5…0fbd45fa；1440/390各两站实浏览器4/4通过、13导航、无横溢/pageerror/console error、旧执行正文隐藏且退役说明可见，未发生浏览器OFR请求。无额外Daily/Wind/DeepSeek/付费调用；实际脚本与输出/两站回执在主root ignored `manual-artifacts/main-score-audit/pressure-model/ofr-production-release-2026-11-01/`。本结果收口本任务下文此前的待发布/待验收状态，不改变源安全或旧研究协议。
 
 - **契约**：新增OFR发表组件、失败/缓存/超龄与无值分离、旧建议纯投影退役、严格增量validator；DESIGN §5.3/5.5定向替代旧主分阈值/关系，不改变13锚点或视觉系统。保留原公式/历史、原数据与安全闸门；预警系统中旧交易文案亦退役，结构观察独立保留。
 - **执行状态**：发布契约`9439bfaa`经独立Codex r2复审GO；消费者已本地接入Daily main、Hero/趋势/时效计时器、独立观察关系、退役附录和旧AI admission hold，未运行生产Daily/付费网络。45项专项通过；首次完整E2E按新契约更新旧预期后81/81通过，unit coverage 1260项（1259 pass / 1既有skip / 0 fail），固定覆盖99.85/94.10/97.96%。最终源码的响应式趋势修订、完整check:changed、独立消费者审阅仍在进行，不预称生产完成。实际回执在主root ignored `manual-artifacts/main-score-audit/pressure-model/ofr-contract-migration-2026-11-01/`。
