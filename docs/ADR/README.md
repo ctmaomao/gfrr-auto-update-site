@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0080 — OFR主压力读数迁移提案](0080-ofr-primary-pressure-migration.md): Proposed; owner授权准备；适配器/测试未接runtime，旧建议退役与具体发布仍待决策，未替代旧模型协议。
+
 - [ADR-0079 — Bubble SEC declared-contact production wiring](0079-bubble-sec-declared-contact-production-wiring.md): separate production wiring PR after #487; owner-designated Codex review; runtime acceptance pending.
 
 - [ADR-0078 — ESLint minimatch security override](0078-eslint-minimatch-security-override.md): CI blocker repair; development-only dependency override; audit/syntax/full checks pass; owner-designated Codex review before merge.
