@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { validateOfrPublicationIfPresent } from './daily/ofr-publication-contract.mjs';
 
 const errors = [];
 
@@ -9,6 +10,14 @@ function fail(message) {
 
 const radarPath = process.argv[2] === '-' ? 0 : resolve('data/radar-data.json');
 const radarData = JSON.parse(readFileSync(radarPath, 'utf8'));
+
+// ADR-0080: a complete retired-publication contract forbids the old AI field.
+// A mode flag alone, a partial migration or a resurrected old layer must fail
+// its strict validator; all legacy provenance assertions below remain intact.
+if (validateOfrPublicationIfPresent(radarData)) {
+  console.log('External AI provenance completeness check: PASS (strict OFR retirement contract; legacy AI field absent)');
+  process.exit(0);
+}
 
 const layer = radarData?.externalAiInterpretationLayer;
 const isDisabledFallback = layer?.contractVersion === 'v28.0K-3A'

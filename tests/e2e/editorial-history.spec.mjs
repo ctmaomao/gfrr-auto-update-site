@@ -14,6 +14,8 @@ for (const width of [1440, 390]) {
     await page.route('**/data/radar-data.json', async route => {
       const response = await route.fetch();
       const data = await response.json();
+      // Exercise a legacy publication during cutover, not the current OFR input.
+      delete data.mainPressureReadout; delete data.advicePolicy;
       data.updatedAt = now;
       data.macroRiskEditorialPreviousIssue = history;
       delete data.macroRiskEditorialLayer;

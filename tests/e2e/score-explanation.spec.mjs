@@ -7,6 +7,8 @@ for (const width of [1440, 390]) {
       await page.route('**/data/radar-data.json', async route => {
         const response = await route.fetch();
         const data = await response.json();
+        // Explicit legacy transition fixture, regardless of the deployed model.
+        delete data.mainPressureReadout; delete data.advicePolicy;
         data.score = 71;
         data.tailRiskOverlay = { baseScore: 57, adjustedScore: 68, scoreAdd: 11, applied: true };
         data.transportShockScoringImpact = { scoreBeforeTransport: 68, scoreAfterTransport: 71, contributionPct: contribution };
@@ -30,6 +32,8 @@ for (const width of [1440, 390]) {
     await page.route('**/data/radar-data.json', async route => {
       const response = await route.fetch();
       const data = await response.json();
+        // Explicit legacy transition fixture, regardless of the deployed model.
+        delete data.mainPressureReadout; delete data.advicePolicy;
       data.score = 68;
       data.modules = { geopolitical: 80, energy: 88, inflation: 59, liquidity: 36, debt: 32, banking: 28 };
       data.tailRiskOverlay = { baseScore: 53, adjustedScore: 68, scoreAdd: 15, applied: true };

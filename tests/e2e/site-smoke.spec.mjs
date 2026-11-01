@@ -157,12 +157,14 @@ async function bubbleGridColumns(page) {
 test.describe('desktop smoke', () => {
   test.use({ viewport: DESKTOP });
 
-  test('homepage renders the current data snapshot', async ({ page }) => {
+  test('legacy JSON cannot resurrect its old verdict or editorial', async ({ page }) => {
     const pageErrors = capturePageErrors(page);
     await page.route('**/data/radar-data.json', async (route) => {
       const response = await route.fetch();
       const radarData = await response.json();
       const currentTimestamp = new Date().toISOString();
+      // Explicit old JSON boundary; a future OFR deployment must test it too.
+      delete radarData.mainPressureReadout; delete radarData.advicePolicy;
       radarData.macroRiskEditorialLayer = buildApprovedMacroRiskEditorial(radarData, currentTimestamp);
       await route.fulfill({ response, json: radarData });
     });
@@ -238,7 +240,12 @@ test.describe('desktop smoke', () => {
     });
   }
 
-  test('trend tolerates a missing weekly date without keeping the static placeholder', async ({ page }) => {
+  test('legacy history cannot supply an OFR curve without an OFR component', async ({ page }) => {
+    await page.route('**/data/radar-data.json', async route => {
+      const response = await route.fetch(); const data = await response.json();
+      delete data.mainPressureReadout; delete data.advicePolicy;
+      await route.fulfill({ response, json: data });
+    });
     const consoleErrors = captureConsoleErrors(page);
     await page.route('**/data/radar-history.json*', async (route) => {
       const response = await route.fetch();
