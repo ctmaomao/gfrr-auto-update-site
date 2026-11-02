@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0081 — Bubble editorial claim-local reference consistency](0081-bubble-editorial-reference-consistency.md): owner-authorized offline repair and code release; only uniquely registered same-claim indicator/reference pairs may be completed, strict validators unchanged; no paid rerun or artifact promotion.
+
 - [ADR-0080 — OFR主压力读数迁移提案](0080-ofr-primary-pressure-migration.md): owner已选旧建议退役；issue #490及本次独立Codex代审/分项推送已授权；适配器未接runtime，最终合并部署待完整迁移审阅，旧模型协议不变。
 
 - [ADR-0079 — Bubble SEC declared-contact production wiring](0079-bubble-sec-declared-contact-production-wiring.md): separate production wiring PR after #487; owner-designated Codex review; runtime acceptance pending.

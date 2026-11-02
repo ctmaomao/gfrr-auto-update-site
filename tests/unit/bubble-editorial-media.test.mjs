@@ -9,7 +9,8 @@ import { buildNewsDiscovery, assessWeeklyEditorialNewsReadiness } from '../../sc
 import { validateNewsDiscovery, validateWeeklyEditorialOutput, visibleEditorialText } from '../../scripts/bubble-watch/weekly-editorial-contract.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { buildWeeklyEditorialSystemPrompt } from '../../scripts/bubble-watch/weekly-editorial-prompt.mjs';
-import { requestWeeklyEditorial, buildWeeklyEditorialReplayCandidate } from '../../scripts/bubble-watch/weekly-editorial-provider.mjs';
+import { requestWeeklyEditorial, buildWeeklyEditorialReplayCandidate, normalizeWeeklyEditorialProviderOutput } from '../../scripts/bubble-watch/weekly-editorial-provider.mjs';
+import { completeClaimIndicatorReferences } from '../../scripts/bubble-watch/weekly-editorial-reference-consistency.mjs';
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from '../../scripts/bubble-watch/weekly-editorial-claim-diagnostics.mjs';
 import { claimNumericSupport } from '../../scripts/bubble-watch/weekly-editorial-numeric-grounding.mjs';
 import { reviewWeeklyEditorial, projectWeeklyEditorial, applyWeeklyEditorialProjection, validateWeeklyEditorialProduction } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
@@ -397,6 +398,82 @@ test('explicit percent ranges match dash typography without accepting signed neg
   for (const [claim, evidence] of [['-4%', '3.75%-4%'], ['4%', '-4%'], ['4%', '-3.75%-4%'], ['4%', '3.75% -4%'], ['4%', '1e3%-4%'], ['4.1%', '3.75%-4%']]) {
     assert.ok(numericProbe(claim, evidence).blockers.length);
   }
+});
+
+test('claim-local declared indicator pairs complete both representations without changing prose or inputs', () => {
+  const { input, output, story } = scenario();
+  const claim = output.weeklyTimeline[0];
+  input.structuredFacts.find(f => f.indicatorId === 'breadth_50d').factZh = '站内广度35%。';
+  claim.detailZh = '据Morningstar分析，站内广度35%，调查与市场观察仍有差异。';
+  claim.sourceIndicatorIds = ['breadth_50d'];
+  claim.sourceRefIds = [story.id];
+  const before = structuredClone({ input, output });
+  assert.ok(validateWeeklyEditorialOutput(output, input).errors.some(e => e.includes('adds numbers absent')));
+  const result = completeClaimIndicatorReferences(output, input);
+  assert.deepEqual(result.output.weeklyTimeline[0].sourceRefIds, [story.id, 'indicator:breadth_50d']);
+  assert.equal(result.output.weeklyTimeline[0].detailZh, claim.detailZh);
+  assert.deepEqual({ input, output }, before);
+  assert.deepEqual(completeClaimIndicatorReferences(result.output, input).diagnostics, { addedSourceRefs: 0, addedIndicatorIds: 0 });
+  assert.deepEqual(completeClaimIndicatorReferences(result.output, input).output, result.output);
+  const reverse = structuredClone(result.output);
+  reverse.weeklyTimeline[0].sourceIndicatorIds = [];
+  assert.deepEqual(completeClaimIndicatorReferences(reverse, input).output.weeklyTimeline[0].sourceIndicatorIds, ['breadth_50d']);
+  const normalized = normalizeWeeklyEditorialProviderOutput(output, input).output;
+  assert.equal(validateWeeklyEditorialOutput(normalized, input).ok, true);
+  assert.ok(normalized.sourceAttribution.some(a => a.sourceRefId === 'indicator:breadth_50d'));
+});
+
+test('reference completion cannot invent evidence, pool other claims, rescue wrong numbers or hide malformed refs', () => {
+  const { input, output, story } = scenario();
+  input.structuredFacts.find(f => f.indicatorId === 'breadth_50d').factZh = '站内广度35%。';
+  const claim = output.weeklyTimeline[0];
+  claim.detailZh = '据Morningstar分析，站内广度35%。';
+  claim.sourceRefIds = [story.id];
+  claim.sourceIndicatorIds = ['breadth_50d'];
+  for (const mutate of [
+    c => { c.sourceIndicatorIds = []; },
+    c => { c.sourceIndicatorIds = ['unknown_indicator']; },
+    c => { c.sourceIndicatorIds = ['spy_vs_rsp_6m']; },
+    c => { c.detailZh = '据Morningstar分析，站内广度36%。'; },
+    c => { c.sourceRefIds.push('news:unknown'); },
+    c => { c.sourceRefIds = 'indicator:breadth_50d'; }
+  ]) {
+    const bad = structuredClone(output); mutate(bad.weeklyTimeline[0]);
+    const normalized = normalizeWeeklyEditorialProviderOutput(bad, input).output;
+    assert.equal(validateWeeklyEditorialOutput(normalized, input).ok, false);
+  }
+  for (const mutate of [
+    i => { i.sourceRefs = i.sourceRefs.filter(r => r.id !== 'indicator:breadth_50d'); },
+    i => { i.sourceRefs.push(i.sourceRefs.find(r => r.id === 'indicator:breadth_50d')); },
+    i => { i.sourceRefs.find(r => r.id === 'indicator:breadth_50d').kind = 'news'; },
+    i => { i.sourceRefs.find(r => r.id === 'indicator:breadth_50d').indicatorIds = 'breadth_50d'; },
+    i => { i.structuredFacts.push(i.structuredFacts.find(f => f.indicatorId === 'breadth_50d')); },
+    i => { i.structuredFacts.find(f => f.indicatorId === 'breadth_50d').sourceRefIds = ['indicator:spy_vs_rsp_6m']; }
+  ]) {
+    const badInput = structuredClone(input); mutate(badInput);
+    assert.deepEqual(completeClaimIndicatorReferences(output, badInput).output.weeklyTimeline[0].sourceRefIds, [story.id]);
+  }
+  const crowded = structuredClone(output);
+  crowded.weeklyTimeline[0].sourceRefIds = Array.from({ length: 12 }, (_, n) => `news:${n}`);
+  assert.equal(completeClaimIndicatorReferences(crowded, input).output.weeklyTimeline[0].sourceRefIds.length, 12);
+});
+
+test('live adapter uses the same reference normalization before unchanged review and projection gates', async () => {
+  const { input, output, story, bubble } = scenario();
+  input.structuredFacts.find(f => f.indicatorId === 'breadth_50d').factZh = '站内广度35%。';
+  Object.assign(output.weeklyTimeline[0], { detailZh: '据Morningstar分析，站内广度35%，仍需谨慎看待摘要覆盖限制。', sourceIndicatorIds: ['breadth_50d'], sourceRefIds: [story.id] });
+  let mockCalls = 0;
+  const fetchImpl = async () => { mockCalls++; return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) }; };
+  const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl });
+  assert.equal(mockCalls, 1);
+  assert.equal(result.diagnostics.referenceNormalization.addedSourceRefs, 1);
+  assert.equal(result.diagnostics.retryCount, 0);
+  const review = reviewWeeklyEditorial({ input, output: result.output });
+  assert.equal(review.frontendDisplayEligible, true);
+  const layer = projectWeeklyEditorial({ input, output: result.output, review });
+  assert.equal(validateWeeklyEditorialProduction(layer, bubble).ok, true);
+  const bad = structuredClone(output); bad.weeklyTimeline[0].detailZh = '据Morningstar分析，站内广度36%。';
+  await assert.rejects(requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(bad) } }] }) }) }), error => error.category === 'provider_output_contract_invalid');
 });
 
 test('typed numeric equivalence matrix covers money, scales, decimals, signs, rates, calendar and ranges', () => {
