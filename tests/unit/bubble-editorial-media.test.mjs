@@ -28,6 +28,27 @@ function livePack(rows = [row()]) {
   return { bubble, discovery, input };
 }
 
+test('HY compact thresholds state bps explicitly without changing source numbers or grounding gates', () => {
+  const { bubble, discovery } = livePack();
+  const hy = bubble.indicators.find(item => item.id === 'hy_oas');
+  Object.assign(hy, { value_display: '326 bps', threshold_text: '>500 红 / 350-500 黄 / <350 绿',
+    note: '高收益债 OAS 326 bps。阈值:>500 红 / 350-500 黄 / <350 绿' });
+  const before = structuredClone(bubble);
+  const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+  const fact = input.structuredFacts.find(item => item.indicatorId === 'hy_oas');
+  assert.match(fact.factZh, /350 bps 至 500 bps/u);
+  assert.deepEqual(bubble, before);
+  const claim = { detailZh: '站内信用阈值为350 bps。', sourceIndicatorIds: ['hy_oas'], sourceRefIds: ['indicator:hy_oas'] };
+  assert.deepEqual(claimNumericSupport(claim, input).blockers, []);
+  for (const bad of [ { ...claim, detailZh: '阈值351 bps。' }, { ...claim, sourceIndicatorIds: [] },
+    { ...claim, sourceRefIds: [] }, { ...claim, detailZh: '阈值350美元。' } ]) {
+    assert.ok(claimNumericSupport(bad, input).blockers.length);
+  }
+  hy.value_display = '326';
+  const unknownUnit = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+  assert.ok(claimNumericSupport(claim, unknownUnit).blockers.length);
+});
+
 function runLiveCheck(pack) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-bubble-live-input-'));
   // Cleanup is limited to the private directory this test created under the OS temp root.
