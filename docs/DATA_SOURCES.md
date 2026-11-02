@@ -1173,6 +1173,8 @@ ignored research-v2。研究候选进入和平红利退潮/多战区冲突两个
 
 ### 免费 Events 冲突统计 runtime 合同
 
+[ADR-0082](ADR/0082-gdelt-index-wait-and-day-checkpoints.md) 仅修复采集运行链：略提前的索引在原总预算内等待真实时钟合格；原 v1 专用缓存可保留完整验证日的检查点，失败后无需重下已完成日。整日缓存不等于合格生产源；672 文件、原时间/来源/计分门槛与免费 Cloud policy 不变。
+
 2026-10-10 本地接线见 [ADR-0064](ADR/0064-gdelt-events-conflict-interval-runtime.md)：独立 gdeltEvents 从公开原始 Events 文件取得完整七日 roots 18–20 全球新闻编码记录及未知行上下界，仅进入 World Order 两个冲突维度。固定尺度 49,529～49,529.5，端点须得到相同整数通道分数；覆盖/ID/时间失败 hold。DOC/Web NGrams 不填充计数；其余三维仍含历史 Cloud 代理。独立生产缓存不得复制研究缓存，免费来源不需要凭据，原 Cloud free_only 不变；本地代码通过不代表已部署。
 
 

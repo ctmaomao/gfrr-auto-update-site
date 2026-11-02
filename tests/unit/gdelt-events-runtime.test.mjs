@@ -8,7 +8,7 @@ import { crc32, deflateRawSync } from 'node:zlib';
 import { parseTimestamp, formatTimestamp } from '../../scripts/gdelt/events-candidate.mjs';
 import { projectResearchFile, buildResearchDay, researchWindow } from '../../scripts/gdelt/events-research.mjs';
 import { eventsSourceFromWindow, validateEventsSource, previousEventsSource } from '../../scripts/world-order/gdelt-events-score.mjs';
-import { fetchGdeltEvents, EVENTS_CACHE_PATH, readEventsRuntimeCache } from '../../scripts/world-order/fetch-gdelt-events.mjs';
+import { fetchGdeltEvents, EVENTS_CACHE_PATH, readEventsRuntimeCache, waitForEventsIndex } from '../../scripts/world-order/fetch-gdelt-events.mjs';
 import { scoreWorldOrderStress } from '../../scripts/world-order/score-world-order-stress.mjs';
 
 const nowMs = Date.parse('2026-10-08T01:00:00Z'), latestTimestamp = '20261008004500';
@@ -56,6 +56,102 @@ function temporary(t, subset) {
   return { root, filename };
 }
 const indexResponse = () => new Response(`100 ${'a'.repeat(32)} https://data.gdeltproject.org/gdeltv2/${latestTimestamp}.export.CSV.zip\n`);
+const indexAt = timestamp => new Response(`100 ${'a'.repeat(32)} https://data.gdeltproject.org/gdeltv2/${timestamp}.export.CSV.zip\n`);
+
+test('future index waits for real clock eligibility with one index GET and no cache rewrite', async t => {
+  const { root, filename } = temporary(t, days), before = fs.readFileSync(filename);
+  let clock = nowMs, requests = 0;
+  const result = await fetchGdeltEvents({ config: { enabled: true }, root, now: () => clock,
+    pause: async ms => { assert.ok(ms <= 30000); clock += ms; },
+    fetchImpl: async url => { requests++; assert.ok(url.endsWith('lastupdate.txt')); return indexAt('20261008011500'); } });
+  assert.equal(result.status, 'ok'); assert.equal(requests, 1);
+  assert.equal(result.diagnostics.indexWaitMs, 15 * 60000);
+  assert.equal(result.diagnostics.cacheWrites, 0);
+  assert.equal(validateEventsSource(result, clock), 1);
+  assert.deepEqual(fs.readFileSync(filename), before);
+});
+
+test('excessive future, stale index, stalled clock and total deadline remain hard holds', async () => {
+  for (const [stamp, advance, started, expected] of [
+    ['20261008013000', true, nowMs, /index_time_hold/],
+    ['20261007210000', true, nowMs, /index_time_hold/],
+    ['20261008011500', false, nowMs, /index_time_hold/],
+    ['20261008011500', true, nowMs - 20 * 60000, /time_budget/]
+  ]) {
+    let clock = nowMs, requestedWait = 0;
+    await assert.rejects(waitForEventsIndex(stamp, { started, now: () => clock, diagnostics: {},
+      pause: async ms => { requestedWait += ms; if (advance) clock += ms; } }), expected);
+    assert.ok(requestedWait <= 15 * 60000);
+  }
+});
+
+test('index waiting across midnight selects the new latest complete UTC window', async t => {
+  const { root, filename } = temporary(t, days);
+  let clock = Date.parse('2026-10-08T23:59:00Z'), requests = 0;
+  const result = await fetchGdeltEvents({ config: { enabled: true }, root, now: () => clock, pause: async ms => { clock += ms; },
+    fetchImpl: async url => {
+      requests++;
+      if (url.endsWith('lastupdate.txt')) return indexAt('20261009000000');
+      const stamp = url.match(/(\d{14})\.export/)[1]; assert.match(stamp, /^20261008/);
+      return new Response(zip(stamp));
+    } });
+  assert.equal(result.status, 'ok'); assert.equal(result.summary.windowEndDay, '20261008');
+  assert.equal(result.summary.downloadedFiles, 672); assert.equal(requests, 97);
+  assert.equal(result.diagnostics.cachedDays, 6);
+  assert.deepEqual([...readEventsRuntimeCache(filename, clock).keys()].sort(), ['20261002','20261003','20261004','20261005','20261006','20261007','20261008']);
+});
+
+test('a held refresh retains only completed days and resumes without downloading those days again', async t => {
+  const { root, filename } = temporary(t, new Map([...days].slice(0, 5)));
+  let requests = 0;
+  const held = await fetchGdeltEvents({ config: { enabled: true }, previousSource: makeSource(), root, now: () => nowMs, pause: async () => {},
+    fetchImpl: async url => {
+      requests++;
+      if (url.endsWith('lastupdate.txt')) return indexResponse();
+      const stamp = url.match(/(\d{14})\.export/)[1];
+      return stamp.startsWith('20261006') ? new Response(zip(stamp)) : new Response('', { status: 429 });
+    } });
+  assert.equal(held.status, 'stale'); assert.equal(requests, 100);
+  assert.equal(held.diagnostics.cacheWrites, 1); assert.equal(held.diagnostics.failureReason, 'events_download_hold');
+  assert.equal(held.lastFetchedAt, makeSource().lastFetchedAt);
+  const saved = readEventsRuntimeCache(filename, nowMs);
+  assert.equal(saved.size, 6); assert.ok(saved.has('20261006')); assert.equal(saved.has('20261007'), false);
+  let resumedRequests = 0;
+  const resumed = await fetchGdeltEvents({ config: { enabled: true }, root, now: () => nowMs, pause: async () => {},
+    fetchImpl: async url => {
+      resumedRequests++;
+      if (url.endsWith('lastupdate.txt')) return indexResponse();
+      const stamp = url.match(/(\d{14})\.export/)[1]; assert.match(stamp, /^20261007/);
+      return new Response(zip(stamp));
+    } });
+  assert.equal(resumed.status, 'ok'); assert.equal(resumedRequests, 97);
+  assert.equal(resumed.summary.downloadedFiles, 672);
+});
+
+test('failure diagnostics precede publication hold and cache save requires completed-day output outside source-free mode', () => {
+  const builder = fs.readFileSync('scripts/build-world-order-stress.mjs', 'utf8');
+  assert.ok(builder.indexOf('GDELT Events refresh:') < builder.indexOf('const scored = scoreWorldOrderStress'));
+  assert.match(builder, /events_cache_updated=\$\{Boolean\(gdeltEvents\?\.diagnostics\?\.cacheWrites\)\}/u);
+  const workflow = fs.readFileSync('.github/workflows/refresh-world-order-stress.yml', 'utf8');
+  const save = workflow.split('- name: Save validated dedicated free Events cache')[1].split('- name:')[0];
+  for (const condition of ['always()', "steps.world_order_refresh.outputs.events_cache_updated == 'true'", "inputs.acled_config_commit == ''", "inputs.acled_weekly_sha256 == ''", "inputs.acled_monthly_sha256 == ''"]) assert.ok(save.includes(condition));
+  assert.ok(save.includes('path: .cache/gdelt-events-runtime/'));
+});
+
+test('clock regression cannot persist an otherwise complete day with invalid acquisition provenance', async t => {
+  const { root, filename } = temporary(t, new Map([...days].slice(0, 6))), before = fs.readFileSync(filename);
+  let clock = nowMs;
+  const result = await fetchGdeltEvents({ config: { enabled: true }, root, now: () => clock, pause: async () => {},
+    fetchImpl: async url => {
+      if (url.endsWith('lastupdate.txt')) return indexResponse();
+      const stamp = url.match(/(\d{14})\.export/)[1];
+      if (stamp === '20261007234500') clock = Date.parse('2026-10-07T23:00:00Z');
+      return new Response(zip(stamp));
+    } });
+  assert.equal(result.status, 'error'); assert.equal(result.diagnostics.failureReason, 'events_runtime_cache_day');
+  assert.equal(result.diagnostics.cacheWrites, 0);
+  assert.deepEqual(fs.readFileSync(filename), before);
+});
 
 test('complete interval publishes; ambiguity, unknown rounding, clock and confidence errors hold', () => {
   const source = makeSource(); assert.equal(validateEventsSource(source, nowMs), 1);

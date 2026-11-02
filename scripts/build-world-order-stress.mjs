@@ -165,6 +165,10 @@ async function main() {
   const sourceFreeRefresh = ['ACLED_CONFIG_COMMIT', 'ACLED_WEEKLY_SHA256', 'ACLED_MONTHLY_SHA256'].some(key => Boolean(process.env[key]?.trim()));
   const gdeltEvents = await fetchGdeltEvents({ config: rules.gdeltEvents,
     previousSource: previous?.externalSources?.gdeltEvents, allowNetwork: !sourceFreeRefresh, root });
+  // Report safe producer diagnostics before scoring can reject an unavailable source.
+  if (gdeltEvents) console.log(`GDELT Events refresh: ${JSON.stringify(gdeltEvents.diagnostics)}`);
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT,
+    `events_cache_updated=${Boolean(gdeltEvents?.diagnostics?.cacheWrites)}\n`);
   const marketConfirmationInput = await selectMarketConfirmationInput({ dataPayload, realtimePayload });
   const marketConfirmation = buildMarketConfirmation({ marketConfirmationInput, rules });
   const scored = scoreWorldOrderStress({ externalSources, marketConfirmation, dataPayload, rules, gdeltEvents });
