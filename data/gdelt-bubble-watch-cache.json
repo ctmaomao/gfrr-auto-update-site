@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-bubble-watch-cache-p38",
   "module": "gdelt-bubble-watch-cache",
-  "generatedAt": "2026-10-12T13:21:55.637Z",
+  "generatedAt": "2026-11-02T13:43:50.417Z",
   "sourceKey": "gdelt_bubble_watch_ceo_hedging",
   "cacheScope": "bubble_watch_ceo_hedging",
-  "status": "ok",
-  "sourceStatus": "live",
-  "requestMode": "live_weekly_query",
+  "status": "error",
+  "sourceStatus": "error",
+  "requestMode": "live_weekly_query_failed_no_usable_cache",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlHours": 132,
@@ -27,18 +27,18 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "Bubble Watch CEO hedging GDELT DOC",
-    "status": 200,
-    "attempts": 1,
-    "retryCount": 0,
-    "rateLimited": false,
-    "timeout": false,
+    "status": 429,
+    "attempts": 2,
+    "retryCount": 1,
+    "rateLimited": true,
+    "timeout": true,
     "retryAfterSeconds": null,
     "timeoutMs": 15000,
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 14308,
-    "errorCode": null
+    "elapsedMs": 30527,
+    "errorCode": "rate_limited"
   },
   "aggregate": {
     "articleCount": 20
@@ -165,7 +165,7 @@
       "seendate": "20260930T174500Z"
     }
   ],
-  "error": null,
+  "error": "Bubble Watch CEO hedging GDELT DOC HTTP 429 after 2 attempt(s)",
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
