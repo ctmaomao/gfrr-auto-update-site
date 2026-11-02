@@ -10,6 +10,33 @@ import { eventsSourceFromWindow, previousEventsSource } from './gdelt-events-sco
 export const EVENTS_CACHE_PATH = '.cache/gdelt-events-runtime/days.json';
 const CACHE_SCHEMA = 'gdelt-events-runtime-cache-v1';
 const MAX_CACHE_BYTES = 50 * 1024 * 1024;
+const MAX_INDEX_WAIT_MS = 15 * 60 * 1000;
+const REFRESH_BUDGET_MS = 20 * 60 * 1000;
+export async function waitForEventsIndex(timestamp, { now, pause, started, diagnostics }) {
+  const indexedAt = parseTimestamp(timestamp);
+  diagnostics.indexTimestamp = timestamp;
+  diagnostics.indexWaitMs = 0;
+  while (true) {
+    const current = now();
+    if (!Number.isFinite(current)) throw new Error('gdelt_events_source_time_hold');
+    const lead = indexedAt - current;
+    if (lead <= 0) {
+      if (-lead > 3 * 3600000) throw new Error('gdelt_events_index_time_hold');
+      return;
+    }
+    if (lead > MAX_INDEX_WAIT_MS || diagnostics.indexWaitMs >= MAX_INDEX_WAIT_MS) throw new Error('gdelt_events_index_time_hold');
+    const delay = Math.min(lead, 30000, MAX_INDEX_WAIT_MS - diagnostics.indexWaitMs);
+    if (current - started + delay > REFRESH_BUDGET_MS) throw new Error('events_time_budget');
+    await pause(delay);
+    diagnostics.indexWaitMs += delay;
+  }
+}
+function validateRuntimeDay(item, nowMs) {
+  const p = validateResearchDay(item), acquired = Date.parse(p.provenance.acquiredAt);
+  if (!Number.isFinite(nowMs) || !Number.isFinite(acquired) || acquired > nowMs
+    || acquired < parseTimestamp(`${p.day}234500`)) throw new Error('events_runtime_cache_day');
+  return p;
+}
 export function readEventsRuntimeCache(filename, nowMs = Date.now()) {
   if (!fs.existsSync(filename)) return new Map();
   if (fs.statSync(filename).size > MAX_CACHE_BYTES) throw new Error('events_runtime_cache_size');
@@ -17,14 +44,14 @@ export function readEventsRuntimeCache(filename, nowMs = Date.now()) {
   if (a.schemaVersion !== CACHE_SCHEMA || !Array.isArray(a.days) || a.days.length > 7) throw new Error('events_runtime_cache_shape');
   const days = new Map();
   for (const item of a.days) {
-    const p = validateResearchDay(item);
-    if (days.has(p.day) || !Number.isFinite(Date.parse(p.provenance.acquiredAt))
-      || Date.parse(p.provenance.acquiredAt) > nowMs || Date.parse(p.provenance.acquiredAt) < parseTimestamp(`${p.day}234500`)) throw new Error('events_runtime_cache_day');
+    const p = validateRuntimeDay(item, nowMs);
+    if (days.has(p.day)) throw new Error('events_runtime_cache_day');
     days.set(p.day, item);
   }
   return days;
 }
-function writeCache(filename, days) {
+function writeCache(filename, days, nowMs) {
+  for (const [day, item] of days) if (validateRuntimeDay(item, nowMs).day !== day) throw new Error('events_runtime_cache_day');
   const text = `${JSON.stringify({ schemaVersion: CACHE_SCHEMA, days: [...days.values()] })}\n`;
   if (Buffer.byteLength(text) > MAX_CACHE_BYTES) throw new Error('events_runtime_cache_size');
   fs.mkdirSync(path.dirname(filename), { recursive: true });
@@ -35,11 +62,10 @@ function writeCache(filename, days) {
 export async function fetchGdeltEvents({ config, previousSource, allowNetwork = true, root = process.cwd(),
   fetchImpl = globalThis.fetch, now = Date.now, pause = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   if (!config?.enabled) return null;
-  const diagnostics = { requests: 0, bytes: 0, cachedDays: 0, downloadedDays: 0, failures: [] };
+  const diagnostics = { requests: 0, bytes: 0, cachedDays: 0, downloadedDays: 0, cacheWrites: 0, failures: [] };
   const filename = path.join(root, EVENTS_CACHE_PATH), started = now();
-  const endMs = Math.floor(started / 86400000) * 86400000 - 86400000, endDay = formatTimestamp(endMs).slice(0, 8);
   try {
-    const cached = readEventsRuntimeCache(filename, started), days = new Map();
+    const cached = readEventsRuntimeCache(filename, started);
     let projected = 0, failures = 0;
     const options = { fetchImpl, onBytes: n => {
       diagnostics.bytes += n;
@@ -48,14 +74,18 @@ export async function fetchGdeltEvents({ config, previousSource, allowNetwork = 
     if (!allowNetwork) throw new Error('events_source_free_refresh');
     diagnostics.requests++;
     const latestTimestamp = parseLatestEventsTimestamp((await downloadEventsResource(null, options)).toString('utf8'));
-    const indexAge = now() - parseTimestamp(latestTimestamp);
-    if (indexAge < 0 || indexAge > 3 * 3600000) throw new Error('gdelt_events_index_time_hold');
+    await waitForEventsIndex(latestTimestamp, { now, pause, started, diagnostics });
+    // Waiting may cross UTC midnight: select the latest complete day afterwards.
+    const endMs = Math.floor(now() / 86400000) * 86400000 - 86400000, endDay = formatTimestamp(endMs).slice(0, 8);
+    const startDay = formatTimestamp(endMs - 6 * 86400000).slice(0, 8);
+    diagnostics.targetEndDay = endDay;
+    const days = new Map([...cached].filter(([day]) => day >= startDay && day <= endDay));
     for (let offset = 6; offset >= 0; offset--) {
       const day = formatTimestamp(endMs - offset * 86400000).slice(0, 8);
       if (cached.has(day)) { days.set(day, cached.get(day)); diagnostics.cachedDays++; continue; }
       const files = [], digests = [];
       for (let i = 0; i < 96; i++) {
-        if (now() - started > 20 * 60 * 1000) throw new Error('events_time_budget');
+        if (now() - started > REFRESH_BUDGET_MS) throw new Error('events_time_budget');
         const timestamp = formatTimestamp(parseTimestamp(`${day}000000`) + i * 900000);
         try {
           diagnostics.requests++;
@@ -76,20 +106,26 @@ export async function fetchGdeltEvents({ config, previousSource, allowNetwork = 
       const a = buildResearchDay(day, files, { acquiredAt: new Date(now()).toISOString(), files: digests });
       validateResearchDay(a);
       days.set(day, a); diagnostics.downloadedDays++;
+      // Persist only complete, hash-validated days. This is collection progress,
+      // never source qualification; the unchanged 672-file/score gates run below.
+      writeCache(filename, days, now());
+      diagnostics.cacheWrites++;
     }
-    if (now() - started > 20 * 60 * 1000) throw new Error('events_time_budget');
+    if (now() - started > REFRESH_BUDGET_MS) throw new Error('events_time_budget');
     const window = researchWindow(days, endDay);
     const source = eventsSourceFromWindow(window, { latestTimestamp,
       acquiredAt: days.get(endDay).payload.provenance.acquiredAt, nowMs: now() });
     // Cache comes from this dedicated producer, never from manual-artifacts.
-    // A hold preserves the previous runtime cache rather than saving a partial week.
-    writeCache(filename, days);
+    // A held window can retain complete days, but never qualifies publication.
     source.diagnostics = diagnostics;
     return source;
   } catch (error) {
     const reason = /^(?:events_|gdelt_events_)[a-z0-9_]+$/u.test(error.message) ? error.message : 'events_source_failed';
+    diagnostics.failureReason = reason;
     try { return { ...previousEventsSource(previousSource, reason, now()), diagnostics }; }
-    catch { return { enabled: true, status: 'error', lastFetchedAt: null, confidence: 0,
+    catch (fallbackError) {
+      diagnostics.previousSourceFailure = /^(?:events_|gdelt_events_)[a-z0-9_]+$/u.test(fallbackError.message) ? fallbackError.message : 'events_previous_source_failed';
+      return { enabled: true, status: 'error', lastFetchedAt: null, confidence: 0,
       summary: { reason }, diagnostics, warnings: ['免费事件来源未取得完整且可用的统计窗口，本轮世界秩序发布暂停。'] }; }
   }
 }

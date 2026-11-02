@@ -67,6 +67,7 @@ jobs:
           restore-keys: gdelt-events-runtime-v1-main-
 
       - name: Refresh world order stress
+        id: world_order_refresh
         env:
           GDELT_CLOUD_API_KEY: ${{ secrets.GDELT_CLOUD_API_KEY }}
           # ACLED secrets reserved for M-60 (Research/Partner tier required)
@@ -75,7 +76,9 @@ jobs:
       - run: npm run check:world-order
 
       - name: Save validated dedicated free Events cache
-        if: ${{ inputs.acled_config_commit == '' && inputs.acled_weekly_sha256 == '' && inputs.acled_monthly_sha256 == '' }}
+        # Completed days are reusable even if the full window is held. Source-free
+        # ACLED refreshes and runs with no new validated days never save a cache.
+        if: ${{ always() && steps.world_order_refresh.outputs.events_cache_updated == 'true' && inputs.acled_config_commit == '' && inputs.acled_weekly_sha256 == '' && inputs.acled_monthly_sha256 == '' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0, Node 24
         with:
           path: .cache/gdelt-events-runtime/

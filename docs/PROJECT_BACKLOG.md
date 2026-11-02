@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 World Order 索引时间与完整日缓存恢复
+
+- **Acceptance baseline**：owner 要求继续修复 World Order 连续失败，优先 GDELT 索引时间/缓存、减少重复请求，不使用收费 API、不放宽来源和计分门槛；审核通过后上线并核验两站。沿用 Codex 代审/发布授权，不伪称独立人工；不触发 Bubble 或收费 AI。
+- **最后基线 / 改动**：独立分支基于 main cd67a54f。[ADR-0082](ADR/0082-gdelt-index-wait-and-day-checkpoints.md) 明确缓存阶段窄范围变更：索引最多等待 15 分钟、纳入原 20 分钟预算，合格后才允许采集；跨午夜重新选最近完整日。每个完整验证日保存检查点，未完成日不保存；只有新检查点且非 source-free 才 always 保存 Actions cache，未合格窗口不发布。score validator、尺度、来源、零重试、下载/记录预算、72h 回退均不改；错误诊断在计分 hold 前输出。
+- **验证 / 审核**：原 7 项 runtime 保留，新增 6 项，共 13/13 exit0；覆盖未来/停钟/总预算/午夜与失败续采、时钟倒退时的整日 provenance 拒绝、source-free/缓存保存边界。workflow 35/35 exit0。完整 check:changed/check:all exit0；最终 source-policy、语法/doc links/diff 检查通过。固定 diff 自审确认方案一致，计分/资格 checker 与配置零修改，旧 7 项断言全保留，无 skip/ignore；审核为 owner 指定 Codex AI review。远端 CI/合并与实际免费刷新待后续回执；无生产文件或配置改动。
+- **下一步 / 限制**：通过审核/CI 后合并 main，确认 Cloud free_only 与下游 AI admission 拒绝付费，再运行既有免费正常刷新。检查诊断、完整窗口和两站实物；缓存检查点不得作为生产源晋升。旧 Cloud 历史证据局限保留，不宣称所有维度来源已全新。原工作区和其它任务保留。
+
 ### 2026-11-03 周评引用输出一致性修复（零付费）
 
 - **Acceptance baseline**：owner 要求先修复周评引用输出一致性，用这几次失败产物离线验证，审核没问题上线修复，不再付费重跑。沿用本任务 Codex 实施/代审/代码发布授权；不授权生产周评调用、搜索或历史候选晋升。
