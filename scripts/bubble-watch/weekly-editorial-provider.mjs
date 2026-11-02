@@ -5,6 +5,7 @@ import {
 } from '../external-ai/provider-adapters.mjs';
 import { assertValid, validateWeeklyEditorialInput, validateWeeklyEditorialOutput } from './weekly-editorial-contract.mjs';
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from './weekly-editorial-claim-diagnostics.mjs';
+import { completeClaimIndicatorReferences } from './weekly-editorial-reference-consistency.mjs';
 import { shortHash } from '../lib/check-script-helpers.mjs';
 import {
   buildWeeklyEditorialSystemPrompt,
@@ -144,6 +145,19 @@ function normalizeConfidence(confidence) {
   };
 }
 
+// Shared by the live adapter and offline diagnostic replay; no transport or write.
+export function normalizeWeeklyEditorialProviderOutput(output, input, { generatedAt = output?.generatedAt, model = output?.model } = {}) {
+  const references = completeClaimIndicatorReferences(normalizeMediaClaimNames(output, input), input);
+  const normalized = {
+    ...references.output,
+    schemaVersion: 'bubble-watch-weekly-editorial-output-v1', generatedAt,
+    asOfDate: input.asOfDate, provider: 'deepseek', model, mode: 'external_ai_weekly_editorial'
+  };
+  normalized.sourceAttribution = normalizeSourceAttribution(normalized, input);
+  normalized.confidence = normalizeConfidence(normalized.confidence);
+  return { output: normalized, referenceNormalization: references.diagnostics };
+}
+
 export function parseWeeklyEditorialProviderContent(content) {
   if (typeof content !== 'string' || !content.trim()) throw new SyntaxError('provider content is empty');
   const trimmed = content.trim();
@@ -260,17 +274,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
   }
 
   const generatedAt = now().toISOString();
-  const normalizedOutput = {
-    ...normalizeMediaClaimNames(output, input),
-    schemaVersion: 'bubble-watch-weekly-editorial-output-v1',
-    generatedAt,
-    asOfDate: input.asOfDate,
-    provider: 'deepseek',
-    model: config.model,
-    mode: 'external_ai_weekly_editorial'
-  };
-  normalizedOutput.sourceAttribution = normalizeSourceAttribution(normalizedOutput, input);
-  normalizedOutput.confidence = normalizeConfidence(normalizedOutput.confidence);
+  const { output: normalizedOutput, referenceNormalization } = normalizeWeeklyEditorialProviderOutput(output, input, { generatedAt, model: config.model });
   const outputValidation = validateWeeklyEditorialOutput(normalizedOutput, input);
   if (!outputValidation.ok) {
     const error = new Error('DeepSeek weekly editorial output failed contract validation');
@@ -293,6 +297,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
       provider: 'deepseek',
       model: config.model,
       apiCallCount: 1,
+      referenceNormalization,
       retryCount: 0,
       timeoutMs: config.timeoutMs,
       maxTokens: config.maxTokens,

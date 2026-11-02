@@ -110,6 +110,8 @@ AI `facts` 的唯一依据。
 - `sourceAttribution[]` 必须逐一覆盖 output 实际使用的全部 `sourceRefIds`。Provider 若遗漏已引用来源，adapter
   只可从 input `sourceRefs[]` 确定性补齐 attribution row；不得改写 AI 正文、增加引用或把
   `discovery_only` 冒充 official/cross-checked。
+
+- **ADR-0081 窄范围替代上述“不得增加引用”**：adapter 可补齐同一事实对象已明确声明的站内指标 ID 与唯一登记 indicator:* 引用之间的另一种表示，条件及负向边界见 [ADR-0081](ADR/0081-bubble-editorial-reference-consistency.md)。不得从正文数字、其它段落或新闻推断/增加来源；原 validator 对缺配对的原输出仍拒绝，全部事实与质量闸门保持。
 - 2026-08-11 长度标定样本为参考站最近 12 个已提交周度版本：全样本均值
   1,976 字，最近 5 期均值 2,947 字，P90 3,137 字，最大 3,278 字。早期短稿
   不代表当前成熟版，因此 production prompt 以最近 5 期均值为主标定。

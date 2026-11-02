@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 周评引用输出一致性修复（零付费）
+
+- **Acceptance baseline**：owner 要求先修复周评引用输出一致性，用这几次失败产物离线验证，审核没问题上线修复，不再付费重跑。沿用本任务 Codex 实施/代审/代码发布授权；不授权生产周评调用、搜索或历史候选晋升。
+- **最后基线 / 改动**：独立分支基于 main 5780313b；[ADR-0081](ADR/0081-bubble-editorial-reference-consistency.md) 显式限定替代设计中的“不得增加引用”：仅补齐同段已声明且与输入唯一互指的站内 ID/ref。原 validator、数值/引述检查、新闻资格、预算、质量审查、writer 与时效不变；不改正文、数字或生产数据。provider 与离线诊断共用纯规范化函数，既有 attribution 补全在其后执行。
+- **验证**：媒体专项 36/36 通过；覆盖双向补全、幂等、原文/输入不变、错数字/来源/跨段/损坏映射及引用上限，真实 adapter 使用 mock transport 后经 review/projection 验证，不发生真实 API 调用。实际产物 41531578149 / 41534908718 的原输入/原文经当前共用路径均通过 validator、review(warn) 和 projection 合同；后者补齐 4 条同段已声明站内 ref，正文不变。41526065601 原旧输入仍缺 HY 单位并拒绝；单独标记的当前 HY 编码模拟通过，不伪称原输入 exact pass。三份均验证 digest/原文件 SHA256 不变、注入无依据金额仍拒绝、mock adapter 一次/no retry；真实 API/search/生产写入均 0。完整 check:changed/check:all exit0；语法、doc links、diff whitespace 通过。固定 diff 自审确认方案一致，validator/数字/引述/quality/writer/workflow 零修改、旧断言保留、无新增 skip/ignore。审核为 owner 指定 Codex AI review；远端 CI/代码合并以实际回执为准。
+- **边界 / 下一步**：仅修复代码。原 HY 输入缺单位时仍应拒绝，另行标明当前编码的模拟结果，不伪造 exact replay；其它产物保留原字节和 digest。通过 review/CI 后合并 main，不派发周评，不把回放候选写生产；周评正文仍未上线。
+
 ### 2026-11-03 追加周评调用与百分比区间解析修复
 
 - **Acceptance baseline**：owner 明确回复“授权追加一次”，允许 #493 修复审核/CI 后再调用一次生产周评并承担费用，失败不自动重试。#493 CI 41528121842 通过，合并 main 08a38d62；本次仍不使用 DeepSeek 修代码，代审/发布授权沿用，checker、预算、数据新鲜度及双搜索资格不放宽。
