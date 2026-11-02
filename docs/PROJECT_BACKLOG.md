@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 周评恢复与 GDELT 免费来源研究
+
+- **Acceptance baseline**：owner 要求 Bubble 周评必须上线，沿用本任务 Codex 实施/代审和发布授权；仅一次 DeepSeek 成本许可、失败不自动重试、原预算与双搜索健康门槛不变。World Order 本轮要求研究免费/低请求替代，不授权绕过访问控制、收费或隐改计分资格。
+- **实际恢复**：只读 meter 41525907479 通过（18/1000、ledger 630、0 searches/0 writes）；唯一恢复派发 41526065601 搜索/input 通过，实际一次 DeepSeek HTTP 200 / finish stop，但发布前数字校验失败，未写生产。失败候选只用于离线诊断，不晋升；追加费用已询问，未收到前不再调用。
+- **修复**：HY 输入正文包含无单位阈值 350，模型输出为 350 bps；严格单位校验按原规则拒绝。仅 compact input 对明确 bps 的 HY 读数，将既有 threshold_text 内相同边界显式注明 bps；不新增数字、不更改原生产 note/阈值/评分、不放宽 validator。新增正反例证明错误数字、错货币、缺引用配对、缺明确单位仍阻断。32 项媒体测试通过；完整 check:changed/check:all exit 0，语法/diff check 通过。旧候选在原输入复现两错，仅补明 HY 单位的诊断输入中零错（非 exact replay、不可晋升）。实际 diff 自审确认与方案一致，validator/checker 零修改、既有断言保留、无新增 skip/ignore；审核为 owner 指定 Codex AI review。CI/上线待，以回执为准。
+- **研究 / 下一步**：见 [GDELT 恢复研究](GDELT_RECOVERY_RESEARCH_2026_11_03.md)。两次低量公开下载均 200，发现索引提前，历史失败日志缺底层诊断，尚无证据认定免费接口限流。优先有界诊断/时间语义及完整日缓存；抽样仅作另行评审的定性证据，不冒充原七日计分。当前修复基于 main 9f9242ba 的独立分支；其它任务改动保留。
+
 ### 2026-11-01 OFR发布契约与消费者迁移（已上线，两站验收通过）
 
 - **Acceptance baseline**：owner正式退役旧公开状态/仓位/风险预算/动作建议、保留历史审计；授权讨论#490、分项PR推送及独立Codex代审。本地基于latest main `0524f164`准备契约和全消费者补丁；#491冻结为准备包，不堆叠远端PR。完整补丁可审后最终merge/deploy另确认；无DeepSeek、付费调用或生产数据生成。

@@ -28,9 +28,20 @@ function buildStructuredFacts(indicators) {
     status: indicator.status,
     asOfDate: indicator.as_of || null,
     stale: indicator.stale === true,
-    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${indicator.note}`, 340),
+    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote(indicator)}`, 340),
     sourceRefIds: [`indicator:${indicator.id}`]
   }));
+}
+
+// HY thresholds use the same bps unit as the published reading. State that unit
+// in the input rather than asking the financial validator to infer missing units.
+function explicitHyThresholdNote(indicator) {
+  const threshold = indicator.threshold_text;
+  if (indicator.id !== 'hy_oas' || !/^\d+(?:\.\d+)? bps$/u.test(indicator.value_display)
+    || typeof threshold !== 'string' || !/^[\d\s.<>/红黄绿-]+$/u.test(threshold)
+    || !indicator.note?.includes(threshold)) return indicator.note;
+  const explicit = threshold.replace(/\d+(?:\.\d+)?/gu, '$& bps').replace(/ bps-(?=\d)/gu, ' bps 至 ');
+  return indicator.note.replace(threshold, explicit);
 }
 
 function buildIndicatorSourceRefs(indicators) {
