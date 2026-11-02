@@ -15,6 +15,9 @@ function decimalKey(raw, power = 0) {
 
 export function numericEvidenceAtoms(text = '') {
   let normalized = String(text).normalize('NFKC').replace(/−/gu, '-');
+  // A contiguous %-number% is an explicitly unit-labelled range endpoint,
+  // not a negative rate. Spaced minus signs and standalone negative rates stay signed.
+  normalized = normalized.replace(/(?<![\d.,+A-Za-z-])(\d+(?:\.\d+)?)%-(\d+(?:\.\d+)?)%(?!\d)/gu, '$1% ; $2%');
   const atoms = [];
   // Spelled-out figures are not exactly parsed: disclose this limit without rejecting ordinary wording changes.
   for (const match of normalized.matchAll(/(?:百分之[零〇一二三四五六七八九十百千万亿两点]+|[零〇一二三四五六七八九两十百千][零〇一二三四五六七八九十百千万亿两点]*(?:美元|人民币|欧元|英镑|元))/gu)) {

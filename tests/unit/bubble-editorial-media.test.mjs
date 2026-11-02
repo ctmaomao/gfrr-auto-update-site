@@ -390,6 +390,15 @@ function numericProbe(claimText, evidence, extras = {}) {
   return claimNumericSupport({ detailZh: claimText, sourceRefIds: [story.id], ...extras.claim }, { newsContext: { stories: [story] }, structuredFacts: [], ...extras.input });
 }
 
+test('explicit percent ranges match dash typography without accepting signed negative rates', () => {
+  for (const [claim, evidence] of [['3.75%–4%', '3.75%-4%.'], ['3.75%-4%', '3.75%–4%'], ['4%', '3.75%-4%']]) {
+    assert.deepEqual(numericProbe(claim, evidence).unsupported, []);
+  }
+  for (const [claim, evidence] of [['-4%', '3.75%-4%'], ['4%', '-4%'], ['4%', '-3.75%-4%'], ['4%', '3.75% -4%'], ['4%', '1e3%-4%'], ['4.1%', '3.75%-4%']]) {
+    assert.ok(numericProbe(claim, evidence).blockers.length);
+  }
+});
+
 test('typed numeric equivalence matrix covers money, scales, decimals, signs, rates, calendar and ranges', () => {
   const pairs = [
     ['500亿美元', '$50 billion'], ['500亿美元', 'USD 50.00 billion'], ['1,000万美元', '$10 million'],
