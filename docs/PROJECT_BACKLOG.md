@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 追加周评调用与百分比区间解析修复
+
+- **Acceptance baseline**：owner 明确回复“授权追加一次”，允许 #493 修复审核/CI 后再调用一次生产周评并承担费用，失败不自动重试。#493 CI 41528121842 通过，合并 main 08a38d62；本次仍不使用 DeepSeek 修代码，代审/发布授权沿用，checker、预算、数据新鲜度及双搜索资格不放宽。
+- **实际运行 / 费用**：只读 meter 41531468968 通过（18/1000、0 searches/writes、ledger636）；唯一追加派发 41531578149 搜索与 input 通过，DeepSeek HTTP200/finish stop，但数字校验失败且未写生产。追加一次许可已消耗，不再自动调用；原/追加 ignored receipt 分别保留，不覆盖既有消费记录。
+- **原因 / 修复**：媒体原摘要为 `3.75%-4%.`，正文为 `3.75%–4%`；解析器误把 ASCII 连字符后的端点当负数。新增窄范围归一化，仅对两个明确百分号、紧邻 ASCII 连字符的非负端点分词；独立负数、空格分隔的负数、错误端点继续 hard block，不补新数字、不修改正文/新闻摘要/引用、不放宽数字合同。原输入和原候选精确、digest-bound、零 API replay 已通过（exactReplay=true、productionEligible=false）；候选仍不晋升生产。
+- **验证 / 下一步**：33 项媒体回归通过，含原文句末标点、双向等价、独立负数、负区间、错误端点反例；完整 check:changed/check:all exit0；最终语法与 whitespace 检查通过；固定 diff 自审确认仅数字分词 bug 修复、旧断言保留、无新增 skip/ignore，Codex AI review 不冒称人审。远端 CI/上线以实际回执为准。周评尚未上线；本轮只修复，不新增付费或生产写入。World Order 研究按上一条报告保留，生产规则未改。
+
 ### 2026-11-03 周评恢复与 GDELT 免费来源研究
 
 - **Acceptance baseline**：owner 要求 Bubble 周评必须上线，沿用本任务 Codex 实施/代审和发布授权；仅一次 DeepSeek 成本许可、失败不自动重试、原预算与双搜索健康门槛不变。World Order 本轮要求研究免费/低请求替代，不授权绕过访问控制、收费或隐改计分资格。
