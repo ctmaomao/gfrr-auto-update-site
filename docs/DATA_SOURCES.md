@@ -695,6 +695,8 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 2026-11-03 来源续审（运行尚未激活）：[免费证据复核](BUBBLE_ABS_CAPEX_FREE_SOURCE_REVIEW_2026_11_03.md)与[ADR-0083](ADR/0083-bubble-october-capex-source-continuation.md)登记十月四家公司新季度，保持固定四家、原窗口与阈值。独立v2面板增加微软七月官方同口径比较凭据，总请求仍最多20，完整证明严格20次；旧v1/七月collector及runtime选择不变。正式运行须后续独立接线并重新采集，不能晋升研究产物。ABS未取得同债项/分层的三期匹配报价，注册表与观测继续为空；部门/新发行利差不补位。免费任务不派发AI，评分披露变化时旧AI快照按原合同失效。
 
+2026-11-03 独立运行接线：来源PR #498经CI/审核合并后，builder在2026-10-30及以后显式选择已审十月集合，七月历史回放保留。手动`Refresh Bubble Qualified Evidence`仅通过既有qualified-only路径免费重新核验四项，禁用Wind且不注入付费源/AI凭据；不运行完整周更。`check:all`及独立发布守卫通过后只提交两份Bubble数据，保留23卡原观测与完整刷新锚点；失败不提交。Pages按成功workflow_run发布，EdgeOne只请求现有带额度/无变化/校验保护的发布器，不触发AI。实际正式运行和两站结果以PROJECT_BACKLOG/回执为准，候选不晋升生产。
+
 2026-10-15 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) r1：`dc_abs_spread` 不再用中国通用ABS绝对收益率代替美国数据中心信用利差。合格输入须分别通过来源准入与核心代表性批准，债券/同日基准各有获审出处并匹配币种、债项、分层、期限及4/12周比较日期。当前审阅注册表为空，故核心保留“待确认”，不是红/黄/绿；现有Wind方法保留作旧模型兼容，不再喂养r1核心灯色。r2内部人已上线；r3本轮接入capex事件缺口，Fed仍待迁移。
 
 定向迁移入口 `node scripts/build-bubble-watch.mjs --refresh-qualified-only` 默认仅写ignored候选；r1零网络，r2/r3仅发起下述12家公司匿名有界请求，不调用付费provider；显式 `--publish-qualified` 才生成两份Bubble生产文件，须沿任务发布授权、候选检查及独立审阅执行。它保留未迁移卡原始观测/出处及已审图表（r1为26卡，r2为25卡，r3为24卡），不触发Wind、新闻或全链采集；`meta.qualified_refresh.fullRefreshAsOfDate`继承最近完整刷新日期，不能逐次续期，超过35天/未来/无效日期拒绝且零写入。完整周度刷新成功才建立新的完整包日期；各来源自身的更严时效门保持。
