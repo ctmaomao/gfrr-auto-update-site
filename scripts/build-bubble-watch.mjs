@@ -1,4 +1,5 @@
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
+import { collectOctoberCapexPanel } from './bubble-watch/capex-october-panel.mjs';
 import { buildQuarterlyCapexIndicator } from './bubble-watch/capex-quarterly-indicator.mjs';
 import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
@@ -4903,7 +4904,10 @@ async function main() {
       continue;
     }
     if (EVIDENCE_REVISION >= 5 && def.id === 'capex_reaction') {
-      const report = await collectQuarterlyCapexPanel({ allowNetwork: true, today });
+      // ADR-0083: the reviewed October set is explicit; historical July replays
+      // keep their original adapter. A later unreviewed catalog still holds.
+      const collect = today >= '2026-10-30' ? collectOctoberCapexPanel : collectQuarterlyCapexPanel;
+      const report = await collect({ allowNetwork: true, today });
       indicators.push(buildQuarterlyCapexIndicator(baseIndicator(def), report, today));
       for (const failure of report.sourceFailures) {
         fetchFailures.push({ id: def.id, reason: `${new URL(failure.url).hostname}:${failure.reason}` });

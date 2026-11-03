@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 四项免费资格刷新与十月 capex 运行恢复
+
+- **Acceptance baseline**：沿用owner两项缺失证据排查/修复、Codex代审/上线和两站验收授权，不放宽证据与计分门槛。来源契约PR #498、固定提交`e997ad5b`通过CI41558518704后已合并`d7ceafdc`；本独立运行PR不再修改来源/校验准入。没有新增付费调用许可。
+- **最后基线 / 改动**：新分支`codex/bubble-qualified-evidence-runtime-20261103`基于latest main `d7ceafdc`。builder按已审日期选择十月集合，旧七月回放保留；修正新季度中文/会计口径说明。新增只读发布守卫与main-only手动流程，复用qualified-only四项免费重验，保留23卡、旧历史与完整刷新锚点；来源失败、capex缺口、其它已知证据退化或越界写入则拒绝提交。只提交两份Bubble数据；Pages注册新producer，EdgeOne只派发现有受保护发布器，token限最后派发步骤，不改变原触发列表或AI调度。
+- **当前任务 / 验证**：新旧运行/源专项通过，6项发布回归含真实Git/CLI tracked/staged/untracked越界验证通过；workflow检查exit0，完整`check:changed`（含`check:all`）exit0。真实候选仅ignored，正式JSON SHA仍`a66f87e3…`；候选守卫通过、来源失败0、覆盖22/23、仅ABS缺口、capex黄灯/原日期2026-10-29，主分区间30.4–34.8、压力45.7–50.0。旧AI未携带、付费调用0。1440/390候选实物27卡/23核心/4影子、原日期与新季度、确定性回退均通过，无横溢/脚本异常。固定差异自审确认方案一致，已审source/checker/计分配置未变，无skip/ignore；最终CI/合并及正式发布以回执为准。
+- **下一步 / 门槛**：完成运行PR验证/审核/CI并合并，再预留唯一正式免费派发收据并运行main手动流程。正式数据由runner重新采集，不复制候选；跟进Pages/EdgeOne并核对两站1440/390、22/23、ABS中性缺口、capex原日期/指引/价格窗口及确定性回退。新评分披露使旧AI绑定失效，不改稿/快照或额外付费。此时未正式发布。
+
 ### 2026-11-03 ABS 与资本开支免费证据续审（来源契约先行）
 
 - **Acceptance baseline**：owner 要求继续排查两项缺失证据，研究免费公开来源，有可修复问题则修复，审核通过后上线并核验两站；不放宽证据/计分门槛，沿用本聊天Codex代审/发布授权，不使用DeepSeek修代码、不额外付费。先来源/checker独立PR，后运行激活，保留其它任务工作区。

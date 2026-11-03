@@ -1,4 +1,5 @@
 import {transport as quarterlyTransport} from './bubble-capex-quarterly-fixtures.mjs';
+import {transport as octoberTransport} from './bubble-capex-october-fixtures.mjs';
 import {transport as fedTransport} from './bubble-fed-source-fixtures.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +22,7 @@ export async function buildQualifiedAbsFixture({publish=false,baselineOutput=nul
       bindings[alias]=name==='collectInsiderWindows' && revision>=2
         ? args=>module[name]({...args,fetchFn:insiderFetch,now:()=>virtualTime,sleep:async ms=>{virtualTime+=ms;}})
         : name==='collectQuarterlyCapexPanel' && revision>=5 ? args=>module[name]({...args,fetchFn:quarterlyFetch,now:()=>virtualTime})
+        : name==='collectOctoberCapexPanel' && revision>=5 ? args=>module[name]({...args,fetchFn:octoberFetch,now:()=>virtualTime})
         : name==='collectFedMarketPath' && revision>=4 ? args=>module[name]({...args,fetchFn:fedFetch,now:()=>virtualTime}) : module[name];
     } else bindings[match[1].trim()]=module.default;
   }
@@ -46,6 +48,8 @@ export async function buildQualifiedAbsFixture({publish=false,baselineOutput=nul
   };
   const quarterlySource=quarterlyTransport(quarterlyOptions);
   const quarterlyFetch=async(url,options)=>{networkCalls++;requestStarts.push(virtualTime);return quarterlySource.fetchFn(url,options);};
+  const octoberSource=octoberTransport(quarterlyOptions);
+  const octoberFetch=async(url,options)=>{networkCalls++;requestStarts.push(virtualTime);return octoberSource.fetchFn(url,options);};
   const fedSource=fedTransport(fedOptions);
   const fedFetch=async(url,options)=>{networkCalls++;requestStarts.push(virtualTime);return fedSource.fetchFn(url,options);};
   const key=file=>path.relative(root,file).replaceAll('\\','/');
