@@ -2,6 +2,8 @@ import {QUARTERLY_CAPEX_EVENTS as events,QUARTERLY_CAPEX_POLICY,QUARTERLY_CAPEX_
 import {cashEventWindow,realDate} from './capex-event-session.mjs';
 import {matchedPrices} from './capex-event-collector.mjs';
 import {isDeepStrictEqual} from 'node:util';
+import {OCTOBER_CAPEX_SCHEMA} from './capex-october-panel.mjs';
+import {replayOctoberCapexPanel} from './capex-october-replay.mjs';
 // Publication/checker fixtures may cross VM realms; compare JSON values,
 // preserving all keys/array order without treating prototypes as evidence.
 const equal=(a,b)=>isDeepStrictEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)));
@@ -9,6 +11,7 @@ const sha=s=>typeof s==='string'&&/^[a-f0-9]{64}$/u.test(s);
 const only=(o,keys)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).length===keys.length&&keys.every(k=>Object.hasOwn(o,k));
 const validClock=(s,today)=>typeof s==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/u.test(s)&&Number.isFinite(Date.parse(s))&&new Date(s).toISOString()===s&&s.slice(0,10)===today;
 export function replayQuarterlyCapexPanel(panel,today,{now=()=>Date.now()}={}){
+ if(panel?.schemaVersion===OCTOBER_CAPEX_SCHEMA)return replayOctoberCapexPanel(panel,today,{now});
  try{return replay(panel,today,now());}catch{return {ok:false,errors:['malformed capex evidence'],decision:{status:'unknown'}};}
 }
 function replay(panel,today,nowMs){

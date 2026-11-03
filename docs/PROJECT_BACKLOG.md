@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 ABS 与资本开支免费证据续审（来源契约先行）
+
+- **Acceptance baseline**：owner 要求继续排查两项缺失证据，研究免费公开来源，有可修复问题则修复，审核通过后上线并核验两站；不放宽证据/计分门槛，沿用本聊天Codex代审/发布授权，不使用DeepSeek修代码、不额外付费。先来源/checker独立PR，后运行激活，保留其它任务工作区。
+- **最后基线 / 改动**：复用干净worktree，分支`codex/bubble-abs-capex-evidence-repair-20261103`基于main `f607ea96`。现有collector4请求均为新季度未审、来源失败0。新增十月固定四家v2面板及独立严格重放，原v1/七月路径与运行选择不变；微软比较凭据多1次、完整证明20次，原20请求/12秒/2MiB/12MiB/零重试重定向保护不变。来源与准入细节见[ADR-0083](ADR/0083-bubble-october-capex-source-continuation.md)及[免费证据复核](BUBBLE_ABS_CAPEX_FREE_SOURCE_REVIEW_2026_11_03.md)。ABS没有合格同债项报价链，保留原缺口，不用部门、新发行或CMBS补位。
+- **当前任务 / 验证**：实际新面板20请求、约4.8MB、0失败、四行合格、独立重放通过；1家上调、0受罚/奖励，原规则黄灯。新旧源/runtime专项27/27、完整`check:changed`（含`check:all`）exit0；目录收紧后9项专项/语法与真实四目录通过，最终链接/whitespace检查通过。Codex固定差异自审确认v1重放及旧断言保留，新v2准入在独立ADR/来源PR显性登记、无skip/ignore。CI/合并以实际回执为准。实际报告与原始HTML仅ignored，不晋升生产；本PR无builder/config/生产数据/workflow/前端变更、无付费调用或新依赖。
+- **下一步 / 门槛**：来源契约review/CI/合并后另开运行PR，明确激活十月collector并提供既有四项资格的免费重新采集/发布路径，保留其它23卡及原观测，不重标已有资格证明日期；失败不发布。评分快照变化会使旧AI正文绑定失效，保持确定性回退，不改旧稿/快照、不追加付费AI。随后核验两站实际覆盖/区间、capex原日期及ABS缺口。当前研究成功不是已上线。
+
 ### 2026-11-03 Bubble 核心趋势紧凑空状态
 
 - **Acceptance baseline**：owner 要求收起核心趋势空状态的大面积留白，显示实际 21/23 项覆盖、缺失项与当前风险区间；不放宽证据或计分门槛，审核通过后上线并核验两站。沿用本聊天 owner 指定 Codex 代审/发布授权，不伪称独立人工 review，不触发付费或生产数据刷新。

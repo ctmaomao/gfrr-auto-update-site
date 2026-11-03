@@ -3,6 +3,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {QUARTERLY_CAPEX_EVENTS,QUARTERLY_CAPEX_POLICY} from './capex-quarterly-panel.mjs';
 import {replayQuarterlyCapexPanel} from './capex-quarterly-replay.mjs';
 import {realDate} from './capex-event-session.mjs';
+import {OCTOBER_CAPEX_SCHEMA,OCTOBER_CAPEX_EVENTS} from './capex-october-panel.mjs';
 const equal=(a,b)=>isDeepStrictEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)));
 export const QUARTERLY_CAPEX_LABELS=Object.freeze({unknown:'待确认',green:'上调获奖励',yellow:'偶发惩罚或反应分化',red:'广泛惩罚'});
 export const QUARTERLY_CAPEX_SOURCE='Stock Analysis季度电话会整理 · 公司公告 · Yahoo/QQQ';
@@ -28,7 +29,8 @@ export function validateQuarterlyCapexPublication(card,today,{now=()=>Date.now()
    const report=card.provenance.detail,result=replayQuarterlyCapexPanel(report,today,{now});
    check(result.ok,`capex quarterly replay: ${result.errors.join('; ')}`);
    check(card.status===result.decision.status&&clock===report.checkedAt,'capex light/clock differs from replay');
-   check(card.as_of===Object.values(QUARTERLY_CAPEX_EVENTS).map(e=>e.date).sort().at(-1)&&!Object.hasOwn(card,'evidence_gap'),'capex original observation/gap invalid');
+   const events=report?.schemaVersion===OCTOBER_CAPEX_SCHEMA?OCTOBER_CAPEX_EVENTS:QUARTERLY_CAPEX_EVENTS;
+   check(card.as_of===Object.values(events).map(e=>e.date).sort().at(-1)&&!Object.hasOwn(card,'evidence_gap'),'capex original observation/gap invalid');
   }
  }catch{check(false,'malformed quarterly capex publication');}
  return errors;
