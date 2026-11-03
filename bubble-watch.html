@@ -142,6 +142,11 @@
   .trend-legend { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
   #trend-chart-wrap { position: relative; height: 220px; }
   #trend-chart-wrap svg { display: block; }
+  .trend.is-empty #trend-chart-wrap { height: auto; }
+  .trend.is-empty .trend-legend { display: none; }
+  .trend-gap { margin: 0; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+  .trend-gap + .trend-gap { margin-top: 6px; }
+  .trend-gap-note { color: var(--muted); font-size: 12px; }
   /* Upstream credit small multiples: same position, 20px gap and 180px plots. */
   .credit-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
   @media (max-width: 720px) { .credit-grid { grid-template-columns: 1fr; } }
@@ -885,11 +890,35 @@ function drawCreditTrend(credit) {
   }
 }
 
+function trendEmptyHtml(data) {
+  const ids = data.scoring?.core_indicator_ids;
+  const coreIds = Array.isArray(ids) && ids.length === 23 && new Set(ids).size === 23 ? ids : null;
+  const cards = new Map((data.indicators || []).map(item => [item.id, item]));
+  const missing = coreIds?.filter(id => !['red', 'yellow', 'green'].includes(cards.get(id)?.status));
+  const coverage = coreIds ? `本期核心证据覆盖 ${coreIds.length - missing.length}/${coreIds.length} 项` : '本期核心证据覆盖待确认';
+  const gaps = missing
+    ? (missing.length ? `待确认：${missing.map(id => cards.get(id)?.name_zh || '名称待确认的核心项').join('、')}。` : '本期核心项均有已发布灯色，同口径历史观测待累计。')
+    : '核心项清单暂缺，覆盖情况待核实。';
+  const summary = data.summary || {};
+  const value = (point, range, unit) => {
+    const validPoint = Number.isFinite(point) && point >= 0 && point <= 100 ? point : null;
+    const validRange = range && Number.isFinite(range.lower) && Number.isFinite(range.upper)
+      && range.lower >= 0 && range.upper <= 100 && range.lower <= range.upper ? range : null;
+    const text = scoreText(validPoint, validRange);
+    return text === '待确认' ? text : `${text}${unit}`;
+  };
+  return `<p class="trend-gap"><b>${coverage}</b></p>
+    <p class="trend-gap">${escapeHtml(gaps)}</p>
+    <p class="trend-gap">本期核心红灯比例：${value(summary.red_pct, summary.primary_score_range_pct, '%')}；黄灯调整压力：${value(summary.weighted_risk_score, summary.weighted_risk_score_range, ' / 100')}。</p>
+    <p class="trend-gap trend-gap-note">完整可比观测待累计，暂不绘制趋势。区间为证据缺口的数学边界，并非概率或统计置信区间；缺口不计零分，旧口径不拼接为趋势。</p>`;
+}
+
 function drawTrend(data) {
   const seed = data.history_seed || [];
   const wrap = document.getElementById('trend-chart-wrap');
   if (!wrap) return;
-  if (!seed.length) { wrap.innerHTML='<p class="trend-gap">新口径完整可比观测待累计；缺口不画成零分，旧模型不拼接为趋势。</p>'; return; }
+  wrap.closest('section.trend').classList.toggle('is-empty', !seed.length);
+  if (!seed.length) { wrap.innerHTML = trendEmptyHtml(data); return; }
   const W = Math.max(320, wrap.clientWidth);
   const H = 220;
   const padL = 44, padR = 14, padT = 10, padB = 26;
@@ -915,7 +944,8 @@ function drawTrend(data) {
   const redDots = redPts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#7C1D1D"/>`).join('');
   const ylwDots = ylwPts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#A8761A"/>`).join('');
 
-  const tooltip = document.getElementById('trend-tooltip');
+  const tooltip = document.createElement('div');
+  tooltip.id = 'trend-tooltip';
   wrap.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Core-23 红灯比例与黄灯调整压力趋势">
       ${grid}

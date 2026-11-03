@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-03 Bubble 核心趋势紧凑空状态
+
+- **Acceptance baseline**：owner 要求收起核心趋势空状态的大面积留白，显示实际 21/23 项覆盖、缺失项与当前风险区间；不放宽证据或计分门槛，审核通过后上线并核验两站。沿用本聊天 owner 指定 Codex 代审/发布授权，不伪称独立人工 review，不触发付费或生产数据刷新。
+- **最后基线 / 改动**：复用干净 World Order worktree，新分支 `codex/bubble-trend-empty-state-20261103` 基于 latest main `a06ca944`。只调整 `bubble-watch.html` 空状态：取消固定高度、隐藏空图例；按已发布核心清单与灯色统计覆盖，读取原发布区间，不重算分数；缺失/无效值仍待确认。保留完整曲线及响应式切换，恢复图表时重新建立 tooltip。本 PR 符合 DESIGN.md 的所有规则（§2/3/4.4/6/9）；纸色、字体、标题及 section 顺序保持，空态正文使用现有 serif 与 muted token。
+- **验证 / 审核**：新增 5 项真实浏览器回归通过，覆盖 1440/390、核心缺卡不缩分母、影子不入覆盖、名称转义、缺失/无效区间不记零、真实零与空态/曲线/resize/hover 切换。相同生产 JSON before/after 四图与计算样式见 [验收证据](review-evidence/bubble-trend-empty-20261103/README.md)；桌面内容区 220→115px、手机 220→184px，全页无横溢或脚本异常。完整 `check:changed`（含 `check:all`）exit0；最终差异 Codex 自审确认符合方案，checker/assertions、data/config/scoring/workflows 零修改，无新增 skip/ignore。远端 CI/合并与线上验收以实际回执为准。
+- **下一步 / 限制**：PR #497 首版 CI 的 audit/coverage/check:all 通过；浏览器 80 pass/6 fail 均因漏保留原烟测要求的“完整可比观测待累计”提示。r2 仅恢复此句式并更新 after 证据，不改测试断言；本地扩大浏览器复验 29/29、修订后完整 `check:changed`（含 `check:all`）均 exit0。后续 CI/合并/上线以实际回执为准。跟进 Pages/EdgeOne 并核对两站桌面/手机实际空态、JSON 与已恢复周评不变。该补丁不补证据、不伪造历史点、不改源资格/计分；仅 bubble 单文件页变化，不触发首页模块 asset bump。
+
 ### 2026-11-03 World Order 索引时间与完整日缓存恢复
 
 - **Acceptance baseline**：owner 要求继续修复 World Order 连续失败，优先 GDELT 索引时间/缓存、减少重复请求，不使用收费 API、不放宽来源和计分门槛；审核通过后上线并核验两站。沿用 Codex 代审/发布授权，不伪称独立人工；不触发 Bubble 或收费 AI。
