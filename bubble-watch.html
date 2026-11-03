@@ -910,7 +910,7 @@ function trendEmptyHtml(data) {
   return `<p class="trend-gap"><b>${coverage}</b></p>
     <p class="trend-gap">${escapeHtml(gaps)}</p>
     <p class="trend-gap">本期核心红灯比例：${value(summary.red_pct, summary.primary_score_range_pct, '%')}；黄灯调整压力：${value(summary.weighted_risk_score, summary.weighted_risk_score_range, ' / 100')}。</p>
-    <p class="trend-gap trend-gap-note">完整可比观测尚未形成，暂不绘制趋势。区间为证据缺口的数学边界，并非概率或统计置信区间；缺口不计零分，旧口径不拼接为趋势。</p>`;
+    <p class="trend-gap trend-gap-note">完整可比观测待累计，暂不绘制趋势。区间为证据缺口的数学边界，并非概率或统计置信区间；缺口不计零分，旧口径不拼接为趋势。</p>`;
 }
 
 function drawTrend(data) {
