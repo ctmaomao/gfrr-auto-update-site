@@ -1443,8 +1443,8 @@
       }
     },
     {
-      "date": "2026-11-02",
-      "week": "11-02",
+      "date": "2026-11-03",
+      "week": "11-03",
       "issue_number": 31,
       "red_pct": null,
       "risk_score": null,
@@ -1481,25 +1481,25 @@
         "frontier_progress": "green",
         "accounting_events": "green",
         "fed_policy": "red",
-        "capex_reaction": "unknown",
+        "capex_reaction": "yellow",
         "ceo_hedging": "green"
       },
       "score_bounds": {
         "primary": {
           "lower": 30.4,
-          "upper": 39.1
+          "upper": 34.8
         },
         "pressure": {
-          "lower": 43.5,
-          "upper": 52.2
+          "lower": 45.7,
+          "upper": 50
         },
         "stage": {
           "lower": 55,
           "upper": 55
         },
         "trigger": {
-          "lower": 34.6,
-          "upper": 50
+          "lower": 38.5,
+          "upper": 46.2
         }
       },
       "tier_range": {
@@ -1508,8 +1508,7 @@
       },
       "effective_tier": "alert",
       "unknown_core_ids": [
-        "dc_abs_spread",
-        "capex_reaction"
+        "dc_abs_spread"
       ],
       "gap_metadata": {
         "dc_abs_spread": {
@@ -1518,47 +1517,15 @@
           "evidence_gap": {
             "policy": "bubble-qualified-evidence-v1",
             "reasonCode": "dc_abs_direct_spread_unavailable",
-            "checkedDate": "2026-11-02"
+            "checkedDate": "2026-11-03"
           },
           "provenance": {
             "mode": "auto",
-            "checkedAt": "2026-11-02T13:43:01.390Z",
+            "checkedAt": "2026-11-03T01:50:46.568Z",
             "detail": {
               "status": "unknown",
               "reasonCode": "dc_abs_direct_spread_unavailable",
               "qualificationFailure": "wrong_market_or_subject"
-            }
-          }
-        },
-        "capex_reaction": {
-          "as_of": null,
-          "stale": false,
-          "evidence_gap": {
-            "policy": "bubble-qualified-evidence-v1",
-            "reasonCode": "capex_qualified_event_unavailable",
-            "checkedDate": "2026-11-02"
-          },
-          "provenance": {
-            "mode": "auto",
-            "checkedAt": "2026-11-02T13:43:19.887Z",
-            "detail": {
-              "policy": "capex_latest_quarterly_call_association_v1",
-              "status": "unknown",
-              "checkedDate": "2026-11-02",
-              "companies": [
-                "MSFT",
-                "META",
-                "AMZN",
-                "GOOGL"
-              ],
-              "missingRequirements": [
-                "latest_reviewed_quarter_catalog",
-                "comparable_annual_guidance",
-                "official_after_close_anchor",
-                "matched_stock_qqq_pair"
-              ],
-              "firstGuidanceDiscoveryComplete": false,
-              "capexCausalityEstablished": false
             }
           }
         }
