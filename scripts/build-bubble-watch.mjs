@@ -28,6 +28,8 @@ import { summarizeEvidence, evidenceHistoryFields } from './bubble-watch/evidenc
 import { stripTags, decodeHtmlEntities, htmlToText, parseFedSepMedians } from './bubble-watch/public-html-parsers.mjs';
 import { mean, standardDeviation, pctReturn, closesByDate, commonDatesForSeries, sliceCommonCloses, dailyReturnsFromCloses, covariance, correlation, betaToBenchmark, rsi14, bollingerPctB } from './bubble-watch/market-statistics.mjs';
 import fs from 'node:fs';
+import { qualifiedEdgarLtmRevenue, qualifiedMirrorLtmRevenue } from './bubble-watch/ltm-revenue.mjs';
+import { inspectNvdaNumerator, qualifyNvdaRatio, buildNvdaGap } from './bubble-watch/nvda-ratio-evidence.mjs';
 import { withTavilyBudget } from './lib/tavily-budget.mjs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
@@ -456,14 +458,14 @@ async function yahooDailyCloses(symbol, range = '1y') {
   return rows;
 }
 
-async function edgarConcept(cik, tags) {
+async function edgarConcept(cik, tags, qualify = null) {
   let lastError = null;
   for (const tag of tags) {
     try {
       const url = `https://data.sec.gov/api/xbrl/companyconcept/CIK${cik}/us-gaap/${tag}.json`;
       const json = await fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': EDGAR_UA, Accept: 'application/json' } });
       const units = json?.units?.USD;
-      if (Array.isArray(units) && units.length) return units;
+      if (Array.isArray(units) && units.length) return qualify ? qualify(units, json, url) : units;
       lastError = new Error(`${tag} 无 USD units`);
     } catch (error) {
       lastError = error;
@@ -4894,6 +4896,36 @@ async function main() {
   let paidWindFallbackCount = 0;
 
   for (const def of INDICATOR_DEFS) {
+    if (EVIDENCE_REVISION >= 5 && def.id === 'nvda_invest_revenue' && !QUALIFIED_REFRESH_ONLY) {
+      const numerator = inspectNvdaNumerator(config, today);
+      let qualification = numerator, revenue = null;
+      if (numerator.status === 'qualified') {
+        try {
+          revenue = await edgarConcept(EDGAR_CIK.NVDA, ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues'], (units, json, url) => {
+            if (Number(json.cik) !== Number(EDGAR_CIK.NVDA)) throw new Error('nvda_revenue_issuer_mismatch');
+            return { ...qualifiedEdgarLtmRevenue(units, today), source: { provider: 'SEC', issuer: 'NVDA', currency: 'USD', url } };
+          });
+        } catch {
+          try { revenue = { ...qualifiedMirrorLtmRevenue(await fetchSaFinancialPage('NVDA', ''), today),
+            source: { provider: 'StockAnalysis', issuer: 'NVDA', currency: 'USD', url: 'https://stockanalysis.com/stocks/nvda/financials/?p=quarterly' } }; }
+          catch { qualification = { ...numerator, status: 'unavailable', reason: 'dated_revenue_unavailable' }; }
+        }
+        if (revenue) qualification = { ...numerator, ...qualifyNvdaRatio(numerator, revenue) };
+      }
+      if (qualification.status !== 'qualified' || !revenue) {
+        indicators.push(buildNvdaGap(baseIndicator(def), today, qualification));
+      } else {
+        const ratio = qualification.ratioPct;
+        indicators.push({ ...baseIndicator(def), status: classifyNumeric(ratio, 30, 15),
+          source_name: '已审同期间客户股权承诺 / NVIDIA收入', value_display: `≈${ratio.toFixed(0)}%`,
+          note: `同期间${numerator.periodStart}至${numerator.periodEnd}，已签客户股权承诺$${(numerator.usd / 1e9).toFixed(1)}B / NVIDIA收入$${(revenue.value / 1e9).toFixed(1)}B。保证、抵押债务及未来意向不纳入；仅为同期间规模比。`,
+          as_of: revenue.observationDate, stale: false,
+          provenance: { mode: 'auto', fetchedAt: new Date().toISOString(), detail: { ...qualification,
+            qualificationStatus: 'qualified', currentEligible: true } } });
+      }
+      autoCount++;
+      continue;
+    }
     if (EVIDENCE_REVISION >= 4 && def.id === 'fed_policy') {
       const report = await collectFedMarketPath({ today });
       indicators.push(buildQualifiedFedIndicator(baseIndicator(def), report, today));

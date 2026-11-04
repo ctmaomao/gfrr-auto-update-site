@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0084 — NVIDIA same-period evidence](0084-nvda-period-qualified-ratio.md): owner-authorized local implementation; narrow r5 gap, independent review and publication pending.
+
 - [ADR-0083 — Bubble October quarterly source continuation](0083-bubble-october-capex-source-continuation.md): separately reviewed fixed-four source/checker admission; legacy/runtime selection remains unchanged until a subsequent activation PR; ABS stays pending, no paid calls.
 
 - [ADR-0082 — GDELT index wait and complete-day checkpoints](0082-gdelt-index-wait-and-day-checkpoints.md): owner-authorized free-only recovery; wait within the original budget, retain validated days without relaxing publication gates, review/CI and two-site verification required.

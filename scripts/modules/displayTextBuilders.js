@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=ofr-primary-20261101-r1';
+﻿import { fmtNumSafe } from './config.js?v=radar-integration-20261104-r3';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

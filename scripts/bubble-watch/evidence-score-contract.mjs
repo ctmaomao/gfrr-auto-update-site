@@ -1,4 +1,5 @@
 // Fixed Core-23; uncertainty never removes a slot or assigns it a green light.
+import { NVDA_RATIO_CONTRACT, NVDA_GAP_REASON, validateNvdaRatioRecord } from './nvda-ratio-evidence.mjs';
 export const CORE_LAYOUT = Object.freeze([
   ['cape', 'stage', 'valuation'], ['top5_weight', 'stage', 'valuation'], ['nvda_fpe', 'stage', 'valuation'],
   ['hyperscaler_capex_yoy', 'stage', 'capital'], ['mag4_fcf_yoy', 'trigger', 'capital'],
@@ -44,6 +45,13 @@ export function isRegisteredEvidenceGap(item, { revision, asOfDate } = {}) {
   const gap = item?.evidence_gap;
   const checked = item?.provenance?.checkedAt;
   const stamp = typeof checked === 'string' ? Date.parse(checked) : NaN;
+  if (item.id === 'nvda_invest_revenue') return revision === 5 && item.score_role === 'core' && item.status === 'unknown'
+    && gap?.policy === NVDA_RATIO_CONTRACT && gap.reasonCode === NVDA_GAP_REASON && gap.checkedDate === asOfDate
+    && item.as_of === null && item.stale === false && item.provenance?.mode === 'auto'
+    && Number.isFinite(stamp) && new Date(stamp).toISOString().slice(0, 10) === asOfDate
+    && item.provenance?.detail?.contractVersion === NVDA_RATIO_CONTRACT
+    && item.provenance.detail.qualificationStatus === 'unavailable' && item.provenance.detail.ratioPct === null
+    && item.provenance.detail.currentEligible === false;
   return item.score_role === 'core' && item.status === 'unknown'
     && METHOD_ORDER.slice(0, revision).includes(item.id)
     && gap?.policy === 'bubble-qualified-evidence-v1'
@@ -62,7 +70,8 @@ export function validateEvidenceLayout(indicators, revision) {
     const item = byId.get(id);
     if (!item || item.score_role !== 'core' || item.axis !== axis || item.category !== category) throw new Error(`Core layout mismatch: ${id}`);
     if (item.status === 'unknown') {
-      if (!allowedGaps.includes(id) || item.evidence_gap?.reasonCode !== GAP_REASONS[id]) throw new Error(`Unregistered evidence gap: ${id}`);
+      const nvdaGap = id === 'nvda_invest_revenue' && isRegisteredEvidenceGap(item, { revision, asOfDate: item.evidence_gap?.checkedDate });
+      if (!nvdaGap && (!allowedGaps.includes(id) || item.evidence_gap?.reasonCode !== GAP_REASONS[id])) throw new Error(`Unregistered evidence gap: ${id}`);
     } else if (!LIGHTS.includes(item.status)) throw new Error(`Invalid evidence status: ${id}`);
   }
   for (const id of SHADOW_IDS) {
@@ -129,6 +138,8 @@ export function validateEvidenceScoreFields(data) {
   const revision = modelRevision(data?.scoring?.model_version);
   if (data?.contractVersion !== 'bubble-watch-v3' || !revision) return ['Unregistered v3 contract/model'];
   let replay;
+  const nvda = Array.isArray(data.indicators) ? data.indicators.find(item => item?.id === 'nvda_invest_revenue') : null;
+  if (nvda) errors.push(...validateNvdaRatioRecord(nvda, data.as_of_date));
   try { replay = replayEvidenceScores(data.indicators, revision); } catch (error) { return [error.message]; }
   for (const item of data.indicators.filter(item => item.status === 'unknown')) {
     if (!isRegisteredEvidenceGap(item, { revision, asOfDate: data.as_of_date })) errors.push(`Invalid gap metadata: ${item.id}`);

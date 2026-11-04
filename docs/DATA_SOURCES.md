@@ -1192,3 +1192,8 @@ The collector defaults offline; only explicit `--allow-network` makes up to 36 f
 ### Bubble quarterly capex call association (ADR-0072)
 
 The [quarterly panel contract](ADR/0072-bubble-quarterly-capex-panel.md) registers Stock Analysis public catalogs/transcripts for the fixed MSFT/META/AMZN/GOOGL panel, with issuer primary HTML for quarterly identity and after-close timing. Catalog coverage is secondary and quarterly only; it is not full official/interim enumeration. MSFT classification and META endpoints/basis are primary-cross-checked; AMZN/GOOGL guidance amounts remain attributed secondary transcript facts. Retain per-company bases, actual July event dates, source/clauses digests and matched Yahoo/QQQ two-end adjusted prices. Public HTML use is bounded owner-requested research, not a claim of full-text redistribution rights; publish derived facts/links only. New-quarter/catalog ambiguity, corrected same-quarter guidance, stale event, unavailable or conflicting material holds; no old-event fallback or403 bypass. At most20 GETs/12s/2MiB each/12MiB cumulative, zero retries/redirects and host circuits. The manual diagnostic workflow uses this path; no production adapter or r3/r4 scoring change is activated by source admission.
+
+
+### NVIDIA 期间资格（2026-11-04，本地待审）
+
+[ADR-0084](ADR/0084-nvda-period-qualified-ratio.md) 收紧完整 r5 NVIDIA 比率资格，不增加源：仅现有 SEC companyconcept 的 NVIDIA/USD 两种收入 concept 或现有 StockAnalysis 季度收入镜像，保留期间、单位与观测年龄。SEC 联系身份、网络边界不改。承诺文字台账混有累计或不同义务时不能作为可比分子；当前保持不可比/待确认，不认证其中金额。没有更新配置台账或生产 JSON，也没有运行全量生产刷新。

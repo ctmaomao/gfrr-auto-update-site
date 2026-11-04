@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=ofr-primary-20261101-r1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=ofr-primary-20261101-r1';
+} from './config.js?v=radar-integration-20261104-r3';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=radar-integration-20261104-r3';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=ofr-primary-20261101-r1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=ofr-primary-20261101-r1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=ofr-primary-20261101-r1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=ofr-primary-20261101-r1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=ofr-primary-20261101-r1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=ofr-primary-20261101-r1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=ofr-primary-20261101-r1';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=ofr-primary-20261101-r1';
+} from './macroOverviewDisplayHelpers.js?v=radar-integration-20261104-r3';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=radar-integration-20261104-r3';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=radar-integration-20261104-r3';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=radar-integration-20261104-r3';
+import { renderTrendSvg } from './renderMacroTrend.js?v=radar-integration-20261104-r3';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=radar-integration-20261104-r3';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=radar-integration-20261104-r3';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=radar-integration-20261104-r3';
 
 // ---------- 阈值 + 派生 helper ----------
 

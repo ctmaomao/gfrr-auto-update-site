@@ -295,6 +295,120 @@
 </div>
 
 <script>
+// BEGIN INLINE EVIDENCE AGE
+// Trusted contract policy. Published evidence may describe this policy, never set it.
+// ADR-0084 / config/bubble-watch-curated.json: NVIDIA ledger 30d, revenue 120d.
+const NVDA_NUMERATOR_MAX_AGE_DAYS = 30;
+const NVDA_REVENUE_MAX_AGE_DAYS = 120;
+
+function nvdaPolicyDay(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const at = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(at) && new Date(at).toISOString().slice(0, 10) === value ? at : null;
+}
+
+// First verify the unchanged proof at its original clock, then age that same
+// observation at the caller's clock. A carry never rewrites its proof timestamp.
+function nvdaEvidenceAgeAt(observationDate, freshness, asOfDate, maxAgeDays) {
+  if (freshness?.maxAgeDays !== maxAgeDays) return null;
+  const observed = nvdaPolicyDay(observationDate), audit = nvdaPolicyDay(asOfDate);
+  const recorded = nvdaPolicyDay(freshness.asOfDate);
+  if (observed === null || audit === null || recorded === null || observed > recorded || recorded > audit
+    || freshness.observationDate !== observationDate) return null;
+  const recordedAge = (recorded - observed) / 86400000;
+  if (freshness.ageDays !== recordedAge || recordedAge > maxAgeDays || freshness.status !== 'fresh') return null;
+  const ageDays = (audit - observed) / 86400000;
+  return { observationDate, asOfDate, ageDays, maxAgeDays, status: ageDays > maxAgeDays ? 'stale' : 'fresh' };
+}
+function nvdaNumeratorAgeAt(numerator, asOfDate) {
+  return nvdaEvidenceAgeAt(numerator?.asOfDate, numerator?.freshness, asOfDate, NVDA_NUMERATOR_MAX_AGE_DAYS);
+}
+function nvdaRevenueAgeAt(revenue, asOfDate) {
+  return nvdaEvidenceAgeAt(revenue?.observationDate, revenue?.freshness, asOfDate, NVDA_REVENUE_MAX_AGE_DAYS);
+}
+function nvdaRatioAgeAt(detail, asOfDate) {
+  const proofDate = detail?.numerator?.freshness?.asOfDate;
+  if (proofDate !== detail?.revenue?.freshness?.asOfDate) return null;
+  const numerator = nvdaNumeratorAgeAt(detail?.numerator, asOfDate), revenue = nvdaRevenueAgeAt(detail?.revenue, asOfDate);
+  return numerator && revenue ? { proofDate, numerator, revenue } : null;
+}
+
+// Display/audit clocks only. Published lights, counts and scores are immutable.
+const DAY = 86400000;
+const BUBBLE_ISSUE_MAX_AGE_DAYS = 35; // Existing weekly publication policy.
+function strictEvidenceDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const at = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(at) && new Date(at).toISOString().slice(0, 10) === value;
+}
+function evidenceFreshnessAtAudit(item, now) {
+  const today = typeof now === 'string' ? now.slice(0, 10) : null;
+  const observedDate = strictEvidenceDate(item?.as_of) ? item.as_of : null;
+  const limit = item?.provenance?.maxAgeDays;
+  const maxAgeDays = Number.isFinite(limit) && limit >= 0 ? limit : null;
+  const ageDays = observedDate === null || !strictEvidenceDate(today) ? null : (Date.parse(today) - Date.parse(observedDate)) / DAY;
+  const reason = ageDays === null ? 'card_date_invalid' : ageDays < 0 ? 'card_date_future'
+    : maxAgeDays === null ? 'card_age_policy_unavailable'
+      : ageDays > maxAgeDays ? 'age_exceeds_policy' : 'within_policy_age';
+  return { observedDate, ageDays, maxAgeDays,
+    status: reason === 'age_exceeds_policy' ? 'stale' : reason === 'within_policy_age' ? 'within_policy_age' : 'unknown', reason };
+}
+function buildBubbleFreshnessView(data, nowMs = Date.now()) {
+  const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : '';
+  const issue = evidenceFreshnessAtAudit({ as_of: data?.as_of_date, provenance: { maxAgeDays: BUBBLE_ISSUE_MAX_AGE_DAYS } }, now);
+  const cards = (data?.indicators ?? []).map(item => {
+    const age = evidenceFreshnessAtAudit(item, now);
+    const label = age.status === 'stale' ? `已超龄 ${age.ageDays}天 / 上限${age.maxAgeDays}天`
+      : age.status === 'unknown' ? age.reason === 'card_age_policy_unavailable' ? '时效政策未记录' : '观测日期待核验'
+        : `观测已过${age.ageDays}天 / 上限${age.maxAgeDays}天`;
+    return { id: item.id, ...age, publishedStale: item.stale === true,
+      label: `${label}${item.stale === true ? ' · 发布时已标旧' : ''}` };
+  });
+  const stale = cards.filter(c => c.status === 'stale').length;
+  const unknown = cards.filter(c => c.status === 'unknown').length;
+  const issueLabel = issue.status === 'stale' ? '历史期次 · 整期已超龄' : issue.status === 'unknown' ? '期次日期待核验' : '本期期次';
+  const nvda = nvdaDisplayState(data?.indicators?.find(item => item.id === 'nvda_invest_revenue'), nowMs);
+  const ratioNote = nvda && !nvda.qualified ? 'NVIDIA比率待核验，已发布分数不可视为全部输入已获当前验证。' : '';
+  return { issue, cards, nvda, verdictLabel: issue.status === 'within_policy_age' ? '本期判读 · ISSUE VERDICT' : '历史或待核验判读 · ARCHIVED / UNVERIFIED',
+    summary: `${issueLabel} · ${data?.as_of_date ?? '日期缺失'}${issue.ageDays === null ? '' : ` · 已过${issue.ageDays}天 / 上限${BUBBLE_ISSUE_MAX_AGE_DAYS}天`}；逐卡超龄${stale}张，时效待核验${unknown}张。灯色与分数保留发布口径；日期为卡片记录，未独立核验源日期。${ratioNote}` };
+}
+
+// A page may carry an old publication without silently certifying its ratio.
+function nvdaDisplayState(item, nowMs = Date.now()) {
+  if (item?.id !== 'nvda_invest_revenue') return null;
+  const d = item.provenance?.detail, n = d?.numerator, r = d?.revenue;
+  const today = Number.isFinite(nowMs) ? new Date(nowMs).toISOString().slice(0, 10) : '';
+  const age = nvdaRatioAgeAt(d, today);
+  const source = r?.source;
+  const sourceValid = source?.issuer === 'NVDA' && source.currency === 'USD'
+    && ((source.provider === 'SEC' && /^https:\/\/data\.sec\.gov\/api\/xbrl\/companyconcept\/CIK0001045810\/us-gaap\/(RevenueFromContractWithCustomerExcludingAssessedTax|Revenues)\.json$/.test(source.url ?? ''))
+      || (source.provider === 'StockAnalysis' && source.url === 'https://stockanalysis.com/stocks/nvda/financials/?p=quarterly'));
+  const qs = r?.quarters;
+  const periods = Array.isArray(qs) && qs.length === 4 && qs.every((q, i) =>
+    strictEvidenceDate(q.start) && strictEvidenceDate(q.end) && Number.isFinite(q.value) && q.value > 0
+    && (Date.parse(q.end) - Date.parse(q.start)) / DAY >= 74
+    && (Date.parse(q.end) - Date.parse(q.start)) / DAY <= 104
+    && (!i || Date.parse(q.start) - Date.parse(qs[i - 1].end) === DAY));
+  const qualified = item.status !== 'unknown' && d?.contractVersion === 'nvda-period-aligned-ratio-v1'
+    && d.qualificationStatus === 'qualified' && d.currentEligible === true && sourceValid
+    && n?.currency === 'USD' && r?.currency === 'USD' && n.basis === 'signed_customer_equity_commitments_in_period'
+    && n.includesGuarantees === false && n.includesCollateralizedDebt === false
+    && n.review?.status === 'accepted' && strictEvidenceDate(n.review.reviewedAt)
+    && n.review.reviewedAt >= n.asOfDate && n.review.reviewedAt <= age?.proofDate
+    && n.periodStart === r.periodStart && n.periodEnd === r.periodEnd && periods
+    && qs[0].start === n.periodStart && qs[3].end === n.periodEnd
+    && (Date.parse(n.periodEnd) - Date.parse(n.periodStart)) / DAY + 1 >= 350
+    && (Date.parse(n.periodEnd) - Date.parse(n.periodStart)) / DAY + 1 <= 380
+    && r.observationDate === r.periodEnd && item.as_of === r.periodEnd
+    && Number.isFinite(n.usd) && n.usd > 0 && Number.isFinite(r.value) && r.value > 1e10
+    && Math.abs(qs.reduce((sum, q) => sum + q.value, 0) - r.value) <= 0.01
+    && Number.isFinite(d.ratioPct) && Math.abs(n.usd / r.value * 100 - d.ratioPct) <= 1e-8
+    && age?.numerator.status === 'fresh' && age.revenue.status === 'fresh';
+  return { qualified, value: qualified ? item.value_display : '待核验 · 期间或口径不可比',
+    note: qualified ? item.note : '尚无同一期间、同一口径且仍有效的承诺与收入证据，当前不展示比率。原台账保留供审计；页面灯色、计数与分数是已发布快照，未在浏览器重算。',
+    label: qualified ? '同期间证据 · 页面时效核验通过' : '比率待核验 · 灯色保留发布记录' };
+}
+// END INLINE EVIDENCE AGE
 // Editorial layout follows The Bubble Watch;data comes from this repo's weekly pipeline.
 // Bubble Watch v2 renders 27 cards while scoring only the frozen Core-23;trend uses comparable Core-23 replays.
 const CATEGORY_ORDER = [
@@ -550,6 +664,29 @@ function tierFromPct(p) {
 }
 
 let lastData = null;
+let lastEditorialStatus = null;
+let lastEditorialEligible = false;
+let lastNvdaQualified = false;
+
+function refreshDisplayAge() {
+  if (!lastData || !document.getElementById('bubble-data-freshness')) return;
+  // A long-open tab must retire expired AI prose too; no network or score rewrite.
+  if (Boolean(eligibleWeeklyEditorial(lastData)) !== lastEditorialEligible
+    || Boolean(buildBubbleFreshnessView(lastData).nvda?.qualified) !== lastNvdaQualified) {
+    render(lastData, lastEditorialStatus);
+    return;
+  }
+  const view = buildBubbleFreshnessView(lastData);
+  document.getElementById('bubble-data-freshness').textContent = view.summary;
+  document.getElementById('bubble-verdict-label').textContent = view.verdictLabel;
+  for (const [index, card] of view.cards.entries()) {
+    const label = document.getElementById(`card-age-${index}`);
+    if (!label) continue;
+    label.textContent = card.label;
+    label.closest('.indicator').classList.toggle('stale', card.publishedStale || card.status === 'stale');
+  }
+}
+
 
 function scoreText(point, range) {
   if (typeof point === 'number' && Number.isFinite(point)) return point.toFixed(1);
@@ -575,6 +712,7 @@ function qualifiedEditorialMatchesData(layer, data) {
 
 function render(data, editorialStatus = null) {
   lastData = data;
+  lastEditorialStatus = editorialStatus;
   const s = data.summary;
   const indicators = data.indicators;
   const coreCount = s.scoring_total_indicators ?? indicators.filter(item => item.score_role === 'core').length;
@@ -592,6 +730,9 @@ function render(data, editorialStatus = null) {
   const qualifiedNames = (meta.qualified_refresh?.indicatorIds || []).map(id=>qualifiedLabels[id]).filter(Boolean).join('、');
   const pipelineLine = `数据覆盖:${meta.auto_count ?? '—'} 项公开数据口径 / ${(meta.curated_count ?? 0) + (meta.fallback_count ?? 0)} 项研究口径${meta.qualified_refresh ? `；本次核验${qualifiedNames || '专题证据'}，其余${meta.qualified_refresh.carriedObservationCount}张卡沿用原观测日期` : ''}`;
   const weeklyEditorial = eligibleWeeklyEditorial(data);
+  lastEditorialEligible = Boolean(weeklyEditorial);
+  const freshness = buildBubbleFreshnessView(data);
+  lastNvdaQualified = Boolean(freshness.nvda?.qualified);
   const heroHeadline = weeklyEditorial?.output?.headlineZh || s.verdict_label;
   const heroLead = weeklyEditorial?.output?.leadZh || s.verdict_desc;
 
@@ -626,10 +767,11 @@ function render(data, editorialStatus = null) {
       </div>
       <div class="verdict">
         <div>
-          <div class="label">本周判读 · THIS WEEK'S VERDICT</div>
+          <div class="label" id="bubble-verdict-label">${escapeHtml(freshness.verdictLabel)}</div>
           <h2>${escapeHtml(heroHeadline)}</h2>
           <p>${escapeHtml(heroLead)}</p>
           <div class="editorial-refresh-note" id="editorial-refresh-note" role="status">${escapeHtml(editorialRefreshMessage(data, editorialStatus))}</div>
+          <div class="editorial-refresh-note" id="bubble-data-freshness" role="status">${escapeHtml(freshness.summary)}</div>
         </div>
         <div class="footnote">
           <span>Issue ${issueNo} · ${escapeHtml(data.as_of_date)}${weeklyEditorial ? ` · 固定判读 ${escapeHtml(s.verdict_label)}` : ''}</span>
@@ -712,9 +854,10 @@ function render(data, editorialStatus = null) {
           </div>
           <div class="indicator-grid">
             ${items.map(ind => {
+              const ratioView = nvdaDisplayState(ind);
               const carried = !ind.stale && ind.as_of && data.as_of_date && ind.as_of < data.as_of_date;
               return `
-              <article class="indicator${ind.stale ? ' stale' : ''}">
+              <article class="indicator${ind.stale || freshness.cards[indicators.indexOf(ind)].status === 'stale' ? ' stale' : ''}">
                 <div class="status-bar ${ind.status}"></div>
                 <div class="head">
                   <div>
@@ -722,13 +865,13 @@ function render(data, editorialStatus = null) {
                     <div class="name-zh">${escapeHtml(ind.name_zh)}</div>
                     <div class="score-role ${ind.score_role === 'shadow' ? 'shadow' : 'core'}">${ind.score_role === 'shadow' ? '影子观察' : '固定核心'}</div>
                   </div>
-                  ${statusBadge(ind.status)}
+                  ${statusBadge(ind.status)}${ratioView ? `<span class="carry-tag">${escapeHtml(ratioView.label)}</span>` : ''}
                 </div>
-                <div class="number">${escapeHtml(ind.value_display || ind.value)}</div>
-                <div class="note">${escapeHtml(ind.note)}</div>
+                <div class="number">${escapeHtml(ratioView ? ratioView.value : ind.value_display || ind.value)}</div>
+                <div class="note">${escapeHtml(ratioView ? ratioView.note : ind.note)}</div>
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>
-                  <span>${escapeHtml(ind.source_name)}${ind.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1' ? ' · <a href="https://xoomar.com/markets/api/insiders" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Data: XOOMAR</a> · 内部人交易数据来源：SEC' : ''}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ind.evidence_gap ? ` · 观测暂缺，核验于${escapeHtml(ind.evidence_gap.checkedDate)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''}</span>
+                  <span>${escapeHtml(ind.source_name)}${ind.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1' ? ' · <a href="https://xoomar.com/markets/api/insiders" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Data: XOOMAR</a> · 内部人交易数据来源：SEC' : ''}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ind.evidence_gap ? ` · 观测暂缺，核验于${escapeHtml(ind.evidence_gap.checkedDate)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''} <span class="carry-tag" id="card-age-${indicators.indexOf(ind)}">${escapeHtml(freshness.cards[indicators.indexOf(ind)].label)}</span></span>
                 </div>
               </article>
             `;}).join('')}
@@ -994,6 +1137,7 @@ async function load() {
     render(data);
     try {
       const status = await statusPromise;
+      lastEditorialStatus = status;
       document.getElementById('editorial-refresh-note').textContent = editorialRefreshMessage(data, status);
     } catch {
       // Diagnostics must never replace successfully rendered primary data.
@@ -1005,6 +1149,8 @@ async function load() {
   }
 }
 load();
+setInterval(refreshDisplayAge, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDisplayAge(); });
 </script>
 </body>
 </html>
