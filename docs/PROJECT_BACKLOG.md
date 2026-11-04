@@ -1,5 +1,23 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-04 NVIDIA 与双页展示发布授权
+
+- **Acceptance baseline**：owner 对“重新核对 latest main/冲突，推送分支、创建草稿 PR；CI 与整合后的独立复核通过后合并并发布现有两站”明确回复“同意”。允许现有 CI/托管配额；不主动调用付费数据、搜索或 AI 周报，不派发生产刷新，不纳入油新闻另案。具体 PR 正式 approve 仍须即时确认，本任务不代执行 approve；其它门禁不绕过。
+- **整合范围**：最新 main `298bf7eca68012a105cbd85221aecf25a7a3dd9a` 比原基线新增7个数据/ACLED配置提交，与已审 `ca7a68ad` 代码包无路径重叠。新分支 `codex/radar-release-20261104` 原样应用已审38文件并保留这些 main 更新。发布前进行完整本地验证、固定树的独立 Codex AI 复核和远端 CI；不伪称人工或 GitHub 正式 approve。
+- **交付/限制**：[发布验收计划](RADAR_RELEASE_2026_11_04.md)。代码上线不等于已获得可比 NVIDIA 数值；仍显示待核验。油新闻 main→release 不同步未在本包修复。最终 commit/PR/CI/部署及两站实物以回执为准。
+
+
+### 2026-11-04 最新 main 整合：NVIDIA 资格与两页时效（本地待审）
+
+- **Acceptance baseline**：owner 同意以最新 main 重新整合并验收，先形成可审上线包再确认发布。基线 `a8bffc7e918660bd8aac248d1a809b80541d25a2`；隔离分支 `codex/radar-integration-20261104`。不推送、PR、合并、部署、付费 provider 或生产刷新；原 E: 工作区研究保持。
+- **实施范围**：按 [ADR-0084](ADR/0084-nvda-period-qualified-ratio.md) 阻止较旧承诺参数覆盖较新台账；不能证明同期间与口径时只登记 NVIDIA r5 缺口。两页按浏览器时钟披露整期/逐卡/独立警报日期、历史与缺失；页面保留发布灯色/分数，旧 NVIDIA 比率不作为当前合格读数。保留 #495–#499 和现有 GDELT、空趋势、资本开支及受保护免费刷新契约。
+- **边界与证据**：[交付范围与验收入口](RADAR_INTEGRATION_2026_11_04.md)。生产 JSON、评分阈值/权重/固定 Core-23 不改。新契约需独立 review；通过本地检查不是发布批准。真实可比 NVIDIA 台账仍缺，ABS 与广义结构覆盖仍属独立缺口。
+
+
+- **4771 独审后修正**：owner 委托审核复现 99 天旧分子自带9000天上限仍获资格的 P2，并授权先修复再固定提交。共享受信契约固定既有分子30天/收入120天，拒绝 payload 缺失或不一致政策，前后端按各自时钟重算；保留旧证据，补政策扩大与29/30/31天及浏览器一致性反例，重跑相关和完整检查。仍不发布、不改生产数据、评分权重或 Core-23 分母。
+
+- **e7aabf7a 跨日独审修正**：owner 委托复核指出原样 carry 的合格证明被新期次重建后误拒绝，并授权修复双时钟。先在原证明时钟验证，再在当前期次重算受信30/120天年龄；保留原证明，新增实际四源刷新/释放闸门回归、跨日有效与30→31/120→121边界、篡改/未来证明及前后端一致性验证。未知与固定23分母不改，旧回执保留，仍不推送部署或付费刷新。
+
 ### 2026-11-03 四项免费资格刷新与十月 capex 运行恢复
 
 - **Acceptance baseline**：沿用owner两项缺失证据排查/修复、Codex代审/上线和两站验收授权，不放宽证据与计分门槛。来源契约PR #498、固定提交`e997ad5b`通过CI41558518704后已合并`d7ceafdc`；本独立运行PR不再修改来源/校验准入。没有新增付费调用许可。
@@ -140,7 +158,7 @@
 
 - **Acceptance baseline**：owner 授权 D（回购证据展示收口）；基于 `702fa47b` main 的 worktree `repo-evidence-release`。范围：`macroOverviewNarrative.js`（helper + label/note + policy 文案）、`renderMacroOverview.js`（pillar/C2/附录/n7 hunk）、`index.html`（C2 note id、分类 intro、回购初始态）、新真实渲染测试、D0 单测按新资格补 fixture、报告 + INDEX 一行、本 backlog 条、before/after 八图与 README、一次 asset bump `repo-evidence-release-1`。不改 matrix/pipeline/data/workflow/checker assertions/评分/冻结 realtime/依赖。
 - **当前**：`classifyRepoEvidence` 仅 finite（真 0 有效）+ BGCR `same_day` + 既有 regime 才判读，TGCR 独立；pillar 保留 D0 两行严格数值与 ×100 并实际使用 `repoBp`，pending 为“待核验”；C2 与附录总是写限定 label/note；n7 三态不称“三层均无压力/2019-09 不存在”；n7 score/isActive 不变。index 无 CSS/IA 改动。**r2（N1/N2/N3/N7）**：附录同段改“美元流动性分项资料：模块状态…”“SOFR/EFFR 参考读数”，repo 去掉固定 `class="ok"`；测试改内联固定合成 fixture（非历史观测；不读动态 data），import 无真实 binding 即 throw，补 pending→normal(0) 恢复与附录静态断言；不改 matrix/evidenceHighlights/其它 null formatter，不第二次 bump。
-- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=ofr-primary-20261101-r1` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
+- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=radar-integration-20261104-r3` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
 - **下一步 / 验证**：`node --check`、`node tests/unit/repo-evidence-display.test.mjs`（6/6，真实 C2/detail/pillar/derive 模块 harness + 内联 fixture）、`node tests/unit/repo-spread-bp-display.test.mjs`（3/3）、标准 `node --test --experimental-test-isolation=none` 合并 9/9 exit0、`check-null-zero-display-guards`、`check-macro-overview-narrative`、`check-dom`、`check-frontend-zh-copy`、`check-frontend-asset-version`、doc-links、`git diff --check`；n7/C2 八图已验收（主分 68/100、n7 47、nav 13、1440/390 scroll 1425/375、pillar/C2/detail 待核验、warm/serif 不变）；附录 r2 已由 Codex 两视口验收（1440/390 待核验、class 空、墨色；main 68/nav 13/scroll 1425/375；facts 原 root 合同目录，不入本包截图）；完整 `check:changed`/`check:all` 由 Codex 重跑，不预称通过。
 - **阻塞 / 限制**：before/after 为同一真实旧快照 2026-10-21（非当前市场、非准确率）；未跑 Daily/realtime/provider/网络，未写 data，未 Git 写；交叉 AI 审阅替代人审（非人审、不扩全项目）。
 
@@ -681,7 +699,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `ofr-primary-20261101-r1` |
+| Cache version | `radar-integration-20261104-r3` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

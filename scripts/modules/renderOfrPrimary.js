@@ -1,5 +1,6 @@
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=ofr-primary-20261101-r1';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=ofr-primary-20261101-r1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=radar-integration-20261104-r3';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=radar-integration-20261104-r3';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=radar-integration-20261104-r3';
 
 const DAY = 86400000;
 const finite = Number.isFinite;
@@ -68,7 +69,7 @@ export function renderOfrPrimary({ radarData, worldOrderStressData, nowMs = Date
   text('hero-weekly-change', v.weekly ? `${signed(v.weekly.value)} · ${v.weekly.fromDate} → ${v.weekly.toDate}${v.current ? '' : '（旧观察）'}` : '趋势待累计');
   text('hero-data-health', snapshotDisplayHealth(radarData, nowMs).heroLabel);
   text('hero-breakdown-counts', '独立警报与旧模型诊断见下方');
-  text('hero-overlay-score', finite(worldOrderStressData?.score) ? `${worldOrderStressData.score} · 独立观察，不升档OFR` : '待更新');
+  text('hero-overlay-score', worldOrderWarningView(worldOrderStressData, nowMs));
   text('threshold-now-line', v.percentile === null ? '十年历史位置待累计' : `严格过去十年历史百分位 ${v.percentile.toFixed(1)} · ${v.date}${v.current ? '' : '（旧观察）'}`);
   text('ofr-scale-note', '原值高于0：压力高于历史平均；低于0：低于历史平均。百分位表示相对历史位置，不是危机概率，也不是新的风险评分。');
   const host = document.getElementById('hero-four-lanes');
@@ -77,9 +78,10 @@ export function renderOfrPrimary({ radarData, worldOrderStressData, nowMs = Date
     if (radarData) {
       const lanes = buildFourLaneReadout(radarData, nowMs).lanes;
       const shock = lanes.shock;
+      const tail = tailWarningView(shock, radarData);
       host.append(row('金融压力', v.current ? raw(v.value) : label, v.percentile === null ? '十年历史位置待累计' : `十年百分位 ${v.percentile.toFixed(1)} · 非概率`));
       host.append(row('结构脆弱性', '分项观察 · 无综合评分', lanes.fragility.gaps.map(g => `${g.label}：${g.status}`).join(' · ')));
-      host.append(row('尾部与运输', shock.tail.length ? shock.tail.map(t => t.label).join(' / ') : shock.tailKnown ? '快照未记录尾部触发' : '尾部记录待核验', `记录对应雷达快照 ${radarData.updatedAt?.slice(0, 10) ?? '日期待核验'}；运输：${shock.transport.status}${shock.transport.expired && !shock.transport.status.includes('过期') ? ' · 过期' : ''}。独立观察，不加分OFR；未触发不等于没有风险。`));
+      host.append(row('尾部与运输', tail.status, tail.detail));
       host.append(row('数据可信度', lanes.credibility.label, `OFR：${label}；各来源按原观察日解读，采集健康不等于所有指标均为本日。`));
     }
     host.hidden = !radarData;

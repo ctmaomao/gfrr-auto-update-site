@@ -8,8 +8,28 @@ import {fileURLToPath} from 'node:url';
 import {buildQualifiedAbsFixture} from '../helpers/bubble-qualified-builder.mjs';
 import {verifyQualifiedRefresh} from '../../scripts/bubble-watch/qualified-refresh-release.mjs';
 import {validateQuarterlyCapexPublication} from '../../scripts/bubble-watch/capex-quarterly-publication.mjs';
+import {nvdaEvidenceFixture} from '../helpers/nvda-evidence-fixture.mjs';
+import {validateNvdaRatioRecord} from '../../scripts/bubble-watch/nvda-ratio-evidence.mjs';
 const clock='2026-11-03T12:00:00Z',now=()=>Date.parse('2026-11-03T12:10:00Z');
 const fedOptions={barTimes:['2026-10-29T04:00:00Z','2026-10-30T04:00:00Z','2026-11-02T05:00:00Z'],csv:'observation_date,DFF\n2026-10-29,4.00\n2026-10-30,4.00'};
+const nextFedOptions={barTimes:['2026-10-30T04:00:00Z','2026-11-02T05:00:00Z','2026-11-03T05:00:00Z'],csv:'observation_date,DFF\n2026-10-30,4.00\n2026-11-02,4.00'};
+for(const [recordDate,eligible]of[['2026-11-01',true],['2026-10-04',false]])test(`actual four-source refresh preserves NVIDIA proof; current eligibility=${eligible}`,async()=>{
+ const before=await buildQualifiedAbsFixture({revision:5,clock,fedOptions});
+ const index=before.output.indicators.findIndex(card=>card.id==='nvda_invest_revenue');
+ assert.equal(before.output.indicators[index].status,'red');
+ const proof={...before.output.indicators[index],...nvdaEvidenceFixture(recordDate,'2026-11-03',125e9)};
+ before.output.indicators[index]=proof;const serialized=JSON.stringify(proof);
+ const after=await buildQualifiedAbsFixture({revision:5,clock:'2026-11-04T12:00:00Z',baselineOutput:before.output,baselineHistory:before.history,fedOptions:nextFedOptions});
+ const carried=after.output.indicators.find(card=>card.id==='nvda_invest_revenue');
+ assert.equal(JSON.stringify(carried),serialized);
+ assert.equal(after.networkCalls,36);assert.deepEqual(after.output.meta.fetch_failures,[]);
+ assert.equal(after.output.summary.scoring_total_indicators,23);assert.equal(after.output.summary.scoring_unknown_count,1);
+ assert.equal(after.output.indicators.find(card=>card.id==='dc_abs_spread').status,'unknown');
+ assert.equal(validateNvdaRatioRecord(carried,'2026-11-04').length===0,eligible);
+ const result=verifyQualifiedRefresh({before:before.output,beforeHistory:before.history,after:after.output,history:after.history,today:'2026-11-04',now:()=>Date.parse('2026-11-04T12:10:00Z')});
+ assert.equal(result.ok,eligible,JSON.stringify(result));
+ if(!eligible)assert.ok(result.errors.includes('score replay invalid'));
+});
 async function pair(options={}){
  const before=await buildQualifiedAbsFixture({revision:5,clock:'2026-10-15T12:00:00Z'});
  const after=await buildQualifiedAbsFixture({revision:5,clock,baselineOutput:before.output,baselineHistory:before.history,fedOptions,...options});
