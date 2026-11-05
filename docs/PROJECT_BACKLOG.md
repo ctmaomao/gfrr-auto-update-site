@@ -1,5 +1,19 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-05 油新闻同步监听发布授权
+
+- **Acceptance baseline**：owner 对“推送修复并创建草稿PR，CI及整合复核通过后合并发布，再检查两站”回复“同意”。可使用现有GitHub Actions/托管配额；不得主动采集新闻、调用付费provider、扩大权限、绕过保护或盲重试。正式GitHub approve不代执行；正常合并已获授权。遇到额外费用、重大语义变化或门槛不能满足时只暂停受影响操作。
+- **安全整合**：新分支 `codex/oil-news-release-20261105` 基于最新main `d2ae9ae8b664a2387525c1f1b45c0803b92902a8`，整合已审 `11135e497abdccc0ad36860768c136a9f4f7b78d`；新增四份数据更新与补丁无路径冲突并原样保留。原任务分支及E:用户研究保留。监听/checker/测试和离线NVIDIA审计代码不另作语义修改；仅补本批准记录。
+- **验收范围**：固定整合SHA/独立Codex AI复核、本地必要检查与远端CI通过后正常PR合并；观察既有Pages/EdgeOne并核对实际源/release/两站油新闻哈希及时间。当前两站parity不能证明新监听已在真实后续刷新触发；未观察到时明确未验证，不主动派发生产刷新。无变化发布可正常跳过；配额400/32天、main/success、并发、已验SHA和原保护均保留。实际PR/CI/合并/发布及触发证据以回执为准。NVIDIA仍无合格新比率。
+- **跨日测试修复**：完整整合检查在11月5日复现既有NVIDIA测试失败：VM固定11月4日，但导入helper默认时钟仍属外部ESM，正确拒绝跨期。仅使用测试上下文的Date mock同步该realm，保留真实生产helper及原断言，补同日UTC首末毫秒通过/翌日零点hold反例。生产代码和严格同期期次门槛不改；保留初次失败日志，修订树需重新独审并完整检查。
+
+### 2026-11-04 NVIDIA 原始证据与油新闻发布续修（本地实施）
+
+- **Acceptance baseline**：owner 要求继续补 NVIDIA 真实可比证据、修两站油新闻同步，并每天排查 Actions。当前授权本地修复、验证、提交和独立验收；新 push/PR/合并/发布先交具体包再确认。不能主动调用付费 provider、生产刷新、扩大权限或降低证据门槛；原 E: 研究与已发布 #500 保留。
+- **基线/范围**：独立分支 `codex/oil-news-publication-followup-20261104` 基于 `f42a79cf8d7441df0bc11564252579beadfcb9f3`。油新闻已恢复同步但漏监听其 producer 完成；[ADR-0085](ADR/0085-oil-news-publication-completion.md) 只追加该 completion listener，保留旧四项、main/success、quota、no-change、锁定已验 SHA。strict checker/cross-workflow literals 显式同步，不放宽断言。
+- **证据/限制**：[原始证据与回放说明](NVIDIA_OIL_FOLLOWUP_2026_11_04.md) 固定四季收入与两种 LTM 算法，保留 1M USD 未调和差异；个别真实投资、持有额、未来承诺、意向与担保分类保留，未证明完整同期间客户已签股权承诺流，仍未知/待核验。离线工具不接生产、计分、网络或 writer；生产 JSON/config/23分母保持。
+- **验证/交付门槛**：实际退出码、固定提交和独立 Codex AI 审核以回执为准；发布仍待本次具体批准。每天约09:00 Pacific/Auckland 的 Actions 巡检已在父会话启用（`6aeb0349adc4819184a401e03d89da68`），不重复建任务。当前线上 parity 仅证明既有恢复，不把本补丁说成已上线。
+
 ### 2026-11-04 NVIDIA 与双页展示发布授权
 
 - **Acceptance baseline**：owner 对“重新核对 latest main/冲突，推送分支、创建草稿 PR；CI 与整合后的独立复核通过后合并并发布现有两站”明确回复“同意”。允许现有 CI/托管配额；不主动调用付费数据、搜索或 AI 周报，不派发生产刷新，不纳入油新闻另案。具体 PR 正式 approve 仍须即时确认，本任务不代执行 approve；其它门禁不绕过。

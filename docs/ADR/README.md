@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0085 — Oil-news completion publication tail](0085-oil-news-publication-completion.md): append the existing producer completion while preserving main/success, quota and immutable checked-source guards; local implementation only, separate release approval pending.
+
 - [ADR-0084 — NVIDIA same-period evidence](0084-nvda-period-qualified-ratio.md): owner-authorized local implementation; narrow r5 gap, independent review and publication pending.
 
 - [ADR-0083 — Bubble October quarterly source continuation](0083-bubble-october-capex-source-continuation.md): separately reviewed fixed-four source/checker admission; legacy/runtime selection remains unchanged until a subsequent activation PR; ABS stays pending, no paid calls.

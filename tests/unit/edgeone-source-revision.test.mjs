@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 
 const workflow = readFileSync(new URL('../../.github/workflows/publish-edgeone-release.yml', import.meta.url), 'utf8');
@@ -9,6 +12,62 @@ const step = name => {
   assert.equal(matches.length, 1, `exactly one ${name} step`);
   return matches[0];
 };
+
+test('successful main oil-news completion queues publication after the producer commit', () => {
+  const producer = readFileSync(new URL('../../.github/workflows/refresh-oil-news-event-watch.yml', import.meta.url), 'utf8');
+  const name = /^name: (.+)$/mu.exec(producer)?.[1].trim();
+  assert.equal(name, 'Refresh Oil News Event Watch');
+  const completion = /  workflow_run:\s+workflows: \[([^\]]+)\]\s+types: \[completed\]\s+branches: \[main\]/u.exec(workflow.replace(/^    #.*\r?\n/gmu, ''));
+  assert.ok(completion, 'completed event is restricted to main');
+  assert.deepEqual(completion[1].split(', ').map(value => value.trim()), [
+    'Macro Risk Editorial Refresh', 'Bubble Watch Weekly Editorial Refresh',
+    'Bubble Watch Editorial Follow-up', 'Refresh Oil Directional Pressure', name
+  ]);
+  assert.ok(workflow.includes("if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}"),
+    'failed/cancelled upstream runs cannot publish');
+  const commit = producer.slice(producer.indexOf('- name: Commit'));
+  assert.ok(commit.indexOf('git push') > commit.indexOf('git commit'));
+  assert.match(step('Checkout source repository'), /ref: main/u,
+    'completion sees the committed latest main even when the earlier trigger SHA predates the news');
+});
+
+test('completion listener cannot request oil-news collection or broaden data push publication', () => {
+  const pushPaths = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('\npermissions:'));
+  assert.doesNotMatch(pushPaths, /data\/\*\*|data\/oil-news-event-watch\.json/u);
+  assert.doesNotMatch(workflow, /workflow run |workflow_dispatch.*refresh|build:oil-news|TAVILY|BRAVE_API|DEEPSEEK/u);
+});
+
+test('a producer commit after the first checkout is included by the completion checkout', t => {
+  const parent = resolve(tmpdir()), root = mkdtempSync(join(parent, 'gfrr-edgeone-completion-'));
+  t.after(() => {
+    const target = resolve(root);
+    assert.equal(dirname(target), parent);
+    assert.ok(target.startsWith(join(parent, 'gfrr-edgeone-completion-')));
+    rmSync(target, { recursive: true, force: true });
+  });
+  const source = join(root, 'source'), early = join(root, 'early'), completed = join(root, 'completed');
+  mkdirSync(source);
+  const git = (cwd, ...args) => execFileSync('git', ['-c', 'commit.gpgsign=false', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  git(source, 'init', '-q', '-b', 'main');
+  git(source, 'config', 'user.name', 'Local publication fixture');
+  git(source, 'config', 'user.email', 'fixture@example.invalid');
+  const file = 'oil-news-event-watch.json';
+  writeFileSync(join(source, file), '{"updatedAt":"2026-11-03T07:17:58Z"}\n');
+  git(source, 'add', file); git(source, 'commit', '-qm', 'old snapshot');
+  git(root, 'clone', '-q', '--no-local', '--branch', 'main', source, early);
+  const triggerSha = git(early, 'rev-parse', 'HEAD');
+  writeFileSync(join(source, file), '{"updatedAt":"2026-11-03T19:53:28Z"}\n');
+  git(source, 'add', file); git(source, 'commit', '-qm', 'producer committed after early checkout');
+  const latestSha = git(source, 'rev-parse', 'HEAD');
+  assert.notEqual(triggerSha, latestSha);
+  assert.ok(workflow.includes('Refresh Oil News Event Watch'));
+  assert.match(step('Checkout source repository'), /ref: main/u);
+  git(root, 'clone', '-q', '--no-local', '--branch', 'main', source, completed);
+  assert.equal(git(completed, 'rev-parse', 'HEAD'), latestSha);
+  assert.equal(git(early, 'rev-parse', 'HEAD'), triggerSha, 'never alter a previously checked tree');
+  assert.equal(JSON.parse(readFileSync(join(completed, file))).updatedAt, '2026-11-03T19:53:28Z');
+  assert.equal(JSON.parse(readFileSync(join(early, file))).updatedAt, '2026-11-03T07:17:58Z');
+});
 
 test('EdgeOne queued publication checks out main rather than its old trigger revision', () => {
   const checkout = step('Checkout source repository');
