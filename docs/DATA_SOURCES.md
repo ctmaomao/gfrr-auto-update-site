@@ -1196,4 +1196,6 @@ The [quarterly panel contract](ADR/0072-bubble-quarterly-capex-panel.md) registe
 
 ### NVIDIA 期间资格（2026-11-04，本地待审）
 
+2026-11-04 续核的[固定原始证据包](fixtures/nvda/primary-evidence-20261104.json)及[离线重放说明](NVIDIA_OIL_FOLLOWUP_2026_11_04.md)仅供人工来源审计：四季直接合计302.969B USD，年度/半年桥接302.970B，1M差异显式未调和；当前分子完整覆盖仍未证明。SEC/NVIDIA及原始交易对手OpenAI/Anthropic公告只作手工证据上下文，不增加runtime provider/源准入，不改既有精确冲突、时效或计分门槛，不把个别投资、余额、意向或担保相加填补比率。
+
 [ADR-0084](ADR/0084-nvda-period-qualified-ratio.md) 收紧完整 r5 NVIDIA 比率资格，不增加源：仅现有 SEC companyconcept 的 NVIDIA/USD 两种收入 concept 或现有 StockAnalysis 季度收入镜像，保留期间、单位与观测年龄。SEC 联系身份、网络边界不改。承诺文字台账混有累计或不同义务时不能作为可比分子；当前保持不可比/待确认，不认证其中金额。没有更新配置台账或生产 JSON，也没有运行全量生产刷新。

@@ -194,10 +194,29 @@ function runtime(c,responses=[]) {
   const run=vm.runInNewContext(`${concept}\n async function run(){const indicators=[];let autoCount=0;for(const def of [{id:'nvda_invest_revenue'}]){${code.slice(a,b)}}return indicators[0];} run`,context);
   return {run,calls};
 }
-test('actual r5 builder performs zero revenue calls for the protected newer text ledger',async()=>{
+test('actual r5 builder performs zero revenue calls for the protected newer text ledger',async t=>{
+  // VM Date cannot freeze an imported helper's default clock in the ESM realm.
+  // Freeze that realm too, without replacing the production helper or its gate.
+  t.mock.timers.enable({apis:['Date'],now:Date.parse(clock)});
   const c=JSON.parse(fs.readFileSync('config/bubble-watch-curated.json')),r=runtime(c),out=await r.run();
   assert.equal(out.status,'unknown');assert.equal(out.as_of,null);assert.equal(r.calls.length,0);
+  assert.equal(out.provenance.checkedAt,new Date(clock).toISOString());
   assert.equal(isRegisteredEvidenceGap(out,{revision:5,asOfDate:today}),true);
+});
+
+test('actual gap default clock accepts the issue day edges and rejects UTC rollover',async t=>{
+  const c=JSON.parse(fs.readFileSync('config/bubble-watch-curated.json'));
+  for(const checkedAt of [`${today}T00:00:00.000Z`,`${today}T23:59:59.999Z`]) {
+    t.mock.timers.enable({apis:['Date'],now:Date.parse(checkedAt)});
+    const r=runtime(c),out=await r.run();
+    assert.equal(out.provenance.checkedAt,checkedAt);assert.equal(r.calls.length,0);
+    assert.equal(isRegisteredEvidenceGap(out,{revision:5,asOfDate:today}),true);
+    t.mock.timers.reset();
+  }
+  t.mock.timers.enable({apis:['Date'],now:Date.parse('2026-11-05T00:00:00.000Z')});
+  const crossed=runtime(c);
+  await assert.rejects(crossed.run(),/nvda_check_clock_invalid/);
+  assert.equal(crossed.calls.length,0);
 });
 test('actual r5 builder rejects stale first SEC concept, then qualifies the current concept',async()=>{
   const old=quarters.map(q=>({...q,start:q.start.replace('2025','2018').replace('2026','2019'),end:q.end.replace('2025','2018').replace('2026','2019')}));

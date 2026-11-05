@@ -7,7 +7,9 @@ env:
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure]
+    # The news producer can commit after an earlier publisher has pinned main.
+    # Its successful completion must queue a fresh checkout (ADR-0085).
+    workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch]
     types: [completed]
     branches: [main]
   schedule:
