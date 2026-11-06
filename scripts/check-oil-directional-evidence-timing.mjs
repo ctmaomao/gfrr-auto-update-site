@@ -15,14 +15,20 @@ const renderer = readFileSync(resolve('scripts/modules/renderOilDirectional.js')
 const css = readFileSync(resolve('assets/styles.css'), 'utf8');
 const data = JSON.parse(readFileSync(resolve('data/oil-directional-pressure.json'), 'utf8'));
 
+// The three summary cards are retired. Keep compatibility IDs, but require
+// observation-date/age/status on the active qualified evidence rows instead.
 const requiredRendererMarkers = [
   'odp-evidence-timing-summary',
   'EVIDENCE_TIMING_SUMMARY_ID',
-  'function renderEvidenceTimingSummary',
-  'T2 OFFICIAL WEEKLY ANCHOR',
-  'T1 MARKET PROXY',
-  'EVENT / THERMAL WATCH',
-  '不确认断供、设施事故或改变 ODP 方向结论',
+  'function clearEvidenceTimingSummary',
+  'function evidenceFreshnessText',
+  'compactDate(e.asOfDate)',
+  'Number.isFinite(e.ageDays)',
+  'sourceStatusShort(e.sourceStatus)',
+  'qualifyOdpDisplay(oilData, radarData)',
+  'const ev = qualified.evidence',
+  '不是 8 个独立来源',
+  '市场价格分别标注观察日，缺失或超龄时不作方向依据',
 ];
 const requiredCssMarkers = [
   '.odp-evidence-timing-summary',
@@ -44,6 +50,18 @@ for (const marker of requiredRendererMarkers) {
 }
 for (const marker of requiredCssMarkers) {
   if (!css.includes(marker)) fail(`assets/styles.css missing P43 timing style marker: ${marker}`);
+}
+
+// Mandatory display has become mandatory retirement, not an optional/ignored
+// check. DOM, historical artifact tiers, styling and no-second-score guards remain.
+if (!/<div class="legacy-model-retired" hidden inert>\s*<div class="odp-evidence-timing-summary"[^>]*id="odp-evidence-timing-summary"/.test(html)) {
+  fail('retired evidence timing summary must remain inside a hidden/inert compatibility wrapper');
+}
+for (const symbol of ['renderEvidenceTimingSummary', 'evidenceTimingCard']) {
+  if (new RegExp(`\\b${symbol}\\s*\\(`).test(renderer)) fail(`retired timing implementation/call must not return: ${symbol}`);
+}
+if (!renderer.includes("make('odp-ev-change', evidenceFreshnessText(e))")) {
+  fail('active evidence rows must visibly render qualified observation date, age and source status');
 }
 
 const evidence = data.evidence || {};

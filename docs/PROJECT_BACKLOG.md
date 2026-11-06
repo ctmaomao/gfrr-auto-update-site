@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-06 油价压力模块精简（本地）
+
+- **Acceptance baseline**：owner 要求聚焦油价方向与压力，停止不现实的新卫星/运费扩展，删除无资格结论与未接入占位，保留客观背离及合格反证。本次只本地实施、离线验证和独立审核，不推送、合并、部署或刷新生产数据。
+- **最后基线 / 改动**：独立分支 `codex/oil-radar-simplify-20261106` 基于最新 main `4ae72b1146f9421ff943a791bc8fe012f139117e`。原工作区及草稿 #503 原样保留；本补丁不包含 #503。按 [ADR-0087](ADR/0087-oil-pressure-evidence-simplification.md) 收紧真实观察日、同源历史、曲线时效与空值资格；撤掉无效裂差论据、卫星/未接入路线占位及重复确认层，STEO 仅为同源月度估算/预测背景。
+- **验证 / 审核**：32 项新增离线资格/真实渲染回归通过；完整 `check:changed` / `check:all` exit0；全单测1372通过、0失败、1项既有本地原样本条件跳过，覆盖率99.85%/93.98%/97.96%。独立Codex AI复核无阻断，五处退役展示断言替代均显式审核。既有美国周度分类阈值、主评分、数据快照、工作流和历史证据不改，旧展示断言的精确语义替换显式列入 ADR，不删除质量门槛或加 skip。
+- **下一步 / 限制**：本地补丁已验证，原工作区1359份记录文件与草稿#503保持原样；任何远端变更需再次确认。缺少同口径带观察日期的价格历史时明确方向暂不足；本补丁不声称提高预测胜率。未执行浏览器实物验收，不绕过先前预览套接字拒绝。
+
 ### 2026-11-05 油新闻同步监听发布授权
 
 - **Acceptance baseline**：owner 对“推送修复并创建草稿PR，CI及整合复核通过后合并发布，再检查两站”回复“同意”。可使用现有GitHub Actions/托管配额；不得主动采集新闻、调用付费provider、扩大权限、绕过保护或盲重试。正式GitHub approve不代执行；正常合并已获授权。遇到额外费用、重大语义变化或门槛不能满足时只暂停受影响操作。
@@ -713,7 +720,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `radar-integration-20261104-r3` |
+| Cache version | `oil-radar-simplify-20261106` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

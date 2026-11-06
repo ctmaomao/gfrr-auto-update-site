@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=radar-integration-20261104-r3';
+} from '../../scripts/modules/config.js?v=oil-radar-simplify-20261106';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
