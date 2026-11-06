@@ -40,3 +40,15 @@ Required evidence: offline builder/display regressions for real source dates, nu
 - Full unit coverage: 1,372 passed, zero failed, one pre-existing conditional local-original-sample test skipped. Coverage was 99.85% lines, 93.98% branches and 97.96% functions, above the unchanged 95/90/95 thresholds.
 - Independent Codex AI review found no remaining blockers, including all five narrowly migrated display checkers. This is not human or browser visual acceptance.
 - The original workspace’s 1,359 recorded files and the clean draft PR #503 worktree remained unchanged. No production data, config, workflow, source collection, remote push, merge or deployment occurred.
+
+## PR #504 browser gate follow-up (2026-11-06)
+
+The owner subsequently approved pushing this isolated change as draft PR #504 and checking CI. Run 42168118023 passed dependency audit, measured unit tests and the full check suite, but browser smoke passed 94 tests and failed one old assertion demanding the retired satellite request-health text. The following EdgeOne staging checks did not run. No production defect or permission bypass is inferred from that expected retirement mismatch.
+
+The owner then explicitly approved replacing those old satellite assertions with checks that the area is hidden and cannot show old conclusions, preserving the other tests, and pushing the correction to the same draft PR. Merge, deployment and changes to draft #503 remain unapproved.
+
+Only the three required satellite health-text assertions and their now-unused snapshot constant are replaced. After the unchanged news-health assertions prove the auxiliary data render has completed, and with the surrounding evidence fold explicitly open, the browser must find exactly one legacy satellite container, its hidden/inert attributes and computed display:none. All eight exact compatibility leaves must exist, remain hidden and contain only the neutral em-dash placeholder. This rejects both accidental un-hiding and silent writes of old conclusions. News-health assertions, other smoke assertions, timeouts, retries, test count and all source-quality/score gates are unchanged. There is no skip, ignore, continue-on-error or runtime/data change.
+
+Independent review, local syntax/lint, existing offline regressions and complete checks are required for this test-contract correction. Browser execution uses the already approved CI workflow; the prior local preview socket denial is not retried or bypassed. Final acceptance is the exact revised PR head's CI result, including the previously skipped EdgeOne stage.
+
+The correction passed independent Codex AI review, syntax, the existing 32 offline qualification/render regressions and complete check:changed/check:all (exit 0). ESLint with the two actual browser callback globals declared passed; default lint had the same ten pre-existing callback-global diagnostics in both baseline and revision, with no new diagnostics or rule/config changes. Revised-head CI remains the browser and EdgeOne acceptance gate.
