@@ -11,6 +11,9 @@
 // (guarded by check:oil-directional-zh-copy) — these are observational assessments,
 // not instructions.
 
+import { thermalObservationHealth } from './oilThermalSourceLifecycle.js?v=oil-evidence-health-20261106';
+import { shippingFreightDisplay } from './macroOverviewDisplayHelpers.js?v=oil-evidence-health-20261106';
+
 const $ = (id) => document.getElementById(id);
 
 function setLeafText(id, value) {
@@ -1268,6 +1271,7 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}${newsFallbackContextText(data)}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,主张方向只显示聚合计数,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
 }
 function thermalTone(data) {
+  if (data && !thermalObservationHealth(data).usable) return 'yellow';
   if (!data || typeof data !== 'object') return '';
   if (data.status === 'source_unavailable') return 'yellow';
   if (data.status === 'not_configured') return 'yellow';
@@ -1280,12 +1284,19 @@ function thermalTone(data) {
 function thermalWindowText(data) {
   if (!data || typeof data !== 'object') return '分钟至数小时级 · 数据未加载';
   const freshness = data.freshness || {};
+  const snapshot = formatUtcMinute(data.generatedAt) || '时点待核';
   const latest = formatUtcMinute(freshness.latestAcqAt);
-  const age = Number.isFinite(freshness.latestAgeHours) ? ` · ${freshness.latestAgeHours}小时龄` : '';
-  const windowDays = Number.isFinite(freshness.windowDays) ? `${freshness.windowDays}天窗` : '窗口待核';
-  return latest ? `${windowDays} · ${latest}${age}` : `${windowDays} · 尚未查询设施热异常`;
+  const latestMs = typeof freshness.latestAcqAt === 'string' ? Date.parse(freshness.latestAcqAt) : NaN;
+  const age = Number.isFinite(latestMs) && latestMs <= Date.now()
+    ? ' · 距今 ' + ((Date.now() - latestMs) / 3600000).toFixed(1) + ' 小时' : '';
+  const windowDays = Number.isFinite(freshness.windowDays) ? freshness.windowDays + '天窗' : '窗口待核';
+  const measurement = latest ? '最新检出 ' + latest + age
+    : data.sourceStatus?.firms === 'not_queried' ? '尚未查询设施热异常'
+      : data.aggregate?.rowCount === 0 ? '本查询未返回热源记录；不等于无异常' : '检出时点未知';
+  return windowDays + ' · 快照 ' + snapshot + ' · ' + measurement;
 }
 const THERMAL_REQUEST_FAILURE_LABELS = {
+  source_retired: '卫星永久停源（未发请求）',
   timeout: '超时',
   network_error: '网络',
   rate_limited: '限流',
@@ -1360,7 +1371,7 @@ function thermalBaselineQualityText(data) {
   const effectiveQualityWindowDays = Number.isFinite(review.effectiveQualityWindowDays)
     ? review.effectiveQualityWindowDays
     : sampleWindowDays;
-  const transition = review.qualityTransition ? ` · ${review.qualityTransition}` : '';
+  const transition = ({ upgraded: ' · 已升级', unchanged: ' · 保持原质量', downgraded: ' · 质量回落' })[review.qualityTransition] || '';
   if (!quality) {
     const status = baseline.status || 'missing';
     return status === 'established'
@@ -1379,6 +1390,7 @@ function thermalBaselineQualityText(data) {
   return `${thermalBaselineQualityLabel(quality)} · ${samples} · ${window}${globalWindow}${transition}`;
 }
 function thermalBaselineQualityTone(data) {
+  if (data && !thermalObservationHealth(data).usable) return 'yellow';
   const quality = data?.baseline?.sourceReview?.baselineQuality;
   if (quality === 'established_observation_window') return 'green';
   if (quality === 'starter_observation_window' || quality === 'starter_short_window') return 'yellow';
@@ -1415,6 +1427,8 @@ function thermalBaselineCoverageNote(data) {
 }
 function thermalStatusText(data) {
   if (!data || typeof data !== 'object') return '数据未加载';
+  const health = thermalObservationHealth(data);
+  if (!health.usable) return health.text;
   const label = data.displayStatusZh || data.status || '状态待核';
   const baselineStatus = data?.baseline?.status || data?.aggregate?.baselineStatus;
   if (baselineStatus === 'partial' && !label.includes('部分基线')) {
@@ -1423,6 +1437,12 @@ function thermalStatusText(data) {
   return label;
 }
 function thermalSignalText(data) {
+  const health = thermalObservationHealth(data);
+  if (!health.usable) {
+    const rows = data?.aggregate?.rowCount;
+    const measured = Number.isFinite(rows) ? `已返回 ${rows} 条聚合热源记录` : '检出计数未知';
+    return `${measured} · ${health.text} · 不据此判断无异常或重复异常`;
+  }
   const aggregate = data && data.aggregate ? data.aggregate : {};
   const baseline = data && data.baseline ? data.baseline : {};
   const rowCount = Number.isFinite(aggregate.rowCount) ? aggregate.rowCount : 0;
@@ -1443,6 +1463,8 @@ function thermalSignalText(data) {
   return `${rowCount} 条聚合热异常 · 高置信 ${high} · max FRP ${maxFrp} · ${facilities} 个设施有检出 · ${baselineText}${repeatedText}`;
 }
 function thermalNoteText(data) {
+  const health = thermalObservationHealth(data);
+  if (data && !health.usable) return `${health.text}。已有成熟历史基线不代表本期来源完整；保留真实检出与原时点，不把缺测当零，也不自动迁移基线或确认事故、断供、油价方向。`;
   if (!data || typeof data !== 'object') {
     return '卫星热异常观察层数据未加载;本区不读取浏览器外部源,不确认炼厂事故、供应中断或油价预测。';
   }
@@ -1467,10 +1489,10 @@ function thermalNoteText(data) {
 }
 function renderSatelliteThermalWatch(oilThermalWatchData) {
   const data = oilThermalWatchData && typeof oilThermalWatchData === 'object' ? oilThermalWatchData : null;
-  const sourceStatus = data?.sourceStatus?.firms ? ` · FIRMS ${data.sourceStatus.firms}` : '';
+  const sourceStatus = data?.sourceStatus?.firms ? ` · FIRMS ${statusZh(data.sourceStatus.firms)}` : '';
   setLeafText('odp-thermal-status', thermalStatusText(data));
   setToneClass('odp-thermal-status', 'odp-thermal-status', thermalTone(data));
-  setLeafText('odp-thermal-source', `NASA FIRMS / VIIRS NRT · production read-only${sourceStatus}`);
+  setLeafText('odp-thermal-source', `NASA FIRMS / VIIRS NRT · 只读观察${sourceStatus}`);
   setLeafText('odp-thermal-request-health', thermalRequestHealthText(data));
   setToneClass('odp-thermal-request-health', 'odp-thermal-request-health', thermalRequestHealthTone(data));
   setLeafText('odp-thermal-window', thermalWindowText(data));
@@ -1585,6 +1607,8 @@ function crossNewsLayer(oilNewsEventWatchData) {
 function crossThermalLayer(oilThermalWatchData) {
   const data = oilThermalWatchData && typeof oilThermalWatchData === 'object' ? oilThermalWatchData : null;
   if (!data) return { stance: 'unknown', text: '卫星/设施层未加载 · 不确认事故' };
+  const health = thermalObservationHealth(data);
+  if (!health.usable) return { stance: 'unknown', text: `${health.text} · 不确认事故或无异常` };
   const aggregate = data.aggregate || {};
   const repeated = Number.isFinite(aggregate.repeatedObservationCount) ? Math.round(aggregate.repeatedObservationCount) : 0;
   const elevated = Number.isFinite(aggregate.elevatedRepeatedObservationCount) ? Math.round(aggregate.elevatedRepeatedObservationCount) : 0;
@@ -1962,7 +1986,7 @@ function renderEvidenceTimingSummary(ev, oilThermalWatchData, oilNewsEventWatchD
   const officialRows = rows.filter(({ e }) => e.latencyTier === 'T2_weekly_official_anchor');
   const marketRows = rows.filter(({ e }) => e.latencyTier === 'T1_daily_market_proxy');
   const newsState = oilNewsEventWatchData?.displayStatusZh || oilNewsEventWatchData?.state || '新闻层未加载';
-  const thermalState = oilThermalWatchData?.displayStatusZh || oilThermalWatchData?.status || '卫星层未加载';
+  const thermalState = thermalStatusText(oilThermalWatchData);
   const officialText = `${evidenceStatusSummary(officialRows)} · ${evidenceDateSummary(officialRows)}。低噪声官方周度锚,用于校准更快但更嘈杂的代理信号。`;
   const marketText = `${evidenceStatusSummary(marketRows)} · ${evidenceDateSummary(marketRows)}。Brent/WTI/裂差/曲线只确认或背离物理链,不单独生成方向。`;
   const watchText = `新闻 ${newsState} · 卫星 ${thermalState}。观察层只提示人工复核,不确认断供、设施事故或改变 ODP 方向结论。`;
@@ -2061,6 +2085,7 @@ function transportReadiness(radarData) {
   const age = Number.isFinite(transport.latestAgeDays) ? `${Math.round(transport.latestAgeDays)}天龄` : '数据龄待核';
   const freshEnough = status === 'live' && Number.isFinite(transport.latestAgeDays) && transport.latestAgeDays <= 7;
   const tone = freshEnough ? 'green' : (status ? 'yellow' : '');
+  const freight = shippingFreightDisplay(radarData?.macroDrivers?.shippingFreight);
   const statusText = status
     ? `PortWatch ${statusZh(status)} · ${age}`
     : `PortWatch 状态待核 · ${age}`;
@@ -2069,8 +2094,8 @@ function transportReadiness(radarData) {
     title: '运输冲击确认因子',
     tone,
     status: statusText,
-    use: '方向权限:候选观察层;ODP 只展示 PortWatch 咽喉摘要,专属候选字段留在 C1 Transport Shock 卡。',
-    gate: '闸门:PortWatch 新鲜度、路线级油轮运费、市场确认、新闻/卫星高频确认必须同时清楚。',
+    use: `聚合运费背景：${freight.providerLabel} · ${freight.detail}。BDTI/BCTI 是油轮市场指数；BDI 是干散货，均非路线报价。`,
+    gate: '闸门:PortWatch 新鲜度须单独核验，专属候选与主分贡献仍见 C1 Transport Shock。路线级油轮运费与市场确认仍未接入。PortWatch 是航运活动代理，不是运价；缺少路线报价与独立接入审阅前，不据此确认断供或增强 ODP 方向。',
   });
 }
 function newsReadiness(oilNewsEventWatchData) {
@@ -2116,7 +2141,9 @@ function thermalReadiness(oilThermalWatchData) {
   }
   const aggregate = data.aggregate || {};
   const baseline = data.baseline || {};
-  const baselineStatus = baseline.status || aggregate.baselineStatus || 'baseline待核';
+  const health = thermalObservationHealth(data);
+  if (!health.usable) return readinessItem({ kicker: 'THERMAL WATCH', title: '设施热异常基线', tone: 'yellow', status: health.text, use: '历史基线保留；当前观测不可与其直接比较。', gate: '闸门:核对有效卫星、当前时效和同口径设施基线；不得自动晋升或把缺测当无异常。' });
+  const baselineStatus = baseline.status || aggregate.baselineStatus || '基线待核';
   const quality = baseline.sourceReview?.baselineQuality ? thermalBaselineQualityLabel(baseline.sourceReview.baselineQuality) : '质量待核';
   const repeated = Number.isFinite(aggregate.repeatedObservationCount) ? Math.round(aggregate.repeatedObservationCount) : 0;
   const elevated = Number.isFinite(aggregate.elevatedRepeatedObservationCount) ? Math.round(aggregate.elevatedRepeatedObservationCount) : 0;
@@ -2189,7 +2216,7 @@ function buildWatchLadderText(oilThermalWatchData, oilNewsEventWatchData) {
   const newsText = oilNewsEventWatchData?.displayStatusZh
     || newsSourceHealthText(oilNewsEventWatchData)
     || '新闻层未加载';
-  const thermalText = oilThermalWatchData?.displayStatusZh || '卫星热异常未加载';
+  const thermalText = thermalStatusText(oilThermalWatchData);
   const thermalQuality = thermalBaselineQualityText(oilThermalWatchData);
   return `新闻 ${newsText} · 卫星 ${thermalText} · ${thermalQuality}; 两者只做观察层,不确认断供、事故或油价方向。`;
 }

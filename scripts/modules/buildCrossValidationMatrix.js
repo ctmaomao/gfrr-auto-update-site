@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=radar-integration-20261104-r3';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=oil-evidence-health-20261106';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

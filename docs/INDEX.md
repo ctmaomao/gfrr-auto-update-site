@@ -18,6 +18,8 @@
 
 ## Current Authority (must follow)
 
+- [Oil thermal source-retirement contract](ADR/0086-oil-thermal-source-retirement.md): local repair with independent code review and full checks passed; visual/publication pending, no baseline-promotion authority.
+
 定义"项目当前是什么"。所有 PR 必须符合:
 
 | 文档 | 角色 |

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=radar-integration-20261104-r3';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=radar-integration-20261104-r3';
+} from './config.js?v=oil-evidence-health-20261106';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=oil-evidence-health-20261106';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=radar-integration-20261104-r3';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=radar-integration-20261104-r3';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=radar-integration-20261104-r3';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=radar-integration-20261104-r3';
-import { renderTrendSvg } from './renderMacroTrend.js?v=radar-integration-20261104-r3';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=radar-integration-20261104-r3';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=radar-integration-20261104-r3';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=radar-integration-20261104-r3';
+} from './macroOverviewDisplayHelpers.js?v=oil-evidence-health-20261106';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=oil-evidence-health-20261106';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=oil-evidence-health-20261106';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=oil-evidence-health-20261106';
+import { renderTrendSvg } from './renderMacroTrend.js?v=oil-evidence-health-20261106';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-evidence-health-20261106';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=oil-evidence-health-20261106';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=oil-evidence-health-20261106';
 
 // ---------- 阈值 + 派生 helper ----------
 

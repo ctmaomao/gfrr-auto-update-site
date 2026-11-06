@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=radar-integration-20261104-r3';
+﻿import { fmtNumSafe } from './config.js?v=oil-evidence-health-20261106';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
