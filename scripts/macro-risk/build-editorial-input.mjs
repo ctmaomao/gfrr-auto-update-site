@@ -1,3 +1,4 @@
+import { hasOfrEditorialMarkers } from './editorial-ofr-snapshot.mjs';
 import fs from 'node:fs/promises';
 import process from 'node:process';
 
@@ -105,9 +106,11 @@ async function main() {
     ].join('\n'));
     throw new Error(`${readiness.reason}: no official or cross_checked news survived the evidence gate; providers=${formatProviderHealth(health)}; stories=${readiness.storyCount}`);
   }
-  const [radarData, worldOrder, marketPricing, radarHistory, oilDirectional, oilNews] = await Promise.all([
-    readJson(options.radarData), readJson(options.worldOrder), readJson(options.marketPricing), readJson(options.radarHistory), readJson(options.oilDirectional), readJson(options.oilNews)
-  ]);
+  const radarData = await readJson(options.radarData);
+  // OFR evidence does not depend on the retired score history or legacy narrative packs.
+  const [worldOrder, marketPricing, radarHistory, oilDirectional, oilNews] = hasOfrEditorialMarkers(radarData)
+    ? [null, null, null, null, null]
+    : await Promise.all([readJson(options.worldOrder), readJson(options.marketPricing), readJson(options.radarHistory), readJson(options.oilDirectional), readJson(options.oilNews)]);
   const input = buildEditorialInput({ radarData, worldOrder, marketPricing, radarHistory, oilDirectional, oilNews, discovery });
   assertValid(validateEditorialInput(input), 'macro risk editorial compact input');
   writeJson(options.output, input);

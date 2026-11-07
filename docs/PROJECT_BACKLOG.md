@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-08 OFR 编辑恢复本地实施
+
+- **Acceptance baseline**：owner对“分阶段实施，先离线回归，再真实生成和两站验收；少误拦、少丢稿而不放过错误内容”回复“同意，请实施”。本轮基于main 2b1efc68隔离工作树，本地v2迁移与测试；不搜索、不调用provider、不push/合并部署，原研究工作区保留。
+- **最后基线 / 改动**：[ADR-0088](ADR/0088-ofr-editorial-contract.md)记录OFR输入、输出、程序数字投影、writer及前端共同迁移。旧模型分数隔离，篇幅/栏目/来源数量改为v2目标和warning；引用、单位、日期、费用和安全底线保留。
+- **当前任务 / 验证**：已完成离线正反例和真实停用快照的限定回放；独立审查发现的schema/来源kind/中文数字/复合单位/引语/发布门禁问题已修。最终check:changed含check:all通过，unit coverage 1450通过/0失败/1既有条件skip；OFR专项41项通过。独立AI复核无剩余阻断，不替代人工批准。
+- **下一步 / 限制**：本地实施、必要检查、固定树独审已完成并交付；后续按另行批准的串行集成流程，不自行上线。本地真实Chrome1440/390合成夹具验收通过（含警告、短稿布局、失效清空）；真实付费生成和两站生产验收尚未运行，不把合成provider响应当作真实生成成功。
+
+
 ### 2026-11-07 恢复 OFR 发布核验与周评旧模型隔离
 
 - **Acceptance baseline**：owner 要求继续项目完善并将重点转回主评分可靠性，随后要求恢复停下的工作。本轮仅在 latest main `aa1eefa4` 新隔离分支 `codex/ofr-editorial-guards-20261107` 实施与验证；不推送、合并、部署、调用付费 provider 或生成生产数据，原研究及 #503/#504/#505 工作树保留。
@@ -748,7 +756,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `readout-consistency-20261108-r3` |
+| Cache version | `macro-ofr-editorial-20261108` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

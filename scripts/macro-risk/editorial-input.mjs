@@ -1,4 +1,6 @@
-import { INPUT_SCHEMA, RISK_MODULES } from './editorial-contract.mjs';
+import { strictOfrDate } from '../daily/ofr-pressure-readout.mjs';
+import { buildOfrEditorialSnapshot, hasOfrEditorialMarkers, assessOfrEditorialPublication } from './editorial-ofr-snapshot.mjs';
+import { INPUT_SCHEMA, OFR_INPUT_SCHEMA, RISK_MODULES } from './editorial-contract.mjs';
 
 const MODULE_LABELS = Object.freeze({
   energy: '能源',
@@ -123,6 +125,7 @@ function compactNews(discovery) {
 }
 
 export function buildEditorialInput({ radarData, worldOrder, marketPricing, radarHistory, oilDirectional, oilNews, discovery, generatedAt = new Date().toISOString(), fixtureOnly = false }) {
+  if (hasOfrEditorialMarkers(radarData)) return buildOfrInput({ radarData, discovery, generatedAt, fixtureOnly });
   if (!radarData?.updatedAt || !Number.isFinite(radarData?.score)) throw new Error('radar-data must contain updatedAt and score');
   const newsStories = compactNews(discovery);
   const newsContext = { ...discovery, stories: newsStories };
@@ -190,5 +193,47 @@ export function buildEditorialInput({ radarData, worldOrder, marketPricing, rada
       affectsExecutionLock: false,
       affectsPositionGuidance: false
     }
+  };
+}
+
+function buildOfrInput({ radarData, discovery, generatedAt, fixtureOnly }) {
+  if (!radarData?.updatedAt || !Number.isFinite(Date.parse(radarData.updatedAt))) throw new Error('radar-data updatedAt missing');
+  const pressureSnapshot = buildOfrEditorialSnapshot(radarData, generatedAt);
+  const p = pressureSnapshot;
+  const freshness = assessOfrEditorialPublication(radarData, generatedAt).freshness;
+  const facts = [
+    fact('ofr:pressure', 'main_pressure', `OFR 金融压力原值为 ${p.index.value ?? '缺失'}，实际观察日 ${p.index.observedDate ?? '缺失'}；来源状态 ${p.status}，观察日距输入生成日 ${freshness.ageHours === null ? '缺失' : freshness.ageHours / 24} 天，当前主判读资格 ${freshness.currentEligibleAtCheck ? '有效' : '不可用'}。原值不是0–100风险评分。`, p.index.observedDate),
+    fact('ofr:weekly-change', 'main_pressure', `OFR 约一周变化 ${p.weeklyChange.value ?? '缺失'}，实际端点 ${p.weeklyChange.fromDate ?? '缺失'} 至 ${p.weeklyChange.toDate ?? '缺失'}。`, p.index.observedDate),
+    fact('ofr:percentile', 'main_pressure', `OFR 严格过去十年历史百分位 ${p.percentile.value ?? '缺失'}，有效历史条数 ${p.percentile.historyRows}；百分位为历史相对位置，不是风险评分或危机概率。`, p.index.observedDate),
+
+  ];
+  // Only numeric macro observations are selected. Legacy qualitative regime,
+  // dailyBrief, module scores, allocations and old radar history never cross.
+  const metrics = [
+    ['credit', 'igOas', '美国投资级债 OAS', '%'], ['credit', 'nfci', 'NFCI', '（指数）'],
+    ['fedLiquidity', 'effectiveFedFundsRate', '有效联邦基金利率', '%'], ['fedLiquidity', 'sofr', 'SOFR', '%']
+  ];
+  for (const [group, key, label, unit] of metrics) {
+    const source = radarData.macroDrivers?.[group];
+    const value = source?.[key];
+    const observed = source?.sourceObservedAt?.[key];
+    if (!Number.isFinite(value) || !strictOfrDate(observed) || observed > generatedAt.slice(0, 10)) continue;
+    const sourceStatus = ['live', 'cached', 'stale', 'missing', 'unavailable'].includes(source?.sourceStatus?.[key]) ? source.sourceStatus[key] : 'unknown';
+    facts.push({ ...fact(`macro:${group}:${key}`, 'independent_context', `${label}为 ${value}${unit}；实际观察日 ${observed}，来源状态 ${sourceStatus}。独立结构观察，不是 OFR 分解。`, observed), sourceStatus });
+  }
+  const stories = compactNews(discovery);
+  const sourceRefs = facts.map(item => ({ ...sourceRefFromFact(item),
+    sourcePath: item.id.startsWith('fact:ofr:') ? 'radarData.mainPressureReadout' : item.id.startsWith('fact:market:') ? `radarData.displayInputsBaseline.${item.id.split(':').at(-1)}` : `radarData.macroDrivers.${item.id.split(':').slice(2).join('.')}`,
+    ...(item.id.startsWith('fact:ofr:') ? { sourceName: p.source.provider, url: p.source.sourceUrl } : { interpretationBoundaryZh: '独立观察，不是 OFR 分解。' })
+  }));
+  sourceRefs.push(...stories.map(story => ({ id: story.id, kind: 'news', sourceName: story.domain, sourceClass: story.evidenceStatus, title: story.title, url: story.url, domain: story.domain, publishedAt: story.publishedAt, topic: story.topic, providers: story.providers, supportingDomains: story.supportingDomains })));
+  return {
+    schemaVersion: OFR_INPUT_SCHEMA, generatedAt, sourceDataUpdatedAt: radarData.updatedAt,
+    inputMode: fixtureOnly ? 'fixture_compact_evidence_pack' : 'live_site_compact_evidence_pack', fixtureOnly,
+    pressureSnapshot, pressureFreshness: freshness, structuredFacts: facts,
+    historicalContext: { recentObservations: p.history, interpretationBoundaryZh: '仅同口径 OFR 历史，不拼接旧分，不构成危机概率或投资建议。' },
+    newsContext: { ...discovery, stories }, sourceRefs,
+    dataGaps: [...(freshness.currentEligibleAtCheck ? [] : ['OFR 当前主判读不可用；保留原观察日期与缺失/缓存/过期状态，不回退旧分。']), ...(p.percentile.value === null ? ['OFR 辅助百分位缺失。'] : []), ...(p.weeklyChange.value === null ? ['OFR 周变化缺失。'] : []), ...(discovery?.dataGaps || [])].slice(0, 12),
+    boundaries: { fixtureOnly, siteStructuredDataOnly: true, newsDiscoveryContextOnly: true, noSecrets: true, noRawArticleBody: true, readOnlyContext: true, excludesExistingAiLayers: true, excludesDecisionExecutionPositionFields: true, affectsGfrrScoring: false, affectsRiskModules: false, affectsDecisionModel: false, affectsExecutionLock: false, affectsPositionGuidance: false }
   };
 }

@@ -5,6 +5,8 @@ import {
 } from '../external-ai/provider-adapters.mjs';
 import {
   OUTPUT_SCHEMA,
+  OFR_INPUT_SCHEMA,
+  OFR_OUTPUT_SCHEMA,
   RISK_MODULES,
   assertValid,
   validateEditorialInput,
@@ -21,7 +23,8 @@ export const EDITORIAL_PROVIDER_CONFIG = Object.freeze({
   retryCount: 0
 });
 
-export function buildEditorialSystemPrompt() {
+export function buildEditorialSystemPrompt(input = null) {
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA) return buildOfrEditorialSystemPrompt();
   return `你是 GFRR 的宏观风险主编。请把近 7 日可信新闻与站内结构化数据综合成中文宏观判读，输出严格 JSON，不要 Markdown。
 
 目标：产出 4,000–5,600 个可见中文字符，信息密度接近专业周报；允许范围为 2,000–6,800 字，但不得为凑字数重复。结论必须是“当前压力判读”，不得伪装成危机预测、战争概率、投资建议或交易信号。
@@ -76,6 +79,7 @@ export function buildEditorialSystemPrompt() {
 }
 
 export function buildEditorialUserPrompt(input) {
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA) return `只返回 JSON。按实际证据写简版，不凑字数或栏目。每段 sourceRefIds 必须属于输入，至少实际引用一条 official/cross_checked 新闻；discovery_only 不可独立支撑事实。正文数字、金额、币种、单位、日期必须与同段引用一致；OFR数字由程序展示，pressureSynthesis 不复述数字。明确引语必须逐字存在于被引证据。输入：\n${JSON.stringify(input)}`;
   const credibleNewsIds = (input?.newsContext?.stories || [])
     .filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus))
     .map((story) => story.id);
@@ -108,7 +112,8 @@ ${JSON.stringify(input)}`;
 }
 
 export function validateEditorialPrompt(input) {
-  const system = buildEditorialSystemPrompt();
+  const system = buildEditorialSystemPrompt(input);
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA) return { ok: system.includes("pressureSynthesis") && system.includes("不生成仓位"), missingMarkers: [] };
   const user = buildEditorialUserPrompt(input);
   const required = ['4,000–5,600', '2,000–6,800', '不计 sourceRefIds', 'weeklyTimeline 恰好 3', 'keyTensions 恰好 2', 'crossMarketAnalysis 恰好 3', 'watchNext 恰好 3', '不超过 6,200', '长度自检', '不得截断 JSON', '不得依赖 adapter/writer 修正', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
   const missingMarkers = required.filter((marker) => !`${system}\n${user}`.includes(marker));
@@ -165,7 +170,7 @@ function deterministicAttribution(source) {
 function normalizeOutput(output, input, generatedAt, model) {
   const normalized = {
     ...output,
-    schemaVersion: OUTPUT_SCHEMA,
+    schemaVersion: input.schemaVersion === OFR_INPUT_SCHEMA ? OFR_OUTPUT_SCHEMA : OUTPUT_SCHEMA,
     generatedAt,
     sourceDataUpdatedAt: input.sourceDataUpdatedAt,
     provider: 'deepseek',
@@ -224,7 +229,7 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
         thinking: { type: 'disabled' },
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: buildEditorialSystemPrompt() },
+          { role: 'system', content: buildEditorialSystemPrompt(input) },
           { role: 'user', content: buildEditorialUserPrompt(input) }
         ]
       }),
@@ -232,7 +237,8 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
     });
     try {
       responseJson = await response.json();
-    } catch {
+    } catch (cause) {
+      if (cause?.name === 'AbortError' || controller.signal.aborted) { const timeoutError = new Error('DeepSeek response body timed out'); timeoutError.name = 'AbortError'; throw timeoutError; }
       const error = new Error('DeepSeek response envelope was not valid JSON');
       error.category = 'provider_response_envelope_invalid';
       error.httpStatus = response?.status || null;
@@ -251,6 +257,12 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
     throw error;
   } finally {
     clearTimeout(timeout);
+  }
+  if (input.schemaVersion === OFR_INPUT_SCHEMA && responseJson?.choices?.[0]?.finish_reason !== 'stop') {
+    const error = new Error('DeepSeek response did not complete normally');
+    error.category = responseJson?.choices?.[0]?.finish_reason === 'length' ? 'provider_output_truncated' : 'provider_completion_invalid';
+    error.responseDiagnostics = responseDiagnostics(responseJson, response?.status || null);
+    throw error;
   }
   const content = responseJson?.choices?.[0]?.message?.content;
   let parsed;
@@ -290,4 +302,15 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
       response: responseDiagnostics(responseJson, response?.status || null)
     }
   };
+}
+
+
+export function buildOfrEditorialSystemPrompt() {
+  return `你是 GFRR 的宏观压力解释编辑。只根据输入证据输出中文严格 JSON。
+主读数是 OFR 官方发表的金融压力指数原值，可负可零；不是0–100风险评分、危机概率或仓位模型。当前/缓存/过期/缺失状态和实际观察日必须尊重。独立结构指标不是 OFR 的分解或加分。旧总分、模块分及旧分历史已退役，不能重新引入。不生成仓位、买卖、配置、执行、危机概率或确定性崩盘指令。
+数字标签（OFR原值、实际观察日、周变化端点及百分位）由程序从已验证快照展示，不要在 pressureSynthesis 复述数字。正文解释关系和限制。其它具体数字、日期、币种和单位只能来自同段引用证据；不能根据同一个数字猜测含义。明确引语须逐字存在，不能将一般术语包装成别人原话。
+可以写有依据的简版。目标为800–2400字，只是建议；不为满足栏目/来源数量凑字。保留6800字/64KiB上限、有效JSON和所有安全边界。只有真正有依据的栏目才写，空栏目用[]、无历史比较用null。每个事实对象都要1–12条合法sourceRefIds；headline/lead/dataGaps/confidence的事实引用用顶层sourceRefIds。全文必须实际引用至少一条 official/cross_checked 新闻，discovery_only 不能单独支撑事实。dataGaps至少一条，watchNext至少一条可观察条件和反证。
+只返回这些字段，不输出scoreSynthesis/moduleAnalysis或任何score数值标签：
+{"headlineZh":"标题","leadZh":"导语","sourceRefIds":["..."],"pressureSynthesis":{"assessmentZh":"只解释，不复述数字","sourceRefIds":["..."]},"weeklyTimeline":[{"date":"YYYY-MM-DD","titleZh":"...","detailZh":"...","sourceRefIds":["..."]}],"keyTensions":[],"contextAnalysis":[{"topic":"independent_context","labelZh":"独立结构观察","assessmentZh":"...","sourceRefIds":["..."]}],"crossMarketAnalysis":[],"historicalComparison":null,"watchNext":[{"conditionZh":"...","whyItMattersZh":"...","invalidationZh":"...","sourceRefIds":["..."]}],"dataGaps":["..."],"confidence":{"level":"low|medium|high","score":50,"reasonZh":"编辑信心，不是风险读数或概率"},"auditFlags":["read_only_editorial","source_attributed"],"boundaries":{"displayOnly":true,"commentaryOnly":true,"externalAiGenerated":true,"usesExternalAiApi":true,"notInvestmentAdvice":true,"affectsGfrrScoring":false,"affectsRiskModules":false,"affectsTailRiskOverlay":false,"affectsDecisionModel":false,"affectsExecutionLock":false,"affectsPositionGuidance":false,"affectsWorldOrder":false,"affectsOdp":false,"affectsBubbleWatch":false}}
+sourceAttribution由程序从实际引用的既有来源生成；不编造来源，不把未知改为零。`;
 }
