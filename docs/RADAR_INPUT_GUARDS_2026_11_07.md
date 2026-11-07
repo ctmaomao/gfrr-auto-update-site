@@ -32,3 +32,7 @@ The downloaded CSV SHA-256, `43b6c9be5893db4928748ed41d61ec32a65b461e4dec2ca59db
 ## Self-audit and remaining boundary
 
 The implementation follows the bounded restoration scope. No existing assertion is deleted, widened or skipped, and no ignore is added. There are no frontend rendering changes; browser visual sign-off is not claimed for this code-only input/monitor package. The old satellite draft and unrelated research are not restarted. Deployment remains outside this local delivery.
+
+## Publication preparation after owner approval
+
+The local-only receipts above remain historical facts. The owner subsequently approved continuing the stated plan through baseline/integration acceptance, pushing repairs, merging changes that pass checks and deploying the website. This package will first be pushed as its own draft PR with exact-head CI, preserving serial integration and the repository's review/release gates. No GitHub approval is impersonated, and no paid data, AI provider or production refresh is dispatched. At preparation time, latest main is still `aa1eefa46f79124b77c1f76e092ddc63a178dd66`; the nine-file fix has no main drift or conflict. Final remote PR/check/deployment receipts must be verified separately and are not implied by the local tests.
