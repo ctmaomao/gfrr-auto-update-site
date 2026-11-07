@@ -37,6 +37,13 @@
 - `data/oil-news-event-watch.json`: 只取已清洗的聚合状态和 data gaps，不把其 proxy 写成
   油价方向或供应中断确认。
 
+OFR 迁移后的雷达旧模型仅供历史审计。紧凑输入发现 `mainPressureReadout`、
+`advicePolicy`、`legacyModelAudit` 或 `scoreRole=legacy_model_audit_only` 时，
+排除整个旧雷达背景及其来源引用，包括旧分数、周变化与派生叙事；即使新读数
+缺失或损坏也不回退旧分数。数据缺口明确说明 OFR 未纳入本周评证据包，
+不能把 OFR 原值填进旧分数位置。Bubble 自身评分、新闻证据、旧历史样本
+和输出验证器保持不变。此处只落实已批准的旧模型退役，不新增模型或来源。
+
 ### 4.2 新闻发现来源
 
 - Tavily Search API `topic=news`,最多 6 个预登记 topic、每 topic 最多 5 条。
