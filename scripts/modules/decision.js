@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=radar-integration-20261104-r3';
-import { formatOnRrpYiUsd } from './format.js?v=radar-integration-20261104-r3';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=readout-consistency-20261107-r1';
+import { formatOnRrpYiUsd } from './format.js?v=readout-consistency-20261107-r1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

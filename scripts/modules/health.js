@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=radar-integration-20261104-r3';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=radar-integration-20261104-r3';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=readout-consistency-20261107-r1';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=readout-consistency-20261107-r1';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
