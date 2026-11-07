@@ -1,9 +1,9 @@
 {
   "contractVersion": "v28.0M-91-multi-asset-metrics-1",
   "kind": "market_pricing_metrics_calculation",
-  "generatedAt": "2026-10-31T14:23:46.279Z",
+  "generatedAt": "2026-11-07T14:45:15.128Z",
   "sourceHistoryFile": "data/market-pricing-history.json",
-  "sourceCommit": "42e41845",
+  "sourceCommit": "77e2f4cd",
   "asset": "qqq",
   "windowSize": 60,
   "stdDevFormula": "sample",
@@ -11,11 +11,11 @@
   "zScoreCapped": false,
   "sourceRecordsCount": 522,
   "metricsRecordsCount": 463,
-  "earliestMetricDate": "2017-12-18",
-  "latestMetricDate": "2026-10-30",
+  "earliestMetricDate": "2017-12-25",
+  "latestMetricDate": "2026-11-06",
   "ma60Range": {
-    "min": 136.836,
-    "max": 657.1927
+    "min": 137.5378,
+    "max": 658.35
   },
   "stdDev60Range": {
     "min": 8.6112,
@@ -50,11 +50,11 @@
       "zScoreCapped": false,
       "sourceRecordsCount": 522,
       "metricsRecordsCount": 463,
-      "earliestMetricDate": "2017-12-18",
-      "latestMetricDate": "2026-10-30",
+      "earliestMetricDate": "2017-12-25",
+      "latestMetricDate": "2026-11-06",
       "ma60Range": {
-        "min": 136.836,
-        "max": 657.1927
+        "min": 137.5378,
+        "max": 658.35
       },
       "stdDev60Range": {
         "min": 8.6112,
@@ -85,14 +85,6 @@
         "affectsPositionGuidance": false
       },
       "records": [
-        {
-          "date": "2017-12-18",
-          "isoWeek": "2017-W51",
-          "close": 157.37,
-          "ma60": 136.836,
-          "stdDev60": 12.0802,
-          "zScore": 1.6998
-        },
         {
           "date": "2017-12-25",
           "isoWeek": "2017-W52",
@@ -3782,12 +3774,20 @@
           "zScore": 0.8566
         },
         {
-          "date": "2026-10-30",
+          "date": "2026-10-26",
           "isoWeek": "2026-W44",
           "close": 690.49,
           "ma60": 657.1927,
           "stdDev60": 56.5564,
           "zScore": 0.5887
+        },
+        {
+          "date": "2026-11-06",
+          "isoWeek": "2026-W45",
+          "close": 656.1,
+          "ma60": 658.35,
+          "stdDev60": 55.794,
+          "zScore": -0.0403
         }
       ]
     },
@@ -11319,14 +11319,6 @@
   },
   "records": [
     {
-      "date": "2017-12-18",
-      "isoWeek": "2017-W51",
-      "close": 157.37,
-      "ma60": 136.836,
-      "stdDev60": 12.0802,
-      "zScore": 1.6998
-    },
-    {
       "date": "2017-12-25",
       "isoWeek": "2017-W52",
       "close": 155.76,
@@ -15015,12 +15007,20 @@
       "zScore": 0.8566
     },
     {
-      "date": "2026-10-30",
+      "date": "2026-10-26",
       "isoWeek": "2026-W44",
       "close": 690.49,
       "ma60": 657.1927,
       "stdDev60": 56.5564,
       "zScore": 0.5887
+    },
+    {
+      "date": "2026-11-06",
+      "isoWeek": "2026-W45",
+      "close": 656.1,
+      "ma60": 658.35,
+      "stdDev60": 55.794,
+      "zScore": -0.0403
     }
   ]
 }

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=readout-consistency-20261107-r2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=readout-consistency-20261107-r2';
+} from './config.js?v=readout-consistency-20261108-r3';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=readout-consistency-20261108-r3';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=readout-consistency-20261107-r2';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=readout-consistency-20261107-r2';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=readout-consistency-20261107-r2';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=readout-consistency-20261107-r2';
-import { renderTrendSvg } from './renderMacroTrend.js?v=readout-consistency-20261107-r2';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=readout-consistency-20261107-r2';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=readout-consistency-20261107-r2';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=readout-consistency-20261107-r2';
+} from './macroOverviewDisplayHelpers.js?v=readout-consistency-20261108-r3';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=readout-consistency-20261108-r3';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=readout-consistency-20261108-r3';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=readout-consistency-20261108-r3';
+import { renderTrendSvg } from './renderMacroTrend.js?v=readout-consistency-20261108-r3';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=readout-consistency-20261108-r3';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=readout-consistency-20261108-r3';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=readout-consistency-20261108-r3';
 
 // ---------- 阈值 + 派生 helper ----------
 

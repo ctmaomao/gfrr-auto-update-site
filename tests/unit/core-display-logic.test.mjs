@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=readout-consistency-20261107-r2';
+} from '../../scripts/modules/config.js?v=readout-consistency-20261108-r3';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

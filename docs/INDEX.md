@@ -254,3 +254,7 @@ ARR / Bubble Watch 独立候选入口：`docs/ARR_EPOCH_SOURCE_REVIEW.md` — Ep
 
 - [指令维护总回执](REVIEW_2026-09-06_CLOSEOUT.md)：当前验收、现行 ADR 入口及按需读取的历史证据。阶段回执不逐篇预读。
 - [阶段文档统一状态](LEGACY_DOCUMENT_STATUS.md)：Market Pricing / External AI 阶段文件的共同状态；实际操作按对应现行契约。
+
+## Local oil-pressure simplification
+
+- [ADR-0087](ADR/0087-oil-pressure-evidence-simplification.md): task-scoped local evidence and display contract; fixed thresholds and archived evidence remain; independent Codex AI review and local checks passed, publication approval remains separate.
