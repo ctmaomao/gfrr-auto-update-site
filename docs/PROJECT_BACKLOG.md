@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-06 油价卫星/运费证据缺口修复与草稿 PR 准备
+
+- **Acceptance baseline**：owner 要求完善油价方向压力研判，重点卫星与运费；随后同意将本次补丁单独整理、核对最新主分支后推送草稿 PR 并检查 CI。此次不授权合并、部署、付费来源、路线报价接入或新基线晋升。
+- **最后基线 / 改动**：隔离工作树基于 latest main c2eeff39711af9da8c209f1f586c57440c057ffb；六个核心源文件与已验证补丁的改前内容一致。只移入本任务差量，文档/测试登记在最新版本上追加，前端缓存重新同步；原 3e7bb261 工作区、索引及其他未提交研究保留。
+- **当前任务 / 结果**：S-NPP 停源零请求/零重试，保留 NOAA 实测但暂停旧三源比较；历史/缺测不等于无异常；运费复用真实原日期与来源，明确聚合指数不等于路线报价。原本地包及 latest main 隔离包均通过15项离线回归、完整 check:changed/check:all 和独立代码审阅；隔离包首轮发现缺少本地锁定 xlsx 依赖，复用匹配的已安装0.20.3后原测试7/7通过，全套第二轮exit0，未改断言。19文件仅机械缓存同步，原工作区1359个已记录文件哈希未变。远端 CI 以精确提交回执为准。ADR-0086 显式登记唯一新增诊断枚举，原断言/评分/生产 JSON/旧基线与 workflow 保持。
+- **下一步 / 门槛**：隔离差异独审、lint/app语法及必要本地检查已通过；提交并推送草稿 PR 后跟进其精确提交的 CI，不合并或部署。浏览器视觉验收仍未执行，既有预览权限限制不绕过；PortWatch 表0上游400无已验证替代地址，保留原日期缓存；两源独立基线与路线运价资格仍待单独审阅。
+
 ### 2026-11-05 油新闻同步监听发布授权
 
 - **Acceptance baseline**：owner 对“推送修复并创建草稿PR，CI及整合复核通过后合并发布，再检查两站”回复“同意”。可使用现有GitHub Actions/托管配额；不得主动采集新闻、调用付费provider、扩大权限、绕过保护或盲重试。正式GitHub approve不代执行；正常合并已获授权。遇到额外费用、重大语义变化或门槛不能满足时只暂停受影响操作。
@@ -713,7 +720,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `radar-integration-20261104-r3` |
+| Cache version | `oil-evidence-health-20261106` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

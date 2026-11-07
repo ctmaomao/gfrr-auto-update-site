@@ -26,6 +26,7 @@ function buildSample({
   return {
     schemaVersion: 'oil-thermal-watch-1',
     module: 'oil-thermal-watch',
+    sources: ['VIIRS_SNPP_NRT', 'VIIRS_NOAA20_NRT', 'VIIRS_NOAA21_NRT'],
     generatedAt,
     status,
     signalState: status === 'ok' ? 'baseline_building_watch' : status,

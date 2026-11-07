@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0086 — FIRMS source retirement and observation gaps](0086-oil-thermal-source-retirement.md): local safety repair; independent code review and full local checks passed, visual/production acceptance pending.
+
 - [ADR-0085 — Oil-news completion publication tail](0085-oil-news-publication-completion.md): append the existing producer completion while preserving main/success, quota and immutable checked-source guards; local implementation only, separate release approval pending.
 
 - [ADR-0084 — NVIDIA same-period evidence](0084-nvda-period-qualified-ratio.md): owner-authorized local implementation; narrow r5 gap, independent review and publication pending.

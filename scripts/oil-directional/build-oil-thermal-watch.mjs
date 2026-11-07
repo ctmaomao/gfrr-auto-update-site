@@ -2,6 +2,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
+import { matchesLegacyThermalSources } from '../modules/oilThermalSourceLifecycle.js';
 import {
   FIRMS_REQUEST_POLICY,
   createFirmsRetryBudget,
@@ -318,10 +320,10 @@ function buildBaselineArtifact({ options, config, baselineConfig }) {
   };
 }
 
-function compareWithBaseline({ facilityId, summary, sourcesWithDetections, baselineConfig }) {
+function compareWithBaseline({ facilityId, summary, sourcesWithDetections, baselineConfig, comparisonEligible = true }) {
   const policy = baselineConfig.policy;
   const row = baselineConfig.facilitiesById.get(facilityId) ?? null;
-  const established = hasEstablishedBaseline(row, policy);
+  const established = hasEstablishedBaseline(row, policy) && comparisonEligible;
   const sourceRepeatMet = sourcesWithDetections >= policy.minRepeatSources;
   const maxFrp = Number.isFinite(summary.maxFrp) ? summary.maxFrp : 0;
   const rowCountAboveP95 = established && summary.rowCount > (row.rowCountP95 + policy.rowCountP95Margin);
@@ -343,8 +345,9 @@ function compareWithBaseline({ facilityId, summary, sourcesWithDetections, basel
       || summary.frpOver100Count >= policy.elevatedMinFrpOver100Count
     )
   );
-  const status = established ? 'established' : (row ? 'insufficient_samples' : 'not_established');
-  const reason = established
+  // Status describes the retained historical baseline, not this run's comparability.
+  const status = hasEstablishedBaseline(row, policy) ? 'established' : (row ? 'insufficient_samples' : 'not_established');
+  const reason = !comparisonEligible ? 'source_coverage_incomplete_or_changed' : established
     ? (
       repeatedObservation
         ? (elevatedRepeatedObservation ? 'above_baseline_repeated_elevated' : 'above_baseline_repeated')
@@ -502,6 +505,7 @@ function deriveRawSignalLevel(summary, sourceCount, sourceDetections) {
 }
 
 function deriveAnomalyLevel(rawSignalLevel, baselineComparison) {
+  if (baselineComparison.reason === 'source_coverage_incomplete_or_changed') return rawSignalLevel;
   if (baselineComparison.elevatedRepeatedObservation) return 'elevated_repeated_watch';
   if (baselineComparison.repeatedObservation) return 'repeated_watch';
   if (baselineComparison.status === 'established' && rawSignalLevel !== 'none_observed') return 'low_signal';
@@ -542,11 +546,12 @@ function applyBaselineCoverageCopy(artifact) {
   return artifact;
 }
 
-async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retryBudget }) {
+async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retryBudget, generatedAt }) {
   const url = buildUrl(mapKey, source, facility.bbox.string, dayRange);
   const request = await fetchFirmsText(url, {
     timeoutMs,
-    retryBudget
+    retryBudget,
+    nowMs: Date.parse(generatedAt)
   });
   let records;
   try {
@@ -683,7 +688,8 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
           facility,
           dayRange: options.dayRange,
           timeoutMs: options.timeoutMs,
-          retryBudget
+          retryBudget,
+          generatedAt
         }));
         allRequestDiagnostics.push(sourceResults.at(-1).requestDiagnostics);
       } catch (error) {
@@ -708,10 +714,13 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
       facilityId: facility.id,
       summary,
       sourcesWithDetections,
-      baselineConfig
+      baselineConfig,
+      comparisonEligible: sourceErrorCount === 0 && matchesLegacyThermalSources(options.sources)
     });
     const anomalyLevel = deriveAnomalyLevel(rawSignalLevel, baselineComparison);
-    const noteZh = baselineComparison.status === 'established'
+    const noteZh = baselineComparison.reason === 'source_coverage_incomplete_or_changed'
+      ? '卫星来源不完整或组合改变；当前检出仅作原始聚合观察，不与旧三源基线比较，不判断有无异常。'
+      : baselineComparison.status === 'established'
       ? (
         baselineComparison.repeatedObservation
           ? '当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。'
@@ -738,6 +747,18 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
     });
   }
 
+  // A partial run cannot claim a whole-cohort baseline comparison. Retain only
+  // real observations, including fully fetched facilities, while the run is held.
+  if (facilityRows.some(row => row.requestErrorCount > 0) || !matchesLegacyThermalSources(options.sources)) {
+    for (const row of facilityRows) {
+      row.baselineComparison = compareWithBaseline({ facilityId: row.id, summary: row,
+        sourcesWithDetections: row.baselineComparison.sourcesWithDetections, baselineConfig, comparisonEligible: false });
+      row.baselineStatus = row.baselineComparison.status;
+      row.anomalyLevel = deriveAnomalyLevel(row.rawSignalLevel, row.baselineComparison);
+      row.anomalyLabelZh = '来源不完整或改变 · 暂不判断';
+      row.noteZh = '本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。';
+    }
+  }
   const aggregate = aggregateSummaries(facilityRows);
   const requestErrorCount = facilityRows.reduce((sum, facility) => sum + facility.requestErrorCount, 0);
   const facilitiesByAnomalyLevel = {};
@@ -771,8 +792,14 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
   artifact.sourceStatus.firms = requestErrorCount === 0 ? 'live' : (requestErrorCount === requestCount ? 'error' : 'partial');
   artifact.status = artifact.sourceStatus.firms === 'error' ? 'source_unavailable' : (artifact.sourceStatus.firms === 'partial' ? 'partial' : 'ok');
   artifact.displayStatusZh = artifact.status === 'source_unavailable' ? '源暂不可用' : '观察层已接入';
-  if (artifact.status === 'source_unavailable') {
+  if (requestErrorCount > 0 || !matchesLegacyThermalSources(options.sources)) {
+    artifact.status = artifact.status === 'source_unavailable' ? 'source_unavailable' : 'partial';
     artifact.signalState = 'source_unavailable';
+    const retired = artifact.aggregate.requestDiagnostics.failuresByCategory.source_retired > 0;
+    artifact.displayStatusZh = retired ? 'S-NPP 已停源 · 基线比较暂停' : '来源不完整或组合改变 · 基线比较暂停';
+    artifact.limitationsZh.push(retired
+      ? 'S-NPP 自 2026-11-02 15:40 UTC 永久停止数据；本轮只保留 NOAA-20/21 的实际检出，不与旧三源基线混算。新源组合基线须单独审阅，不能把缺测当无异常。'
+      : '本轮来源不完整或源组合与历史基线不一致，不产生重复异常或无异常结论。');
   } else if (artifact.aggregate.elevatedRepeatedObservationCount > 0) {
     artifact.signalState = 'baseline_elevated_repeated_watch';
     artifact.displayStatusZh = repeatedDisplayStatusZh(artifact.baseline.status);
@@ -892,7 +919,9 @@ async function main() {
   }, null, 2));
 }
 
-main().catch((error) => {
+export { buildLiveArtifact, parseArgs, readFacilityConfig, readBaselineConfig };
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main().catch((error) => {
   console.error(`Oil thermal watch build failed: ${error.message}`);
   process.exit(1);
 });

@@ -1,3 +1,5 @@
+import { FIRMS_SNPP_RETIRED_AT, matchesLegacyThermalSources } from '../modules/oilThermalSourceLifecycle.js';
+
 const FIRMS_REQUEST_POLICY_VERSION = 'firms-request-policy-1';
 
 export const OIL_THERMAL_SAMPLE_HEALTH_GATE = Object.freeze({
@@ -12,6 +14,7 @@ export const OIL_THERMAL_SAMPLE_HEALTH_GATE = Object.freeze({
 });
 
 const FAILURE_CATEGORIES = new Set([
+  'source_retired',
   'timeout',
   'network_error',
   'rate_limited',
@@ -63,6 +66,12 @@ function sanitizedFailureCategories(requestDiagnostics) {
 
 export function classifyOilThermalSampleHealth(artifact) {
   const reasons = [];
+  if (!matchesLegacyThermalSources(artifact?.sources)) addReason(reasons, 'source_set_missing_or_incomparable');
+  // The approved cohort is the pre-retirement three-satellite baseline.
+  // New two-satellite samples need an independently reviewed cohort, not age alone.
+  if (Date.parse(artifact?.generatedAt) >= Date.parse(FIRMS_SNPP_RETIRED_AT)) {
+    addReason(reasons, 'source_transition_requires_baseline_review');
+  }
   const facilities = Array.isArray(artifact?.facilities) ? artifact.facilities : [];
   const artifactStatus = typeof artifact?.status === 'string' ? artifact.status : null;
   const firmsSourceStatus = typeof artifact?.sourceStatus?.firms === 'string'

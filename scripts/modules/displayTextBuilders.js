@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=radar-integration-20261104-r3';
+﻿import { fmtNumSafe } from './config.js?v=oil-evidence-health-20261106';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

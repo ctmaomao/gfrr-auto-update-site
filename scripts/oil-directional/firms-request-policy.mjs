@@ -1,4 +1,7 @@
+import { isRetiredFirmsSource } from '../modules/oilThermalSourceLifecycle.js';
+
 const FAILURE_CATEGORIES = new Set([
+  'source_retired',
   'timeout',
   'network_error',
   'rate_limited',
@@ -176,9 +179,25 @@ export async function fetchFirmsText(url, {
   retryBudget = null,
   maxRetries = FIRMS_REQUEST_POLICY.maxRetriesPerRequest,
   baseBackoffMs = FIRMS_REQUEST_POLICY.baseBackoffMs,
-  maxBackoffMs = FIRMS_REQUEST_POLICY.maxBackoffMs
+  maxBackoffMs = FIRMS_REQUEST_POLICY.maxBackoffMs,
+  nowMs = Date.now()
 } = {}) {
   const boundedTimeoutMs = finiteInteger(timeoutMs);
+  // A retired satellite can return HTTP 200 with an empty CSV. Do not call it
+  // or record that as a successful zero-detection observation. Historic windows
+  // ending before retirement remain readable; no provider response is copied.
+  const requestUrl = new URL(url);
+  const match = requestUrl.hostname === 'firms.modaps.eosdis.nasa.gov'
+    ? requestUrl.pathname.match(/^\/api\/area\/csv\/[^/]+\/([^/]+)\/[^/]+\/(\d+)(?:\/(\d{4}-\d{2}-\d{2}))?\/?$/u) : null;
+  let observationEnd = nowMs;
+  if (match?.[3]) {
+    const start = Date.parse(match[3] + 'T00:00:00Z');
+    if (Number.isFinite(start) && new Date(start).toISOString().slice(0, 10) === match[3]) observationEnd = start + Number(match[2]) * 86400000 - 1;
+  }
+  if (match && isRetiredFirmsSource(match[1], observationEnd)) {
+    throw createRequestError({ outcome: 'error', category: 'source_retired', retryable: false,
+      attempts: 0, retryCount: 0, timeoutMs: boundedTimeoutMs });
+  }
   const boundedRetries = Math.min(
     FIRMS_REQUEST_POLICY.maxRetriesPerRequest,
     finiteInteger(maxRetries, FIRMS_REQUEST_POLICY.maxRetriesPerRequest)
