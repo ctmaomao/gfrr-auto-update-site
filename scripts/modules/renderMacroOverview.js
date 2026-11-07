@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=readout-consistency-20261107-r1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=readout-consistency-20261107-r1';
+} from './config.js?v=readout-consistency-20261107-r2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=readout-consistency-20261107-r2';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=readout-consistency-20261107-r1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=readout-consistency-20261107-r1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=readout-consistency-20261107-r1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=readout-consistency-20261107-r1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=readout-consistency-20261107-r1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=readout-consistency-20261107-r1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=readout-consistency-20261107-r1';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=readout-consistency-20261107-r1';
+} from './macroOverviewDisplayHelpers.js?v=readout-consistency-20261107-r2';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=readout-consistency-20261107-r2';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=readout-consistency-20261107-r2';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=readout-consistency-20261107-r2';
+import { renderTrendSvg } from './renderMacroTrend.js?v=readout-consistency-20261107-r2';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=readout-consistency-20261107-r2';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=readout-consistency-20261107-r2';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=readout-consistency-20261107-r2';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1992,7 +1992,7 @@ function renderConsumerRetail({ radarData }) {
   const bofaOld = bofaDate && Date.now() - Date.parse(retail.bofaReportDate) > 62 * 86400000;
   const bofaStateZh = bofaStatus === 'fallback' ? '沿用旧值' : bofaOld ? '报告较旧' : '已更新';
   setLeafText('c4-consumer-bofa', bofaValue !== null && bofaMonth && ['live', 'fallback'].includes(bofaStatus)
-    ? `${pct(bofaValue)} YoY · ${bofaMonth}报告 · ${bofaStateZh}` : '— · 缺少可用除油报告读数');
+    ? `${pct(bofaValue)} YoY · ${bofaMonth}报告 · ${bofaStateZh}` : '— · 缺少可用报告');
   const redbookDate = observationDate(retail.redbookRetailSalesDate);
   const redbookStatus = retail.redbookStatus || retail.sourceStatus?.redbookPublicHtml;
   setLeafText('c4-consumer-redbook', Number.isFinite(retail.redbookRetailSalesYoY) && redbookDate && sourceUsable(redbookStatus)

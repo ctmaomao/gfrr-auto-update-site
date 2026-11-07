@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=readout-consistency-20261107-r1';
+﻿import { fmtNumSafe } from './config.js?v=readout-consistency-20261107-r2';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
