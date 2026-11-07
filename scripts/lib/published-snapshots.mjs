@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { inspectPublishedOfr } from './published-ofr-snapshots.mjs';
 
 export const SITES = Object.freeze([
   { id: 'pages', base: 'https://ctmaomao.github.io/gfrr-auto-update-site/', graceHours: 1 },
@@ -53,6 +54,9 @@ export function inspectContent(target, text, now) {
     if (ageHours !== null && ageHours < -5 / 60) result.errors.push('source_time_future');
   };
   if (target.kind === 'radar') {
+    const ofr = inspectPublishedOfr(data, now);
+    result.errors.push(...ofr.errors);
+    result.sources.push(...ofr.sources);
     add('daily_realtime', data.dailyRealtimeInput?.sourceMode, data.dailyRealtimeInput?.updatedAt, 'input_snapshot');
     result.editorial = { currentGeneratedAt: date(data.macroRiskEditorialLayer?.generatedAt),
       currentSourceAt: date(data.macroRiskEditorialLayer?.sourceDataUpdatedAt),
@@ -135,7 +139,7 @@ export async function probePublishedSnapshots({ baseline, now = Date.now(), fetc
         const grace = now - Date.parse(baseline[target.path].committedAt) <= site.graceHours * 3600000;
         (newer || grace ? row.warnings : row.errors).push(newer ? 'baseline_advanced' : grace ? 'publication_in_progress' : 'baseline_mismatch');
       }
-      if (row.sources.some(source => ['error', 'partial', 'missing', 'fallback', 'stale', 'aging', 'manual_required', 'unavailable'].includes(source.status) || source.ageExceeded)) row.warnings.push('source_degraded');
+      if (row.sources.some(source => ['error', 'partial', 'missing', 'fallback', 'stale', 'aging', 'manual_required', 'unavailable', 'cached', 'missing_current'].includes(source.status) || source.ageExceeded)) row.warnings.push('source_degraded');
     }
   }));
   for (const target of TARGETS) {
