@@ -38,3 +38,11 @@ OFR 迁移后旧编辑输入仍复述六模块分数，所以不能仅删除 adm
 - 视觉复核修复短稿半空双栏和压力正文错格，并让覆盖提示默认可见、来源类别中文化。仅原宏观编辑CSS段改为纸张/墨色token、移除既有阴影/渐变/装饰圆角；共享样式也影响旧v1外观，v1渲染资格与正文逻辑未改。正文使用paper-bg，未把画布token推广到正文。此局部改动按DESIGN.md §2/3/4/6核对，IA不变；后续PR声明：本 PR 符合 DESIGN.md 的所有规则。
 - 工作树ignored manual-artifacts/macro-ofr-editorial保留真实失败快照回放、完整检查日志、Chrome报告及before-fix/after截图。回放将原model_contract_transition复现为hold，完整新契约变为candidate；没有预算预留、provider调用或生产写入。
 - 最终 npm run check:changed（实际包含check:all）exit0；test:unit:coverage为1451项、1450通过、0失败、1项既有本地真实原件条件skip。配置覆盖率范围内行99.86%、分支93.24%、函数97.96%，不将它称作所有新增代码的覆盖率。OFR专项41项均通过；改动专项eslint、app语法、diff空白与文档链接均通过。无push、合并、部署或真实付费运行。OFR新稿续期/历史留存未在本包实现。
+
+## Serial release authorization and preflight
+
+Owner subsequently confirmed the explicit request to push these Macro/Bubble changes to ctmaomao/gfrr-auto-update-site, create/update PRs, use independent AI review, then merge/deploy serially after checks. The earlier local-only receipt above remains historical. Actual paid generation and its spending limit remain separate: this candidate must not merge while that confirmation is pending, because a later eligible Daily/World Order/ODP completion can automatically resume paid Macro discovery and DeepSeek even without manual dispatch. No workflow disablement or budget-ref deletion is implied or performed.
+
+The separate Macro release candidate carries the original implementation plus independently reproduced grounding fixes: unsupported Chinese rate expressions cannot disappear from numeric validation; US dollar(s)/U.S. dollar(s) bind the per-unit denominator; PER and English unit words accept case variants while SI symbols retain case. Exact Chinese evidence tokens are compared conservatively, not guessed equivalent to Arabic numerals. The shared Bubble numeric parser remains unchanged. Added positive, negative and final-writer regressions preserve existing assertions.
+
+Local combined validation and the standalone Macro release gates are recorded in PROJECT_BACKLOG.md and the draft PR. AI review is not a claim of human approval. The next Bubble PR must wait for Macro to land on main; the combined local validation tree is not a stacked release PR. Production data, workflows, original worktrees and paid services remain untouched.

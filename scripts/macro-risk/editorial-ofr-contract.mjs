@@ -89,8 +89,8 @@ export function validateOfrEditorialOutput(output, input, inputResult, unsafePat
     if(refs.length && refs.every(id=>stories.get(id)?.evidenceStatus==='discovery_only'))errors.push('OFR claim relies only on discovery_only');
     const evidence=[...(input?.structuredFacts||[]).filter(f=>(f.sourceRefIds||[]).some(id=>refs.includes(id))).map(f=>f.factZh), ...refs.map(id=>stories.get(id)).filter(s=>s&&['official','cross_checked'].includes(s.evidenceStatus)).map(s=>`${s.title} ${s.snippet||''} ${s.publishedAt?.slice(0,10)||''}`)].join('\n');
     const text=[...textFields.map(k=>claim[k]),claim.date].filter(x=>typeof x==='string').join('\n');
-    const supported=new Set(numericEvidenceAtoms(evidence).filter(a=>!a.kind.startsWith('invalid')).flatMap(a=>[a.key,...(a.alternateKey?[a.alternateKey]:[])]));
-    for(const atom of numericEvidenceAtoms(text))if(atom.kind.startsWith('invalid')||(!supported.has(atom.key)&&!supported.has(atom.alternateKey)))errors.push(`OFR claim unsupported numeric/unit/date: ${atom.key}`);
+    const supported=new Set(ofrNumericEvidenceAtoms(evidence).filter(a=>!a.kind.startsWith('invalid')).flatMap(a=>[a.key,...(a.alternateKey?[a.alternateKey]:[])]));
+    for(const atom of ofrNumericEvidenceAtoms(text))if(atom.kind.startsWith('invalid')||(!supported.has(atom.key)&&!supported.has(atom.alternateKey)))errors.push(`OFR claim unsupported numeric/unit/date: ${atom.key}`);
     const compoundEvidence = new Set(compoundUnitAtoms(evidence));
     for (const atom of compoundUnitAtoms(text)) if (!compoundEvidence.has(atom)) errors.push(`OFR compound financial unit unsupported: ${atom}`);
     for(const match of text.matchAll(/(?:称|表示|写道|原文|指出|宣布|强调|宣称|声称|警告|报告|透露|提到|认为|said|stated|announced|emphasized|claimed|warned|reported|noted)\s*[:：]?\s*[“「"]([^”」"]+)[”」"]/giu))if(!evidence.includes(match[1]))errors.push('OFR explicit quotation not supported by cited evidence');
@@ -113,13 +113,26 @@ export function validateOfrEditorialOutput(output, input, inputResult, unsafePat
 }
 
 
+// OFR requires numeric grounding beyond Bubble's intentionally narrower hard
+// scope. Preserve unparsed Chinese rates as exact evidence tokens rather than
+// treating their absence from the shared parser as absence of a numeric claim.
+// Do not infer equivalence to Arabic figures without an exact numeral parser.
+function ofrNumericEvidenceAtoms(text) {
+  const normalized = String(text).normalize('NFKC');
+  const atoms = numericEvidenceAtoms(normalized);
+  for (const match of normalized.matchAll(/(?:负|正|[+-])?[零〇一二三四五六七八九十百千万亿两点]+\s*(?:个\s*)?(?:基点|百分点|百分比|%|basis points?|percentage points?|bps|bp)(?![A-Za-z])/giu)) {
+    atoms.push({ key: `unparsed-rate:${match[0].replace(/\s+/gu, '').toLowerCase()}`, kind: 'unparsed-financial' });
+  }
+  return atoms;
+}
+
 // A monetary amount and its explicit denominator are one token. This also
 // rejects dropping a denominator entirely, not just changing barrel to tonne.
 function compoundUnitAtoms(text) {
   const value = String(text).normalize('NFKC');
   const aliases = { barrel: 'barrel', barrels: 'barrel', bbl: 'barrel', 桶: 'barrel', ton: 'ton', tons: 'ton', tonne: 'ton', tonnes: 'ton', 吨: 'ton', kWh: 'kWh', MWh: 'MWh', kg: 'kg', 千克: 'kg', hour: 'hour', hours: 'hour', 小时: 'hour' };
   const atoms = [];
-  const currencies = '(?:US\\$|U\\.S\\.\\$|USD|EUR|GBP|CNY|HKD|AUD|CAD|NZD|SGD|JPY|HK\\$|AU\\$|CA\\$|NZ\\$|A\\$|C\\$|S\\$|\\$|€|£|新西兰元|新加坡元|人民币|美元|欧元|英镑|港元|澳元|加元|日元|元)';
+  const currencies = '(?:US dollars?|U\\.S\\. dollars?|US\\$|U\\.S\\.\\$|USD|EUR|GBP|CNY|HKD|AUD|CAD|NZD|SGD|JPY|HK\\$|AU\\$|CA\\$|NZ\\$|A\\$|C\\$|S\\$|\\$|€|£|新西兰元|新加坡元|人民币|美元|欧元|英镑|港元|澳元|加元|日元|元)';
   const amount = '[+-]?(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?';
   const scale = '(?:trillion|billion|million|thousand|tn|bn|b|m|k|万亿|百万|亿|万|千)';
   const pattern = new RegExp(`(?:${currencies}\\s*)?${amount}\\s*(?:${scale}\\s*)?(?:${currencies})?`, 'giu');
@@ -128,10 +141,13 @@ function compoundUnitAtoms(text) {
     if (!money) continue;
     const before = value.slice(Math.max(0, match.index - 35), match.index);
     const after = value.slice(match.index + match[0].length);
-    const following = /^\s*(?:per\s+|[／/]\s*|每\s*)([A-Za-z]+|桶|吨|千克|小时)/u.exec(after);
-    const preceding = /(?:每|per\s+|[／/])\s*([A-Za-z]+|桶|吨|千克|小时)\s*$/u.exec(before);
+    const following = /^\s*(?:[Pp][Ee][Rr]\s+|[／/]\s*|每\s*)([A-Za-z]+|桶|吨|千克|小时)/u.exec(after);
+    const preceding = /(?:每|[Pp][Ee][Rr]\s+|[／/])\s*([A-Za-z]+|桶|吨|千克|小时)\s*$/u.exec(before);
     const unit = following?.[1] || preceding?.[1];
-    atoms.push(unit ? `${money.key}/per:${aliases[unit] || unit.toLowerCase()}` : `${money.key}/plain`);
+    // English words are case-insensitive; SI symbols remain case-sensitive.
+    // Unknown symbols retain their spelling rather than gaining equivalence.
+    const wordAliases = { barrel: 'barrel', barrels: 'barrel', bbl: 'barrel', ton: 'ton', tons: 'ton', tonne: 'ton', tonnes: 'ton', hour: 'hour', hours: 'hour' };
+    atoms.push(unit ? `${money.key}/per:${aliases[unit] || wordAliases[unit.toLowerCase()] || unit}` : `${money.key}/plain`);
   }
   return atoms;
 }

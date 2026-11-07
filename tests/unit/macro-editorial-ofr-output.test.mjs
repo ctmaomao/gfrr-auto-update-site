@@ -68,3 +68,59 @@ test('currency amount and denominator remain inseparable through scaling, order 
  }
  for(const claim of ['价格为每桶4美元。','价格为4美元/桶。']) {const {input,output}=ofrEditorialFixture();input.newsContext.stories[0].snippet='The price is 4 USD per barrel.';output.weeklyTimeline[0].detailZh=claim;const result=validateEditorialOutput(output,input);assert.equal(result.ok,true,result.errors.join(';'));}
 });
+
+test('Chinese rate assertions cannot disappear from OFR grounding or final writer review',()=>{
+ for (const claim of ['政策利率为九十九个基点。','政策利率上调九十九个百分点。','政策利率为九十九%。','政策利率为负四个基点。']) {
+  const {input,output,radar,layer,at}=fixture();
+  output.weeklyTimeline[0].detailZh=claim;
+  assert.equal(validateEditorialOutput(output,input).ok,false,claim);
+  layer.output=output;layer.validation.artifactDigest=layer.provenance.artifactDigest=hash(output);
+  assert.throws(()=>applyEditorialProjection(radar,layer,new Date(at),input),/revalidation/,claim);
+ }
+});
+
+test('OFR preserves supported Arabic rates and exact Chinese rates without guessing translations',()=>{
+ for(const [evidence,claim] of [['Policy rate is 4%.','政策利率为4%。'],['The rate increased by 25 basis points.','利率上调0.25个百分点。'],['政策利率上调二十五个基点。','政策利率上调二十五个基点。']]) {
+  const x=ofrEditorialFixture();x.input.newsContext.stories[0].snippet=evidence;x.output.weeklyTimeline[0].detailZh=claim;
+  const review=reviewEditorial({input:x.input,output:x.output,generatedAt:x.at});
+  const layer=projectEditorial({...x,review,generatedAt:x.at,sourceCommit:'b'.repeat(40),runId:'123'});
+  assert.equal(applyEditorialProjection(x.radar,layer,new Date(x.at),x.input).macroRiskEditorialLayer.output.weeklyTimeline[0].detailZh,claim);
+ }
+ const {input,output}=ofrEditorialFixture();input.newsContext.stories[0].snippet='政策利率上调二十五个基点。';output.weeklyTimeline[0].detailZh='政策利率上调九十九个基点。';
+ assert.equal(validateEditorialOutput(output,input).ok,false);
+});
+
+test('spelled-out dollar aliases bind denominators through translation and final writer review',()=>{
+ for (const currency of ['US dollar','US dollars','U.S. dollar','U.S. dollars']) {
+  const x=ofrEditorialFixture();x.input.newsContext.stories[0].snippet=`The price is 4 ${currency} per barrel.`;
+  for (const faithful of ['价格为每桶4美元。','价格为4美元/桶。',`The price is 4 ${currency} per barrel.`]) {
+   x.output.weeklyTimeline[0].detailZh=faithful;
+   const review=reviewEditorial({input:x.input,output:x.output,generatedAt:x.at});
+   const layer=projectEditorial({...x,review,generatedAt:x.at,sourceCommit:'b'.repeat(40),runId:'123'});
+   assert.equal(applyEditorialProjection(x.radar,layer,new Date(x.at),x.input).macroRiskEditorialLayer.output.weeklyTimeline[0].detailZh,faithful);
+   for (const claim of [`The price is 4 ${currency} per tonne.`,`The price is 4 ${currency}.`,'价格为4美元/吨。','价格为4美元。']) {
+    const changed=structuredClone(layer);changed.output.weeklyTimeline[0].detailZh=claim;
+    changed.validation.artifactDigest=changed.provenance.artifactDigest=hash(changed.output);
+    assert.equal(validateEditorialOutput(changed.output,x.input).ok,false,claim);
+    assert.throws(()=>applyEditorialProjection(x.radar,changed,new Date(x.at),x.input),/revalidation/,claim);
+   }
+  }
+ }
+});
+
+test('compound denominator words ignore case but SI symbols retain case',()=>{
+ for (const evidence of ['The price is 4 US dollars PER BARREL.','The price is PER BARREL 4 US dollars.','The price is 4 US dollars PeR BaRrEl.']) {
+  const x=ofrEditorialFixture();x.input.newsContext.stories[0].snippet=evidence;
+  for (const claim of ['价格为4美元/桶。','The price is 4 US dollars pEr barrels.','The price is PER Barrel 4 US dollars.']) {
+   x.output.weeklyTimeline[0].detailZh=claim;
+   const result=validateEditorialOutput(x.output,x.input);assert.equal(result.ok,true,result.errors.join(';'));
+  }
+  for (const claim of ['The price is 4 US dollars PER TONNE.','The price is PER TONNE 4 US dollars.','价格为4美元。']) {
+   x.output.weeklyTimeline[0].detailZh=claim;assert.equal(validateEditorialOutput(x.output,x.input).ok,false,claim);
+  }
+ }
+ for (const [evidence,claim,ok] of [['4 USD per MWh','4美元/MWh',true],['4 USD per MWh','4美元/mWh',false],['4 USD per mWh','4美元/MWh',false],['4 USD per kWh','4美元/KWH',false]]) {
+  const x=ofrEditorialFixture();x.input.newsContext.stories[0].snippet=evidence;x.output.weeklyTimeline[0].detailZh=claim;
+  assert.equal(validateEditorialOutput(x.output,x.input).ok,ok,`${evidence} -> ${claim}`);
+ }
+});

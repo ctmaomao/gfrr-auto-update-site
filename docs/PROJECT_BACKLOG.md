@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-08 Macro / Bubble serial release preparation
+
+- **Acceptance baseline**: owner confirmed push/PR, independent AI review, and serial merge/deploy after checks for these two changes. Paid generation remains subject to separately confirmed spending and scope. Until then, Macro merge is held because it may resume automatic paid work.
+- **Last baseline / changes**: origin/main 2b1efc68; separate Macro release branch retains 37e4a3cb and adds Chinese-rate / compound-currency denominator fixes found in independent review. Original Macro/Bubble worktrees are preserved. Bubble's single-channel corroboration fix remains in the isolated combined candidate for the later serial PR.
+- **Current validation**: combined unit suite passed 1474/1475 with zero failures and one existing conditional skip; true Chrome 1440/390 checks passed tested current/history/fallback flows on both pages. Standalone Macro check:changed (including check:all) passed, unit coverage passed 1454/1455 with one existing skip and zero failures, and standard browser E2E passed 95/95. Final documentation and exact-head remote CI are recorded in the draft PR; no merge or production generation is claimed.
+- **Next / blockers**: finish standalone gates, create a draft Macro PR and inspect its exact-head CI; hold merge/deployment and paid generation pending monetary budget / automatic-run approval. Only after Macro merge may Bubble be rebased to latest main and opened independently. Do not infer successful generation from checks or synthetic fixtures.
+
 ### 2026-11-08 OFR 编辑恢复本地实施
 
 - **Acceptance baseline**：owner对“分阶段实施，先离线回归，再真实生成和两站验收；少误拦、少丢稿而不放过错误内容”回复“同意，请实施”。本轮基于main 2b1efc68隔离工作树，本地v2迁移与测试；不搜索、不调用provider、不push/合并部署，原研究工作区保留。
