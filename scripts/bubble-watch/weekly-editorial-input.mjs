@@ -104,6 +104,17 @@ function buildCompactNewsContext(discovery) {
   };
 }
 
+// Retirement is fail-closed even when the new component is absent or malformed.
+// Its audit score and legacy-derived prose must not become current AI evidence.
+function excludesRetiredRadarContext(radar) {
+  return radar !== null && typeof radar === 'object' && (
+    Object.hasOwn(radar, 'mainPressureReadout')
+    || Object.hasOwn(radar, 'advicePolicy')
+    || radar.scoreRole === 'legacy_model_audit_only'
+    || Object.hasOwn(radar, 'legacyModelAudit')
+  );
+}
+
 function buildRadarContext(radar) {
   if (!radar || typeof radar !== 'object') return null;
   return {
@@ -170,11 +181,13 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
   if (!Array.isArray(bubbleWatch.indicators) || bubbleWatch.indicators.length !== 27) throw new Error('Bubble Watch input must contain 27 indicators');
   const summary = bubbleWatch.summary || {};
   const indicators = bubbleWatch.indicators;
-  const radarContext = buildRadarContext(radarData);
+  const radarExcluded = excludesRetiredRadarContext(radarData);
+  const radarContext = radarExcluded ? null : buildRadarContext(radarData);
   const oilContext = buildOilNewsContext(oilNewsWatch);
   const newsContext = buildCompactNewsContext(discovery);
   const staleIndicators = indicators.filter((indicator) => indicator.stale === true).map((indicator) => indicator.name_zh || indicator.id);
   const dataGaps = [
+    ...(radarExcluded ? ['全球雷达旧模型已退役，旧分数及派生文案不作为本期周评证据；OFR 压力读数未纳入本证据包，不据此推断当前全球风险水平。'] : []),
     ...(indicators.some(i => i.status === 'unknown') ? [`待确认指标: ${indicators.filter(i => i.status === 'unknown').map(i => i.name_zh || i.id).join('、')}；点值为空，保留固定23分母上下界。`] : []),
     ...(Array.isArray(discovery?.dataGaps) ? discovery.dataGaps : []),
     ...(staleIndicators.length > 0 ? [`过期指标: ${staleIndicators.join('、')}`] : []),
