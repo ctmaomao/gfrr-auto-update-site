@@ -1,5 +1,16 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-07 读数与解释一致性修复（草稿 PR 准备）
+
+- **Acceptance baseline**：owner 对“先集中修好这一小批问题，不增加新数据源、新总分或新页面；先把现有读数解释准确”回复“同意你的建议”。前轮本地阶段仅隔离工作树实施、验证及独立复核；当时不推送、开PR、合并、部署、调用收费源或运行Daily/realtime生成。
+- **草稿发布追加授权**：owner 对“我可以将这批修复单独推送为草稿 PR，并检查 GitHub CI；合并和上线仍会另行征求你的同意。你同意吗？”回复“同意”。仅替代本条前述本地阶段的 push/PR 禁止，允许本包独立分支、草稿 PR 和精确提交 CI 核验；不授权合并、auto-merge、上线、付费源或 Daily/realtime 生成。2026-11-07 核对 main 前进至 `a9279041`，仅自动更新 `data/oil-directional-pressure.json`，与本包无交集；通过普通 merge 保留最新 main 数据，不改另案 #504。实际提交、PR 和 CI 结果以交付回执为准。
+
+- **PR #505 兼容修复追加授权（2026-11-07）**：owner 同意恢复 BoA 缺失提示原文后推送同一草稿 PR 并重新检查。仅将缺失提示恢复为“— · 缺少可用报告”，相邻“美银卡消费(除油)”标签及 ExGas、真零/缺失、日期和重复刷新逻辑保持；不修改既有 E2E/checker 断言。缓存版本机械更新为 `readout-consistency-20261107-r2`，历史回执保留。基线 `569d204e` 的 CI 两项文本契约失败已定位；最终树本地验证、独立复核与新精确 head CI 以实际回执为准，仍不合并、auto-merge、部署或运行生产生成。
+
+- **最后基线 / 改动**：基于latest main `d2598156`，分支 `codex/readout-consistency-20261107`。市场温度按各资产原日期/60周统计描述，复用10天年龄与辅助滞后7天契约；消费保留真零、缺失清空，披露组合日期并非CARTS共同观察日；地缘、运输及相关定性说明明确旧模型审计，非OFR分解。没有新阈值、数据源、分数或建议；生产数据/配置/评分/workflow不改。新增离线DOM回归接入原检查链；原断言保留。前端版本仅机械同步。本地包已核对 DESIGN.md §2/3/4/5.3/5.5/6；13项导航、52张卡、结构/字体/纸张样式不变，无新卡片、布局或CSS；浏览器视觉与响应式尚未验收。
+- **当前任务 / 验证**：完整 `npm run check:changed` 实际调用 `check:all`，exit0；含新增13项在内的管线/显示纯函数228项全过，原OFR缺失不回退、DOM/中文/资产/语法等检查保留并通过。独立Codex实际差异复核未留P1/P2；历史回执缓存token误改已恢复。新增测试lint通过；两展示模块14条既有未使用声明lint error，与HEAD基线13+1条完全相同，不做范围外清理。既有来源陈旧/退役解释层缺席及离线样例WARN保留，非本次回归失败。原研究目录及油价另案PR #504不纳入；后续整合只需统一入口缓存版本。
+- **前轮交付 / 当前下一步**：前轮交付未提交的隔离差异和实际测试结果；本轮按上方追加授权整合 latest main、必要重检、推送独立草稿并核验精确提交 CI。原完整日志保存在本工作树ignored `manual-artifacts/readout-consistency/check-changed.log`。既有本地预览socket权限限制未绕过，因此本轮没有真实浏览器视觉/响应式验收，不以离线DOM代替截图；未启动监听服务。前轮尚无提交、推送或PR；本轮实际状态以交付回执为准，仍不合并或发布。
+
 ### 2026-11-05 油新闻同步监听发布授权
 
 - **Acceptance baseline**：owner 对“推送修复并创建草稿PR，CI及整合复核通过后合并发布，再检查两站”回复“同意”。可使用现有GitHub Actions/托管配额；不得主动采集新闻、调用付费provider、扩大权限、绕过保护或盲重试。正式GitHub approve不代执行；正常合并已获授权。遇到额外费用、重大语义变化或门槛不能满足时只暂停受影响操作。
@@ -713,7 +724,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `radar-integration-20261104-r3` |
+| Cache version | `readout-consistency-20261107-r2` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

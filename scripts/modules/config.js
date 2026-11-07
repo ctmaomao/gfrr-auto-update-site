@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=radar-integration-20261104-r3';
+﻿import { formatFiniteNumber } from './format.js?v=readout-consistency-20261107-r2';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
