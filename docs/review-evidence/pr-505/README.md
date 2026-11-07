@@ -54,4 +54,3 @@ Before:
 After:
 
 ![Consumer evidence after at 390px](after-consumer-390.png)
-
