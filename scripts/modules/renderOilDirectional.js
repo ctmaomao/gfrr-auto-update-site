@@ -11,7 +11,7 @@
 // (guarded by check:oil-directional-zh-copy) — these are observational assessments,
 // not instructions.
 
-import { qualifyOdpDisplay } from './oilEvidenceQuality.js?v=oil-radar-simplify-20261107-r3';
+import { qualifyOdpDisplay } from './oilEvidenceQuality.js?v=readout-consistency-20261108-r3';
 
 const $ = (id) => document.getElementById(id);
 

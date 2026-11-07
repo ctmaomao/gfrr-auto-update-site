@@ -1,6 +1,6 @@
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-radar-simplify-20261107-r3';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=oil-radar-simplify-20261107-r3';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=oil-radar-simplify-20261107-r3';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=readout-consistency-20261108-r3';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=readout-consistency-20261108-r3';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=readout-consistency-20261108-r3';
 
 const DAY = 86400000;
 const finite = Number.isFinite;

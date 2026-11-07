@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=oil-radar-simplify-20261107-r3';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=readout-consistency-20261108-r3';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',
@@ -1056,7 +1056,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
   {
     const euro = isPlainObject(md.euroVolatility) ? md.euroVolatility : {};
     const v2x = euro.sourceStatus === 'live' ? finite(euro.value) : null;
-    const caveat = '欧元区波动率(V2X)与波动率指数(VIX)高度相关,只取背离;波动率指数(VIX)已计入主评分,不重复计数恐慌。';
+    const caveat = '欧元区波动率(V2X)与波动率指数(VIX)高度相关,只取背离;波动率指数(VIX)属于旧模型证据,不作为OFR分解，也不重复计数恐慌。';
     if (v2x === null || vix === null) {
       signals.push(coherenceSignal('v2x_vix_divergence', '欧美波动率(V2X/VIX)', '背景', '同步',
         '欧元区波动率(V2X)或波动率指数(VIX)未刷新,暂不判定地区波动率背离。', ['euroVolatility.value', 'vix'], caveat));
@@ -1071,7 +1071,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
         reason = `美国波动率指数(VIX) ${formatNumber(vix, 1)} 高于欧元区波动率(V2X) ${formatNumber(v2x, 1)}(${formatNumber(spread, 1)}),恐慌偏美国单市场性。`;
       } else {
         verdict = '印证';
-        reason = `欧美波动率同步(差 ${formatNumber(spread, 1)}),恐慌为系统性而非地区性,与核心一致。`;
+        reason = `欧美波动率同步(差 ${formatNumber(spread, 1)}),两项波动率读数相近；仅作跨市场背景，不据此判定系统性风险或OFR方向。`;
       }
       signals.push(coherenceSignal('v2x_vix_divergence', '欧美波动率(V2X/VIX)', verdict, '同步', reason,
         ['euroVolatility.value', 'vix'], caveat));
@@ -1167,7 +1167,7 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
     const pbdc = finite(pc.pbdcEtf4wChange);
     const hyOas = finite(baseline.hyOas ?? credit.hyOas);
     const proxyVals = [bdc, pbdc].filter((x) => x !== null);
-    const caveat = '高收益债(HY)/投资级债(IG)已计入主评分,只取公开信用市场与代理资产的背离;商业发展公司(BDC)/优先贷款ETF(SRLN)/区间基金净值(CCLFX)/信用违约互换指数(CDX)是公开基金/净值/指数代理,无折价字段、非私募内部估值,不得写"隐藏私募裂缝已确认"。';
+    const caveat = '高收益债(HY)/投资级债(IG)属于旧模型证据，非OFR分解,只取公开信用市场与代理资产的背离;商业发展公司(BDC)/优先贷款ETF(SRLN)/区间基金净值(CCLFX)/信用违约互换指数(CDX)是公开基金/净值/指数代理,无折价字段、非私募内部估值,不得写"隐藏私募裂缝已确认"。';
     const dataUsed = ['privateCreditProxy.bdcEtf4wChange', 'privateCreditProxy.pbdcEtf4wChange', 'hyOas', 'credit.igOas'];
     if (proxyVals.length === 0 || hyOas === null) {
       signals.push(coherenceSignal('public_credit_proxy', '公开信用代理', '背景', '领先/同步',
@@ -1247,8 +1247,8 @@ export function buildMacroCoherence(data = {}, matrix = {}, marketPricingMetrics
   // summaryLine:prose,先点背离,无 N/M 数字、无 bar
   const diverge = signals.filter((s) => s.verdict === '背离').map((s) => s.perspectiveZh);
   const summaryLine = diverge.length
-    ? `值得盯的背离:${diverge.join('、')}。其余跨市场证据多数与核心结论同向。`
-    : '跨市场证据多数与核心结论同向,暂无显著背离;中国/EM 作弱慢背景。';
+    ? `值得盯的背离:${diverge.join('、')}。其余跨市场证据多数在旧模型定性诊断中同向。`
+    : '跨市场证据多数在旧模型定性诊断中同向,暂无显著背离;中国/EM 作弱慢背景。';
 
   return { signals, summaryLine };
 }
