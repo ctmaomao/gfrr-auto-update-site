@@ -158,7 +158,9 @@ function validateStaticFrontendContract() {
     if (!html.includes(`id="${id}"`)) fail(`index.html missing attribution DOM id: ${id}`);
     if (!renderer.includes(id)) fail(`renderOilDirectional.js missing attribution DOM reference: ${id}`);
   }
-  for (const marker of ['function renderAttribution', 'function clearAttribution', 'it.attribution']) {
+  // ADR-0087 replaces raw historical prose forwarding with qualified current evidence.
+  if (/\bit\.attribution\b/.test(renderer)) fail('renderer must not forward unqualified historical attribution');
+  for (const marker of ['function renderAttribution', 'function clearAttribution', 'function physicalCounterEvidence', 'renderAttribution(it, sig, ev, qualified)']) {
     if (!renderer.includes(marker)) fail(`renderOilDirectional.js missing attribution renderer marker: ${marker}`);
   }
 }

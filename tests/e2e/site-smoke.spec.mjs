@@ -5,9 +5,6 @@ import { readFileSync } from 'node:fs';
 
 const DESKTOP = { width: 1440, height: 1000 };
 const MOBILE = { width: 390, height: 844 };
-const OIL_THERMAL_WATCH = JSON.parse(
-  readFileSync('data/oil-thermal-watch.json', 'utf8'),
-);
 
 function capturePageErrors(page) {
   const errors = [];
@@ -199,20 +196,32 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#homepage-risk-engines .mini-card')).toHaveCount(6);
     await expect(page.locator('#homepage-macro-coherence .mc-row')).toHaveCount(7);
     await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
-    const thermalRequestDiagnostics = OIL_THERMAL_WATCH.aggregate.requestDiagnostics;
-    const completedThermalRequests = thermalRequestDiagnostics.logicalRequestCount
-      - thermalRequestDiagnostics.failedRequestCount;
-    await expect(page.locator('#odp-thermal-request-health')).toContainText(
-      `请求完成 ${completedThermalRequests}/${thermalRequestDiagnostics.logicalRequestCount}`,
-    );
-    await expect(page.locator('#odp-thermal-request-health')).toContainText(
-      `最终失败 ${thermalRequestDiagnostics.failedRequestCount}`,
-    );
-    await expect(page.locator('#odp-thermal-request-health')).toContainText('仅显示脱敏分类计数');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('自动下载源正常');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('命中');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('文档');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('不用于当前新闻信号');
+    // ADR-0087: legacy satellite data must not repopulate the retired display.
+    // News health above establishes the completed auxiliary render; primary-ready alone does not.
+    // The enclosing evidence fold is open, so hidden means retired, not collapsed.
+    const thermalSection = page.locator('.odp-energy-group:has(#odp-thermal-status)');
+    await expect(thermalSection).toHaveCount(1);
+    await expect(thermalSection).toHaveClass(/legacy-model-retired/u);
+    await expect(thermalSection).toHaveAttribute('hidden', '');
+    await expect(thermalSection).toHaveAttribute('inert', '');
+    await expect(thermalSection).toBeHidden();
+    await expect(thermalSection).toHaveCSS('display', 'none');
+    const retiredThermalIds = [
+      'odp-thermal-status', 'odp-thermal-source', 'odp-thermal-request-health',
+      'odp-thermal-window', 'odp-thermal-facility', 'odp-thermal-baseline-quality',
+      'odp-thermal-signal', 'odp-thermal-note',
+    ];
+    await expect(thermalSection.locator('[id^="odp-thermal-"]')).toHaveCount(retiredThermalIds.length);
+    for (const id of retiredThermalIds) {
+      const leaf = thermalSection.locator('#' + id);
+      await expect(leaf).toHaveCount(1);
+      await expect(leaf).toBeHidden();
+      await expect(leaf).toHaveText('—');
+    }
     expect(pageErrors).toEqual([]);
   });
 

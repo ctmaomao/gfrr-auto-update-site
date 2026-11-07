@@ -7,7 +7,7 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=radar-integration-20261104-r3" />
+  <link rel="stylesheet" href="assets/styles.css?v=oil-radar-simplify-20261107-r3" />
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -484,39 +484,40 @@
       <header class="editorial-section-header">
         <span class="section-kicker">OIL DIRECTIONAL PRESSURE · 油价方向压力研判</span>
         <span class="section-title" id="odp-verdict">—</span>
-        <span class="section-note">独立能源专题 · EIA 周度物理链 + Brent 公开代理 · 仅供参考,不参与平台评分</span>
+        <span class="section-note">独立能源专题 · 美国周度供需与市场价格分列 · 仅供参考,不参与平台评分</span>
       </header>
       <div class="editorial-section-body">
         <div class="odp-reader-flow" aria-label="ODP 阅读路径">
           <article class="odp-flow-block odp-flow-verdict">
             <div class="odp-flow-heading">
               <span>01 · VERDICT</span>
-              <strong>方向结论</strong>
-              <em>方向结论、价格背离、置信度与数据充分度。</em>
+              <strong>方向与周度压力</strong>
+              <em>价格是否可判断、美国周度供需状态及真实观察日。</em>
             </div>
             <p class="odp-headline" id="odp-headline">—</p>
             <p class="odp-brent-basis-alert" id="odp-brent-basis-alert">—</p>
             <dl class="odp-meta">
-              <div><dt>物理判断</dt><dd id="odp-physical-bias">—</dd></div>
+              <div><dt>美国周度压力</dt><dd id="odp-physical-bias">—</dd></div>
               <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
-              <div><dt>置信度</dt><dd id="odp-confidence">—</dd></div>
+              <div><dt>解释范围</dt><dd id="odp-confidence">—</dd></div>
               <div><dt>数据充分度</dt><dd id="odp-data-sufficiency">—</dd></div>
-              <div><dt>截至</dt><dd id="odp-asof">—</dd></div>
+              <div><dt>美国统计观察日</dt><dd id="odp-asof">—</dd></div>
             </dl>
           </article>
           <details class="editorial-folded-content odp-after-verdict-fold">
             <summary>
-              <span><span class="fold-marker"></span> 02-04 · 研判链、反证与证据详情 <em>· 默认收起</em></span>
+              <span><span class="fold-marker"></span> 02-04 · 美国周度依据、市场读数与背景 <em>· 默认收起</em></span>
               <span class="fold-label">展开/收起</span>
             </summary>
             <div class="editorial-section-body">
               <section class="odp-flow-block odp-flow-why">
                 <div class="odp-flow-heading">
                   <span>02 · EVIDENCE CHAIN</span>
-                  <strong>为什么这样判断</strong>
-                  <em>周度物理链是主锚,价格、期限结构和慢变量只做确认或背离。</em>
+                  <strong>美国周度依据</strong>
+                  <em>周度统计描述当前供需压力；市场价格另看日期与可比性。</em>
                 </div>
                 <p class="odp-attribution-thesis" id="odp-attribution-thesis">—</p>
+                <div class="legacy-model-retired" hidden inert>
                 <div class="odp-ladder" aria-label="ODP 判断链">
                   <article class="odp-ladder-card">
                     <span class="odp-ladder-kicker">1 · CORE PHYSICAL CHAIN</span>
@@ -539,16 +540,17 @@
                     <p id="odp-ladder-watch">—</p>
                   </article>
                 </div>
+                </div>
                 <div class="odp-support-grid">
                   <section class="odp-attribution-panel odp-support-panel">
                     <span class="odp-attribution-kicker">ATTRIBUTION</span>
-                    <strong>方向归因</strong>
+                    <strong>观察边界</strong>
                     <ul id="odp-attribution-support"></ul>
                   </section>
                   <div class="odp-reason-panels" aria-label="ODP 方向拆解">
                     <section class="odp-reason-panel">
                       <div class="odp-reason-panel-heading">
-                        <span>核心物理锚</span>
+                        <span>美国周度统计</span>
                         <strong>EIA 周度链</strong>
                       </div>
                       <ul class="odp-reasons">
@@ -561,7 +563,7 @@
                     </section>
                     <section class="odp-reason-panel">
                       <div class="odp-reason-panel-heading">
-                        <span>市场确认</span>
+                        <span>市场价格</span>
                         <strong>价格 / 期限结构</strong>
                       </div>
                       <ul class="odp-reasons">
@@ -574,21 +576,21 @@
               <section class="odp-flow-block odp-flow-challenge">
                 <div class="odp-flow-heading">
                   <span>03 · COUNTERWEIGHT</span>
-                  <strong>反证与置信边界</strong>
-                  <em>反证、置信封顶与改变判断条件。</em>
+                  <strong>可能抵消周度压力的依据</strong>
+                  <em>只列已合格的周度或市场反向证据；缺失不能当作没有反证。</em>
                 </div>
-                <div class="odp-challenge-panels" aria-label="ODP 反证与置信边界">
+                <div aria-label="ODP 合格反向依据">
                   <section class="odp-attribution-panel">
                     <span class="odp-attribution-kicker">COUNTER EVIDENCE</span>
                     <strong>主要反证</strong>
                     <ul id="odp-attribution-counter"></ul>
                   </section>
-                  <section class="odp-attribution-panel">
+                  <section class="odp-attribution-panel legacy-model-retired" hidden inert>
                     <span class="odp-attribution-kicker">CONFIDENCE CAP</span>
                     <strong>置信封顶</strong>
                     <ul id="odp-attribution-caps"></ul>
                   </section>
-                  <section class="odp-attribution-panel">
+                  <section class="odp-attribution-panel legacy-model-retired" hidden inert>
                     <span class="odp-attribution-kicker">VIEW CHANGE</span>
                     <strong>改变判断条件</strong>
                     <ul id="odp-attribution-triggers"></ul>
@@ -598,27 +600,29 @@
               <section class="odp-flow-block odp-detail">
                 <div class="odp-flow-heading">
                   <span>04 · DETAIL LEDGER</span>
-                  <strong>证据矩阵与审计详情</strong>
-                  <em>角色分组、时点分级与观察层边界。</em>
+                  <strong>观察值、日期与背景</strong>
+                  <em>同一来源不重复算确认，预测与观察值分开阅读。</em>
                 </div>
             <div class="odp-detail-subhead">
               <span>MATRIX</span>
               <strong>证据矩阵</strong>
             </div>
             <p id="odp-evidence-note">—</p>
+            <div class="legacy-model-retired" hidden inert>
             <div class="odp-evidence-timing-summary" id="odp-evidence-timing-summary" aria-label="ODP 证据时效分层">—</div>
             <div class="odp-detail-subhead">
               <span>READINESS</span>
               <strong>证据成熟度矩阵</strong>
             </div>
             <div class="odp-evidence-readiness-matrix" id="odp-evidence-readiness-matrix" aria-label="ODP 证据成熟度矩阵">—</div>
+            </div>
             <div class="odp-evidence-list" id="odp-evidence-list"></div>
             <div class="odp-detail-subhead">
               <span>AUDIT LAYERS</span>
-              <strong>审计与观察层</strong>
+              <strong>月度与新闻背景</strong>
             </div>
             <div class="odp-energy-addendum" id="odp-energy-addendum" aria-label="能源压力补充证据">
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">BRENT BASIS CHECK</span>
                   <strong>Brent 口径校验</strong>
@@ -632,7 +636,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-brent-basis-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">PULSE FACTOR CHECK</span>
                   <strong>Pulse 三因子校验</strong>
@@ -650,7 +654,7 @@
               <div class="odp-energy-group">
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">GLOBAL STOCK GAP</span>
-                  <strong>全球库存/需求缺口</strong>
+                  <strong>EIA STEO 月度预测/估算背景</strong>
                 </div>
                 <div class="odp-energy-metrics">
                   <div><span>状态</span><b class="odp-global-forecast-status" id="odp-global-forecast-status">—</b></div>
@@ -658,11 +662,11 @@
                   <div><span>全球库存</span><b id="odp-global-forecast-global-stocks">—</b></div>
                   <div><span>需求预测</span><b id="odp-global-forecast-demand">—</b></div>
                   <div><span>供应缓冲</span><b id="odp-global-forecast-buffer">—</b></div>
-                  <div class="wide"><span>可读口径</span><b id="odp-global-forecast-window">—</b></div>
+                  <div class="wide"><span>真实月期</span><b id="odp-global-forecast-window">—</b></div>
                 </div>
                 <p class="odp-energy-note" id="odp-global-forecast-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">GLOBAL OVERLAY</span>
                   <strong>全球确认层</strong>
@@ -691,14 +695,14 @@
                   <div class="wide"><span>来源健康</span><b class="odp-news-source-health" id="odp-news-event-source-health">—</b></div>
                   <div class="wide"><span>Web NGrams 背景</span><b class="odp-news-web-ngrams-health" id="odp-news-event-web-ngrams-health">—</b></div>
                   <div class="wide"><span>Web NGrams 时效</span><b class="odp-news-web-ngrams-health" id="odp-news-event-web-ngrams-age">—</b></div>
-                  <div class="wide"><span>市场确认</span><b id="odp-news-event-market">—</b></div>
+                  <div class="wide"><span>市场价格</span><b id="odp-news-event-market">—</b></div>
                   <div class="wide"><span>主张方向</span><b class="odp-news-claim-polarity" id="odp-news-event-claim-polarity">—</b></div>
                   <div class="wide"><span>主张质量</span><b class="odp-news-claim-quality" id="odp-news-event-claim-quality">—</b></div>
                   <div class="wide"><span>标题风险</span><b id="odp-news-event-title-risk">—</b></div>
                 </div>
                 <p class="odp-energy-note" id="odp-news-event-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">SATELLITE THERMAL WATCH</span>
                   <strong>卫星热异常观察</strong>
@@ -714,7 +718,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-thermal-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">CROSS-CONFIRMATION</span>
                   <strong>交叉确认</strong>
@@ -729,7 +733,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-cross-confirmation-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">TIMESTAMP QC</span>
                   <strong>数据时点/QC</strong>
@@ -744,7 +748,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-qc-ledger-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">OPEC BUFFER</span>
                   <strong>OPEC 闲置产能</strong>
@@ -757,7 +761,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-energy-spare-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">CHOKEPOINT PROXY</span>
                   <strong>咽喉转运</strong>
@@ -1202,6 +1206,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=radar-integration-20261104-r3"></script>
+  <script type="module" src="scripts/app.js?v=oil-radar-simplify-20261107-r3"></script>
 </body>
 </html>

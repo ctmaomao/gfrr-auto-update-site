@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=radar-integration-20261104-r3';
+import { $ } from './config.js?v=oil-radar-simplify-20261107-r3';
 
 function asNumber(value) {
   const n = Number(value);

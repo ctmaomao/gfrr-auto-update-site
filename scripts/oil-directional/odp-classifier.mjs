@@ -281,7 +281,7 @@ export const GLOBAL_OVERLAY_EFFECT_VALUES = Object.freeze([
 
 const GT = ODP_GLOBAL_OVERLAY_THRESHOLDS;
 const usableStatus = (status) => status === 'live' || status === 'fallback';
-const asNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+const asNum = (v) => (!['number', 'string'].includes(typeof v) || (typeof v === 'string' && !v.trim()) ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 
 function physicallyTightFromSignals(physical) {
   const s = (physical && physical.signals) || {};
@@ -326,7 +326,7 @@ export function evaluateGlobalOverlay(reconcile, physical, price, context) {
   const spare = (context && context.spareCapacity) || {};
   const transport = (context && context.transport) || {};
   const invUsable = usableStatus(inv.sourceStatus);
-  const spareUsable = usableStatus(spare.sourceStatus);
+  const spareUsable = usableStatus(spare.sourceStatus) && asNum(spare.spareCapacityMbpd) !== null;
   const transportUsable = usableStatus(transport.sourceStatus);
 
   if (!invUsable && !spareUsable && !transportUsable) {

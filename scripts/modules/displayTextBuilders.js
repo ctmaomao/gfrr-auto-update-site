@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=radar-integration-20261104-r3';
+﻿import { fmtNumSafe } from './config.js?v=oil-radar-simplify-20261107-r3';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
