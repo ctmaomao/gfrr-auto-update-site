@@ -6,10 +6,10 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
-import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=radar-integration-20261104-r3';
-import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=radar-integration-20261104-r3';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=oil-radar-simplify-20261107-r3';
+import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=oil-radar-simplify-20261107-r3';
 
-const APP_VERSION = 'radar-integration-20261104-r3';
+const APP_VERSION = 'oil-radar-simplify-20261107-r3';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -234,7 +234,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=radar-integration-20261104-r3');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=oil-radar-simplify-20261107-r3');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

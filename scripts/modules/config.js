@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=radar-integration-20261104-r3';
+﻿import { formatFiniteNumber } from './format.js?v=oil-radar-simplify-20261107-r3';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

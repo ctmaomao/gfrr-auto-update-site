@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0087 — Oil-pressure evidence simplification](0087-oil-pressure-evidence-simplification.md): verified local evidence qualification and narrow non-predictive display contract; remote publication not authorized. ADR-0086 is reserved by the separate draft PR #503.
+
 - [ADR-0085 — Oil-news completion publication tail](0085-oil-news-publication-completion.md): append the existing producer completion while preserving main/success, quota and immutable checked-source guards; local implementation only, separate release approval pending.
 
 - [ADR-0084 — NVIDIA same-period evidence](0084-nvda-period-qualified-ratio.md): owner-authorized local implementation; narrow r5 gap, independent review and publication pending.

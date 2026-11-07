@@ -70,12 +70,13 @@ const sourceRequirements = [
   [
     'scripts/oil-directional/build-oil-thermal-watch.mjs',
     ['baselineQualityBasis', 'global_sample_window_days_legacy']
-  ],
-  [
-    'scripts/modules/renderOilDirectional.js',
-    ['effectiveQualityWindowDays', '最短设施窗']
   ]
 ];
+
+// ADR-0087 retires only the live satellite display; all quality/promotion checks above remain.
+const renderer = readSource('scripts/modules/renderOilDirectional.js');
+assert(!renderer.includes('effectiveQualityWindowDays'), 'retired satellite facility quality must not become a current ODP conclusion');
+assert(!renderer.includes('renderSatelliteThermalWatch'), 'retired satellite renderer must not return to the active ODP module');
 
 for (const [path, markers] of sourceRequirements) {
   const source = readSource(path);
