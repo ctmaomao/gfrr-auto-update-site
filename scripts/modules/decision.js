@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=bubble-budget-reliability-20261108';
-import { formatOnRrpYiUsd } from './format.js?v=bubble-budget-reliability-20261108';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=weekly-homepage-20261109';
+import { formatOnRrpYiUsd } from './format.js?v=weekly-homepage-20261109';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

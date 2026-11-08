@@ -1,6 +1,6 @@
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=bubble-budget-reliability-20261108';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=bubble-budget-reliability-20261108';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=bubble-budget-reliability-20261108';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=weekly-homepage-20261109';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=weekly-homepage-20261109';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=weekly-homepage-20261109';
 
 const DAY = 86400000;
 const finite = Number.isFinite;

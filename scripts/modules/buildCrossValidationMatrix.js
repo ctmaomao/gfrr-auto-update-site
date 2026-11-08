@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=bubble-budget-reliability-20261108';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=weekly-homepage-20261109';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

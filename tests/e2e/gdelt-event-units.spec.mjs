@@ -7,7 +7,7 @@ for(const width of [1440,390])test(`legacy energy fallback uses event units at $
   world.externalSources.gdelt={status:'ok',lastFetchedAt:'2026-09-10T00:00:00Z',summary:{totalEvents:7,conflictEvents:7,totalArticles:999,regionsCovered:['Iran']}};
   await page.route('**/data/oil-news-event-watch.json*',route=>route.fulfill({status:404,body:''}));
   await page.route('**/data/world-order-stress.json*',route=>route.fulfill({json:world}));
-  await page.goto('/');await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
+  await page.goto('/index.html?view=radar');await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
   const counter=page.locator('#odp-news-event-window');
   await expect(counter).toContainText('7 起事件（按国家汇总）');
   await expect(counter).toContainText('去重报道数未知');

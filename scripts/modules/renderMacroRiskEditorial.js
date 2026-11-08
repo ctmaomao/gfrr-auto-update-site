@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=bubble-budget-reliability-20261108';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=weekly-homepage-20261109';
 
 const MAX_AGE_HOURS = 30;
 

@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=bubble-budget-reliability-20261108';
+import { $ } from './config.js?v=weekly-homepage-20261109';
 
 function asNumber(value) {
   const n = Number(value);

@@ -10,7 +10,7 @@
 // fixtures, and the header name is a constant so a "report-only" configuration can never silently
 // become an enforced one.
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 
 export const GOOGLE_FONTS_STYLESHEET = 'https://fonts.googleapis.com';
@@ -113,8 +113,28 @@ export function derivePageHashes(root, file, { requireInlineBlocks = true } = {}
  */
 export function deriveExpectedHashSources(root, files = INLINE_HASH_SOURCE_FILES) {
   const pages = files.map((file) => derivePageHashes(root, file));
-  const script = pages.flatMap((page) => page.scriptHashes);
-  const style = pages.flatMap((page) => page.styleHashes);
+  // Single-file weekly reports use content hashes, never unsafe-inline. The Pages
+  // allowlist limits these to dated HTML and the archive; duplicate bodies share hashes.
+  // Minimal fixture trees have no reports directory. Production artifact construction
+  // requires the directory and the dedicated weekly check verifies every generated page.
+  if (files === INLINE_HASH_SOURCE_FILES && existsSync(resolve(root, 'reports'))) {
+    const weeklyFiles = ['weekly-reports.html', ...readdirSync(resolve(root, 'reports')).filter(name => /^(?:archive|\d{4}-\d{2}-\d{2})\.html$/.test(name)).map(name => 'reports/' + name)];
+    const weeklySources = [];
+    for (const file of weeklyFiles) {
+      const page = derivePageHashes(root, file, { requireInlineBlocks: false });
+      if (!page.styleHashes.length) throw new Error(file + ' must contain its standalone report styles');
+      weeklySources.push(page);
+    }
+    // One content-addressed weekly bundle, regardless of issue count. All source
+    // files remain listed for provenance. Existing strict policy equality is unchanged.
+    pages.push({
+      file: 'weekly-reports.html', sourceFiles: weeklyFiles,
+      scriptHashes: [...new Set(weeklySources.flatMap(page => page.scriptHashes))],
+      styleHashes: [...new Set(weeklySources.flatMap(page => page.styleHashes))],
+    });
+  }
+  const script = [...new Set(pages.flatMap((page) => page.scriptHashes))];
+  const style = [...new Set(pages.flatMap((page) => page.styleHashes))];
   if (!script.length || !style.length) {
     throw new Error('expected hash sources are empty; refusing to treat an empty hash set as valid');
   }

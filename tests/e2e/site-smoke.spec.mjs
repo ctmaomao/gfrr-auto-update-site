@@ -80,7 +80,7 @@ for (const viewport of [DESKTOP, MOBILE]) {
       data.macroRiskEditorialPreviousIssue = null;
       await route.fulfill({ response, json: data });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#macro-risk-editorial')).toBeHidden();
     await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('data-editorial-state', 'deterministic-fallback');
@@ -165,7 +165,7 @@ test.describe('desktop smoke', () => {
       radarData.macroRiskEditorialLayer = buildApprovedMacroRiskEditorial(radarData, currentTimestamp);
       await route.fulfill({ response, json: radarData });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#issue-meta-issue')).toContainText('ISSUE v28.0.10');
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
@@ -238,7 +238,7 @@ test.describe('desktop smoke', () => {
         radarData.macroDrivers.consumerRetail.bofaStatus = state === 'future' ? 'live' : state;
         await route.fulfill({ response, json: radarData });
       });
-      await page.goto('/index.html');
+      await page.goto('/index.html?view=radar');
       await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
       const text = page.locator('#c4-consumer-bofa');
       if (state === 'missing' || state === 'future') {
@@ -263,7 +263,7 @@ test.describe('desktop smoke', () => {
       await route.fulfill({ response, json: history });
     });
 
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#trend-line-score')).toBeHidden();
     await expect(page.locator('#trend-line-score')).toHaveAttribute('points', '');
@@ -331,7 +331,7 @@ test.describe('mobile smoke', () => {
       await route.fulfill({ response, json: radarData });
     });
 
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-risk-editorial')).toBeHidden();
