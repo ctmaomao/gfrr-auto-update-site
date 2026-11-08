@@ -95,12 +95,12 @@ function isOfficialDomain(domain) {
 // request (ADR-0059), so it says nothing about index or source health. It is the
 // only failure class that may downgrade an empty refresh to an expected skip
 // (ADR-0060): real provider failures must stay hard failures.
-const BUDGET_HOLD_CODE = /^tavily_budget_[a-z_]+$/u;
+const BUDGET_HOLD_CODE = /^(?:tavily|brave)_budget_[a-z_]+$/u;
 
 function providerHeldByBudget(status) {
   const runs = Array.isArray(status?.queryRuns) ? status.queryRuns : [];
   const failures = runs.filter((run) => run?.status === 'error');
-  return failures.length > 0 && failures.every((run) => BUDGET_HOLD_CODE.test(run?.error || ''));
+  return failures.length > 0 && failures.every((run) => run?.providerRequestAttempted === false && BUDGET_HOLD_CODE.test(run?.error || ''));
 }
 
 export function assessEditorialNewsReadiness(discovery) {

@@ -630,8 +630,13 @@ check('contract', buildSrc.includes('readGdeltBubbleWatchCache') && buildSrc.inc
   'ceo_hedging GDELT public search 必须保留低频缓存与 stale fallback');
 check('contract', buildSrc.includes('mergeCeoHedgingNewsConfirmations') && buildSrc.includes('Brave News Search API'),
   'ceo_hedging 必须保留 Tavily/Brave 交叉确认路径');
-check('contract', buildSrc.includes('capSingleSourceCeoHedgingRed') && buildSrc.includes('redRequiresTwoIndependentNewsSources'),
-  'ceo_hedging 必须保留单源红灯封顶规则');
+// ADR-0090 retires the Wind-only helper, not the active multi-source red cap.
+check('contract', buildSrc.includes('const multiSourceConfirmed = confirmingSourceCount >= 2;')
+  && buildSrc.includes('const mergedRank = strongestRank >= 2 && !multiSourceConfirmed ? 1 : strongestRank;')
+  && buildSrc.includes('redRequiresTwoIndependentNewsSources'),
+  'ceo_hedging 活跃多源合并路径必须保留单源红灯封顶规则');
+check('contract', !buildSrc.includes('fetchCeoHedgingFromWindNews'),
+  'ceo_hedging 不得恢复付费 Wind 回退');
 check('contract', buildSrc.includes('extractVcAiFundingShare') && buildSrc.includes('ai_sector_total_global_vc_sentence_v2'),
   'vc_ai_share 必须使用 AI sector / total global VC 句子级解析器,避免误抓巨额轮次数值');
 check('contract', buildSrc.includes('UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST') && buildSrc.includes("'mag4_fcf_yoy'"),

@@ -31,6 +31,8 @@ import fs from 'node:fs';
 import { qualifiedEdgarLtmRevenue, qualifiedMirrorLtmRevenue } from './bubble-watch/ltm-revenue.mjs';
 import { inspectNvdaNumerator, qualifyNvdaRatio, buildNvdaGap } from './bubble-watch/nvda-ratio-evidence.mjs';
 import { withTavilyBudget } from './lib/tavily-budget.mjs';
+import { withBraveBudget } from './lib/brave-budget.mjs';
+import { createSearchKeyPool } from './lib/search-key-pool.mjs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
 import os from 'node:os';
@@ -3131,22 +3133,6 @@ function getCeoHedgingResultCounts(result) {
   };
 }
 
-function capSingleSourceCeoHedgingRed(result, reason) {
-  if (result?.status !== 'red') return result;
-  return {
-    ...result,
-    status: 'yellow',
-    value_display: ceoHedgingDisplayForStatus('yellow'),
-    note: `${result.note} 当前只有单一路径达到红色强度,尚未形成独立来源共振,按保守口径先维持黄灯。`,
-    detail: {
-      ...(result.detail || {}),
-      singleSourceCapApplied: true,
-      singleSourceCapReason: reason,
-      uncappedStatus: 'red'
-    }
-  };
-}
-
 function unavailableCeoHedgingConfirmation(source, errorOrReason) {
   return {
     source,
@@ -3486,124 +3472,39 @@ async function fetchCeoHedgingFromGdeltPublic() {
   };
 }
 
-async function tavilySearch(payload) {
-  if (!TAVILY_API_KEYS.length) throw new Error('TAVILY_API_KEYS 未配置');
-  let lastError = null;
-  for (let i = 0; i < TAVILY_API_KEYS.length; i++) {
-    const key = TAVILY_API_KEYS[i];
-    try {
-      return await withTavilyBudget({ key, payload, consumer: 'bubble-ceo' }, async () => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 20000);
-        try {
-          const res = await fetch('https://api.tavily.com/search', {
-            method: 'POST',
-            redirect: 'error',
-            headers: {
-              Authorization: `Bearer ${key}`,
-              'Content-Type': 'application/json',
-              'User-Agent': UA
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-          });
-          const text = await res.text();
-          if (!res.ok) throw new Error(`Tavily HTTP ${res.status}`);
-          try {
-            return JSON.parse(text);
-          } catch (parseError) {
-            throw new Error(`Tavily JSON parse failed: ${parseError.message}`);
-          }
-        } finally {
-          clearTimeout(timer);
-        }
-      });
-    } catch (error) {
-      if (error?.budgetCode) throw error;
-      lastError = error;
-      console.warn(`[bubble-watch] Tavily CEO hedging search key ${i + 1}/${TAVILY_API_KEYS.length} failed: ${error.message}`);
-    }
-  }
-  throw lastError || new Error('Tavily Search API failed');
-}
+const ceoTavilyKeyPool = createSearchKeyPool(TAVILY_API_KEYS);
+const ceoBraveKeyPool = createSearchKeyPool(BRAVE_API_KEYS);
 
-async function braveNewsSearch(params) {
-  if (!BRAVE_API_KEYS.length) throw new Error('BRAVE_API_KEYS 未配置');
-  let lastError = null;
-  for (let i = 0; i < BRAVE_API_KEYS.length; i++) {
-    const key = BRAVE_API_KEYS[i];
+async function tavilySearch(payload, { budget = withTavilyBudget, requestWithKeys = ceoTavilyKeyPool } = {}) {
+  return requestWithKeys(key => budget({ key, payload, consumer: 'bubble-ceo' }, async () => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);
     try {
-      const url = `https://api.search.brave.com/res/v1/news/search?${params}`;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip',
-          'User-Agent': UA,
-          'X-Subscription-Token': key
-        },
-        signal: controller.signal
+      const res = await fetch('https://api.tavily.com/search', {
+        method: 'POST', redirect: 'error',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': UA },
+        body: JSON.stringify(payload), signal: controller.signal
       });
-      const text = await res.text();
-      if (!res.ok) throw new Error(`Brave News HTTP ${res.status}`);
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        throw new Error(`Brave News JSON parse failed: ${parseError.message}`);
-      }
-    } catch (error) {
-      lastError = error;
-      console.warn(`[bubble-watch] Brave CEO hedging news key ${i + 1}/${BRAVE_API_KEYS.length} failed: ${error.message}`);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  throw lastError || new Error('Brave News Search API failed');
+      if (!res.ok) { await res.body?.cancel(); throw new Error(`Tavily HTTP ${res.status}`); }
+      return JSON.parse(await res.text());
+    } finally { clearTimeout(timer); }
+  }));
 }
 
-async function fetchCeoHedgingFromWindNews(gdeltError) {
-  const json = await windMcpCall('financial_docs', 'get_financial_news', {
-    query: 'AI泡沫CEO',
-    top_k: 5
-  });
-  const items = extractWindNewsItems(json);
-  if (!items.length) throw new Error('Wind CEO hedging news 返回空列表');
-  const aiRe = /\bAI\b|人工智能/iu;
-  const overheatRe = /泡沫|过热|非理性|担忧|质疑|风险|破裂|bubble|overbuild|overheated|irrational|mania|capex/iu;
-  const cautionRe = /担忧|质疑|警告|风险|破裂|放缓|非理性|泡沫|bubble|overheated|irrational/iu;
-  const relevant = items.filter((item) => {
-    const text = `${item.title || ''} ${item.content || ''}`;
-    return aiRe.test(text) && overheatRe.test(text);
-  });
-  const executiveHits = relevant.filter((item) => hasNamedCeoFinancialCaution(`${item.title || ''} ${item.content || ''}`));
-  const cautionHits = relevant.filter((item) => cautionRe.test(`${item.title || ''} ${item.content || ''}`));
-  const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
-  const narrative = status === 'red'
-    ? '对冲表态明显扩散:近期新闻持续围绕 AI 泡沫、估值压力和资本开支可持续性展开,并出现较多 CEO/高管谨慎表述。承认过热的频率与强度已明显偏高,升至红灯。'
-    : status === 'yellow'
-      ? '对冲表态继续升温:近期新闻继续围绕 AI 泡沫、估值压力和资本开支可持续性展开,并出现部分 CEO/高管谨慎表述。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。'
-      : '对冲表态暂未扩散:近期公开新闻仍以市场讨论和分析师质疑为主,缺少直接高管共振,维持绿灯。';
-  return {
-    status,
-    value_display: display,
-    source_name: 'Wind MCP paid optional news fallback',
-    note: narrative,
-    detail: {
-      source: 'Wind MCP financial_docs.get_financial_news',
-      freePrimaryFailure: gdeltError?.message || String(gdeltError || ''),
-      articleCount: relevant.length,
-      executiveHitCount: executiveHits.length,
-      cautionHitCount: cautionHits.length,
-      topArticles: relevant.slice(0, 5).map((item) => ({
-        title: item.title || null,
-        date: item.date || null,
-        relevance: item.relevance ?? null,
-        doc_type: item.doc_type || null
-      }))
-    }
-  };
+async function braveNewsSearch(params, { budget = withBraveBudget, requestWithKeys = ceoBraveKeyPool } = {}) {
+  return requestWithKeys(key => budget({ key, consumer: 'bubble-ceo' }, async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+        method: 'GET', redirect: 'error',
+        headers: { Accept: 'application/json', 'Accept-Encoding': 'gzip', 'User-Agent': UA, 'X-Subscription-Token': key },
+        signal: controller.signal
+      });
+      if (!res.ok) { await res.body?.cancel(); throw Object.assign(new Error(`Brave News HTTP ${res.status}`), { httpStatus: res.status, providerResponseReceived: true }); }
+      return JSON.parse(await res.text());
+    } finally { clearTimeout(timer); }
+  }));
 }
 
 async function fetchCeoHedgingFromTavilyPublic(gdeltError, mode = 'fallback') {
@@ -3764,12 +3665,7 @@ async function fetchCeoHedgingWithTieredSources() {
         );
       }
     }
-    console.warn('[bubble-watch] Tavily/Brave CEO hedging fallbacks unavailable, try Wind paid fallback');
-    const windErrorContext = new Error(`GDELT failed: ${error.message}; Tavily/Brave free search unavailable`);
-    return capSingleSourceCeoHedgingRed(
-      await fetchCeoHedgingFromWindNews(windErrorContext),
-      'GDELT/Tavily/Brave 免费新闻路径均不可用,Wind 为唯一付费兜底路径'
-    );
+    throw new Error(`GDELT failed: ${error.message}; Tavily/Brave free search unavailable; CEO Wind fallback disabled by free-only search policy`);
   }
 }
 

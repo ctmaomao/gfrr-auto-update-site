@@ -73,7 +73,7 @@ test('oil real collector isolates quota failure from healthy Brave without expos
     assert.ok(url.includes('search.brave.com')); braveCalls++;
     return Response.json({ results: [] });
   });
-  const result = await runDiagnosis({ budget, allowNetwork: true, sources: ['tavily', 'brave'], windowDays: 7, maxResults: 5, writeOutput: false });
+  const result = await runDiagnosis({ budget, braveBudget: budget, allowNetwork: true, sources: ['tavily', 'brave'], windowDays: 7, maxResults: 5, writeOutput: false });
   assert.equal(tavilyCalls, 1);
   assert.ok(braveCalls > 1);
   assert.equal(result.sourceResults.find(row => row.source === 'tavily').status, 'error');

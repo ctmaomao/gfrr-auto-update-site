@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-08 两篇文章共享预算与免费搜索门禁（预算实施与发布门禁）
+
+- **Acceptance baseline**：owner 批准 Macro Risk / Bubble Watch 两篇文章合计每月最多 CNY 5；Tavily / Brave 已确认免费，但剩余额度未知时停止。仅去掉 CEO 新闻的付费 Wind 回退，不改 Daily、主评分或其它 Wind 指标。保留事实、引用、质量、时效、单次调用和既有 writer 门禁；owner也已批准推送/PR、独立AI代审及检查通过后的串行合并部署；真实生成仍须先核验费用与调用上限。本地实施阶段尚未调用provider、生产刷新、初始化远端账本或执行远端发布。
+- **最后基线 / 改动**：隔离云工作树 `gfrr-editorial-budget-20261108`、分支 `codex/editorial-budget-cap-20261108`。按 [ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 增加两文章共享 DeepSeek CAS 账本、默认 provider gate、搜索前只读预检及两处 step-local 参数；四个搜索消费者统一 Tavily / Brave 账本。仅退役 CEO Wind helper，活跃多源红灯封顶保持；Epoch 周度生产 job 的原 hash 守卫和源审计 workflow 不变。
+- **当前任务 / 验证**：新增离线预算与真实入口/工作流接线回归登记 `check:all`。CNY 2.161152 是全上下文最坏预留，不是平均成本，零历史时最多两次/31天；不明完成不老化，保留完整历史无自动退款/重置。Tavily `/usage` 有独立 10次/10分钟持久限流；Brave 需真实 dashboard 剩余额度 grant。 两搜索950/31天为按记录预留时间统计的项目预算，不宣称真实dispatch严格窗口已证实；旧历史/schema不变，摘要显性披露。新请求30秒单调deadline，Brave到期另按可信serverTime+31秒提前hold。完整验证与独立审阅以本轮最终回执为准，不能用新增测试通过代替全套。
+- **本地验证回执（2026-11-08）**：完整 `npm run check:changed` 实际执行 `check:all`，exit 0；单测/覆盖率 1,529 通过、1 个既有条件跳过，原门槛通过；独立 AI 代审最终 169/169 专项通过，无剩余 P1/P2，非人工 approve。EdgeOne staging 67/67，依赖审计 0 vulnerabilities。云端 Chromium 因系统 socket 限制无法启动，不计为浏览器通过；精确提交 CI 仍须完成锁定 Chromium 回归。未初始化账本、未调用 provider 或修改生产。
+- **下一步 / 阻塞**：先完成本地完整检查及独立AI契约审阅，再按已获批准推进推送/PR、串行合并部署；不把发布授权当作预算证据已满足。DeepSeek 初始化需完整历史或严格核验的本月全账户账单上界；真实 billing timezone、上报延迟、全部请求已完成与切换证据不明时保持 hold。默认 full-cap quarantine 需31天加时钟余量；余额/显示时区/单个 key 用量不是完整历史。价格复核不超过24小时，账本根SHA和复核digest缺失则零调用。免费账户确认不等于 Brave 剩余额度证据；现有只读状态流程不探测 provider。
+
 ### 2026-11-07 恢复 OFR 发布核验与周评旧模型隔离
 
 - **Acceptance baseline**：owner 要求继续项目完善并将重点转回主评分可靠性，随后要求恢复停下的工作。本轮仅在 latest main `aa1eefa4` 新隔离分支 `codex/ofr-editorial-guards-20261107` 实施与验证；不推送、合并、部署、调用付费 provider 或生成生产数据，原研究及 #503/#504/#505 工作树保留。

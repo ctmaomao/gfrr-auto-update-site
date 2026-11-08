@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../tests/helpers/deepseek-budget-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,7 +131,7 @@ const fakeFetch = async (url, request) => {
     }
   };
 };
-const providerResult = await requestWeeklyEditorial({
+const providerResult = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
   input,
   apiKey: 'fixture-secret-never-serialized',
   fetchImpl: fakeFetch,
@@ -158,7 +159,7 @@ const missingAttributionOutput = {
   sourceAttribution: providerOutput.sourceAttribution.filter((item) => item.sourceRefId !== omittedAttribution)
 };
 let attributionRepairCalls = 0;
-const attributionRepairResult = await requestWeeklyEditorial({
+const attributionRepairResult = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
   input,
   apiKey: 'fixture-key',
   fetchImpl: async () => {
@@ -228,7 +229,7 @@ let invalidJsonCalls = 0;
 let invalidJsonFailure = null;
 let invalidJsonError = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -252,7 +253,7 @@ assert(classifyProviderFailure(truncatedError).category === 'provider_output_tru
 let timeoutCalls = 0;
 let timeoutFailure = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -272,7 +273,7 @@ assert(timeoutFailure?.category === 'provider_timeout' && timeoutFailure.retryAl
 let transportCalls = 0;
 let transportError = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -291,7 +292,7 @@ assert(transportError?.responseDiagnostics?.transportErrorName === 'TypeError' &
 let envelopeCalls = 0;
 let envelopeError = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -311,7 +312,7 @@ let contractCalls = 0;
 let contractError = null;
 try {
   const invalidContractOutput = { ...providerOutput, headlineZh: null };
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
