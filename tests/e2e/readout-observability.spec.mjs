@@ -77,7 +77,7 @@ for (const width of [1440, 390]) {
       await route.fulfill({ response, json: qualified });
     });
     await page.route('**/data/world-order-stress.json*', route => route.fulfill({ json: world }));
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
     await expect(page.locator('#hero-score-value')).toHaveText('-1.829');
     await expect(page.locator('#hero-overlay-score')).toContainText('历史快照');

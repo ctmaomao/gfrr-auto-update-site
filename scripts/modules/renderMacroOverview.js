@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=bubble-budget-reliability-20261108';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=bubble-budget-reliability-20261108';
+} from './config.js?v=weekly-homepage-20261109';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=weekly-homepage-20261109';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=bubble-budget-reliability-20261108';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=bubble-budget-reliability-20261108';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=bubble-budget-reliability-20261108';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=bubble-budget-reliability-20261108';
-import { renderTrendSvg } from './renderMacroTrend.js?v=bubble-budget-reliability-20261108';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=bubble-budget-reliability-20261108';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=bubble-budget-reliability-20261108';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=bubble-budget-reliability-20261108';
+} from './macroOverviewDisplayHelpers.js?v=weekly-homepage-20261109';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=weekly-homepage-20261109';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=weekly-homepage-20261109';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=weekly-homepage-20261109';
+import { renderTrendSvg } from './renderMacroTrend.js?v=weekly-homepage-20261109';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=weekly-homepage-20261109';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=weekly-homepage-20261109';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=weekly-homepage-20261109';
 
 // ---------- 阈值 + 派生 helper ----------
 

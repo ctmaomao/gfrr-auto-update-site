@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=bubble-budget-reliability-20261108';
+﻿import { formatFiniteNumber } from './format.js?v=weekly-homepage-20261109';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

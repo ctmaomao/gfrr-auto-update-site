@@ -759,38 +759,18 @@
      不参与任何数据渲染。统一固定右上角:左上角会遮挡手机端刊头标题,
      右上角桌面/手机布局一致且 issue-meta 在手机端折行到标题下方不冲突。
      ================================================================ */
-  .page-bookmarks { position: fixed; top: 0; right: clamp(10px, 2.5vw, 30px); display: flex; gap: 10px; z-index: 1000; }
-  .page-bookmarks .pbm {
-    display: block; width: 34px; height: 128px; position: relative;
-    text-decoration: none; color: #FBF7F0;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), 50% 100%, 0 calc(100% - 10px));
-    transform: translateY(calc(-100% + 24px));
-    transition: transform .38s cubic-bezier(.34, 1.45, .64, 1), filter .2s ease;
-    box-shadow: 0 2px 6px rgba(26, 24, 21, .35);
-    filter: saturate(.82);
-  }
-  .page-bookmarks .pbm:nth-child(2) { transition-delay: .04s; }
-  .page-bookmarks .pbm-radar { background: linear-gradient(180deg, #5d1515 0%, #7C1D1D 100%); }
-  .page-bookmarks .pbm-bubble { background: linear-gradient(180deg, #7d5813 0%, #A8761A 100%); }
-  .page-bookmarks .pbm-label {
-    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-    writing-mode: vertical-rl; font-family: "Noto Serif SC", serif;
-    font-size: 13px; font-weight: 600; letter-spacing: .3em; white-space: nowrap;
-  }
-  .page-bookmarks .pbm-dot {
-    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-    width: 7px; height: 7px; border-radius: 50%;
-    background: rgba(251, 247, 240, .85);
-  }
-  .page-bookmarks .pbm-active { filter: saturate(1.1); }
-  .page-bookmarks .pbm-active .pbm-dot { box-shadow: 0 0 0 2.5px rgba(251, 247, 240, .3); }
-  .page-bookmarks:hover .pbm, .page-bookmarks:focus-within .pbm { transform: translateY(0); filter: saturate(1.1); }
-  .page-bookmarks .pbm:hover { filter: saturate(1.25) brightness(1.06); }
-  .page-bookmarks .pbm:focus-visible { outline: 2px solid var(--paper-ink, #1A1815); outline-offset: 2px; }
-  /* 触屏带尾 36px:止于手机端刊头标题首行(top≈39px)之上,避免角部遮字 */
-  @media (hover: none) { .page-bookmarks .pbm { transform: translateY(calc(-100% + 36px)); } }
-  @media (prefers-reduced-motion: reduce) { .page-bookmarks .pbm { transition: none; } }
-  @media print { .page-bookmarks { display: none; } }
+  /* Three explicit top-right tabs; same component on all three reader pages. */
+  .page-bookmarks { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:0; position:relative; z-index:1; margin:16px clamp(18px,4vw,48px) 0; }
+  .page-bookmarks .pbm { display:block; padding:10px 14px; text-decoration:none; border:1px solid var(--paper-line); border-bottom:2px solid var(--paper-line-strong); color:var(--paper-ink); background:var(--paper-bg); font:13px/1.4 var(--font-serif); }
+  .page-bookmarks .pbm + .pbm { border-left:0; }
+  .page-bookmarks .pbm-label { position:static; writing-mode:horizontal-tb; }
+  .page-bookmarks .pbm-dot { display:none; }
+  .page-bookmarks .pbm-active { background:var(--paper-ink); color:var(--paper-bg); }
+  .page-bookmarks .pbm:hover { text-decoration:underline; text-underline-offset:4px; }
+  .page-bookmarks .pbm:focus-visible { outline:2px solid var(--risk-red); outline-offset:3px; }
+  @media(max-width:600px) { .page-bookmarks { margin:12px 18px 0; } .page-bookmarks .pbm { padding:9px 11px; font-size:12px; } }
+  @media print { .page-bookmarks { display:none; } }
+
 
 /* ADR-0080: raw OFR observations and formally retired legacy advice. */
 .legacy-model-retired[hidden] { display: none !important; }

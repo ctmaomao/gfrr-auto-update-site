@@ -223,18 +223,29 @@ ADR-0089 / owner 2026-11-08 窄范围例外：当期 AI 缺失或不合格时，
 
 ADR-0050 / owner 2026-09-16 批准的窄范围补充（[讨论 #369](https://github.com/ctmaomao/gfrr-auto-update-site/issues/369)）：本页除下述专属数据外，可只读 `data/bubble-watch-editorial-status.json`，在 Hero 正文下显示脱敏刷新原因。状态必须同数据期次、七天内有效；状态获取失败不阻塞正文。沿用现有 muted/serif 小字，不新增 section、颜色或评分输入；不放宽 AI 正文的有效期与展示门槛。
 
-站点自 2026-06-11 起有两个独立页面(见 ADR-0016):
+原两页结构见 ADR-0016；2026-11-09 起增加默认周报入口，按下文 §4.5 执行：
 
 - `index.html` — 全球金融风险雷达(本合约 §4.1-4.3 的 IA 锁定仅约束此页)。
 - `bubble-watch.html` — AI 泡沫监测 · The Bubble Watch,**独立单文件页**(内联 CSS + 内联渲染 JS,沿用外部原版的报纸排版与本站 editorial paper 语言),自带视觉契约,不受 §4.1 一级阅读顺序约束;数据只读 `data/bubble-watch.json`,display-only,不进雷达打分/决策链。
 - Bubble Watch v2 必须全量展示 27 张证据卡,并以克制的 mono 小印章区分「固定核心」与「影子观察」;Hero、Stage × Trigger、历史趋势须明确标注 Core-23 口径。角色标签只能使用纸媒式细边框/虚线印章,不得改成彩色 SaaS pill、开关或独立 dashboard 面板。
 - 合格的 `summary.weekly_editorial` 在 Hero 后使用同一 editorial paper 语言展示周度长篇判读：时间线、指标综合、关键矛盾、分类、历史差异、下周条件、数据限制和来源账本。不得把它画成 SaaS 卡片墙、聊天框或独立 AI dashboard；缺失/过期/as-of 不匹配时整个长篇区隐藏，Hero 必须回退到规则 `verdict_label` + `verdict_desc`。
 - Bubble Watch 响应式验收固定覆盖 1440px 桌面与 390px 手机视口。390px 下 Hero 与 Stage × Trigger 必须为单列,全页不得产生横向溢出,趋势 SVG 不得宽于容器；运行态必须显示 27 / Core-23 / Shadow-4 对应的 27 张分类证据卡、23 个核心印章和 4 个影子印章,且 Hero/两轴数值须与专属 JSON 一致。专属 JSON 不可用时只显示错误态,不得保留旧卡片或趋势图。
-- 两页通过左上角 `.page-bookmarks` 彩色书签丝带互切:默认缩在角落只露带尾(当前页饱和度更高、带光环圆点),hover / 键盘聚焦滑出显示页名;纯 CSS、无 JS。组件契约**双侧同构**:`assets/styles.css`(index 侧)与 `bubble-watch.html` 内联(专题侧)各持一份,**改任一侧必须同步另一侧**,由 `check:bubble-watch` 的 boundary leaf 守卫两侧存在性。
+- 原两页通过左上角 `.page-bookmarks` 彩色书签丝带互切:默认缩在角落只露带尾(当前页饱和度更高、带光环圆点),hover / 键盘聚焦滑出显示页名;纯 CSS、无 JS。组件契约**双侧同构**:`assets/styles.css`(index 侧)与 `bubble-watch.html` 内联(专题侧)各持一份,**改任一侧必须同步另一侧**,由 `check:bubble-watch` 的 boundary leaf 守卫两侧存在性。
 - 书签是 fixed overlay 导航,不属于 §4.1 的 section,不进 dashboard-jump-nav。
 
 ---
 
+### 4.5 周报默认入口与三标签（2026-11-09）
+
+owner 接手实施要求及讨论：[PR #510](https://github.com/ctmaomao/gfrr-auto-update-site/pull/510)。本条明确替代 §4.4 的两页收缩丝带导航条款，不改变雷达正文的 §4.1–4.3 顺序。
+
+- 根入口和不带锚点的 index.html 默认转到 weekly-reports.html，完整展示最新一期正文和最近52期目录。显式 index.html?view=radar 与所有旧 index.html#锚点继续打开雷达；不迁移原DOM id、不改评分或数据。
+- 周报、雷达、AI泡沫右上方同构显示“每周周报 / 全球雷达 / AI泡沫”三个常显标签。使用纸色、墨色、细线和三个字体token，无彩色渐变、阴影、抽拉或遮挡正文的fixed覆盖层。当前页通过aria-current和反白标示，支持键盘及390px触屏。
+- 每期 reports/YYYY-MM-DD.html 为完整离线可读的固定单HTML；weekly-reports.html及旧weekly-reports/入口由确定性生成器派生。超过52期只从近期列表转到更早归档，固定URL和正文不自动删除。
+- 周报沿用 §§1–3、6–7 的纸媒视觉语言，正文目录不受雷达13项jump-nav限制。来源、观察时点和缺口必须进入正文；不得把旧模型总分或研究分等同现行OFR或危机概率。
+- Pages与EdgeOne共用静态白名单；允许新增周报HTML及相应发布触发，是本任务明确授权范围，不据此扩展数据管线或付费provider权限。独立审查和实际桌面/手机验收仍必须完成。
+
+---
 ## 5. 组件规范（核心组件的 HTML 结构和样式）
 
 ### 5.1 editorial-section（一级 section 容器）

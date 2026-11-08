@@ -12,7 +12,7 @@ for (const width of [1440, 390]) {
       await route.abort();
     });
     try {
-      await page.goto('/index.html', { waitUntil: 'domcontentloaded' });
+      await page.goto('/index.html?view=radar', { waitUntil: 'domcontentloaded' });
       await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u, { timeout: 5000 });
       await expect(page.locator('#homepage-today-judgment')).toBeVisible();
       await expect(page.locator('#hero-score-value')).not.toHaveText('');

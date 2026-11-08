@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=bubble-budget-reliability-20261108';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=bubble-budget-reliability-20261108';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=weekly-homepage-20261109';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=weekly-homepage-20261109';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

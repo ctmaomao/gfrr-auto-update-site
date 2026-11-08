@@ -14,7 +14,7 @@ for (const width of [1440, 390]) {
       wo.warnings = ['免费 Events 已纳入两个冲突维度；新旧分数不可直接比较。'];
       await route.fulfill({ json: wo });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
     await page.locator('#world-order-stress-section > summary').click();
     await expect(page.locator('#wo-detail-gdelt-conflict-events')).toHaveText('51,817～51,819（免费编码记录）');

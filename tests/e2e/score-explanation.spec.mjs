@@ -14,7 +14,7 @@ for (const width of [1440, 390]) {
         data.transportShockScoringImpact = { scoreBeforeTransport: 68, scoreAfterTransport: 71, contributionPct: contribution };
         await route.fulfill({ response, json: data });
       });
-      await page.goto('/index.html');
+      await page.goto('/index.html?view=radar');
       await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
       await expect(page.locator('#hero-score-value')).toHaveText('—');
       await expect(page.locator('#hero-verdict-headline')).toHaveText('官方读数待更新');
@@ -47,7 +47,7 @@ for (const width of [1440, 390]) {
       data.brentPricingLayer.publicSpotProxy = { value: 109.51, observedAt: '2026-09-09' };
       await route.fulfill({ response, json: data });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#hero-score-value')).toHaveText('—');
     await expect(page.locator('#hero-verdict-headline')).toHaveText('官方读数待更新');

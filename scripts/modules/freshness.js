@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=bubble-budget-reliability-20261108';
+﻿import { fmtNumSafe } from './config.js?v=weekly-homepage-20261109';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

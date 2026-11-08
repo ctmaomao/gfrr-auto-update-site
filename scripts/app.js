@@ -6,10 +6,10 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
-import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=bubble-budget-reliability-20261108';
-import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=bubble-budget-reliability-20261108';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=weekly-homepage-20261109';
+import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=weekly-homepage-20261109';
 
-const APP_VERSION = 'bubble-budget-reliability-20261108';
+const APP_VERSION = 'weekly-homepage-20261109';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -234,7 +234,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=bubble-budget-reliability-20261108');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=weekly-homepage-20261109');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {
