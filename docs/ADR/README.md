@@ -131,6 +131,8 @@
 
 | [ADR-0071](0071-bubble-editorial-essential-gates.md) | Essential editorial gates; presentation warnings | Independent contract review required |
 
+| [ADR-0089](0089-bubble-editorial-reliability.md) | Bubble limited discovery, evidence-bound writer and original-issue history | Local implementation; independent review required |
+
 ## Superseded
 
 | [ADR-0045](0045-editorial-single-recovery.md) | One-use 2026-09-11 editorial recovery | Executable route retired by ADR-0058; spent refs retained |

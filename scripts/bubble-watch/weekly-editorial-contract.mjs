@@ -267,7 +267,7 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
 
   const limited = options.metadataOnly && typeof options.limitedEvidence === 'boolean' ? options.limitedEvidence : isLimitedEvidence(input);
   const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: 0, max: 8 });
-  const tensions = requireArray(root.keyTensions, 'output.keyTensions', errors, { min: 0, max: 6 });
+  requireArray(root.keyTensions, 'output.keyTensions', errors, { min: 0, max: 6 });
   const categories = requireArray(root.categoryAnalysis, 'output.categoryAnalysis', errors, { min: 0, max: 6 });
   requireArray(root.watchNextWeek, 'output.watchNextWeek', errors, { min: 1, max: 6 });
   requireArray(root.dataGaps, 'output.dataGaps', errors, { min: 1, max: 12 });
@@ -331,6 +331,7 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
     if (!attributionIds.has(sourceRefId)) errors.push(`output source ${sourceRefId} lacks sourceAttribution`);
   }
 
+  if (input?.newsContext?.coverageMode === 'limited_single_search' && !requireSafeArray(root.dataGaps).some(gap => typeof gap === 'string' && /一个完整健康的搜索渠道/u.test(gap) && /不代表充分核实/u.test(gap))) errors.push('limited search editorial must disclose channel and evidence limitations');
   if (limited && !requireSafeArray(root.dataGaps).some((gap) => /新闻|证据|覆盖/u.test(gap))) warnings.add('新闻证据覆盖有限，请结合来源与数据限制阅读。');
   if ([...referencedSourceIds].some((id) => newsById.get(id)?.evidenceStatus === 'attributed_media') && !requireSafeArray(root.dataGaps).some((gap) => /摘要|媒体|观点|来源|核实/u.test(gap))) warnings.add('专业媒体摘要或机构观点尚未独立核实，请结合来源复核。');
   const confidence = requireRecord(root.confidence, 'output.confidence', errors);

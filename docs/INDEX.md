@@ -260,3 +260,5 @@ ARR / Bubble Watch 独立候选入口：`docs/ARR_EPOCH_SOURCE_REVIEW.md` — Ep
 ## Local oil-pressure simplification
 
 - [ADR-0087](ADR/0087-oil-pressure-evidence-simplification.md): task-scoped local evidence and display contract; fixed thresholds and archived evidence remain; independent Codex AI review and local checks passed, publication approval remains separate.
+
+- [Bubble 周评可靠性与原期保留（ADR-0089）](ADR/0089-bubble-editorial-reliability.md)：本地实施；发布须另行审核/验收。

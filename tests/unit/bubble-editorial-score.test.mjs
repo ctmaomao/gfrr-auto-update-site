@@ -5,7 +5,7 @@ import { replayEvidenceScores } from '../../scripts/bubble-watch/evidence-score-
 import { buildEditorialScoringSnapshot, validateEditorialScoringSnapshot } from '../../scripts/bubble-watch/editorial-score-snapshot.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { validateWeeklyEditorialInput, validateWeeklyEditorialOutput } from '../../scripts/bubble-watch/weekly-editorial-contract.mjs';
-import { projectWeeklyEditorial, validateWeeklyEditorialProduction, applyWeeklyEditorialProjection } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
+import { reviewWeeklyEditorial, projectWeeklyEditorial, validateWeeklyEditorialProduction, applyWeeklyEditorialProjection } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
 const read = file => JSON.parse(fs.readFileSync(new URL(`../../${file}`,import.meta.url)));
 function qualifiedBubble() {
   const d=structuredClone(read('docs/fixtures/bubble-watch/legacy-contract-bundle.json').files['data/bubble-watch.json']);
@@ -58,7 +58,7 @@ test('production projection preserves qualified score proof and rejects same-dat
   const result=validateWeeklyEditorialOutput(output,input);assert.equal(result.ok,true,result.errors.join('; '));
   const invented=structuredClone(output);invented.scorecardSynthesisZh='Core-23主分为0%，所有缺口按绿灯处理，市场风险已经完全消失。';
   assert.equal(validateWeeklyEditorialOutput(invented,input).ok,false);
-  const review=read('docs/fixtures/bubble-watch-weekly-editorial/sample-review-v1.json');
+  const review=reviewWeeklyEditorial({input,output});
   const layer=projectWeeklyEditorial({input,output,review});
   assert.deepEqual(layer.sourceScoringSnapshot,input.scoringSnapshot);
   const valid=validateWeeklyEditorialProduction(layer,bubble);assert.equal(valid.ok,true,valid.errors.join('; '));
@@ -86,14 +86,15 @@ test('genuine fully observed zero remains zero rather than pending',()=>{
 });
 test('an r4 commentary cannot be relabeled r5, even when dates and score numbers are unchanged',()=>{
  const bubble=qualifiedBubble();bubble.scoring.model_version='bubble-watch-v3-core23-shadow4-r4';
- const fixture=read('docs/fixtures/bubble-watch-weekly-editorial/sample-input-v1.json'),review=read('docs/fixtures/bubble-watch-weekly-editorial/sample-review-v1.json');
+ const fixture=read('docs/fixtures/bubble-watch-weekly-editorial/sample-input-v1.json');
  const input=buildWeeklyEditorialInput({bubbleWatch:bubble,discovery:fixture.newsContext,generatedAt:'2026-10-13T00:00:00Z'});
  const output=read('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json');output.asOfDate=input.asOfDate;output.scorecardSynthesisZh=input.scoringSnapshot.scorecardDisclosureZh;
+ const review=reviewWeeklyEditorial({input,output});
  const layer=projectWeeklyEditorial({input,output,review});assert.equal(validateWeeklyEditorialProduction(layer,bubble).ok,true);
  const next=structuredClone(bubble);next.scoring.model_version='bubble-watch-v3-core23-shadow4-r5';assert.equal(validateWeeklyEditorialProduction(layer,next).ok,false);
  assert.equal(layer.sourceScoringSnapshot.modelVersion,'bubble-watch-v3-core23-shadow4-r4');
  const nextInput=buildWeeklyEditorialInput({bubbleWatch:next,discovery:fixture.newsContext,generatedAt:'2026-10-13T00:00:00Z'});
  const nextOutput=structuredClone(output);nextOutput.scorecardSynthesisZh=nextInput.scoringSnapshot.scorecardDisclosureZh;
- const nextLayer=projectWeeklyEditorial({input:nextInput,output:nextOutput,review});assert.equal(validateWeeklyEditorialProduction(nextLayer,next).ok,true);
+ const nextLayer=projectWeeklyEditorial({input:nextInput,output:nextOutput,review:reviewWeeklyEditorial({input:nextInput,output:nextOutput})});assert.equal(validateWeeklyEditorialProduction(nextLayer,next).ok,true);
  assert.equal(nextLayer.sourceScoringSnapshot.modelVersion,'bubble-watch-v3-core23-shadow4-r5');
 });

@@ -465,6 +465,17 @@ function eligibleWeeklyEditorial(data, nowMs = Date.now()) {
   return layer;
 }
 
+const verifiedPreviousIssues = new WeakSet();
+function eligiblePreviousWeeklyEditorial(data, nowMs = Date.now()) {
+  const issue = data?.summary?.previous_weekly_editorial;
+  if (!issue || !verifiedPreviousIssues.has(issue) || eligibleWeeklyEditorial(data, nowMs)) return null;
+  if (Date.parse(issue.editorial.generatedAt) > nowMs || issue.editorial.asOfDate > data.as_of_date) return null;
+  // Replay only against original data and original time. Never change current
+  // Hero, current deterministic evidence, or the dates inside the old article.
+  return eligibleWeeklyEditorial({...issue.sourceData,
+    summary:{...issue.sourceData.summary,weekly_editorial:issue.editorial}}, Date.parse(issue.editorial.generatedAt));
+}
+
 function editorialRefreshMessage(data, status, nowMs = Date.now()) {
   if (eligibleWeeklyEditorial(data, nowMs)) return '';
   const layer = data?.summary?.weekly_editorial;
@@ -503,7 +514,7 @@ function editorialRefreshMessage(data, status, nowMs = Date.now()) {
   return `${message}${followup} 最近核查：${status.checkedAt.slice(0, 16).replace('T', ' ')} UTC。`;
 }
 
-function renderWeeklyEditorial(layer) {
+function renderWeeklyEditorial(layer, historical = false) {
   if (!layer) return '';
   const output = layer.output || {};
   const categoryNames = Object.fromEntries(CATEGORY_ORDER.map(item => [item.key, `${item.zh} · ${item.en}`]));
@@ -533,7 +544,7 @@ function renderWeeklyEditorial(layer) {
       <div class="weekly-editorial-header">
         <div>
           <div class="weekly-editorial-kicker">DEEPSEEK WEEKLY EDITORIAL · 只读解释层</div>
-          <h3>证据如何拼成这一周</h3>
+          <h3>${historical ? `上一期 AI 判读 · ${escapeHtml(layer.asOfDate)}` : '证据如何拼成这一周'}</h3>
         </div>
         <div class="weekly-editorial-meta">
           <div>PROVIDER ${escapeHtml(layer.provider)} · ${escapeHtml(layer.model)}</div>
@@ -543,6 +554,7 @@ function renderWeeklyEditorial(layer) {
         </div>
       </div>
 
+      ${historical ? `<p class="weekly-editorial-scorecard">历史参考：原数据日期 ${escapeHtml(layer.asOfDate)}，原生成时间 ${escapeHtml(generatedLabel)}。以下正文、评分及来源均为原期记录，不代表本期判断；本期确定性判读与证据保持展开。</p><h4>${escapeHtml(output.headlineZh)}</h4><p>${escapeHtml(output.leadZh)}</p>` : ''}
       <div class="weekly-editorial-scorecard">${escapeHtml(output.scorecardSynthesisZh)}</div>
 
       ${(output.weeklyTimeline || []).length ? `<h4>周内时间线 <em>· WEEKLY TIMELINE</em></h4>` : ''}
@@ -780,7 +792,7 @@ function render(data, editorialStatus = null) {
       </div>
     </section>
 
-    ${renderWeeklyEditorial(weeklyEditorial)}
+    ${weeklyEditorial ? renderWeeklyEditorial(weeklyEditorial) : renderWeeklyEditorial(eligiblePreviousWeeklyEditorial(data), true)}
 
     ${((s.stage_score != null || s.stage_score_range) && (s.trigger_score != null || s.trigger_score_range)) ? `
     <section class="axes">
@@ -1135,6 +1147,17 @@ async function load() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     render(data);
+    // Optional history never delays or replaces the current deterministic page.
+    if (data?.summary?.previous_weekly_editorial) {
+      import('./scripts/modules/bubblePreviousIssue.js?v=bubble-budget-reliability-20261108')
+        .then(async ({ verifyPreviousIssueDigests }) => {
+          const issue = data.summary.previous_weekly_editorial;
+          if (await verifyPreviousIssueDigests(issue, data.as_of_date)) {
+            verifiedPreviousIssues.add(issue);
+            if (lastData === data) render(data, lastEditorialStatus);
+          }
+        }).catch(() => { /* History is optional and fails closed. */ });
+    }
     try {
       const status = await statusPromise;
       lastEditorialStatus = status;

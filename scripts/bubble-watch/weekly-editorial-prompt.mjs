@@ -72,6 +72,7 @@ export function buildWeeklyEditorialUserPrompt(input) {
     'Organize the content through the structured fields: weekly timeline, fixed scorecard, key tensions, six-category analysis, historical differences, next-week watch conditions, and data gaps.',
     'Do not repeat the deterministic narrative verbatim. Add synthesis only where the input supports it.',
     coverageConstraint,
+    ...(input?.newsContext?.coverageMode === 'limited_single_search' ? ['Only one search channel is fully healthy. This does not establish independent source corroboration or sufficient coverage. Copy the supplied search-coverage disclosure into dataGaps; use limited mode and confidence <=70.'] : []),
     isLimitedEvidence(input) ? 'Limited evidence: write a concise 600-1,800 character editorial; this overrides the normal length target and exact item counts. Include only supported timeline items, tensions and categories. Omit unsupported sections, disclose news coverage in dataGaps, confidence must be low/medium with score <=70. Cite the indicators actually used and include an observable watch condition. Do not pad.' : 'Use full coverage only where evidence supports it; omit unsupported news details.',
     'Use sourceRefIds and sourceIndicatorIds exactly as supplied. Return one JSON object only.',
     JSON.stringify(input),

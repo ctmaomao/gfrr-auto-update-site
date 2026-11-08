@@ -1,3 +1,4 @@
+import { validateWeeklyEditorialProduction } from './weekly-editorial-production.mjs';
 import { assessWeeklyEditorialNewsReadiness } from './weekly-editorial-news.mjs';
 import { validateNewsDiscovery } from './weekly-editorial-contract.mjs';
 
@@ -13,14 +14,14 @@ export function weekStart(now) {
   return date.toISOString().slice(0, 10);
 }
 
-export function hasCurrentEditorial(data, now) {
+export function hasCurrentEditorial(data) {
   const layer = data?.summary?.weekly_editorial;
   // Conservative cost guard: any current-period output blocks a second paid attempt,
   // even if its display validation later fails. Display retains its own stricter gate.
   return Boolean(layer && layer.asOfDate === data.as_of_date);
 }
 
-export function classifyRun({ run, steps, discovery, asOfDate }) {
+export function classifyRun({ run, steps, discovery, asOfDate, data }) {
   const provider = steps?.find(step => step.name === PROVIDER_STEP);
   const providerCalled = provider?.conclusion === 'skipped' ? false
     : provider?.started_at && provider.started_at !== '0001-01-01T00:00:00Z' ? true : null;
@@ -30,7 +31,11 @@ export function classifyRun({ run, steps, discovery, asOfDate }) {
   if (!discovery || discovery.windowEnd !== asOfDate || !validateNewsDiscovery(discovery).ok) return result;
   if (providerCalled === true) {
     const published = steps.some(step => step.name === 'Commit refreshed weekly editorial' && step.conclusion === 'success');
-    return { ...result, reason: published && run.conclusion === 'success' ? 'published'
+    const layer = data?.summary?.weekly_editorial;
+    const publishedDataMatches = layer?.asOfDate === asOfDate && String(layer?.provenance?.runId) === String(run.id)
+      && layer?.provenance?.generatedBy === 'github_actions_workflow' && validateWeeklyEditorialProduction(layer, data).ok;
+    return { ...result, reason: published && run.conclusion === 'success'
+      ? (publishedDataMatches ? 'published' : 'unverified')
       : provider.conclusion !== 'success' ? 'provider_failed' : 'validation_or_publish_failed' };
   }
   const readiness = assessWeeklyEditorialNewsReadiness(discovery);

@@ -19,7 +19,8 @@ async function api(route, body) {
   return response.status === 204 ? null : response.json();
 }
 
-async function observations(asOfDate, now) {
+async function observations(data, now) {
+  const asOfDate = data.as_of_date;
   const result = await api(`actions/workflows/${WORKFLOW}/runs?branch=main&per_page=100&created=${encodeURIComponent(`>=${weekStart(now)}`)}`);
   if (result.total_count >= 100) throw new Error('Run inventory exceeds bounded limit');
   const runs = result.workflow_runs || [];
@@ -42,7 +43,7 @@ async function observations(asOfDate, now) {
     } catch {
       // Missing/expired artifact is unknown evidence, never proof of zero calls.
     }
-    run.evidence = classifyRun({ run, steps: job.steps, discovery, asOfDate });
+    run.evidence = classifyRun({ run, steps: job.steps, discovery, asOfDate, data });
   }
   return runs.sort((left, right) => right.id - left.id);
 }
@@ -73,7 +74,7 @@ export async function main() {
   const state = read(STATUS_PATH);
   if (state.schemaVersion !== STATUS_SCHEMA || !state.reservations || Array.isArray(state.reservations)) throw new Error('Invalid persistent state');
   const now = new Date().toISOString();
-  const runs = await observations(data.as_of_date, now);
+  const runs = await observations(data, now);
   const attempt = Number(process.env.GITHUB_RUN_ATTEMPT);
   if (admission) {
     const allowed = admitRecheck({ data, state, runs, now, runId: process.env.GITHUB_RUN_ID, attempt,

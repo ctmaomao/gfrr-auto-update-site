@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=macro-budget-integration-20261108';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-budget-integration-20261108';
+} from './config.js?v=bubble-budget-reliability-20261108';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=bubble-budget-reliability-20261108';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=macro-budget-integration-20261108';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-budget-integration-20261108';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=macro-budget-integration-20261108';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=macro-budget-integration-20261108';
-import { renderTrendSvg } from './renderMacroTrend.js?v=macro-budget-integration-20261108';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=macro-budget-integration-20261108';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=macro-budget-integration-20261108';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=macro-budget-integration-20261108';
+} from './macroOverviewDisplayHelpers.js?v=bubble-budget-reliability-20261108';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=bubble-budget-reliability-20261108';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=bubble-budget-reliability-20261108';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=bubble-budget-reliability-20261108';
+import { renderTrendSvg } from './renderMacroTrend.js?v=bubble-budget-reliability-20261108';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=bubble-budget-reliability-20261108';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=bubble-budget-reliability-20261108';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=bubble-budget-reliability-20261108';
 
 // ---------- 阈值 + 派生 helper ----------
 

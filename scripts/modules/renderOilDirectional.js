@@ -11,7 +11,7 @@
 // (guarded by check:oil-directional-zh-copy) — these are observational assessments,
 // not instructions.
 
-import { qualifyOdpDisplay } from './oilEvidenceQuality.js?v=macro-budget-integration-20261108';
+import { qualifyOdpDisplay } from './oilEvidenceQuality.js?v=bubble-budget-reliability-20261108';
 
 const $ = (id) => document.getElementById(id);
 

@@ -1,3 +1,4 @@
+import { preservePreviousWeeklyIssue } from './bubble-watch/previous-weekly-issue.mjs';
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
 import { collectOctoberCapexPanel } from './bubble-watch/capex-october-panel.mjs';
 import { buildQuarterlyCapexIndicator } from './bubble-watch/capex-quarterly-indicator.mjs';
@@ -4753,6 +4754,8 @@ function buildWowChanges(flips, indicators) {
 // ---------- 主流程 ----------
 
 async function main() {
+  let previousEditorialPublication = null;
+  try { previousEditorialPublication = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')); } catch { /* No valid previous publication to preserve. */ }
   // Log only the resolution mode, never the user agent or contact value.
   console.log(`[bubble-watch] SEC EDGAR declared contact: ${describeEdgarIdentity(process.env)}`);
   const previousQualifiedOutput = QUALIFIED_REFRESH_ONLY ? JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')) : null;
@@ -5128,6 +5131,8 @@ async function main() {
       upstream_sync: upstreamSync
     }
   };
+
+  preservePreviousWeeklyIssue(output, previousEditorialPublication);
 
   const historyOutput = {
     ...history, contractVersion:BUBBLE_WATCH_HISTORY_CONTRACT_VERSION,

@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-08 Bubble budget-first serial integration
+
+- **Acceptance baseline**: owner approved the two articles' push/PR, independent AI review and checked serial merge/deploy, with a shared CNY 5 monthly DeepSeek ceiling and free Tavily/Brave search. Unknown account evidence, exhausted allowance and unresolved reservations remain fail-closed. This stage performs only code and offline validation; no provider calls, ledger initialization, production configuration or data writes.
+- **Last baseline / changes**: budget #508 and Macro #507 are merged; isolated branch `codex/bubble-editorial-budget-release-20261108` starts at main `719792ea`. Selectively port the final `37e4a3cb..64fe6d9b` Bubble delta: qualified single-channel limited evidence, original-input writer revalidation, original-date historical issue retention and verified publication status. Preserve merged Macro numeric validation, all budget callbacks and retired CEO Wind fallback. Original worktrees remain intact.
+- **Current validation**: final check:changed/check:all exit 0; coverage 1,594 pass / one existing skip / zero fail; standard E2E 98/98 first-run pass; actual Chrome 1440/390 current/history/fallback/overlapping-load acceptance passes. Independent AI review has no P1/P2. Changed-file lint has 60 pre-existing errors and zero added errors. [Evidence and limits](review-evidence/bubble-budget-integration-20261108/README.md). Current-only negative assertions remain unchanged; their fixtures omit optional history, and three companion cases verify original historical content. DESIGN section 4.4 follows ADR-0089 without new colors, fonts, layout or scoring inputs.
+- **Next / blockers**: final source checks and independent AI review are complete; record the local commit, then obtain final commit review before push and a separate draft PR. Exact-head CI and serial production static acceptance follow; real generation stays held until account-level budget evidence is verified. Earlier receipts below describe their original trees, not this integration result.
+
 ### 2026-11-08 Macro / Bubble serial release preparation
 
 - **Budget-first integration receipt**: budget main `575462fc` merged locally into PR #507 head `7a132e51` in isolated `gfrr-macro-budget-integration-20261108`; provider/accounting and OFR prompt/timeout/completion safeguards retained. Full check:changed/check:all exit 0; unit coverage 1,574 pass / one existing skip / zero fail. Standard E2E initially 90 pass plus five navigation-load timeouts, then unchanged failed-only rerun 5/5 pass; real Chrome 1440/390 synthetic current/fallback/repeated restore checks passed. Independent AI review has no P1/P2. [Evidence and limitations](review-evidence/macro-editorial-20261108/README.md#budget-first-integration-verification-2026-11-08). Final exact-head remote CI, serial merge and deployment remain pending; provider and ledger remain stopped.
@@ -772,7 +779,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `macro-budget-integration-20261108` |
+| Cache version | `bubble-budget-reliability-20261108` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
