@@ -28,7 +28,8 @@ export function isUsableNews(story) {
     && story?.contentScope !== 'title_only';
 }
 export function isLimitedEvidence(input) {
-  return (input?.newsContext?.stories || []).filter(isUsableNews).length < 2;
+  return input?.newsContext?.coverageMode === 'limited_single_search'
+    || (input?.newsContext?.stories || []).filter(isUsableNews).length < 2;
 }
 export function validMediaStory(story, { metadataOnly = false } = {}) {
   const name = publisherName(story?.domain);

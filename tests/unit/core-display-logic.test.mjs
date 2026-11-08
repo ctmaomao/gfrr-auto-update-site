@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=macro-budget-integration-20261108';
+} from '../../scripts/modules/config.js?v=bubble-budget-reliability-20261108';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

@@ -193,16 +193,27 @@ assertValid(validateWeeklyEditorialProduction(layer, bubbleWatch), 'provider-pat
 assert(layer.sourceLedger.every((source) => !Object.hasOwn(source, 'snippet')), 'production source ledger must remove snippets');
 assert(layer.qualityReview.promotionEligible === false && layer.provenance.humanApproved === false, 'production promotion/human approval boundaries drifted');
 
+// Writer admission uses coherent issue clocks and retained original input, never
+// a metadata-only projection. Historical provider fixtures above remain unchanged.
+const writeInput = structuredClone(input);
+writeInput.generatedAt = `${input.asOfDate}T01:00:00.000Z`;
+writeInput.newsContext.generatedAt = `${input.asOfDate}T00:00:00.000Z`;
+writeInput.newsContext.windowStart = input.asOfDate;
+writeInput.newsContext.windowEnd = input.asOfDate;
+const writeOutput = { ...providerResult.output, generatedAt: `${input.asOfDate}T01:01:00.000Z` };
+const writeReview = reviewWeeklyEditorial({ input: writeInput, output: writeOutput, generatedAt: `${input.asOfDate}T01:02:00.000Z` });
+const writeLayer = projectWeeklyEditorial({ input: writeInput, output: writeOutput, review: writeReview,
+  generatedAt: `${input.asOfDate}T01:03:00.000Z`, sourceCommit: layer.provenance.sourceCommit, runId: layer.provenance.runId });
 const projection = {
   schemaVersion: 'bubble-watch-weekly-editorial-production-projection-v1',
   target: 'data/bubble-watch.json.summary.weekly_editorial',
-  weeklyEditorial: layer
+  generatedAt: writeLayer.generatedAt, weeklyEditorial: writeLayer, writeEvidence: { input: writeInput, review: writeReview }
 };
-const nextBubble = buildWeeklyEditorialWriteResult(bubbleWatch, projection);
+const nextBubble = buildWeeklyEditorialWriteResult(bubbleWatch, projection, { now: `${input.asOfDate}T01:04:00.000Z` });
 assert(JSON.stringify(withoutWeeklyEditorial(nextBubble)) === JSON.stringify(withoutWeeklyEditorial(bubbleWatch)), 'writer changed data outside summary.weekly_editorial');
 assert(nextBubble.summary.primary_score_pct === bubbleWatch.summary.primary_score_pct, 'writer changed primary score');
 assert(nextBubble.summary.stage_score === bubbleWatch.summary.stage_score && nextBubble.summary.trigger_score === bubbleWatch.summary.trigger_score, 'writer changed Stage/Trigger');
-assert(JSON.stringify(applyWeeklyEditorialProjection(bubbleWatch, layer)) === JSON.stringify(nextBubble), 'pure writer paths disagree');
+assert(JSON.stringify(applyWeeklyEditorialProjection(bubbleWatch, writeLayer)) === JSON.stringify(nextBubble), 'pure writer paths disagree');
 
 const asOfMismatch = structuredClone(bubbleWatch);
 asOfMismatch.as_of_date = '2026-08-09';

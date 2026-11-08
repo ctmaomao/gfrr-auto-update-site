@@ -470,6 +470,9 @@ for (const viewport of [DESKTOP, MOBILE]) {
 for (const mutation of ['scorecard','checking-clock','same-day-model']) {
   test(`Bubble v3 rejects stale editorial binding: ${mutation}`,async({page})=>{
     const {output}=await buildQualifiedAbsFixture();
+    // This negative isolates current-issue eligibility. The builder now retains
+    // valid history independently; the companion cases below exercise that path.
+    delete output.summary.previous_weekly_editorial;
     const layer=buildApprovedBubbleWeeklyEditorial(output,new Date().toISOString());
     if(mutation==='scorecard') layer.output.scorecardSynthesisZh='主分为0%，缺口已全部按绿灯计入。';
     if(mutation==='checking-clock') layer.sourceScoringSnapshot.qualifiedEvidence.indicators.find(i=>i.id==='dc_abs_spread').provenance.checkedAt='2026-10-13T00:00:00Z';
@@ -480,5 +483,34 @@ for (const mutation of ['scorecard','checking-clock','same-day-model']) {
     await expect(page.locator('#weekly-editorial')).toHaveCount(0);
     await expect(page.locator('.verdict h2')).toHaveText(output.summary.verdict_label);
     await expect(page.locator('.big-number .value .bound')).toHaveCount(2);
+  });
+  test(`Bubble v3 preserves original history after rejecting current binding: ${mutation}`,async({page})=>{
+    const errors=capturePageErrors(page);
+    const {output,baseline}=await buildQualifiedAbsFixture();
+    const original=baseline['data/bubble-watch.json'].summary.weekly_editorial;
+    expect(output.summary.previous_weekly_editorial.editorial).toEqual(original);
+    const layer=buildApprovedBubbleWeeklyEditorial(output,new Date().toISOString());
+    layer.output.headlineZh='不得展示的本期绑定测试正文';
+    if(mutation==='scorecard') layer.output.scorecardSynthesisZh='主分为0%，缺口已全部按绿灯计入。';
+    if(mutation==='checking-clock') layer.sourceScoringSnapshot.qualifiedEvidence.indicators.find(i=>i.id==='dc_abs_spread').provenance.checkedAt='2026-10-13T00:00:00Z';
+    if(mutation==='same-day-model') layer.sourceScoringSnapshot.modelVersion='bubble-watch-v3-core23-shadow4-r2';
+    output.summary.weekly_editorial=layer;
+    await page.route('**/data/bubble-watch.json?*',route=>route.fulfill({json:output}));
+    await page.goto('/bubble-watch.html');
+    const historical=page.locator('#weekly-editorial');
+    await expect(historical).toHaveCount(1);
+    await expect(historical.locator('h3')).toHaveText(`上一期 AI 判读 · ${original.asOfDate}`);
+    await expect(historical).toContainText(`原数据日期 ${original.asOfDate}`);
+    await expect(historical).toContainText(`原生成时间 ${original.generatedAt.slice(0,19).replace('T',' ')} UTC`);
+    await expect(historical).toContainText(original.output.headlineZh);
+    await expect(historical).toContainText(original.output.leadZh);
+    await expect(historical).toContainText(original.output.scorecardSynthesisZh);
+    await expect(historical).toContainText('不代表本期判断');
+    await expect(page.locator('#root')).not.toContainText(layer.output.headlineZh);
+    await expect(page.locator('.verdict h2')).toHaveText(output.summary.verdict_label);
+    await expect(page.locator('.verdict p')).toHaveText(output.summary.verdict_desc);
+    await expect(page.locator('.big-number .value .bound')).toHaveCount(2);
+    await expect(page.locator('section.category article.indicator')).toHaveCount(27);
+    expect(errors).toEqual([]);
   });
 }

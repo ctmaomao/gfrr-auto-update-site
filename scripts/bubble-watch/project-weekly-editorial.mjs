@@ -64,6 +64,9 @@ async function main() {
     generatedAt,
     target: 'data/bubble-watch.json.summary.weekly_editorial',
     weeklyEditorial: layer,
+    // Transient, bounded input evidence: retained for writer revalidation only.
+    // Never copied into the production layer or public source ledger.
+    writeEvidence: { input, review },
     productionImpact: {
       writesProductionData: false,
       modifiesBubbleWatchScoring: false,

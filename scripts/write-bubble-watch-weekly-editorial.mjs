@@ -3,6 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
+import { validateWeeklyEditorialWriteEvidence, assertWeeklyEditorialWriterContext } from './bubble-watch/weekly-editorial-write-evidence.mjs';
 import { applyWeeklyEditorialProjection } from './bubble-watch/weekly-editorial-production.mjs';
 
 const SAFE_TARGET = 'data/bubble-watch.json';
@@ -50,13 +51,15 @@ function writeJsonAtomically(filePath, value) {
   }
 }
 
-export function buildWeeklyEditorialWriteResult(bubbleWatch, projection) {
+export function buildWeeklyEditorialWriteResult(bubbleWatch, projection, { now = new Date().toISOString() } = {}) {
   if (projection?.schemaVersion !== 'bubble-watch-weekly-editorial-production-projection-v1') {
     throw new Error('input must be a weekly editorial production projection');
   }
   if (projection.target !== 'data/bubble-watch.json.summary.weekly_editorial') {
     throw new Error('projection target is invalid');
   }
+  const check = validateWeeklyEditorialWriteEvidence({ bubbleWatch, projection, now });
+  if (!check.ok) throw new Error(`weekly editorial write evidence failed: ${check.errors.join('; ')}`);
   return applyWeeklyEditorialProjection(bubbleWatch, projection.weeklyEditorial);
 }
 
@@ -66,6 +69,7 @@ function main() {
     const target = assertWeeklyEditorialSafeTarget(options.target);
     const before = readJson(target);
     const projection = readJson(options.input);
+    assertWeeklyEditorialWriterContext(projection.weeklyEditorial, process.env);
     const after = buildWeeklyEditorialWriteResult(before, projection);
     const changed = JSON.stringify(before.summary?.weekly_editorial || null) !== JSON.stringify(after.summary.weekly_editorial);
     if (changed) writeJsonAtomically(target, after);

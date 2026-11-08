@@ -1,3 +1,4 @@
+import { LIMITED_SEARCH_DISCLOSURE } from './weekly-editorial-news.mjs';
 import { withDeepSeekBudget } from '../lib/deepseek-budget.mjs';
 import {
   DEFAULT_DEEPSEEK_MODEL
@@ -124,15 +125,16 @@ function deterministicAttribution(source) {
 }
 
 function normalizeSourceAttribution(output, input) {
-  const sourceMap = new Map((input?.sourceRefs || []).map((source) => [source.id, source]));
-  const referencedIds = collectSourceRefIds(output);
-  const existingMap = new Map();
-  for (const item of Array.isArray(output?.sourceAttribution) ? output.sourceAttribution : []) {
-    if (typeof item?.sourceRefId === 'string' && referencedIds.has(item.sourceRefId) && sourceMap.has(item.sourceRefId) && !existingMap.has(item.sourceRefId)) {
-      existingMap.set(item.sourceRefId, item);
-    }
+  // Fill omissions only. Invalid, duplicate and unknown existing rows must reach
+  // the strict validator unchanged, not disappear during a format repair.
+  if (!Array.isArray(output?.sourceAttribution)) return output?.sourceAttribution;
+  const rows = structuredClone(output.sourceAttribution);
+  const sourceMap = new Map((input?.sourceRefs || []).map(source => [source.id, source]));
+  const existingIds = new Set(rows.map(item => item?.sourceRefId));
+  for (const id of collectSourceRefIds(output)) {
+    if (!existingIds.has(id) && sourceMap.has(id)) rows.push(deterministicAttribution(sourceMap.get(id)));
   }
-  return [...referencedIds].map((sourceRefId) => existingMap.get(sourceRefId) || deterministicAttribution(sourceMap.get(sourceRefId) || { id: sourceRefId }));
+  return rows;
 }
 
 function normalizeConfidence(confidence) {
@@ -154,6 +156,10 @@ export function normalizeWeeklyEditorialProviderOutput(output, input, { generate
   };
   normalized.sourceAttribution = normalizeSourceAttribution(normalized, input);
   normalized.confidence = normalizeConfidence(normalized.confidence);
+  if (input?.newsContext?.coverageMode === 'limited_single_search' && Array.isArray(normalized.dataGaps)
+    && normalized.dataGaps.every(gap => typeof gap === 'string') && !normalized.dataGaps.includes(LIMITED_SEARCH_DISCLOSURE)) {
+    normalized.dataGaps = [...normalized.dataGaps, LIMITED_SEARCH_DISCLOSURE];
+  }
   return { output: normalized, referenceNormalization: references.diagnostics };
 }
 

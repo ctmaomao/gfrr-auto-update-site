@@ -12,31 +12,60 @@ export const WEEKLY_EDITORIAL_QUERIES = Object.freeze({
   accounting_regulatory: '(AI OR artificial intelligence) accounting SEC DOJ investigation disclosure regulation'
 });
 
+export const LIMITED_SEARCH_DISCLOSURE = '本期仅有一个完整健康的搜索渠道，新闻覆盖受限；搜索渠道不等于独立来源，现有摘要不代表充分核实。';
+
+export function healthyWeeklySearchProviders(discovery) {
+  return ['tavily', 'brave'].filter(provider => {
+    const status = discovery?.sourceStatus?.[provider];
+    return status?.status === 'ok' && status.successCount === EDITORIAL_TOPICS.length && status.failureCount === 0;
+  });
+}
+
+function qualifiedLimitedSearchExcerpt(story, discovery) {
+  if (contentScope(story) !== 'excerpt' || String(story?.snippet || '').trim().length < 80) return false;
+  if (!Number.isFinite(Date.parse(story?.publishedAt))) return false;
+  const date = story.publishedAt.slice(0, 10);
+  return date >= discovery.windowStart && date <= discovery.windowEnd;
+}
+
+export function usableLimitedSearchStory(story, discovery) {
+  if (!isUsableNews(story) || !qualifiedLimitedSearchExcerpt(story, discovery)) return false;
+  // Every contributing row must come from a fully healthy channel; membership
+  // alone cannot prove which row supplied a merged excerpt or corroborating domain.
+  if (!Array.isArray(story.providers) || story.providers.length === 0
+    || !story.providers.every(provider => healthyWeeklySearchProviders(discovery).includes(provider))) return false;
+  if (story.evidenceStatus === 'official' && !isOfficialDomain(story.domain)) return false;
+  if (story.evidenceStatus === 'cross_checked' && (!Array.isArray(story.supportingDomains)
+    || new Set(story.supportingDomains).size < 2 || !story.supportingDomains.includes(story.domain))) return false;
+  try { if (new URL(story.url).hostname.replace(/^www\./u, '') !== story.domain) return false; } catch { return false; }
+  return story.evidenceStatus !== 'attributed_media' || validMediaStory(story);
+}
+
 export function assessWeeklyEditorialNewsReadiness(discovery) {
-  const providers = ['tavily', 'brave'].map((provider) => discovery?.sourceStatus?.[provider] || {});
-  const providerStatuses = providers.map((status) => status.status || 'missing');
-  const searchProvidersHealthy = providers.every((status) => status.status === 'ok'
-    && status.successCount === EDITORIAL_TOPICS.length
-    && status.failureCount === 0);
+  const providers = ['tavily', 'brave'].map(provider => discovery?.sourceStatus?.[provider] || {});
+  const providerStatuses = providers.map(status => status.status || 'missing');
+  const healthyProviders = healthyWeeklySearchProviders(discovery);
+  const searchProvidersHealthy = healthyProviders.length === 2;
   const stories = Array.isArray(discovery?.stories) ? discovery.stories : [];
   const credibleCount = stories.filter(isUsableNews).length;
-  const editorialReady = searchProvidersHealthy && ['ok', 'partial'].includes(discovery?.status)
-    && discovery?.liveProviderCount === 2
-    && credibleCount >= 1;
+  const limitedCredibleCount = stories.filter(story => usableLimitedSearchStory(story, discovery)).length;
+  const actualLiveCount = providers.filter(status => ['ok', 'partial'].includes(status.status)).length;
+  const countConsistent = discovery?.liveProviderCount === actualLiveCount;
+  const degraded = healthyProviders.length === 1 && countConsistent && limitedCredibleCount >= 1;
+  const editorialReady = ['ok', 'partial'].includes(discovery?.status) && countConsistent
+    && ((searchProvidersHealthy && credibleCount >= 1) || (degraded && discovery.status === 'partial'));
   let reason = null;
-  if (credibleCount === 0 && searchProvidersHealthy) reason = 'no_credible_news';
-  else if (!searchProvidersHealthy) reason = 'search_provider_unhealthy';
-  else if (discovery?.liveProviderCount !== 2) reason = 'two_live_providers_required';
+  if (credibleCount === 0 && searchProvidersHealthy && countConsistent) reason = 'no_credible_news';
+  else if (!searchProvidersHealthy && !degraded) reason = 'search_provider_unhealthy';
+  else if (!countConsistent) reason = 'provider_count_inconsistent';
   else if (credibleCount === 0) reason = 'credible_news_required';
-  else if (!['ok', 'partial'].includes(discovery?.status)) reason = 'discovery_status_not_ready';
+  else if (!editorialReady) reason = 'discovery_status_not_ready';
   return {
     editorialReady,
-    expectedSkip: credibleCount === 0 && searchProvidersHealthy,
-    reason,
-    storyCount: stories.length,
-    credibleCount,
-    providerStatuses,
-    searchProvidersHealthy
+    expectedSkip: credibleCount === 0 && searchProvidersHealthy && countConsistent && discovery?.status === 'insufficient',
+    reason, storyCount: stories.length, credibleCount, limitedCredibleCount, providerStatuses,
+    searchProvidersHealthy, healthyProviders, coverageMode: degraded ? 'limited_single_search' : 'dual_search',
+    ...(degraded ? { disclosure: LIMITED_SEARCH_DISCLOSURE } : {})
   };
 }
 
@@ -188,11 +217,27 @@ function storyFromCluster(cluster) {
 }
 
 export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, windowStart, windowEnd }) {
-  const normalized = (Array.isArray(rawStories) ? rawStories : [])
+  const healthyProviders = healthyWeeklySearchProviders({ sourceStatus });
+  // Filter before clustering so a failed channel cannot donate the preferred
+  // excerpt, official label or extra supporting domain to a healthy-channel hit.
+  const admittedRows = healthyProviders.length === 1
+    ? (Array.isArray(rawStories) ? rawStories : []).filter(row => healthyProviders.includes(row?.provider))
+    : (Array.isArray(rawStories) ? rawStories : []);
+  const normalized = admittedRows
     .map(normalizeProviderStory)
     .filter(Boolean);
-  const stories = clusterStories(normalized)
-    .map(storyFromCluster)
+  // A rejected hit remains discovery-only diagnostics, but cannot contribute a
+  // domain, title bridge, preferred excerpt or official label to a trusted cluster.
+  const limitedSearch = healthyProviders.length === 1;
+  const qualifiedRows = limitedSearch
+    ? normalized.filter(row => qualifiedLimitedSearchExcerpt(row, { windowStart, windowEnd })) : normalized;
+  const rejectedRows = limitedSearch ? normalized.filter(row => !qualifiedRows.includes(row)) : [];
+  const candidates = [
+    ...clusterStories(qualifiedRows).map(storyFromCluster),
+    ...clusterStories(rejectedRows).map(cluster => ({ ...storyFromCluster(cluster), evidenceStatus: 'discovery_only' }))
+  ];
+  const stories = candidates
+    .filter((story, index) => candidates.findIndex(candidate => candidate.id === story.id) === index)
     .map((story) => story.evidenceStatus === 'attributed_media' && (story.publishedAt.slice(0, 10) < windowStart || story.publishedAt.slice(0, 10) > windowEnd) ? { ...story, evidenceStatus: 'discovery_only' } : story)
     .sort((left, right) => {
       const statusRank = { official: 0, cross_checked: 1, attributed_media: 2, discovery_only: 3 };
