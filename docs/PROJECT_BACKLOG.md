@@ -2,10 +2,12 @@
 
 ### 2026-11-08 Macro / Bubble serial release preparation
 
-- **Acceptance baseline**: owner confirmed push/PR, independent AI review, and serial merge/deploy after checks for these two changes. Paid generation remains subject to separately confirmed spending and scope. Until then, Macro merge is held because it may resume automatic paid work.
+- **Budget-first integration receipt**: budget main `575462fc` merged locally into PR #507 head `7a132e51` in isolated `gfrr-macro-budget-integration-20261108`; provider/accounting and OFR prompt/timeout/completion safeguards retained. Full check:changed/check:all exit 0; unit coverage 1,574 pass / one existing skip / zero fail. Standard E2E initially 90 pass plus five navigation-load timeouts, then unchanged failed-only rerun 5/5 pass; real Chrome 1440/390 synthetic current/fallback/repeated restore checks passed. Independent AI review has no P1/P2. [Evidence and limitations](review-evidence/macro-editorial-20261108/README.md#budget-first-integration-verification-2026-11-08). Final exact-head remote CI, serial merge and deployment remain pending; provider and ledger remain stopped.
+
+- **Acceptance baseline**: owner confirmed push/PR, independent AI review, and serial merge/deploy after checks for these two changes. Paid generation remains subject to separately confirmed spending and scope. The later approved CNY 5 shared-budget policy now gates automatic work; unknown billing evidence still blocks generation.
 - **Last baseline / changes**: origin/main 2b1efc68; separate Macro release branch retains 37e4a3cb and adds Chinese-rate / compound-currency denominator fixes found in independent review. Original Macro/Bubble worktrees are preserved. Bubble's single-channel corroboration fix remains in the isolated combined candidate for the later serial PR.
 - **Current validation**: combined unit suite passed 1474/1475 with zero failures and one existing conditional skip; true Chrome 1440/390 checks passed tested current/history/fallback flows on both pages. Standalone Macro check:changed (including check:all) passed, unit coverage passed 1454/1455 with one existing skip and zero failures, and standard browser E2E passed 95/95. Final documentation and exact-head remote CI are recorded in the draft PR; no merge or production generation is claimed.
-- **Next / blockers**: finish standalone gates, create a draft Macro PR and inspect its exact-head CI; hold merge/deployment and paid generation pending monetary budget / automatic-run approval. Only after Macro merge may Bubble be rebased to latest main and opened independently. Do not infer successful generation from checks or synthetic fixtures.
+- **Next / blockers**: budget PR #508 is merged at 575462fc; integrate it into Macro PR #507 in a new isolated worktree, preserve both budget and OFR gates, and run final-tree checks and independent review before updating the PR. Paid generation remains held until budget evidence is complete. Only after Macro merge may Bubble be rebased to latest main and opened independently. Do not infer successful generation from checks or synthetic fixtures.
 
 ### 2026-11-08 OFR 编辑恢复本地实施
 
@@ -14,6 +16,13 @@
 - **当前任务 / 验证**：已完成离线正反例和真实停用快照的限定回放；独立审查发现的schema/来源kind/中文数字/复合单位/引语/发布门禁问题已修。最终check:changed含check:all通过，unit coverage 1450通过/0失败/1既有条件skip；OFR专项41项通过。独立AI复核无剩余阻断，不替代人工批准。
 - **下一步 / 限制**：本地实施、必要检查、固定树独审已完成并交付；后续按另行批准的串行集成流程，不自行上线。本地真实Chrome1440/390合成夹具验收通过（含警告、短稿布局、失效清空）；真实付费生成和两站生产验收尚未运行，不把合成provider响应当作真实生成成功。
 
+### 2026-11-08 两篇文章共享预算与免费搜索门禁（预算实施与发布门禁）
+
+- **Acceptance baseline**：owner 批准 Macro Risk / Bubble Watch 两篇文章合计每月最多 CNY 5；Tavily / Brave 已确认免费，但剩余额度未知时停止。仅去掉 CEO 新闻的付费 Wind 回退，不改 Daily、主评分或其它 Wind 指标。保留事实、引用、质量、时效、单次调用和既有 writer 门禁；owner也已批准推送/PR、独立AI代审及检查通过后的串行合并部署；真实生成仍须先核验费用与调用上限。本地实施阶段尚未调用provider、生产刷新、初始化远端账本或执行远端发布。
+- **最后基线 / 改动**：隔离云工作树 `gfrr-editorial-budget-20261108`、分支 `codex/editorial-budget-cap-20261108`。按 [ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 增加两文章共享 DeepSeek CAS 账本、默认 provider gate、搜索前只读预检及两处 step-local 参数；四个搜索消费者统一 Tavily / Brave 账本。仅退役 CEO Wind helper，活跃多源红灯封顶保持；Epoch 周度生产 job 的原 hash 守卫和源审计 workflow 不变。
+- **当前任务 / 验证**：新增离线预算与真实入口/工作流接线回归登记 `check:all`。CNY 2.161152 是全上下文最坏预留，不是平均成本，零历史时最多两次/31天；不明完成不老化，保留完整历史无自动退款/重置。Tavily `/usage` 有独立 10次/10分钟持久限流；Brave 需真实 dashboard 剩余额度 grant。 两搜索950/31天为按记录预留时间统计的项目预算，不宣称真实dispatch严格窗口已证实；旧历史/schema不变，摘要显性披露。新请求30秒单调deadline，Brave到期另按可信serverTime+31秒提前hold。完整验证与独立审阅以本轮最终回执为准，不能用新增测试通过代替全套。
+- **本地验证回执（2026-11-08）**：完整 `npm run check:changed` 实际执行 `check:all`，exit 0；单测/覆盖率 1,529 通过、1 个既有条件跳过，原门槛通过；独立 AI 代审最终 169/169 专项通过，无剩余 P1/P2，非人工 approve。EdgeOne staging 67/67，依赖审计 0 vulnerabilities。云端 Chromium 因系统 socket 限制无法启动，不计为浏览器通过；精确提交 CI 仍须完成锁定 Chromium 回归。未初始化账本、未调用 provider 或修改生产。
+- **下一步 / 阻塞**：先完成本地完整检查及独立AI契约审阅，再按已获批准推进推送/PR、串行合并部署；不把发布授权当作预算证据已满足。DeepSeek 初始化需完整历史或严格核验的本月全账户账单上界；真实 billing timezone、上报延迟、全部请求已完成与切换证据不明时保持 hold。默认 full-cap quarantine 需31天加时钟余量；余额/显示时区/单个 key 用量不是完整历史。价格复核不超过24小时，账本根SHA和复核digest缺失则零调用。免费账户确认不等于 Brave 剩余额度证据；现有只读状态流程不探测 provider。
 
 ### 2026-11-07 恢复 OFR 发布核验与周评旧模型隔离
 
@@ -222,7 +231,7 @@
 
 - **Acceptance baseline**：owner 授权 D（回购证据展示收口）；基于 `702fa47b` main 的 worktree `repo-evidence-release`。范围：`macroOverviewNarrative.js`（helper + label/note + policy 文案）、`renderMacroOverview.js`（pillar/C2/附录/n7 hunk）、`index.html`（C2 note id、分类 intro、回购初始态）、新真实渲染测试、D0 单测按新资格补 fixture、报告 + INDEX 一行、本 backlog 条、before/after 八图与 README、一次 asset bump `repo-evidence-release-1`。不改 matrix/pipeline/data/workflow/checker assertions/评分/冻结 realtime/依赖。
 - **当前**：`classifyRepoEvidence` 仅 finite（真 0 有效）+ BGCR `same_day` + 既有 regime 才判读，TGCR 独立；pillar 保留 D0 两行严格数值与 ×100 并实际使用 `repoBp`，pending 为“待核验”；C2 与附录总是写限定 label/note；n7 三态不称“三层均无压力/2019-09 不存在”；n7 score/isActive 不变。index 无 CSS/IA 改动。**r2（N1/N2/N3/N7）**：附录同段改“美元流动性分项资料：模块状态…”“SOFR/EFFR 参考读数”，repo 去掉固定 `class="ok"`；测试改内联固定合成 fixture（非历史观测；不读动态 data），import 无真实 binding 即 throw，补 pending→normal(0) 恢复与附录静态断言；不改 matrix/evidenceHighlights/其它 null formatter，不第二次 bump。
-- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=readout-consistency-20261108-r3` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
+- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=macro-budget-integration-20261108` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
 - **下一步 / 验证**：`node --check`、`node tests/unit/repo-evidence-display.test.mjs`（6/6，真实 C2/detail/pillar/derive 模块 harness + 内联 fixture）、`node tests/unit/repo-spread-bp-display.test.mjs`（3/3）、标准 `node --test --experimental-test-isolation=none` 合并 9/9 exit0、`check-null-zero-display-guards`、`check-macro-overview-narrative`、`check-dom`、`check-frontend-zh-copy`、`check-frontend-asset-version`、doc-links、`git diff --check`；n7/C2 八图已验收（主分 68/100、n7 47、nav 13、1440/390 scroll 1425/375、pillar/C2/detail 待核验、warm/serif 不变）；附录 r2 已由 Codex 两视口验收（1440/390 待核验、class 空、墨色；main 68/nav 13/scroll 1425/375；facts 原 root 合同目录，不入本包截图）；完整 `check:changed`/`check:all` 由 Codex 重跑，不预称通过。
 - **阻塞 / 限制**：before/after 为同一真实旧快照 2026-10-21（非当前市场、非准确率）；未跑 Daily/realtime/provider/网络，未写 data，未 Git 写；交叉 AI 审阅替代人审（非人审、不扩全项目）。
 
@@ -763,7 +772,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `macro-ofr-editorial-20261108` |
+| Cache version | `macro-budget-integration-20261108` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

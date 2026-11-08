@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../helpers/deepseek-budget-fixture.mjs';
 import { planAdmission, REPOSITORY } from '../../scripts/macro-risk/editorial-refresh-admission.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -33,7 +34,7 @@ test('writer rejects same timestamp different pressure source and stale output',
 });
 test('mocked provider produces v2 without accepting model-supplied score labels',async()=>{
  const {input,output,at}=ofrEditorialFixture();let calls=0;
- const result=await requestEditorial({input,apiKey:'fixture-not-secret',now:()=>new Date(at),fetchImpl:async(_u,o)=>{calls++;const body=JSON.parse(o.body);assert.match(body.messages[0].content,/OFR/);return {ok:true,status:200,json:async()=>({choices:[{finish_reason:'stop',message:{content:JSON.stringify(output)}}]})};}});
+ const result=await requestEditorial({budget:fixtureDeepSeekBudget,input,apiKey:'fixture-not-secret',now:()=>new Date(at),fetchImpl:async(_u,o)=>{calls++;const body=JSON.parse(o.body);assert.match(body.messages[0].content,/OFR/);return {ok:true,status:200,json:async()=>({choices:[{finish_reason:'stop',message:{content:JSON.stringify(output)}}]})};}});
  assert.equal(calls,1);assert.equal(result.output.schemaVersion,'macro-risk-editorial-ofr-output-v2');assert.equal(result.diagnostics.retryCount,0);
 });
 
@@ -49,8 +50,8 @@ test('publication revalidation rejects unsafe output even after attacker recalcu
  assert.equal(validateEditorialProduction(layer,radar,new Date(at)).ok,false);assert.throws(()=>validateOfrPublicationIfPresent(radar));
 });
 test('incomplete provider finish and aborted body never retry',async()=>{
- for(const finish of ['length','content_filter',null]) { const {input,output,at}=ofrEditorialFixture();let calls=0;await assert.rejects(requestEditorial({input,apiKey:'fixture',now:()=>new Date(at),fetchImpl:async()=>{calls++;return {ok:true,status:200,json:async()=>({choices:[{finish_reason:finish,message:{content:JSON.stringify(output)}}]})};}}),e=>e.category=== (finish==='length'?'provider_output_truncated':'provider_completion_invalid'));assert.equal(calls,1); }
- const {input}=ofrEditorialFixture();await assert.rejects(requestEditorial({input,apiKey:'fixture',fetchImpl:async()=>({ok:true,status:200,json:async()=>{const e=new Error('aborted');e.name='AbortError';throw e;}})}),e=>e.category==='provider_timeout');
+ for(const finish of ['length','content_filter',null]) { const {input,output,at}=ofrEditorialFixture();let calls=0;await assert.rejects(requestEditorial({budget:fixtureDeepSeekBudget,input,apiKey:'fixture',now:()=>new Date(at),fetchImpl:async()=>{calls++;return {ok:true,status:200,json:async()=>({choices:[{finish_reason:finish,message:{content:JSON.stringify(output)}}]})};}}),e=>e.category=== (finish==='length'?'provider_output_truncated':'provider_completion_invalid'));assert.equal(calls,1); }
+ const {input}=ofrEditorialFixture();await assert.rejects(requestEditorial({budget:fixtureDeepSeekBudget,input,apiKey:'fixture',fetchImpl:async()=>({ok:true,status:200,json:async()=>{const e=new Error('aborted');e.name='AbortError';throw e;}})}),e=>e.category==='provider_timeout');
 });
 
 

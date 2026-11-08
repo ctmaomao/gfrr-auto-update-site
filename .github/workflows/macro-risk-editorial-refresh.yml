@@ -84,6 +84,13 @@ jobs:
             exit 1
           fi
 
+      - name: Check shared CNY budget before discovery
+        env:
+          DEEPSEEK_BUDGET_GITHUB_TOKEN: ${{ github.token }}
+          DEEPSEEK_BUDGET_GENESIS_SHA: ${{ vars.DEEPSEEK_BUDGET_GENESIS_SHA }}
+          DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256 }}
+        run: node scripts/review-deepseek-budget.mjs --require-eligible
+
       - name: Admit one refresh for current upstream data
         id: admission
         env:
@@ -113,6 +120,9 @@ jobs:
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_BUDGET_GITHUB_TOKEN: ${{ github.token }}
+          DEEPSEEK_BUDGET_GENESIS_SHA: ${{ vars.DEEPSEEK_BUDGET_GENESIS_SHA }}
+          DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256 }}
         run: npm run run:macro-risk-editorial-deepseek -- --allow-network
 
       - name: Review editorial quality

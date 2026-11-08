@@ -29,3 +29,17 @@ Visual inspection found no credentials, personal information, or unredacted sens
 - `after-fixed-v2-390.png`: `f4c4ad7843636df6027b1ede50044f3c511d6439576b496b049061a80cb2dcb1`
 - `before-intermediate-v2-1440.png`: `c5504464c84f843af355b1c17341d754fad1c27ddc5985d5ecf63cd1f90bcfff`
 - `before-intermediate-v2-390.png`: `29d3ddfba846255e306221f6737f2fddecb5ba578586499e9fd27e362d2d52f9`
+
+## Budget-first integration verification (2026-11-08)
+
+The isolated Macro integration merges budget main `575462fc` into PR #507 head `7a132e51` without rewriting either parent. The provider preserves the shared accounting callback and sends the OFR system prompt from the actual frozen payload. Response-body cancellation and incomplete completion gates remain active. No provider call, ledger initialization, production configuration change, or data generation was performed.
+
+- `npm run check:changed` completed the full `check:all` chain, exit 0.
+- `npm run test:unit:coverage`: 1,574 passed, one existing conditional skip, zero failures; original aggregate coverage thresholds passed (lines 99.86%, branches 93.23%, functions 97.96%).
+- Standard `npm run test:e2e`: initially 90 passed and five navigation-load timeouts. Saved traces show slow/pending Google Fonts requests. One unchanged `playwright test --last-failed` rerun passed all five, exit 0; no assertion or timeout was changed. This is 95 cases covered across the initial run and bounded rerun, not a claimed single all-green run.
+- Real installed Chrome at 1440/390 passed current, stale, missing, legacy-current/history rejection and repeated restoration; no horizontal overflow or JavaScript errors. The new screenshots below were visually inspected and retain paper surfaces and the three CSS font stacks. The existing mobile fixed bookmarks overlap part of the element crop.
+- New captures use the same synthetic OFR fixture clock and program-projected zero/weekly delta described above, with external requests blocked. They are not live provider output or production acceptance, and do not prove CDN font loading.
+- Independent AI review found no P1/P2 and its separate targeted regressions passed 40/40. This does not impersonate GitHub human approval.
+
+- after-budget-integration-1440.png: d5134d4910493d409bcd6cd4e134c1935b0db8cb341db237621f7b39112a43d2
+- after-budget-integration-390.png: 3cca026c309783e736576f9c0beed8108a1c2a70ad5392ed0630e3ac62c11742

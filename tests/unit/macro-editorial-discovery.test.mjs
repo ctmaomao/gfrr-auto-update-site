@@ -123,7 +123,7 @@ test('actual Brave collector keeps its six news searches', async (t) => {
     assert.equal(parsed.searchParams.get('freshness'), 'pw');
     return new Response(JSON.stringify({ results: [] }));
   });
-  const collected = await collectProvider('brave', ['synthetic-test-key']);
+  const collected = await collectProvider('brave', ['synthetic-test-key'], { braveBudget: budget });
   assert.equal(calls, 6);
   assert.equal(collected.status.status, 'ok');
 });
@@ -161,7 +161,7 @@ function budgetHeldDiscovery() {
   return buildNewsDiscovery({ ...window, rawStories: commentaryStories(), sourceStatus: {
     tavily: { status: 'error', successCount: 0, failureCount: 6, queryRuns: EDITORIAL_TOPICS.map((topic, index) => ({
       topic, status: 'error', resultCount: 0,
-      error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped'
+      error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped', providerRequestAttempted: false
     })) },
     brave: healthyProviderStatus()
   } });
@@ -259,4 +259,56 @@ test('a budget hold skips green with its own classification and no artifact', ()
   assert.match(result.stdout, /tavily_budget_account_limit/);
   assert.doesNotMatch(result.stdout, /editorial input PASS/);
   assert.doesNotMatch(result.stderr, /news_source_health_incomplete/);
+});
+
+// ADR-0090: exercise the real collector and budget boundary, not a fabricated
+// failure code. A paid/quota response is a request that happened, never a green
+// pre-dispatch skip, even after subsequent topics receive session_stopped.
+test('actual Brave 429, timeout and malformed success retain source-health failure', async (t) => {
+  const { createBraveBudget, emptyBraveLedger } = await import('../../scripts/lib/brave-budget.mjs');
+  const { keyFingerprint } = await import('../../scripts/lib/free-search-ledger.mjs');
+  const { randomUUID } = await import('node:crypto');
+  const now = Date.parse('2026-11-08T12:00:00.000Z');
+  const key = 'synthetic-offline-key';
+  for (const response of [() => new Response('{}', { status: 429 }),
+    () => { throw Object.assign(new Error('offline timeout'), { name: 'AbortError' }); },
+    () => new Response('{}')]) {
+    let ledger = { ...emptyBraveLedger(), grants: [{ id: randomUUID(), keyId: keyFingerprint(key),
+      source: 'owner_dashboard', scope: 'exclusive_repository_key', evidenceRef: 'offline-regression',
+      zeroChargeConfirmed: true, requestLimit: 1000, usageAtActivation: 999,
+      verifiedAt: '2026-11-08T11:00:00.000Z', expiresAt: '2026-11-09T11:00:00.000Z' }] };
+    let head = 0, calls = 0;
+    const store = { async read() { return { head, serverTime: now, ledger: structuredClone(ledger) }; },
+      async write(previous, next) { if (previous.head !== head) return false; ledger = structuredClone(next); head++; return true; } };
+    const braveBudget = createBraveBudget({ store, now: () => now });
+    const mocked = t.mock.method(globalThis, 'fetch', async () => { calls++; return response(); });
+    const collected = await collectProvider('brave', [key], { braveBudget });
+    assert.equal(calls, 1);
+    assert.equal(collected.status.queryRuns[0].providerRequestAttempted, true);
+    const discovery = buildNewsDiscovery({ ...window, rawStories: [], sourceStatus: { ...healthy, brave: collected.status } });
+    const readiness = assessEditorialNewsReadiness(discovery);
+    assert.equal(readiness.expectedSkip, false);
+    assert.equal(readiness.reason, 'news_source_health_incomplete');
+    mocked.mock.restore();
+  }
+});
+
+test('actual Brave pre-dispatch unknown quota is an explicit skip without provider requests', async (t) => {
+  const { createBraveBudget, emptyBraveLedger } = await import('../../scripts/lib/brave-budget.mjs');
+  let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => { calls++; assert.fail('no provider request is authorized'); });
+  const braveBudget = createBraveBudget({ store: { async read() { return { ledger: emptyBraveLedger() }; },
+    async write() { assert.fail('unknown quota cannot reserve'); } } });
+  const collected = await collectProvider('brave', ['synthetic-offline-key'], { braveBudget });
+  const discovery = buildNewsDiscovery({ ...window, rawStories: [], sourceStatus: { ...healthy, brave: collected.status } });
+  assert.equal(calls, 0);
+  assert.ok(collected.status.queryRuns.every(run => run.providerRequestAttempted === false));
+  assert.equal(assessEditorialNewsReadiness(discovery).reason, 'search_budget_exhausted');
+  assert.equal(assessEditorialNewsReadiness(discovery).expectedSkip, true);
+});
+
+test('budget codes without affirmative pre-dispatch evidence fail closed', () => {
+  const discovery = budgetHeldDiscovery();
+  for (const run of discovery.sourceStatus.tavily.queryRuns) delete run.providerRequestAttempted;
+  assert.equal(assessEditorialNewsReadiness(discovery).expectedSkip, false);
 });

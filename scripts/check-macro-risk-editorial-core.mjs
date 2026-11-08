@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../tests/helpers/deepseek-budget-fixture.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
@@ -81,7 +82,7 @@ assert(!degradedNoCredibleReadiness.expectedSkip && degradedNoCredibleReadiness.
 const budgetHeldStatus = {
   status: 'error', successCount: 0, failureCount: EDITORIAL_TOPICS.length,
   queryRuns: EDITORIAL_TOPICS.map((topic, index) => ({ topic, status: 'error', resultCount: 0,
-    error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped' }))
+    error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped', providerRequestAttempted: false }))
 };
 const budgetHeldReadiness = assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
   sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, tavily: budgetHeldStatus } });
@@ -168,7 +169,7 @@ const output = {
 
 let apiCalls = 0;
 let capturedRequest;
-const result = await requestEditorial({
+const result = await requestEditorial({ budget: fixtureDeepSeekBudget,
   input,
   apiKey: 'fixture-secret-not-serialized',
   fetchImpl: async (url, request) => {
@@ -195,7 +196,7 @@ for (const refs of [null, [], 'site:score', Array(13).fill('site:score')]) {
   let calls = 0;
   let failure;
   try {
-    await requestEditorial({ input, apiKey: 'fixture', now: () => new Date('2026-08-11T06:02:00.000Z'),
+    await requestEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture', now: () => new Date('2026-08-11T06:02:00.000Z'),
       fetchImpl: async () => { calls += 1; return { ok: true, status: 200, async json() {
         return { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(invalidOutput) } }] };
       } }; }

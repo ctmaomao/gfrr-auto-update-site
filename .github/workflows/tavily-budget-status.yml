@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
-      - name: Verify official usage and shared ledger without searching
+      - name: Inspect shared ledger without probing provider usage
         env:
           TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}

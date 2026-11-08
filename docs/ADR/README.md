@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0090 — Shared editorial cap and free search](0090-shared-editorial-budget-and-free-search.md): owner-authorized CNY 5 shared article cap, verified search allowance and narrow CEO Wind fallback retirement; push/PR, independent AI review and checked serial publication authorized, operational activation evidence pending.
+
 - [ADR-0087 — Oil-pressure evidence simplification](0087-oil-pressure-evidence-simplification.md): verified local evidence qualification and narrow non-predictive display contract; remote publication not authorized. ADR-0086 is reserved by the separate draft PR #503.
 
 - [ADR-0085 — Oil-news completion publication tail](0085-oil-news-publication-completion.md): append the existing producer completion while preserving main/success, quota and immutable checked-source guards; local implementation only, separate release approval pending.

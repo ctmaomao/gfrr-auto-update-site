@@ -1,7 +1,6 @@
+import { withDeepSeekBudget } from '../lib/deepseek-budget.mjs';
 import {
-  DEFAULT_DEEPSEEK_MODEL,
-  DEEPSEEK_BASE_URL,
-  DEEPSEEK_CHAT_ENDPOINT
+  DEFAULT_DEEPSEEK_MODEL
 } from '../external-ai/provider-adapters.mjs';
 import { assertValid, validateWeeklyEditorialInput, validateWeeklyEditorialOutput } from './weekly-editorial-contract.mjs';
 import { normalizeMediaClaimNames, diagnoseMediaClaims } from './weekly-editorial-claim-diagnostics.mjs';
@@ -171,6 +170,7 @@ export function parseWeeklyEditorialProviderContent(content) {
 }
 
 export function classifyProviderFailure(error) {
+  if (/^deepseek_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return { category: error.budgetCode, retryAllowedInSameRun: false, recommendedAction: 'Keep the paid provider stopped; review the shared budget evidence without retrying.' };
   if (error?.name === 'AbortError' || error?.category === 'provider_timeout') {
     return { category: 'provider_timeout', retryAllowedInSameRun: false, recommendedAction: 'Inspect input size and retry once in a later run.' };
   }
@@ -198,52 +198,49 @@ export function classifyProviderFailure(error) {
   return { category: 'provider_unknown_error', retryAllowedInSameRun: false, recommendedAction: 'Inspect sanitized diagnostics before any later run.' };
 }
 
-export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch, now = () => new Date(), config = WEEKLY_EDITORIAL_PROVIDER_CONFIG }) {
+export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch, now = () => new Date(), config = WEEKLY_EDITORIAL_PROVIDER_CONFIG, budget = withDeepSeekBudget }) {
   assertValid(validateWeeklyEditorialInput(input), 'weekly editorial provider input');
   const promptCheck = validateWeeklyEditorialPrompt(input);
   if (!promptCheck.ok) throw new Error(`weekly editorial prompt contract missing: ${promptCheck.missingMarkers.join(', ')}`);
   if (typeof apiKey !== 'string' || !apiKey.trim()) throw new Error('DEEPSEEK_API_KEY is required');
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+  let timeout;
   let response;
   let responseJson;
+  const payload = {
+    model: config.model,
+    stream: false,
+    temperature: config.temperature,
+    max_tokens: config.maxTokens,
+    thinking: { type: 'disabled' },
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: buildWeeklyEditorialSystemPrompt(input) },
+      { role: 'user', content: buildWeeklyEditorialUserPrompt(input) }
+    ]
+  };
   try {
-    response = await fetchImpl(`${DEEPSEEK_BASE_URL}${DEEPSEEK_CHAT_ENDPOINT}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: config.model,
-        stream: false,
-        temperature: config.temperature,
-        max_tokens: config.maxTokens,
-        thinking: { type: 'disabled' },
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: buildWeeklyEditorialSystemPrompt(input) },
-          { role: 'user', content: buildWeeklyEditorialUserPrompt(input) }
-        ]
-      }),
-      signal: controller.signal
+    responseJson = await budget({ key: apiKey, payload, consumer: 'bubble-editorial' }, async ({ url, headers, body }) => {
+      timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+      response = await fetchImpl(url, { method: 'POST', headers, body, redirect: 'error', signal: controller.signal });
+      try {
+        responseJson = await response.json();
+      } catch {
+        const error = new Error('DeepSeek response envelope was not valid JSON');
+        error.category = 'provider_response_envelope_invalid';
+        error.httpStatus = response?.status || null;
+        error.responseDiagnostics = responseDiagnostics(null, response?.status || null);
+        throw error;
+      }
+      if (!response.ok) {
+        const error = new Error(`DeepSeek HTTP ${response.status}`);
+        error.httpStatus = response.status;
+        error.responseDiagnostics = responseDiagnostics(responseJson, response.status);
+        throw error;
+      }
+      return responseJson;
     });
-    try {
-      responseJson = await response.json();
-    } catch {
-      const error = new Error('DeepSeek response envelope was not valid JSON');
-      error.category = 'provider_response_envelope_invalid';
-      error.httpStatus = response?.status || null;
-      error.responseDiagnostics = responseDiagnostics(null, response?.status || null);
-      throw error;
-    }
-    if (!response.ok) {
-      const error = new Error(`DeepSeek HTTP ${response.status}`);
-      error.httpStatus = response.status;
-      error.responseDiagnostics = responseDiagnostics(responseJson, response.status);
-      throw error;
-    }
   } catch (error) {
     if (error?.name === 'AbortError') error.category = 'provider_timeout';
     else if (!error?.category && !response) {

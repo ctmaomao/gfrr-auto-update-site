@@ -1,7 +1,6 @@
+import { withDeepSeekBudget } from '../lib/deepseek-budget.mjs';
 import {
-  DEFAULT_DEEPSEEK_MODEL,
-  DEEPSEEK_BASE_URL,
-  DEEPSEEK_CHAT_ENDPOINT
+  DEFAULT_DEEPSEEK_MODEL
 } from '../external-ai/provider-adapters.mjs';
 import {
   OUTPUT_SCHEMA,
@@ -202,55 +201,56 @@ export function parseEditorialProviderContent(content) {
 }
 
 export function classifyProviderFailure(error) {
+  if (/^deepseek_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return { category: error.budgetCode, retryAllowedInSameRun: false, recommendedAction: 'Keep the paid provider stopped; review the shared budget evidence without retrying.' };
   if (error?.name === 'AbortError' || error?.category === 'provider_timeout') return { category: 'provider_timeout', retryAllowedInSameRun: false };
   if ([429, 500, 502, 503, 504].includes(error?.httpStatus)) return { category: 'provider_unavailable', retryAllowedInSameRun: false };
   if (error?.category === 'provider_output_contract_invalid' && error?.responseDiagnostics?.finishReason === 'length') return { category: 'provider_output_truncated', retryAllowedInSameRun: false };
   return { category: error?.category || 'provider_unknown_error', retryAllowedInSameRun: false };
 }
 
-export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now = () => new Date(), config = EDITORIAL_PROVIDER_CONFIG }) {
+export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now = () => new Date(), config = EDITORIAL_PROVIDER_CONFIG, budget = withDeepSeekBudget }) {
   assertValid(validateEditorialInput(input), 'macro risk editorial provider input');
   const prompt = validateEditorialPrompt(input);
   if (!prompt.ok) throw new Error(`macro risk editorial prompt contract missing: ${prompt.missingMarkers.join(', ')}`);
   if (typeof apiKey !== 'string' || !apiKey.trim()) throw new Error('DEEPSEEK_API_KEY is required');
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+  let timeout;
   let response;
   let responseJson;
+  const payload = {
+    model: config.model,
+    stream: false,
+    temperature: config.temperature,
+    max_tokens: config.maxTokens,
+    thinking: { type: 'disabled' },
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: buildEditorialSystemPrompt(input) },
+      { role: 'user', content: buildEditorialUserPrompt(input) }
+    ]
+  };
   try {
-    response = await fetchImpl(`${DEEPSEEK_BASE_URL}${DEEPSEEK_CHAT_ENDPOINT}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: config.model,
-        stream: false,
-        temperature: config.temperature,
-        max_tokens: config.maxTokens,
-        thinking: { type: 'disabled' },
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: buildEditorialSystemPrompt(input) },
-          { role: 'user', content: buildEditorialUserPrompt(input) }
-        ]
-      }),
-      signal: controller.signal
+    responseJson = await budget({ key: apiKey, payload, consumer: 'macro-editorial' }, async ({ url, headers, body }) => {
+      timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+      response = await fetchImpl(url, { method: 'POST', headers, body, redirect: 'error', signal: controller.signal });
+      try {
+        responseJson = await response.json();
+      } catch (cause) {
+        if (cause?.name === 'AbortError' || controller.signal.aborted) { const timeoutError = new Error('DeepSeek response body timed out'); timeoutError.name = 'AbortError'; throw timeoutError; }
+        const error = new Error('DeepSeek response envelope was not valid JSON');
+        error.category = 'provider_response_envelope_invalid';
+        error.httpStatus = response?.status || null;
+        error.responseDiagnostics = responseDiagnostics(null, response?.status || null);
+        throw error;
+      }
+      if (!response.ok) {
+        const error = new Error(`DeepSeek HTTP ${response.status}`);
+        error.httpStatus = response.status;
+        error.responseDiagnostics = responseDiagnostics(responseJson, response.status);
+        throw error;
+      }
+      return responseJson;
     });
-    try {
-      responseJson = await response.json();
-    } catch (cause) {
-      if (cause?.name === 'AbortError' || controller.signal.aborted) { const timeoutError = new Error('DeepSeek response body timed out'); timeoutError.name = 'AbortError'; throw timeoutError; }
-      const error = new Error('DeepSeek response envelope was not valid JSON');
-      error.category = 'provider_response_envelope_invalid';
-      error.httpStatus = response?.status || null;
-      error.responseDiagnostics = responseDiagnostics(null, response?.status || null);
-      throw error;
-    }
-    if (!response.ok) {
-      const error = new Error(`DeepSeek HTTP ${response.status}`);
-      error.httpStatus = response.status;
-      error.responseDiagnostics = responseDiagnostics(responseJson, response.status);
-      throw error;
-    }
   } catch (error) {
     if (error?.name === 'AbortError') error.category = 'provider_timeout';
     else if (!error?.category && !response) error.category = 'provider_transport_error';
