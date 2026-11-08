@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../helpers/deepseek-budget-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -213,7 +214,7 @@ test('limited system prompt reaches the provider without the conflicting long-fo
   const { input, output } = scenario();
   assert.ok(buildWeeklyEditorialSystemPrompt(input).includes('Target 600-1,800'));
   let calls = 0;
-  await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
     calls += 1;
     const body = JSON.parse(request.body);
     assert.ok(body.messages[0].content.includes('Target 600-1,800'));
@@ -232,7 +233,7 @@ test('provider receives quantitative-source separation and concise non-quota gui
       input.sourceRefs.push({ ...input.sourceRefs.find(ref => ref.id === input.newsContext.stories[0].id), ...second });
     }
     let calls = 0;
-    await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
+    await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
       calls++;
       const messages = JSON.parse(request.body).messages;
       const prompt = messages[0].content;
@@ -272,7 +273,7 @@ test('provider rejects the incident-sized 6581-character response without trunca
   assert.equal(visibleEditorialText(output).length, 6581);
   const snapshot = JSON.stringify(output);
   let calls = 0;
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
@@ -308,7 +309,7 @@ test('provider canonicalizes only explicitly attributed aliases of the already c
     assert.ok(validateWeeklyEditorialOutput(output, input).warnings.some(warning => warning.includes('归因措辞')));
     const snapshot = JSON.stringify(output);
     let calls = 0;
-    const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+    const result = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => {
       calls++;
       return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
     } });
@@ -345,7 +346,7 @@ test('failure diagnostics identify claim path and offending numbers without prov
   output.weeklyTimeline[0].detailZh = `据WSJ分析，融资999999亿美元。 PRIVATE_PROSE_MARKER ${secret}`;
   output.weeklyTimeline[0].sourceRefIds.push('news:UNKNOWN_REF_PRIVATE_MARKER');
   let calls = 0;
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: secret, fetchImpl: async () => {
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: secret, fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
@@ -464,7 +465,7 @@ test('live adapter uses the same reference normalization before unchanged review
   Object.assign(output.weeklyTimeline[0], { detailZh: '据Morningstar分析，站内广度35%，仍需谨慎看待摘要覆盖限制。', sourceIndicatorIds: ['breadth_50d'], sourceRefIds: [story.id] });
   let mockCalls = 0;
   const fetchImpl = async () => { mockCalls++; return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) }; };
-  const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl });
+  const result = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl });
   assert.equal(mockCalls, 1);
   assert.equal(result.diagnostics.referenceNormalization.addedSourceRefs, 1);
   assert.equal(result.diagnostics.retryCount, 0);
@@ -473,7 +474,7 @@ test('live adapter uses the same reference normalization before unchanged review
   const layer = projectWeeklyEditorial({ input, output: result.output, review });
   assert.equal(validateWeeklyEditorialProduction(layer, bubble).ok, true);
   const bad = structuredClone(output); bad.weeklyTimeline[0].detailZh = '据Morningstar分析，站内广度36%。';
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(bad) } }] }) }) }), error => error.category === 'provider_output_contract_invalid');
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(bad) } }] }) }) }), error => error.category === 'provider_output_contract_invalid');
 });
 
 test('typed numeric equivalence matrix covers money, scales, decimals, signs, rates, calendar and ranges', () => {
@@ -552,7 +553,7 @@ test('full validator/provider/review/projection accepts equivalent revenue and e
   for (const id of item.sourceRefIds) if (!output.sourceAttribution.some(ref => ref.sourceRefId === id)) output.sourceAttribution.push({ sourceRefId: id, claimType: id.startsWith('indicator:') ? 'site_structured_data' : 'attributed_media_news_context', noteZh: '测试中的已引用来源。' });
   assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
   let calls = 0;
-  const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+  const result = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } });
@@ -616,7 +617,7 @@ test('a rejected provider response retains a bounded redacted replay candidate w
   output.rawResponse = { body: 'PRIVATE_HTTP_ENVELOPE' };
   const snapshot = JSON.stringify(output);
   let calls = 0;
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: secret, fetchImpl: async () => {
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: secret, fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
@@ -694,7 +695,7 @@ test('short supported editorial and terminology quotes survive provider review a
  output.headlineZh='本期观察';output.leadZh='证据有限，保留可核实内容。';output.watchNextWeek=output.watchNextWeek.slice(0,1);
  output.weeklyTimeline[0].sourceIndicatorIds=[];
  const result=validateWeeklyEditorialOutput(output,input);assert.equal(result.ok,true,JSON.stringify(result.errors));assert.ok(result.warnings.length>0);
- let calls=0;const response=await requestWeeklyEditorial({input,apiKey:'fixture-key',fetchImpl:async()=>{calls++;return{ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};}});
+ let calls=0;const response=await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,input,apiKey:'fixture-key',fetchImpl:async()=>{calls++;return{ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};}});
  const review=reviewWeeklyEditorial({input,output:response.output});assert.equal(calls,1);assert.equal(review.frontendDisplayEligible,true);assert.equal(review.status,'warn');
  const layer=projectWeeklyEditorial({input,output:response.output,review});assert.ok(layer.qualityReview.warnings.some(w=>w.includes('逐字匹配')));
  assert.equal(validateWeeklyEditorialProduction(layer,bubble).ok,true);

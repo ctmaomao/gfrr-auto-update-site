@@ -3,6 +3,7 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { withTavilyBudget } from '../lib/tavily-budget.mjs';
+import { withBraveBudget } from '../lib/brave-budget.mjs';
 
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { EDITORIAL_TOPICS } from './weekly-editorial-contract.mjs';
@@ -62,7 +63,7 @@ function resolveWindow(asOfDate) {
 }
 
 function safeError(error) {
-  if (/^tavily_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return error.budgetCode;
+  if (/^(?:tavily|brave)_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return error.budgetCode;
   if (error?.name === 'AbortError') return 'request_timeout';
   const message = String(error?.message || 'request_failed');
   const http = message.match(/HTTP\s+(\d{3})/u);
@@ -82,7 +83,7 @@ async function fetchJson(url, init, label) {
   try {
     const response = await fetch(url, { ...init, signal: controller.signal });
     const text = await response.text();
-    if (!response.ok) throw new Error(`${label} HTTP ${response.status}`);
+    if (!response.ok) throw Object.assign(new Error(`${label} HTTP ${response.status}`), { httpStatus: response.status, providerResponseReceived: true });
     return JSON.parse(text);
   } finally {
     clearTimeout(timer);
@@ -115,7 +116,7 @@ async function fetchTavily(topic, query, requestWithKeys, budget) {
   }));
 }
 
-async function fetchBrave(topic, query, requestWithKeys) {
+async function fetchBrave(topic, query, requestWithKeys, braveBudget) {
   const params = new URLSearchParams({
     q: query,
     freshness: 'pw',
@@ -125,15 +126,16 @@ async function fetchBrave(topic, query, requestWithKeys) {
     ui_lang: 'en-US',
     extra_snippets: 'true'
   });
-  const json = await requestWithKeys((key) => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+  const json = await requestWithKeys((key) => braveBudget({ key, consumer: 'bubble-editorial' }, () => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
     method: 'GET',
+    redirect: 'error',
     headers: {
       Accept: 'application/json',
       'Accept-Encoding': 'gzip',
       'User-Agent': USER_AGENT,
       'X-Subscription-Token': key
     }
-  }, 'Brave'));
+  }, 'Brave')));
   return (Array.isArray(json?.results) ? json.results : []).map((item) => ({
     provider: 'brave',
     topic,
@@ -144,7 +146,7 @@ async function fetchBrave(topic, query, requestWithKeys) {
   }));
 }
 
-export async function collectProvider(provider, keys, { budget = withTavilyBudget } = {}) {
+export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveBudget } = {}) {
   const rows = [];
   const queryRuns = [];
   if (keys.length === 0) {
@@ -158,7 +160,7 @@ export async function collectProvider(provider, keys, { budget = withTavilyBudge
     try {
       const results = provider === 'tavily'
         ? await fetchTavily(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys, budget)
-        : await fetchBrave(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys);
+        : await fetchBrave(topic, WEEKLY_EDITORIAL_QUERIES[topic], requestWithKeys, braveBudget);
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });
     } catch (error) {

@@ -12,10 +12,14 @@ export function createSearchKeyPool(keys, onQuota = (category) => {
   const uniqueKeys = [...new Set(keys)];
   const paused = new Map();
   return async (request) => {
-    let lastError;
+    let lastError, providerRequestAttempted = false;
     for (const key of uniqueKeys) {
-      if (paused.has(key)) { lastError = paused.get(key); continue; }
+      if (paused.has(key)) { lastError = paused.get(key); providerRequestAttempted ||= lastError.providerRequestAttempted === true; continue; }
       try { return await request(key); } catch (error) {
+        // A later preflight hold must not erase an earlier dispatched failure
+        // in this logical query (or a paused key from this same collection).
+        providerRequestAttempted ||= error?.providerRequestAttempted === true;
+        if (providerRequestAttempted && error && typeof error === 'object') error.providerRequestAttempted = true;
         // A shared budget hold must not try another key to evade the account cap.
         if (error?.budgetCode) throw error;
         lastError = error;
@@ -24,6 +28,7 @@ export function createSearchKeyPool(keys, onQuota = (category) => {
           // Retain only the status, never a response body or credential-bearing error.
           const safe = new Error(`HTTP ${category.slice(5, 8)}`);
           safe.httpStatus = Number(category.slice(5, 8));
+          if (providerRequestAttempted) safe.providerRequestAttempted = true;
           paused.set(key, safe);
           lastError = safe;
           onQuota(category);
