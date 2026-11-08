@@ -44,7 +44,7 @@ export function buildPagesArtifact() {
     const source = resolve(root, entry);
     const target = resolve(output, entry);
     mkdirSync(dirname(target), { recursive: true });
-    cpSync(source, target, { recursive: true });
+    cpSync(source, target, { recursive: true, filter: (src) => entry !== 'weekly-reports' || src === source || /^(?:index|\d{4}-\d{2}-\d{2})\.html$/.test(relative(source, src)) });
   }
   validateArtifactTree(output);
   console.log(`Prepared Pages artifact: ${output}`);
