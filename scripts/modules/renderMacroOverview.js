@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=readout-consistency-20261108-r3';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=readout-consistency-20261108-r3';
+} from './config.js?v=macro-budget-integration-20261108';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=macro-budget-integration-20261108';
 import {
   brentModeZh,
   moduleTone,
@@ -18,14 +18,14 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=readout-consistency-20261108-r3';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=readout-consistency-20261108-r3';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=readout-consistency-20261108-r3';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=readout-consistency-20261108-r3';
-import { renderTrendSvg } from './renderMacroTrend.js?v=readout-consistency-20261108-r3';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=readout-consistency-20261108-r3';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=readout-consistency-20261108-r3';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=readout-consistency-20261108-r3';
+} from './macroOverviewDisplayHelpers.js?v=macro-budget-integration-20261108';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=macro-budget-integration-20261108';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=macro-budget-integration-20261108';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=macro-budget-integration-20261108';
+import { renderTrendSvg } from './renderMacroTrend.js?v=macro-budget-integration-20261108';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=macro-budget-integration-20261108';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=macro-budget-integration-20261108';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=macro-budget-integration-20261108';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2767,7 +2767,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   observationReactionContext.worldOrderStressData = worldOrderStressData || null;
   // Old editorial has no OFR input contract. This local display projection also
   // fails closed while an old JSON snapshot is served during deployment.
-  radarData = radarData ? { ...radarData, macroRiskEditorialLayer: null, macroRiskEditorialPreviousIssue: null } : null;
+  radarData = radarData ? { ...radarData, macroRiskEditorialLayer: radarData.macroRiskEditorialLayer?.schemaVersion === 'macro-risk-editorial-ofr-production-v2' ? radarData.macroRiskEditorialLayer : null, macroRiskEditorialPreviousIssue: null } : null;
 
   // Stage 4b-1A: Hero + threshold + pressure-sources
   renderOfrPrimary({ radarData, worldOrderStressData });

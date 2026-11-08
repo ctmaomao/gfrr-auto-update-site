@@ -1,3 +1,5 @@
+import { OFR_INPUT_SCHEMA, OFR_OUTPUT_SCHEMA, validateOfrEditorialInput, validateOfrEditorialOutput, visibleOfrEditorialSections } from './editorial-ofr-contract.mjs';
+export { OFR_INPUT_SCHEMA, OFR_OUTPUT_SCHEMA, OFR_PRODUCTION_SCHEMA } from './editorial-ofr-contract.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'macro-risk-editorial-news-discovery-v1';
 export const INPUT_SCHEMA = 'macro-risk-editorial-input-v1';
 export const OUTPUT_SCHEMA = 'macro-risk-editorial-output-v1';
@@ -115,6 +117,7 @@ function joinVisibleStrings(values) {
 }
 
 export function visibleEditorialSections(output) {
+  if (output?.schemaVersion === OFR_OUTPUT_SCHEMA) return visibleOfrEditorialSections(output);
   return {
     headline: joinVisibleStrings([output?.headlineZh]),
     lead: joinVisibleStrings([output?.leadZh]),
@@ -183,6 +186,7 @@ export function validateNewsDiscovery(discovery) {
 }
 
 export function validateEditorialInput(input) {
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA) return validateOfrEditorialInput(input, validateNewsDiscovery);
   const errors = [];
   const root = requireRecord(input, 'input', errors);
   if (root.schemaVersion !== INPUT_SCHEMA) errors.push(`input.schemaVersion must be ${INPUT_SCHEMA}`);
@@ -219,6 +223,7 @@ export function validateEditorialInput(input) {
 }
 
 export function validateEditorialOutput(output, input) {
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA || output?.schemaVersion === OFR_OUTPUT_SCHEMA) return validateOfrEditorialOutput(output, input, validateEditorialInput(input), UNSAFE_TEXT_PATTERNS);
   const errors = [];
   const root = requireRecord(output, 'output', errors);
   const inputResult = validateEditorialInput(input);
@@ -231,11 +236,13 @@ export function validateEditorialOutput(output, input) {
   requireString(root.leadZh, 'output.leadZh', errors, { min: 80, max: 900 });
   const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: 3, max: 5 });
   const scoreSynthesis = requireRecord(root.scoreSynthesis, 'output.scoreSynthesis', errors);
+  if (Object.hasOwn(scoreSynthesis, 'score') && scoreSynthesis.score !== input?.riskSnapshot?.score) errors.push('output score label must equal trusted input');
   requireString(scoreSynthesis.assessmentZh, 'output.scoreSynthesis.assessmentZh', errors, { min: 80, max: 1000 });
   requireArray(root.keyTensions, 'output.keyTensions', errors, { min: 2, max: 4 });
   const modules = requireArray(root.moduleAnalysis, 'output.moduleAnalysis', errors, { min: 6, max: 6 });
   const moduleNames = uniqueStrings(modules.map((item) => item?.module), 'output module names', errors);
   for (const module of RISK_MODULES) if (!moduleNames.has(module)) errors.push(`output is missing risk module ${module}`);
+  for (const item of modules) if (Object.hasOwn(item || {}, 'score') && item.score !== input?.moduleSnapshot?.find(row => row.module === item.module)?.score) errors.push('output module score label must equal trusted input');
   requireArray(root.crossMarketAnalysis, 'output.crossMarketAnalysis', errors, { min: 3, max: 5 });
   requireRecord(root.historicalComparison, 'output.historicalComparison', errors);
   requireArray(root.watchNext, 'output.watchNext', errors, { min: 3, max: 5 });
@@ -275,8 +282,8 @@ export function validateEditorialReview(review) {
   const errors = [];
   const root = requireRecord(review, 'review', errors);
   if (root.schemaVersion !== REVIEW_SCHEMA) errors.push(`review.schemaVersion must be ${REVIEW_SCHEMA}`);
-  if (root.inputSchemaVersion !== INPUT_SCHEMA) errors.push(`review.inputSchemaVersion must be ${INPUT_SCHEMA}`);
-  if (root.outputSchemaVersion !== OUTPUT_SCHEMA) errors.push(`review.outputSchemaVersion must be ${OUTPUT_SCHEMA}`);
+  if (![INPUT_SCHEMA, OFR_INPUT_SCHEMA].includes(root.inputSchemaVersion)) errors.push(`review.inputSchemaVersion must be ${INPUT_SCHEMA}`);
+  if (![OUTPUT_SCHEMA, OFR_OUTPUT_SCHEMA].includes(root.outputSchemaVersion)) errors.push(`review.outputSchemaVersion must be ${OUTPUT_SCHEMA}`);
   if (!['pass', 'warn', 'fail'].includes(root.status)) errors.push('review.status must be pass, warn, or fail');
   if (root.promotionEligible !== false) errors.push('review.promotionEligible must remain false');
   if (root.status === 'fail' && root.frontendDisplayEligible !== false) errors.push('failed review cannot be frontend display eligible');

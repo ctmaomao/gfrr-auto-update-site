@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=readout-consistency-20261108-r3';
-import { formatOnRrpYiUsd } from './format.js?v=readout-consistency-20261108-r3';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=macro-budget-integration-20261108';
+import { formatOnRrpYiUsd } from './format.js?v=macro-budget-integration-20261108';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

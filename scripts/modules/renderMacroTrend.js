@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=readout-consistency-20261108-r3';
+import { $ } from './config.js?v=macro-budget-integration-20261108';
 
 function asNumber(value) {
   const n = Number(value);

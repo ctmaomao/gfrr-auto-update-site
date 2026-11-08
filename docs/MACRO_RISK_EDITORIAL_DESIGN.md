@@ -1,5 +1,9 @@
 # Macro Risk Editorial — 主总览 DeepSeek 生产设计
 
+## 2026-11-08 OFR v2迁移
+
+[ADR-0088](ADR/0088-ofr-editorial-contract.md)为新OFR编辑路径的当前契约；下文v1分数/六模块/篇幅配额是旧模型兼容记录。v2仅读已验证OFR原值、真实观察日、变化及缺失时效；程序注入数字，AI只解释。短稿与栏目/来源数量仅warning，事实引用/单位日期/安全/30小时/writer与费用保护保留。当前仅本地准备，不代表已生成、发布或取得付费许可。
+
 ## 1. 状态与目标
 
 - 状态: Owner approved for staged implementation, 2026-08-11.

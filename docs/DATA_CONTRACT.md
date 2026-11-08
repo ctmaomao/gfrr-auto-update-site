@@ -1,5 +1,9 @@
 # Global Financial Risk Radar 数据契约说明
 
+## OFR编辑层v2迁移
+
+[ADR-0088](ADR/0088-ofr-editorial-contract.md)显式替代下方“任意迁移均hold/不允许编辑层”的旧阶段约束：完整OFR publication及周差时序验证通过后，只有macro-risk-editorial-ofr-production-v2可写入独立macroRiskEditorialLayer；pressureSnapshot由原input投影并与当前mainPressureReadout精确对齐。旧稿及上一期稿不能移植，旧建议退役保持。该本地补丁尚未发布；不扩大生产或付费授权。
+
 ## OFR主压力读数与旧建议退役（ADR-0080，迁移契约）
 
 本节为[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)对应的窄范围契约：owner已决定正式退役旧公开建议、保留历史审计；准备代码不自动批准生产合并。根`version`与`decisionModel.contractVersion`仍为`v27.0`。
@@ -1075,7 +1079,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `readout-consistency-20261108-r3`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-budget-integration-20261108`）。
 
 稳定边界：
 
@@ -1540,24 +1544,24 @@ Boundaries:
 
 各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `readout-consistency-20261108-r3`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `macro-budget-integration-20261108`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=readout-consistency-20261108-r3`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=readout-consistency-20261108-r3`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `readout-consistency-20261108-r3`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=macro-budget-integration-20261108`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=macro-budget-integration-20261108`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `macro-budget-integration-20261108`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs readout-consistency-20261108-r3
-npm run bump:frontend-asset-version -- readout-consistency-20261108-r3
+node scripts/bump-frontend-asset-version.mjs macro-budget-integration-20261108
+npm run bump:frontend-asset-version -- macro-budget-integration-20261108
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `readout-consistency-20261108-r3`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `macro-budget-integration-20261108`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 

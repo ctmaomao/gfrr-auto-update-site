@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { buildEditorialInput } from '../../scripts/macro-risk/editorial-input.mjs';
-import { buildNewsDiscovery } from '../../scripts/macro-risk/editorial-news.mjs';
+import { ofrEditorialFixture } from '../fixtures/macro-editorial-ofr.mjs';
 import { validateEditorialInput } from '../../scripts/macro-risk/editorial-contract.mjs';
 import { validateWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-contract.mjs';
 
@@ -32,17 +31,9 @@ function assertZeroNetwork(result, expectedExit = 0) {
 }
 
 function macroInput() {
-  const discovery = buildNewsDiscovery({
-    rawStories: [{ provider: 'tavily', topic: 'central_bank_inflation',
-      title: 'Federal Reserve policy statement', url: 'https://www.federalreserve.gov/newsevents/pressreleases/monetary20260810a.htm',
-      publishedAt: '2026-08-10T10:00:00.000Z', snippet: 'Synthetic official policy context for an offline admission test.' }],
-    sourceStatus: { tavily: { status: 'ok' }, brave: { status: 'ok' } },
-    generatedAt: '2026-08-11T06:00:00.000Z', windowStart: '2026-08-04', windowEnd: '2026-08-11'
-  });
-  return buildEditorialInput({ radarData: json('data/radar-data.json'),
-    worldOrder: json('data/world-order-stress.json'), marketPricing: json('data/market-pricing-metrics.json'),
-    radarHistory: json('data/radar-history.json'), oilDirectional: json('data/oil-directional-pressure.json'),
-    oilNews: json('data/oil-news-event-watch.json'), discovery, generatedAt: '2026-08-11T06:01:00.000Z' });
+  // The production input migrated to OFR v2. Keep fixture clocks coherent instead
+  // of combining current repository data with a fixed legacy discovery date.
+  return ofrEditorialFixture().input;
 }
 
 test('both real editorial entry points default to the shared gate and make zero requests without budget configuration', () => {

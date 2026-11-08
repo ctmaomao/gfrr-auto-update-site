@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=readout-consistency-20261108-r3';
+﻿import { fmtNumSafe } from './config.js?v=macro-budget-integration-20261108';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

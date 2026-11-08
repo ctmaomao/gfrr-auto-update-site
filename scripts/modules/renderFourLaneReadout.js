@@ -2,7 +2,7 @@
 // No scoring: the tail floor is annotated as the old model's floor, not a new
 // pressure score; transport that is not applied is not counted as an alert.
 
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=readout-consistency-20261108-r3';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=macro-budget-integration-20261108';
 
 const ROWS = [
   { key: 'continuous', label: '六模块基础读数' },

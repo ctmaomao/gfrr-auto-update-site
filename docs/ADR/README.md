@@ -141,3 +141,5 @@
 2. 文件名格式: `NNNN-kebab-case-title.md`,NNNN 紧接上一个编号
 3. 在本 README 的 Active 表追加一行
 4. 若推翻已有 ADR,把旧 ADR `Status` 改为 `Superseded by ADR-NNNN`,并把它从 Active 移到 Superseded
+
+- [ADR-0088 OFR 编辑契约与简版判读](0088-ofr-editorial-contract.md) — 独立v2迁移，原始观察程序投影，事实/费用底线保留。

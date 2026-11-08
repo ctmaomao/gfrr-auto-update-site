@@ -1,3 +1,5 @@
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=macro-budget-integration-20261108';
+
 const MAX_AGE_HOURS = 30;
 
 function isRecord(value) {
@@ -29,6 +31,9 @@ function formatUtc(value) {
 
 export function isMacroRiskEditorialVisible(layer, radarData, now = new Date()) {
   if (!isRecord(layer) || !isRecord(radarData)) return false;
+  if (layer.schemaVersion === 'macro-risk-editorial-ofr-production-v2') return isOfrEditorialVisible(layer, radarData, now);
+  if (radarData.mainPressureReadout !== undefined || radarData.advicePolicy !== undefined
+      || radarData.scoreRole === 'legacy_model_audit_only' || radarData.legacyModelAudit !== undefined) return false;
   if (layer.schemaVersion !== 'macro-risk-editorial-production-v1') return false;
   if (layer.status !== 'valid' || layer.displayEnabled !== true) return false;
   if (layer.sourceDataUpdatedAt !== radarData.updatedAt) return false;
@@ -54,6 +59,10 @@ export function isMacroRiskEditorialVisible(layer, radarData, now = new Date()) 
 // original clocks qualify its original display; they never qualify today's AI.
 export function isMacroRiskEditorialPreviousIssueVisible(layer, radarData, now = new Date()) {
   if (!isRecord(layer) || !isRecord(radarData) || !Number.isFinite(now.getTime())) return false;
+  // A retired score article never becomes current OFR commentary, even as history.
+  if (radarData.mainPressureReadout !== undefined || radarData.advicePolicy !== undefined
+      || radarData.scoreRole === 'legacy_model_audit_only' || radarData.legacyModelAudit !== undefined
+      || layer.schemaVersion === 'macro-risk-editorial-ofr-production-v2') return false;
   const clocks = [layer.sourceDataUpdatedAt, layer.generatedAt, layer.output?.generatedAt, radarData.updatedAt].map(value => Date.parse(value || ''));
   if (!clocks.every(value => Number.isFinite(value) && value <= now.getTime())) return false;
   const [sourceTime, generatedTime, outputTime, currentTime] = clocks;
@@ -167,7 +176,24 @@ function renderWatch(output, index) {
   return block;
 }
 
+function editorialWarningZh(value) {
+  return text(value, '').replace(/cross_checked/gu, '经交叉核对').replace(/discovery_only/gu, '仅供线索发现')
+    .replace(/official/gu, '官方来源').replace(/partial/gu, '覆盖不完整');
+}
+
+function renderEditorialWarnings(layer) {
+  const warnings = array(layer.qualityReview?.warnings).filter(value => typeof value === 'string' && value.trim());
+  if (!warnings.length) return null;
+  const block = el('div', 'macro-editorial-gaps');
+  block.append(el('h4', '', '编辑覆盖提示'));
+  const list = el('ul', '');
+  for (const warning of warnings) list.append(el('li', '', editorialWarningZh(warning)));
+  block.append(list);
+  return block;
+}
+
 function renderSources(layer, output, index) {
+  const ofr = layer.schemaVersion === 'macro-risk-editorial-ofr-production-v2';
   const details = el('details', 'macro-editorial-sources');
   details.append(el('summary', '', `证据来源与数据限制 · ${array(layer.sourceLedger).length} SOURCES`));
   const content = el('div', 'macro-editorial-sources-content');
@@ -187,7 +213,9 @@ function renderSources(layer, output, index) {
       link.rel = 'noopener noreferrer';
       item.append(link);
     } else item.append(document.createTextNode(label));
-    item.append(el('span', '', ` · S${entry.number} · ${text(entry.source.sourceClass)}`));
+    const sourceClass = ofr ? ({ official: '官方来源', cross_checked: '经交叉核对', discovery_only: '仅供线索发现', site_structured: '站内结构化证据', site: '站内证据' }[entry.source.sourceClass]
+      || (entry.source.kind === 'site_structured' || entry.source.kind === 'site' ? '站内结构化证据' : '新闻证据')) : text(entry.source.sourceClass);
+    item.append(el('span', '', ` · S${entry.number} · ${sourceClass}`));
     sourceList.append(item);
   }
   content.append(gaps, sourceList);
@@ -196,6 +224,7 @@ function renderSources(layer, output, index) {
 }
 
 function renderEditorialContent(layer, previousIssue = false, radarData = null) {
+  if (layer.schemaVersion === 'macro-risk-editorial-ofr-production-v2') return renderOfrEditorialContent(layer);
   const output = layer.output;
   const index = sourceIndex(layer);
   const fragment = document.createDocumentFragment();
@@ -249,6 +278,74 @@ function renderEditorialContent(layer, previousIssue = false, radarData = null) 
   footer.append(el('p', '', `置信度说明：${text(output.confidence?.reasonZh)}`), el('p', '', previousIssue
     ? '历史判读仅解释原期宏观压力。仅供参考,不参与平台的风险打分与决策。'
     : '边界：本判读只解释当前宏观压力，不构成危机预测或投资建议，也不改变任何评分、决策与执行字段。'), renderSources(layer, output, index));
+  fragment.append(footer);
+  return fragment;
+}
+
+
+function renderOfrEditorialContent(layer) {
+  const output = layer.output;
+  const snapshot = layer.pressureSnapshot;
+  const index = sourceIndex(layer);
+  const fragment = document.createDocumentFragment();
+  const header = el('header', 'macro-editorial-header');
+  const top = el('div', 'macro-editorial-header-top');
+  const eyebrow = el('div', 'macro-editorial-eyebrow');
+  eyebrow.append(el('span', 'macro-editorial-live-dot', ''), document.createTextNode(' 本期宏观判读 · OFR 金融压力观察'));
+  const badges = el('div', 'macro-editorial-badges');
+  badges.append(el('span', '', 'DEEPSEEK'), el('span', '', '只读编辑层'), el('span', '', '不进评分'));
+  top.append(eyebrow, badges);
+  const title = el('h2', '', output.headlineZh); title.id = 'macro-editorial-title';
+  header.append(top, title, el('p', 'macro-editorial-lead', output.leadZh), sourceFooter(output.sourceRefIds, index));
+  const meta = el('div', 'macro-editorial-meta');
+  const status = { available: '官方观察值', cached: '抓取失败，保留旧观察', stale: '观察已陈旧', missing_current: '最新观察缺值', unavailable: '官方读数缺失' }[snapshot.status];
+  const raw = value => Number.isFinite(value) ? value.toFixed(3) : '缺失';
+  const w = snapshot.weeklyChange;
+  const p = snapshot.percentile;
+  meta.append(
+    el('span', '', `OFR FSI 原值 ${raw(snapshot.index.value)} · 观察日 ${text(snapshot.index.observedDate, '缺失')}`),
+    el('span', '', `数据状态：${status}`),
+    el('span', '', Number.isFinite(w.value) ? `周变化 ${w.value > 0 ? '+' : ''}${raw(w.value)} · ${w.fromDate} → ${w.toDate}` : '周变化缺失，趋势待累计'),
+    el('span', '', Number.isFinite(p.value) ? `严格过去十年历史百分位 ${p.value.toFixed(1)} · 截至 ${p.endDateExclusive}（不含当日）` : '十年历史百分位缺失，覆盖待累计'),
+    el('span', '', `生成 ${formatUtc(layer.generatedAt)}`)
+  );
+  header.append(meta);
+  fragment.append(header);
+  const synthesis = el('section', 'macro-editorial-score-synthesis macro-editorial-synthesis-prose');
+  synthesis.append(el('div', 'macro-editorial-score-label', 'OFR PRESSURE · 金融压力解读'),
+    el('p', '', '原值以0为历史平均参考；历史百分位表示相对位置，不是0–100风险分，也不是危机概率。'),
+    el('p', '', output.pressureSynthesis.assessmentZh), sourceFooter(output.pressureSynthesis.sourceRefIds, index));
+  fragment.append(synthesis);
+  if (array(output.weeklyTimeline).length || array(output.keyTensions).length) {
+    const both = array(output.weeklyTimeline).length && array(output.keyTensions).length;
+    const split = el('div', both ? 'macro-editorial-split' : 'macro-editorial-split macro-editorial-single-column');
+    if (array(output.weeklyTimeline).length) split.append(renderTimeline(output, index));
+    if (array(output.keyTensions).length) split.append(renderTensions(output, index));
+    fragment.append(split);
+  }
+  if (array(output.contextAnalysis).length) {
+    const contexts = el('section', 'macro-editorial-block macro-editorial-modules');
+    contexts.append(sectionHeading('MACRO CONTEXT', '宏观背景与独立证据'));
+    const grid = el('div', 'macro-editorial-module-grid');
+    for (const item of output.contextAnalysis) {
+      const card = el('article', 'macro-editorial-module-card');
+      card.append(el('h4', '', item.labelZh), el('p', '', item.assessmentZh), sourceFooter(item.sourceRefIds, index));
+      grid.append(card);
+    }
+    contexts.append(grid); fragment.append(contexts);
+  }
+  if (array(output.crossMarketAnalysis).length) fragment.append(renderCrossMarket(output, index));
+  if (output.historicalComparison) {
+    const h = output.historicalComparison;
+    const history = el('section', 'macro-editorial-history');
+    history.append(sectionHeading('HISTORICAL LENS', h.periodZh), el('h4', '', '相似点'), el('p', '', h.similaritiesZh), el('h4', '', '关键差异'), el('p', '', h.differencesZh), sourceFooter(h.sourceRefIds, index));
+    fragment.append(history);
+  }
+  fragment.append(renderWatch(output, index));
+  const footer = el('footer', 'macro-editorial-footer');
+  const warnings = renderEditorialWarnings(layer);
+  if (warnings) footer.append(warnings);
+  footer.append(el('p', '', `编辑信心说明：${output.confidence.reasonZh}`), el('p', '', 'OFR 官方观察约滞后两个营业日。结构背景、尾部警报和世界秩序独立观察，不构成OFR分解或仓位建议。仅供参考,不参与平台的风险打分与决策。'), renderSources(layer, output, index));
   fragment.append(footer);
   return fragment;
 }

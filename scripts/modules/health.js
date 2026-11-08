@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=readout-consistency-20261108-r3';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=readout-consistency-20261108-r3';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=macro-budget-integration-20261108';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=macro-budget-integration-20261108';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

@@ -115,6 +115,8 @@ assert(classifySearchRequestError(new TypeError('fetch failed')) === 'network_er
 assert(classifySearchRequestError(new SyntaxError('invalid JSON')) === 'invalid_json', 'search provider JSON failures must remain categorized');
 
 const radarData = readJson('data/radar-data.json');
+// Historical v1 regression context, explicitly isolated from the OFR v2 suite.
+for (const key of ['mainPressureReadout','advicePolicy','scoreRole','legacyModelAudit']) delete radarData[key];
 const input = buildEditorialInput({
   radarData,
   worldOrder: readJson('data/world-order-stress.json'),

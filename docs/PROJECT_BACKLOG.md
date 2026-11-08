@@ -1,5 +1,21 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-08 Macro / Bubble serial release preparation
+
+- **Budget-first integration receipt**: budget main `575462fc` merged locally into PR #507 head `7a132e51` in isolated `gfrr-macro-budget-integration-20261108`; provider/accounting and OFR prompt/timeout/completion safeguards retained. Full check:changed/check:all exit 0; unit coverage 1,574 pass / one existing skip / zero fail. Standard E2E initially 90 pass plus five navigation-load timeouts, then unchanged failed-only rerun 5/5 pass; real Chrome 1440/390 synthetic current/fallback/repeated restore checks passed. Independent AI review has no P1/P2. [Evidence and limitations](review-evidence/macro-editorial-20261108/README.md#budget-first-integration-verification-2026-11-08). Final exact-head remote CI, serial merge and deployment remain pending; provider and ledger remain stopped.
+
+- **Acceptance baseline**: owner confirmed push/PR, independent AI review, and serial merge/deploy after checks for these two changes. Paid generation remains subject to separately confirmed spending and scope. The later approved CNY 5 shared-budget policy now gates automatic work; unknown billing evidence still blocks generation.
+- **Last baseline / changes**: origin/main 2b1efc68; separate Macro release branch retains 37e4a3cb and adds Chinese-rate / compound-currency denominator fixes found in independent review. Original Macro/Bubble worktrees are preserved. Bubble's single-channel corroboration fix remains in the isolated combined candidate for the later serial PR.
+- **Current validation**: combined unit suite passed 1474/1475 with zero failures and one existing conditional skip; true Chrome 1440/390 checks passed tested current/history/fallback flows on both pages. Standalone Macro check:changed (including check:all) passed, unit coverage passed 1454/1455 with one existing skip and zero failures, and standard browser E2E passed 95/95. Final documentation and exact-head remote CI are recorded in the draft PR; no merge or production generation is claimed.
+- **Next / blockers**: budget PR #508 is merged at 575462fc; integrate it into Macro PR #507 in a new isolated worktree, preserve both budget and OFR gates, and run final-tree checks and independent review before updating the PR. Paid generation remains held until budget evidence is complete. Only after Macro merge may Bubble be rebased to latest main and opened independently. Do not infer successful generation from checks or synthetic fixtures.
+
+### 2026-11-08 OFR 编辑恢复本地实施
+
+- **Acceptance baseline**：owner对“分阶段实施，先离线回归，再真实生成和两站验收；少误拦、少丢稿而不放过错误内容”回复“同意，请实施”。本轮基于main 2b1efc68隔离工作树，本地v2迁移与测试；不搜索、不调用provider、不push/合并部署，原研究工作区保留。
+- **最后基线 / 改动**：[ADR-0088](ADR/0088-ofr-editorial-contract.md)记录OFR输入、输出、程序数字投影、writer及前端共同迁移。旧模型分数隔离，篇幅/栏目/来源数量改为v2目标和warning；引用、单位、日期、费用和安全底线保留。
+- **当前任务 / 验证**：已完成离线正反例和真实停用快照的限定回放；独立审查发现的schema/来源kind/中文数字/复合单位/引语/发布门禁问题已修。最终check:changed含check:all通过，unit coverage 1450通过/0失败/1既有条件skip；OFR专项41项通过。独立AI复核无剩余阻断，不替代人工批准。
+- **下一步 / 限制**：本地实施、必要检查、固定树独审已完成并交付；后续按另行批准的串行集成流程，不自行上线。本地真实Chrome1440/390合成夹具验收通过（含警告、短稿布局、失效清空）；真实付费生成和两站生产验收尚未运行，不把合成provider响应当作真实生成成功。
+
 ### 2026-11-08 两篇文章共享预算与免费搜索门禁（预算实施与发布门禁）
 
 - **Acceptance baseline**：owner 批准 Macro Risk / Bubble Watch 两篇文章合计每月最多 CNY 5；Tavily / Brave 已确认免费，但剩余额度未知时停止。仅去掉 CEO 新闻的付费 Wind 回退，不改 Daily、主评分或其它 Wind 指标。保留事实、引用、质量、时效、单次调用和既有 writer 门禁；owner也已批准推送/PR、独立AI代审及检查通过后的串行合并部署；真实生成仍须先核验费用与调用上限。本地实施阶段尚未调用provider、生产刷新、初始化远端账本或执行远端发布。
@@ -756,7 +772,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `readout-consistency-20261108-r3` |
+| Cache version | `macro-budget-integration-20261108` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
