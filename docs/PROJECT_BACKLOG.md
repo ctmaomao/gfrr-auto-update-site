@@ -2,10 +2,25 @@
 
 ### 2026-11-09 语法检查有界并行
 
-- **Acceptance baseline / last base**：持续科学合理改善与 workflow 精简审查范围，初始 main `54e9fd16`，随后整合最新 main `44b88e12` 并保留 Bubble/ACLED 记录；不改变覆盖、失败语义、时间门槛或发布保护。Transport 合并和 EdgeOne 跳过完整检查因收益/等价性不足未实施。
+- **Acceptance baseline / last base**：持续科学合理改善与 workflow 精简审查范围，初始 main `54e9fd16`，先整合 main `44b88e12`，再整合 `e95d4599`（#519/#521）；保留 Bubble/ACLED/预算与免费刷新记录及主线数据；不改变覆盖、失败语义、时间门槛或发布保护。Transport 合并和 EdgeOne 跳过完整检查因收益/等价性不足未实施。
 - **Current task**：仅将 `check-syntax.mjs` 的逐文件 Node 语法检查改为最多 4 个并发，保留扫描范围、排序、1 MiB 输出上限与全部失败收集；新增 9 项回归。详见[性能证据与边界](SYNTAX_CHECK_PERFORMANCE_2026_11_09.md)。
-- **Validation**：两组本地 612 文件比较为 36.463/34.024 秒→9.467/9.354 秒，退出码均 0、完整 stdout 逐字节一致；9/9 新测试与独立真实进程异常反例通过，无 P1/P2。初始基线及整合 `44b88e12` 后完整 `check:changed` / `check:all` 均退出 0（整合后 262.618 秒）；整合后 coverage 1,669 pass / 1 既有 skip / 0 fail，99.86% / 93.23% / 97.96%。
-- **Next / limits**：完整离线验证与独审完成；独立 draft PR，协调当前主线任务再集成，精确 head CI 仍是门槛。本地计时不冒充 GitHub runner 加速，无 workflow、预算、生产数据或付费调用变化。
+- **Validation**：两组本地 612 文件比较为 36.463/34.024 秒→9.467/9.354 秒，退出码均 0、完整 stdout 逐字节一致；9/9 新测试与独立真实进程异常反例通过，无 P1/P2。各基线完整检查均通过；整合 `e95d4599` 后完整 `check:changed` / `check:all` 退出 0（259.752 秒），coverage 1,691 pass / 1 既有 skip / 0 fail（45.477 秒），99.86% / 93.23% / 97.96%。
+- **Next / limits**：初始 PR #520 head `74eb0d46` CI 全绿（1669单测/104浏览器/67 EdgeOne回归）；最新基线本地复验与独审完成；协调当前主线任务再集成，新精确 head CI 仍是门槛。本地计时不冒充 GitHub runner 加速，无 workflow、预算、生产数据或付费调用变化。
+
+### 2026-11-09 Full free-only Bubble refresh preparation
+
+- **Acceptance baseline / last base**: coordinate a current full Bubble data pack before the separately capped editorial attempt. Original isolated implementation on main `54e9fd16`, now integrated without rewriting history on main `95951a0a`, retaining #517/#518/#519 and the newer Oil News data; original scheduled workflow and upstream paid editorial/budget files unchanged. Scope corrected to a separate workflow because the original completion triggers paid editorial.
+- **Current task**: [ADR-0095](ADR/0095-bubble-full-free-refresh.md) adds manual/main-only full collection, hard-disabled Wind, existing free-search gates, source freshness/fallback summary, shared writer and unchanged full publication gates. Pages exact-name admission and existing guarded EdgeOne dispatch support both sites without triggering editorial.
+- **Validation**: original and `2965c602` integration checks/review passed. Final base `95951a0a` retains both newer Oil News blobs exactly; complete `check:changed`/nested `check:all` exit 0 and unit coverage 1682 pass / one existing skip / zero fail (99.86/93.23/97.96). Seven focused workflow tests remain included in the aggregate. Independent reviewer verified invalid paid/qualified metadata fails before publication; final combined-tree review receipt remains coordinator-controlled. No old checker assertions removed or widened, no dependency or production data changes.
+- **Next / limits**: review and validate the exact integrated tree before coordinated publication; preserve any newer main production data. #517/#518/#519 are already on the integration base. No push, PR, dispatch, paid request, credential access/configuration or refresh performed here. Actual freshness and dual-site acceptance require the later authorized live run; stale/missing observations remain disclosed.
+
+
+### 2026-11-09 Editorial additional one-shot grant
+
+- **Acceptance baseline / last base**: isolated `fix/editorial-one-shot-20261110` from main `21b5c8b5`, integrated without rewriting history onto main `44b88e127ce0b189700630331f165b89514a5393` after PR #517/#518; owner authorized one additional attempt per article, total CNY 4.33, no retries. Prior project spend remains unknown.
+- **Current task**: implement [ADR-0094](ADR/0094-editorial-one-shot-additional-grant.md): fixed manual-only grant, separate append-only CAS ledger, full permanent reservations and existing production workflows. Monthly automatic budget and free-search/source/quality/writer gates stay unchanged.
+- **Validation**: original monthly 54 tests plus 15 grant tests pass; existing budget wiring 8/8 tests pass. Final full `check:changed` / nested `check:all` exit 0; targeted ESLint, syntax, docs links and whitespace pass. Initial missing local locked XLSX dependency was resolved by reusing an identical-lock dependency tree, without installation. After integrating main `44b88e12`, focused budget 69/69 and wiring 8/8 plus full `check:changed` / nested `check:all` pass (exit 0). Original budget source/workflow blobs and upstream fixes are preserved; final-tree independent review remains coordinator-controlled.
+- **Next / limits**: coordinator controls independent review and later activation. Original local commit `10f76a0b` exists; the integration merge is pending independent review before local commit. No remote ledger/settings/credential changes, provider/search calls, CI, remote push/PR, production refresh or data changes were performed. PR #517 is merged; Bubble source freshness and a separately reviewed free-only refresh remain independent prerequisites.
 
 ### 2026-11-09 Bubble 正常刷新校验修复
 

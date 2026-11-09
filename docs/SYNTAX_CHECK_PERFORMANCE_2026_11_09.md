@@ -6,7 +6,9 @@ The owner's ongoing scientific, evidence-based maintenance request includes revi
 workflow complexity without weakening data or release checks. This isolated change is
 initially based on main `54e9fd16bbd39bfea764fb22014ac668c5afded7`, then integrated
 with main `44b88e127ce0b189700630331f165b89514a5393` after the Bubble repair merged.
-Both existing Bubble and ACLED task records are retained.
+The next integration includes main `e95d4599546b8706867ae5c64e1bbcce62d2888f`
+(PRs #519/#521), preserving their workflow, budget, test and production-data changes.
+Existing Bubble, ACLED, budget and free-refresh task records are retained.
 
 The [2026-11-09 EdgeOne run](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/42615075024)
 spent 216 seconds in `check:all`. Its `check:syntax` segment took approximately 13.27
@@ -53,8 +55,18 @@ data, source acquisition, paid-provider path, or deployment gate is changed.
   full `check:changed` / nested `check:all` in 262.618 seconds. Full unit coverage
   passed in 46.232 seconds: 1,669 passed, one existing skip, zero failures, with
   the same 99.86% / 93.23% / 97.96% coverage.
-- Exact-head CI remains required before integration. No production refresh or
-  remote run is triggered by this note.
+- The initial [PR #520 CI run](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/42713681016)
+  passed on head `74eb0d46177a1dcfcb21674c35fd97b511bfd14e`: 1,669 unit tests,
+  104 browser cases and 67 EdgeOne regressions passed, with one existing unit skip.
+  The syntax segment checked all 612 files in 6.123 seconds between npm headings.
+  This single observation is not a controlled runner comparison or fixed savings claim.
+- Integration with main `e95d4599546b8706867ae5c64e1bbcce62d2888f` passed full
+  `check:changed` / nested `check:all` in 259.752 seconds. Unit coverage passed in
+  45.477 seconds: 1,691 passed, one existing skip, zero failures, with unchanged
+  99.86% / 93.23% / 97.96% coverage. All 613 scripts, including the new one-shot
+  helper, remain covered. Independent integration review found no P1/P2.
+- New exact-head CI is required before merging the integrated revision. No
+  production refresh is triggered by this note.
 
 The exact-head CI must still run all its checks. Compare the syntax segment on that
 runner before claiming a remote speedup or a particular saving in Actions minutes.
