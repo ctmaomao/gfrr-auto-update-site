@@ -3,6 +3,23 @@ import { FILE_PROBE, probeAcledFile } from './acled-file-probe.mjs';
 export const AUTH_PROBE = Object.freeze({ loginUrl: 'https://acleddata.com/user/login?_format=json',
   logoutUrl: 'https://acleddata.com/user/logout?_format=json', controlMaxBytes: 65536, timeoutMs: 15000, requests: 3 });
 
+// Match only documented error messages. Never return server text, headers,
+// cookies or identity fields, even if a denial response echoes credentials.
+function classifyLoginDenial(bytes, status) {
+  try {
+    const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    const message = value && !Array.isArray(value) ? value.message : null;
+    if (status === 400 && message === 'Sorry, unrecognized username or password.') return 'credentials_rejected';
+    if (status === 403) {
+      if (message === 'Consent must be accepted in order to continue using the site when logged in.') return 'consent_required';
+      if (message === 'Please fill in all the required fields.') return 'profile_required_fields';
+      if (message === 'Access denied') return 'access_denied';
+      if (message === 'Invalid URL') return 'invalid_url';
+    }
+  } catch { /* Unknown/malformed denial content stays undisclosed and denied. */ }
+  return 'unclassified_denial';
+}
+
 // Deliberately support only a secure Drupal session cookie, not a general cookie jar.
 export function sessionCookie(headers, now = Date.now()) {
   const entries = headers.getSetCookie();
@@ -29,13 +46,29 @@ export function sessionCookie(headers, now = Date.now()) {
 export async function controlRequest(url, options, fetchImpl, timeoutMs, responseKind = 'control') {
   if (!['control', 'html'].includes(responseKind)) throw new Error('response_kind');
   const maxBytes = responseKind === 'html' ? 1048576 : AUTH_PROBE.controlMaxBytes;
-  const controller = new AbortController(); let timer, reader, httpStatus = null, receivedBytes = 0;
-  const fail = reason => ({ ok: false, reason, httpStatus, receivedBytes });
+  const controller = new AbortController(); let timer, reader, httpStatus = null, receivedBytes = 0, loginFailure;
+  const fail = reason => ({ ok: false, reason, httpStatus, receivedBytes, ...(loginFailure ? { loginFailure } : {}) });
   const operation = async () => {
     const response = await fetchImpl(url, { ...options, redirect: 'manual', signal: controller.signal });
     if (controller.signal.aborted) { void response.body?.cancel().catch(() => {}); return fail('timeout'); }
     httpStatus = response.status;
-    if (![200, 204].includes(httpStatus)) { void response.body?.cancel().catch(() => {}); return fail('http_not_ok'); }
+    const denied = ![200, 204].includes(httpStatus);
+    // This is the SAME failed login response, not a follow-up probe. Only its
+    // bounded JSON body may be classified; redirects, HTML and all other targets
+    // still cancel immediately. A diagnosis can never turn a denial into success.
+    if (denied) {
+      const loginTarget = responseKind === 'control' && url === AUTH_PROBE.loginUrl && options?.method === 'POST';
+      if (loginTarget && [400, 401, 403, 429].includes(httpStatus)) {
+        loginFailure = httpStatus === 401 ? 'unauthorized' : httpStatus === 429 ? 'rate_limited' : 'unclassified_denial';
+        if ([400, 403].includes(httpStatus)
+          && (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() === 'application/json') {
+          // Continue through the unchanged byte cap and whole-response deadline.
+        } else {
+          if ([400, 403].includes(httpStatus)) loginFailure = 'non_json_denial';
+          void response.body?.cancel().catch(() => {}); return fail('http_not_ok');
+        }
+      } else { void response.body?.cancel().catch(() => {}); return fail('http_not_ok'); }
+    }
     if (responseKind === 'html' && (httpStatus !== 200
       || (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() !== 'text/html')) {
       void response.body?.cancel().catch(() => {}); return fail('not_html');
@@ -57,6 +90,10 @@ export async function controlRequest(url, options, fetchImpl, timeoutMs, respons
       }
     }
     if (length !== null && Number(length) !== receivedBytes) return fail('length_mismatch');
+    if (denied) {
+      loginFailure = classifyLoginDenial(Buffer.concat(chunks), httpStatus);
+      return fail('http_not_ok');
+    }
     return { ok: true, httpStatus, receivedBytes, headers: response.headers, bytes: Buffer.concat(chunks) };
   };
   try {
@@ -79,6 +116,7 @@ export async function authenticatedProbe({ username, password, fetchImpl = fetch
   const login = await controlRequest(AUTH_PROBE.loginUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ name: username, pass: password }) }, fetchImpl, timeoutMs);
   report.loginHttpStatus = login.httpStatus; report.loginBytes = login.receivedBytes;
+  if (login.loginFailure) report.loginFailure = login.loginFailure;
   // Even an interrupted/invalid login can have created a server-side session.
   report.sessionMayRemain = true;
   if (!login.ok) return { ...report, login: 'unconfirmed', reason: login.reason };
