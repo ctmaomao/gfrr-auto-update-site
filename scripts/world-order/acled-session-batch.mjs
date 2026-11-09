@@ -18,6 +18,7 @@ export async function collectAcledSessionBatch({ username, password, fetchImpl, 
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ name: username, pass: password }) }, fetchImpl, timeoutMs);
   report.loginHttpStatus = login.httpStatus; report.loginBytes = login.receivedBytes;
+  if (login.loginFailure) report.loginFailure = login.loginFailure;
   report.sessionMayRemain = true;
   if (!login.ok) { report.login = 'unconfirmed'; report.reason = login.reason; return result; }
   let cookie, csrfToken, logoutToken;

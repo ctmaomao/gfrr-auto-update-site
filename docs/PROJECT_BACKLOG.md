@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 ACLED 登录拒绝脱敏诊断
+
+- **Acceptance baseline / last base**：owner 反馈浏览器登录正常；在既有修复/发布授权内，隔离分支基于 main `21b5c8b5`。保留原工作区和并发 Bubble 改动，不重跑 ACLED、不动凭据/会话、不绕过403或新增访问权限。
+- **Current task**：只在既有登录失败响应上增加固定枚举诊断，400/403 JSON 仍受64KiB和整体超时约束；所有拒绝保持失败，正文/身份/凭据不进入日志。详见[调查与实施边界](ACLED_LOGIN_DIAGNOSTICS_2026_11_09.md)。
+- **Validation**：43项专项、完整check:changed/check:all均exit0；unit coverage1655通过/1既有skip/0失败（99.86/93.23/97.96）。独立AI审查无P1/P2并额外23项边界用例通过；新测试接入原ACLED套件，原checker与门槛不放宽。
+- **Next / limits**：本地验证及独审完成，独立draft PR与精确head CI待回执。run `42576711961` 在首次登录403停止，未下载或改生产；此前11月6日登录/下载/退出均成功。历史日志未保存拒绝原因，不能断言密码错误/权限失效；补丁只补诊断，后续自然时隙/来源侧证据才能确认恢复。本轮零ACLED请求，无凭据改动。
+
 ### 2026-11-09 ON RRP 独立警示文案修正
 
 - **Acceptance baseline / last base**：持续核查金融证据的授权内窄范围修正，基于 main `508bd665`；经纽约联储官方材料验证，将当前独立警示改为“隔夜逆回购余额偏低”，明确不等同银行准备金短缺，不改评分或历史。
