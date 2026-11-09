@@ -14,6 +14,14 @@ export async function prepareOfrPublication(data, { previous = null, fetchSnapsh
   let component;
   try {
     component = buildPublishedOfrComponent({ readout: result?.readout ?? null, rows: result?.rows ?? [], previous: previousComponent, now, retrievalError: result?.readout ? null : 'ofr_source_unavailable' });
+    // A newly fetched but truncated/older file is not a new current observation.
+    // Keep the last published observation with its original receipt and hash,
+    // while withholding current eligibility. Same-date official revisions and
+    // newer missing observations remain valid inputs to the existing contract.
+    if (result?.readout && previousComponent?.index?.observedDate
+      && component.index.observedDate < previousComponent.index.observedDate) {
+      component = buildPublishedOfrComponent({ previous: previousComponent, now, retrievalError: 'ofr_observation_date_regressed' });
+    }
   } catch {
     // Invalid new receipt/history also fails closed. No retry or new source.
     try { component = buildPublishedOfrComponent({ previous: previousComponent, now, retrievalError: 'ofr_source_contract_invalid' }); }
