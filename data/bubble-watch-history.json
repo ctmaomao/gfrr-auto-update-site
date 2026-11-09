@@ -1530,6 +1530,119 @@
           }
         }
       }
+    },
+    {
+      "date": "2026-11-09",
+      "week": "11-09",
+      "issue_number": 32,
+      "red_pct": null,
+      "risk_score": null,
+      "scoring_model_version": "bubble-watch-v3-core23-shadow4-r5",
+      "core_red_pct": null,
+      "core_risk_score": null,
+      "display_red_pct": null,
+      "display_risk_score": null,
+      "stage_score": null,
+      "trigger_score": null,
+      "statuses": {
+        "cape": "red",
+        "top5_weight": "red",
+        "nvda_fpe": "green",
+        "private_secondary_marks": "red",
+        "hyperscaler_capex_yoy": "yellow",
+        "mag4_fcf_yoy": "red",
+        "vc_ai_share": "red",
+        "nvda_invest_revenue": "unknown",
+        "breadth_50d": "green",
+        "spy_vs_rsp_6m": "yellow",
+        "insider_sell_buy": "yellow",
+        "ai_ipo_pipeline": "yellow",
+        "hy_oas": "green",
+        "dc_abs_spread": "unknown",
+        "debt_capex_ratio": "yellow",
+        "neocloud_credit": "green",
+        "token_volume_mom": "yellow",
+        "token_revenue_ratio": "green",
+        "gpu_rental_price": "green",
+        "arr_2nd_deriv": "red",
+        "enterprise_deploy": "green",
+        "cloud_rpo_growth": "yellow",
+        "frontier_progress": "green",
+        "accounting_events": "green",
+        "fed_policy": "red",
+        "capex_reaction": "yellow",
+        "ceo_hedging": "green"
+      },
+      "score_bounds": {
+        "primary": {
+          "lower": 26.1,
+          "upper": 34.8
+        },
+        "pressure": {
+          "lower": 43.5,
+          "upper": 52.2
+        },
+        "stage": {
+          "lower": 45,
+          "upper": 55
+        },
+        "trigger": {
+          "lower": 42.3,
+          "upper": 50
+        }
+      },
+      "tier_range": {
+        "lower": "alert",
+        "upper": "alert"
+      },
+      "effective_tier": "alert",
+      "unknown_core_ids": [
+        "nvda_invest_revenue",
+        "dc_abs_spread"
+      ],
+      "gap_metadata": {
+        "nvda_invest_revenue": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "nvda-period-aligned-ratio-v1",
+            "reasonCode": "nvda_comparable_commitment_revenue_evidence_unavailable",
+            "checkedDate": "2026-11-09"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-09T23:12:46.969Z",
+            "detail": {
+              "contractVersion": "nvda-period-aligned-ratio-v1",
+              "qualificationStatus": "unavailable",
+              "reason": "newer_ledger_requires_comparable_evidence",
+              "latestLedgerDate": "2026-11-08",
+              "parameterDate": "2026-06-07",
+              "newerLedgerProtected": true,
+              "ratioPct": null,
+              "currentEligible": false
+            }
+          }
+        },
+        "dc_abs_spread": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "bubble-qualified-evidence-v1",
+            "reasonCode": "dc_abs_direct_spread_unavailable",
+            "checkedDate": "2026-11-09"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-09T23:14:28.867Z",
+            "detail": {
+              "status": "unknown",
+              "reasonCode": "dc_abs_direct_spread_unavailable",
+              "qualificationFailure": "wrong_market_or_subject"
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -3,9 +3,9 @@
   "curated": {
     "private_secondary_marks": {
       "status": "red",
-      "value_display": "Anthropic −12.73% / OpenAI +29.62%",
-      "note": "11/1 Clarity指示标价：Anthropic $995.22、隐含$842.18B，较$965B一级估值折价12.73%，触发红；OpenAI $938.11、隐含$1,104.33B，较$852B溢价29.62%。均非成交。",
-      "asOfDate": "2026-11-01",
+      "value_display": "Anthropic −13.55% / OpenAI +0.06%",
+      "note": "11/8 Clarity指示标价：Anthropic $985.88、隐含$834.28B，较$965B一级估值折价13.55%，触发红；OpenAI $956.79、隐含$1,250.73B，较11/6新一级估值$1,250B溢价0.06%。均非成交。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -14,7 +14,7 @@
       "status": "red",
       "value_display": "64.2%",
       "note": "本轮重新打开Crunchbase Q3全球报告：AI $102B / 全部VC $159B=64.15%，显示64.2%，高于50红线；仍为10/5最新披露，标current。",
-      "asOfDate": "2026-11-01",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 120,
       "cadence": "quarterly",
       "syncedFromUpstream": true
@@ -22,17 +22,17 @@
     "ai_ipo_pipeline": {
       "status": "yellow",
       "value_display": "5 家（升温）",
-      "note": "近6个月去重名单仍5家，黄。Anthropic 10/26由秘密递表转为公开S-1并申请ANT代码；状态升级但不重复计数，其他延迟/在途名字沿用。",
-      "asOfDate": "2026-11-01",
+      "note": "近6个月去重名单仍5家，黄。Anthropic 11/2提交S-1/A但价格区间和股数仍空白；其为同一公司状态推进，不重复计数。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "dc_abs_spread": {
       "status": "red",
-      "value_display": "近90天：1项不可抗力；1笔顺利发行",
-      "note": "近90天仍含9/24 Project Jupiter已确认不可抗力，按先判红规则维持红；10/28 EdgeCore顺利完成$521M ABS是正向新证据，但不抵消窗口内红事件。未核实同债券利差走阔≥50bp。",
-      "asOfDate": "2026-11-01",
+      "value_display": "近90天：1项不可抗力；贷款组合拍卖/利差扩大",
+      "note": "近90天仍含Project Jupiter确认不可抗力，按定义红；本周ING拍卖$500M数据中心贷款组合，CREFC报BBB利差周扩15bp（低于50bp红阈值），同时保留EdgeCore顺利发行作为反向证据。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -40,8 +40,8 @@
     "debt_capex_ratio": {
       "status": "yellow",
       "value_display": "57.0%（$570B / $1.0T）",
-      "note": "年度全口径锚$570B / 全球AI基础设施投资约$1.0T=57.0%，黄。本周新增EdgeCore $0.521B；另补录此前漏记Nebius $3.5B与Crusoe $0.7B，台账下限累计$248.152B。上次全量对账10/25，仅7天，未到期；无逾期警告。",
-      "asOfDate": "2026-11-01",
+      "note": "全口径年度融资锚$570B / 2026 AI总投资$1.0T=57.0%，黄；本周新增Cipher $0.85B，台账下限升至$249.002B。完整对账距10/25为14天，尚未到期。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 120,
       "cadence": "low-frequency-research",
       "syncedFromUpstream": true
@@ -49,17 +49,17 @@
     "neocloud_credit": {
       "status": "green",
       "value_display": "0 项已确认事件",
-      "note": "对CoreWeave/Nebius/Nscale/Lambda/Crusoe近90天具名扫描，未核实违约、评级下调或正式Watch，绿。融资压力与未签担保谈判保留为非合格压力；Nebius与Crusoe新融资反映仍有部分信贷通道。",
-      "asOfDate": "2026-11-01",
+      "note": "CoreWeave、Nebius、Nscale、Lambda、Crusoe近90天扫描未见新的正式违约、评级下调或Watch事件，绿；价格压力与融资讨论不等同合同定义事件。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
     },
     "token_volume_mom": {
       "status": "yellow",
-      "value_display": "+31.0% MoM",
-      "note": "OpenRouter prefetch近30日763.8T tokens / 前30日583.1T，+31.0%；仍增长但较上期+37.6%减速，黄。",
-      "asOfDate": "2026-11-01",
+      "value_display": "+28.4% MoM",
+      "note": "OpenRouter全平台近30日804.5T tokens、前30日626.8T，环比+28.4%；绝对量继续增长但增速由31.0%降至28.4%，按减速判黄。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 45,
       "cadence": "monthly-research",
       "syncedFromUpstream": true
@@ -75,9 +75,9 @@
     },
     "gpu_rental_price": {
       "status": "green",
-      "value_display": "$3.29/H100·hr",
-      "note": "GetDeploying实际页按单卡H100、on-demand、in-stock筛选21条，中位$3.29/hr，较上期$3.39约−2.95%，未达−15%红线且无普遍过剩，绿；报价样本非成交指数。",
-      "asOfDate": "2026-11-01",
+      "value_display": "$3.99/H100·hr",
+      "note": "GetDeploying当前on-demand中位价$3.99/H100·hr，较上期$3.29上涨21.3%，90天趋势+4%；挂牌价未见供给过剩式下跌，绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -85,8 +85,8 @@
     "arr_2nd_deriv": {
       "status": "red",
       "value_display": "披露序列减速 −116.67pp",
-      "note": "同basis披露序列仍以Anthropic 7/31 >$65B、4/6 >$30B（距4/30截止24天）和12/31约$9B（距1/31截止31天）计算：116.67% vs 233.33%，二阶−116.67pp，红。10/26 S-1的10/31 run-rate金额仍空白，Q3季度收入不年化入账，故current保留真实7/31锚。 OpenAI net序列缺少三锚，未纳入计算。",
-      "asOfDate": "2026-11-01",
+      "note": "Anthropic已披露序列的最近3个月增长代理由约+160%降至+43.33%，二阶变化−116.67pp，红；OpenAI因同basis三锚不足排除。11/2 S-1/A仍留空10/31 run-rate，未估算或插值。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 45,
       "cadence": "monthly-research",
       "syncedFromUpstream": true
@@ -95,25 +95,25 @@
       "status": "green",
       "value_display": "44%（QoQ +21pp）",
       "note": "重新打开KPMG同一显著员工采用问题：Q3 44% / Q2 23%，+21pp，按≥+3绿；9/24仍为最新披露，current，不混入62% agent问题。",
-      "asOfDate": "2026-11-01",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 120,
       "cadence": "quarterly",
       "syncedFromUpstream": true
     },
     "frontier_progress": {
       "status": "green",
-      "value_display": "ECI +4.59 / 90d",
-      "note": "有效ECI缓存：GPT-6 Astra为169.06（模型日9/3），90天增4.59、过去一年季均4.58，比值1.002≥0.5，绿。缓存相对上周有历史拟合修订，不把模型日改写为扫描日；困难基准本周无新同口径SOTA。",
-      "asOfDate": "2026-11-01",
+      "value_display": "ECI +4.62 / 90d",
+      "note": "Epoch ECI滚动SOTA为GPT-6 Astra 169.07（9/3）；90天增幅4.62，过去一年季均4.48，比值1.031，未触发停滞且高于50%门槛，绿。困难基准本周未见同basis新SOTA，90天前沿进入者2个。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 35,
       "cadence": "monthly-research",
       "syncedFromUpstream": true
     },
     "accounting_events": {
-      "status": "red",
-      "value_display": "2 项已确认事件",
-      "note": "本周核实2项已确认会计事件：Datavault AI多期报表不再可信，Endava称部分客户/供应商安排缺乏经济实质或会计处理错误并将重述FY2026；按“任何已确认=红”判红。",
-      "asOfDate": "2026-11-01",
+      "status": "green",
+      "value_display": "0 项已确认事件",
+      "note": "11/2–11/8扫描未见AI口径内新的已确认会计重述、造假或round-tripping调查；GoodRx与Driven Brands重述不属AI发行人口径，绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -122,7 +122,7 @@
       "status": "yellow",
       "value_display": "偶发惩罚（最新META −4.12pp）",
       "note": "最新一轮财报重新核实：Alphabet维持$195–205B区间，Amazon/Microsoft未形成新的明确年度上调事件；最近合格事件仍是Meta 10/21上调下限后相对QQQ −4.12pp，与既有受罚/获奖样本并列为偶发惩罚黄，current。",
-      "asOfDate": "2026-11-01",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -130,8 +130,8 @@
     "ceo_hedging": {
       "status": "green",
       "value_display": "近60天无合格表态",
-      "note": "近60天具名扫描未核实五位CEO新的泡沫/过热承认；Altman 9/2表态在11/1已刚好滚出窗口，故按窗口规则由黄转绿。AI安全言论不替代金融过热表态。",
-      "asOfDate": "2026-11-01",
+      "note": "近60天窗口自9/10起；Altman 9/1旧表态已在窗口外，本周未见五位具名CEO新的合格泡沫对冲表态，绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 21,
       "cadence": "weekly-editorial",
       "syncedFromUpstream": true
@@ -140,33 +140,33 @@
   "autoFallback": {
     "cape": {
       "status": "red",
-      "value_display": "41.04x",
-      "note": "10/28收盘CAPE为41.04，高于35红线；本期实际打开Multpl并保留真实观测日。",
-      "asOfDate": "2026-11-01",
+      "value_display": "38.91x",
+      "note": "11/6收盘CAPE为38.91，较上期41.04下降但仍高于35红线。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "top5_weight": {
       "status": "red",
-      "value_display": "27.44%",
-      "note": "11/1缓存从SSGA SPY官方持仓得单类前五合计27.44%（NVDA 7.77/AAPL 7.65/MSFT 5.92/AMZN 3.60/GOOGL 2.50），仍高于25红线；双Alphabet口径29.46%只作补充。",
-      "asOfDate": "2026-11-01",
+      "value_display": "27.76%",
+      "note": "11/8缓存从SSGA SPY官方持仓得单类前五合计27.76%（AAPL 7.92/NVDA 6.93/MSFT 6.27/AMZN 4.03/GOOGL 2.61），高于25红线；双Alphabet口径29.87%仅作补充。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "nvda_fpe": {
       "status": "green",
-      "value_display": "16.92x",
-      "note": "StockAnalysis 10/30收盘页显示NVDA远期PE 16.92x，低于30黄线，绿。",
-      "asOfDate": "2026-11-01",
+      "value_display": "15.43x",
+      "note": "StockAnalysis 11/6收盘页显示NVDA远期PE 15.43x，低于30黄线，绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "hyperscaler_capex_yoy": {
       "status": "yellow",
       "value_display": "+107.59% YoY",
-      "note": "四家均对齐至日历Q3实际：现金PP&E $201,923M / 去年同期$97,271M，同比+107.59%，加速黄。报告期从上期混季对齐为同季，raw basis标签随之变化，pipeline不做跨basis WoW。",
-      "asOfDate": "2026-11-01",
+      "note": "四家最新实际仍为日历Q3：现金PP&E同比+107.59%，加速黄；本期实际核实未见更新，保留10/29披露日。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 30,
       "syncedFromUpstream": true
     },
@@ -182,16 +182,16 @@
     "nvda_invest_revenue": {
       "status": "red",
       "value_display": "≥53.98%（已签可核实下限）",
-      "note": "已签承诺台账下限$163.5524B / 实际LTM收入$302.969B=53.98%，红；10/29 Nscale信用支持仍在谈、未签且无金额，不入分子，标current并保留9/17真实锚。担保上限不等于已付现金。",
-      "asOfDate": "2026-11-01",
+      "note": "已签承诺台账下限$163.5524B / 实际LTM收入$302.969B=53.98%，红；本期未见新的已签定量承诺，保留9/17真实锚。担保上限不等于已付现金。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 30,
       "syncedFromUpstream": true
     },
     "breadth_50d": {
       "status": "green",
-      "value_display": "60.23%",
-      "note": "Investing历史页10/30实际收盘为60.23%，高于60黄线边界，转绿；页面同时保留日内开高低，不用估算。",
-      "asOfDate": "2026-11-01",
+      "value_display": "61.55%",
+      "note": "Investing历史页11/6实际收盘为61.55%，高于60边界，维持绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
@@ -205,33 +205,33 @@
     },
     "insider_sell_buy": {
       "status": "red",
-      "value_display": "99x+（买盘近零；原始474x）",
-      "note": "12家30日卖出$57.6M、买入$0.121M，原始474x；prefetch zero_buy=true，按契约value封顶99并判红。绝对卖压较上期相近，但极低买盘使比值对分母敏感。",
-      "asOfDate": "2026-11-01",
+      "value_display": "99x+（买盘近零；原始923.8x）",
+      "note": "12家30日卖出$66.0M、买入$0.071M，原始923.8x；prefetch zero_buy=true，按契约value封顶99并判红。绝对卖压较上期上升约15%，但极低买盘令比值对分母敏感。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "hy_oas": {
       "status": "green",
-      "value_display": "326 bps",
-      "note": "FRED prefetch最新观测为10/29 326bp，低于350黄线，绿；近五日338→330→318→314→326。",
-      "asOfDate": "2026-11-01",
+      "value_display": "348 bps",
+      "note": "FRED 11/5观测为348bp，较上期326bp扩大22bp，但仍低于350bp黄线，绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "fed_policy": {
-      "status": "yellow",
-      "value_display": "3.75%–4.00%（维持）",
-      "note": "FOMC 10/28以10–2票维持3.75%–4.00%，两名反对者主张加息25bp；通胀仍高，按维持高利率判黄。",
-      "asOfDate": "2026-11-01",
+      "status": "red",
+      "value_display": "12月加息25bp概率76.8%",
+      "note": "CME FedWatch显示12/9加息25bp概率76.8%、维持23.2%；当前目标区间3.75%–4.00%，按隐含加息判红。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 14,
       "syncedFromUpstream": true
     },
     "cloud_rpo_growth": {
       "status": "green",
       "value_display": "$2.4798T 最新披露合计",
-      "note": "新Q3主锚：MSFT商业RPO $677B、AWS $578B、Google Cloud $560.8B，加Oracle $664B，混合日期最新披露合计$2.4798T，较上期台账$2.3529T高5.39%，维持强劲绿。各公司定义/久期不同，订单不等于已实现收入。",
-      "asOfDate": "2026-11-01",
+      "note": "最新披露的Oracle、Microsoft、AWS、Google Cloud RPO/积压合计仍为$2.4798T，较前一组披露高5.39%；公司定义和期限不同，仅作需求存量交叉，current/绿。",
+      "asOfDate": "2026-11-08",
       "maxAgeDays": 90,
       "syncedFromUpstream": true
     }
@@ -253,8 +253,8 @@
     "sourceUrl": "https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json",
     "sourceKind": "latest",
     "snapshotName": null,
-    "upstreamAsOf": "2026-11-01",
+    "upstreamAsOf": "2026-11-08",
     "adoptedCount": 24,
-    "syncedAt": "2026-11-02T13:41:30.215Z"
+    "syncedAt": "2026-11-09T23:12:43.104Z"
   }
 }
