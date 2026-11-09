@@ -1,12 +1,12 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-11-08T18:03:31.532Z",
+  "generatedAt": "2026-11-09T22:39:39.240Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
-  "status": "error",
-  "sourceStatus": "error",
-  "requestMode": "error_cooldown_cache_hit",
+  "status": "ok",
+  "sourceStatus": "live",
+  "requestMode": "live_broad_query",
   "source": "GDELT DOC public search",
   "cachePolicy": {
     "ttlMinutes": 1440,
@@ -40,49 +40,40 @@
     "provider": "gdelt",
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
-    "status": 429,
-    "attempts": 2,
-    "retryCount": 1,
-    "rateLimited": true,
+    "status": 200,
+    "attempts": 1,
+    "retryCount": 0,
+    "rateLimited": false,
     "timeout": false,
     "retryAfterSeconds": null,
     "timeoutMs": 20000,
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 28437,
-    "errorCode": "rate_limited"
+    "elapsedMs": 14076,
+    "errorCode": null
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-11-08T18:03:03.095Z",
-    "lastLiveSuccessAt": "2026-11-04T06:56:12.238Z",
-    "latestOutcome": "rate_limited",
+    "latestAttemptAt": "2026-11-09T22:39:25.161Z",
+    "lastLiveSuccessAt": "2026-11-09T22:39:25.161Z",
+    "latestOutcome": "success",
     "windows": {
       "days7": {
-        "attemptCount": 7,
-        "successCount": 1,
+        "attemptCount": 8,
+        "successCount": 2,
         "failureCount": 6,
-        "successRatePct": 14.3
+        "successRatePct": 25
       },
       "days30": {
-        "attemptCount": 32,
-        "successCount": 3,
+        "attemptCount": 33,
+        "successCount": 4,
         "failureCount": 29,
-        "successRatePct": 9.4
+        "successRatePct": 12.1
       }
     },
     "history": [
-      {
-        "attemptedAt": "2026-09-11T00:38:42.052Z",
-        "outcome": "rate_limited",
-        "attempts": 1,
-        "retryCount": 0,
-        "status": 429,
-        "errorCode": "rate_limited",
-        "elapsedMs": 11496
-      },
       {
         "attemptedAt": "2026-09-12T04:56:40.630Z",
         "outcome": "rate_limited",
@@ -649,28 +640,320 @@
         "status": 429,
         "errorCode": "rate_limited",
         "elapsedMs": 28437
+      },
+      {
+        "attemptedAt": "2026-11-09T22:39:25.161Z",
+        "outcome": "success",
+        "attempts": 1,
+        "retryCount": 0,
+        "status": 200,
+        "errorCode": null,
+        "elapsedMs": 14076
       }
     ]
   },
-  "lastFetchFailure": {
-    "at": "2026-11-08T18:03:03.095Z",
-    "errorClass": "rate_limited",
-    "cooldownHours": 24
-  },
   "aggregate": {
-    "articleCount": 0,
+    "articleCount": 32,
     "bucketCounts": {
-      "chokepoint": 0,
+      "chokepoint": 2,
       "sanctions": 0,
       "supply_disruption": 0,
       "facility_event": 0,
-      "tanker_shipping": 0,
-      "middle_east_risk": 0,
-      "market_reaction": 0
+      "tanker_shipping": 5,
+      "middle_east_risk": 4,
+      "market_reaction": 7
     }
   },
-  "articles": [],
-  "error": "GDELT DOC broad oil-news cache HTTP 429 after 2 attempt(s)",
+  "articles": [
+    {
+      "domain": "shippingtribune.com",
+      "publishedAt": null,
+      "buckets": [
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "thehindubusinessline.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint",
+        "market_reaction",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "arynews.tv",
+      "publishedAt": null,
+      "buckets": [
+        "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "gold.cnfol.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "businesstimes.com.sg",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "oilprice.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction",
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "cnbcafrica.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction",
+        "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "petroleumnews.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "futures.cnfol.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "shippingtribune.com",
+      "publishedAt": null,
+      "buckets": [
+        "tanker_shipping"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "gold.cnfol.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "epochtimes.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "theglobeandmail.com",
+      "publishedAt": null,
+      "buckets": [
+        "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "jamn1075.iheart.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "1190kex.iheart.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "finance.jrj.com.cn",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "finance.eastmoney.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "tayyar.org",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "newsway.co.kr",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "24.ae",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "baotintuc.vn",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "vietgiaitri.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "vesti.bg",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "thehindubusinessline.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "taipeitimes.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "cnbc.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "vietstock.vn",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "cinaradio.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "viva.co.id",
+      "publishedAt": null,
+      "buckets": [
+        "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "timesofindia.indiatimes.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "cbsnews.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    }
+  ],
+  "error": null,
   "promotionEligible": false,
   "productionDisplayApproved": false,
   "productionImpact": {
@@ -689,335 +972,5 @@
     "本 cache 只保存 compact domain/publishedAt/bucket/query 摘要和聚合计数,不保存标题原文、URL、snippet、正文或 raw response。",
     "本 cache 不确认通道关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。"
   ],
-  "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation",
-  "lastUsableCache": {
-    "generatedAt": "2026-11-04T06:56:32.025Z",
-    "status": "ok",
-    "sourceStatus": "live",
-    "requestMode": "live_broad_query",
-    "source": "GDELT DOC public search",
-    "cachePolicy": {
-      "ttlMinutes": 1440,
-      "staleMaxHours": 72,
-      "errorCooldownHours": 24,
-      "errorCooldownHoursByClass": {
-        "rate_limited": 24,
-        "timeout": 4,
-        "network_error": 4,
-        "server_error": 6,
-        "other": 12
-      },
-      "lowFrequencyCache": true,
-      "broadQueryLocalClassification": true,
-      "liveRetryPolicy": "one_bounded_retry_after_cache_or_classified_error_cooldown",
-      "liveMaxRetries": 1,
-      "retryJitterMaxMs": 1500,
-      "lastUsableCachePreservedOnError": true,
-      "lastUsableCacheAffectsCurrentSignal": false
-    },
-    "query": {
-      "id": "gdelt_broad_oil_news",
-      "label": "GDELT broad oil-news cache query",
-      "query": "(oil OR crude OR Brent OR WTI OR tanker OR refinery) (Hormuz OR \"Red Sea\" OR sanction OR outage OR attack OR disruption OR futures)",
-      "windowDays": 7,
-      "maxRecords": 32,
-      "mode": "ArtList",
-      "sort": "HybridRel"
-    },
-    "aggregate": {
-      "articleCount": 32,
-      "bucketCounts": {
-        "chokepoint": 0,
-        "sanctions": 0,
-        "supply_disruption": 0,
-        "facility_event": 0,
-        "tanker_shipping": 0,
-        "middle_east_risk": 5,
-        "market_reaction": 1
-      }
-    },
-    "articles": [
-      {
-        "domain": "theglobeandmail.com",
-        "publishedAt": null,
-        "buckets": [
-          "middle_east_risk"
-        ],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "jamn1075.iheart.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "1190kex.iheart.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.jrj.com.cn",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "163.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "theglobeandmail.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "usstock.jrj.com.cn",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "sandiegouniontribune.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "wallstreetcn.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "aa.com.tr",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "ec.ltn.com.tw",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "fnnews.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "alwatan.com.sa",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "thestar.com.my",
-        "publishedAt": null,
-        "buckets": [
-          "middle_east_risk"
-        ],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "wallstreetcn.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "boursorama.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "wallstreetcn.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "shz.de",
-        "publishedAt": null,
-        "buckets": [
-          "middle_east_risk"
-        ],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "noz.de",
-        "publishedAt": null,
-        "buckets": [
-          "middle_east_risk"
-        ],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "sovsekretno.ru",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "ichannela.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "boursorama.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "novosti.rs",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "finance.eastmoney.com",
-        "publishedAt": null,
-        "buckets": [],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "futures.jrj.com.cn",
-        "publishedAt": null,
-        "buckets": [
-          "market_reaction"
-        ],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      },
-      {
-        "domain": "sondakika.com",
-        "publishedAt": null,
-        "buckets": [
-          "middle_east_risk"
-        ],
-        "queryIds": [
-          "gdelt_broad_oil_news"
-        ]
-      }
-    ],
-    "usedForCurrentSignal": false,
-    "productionImpact": {
-      "affectsValues": false,
-      "affectsScoring": false,
-      "affectsDecisionModel": false,
-      "affectsExecutionLock": false,
-      "affectsPositionGuidance": false,
-      "affectsBrentPromotion": false,
-      "affectsOdpFinalBias": false,
-      "affectsGlobalRiskHeatmap": false,
-      "affectsCrossValidation": false
-    },
-    "noteZh": "429/错误降级时仅保留最近可用 GDELT compact cache 供审计,不参与本轮 Oil News 聚合增强。"
-  }
+  "boundary": "production read-only GDELT compact news cache for ODP oil-news event watch; display-only/audit-only cache; NOT in values, scoring, decision, execution, position, Brent promotion, ODP finalBias, Global Risk Heatmap, or cross-validation"
 }
