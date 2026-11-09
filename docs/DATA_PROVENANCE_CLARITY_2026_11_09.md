@@ -1,5 +1,11 @@
 # 数据口径、时间与解释清晰度核查（2026-11-09）
 
+## 2026-11-09 最新 main 整合待验回执
+
+main `f40126d3` 仅增加 World Order 自动数据；纯代码整合树 `bdfdefb388eb608998d454f1458a069038140ca7`。协调方独立 AI 复核无 P1/P2，不是人工批准；相对该 main 的 data/workflow 差异为空。含旧证据的本地整合树 `d4a37a639ce444d0283bfb46e2ebd9b7e1c1979c` 的 `check:changed` exit 0（干净树，文档链接检查），单独 `check:all` exit 0；coverage 1616 pass / 1 既有 skip / 0 fail，99.86/93.35/97.96。
+
+新快照 [1440/390 实测证据](review-evidence/pr511-visual-f40126d3/README.md) 显示关键文案与重复交互正常；Google Fonts 被代理阻断。系统 Chromium 的 104 项 E2E 首轮 103 pass / 1 fail，失败为 Google Fonts 的 `net::ERR_TUNNEL_CONNECTION_FAILED` 被控制台错误断言捕获；该项原样重跑仍失败。锁定浏览器未安装。原始 head 的 CI 曾有 104/104 浏览器回归成功，不代表新 head 成功。新 head 的 GitHub Actions 锁定 Chromium 104 项及全部 CI 必须通过后方可合并；CI、完整浏览器门槛和发布均待核验，未上线。协调方在用户桌面 Chrome 核验两生产域的 IBM Plex Mono、Noto Serif SC 和 Playfair Display 均已加载，自定义域 fontErrors=0；这不是新候选完整浏览器回归。
+
 ## 2026-11-09 整合与视觉验收回执
 
 PR #511 以 `9f79438d` 与 main `3a8a44c1` 无冲突整合，代码及数据整合树为 `a5c6a5bea762e22f8cf9b0ea59b96f959ab059e2`。相对该 main，生产 `data/` 和 workflow 差异为空。协调方记录整合树 `npm run check:changed` 实际执行完整 `check:all`，exit 0；unit coverage 1616 pass、1 个既有 skip、0 fail，lines/branches/functions 分别为 99.86/93.23/97.96；35 项独立审阅专项、`node --check scripts/app.js` 和 whitespace 检查通过。独立 AI 审查完整 PR 相对 main 无 P1/P2，不是人工批准。首版 CI check-all job `128943387505` 的步骤成功；新 head 的 CI 尚待核验。

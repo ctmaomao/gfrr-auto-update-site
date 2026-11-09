@@ -1,5 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 PR #511 最新 main 整合待验
+
+- main `f40126d3` 仅自动更新 World Order 数据；纯代码整合树 `bdfdefb388eb608998d454f1458a069038140ca7`。协调方独立 AI 复核无 P1/P2，非人工批准；相对 main 的 data/workflow diff 为空。
+- 含旧证据整合树 `d4a37a639ce444d0283bfb46e2ebd9b7e1c1979c`：干净树 `check:changed` exit 0（链接检查），独立 `check:all` exit 0；coverage 1616 pass / 1 既有 skip / 0 fail（99.86/93.35/97.96）。
+- [新快照视觉](review-evidence/pr511-visual-f40126d3/README.md) 的 1440/390 和重复交互正常；Google Fonts 代理阻断。系统 Chromium E2E 103/104，唯一失败为该字体请求进入控制台错误断言，原样重跑仍失败；锁定浏览器未安装。原始 head CI 曾 104/104，不能代替新 head；GitHub Actions 锁定 Chromium 的新 head 104 项及全部 CI 通过是合并门槛。协调方在用户桌面 Chrome 核验两生产域三种字体加载，自定义域 fontErrors=0，但不是新候选完整浏览器回归。新 head CI、完整浏览器门槛和发布尚待核验，未上线。
+
 ### 2026-11-09 数据口径 PR #511 整合与视觉回执
 
 - **整合**：PR head `9f79438d` 与 main `3a8a44c1` 无冲突整合，整合树 `a5c6a5bea762e22f8cf9b0ea59b96f959ab059e2`；相对该 main 的生产 data 和 workflow diff 为空。
