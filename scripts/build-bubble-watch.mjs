@@ -1,3 +1,4 @@
+import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote } from './bubble-watch/evidence-wording.mjs';
 import { collectQualifiedCashFlowConcept, qualifyMirrorCashFlows, requireCashFlowPeriodFloor, alignCashFlowPeriods, CASH_CAPEX_TAGS, OPERATING_CASH_FLOW_TAGS } from './bubble-watch/cash-flow-periods.mjs';
 import { preservePreviousWeeklyIssue } from './bubble-watch/previous-weekly-issue.mjs';
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
@@ -162,7 +163,7 @@ const INDICATOR_DEFS = [
   { id: 'vc_ai_share', axis: 'stage', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
   { id: 'nvda_invest_revenue', axis: 'stage', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
   { id: 'breadth_50d', axis: 'trigger', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
-  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
+  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '差值绝对值:>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
   { id: 'insider_sell_buy', axis: 'trigger', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'SEC EDGAR Form 4', mode: 'auto' },
   { id: 'ai_ipo_pipeline', axis: 'stage', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
   { id: 'hy_oas', axis: 'trigger', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
@@ -1546,7 +1547,7 @@ const autoBuilders = {
     return {
       status,
       value_display: fmtPct(spread, 1, true),
-      note: `Yahoo Chart 实算 6 个月回报:SPY ${fmtPct(ret(spy), 1, true)} vs 等权重 RSP ${fmtPct(ret(rsp), 1, true)},市值加权领先 ${fmtPct(spread, 1, true)}——${abs >= 5 ? '头部独涨、广度未跟上' : '头部与平均股差距可控'}。阈值:>10% 红 / 5-10% 黄 / <5% 绿`,
+      note: signedSpreadNote(ret(spy), ret(rsp)),
       detail: { spyRet: ret(spy), rspRet: ret(rsp), spread }
     };
   },
@@ -2373,7 +2374,7 @@ async function fetchEnterpriseDeployFromPublicReports() {
     status,
     value_display: `~${pct}%`,
     source_name: 'Google Cloud ROI of AI public report',
-    note: `Google Cloud ROI of AI 公开报告解析:约 ${pct}% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该项是 enterprise production proxy,不等同所有企业 AI use case。阈值:<50%=红 / 50-65%=黄 / >65%=绿`,
+    note: enterpriseSurveyNote({ productionDeployPct: pct, deloitteSupport }),
     detail: {
       source: 'Google Cloud ROI of AI public report',
       url: 'https://cloud.google.com/transform/roi-of-ai-how-agents-help-business',
@@ -4120,7 +4121,7 @@ const PUBLIC_CALIBRATION_SUMMARIES = {
   capex_reaction: '价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。',
   ceo_hedging: '高管和市场领袖的谨慎措辞增加，但尚未形成集体承认过热或暂停投入的共振。',
   token_revenue_ratio: 'Token 用量与估算支出增速接近，尚未显示收入兑现显著落后于算力消耗。',
-  enterprise_deploy: '单一 AI-agent 口径偏窄，但跨调查仍显示生产部署处于高位，暂不下调灯色。'
+  enterprise_deploy: '单一 AI-agent 调查不能替代登记校准口径，灯色沿用既有校准规则，不代表本轮跨调查确认。'
 };
 
 function publicCalibrationSummary(ind) {
@@ -4184,6 +4185,8 @@ function normalizePublicBubbleCopy(text) {
 }
 
 function publicIndicatorNote(ind) {
+  const evidenceNote = evidenceAwareNote(ind);
+  if (evidenceNote !== ind.note) return evidenceNote;
   let note = normalizePublicBubbleCopy(ind.note);
   const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
   if (calibration?.applied) {

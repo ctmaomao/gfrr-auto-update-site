@@ -1,3 +1,4 @@
+import { evidenceAwareNote } from './evidence-wording.mjs';
 import { createHash } from 'node:crypto';
 import { assessWeeklyEditorialNewsReadiness, usableLimitedSearchStory } from './weekly-editorial-news.mjs';
 import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
@@ -30,7 +31,7 @@ function buildStructuredFacts(indicators) {
     status: indicator.status,
     asOfDate: indicator.as_of || null,
     stale: indicator.stale === true,
-    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote(indicator)}`, 340),
+    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote({ ...indicator, note: evidenceAwareNote(indicator) })}`, 340),
     sourceRefIds: [`indicator:${indicator.id}`]
   }));
 }

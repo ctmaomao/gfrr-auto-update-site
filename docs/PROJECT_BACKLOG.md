@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 Bubble wording and evidence-date repair
+
+- **Acceptance baseline / last base**: isolated from main `65d3cc68`; narrow factual repair after the full free refresh. Preserve every score, status, calibration, source gate and production artifact; no provider or remote action.
+- **Current task**: signed SPY/RSP leadership wording, distinct enterprise calibration versus AI-agent survey context, and ARR historical-review versus original-observation disclosure in both public notes and compact editorial facts. Missing Deloitte support and missing ARR anchor dates remain explicit; no dates inferred.
+- **Validation**: focused offline regressions cover signed/zero spread and unchanged absolute scoring, unavailable corroboration and mixed survey populations, stale rejected milestone versus review-date propagation, input immutability and idempotent disclosure. Full checks and independent review pending.
+- **Next / limits**: freeze exact patch for independent AI review after full checks. No production JSON or curated evidence edited; later reviewed free regeneration remains coordinator-controlled. This describes existing scoring behavior, not approval of a symmetric economic interpretation.
+
+
 ### 2026-11-09 Full free-only Bubble refresh preparation
 
 - **Acceptance baseline / last base**: coordinate a current full Bubble data pack before the separately capped editorial attempt. Original isolated implementation on main `54e9fd16`, now integrated without rewriting history on main `95951a0a`, retaining #517/#518/#519 and the newer Oil News data; original scheduled workflow and upstream paid editorial/budget files unchanged. Scope corrected to a separate workflow because the original completion triggers paid editorial.
