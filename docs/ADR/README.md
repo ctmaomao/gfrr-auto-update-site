@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0092 — Delegated AI review](0092-delegated-ai-review.md): owner-requested project review delegation; independent AI review replaces generic human-only review and repeated same-scope confirmation, with unchanged authorization boundaries and quality gates.
+
 - [ADR-0090 — Shared editorial cap and free search](0090-shared-editorial-budget-and-free-search.md): owner-authorized CNY 5 shared article cap, verified search allowance and narrow CEO Wind fallback retirement; push/PR, independent AI review and checked serial publication authorized, operational activation evidence pending.
 
 - [ADR-0087 — Oil-pressure evidence simplification](0087-oil-pressure-evidence-simplification.md): verified local evidence qualification and narrow non-predictive display contract; remote publication not authorized. ADR-0086 is reserved by the separate draft PR #503.
@@ -89,7 +91,7 @@
 
 | [ADR-0025](0025-proportionate-validation.md) | Proportionate local validation | Owner-authorized local implementation; pending merge review |
 
-| [ADR-0026](0026-tiered-git-authorization.md) | Tiered Git authorization | Owner accepted; independent merge review retained |
+| [ADR-0026](0026-tiered-git-authorization.md) | Tiered Git authorization | Owner accepted; reviewer/confirmation policy partially superseded by ADR-0092 |
 
 | [ADR-0027](0027-design-document-consistency.md) | Scoped design-document consistency correction; partial supersession of ADR-0011/0014 enforcement references | Owner authorized; independent merge review retained |
 

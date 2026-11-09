@@ -8,19 +8,20 @@
 
 ## 执行与批准
 
-授权任务连续推进至必要验证完成；常规选择自行判断，缺失关键信息才询问。只读审阅不写文件，设计授权不自动进入实施。批准沿用同任务有效范围，明确的临执行确认、owner 手动操作和费用重确认除外。仅暂停实际触及门槛的步骤，并先完成可独立准备的可审阅结果。
-发消息、部署、发布、删除、付费调用/交易及通知仍须对应明确授权；技能不提供这些权限，也不默认授权安装或更新。
+授权任务连续推进至必要验证和验收完成；常规选择自行判断，缺失关键信息才询问。只读审阅不写文件，设计授权不自动进入实施。有效授权沿用同任务的对象、动作、数据和费用范围；不因步骤切换、同范围修复重试或已有授权的 Git/发布操作重复请示。项目技术方案、代码与发布质量由 AI 审核把控，合并前仍须独立审阅，不以实施者自评代替。
+2026-11-09 owner 要求后续项目审查由 AI 承担，取消项目流程额外设置的重复人工确认；本条与 [ADR-0092](docs/ADR/0092-delegated-ai-review.md) 仅替代通用人工审阅/重复确认要求，不扩大任务授权。历史“待人工 review”“另行最终确认”“owner 手动执行”不再单独阻断已授权且验证通过的同范围操作；后续用户的新限制和实际工具权限仍优先。
+发消息、部署、发布、删除、付费调用/交易及通知仍须对应有效授权；技能和审查通过本身不提供这些权限，也不默认授权安装或更新。涉及未授权的新目标/数据/费用/用途、破坏性操作、凭据与持续访问、来源权利或平台要求临执行确认/本人操作的情况，保留相应门槛。只暂停受影响步骤，继续可独立完成的工作；不把平台限制、第三方权利或真实人工作业事实改写为 AI 已批准。
 
 <a id="git-human-control"></a>
 
 ## Git 分级授权
 
-决策记录见 [ADR-0026](docs/ADR/0026-tiered-git-authorization.md)。
+决策记录见 [ADR-0026](docs/ADR/0026-tiered-git-authorization.md) 与 [ADR-0092](docs/ADR/0092-delegated-ai-review.md)。旧 `git-human-control` 锚点仅为链接兼容。
 
 2026-09-06 owner 已批准以本节替代通用“Git 只能由 owner 手动执行”的要求；历史记录不撤销该授权。保持 serial trunk mode：基于 latest main、一次一个逻辑任务、no stacked PR；旧 PR 不追加其它任务。Git 权限按操作影响判断，不按模型名称或置信度放宽。
 
 - **本地常规操作自主执行**：可读取状态、fetch（不附带删除/prune）、创建任务分支或隔离 worktree、安全切换，以及只暂存本任务改动并在必要检查通过后本地 commit。同步当前分支仅允许工作区/索引干净时 fast-forward，该同步属于本地常规授权；无法快进则保留现场，先确定范围，不自动重写历史。
-- **远端/集成操作按任务授权执行**：push、集成功能分支的 merge 及其触发的部署/发布须有相应目标和动作的明确授权；有效授权可沿用，由 AI 执行，无需 owner 手动敲命令。合并前的独立人工 review 和生产验收要求仍保留。推送到 main 可能触发 Pages，不能把本地 commit 授权当作发布授权。
+- **远端/集成操作按任务授权执行**：push、集成功能分支的 merge 及其触发的部署/发布须有相应目标和动作的明确授权；有效授权可沿用，由 AI 执行，无需 owner 手动敲命令或对同一范围再次确认。合并前由独立 AI reviewer 按 §10 核验实际 diff、必要检查和风险，生产验收要求仍保留。推送到 main 可能触发 Pages，不能把本地 commit 授权当作发布授权。
 - **破坏性操作保留具体确认**：强制推送、丢弃改动、重写共享历史、删除分支/worktree 等，先提供受影响对象与恢复方案，再取得针对具体操作的确认；不靠笼统“收尾”推断。
 
 执行前核对分支、目标、工作区与索引；保留用户和其它任务的改动，不使用全量暂存混入无关文件。无法安全区分改动时只暂停相关 Git 操作。允许 Git 操作不等于必须制造分支或提交；按当前任务需要执行。源权利、付费调用、凭证、数据发布和平台 Hook 信任等单独保障不变。
@@ -116,7 +117,7 @@ Daily/realtime 生成操作仍须授权，按 §4 核对产物并保留用户改
 
 ## 8. 工作流与部署保护
 
-Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准，当前仍为 check:all；副作用见 §5。Realtime/Daily 的 Actions Summary 提供输出、baseline、Decision 与 Transmission Delta 的人工审计记录。
+Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准，当前仍为 check:all；副作用见 §5。Realtime/Daily 的 Actions Summary 提供输出、baseline、Decision 与 Transmission Delta 的可复核审计记录。
 
 ## 9. 推荐输出格式
 
@@ -126,13 +127,15 @@ Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准�
 
 ## 10. `/goal` 自主循环 review 守则
 
-本节为 Codex `/goal` 等自主循环工具的人工 review 强制要求。`/goal` 跑完声明 complete + `check:all` 全绿,不等于可以 merge。merge 前必须人工核对以下三点;任一点失败必须先修复或回滚,不得跳过。
+本节为 Codex `/goal` 等实施任务的独立 review 强制要求。`/goal` 跑完声明 complete + `check:all` 全绿，不等于可以 merge。默认由未参与本次实施的独立 AI reviewer 审查实际文件和 diff；实施者的 self-audit 不能替代独立审查，AI review 不标注成人工批准。
+审查记录须注明 base/head（未提交时记录 reviewed tree 或文件 blob）、范围、发现与修复、验证结果和未验证项。未解决的 P1/P2、必需检查失败或缺失均阻止合并。head/base 变化后核对实际新增差异，对受影响部分复审并重跑必要检查；旧 head 的绿灯不能冒充新 head CI。独立 reviewer 不可用时暂停合并，不以自评或请求用户点击确认替代。
+merge 前必须独立核对以下三点；任一点失败必须先修复或按既有授权安全回滚，不得跳过。
 
-- **方案一致性**：merge 前人工打开实际文件，核对实施清单与 owner 拍板的方案一致；不能以汇报声称一致代替检查，不能未经批准改走其它方案。
+- **方案一致性**：merge 前独立 reviewer 打开实际文件，核对实施清单与用户授权的目标及 acceptance baseline 一致；在范围内自行选择并解释实现方案，不能以汇报声称一致代替检查，不能擅自扩大目标或改动禁止范围。
 - **Contract checker 完整性**:必须确认 `/goal` 没有为了让 `check:all` PASS 而擅自放宽现有 contract checker。检查方法:在受影响的 contract / checker 文件上跑 `git diff`,确认 assertion 没被删、没被改宽、没被加 skip。Contract checker 的 assertion 变更属于 ADR-level 决策,必须独立 reviewed PR,不得隐藏在 presentation patch 里。
 - **Ignore list 显性化**:任何新增的 coverage checker / contract checker 的 ignore list 必须在文件内对每一条 ignore 写明理由(为什么 ignore、对应哪个边界、unlock 路径)。无注释的 ignore 是技术债,不得通过 review。
 
-实施或文档同步任务触发实际审批后，将用户拍板方案记录在 PROJECT_BACKLOG.md 对应任务作为 acceptance baseline；只读审计在回复中记录。记录不扩大授权，也无需为记录本身再次请示。
+实施或文档同步任务触发实际审批后，将用户授权目标和已审查方案记录在 PROJECT_BACKLOG.md 对应任务作为 acceptance baseline；只读审计在回复中记录。记录不扩大授权，也无需为记录本身再次请示。
 
 `/goal` 指令模板默认 Done 条件中必须包含一条 self-audit step:在声明 complete 前自己跑一遍上述三点核对,把核对结果写进汇报,而不是只汇报 check:all 通过。
 

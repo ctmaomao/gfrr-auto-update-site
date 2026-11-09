@@ -8,6 +8,8 @@
 
 ## 已有覆盖关系
 
+- 通用项目审查主体及同范围免重复确认以根 AGENTS.md / [ADR-0092](ADR/0092-delegated-ai-review.md) 为准；本附件中手工样本、真实人工标注、来源权利、未解锁生产路径及费用边界不因 AI review 自动转换状态或解除。
+
 - 默认检查的实际副作用以根 AGENTS.md §5 与 package.json / check-suite.mjs 为准；原条目中的“默认只读”指生产数据隔离，不能用来推断完全不写 ignored artifacts。
 
 - G-4A/G-4B 为阶段记录；当前 Brent promotion 执行 G-4C freshness hard gate，PR #53 仍 superseded。
