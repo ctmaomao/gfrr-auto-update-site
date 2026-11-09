@@ -11,7 +11,7 @@ export function snapshotDisplayHealth(radarData, nowMs = Date.now()) {
     && new Date(calendar).toISOString().slice(0,10)===datePart && at<=nowMs+5*60*1000;
   const ageHours=valid ? Math.max(0,(nowMs-at)/3600000) : null;
   const status=!valid?'invalid':ageHours>SNAPSHOT_MAX_AGE_HOURS?'stale':'current';
-  const freshnessLabel=!valid?'快照时间无效，当前时效待确认':`${status==='stale'?'更新延迟 · 历史快照':'本期快照'} · 发布${ageHours<1?'不足 1':`已过 ${Math.floor(ageHours)}`}小时`;
+  const freshnessLabel=!valid?'快照时间无效，当前时效待确认':`${status==='stale'?'更新延迟 · 历史快照':'本期快照'} · 生成${ageHours<1?'不足 1':`已过 ${Math.floor(ageHours)}`}小时`;
   const health=radarData?.dailyRealtimeInput?.healthScore;
   const healthText=typeof health==='number' && Number.isFinite(health) && health>=0 && health<=100 ? `${health}/100` : '未知';
   const collectionLabel=`采集时健康度 ${healthText}`;

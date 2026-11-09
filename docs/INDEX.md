@@ -36,6 +36,8 @@
 
 ## Conditional Authority (authoritative only within their scope)
 
+- [数据口径与时间清晰度实施核查（2026-11-09）](DATA_PROVENANCE_CLARITY_2026_11_09.md)：Scope-conditional；本轮检查、展示修复、源日期缺口与验证状态，不批准新来源、评分或发布。
+
 - [ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) — 两篇文章共享 CNY 5 成本上限、持久预留与免费搜索准入；仅替代 CEO Wind helper-presence 断言及点名的旧状态探测语义，不扩展 Daily、评分或其它 Wind 指标；实施及经独立AI审阅/检查后的串行发布已授权，实际激活证据与验收待验。
 
 - [OFR_PRIMARY_MIGRATION_2026_11_01.md](OFR_PRIMARY_MIGRATION_2026_11_01.md) — OFR主读数替代的准备/迁移提案；仅约束本次未接runtime适配器与研究，owner已选择旧建议退役，DESIGN/checker迁移须实际审阅，生产合并激活待确认，不覆盖现行评分或七候选协议。

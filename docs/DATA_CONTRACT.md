@@ -1079,7 +1079,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `weekly-homepage-20261109`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `data-provenance-20261109`）。
 
 稳定边界：
 
@@ -1544,24 +1544,24 @@ Boundaries:
 
 各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `weekly-homepage-20261109`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `data-provenance-20261109`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=weekly-homepage-20261109`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=weekly-homepage-20261109`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `weekly-homepage-20261109`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=data-provenance-20261109`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=data-provenance-20261109`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `data-provenance-20261109`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs weekly-homepage-20261109
-npm run bump:frontend-asset-version -- weekly-homepage-20261109
+node scripts/bump-frontend-asset-version.mjs data-provenance-20261109
+npm run bump:frontend-asset-version -- data-provenance-20261109
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `weekly-homepage-20261109`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `data-provenance-20261109`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -2620,3 +2620,7 @@ NVIDIA 时效记录只能声明既定政策，不能选择上限：分子30天�
 
 
 NVIDIA 跨日 carry 使用双时钟：先按原证明日期验证分子、收入的原始年龄/政策/期间一致性，再按当前期次或查看日期重算30/120天资格；证明字段原样保留，不能把新期次日期写回旧证明。仍有效的跨日证据可沿用，任一超龄或未来/篡改证明仍 hold；不改未知资格与23槽分母。见 [跨日独审修正](RADAR_INTEGRATION_2026_11_04.md#independent-review-correction-of-e7aabf7a-original-proof-and-current-eligibility-clocks)。
+
+## 2026-11-09 现有观察字段语义修复
+
+`brentPricingLayer.selectedBrent.observedAt` 仅由相同来源、相同已选数值的 `sourceDetails.brent.observedAt/timestamp` 校验得到，缺失/非法/未来为 null；不再回退为输入或 Daily 生成时间。字段结构和旧价差计算不变。页面只从匹配的原来源日期解读旧快照，未知合约或异日不作直接价差展示。`dailyRealtimeInput.updatedAt` 是输入快照生成、`capturedAt` 是 Daily 采纳输入、顶层 `updatedAt` 是 Daily 计算起点；均不等于逐项源观察时间。详见[本轮核查](DATA_PROVENANCE_CLARITY_2026_11_09.md)。

@@ -1,0 +1,7 @@
+# PR 511 visual inspection on f40126d3 — 2026-11-09
+
+Before is main `f40126d39914380f950704cf0091db5be26ddf9b`; after is local merge `7a23179ddea928d7155c46ba4a42534296a2afa1`, tree `d4a37a639ce444d0283bfb46e2ebd9b7e1c1979c`, including the prior documentation evidence. The same radar and World Order snapshot bytes were served on both sides. Captures use system Chromium at 1440x900 and 390x900; full-page and component captures are labeled before/after. The prior `pr511-visual-20261109` evidence remains pinned to its original base.
+
+Brent provenance and comparison limits, broad USD, OFR clocks, and health/freshness were inspected in pixels; mobile wraps without clipping. Both widths have no document overflow. Repeated expand/collapse, reload and two weekly/radar navigation cycles preserved content with no pageerror. Shared sampled computed styles and rendered text are in `results.json`.
+
+Google Fonts `https://fonts.googleapis.com/css2` failed with `net::ERR_TUNNEL_CONNECTION_FAILED`; fallback fonts render, so loaded web-font appearance is unverified. The 104-test Playwright suite using system Chromium (the pinned browser was unavailable) had 103 passes and one failure: `site-smoke.spec.mjs:252` reported this resource error in its console-error assertion. One unchanged failed-only rerun also failed for the same reason. No assertion, network policy, or browser download was changed. This evidence is local pending resolution; it is not a CI or production release receipt.

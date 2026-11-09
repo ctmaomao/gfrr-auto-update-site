@@ -46,7 +46,7 @@ const context = vm.createContext({ ...bindings, document: documentStub, Date: Fi
   window: {}, setTimeout: () => {}, clearTimeout: () => {},
 });
 vm.runInContext(source.replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?[ \t]*$/gm, '').replace(/^export[ \t]+/gm, ''), context);
-const api = vm.runInContext('({ renderMacroOverview, renderMarketTemperature, renderC7MarketSentiment, renderC4UsEconomyTemperature, renderRiskEngines, renderTransportShockConfirmation, renderC8Geopolitical, marketObservation, observationDate, asNumber, strictFiniteDisplay, MARKET_MAX_AGE_DAYS, MARKET_MAX_AUXILIARY_LAG_DAYS })', context);
+const api = vm.runInContext('({ renderMacroOverview, renderC1InflationEnergy, renderDetailData, renderMarketTemperature, renderC7MarketSentiment, renderC4UsEconomyTemperature, renderRiskEngines, renderTransportShockConfirmation, renderC8Geopolitical, marketObservation, observationDate, asNumber, strictFiniteDisplay, MARKET_MAX_AGE_DAYS, MARKET_MAX_AUXILIARY_LAG_DAYS })', context);
 beforeEach(() => { nodes.clear(); errors.length = 0; });
 const text = id => el(id).textContent;
 const market = (z = 0.5887, date = '2026-10-30') => ({ zScoreRange: { min: -2, max: 3 }, assets: Object.fromEntries(['qqq','ndx','ixic'].map(key => [key, { latestMetricDate: date, records: [{ date, zScore: z, close: 690.49, ma60: 657.19, stdDev60: 56.56 }] }])) });
@@ -274,4 +274,27 @@ test('BoA total card-spending growth cannot substitute for missing ex-gas eviden
   renderRetail(data);
   assert.match(text('c4-consumer-bofa'), /^—/);
   assert.doesNotMatch(text('c4-consumer-bofa'), /6\.2|0\.0|已更新/);
+});
+
+
+test('Brent repeated renders clear missing provenance and health clocks never borrow observations', () => {
+  const data = { updatedAt: '2026-11-07T01:00:00Z', displayInputsBaseline: { brent: 107.03 },
+    dailyRealtimeInput: { updatedAt: '2026-11-07T00:30:00Z', capturedAt: '2026-11-07T01:00:00Z', healthScore: 100, sourceMode: 'live' },
+    brentPricingLayer: { selectedBrent: { source: 'fred:DCOILBRENTEU', value: 107.03, observedAt: '2026-11-07T01:00:00Z' }, publicSpotProxy: { source: 'fred-anchor', value: 107.03, observedAt: '2026-11-03' },
+      eiaBrentSpotProxy: { price: 107.03, updatedAt: '2026-11-03T00:00:00Z' }, futuresProxy: { value: 98.32, observedAt: '2026-11-06T21:59:44Z' }, proxySpread: { spotMinusFutures: 8.71 } } };
+  const before = JSON.stringify(data);
+  api.renderC1InflationEnergy({ radarData: data }); api.renderDetailData({ radarData: data });
+  assert.match(text('c1-brent-aux'), /2026-11-03/); assert.match(text('c1-brent-spread'), /未对齐/);
+  assert.equal(text('detail-health-source-mode'), '在线采集');
+  assert.equal(text('detail-health-input-at'), '2026-11-07 00:30 UTC');
+  assert.equal(text('detail-health-captured'), '2026-11-07 01:00 UTC');
+  assert.equal(text('detail-health-run-at'), '2026-11-07 01:00 UTC');
+  assert.equal(JSON.stringify(data), before);
+  api.renderC1InflationEnergy({ radarData: { displayInputsBaseline: { brent: null }, brentPricingLayer: {} } });
+  api.renderDetailData({ radarData: {} });
+  assert.equal(text('c1-brent-number'), '—'); assert.match(text('c1-brent-eia'), /^—/);
+  assert.match(text('c1-brent-aux'), /未核实/);
+  assert.equal(text('detail-health-source-mode'), '未记录');
+  for (const id of ['input-at', 'captured', 'run-at']) assert.equal(text(`detail-health-${id}`), '未记录或待核验');
+  assert.deepEqual(errors, []);
 });

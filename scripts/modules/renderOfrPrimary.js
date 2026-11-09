@@ -1,6 +1,7 @@
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=weekly-homepage-20261109';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=weekly-homepage-20261109';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=weekly-homepage-20261109';
+import { provenanceTime } from './dataProvenanceView.js?v=data-provenance-20261109';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=data-provenance-20261109';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=data-provenance-20261109';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=data-provenance-20261109';
 
 const DAY = 86400000;
 const finite = Number.isFinite;
@@ -64,8 +65,9 @@ export function renderOfrPrimary({ radarData, worldOrderStressData, nowMs = Date
   text('hero-score-attribution', v.current ? `OFR FSI原值 · ${v.date}` : `${label}${v.date ? ` · 原观察日 ${v.date} · 原值 ${raw(v.value)}` : ''}`);
   text('hero-verdict-kicker', 'FINANCIAL STRESS · 金融压力观测');
   text('hero-verdict-headline', v.current ? (v.value > 0 ? '高于历史平均' : v.value < 0 ? '低于历史平均' : '处于历史平均') : label);
-  text('hero-verdict-body', `${v.current ? 'OFR原值以0为历史平均参考；负值不等于没有风险。' : '当前主读数暂不具备有效本期资格；不以旧综合分代替。'}这是已发表金融市场压力的测量，约滞后两个营业日，不能直接判断估值泡沫、危机概率或市场顶部。能源尾部和世界秩序单列观察，不抬高本读数。`);
+  text('hero-verdict-body', `${v.current ? 'OFR原值以0为历史平均参考；负值不等于没有风险。' : '当前主读数暂不具备有效本期资格；不以旧综合分代替。'}这是近期已实现的金融市场压力测量，约滞后两个营业日，并非实时行情，不能直接判断估值泡沫、危机概率或市场顶部。能源尾部和世界秩序单列观察，不抬高本读数。`);
   text('hero-dominant-chain', v.date ?? '观察日待更新');
+  text('ofr-time-provenance', `观察日 ${v.date ?? '待核验'} · 获取 ${provenanceTime(v.date ? radarData?.mainPressureReadout?.source?.retrievedAt : null, nowMs)} · 派生计算 ${provenanceTime(v.date ? radarData?.mainPressureReadout?.asOf : null, nowMs)}`);
   text('hero-weekly-change', v.weekly ? `${signed(v.weekly.value)} · ${v.weekly.fromDate} → ${v.weekly.toDate}${v.current ? '' : '（旧观察）'}` : '趋势待累计');
   text('hero-data-health', snapshotDisplayHealth(radarData, nowMs).heroLabel);
   text('hero-breakdown-counts', '独立警报与旧模型诊断见下方');
@@ -80,7 +82,7 @@ export function renderOfrPrimary({ radarData, worldOrderStressData, nowMs = Date
       const shock = lanes.shock;
       const tail = tailWarningView(shock, radarData);
       host.append(row('金融压力', v.current ? raw(v.value) : label, v.percentile === null ? '十年历史位置待累计' : `十年百分位 ${v.percentile.toFixed(1)} · 非概率`));
-      host.append(row('结构脆弱性', '分项观察 · 无综合评分', lanes.fragility.gaps.map(g => `${g.label}：${g.status}`).join(' · ')));
+      host.append(row('结构脆弱性', '分项观察 · 无综合评分', `估值、杠杆与融资期限等慢变量须分项核验，OFR偏低不代表结构安全。${lanes.fragility.gaps.map(g => `${g.label}：${g.status}`).join(' · ')}`));
       host.append(row('尾部与运输', tail.status, tail.detail));
       host.append(row('数据可信度', lanes.credibility.label, `OFR：${label}；各来源按原观察日解读，采集健康不等于所有指标均为本日。`));
     }
