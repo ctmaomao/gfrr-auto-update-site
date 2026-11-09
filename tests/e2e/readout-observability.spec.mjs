@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 /* global document, innerWidth */
 import { buildOfrReadout } from '../../scripts/daily/ofr-pressure-readout.mjs';
 import { buildPublishedOfrComponent, retireLegacyAdvice } from '../../scripts/daily/ofr-publication-contract.mjs';
@@ -107,12 +108,15 @@ for (const width of [1440, 390]) {
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     let input;
     await page.route('**/data/bubble-watch.json*', async route => {
-      const response = await route.fetch(); input = await response.json();
+      // Freeze the age-only fixture: a newer production issue must not move this test's expiry.
+      input = structuredClone(JSON.parse(readFileSync(new URL('../../docs/fixtures/bubble-watch/legacy-contract-bundle.json', import.meta.url))).files['data/bubble-watch.json']);
+      input.as_of_date = '2026-11-01';
+      input.generated_at = '2026-11-01T12:00:00Z';
       const card = input.indicators.find(i => i.id === 'neocloud_credit');
       card.as_of = '2026-11-01'; card.provenance.maxAgeDays = 21; card.stale = false;
       input.summary.weekly_editorial = buildApprovedBubbleWeeklyEditorial(input, '2026-11-22T12:00:00Z');
       input.summary.weekly_editorial.freshness.maxAgeHours = 24;
-      await route.fulfill({ response, json: input });
+      await route.fulfill({ json: input });
     });
     await page.goto('/bubble-watch.html'); await expect(page.locator('section.category article.indicator')).toHaveCount(27);
     await expect(page.locator('#weekly-editorial')).toBeVisible();
@@ -129,10 +133,15 @@ for (const width of [1440, 390]) {
     await expect(page.locator('.verdict h2')).toHaveText(input.summary.verdict_label);
     await expect(age).toContainText('已超龄 22天');
     await expect(page.locator('#bubble-data-freshness')).toContainText('本期期次');
-    await page.clock.setSystemTime(new Date('2026-12-10T12:00:00Z'));
+    await page.clock.setSystemTime(new Date('2026-12-06T12:00:00Z'));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(page.locator('#bubble-data-freshness')).toContainText('已过35天 / 上限35天');
+    await expect(page.locator('#bubble-data-freshness')).not.toContainText('整期已超龄');
+    await page.clock.setSystemTime(new Date('2026-12-07T12:00:00Z'));
     // Foregrounding a tab rechecks immediately, even if its timer was throttled.
     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await expect(page.locator('#bubble-data-freshness')).toContainText('整期已超龄');
+    await expect(page.locator('#bubble-data-freshness')).toContainText('已过36天 / 上限35天');
     await expect(page.locator('#bubble-verdict-label')).toContainText('历史或待核验');
     const after = await page.evaluate(() => ({ score: document.querySelector('.big-number .value').textContent,
       lights: [...document.querySelectorAll('.status-bar')].map(e => e.className),
