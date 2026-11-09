@@ -1,14 +1,35 @@
 import { validateEvidenceScoreFields } from './evidence-score-contract.mjs';
+import { NVDA_RATIO_CONTRACT } from './nvda-ratio-evidence.mjs';
 
 // Keep the score proof small: no narrative, paid response, or credentials.
 const SUMMARY_FIELDS = ['primary_score_pct','red_pct','weighted_risk_score','stage_score','trigger_score',
   'scoring_unknown_count','scoring_total_indicators','scoring_red_count','scoring_yellow_count','scoring_green_count',
   'primary_score_range_pct','weighted_risk_score_range','stage_score_range','trigger_score_range','category_scores','category_score_ranges','verdict_label'];
 const pick = (object, keys) => Object.fromEntries(keys.map(key=>[key,structuredClone(object?.[key])]));
+const AGE_FIELDS = ['observationDate','asOfDate','ageDays','maxAgeDays','status'];
+function compactScoreProvenance(item) {
+  const provenance=item.provenance, detail=provenance?.detail;
+  if(item.id==='nvda_invest_revenue' && detail?.contractVersion===NVDA_RATIO_CONTRACT) {
+    // r5 qualification is a replayable proof, not optional collector diagnostics.
+    // Explicit projection excludes raw responses, notes and unrelated metadata.
+    const proof=pick(detail,['contractVersion','qualificationStatus','ratioPct','currentEligible']);
+    if(item.status!=='unknown') {
+      const n=detail.numerator,r=detail.revenue;
+      proof.numerator={...pick(n,['issuer','currency','usd','basis','includesGuarantees','includesCollateralizedDebt','asOfDate','periodStart','periodEnd']),
+        review:pick(n.review,['status','reviewedAt']),freshness:pick(n.freshness,AGE_FIELDS),
+        records:n.records.map(row=>pick(row,['id','kind','bindingStatus','counterpartyRole','signedDate','usd','sourceUrl']))};
+      proof.revenue={...pick(r,['value','currency','periodStart','periodEnd','observationDate']),
+        freshness:pick(r.freshness,AGE_FIELDS),source:pick(r.source,['provider','issuer','currency','url']),
+        quarters:r.quarters.map(row=>pick(row,['start','end','value','filed','derived']))};
+    }
+    return {...pick(provenance,item.status==='unknown'?['mode','checkedAt']:['mode']),detail:proof};
+  }
+  return item.status==='unknown'?pick(provenance,['mode','checkedAt']):undefined;
+}
 function scoreDisclosure(snapshot) {
   const score = (value, range) => value === null ? `${range.lower.toFixed(1)}–${range.upper.toFixed(1)}` : value.toFixed(1);
   const proof = snapshot.qualifiedEvidence;
-  const missing = proof.indicators.filter(i=>i.status==='unknown').map(i=>({dc_abs_spread:'数据中心ABS利差',insider_sell_buy:'内部人交易',capex_reaction:'资本开支反应',fed_policy:'Fed政策路径'})[i.id]);
+  const missing = proof.indicators.filter(i=>i.status==='unknown').map(i=>({dc_abs_spread:'数据中心ABS利差',insider_sell_buy:'内部人交易',capex_reaction:'资本开支反应',fed_policy:'Fed政策路径',nvda_invest_revenue:'NVIDIA客户投资/收入比'})[i.id]);
   return `固定核心23项，主分${score(snapshot.primaryScorePct,snapshot.primaryScoreRangePct)}%，辅助压力${score(snapshot.weightedRiskScore,snapshot.weightedRiskScoreRange)}；泡沫成熟度${score(snapshot.stageScore,snapshot.stageScoreRange)}，破裂临近度${score(snapshot.triggerScore,snapshot.triggerScoreRange)}。${missing.length ? `${missing.join('、')}待确认，点值保留为空，不按绿灯或零分处理；上下界是数学边界，不是概率。` : '核心观测齐全；四项影子观察不计分。'}综合判读：${snapshot.verdictLabelZh}。`;
 }
 export function buildEditorialScoringSnapshot(bubble) {
@@ -27,8 +48,7 @@ export function buildEditorialScoringSnapshot(bubble) {
       indicators:bubble.indicators.map(i=>pick(i,['id','axis','category','score_role','status','as_of','stale','evidence_gap','provenance'])),
       summary:pick(s,SUMMARY_FIELDS),
       scoring:pick(bubble.scoring,['model_version','effective_tier','base_tier','override_active','two_axis_upgrade','tier_range','unknown_core_ids'])};
-    // Only the gap's checking clock is needed; never copy collector diagnostics.
-    for(const i of snapshot.qualifiedEvidence.indicators) i.provenance=i.status==='unknown'?pick(i.provenance,['mode','checkedAt']):undefined;
+    for(const i of snapshot.qualifiedEvidence.indicators) i.provenance=compactScoreProvenance(i);
     snapshot.coreUnknownCount=s.scoring_unknown_count;
     snapshot.primaryScoreRangePct=structuredClone(s.primary_score_range_pct);
     snapshot.weightedRiskScoreRange=structuredClone(s.weighted_risk_score_range);
