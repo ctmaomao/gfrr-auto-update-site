@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=data-provenance-20261109';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=onrrp-wording-20261109';
 
 const MAX_AGE_HOURS = 30;
 

@@ -9784,7 +9784,7 @@ export function activeStructuralSignals(macroDrivers) {
       && fed.onRrp < cfg.fedLiquidity.onRrpCriticalThreshold) {
     active.push({
       key: 'onRrpCritical',
-      label: '逆回购准备金告急',
+      label: '隔夜逆回购余额偏低',
       detail: `ON RRP ${formatOnRrpYiUsd(fed.onRrp)}`,
       reliability: fedStatus.onRrp
     });

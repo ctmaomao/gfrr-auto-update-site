@@ -7,8 +7,8 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=data-provenance-20261109" />
-  <script src="scripts/modules/weekly-homepage.js?v=data-provenance-20261109"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=onrrp-wording-20261109" />
+  <script src="scripts/modules/weekly-homepage.js?v=onrrp-wording-20261109"></script>
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -800,7 +800,7 @@
           <div>
             <p id="detail-health-sources-active">采集健康只描述本次输入链路的成功与回退情况。日频行情、周频和月季频宏观数据各有观察日期及发布滞后，不能由采集成功推断它们均为实时。逐项缺少观察日或时效规则时，保留待核验，不借快照生成时间续期。</p>
             <p id="detail-health-sources-none" hidden>部分输入存在降级或回退，具体以各卡片来源状态及上方计数为准；来源状态与观察值时效需分别核验。</p>
-            <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">逆回购准备金告急</code>(隔夜逆回购余额:<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号独立展示，不提高OFR读数或生成仓位指令</span><span id="detail-fed-signal-none" hidden>当前快照未记录激活结构信号，不等于没有结构风险</span>，但美元流动性分项资料：模块状态 <code class="ok" id="detail-fed-regime">平稳</code>，美联储总资产(WALCL) <span id="detail-fed-walcl">6.71T</span>、银行准备金 <span id="detail-fed-reserves">3.13T</span>、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，回购利差状态为<code id="detail-fed-repo-regime">待核验</code>。</p>
+            <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">隔夜逆回购余额偏低</code>(隔夜逆回购余额:<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号独立展示，不提高OFR读数或生成仓位指令</span><span id="detail-fed-signal-none" hidden>当前快照未记录激活结构信号，不等于没有结构风险</span>，但美元流动性分项资料：模块状态 <code class="ok" id="detail-fed-regime">平稳</code>，美联储总资产(WALCL) <span id="detail-fed-walcl">6.71T</span>、银行准备金 <span id="detail-fed-reserves">3.13T</span>、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，回购利差状态为<code id="detail-fed-repo-regime">待核验</code>。余额偏低不等于银行准备金短缺，需结合银行准备金余额与货币市场利差判断。</p>
           </div>
           <aside class="appendix-sidebar">
             <div class="sidebar-kicker">健康度快照</div>
@@ -813,7 +813,7 @@
               <dt>输入快照生成</dt><dd id="detail-health-input-at">—</dd>
               <dt>Daily 计算起点</dt><dd id="detail-health-run-at">—</dd>
               <dt>快照时效</dt><dd id="detail-health-freshness">待核验</dd>
-              <dt>结构信号</dt><dd id="detail-health-structural-dd">逆回购准备金告急 (1)</dd>
+              <dt>结构信号</dt><dd id="detail-health-structural-dd">隔夜逆回购余额偏低 (1)</dd>
             </dl>
           </aside>
         </div>
@@ -821,7 +821,7 @@
           <div class="callout-kicker">现状判读</div>
           <p id="detail-health-callout-active">采集记录正常，观察值时效仍须逐项核对。</p>
           <p id="detail-health-callout-none" hidden>采集记录需关注，当前存在缺失、降级或回退信号。</p>
-          <p><span id="detail-health-live-note-active">来源正常与数据足够新是两回事。上方OFR单列实际观察、获取和派生计算时间；其它指标以各自观察日为准。</span><span id="detail-health-live-note-none" hidden>部分证据来自缓存或回退；获取时间不改变原观察日，也不证明当前仍有效。</span><span id="detail-health-structural-note-active">另有独立结构信号 <span id="detail-health-structural-signal">逆回购准备金告急</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
+          <p><span id="detail-health-live-note-active">来源正常与数据足够新是两回事。上方OFR单列实际观察、获取和派生计算时间；其它指标以各自观察日为准。</span><span id="detail-health-live-note-none" hidden>部分证据来自缓存或回退；获取时间不改变原观察日，也不证明当前仍有效。</span><span id="detail-health-structural-note-active">另有独立结构信号 <span id="detail-health-structural-signal">隔夜逆回购余额偏低</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
         </div>
 
         <div class="legacy-model-retired" hidden inert>
@@ -1205,6 +1205,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=data-provenance-20261109"></script>
+  <script type="module" src="scripts/app.js?v=onrrp-wording-20261109"></script>
 </body>
 </html>

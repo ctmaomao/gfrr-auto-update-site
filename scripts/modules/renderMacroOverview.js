@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=data-provenance-20261109';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=data-provenance-20261109';
+} from './config.js?v=onrrp-wording-20261109';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=onrrp-wording-20261109';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,15 +17,15 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=data-provenance-20261109';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=data-provenance-20261109';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=data-provenance-20261109';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=data-provenance-20261109';
-import { renderTrendSvg } from './renderMacroTrend.js?v=data-provenance-20261109';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=data-provenance-20261109';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=data-provenance-20261109';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=data-provenance-20261109';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=data-provenance-20261109';
+} from './macroOverviewDisplayHelpers.js?v=onrrp-wording-20261109';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=onrrp-wording-20261109';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=onrrp-wording-20261109';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=onrrp-wording-20261109';
+import { renderTrendSvg } from './renderMacroTrend.js?v=onrrp-wording-20261109';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=onrrp-wording-20261109';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=onrrp-wording-20261109';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=onrrp-wording-20261109';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=onrrp-wording-20261109';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2400,7 +2400,8 @@ function renderDetailData({ radarData }) {
     setHidden('detail-health-structural-note-none', hasStructuralSignal);
     if (firstSignal) {
       const signalKey = firstSignal.key || 'structuralSignal';
-      const signalLabel = firstSignal.label || signalKey;
+      // Map the stable key so older published snapshots retain truthful current wording.
+      const signalLabel = signalKey === 'onRrpCritical' ? '隔夜逆回购余额偏低' : (firstSignal.label || signalKey);
       const signalDetail = firstSignal.detail || signalLabel;
       setLeafText('detail-fed-signal-label', signalLabel);
       setLeafText('detail-fed-onrrp', signalDetail);
