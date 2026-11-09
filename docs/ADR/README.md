@@ -133,6 +133,8 @@
 
 | [ADR-0089](0089-bubble-editorial-reliability.md) | Bubble limited discovery, evidence-bound writer and original-issue history | Local implementation; independent review required |
 
+| [ADR-0091](0091-cash-flow-period-selection.md) | Complete, dated SEC cash-flow concepts and aligned mirror fallback | Local implementation and independent AI review complete; integration pending |
+
 ## Superseded
 
 | [ADR-0045](0045-editorial-single-recovery.md) | One-use 2026-09-11 editorial recovery | Executable route retired by ADR-0058; spent refs retained |

@@ -20,6 +20,13 @@
 - **下一步 / 门槛**：云浏览器执行受本地socket与下载阻塞，转已连接桌面新隔离树验证。逐指标日期schema缺口、Wind备用源品种等价性及AI融资/债务期限/现金流连续覆盖另行研究，不以显示修正宣称全部数据问题已根治。初始阶段不push/合并部署；后续协调允许必要本地门槛完成后推送独立draft PR，以固定提交CI补齐浏览器门槛，仍不得自行合并或部署。
 
 
+### 2026-11-09 Big5 SEC cash-flow source-period repair
+
+- **Acceptance baseline**: owner requested implementation of AI financing/cash-flow reliability work after source feasibility checks, without page expansion or unbacktested scoring thresholds. This local patch corrects the existing cash-flow input defect; no new financial indicator, production data edit, paid provider, refresh dispatch, push or merge.
+- **Last baseline / changes**: isolated `fix/sec-source-selection-20261109` at main `c59cc4b1`. [ADR-0091](ADR/0091-cash-flow-period-selection.md) adds complete individual-concept selection, eight dated quarters, 120-day period-end qualification, exact OCF/capex alignment and a dated mirror with a known-SEC-period floor. Original production/history/curated data stay unchanged.
+- **Current task / validation**: original SEC replay through 2026-11-02 gives AMZN168.300/215.192B and Big5 723.756/691.015B=95.476%; existing red light unchanged. A live read-only Amazon mirror independently matches. Final check:changed/check:all exit0, new source regressions17/17, full unit coverage1617 pass/one existing skip/zero fail. New helper/tests lint clean; builder retains the exact12 baseline lint findings, none added. Independent AI review has no remaining P1/P2; source conflicts, cross-source backdating and future-production test compatibility findings were fixed, without changing old checker assertions.
+- **Next / limits**: local implementation, validation and fixed-diff independent AI review complete; return the local commit for coordinated integration. No push/PR/merge or production refresh performed. Production confirmation requires the next authorized normal full Bubble refresh, not the qualified-only four-source job. No manual data promotion or paid regeneration. Self-audit confirms the approved narrow source scope, unchanged score/checker assertions, and no added skip/ignore list.
+
 ### 2026-11-09 周报首页接手整合（实施中，待集成与发布验收）
 
 - **Acceptance baseline**：owner要求接手停止的PR #510，周报作为默认首页，右上三标签、旧雷达锚点兼容；完整固定单HTML、最近52期后转归档不删除；沿用既有Auckland周一09:00任务；精确来源、历史固定、不将模型分当概率。
