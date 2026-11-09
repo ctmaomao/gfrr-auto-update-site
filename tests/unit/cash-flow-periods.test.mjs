@@ -204,3 +204,67 @@ test('actual mirror original split tables reproduce Amazon facts and must share 
   assert.throws(() => qualifyMirrorCashFlows(html.replace('id="2026-09-30"', 'id="2026-09-29"'), '2026-11-09'), /period_mismatch/);
   assert.throws(() => qualifyMirrorCashFlows(html + html, '2026-11-09'), /duplicate_series/);
 });
+
+const syntheticCumulative = () => {
+  const rows = [];
+  for (let year = 2024; year <= 2026; year++) {
+    for (let quarter = 1; quarter <= 4; quarter++) {
+      if (year === 2026 && quarter === 4) continue;
+      rows.push({ start: `${year}-01-01`, end: `${year}-${['03-31', '06-30', '09-30', '12-31'][quarter - 1]}`,
+        filed: clock, form: '10-Q', val: quarter * 10 });
+    }
+  }
+  return rows;
+};
+const syntheticDirect = () => syntheticCumulative().map(row => ({ ...row,
+  start: `${row.end.slice(0, 4)}-${{ '03-31': '01-01', '06-30': '04-01', '09-30': '07-01', '12-31': '10-01' }[row.end.slice(5)]}`, val: 10 }));
+const syntheticFetch = (tags, complete, alternative) => async url => {
+  const tag = url.split('/').at(-1).replace('.json', '');
+  return { cik: Number(CIK.AMZN), taxonomy: 'us-gaap', tag, units: { USD: tag === tags[0] ? complete : alternative } };
+};
+
+for (const kind of ['capex', 'ocf']) {
+  for (const reversed of [false, true]) {
+    test(`${kind} rejects incomplete cross-tag direct/cumulative conflicts in either tag order (${reversed})`, async () => {
+      const tags = [...(kind === 'capex' ? CASH_CAPEX_TAGS : OPERATING_CASH_FLOW_TAGS)];
+      if (reversed) tags.reverse();
+      // Exercise both directions, including the oldest selected quarter whose
+      // cumulative predecessor ends before the selected eight-quarter window.
+      for (const end of ['2026-09-30', '2024-12-31']) {
+        const cumulative = syntheticCumulative(), direct = syntheticDirect();
+        const partialDirect = direct.filter(r => r.end === end).map(r => ({ ...r, val: 999 }));
+        const partialCumulative = cumulative.filter(r => r.start === `${end.slice(0, 4)}-01-01`
+          && [end, end.endsWith('12-31') ? `${end.slice(0, 4)}-09-30` : `${end.slice(0, 4)}-06-30`].includes(r.end))
+          .map(r => r.end === end ? { ...r, val: r.val + 989 } : r);
+        for (const [complete, alternative] of [[cumulative, partialDirect], [direct, partialCumulative]]) {
+          assert.throws(() => qualifyEdgarCashFlow(alternative, clock, kind), /eight_quarters_missing|period_stale/);
+          for (const requestTags of [tags, [...tags].reverse()]) {
+            await assert.rejects(collect('AMZN', kind, { tags: requestTags, fetchConcept: syntheticFetch(tags, complete, alternative) }), /same_period_concepts_disagree/);
+          }
+        }
+      }
+    });
+  }
+}
+
+test('agreeing incomplete alternatives remain rejected as candidates without blocking complete source', async () => {
+  for (const [complete, alternative] of [
+    [syntheticCumulative(), syntheticDirect().slice(-1)],
+    [syntheticDirect(), syntheticCumulative().slice(-2)]
+  ]) {
+    const result = await collect('AMZN', 'capex', { fetchConcept: syntheticFetch(CASH_CAPEX_TAGS, complete, alternative) });
+    assert.equal(result.source.tag, CASH_CAPEX_TAGS[0]);
+    assert.equal(result.quarters.at(-1).value, 10);
+    assert.equal(result.rejectedConcepts[0].reason, 'cash_flow_eight_quarters_missing');
+  }
+});
+
+
+test('conflicting cumulative predecessors before the selected window cannot be silently chosen', async () => {
+  const complete = syntheticDirect();
+  const alternative = syntheticCumulative().filter(r => ['2024-09-30', '2024-12-31'].includes(r.end));
+  alternative.push({ ...alternative[0], val: 999 });
+  await assert.rejects(collect('AMZN', 'capex', {
+    fetchConcept: syntheticFetch(CASH_CAPEX_TAGS, complete, alternative)
+  }), /same_filing_conflict/);
+});

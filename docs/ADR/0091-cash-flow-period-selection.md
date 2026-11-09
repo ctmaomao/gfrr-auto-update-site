@@ -1,7 +1,7 @@
 # ADR-0091: Qualify complete, dated cash-flow concepts before aggregation
 
 - Date: 2026-11-09
-- Status: Local implementation and independent AI review complete; coordinated integration and production refresh verification pending.
+- Status: Original candidate review preserved below; integration correction locally validated and independently AI-reviewed; exact-head verification and coordinated release pending.
 - Scope: Existing SEC companyconcept and StockAnalysis quarterly cash-flow sources for Big5 capex/OCF and hyperscaler capex YoY only.
 
 ## Acceptance baseline
@@ -35,11 +35,19 @@ The corrected sum is OCF $723.756B and cash capex $691.015B, or 95.476237848%. T
 7. Store original periods, selected tag/row, URL, facts and freshness in provenance. Set the indicator's observation date to the oldest participating company's selected period end; keep `fetchedAt` as retrieval metadata. No claim of comparable fiscal year ends across companies is introduced.
 8. Preserve the dated curated fallback and all existing score/unknown/stale semantics if both live paths fail. Do not update curated values or historical production JSON by hand. Do not alter existing checker assertions or grant legacy records a new proof.
 
-## Review and validation
+## Original candidate review and validation (f5d73bd6)
 
 The new offline suite is wired into `check:bubble-watch` and therefore `check:all`. It covers the original five-company facts, Amazon's discontinued tag, the actual two builder paths, cache/request bounds, 120/121-day boundaries, missing quarters, null/zero values, wrong identity/currency, incomplete latest concepts, alternative-concept conflicts, cumulative/direct conflicts, exact OCF/capex alignment, mirror fallback dates and the SEC-to-mirror period floor. Independent review found three P2 edge cases (cross-source backdating, incomplete alternative conflicts, direct-quarter masking); all have dedicated regression cases and are corrected in this candidate.
 
 Final local validation: check:changed/check:all exit 0; source regressions 17/17; full unit coverage 1,617 pass, one existing skip, zero fail. New helper/test ESLint is clean; the builder has the same 12 pre-existing findings as the baseline and no new findings. Independent AI review has no remaining P1/P2 and is not a human approval. Self-audit confirms the narrow source scope, unchanged score and checker assertions, and no new skip/ignore list. Results and handoff are recorded in the current [project backlog](../PROJECT_BACKLOG.md). These tests do not run the full builder, call a provider, refresh production or replace the required integration review.
+
+## Integration correction after PR #511
+
+The original candidate's audit above is historical, not a validation receipt for this correction. Independent integration review found that the incomplete-alternative regression covered identical raw periods only: a complete PP&E cumulative series deriving 2026 Q3 cash capex of 10 could be accepted alongside an incomplete ProductiveAssets direct quarter of 999. The raw start/end keys differed, and only complete concepts participated in quarter fingerprints.
+
+On main `c89c266019c35d49926f0fafd779ee12d776e159`, the original patch is integrated without changing the PR #511 data-clarity work. Quarter derivation is now shared between qualification and conflict checks. Every observed concept independently derives overlapping quarters, even when it lacks eight quarters; cumulative predecessors before the selected window remain available for its first quarter. Conflicting quarter starts or amounts reject selection. Original raw-period conflicts and complete-candidate fingerprints remain checked. This comparison never stitches tags or admits an incomplete candidate. Existing period freshness, newest-disclosure, source identity, USD, finite/null, mirror-floor and scoring gates remain unchanged.
+
+New offline regressions cover both OCF/capex tags, reversed tag priority, complete cumulative versus incomplete direct facts and the reverse, latest/earliest overlapping quarters, and agreeing incomplete alternatives. No source request or production generation is part of this correction. Integration validation on the frozen source/test blobs: `check:changed` including full `check:all` exit 0; source regressions 23/23; full unit coverage 1,639 pass, one existing skip, zero fail, with 99.86% lines / 93.23% branches / 97.96% functions (original thresholds unchanged). The Bubble/source aggregate stage ran after the final source/test edits; explicit final helper/test syntax and ESLint checks also exited 0. Builder lint remains exactly the same 12 findings as main `c89c2660` (same rule/message/severity multiset), with no new findings. The initial aggregate attempt was blocked by an untracked dependency symlink (`EISDIR`); replacing it with a local copy of existing dependencies fixed setup without a package or dependency change. The successful rerun is the result above. Whitespace checks pass and production data/workflow diffs are empty. Independent AI re-review of the frozen source/test blobs found no remaining P1/P2 and passed 23/23 focused tests. Exact-commit identity verification and natural-refresh acceptance remain separate gates.
 
 ## Natural-refresh acceptance
 

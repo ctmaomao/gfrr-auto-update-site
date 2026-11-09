@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 SEC incomplete-alternative integration correction
+
+- **Acceptance baseline / last base**: preserve the original source repair and PR #511 data-clarity work; isolated branch from main `c89c266019c35d49926f0fafd779ee12d776e159`, original patch cherry-picked as `d7fc41cb`. Both original worktrees and historical receipts below remain intact.
+- **Current task**: fix the independent P2 finding where incomplete alternative concepts escaped cross-tag cumulative/direct quarter comparison. Shared per-concept derivation checks overlapping quarters without stitching tags; the raw fact, complete-series and existing source/score gates remain.
+- **Validation**: final source regressions 23/23; full `check:changed`/nested `check:all` exit 0; full unit coverage 1,639 pass / one existing skip / zero fail (99.86/93.23/97.96). Final helper/test syntax and lint exit 0; builder retains the exact 12 baseline lint findings, none added. Whitespace passes and production data/workflow diff is empty. See [ADR-0091 integration correction](ADR/0091-cash-flow-period-selection.md#integration-correction-after-pr-511).
+- **Next / limits**: local checks complete; independent AI re-review found no remaining P1/P2 on the frozen source/test blobs (not human approval). Local commit and exact-head identity verification follow under coordinator control. No source/paid-provider calls, production JSON edits, Bubble/Daily/realtime generation, push, PR, merge or deployment in this correction. Natural refresh remains a separate acceptance gate.
+
 ### 2026-11-09 PR #511 最新 main 整合待验
 
 - main `f40126d3` 仅自动更新 World Order 数据；纯代码整合树 `bdfdefb388eb608998d454f1458a069038140ca7`。协调方独立 AI 复核无 P1/P2，非人工批准；相对 main 的 data/workflow diff 为空。

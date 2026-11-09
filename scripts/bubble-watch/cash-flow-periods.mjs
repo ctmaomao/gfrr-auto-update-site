@@ -44,6 +44,33 @@ function disclosedRows(units, asOfDate) {
     && days(row.start, row.end) + 1 >= 75 && days(row.start, row.end) + 1 <= 380);
 }
 
+// Derive each concept on its own, without requiring enough quarters to qualify.
+function deriveCashFlowQuarters(rows, minimumEnd = '') {
+  const quarters = new Map();
+  const put = q => {
+    if (q.end < minimumEnd) return;
+    const prior = quarters.get(q.end);
+    if (prior && (prior.start !== q.start || prior.value !== q.value)) fail('quarter_conflict');
+    quarters.set(q.end, q);
+  };
+  const facts = row => ({ start: row.start, end: row.end, value: row.val, filed: row.filed, accession: row.accn ?? null });
+  for (const row of rows) {
+    if (days(row.start, row.end) + 1 <= 105) put({ start: row.start, end: row.end, value: row.val, facts: [facts(row)] });
+  }
+  for (const row of rows) {
+    if (row.end < minimumEnd || days(row.start, row.end) + 1 <= 105) continue;
+    const previous = rows.filter(p => p.start === row.start && days(p.end, row.end) >= 75 && days(p.end, row.end) <= 105);
+    if (previous.length > 1) fail('cumulative_ambiguous');
+    if (previous.length === 1) {
+      const p = previous[0];
+      put({ start: nextDay(p.end), end: row.end,
+        value: Number.isFinite(row.val) && Number.isFinite(p.val) ? row.val - p.val : null,
+        facts: [facts(row), facts(p)] });
+    }
+  }
+  return [...quarters.values()].sort((a, b) => a.end.localeCompare(b.end));
+}
+
 export function qualifyEdgarCashFlow(units, asOfDate, kind) {
   const disclosed = disclosedRows(units, asOfDate);
   const latestEnd = disclosed.map(row => row.end).sort().at(-1);
@@ -58,28 +85,7 @@ export function qualifyEdgarCashFlow(units, asOfDate, kind) {
     if (prior?.filed === row.filed && prior.val !== row.val) fail('same_filing_conflict');
     if (!prior || row.filed > prior.filed) periods.set(key, row);
   }
-  const rows = [...periods.values()], quarters = new Map();
-  const put = q => {
-    const prior = quarters.get(q.end);
-    if (prior && (prior.start !== q.start || prior.value !== q.value)) fail('quarter_conflict');
-    quarters.set(q.end, q);
-  };
-  const facts = row => ({ start: row.start, end: row.end, value: row.val, filed: row.filed, accession: row.accn ?? null });
-  for (const row of rows) {
-    if (days(row.start, row.end) + 1 <= 105) put({ start: row.start, end: row.end, value: row.val, facts: [facts(row)] });
-  }
-  for (const row of rows) {
-    if (days(row.start, row.end) + 1 <= 105) continue;
-    const previous = rows.filter(p => p.start === row.start && days(p.end, row.end) >= 75 && days(p.end, row.end) <= 105);
-    if (previous.length > 1) fail('cumulative_ambiguous');
-    if (previous.length === 1) {
-      const p = previous[0];
-      put({ start: nextDay(p.end), end: row.end,
-        value: Number.isFinite(row.val) && Number.isFinite(p.val) ? row.val - p.val : null,
-        facts: [facts(row), facts(p)] });
-    }
-  }
-  const ordered = [...quarters.values()].sort((a, b) => a.end.localeCompare(b.end));
+  const ordered = deriveCashFlowQuarters([...periods.values()]);
   if (ordered.at(-1)?.end !== latestEnd) fail('latest_period_incomplete');
   return finish(ordered, asOfDate, kind);
 }
@@ -110,20 +116,33 @@ export async function collectQualifiedCashFlowConcept({ cik, tags, kind, asOfDat
   if (selected.periodEnd !== newestDisclosedEnd) fail('newer_concept_incomplete');
   // Completeness is not permission to discard contradictory evidence from a
   // shorter alternative concept. Compare each tag's latest original facts.
-  const byPeriod = new Map();
+  const byPeriod = new Map(), byQuarter = new Map();
   for (const concept of observedConcepts) {
     const latestFacts = new Map();
     for (const row of concept.disclosed) {
-      if (row.end < selected.quarters[0].start) continue;
+      // Include only overlapping facts and the within-tag predecessors they
+      // need. Conflicting predecessors must not be silently chosen either.
+      if (row.end < selected.quarters[0].start && !concept.disclosed.some(current =>
+        current.end >= selected.quarters[0].start && current.start === row.start
+        && days(row.end, current.end) >= 75 && days(row.end, current.end) <= 105)) continue;
       const key = `${row.start}|${row.end}`, prior = latestFacts.get(key);
       if (!prior || row.filed > prior.filed) latestFacts.set(key, row);
       else if (row.filed === prior.filed && row.val !== prior.val) fail('same_filing_conflict');
     }
     for (const [key, row] of latestFacts) {
+      if (row.end < selected.quarters[0].start) continue;
       if (byPeriod.has(key) && byPeriod.get(key) !== row.val) fail('same_period_concepts_disagree');
       byPeriod.set(key, row.val);
     }
+    // Keep cumulative predecessors for the first overlapping quarter, but
+    // never combine rows from different tags to derive or qualify a series.
+    for (const q of deriveCashFlowQuarters([...latestFacts.values()], selected.quarters[0].start)) {
+      const prior = byQuarter.get(q.end);
+      if (prior && (prior.start !== q.start || prior.value !== q.value)) fail('same_period_concepts_disagree');
+      byQuarter.set(q.end, q);
+    }
   }
+
   const fingerprint = value => JSON.stringify(value.quarters.map(q => [q.start, q.end, q.value]));
   if (candidates.some(c => c.periodEnd === selected.periodEnd && fingerprint(c) !== fingerprint(selected))) fail('same_period_concepts_disagree');
   return { ...selected, rejectedConcepts: rejected };
