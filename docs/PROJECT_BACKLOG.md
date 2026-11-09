@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+
+### 2026-11-09 项目确认流程改为独立 AI 审查
+
+- **Acceptance baseline / last base**：owner 要求后续 GFRR 审查由 AI 把控，不重复要求本人确认；基于 #513 已合并后的 main `cecf8c93` 创建独立 `docs/ai-review-policy-20261109` 分支，不混入数据修复。
+- **Current task**：按 [ADR-0092](ADR/0092-delegated-ai-review.md) 替代通用人工 review 与同范围重复确认，统一根规则、导航、ADR 状态和运维入口；独立审阅、完整检查、固定 head CI 与生产验收保留。
+- **Validation**：完整 `check:changed` / `check:all` exit 0；coverage 1,639 pass / 1 既有 skip / 0 fail（99.86/93.23/97.96），EdgeOne staging 67/67。独立 AI 审阅无 P1/P2；代码、workflow、checker assertion、生产 JSON 不变。标准 E2E 因缺少锁定 Chromium 未能启动浏览器，104 项均为环境启动失败；最终 head 的远端 104 项全通过仍是合并门槛。
+- **Next / limits**：本地规则验证及独立审阅完成，按当前有效授权串行推送 draft PR，核验精确 head CI 后合入 main。55 个 Pages 静态产物与基线逐字节一致；本轮文档不匹配 Pages/EdgeOne 发布路径，无需额外网站部署。未改平台权限、付费规则、凭据、来源权利或破坏性操作门槛；远端 CI/合并结果以 PR 回执为准，不把本地检查称为已生效。
+
 ### 2026-11-09 SEC incomplete-alternative integration correction
 
 - **Acceptance baseline / last base**: preserve the original source repair and PR #511 data-clarity work; isolated branch from main `c89c266019c35d49926f0fafd779ee12d776e159`, original patch cherry-picked as `d7fc41cb`. Both original worktrees and historical receipts below remain intact.
