@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 语法检查有界并行
+
+- **Acceptance baseline / last base**：持续科学合理改善与 workflow 精简审查范围，初始 main `54e9fd16`，随后整合最新 main `44b88e12` 并保留 Bubble/ACLED 记录；不改变覆盖、失败语义、时间门槛或发布保护。Transport 合并和 EdgeOne 跳过完整检查因收益/等价性不足未实施。
+- **Current task**：仅将 `check-syntax.mjs` 的逐文件 Node 语法检查改为最多 4 个并发，保留扫描范围、排序、1 MiB 输出上限与全部失败收集；新增 9 项回归。详见[性能证据与边界](SYNTAX_CHECK_PERFORMANCE_2026_11_09.md)。
+- **Validation**：两组本地 612 文件比较为 36.463/34.024 秒→9.467/9.354 秒，退出码均 0、完整 stdout 逐字节一致；9/9 新测试与独立真实进程异常反例通过，无 P1/P2。初始基线及整合 `44b88e12` 后完整 `check:changed` / `check:all` 均退出 0（整合后 262.618 秒）；整合后 coverage 1,669 pass / 1 既有 skip / 0 fail，99.86% / 93.23% / 97.96%。
+- **Next / limits**：完整离线验证与独审完成；独立 draft PR，协调当前主线任务再集成，精确 head CI 仍是门槛。本地计时不冒充 GitHub runner 加速，无 workflow、预算、生产数据或付费调用变化。
+
 ### 2026-11-09 Bubble 正常刷新校验修复
 
 - **Acceptance baseline / last base**：在持续修复和项目发布授权内处理正常刷新 run `42631412749`，隔离树基于 main `4ce78149`；保留严格证据、费用与发布门槛，不手动重跑或调用 AI/搜索。
