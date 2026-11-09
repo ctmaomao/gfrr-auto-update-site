@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0095 — Full free-only Bubble refresh](0095-bubble-full-free-refresh.md): isolated manual workflow, unchanged original schedule, disabled Wind and no paid editorial trigger; local implementation, independent review and coordinated activation pending.
+
 - [ADR-0093 — Bubble editorial proof preservation](0093-bubble-editorial-proof-preservation.md): preserve the registered NVIDIA proof through compact projection and make the ledger regression deterministic; strict validators, production data and no-retry boundaries unchanged.
 
 - [ADR-0092 — Delegated AI review](0092-delegated-ai-review.md): owner-requested project review delegation; independent AI review replaces generic human-only review and repeated same-scope confirmation, with unchanged authorization boundaries and quality gates.

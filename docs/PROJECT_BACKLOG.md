@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 Full free-only Bubble refresh preparation
+
+- **Acceptance baseline / last base**: coordinate a current full Bubble data pack before the separately capped editorial attempt. Original isolated implementation on main `54e9fd16`, now integrated without rewriting history on main `95951a0a`, retaining #517/#518/#519 and the newer Oil News data; original scheduled workflow and upstream paid editorial/budget files unchanged. Scope corrected to a separate workflow because the original completion triggers paid editorial.
+- **Current task**: [ADR-0095](ADR/0095-bubble-full-free-refresh.md) adds manual/main-only full collection, hard-disabled Wind, existing free-search gates, source freshness/fallback summary, shared writer and unchanged full publication gates. Pages exact-name admission and existing guarded EdgeOne dispatch support both sites without triggering editorial.
+- **Validation**: original and `2965c602` integration checks/review passed. Final base `95951a0a` retains both newer Oil News blobs exactly; complete `check:changed`/nested `check:all` exit 0 and unit coverage 1682 pass / one existing skip / zero fail (99.86/93.23/97.96). Seven focused workflow tests remain included in the aggregate. Independent reviewer verified invalid paid/qualified metadata fails before publication; final combined-tree review receipt remains coordinator-controlled. No old checker assertions removed or widened, no dependency or production data changes.
+- **Next / limits**: review and validate the exact integrated tree before coordinated publication; preserve any newer main production data. #517/#518/#519 are already on the integration base. No push, PR, dispatch, paid request, credential access/configuration or refresh performed here. Actual freshness and dual-site acceptance require the later authorized live run; stale/missing observations remain disclosed.
+
 
 ### 2026-11-09 Editorial additional one-shot grant
 
