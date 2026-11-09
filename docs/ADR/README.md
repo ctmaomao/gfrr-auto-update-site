@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0093 — Bubble editorial proof preservation](0093-bubble-editorial-proof-preservation.md): preserve the registered NVIDIA proof through compact projection and make the ledger regression deterministic; strict validators, production data and no-retry boundaries unchanged.
+
 - [ADR-0092 — Delegated AI review](0092-delegated-ai-review.md): owner-requested project review delegation; independent AI review replaces generic human-only review and repeated same-scope confirmation, with unchanged authorization boundaries and quality gates.
 
 - [ADR-0090 — Shared editorial cap and free search](0090-shared-editorial-budget-and-free-search.md): owner-authorized CNY 5 shared article cap, verified search allowance and narrow CEO Wind fallback retirement; push/PR, independent AI review and checked serial publication authorized, operational activation evidence pending.

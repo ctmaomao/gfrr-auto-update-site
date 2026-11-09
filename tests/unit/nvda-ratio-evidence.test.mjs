@@ -130,12 +130,20 @@ test('comparable four-quarter inputs replay the unchanged ratio and light thresh
   assert.equal(nvdaDisplayState(item(),Date.parse(clock)).qualified,true);
   const bad=item();bad.status='green';assert.notDeepEqual(validateNvdaRatioRecord(bad,today),[]);
 });
-test('actual newer ledger is protected, never parsed from prose or replaced by old parameters',()=>{
-  const c=JSON.parse(fs.readFileSync('config/bubble-watch-curated.json'));
+test('newer text ledger is protected, never parsed from prose or replaced by old parameters',()=>{
+  // Fixed historical scenario: production sync may advance beyond this test's
+  // clock. Reading live config here would test a future ledger, not this case.
+  const c={params:{nvdaCommitments:{usd:125e9,desc:'synthetic cumulative commitments and debt',asOfDate:'2026-06-07'}},
+    autoFallback:{nvda_invest_revenue:{asOfDate:'2026-11-01',maxAgeDays:30,note:'synthetic newer text ledger'}}};
   const before=JSON.stringify(c), n=inspectNvdaNumerator(c,today);
   assert.equal(n.status,'unavailable');assert.equal(n.reason,'newer_ledger_requires_comparable_evidence');
   assert.equal(n.newerLedgerProtected,true);assert.equal(n.latestLedgerDate,c.autoFallback.nvda_invest_revenue.asOfDate);
   assert.equal(JSON.stringify(c),before);
+  const future=structuredClone(c);future.autoFallback.nvda_invest_revenue.asOfDate='2026-11-05';
+  assert.equal(inspectNvdaNumerator(future,today).reason,'ledger_date_invalid');
+  const advanced=inspectNvdaNumerator(future,'2026-11-09');
+  assert.equal(advanced.reason,'newer_ledger_requires_comparable_evidence');assert.equal(advanced.newerLedgerProtected,true);
+  assert.equal(advanced.latestLedgerDate,'2026-11-05');
 });
 test('cumulative, guarantees, unsigned intent, missing dates, wrong currency or unmatched records cannot qualify',()=>{
   for(const change of [p=>p.basis='cumulative_commitments',p=>p.includesGuarantees=true,p=>p.includesCollateralizedDebt=true,

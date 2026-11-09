@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 Bubble 正常刷新校验修复
+
+- **Acceptance baseline / last base**：在持续修复和项目发布授权内处理正常刷新 run `42631412749`，隔离树基于 main `4ce78149`；保留严格证据、费用与发布门槛，不手动重跑或调用 AI/搜索。
+- **Current task**：修复编辑摘要投影误删 NVIDIA r5 必需证明，补具名缺证披露；将固定时钟的台账测试改为明确历史夹具并增加未来日期反例。详见 [ADR-0093](ADR/0093-bubble-editorial-proof-preservation.md)。生产数据、配置、来源、评分、workflow 和 validator 不改。
+- **Validation**：完整 `check:changed`/`check:all` exit0，覆盖测试1,654通过/1既有skip/0失败（99.86/93.23/97.96）。独审29项通过且无P1/P2；离线刷新形状回放在旧代码复现13项同类失败，修复后三套38/38通过。55个静态产物源文件逐字节未变；没有真实生成，原validator和门槛不变。
+- **Next / limits**：本地完整检查及独立AI审查完成，推送独立draft PR并核验精确head CI后串行合并。锁定Chromium本地缺失，浏览器验收保留远端CI。故障run未提交数据；后续只有状态提交，不能证明Amazon修复已发布。继续等待自然刷新及实际provenance双站验收，不将约95%的汇总成功日志称为实物验证。
+
 ### 2026-11-09 ON RRP 独立警示文案修正
 
 - **Acceptance baseline / last base**：持续核查金融证据的授权内窄范围修正，基于 main `508bd665`；经纽约联储官方材料验证，将当前独立警示改为“隔夜逆回购余额偏低”，明确不等同银行准备金短缺，不改评分或历史。
