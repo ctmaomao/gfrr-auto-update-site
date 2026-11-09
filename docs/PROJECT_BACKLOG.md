@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+
+### 2026-11-09 Editorial additional one-shot grant
+
+- **Acceptance baseline / last base**: isolated `fix/editorial-one-shot-20261110` from main `21b5c8b5`, integrated without rewriting history onto main `44b88e127ce0b189700630331f165b89514a5393` after PR #517/#518; owner authorized one additional attempt per article, total CNY 4.33, no retries. Prior project spend remains unknown.
+- **Current task**: implement [ADR-0094](ADR/0094-editorial-one-shot-additional-grant.md): fixed manual-only grant, separate append-only CAS ledger, full permanent reservations and existing production workflows. Monthly automatic budget and free-search/source/quality/writer gates stay unchanged.
+- **Validation**: original monthly 54 tests plus 15 grant tests pass; existing budget wiring 8/8 tests pass. Final full `check:changed` / nested `check:all` exit 0; targeted ESLint, syntax, docs links and whitespace pass. Initial missing local locked XLSX dependency was resolved by reusing an identical-lock dependency tree, without installation. After integrating main `44b88e12`, focused budget 69/69 and wiring 8/8 plus full `check:changed` / nested `check:all` pass (exit 0). Original budget source/workflow blobs and upstream fixes are preserved; final-tree independent review remains coordinator-controlled.
+- **Next / limits**: coordinator controls independent review and later activation. Original local commit `10f76a0b` exists; the integration merge is pending independent review before local commit. No remote ledger/settings/credential changes, provider/search calls, CI, remote push/PR, production refresh or data changes were performed. PR #517 is merged; Bubble source freshness and a separately reviewed free-only refresh remain independent prerequisites.
+
 ### 2026-11-09 Bubble 正常刷新校验修复
 
 - **Acceptance baseline / last base**：在持续修复和项目发布授权内处理正常刷新 run `42631412749`，隔离树基于 main `4ce78149`；保留严格证据、费用与发布门槛，不手动重跑或调用 AI/搜索。

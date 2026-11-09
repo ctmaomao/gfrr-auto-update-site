@@ -95,13 +95,13 @@ export function prepareBootstrapLedger({ bootstrap, review, approvedRecordDigest
       || now - Date.parse(bootstrap.dashboard.observedAt) > POLICY.maxBootstrapEvidenceAgeMs)) fail('bootstrap_unproven');
   return structuredClone(ledger);
 }
-function validateReview(review, now) {
+export function validateReview(review, now) {
   if (!exact(review, 'policyDigest,verifiedAt,expiresAt,evidenceSha256') || review.policyDigest !== POLICY_DIGEST
     || !iso(review.verifiedAt) || !iso(review.expiresAt) || !HEX.test(review.evidenceSha256)
     || Date.parse(review.verifiedAt) > now || Date.parse(review.expiresAt) <= Date.parse(review.verifiedAt)
     || Date.parse(review.expiresAt) - Date.parse(review.verifiedAt) > POLICY.maxReviewAgeMs) fail('price_policy_unknown');
 }
-function activeReview(ledger, approvedReviewDigest, now) {
+export function activeReview(ledger, approvedReviewDigest, now) {
   const review = ledger.reviews.at(-1);
   if (!HEX.test(approvedReviewDigest || '') || digest(review) !== approvedReviewDigest
     || Date.parse(review.expiresAt) <= now + RETIREMENT_MARGIN_MS / 2) fail('price_review_required');
@@ -296,14 +296,14 @@ export function validateBalance(json) {
   // bootstrap evidence, an account identity or authority to raise the cap.
   return { currency: b.currency };
 }
-function validateTokenUsage(usage) {
+export function validateTokenUsage(usage) {
   if (!exact(usage, 'prompt_tokens,completion_tokens,total_tokens') || !integer(usage.prompt_tokens)
     || !integer(usage.completion_tokens) || !integer(usage.total_tokens)
     || usage.completion_tokens > POLICY.maxOutputTokens || usage.total_tokens > POLICY.contextTokens
     || usage.prompt_tokens + usage.completion_tokens !== usage.total_tokens) fail('receipt_unknown');
   return usage;
 }
-function receipt(result, startedAt, completedAt) {
+export function receipt(result, startedAt, completedAt) {
   // Three audited 2026-11-02 Bubble responses use deepseek-flash for the exact
   // request alias. The generic API identifier does NOT pin the model-card version.
   if (!result || result.model !== POLICY.responseModel) fail('model_changed');
@@ -371,7 +371,12 @@ export async function readDeepSeekBalance(key, fetchImpl = fetch) {
  * rewinds are outside this client-side guarantee. No protection/permission
  * settings are created or required by this module.
  */
-export function createGithubLedger({ token, genesisSha, fetchImpl = fetch, now = Date.now }) {
+export function createGithubLedger(options) {
+  return createGithubLedgerStore(options, { branch: BUDGET_BRANCH, validateLedger, validateTransition });
+}
+
+// Shared transport only. Accounting contracts remain separate and fixed by callers.
+export function createGithubLedgerStore({ token, genesisSha, fetchImpl = fetch, now = Date.now }, { branch, validateLedger, validateTransition, validateGenesis = snapshot => snapshot.parents.length === 0 }) {
   if (!token) fail('credentials_missing');
   if (!SHA.test(genesisSha || '')) fail('uninitialized');
   const base = `https://api.github.com/repos/${BUDGET_REPOSITORY}`;
@@ -399,14 +404,14 @@ export function createGithubLedger({ token, genesisSha, fetchImpl = fetch, now =
   }
   return {
     async read() {
-      const ref = await api(`/git/ref/heads/${BUDGET_BRANCH}`);
+      const ref = await api(`/git/ref/heads/${branch}`);
       if (ref.status === 404) fail('uninitialized');
       if (ref.status !== 200 || !SHA.test(ref.json?.object?.sha || '')) fail('store_unavailable');
       const chain = [], heads = [], head = ref.json.object.sha; let current = head;
       for (let n = 0; n < 1024; n++) {
         const snapshot = await load(current); chain.push(snapshot); heads.push(current);
         if (current === genesisSha) {
-          if (snapshot.parents.length || snapshot.ledger.entries?.length || snapshot.ledger.reviews?.length !== 1) fail('bootstrap_unproven');
+          if (!validateGenesis(snapshot) || snapshot.ledger.entries?.length || snapshot.ledger.reviews?.length !== 1) fail('bootstrap_unproven');
           break;
         }
         if (snapshot.parents.length !== 1 || !SHA.test(snapshot.parents[0]?.sha || '')) fail('history_unproven');
@@ -431,7 +436,7 @@ export function createGithubLedger({ token, genesisSha, fetchImpl = fetch, now =
       if (tree.status !== 201 || !SHA.test(tree.json?.sha || '')) fail('store_unavailable');
       const commit = await api('/git/commits', 'POST', { message: 'Record capped DeepSeek admission', tree: tree.json.sha, parents: [previous.head] });
       if (commit.status !== 201 || !SHA.test(commit.json?.sha || '')) fail('store_unavailable');
-      const update = await api(`/git/refs/heads/${BUDGET_BRANCH}`, 'PATCH', { sha: commit.json.sha, force: false });
+      const update = await api(`/git/refs/heads/${branch}`, 'PATCH', { sha: commit.json.sha, force: false });
       if ([409, 422].includes(update.status)) return false;
       if (update.status !== 200 || update.json?.object?.sha !== commit.json.sha) fail('write_uncertain');
       // A committed ref with a lost/untrusted clock acknowledgment is uncertain:
@@ -516,6 +521,10 @@ export function createDeepSeekBudget({ store, readBalance = readDeepSeekBalance,
 let runtime;
 export async function withDeepSeekBudget({ key, payload, consumer }, request) {
   const env = process.env;
+  if (env.DEEPSEEK_BUDGET_SELECTION && env.DEEPSEEK_BUDGET_SELECTION !== 'monthly') {
+    const { withOneShotBudget } = await import('./deepseek-one-shot.mjs');
+    return withOneShotBudget({ key, payload, consumer }, request);
+  }
   if (env.GITHUB_ACTIONS === 'true' && env.GITHUB_REPOSITORY !== BUDGET_REPOSITORY) fail('wrong_repository');
   if (!runtime) runtime = createDeepSeekBudget({
     store: createGithubLedger({ token: env.DEEPSEEK_BUDGET_GITHUB_TOKEN, genesisSha: env.DEEPSEEK_BUDGET_GENESIS_SHA }),
