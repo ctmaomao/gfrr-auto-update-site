@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=data-provenance-20261109';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=onrrp-wording-20261109';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

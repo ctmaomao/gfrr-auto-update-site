@@ -290,3 +290,72 @@ test('appendix repo sentence is neutral and repo status is not fixed ok', () => 
   assert.doesNotMatch(segment, /class="ok" id="detail-fed-repo-regime"/);
 });
 
+// ON RRP is a separate Fed liability from bank reserve balances. These fixtures
+// intentionally retain the old label to exercise already-published snapshots.
+test('current structural leaves map only the ON RRP key and preserve snapshot details', async () => {
+  const { api, elementFor } = await buildRenderApi();
+  const cases = [
+    { key: 'onRrpCritical', label: '逆回购准备金告急', detail: 'ON RRP 0.00 亿美元', expected: '隔夜逆回购余额偏低' },
+    { key: 'curveDeepInversion', label: '曲线深度倒挂', detail: '10年-2年利差 -1.00', expected: '曲线深度倒挂' },
+    { key: 'futureSignal', label: '合成未知信号', detail: '合成证据', expected: '合成未知信号' },
+    { key: 'futureSignal', expected: 'futureSignal' },
+    { key: 'onRrpCritical', label: '合成旧标签', detail: 'ON RRP 2.00 亿美元', expected: '隔夜逆回购余额偏低' },
+  ];
+  for (const { expected, ...signal } of cases) {
+    const data = clone(FIXTURE);
+    data.decisionModel.structuralSignals = [signal, { key: 'other', label: '另一信号' }];
+    const before = clone(data);
+    api.renderDetailData({ radarData: data });
+    assert.deepEqual(data, before, 'render must not rewrite the dated snapshot');
+    assert.equal(elementFor('detail-fed-signal-count').textContent, '2');
+    assert.equal(elementFor('detail-fed-signal-label').textContent, expected);
+    assert.equal(elementFor('detail-fed-onrrp').textContent, signal.detail || expected);
+    assert.equal(elementFor('detail-health-structural-dd').textContent, `${expected} (2)`);
+    assert.equal(elementFor('detail-health-structural-signal').textContent, `${expected} · ${signal.detail || expected}`);
+    for (const id of ['detail-fed-signal-active', 'detail-health-structural-note-active']) assert.equal(elementFor(id).hidden, false);
+    api.renderDetailData({ radarData: clone(FIXTURE) });
+    assert.equal(elementFor('detail-fed-signal-count').textContent, '0');
+    assert.equal(elementFor('detail-health-structural-dd').textContent, '无激活结构信号');
+    for (const id of ['detail-fed-signal-active', 'detail-health-structural-note-active']) assert.equal(elementFor(id).hidden, true, 'no stale visible warning');
+    for (const id of ['detail-fed-signal-none', 'detail-health-structural-note-none']) assert.equal(elementFor(id).hidden, false);
+  }
+});
+
+test('ON RRP current fallback uses low-balance wording and explicit reserve boundary', () => {
+  const html = fs.readFileSync(INDEX, 'utf8');
+  for (const id of ['detail-fed-signal-label', 'detail-health-structural-dd', 'detail-health-structural-signal']) {
+    assert.match(html, new RegExp(`id="${id}">隔夜逆回购余额偏低`));
+  }
+  assert.match(html, /余额偏低不等于银行准备金短缺，需结合银行准备金余额与货币市场利差判断。/);
+});
+
+test('current independent warnings override legacy signals including empty arrays across renders', async () => {
+  const { api, elementFor } = await buildRenderApi();
+  const legacy = { key: 'curveDeepInversion', label: '旧曲线信号', detail: '旧证据' };
+  const current = { key: 'onRrpCritical', label: '逆回购准备金告急', detail: 'ON RRP 0.00 亿美元' };
+  const other = { key: 'futureSignal', label: '逆回购准备金告急', detail: '另一信号证据' };
+  for (const signals of [[current], [], [other], undefined, [current], []]) {
+    const data = clone(FIXTURE);
+    data.decisionModel.structuralSignals = [legacy];
+    if (signals !== undefined) data.independentWarnings = { structuralSignals: signals };
+    const before = clone(data);
+    api.renderDetailData({ radarData: data });
+    assert.deepEqual(data, before);
+    const selected = signals ?? [legacy];
+    const active = selected.length > 0;
+    assert.equal(elementFor('detail-fed-signal-count').textContent, String(selected.length));
+    assert.equal(elementFor('detail-fed-signal-active').hidden, !active);
+    assert.equal(elementFor('detail-fed-signal-none').hidden, active);
+    assert.equal(elementFor('detail-health-structural-note-active').hidden, !active);
+    assert.equal(elementFor('detail-health-structural-note-none').hidden, active);
+    if (active) {
+      const label = selected[0].key === 'onRrpCritical' ? '隔夜逆回购余额偏低' : selected[0].label;
+      assert.equal(elementFor('detail-fed-signal-label').textContent, label);
+      assert.equal(elementFor('detail-fed-onrrp').textContent, selected[0].detail);
+      assert.equal(elementFor('detail-health-structural-signal').textContent, `${label} · ${selected[0].detail}`);
+      assert.equal(elementFor('detail-health-structural-dd').textContent, `${label} (1)`);
+    } else {
+      assert.equal(elementFor('detail-health-structural-dd').textContent, '无激活结构信号');
+    }
+  }
+});

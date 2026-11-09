@@ -1,7 +1,7 @@
-import { provenanceTime } from './dataProvenanceView.js?v=data-provenance-20261109';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=data-provenance-20261109';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=data-provenance-20261109';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=data-provenance-20261109';
+import { provenanceTime } from './dataProvenanceView.js?v=onrrp-wording-20261109';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=onrrp-wording-20261109';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=onrrp-wording-20261109';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=onrrp-wording-20261109';
 
 const DAY = 86400000;
 const finite = Number.isFinite;

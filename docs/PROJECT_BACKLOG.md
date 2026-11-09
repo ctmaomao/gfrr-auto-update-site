@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 ON RRP 独立警示文案修正
+
+- **Acceptance baseline / last base**：持续核查金融证据的授权内窄范围修正，基于 main `508bd665`；经纽约联储官方材料验证，将当前独立警示改为“隔夜逆回购余额偏低”，明确不等同银行准备金短缺，不改评分或历史。
+- **Current task**：仅修正生成标签、旧快照稳定key的当前展示映射、三处静态fallback与邻近解释；保留数量、阈值、来源资格和全部生产JSON。强制前端cache bump仅同步版本引用。详见[证据与限制](ONRRP_WARNING_CLARITY_2026_11_09.md)。
+- **Validation**：10项针对性回归及app/pipeline/renderer语法通过；完整unit coverage 1649通过/1既有skip/0失败（99.86/93.23/97.96）；完整check:changed/check:all退出0；独审新增当前独立警示路径测试后，pipeline专项247/247通过。
+- **Next / limits**：独立AI审查、1440/390视觉与计算样式、精确head CI仍待协调验收，未提交/推送/合并/部署。此修正改善表述，不证明预测准确率提高；未重试受限云浏览器或运行生产刷新。
+
+
 
 ### 2026-11-09 OFR 观察日连续性修复
 
@@ -835,7 +843,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `data-provenance-20261109` |
+| Cache version | `onrrp-wording-20261109` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |
