@@ -1470,6 +1470,17 @@ function brentSpreadStatusZh(status) {
   }[status] || '状态待确认';
 }
 
+export function selectedBrentObservation(sourceDetails, selectedSource, selectedValue, reference = isoNow) {
+  // Only a same-source, same-value observation can date the selected price.
+  // Collection/update times must never make an old observation appear current.
+  const source = normalizeBrentSourceName(sourceDetails?.source);
+  if (!source || source !== normalizeBrentSourceName(selectedSource) ||
+      !Number.isFinite(selectedValue) || !Number.isFinite(sourceDetails?.value) ||
+      sourceDetails.value !== selectedValue) return null;
+  return [sourceDetails.observedAt, sourceDetails.timestamp]
+    .find((value) => parseObservationDate(value, reference) !== null) ?? null;
+}
+
 function buildBrentPricingLayer({
   realtimePayload,
   displayInputsBaseline,
@@ -1487,7 +1498,7 @@ function buildBrentPricingLayer({
   const sourceDetails = realtimePayload?.sourceDetails?.brent || {};
   const selectedValue = firstFinite(displayInputsBaseline?.brent, realtimePayload?.values?.brent);
   const selectedSource = firstString(sourceDetails.source, realtimePayload?.sourceStatus?.brent, promotion.selectedSource, consensus.recommendedSource);
-  const selectedObservedAt = firstString(sourceDetails.observedAt, sourceDetails.updatedAt, realtimePayload?.updatedAt, dailyRealtimeInput?.updatedAt);
+  const selectedObservedAt = selectedBrentObservation(sourceDetails, selectedSource, selectedValue);
   const selectedBrent = {
     value: selectedValue,
     source: selectedSource,

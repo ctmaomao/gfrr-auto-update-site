@@ -7,8 +7,8 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=weekly-homepage-20261109" />
-  <script src="scripts/modules/weekly-homepage.js?v=weekly-homepage-20261109"></script>
+  <link rel="stylesheet" href="assets/styles.css?v=data-provenance-20261109" />
+  <script src="scripts/modules/weekly-homepage.js?v=data-provenance-20261109"></script>
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
@@ -104,6 +104,7 @@
           <h4>读数解释 <em>· Reading Guide</em></h4>
           <div class="now" id="threshold-now-line">等待最新数据</div>
         </div>
+        <p class="section-note" id="ofr-time-provenance">观察日、获取时间与派生计算时间待核验。</p>
         <p id="ofr-scale-note">OFR原值相对0说明历史平均位置；辅助百分位不是危机概率。</p>
         <div class="threshold-bar-wrap legacy-model-retired" hidden inert>
           <div class="threshold-bar">
@@ -339,9 +340,9 @@
         <!-- C1: 通胀与能源 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>通胀与能源</h3><span class="en">INFLATION & ENERGY</span><span class="counts">7 张 · <span class="red">3 红</span> · <span class="yellow">2 黄</span> · 2 OBS</span></div>
-          <p class="cat-intro">能源是当前主线第一环。布伦特原油(Brent)主值与公开代理价格的距离反映现货溢价压力；裂解价差(Crack Spread)是能源向下游柴油 / 汽油传导的中间证据；美国制造业景气(ISM PMI)看美国制造业能否消化能源成本；消费者物价(CPI) / 美国油价(WTI)提供通胀与油价基准的直接读数；运输冲击确认因子把咽喉流量、路线级运费与市场确认拆开观察,并显示 owner-approved free-proxy 旧模型低权重主分影响（不计入OFR）。</p>
+          <p class="cat-intro">能源是当前主线第一环。布伦特原油(Brent)的现货代理和各月份期货须核对观察日，跨口径差值不能直接解释为现货溢价；裂解价差(Crack Spread)是能源向下游柴油 / 汽油传导的中间证据；美国制造业景气(ISM PMI)看美国制造业能否消化能源成本；消费者物价(CPI) / 美国油价(WTI)提供通胀与油价基准的直接读数；运输冲击确认因子把咽喉流量、路线级运费与市场确认拆开观察,并显示 owner-approved free-proxy 旧模型低权重主分影响（不计入OFR）。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">116.73</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">主值取公开现货代理 · 状态:公开代理观察</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">$116.50</span></div><div><span class="k">期货 front Yahoo</span> · <span class="v" id="c1-brent-futures">$103.54</span></div><div><span class="k">期货 ICE</span> · <span class="v" id="c1-brent-ice">$98.21</span></div><div><span class="k">现货-期货价差</span> · <span class="v" id="c1-brent-spread">+$16.52</span></div><div><span class="k">最大代理偏离%</span> · <span class="v" id="c1-brent-divergence">14.9%</span></div></div><p class="note">三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
+            <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">—</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">来源口径与观察日待核验</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">—</span></div><div><span class="k">期货／市场代理</span> · <span class="v" id="c1-brent-futures">—</span></div><div><span class="k">ICE 延迟期货</span> · <span class="v" id="c1-brent-ice">—</span></div><div><span class="k">同日代理差</span> · <span class="v" id="c1-brent-spread">—</span></div><div><span class="k">比较边界</span> · <span class="v" id="c1-brent-divergence">—</span></div></div><p class="note" id="c1-brent-note">现货代理、连续近月与指定月份期货分别阅读；观察日或合约月份未核实，不直接比较价差。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
             <article class="indicator-card" id="card-c1-crack"><div class="status-bar red" id="c1-crack-status"></div><div class="head"><div><div class="name-en">Crack spread</div><div class="name-zh">炼油价差(Crack Spread)</div></div><span class="badge red" id="c1-crack-badge">RED</span></div><div class="number"><span id="c1-crack-number">48.37</span><span class="unit" id="c1-crack-unit">USD/bbl</span></div><div class="aux" id="c1-crack-aux">超低硫柴油(ULSD) × 42 − 布伦特原油(Brent) · 4 周变化 +19.87</div><p class="note" id="c1-crack-note">炼油利润扩张说明能源向汽油 / 柴油传导。布伦特原油(Brent) → 消费者物价(CPI)的中间证据。状态: 供应紧张。</p><div class="meta"><span>阈值 &gt;40 红</span><span>炼油价差与 4 周变化</span></div></article>
             <article class="indicator-card" id="card-c1-ism"><div class="status-bar yellow" id="c1-ism-status"></div><div class="head"><div><div class="name-en">ISM PMI</div><div class="name-zh">美国制造业景气(ISM PMI)</div></div><span class="badge yellow" id="c1-ism-badge">YELLOW</span></div><div class="number" id="c1-ism-number">52.7</div><div class="aux" id="c1-ism-aux">3 月动量 +0.1 · regime: 中性偏扩张</div><p class="note" id="c1-ism-note">制造业读数仍在扩张线之上，但增速放缓，能源成本难被需求消化。</p><div class="meta"><span>阈值 &lt;45 红</span><span>制造业景气(PMI)</span></div></article>
             <article class="indicator-card" id="card-c1-cpi"><div class="status-bar yellow" id="c1-cpi-status"></div><div class="head"><div><div class="name-en">CPI</div><div class="name-zh">美国消费者物价(CPI)</div></div><span class="badge yellow" id="c1-cpi-badge">YELLOW</span></div><div class="number"><span id="c1-cpi-number">3.8</span><span class="unit" id="c1-cpi-unit">% YoY</span></div><div class="aux" id="c1-cpi-aux">核心通胀(Core CPI) +2.7% YoY · 月环比(MoM) +0.6%</div><p class="note" id="c1-cpi-note">圣路易斯联储(FRED)总体与核心消费者物价(CPI)月频公开数据。主显同比(YoY)。</p><div class="meta"><span>实时</span><span>FRED CPIAUCSL + CPILFESL</span></div></article>
@@ -356,7 +357,7 @@
           <div class="reader-cat-header"><h3>全球流动性</h3><span class="en">GLOBAL LIQUIDITY</span><span class="counts">7 张</span></div>
           <p class="cat-intro">全球流动性来自四条管线：美元 / 黄金 / 利率 / 美联储资产负债表。任意管线收紧都会向风险资产传导。美联储流动性三层(水位 / 回购 / 隔夜)分项观察；回购利差以同一观测日核验为准，不能由单一利差断言隔夜市场整体。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow" id="c2-dxy-status"></div><div class="head"><div><div class="name-en">DXY</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow" id="c2-dxy-badge">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">强美元说明全球融资环境收紧，尚未到单独危机程度。</p><div class="meta"><span>阈值 &gt;115 红</span><span>美元指数 + 12 周区间</span></div></article>
+            <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow" id="c2-dxy-status"></div><div class="head"><div><div class="name-en">BROAD USD INDEX</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow" id="c2-dxy-badge">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">主序列为FRED DTWEXBGS贸易加权广义美元指数，不是ICE DXY；两者基期、货币篮子与权重不同，不能比较点位。此快照未保留该点观察日，不以生成时间代替。</p><div class="meta"><span>阈值 &gt;115 红</span><span>FRED DTWEXBGS · 12 周区间</span></div></article>
             <article class="indicator-card" id="card-c2-gold"><div class="status-bar yellow" id="c2-gold-status"></div><div class="head"><div><div class="name-en">Gold</div><div class="name-zh">黄金</div></div><span class="badge yellow" id="c2-gold-badge">YELLOW</span></div><div class="number"><span id="c2-gold-number">4510.50</span><span class="unit" id="c2-gold-unit">USD/oz</span></div><div class="aux" id="c2-gold-aux">趋势 +</div><p class="note">避险需求 + 通胀对冲并存，与强美元共强 = 金融压力与安全资产需求并存。</p><div class="meta"><span>趋势驱动</span><span>黄金现货价格</span></div></article>
             <article class="indicator-card" id="card-c2-us10y"><div class="status-bar yellow" id="c2-us10y-status"></div><div class="head"><div><div class="name-en">US 10Y + 2s10s</div><div class="name-zh">美元利率曲线</div></div><span class="badge yellow" id="c2-us10y-badge">YELLOW</span></div><div class="number"><span id="c2-us10y-number">4.57</span><span class="unit" id="c2-us10y-unit">%</span></div><div class="aux" id="c2-us10y-aux">10年期 · 10年-2年利差(2s10s) +18bp · 从倒挂转正</div><div class="agg-rows"><div><span class="k">10-2 年期差</span> · <span class="v" id="c2-us10y-t10y2y">+0.18%</span></div><div><span class="k">周变化</span> · <span class="v" id="c2-us10y-week-change">+3bp</span></div><div><span class="k">状态</span> · <span class="v" id="c2-us10y-regime">陡峭化</span></div><div><span class="k">陡峭化警示</span> · <span class="v" id="c2-us10y-alert">是</span></div></div><p class="note">曲线从倒挂转正通常领先衰退 6-18 个月。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>美债收益率曲线</span></div></article>
             <article class="indicator-card" id="card-c2-usd-liquidity"><div class="status-bar green" id="c2-liquidity-status"></div><div class="head"><div><div class="name-en">USD Liquidity Agg</div><div class="name-zh">美元流动性聚合</div></div><span class="badge green" id="c2-liquidity-badge">GREEN</span></div><div class="number"><span id="c2-liquidity-number">3.62</span><span class="unit" id="c2-liquidity-unit">T USD</span></div><div class="aux" id="c2-liquidity-aux">银行准备金 · 12 周高位</div><div class="agg-rows"><div><span class="k">美联储总资产(WALCL)</span> · <span class="v" id="c2-liquidity-walcl">7.18T · 4w +$36B</span></div><div><span class="k">银行准备金</span> · <span class="v" id="c2-liquidity-reserves">3.62T · 4w +$58B</span></div><div><span class="k">隔夜逆回购(ON RRP)</span> · <span class="v" id="c2-liquidity-rrp">$320B · WoW -$8B</span></div><div><span class="k">隔夜利率(SOFR/EFFR)</span> · <span class="v" id="c2-liquidity-sofr-effr">5.31% / 5.33%</span></div><div><span class="k">回购利率(BGCR/TGCR)</span> · <span class="v" id="c2-liquidity-bgcr-tgcr">5.29% / 5.28%</span></div><div><span class="k">回购利差状态</span> · <span class="v" id="c2-liquidity-repo-regime">待核验</span></div></div><p class="note" id="c2-liquidity-repo-note">该回购利差待核验：值缺失或非同一观测日，不能确认正常或压力。</p><div class="meta"><span>仅供观察</span><span>美联储(Fed)流动性组合</span></div></article>
@@ -794,12 +795,12 @@
         <div class="appendix-narrative-intro">本附录为今日主判断的支撑层。所有数据来自 <code>data/radar-data.json</code>，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。</div>
 
         <h4>1. 数据健康 <em>· Data Health</em></h4>
-        <p>本期数据综合健康状态<strong id="detail-health-state-word">正常</strong>。<code class="ok" id="detail-health-score">健康度 100/100</code>，数据来源为 <code id="detail-health-source-mode">Worker 实时</code>，<span id="detail-health-critical-missing">0</span> 项关键缺失、<span id="detail-health-fallback-count">0</span> 项回退。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，采集时间 <code id="detail-health-captured">23:29 UTC</code>。<span id="detail-health-refresh-active">实时数据源刷新成功，无需进入降级模式或缓存模式。</span><span id="detail-health-refresh-none" hidden>实时数据源未完全处于实时状态，当前可能为非实时、降级或缓存输入，请以上方计数与各卡片来源状态为准。</span></p>
+        <p>本期输入采集状态<strong id="detail-health-state-word">待核验</strong>。<code class="ok" id="detail-health-score">采集时健康度待核验</code>，输入采集模式为 <code id="detail-health-source-mode">采集模式待核验</code>，<span id="detail-health-critical-missing">0</span> 项关键缺失、<span id="detail-health-fallback-count">0</span> 项回退。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，Daily 采纳输入时间 <code id="detail-health-captured">—</code>。<span id="detail-health-refresh-active">本次输入采集记录正常；不代表每项观察值都是当天或仍足够新。</span><span id="detail-health-refresh-none" hidden>本次输入采集存在缺失、降级或缓存，请以上方记录与逐项来源状态为准。</span></p>
         <div class="appendix-twocol">
           <div>
-            <p id="detail-health-sources-active">快变量层 7 个数据源(<code>布伦特原油、广义美元指数、VIX 波动率、高收益债利差、10 年期美债、黄金、标普500</code>) 全部 <code class="ok">实时</code>。慢变量层宏观驱动下 12 个子模块的来源状态显示，FRED 美联储数据系列(8 项)、Yahoo 行情系列(纳指类 NDX/QQQ/IXIC、信贷类基金 BIZD/PBDC/SRLN/CCLFX 等)、ISM 制造业景气(PMI)、StockQ 运费指数(油轮 BDTI/BCTI、干散货 BDI)、ICE 信用利差(高收益/投资级 CDX)、美国银行消费观察(Consumer Checkpoint) 均处于实时状态。</p>
-            <p id="detail-health-sources-none" hidden>部分快变量 / 慢变量数据源未处于实时状态（非实时 / 降级 / 回退），具体以各卡片来源状态与上方关键缺失 / 回退计数为准。</p>
-            <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">逆回购准备金告急</code>(隔夜逆回购余额:<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号已纳入决策层门控</span><span id="detail-fed-signal-none" hidden>结构信号层当前未激活，决策层未因结构信号加码</span>，但美元流动性分项资料：模块状态 <code class="ok" id="detail-fed-regime">平稳</code>，美联储总资产(WALCL) <span id="detail-fed-walcl">6.71T</span>、银行准备金 <span id="detail-fed-reserves">3.13T</span>、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，回购利差状态为<code id="detail-fed-repo-regime">待核验</code>。</p>
+            <p id="detail-health-sources-active">采集健康只描述本次输入链路的成功与回退情况。日频行情、周频和月季频宏观数据各有观察日期及发布滞后，不能由采集成功推断它们均为实时。逐项缺少观察日或时效规则时，保留待核验，不借快照生成时间续期。</p>
+            <p id="detail-health-sources-none" hidden>部分输入存在降级或回退，具体以各卡片来源状态及上方计数为准；来源状态与观察值时效需分别核验。</p>
+            <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">逆回购准备金告急</code>(隔夜逆回购余额:<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号独立展示，不提高OFR读数或生成仓位指令</span><span id="detail-fed-signal-none" hidden>当前快照未记录激活结构信号，不等于没有结构风险</span>，但美元流动性分项资料：模块状态 <code class="ok" id="detail-fed-regime">平稳</code>，美联储总资产(WALCL) <span id="detail-fed-walcl">6.71T</span>、银行准备金 <span id="detail-fed-reserves">3.13T</span>、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，回购利差状态为<code id="detail-fed-repo-regime">待核验</code>。</p>
           </div>
           <aside class="appendix-sidebar">
             <div class="sidebar-kicker">健康度快照</div>
@@ -809,16 +810,18 @@
               <dt>关键缺失</dt><dd id="detail-health-critical-missing-dd">0 项</dd>
               <dt>降级模式</dt><dd id="detail-health-degraded-mode">否</dd>
               <dt>安全输出</dt><dd id="detail-health-safe-output">是</dd>
-              <dt>最近运行</dt><dd id="detail-health-run-at">2026-05-24 23:32 UTC</dd>
+              <dt>输入快照生成</dt><dd id="detail-health-input-at">—</dd>
+              <dt>Daily 计算起点</dt><dd id="detail-health-run-at">—</dd>
+              <dt>快照时效</dt><dd id="detail-health-freshness">待核验</dd>
               <dt>结构信号</dt><dd id="detail-health-structural-dd">逆回购准备金告急 (1)</dd>
             </dl>
           </aside>
         </div>
         <div class="appendix-callout ok" id="detail-health-callout">
           <div class="callout-kicker">现状判读</div>
-          <p id="detail-health-callout-active">数据健康正常，无需触发回退机制。</p>
-          <p id="detail-health-callout-none" hidden>数据健康需关注，当前存在非实时、降级或回退信号。</p>
-          <p><span id="detail-health-live-note-active">系统所有关键数据源处于实时状态，今日主判断的所有证据均可被审计追溯。</span><span id="detail-health-live-note-none" hidden>部分关键数据源未处于实时状态，今日部分证据可能来自非实时、缓存或回退输入，请谨慎解读。</span><span id="detail-health-structural-note-active">唯一需要观察的是 <span id="detail-health-structural-signal">逆回购准备金告急</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
+          <p id="detail-health-callout-active">采集记录正常，观察值时效仍须逐项核对。</p>
+          <p id="detail-health-callout-none" hidden>采集记录需关注，当前存在缺失、降级或回退信号。</p>
+          <p><span id="detail-health-live-note-active">来源正常与数据足够新是两回事。上方OFR单列实际观察、获取和派生计算时间；其它指标以各自观察日为准。</span><span id="detail-health-live-note-none" hidden>部分证据来自缓存或回退；获取时间不改变原观察日，也不证明当前仍有效。</span><span id="detail-health-structural-note-active">另有独立结构信号 <span id="detail-health-structural-signal">逆回购准备金告急</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
         </div>
 
         <div class="legacy-model-retired" hidden inert>
@@ -1202,6 +1205,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=weekly-homepage-20261109"></script>
+  <script type="module" src="scripts/app.js?v=data-provenance-20261109"></script>
 </body>
 </html>

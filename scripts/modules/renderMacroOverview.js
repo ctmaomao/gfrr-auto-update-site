@@ -8,24 +8,24 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=weekly-homepage-20261109';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=weekly-homepage-20261109';
+} from './config.js?v=data-provenance-20261109';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=data-provenance-20261109';
 import {
-  brentModeZh,
   moduleTone,
   riskBiasZh,
   sourceModeZh,
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=weekly-homepage-20261109';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=weekly-homepage-20261109';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=weekly-homepage-20261109';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=weekly-homepage-20261109';
-import { renderTrendSvg } from './renderMacroTrend.js?v=weekly-homepage-20261109';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=weekly-homepage-20261109';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=weekly-homepage-20261109';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=weekly-homepage-20261109';
+} from './macroOverviewDisplayHelpers.js?v=data-provenance-20261109';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=data-provenance-20261109';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=data-provenance-20261109';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=data-provenance-20261109';
+import { renderTrendSvg } from './renderMacroTrend.js?v=data-provenance-20261109';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=data-provenance-20261109';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=data-provenance-20261109';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=data-provenance-20261109';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=data-provenance-20261109';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -1248,26 +1248,14 @@ function renderC1InflationEnergy({ radarData }) {
     const brentLayer = radarData.brentPricingLayer || {};
     const consumer = radarData.macroDrivers?.consumer || {};
 
-    const brent = currentValue(radarData, 'brent') ?? asNumber(brentLayer.selectedBrent?.value);
-    const brentStatus = brentTone(brent);
-    setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brentStatus);
-    if (brent !== null) setLeafText('c1-brent-number', brent.toFixed(2));
-    if (brentLayer.mode) {
-      setLeafText('c1-brent-aux', `主值取公开现货代理 · 状态:${brentModeZh(brentLayer.mode)}`);
+    const brent = strictFiniteDisplay(radarData.__effectiveDisplayInputs?.brent ?? radarData.displayInputsBaseline?.brent) ?? strictFiniteDisplay(brentLayer.selectedBrent?.value);
+    setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brent === null ? 'pending' : brentTone(brent));
+    setLeafText('c1-brent-number', brent === null ? '—' : brent.toFixed(2));
+    const provenance = buildBrentProvenanceView(brentLayer, brent);
+    for (const key of ['eia', 'futures', 'ice', 'spread', 'divergence', 'note']) {
+      setLeafText(`c1-brent-${key}`, provenance[key]);
     }
-    const eia = asNumber(brentLayer.eiaBrentSpotProxy?.price);
-    const futures = asNumber(brentLayer.futuresProxy?.value);
-    const ice = asNumber(brentLayer.iceFuturesPriceCurve?.frontPrice);
-    const spread = asNumber(brentLayer.proxySpread?.spotMinusFutures);
-    const divergence = asNumber(brentLayer.proxySpread?.maxProxyDivergencePct);
-    if (eia !== null) setLeafText('c1-brent-eia', formatUsd(eia));
-    if (futures !== null) setLeafText('c1-brent-futures', formatUsd(futures));
-    if (ice !== null) setLeafText('c1-brent-ice', formatUsd(ice));
-    if (spread !== null) {
-      const sign = spread >= 0 ? '+$' : '-$';
-      setLeafText('c1-brent-spread', `${sign}${Math.abs(spread).toFixed(2)}`);
-    }
-    if (divergence !== null) setLeafText('c1-brent-divergence', `${divergence.toFixed(1)}%`);
+    setLeafText('c1-brent-aux', provenance.selected);
 
     const crack = asNumber(brentLayer.crackSpread);
     const crackStatus = crackTone(crack);
@@ -2391,13 +2379,14 @@ function renderDetailData({ radarData }) {
     const scenarios = radarData.scenarioTree || [];
 
     setLeafText('detail-health-score', snapshotDisplayHealth(radarData).collectionLabel);
-    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `${sourceModeZh(realtime.sourceMode)}输入`);
-    const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
-    if (runAt) setLeafText('detail-health-run-at', runAt);
+    setLeafText('detail-health-source-mode', realtime.sourceMode === 'live' ? '在线采集' : realtime.sourceMode ? `${sourceModeZh(realtime.sourceMode)}输入` : '未记录');
+    setLeafText('detail-health-run-at', provenanceTime(radarData.updatedAt));
+    setLeafText('detail-health-input-at', provenanceTime(realtime.updatedAt));
+    setLeafText('detail-health-freshness', snapshotDisplayHealth(radarData).freshnessLabel);
     // P3-18 WIRE batch B/C/D: data-health appendix prose + sidebar dd + Fed liquidity mirror
     if (realtime.branch) setLeafText('detail-health-branch', realtime.branch);
     if (realtime.commitSha) setLeafText('detail-health-commit', String(realtime.commitSha).slice(0, 8));
-    if (runAt) setLeafText('detail-health-captured', runAt);
+    setLeafText('detail-health-captured', provenanceTime(realtime.capturedAt));
     setLeafText('detail-health-score-dd', snapshotDisplayHealth(radarData).collectionLabel);
 
     // Structural signals: WIRE count + active/none toggle (batch D — 0-signal safe)
