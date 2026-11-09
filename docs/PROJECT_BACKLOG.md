@@ -1,6 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
 
+### 2026-11-09 OFR 观察日连续性修复
+
+- **Acceptance baseline / last base**：持续审查真实金融状态与模型证据，优先修复可复现的数据质量问题；隔离树基于 main `9641f7b1`，不改并发 ACLED/Macro Editorial/oil news，不扩大来源、付费或冻结研究候选。
+- **Current task**：修复新抓取 OFR 文件观察日倒退却覆盖较新发布的问题；沿用缓存/过期路径，保留原值、日期、收据、哈希并退出当前资格。同日修订、新观察、真实零和显式缺失保持。详见[证据与限制](OFR_OBSERVATION_CONTINUITY_2026_11_09.md)。
+- **Validation**：新增六组回归、完整 check:changed/check:all 退出0；unit coverage 1645 pass/1既有skip/0fail（99.86/93.23/97.96）。独立补丁审阅无剩余P1/P2，45项OFR回归通过；独立历史/压力研究另45项通过，cohort不变。55个静态源文件与基线逐字节一致。
+- **Next / limits**：本地实现、完整检查及独立审阅完成；按有效授权推送独立draft PR，精确head CI通过后串行合并，远端结果待回执。未运行生产刷新、付费调用或改生产JSON；修复保障观察时间连续性，不证明危机预测能力，原模型收集/评审门槛不变。
+
 ### 2026-11-09 项目确认流程改为独立 AI 审查
 
 - **Acceptance baseline / last base**：owner 要求后续 GFRR 审查由 AI 把控，不重复要求本人确认；基于 #513 已合并后的 main `cecf8c93` 创建独立 `docs/ai-review-policy-20261109` 分支，不混入数据修复。
