@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 SEC incomplete-alternative integration correction
+
+- **Acceptance baseline / last base**: preserve the original source repair and PR #511 data-clarity work; isolated branch from main `c89c266019c35d49926f0fafd779ee12d776e159`, original patch cherry-picked as `d7fc41cb`. Both original worktrees and historical receipts below remain intact.
+- **Current task**: fix the independent P2 finding where incomplete alternative concepts escaped cross-tag cumulative/direct quarter comparison. Shared per-concept derivation checks overlapping quarters without stitching tags; the raw fact, complete-series and existing source/score gates remain.
+- **Validation**: final source regressions 23/23; full `check:changed`/nested `check:all` exit 0; full unit coverage 1,639 pass / one existing skip / zero fail (99.86/93.23/97.96). Final helper/test syntax and lint exit 0; builder retains the exact 12 baseline lint findings, none added. Whitespace passes and production data/workflow diff is empty. See [ADR-0091 integration correction](ADR/0091-cash-flow-period-selection.md#integration-correction-after-pr-511).
+- **Next / limits**: local checks complete; independent AI re-review found no remaining P1/P2 on the frozen source/test blobs (not human approval). Local commit and exact-head identity verification follow under coordinator control. No source/paid-provider calls, production JSON edits, Bubble/Daily/realtime generation, push, PR, merge or deployment in this correction. Natural refresh remains a separate acceptance gate.
+
 ### 2026-11-09 PR #511 最新 main 整合待验
 
 - main `f40126d3` 仅自动更新 World Order 数据；纯代码整合树 `bdfdefb388eb608998d454f1458a069038140ca7`。协调方独立 AI 复核无 P1/P2，非人工批准；相对 main 的 data/workflow diff 为空。
@@ -19,6 +26,13 @@
 - **当前任务 / 验证**：最终完整check:changed/check:all exit0、coverage1616通过/1既有skip/0失败，原门槛通过。独立AI发现两项来源标签P2已修并复核无剩余P1/P2；专项29/29。[实施证据与未解决边界](DATA_PROVENANCE_CLARITY_2026_11_09.md)。本地离线门槛完成，浏览器门槛仍待固定提交CI及真实视觉验收，不称已完成上线。
 - **下一步 / 门槛**：云浏览器执行受本地socket与下载阻塞，转已连接桌面新隔离树验证。逐指标日期schema缺口、Wind备用源品种等价性及AI融资/债务期限/现金流连续覆盖另行研究，不以显示修正宣称全部数据问题已根治。初始阶段不push/合并部署；后续协调允许必要本地门槛完成后推送独立draft PR，以固定提交CI补齐浏览器门槛，仍不得自行合并或部署。
 
+
+### 2026-11-09 Big5 SEC cash-flow source-period repair
+
+- **Acceptance baseline**: owner requested implementation of AI financing/cash-flow reliability work after source feasibility checks, without page expansion or unbacktested scoring thresholds. This local patch corrects the existing cash-flow input defect; no new financial indicator, production data edit, paid provider, refresh dispatch, push or merge.
+- **Last baseline / changes**: isolated `fix/sec-source-selection-20261109` at main `c59cc4b1`. [ADR-0091](ADR/0091-cash-flow-period-selection.md) adds complete individual-concept selection, eight dated quarters, 120-day period-end qualification, exact OCF/capex alignment and a dated mirror with a known-SEC-period floor. Original production/history/curated data stay unchanged.
+- **Current task / validation**: original SEC replay through 2026-11-02 gives AMZN168.300/215.192B and Big5 723.756/691.015B=95.476%; existing red light unchanged. A live read-only Amazon mirror independently matches. Final check:changed/check:all exit0, new source regressions17/17, full unit coverage1617 pass/one existing skip/zero fail. New helper/tests lint clean; builder retains the exact12 baseline lint findings, none added. Independent AI review has no remaining P1/P2; source conflicts, cross-source backdating and future-production test compatibility findings were fixed, without changing old checker assertions.
+- **Next / limits**: local implementation, validation and fixed-diff independent AI review complete; return the local commit for coordinated integration. No push/PR/merge or production refresh performed. Production confirmation requires the next authorized normal full Bubble refresh, not the qualified-only four-source job. No manual data promotion or paid regeneration. Self-audit confirms the approved narrow source scope, unchanged score/checker assertions, and no added skip/ignore list.
 
 ### 2026-11-09 周报首页接手整合（实施中，待集成与发布验收）
 

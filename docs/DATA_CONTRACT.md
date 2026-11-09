@@ -2624,3 +2624,8 @@ NVIDIA 跨日 carry 使用双时钟：先按原证明日期验证分子、收入
 ## 2026-11-09 现有观察字段语义修复
 
 `brentPricingLayer.selectedBrent.observedAt` 仅由相同来源、相同已选数值的 `sourceDetails.brent.observedAt/timestamp` 校验得到，缺失/非法/未来为 null；不再回退为输入或 Daily 生成时间。字段结构和旧价差计算不变。页面只从匹配的原来源日期解读旧快照，未知合约或异日不作直接价差展示。`dailyRealtimeInput.updatedAt` 是输入快照生成、`capturedAt` 是 Daily 采纳输入、顶层 `updatedAt` 是 Daily 计算起点；均不等于逐项源观察时间。详见[本轮核查](DATA_PROVENANCE_CLARITY_2026_11_09.md)。
+
+
+### Cash-flow source-period qualification (ADR-0091)
+
+For newly generated `mag4_fcf_yoy` and `hyperscaler_capex_yoy` auto results, `provenance.detail.perCompany[].sourceEvidence` records the selected SEC concept or quarterly-mirror row, eight contiguous dated quarters, source facts, USD unit and a trusted 120-day period-end freshness assessment. Big5 stores separate `ocf` and `capex` series and requires exact start/end alignment. `latestEnd` preserves each company's actual fiscal period; indicator `as_of` is the oldest selected company period end, not the fetch day. Existing historical publications are not rewritten or represented as having this new proof. [ADR-0091](ADR/0091-cash-flow-period-selection.md) defines the fail-closed selection and the natural-refresh acceptance still required. Score formulas, lights, Core-23 and stale curated fallback semantics are unchanged.

@@ -1,3 +1,4 @@
+import { collectQualifiedCashFlowConcept, qualifyMirrorCashFlows, requireCashFlowPeriodFloor, alignCashFlowPeriods, CASH_CAPEX_TAGS, OPERATING_CASH_FLOW_TAGS } from './bubble-watch/cash-flow-periods.mjs';
 import { preservePreviousWeeklyIssue } from './bubble-watch/previous-weekly-issue.mjs';
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
 import { collectOctoberCapexPanel } from './bubble-watch/capex-october-panel.mjs';
@@ -710,6 +711,22 @@ async function fetchSecAiIpoFilingConfirmations(ctx = {}) {
   };
 }
 
+// Cache only within this build. Every candidate tag is evaluated independently;
+// a nonempty historical tag can never mask a newer qualified cash-flow concept.
+const EDGAR_CASH_FLOW_CACHE = new Map();
+const EDGAR_CASH_FLOW_PERIODS = new Map();
+async function edgarCashFlow(cik, kind) {
+  return collectQualifiedCashFlowConcept({ cik, kind, asOfDate: isoDate(),
+    observePeriod: end => { if (end > (EDGAR_CASH_FLOW_PERIODS.get(cik) || '')) EDGAR_CASH_FLOW_PERIODS.set(cik, end); },
+    tags: kind === 'capex' ? CASH_CAPEX_TAGS : OPERATING_CASH_FLOW_TAGS,
+    fetchConcept: url => {
+      if (!EDGAR_CASH_FLOW_CACHE.has(url)) EDGAR_CASH_FLOW_CACHE.set(url,
+        fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': EDGAR_UA, Accept: 'application/json' } }));
+      return EDGAR_CASH_FLOW_CACHE.get(url);
+    }
+  });
+}
+
 // 现金流类(duration)概念:10-Q 报 YTD 累计,需差分出单季值
 function deriveQuarterlySeries(units) {
   const byKey = new Map();
@@ -981,17 +998,6 @@ function trailing4qCapexOcfCoverage(rowsOldestFirst) {
     fcfPrev: prevOcf - prevCapex,
     latestEnd: rows[rows.length - 1].end
   };
-}
-
-function saT4qCapexOcfCoverage(ocfNewestFirst, capexNewestFirst) {
-  const n = Math.min(ocfNewestFirst.length, capexNewestFirst.length);
-  if (n < 8) return null;
-  const rowsOldestFirst = Array.from({ length: n }, (_, i) => ({
-    end: `stockanalysis-index-${i}`,
-    ocf: ocfNewestFirst[i],
-    capex: Math.abs(capexNewestFirst[i])
-  })).reverse();
-  return trailing4qCapexOcfCoverage(rowsOldestFirst);
 }
 
 function classifyHyperscalerCashFlowCoverage(ratioPct, over100Count) {
@@ -1353,9 +1359,9 @@ const autoBuilders = {
     let sourceTag = 'SEC EDGAR';
     try {
       for (const ticker of companies) {
-        const units = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
-        const yoy = trailing4qYoy(deriveQuarterlySeries(units));
-        if (yoy) perCompany.push({ ticker, ...yoy });
+        const capex = await edgarCashFlow(EDGAR_CIK[ticker], 'capex');
+        const yoy = trailing4qYoy(capex.quarters.map(q => ({ end: q.end, val: q.value })));
+        if (yoy) perCompany.push({ ticker, ...yoy, sourceEvidence: capex });
       }
     } catch (error) {
       console.warn(`[bubble-watch] EDGAR capex 链失败,改走 stockanalysis 镜像: ${error.message}`);
@@ -1366,9 +1372,11 @@ const autoBuilders = {
       perCompany = [];
       for (const ticker of companies) {
         const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
-        const capex = parseSaQuarterlyRow(html, 'Capital Expenditures').map((v) => Math.abs(v));
-        const yoy = saT4qYoy(capex);
-        if (yoy) perCompany.push({ ticker, ...yoy });
+        const { capex } = qualifyMirrorCashFlows(html, isoDate(), { requireOcf: false });
+        requireCashFlowPeriodFloor(capex, EDGAR_CASH_FLOW_PERIODS.get(EDGAR_CIK[ticker]));
+        capex.source.url = `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/financials/cash-flow-statement/?p=quarterly`;
+        const yoy = trailing4qYoy(capex.quarters.map(q => ({ end: q.end, val: q.value })));
+        if (yoy) perCompany.push({ ticker, ...yoy, sourceEvidence: capex });
       }
     }
     if (perCompany.length < 3) throw new Error(`capex 可用公司不足 (${perCompany.length}/4)`);
@@ -1379,8 +1387,9 @@ const autoBuilders = {
     return {
       status,
       value_display: fmtPct(yoyPct, 0, true),
+      as_of: perCompany.map(c => c.latestEnd).sort()[0],
       note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季 capex 合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B);开支仍在${yoyPct >= 15 ? '加速扩张' : yoyPct >= 0 ? '稳健区间' : '收缩——指引下调风险落地'}。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿`,
-      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, yoyPct: Number(c.yoyPct.toFixed(1)) })) }
+      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, yoyPct: Number(c.yoyPct.toFixed(1)), latestEnd: c.latestEnd, sourceEvidence: c.sourceEvidence })) }
     };
   },
   async mag4_fcf_yoy() {
@@ -1389,14 +1398,10 @@ const autoBuilders = {
     let sourceTag = 'SEC EDGAR';
     try {
       for (const ticker of companies) {
-        const ocfUnits = await edgarConcept(EDGAR_CIK[ticker], ['NetCashProvidedByUsedInOperatingActivities', 'NetCashProvidedByUsedInOperatingActivitiesContinuingOperations']);
-        const capexUnits = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
-        const capexQ = new Map(deriveQuarterlySeries(capexUnits).map((q) => [q.end, Math.abs(q.val)]));
-        const rows = deriveQuarterlySeries(ocfUnits)
-          .filter((q) => capexQ.has(q.end))
-          .map((q) => ({ end: q.end, ocf: q.val, capex: capexQ.get(q.end) }));
-        const coverage = trailing4qCapexOcfCoverage(rows);
-        if (coverage) perCompany.push({ ticker, ...coverage });
+        const ocf = await edgarCashFlow(EDGAR_CIK[ticker], 'ocf');
+        const capex = await edgarCashFlow(EDGAR_CIK[ticker], 'capex');
+        const coverage = trailing4qCapexOcfCoverage(alignCashFlowPeriods(ocf, capex));
+        if (coverage) perCompany.push({ ticker, ...coverage, sourceEvidence: { ocf, capex } });
       }
     } catch (error) {
       console.warn(`[bubble-watch] EDGAR Big5 cash-flow coverage 链失败,改走 stockanalysis 镜像: ${error.message}`);
@@ -1407,10 +1412,12 @@ const autoBuilders = {
       perCompany = [];
       for (const ticker of companies) {
         const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
-        const ocf = parseSaQuarterlyRow(html, 'Operating Cash Flow');
-        const capex = parseSaQuarterlyRow(html, 'Capital Expenditures'); // 负值
-        const coverage = saT4qCapexOcfCoverage(ocf, capex);
-        if (coverage) perCompany.push({ ticker, ...coverage });
+        const { ocf, capex } = qualifyMirrorCashFlows(html, isoDate());
+        requireCashFlowPeriodFloor(capex, EDGAR_CASH_FLOW_PERIODS.get(EDGAR_CIK[ticker]));
+        const url = `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/financials/cash-flow-statement/?p=quarterly`;
+        ocf.source.url = url; capex.source.url = url;
+        const coverage = trailing4qCapexOcfCoverage(alignCashFlowPeriods(ocf, capex));
+        if (coverage) perCompany.push({ ticker, ...coverage, sourceEvidence: { ocf, capex } });
       }
     }
     if (perCompany.length !== companies.length) throw new Error(`Big5 cash-flow coverage 可用公司不足 (${perCompany.length}/${companies.length})`);
@@ -1426,6 +1433,7 @@ const autoBuilders = {
     return {
       status,
       value_display: `≈${ratioPct.toFixed(0)}%`,
+      as_of: perCompany.map(c => c.latestEnd).sort()[0],
       note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季经营现金流 $${(nowOcf / 1e9).toFixed(0)}B、cash capex $${(nowCapex / 1e9).toFixed(0)}B,capex/OCF ≈${ratioPct.toFixed(1)}%(上年同期 ${prevRatioPct.toFixed(1)}%,变化 ${fmtPct(ratioChangePct, 1, true)});${over100Count}/5 家 capex 已超过 OCF。该口径采用 Epoch/Apollo 式 hyperscaler 现金流覆盖率,比单纯 FCF YoY 更敏感。阈值:≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿`,
       detail: {
         ratioPct,
@@ -1438,6 +1446,8 @@ const autoBuilders = {
         adoptedModel: 'epoch_apollo_big5_cash_capex_to_ocf_coverage',
         perCompany: perCompany.map((c) => ({
           ticker: c.ticker,
+          latestEnd: c.latestEnd,
+          sourceEvidence: c.sourceEvidence,
           ocfTtmB: Number((c.nowOcf / 1e9).toFixed(1)),
           capexTtmB: Number((c.nowCapex / 1e9).toFixed(1)),
           fcfTtmB: Number((c.fcfNow / 1e9).toFixed(1)),
