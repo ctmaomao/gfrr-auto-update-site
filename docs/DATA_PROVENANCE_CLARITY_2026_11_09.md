@@ -1,5 +1,11 @@
 # 数据口径、时间与解释清晰度核查（2026-11-09）
 
+## 2026-11-09 整合与视觉验收回执
+
+PR #511 以 `9f79438d` 与 main `3a8a44c1` 无冲突整合，代码及数据整合树为 `a5c6a5bea762e22f8cf9b0ea59b96f959ab059e2`。相对该 main，生产 `data/` 和 workflow 差异为空。协调方记录整合树 `npm run check:changed` 实际执行完整 `check:all`，exit 0；unit coverage 1616 pass、1 个既有 skip、0 fail，lines/branches/functions 分别为 99.86/93.23/97.96；35 项独立审阅专项、`node --check scripts/app.js` 和 whitespace 检查通过。独立 AI 审查完整 PR 相对 main 无 P1/P2，不是人工批准。首版 CI check-all job `128943387505` 的步骤成功；新 head 的 CI 尚待核验。
+
+对同一生产快照的 1440px / 390px Chromium before/after 进行了真实截图和查看，详情及计算样式见[视觉证据](review-evidence/pr511-visual-20261109/README.md)。关键文案、展开/折叠和重复导航可读，未见横向溢出或页面脚本异常；Google Fonts 请求被代理限制，使用回退字体，网页字体的最终视觉效果尚未验证。用户已撤销本项目重复人工确认环节，质量门槛不变；新 head 的 CI 和发布验收仍待核验。本次不声称已上线。
+
 ## 范围与基线
 
 owner 要求核查并实施第 4 项：分开观察、获取和计算时间；来源健康与时效；Brent 现货/期货、合约月份及日期；广义美元指数与 DXY；近期金融压力与慢变量结构脆弱性。后续研究先证明稳定可得，不增加未回测评分。基于 main `c59cc4b1` 的新隔离工作树，原预算工作树和周报工作保留。本 PR 符合 DESIGN.md 的所有规则。

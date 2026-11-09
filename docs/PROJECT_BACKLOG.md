@@ -1,5 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-09 数据口径 PR #511 整合与视觉回执
+
+- **整合**：PR head `9f79438d` 与 main `3a8a44c1` 无冲突整合，整合树 `a5c6a5bea762e22f8cf9b0ea59b96f959ab059e2`；相对该 main 的生产 data 和 workflow diff 为空。
+- **验证**：协调方记录最终 `check:changed` 含完整 `check:all` exit 0，coverage 1616 pass / 1 既有 skip / 0 fail（99.86/93.23/97.96）；35 项独立审阅专项、`node --check scripts/app.js` 和 whitespace 通过。独立 AI 审查相对 main 无 P1/P2，不是人工批准。首版 CI check-all job `128943387505` 步骤成功；新 head CI 仍待核验。
+- **视觉与门槛**：同一快照的 1440/390 Chromium before/after、交互与计算样式见[证据](review-evidence/pr511-visual-20261109/README.md)；Google Fonts 受代理限制，网页字体实际效果待核验。用户已撤销本项目重复人工确认环节，质量门槛不变；新 head CI 和发布验收仍待核验，尚未上线。
+
 ### 2026-11-09 数据口径与时间清晰度（本地验证中）
 
 - **Acceptance baseline**：owner要求检查并实施第4项，区分观察/获取/计算、健康/时效、Brent现货期货合约和美元指数口径、OFR与结构脆弱性；不扩源/评分/页面，不调用收费数据或AI。

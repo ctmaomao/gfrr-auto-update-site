@@ -1,0 +1,270 @@
+[
+  {
+    "width": 1440,
+    "variant": "before",
+    "initial": false,
+    "closed": true,
+    "reopenSame": true,
+    "reloadClosed": true,
+    "reloadSame": true,
+    "brentSame": true,
+    "overflow": {
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "offenders": []
+    },
+    "styles": {
+      "body": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      ".threshold-block": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent .aux": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"IBM Plex Mono\", \"SF Mono\", Menlo, Consolas, monospace"
+      },
+      "#card-c1-brent .note": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c2-dxy": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data summary": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Playfair Display\", \"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      }
+    },
+    "text": {
+      "brent": "BRENT\n布伦特原油\nRED\n107.03USD/bbl\n主值取公开现货代理 · 状态:公开代理观察\n公开现货代理 EIA\n·\n$107.03\n期货 front Yahoo\n·\n$97.83\n期货 ICE\n·\n$97.50\n现货-期货价差\n·\n+$9.20\n最大代理偏离%\n·\n8.8%\n\n三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。\n\n阈值 >100 红\n能源价格证据链",
+      "dollar": "DXY\n广义美元指数\nRED\n121.67\n12周高位 121.67\n\n强美元说明全球融资环境收紧，尚未到单独危机程度。\n\n阈值 >115 红\n美元指数 + 12 周区间",
+      "ofr": "读数解释 · Reading Guide\n严格过去十年历史百分位 44.3 · 2026-11-04\n\n原值高于0：压力高于历史平均；低于0：低于历史平均。百分位表示相对历史位置，不是危机概率，也不是新的风险评分。",
+      "appendix": " 详细数据与图表 · Appendix detail-data\n展开/收起 · 4 章节\n本附录为今日主判断的支撑层。所有数据来自 DATA/RADAR-DATA.JSON，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。\n1. 数据健康 · Data Health\n\n本期数据综合健康状态采集时正常。采集时健康度 100/100，数据来源为 实时输入，0 项关键缺失、0 项回退。Daily 输入来自 realtime-data 分支，提交 fced6b6f，采集时间 2026-11-09 01:49 UTC。实时数据源刷新成功，无需进入降级模式或缓存模式。\n\n快变量层 7 个数据源(布伦特原油、广义美元指数、VIX 波动率、高收益债利差、10 年期美债、黄金、标普500) 全部 实时。慢变量层宏观驱动下 12 个子模块的来源状态显示，FRED 美联储数据系列(8 项)、Yahoo 行情系列(纳指类 NDX/QQQ/IXIC、信贷类基金 BIZD/PBDC/SRLN/CCLFX 等)、ISM 制造业景气(PMI)、StockQ 运费指数(油轮 BDTI/BCTI、干散货 BDI)、ICE 信用利差(高收益/投资级 CDX)、美国银行消费观察(Consumer Checkpoint) 均处于实时状态。\n\n结构信号层激活 1 项：逆回购准备金告急(隔夜逆回购余额:ON RRP 1.50 亿美元)。该信号已纳入决策层门控，但美元流动性分项资料：模块状态 平稳，美联储总资产(WALCL) 6.75T、银行准备金 2.93T、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 3.92%/3.88%，回购利差状态为正常。\n\n健康度快照\n数据源健康\n健康度\n采集时健康度 100/100\n关键缺失\n0 项\n降级模式\n否\n安全输出\n是\n最近运行\n2026-11-09 01:49 UTC\n结构信号\n逆回购准备金告急 (1)\n现状判读\n\n数据健康正常，无需触发回退机制。\n\n系统所有关键数据源处于实时状态，今日主判断的所有证据均可被审计追溯。唯一需要观察的是 逆回购准备金告急 · ON RRP 1.50 亿美元，它独立列示，不提高OFR读数，也不生成仓位指令。\n\n3. 旧模型宏观传导诊断 · Transmission Network\n\n系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 79，路径置信度 88，主导冲击为战争/油价，主导资产影响为全球股票承压。\n\nSHOCK\n战争冲击\n分数 82\n→\nPRICE\n油价压力\n分数 81\n→\nMACRO\n通胀传导\n分数 81\n→\nRATE\n利率压力\n分数 78\n→\nASSET\n股票影响\n分数 79\n+ 中期对冲：\n分数 64\n(对冲通胀，但短线受真实利率压制)\n\n网络第二层把\"价格变量层\"(原油 / 商品 / 美元) → \"宏观变量层\"(通胀预期 / 真实利率 / 流动性) → \"市场传导层\"(融资条件 / 波动率 / 相关性) → \"资产结果层\"(股票 / 债券 / 黄金 / 能源)。各层压力均被 partial 验证(逐层得分见上方节点链实时字段)，没有出现\"上游强、下游弱\"那种典型的\"市场不信\"形态。\n\n资产冲击分解层显示六类资产的方向：\n\n能源 正面 — 地缘冲击 + 供给约束 + 库存/需求\n美元 / 短票 正面 — 融资偏紧 + 防御需求\n科技股 阶段偏空 — 真实利率 + 流动性最敏感\n全球股票 负面 — 利率 + 流动性 + 风险偏好\n长久期债券 负面 — 通胀黏性 + 政策路径\n黄金 中性偏多 — 通胀对冲 + 真实利率 + 流动性扰动\n系统自动结论\n4 句话总结\n\n① 主链条仍由战争冲击驱动，经油价与通胀传导到利率和估值端。\n② 过去 30 天传导速度先升后缓，风险并未解除，而是转入高位震荡阶段。\n③ 流动性偏紧并未打断主链，反而放大了股票和久期资产的回撤弹性。\n④ 黄金保留中期对冲属性，但短线受真实利率和美元阶段性压制。\n\n旧模型的资产收益预测和情景概率已退役；历史发布记录保留供审计。"
+    },
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ]
+  },
+  {
+    "width": 1440,
+    "variant": "after",
+    "initial": false,
+    "closed": true,
+    "reopenSame": true,
+    "reloadClosed": true,
+    "reloadSame": true,
+    "brentSame": true,
+    "overflow": {
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "offenders": []
+    },
+    "styles": {
+      "body": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      ".threshold-block": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent .aux": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"IBM Plex Mono\", \"SF Mono\", Menlo, Consolas, monospace"
+      },
+      "#card-c1-brent .note": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c2-dxy": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data summary": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Playfair Display\", \"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      }
+    },
+    "text": {
+      "brent": "BRENT\n布伦特原油\nRED\n107.03USD/bbl\nFRED 现货代理 · 2026-11-03\n公开现货代理 EIA\n·\n$107.03 · 2026-11-03\n期货／市场代理\n·\n$97.83 · Yahoo · 连续近月，合约月未核实 · 2026-11-09\nICE 延迟期货\n·\n$97.50 · Jan27 · 2026-11-09\n同日代理差\n·\n— · 日期或合约未对齐\n比较边界\n·\n跨口径，非同一价格偏离\n\n现货代理、连续近月和指定月份期货分别阅读；不同观察日或未核实合约月份不作直接价差比较。ICE为延迟报价，不是官方结算价；公开现货代理不是Platts Dated Brent。\n\n阈值 >100 红\n能源价格证据链",
+      "dollar": "BROAD USD INDEX\n广义美元指数\nRED\n121.67\n12周高位 121.67\n\n主序列为FRED DTWEXBGS贸易加权广义美元指数，不是ICE DXY；两者基期、货币篮子与权重不同，不能比较点位。此快照未保留该点观察日，不以生成时间代替。\n\n阈值 >115 红\nFRED DTWEXBGS · 12 周区间",
+      "ofr": "读数解释 · Reading Guide\n严格过去十年历史百分位 44.3 · 2026-11-04\n\n观察日 2026-11-04 · 获取 2026-11-09 01:50 UTC · 派生计算 2026-11-09 01:50 UTC\n\n原值高于0：压力高于历史平均；低于0：低于历史平均。百分位表示相对历史位置，不是危机概率，也不是新的风险评分。",
+      "appendix": " 详细数据与图表 · Appendix detail-data\n展开/收起 · 4 章节\n本附录为今日主判断的支撑层。所有数据来自 DATA/RADAR-DATA.JSON，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。\n1. 数据健康 · Data Health\n\n本期输入采集状态采集时正常。采集时健康度 100/100，输入采集模式为 在线采集，0 项关键缺失、0 项回退。Daily 输入来自 realtime-data 分支，提交 fced6b6f，Daily 采纳输入时间 2026-11-09 01:49 UTC。本次输入采集记录正常；不代表每项观察值都是当天或仍足够新。\n\n采集健康只描述本次输入链路的成功与回退情况。日频行情、周频和月季频宏观数据各有观察日期及发布滞后，不能由采集成功推断它们均为实时。逐项缺少观察日或时效规则时，保留待核验，不借快照生成时间续期。\n\n结构信号层激活 1 项：逆回购准备金告急(隔夜逆回购余额:ON RRP 1.50 亿美元)。该信号独立展示，不提高OFR读数或生成仓位指令，但美元流动性分项资料：模块状态 平稳，美联储总资产(WALCL) 6.75T、银行准备金 2.93T、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 3.92%/3.88%，回购利差状态为正常。\n\n健康度快照\n数据源健康\n健康度\n采集时健康度 100/100\n关键缺失\n0 项\n降级模式\n否\n安全输出\n是\n输入快照生成\n2026-11-09 00:59 UTC\nDaily 计算起点\n2026-11-09 01:49 UTC\n快照时效\n本期快照 · 生成不足 1小时\n结构信号\n逆回购准备金告急 (1)\n现状判读\n\n采集记录正常，观察值时效仍须逐项核对。\n\n来源正常与数据足够新是两回事。上方OFR单列实际观察、获取和派生计算时间；其它指标以各自观察日为准。另有独立结构信号 逆回购准备金告急 · ON RRP 1.50 亿美元，它独立列示，不提高OFR读数，也不生成仓位指令。\n\n3. 旧模型宏观传导诊断 · Transmission Network\n\n系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 79，路径置信度 88，主导冲击为战争/油价，主导资产影响为全球股票承压。\n\nSHOCK\n战争冲击\n分数 82\n→\nPRICE\n油价压力\n分数 81\n→\nMACRO\n通胀传导\n分数 81\n→\nRATE\n利率压力\n分数 78\n→\nASSET\n股票影响\n分数 79\n+ 中期对冲：\n分数 64\n(对冲通胀，但短线受真实利率压制)\n\n网络第二层把\"价格变量层\"(原油 / 商品 / 美元) → \"宏观变量层\"(通胀预期 / 真实利率 / 流动性) → \"市场传导层\"(融资条件 / 波动率 / 相关性) → \"资产结果层\"(股票 / 债券 / 黄金 / 能源)。各层压力均被 partial 验证(逐层得分见上方节点链实时字段)，没有出现\"上游强、下游弱\"那种典型的\"市场不信\"形态。\n\n资产冲击分解层显示六类资产的方向：\n\n能源 正面 — 地缘冲击 + 供给约束 + 库存/需求\n美元 / 短票 正面 — 融资偏紧 + 防御需求\n科技股 阶段偏空 — 真实利率 + 流动性最敏感\n全球股票 负面 — 利率 + 流动性 + 风险偏好\n长久期债券 负面 — 通胀黏性 + 政策路径\n黄金 中性偏多 — 通胀对冲 + 真实利率 + 流动性扰动\n系统自动结论\n4 句话总结\n\n① 主链条仍由战争冲击驱动，经油价与通胀传导到利率和估值端。\n② 过去 30 天传导速度先升后缓，风险并未解除，而是转入高位震荡阶段。\n③ 流动性偏紧并未打断主链，反而放大了股票和久期资产的回撤弹性。\n④ 黄金保留中期对冲属性，但短线受真实利率和美元阶段性压制。\n\n旧模型的资产收益预测和情景概率已退役；历史发布记录保留供审计。"
+    },
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ]
+  },
+  {
+    "width": 390,
+    "variant": "before",
+    "initial": false,
+    "closed": true,
+    "reopenSame": true,
+    "reloadClosed": true,
+    "reloadSame": true,
+    "brentSame": true,
+    "overflow": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "offenders": []
+    },
+    "styles": {
+      "body": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      ".threshold-block": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent .aux": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"IBM Plex Mono\", \"SF Mono\", Menlo, Consolas, monospace"
+      },
+      "#card-c1-brent .note": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c2-dxy": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data summary": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Playfair Display\", \"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      }
+    },
+    "text": {
+      "brent": "BRENT\n布伦特原油\nRED\n107.03USD/bbl\n主值取公开现货代理 · 状态:公开代理观察\n公开现货代理 EIA\n·\n$107.03\n期货 front Yahoo\n·\n$97.83\n期货 ICE\n·\n$97.50\n现货-期货价差\n·\n+$9.20\n最大代理偏离%\n·\n8.8%\n\n三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。\n\n阈值 >100 红\n能源价格证据链",
+      "dollar": "DXY\n广义美元指数\nRED\n121.67\n12周高位 121.67\n\n强美元说明全球融资环境收紧，尚未到单独危机程度。\n\n阈值 >115 红\n美元指数 + 12 周区间",
+      "ofr": "读数解释 · Reading Guide\n严格过去十年历史百分位 44.3 · 2026-11-04\n\n原值高于0：压力高于历史平均；低于0：低于历史平均。百分位表示相对历史位置，不是危机概率，也不是新的风险评分。",
+      "appendix": " 详细数据与图表 · Appendix detail-data\n展开/收起 · 4 章节\n本附录为今日主判断的支撑层。所有数据来自 DATA/RADAR-DATA.JSON，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。\n1. 数据健康 · Data Health\n\n本期数据综合健康状态采集时正常。采集时健康度 100/100，数据来源为 实时输入，0 项关键缺失、0 项回退。Daily 输入来自 realtime-data 分支，提交 fced6b6f，采集时间 2026-11-09 01:49 UTC。实时数据源刷新成功，无需进入降级模式或缓存模式。\n\n快变量层 7 个数据源(布伦特原油、广义美元指数、VIX 波动率、高收益债利差、10 年期美债、黄金、标普500) 全部 实时。慢变量层宏观驱动下 12 个子模块的来源状态显示，FRED 美联储数据系列(8 项)、Yahoo 行情系列(纳指类 NDX/QQQ/IXIC、信贷类基金 BIZD/PBDC/SRLN/CCLFX 等)、ISM 制造业景气(PMI)、StockQ 运费指数(油轮 BDTI/BCTI、干散货 BDI)、ICE 信用利差(高收益/投资级 CDX)、美国银行消费观察(Consumer Checkpoint) 均处于实时状态。\n\n结构信号层激活 1 项：逆回购准备金告急(隔夜逆回购余额:ON RRP 1.50 亿美元)。该信号已纳入决策层门控，但美元流动性分项资料：模块状态 平稳，美联储总资产(WALCL) 6.75T、银行准备金 2.93T、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 3.92%/3.88%，回购利差状态为正常。\n\n健康度快照\n数据源健康\n健康度\n采集时健康度 100/100\n关键缺失\n0 项\n降级模式\n否\n安全输出\n是\n最近运行\n2026-11-09 01:49 UTC\n结构信号\n逆回购准备金告急 (1)\n现状判读\n\n数据健康正常，无需触发回退机制。\n\n系统所有关键数据源处于实时状态，今日主判断的所有证据均可被审计追溯。唯一需要观察的是 逆回购准备金告急 · ON RRP 1.50 亿美元，它独立列示，不提高OFR读数，也不生成仓位指令。\n\n3. 旧模型宏观传导诊断 · Transmission Network\n\n系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 79，路径置信度 88，主导冲击为战争/油价，主导资产影响为全球股票承压。\n\nSHOCK\n战争冲击\n分数 82\n→\nPRICE\n油价压力\n分数 81\n→\nMACRO\n通胀传导\n分数 81\n→\nRATE\n利率压力\n分数 78\n→\nASSET\n股票影响\n分数 79\n+ 中期对冲：\n分数 64\n(对冲通胀，但短线受真实利率压制)\n\n网络第二层把\"价格变量层\"(原油 / 商品 / 美元) → \"宏观变量层\"(通胀预期 / 真实利率 / 流动性) → \"市场传导层\"(融资条件 / 波动率 / 相关性) → \"资产结果层\"(股票 / 债券 / 黄金 / 能源)。各层压力均被 partial 验证(逐层得分见上方节点链实时字段)，没有出现\"上游强、下游弱\"那种典型的\"市场不信\"形态。\n\n资产冲击分解层显示六类资产的方向：\n\n能源 正面 — 地缘冲击 + 供给约束 + 库存/需求\n美元 / 短票 正面 — 融资偏紧 + 防御需求\n科技股 阶段偏空 — 真实利率 + 流动性最敏感\n全球股票 负面 — 利率 + 流动性 + 风险偏好\n长久期债券 负面 — 通胀黏性 + 政策路径\n黄金 中性偏多 — 通胀对冲 + 真实利率 + 流动性扰动\n系统自动结论\n4 句话总结\n\n① 主链条仍由战争冲击驱动，经油价与通胀传导到利率和估值端。\n② 过去 30 天传导速度先升后缓，风险并未解除，而是转入高位震荡阶段。\n③ 流动性偏紧并未打断主链，反而放大了股票和久期资产的回撤弹性。\n④ 黄金保留中期对冲属性，但短线受真实利率和美元阶段性压制。\n\n旧模型的资产收益预测和情景概率已退役；历史发布记录保留供审计。"
+    },
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ]
+  },
+  {
+    "width": 390,
+    "variant": "after",
+    "initial": false,
+    "closed": true,
+    "reopenSame": true,
+    "reloadClosed": true,
+    "reloadSame": true,
+    "brentSame": true,
+    "overflow": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "offenders": []
+    },
+    "styles": {
+      "body": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      ".threshold-block": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c1-brent .aux": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"IBM Plex Mono\", \"SF Mono\", Menlo, Consolas, monospace"
+      },
+      "#card-c1-brent .note": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(58, 53, 48)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#card-c2-dxy": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data": {
+        "background": "rgb(251, 247, 240)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      },
+      "#detail-data summary": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(26, 24, 21)",
+        "fontFamily": "\"Playfair Display\", \"Noto Serif SC\", \"Source Han Serif SC\", \"Songti SC\", serif"
+      }
+    },
+    "text": {
+      "brent": "BRENT\n布伦特原油\nRED\n107.03USD/bbl\nFRED 现货代理 · 2026-11-03\n公开现货代理 EIA\n·\n$107.03 · 2026-11-03\n期货／市场代理\n·\n$97.83 · Yahoo · 连续近月，合约月未核实 · 2026-11-09\nICE 延迟期货\n·\n$97.50 · Jan27 · 2026-11-09\n同日代理差\n·\n— · 日期或合约未对齐\n比较边界\n·\n跨口径，非同一价格偏离\n\n现货代理、连续近月和指定月份期货分别阅读；不同观察日或未核实合约月份不作直接价差比较。ICE为延迟报价，不是官方结算价；公开现货代理不是Platts Dated Brent。\n\n阈值 >100 红\n能源价格证据链",
+      "dollar": "BROAD USD INDEX\n广义美元指数\nRED\n121.67\n12周高位 121.67\n\n主序列为FRED DTWEXBGS贸易加权广义美元指数，不是ICE DXY；两者基期、货币篮子与权重不同，不能比较点位。此快照未保留该点观察日，不以生成时间代替。\n\n阈值 >115 红\nFRED DTWEXBGS · 12 周区间",
+      "ofr": "读数解释 · Reading Guide\n严格过去十年历史百分位 44.3 · 2026-11-04\n\n观察日 2026-11-04 · 获取 2026-11-09 01:50 UTC · 派生计算 2026-11-09 01:50 UTC\n\n原值高于0：压力高于历史平均；低于0：低于历史平均。百分位表示相对历史位置，不是危机概率，也不是新的风险评分。",
+      "appendix": " 详细数据与图表 · Appendix detail-data\n展开/收起 · 4 章节\n本附录为今日主判断的支撑层。所有数据来自 DATA/RADAR-DATA.JSON，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。\n1. 数据健康 · Data Health\n\n本期输入采集状态采集时正常。采集时健康度 100/100，输入采集模式为 在线采集，0 项关键缺失、0 项回退。Daily 输入来自 realtime-data 分支，提交 fced6b6f，Daily 采纳输入时间 2026-11-09 01:49 UTC。本次输入采集记录正常；不代表每项观察值都是当天或仍足够新。\n\n采集健康只描述本次输入链路的成功与回退情况。日频行情、周频和月季频宏观数据各有观察日期及发布滞后，不能由采集成功推断它们均为实时。逐项缺少观察日或时效规则时，保留待核验，不借快照生成时间续期。\n\n结构信号层激活 1 项：逆回购准备金告急(隔夜逆回购余额:ON RRP 1.50 亿美元)。该信号独立展示，不提高OFR读数或生成仓位指令，但美元流动性分项资料：模块状态 平稳，美联储总资产(WALCL) 6.75T、银行准备金 2.93T、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 3.92%/3.88%，回购利差状态为正常。\n\n健康度快照\n数据源健康\n健康度\n采集时健康度 100/100\n关键缺失\n0 项\n降级模式\n否\n安全输出\n是\n输入快照生成\n2026-11-09 00:59 UTC\nDaily 计算起点\n2026-11-09 01:49 UTC\n快照时效\n本期快照 · 生成不足 1小时\n结构信号\n逆回购准备金告急 (1)\n现状判读\n\n采集记录正常，观察值时效仍须逐项核对。\n\n来源正常与数据足够新是两回事。上方OFR单列实际观察、获取和派生计算时间；其它指标以各自观察日为准。另有独立结构信号 逆回购准备金告急 · ON RRP 1.50 亿美元，它独立列示，不提高OFR读数，也不生成仓位指令。\n\n3. 旧模型宏观传导诊断 · Transmission Network\n\n系统通过 6 个节点把宏观冲击从源头追到资产层。当前传导压力综合分 79，路径置信度 88，主导冲击为战争/油价，主导资产影响为全球股票承压。\n\nSHOCK\n战争冲击\n分数 82\n→\nPRICE\n油价压力\n分数 81\n→\nMACRO\n通胀传导\n分数 81\n→\nRATE\n利率压力\n分数 78\n→\nASSET\n股票影响\n分数 79\n+ 中期对冲：\n分数 64\n(对冲通胀，但短线受真实利率压制)\n\n网络第二层把\"价格变量层\"(原油 / 商品 / 美元) → \"宏观变量层\"(通胀预期 / 真实利率 / 流动性) → \"市场传导层\"(融资条件 / 波动率 / 相关性) → \"资产结果层\"(股票 / 债券 / 黄金 / 能源)。各层压力均被 partial 验证(逐层得分见上方节点链实时字段)，没有出现\"上游强、下游弱\"那种典型的\"市场不信\"形态。\n\n资产冲击分解层显示六类资产的方向：\n\n能源 正面 — 地缘冲击 + 供给约束 + 库存/需求\n美元 / 短票 正面 — 融资偏紧 + 防御需求\n科技股 阶段偏空 — 真实利率 + 流动性最敏感\n全球股票 负面 — 利率 + 流动性 + 风险偏好\n长久期债券 负面 — 通胀黏性 + 政策路径\n黄金 中性偏多 — 通胀对冲 + 真实利率 + 流动性扰动\n系统自动结论\n4 句话总结\n\n① 主链条仍由战争冲击驱动，经油价与通胀传导到利率和估值端。\n② 过去 30 天传导速度先升后缓，风险并未解除，而是转入高位震荡阶段。\n③ 流动性偏紧并未打断主链，反而放大了股票和久期资产的回撤弹性。\n④ 黄金保留中期对冲属性，但短线受真实利率和美元阶段性压制。\n\n旧模型的资产收益预测和情景概率已退役；历史发布记录保留供审计。"
+    },
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ]
+  }
+]

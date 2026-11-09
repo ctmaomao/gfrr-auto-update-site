@@ -1,0 +1,10 @@
+# PR 511 visual inspection — 2026-11-09
+
+- Before: main commit `3a8a44c1023e400c07b482651177f66e3e53a99f`, tree `5be7c246e88254a8a80069ce8a467c1a1d6253cf`.
+- After: PR head `9f79438de327d1b1a235831b246d9fab586ebdb6` merged without commit with the above main, tree `a5c6a5bea762e22f8cf9b0ea59b96f959ab059e2`.
+- Both use the same latest-main `data/radar-data.json`; `git diff --name-only origin/main -- data .github/workflows` is empty in the integrated worktree. The staged data changes relative to PR head come solely from main.
+- Chromium `/usr/bin/chromium` headless, viewport 1440x900 and 390x900, device scale factor 1. `*-page.png` are full page; `*-brent.png`, `*-dollar.png`, `*-ofr.png`, and `*-appendix.png` are matching component captures. Pixel dimensions can be read from each PNG.
+- Viewed component captures directly. Brent dates/contracts and no-comparison notice, broad USD distinction, OFR three clocks, and health/freshness disclosure are visible at both sizes. Mobile Brent wraps without clipping. Both viewport widths match document scroll width. Appendix starts closed; repeated open/close and reload retained content; two weekly/radar navigation cycles preserved Brent values and reset the fold. No pageerror events observed.
+- Both before and after reported `net::ERR_TUNNEL_CONNECTION_FAILED` loading `https://fonts.googleapis.com/css2`; capture uses fallback rendering, so loaded web-font appearance is not verified. The console recorded one resource failure per load, two per initial/reload sequence. Computed `font-family` is a declared stack and does not prove a web font loaded.
+- `results.json` contains the precise rendered text, sampled background/color/font-family, console messages, and interaction and overflow results. For the eight sampled shared selectors, computed styles matched before versus after at each viewport.
+- No production data generation, provider calls, branch push, merge commit, or deployment was performed. These are local, uncommitted evidence files.
