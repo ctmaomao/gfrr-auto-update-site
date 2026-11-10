@@ -228,3 +228,93 @@ test('valid single-channel cross-domain excerpts remain qualified with consisten
   assert.equal(validateNewsDiscovery(rejectedDuplicate).ok, true);
   assert.equal(rejectedDuplicate.stories.length, 1);
 });
+
+
+// Synthetic benign shapes only; no external diagnostic excerpts belong in fixtures.
+const navigationExcerpt = 'Markets and technology. Most Read: The city garden opens this weekend. Related stories: A museum extends its summer hours.';
+const newsletterAgenda = 'Welcome to Private Markets, this is our weekly newsletter about capital. Today, we look at gardens, museum schedules and transport plans.';
+const scriptAnalysis = 'Some observers expect durable AI demand, but construction delays can pressure project cash flows and increase financing uncertainty. This is commentary, not a reported company transaction.';
+function evidenceDiscovery(snippets, dual = false) {
+  return buildNewsDiscovery({ rawStories: snippets.map((snippet, index) => ({ provider: 'brave',
+    topic: ['market_structure_valuation', 'ai_financing_credit', 'ai_capex_earnings'][index % 3],
+    title: ['Market concentration outlook', 'Software credit sentiment improves', 'Broadcast script'][index % 3],
+    url: `https://${['ft.com', 'bloomberg.com', 'cnbc.com'][index % 3]}/news/story-${index}`, snippet, publishedAt: '2026-11-09' })),
+  sourceStatus: { brave: healthy, tavily: dual ? healthy : failed }, generatedAt: '2026-11-10T00:00:00Z', windowStart: '2026-11-03', windowEnd: '2026-11-10' });
+}
+
+test('navigation and newsletter agenda cannot become article evidence, while script commentary survives', () => {
+  for (const dual of [false, true]) {
+    const discovery = evidenceDiscovery([navigationExcerpt, newsletterAgenda, scriptAnalysis], dual);
+    assert.equal(validateNewsDiscovery(discovery).ok, true);
+    const readiness = assessWeeklyEditorialNewsReadiness(discovery);
+    assert.equal(readiness.editorialReady, true);
+    assert.equal(readiness.credibleCount, 1);
+    assert.equal(readiness.coverageMode, dual ? 'dual_search' : 'limited_single_search');
+    assert.equal(discovery.stories.find(s => s.domain === 'cnbc.com').evidenceStatus, 'attributed_media');
+    for (const story of discovery.stories.filter(s => s.domain !== 'cnbc.com')) {
+      assert.equal(story.evidenceStatus, 'discovery_only');
+      assert.equal(story.contentScope, 'title_only');
+      assert.equal(story.snippet, null);
+    }
+    const bubble = read('data/bubble-watch.json');
+    const before = digest(bubble);
+    const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+    assert.equal(validateWeeklyEditorialInput(input).ok, true);
+    assert.equal(digest(bubble), before);
+    assert.ok(!JSON.stringify(input).includes(navigationExcerpt));
+    assert.ok(!JSON.stringify(input).includes(newsletterAgenda));
+    assert.ok(JSON.stringify(input).includes(scriptAnalysis));
+    assert.equal(input.newsContext.stories.filter(s => s.evidenceStatus === 'attributed_media').length, 1);
+    const clean = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery: evidenceDiscovery([scriptAnalysis], dual) });
+    assert.equal(input.sourceSnapshotDigest, clean.sourceSnapshotDigest);
+    assert.deepEqual(input.scoringSnapshot, clean.scoringSnapshot);
+    assert.deepEqual(input.structuredFacts, clean.structuredFacts);
+  }
+});
+
+test('forged excerpt and media labels do not bypass readiness or compact-input sanitization', () => {
+  for (const dual of [false, true]) for (const snippet of [navigationExcerpt, newsletterAgenda]) {
+    const discovery = evidenceDiscovery([scriptAnalysis], dual);
+    discovery.stories[0].snippet = snippet;
+    discovery.stories[0].contentScope = 'excerpt';
+    discovery.stories[0].evidenceStatus = 'attributed_media';
+    assert.equal(assessWeeklyEditorialNewsReadiness(discovery).editorialReady, false);
+    assert.equal(validateNewsDiscovery(discovery).ok, false);
+    const input = buildWeeklyEditorialInput({ bubbleWatch: read('data/bubble-watch.json'), discovery });
+    assert.ok(!JSON.stringify(input).includes(snippet));
+    assert.ok(input.newsContext.stories.every(s => s.snippet === null && s.evidenceStatus === 'discovery_only'));
+    assert.ok(input.sourceRefs.filter(s => s.kind === 'news').every(s => s.sourceClass === 'discovery_only'));
+  }
+});
+
+test('contaminated rows cannot donate corroboration or official trust under either search mode', () => {
+  for (const dual of [false, true]) {
+    const d = evidenceDiscovery([scriptAnalysis], dual);
+    const common = { provider: 'brave', topic: 'ai_financing_credit', title: 'AI infrastructure funding outlook', publishedAt: '2026-11-09' };
+    const discovery = buildNewsDiscovery({ ...d, rawStories: [
+      { ...common, url: 'https://unknown.example/report', snippet: scriptAnalysis },
+      { ...common, url: 'https://sec.gov/report', snippet: navigationExcerpt }
+    ] });
+    assert.ok(discovery.stories.every(s => s.evidenceStatus === 'discovery_only'));
+    assert.equal(assessWeeklyEditorialNewsReadiness(discovery).editorialReady, false);
+  }
+});
+
+test('substantive newsletters remain usable and navigation after the length cap is rejected before truncation', () => {
+  const substantive = 'Welcome to our newsletter. Analysts argue that delayed construction can weaken cash flows despite durable AI demand; financing risks remain uncertain.';
+  assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([substantive])).editorialReady, true);
+  const discovery = evidenceDiscovery([scriptAnalysis.repeat(3) + ' Most Read: garden opening hours']);
+  assert.equal(discovery.stories[0].snippet, null);
+  assert.equal(assessWeeklyEditorialNewsReadiness(discovery).editorialReady, false);
+});
+
+
+test('page-furniture detection preserves popular/recommended analytical prose but rejects repeated navigation', () => {
+  for (const snippet of [
+    'The most popular AI models saw revenue growth slow this quarter, according to the company published earnings report; analysts caution that demand remains uncertain.',
+    'Analysts recommended articles on financing risk because these explain why project delays can pressure cash flows even while demand remains robust.'
+  ]) assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([snippet])).editorialReady, true);
+  const navigation = 'CompaniesShow more Companies Energy Financials Retail Technology TechShow more Tech Artificial intelligence Semiconductors Cyber Security';
+  assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([navigation])).editorialReady, false);
+  assert.equal(evidenceDiscovery([navigation]).stories[0].snippet, null);
+});

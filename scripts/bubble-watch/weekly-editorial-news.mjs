@@ -1,4 +1,4 @@
-import { contentScope, isOfficialDomain, isUsableNews, publisherName, validMediaStory } from './editorial-evidence-policy.mjs';
+import { excerptEligibility, contentScope, isOfficialDomain, isUsableNews, publisherName, validMediaStory } from './editorial-evidence-policy.mjs';
 import { createHash } from 'node:crypto';
 
 import { EDITORIAL_TOPICS, NEWS_DISCOVERY_SCHEMA } from './weekly-editorial-contract.mjs';
@@ -155,7 +155,7 @@ export function normalizeProviderStory(raw) {
     url,
     domain,
     publishedAt: parsePublishedAt(raw.publishedAt),
-    snippet: compactText(raw.snippet, 360),
+    snippet: excerptEligibility(raw).eligible ? compactText(raw.snippet, 360) : null,
     searchScore: Number.isFinite(raw.searchScore) ? raw.searchScore : null
   };
 }
@@ -199,7 +199,7 @@ function storyFromCluster(cluster) {
   const scope = contentScope(preferred);
   const sourceName = publisherName(preferred.domain) || preferred.domain;
   const media = validMediaStory({ ...preferred, contentScope: scope, sourceName });
-  const evidenceStatus = official ? 'official' : supportingDomains.length >= 2 ? 'cross_checked' : media ? 'attributed_media' : 'discovery_only';
+  const evidenceStatus = scope !== 'excerpt' ? 'discovery_only' : official ? 'official' : supportingDomains.length >= 2 ? 'cross_checked' : media ? 'attributed_media' : 'discovery_only';
   return {
     id: stableStoryId(cluster.topic, preferred.title, preferred.url),
     topic: cluster.topic,
@@ -229,9 +229,9 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
   // A rejected hit remains discovery-only diagnostics, but cannot contribute a
   // domain, title bridge, preferred excerpt or official label to a trusted cluster.
   const limitedSearch = healthyProviders.length === 1;
-  const qualifiedRows = limitedSearch
-    ? normalized.filter(row => qualifiedLimitedSearchExcerpt(row, { windowStart, windowEnd })) : normalized;
-  const rejectedRows = limitedSearch ? normalized.filter(row => !qualifiedRows.includes(row)) : [];
+  const qualifiedRows = normalized.filter(row => excerptEligibility(row).eligible
+    && (!limitedSearch || qualifiedLimitedSearchExcerpt(row, { windowStart, windowEnd })));
+  const rejectedRows = normalized.filter(row => !qualifiedRows.includes(row));
   const candidates = [
     ...clusterStories(qualifiedRows).map(storyFromCluster),
     ...clusterStories(rejectedRows).map(cluster => ({ ...storyFromCluster(cluster), evidenceStatus: 'discovery_only' }))

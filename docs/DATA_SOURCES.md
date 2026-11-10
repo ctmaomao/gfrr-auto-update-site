@@ -1162,6 +1162,9 @@ Bubble 周度新闻频率补充（ADR-0050）：周三允许一次有持久预�
 
 owner 批准 [ADR-0062](ADR/0062-bubble-editorial-attributed-media.md)：已有 Tavily/Brave 返回的 Morningstar、FT、Bloomberg、CNBC、Reuters、WSJ、The Information 内容可登记为 attributed_media。精确域名及子域名匹配不等于全部路径无条件合格：社区、论坛、评论与 sponsored 路径不进入该类别；有效日期和至少 80 字符可用摘要仍必需。不新增抓取源或搜索请求，不抓取付费全文。加州司法部 oag.ca.gov 精确登记为官方机构；不得泛化到所有 gov 域名。
 
+2026-11-10 摘要资格修复：导航、Most Read、关联文章、订阅提示和 newsletter 开场议程不能作为所发现文章的正文证据；采集聚类前剔除该摘要，readiness 与 compact input 再验，不信任外部 `excerpt` / `attributed_media` 标签。拒绝文本不进入 provider input，至多保留标题/URL发现线索；不据标题补写正文。实质 newsletter 分析或通用 script 不因形式被一概拒绝，但只能支持摘要已有的具出处评论，不能变为公司事件、交易、财报或事件日期。此为有限模式过滤，不保证全部摘要已与文章匹配或独立核实；原出处、日期、事实与输出审阅门槛不变。
+
+
 The 2026-10-08 second-stage `research:gdelt-events` is a separate manual, ignored
 historical research archive under the same artifact_sanitizer_layer. Daily groups
 retain hashed ID membership and file digests, no raw source content. Quarantine
