@@ -8,6 +8,13 @@
 - **Next / limits**: freeze for independent review after full checks; coordinator controls serial integration and any later authorized generation. No raw diagnostic excerpts committed; no checker assertion, workflow, dependency, data, ledger or scoring changes. This is bounded contamination detection, not proof that all search snippets match their article or are independently verified.
 
 
+### 2026-11-10 DeepSeek balance-shape diagnostic
+
+- **Acceptance baseline / last base**: isolated `fix/deepseek-balance-diagnostics-20261110` from `5878d890`, integrated with main `512987e5` to preserve latest editorial status; composite validation uses news repair commit `315abcf5` / tree `8cbfd498`, with both original worktrees preserved. Owner explicitly authorized one new diagnostic program to use the existing key for one structure-only balance GET, no amounts or generation.
+- **Current task**: [ADR-0096](ADR/0096-deepseek-balance-shape-diagnostic.md) adds a pure sanitized projection and a unique, temporary, manual-only read workflow. Run number/attempt 1, exact identity and fixed expiry hold before key access. All ordinary workflows, history selectors and paid admission remain unchanged.
+- **Validation**: 69 original budget plus 15 diagnostic tests pass, all mocked; first draft revealed artifact-isolation assertions and indirect follow-up writes, so its article-workflow changes were withdrawn. Final full `check:changed` / nested `check:all` pass (exit 0); coverage 1,701 pass / one existing skip / zero fail (99.86/93.23/97.96). Workflow 56/56, node-runtime 3/3, wiring 8/8 and targeted ESLint/docs checks pass. Composite full `check:changed` / nested `check:all` pass (exit 0), with coverage 1,706 pass / one existing skip / zero fail (99.86/93.23/97.96) and focused budget/diagnostic 84/84 plus wiring 8/8. Independent composite-tree review remains pending; actual main must match the reviewed news tree before publication.
+- **Next / limits**: no real credential/provider access, PR/dispatch, ledger/configuration writes or production regeneration performed. Coordinator alone may execute the single authorized read after review; no retry after uncertain outcome. A reviewed cleanup PR must remove the temporary secret-bearing workflow afterward. Held news/input evidence still forbids generation.
+
 ### 2026-11-10 ARR public-copy normalization repair
 
 - **Acceptance baseline / last base**: isolated from main `5523df1c`; failed free refresh `42725494353` stopped safely before publication. Preserve historical ARR disclosures, original review/candidate dates, all scores and freshness gates; no production regeneration or provider calls here.
