@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 ARR public-copy normalization repair
+
+- **Acceptance baseline / last base**: isolated from main `5523df1c`; failed free refresh `42725494353` stopped safely before publication. Preserve historical ARR disclosures, original review/candidate dates, all scores and freshness gates; no production regeneration or provider calls here.
+- **Current task**: route evidence-aware notes through the existing public-copy normalizer. The earlier return skipped normalization of the raw fallback suffix, exposing “实时抓取失败” in cards and qualified narrative highlights.
+- **Validation**: four focused tests pass. New offline regression constructs the actual raw fallback, applies public projection, qualified narrative and compact editorial projection, then invokes unchanged public-copy rules. It retains the original failure as a negative control and verifies dates, 166/45-day rejection, score proof and replay equality. Full checks and independent exact-tree review remain pending.
+- **Next / limits**: freeze the minimal patch for independent review and complete full checks before local commit. No validator, source, production JSON, workflow, dependency or scoring changes; later reviewed free refresh and deployment remain coordinator-controlled.
+
+
 ### 2026-11-09 Bubble wording and evidence-date repair
 
 - **Acceptance baseline / last base**: isolated from main `65d3cc68`; narrow factual repair after the full free refresh. Preserve every score, status, calibration, source gate and production artifact; no provider or remote action.

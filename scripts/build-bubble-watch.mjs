@@ -4186,7 +4186,7 @@ function normalizePublicBubbleCopy(text) {
 
 function publicIndicatorNote(ind) {
   const evidenceNote = evidenceAwareNote(ind);
-  if (evidenceNote !== ind.note) return evidenceNote;
+  if (evidenceNote !== ind.note) return normalizePublicBubbleCopy(evidenceNote);
   let note = normalizePublicBubbleCopy(ind.note);
   const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
   if (calibration?.applied) {
