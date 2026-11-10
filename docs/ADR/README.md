@@ -157,3 +157,5 @@
 - [ADR-0094: Bounded additional editorial generation grant](0094-editorial-one-shot-additional-grant.md) — explicit manual-only CNY4.33 grant; ordinary monthly gate unchanged.
 
 - [ADR-0096: Manual balance-shape diagnosis](0096-deepseek-balance-shape-diagnostic.md) — single read-only GET, sanitized structure only, unchanged paid admission.
+
+- [ADR-0097: CNY-only one-shot balance admission](0097-one-shot-cny-balance-admission.md) — exact CNY funding, optional zero USD metadata, unchanged monthly gate and spending grant.

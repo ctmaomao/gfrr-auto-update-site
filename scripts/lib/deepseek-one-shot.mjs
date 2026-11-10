@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   BUDGET_REPOSITORY, CONSUMERS, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
   digest, createGithubLedgerStore, prepareRequest, readDeepSeekBalance,
-  validateBalance, validateReview, activeReview, validateTokenUsage, receipt
+  validateReview, activeReview, validateTokenUsage, receipt
 } from './deepseek-budget.mjs';
 
 // Separate additional authorization. This is NOT a historical-spend assertion,
@@ -114,7 +114,33 @@ export async function verifyOneShotStatus({ store, consumer, approvedGrantDigest
     grant: GRANT, consumer, reservedMicroCny, remainingMicroCny: GRANT.capMicroCny - reservedMicroCny, admission: 'eligible_snapshot_only' };
 }
 
-export function createOneShotBudget({ store, approvedGrantDigest, approvedReviewDigest, readBalance = readDeepSeekBalance,
+// Owner-reported CNY billing permits only CNY-funded one-shot requests.
+// Optional USD metadata is accepted only when every USD amount is exactly zero.
+// No FX, spending-history inference, balance logging or monthly-policy change.
+export function validateOneShotBalance(json) {
+  if (json?.is_available !== true || !Array.isArray(json.balance_infos)
+    || json.balance_infos.length < 1 || json.balance_infos.length > 2) fail('currency_unknown');
+  const rows = new Map();
+  for (const row of json.balance_infos) {
+    if (!exact(row, 'currency,total_balance,granted_balance,topped_up_balance')
+      || !['CNY', 'USD'].includes(row.currency) || rows.has(row.currency)) fail('currency_unknown');
+    const amounts = ['total_balance', 'granted_balance', 'topped_up_balance'].map(field => {
+      const value = row[field];
+      if (typeof value !== 'string' || value.length > 32
+        || !/^(0|[1-9]\d*)(\.\d{1,8})?$/u.test(value)) fail('currency_unknown');
+      const [whole, fraction = ''] = value.split('.');
+      return BigInt(whole) * 100_000_000n + BigInt(fraction.padEnd(8, '0'));
+    });
+    if (amounts[0] !== amounts[1] + amounts[2]
+      || (row.currency === 'USD' && amounts.some(value => value !== 0n))) fail('currency_unknown');
+    rows.set(row.currency, amounts);
+  }
+  if (!rows.has('CNY') || rows.get('CNY')[0] < BigInt(POLICY.reserveMicroCny) * 100n) fail('currency_unknown');
+  return { currency: 'CNY' };
+}
+export const readOneShotBalance = (key, fetchImpl = fetch) => readDeepSeekBalance(key, fetchImpl, validateOneShotBalance);
+
+export function createOneShotBudget({ store, approvedGrantDigest, approvedReviewDigest, readBalance = readOneShotBalance,
   now = Date.now, id = randomUUID }) {
   let stopped = false, lastTime = -1;
   const clock = () => { const at = timestamp(now()); if (at < lastTime) fail('clock_rollback'); lastTime = at; return at; };
@@ -127,7 +153,7 @@ export function createOneShotBudget({ store, approvedGrantDigest, approvedReview
       const previous = await store.read(); store.assertClock?.();
       const options = { consumer: prepared.consumer, approvedGrantDigest, approvedReviewDigest };
       admission(previous.ledger, options, clock());
-      validateBalance(await readBalance(context.key));
+      validateOneShotBalance(await readBalance(context.key));
       const at = clock(); admission(previous.ledger, options, at);
       reservation = { id: id(), kind: 'reserve', time: new Date(at).toISOString(), consumer: prepared.consumer,
         mode: 'manual', runId: prepared.runId, keyId: prepared.keyId, requestDigest: prepared.requestDigest,
