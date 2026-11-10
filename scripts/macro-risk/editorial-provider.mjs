@@ -1,3 +1,4 @@
+import { safeProviderDiagnostics } from '../lib/editorial-safe-diagnostics.mjs';
 import { withDeepSeekBudget } from '../lib/deepseek-budget.mjs';
 import {
   DEFAULT_DEEPSEEK_MODEL
@@ -167,7 +168,7 @@ function deterministicAttribution(source) {
   };
 }
 
-function normalizeOutput(output, input, generatedAt, model) {
+export function normalizeOutput(output, input, generatedAt, model) {
   const normalized = {
     ...output,
     schemaVersion: input.schemaVersion === OFR_INPUT_SCHEMA ? OFR_OUTPUT_SCHEMA : OUTPUT_SCHEMA,
@@ -177,6 +178,12 @@ function normalizeOutput(output, input, generatedAt, model) {
     model,
     mode: 'external_ai_macro_risk_editorial'
   };
+  if (input.schemaVersion === OFR_INPUT_SCHEMA) {
+    for (const key of ['weeklyTimeline', 'keyTensions', 'contextAnalysis', 'crossMarketAnalysis']) {
+      if (!Object.hasOwn(normalized, key)) normalized[key] = [];
+    }
+    if (!Object.hasOwn(normalized, 'historicalComparison')) normalized.historicalComparison = null;
+  }
   if (normalized.confidence && Number.isFinite(normalized.confidence.score) && normalized.confidence.score > 0 && normalized.confidence.score <= 1) {
     normalized.confidence = { ...normalized.confidence, score: Math.round(normalized.confidence.score * 100) };
   }
@@ -286,9 +293,12 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
         errorCount: validation.errors.length,
         visibleTextLength: validation.visibleTextLength,
         visibleTextSectionLengths: validation.visibleTextSectionLengths,
-        errors: validation.errors.slice(0, 24)
+        errors: validation.errors.slice(0, 24),
+        claims: validation.diagnostics || [],
+        diagnosticsTruncated: (validation.diagnostics?.length || 0) > 24
       }
     };
+    error.responseDiagnostics = safeProviderDiagnostics(error.responseDiagnostics, input, apiKey);
     throw error;
   }
   return {

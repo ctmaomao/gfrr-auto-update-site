@@ -318,3 +318,45 @@ test('page-furniture detection preserves popular/recommended analytical prose bu
   assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([navigation])).editorialReady, false);
   assert.equal(evidenceDiscovery([navigation]).stories[0].snippet, null);
 });
+
+// ADR-0103: omission is a structural default, never permission to repair facts.
+test('optional Bubble defaults preserve malformed fields and never fabricate required content', () => {
+  const {input,output}=pack();
+  for(const key of ['weeklyTimeline','keyTensions','categoryAnalysis','historicalComparison']) {
+    const o=structuredClone(output);delete o[key];
+    const normalized=normalizeWeeklyEditorialProviderOutput(o,input).output;
+    assert.deepEqual(normalized[key],key==='historicalComparison'?null:[]);
+    assert.equal(Object.hasOwn(o,key),false);
+    for(const bad of ['',42,false]) {o[key]=bad;const n=normalizeWeeklyEditorialProviderOutput(o,input).output;assert.deepEqual(n[key],bad);assert.equal(validateWeeklyEditorialOutput(n,input).ok,false);}
+  }
+  for(const key of ['watchNextWeek','dataGaps','leadZh']) {const o=structuredClone(output);delete o[key];assert.equal(validateWeeklyEditorialOutput(normalizeWeeklyEditorialProviderOutput(o,input).output,input).ok,false);}
+});
+
+test('final Bubble writer rejects current news/input/output tampering while preserving current data', () => {
+  const p=pack(), original=JSON.stringify(p.bubble);
+  for(const mutate of [q=>{q.writeEvidence.input.newsContext.stories[0].snippet='Video programme introduction only';},
+    q=>{q.writeEvidence.input.sourceSnapshotDigest='a'.repeat(64);},
+    q=>{q.weeklyEditorial.output.weeklyTimeline[0].sourceRefIds=['news:unknown'];}]) {
+    const q=structuredClone(p.projection);mutate(q);
+    assert.throws(()=>buildWeeklyEditorialWriteResult(p.bubble,q,{now:p.now}),/write evidence/);
+    assert.equal(JSON.stringify(p.bubble),original);
+  }
+});
+
+test('provider acceptance is not quality acceptance: zero-news candidate remains rejected after the mocked provider', async () => {
+  const p=pack(), indicator=p.input.structuredFacts[0].indicatorId;
+  const rewrite=value=>Array.isArray(value)?value.map(rewrite):value&&typeof value==='object'
+    ?Object.fromEntries(Object.entries(value).map(([key,item])=>[key,key==='sourceRefIds'?[`indicator:${indicator}`]:key==='sourceIndicatorIds'?[indicator]:rewrite(item)])):value;
+  const output=rewrite(p.output);
+  const normalized=normalizeWeeklyEditorialProviderOutput(output,p.input).output;
+  assert.equal(validateWeeklyEditorialOutput(normalized,p.input).ok,true);
+  let calls=0;
+  const result=await requestWeeklyEditorial({budget:fixtureDeepSeekBudget,input:p.input,apiKey:'offline-only',now:()=>new Date(p.output.generatedAt),fetchImpl:async()=>{
+    calls++;return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};
+  }});
+  assert.equal(calls,1);
+  const review=reviewWeeklyEditorial({input:p.input,output:result.output});
+  assert.equal(review.status,'fail');assert.equal(review.frontendDisplayEligible,false);
+  assert.ok(review.blockers.some(reason=>reason.includes('新闻引用')));
+  // Artifact policy tests independently enforce receipt-only upload even on this late failure.
+});

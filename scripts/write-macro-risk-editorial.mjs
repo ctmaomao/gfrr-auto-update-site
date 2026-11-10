@@ -55,7 +55,7 @@ function main() {
     const changed = JSON.stringify(before.macroRiskEditorialLayer || null) !== JSON.stringify(after.macroRiskEditorialLayer);
     if (changed) writeJsonAtomically(target, after);
     console.log(`Macro risk editorial production write PASS (target=${target}, changed=${changed}, scoringChanged=false)`);
-  } catch (error) { console.error(`Macro risk editorial production write FAIL: ${error.message}`); process.exitCode = 1; }
+  } catch { console.error('Macro risk editorial production write FAIL: details withheld; see safe diagnostic receipt'); process.exitCode = 1; }
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) main();

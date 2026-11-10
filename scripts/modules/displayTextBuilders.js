@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=onrrp-wording-20261109';
+﻿import { fmtNumSafe } from './config.js?v=editorial-review-20261110-r2';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

@@ -1,3 +1,4 @@
+import { editorialListMarkerView } from '../modules/editorialNumericView.js';
 // Exact financial equivalence; other numeric differences are audit hints, never display blockers.
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 const MONTH_INDEX = Object.fromEntries(MONTHS.flatMap((month, index) => [[month, index + 1], [month.slice(0, 3), index + 1]]).concat([['sept', 9]]));
@@ -14,7 +15,10 @@ function decimalKey(raw, power = 0) {
 }
 
 export function numericEvidenceAtoms(text = '') {
-  let normalized = String(text).normalize('NFKC').replace(/−/gu, '-');
+  let normalized = editorialListMarkerView(text).replace(/−/gu, '-');
+  // The lexical word 一元化 is not an amount; mask that exact idiom only.
+  // Genuine 一元/一元人民币 and other quantities retain the financial parser.
+  normalized = normalized.replace(/一元化(?=解释|分析|理解|视角)/gu, '   ');
   // A contiguous %-number% is an explicitly unit-labelled range endpoint,
   // not a negative rate. Spaced minus signs and standalone negative rates stay signed.
   normalized = normalized.replace(/(?<![\d.,+A-Za-z-])(\d+(?:\.\d+)?)%-(\d+(?:\.\d+)?)%(?!\d)/gu, '$1% ; $2%');

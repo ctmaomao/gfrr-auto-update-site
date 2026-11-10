@@ -74,8 +74,8 @@ function main() {
     const changed = JSON.stringify(before.summary?.weekly_editorial || null) !== JSON.stringify(after.summary.weekly_editorial);
     if (changed) writeJsonAtomically(target, after);
     console.log(`Bubble Watch weekly editorial production write PASS (target=${target}, changed=${changed}, scoringChanged=false)`);
-  } catch (error) {
-    console.error(`Bubble Watch weekly editorial production write FAIL: ${error.message}`);
+  } catch {
+    console.error('Bubble Watch weekly editorial production write FAIL: details withheld; see safe diagnostic receipt');
     process.exitCode = 1;
   }
 }

@@ -53,3 +53,6 @@ assert(pages.includes('- Macro Risk Editorial Refresh'), 'Pages workflow must li
 assert(!pages.includes('- External AI Production Refresh'), 'Pages workflow must not listen for retired external AI refresh');
 
 console.log('Macro risk editorial workflow PASS (upstream completion, durable day/input budget, source-quality skip before provider, fail-closed review/write, protected path, Pages trigger)');
+
+const receiptUploads = workflow.split('\n      - name:').filter(step => step.includes('uses: actions/upload-artifact@'));
+assert(receiptUploads.length === 1 && receiptUploads[0].includes("if: always() && steps.diagnostic_receipt.outcome == 'success'") && /path: manual-artifacts\/[a-z-]+\/safe-diagnostic-receipt\.json\n/u.test(receiptUploads[0]) && !/path: \||deepseek-output|deepseek-failure|editorial-input|news-discovery|production-projection|\*\*/u.test(receiptUploads[0]), 'ADR-0103 permits only the exact safe receipt artifact path');

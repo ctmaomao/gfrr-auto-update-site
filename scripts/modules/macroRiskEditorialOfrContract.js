@@ -1,3 +1,4 @@
+import { pressureContainsNumericContent } from './editorialNumericView.js?v=editorial-review-20261110-r2';
 // Browser-only display qualification. No provider, network, or score calculation.
 const MAX_AGE_MS = 30 * 3600000;
 const DAY = 86400000;
@@ -103,7 +104,7 @@ function outputValid(o, ledger) {
   if (!Array.isArray(o.sourceRefIds) || !o.sourceRefIds.length || o.sourceRefIds.length > 12 || o.sourceRefIds.some(id => !ledger.has(id))) return false;
   o.sourceRefIds.forEach(id => refs.add(id));
   if (o.headlineZh.length > 90 || o.leadZh.length > 900 || !claim(o.pressureSynthesis, ['assessmentZh'])
-      || o.pressureSynthesis.assessmentZh.length > 1000 || /[0-9０-９]|百分之[零〇一二三四五六七八九十百]|(?:原值|指数|周变化|变化幅度|历史百分位|百分位)(?:为|是|达到|升至|降至|[:：])\s*(?:负|正)?[零〇一二三四五六七八九十百千万亿两]+(?:点[零〇一二三四五六七八九]+)?(?:[，。、；\s]|$)/u.test(o.pressureSynthesis.assessmentZh)) return false;
+      || o.pressureSynthesis.assessmentZh.length > 1000 || pressureContainsNumericContent(o.pressureSynthesis.assessmentZh)) return false;
   for (const [key, names, min, max] of [
     ['contextAnalysis', ['topic', 'labelZh', 'assessmentZh'], 0, 6],
     ['weeklyTimeline', ['date', 'titleZh', 'detailZh'], 0, 5],

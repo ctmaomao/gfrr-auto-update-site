@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 Editorial normalization and safe diagnostics
+
+- **Acceptance baseline / last base**: reviewed original main `16a6cea1`, serial integration onto `d7127baa` after r6 and ADR-0102; owner-approved reliable independent DeepSeek commentary with unchanged fact, source, date, snapshot, cost and no-retry boundaries. No no-news mode or further paid call. Revised privacy scope includes only the two existing editorial workflows.
+- **Current task**: [ADR-0103](ADR/0103-editorial-review-diagnostics.md) retains numeric-pressure prohibition after narrow list-marker detection, absent-only defaults and bounded diagnostics. Independent review rejected the initial numeric-pressure relaxation; false labeled/wrapped readings now remain blocked. Existing final Bubble writer evidence checks remain authoritative.
+- **Validation**: revised check:changed / nested check:all and all-unit coverage pass (99.86/93.24/97.96); final Macro core 116 tests pass. Original r2 independent re-review passed with no P1/P2; combined-tree checks and integration review pending. Both workflows retain only safe receipts. Full lint has identical 222 baseline errors; changed functional lint passes. Frontend qualification changes no layout; asset version synchronized.
+- **Next / limits**: freeze combined tree for coordinator-controlled integration review. No production JSON, budget, secret or account change. Receipt-only artifacts temporarily make old follow-up unverified and unable to reserve a recheck; reservation history/guards remain untouched pending ADR-0104. Rejected text cannot be reconstructed from hashes. Source supplementation remains ADR-0102.
+
 
 ### 2026-11-10 Administrative release headers and bounded BLS excerpts
 
@@ -405,7 +412,7 @@
 
 - **Acceptance baseline**：owner 授权 D（回购证据展示收口）；基于 `702fa47b` main 的 worktree `repo-evidence-release`。范围：`macroOverviewNarrative.js`（helper + label/note + policy 文案）、`renderMacroOverview.js`（pillar/C2/附录/n7 hunk）、`index.html`（C2 note id、分类 intro、回购初始态）、新真实渲染测试、D0 单测按新资格补 fixture、报告 + INDEX 一行、本 backlog 条、before/after 八图与 README、一次 asset bump `repo-evidence-release-1`。不改 matrix/pipeline/data/workflow/checker assertions/评分/冻结 realtime/依赖。
 - **当前**：`classifyRepoEvidence` 仅 finite（真 0 有效）+ BGCR `same_day` + 既有 regime 才判读，TGCR 独立；pillar 保留 D0 两行严格数值与 ×100 并实际使用 `repoBp`，pending 为“待核验”；C2 与附录总是写限定 label/note；n7 三态不称“三层均无压力/2019-09 不存在”；n7 score/isActive 不变。index 无 CSS/IA 改动。**r2（N1/N2/N3/N7）**：附录同段改“美元流动性分项资料：模块状态…”“SOFR/EFFR 参考读数”，repo 去掉固定 `class="ok"`；测试改内联固定合成 fixture（非历史观测；不读动态 data），import 无真实 binding 即 throw，补 pending→normal(0) 恢复与附录静态断言；不改 matrix/evidenceHighlights/其它 null formatter，不第二次 bump。
-- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=data-provenance-20261109` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
+- **r3（CI coverage 阻断）**：PR479 CI 39866467077 functions 90.57<95、config funcs 0%；根因为测试静态无 query 模块与页面 `?v=editorial-review-20261110-r2` 形成双实例。只改 `repo-evidence-display.test.mjs` 加载方式：解析 render 源 import specifier 后按 fileURL 动态 import 实际 query 模块，绑定必须真实否则 throw，仅模拟 document/DOM；最小复现 config funcs 0→100、all files 50→100、15/15 pass，合并标准 9/9；未改生产/checker/package/bump。
 - **下一步 / 验证**：`node --check`、`node tests/unit/repo-evidence-display.test.mjs`（6/6，真实 C2/detail/pillar/derive 模块 harness + 内联 fixture）、`node tests/unit/repo-spread-bp-display.test.mjs`（3/3）、标准 `node --test --experimental-test-isolation=none` 合并 9/9 exit0、`check-null-zero-display-guards`、`check-macro-overview-narrative`、`check-dom`、`check-frontend-zh-copy`、`check-frontend-asset-version`、doc-links、`git diff --check`；n7/C2 八图已验收（主分 68/100、n7 47、nav 13、1440/390 scroll 1425/375、pillar/C2/detail 待核验、warm/serif 不变）；附录 r2 已由 Codex 两视口验收（1440/390 待核验、class 空、墨色；main 68/nav 13/scroll 1425/375；facts 原 root 合同目录，不入本包截图）；完整 `check:changed`/`check:all` 由 Codex 重跑，不预称通过。
 - **阻塞 / 限制**：before/after 为同一真实旧快照 2026-10-21（非当前市场、非准确率）；未跑 Daily/realtime/provider/网络，未写 data，未 Git 写；交叉 AI 审阅替代人审（非人审、不扩全项目）。
 
@@ -946,7 +953,7 @@ Current project state and open work. Dated implementation/approval receipts are 
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `onrrp-wording-20261109` |
+| Cache version | `editorial-review-20261110-r2` |
 | 前端输入 | M-94 首页读取 `data/radar-data.json`；`scripts/modules/realtime.js` 冻结、未接入 |
 | Worker 预览 | `/market.worker-preview.json` 主预览；`/market.secondary-preview.json` 仅 secondary diagnostics，不代表前端入口 |
 | Daily 输入 | `realtime-data`；不切换到 Worker endpoint |

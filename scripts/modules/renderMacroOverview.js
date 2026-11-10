@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=onrrp-wording-20261109';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=onrrp-wording-20261109';
+} from './config.js?v=editorial-review-20261110-r2';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=editorial-review-20261110-r2';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,15 +17,15 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=onrrp-wording-20261109';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=onrrp-wording-20261109';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=onrrp-wording-20261109';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=onrrp-wording-20261109';
-import { renderTrendSvg } from './renderMacroTrend.js?v=onrrp-wording-20261109';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=onrrp-wording-20261109';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=onrrp-wording-20261109';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=onrrp-wording-20261109';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=onrrp-wording-20261109';
+} from './macroOverviewDisplayHelpers.js?v=editorial-review-20261110-r2';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=editorial-review-20261110-r2';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=editorial-review-20261110-r2';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=editorial-review-20261110-r2';
+import { renderTrendSvg } from './renderMacroTrend.js?v=editorial-review-20261110-r2';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=editorial-review-20261110-r2';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=editorial-review-20261110-r2';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=editorial-review-20261110-r2';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=editorial-review-20261110-r2';
 
 // ---------- 阈值 + 派生 helper ----------
 
