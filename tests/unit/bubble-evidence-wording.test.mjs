@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { gunzipSync } from 'node:zlib';
 import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote } from '../../scripts/bubble-watch/evidence-wording.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { summarizeEvidence } from '../../scripts/bubble-watch/evidence-publication.mjs';
@@ -64,9 +65,9 @@ test('current published facts disclose missing ARR anchor dates and stale reject
 });
 
 
-test('actual raw ARR fallback passes unchanged public-copy rules after public, narrative and compact projection', () => {
-  const bubble = read('data/bubble-watch.json');
-  const entry = { ...read('config/bubble-watch-curated.json').curated.arr_2nd_deriv, asOfDate: '2026-11-08' };
+test('historical r5 raw ARR fallback passes unchanged public-copy rules after public, narrative and compact projection', () => {
+  const bubble = JSON.parse(gunzipSync(fs.readFileSync(new URL('../fixtures/bubble-r5-observation-migration.json.gz', import.meta.url)))).before;
+  const entry = { status: 'red', value_display: '披露序列减速', note: '历史研究披露序列，不代表新观测。', asOfDate: '2026-11-08', maxAgeDays: 45 };
   const definition = bubble.indicators.find(row => row.id === 'arr_2nd_deriv');
   const context = vm.createContext({ evidenceAwareNote,
     CORE_INDICATOR_ID_SET: new Set(bubble.indicators.filter(row => row.score_role === 'core').map(row => row.id)),

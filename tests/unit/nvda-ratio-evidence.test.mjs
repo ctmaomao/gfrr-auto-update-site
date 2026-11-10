@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { gunzipSync } from 'node:zlib';
 import { inspectNvdaNumerator, qualifyNvdaRatio, validateNvdaRatioRecord, buildNvdaGap } from '../../scripts/bubble-watch/nvda-ratio-evidence.mjs';
 import { qualifiedEdgarLtmRevenue, qualifiedMirrorLtmRevenue } from '../../scripts/bubble-watch/ltm-revenue.mjs';
 import { isRegisteredEvidenceGap, replayEvidenceScores, validateEvidenceScoreFields } from '../../scripts/bubble-watch/evidence-score-contract.mjs';
@@ -174,7 +175,8 @@ test('r5 narrowly registers the gap and keeps the fixed Core-23 uncertainty deno
     i=>i.provenance.detail.currentEligible=true,i=>i.evidence_gap.checkedDate='2026-11-03']) {
     const bad=structuredClone(gap);mutate(bad);assert.equal(isRegisteredEvidenceGap(bad,{revision:5,asOfDate:today}),false);
   }
-  const data=JSON.parse(fs.readFileSync('data/bubble-watch.json'));
+  // This is an r5 replay, not a mutation of a newer production epoch.
+  const data=JSON.parse(gunzipSync(fs.readFileSync(new URL('../fixtures/bubble-r5-observation-migration.json.gz', import.meta.url)))).before;
   const cards=data.indicators.map(i=>i.id===base.id?gap:i), r=replayEvidenceScores(cards,5);
   assert.equal(r.primary,null);assert.equal(Object.values(r.counts).reduce((a,b)=>a+b),23);
   assert.equal(r.counts.unknown,2);assert.deepEqual(r.primaryRange,{lower:26.1,upper:34.8});

@@ -1,4 +1,5 @@
 import { validateEvidenceScoreFields } from './evidence-score-contract.mjs';
+import { ARR_EVIDENCE_CONTRACT } from './arr-evidence.mjs';
 import { NVDA_RATIO_CONTRACT } from './nvda-ratio-evidence.mjs';
 
 // Keep the score proof small: no narrative, paid response, or credentials.
@@ -9,6 +10,19 @@ const pick = (object, keys) => Object.fromEntries(keys.map(key=>[key,structuredC
 const AGE_FIELDS = ['observationDate','asOfDate','ageDays','maxAgeDays','status'];
 function compactScoreProvenance(item) {
   const provenance=item.provenance, detail=provenance?.detail;
+  if (item.id === 'enterprise_deploy' && detail?.sourceObservation) return {
+    ...pick(provenance, ['mode', 'asOfDate', 'ageDays', 'maxAgeDays']),
+    detail: pick(detail, ['sourceObservation', 'currentPct', 'previousPct', 'changePp', 'currentQuarter', 'previousQuarter',
+      'basis', 'sourceUrl', 'publicationDate', 'surveyStart', 'surveyEnd', 'sampleSize', 'population']) };
+  if (item.id === 'arr_2nd_deriv') {
+    if (detail?.contractVersion === ARR_EVIDENCE_CONTRACT) return { ...pick(provenance, ['mode', 'checkedAt']), detail: {
+      ...pick(detail, ['contractVersion', 'qualificationStatus', 'currentEligible', 'reason', 'historicalSourceObservation', 'rejectionEvidence']),
+      historicalObservation: pick(detail.historicalObservation, AGE_FIELDS),
+      rejectedLiveObservation: pick(detail.rejectedLiveObservation, AGE_FIELDS) } };
+    if (detail?.source === 'SaaStr WordPress public API') return { ...pick(provenance, ['mode']), detail: {
+      ...pick(detail, ['source', 'slopeRatio']), milestones: detail.milestones.map(row => pick(row, ['date', 'arrB', 'sourceId'])),
+      underlyingObservationFreshness: pick(detail.underlyingObservationFreshness, AGE_FIELDS) } };
+  }
   if(item.id==='nvda_invest_revenue' && detail?.contractVersion===NVDA_RATIO_CONTRACT) {
     // r5 qualification is a replayable proof, not optional collector diagnostics.
     // Explicit projection excludes raw responses, notes and unrelated metadata.
@@ -29,7 +43,7 @@ function compactScoreProvenance(item) {
 function scoreDisclosure(snapshot) {
   const score = (value, range) => value === null ? `${range.lower.toFixed(1)}–${range.upper.toFixed(1)}` : value.toFixed(1);
   const proof = snapshot.qualifiedEvidence;
-  const missing = proof.indicators.filter(i=>i.status==='unknown').map(i=>({dc_abs_spread:'数据中心ABS利差',insider_sell_buy:'内部人交易',capex_reaction:'资本开支反应',fed_policy:'Fed政策路径',nvda_invest_revenue:'NVIDIA客户投资/收入比'})[i.id]);
+  const missing = proof.indicators.filter(i=>i.status==='unknown').map(i=>({dc_abs_spread:'数据中心ABS利差',insider_sell_buy:'内部人交易',capex_reaction:'资本开支反应',fed_policy:'Fed政策路径',nvda_invest_revenue:'NVIDIA客户投资/收入比',arr_2nd_deriv:'AI收入增速的二阶导'})[i.id]);
   return `固定核心23项，主分${score(snapshot.primaryScorePct,snapshot.primaryScoreRangePct)}%，辅助压力${score(snapshot.weightedRiskScore,snapshot.weightedRiskScoreRange)}；泡沫成熟度${score(snapshot.stageScore,snapshot.stageScoreRange)}，破裂临近度${score(snapshot.triggerScore,snapshot.triggerScoreRange)}。${missing.length ? `${missing.join('、')}待确认，点值保留为空，不按绿灯或零分处理；上下界是数学边界，不是概率。` : '核心观测齐全；四项影子观察不计分。'}综合判读：${snapshot.verdictLabelZh}。`;
 }
 export function buildEditorialScoringSnapshot(bubble) {

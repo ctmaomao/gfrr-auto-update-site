@@ -25,6 +25,7 @@ export function enterpriseSurveyNote(detail = {}, valueDisplay = '') {
 export function evidenceAwareNote(indicator) {
   const detail = indicator.provenance?.detail;
   if (indicator.id === 'spy_vs_rsp_6m' && Number.isFinite(detail?.spyRet) && Number.isFinite(detail?.rspRet)) return signedSpreadNote(detail.spyRet, detail.rspRet);
+  if (detail?.sourceObservation || detail?.contractVersion === 'arr-observation-eligibility-v1') return indicator.note;
   if (indicator.id === 'enterprise_deploy' && detail) return enterpriseSurveyNote(detail, indicator.value_display);
   if (indicator.id === 'arr_2nd_deriv' && ['curated', 'auto_fallback'].includes(indicator.provenance?.mode)) {
     if (indicator.note?.startsWith('沿用历史披露序列；')) return indicator.note;

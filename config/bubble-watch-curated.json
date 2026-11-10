@@ -13,11 +13,26 @@
     "vc_ai_share": {
       "status": "red",
       "value_display": "64.2%",
-      "note": "本轮重新打开Crunchbase Q3全球报告：AI $102B / 全部VC $159B=64.15%，显示64.2%，高于50红线；仍为10/5最新披露，标current。",
-      "asOfDate": "2026-11-08",
+      "note": "Crunchbase 2026-Q3 全球创投融资：AI 102B 美元 / 总额 159B 美元，占比 64.2%。原报告发布于 2026-10-05；后续周报复核不改变该观察日期。",
+      "asOfDate": "2026-10-05",
       "maxAgeDays": 120,
       "cadence": "quarterly",
-      "syncedFromUpstream": true
+      "syncedFromUpstream": true,
+      "reviewAsOfDate": "2026-11-08",
+      "reportAsOfDate": "2026-11-08",
+      "sourceObservation": {
+        "contract": "bubble-source-observation-v1",
+        "basis": "crunchbase_global_quarterly",
+        "observationDate": "2026-10-05",
+        "publicationDate": "2026-10-05",
+        "sourceUrl": "https://news.crunchbase.com/venture/q3-2026-global-startup-funding-ai-billion-dollar-rounds-exits-data/",
+        "period": "2026-Q3",
+        "periodStart": "2026-07-01",
+        "periodEnd": "2026-09-30",
+        "geography": "global",
+        "aiFundingUsdB": 102,
+        "totalFundingUsdB": 159
+      }
     },
     "ai_ipo_pipeline": {
       "status": "yellow",
@@ -84,21 +99,79 @@
     },
     "arr_2nd_deriv": {
       "status": "red",
-      "value_display": "披露序列减速 −116.67pp",
-      "note": "Anthropic已披露序列的最近3个月增长代理由约+160%降至+43.33%，二阶变化−116.67pp，红；OpenAI因同basis三锚不足排除。11/2 S-1/A仍留空10/31 run-rate，未估算或插值。",
-      "asOfDate": "2026-11-08",
+      "value_display": "历史披露序列（非当前读数）",
+      "note": "沿用 Anthropic 历史总额口径披露：2025-12-31 约 9B 美元、2026-04-06 超过 30B 美元、2026-07-31 超过 65B 美元。三个锚点日期间隔不同，金额含约数或下限，不能据此宣称当前三个月精确增速。最新底层观察仍为 2026-07-31，45 天时效门槛不因周报复核续期；OpenAI 缺少同口径三锚，不纳入该历史序列。",
+      "asOfDate": "2026-07-31",
       "maxAgeDays": 45,
       "cadence": "monthly-research",
-      "syncedFromUpstream": true
+      "syncedFromUpstream": true,
+      "reviewAsOfDate": "2026-11-08",
+      "reportAsOfDate": "2026-11-08",
+      "sourceObservation": {
+        "contract": "bubble-source-observation-v1",
+        "basis": "same_basis_disclosed_series_3m_vs_prior3m",
+        "observationDate": "2026-07-31",
+        "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute",
+        "measurement": "historical_disclosed_run_rate_anchors",
+        "company": "Anthropic",
+        "revenueBasis": "gross",
+        "productionEligible": false,
+        "anchors": [
+          {
+            "asOfDate": "2025-12-31",
+            "amountUsdB": 9,
+            "qualifier": "about",
+            "isForecast": false,
+            "sourceDate": "2026-04-06",
+            "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute"
+          },
+          {
+            "asOfDate": "2026-04-06",
+            "amountUsdB": 30,
+            "qualifier": "more_than",
+            "isForecast": false,
+            "sourceDate": "2026-04-06",
+            "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute"
+          },
+          {
+            "asOfDate": "2026-07-31",
+            "amountUsdB": 65,
+            "qualifier": "more_than",
+            "isForecast": false,
+            "sourceDate": "2026-08-17",
+            "sourceUrl": "https://www.marketscreener.com/news/anthropic-revenue-run-rate-tops-65-billion-source-says-ce7859dcdd80ff2d",
+            "companyConfirmed": false
+          }
+        ]
+      }
     },
     "enterprise_deploy": {
       "status": "green",
       "value_display": "44%（QoQ +21pp）",
-      "note": "重新打开KPMG同一显著员工采用问题：Q3 44% / Q2 23%，+21pp，按≥+3绿；9/24仍为最新披露，current，不混入62% agent问题。",
-      "asOfDate": "2026-11-08",
+      "note": "KPMG 2026-Q3 调查：44% 受访高管报告显著员工 AI 采用，上一季 23%，变化 +21 个百分点。样本为 314 位美国高管，所在机构年收入至少 10 亿美元；调查期 2026-07-24 至 2026-08-25，发布于 2026-09-24。这是员工采用率，不是 AI-agent 生产部署率。",
+      "asOfDate": "2026-09-24",
       "maxAgeDays": 120,
       "cadence": "quarterly",
-      "syncedFromUpstream": true
+      "syncedFromUpstream": true,
+      "reviewAsOfDate": "2026-11-08",
+      "reportAsOfDate": "2026-11-08",
+      "sourceObservation": {
+        "contract": "bubble-source-observation-v1",
+        "basis": "kpmg_significant_workforce_adoption",
+        "previousBasis": "kpmg_significant_workforce_adoption",
+        "observationDate": "2026-09-24",
+        "sourceUrl": "https://kpmg.com/us/en/media/news/q3-ai-pulse-2026.html",
+        "currentPct": 44,
+        "previousPct": 23,
+        "currentQuarter": "2026-Q3",
+        "previousQuarter": "2026-Q2",
+        "changePp": 21,
+        "publicationDate": "2026-09-24",
+        "surveyStart": "2026-07-24",
+        "surveyEnd": "2026-08-25",
+        "sampleSize": 314,
+        "population": "us_executives_annual_revenue_gte_1bn"
+      }
     },
     "frontier_progress": {
       "status": "green",

@@ -339,37 +339,36 @@
       ]
     },
     "enterprise_deploy": {
-      "automationStatus": "hybrid_live",
-      "primarySignal": "Enterprise AI production deployment rate",
-      "paidFallbackCandidates": [
-        {
-          "source": "Wind MCP financial news",
-          "url": "https://aifinmarket.wind.com.cn/#/docs",
-          "cadence": "weekly / fallback only",
-          "role": "paid final fallback for survey/news reports containing explicit AI production-deployment percentages",
-          "limitations": "Requires an explicit deployment percentage; otherwise builder must still fail closed to curated."
-        }
-      ],
+      "automationStatus": "reviewed_curated",
+      "primarySignal": "KPMG significant workforce AI adoption quarter-over-quarter percentage-point change",
+      "paidFallbackCandidates": [],
       "freeSourceCandidates": [
+        {
+          "source": "KPMG US AI Quarterly Pulse",
+          "url": "https://kpmg.com/us/en/media/news/q3-ai-pulse-2026.html",
+          "cadence": "quarterly / reviewed typed ledger",
+          "role": "same-population significant workforce AI adoption percentage-point change",
+          "limitations": "US executives at $1B+ revenue organizations; not AI-agent production deployment; original publication date and 120-day gate required. Unreviewed metric substitutions fail closed."
+        },
         {
           "source": "Google Cloud ROI of AI public report",
           "url": "https://cloud.google.com/transform/roi-of-ai-how-agents-help-business",
           "cadence": "periodic",
-          "role": "production AI-agent deployment percentage proxy",
+          "role": "context_only_not_scoring",
           "limitations": "Executive survey / Google Cloud framing; production AI agents are narrower than all enterprise AI production use cases."
         },
         {
           "source": "Deloitte State of AI in the Enterprise",
           "url": "https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/content/state-of-ai-in-the-enterprise.html",
           "cadence": "periodic",
-          "role": "cross-check for production-project scaling trend",
+          "role": "context_only_not_scoring",
           "limitations": "Provides directional production-project context; not always a single comparable percentage."
         },
         {
           "source": "McKinsey State of AI / Deloitte State of Generative AI reports",
           "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
           "cadence": "quarterly",
-          "role": "survey benchmark",
+          "role": "context_only_not_scoring",
           "limitations": "Low frequency and access can block data-center fetches; used only as calibration/cross-check, not primary weekly source."
         }
       ]

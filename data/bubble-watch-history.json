@@ -1643,6 +1643,196 @@
           }
         }
       }
+    },
+    {
+      "date": "2026-11-10",
+      "week": "11-10",
+      "issue_number": 32,
+      "red_pct": null,
+      "risk_score": null,
+      "scoring_model_version": "bubble-watch-v3-core23-shadow4-r6",
+      "core_red_pct": null,
+      "core_risk_score": null,
+      "display_red_pct": null,
+      "display_risk_score": null,
+      "stage_score": null,
+      "trigger_score": null,
+      "statuses": {
+        "cape": "red",
+        "top5_weight": "red",
+        "nvda_fpe": "green",
+        "private_secondary_marks": "red",
+        "hyperscaler_capex_yoy": "yellow",
+        "mag4_fcf_yoy": "red",
+        "vc_ai_share": "red",
+        "nvda_invest_revenue": "unknown",
+        "breadth_50d": "green",
+        "spy_vs_rsp_6m": "yellow",
+        "insider_sell_buy": "yellow",
+        "ai_ipo_pipeline": "yellow",
+        "hy_oas": "green",
+        "dc_abs_spread": "unknown",
+        "debt_capex_ratio": "yellow",
+        "neocloud_credit": "green",
+        "token_volume_mom": "yellow",
+        "token_revenue_ratio": "green",
+        "gpu_rental_price": "green",
+        "arr_2nd_deriv": "unknown",
+        "enterprise_deploy": "green",
+        "cloud_rpo_growth": "yellow",
+        "frontier_progress": "green",
+        "accounting_events": "green",
+        "fed_policy": "red",
+        "capex_reaction": "yellow",
+        "ceo_hedging": "green"
+      },
+      "score_bounds": {
+        "primary": {
+          "lower": 21.7,
+          "upper": 34.8
+        },
+        "pressure": {
+          "lower": 39.1,
+          "upper": 52.2
+        },
+        "stage": {
+          "lower": 45,
+          "upper": 55
+        },
+        "trigger": {
+          "lower": 34.6,
+          "upper": 50
+        }
+      },
+      "tier_range": {
+        "lower": "alert",
+        "upper": "alert"
+      },
+      "effective_tier": "alert",
+      "unknown_core_ids": [
+        "nvda_invest_revenue",
+        "dc_abs_spread",
+        "arr_2nd_deriv"
+      ],
+      "gap_metadata": {
+        "nvda_invest_revenue": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "nvda-period-aligned-ratio-v1",
+            "reasonCode": "nvda_comparable_commitment_revenue_evidence_unavailable",
+            "checkedDate": "2026-11-10"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-10T00:27:09.954Z",
+            "detail": {
+              "contractVersion": "nvda-period-aligned-ratio-v1",
+              "qualificationStatus": "unavailable",
+              "reason": "newer_ledger_requires_comparable_evidence",
+              "latestLedgerDate": "2026-11-08",
+              "parameterDate": "2026-06-07",
+              "newerLedgerProtected": true,
+              "ratioPct": null,
+              "currentEligible": false
+            }
+          }
+        },
+        "dc_abs_spread": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "bubble-qualified-evidence-v1",
+            "reasonCode": "dc_abs_direct_spread_unavailable",
+            "checkedDate": "2026-11-10"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-10T00:28:38.410Z",
+            "detail": {
+              "status": "unknown",
+              "reasonCode": "dc_abs_direct_spread_unavailable",
+              "qualificationFailure": "wrong_market_or_subject"
+            }
+          }
+        },
+        "arr_2nd_deriv": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "arr-observation-eligibility-v1",
+            "reasonCode": "arr_current_comparable_series_unavailable",
+            "checkedDate": "2026-11-10"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-10T06:14:30.988Z",
+            "detail": {
+              "contractVersion": "arr-observation-eligibility-v1",
+              "qualificationStatus": "unavailable",
+              "currentEligible": false,
+              "reason": "historical_and_live_observations_stale",
+              "historicalObservation": {
+                "observationDate": "2026-07-31",
+                "asOfDate": "2026-11-10",
+                "ageDays": 102,
+                "maxAgeDays": 45,
+                "status": "stale"
+              },
+              "historicalSourceObservation": {
+                "contract": "bubble-source-observation-v1",
+                "basis": "same_basis_disclosed_series_3m_vs_prior3m",
+                "observationDate": "2026-07-31",
+                "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute",
+                "measurement": "historical_disclosed_run_rate_anchors",
+                "company": "Anthropic",
+                "revenueBasis": "gross",
+                "productionEligible": false,
+                "anchors": [
+                  {
+                    "asOfDate": "2025-12-31",
+                    "amountUsdB": 9,
+                    "qualifier": "about",
+                    "isForecast": false,
+                    "sourceDate": "2026-04-06",
+                    "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute"
+                  },
+                  {
+                    "asOfDate": "2026-04-06",
+                    "amountUsdB": 30,
+                    "qualifier": "more_than",
+                    "isForecast": false,
+                    "sourceDate": "2026-04-06",
+                    "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute"
+                  },
+                  {
+                    "asOfDate": "2026-07-31",
+                    "amountUsdB": 65,
+                    "qualifier": "more_than",
+                    "isForecast": false,
+                    "sourceDate": "2026-08-17",
+                    "sourceUrl": "https://www.marketscreener.com/news/anthropic-revenue-run-rate-tops-65-billion-source-says-ce7859dcdd80ff2d",
+                    "companyConfirmed": false
+                  }
+                ]
+              },
+              "rejectedLiveObservation": {
+                "observationDate": "2026-05-28",
+                "asOfDate": "2026-11-10",
+                "ageDays": 166,
+                "maxAgeDays": 45,
+                "status": "stale"
+              },
+              "rejectionEvidence": {
+                "kind": "published_rejection",
+                "sourceIssueDate": "2026-11-10",
+                "sourceSnapshotSha256": "d91021987cf40ef049fc9f8abf1d00aa728586780279db13c7e01badee9c7ff9",
+                "reason": "hybrid_live source failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 166d old (max 45d)"
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
