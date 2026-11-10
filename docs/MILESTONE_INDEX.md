@@ -1,40 +1,42 @@
 # Milestone Index
 
-> Milestone (M-XX 与 vXX.XX) 一行索引。本文件是 milestone 历史的默认入口;
-> `README.md` 只保留项目入口摘要,不再承载 milestone 流水账。
->
-> **加载策略**:默认会话只读 日期化会话交接和逐次审计表见 [历史归档](PROJECT_HANDOFF_HISTORY.md)，只在核对对应事件时读取；当前待办仍以 PROJECT_BACKLOG 为准。
-
-ODP/Energy/Transport 的逐阶段细节见 [P3-19/P3-19a 原文归档](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)；按当前 backlog 指针读取对应范围。
-
-旧 Completed 表与 P3-17/18/20 过程见[完成记录](PROJECT_COMPLETED_HISTORY.md)，不作为新任务入口。
-
-## Active 与 ## Recently Merged 段。
-> ## Archived 段仅在用户明确要求查阅历史时读取。
-> 这避免每次会话被 70+ 历史 milestone 文档污染。
+本页是已完成 milestone 的历史入口，不重复维护跨任务状态。开始工作先读 [PROJECT_BACKLOG](PROJECT_BACKLOG.md) 的当前条目和最新交接；只有核对历史决定、证据或具体回归时才读取下面对应阶段，无需逐篇预读。
 
 ## Active
 
-当前未关闭、影响进行中工作的 milestone 与状态:
+- 当前入口：周报/雷达/Bubble 三标签；雷达 OFR 主读数、旧建议退役，详见 [DESIGN](../DESIGN.md) 与 [DATA_CONTRACT](DATA_CONTRACT.md)。
+- 当前任务、生产验收缺口及持续来源限制：[PROJECT_BACKLOG Section 2](PROJECT_BACKLOG.md#section-2--open-backlog-items)。
+- 前端 cache 版本以 [scripts/app.js](../scripts/app.js) 的 APP_VERSION 为准，不再维护第二份易失效的版本快照；检查组成以 package.json 为准。
+- M-91 之后按具体任务/ADR 演进，不把早期 M-series 称为最近生产发布。SIPRI 年度入口和其它排程以对应 workflow/OPERATIONS 为准。
 
-- **当前生产**: 最后正式 milestone = v28.0M-91;其后增量工作改走 Stage-brief 流程(不再发 M-XX,如 P3-16 China aggregator 换源 / A-scope 文案 / checker streamline Phase 1 / C5 world-economy 加股指批次 / 系统终审批 A-E(展示完整性·守卫·死重·数据龄·跨市场印证层),详见 `docs/PROJECT_BACKLOG.md`)。frontend cache 已改描述式版本串(非 `28.0M-NNV`),当前 `odp-thermal-facility-window-quality-1`;P64/P66 ODP verdict history monitor、P65 FIRMS 30-day history-window capacity repair、P67 Web NGrams historical sample-age display、P68 FIRMS facility-window baseline quality gate 已落地；`check:all` 组成以 `package.json` 为准。M-91 Market Pricing NDX/IXIC auxiliary implementation 已落地；M-87 null-zero display guards 已落地；M-86 frontend proxy coverage semantics 已落地；M-85 public source tranche 11 已落地；M-84 public source tranche 10 已落地；M-83 public source tranche 9 已落地；M-82 public source tranche 8 已落地；M-81 public source tranche 7 已落地；M-80 public source tranche 6 已落地；M-79 public source tranche 5 已落地；M-78 public source tranche 4 已落地；M-77 public source tranche 3 已落地；M-76 frontend macro field surfacing 已落地；M-75 check suite compaction 已落地；M-74 expanded macro data auto ingestion 已落地；M-73 BGCR/TGCR NY Fed secured rates runtime fix + employment quality public FRED expansion 已落地；M-71 Brent public proxy source review 已落地；M-70 commercialRealEstate (CRE) 已落地；M-69 consumerRetail (CARTS) 已落地；M-68 employment breadth 已落地；M-67 ISM PMI source repair 已落地；ADR-0014 IA contract authority hierarchy 已落地；M-63b ACLED monthly evidence-only ingestion 已落地；M-63c ACLED reminder workflows 已落地
-- **下一步**: 见 `docs/PROJECT_BACKLOG.md` Section 2 Open Backlog Items
-- **Open backlog 主线**: P1-4 ACLED 接入完整闭合 (M-63a/b/c 全部落地)；P2-7 employment breadth 已落地；P2-8 high-frequency consumer evidence 已落地并关闭；P2-9 CRE/CDX/私募信贷已落地并关闭（M-70 CRE-only;CDX/私募信贷=P3-15）；P3-* 已明确 won't fix
-- **年度提醒**: M-61b SIPRI 每年 5 月 1 日 GitHub Actions issue (`sipri-annual-refresh-reminder.yml`)
+## Recently Merged
 
-## Recently Merged (最近 5 个,详细可读对应 doc)
+截至 2026-11-10 main `eeb7a1a3` 的最近代码整合；不是生产数据健康或付费运行验收证明。后续状态查实际 PR/main，无需每次数据提交更新本表。
 
-| # | 一句话 | 主要 doc |
+| PR | 已合入内容 | 决策 / 证据 |
+|---|---|---|
+| [#533](https://github.com/ctmaomao/gfrr-auto-update-site/pull/533) | Editorial normalization / safe diagnostics | [ADR-0103](ADR/0103-editorial-review-diagnostics.md) |
+| [#532](https://github.com/ctmaomao/gfrr-auto-update-site/pull/532) | 行政发布页标题与有效正文证据 | [ADR-0102](ADR/0102-administrative-release-evidence.md) |
+| [#531](https://github.com/ctmaomao/gfrr-auto-update-site/pull/531) | Bubble r6 观察日与证据修复 | [ADR-0101](ADR/0101-bubble-observation-evidence-r6.md) |
+| [#530](https://github.com/ctmaomao/gfrr-auto-update-site/pull/530) | 共享编辑新闻摘要清理 | [ADR-0099](ADR/0099-shared-editorial-news-hygiene.md) |
+| [#529](https://github.com/ctmaomao/gfrr-auto-update-site/pull/529) | 隔离不合格 Bubble 旧稿 | Git/PR 回执；不把旧稿重新晋升 |
+
+历史交接见[2026-09 至 2026-11 快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)、[更早交接](PROJECT_HANDOFF_HISTORY.md)；已完成清理见[完成记录](PROJECT_COMPLETED_HISTORY.md)。ODP/Energy/Transport 逐阶段原文见[专档](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)，其中有效门槛不因归档取消。
+
+## Archived (历史 milestone,scope-only,默认不加载)
+
+> 全部已合并,作为 Conditional Authority 仅在对应历史 PR 范围内权威。
+> 阅读它们前先确认任务边界是否真的需要历史细节;通常不需要。
+
+### 最近五个 M-series milestone（原索引快照）
+
+| # | 当时内容 | 主要 doc |
 |---|---|---|
 | **M-91** | Market Pricing NDX/IXIC implementation: QQQ remains primary;Yahoo `^NDX` / `^IXIC` become Daily/manual display-only auxiliary comparison metrics;cache 28.0M-91V | `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` / `scripts/check-market-pricing-multi-asset.mjs` |
 | **M-87** | Null-zero display guards: missing Brent/repo values stay missing instead of rendering as `0.00` or `+0.0bp`; cache 28.0M-87V | `scripts/check-null-zero-display-guards.mjs` |
 | **M-86** | Frontend Proxy Coverage Semantics: Macro Overview separates public proxy coverage from formal/non-public source boundary notes; cache 28.0M-86V | `scripts/modules/renderMacroOverview.js` / `docs/DATA_CONTRACT.md` |
 | **M-85** | Public Source Tranche 11: EIA Europe Brent Spot Price FOB public HTML proxy inside brentPricingLayer; audit-only/display-only;cache 28.0M-85V | `docs/DATA_CONTRACT.md` |
 | **M-84** | Public Source Tranche 10: FRED CREACBW027SBOG public aggregate bank CRE loan balance proxy inside commercialRealEstate; audit-only/display-only;cache 28.0M-84V | `docs/DATA_CONTRACT.md` |
-## Archived (历史 milestone,scope-only,默认不加载)
-
-> 全部已合并,作为 Conditional Authority 仅在对应历史 PR 范围内权威。
-> 阅读它们前先确认任务边界是否真的需要历史细节;通常不需要。
 
 ### M-series (M-31 → M-66)
 
@@ -154,8 +156,6 @@ ODP/Energy/Transport 的逐阶段细节见 [P3-19/P3-19a 原文归档](ENERGY_TR
 
 ---
 
-## How to add a new milestone
+## How to maintain this index
 
-1. PR 合并后,在 `## Recently Merged` 表顶部加一行,把旧的最后一行下移到 `## Archived` 相应段
-2. 如果 milestone 影响 active backlog,同步更新 `docs/PROJECT_BACKLOG.md`
-3. 不要修改已存在的 milestone 行(它们已是历史事实)
+当前工作只维护 PROJECT_BACKLOG 对应条目；milestone 完成时在本页保留简短结论和证据链接，不复制实时版本、来源健康、费用余额或未完成清单。历史事实保留；错误事实可附带日期和依据更正，已替代决策标明后续 ADR，不把整理变成重写授权/验收历史。

@@ -1,268 +1,112 @@
 # Documentation Authority Index
 
-> 本文档定义本仓库所有 `.md` 文档的权威等级。
-> 抽取自 `AGENTS.md` (v28.0J-pre-split tag) 的 "Documentation Authority Index" 段。
-> 任何新增、删除、迁移文档时,必须同步更新本索引。
+本索引区分现行规则、任务范围和历史证据，不复制每个阶段的实施/待合并状态。新增、移动或删除文档时更新适用的入口；一般任务只读命中范围及其直接依赖，不遍历本仓库全部 Markdown。
 
 ## Rule of Conflict Resolution
 
-如两份文档冲突:
+1. 系统、平台权限和用户当前指令不由仓库文档改变；项目执行以 [AGENTS.md](../AGENTS.md) 为入口。
+2. 先核对路径、阶段、操作及明确的 reviewed supersession。已批准的窄范围替代只在该范围优先；同范围、同状态且无明确替代关系的冲突才取更严格者。检查通过不是授权。
+3. 历史设计的“下一步/仅手工/未上线/待人工确认”只描述其当时阶段，不自动阻断后续已批准并验证的实现，也不解锁仍未批准的路径。[ADR-0092](ADR/0092-delegated-ai-review.md) 统一项目独立 AI 审查和同范围免重复确认。
+4. 当前状态查实际代码/配置、最新任务与 PR/运行回执；已合并不等于线上验收成功，旧通过记录也不是今天的健康证明。数据来源、费用、凭据、破坏性操作与证据质量边界不因文档整理解除。
+5. 检查命令以 [package.json](../package.json) / [check-suite](../scripts/check-suite.mjs) 为准；适用检查和副作用见 AGENTS §5，不机械运行历史命令。
 
-1. **Current Authority** beats everything else.
-2. 先核对路径、阶段和操作；明确记录的 reviewed supersession / owner-approved 窄范围例外仅在指定范围优先，无例外的同范围同状态冲突才取更严格者。检查通过不是授权。
-3. Scope-conditional authority 不自行覆盖 Current Authority；根规则明确引用的领域附件在对应范围执行，旧 helper 禁令不否定已记录的独立 runtime 授权。
-4. Historical Background NEVER overrides anything current.
-5. When in doubt, check `package.json` for the actual check commands and run them.
+## Current Authority
 
----
-
-## Current Authority (must follow)
-
-定义"项目当前是什么"。所有 PR 必须符合:
-
-| 文档 | 角色 |
+| 入口 | 何时读取 |
 |---|---|
-| `CLAUDE.md` | AI 启动导航 (新增于 v28.0J-pre-split 后) |
-| `DESIGN.md` | 前端设计契约 (视觉/IA/色彩/字体/组件) |
-| `AGENTS.md` | AI 开发规则合约 (规则锚点,索引/历史已外迁) |
-| `package.json` | 所有 check 命令与 `check:all` 组成权威源；`check:all` 对生产数据只读；当前包含生成 ignored analyst input 的子命令，零文件写入任务先查副作用 |
-| `docs/PROJECT_BACKLOG.md` | 项目自我记忆 + 跨会话 active task |
-| `docs/DATA_SOURCES.md` | 10+ 外部数据源边界 (新增于 v28.0J-pre-split 后) |
-| `docs/ADR/README.md` | 重大架构决策索引 (新增于 v28.0J-pre-split 后) |
-
-安全漏洞报告流程见仓库根目录 [`SECURITY.md`](../SECURITY.md)；该文件只约束报告渠道与披露边界，不替代领域数据来源条款。
-
----
-
-## Conditional Authority (authoritative only within their scope)
-
-- [ADR-0092](ADR/0092-delegated-ai-review.md)：项目通用审查改由独立 AI 承担，已授权同范围操作不重复请示；仅替代审查主体与重复确认流程，不放宽平台权限、领域契约、费用、来源权利或质量门槛。
-
-- [数据口径与时间清晰度实施核查（2026-11-09）](DATA_PROVENANCE_CLARITY_2026_11_09.md)：Scope-conditional；本轮检查、展示修复、源日期缺口与验证状态，不批准新来源、评分或发布。
-
-- [ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) — 两篇文章共享 CNY 5 成本上限、持久预留与免费搜索准入；仅替代 CEO Wind helper-presence 断言及点名的旧状态探测语义，不扩展 Daily、评分或其它 Wind 指标；实施及经独立AI审阅/检查后的串行发布已授权，实际激活证据与验收待验。
-
-- [OFR_PRIMARY_MIGRATION_2026_11_01.md](OFR_PRIMARY_MIGRATION_2026_11_01.md) — OFR主读数替代的准备/迁移提案；仅约束本次未接runtime适配器与研究，owner已选择旧建议退役，DESIGN/checker迁移须实际审阅，生产合并激活待确认，不覆盖现行评分或七候选协议。
-
-- [POLICY_SPREAD_DISPLAY_2026_10_25.md](POLICY_SPREAD_DISPLAY_2026_10_25.md) — I 政策价差展示：C2 Fed Path 标题/aux/note/meta/目标区间中值与本卡中性占位；WoW#4 政策价差观察；pillar2 strict finite 政策文字；不改 checker/score/data/其它 WoW/HY；r2 before/after 4 图+facts 已登记（图只证政策卡/布局），full/coverage exit0、CI 待。
-
-- [MATRIX_REPO_QUALIFICATION_2026_10_25.md](MATRIX_REPO_QUALIFICATION_2026_10_25.md) — H 矩阵回购资格：三消费者复用 D helper + 未舍入 raw 档位一致性；pending 各自 missing；四 checker 断言窄修；before/after 4 图已登记（合法图像素相同、detail 未渲染）；主分/矩阵分别验收；不改 D/pipeline/score/data/workflow/F/G/其它 consumer。
-
-- [C2_C3_NULL_DISPLAY_2026_10_23.md](C2_C3_NULL_DISPLAY_2026_10_23.md) — C2/C3 缺失态：选中流动性/政策与 HY/IG/CRE 字段本地 strict finite、逐叶重写、成对腿保留有效值；HY 保留 effective→baseline→credit fallback；CRE canonical 组合档位与 3 处窄文案修正；F NFCI/评分/data/workflow/checker 不动；before/after 8 图已登记，full/coverage/review 待。
-
-- [NFCI_DISPLAY_REPAIR_2026_10_23.md](NFCI_DISPLAY_REPAIR_2026_10_23.md) — NFCI 展示映射与缺失态：canonical 五档 tone + 既有 alias；C3 严格 finite、缺失/未知 pending 且每次重写；pillar/n6 仅文本缺失 `—`，n6 score/isActive 旧绑定原样；静态卡中性、方向文案修正；不改评分/data/workflow/checker。
-
-- [FOUR_LANE_RISK_READING_2026_10_22.md](FOUR_LANE_RISK_READING_2026_10_22.md) — 四层风险证据展示：Hero 内连续金融压力/结构脆弱性/独立冲击/数据可信度四行；总分 null、tail floor 明写原模型保底阈值、transport 未触发不计警报、tail 缺失/非法/空区分；仅展示，不改主分/评分/data/workflow/checker。
-
-- [REPO_EVIDENCE_DISPLAY_2026_10_22.md](REPO_EVIDENCE_DISPLAY_2026_10_22.md) — 回购证据展示收口：统一 `classifyRepoEvidence` 资格（finite+同日+既有 regime）驱动 pillar/C2/附录/n7/policy；pending 不称正常/无压力，正常/压力仅描述该利差；n7 score/isActive 与主分不变；不改评分/data/workflow/pipeline/checker。
-
-- [SOURCE_OBSERVATION_REPAIR_2026_10_22.md](SOURCE_OBSERVATION_REPAIR_2026_10_22.md) — 原始观察日期链路：DFF/SOFR/WRESBAL、NFCI/SLOOS 大/小、CRE 5 项逐项 observation date 与逐腿同日 gate；不改原始指标值/主分/决策，但派生回购利差新增同日资格，错日/未知可置 null 并改变证据矩阵；观察日≠publication/PIT。
-
-- [ADR-0073](ADR/0073-main-radar-pressure-display-labels.md) — 主雷达同期压力最高档精确标签迁移，保留阈值/颜色/World Order展示行为及Bubble Watch隔离；不更换生产评分模型。
-
-- [SCORE_REMEDIATION_2026_10_17.md](SCORE_REMEDIATION_2026_10_17.md) — 本轮主雷达判读整改的 owner 验收基线、分步实施和独立契约/模型评审门槛；不授权自动更换生产评分。
-
-- [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) — Bubble 四项迁移及固定 Core-23 区间；契约候选待审，不启用 runtime。
-
-- [ADR-0067](ADR/0067-baltic-public-ticker.md)：owner 批准的 BDI/BDTI/BCTI 公开聚合指数接入与严格来源迁移；不授权路线级确认或其它来源。
-
-- [ADR-0066](ADR/0066-pages-publication-coalescing.md)：同一 main 源码的保守 Pages 发布去重；保留完整检查、失败时正常发布、手动强制与全部旧触发。
-
-- [ADR-0065](ADR/0065-node24-cache-action.md)：World Order 缓存 Action 的 Node 24 固定版本及显性 checker 收紧；不改变缓存、源权利或预算边界。
-
-- [ADR-0058](ADR/0058-retire-expired-editorial-recovery.md)：关闭已过期恢复执行入口，保留历史授权与已耗预算；当前交接精简不解除长期观察或来源限制。
-- [ADR-0055](ADR/0055-acled-weekly-automation.md) / [ADR-0056](ADR/0056-acled-split-cadence.md)：ACLED 自动链与现行周一/三/五分频；具体预算、源权利及已耗 initial 按原决策保留。
-
-- [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)：Pages 实际源码固定与 ODP 成功后的单一发布触发；保留 EdgeOne 配额和独立 checker 审阅。
-
-- [HEALTH_REMEDIATION_2026_09_18.md](HEALTH_REMEDIATION_2026_09_18.md)：本轮健康整改顺序、已验旧问题及外部待验边界；不替代既有费用、源权利和发布契约。
-
-- [HEALTH_AUDIT_2026_09_18.md](HEALTH_AUDIT_2026_09_18.md)：2026-09-18 只读健康度审计的实测证据、评分明细与修正记录（含两处已撤销的误判）；不修改 checker、数据或发布契约，仅作可复用基线。
-
-- [CHECK_ALL_COVERAGE_CLASSIFICATION.md](CHECK_ALL_COVERAGE_CLASSIFICATION.md)：`check:all` 可达范围口径、17 项未纳入脚本的逐条分类及 meta-checker 需求草案；设计提案，不改变 `check:all` 组成或任何现有断言。
-
-- [FRONTEND_ASSET_VERSION_CHECK_DESIGN.md](FRONTEND_ASSET_VERSION_CHECK_DESIGN.md)：前端 asset 版本是否已 bump 的只读检查器设计与实测验证；补 `check:all` 对 asset bump 规则无强制手段的缺口，含作用域、基线定位与两阶段落地建议。设计提案，不改前端代码或现有断言。
-
-- [PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)：当前冻结压力研究的人工评审口径、完整证据清单与结论模板；沿用 ADR-0044/0047 的收集门槛，不改变运行时闸门或授予生产替换权限。
-
-- [LINT_PILOT_FIRST_RUN.md](LINT_PILOT_FIRST_RUN.md)：lint 试点首次全量扫描报告（645 文件、152 条诊断、配置错误 0、解析失败 0），含跨上下文诊断单列与三分类；仅为报告，未接入 `check:all` 或任何 workflow，不预设修复或忽略。
-
-- [ADR-0037](ADR/0037-check-suite-deduplication.md)：检查执行去重与传递覆盖校验；保留全部 leaf 断言和独立 checker/合并审阅。
-
-- [ADR-0036](ADR/0036-final-editorial-write-revalidation.md)：最终编辑层写入复验与有界诊断；不放宽来源、付费、评分或部署权限。
-
-- [ADR-0035](ADR/0035-runtime-security-patch-baseline.md)：本轮实际 Node 补丁版本下限与 Playwright 精确升级；保留零生产依赖和独立合并审阅。
-
-- [ADR-0034](ADR/0034-acled-complete-month-windows.md)：ACLED 月度完整日历窗口、缺月不可得及对应 checker 收紧；不改年度指标和评分。
-
-- [ADR-0033](ADR/0033-acled-weekly-completeness.md)：ACLED 周表六地区完整性与缺地区保留旧配置；保留官方错峰日期及原有来源授权。
-
-- [ADR-0032](ADR/0032-macro-editorial-upstream-admission.md)：Macro Risk 上游完成触发、持久日预算/输入去重及对应 workflow checker 变更；不放宽付费、来源、质量或展示契约。
-
-- [OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)：本地原文时间声明的闭合证据复核契约；无网络、生产或质量资格。
-
-- [AGENT_DOMAIN_BOUNDARIES.md](AGENT_DOMAIN_BOUNDARIES.md)：根 AGENTS.md 明确委托的领域规则附件；按任务读对应段落。原阶段约束只管各自路径，现行窄范围例外见附件开头；领域 checker 直接校验本附件，保留原断言，根只保留导航和通用规则。迁移决策见 [ADR-0024](ADR/0024-agent-domain-authority.md)。
-
-仅在对应 PR / 子系统范围内权威。**默认会话不应将其作为全项目规则。**
-
-> External AI / Market Pricing 阶段文档的状态与现行契约入口统一见[阶段状态说明](LEGACY_DOCUMENT_STATUS.md)，不在各导航入口重复维护快照。
-
-### Market Pricing scope (M-14 → M-91)
-
-- `docs/MARKET_PRICING_SOURCE_FORMAT_VERIFICATION_DESIGN.md` (M-20)
-- `docs/MARKET_PRICING_NETWORK_OPEN_THROTTLED.md` (M-21)
-- `docs/MARKET_PRICING_FIRST_REAL_RECORD_WRITE.md` (M-24)
-- `docs/MARKET_PRICING_METRICS_CALCULATION.md` (M-26)
-- `docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md` (M-91 implementation reference; source review completed, implementation landed)
-- 其余 M-14 / M-22 / M-23 / M-25 / M-27 → M-30 阶段文档已移入 Historical Background；文件保留，但默认不加载。
-
-### Editorial / Visual scope (M-31 → M-39)
-
-- M-31 → M-38(8 个 editorial/visual 已合并 milestone scope docs)— 已在 `docs/MILESTONE_INDEX.md` ## Archived › M-series 逐条登记,默认不加载(A1 验证 2026-06-02:纯历史、无活引用)。
-- `docs/BRENT_PROMOTION_AUDIT_M39.md` (M-39) — 保留(A1 验证:被 ADR-0009 References 引用,非纯历史)
-
-### Macro driver expansion scope (M-41 → M-50)
-
-- `docs/M-41_FED_LIQUIDITY_EXTENDED_DRIVERS.md`
-- `docs/M-49_DIESEL_CRACK_SPREAD.md`
-- `docs/M-50_REPO_MARKET_SPREAD.md`
-- `docs/M-67_ISM_PMI_SOURCE_REPAIR.md` — ISM PMI **active source contract**(`docs/M-47_ISM_PMI_GROWTH_LAYER.md` §Current Source 明确指向它;FRED:NAPM 404 后现行源为 `ISM:ManufacturingPMI`)。**仍有效,非历史**;audit-only/display-only。
-- `docs/TREASURY_FISCAL_DATA_TGA_SOURCE_REVIEW.md` — Treasury Fiscal Data DTS / TGA source-review only; future `macroDrivers.fedLiquidity` candidate, no runtime / formula / scoring approval.
-- `docs/FED_LIQUIDITY_RECALIBRATION_BRIEF.md` — brief-only research contract for funding-stress target, regime-aware ON RRP buffer/velocity, and near-zero percentage-noise recalibration; no runtime / formula / scoring approval.
-- M-42 / M-45 → M-48 阶段文档已移入 Historical Background；ISM 当前源边界以 M-67 为准。
-
-### Cross-validation narrative density scope (M-51 → M-53)
-
-- M-51 → M-53(3 个 narrative-density 已合并 milestone scope docs)— 已在 `docs/MILESTONE_INDEX.md` ## Archived 逐条登记,默认不加载(A1 验证 2026-06-02:纯历史、无活引用)。
-
-### Brent / energy public proxy source review scope
-
-- `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md` (M-71)
-- `docs/OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md` (Oil Directional Pressure Model / ODP — feasibility + source review; this doc stays a source-review artifact, but PR1 ingestion + checks are implemented: `data/oil-directional-pressure.json` + `scripts/oil-directional/` + `check:oil-directional`)
-- `docs/OIL_DIRECTIONAL_VERDICT_HISTORY_MONITOR.md` (P64/P66 artifact-only git-history monitor for existing ODP verdict transitions/divergence/evidence age plus orthogonal persistent-low-confidence observation; no network, production write, refresh trigger, new verdict, or score)
-- `docs/OIL_THERMAL_HISTORY_WINDOW_CAPACITY.md` (P65 shared 240-sample baseline review capacity; existing P60 health gate, 30-day threshold, and manual promotion boundary unchanged)
-- `docs/OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + owner-approved implementation follow-up; EIA STEO `COPS_OPEC` → `macroDrivers.energySpareCapacity`)
-- `docs/ENERGY_INVENTORY_BALANCE_SOURCE_REVIEW.md` (P6A source-review + implementation follow-up; EIA STEO OECD commercial inventory + global net inventory withdrawals → `macroDrivers.energyInventoryBalance`)
-- `docs/ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md` (Energy Stress Phase 2 source-review + implementation follow-up; IMF PortWatch chokepoint source → `macroDrivers.energyTransport`)
-- `docs/ENERGY_TRANSPORT_CHOKEPOINT_IMPLEMENTATION_BRIEF.md` (owner-approved PortWatch implementation design contract; first runtime scope limited to Daily `macroDrivers.energyTransport` + validator/check/docs)
-- `docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_TO_SCORE_CONTRACT.md` (transport-shock-confirmation-factor-source-to-score-contract-v1; P-score-1 contract only for a future `transportShockConfirmationFactor`; no shadow score / no frontend / no ODP finalBias or main-judgment weighting change)
-- `docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_REVIEW.md` (transport-shock-confirmation-factor-source-review-v1; P-score-2 review of Free Route-Linked Tanker Transport Pressure Proxy + Baltic Weekly Tanker Report public route-signal; no live fetch / no production write / no frontend / no shadow score)
-- `docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_MARKET_CONFIRMATION_SOURCE_REVIEW.md` (transport-shock-confirmation-factor-market-confirmation-source-review-v1; P-score-15 review of already-connected Brent curve/price and Oil News market-reaction candidates; no marketConfirmation write / no score write / no production write)
-- `docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_SCORE_DESIGN.md` (transport-shock-confirmation-factor-free-proxy-score-design-v1; P-score-19 design-only free-proxy low-weight score path; maxFutureMainScoreContributionPct=3; no score write / no production write / no ODP finalBias)
-- `docs/TRANSPORT_SHOCK_FREE_PROXY_SCORE_BRIDGE_REVIEW.md` (transport-shock-free-proxy-score-bridge-review-v1; P-score-46 bridge-review that reclassifies route freight as not required for the low-weight free-proxy path while keeping high-frequency physical confirmation blocked; no score write / no production write / no ODP finalBias)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_REVIEW.md` (route-level tanker freight confirmation source-review only; future confirmation candidate for `transportShockCandidate`, no live fetch / no production write)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_PROOF_OF_SOURCE_DESIGN.md` (route-level tanker freight proof-of-source design; next allowed step is dry-run-only manual artifact scaffold, no live fetch / no production write)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md` (route-level tanker freight frontend display brief; docs-only future UI contract inside existing ODP folded detail, no frontend implementation / no production write)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md` (route-level tanker freight production write readiness; manual/local pre-write gate only, source-rights/manual blockers remain, no production write)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md` (route-level tanker freight thematic card brief; docs-only final target for a future C1 通胀与能源 card, no frontend implementation / no production write)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md` (route-level tanker freight production writer contract design; future `macroDrivers.energyTransport.routeFreightConfirmation` field contract only, no writer / no production write)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md` (route-level tanker freight source-rights approval gate; manual source-rights gate keeps production writes blocked until explicit approval)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_TEMPLATE.md` (route-level tanker freight source-rights approval template; template-only manual evidence shape, grants no approval)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_INPUT_PREP.md` (route-level tanker freight source-rights input prep; creates ignored local draft, grants no approval)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_ARTIFACT_REVIEW.md` (route-level tanker freight source-rights artifact review; local/manual ignored artifact reviewer, no gate update approval)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL.md` (route-level tanker freight source-rights gate update proposal; dry-run proposal artifact, does not update gate)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL_REVIEW.md` (route-level tanker freight source-rights gate update proposal review; manual proposal reviewer, no apply/update)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md` (route-level tanker freight Baltic context policy; keeps existing Baltic Freight as broad context unless a separate deprecation/merge review is approved)
-- `docs/ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md` (route-level tanker freight disabled writer scaffold; manual-artifact-only disabled projection, no production write)
-- `docs/ENERGY_STRESS_FRONTEND_DISPLAY_BRIEF.md` (owner-approved docs-only frontend display brief for surfacing OPEC spare capacity + PortWatch inside existing ODP details; no UI implementation yet)
-- `docs/PORTWATCH_TOS_PIN_REVIEW.md` (docs-only terms pin review; exact ArcGIS `Daily_Chokepoints_Data` licenseInfo points to IMF terms, runtime enum change deferred)
-
-### China macro source review scope
-
-- `docs/CHINA_V2X_SOURCE_REVIEW.md` (Stage 6 China 难源调研 + V2X 源)
-- `docs/CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md` (China central-bank operation / SReFin / property index candidates, source-review only)
-
-### Frontend visual + IA restructure scope (M-54 → M-55b)
-
-- M-54 → M-55b(3 个 frontend-visual / IA-restructure 已合并 milestone scope docs;M-54 已被 M-94 推翻)— 已在 `docs/MILESTONE_INDEX.md` ## Archived 逐条登记,默认不加载(A1 验证 2026-06-02:纯历史、无活引用)。
-
-### Recent milestones (M-57 → M-62)
-
-- `docs/M-60_PAGES_TRIGGER_COVERAGE.md` — Pages trigger coverage 的现行保护边界仍有效；实现已合并进 `check:workflows`。
-- `docs/M-61_SIPRI_INTEGRATION.md` — SIPRI manual normalized source 的现行数据边界仍有效。
-- M-57 → M-59 已移入 Historical Background；其实现状态以当前 checker、runbook 与数据契约为准。
-- (M-43 provenance, M-62 isoWeek merge — 见 MILESTONE_INDEX.md)
-
-### M-94 V0 Path C frontend rebuild scope (current — 仍有效,非历史)
-
-- `docs/M94_V0_DATA_CONTRACT.md` — M-94 V0 数据消费契约 v3.1 + 视觉权威基准(mock v2.1);文件自述「保持有效」,被 `AGENTS.md` 与 `DESIGN.md §5.6` 引用。前端 display-only,不动 scoring/decision/execution/position/Worker/pipeline。
-- `docs/m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md` — 路径 C 前端重写 7-stage 计划参考(位于 `docs/m94-v0/` 子目录,非 `docs/` 顶层)。
-
-### External AI scope
-
-- `docs/EXTERNAL_AI_API_DESIGN.md`
-- `docs/EXTERNAL_AI_PROMPT_CONTRACT.md`
-- `docs/EXTERNAL_AI_PRODUCTION_INTEGRATION_DESIGN.md`
-- `docs/EXTERNAL_AI_MANUAL_TEST_DESIGN.md`
-- `docs/BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md` — Bubble Watch 独立 DeepSeek 周度编辑层；只读展示，不影响 Core-23 / Shadow-4 或 GFRR 主链。
-- `docs/MACRO_RISK_EDITORIAL_DESIGN.md` — 首页 Macro Risk DeepSeek 编辑层；嵌入主总览、每日单次调用、fail-closed，只解释不改分。
-- `docs/EXTERNAL_AI_PROVENANCE_TRACKING_M43.md`
-- `docs/EXTERNAL_AI_*_DESIGN.md` (其他;wildcard 覆盖未逐条列出的 External AI 设计文档 — 本轮有意不逐文件展开)
-
-### World Order / Signal Intake scope
-
-ARR / Bubble Watch 独立候选入口：`docs/ARR_EPOCH_SOURCE_REVIEW.md` — Epoch 免费 CSV 来源评审及一次性隔离核验；未实现定时更新或生产切换，不继承第三方文章抓取权限。
-
-- `docs/WORLD_ORDER_STRESS.md`
-- `docs/WORLD_ORDER_SOURCE_REVIEW.md`
-- `docs/SIGNAL_INTAKE.md`
-- `docs/M-63_ACLED_INTEGRATION.md` — ACLED manual-xlsx 接入操作契约(**仍有效,非普通历史**):含 EULA §3.3 硬边界(禁 workflow/script/crawler/browser 自动访问 `acleddata.com`);`acled-{weekly,monthly}-refresh-reminder.yml` 仍指向其 Runbook(Section 3 + Section 9)。
-- `docs/ACLED_HDX_MONTHLY_SOURCE_REVIEW.md` — 2026-09-08 HDX/HAPI 月度候选来源评审与隔离验证设计；六项指标等价性及适用许可未通过，不授权真实数据下载、发信、自动刷新或生产替换。
-
-### Architecture (conditional, not current operating contract)
-
-- `docs/UNIFIED_DATA_PIPELINE_ARCHITECTURE.md` — 下一阶段架构,不是当前运行合约
-
-### Realtime worker scope
-
-- `workers/gfrr-realtime-worker/README.md`
-
----
-
-## Operating Document (large, mixed content; consult selectively)
-
-包含当前规则与历史混合内容。阅读时只看 "current" 段,忽略 phase history 除非明确相关:
-
-- `README.md` — 项目入口概览
-- `docs/DATA_CONTRACT.md` — 数据契约 (规则与历史混合)
-- `docs/OPERATIONS.md` — 运维与排查 (命令与版本历史混合)
-- `docs/SYSTEM_UPGRADE_PLAN.md` — 升级计划与稳定基线 (规则与已完成阶段混合)
-- `docs/MARKET_PRICING_WEEKLY_REFRESH.md` — QQQ 周线**手动 fallback runbook**(`scripts/refresh-qqq-data.ps1` operator 工具,非 CI)。QQQ 周历史已改 Yahoo cron 自动(`refresh-qqq-market-pricing.yml`),本 runbook 退为手动 fallback,非历史死档。
-
----
-
-## Historical Background (NOT current authority)
-
-仅作为历史背景,绝不覆盖任何 current 规则:
-
-- [World Order 展示验收截图](evidence/world-order-narrative-20260909/README.md)：2026-09-09 当前快照解读修复的桌面/手机证据，不定义新的设计或数据契约。
-
-- [历史交接与审计表](PROJECT_HANDOFF_HISTORY.md)：从 backlog 原文迁出的日期记录，按需读取；不承载当前任务授权。
-
-- `docs/V27_BASELINE.md` — v27.x 历史基线
-- `docs/EXTERNAL_AI_IMPLEMENTATION_READINESS_AUDIT.md` — readiness 历史审计
-- `docs/EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md` — readiness 历史审计
-- `docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md` — readiness 历史
-- `docs/EXTERNAL_AI_SECRET_AND_FIRST_PROVIDER_CALL_GATE.md` — 历史 gate
-- `docs/MARKET_PRICING_SOURCE_INCIDENT_LOG.md` — 历史 incident 记录
-- Market Pricing 中间阶段设计文档(对应 checker 已于 checker 精简 Phase 1 退休)— 文件未删,仅作历史设计背景保留、移出 active 导航:`MARKET_PRICING_ARTIFACT_ONLY_FETCH_DESIGN.md`、`MARKET_PRICING_REAL_RECORD_CONTRACT_DESIGN.md`、`MARKET_PRICING_SOURCE_SELECTION_REVIEW.md`、`MARKET_PRICING_PROOF_OF_SOURCE_DESIGN.md`、`MARKET_PRICING_NETWORK_GATE_DESIGN.md`、`MARKET_PRICING_NETWORK_GATE_SCAFFOLD.md`、`MARKET_PRICING_SOURCE_COMPLIANCE_REVIEW_SCAFFOLD.md`、`MARKET_PRICING_SYMBOL_MAPPING_VERIFICATION_DESIGN.md`
-- Market Pricing 已完成阶段文档(M-14 / M-22 / M-23 / M-25 / M-27 → M-30)— 文件未删,仅作历史设计/实施背景保留:`MARKET_PRICING_TEMPERATURE_DATA_SOURCE_DESIGN.md`、`MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_DESIGN.md`、`MARKET_PRICING_MANUAL_WEEKLY_INPUT_SANITIZER_SCAFFOLD.md`、`MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md`、`MARKET_PRICING_TEMPERATURE_DISPLAY.md`、`MARKET_PRICING_FIRST_FOLD_AND_CROSS_VALIDATION.md`、`MARKET_PRICING_MACRODRIVERS_SURFACING.md`、`CROSS_VALIDATION_EDUCATION_APPENDIX.md`
-- Macro driver 已完成阶段文档(M-42 / M-45 → M-48)— 文件未删,仅作历史实施背景保留:`M-42_FED_LIQUIDITY_RESERVE_BALANCES.md`、`M-45_FRONTEND_FIELD_SYNCHRONIZATION.md`、`M-46_SLOOS_BANK_LOAN_STANDARDS.md`、`M-47_ISM_PMI_GROWTH_LAYER.md`、`M-48_NFCI_BANK_STRESS_INDEX.md`;ISM 当前源契约以 `M-67_ISM_PMI_SOURCE_REPAIR.md` 为准。
-- Recent milestones 已完成阶段文档(M-57 → M-59)— 文件未删,仅作历史实施背景保留:`M-57_MARKET_TEMPERATURE_FIX_AND_PROJECT_BACKLOG.md`、`M-58_REALTIME_BAND_FIELD_COMPLETION.md`、`M-59_GDELT_CLOUD_INTEGRATION.md`;M-60 / M-61 因仍承载现行保护边界而保留在 Conditional。
-- M-92 / M-93 today-summary-card + 普通用户 plain-summary 源审计 / spec 文档(`SUMMARY_VIEW_M92A_SOURCE_REVIEW.md`、`SUMMARY_VIEW_M92_GAP_ANALYSIS_V2.md`、`PLAIN_SUMMARY_M93A_V2_SOURCE_REVIEW.md`、`USER_LANGUAGE_AUDIT_M93_V1.md`)— 描述 2026-05 已 shipped、后被 M-94 V0 Path C 前端重写退场的 runtime path(checker / renderer / DOM 分别于 `5eff6ab`(stage 1)/ `c8229574`(stage 2)/ `91d06f3d` 退场);纯历史 pre-impl 审计/spec,2 个 spec doc 顶部带 STATUS banner。DESIGN / `M94_V0_DATA_CONTRACT.md` 的 plain-summary residual = M-94 cleanup debt,待 Batch 5余项 处理(`assets/styles.css` 的孤儿 `.plain-summary-section`/`.ps-kicker`/`.ps-story`/`.ps-meta` 选择器已于 `7f2ee0fd` 删除收口,2026-06-05;残留债仅剩 DESIGN / `M94_V0_DATA_CONTRACT.md` 文案)。
-- 所有已合并 milestone 的 scope-only doc (按 Conditional Authority 处理,但默认不主动加载;见 `docs/MILESTONE_INDEX.md` Archived 段)
-
-- [Energy / ODP / Transport 实施历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：P3-19/P3-19a 的逐阶段原文与证据，按需查阅；当前授权入口在 backlog 和领域附件，归档不取消仍有效的阶段约束。
-
-- [完成事项与维护快照归档](PROJECT_COMPLETED_HISTORY.md)：原 backlog Section 1/3、P3-17/18/20 日期化原文；当前状态与未关闭事项留在 backlog。
+| [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 执行规则 / 简短启动导航 |
+| [PROJECT_BACKLOG.md](PROJECT_BACKLOG.md) | 当前工作、真实等待与最新四字段交接 |
+| [DESIGN.md](../DESIGN.md) | 前端视觉、IA、组件与变更流程 |
+| [DATA_CONTRACT.md](DATA_CONTRACT.md) | 字段、生产/展示契约；先定位改动对应章节 |
+| [DATA_SOURCES.md](DATA_SOURCES.md) | 来源、时效、降级与权利边界；按来源读取 |
+| [OPERATIONS.md](OPERATIONS.md) | 对应运行/排障/发布步骤；命令执行仍需任务授权 |
+| [ADR/README.md](ADR/README.md) | 架构决策、明确替代关系和相关历史依据 |
+| [SECURITY.md](../SECURITY.md) | 安全报告与披露渠道，不替代来源条款 |
+
+## Conditional Authority
+
+只约束点名子系统、路径或任务，不是全项目新增限制。根 AGENTS 委托的 [AGENT_DOMAIN_BOUNDARIES.md](AGENT_DOMAIN_BOUNDARIES.md) 保留机器校验的领域规则；按 runtime / external-ai / sources / energy / transport 条目读取。
+
+### 当前产品与发布
+
+- 首页的周报/雷达/Bubble 三标签见 [DESIGN §4.5](../DESIGN.md#45-周报默认入口与三标签2026-11-09)、[周报记录](WEEKLY_HOMEPAGE_VISUAL_2026_11_09.md)与[周报档案说明](../weekly-reports/README.md)。
+- OFR 主压力读数与旧公开建议退役已经实现，见 [ADR-0080](ADR/0080-ofr-primary-pressure-migration.md)、[迁移记录](OFR_PRIMARY_MIGRATION_2026_11_01.md)、现行 DATA_CONTRACT / DESIGN。七候选研究并未因此晋升。
+- 观察日期、缺失/真实零、代理身份及显示修复见 [数据口径核查](DATA_PROVENANCE_CLARITY_2026_11_09.md)。日期化局部回执不扩大修改范围。
+- Pages/EdgeOne 实际 checked-main、发布去重与触发契约见 [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)、[ADR-0066](ADR/0066-pages-publication-coalescing.md)和 OPERATIONS；完整保护网保留。
+
+### AI 编辑与 Bubble
+
+- 现行编辑层：[Macro Risk](MACRO_RISK_EDITORIAL_DESIGN.md)、[Bubble Weekly Editorial](BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md)、DATA_CONTRACT / OPERATIONS。只解释、不改 scoring/decision/execution/position。
+- 预算与搜索：[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md)；一次性 grant 记录 [ADR-0094](ADR/0094-editorial-one-shot-additional-grant.md)。状态必须核实实际账本/当前授权，不能由历史说明恢复已耗额度或默认重试。
+- 免费完整刷新见 [ADR-0095](ADR/0095-bubble-full-free-refresh.md)；输入证据/编辑诊断的后续决策查 [ADR 索引](ADR/README.md)，本页不重复维护并行任务进度。
+- Bubble Core-23 / Shadow-4、资格与 revision 见 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md)及其明确后续修订；[ARR 来源](ARR_EPOCH_SOURCE_REVIEW.md)不因诊断通过自动晋升。
+- 旧 `EXTERNAL_AI_*` 阶段文档保留原输入/输出设计和审计证据，旧面板/旧生产刷新已退役；先读[统一状态](LEGACY_DOCUMENT_STATUS.md#external-ai)，再按兼容/手工工具需要定位。旧 no-go 不覆盖现行独立编辑链，旧工具也不继承新链授权。
+
+### 宏观、World Order 与来源
+
+- [WORLD_ORDER_STRESS.md](WORLD_ORDER_STRESS.md)、[WORLD_ORDER_SOURCE_REVIEW.md](WORLD_ORDER_SOURCE_REVIEW.md)、[SIGNAL_INTAKE.md](SIGNAL_INTAKE.md)：overlay / 来源接入边界。
+- ACLED 现行自动链见 [ACLED_AUTOMATIC_UPDATE.md](ACLED_AUTOMATIC_UPDATE.md)、[ADR-0055](ADR/0055-acled-weekly-automation.md) / [ADR-0056](ADR/0056-acled-split-cadence.md)。[M-63](M-63_ACLED_INTEGRATION.md)仍约束手工归一化、数据和 reminder，不能用其旧全局 manual-only 文字撤销上述固定路径例外；EULA 披露、拒绝即停和已耗预算仍保留。
+- [ACLED HDX/HAPI 候选](ACLED_HDX_MONTHLY_SOURCE_REVIEW.md)是独立来源评审，不是自动链替代或下载许可。[SIPRI](M-61_SIPRI_INTEGRATION.md)仍为年度手工来源契约。
+- ISM 当前来源是 [M-67](M-67_ISM_PMI_SOURCE_REPAIR.md)，不是 M-47 的退役 FRED:NAPM；其它宏观源以 DATA_SOURCES 为首选。
+- [China V2X](CHINA_V2X_SOURCE_REVIEW.md) / [China 宏观](CHINA_MACRO_LIQUIDITY_PROPERTY_SOURCE_REVIEW.md)、[Treasury TGA](TREASURY_FISCAL_DATA_TGA_SOURCE_REVIEW.md) / [流动性校准](FED_LIQUIDITY_RECALIBRATION_BRIEF.md)：各自源评审/研究范围，不自动批准新运行输入。
+- [压力研究最终标准](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)保留冻结样本与独立评审门槛；技术审阅主体按 ADR-0092，真实来源/人工标注事实不得改写。
+
+### Energy / ODP / Transport
+
+- `docs/BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md`：[Brent 公共代理](BRENT_PUBLIC_PROXY_SOURCE_REVIEW.md)；[ODP source-of-record](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)是现行证据边界，不把公共代理包装为官方结算或 Platts。
+- [Oil News](OIL_NEWS_EVENT_SOURCE_REVIEW.md)、[GDELT policy](GDELT_SOURCE_POLICY.md)、[publication evidence](OIL_NEWS_PUBLICATION_EVIDENCE_REVIEW.md)、[Oil Thermal](OIL_THERMAL_ANOMALY_SOURCE_REVIEW.md)分别承载新闻/时效/热异常门槛。
+- [OPEC](OPEC_SPARE_CAPACITY_SOURCE_REVIEW.md)、[库存](ENERGY_INVENTORY_BALANCE_SOURCE_REVIEW.md)、[PortWatch](ENERGY_TRANSPORT_CHOKEPOINT_SOURCE_REVIEW.md)及[条款核对](PORTWATCH_TOS_PIN_REVIEW.md)：来源、代理与再分发边界。
+- Transport 已批准 capped free-proxy 入分与未解锁 route/market 确认分开，入口见 [runtime](AGENT_DOMAIN_BOUNDARIES.md#transport-runtime) / [manual helpers](AGENT_DOMAIN_BOUNDARIES.md#transport-manual)。`TRANSPORT_SHOCK_*` 与 `ROUTE_LEVEL_TANKER_FREIGHT_*` 分别只约束其点名工具/源/阶段，不能把整个系列作为每次开发必读。
+- [路线 source rights gate](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md) / [production readiness](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md)继续有效；检查器消费的文档和 [Energy/Transport 原文](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)不做无证据删除。
+
+
+#### Transport 机器依赖入口
+
+以下路径仍由既有 checker 直接验证，保留为可点击的精简索引；只读本次任务对应条目，不重复展开所有阶段禁令。删除或迁移这些入口需另做断言归属审阅，本轮不改 checker。
+
+| 文档 | 契约定位 |
+|---|---|
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md`](ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md`](ROUTE_LEVEL_TANKER_FREIGHT_DISABLED_WRITER_SCAFFOLD.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md`](ROUTE_LEVEL_TANKER_FREIGHT_FRONTEND_DISPLAY_BRIEF.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md`](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITER_CONTRACT_DESIGN.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md`](ROUTE_LEVEL_TANKER_FREIGHT_PRODUCTION_WRITE_READINESS.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_PROOF_OF_SOURCE_DESIGN.md`](ROUTE_LEVEL_TANKER_FREIGHT_PROOF_OF_SOURCE_DESIGN.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_REVIEW.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_REVIEW.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_GATE.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_TEMPLATE.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_APPROVAL_TEMPLATE.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_ARTIFACT_REVIEW.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_ARTIFACT_REVIEW.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL_REVIEW.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_GATE_UPDATE_PROPOSAL_REVIEW.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_INPUT_PREP.md`](ROUTE_LEVEL_TANKER_FREIGHT_SOURCE_RIGHTS_INPUT_PREP.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md`](ROUTE_LEVEL_TANKER_FREIGHT_THEMATIC_CARD_BRIEF.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_HISTORICAL_REPLAY_DESIGN.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_HISTORICAL_REPLAY_DESIGN.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_HISTORICAL_REPLAY_RUNNER_DESIGN.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_HISTORICAL_REPLAY_RUNNER_DESIGN.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_SCORE_DESIGN.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_FREE_PROXY_SCORE_DESIGN.md) | `transport-shock-confirmation-factor-free-proxy-score-design-v1` |
+| [`docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_MARKET_CONFIRMATION_SOURCE_REVIEW.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_MARKET_CONFIRMATION_SOURCE_REVIEW.md) | `transport-shock-confirmation-factor-market-confirmation-source-review-v1` |
+| [`docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_REVIEW.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_REVIEW.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_TO_SCORE_CONTRACT.md`](TRANSPORT_SHOCK_CONFIRMATION_FACTOR_SOURCE_TO_SCORE_CONTRACT.md) | `transport-shock-confirmation-factor-source-to-score-contract-v1` |
+| [`docs/TRANSPORT_SHOCK_FREE_FREIGHT_ALTERNATIVE_SOURCE_REVIEW.md`](TRANSPORT_SHOCK_FREE_FREIGHT_ALTERNATIVE_SOURCE_REVIEW.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+| [`docs/TRANSPORT_SHOCK_FREE_PROXY_SCORE_BRIDGE_REVIEW.md`](TRANSPORT_SHOCK_FREE_PROXY_SCORE_BRIDGE_REVIEW.md) | `transport-shock-free-proxy-score-bridge-review-v1` |
+| [`docs/TRANSPORT_SHOCK_SATELLITE_HANDLING_POLICY.md`](TRANSPORT_SHOCK_SATELLITE_HANDLING_POLICY.md) | 对应文件点名的来源/手工工具；不扩展运行授权 |
+
+### Market Pricing、前端与 Worker
+
+- 现行 [指标计算](MARKET_PRICING_METRICS_CALCULATION.md)、[温度展示](MARKET_PRICING_TEMPERATURE_DISPLAY.md)、[M-91 多资产](MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md)与 OPERATIONS；[weekly fallback](MARKET_PRICING_WEEKLY_REFRESH.md)仍为手工备用操作，不是调度入口。
+- 早期 `MARKET_PRICING_*` 阶段设计保留历史；当前字段、60 周不足降级和 display-only 边界见[统一状态](LEGACY_DOCUMENT_STATUS.md#market-pricing)，不由旧 records-empty/仅 scaffold 状态阻断当前功能。
+- [M94_V0_DATA_CONTRACT.md](M94_V0_DATA_CONTRACT.md)仍是前端字段消费与 mock 基准；后续明确的 DESIGN/ADR 修订在对应范围优先。[七阶段重建计划](m94-v0/M94_V0_FRONTEND_REBUILD_PLAN.md)已完成，非新实施清单。
+- [Worker README](../workers/gfrr-realtime-worker/README.md) / [ADR-0018](ADR/0018-m94-path-c-static-frontend-runtime.md)区分 Worker 预览与静态前端；[架构提案](UNIFIED_DATA_PIPELINE_ARCHITECTURE.md)不是现行运行合约。
+
+## Historical Background
+
+以下默认按需查阅，不定义全项目新门槛：
+
+- [MILESTONE_INDEX.md](MILESTONE_INDEX.md)：已完成 M/v 系列；历史 cache 版本和“下一步”不作今日状态。
+- [2026-09 至 2026-11 交接](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)、[更早交接](PROJECT_HANDOFF_HISTORY.md)、[完成事项](PROJECT_COMPLETED_HISTORY.md)、[Energy/Transport 历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：原批准、失败、预算、验收与限制保留，归档不等于解除。
+- [V27_BASELINE.md](V27_BASELINE.md)、[SYSTEM_UPGRADE_PLAN.md](SYSTEM_UPGRADE_PLAN.md)、已完成 milestone scope docs、旧 M-92/M-93 设计/源审计：只说明对应阶段。仍有效的具体来源契约以本页现行入口明确引用为准。
+- `docs/evidence/`、`docs/review-evidence/`、`deliverables/engineering-assurance/` 与日期化审计/修复报告：证据、当时结论或限定任务契约，不证明最新线上健康。测试 fixture README / `manual-artifacts/` README 只说明对应样本和工具。
+- 未逐个列出的任务文档按文内明确范围与后续修订解释；不能因有“必须”二字升级为全仓规则。无法确定是否已被替代时核对相关 ADR、代码和最新回执，不自动删证据或放宽门禁。
 
 ## 指令维护入口
 
-- [指令维护总回执](REVIEW_2026-09-06_CLOSEOUT.md)：当前验收、现行 ADR 入口及按需读取的历史证据。阶段回执不逐篇预读。
-- [阶段文档统一状态](LEGACY_DOCUMENT_STATUS.md)：Market Pricing / External AI 阶段文件的共同状态；实际操作按对应现行契约。
-
-## Local oil-pressure simplification
-
-- [ADR-0087](ADR/0087-oil-pressure-evidence-simplification.md): task-scoped local evidence and display contract; fixed thresholds and archived evidence remain; independent Codex AI review and local checks passed, publication approval remains separate.
-
-- [Bubble 周评可靠性与原期保留（ADR-0089）](ADR/0089-bubble-editorial-reliability.md)：本地实施；发布须另行审核/验收。
+[2026-11-10 全仓 Markdown 核查](MARKDOWN_MAINTENANCE_2026_11_10.md)记录覆盖、精简和限制；[2026-09-06 总回执](REVIEW_2026-09-06_CLOSEOUT.md)保留先前拆分依据。阶段回执不逐篇预读，规则维护按实际影响验证，机器断言迁移另做独立方案与审阅。
