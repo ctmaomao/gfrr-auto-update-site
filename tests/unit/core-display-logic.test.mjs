@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=onrrp-wording-20261109';
+} from '../../scripts/modules/config.js?v=editorial-review-20261110-r2';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

@@ -608,7 +608,7 @@ test('unsafe wording in visible source notes or other output text cannot bypass 
   }
 });
 
-test('a rejected provider response retains a bounded redacted replay candidate without raw HTTP or automatic promotion', async () => {
+test('ADR-0103 rejected provider response retains no replay candidate; offline explicit helper stays bounded', async () => {
   const { input, output, story } = scenario();
   const secret = 'fixture-private-781236985401';
   output.weeklyTimeline[0].sourceRefIds = [story.id];
@@ -621,18 +621,11 @@ test('a rejected provider response retains a bounded redacted replay candidate w
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
-    const candidate = error.replayCandidate;
-    assert.equal(candidate.replayOnly, true);
-    assert.equal(candidate.productionEligible, false);
-    assert.equal(candidate.redactionsApplied, true);
-    assert.equal(candidate.omittedFields, 2);
-    assert.equal(candidate.bounded, false);
-    const serialized = JSON.stringify(candidate);
+    assert.equal(error.replayCandidate, undefined);
+    const serialized = JSON.stringify(error);
     assert.equal(serialized.includes(secret), false);
     assert.equal(serialized.includes('PRIVATE_HTTP_ENVELOPE'), false);
-    assert.ok(serialized.includes('999999'));
-    assert.equal(validateWeeklyEditorialOutput({ replayCandidate: candidate }, input).ok, false, 'failure envelope is never a production output');
-    assert.ok(Buffer.byteLength(serialized) <= 128 * 1024);
+    assert.equal(serialized.includes('据Morningstar报道'), false);
     return true;
   });
   assert.equal(calls, 1);
@@ -769,19 +762,14 @@ test('retained failure evidence replays offline and replay failures expose fixed
   }
 });
 
-test('only failed weekly-editorial runs get the longer failure-evidence retention', () => {
+test('ADR-0103 replaces raw failure retention with a three-day receipt-only artifact', () => {
   const workflow = fs.readFileSync('.github/workflows/bubble-watch-weekly-editorial-refresh.yml', 'utf8');
-  const [, failureStep] = workflow.split('Retain failure evidence for triage');
-  assert.ok(failureStep, 'failure evidence upload step must exist');
-  assert.match(failureStep, /if: \$\{\{ failure\(\) \}\}/u);
-  assert.match(failureStep, /bubble-watch-weekly-editorial-failure-\$\{\{ github\.run_id \}\}/u);
-  assert.match(failureStep, /deepseek-failure-latest\.json/u);
-  assert.match(failureStep, /editorial-input-latest\.json/u);
-  assert.equal(failureStep.includes('deepseek-output-latest.json'), false);
-  assert.match(failureStep, /retention-days: 30/u);
-  assert.equal(failureStep.includes('retention-days: 3\n'), false);
-  // The always-uploaded bundle keeps its reviewed 3-day retention for successful runs.
-  const normalStep = workflow.split('Upload sanitized editorial artifacts')[1]?.split('Retain failure evidence for triage')[0] || '';
-  assert.match(normalStep, /if: \$\{\{ always\(\) \}\}/u);
-  assert.match(normalStep, /retention-days: 3/u);
+  assert.equal(workflow.includes('Retain failure evidence for triage'),false);
+  const receipt=workflow.split('Upload safe editorial diagnostic receipt')[1];
+  assert.ok(receipt);
+  assert.ok(receipt.includes("if: always() && steps.diagnostic_receipt.outcome == 'success'"));
+  assert.ok(receipt.includes('safe-diagnostic-receipt.json'));
+  for(const raw of ['deepseek-failure-latest.json','editorial-input-latest.json','deepseek-output-latest.json'])assert.equal(receipt.includes(raw),false);
+  assert.match(receipt,/retention-days: 3/u);
+  assert.equal(receipt.includes('retention-days: 30'),false);
 });

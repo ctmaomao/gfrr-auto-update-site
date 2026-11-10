@@ -269,6 +269,7 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
   if (input?.scoringSnapshot?.contractVersion === 'bubble-watch-v3' && root.scorecardSynthesisZh !== input.scoringSnapshot.scorecardDisclosureZh) errors.push('output qualified scorecard must copy the supplied deterministic disclosure exactly');
 
   const limited = options.metadataOnly && typeof options.limitedEvidence === 'boolean' ? options.limitedEvidence : isLimitedEvidence(input);
+  if (root.historicalComparison !== undefined && root.historicalComparison !== null && !isRecord(root.historicalComparison)) errors.push('output.historicalComparison must be an object or null');
   const timeline = requireArray(root.weeklyTimeline, 'output.weeklyTimeline', errors, { min: 0, max: 8 });
   requireArray(root.keyTensions, 'output.keyTensions', errors, { min: 0, max: 6 });
   const categories = requireArray(root.categoryAnalysis, 'output.categoryAnalysis', errors, { min: 0, max: 6 });

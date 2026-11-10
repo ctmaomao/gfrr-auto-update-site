@@ -136,6 +136,7 @@ jobs:
 
       - name: Run one DeepSeek editorial call
         if: steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_provider
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_BUDGET_GITHUB_TOKEN: ${{ github.token }}
@@ -150,6 +151,7 @@ jobs:
 
       - name: Review and project display-only production layer
         if: steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_review
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
@@ -158,6 +160,7 @@ jobs:
 
       - name: Write weekly editorial field
         if: steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_writer
         run: |
           npm run write:bubble-watch-weekly-editorial -- \
             --input manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json \
@@ -188,6 +191,7 @@ jobs:
 
       - name: Commit refreshed weekly editorial
         if: steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_save
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -215,31 +219,23 @@ jobs:
           git diff --quiet --exit-code
           echo "SKIPPED_NO_CREDIBLE_NEWS: no DeepSeek call and no production write."
 
-      - name: Upload sanitized editorial artifacts
-        if: ${{ always() }}
+
+      # ADR-0103: no raw input/candidate/review/projection artifacts, even after success.
+      - name: Prepare safe editorial diagnostic receipt
+        if: always()
+        id: diagnostic_receipt
+        env:
+          EDITORIAL_PROVIDER_OUTCOME: ${{ steps.editorial_provider.outcome }}
+          EDITORIAL_REVIEW_OUTCOME: ${{ steps.editorial_review.outcome }}
+          EDITORIAL_WRITER_OUTCOME: ${{ steps.editorial_writer.outcome }}
+          EDITORIAL_SAVE_OUTCOME: ${{ steps.editorial_save.outcome }}
+        run: node scripts/write-editorial-diagnostic-receipt.mjs --consumer bubble
+
+      - name: Upload safe editorial diagnostic receipt
+        if: always() && steps.diagnostic_receipt.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: bubble-watch-weekly-editorial-${{ github.run_id }}
-          path: |
-            manual-artifacts/bubble-watch-weekly-editorial/news-discovery-latest.json
-            manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json
-            manual-artifacts/bubble-watch-weekly-editorial/deepseek-output-latest.json
-            manual-artifacts/bubble-watch-weekly-editorial/deepseek-failure-latest.json
-            manual-artifacts/bubble-watch-weekly-editorial/quality-review-latest.json
-            manual-artifacts/bubble-watch-weekly-editorial/production-projection-latest.json
-          if-no-files-found: warn
+          path: manual-artifacts/bubble-watch-weekly-editorial/safe-diagnostic-receipt.json
+          if-no-files-found: error
           retention-days: 3
-
-      # Failed runs keep only their diagnostic evidence for longer: the weekly cadence and
-      # the midweek triage window are longer than the 3-day bundle above. Successful runs
-      # are not extended.
-      - name: Retain failure evidence for triage
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: bubble-watch-weekly-editorial-failure-${{ github.run_id }}
-          path: |
-            manual-artifacts/bubble-watch-weekly-editorial/editorial-input-latest.json
-            manual-artifacts/bubble-watch-weekly-editorial/deepseek-failure-latest.json
-          if-no-files-found: warn
-          retention-days: 30

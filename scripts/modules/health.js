@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=onrrp-wording-20261109';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=onrrp-wording-20261109';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=editorial-review-20261110-r2';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=editorial-review-20261110-r2';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

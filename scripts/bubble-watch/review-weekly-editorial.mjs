@@ -43,7 +43,7 @@ async function main() {
   if (review.status === 'fail') process.exitCode = 1;
 }
 
-main().catch((error) => {
-  console.error(`Bubble Watch weekly editorial review failed: ${error.message}`);
+main().catch(() => {
+  console.error('Bubble Watch weekly editorial review failed: details withheld; see safe diagnostic receipt');
   process.exitCode = 1;
 });
