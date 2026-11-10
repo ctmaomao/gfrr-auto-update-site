@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 Bubble news excerpt eligibility repair
+
+- **Acceptance baseline / last base**: isolated from main `512987e5` under the ongoing evidence-correctness review. Keep all financial grounding, source dates, score proofs, provider budgets and output review gates; no provider/search call or production generation.
+- **Current task**: reject navigation/related-story contamination and newsletter masthead/agenda text before clustering and trust upgrades; recheck excerpt eligibility at readiness and compact projection even if incoming metadata claims `attributed_media`. Rejected text is removed, with at most title/URL discovery context retained. Substantive newsletter analysis and generic scripts remain eligible only for the supplied attributed commentary, never invented company events or dates.
+- **Validation**: synthetic benign regressions cover collection, dual/single-search readiness, forged labels, pre-truncation filtering, corroboration isolation and unchanged financial snapshots. Private offline replay of the retained three-media-story input leaves one usable commentary source, retains single-search disclosure, removes both rejected excerpts from the provider prompt, and preserves the source digest, scoring snapshot and structured facts. Full checks and independent exact-tree review pending.
+- **Next / limits**: freeze for independent review after full checks; coordinator controls serial integration and any later authorized generation. No raw diagnostic excerpts committed; no checker assertion, workflow, dependency, data, ledger or scoring changes. This is bounded contamination detection, not proof that all search snippets match their article or are independently verified.
+
+
 ### 2026-11-10 ARR public-copy normalization repair
 
 - **Acceptance baseline / last base**: isolated from main `5523df1c`; failed free refresh `42725494353` stopped safely before publication. Preserve historical ARR disclosures, original review/candidate dates, all scores and freshness gates; no production regeneration or provider calls here.

@@ -1,3 +1,4 @@
+import { excerptEligibility } from './editorial-evidence-policy.mjs';
 import { evidenceAwareNote } from './evidence-wording.mjs';
 import { createHash } from 'node:crypto';
 import { assessWeeklyEditorialNewsReadiness, usableLimitedSearchStory } from './weekly-editorial-news.mjs';
@@ -92,7 +93,8 @@ function buildCompactNewsContext(discovery) {
     .slice(0, MAX_INPUT_NEWS_STORIES)
     .map((story) => ({
       ...story,
-      snippet: compactText(story.snippet, 360)
+      snippet: excerptEligibility(story).eligible ? compactText(story.snippet, 360) : null,
+      ...(!excerptEligibility(story).eligible ? { evidenceStatus: 'discovery_only', contentScope: 'title_only' } : {})
     }));
   const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
     status: status?.status || 'unavailable',
