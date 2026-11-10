@@ -1,4 +1,4 @@
-import { sanitizeNewsStory } from '../lib/editorial-news-hygiene.mjs';
+import { compactNewsStory } from '../lib/editorial-news-hygiene.mjs';
 import { evidenceAwareNote } from './evidence-wording.mjs';
 import { createHash } from 'node:crypto';
 import { assessWeeklyEditorialNewsReadiness, usableLimitedSearchStory } from './weekly-editorial-news.mjs';
@@ -91,8 +91,7 @@ function buildCompactNewsContext(discovery) {
       return true;
     })
     .slice(0, MAX_INPUT_NEWS_STORIES)
-    .map(sanitizeNewsStory)
-    .map(story => ({ ...story, snippet: compactText(story.snippet, 360) }));
+    .map(story => compactNewsStory(story, 360));
   const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
     status: status?.status || 'unavailable',
     successCount: Number.isInteger(status?.successCount) ? status.successCount : 0,
