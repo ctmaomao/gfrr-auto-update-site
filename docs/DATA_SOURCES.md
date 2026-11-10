@@ -693,6 +693,8 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016 / ADR-0019)
 
+**2026-11-10 r6 窄范围更正**：[ADR-0101](ADR/0101-bubble-observation-evidence-r6.md) 保留 ARR 45 天门槛，原观察过期后不再因周报复核而沿用红灯；登记有来源绑定的未知。企业项使用 KPMG 显著员工采用率相邻季度比较，原发布日期 9/24、120 天门槛、reviewed_curated；Google/Wind 生产部署率不是该项替身。VC 原发布日 10/5，ARR 历史观测 7/31，周报 11/8 单列复核。此登记仅替代下述旧口径的相应部分，不晋升 Epoch、不增加请求或放宽缺证门槛。
+
 2026-11-03 来源续审（运行尚未激活）：[免费证据复核](BUBBLE_ABS_CAPEX_FREE_SOURCE_REVIEW_2026_11_03.md)与[ADR-0083](ADR/0083-bubble-october-capex-source-continuation.md)登记十月四家公司新季度，保持固定四家、原窗口与阈值。独立v2面板增加微软七月官方同口径比较凭据，总请求仍最多20，完整证明严格20次；旧v1/七月collector及runtime选择不变。正式运行须后续独立接线并重新采集，不能晋升研究产物。ABS未取得同债项/分层的三期匹配报价，注册表与观测继续为空；部门/新发行利差不补位。免费任务不派发AI，评分披露变化时旧AI快照按原合同失效。
 
 2026-11-03 独立运行接线：来源PR #498经CI/审核合并后，builder在2026-10-30及以后显式选择已审十月集合，七月历史回放保留。手动`Refresh Bubble Qualified Evidence`仅通过既有qualified-only路径免费重新核验四项，禁用Wind且不注入付费源/AI凭据；不运行完整周更。`check:all`及独立发布守卫通过后只提交两份Bubble数据，保留23卡原观测与完整刷新锚点；失败不提交。Pages按成功workflow_run发布，EdgeOne只请求现有带额度/无变化/校验保护的发布器，不触发AI。实际正式运行和两站结果以PROJECT_BACKLOG/回执为准，候选不晋升生产。

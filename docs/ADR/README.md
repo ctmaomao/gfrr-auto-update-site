@@ -161,3 +161,5 @@
 - [ADR-0096: Manual balance-shape diagnosis](0096-deepseek-balance-shape-diagnostic.md) — single read-only GET, sanitized structure only, unchanged paid admission.
 
 - [ADR-0097: CNY-only one-shot balance admission](0097-one-shot-cny-balance-admission.md) — exact CNY funding, optional zero USD metadata, unchanged monthly gate and spending grant.
+
+- [ADR-0101: Bubble original observations and r6 eligibility](0101-bubble-observation-evidence-r6.md) — original dates, source-bound ARR uncertainty, coherent KPMG metric and immutable model epochs.

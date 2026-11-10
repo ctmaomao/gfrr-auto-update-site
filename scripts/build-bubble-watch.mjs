@@ -1,10 +1,13 @@
+import { computeEvidenceSimilarity } from './bubble-watch/evidence-similarity.mjs';
+import { syncUpstreamObservation, buildEnterpriseObservationProjection } from './bubble-watch/source-observation.mjs';
+import { buildArrGap, parseArrStaleFailure, ARR_MAX_AGE_DAYS } from './bubble-watch/arr-evidence.mjs';
 import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote } from './bubble-watch/evidence-wording.mjs';
 import { collectQualifiedCashFlowConcept, qualifyMirrorCashFlows, requireCashFlowPeriodFloor, alignCashFlowPeriods, CASH_CAPEX_TAGS, OPERATING_CASH_FLOW_TAGS } from './bubble-watch/cash-flow-periods.mjs';
 import { preservePreviousWeeklyIssue } from './bubble-watch/previous-weekly-issue.mjs';
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
 import { collectOctoberCapexPanel } from './bubble-watch/capex-october-panel.mjs';
 import { buildQuarterlyCapexIndicator } from './bubble-watch/capex-quarterly-indicator.mjs';
-import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores } from './bubble-watch/evidence-score-contract.mjs';
+import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores, validateEvidenceScoreFields } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { collectInsiderWindows } from './bubble-watch/insider-window-collector.mjs';
 import { buildQualifiedInsiderIndicator } from './bubble-watch/insider-indicator.mjs';
@@ -94,7 +97,7 @@ const QUALIFIED_INDICATOR_IDS = METHOD_ORDER.slice(0, EVIDENCE_REVISION);
 const QUALIFIED_REFRESH_ONLY = process.argv.includes('--refresh-qualified-only');
 const QUALIFIED_PUBLISH = process.argv.includes('--publish-qualified');
 if (QUALIFIED_PUBLISH && !QUALIFIED_REFRESH_ONLY) throw new Error('Qualified publish requires --refresh-qualified-only');
-if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4,5].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3, 4 or 5');
+if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4,5,6].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3, 4, 5 or 6');
 const BUBBLE_WATCH_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-v3' : 'bubble-watch-v2';
 const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2';
 const SCORING_MODEL_VERSION = EVIDENCE_REVISION ? evidenceModelVersion(EVIDENCE_REVISION) : 'bubble-watch-v2-core23-shadow4';
@@ -2325,16 +2328,23 @@ async function fetchArrSecondDerivativeFromSaastr(_ctx, entry) {
   const slopeRatio = latest.monthlyDeltaB / prev.monthlyDeltaB;
   const status = slopeRatio < 0.5 ? 'red' : slopeRatio < 0.85 ? 'yellow' : 'green';
   const latestMilestone = milestones[milestones.length - 1];
-  const underlyingObservationFreshness = requireFreshUnderlyingObservation({
+  let underlyingObservationFreshness;
+  try { underlyingObservationFreshness = requireFreshUnderlyingObservation({
     observationDate: latestMilestone.date,
     asOfDate: isoDate(),
-    maxAgeDays: Number(entry?.maxAgeDays)
-  });
+    maxAgeDays: ARR_MAX_AGE_DAYS
+  }); } catch (error) {
+    error.arrRejectionEvidence = { kind: 'saastr_four_post_series', source: 'SaaStr WordPress public API',
+      milestones: milestones.map(({ date, arrB, sourceId }) => ({ date, arrB, sourceId })) };
+    throw error;
+  }
+  if (entry?.maxAgeDays !== ARR_MAX_AGE_DAYS) throw new Error('arr_age_policy_mismatch');
   const display = status === 'red' ? '减速' : status === 'yellow' ? '高位放缓' : '加速中';
   return {
     status,
     value_display: display,
     source_name: 'SaaStr public ARR milestone monitor',
+    as_of: latestMilestone.date,
     note: `SaaStr 公开 Anthropic ARR/run-rate 里程碑解析:${milestones.map((m) => `${m.date} $${m.arrB.toFixed(0)}B`).join(' → ')};最新区间月增量约 $${latest.monthlyDeltaB.toFixed(1)}B,为前一区间的 ${slopeRatio.toFixed(2)}x。该项是公开估算里程碑 proxy,不是审计收入。阈值:明显减速=红 / 高位放缓=黄 / 维持加速=绿`,
     detail: {
       source: 'SaaStr WordPress public API',
@@ -3811,13 +3821,11 @@ async function syncCuratedFromUpstream(config) {
     for (const [id, entry] of Object.entries(config[bucket] || {})) {
       if (UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST.has(id)) continue;
       const up = byId.get(id);
-      if (!up || !STATUS_RANK.hasOwnProperty(up.status)) continue;
-      if (upstream.as_of_date > entry.asOfDate) {
-        entry.status = up.status;
-        entry.value_display = String(up.value_display ?? up.value ?? entry.value_display).slice(0, 40);
-        if (typeof up.note === 'string' && up.note.length > 20) entry.note = up.note.slice(0, 800);
-        entry.asOfDate = upstream.as_of_date;
-        entry.syncedFromUpstream = true;
+      if (!up) continue;
+      const observation = syncUpstreamObservation({ id, entry, upstreamIndicator: up,
+        reportDate: upstream.as_of_date, today: isoDate() });
+      if (observation.accepted && observation.changed) {
+        config[bucket][id] = observation.entry;
         adopted += 1;
       }
     }
@@ -3858,7 +3866,8 @@ function buildCuratedIndicator(def, entry, today) {
     note: stale ? `${entry.note}(沿用 ${entry.asOfDate} 口径)` : entry.note,
     as_of: entry.asOfDate,
     stale,
-    provenance: { mode: 'curated', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays }
+    provenance: { mode: 'curated', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays,
+      ...(entry.sourceObservation ? { reviewAsOfDate: entry.reviewAsOfDate, reportAsOfDate: entry.reportAsOfDate, detail: { sourceObservation: entry.sourceObservation } } : {}) }
   };
 }
 
@@ -3872,7 +3881,8 @@ function buildFallbackIndicator(def, entry, today, reason) {
     note: `${entry.note}(实时抓取失败,沿用 ${entry.asOfDate} 快照)`,
     as_of: entry.asOfDate,
     stale,
-    provenance: { mode: 'auto_fallback', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays, reason }
+    provenance: { mode: 'auto_fallback', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays, reason,
+      ...(entry.sourceObservation ? { reviewAsOfDate: entry.reviewAsOfDate, reportAsOfDate: entry.reportAsOfDate, detail: { sourceObservation: entry.sourceObservation } } : {}) }
   };
 }
 
@@ -4201,6 +4211,7 @@ function publicIndicatorNote(ind) {
 }
 
 function publicIndicatorSourceName(ind) {
+  if (ind.provenance?.detail?.sourceObservation || ind.evidence_gap?.policy === 'arr-observation-eligibility-v1') return ind.source_name;
   if (ind.evidence_gap?.policy === 'bubble-qualified-evidence-v1') return ind.source_name;
   if (['insider_fixed_12_30_90_v1','fed_market_path_collection_v1','capex_latest_quarterly_call_association_v1'].includes(ind.provenance?.detail?.policy)) return ind.source_name;
   if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
@@ -4224,43 +4235,6 @@ function tierFromPct(p) {
   return 'observation';
 }
 
-const HISTORICAL_PERIODS = [
-  { period: '1999-06', label_zh: '互联网泡沫顶前 9 个月', label_en: '9 months before dot-com top' },
-  { period: '2000-02', label_zh: '互联网泡沫顶前 1 个月', label_en: '1 month before dot-com top' },
-  { period: '2007-10', label_zh: '金融危机股市顶', label_en: 'GFC equity top' },
-  { period: '2021-11', label_zh: '成长股/SPAC 顶', label_en: 'Growth/SPAC top' }
-];
-
-// ponytail: Similarity uses only Core-23 rows with a reviewed historical analogue.
-// spy_vs_rsp_6m remains core-scored but stays outside similarity until reviewed;
-// Shadow-4 rows are naturally absent from the current-status map passed here.
-const HISTORICAL_CALIBRATION_ROWS = {
-  cape: ['red', 'red', 'yellow', 'red'],
-  top5_weight: ['yellow', 'red', 'green', 'yellow'],
-  nvda_fpe: ['red', 'red', 'green', 'red'],
-  private_secondary_marks: ['green', 'green', 'yellow', 'green'],
-  hyperscaler_capex_yoy: ['yellow', 'yellow', 'green', 'yellow'],
-  mag4_fcf_yoy: ['yellow', 'red', 'green', 'green'],
-  vc_ai_share: ['red', 'red', 'green', 'red'],
-  nvda_invest_revenue: ['yellow', 'red', 'green', 'green'],
-  breadth_50d: ['yellow', 'red', 'red', 'red'],
-  insider_sell_buy: ['yellow', 'red', 'yellow', 'red'],
-  ai_ipo_pipeline: ['red', 'red', 'yellow', 'red'],
-  hy_oas: ['yellow', 'yellow', 'yellow', 'green'],
-  dc_abs_spread: ['yellow', 'yellow', 'red', 'green'],
-  neocloud_credit: ['green', 'yellow', 'red', 'green'],
-  debt_capex_ratio: ['yellow', 'red', null, 'green'],
-  token_volume_mom: ['green', 'green', null, 'green'],
-  gpu_rental_price: ['green', 'yellow', null, 'green'],
-  arr_2nd_deriv: ['green', 'yellow', null, 'green'],
-  enterprise_deploy: ['green', 'yellow', null, 'green'],
-  cloud_rpo_growth: ['green', 'green', null, 'green'],
-  frontier_progress: ['green', 'green', null, 'green'],
-  accounting_events: ['green', 'yellow', 'yellow', 'yellow'],
-  fed_policy: ['red', 'red', 'green', 'red'],
-  capex_reaction: ['green', 'yellow', null, 'green'],
-  ceo_hedging: ['green', 'yellow', 'yellow', 'yellow']
-};
 
 function meanStatusScore(items) {
   return Number((items.reduce((sum, item) => sum + AXIS_SCORE[item.status], 0) / items.length).toFixed(1));
@@ -4292,31 +4266,7 @@ function computeMomentum(indicators, prevEntry) {
   return { deteriorated, improved, net: deteriorated - improved };
 }
 
-function computeSimilarity(indicators) {
-  const current = new Map(indicators.map((item) => [item.id, item.status]));
-  return HISTORICAL_PERIODS.map((period, periodIndex) => {
-    let matched = 0;
-    let denominator = 0;
-    for (const [id, row] of Object.entries(HISTORICAL_CALIBRATION_ROWS)) {
-      // Refitted indicators lack comparable historical inputs: ABS needs matched bond spreads,
-      // insiders need fixed 30/90d coverage, capex needs guidance events, Fed needs a 3/6m market curve.
-      // Unlock each only after a reviewed historical calibration for that definition.
-      if (EVIDENCE_REVISION && METHOD_ORDER.slice(0, EVIDENCE_REVISION).includes(id)) continue;
-      const historical = row[periodIndex];
-      const status = current.get(id);
-      if (!historical || !status) continue;
-      denominator += 1;
-      const distance = Math.abs(STATUS_RANK[status] - STATUS_RANK[historical]);
-      matched += distance === 0 ? 1 : distance === 1 ? 0.5 : 0;
-    }
-    return {
-      ...period,
-      match_pct: Math.round((matched / denominator) * 100),
-      denominator,
-      basis: 'core_calibrated_indicators_only'
-    };
-  }).sort((a, b) => b.match_pct - a.match_pct);
-}
+
 
 function replayCoreHistoryEntry(entry) {
   if (!entry?.statuses || !CORE_INDICATOR_IDS.every((id) => ['red', 'yellow', 'green'].includes(entry.statuses[id]))) return null;
@@ -4589,7 +4539,7 @@ function buildVerdictDescFromNarrativePlan(plan, fallbackDesc) {
 }
 
 function computeSummary(indicators, today, prevEntry, meta) {
-  if (EVIDENCE_REVISION) return summarizeEvidence(indicators, today, prevEntry, { revision: EVIDENCE_REVISION, promotionPolicy: SHADOW_PROMOTION_POLICY, similarity: computeSimilarity(indicators.filter(i => i.score_role === 'core')) });
+  if (EVIDENCE_REVISION) return summarizeEvidence(indicators, today, prevEntry, { revision: EVIDENCE_REVISION, promotionPolicy: SHADOW_PROMOTION_POLICY, similarity: computeEvidenceSimilarity(indicators, EVIDENCE_REVISION) });
   const total = indicators.length;
   const displayRed = indicators.filter((i) => i.status === 'red').length;
   const displayYellow = indicators.filter((i) => i.status === 'yellow').length;
@@ -4616,7 +4566,7 @@ function computeSummary(indicators, today, prevEntry, meta) {
     meanStatusScore(coreIndicators.filter((item) => item.category === cat.key))
   ]));
   const momentum = computeMomentum(coreIndicators, prevEntry);
-  const similarity = computeSimilarity(coreIndicators);
+  const similarity = computeEvidenceSimilarity(coreIndicators, EVIDENCE_REVISION);
 
   const baseTier = tierFromPct(redPct);
   // 分类强制升级:红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」
@@ -4785,6 +4735,12 @@ async function main() {
       throw new Error('Qualified refresh requires an immutable complete-refresh anchor within 35 days');
     }
   }
+  if (QUALIFIED_REFRESH_ONLY && EVIDENCE_REVISION >= 6) {
+    if (previousQualifiedOutput.scoring?.model_version !== SCORING_MODEL_VERSION
+      || validateEvidenceScoreFields({ ...previousQualifiedOutput, as_of_date: isoDate() }).length) {
+      throw new Error('Qualified refresh cannot renew carried r6 evidence; run a complete free refresh');
+    }
+  }
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
   const creditConfig = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/bubble-credit-spreads.json'), 'utf8'));
   const creditEnabled = creditPublicationEnabled(creditConfig);
@@ -4904,6 +4860,17 @@ async function main() {
       else throw new Error(`Unknown carried evidence origin: ${def.id}`);
       continue;
     }
+    if (EVIDENCE_REVISION >= 6 && def.id === 'enterprise_deploy') {
+      const entry = config.curated[def.id];
+      const observation = buildEnterpriseObservationProjection(entry, today);
+      if (!observation.ok) throw new Error(`Enterprise reviewed observation unavailable: ${observation.reason}`);
+      const { name_en, name_zh, threshold_text, source_name, status, value_display, note, asOfDate, ageDays, maxAgeDays, detail } = observation;
+      indicators.push({ ...baseIndicator(def), name_en, name_zh, threshold_text, source_name, status, value_display, note,
+        as_of: asOfDate, stale: false, provenance: { mode: 'curated', asOfDate, ageDays, maxAgeDays,
+          reviewAsOfDate: entry.reviewAsOfDate, reportAsOfDate: entry.reportAsOfDate, detail } });
+      curatedCount += 1;
+      continue;
+    }
     if (def.mode === 'curated') {
       const entry = config.curated[def.id];
       if (!entry) throw new Error(`config curated 缺指标 ${def.id}`);
@@ -4980,6 +4947,13 @@ async function main() {
           const fallbackReason = windFallbackBuilder && !WIND_API_KEY
             ? `${candidate.automationStatus} source failed: ${error.message}; paid Wind final fallback skipped: WIND_API_KEY 未配置或已禁用`
             : `${candidate.automationStatus} source failed: ${error.message}`;
+          if (EVIDENCE_REVISION >= 6 && def.id === 'arr_2nd_deriv'
+            && parseArrStaleFailure(error.message, today) && daysBetween(entry.asOfDate, today) > ARR_MAX_AGE_DAYS) {
+            indicators.push(buildArrGap(baseIndicator(def), entry, today, error.message, new Date().toISOString(), error.arrRejectionEvidence));
+            autoCount += 1;
+            hybridCount += 1;
+            continue;
+          }
           const fallbackIndicator = buildFallbackIndicator(def, entry, today, fallbackReason);
           if (error.evidenceGate) fallbackIndicator.provenance.evidenceGate = error.evidenceGate;
           indicators.push(fallbackIndicator);
@@ -5133,6 +5107,9 @@ async function main() {
           .map(([id]) => id),
         hybrid_paid_optional_ids: Object.entries(sourceCandidates.indicators || {})
           .filter(([, candidate]) => candidate?.automationStatus === 'hybrid_paid_optional')
+          .map(([id]) => id),
+        reviewed_curated_ids: Object.entries(sourceCandidates.indicators || {})
+          .filter(([, candidate]) => candidate?.automationStatus === 'reviewed_curated')
           .map(([id]) => id),
         candidate_only_ids: Object.entries(sourceCandidates.indicators || {})
           .filter(([, candidate]) => candidate?.automationStatus === 'candidate_only')

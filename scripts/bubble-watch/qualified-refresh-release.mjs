@@ -11,7 +11,7 @@ const week=date=>{const n=Date.parse(`${date}T00:00:00Z`),weekday=new Date(n).ge
 export function verifyQualifiedRefresh({before,beforeHistory,after,history,today=new Date().toISOString().slice(0,10),now=()=>Date.now()}){
  const errors=[],check=(ok,label)=>{if(!ok)errors.push(label);};
  try{
-  check(before.contractVersion==='bubble-watch-v3'&&before.scoring.model_version==='bubble-watch-v3-core23-shadow4-r5','baseline must be current r5');
+  check(before.contractVersion==='bubble-watch-v3'&&['bubble-watch-v3-core23-shadow4-r5','bubble-watch-v3-core23-shadow4-r6'].includes(before.scoring.model_version),'baseline must be reviewed r5 or r6');
   check(after.contractVersion===before.contractVersion&&after.scoring.model_version===before.scoring.model_version,'model changed');
   check(after.as_of_date===today&&before.as_of_date<=today&&Number.isFinite(Date.parse(after.generated_at))&&Date.parse(after.generated_at)<=now(),'refresh date invalid');
   check(validateEvidenceScoreFields(after).length===0,'score replay invalid');

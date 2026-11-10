@@ -1,3 +1,5 @@
+import { validateEnterpriseObservationRecord } from './bubble-watch/source-observation.mjs';
+import { computeEvidenceSimilarity } from './bubble-watch/evidence-similarity.mjs';
 // check-bubble-watch.mjs — AI 泡沫监测(Bubble Watch)契约检查
 //
 // leaf 检查:
@@ -127,7 +129,7 @@ const gdeltBubbleCache = JSON.parse(read('data/gdelt-bubble-watch-cache.json'));
 
 // ---- 1. contract ----
 check('contract', methodConfig.contractVersion === 'bubble-qualified-methods-v1'
-  && Number.isInteger(methodConfig.activeRevision) && methodConfig.activeRevision >= 0 && methodConfig.activeRevision <= 5
+  && Number.isInteger(methodConfig.activeRevision) && methodConfig.activeRevision >= 0 && methodConfig.activeRevision <= 6
   && Array.isArray(methodConfig.approvedAbsSourceReviews)
   && (methodConfig.absObservation === null || (typeof methodConfig.absObservation === 'object' && !Array.isArray(methodConfig.absObservation))),
   'qualified method deployment configuration invalid');
@@ -185,8 +187,12 @@ if (isV3) {
   try { evidenceReplay = replayEvidenceScores(data.indicators, evidenceRevision); } catch (error) { check('contract', false, error.message); }
   // r3 is pending-only: no complete latest-event adapter or numeric rule admitted.
   // r4 admits only the separately reviewed 3/6-month daily-bar proxy proof.
-  check('contract', [1, 2, 3, 4, 5].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
+  check('contract', [1, 2, 3, 4, 5, 6].includes(evidenceRevision) && methodConfig.activeRevision === evidenceRevision,
     'v3 method revision is not supported/activated by the reviewed source policy');
+  if (evidenceRevision === 6) {
+    check('contract', validateEnterpriseObservationRecord(indicatorById.enterprise_deploy, data.as_of_date), 'KPMG enterprise source proof does not replay');
+    check('contract', JSON.stringify(s.similarity) === JSON.stringify(computeEvidenceSimilarity(data.indicators, 6)), 'r6 historical comparison must exclude unknown/incomparable evidence');
+  }
   const abs = indicatorById.dc_abs_spread;
   const qualified = qualifyDataCenterSpread(methodConfig.absObservation, data.as_of_date, methodConfig.approvedAbsSourceReviews);
   check('contract', abs?.status === qualified.status, 'ABS status differs from qualified direct spread evidence');
@@ -383,12 +389,13 @@ check('contract', CURATED_ORIGIN_IDS.every((id) => candidateEntries[id]) && Obje
   `source candidates 必须覆盖 ${CURATED_ORIGIN_IDS.length} 个 curated-origin 指标(got ${Object.keys(candidateEntries).length})`);
 for (const id of CURATED_ORIGIN_IDS) {
   const entry = candidateEntries[id] || {};
-  check('contract', ['hybrid_live', 'hybrid_paid_optional', 'candidate_only'].includes(entry.automationStatus), `${id} automationStatus 非法: ${entry.automationStatus}`);
+  check('contract', (['hybrid_live', 'hybrid_paid_optional', 'candidate_only'].includes(entry.automationStatus)
+    || (id === 'enterprise_deploy' && evidenceRevision === 6 && entry.automationStatus === 'reviewed_curated')), `${id} automationStatus 非法: ${entry.automationStatus}`);
   check('contract', typeof entry.primarySignal === 'string' && entry.primarySignal.length >= 10, `${id} 缺 primarySignal`);
   check('contract', Array.isArray(entry.freeSourceCandidates) && entry.freeSourceCandidates.length >= 1, `${id} 缺 freeSourceCandidates`);
 }
 for (const id of HYBRID_LIVE_IDS) {
-  check('contract', candidateEntries[id]?.automationStatus === 'hybrid_live', `${id} 必须保持 hybrid_live`);
+  check('contract', candidateEntries[id]?.automationStatus === (id === 'enterprise_deploy' && evidenceRevision === 6 ? 'reviewed_curated' : 'hybrid_live'), `${id} 必须保持登记的来源自动化政策`);
 }
 for (const id of HYBRID_PAID_OPTIONAL_IDS) {
   check('contract', candidateEntries[id]?.automationStatus === 'hybrid_paid_optional', `${id} 必须保持 hybrid_paid_optional`);

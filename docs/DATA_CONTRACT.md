@@ -2515,6 +2515,9 @@ M-5(design-only):future `marketPricingTemperatureLayer` 须 display-only、须�
 
 ## bubble-watch 专题数据契约 (ADR-0016 / ADR-0019)
 
+[ADR-0101](ADR/0101-bubble-observation-evidence-r6.md) 明确登记 r6：ARR 45 天过龄且两条来源证明均可重放时保留未知；历史锚点、被拒候选与来源指纹不丢失。企业项迁移为 KPMG 同口径显著员工采用率季度变化，120 天、原调查/发布日期和 typed proof 必须通过；reviewed_curated 不再走 Google/Wind 部署率替身。此窄范围替代下方旧企业 hybrid 与 ARR 新复核快照可续期的描述，其它阈值、Core23/Shadow4、旧 epoch 和来源失败硬门槛不变。所有 upstream 同步将观察日与周报复核日分开。四项定向刷新不会续期 r6 带入证明，跨日不合格时在请求前要求完整免费刷新。
+
+
 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 已批准 v3 固定Core-23/Shadow-4证据缺口契约，r1迁移ABS，r2已接入内部人；r3已接入capex事件缺口，r4本轮在独立来源契约#463合并后启用Fed 3/6月市场路径。仅已登记且已迁移核心项可为unknown，附精确reasonCode、检查日、auto检查时间；缺观测日null。主分/压力及受影响的轴/分类点值null，后端发布原固定分母的上下界；区间不是概率。原分档/共振升级规则不变，两端有效档位一致才发布保证档位，否则“判读待确认”。v2按以下旧契约兼容读取，不把unknown转换成零或绿灯。
 
 v3历史按模型epoch保留原记录，不再重贴旧灯色模型；每个当前模型最多滚动16条，点趋势最多10个同模型完整观测，初期可空且页面明确“待累计”。定向更新保留完整刷新anchor及各卡原日期，不能续期旧包。AI输入/生产投影必须保存可重放计分快照并与当期数据绑定，v3评分段逐字使用确定性披露，旧或篡改编辑层回退正文。页面直接展示后端区间和中性待确认，不重算评分。

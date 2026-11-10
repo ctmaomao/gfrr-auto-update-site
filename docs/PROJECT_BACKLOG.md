@@ -1,5 +1,15 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 Bubble observation and r6 evidence repair
+
+- **Acceptance baseline / last base**: initial main `836296ca` after #529 quarantine acceptance, integrated onto #530 main `16a6cea1` with all news hygiene changes and non-Bubble data retained. Owner requests rigorous upstream/site comparison and correction of substantive scoring evidence, not copying the higher headline score. Preserve Core23/Shadow4, all old history, 45/120-day gates, main financial scoring, Epoch candidacy and no paid calls.
+- **Current task**: [ADR-0101](ADR/0101-bubble-observation-evidence-r6.md) corrects observation versus review dates, source-binds the expired ARR unknown, and explicitly aligns the enterprise label/threshold/proof to KPMG workforce adoption. A bounded offline migration changes three cards, preserves 24, appends r6 and discloses 21.7–34.8% / 39.1–52.2% bounds; lower bounds do not indicate risk improvement. Historical similarity excludes unknown/incomparable definitions.
+- **Validation**: 31 dedicated source/migration/score/date and actual-builder tests pass. Complete check:changed / check:all exit 0; measured unit suite 1,764 pass / one existing skip / zero fail (99.86/93.23/97.96). Independent pre-review verified all three P2 repairs: source binding, typed upstream renewal/value laundering, and zero-request carried-proof expiry hold. Independent exact-tree signoff passed without P1/P2. Initial PR #531 CI passed units/full checks but exposed two browser tests replaying moving r6 data as r5. The repair preserves all existing assertions, freezes the r5 baseline and additionally exercises r6 at both widths; final-head checks and CI remain required.
+- **Next / limits**: integrate the separate news hygiene main first, then freeze and review the actual r6 tree before serial PR/CI/merge and dual-site acceptance. Editorial amendment remains held for final r6 binding. No network refresh, provider/search request, new dependency or paid call. Draft PR #531 is published; production remains unchanged pending final-head CI and dual-site acceptance.
+
+
+
+
 ### 2026-11-10 Shared editorial excerpt hygiene follow-up
 
 - **Acceptance baseline / last base**: isolated from main `e26a233f`; preserve all original retained-run files, production data and other worktrees. Owner authorized correction without another DeepSeek call; this patch only repairs future input handling, separately from article quarantine/amendment.

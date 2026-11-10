@@ -1,3 +1,5 @@
+import { isExpectedArrGapFailure } from '../../scripts/bubble-watch/arr-evidence.mjs';
+import { validateEnterpriseObservationRecord } from '../../scripts/bubble-watch/source-observation.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
@@ -54,7 +56,7 @@ test('source health warns about pending evidence while retaining checker hard fa
   const functionSource=source.slice(source.indexOf('function buildReport('),source.indexOf('function markdownReport('));
   const context=vm.createContext({allowPaidWind:false,EXPECTED_PAID_FALLBACK_IDS:[],EXPECTED_CANDIDATE_ONLY_IDS:new Set(),EVIDENCE_GAP_POLICIES:{},
     isExpectedPaidSkip:()=>false,isExpectedCandidateOnly:()=>false,isExpectedPolicyFallback:()=>false,isExpectedPolicyFetchFailure:()=>false,
-    isExpectedPolicyDegradedLiveRow:()=>false,sourceWarningLines:()=>[]});
+    isExpectedArrGapFailure, validateEnterpriseObservationRecord, isExpectedPolicyDegradedLiveRow:()=>false,sourceWarningLines:()=>[]});
   vm.runInContext(functionSource+'globalThis.report=buildReport;',context);
   const data={meta:{},indicators:[{id:'dc_abs_spread',status:'unknown',provenance:{mode:'auto'},evidence_gap:{reasonCode:'dc_abs_direct_spread_unavailable'}}]};
   const healthy={code:0,text:''};
