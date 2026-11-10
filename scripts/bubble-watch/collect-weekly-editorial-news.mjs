@@ -144,7 +144,7 @@ async function fetchBrave(topic, query, requestWithKeys, braveBudget) {
     title: item.title,
     url: item.url,
     publishedAt: item.page_age || item.age,
-    snippet: [item.description, ...(Array.isArray(item.extra_snippets) ? item.extra_snippets : [])].filter(Boolean).join(' ')
+    snippet: item.description
   }));
 }
 

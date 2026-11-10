@@ -186,7 +186,7 @@ test('writer recomputes indicator and news attribution rather than trusting a ne
 function corroborationDiscovery(extra = {}) {
   const row = { provider: 'brave', topic: 'ai_financing_credit', title: 'AI credit financing outlook',
     url: 'https://unknown-a.example/story', publishedAt: '2026-11-03', snippet };
-  return buildNewsDiscovery({ rawStories: [row, { ...row, url: 'https://unknown-b.example/story', ...extra }],
+  return buildNewsDiscovery({ rawStories: [row, { ...row, url: 'https://unknown-b.example/story', snippet: 'Separate reporting describes potential AI infrastructure funding benefits while emphasizing unresolved repayment and demand uncertainty. This does not establish a systemic credit event.', ...extra }],
     sourceStatus: { brave: healthy, tavily: failed }, generatedAt: '2026-11-03T01:00:00Z',
     windowStart: '2026-10-27', windowEnd: '2026-11-03' });
 }

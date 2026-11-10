@@ -174,7 +174,7 @@ test('targeted Bubble hits retain original attributed, official and cross-checke
   assert.equal(indexedTwice.stories[0].evidenceStatus, 'attributed_media');
   assert.equal(discover([row({ url: 'https://amd.com/synthetic-fixture' })]).stories[0].evidenceStatus, 'official');
   const crossChecked = discover([row({ url: 'https://one.example.org/synthetic-fixture' }),
-    row({ url: 'https://two.example.org/synthetic-fixture' })]);
+    row({ url: 'https://two.example.org/synthetic-fixture', snippet: 'Independent reporting notes that AI infrastructure funding may improve access to capital, but repayment risks and uncertain demand still warrant scrutiny.' })]);
   assert.equal(crossChecked.stories[0].evidenceStatus, 'cross_checked', 'retrieval list is not a new eligibility allowlist');
 });
 

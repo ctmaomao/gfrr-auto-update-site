@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 Shared editorial excerpt hygiene follow-up
+
+- **Acceptance baseline / last base**: isolated from main `e26a233f`; preserve all original retained-run files, production data and other worktrees. Owner authorized correction without another DeepSeek call; this patch only repairs future input handling, separately from article quarantine/amendment.
+- **Current task**: [ADR-0099](ADR/0099-shared-editorial-news-hygiene.md) shares Bubble/Macro excerpt rejection, prevents contaminated rows and syndicated releases donating trust, stops concatenating Brave extra fragments, and adds strict input guards. No existing assertion is removed or relaxed; coherent commentary and issuer-hosted primary releases retain original gates.
+- **Validation**: synthetic marker/prose, wire/duplicate independence, forged metadata and both mocked six-request collectors have focused tests; actual retained-source replay is private and enum-only. Full final-tree checks and independent review remain pending.
+- **Next / limits**: freeze with exact tree/blobs/patch for coordinator-controlled review and serial integration. No provider/search/account access, credential or ledger changes, generation, workflow dispatch, production edits, or remote mutation. Pattern eligibility is not proof of semantic article association or truth.
+
+
 ### 2026-11-10 Editorial search targeting
 
 - **Acceptance baseline / last base**: isolated from main `9ddf95eb`, integrated onto `ca8cf5b5` with all three newer radar data files preserved byte-for-byte; improve retrieval within the existing free-search allowance, without changing evidence, financial grounding, scoring, freshness, cost or publication gates. Coordinator controls final-main integration after checking the newer scheduled Daily inputs; the separate free Daily preparation is paused.

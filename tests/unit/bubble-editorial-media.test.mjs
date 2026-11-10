@@ -73,7 +73,7 @@ function runLiveCheck(pack) {
 }
 
 test('actual live-input CLI admits media-only evidence and preserves official/cross-checked admission', () => {
-  for (const rows of [[row()], [row('https://oag.ca.gov/news/press-releases/openai')], [row('https://example.org/news/ai'), row('https://example.net/news/ai')]]) {
+  for (const rows of [[row()], [row('https://oag.ca.gov/news/press-releases/openai')], [row('https://example.org/news/ai'), { ...row('https://example.net/news/ai'), snippet: 'Separately worded synthetic reporting notes AI infrastructure funding opportunities alongside uncertain demand and continuing repayment risks.' }]]) {
     const pack = livePack(rows);
     assert.equal(pack.discovery.stories.length, 1);
     const result = runLiveCheck(pack);

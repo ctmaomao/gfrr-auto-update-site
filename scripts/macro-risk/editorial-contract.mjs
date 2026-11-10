@@ -1,3 +1,4 @@
+import { evidenceEligibility } from '../lib/editorial-news-hygiene.mjs';
 import { OFR_INPUT_SCHEMA, OFR_OUTPUT_SCHEMA, validateOfrEditorialInput, validateOfrEditorialOutput, visibleOfrEditorialSections } from './editorial-ofr-contract.mjs';
 export { OFR_INPUT_SCHEMA, OFR_OUTPUT_SCHEMA, OFR_PRODUCTION_SCHEMA } from './editorial-ofr-contract.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'macro-risk-editorial-news-discovery-v1';
@@ -171,6 +172,8 @@ export function validateNewsDiscovery(discovery) {
     if (story?.evidenceStatus === 'cross_checked' && new Set(requireArray(story?.supportingDomains, `news discovery.stories[${index}].supportingDomains`, errors, { min: 2, max: 8 })).size < 2) {
       errors.push(`news discovery.stories[${index}] cross_checked requires two independent domains`);
     }
+    if (story?.snippet && !evidenceEligibility(story).eligible) errors.push(`news discovery.stories[${index}] contains ineligible excerpt`);
+    if (story?.evidenceStatus !== 'discovery_only' && !evidenceEligibility(story).eligible) errors.push(`news discovery.stories[${index}] requires eligible evidence`);
     if (typeof story?.snippet === 'string' && story.snippet.length > 360) errors.push(`news discovery.stories[${index}].snippet exceeds 360 characters`);
     for (const forbidden of ['raw', 'rawResponse', 'rawContent', 'headers', 'apiKey', 'authorization', 'fullArticleBody']) {
       if (Object.hasOwn(story || {}, forbidden)) errors.push(`news discovery.stories[${index}] contains forbidden field ${forbidden}`);
