@@ -1,7 +1,7 @@
 # ADR-0096: One-time balance-shape diagnosis without admission changes
 
 - Date: 2026-11-10.
-- Status: owner-authorized single-read diagnostic implementation; independent review and live execution pending.
+- Status: single authorized read completed; temporary credential-bearing workflow retired.
 - Baseline: main `512987e5`, composed with the separately reviewed news repair tree `8cbfd498` (commit `315abcf5`); [ADR-0090](0090-shared-editorial-budget-and-free-search.md) and [ADR-0094](0094-editorial-one-shot-additional-grant.md) remain unchanged.
 
 ## Problem and authorization
@@ -39,3 +39,9 @@ Tests enforce those subscriber and history constraints for success, failure and 
 All implementation tests use synthetic responses and injected transports. They cover amount/availability non-disclosure, malformed/accessor/proxy inputs, immutable paid admission, bounded transport and no retry, first-run/attempt/expiry refusal before key access, no-network CLI defaults and full downstream isolation. All existing assertions remain unchanged. Full checks, coverage and independent review are required before coordinated publication/execution.
 
 See [operations](../OPERATIONS.md#deepseek-balance-shape-diagnostic). A structural report cannot authorize generation, alter credentials, initialize a ledger or establish which currency a mixed account would debit.
+
+## Retirement and sanitized execution record
+
+Run `42738568668` (run number 1, attempt 1) completed the single authorized structure read. The sanitized result was `shape_only` with `admission=hold`: response object, boolean availability field type (value withheld), and a two-row balance array with CNY and USD currency labels. All three amount fields in each row were strings matching the decimal format; no amounts or availability value are recorded. The expected nonzero exit did not authorize another attempt.
+
+The cleanup removes the sole temporary secret-bearing workflow. Tests now positively require its absence and reject diagnostic names, module/CLI invocations, opt-in flags or inline balance endpoint references in every active workflow, while retaining subscriber/history isolation and all pure privacy, deadline, no-retry and once-context tests. Normal workflows, paid currency admission and ledger logic remain unchanged. No further read is authorized; mixed-currency debit precedence and payable balance remain unknown.

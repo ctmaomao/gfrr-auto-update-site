@@ -122,24 +122,13 @@ test('unchanged paid currency gate rejects mixed currency and unavailable balanc
   assert.throws(() => validateBalance({ is_available: false, balance_infos: [payload().balance_infos[0]] }), /currency_unknown/);
 });
 
-test('isolated single-read workflow has no writer, unrelated credential, or downstream workflow trigger', () => {
+test('retired diagnostic has no workflow entrypoint or copied credential-access invocation', () => {
   const file = '.github/workflows/deepseek-balance-shape-once-20261110.yml';
-  const source = fs.readFileSync(file, 'utf8');
-  assert.match(source, /^name: DeepSeek Balance Shape Once 20261110/mu);
-  assert.match(source, /github.run_number == 1 && github.run_attempt == 1/u);
-  assert.match(source, /github.event_name == 'workflow_dispatch'/u);
-  assert.match(source, /github.ref == 'refs\/heads\/main'/u);
-  assert.match(source, /inputs.acknowledge_single_read == true/u);
-  assert.match(source, /default: false/u);
-  assert.match(source, /permissions:\n  contents: read/u);
-  assert.match(source, /persist-credentials: false/u);
-  assert.match(source, /environment: external-ai-production-refresh/u);
-  assert.equal((source.match(/DEEPSEEK_API_KEY:/gu) || []).length, 1);
-  assert.ok(source.indexOf('diagnosticContextAllowed(process.env)') < source.indexOf('DEEPSEEK_API_KEY:'));
-  assert.equal((source.match(/--allow-balance-read/gu) || []).length, 1);
-  assert.doesNotMatch(source, /workflow_run:|schedule:|push:|pull_request:|contents: write|actions:|id-token:|upload-artifact|github.token|TAVILY|BRAVE|GITHUB_TOKEN|npm |git push|dispatches|ledger/u);
-  for (const candidate of fs.readdirSync('.github/workflows').filter(name => /\.ya?ml$/u.test(name) && name !== file.split('/').at(-1))) {
+  assert.equal(fs.existsSync(file), false, 'the single-use credential entrypoint must remain deleted');
+  for (const candidate of fs.readdirSync('.github/workflows').filter(name => /\.ya?ml$/u.test(name))) {
     const workflow = fs.readFileSync(`.github/workflows/${candidate}`, 'utf8');
+    assert.doesNotMatch(workflow, /DeepSeek Balance Shape Once|deepseek-balance-shape-once|diagnose-deepseek-balance|deepseek-balance-diagnostics|--allow-balance-read|BALANCE_DIAGNOSTIC|acknowledge_single_read|diagnoseBalance|inspectBalanceShape|diagnosticContextAllowed|runBalanceDiagnostic|api\.deepseek\.com\/user\/balance/u,
+      `${candidate} must not copy, rename, invoke or inline the retired diagnostic`);
     if (!workflow.includes('workflow_run:')) continue;
     const trigger = workflow.split('workflow_run:')[1].split(/^  [a-z_]+:/mu)[0];
     assert.match(trigger, /workflows:/u, `${candidate} must have an explicit upstream allowlist`);
