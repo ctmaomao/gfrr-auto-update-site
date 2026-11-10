@@ -1,5 +1,13 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 One-shot CNY balance admission
+
+- **Acceptance baseline / last base**: main `b504c503`; preserve its latest automatic oil update and the retired diagnostic entrypoint's absence. Owner reports prior CNY billing and directs proceeding under the original two-article, additional CNY 4.33 authorization, without USD spending or support outreach.
+- **Current task**: [ADR-0097](ADR/0097-one-shot-cny-balance-admission.md) permits unique CNY plus optional all-zero USD only in the explicit one-shot gate; exact decimal consistency and full-reservation funding are required. Shared GET transport retains limits; ordinary monthly admission remains unchanged.
+- **Validation**: full `check:changed` / nested `check:all` pass (exit 0); focused budget/diagnostic 87/87 and wiring 8/8 pass. Coverage: 1,709 pass, one existing skip, zero fail (99.86/93.23/97.96). Independent code pre-review found no P1/P2; frozen-tree sign-off pending.
+- **Next / limits**: coordinator owns serial publication and any already-authorized attempt. No real balance read, key access, generation, new credential entrypoint, ledger mutation or budget/price change occurred in this implementation. Nonzero USD and all uncertainty still HOLD; no retry or second diagnostic.
+
+
 ### 2026-11-10 Bubble news excerpt eligibility repair
 
 - **Acceptance baseline / last base**: isolated from main `512987e5` under the ongoing evidence-correctness review. Keep all financial grounding, source dates, score proofs, provider budgets and output review gates; no provider/search call or production generation.

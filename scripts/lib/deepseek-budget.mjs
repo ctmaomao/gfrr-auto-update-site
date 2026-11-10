@@ -357,11 +357,11 @@ async function boundedJson(fetchImpl, url, init = {}, validateDate = () => {}) {
     return { status: response.status, observedAt, json };
   } catch (error) { if (error.budgetCode) throw error; fail('transport_unknown'); } finally { clearTimeout(timer); }
 }
-export async function readDeepSeekBalance(key, fetchImpl = fetch) {
+export async function readDeepSeekBalance(key, fetchImpl = fetch, validate = validateBalance) {
   if (typeof key !== 'string' || !key || /[\r\n]/u.test(key)) fail('key_missing');
   const response = await boundedJson(fetchImpl, 'https://api.deepseek.com/user/balance', { headers: { Authorization: `Bearer ${key}` } });
   if (response.status !== 200) fail('balance_unavailable');
-  validateBalance(response.json); return response.json;
+  validate(response.json); return response.json;
 }
 
 /** Durable authority: independent branch pinned to an operator-verified genesis

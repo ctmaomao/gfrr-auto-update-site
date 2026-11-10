@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { POLICY, POLICY_DIGEST, digest, BUDGET_REPOSITORY } from '../../scripts/lib/deepseek-budget.mjs';
 import { GRANT, prepareOneShotLedger, validateOneShotLedger, validateOneShotTransition,
-  createOneShotBudget, verifyOneShotStatus, oneShotRuntimeConfig, createOneShotStore } from '../../scripts/lib/deepseek-one-shot.mjs';
+  createOneShotBudget, verifyOneShotStatus, oneShotRuntimeConfig, createOneShotStore, validateOneShotBalance, readOneShotBalance } from '../../scripts/lib/deepseek-one-shot.mjs';
 const NOW = Date.parse('2026-11-09T21:45:00.000Z');
 const grant = { policy: GRANT, authorizedAt: new Date(NOW - 1000).toISOString(), authorizationEvidenceSha256: 'a'.repeat(64), initializationParentSha: 'b'.repeat(40) };
 const review = { policyDigest: POLICY_DIGEST, verifiedAt: new Date(NOW).toISOString(),
@@ -205,4 +205,47 @@ test('one-shot genesis requires exactly the approved initialization parent; mont
   }
   const changed = fresh(); changed.grant.initializationParentSha = 'c'.repeat(40);
   assert.throws(() => validateOneShotTransition(fresh(), changed, NOW), /history_changed/);
+});
+
+const currencyRow = (currency, total = '0', granted = '0', topped = total) => ({ currency,
+  total_balance: total, granted_balance: granted, topped_up_balance: topped });
+const multiBalance = (...rows) => ({ is_available: true, balance_infos: rows });
+test('one-shot permits only sufficiently CNY-funded balances with optional all-zero USD metadata', async () => {
+  for (const rows of [[currencyRow('CNY', '2.161152')], [currencyRow('CNY', '2.16115200'), currencyRow('USD', '0.00000000')],
+    [currencyRow('USD'), currencyRow('CNY', '2.16115201', '0.00000001', '2.161152')]]) {
+    assert.deepEqual(validateOneShotBalance(multiBalance(...rows)), { currency: 'CNY' });
+    const store = memory(); let calls = 0;
+    await gate(store, { readBalance: async () => multiBalance(...rows) })(context(), async () => { calls++; return response(); });
+    assert.equal(calls, 1);
+    assert.equal((await store.read()).ledger.entries.filter(row => row.kind === 'reserve').length, 1);
+  }
+});
+test('ambiguous, insufficient, nonzero USD and malformed one-shot balances hold before reservation or POST', async () => {
+  const cny = currencyRow('CNY', '5'), usd = currencyRow('USD');
+  const bad = [null, {}, multiBalance(), multiBalance(usd), multiBalance(cny, cny), multiBalance(cny, usd, usd),
+    multiBalance(cny, currencyRow('EUR')), { ...multiBalance(cny), is_available: false },
+    multiBalance(currencyRow('CNY', '2.16115199')), multiBalance(currencyRow('CNY', '0')),
+    multiBalance(cny, currencyRow('USD', '0.00000001')), multiBalance(cny, currencyRow('USD', '0', '1', '0')),
+    multiBalance(currencyRow('CNY', '5', '1', '5')), multiBalance({ ...cny, extra: true }),
+    ...[null, 1, '-1', '+1', '01', '1e2', 'NaN', 'Infinity', '0.000000001', '1'.repeat(33)].flatMap(value =>
+      ['total_balance', 'granted_balance', 'topped_up_balance'].flatMap(field => [
+        multiBalance({ ...cny, [field]: value }), multiBalance(cny, { ...usd, [field]: value })]))];
+  for (const value of bad) {
+    assert.throws(() => validateOneShotBalance(value), /^Error: deepseek_budget_currency_unknown$/);
+    const store = memory();
+    await assert.rejects(gate(store, { readBalance: async () => value })(context(), () => assert.fail('paid POST')), /currency_unknown/);
+    assert.equal((await store.read()).ledger.entries.length, 0);
+  }
+});
+test('one-shot reader reuses bounded fixed GET and monthly reader remains strict', async () => {
+  const { readDeepSeekBalance } = await import('../../scripts/lib/deepseek-budget.mjs');
+  let reads = 0;
+  const fetchImpl = async (url, init) => {
+    reads++; assert.equal(url, 'https://api.deepseek.com/user/balance'); assert.equal(init.redirect, 'error');
+    assert.equal(init.body, undefined); assert.equal(init.method, undefined);
+    return new Response(JSON.stringify(multiBalance(currencyRow('CNY', '5'), currencyRow('USD'))),
+      { headers: { date: new Date().toUTCString() } });
+  };
+  await readOneShotBalance('FAKE_KEY', fetchImpl); assert.equal(reads, 1);
+  await assert.rejects(readDeepSeekBalance('FAKE_KEY', fetchImpl), /currency_unknown/); assert.equal(reads, 2);
 });
