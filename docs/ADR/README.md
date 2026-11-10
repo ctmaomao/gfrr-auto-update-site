@@ -155,3 +155,5 @@
 - [ADR-0088 OFR 编辑契约与简版判读](0088-ofr-editorial-contract.md) — 独立v2迁移，原始观察程序投影，事实/费用底线保留。
 
 - [ADR-0094: Bounded additional editorial generation grant](0094-editorial-one-shot-additional-grant.md) — explicit manual-only CNY4.33 grant; ordinary monthly gate unchanged.
+
+- [ADR-0096: Manual balance-shape diagnosis](0096-deepseek-balance-shape-diagnostic.md) — single read-only GET, sanitized structure only, unchanged paid admission.

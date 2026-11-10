@@ -430,7 +430,7 @@
     "check:macro-risk-editorial-history": "node scripts/check-macro-risk-editorial-history.mjs && node --test tests/unit/editorial-history.test.mjs",
     "review:deepseek-budget": "node scripts/review-deepseek-budget.mjs",
     "review:brave-budget": "node scripts/review-brave-budget.mjs",
-    "check:deepseek-budget": "node --test tests/unit/deepseek-budget.test.mjs tests/unit/deepseek-one-shot.test.mjs",
+    "check:deepseek-budget": "node --test tests/unit/deepseek-budget.test.mjs tests/unit/deepseek-one-shot.test.mjs tests/unit/deepseek-balance-diagnostics.test.mjs",
     "check:free-search-budget": "node --test tests/unit/free-search-budget.test.mjs",
     "check:editorial-budget-wiring": "node --test tests/unit/editorial-budget-wiring.test.mjs",
     "build:weekly-reports": "node scripts/build-weekly-reports.mjs",

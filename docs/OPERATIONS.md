@@ -1768,3 +1768,17 @@ Activation is a separate coordinator-controlled action after independent review,
 5. Inspect durable reserve/outcome and existing publication/quality checks. Report actual provider attempts and publication separately. Failed/unknown reservations remain permanently consumed; an unresolved outcome holds the other consumer. Preserve ledger/anchors after completion or expiry. Leave subsequent dispatches on `monthly`; never recreate this grant under another branch or date.
 
 The original monthly ledger, free-search controls, Macro day/input tags, provider timeouts, output/fact/quality/freshness rules and data-only writer are unchanged. Never delete deduplication tags or edit timestamps to force availability. Initialization and dispatch are not performed by offline preparation or by merely deploying this code.
+
+<a id="deepseek-balance-shape-diagnostic"></a>
+
+### DeepSeek balance-shape diagnostic
+
+[ADR-0096](ADR/0096-deepseek-balance-shape-diagnostic.md) records explicit owner authorization for one new manual program to use the existing DeepSeek key for a single balance-structure GET. After exact-code independent review, the coordinator may dispatch only `DeepSeek Balance Shape Once 20261110` (`deepseek-balance-shape-once-20261110.yml`) on main with `acknowledge_single_read=true`. Verify it is the unique first run and first attempt; record the run ID. Do not rerun an article workflow, retry the diagnostic, or dispatch again after failure/unknown outcome. A first run that stops before reading also does not authorize a replacement.
+
+The new workflow has only `contents: read`, the existing production environment and one step-local existing key. No new credential/account permission is configured. Job and CLI require run number 1 and attempt 1; the CLI also binds exact workflow/repository/main identity. A no-key context check and the CLI reject at or after 2026-11-11T00:00:00.000Z minus 76 seconds. Never extend the expiry, rename/recreate the file or reset history to obtain another attempt.
+
+Only the fixed GET runs once, with a 15-second deadline, 64-KiB body ceiling, no redirects and no retries. No search, ledger, generation, writer, artifact or dispatch runs. All results exit nonzero with HOLD. The new unique workflow name is absent from every downstream allowlist, including Bubble Follow-up; scheduled/manual follow-up history queries only the original article workflow. Do not rely on a failed conclusion alone to prevent indirect writes.
+
+Read only the sanitized structure: field types, decimal-format booleans, array count and CNY/USD/unknown labels. There is no amount, availability value, zero/nonzero/affordability inference or raw response/key data. Do not add verbose HTTP logging, shell tracing or raw artifacts. Finding a CNY row is not evidence of deduction precedence; original currency/availability admission and all generation guards remain unchanged.
+
+After the single attempt, the coordinator must use a reviewed cleanup PR to delete the temporary secret-bearing workflow and verify its removal. Do not add Actions write permission for self-deletion or change security settings. Retain only sanitized evidence. Local tests are mocked and do not exercise the authorization.
