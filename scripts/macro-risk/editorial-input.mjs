@@ -1,3 +1,4 @@
+import { sanitizeNewsStory } from '../lib/editorial-news-hygiene.mjs';
 import { strictOfrDate } from '../daily/ofr-pressure-readout.mjs';
 import { buildOfrEditorialSnapshot, hasOfrEditorialMarkers, assessOfrEditorialPublication } from './editorial-ofr-snapshot.mjs';
 import { INPUT_SCHEMA, OFR_INPUT_SCHEMA, RISK_MODULES } from './editorial-contract.mjs';
@@ -121,7 +122,7 @@ function compactNews(discovery) {
     if (count >= 2) return false;
     perTopic.set(story.topic, count + 1);
     return true;
-  }).slice(0, 12).map((story) => ({ ...story, snippet: compactText(story.snippet, 280) }));
+  }).slice(0, 12).map(sanitizeNewsStory).map((story) => ({ ...story, snippet: compactText(story.snippet, 280) }));
 }
 
 export function buildEditorialInput({ radarData, worldOrder, marketPricing, radarHistory, oilDirectional, oilNews, discovery, generatedAt = new Date().toISOString(), fixtureOnly = false }) {

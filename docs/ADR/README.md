@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0099 — Shared editorial news hygiene](0099-shared-editorial-news-hygiene.md): reject mixed/navigation snippets and syndicated false corroboration in Bubble and Macro; additive input guards, unchanged budgets and historical metadata boundaries.
+
 - [ADR-0095 — Full free-only Bubble refresh](0095-bubble-full-free-refresh.md): isolated manual workflow, unchanged original schedule, disabled Wind and no paid editorial trigger; local implementation, independent review and coordinated activation pending.
 
 - [ADR-0093 — Bubble editorial proof preservation](0093-bubble-editorial-proof-preservation.md): preserve the registered NVIDIA proof through compact projection and make the ledger regression deterministic; strict validators, production data and no-retry boundaries unchanged.

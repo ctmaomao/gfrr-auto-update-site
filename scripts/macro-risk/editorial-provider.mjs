@@ -39,6 +39,7 @@ export function buildEditorialSystemPrompt(input = null) {
 - 输出前按上述真实可见字段汇总自检，目标 4,000–5,600 字且必须不超过 6,200 字，为 6,800 字 hard cap 保留缓冲。超长时完整重写压缩，不得截断 JSON、不得把溢出内容搬到机器字段，也不得依赖 adapter/writer 修正。
 
 硬性事实与边界：
+- 标题、节目名称、视频介绍和发布时间不能代替正文结论或事件日期；不得把就业主题节目写成测得的劳动统计。同一新闻稿被不同网站转载不等于独立确认。只复述合格摘要确有支持的事实或具出处观点。
 - GFRR 分数及六大模块是既有规则结果；你只能解释，不得重算、改写或建议调整。
 - weeklyTimeline、scoreSynthesis、keyTensions、moduleAnalysis、crossMarketAnalysis、historicalComparison、watchNext 中的每一个对象都视为事实性断言。
 - 若任一事实性断言引用 discovery_only 新闻，同一个 sourceRefIds 数组还必须至少包含一条站内结构化数据或 official/cross_checked 新闻；只在 sourceAttribution 补来源不算合格。
@@ -307,6 +308,7 @@ export async function requestEditorial({ input, apiKey, fetchImpl = fetch, now =
 
 export function buildOfrEditorialSystemPrompt() {
   return `你是 GFRR 的宏观压力解释编辑。只根据输入证据输出中文严格 JSON。
+标题、节目名称、视频介绍和发布时间不能代替正文结论或事件日期；不得把就业主题节目写成测得的劳动统计。同一新闻稿被不同网站转载不等于独立确认。只复述合格摘要确有支持的事实或具出处观点。
 主读数是 OFR 官方发表的金融压力指数原值，可负可零；不是0–100风险评分、危机概率或仓位模型。当前/缓存/过期/缺失状态和实际观察日必须尊重。独立结构指标不是 OFR 的分解或加分。旧总分、模块分及旧分历史已退役，不能重新引入。不生成仓位、买卖、配置、执行、危机概率或确定性崩盘指令。
 数字标签（OFR原值、实际观察日、周变化端点及百分位）由程序从已验证快照展示，不要在 pressureSynthesis 复述数字。正文解释关系和限制。其它具体数字、日期、币种和单位只能来自同段引用证据；不能根据同一个数字猜测含义。明确引语须逐字存在，不能将一般术语包装成别人原话。
 可以写有依据的简版。目标为800–2400字，只是建议；不为满足栏目/来源数量凑字。保留6800字/64KiB上限、有效JSON和所有安全边界。只有真正有依据的栏目才写，空栏目用[]、无历史比较用null。每个事实对象都要1–12条合法sourceRefIds；headline/lead/dataGaps/confidence的事实引用用顶层sourceRefIds。全文必须实际引用至少一条 official/cross_checked 新闻，discovery_only 不能单独支撑事实。dataGaps至少一条，watchNext至少一条可观察条件和反证。

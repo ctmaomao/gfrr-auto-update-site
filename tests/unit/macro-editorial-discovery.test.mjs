@@ -20,7 +20,7 @@ const healthy = Object.fromEntries(['tavily', 'brave'].map(provider => [provider
 }]));
 const row = (overrides = {}) => ({ provider: 'brave', topic: 'central_bank_inflation',
   title: 'Economic outlook and policy discussion', url: 'https://example.com/policy',
-  publishedAt: '2026-09-03T10:00:00Z', ...overrides });
+  publishedAt: '2026-09-03T10:00:00Z', snippet: 'Synthetic policy commentary discusses the economic outlook and uncertainty around future interest rates.', ...overrides });
 const discover = rawStories => buildNewsDiscovery({ ...window, sourceStatus: healthy, rawStories });
 
 test('six slots retain broad news and allocate exactly two basic primary searches', () => {

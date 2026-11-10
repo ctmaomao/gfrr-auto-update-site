@@ -1,3 +1,4 @@
+import { evidenceEligibility } from '../lib/editorial-news-hygiene.mjs';
 import { claimQuoteSupport } from './weekly-editorial-quote-support.mjs';
 import { validateEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { isLimitedEvidence, validMediaStory } from './editorial-evidence-policy.mjs';
@@ -185,6 +186,8 @@ export function validateNewsDiscovery(discovery, options = {}) {
       const domains = requireArray(story?.supportingDomains, `news discovery.stories[${index}].supportingDomains`, errors, { min: 2, max: 8 });
       if (new Set(domains).size < 2) errors.push(`news discovery.stories[${index}] cross_checked requires two independent domains`);
     }
+    if (!options.metadataOnly && story?.snippet && !evidenceEligibility(story).eligible) errors.push(`news discovery.stories[${index}] contains ineligible excerpt`);
+    if (!options.metadataOnly && story?.evidenceStatus !== 'discovery_only' && !evidenceEligibility(story).eligible) errors.push(`news discovery.stories[${index}] requires eligible evidence`);
     if (typeof story?.snippet === 'string' && story.snippet.length > 360) errors.push(`news discovery.stories[${index}].snippet exceeds 360 characters`);
     for (const forbidden of ['raw', 'rawResponse', 'rawContent', 'headers', 'apiKey', 'authorization', 'fullArticleBody']) {
       if (Object.hasOwn(story || {}, forbidden)) errors.push(`news discovery.stories[${index}] contains forbidden field ${forbidden}`);
