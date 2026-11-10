@@ -1,6 +1,6 @@
 # Global Financial Risk Radar
 
-Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它把 realtime 快变量、Daily baseline、风险模块、解释层和运维检查组织成可审计的网站,用于观察宏观风险状态和策略约束。
+Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它把 realtime 快变量、Daily baseline、风险模块、解释层和运维检查组织成可审计的网站,用于观察宏观金融压力、结构性风险与证据边界。
 
 在线访问:
 
@@ -21,15 +21,16 @@ Global Financial Risk Radar 是一个静态部署的宏观风险驾驶舱。它�
 本项目回答:
 
 - 当前宏观风险处于什么状态。
-- 当前应偏进攻、均衡、谨慎还是防守。
-- 当前仓位区间、现金缓冲和风险预算应如何约束。
+- OFR 已发表金融压力读数、观察日期与历史相对位置如何变化。
+- 哪些独立结构证据与主读数不同，哪些数据尚不足以判断。
 - 哪些风险触发条件、缓和条件或数据缺口需要关注。
 
-它不是选股工具、短线交易信号系统,也不是外部 AI 自动决策系统。
+旧模型推导的公开仓位、状态、风险预算与动作建议已退役，历史分数和原始记录仅保留审计；OFR 百分位不是风险评分或危机概率。本站不是选股工具、短线交易信号系统，也不是外部 AI 自动决策系统。
 
 ## 运行结构
 
-- 首页由 `scripts/app.js` 读取 `data/radar-data.json` 静态快照，主数据就绪先呈现，附属 JSON 独立降级；不在浏览器重算主分或决策。
+- 首页默认展示周报，并提供雷达与 Bubble 三标签；周报原正文、日期和历史 URL 保留。
+- 雷达由 `scripts/app.js` 读取 `data/radar-data.json` 静态快照，主数据就绪先呈现，附属 JSON 独立降级；不在浏览器重算主分或决策。
 - Daily 从 `realtime-data` 分支读取输入，写入 radar 数据与历史；`displayInputsBaseline` 保留结构化基线值。
 - Worker 独立生成 `/market.worker-preview.json`；它是 Worker 运行链的主预览，不是当前首页的直接数据入口。
 - `scripts/modules/realtime.js` 保留为冻结的历史 overlay 路径，当前未接入；重新接入须单独评审。
