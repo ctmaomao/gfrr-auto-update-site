@@ -1,5 +1,12 @@
 # Project Backlog · GFRR Auto-Update Site
 
+### 2026-11-10 Editorial search targeting
+
+- **Acceptance baseline / last base**: isolated from main `9ddf95eb`, integrated onto `ca8cf5b5` with all three newer radar data files preserved byte-for-byte; improve retrieval within the existing free-search allowance, without changing evidence, financial grounding, scoring, freshness, cost or publication gates. Coordinator controls final-main integration after checking the newer scheduled Daily inputs; the separate free Daily preparation is paused.
+- **Current task**: Bubble's six news/basic/week requests target the exact existing reviewed-publisher and official domains, derived from its evidence policy. Macro's existing BLS general/basic slot searches `"Employment Situation" payroll unemployment`; other requests, result limits, usage receipts and budget guards stay unchanged. This is query optimization, not a parser repair or evidence upgrade; no new ADR-level eligibility rule.
+- **Validation**: original and `ca8cf5b5` integration `check:changed` / nested `check:all` pass (exit 0); 10 targeted payload, receipt/budget, URL/date/excerpt/classification regressions and focused lint pass. Unit coverage: 1,719 pass, one existing skip, zero fail (99.86/93.23/97.96). Provider public documentation confirms the supported domain filter; reduced recall or no useful results remain possible.
+- **Next / limits**: local checks complete; independent original-tree review found no correctness blocker, integrated frozen-tree review and coordinator-controlled publication remain pending. No account/provider endpoint, key, balance, generation, remote ledger, workflow dispatch, production data or remote write accessed. No live article or earlier search result is injected into fixtures or runtime.
+
 ### 2026-11-10 One-shot CNY balance admission
 
 - **Acceptance baseline / last base**: main `b504c503`; preserve its latest automatic oil update and the retired diagnostic entrypoint's absence. Owner reports prior CNY billing and directs proceeding under the original two-article, additional CNY 4.33 authorization, without USD spending or support outreach.

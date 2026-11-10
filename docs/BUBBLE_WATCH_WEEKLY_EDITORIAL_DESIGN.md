@@ -46,7 +46,8 @@ OFR 迁移后的雷达旧模型仅供历史审计。紧凑输入发现 `mainPres
 
 ### 4.2 新闻发现来源
 
-- Tavily Search API `topic=news`,最多 6 个预登记 topic、每 topic 最多 5 条。
+- Tavily Search API `topic=news` / `search_depth=basic` / `time_range=week`，仍为 6 个预登记 topic、每 topic 最多 5 条。`include_domains` 直接派生自 `editorial-evidence-policy.mjs` 已有专业媒体与官方域名，不维护第二份来源名单；Brave 查询不变。
+- 该检索收窄可能减少无关候选，也可能减少结果与名单外的跨来源印证，不保证得到可用新闻。Tavily 的 [include_domains](https://docs.tavily.com/documentation/api-reference/endpoint/search) 为字符串数组、上限 300 项，默认限制到列明域名；结果仍须通过原 URL、日期、摘要、分类和就绪检查，不因命中名单自动升级。免费预算门禁与 usage 回执不变。
 - Brave News Search API `freshness=pw`,相同 topic、每 topic 最多 5 条。
 - 一期不新增 GDELT endpoint。现有 GDELT Bubble cache 仍只服务 `ceo_hedging`。
 - 搜索结果只在 transient artifact 中保留 bounded title / URL / snippet；production 只投影

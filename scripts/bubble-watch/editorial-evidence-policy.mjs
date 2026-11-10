@@ -10,6 +10,9 @@ const OFFICIAL = Object.freeze([
   'nvidia.com', 'microsoft.com', 'aboutamazon.com', 'amazon.com', 'abc.xyz',
   'investor.fb.com', 'meta.com', 'openai.com', 'anthropic.com', 'oracle.com', 'amd.com', 'broadcom.com'
 ]);
+// Retrieval targeting only; returned stories still need every evidence gate below.
+export const EDITORIAL_SEARCH_DOMAINS = Object.freeze([...Object.keys(PUBLISHERS), ...OFFICIAL]);
+
 const domainMatches = (domain, suffix) => domain === suffix || domain.endsWith(`.${suffix}`);
 export function publisherName(domain = '') {
   return Object.entries(PUBLISHERS).find(([suffix]) => domainMatches(domain, suffix))?.[1] || null;
