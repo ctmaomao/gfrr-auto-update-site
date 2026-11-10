@@ -1,4 +1,4 @@
-import { evidenceEligibility, independentSupportDomains } from '../lib/editorial-news-hygiene.mjs';
+import { compactNewsStory, evidenceEligibility, independentSupportDomains } from '../lib/editorial-news-hygiene.mjs';
 import { createHash } from 'node:crypto';
 
 import { EDITORIAL_TOPICS, NEWS_DISCOVERY_SCHEMA } from './editorial-contract.mjs';
@@ -180,7 +180,7 @@ export function normalizeProviderStory(raw) {
     url,
     domain,
     publishedAt: parsePublishedAt(raw.publishedAt),
-    snippet: evidenceEligibility(raw).eligible ? compactText(raw.snippet, 360) : null,
+    snippet: compactNewsStory(raw, 360).snippet,
     searchScore: Number.isFinite(raw.searchScore) ? raw.searchScore : null
   };
 }

@@ -1,6 +1,57 @@
+const BLS_EMPLOYMENT_HEADING = /THE EMPLOYMENT SITUATION\s*[-–—]\s*(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/iu;
+const BLS_ADMIN_START = /^(?:Transmission of material in this news release is embargoed until\b|Technical information\s*:|Media contact\s*:)/iu;
+
+export function isBlsEmploymentRelease(story) {
+  try {
+    const url = new URL(story?.url);
+    return url.protocol === 'https:' && !url.username && !url.password && !url.port && !url.search && !url.hash
+      && ['bls.gov', 'www.bls.gov'].includes(url.hostname)
+      && /^\/news\.release\/archives\/empsit_\d{8}\.htm$/u.test(url.pathname);
+  } catch { return false; }
+}
+
+// This is a bounded observation-shape check for one registered statistical
+// release, not semantic verification. A short directional result is sufficient;
+// administrative numbers, the report title and future expectations are not.
+function hasEmploymentObservation(text) {
+  // Evaluate separate sentences/clauses: a forecast's past participle is not
+  // an observation, while a separate reported result may still be retained.
+  return text.split(/(?<=[.!?])\s+(?=[A-Z])|[;\n]/u).some(sentence => {
+    if (/\b(?:are|is|were|was)\s+(?:expected|forecast|projected|anticipated)\s+to\b|\b(?:will|would|could|may|might)\s+(?:have\s+)?(?:risen|rise|fall|grow|increase|decrease|decline|add|lose|gain|be)\b/iu.test(sentence)) return false;
+    return /\b(?:payrolls?|(?:nonfarm\s+)?employment|unemployment(?:\s+rate)?|unemployed (?:people|persons)|(?:labor|labour) force(?: participation(?: rate)?)?|employment[- ]population ratio|(?:average\s+)?(?:hourly earnings|workweek)|jobs)\b[^!?]{0,100}\b(?:(?:rose|fell|grew|increased|decreased|declined|added|lost|gained)\b|(?:was|were|remained|held)\s+(?:unchanged|essentially unchanged|steady|stable|little changed|(?:at\s+)?[+-]?\d)|edged\s+(?:up|down)|changed\s+little|continued\s+to\s+(?:rise|fall|grow))/iu.test(sentence);
+  });
+}
+
+function prepareReleaseExcerpt(story) {
+  const original = String(story?.snippet || '').trim();
+  if (!isBlsEmploymentRelease(story)) return { snippet: original, reason: null };
+  const header = BLS_ADMIN_START.test(original);
+  const heading = BLS_EMPLOYMENT_HEADING.exec(original);
+  let snippet = original;
+  // Never guess where an incomplete header ends. Only a complete known heading
+  // permits extraction, and the body is an exact substring of the supplied text.
+  if (header) {
+    if (!heading) return { snippet: null, reason: 'administrative_header_only' };
+    snippet = original.slice(heading.index + heading[0].length).trim();
+  } else if (heading?.index === 0) {
+    snippet = original.slice(heading[0].length).trim();
+  }
+  if (!hasEmploymentObservation(snippet)) return { snippet: null, reason: 'release_observation_missing' };
+  return { snippet, reason: null };
+}
+
+export function needsBlsBodySupplement(story) {
+  if (!isBlsEmploymentRelease(story)) return false;
+  const text = String(story?.snippet || '').trim();
+  return (BLS_ADMIN_START.test(text) || BLS_EMPLOYMENT_HEADING.exec(text)?.index === 0)
+    && prepareReleaseExcerpt(story).reason !== null;
+}
+
 // Bounded reasons only: never retain rejected text in diagnostic fields.
 export function excerptEligibility(story) {
-  const snippet = String(story?.snippet || '').replace(/\s+/gu, ' ').trim();
+  const prepared = prepareReleaseExcerpt(story);
+  if (prepared.reason) return { eligible: false, reason: prepared.reason };
+  const snippet = prepared.snippet.replace(/\s+/gu, ' ').trim();
   if (snippet.length < 12) return { eligible: false, reason: 'missing_excerpt' };
   if (/subscribe to (?:read|unlock)|save \d+%|trial .*\d+.*weeks|sign in to (?:read|continue)/iu.test(snippet)) {
     return { eligible: false, reason: 'subscription_boilerplate' };
@@ -60,11 +111,27 @@ export function evidenceEligibility(story) {
   return { eligible: true, reason: null };
 }
 
+export function compactNewsStory(story, maxLength) {
+  if (!Number.isInteger(maxLength) || maxLength < 1) throw new Error('invalid excerpt limit');
+  const prepared = prepareReleaseExcerpt(story);
+  const cleaned = { ...story, snippet: prepared.snippet };
+  if (prepared.reason || !evidenceEligibility(cleaned).eligible) return rejectedStory(story);
+  const text = cleaned.snippet.replace(/\s+/gu, ' ').trim();
+  const snippet = text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
+  const compact = { ...story, snippet };
+  // Eligibility belongs to the text actually supplied to the model, not a longer
+  // source fragment that may have lost its only observation during projection.
+  return evidenceEligibility(compact).eligible ? compact : rejectedStory(story);
+}
+
+function rejectedStory(story) {
+  return { ...story, snippet: null, evidenceStatus: 'discovery_only', contentScope: 'title_only' };
+}
+
 export function sanitizeNewsStory(story) {
-  const eligibility = evidenceEligibility(story);
-  return eligibility.eligible ? story : {
-    ...story, snippet: null, evidenceStatus: 'discovery_only', contentScope: 'title_only'
-  };
+  const prepared = prepareReleaseExcerpt(story);
+  const cleaned = { ...story, snippet: prepared.snippet };
+  return !prepared.reason && evidenceEligibility(cleaned).eligible ? cleaned : rejectedStory(story);
 }
 
 export function independentSupportDomains(rows) {

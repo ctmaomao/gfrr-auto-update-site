@@ -1,5 +1,14 @@
 # Project Backlog · GFRR Auto-Update Site
 
+
+### 2026-11-10 Administrative release headers and bounded BLS excerpts
+
+- **Acceptance baseline / last base**: isolated from main `16a6cea14`; owner-authorized evidence-quality repair and bounded free public preparation, with coordinator-controlled serial integration. Preserve retained artifacts, production data, scoring and paid-attempt records.
+- **Current task**: [ADR-0102](ADR/0102-administrative-release-evidence.md) removes recognized BLS administrative headers, rejects title-only releases and rechecks actual compact excerpts in both editorial pipelines. Macro alone may supplement one already discovered Employment Situation archive with at most one robots and one public body request, without credentials, redirects, retries or independent-source inflation.
+- **Validation**: synthetic short-result, ordinary-prose, truncation and mocked bounded-fetch tests; retained-run replay remains private. Full checks and independent frozen-tree review pending. No live supplement availability has been established.
+- **Next / limits**: freeze for independent review and serial integration. No paid regeneration, ledger or production-data changes; inaccessible, restricted, undated, mismatched or unsupported bodies remain unavailable. Pattern checks do not certify semantic truth.
+
+
 ### 2026-11-10 Bubble observation and r6 evidence repair
 
 - **Acceptance baseline / last base**: initial main `836296ca` after #529 quarantine acceptance, integrated onto #530 main `16a6cea1` with all news hygiene changes and non-Bubble data retained. Owner requests rigorous upstream/site comparison and correction of substantive scoring evidence, not copying the higher headline score. Preserve Core23/Shadow4, all old history, 45/120-day gates, main financial scoring, Epoch candidacy and no paid calls.
