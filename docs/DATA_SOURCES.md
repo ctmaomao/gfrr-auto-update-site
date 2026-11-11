@@ -24,6 +24,8 @@
 
 ### OFR — Financial Stress Index（生产运行，首次两站验收通过）
 
+[ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md)：OFR 原值正负比较的是其校准历史均值；本站严格过去十年 midrank 是另一项样本排序，不能从负值推出该窗口低位或宽松状态。[OFR 官方说明](https://www.financialresearch.gov/financial-stress-index/)提供类别及地区贡献；`mainPressureReadout.contributionsPublished=false` 仅是本站当前快照不发布未完成修订比较的贡献项，不是官方缺少数据。此次仅增强编辑输入和新稿检查，不新增来源、取数、贡献发布或评分。
+
 **当前定案（2026-11-01）**：owner已批准本任务按顺序合并上线、一次免费官方OFR首发与两站部署，范围见ADR-0080最终授权；只发布官方总指数及辅助历史位置，不映射仓位，不额外派发Daily/Wind/DeepSeek。首发已于2026-11-01完成：数据提交3d6a57a3，单次官方收据08:09:43.189Z，观察日2026-10-28，原值-1.829；Pages与radar.gfrfinradar.uk实际产物/1440及390浏览器验收通过。十年位置仅辅助、旧68分仅审计，详细回执见PROJECT_BACKLOG对应任务。下面未激活/待批准状态为准备包的历史登记，在本任务范围由该定案替代，来源权利和失败隔离限制保留。
 
 **准备阶段消费者接入修订（历史记录）**：准备包#491保留下面原阶段登记。owner已选择退役旧公开建议，当前在独立本地契约/消费者补丁中准备既有Daily main写入前的单次官方抓取及`mainPressureReadout`发布，不执行生产Daily或晋升ignored快照。最终合并上线仍待完整补丁确认。只发布总指数/十年辅助位置/有日期趋势，贡献项不公开；保留原观察日、真实收据和SHA。源码中的runtime接线不代表当前线上已激活，Worker、浏览器外部fetch和旧评分契约不改变。
