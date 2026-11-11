@@ -34,7 +34,7 @@ export function buildWeeklyEditorialSystemPrompt(input) {
       headlineZh: 'short verdict headline',
       leadZh: 'weekly lead paragraph',
       weeklyTimeline: [{ date: 'YYYY-MM-DD', titleZh: 'event', detailZh: 'meaning and limits', sourceRefIds: ['stable source ID'], sourceIndicatorIds: ['indicator ID when citing site facts; otherwise empty array'] }],
-      scorecardSynthesisZh: 'explain fixed Core-23 and Stage/Trigger without changing them',
+      scorecardSynthesisZh: 'for v3, copy input.scoringSnapshot.scorecardDisclosureZh EXACTLY; otherwise explain fixed Core-23 and Stage/Trigger without changing them',
       scorecardSourceIndicatorIds: ['indicator ID'],
       keyTensions: [{ titleZh: 'tension', detailZh: 'both sides', sourceIndicatorIds: ['indicator ID'], sourceRefIds: ['stable source ID'] }],
       categoryAnalysis: [{ category: 'registered category', detailZh: 'analysis', sourceIndicatorIds: ['indicator ID'], sourceRefIds: ['stable source ID'] }],
@@ -66,12 +66,12 @@ export function buildWeeklyEditorialSystemPrompt(input) {
 export function buildWeeklyEditorialUserPrompt(input) {
   const credibleStories = (input?.newsContext?.stories || []).filter((story) => isUsableNews(story));
   const coverageConstraint = credibleStories.length <= 1
-    ? `Only ${credibleStories.length} usable official/cross_checked/attributed_media news story is available${credibleStories.length === 1 ? ` (${credibleStories[0].id})` : ''}. In weeklyTimeline, use at most ${credibleStories.length} news story as a primary factual event. Build the remaining timeline items from structuredFacts, previousComparison, and deterministic scorecard changes; cite matching indicator:* sourceRefIds and sourceIndicatorIds. Never use discovery_only news as sole support.`
+    ? `Only ${credibleStories.length} usable official/cross_checked/attributed_media news story is available${credibleStories.length === 1 ? ` (${credibleStories[0].id})` : ''}. In weeklyTimeline, use at most ${credibleStories.length} news story as a primary factual event. Build the remaining timeline items from structuredFacts, previousComparison, and deterministic scorecard changes only when those inputs establish a dated observation or change; cite matching indicator:* sourceRefIds and sourceIndicatorIds. There is no timeline item quota: omit unsupported items, never create a company event or event date from a static indicator or publication date. Never use discovery_only news as sole support.`
     : 'Prefer official/cross_checked news for timeline events. If a discovery_only item is mentioned, corroborate it with matching structuredFacts plus indicator:* sourceRefIds and sourceIndicatorIds.';
   return [
     'Produce this week\'s Chinese Bubble Watch editorial from the compact evidence pack below.',
     'Organize the content through the structured fields: weekly timeline, fixed scorecard, key tensions, six-category analysis, historical differences, next-week watch conditions, and data gaps.',
-    'Do not repeat the deterministic narrative verbatim. Add synthesis only where the input supports it.',
+    'Copy the required v3 scorecardDisclosureZh verbatim into scorecardSynthesisZh. Outside that fixed disclosure, do not repeat the deterministic narrative verbatim; add synthesis only where the input supports it.',
     coverageConstraint,
     ...(input?.newsContext?.coverageMode === 'limited_single_search' ? ['Only one search channel is fully healthy. This does not establish independent source corroboration or sufficient coverage. Copy the supplied search-coverage disclosure into dataGaps; use limited mode and confidence <=70.'] : []),
     isLimitedEvidence(input) ? 'Limited evidence: write a concise 600-1,800 character editorial; this overrides the normal length target and exact item counts. Include only supported timeline items, tensions and categories. Omit unsupported sections, disclose news coverage in dataGaps, confidence must be low/medium with score <=70. Cite the indicators actually used and include an observable watch condition. Do not pad.' : 'Use full coverage only where evidence supports it; omit unsupported news details.',

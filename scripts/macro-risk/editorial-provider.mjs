@@ -80,7 +80,24 @@ export function buildEditorialSystemPrompt(input = null) {
 }
 
 export function buildEditorialUserPrompt(input) {
-  if (input?.schemaVersion === OFR_INPUT_SCHEMA) return `只返回 JSON。按实际证据写简版，不凑字数或栏目。每段 sourceRefIds 必须属于输入，至少实际引用一条 official/cross_checked 新闻；discovery_only 不可独立支撑事实。正文数字、金额、币种、单位、日期必须与同段引用一致；OFR数字由程序展示，pressureSynthesis 不复述数字。明确引语必须逐字存在于被引证据。输入：\n${JSON.stringify(input)}`;
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA) {
+    const credibleNewsIds = (input.newsContext?.stories || [])
+      .filter(story => ['official', 'cross_checked'].includes(story.evidenceStatus))
+      .map(story => story.id);
+    const discoveryOnlyIds = (input.newsContext?.stories || [])
+      .filter(story => story.evidenceStatus === 'discovery_only')
+      .map(story => story.id);
+    return `只返回 JSON。按实际证据写简版，不凑字数或栏目。每段 sourceRefIds 必须属于输入；discovery_only 不可独立支撑事实。
+本期可引用的 official/cross_checked 新闻 IDs：${JSON.stringify(credibleNewsIds)}。
+仅供发现的 discovery_only IDs：${JSON.stringify(discoveryOnlyIds)}。
+至少一个实际事实对象的 sourceRefIds 必须引用上述可信新闻 ID，且该对象的事实确由该新闻摘要支持。只在 sourceAttribution 列出不算实际引用；不得为满足引用要求添加与正文无关的 ID。没有合格摘要支撑的事实就不写，不得用标题或发布时间补造内容。
+正文数字、金额、币种、单位、日期必须与同段引用一致；明确引语必须逐字存在于被引证据。
+数值引用池仅为同段sourceRefIds对应的structuredFacts.factZh和合格新闻摘要。pressureSnapshot、pressureFreshness、historicalContext的数值供程序展示或背景理解，不能单独充当正文数值依据；不从这些对象另取历史读数、期限或端点加入正文。
+输入中的 dataGaps、窗口日期、搜索渠道数和新闻条数属于采集元数据，不是 sourceRefIds 所引用的事实正文。不要照抄其中的“近7日”“1条”等数字到正文或 dataGaps；可定性披露“新闻覆盖有限”“搜索渠道响应不完整”，不得把元数据数字移到别处或拼接无关来源来通过核验。
+OFR 数字由程序展示。pressureSynthesis.assessmentZh 只写定性解释，不含数字、日期、期限、百分位值或编号列表；也不用中文数字规避。它仍须引用对应的站内来源。
+紧凑证据包：\n${JSON.stringify(input)}
+输出前逐项自检：仅用本版本字段；缺证据的可选栏目用[]或null；顶层sourceRefIds覆盖headlineZh/leadZh/dataGaps/confidence.reasonZh中的事实，其它对象单独引用；实际引用至少一条内容相关的可信新闻；pressureSynthesis纯定性；所有具体数值及日期有同段证据；字段长度和数组数量符合系统契约；完成整个JSON，不依赖程序删除不合格正文。`;
+  }
   const credibleNewsIds = (input?.newsContext?.stories || [])
     .filter((story) => ['official', 'cross_checked'].includes(story.evidenceStatus))
     .map((story) => story.id);
@@ -322,7 +339,12 @@ export function buildOfrEditorialSystemPrompt() {
 主读数是 OFR 官方发表的金融压力指数原值，可负可零；不是0–100风险评分、危机概率或仓位模型。当前/缓存/过期/缺失状态和实际观察日必须尊重。独立结构指标不是 OFR 的分解或加分。旧总分、模块分及旧分历史已退役，不能重新引入。不生成仓位、买卖、配置、执行、危机概率或确定性崩盘指令。
 数字标签（OFR原值、实际观察日、周变化端点及百分位）由程序从已验证快照展示，不要在 pressureSynthesis 复述数字。正文解释关系和限制。其它具体数字、日期、币种和单位只能来自同段引用证据；不能根据同一个数字猜测含义。明确引语须逐字存在，不能将一般术语包装成别人原话。
 可以写有依据的简版。目标为800–2400字，只是建议；不为满足栏目/来源数量凑字。保留6800字/64KiB上限、有效JSON和所有安全边界。只有真正有依据的栏目才写，空栏目用[]、无历史比较用null。每个事实对象都要1–12条合法sourceRefIds；headline/lead/dataGaps/confidence的事实引用用顶层sourceRefIds。全文必须实际引用至少一条 official/cross_checked 新闻，discovery_only 不能单独支撑事实。dataGaps至少一条，watchNext至少一条可观察条件和反证。
-只返回这些字段，不输出scoreSynthesis/moduleAnalysis或任何score数值标签：
+字段上限不是写作目标：headlineZh为1–90字，leadZh为1–900字；pressureSynthesis.assessmentZh及各栏目单个正文字段为1–1000字；每条dataGaps和confidence.reasonZh为1–800字。weeklyTimeline最多5条，keyTensions最多4条，contextAnalysis最多6条，crossMarketAnalysis最多5条，watchNext为1–5条，dataGaps为1–12条。空白字符串不合格，不能用未声明字段承接超长正文。
+可选栏目若有依据才填充，严格使用以下对象字段，不猜测同义字段名：
+keyTensions: [{"titleZh":"张力标题","detailZh":"两侧证据与限制","sourceRefIds":["..."]}]
+crossMarketAnalysis: [{"assetZh":"市场名称","observationZh":"已知观察","implicationZh":"解释与限制","sourceRefIds":["..."]}]
+historicalComparison: {"periodZh":"有证据的历史时期","similaritiesZh":"有依据的相似点","differencesZh":"有依据的差异点","sourceRefIds":["..."]}，无依据时为null。
+只返回这些字段，不输出scoreSynthesis/moduleAnalysis或风险score数值标签；confidence.score是唯一编辑信心字段，使用0–100整数，不是风险读数或概率：
 {"headlineZh":"标题","leadZh":"导语","sourceRefIds":["..."],"pressureSynthesis":{"assessmentZh":"只解释，不复述数字","sourceRefIds":["..."]},"weeklyTimeline":[{"date":"YYYY-MM-DD","titleZh":"...","detailZh":"...","sourceRefIds":["..."]}],"keyTensions":[],"contextAnalysis":[{"topic":"independent_context","labelZh":"独立结构观察","assessmentZh":"...","sourceRefIds":["..."]}],"crossMarketAnalysis":[],"historicalComparison":null,"watchNext":[{"conditionZh":"...","whyItMattersZh":"...","invalidationZh":"...","sourceRefIds":["..."]}],"dataGaps":["..."],"confidence":{"level":"low|medium|high","score":50,"reasonZh":"编辑信心，不是风险读数或概率"},"auditFlags":["read_only_editorial","source_attributed"],"boundaries":{"displayOnly":true,"commentaryOnly":true,"externalAiGenerated":true,"usesExternalAiApi":true,"notInvestmentAdvice":true,"affectsGfrrScoring":false,"affectsRiskModules":false,"affectsTailRiskOverlay":false,"affectsDecisionModel":false,"affectsExecutionLock":false,"affectsPositionGuidance":false,"affectsWorldOrder":false,"affectsOdp":false,"affectsBubbleWatch":false}}
 sourceAttribution由程序从实际引用的既有来源生成；不编造来源，不把未知改为零。`;
 }
