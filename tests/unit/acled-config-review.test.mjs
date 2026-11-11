@@ -93,12 +93,20 @@ test('new monthly date and file row changes are distinguished from date regressi
   let report = review(input);
   assert.equal(report.monthly.status, 'date_advanced'); assert.equal(report.monthly.rowCountChanges, 1);
   assert.equal(report.status, 'review_required'); assert.equal(report.boundaries.freshnessAssessed, false);
-  change(input, 'weekly', v => { v.latestWeek = '2000-01-01'; for (const f of v.filesIngested) f.weekRange = ['1999-01-01', '2000-01-01']; });
+  change(input, 'weekly', v => {
+    v.latestWeek = '2000-01-01';
+    for (const f of v.filesIngested) f.weekRange = ['1999-01-01', '2000-01-01'];
+    v.quality.weeklyWindow.latestWeek = v.latestWeek;
+    v.quality.weeklyWindow.weeks12 = Array.from({ length: 12 }, (_, i) => new Date(Date.parse('2000-01-01T00:00:00Z') - (11 - i) * 7 * 86400000).toISOString().slice(0, 10));
+    v.quality.weeklyWindow.weeks4 = v.quality.weeklyWindow.weeks12.slice(-4);
+  });
   report = review(input); assert.equal(report.status, 'date_regression_hold');
 });
 
-test('regional lag is preserved, while the declared maximum must match a real regional endpoint', () => {
+test('legacy regional lag retains the old maximum rule without claiming common-window evidence', () => {
   const input = fixture();
+  // Only genuinely absent metadata uses the legacy compatibility path.
+  for (const side of ['baseline', 'candidate']) change(input, 'weekly', v => { delete v.quality.weeklyWindow; }, side);
   change(input, 'weekly', v => { v.filesIngested[0].weekRange[1] = '2026-08-28'; });
   assert.equal(review(input).status, 'review_required');
   const tooEarly = structuredClone(input);
@@ -107,6 +115,67 @@ test('regional lag is preserved, while the declared maximum must match a real re
   const tooLate = structuredClone(input);
   change(tooLate, 'weekly', v => { v.latestWeek = '2099-01-01'; });
   assert.equal(review(tooLate).status, 'invalid');
+});
+
+test('common-grid comparison preserves later source coverage and compares complete metadata', () => {
+  const input = fixture();
+  change(input, 'weekly', v => {
+    const next = new Date(Date.parse(`${v.latestWeek}T00:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
+    for (const f of v.filesIngested.slice(0, 3)) f.weekRange[1] = next;
+  });
+  const before = structuredClone(input), report = review(input);
+  assert.equal(report.status, 'review_required');
+  assert.equal(report.weekly.status, 'same_date_revision');
+  assert.deepEqual(report.weekly.changedSections, ['filesIngested']);
+  assert.equal(report.boundaries.productionEligible, false);
+  assert.deepEqual(input, before);
+  input.baseline.weekly = input.candidate.weekly;
+  assert.equal(review(input).status, 'unchanged');
+});
+
+test('legacy baseline can compare with common-grid candidate without upgrading legacy evidence', () => {
+  const input = fixture();
+  change(input, 'weekly', v => { delete v.quality.weeklyWindow; }, 'baseline');
+  const report = review(input);
+  assert.equal(report.status, 'review_required');
+  assert.equal(report.weekly.status, 'same_date_revision');
+  assert.deepEqual(report.weekly.changedSections, ['quality']);
+  assert.equal(report.weekly.metadataChanged, true);
+  assert.equal(report.boundaries.contentValidated, false);
+  assert.equal(report.boundaries.productionEligible, false);
+});
+
+test('invalid common-grid metadata and false common cutoffs fail closed on either side', () => {
+  const mutations = [
+    v => { v.quality.weeklyWindow = null; },
+    v => { v.quality.weeklyWindow = false; },
+    v => { v.quality.weeklyWindow = {}; },
+    v => { v.quality.weeklyWindow.version = 'unknown'; },
+    v => { v.quality.weeklyWindow.latestWeek = '2026-02-30'; },
+    v => { v.quality.weeklyWindow.weeks12.splice(3, 1); },
+    v => { v.quality.weeklyWindow.weeks12[0] = v.latestWeek; },
+    v => { v.quality.weeklyWindow.weeks12[2] = v.quality.weeklyWindow.weeks12[1]; },
+    v => { v.quality.weeklyWindow.weeks4.reverse(); },
+    v => { v.quality.weeklyWindow.regions.pop(); },
+    v => { v.quality.weeklyWindow.regions[0] = v.quality.weeklyWindow.regions[1]; },
+    v => { v.regionalLast4Weeks.pop(); },
+    v => { v.filesIngested[0].weekRange[0] = v.latestWeek; },
+    v => { v.filesIngested[0].weekRange[1] = v.quality.weeklyWindow.weeks12[0]; },
+    v => { v.filesIngested[0].weekRange[0] = '2026-02-30'; },
+    v => { v.filesIngested[0].weekRange.reverse(); },
+    // Complete evidence cannot justify an arbitrarily old cutoff when every
+    // source continues later. The comparator must enforce the sanitizer's min.
+    v => {
+      const next = new Date(Date.parse(`${v.latestWeek}T00:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
+      for (const f of v.filesIngested) f.weekRange[1] = next;
+    },
+  ];
+  for (const side of ['baseline', 'candidate']) {
+    for (const mutate of mutations) {
+      const input = fixture(); change(input, 'weekly', mutate, side);
+      assert.equal(review(input).status, 'invalid');
+    }
+  }
 });
 
 test('exact baseline pins detect concurrent bytes changes including whitespace and preparation time', () => {

@@ -174,3 +174,5 @@
 - [ADR-0105: Separate two-page verification grant](0105-editorial-verification-grant.md) — a fresh explicit CNY4.33 approval, isolated history and unchanged production gates.
 
 - [ADR-0107: OFR editorial semantic boundaries](0107-ofr-editorial-semantic-boundaries.md) — calibration baseline, strict prior-window ranking and site-only contribution gaps; bounded new-writer checks.
+
+- [ADR-0108: ACLED common-window pair comparison](0108-acled-common-window-comparison.md) — compare current common cutoffs while preserving legacy, pins and strict publication gates.
