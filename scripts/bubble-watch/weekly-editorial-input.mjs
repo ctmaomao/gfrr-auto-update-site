@@ -1,5 +1,5 @@
 import { compactNewsStory } from '../lib/editorial-news-hygiene.mjs';
-import { evidenceAwareNote } from './evidence-wording.mjs';
+import { evidenceAwareNote, indicatorSemanticLabels, semanticNarrativeText } from './evidence-wording.mjs';
 import { createHash } from 'node:crypto';
 import { assessWeeklyEditorialNewsReadiness, usableLimitedSearchStory } from './weekly-editorial-news.mjs';
 import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
@@ -23,7 +23,7 @@ function compactList(values, maxItems, maxLength = 360) {
 }
 
 function buildStructuredFacts(indicators) {
-  return indicators.slice(0, 27).map((indicator) => ({
+  return indicators.slice(0, 27).map(indicator => ({ ...indicator, ...indicatorSemanticLabels(indicator) })).map((indicator) => ({
     id: `fact:${indicator.id}`,
     indicatorId: indicator.id,
     scoreRole: indicator.score_role,
@@ -235,7 +235,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
     scoringSnapshot: buildEditorialScoringSnapshot(bubbleWatch),
     narrativeBaseline: {
       source: summary.verdict_desc_source,
-      verdictDescZh: compactText(summary.verdict_desc, 2800),
+      verdictDescZh: compactText(semanticNarrativeText(summary.verdict_desc, indicators), 2800),
       upstreamVerdictIncluded: false,
       upstreamSummaryAdopted: false
     },

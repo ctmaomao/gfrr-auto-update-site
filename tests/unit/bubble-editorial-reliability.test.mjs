@@ -39,6 +39,11 @@ function pack() {
       claim.detailZh = '据Morningstar分析，人工智能基础设施融资可能改善信用获取，但需求与偿还风险仍存在。这属于机构观点，尚未独立核实。';
     }
   }
+  for (const event of output.weeklyTimeline) {
+    event.date = story.publishedAt.slice(0, 10);
+    event.titleZh = `报道：${event.titleZh}`;
+    event.detailZh = `${event.date} 据媒体报道，${event.detailZh}`;
+  }
   output.sourceAttribution = output.sourceAttribution.filter((row, i, all) => all.findIndex(other => other.sourceRefId === row.sourceRefId) === i);
   const review = reviewWeeklyEditorial({ input, output, generatedAt: `${date}T00:03:00.000Z` });
   const layer = projectWeeklyEditorial({ input, output, review, generatedAt: `${date}T00:04:00.000Z`, sourceCommit: 'a'.repeat(40), runId: '123' });
@@ -348,8 +353,16 @@ test('provider acceptance is not quality acceptance: zero-news candidate remains
   const rewrite=value=>Array.isArray(value)?value.map(rewrite):value&&typeof value==='object'
     ?Object.fromEntries(Object.entries(value).map(([key,item])=>[key,key==='sourceRefIds'?[`indicator:${indicator}`]:key==='sourceIndicatorIds'?[indicator]:rewrite(item)])):value;
   const output=rewrite(p.output);
+  const fact=p.input.structuredFacts[0];
+  for (const event of output.weeklyTimeline) {
+    event.date=fact.asOfDate;
+    event.sourceIndicatorIds=[indicator];
+    event.titleZh='站内观测快照';
+    event.detailZh=`${event.date} 的站内观测：${fact.factZh}`;
+  }
   const normalized=normalizeWeeklyEditorialProviderOutput(output,p.input).output;
-  assert.equal(validateWeeklyEditorialOutput(normalized,p.input).ok,true);
+  const validation=validateWeeklyEditorialOutput(normalized,p.input);
+  assert.equal(validation.ok,true,JSON.stringify(validation.errors));
   let calls=0;
   const result=await requestWeeklyEditorial({budget:fixtureDeepSeekBudget,input:p.input,apiKey:'offline-only',now:()=>new Date(p.output.generatedAt),fetchImpl:async()=>{
     calls++;return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};

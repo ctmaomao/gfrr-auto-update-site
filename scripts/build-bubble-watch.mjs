@@ -1,7 +1,7 @@
 import { computeEvidenceSimilarity } from './bubble-watch/evidence-similarity.mjs';
 import { syncUpstreamObservation, buildEnterpriseObservationProjection } from './bubble-watch/source-observation.mjs';
 import { buildArrGap, parseArrStaleFailure, ARR_MAX_AGE_DAYS } from './bubble-watch/arr-evidence.mjs';
-import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote } from './bubble-watch/evidence-wording.mjs';
+import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote, indicatorSemanticLabels, broadHyNote, RPO_SCOPE_ZH } from './bubble-watch/evidence-wording.mjs';
 import { collectQualifiedCashFlowConcept, qualifyMirrorCashFlows, requireCashFlowPeriodFloor, alignCashFlowPeriods, CASH_CAPEX_TAGS, OPERATING_CASH_FLOW_TAGS } from './bubble-watch/cash-flow-periods.mjs';
 import { preservePreviousWeeklyIssue } from './bubble-watch/previous-weekly-issue.mjs';
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
@@ -166,9 +166,9 @@ const INDICATOR_DEFS = [
   { id: 'vc_ai_share', axis: 'stage', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
   { id: 'nvda_invest_revenue', axis: 'stage', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
   { id: 'breadth_50d', axis: 'trigger', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
-  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '差值绝对值:>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
+  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
   { id: 'insider_sell_buy', axis: 'trigger', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'SEC EDGAR Form 4', mode: 'auto' },
-  { id: 'ai_ipo_pipeline', axis: 'stage', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
+  { id: 'ai_ipo_pipeline', axis: 'stage', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 发行/待发行管线', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
   { id: 'hy_oas', axis: 'trigger', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
   { id: 'dc_abs_spread', axis: 'trigger', category: 'credit', name_en: 'Data Center ABS Spread', name_zh: '数据中心 ABS 利差', threshold_text: '走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿', source_name: 'Green Street News / 公开发行定价(编辑口径)', mode: 'curated' },
   { id: 'debt_capex_ratio', axis: 'stage', category: 'credit', name_en: 'Debt / Capex Flow Ratio', name_zh: '全口径外部融资/Capex 比', threshold_text: '>60% 红 / 30-60% 黄 / <30% 绿', source_name: 'Morgan Stanley public research / Wind paid cross-check', mode: 'curated' },
@@ -178,7 +178,7 @@ const INDICATOR_DEFS = [
   { id: 'gpu_rental_price', axis: 'trigger', category: 'fundamentals', name_en: 'GPU Rental Spot Price', name_zh: 'GPU 租赁现货价', threshold_text: '环比跌>15%/供过于求=红 / 阴跌=黄 / 稳定或上涨=绿', source_name: 'Thunder Compute / getdeploying', mode: 'curated' },
   { id: 'arr_2nd_deriv', axis: 'trigger', category: 'fundamentals', name_en: 'AI ARR 2nd Derivative', name_zh: 'AI 收入增速的二阶导', threshold_text: '减速=红 / 平稳=黄 / 加速=绿', source_name: 'Sacra / 公开报道(研究口径)', mode: 'curated' },
   { id: 'enterprise_deploy', axis: 'stage', category: 'fundamentals', name_en: 'Enterprise Production Deploy', name_zh: '企业生产环境部署率', threshold_text: '<50%=红 / 50-65%=黄 / >65%=绿', source_name: 'McKinsey / Deloitte(季度调查口径)', mode: 'curated' },
-  { id: 'cloud_rpo_growth', axis: 'trigger', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
+  { id: 'cloud_rpo_growth', axis: 'trigger', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商剩余履约义务（RPO）增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
   { id: 'frontier_progress', axis: 'trigger', category: 'fundamentals', name_en: 'Frontier Model Progress', name_zh: '前沿模型能力进展', threshold_text: '停滞=红 / 放缓=黄 / 正常或加速=绿', source_name: 'METR / Epoch AI / ARC Prize', mode: 'curated' },
   { id: 'accounting_events', axis: 'trigger', category: 'macro', name_en: 'Round-Tripping / Accounting', name_zh: '会计造假/round-tripping 事件', threshold_text: '任何=红 / 调查=黄 / 无=绿', source_name: 'SEC / 公开执法报道(编辑口径)', mode: 'curated' },
   { id: 'fed_policy', axis: 'trigger', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'Fed SEP / Fed funds futures / FRED', mode: 'auto' },
@@ -1301,7 +1301,7 @@ function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote, failures = []) {
     status,
     ...(observationDates.length === rows.length ? { as_of: observationDates[0] } : {}),
     value_display: fmtPct(yoy, 0, true),
-    note: `${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${coverageNote}${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
+    note: `${RPO_SCOPE_ZH}${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${coverageNote}${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
     detail: {
       yoyPct: yoy,
       prevYoyPct: prevYoy,
@@ -1549,7 +1549,7 @@ const autoBuilders = {
     const status = abs > 10 ? 'red' : abs >= 5 ? 'yellow' : 'green';
     return {
       status,
-      value_display: fmtPct(spread, 1, true),
+      value_display: `${spread > 0 ? '+' : ''}${spread.toFixed(1)} 个百分点`,
       note: signedSpreadNote(ret(spy), ret(rsp)),
       detail: { spyRet: ret(spy), rspRet: ret(rsp), spread }
     };
@@ -1635,7 +1635,7 @@ const autoBuilders = {
     return {
       status,
       value_display: `${bps} bps`,
-      note: `FRED 实拉 ICE BofA 高收益债 OAS = ${rows[0].value.toFixed(2)}%(${bps} bps,${rows[0].date});长期均值约 394 bps——信用市场对 AI capex 烧钱${bps < 350 ? '仍未定价压力,是当前最支撑多头的指标' : '开始定价压力'}。阈值:>500 红 / 350-500 黄 / <350 绿`,
+      note: broadHyNote(bps, rows[0].date),
       detail: { bps, date: rows[0].date }
     };
   },
@@ -4107,7 +4107,7 @@ const PUBLIC_SOURCE_LABELS = {
   breadth_50d: 'Barchart $S5FI 市场广度',
   spy_vs_rsp_6m: '市值加权与等权重 ETF',
   insider_sell_buy: '内部人交易披露',
-  ai_ipo_pipeline: '一级市场公开报道',
+  ai_ipo_pipeline: '发行/待发行管线公开报道与申报',
   hy_oas: 'ICE BofA 高收益债利差',
   dc_abs_spread: '数据中心证券样本与 ABS 基准',
   debt_capex_ratio: '数据中心融资缺口研究',
@@ -4117,7 +4117,7 @@ const PUBLIC_SOURCE_LABELS = {
   gpu_rental_price: 'Thunder Compute / getdeploying',
   arr_2nd_deriv: '公开 ARR 里程碑',
   enterprise_deploy: '企业 AI 部署调查',
-  cloud_rpo_growth: '云厂商订单与 backlog 披露',
+  cloud_rpo_growth: '云厂商 RPO / 积压订单披露',
   frontier_progress: 'METR / Epoch AI / ARC Prize',
   accounting_events: 'SEC / DOJ 执法公告',
   fed_policy: 'Fed 点阵图/期货/FRED',
@@ -4196,8 +4196,8 @@ function normalizePublicBubbleCopy(text) {
 
 function publicIndicatorNote(ind) {
   const evidenceNote = evidenceAwareNote(ind);
-  if (evidenceNote !== ind.note) return normalizePublicBubbleCopy(evidenceNote);
-  let note = normalizePublicBubbleCopy(ind.note);
+  if (evidenceNote !== ind.note && ind.id !== 'ai_ipo_pipeline') return normalizePublicBubbleCopy(evidenceNote);
+  let note = normalizePublicBubbleCopy(evidenceNote);
   const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
   if (calibration?.applied) {
     note = note
@@ -4221,6 +4221,7 @@ function publicIndicatorSourceName(ind) {
 function applyPublicIndicatorCopy(indicators) {
   return indicators.map((ind) => ({
     ...ind,
+    ...indicatorSemanticLabels(ind),
     note: publicIndicatorNote(ind),
     source_name: publicIndicatorSourceName(ind)
   }));
