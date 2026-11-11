@@ -1,21 +1,23 @@
 import fs from 'node:fs';
-import { GRANT, ONE_SHOT_BRANCH, prepareOneShotLedger, verifyOneShotStatus, oneShotRuntimeConfig } from './lib/deepseek-one-shot.mjs';
+import { GRANT, oneShotSelection, prepareOneShotLedger, verifyOneShotStatus, oneShotRuntimeConfig } from './lib/deepseek-one-shot.mjs';
 import { createGithubLedger, POLICY, POLICY_DIGEST, prepareBootstrapLedger, verifyBudgetStatus } from './lib/deepseek-budget.mjs';
 
 // Read-only by default. This CLI never initializes a ledger, changes a price
 // review, reads a provider key, calls DeepSeek, or sends a generation request.
 async function main() {
   const args = process.argv.slice(2);
-  if (args.length === 1 && args[0] === '--one-shot-plan') {
+  if ([1, 2].includes(args.length) && args[0] === '--one-shot-plan') {
+    const { grant, branch } = oneShotSelection(args[1] || GRANT.id);
     console.log(JSON.stringify({ operation: 'offline_plan', providerCalls: 0, writes: 0,
-      grant: GRANT, branch: ONE_SHOT_BRANCH, requires: ['independently approved grant digest',
+      grant, branch, requires: ['independently approved grant digest',
         'create-only pinned genesis with no existing ledger', 'current independently reviewed exact price digest',
         'explicit first-attempt workflow_dispatch on main', 'unchanged free-search and production gates'] }, null, 2));
     return;
   }
-  if (args.length === 4 && args[0] === '--prepare-one-shot' && args[2] === '--approved-grant-digest') {
+  if ([4, 6].includes(args.length) && args[0] === '--prepare-one-shot' && args[2] === '--approved-grant-digest'
+    && (args.length === 4 || args[4] === '--selection')) {
     const prepared = JSON.parse(fs.readFileSync(args[1], 'utf8'));
-    const ledger = prepareOneShotLedger({ ...prepared, approvedGrantDigest: args[3] });
+    const ledger = prepareOneShotLedger({ ...prepared, approvedGrantDigest: args[3], selection: args[5] || GRANT.id });
     console.log(JSON.stringify({ operation: 'offline_one_shot_plan', providerCalls: 0, writes: 0, ledger }, null, 2));
     return;
   }

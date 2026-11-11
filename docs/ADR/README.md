@@ -168,3 +168,5 @@
 
 - [ADR-0102: Administrative release evidence](0102-administrative-release-evidence.md) — final compact guards and bounded Macro-only BLS public excerpts.
 - [ADR-0103: Evidence-bound editorial normalization and safe failure diagnostics](0103-editorial-review-diagnostics.md)
+
+- [ADR-0105: Separate two-page verification grant](0105-editorial-verification-grant.md) — a fresh explicit CNY4.33 approval, isolated history and unchanged production gates.
