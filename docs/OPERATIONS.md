@@ -1780,3 +1780,25 @@ The temporary `deepseek-balance-shape-once-20261110.yml` credential-bearing entr
 ### CNY-only one-shot balance admission
 
 [ADR-0097](ADR/0097-one-shot-cny-balance-admission.md) narrows the additional grant's balance check to a unique sufficiently funded CNY row and optional all-zero USD row. Nonzero USD, duplicates, unknown currency, malformed/inconsistent amounts, insufficient CNY or unavailable account still HOLD before reservation and POST. A structural diagnosis never proves a zero USD balance; the normal authorized one-shot attempt performs its existing bounded balance read. Do not call the retired diagnostic or make a separate probe. No conversion or USD budget is allowed. The original CNY 4.33 grant, one attempt per article, permanent reservations and price/quality gates remain unchanged; the ordinary monthly gate keeps its original strict single-CNY check and fail-closed initialization requirements.
+
+<a id="one-shot-verification-editorial-grant"></a>
+
+### New two-page verification grant (2026-11-11)
+
+[ADR-0105](ADR/0105-editorial-verification-grant.md) adds a separately authorized, manual-only CNY 4.33 total grant: one Macro and one Bubble attempt, no retries, expiring 2026-11-13T00:00:00.000Z. It does not revive the spent ADR-0094 allowance. Follow the existing activation/receipt procedure above with these exact substitutions:
+
+- Selection: `editorial-verification-20261111-cny433-v1`.
+- Fixed create-only ledger branch: `deepseek-editorial-verification-20261111`.
+- Policy export: `VERIFICATION_GRANT`; old `GRANT` is unchanged.
+- Non-secret production-environment pins: `DEEPSEEK_VERIFY_20261111_GENESIS_SHA`, `DEEPSEEK_VERIFY_20261111_GRANT_SHA256`, `DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256`. Never alter the old or monthly pins/history.
+
+Offline planning and preparation only:
+
+```sh
+node scripts/review-deepseek-budget.mjs --one-shot-plan editorial-verification-20261111-cny433-v1
+node scripts/review-deepseek-budget.mjs --prepare-one-shot /path/to/reviewed-input.json --approved-grant-digest APPROVED_SHA256 --selection editorial-verification-20261111-cny433-v1
+```
+
+Use fresh, independently reviewed authorization and official-price evidence, not a reused old authorization hash. The policy reserves CNY 2.161152 per attempt, CNY 4.322304 combined; actual cost remains unverified until authoritative billing is available. The existing provider receipt records token usage, not a settled bill. Currency/funding is checked by the normal authorized attempt before reservation, without printing balances or making a separate probe.
+
+Before dispatch, verify the matching unconsumed grant slot and fresh price approval, Macro's natural current input/day tags, current eligible evidence and other source/quality gates. Dispatch each existing workflow at most once using this explicit selection and normal acknowledgements. If a slot is spent, an outcome is uncertain, an input is already claimed, or access is unavailable, stop the affected action. Never rerun, reset tags, modify data dates, substitute a manual artifact, activate another grant or silently use monthly budget. Report calls, permanent reserves, receipt/quality outcomes and actual two-site publication separately.
