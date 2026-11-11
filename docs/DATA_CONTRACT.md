@@ -4,6 +4,8 @@
 
 [ADR-0088](ADR/0088-ofr-editorial-contract.md)显式替代下方“任意迁移均hold/不允许编辑层”的旧阶段约束：完整OFR publication及周差时序验证通过后，只有macro-risk-editorial-ofr-production-v2可写入独立macroRiskEditorialLayer；pressureSnapshot由原input投影并与当前mainPressureReadout精确对齐。旧稿及上一期稿不能移植，旧建议退役保持。该本地补丁尚未发布；不扩大生产或付费授权。
 
+[ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md) 进一步约束新 OFR 编辑正文的定性比较与贡献缺项归属。检查使用原始 compact input 的已验证快照，不改变 `mainPressureReadout`、production schema、旧稿读路径或历史正文；`contributionsPublished=false` 明确仅描述本站快照，不代表 OFR 官方未公布贡献。
+
 ## OFR主压力读数与旧建议退役（ADR-0080，迁移契约）
 
 本节为[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)对应的窄范围契约：owner已决定正式退役旧公开建议、保留历史审计；准备代码不自动批准生产合并。根`version`与`decisionModel.contractVersion`仍为`v27.0`。

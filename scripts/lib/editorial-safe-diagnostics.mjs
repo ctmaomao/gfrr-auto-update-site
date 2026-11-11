@@ -2,9 +2,9 @@
 import { numericEvidenceAtoms } from '../bubble-watch/weekly-editorial-numeric-grounding.mjs';
 const count = value => Number.isSafeInteger(value) && value >= 0 && value <= 1e9 ? value : null;
 const pathPattern = /^(?:root\.dataGaps\[\d{1,3}\]|root\.confidence\.reasonZh|root|pressureSynthesis|historicalComparison|weeklyTimeline\[\d{1,3}\]|keyTensions\[\d{1,3}\]|contextAnalysis\[\d{1,3}\]|crossMarketAnalysis\[\d{1,3}\]|watchNext\[\d{1,3}\])(?:\.(?:headlineZh|leadZh|detailZh|titleZh|assessmentZh|labelZh|assetZh|observationZh|implicationZh|periodZh|similaritiesZh|differencesZh|conditionZh|whyItMattersZh|invalidationZh|reasonZh|date))?$/u;
-const codes = new Set(['unsupported_numeric', 'unsupported_compound_unit', 'unsupported_quote', 'unknown_source', 'pressure_numeric_prose', 'contract_invalid']);
+const codes = new Set(['unsupported_numeric', 'unsupported_compound_unit', 'unsupported_quote', 'unknown_source', 'pressure_numeric_prose', 'ofr_semantic_boundary', 'contract_invalid']);
 const kinds = new Set(['number','percent','percentage-point','year','month','day','quarter','date','month-day','scaled-number','power-W','invalid','invalid-financial','unparsed-financial', ...['USD','EUR','GBP','CNY','HKD','AUD','CAD','NZD','SGD','JPY'].map(x=>`money:${x}`), ...['KiB','MiB','GiB','TiB','KB','MB','GB','TB','kbps','Mbps','Gbps','km','kg','kWh','MWh','GWh'].map(x=>`unit:${x}`)]);
-const fixedRefs = new Set(['site:ofr:pressure','site:ofr:weekly-change','site:ofr:percentile',
+const fixedRefs = new Set(['site:ofr:pressure','site:ofr:weekly-change','site:ofr:percentile','site:ofr:coverage',
   'site:macro:credit:igOas','site:macro:credit:nfci','site:macro:fedLiquidity:effectiveFedFundsRate','site:macro:fedLiquidity:sofr']);
 // Only registered Macro topics and content hashes, not arbitrary source strings.
 const refPattern = /^news:(?:central_bank_inflation|energy_geopolitics|credit_liquidity|growth_employment_consumer|global_china_europe|market_volatility_valuation):[a-f0-9]{14}$/u;
@@ -32,7 +32,8 @@ export function safeClaimDiagnostics(rows, input, secret = '') {
   }));
 }
 function safeError(message) {
-  if (['unsupported_numeric','unsupported_compound_unit','unsupported_quote','credible_news_required','unknown_source_or_field','pressure_numeric_prose','contract_invalid'].includes(message)) return message;
+  if (['unsupported_numeric','unsupported_compound_unit','unsupported_quote','credible_news_required','unknown_source_or_field','pressure_numeric_prose','ofr_semantic_boundary','contract_invalid'].includes(message)) return message;
+  if (String(message).startsWith('OFR semantic boundary: ')) return 'ofr_semantic_boundary';
   if (message === 'OFR pressure prose must leave numeric readings to program projection') return 'pressure_numeric_prose';
   // Return literals, never a matched substring. Unknown text stays process-local.
   if (String(message).includes('sourceRefIds must be an array with length 1-12')) return 'sourceRefIds must be an array with length 1-12';

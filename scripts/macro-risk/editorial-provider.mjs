@@ -94,6 +94,8 @@ export function buildEditorialUserPrompt(input) {
 正文数字、金额、币种、单位、日期必须与同段引用一致；明确引语必须逐字存在于被引证据。
 数值引用池仅为同段sourceRefIds对应的structuredFacts.factZh和合格新闻摘要。pressureSnapshot、pressureFreshness、historicalContext的数值供程序展示或背景理解，不能单独充当正文数值依据；不从这些对象另取历史读数、期限或端点加入正文。
 输入中的 dataGaps、窗口日期、搜索渠道数和新闻条数属于采集元数据，不是 sourceRefIds 所引用的事实正文。不要照抄其中的“近7日”“1条”等数字到正文或 dataGaps；可定性披露“新闻覆盖有限”“搜索渠道响应不完整”，不得把元数据数字移到别处或拼接无关来源来通过核验。
+OFR 原值正负仅对比 OFR 校准历史均值；严格过去十年百分位独立描述本站历史样本排序，负值不等于该窗口低位。定性比较必须在同一分句写出基准并引用对应的 site:ofr:pressure 或 site:ofr:percentile，不能只写“低位”“历史相对偏低”“宽松底色”。与样本排序有关的高低只描述中位位置的两侧，不定义压力等级。
+contributionsPublished=false 仅表示本站当前快照未包含贡献分解，不代表 OFR 官方未公布；本站缺项必须明确写“本站当前快照/输入”，引用 site:ofr:coverage，不把来源机构写成缺少数据。
 OFR 数字由程序展示。pressureSynthesis.assessmentZh 只写定性解释，不含数字、日期、期限、百分位值或编号列表；也不用中文数字规避。它仍须引用对应的站内来源。
 紧凑证据包：\n${JSON.stringify(input)}
 输出前逐项自检：仅用本版本字段；缺证据的可选栏目用[]或null；顶层sourceRefIds覆盖headlineZh/leadZh/dataGaps/confidence.reasonZh中的事实，其它对象单独引用；实际引用至少一条内容相关的可信新闻；pressureSynthesis纯定性；所有具体数值及日期有同段证据；字段长度和数组数量符合系统契约；完成整个JSON，不依赖程序删除不合格正文。`;
@@ -131,7 +133,11 @@ ${JSON.stringify(input)}`;
 
 export function validateEditorialPrompt(input) {
   const system = buildEditorialSystemPrompt(input);
-  if (input?.schemaVersion === OFR_INPUT_SCHEMA) return { ok: system.includes("pressureSynthesis") && system.includes("不生成仓位"), missingMarkers: [] };
+  if (input?.schemaVersion === OFR_INPUT_SCHEMA) {
+    const required = ['pressureSynthesis', '不生成仓位', '校准历史均值', '严格过去十年', '本站当前快照', 'OFR 官方提供'];
+    const missingMarkers = required.filter(marker => !system.includes(marker));
+    return { ok: missingMarkers.length === 0, missingMarkers };
+  }
   const user = buildEditorialUserPrompt(input);
   const required = ['4,000–5,600', '2,000–6,800', '不计 sourceRefIds', 'weeklyTimeline 恰好 3', 'keyTensions 恰好 2', 'crossMarketAnalysis 恰好 3', 'watchNext 恰好 3', '不超过 6,200', '长度自检', '不得截断 JSON', '不得依赖 adapter/writer 修正', 'discovery_only', '逐项引用自检', '可信新闻 source IDs', '必须至少引用其中 1 条', 'weeklyTimeline 至少一个对象', '同一个 sourceRefIds', '不得重算', '不得伪装成危机预测', 'sourceRefIds', '恰好 6', 'confidence.score', '只返回 JSON'];
   const missingMarkers = required.filter((marker) => !`${system}\n${user}`.includes(marker));
@@ -337,6 +343,7 @@ export function buildOfrEditorialSystemPrompt() {
   return `你是 GFRR 的宏观压力解释编辑。只根据输入证据输出中文严格 JSON。
 标题、节目名称、视频介绍和发布时间不能代替正文结论或事件日期；不得把就业主题节目写成测得的劳动统计。同一新闻稿被不同网站转载不等于独立确认。只复述合格摘要确有支持的事实或具出处观点。
 主读数是 OFR 官方发表的金融压力指数原值，可负可零；不是0–100风险评分、危机概率或仓位模型。当前/缓存/过期/缺失状态和实际观察日必须尊重。独立结构指标不是 OFR 的分解或加分。旧总分、模块分及旧分历史已退役，不能重新引入。不生成仓位、买卖、配置、执行、危机概率或确定性崩盘指令。
+原值低于 OFR 校准历史均值与严格过去十年样本中的相对位置是不同基准；同一分句必须明确比较基准和方向，不把负值推成历史低位或宽松状态。任何标题、导语、压力解释、张力、数据限制或置信度说明都遵守该规则。contributionsPublished=false 仅是本站当前快照未纳入类别/地区贡献的限制；OFR 官方提供这些贡献，不得写“OFR未公布贡献分解”。
 数字标签（OFR原值、实际观察日、周变化端点及百分位）由程序从已验证快照展示，不要在 pressureSynthesis 复述数字。正文解释关系和限制。其它具体数字、日期、币种和单位只能来自同段引用证据；不能根据同一个数字猜测含义。明确引语须逐字存在，不能将一般术语包装成别人原话。
 可以写有依据的简版。目标为800–2400字，只是建议；不为满足栏目/来源数量凑字。保留6800字/64KiB上限、有效JSON和所有安全边界。只有真正有依据的栏目才写，空栏目用[]、无历史比较用null。每个事实对象都要1–12条合法sourceRefIds；headline/lead/dataGaps/confidence的事实引用用顶层sourceRefIds。全文必须实际引用至少一条 official/cross_checked 新闻，discovery_only 不能单独支撑事实。dataGaps至少一条，watchNext至少一条可观察条件和反证。
 字段上限不是写作目标：headlineZh为1–90字，leadZh为1–900字；pressureSynthesis.assessmentZh及各栏目单个正文字段为1–1000字；每条dataGaps和confidence.reasonZh为1–800字。weeklyTimeline最多5条，keyTensions最多4条，contextAnalysis最多6条，crossMarketAnalysis最多5条，watchNext为1–5条，dataGaps为1–12条。空白字符串不合格，不能用未声明字段承接超长正文。

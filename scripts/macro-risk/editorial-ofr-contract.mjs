@@ -1,3 +1,4 @@
+import { inspectOfrSemanticField } from './editorial-ofr-semantics.mjs';
 import { pressureContainsNumericContent } from '../modules/editorialNumericView.js';
 import { validatePublishedOfrComponent } from '../daily/ofr-publication-contract.mjs';
 import { numericEvidenceAtoms } from '../bubble-watch/weekly-editorial-numeric-grounding.mjs';
@@ -103,6 +104,15 @@ export function validateOfrEditorialOutput(output, input, inputResult, unsafePat
         ...list(root.dataGaps).map((value, index) => [`root.dataGaps[${index}]`, value]),
         ['root.confidence.reasonZh', root.confidence?.reasonZh]]
       : [...textFields, 'date'].map(field => [`${claimPath}.${field}`, claim[field]]);
+    for (const [fieldPath, value] of numericFields) {
+      for (const ruleCode of inspectOfrSemanticField(value, {
+        snapshot: input?.pressureSnapshot, sourceRefIds: refs,
+        defaultPressure: claimPath === 'pressureSynthesis' || fieldPath === 'root.headlineZh'
+      })) {
+        errors.push(`OFR semantic boundary: ${ruleCode}`);
+        diagnostics.push({ claimPath, fieldPath, ruleCode: 'ofr_semantic_boundary', sourceRefIds: refs });
+      }
+    }
     // Preserve whole-claim currency/range context; per-field parsing is only
     // used to locate diagnostics and must not change acceptance semantics.
     for (const atom of ofrNumericEvidenceAtoms(text)) {
