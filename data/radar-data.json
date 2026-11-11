@@ -3246,5 +3246,520 @@
     ],
     "scope": "input_conditions_not_position_instructions"
   },
-  "scenarios": []
+  "scenarios": [],
+  "macroRiskEditorialLayer": {
+    "schemaVersion": "macro-risk-editorial-ofr-production-v2",
+    "pressureSnapshot": {
+      "contractVersion": "ofr-primary-pressure-observation-v1",
+      "modelId": "ofr_fsi_published_index",
+      "asOf": "2026-11-11T02:04:21.388Z",
+      "status": "available",
+      "currentEligible": true,
+      "contributionsPublished": false,
+      "source": {
+        "provider": "Office of Financial Research",
+        "sourceUrl": "https://www.financialresearch.gov/financial-stress-index/",
+        "observedDate": "2026-11-06",
+        "retrievedAt": "2026-11-11T02:04:21.325Z",
+        "snapshotSha256": "34f812e685db795a598644ea7ae1a1367947ce11fe007387f01867038635394f",
+        "firstReleaseHistory": false,
+        "publicationLagNote": "数据约为两个营业日前，实际观察日单列。"
+      },
+      "retrieval": {
+        "attemptedAt": "2026-11-11T02:04:21.388Z",
+        "status": "received",
+        "fallbackUsed": false,
+        "error": null
+      },
+      "index": {
+        "value": -1.079,
+        "observedDate": "2026-11-06",
+        "ageDays": 5,
+        "freshnessMaxCalendarDays": 7
+      },
+      "lastKnown": {
+        "value": -1.079,
+        "observedDate": "2026-11-06"
+      },
+      "weeklyChange": {
+        "value": 0.31299999999999994,
+        "fromDate": "2026-10-30",
+        "toDate": "2026-11-06",
+        "targetDate": "2026-10-30",
+        "meaning": "change_from_dated_observation_approximately_one_week_prior"
+      },
+      "percentile": {
+        "value": 74.18850215095816,
+        "method": "strict_prior_midrank",
+        "years": 10,
+        "minimumRows": 2000,
+        "startDate": "2016-11-06",
+        "endDateExclusive": "2026-11-06",
+        "historyRows": 2557,
+        "firstObservation": "2016-11-07",
+        "lastObservation": "2026-11-05",
+        "maxGapDays": 4,
+        "lower": 1897,
+        "equal": 0,
+        "reasons": [],
+        "meaning": "historical_relative_position_not_crisis_probability"
+      },
+      "history": [
+        {
+          "date": "2026-10-22",
+          "value": -1.479
+        },
+        {
+          "date": "2026-10-23",
+          "value": -1.319
+        },
+        {
+          "date": "2026-10-26",
+          "value": -1.569
+        },
+        {
+          "date": "2026-10-27",
+          "value": -1.913
+        },
+        {
+          "date": "2026-10-28",
+          "value": -1.829
+        },
+        {
+          "date": "2026-10-29",
+          "value": -2.117
+        },
+        {
+          "date": "2026-10-30",
+          "value": -1.392
+        },
+        {
+          "date": "2026-11-02",
+          "value": -1.472
+        },
+        {
+          "date": "2026-11-03",
+          "value": -1.484
+        },
+        {
+          "date": "2026-11-04",
+          "value": -2.162
+        },
+        {
+          "date": "2026-11-05",
+          "value": -1.388
+        },
+        {
+          "date": "2026-11-06",
+          "value": -1.079
+        }
+      ],
+      "boundaries": {
+        "calibratedProbability": false,
+        "crisisStateAssigned": false,
+        "oldThresholdsApplied": false,
+        "tailFloorAdded": false,
+        "worldOrderAdded": false,
+        "decisionMapping": null,
+        "positionMapping": null,
+        "notInvestmentAdvice": true
+      }
+    },
+    "pressureFreshness": {
+      "id": "ofr_fsi",
+      "status": "available",
+      "observedAt": "2026-11-06",
+      "clockKind": "source_observation",
+      "ageHours": 120,
+      "ageExceeded": false,
+      "retrievedAt": "2026-11-11T02:04:21.325Z",
+      "publishedAsOf": "2026-11-11T02:04:21.388Z",
+      "currentEligibleAtCheck": true,
+      "weeklyHistoryStatus": "verified_internal"
+    },
+    "status": "valid",
+    "displayEnabled": true,
+    "generatedAt": "2026-11-11T03:10:26.194Z",
+    "updatedAt": "2026-11-11T03:10:26.194Z",
+    "sourceDataUpdatedAt": "2026-11-11T02:03:43.286Z",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "mode": "external_ai_macro_risk_editorial",
+    "sourceMode": "ofr_observation_and_independent_context_v2",
+    "output": {
+      "headlineZh": "OFR压力原值仍处负值区间，周内回升但未改变宽松底色",
+      "leadZh": "OFR官方金融压力指数最新可用观察显示，压力原值仍为负值，处于历史相对偏低的压力区间；与约一周前的观察端点相比，指数有所回升，说明压力边际上行，但幅度有限。需要强调，该原值可正可负，不是0–100风险评分，也不是危机概率或仓位模型。独立结构观察方面，美国投资级债OAS为0.91%（实际观察日2026-11-09），NFCI为-0.459（指数，实际观察日2026-10-30），有效联邦基金利率与SOFR均为3.88%（实际观察日2026-11-09），这些指标只作独立背景，不是OFR指数的分解或加分项。新闻层面，美联储理事Waller在2026-11-10的讲话摘要称美国经济增长强劲、劳动力市场使就业接近长期水平；副主席Bowman同日讲话提及近期能源市场与AI建设进展，但摘要未给出可核验的政策结论。能源地缘相关报道仅为发现级来源，不单独支撑事实判断。",
+      "sourceRefIds": [
+        "site:ofr:pressure",
+        "site:ofr:weekly-change",
+        "site:ofr:percentile",
+        "site:macro:credit:igOas",
+        "site:macro:credit:nfci",
+        "site:macro:fedLiquidity:effectiveFedFundsRate",
+        "site:macro:fedLiquidity:sofr",
+        "news:central_bank_inflation:5dbe49be8918df",
+        "news:central_bank_inflation:a2a2f5c5d7194a"
+      ],
+      "pressureSynthesis": {
+        "assessmentZh": "OFR压力原值仍为负值，表明按该官方口径衡量的金融压力整体处于低位；周度端点比较显示压力较约一周前有所回升，属于边际变化而非状态切换。历史百分位只描述当前读数在严格过去十年同口径历史中的相对位置，不能解读为危机概率或风险评分。独立结构指标（信用利差、金融条件指数、短端利率）与OFR指数口径不同，不能相加或当作分解项；它们只用于交叉观察资金与信用环境的松紧方向。官方讲话摘要提供增长与政策讨论的背景，但摘要未给出可量化的政策路径，因此不据此推断压力走向。",
+        "sourceRefIds": [
+          "site:ofr:pressure",
+          "site:ofr:weekly-change",
+          "site:ofr:percentile",
+          "site:macro:credit:igOas",
+          "site:macro:credit:nfci",
+          "site:macro:fedLiquidity:effectiveFedFundsRate",
+          "site:macro:fedLiquidity:sofr",
+          "news:central_bank_inflation:5dbe49be8918df"
+        ]
+      },
+      "weeklyTimeline": [
+        {
+          "date": "2026-11-06",
+          "titleZh": "OFR压力原值最新观察日",
+          "detailZh": "OFR金融压力指数原值为-1.079，实际观察日2026-11-06，来源状态available，当前主判读资格有效；原值不是0–100风险评分。",
+          "sourceRefIds": [
+            "site:ofr:pressure"
+          ]
+        },
+        {
+          "date": "2026-11-09",
+          "titleZh": "信用与短端利率独立观察",
+          "detailZh": "美国投资级债OAS为0.91%，有效联邦基金利率与SOFR均为3.88%，实际观察日均为2026-11-09；这些是独立结构观察，不是OFR分解。",
+          "sourceRefIds": [
+            "site:macro:credit:igOas",
+            "site:macro:fedLiquidity:effectiveFedFundsRate",
+            "site:macro:fedLiquidity:sofr"
+          ]
+        },
+        {
+          "date": "2026-11-10",
+          "titleZh": "美联储官员讲话摘要",
+          "detailZh": "Waller讲话摘要称美国经济增长强劲、劳动力市场使就业接近长期水平；Bowman讲话摘要提及近期能源市场与AI建设进展，但摘要未给出可核验的政策结论。",
+          "sourceRefIds": [
+            "news:central_bank_inflation:5dbe49be8918df",
+            "news:central_bank_inflation:a2a2f5c5d7194a"
+          ]
+        }
+      ],
+      "keyTensions": [
+        {
+          "titleZh": "压力低位与边际回升并存",
+          "detailZh": "OFR原值仍为负值，指向整体压力偏低；但约一周端点比较显示指数回升，说明边际压力上行。两者并不矛盾，但单周变化不足以判定趋势反转。",
+          "sourceRefIds": [
+            "site:ofr:pressure",
+            "site:ofr:weekly-change"
+          ]
+        },
+        {
+          "titleZh": "官方增长表述与压力读数口径不同",
+          "detailZh": "美联储官员讲话摘要称经济增长强劲、就业接近长期水平，这属于对经济基本面的定性描述；OFR指数衡量的是金融压力，两者口径不同，不能互相替代或直接推导。",
+          "sourceRefIds": [
+            "news:central_bank_inflation:5dbe49be8918df",
+            "site:ofr:pressure"
+          ]
+        }
+      ],
+      "contextAnalysis": [
+        {
+          "topic": "independent_context",
+          "labelZh": "独立结构观察",
+          "assessmentZh": "投资级债OAS、NFCI与短端利率属于独立结构指标，与OFR压力指数来源和口径不同，不能视为OFR的分解或加分项。它们可用于观察信用与资金环境的松紧方向，但不改变主读数解释。",
+          "sourceRefIds": [
+            "site:macro:credit:igOas",
+            "site:macro:credit:nfci",
+            "site:macro:fedLiquidity:effectiveFedFundsRate",
+            "site:macro:fedLiquidity:sofr"
+          ]
+        },
+        {
+          "topic": "independent_context",
+          "labelZh": "新闻覆盖限制",
+          "assessmentZh": "本期新闻发现仅部分主题获得响应，信用流动性、增长就业、全球与市场波动等主题未取得合格结果；能源地缘相关条目为发现级来源，不单独支撑事实判断。因此新闻层面对压力解释的补充有限。",
+          "sourceRefIds": [
+            "news:central_bank_inflation:5dbe49be8918df",
+            "news:central_bank_inflation:a2a2f5c5d7194a"
+          ]
+        }
+      ],
+      "crossMarketAnalysis": [],
+      "historicalComparison": null,
+      "watchNext": [
+        {
+          "conditionZh": "后续OFR观察日原值是否延续回升方向",
+          "whyItMattersZh": "单周端点变化只能说明边际，若连续多个观察日同向变化，才更有依据讨论压力状态是否切换。",
+          "invalidationZh": "若后续观察日原值回落至此前低位附近，则当前边际回升不构成持续趋势。",
+          "sourceRefIds": [
+            "site:ofr:pressure",
+            "site:ofr:weekly-change"
+          ]
+        },
+        {
+          "conditionZh": "信用利差与金融条件指数是否同向收紧",
+          "whyItMattersZh": "独立结构指标若与OFR回升同向，可增强对信用环境边际变化的交叉观察；但两者口径不同，不能合并计分。",
+          "invalidationZh": "若信用利差与NFCI未同向变化，则不宜把OFR单周回升解读为信用环境系统性收紧。",
+          "sourceRefIds": [
+            "site:macro:credit:igOas",
+            "site:macro:credit:nfci"
+          ]
+        }
+      ],
+      "dataGaps": [
+        "新闻发现未获得两个索引的完整成功响应，信用流动性、增长就业、全球与市场波动等主题缺少合格摘要，新闻层面对压力解释的补充有限。",
+        "部分能源地缘结果仅为发现级来源，不得单独支撑事实性判断。",
+        "OFR指数未公布贡献分解，无法据此判断周内变化由哪些成分驱动。"
+      ],
+      "confidence": {
+        "level": "medium",
+        "score": 62,
+        "reasonZh": "主读数来自OFR官方结构化快照，观察日与状态明确，周变化与百分位有同段证据；但新闻覆盖不完整，缺少信用与市场波动主题的合格摘要，且OFR未公布贡献分解，故编辑信心为中等。该分数是编辑信心，不是风险读数或概率。"
+      },
+      "auditFlags": [
+        "read_only_editorial",
+        "source_attributed"
+      ],
+      "boundaries": {
+        "displayOnly": true,
+        "commentaryOnly": true,
+        "externalAiGenerated": true,
+        "usesExternalAiApi": true,
+        "notInvestmentAdvice": true,
+        "affectsGfrrScoring": false,
+        "affectsRiskModules": false,
+        "affectsTailRiskOverlay": false,
+        "affectsDecisionModel": false,
+        "affectsExecutionLock": false,
+        "affectsPositionGuidance": false,
+        "affectsWorldOrder": false,
+        "affectsOdp": false,
+        "affectsBubbleWatch": false
+      },
+      "schemaVersion": "macro-risk-editorial-ofr-output-v2",
+      "generatedAt": "2026-11-11T03:10:25.795Z",
+      "sourceDataUpdatedAt": "2026-11-11T02:03:43.286Z",
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "mode": "external_ai_macro_risk_editorial",
+      "sourceAttribution": [
+        {
+          "sourceRefId": "site:ofr:pressure",
+          "claimType": "site_structured_data",
+          "noteZh": "Office of Financial Research（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:ofr:weekly-change",
+          "claimType": "site_structured_data",
+          "noteZh": "Office of Financial Research（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:ofr:percentile",
+          "claimType": "site_structured_data",
+          "noteZh": "Office of Financial Research（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:credit:igOas",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:credit:nfci",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:fedLiquidity:effectiveFedFundsRate",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "site:macro:fedLiquidity:sofr",
+          "claimType": "site_structured_data",
+          "noteZh": "GFRR 站内结构化数据（站内结构化数据）"
+        },
+        {
+          "sourceRefId": "news:central_bank_inflation:5dbe49be8918df",
+          "claimType": "official_news_context",
+          "noteZh": "federalreserve.gov（近 7 日新闻上下文）"
+        },
+        {
+          "sourceRefId": "news:central_bank_inflation:a2a2f5c5d7194a",
+          "claimType": "official_news_context",
+          "noteZh": "federalreserve.gov（近 7 日新闻上下文）"
+        }
+      ]
+    },
+    "sourceLedger": [
+      {
+        "id": "site:ofr:pressure",
+        "kind": "site_structured",
+        "sourceName": "Office of Financial Research",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-11-06",
+        "url": "https://www.financialresearch.gov/financial-stress-index/",
+        "factIds": [
+          "fact:ofr:pressure"
+        ]
+      },
+      {
+        "id": "site:ofr:weekly-change",
+        "kind": "site_structured",
+        "sourceName": "Office of Financial Research",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-11-06",
+        "url": "https://www.financialresearch.gov/financial-stress-index/",
+        "factIds": [
+          "fact:ofr:weekly-change"
+        ]
+      },
+      {
+        "id": "site:ofr:percentile",
+        "kind": "site_structured",
+        "sourceName": "Office of Financial Research",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-11-06",
+        "url": "https://www.financialresearch.gov/financial-stress-index/",
+        "factIds": [
+          "fact:ofr:percentile"
+        ]
+      },
+      {
+        "id": "site:macro:credit:igOas",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-11-09",
+        "factIds": [
+          "fact:macro:credit:igOas"
+        ]
+      },
+      {
+        "id": "site:macro:credit:nfci",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-10-30",
+        "factIds": [
+          "fact:macro:credit:nfci"
+        ]
+      },
+      {
+        "id": "site:macro:fedLiquidity:effectiveFedFundsRate",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-11-09",
+        "factIds": [
+          "fact:macro:fedLiquidity:effectiveFedFundsRate"
+        ]
+      },
+      {
+        "id": "site:macro:fedLiquidity:sofr",
+        "kind": "site_structured",
+        "sourceName": "GFRR 站内结构化数据",
+        "sourceClass": "site_structured",
+        "asOfDate": "2026-11-09",
+        "factIds": [
+          "fact:macro:fedLiquidity:sofr"
+        ]
+      },
+      {
+        "id": "news:central_bank_inflation:5dbe49be8918df",
+        "kind": "news",
+        "sourceName": "federalreserve.gov",
+        "sourceClass": "official",
+        "title": "Speech by Governor Waller on the economic outlook - Federal Reserve Board",
+        "url": "https://federalreserve.gov/newsevents/speech/waller20261110a.htm",
+        "domain": "federalreserve.gov",
+        "publishedAt": "2026-11-10T00:00:00.000Z",
+        "topic": "central_bank_inflation",
+        "providers": [
+          "tavily"
+        ],
+        "supportingDomains": [
+          "federalreserve.gov"
+        ]
+      },
+      {
+        "id": "news:central_bank_inflation:a2a2f5c5d7194a",
+        "kind": "news",
+        "sourceName": "federalreserve.gov",
+        "sourceClass": "official",
+        "title": "Speech by Vice Chair for Supervision Bowman on the U.S. economy and considerations for monetary policy - Federal Reserve Board",
+        "url": "https://federalreserve.gov/newsevents/speech/bowman20261110a.htm",
+        "domain": "federalreserve.gov",
+        "publishedAt": "2026-11-10T00:00:00.000Z",
+        "topic": "central_bank_inflation",
+        "providers": [
+          "tavily"
+        ],
+        "supportingDomains": [
+          "federalreserve.gov"
+        ]
+      }
+    ],
+    "validation": {
+      "validator": "check:macro-risk-editorial-contract",
+      "status": "pass",
+      "validatedAt": "2026-11-11T03:10:26.194Z",
+      "artifactDigest": "19cc4d98e0d7fdc82a67f774b388980015695ba5d5eec6fc480ff014e575433b"
+    },
+    "qualityReview": {
+      "status": "warn",
+      "recommendation": "approved_for_read_only_display",
+      "promotionEligible": false,
+      "reviewedAt": "2026-11-11T03:10:25.999Z",
+      "dimensions": {
+        "structuralContract": "pass",
+        "sourceReferenceIntegrity": "pass",
+        "newsEvidenceQuality": "pass",
+        "scoringBoundaryIntegrity": "pass",
+        "unsafeWording": "pass",
+        "editorialDepth": "warn",
+        "deterministicFallback": "pass"
+      },
+      "warnings": [
+        "本期独立结构观察覆盖有限，不补写无依据栏目。",
+        "本期实际引用来源少于建议数量，保留简版与覆盖限制。",
+        "近 7 日新闻发现为 partial，页面必须保留数据限制"
+      ]
+    },
+    "provenance": {
+      "generatedBy": "github_actions_workflow",
+      "humanApproved": false,
+      "inputDigest": "82cc82188d768ef557955290d436f5dc27ce972a2c5b77510d9636b3cb9272fb",
+      "artifactDigest": "19cc4d98e0d7fdc82a67f774b388980015695ba5d5eec6fc480ff014e575433b",
+      "sourceCommit": "895aa3097721b9f08c6f6403576f94615e15e494",
+      "runId": "42950570179",
+      "newsDiscoveryStatus": "partial",
+      "liveNewsProviderCount": 1
+    },
+    "freshness": {
+      "artifactGeneratedAt": "2026-11-11T03:10:25.795Z",
+      "sourceDataUpdatedAt": "2026-11-11T02:03:43.286Z",
+      "maxAgeHours": 30,
+      "isStale": false
+    },
+    "fallback": {
+      "available": true,
+      "source": "deterministic_macro_overview",
+      "target": "#macro-risk-overview"
+    },
+    "boundaries": {
+      "displayOnly": true,
+      "commentaryOnly": true,
+      "externalAiGenerated": true,
+      "usesExternalAiApi": true,
+      "frontendDisplayApproved": true,
+      "affectsGfrrScoring": false,
+      "affectsRiskModules": false,
+      "affectsTailRiskOverlay": false,
+      "affectsDecisionModel": false,
+      "affectsExecutionLock": false,
+      "affectsPositionGuidance": false,
+      "affectsWorldOrder": false,
+      "affectsOdp": false,
+      "affectsBubbleWatch": false,
+      "notInvestmentAdvice": true
+    }
+  }
 }
