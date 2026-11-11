@@ -262,3 +262,7 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 ## 2026-11-08 可靠性窄范围替代（ADR-0089）
 
 [ADR-0089](ADR/0089-bubble-editorial-reliability.md) 替代旧双搜索渠道硬门槛和旧稿全部隐藏规则：只在一个完整健康渠道有合格原摘要证据时允许明确披露的受限简版；零可靠证据仍阻断。writer 使用 transient writeEvidence 重验原输入摘要、事实、引用、哈希、原数据快照与时效，只接收匹配当前 Actions 的生产路径。原期合格生产文章可在 previous_weekly_editorial 保留并明确历史展示，当前 Hero 仍用本期确定性依据。费用、一次调用、无重试、不得晋升手工产物或历史为现稿不变。
+
+## Publication-date and metric-semantics correction (ADR-0106)
+
+[ADR-0106](ADR/0106-bubble-evidence-semantics.md) adds full-input, fail-closed timeline date binding. News rows identify a cited eligible publication day in both date and visible reporting prose; titles identify reporting/disclosure. Structured-only rows identify their cited fact observation day. There is no inferred eventDate or provider-output date repair. Historical metadata-only checks keep their existing rules because excerpts are not retained, while review/projection/final writer still require the complete transient input for new writes. Compact current metrics distinguish RPO from deferred revenue, return differences from percent returns, pending pipelines from completed IPOs, and broad HY context from AI-specific credit evidence. The scoped SPY unit guard and new timeline checks only add assertions; all earlier source, financial, quotation, budget and writer gates remain.

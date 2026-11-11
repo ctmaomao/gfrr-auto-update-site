@@ -166,7 +166,10 @@ for(const qualified of [false,true]) test(`r5 NVIDIA ${qualified?'qualified':'ga
   assert.ok(Buffer.byteLength(JSON.stringify(input))<60*1024);
   const output=read('docs/fixtures/bubble-watch-weekly-editorial/sample-output-v1.json');
   output.asOfDate=date;output.generatedAt=`${date}T12:02:00Z`;output.scorecardSynthesisZh=input.scoringSnapshot.scorecardDisclosureZh;
-  for(const event of output.weeklyTimeline) event.date=date;
+  for(const event of output.weeklyTimeline) {
+    event.detailZh=event.detailZh.replace(event.date,date);
+    event.date=date;
+  }
   const review=reviewWeeklyEditorial({input,output,generatedAt:`${date}T12:03:00Z`});
   const layer=projectWeeklyEditorial({input,output,review,generatedAt:`${date}T12:04:00Z`,sourceCommit:'a'.repeat(40),runId:'123'});
   const projection={schemaVersion:'bubble-watch-weekly-editorial-production-projection-v1',target:'data/bubble-watch.json.summary.weekly_editorial',generatedAt:layer.generatedAt,weeklyEditorial:layer,writeEvidence:{input,review}};

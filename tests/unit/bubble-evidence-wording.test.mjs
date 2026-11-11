@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { gunzipSync } from 'node:zlib';
-import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote } from '../../scripts/bubble-watch/evidence-wording.mjs';
+import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote, indicatorSemanticLabels } from '../../scripts/bubble-watch/evidence-wording.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { summarizeEvidence } from '../../scripts/bubble-watch/evidence-publication.mjs';
 import { buildEditorialScoringSnapshot } from '../../scripts/bubble-watch/editorial-score-snapshot.mjs';
@@ -23,6 +23,8 @@ test('signed SPY/RSP description preserves existing absolute score at negative, 
     assert.ok(Math.abs(result.detail.spread - spread) < 1e-10);
     assert.match(result.note, spread < 0 ? /等权重 RSP 领先市值加权 SPY/ : spread > 0 ? /市值加权 SPY 领先等权重 RSP/ : /回报持平/);
     assert.match(result.note, /绝对值/);
+    assert.match(result.value_display, /个百分点$/u);
+    assert.match(result.note, /SPY−RSP [+-]?\d+\.\d 个百分点/u);
     assert.doesNotMatch(result.note, /头部独涨、广度未跟上/);
   }
 });
@@ -69,7 +71,7 @@ test('historical r5 raw ARR fallback passes unchanged public-copy rules after pu
   const bubble = JSON.parse(gunzipSync(fs.readFileSync(new URL('../fixtures/bubble-r5-observation-migration.json.gz', import.meta.url)))).before;
   const entry = { status: 'red', value_display: '披露序列减速', note: '历史研究披露序列，不代表新观测。', asOfDate: '2026-11-08', maxAgeDays: 45 };
   const definition = bubble.indicators.find(row => row.id === 'arr_2nd_deriv');
-  const context = vm.createContext({ evidenceAwareNote,
+  const context = vm.createContext({ evidenceAwareNote, indicatorSemanticLabels,
     CORE_INDICATOR_ID_SET: new Set(bubble.indicators.filter(row => row.score_role === 'core').map(row => row.id)),
     SHADOW_INDICATOR_ID_SET: new Set(bubble.indicators.filter(row => row.score_role === 'shadow').map(row => row.id)) });
   const functionText = (name, next) => source.slice(source.indexOf(`function ${name}(`), source.indexOf(`function ${next}(`));
@@ -112,4 +114,26 @@ test('historical r5 raw ARR fallback passes unchanged public-copy rules after pu
   assert.equal(projected.provenance.reason, raw.provenance.reason);
   assert.equal(projected.status, raw.status);
   assert.equal(projected.stale, raw.stale);
+});
+
+test('current metric labels and compact facts preserve numeric provenance and scope', () => {
+  const bubble = read('data/bubble-watch.json');
+  bubble.indicators.find(row => row.id === 'cloud_rpo_growth').name_zh = '云厂商递延收入增速';
+  bubble.indicators.find(row => row.id === 'ai_ipo_pipeline').name_zh = 'AI 一级市场发行';
+  Object.assign(bubble.indicators.find(row => row.id === 'spy_vs_rsp_6m'), { value_display: '-6.5%', provenance: { detail: { spyRet: 1.8111747423, rspRet: 8.3141286330, spread: -6.5029538907 } } });
+  const before = structuredClone(bubble);
+  const discovery = buildNewsDiscovery({ rawStories: [], sourceStatus: {}, generatedAt: '2026-11-11T12:00:00Z', windowStart: '2026-11-04', windowEnd: '2026-11-11' });
+  const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+  const fact = id => input.structuredFacts.find(row => row.indicatorId === id).factZh;
+  assert.match(fact('cloud_rpo_growth'), /剩余履约义务（RPO）增速/u);
+  assert.match(fact('cloud_rpo_growth'), /不等同递延收入或已确认收入/u);
+  assert.match(fact('cloud_rpo_growth'), /公司业务范围、定义和财季存在差异/u);
+  assert.match(fact('spy_vs_rsp_6m'), /-6\.5 个百分点/u);
+  assert.doesNotMatch(fact('spy_vs_rsp_6m'), /-6\.5%/u);
+  assert.match(fact('ai_ipo_pipeline'), /发行\/待发行管线.*不是已完成发行数/u);
+  assert.match(fact('ai_ipo_pipeline'), /近6个月去重.*S-1\/A/u);
+  assert.match(fact('hy_oas'), /全市场信用环境.*不是 AI 专属/u);
+  assert.doesNotMatch(fact('hy_oas'), /最支撑多头|烧钱仍未定价/u);
+  assert.deepEqual(input.scoringSnapshot, buildEditorialScoringSnapshot(bubble));
+  assert.deepEqual(bubble, before);
 });

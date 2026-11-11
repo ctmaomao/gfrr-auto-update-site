@@ -1,9 +1,43 @@
 // Read-only descriptions: never infer observations or alter model inputs.
+export const RPO_LABEL_ZH = '云厂商剩余履约义务（RPO）增速';
+export const IPO_LABEL_ZH = 'AI 发行/待发行管线';
+export const SPREAD_THRESHOLD_ZH = '差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿';
+export const RPO_SCOPE_ZH = 'RPO/积压订单不等同递延收入或已确认收入；公司业务范围、定义和财季存在差异，合计仅作需求存量观察。';
+export const IPO_SCOPE_ZH = '发行/待发行管线不是已完成发行数；登记公司数为近6个月去重口径，S-1/A 申报不代表已定价或完成上市，申报份数不等于公司数。';
+export const HY_SCOPE_ZH = '广义高收益债 OAS 反映全市场信用环境，不是 AI 专属债券篮子，不能直接证明 AI 资本开支风险已被或尚未被定价。';
+
+// Labels/units only. Numeric provenance, score inputs and observation clocks are untouched.
+export function indicatorSemanticLabels(indicator) {
+  if (indicator.id === 'cloud_rpo_growth') return { name_zh: RPO_LABEL_ZH };
+  if (indicator.id === 'ai_ipo_pipeline') return { name_zh: IPO_LABEL_ZH };
+  if (indicator.id === 'spy_vs_rsp_6m') return {
+    threshold_text: SPREAD_THRESHOLD_ZH,
+    value_display: String(indicator.value_display || '').replace(/^([+−-]?\d+(?:\.\d+)?)%$/u, '$1 个百分点')
+  };
+  return {};
+}
+
+// Rewrite only indicator-bound current deterministic prose; never traverse AI issues.
+export function semanticNarrativeText(text, indicators) {
+  if (typeof text !== 'string') return text;
+  for (const old of indicators) {
+    const next = { ...old, ...indicatorSemanticLabels(old) };
+    text = text.replaceAll(`${old.name_zh}为${old.value_display}`, `${next.name_zh}为${next.value_display}`);
+    if (old.name_zh !== next.name_zh) text = text.replaceAll(old.name_zh, next.name_zh);
+  }
+  return text;
+}
+
+const prependOnce = (scope, note) => String(note || '').startsWith(scope) ? note : `${scope}${note || ''}`;
+
+export function broadHyNote(bps, date) {
+  return `${HY_SCOPE_ZH}ICE BofA 高收益债 OAS = ${(bps / 100).toFixed(2)}%（${bps} bps，${date}）。阈值:>500 红 / 350-500 黄 / <350 绿`;
+}
 export function signedSpreadNote(spyRet, rspRet) {
   const spread = spyRet - rspRet;
   const pct = value => `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   const direction = spread > 0 ? '市值加权 SPY 领先等权重 RSP' : spread < 0 ? '等权重 RSP 领先市值加权 SPY' : '市值加权 SPY 与等权重 RSP 回报持平';
-  return `公开市场价格显示 6 个月回报:SPY ${pct(spyRet)} vs 等权重 RSP ${pct(rspRet)}；SPY−RSP ${pct(spread)}，${direction}。该差值不单独证明头部独涨或个股广度；既有灯色按差值绝对值分档:>10% 红 / 5-10% 黄 / <5% 绿。`;
+  return `标普500市值加权与等权重ETF的6个月回报（RSP不是小盘股指数）:SPY ${pct(spyRet)} vs 等权重 RSP ${pct(rspRet)}；SPY−RSP ${spread > 0 ? '+' : ''}${spread.toFixed(1)} 个百分点，${direction}。该差值不单独证明头部独涨或个股广度；既有灯色按${SPREAD_THRESHOLD_ZH}。`;
 }
 
 export function enterpriseSurveyNote(detail = {}, valueDisplay = '') {
@@ -25,6 +59,13 @@ export function enterpriseSurveyNote(detail = {}, valueDisplay = '') {
 export function evidenceAwareNote(indicator) {
   const detail = indicator.provenance?.detail;
   if (indicator.id === 'spy_vs_rsp_6m' && Number.isFinite(detail?.spyRet) && Number.isFinite(detail?.rspRet)) return signedSpreadNote(detail.spyRet, detail.rspRet);
+  if (indicator.id === 'spy_vs_rsp_6m') return '收益差按百分点表示；历史备用快照缺少同一六个月窗口的两端收益，不能据此重建或确认相对收益。';
+  if (indicator.id === 'cloud_rpo_growth') return prependOnce(RPO_SCOPE_ZH, indicator.note);
+  if (indicator.id === 'ai_ipo_pipeline') return prependOnce(IPO_SCOPE_ZH, indicator.note);
+  if (indicator.id === 'hy_oas') {
+    if (Number.isFinite(detail?.bps) && /^\d{4}-\d{2}-\d{2}$/u.test(detail?.date || '')) return broadHyNote(detail.bps, detail.date);
+    return prependOnce(HY_SCOPE_ZH, indicator.note);
+  }
   if (detail?.sourceObservation || detail?.contractVersion === 'arr-observation-eligibility-v1') return indicator.note;
   if (indicator.id === 'enterprise_deploy' && detail) return enterpriseSurveyNote(detail, indicator.value_display);
   if (indicator.id === 'arr_2nd_deriv' && ['curated', 'auto_fallback'].includes(indicator.provenance?.mode)) {

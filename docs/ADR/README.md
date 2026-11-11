@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0106 — Bubble evidence semantics](0106-bubble-evidence-semantics.md): correct RPO/pipeline/proxy labels and percentage-point units without score changes; bind new timeline rows to explicit report/observation dates. Local implementation, independent final-tree review and coordinated integration pending.
+
 本索引按决策主题导航，不把每条旧“pending/local-only”当作全局禁令。明确的后续修订、当前有效授权和实际验收仍须逐项核对；状态更新不新增来源、费用或发布权限。
 
 - [ADR-0099 — Shared editorial news hygiene](0099-shared-editorial-news-hygiene.md): reject mixed/navigation snippets and syndicated false corroboration in Bubble and Macro; additive input guards, unchanged budgets and historical metadata boundaries.

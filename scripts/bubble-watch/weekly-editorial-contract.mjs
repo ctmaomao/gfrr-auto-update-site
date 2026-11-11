@@ -1,7 +1,9 @@
+import { explicitSpreadUnitError } from './weekly-editorial-metric-semantics.mjs';
 import { evidenceEligibility } from '../lib/editorial-news-hygiene.mjs';
 import { claimQuoteSupport } from './weekly-editorial-quote-support.mjs';
 import { validateEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { isLimitedEvidence, validMediaStory } from './editorial-evidence-policy.mjs';
+import { validateTimelineDateBindings } from './weekly-editorial-timeline-dates.mjs';
 import { claimNumericSupport } from './weekly-editorial-numeric-grounding.mjs';
 export const NEWS_DISCOVERY_SCHEMA = 'bubble-watch-weekly-news-discovery-v1';
 export const INPUT_SCHEMA = 'bubble-watch-weekly-editorial-input-v1';
@@ -304,6 +306,7 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
       referencedIndicatorIds.add(indicatorId);
     }
     const claimText = [claim.titleZh, claim.detailZh].filter(Boolean).join(' ');
+    if (!options.metadataOnly && explicitSpreadUnitError(claim)) errors.push(`output factual claim[${index}] must express the SPY-RSP return difference in percentage points, not percent`);
     for (const refId of refs) {
       const story = newsById.get(refId);
       if (story?.contentScope === 'title_only') errors.push(`output factual claim[${index}] cites title-only news; omit unsupported detail`);
@@ -354,6 +357,11 @@ export function validateWeeklyEditorialOutput(output, input, options = {}) {
     if (pattern.test(collectStrings(root).join('\n'))) errors.push(`output contains unsafe wording matching ${pattern}`);
   }
   if (timeline.some((item) => typeof item?.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(item.date))) errors.push('output timeline dates must use YYYY-MM-DD');
+
+  // Historical sourceLedger revalidation has no excerpts or new date-basis fields.
+  // Preserve that read-only compatibility; all new provider/projection/writer paths
+  // validate the original full input and must satisfy publication-date binding.
+  if (!options.metadataOnly) errors.push(...validateTimelineDateBindings(timeline, input));
 
   return { ok: errors.length === 0, errors, warnings: [...warnings], visibleTextLength: visibleText.length };
 }

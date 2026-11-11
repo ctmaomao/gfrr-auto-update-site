@@ -43,6 +43,18 @@ function replaceExactStrings(value, replacements) {
   return value;
 }
 
+// This checker remaps news IDs between synthetic fixtures. Keep their publication
+// dates/framing aligned too; runtime/provider output is never repaired this way.
+function bindFixtureTimelineDates(output, stories) {
+  for (const event of output.weeklyTimeline) {
+    const story = stories.find(row => event.sourceRefIds.includes(row.id));
+    assert(story, 'timeline fixture requires a cited news story');
+    event.date = story.publishedAt.slice(0, 10);
+    event.detailZh = `${event.date} 据媒体报道，${event.detailZh.replace(/^\d{4}-\d{2}-\d{2} 据媒体报道，/u, '')}`;
+  }
+  return output;
+}
+
 function withoutWeeklyEditorial(bubbleWatch) {
   const copy = structuredClone(bubbleWatch);
   delete copy.summary.weekly_editorial;
@@ -76,7 +88,7 @@ const replacements = new Map([
   ['news:earnings-sample', credibleStories[1].id],
   ['news:financing-sample', credibleStories[2].id]
 ]);
-let providerOutput = replaceExactStrings(sampleOutput, replacements);
+let providerOutput = bindFixtureTimelineDates(replaceExactStrings(sampleOutput, replacements), discovery.stories);
 providerOutput.asOfDate = input.asOfDate;
 if (input.scoringSnapshot.contractVersion === 'bubble-watch-v3') providerOutput.scorecardSynthesisZh = input.scoringSnapshot.scorecardDisclosureZh;
 providerOutput.sourceAttribution = providerOutput.sourceAttribution.map((item) => {
@@ -93,7 +105,7 @@ assert(JSON.stringify(parseWeeklyEditorialProviderContent(JSON.stringify(provide
 assert(JSON.stringify(parseWeeklyEditorialProviderContent(`\`\`\`json\n${JSON.stringify(providerOutput)}\n\`\`\``)) === JSON.stringify(providerOutput), 'single fenced provider JSON parser replay failed');
 
 const oneCredibleReplacements = new Map(credibleStories.slice(1).map((story) => [story.id, credibleStories[0].id]));
-const oneCredibleOutput = replaceExactStrings(providerOutput, oneCredibleReplacements);
+const oneCredibleOutput = bindFixtureTimelineDates(replaceExactStrings(providerOutput, oneCredibleReplacements), discovery.stories);
 const seenOneCredibleAttributions = new Set();
 oneCredibleOutput.sourceAttribution = oneCredibleOutput.sourceAttribution.filter((item) => {
   if (seenOneCredibleAttributions.has(item.sourceRefId)) return false;
