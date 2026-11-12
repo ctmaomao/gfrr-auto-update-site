@@ -1271,3 +1271,7 @@ The existing Yahoo six-month price-return spread now uses identical dated endpoi
 CAPE uses the existing Multpl page-linked `https://www.multpl.com/shiller-pe/atom` feed, binding current value to its unique dated entry and full update clock. This replaces one HTML request, not an extra source/vendor or call. StockAnalysis SPY holdings uses `Top ... Holdings Updated`; NVDA forward PE uses the explicitly labelled financial-statistics update. Generic quote or last-checked dates cannot supply the metric date. Seven-day freshness applies and failures retain the original dated snapshot. Undated Slickcharts cannot substitute a current holdings observation.
 
 Bubble FRED JSON/CSV reject missing/null/blank/non-numeric values rather than coercing them to zero, preserve actual zero, reject invalid/future dates and conflicting duplicates, and sort dated rows newest first. HY OAS uses its actual FRED date and a seven-day age limit. No score threshold, provider permission or refresh schedule changes. See [audit](BUBBLE_SOURCE_FRESHNESS_AUDIT_2026_11_12.md).
+
+### Bubble independent credit-history refresh (2026-11-12)
+
+The existing HY/CCC/IG FRED display history now has a bounded Tuesday–Saturday 06:20 UTC refresh: three public requests, no keys or application retries. Individual source dates and fallback/stale status remain authoritative. It does not refresh Bubble scoring, weekly issue dates, quarterly evidence or AI prose. See [cadence, safety gates and broader-market limits](BUBBLE_CREDIT_DAILY_REFRESH_2026_11_12.md).

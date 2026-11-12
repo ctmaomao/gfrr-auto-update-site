@@ -660,6 +660,7 @@ const mainWriterWorkflows = [
   'build-daily-radar-data.yml',
   'macro-risk-editorial-refresh.yml',
   'refresh-bubble-watch.yml',
+  'refresh-bubble-credit-spreads.yml',
   'refresh-oil-directional-pressure.yml',
   'refresh-oil-news-event-watch.yml',
   'refresh-oil-thermal-watch.yml',
