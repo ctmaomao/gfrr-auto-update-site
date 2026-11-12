@@ -27,13 +27,14 @@ function inspect(file) {
   try { parsed = JSON.parse(bytes.toString('utf8')); } catch { /* No parse errors or input text leave the process. */ }
   return { metadata: { state: 'present', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }, parsed };
 }
-export function buildEditorialDiagnosticReceipt({ consumer, root = process.cwd(), outcomes = {}, budget = {} }) {
+export function buildEditorialDiagnosticReceipt({ consumer, root = process.cwd(), outcomes = {}, budget = {}, budgetSelection = null }) {
   if (!Object.hasOwn(PREFIXES, consumer)) throw new Error('unknown_editorial_consumer');
   const directory = safeDirectory(root, PREFIXES[consumer]);
   const files = { ...FILES, review: consumer === 'macro' ? 'review-latest.json' : 'quality-review-latest.json' };
   const inspected = Object.fromEntries(Object.entries(files).map(([key, name]) => [key, inspect(path.join(directory, name))]));
   const states = Object.fromEntries(['provider', 'review', 'writer', 'save'].map(key => [key, OUTCOMES.has(outcomes[key]) ? outcomes[key] : 'unknown']));
   const review = inspected.review.parsed;
+  const privateClaim = consumer === 'bubble' && budgetSelection === 'editorial-bubble-receipt-20261112-v1';
   return {
     schemaVersion: 'editorial-safe-diagnostic-receipt-v1', consumer,
     rawTextRetained: false, replayPossibleFromReceipt: false,
@@ -51,13 +52,14 @@ export function buildEditorialDiagnosticReceipt({ consumer, root = process.cwd()
         && budget.skipVerification === 'success' && Object.values(inspected).every(file => file.metadata.state === 'missing')
         && Object.values(states).every(value => value === 'skipped')
     },
-    files: Object.fromEntries(Object.entries(inspected).map(([key, value]) => [key, value.metadata])),
+    files: Object.fromEntries(Object.entries(inspected).map(([key, value]) => [key, privateClaim
+      ? { state: value.metadata.state, bytes: null, sha256: null } : value.metadata])),
     qualityReview: {
       status: ['pass', 'warn', 'fail'].includes(review?.status) ? review.status : 'unknown',
       blockerCount: Array.isArray(review?.blockers) ? Math.min(review.blockers.length, 1000) : null,
       warningCount: Array.isArray(review?.warnings) ? Math.min(review.warnings.length, 1000) : null
     },
-    providerDiagnostics: safeProviderDiagnostics(inspected.failure.parsed?.requestDiagnostics?.response, null)
+    providerDiagnostics: privateClaim ? null : safeProviderDiagnostics(inspected.failure.parsed?.requestDiagnostics?.response, null)
   };
 }
 function main() {
@@ -66,7 +68,7 @@ function main() {
   const outcomes = Object.fromEntries(['provider', 'review', 'writer', 'save'].map(key => [key, process.env[`EDITORIAL_${key.toUpperCase()}_OUTCOME`]]));
   const budget = Object.fromEntries(['outcome', 'disposition', 'reason'].map(key => [key, process.env[`EDITORIAL_BUDGET_${key.toUpperCase()}`]]));
   budget.skipVerification = process.env.EDITORIAL_BUDGET_SKIP_VERIFICATION;
-  const receipt = buildEditorialDiagnosticReceipt({ consumer, outcomes, budget });
+  const receipt = buildEditorialDiagnosticReceipt({ consumer, outcomes, budget, budgetSelection: process.env.DEEPSEEK_BUDGET_SELECTION });
   const directory = safeDirectory(process.cwd(), PREFIXES[consumer]);
   fs.mkdirSync(directory, { recursive: true });
   const destination = path.join(directory, 'safe-diagnostic-receipt.json');

@@ -1,39 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
-import { POLICY, POLICY_DIGEST, LEGACY_POLICY_DIGEST, digest } from '../../scripts/lib/deepseek-budget.mjs';
-import { GRANT, VERIFICATION_GRANT, validateOneShotLedger } from '../../scripts/lib/deepseek-one-shot.mjs';
+import { POLICY, digest } from '../../scripts/lib/deepseek-budget.mjs';
 import { RECEIPT_GRANT, prepareReceiptLedger, validateReceiptLedger, validateReceiptTransition,
   createReceiptBudget, verifyReceiptStatus, createReceiptExposureVerifier, receiptRuntimeConfig } from '../../scripts/lib/deepseek-receipt-grant.mjs';
-const NOW = Date.parse('2026-11-12T08:00:00.000Z');
+import { NOW, key, receiptGrantFixture as input } from '../fixtures/deepseek-receipt-grant.mjs';
 const iso = n => new Date(n).toISOString();
-const key = 'SYNTHETIC_RECEIPT_KEY';
-function historic(policy, index) {
-  const at = Date.parse(index ? '2026-11-11T02:00:00.000Z' : '2026-11-10T02:00:00.000Z');
-  const review = { policyDigest: LEGACY_POLICY_DIGEST, verifiedAt: iso(at), expiresAt: iso(at + 86400000), evidenceSha256: digest('synthetic price') };
-  const usages = index ? [[18120, 4127], [6302, 1823]] : [[17518, 4252], [7596, 1279]];
-  const entries = usages.flatMap(([prompt, output], i) => {
-    const id = randomUUID();
-    return [{ id, kind: 'reserve', time: iso(at + i * 10000 + 1000), consumer: ['bubble-editorial', 'macro-editorial'][i], mode: 'manual',
-      runId: String(index * 2 + i + 1), keyId: digest(key), requestDigest: digest(`request${index}${i}`), reservedMicroCny: POLICY.reserveMicroCny, reviewDigest: digest(review) },
-    { id: randomUUID(), kind: 'outcome', time: iso(at + i * 10000 + 2000), reservationId: id, status: 'complete_unreconciled',
-      requestIdDigest: digest(`response${index}${i}`), usage: { prompt_tokens: prompt, completion_tokens: output, total_tokens: prompt + output }, code: null }];
-  });
-  const ledger = { schemaVersion: 'deepseek-one-shot-v1', grant: { policy, authorizedAt: iso(at), authorizationEvidenceSha256: digest('synthetic authorization'), initializationParentSha: 'a'.repeat(40) }, reviews: [review], entries };
-  validateOneShotLedger(ledger, NOW, policy.id);
-  return { selection: policy.id, head: String(index + 1).repeat(40), genesisSha: String(index + 3).repeat(40), ledgerSha256: digest(ledger), ledger };
-}
-function input() {
-  const snapshot = { observedAt: iso(NOW - 1000), calendarMonth: '2026-11', projectUtcOffsetMinutes: 0, exportUtcOffsetMinutes: 780,
-    coveredFrom: '2026-10-31T11:00:00.000Z', coveredThrough: '2026-11-12T11:00:00.000Z', exportSha256: digest('synthetic export'),
-    accountScopeEvidenceSha256: digest('synthetic all keys evidence'), accountSpendCny: '0.2643584', historicalDebitMicroCny: 2836985, keyId: digest(key),
-    quiescenceEvidenceSha256: digest('synthetic all paths attestation'), unknownRequests: 0, allProjectPathsControlled: true,
-    inventorySha256: digest('synthetic inventory'), earlyCompleted: [[17086,4740],[17188,5138],[17111,4845],null].map((u, i) => ({ runId: ['41526065601','41531578149','41534908718','41539541399'][i], completedAt: '2026-11-02T22:44:00.000Z', evidenceSha256: digest(`synthetic early${i}`), status: 'completed', usage: u ? { prompt_tokens:u[0], completion_tokens:u[1], total_tokens:u[0]+u[1] } : null })),
-    legacy: [historic(GRANT, 0), historic(VERIFICATION_GRANT, 1)] };
-  const grant = { policy: RECEIPT_GRANT, authorizedAt: iso(NOW - 500), expiresAt: iso(NOW + 3600000), authorizationEvidenceSha256: digest('synthetic one-call approval'), initializationParentSha: 'f'.repeat(40), snapshot };
-  const review = { policyDigest: POLICY_DIGEST, verifiedAt: iso(NOW), expiresAt: iso(NOW + 86400000), evidenceSha256: digest('synthetic current price') };
-  return { grant, review, approvedGrantDigest: digest(grant) };
-}
 function setup(changes = {}) {
   const data = input(); let ledger = prepareReceiptLedger(data, NOW), head = 0;
   const store = { read: async () => ({ head, ledger: structuredClone(ledger) }), write: async (old, next) => {
@@ -52,17 +23,17 @@ test('transitional ceiling double-counts receipt exposure without changing four 
   const { gate, store, options } = setup();
   const before = (await store.read()).ledger.grant.snapshot.legacy;
   const status = await verifyReceiptStatus(options);
-  assert.equal(status.historicalUpperBoundMicroCny, 2836985); assert.equal(status.nextReservationMicroCny, 2161152);
+  assert.equal(status.historicalUpperBoundMicroCny, 2292449); assert.equal(status.nextReservationMicroCny, POLICY.reserveMicroCny);
   let calls = 0; await gate(context(), async () => { calls++; return response(); });
   await assert.rejects(gate(context(), () => assert.fail()), /session_stopped/);
   await assert.rejects(createReceiptBudget(options)(context(), () => assert.fail()), /grant_consumed/);
   const after = (await store.read()).ledger;
   assert.deepEqual(after.grant.snapshot.legacy, before); assert.equal(calls, 1);
-  assert.equal(before.flatMap(x => x.ledger.entries).filter(x => x.kind === 'reserve').reduce((n, x) => n + x.reservedMicroCny, 0), 8644608);
+  assert.equal(before.flatMap(x => x.ledger.entries).filter(x => x.kind === 'reserve').reduce((n, x) => n + x.reservedMicroCny, 0), 4 * POLICY.reserveMicroCny);
   validateReceiptLedger(after, NOW + 400 * 86400000);
 });
 test('unknown or altered snapshot never prepares a grant', () => {
-  const mutations = [s => { s.unknownRequests = 1; }, s => { s.allProjectPathsControlled = false; }, s => { s.accountSpendCny = '0.264358'; },
+  const mutations = [s => { s.unknownRequests = 1; }, s => { s.allProjectPathsControlled = false; }, s => { s.accountSpendCny = '0.12345'; },
     s => { s.accountSpendCny = '9.9'; }, s => { s.historicalDebitMicroCny--; }, s => { s.calendarMonth = '2026-12'; }, s => { s.projectUtcOffsetMinutes = 780; },
     s => { s.coveredFrom = '2026-11-01T11:00:00.000Z'; }, s => { s.coveredThrough = '2026-11-11T11:00:00.000Z'; },
     s => { s.exportSha256 = ''; }, s => { s.inventorySha256 = ''; }, s => { s.earlyCompleted[0].usage.prompt_tokens++; }, s => { s.earlyCompleted[3].status = 'pending'; }, s => { s.earlyCompleted.pop(); }, s => { s.keyId = digest('other'); }, s => { s.legacy[0].head = ''; },
@@ -144,4 +115,42 @@ test('real authorization may precede later evidence observation, never a future 
   assert.doesNotThrow(() => prepareReceiptLedger(data, NOW));
   data.grant.authorizedAt = iso(NOW + 1); data.approvedGrantDigest = digest(data.grant);
   assert.throws(() => prepareReceiptLedger(data, NOW), /grant_invalid/);
+});
+
+test('private approval pins valid evidence values while structural checks reject duplicate requests', () => {
+  const changed = input();
+  changed.grant.snapshot.accountSpendCny = '0.12345778';
+  changed.grant.snapshot.historicalDebitMicroCny++;
+  assert.throws(() => prepareReceiptLedger(changed, NOW), /grant_unapproved/);
+  for (const mutate of [
+    s => { s.earlyCompleted[1].runId = s.earlyCompleted[0].runId; },
+    s => { s.earlyCompleted[0].runId = s.legacy[0].ledger.entries[0].runId; },
+    s => { s.earlyCompleted[0].runId = '01'; },
+    s => { s.earlyCompleted[0].completedAt = '2026-10-31T23:59:59.000Z'; },
+    s => { s.earlyCompleted[0].completedAt = iso(NOW + 1); },
+    s => { s.earlyCompleted[0].usage = null; },
+    s => { s.earlyCompleted[3].usage = { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }; },
+    s => { s.historicalDebitMicroCny = Number.MAX_SAFE_INTEGER + 1; },
+    s => { s.earlyCompleted[0].usage = { prompt_tokens: POLICY.contextTokens, completion_tokens: 1, total_tokens: POLICY.contextTokens + 1 }; },
+  ]) {
+    const data = input(); mutate(data.grant.snapshot); data.approvedGrantDigest = digest(data.grant);
+    assert.throws(() => prepareReceiptLedger(data, NOW), /deepseek_budget_/);
+  }
+});
+
+test('export decimal parsing is bounded, exact and rounded upward once to micro-CNY', () => {
+  for (const amount of ['-1', '+1', '1e-3', 'NaN', 'Infinity', '01.2', '.5', '1.', '0.000000001', '1000', 0.1, null]) {
+    const data = input(); data.grant.snapshot.accountSpendCny = amount; data.approvedGrantDigest = digest(data.grant);
+    assert.throws(() => prepareReceiptLedger(data, NOW), /snapshot_unproven/);
+  }
+  for (const [amount, rounded] of [['0', 0], ['0.00000001', 1], ['0.000001', 1], ['0.00000101', 2], ['1', 1000000]]) {
+    const data = input(); data.grant.snapshot.accountSpendCny = amount;
+    data.grant.snapshot.historicalDebitMicroCny = POLICY.reserveMicroCny + 2800 + 5040 + rounded;
+    data.approvedGrantDigest = digest(data.grant);
+    assert.doesNotThrow(() => prepareReceiptLedger(data, NOW));
+  }
+  const over = input(); over.grant.snapshot.accountSpendCny = '9';
+  over.grant.snapshot.historicalDebitMicroCny = POLICY.reserveMicroCny + 2800 + 5040 + 9000000;
+  over.approvedGrantDigest = digest(over.grant);
+  assert.throws(() => prepareReceiptLedger(over, NOW), /project_limit/);
 });

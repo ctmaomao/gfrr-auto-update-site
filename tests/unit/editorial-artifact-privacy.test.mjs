@@ -99,3 +99,23 @@ test('real review/projection/writer CLIs with malformed private payloads log onl
     }
   } finally {fs.rmSync(root,{recursive:true,force:true});}
 });
+
+test('private one-use route retains no provider usage or private-derived file metadata', () => {
+  const { root, directory } = make('bubble');
+  try {
+    fs.writeFileSync(path.join(directory, 'deepseek-failure-latest.json'), JSON.stringify({
+      requestDiagnostics: { response: { httpStatus: 200, usage: { prompt_tokens: 12345, completion_tokens: 6789, total_tokens: 19134 },
+        requestIdDigest: 'PRIVATE_REQUEST_DIGEST', keyId: 'PRIVATE_KEY_ID', cost: 1.23 } } }));
+    const normal = buildEditorialDiagnosticReceipt({ consumer: 'bubble', root });
+    assert.equal(normal.providerDiagnostics.usage.prompt_tokens, 12345);
+    const selected = buildEditorialDiagnosticReceipt({ consumer: 'bubble', root, budgetSelection: 'editorial-bubble-receipt-20261112-v1' });
+    assert.equal(selected.providerDiagnostics, null);
+    for (const metadata of Object.values(selected.files)) { assert.equal(metadata.bytes, null); assert.equal(metadata.sha256, null); }
+    assert.doesNotMatch(JSON.stringify(selected), /12345|6789|19134|PRIVATE_REQUEST|PRIVATE_KEY|prompt_tokens|completion_tokens/u);
+    const run = spawnSync(process.execPath, [cli, '--consumer', 'bubble'], { cwd: root, encoding: 'utf8',
+      env: { ...process.env, DEEPSEEK_BUDGET_SELECTION: 'editorial-bubble-receipt-20261112-v1' } });
+    assert.equal(run.status, 0);
+    const retained = fs.readFileSync(path.join(directory, 'safe-diagnostic-receipt.json'), 'utf8');
+    assert.doesNotMatch(retained + run.stdout + run.stderr, /12345|6789|19134|PRIVATE_REQUEST|PRIVATE_KEY|prompt_tokens|completion_tokens/u);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});

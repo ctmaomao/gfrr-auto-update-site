@@ -6,6 +6,7 @@ import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-edi
 import { reviewWeeklyEditorial, projectWeeklyEditorial } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
 import { buildWeeklyEditorialWriteResult } from '../../scripts/write-bubble-watch-weekly-editorial.mjs';
 import { buildBubbleReceiptCandidate, serializeBubbleReceiptCandidate } from '../../scripts/prepare-bubble-receipt-candidate.mjs';
+import { PRIVATE_CLAIM_ID } from '../../scripts/lib/deepseek-private-claim.mjs';
 import { RECEIPT_GRANT } from '../../scripts/lib/deepseek-receipt-grant.mjs';
 const read = file => JSON.parse(fs.readFileSync(new URL(`../../${file}`, import.meta.url)));
 const healthy = { status: 'ok', successCount: 6, failureCount: 0 };
@@ -52,63 +53,41 @@ const env = { DEEPSEEK_BUDGET_SELECTION: RECEIPT_GRANT.id, GITHUB_EVENT_NAME: 'w
   GITHUB_REPOSITORY: 'ctmaomao/gfrr-auto-update-site', GITHUB_WORKFLOW: 'Bubble Watch Weekly Editorial Refresh',
   GITHUB_REF: 'refs/heads/main', GITHUB_RUN_ID: '123', DEEPSEEK_API_KEY: 'test-secret-never-retained-12345' };
 const build = (p, override = {}) => buildBubbleReceiptCandidate({ bubbleWatch: p.bubble, projection: p.projection, now: p.now, env, ...override });
-import { createHash, randomUUID } from 'node:crypto';
-import { POLICY, POLICY_DIGEST, LEGACY_POLICY_DIGEST, digest } from '../../scripts/lib/deepseek-budget.mjs';
-import { GRANT, VERIFICATION_GRANT, validateOneShotLedger } from '../../scripts/lib/deepseek-one-shot.mjs';
-import { prepareReceiptLedger } from '../../scripts/lib/deepseek-receipt-grant.mjs';
+import { createHash } from 'node:crypto';
 import { prepareReviewedBubblePublication } from '../../scripts/prepare-reviewed-bubble-publication.mjs';
 const NOW = Date.parse('2026-11-12T08:00:00.000Z');
 const iso = n => new Date(n).toISOString();
-const key = 'SYNTHETIC_RECEIPT_KEY';
-function historic(policy, index) {
-  const at = Date.parse(index ? '2026-11-11T02:00:00.000Z' : '2026-11-10T02:00:00.000Z');
-  const review = { policyDigest: LEGACY_POLICY_DIGEST, verifiedAt: iso(at), expiresAt: iso(at + 86400000), evidenceSha256: digest('synthetic price') };
-  const usages = index ? [[18120, 4127], [6302, 1823]] : [[17518, 4252], [7596, 1279]];
-  const entries = usages.flatMap(([prompt, output], i) => {
-    const id = randomUUID();
-    return [{ id, kind: 'reserve', time: iso(at + i * 10000 + 1000), consumer: ['bubble-editorial', 'macro-editorial'][i], mode: 'manual',
-      runId: String(index * 2 + i + 1), keyId: digest(key), requestDigest: digest(`request${index}${i}`), reservedMicroCny: POLICY.reserveMicroCny, reviewDigest: digest(review) },
-    { id: randomUUID(), kind: 'outcome', time: iso(at + i * 10000 + 2000), reservationId: id, status: 'complete_unreconciled',
-      requestIdDigest: digest(`response${index}${i}`), usage: { prompt_tokens: prompt, completion_tokens: output, total_tokens: prompt + output }, code: null }];
-  });
-  const ledger = { schemaVersion: 'deepseek-one-shot-v1', grant: { policy, authorizedAt: iso(at), authorizationEvidenceSha256: digest('synthetic authorization'), initializationParentSha: 'a'.repeat(40) }, reviews: [review], entries };
-  validateOneShotLedger(ledger, NOW, policy.id);
-  return { selection: policy.id, head: String(index + 1).repeat(40), genesisSha: String(index + 3).repeat(40), ledgerSha256: digest(ledger), ledger };
-}
-function input() {
-  const snapshot = { observedAt: iso(NOW - 1000), calendarMonth: '2026-11', projectUtcOffsetMinutes: 0, exportUtcOffsetMinutes: 780,
-    coveredFrom: '2026-10-31T11:00:00.000Z', coveredThrough: '2026-11-12T11:00:00.000Z', exportSha256: digest('synthetic export'),
-    accountScopeEvidenceSha256: digest('synthetic all keys evidence'), accountSpendCny: '0.2643584', historicalDebitMicroCny: 2836985, keyId: digest(key),
-    quiescenceEvidenceSha256: digest('synthetic all paths attestation'), unknownRequests: 0, allProjectPathsControlled: true,
-    inventorySha256: digest('synthetic inventory'), earlyCompleted: [[17086,4740],[17188,5138],[17111,4845],null].map((u, i) => ({ runId: ['41526065601','41531578149','41534908718','41539541399'][i], completedAt: '2026-11-02T22:44:00.000Z', evidenceSha256: digest(`synthetic early${i}`), status: 'completed', usage: u ? { prompt_tokens:u[0], completion_tokens:u[1], total_tokens:u[0]+u[1] } : null })),
-    legacy: [historic(GRANT, 0), historic(VERIFICATION_GRANT, 1)] };
-  const grant = { policy: RECEIPT_GRANT, authorizedAt: iso(NOW - 500), expiresAt: iso(NOW + 3600000), authorizationEvidenceSha256: digest('synthetic one-call approval'), initializationParentSha: 'f'.repeat(40), snapshot };
-  const review = { policyDigest: POLICY_DIGEST, verifiedAt: iso(NOW), expiresAt: iso(NOW + 86400000), evidenceSha256: digest('synthetic current price') };
-  return { grant, review, approvedGrantDigest: digest(grant) };
-}
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 function request() {
   const p = pack(), candidate = build(p);
   const candidateBytes = Buffer.from(serializeBubbleReceiptCandidate(candidate));
   // Synthetic archive bytes only: archive authentication/extraction is coordinator-owned.
   const archiveBytes = Buffer.from('SYNTHETIC ARCHIVE');
-  const data = input(), ledger = prepareReceiptLedger(data, NOW);
-  const reserve = { id: randomUUID(), kind: 'reserve', time: iso(NOW + 1000), consumer: 'bubble-editorial', mode: 'manual',
-    runId: '123', keyId: digest(key), requestDigest: digest('synthetic payload'), reservedMicroCny: POLICY.reserveMicroCny, reviewDigest: digest(data.review) };
-  ledger.entries = [reserve, { id: randomUUID(), kind: 'outcome', time: iso(NOW + 120000), reservationId: reserve.id,
-    status: 'complete_unreconciled', requestIdDigest: digest('synthetic provider id'), usage: { prompt_tokens: 100, completion_tokens: 100, total_tokens: 200 }, code: null }];
+  const expectedClaimId = PRIVATE_CLAIM_ID, claimHead = 'd'.repeat(40), treeSha = 'e'.repeat(40);
+  const marker = { schemaVersion: 'opaque-one-use-v1', state: 'consumed' };
+  const markerBytes = Buffer.from(JSON.stringify(marker));
+  const blobSha = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${markerBytes.length}\0`), markerBytes])).digest('hex');
   const evidence = { run: { id: 123, repository: { full_name: 'ctmaomao/gfrr-auto-update-site' }, head_repository: { full_name: 'ctmaomao/gfrr-auto-update-site' },
     name: 'Bubble Watch Weekly Editorial Refresh', path: '.github/workflows/bubble-watch-weekly-editorial-refresh.yml', event: 'workflow_dispatch',
     head_branch: 'main', status: 'completed', conclusion: 'success', run_attempt: 1, head_sha: candidate.sourceCommit,
     created_at: '2026-11-12T08:00:00Z', updated_at: '2026-11-12T08:04:30Z' },
     artifacts: [{ id: 42, expired: false, name: 'bubble-receipt-review-candidate-123', workflow_run: { id: 123, head_sha: candidate.sourceCommit }, digest: `sha256:${hash(archiveBytes)}` }],
-    ledger, archiveEntry: 'receipt-review-candidate.json', extractedContentSha256: hash(candidateBytes) };
+    claim: { ref: { ref: `refs/heads/deepseek-once-${expectedClaimId}`, object: { type: 'commit', sha: claimHead } },
+      commit: { sha: claimHead, parents: [], message: 'Record one-use claim', tree: { sha: treeSha } },
+      tree: { sha: treeSha, truncated: false, tree: [{ path: 'claim.json', mode: '100644', type: 'blob', sha: blobSha }] },
+      file: { sha: blobSha, encoding: 'base64', content: Buffer.from(JSON.stringify(marker)).toString('base64') } },
+    jobs: [{ id: 456, run_id: 123, run_attempt: 1, head_sha: candidate.sourceCommit, name: 'bubble-watch-weekly-editorial-refresh',
+      status: 'completed', conclusion: 'success', steps: [
+        ...['Run one DeepSeek editorial call', 'Review and project display-only production layer',
+          'Prepare receipt-grant review candidate', 'Upload receipt-grant review candidate'].map(name => ({ name, status: 'completed', conclusion: 'success' })),
+        ...['Write weekly editorial field', 'Commit refreshed weekly editorial'].map(name => ({ name, status: 'completed', conclusion: 'skipped' }))] }],
+    archiveEntry: 'receipt-review-candidate.json', extractedContentSha256: hash(candidateBytes) };
   const bindings = { selection: RECEIPT_GRANT.id, repository: 'ctmaomao/gfrr-auto-update-site', runId: '123', runAttempt: 1,
     sourceCommit: candidate.sourceCommit, artifactId: 42, archiveSha256: hash(archiveBytes), candidateSha256: hash(candidateBytes),
     outputSha256: candidate.artifactDigest, inputSha256: candidate.inputDigest, sourceSnapshotSha256: candidate.sourceSnapshotDigest,
-    evidenceSha256: hash(JSON.stringify(evidence)) };
-  return { candidateBytes, archiveBytes, evidence, approval: { schemaVersion: 'bubble-independent-factual-approval-v1',
-    decision: 'approve_exact_candidate', bindings, reviewReportSha256: digest('synthetic review report'), reviewedAt: iso(NOW + 280000) },
+    claimRef: evidence.claim.ref.ref, claimHead, evidenceSha256: hash(JSON.stringify(evidence)) };
+  return { candidateBytes, archiveBytes, evidence, expectedClaimId, approval: { schemaVersion: 'bubble-independent-factual-approval-v1',
+    decision: 'approve_exact_candidate', bindings, reviewReportSha256: hash('synthetic review report'), reviewedAt: iso(NOW + 280000) },
     expectedMain: 'b'.repeat(40), observedMain: 'b'.repeat(40), currentBubbleBytes: Buffer.from(JSON.stringify(p.bubble)), now: p.now };
 }
 test('pure preparation returns exact existing-writer result and no authenticated/publication claim', () => {
@@ -120,7 +99,7 @@ test('pure preparation returns exact existing-writer result and no authenticated
   assert.deepEqual(JSON.parse(result.content), buildWeeklyEditorialWriteResult(JSON.parse(r.currentBubbleBytes), JSON.parse(r.candidateBytes).projection, { now: r.now }));
   assert.deepEqual(structuredClone(r), before);
 });
-test('run, artifact, content, approval, ledger, current head and freshness mismatches HOLD', () => {
+test('run, artifact, content, approval, opaque claim, current head and freshness mismatches HOLD', () => {
   for (const mutate of [
     r => { r.observedMain = 'c'.repeat(40); }, r => { r.now = '2026-11-14T00:00:00.000Z'; },
     r => { r.evidence.run.created_at = '2026-02-30T08:00:00Z'; }, r => { r.evidence.run.updated_at = '2026-11-12T08:04:30+00:00'; },
@@ -129,7 +108,12 @@ test('run, artifact, content, approval, ledger, current head and freshness misma
     r => { r.evidence.artifacts.push(r.evidence.artifacts[0]); }, r => { r.evidence.artifacts[0].expired = true; },
     r => { r.archiveBytes = Buffer.from('different archive'); }, r => { r.candidateBytes = Buffer.concat([r.candidateBytes, Buffer.from(' ')]); },
     r => { r.approval.decision = 'hold'; }, r => { r.approval.bindings.outputSha256 = '0'.repeat(64); },
-    r => { r.evidence.ledger.entries.pop(); }, r => { r.evidence.ledger.entries[0].runId = '456'; },
+    r => { r.expectedClaimId = '9'.repeat(64); }, r => { r.evidence.claim.ref.object.sha = '9'.repeat(40); },
+    r => { r.evidence.claim.commit.parents.push({ sha: 'a'.repeat(40) }); }, r => { r.evidence.claim.commit.message = 'private'; },
+    r => { r.evidence.claim.tree.tree.push({ path: 'private.json' }); },
+    r => { r.evidence.claim.file.content = Buffer.from(JSON.stringify({ schemaVersion: 'opaque-one-use-v1', state: 'consumed', usage: 1 })).toString('base64'); },
+    r => { r.evidence.jobs[0].steps[0].conclusion = 'failure'; }, r => { r.evidence.jobs[0].run_id = 999; },
+    r => { r.evidence.jobs[0].steps.pop(); }, r => { r.evidence.ledger = { usage: 1 }; },
     r => { const b = JSON.parse(r.currentBubbleBytes); b.as_of_date = '2026-11-13'; r.currentBubbleBytes = Buffer.from(JSON.stringify(b)); }
   ]) { const r = request(); mutate(r); assert.throws(() => prepareReviewedBubblePublication(r)); }
 });
@@ -137,4 +121,16 @@ test('even a freshly rebound approval cannot bypass source rebuild or retained-r
   const r = request();
   r.radarData = { updatedAt: '2026-11-12T08:00:00.000Z', values: { spx: 123 } };
   assert.throws(() => prepareReviewedBubblePublication(r));
+});
+
+test('fresh factual approval cannot legitimize failed provider, missing marker or a second artifact upload', () => {
+  for (const mutate of [
+    r => { r.evidence.jobs[0].steps[0].conclusion = 'failure'; },
+    r => { r.evidence.jobs[0].steps.push({ ...r.evidence.jobs[0].steps[3] }); },
+    r => { r.evidence.claim.file.content = Buffer.from('{}').toString('base64'); },
+    r => { r.evidence.jobs[0].steps.at(-1).conclusion = 'success'; }
+  ]) {
+    const r = request(); mutate(r); r.approval.bindings.evidenceSha256 = hash(JSON.stringify(r.evidence));
+    assert.throws(() => prepareReviewedBubblePublication(r));
+  }
 });
