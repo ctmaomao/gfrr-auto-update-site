@@ -134,6 +134,16 @@ npm run check:macro-risk-editorial
 
 ### Shared editorial budget and free-search admission
 
+Brave 另有 [ADR-0111](ADR/0111-brave-shared-free-only.md) 的显式 v2 路径：仅在账户 Search Postpaid 已保存的 Free credits only、服务商硬停、所有该plan key覆盖及实际项目key绑定均独立核验后使用。不把唯一key当独占，不把零out-of-pocket当硬停。下文独占key要求仍完整适用于v1；v2只窄范围替代独占与全账户实时配额/历史已知要求，其它hold不变。
+
+v2 的私有 grant 必须含证据与account-plan binding的SHA-256、key指纹、verification/expiry/protection boundary、至多950次项目授权和同时间的dashboard观察；字段契约见ADR-0111。expiresAt不超过31天及已审保护边界；账单日期时区不明时保守提前到期，不伪造period end。账户累计用量不是项目历史或实时余额。
+
+仅确认从未初始化、实际ref缺失且已完成证据审查后，才能显式执行 `npm run review:brave-budget -- --initialize-shared --grant-file <private-file>`。已有任何版本账本拒绝初始化，无自动迁移。初始化时间取可信GitHub Date，初始化前历史始终unknown；续grant仍用原 `--activate --grant-file` 追加，不能清pending、换key或重置950/31天计数。部署代码不等于激活。只读摘要把project剩余与provider余量unknown分开。
+
+另有经独立核验的connector create-only路径：建立只含 `usage.json` 的新树，以已核main commit作为技术parent，再原子创建 `brave-usage-ledger` ref并严格回读；不得更新main、覆盖现存ref或借此恢复已删历史。main parent不是Brave历史，此路线也不能宣称执行过CLI `--initialize`。创建含grant的ref即激活，必须事先完成同等证据、可信时间/时钟余量与初始化资格核验；任何不确定结果先回读，不盲重试，具体操作另行独审。
+
+核对项目key可显式手动选择原 `Tavily Budget Status` workflow的 `brave-key-fingerprint`；默认仍Tavily状态。独立main-only job只给核验步骤两个Brave secrets，仅输出各变量与合并集合的SHA-256前16位、count/missing；无provider/ledger/network诊断。也可在已获授权的环境运行 `npm run review:brave-budget -- --key-fingerprints`，不打印原key。指纹比对仍须私密核验账户/plan归属，多个/缺失/解析有歧义时不能猜测。
+
 [ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 的基础保护继续有效；[ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) 将 monthly 新 genesis 契约设为两篇文章合计 CNY 10/月，代码上线不代表已经初始化、激活或通过线上验收。所有 key、手动与自动请求共用 `deepseek-usage-ledger`。每次按完整上下文最坏预留 CNY 2.161152，因此零历史负担也至多四次/31天，不能按平时低 token 用量估算可调用次数。成功仍保留全额到完成后31天加152秒；不明失败/取消/崩溃永久保留待核，阻止后续调用，不自动退款、月底重置或删账本。
 
 先运行零网络、零写入的计划检查：

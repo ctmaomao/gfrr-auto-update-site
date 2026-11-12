@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **Brave免费额度记录修复**：2026-11-12 owner要求修复记录且Brave/Tavily只用免费额度。基于main `a3feda3f` 实施 [ADR-0111](ADR/0111-brave-shared-free-only.md) 的独立v2共享免费硬限类型、诚实的账户观察/项目计数与原status workflow隔离指纹核验入口。验收边界：v1、付费预算、生产数据、四consumer、CAS/时钟/未知结果hold均不变，历史不重置；真实证据与指纹私密核验、独立实际树审阅、串行发布和create-only激活仍由协调任务执行，代码完成不代表已恢复调用。
+
 - **两篇编辑月预算 CNY10 / 余额识别**：2026-11-12 owner 要求上限设为10元且 Tavily/Brave 只用免费额度。本地基于 `a9f6cab6` 实施 [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md)：仅新 monthly v2 genesis 使用10元，共用严格 CNY＋可选全零 USD 校验；旧 monthly v1 hold，两个 one-shot grant/price digest 与已耗四次永久预留不变。验收基线包括最多四次全上下文预留、第五次拒绝、全部历史/价格/时钟/事实门槛。代码上线与账户激活分开；历史证据不足不初始化，无真实余额/搜索/provider请求、远端账本或生产数据写入。Brave免费记录修复由独立协调步骤处理，不把本补丁当成完成证明。最终完整检查、独立实际树审阅与串行发布以交付回执为准。
 
 - **Macro 预算暂停重复告警**：2026-11-12 基于 `cbce451b6b15e1ad7bfac433e33ee3137af27a31` 隔离实现 [ADR-0109](ADR/0109-macro-budget-pause-notifications.md)。验收基线为 owner 要求排查每日多次 GitHub Actions 报错：仅将自动 Macro、monthly 双空配置的预网络暂停分类为可审计 expected skip，显式跳过全部费用/数据副作用，并以认证上游执行证据阻止 Pages/EdgeOne 无意义发布。真实 API、账本、配置、价格和生成失败仍红，全部预算/旧消耗/事实门槛不变。完整离线检查、实际 diff 独立审阅、精确 head CI 和后续自然运行验收按交付回执核实；本轮不重跑工作流、不请求 source/provider/余额、不写生产数据。
