@@ -24,12 +24,7 @@ GitHub tools, not fields asserted by a candidate, artifact or arbitrary local JS
    Independently extract the single regular `receipt-review-candidate.json` entry;
    bind its exact byte hash to that archive. The helper does not parse ZIPs or
    authenticate the relationship between caller-supplied archive/content bytes.
-3. Authenticate the fixed grant ledger branch, genesis, ancestry and reviewed
-   grant digest. Read its complete immutable ledger at a pinned commit. Require
-   exactly one matching reservation and its complete successful token receipt,
-   with no alternate run or replacement candidate. Retain the authenticated ledger
-   commit and lookup receipts in the independent review report. No consumed slot
-   is restored; no success is inferred from an untrusted local ledger document.
+3. Under [ADR-0113](ADR/0113-private-bubble-claim.md), authenticate the fixed opaque consumed marker against the expected claim identifier from the independently approved private envelope. Read its actual ref, parentless commit, tree and blob. Require the fixed generic message and sole regular `claim.json` with the exact constant consumed schema. Independently authenticate the original job and successful provider/review/projection/package/upload steps; writer/save must be skipped. No public token receipt or exact monetary settlement is required or inferred. Retain private review provenance without publishing the private envelope.
 4. Independently review the exact candidate: claims, numerical units, dates, source
    URLs, quotations, all narrative claims and tracked source files at sourceCommit.
    Do not edit the article or its timestamps. Produce an immutable review report
@@ -42,15 +37,16 @@ GitHub tools, not fields asserted by a candidate, artifact or arbitrary local JS
 `candidateBytes`, `archiveBytes` and `currentBubbleBytes` are Buffers. `now` is the
 actual publication-check UTC time, not the generation time. `expectedMain` and
 `observedMain` are full current main commit hashes obtained independently.
+`expectedClaimId` comes from the approved private envelope, never from candidate content.
 `radarData` and `oilNewsWatch` are parsed current tracked files at that same head;
 never omit a present context file. Source and target must be verified clean reads.
 
 `evidence` contains the authenticated run REST object (`run`), complete artifact
-array (`artifacts`), complete `ledger`, `archiveEntry` and
+array (`artifacts`), original `jobs`, authenticated marker `claim` (ref/commit/tree/file), `archiveEntry` and
 `extractedContentSha256`. `run.repository` and `run.head_repository` must identify
 the target repository; if a REST response omits a field, retain a separate
 verified repository lookup rather than inventing it. The coordinator records
-source URLs/IDs and ledger provenance in the review report.
+source URLs/IDs and marker provenance in the review report.
 
 Approval schema: `schemaVersion=bubble-independent-factual-approval-v1`,
 `decision=approve_exact_candidate`, `reviewedAt`, `reviewReportSha256`, `bindings`.
@@ -58,7 +54,7 @@ The exact binding object, in this order, is:
 
 - selection, repository, runId (string), runAttempt (1), sourceCommit, artifactId
 - archiveSha256, candidateSha256, outputSha256, inputSha256
-- sourceSnapshotSha256, evidenceSha256
+- sourceSnapshotSha256, claimRef, claimHead, evidenceSha256
 
 All SHA-256 values are lowercase hex. Archive/candidate/report hashes cover exact
 bytes. Output/input/evidence and approval hashes use UTF-8 `JSON.stringify(value)`

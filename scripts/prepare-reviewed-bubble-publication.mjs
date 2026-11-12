@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { buildWeeklyEditorialInput } from './bubble-watch/weekly-editorial-input.mjs';
 import { reviewWeeklyEditorial } from './bubble-watch/weekly-editorial-production.mjs';
 import { buildWeeklyEditorialWriteResult } from './write-bubble-watch-weekly-editorial.mjs';
-import { RECEIPT_GRANT, validateReceiptLedger } from './lib/deepseek-receipt-grant.mjs';
+import { RECEIPT_GRANT } from './lib/deepseek-receipt-grant.mjs';
+import { opaqueClaimRef, validateOpaqueMarker } from './lib/deepseek-private-claim.mjs';
 
 // Pure preparation only: these inputs are NOT authenticated by this module.
 // The coordinator must verify their origins and the independent approval before
@@ -22,7 +23,7 @@ function parse(bytes, limit) {
 }
 
 export function prepareReviewedBubblePublication({ candidateBytes, archiveBytes, evidence,
-  approval, expectedMain, observedMain, currentBubbleBytes, radarData, oilNewsWatch, now }) {
+  approval, expectedClaimId, expectedMain, observedMain, currentBubbleBytes, radarData, oilNewsWatch, now }) {
   must(iso(now) && sha(expectedMain) && observedMain === expectedMain);
   const currentBubble = parse(currentBubbleBytes, 2 * 1024 * 1024);
   const candidate = parse(candidateBytes, 128 * 1024);
@@ -32,7 +33,8 @@ export function prepareReviewedBubblePublication({ candidateBytes, archiveBytes,
     && candidate.purpose === 'independent_fact_review_before_publication'
     && candidate.replayEvidenceRetained === true && candidate.containsPrompt === false
     && candidate.containsProviderEnvelope === false && sha(candidate.sourceCommit));
-  const { run, artifacts, ledger } = evidence;
+  must(evidence && Object.keys(evidence).sort().join(',') === 'archiveEntry,artifacts,claim,extractedContentSha256,jobs,run');
+  const { run, artifacts, claim, jobs } = evidence;
   const repository = 'ctmaomao/gfrr-auto-update-site';
   must(run.repository?.full_name === repository && run.head_repository?.full_name === repository
     && run.name === 'Bubble Watch Weekly Editorial Refresh'
@@ -56,13 +58,40 @@ export function prepareReviewedBubblePublication({ candidateBytes, archiveBytes,
   // binds that extraction to the archive below. This is not a ZIP parser.
   must(evidence.archiveEntry === 'receipt-review-candidate.json'
     && evidence.extractedContentSha256 === hash(candidateBytes));
-  validateReceiptLedger(ledger, Date.parse(now));
-  must(ledger.entries.length === 2);
-  const [reserve, outcome] = ledger.entries;
-  must(reserve.runId === candidate.runId && reserve.consumer === RECEIPT_GRANT.consumer
-    && outcome.status === 'complete_unreconciled' && outcome.reservationId === reserve.id
-    && Date.parse(reserve.time) >= Date.parse(run.created_at)
-    && Date.parse(outcome.time) <= Date.parse(run.updated_at));
+  // The expected claim identity comes from the private approved grant, not the
+  // candidate. The coordinator authenticates these original GitHub API records.
+  // No token usage or monetary receipt is required or inferred from this marker.
+  const expectedClaimRef = opaqueClaimRef(expectedClaimId);
+  must(claim && Object.keys(claim).sort().join(',') === 'commit,file,ref,tree');
+  must(claim.ref?.ref === expectedClaimRef
+    && claim.ref.object?.type === 'commit' && sha(claim.ref.object.sha)
+    && claim.commit?.sha === claim.ref.object.sha && Array.isArray(claim.commit.parents)
+    && claim.commit.parents.length === 0 && claim.commit.message === 'Record one-use claim' && sha(claim.commit.tree?.sha)
+    && claim.tree?.sha === claim.commit.tree.sha && claim.tree.truncated === false
+    && Array.isArray(claim.tree.tree) && claim.tree.tree.length === 1);
+  const markerFile = claim.tree.tree[0];
+  must(markerFile.path === 'claim.json' && markerFile.mode === '100644' && markerFile.type === 'blob'
+    && sha(markerFile.sha) && claim.file?.sha === markerFile.sha
+    && claim.file.encoding === 'base64' && typeof claim.file.content === 'string');
+  const markerBytes = Buffer.from(claim.file.content, 'base64');
+  const actualBlobSha = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${markerBytes.length}\0`), markerBytes])).digest('hex');
+  must(actualBlobSha === markerFile.sha);
+  validateOpaqueMarker(parse(markerBytes, 1024));
+  must(Array.isArray(jobs) && jobs.length === 1);
+  const job = jobs[0];
+  must(Number.isSafeInteger(job.id) && job.id > 0 && job.run_id === run.id
+    && job.run_attempt === 1 && job.head_sha === candidate.sourceCommit
+    && job.name === 'bubble-watch-weekly-editorial-refresh'
+    && job.status === 'completed' && job.conclusion === 'success' && Array.isArray(job.steps));
+  for (const name of ['Run one DeepSeek editorial call', 'Review and project display-only production layer',
+    'Prepare receipt-grant review candidate', 'Upload receipt-grant review candidate']) {
+    const matches = job.steps.filter(step => step.name === name);
+    must(matches.length === 1 && matches[0].status === 'completed' && matches[0].conclusion === 'success');
+  }
+  for (const name of ['Write weekly editorial field', 'Commit refreshed weekly editorial']) {
+    const matches = job.steps.filter(step => step.name === name);
+    must(matches.length === 1 && matches[0].conclusion === 'skipped');
+  }
   const projection = candidate.projection;
   const { input, review } = projection.writeEvidence;
   const layer = projection.weeklyEditorial;
@@ -77,7 +106,7 @@ export function prepareReviewedBubblePublication({ candidateBytes, archiveBytes,
     sourceCommit: candidate.sourceCommit, artifactId: artifact.id,
     archiveSha256: hash(archiveBytes), candidateSha256: hash(candidateBytes),
     outputSha256: candidate.artifactDigest, inputSha256: candidate.inputDigest,
-    sourceSnapshotSha256: candidate.sourceSnapshotDigest, evidenceSha256: digest(evidence) };
+    sourceSnapshotSha256: candidate.sourceSnapshotDigest, claimRef: claim.ref.ref, claimHead: claim.commit.sha, evidenceSha256: digest(evidence) };
   must(Object.values(bindings).every(v => v !== undefined)
     && approval.schemaVersion === 'bubble-independent-factual-approval-v1'
     && approval.decision === 'approve_exact_candidate' && digest(approval.bindings) === digest(bindings)

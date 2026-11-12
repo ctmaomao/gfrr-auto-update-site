@@ -27,7 +27,7 @@ export function validateReceiptSnapshot(s, now = Date.now()) {
     || s.projectUtcOffsetMinutes !== 0
     || s.exportUtcOffsetMinutes !== 780 || !iso(s.coveredFrom) || !iso(s.coveredThrough)
     || ![s.exportSha256, s.accountScopeEvidenceSha256, s.keyId, s.quiescenceEvidenceSha256, s.inventorySha256].every(v => HEX.test(v || ''))
-    || s.accountSpendCny !== '0.2643584' || s.unknownRequests !== 0 || s.allProjectPathsControlled !== true
+    || typeof s.accountSpendCny !== 'string' || !/^(?:0|[1-9][0-9]{0,2})(?:\.[0-9]{1,8})?$/u.test(s.accountSpendCny) || s.unknownRequests !== 0 || s.allProjectPathsControlled !== true
     || !Array.isArray(s.legacy) || s.legacy.length !== 2
     || !Array.isArray(s.earlyCompleted) || s.earlyCompleted.length !== 4) fail('snapshot_unproven');
   const start = Date.parse(`${s.calendarMonth}-01T00:00:00.000Z`) - s.projectUtcOffsetMinutes * 60_000;
@@ -39,7 +39,7 @@ export function validateReceiptSnapshot(s, now = Date.now()) {
     || Date.parse(s.coveredThrough) > Date.parse(s.observedAt) + 86_400_000
     || monthAt(Date.parse(s.observedAt) - margin, s.projectUtcOffsetMinutes) !== s.calendarMonth
     || monthAt(Date.parse(s.observedAt) + margin, s.projectUtcOffsetMinutes) !== s.calendarMonth) fail('snapshot_unproven');
-  let bounded = 0; const requestIds = new Set();
+  let bounded = 0; const requestIds = new Set(), runIds = new Set();
   for (const [i, historic] of s.legacy.entries()) {
     const selection = [GRANT.id, VERIFICATION_GRANT.id][i];
     if (!exact(historic, 'selection,head,genesisSha,ledgerSha256,ledger') || historic.selection !== selection
@@ -53,36 +53,35 @@ export function validateReceiptSnapshot(s, now = Date.now()) {
       const o = outcomes.find(row => row.reservationId === r.id);
       if (r.keyId !== s.keyId || Date.parse(r.time) < start || Date.parse(r.time) > Date.parse(s.observedAt)
         || !o || o.status !== 'complete_unreconciled' || Date.parse(o.time) > Date.parse(s.observedAt)
-        || requestIds.has(o.requestIdDigest)) fail('snapshot_unproven');
-      requestIds.add(o.requestIdDigest);
+        || requestIds.has(o.requestIdDigest) || runIds.has(r.runId)) fail('snapshot_unproven');
+      requestIds.add(o.requestIdDigest); runIds.add(r.runId);
       bounded += o.usage.prompt_tokens * POLICY.inputMicroCnyPerToken + o.usage.completion_tokens * POLICY.outputMicroCnyPerToken;
     }
   }
   // These four completed early requests predate the grant ledgers. Three
   // provider HTTP200 receipts remain billable despite article validation failure.
   // The fourth completion has no token receipt: retain a full-context ceiling.
-  const earlyRuns = ['41526065601', '41531578149', '41534908718', '41539541399'];
-  const earlyUsage = [[17086, 4740, 21826], [17188, 5138, 22326], [17111, 4845, 21956]];
   let earlyBounded = 0;
   for (const [i, row] of s.earlyCompleted.entries()) {
-    if (!exact(row, 'runId,completedAt,evidenceSha256,status,usage') || row.runId !== earlyRuns[i]
+    if (!exact(row, 'runId,completedAt,evidenceSha256,status,usage') || typeof row.runId !== 'string' || !/^[1-9][0-9]{0,19}$/u.test(row.runId) || runIds.has(row.runId)
       || row.status !== 'completed' || !iso(row.completedAt) || !HEX.test(row.evidenceSha256 || '')
       || Date.parse(row.completedAt) < start || Date.parse(row.completedAt) > Date.parse(s.observedAt)) fail('snapshot_unproven');
+    runIds.add(row.runId);
     if (i === 3) {
       if (row.usage !== null) fail('snapshot_unproven');
       earlyBounded += POLICY.reserveMicroCny;
     } else {
       validateTokenUsage(row.usage);
-      if (!same([row.usage.prompt_tokens, row.usage.completion_tokens, row.usage.total_tokens], earlyUsage[i])) fail('snapshot_unproven');
       earlyBounded += row.usage.prompt_tokens * POLICY.inputMicroCnyPerToken + row.usage.completion_tokens * POLICY.outputMicroCnyPerToken;
     }
   }
   // Intentional overlap: do NOT subtract receipts already present in the export.
-  const [whole, fraction] = s.accountSpendCny.split('.');
+  const [whole, fraction = ''] = s.accountSpendCny.split('.');
   const units = BigInt(whole) * 100_000_000n + BigInt(fraction.padEnd(8, '0'));
   const exported = Number((units + 99n) / 100n);
-  if (bounded !== 190_920 || earlyBounded !== 220_554 + POLICY.reserveMicroCny
-    || s.historicalDebitMicroCny !== exported + bounded + earlyBounded
+  const total = exported + bounded + earlyBounded;
+  if (!Number.isSafeInteger(total) || !Number.isSafeInteger(s.historicalDebitMicroCny)
+    || s.historicalDebitMicroCny !== total
     || s.historicalDebitMicroCny + POLICY.reserveMicroCny > RECEIPT_GRANT.capMicroCny) fail('project_limit');
   return s;
 }

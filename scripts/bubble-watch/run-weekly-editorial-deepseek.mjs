@@ -1,3 +1,4 @@
+import { RECEIPT_GRANT } from '../lib/deepseek-receipt-grant.mjs';
 import { safeProviderDiagnostics } from '../lib/editorial-safe-diagnostics.mjs';
 import fs from 'node:fs/promises';
 import process from 'node:process';
@@ -50,7 +51,11 @@ async function main() {
   try {
     const result = await requestWeeklyEditorial({ input, apiKey });
     writeJson(options.output, result.output);
-    console.log(`Bubble Watch DeepSeek weekly editorial PASS (apiCallCount=${result.diagnostics.apiCallCount}, retryCount=0, model=${result.diagnostics.model}, output=${options.output})`);
+    if (process.env.DEEPSEEK_BUDGET_SELECTION === RECEIPT_GRANT.id) {
+      console.log('Bubble Watch DeepSeek weekly editorial PASS');
+    } else {
+      console.log(`Bubble Watch DeepSeek weekly editorial PASS (apiCallCount=${result.diagnostics.apiCallCount}, retryCount=0, model=${result.diagnostics.model}, output=${options.output})`);
+    }
   } catch (error) {
     const classification = classifyProviderFailure(error);
     const failureArtifact = {

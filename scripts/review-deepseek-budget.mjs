@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-import { RECEIPT_GRANT, prepareReceiptLedger, verifyReceiptStatus, receiptRuntimeConfig } from './lib/deepseek-receipt-grant.mjs';
+import { verifyPrivateClaimStatus, privateClaimRuntimeConfig } from './lib/deepseek-private-claim.mjs';
+import { RECEIPT_GRANT, prepareReceiptLedger } from './lib/deepseek-receipt-grant.mjs';
 import { GRANT, oneShotSelection, prepareOneShotLedger, verifyOneShotStatus, oneShotRuntimeConfig } from './lib/deepseek-one-shot.mjs';
 import { createGithubLedger, POLICY, POLICY_DIGEST, prepareBootstrapLedger, verifyBudgetStatus } from './lib/deepseek-budget.mjs';
 
@@ -15,6 +16,7 @@ function reportPreflight(disposition, reason) {
 // review, reads a provider key, calls DeepSeek, or sends a generation request.
 async function main() {
   const args = process.argv.slice(2);
+  if (args[0] === '--prepare-receipt-grant' && process.env.GITHUB_ACTIONS === 'true') throw new Error('deepseek_budget_private_snapshot_unproven');
   if (args.length === 4 && args[0] === '--prepare-receipt-grant' && args[2] === '--approved-grant-digest') {
     const prepared = JSON.parse(fs.readFileSync(args[1], 'utf8'));
     const ledger = prepareReceiptLedger({ ...prepared, approvedGrantDigest: args[3] });
@@ -70,7 +72,7 @@ async function main() {
     return;
   }
   if (env.DEEPSEEK_BUDGET_SELECTION === RECEIPT_GRANT.id) {
-    const result = await verifyReceiptStatus(receiptRuntimeConfig());
+    const result = await verifyPrivateClaimStatus(privateClaimRuntimeConfig());
     console.log(JSON.stringify(result, null, 2));
     reportPreflight('eligible', result.admission);
     return;

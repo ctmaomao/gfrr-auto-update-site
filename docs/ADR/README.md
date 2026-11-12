@@ -184,3 +184,5 @@
 - [ADR-0110: Monthly CNY10 and CNY balance](0110-monthly-cny-ten-and-balance.md) — explicit v2 genesis, immutable legacy grants, shared exact CNY funding; activation requires separate evidence.
 
 - [ADR-0112: Transitional Bubble receipt-based one-call grant](0112-bubble-receipt-one-call.md) — immutable historical evidence, one Bubble attempt and offline key identification; no recurring activation.
+
+- [ADR-0113: Private Bubble evidence and opaque one-use claim](0113-private-bubble-claim.md) — approved environment-secret evidence, atomic content-free marker and no public usage receipts.
