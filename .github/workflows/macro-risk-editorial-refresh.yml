@@ -94,6 +94,7 @@ jobs:
           fi
 
       - name: Check shared CNY budget before discovery
+        id: budget_preflight
         env:
           DEEPSEEK_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           DEEPSEEK_BUDGET_SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.budget_selection || 'monthly' }}
@@ -106,10 +107,11 @@ jobs:
           DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256 }}
           DEEPSEEK_BUDGET_GENESIS_SHA: ${{ vars.DEEPSEEK_BUDGET_GENESIS_SHA }}
           DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256 }}
-        run: node scripts/review-deepseek-budget.mjs --require-eligible
+        run: node scripts/review-deepseek-budget.mjs --require-eligible --allow-uninitialized-monthly-skip
 
       - name: Admit one refresh for current upstream data
         id: admission
+        if: steps.budget_preflight.outputs.budget_eligible == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/macro-risk/admit-editorial-refresh.mjs --reserve
@@ -234,11 +236,32 @@ jobs:
           # run never hides an exhausted search budget.
           echo "SKIPPED_NO_CREDIBLE_NEWS or SKIPPED_SEARCH_BUDGET_EXHAUSTED (reason=${{ steps.build_input.outputs.skip_reason }}): no DeepSeek call and no production write."
 
+      - name: Verify uninitialized monthly budget skip stayed side-effect free
+        id: budget_skip_verification
+        if: steps.budget_preflight.outputs.budget_disposition == 'expected_skip'
+        env:
+          ADMISSION_OUTCOME: ${{ steps.admission.outcome }}
+          PROVIDER_OUTCOME: ${{ steps.editorial_provider.outcome }}
+          SAVE_OUTCOME: ${{ steps.editorial_save.outcome }}
+        run: |
+          set -euo pipefail
+          test "$ADMISSION_OUTCOME" = skipped
+          test "$PROVIDER_OUTCOME" = skipped
+          test "$SAVE_OUTCOME" = skipped
+          test ! -e manual-artifacts/macro-risk-editorial
+          git diff --quiet --exit-code
+          git diff --cached --quiet --exit-code
+          echo "SKIPPED_MONTHLY_BUDGET_UNINITIALIZED: no admission reservation, search, provider call, ledger or production write." >> "$GITHUB_STEP_SUMMARY"
+
       # ADR-0103: no raw input/candidate/review/projection artifacts, even after success.
       - name: Prepare safe editorial diagnostic receipt
         if: always()
         id: diagnostic_receipt
         env:
+          EDITORIAL_BUDGET_OUTCOME: ${{ steps.budget_preflight.outcome }}
+          EDITORIAL_BUDGET_DISPOSITION: ${{ steps.budget_preflight.outputs.budget_disposition }}
+          EDITORIAL_BUDGET_SKIP_VERIFICATION: ${{ steps.budget_skip_verification.outcome }}
+          EDITORIAL_BUDGET_REASON: ${{ steps.budget_preflight.outputs.budget_reason }}
           EDITORIAL_PROVIDER_OUTCOME: ${{ steps.editorial_provider.outcome }}
           EDITORIAL_REVIEW_OUTCOME: ${{ steps.editorial_review.outcome }}
           EDITORIAL_WRITER_OUTCOME: ${{ steps.editorial_writer.outcome }}

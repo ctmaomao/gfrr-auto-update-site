@@ -156,6 +156,8 @@ npm run review:brave-budget -- --plan
 
 搜索摘要与 `--plan` 明示 `countBasis=recorded_reservation_time`、`strictDispatchWindowVerified=false`。保留旧账本、schema、历史与额度，不补造早期dispatch证据或重置。两搜索provider新准入均要求30秒单调时钟dispatch deadline；Brave还要求成功CAS所读的可信GitHub `serverTime + 30000ms + 1000ms` 严格早于grant到期，边界附近可提前hold。真实免费门禁仍靠Tavily已核Researcher/PAYGO禁用及官方用量/余量、Brave已核独占key免费grant与未决债务hold；Tavily `/usage` 独立权威时钟10次/10分钟规则不变。
 
+[ADR-0109](ADR/0109-macro-budget-pause-notifications.md) 将自动 Macro 的明确 monthly 双空配置记为 `expected_skip / deepseek_budget_uninitialized`，而不是运行故障；仅此 opt-in 路径在网络请求前停止，并跳过日/input 预留、搜索、provider、生产写入和提交。Summary 与安全回执保留原因和跳过验证状态。手动运行、one-shot、缺凭证、畸形/部分配置、API/坏账本/价格/余额/生成错误仍失败；其它 consumer 不变。Pages 与 EdgeOne 仅按经认证的精确 run/attempt/head/job/step 证据跳过这类无内容发布，未知状态继续原部署校验，不把绿色暂停称作新稿已发布。
+
 失败排查先看脱敏预算code、账本摘要和上游状态。不要通过整条AI workflow重跑来探测余额或搜索配额，也不要清除旧日/input/recheck refs。预算失败与搜索失败均不能伪装成健康的零可信新闻skip；未生成新判读时保留确定性fallback和真实旧期日期。`manual:external-ai:deepseek` 的历史手动路线不属于本次两文章额度，当前共享gate拒绝该第三consumer，即使提供key和网络参数也不允许借用本预算。
 
 只停用 `ceo_hedging` 的付费Wind新闻兜底；Daily、其它Wind指标、Bubble完整刷新与source-audit工作流原授权边界保持。免费新闻不足时沿用原缺失/curated回退，不为保红灯降低两独立源要求。
