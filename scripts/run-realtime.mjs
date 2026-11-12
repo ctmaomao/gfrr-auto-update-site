@@ -1,3 +1,4 @@
+import { ICE_BRENT_CONTRACT_DATA_URL, parseIceBrentCandidate } from './realtime/ice-brent-candidate.mjs';
 import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import fs from 'fs';
 import path from 'path';
@@ -563,53 +564,19 @@ async function fetchRows(descriptor) {
 }
 
 async function fetchBrentIceCandidate(fetchedAt) {
-  const source = 'ice';
-  const delayClass = 'delayed-15m';
-  const url = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=400137160';
   try {
-    const text = await retryTask(
-      () => fetchWithTimeout(url, {
-        timeoutMs: REQUEST_TIMEOUT_MS,
-        headers: {
-          Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          Referer: 'https://www.ice.com/products/219/Brent-Crude-Futures'
-        }
-      }),
-      { label: 'ice:brent' }
-    );
-
-    const value = extractValueByPatterns(text, [
-      /"lastPrice"\s*:\s*"?([\d.,]+)"?/i,
-      /"settlementPrice"\s*:\s*"?([\d.,]+)"?/i,
-      /"marketPrice"\s*:\s*"?([\d.,]+)"?/i,
-      /"price"\s*:\s*"?([\d.,]+)"?/i,
-      /Last\s*Price[\s\S]{0,160}?>([\d.,]+)</i,
-      /"previousDaySettlementPrice"\s*:\s*"?([\d.,]+)"?/i
-    ]);
-    if (!Number.isFinite(value)) {
-      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
-    }
-    if (!isReasonableBrentValue(value)) {
-      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
-    }
-    const observedRaw = firstMatch(text, [
-      /"lastTime"\s*:\s*"([^"]{4,40})"/i,
-      /"lastUpdateTime"\s*:\s*"([^"]{4,40})"/i,
-      /As of\s*([^<]{8,40}(?:GMT|UTC))/i,
-      /Last updated\s*([^<]{8,40}(?:GMT|UTC))/i
-    ]);
-    return {
-      source,
-      value,
-      observedAt: parseObservedAtUtc(observedRaw),
-      fetchedAt,
-      delayClass,
-      available: true,
-      reason: null
-    };
+    // Same structured source already used by the Daily ICE curve. One bounded
+    // request; access/rate-limit failures are unavailable, not retried here.
+    const text = await fetchWithTimeout(ICE_BRENT_CONTRACT_DATA_URL, {
+      timeoutMs: REQUEST_TIMEOUT_MS,
+      headers: { Accept: 'application/json' }
+    });
+    let rows;
+    try { rows = JSON.parse(text); }
+    catch { return buildUnavailableCandidate('ice', fetchedAt, 'delayed-15m', 'parse-failed:non-json'); }
+    return parseIceBrentCandidate(rows, fetchedAt);
   } catch (error) {
-    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
+    return buildUnavailableCandidate('ice', fetchedAt, 'delayed-15m', classifyFetchFailure(error));
   }
 }
 

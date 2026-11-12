@@ -222,6 +222,25 @@ Market Pricing 新鲜度复核使用 `npm run review:market-pricing-freshness`�
 
 ---
 
+### ICE Brent realtime candidate repair (2026-11-12)
+
+The existing realtime ICE candidate now uses the same public structured
+`https://www.ice.com/marketdata/api/productguide/charting/contract-data?productId=254&hubId=403`
+source already used by the Daily curve, instead of a product-page regex. It makes
+one bounded request, selects the nearest contract before validating its price,
+and preserves the provider's explicit UTC/GMT quote time and contract identity.
+Missing, ambiguous, future-dated or malformed front quotes fail closed; no
+fallback to a deferred contract or fetched-at timestamp. Existing 120-minute
+consensus freshness, divergence and promotion rules are unchanged.
+
+This is delayed ICE futures, not EIA spot, official settlement or the same venue
+instrument as Yahoo NYMEX BZ=F. Public accessibility does not establish public
+redistribution rights or an SLA; [ICE's data terms](https://www.ice.com/fixed-income-data-services/data-and-analytics/proprietary-data)
+remain relevant. No access restrictions are bypassed and no paid service is used.
+FRED/EIA both reported November 3 spot observations during the November 12
+review. Their daily observation frequency is not a daily-publication promise.
+The frozen pressure-research spot series and cohort are deliberately unchanged.
+
 ### Trading Economics — Brent
 
 | 字段 | 值 |
