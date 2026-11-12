@@ -1,3 +1,4 @@
+import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import { fetchBalticFreight } from './daily/baltic-freight.mjs';
 import { freightSourceString, freightProvidersFromSource, isFreightSource } from './daily/freight-source-contract.mjs';
 import { buildAiInterpretationLayer } from './daily/rule-based-interpretation.mjs';
@@ -1850,37 +1851,6 @@ async function retryFetch(url, label, timeoutMs = MACRO_FETCH_TIMEOUT_MS, option
     }
   }
   throw new Error(`${label} failed: ${stringifyFetchError(lastErr)}`);
-}
-
-function parseFredCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const out = [];
-  for (const line of lines.slice(1)) {
-    const [date, raw] = line.split(',');
-    if (!date || raw === undefined || raw === '.' || raw.trim() === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    out.push({ date, value });
-  }
-  return out;
-}
-
-function parseFredApiObservations(text) {
-  const json = JSON.parse(text);
-  const observations = json?.observations;
-  if (!Array.isArray(observations)) {
-    throw new Error('FRED API returned invalid observations payload');
-  }
-  const out = [];
-  for (const item of observations) {
-    const date = item?.date;
-    const raw = item?.value;
-    if (!date || raw === undefined || raw === '.' || String(raw).trim() === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    out.push({ date, value });
-  }
-  return out;
 }
 
 function cosdIso(daysBack) {
