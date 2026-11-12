@@ -1261,3 +1261,7 @@ the existing seven-day publication freshness check. Missing tenor/rate,
 unsupported instruments, future or stale publication dates remain rejected.
 This is parser compatibility for the existing source, not a new feed, intraday
 schedule, or scoring input. Regression: `tests/unit/china-omo-overnight.test.mjs`.
+
+### Bubble SPY/RSP observation alignment (2026-11-12)
+
+The existing Yahoo six-month price-return spread now uses identical dated endpoints and publishes the last common observation date, not retrieval day. At least 100 common sessions, a 150–200 day span and a maximum seven-day endpoint age are required. The unadjusted-close formula and percentage-point thresholds remain unchanged; invalid or incomplete data uses the existing dated fallback. No source or request is added. See [the source audit](BUBBLE_SOURCE_FRESHNESS_AUDIT_2026_11_12.md).

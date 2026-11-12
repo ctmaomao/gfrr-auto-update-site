@@ -1,3 +1,4 @@
+import { alignedEtfSpread } from './bubble-watch/aligned-etf-spread.mjs';
 import { computeEvidenceSimilarity } from './bubble-watch/evidence-similarity.mjs';
 import { syncUpstreamObservation, buildEnterpriseObservationProjection } from './bubble-watch/source-observation.mjs';
 import { buildArrGap, parseArrStaleFailure, ARR_MAX_AGE_DAYS } from './bubble-watch/arr-evidence.mjs';
@@ -1542,16 +1543,17 @@ const autoBuilders = {
     };
   },
   async spy_vs_rsp_6m() {
-    const [spy, rsp] = [await retry(() => yahooCloses('SPY', '6mo'), 'Yahoo SPY'), await retry(() => yahooCloses('RSP', '6mo'), 'Yahoo RSP')];
-    const ret = (closes) => ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;
-    const spread = ret(spy) - ret(rsp);
+    const [spy, rsp] = [await retry(() => yahooCloses('SPY', '6mo', true), 'Yahoo SPY'), await retry(() => yahooCloses('RSP', '6mo', true), 'Yahoo RSP')];
+    const detail = alignedEtfSpread(spy, rsp, isoDate());
+    const { spread, spyRet, rspRet, observationDate } = detail;
     const abs = Math.abs(spread);
     const status = abs > 10 ? 'red' : abs >= 5 ? 'yellow' : 'green';
     return {
       status,
       value_display: `${spread > 0 ? '+' : ''}${spread.toFixed(1)} 个百分点`,
-      note: signedSpreadNote(ret(spy), ret(rsp)),
-      detail: { spyRet: ret(spy), rspRet: ret(rsp), spread }
+      as_of: observationDate,
+      note: signedSpreadNote(spyRet, rspRet),
+      detail
     };
   },
   async insider_sell_buy(ctx) {

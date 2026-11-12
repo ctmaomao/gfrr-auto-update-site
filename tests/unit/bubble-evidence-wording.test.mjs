@@ -1,3 +1,4 @@
+import { alignedEtfSpread } from '../../scripts/bubble-watch/aligned-etf-spread.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,9 +16,14 @@ const read = file => JSON.parse(fs.readFileSync(new URL(`../../${file}`, import.
 test('signed SPY/RSP description preserves existing absolute score at negative, positive, zero and boundaries', async () => {
   const method = source.slice(source.indexOf('  async spy_vs_rsp_6m() {'), source.indexOf('  async insider_sell_buy(ctx) {'));
   for (const spread of [-11, -10, -6.5, -5, -4.9, 0, 4.9, 5, 6.5, 10, 11]) {
-    const context = vm.createContext({ signedSpreadNote, retry: fn => fn(), yahooCloses: async symbol => symbol === 'SPY' ? [100, 100 + spread] : [100, 100], fmtPct: n => `${n.toFixed(1)}%` });
+    const context = vm.createContext({ signedSpreadNote, alignedEtfSpread, isoDate: () => '2026-11-12', retry: fn => fn(),
+      yahooCloses: async (symbol, range, withDates) => {
+        assert.equal(range, '6mo'); assert.equal(withDates, true);
+        return Array.from({ length: 181 }, (_, i) => ({ date: new Date(Date.UTC(2026, 4, 15 + i)).toISOString().slice(0, 10), close: symbol === 'SPY' ? 100 + spread * i / 180 : 100 }));
+      }, fmtPct: n => `${n.toFixed(1)}%` });
     vm.runInContext(`globalThis.builder = ({${method}}).spy_vs_rsp_6m`, context);
     const result = await context.builder();
+    assert.equal(result.as_of, '2026-11-11');
     const magnitude = Math.abs(result.detail.spread);
     assert.equal(result.status, magnitude > 10 ? 'red' : magnitude >= 5 ? 'yellow' : 'green');
     assert.ok(Math.abs(result.detail.spread - spread) < 1e-10);
