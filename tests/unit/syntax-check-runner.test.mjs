@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFile, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -80,7 +80,7 @@ test('syntax adapter keeps real Node --check, bounded output and fail-closed chi
     const result = await checkFileSyntax('example.mjs', (command, args, options, done) => {
       assert.equal(command, process.execPath);
       assert.deepEqual(args, ['--check', 'example.mjs']);
-      assert.deepEqual(options, { encoding: 'utf8', maxBuffer: 1024 * 1024 });
+      assert.deepEqual(options, { encoding: 'buffer', maxBuffer: 1024 * 1024 });
       done(error, 'child stdout', 'child stderr');
     });
     assert.equal(result.status, error ? null : 0);
@@ -137,4 +137,34 @@ test('real syntax checks never execute valid JavaScript or change checked bytes'
   assert.equal(existsSync(sentinel), false);
   assert.equal(readFileSync(file, 'utf8'), source);
   assert.equal((await checkFileSyntax(resolve(root, 'missing.js'))).status, null);
+});
+
+
+test('aggregate stdout and stderr overflow fails like the original synchronous parser', async t => {
+  const { put } = fixture(t);
+  const file = put('scripts/valid.mjs', 'export const valid = 1;');
+  const preload = put('noisy-preload.cjs', `
+    const { writeSync } = require('node:fs');
+    writeSync(1, Buffer.alloc(700000, 'a'));
+    writeSync(2, Buffer.alloc(700000, 'b'));
+  `);
+  const env = { ...process.env, NODE_OPTIONS: `--require=${preload}` };
+  const original = spawnSync(process.execPath, ['--check', file], { env, encoding: 'utf8' });
+  assert.notEqual(original.status, 0);
+  assert.equal(original.error?.code, 'ENOBUFS');
+  const result = await checkFileSyntax(file, (command, args, options, done) =>
+    execFile(command, args, { ...options, env }, done));
+  assert.notEqual(result.status, 0);
+});
+
+test('CLI invoked through a symlink still checks and rejects invalid source', t => {
+  const { root, put } = fixture(t);
+  put('scripts/invalid.mjs', 'export const invalid = ;');
+  const linkedDirectory = join(root, 'linked-checker');
+  symlinkSync(dirname(checker), linkedDirectory, 'junction');
+  const linkedChecker = join(linkedDirectory, 'check-syntax.mjs');
+  const result = spawnSync(process.execPath, [linkedChecker], { cwd: root, encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /FAIL scripts\/invalid\.mjs/u);
+  assert.match(result.stderr, /SyntaxError/u);
 });

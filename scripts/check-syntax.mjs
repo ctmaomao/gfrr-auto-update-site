@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT_DIR = 'scripts';
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules']);
+const MAX_OUTPUT_BYTES = 1024 * 1024;
 
 function toPosixPath(filePath) {
   return filePath.split(path.sep).join('/');
@@ -30,18 +31,30 @@ export function syntaxConcurrency(parallelism = availableParallelism()) {
   return Math.max(1, Math.min(4, Number.isSafeInteger(parallelism) ? parallelism : 1));
 }
 
-// Keep Node's real parser and the original 1 MiB child-output limit. No source
-// is imported or executed, and spawn/signal/output-limit failures stay failures.
+// Keep Node's real parser and spawnSync's aggregate 1 MiB child-output limit.
+// execFile alone caps each stream separately, so count raw bytes across both.
+// No source is imported or executed; spawn/signal/output failures stay failures.
 export function checkFileSyntax(file, execute = execFile) {
   return new Promise((resolve) => {
-    execute(process.execPath, ['--check', file], {
-      encoding: 'utf8',
-      maxBuffer: 1024 * 1024
+    let outputBytes = 0;
+    let outputLimitExceeded = false;
+    const child = execute(process.execPath, ['--check', file], {
+      encoding: 'buffer',
+      maxBuffer: MAX_OUTPUT_BYTES
     }, (error, stdout, stderr) => resolve({
-      status: error ? null : 0,
-      stdout: stdout || '',
-      stderr: stderr || ''
+      status: error || outputLimitExceeded ? null : 0,
+      stdout: stdout?.toString('utf8') || '',
+      stderr: stderr?.toString('utf8') || ''
     }));
+    const countOutput = (chunk) => {
+      outputBytes += chunk.length;
+      if (outputBytes > MAX_OUTPUT_BYTES && !outputLimitExceeded) {
+        outputLimitExceeded = true;
+        child.kill();
+      }
+    };
+    child?.stdout?.on('data', countOutput);
+    child?.stderr?.on('data', countOutput);
   });
 }
 
@@ -88,4 +101,5 @@ async function main() {
   console.log('Syntax check passed');
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();
+if (process.argv[1] && fs.existsSync(process.argv[1])
+  && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) await main();

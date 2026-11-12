@@ -20,7 +20,7 @@ const healthy = Object.fromEntries(['tavily', 'brave'].map(provider => [provider
 }]));
 const row = (overrides = {}) => ({ provider: 'brave', topic: 'central_bank_inflation',
   title: 'Economic outlook and policy discussion', url: 'https://example.com/policy',
-  publishedAt: '2026-09-03T10:00:00Z', ...overrides });
+  publishedAt: '2026-09-03T10:00:00Z', snippet: 'Synthetic policy commentary discusses the economic outlook and uncertainty around future interest rates.', ...overrides });
 const discover = rawStories => buildNewsDiscovery({ ...window, sourceStatus: healthy, rawStories });
 
 test('six slots retain broad news and allocate exactly two basic primary searches', () => {
@@ -101,7 +101,7 @@ test('actual Tavily collector uses six requests, recovers primary evidence witho
     const primaryUrl = body.include_domains?.[0] === 'federalreserve.gov' ? fedUrl : blsUrl;
     return new Response(JSON.stringify({ results: [{
       title: 'Synthetic current economic release', url: body.topic === 'general' ? primaryUrl : 'https://example.com/news',
-      content: 'Synthetic bounded test snippet', ...(body.topic === 'general' ? {} : { published_date: '2026-09-03T10:00:00Z' })
+      content: body.include_domains?.[0] === 'bls.gov' ? 'Synthetic test: Payrolls rose.' : 'Synthetic bounded test snippet', ...(body.topic === 'general' ? {} : { published_date: '2026-09-03T10:00:00Z' })
     }] }));
   });
   const collected = await collectProvider('tavily', ['synthetic-test-key'], { budget });

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { ACLED_WEEKLY_REGIONS } from './acled-weekly-coverage.mjs';
+import { weeklyWindowProblem } from './acled-weekly-window.mjs';
 import { ACLED_MONTHLY_SLUGS } from './acled-download-manifest.mjs';
 
 // artifact_sanitizer_layer: comparison of already normalized configurations, NOT
@@ -48,12 +49,21 @@ function parse(text, kind) {
     seen.add(f[id]);
     if (kind === 'weekly') {
       if (!Array.isArray(f.weekRange) || f.weekRange.length !== 2
-        || day(f.weekRange[0]) > day(f.weekRange[1]) || f.weekRange[1] > date) reject();
+        || day(f.weekRange[0]) > day(f.weekRange[1])) reject();
     } else if (day(f.asOfDate) !== date) reject();
   }
-  // Sanitizer latestWeek is the maximum across regions, not a common cutoff.
-  // Retain real staggered dates while rejecting a falsely early/late maximum.
-  if (kind === 'weekly' && v.filesIngested.map(f => f.weekRange[1]).sort().at(-1) !== date) reject();
+  if (kind === 'weekly') {
+    const ends = v.filesIngested.map(f => f.weekRange[1]).sort();
+    if (Object.hasOwn(v.quality, 'weeklyWindow')) {
+      // ADR-0040: aggregation ends at the latest common continuous grid; raw
+      // file coverage may extend beyond it and must not be rewritten to match.
+      if (weeklyWindowProblem(v) !== null || ends[0] !== date) reject();
+    } else {
+      // Legacy comparison compatibility only. Runtime still excludes weekly
+      // metrics without common-grid evidence; no production eligibility here.
+      if (ends.at(-1) !== date || ends.some(end => end > date)) reject();
+    }
+  }
   // Ignore only top-level preparation time. Key order is not semantic, while
   // array order remains significant (ranked lists and windows must not be sorted).
   const { preparedAt, ...semantic } = v;

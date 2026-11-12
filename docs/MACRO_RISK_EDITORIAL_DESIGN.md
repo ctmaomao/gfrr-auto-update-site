@@ -4,6 +4,10 @@
 
 [ADR-0088](ADR/0088-ofr-editorial-contract.md)为新OFR编辑路径的当前契约；下文v1分数/六模块/篇幅配额是旧模型兼容记录。v2仅读已验证OFR原值、真实观察日、变化及缺失时效；程序注入数字，AI只解释。短稿与栏目/来源数量仅warning，事实引用/单位日期/安全/30小时/writer与费用保护保留。当前仅本地准备，不代表已生成、发布或取得付费许可。
 
+## 2026-11-11 OFR 定性语义边界
+
+[ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md) 在 v2 新稿 validator/review/final writer 中增加有界检查：原值与校准均值、严格过去十年样本排序、本站贡献分解缺项分开解释。比较基准须在同一分句，方向由原始已验证快照决定，并引用相应站内事实；不创造压力等级。输入新增可引用的本站覆盖事实，生产快照 schema、数值、时钟、旧稿读兼容和历史正文不变。检查只覆盖登记表达及这些关系，不证明全部经济语义、新闻事实或因果。零新增 provider/search 调用，不削弱既有数值/币种/日期/引语/来源/安全门槛。
+
 ## 1. 状态与目标
 
 - 状态: Owner approved for staged implementation, 2026-08-11.
@@ -49,6 +53,7 @@
 ### 4.2 新闻发现来源
 
 - Tavily Search API，近 7 日、每 topic 最多 5 条、`search_depth=basic`。六个既有查询中，央行/通胀与增长/就业两项改用 `topic=general` + `include_domains` 定向检索已登记的 `federalreserve.gov` / `bls.gov`；其余四项仍为 `topic=news`。不增加调用次数、结果上限或 provider。
+- 增长/就业槽只聚焦 BLS `"Employment Situation" payroll unemployment` 永久归档页；不固定日期 URL，不扩展 PDF/日期解析，不保证命中或通过证据检查。
 - Brave News Search API，`freshness=pw`，相同 topic，每 topic 最多 5 条。
 - 定向 general 结果只接受这两个精确 host（可带 `www`）的已登记日期路径：Fed `newsevents/speech|pressreleases/<name>YYYYMMDD<letter>.htm`、BLS `news.release/archives/<series>_MMDDYYYY.htm`。日期必须是合法日历日期；不把索引更新时间、首页更新时间、摘要日期或抓取时间充作发布时间。其他格式保持不采纳，扩展须有来源证据与回归。
 - 所有结果在聚类前按本次近 7 日窗口与实际 `generatedAt` 过滤；缺日期、旧日期和未来值不能赋予事件簇官方/交叉印证资格。general search 的 `time_range` 可能按发布或更新筛选，因此不能单独作为新鲜度依据。API 参数依据 [Tavily Search 文档](https://docs.tavily.com/documentation/api-reference/endpoint/search)。

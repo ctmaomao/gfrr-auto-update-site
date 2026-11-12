@@ -43,17 +43,18 @@
 
 ## 1. 项目当前状态与跨任务硬边界
 
+- 当前首页为周报/雷达/Bubble 三标签；雷达主读数为 OFR FSI，旧公开仓位/状态/风险预算/动作建议已退役，旧分与模型保留审计。当前事实见 [PROJECT_BACKLOG](docs/PROJECT_BACKLOG.md)，不要从历史阶段推断新任务。
 - Release/display version 为 v28.0.10；data.version / decisionModel.contractVersion 保留 v27.0。asset cache 读 scripts/app.js 的 APP_VERSION，不机械替换历史版本。
 - Worker 主 preview 为 /market.worker-preview.json；M-94 前端当前读 data/radar-data.json，scripts/modules/realtime.js 冻结且未接入，重接 overlay 需另开评审。
 - core secondary set 为 vix / gold / dxy / us10y / spx，只写 /market.secondary-preview.json，不覆盖或参与任何 values.* 主值或主评分；secondarySources / secondaryDiagnostics / secondarySourceSummary 不得混入 /market.worker-preview.json。
 - v28.0G-4C Trading Economics freshness hard gate：Yahoo 与 TE 均须 fresh。tradingeconomics-observedAt-invalid / tradingeconomics-confirmation-stale 在 promotion 层 hard hold；observedAt failure does not make candidate ok false。PR #53 superseded；KV write guard deferred。
 - worker-health-snapshot、review:worker-health-snapshot 和 Worker health check 只读，不改 Worker runtime、payload contract、KV、data/realtime 产物或前端 fallback，不触发恢复/部署。Daily workflow 主输入保持 realtime-data；Daily vs Worker drift 仅 audit-only。Check Realtime Health 不恢复为 Worker-first runtime hard gate，realtime-data stale 不阻断主运行链路监控；health warning 与 hard-fail 边界不混淆。
 - External AI 仅独立展示，不影响 scoring/decision/execution/position。现行 Macro Risk / Bubble Watch 生产路径仍须成本授权、单次 provider call/no retry、validator/review/freshness；不覆盖 deterministic 输出，不晋升 manual artifacts，不打印凭证。
-- World Order 为独立 regime overlay，不是第七个模块；新增源需 source review / 独立接入授权。ACLED 仅手工 xlsx 标准化，不自动抓取或恢复旧 API；失败不伪造数据或清空可用缓存。
+- World Order 为独立 regime overlay，不是第七个模块；新增源需 source review / 独立接入授权。ACLED 本地运行时只读归一化 JSON；手工路径与已批准的固定自动链分开，现行例外/26-14-14 预算见 [ADR-0055](docs/ADR/0055-acled-weekly-automation.md)、[ADR-0056](docs/ADR/0056-acled-split-cadence.md)和[运行说明](docs/ACLED_AUTOMATIC_UPDATE.md)。不恢复旧 API，不绕过拒绝或扩大来源权利，失败不伪造数据或清空缓存。
 - 宏观代理保留来源/时效/缺失披露。macroDrivers.employment 含 FRED CES0500000003 平均时薪，sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll} 失败降级。macroDrivers.consumerRetail 可展示 Redbook public HTML / BoA 公开摘要，不冒充原始卡数据。macroDrivers.commercialRealEstate 不得伪造为 CDX、私募信贷数据或非公开 CRE loan tape。M-74 后代理按对应源契约 display-only。
 - Transport 的 transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1 是既有 owner_thread_approval，状态 runtime_scoring_migration_authorized_capped_free_proxy、maxContributionPct=3；P51 transport-shock-scoring-impact-v1 只准现行 free-proxy gate 的 +1/+2/+3、默认 fail-closed 0。routeFreightConfirmation/marketConfirmation 仍 not_connected；不扩展 ODP/Brent promotion/Heatmap/cross-validation/Bubble Watch。
 - route-level tanker freight source-rights 和生产写入须独立批准，manual/preflight 成功不是授权。不降低 checker/validator 或篡改生产 JSON 让检查通过；不删除用户文件、数据、配置或日志。
-- 不引入未经批准的依赖；零生产依赖策略、新增须 ADR 保留。保持现有模块和架构；领域细则无损迁移至 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按上表读取。
+- 不引入未经批准的依赖；零生产依赖策略保留。已准入的开发工具类别按 [ADR-0013](docs/ADR/0013-dev-dependencies-allowed-for-local-tools.md)说明用途、版本与隔离边界，无需每个包重复新建 ADR；超出该范围另行评审。保持现有模块和架构；领域细则无损迁移至 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按上表读取。
 - 修改 index.html、scripts/app.js、scripts/modules/*.js 或 assets/styles.css 必须运行 `npm run bump:frontend-asset-version` 同步入口、module import query 与样式表引用；仅 Worker/docs/check/workflow/JSON 改动无需 bump。`assets/styles.css` 自身不带版本参数——参数写在 index.html 的引用上，bump 工具会改写该引用，因此纳入触发集无需改动工具；该路径无条件属于触发集，删除该文件同样计入。该规则由 `check:frontend-asset-version`（`check:all` 内）强制：工作区或已提交历史中存在未 bump 的前端改动时 fail；无法判定时只输出 WATCH，不伪装成违规。检查器作用域直接解析 `bump-frontend-asset-version.mjs` 的声明，不在此重述。scripts/ 的 console.log 可能是 Actions 日志功能，不作为 debug 残留删除。
 
 ## 2. Frontend Design Contract — Mandatory Reading

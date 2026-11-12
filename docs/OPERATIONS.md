@@ -74,7 +74,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `onrrp-wording-20261109`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `editorial-review-20261110-r2`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 单独检查 Worker Health；它只反映 Worker 运行链，不是当前静态首页的数据加载闸门。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -89,7 +89,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。旧 `externalAiInterpretationLayer` 只保留数据兼容；首页当前可见的 DeepSeek 输出是独立 `macroRiskEditorialLayer`。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `onrrp-wording-20261109`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `editorial-review-20261110-r2`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -134,7 +134,17 @@ npm run check:macro-risk-editorial
 
 ### Shared editorial budget and free-search admission
 
-[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 是本轮本地预算收紧基线，尚不代表已经初始化、激活或通过线上验收。两篇文章合计 CNY 5/月；所有 key、手动与自动请求共用 `deepseek-usage-ledger`。每次按完整上下文最坏预留 CNY 2.161152，因此零历史负担也至多两次/31天，不能按平时低 token 用量估算可调用次数。成功仍保留全额到完成后31天加152秒；不明失败/取消/崩溃永久保留待核，阻止后续调用，不自动退款、月底重置或删账本。
+Brave 另有 [ADR-0111](ADR/0111-brave-shared-free-only.md) 的显式 v2 路径：仅在账户 Search Postpaid 已保存的 Free credits only、服务商硬停、所有该plan key覆盖及实际项目key绑定均独立核验后使用。不把唯一key当独占，不把零out-of-pocket当硬停。下文独占key要求仍完整适用于v1；v2只窄范围替代独占与全账户实时配额/历史已知要求，其它hold不变。
+
+v2 的私有 grant 必须含证据与account-plan binding的SHA-256、key指纹、verification/expiry/protection boundary、至多950次项目授权和同时间的dashboard观察；字段契约见ADR-0111。expiresAt不超过31天及已审保护边界；账单日期时区不明时保守提前到期，不伪造period end。账户累计用量不是项目历史或实时余额。
+
+仅确认从未初始化、实际ref缺失且已完成证据审查后，才能显式执行 `npm run review:brave-budget -- --initialize-shared --grant-file <private-file>`。已有任何版本账本拒绝初始化，无自动迁移。初始化时间取可信GitHub Date，初始化前历史始终unknown；续grant仍用原 `--activate --grant-file` 追加，不能清pending、换key或重置950/31天计数。部署代码不等于激活。只读摘要把project剩余与provider余量unknown分开。
+
+另有经独立核验的connector create-only路径：建立只含 `usage.json` 的新树，以已核main commit作为技术parent，再原子创建 `brave-usage-ledger` ref并严格回读；不得更新main、覆盖现存ref或借此恢复已删历史。main parent不是Brave历史，此路线也不能宣称执行过CLI `--initialize`。创建含grant的ref即激活，必须事先完成同等证据、可信时间/时钟余量与初始化资格核验；任何不确定结果先回读，不盲重试，具体操作另行独审。
+
+核对项目key可显式手动选择原 `Tavily Budget Status` workflow的 `brave-key-fingerprint`；默认仍Tavily状态。独立main-only job只给核验步骤两个Brave secrets，仅输出各变量与合并集合的SHA-256前16位、count/missing；无provider/ledger/network诊断。也可在已获授权的环境运行 `npm run review:brave-budget -- --key-fingerprints`，不打印原key。指纹比对仍须私密核验账户/plan归属，多个/缺失/解析有歧义时不能猜测。
+
+[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 的基础保护继续有效；[ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) 将 monthly 新 genesis 契约设为两篇文章合计 CNY 10/月，代码上线不代表已经初始化、激活或通过线上验收。所有 key、手动与自动请求共用 `deepseek-usage-ledger`。每次按完整上下文最坏预留 CNY 2.161152，因此零历史负担也至多四次/31天，不能按平时低 token 用量估算可调用次数。成功仍保留全额到完成后31天加152秒；不明失败/取消/崩溃永久保留待核，阻止后续调用，不自动退款、月底重置或删账本。
 
 先运行零网络、零写入的计划检查：
 
@@ -148,13 +158,15 @@ npm run review:brave-budget -- --plan
 
 激活前必须逐项核验：
 
-1. DeepSeek 所有未受控调用已关闭、旧请求确实全部结束，账本不存在时才能准备一次 genesis，已有历史绝不能覆盖。未知历史按 CNY 5 完整隔离31天加152秒。另一方案是经独立复核的完整31天加余量历史；第三方案是严格的当前账单月全账户/所有key累计上界，不能只取项目key、余额或显示时区。后一方案必须证明实际固定 billing UTC offset、账单月起点、全账户绑定及最多5分钟的真实上报延迟（`lagBoundEvidenceSha256`），在停止/排空请求后再等5分钟加152秒观测，5分钟内且同账单月完成准备；观测、切换和准备各自±76秒仍须属于同一账单月。显示金额额外加 CNY 0.01，例如0.14计为0.15；完整 bootstrap digest 独立批准后才可准备，准备本身不写远端。缺任何证明仍hold。
+1. 新 monthly 必须使用 `deepseek-budget-v2` schema 与 v2 policy/price digest；旧 v1 monthly 一律 hold，不能自动换 schema、覆盖或重建。创建时重新核实远端账本不存在。两个 one-shot 仍精确绑定旧 policy/grant/price digest，已耗名额和永久预留不变。已知四次 one-shot 保守预留合计 CNY8.644608 不是零历史证明；完整历史证据未足即不激活，不用 token 推算退款。DeepSeek 所有未受控调用已关闭、旧请求确实全部结束，账本不存在时才能准备一次 genesis，已有历史绝不能覆盖。未知历史按 CNY 10 完整隔离31天加152秒。另一方案是经独立复核的完整31天加余量历史；第三方案是严格的当前账单月全账户/所有key累计上界，不能只取项目key、余额或显示时区。后一方案必须证明实际固定 billing UTC offset、账单月起点、全账户绑定及最多5分钟的真实上报延迟（`lagBoundEvidenceSha256`），在停止/排空请求后再等5分钟加152秒观测，5分钟内且同账单月完成准备；观测、切换和准备各自±76秒仍须属于同一账单月。显示金额额外加 CNY 0.01，例如0.14计为0.15；完整 bootstrap digest 独立批准后才可准备，准备本身不写远端。缺任何证明仍hold。
 2. 单独核验当前 CNY 费率、1,048,576-token context、8,000输出上限和请求/响应模型。价格review有效期至多24小时，代码提前76秒hold；复核必须追加并单独固定digest，不能改历史。请求别名不锁定底层模型，费率变化或响应不符需停用与新审阅，不能自动换模型/汇率。
 3. DeepSeek 两个步骤分别注入 `DEEPSEEK_BUDGET_GITHUB_TOKEN`、`DEEPSEEK_BUDGET_GENESIS_SHA`、`DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256`；仅付费步骤有 `DEEPSEEK_API_KEY`。`--require-eligible` 在新闻搜索之前只读预检；它不预留费用，真正provider仍先CAS预留再单次调用。不要把凭证移到job/global环境，或用手动成本确认绕过账本。 每次GitHub元数据响应、读体及完成、最终paid派发前都维持受界时钟；长停顿或clockstep即hold。若PATCH已生效但回包/派发前校时失败，零付费发送且保留pending，不清账重试。
 4. Tavily保留按记录的预留时间统计的31天项目预算：950总额/800自动/150手动，另有50账户余量；这不是已独立证实的真实dispatch滚动硬上限。所有 `/usage` 探测必须走 `tavily-meter-ledger`，缺失需另行初始化；10次/10分钟按661秒保守窗口执行，包含30秒dispatch、30秒时钟误差和1秒HTTP精度。初始化时间取GitHub首次404的可信Date，初始化后≤661秒仍hold，整秒时首次安全准入为662秒；缺旧genesis不自动迁移。未知时间/配额/PAYGO/余额即停止，无缓存替代或换key绕过。
 5. Brave免费确认不是剩余额度。`brave-usage-ledger` 的grant必须有 dashboard 实际请求上限、既有使用、到期、免费确认、来源证据与独占仓库key指纹，grant最多950剩余请求、有效期至多31天；另有按记录预留时间计算的950/31天项目计数，不能声称真实dispatch严格窗口已证实。未知、到期或key不匹配即停止，无自动续月。timeout/网络/5xx/坏JSON结果永久待核，新的grant不能清掉旧待核。实际4xx可记录失败但不退还；402/429/432/433额外hold。
 
 搜索摘要与 `--plan` 明示 `countBasis=recorded_reservation_time`、`strictDispatchWindowVerified=false`。保留旧账本、schema、历史与额度，不补造早期dispatch证据或重置。两搜索provider新准入均要求30秒单调时钟dispatch deadline；Brave还要求成功CAS所读的可信GitHub `serverTime + 30000ms + 1000ms` 严格早于grant到期，边界附近可提前hold。真实免费门禁仍靠Tavily已核Researcher/PAYGO禁用及官方用量/余量、Brave已核独占key免费grant与未决债务hold；Tavily `/usage` 独立权威时钟10次/10分钟规则不变。
+
+[ADR-0109](ADR/0109-macro-budget-pause-notifications.md) 将自动 Macro 的明确 monthly 双空配置记为 `expected_skip / deepseek_budget_uninitialized`，而不是运行故障；仅此 opt-in 路径在网络请求前停止，并跳过日/input 预留、搜索、provider、生产写入和提交。Summary 与安全回执保留原因和跳过验证状态。手动运行、one-shot、缺凭证、畸形/部分配置、API/坏账本/价格/余额/生成错误仍失败；其它 consumer 不变。Pages 与 EdgeOne 仅按经认证的精确 run/attempt/head/job/step 证据跳过这类无内容发布，未知状态继续原部署校验，不把绿色暂停称作新稿已发布。
 
 失败排查先看脱敏预算code、账本摘要和上游状态。不要通过整条AI workflow重跑来探测余额或搜索配额，也不要清除旧日/input/recheck refs。预算失败与搜索失败均不能伪装成健康的零可信新闻skip；未生成新判读时保留确定性fallback和真实旧期日期。`manual:external-ai:deepseek` 的历史手动路线不属于本次两文章额度，当前共享gate拒绝该第三consumer，即使提供key和网络参数也不允许借用本预算。
 
@@ -648,27 +660,27 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `onrrp-wording-20261109`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
+当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `editorial-review-20261110-r2`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=onrrp-wording-20261109
-scripts/app.js and active scripts/modules/*.js local imports → ?v=onrrp-wording-20261109
+index.html app.js entry → ?v=editorial-review-20261110-r2
+scripts/app.js and active scripts/modules/*.js local imports → ?v=editorial-review-20261110-r2
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `onrrp-wording-20261109`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `editorial-review-20261110-r2`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs onrrp-wording-20261109
-npm run bump:frontend-asset-version -- onrrp-wording-20261109
+node scripts/bump-frontend-asset-version.mjs editorial-review-20261110-r2
+npm run bump:frontend-asset-version -- editorial-review-20261110-r2
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `onrrp-wording-20261109`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `editorial-review-20261110-r2`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
@@ -1768,3 +1780,37 @@ Activation is a separate coordinator-controlled action after independent review,
 5. Inspect durable reserve/outcome and existing publication/quality checks. Report actual provider attempts and publication separately. Failed/unknown reservations remain permanently consumed; an unresolved outcome holds the other consumer. Preserve ledger/anchors after completion or expiry. Leave subsequent dispatches on `monthly`; never recreate this grant under another branch or date.
 
 The original monthly ledger, free-search controls, Macro day/input tags, provider timeouts, output/fact/quality/freshness rules and data-only writer are unchanged. Never delete deduplication tags or edit timestamps to force availability. Initialization and dispatch are not performed by offline preparation or by merely deploying this code.
+
+<a id="deepseek-balance-shape-diagnostic"></a>
+
+### DeepSeek balance-shape diagnostic
+
+[ADR-0096](ADR/0096-deepseek-balance-shape-diagnostic.md) records the completed single authorized read, run `42738568668` (number 1, attempt 1). Its sanitized HOLD report showed an object response, boolean availability field type without its value, and two balance rows labeled CNY and USD. Each row's three amount fields were decimal-format strings; no amounts are retained here. This does not establish available funds or debit precedence.
+
+The temporary `deepseek-balance-shape-once-20261110.yml` credential-bearing entrypoint is retired and deleted. Do not dispatch, rerun, rename, recreate or copy it, extend its expiry, or invoke the retained CLI with a real key. No further standalone diagnostic balance read is authorized. Offline pure helpers and privacy/deadline/no-retry/context tests remain; wiring tests require the entrypoint to stay absent and reject copied diagnostic invocation in all active workflows. Ordinary production workflows, follow-up history selectors, paid currency gates and ledgers are unchanged. No Actions write permission or security-setting change is needed for this removal.
+
+### CNY-only one-shot balance admission
+
+[ADR-0097](ADR/0097-one-shot-cny-balance-admission.md) narrows the additional grant's balance check to a unique sufficiently funded CNY row and optional all-zero USD row. Nonzero USD, duplicates, unknown currency, malformed/inconsistent amounts, insufficient CNY or unavailable account still HOLD before reservation and POST. A structural diagnosis never proves a zero USD balance; the normal authorized one-shot attempt performs its existing bounded balance read. Do not call the retired diagnostic or make a separate probe. No conversion or USD budget is allowed. The original CNY 4.33 grant, one attempt per article, permanent reservations and price/quality gates remain unchanged; [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) applies this same exact CNY funding validator to monthly admission, retaining fail-closed initialization and the immutable legacy one-shot grants.
+
+<a id="one-shot-verification-editorial-grant"></a>
+
+### New two-page verification grant (2026-11-11)
+
+[ADR-0105](ADR/0105-editorial-verification-grant.md) adds a separately authorized, manual-only CNY 4.33 total grant: one Macro and one Bubble attempt, no retries, expiring 2026-11-13T00:00:00.000Z. It does not revive the spent ADR-0094 allowance. Follow the existing activation/receipt procedure above with these exact substitutions:
+
+- Selection: `editorial-verification-20261111-cny433-v1`.
+- Fixed create-only ledger branch: `deepseek-editorial-verification-20261111`.
+- Policy export: `VERIFICATION_GRANT`; old `GRANT` is unchanged.
+- Non-secret production-environment pins: `DEEPSEEK_VERIFY_20261111_GENESIS_SHA`, `DEEPSEEK_VERIFY_20261111_GRANT_SHA256`, `DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256`. Never alter the old or monthly pins/history.
+
+Offline planning and preparation only:
+
+```sh
+node scripts/review-deepseek-budget.mjs --one-shot-plan editorial-verification-20261111-cny433-v1
+node scripts/review-deepseek-budget.mjs --prepare-one-shot /path/to/reviewed-input.json --approved-grant-digest APPROVED_SHA256 --selection editorial-verification-20261111-cny433-v1
+```
+
+Use fresh, independently reviewed authorization and official-price evidence, not a reused old authorization hash. The policy reserves CNY 2.161152 per attempt, CNY 4.322304 combined; actual cost remains unverified until authoritative billing is available. The existing provider receipt records token usage, not a settled bill. Currency/funding is checked by the normal authorized attempt before reservation, without printing balances or making a separate probe.
+
+Before dispatch, verify the matching unconsumed grant slot and fresh price approval, Macro's natural current input/day tags, current eligible evidence and other source/quality gates. Dispatch each existing workflow at most once using this explicit selection and normal acknowledgements. If a slot is spent, an outcome is uncertain, an input is already claimed, or access is unavailable, stop the affected action. Never rerun, reset tags, modify data dates, substitute a manual artifact, activate another grant or silently use monthly budget. Report calls, permanent reserves, receipt/quality outcomes and actual two-site publication separately.

@@ -1,3 +1,5 @@
+import { ofrBaselineMeaning, ofrPercentileMeaning, OFR_SITE_COVERAGE_FACT } from './editorial-ofr-semantics.mjs';
+import { compactNewsStory } from '../lib/editorial-news-hygiene.mjs';
 import { strictOfrDate } from '../daily/ofr-pressure-readout.mjs';
 import { buildOfrEditorialSnapshot, hasOfrEditorialMarkers, assessOfrEditorialPublication } from './editorial-ofr-snapshot.mjs';
 import { INPUT_SCHEMA, OFR_INPUT_SCHEMA, RISK_MODULES } from './editorial-contract.mjs';
@@ -121,7 +123,7 @@ function compactNews(discovery) {
     if (count >= 2) return false;
     perTopic.set(story.topic, count + 1);
     return true;
-  }).slice(0, 12).map((story) => ({ ...story, snippet: compactText(story.snippet, 280) }));
+  }).slice(0, 12).map(story => compactNewsStory(story, 280));
 }
 
 export function buildEditorialInput({ radarData, worldOrder, marketPricing, radarHistory, oilDirectional, oilNews, discovery, generatedAt = new Date().toISOString(), fixtureOnly = false }) {
@@ -202,10 +204,10 @@ function buildOfrInput({ radarData, discovery, generatedAt, fixtureOnly }) {
   const p = pressureSnapshot;
   const freshness = assessOfrEditorialPublication(radarData, generatedAt).freshness;
   const facts = [
-    fact('ofr:pressure', 'main_pressure', `OFR 金融压力原值为 ${p.index.value ?? '缺失'}，实际观察日 ${p.index.observedDate ?? '缺失'}；来源状态 ${p.status}，观察日距输入生成日 ${freshness.ageHours === null ? '缺失' : freshness.ageHours / 24} 天，当前主判读资格 ${freshness.currentEligibleAtCheck ? '有效' : '不可用'}。原值不是0–100风险评分。`, p.index.observedDate),
+    fact('ofr:pressure', 'main_pressure', `OFR 金融压力原值为 ${p.index.value ?? '缺失'}，实际观察日 ${p.index.observedDate ?? '缺失'}；来源状态 ${p.status}，观察日距输入生成日 ${freshness.ageHours === null ? '缺失' : freshness.ageHours / 24} 天，当前主判读资格 ${freshness.currentEligibleAtCheck ? '有效' : '不可用'}。原值不是0–100风险评分。${ofrBaselineMeaning(p.index.value)}`, p.index.observedDate),
     fact('ofr:weekly-change', 'main_pressure', `OFR 约一周变化 ${p.weeklyChange.value ?? '缺失'}，实际端点 ${p.weeklyChange.fromDate ?? '缺失'} 至 ${p.weeklyChange.toDate ?? '缺失'}。`, p.index.observedDate),
-    fact('ofr:percentile', 'main_pressure', `OFR 严格过去十年历史百分位 ${p.percentile.value ?? '缺失'}，有效历史条数 ${p.percentile.historyRows}；百分位为历史相对位置，不是风险评分或危机概率。`, p.index.observedDate),
-
+    fact('ofr:percentile', 'main_pressure', `OFR 严格过去十年历史百分位 ${p.percentile.value ?? '缺失'}，有效历史条数 ${p.percentile.historyRows}；百分位为历史相对位置，不是风险评分或危机概率。${ofrPercentileMeaning(p.percentile.value)}`, p.index.observedDate),
+    fact('ofr:coverage', 'site_evidence_scope', OFR_SITE_COVERAGE_FACT, p.asOf.slice(0, 10)),
   ];
   // Only numeric macro observations are selected. Legacy qualitative regime,
   // dailyBrief, module scores, allocations and old radar history never cross.
@@ -224,7 +226,7 @@ function buildOfrInput({ radarData, discovery, generatedAt, fixtureOnly }) {
   const stories = compactNews(discovery);
   const sourceRefs = facts.map(item => ({ ...sourceRefFromFact(item),
     sourcePath: item.id.startsWith('fact:ofr:') ? 'radarData.mainPressureReadout' : item.id.startsWith('fact:market:') ? `radarData.displayInputsBaseline.${item.id.split(':').at(-1)}` : `radarData.macroDrivers.${item.id.split(':').slice(2).join('.')}`,
-    ...(item.id.startsWith('fact:ofr:') ? { sourceName: p.source.provider, url: p.source.sourceUrl } : { interpretationBoundaryZh: '独立观察，不是 OFR 分解。' })
+    ...(item.id === 'fact:ofr:coverage' ? { sourceName: '本站 OFR 快照发布范围', sourcePath: 'radarData.mainPressureReadout.contributionsPublished', url: p.source.sourceUrl } : item.id.startsWith('fact:ofr:') ? { sourceName: p.source.provider, url: p.source.sourceUrl } : { interpretationBoundaryZh: '独立观察，不是 OFR 分解。' })
   }));
   sourceRefs.push(...stories.map(story => ({ id: story.id, kind: 'news', sourceName: story.domain, sourceClass: story.evidenceStatus, title: story.title, url: story.url, domain: story.domain, publishedAt: story.publishedAt, topic: story.topic, providers: story.providers, supportingDomains: story.supportingDomains })));
   return {

@@ -53,7 +53,7 @@ assert(discovery.status === 'ok', `fixture news discovery should be ok, got ${di
 
 const governmentDomainDiscovery = buildNewsDiscovery({
   rawStories: [
-    { provider: 'tavily', topic: 'credit_liquidity', title: 'New York City pension funds publish annual returns', url: 'https://comptroller.nyc.gov/reports/pension-fund-returns', publishedAt: '2026-08-13T02:00:00Z' },
+    { provider: 'tavily', topic: 'credit_liquidity', title: 'New York City pension funds publish annual returns', url: 'https://comptroller.nyc.gov/reports/pension-fund-returns', snippet: 'Synthetic official report describes annual pension fund returns and their reporting limitations.', publishedAt: '2026-08-13T02:00:00Z' },
     { provider: 'brave', topic: 'credit_liquidity', title: 'Macro government themed commentary', url: 'https://macro-gov.example.com/commentary', publishedAt: '2026-08-13T03:00:00Z' }
   ],
   sourceStatus: { tavily: { status: 'ok' }, brave: { status: 'ok' } },

@@ -1,3 +1,4 @@
+import { compactNewsStory, evidenceEligibility, independentSupportDomains } from '../lib/editorial-news-hygiene.mjs';
 import { createHash } from 'node:crypto';
 
 import { EDITORIAL_TOPICS, NEWS_DISCOVERY_SCHEMA } from './editorial-contract.mjs';
@@ -105,8 +106,8 @@ function providerHeldByBudget(status) {
 
 export function assessEditorialNewsReadiness(discovery) {
   const stories = Array.isArray(discovery?.stories) ? discovery.stories : [];
-  const officialCount = stories.filter((story) => story?.evidenceStatus === 'official').length;
-  const crossCheckedCount = stories.filter((story) => story?.evidenceStatus === 'cross_checked').length;
+  const officialCount = stories.filter((story) => story?.evidenceStatus === 'official' && evidenceEligibility(story).eligible).length;
+  const crossCheckedCount = stories.filter((story) => story?.evidenceStatus === 'cross_checked' && evidenceEligibility(story).eligible).length;
   const credibleCount = officialCount + crossCheckedCount;
   const providers = ['tavily', 'brave'].map((provider) => discovery?.sourceStatus?.[provider] || {});
   const providerStatuses = providers.map((status) => status.status || 'missing');
@@ -179,7 +180,7 @@ export function normalizeProviderStory(raw) {
     url,
     domain,
     publishedAt: parsePublishedAt(raw.publishedAt),
-    snippet: compactText(raw.snippet, 360),
+    snippet: compactNewsStory(raw, 360).snippet,
     searchScore: Number.isFinite(raw.searchScore) ? raw.searchScore : null
   };
 }
@@ -198,8 +199,8 @@ function storyFromCluster(cluster) {
     return officialDelta || String(right.publishedAt || '').localeCompare(String(left.publishedAt || '')) || Number(right.searchScore || 0) - Number(left.searchScore || 0);
   })[0];
   const providers = [...new Set(cluster.rows.map((row) => row.provider))].sort();
-  const supportingDomains = [...new Set(cluster.rows.map((row) => row.domain))].sort();
-  const evidenceStatus = cluster.rows.some((row) => isOfficialDomain(row.domain))
+  const supportingDomains = independentSupportDomains([preferred, ...cluster.rows.filter(row => row !== preferred)]);
+  const evidenceStatus = !evidenceEligibility(preferred).eligible ? 'discovery_only' : cluster.rows.some((row) => isOfficialDomain(row.domain))
     ? 'official'
     : supportingDomains.length >= 2 ? 'cross_checked' : 'discovery_only';
   return {
@@ -228,13 +229,15 @@ export function buildNewsDiscovery({ rawStories, sourceStatus, generatedAt, wind
   });
   const clusters = [];
   for (const row of rows) {
-    const match = clusters.find((cluster) => cluster.topic === row.topic && cluster.rows.some((item) => sameStory(item, row)));
+    if (!evidenceEligibility(row).eligible) { clusters.push({ topic: row.topic, rows: [row] }); continue; }
+    const match = clusters.find((cluster) => cluster.topic === row.topic && evidenceEligibility(cluster.rows[0]).eligible && cluster.rows.some((item) => sameStory(item, row)));
     if (match) match.rows.push(row);
     else clusters.push({ topic: row.topic, rows: [row] });
   }
   const rank = { official: 0, cross_checked: 1, discovery_only: 2 };
   const stories = clusters.map(storyFromCluster)
     .sort((left, right) => rank[left.evidenceStatus] - rank[right.evidenceStatus] || String(right.publishedAt || '').localeCompare(String(left.publishedAt || '')))
+    .filter((story, index, all) => all.findIndex(other => other.id === story.id) === index)
     .filter((story, index, all) => all.slice(0, index).filter((item) => item.topic === story.topic).length < 5)
     .slice(0, 30);
   const statuses = sourceStatus || {};

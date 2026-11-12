@@ -46,7 +46,8 @@ OFR 迁移后的雷达旧模型仅供历史审计。紧凑输入发现 `mainPres
 
 ### 4.2 新闻发现来源
 
-- Tavily Search API `topic=news`,最多 6 个预登记 topic、每 topic 最多 5 条。
+- Tavily Search API `topic=news` / `search_depth=basic` / `time_range=week`，仍为 6 个预登记 topic、每 topic 最多 5 条。`include_domains` 直接派生自 `editorial-evidence-policy.mjs` 已有专业媒体与官方域名，不维护第二份来源名单；Brave 查询不变。
+- 该检索收窄可能减少无关候选，也可能减少结果与名单外的跨来源印证，不保证得到可用新闻。Tavily 的 [include_domains](https://docs.tavily.com/documentation/api-reference/endpoint/search) 为字符串数组、上限 300 项，默认限制到列明域名；结果仍须通过原 URL、日期、摘要、分类和就绪检查，不因命中名单自动升级。免费预算门禁与 usage 回执不变。
 - Brave News Search API `freshness=pw`,相同 topic、每 topic 最多 5 条。
 - 一期不新增 GDELT endpoint。现有 GDELT Bubble cache 仍只服务 `ceo_hedging`。
 - 搜索结果只在 transient artifact 中保留 bounded title / URL / snippet；production 只投影
@@ -261,3 +262,7 @@ Workflow 使用现有 `external-ai-production-refresh` environment 的 `DEEPSEEK
 ## 2026-11-08 可靠性窄范围替代（ADR-0089）
 
 [ADR-0089](ADR/0089-bubble-editorial-reliability.md) 替代旧双搜索渠道硬门槛和旧稿全部隐藏规则：只在一个完整健康渠道有合格原摘要证据时允许明确披露的受限简版；零可靠证据仍阻断。writer 使用 transient writeEvidence 重验原输入摘要、事实、引用、哈希、原数据快照与时效，只接收匹配当前 Actions 的生产路径。原期合格生产文章可在 previous_weekly_editorial 保留并明确历史展示，当前 Hero 仍用本期确定性依据。费用、一次调用、无重试、不得晋升手工产物或历史为现稿不变。
+
+## Publication-date and metric-semantics correction (ADR-0106)
+
+[ADR-0106](ADR/0106-bubble-evidence-semantics.md) adds full-input, fail-closed timeline date binding. News rows identify a cited eligible publication day in both date and visible reporting prose; titles identify reporting/disclosure. Structured-only rows identify their cited fact observation day. There is no inferred eventDate or provider-output date repair. Historical metadata-only checks keep their existing rules because excerpts are not retained, while review/projection/final writer still require the complete transient input for new writes. Compact current metrics distinguish RPO from deferred revenue, return differences from percent returns, pending pipelines from completed IPOs, and broad HY context from AI-specific credit evidence. The scoped SPY unit guard and new timeline checks only add assertions; all earlier source, financial, quotation, budget and writer gates remain.

@@ -1,3 +1,4 @@
+import { safeProviderDiagnostics } from '../lib/editorial-safe-diagnostics.mjs';
 import fs from 'node:fs/promises';
 import process from 'node:process';
 
@@ -35,12 +36,7 @@ function parseArgs(argv) {
   return options;
 }
 
-function safeMessage(error) {
-  if (/^DeepSeek HTTP \d{3}$/u.test(error?.message || '')) return error.message;
-  if (/^(?:DEEPSEEK_API_KEY is required|weekly editorial prompt contract missing)/u.test(error?.message || '')) return error.message;
-  if (['invalid_provider_json', 'provider_response_envelope_invalid', 'provider_output_contract_invalid'].includes(error?.category)) return error.message;
-  return 'weekly_editorial_provider_failed';
-}
+function safeMessage() { return 'weekly_editorial_provider_failed'; }
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
@@ -72,9 +68,9 @@ async function main() {
         maxTokens: WEEKLY_EDITORIAL_PROVIDER_CONFIG.maxTokens,
         apiCallLimit: 1,
         retryCount: 0,
-        response: error.responseDiagnostics || null
+        response: safeProviderDiagnostics(error.responseDiagnostics, input, String(process.env.DEEPSEEK_API_KEY || '').trim())
       },
-      replayCandidate: error.replayCandidate || null,
+      rejectedTextRetained: false,
       productionImpact: {
         outputWritten: false,
         productionDataWritten: false,
@@ -88,7 +84,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(`Bubble Watch DeepSeek weekly editorial failed: ${error.message}`);
+main().catch(() => {
+  console.error('Bubble Watch DeepSeek weekly editorial failed: details withheld; see safe diagnostic receipt');
   process.exitCode = 1;
 });

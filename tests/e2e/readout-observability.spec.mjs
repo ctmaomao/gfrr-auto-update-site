@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 /* global document, innerWidth */
 import { buildOfrReadout } from '../../scripts/daily/ofr-pressure-readout.mjs';
 import { buildPublishedOfrComponent, retireLegacyAdvice } from '../../scripts/daily/ofr-publication-contract.mjs';
 import { buildApprovedBubbleWeeklyEditorial } from '../helpers/bubble-editorial-fixture.mjs';
 import { buildNvdaGap } from '../../scripts/bubble-watch/nvda-ratio-evidence.mjs';
+import { migrateObservationEvidence } from '../../scripts/bubble-watch/observation-migration.mjs';
 import { replayEvidenceScores, validateEvidenceScoreFields } from '../../scripts/bubble-watch/evidence-score-contract.mjs';
 
 test('Bubble age timer remains quiet after malformed data enters the error state', async ({ page }) => {
@@ -17,8 +20,17 @@ test('Bubble age timer remains quiet after malformed data enters the error state
   expect(errors).toEqual([]);
 });
 
+// Keep the historical r5 epoch fixed; current production data can be a newer model.
+const observationBaseline = JSON.parse(gunzipSync(readFileSync(new URL('../fixtures/bubble-r5-observation-migration.json.gz', import.meta.url))));
+const observationFixtures = {
+  5: observationBaseline.before,
+  6: migrateObservationEvidence({ ...observationBaseline,
+    config: JSON.parse(readFileSync(new URL('../../config/bubble-watch-curated.json', import.meta.url))),
+    checkedAt: '2026-11-10T06:14:30.988Z' }).after
+};
+
 for (const width of [1440, 390]) {
-  test(`NVDA legacy ratio is visibly unqualified and a new gap uses published uncertainty at ${width}px`, async ({ page }) => {
+  for (const revision of [5, 6]) test(`NVDA legacy ratio is visibly unqualified and a new gap uses r${revision} published uncertainty at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.clock.install({ time: new Date('2026-11-04T12:00:00Z') });
     const errors = []; page.on('pageerror', e => errors.push(e.message));
@@ -29,11 +41,12 @@ for (const width of [1440, 390]) {
     await expect(page.locator('#bubble-data-freshness')).toContainText('已发布分数不可视为全部输入已获当前验证');
     let fixture;
     await page.route('**/data/bubble-watch.json*', async route => {
-      const response = await route.fetch(); fixture = await response.json();
+      fixture = structuredClone(observationFixtures[revision]);
+      expect(fixture.scoring.model_version).toBe(`bubble-watch-v3-core23-shadow4-r${revision}`);
       const date = fixture.as_of_date;
       fixture.indicators = fixture.indicators.map(item => item.id === 'nvda_invest_revenue'
         ? buildNvdaGap(item, date, { reason: 'numerator_basis_unverified' }, `${date}T12:00:00Z`) : item);
-      const r = replayEvidenceScores(fixture.indicators, 5);
+      const r = replayEvidenceScores(fixture.indicators, revision);
       Object.assign(fixture.summary, {
         primary_score_pct: r.primary, red_pct: r.primary, weighted_risk_score: r.pressure,
         stage_score: r.stage, trigger_score: r.trigger, scoring_unknown_count: r.unknownIds.length,
@@ -47,7 +60,7 @@ for (const width of [1440, 390]) {
       Object.assign(fixture.scoring, { effective_tier:r.effectiveTier, base_tier:r.baseTier,
         override_active:r.overrideActive, two_axis_upgrade:r.twoAxisUpgrade, tier_range:r.tierRange, unknown_core_ids:r.unknownIds });
       expect(validateEvidenceScoreFields(fixture)).toEqual([]);
-      await route.fulfill({ response, json: fixture });
+      await route.fulfill({ json: fixture });
     });
     await page.reload();
     await expect(card.locator('.status-bar')).toHaveClass('status-bar unknown');
@@ -55,6 +68,8 @@ for (const width of [1440, 390]) {
     await expect(page.locator('.big-number .value')).toContainText(fixture.summary.primary_score_range_pct.lower.toFixed(1));
     await expect(page.locator('.big-number .value')).toContainText(fixture.summary.primary_score_range_pct.upper.toFixed(1));
     await expect(page.locator('.score-role.core')).toHaveCount(23);
+    expect(fixture.indicators.find(item => item.id === 'arr_2nd_deriv').status).toBe(revision === 6 ? 'unknown' : 'red');
+    expect(fixture.summary.scoring_unknown_count).toBe(revision === 6 ? 3 : 2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
     expect(errors).toEqual([]);
   });
@@ -107,12 +122,15 @@ for (const width of [1440, 390]) {
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     let input;
     await page.route('**/data/bubble-watch.json*', async route => {
-      const response = await route.fetch(); input = await response.json();
+      // Freeze the age-only fixture: a newer production issue must not move this test's expiry.
+      input = structuredClone(JSON.parse(readFileSync(new URL('../../docs/fixtures/bubble-watch/legacy-contract-bundle.json', import.meta.url))).files['data/bubble-watch.json']);
+      input.as_of_date = '2026-11-01';
+      input.generated_at = '2026-11-01T12:00:00Z';
       const card = input.indicators.find(i => i.id === 'neocloud_credit');
       card.as_of = '2026-11-01'; card.provenance.maxAgeDays = 21; card.stale = false;
       input.summary.weekly_editorial = buildApprovedBubbleWeeklyEditorial(input, '2026-11-22T12:00:00Z');
       input.summary.weekly_editorial.freshness.maxAgeHours = 24;
-      await route.fulfill({ response, json: input });
+      await route.fulfill({ json: input });
     });
     await page.goto('/bubble-watch.html'); await expect(page.locator('section.category article.indicator')).toHaveCount(27);
     await expect(page.locator('#weekly-editorial')).toBeVisible();
@@ -129,10 +147,15 @@ for (const width of [1440, 390]) {
     await expect(page.locator('.verdict h2')).toHaveText(input.summary.verdict_label);
     await expect(age).toContainText('已超龄 22天');
     await expect(page.locator('#bubble-data-freshness')).toContainText('本期期次');
-    await page.clock.setSystemTime(new Date('2026-12-10T12:00:00Z'));
+    await page.clock.setSystemTime(new Date('2026-12-06T12:00:00Z'));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(page.locator('#bubble-data-freshness')).toContainText('已过35天 / 上限35天');
+    await expect(page.locator('#bubble-data-freshness')).not.toContainText('整期已超龄');
+    await page.clock.setSystemTime(new Date('2026-12-07T12:00:00Z'));
     // Foregrounding a tab rechecks immediately, even if its timer was throttled.
     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await expect(page.locator('#bubble-data-freshness')).toContainText('整期已超龄');
+    await expect(page.locator('#bubble-data-freshness')).toContainText('已过36天 / 上限35天');
     await expect(page.locator('#bubble-verdict-label')).toContainText('历史或待核验');
     const after = await page.evaluate(() => ({ score: document.querySelector('.big-number .value').textContent,
       lights: [...document.querySelectorAll('.status-bar')].map(e => e.className),

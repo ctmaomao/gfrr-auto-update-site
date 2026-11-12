@@ -1,21 +1,31 @@
 # Architecture Decision Records (ADR)
 
-> 项目重大架构决策的不可变记录。每个决策一个文件,**只追加,永不修改**。
-> 决策被推翻时,创建新 ADR(`status: Accepted`)并把旧 ADR 状态改为 `Superseded by ADR-NNNN`。
+> 每个重大决策一个文件，保留原理由和范围。改变决策需新 ADR 并注明明确替代关系；拼写、坏链接、经证实的合并状态及带依据的纠错可就地维护，不必为普通文档修正新增 ADR。
+> 新决策按实际阶段标为 Proposed / Accepted，不能在尚未审阅时预填 Accepted。历史段落和当时的 pending 不是今天的状态，当前任务查 PROJECT_BACKLOG，实际整合查 PR/main。通用审查主体按 ADR-0092；不能把真实人工来源事实改成 AI 已完成。
 >
 > 格式参考 Michael Nygard ADR 模板。每个决策包含:Context / Decision / Consequences / Status。
 
 ## Active
 
+- [ADR-0111 — Brave shared free-only admission](0111-brave-shared-free-only.md): distinct evidence-bound v2 grants, unknown pre-recording history and isolated key-binding diagnostics; local implementation, independent review and activation pending.
+
+- [ADR-0109 — Macro budget pause notifications](0109-macro-budget-pause-notifications.md): explicitly classify only automatic dual-empty monthly configuration as a no-side-effect skip; preserve real failures and verify upstream job evidence before suppressing Pages/EdgeOne publication. Proposed, independent review and runtime acceptance pending.
+
+- [ADR-0106 — Bubble evidence semantics](0106-bubble-evidence-semantics.md): correct RPO/pipeline/proxy labels and percentage-point units without score changes; bind new timeline rows to explicit report/observation dates. Local implementation, independent final-tree review and coordinated integration pending.
+
+本索引按决策主题导航，不把每条旧“pending/local-only”当作全局禁令。明确的后续修订、当前有效授权和实际验收仍须逐项核对；状态更新不新增来源、费用或发布权限。
+
+- [ADR-0099 — Shared editorial news hygiene](0099-shared-editorial-news-hygiene.md): reject mixed/navigation snippets and syndicated false corroboration in Bubble and Macro; additive input guards, unchanged budgets and historical metadata boundaries.
+
 - [ADR-0095 — Full free-only Bubble refresh](0095-bubble-full-free-refresh.md): isolated manual workflow, unchanged original schedule, disabled Wind and no paid editorial trigger; local implementation, independent review and coordinated activation pending.
 
 - [ADR-0093 — Bubble editorial proof preservation](0093-bubble-editorial-proof-preservation.md): preserve the registered NVIDIA proof through compact projection and make the ledger regression deterministic; strict validators, production data and no-retry boundaries unchanged.
 
-- [ADR-0092 — Delegated AI review](0092-delegated-ai-review.md): owner-requested project review delegation; independent AI review replaces generic human-only review and repeated same-scope confirmation, with unchanged authorization boundaries and quality gates.
+- [ADR-0092 — Delegated AI review](0092-delegated-ai-review.md): merged #514; independent AI review replaces generic human-only review and repeated same-scope confirmation, with unchanged authorization boundaries and quality gates.
 
 - [ADR-0090 — Shared editorial cap and free search](0090-shared-editorial-budget-and-free-search.md): owner-authorized CNY 5 shared article cap, verified search allowance and narrow CEO Wind fallback retirement; push/PR, independent AI review and checked serial publication authorized, operational activation evidence pending.
 
-- [ADR-0087 — Oil-pressure evidence simplification](0087-oil-pressure-evidence-simplification.md): verified local evidence qualification and narrow non-predictive display contract; remote publication not authorized. ADR-0086 is reserved by the separate draft PR #503.
+- [ADR-0087 — Oil-pressure evidence simplification](0087-oil-pressure-evidence-simplification.md): verified local evidence qualification and narrow non-predictive display contract; historical local receipt retained; current task/publication status must be checked against subsequent PRs. ADR-0086 was reserved by the separate PR #503.
 
 - [ADR-0085 — Oil-news completion publication tail](0085-oil-news-publication-completion.md): append the existing producer completion while preserving main/success, quota and immutable checked-source guards; local implementation only, separate release approval pending.
 
@@ -27,7 +37,7 @@
 
 - [ADR-0081 — Bubble editorial claim-local reference consistency](0081-bubble-editorial-reference-consistency.md): owner-authorized offline repair and code release; only uniquely registered same-claim indicator/reference pairs may be completed, strict validators unchanged; no paid rerun or artifact promotion.
 
-- [ADR-0080 — OFR主压力读数迁移提案](0080-ofr-primary-pressure-migration.md): owner已选旧建议退役；issue #490及本次独立Codex代审/分项推送已授权；适配器未接runtime，最终合并部署待完整迁移审阅，旧模型协议不变。
+- [ADR-0080 — OFR主压力读数迁移提案](0080-ofr-primary-pressure-migration.md): #491/#492 已整合 OFR 主读数和旧公开建议退役；旧七候选研究协议保留，原准备阶段文字不是当前未接入状态。
 
 - [ADR-0079 — Bubble SEC declared-contact production wiring](0079-bubble-sec-declared-contact-production-wiring.md): separate production wiring PR after #487; owner-designated Codex review; runtime acceptance pending.
 
@@ -155,3 +165,20 @@
 - [ADR-0088 OFR 编辑契约与简版判读](0088-ofr-editorial-contract.md) — 独立v2迁移，原始观察程序投影，事实/费用底线保留。
 
 - [ADR-0094: Bounded additional editorial generation grant](0094-editorial-one-shot-additional-grant.md) — explicit manual-only CNY4.33 grant; ordinary monthly gate unchanged.
+
+- [ADR-0096: Manual balance-shape diagnosis](0096-deepseek-balance-shape-diagnostic.md) — single read-only GET, sanitized structure only, unchanged paid admission.
+
+- [ADR-0097: CNY-only one-shot balance admission](0097-one-shot-cny-balance-admission.md) — exact CNY funding, optional zero USD metadata, unchanged monthly gate and spending grant.
+
+- [ADR-0101: Bubble original observations and r6 eligibility](0101-bubble-observation-evidence-r6.md) — original dates, source-bound ARR uncertainty, coherent KPMG metric and immutable model epochs.
+
+- [ADR-0102: Administrative release evidence](0102-administrative-release-evidence.md) — final compact guards and bounded Macro-only BLS public excerpts.
+- [ADR-0103: Evidence-bound editorial normalization and safe failure diagnostics](0103-editorial-review-diagnostics.md)
+
+- [ADR-0105: Separate two-page verification grant](0105-editorial-verification-grant.md) — a fresh explicit CNY4.33 approval, isolated history and unchanged production gates.
+
+- [ADR-0107: OFR editorial semantic boundaries](0107-ofr-editorial-semantic-boundaries.md) — calibration baseline, strict prior-window ranking and site-only contribution gaps; bounded new-writer checks.
+
+- [ADR-0108: ACLED common-window pair comparison](0108-acled-common-window-comparison.md) — compare current common cutoffs while preserving legacy, pins and strict publication gates.
+
+- [ADR-0110: Monthly CNY10 and CNY balance](0110-monthly-cny-ten-and-balance.md) — explicit v2 genesis, immutable legacy grants, shared exact CNY funding; activation requires separate evidence.

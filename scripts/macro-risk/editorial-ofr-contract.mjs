@@ -1,3 +1,5 @@
+import { inspectOfrSemanticField } from './editorial-ofr-semantics.mjs';
+import { pressureContainsNumericContent } from '../modules/editorialNumericView.js';
 import { validatePublishedOfrComponent } from '../daily/ofr-publication-contract.mjs';
 import { numericEvidenceAtoms } from '../bubble-watch/weekly-editorial-numeric-grounding.mjs';
 
@@ -51,6 +53,7 @@ export function validateOfrEditorialInput(input, validateNewsDiscovery) {
 export function validateOfrEditorialOutput(output, input, inputResult, unsafePatterns) {
   const errors = [...inputResult.errors];
   const warnings = [];
+  const diagnostics = [];
   const root = record(output) ? output : {};
   const str=(v,label,min=1,max=1000)=>{if(typeof v!=='string'||v.trim().length<min||v.length>max)errors.push(`${label} must be nonempty text within bounds`);};
   const arr=(v,label,min=0,max=5)=>{if(!Array.isArray(v)||v.length<min||v.length>max){errors.push(`${label} array bounds invalid`);return [];}return v;};
@@ -81,23 +84,55 @@ export function validateOfrEditorialOutput(output, input, inputResult, unsafePat
   for(const key of ['affectsGfrrScoring','affectsRiskModules','affectsTailRiskOverlay','affectsDecisionModel','affectsExecutionLock','affectsPositionGuidance','affectsWorldOrder','affectsOdp','affectsBubbleWatch'])if(root.boundaries?.[key]!==false)errors.push(`output.boundaries.${key} must be false`);
   const stories=new Map((input?.newsContext?.stories||[]).map(x=>[x.id,x]));
   const referred=new Set();
-  for(const claim of ofrEditorialClaims(root)){
+  const claims = ofrEditorialClaims(root);
+  const claimPaths = ['root', ...(record(root.pressureSynthesis) ? ['pressureSynthesis'] : []),
+    ...['weeklyTimeline','keyTensions','contextAnalysis','crossMarketAnalysis'].flatMap(key => list(root[key]).filter(record).map(row => `${key}[${root[key].indexOf(row)}]`)),
+    ...(record(root.historicalComparison) ? ['historicalComparison'] : []),
+    ...list(root.watchNext).filter(record).map(row => `watchNext[${root.watchNext.indexOf(row)}]`)];
+  for(const [claimIndex, claim] of claims.entries()){
+    const claimPath = claimPaths[claimIndex] || 'root';
     for(const key of Object.keys(claim))if(!claimKeys.has(key))errors.push(`OFR claim unknown/retired field ${key}`);
     const refs=arr(claim.sourceRefIds,'claim sourceRefIds',1,12);
-    if(refs.some(id=>typeof id!=='string'||!inputResult.sourceRefIds.has(id)))errors.push('OFR claim unknown source');
+    if(refs.some(id=>typeof id!=='string'||!inputResult.sourceRefIds.has(id))) { errors.push('OFR claim unknown source'); diagnostics.push({claimPath,fieldPath:claimPath,ruleCode:'unknown_source',sourceRefIds:refs}); }
     refs.forEach(id=>referred.add(id));
     if(refs.length && refs.every(id=>stories.get(id)?.evidenceStatus==='discovery_only'))errors.push('OFR claim relies only on discovery_only');
     const evidence=[...(input?.structuredFacts||[]).filter(f=>(f.sourceRefIds||[]).some(id=>refs.includes(id))).map(f=>f.factZh), ...refs.map(id=>stories.get(id)).filter(s=>s&&['official','cross_checked'].includes(s.evidenceStatus)).map(s=>`${s.title} ${s.snippet||''} ${s.publishedAt?.slice(0,10)||''}`)].join('\n');
     const text=[...textFields.map(k=>claim[k]),claim.date].filter(x=>typeof x==='string').join('\n');
     const supported=new Set(ofrNumericEvidenceAtoms(evidence).filter(a=>!a.kind.startsWith('invalid')).flatMap(a=>[a.key,...(a.alternateKey?[a.alternateKey]:[])]));
-    for(const atom of ofrNumericEvidenceAtoms(text))if(atom.kind.startsWith('invalid')||(!supported.has(atom.key)&&!supported.has(atom.alternateKey)))errors.push(`OFR claim unsupported numeric/unit/date: ${atom.key}`);
+    const numericFields = claimPath === 'root'
+      ? [['root.headlineZh', root.headlineZh], ['root.leadZh', root.leadZh],
+        ...list(root.dataGaps).map((value, index) => [`root.dataGaps[${index}]`, value]),
+        ['root.confidence.reasonZh', root.confidence?.reasonZh]]
+      : [...textFields, 'date'].map(field => [`${claimPath}.${field}`, claim[field]]);
+    for (const [fieldPath, value] of numericFields) {
+      for (const ruleCode of inspectOfrSemanticField(value, {
+        snapshot: input?.pressureSnapshot, sourceRefIds: refs,
+        defaultPressure: claimPath === 'pressureSynthesis' || fieldPath === 'root.headlineZh'
+      })) {
+        errors.push(`OFR semantic boundary: ${ruleCode}`);
+        diagnostics.push({ claimPath, fieldPath, ruleCode: 'ofr_semantic_boundary', sourceRefIds: refs });
+      }
+    }
+    // Preserve whole-claim currency/range context; per-field parsing is only
+    // used to locate diagnostics and must not change acceptance semantics.
+    for (const atom of ofrNumericEvidenceAtoms(text)) {
+      if (atom.kind.startsWith('invalid') || (!supported.has(atom.key) && !supported.has(atom.alternateKey))) {
+        errors.push(`OFR claim unsupported numeric/unit/date: ${atom.key}`);
+        const fieldPath = numericFields.find(([, value]) => typeof value === 'string'
+          && ofrNumericEvidenceAtoms(value).some(candidate => candidate.key === atom.key))?.[0] || claimPath;
+        diagnostics.push({ claimPath, fieldPath, ruleCode: 'unsupported_numeric', atom, sourceRefIds: refs });
+      }
+    }
     const compoundEvidence = new Set(compoundUnitAtoms(evidence));
-    for (const atom of compoundUnitAtoms(text)) if (!compoundEvidence.has(atom)) errors.push(`OFR compound financial unit unsupported: ${atom}`);
-    for(const match of text.matchAll(/(?:称|表示|写道|原文|指出|宣布|强调|宣称|声称|警告|报告|透露|提到|认为|said|stated|announced|emphasized|claimed|warned|reported|noted)\s*[:：]?\s*[“「"]([^”」"]+)[”」"]/giu))if(!evidence.includes(match[1]))errors.push('OFR explicit quotation not supported by cited evidence');
+    for (const atom of compoundUnitAtoms(text)) if (!compoundEvidence.has(atom)) { errors.push(`OFR compound financial unit unsupported: ${atom}`); diagnostics.push({claimPath,fieldPath:claimPath,ruleCode:'unsupported_compound_unit',sourceRefIds:refs}); }
+    for(const match of text.matchAll(/(?:称|表示|写道|原文|指出|宣布|强调|宣称|声称|警告|报告|透露|提到|认为|said|stated|announced|emphasized|claimed|warned|reported|noted)\s*[:：]?\s*[“「"]([^”」"]+)[”」"]/giu))if(!evidence.includes(match[1])) { errors.push('OFR explicit quotation not supported by cited evidence'); diagnostics.push({claimPath,fieldPath:claimPath,ruleCode:'unsupported_quote',sourceRefIds:refs}); }
     if(claim.date && (!/^\d{4}-\d{2}-\d{2}$/u.test(claim.date)||!Number.isFinite(Date.parse(`${claim.date}T00:00:00Z`))||new Date(`${claim.date}T00:00:00Z`).toISOString().slice(0,10)!==claim.date))errors.push('OFR timeline date invalid');
   }
-  // Numeric pressure labels are injected by projection, never copied from model text.
-  if(/[0-9０-９]|百分之[零〇一二三四五六七八九十百]|(?:原值|指数|周变化|变化幅度|历史百分位|百分位)(?:为|是|达到|升至|降至|[:：])\s*(?:负|正)?[零〇一二三四五六七八九十百千万亿两]+(?:点[零〇一二三四五六七八九]+)?(?:[，。、；\s]|$)/u.test(root.pressureSynthesis?.assessmentZh||''))errors.push('OFR pressure prose must leave numeric readings to program projection');
+  // Membership in cited evidence cannot bind a number to the correct pressure field.
+  if (pressureContainsNumericContent(root.pressureSynthesis?.assessmentZh)) {
+    errors.push('OFR pressure prose must leave numeric readings to program projection');
+    diagnostics.push({ claimPath: 'pressureSynthesis', fieldPath: 'pressureSynthesis.assessmentZh', ruleCode: 'pressure_numeric_prose', sourceRefIds: root.pressureSynthesis?.sourceRefIds });
+  }
   const attrs=new Set(attributions.map(x=>x?.sourceRefId));if(attrs.size!==attributions.length)errors.push('duplicate attribution');
   for(const id of referred)if(!attrs.has(id))errors.push('OFR citation lacks attribution');
   for(const id of attrs)if(!inputResult.sourceRefIds.has(id))errors.push('unknown attribution source');
@@ -109,7 +144,7 @@ export function validateOfrEditorialOutput(output, input, inputResult, unsafePat
   if(referred.size<12)warnings.push('本期实际引用来源少于建议数量，保留简版与覆盖限制。');
   for(const pattern of unsafePatterns)if(pattern.test(visible))errors.push('OFR output unsafe wording');
   if(/(?:总分|综合分|风险评分|模块分)(?:为|是|达到|升至|降至|[:：])\s*[\d零一二三四五六七八九十]|(?:仓位|配置|现金|敞口)(?:比例|建议|上限)|(?:建议|应当).{0,8}(?:买入|卖出|加仓|减仓|做多|做空)/u.test(visible))errors.push('OFR output revives retired scoring or allocation advice');
-  return {ok:!errors.length,errors,warnings,visibleTextLength:visible.length,visibleTextSectionLengths:Object.fromEntries(Object.entries(sections).map(([k,v])=>[k,v.length])),referencedSourceCount:referred.size};
+  return {ok:!errors.length,errors,warnings,diagnostics,visibleTextLength:visible.length,visibleTextSectionLengths:Object.fromEntries(Object.entries(sections).map(([k,v])=>[k,v.length])),referencedSourceCount:referred.size};
 }
 
 

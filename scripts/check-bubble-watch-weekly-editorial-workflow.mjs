@@ -104,6 +104,9 @@ for (const marker of [
 const providerInvocationCount = workflow.split('run:bubble-watch-weekly-editorial-deepseek -- --allow-network').length - 1;
 if (providerInvocationCount !== 1) errors.push(`${WORKFLOW} must invoke DeepSeek runner exactly once; got ${providerInvocationCount}`);
 
+const receiptUploads = workflow.split('\n      - name:').filter(step => step.includes('uses: actions/upload-artifact@'));
+if (!(receiptUploads.length === 1 && receiptUploads[0].includes("if: always() && steps.diagnostic_receipt.outcome == 'success'") && /path: manual-artifacts\/[a-z-]+\/safe-diagnostic-receipt\.json\n/u.test(receiptUploads[0]) && !/path: \||deepseek-output|deepseek-failure|editorial-input|news-discovery|production-projection|\*\*/u.test(receiptUploads[0]))) errors.push('ADR-0103 permits only the exact safe receipt artifact path');
+
 if (errors.length > 0) {
   console.error('Bubble Watch weekly editorial workflow check FAIL:');
   for (const error of errors) console.error(`- ${error}`);

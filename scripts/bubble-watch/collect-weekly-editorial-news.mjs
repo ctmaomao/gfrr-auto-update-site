@@ -6,6 +6,7 @@ import { withTavilyBudget } from '../lib/tavily-budget.mjs';
 import { withBraveBudget } from '../lib/brave-budget.mjs';
 
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
+import { EDITORIAL_SEARCH_DOMAINS } from './editorial-evidence-policy.mjs';
 import { EDITORIAL_TOPICS } from './weekly-editorial-contract.mjs';
 import {
   buildNewsDiscovery,
@@ -93,7 +94,8 @@ async function fetchJson(url, init, label) {
 async function fetchTavily(topic, query, requestWithKeys, budget) {
   const payload = {
     query, topic: 'news', search_depth: 'basic', max_results: MAX_RESULTS,
-    time_range: 'week', include_answer: false, include_raw_content: false, include_usage: true
+    time_range: 'week', include_answer: false, include_raw_content: false, include_usage: true,
+    include_domains: EDITORIAL_SEARCH_DOMAINS
   };
   const json = await requestWithKeys((key) => budget({ key, payload, consumer: 'bubble-editorial' }, () => fetchJson('https://api.tavily.com/search', {
     method: 'POST',
@@ -142,7 +144,7 @@ async function fetchBrave(topic, query, requestWithKeys, braveBudget) {
     title: item.title,
     url: item.url,
     publishedAt: item.page_age || item.age,
-    snippet: [item.description, ...(Array.isArray(item.extra_snippets) ? item.extra_snippets : [])].filter(Boolean).join(' ')
+    snippet: item.description
   }));
 }
 

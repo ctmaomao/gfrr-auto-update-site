@@ -2,7 +2,7 @@
 
 ## Status
 
-Owner requested on 2026-11-09; governance implementation and independent AI review complete, exact-head CI and merge pending. This decision partially supersedes ADR-0026's generic human-only merge-review requirement and same-scope repeat-confirmation language in current project navigation. The original ADR and historical receipts remain unchanged except for an explicit status pointer.
+Accepted and merged in PR #514 (`34c2df15`), verified in main on 2026-11-10. The verification paragraph below preserves the pre-merge local receipt; it does not mean that integration is still pending. This decision partially supersedes ADR-0026's generic human-only merge-review requirement and same-scope repeat-confirmation language in current project navigation. The original ADR and historical receipts remain unchanged except for an explicit status pointer.
 
 ## Context
 

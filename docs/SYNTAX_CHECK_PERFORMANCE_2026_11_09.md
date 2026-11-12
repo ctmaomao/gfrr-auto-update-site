@@ -31,8 +31,8 @@ directories, and sorts with the same `localeCompare` order. It runs a separate r
 
 At most `min(4, availableParallelism())` child processes run concurrently. Results
 are retained by input index and printed in the established order. Every file is
-checked even if another fails. A nonzero exit, signal, spawn failure, or 1 MiB
-child-output overflow remains a failed check, and any failed file makes the command
+checked even if another fails. A nonzero exit, signal, spawn failure, or aggregate 1 MiB
+child-output overflow across stdout and stderr remains a failed check, and any failed file makes the command
 exit nonzero. A single available CPU stays serial. There is no persistent validation
 cache, environment switch, new dependency, or new ignore rule.
 
@@ -70,3 +70,34 @@ data, source acquisition, paid-provider path, or deployment gate is changed.
 
 The exact-head CI must still run all its checks. Compare the syntax segment on that
 runner before claiming a remote speedup or a particular saving in Actions minutes.
+
+## 2026-11-12 current-main integration
+
+The existing PR #520 is integrated with main `70cac20c5a40d10e228663242adb1be3623232a8`,
+including the Markdown cleanup, Brave budget repair, FRED parser extraction and
+natural Oil Directional Pressure update. Only the same four task files differ.
+
+Fresh independent review found that the old draft's `execFile` limit applied per
+stream, unlike `spawnSync`'s combined stdout/stderr limit. The adapter now counts
+raw Buffer bytes across both streams, terminates on aggregate overflow and reports
+failure. A real dual-stream regression reproduces the old failure. A second test
+preserves CLI execution through a symlink. Existing discovery, exclusions, source
+parse-only behavior and all prior assertions remain; there are now 11 focused tests.
+
+On Node 24.22.1 with 9 available CPUs (parallelism capped at 4), all 630 current
+scripts passed. Serial runs took 36.751 / 37.778 seconds; the corrected parallel
+adapter took 10.112 / 9.856 seconds. Complete stdout was byte-identical across the
+serial and corrected runs, a local wall-time reduction of about 72–74%. This does
+not reduce the number of checks, workflows or jobs, and is not a billing forecast.
+
+Current-base `check:changed`, including complete `check:all`, passed in 277.202
+seconds. Full unit coverage passed in 47.949 seconds: 1,875 passed, one existing
+skip, zero failures; coverage remained 99.86% lines / 93.36% branches / 97.96%
+functions. The checks ran sequentially with a private temporary directory to avoid
+unrelated concurrent ACLED fixture-directory interference. Focused tests, changed-file
+ESLint, documentation links and whitespace checks passed. Independent review also
+verified combined-byte thresholds, invalid UTF-8, signals, spawn failures and symlink
+invocation against the original parser, with no remaining P1/P2.
+
+Exact-head CI and deployment verification still gate completion. Existing CI and
+Pages continue running the full suite; no provider or production generation was run.

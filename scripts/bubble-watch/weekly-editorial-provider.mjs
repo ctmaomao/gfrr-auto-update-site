@@ -154,6 +154,10 @@ export function normalizeWeeklyEditorialProviderOutput(output, input, { generate
     schemaVersion: 'bubble-watch-weekly-editorial-output-v1', generatedAt,
     asOfDate: input.asOfDate, provider: 'deepseek', model, mode: 'external_ai_weekly_editorial'
   };
+  for (const key of ['weeklyTimeline', 'keyTensions', 'categoryAnalysis']) {
+    if (!Object.hasOwn(normalized, key)) normalized[key] = [];
+  }
+  if (!Object.hasOwn(normalized, 'historicalComparison')) normalized.historicalComparison = null;
   normalized.sourceAttribution = normalizeSourceAttribution(normalized, input);
   normalized.confidence = normalizeConfidence(normalized.confidence);
   if (input?.newsContext?.coverageMode === 'limited_single_search' && Array.isArray(normalized.dataGaps)
@@ -282,7 +286,7 @@ export async function requestWeeklyEditorial({ input, apiKey, fetchImpl = fetch,
   if (!outputValidation.ok) {
     const error = new Error('DeepSeek weekly editorial output failed contract validation');
     error.category = 'provider_output_contract_invalid';
-    error.replayCandidate = buildWeeklyEditorialReplayCandidate(normalizedOutput, input, apiKey);
+    // ADR-0103: rejected prose is not retained in ordinary Actions artifacts.
     error.responseDiagnostics = {
       ...responseDiagnostics(responseJson, response?.status || null),
       contract: {

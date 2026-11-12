@@ -1,3 +1,5 @@
+import { compactNewsStory } from '../lib/editorial-news-hygiene.mjs';
+import { evidenceAwareNote, indicatorSemanticLabels, semanticNarrativeText } from './evidence-wording.mjs';
 import { createHash } from 'node:crypto';
 import { assessWeeklyEditorialNewsReadiness, usableLimitedSearchStory } from './weekly-editorial-news.mjs';
 import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
@@ -21,7 +23,7 @@ function compactList(values, maxItems, maxLength = 360) {
 }
 
 function buildStructuredFacts(indicators) {
-  return indicators.slice(0, 27).map((indicator) => ({
+  return indicators.slice(0, 27).map(indicator => ({ ...indicator, ...indicatorSemanticLabels(indicator) })).map((indicator) => ({
     id: `fact:${indicator.id}`,
     indicatorId: indicator.id,
     scoreRole: indicator.score_role,
@@ -30,7 +32,7 @@ function buildStructuredFacts(indicators) {
     status: indicator.status,
     asOfDate: indicator.as_of || null,
     stale: indicator.stale === true,
-    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote(indicator)}`, 340),
+    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote({ ...indicator, note: evidenceAwareNote(indicator) })}`, 340),
     sourceRefIds: [`indicator:${indicator.id}`]
   }));
 }
@@ -89,10 +91,7 @@ function buildCompactNewsContext(discovery) {
       return true;
     })
     .slice(0, MAX_INPUT_NEWS_STORIES)
-    .map((story) => ({
-      ...story,
-      snippet: compactText(story.snippet, 360)
-    }));
+    .map(story => compactNewsStory(story, 360));
   const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
     status: status?.status || 'unavailable',
     successCount: Number.isInteger(status?.successCount) ? status.successCount : 0,
@@ -236,7 +235,7 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
     scoringSnapshot: buildEditorialScoringSnapshot(bubbleWatch),
     narrativeBaseline: {
       source: summary.verdict_desc_source,
-      verdictDescZh: compactText(summary.verdict_desc, 2800),
+      verdictDescZh: compactText(semanticNarrativeText(summary.verdict_desc, indicators), 2800),
       upstreamVerdictIncluded: false,
       upstreamSummaryAdopted: false
     },

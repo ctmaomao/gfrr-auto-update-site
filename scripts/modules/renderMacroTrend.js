@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=onrrp-wording-20261109';
+import { $ } from './config.js?v=editorial-review-20261110-r2';
 
 function asNumber(value) {
   const n = Number(value);

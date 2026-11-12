@@ -14,6 +14,9 @@ import { fetchAcledSummary } from '../../scripts/world-order/fetch-acled.mjs';
 import { compactObject } from '../../scripts/world-order/normalize-world-order-inputs.mjs';
 import { isReviewedAcledAuthWorkflow, AUTO_WORKFLOW_PATH } from '../../scripts/acled-auth-workflow-policy.mjs';
 import { isAcledRepositoryOrigin } from '../../scripts/world-order/acled-repository.mjs';
+import { validateAcledPrivateBatch } from '../../scripts/world-order/acled-private-validation.mjs';
+import { DETAIL_PAGES } from '../../scripts/world-order/acled-detail-discovery.mjs';
+import { workbook } from '../fixtures/acled-weekly-workbook.mjs';
 import { acledAutoPlan, validAcledScheduledSlot } from '../../scripts/world-order/acled-auto-cadence.mjs';
 
 const sha = v => createHash('sha256').update(v).digest('hex');
@@ -141,6 +144,53 @@ test('weekly-only strict publication preserves exact monthly bytes and pins; dai
   assert.equal((await runAcledAutoUpdate(options)).status, 'slot_unavailable'); assert.deepEqual(f.calls, ['claim-query']);
   assert.equal(fs.readFileSync(path.join(f.root, paths.monthly), 'utf8'), original);
   assert.equal(f.git(['status', '--porcelain']), '');
+});
+
+test('staggered synthetic XLSX survives the real sanitizer, comparison and strict pair publication', async t => {
+  const f = fixture(t, true, true);
+  const monthly = fs.readFileSync(path.join(f.root, paths.monthly), 'utf8');
+  const latestMs = Math.floor(Date.now() / 86400000) * 86400000 - 7 * 86400000;
+  const latestWeek = new Date(latestMs).toISOString().slice(0, 10);
+  const newerWeek = new Date(latestMs + 7 * 86400000).toISOString().slice(0, 10);
+  const serial = (latestMs - Date.UTC(1899, 11, 30)) / 86400000;
+  const workbooks = DETAIL_PAGES.filter(p => p.kind === 'weekly').map((p, index) => ({
+    url: `https://acleddata.com/system/files/${latestWeek.slice(0, 7)}/${p.identity}_aggregated_data_up_to_week_of-${index < 3 ? newerWeek : latestWeek}.xlsx`,
+    bytes: workbook(index < 3 ? serial + 7 : serial, { weeks: index < 3 ? 13 : 12, newestEvents: index < 3 ? 1000 : 1 }),
+  }));
+  const snapshots = workbooks.map(w => Buffer.from(w.bytes));
+  let validated, published;
+  const r = await runAcledAutoUpdate({ ...f.options,
+    env: { ...env, GITHUB_EVENT_NAME: 'schedule', ACLED_AUTO_SCHEDULE: '30 0 * * 3' },
+    now: '2026-11-11T06:52:29Z',
+    // All transports remain synthetic. The real private sanitizer and strict
+    // commit preparation run without contacting ACLED or remote GitHub.
+    collect: async () => ({ report: { status: 'authenticated_zip_batch_read', requestCount: 14,
+      logout: 'confirmed', sessionMayRemain: false }, workbooks }),
+    validate: (input, options) => {
+      const result = validateAcledPrivateBatch(input, options);
+      validated = structuredClone(result);
+      return result;
+    },
+    publish: input => { published = input; return f.options.publish(input); },
+  });
+  assert.equal(validated.report.status, 'private_validation_passed');
+  assert.equal(validated.report.cleanupConfirmed, true);
+  assert.equal(validated.report.rawFilesRetained, false);
+  const candidate = validated.candidates[path.basename(paths.weekly)];
+  assert.equal(candidate.latestWeek, latestWeek);
+  assert.equal(candidate.quality.weeklyWindow.latestWeek, latestWeek);
+  assert.equal(candidate.filesIngested.filter(file => file.weekRange[1] === newerWeek).length, 3);
+  assert.equal(candidate.global.eventsLast4Weeks, 24);
+  assert.equal(candidate.global.eventsLast12Weeks, 72);
+  assert.equal(r.status, 'refresh_dispatched_site_pending', JSON.stringify(r));
+  assert.equal(r.acledRequests, 14); assert.equal(r.githubRequests, 5);
+  assert.equal(r.comparison.status, 'review_required');
+  assert.equal(r.comparison.boundaries.productionEligible, false);
+  assert.equal(published.candidate.monthly, monthly);
+  assert.equal(r.receipt.acled_monthly_sha256, sha(monthly));
+  assert.equal(fs.readFileSync(path.join(f.root, paths.monthly), 'utf8'), monthly);
+  assert.equal(f.git(['status', '--porcelain']), '');
+  workbooks.forEach((w, index) => assert.deepEqual(w.bytes, snapshots[index]));
 });
 
 test('Friday weekly unchanged skips mutation; unexpected monthly candidate or request overrun holds', async t => {

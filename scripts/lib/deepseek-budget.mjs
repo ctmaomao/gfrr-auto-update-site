@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 export const BUDGET_REPOSITORY = 'ctmaomao/gfrr-auto-update-site';
 export const BUDGET_BRANCH = 'deepseek-usage-ledger';
 export const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
-export const POLICY = Object.freeze({
+export const LEGACY_POLICY = Object.freeze({
   id: 'deepseek-flash-cny-20261108-v1', currency: 'CNY', capMicroCny: 5_000_000,
   windowDays: 31, model: 'deepseek-v4-flash', responseModel: 'deepseek-flash',
   documentedModelVersion: 'DeepSeek-V4.1-Flash-1017', underlyingVersionPinned: false,
@@ -19,6 +19,11 @@ export const POLICY = Object.freeze({
   priceSource: 'https://api-docs.deepseek.com/zh-cn/quick_start/pricing/',
   modelSource: 'https://api-docs.deepseek.com/api/list-models/',
   requestSource: 'https://api-docs.deepseek.com/api/create-chat-completion/'
+});
+// ADR-0110: never mutate the v1 digest used by the two permanent one-shot grants.
+// Monthly v2 is a new genesis contract, not an in-place upgrade of a v1 ledger.
+export const POLICY = Object.freeze({ ...LEGACY_POLICY,
+  id: 'deepseek-flash-cny-20261112-v2', capMicroCny: 10_000_000
 });
 export const CONSUMERS = Object.freeze(['macro-editorial', 'bubble-editorial']);
 const DAY = 86_400_000, WINDOW = POLICY.windowDays * DAY, MAX_BYTES = 2 * 1024 * 1024;
@@ -38,17 +43,18 @@ function canonical(value) {
   return `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${canonical(value[k])}`).join(',')}}`;
 }
 export const digest = value => createHash('sha256').update(typeof value === 'string' ? value : canonical(value)).digest('hex');
+export const LEGACY_POLICY_DIGEST = digest(LEGACY_POLICY);
 export const POLICY_DIGEST = digest(POLICY);
 const same = (a, b) => canonical(a) === canonical(b);
 const time = now => { if (!integer(now) || now > 8_640_000_000_000_000) fail('clock_unknown'); return now; };
 
 /** Canonical bootstrap contract, prepared OFFLINE, never initialized by a call.
  * bootstrap = { cutoverAt, evidenceSha256, history: 'full-cap-quarantine',
- *   currency: 'CNY', historicalDebitMicroCny: 5000000,
+ *   currency: 'CNY', historicalDebitMicroCny: 10000000,
  *   outstandingRequests: 0, ungatedConsumersDisabled: true }.
  * Evidence must prove every earlier project request is finished and every
  * ungated caller is disabled at cutoverAt. Unknown history is quarantined for
- * 31 FULL days plus the cross-process clock margin, not assumed zero. This does not claim past spend was <=CNY5.
+ * 31 FULL days plus the cross-process clock margin, not assumed zero. This does not claim past spend was <=CNY10.
  * Operator must preserve any pre-existing ledger; initialization is one-time.
  * review = { policyDigest, verifiedAt, expiresAt, evidenceSha256 }.
  * Its digest is pinned separately by DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256.
@@ -88,15 +94,15 @@ const time = now => { if (!integer(now) || now > 8_640_000_000_000_000) fail('cl
  */
 export function prepareBootstrapLedger({ bootstrap, review, approvedRecordDigest }, now = Date.now()) {
   if (['reviewed-complete-history', 'reviewed-current-calendar-month'].includes(bootstrap?.history) && (!HEX.test(approvedRecordDigest || '') || digest(bootstrap) !== approvedRecordDigest)) fail('bootstrap_unproven');
-  const ledger = { schemaVersion: 'deepseek-budget-v1', bootstrap, reviews: [review], entries: [] };
+  const ledger = { schemaVersion: 'deepseek-budget-v2', bootstrap, reviews: [review], entries: [] };
   validateLedger(ledger, now);
   if (bootstrap.history === 'reviewed-current-calendar-month'
     && (!sameBillingMonthWithinSkew(now, bootstrap)
       || now - Date.parse(bootstrap.dashboard.observedAt) > POLICY.maxBootstrapEvidenceAgeMs)) fail('bootstrap_unproven');
   return structuredClone(ledger);
 }
-export function validateReview(review, now) {
-  if (!exact(review, 'policyDigest,verifiedAt,expiresAt,evidenceSha256') || review.policyDigest !== POLICY_DIGEST
+export function validateReview(review, now, policyDigest = POLICY_DIGEST) {
+  if (!exact(review, 'policyDigest,verifiedAt,expiresAt,evidenceSha256') || review.policyDigest !== policyDigest
     || !iso(review.verifiedAt) || !iso(review.expiresAt) || !HEX.test(review.evidenceSha256)
     || Date.parse(review.verifiedAt) > now || Date.parse(review.expiresAt) <= Date.parse(review.verifiedAt)
     || Date.parse(review.expiresAt) - Date.parse(review.verifiedAt) > POLICY.maxReviewAgeMs) fail('price_policy_unknown');
@@ -138,7 +144,7 @@ function validateMonthlyBootstrap(b, common) {
 
 export function validateLedger(ledger, now = Date.now()) {
   time(now);
-  if (!exact(ledger, 'schemaVersion,bootstrap,reviews,entries') || ledger.schemaVersion !== 'deepseek-budget-v1'
+  if (!exact(ledger, 'schemaVersion,bootstrap,reviews,entries') || ledger.schemaVersion !== 'deepseek-budget-v2'
     || !Array.isArray(ledger.entries) || !Array.isArray(ledger.reviews) || ledger.reviews.length < 1) fail('invalid_ledger');
   const b = ledger.bootstrap;
   const common = 'cutoverAt,evidenceSha256,history,currency,historicalDebitMicroCny,outstandingRequests,ungatedConsumersDisabled';
@@ -287,14 +293,27 @@ export function prepareRequest({ key, payload, consumer, mode = 'manual', runId 
     consumer, mode, runId, keyId: digest(key), requestDigest: digest(body) });
 }
 
+// Snapshot only: never infer spend, account identity, FX or budget authority.
 export function validateBalance(json) {
-  if (json?.is_available !== true || !Array.isArray(json.balance_infos) || json.balance_infos.length !== 1) fail('currency_unknown');
-  const b = json.balance_infos[0];
-  if (b?.currency !== POLICY.currency || ['total_balance', 'granted_balance', 'topped_up_balance'].some(k =>
-    typeof b[k] !== 'string' || !/^(0|[1-9]\d*)(\.\d{1,8})?$/u.test(b[k]) || !Number.isFinite(Number(b[k])))) fail('currency_unknown');
-  // Balance proves only a currency snapshot. It is NOT a project spend meter,
-  // bootstrap evidence, an account identity or authority to raise the cap.
-  return { currency: b.currency };
+  if (json?.is_available !== true || !Array.isArray(json.balance_infos)
+    || json.balance_infos.length < 1 || json.balance_infos.length > 2) fail('currency_unknown');
+  const rows = new Map();
+  for (const row of json.balance_infos) {
+    if (!exact(row, 'currency,total_balance,granted_balance,topped_up_balance')
+      || !['CNY', 'USD'].includes(row.currency) || rows.has(row.currency)) fail('currency_unknown');
+    const amounts = ['total_balance', 'granted_balance', 'topped_up_balance'].map(field => {
+      const value = row[field];
+      if (typeof value !== 'string' || value.length > 32
+        || !/^(0|[1-9]\d*)(\.\d{1,8})?$/u.test(value)) fail('currency_unknown');
+      const [whole, fraction = ''] = value.split('.');
+      return BigInt(whole) * 100_000_000n + BigInt(fraction.padEnd(8, '0'));
+    });
+    if (amounts[0] !== amounts[1] + amounts[2]
+      || (row.currency === 'USD' && amounts.some(value => value !== 0n))) fail('currency_unknown');
+    rows.set(row.currency, amounts);
+  }
+  if (!rows.has('CNY') || rows.get('CNY')[0] < BigInt(POLICY.reserveMicroCny) * 100n) fail('currency_unknown');
+  return { currency: 'CNY' };
 }
 export function validateTokenUsage(usage) {
   if (!exact(usage, 'prompt_tokens,completion_tokens,total_tokens') || !integer(usage.prompt_tokens)
@@ -357,11 +376,11 @@ async function boundedJson(fetchImpl, url, init = {}, validateDate = () => {}) {
     return { status: response.status, observedAt, json };
   } catch (error) { if (error.budgetCode) throw error; fail('transport_unknown'); } finally { clearTimeout(timer); }
 }
-export async function readDeepSeekBalance(key, fetchImpl = fetch) {
+export async function readDeepSeekBalance(key, fetchImpl = fetch, validate = validateBalance) {
   if (typeof key !== 'string' || !key || /[\r\n]/u.test(key)) fail('key_missing');
   const response = await boundedJson(fetchImpl, 'https://api.deepseek.com/user/balance', { headers: { Authorization: `Bearer ${key}` } });
   if (response.status !== 200) fail('balance_unavailable');
-  validateBalance(response.json); return response.json;
+  validate(response.json); return response.json;
 }
 
 /** Durable authority: independent branch pinned to an operator-verified genesis

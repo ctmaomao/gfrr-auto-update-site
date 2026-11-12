@@ -21,6 +21,7 @@ on:
         options:
           - monthly
           - editorial-additional-20261109-cny433-v1
+          - editorial-verification-20261111-cny433-v1
       allow_network:
         description: "Allow Tavily, Brave, and DeepSeek network calls"
         type: boolean
@@ -93,6 +94,7 @@ jobs:
           fi
 
       - name: Check shared CNY budget before discovery
+        id: budget_preflight
         env:
           DEEPSEEK_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           DEEPSEEK_BUDGET_SELECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.budget_selection || 'monthly' }}
@@ -100,12 +102,16 @@ jobs:
           DEEPSEEK_ONE_SHOT_GENESIS_SHA: ${{ vars.DEEPSEEK_ONE_SHOT_GENESIS_SHA }}
           DEEPSEEK_ONE_SHOT_GRANT_SHA256: ${{ vars.DEEPSEEK_ONE_SHOT_GRANT_SHA256 }}
           DEEPSEEK_ONE_SHOT_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_ONE_SHOT_PRICE_REVIEW_SHA256 }}
+          DEEPSEEK_VERIFY_20261111_GENESIS_SHA: ${{ vars.DEEPSEEK_VERIFY_20261111_GENESIS_SHA }}
+          DEEPSEEK_VERIFY_20261111_GRANT_SHA256: ${{ vars.DEEPSEEK_VERIFY_20261111_GRANT_SHA256 }}
+          DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256 }}
           DEEPSEEK_BUDGET_GENESIS_SHA: ${{ vars.DEEPSEEK_BUDGET_GENESIS_SHA }}
           DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256 }}
-        run: node scripts/review-deepseek-budget.mjs --require-eligible
+        run: node scripts/review-deepseek-budget.mjs --require-eligible --allow-uninitialized-monthly-skip
 
       - name: Admit one refresh for current upstream data
         id: admission
+        if: steps.budget_preflight.outputs.budget_eligible == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/macro-risk/admit-editorial-refresh.mjs --reserve
@@ -131,6 +137,7 @@ jobs:
 
       - name: Run one DeepSeek editorial call
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_provider
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_BUDGET_GITHUB_TOKEN: ${{ github.token }}
@@ -139,12 +146,16 @@ jobs:
           DEEPSEEK_ONE_SHOT_GENESIS_SHA: ${{ vars.DEEPSEEK_ONE_SHOT_GENESIS_SHA }}
           DEEPSEEK_ONE_SHOT_GRANT_SHA256: ${{ vars.DEEPSEEK_ONE_SHOT_GRANT_SHA256 }}
           DEEPSEEK_ONE_SHOT_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_ONE_SHOT_PRICE_REVIEW_SHA256 }}
+          DEEPSEEK_VERIFY_20261111_GENESIS_SHA: ${{ vars.DEEPSEEK_VERIFY_20261111_GENESIS_SHA }}
+          DEEPSEEK_VERIFY_20261111_GRANT_SHA256: ${{ vars.DEEPSEEK_VERIFY_20261111_GRANT_SHA256 }}
+          DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256 }}
           DEEPSEEK_BUDGET_GENESIS_SHA: ${{ vars.DEEPSEEK_BUDGET_GENESIS_SHA }}
           DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256: ${{ vars.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256 }}
         run: npm run run:macro-risk-editorial-deepseek -- --allow-network
 
       - name: Review editorial quality
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_review
         run: npm run review:macro-risk-editorial
 
       - name: Project production layer
@@ -154,23 +165,9 @@ jobs:
         run: |
           GITHUB_SHA="$(git rev-parse HEAD)" npm run project:macro-risk-editorial
 
-      - name: Upload sanitized editorial artifacts
-        if: always() && steps.admission.outputs.refresh_allowed == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: macro-risk-editorial-refresh-${{ github.run_id }}
-          path: |
-            manual-artifacts/macro-risk-editorial/news-discovery-latest.json
-            manual-artifacts/macro-risk-editorial/editorial-input-latest.json
-            manual-artifacts/macro-risk-editorial/deepseek-output-latest.json
-            manual-artifacts/macro-risk-editorial/deepseek-failure-latest.json
-            manual-artifacts/macro-risk-editorial/review-latest.json
-            manual-artifacts/macro-risk-editorial/production-projection-latest.json
-          if-no-files-found: warn
-          retention-days: 3
-
       - name: Write production editorial layer
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_writer
         run: |
           npm run write:macro-risk-editorial -- \
             --input manual-artifacts/macro-risk-editorial/production-projection-latest.json \
@@ -206,6 +203,7 @@ jobs:
 
       - name: Commit refreshed macro editorial if changed
         if: steps.admission.outputs.refresh_allowed == 'true' && steps.build_input.outputs.editorial_ready == 'true'
+        id: editorial_save
         run: |
           set -euo pipefail
           if git diff --quiet -- data/radar-data.json; then
@@ -237,3 +235,44 @@ jobs:
           # a failure here, but it is reported as its own classification so a green
           # run never hides an exhausted search budget.
           echo "SKIPPED_NO_CREDIBLE_NEWS or SKIPPED_SEARCH_BUDGET_EXHAUSTED (reason=${{ steps.build_input.outputs.skip_reason }}): no DeepSeek call and no production write."
+
+      - name: Verify uninitialized monthly budget skip stayed side-effect free
+        id: budget_skip_verification
+        if: steps.budget_preflight.outputs.budget_disposition == 'expected_skip'
+        env:
+          ADMISSION_OUTCOME: ${{ steps.admission.outcome }}
+          PROVIDER_OUTCOME: ${{ steps.editorial_provider.outcome }}
+          SAVE_OUTCOME: ${{ steps.editorial_save.outcome }}
+        run: |
+          set -euo pipefail
+          test "$ADMISSION_OUTCOME" = skipped
+          test "$PROVIDER_OUTCOME" = skipped
+          test "$SAVE_OUTCOME" = skipped
+          test ! -e manual-artifacts/macro-risk-editorial
+          git diff --quiet --exit-code
+          git diff --cached --quiet --exit-code
+          echo "SKIPPED_MONTHLY_BUDGET_UNINITIALIZED: no admission reservation, search, provider call, ledger or production write." >> "$GITHUB_STEP_SUMMARY"
+
+      # ADR-0103: no raw input/candidate/review/projection artifacts, even after success.
+      - name: Prepare safe editorial diagnostic receipt
+        if: always()
+        id: diagnostic_receipt
+        env:
+          EDITORIAL_BUDGET_OUTCOME: ${{ steps.budget_preflight.outcome }}
+          EDITORIAL_BUDGET_DISPOSITION: ${{ steps.budget_preflight.outputs.budget_disposition }}
+          EDITORIAL_BUDGET_SKIP_VERIFICATION: ${{ steps.budget_skip_verification.outcome }}
+          EDITORIAL_BUDGET_REASON: ${{ steps.budget_preflight.outputs.budget_reason }}
+          EDITORIAL_PROVIDER_OUTCOME: ${{ steps.editorial_provider.outcome }}
+          EDITORIAL_REVIEW_OUTCOME: ${{ steps.editorial_review.outcome }}
+          EDITORIAL_WRITER_OUTCOME: ${{ steps.editorial_writer.outcome }}
+          EDITORIAL_SAVE_OUTCOME: ${{ steps.editorial_save.outcome }}
+        run: node scripts/write-editorial-diagnostic-receipt.mjs --consumer macro
+
+      - name: Upload safe editorial diagnostic receipt
+        if: always() && steps.diagnostic_receipt.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macro-risk-editorial-refresh-${{ github.run_id }}
+          path: manual-artifacts/macro-risk-editorial/safe-diagnostic-receipt.json
+          if-no-files-found: error
+          retention-days: 3

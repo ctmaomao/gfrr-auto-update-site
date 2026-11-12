@@ -24,6 +24,8 @@
 
 ### OFR — Financial Stress Index（生产运行，首次两站验收通过）
 
+[ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md)：OFR 原值正负比较的是其校准历史均值；本站严格过去十年 midrank 是另一项样本排序，不能从负值推出该窗口低位或宽松状态。[OFR 官方说明](https://www.financialresearch.gov/financial-stress-index/)提供类别及地区贡献；`mainPressureReadout.contributionsPublished=false` 仅是本站当前快照不发布未完成修订比较的贡献项，不是官方缺少数据。此次仅增强编辑输入和新稿检查，不新增来源、取数、贡献发布或评分。
+
 **当前定案（2026-11-01）**：owner已批准本任务按顺序合并上线、一次免费官方OFR首发与两站部署，范围见ADR-0080最终授权；只发布官方总指数及辅助历史位置，不映射仓位，不额外派发Daily/Wind/DeepSeek。首发已于2026-11-01完成：数据提交3d6a57a3，单次官方收据08:09:43.189Z，观察日2026-10-28，原值-1.829；Pages与radar.gfrfinradar.uk实际产物/1440及390浏览器验收通过。十年位置仅辅助、旧68分仅审计，详细回执见PROJECT_BACKLOG对应任务。下面未激活/待批准状态为准备包的历史登记，在本任务范围由该定案替代，来源权利和失败隔离限制保留。
 
 **准备阶段消费者接入修订（历史记录）**：准备包#491保留下面原阶段登记。owner已选择退役旧公开建议，当前在独立本地契约/消费者补丁中准备既有Daily main写入前的单次官方抓取及`mainPressureReadout`发布，不执行生产Daily或晋升ignored快照。最终合并上线仍待完整补丁确认。只发布总指数/十年辅助位置/有日期趋势，贡献项不公开；保留原观察日、真实收据和SHA。源码中的runtime接线不代表当前线上已激活，Worker、浏览器外部fetch和旧评分契约不改变。
@@ -693,6 +695,8 @@ Transport Shock Confirmation Factor frontend blocker row(P-score-40) extends the
 
 ### Bubble Watch 专题源 — SEC EDGAR / multpl / stockanalysis / Wikipedia / public research proxies (ADR-0016 / ADR-0019)
 
+**2026-11-10 r6 窄范围更正**：[ADR-0101](ADR/0101-bubble-observation-evidence-r6.md) 保留 ARR 45 天门槛，原观察过期后不再因周报复核而沿用红灯；登记有来源绑定的未知。企业项使用 KPMG 显著员工采用率相邻季度比较，原发布日期 9/24、120 天门槛、reviewed_curated；Google/Wind 生产部署率不是该项替身。VC 原发布日 10/5，ARR 历史观测 7/31，周报 11/8 单列复核。此登记仅替代下述旧口径的相应部分，不晋升 Epoch、不增加请求或放宽缺证门槛。
+
 2026-11-03 来源续审（运行尚未激活）：[免费证据复核](BUBBLE_ABS_CAPEX_FREE_SOURCE_REVIEW_2026_11_03.md)与[ADR-0083](ADR/0083-bubble-october-capex-source-continuation.md)登记十月四家公司新季度，保持固定四家、原窗口与阈值。独立v2面板增加微软七月官方同口径比较凭据，总请求仍最多20，完整证明严格20次；旧v1/七月collector及runtime选择不变。正式运行须后续独立接线并重新采集，不能晋升研究产物。ABS未取得同债项/分层的三期匹配报价，注册表与观测继续为空；部门/新发行利差不补位。免费任务不派发AI，评分披露变化时旧AI快照按原合同失效。
 
 2026-11-03 独立运行接线：来源PR #498经CI/审核合并后，builder在2026-10-30及以后显式选择已审十月集合，七月历史回放保留。手动`Refresh Bubble Qualified Evidence`仅通过既有qualified-only路径免费重新核验四项，禁用Wind且不注入付费源/AI凭据；不运行完整周更。`check:all`及独立发布守卫通过后只提交两份Bubble数据，保留23卡原观测与完整刷新锚点；失败不提交。Pages按成功workflow_run发布，EdgeOne只请求现有带额度/无变化/校验保护的发布器，不触发AI。实际正式运行和两站结果以PROJECT_BACKLOG/回执为准，候选不晋升生产。
@@ -747,6 +751,8 @@ r4已由独立契约#463审阅合并，本轮runtime启用activeRevision4，接�
 | **Wind MCP paid optional / final fallback / audit cross-check** | `mcp.wind.com.cn/vserver_{stock,analytics,economic,financial_docs}_data/mcp/` | `dc_abs_spread` 的 paid optional 覆盖;`debt_capex_ratio` 的 paid cross-check;`ai_ipo_pipeline` / `accounting_events` / `token_revenue_ratio` / `enterprise_deploy` / `capex_reaction` 的 paid final fallback（CEO新闻已按ADR-0090退役；其余Wind用途不变）;Big5 capex/OCF 的人工/审计复核 | 需 `WIND_API_KEY`;builder 只发布派生判级/摘要,不提交 raw Wind 响应。`dc_abs_spread` 使用数据中心 ABS 样本识别 + 中国 ABS AAA 收益率基准方向 + 金融新闻证据,并明确标注为 paid proxy;样本券专属估值利差字段为空时不得写成正式数据中心连续利差。paid final fallback 只在免费/公开主源失败后触发,成功时 `provenance.detail.paidWindFinalFallback=true`;无 key/证据不足仍 fail-closed 回 curated。Wind `stock_data.get_stock_fundamentals` 可用于复核 OCF/Capex 原始列,但不得直接混入 Wind 自带自由现金流派生列或前瞻 FCF |
 | **aibubble-cn.github.io 上游周报** | `raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json`(该站页面的实际数据端点) | 编辑/研究类 15 项 + 部分自动指标 fallback 快照的滚动自动同步;历史 snapshots 仅作写作结构校准参考 | 每轮 build(周一 cron)检查:上游 `as_of_date` 比本地口径新 → 对允许同步的指标自动采纳 status/value_display/note 并回写 `config/bubble-watch-curated.json`(workflow 随数据一起提交);不可达/未更新 → 沿用现状、下周期再查,超期由 STALE 暴露。上游为人工周报,不得写成 API 实时数据;生产 `summary.verdict_desc` 由本地 `bubble-watch-narrative-v2` evidence-pack 生成,不得直接采纳上游正文。`private_secondary_marks` / `gpu_rental_price` / `frontier_progress` 复用此路径并在源候选矩阵声明为 candidate-only;它们与 `token_revenue_ratio` 一起组成 Shadow-4。`capex_reaction` 可把新鲜上游红灯周报作为本地价格代理的研究确认锚。`mag4_fcf_yoy` score slot 改造为本地权威 Big5 realized TTM capex/OCF 指标,在上游同步 blocklist 中;参考站若存在只能作为可选差异提示,不可作为发布值、fallback 值或灯色仲裁依据 |
 | **Bubble Watch source-health audit** | `.github/workflows/audit-bubble-watch-sources.yml` / `scripts/audit-bubble-watch-sources.mjs` | 周二至周五免费源链路健康检查;artifact-only report | `permissions: contents: read`;运行 builder 后恢复 `data/bubble-watch*.json` 与 `config/bubble-watch-curated.json`,只上传 `manual-artifacts/bubble-watch-source-health-*` artifact。scheduled 默认禁用 Wind;paid optional/final fallback 因 Wind disabled 跳过时应作为 expected WARN。`arr_2nd_deriv` 仅在失败原因精确为 `arr_underlying_observation_stale`、且 curated 回退快照本身未 stale 并满足 `ageDays <= maxAgeDays` 时作为 policy-driven expected WARN;ADR-0049 补充 VC/Neocloud 的两条精确证据不足原因：仅所有已登记来源本轮可达且内容有效、诊断齐全、研究快照日期与年龄重放合格时为 WARN；HTTP/超时/坏内容、过期或缺失诊断仍 FAIL。其它 fallback/stale/fetch failure 仍使 audit 失败 |
+
+**Brave共享免费补充（ADR-0111）**：[独立v2契约](ADR/0111-brave-shared-free-only.md) 在已审plan级免费硬停保护下允许共享key使用；仅替代下文v1独占/全账户余量已知要求。账户观察与项目计数分开，初始化前历史unknown，provider实时余量unknown；无自动迁移、续月或清债，尚须实际取证与激活。
 
 **共享免费搜索准入（ADR-0090，本地实施）**：全部 endpoint 调用仅在四处：Macro article collector、Bubble article collector、Oil News diagnosis/build、Bubble CEO builder（含audit复用）。Tavily/Brave在这些路径及手动运行都走同一持久账本。免费账户已确认不等于剩余配额已知：Tavily官方`/usage`须先经过独立10次/10分钟meter，保守保留661秒；Brave需真实dashboard grant且无自动续月，不存在本项目可假定的官方余额API。原Tavily只读status仅读账本不探测provider。两者950/31天项目计数基于记录的预留时间，非已证实的真实dispatch滚动硬上限；摘要明示`countBasis=recorded_reservation_time`和`strictDispatchWindowVerified=false`，旧历史/schema保留，不重置或补造证明。新请求有30秒单调dispatch deadline；Brave还须可信serverTime加31秒严格早于grant到期，临近边界提前hold。搜索额度失败不转成健康零新闻、不换key绕过，不降低事实/红灯多源确认。
 
@@ -1158,9 +1164,14 @@ candidate v2 / classification v3 / telemetry v5。文件时间为 `datasetObserv
 
 Bubble 周度新闻频率补充（ADR-0050）：周三允许一次有持久预留的新闻不足补检，复用相同六主题与双索引，不新增来源或放宽合格证据。单条官方来源可以合格；非官方需不同域名的同一故事聚类。不同域名并不保证报道独立，转载可能共用同一通讯社原稿；当前分类是检索层交叉确认，不能冒充事实真伪认证。
 
+[ADR-0099](ADR/0099-shared-editorial-news-hygiene.md) 将摘要卫生检查共享给 Bubble 与 Macro：显式关联内容/导航组合、视频开场或列表混入不能作为文章证据；已识别新闻稿分发路径和实质重复摘要不能因不同托管域名冒充独立确认。保留发行人自有官方发布及原合格媒体评论；不补正文、不补日期、不扩源/搜索/费用，Brave 额外片段不再直接拼接。输入新断言只收紧，不改历史 metadata-only 路径或原金融输出检查。
+
 ### Bubble 周度专业媒体证据（2026-10-06）
 
 owner 批准 [ADR-0062](ADR/0062-bubble-editorial-attributed-media.md)：已有 Tavily/Brave 返回的 Morningstar、FT、Bloomberg、CNBC、Reuters、WSJ、The Information 内容可登记为 attributed_media。精确域名及子域名匹配不等于全部路径无条件合格：社区、论坛、评论与 sponsored 路径不进入该类别；有效日期和至少 80 字符可用摘要仍必需。不新增抓取源或搜索请求，不抓取付费全文。加州司法部 oag.ca.gov 精确登记为官方机构；不得泛化到所有 gov 域名。
+
+2026-11-10 摘要资格修复：导航、Most Read、关联文章、订阅提示和 newsletter 开场议程不能作为所发现文章的正文证据；采集聚类前剔除该摘要，readiness 与 compact input 再验，不信任外部 `excerpt` / `attributed_media` 标签。拒绝文本不进入 provider input，至多保留标题/URL发现线索；不据标题补写正文。实质 newsletter 分析或通用 script 不因形式被一概拒绝，但只能支持摘要已有的具出处评论，不能变为公司事件、交易、财报或事件日期。此为有限模式过滤，不保证全部摘要已与文章匹配或独立核实；原出处、日期、事实与输出审阅门槛不变。
+
 
 The 2026-10-08 second-stage `research:gdelt-events` is a separate manual, ignored
 historical research archive under the same artifact_sanitizer_layer. Daily groups
@@ -1208,3 +1219,16 @@ The [quarterly panel contract](ADR/0072-bubble-quarterly-capex-panel.md) registe
 ### 2026-11-09 SEC cash-flow period qualification
 
 [ADR-0091](ADR/0091-cash-flow-period-selection.md) tightens the existing Big5 capex/OCF and hyperscaler capex source selection. It adds no source or score threshold. A nonempty historical SEC concept is not sufficient: each candidate must independently establish eight consecutive quarters, and the newest disclosed period must be complete and at most 120 days old. OCF and capex use identical start/end periods within each company; Oracle's fiscal calendar remains separate. Conflicting alternative facts and direct-versus-cumulative differences fail closed. The existing quarterly mirror must prove USD scale and dated columns, cannot skip missing cells, and cannot predate a newer period already observed in SEC. The original curated fallback and its stale date remain unchanged. Full source evidence is retained in the two indicators' provenance; retrieval time is not an observation date.
+
+### Bubble evidence wording and review dates (2026-11-09)
+
+SPY/RSP notes identify the leader from the signed return difference while disclosing the existing absolute-magnitude light rule. Wording repair does not change that rule or assert that its economic symmetry has been approved. Enterprise notes distinguish the retained registered calibration from the Google Cloud AI-agent survey; Deloitte retrieval failure or no parsed support cannot become corroboration, and a separate project-production expectation is not the same survey population. ARR fallback review dates are not original revenue observation dates. When original series anchors are absent, public notes and compact editorial facts explicitly say the series cannot establish current three-month actual growth. A rejected stale live milestone belongs to the rejected candidate, not the retained curated series. None of these disclosures renews observation freshness, changes stale flags or scores, or adds source evidence.
+
+
+### Administrative release evidence (2026-11-10)
+
+[ADR-0102](ADR/0102-administrative-release-evidence.md) treats an Employment Situation administrative header or report title as discovery metadata, not a labor observation. Both editorial paths recheck the exact compact snippet after cleaning and truncation. Macro may read only one already discovered, date-matched HTTPS BLS Employment Situation archive after a successful robots precheck, retaining the exact discovered host and path. This adds at most two credential-free public HTTP requests, no search/provider calls, no retries, no independent corroboration and no scoring inputs. Restrictions, redirects, unsupported layouts and date/embargo uncertainty hold closed. Mocked success is not evidence of live BLS accessibility.
+
+### Bubble metric meaning corrections (2026-11-11)
+
+[ADR-0106](ADR/0106-bubble-evidence-semantics.md) clarifies `cloud_rpo_growth` as RPO/remaining performance obligations and backlog, not deferred or recognized revenue. Company scope, definitions and fiscal periods differ. SPY minus RSP six-month percentage returns is a percentage-point difference; the existing numbers and absolute-magnitude score thresholds stay fixed. The registered IPO company count is a six-month deduplicated issuance/pending pipeline; SEC confirmation separately scans 365 days, and S-1/A is not completed pricing/listing. Broad HY OAS is not an AI-specific bond basket or direct capex-risk-pricing evidence. No collection or source-rights change. New Bubble timeline dates denote explicitly attributed publication dates or cited structured observation dates, never inferred occurrence/retrieval dates.

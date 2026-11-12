@@ -39,6 +39,11 @@ function pack() {
       claim.detailZh = '据Morningstar分析，人工智能基础设施融资可能改善信用获取，但需求与偿还风险仍存在。这属于机构观点，尚未独立核实。';
     }
   }
+  for (const event of output.weeklyTimeline) {
+    event.date = story.publishedAt.slice(0, 10);
+    event.titleZh = `报道：${event.titleZh}`;
+    event.detailZh = `${event.date} 据媒体报道，${event.detailZh}`;
+  }
   output.sourceAttribution = output.sourceAttribution.filter((row, i, all) => all.findIndex(other => other.sourceRefId === row.sourceRefId) === i);
   const review = reviewWeeklyEditorial({ input, output, generatedAt: `${date}T00:03:00.000Z` });
   const layer = projectWeeklyEditorial({ input, output, review, generatedAt: `${date}T00:04:00.000Z`, sourceCommit: 'a'.repeat(40), runId: '123' });
@@ -186,7 +191,7 @@ test('writer recomputes indicator and news attribution rather than trusting a ne
 function corroborationDiscovery(extra = {}) {
   const row = { provider: 'brave', topic: 'ai_financing_credit', title: 'AI credit financing outlook',
     url: 'https://unknown-a.example/story', publishedAt: '2026-11-03', snippet };
-  return buildNewsDiscovery({ rawStories: [row, { ...row, url: 'https://unknown-b.example/story', ...extra }],
+  return buildNewsDiscovery({ rawStories: [row, { ...row, url: 'https://unknown-b.example/story', snippet: 'Separate reporting describes potential AI infrastructure funding benefits while emphasizing unresolved repayment and demand uncertainty. This does not establish a systemic credit event.', ...extra }],
     sourceStatus: { brave: healthy, tavily: failed }, generatedAt: '2026-11-03T01:00:00Z',
     windowStart: '2026-10-27', windowEnd: '2026-11-03' });
 }
@@ -227,4 +232,144 @@ test('valid single-channel cross-domain excerpts remain qualified with consisten
   const rejectedDuplicate = corroborationDiscovery({ url: 'https://unknown-a.example/story', snippet: 'short' });
   assert.equal(validateNewsDiscovery(rejectedDuplicate).ok, true);
   assert.equal(rejectedDuplicate.stories.length, 1);
+});
+
+
+// Synthetic benign shapes only; no external diagnostic excerpts belong in fixtures.
+const navigationExcerpt = 'Markets and technology. Most Read: The city garden opens this weekend. Related stories: A museum extends its summer hours.';
+const newsletterAgenda = 'Welcome to Private Markets, this is our weekly newsletter about capital. Today, we look at gardens, museum schedules and transport plans.';
+const scriptAnalysis = 'Some observers expect durable AI demand, but construction delays can pressure project cash flows and increase financing uncertainty. This is commentary, not a reported company transaction.';
+function evidenceDiscovery(snippets, dual = false) {
+  return buildNewsDiscovery({ rawStories: snippets.map((snippet, index) => ({ provider: 'brave',
+    topic: ['market_structure_valuation', 'ai_financing_credit', 'ai_capex_earnings'][index % 3],
+    title: ['Market concentration outlook', 'Software credit sentiment improves', 'Broadcast script'][index % 3],
+    url: `https://${['ft.com', 'bloomberg.com', 'cnbc.com'][index % 3]}/news/story-${index}`, snippet, publishedAt: '2026-11-09' })),
+  sourceStatus: { brave: healthy, tavily: dual ? healthy : failed }, generatedAt: '2026-11-10T00:00:00Z', windowStart: '2026-11-03', windowEnd: '2026-11-10' });
+}
+
+test('navigation and newsletter agenda cannot become article evidence, while script commentary survives', () => {
+  for (const dual of [false, true]) {
+    const discovery = evidenceDiscovery([navigationExcerpt, newsletterAgenda, scriptAnalysis], dual);
+    assert.equal(validateNewsDiscovery(discovery).ok, true);
+    const readiness = assessWeeklyEditorialNewsReadiness(discovery);
+    assert.equal(readiness.editorialReady, true);
+    assert.equal(readiness.credibleCount, 1);
+    assert.equal(readiness.coverageMode, dual ? 'dual_search' : 'limited_single_search');
+    assert.equal(discovery.stories.find(s => s.domain === 'cnbc.com').evidenceStatus, 'attributed_media');
+    for (const story of discovery.stories.filter(s => s.domain !== 'cnbc.com')) {
+      assert.equal(story.evidenceStatus, 'discovery_only');
+      assert.equal(story.contentScope, 'title_only');
+      assert.equal(story.snippet, null);
+    }
+    const bubble = read('data/bubble-watch.json');
+    const before = digest(bubble);
+    const input = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery });
+    assert.equal(validateWeeklyEditorialInput(input).ok, true);
+    assert.equal(digest(bubble), before);
+    assert.ok(!JSON.stringify(input).includes(navigationExcerpt));
+    assert.ok(!JSON.stringify(input).includes(newsletterAgenda));
+    assert.ok(JSON.stringify(input).includes(scriptAnalysis));
+    assert.equal(input.newsContext.stories.filter(s => s.evidenceStatus === 'attributed_media').length, 1);
+    const clean = buildWeeklyEditorialInput({ bubbleWatch: bubble, discovery: evidenceDiscovery([scriptAnalysis], dual) });
+    assert.equal(input.sourceSnapshotDigest, clean.sourceSnapshotDigest);
+    assert.deepEqual(input.scoringSnapshot, clean.scoringSnapshot);
+    assert.deepEqual(input.structuredFacts, clean.structuredFacts);
+  }
+});
+
+test('forged excerpt and media labels do not bypass readiness or compact-input sanitization', () => {
+  for (const dual of [false, true]) for (const snippet of [navigationExcerpt, newsletterAgenda]) {
+    const discovery = evidenceDiscovery([scriptAnalysis], dual);
+    discovery.stories[0].snippet = snippet;
+    discovery.stories[0].contentScope = 'excerpt';
+    discovery.stories[0].evidenceStatus = 'attributed_media';
+    assert.equal(assessWeeklyEditorialNewsReadiness(discovery).editorialReady, false);
+    assert.equal(validateNewsDiscovery(discovery).ok, false);
+    const input = buildWeeklyEditorialInput({ bubbleWatch: read('data/bubble-watch.json'), discovery });
+    assert.ok(!JSON.stringify(input).includes(snippet));
+    assert.ok(input.newsContext.stories.every(s => s.snippet === null && s.evidenceStatus === 'discovery_only'));
+    assert.ok(input.sourceRefs.filter(s => s.kind === 'news').every(s => s.sourceClass === 'discovery_only'));
+  }
+});
+
+test('contaminated rows cannot donate corroboration or official trust under either search mode', () => {
+  for (const dual of [false, true]) {
+    const d = evidenceDiscovery([scriptAnalysis], dual);
+    const common = { provider: 'brave', topic: 'ai_financing_credit', title: 'AI infrastructure funding outlook', publishedAt: '2026-11-09' };
+    const discovery = buildNewsDiscovery({ ...d, rawStories: [
+      { ...common, url: 'https://unknown.example/report', snippet: scriptAnalysis },
+      { ...common, url: 'https://sec.gov/report', snippet: navigationExcerpt }
+    ] });
+    assert.ok(discovery.stories.every(s => s.evidenceStatus === 'discovery_only'));
+    assert.equal(assessWeeklyEditorialNewsReadiness(discovery).editorialReady, false);
+  }
+});
+
+test('substantive newsletters remain usable and navigation after the length cap is rejected before truncation', () => {
+  const substantive = 'Welcome to our newsletter. Analysts argue that delayed construction can weaken cash flows despite durable AI demand; financing risks remain uncertain.';
+  assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([substantive])).editorialReady, true);
+  const discovery = evidenceDiscovery([scriptAnalysis.repeat(3) + ' Most Read: garden opening hours']);
+  assert.equal(discovery.stories[0].snippet, null);
+  assert.equal(assessWeeklyEditorialNewsReadiness(discovery).editorialReady, false);
+});
+
+
+test('page-furniture detection preserves popular/recommended analytical prose but rejects repeated navigation', () => {
+  for (const snippet of [
+    'The most popular AI models saw revenue growth slow this quarter, according to the company published earnings report; analysts caution that demand remains uncertain.',
+    'Analysts recommended articles on financing risk because these explain why project delays can pressure cash flows even while demand remains robust.'
+  ]) assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([snippet])).editorialReady, true);
+  const navigation = 'CompaniesShow more Companies Energy Financials Retail Technology TechShow more Tech Artificial intelligence Semiconductors Cyber Security';
+  assert.equal(assessWeeklyEditorialNewsReadiness(evidenceDiscovery([navigation])).editorialReady, false);
+  assert.equal(evidenceDiscovery([navigation]).stories[0].snippet, null);
+});
+
+// ADR-0103: omission is a structural default, never permission to repair facts.
+test('optional Bubble defaults preserve malformed fields and never fabricate required content', () => {
+  const {input,output}=pack();
+  for(const key of ['weeklyTimeline','keyTensions','categoryAnalysis','historicalComparison']) {
+    const o=structuredClone(output);delete o[key];
+    const normalized=normalizeWeeklyEditorialProviderOutput(o,input).output;
+    assert.deepEqual(normalized[key],key==='historicalComparison'?null:[]);
+    assert.equal(Object.hasOwn(o,key),false);
+    for(const bad of ['',42,false]) {o[key]=bad;const n=normalizeWeeklyEditorialProviderOutput(o,input).output;assert.deepEqual(n[key],bad);assert.equal(validateWeeklyEditorialOutput(n,input).ok,false);}
+  }
+  for(const key of ['watchNextWeek','dataGaps','leadZh']) {const o=structuredClone(output);delete o[key];assert.equal(validateWeeklyEditorialOutput(normalizeWeeklyEditorialProviderOutput(o,input).output,input).ok,false);}
+});
+
+test('final Bubble writer rejects current news/input/output tampering while preserving current data', () => {
+  const p=pack(), original=JSON.stringify(p.bubble);
+  for(const mutate of [q=>{q.writeEvidence.input.newsContext.stories[0].snippet='Video programme introduction only';},
+    q=>{q.writeEvidence.input.sourceSnapshotDigest='a'.repeat(64);},
+    q=>{q.weeklyEditorial.output.weeklyTimeline[0].sourceRefIds=['news:unknown'];}]) {
+    const q=structuredClone(p.projection);mutate(q);
+    assert.throws(()=>buildWeeklyEditorialWriteResult(p.bubble,q,{now:p.now}),/write evidence/);
+    assert.equal(JSON.stringify(p.bubble),original);
+  }
+});
+
+test('provider acceptance is not quality acceptance: zero-news candidate remains rejected after the mocked provider', async () => {
+  const p=pack(), indicator=p.input.structuredFacts[0].indicatorId;
+  const rewrite=value=>Array.isArray(value)?value.map(rewrite):value&&typeof value==='object'
+    ?Object.fromEntries(Object.entries(value).map(([key,item])=>[key,key==='sourceRefIds'?[`indicator:${indicator}`]:key==='sourceIndicatorIds'?[indicator]:rewrite(item)])):value;
+  const output=rewrite(p.output);
+  const fact=p.input.structuredFacts[0];
+  for (const event of output.weeklyTimeline) {
+    event.date=fact.asOfDate;
+    event.sourceIndicatorIds=[indicator];
+    event.titleZh='站内观测快照';
+    event.detailZh=`${event.date} 的站内观测：${fact.factZh}`;
+  }
+  const normalized=normalizeWeeklyEditorialProviderOutput(output,p.input).output;
+  const validation=validateWeeklyEditorialOutput(normalized,p.input);
+  assert.equal(validation.ok,true,JSON.stringify(validation.errors));
+  let calls=0;
+  const result=await requestWeeklyEditorial({budget:fixtureDeepSeekBudget,input:p.input,apiKey:'offline-only',now:()=>new Date(p.output.generatedAt),fetchImpl:async()=>{
+    calls++;return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};
+  }});
+  assert.equal(calls,1);
+  const review=reviewWeeklyEditorial({input:p.input,output:result.output});
+  assert.equal(review.status,'fail');assert.equal(review.frontendDisplayEligible,false);
+  assert.ok(review.blockers.some(reason=>reason.includes('新闻引用')));
+  // Artifact policy tests independently enforce receipt-only upload even on this late failure.
 });

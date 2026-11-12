@@ -1,3 +1,4 @@
+import { supplementBlsEmploymentExcerpt } from './bls-release-excerpt.mjs';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
@@ -80,7 +81,7 @@ async function brave(topic, query, requestWithKeys, braveBudget, markAttempted) 
     redirect: 'error',
     headers: { Accept: 'application/json', 'Accept-Encoding': 'gzip', 'User-Agent': USER_AGENT, 'X-Subscription-Token': key }
   }); }));
-  return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: [item.description, ...(item.extra_snippets || [])].filter(Boolean).join(' ') }));
+  return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: item.description }));
 }
 
 export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveBudget } = {}) {
@@ -119,7 +120,13 @@ async function main() {
   } else {
     sourceStatus = { tavily: { status: 'dry_run', successCount: 0, failureCount: 0, queryRuns: [] }, brave: { status: 'dry_run', successCount: 0, failureCount: 0, queryRuns: [] } };
   }
-  const discovery = buildNewsDiscovery({ rawStories, sourceStatus, generatedAt: new Date().toISOString(), ...window });
+  const generatedAt = new Date().toISOString();
+  // One bounded public-source supplement, never another search/provider request.
+  const supplement = options.allowNetwork
+    ? await supplementBlsEmploymentExcerpt({ rawStories, generatedAt, ...window })
+    : { rawStories, diagnostics: { status: 'not_needed', reason: null, requestCount: 0, robotsAttempted: false, bodyAttempted: false } };
+  const discovery = buildNewsDiscovery({ rawStories: supplement.rawStories, sourceStatus, generatedAt, ...window });
+  discovery.officialExcerptSupplement = supplement.diagnostics;
   writeJson(options.output, discovery);
   console.log(`Macro risk editorial news ${options.allowNetwork ? 'live' : 'dry-run'}: status=${discovery.status}, stories=${discovery.stories.length}, output=${options.output}`);
 }

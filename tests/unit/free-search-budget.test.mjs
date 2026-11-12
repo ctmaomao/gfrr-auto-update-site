@@ -6,7 +6,7 @@ import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import vm from 'node:vm';
-import { createBraveBudget, emptyBraveLedger, summarizeBraveLedger, validateBraveLedger, activateBraveGrant, createBraveLedger } from '../../scripts/lib/brave-budget.mjs';
+import { createBraveBudget, emptySharedBraveLedger, emptyBraveLedger, summarizeBraveLedger, validateBraveLedger, activateBraveGrant, createBraveLedger } from '../../scripts/lib/brave-budget.mjs';
 import { createMeteredTavilyUsage, emptyMeterLedger as newMeterLedger, validateMeterLedger, createTavilyMeterStore } from '../../scripts/lib/tavily-usage-meter.mjs';
 import { keyFingerprint, createSearchLedger } from '../../scripts/lib/free-search-ledger.mjs';
 import { createTavilyBudget, emptyLedger, validateUsage, verifyBudgetStatus, summarizeLedger } from '../../scripts/lib/tavily-budget.mjs';
@@ -14,6 +14,10 @@ import { createSearchKeyPool } from '../../scripts/lib/search-key-pool.mjs';
 import { collectProvider as macro } from '../../scripts/macro-risk/collect-editorial-news.mjs';
 import { collectProvider as bubble } from '../../scripts/bubble-watch/collect-weekly-editorial-news.mjs';
 import { runDiagnosis } from '../../scripts/oil-directional/diagnose-oil-news-events.mjs';
+
+// No test in this suite may fall through to a real transport. Individual tests
+// explicitly replace this guard with synthetic responses.
+test.before(() => { globalThis.fetch = async () => { throw new Error('offline_test_network_forbidden'); }; });
 
 const clock = Date.parse('2026-11-08T12:00:00.000Z');
 // Existing fixture authority was initialized before the full conservative startup window.
@@ -662,4 +666,152 @@ test('project counter summaries and offline plans state reservation-time scope w
     assert.equal(plan.searches, 0);
     assert.equal(plan.writes, 0);
   }
+});
+
+
+// Synthetic evidence only. No real account identifiers or dashboard receipts.
+const sharedGrant = (patch = {}) => ({ id: randomUUID(), keyId: keyFingerprint(key), source: 'owner_dashboard',
+  scope: 'provider_enforced_free_only', plan: 'search_postpaid', evidenceSha256: 'a'.repeat(64), accountPlanBindingSha256: 'b'.repeat(64),
+  freeOnlyEnabled: true, hardStopConfirmed: true, requestLimit: 950,
+  verifiedAt: '2026-11-08T11:00:00.000Z', expiresAt: '2026-11-09T11:00:00.000Z', protectionEndsAt: '2026-12-01T00:00:00.000Z',
+  accountObservation: { source: 'owner_dashboard', observedAt: '2026-11-08T11:00:00.000Z', requestsUsed: 123, usageCostUsd: '0.62', outOfPocketCostUsd: '0.00', monthlyFreeCreditUsd: '5.00' }, ...patch });
+const sharedFunded = (patch = {}) => ({ ...emptySharedBraveLedger('2026-11-08T11:30:00.000Z'), grants: [sharedGrant(patch)] });
+
+test('shared v2 evidence is strict and cannot masquerade as v1 quota or history', () => {
+  const initial = sharedFunded(), summary = summarizeBraveLedger(initial, clock);
+  assert.equal(summary.status, 'eligible_snapshot_only');
+  assert.equal(summary.historyBeforeRecording, 'unknown');
+  assert.equal(summary.remainingVerifiedRequests, null);
+  assert.equal(summary.providerRemainingRequests, 'unknown');
+  assert.equal(summary.projectRemainingRequests, 950);
+  assert.equal(summary.accountObservation.requestsUsed, 123);
+  assert.equal(summary.reservedRequests, 0);
+  for (const patch of [{ evidenceSha256: '' }, { accountPlanBindingSha256: '' }, { freeOnlyEnabled: false }, { hardStopConfirmed: false },
+    { scope: 'exclusive_repository_key' }, { plan: 'search_prepaid' }, { requestLimit: 951 }, { requestLimit: 0 },
+    { protectionEndsAt: '2026-11-08T11:00:00.000Z' }, { expiresAt: '2027-01-01T00:00:00.000Z' },
+    { usageAtActivation: 0 }, { accountObservation: null }, { accountObservation: { ...initial.grants[0].accountObservation, outOfPocketCostUsd: '0.01' } }]) {
+    assert.throws(() => validateBraveLedger(sharedFunded(patch), clock), /grant_invalid/);
+  }
+  for (const field of Object.keys(initial.grants[0])) {
+    const invalid = structuredClone(initial); delete invalid.grants[0][field];
+    assert.throws(() => validateBraveLedger(invalid, clock), /grant_invalid/);
+  }
+  assert.throws(() => validateBraveLedger({ ...emptyBraveLedger(), grants: initial.grants }, clock), /grant_invalid/);
+  assert.throws(() => validateBraveLedger({ ...initial, grants: [grant()] }, clock), /grant_invalid/);
+  assert.throws(() => validateBraveLedger({ ...initial, historyBeforeRecording: 'zero' }, clock), /invalid_ledger/);
+});
+
+test('shared v2 retains a cross-grant 950 reservation counter and old unknown outcomes', async () => {
+  const initial = sharedFunded();
+  initial.entries = Array.from({ length: 950 }, () => ({ id: randomUUID(), keyId: keyFingerprint(key), grantId: initial.grants[0].id,
+    time: new Date(clock - 1000).toISOString(), consumer: 'oil-news', mode: 'automated', runId: '42', requests: 1, state: 'success', finishedAt: new Date(clock - 1000).toISOString() }));
+  const store = memory(initial), next = sharedGrant({ evidenceSha256: 'c'.repeat(64), verifiedAt: new Date(clock).toISOString(), accountObservation: { ...initial.grants[0].accountObservation, observedAt: new Date(clock).toISOString() } });
+  await activateBraveGrant({ store, grant: next, now: () => clock });
+  const summary = summarizeBraveLedger((await store.read()).ledger, clock);
+  assert.equal(summary.status, 'brave_budget_project_limit');
+  assert.equal(summary.projectRemainingRequests, 0);
+  await assert.rejects(braveGate(store)(context, never), /project_limit/);
+  const pending = sharedFunded(); pending.entries = [{ ...initial.entries[0], grantId: pending.grants[0].id, state: 'reserved', finishedAt: null }];
+  await assert.rejects(activateBraveGrant({ store: memory(pending), grant: next, now: () => clock }), /activation_pending_accounting/);
+  await assert.rejects(braveGate(memory(pending))(context, never), /pending_accounting/);
+  for (const patch of [{ keyId: 'f'.repeat(16) }, { accountPlanBindingSha256: 'f'.repeat(64) }]) {
+    await assert.rejects(activateBraveGrant({ store: memory(sharedFunded()), grant: { ...next, ...patch }, now: () => clock }), /grant_invalid/);
+  }
+});
+
+test('shared v2 CAS, quota rejection, unknown outcomes and dispatch expiry remain fail closed', async () => {
+  const store = memory(sharedFunded({ requestLimit: 1 })); let calls = 0;
+  await Promise.allSettled([1, 2].map(() => braveGate(store)(context, async () => { calls++; return { results: [] }; })));
+  assert.equal(calls, 1);
+  for (const error of [new Error('timeout'), rejectedResponse(503), rejectedResponse(429)]) {
+    const failed = memory(sharedFunded());
+    await assert.rejects(braveGate(failed)(context, async () => { throw error; }), /provider_/);
+    await assert.rejects(braveGate(failed)(context, never), /pending_accounting|provider_quota_unknown/);
+    assert.equal((await failed.read()).ledger.entries.length, 1);
+  }
+  const near = memory(sharedFunded({ expiresAt: new Date(clock + 31000).toISOString() }));
+  await assert.rejects(braveGate(near)(context, never), /grant_expired/);
+  assert.equal((await near.read()).ledger.entries[0].state, 'reserved');
+  const slow = memory(sharedFunded()), write = slow.write; let elapsed = 0;
+  slow.write = async (...args) => { const result = await write(...args); elapsed = 30000; return result; };
+  await assert.rejects(createBraveBudget({ store: slow, now: () => clock, monotonicNow: () => elapsed })(context, never), /dispatch_deadline/);
+  const unknown = memory(sharedFunded()); unknown.setServerTime(NaN);
+  await assert.rejects(braveGate(unknown)(context, never), /clock_unknown/);
+  const uncertain = memory(sharedFunded()), commit = uncertain.write;
+  uncertain.write = async (...args) => { await commit(...args); throw new Error('uncertain'); };
+  await assert.rejects(braveGate(uncertain)(context, never), /uncertain/);
+  assert.equal((await uncertain.read()).ledger.entries[0].state, 'reserved');
+});
+
+test('v2 create-only initialization records trusted start time without importing or resetting v1', async () => {
+  const github = githubMeterFixture(null, 'brave-usage-ledger');
+  const store = createBraveLedger({ token: 'synthetic', fetchImpl: github.fetch, now: github.now, sharedFreeOnly: true, grant: sharedGrant() });
+  await assert.rejects(store.read(), /uninitialized/);
+  assert.equal(await store.initialize(), true);
+  assert.equal(github.ledger().recordingStartedAt, new Date(clock).toISOString());
+  assert.equal(github.ledger().historyBeforeRecording, 'unknown');
+  await assert.rejects(store.initialize(), /initialization_refused/);
+  const legacy = githubMeterFixture(funded(), 'brave-usage-ledger');
+  await assert.rejects(createBraveLedger({ token: 'synthetic', fetchImpl: legacy.fetch, now: legacy.now, sharedFreeOnly: true, grant: sharedGrant() }).initialize(), /initialization_refused/);
+  assert.equal(legacy.ledger().schemaVersion, 'brave-budget-v1');
+});
+
+test('shared v2 actual Macro, Bubble and CEO transports use the same project gate', async t => {
+  const store = memory(sharedFunded()), budget = braveGate(store); let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => { calls++; return Response.json({ results: [] }); });
+  for (const collect of [macro, bubble]) {
+    await collect('brave', [key], { braveBudget: budget });
+  }
+  const api = ceoApi(async () => { calls++; return Response.json({ results: [] }); }, budget, never);
+  await api.braveNewsSearch(new URLSearchParams({ q: 'synthetic' }));
+  const rows = (await store.read()).ledger.entries;
+  assert.ok(calls > 2);
+  assert.equal(rows.length, calls);
+  assert.deepEqual([...new Set(rows.map(row => row.consumer))].sort(), ['bubble-ceo', 'bubble-editorial', 'macro-editorial']);
+});
+
+test('fingerprint mode is offline, reports parsed variable sets only, and refuses ambiguous parsing', () => {
+  const run = patch => spawnSync(process.execPath, ['scripts/review-brave-budget.mjs', '--key-fingerprints'], {
+    encoding: 'utf8', env: { PATH: process.env.PATH, ...patch } });
+  const one = 'SYNTHETIC_ALPHA', two = 'SYNTHETIC_BETA';
+  const result = run({ BRAVE_API_KEYS: `  ${one},${two};${one}\n`, BRAVE_API_KEY: two });
+  assert.equal(result.status, 0, result.stderr);
+  const body = JSON.parse(result.stdout);
+  assert.equal(body.variables.BRAVE_API_KEYS.count, 2);
+  assert.equal(body.variables.BRAVE_API_KEY.count, 1);
+  assert.deepEqual(body.combined.fingerprints, [keyFingerprint(one), keyFingerprint(two)]);
+  assert.equal(body.searches + body.ledgerReads + body.writes, 0);
+  assert.ok(!result.stdout.includes(one) && !result.stdout.includes(two));
+  assert.equal(JSON.parse(run({}).stdout).combined.missing, true);
+  const invalid = run({ BRAVE_API_KEYS: `${one} ${two}` });
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /^brave_budget_key_parsing_ambiguous\s*$/u);
+  assert.ok(!invalid.stderr.includes(one));
+  const workflow = readFileSync('.github/workflows/tavily-budget-status.yml', 'utf8');
+  const isolated = workflow.split('  brave-key-fingerprint:')[1].split('  verify:')[0];
+  assert.match(workflow, /default: tavily-status/u);
+  assert.match(isolated, /github.ref == 'refs\/heads\/main' && inputs.operation == 'brave-key-fingerprint'/u);
+  assert.match(isolated, /ref: \$\{\{ github.sha \}\}/u);
+  assert.match(isolated, /persist-credentials: false/u);
+  assert.deepEqual([...isolated.matchAll(/secrets\.([A-Z_]+)/gu)].map(match => match[1]).sort(), ['BRAVE_API_KEY', 'BRAVE_API_KEYS']);
+  assert.doesNotMatch(isolated, /npm |--verify|--initialize|--activate|TAVILY_|DEEPSEEK_|schedule:/u);
+  assert.match(isolated, /run: node scripts\/review-brave-budget.mjs --key-fingerprints/u);
+});
+
+
+test('shared v2 Oil News transport records each request without account usage becoming project history', async t => {
+  const oldCwd = process.cwd(), directory = mkdtempSync(join(tmpdir(), 'gfrr-shared-brave-oil-'));
+  process.chdir(directory);
+  t.after(() => { process.chdir(oldCwd); rmSync(directory, { recursive: true, force: true }); });
+  const names = ['BRAVE_API_KEYS', 'BRAVE_API_KEY'], old = names.map(name => process.env[name]);
+  t.after(() => names.forEach((name, index) => { if (old[index] === undefined) delete process.env[name]; else process.env[name] = old[index]; }));
+  process.env.BRAVE_API_KEYS = key; process.env.BRAVE_API_KEY = '';
+  const store = memory(sharedFunded()); let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => { calls++; return Response.json({ results: [] }); });
+  await runDiagnosis({ allowNetwork: true, sources: ['brave'], windowDays: 7, maxResults: 5, writeOutput: false, braveBudget: braveGate(store) });
+  const summary = summarizeBraveLedger((await store.read()).ledger, clock);
+  assert.equal(calls, 4);
+  assert.equal(summary.reservedRequests, 4);
+  assert.equal(summary.accountObservation.requestsUsed, 123);
+  assert.equal(summary.byConsumer['oil-news'].success, 4);
 });

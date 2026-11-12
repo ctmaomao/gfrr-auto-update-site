@@ -78,7 +78,7 @@ async function main() {
   console.log(`Bubble Watch weekly editorial projection PASS (sources=${layer.sourceLedger.length}, review=${layer.qualityReview.status}, output=${options.projection})`);
 }
 
-main().catch((error) => {
-  console.error(`Bubble Watch weekly editorial projection failed: ${error.message}`);
+main().catch(() => {
+  console.error('Bubble Watch weekly editorial projection failed: details withheld; see safe diagnostic receipt');
   process.exitCode = 1;
 });
