@@ -178,3 +178,5 @@
 - [ADR-0107: OFR editorial semantic boundaries](0107-ofr-editorial-semantic-boundaries.md) — calibration baseline, strict prior-window ranking and site-only contribution gaps; bounded new-writer checks.
 
 - [ADR-0108: ACLED common-window pair comparison](0108-acled-common-window-comparison.md) — compare current common cutoffs while preserving legacy, pins and strict publication gates.
+
+- [ADR-0110: Monthly CNY10 and CNY balance](0110-monthly-cny-ten-and-balance.md) — explicit v2 genesis, immutable legacy grants, shared exact CNY funding; activation requires separate evidence.

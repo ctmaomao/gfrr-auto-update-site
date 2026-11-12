@@ -3,7 +3,7 @@ import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { POLICY, POLICY_DIGEST, digest, BUDGET_REPOSITORY } from '../../scripts/lib/deepseek-budget.mjs';
+import { LEGACY_POLICY as POLICY, LEGACY_POLICY_DIGEST as POLICY_DIGEST, digest, BUDGET_REPOSITORY } from '../../scripts/lib/deepseek-budget.mjs';
 import { GRANT, VERIFICATION_GRANT, oneShotSelection, prepareOneShotLedger, validateOneShotLedger,
   validateOneShotTransition, createOneShotBudget, verifyOneShotStatus, oneShotRuntimeConfig,
   createOneShotStore } from '../../scripts/lib/deepseek-one-shot.mjs';
@@ -190,4 +190,12 @@ test('new CLI plan is offline, unknown selections fail, and both existing workfl
     assert.ok(source.indexOf('review-deepseek-budget.mjs --require-eligible') < source.indexOf('TAVILY_API_KEYS:'));
     assert.match(source, /--data-only/u);
   }
+});
+
+// Digests captured independently from pre-change main a9f6cab6, not derived
+// from the new monthly policy. Existing grants and their price approvals survive.
+test('both historical one-shot grants retain their exact pre-monthly-v2 digests', () => {
+  assert.equal(POLICY_DIGEST, 'e5d89e09ba8bb0906bf0efeded3d185087809c9bf56aff44e048b083afee7518');
+  assert.equal(digest(GRANT), '9c642871a981247ec449d666dc7b232a032da17ace4bdfe7ba88281f4a97a785');
+  assert.equal(digest(VERIFICATION_GRANT), '6defa22d9fea4ce67fff8e40cc61478d40dca4bf37f884d558a1f6bad80850ba');
 });

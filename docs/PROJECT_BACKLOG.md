@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **两篇编辑月预算 CNY10 / 余额识别**：2026-11-12 owner 要求上限设为10元且 Tavily/Brave 只用免费额度。本地基于 `a9f6cab6` 实施 [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md)：仅新 monthly v2 genesis 使用10元，共用严格 CNY＋可选全零 USD 校验；旧 monthly v1 hold，两个 one-shot grant/price digest 与已耗四次永久预留不变。验收基线包括最多四次全上下文预留、第五次拒绝、全部历史/价格/时钟/事实门槛。代码上线与账户激活分开；历史证据不足不初始化，无真实余额/搜索/provider请求、远端账本或生产数据写入。Brave免费记录修复由独立协调步骤处理，不把本补丁当成完成证明。最终完整检查、独立实际树审阅与串行发布以交付回执为准。
+
 - **Macro 预算暂停重复告警**：2026-11-12 基于 `cbce451b6b15e1ad7bfac433e33ee3137af27a31` 隔离实现 [ADR-0109](ADR/0109-macro-budget-pause-notifications.md)。验收基线为 owner 要求排查每日多次 GitHub Actions 报错：仅将自动 Macro、monthly 双空配置的预网络暂停分类为可审计 expected skip，显式跳过全部费用/数据副作用，并以认证上游执行证据阻止 Pages/EdgeOne 无意义发布。真实 API、账本、配置、价格和生成失败仍红，全部预算/旧消耗/事实门槛不变。完整离线检查、实际 diff 独立审阅、精确 head CI 和后续自然运行验收按交付回执核实；本轮不重跑工作流、不请求 source/provider/余额、不写生产数据。
 
 - **Bubble 来源语义与日期绑定修复**：#538 已合并 `2591d3b4`，落地 [ADR-0106](ADR/0106-bubble-evidence-semantics.md) 与有界当前文案迁移，并保留 #537 新稿隔离及随后自然数据更新。验收基线是 RPO/百分点/发行待发管线/HY 广义代理语义纠错、新时间线报道日绑定；数值、评分、所有原期时钟、provenance 和历史 AI 正文不变，当前 AI 层保持缺席。双站验收仍由协调任务按实际回执核实；不调用 provider、不恢复已耗授权。
@@ -125,7 +127,7 @@ STEO、库存与 PortWatch 摘要已接入；现行 [P50 授权](fixtures/transp
 
 ## 🔄 Session Handoff (最新)
 
-- **最后基线 / 改动**：2026-11-12 main `cbce451b6b15e1ad7bfac433e33ee3137af27a31`；独立工作树实现 Macro monthly 暂停分类、安全回执和 Pages/EdgeOne 上游无副作用判定。旧工作区和生产数据未动。
-- **当前任务**：按 owner“每天都能收到好几条GitHub action报错，请再排查一下”的目标交付 ADR-0109；只修复已确认有意暂停的故障误报，保留真实故障与全部内容/费用保护。
-- **下一步**：完成最终 `check:changed` / `check:all`、实际 diff 独立审阅，再由协调任务推进同范围串行 PR/合并和精确 head CI；自然运行验证告警与发布跳过，不以代码检查代替线上结果。
-- **阻塞 / 运行边界**：monthly 不初始化，一次性名额不恢复，不调用 source/provider/余额，不重跑工作流或写生产数据。GitHub 证据缺失时仍沿用原 checked publication；新稿事实隔离及 ACLED 自然槽验收等待不受本修复改变。
+- **最后基线 / 改动**：2026-11-12 main `a9f6cab687a60ec3b79897fe9025a541740f0dd1`；隔离实现 monthly CNY10 v2 与严格 CNY 余额共用，旧树、生产数据及远端账本未改。
+- **当前任务**：按 owner 10元与搜索免费目标交付 ADR-0110，精确保留两轮 one-shot grant/policy/price digest 和全部已耗历史。
+- **下一步**：最终 `check:changed` 运行完整 `check:all`、独立实际 diff 审阅，再由协调任务串行发布；账户激活另核全部历史与新价格证据。
+- **阻塞 / 运行边界**：未初始化 monthly、未调用余额/搜索/provider、未新增凭证入口。已知 CNY8.644608 永久旧预留不是零历史，不能退款/复用；证据不足继续 hold。Brave grant/记录操作与后续自然运行验收不由此代码检查替代。

@@ -92,12 +92,13 @@ test('valid monthly snapshot is eligible; stale review, depleted budget, corrupt
   const now = Date.now(), day = 86400000;
   const review = { policyDigest: POLICY_DIGEST, verifiedAt: new Date(now - 60000).toISOString(),
     expiresAt: new Date(now + day - 60000).toISOString(), evidenceSha256: 'b'.repeat(64) };
-  const ledger = { schemaVersion: 'deepseek-budget-v1', bootstrap: {
+  const ledger = { schemaVersion: 'deepseek-budget-v2', bootstrap: {
     cutoverAt: new Date(now - 32 * day).toISOString(), evidenceSha256: 'c'.repeat(64),
-    history: 'full-cap-quarantine', currency: 'CNY', historicalDebitMicroCny: 5000000,
+    history: 'full-cap-quarantine', currency: 'CNY', historicalDebitMicroCny: 10000000,
     outstandingRequests: 0, ungatedConsumersDisabled: true }, reviews: [review], entries: [] };
   const cases = [
     { ledger, reason: 'eligible_snapshot_only', status: 0 },
+    { ledger: { ...ledger, schemaVersion: 'deepseek-budget-v1' }, reason: 'deepseek_budget_invalid_ledger', status: 1 },
     { ledger: { ...ledger, schemaVersion: 'broken' }, reason: 'deepseek_budget_invalid_ledger', status: 1 },
     { ledger: { ...ledger, bootstrap: { ...ledger.bootstrap, cutoverAt: new Date(now - 60000).toISOString() } },
       reason: 'deepseek_budget_project_limit', status: 1 },

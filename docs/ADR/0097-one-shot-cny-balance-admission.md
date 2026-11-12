@@ -10,6 +10,8 @@ The owner reports prior CNY billing and only CNY top-ups, requires CNY debit, an
 
 ## Decision
 
+[ADR-0110](0110-monthly-cny-ten-and-balance.md) later extends this identical validator to monthly. Its narrow supersession removes only the monthly exclusion below, not the one-shot grant, history or funding protections.
+
 Only the explicitly selected one-shot gate accepts one unique CNY row plus an optional unique USD row. Availability must be exactly true. Each row must contain exactly currency and the three documented amount fields. All amounts must be nonnegative decimal strings with at most eight fractional digits and at most 32 characters. Exact BigInt arithmetic requires total to equal granted plus topped-up balance. The CNY total must cover the full current worst-case reservation, CNY 2.161152. Every optional USD amount must be exactly zero. Unknown/duplicate currencies, nonzero USD, malformed or inconsistent amounts, insufficient CNY and unavailable accounts all HOLD before reservation and POST, with a fixed error that contains no balances.
 
 Zero USD is a conservative restriction, not an asserted provider debit-priority rule. No FX conversion, USD spending authorization, balance-to-project-spend inference or historical spending reset is introduced. Actual provider account behavior remains outside the snapshot's proof; the scope relies on the owner's reported CNY billing and requires CNY funding without a positive alternative-currency balance.

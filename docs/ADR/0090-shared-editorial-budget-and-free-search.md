@@ -2,6 +2,8 @@
 
 ## Status
 
+Narrow supersession: [ADR-0110](0110-monthly-cny-ten-and-balance.md) sets the new monthly v2 genesis cap to CNY10 and shares the strict CNY-funded balance validator. The CNY5 numbers below record the original v1 decision, not current v2 admission. All other protection, history and free-search requirements remain.
+
 Owner-authorized implementation and publication through push/PR, independent AI review, serial merge and deployment after required checks. The owner also approved the shared CNY 5 monthly DeepSeek cap. Actual provider generation remains conditional on verified budget/account evidence and the runtime gates below; this ADR itself is not proof that activation prerequisites, ledger initialization or production acceptance have completed. This phase has performed no remote configuration, ledger initialization, provider request or production refresh. Actual verification belongs in the [project backlog](../PROJECT_BACKLOG.md).
 
 ## Context and scope
