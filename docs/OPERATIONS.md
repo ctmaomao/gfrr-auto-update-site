@@ -134,7 +134,7 @@ npm run check:macro-risk-editorial
 
 ### Shared editorial budget and free-search admission
 
-[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 是本轮本地预算收紧基线，尚不代表已经初始化、激活或通过线上验收。两篇文章合计 CNY 5/月；所有 key、手动与自动请求共用 `deepseek-usage-ledger`。每次按完整上下文最坏预留 CNY 2.161152，因此零历史负担也至多两次/31天，不能按平时低 token 用量估算可调用次数。成功仍保留全额到完成后31天加152秒；不明失败/取消/崩溃永久保留待核，阻止后续调用，不自动退款、月底重置或删账本。
+[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 的基础保护继续有效；[ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) 将 monthly 新 genesis 契约设为两篇文章合计 CNY 10/月，代码上线不代表已经初始化、激活或通过线上验收。所有 key、手动与自动请求共用 `deepseek-usage-ledger`。每次按完整上下文最坏预留 CNY 2.161152，因此零历史负担也至多四次/31天，不能按平时低 token 用量估算可调用次数。成功仍保留全额到完成后31天加152秒；不明失败/取消/崩溃永久保留待核，阻止后续调用，不自动退款、月底重置或删账本。
 
 先运行零网络、零写入的计划检查：
 
@@ -148,7 +148,7 @@ npm run review:brave-budget -- --plan
 
 激活前必须逐项核验：
 
-1. DeepSeek 所有未受控调用已关闭、旧请求确实全部结束，账本不存在时才能准备一次 genesis，已有历史绝不能覆盖。未知历史按 CNY 5 完整隔离31天加152秒。另一方案是经独立复核的完整31天加余量历史；第三方案是严格的当前账单月全账户/所有key累计上界，不能只取项目key、余额或显示时区。后一方案必须证明实际固定 billing UTC offset、账单月起点、全账户绑定及最多5分钟的真实上报延迟（`lagBoundEvidenceSha256`），在停止/排空请求后再等5分钟加152秒观测，5分钟内且同账单月完成准备；观测、切换和准备各自±76秒仍须属于同一账单月。显示金额额外加 CNY 0.01，例如0.14计为0.15；完整 bootstrap digest 独立批准后才可准备，准备本身不写远端。缺任何证明仍hold。
+1. 新 monthly 必须使用 `deepseek-budget-v2` schema 与 v2 policy/price digest；旧 v1 monthly 一律 hold，不能自动换 schema、覆盖或重建。创建时重新核实远端账本不存在。两个 one-shot 仍精确绑定旧 policy/grant/price digest，已耗名额和永久预留不变。已知四次 one-shot 保守预留合计 CNY8.644608 不是零历史证明；完整历史证据未足即不激活，不用 token 推算退款。DeepSeek 所有未受控调用已关闭、旧请求确实全部结束，账本不存在时才能准备一次 genesis，已有历史绝不能覆盖。未知历史按 CNY 10 完整隔离31天加152秒。另一方案是经独立复核的完整31天加余量历史；第三方案是严格的当前账单月全账户/所有key累计上界，不能只取项目key、余额或显示时区。后一方案必须证明实际固定 billing UTC offset、账单月起点、全账户绑定及最多5分钟的真实上报延迟（`lagBoundEvidenceSha256`），在停止/排空请求后再等5分钟加152秒观测，5分钟内且同账单月完成准备；观测、切换和准备各自±76秒仍须属于同一账单月。显示金额额外加 CNY 0.01，例如0.14计为0.15；完整 bootstrap digest 独立批准后才可准备，准备本身不写远端。缺任何证明仍hold。
 2. 单独核验当前 CNY 费率、1,048,576-token context、8,000输出上限和请求/响应模型。价格review有效期至多24小时，代码提前76秒hold；复核必须追加并单独固定digest，不能改历史。请求别名不锁定底层模型，费率变化或响应不符需停用与新审阅，不能自动换模型/汇率。
 3. DeepSeek 两个步骤分别注入 `DEEPSEEK_BUDGET_GITHUB_TOKEN`、`DEEPSEEK_BUDGET_GENESIS_SHA`、`DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256`；仅付费步骤有 `DEEPSEEK_API_KEY`。`--require-eligible` 在新闻搜索之前只读预检；它不预留费用，真正provider仍先CAS预留再单次调用。不要把凭证移到job/global环境，或用手动成本确认绕过账本。 每次GitHub元数据响应、读体及完成、最终paid派发前都维持受界时钟；长停顿或clockstep即hold。若PATCH已生效但回包/派发前校时失败，零付费发送且保留pending，不清账重试。
 4. Tavily保留按记录的预留时间统计的31天项目预算：950总额/800自动/150手动，另有50账户余量；这不是已独立证实的真实dispatch滚动硬上限。所有 `/usage` 探测必须走 `tavily-meter-ledger`，缺失需另行初始化；10次/10分钟按661秒保守窗口执行，包含30秒dispatch、30秒时钟误差和1秒HTTP精度。初始化时间取GitHub首次404的可信Date，初始化后≤661秒仍hold，整秒时首次安全准入为662秒；缺旧genesis不自动迁移。未知时间/配额/PAYGO/余额即停止，无缓存替代或换key绕过。
@@ -1781,7 +1781,7 @@ The temporary `deepseek-balance-shape-once-20261110.yml` credential-bearing entr
 
 ### CNY-only one-shot balance admission
 
-[ADR-0097](ADR/0097-one-shot-cny-balance-admission.md) narrows the additional grant's balance check to a unique sufficiently funded CNY row and optional all-zero USD row. Nonzero USD, duplicates, unknown currency, malformed/inconsistent amounts, insufficient CNY or unavailable account still HOLD before reservation and POST. A structural diagnosis never proves a zero USD balance; the normal authorized one-shot attempt performs its existing bounded balance read. Do not call the retired diagnostic or make a separate probe. No conversion or USD budget is allowed. The original CNY 4.33 grant, one attempt per article, permanent reservations and price/quality gates remain unchanged; the ordinary monthly gate keeps its original strict single-CNY check and fail-closed initialization requirements.
+[ADR-0097](ADR/0097-one-shot-cny-balance-admission.md) narrows the additional grant's balance check to a unique sufficiently funded CNY row and optional all-zero USD row. Nonzero USD, duplicates, unknown currency, malformed/inconsistent amounts, insufficient CNY or unavailable account still HOLD before reservation and POST. A structural diagnosis never proves a zero USD balance; the normal authorized one-shot attempt performs its existing bounded balance read. Do not call the retired diagnostic or make a separate probe. No conversion or USD budget is allowed. The original CNY 4.33 grant, one attempt per article, permanent reservations and price/quality gates remain unchanged; [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) applies this same exact CNY funding validator to monthly admission, retaining fail-closed initialization and the immutable legacy one-shot grants.
 
 <a id="one-shot-verification-editorial-grant"></a>
 

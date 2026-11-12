@@ -37,7 +37,7 @@
 ### AI 编辑与 Bubble
 
 - 现行编辑层：[Macro Risk](MACRO_RISK_EDITORIAL_DESIGN.md)、[Bubble Weekly Editorial](BUBBLE_WATCH_WEEKLY_EDITORIAL_DESIGN.md)、DATA_CONTRACT / OPERATIONS。只解释、不改 scoring/decision/execution/position。
-- 预算与搜索：[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md)；一次性 grant 记录 [ADR-0094](ADR/0094-editorial-one-shot-additional-grant.md)。状态必须核实实际账本/当前授权，不能由历史说明恢复已耗额度或默认重试。
+- 预算与搜索：[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 与 monthly v2 [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md)；一次性 grant 记录 [ADR-0094](ADR/0094-editorial-one-shot-additional-grant.md)。状态必须核实实际账本/当前授权，不能由历史说明恢复已耗额度或默认重试。
 - 免费完整刷新见 [ADR-0095](ADR/0095-bubble-full-free-refresh.md)；输入证据/编辑诊断的后续决策查 [ADR 索引](ADR/README.md)，本页不重复维护并行任务进度。
 - Bubble Core-23 / Shadow-4、资格与 revision 见 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md)及其明确后续修订；[ARR 来源](ARR_EPOCH_SOURCE_REVIEW.md)不因诊断通过自动晋升。
 - 旧 `EXTERNAL_AI_*` 阶段文档保留原输入/输出设计和审计证据，旧面板/旧生产刷新已退役；先读[统一状态](LEGACY_DOCUMENT_STATUS.md#external-ai)，再按兼容/手工工具需要定位。旧 no-go 不覆盖现行独立编辑链，旧工具也不继承新链授权。

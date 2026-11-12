@@ -3,7 +3,7 @@ import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { POLICY, POLICY_DIGEST, digest, BUDGET_REPOSITORY } from '../../scripts/lib/deepseek-budget.mjs';
+import { LEGACY_POLICY as POLICY, LEGACY_POLICY_DIGEST as POLICY_DIGEST, digest, BUDGET_REPOSITORY } from '../../scripts/lib/deepseek-budget.mjs';
 import { GRANT, prepareOneShotLedger, validateOneShotLedger, validateOneShotTransition,
   createOneShotBudget, verifyOneShotStatus, oneShotRuntimeConfig, createOneShotStore, validateOneShotBalance, readOneShotBalance } from '../../scripts/lib/deepseek-one-shot.mjs';
 const NOW = Date.parse('2026-11-09T21:45:00.000Z');
@@ -237,7 +237,7 @@ test('ambiguous, insufficient, nonzero USD and malformed one-shot balances hold 
     assert.equal((await store.read()).ledger.entries.length, 0);
   }
 });
-test('one-shot reader reuses bounded fixed GET and monthly reader remains strict', async () => {
+test('one-shot and monthly readers share bounded fixed GET and strict CNY funding', async () => {
   const { readDeepSeekBalance } = await import('../../scripts/lib/deepseek-budget.mjs');
   let reads = 0;
   const fetchImpl = async (url, init) => {
@@ -247,5 +247,5 @@ test('one-shot reader reuses bounded fixed GET and monthly reader remains strict
       { headers: { date: new Date().toUTCString() } });
   };
   await readOneShotBalance('FAKE_KEY', fetchImpl); assert.equal(reads, 1);
-  await assert.rejects(readDeepSeekBalance('FAKE_KEY', fetchImpl), /currency_unknown/); assert.equal(reads, 2);
+  assert.deepEqual(await readDeepSeekBalance('FAKE_KEY', fetchImpl), multiBalance(currencyRow('CNY', '5'), currencyRow('USD'))); assert.equal(reads, 2);
 });

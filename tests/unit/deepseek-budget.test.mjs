@@ -13,14 +13,14 @@ const key = 'PRIVATE_FAKE_DEEPSEEK_KEY';
 const review = (at = NOW) => ({ policyDigest: POLICY_DIGEST, verifiedAt: new Date(at).toISOString(),
   expiresAt: new Date(at + DAY).toISOString(), evidenceSha256: 'b'.repeat(64) });
 const bootstrap = () => ({ cutoverAt: new Date(NOW - 32 * DAY).toISOString(), evidenceSha256: 'a'.repeat(64),
-  history: 'full-cap-quarantine', currency: 'CNY', historicalDebitMicroCny: 5_000_000,
+  history: 'full-cap-quarantine', currency: 'CNY', historicalDebitMicroCny: 10_000_000,
   outstandingRequests: 0, ungatedConsumersDisabled: true });
 const fresh = () => prepareBootstrapLedger({ bootstrap: bootstrap(), review: review() }, NOW);
 const payload = () => ({ model: POLICY.model, temperature: 0.2, max_tokens: 8000, stream: false,
   thinking: { type: 'disabled' }, response_format: { type: 'json_object' },
   messages: [{ role: 'system', content: 'PRIVATE_SYSTEM_PROMPT' }, { role: 'user', content: 'PRIVATE_USER_PROMPT' }] });
 const context = changes => ({ key, payload: payload(), consumer: 'macro-editorial', mode: 'automated', runId: '100', ...changes });
-const balance = () => ({ is_available: true, balance_infos: [{ currency: 'CNY', total_balance: '1.5', granted_balance: '0.0', topped_up_balance: '1.5' }] });
+const balance = () => ({ is_available: true, balance_infos: [{ currency: 'CNY', total_balance: '10.0', granted_balance: '0.0', topped_up_balance: '10.0' }] });
 const response = () => ({ id: randomUUID(), object: 'chat.completion', created: NOW / 1000, model: POLICY.responseModel, usage: {
   prompt_tokens: 100, completion_tokens: 200, total_tokens: 300, prompt_cache_hit_tokens: 20, prompt_cache_miss_tokens: 80
 }, choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: '{}' } }] });
@@ -41,19 +41,19 @@ function settlement(reservation, changes = {}) {
     currency: 'CNY', billedMicroCny: 2000, billingEvidenceSha256: 'c'.repeat(64), requestIdDigest: 'd'.repeat(64), model: POLICY.responseModel, ...changes };
 }
 
-test('fixed integer cap and full-context reserve are CNY5 and CNY2.161152, with no float estimates', () => {
-  assert.equal(POLICY.capMicroCny, 5_000_000);
+test('fixed integer cap and full-context reserve are CNY10 and CNY2.161152, with no float estimates', () => {
+  assert.equal(POLICY.capMicroCny, 10_000_000);
   assert.equal(POLICY.reserveMicroCny, POLICY.contextTokens * 2 + POLICY.maxOutputTokens * 8);
   assert.equal(POLICY.reserveMicroCny, 2_161_152);
   assert.equal(Object.isFrozen(POLICY), true);
-  assert.throws(() => { POLICY.capMicroCny = 10_000_000; });
+  assert.throws(() => { POLICY.capMicroCny = 20_000_000; });
 });
 
 test('bootstrap is explicit, quarantines full cap for31 days and never infers history from balance', async () => {
   const b = { ...bootstrap(), cutoverAt: new Date(NOW).toISOString() };
   const ledger = prepareBootstrapLedger({ bootstrap: b, review: review() }, NOW);
-  assert.equal(summarizeLedger(ledger, NOW).reservedMicroCny, 5_000_000);
-  assert.equal(summarizeLedger(ledger, NOW + 31 * DAY).reservedMicroCny, 5_000_000);
+  assert.equal(summarizeLedger(ledger, NOW).reservedMicroCny, 10_000_000);
+  assert.equal(summarizeLedger(ledger, NOW + 31 * DAY).reservedMicroCny, 10_000_000);
   assert.equal(summarizeLedger(ledger, NOW + 31 * DAY + RETIREMENT_MARGIN_MS + 1).reservedMicroCny, 0);
   let reads = 0;
   await assert.rejects(gate(memory(ledger), { readBalance: async () => { reads++; return balance(); } })(context(), () => assert.fail('paid send')), /project_limit/);
@@ -83,26 +83,27 @@ test('exact serialized immutable request is reserved before its sole provider ca
   assert.ok(!JSON.stringify([ledger, reports]).includes('PRIVATE_'));
 });
 
-test('aggregate two-consumer, both-mode, rotating-key cap allows two attempts, never three', async () => {
+test('aggregate two-consumer, both-mode, rotating-key cap allows four attempts, never five', async () => {
   const store = memory(); let calls = 0;
-  for (const ctx of [context(), context({ consumer: 'bubble-editorial', mode: 'manual', key: 'rotated-key' })]) {
+  for (const ctx of [context(), context(), context(), context({ consumer: 'bubble-editorial', mode: 'manual', key: 'rotated-key' })]) {
     await gate(store)(ctx, async () => { calls++; return response(); });
   }
   const status = await verifyBudgetStatus({ store, approvedReviewDigest: digest(review()), now: () => NOW });
-  assert.equal(status.reservedMicroCny, 4_322_304); assert.equal(status.remainingMicroCny, 677_696);
+  assert.equal(status.reservedMicroCny, 8_644_608); assert.equal(status.remainingMicroCny, 1_355_392);
   assert.equal(status.byConsumer['bubble-editorial'], 2_161_152);
   await assert.rejects(gate(store)(context({ key: 'another-key' }), () => { calls++; }), /project_limit/);
-  assert.equal(calls, 2);
+  assert.equal(calls, 4);
 });
 
 test('concurrent independent processes racing for last allowance have one confirmed CAS winner', async () => {
-  const store = memory(); await gate(store)(context(), async () => response());
+  const store = memory();
+  for (let i = 0; i < 3; i++) await gate(store)(context(), async () => response());
   let calls = 0;
   const outcomes = await Promise.allSettled(['macro-editorial', 'bubble-editorial'].map(consumer =>
     gate(store)(context({ consumer }), async () => { calls++; return response(); })));
   assert.equal(calls, 1); assert.equal(outcomes.filter(r => r.status === 'fulfilled').length, 1);
-  assert.equal((await store.read()).ledger.entries.filter(r => r.kind === 'reserve').length, 2);
-  assert.equal(summarizeLedger((await store.read()).ledger, NOW).reservedMicroCny, 4_322_304);
+  assert.equal((await store.read()).ledger.entries.filter(r => r.kind === 'reserve').length, 4);
+  assert.equal(summarizeLedger((await store.read()).ledger, NOW).reservedMicroCny, 8_644_608);
 });
 
 test('ambiguous reserve persisted then threw: no paid send, no retry and permanent liability', async () => {
@@ -226,6 +227,7 @@ test('renewing reviewed price evidence never resets prior reservations or quaran
   assert.throws(() => appendPriceReview(previous, nextReview, 'f'.repeat(64), NOW + DAY), /price_review_required/);
   const newer = memory(renewed);
   await gate(newer, { approvedReviewDigest: digest(nextReview), now: () => NOW + DAY })(context(), async () => ({ ...response(), created: (NOW + DAY) / 1000 }));
+  for (let i = 0; i < 2; i++) await gate(newer, { approvedReviewDigest: digest(nextReview), now: () => NOW + DAY })(context(), async () => ({ ...response(), created: (NOW + DAY) / 1000 }));
   await assert.rejects(gate(newer, { approvedReviewDigest: digest(nextReview), now: () => NOW + DAY })(context(), () => assert.fail('paid send')), /project_limit/);
 });
 
@@ -277,7 +279,8 @@ test('independently reviewed complete history migration uses exact proved spend,
   assert.throws(() => prepareBootstrapLedger({ bootstrap: b, review: review() }, NOW), /bootstrap_unproven/);
   const ledger = prepareBootstrapLedger({ bootstrap: b, review: review(), approvedRecordDigest: digest(b) }, NOW);
   assert.equal(summarizeLedger(ledger, NOW).reservedMicroCny, 2_000_000);
-  const store = memory(ledger); await gate(store)(context(), async () => response());
+  const store = memory(ledger);
+  for (let i = 0; i < 3; i++) await gate(store)(context(), async () => response());
   await assert.rejects(gate(store)(context(), () => assert.fail('paid send')), /project_limit/);
   for (const change of [{ historicalDebitMicroCny: 0 }, { coveredFrom: new Date(NOW - DAY).toISOString() },
     { scope: 'current-key-only' }, { outstandingRequests: 1 }, { historicalEntries: [] }]) {
@@ -480,14 +483,14 @@ function monthlyBootstrap() {
 }
 const prepareMonthly = (b, at = NOW) => prepareBootstrapLedger({ bootstrap: b, review: review(at), approvedRecordDigest: digest(b) }, at);
 
-test('opposite accepted production clocks cannot admit a third full attempt before January month end', async () => {
+test('opposite accepted production clocks cannot admit a fifth full attempt before January month end', async () => {
   let actualNow = Date.parse('2027-01-01T00:00:30.000Z');
   const firstLocal = actualNow - 60_000;
   const firstReview = review(firstLocal);
   const initial = prepareBootstrapLedger({ bootstrap: { ...bootstrap(), cutoverAt: new Date(firstLocal - 32 * DAY).toISOString() },
     review: firstReview }, firstLocal);
   const remote = github(initial, { authorityNow: () => actualNow }); let paid = 0;
-  for (const consumer of ['macro-editorial', 'bubble-editorial']) {
+  for (const consumer of ['macro-editorial', 'bubble-editorial', 'macro-editorial', 'bubble-editorial']) {
     await gate(remote.store({ now: () => firstLocal }), { now: () => firstLocal, approvedReviewDigest: digest(firstReview) })(
       context({ consumer }), async () => { paid++; return { ...response(), created: actualNow / 1000 }; });
   }
@@ -498,8 +501,8 @@ test('opposite accepted production clocks cannot admit a third full attempt befo
   assert.equal(await store.write(previous, appendPriceReview(previous.ledger, newReview, digest(newReview), laterLocal)), true);
   await assert.rejects(gate(remote.store({ now: () => laterLocal }), { now: () => laterLocal,
     approvedReviewDigest: digest(newReview) })(context(), async () => { paid++; return response(); }), /project_limit/);
-  assert.equal(paid, 2);
-  assert.equal(summarizeLedger((await store.read()).ledger, laterLocal).reservedMicroCny, 4_322_304);
+  assert.equal(paid, 4);
+  assert.equal(summarizeLedger((await store.read()).ledger, laterLocal).reservedMicroCny, 8_644_608);
 });
 
 test('bootstrap, completed reservations and settlements all retain through the full crossclock margin', async () => {
@@ -524,19 +527,19 @@ test('price review also holds conservatively before expiry under a slow local cl
   await assert.rejects(gate(memory(), { now: () => at })(context(), () => assert.fail('paid send')), /price_review_required/);
 });
 
-test('proved current-month all-key aggregate rounds CNY0.14 upward to0.15 and permits at most two new attempts', async () => {
+test('proved current-month all-key aggregate rounds CNY0.14 upward to0.15 and permits at most four new attempts', async () => {
   const b = monthlyBootstrap();
   for (const approvedRecordDigest of [undefined, '0'.repeat(64)]) {
     assert.throws(() => prepareBootstrapLedger({ bootstrap: b, review: review(), approvedRecordDigest }, NOW), /bootstrap_unproven/);
   }
   const ledger = prepareMonthly(b), store = memory(ledger); let paid = 0;
   assert.equal(summarizeLedger(ledger, NOW).reservedMicroCny, 150_000);
-  for (const consumer of ['macro-editorial', 'bubble-editorial']) {
+  for (const consumer of ['macro-editorial', 'bubble-editorial', 'macro-editorial', 'bubble-editorial']) {
     await gate(store)(context({ consumer }), async () => { paid++; return response(); });
   }
-  assert.equal(summarizeLedger((await store.read()).ledger, NOW).reservedMicroCny, 4_472_304);
+  assert.equal(summarizeLedger((await store.read()).ledger, NOW).reservedMicroCny, 8_794_608);
   await assert.rejects(gate(store)(context(), () => { paid++; }), /project_limit/);
-  assert.equal(paid, 2); assert.deepEqual((await store.read()).ledger.bootstrap, b);
+  assert.equal(paid, 4); assert.deepEqual((await store.read()).ledger.bootstrap, b);
 });
 
 test('zero displayed monthly spend still reserves a full precision quantum and needs proved history', () => {
@@ -770,4 +773,43 @@ test('metadata duration uses a monotonic deadline even if an abort timer has not
     } });
   await assert.rejects(gate(store)(context(), () => { paid++; }), /transport_unknown/);
   assert.equal(paid, 0); assert.equal(remote.getHead(), remote.genesis);
+});
+
+// ADR-0110: schema/policy changes are explicit, never a silent v1 cap increase.
+test('monthly v2 refuses a v1 ledger and old price approval without writes or provider reads', async () => {
+  const { LEGACY_POLICY_DIGEST } = await import('../../scripts/lib/deepseek-budget.mjs');
+  const legacy = { ...fresh(), schemaVersion: 'deepseek-budget-v1',
+    bootstrap: { ...bootstrap(), historicalDebitMicroCny: 5_000_000 },
+    reviews: [{ ...review(), policyDigest: LEGACY_POLICY_DIGEST }] };
+  const store = memory(legacy);
+  await assert.rejects(gate(store, { readBalance: () => assert.fail('balance read') })(context(), () => assert.fail('paid send')), /invalid_ledger/);
+  assert.equal(store.writes, 0);
+  assert.deepEqual((await store.read()).ledger, legacy);
+  assert.throws(() => prepareBootstrapLedger({ bootstrap: bootstrap(), review: legacy.reviews[0] }, NOW), /price_policy_unknown/);
+  assert.equal(fresh().schemaVersion, 'deepseek-budget-v2');
+  assert.notEqual(POLICY_DIGEST, LEGACY_POLICY_DIGEST);
+});
+
+test('monthly uses exact CNY funding and accepts only an optional all-zero USD row before reservation', async () => {
+  const row = (currency, total = '0', granted = '0', topped = total) => ({ currency,
+    total_balance: total, granted_balance: granted, topped_up_balance: topped });
+  const value = (...rows) => ({ is_available: true, balance_infos: rows });
+  for (const rows of [[row('CNY', '2.161152')], [row('CNY', '2.16115200'), row('USD')],
+    [row('USD', '0.00000000'), row('CNY', '2.16115201', '0.00000001', '2.161152')]]) {
+    const store = memory(); let paid = 0;
+    await gate(store, { readBalance: async () => value(...rows) })(context(), async () => { paid++; return response(); });
+    assert.equal(paid, 1); assert.equal(store.writes, 2);
+  }
+  const cny = row('CNY', '5'), usd = row('USD');
+  const invalid = [value(row('CNY', '2.16115199')), value(cny, row('USD', '0.00000001')),
+    value(cny, row('USD', '0', '1', '0')), value(row('CNY', '5', '1', '5')), value(cny, cny),
+    value(cny, usd, usd), value(usd), value(cny, row('EUR')), value({ ...cny, extra: true }),
+    ...[null, 1, '-1', '+1', '01', '1e2', 'NaN', 'Infinity', '0.000000001', '1'.repeat(33)].flatMap(amount =>
+      ['total_balance', 'granted_balance', 'topped_up_balance'].flatMap(field =>
+        [value({ ...cny, [field]: amount }), value(cny, { ...usd, [field]: amount })]))];
+  for (const balanceValue of invalid) {
+    const store = memory();
+    await assert.rejects(gate(store, { readBalance: async () => balanceValue })(context(), () => assert.fail('paid send')), /currency_unknown/);
+    assert.equal(store.writes, 0);
+  }
 });

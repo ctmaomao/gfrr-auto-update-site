@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import {
-  BUDGET_REPOSITORY, CONSUMERS, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
+  BUDGET_REPOSITORY, CONSUMERS, LEGACY_POLICY as POLICY, LEGACY_POLICY_DIGEST as POLICY_DIGEST, RETIREMENT_MARGIN_MS,
   digest, createGithubLedgerStore, prepareRequest, readDeepSeekBalance,
-  validateReview, activeReview, validateTokenUsage, receipt
+  validateReview, validateBalance, activeReview, validateTokenUsage, receipt
 } from './deepseek-budget.mjs';
 
 // Separate additional authorization. This is NOT a historical-spend assertion,
@@ -49,7 +49,7 @@ export function validateOneShotLedger(ledger, now = Date.now(), selection = GRAN
   let previousTime = Date.parse(ledger.grant.authorizedAt);
   const reviews = new Set();
   for (const review of ledger.reviews) {
-    validateReview(review, now);
+    validateReview(review, now, POLICY_DIGEST);
     if (Date.parse(review.verifiedAt) < previousTime || reviews.has(digest(review))) fail('price_policy_unknown');
     previousTime = Date.parse(review.verifiedAt); reviews.add(digest(review));
   }
@@ -134,30 +134,8 @@ export async function verifyOneShotStatus({ store, consumer, approvedGrantDigest
     grant: policy, consumer, reservedMicroCny, remainingMicroCny: policy.capMicroCny - reservedMicroCny, admission: 'eligible_snapshot_only' };
 }
 
-// Owner-reported CNY billing permits only CNY-funded one-shot requests.
-// Optional USD metadata is accepted only when every USD amount is exactly zero.
-// No FX, spending-history inference, balance logging or monthly-policy change.
-export function validateOneShotBalance(json) {
-  if (json?.is_available !== true || !Array.isArray(json.balance_infos)
-    || json.balance_infos.length < 1 || json.balance_infos.length > 2) fail('currency_unknown');
-  const rows = new Map();
-  for (const row of json.balance_infos) {
-    if (!exact(row, 'currency,total_balance,granted_balance,topped_up_balance')
-      || !['CNY', 'USD'].includes(row.currency) || rows.has(row.currency)) fail('currency_unknown');
-    const amounts = ['total_balance', 'granted_balance', 'topped_up_balance'].map(field => {
-      const value = row[field];
-      if (typeof value !== 'string' || value.length > 32
-        || !/^(0|[1-9]\d*)(\.\d{1,8})?$/u.test(value)) fail('currency_unknown');
-      const [whole, fraction = ''] = value.split('.');
-      return BigInt(whole) * 100_000_000n + BigInt(fraction.padEnd(8, '0'));
-    });
-    if (amounts[0] !== amounts[1] + amounts[2]
-      || (row.currency === 'USD' && amounts.some(value => value !== 0n))) fail('currency_unknown');
-    rows.set(row.currency, amounts);
-  }
-  if (!rows.has('CNY') || rows.get('CNY')[0] < BigInt(POLICY.reserveMicroCny) * 100n) fail('currency_unknown');
-  return { currency: 'CNY' };
-}
+// Both gates share the exact CNY-funded balance contract (ADR-0110).
+export const validateOneShotBalance = validateBalance;
 export const readOneShotBalance = (key, fetchImpl = fetch) => readDeepSeekBalance(key, fetchImpl, validateOneShotBalance);
 
 export function createOneShotBudget({ store, approvedGrantDigest, approvedReviewDigest, selection = GRANT.id, readBalance = readOneShotBalance,
