@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **运行代码等价精简**：owner 要求持续精简代码、Markdown 与 Actions，优先降低维护复杂度而非减少文件数。2026-11-12 基于已合入 Brave #544 的 main `df5e8dcc`，先把 Daily/realtime 完全相同的 FRED CSV/API 解析收口至 `scripts/lib/fred-observations.mjs`，原调用点、异常、行序及数值行为不变；697 组原实现差分一致，评分实现指纹未变。验收要求既有纯函数套件新增回归、完整检查、独立实际 diff 审阅与最新 main 串行集成。未运行取数或生成命令，不改预算、来源资格、评分、生产数据或工作流；其它重复片段须分别证明语义等价，不能据文件名删除历史保护工具。
+
 - **Brave免费额度记录修复**：2026-11-12 owner要求修复记录且Brave/Tavily只用免费额度。基于main `a3feda3f` 实施 [ADR-0111](ADR/0111-brave-shared-free-only.md) 的独立v2共享免费硬限类型、诚实的账户观察/项目计数与原status workflow隔离指纹核验入口。验收边界：v1、付费预算、生产数据、四consumer、CAS/时钟/未知结果hold均不变，历史不重置；真实证据与指纹私密核验、独立实际树审阅、串行发布和create-only激活仍由协调任务执行，代码完成不代表已恢复调用。
 
 - **两篇编辑月预算 CNY10 / 余额识别**：2026-11-12 owner 要求上限设为10元且 Tavily/Brave 只用免费额度。本地基于 `a9f6cab6` 实施 [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md)：仅新 monthly v2 genesis 使用10元，共用严格 CNY＋可选全零 USD 校验；旧 monthly v1 hold，两个 one-shot grant/price digest 与已耗四次永久预留不变。验收基线包括最多四次全上下文预留、第五次拒绝、全部历史/价格/时钟/事实门槛。代码上线与账户激活分开；历史证据不足不初始化，无真实余额/搜索/provider请求、远端账本或生产数据写入。Brave免费记录修复由独立协调步骤处理，不把本补丁当成完成证明。最终完整检查、独立实际树审阅与串行发布以交付回执为准。

@@ -1,3 +1,4 @@
+import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -88,37 +89,6 @@ const sourceSpecs = {
     // gold-api is the sole source (owner-confirmed: no new gold source added).
   }
 };
-
-function parseFredCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const out = [];
-  for (const line of lines.slice(1)) {
-    const [date, raw] = line.split(',');
-    if (!date || raw === undefined || raw === '.' || raw.trim() === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    out.push({ date, value });
-  }
-  return out;
-}
-
-function parseFredApiObservations(text) {
-  const json = JSON.parse(text);
-  const observations = json?.observations;
-  if (!Array.isArray(observations)) {
-    throw new Error('FRED API returned invalid observations payload');
-  }
-  const out = [];
-  for (const item of observations) {
-    const date = item?.date;
-    const raw = item?.value;
-    if (!date || raw === undefined || raw === '.' || String(raw).trim() === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    out.push({ date, value });
-  }
-  return out;
-}
 
 function buildFredApiUrl(seriesId, observationStart) {
   const params = new URLSearchParams({
