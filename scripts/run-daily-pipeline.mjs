@@ -3490,7 +3490,7 @@ async function resolveCfetsRmb(prevCfetsRmb) {
 
 
 
-const CHINA_OMO_OPERATION_RE = /开展了?(?<amount>\d+(?:\.\d+)?)(?<unit>万亿元|亿元|万亿|亿)\s*(?<termDays>\d+)\s*天(?:期)?(?<operationType>逆回购|正回购)操作/u;
+const CHINA_OMO_OPERATION_RE = /开展了?(?<amount>\d+(?:\.\d+)?)(?<unit>万亿元|亿元|万亿|亿)\s*(?:(?<termDays>\d+)\s*天(?:期)?|(?<overnight>隔夜))(?<operationType>逆回购|正回购)操作/u;
 const CHINA_OMO_RATE_RE = /(?:操作利率|中标利率)\s*(?:为)?\s*(?<ratePct>\d+(?:\.\d+)?)%/u;
 const CHINA_OMO_INTEXT_DATE_RE = /(?:(?<year>\d{4})年)?(?<month>\d{1,2})月(?<day>\d{1,2})日[^。]*开展了?\d/u;
 const CHINA_OMO_OPERATION_TYPES = new Set(['逆回购', '正回购', '无操作']);
@@ -3539,7 +3539,8 @@ function parseChinaOmoText(plainInput, link) {
   if (!CHINA_OMO_OPERATION_TYPES.has(operationType) || operationType === '无操作') {
     throw new Error('eastmoney:omo unsupported operation type');
   }
-  const termDays = Number(opMatch.groups.termDays);
+  // Overnight is an explicit one-day tenor, not a missing numeric term.
+  const termDays = opMatch.groups.overnight ? 1 : Number(opMatch.groups.termDays);
   if (!Number.isInteger(termDays) || termDays <= 0 || termDays > 365) throw new Error('eastmoney:omo invalid term');
 
   const unit = opMatch.groups.unit;
