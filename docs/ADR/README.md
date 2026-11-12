@@ -182,3 +182,5 @@
 - [ADR-0108: ACLED common-window pair comparison](0108-acled-common-window-comparison.md) — compare current common cutoffs while preserving legacy, pins and strict publication gates.
 
 - [ADR-0110: Monthly CNY10 and CNY balance](0110-monthly-cny-ten-and-balance.md) — explicit v2 genesis, immutable legacy grants, shared exact CNY funding; activation requires separate evidence.
+
+- [ADR-0112: Transitional Bubble receipt-based one-call grant](0112-bubble-receipt-one-call.md) — immutable historical evidence, one Bubble attempt and offline key identification; no recurring activation.

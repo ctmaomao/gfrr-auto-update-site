@@ -12,10 +12,18 @@ const consumers={macro:['macro-risk-editorial','macro-risk-editorial-refresh.yml
 const privateText='PRIVATE_REJECTED_BODY https://private.example/private-id';
 const make=(consumer)=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'editorial-private-artifact-test-'));const directory=path.join(root,'manual-artifacts',consumers[consumer][0]);fs.mkdirSync(directory,{recursive:true});return {root,directory};};
 
-test('both real workflows upload one exact receipt only, across failure, cancellation and successful save paths',()=>{
+test('both ordinary workflows retain one exact receipt; selected successful Bubble grant has one narrow bundle exception',()=>{
   for(const [consumer,[prefix,file]] of Object.entries(consumers)) {
     const workflow=fs.readFileSync(`.github/workflows/${file}`,'utf8');
-    const uploads=workflow.split('\n      - name:').filter(step=>step.includes('uses: actions/upload-artifact@'));
+    const allUploads=workflow.split('\n      - name:').filter(step=>step.includes('uses: actions/upload-artifact@'));
+    const candidateUploads=allUploads.filter(step=>step.startsWith(' Upload receipt-grant review candidate\n'));
+    assert.equal(candidateUploads.length,consumer==='bubble'?1:0);
+    if(consumer==='bubble') {
+      assert.ok(candidateUploads[0].includes("if: inputs.budget_selection == 'editorial-bubble-receipt-20261112-v1' && steps.receipt_candidate.outcome == 'success'"));
+      assert.ok(candidateUploads[0].includes('path: manual-artifacts/bubble-watch-weekly-editorial/receipt-review-candidate.json\n'));
+      assert.ok(candidateUploads[0].includes('retention-days: 3'));
+    }
+    const uploads=allUploads.filter(step=>!step.startsWith(' Upload receipt-grant review candidate\n'));
     assert.equal(uploads.length,1,consumer);
     assert.ok(uploads[0].includes("if: always() && steps.diagnostic_receipt.outcome == 'success'"));
     assert.match(uploads[0],new RegExp(`path: manual-artifacts/${prefix}/safe-diagnostic-receipt\\.json\\n`));

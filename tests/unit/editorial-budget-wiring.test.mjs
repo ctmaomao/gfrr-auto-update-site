@@ -130,7 +130,17 @@ test('each article workflow checks the shared cap before discovery and scopes bu
       assert.match(preflight, new RegExp(`^          ${name}:`, 'mu'));
       assert.match(paid, new RegExp(`^          ${name}:`, 'mu'));
     }
-    assert.equal((source.match(/DEEPSEEK_API_KEY:/gu) || []).length, 1);
+    // ADR-0112: only the successful receipt-grant packager may additionally
+    // read the same key offline to reject secrets before retaining evidence.
+    const packagers = blocks.filter(block => block.includes('node scripts/prepare-bubble-receipt-candidate.mjs'));
+    assert.equal(packagers.length, name === 'bubble-watch-weekly-editorial-refresh' ? 1 : 0);
+    for (const packager of packagers) {
+      assert.ok(packager.includes("if: inputs.budget_selection == 'editorial-bubble-receipt-20261112-v1' && steps.editorial_provider.outcome == 'success' && steps.editorial_review.outcome == 'success'"));
+      assert.ok(packager.includes('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'));
+      assert.doesNotMatch(packager, /DEEPSEEK_BUDGET_GITHUB_TOKEN|run:.*(?:curl|fetch)|--allow-network/u);
+    }
+    const ordinarySource = packagers.reduce((remaining, block) => remaining.replace(block, ''), source);
+    assert.equal((ordinarySource.match(/DEEPSEEK_API_KEY:/gu) || []).length, 1);
     assert.ok(paid.includes('DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'));
     assert.match(paid, /^        if: .*editorial_ready == 'true'/mu);
     assert.ok(source.includes('cancel-in-progress: false'));
