@@ -1265,3 +1265,9 @@ schedule, or scoring input. Regression: `tests/unit/china-omo-overnight.test.mjs
 ### Bubble SPY/RSP observation alignment (2026-11-12)
 
 The existing Yahoo six-month price-return spread now uses identical dated endpoints and publishes the last common observation date, not retrieval day. At least 100 common sessions, a 150–200 day span and a maximum seven-day endpoint age are required. The unadjusted-close formula and percentage-point thresholds remain unchanged; invalid or incomplete data uses the existing dated fallback. No source or request is added. See [the source audit](BUBBLE_SOURCE_FRESHNESS_AUDIT_2026_11_12.md).
+
+### Bubble metric-specific date and missing-value repair (2026-11-12)
+
+CAPE uses the existing Multpl page-linked `https://www.multpl.com/shiller-pe/atom` feed, binding current value to its unique dated entry and full update clock. This replaces one HTML request, not an extra source/vendor or call. StockAnalysis SPY holdings uses `Top ... Holdings Updated`; NVDA forward PE uses the explicitly labelled financial-statistics update. Generic quote or last-checked dates cannot supply the metric date. Seven-day freshness applies and failures retain the original dated snapshot. Undated Slickcharts cannot substitute a current holdings observation.
+
+Bubble FRED JSON/CSV reject missing/null/blank/non-numeric values rather than coercing them to zero, preserve actual zero, reject invalid/future dates and conflicting duplicates, and sort dated rows newest first. HY OAS uses its actual FRED date and a seven-day age limit. No score threshold, provider permission or refresh schedule changes. See [audit](BUBBLE_SOURCE_FRESHNESS_AUDIT_2026_11_12.md).

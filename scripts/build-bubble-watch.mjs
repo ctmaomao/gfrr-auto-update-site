@@ -1,3 +1,4 @@
+import { parseCapeAtom, parseStockAnalysisMetricDate, parseBubbleFredRows, requireDailyObservation } from './bubble-watch/source-observation-inputs.mjs';
 import { alignedEtfSpread } from './bubble-watch/aligned-etf-spread.mjs';
 import { computeEvidenceSimilarity } from './bubble-watch/evidence-similarity.mjs';
 import { syncUpstreamObservation, buildEnterpriseObservationProjection } from './bubble-watch/source-observation.mjs';
@@ -159,7 +160,7 @@ const CATEGORY_ORDER = [
 // 27 项指标静态定义。axis 用于 Stage × Trigger 第二层聚合。
 const INDICATOR_DEFS = [
   { id: 'cape', axis: 'stage', category: 'valuation', name_en: 'Shiller CAPE', name_zh: 'CAPE 周期调整 PE', threshold_text: '>35 红 / 25-35 黄 / <25 绿', source_name: 'multpl.com / GuruFocus', mode: 'auto' },
-  { id: 'top5_weight', axis: 'stage', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
+  { id: 'top5_weight', axis: 'stage', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'StockAnalysis SPY holdings', mode: 'auto' },
   { id: 'nvda_fpe', axis: 'stage', category: 'valuation', name_en: 'NVDA Forward P/E', name_zh: 'NVDA 远期 PE', threshold_text: '>40 红 / 30-40 黄 / <30 绿', source_name: 'GuruFocus / StockAnalysis', mode: 'auto' },
   { id: 'private_secondary_marks', axis: 'trigger', category: 'valuation', name_en: 'AI Private Secondary Marks', name_zh: 'AI 私募二级市场标价', threshold_text: '折价/下跌=红 / 溢价收窄+卖压=黄 / 溢价稳定或扩大=绿', source_name: 'Forge Global / Caplight / Hiive', mode: 'curated' },
   { id: 'hyperscaler_capex_yoy', axis: 'stage', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
@@ -381,9 +382,7 @@ async function fredObservations(seriesId, limit) {
         limit: String(limit)
       });
       const json = await fetchWithTimeout(`https://api.stlouisfed.org/fred/series/observations?${params}`, { asJson: true });
-      const rows = (json.observations || [])
-        .filter((o) => o.value !== '.' && Number.isFinite(Number(o.value)))
-        .map((o) => ({ date: o.date, value: Number(o.value) }));
+      const rows = parseBubbleFredRows(json.observations, isoDate());
       if (!rows.length) throw new Error(`FRED ${seriesId} API 无有效观测`);
       return rows; // 倒序:rows[0] 最新
     } catch (error) {
@@ -408,15 +407,10 @@ async function fredGraphCsvObservations(seriesId, limit) {
     headers: { 'User-Agent': UA, Accept: 'text/csv,*/*' },
     timeoutMs: 20000
   });
-  const rows = csv.trim().split(/\r?\n/u)
-    .slice(1)
-    .map((line) => {
-      const [date, value] = line.split(',');
-      return { date: String(date || '').trim(), value: Number(value) };
-    })
-    .filter((row) => /^\d{4}-\d{2}-\d{2}$/u.test(row.date) && Number.isFinite(row.value))
-    .slice(-limit)
-    .reverse();
+  const rows = parseBubbleFredRows(csv.trim().split(/\r?\n/u).slice(1).map(line => {
+    const [date, value] = line.split(',');
+    return { date: String(date || '').trim(), value };
+  }), isoDate()).slice(0, limit);
   if (!rows.length) throw new Error(`FRED ${seriesId} 无有效观测`);
   return rows; // 倒序:rows[0] 最新
 }
@@ -786,16 +780,11 @@ function trailing4qYoy(quarters) {
 }
 
 async function fetchMultplCape() {
-  const html = await fetchWithTimeout('https://www.multpl.com/shiller-pe', { headers: { 'User-Agent': BROWSER_UA } });
-  const text = stripTags(html);
-  const m = text.match(/Current Shiller PE Ratio[^0-9]{0,40}([0-9]{1,3}\.[0-9]{1,2})/iu);
-  if (!m) throw new Error('multpl CAPE 解析失败');
-  const v = Number(m[1]);
-  if (!(v > 5 && v < 100)) throw new Error(`multpl CAPE 值越界: ${v}`);
-  return v;
+  const xml = await fetchWithTimeout('https://www.multpl.com/shiller-pe/atom', { headers: { 'User-Agent': BROWSER_UA } });
+  return parseCapeAtom(xml, isoDate());
 }
 
-// S&P 500 权重表:主源 stockanalysis SPY holdings,备源 slickcharts
+// SPY holdings: only a metric-dated table may replace the existing dated snapshot.
 function parseHoldingsRows(html, symbolRe) {
   const rows = [];
   const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gu;
@@ -813,21 +802,13 @@ function parseHoldingsRows(html, symbolRe) {
 }
 
 async function fetchSp500Holdings() {
-  let rows = [];
-  try {
-    const html = await fetchWithTimeout('https://stockanalysis.com/etf/spy/holdings/', { headers: { 'User-Agent': BROWSER_UA } });
-    rows = parseHoldingsRows(html, /href="\/stocks\/([a-z][a-z0-9.\-]{0,9})\/"/u);
-  } catch (error) {
-    console.warn(`[bubble-watch] stockanalysis SPY holdings 失败: ${error.message}`);
-  }
-  if (rows.length < 20) {
-    const html = await fetchWithTimeout('https://www.slickcharts.com/sp500', { headers: { 'User-Agent': BROWSER_UA, Accept: 'text/html' } });
-    rows = parseHoldingsRows(html, /\/symbol\/([A-Z][A-Z0-9.\-]{0,9})/u);
-  }
-  if (rows.length < 20) throw new Error(`S&P 权重表解析行数不足 (${rows.length})`);
+  const html = await fetchWithTimeout('https://stockanalysis.com/etf/spy/holdings/', { headers: { 'User-Agent': BROWSER_UA } });
+  const observationDate = parseStockAnalysisMetricDate(html, 'holdings', isoDate());
+  const rows = parseHoldingsRows(html, /href="\/stocks\/([a-z][a-z0-9.\-]{0,9})\/"/u);
+  if (rows.length < 20) throw new Error(`SPY 权重表解析行数不足 (${rows.length})`);
   const top5 = rows.slice(0, 5).reduce((a, r) => a + r.weight, 0);
   if (!(top5 > 10 && top5 < 60)) throw new Error(`top5 权重越界: ${top5}`);
-  return rows;
+  return { rows, observationDate };
 }
 
 // 全市场成份股名单(Wikipedia List of S&P 500 companies,~503 只)
@@ -1105,7 +1086,7 @@ async function fetchNvdaForwardPe() {
     const m = stripTags(html).match(re) || html.match(re);
     if (m) {
       const v = Number(m[1]);
-      if (v > 3 && v < 200) return v;
+      if (v > 3 && v < 200) return { value: v, observationDate: parseStockAnalysisMetricDate(html, 'statistics', isoDate()) };
     }
   }
   throw new Error('stockanalysis NVDA forward PE 解析失败');
@@ -1325,18 +1306,20 @@ function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote, failures = []) {
 
 const autoBuilders = {
   async cape() {
-    const v = await retry(fetchMultplCape, 'multpl CAPE');
+    const observation = await retry(fetchMultplCape, 'multpl CAPE');
+    const v = observation.value;
     const status = classifyNumeric(v, 35, 25);
     const distancePct = (((44.19 - v) / 44.19) * 100).toFixed(0);
     return {
       status,
       value_display: v.toFixed(1),
       note: `multpl.com 实时抓取 CAPE = ${v.toFixed(2)},距 2000 年互联网泡沫峰值 44.19 约 ${distancePct}%;earnings yield ≈ ${(100 / v).toFixed(1)}%。阈值:>35 红 / 25-35 黄 / <25 绿`,
-      detail: { cape: v }
+      as_of: observation.observationDate,
+      detail: { cape: v, observationDate: observation.observationDate, sourceTimestamp: observation.sourceTimestamp }
     };
   },
   async top5_weight(ctx) {
-    const rows = await retry(fetchSp500Holdings, 'S&P 500 holdings');
+    const { rows, observationDate } = await retry(fetchSp500Holdings, 'S&P 500 holdings');
     ctx.holdingsRows = rows;
     const top5 = rows.slice(0, 5);
     const sum = top5.reduce((a, r) => a + r.weight, 0);
@@ -1345,17 +1328,19 @@ const autoBuilders = {
       status,
       value_display: `≈${sum.toFixed(1)}%`,
       note: `SPY 持仓表实时抓取:前 5 大权重 ${top5.map((r) => r.symbol).join(' / ')} 合计 ≈${sum.toFixed(1)}%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿`,
-      detail: { top5: top5.map((r) => ({ symbol: r.symbol, weight: r.weight })), sum }
+      as_of: observationDate,
+      detail: { observationDate, top5: top5.map((r) => ({ symbol: r.symbol, weight: r.weight })), sum }
     };
   },
   async nvda_fpe() {
-    const v = await retry(fetchNvdaForwardPe, 'stockanalysis NVDA fPE');
+    const { value: v, observationDate } = await retry(fetchNvdaForwardPe, 'stockanalysis NVDA fPE');
     const status = classifyNumeric(v, 40, 30);
     return {
       status,
       value_display: `≈${v.toFixed(0)}x`,
       note: `StockAnalysis 实时抓取 NVDA 远期 PE ≈ ${v.toFixed(1)}x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿`,
-      detail: { forwardPe: v }
+      as_of: observationDate,
+      detail: { forwardPe: v, observationDate }
     };
   },
   async hyperscaler_capex_yoy() {
@@ -1632,11 +1617,13 @@ const autoBuilders = {
   },
   async hy_oas() {
     const rows = await retry(() => fredObservations('BAMLH0A0HYM2', 10), 'FRED HY OAS');
+    requireDailyObservation(rows[0].date, isoDate(), 'hy_oas');
     const bps = Math.round(rows[0].value * 100);
     const status = bps > 500 ? 'red' : bps >= 350 ? 'yellow' : 'green';
     return {
       status,
       value_display: `${bps} bps`,
+      as_of: rows[0].date,
       note: broadHyNote(bps, rows[0].date),
       detail: { bps, date: rows[0].date }
     };
