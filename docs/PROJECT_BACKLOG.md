@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **Bubble 候选发布准备**：固定 receipt grant 的纯离线准备器仅重放精确已审候选，不调用 provider、不写生产或远端。协调者负责认证原 run/artifact/ledger 与独立事实批准，按当前 main/源证据及原 writer 时效检查生成单文件 CAS 提案；冲突 HOLD。验收与信任边界见 [发布准备契约](BUBBLE_REVIEWED_PUBLICATION.md)，待独立实际补丁审阅与完整验证；不能据候选成功声称已上线。
+
 - **DeepSeek key 私密核验与 Bubble 单次准备**：2026-11-12 owner 要求确认网站实际使用的 key，并仅调用一次 Bubble、事实复核后上线，月上限10元且搜索只用免费额度。基于 `dfbdd250` 新增离线 key SHA-256 与导出遮罩投影 SHA-256 诊断，独立 main-only 手动入口不访问 provider、不读写账本、不输出密钥片段。新单次预算准备与诊断分开，旧四个名额和预留不变；新 grant 仅保留通过验证的短期来源证据候选，跳过 writer/commit，待独立事实复核和原最终 writer 门槛后才能发布；长期预算应归属网站 key，账户合计只能作为本次临时历史上界。当前仍待独立实际 diff 审阅、远端诊断和运行证据，不宣称 key 已匹配或已生成文章。
 
 - **语法检查有界并行（PR #520）**：继续 owner 持续精简目标，2026-11-12 串行整合 main `70cac20c`，保留 #534 文档清理、Brave #544、FRED #545 及全部自然数据。仅把 `check-syntax.mjs` 的逐文件 Node 解析改为最多 4 个并发，扫描范围、排序、1 MiB 输出上限、全文件检查和失败退出不变；11 项回归与[性能证据](SYNTAX_CHECK_PERFORMANCE_2026_11_09.md)同步复验。当前基线完整检查、单元 coverage 与独立实际文件审阅已通过，下一步是精确 head CI 与串行发布；不修改工作流、预算、数据、checker assertion 或发布门槛，不把本地加速写成账单节省。
