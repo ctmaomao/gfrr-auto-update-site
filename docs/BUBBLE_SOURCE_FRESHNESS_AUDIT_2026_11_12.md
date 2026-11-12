@@ -12,7 +12,7 @@ The repair uses common dated sessions and identical endpoints, retains the exist
 
 | Source/indicator | Current behavior / limitation | Next useful step |
 |---|---|---|
-| CAPE / SPY holdings / NVDA forward PE | Existing public HTML scrapers attach retrieval-day `as_of`; source-date extraction is not established | Bind metric-specific dates before claiming observation freshness; do not use generic page modification date |
+| CAPE / SPY holdings / NVDA forward PE | Follow-up repair binds CAPE Atom entry clock, holdings update date and financial-statistics update date | Require dated observations within 7 days; no generic page checked-date substitution |
 | SEC hyperscaler capex / cash flow | Complete quarter qualification and 120-day age checks; fiscal calendars retained | Keep quarterly cadence and period semantics; daily polling cannot make disclosures realtime |
 | Barchart breadth / Yahoo fallback | Dated source requirement; full universe fallback aligns session and coverage | Retain guards; full-universe requests are expensive and should not be made frequent blindly |
 | Credit spreads | FRED daily observations; full builder refresh is weekly, separate credit-only tool is manual | Daily close is not live intraday credit pricing |
@@ -31,3 +31,11 @@ The full Bubble refresh is weekly (Monday 05:30 UTC). Tuesday–Friday source au
 ## Boundaries
 
 No production JSON, frozen research, score formula, budget, source rights or publication gate changed. Source availability and true observation freshness must remain distinct. The audit does not equate a new package generation date with fresh constituent observations.
+
+## Source-date follow-up
+
+CAPE switches the single existing Multpl page request to the page-linked Atom feed. The feed binds the same value to a full entry timestamp and dated entry identity. SPY holdings and NVDA forward PE retain their existing StockAnalysis endpoints, but use the metric-specific update date. All three require a real observation within seven days and retain the original dated fallback on failure. The undated Slickcharts substitution is retired from this collector: its availability does not establish a current holdings observation. No new vendor, paid call or extra request is added.
+
+The Bubble FRED API/CSV parsers now reject null, blank, boolean, object and nonnumeric values without converting them to zero; genuine zero remains valid. Dates must be real, nonfuture ISO days, conflicting duplicates fail, and valid observations are ordered newest first. HY OAS publishes its actual FRED observation date and requires it within seven days; its formula and thresholds are unchanged. These fixes do not increase the weekly production cadence.
+
+Read-only live probes on November 12 returned HTTP200 and passed the new parsers: Multpl Atom CAPE40.24 with source clock `2026-11-11T16:00:00-05:00`; StockAnalysis holdings metric update November10 (distinct from quote November11 and last-checked November12); NVDA financial-statistics update November12. These probes establish current parser compatibility, not a permanent availability guarantee. No full source body is republished.
