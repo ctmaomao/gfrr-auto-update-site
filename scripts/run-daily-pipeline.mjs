@@ -6748,14 +6748,21 @@ function buildMissingEmployment() {
   };
 }
 
+function consumerRetailObservationIso(value) {
+  const day = parseObservationDate(value, isoNow);
+  return day ? `${day}T00:00:00Z` : null;
+}
+
 function buildMissingConsumerRetail() {
   return {
     cartsNominal: null,
     cartsNominal4wAverage: null,
     cartsNominalYoY: null,
+    cartsNominalUpdatedAt: null,
     cartsReal: null,
     cartsReal4wAverage: null,
     cartsRealYoY: null,
+    cartsRealUpdatedAt: null,
     retailSegments: CONSUMER_RETAIL_SEGMENT_SERIES.map((series) => ({
       key: series.key,
       seriesId: series.id,
@@ -8298,9 +8305,11 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
     cartsNominal,
     cartsNominal4wAverage,
     cartsNominalYoY,
+    cartsNominalUpdatedAt: consumerRetailObservationIso(prevConsumerRetail.cartsNominalUpdatedAt),
     cartsReal,
     cartsReal4wAverage,
     cartsRealYoY,
+    cartsRealUpdatedAt: consumerRetailObservationIso(prevConsumerRetail.cartsRealUpdatedAt),
     retailSegments,
     segmentPositiveCount: Number.isFinite(prevConsumerRetail.segmentPositiveCount)
       ? prevConsumerRetail.segmentPositiveCount
@@ -9190,13 +9199,13 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     cartsNominal = fredMillionsToBillions(latestValue(rows));
     cartsNominal4wAverage = fredMillionsToBillions(averageRecentValues(rows, 4));
     cartsNominalYoY = calculateWeeklyYoY(rows);
-    cartsNominalUpdatedAt = latestDateIso(rows);
+    cartsNominalUpdatedAt = consumerRetailObservationIso(latestDateIso(rows));
     status.carts = 'live';
   } else if (Number.isFinite(fallback.cartsNominal)) {
     cartsNominal = fallback.cartsNominal;
     cartsNominal4wAverage = fallback.cartsNominal4wAverage;
     cartsNominalYoY = fallback.cartsNominalYoY;
-    cartsNominalUpdatedAt = fallback.updatedAt;
+    cartsNominalUpdatedAt = fallback.cartsNominalUpdatedAt;
     status.carts = 'fallback';
   }
 
@@ -9205,13 +9214,13 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     cartsReal = fredMillionsToBillions(latestValue(rows));
     cartsReal4wAverage = fredMillionsToBillions(averageRecentValues(rows, 4));
     cartsRealYoY = calculateWeeklyYoY(rows);
-    cartsRealUpdatedAt = latestDateIso(rows);
+    cartsRealUpdatedAt = consumerRetailObservationIso(latestDateIso(rows));
     status.cartsr = 'live';
   } else if (Number.isFinite(fallback.cartsReal)) {
     cartsReal = fallback.cartsReal;
     cartsReal4wAverage = fallback.cartsReal4wAverage;
     cartsRealYoY = fallback.cartsRealYoY;
-    cartsRealUpdatedAt = fallback.updatedAt;
+    cartsRealUpdatedAt = fallback.cartsRealUpdatedAt;
     status.cartsr = 'fallback';
   }
 
@@ -9272,9 +9281,11 @@ async function resolveConsumerRetail(prevConsumerRetail) {
     cartsNominal: Number.isFinite(cartsNominal) ? cartsNominal : null,
     cartsNominal4wAverage: Number.isFinite(cartsNominal4wAverage) ? cartsNominal4wAverage : null,
     cartsNominalYoY: Number.isFinite(cartsNominalYoY) ? cartsNominalYoY : null,
+    cartsNominalUpdatedAt,
     cartsReal: Number.isFinite(cartsReal) ? cartsReal : null,
     cartsReal4wAverage: Number.isFinite(cartsReal4wAverage) ? cartsReal4wAverage : null,
     cartsRealYoY: Number.isFinite(cartsRealYoY) ? cartsRealYoY : null,
+    cartsRealUpdatedAt,
     retailSegments,
     segmentPositiveCount: Number.isFinite(segmentPositiveCount) ? segmentPositiveCount : null,
     segmentSeriesCount: Number.isFinite(segmentSeriesCount) ? segmentSeriesCount : null,
