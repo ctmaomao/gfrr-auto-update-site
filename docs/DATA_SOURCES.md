@@ -1251,3 +1251,13 @@ SPY/RSP notes identify the leader from the signed return difference while disclo
 ### Bubble metric meaning corrections (2026-11-11)
 
 [ADR-0106](ADR/0106-bubble-evidence-semantics.md) clarifies `cloud_rpo_growth` as RPO/remaining performance obligations and backlog, not deferred or recognized revenue. Company scope, definitions and fiscal periods differ. SPY minus RSP six-month percentage returns is a percentage-point difference; the existing numbers and absolute-magnitude score thresholds stay fixed. The registered IPO company count is a six-month deduplicated issuance/pending pipeline; SEC confirmation separately scans 365 days, and S-1/A is not completed pricing/listing. Broad HY OAS is not an AI-specific bond basket or direct capex-risk-pricing evidence. No collection or source-rights change. New Bubble timeline dates denote explicitly attributed publication dates or cited structured observation dates, never inferred occurrence/retrieval dates.
+
+### China OMO overnight tenor compatibility (2026-11-12)
+
+EastMoney aggregated PBOC reports may state `隔夜逆回购` instead of a numeric
+`1天期逆回购`. The OMO parser maps only the explicit `隔夜` tenor to one day;
+it still requires the gross operation amount, a plausible operation rate, and
+the existing seven-day publication freshness check. Missing tenor/rate,
+unsupported instruments, future or stale publication dates remain rejected.
+This is parser compatibility for the existing source, not a new feed, intraday
+schedule, or scoring input. Regression: `tests/unit/china-omo-overnight.test.mjs`.
