@@ -1,0 +1,54 @@
+name: Refresh Bubble Credit Spreads
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Tuesday-Saturday after the preceding US session. FRED observations may lag.
+    - cron: '20 6 * * 2-6'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gfrr-main-writer-main
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  refresh:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Sync latest main before refresh
+        run: git pull --ff-only origin main
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci
+      - name: Refresh only independent credit history (three public requests, no keys)
+        run: node scripts/refresh-bubble-credit-spreads.mjs --write
+      - name: Validate all production contracts before commit
+        run: npm run check:all
+      - name: Commit only the verified Bubble display payload
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bubble-watch.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: refresh Bubble credit display history"
+            git push origin HEAD:main
+          fi
+      - name: Request the existing guarded custom-domain publisher
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish-edgeone-release.yml --repo "$GITHUB_REPOSITORY" --ref main

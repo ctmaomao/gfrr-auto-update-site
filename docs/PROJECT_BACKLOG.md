@@ -1,5 +1,7 @@
 # Project Backlog · GFRR Auto-Update Site
 
+- **Bubble 独立信用历史日更**：新增受控免费采集计划，周二至周六 06:20 UTC 只刷新既有 HY/CCC/IG 展示字段，每轮三次公开 FRED 请求；不改周度评分、证据日期或 AI 正文。源失败沿用带原日期历史，保护网和串行发布不变。合并/首次自然运行/双站更新须按实际回执区分，不宣称整体市场实时。[范围与后续设计](BUBBLE_CREDIT_DAILY_REFRESH_2026_11_12.md)。
+
 本页只保留当前工作、未解依赖与维护入口。已完成任务的过程记录移入[2026-09 至 2026-11 原文快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)；更早记录见[历史目录](MILESTONE_INDEX.md)。旧“待合并/下一步”不覆盖下方已核实的 main 状态，合并也不自动证明生产验收完成。
 
 ## Section 1 · 维护状态
