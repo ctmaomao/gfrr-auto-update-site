@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { RECEIPT_GRANT, prepareReceiptLedger, verifyReceiptStatus, receiptRuntimeConfig } from './lib/deepseek-receipt-grant.mjs';
 import { GRANT, oneShotSelection, prepareOneShotLedger, verifyOneShotStatus, oneShotRuntimeConfig } from './lib/deepseek-one-shot.mjs';
 import { createGithubLedger, POLICY, POLICY_DIGEST, prepareBootstrapLedger, verifyBudgetStatus } from './lib/deepseek-budget.mjs';
 
@@ -14,6 +15,12 @@ function reportPreflight(disposition, reason) {
 // review, reads a provider key, calls DeepSeek, or sends a generation request.
 async function main() {
   const args = process.argv.slice(2);
+  if (args.length === 4 && args[0] === '--prepare-receipt-grant' && args[2] === '--approved-grant-digest') {
+    const prepared = JSON.parse(fs.readFileSync(args[1], 'utf8'));
+    const ledger = prepareReceiptLedger({ ...prepared, approvedGrantDigest: args[3] });
+    console.log(JSON.stringify({ operation: 'offline_receipt_grant_plan', providerCalls: 0, writes: 0, ledger }, null, 2));
+    return;
+  }
   if ([1, 2].includes(args.length) && args[0] === '--one-shot-plan') {
     const { grant, branch } = oneShotSelection(args[1] || GRANT.id);
     console.log(JSON.stringify({ operation: 'offline_plan', providerCalls: 0, writes: 0,
@@ -60,6 +67,12 @@ async function main() {
     && env.DEEPSEEK_BUDGET_GITHUB_TOKEN
     && !env.DEEPSEEK_BUDGET_GENESIS_SHA && !env.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256) {
     reportPreflight('expected_skip', 'deepseek_budget_uninitialized');
+    return;
+  }
+  if (env.DEEPSEEK_BUDGET_SELECTION === RECEIPT_GRANT.id) {
+    const result = await verifyReceiptStatus(receiptRuntimeConfig());
+    console.log(JSON.stringify(result, null, 2));
+    reportPreflight('eligible', result.admission);
     return;
   }
   if (process.env.DEEPSEEK_BUDGET_SELECTION && process.env.DEEPSEEK_BUDGET_SELECTION !== 'monthly') {

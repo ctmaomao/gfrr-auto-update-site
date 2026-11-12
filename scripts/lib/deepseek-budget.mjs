@@ -540,6 +540,10 @@ export function createDeepSeekBudget({ store, readBalance = readDeepSeekBalance,
 let runtime;
 export async function withDeepSeekBudget({ key, payload, consumer }, request) {
   const env = process.env;
+  if (env.DEEPSEEK_BUDGET_SELECTION === 'editorial-bubble-receipt-20261112-v1') {
+    const { withReceiptBudget } = await import('./deepseek-receipt-grant.mjs');
+    return withReceiptBudget({ key, payload, consumer }, request);
+  }
   if (env.DEEPSEEK_BUDGET_SELECTION && env.DEEPSEEK_BUDGET_SELECTION !== 'monthly') {
     const { withOneShotBudget } = await import('./deepseek-one-shot.mjs');
     return withOneShotBudget({ key, payload, consumer }, request);

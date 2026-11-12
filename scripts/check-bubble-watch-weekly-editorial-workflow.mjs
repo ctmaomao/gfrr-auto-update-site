@@ -104,7 +104,28 @@ for (const marker of [
 const providerInvocationCount = workflow.split('run:bubble-watch-weekly-editorial-deepseek -- --allow-network').length - 1;
 if (providerInvocationCount !== 1) errors.push(`${WORKFLOW} must invoke DeepSeek runner exactly once; got ${providerInvocationCount}`);
 
-const receiptUploads = workflow.split('\n      - name:').filter(step => step.includes('uses: actions/upload-artifact@'));
+const allUploads = workflow.split('\n      - name:').filter(step => step.includes('uses: actions/upload-artifact@'));
+// ADR exception is a distinct, successful selected-grant bundle. Ordinary and
+// failed paths must still have exactly the original receipt-only upload.
+const receiptUploads = allUploads.filter(step => !step.startsWith(' Upload receipt-grant review candidate\n'));
+const candidateUploads = allUploads.filter(step => step.startsWith(' Upload receipt-grant review candidate\n'));
+if (allUploads.length !== 2 || candidateUploads.length !== 1) errors.push('receipt grant permits exactly one additional candidate upload');
+const candidate = candidateUploads[0] || '';
+for (const marker of [
+  "if: inputs.budget_selection == 'editorial-bubble-receipt-20261112-v1' && steps.receipt_candidate.outcome == 'success'",
+  'path: manual-artifacts/bubble-watch-weekly-editorial/receipt-review-candidate.json\n',
+  'if-no-files-found: error', 'retention-days: 3'
+]) requireMarker(candidate, marker, 'successful receipt candidate upload');
+if (/path: \||\*\*|production-projection|deepseek-output|editorial-input|news-discovery/u.test(candidate)) errors.push('candidate upload must use only the sanitized exact bundle path');
+for (const stepName of ['Write weekly editorial field', 'Protected path assertion', 'Commit refreshed weekly editorial']) {
+  requireMarker(workflow, `- name: ${stepName}\n        if: steps.build_input.outputs.editorial_ready == 'true' && inputs.budget_selection != 'editorial-bubble-receipt-20261112-v1'`, 'candidate-only writer exclusion');
+}
+const packaging = workflow.split('- name: Prepare receipt-grant review candidate\n')[1]?.split('\n      - name:')[0] || '';
+for (const marker of [
+  "if: inputs.budget_selection == 'editorial-bubble-receipt-20261112-v1' && steps.editorial_provider.outcome == 'success' && steps.editorial_review.outcome == 'success'",
+  'git diff --quiet --exit-code', 'git diff --cached --quiet --exit-code',
+  'node scripts/prepare-bubble-receipt-candidate.mjs', 'DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}'
+]) requireMarker(packaging, marker, 'successful receipt candidate preparation');
 if (!(receiptUploads.length === 1 && receiptUploads[0].includes("if: always() && steps.diagnostic_receipt.outcome == 'success'") && /path: manual-artifacts\/[a-z-]+\/safe-diagnostic-receipt\.json\n/u.test(receiptUploads[0]) && !/path: \||deepseek-output|deepseek-failure|editorial-input|news-discovery|production-projection|\*\*/u.test(receiptUploads[0]))) errors.push('ADR-0103 permits only the exact safe receipt artifact path');
 
 if (errors.length > 0) {
