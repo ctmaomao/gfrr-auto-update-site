@@ -5,13 +5,40 @@ env:
 
 on:
   workflow_dispatch:
+    inputs:
+      operation:
+        description: Read Tavily ledger or inspect Brave key fingerprints offline
+        type: choice
+        default: tavily-status
+        options:
+          - tavily-status
+          - brave-key-fingerprint
 
 permissions:
   contents: read
 
 jobs:
+  brave-key-fingerprint:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.operation == 'brave-key-fingerprint' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Inspect Brave key fingerprints without network or ledger access
+        env:
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+        run: node scripts/review-brave-budget.mjs --key-fingerprints
+
   verify:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && inputs.operation == 'tavily-status' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

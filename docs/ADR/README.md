@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0111 — Brave shared free-only admission](0111-brave-shared-free-only.md): distinct evidence-bound v2 grants, unknown pre-recording history and isolated key-binding diagnostics; local implementation, independent review and activation pending.
+
 - [ADR-0109 — Macro budget pause notifications](0109-macro-budget-pause-notifications.md): explicitly classify only automatic dual-empty monthly configuration as a no-side-effect skip; preserve real failures and verify upstream job evidence before suppressing Pages/EdgeOne publication. Proposed, independent review and runtime acceptance pending.
 
 - [ADR-0106 — Bubble evidence semantics](0106-bubble-evidence-semantics.md): correct RPO/pipeline/proxy labels and percentage-point units without score changes; bind new timeline rows to explicit report/observation dates. Local implementation, independent final-tree review and coordinated integration pending.

@@ -12,10 +12,66 @@ const fail = (suffix, providerRequestAttempted = false) => {
 };
 export const emptyBraveLedger = () => ({ schemaVersion: 'brave-budget-v1', grants: [], entries: [], hold: null });
 
+// v2 records project admissions under a reviewed provider-enforced free-only
+// plan. It does not turn an account snapshot into an exclusive quota grant.
+export const emptySharedBraveLedger = recordingStartedAt => ({
+  schemaVersion: 'brave-budget-v2', recordingStartedAt, historyBeforeRecording: 'unknown', grants: [], entries: [], hold: null
+});
+const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
+  && Object.keys(value).sort().join(',') === keys.split(',').sort().join(',');
+const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/u.test(value);
+const usd = value => typeof value === 'string' && /^(0|[1-9][0-9]{0,8})\.[0-9]{2}$/u.test(value);
+function validateSharedBraveLedger(ledger, now) {
+  if (!Number.isFinite(now) || !exactKeys(ledger, 'schemaVersion,recordingStartedAt,historyBeforeRecording,grants,entries,hold')
+    || !isTime(ledger.recordingStartedAt) || Date.parse(ledger.recordingStartedAt) > now + SEARCH_CLOCK_POLICY.maxSkewMs
+    || ledger.historyBeforeRecording !== 'unknown' || !Array.isArray(ledger.grants) || !Array.isArray(ledger.entries)) fail('invalid_ledger');
+  const grants = new Map();
+  let prior;
+  for (const grant of ledger.grants) {
+    if (!exactKeys(grant, 'id,keyId,scope,source,evidenceSha256,accountPlanBindingSha256,verifiedAt,expiresAt,protectionEndsAt,requestLimit,freeOnlyEnabled,hardStopConfirmed,plan,accountObservation')
+      || !/^[a-f0-9-]{36}$/u.test(grant.id || '') || grants.has(grant.id) || !/^[a-f0-9]{16}$/u.test(grant.keyId || '')
+      || grant.scope !== 'provider_enforced_free_only' || grant.source !== 'owner_dashboard' || grant.plan !== 'search_postpaid'
+      || grant.freeOnlyEnabled !== true || grant.hardStopConfirmed !== true || !digest(grant.evidenceSha256) || !digest(grant.accountPlanBindingSha256)
+      || !isTime(grant.verifiedAt) || !isTime(grant.expiresAt) || !isTime(grant.protectionEndsAt) || Date.parse(grant.verifiedAt) > now
+      || Date.parse(grant.expiresAt) <= Date.parse(grant.verifiedAt) || Date.parse(grant.expiresAt) > Date.parse(grant.protectionEndsAt)
+      || Date.parse(grant.expiresAt) - Date.parse(grant.verifiedAt) > BRAVE_POLICY.maxGrantDays * 86400000
+      || !isCount(grant.requestLimit) || grant.requestLimit < 1 || grant.requestLimit > BRAVE_POLICY.maxGrantRequests
+      || (prior && (Date.parse(grant.verifiedAt) <= Date.parse(prior.verifiedAt) || grant.keyId !== prior.keyId
+        || grant.accountPlanBindingSha256 !== prior.accountPlanBindingSha256))) fail('grant_invalid');
+    const observation = grant.accountObservation;
+    if (!exactKeys(observation, 'source,observedAt,requestsUsed,usageCostUsd,outOfPocketCostUsd,monthlyFreeCreditUsd')
+      || observation.source !== 'owner_dashboard' || !isTime(observation.observedAt) || observation.observedAt !== grant.verifiedAt
+      || !isCount(observation.requestsUsed) || !usd(observation.usageCostUsd) || !usd(observation.monthlyFreeCreditUsd)
+      || Number(observation.monthlyFreeCreditUsd) <= 0 || Number(observation.usageCostUsd) >= Number(observation.monthlyFreeCreditUsd)
+      || observation.outOfPocketCostUsd !== '0.00') fail('grant_invalid');
+    grants.set(grant.id, grant); prior = grant;
+  }
+  const ids = new Set();
+  for (const row of ledger.entries) {
+    const grant = grants.get(row?.grantId);
+    if (!exactKeys(row, 'consumer,finishedAt,grantId,id,keyId,mode,requests,runId,state,time')
+      || !/^[a-f0-9-]{36}$/u.test(row.id || '') || ids.has(row.id) || !isTime(row.time) || Date.parse(row.time) > now
+      || Date.parse(row.time) < Date.parse(ledger.recordingStartedAt)
+      || !grant || Date.parse(row.time) < Date.parse(grant.verifiedAt) || Date.parse(row.time) >= Date.parse(grant.expiresAt)
+      || row.keyId !== grant.keyId || row.requests !== 1 || !CONSUMERS.includes(row.consumer)
+      || !['manual','automated'].includes(row.mode) || !/^(local|[0-9]+)$/u.test(row.runId || '')
+      || !['reserved','success','failed'].includes(row.state)
+      || (row.state === 'reserved' ? row.finishedAt !== null : !isTime(row.finishedAt)
+        || Date.parse(row.finishedAt) < Date.parse(row.time) || Date.parse(row.finishedAt) > now)) fail('invalid_ledger');
+    ids.add(row.id);
+  }
+  if (ledger.hold !== null && (!exactKeys(ledger.hold, 'code,reservationId')
+    || ledger.hold.code !== 'brave_budget_provider_quota_unknown' || !ids.has(ledger.hold.reservationId))) fail('invalid_ledger');
+  return ledger;
+}
+export function validateBraveLedger(ledger, now) {
+  return ledger?.schemaVersion === 'brave-budget-v2' ? validateSharedBraveLedger(ledger, now) : validateLegacyBraveLedger(ledger, now);
+}
+
 // A grant records an operator-verified remaining free request allowance, NOT a
 // money balance. Rate-limit headers and the owner's zero-charge assurance alone
 // cannot establish quota. No automatic renewal, calendar reset or key rotation.
-export function validateBraveLedger(ledger, now) {
+function validateLegacyBraveLedger(ledger, now) {
   if (!Number.isFinite(now) || ledger?.schemaVersion !== 'brave-budget-v1' || !Array.isArray(ledger.entries) || !Array.isArray(ledger.grants)
     || Object.keys(ledger).sort().join(',') !== 'entries,grants,hold,schemaVersion') fail('invalid_ledger');
   const grantIds = new Set();
@@ -52,25 +108,31 @@ export function validateBraveLedger(ledger, now) {
   return ledger;
 }
 
-export function createBraveLedger({ token = process.env.TAVILY_BUDGET_GITHUB_TOKEN, fetchImpl = fetch, grant = null, now = Date.now } = {}) {
+export function createBraveLedger({ token = process.env.TAVILY_BUDGET_GITHUB_TOKEN, fetchImpl = fetch, grant = null, sharedFreeOnly = false, now = Date.now } = {}) {
   return createSearchLedger({ branch: 'brave-usage-ledger', token, fetchImpl, now, prefix: 'brave_budget',
-    initialLedger: () => validateBraveLedger({ ...emptyBraveLedger(), grants: grant ? [grant] : [] }, now()) });
+    initialLedger: serverTime => validateBraveLedger({ ...(sharedFreeOnly ? emptySharedBraveLedger(new Date(serverTime).toISOString()) : emptyBraveLedger()), grants: grant ? [grant] : [] }, now()) });
 }
 export function summarizeBraveLedger(ledger, now = Date.now()) {
   validateBraveLedger(ledger, now);
   const { entries } = ledger;
+  const shared = ledger.schemaVersion === 'brave-budget-v2';
   const grant = ledger.grants.at(-1);
   const grantEntries = entries.filter(row => row.grantId === grant?.id);
   const rollingRequests = entries.filter(row => Date.parse(row.time) > now - BRAVE_POLICY.windowDays * 86400000).length;
+  const grantUsed = (shared ? 0 : grant?.usageAtActivation || 0) + grantEntries.length;
   const status = ledger.hold ? ledger.hold.code : !grant ? 'brave_budget_quota_unknown' : Date.parse(grant.expiresAt) <= now ? 'brave_budget_grant_expired'
-    : grant.usageAtActivation + grantEntries.length >= grant.requestLimit ? 'brave_budget_quota_exhausted' : entries.some(row => row.state === 'reserved') ? 'brave_budget_pending_accounting' : rollingRequests >= BRAVE_POLICY.rollingRequests ? 'brave_budget_project_limit' : 'eligible_snapshot_only';
+    : grantUsed >= grant.requestLimit ? 'brave_budget_quota_exhausted' : entries.some(row => row.state === 'reserved') ? 'brave_budget_pending_accounting' : rollingRequests >= BRAVE_POLICY.rollingRequests ? 'brave_budget_project_limit' : 'eligible_snapshot_only';
   const byConsumer = {}, byMode = {}, byKey = {}, byDayUtc = {};
   for (const row of entries) for (const [group, key] of [[byConsumer,row.consumer],[byMode,row.mode],[byKey,row.keyId],[byDayUtc,row.time.slice(0,10)]]) {
     const counts = group[key] ||= { reserved: 0, success: 0, failed: 0, pending: 0 };
     counts.reserved++;
     counts[row.state === 'reserved' ? 'pending' : row.state]++;
   }
-  return { ...BRAVE_PROJECT_COUNTER_DISCLOSURE, status, grant: grant || null, rollingRequests, reservedRequests: entries.length, remainingVerifiedRequests: grant ? Math.max(0, grant.requestLimit - grant.usageAtActivation - grantEntries.length) : null,
+  return { ...BRAVE_PROJECT_COUNTER_DISCLOSURE, status, grant: grant || null, rollingRequests, reservedRequests: entries.length, remainingVerifiedRequests: !shared && grant ? Math.max(0, grant.requestLimit - grantUsed) : null,
+    ...(shared ? { recordingStartedAt: ledger.recordingStartedAt, historyBeforeRecording: ledger.historyBeforeRecording,
+      projectRemainingRequests: grant ? Math.max(0, Math.min(grant.requestLimit - grantUsed, BRAVE_POLICY.rollingRequests - rollingRequests)) : null,
+      providerRemainingRequests: 'unknown', accountObservation: grant?.accountObservation || null,
+      freeOnlyProtection: 'reviewed_dashboard_evidence_not_live_verification' } : {}),
     monetaryBalance: 'unavailable_no_official_api', byConsumer, byMode, byKey, byDayUtc };
 }
 export function createBraveBudget({ store, now = Date.now, monotonicNow = () => performance.now(), id = randomUUID, report = () => {} }) {
