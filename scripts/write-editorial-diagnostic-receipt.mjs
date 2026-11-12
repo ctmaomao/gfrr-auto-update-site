@@ -27,7 +27,7 @@ function inspect(file) {
   try { parsed = JSON.parse(bytes.toString('utf8')); } catch { /* No parse errors or input text leave the process. */ }
   return { metadata: { state: 'present', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }, parsed };
 }
-export function buildEditorialDiagnosticReceipt({ consumer, root = process.cwd(), outcomes = {} }) {
+export function buildEditorialDiagnosticReceipt({ consumer, root = process.cwd(), outcomes = {}, budget = {} }) {
   if (!Object.hasOwn(PREFIXES, consumer)) throw new Error('unknown_editorial_consumer');
   const directory = safeDirectory(root, PREFIXES[consumer]);
   const files = { ...FILES, review: consumer === 'macro' ? 'review-latest.json' : 'quality-review-latest.json' };
@@ -40,6 +40,17 @@ export function buildEditorialDiagnosticReceipt({ consumer, root = process.cwd()
     // This is a step receipt, not verification of remote save or live deployment.
     repositorySaveVerified: false, livePublicationVerified: false,
     stepOutcomes: states,
+    budgetPreflight: {
+      outcome: OUTCOMES.has(budget.outcome) ? budget.outcome : 'unknown',
+      disposition: ['eligible', 'hold', 'failure', 'expected_skip'].includes(budget.disposition) ? budget.disposition : 'unknown',
+      reason: ['eligible_snapshot_only', 'deepseek_budget_uninitialized'].includes(budget.reason) ? budget.reason : 'unknown',
+      skipVerification: OUTCOMES.has(budget.skipVerification) ? budget.skipVerification : 'unknown',
+      // Unknown/missing/failure receipts never assert an intentional skip.
+      expectedSkip: consumer === 'macro' && budget.outcome === 'success'
+        && budget.disposition === 'expected_skip' && budget.reason === 'deepseek_budget_uninitialized'
+        && budget.skipVerification === 'success' && Object.values(inspected).every(file => file.metadata.state === 'missing')
+        && Object.values(states).every(value => value === 'skipped')
+    },
     files: Object.fromEntries(Object.entries(inspected).map(([key, value]) => [key, value.metadata])),
     qualityReview: {
       status: ['pass', 'warn', 'fail'].includes(review?.status) ? review.status : 'unknown',
@@ -53,7 +64,9 @@ function main() {
   if (process.argv.length !== 4 || process.argv[2] !== '--consumer') throw new Error('invalid_receipt_arguments');
   const consumer = process.argv[3];
   const outcomes = Object.fromEntries(['provider', 'review', 'writer', 'save'].map(key => [key, process.env[`EDITORIAL_${key.toUpperCase()}_OUTCOME`]]));
-  const receipt = buildEditorialDiagnosticReceipt({ consumer, outcomes });
+  const budget = Object.fromEntries(['outcome', 'disposition', 'reason'].map(key => [key, process.env[`EDITORIAL_BUDGET_${key.toUpperCase()}`]]));
+  budget.skipVerification = process.env.EDITORIAL_BUDGET_SKIP_VERIFICATION;
+  const receipt = buildEditorialDiagnosticReceipt({ consumer, outcomes, budget });
   const directory = safeDirectory(process.cwd(), PREFIXES[consumer]);
   fs.mkdirSync(directory, { recursive: true });
   const destination = path.join(directory, 'safe-diagnostic-receipt.json');

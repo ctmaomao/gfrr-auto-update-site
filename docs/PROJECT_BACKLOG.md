@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **Macro 预算暂停重复告警**：2026-11-12 基于 `cbce451b6b15e1ad7bfac433e33ee3137af27a31` 隔离实现 [ADR-0109](ADR/0109-macro-budget-pause-notifications.md)。验收基线为 owner 要求排查每日多次 GitHub Actions 报错：仅将自动 Macro、monthly 双空配置的预网络暂停分类为可审计 expected skip，显式跳过全部费用/数据副作用，并以认证上游执行证据阻止 Pages/EdgeOne 无意义发布。真实 API、账本、配置、价格和生成失败仍红，全部预算/旧消耗/事实门槛不变。完整离线检查、实际 diff 独立审阅、精确 head CI 和后续自然运行验收按交付回执核实；本轮不重跑工作流、不请求 source/provider/余额、不写生产数据。
+
 - **Bubble 来源语义与日期绑定修复**：#538 已合并 `2591d3b4`，落地 [ADR-0106](ADR/0106-bubble-evidence-semantics.md) 与有界当前文案迁移，并保留 #537 新稿隔离及随后自然数据更新。验收基线是 RPO/百分点/发行待发管线/HY 广义代理语义纠错、新时间线报道日绑定；数值、评分、所有原期时钟、provenance 和历史 AI 正文不变，当前 AI 层保持缺席。双站验收仍由协调任务按实际回执核实；不调用 provider、不恢复已耗授权。
 
 - **Bubble 新稿事实隔离**：run `42935389410` 一次生成成功，commit `423c9dc7` 自动质量门槛通过，但独立事实复核确认 RPO/backlog 被误称递延收入，以及 SPY/RSP 百分收益率差被误写为百分比而非百分点。#537 已合并 `1a3a04eb`，撤下本次 `summary.weekly_editorial` 并精确恢复生成前已验证的 Bubble 文件；该隔离提交的其余结构化数据和分数不变。双站部署验收由协调任务核实。原稿保留在原 commit `423c9dc7` 与受控快照，安全回执仅保留诊断摘要/哈希，不再调用、不手改稿件、不改变预算。之后分别修正源标签、单位和新闻报道日/事件日语义；自动通过不等于事实验收完成。
@@ -123,7 +125,7 @@ STEO、库存与 PortWatch 摘要已接入；现行 [P50 授权](fixtures/transp
 
 ## 🔄 Session Handoff (最新)
 
-- **最后基线 / 改动**：2026-11-11 main `51bebb2d90c3b21201bdbff1862bb58128ca71b2`；隔离工作树修复 ACLED common-grid 比较契约，新增合成 XLSX 集成与双侧畸形输入反例。原工作区、生产配置、数据、sanitizer、strict checker 和其它编辑修复保持不变。
-- **当前任务**：按持续审核/及时修订授权交付 ADR-0108。自然 run 已证明登录成功，但候选未发布；合成回归证明共同截止日与原文件最大日期混淆的代码缺陷，不冒充已恢复原真实批次。
-- **下一步**：完成最终实际 diff 独立审阅、`check:changed`→`check:all`、全量 unit coverage；按 exact head CI 串行 PR/合并，并核验自动部署。远端结果见实际交付回执，不以本条预告代替成功。后续自然槽才提供采集至生产的新证明。
-- **阻塞 / 运行边界**：原批次私有候选和原件已按策略清理；本轮零新增 ACLED 请求，已耗 claim/initial 与 26/14/14 预算不变，不回放、重试、放宽校验或扩大来源权利。代码部署不会让旧源日期变新，Macro/Bubble 已耗名额及事实隔离也保持原状。
+- **最后基线 / 改动**：2026-11-12 main `cbce451b6b15e1ad7bfac433e33ee3137af27a31`；独立工作树实现 Macro monthly 暂停分类、安全回执和 Pages/EdgeOne 上游无副作用判定。旧工作区和生产数据未动。
+- **当前任务**：按 owner“每天都能收到好几条GitHub action报错，请再排查一下”的目标交付 ADR-0109；只修复已确认有意暂停的故障误报，保留真实故障与全部内容/费用保护。
+- **下一步**：完成最终 `check:changed` / `check:all`、实际 diff 独立审阅，再由协调任务推进同范围串行 PR/合并和精确 head CI；自然运行验证告警与发布跳过，不以代码检查代替线上结果。
+- **阻塞 / 运行边界**：monthly 不初始化，一次性名额不恢复，不调用 source/provider/余额，不重跑工作流或写生产数据。GitHub 证据缺失时仍沿用原 checked publication；新稿事实隔离及 ACLED 自然槽验收等待不受本修复改变。

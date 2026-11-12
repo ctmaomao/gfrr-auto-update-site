@@ -7,6 +7,8 @@
 
 ## Active
 
+- [ADR-0109 — Macro budget pause notifications](0109-macro-budget-pause-notifications.md): explicitly classify only automatic dual-empty monthly configuration as a no-side-effect skip; preserve real failures and verify upstream job evidence before suppressing Pages/EdgeOne publication. Proposed, independent review and runtime acceptance pending.
+
 - [ADR-0106 — Bubble evidence semantics](0106-bubble-evidence-semantics.md): correct RPO/pipeline/proxy labels and percentage-point units without score changes; bind new timeline rows to explicit report/observation dates. Local implementation, independent final-tree review and coordinated integration pending.
 
 本索引按决策主题导航，不把每条旧“pending/local-only”当作全局禁令。明确的后续修订、当前有效授权和实际验收仍须逐项核对；状态更新不新增来源、费用或发布权限。
