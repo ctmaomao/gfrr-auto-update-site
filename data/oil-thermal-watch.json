@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-11-13T11:02:53.327Z",
+  "generatedAt": "2026-11-13T19:44:54.827Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": "2026-11-13T09:21:00Z",
-    "latestAgeHours": 1.7,
+    "latestAcqAt": "2026-11-13T19:40:00Z",
+    "latestAgeHours": 0.1,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -136,22 +136,24 @@
     ]
   },
   "aggregate": {
-    "rowCount": 89,
-    "latestAcqAt": "2026-11-13T09:21:00Z",
-    "maxFrp": 16.24,
+    "rowCount": 153,
+    "latestAcqAt": "2026-11-13T19:40:00Z",
+    "maxFrp": 49.5,
     "confidenceCounts": {
-      "n": 89
+      "n": 147,
+      "l": 4,
+      "h": 2
     },
-    "highConfidenceCount": 0,
+    "highConfidenceCount": 2,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
     "dayNightCounts": {
       "N": 81,
-      "D": 8
+      "D": 72
     },
-    "latestAgeHours": 1.7,
+    "latestAgeHours": 0.1,
     "facilityCount": 42,
-    "facilitiesWithDetections": 14,
+    "facilitiesWithDetections": 24,
     "requestCount": 126,
     "requestErrorCount": 0,
     "requestDiagnostics": {
@@ -175,13 +177,13 @@
       }
     },
     "baselineStatus": "established",
-    "repeatedObservationCount": 2,
+    "repeatedObservationCount": 5,
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 42,
     "facilitiesByAnomalyLevel": {
-      "low_signal": 12,
-      "repeated_watch": 2,
-      "none_observed": 28
+      "low_signal": 19,
+      "repeated_watch": 5,
+      "none_observed": 18
     }
   },
   "facilities": [
@@ -206,7 +208,7 @@
       "dayNightCounts": {
         "N": 7
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -234,7 +236,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_marathon_galveston_bay_tx",
@@ -257,7 +259,7 @@
       "dayNightCounts": {
         "N": 8
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -285,7 +287,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_marathon_garyville_la",
@@ -308,7 +310,7 @@
       "dayNightCounts": {
         "N": 2
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
@@ -336,7 +338,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_baytown_tx",
@@ -359,7 +361,7 @@
       "dayNightCounts": {
         "N": 9
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -387,7 +389,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_baton_rouge_la",
@@ -398,19 +400,20 @@
       "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 7,
-      "latestAcqAt": "2026-11-13T08:24:00Z",
+      "rowCount": 8,
+      "latestAcqAt": "2026-11-13T18:57:00Z",
       "maxFrp": 3.22,
       "confidenceCounts": {
-        "n": 7
+        "n": 8
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 7
+        "N": 7,
+        "D": 1
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 0.8,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -438,7 +441,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_citgo_lake_charles_la",
@@ -449,19 +452,20 @@
       "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 7,
-      "latestAcqAt": "2026-11-13T08:24:00Z",
+      "rowCount": 9,
+      "latestAcqAt": "2026-11-13T19:40:00Z",
       "maxFrp": 2.73,
       "confidenceCounts": {
-        "n": 7
+        "n": 9
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "N": 7
+        "N": 7,
+        "D": 2
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 0.1,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -489,7 +493,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_beaumont_tx",
@@ -512,7 +516,7 @@
       "dayNightCounts": {
         "N": 5
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -540,7 +544,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_deer_park_tx",
@@ -563,7 +567,7 @@
       "dayNightCounts": {
         "N": 6
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -591,7 +595,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_valero_corpus_christi_tx",
@@ -614,7 +618,7 @@
       "dayNightCounts": {
         "N": 11
       },
-      "latestAgeHours": 1.7,
+      "latestAgeHours": 10.4,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -642,7 +646,7 @@
       "anomalyLevel": "repeated_watch",
       "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_phillips_sweeny_tx",
@@ -665,7 +669,7 @@
       "dayNightCounts": {
         "N": 9
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -693,7 +697,7 @@
       "anomalyLevel": "repeated_watch",
       "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_phillips_belle_chasse_la",
@@ -740,7 +744,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_shell_norco_la",
@@ -763,7 +767,7 @@
       "dayNightCounts": {
         "N": 10
       },
-      "latestAgeHours": 2.6,
+      "latestAgeHours": 11.3,
       "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
@@ -791,7 +795,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_terminal_ras_tanura",
@@ -799,19 +803,23 @@
       "region": "Middle East / Saudi Arabia",
       "assetType": "oil_terminal",
       "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Ras Tannura; desig_cd=TRMO; fc=S; cc_ft=SAU; adm1=SA-04; lat_dd=26.641944; long_dd=50.156389; mod_dt_ft=2016-12-14T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Saudi Aramco ports-and-terminals documentation separately confirms Ras Tanura terminal/port context. This is an oil-terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 10.75,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 2
+      },
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -824,21 +832,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 0,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
-        "maxFrpAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
+        "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_processing_abqaiq_buqayq",
@@ -885,7 +893,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_gosp_khurais",
@@ -932,7 +940,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_field_shaybah",
@@ -979,7 +987,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_port_yanbu_industrial_city",
@@ -987,19 +995,24 @@
       "region": "Middle East / Saudi Arabia",
       "assetType": "port_terminal",
       "sourceNote": "NGA GNS country file Saudi Arabia.txt; row full_name=Madinat Yanbu al Sinaiyah Port; desig_cd=PRT; fc=L; cc_ft=SAU; adm1=SA-03; lat_dd=23.950934; long_dd=38.222638; mod_dt_ft=2011-04-27T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a port/terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Saudi%20Arabia.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 5,
+      "latestAcqAt": "2026-11-13T11:10:00Z",
+      "maxFrp": 49.5,
+      "confidenceCounts": {
+        "l": 2,
+        "n": 3
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 5
+      },
+      "latestAgeHours": 8.6,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1012,21 +1025,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
-        "maxFrpAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
+        "maxFrpAboveP95": true,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_port_jazan",
@@ -1073,7 +1086,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_oil_terminal_kharg_island",
@@ -1081,19 +1094,23 @@
       "region": "Middle East / Iran",
       "assetType": "oil_terminal",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Kharg Island Terminal; desig_cd=TRMO; fc=S; cc_ft=IRN; adm1=IR-000; lat_dd=29.25; long_dd=50.328611; mod_dt_ft=2025-04-29T13:40:15.000Z; point converted to +/-0.05 degree FIRMS watch box. This is an oil-terminal area proxy, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 5.58,
+      "confidenceCounts": {
+        "n": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 1
+      },
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1106,7 +1123,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1117,10 +1134,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_tehran_oil_refinery",
@@ -1167,7 +1184,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_area_abadan",
@@ -1175,19 +1192,23 @@
       "region": "Middle East / Iran",
       "assetType": "refinery_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Abadan; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-06; lat_dd=30.3392; long_dd=48.3043; mod_dt_ft=2014-08-08T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. NIORDC contact/refineries pages separately list Abadan Oil Refining Company. This is a refinery-area proxy from the official Abadan place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 4,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 7.28,
+      "confidenceCounts": {
+        "n": 4
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 4
+      },
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1200,8 +1221,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1211,10 +1232,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_area_bandar_abbas",
@@ -1261,7 +1282,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_energy_area_asaluyeh",
@@ -1269,23 +1290,23 @@
       "region": "Middle East / Iran",
       "assetType": "energy_processing_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Asaluyeh; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-18; lat_dd=27.47383219; long_dd=52.60782293; mod_dt_ft=2023-06-08T21:35:22.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a broad energy-processing area proxy from the official place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-11-13T08:47:00Z",
+      "rowCount": 15,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
       "maxFrp": 11.7,
       "confidenceCounts": {
-        "n": 3
+        "n": 15
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 3
+        "D": 15
       },
-      "latestAgeHours": 2.3,
-      "rawSignalLevel": "low_signal",
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1298,8 +1319,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1312,7 +1333,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_refinery_area_haifa_bay",
@@ -1359,7 +1380,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_refinery_area_ashdod",
@@ -1406,7 +1427,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_port_eilat",
@@ -1453,7 +1474,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_ruwais_refinery_area",
@@ -1461,19 +1482,24 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "refinery_area_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Ruwais; desig_cd=PPL; fc=P; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1999-06-15T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 5,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 5.27,
+      "confidenceCounts": {
+        "n": 4,
+        "l": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 5
+      },
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1486,8 +1512,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1497,10 +1523,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_jebel_dhanna_terminal_area",
@@ -1547,7 +1573,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_das_island_terminal_area",
@@ -1555,23 +1581,24 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "export_terminal_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Das Island Terminal; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1993-12-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 3,
-      "latestAcqAt": "2026-11-13T08:47:00Z",
-      "maxFrp": 16.24,
+      "rowCount": 8,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 19.65,
       "confidenceCounts": {
-        "n": 3
+        "n": 6,
+        "h": 2
       },
-      "highConfidenceCount": 0,
+      "highConfidenceCount": 2,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 3
+        "D": 8
       },
-      "latestAgeHours": 2.3,
-      "rawSignalLevel": "low_signal",
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "elevated_watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1584,8 +1611,8 @@
         "frpOver50CountP95": 4,
         "frpOver100CountP95": 1,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1598,7 +1625,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_fujairah_energy_port_area",
@@ -1645,7 +1672,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_ras_laffan_energy_port_area",
@@ -1653,23 +1680,23 @@
       "region": "Middle East / Qatar / Al Khor",
       "assetType": "energy_port_proxy",
       "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Ra's Laffan; desig_cd=PT; fc=T; cc_ft=QAT; adm1=QA-KH; mod_dt_ft=2016-06-17T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip",
-      "sourceAgreement": "1/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 2,
-      "latestAcqAt": "2026-11-13T08:47:00Z",
-      "maxFrp": 10.63,
+      "rowCount": 6,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 12.31,
       "confidenceCounts": {
-        "n": 2
+        "n": 6
       },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
       "dayNightCounts": {
-        "D": 2
+        "D": 6
       },
-      "latestAgeHours": 2.3,
-      "rawSignalLevel": "low_signal",
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1682,8 +1709,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 1,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1696,7 +1723,7 @@
       "anomalyLevel": "low_signal",
       "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_mesaieed_industrial_port_area",
@@ -1704,19 +1731,24 @@
       "region": "Middle East / Qatar / Al Wakrah",
       "assetType": "industrial_port_proxy",
       "sourceNote": "NGA GNS country file official point; country=Qatar; full_name=Musay'id; desig_cd=PPL; fc=P; cc_ft=QAT; adm1=QA-WA; mod_dt_ft=2016-05-12T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Qatar.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 3,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 4.34,
+      "confidenceCounts": {
+        "n": 2,
+        "l": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 3
+      },
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1729,21 +1761,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_dukhan_oilfield_area",
@@ -1790,7 +1822,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_halul_terminal_area",
@@ -1837,7 +1869,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_mina_al_ahmadi_terminal_area",
@@ -1884,7 +1916,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_mina_abdullah_terminal_area",
@@ -1892,19 +1924,23 @@
       "region": "Middle East / Kuwait / Al Ahmadi",
       "assetType": "refinery_terminal_proxy",
       "sourceNote": "NGA GNS country file official point; country=Kuwait; full_name=Mina Abdullah; desig_cd=TRMO; fc=S; cc_ft=KWT; adm1=KW-000; mod_dt_ft=2006-06-30T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Kuwait.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 4,
+      "latestAcqAt": "2026-11-13T10:28:00Z",
+      "maxFrp": 5.09,
+      "confidenceCounts": {
+        "n": 4
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 4
+      },
+      "latestAgeHours": 9.3,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1917,8 +1953,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -1928,10 +1964,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_shuaiba_port_refinery_area",
@@ -1939,19 +1975,23 @@
       "region": "Middle East / Kuwait / Al Ahmadi",
       "assetType": "refinery_port_proxy",
       "sourceNote": "NGA GNS country file official point; country=Kuwait; full_name=Shuaiba Port; desig_cd=HBR; fc=H; cc_ft=KWT; adm1=KW-000; mod_dt_ft=2006-06-30T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Kuwait.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-11-13T09:32:00Z",
+      "maxFrp": 3.85,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 2
+      },
+      "latestAgeHours": 10.2,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1964,7 +2004,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1975,10 +2015,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_burgan_oilfield_area",
@@ -2025,7 +2065,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_khawr_al_amaya_terminal_area",
@@ -2072,7 +2112,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_zubair_oilfield_area",
@@ -2119,7 +2159,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_rumaila_oilfield_area",
@@ -2127,19 +2167,23 @@
       "region": "Middle East / Iraq / Basra",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Ar Rumaila; desig_cd=PPL; fc=P; cc_ft=IRQ; adm1=IQ-BA; mod_dt_ft=2002-10-22T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 12,
+      "latestAcqAt": "2026-11-13T10:30:00Z",
+      "maxFrp": 7.89,
+      "confidenceCounts": {
+        "n": 12
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 12
+      },
+      "latestAgeHours": 9.2,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -2152,8 +2196,8 @@
         "frpOver50CountP95": 2,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -2163,10 +2207,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_kirkuk_oilfield_area",
@@ -2174,19 +2218,23 @@
       "region": "Middle East / Iraq / Kirkuk",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Kirkuk; desig_cd=OILF; fc=L; cc_ft=IRQ; adm1=IQ-KI; mod_dt_ft=2012-04-16T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-11-13T10:30:00Z",
+      "maxFrp": 6.07,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 2
+      },
+      "latestAgeHours": 9.2,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -2199,8 +2247,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -2210,10 +2258,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     }
   ],
   "productionImpact": {
@@ -2231,6 +2279,7 @@
   "limitationsZh": [
     "FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。",
     "生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。",
-    "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。"
+    "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。",
+    "历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.6 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
   ]
 }
