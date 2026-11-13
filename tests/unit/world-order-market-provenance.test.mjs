@@ -6,7 +6,7 @@ const values = { gold: 3979, dxy: 121.8803 };
 const details = { dxy: { ok: true, value: 121.8803, source: 'fred:DTWEXBGS', timestamp: '2026-11-06' } };
 test('matched metadata preserves reported series and date without freshness or calibration claim', () => {
   const output = build(values, details);
-  assert.deepEqual(output.dxy, { status: 'matched_metadata', source: 'fred:DTWEXBGS', reportedTimestamp: '2026-11-06', reportedFallbackUsed: null, reason: null, qualification: 'not_assessed' });
+  assert.deepEqual(output.dxy, { status: 'matched_metadata', source: 'fred:DTWEXBGS', reportedTimestamp: '2026-11-06', reportedTimestampKind: 'unknown', reportedFallbackUsed: null, reason: null, qualification: 'not_assessed' });
   assert.equal(output.gold.status, 'unknown');
   assert.equal(output.brent.reason, 'selected_value_missing');
   assert.equal(validate(output, values), true);
@@ -25,7 +25,7 @@ test('optional provenance cannot change legacy score or confidence', () => {
   assert.deepEqual(buildMarketConfirmation({ marketConfirmationInput: input }), buildMarketConfirmation({ marketConfirmationInput: { ...input, observationProvenance: build(input, details) } }));
 });
 test('validator rejects qualification promotion and malformed optional metadata', () => {
-  for (const mutate of [x => { x.dxy.qualification = 'fresh'; }, x => { x.dxy.reportedTimestamp = 'bad'; }, x => { x.dxy.source = null; }, x => { delete x.gold; }, x => { x.gold.reason = 'fresh'; }, x => { x.extra = {}; }]) {
+  for (const mutate of [x => { x.dxy.qualification = 'fresh'; }, x => { x.dxy.reportedTimestamp = 'bad'; }, x => { x.dxy.source = null; }, x => { delete x.gold; }, x => { x.gold.reason = 'fresh'; }, x => { x.extra = {}; }, x => { x.dxy.reportedTimestampKind = 'fresh_quote'; }, x => { x.gold.reportedTimestampKind = 'observation_date'; }]) {
     const output = build(values, details); mutate(output); assert.throws(() => validate(output, values));
   }
 });
@@ -41,4 +41,11 @@ test('selector preserves exact Worker/local provenance but never borrows it for 
   const daily = await selectMarketConfirmationInput({ dataPayload: { updatedAt: now, displayInputsBaseline: input.values, sourceDetails: details } });
   assert.equal(daily.source, 'daily-baseline');
   assert.equal(daily.observationProvenance.dxy.status, 'unknown');
+});
+
+test('timestamp semantics are preserved only as reported metadata, never inferred from source name', () => {
+  const output = build(values, { dxy: { ...details.dxy, timestampKind: 'observation_date' } });
+  assert.equal(output.dxy.reportedTimestampKind, 'observation_date');
+  assert.equal(output.dxy.qualification, 'not_assessed');
+  assert.equal(build(values, details).dxy.reportedTimestampKind, 'unknown');
 });

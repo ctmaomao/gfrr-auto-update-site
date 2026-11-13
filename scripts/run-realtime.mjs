@@ -1,3 +1,4 @@
+import { goldQuoteRows, sourceTimestampAgeSeconds } from './realtime/gold-quote.mjs';
 import { ICE_BRENT_CONTRACT_DATA_URL, parseIceBrentCandidate } from './realtime/ice-brent-candidate.mjs';
 import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import fs from 'fs';
@@ -548,15 +549,7 @@ async function fetchRows(descriptor) {
   );
 
   if (descriptor.kind === 'goldapi') {
-    const json = JSON.parse(text);
-    if (!json || !Number.isFinite(Number(json.price))) {
-      throw new Error(`${descriptor.source} returned invalid data`);
-    }
-    const today = new Date().toISOString().slice(0, 10);
-    return [
-      { date: today, value: Number(json.price) },
-      { date: today, value: Number(json.price) }
-    ];
+    return goldQuoteRows(JSON.parse(text));
   }
   const rows = parseStooqCsv(text);
   if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
@@ -1017,16 +1010,15 @@ function normalizeLiveResult(key, descriptor, rows, { critical, fallbackUsed = f
     key,
     ok: true,
     value: payload.value,
-    change: payload.change,
+    change: descriptor.kind === 'goldapi' ? null : payload.change,
     source: descriptor.source,
     timestamp: payload.timestamp,
+    timestampKind: descriptor.kind === 'goldapi' ? 'provider_acquisition' : 'observation_date',
     fallbackUsed,
     error: null,
     critical,
     freshnessPrepared: true,
-    ageSeconds: payload.timestamp
-      ? Math.max(0, Math.round((Date.now() - Date.parse(`${payload.timestamp}T00:00:00Z`)) / 1000))
-      : null,
+    ageSeconds: sourceTimestampAgeSeconds(payload.timestamp),
     sourceStatusLabel: fallbackUsed ? `${descriptor.source}:secondary` : descriptor.source
   };
 }
@@ -1039,9 +1031,12 @@ function normalizeFallbackResult(key, descriptor, prev, critical, error) {
     key,
     ok: false,
     value: Number.isFinite(prevValue) ? prevValue : null,
-    change: Number.isFinite(prevChange) ? prevChange : 0,
+    change: key === 'gold' ? null : (Number.isFinite(prevChange) ? prevChange : 0),
     source: descriptor.source,
     timestamp: prevTimestamp,
+    timestampKind: prev?.sourceDetails?.[key]?.timestamp
+      ? (prev.sourceDetails[key].timestampKind || 'unknown')
+      : (prevTimestamp ? 'snapshot_acquisition' : 'unknown'),
     fallbackUsed: true,
     error: stringifyError(error),
     critical,
@@ -1080,6 +1075,7 @@ function buildSourceDetails(results) {
       value: result.value,
       source: result.source,
       timestamp: result.timestamp,
+      timestampKind: result.timestampKind || 'unknown',
       fallbackUsed: result.fallbackUsed,
       error: result.error,
       freshnessPrepared: result.freshnessPrepared,
@@ -1162,6 +1158,7 @@ function buildPayload(results, prev, brentValidation = null) {
       value: brentPromotion.selectedValue,
       source: `${brentPromotion.selectedSource}:public-consensus-promoted`,
       timestamp: brentPromotion.selectedObservedAt,
+      timestampKind: 'reported_candidate_time',
       ageSeconds: Number.isFinite(computeAgeMinutes(brentPromotion.selectedObservedAt, now))
         ? computeAgeMinutes(brentPromotion.selectedObservedAt, now) * 60
         : null,
