@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import { classifyByThreshold, finite, normalizeStatus, statusLabel } from '../../scripts/modules/displayStatusThresholds.js';
-import {
+// Exercise the same cache-keyed module instance as the production renderer.
+// A fixed old query silently leaves the newly bumped instance untested.
+const appSource = readFileSync(new URL('../../scripts/app.js', import.meta.url), 'utf8');
+const assetVersion = /const APP_VERSION = '([^']+)';/u.exec(appSource)?.[1];
+assert.ok(assetVersion, 'current frontend asset version must be explicit');
+const {
   $,
   deltaArrow,
   fmtDeltaSafe,
@@ -11,7 +17,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=ui-truth-20261114-r1';
+} = await import(`../../scripts/modules/config.js?v=${assetVersion}`);
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

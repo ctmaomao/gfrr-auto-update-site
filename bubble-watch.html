@@ -329,6 +329,24 @@ function evidenceFreshnessAtAudit(item, now) {
   return { observedDate, ageDays, maxAgeDays,
     status: reason === 'age_exceeds_policy' ? 'stale' : reason === 'within_policy_age' ? 'within_policy_age' : 'unknown', reason };
 }
+// Read-only diagnostics: a retained observation is not a successful current scan.
+function sourceCoverageNotice(item, nowMs = Date.now()) {
+  const provenance = item?.provenance;
+  if (provenance?.mode !== 'auto_fallback') return '';
+  const gate = provenance.evidenceGate;
+  const reasons = {
+    vc_current_period_unconfirmed: { id: 'vc_ai_share', text: '本轮未取得同一期间的合格全球 AI 创投占比，沿用原季度研究；不代表本轮已确认最新占比。' },
+    neocloud_current_coverage_unconfirmed: { id: 'neocloud_credit', text: '本轮未取得完整的近期公司覆盖，沿用历史事件记录；0 项不代表当前已确认没有信用事件。' }
+  };
+  const reason = gate?.policy === 'bubble-evidence-gap-v1' ? reasons[gate.reasonCode] : null;
+  const specific = reason?.id === item.id && Array.isArray(gate.checks) && gate.checks.length > 0
+    && gate.checks.every(check => check?.status === 'ok');
+  const today = Number.isFinite(nowMs) ? new Date(nowMs).toISOString().slice(0, 10) : '';
+  const checked = strictEvidenceDate(gate?.checkedAt) && strictEvidenceDate(today) && gate.checkedAt <= today
+    && (!strictEvidenceDate(item.as_of) || gate.checkedAt >= item.as_of) ? gate.checkedAt : null;
+  return `${checked ? `更新核验 ${checked}：` : '更新核验日期待确认：'}${specific ? reason.text : '本轮未取得合格更新，沿用原观察记录；不代表当前来源已获确认。'}灯色与分数保留发布口径。`;
+}
+
 function buildBubbleFreshnessView(data, nowMs = Date.now()) {
   const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : '';
   const issue = evidenceFreshnessAtAudit({ as_of: data?.as_of_date, provenance: { maxAgeDays: BUBBLE_ISSUE_MAX_AGE_DAYS } }, now);
@@ -858,6 +876,7 @@ function render(data, editorialStatus = null) {
           <div class="indicator-grid">
             ${items.map(ind => {
               const ratioView = nvdaDisplayState(ind);
+              const coverageNotice = sourceCoverageNotice(ind);
               const carried = !ind.stale && ind.as_of && data.as_of_date && ind.as_of < data.as_of_date;
               return `
               <article class="indicator${ind.stale || freshness.cards[indicators.indexOf(ind)].status === 'stale' ? ' stale' : ''}">
@@ -872,6 +891,7 @@ function render(data, editorialStatus = null) {
                 </div>
                 <div class="number">${escapeHtml(ratioView ? ratioView.value : ind.value_display || ind.value)}</div>
                 <div class="note">${escapeHtml(ratioView ? ratioView.note : ind.note)}</div>
+                ${coverageNotice ? `<div class="note source-coverage-notice">${escapeHtml(coverageNotice)}</div>` : ''}
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>
                   <span>${escapeHtml(ind.source_name)}${ind.provenance?.detail?.policy === 'insider_fixed_12_30_90_v1' ? ' · <a href="https://xoomar.com/markets/api/insiders" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Data: XOOMAR</a> · 内部人交易数据来源：SEC' : ''}${ind.as_of ? ` · ${escapeHtml(ind.as_of)}` : ind.evidence_gap ? ` · 观测暂缺，核验于${escapeHtml(ind.evidence_gap.checkedDate)}` : ''}${carried ? ' <span class="carry-tag">沿用</span>' : ''} <span class="carry-tag" id="card-age-${indicators.indexOf(ind)}">${escapeHtml(freshness.cards[indicators.indexOf(ind)].label)}</span></span>

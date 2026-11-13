@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=ui-truth-20261114-r1';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=source-disclosure-20261114-r1';
 
 const MAX_AGE_HOURS = 30;
 

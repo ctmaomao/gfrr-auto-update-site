@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=ui-truth-20261114-r1';
+﻿import { fmtNumSafe } from './config.js?v=source-disclosure-20261114-r1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
