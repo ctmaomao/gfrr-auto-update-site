@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { validatePreparedWorldOrderV2, assertWorldOrderProductionVersion } from './world-order/prepared-v2-contract.mjs';
 import { validateMarketInputProvenance } from './world-order/market-input-provenance.mjs';
 import { EVENTS_MODEL, validateEventsSource } from './world-order/gdelt-events-score.mjs';
 import fs from 'node:fs';
@@ -12,6 +11,7 @@ const root = path.resolve(__dirname, '..');
 const dataPath = path.join(root, 'data', 'world-order-stress.json');
 
 if (process.argv.includes('--validate-prepared-v2')) {
+  const { validatePreparedWorldOrderV2 } = await import('./world-order/prepared-v2-contract.mjs');
   if (process.argv.length !== 4 || process.argv[2] !== '--validate-prepared-v2') throw new Error('prepared_v2_arguments_invalid');
   const candidatePath = path.resolve(process.argv[3]);
   if (candidatePath === dataPath || candidatePath.startsWith(path.join(root, 'data') + path.sep)
@@ -115,7 +115,9 @@ for (const phrase of forbiddenPhrases) {
 }
 
 const payload = JSON.parse(text);
-assertWorldOrderProductionVersion(payload);
+if (payload && typeof payload === 'object' && Object.hasOwn(payload, 'contractVersion')) {
+  throw new Error('world_order_version_not_activated');
+}
 for (const key of ['version', 'updatedAt', 'sourceMode', 'score', 'state', 'labelZh', 'confidence', 'freshness', 'marketConfirmationInput', 'externalSources', 'dimensions', 'dominantDrivers', 'systemInterpretationZh', 'decisionModifier', 'warnings']) {
   if (!(key in payload)) fail(`${key} missing`);
 }
