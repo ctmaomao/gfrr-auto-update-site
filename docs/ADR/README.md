@@ -186,3 +186,5 @@
 - [ADR-0112: Transitional Bubble receipt-based one-call grant](0112-bubble-receipt-one-call.md) — immutable historical evidence, one Bubble attempt and offline key identification; no recurring activation.
 
 - [ADR-0113: Private Bubble evidence and opaque one-use claim](0113-private-bubble-claim.md) — approved environment-secret evidence, atomic content-free marker and no public usage receipts.
+
+- [ADR-0114: Thermal completion publication tail](0114-thermal-publication-completion.md) — one existing producer completion, unchanged publication admission and release quota.

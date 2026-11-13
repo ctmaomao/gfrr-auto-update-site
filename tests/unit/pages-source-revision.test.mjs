@@ -20,7 +20,7 @@ test('queued production Pages jobs build checked latest-main rather than the tri
 
 test('ODP completion can publish without AI success while EdgeOne budget and coalescing remain', () => {
   const workflow = readFileSync('.github/workflows/publish-edgeone-release.yml', 'utf8');
-  assert.ok(workflow.includes('workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch]'));
+  assert.ok(workflow.includes('workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch]'));
   assert.ok(workflow.includes("github.event.workflow_run.conclusion == 'success'"));
   assert.match(workflow, /types: \[completed\]\s+branches: \[main\]/u);
   assert.ok(workflow.includes("cron: '55 */3 * * *'"));
