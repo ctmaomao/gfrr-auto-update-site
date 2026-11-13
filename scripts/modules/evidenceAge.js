@@ -1,5 +1,5 @@
 // Display/audit clocks only. Published lights, counts and scores are immutable.
-import { nvdaRatioAgeAt } from './nvdaEvidencePolicy.js?v=editorial-review-20261110-r2';
+import { nvdaRatioAgeAt } from './nvdaEvidencePolicy.js?v=ui-truth-20261114-r1';
 const DAY = 86400000;
 export const BUBBLE_ISSUE_MAX_AGE_DAYS = 35; // Existing weekly publication policy.
 export function strictEvidenceDate(value) {

@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=editorial-review-20261110-r2';
+﻿import { formatFiniteNumber } from './format.js?v=ui-truth-20261114-r1';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

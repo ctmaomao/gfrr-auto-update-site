@@ -11,7 +11,7 @@ import {
   fmtSignedArrow,
   riskColor,
   trendClass,
-} from '../../scripts/modules/config.js?v=editorial-review-20261110-r2';
+} from '../../scripts/modules/config.js?v=ui-truth-20261114-r1';
 import {
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,

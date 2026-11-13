@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=editorial-review-20261110-r2';
+﻿import { fmtNumSafe } from './config.js?v=ui-truth-20261114-r1';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

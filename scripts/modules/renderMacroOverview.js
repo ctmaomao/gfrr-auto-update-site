@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=editorial-review-20261110-r2';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=editorial-review-20261110-r2';
+} from './config.js?v=ui-truth-20261114-r1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=ui-truth-20261114-r1';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,15 +17,15 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=editorial-review-20261110-r2';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=editorial-review-20261110-r2';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=editorial-review-20261110-r2';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=editorial-review-20261110-r2';
-import { renderTrendSvg } from './renderMacroTrend.js?v=editorial-review-20261110-r2';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=editorial-review-20261110-r2';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=editorial-review-20261110-r2';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=editorial-review-20261110-r2';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=editorial-review-20261110-r2';
+} from './macroOverviewDisplayHelpers.js?v=ui-truth-20261114-r1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=ui-truth-20261114-r1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=ui-truth-20261114-r1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=ui-truth-20261114-r1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=ui-truth-20261114-r1';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=ui-truth-20261114-r1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=ui-truth-20261114-r1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=ui-truth-20261114-r1';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=ui-truth-20261114-r1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -223,6 +223,9 @@ function latestRecord(records) {
   return Array.isArray(records) && records.length > 0 ? records[records.length - 1] : null;
 }
 function asNumber(value) {
+  if (value === null || value === undefined || typeof value === 'boolean'
+      || (typeof value === 'string' && value.trim() === '')
+      || !['number', 'string'].includes(typeof value)) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
@@ -1086,29 +1089,29 @@ function renderC8Geopolitical({ radarData, worldOrderStressData }) {
     setLeafText('c8-geo-aux', `旧模型地缘模块 · 审计趋势 ${geoTrend}`);
     setLeafText('c8-geo-note', `旧模型地缘评分 ${geoScore !== null ? Math.round(geoScore) : '—'}，仅保留审计，不计入OFR主读数。世界秩序另作独立观察，不升档OFR。`);
 
-    const woScore = asNumber(worldOrderStressData?.score);
-    if (woScore !== null) setLeafText('c8-wo-number', String(Math.round(woScore)));
-    if (worldOrderStressData?.state || worldOrderStressData?.labelZh) {
-      setLeafText('c8-wo-aux', `状态:${worldOrderStressData.labelZh || '—'}`);
+    const woScore = strictFiniteDisplay(worldOrderStressData?.score);
+    setLeafText('c8-wo-number', woScore !== null ? String(Math.round(woScore)) : '—');
+    setLeafText('c8-wo-aux', `状态:${woScore !== null ? worldOrderStateLabel(worldOrderStressData?.state, worldOrderStressData?.labelZh) : '待确认'}`);
+    if (woScore === null) setPendingIndicator('c8-wo-status', 'c8-wo-badge');
+    else {
+      setToneClass('c8-wo-status', 'status-bar', 'orange');
+      setBadge('c8-wo-badge', 'orange', '独立观察');
     }
 
-    const econ = worldOrderStressData?.dimensions?.economicWeaponization || {};
-    const econScore = asNumber(econ.score);
-    const econTone = indicatorTone(econScore);
-    setToneClass('c8-econ-status', 'status-bar', econTone);
-    setBadge('c8-econ-badge', econTone);
-    if (econScore !== null) setLeafText('c8-econ-number', String(Math.round(econScore)));
-    if (econ.trend) setLeafText('c8-econ-aux', `趋势(trend): ${econ.trend} · 美国制裁清单(OFAC)+全球新闻事件(GDELT)`);
-    if (econ.trend) setLeafText('c8-econ-note', `制裁与经济武器化处于高位区间。趋势(trend): ${econ.trend}。`);
-
-    const arms = worldOrderStressData?.dimensions?.peaceDividendRetreat || {};
-    const armsScore = asNumber(arms.score);
-    const armsTone = indicatorTone(armsScore);
-    setToneClass('c8-arms-status', 'status-bar', armsTone);
-    setBadge('c8-arms-badge', armsTone);
-    if (armsScore !== null) setLeafText('c8-arms-number', String(Math.round(armsScore)));
-    if (arms.trend) setLeafText('c8-arms-aux', `trend: ${arms.trend} · ACLED weekly + SIPRI annual`);
-    if (arms.trend) setLeafText('c8-arms-note', `手动 + 年度数据。不当成实时高频信号读。trend: ${arms.trend}。`);
+    // Producer trendFromScore is a score bucket, not a measured time change.
+    // Match the appendix semantics and overwrite every leaf on repeated loads.
+    for (const [key, slug, label] of [
+      ['economicWeaponization', 'econ', '经济武器化'],
+      ['peaceDividendRetreat', 'arms', '军备与冲突'],
+    ]) {
+      const dim = worldOrderStressData?.dimensions?.[key] || {};
+      const score = strictFiniteDisplay(dim.score);
+      if (score === null) setPendingIndicator(`c8-${slug}-status`, `c8-${slug}-badge`);
+      else setIndicatorStatus(`c8-${slug}-status`, `c8-${slug}-badge`, indicatorTone(score));
+      setLeafText(`c8-${slug}-number`, score !== null ? String(Math.round(score)) : '—');
+      setLeafText(`c8-${slug}-aux`, `${label} · ${score !== null ? '当前评分快照' : '数据待确认'}`);
+      setLeafText(`c8-${slug}-note`, '世界秩序独立维度，来源与时效见世界秩序附录。分档不代表较上期升降，也不代表实时观察；不计入OFR主读数。');
+    }
   } catch (error) {
     console.error('[renderMacroOverview] renderC8Geopolitical failed:', error);
   }
@@ -1229,8 +1232,8 @@ function setIndicatorStatus(statusId, badgeId, tone) {
   setBadge(badgeId, tone);
 }
 
-// Local opt-in qualification for nullable display fields. Do not replace
-// the global asNumber: scoring and unrelated readers keep their existing behavior.
+// Strict numeric qualification for producer fields; unlike asNumber, numeric
+// strings are not accepted. Display-only, never changes producer scoring.
 function strictFiniteDisplay(value) {
   return Number.isFinite(value) ? value : null;
 }
@@ -1257,6 +1260,10 @@ function renderC1InflationEnergy({ radarData }) {
     }
     setLeafText('c1-brent-aux', provenance.selected);
 
+    for (const slug of ['crack', 'ism']) {
+      setPendingIndicator(`c1-${slug}-status`, `c1-${slug}-badge`);
+      for (const leaf of ['number', 'aux', 'note']) setLeafText(`c1-${slug}-${leaf}`, '—');
+    }
     const crack = asNumber(brentLayer.crackSpread);
     const crackStatus = crackTone(crack);
     setIndicatorStatus('c1-crack-status', 'c1-crack-badge', crackStatus);
@@ -1892,6 +1899,8 @@ function renderC3CreditCorporate({ radarData }) {
     const nfciNoteState = nfci === null ? '当前读数缺失，待核验' : nfciKnown ? `当前 ${nfci.toFixed(3)}，${nfciRegime}` : `当前 ${nfci.toFixed(3)}，档位待核验`;
     setLeafText('c3-nfci-note', `金融条件指数(NFCI)汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。正值表示较历史平均偏紧，负值表示偏松。${nfciNoteState}。`);
 
+    setPendingIndicator('c3-private-status', 'c3-private-badge');
+    for (const leaf of ['number', 'aux', 'bdc', 'pbdc', 'srln', 'regime']) setLeafText(`c3-private-${leaf}`, '—');
     const privateTone = privateCreditToneFromRegime(privateCredit.privateCreditProxyRegime);
     setIndicatorStatus('c3-private-status', 'c3-private-badge', privateTone);
     const intervalNav = asNumber(privateCredit.intervalFundNavPrice);
@@ -1950,6 +1959,8 @@ function renderConsumerRetail({ radarData }) {
   const sourceLabel = status => ({ live: '来源已采集', fallback: '沿用旧值', stale: '来源过期' })[status] || '来源待核验';
   const sourceUsable = status => ['live', 'fallback', 'stale'].includes(status);
   const recordDate = observationDate(retail.updatedAt);
+  const nominalDate = observationDate(retail.cartsNominalUpdatedAt);
+  const realDate = observationDate(retail.cartsRealUpdatedAt);
   const nominal = sourceUsable(retail.sourceStatus?.carts) ? strictFiniteDisplay(retail.cartsNominalYoY) : null;
   const real = sourceUsable(retail.sourceStatus?.cartsr) ? strictFiniteDisplay(retail.cartsRealYoY) : null;
   const direction = value => value === null ? '待核验' : value > 0 ? '同比增长' : value < 0 ? '同比下降' : '同比持平';
@@ -1958,7 +1969,7 @@ function renderConsumerRetail({ radarData }) {
   setLeafText('c4-consumer-number', nominal !== null ? pct(nominal).replace('%', '') : '—');
   setLeafText('c4-consumer-real', pct(real));
   setLeafText('c4-consumer-aux', `名义零售(CARTS) · 实际 ${pct(real)} YoY · 组合记录 ${recordDate || '日期待核验'}`);
-  setLeafText('c4-consumer-note', `记录中名义零售 ${pct(nominal)}（${direction(nominal)}，${sourceLabel(retail.sourceStatus?.carts)}）；实际零售 ${pct(real)}（${direction(real)}，${sourceLabel(retail.sourceStatus?.cartsr)}）。组合日期不是各项共同观察日，CARTS各自日期未提供，不能认定当前同步趋势。`);
+  setLeafText('c4-consumer-note', `记录中名义零售 ${pct(nominal)}（${direction(nominal)}，${sourceLabel(retail.sourceStatus?.carts)}）；实际零售 ${pct(real)}（${direction(real)}，${sourceLabel(retail.sourceStatus?.cartsr)}）。名义观察日 ${nominalDate || '未提供或待核验'}；实际观察日 ${realDate || '未提供或待核验'}。组合日期不是各项共同观察日，不能仅据组合日期认定当前同步趋势。`);
   const segmentDate = observationDate(retail.segmentUpdatedAt);
   const segmentsKnown = segmentDate && sourceUsable(retail.sourceStatus?.retailSegments);
   const diffusion = segmentsKnown ? strictFiniteDisplay(retail.segmentDiffusionPct) : null;
@@ -1992,6 +2003,10 @@ function renderConsumerRetail({ radarData }) {
 function renderC4UsEconomyTemperature({ radarData }) {
   try {
     renderConsumerRetail({ radarData });
+    setPendingIndicator('c4-employment-status', 'c4-employment-badge');
+    for (const leaf of ['number', 'aux', 'claims-change', 'continuing', 'jolts', 'u6', 'ahe', 'diffusion', 'regime']) {
+      setLeafText(`c4-employment-${leaf}`, '—');
+    }
     if (!radarData) return;
     const employment = radarData.macroDrivers?.employment || {};
 

@@ -583,14 +583,26 @@ function statusBadge(status) {
   return `<span class="badge ${status}">${map[status] || status}</span>`;
 }
 
+function technicalObservationLabel(panel, nowMs = Date.now()) {
+  const date = panel?.basket?.latestDate;
+  const today = Number.isFinite(nowMs) ? new Date(nowMs).toISOString().slice(0, 10) : null;
+  if (!['red', 'yellow', 'green'].includes(panel?.status)) return '观测暂缺；生成时间不代表价格观察日';
+  if (!strictEvidenceDate(date) || !strictEvidenceDate(today) || date > today || date !== panel?.as_of_date) {
+    return '价格观察日期待核验；不以期次或生成时间替代';
+  }
+  const age = Math.floor((Date.parse(today) - Date.parse(date)) / DAY);
+  return `价格观察截至 ${date} · 已过${age}天；日线快照，非实时行情；灯色保留发布口径`;
+}
+
 function renderMarketTechnicalHeat(panel) {
   if (!panel || panel.contractVersion !== 'bubble-watch-market-technical-heat-v1') return '';
   const status = panel.status || 'unavailable';
-  const counts = panel.counts || {};
+  const available = ['red', 'yellow', 'green'].includes(status);
+  const counts = available ? panel.counts || {} : {};
   const basket = panel.basket || {};
   const labelZh = status === 'red' ? '技术过热' : status === 'yellow' ? '升温观察' : status === 'green' ? '温度可控' : '数据暂缺';
   const statusClass = ['red', 'yellow', 'green'].includes(status) ? status : 'unavailable';
-  const items = Array.isArray(panel.items) ? panel.items : [];
+  const items = available && Array.isArray(panel.items) ? panel.items : [];
   return `
     <section class="market-technical-heat" id="market-technical-heat">
       <div class="category-header">
@@ -599,19 +611,20 @@ function renderMarketTechnicalHeat(panel) {
           <span class="en">PUBLIC MARKET TECHNICAL HEAT</span>
         </div>
         <div class="counts">
-          辅助观察 · ${(counts.total ?? items.length) || 0} 个市场温度项 · <span class="red">${counts.red ?? 0} 红</span> · <span class="yellow">${counts.yellow ?? 0} 黄</span>
+          ${available ? `辅助观察 · ${(counts.total ?? items.length) || 0} 个市场温度项 · <span class="red">${counts.red ?? 0} 红</span> · <span class="yellow">${counts.yellow ?? 0} 黄</span>` : '辅助观察 · 数据暂缺'}
         </div>
       </div>
       <div class="technical-audit-summary ${statusClass}">
         <div>
           <div class="label">MARKET TEMPERATURE · 独立观察</div>
-          <div class="technical-headline">${escapeHtml(labelZh)}${Number.isFinite(panel.heat_score) ? ` · ${panel.heat_score.toFixed(1)}/100` : ''}</div>
-          <div class="summary-text">${escapeHtml(panel.summary || '公开市场技术热度暂缺;仅作市场温度观察。')}</div>
+          <div class="technical-headline">${escapeHtml(labelZh)}${available && Number.isFinite(panel.heat_score) ? ` · ${panel.heat_score.toFixed(1)}/100` : ''}</div>
+          <div class="summary-text">${escapeHtml(available ? panel.summary || '公开市场技术热度仅作市场温度观察。' : '公开市场技术热度暂缺；不展示未经确认的分数、灯色或指标。')}</div>
         </div>
         <div class="meta-lines">
           <div>篮子: ${escapeHtml((basket.symbols || basket.requestedSymbols || []).join('/') || '—')}</div>
           <div>数据口径: ${escapeHtml('公开日线价格')}</div>
-          <div>备用口径: ${escapeHtml('其它公开价格源')}</div>
+          <div>备用口径: 候选来源尚未接入，不代表已有多源确认</div>
+          <div id="technical-observation-date">${escapeHtml(technicalObservationLabel(panel))}</div>
           <div>解释边界: 反映市场温度,不替代估值/基本面判断</div>
         </div>
       </div>
@@ -667,6 +680,8 @@ function refreshDisplayAge() {
   const view = buildBubbleFreshnessView(lastData);
   document.getElementById('bubble-data-freshness').textContent = view.summary;
   document.getElementById('bubble-verdict-label').textContent = view.verdictLabel;
+  const technicalDate = document.getElementById('technical-observation-date');
+  if (technicalDate) technicalDate.textContent = technicalObservationLabel(lastData.market_technical_heat);
   for (const [index, card] of view.cards.entries()) {
     const label = document.getElementById(`card-age-${index}`);
     if (!label) continue;
@@ -947,8 +962,8 @@ function smoothPath(pts) {
 
 const CREDIT_PANELS = [
   { key: 'hy', title: 'HY OAS', desc: '高收益债整体', detail: '美国整体高收益债券的期权调整利差', thresholds: [{ value: 350, color: '#F1C232' }, { value: 500, color: '#E63946' }] },
-  { key: 'ccc', title: 'CCC OAS', desc: 'Neocloud 评级尾部', detail: '美国 CCC 及以下评级债券的市场代理，并非 Neocloud 专属债券利差', thresholds: [] },
-  { key: 'ig', title: 'IG OAS', desc: 'Hyperscaler 发债基准', detail: '美国投资级公司债的市场代理，并非大型云厂商专属债券利差', thresholds: [] }
+  { key: 'ccc', title: 'CCC OAS', desc: 'CCC 及以下市场代理', detail: '美国 CCC 及以下评级债券的市场代理，并非 Neocloud 专属债券利差', thresholds: [] },
+  { key: 'ig', title: 'IG OAS', desc: '投资级公司债市场代理', detail: '美国投资级公司债的市场代理，并非大型云厂商专属债券利差', thresholds: [] }
 ];
 
 function creditPoints(credit, key) {
@@ -970,6 +985,7 @@ function creditSectionHtml(credit) {
   return `<section class="trend" id="credit-spreads">
     <div class="trend-header"><h3>AI 基建信用利差 <em>· Credit Spreads · 1Y</em></h3>
       <div class="trend-legend"><span>FRED 日度 · ${escapeHtml(dateLabel)}</span><span style="color:var(--muted)">HY 阈值: 350 黄 / 500 红</span></div></div>
+    <div class="credit-notice">美国广义公司债市场代理，并非 AI 企业或数据中心专属利差；独立日更，不改变上方周度评分。</div>
     <div class="credit-grid">${CREDIT_PANELS.map(p => {
       const points = creditPoints(credit, p.key), last = points.at(-1);
       const delta = last ? last.bps - points.at(-6).bps : null;

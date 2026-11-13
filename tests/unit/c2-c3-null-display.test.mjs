@@ -52,7 +52,7 @@ async function buildRenderApi() {
   const context = vm.createContext(sandbox);
   vm.runInContext(body, context, { filename: 'renderMacroOverview.vm.js' });
   return {
-    api: vm.runInContext('({ renderC2GlobalLiquidity, renderC3CreditCorporate, deriveNarratives, asNumber })', context),
+    api: vm.runInContext('({ renderC2GlobalLiquidity, renderC3CreditCorporate, deriveNarratives, renderConsumerRetail, renderC8Geopolitical, renderC4UsEconomyTemperature, renderC1InflationEnergy, asNumber })', context),
     elementFor,
   };
 }
@@ -355,4 +355,72 @@ test('static CRE meta uses the existing composite tiers and no single-threshold 
   const card = html.slice(start, end);
   assert.match(card, /既有组合档位：违约 \/ 核销 \/ 信贷标准/);
   assert.doesNotMatch(card, /阈值 &gt;1\.5% 红/);
+});
+
+
+test('overview and legacy trend numeric helpers never fabricate zero from missing values', () => {
+  const trendSource = fs.readFileSync(`${ROOT}/scripts/modules/renderMacroTrend.js`, 'utf8');
+  const helper = trendSource.match(/function asNumber\(value\) \{[\s\S]*?\n\}/u)[0];
+  const trendAsNumber = vm.runInNewContext(`${helper}; asNumber`);
+  for (const fn of [api.asNumber, trendAsNumber]) {
+    for (const value of [null, undefined, '', '  ', false, true, [], {}, NaN, Infinity]) {
+      assert.equal(fn(value), null, `missing/invalid ${String(value)} stays missing`);
+    }
+    for (const value of [0, '0', -2, '-2', 4.3, '4.3']) assert.equal(fn(value), Number(value));
+  }
+});
+
+test('CARTS renders independent producer observation dates without borrowing aggregate date', () => {
+  const retail = { cartsNominalYoY: 0.02, cartsRealYoY: 0,
+    updatedAt: '2026-11-10', cartsNominalUpdatedAt: '2026-10-01', cartsRealUpdatedAt: '2026-09-01',
+    sourceStatus: { carts: 'live', cartsr: 'fallback' } };
+  api.renderConsumerRetail({ radarData: { macroDrivers: { consumerRetail: retail } } });
+  assert.match(elementFor('c4-consumer-note').textContent, /名义观察日 2026-10-01；实际观察日 2026-09-01/);
+  assert.match(elementFor('c4-consumer-note').textContent, /沿用旧值/);
+  assert.equal(elementFor('c4-consumer-real').textContent, '+0.0%');
+  for (const date of [null, '', '2026-02-30', '2999-01-01']) {
+    api.renderConsumerRetail({ radarData: { macroDrivers: { consumerRetail: { ...retail, cartsNominalUpdatedAt: date, cartsRealUpdatedAt: date } } } });
+    assert.match(elementFor('c4-consumer-note').textContent, /名义观察日 未提供或待核验；实际观察日 未提供或待核验/);
+    assert.doesNotMatch(elementFor('c4-consumer-note').textContent, /2026-11-10/);
+  }
+});
+
+
+test('C8 matches appendix snapshot semantics and clears missing values after success', () => {
+  api.renderC8Geopolitical({ radarData: {}, worldOrderStressData: {
+    score: 54, state: 'normal', dimensions: {
+      economicWeaponization: { score: 20, trend: '上行' },
+      peaceDividendRetreat: { score: 0, trend: '上行' },
+    },
+  } });
+  assert.equal(elementFor('c8-arms-number').textContent, '0');
+  assert.match(elementFor('c8-econ-aux').textContent, /当前评分快照/);
+  assert.doesNotMatch(elementFor('c8-econ-note').textContent, /处于.*高位|趋势.*上行/);
+  api.renderC8Geopolitical({ radarData: {}, worldOrderStressData: null });
+  for (const slug of ['wo', 'econ', 'arms']) {
+    assert.equal(elementFor(`c8-${slug}-number`).textContent, '—');
+    assert.equal(elementFor(`c8-${slug}-badge`).textContent, '待核验');
+    assert.match(elementFor(`c8-${slug}-status`).className, /pending/);
+  }
+  assert.equal(elementFor('c8-wo-aux').textContent, '状态:待确认');
+});
+
+
+test('guarded C1, private-credit and employment leaves clear after valid observations disappear', () => {
+  api.renderC1InflationEnergy({ radarData: { brentPricingLayer: { crackSpread: 12, crackSpread4wChange: 2 }, macroDrivers: { consumer: { ismManufacturingPmi: 52 } } } });
+  assert.equal(elementFor('c1-crack-number').textContent, '12.00');
+  api.renderC1InflationEnergy({ radarData: { brentPricingLayer: { crackSpread: null }, macroDrivers: { consumer: { ismManufacturingPmi: null } } } });
+  for (const slug of ['crack', 'ism']) {
+    assert.equal(elementFor(`c1-${slug}-number`).textContent, '—');
+    assert.equal(elementFor(`c1-${slug}-badge`).textContent, '待核验');
+  }
+  api.renderC4UsEconomyTemperature({ radarData: { macroDrivers: { employment: { initialClaims: 222000, initialClaims4wAverage: 220000, u6Rate: 8.2 } } } });
+  assert.equal(elementFor('c4-employment-number').textContent, '222');
+  api.renderC4UsEconomyTemperature({ radarData: { macroDrivers: { employment: { initialClaims: null, u6Rate: null } } } });
+  for (const leaf of ['number', 'aux', 'claims-change', 'continuing', 'jolts', 'u6', 'ahe', 'diffusion', 'regime']) assert.equal(elementFor(`c4-employment-${leaf}`).textContent, '—');
+  const data = { macroDrivers: { privateCreditProxy: { intervalFundNavPrice: 100, bdcEtfPrice: 21, bdcEtf4wChange: 0.03 } } };
+  api.renderC3CreditCorporate({ radarData: data });
+  assert.equal(elementFor('c3-private-number').textContent, '100.00');
+  api.renderC3CreditCorporate({ radarData: { macroDrivers: { privateCreditProxy: { intervalFundNavPrice: null } } } });
+  for (const leaf of ['number', 'aux', 'bdc', 'pbdc', 'srln', 'regime']) assert.equal(elementFor(`c3-private-${leaf}`).textContent, '—');
 });
