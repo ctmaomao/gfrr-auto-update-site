@@ -45,6 +45,10 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
     data.market_technical_heat.status = 'unavailable';
     await page.reload();
     await expect(page.locator('#technical-observation-date')).toContainText('观测暂缺');
+    await expect(page.locator('#market-technical-heat .technical-headline')).toHaveText('数据暂缺');
+    await expect(page.locator('#market-technical-heat .summary-text')).toContainText('不展示未经确认的分数、灯色或指标');
+    await expect(page.locator('#market-technical-heat article.indicator')).toHaveCount(0);
+    await expect(page.locator('#market-technical-heat .counts')).toHaveText('辅助观察 · 数据暂缺');
     await capture('bubble-technical-unavailable');
     unavailable = true;
     await page.reload();

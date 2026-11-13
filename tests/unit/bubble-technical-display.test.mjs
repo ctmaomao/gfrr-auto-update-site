@@ -14,7 +14,9 @@ test('technical snapshot exposes its own observation date, not generated time or
   assert.match(label(panel, now), /非实时行情；灯色保留发布口径/);
 });
 test('unavailable, missing, invalid, future and conflicting dates do not look current', () => {
-  assert.match(label({ ...panel, status: 'unavailable' }, now), /观测暂缺/);
+  for (const status of ['unavailable', undefined, 'unexpected']) {
+    assert.match(label({ ...panel, status }, now), /观测暂缺/);
+  }
   for (const date of [null, '', '2026-02-30', '2026-11-14', '2026-11-10']) {
     assert.match(label({ ...panel, basket: { latestDate: date } }, now), /待核验/);
   }
@@ -31,4 +33,23 @@ test('credit proxy limits are visible text rather than hover-only titles', () =>
   assert.match(page, /<div class="credit-notice">美国广义公司债市场代理，并非 AI 企业或数据中心专属利差；独立日更，不改变上方周度评分。<\/div>/);
   assert.match(page, /desc: 'CCC 及以下市场代理'/);
   assert.match(page, /desc: '投资级公司债市场代理'/);
+});
+
+// Invalid aggregate state must not expose retained payload values as current.
+test('unavailable technical panel suppresses retained score, counts, summary and items', () => {
+  const renderer = page.slice(page.indexOf('function renderMarketTechnicalHeat('), page.indexOf('const TIER_FROM_LABEL_ZH'));
+  const render = vm.runInNewContext(`${renderer}; renderMarketTechnicalHeat`, {
+    escapeHtml: value => String(value), technicalObservationLabel: label, statusBadge: () => 'badge'
+  });
+  const retained = { ...panel, contractVersion: 'bubble-watch-market-technical-heat-v1',
+    heat_score: 10, summary: '温度可控：0红/1黄/4绿', counts: { total: 5, yellow: 1 },
+    items: [{ name_zh: '残留指标', status: 'green', value_display: '123' }] };
+  for (const status of ['unavailable', undefined, 'unexpected']) {
+    const html = render({ ...retained, status });
+    assert.match(html, /不展示未经确认的分数、灯色或指标/);
+    assert.doesNotMatch(html, /10.0\/100|温度可控|残留指标|article class="indicator"/);
+    assert.match(html, /辅助观察 · 数据暂缺/);
+  }
+  assert.match(render(retained), /10.0\/100/);
+  assert.match(render(retained), /残留指标/);
 });

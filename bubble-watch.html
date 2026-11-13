@@ -586,7 +586,7 @@ function statusBadge(status) {
 function technicalObservationLabel(panel, nowMs = Date.now()) {
   const date = panel?.basket?.latestDate;
   const today = Number.isFinite(nowMs) ? new Date(nowMs).toISOString().slice(0, 10) : null;
-  if (panel?.status === 'unavailable') return '观测暂缺；生成时间不代表价格观察日';
+  if (!['red', 'yellow', 'green'].includes(panel?.status)) return '观测暂缺；生成时间不代表价格观察日';
   if (!strictEvidenceDate(date) || !strictEvidenceDate(today) || date > today || date !== panel?.as_of_date) {
     return '价格观察日期待核验；不以期次或生成时间替代';
   }
@@ -597,11 +597,12 @@ function technicalObservationLabel(panel, nowMs = Date.now()) {
 function renderMarketTechnicalHeat(panel) {
   if (!panel || panel.contractVersion !== 'bubble-watch-market-technical-heat-v1') return '';
   const status = panel.status || 'unavailable';
-  const counts = panel.counts || {};
+  const available = ['red', 'yellow', 'green'].includes(status);
+  const counts = available ? panel.counts || {} : {};
   const basket = panel.basket || {};
   const labelZh = status === 'red' ? '技术过热' : status === 'yellow' ? '升温观察' : status === 'green' ? '温度可控' : '数据暂缺';
   const statusClass = ['red', 'yellow', 'green'].includes(status) ? status : 'unavailable';
-  const items = Array.isArray(panel.items) ? panel.items : [];
+  const items = available && Array.isArray(panel.items) ? panel.items : [];
   return `
     <section class="market-technical-heat" id="market-technical-heat">
       <div class="category-header">
@@ -610,14 +611,14 @@ function renderMarketTechnicalHeat(panel) {
           <span class="en">PUBLIC MARKET TECHNICAL HEAT</span>
         </div>
         <div class="counts">
-          辅助观察 · ${(counts.total ?? items.length) || 0} 个市场温度项 · <span class="red">${counts.red ?? 0} 红</span> · <span class="yellow">${counts.yellow ?? 0} 黄</span>
+          ${available ? `辅助观察 · ${(counts.total ?? items.length) || 0} 个市场温度项 · <span class="red">${counts.red ?? 0} 红</span> · <span class="yellow">${counts.yellow ?? 0} 黄</span>` : '辅助观察 · 数据暂缺'}
         </div>
       </div>
       <div class="technical-audit-summary ${statusClass}">
         <div>
           <div class="label">MARKET TEMPERATURE · 独立观察</div>
-          <div class="technical-headline">${escapeHtml(labelZh)}${Number.isFinite(panel.heat_score) ? ` · ${panel.heat_score.toFixed(1)}/100` : ''}</div>
-          <div class="summary-text">${escapeHtml(panel.summary || '公开市场技术热度暂缺;仅作市场温度观察。')}</div>
+          <div class="technical-headline">${escapeHtml(labelZh)}${available && Number.isFinite(panel.heat_score) ? ` · ${panel.heat_score.toFixed(1)}/100` : ''}</div>
+          <div class="summary-text">${escapeHtml(available ? panel.summary || '公开市场技术热度仅作市场温度观察。' : '公开市场技术热度暂缺；不展示未经确认的分数、灯色或指标。')}</div>
         </div>
         <div class="meta-lines">
           <div>篮子: ${escapeHtml((basket.symbols || basket.requestedSymbols || []).join('/') || '—')}</div>
