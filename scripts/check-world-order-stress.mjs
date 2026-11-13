@@ -1,3 +1,4 @@
+import { validateMarketInputProvenance } from './world-order/market-input-provenance.mjs';
 import { EVENTS_MODEL, validateEventsSource } from './world-order/gdelt-events-score.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -106,6 +107,9 @@ assertConfidence(payload.confidence, 'confidence');
 if (!allowedStates.has(payload.state)) fail(`invalid state: ${payload.state}`);
 if (!allowedFreshness.has(payload.freshness)) fail(`invalid freshness: ${payload.freshness}`);
 if (!isObject(payload.marketConfirmationInput)) fail('marketConfirmationInput must be object');
+if (Object.hasOwn(payload.marketConfirmationInput, 'observationProvenance')) {
+  validateMarketInputProvenance(payload.marketConfirmationInput.observationProvenance, payload.marketConfirmationInput);
+}
 if (!allowedMarketInputSources.has(payload.marketConfirmationInput.source)) {
   fail(`invalid marketConfirmationInput.source: ${payload.marketConfirmationInput.source}`);
 }
