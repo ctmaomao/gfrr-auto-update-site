@@ -121,9 +121,9 @@ const contracts = [
     file: '.github/workflows/publish-edgeone-release.yml',
     required: [
       'name: Publish EdgeOne Release Channel',
-      // ADR-0085 retains the ADR-0057 triggers and adds only the oil-news
-      // producer completion tail; no source refresh or broad data push trigger.
-      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch]',
+      // ADR-0114 retains all five existing triggers and adds the thermal
+      // completion tail; no source refresh or broad data push trigger.
+      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch]',
       'types: [completed]',
       'branches: [main]',
       'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
