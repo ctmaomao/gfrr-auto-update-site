@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './modules/worldOrderSourceDisplay.js';
 import { worldOrderStateLabel } from './modules/macroOverviewDisplayHelpers.js';
 
 const renderer = readFileSync('scripts/modules/renderMacroOverview.js', 'utf8');
@@ -11,7 +12,7 @@ const leaves = {};
 const tones = {};
 const context = vm.createContext({
   document: { getElementById: (id) => ({ classList: { remove: () => { tones[id] = null; } } }) },
-  worldOrderStateLabel,
+  worldOrderStateLabel, worldOrderSourceClock, worldOrderSourceDisclosure,
   setLeafText: (id, value) => { leaves[id] = String(value); },
   updateToneClass: (id, allowed, tone) => { if (tone) tones[id] = tone; },
   dimensionTone: (value) => value >= 70 ? 'high' : 'low',

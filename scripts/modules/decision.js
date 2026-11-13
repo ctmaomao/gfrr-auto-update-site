@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=ui-truth-20261114-r1';
-import { formatOnRrpYiUsd } from './format.js?v=ui-truth-20261114-r1';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=source-disclosure-20261114-r1';
+import { formatOnRrpYiUsd } from './format.js?v=source-disclosure-20261114-r1';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

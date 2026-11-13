@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 
 // Immutable pre-change main. Baseline resources are read from Git, never fetched
 // from production or published. This is screenshot evidence, not a test bypass.
-const BASE = 'e1798ac346376f5fce34c2aeeed0338be63ac4f7';
+const BASE = 'abe9107d2e58af82a10d6641487af9ad66f9251e';
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
 for (const width of [1440, 390]) {
   test(`immutable pre-change UI visual baseline ${width}`, async ({ page }, testInfo) => {

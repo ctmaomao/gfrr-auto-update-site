@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=ui-truth-20261114-r1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=ui-truth-20261114-r1';
+} from './config.js?v=source-disclosure-20261114-r1';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=source-disclosure-20261114-r1';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,15 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=ui-truth-20261114-r1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=ui-truth-20261114-r1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=ui-truth-20261114-r1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=ui-truth-20261114-r1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=ui-truth-20261114-r1';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=ui-truth-20261114-r1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=ui-truth-20261114-r1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=ui-truth-20261114-r1';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=ui-truth-20261114-r1';
+} from './macroOverviewDisplayHelpers.js?v=source-disclosure-20261114-r1';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=source-disclosure-20261114-r1';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=source-disclosure-20261114-r1';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=source-disclosure-20261114-r1';
+import { renderTrendSvg } from './renderMacroTrend.js?v=source-disclosure-20261114-r1';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=source-disclosure-20261114-r1';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=source-disclosure-20261114-r1';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=source-disclosure-20261114-r1';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=source-disclosure-20261114-r1';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=source-disclosure-20261114-r1';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2598,10 +2599,8 @@ function renderWorldOrderStress({ worldOrderStressData }) {
     setLeafText('wo-detail-gdelt-conflict-events', eventsSummary
       ? `${woCountOrDash(eventsSummary.violenceLower)}～${woCountOrDash(eventsSummary.violenceUpper)}（免费编码记录）`
       : `${woCountOrDash(wo.externalSources?.gdelt?.summary?.conflictEvents)}（历史 Cloud）`);
-    const freshnessLabel = (value) => ({ fresh: '新鲜', aging: '偏旧', stale: '过期', error: '读取失败', not_configured: '未配置', missing: '缺失' })[value] || '待确认';
-    const eventsFreshnessNote = eventsSummary
-      ? `免费记录窗口：${eventsSummary.windowStartDay}～${eventsSummary.windowEndDay}；${eventsSource.status === 'stale' ? '沿用历史窗口' : '完整七日文件'}，未知隔离 ${woCountOrDash(eventsSummary.quarantinedRows)} 行，仅计入两个冲突维度；其余三维仍含历史 Cloud 代理。` : '';
-    setLeafText('wo-detail-source-freshness', `ACLED 周表时效：${freshnessLabel(acledSummary.sourceFreshness)}；月表时效：${freshnessLabel(acledSummary.monthlySourceFreshness)}。${eventsFreshnessNote}`);
+    setLeafText('wo-detail-source-clock', worldOrderSourceClock(wo));
+    setLeafText('wo-detail-source-freshness', worldOrderSourceDisclosure(wo));
 
     const dimMap = {
       peaceDividendRetreat: 'peace',
