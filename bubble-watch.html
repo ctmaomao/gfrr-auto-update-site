@@ -700,6 +700,7 @@ function refreshDisplayAge() {
   document.getElementById('bubble-verdict-label').textContent = view.verdictLabel;
   const technicalDate = document.getElementById('technical-observation-date');
   if (technicalDate) technicalDate.textContent = technicalObservationLabel(lastData.market_technical_heat);
+  refreshCreditNotices(lastData.credit_spreads);
   for (const [index, card] of view.cards.entries()) {
     const label = document.getElementById(`card-age-${index}`);
     if (!label) continue;
@@ -998,6 +999,28 @@ function creditPoints(credit, key) {
   return points;
 }
 
+// Update only existing notice leaves: no network, chart replacement or score change.
+function creditNotice(credit, key, nowMs = Date.now()) {
+  const last = creditPoints(credit, key).at(-1);
+  if (!last) return '数据暂缺，等待下次更新';
+  const stale = nowMs - Date.parse(last.date) > 10 * 86400000;
+  const status = credit.sources?.[key]?.status;
+  if (status === 'fallback') return `更新未完成，沿用 ${last.date} 观测${stale ? '（已超过 10 天）' : ''}`;
+  if (stale) return `观测已超过 10 天 · ${last.date}`;
+  if (status === 'stale') return `来源标记为陈旧 · ${last.date}`;
+  const dates = CREDIT_PANELS.map(p => creditPoints(credit, p.key).at(-1)?.date).filter(Boolean);
+  return dates.length !== 3 || new Set(dates).size !== 1 ? `观测 ${last.date}` : '';
+}
+function refreshCreditNotices(credit) {
+  for (const panel of CREDIT_PANELS) {
+    const leaf = document.getElementById(`credit-notice-${panel.key}`);
+    if (!leaf) continue;
+    const notice = creditNotice(credit, panel.key);
+    leaf.textContent = notice;
+    leaf.hidden = !notice;
+  }
+}
+
 function creditSectionHtml(credit) {
   if (!credit || credit.contractVersion !== 'bubble-credit-spreads-v1' || credit.boundary !== 'display_only_no_score_impact') return '';
   const dates = CREDIT_PANELS.map(p => creditPoints(credit, p.key).at(-1)?.date).filter(Boolean);
@@ -1009,12 +1032,9 @@ function creditSectionHtml(credit) {
     <div class="credit-grid">${CREDIT_PANELS.map(p => {
       const points = creditPoints(credit, p.key), last = points.at(-1);
       const delta = last ? last.bps - points.at(-6).bps : null;
-      const status = credit.sources?.[p.key]?.status;
-      const stale = last && Date.now() - Date.parse(last.date) > 10 * 86400000;
-      const notice = !last ? '数据暂缺，等待下次更新' : status === 'fallback' ? `更新未完成，沿用 ${last.date} 观测${stale ? '（已超过 10 天）' : ''}`
-        : stale || status === 'stale' ? `观测已超过 10 天 · ${last.date}` : new Set(dates).size !== 1 || dates.length !== 3 ? `观测 ${last.date}` : '';
+      const notice = creditNotice(credit, p.key);
       return `<div><div class="credit-label" title="${escapeHtml(p.detail)}；1bp = 0.01 个百分点；5日按五个有效观测间隔计算"><b>${p.title}</b><span>${p.desc}${last ? ` · ${last.bps}bp（5日${delta >= 0 ? '+' : ''}${delta}）` : ''}</span></div>
-        <div class="credit-chart-wrap" id="credit-${p.key}"></div>${notice ? `<div class="credit-notice">${escapeHtml(notice)}</div>` : ''}</div>`;
+        <div class="credit-chart-wrap" id="credit-${p.key}"></div><div class="credit-notice" id="credit-notice-${p.key}"${notice ? '' : ' hidden'}>${escapeHtml(notice)}</div></div>`;
     }).join('')}</div></section>`;
 }
 
@@ -1089,12 +1109,13 @@ function drawTrend(data) {
   const W = Math.max(320, wrap.clientWidth);
   const H = 220;
   const padL = 44, padR = 14, padT = 10, padB = 26;
-  const ymax = 70;
+  // Both published series have the full 0–100 domain; never flatten 70–100.
+  const ymax = 100;
   const x = i => padL + (seed.length === 1 ? 0 : i * (W - padL - padR) / (seed.length - 1));
   const y = v => padT + (1 - Math.min(v, ymax) / ymax) * (H - padT - padB);
 
   let grid = '';
-  for (let v = 0; v <= ymax; v += 10) {
+  for (let v = 0; v <= ymax; v += 20) {
     grid += `<line x1="${padL}" y1="${y(v)}" x2="${W - padR}" y2="${y(v)}" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>`;
     grid += `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1815">${v}%</text>`;
   }
