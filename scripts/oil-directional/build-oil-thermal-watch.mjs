@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { discloseOilThermalBaselineAge } from './oil-thermal-baseline-age.mjs';
 import {
   FIRMS_REQUEST_POLICY,
   createFirmsRetryBudget,
@@ -879,6 +880,7 @@ async function main() {
 
   artifact = applyBaselineCoverageCopy(artifact);
   artifact = stabilizeUnqueriedArtifact(options, artifact);
+  artifact = discloseOilThermalBaselineAge(artifact);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   console.log(JSON.stringify({
     status: artifact.status,
