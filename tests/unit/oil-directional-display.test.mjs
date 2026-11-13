@@ -248,3 +248,37 @@ test('invalid endpoint clocks remove standalone contango counterevidence after r
     assert.match(dom.text('odp-reason-curve'),/期限结构未知/);
   }
 });
+
+test('news separates collection time from article age and aggregate market clocks', (t) => {
+  const dom = harness(t);
+  const news = { schemaVersion: 'oil-news-event-watch-1', generatedAt: '2026-11-06T10:00:00Z',
+    freshness: { windowDays: 7, latestArticleAt: '2026-11-05T12:00:00Z', latestArticleAgeHours: 1 },
+    displayStatusZh: '观察', aggregate: { confidence: 'low' } };
+  const worldOrderStressData = { marketConfirmationInput: { brent: 101, updatedAt: '2026-11-05T11:00:00Z', ageMinutes: 0 } };
+  const before = JSON.stringify({ news, worldOrderStressData });
+  dom.render(oilFixture(), radarFixture(), { oilNewsEventWatchData: news, worldOrderStressData });
+  assert.match(dom.text('odp-news-event-window'), /快照生成 2026-11-06.*最新报道 2026-11-05.*距本次打开时 24小时/);
+  assert.match(dom.text('odp-news-event-market'), /背景快照.*汇总于 2026-11-05.*非报价观察时间/);
+  assert.doesNotMatch(dom.text('odp-news-event-market'), /0 分钟龄/);
+  assert.match(dom.text('odp-news-event-status'), /^采集时/);
+  assert.match(dom.text('odp-news-event-note'), /当时置信度 低/);
+  assert.equal(JSON.stringify({ news, worldOrderStressData }), before);
+  for (const date of [null, 'bad', '2026-02-30', '2026-11-07T12:00:00Z']) {
+    news.freshness.latestArticleAt = date;
+    worldOrderStressData.marketConfirmationInput.updatedAt = date;
+    dom.render(oilFixture(), radarFixture(), { oilNewsEventWatchData: news, worldOrderStressData });
+    assert.match(dom.text('odp-news-event-window'), /最新报道 时点待核/);
+    assert.match(dom.text('odp-news-event-market'), /时点或数值待核/);
+    assert.doesNotMatch(dom.text('odp-news-event-market'), /101/);
+  }
+  worldOrderStressData.marketConfirmationInput.updatedAt = '2026-11-05T11:00:00Z';
+  for (const value of [null, '', true, [101], {}, -1, 0]) {
+    worldOrderStressData.marketConfirmationInput.brent = value;
+    dom.render(oilFixture(), radarFixture(), { oilNewsEventWatchData: news, worldOrderStressData });
+    assert.match(dom.text('odp-news-event-market'), /时点或数值待核/);
+  }
+  news.generatedAt = null;
+  news.freshness.latestArticleAt = '2026-11-05T12:00:00Z';
+  dom.render(oilFixture(), radarFixture(), { oilNewsEventWatchData: news, worldOrderStressData });
+  assert.match(dom.text('odp-news-event-window'), /快照生成 时点待核.*最新报道 时点待核/);
+});

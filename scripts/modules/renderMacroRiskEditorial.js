@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=editorial-review-20261110-r2';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=ui-truth-20261114-r1';
 
 const MAX_AGE_HOURS = 30;
 

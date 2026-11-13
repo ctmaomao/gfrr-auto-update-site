@@ -50,6 +50,15 @@ jobs:
       - name: Run browser smoke
         run: npm run test:e2e
 
+      - name: Upload browser verification artifacts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: visual-qa-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: error
+
       # The EdgeOne staging regressions are named explicitly rather than by glob so fixture,
       # helper and Playwright spec files under tests/csp/ can never be picked up by accident.
       # This runs after the browser smoke step on purpose: that step builds `_site`, which these

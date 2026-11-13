@@ -11,7 +11,7 @@
 // (guarded by check:oil-directional-zh-copy) — these are observational assessments,
 // not instructions.
 
-import { qualifyOdpDisplay } from './oilEvidenceQuality.js?v=editorial-review-20261110-r2';
+import { qualifyOdpDisplay, oilObservationMillis, oilEvidenceNumber } from './oilEvidenceQuality.js?v=ui-truth-20261114-r1';
 
 const $ = (id) => document.getElementById(id);
 
@@ -258,17 +258,6 @@ function pct(v, dp = 1) {
 function fixed(v, dp = 1) {
   return Number.isFinite(v) ? v.toFixed(dp) : '—';
 }
-function asNumber(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
-function firstNumber(...values) {
-  for (const value of values) {
-    const n = asNumber(value);
-    if (n !== null) return n;
-  }
-  return null;
-}
 function formatUsd(value) {
   return Number.isFinite(value) ? `$${value.toFixed(2)}` : '—';
 }
@@ -403,12 +392,7 @@ export function renderLegacyOilEventNewsLayer(worldOrderStressData) {
   const fetchedAt = formatUtcMinute(gdelt.lastFetchedAt || summary.attemptedAt);
   const cached = summary.usedCachedSummary === true ? ' · 缓存' : '';
   const marketInput = worldOrderStressData?.marketConfirmationInput || {};
-  const marketBrent = firstNumber(marketInput.brent);
-  const marketAge = Number.isFinite(marketInput.ageMinutes) ? ` · ${Math.round(marketInput.ageMinutes)} 分钟龄` : '';
-  const marketAt = marketAge || (formatUtcMinute(marketInput.updatedAt) ? ` · ${formatUtcMinute(marketInput.updatedAt)}` : '');
-  const marketText = Number.isFinite(marketBrent)
-    ? `Brent ${formatUsd(marketBrent)}${marketAt}`
-    : '市场确认暂不可用';
+  const marketText = newsMarketSnapshotText(marketInput);
 
   let statusText = eventSourceStatusZh(status);
   let tone = '';
@@ -686,10 +670,20 @@ function newsFallbackContextText(data) {
 function newsWindowText(data) {
   const freshness = data?.freshness || {};
   const windowDays = Number.isFinite(freshness.windowDays) ? `${freshness.windowDays}天窗` : '窗口待核';
-  const latest = formatUtcMinute(freshness.latestArticleAt);
-  const generated = formatUtcMinute(data?.generatedAt);
-  const age = Number.isFinite(freshness.latestArticleAgeHours) ? ` · ${freshness.latestArticleAgeHours}小时龄` : '';
-  return `${windowDays} · ${latest || generated || '—'}${age}`;
+  const now = Date.now();
+  const latestMs = oilObservationMillis(freshness.latestArticleAt);
+  const generatedMs = oilObservationMillis(data?.generatedAt);
+  const generated = Number.isFinite(generatedMs) && generatedMs <= now ? formatUtcMinute(data.generatedAt) : '时点待核';
+  const latest = Number.isFinite(generatedMs) && generatedMs <= now && Number.isFinite(latestMs) && latestMs <= now && latestMs <= generatedMs
+    ? `${formatUtcMinute(freshness.latestArticleAt)} · 距本次打开时 ${Math.floor((now - latestMs) / 3600000)}小时`
+    : '时点待核';
+  return `${windowDays} · 快照生成 ${generated} · 最新报道 ${latest}`;
+}
+function newsMarketSnapshotText(marketInput) {
+  const value = oilEvidenceNumber(marketInput?.brent);
+  const at = oilObservationMillis(marketInput?.updatedAt);
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(at) || at > Date.now()) return 'Brent 背景快照时点或数值待核';
+  return `Brent 背景快照 ${formatUsd(value)} · 汇总于 ${formatUtcMinute(marketInput.updatedAt)}；非报价观察时间，不作市场确认`;
 }
 function headlineReadinessText(data) {
   const readiness = data?.headlineDisplayReadiness || {};
@@ -819,13 +813,8 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   const confidence = data.aggregate?.confidence || 'none';
   const unique = Number.isFinite(data.aggregate?.uniqueArticleCount) ? Math.round(data.aggregate.uniqueArticleCount) : 0;
   const marketInput = worldOrderStressData?.marketConfirmationInput || {};
-  const marketBrent = firstNumber(marketInput.brent);
-  const marketAge = Number.isFinite(marketInput.ageMinutes) ? ` · ${Math.round(marketInput.ageMinutes)} 分钟龄` : '';
-  const marketAt = marketAge || (formatUtcMinute(marketInput.updatedAt) ? ` · ${formatUtcMinute(marketInput.updatedAt)}` : '');
-  const brentText = Number.isFinite(marketBrent)
-    ? `Brent ${formatUsd(marketBrent)}${marketAt}`
-    : 'Brent 市场确认暂不可用';
-  const stateText = data.displayStatusZh || '观察层已接入';
+  const brentText = newsMarketSnapshotText(marketInput);
+  const stateText = `采集时：${data.displayStatusZh || '观察层已接入'}`;
   const webNgramsHealth = webNgramsSourceHealth(data);
 
   setLeafText('odp-news-event-status', stateText);
@@ -835,7 +824,7 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setLeafText('odp-news-event-sanctions', `制裁 ${sanctions} / 航运 ${shipping}`);
   setLeafText('odp-news-event-headline-gate', headlineReadinessText(data));
   setToneClass('odp-news-event-headline-gate', 'odp-news-headline-gate', headlineReadinessTone(data));
-  setLeafText('odp-news-event-source-health', newsSourceHealthText(data));
+  setLeafText('odp-news-event-source-health', `采集时：${newsSourceHealthText(data)}`);
   setToneClass('odp-news-event-source-health', 'odp-news-source-health', newsSourceHealthTone(data));
   setLeafText('odp-news-event-web-ngrams-health', webNgramsHealth.text);
   setToneClass('odp-news-event-web-ngrams-health', 'odp-news-web-ngrams-health', webNgramsHealth.tone);
@@ -847,7 +836,7 @@ function renderOilEventNewsLayer(oilNewsEventWatchData, worldOrderStressData) {
   setLeafText('odp-news-event-claim-quality', claimQualityText(data));
   setToneClass('odp-news-event-claim-quality', 'odp-news-claim-quality', claimQualityTone(data));
   setLeafText('odp-news-event-title-risk', titleRiskText(data));
-  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}${newsFallbackContextText(data)}本区读取 production read-only oil-news event watch(GDELT/Tavily/Brave),置信度 ${confidence};标题只做聚合风险闸门,主张方向只显示聚合计数,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
+  setLeafText('odp-news-event-note', `${data.aggregate?.reasonZh || '专用油价新闻层暂不可用。'}${newsFallbackContextText(data)}本区展示 GDELT/Tavily/Brave 新闻采集快照，以上状态与计数仅对应快照生成时，不代表当前事件已获确认；当时置信度 ${{ high: '高', medium: '中', low: '低', none: '未形成' }[confidence] || '待核'};标题只做聚合风险闸门,主张方向只显示聚合计数,不展示原文标题。它不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向。只有与价格结构、库存/供需锚点、咽喉转运和卫星/设施事件同时印证时,才适合提高人工观察置信度。`);
 }
 function renderEnergyAddendum(radarData, worldOrderStressData, oilData, oilNewsEventWatchData) {
   clearEnergyAddendum();

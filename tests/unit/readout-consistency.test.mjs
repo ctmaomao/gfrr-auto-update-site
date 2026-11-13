@@ -60,10 +60,11 @@ const retail = () => ({ updatedAt: '2026-10-31T00:00:00Z', cartsNominalYoY: 0.08
 const radar = () => ({ macroDrivers: { consumerRetail: retail(), consumer: { umichSentiment: 48.1, threeMonthChange: -1.4, regime: '稳定', updatedAt: '2026-09-01T00:00:00Z', sourceStatus: { umichSentiment: 'live' } } } });
 const renderRetail = r => api.renderC4UsEconomyTemperature({ radarData: r });
 
-test('market dates and age limits reuse the existing contract without touching shared numeric coercion', () => {
+test('market dates and age limits preserve their contract while missing numeric inputs stay missing', () => {
   assert.equal(api.MARKET_MAX_AGE_DAYS, MAX_ACTIVE_ASSET_AGE_DAYS);
   assert.equal(api.MARKET_MAX_AUXILIARY_LAG_DAYS, MAX_AUXILIARY_LAG_DAYS);
-  assert.equal(api.asNumber(null), 0); // legacy helper unchanged, targeted callers opt in
+  assert.equal(api.asNumber(null), null); // missing observations must not become zero
+  assert.equal(api.asNumber(0), 0); // real zero remains an observation
   assert.equal(api.strictFiniteDisplay(null), null);
   for (const value of [null, undefined, '', '0', false, true, [], {}, NaN, Infinity]) assert.equal(api.strictFiniteDisplay(value), null);
   assert.equal(api.strictFiniteDisplay(0), 0);
@@ -144,7 +145,7 @@ test('consumer positive, negative, true zero and valid-to-missing agree with the
 test('consumer dates and source flags never mislabel aggregate dates or stale/failed evidence as current', () => {
   const data = radar(); renderRetail(data);
   assert.match(text('c4-consumer-aux'), /组合记录 2026-10-31/);
-  assert.match(text('c4-consumer-note'), /CARTS各自日期未提供/);
+  assert.match(text('c4-consumer-note'), /名义观察日 未提供或待核验；实际观察日 未提供或待核验/);
   assert.match(text('c4-consumer-diffusion'), /2026-08-01/); assert.match(text('c4-consumer-umich'), /2026-09-01/);
   data.macroDrivers.consumerRetail.sourceStatus.cartsr = 'stale'; renderRetail(data);
   assert.match(text('c4-consumer-note'), /来源过期/); assert.equal(text('c4-consumer-badge'), '待核验');

@@ -1,9 +1,12 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=editorial-review-20261110-r2';
+import { $ } from './config.js?v=ui-truth-20261114-r1';
 
 function asNumber(value) {
+  if (value === null || value === undefined || typeof value === 'boolean'
+      || (typeof value === 'string' && value.trim() === '')
+      || !['number', 'string'].includes(typeof value)) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }

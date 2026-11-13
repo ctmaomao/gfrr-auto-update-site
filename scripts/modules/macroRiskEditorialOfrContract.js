@@ -1,4 +1,4 @@
-import { pressureContainsNumericContent } from './editorialNumericView.js?v=editorial-review-20261110-r2';
+import { pressureContainsNumericContent } from './editorialNumericView.js?v=ui-truth-20261114-r1';
 // Browser-only display qualification. No provider, network, or score calculation.
 const MAX_AGE_MS = 30 * 3600000;
 const DAY = 86400000;
