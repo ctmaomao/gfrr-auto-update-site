@@ -158,15 +158,17 @@ function buildDailyBaselineInput(dataPayload, fallbackReason) {
   if (!values || typeof values !== 'object' || brent === null || brent <= 0) {
     return null;
   }
+  const updatedAt = Object.hasOwn(dataPayload?.dailyRealtimeInput ?? {}, 'updatedAt')
+    ? dataPayload.dailyRealtimeInput.updatedAt : dataPayload?.updatedAt;
+  const ageMinutes = ageMinutesFromUpdatedAt(updatedAt);
+  // A dated baseline is not a realtime quote, but its clock must still be valid.
+  // Do not fall through from an explicitly invalid input clock to a newer wrapper clock.
+  if (ageMinutes === null) return null;
   return buildMarketConfirmationInput({
     source: 'daily-baseline',
     path: 'data/radar-data.json',
-    updatedAt: typeof dataPayload?.dailyRealtimeInput?.updatedAt === 'string'
-      ? dataPayload.dailyRealtimeInput.updatedAt
-      : typeof dataPayload?.updatedAt === 'string'
-        ? dataPayload.updatedAt
-        : null,
-    ageMinutes: ageMinutesFromUpdatedAt(dataPayload?.dailyRealtimeInput?.updatedAt || dataPayload?.updatedAt),
+    updatedAt,
+    ageMinutes,
     values,
     fallbackReason
   });
