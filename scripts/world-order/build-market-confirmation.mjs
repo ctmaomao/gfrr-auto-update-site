@@ -1,3 +1,4 @@
+import { buildMarketInputProvenance } from './market-input-provenance.mjs';
 import {
   clampConfidence,
   clampScore,
@@ -74,6 +75,7 @@ function buildMarketConfirmationInput({
     us10y: normalizedValues.us10y,
     real10y: normalizedValues.real10y,
     spx: normalizedValues.spx,
+    observationProvenance: buildMarketInputProvenance(normalizedValues, sourceDetails),
     brentSource: extractBrentSource(payloadForBrent),
     brentPromotionApplied: brentValidation?.promotion?.applied === true,
     brentPromotionReason: extractPromotionReason(payloadForBrent),

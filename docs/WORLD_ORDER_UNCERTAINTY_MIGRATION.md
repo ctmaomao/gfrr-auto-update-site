@@ -45,3 +45,17 @@ The range helper intentionally does not expose an overall score function or regi
 ## Stage 2a history preparation (inactive)
 
 The history normalizer and merge helper are extracted with legacy behavior preserved, including its historical null coercion (not endorsed for v2). Explicit v2 inputs are rejected by default before legacy coercion. Offline opt-in supports strictly typed incomplete snapshots and dated lastKnown; it never interprets a conditional bound as a point estimate. The production Daily caller does not enable v2. Unknown versions fail rather than fall into v1. UI consumers, production validators and producer remain v1, so activation is still blocked.
+
+## Stage 2b presentation preparation (inactive)
+
+`uncertainty-presentation.mjs` is an unimported pure adapter for explicit offline opt-in. It reuses the Stage 2a validator, accepts source/history incomplete snapshots, emits no point score/tone/recommendation, names the conditional outer bound and distinguishes dated lastKnown from current data. Invalid inputs throw; future integration must render an unavailable state, never retain the previous view. Legacy unversioned inputs return null for the unchanged V1 path. This is not completed frontend support or activation.
+
+Consumer audit / still-required work:
+- `renderMacroTrend.mergeCurrentTrendSnapshot`: when current overlay score is null it can retain the previous history overlay. V2 must replace that record, break the current point/line, and never imply unchanged risk. Test valid → incomplete → invalid → V1 across current and history inputs.
+- `renderMacroOverview`: C8, detail state, market confirmation, dimension tones, risk-bias, warnings and summary must all switch together; a conditional range must not occupy a point-score field. Clear old tone and recommendation, show missing reasons and dated lastKnown separately.
+- `macroOverviewNarrative`, `buildCrossValidationMatrix`, `independentWarningView`/OFR and oil references: explicit incomplete branch with version validation, no null-to-zero, ordinary regime, neutral modifier, or old state retained. Source evidence may still be shown with its own timestamps and qualifications.
+- The adapter deliberately has no runtime importer. No asset-version bump or CSS change accompanies this prepared-only addition. Before wiring it, migrate all consumers, test transitions with real DOM, perform desktop/mobile visual acceptance, bump loaded assets, and independently review the exact runtime tree. Provider eligibility, production validators and activation remain separate blockers.
+
+## Stage 2c provenance audit
+
+The existing V1 input selector now preserves matched per-leaf sourceDetails as optional `observationProvenance`, retaining a reported timestamp and fallback marker only for exact selected-value matches. Metadata remains explicitly unqualified, not a freshness gate. Daily unavailable metadata is unknown, not borrowed from an acquisition timestamp. The production checker validates this optional audit field; no scoring policy or V2 activation changes. Verified observation semantics, DTWEXBGS publication cadence/holidays, instrument matching and source-specific qualification remain unresolved activation gates.
