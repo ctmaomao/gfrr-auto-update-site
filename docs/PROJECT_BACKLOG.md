@@ -1,5 +1,7 @@
 # Project Backlog · GFRR Auto-Update Site
 
+- **黄金时间真实性修复**：GitHub realtime 原先丢弃 Gold API 更新时间、重标今天并复制报价制造零日变动。现保留官方定义的上游获取时间，单报价日变动为 null，错误价格/日期仍回退；明确 FRED 观察日、来源获取时间及 Brent 候选时间语义，不改评分或 V2 开关。实际来源核验与字段见 DATA_CONTRACT。待完整检查、独审和精确 CI 后发布。
+
 - **World Order V2 预备校验接入**：真实 checker 新增显式离线预备模式，固定分量绑定本地快照哈希/版本/日期，市场判据暂全部 unknown；默认生产模式拒绝未激活版本，不把自洽区间当作来源合格。来源观察语义、消费者接线及视觉验收仍待完成，V2 不启用。见 [迁移设计](WORLD_ORDER_UNCERTAINTY_MIGRATION.md)。
 
 - **World Order 不确定性迁移准备**：2026-11-13 全项目续审发现缺失市场输入归零会降低总分，且 Daily 历史可能沿用旧状态。新增未接生产的条件贡献区间纯函数与离线回归，固定旧公式，缺失项保留 null 与范围；不虚构美元校准、不改现行评分。分阶段消费者/历史迁移及激活门槛见 [迁移设计](WORLD_ORDER_UNCERTAINTY_MIGRATION.md)。本阶段不代表线上问题已解决。
