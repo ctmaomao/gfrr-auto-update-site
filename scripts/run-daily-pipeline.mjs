@@ -1,3 +1,4 @@
+import { normalizeWorldOrderStressHistorySnapshot, mergeWorldOrderStress } from './daily/world-order-history.mjs';
 import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import { fetchBalticFreight } from './daily/baltic-freight.mjs';
 import { freightSourceString, freightProvidersFromSource, isFreightSource } from './daily/freight-source-contract.mjs';
@@ -491,27 +492,6 @@ function textOrNull(value) {
   return text.length ? text : null;
 }
 
-function normalizeWorldOrderStressHistorySnapshot(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
-  const score = finiteNumberOrNull(payload.score);
-  const confidence = finiteNumberOrNull(payload.confidence);
-  const observedAt = textOrNull(payload.updatedAt);
-  const state = textOrNull(payload.state);
-  const labelZh = textOrNull(payload.labelZh);
-  const freshness = textOrNull(payload.freshness);
-  if (score === null || score < 0 || score > 100) return null;
-  if (confidence === null || confidence < 0 || confidence > 1) return null;
-  if (!observedAt || Number.isNaN(Date.parse(observedAt))) return null;
-  if (!state || !labelZh || !freshness) return null;
-  return {
-    score,
-    state,
-    labelZh,
-    observedAt,
-    confidence,
-    freshness
-  };
-}
 
 const DAILY_REALTIME_AUDIT_SOURCE = 'origin/realtime-data:realtime/market.json';
 
@@ -10464,11 +10444,6 @@ function applyTransmissionDeltas(chain, previousSource) {
   };
 }
 
-function mergeWorldOrderStress(entry, worldOrderStress, previousEntry = null) {
-  if (worldOrderStress) return { ...entry, worldOrderStress };
-  if (previousEntry?.worldOrderStress) return { ...entry, worldOrderStress: previousEntry.worldOrderStress };
-  return entry;
-}
 
 function appendHistory(prev, score, transmissionSnapshot = null, worldOrderStress = null) {
   const today = isoNow.slice(0, 10);

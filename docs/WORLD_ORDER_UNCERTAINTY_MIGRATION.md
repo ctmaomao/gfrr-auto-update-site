@@ -19,7 +19,7 @@ Migration surface / release blockers
 - Producer: build-market-confirmation, build-world-order-stress, score-world-order-stress, normalization/clamp, model version and config.
 - Validators: check-world-order-stress finite score/state whitelist, validate-data history schema, model/check fixtures; add v2 branch rather than weakening v1 assertions.
 - Consumers: renderMacroOverview (detail cards, tone, marker/summary), renderMacroTrend, macroOverviewNarrative, buildCrossValidationMatrix, renderOilDirectional and renderOfrPrimary references, review-world-order-stress, verify-acled-refresh; audit editorial/external-AI input serializers and source-layers for zero coercion.
-- Daily history normalizeWorldOrderStressHistorySnapshot currently rejects null score; mergeWorldOrderStress then keeps previous snapshot. Must explicitly persist incomplete marker with dated lastKnown, not silent carry-forward.
+- Legacy Daily history coerces explicit null score/confidence to zero; undefined or other invalid snapshots may be rejected and same-day mergeWorldOrderStress then keeps the previous snapshot. Must explicitly persist incomplete marker with dated lastKnown, not silent carry-forward.
 - Tests: all known unchanged, each unknown criterion bounds, all missing0..88 not green, shared-input combination, fresh wrapper+old leaf, date missing/invalid/future, partial failure, v1 history compatibility, valid→incomplete UI clearing, no stale green/neutral marker, default and unknown-dollar isolation.
 - Desktop/mobile visual acceptance and exact-head browser CI required before activation. Present session's local preview capability is blocked; remote CI alone is not claimed as completed visual acceptance.
 
@@ -41,3 +41,7 @@ Independent design review addendum
 - Stage 3: separate exact-tree activation review with before/after evidence, incomplete-state desktop/mobile acceptance, all consumers migrated, and source qualification policy established. No unconditional current-score publication from prepared output.
 
 The range helper intentionally does not expose an overall score function or regime classifier: other components, weights and unknown-source behavior are not yet migrated. A complete contribution set is not proof that any observation was actually fresh. No statistical accuracy claim or newly calibrated dollar threshold is made.
+
+## Stage 2a history preparation (inactive)
+
+The history normalizer and merge helper are extracted with legacy behavior preserved, including its historical null coercion (not endorsed for v2). Explicit v2 inputs are rejected by default before legacy coercion. Offline opt-in supports strictly typed incomplete snapshots and dated lastKnown; it never interprets a conditional bound as a point estimate. The production Daily caller does not enable v2. Unknown versions fail rather than fall into v1. UI consumers, production validators and producer remain v1, so activation is still blocked.
