@@ -1038,6 +1038,13 @@ function creditSectionHtml(credit) {
     }).join('')}</div></section>`;
 }
 
+// Date labels include both endpoints, without duplicate indices in short series.
+function dateTickIndices(length, plotWidth, maxTicks = 5) {
+  if (!Number.isInteger(length) || length < 2 || !Number.isFinite(plotWidth) || plotWidth <= 0) return [];
+  const count = Math.min(length, maxTicks, Math.max(2, Math.floor(plotWidth / 90) + 1));
+  return Array.from({ length: count }, (_, n) => Math.round(n * (length - 1) / (count - 1)));
+}
+
 function drawCreditTrend(credit) {
   for (const panel of CREDIT_PANELS) {
     const wrap = document.getElementById(`credit-${panel.key}`), points = creditPoints(credit, panel.key);
@@ -1054,8 +1061,11 @@ function drawCreditTrend(credit) {
     let content = '';
     for (let v = min; v <= max; v += step) content += `<line x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(0,0,0,0.05)"/><text x="${left-10}" y="${y(v)+3}" text-anchor="end">${v}bp</text>`;
     content += `<path d="M${left},${top}V${H-bottom}H${W-right}" fill="none" stroke="rgba(0,0,0,0.1)"/>`;
-    // Match upstream's five category-axis ticks, retaining actual dates in tooltips.
-    for (let n = 0; n < 5; n++) { const i = Math.min(points.length - 1, n * Math.ceil(points.length / 5)); content += `<text x="${x(i)}" y="${H-7}" text-anchor="middle">${points[i].date.slice(0,7)}</text>`; }
+    // Adapt label density to available width; exact daily dates remain in tooltips.
+    for (const i of dateTickIndices(points.length, W - left - right)) {
+      const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
+      content += `<text class="credit-date-label" x="${x(i)}" y="${H-7}" text-anchor="${anchor}">${points[i].date.slice(0,7)}</text>`;
+    }
     for (const threshold of panel.thresholds) content += `<line class="credit-threshold" x1="${left}" x2="${W-right}" y1="${y(threshold.value)}" y2="${y(threshold.value)}" stroke="${threshold.color}" stroke-width="1" stroke-dasharray="4 4"/>`;
     content += `<polyline class="credit-series" points="${points.map((p,i) => `${x(i).toFixed(2)},${y(p.bps).toFixed(2)}`).join(' ')}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round"/>`;
     wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" tabindex="0" aria-label="${panel.title} 一年信用利差趋势，最新 ${points.at(-1).date}：${points.at(-1).bps} 个基点" style="font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--ink)">${content}</svg><div class="credit-tooltip" role="status"></div>`;
@@ -1121,10 +1131,14 @@ function drawTrend(data) {
   }
   // 窄屏抽稀 x 轴标签,避免周标重叠(尾点始终保留)
   const labelStep = W < 560 ? Math.ceil(seed.length / 5) : 1;
+  // Preserve the existing density ceiling, then distribute its labels without a crowded tail.
+  const maxLabels = Math.ceil((seed.length - 1) / labelStep) + 1;
+  const labelIndices = new Set(seed.length === 1 ? [0] : dateTickIndices(seed.length, W - padL - padR, maxLabels));
   let xlabels = '';
   seed.forEach((p, i) => {
-    if (i % labelStep !== 0 && i !== seed.length - 1) return;
-    xlabels += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1815">${escapeHtml(p.week)}</text>`;
+    if (!labelIndices.has(i)) return;
+    const anchor = i === 0 ? 'start' : i === seed.length - 1 ? 'end' : 'middle';
+    xlabels += `<text class="trend-date-label" x="${x(i)}" y="${H - 6}" text-anchor="${anchor}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#1A1815">${escapeHtml(p.week)}</text>`;
   });
 
   const redPts = seed.map((p, i) => ({ x: x(i), y: y(p.red_pct) }));
