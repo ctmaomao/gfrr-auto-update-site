@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { validatePreparedWorldOrderV2, assertWorldOrderProductionVersion } from './world-order/prepared-v2-contract.mjs';
 import { validateMarketInputProvenance } from './world-order/market-input-provenance.mjs';
 import { EVENTS_MODEL, validateEventsSource } from './world-order/gdelt-events-score.mjs';
 import fs from 'node:fs';
@@ -8,6 +10,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 const dataPath = path.join(root, 'data', 'world-order-stress.json');
+
+if (process.argv.includes('--validate-prepared-v2')) {
+  if (process.argv.length !== 4 || process.argv[2] !== '--validate-prepared-v2') throw new Error('prepared_v2_arguments_invalid');
+  const candidatePath = path.resolve(process.argv[3]);
+  if (candidatePath === dataPath || candidatePath.startsWith(path.join(root, 'data') + path.sep)
+    || candidatePath.startsWith(path.join(root, 'realtime') + path.sep)) throw new Error('prepared_v2_candidate_must_be_nonproduction');
+  const readSnapshot = file => {
+    const bytes = fs.readFileSync(path.join(root, file));
+    return { data: JSON.parse(bytes), sha256: createHash('sha256').update(bytes).digest('hex') };
+  };
+  validatePreparedWorldOrderV2(JSON.parse(fs.readFileSync(candidatePath, 'utf8')), {
+    world: readSnapshot('data/world-order-stress.json'),
+    radar: readSnapshot('data/radar-data.json'),
+    rules: JSON.parse(fs.readFileSync(path.join(root, 'config/world-order-rules.json'), 'utf8'))
+  });
+  console.log('Prepared World Order V2 structure: PASS; NOT activated or publication-eligible.');
+  process.exit(0);
+}
+
 
 const allowedStates = new Set([
   'normal_globalization',
@@ -94,6 +115,7 @@ for (const phrase of forbiddenPhrases) {
 }
 
 const payload = JSON.parse(text);
+assertWorldOrderProductionVersion(payload);
 for (const key of ['version', 'updatedAt', 'sourceMode', 'score', 'state', 'labelZh', 'confidence', 'freshness', 'marketConfirmationInput', 'externalSources', 'dimensions', 'dominantDrivers', 'systemInterpretationZh', 'decisionModifier', 'warnings']) {
   if (!(key in payload)) fail(`${key} missing`);
 }

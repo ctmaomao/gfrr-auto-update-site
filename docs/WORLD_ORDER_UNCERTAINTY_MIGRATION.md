@@ -59,3 +59,17 @@ Consumer audit / still-required work:
 ## Stage 2c provenance audit
 
 The existing V1 input selector now preserves matched per-leaf sourceDetails as optional `observationProvenance`, retaining a reported timestamp and fallback marker only for exact selected-value matches. Metadata remains explicitly unqualified, not a freshness gate. Daily unavailable metadata is unknown, not borrowed from an acquisition timestamp. The production checker validates this optional audit field; no scoring policy or V2 activation changes. Verified observation semantics, DTWEXBGS publication cadence/holidays, instrument matching and source-specific qualification remain unresolved activation gates.
+
+## Stage 2d real-checker preparation (not publication)
+
+The real World Order checker accepts `--validate-prepared-v2 <nonproduction-candidate.json>` for explicit offline structure validation. Default production mode rejects any explicit unactivated contract version before legacy score validation; no version field can bypass existing V1 assertions. No producer or workflow enables V2.
+
+`prepared-v2-contract.mjs` binds both fixed components to exact local World Order/radar snapshot SHA-256, source path, model version and generation date. It replays the fixed existing .6/.3/.1 aggregate and dimension weights with the original rounding order. All six market criteria must remain unknown; an evidenceRef string cannot qualify a source. The resulting interval is solely a conditional completion bound with other components held fixed and not revalidated, never a probability, point estimate or complete risk uncertainty estimate. Formula drift, timestamp failures, baseline hash changes, fabricated qualifications, missing lineage, extra advice and changed bounds fail.
+
+Source qualification remains blocked by concrete semantics, not an authorization question:
+- Worker FRED details retain actual observation-row dates, but daily observations can be published in weekly batches (DTWEXBGS); source fetch time does not prove observation freshness.
+- Worker held-Brent `timestamp` can be the previous preview generation time. A matched metadata record therefore cannot be promoted to a verified quote observation.
+- Gold's provider `updatedAt` semantics and source-specific cadence are not yet certified.
+- Daily baseline does not retain per-leaf observation metadata.
+
+A future positive qualification record must bind the selected value, actual instrument/series, verified observation time, fallback/held status and a reviewed cadence/publication-calendar policy. Until then, prepared validation accepts only unknown criteria and publication remains blocked. Consumer/UI wiring and visual acceptance are separate outstanding gates.
