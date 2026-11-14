@@ -1,5 +1,7 @@
 # Bubble source freshness audit — 2026-11-12
 
+Status reconciliation: 2026-11-14, checked against main `2bb84648`. The November 12 findings below remain historical evidence; implementation and natural adoption are separated here.
+
 Scope: current Bubble acquisition, dated observations and cadence. This is not a claim that every provider is realtime or that future retrievals will succeed. No paid provider or production refresh was run for this audit.
 
 ## Confirmed repair
@@ -15,7 +17,7 @@ The repair uses common dated sessions and identical endpoints, retains the exist
 | CAPE / SPY holdings / NVDA forward PE | Follow-up repair binds CAPE Atom entry clock, holdings update date and financial-statistics update date | Require dated observations within 7 days; no generic page checked-date substitution |
 | SEC hyperscaler capex / cash flow | Complete quarter qualification and 120-day age checks; fiscal calendars retained | Keep quarterly cadence and period semantics; daily polling cannot make disclosures realtime |
 | Barchart breadth / Yahoo fallback | Dated source requirement; full universe fallback aligns session and coverage | Retain guards; full-universe requests are expensive and should not be made frequent blindly |
-| Credit spreads | FRED daily observations; full builder refresh is weekly, separate credit-only tool is manual | Daily close is not live intraday credit pricing |
+| Credit spreads | FRED daily observations; full builder remains weekly; #556 adds a separate scheduled credit-only publication | Daily close is not live intraday credit pricing |
 | VC share / neocloud credit | Current package falls back to dated evidence when recent complete coverage cannot be proved | Preserve explicit gaps; search success alone is not current-period coverage |
 | OpenRouter volume / spend proxy | Public dated chart plus current model catalogue; spend assumes 80/20 input/output blend and is not actual vendor revenue | Bind chart period to observation date; catalogue availability does not certify historical realized pricing |
 | IPO pipeline / accounting events / CEO caution | Public filings/news-derived proxies, not complete issuance/incident inventories; free-search and evidence gates apply | Retain scope/date/coverage limits; do not treat no result as proof of no event |
@@ -26,7 +28,7 @@ The repair uses common dated sessions and identical endpoints, retains the exist
 
 ## Cadence
 
-The full Bubble refresh is weekly (Monday 05:30 UTC). Tuesday–Friday source audits restore production files and do not publish new observations. Separate qualified refresh and credit-spread tools have narrower scopes and are manual, not a daily publication schedule. Increasing full-build frequency would also increase broad scraping/search and does not solve metric-date ambiguity; a selective dated market snapshot is a separate reviewed upgrade, not silently enabled here.
+The full Bubble refresh is weekly (Monday 05:30 UTC). Tuesday–Friday source audits restore production files and do not publish new observations. The separate qualified refresh remains narrower in scope. Credit-only publication is now scheduled Tuesday–Saturday at 06:20 UTC in [refresh-bubble-credit-spreads.yml](../.github/workflows/refresh-bubble-credit-spreads.yml), after #556. Its first natural run [43444779335](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43444779335) began November 13 at 14:39 UTC and committed `3713fb90`; scheduler delay means the cron is not a delivery-time guarantee. It refreshes only HY/CCC/IG display history, not weekly scores, constituent evidence dates or AI prose. Increasing full-build frequency would also increase broad scraping/search and does not solve metric-date ambiguity; a selective dated market snapshot is a separate reviewed upgrade, not silently enabled here.
 
 ## Boundaries
 
@@ -39,3 +41,12 @@ CAPE switches the single existing Multpl page request to the page-linked Atom fe
 The Bubble FRED API/CSV parsers now reject null, blank, boolean, object and nonnumeric values without converting them to zero; genuine zero remains valid. Dates must be real, nonfuture ISO days, conflicting duplicates fail, and valid observations are ordered newest first. HY OAS publishes its actual FRED observation date and requires it within seven days; its formula and thresholds are unchanged. These fixes do not increase the weekly production cadence.
 
 Read-only live probes on November 12 returned HTTP200 and passed the new parsers: Multpl Atom CAPE40.24 with source clock `2026-11-11T16:00:00-05:00`; StockAnalysis holdings metric update November10 (distinct from quote November11 and last-checked November12); NVDA financial-statistics update November12. These probes establish current parser compatibility, not a permanent availability guarantee. No full source body is republished.
+
+
+## Current adoption checkpoint — November 14
+
+- Source-date implementation is merged: #553 (`95aa69e3`) for common-session SPY/RSP and #555 (`0dd3c8ff`) for metric dates and FRED missing values. They are not awaiting implementation or PR approval.
+- At main `2bb84648`, full `data/bubble-watch.json` still declares `as_of_date=2026-11-10` and `generated_at=2026-11-10T06:14:30.988Z`. The credit-only `checkedAt=2026-11-13T14:39:29.850Z` is independent. Thus the new full collector's natural production adoption remains unverified; a successful source probe or credit refresh does not establish it.
+- #564–#567 add truthful frontend dates, unavailable states, source-coverage caveats, read-time credit-age updates and complete chart axes/date endpoints. These are display repairs, not new observations or complete inventory coverage.
+- VC share / Neocloud recent coverage, stale ARR milestones and other qualified/manual indicators remain genuine evidence limits. A new page fetch or a zero-result search does not resolve them.
+- Historical wording above describes the November 12 audit and its probes. This checkpoint changes no source qualification, scoring, budget or publication policy.
