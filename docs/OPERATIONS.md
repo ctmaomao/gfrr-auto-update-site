@@ -1828,3 +1828,39 @@ Compare the full hash privately against authenticated receipt key IDs and the pr
 After independent approval, coordinator initialization must first recheck the branch is absent, create only a genesis on `deepseek-bubble-receipt-20261112` with its declared parent, and read it back. Existing ref, partial creation or uncertain outcome must be investigated, never overwritten/recreated. Pin `DEEPSEEK_RECEIPT_20261112_GENESIS_SHA`, `DEEPSEEK_RECEIPT_20261112_GRANT_SHA256` and `DEEPSEEK_RECEIPT_20261112_PRICE_REVIEW_SHA256`. Only explicit Bubble manual selection `editorial-bubble-receipt-20261112-v1` can use them. Never change monthly variables or old grants to make this pass. Preflight and dispatch require authenticated unchanged historical heads, absent monthly ledger and no concurrent editorial run; the current secret must match historical receipt identity. Failure consumes any already-written reservation. No second call or automatic refresh is allowed.
 
 For the new receipt grant only, the workflow retains a successful validated review bundle for at most three days and skips production writer/commit. The bundle contains the exact compact public-source evidence needed for final-writer replay, not prompts/provider envelopes/account evidence. Independent factual review and a separately reviewed coordinator admission authenticating the original GitHub run/artifact/source commit and candidate-digest approval are required before calling the unchanged final-writer function. Do not forge the original run environment or invoke its CLI in a different run; source drift or stale inputs hold publication without another DeepSeek call. Ordinary generation and failure receipt retention remain unchanged. See ADR-0112 for the narrow successful-candidate exception to ADR-0103.
+
+### Brent observation metadata in Daily/Worker audit (2026-11-14)
+
+`audit:daily-worker` remains a read-only observer of the existing realtime input
+and Worker preview; it never selects a source or changes promotion, scoring,
+thresholds, weights or shadow activation. The JSON log and Actions Summary now
+retain an allowlisted `brentObservation` projection: source/instrument, known
+contract, actual observation time and its precision, explicitly supplied fetch
+time, age at audit time, promotion state/reason and candidate exclusion reason.
+Unknown identifiers/reasons are `unknown`; missing times and numeric values are
+null. Source URLs, raw responses and arbitrary diagnostic text are not retained.
+
+The payload `updatedAt` and the audit's Worker retrieval time remain distinct
+from source observation time. Date-only observations have calendar age in days,
+not invented intraday precision. Realtime's promoted candidate date is taken
+from the original candidate, not the synthetic selected timestamp; Worker held
+previous values and derived two-source averages have no known single observation
+time. Their component candidates are recorded separately. Failed cached fallbacks
+lose unverified source/time identity; explicit acquisition or unknown clock types
+are never reported as observations. Successful alternate sources are not treated
+as failed cache reads. No new upstream field
+or timestamp is manufactured, and old logs cannot be retroactively reconstructed.
+
+Each available input includes a SHA-256 of its parsed JSON serialization, with
+that hash basis explicitly named; the Daily realtime commit is recorded only if
+its existing environment value is a full lowercase commit SHA. This identifies
+the actual input without copying its raw diagnostics. It is not a hash of the
+original HTTP/file bytes or proof of upstream authenticity.
+
+`drift.brentComparison` distinguishes `comparable` (same known source,
+instrument/contract and observation time), `different-basis` and `unknown`.
+Rolling futures without a known contract stay unknown. `absDiff`/`pctDiff`,
+`material` and `--fail-on-large-drift` retain their existing arithmetic threshold
+meaning; they do not establish economically comparable observations. Missing
+values never become zero. Payload generation gaps are not quote age gaps.
+Regression coverage: `tests/unit/brent-observation-audit.test.mjs`.
