@@ -73,3 +73,14 @@ Source qualification remains blocked by concrete semantics, not an authorization
 - Daily baseline does not retain per-leaf observation metadata.
 
 A future positive qualification record must bind the selected value, actual instrument/series, verified observation time, fallback/held status and a reviewed cadence/publication-calendar policy. Until then, prepared validation accepts only unknown criteria and publication remains blocked. Consumer/UI wiring and visual acceptance are separate outstanding gates.
+
+
+## Stage 2e observation-readiness preflight (inactive)
+
+`observation-readiness.mjs` is a pure offline audit, with no producer, history, frontend, or workflow importer. It examines the selected finite value against the original raw source record, exact registered source labels, explicitly reported timestamp kind, valid calendar date, future date and fallback/held flags. Even a reported observation claim requires explicit `fallbackUsed=false` and `held=false`; absent held provenance remains unknown. `matched_metadata` alone lacks the original bound value and cannot pass this preflight. Wrapper/generation clocks are never substituted. Recognizing a source label is not proof of provider authenticity or data rights.
+
+The report distinguishes a **reported observation claim** from a qualified observation: `reportedObservationAt` may preserve a strictly matched record's explicit claim, but `qualifiedObservedAt` is always null and `qualification` is always `not_qualified`. Gold API acquisition time cannot become a quote time by relabeling it. Brent composite/unknown labels remain unresolved; the registered FRED spot label is not treated as a futures identity. `DTWEXBGS` remains the broad-dollar series, never ICE DXY; there is no threshold evaluation, including at 105. Cadence/publication-calendar policies and instrument-specific rule review remain missing for every source.
+
+All six criteria therefore remain unknown, and feeding this report into the existing prepared completion helper still yields 0–88 with no current point score or regime. The report does not narrow the range, activate V2, qualify prior prices as current, or change any production result. Tests cover wrong-series/value binding, invalid/future clocks, acquisition/held records, missing values vs true zero, immutable input, unknown joint criteria and default-disabled history.
+
+Audit of remaining consumers: V1 history still has legacy null-to-zero and same-day carry-forward behavior; the explicit V2 history and presentation branches remain opt-in. Production overview/trend/narrative/matrix/oil/OFR consumers are not connected to this preflight or the inactive V2 adapter. This addition is evidence preparation only, not completion of the consumer/history migration. V2 history date parsing still deserves a separate strict-calendar review before activation.
