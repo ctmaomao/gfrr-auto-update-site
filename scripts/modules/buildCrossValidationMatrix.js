@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=source-disclosure-20261114-r1';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=qqq-week-label-20261114';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',
