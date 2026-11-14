@@ -1280,3 +1280,7 @@ The existing HY/CCC/IG FRED display history now has a bounded Tuesday–Saturday
 ### Oil Thermal 历史基线年龄披露（2026-11-13）
 
 `established_observation_window` 描述已审阅样本跨度，不保证截至日期新鲜。生产 baseline config 仅由独立审阅的显式晋升更新；自然 thermal refresh 和 quality monitor 不自动更新它。构建器在既有 `limitationsZh` 和设施 `noteZh` 写明真实 `lastSampleAt` 与相对 artifact `generatedAt` 的年龄。设施使用自己的截至日期，不借用全局日期；年龄超过自身采样跨度时提示“基线参考较旧”，这只是可复核的描述，不是新增交易或信号门槛。缺失、非法或未来截至时间明确无法核验。该补丁不改任何既有状态、阈值、重复/升高分类或生产配置，不恢复已退役前端卡片，也不把检测解释成事故、停产、断供或价格方向。新说明须待下一次自然 thermal 生成才进入公开 JSON。
+
+### Independent Bubble market observations (2026-11-14)
+
+Existing CAPE/SPY holdings/NVDA PE/SPY–RSP public sources gain a separate dated display snapshot with five bounded credential-free requests. It shares the existing credit workflow, does not repeat credit requests, and never enters weekly scores or AI input. Missing/invalid dates stay unknown; previous valid values keep original dates. [Contract, limits and verification](BUBBLE_INDEPENDENT_MARKET_OBSERVATIONS.md).

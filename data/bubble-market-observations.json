@@ -1,0 +1,61 @@
+{
+  "contractVersion": "bubble-market-observations-v1",
+  "boundary": "display_only_no_score_or_editorial_impact",
+  "checkedAt": "2026-11-14T09:44:55.067Z",
+  "observations": [
+    {
+      "id": "cape",
+      "label": "CAPE 周期调整估值",
+      "unit": "倍",
+      "sourceName": "Multpl Shiller PE",
+      "sourceUrl": "https://www.multpl.com/shiller-pe/atom",
+      "value": 39.95,
+      "observationDate": "2026-11-13",
+      "fetchedAt": "2026-11-14T09:44:55.067Z",
+      "status": "fresh",
+      "maxAgeDays": 7
+    },
+    {
+      "id": "top5_weight",
+      "label": "SPY 前五大持仓权重",
+      "unit": "%",
+      "sourceName": "StockAnalysis SPY holdings",
+      "sourceUrl": "https://stockanalysis.com/etf/spy/holdings/",
+      "value": 26.659999999999997,
+      "observationDate": "2026-11-12",
+      "fetchedAt": "2026-11-14T09:44:55.067Z",
+      "status": "fresh",
+      "maxAgeDays": 7
+    },
+    {
+      "id": "nvda_fpe",
+      "label": "NVDA 远期市盈率",
+      "unit": "倍",
+      "sourceName": "StockAnalysis financial statistics",
+      "sourceUrl": "https://stockanalysis.com/stocks/nvda/statistics/",
+      "value": 13.46,
+      "observationDate": "2026-11-14",
+      "fetchedAt": "2026-11-14T09:44:55.067Z",
+      "status": "fresh",
+      "maxAgeDays": 7
+    },
+    {
+      "id": "spy_vs_rsp_6m",
+      "label": "SPY−RSP 六个月价格收益差",
+      "unit": "个百分点",
+      "sourceName": "Yahoo daily closes (unadjusted)",
+      "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=6mo&interval=1d",
+      "value": -7.764062154888256,
+      "observationDate": "2026-11-13",
+      "fetchedAt": "2026-11-14T09:44:55.067Z",
+      "status": "fresh",
+      "maxAgeDays": 7
+    }
+  ],
+  "collection": {
+    "requests": 5,
+    "maximumRequests": 5,
+    "applicationRetries": 0,
+    "paidCalls": 0
+  }
+}
