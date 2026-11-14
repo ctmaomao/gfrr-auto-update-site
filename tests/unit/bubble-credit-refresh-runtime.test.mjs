@@ -49,12 +49,13 @@ test('dry run never writes; disabled publication, invalid series and concurrent 
     await assert.rejects(run({ ...options, write: true }), error => error.writes.length === 0 && (options.enabled !== false || error.calls === 0));
   }
 });
-test('scheduled credit-only path has no provider credentials, broad builder, paid editorial trigger or retries', () => {
+test('scheduled independent-display path has no provider credentials, broad builder, paid editorial trigger or retries', () => {
   const workflow = fs.readFileSync(new URL('../../.github/workflows/refresh-bubble-credit-spreads.yml', import.meta.url), 'utf8');
   assert.match(workflow, /cron: '20 6 \* \* 2-6'/u);
   assert.match(workflow, /group: gfrr-main-writer-main/u);
   assert.match(workflow, /node scripts\/refresh-bubble-credit-spreads\.mjs --write/u);
-  assert.match(workflow, /git add data\/bubble-watch\.json\n/u);
+  assert.match(workflow, /git add data\/bubble-watch\.json data\/bubble-market-observations\.json\n/u);
+  assert.match(workflow, /node scripts\/refresh-bubble-market-observations\.mjs --write/u);
   assert.ok(workflow.indexOf('npm run check:all') < workflow.indexOf('git commit'));
   assert.doesNotMatch(workflow, /secrets\.|WIND|DEEPSEEK|TAVILY|BRAVE|build:bubble|workflow_run:|git pull --rebase/u);
   const editorial = fs.readFileSync(new URL('../../.github/workflows/bubble-watch-weekly-editorial-refresh.yml', import.meta.url), 'utf8');

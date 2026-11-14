@@ -10,6 +10,8 @@
 <style>
   :root {
     --paper-bg:#FBF7F0; --paper-ink:#1A1815; --paper-line:rgba(26,24,21,.16); --paper-line-strong:#1A1815; --risk-red:#7C1D1D; --font-serif:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+    --font-display:"Playfair Display","Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+    --font-mono:"IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
     --bg: #FBF7F0;
     --ink: #1A1815;
     --red: #7C1D1D;
@@ -257,6 +259,18 @@
   @media(max-width:600px) { .page-bookmarks { margin:12px 18px 0; } .page-bookmarks .pbm { padding:9px 11px; font-size:12px; } }
   @media print { .page-bookmarks { display:none; } }
 
+  /* Independent observations: neutral paper rows, never score cards. */
+  .market-observations { margin:40px 0; border-top:3px double var(--paper-ink); border-bottom:1px solid var(--paper-line); padding:20px 0; }
+  .market-observations h3 { margin:0 0 12px; font-family:var(--font-display); font-size:22px; font-weight:900; }
+  .market-observations p { font-family:var(--font-serif); font-size:13px; line-height:1.7; color:var(--muted); }
+  .market-observation-list { margin:0; }
+  .market-observation-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:12px 24px; padding:13px 0; border-top:1px solid var(--paper-line); }
+  .market-observation-row dt { font-family:var(--font-serif); font-size:14px; font-weight:600; }
+  .market-observation-row dd { margin:0; min-width:0; }
+  .market-observation-value { font-family:var(--font-display); font-size:24px; color:var(--paper-ink); }
+  .market-observation-meta { margin-top:5px; font-family:var(--font-mono); font-size:11px; line-height:1.7; color:var(--muted); overflow-wrap:anywhere; }
+  .market-observation-meta a { color:var(--paper-ink); text-decoration:none; border-bottom:1px solid var(--paper-line-strong); }
+  @media (max-width:720px) { .market-observation-row { grid-template-columns:1fr; gap:6px; } }
 </style>
 </head>
 <body>
@@ -683,6 +697,68 @@ function tierFromPct(p) {
 }
 
 let lastData = null;
+let lastMarketObservations = null;
+const MARKET_OBSERVATION_DEFS = [
+  { id:'cape', label:'CAPE 周期调整 PE', unit:'倍', sourceUrl:'https://www.multpl.com/shiller-pe/atom' },
+  { id:'top5_weight', label:'SPY 前五大持仓权重', unit:'%', sourceUrl:'https://stockanalysis.com/etf/spy/holdings/' },
+  { id:'nvda_fpe', label:'NVDA 远期 PE', unit:'倍', sourceUrl:'https://stockanalysis.com/stocks/nvda/statistics/' },
+  { id:'spy_vs_rsp_6m', label:'SPY−RSP 六个月价格回报差', unit:'个百分点', sourceUrl:'https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=6mo&interval=1d' }
+];
+function marketDay(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) return null;
+  const stamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(stamp) && new Date(stamp).toISOString().slice(0,10) === value ? stamp : null;
+}
+function marketStamp(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/u.test(value)) return null;
+  const stamp = Date.parse(value);
+  return Number.isFinite(stamp) && new Date(stamp).toISOString().replace('.000Z','Z') === value.replace('.000Z','Z') ? stamp : null;
+}
+function marketObservationRows(snapshot, now = Date.now()) {
+  const checked = marketStamp(snapshot?.checkedAt);
+  const valid = snapshot?.contractVersion === 'bubble-market-observations-v1'
+    && snapshot?.boundary === 'display_only_no_score_or_editorial_impact'
+    && checked !== null && checked <= now && Array.isArray(snapshot.observations);
+  return MARKET_OBSERVATION_DEFS.map(def => {
+    const rows = valid ? snapshot.observations.filter(row => row?.id === def.id) : [];
+    const row = rows.length === 1 ? rows[0] : null;
+    const absent = { ...def, value:null, notice:'数据暂缺，未获得合格观测', date:null, fetchedAt:null, href:null };
+    if (!row || !['fresh','stale','fallback','missing'].includes(row.status) || row.status === 'missing') return absent;
+    const date = marketDay(row.observationDate), fetched = marketStamp(row.fetchedAt);
+    if (typeof row.value !== 'number' || !Number.isFinite(row.value) || row.maxAgeDays !== 7
+      || date === null || fetched === null || date > fetched || fetched > checked
+      || (def.id === 'cape' && !(row.value > 5 && row.value < 100))
+      || (def.id === 'top5_weight' && !(row.value > 10 && row.value < 60))
+      || (def.id === 'nvda_fpe' && !(row.value > 3 && row.value < 200))
+      || (def.id === 'spy_vs_rsp_6m' && Math.abs(row.value) >= 10000)
+      || (row.status === 'fresh' && row.fetchedAt !== snapshot.checkedAt)) return absent;
+    let href = null;
+    if (row.sourceUrl !== def.sourceUrl) return absent;
+    href = def.sourceUrl;
+    const stale = Math.floor((now - date) / 86400000) > 7;
+    const notice = row.status === 'fallback' ? `本次获取未完成，沿用原观测${stale ? '；已超过 7 天，仅作历史参考' : ''}`
+      : stale ? '观测已超过 7 天，仅作历史参考' : row.status === 'stale' ? '来源标记过期，仅作历史参考' : '合格日期观测，非实时行情';
+    return { ...def, value:row.value, notice, date:row.observationDate, fetchedAt:row.fetchedAt, href };
+  });
+}
+function marketObservationsHtml(snapshot, weeklyDate) {
+  const rows = marketObservationRows(snapshot);
+  const checked = marketStamp(snapshot?.checkedAt);
+  const checkLabel = snapshot?.contractVersion === 'bubble-market-observations-v1'
+    && snapshot?.boundary === 'display_only_no_score_or_editorial_impact' && Array.isArray(snapshot.observations)
+    && checked !== null && checked <= Date.now() ? `最近检查 ${escapeHtml(snapshot.checkedAt)}。` : '独立快照暂不可用。';
+  return `<h3>独立市场观察</h3><p>周度评分依据：${escapeHtml(weeklyDate || '日期缺失')}。以下观察单独更新，不改变本期评分、证据卡、期号或文章。信用利差继续见下方独立信用区。</p>
+    <p>${checkLabel}检查时间不等于观测日期；计划运行可能延迟，以逐项日期为准。</p>
+    <dl class="market-observation-list">${rows.map(row => `<div class="market-observation-row" data-market-id="${row.id}"><dt>${row.label}</dt><dd>
+      <div class="market-observation-value">${row.value === null ? '待确认' : `${row.id === 'spy_vs_rsp_6m' && row.value > 0 ? '+' : ''}${row.value.toFixed(2)} ${row.unit}`}</div>
+      <div class="market-observation-meta">${escapeHtml(row.notice)}${row.date ? `<br>观测 ${escapeHtml(row.date)} · 获取 ${escapeHtml(row.fetchedAt)}<br><a href="${escapeHtml(row.href)}" target="_blank" rel="noopener noreferrer">来源</a>` : ''}</div>
+    </dd></div>`).join('')}</dl>`;
+}
+function refreshMarketObservations() {
+  const section = document.getElementById('market-observations');
+  if (section && lastData) section.innerHTML = marketObservationsHtml(lastMarketObservations, lastData.as_of_date);
+}
+
 let lastEditorialStatus = null;
 let lastEditorialEligible = false;
 let lastNvdaQualified = false;
@@ -701,6 +777,7 @@ function refreshDisplayAge() {
   const technicalDate = document.getElementById('technical-observation-date');
   if (technicalDate) technicalDate.textContent = technicalObservationLabel(lastData.market_technical_heat);
   refreshCreditNotices(lastData.credit_spreads);
+  refreshMarketObservations();
   for (const [index, card] of view.cards.entries()) {
     const label = document.getElementById(`card-age-${index}`);
     if (!label) continue;
@@ -841,6 +918,8 @@ function render(data, editorialStatus = null) {
       </div>` : ''}
       ${s.momentum ? `<div class="momentum-row">核心本周边际：<b class="worse">${s.momentum.deteriorated} 级恶化</b> · <b class="better">${s.momentum.improved} 级好转</b>（净 ${s.momentum.net > 0 ? '+' : ''}${s.momentum.net}）</div>` : ''}
     </section>` : ''}
+
+    <section class="market-observations" id="market-observations" aria-label="独立市场观察">${marketObservationsHtml(lastMarketObservations, data.as_of_date)}</section>
 
     <section class="trend">
       <div class="trend-header">
@@ -1186,6 +1265,11 @@ window.addEventListener('resize', () => {
 });
 
 async function load() {
+  // Independent optional snapshot never delays or modifies the weekly issue.
+  fetch(`data/bubble-market-observations.json?t=${Date.now()}`, { cache:'no-store', signal:AbortSignal.timeout(3000) })
+    .then(response => response.ok ? response.json() : null)
+    .then(snapshot => { lastMarketObservations = snapshot; refreshMarketObservations(); })
+    .catch(() => { lastMarketObservations = null; refreshMarketObservations(); });
   try {
     const statusPromise = fetch(`data/bubble-watch-editorial-status.json?t=${Date.now()}`, {
       cache: 'no-store', signal: AbortSignal.timeout(3000)

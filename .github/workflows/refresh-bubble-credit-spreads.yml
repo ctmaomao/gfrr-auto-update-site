@@ -37,15 +37,17 @@ jobs:
       - run: npm ci
       - name: Refresh only independent credit history (three public requests, no keys)
         run: node scripts/refresh-bubble-credit-spreads.mjs --write
+      - name: Refresh independent market observations (five public requests, no keys)
+        run: node scripts/refresh-bubble-market-observations.mjs --write
       - name: Validate all production contracts before commit
         run: npm run check:all
       - name: Commit only the verified Bubble display payload
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/bubble-watch.json
+          git add data/bubble-watch.json data/bubble-market-observations.json
           if ! git diff --cached --quiet; then
-            git commit -m "chore: refresh Bubble credit display history"
+            git commit -m "chore: refresh Bubble independent market and credit observations"
             git push origin HEAD:main
           fi
       - name: Request the existing guarded custom-domain publisher
