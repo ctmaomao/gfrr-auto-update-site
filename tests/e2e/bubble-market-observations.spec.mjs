@@ -37,9 +37,13 @@ for (const width of [1440,390]) test(`Independent market observations retain wee
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await expect(page.locator('#market-observations a')).toHaveCount(4);
   await page.locator('#market-observations').scrollIntoViewIfNeeded();
-  await testInfo.attach(`market-observations-${width}`, { body:await page.screenshot({fullPage:false}), contentType:'image/png' });
+  const screenshotPath=testInfo.outputPath(`market-observations-${width}.png`);
+  await page.screenshot({path:screenshotPath,fullPage:false});
+  await testInfo.attach(`market-observations-${width}`, { path:screenshotPath, contentType:'image/png' });
   const styles=await page.locator('#market-observations').evaluate(el=>({color:getComputedStyle(el).color,font:getComputedStyle(el.querySelector('h3')).fontFamily,background:getComputedStyle(document.body).backgroundColor}));
-  await testInfo.attach(`market-observations-styles-${width}`, { body:JSON.stringify(styles), contentType:'application/json' });
+  const stylesPath=testInfo.outputPath(`market-observations-styles-${width}.json`);
+  fs.writeFileSync(stylesPath,JSON.stringify(styles));
+  await testInfo.attach(`market-observations-styles-${width}`, { path:stylesPath, contentType:'application/json' });
 });
 test('Market fallback keeps original date, ages on long-open tab, and missing fetch leaves weekly view usable',async({page})=>{
   await setup(page); const data=fixture();data.observations[0].status='fallback';
