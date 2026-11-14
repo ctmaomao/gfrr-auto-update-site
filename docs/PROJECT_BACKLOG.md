@@ -1,5 +1,7 @@
 # Project Backlog · GFRR Auto-Update Site
 
+- **QQQ 周线日期语义保守修正**：2026-11-14 全链路准确性审核基于 `4b32f25e`，确认 Yahoo 周线时间标签未经实际收盘日期核验，不能称“在该日的收盘价”。本轮只修正市场温度与 NDX 对照的标签、年龄及同期说明，保留原数值、阈值、历史、来源和评分；日期标签相同不确认同一实际收盘时点，十天/七天仅描述标签年龄/间隔，完整周与真实行情新鲜度仍待源证据。不猜测日期、不改生产 JSON。验收要求离线正负零/缺失/日期回归、完整检查、独立审阅、桌面手机实图与精确 CI；完成情况按实际回执报告。
+
 - **Bubble 独立市场观察**：按owner时效升级授权，新增合格来源日期的独立观察快照，复用信用工作流与串行发布，五次固定免费请求，不重复信用取数；周度评分、27卡证据、历史和文章保持原期次。无效/未来/缺失来源不晋升，失败沿用原日期或未知。初始真实采集、完整检查、独立代码/实图审阅、精确CI及双站验收以实际回执区分。[契约与限制](BUBBLE_INDEPENDENT_MARKET_OBSERVATIONS.md)。
 
 本页只保留当前工作、未解依赖与维护入口。已完成任务的过程记录移入[2026-09 至 2026-11 原文快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)；更早记录见[历史目录](MILESTONE_INDEX.md)。旧“待合并/下一步”不覆盖下方已核实的 main 状态，合并也不自动证明生产验收完成。
@@ -12,7 +14,7 @@
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `source-disclosure-20261114-r1` |
+| Cache version | `qqq-week-label-20261114` |
 | 前端输入 | 首页读取静态 JSON；周报为默认入口，另有雷达与 Bubble 标签；`scripts/modules/realtime.js` 冻结、未接入 |
 | 雷达主读数 | OFR 已发表 FSI；旧模型保留审计，旧公开仓位/状态/风险预算/动作建议已退役，不把百分位当风险分或概率 |
 | Worker / Daily | `/market.worker-preview.json` 是 Worker 主预览，secondary 只作诊断；Daily 仍消费 `realtime-data` |

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=source-disclosure-20261114-r1';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=source-disclosure-20261114-r1';
+} from './config.js?v=qqq-week-label-20261114';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=qqq-week-label-20261114';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,16 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=source-disclosure-20261114-r1';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=source-disclosure-20261114-r1';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=source-disclosure-20261114-r1';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=source-disclosure-20261114-r1';
-import { renderTrendSvg } from './renderMacroTrend.js?v=source-disclosure-20261114-r1';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=source-disclosure-20261114-r1';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=source-disclosure-20261114-r1';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=source-disclosure-20261114-r1';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=source-disclosure-20261114-r1';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=source-disclosure-20261114-r1';
+} from './macroOverviewDisplayHelpers.js?v=qqq-week-label-20261114';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=qqq-week-label-20261114';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=qqq-week-label-20261114';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=qqq-week-label-20261114';
+import { renderTrendSvg } from './renderMacroTrend.js?v=qqq-week-label-20261114';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=qqq-week-label-20261114';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=qqq-week-label-20261114';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=qqq-week-label-20261114';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=qqq-week-label-20261114';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=qqq-week-label-20261114';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -320,8 +320,8 @@ function marketObservation(metrics, key, nowMs = Date.now()) {
   const z = validDate ? strictFiniteDisplay(record?.zScore) : null;
   const age = validDate ? (nowMs - Date.parse(date + 'T00:00:00Z')) / 86400000 : null;
   const stale = age !== null && age > MARKET_MAX_AGE_DAYS;
-  const label = z === null ? '— · 读数或观察日待核验'
-    : `${signedFixed(z, 2)}σ · ${date} · ${stale ? '历史观测，已超龄' : '周频观测'}`;
+  const label = z === null ? '— · 读数或周线日期标签待核验'
+    : `${signedFixed(z, 2)}σ · 来源周线标签 ${date} · ${stale ? '标签距今超过10天' : '实际收盘日期未核验'}`;
   return { record, date: validDate ? date : null, z, stale, label };
 }
 
@@ -332,17 +332,17 @@ function renderMarketTemperature({ marketPricingMetricsData }) {
     const ndx = marketObservation(mpm, 'ndx');
     const ixic = marketObservation(mpm, 'ixic');
     setLeafText('mt-zscore-value', qqq.z !== null ? signedFixed(qqq.z, 2) : '—');
-    setLeafText('mt-observation-state', qqq.z === null ? '等待可核验观测' : qqq.stale ? '历史观测 · 已超龄' : '周频统计观测');
-    const direction = qqq.z === null ? 'QQQ 读数或观察日缺失，待核验。'
-      : `QQQ 在 ${qqq.date} 的收盘价${qqq.z === 0 ? '等于' : qqq.z > 0 ? '高于' : '低于'} 60 周均值${qqq.z === 0 ? '' : ` ${Math.abs(qqq.z).toFixed(2)} 个标准差`}。`;
+    setLeafText('mt-observation-state', qqq.z === null ? '等待可核验周线记录' : qqq.stale ? '历史周线记录 · 标签超过10天' : '周线统计 · 收盘日期待核验');
+    const direction = qqq.z === null ? 'QQQ 读数或周线日期标签缺失，待核验。'
+      : `QQQ 来源周线标签为 ${qqq.date} 的价格${qqq.z === 0 ? '等于' : qqq.z > 0 ? '高于' : '低于'} 60 周均值${qqq.z === 0 ? '' : ` ${Math.abs(qqq.z).toFixed(2)} 个标准差`}。`;
     const observations = [qqq, ndx, ixic];
     const complete = observations.every(o => o.z !== null);
     const aligned = complete && observations.every(o => o.date === qqq.date);
     const auxiliaryLag = complete && [ndx, ixic].some(o => (Date.parse(qqq.date) - Date.parse(o.date)) / 86400000 > MARKET_MAX_AUXILIARY_LAG_DAYS);
-    const comparison = !complete ? '部分观测缺失，不作同期比较。'
-      : !aligned ? `观察日期不同，不作同期比较。${auxiliaryLag ? '辅助资产较QQQ滞后超过7天。' : ''}`
-        : observations.some(o => o.stale) ? '同日历史观测已超龄，不代表当前市场。' : '仅描述所列观察日，不代表实时市场或历史排名。';
-    setLeafText('mt-narrative', `${direction} QQQ ${qqq.label}；NDX ${ndx.label}；IXIC ${ixic.label}。${comparison}`);
+    const comparison = !complete ? '部分周线记录缺失，不作同期比较。'
+      : !aligned ? `来源日期标签不同，不作同期比较。${auxiliaryLag ? '辅助资产的日期标签比QQQ早超过7天。' : ''}`
+        : observations.some(o => o.stale) ? '相同日期标签距今超过10天，不代表当前市场。' : '日期标签相同也不证明实际收盘时点一致，不作同期比较。';
+    setLeafText('mt-narrative', `${direction} QQQ ${qqq.label}；NDX ${ndx.label}；IXIC ${ixic.label}。${comparison} 日期是来源周线记录的标签，不保证是实际收盘日；未核验该周是否完整，不据此确认行情新鲜度，不代表实时市场或历史排名。`);
     for (const [id, key] of [['mt-close', 'close'], ['mt-ma60', 'ma60'], ['mt-stddev', 'stdDev60']]) {
       const value = qqq.date ? strictFiniteDisplay(qqq.record?.[key]) : null;
       setLeafText(id, value !== null ? moneyFixed(value) : '—');
@@ -1071,10 +1071,10 @@ function renderMarketComparison({ marketPricingMetricsData }) {
     const qqq = marketObservation(marketPricingMetricsData, 'qqq');
     const ndx = marketObservation(marketPricingMetricsData, 'ndx');
     setPendingIndicator('c7-ndx-status', 'c7-ndx-badge');
-    setBadge('c7-ndx-badge', 'pending', ndx.z === null ? '待核验' : ndx.stale ? '历史观测' : '统计观察');
+    setBadge('c7-ndx-badge', 'pending', ndx.z === null ? '待核验' : ndx.stale ? '历史周线记录' : '周线统计');
     setLeafText('c7-ndx-number', ndx.z !== null ? signedFixed(ndx.z, 2) : '—');
     setLeafText('c7-ndx-aux', `NDX ${ndx.label}`);
-    setLeafText('c7-ndx-note', `60 周偏离度：NDX ${ndx.label}；QQQ ${qqq.label}。各自日期的统计描述，不据此推断同期板块温度，不构成投资建议。`);
+    setLeafText('c7-ndx-note', `60 周偏离度：NDX ${ndx.label}；QQQ ${qqq.label}。来源周线标签的统计描述，实际收盘日和完整周尚未核验，不据此推断行情新鲜度或同期板块温度，不构成投资建议。`);
 }
 
 // ---------- Stage 5a: C8 Geopolitics & World Order ----------

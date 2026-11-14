@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=source-disclosure-20261114-r1';
+﻿import { fmtNumSafe } from './config.js?v=qqq-week-label-20261114';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

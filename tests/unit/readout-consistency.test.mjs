@@ -89,13 +89,13 @@ test('mixed dates, historical values and auxiliary lag remain explicit in both t
   for (const key of ['ndx','ixic']) { data.assets[key].records[0].date = '2026-09-04'; data.assets[key].latestMetricDate = '2026-09-04'; }
   api.renderMarketTemperature({ marketPricingMetricsData: data });
   api.renderC7MarketSentiment({ radarData: null, marketPricingMetricsData: data });
-  assert.match(text('mt-narrative'), /2026-09-04.*历史观测，已超龄/);
-  assert.match(text('mt-narrative'), /日期不同，不作同期比较/);
-  assert.match(text('mt-narrative'), /滞后超过7天/);
+  assert.match(text('mt-narrative'), /2026-09-04.*标签距今超过10天/);
+  assert.match(text('mt-narrative'), /日期标签不同，不作同期比较/);
+  assert.match(text('mt-narrative'), /日期标签比QQQ早超过7天/);
   assert.match(text('c7-ndx-note'), /2026-09-04/); assert.match(text('c7-ndx-note'), /2026-10-30/);
-  assert.equal(text('c7-ndx-badge'), '历史观测');
+  assert.equal(text('c7-ndx-badge'), '历史周线记录');
   api.renderMarketTemperature({ marketPricingMetricsData: market(1, '2026-09-04') });
-  assert.match(text('mt-narrative'), /同日历史观测已超龄，不代表当前市场/);
+  assert.match(text('mt-narrative'), /相同日期标签距今超过10天，不代表当前市场/);
 });
 
 test('market invalid values/dates and repeated missing renders clear every previously rendered numeric leaf', () => {
@@ -298,4 +298,22 @@ test('Brent repeated renders clear missing provenance and health clocks never bo
   assert.equal(text('detail-health-source-mode'), '未记录');
   for (const id of ['input-at', 'captured', 'run-at']) assert.equal(text(`detail-health-${id}`), '未记录或待核验');
   assert.deepEqual(errors, []);
+});
+
+
+test('weekly labels cannot certify an actual close date, complete week or source freshness', () => {
+  for (const date of ['2026-11-02', '2026-11-06']) {
+    const data = market(0, date), before = JSON.stringify(data);
+    api.renderMarketTemperature({ marketPricingMetricsData: data });
+    api.renderC7MarketSentiment({ radarData: null, marketPricingMetricsData: data });
+    assert.equal(text('mt-zscore-value'), '0.00');
+    assert.match(text('mt-narrative'), new RegExp(`来源周线标签为 ${date} 的价格等于`));
+    assert.match(text('mt-narrative'), /标签相同也不证明实际收盘时点一致，不作同期比较/);
+    assert.match(text('mt-narrative'), /未核验该周是否完整，不据此确认行情新鲜度/);
+    assert.doesNotMatch(text('mt-narrative'), /在.*的收盘价|周频观测|同日历史观测/);
+    assert.match(text('mt-observation-state'), /收盘日期待核验/);
+    assert.match(text('c7-ndx-note'), /实际收盘日和完整周尚未核验/);
+    assert.equal(JSON.stringify(data), before);
+  }
+  assert.match(html, /周线价格\(close\): <span id="mt-close"/);
 });

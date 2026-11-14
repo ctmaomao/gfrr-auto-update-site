@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=source-disclosure-20261114-r1';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=source-disclosure-20261114-r1';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=qqq-week-label-20261114';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=qqq-week-label-20261114';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
