@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-11-14T01:27:38.212Z",
+  "generatedAt": "2026-11-14T10:29:46.622Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -9,8 +9,8 @@
     "VIIRS_NOAA21_NRT"
   ],
   "status": "ok",
-  "signalState": "baseline_established_no_detections",
-  "displayStatusZh": "观察层已接入",
+  "signalState": "baseline_repeated_watch",
+  "displayStatusZh": "重复观察待核",
   "sourceStatus": {
     "mapKey": "configured",
     "firms": "live",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": null,
-    "latestAgeHours": null,
+    "latestAcqAt": "2026-11-14T09:02:00Z",
+    "latestAgeHours": 1.5,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -136,17 +136,21 @@
     ]
   },
   "aggregate": {
-    "rowCount": 0,
-    "latestAcqAt": null,
-    "maxFrp": null,
-    "confidenceCounts": {},
+    "rowCount": 115,
+    "latestAcqAt": "2026-11-14T09:02:00Z",
+    "maxFrp": 3.38,
+    "confidenceCounts": {
+      "n": 115
+    },
     "highConfidenceCount": 0,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
-    "dayNightCounts": {},
-    "latestAgeHours": null,
+    "dayNightCounts": {
+      "N": 115
+    },
+    "latestAgeHours": 1.5,
     "facilityCount": 42,
-    "facilitiesWithDetections": 0,
+    "facilitiesWithDetections": 11,
     "requestCount": 126,
     "requestErrorCount": 0,
     "requestDiagnostics": {
@@ -170,11 +174,13 @@
       }
     },
     "baselineStatus": "established",
-    "repeatedObservationCount": 0,
+    "repeatedObservationCount": 5,
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 42,
     "facilitiesByAnomalyLevel": {
-      "none_observed": 42
+      "low_signal": 6,
+      "repeated_watch": 5,
+      "none_observed": 31
     }
   },
   "facilities": [
@@ -184,19 +190,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=Motiva Enterprises LLC; Site=Port Arthur; State=Texas; PADD=3; AD_Mbpd=639.7; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 8,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 2.48,
+      "confidenceCounts": {
+        "n": 8
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 8
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -209,8 +219,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -220,10 +230,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_marathon_galveston_bay_tx",
@@ -231,19 +241,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Galveston Bay; State=Texas; PADD=3; AD_Mbpd=625.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 18,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 1.72,
+      "confidenceCounts": {
+        "n": 18
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 18
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -256,8 +270,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -267,10 +281,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_marathon_garyville_la",
@@ -278,19 +292,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Garyville; State=Louisiana; PADD=3; AD_Mbpd=608.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 1,
+      "latestAcqAt": "2026-11-14T08:05:00Z",
+      "maxFrp": 1.97,
+      "confidenceCounts": {
+        "n": 1
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 1
+      },
+      "latestAgeHours": 2.4,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -303,7 +321,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -314,10 +332,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_baytown_tx",
@@ -325,19 +343,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baytown; State=Texas; PADD=3; AD_Mbpd=584.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 15,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 2.48,
+      "confidenceCounts": {
+        "n": 15
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 15
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -350,21 +372,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_baton_rouge_la",
@@ -372,19 +394,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baton Rouge; State=Louisiana; PADD=3; AD_Mbpd=542.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 5,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 2.79,
+      "confidenceCounts": {
+        "n": 5
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 5
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -397,8 +423,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -408,10 +434,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_citgo_lake_charles_la",
@@ -419,19 +445,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=CITGO PETROLEUM CORP; Site=Lake Charles; State=Louisiana; PADD=3; AD_Mbpd=440.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 18,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 2.1,
+      "confidenceCounts": {
+        "n": 18
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 18
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -444,21 +474,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_beaumont_tx",
@@ -466,19 +496,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Beaumont; State=Texas; PADD=3; AD_Mbpd=384.4; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 12,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 1.72,
+      "confidenceCounts": {
+        "n": 12
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 12
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -491,21 +525,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_deer_park_tx",
@@ -513,19 +547,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=DEER PARK REFINING LTD PARTNERSHIP; Site=Deer Park; State=Texas; PADD=3; AD_Mbpd=340.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 16,
+      "latestAcqAt": "2026-11-14T09:01:00Z",
+      "maxFrp": 2.07,
+      "confidenceCounts": {
+        "n": 16
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 16
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -538,21 +576,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_valero_corpus_christi_tx",
@@ -560,19 +598,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=VALERO REFINING CO TEXAS LP; Site=Corpus Christi; State=Texas; PADD=3; AD_Mbpd=297.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 3,
+      "latestAcqAt": "2026-11-14T09:02:00Z",
+      "maxFrp": 2.2,
+      "confidenceCounts": {
+        "n": 3
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 3
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -585,8 +627,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -596,10 +638,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_phillips_sweeny_tx",
@@ -607,19 +649,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Sweeny; State=Texas; PADD=3; AD_Mbpd=278.9; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 13,
+      "latestAcqAt": "2026-11-14T09:02:00Z",
+      "maxFrp": 3.38,
+      "confidenceCounts": {
+        "n": 13
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 13
+      },
+      "latestAgeHours": 1.5,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -632,21 +678,21 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
-        "rowCountAboveP95": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
+        "rowCountAboveP95": true,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
         "frpOver50AboveP95": false,
-        "aboveBaselineStrength": false,
-        "repeatedObservation": false,
+        "aboveBaselineStrength": true,
+        "repeatedObservation": true,
         "elevatedRepeatedObservation": false,
-        "reason": "within_baseline_or_not_repeated"
+        "reason": "above_baseline_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "repeated_watch",
+      "anomalyLabelZh": "重复观察",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "当前热异常超过设施历史基线且满足多源重复观测,仅供人工复核;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_phillips_belle_chasse_la",
@@ -693,7 +739,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_shell_norco_la",
@@ -701,19 +747,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=SHELL OIL PRODUCTS US; Site=Norco; State=Louisiana; PADD=3; AD_Mbpd=250.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "live",
       "requestErrorCount": 0,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 6,
+      "latestAcqAt": "2026-11-14T08:05:00Z",
+      "maxFrp": 1.83,
+      "confidenceCounts": {
+        "n": 6
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 6
+      },
+      "latestAgeHours": 2.4,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -726,8 +776,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -737,10 +787,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "within_baseline_or_not_repeated"
       },
-      "anomalyLevel": "none_observed",
-      "anomalyLabelZh": "未观察到",
+      "anomalyLevel": "low_signal",
+      "anomalyLabelZh": "低信号",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_terminal_ras_tanura",
@@ -787,7 +837,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_processing_abqaiq_buqayq",
@@ -834,7 +884,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_gosp_khurais",
@@ -881,7 +931,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_field_shaybah",
@@ -928,7 +978,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_port_yanbu_industrial_city",
@@ -975,7 +1025,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_port_jazan",
@@ -1022,7 +1072,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_oil_terminal_kharg_island",
@@ -1069,7 +1119,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_tehran_oil_refinery",
@@ -1116,7 +1166,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_area_abadan",
@@ -1163,7 +1213,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_area_bandar_abbas",
@@ -1210,7 +1260,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_energy_area_asaluyeh",
@@ -1257,7 +1307,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_refinery_area_haifa_bay",
@@ -1304,7 +1354,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_refinery_area_ashdod",
@@ -1351,7 +1401,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_port_eilat",
@@ -1398,7 +1448,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_ruwais_refinery_area",
@@ -1445,7 +1495,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_jebel_dhanna_terminal_area",
@@ -1492,7 +1542,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_das_island_terminal_area",
@@ -1539,7 +1589,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_fujairah_energy_port_area",
@@ -1586,7 +1636,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_ras_laffan_energy_port_area",
@@ -1633,7 +1683,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_mesaieed_industrial_port_area",
@@ -1680,7 +1730,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_dukhan_oilfield_area",
@@ -1727,7 +1777,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_halul_terminal_area",
@@ -1774,7 +1824,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_mina_al_ahmadi_terminal_area",
@@ -1821,7 +1871,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_mina_abdullah_terminal_area",
@@ -1868,7 +1918,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_shuaiba_port_refinery_area",
@@ -1915,7 +1965,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_burgan_oilfield_area",
@@ -1962,7 +2012,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_khawr_al_amaya_terminal_area",
@@ -2009,7 +2059,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_zubair_oilfield_area",
@@ -2056,7 +2106,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_rumaila_oilfield_area",
@@ -2103,7 +2153,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_kirkuk_oilfield_area",
@@ -2150,7 +2200,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "未观察到",
       "baselineStatus": "established",
-      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "设施已有历史基线,但本轮未同时满足超基线强度与多源重复观测;不确认事故、停产、断供或油价方向。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     }
   ],
   "productionImpact": {
@@ -2169,6 +2219,6 @@
     "FIRMS/VIIRS 是热异常和火点代理,不是炼厂事故、停产、断供或油价方向确认。",
     "生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。",
     "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。",
-    "历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 69.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+    "历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 70.2 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
   ]
 }
