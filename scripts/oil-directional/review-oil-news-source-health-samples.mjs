@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
-import { spawnSync } from 'node:child_process';
+import { WATCH_PATH, readCommitRows, readWatchAtCommit } from './oil-news-watch-history.mjs';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'oil-news-source-health-samples-review-p34';
-const WATCH_PATH = 'data/oil-news-event-watch.json';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/oil-news-source-health-samples-review-latest.json';
 const DEFAULT_MAX_COMMITS = 30;
 const DEFAULT_MAX_SAMPLES = 12;
@@ -174,50 +173,6 @@ function productionImpactFalseMap() {
     affectsOdpFinalBias: false,
     affectsGlobalRiskHeatmap: false,
     affectsCrossValidation: false
-  };
-}
-
-function runGit(args) {
-  const result = spawnSync('git', args, {
-    cwd: process.cwd(),
-    encoding: 'utf8',
-    maxBuffer: 20 * 1024 * 1024
-  });
-  if (result.error) throw new Error(`Failed to run git ${args.join(' ')}: ${result.error.message}`);
-  if (result.status !== 0) {
-    const stderr = String(result.stderr ?? '').trim();
-    throw new Error(`git ${args.join(' ')} failed: ${stderr || `exit ${result.status}`}`);
-  }
-  return String(result.stdout ?? '');
-}
-
-function readCommitRows(maxCommits) {
-  const output = runGit(['log', `--max-count=${maxCommits}`, '--format=%H%x09%ct%x09%s', '--', WATCH_PATH]);
-  return output
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [hash, epochText, ...subjectParts] = line.split('\t');
-      const epochSeconds = Number(epochText);
-      return {
-        hash,
-        committedAt: Number.isFinite(epochSeconds) ? new Date(epochSeconds * 1000).toISOString() : null,
-        subject: subjectParts.join('\t')
-      };
-    });
-}
-
-function readWatchAtCommit(commit) {
-  return {
-    text: runGit(['show', `${commit.hash}:${WATCH_PATH}`]),
-    source: {
-      type: 'git_history',
-      path: WATCH_PATH,
-      commitHash: commit.hash,
-      committedAt: commit.committedAt,
-      commitSubject: commit.subject
-    }
   };
 }
 
