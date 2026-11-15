@@ -25,6 +25,7 @@ const SIGNAL_STATES = new Set([
 ]);
 const SOURCE_STATUSES = new Set(['configured', 'missing', 'not_queried', 'live', 'partial', 'error']);
 const FIRMS_FAILURE_CATEGORIES = new Set([
+  'source_retired',
   'timeout',
   'network_error',
   'rate_limited',
