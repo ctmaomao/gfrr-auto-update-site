@@ -65,3 +65,11 @@ For the same source history, metrics output is identical except for `generatedAt
 2. Review the preview output: sanity checks, record counts, date range, and MA60 / StdDev60 / z-score ranges.
 3. Run `npm run market-pricing:metrics-calculation:commit` to write `data/market-pricing-metrics.json`.
 4. Commit the generated metrics file manually, using the actual metrics record count from the dry-run/commit output rather than a hard-coded historical count.
+
+## M-25 history prerequisites (consolidated)
+
+The read-only buildup verifier requires history `status=has_history`, QQQ `status=active`, at least 60 records and `coverage.hasAtLeast60Weeks=true`. Coverage must match the records: `weeklyRows` equals length, `oldestDate` equals the first date, and `latestDate` equals the last. Dates must be strictly ascending without duplicates; every record needs a valid ISO date/week and finite positive `close`.
+
+M-24 populates weekly history; M-62 merges by `isoWeek` rather than replacing accumulated records. `scripts/check-market-pricing-history.mjs` checks structural integrity in both waiting and populated states; the buildup verifier adds the 60-week calculation prerequisite. It writes no data, calculates no metrics, enables no display and changes no scoring/decision/execution/position logic: calculation and display remain separate M-26/M-27 responsibilities. These phase names describe responsibilities, not a current rollout hold.
+
+[Original M-25 note](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/MARKET_PRICING_WEEKLY_HISTORY_BUILDUP.md), SHA256 `2831a930ac25f85d9938e062c04ab57141d729ecd280bcc4c625a7196d8b3ecf`.

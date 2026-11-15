@@ -19,4 +19,4 @@ P3-19/P3-19a implementation records were preserved verbatim in `docs/ENERGY_TRAN
 
 No duplicate record index or new runtime abstraction is introduced. The history file remains protected by its existing literal assertions and strict Markdown link checks. Further changes to those records must preserve or explicitly review their consumers.
 
-Review the mechanical path/diagnostic substitutions separately from product changes; no assertion or ignore list is relaxed. Run the new negative tests through `check:docs`, then the full `check:changed` validation and `git diff --check`. Results are recorded in the [migration receipt](../REVIEW_2026-09-06_ENERGY_ASSERTIONS.md).
+Review the mechanical path/diagnostic substitutions separately from product changes; no assertion or ignore list is relaxed. Run the new negative tests through `check:docs`, then the full `check:changed` validation and `git diff --check`. Results are recorded in the [migration receipt](../REVIEW_2026-09-06_CLOSEOUT.md#energy-assertions).
