@@ -7,19 +7,15 @@
   <title>全球金融风险雷达 · Global Financial Risk Radar</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="assets/styles.css?v=oil-evidence-health-20261106" />
+  <link rel="stylesheet" href="assets/styles.css?v=qqq-week-label-20261114" />
+  <script src="scripts/modules/weekly-homepage.js?v=qqq-week-label-20261114"></script>
 </head>
 <body class="gfrr-data-loading">
   <nav class="page-bookmarks" aria-label="站内页面切换">
-    <a class="pbm pbm-radar pbm-active" href="index.html" aria-current="page" title="全球金融风险雷达(当前页)">
-      <span class="pbm-label">风险雷达</span>
-      <span class="pbm-dot" aria-hidden="true"></span>
-    </a>
-    <a class="pbm pbm-bubble" href="bubble-watch.html" title="切换到 AI泡沫">
-      <span class="pbm-label">AI泡沫</span>
-      <span class="pbm-dot" aria-hidden="true"></span>
-    </a>
-  </nav>
+<a class="pbm pbm-weekly" href="index.html"><span class="pbm-label">每周周报</span><span class="pbm-dot" aria-hidden="true"></span></a>
+<a class="pbm pbm-radar pbm-active" href="index.html?view=radar" aria-current="page"><span class="pbm-label">全球雷达</span><span class="pbm-dot" aria-hidden="true"></span></a>
+<a class="pbm pbm-bubble" href="bubble-watch.html"><span class="pbm-label">AI泡沫</span><span class="pbm-dot" aria-hidden="true"></span></a>
+</nav>
   <div class="container">
     <header class="masthead">
       <div class="masthead-row">
@@ -108,6 +104,7 @@
           <h4>读数解释 <em>· Reading Guide</em></h4>
           <div class="now" id="threshold-now-line">等待最新数据</div>
         </div>
+        <p class="section-note" id="ofr-time-provenance">观察日、获取时间与派生计算时间待核验。</p>
         <p id="ofr-scale-note">OFR原值相对0说明历史平均位置；辅助百分位不是危机概率。</p>
         <div class="threshold-bar-wrap legacy-model-retired" hidden inert>
           <div class="threshold-bar">
@@ -210,17 +207,17 @@
         <div class="runtime-block-body">
           <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;">
             <div>
-              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;">极度过热 · extreme-hot</div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--paper-muted);text-transform:uppercase;" id="mt-observation-state">等待可核验观测</div>
               <div style="font-family:var(--font-display);font-size:48px;font-weight:900;line-height:1;color:var(--risk-yellow);margin-top:4px;"><span id="mt-zscore-value">—</span><span style="font-size:0.4em;color:var(--paper-muted);">σ</span></div>
-              <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">纳斯达克100 ETF(QQQ) vs 60 周均值 · 历史第二极端</div>
+              <div style="font-family:var(--font-mono);font-size:10px;color:var(--paper-muted);margin-top:6px;">纳斯达克100 ETF(QQQ) vs 60 周均值 · 按来源周线标签解读</div>
             </div>
             <div>
               <p id="mt-narrative" style="margin:0 0 8px 0;font-size:13.5px;">等待最新市场温度数据。</p>
               <div style="font-family:var(--font-mono);font-size:11px;color:var(--paper-muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;">
-                <div>收盘(close): <span id="mt-close" style="color:var(--paper-ink);">—</span></div>
+                <div>周线价格(close): <span id="mt-close" style="color:var(--paper-ink);">—</span></div>
                 <div>60周均线(ma60): <span id="mt-ma60" style="color:var(--paper-ink);">—</span></div>
-                <div>60 日标准差: <span id="mt-stddev" style="color:var(--paper-ink);">—</span></div>
-                <div>z 分数区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">—</span></div>
+                <div>60 周标准差: <span id="mt-stddev" style="color:var(--paper-ink);">—</span></div>
+                <div>历史样本 z 区间: <span id="mt-zscore-range" style="color:var(--paper-ink);">—</span></div>
               </div>
             </div>
           </div>
@@ -294,11 +291,11 @@
         </div>
         <div class="runtime-block-body" id="transport-shock-score-attribution">
           <div class="agg-rows">
-            <div><span class="k">Transport Shock 主分归因</span> · <span class="v" id="transport-shock-score-attribution-impact">主分影响待刷新</span></div>
+            <div><span class="k">Transport Shock 主分归因（旧模型审计）</span> · <span class="v" id="transport-shock-score-attribution-impact">旧模型审计待刷新</span></div>
             <div><span class="k">触发原因</span> · <span class="v" id="transport-shock-score-attribution-reason">候选待刷新</span></div>
             <div><span class="k">边界</span> · <span class="v" id="transport-shock-score-attribution-boundary">route / market confirmation 未接入</span></div>
           </div>
-          <p class="note" id="transport-shock-score-attribution-note">只解释已写入 production payload 的 capped score impact;不确认路线级油轮运费、封锁、断供或油价方向。</p>
+          <p class="note" id="transport-shock-score-attribution-note">旧模型审计，不计入OFR。只解释已写入 production payload 的 capped score impact;不确认路线级油轮运费、封锁、断供或油价方向。</p>
         </div>
       </div>
 
@@ -318,7 +315,7 @@
       <div class="runtime-block" id="homepage-macro-coherence">
         <div class="runtime-block-header">
           <h3>跨市场印证<span class="en">(Macro Coherence)</span></h3>
-          <div class="meta">定性印证(Qualitative Check)，仅供观察，不进打分</div>
+          <div class="meta">旧模型定性诊断(Qualitative Check)，非OFR分解或当前建议</div>
         </div>
         <div class="mc-rows" id="mc-rows"></div>
         <div class="mc-summary"><span id="mc-summary-line">—</span></div>
@@ -343,15 +340,15 @@
         <!-- C1: 通胀与能源 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>通胀与能源</h3><span class="en">INFLATION & ENERGY</span><span class="counts">7 张 · <span class="red">3 红</span> · <span class="yellow">2 黄</span> · 2 OBS</span></div>
-          <p class="cat-intro">能源是当前主线第一环。布伦特原油(Brent)主值与公开代理价格的距离反映现货溢价压力；裂解价差(Crack Spread)是能源向下游柴油 / 汽油传导的中间证据；美国制造业景气(ISM PMI)看美国制造业能否消化能源成本；消费者物价(CPI) / 美国油价(WTI)提供通胀与油价基准的直接读数；运输冲击确认因子把咽喉流量、路线级运费与市场确认拆开观察,并显示 owner-approved free-proxy 低权重主分影响。</p>
+          <p class="cat-intro">能源是当前主线第一环。布伦特原油(Brent)的现货代理和各月份期货须核对观察日，跨口径差值不能直接解释为现货溢价；裂解价差(Crack Spread)是能源向下游柴油 / 汽油传导的中间证据；美国制造业景气(ISM PMI)看美国制造业能否消化能源成本；消费者物价(CPI) / 美国油价(WTI)提供通胀与油价基准的直接读数；运输冲击确认因子把咽喉流量、路线级运费与市场确认拆开观察,并显示 owner-approved free-proxy 旧模型低权重主分影响（不计入OFR）。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">116.73</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">主值取公开现货代理 · 状态:公开代理观察</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">$116.50</span></div><div><span class="k">期货 front Yahoo</span> · <span class="v" id="c1-brent-futures">$103.54</span></div><div><span class="k">期货 ICE</span> · <span class="v" id="c1-brent-ice">$98.21</span></div><div><span class="k">现货-期货价差</span> · <span class="v" id="c1-brent-spread">+$16.52</span></div><div><span class="k">最大代理偏离%</span> · <span class="v" id="c1-brent-divergence">14.9%</span></div></div><p class="note">三层证据链(主值 / 现货代理 / 期货代理)显示价差较大，能源主线传导正在被实际定价压实。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
+            <article class="indicator-card" id="card-c1-brent"><div class="status-bar red" id="c1-brent-status"></div><div class="head"><div><div class="name-en">Brent</div><div class="name-zh">布伦特原油</div></div><span class="badge red" id="c1-brent-badge">RED</span></div><div class="number"><span id="c1-brent-number">—</span><span class="unit" id="c1-brent-unit">USD/bbl</span></div><div class="aux" id="c1-brent-aux">来源口径与观察日待核验</div><div class="agg-rows"><div><span class="k">公开现货代理 EIA</span> · <span class="v" id="c1-brent-eia">—</span></div><div><span class="k">期货／市场代理</span> · <span class="v" id="c1-brent-futures">—</span></div><div><span class="k">ICE 延迟期货</span> · <span class="v" id="c1-brent-ice">—</span></div><div><span class="k">同日代理差</span> · <span class="v" id="c1-brent-spread">—</span></div><div><span class="k">比较边界</span> · <span class="v" id="c1-brent-divergence">—</span></div></div><p class="note" id="c1-brent-note">现货代理、连续近月与指定月份期货分别阅读；观察日或合约月份未核实，不直接比较价差。</p><div class="meta"><span>阈值 &gt;100 红</span><span>能源价格证据链</span></div></article>
             <article class="indicator-card" id="card-c1-crack"><div class="status-bar red" id="c1-crack-status"></div><div class="head"><div><div class="name-en">Crack spread</div><div class="name-zh">炼油价差(Crack Spread)</div></div><span class="badge red" id="c1-crack-badge">RED</span></div><div class="number"><span id="c1-crack-number">48.37</span><span class="unit" id="c1-crack-unit">USD/bbl</span></div><div class="aux" id="c1-crack-aux">超低硫柴油(ULSD) × 42 − 布伦特原油(Brent) · 4 周变化 +19.87</div><p class="note" id="c1-crack-note">炼油利润扩张说明能源向汽油 / 柴油传导。布伦特原油(Brent) → 消费者物价(CPI)的中间证据。状态: 供应紧张。</p><div class="meta"><span>阈值 &gt;40 红</span><span>炼油价差与 4 周变化</span></div></article>
             <article class="indicator-card" id="card-c1-ism"><div class="status-bar yellow" id="c1-ism-status"></div><div class="head"><div><div class="name-en">ISM PMI</div><div class="name-zh">美国制造业景气(ISM PMI)</div></div><span class="badge yellow" id="c1-ism-badge">YELLOW</span></div><div class="number" id="c1-ism-number">52.7</div><div class="aux" id="c1-ism-aux">3 月动量 +0.1 · regime: 中性偏扩张</div><p class="note" id="c1-ism-note">制造业读数仍在扩张线之上，但增速放缓，能源成本难被需求消化。</p><div class="meta"><span>阈值 &lt;45 红</span><span>制造业景气(PMI)</span></div></article>
             <article class="indicator-card" id="card-c1-cpi"><div class="status-bar yellow" id="c1-cpi-status"></div><div class="head"><div><div class="name-en">CPI</div><div class="name-zh">美国消费者物价(CPI)</div></div><span class="badge yellow" id="c1-cpi-badge">YELLOW</span></div><div class="number"><span id="c1-cpi-number">3.8</span><span class="unit" id="c1-cpi-unit">% YoY</span></div><div class="aux" id="c1-cpi-aux">核心通胀(Core CPI) +2.7% YoY · 月环比(MoM) +0.6%</div><p class="note" id="c1-cpi-note">圣路易斯联储(FRED)总体与核心消费者物价(CPI)月频公开数据。主显同比(YoY)。</p><div class="meta"><span>实时</span><span>FRED CPIAUCSL + CPILFESL</span></div></article>
             <article class="indicator-card" id="card-c1-wti"><div class="status-bar red" id="c1-wti-status"></div><div class="head"><div><div class="name-en">WTI</div><div class="name-zh">美国油价基准</div></div><span class="badge red" id="c1-wti-badge">RED</span></div><div class="number"><span id="c1-wti-number">112</span><span class="unit" id="c1-wti-unit">USD/bbl</span></div><div class="aux" id="c1-wti-aux">近5日 —</div><p class="note" id="c1-wti-note">配 Brent 看美欧能源分化。FRED daily WTI 可能滞后,近5日为相对最新 FRED 点。</p><div class="meta"><span>实时</span><span>FRED DCOILWTICO</span></div></article>
             <article class="indicator-card" id="card-c1-shipping-freight"><div class="status-bar neutral" id="c1-freight-status"></div><div class="head"><div><div class="name-en">Baltic Freight</div><div class="name-zh">波罗的海运费</div></div><span class="badge neutral" id="c1-freight-badge">OBS</span></div><div class="number"><span id="c1-freight-number">—</span><span class="unit">BDI</span></div><div class="aux" id="c1-freight-aux">运费来源尚未加载</div><p class="note">波罗的海运费:BDTI/BCTI 油轮 + BDI 干散货,反映全球海运需求与运费压力。仅作展示观察。</p><div class="meta"><span id="c1-freight-source-state">时效待核</span><span id="c1-freight-provider">BDTI/BCTI/BDI</span></div></article>
-            <article class="indicator-card" id="card-c1-transport-shock"><div class="status-bar neutral" id="c1-transport-shock-status"></div><div class="head"><div><div class="name-en">Transport Shock</div><div class="name-zh">运输冲击确认因子</div></div><span class="badge neutral" id="c1-transport-shock-badge">OBS</span></div><div class="number"><span id="c1-transport-shock-number">—</span><span class="unit">score</span></div><div class="aux" id="c1-transport-shock-aux">PortWatch 候选字段待刷新 · 主分影响待刷新</div><div class="agg-rows"><div><span class="k">路线级运费确认</span> · <span class="v" id="c1-transport-shock-route">未接入</span></div><div><span class="k">市场确认</span> · <span class="v" id="c1-transport-shock-market">未接入</span></div><div><span class="k">入分闸门</span> · <span class="v" id="c1-transport-shock-score-gate">低权重闸门待刷新</span></div><div><span class="k">主分影响</span> · <span class="v" id="c1-transport-shock-score-impact">0 / +3</span></div><div><span class="k">阻塞项</span> · <span class="v" id="c1-transport-shock-blockers">候选待刷新</span></div><div><span class="k">霍尔木兹代理</span> · <span class="v" id="c1-transport-shock-hormuz">—</span></div><div><span class="k">样本质量</span> · <span class="v" id="c1-transport-shock-sample-quality">待审阅</span></div><div><span class="k">数据龄</span> · <span class="v" id="c1-transport-shock-freshness">—</span></div></div><p class="note" id="c1-transport-shock-note">只读生产 payload 的 PortWatch free-proxy 低权重主分影响。路线级油轮运费和市场确认仍是未接入边界,不等同于封锁、断供或油价方向确认。</p><div class="meta"><span>低权重 / +3 cap</span><span>PortWatch + route / market gates</span></div></article>
+            <article class="indicator-card" id="card-c1-transport-shock"><div class="status-bar neutral" id="c1-transport-shock-status"></div><div class="head"><div><div class="name-en">Transport Shock</div><div class="name-zh">运输冲击确认因子</div></div><span class="badge neutral" id="c1-transport-shock-badge">OBS</span></div><div class="number"><span id="c1-transport-shock-number">—</span><span class="unit">score</span></div><div class="aux" id="c1-transport-shock-aux">PortWatch 候选字段待刷新 · 主分影响待刷新</div><div class="agg-rows"><div><span class="k">路线级运费确认</span> · <span class="v" id="c1-transport-shock-route">未接入</span></div><div><span class="k">市场确认</span> · <span class="v" id="c1-transport-shock-market">未接入</span></div><div><span class="k">入分闸门</span> · <span class="v" id="c1-transport-shock-score-gate">低权重闸门待刷新</span></div><div><span class="k">旧模型影响</span> · <span class="v" id="c1-transport-shock-score-impact">—</span></div><div><span class="k">阻塞项</span> · <span class="v" id="c1-transport-shock-blockers">候选待刷新</span></div><div><span class="k">霍尔木兹代理</span> · <span class="v" id="c1-transport-shock-hormuz">—</span></div><div><span class="k">样本质量</span> · <span class="v" id="c1-transport-shock-sample-quality">待审阅</span></div><div><span class="k">数据龄</span> · <span class="v" id="c1-transport-shock-freshness">—</span></div></div><p class="note" id="c1-transport-shock-note">只读生产 payload 的 PortWatch free-proxy 旧模型低权重主分影响（不计入OFR）。路线级油轮运费和市场确认仍是未接入边界,不等同于封锁、断供或油价方向确认。</p><div class="meta"><span>低权重 / +3 cap</span><span>PortWatch + route / market gates</span></div></article>
           </div>
         </div>
 
@@ -360,7 +357,7 @@
           <div class="reader-cat-header"><h3>全球流动性</h3><span class="en">GLOBAL LIQUIDITY</span><span class="counts">7 张</span></div>
           <p class="cat-intro">全球流动性来自四条管线：美元 / 黄金 / 利率 / 美联储资产负债表。任意管线收紧都会向风险资产传导。美联储流动性三层(水位 / 回购 / 隔夜)分项观察；回购利差以同一观测日核验为准，不能由单一利差断言隔夜市场整体。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow" id="c2-dxy-status"></div><div class="head"><div><div class="name-en">DXY</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow" id="c2-dxy-badge">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">强美元说明全球融资环境收紧，尚未到单独危机程度。</p><div class="meta"><span>阈值 &gt;115 红</span><span>美元指数 + 12 周区间</span></div></article>
+            <article class="indicator-card" id="card-c2-dxy"><div class="status-bar yellow" id="c2-dxy-status"></div><div class="head"><div><div class="name-en">BROAD USD INDEX</div><div class="name-zh">广义美元指数</div></div><span class="badge yellow" id="c2-dxy-badge">YELLOW</span></div><div class="number" id="c2-dxy-number">119.28</div><div class="aux" id="c2-dxy-aux">12 周高位 累积中</div><p class="note">主序列为FRED DTWEXBGS贸易加权广义美元指数，不是ICE DXY；两者基期、货币篮子与权重不同，不能比较点位。此快照未保留该点观察日，不以生成时间代替。</p><div class="meta"><span>阈值 &gt;115 红</span><span>FRED DTWEXBGS · 12 周区间</span></div></article>
             <article class="indicator-card" id="card-c2-gold"><div class="status-bar yellow" id="c2-gold-status"></div><div class="head"><div><div class="name-en">Gold</div><div class="name-zh">黄金</div></div><span class="badge yellow" id="c2-gold-badge">YELLOW</span></div><div class="number"><span id="c2-gold-number">4510.50</span><span class="unit" id="c2-gold-unit">USD/oz</span></div><div class="aux" id="c2-gold-aux">趋势 +</div><p class="note">避险需求 + 通胀对冲并存，与强美元共强 = 金融压力与安全资产需求并存。</p><div class="meta"><span>趋势驱动</span><span>黄金现货价格</span></div></article>
             <article class="indicator-card" id="card-c2-us10y"><div class="status-bar yellow" id="c2-us10y-status"></div><div class="head"><div><div class="name-en">US 10Y + 2s10s</div><div class="name-zh">美元利率曲线</div></div><span class="badge yellow" id="c2-us10y-badge">YELLOW</span></div><div class="number"><span id="c2-us10y-number">4.57</span><span class="unit" id="c2-us10y-unit">%</span></div><div class="aux" id="c2-us10y-aux">10年期 · 10年-2年利差(2s10s) +18bp · 从倒挂转正</div><div class="agg-rows"><div><span class="k">10-2 年期差</span> · <span class="v" id="c2-us10y-t10y2y">+0.18%</span></div><div><span class="k">周变化</span> · <span class="v" id="c2-us10y-week-change">+3bp</span></div><div><span class="k">状态</span> · <span class="v" id="c2-us10y-regime">陡峭化</span></div><div><span class="k">陡峭化警示</span> · <span class="v" id="c2-us10y-alert">是</span></div></div><p class="note">曲线从倒挂转正通常领先衰退 6-18 个月。</p><div class="meta"><span>阈值 &gt;5% 红</span><span>美债收益率曲线</span></div></article>
             <article class="indicator-card" id="card-c2-usd-liquidity"><div class="status-bar green" id="c2-liquidity-status"></div><div class="head"><div><div class="name-en">USD Liquidity Agg</div><div class="name-zh">美元流动性聚合</div></div><span class="badge green" id="c2-liquidity-badge">GREEN</span></div><div class="number"><span id="c2-liquidity-number">3.62</span><span class="unit" id="c2-liquidity-unit">T USD</span></div><div class="aux" id="c2-liquidity-aux">银行准备金 · 12 周高位</div><div class="agg-rows"><div><span class="k">美联储总资产(WALCL)</span> · <span class="v" id="c2-liquidity-walcl">7.18T · 4w +$36B</span></div><div><span class="k">银行准备金</span> · <span class="v" id="c2-liquidity-reserves">3.62T · 4w +$58B</span></div><div><span class="k">隔夜逆回购(ON RRP)</span> · <span class="v" id="c2-liquidity-rrp">$320B · WoW -$8B</span></div><div><span class="k">隔夜利率(SOFR/EFFR)</span> · <span class="v" id="c2-liquidity-sofr-effr">5.31% / 5.33%</span></div><div><span class="k">回购利率(BGCR/TGCR)</span> · <span class="v" id="c2-liquidity-bgcr-tgcr">5.29% / 5.28%</span></div><div><span class="k">回购利差状态</span> · <span class="v" id="c2-liquidity-repo-regime">待核验</span></div></div><p class="note" id="c2-liquidity-repo-note">该回购利差待核验：值缺失或非同一观测日，不能确认正常或压力。</p><div class="meta"><span>仅供观察</span><span>美联储(Fed)流动性组合</span></div></article>
@@ -386,10 +383,10 @@
         <!-- C4: 美国经济温度 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>美国经济温度</h3><span class="en">US ECONOMIC TEMPERATURE</span><span class="counts">2 聚合 + 四象限</span></div>
-          <p class="cat-intro orange-edge"><strong>四象限 · 就业 × 消费：</strong>就业供给端 + 消费需求端，只有同向才是真趋势。当前位 = 就业偏强 / 消费偏弱 → 实际工资被通胀压制(2022-2023 模式)。</p>
+          <p class="cat-intro orange-edge"><strong>就业 × 消费：</strong>各项读数按自身观察日期及来源状态解读。名义与实际零售分别列示；组合记录日期不代表全部指标同期，不由此推断实际工资变化。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c4-employment"><div class="status-bar yellow" id="c4-employment-status"></div><div class="head"><div><div class="name-en">Employment Agg</div><div class="name-zh">就业温度聚合</div></div><span class="badge yellow" id="c4-employment-badge">YELLOW</span></div><div class="number"><span id="c4-employment-number">238</span><span class="unit" id="c4-employment-unit">k</span></div><div class="aux" id="c4-employment-aux">初请失业金 · 4 周均值 232k · WoW +6k</div><div class="agg-rows"><div><span class="k">初请 4 周变化</span> · <span class="v" id="c4-employment-claims-change">+6k</span></div><div><span class="k">续请失业金</span> · <span class="v" id="c4-employment-continuing">1.82M · 4w +4k</span></div><div><span class="k">JOLTS 职位空缺</span> · <span class="v" id="c4-employment-jolts">7.4M · YoY -8.2%</span></div><div><span class="k">U-6 失业率</span> · <span class="v" id="c4-employment-u6">7.4%</span></div><div><span class="k">时薪 AHE YoY</span> · <span class="v" id="c4-employment-ahe">+4.1%</span></div><div><span class="k">行业扩散度</span> · <span class="v" id="c4-employment-diffusion">63% (11 行业扩张占比)</span></div><div><span class="k">扩散状态</span> · <span class="v" id="c4-employment-regime">收窄</span></div></div><p class="note">从最快(ICSA)到最慢(时薪)的综合判读。市场偏强但边际松动。</p><div class="meta"><span>阈值 &gt;280k 红</span><span>就业温度组合</span></div></article>
-            <article class="indicator-card" id="card-c4-consumer"><div class="status-bar yellow" id="c4-consumer-status"></div><div class="head"><div><div class="name-en">Consumer Agg</div><div class="name-zh">消费温度聚合</div></div><span class="badge yellow" id="c4-consumer-badge">YELLOW</span></div><div class="number"><span id="c4-consumer-number">+1.9</span><span class="unit" id="c4-consumer-unit">% YoY</span></div><div class="aux" id="c4-consumer-aux">名义零售(CARTS) · 4w +0.4% · WoW -0.4pp</div><div class="agg-rows"><div><span class="k">实际零售 YoY</span> · <span class="v" id="c4-consumer-real">-1.2%</span></div><div><span class="k">品类扩散占比</span> · <span class="v" id="c4-consumer-diffusion">54% (13 类品类正增长占比)</span></div><div><span class="k">最强品类</span> · <span class="v" id="c4-consumer-strongest">非店铺零售 +8.2% YoY</span></div><div><span class="k">最弱品类</span> · <span class="v" id="c4-consumer-weakest">家具家装 -4.6% YoY</span></div><div><span class="k">密歇根信心</span> · <span class="v" id="c4-consumer-umich">52.4 · 3m -3.1</span></div><div><span class="k">美银卡消费(除油)</span> · <span class="v" id="c4-consumer-bofa">— · 待加载报告</span></div><div><span class="k">Redbook YoY</span> · <span class="v" id="c4-consumer-redbook">+3.8%</span></div></div><p class="note">名义零售仍正、扣通胀转负。消费动能被通胀吃掉的典型形态。</p><div class="meta"><span>阈值 实际零售 YoY &lt;0 红</span><span>消费与零售组合</span></div></article>
+            <article class="indicator-card" id="card-c4-employment"><div class="status-bar yellow" id="c4-employment-status"></div><div class="head"><div><div class="name-en">Employment Agg</div><div class="name-zh">就业温度聚合</div></div><span class="badge yellow" id="c4-employment-badge">YELLOW</span></div><div class="number"><span id="c4-employment-number">238</span><span class="unit" id="c4-employment-unit">k</span></div><div class="aux" id="c4-employment-aux">初请失业金 · 4 周均值 232k · WoW +6k</div><div class="agg-rows"><div><span class="k">初请 4 周变化</span> · <span class="v" id="c4-employment-claims-change">+6k</span></div><div><span class="k">续请失业金</span> · <span class="v" id="c4-employment-continuing">1.82M · 4w +4k</span></div><div><span class="k">JOLTS 职位空缺</span> · <span class="v" id="c4-employment-jolts">7.4M · YoY -8.2%</span></div><div><span class="k">U-6 失业率</span> · <span class="v" id="c4-employment-u6">7.4%</span></div><div><span class="k">时薪 AHE YoY</span> · <span class="v" id="c4-employment-ahe">+4.1%</span></div><div><span class="k">行业扩散度</span> · <span class="v" id="c4-employment-diffusion">63% (11 行业扩张占比)</span></div><div><span class="k">扩散状态</span> · <span class="v" id="c4-employment-regime">收窄</span></div></div><p class="note">初请失业金、职位空缺、失业率和时薪来自不同频率的观察；不能仅据组合更新时间认定同步变化。</p><div class="meta"><span>阈值 &gt;280k 红</span><span>就业温度组合</span></div></article>
+            <article class="indicator-card" id="card-c4-consumer"><div class="status-bar pending" id="c4-consumer-status"></div><div class="head"><div><div class="name-en">Consumer Agg</div><div class="name-zh">消费温度聚合</div></div><span class="badge pending" id="c4-consumer-badge">待核验</span></div><div class="number"><span id="c4-consumer-number">—</span><span class="unit" id="c4-consumer-unit">% YoY</span></div><div class="aux" id="c4-consumer-aux">名义与实际零售读数待核验</div><div class="agg-rows"><div><span class="k">实际零售 YoY</span> · <span class="v" id="c4-consumer-real">—</span></div><div><span class="k">品类扩散占比</span> · <span class="v" id="c4-consumer-diffusion">—</span></div><div><span class="k">最强品类</span> · <span class="v" id="c4-consumer-strongest">—</span></div><div><span class="k">最弱品类</span> · <span class="v" id="c4-consumer-weakest">—</span></div><div><span class="k">密歇根信心</span> · <span class="v" id="c4-consumer-umich">—</span></div><div><span class="k">美银卡消费(除油)</span> · <span class="v" id="c4-consumer-bofa">— · 待加载报告</span></div><div><span class="k">Redbook YoY</span> · <span class="v" id="c4-consumer-redbook">—</span></div></div><p class="note" id="c4-consumer-note">等待可核验的消费与零售读数、日期及来源状态。</p><div class="meta"><span>各源独立观察</span><span>消费与零售组合</span></div></article>
           </div>
         </div>
 
@@ -400,18 +397,18 @@
           <div class="card-grid">
             <article class="indicator-card" id="card-c7-vix"><div class="status-bar green" id="c7-vix-status"></div><div class="head"><div><div class="name-en">VIX</div><div class="name-zh">标普500隐含波动率(VIX)</div></div><span class="badge green" id="c7-vix-badge">GREEN</span></div><div class="number" id="c7-vix-number">16.76</div><div class="aux" id="c7-vix-aux">12 周低位</div><p class="note" id="c7-vix-note">波动率没有同步扩张，是当前形势不能写成全面危机的关键反证。</p><div class="meta"><span>阈值 &gt;25 红</span><span>标普500隐含波动率(VIX)</span></div></article>
             <article class="indicator-card" id="card-c7-spx"><div class="status-bar yellow" id="c7-spx-status"></div><div class="head"><div><div class="name-en">SPX</div><div class="name-zh">标普500(SPX)</div></div><span class="badge yellow" id="c7-spx-badge">MIXED</span></div><div class="number" id="c7-spx-number">7473</div><div class="aux" id="c7-spx-aux">52 周高位 累积中</div><p class="note">风险资产仍强，结构压力尚未完全进入价格。</p><div class="meta"><span>距高 -15%+ 红</span><span>标普500(SPX)与 52 周高位</span></div></article>
-            <article class="indicator-card" id="card-c7-ndx"><div class="status-bar yellow" id="c7-ndx-status"></div><div class="head"><div><div class="name-en">NDX 60w z-score</div><div class="name-zh">纳指100温度对照(NDX)</div></div><span class="badge yellow" id="c7-ndx-badge">+2.22σ</span></div><div class="number"><span id="c7-ndx-number">+2.22</span><span class="unit" id="c7-ndx-unit">σ</span></div><div class="aux" id="c7-ndx-aux">纳指100(NDX) vs 60 周均值 · 纳斯达克100 ETF(QQQ)对照</div><p class="note" id="c7-ndx-note">纳指100(NDX) 60 周偏离度(z-score)用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。</p><div class="meta"><span>仅供观察</span><span>纳指100(NDX)历史温度</span></div></article>
+            <article class="indicator-card" id="card-c7-ndx"><div class="status-bar pending" id="c7-ndx-status"></div><div class="head"><div><div class="name-en">NDX 60w z-score</div><div class="name-zh">纳指100温度对照(NDX)</div></div><span class="badge pending" id="c7-ndx-badge">待核验</span></div><div class="number"><span id="c7-ndx-number">—</span><span class="unit" id="c7-ndx-unit">σ</span></div><div class="aux" id="c7-ndx-aux">纳指100(NDX) vs 60 周均值 · 纳斯达克100 ETF(QQQ)对照</div><p class="note" id="c7-ndx-note">纳指100(NDX) 60 周偏离度(z-score)用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。</p><div class="meta"><span>仅供观察</span><span>纳指100(NDX)历史温度</span></div></article>
           </div>
         </div>
 
         <!-- C8: 地缘与世界秩序 -->
         <div class="reader-cat-block">
           <div class="reader-cat-header"><h3>地缘与世界秩序</h3><span class="en">GEOPOLITICS & WORLD ORDER</span><span class="counts">4 张</span></div>
-          <p class="cat-intro">底层地缘评分(计入主评分)+ 世界秩序压力(只做强度修正、不计入主评分)+ 经济武器化 + 军备冲突。</p>
+          <p class="cat-intro">旧模型地缘评分仅作审计；世界秩序、经济武器化与军备冲突为独立观察，均不计入或升档OFR。</p>
           <div class="card-grid">
-            <article class="indicator-card" id="card-c8-geo"><div class="status-bar red" id="c8-geo-status"></div><div class="head"><div><div class="name-en">Geopolitical Module</div><div class="name-zh">底层地缘风险评分</div></div><span class="badge red" id="c8-geo-badge">RED</span></div><div class="number" id="c8-geo-number">78</div><div class="aux" id="c8-geo-aux">6 底层模块之一 · 模块趋势 ↑</div><p class="note" id="c8-geo-note">底层地缘评分 78，直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。</p><div class="meta"><span>阈值 &gt;70 红</span><span>底层地缘评分趋势</span></div></article>
-            <article class="indicator-card" id="card-c8-wo"><span class="corner overlay" id="c8-wo-corner">OVERLAY</span><div class="status-bar orange" id="c8-wo-status"></div><div class="head"><div><div class="name-en">World Order Overlay</div><div class="name-zh">结构性世界秩序压力</div></div><span class="badge orange" id="c8-wo-badge">OVERLAY</span></div><div class="number" id="c8-wo-number">70</div><div class="aux" id="c8-wo-aux">状态:多战区压力期</div><p class="note" id="c8-wo-note">只为今日判读做强度修正，不计入主评分。</p><div class="meta"><span>不进主评分</span><span>世界秩序压力状态</span></div></article>
-            <article class="indicator-card" id="card-c8-econ"><div class="status-bar red" id="c8-econ-status"></div><div class="head"><div><div class="name-en">Economic Weaponization</div><div class="name-zh">经济武器化</div></div><span class="badge red" id="c8-econ-badge">RED</span></div><div class="number" id="c8-econ-number">+2.3</div><div class="aux" id="c8-econ-aux">美国制裁清单(OFAC)30日 + 全球新闻事件(GDELT)制裁事件偏离度(z-score)</div><p class="note" id="c8-econ-note">制裁与经济武器化处于历史高位区间。趋势(trend): 上行。</p><div class="meta"><span>美国制裁清单(OFAC)+全球新闻事件(GDELT)</span><span id="c8-econ-meta-source">经济武器化压力</span></div></article>
+            <article class="indicator-card" id="card-c8-geo"><div class="status-bar pending" id="c8-geo-status"></div><div class="head"><div><div class="name-en">Geopolitical Module</div><div class="name-zh">底层地缘风险评分</div></div><span class="badge pending" id="c8-geo-badge">待核验</span></div><div class="number" id="c8-geo-number">—</div><div class="aux" id="c8-geo-aux">旧模型地缘模块 · 审计趋势待加载</div><p class="note" id="c8-geo-note">旧模型地缘评分待加载，仅作审计，不计入OFR主读数。世界秩序另作独立观察，不升档OFR。</p><div class="meta"><span>阈值 &gt;70 红</span><span>底层地缘评分趋势</span></div></article>
+            <article class="indicator-card" id="card-c8-wo"><span class="corner overlay" id="c8-wo-corner">OVERLAY</span><div class="status-bar orange" id="c8-wo-status"></div><div class="head"><div><div class="name-en">World Order Overlay</div><div class="name-zh">结构性世界秩序压力</div></div><span class="badge orange" id="c8-wo-badge">OVERLAY</span></div><div class="number" id="c8-wo-number">70</div><div class="aux" id="c8-wo-aux">状态:多战区压力期</div><p class="note" id="c8-wo-note">独立观察，不计入或升档OFR主读数。</p><div class="meta"><span>不进主评分</span><span>世界秩序压力状态</span></div></article>
+            <article class="indicator-card" id="card-c8-econ"><div class="status-bar red" id="c8-econ-status"></div><div class="head"><div><div class="name-en">Economic Weaponization</div><div class="name-zh">经济武器化</div></div><span class="badge red" id="c8-econ-badge">RED</span></div><div class="number" id="c8-econ-number">+2.3</div><div class="aux" id="c8-econ-aux">美国制裁清单(OFAC)30日 + 全球新闻事件(GDELT)制裁事件偏离度(z-score)</div><p class="note" id="c8-econ-note">世界秩序独立维度；当前分档不代表历史高位或较上期变化。来源与时效见世界秩序附录。</p><div class="meta"><span>美国制裁清单(OFAC)+全球新闻事件(GDELT)</span><span id="c8-econ-meta-source">经济武器化压力</span></div></article>
             <article class="indicator-card" id="card-c8-arms"><span class="corner manual" id="c8-arms-corner">MANUAL · ANNUAL</span><div class="status-bar yellow" id="c8-arms-status"></div><div class="head"><div><div class="name-en">Arms & Conflict</div><div class="name-zh">军备与冲突</div></div><span class="badge yellow" id="c8-arms-badge">YELLOW</span></div><div class="number" id="c8-arms-number">+1.2</div><div class="aux" id="c8-arms-aux">ACLED 30d + SIPRI 全球军费 2.4% GDP</div><p class="note" id="c8-arms-note">手动 + 年度数据。不当成实时高频信号读。</p><div class="meta"><span>ACLED weekly + SIPRI annual</span><span>军备与冲突压力</span></div></article>
           </div>
         </div>
@@ -484,39 +481,40 @@
       <header class="editorial-section-header">
         <span class="section-kicker">OIL DIRECTIONAL PRESSURE · 油价方向压力研判</span>
         <span class="section-title" id="odp-verdict">—</span>
-        <span class="section-note">独立能源专题 · EIA 周度物理链 + Brent 公开代理 · 仅供参考,不参与平台评分</span>
+        <span class="section-note">独立能源专题 · 美国周度供需与市场价格分列 · 仅供参考,不参与平台评分</span>
       </header>
       <div class="editorial-section-body">
         <div class="odp-reader-flow" aria-label="ODP 阅读路径">
           <article class="odp-flow-block odp-flow-verdict">
             <div class="odp-flow-heading">
               <span>01 · VERDICT</span>
-              <strong>方向结论</strong>
-              <em>方向结论、价格背离、置信度与数据充分度。</em>
+              <strong>方向与周度压力</strong>
+              <em>价格是否可判断、美国周度供需状态及真实观察日。</em>
             </div>
             <p class="odp-headline" id="odp-headline">—</p>
             <p class="odp-brent-basis-alert" id="odp-brent-basis-alert">—</p>
             <dl class="odp-meta">
-              <div><dt>物理判断</dt><dd id="odp-physical-bias">—</dd></div>
+              <div><dt>美国周度压力</dt><dd id="odp-physical-bias">—</dd></div>
               <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
-              <div><dt>置信度</dt><dd id="odp-confidence">—</dd></div>
+              <div><dt>解释范围</dt><dd id="odp-confidence">—</dd></div>
               <div><dt>数据充分度</dt><dd id="odp-data-sufficiency">—</dd></div>
-              <div><dt>截至</dt><dd id="odp-asof">—</dd></div>
+              <div><dt>美国统计观察日</dt><dd id="odp-asof">—</dd></div>
             </dl>
           </article>
           <details class="editorial-folded-content odp-after-verdict-fold">
             <summary>
-              <span><span class="fold-marker"></span> 02-04 · 研判链、反证与证据详情 <em>· 默认收起</em></span>
+              <span><span class="fold-marker"></span> 02-04 · 美国周度依据、市场读数与背景 <em>· 默认收起</em></span>
               <span class="fold-label">展开/收起</span>
             </summary>
             <div class="editorial-section-body">
               <section class="odp-flow-block odp-flow-why">
                 <div class="odp-flow-heading">
                   <span>02 · EVIDENCE CHAIN</span>
-                  <strong>为什么这样判断</strong>
-                  <em>周度物理链是主锚,价格、期限结构和慢变量只做确认或背离。</em>
+                  <strong>美国周度依据</strong>
+                  <em>周度统计描述当前供需压力；市场价格另看日期与可比性。</em>
                 </div>
                 <p class="odp-attribution-thesis" id="odp-attribution-thesis">—</p>
+                <div class="legacy-model-retired" hidden inert>
                 <div class="odp-ladder" aria-label="ODP 判断链">
                   <article class="odp-ladder-card">
                     <span class="odp-ladder-kicker">1 · CORE PHYSICAL CHAIN</span>
@@ -539,16 +537,17 @@
                     <p id="odp-ladder-watch">—</p>
                   </article>
                 </div>
+                </div>
                 <div class="odp-support-grid">
                   <section class="odp-attribution-panel odp-support-panel">
                     <span class="odp-attribution-kicker">ATTRIBUTION</span>
-                    <strong>方向归因</strong>
+                    <strong>观察边界</strong>
                     <ul id="odp-attribution-support"></ul>
                   </section>
                   <div class="odp-reason-panels" aria-label="ODP 方向拆解">
                     <section class="odp-reason-panel">
                       <div class="odp-reason-panel-heading">
-                        <span>核心物理锚</span>
+                        <span>美国周度统计</span>
                         <strong>EIA 周度链</strong>
                       </div>
                       <ul class="odp-reasons">
@@ -561,7 +560,7 @@
                     </section>
                     <section class="odp-reason-panel">
                       <div class="odp-reason-panel-heading">
-                        <span>市场确认</span>
+                        <span>市场价格</span>
                         <strong>价格 / 期限结构</strong>
                       </div>
                       <ul class="odp-reasons">
@@ -574,21 +573,21 @@
               <section class="odp-flow-block odp-flow-challenge">
                 <div class="odp-flow-heading">
                   <span>03 · COUNTERWEIGHT</span>
-                  <strong>反证与置信边界</strong>
-                  <em>反证、置信封顶与改变判断条件。</em>
+                  <strong>可能抵消周度压力的依据</strong>
+                  <em>只列已合格的周度或市场反向证据；缺失不能当作没有反证。</em>
                 </div>
-                <div class="odp-challenge-panels" aria-label="ODP 反证与置信边界">
+                <div aria-label="ODP 合格反向依据">
                   <section class="odp-attribution-panel">
                     <span class="odp-attribution-kicker">COUNTER EVIDENCE</span>
                     <strong>主要反证</strong>
                     <ul id="odp-attribution-counter"></ul>
                   </section>
-                  <section class="odp-attribution-panel">
+                  <section class="odp-attribution-panel legacy-model-retired" hidden inert>
                     <span class="odp-attribution-kicker">CONFIDENCE CAP</span>
                     <strong>置信封顶</strong>
                     <ul id="odp-attribution-caps"></ul>
                   </section>
-                  <section class="odp-attribution-panel">
+                  <section class="odp-attribution-panel legacy-model-retired" hidden inert>
                     <span class="odp-attribution-kicker">VIEW CHANGE</span>
                     <strong>改变判断条件</strong>
                     <ul id="odp-attribution-triggers"></ul>
@@ -598,27 +597,29 @@
               <section class="odp-flow-block odp-detail">
                 <div class="odp-flow-heading">
                   <span>04 · DETAIL LEDGER</span>
-                  <strong>证据矩阵与审计详情</strong>
-                  <em>角色分组、时点分级与观察层边界。</em>
+                  <strong>观察值、日期与背景</strong>
+                  <em>同一来源不重复算确认，预测与观察值分开阅读。</em>
                 </div>
             <div class="odp-detail-subhead">
               <span>MATRIX</span>
               <strong>证据矩阵</strong>
             </div>
             <p id="odp-evidence-note">—</p>
+            <div class="legacy-model-retired" hidden inert>
             <div class="odp-evidence-timing-summary" id="odp-evidence-timing-summary" aria-label="ODP 证据时效分层">—</div>
             <div class="odp-detail-subhead">
               <span>READINESS</span>
               <strong>证据成熟度矩阵</strong>
             </div>
             <div class="odp-evidence-readiness-matrix" id="odp-evidence-readiness-matrix" aria-label="ODP 证据成熟度矩阵">—</div>
+            </div>
             <div class="odp-evidence-list" id="odp-evidence-list"></div>
             <div class="odp-detail-subhead">
               <span>AUDIT LAYERS</span>
-              <strong>审计与观察层</strong>
+              <strong>月度与新闻背景</strong>
             </div>
             <div class="odp-energy-addendum" id="odp-energy-addendum" aria-label="能源压力补充证据">
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">BRENT BASIS CHECK</span>
                   <strong>Brent 口径校验</strong>
@@ -632,7 +633,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-brent-basis-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">PULSE FACTOR CHECK</span>
                   <strong>Pulse 三因子校验</strong>
@@ -650,7 +651,7 @@
               <div class="odp-energy-group">
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">GLOBAL STOCK GAP</span>
-                  <strong>全球库存/需求缺口</strong>
+                  <strong>EIA STEO 月度预测/估算背景</strong>
                 </div>
                 <div class="odp-energy-metrics">
                   <div><span>状态</span><b class="odp-global-forecast-status" id="odp-global-forecast-status">—</b></div>
@@ -658,11 +659,11 @@
                   <div><span>全球库存</span><b id="odp-global-forecast-global-stocks">—</b></div>
                   <div><span>需求预测</span><b id="odp-global-forecast-demand">—</b></div>
                   <div><span>供应缓冲</span><b id="odp-global-forecast-buffer">—</b></div>
-                  <div class="wide"><span>可读口径</span><b id="odp-global-forecast-window">—</b></div>
+                  <div class="wide"><span>真实月期</span><b id="odp-global-forecast-window">—</b></div>
                 </div>
                 <p class="odp-energy-note" id="odp-global-forecast-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">GLOBAL OVERLAY</span>
                   <strong>全球确认层</strong>
@@ -691,14 +692,14 @@
                   <div class="wide"><span>来源健康</span><b class="odp-news-source-health" id="odp-news-event-source-health">—</b></div>
                   <div class="wide"><span>Web NGrams 背景</span><b class="odp-news-web-ngrams-health" id="odp-news-event-web-ngrams-health">—</b></div>
                   <div class="wide"><span>Web NGrams 时效</span><b class="odp-news-web-ngrams-health" id="odp-news-event-web-ngrams-age">—</b></div>
-                  <div class="wide"><span>市场确认</span><b id="odp-news-event-market">—</b></div>
+                  <div class="wide"><span>市场价格</span><b id="odp-news-event-market">—</b></div>
                   <div class="wide"><span>主张方向</span><b class="odp-news-claim-polarity" id="odp-news-event-claim-polarity">—</b></div>
                   <div class="wide"><span>主张质量</span><b class="odp-news-claim-quality" id="odp-news-event-claim-quality">—</b></div>
                   <div class="wide"><span>标题风险</span><b id="odp-news-event-title-risk">—</b></div>
                 </div>
                 <p class="odp-energy-note" id="odp-news-event-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">SATELLITE THERMAL WATCH</span>
                   <strong>卫星热异常观察</strong>
@@ -714,7 +715,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-thermal-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">CROSS-CONFIRMATION</span>
                   <strong>交叉确认</strong>
@@ -729,7 +730,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-cross-confirmation-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">TIMESTAMP QC</span>
                   <strong>数据时点/QC</strong>
@@ -744,7 +745,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-qc-ledger-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">OPEC BUFFER</span>
                   <strong>OPEC 闲置产能</strong>
@@ -757,7 +758,7 @@
                 </div>
                 <p class="odp-energy-note" id="odp-energy-spare-note">—</p>
               </div>
-              <div class="odp-energy-group">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
                 <div class="odp-energy-heading">
                   <span class="odp-energy-kicker">CHOKEPOINT PROXY</span>
                   <strong>咽喉转运</strong>
@@ -794,12 +795,12 @@
         <div class="appendix-narrative-intro">本附录为今日主判断的支撑层。所有数据来自 <code>data/radar-data.json</code>，每天自动更新。读取顺序：数据健康 → 时间维度 → 传导网络 → 资产投影。</div>
 
         <h4>1. 数据健康 <em>· Data Health</em></h4>
-        <p>本期数据综合健康状态<strong id="detail-health-state-word">正常</strong>。<code class="ok" id="detail-health-score">健康度 100/100</code>，数据来源为 <code id="detail-health-source-mode">Worker 实时</code>，<span id="detail-health-critical-missing">0</span> 项关键缺失、<span id="detail-health-fallback-count">0</span> 项回退。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，采集时间 <code id="detail-health-captured">23:29 UTC</code>。<span id="detail-health-refresh-active">实时数据源刷新成功，无需进入降级模式或缓存模式。</span><span id="detail-health-refresh-none" hidden>实时数据源未完全处于实时状态，当前可能为非实时、降级或缓存输入，请以上方计数与各卡片来源状态为准。</span></p>
+        <p>本期输入采集状态<strong id="detail-health-state-word">待核验</strong>。<code class="ok" id="detail-health-score">采集时健康度待核验</code>，输入采集模式为 <code id="detail-health-source-mode">采集模式待核验</code>，<span id="detail-health-critical-missing">0</span> 项关键缺失、<span id="detail-health-fallback-count">0</span> 项回退。Daily 输入来自 <code id="detail-health-branch">realtime-data</code> 分支，提交 <code id="detail-health-commit">75b982d4</code>，Daily 采纳输入时间 <code id="detail-health-captured">—</code>。<span id="detail-health-refresh-active">本次输入采集记录正常；不代表每项观察值都是当天或仍足够新。</span><span id="detail-health-refresh-none" hidden>本次输入采集存在缺失、降级或缓存，请以上方记录与逐项来源状态为准。</span></p>
         <div class="appendix-twocol">
           <div>
-            <p id="detail-health-sources-active">快变量层 7 个数据源(<code>布伦特原油、广义美元指数、VIX 波动率、高收益债利差、10 年期美债、黄金、标普500</code>) 全部 <code class="ok">实时</code>。慢变量层宏观驱动下 12 个子模块的来源状态显示，FRED 美联储数据系列(8 项)、Yahoo 行情系列(纳指类 NDX/QQQ/IXIC、信贷类基金 BIZD/PBDC/SRLN/CCLFX 等)、ISM 制造业景气(PMI)、StockQ 运费指数(油轮 BDTI/BCTI、干散货 BDI)、ICE 信用利差(高收益/投资级 CDX)、美国银行消费观察(Consumer Checkpoint) 均处于实时状态。</p>
-            <p id="detail-health-sources-none" hidden>部分快变量 / 慢变量数据源未处于实时状态（非实时 / 降级 / 回退），具体以各卡片来源状态与上方关键缺失 / 回退计数为准。</p>
-            <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">逆回购准备金告急</code>(隔夜逆回购余额:<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号已纳入决策层门控</span><span id="detail-fed-signal-none" hidden>结构信号层当前未激活，决策层未因结构信号加码</span>，但美元流动性分项资料：模块状态 <code class="ok" id="detail-fed-regime">平稳</code>，美联储总资产(WALCL) <span id="detail-fed-walcl">6.71T</span>、银行准备金 <span id="detail-fed-reserves">3.13T</span>、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，回购利差状态为<code id="detail-fed-repo-regime">待核验</code>。</p>
+            <p id="detail-health-sources-active">采集健康只描述本次输入链路的成功与回退情况。日频行情、周频和月季频宏观数据各有观察日期及发布滞后，不能由采集成功推断它们均为实时。逐项缺少观察日或时效规则时，保留待核验，不借快照生成时间续期。</p>
+            <p id="detail-health-sources-none" hidden>部分输入存在降级或回退，具体以各卡片来源状态及上方计数为准；来源状态与观察值时效需分别核验。</p>
+            <p><span id="detail-fed-signal-active">结构信号层激活 <span id="detail-fed-signal-count">1</span> 项：<code class="warn" id="detail-fed-signal-label">隔夜逆回购余额偏低</code>(隔夜逆回购余额:<span id="detail-fed-onrrp">ON RRP 9.65 亿美元</span>)。该信号独立展示，不提高OFR读数或生成仓位指令</span><span id="detail-fed-signal-none" hidden>当前快照未记录激活结构信号，不等于没有结构风险</span>，但美元流动性分项资料：模块状态 <code class="ok" id="detail-fed-regime">平稳</code>，美联储总资产(WALCL) <span id="detail-fed-walcl">6.71T</span>、银行准备金 <span id="detail-fed-reserves">3.13T</span>、担保隔夜利率/有效联邦基金利率(SOFR/EFFR) 参考读数 <span id="detail-fed-sofr-effr">3.51%/3.62%</span>，回购利差状态为<code id="detail-fed-repo-regime">待核验</code>。余额偏低不等于银行准备金短缺，需结合银行准备金余额与货币市场利差判断。</p>
           </div>
           <aside class="appendix-sidebar">
             <div class="sidebar-kicker">健康度快照</div>
@@ -809,16 +810,18 @@
               <dt>关键缺失</dt><dd id="detail-health-critical-missing-dd">0 项</dd>
               <dt>降级模式</dt><dd id="detail-health-degraded-mode">否</dd>
               <dt>安全输出</dt><dd id="detail-health-safe-output">是</dd>
-              <dt>最近运行</dt><dd id="detail-health-run-at">2026-05-24 23:32 UTC</dd>
-              <dt>结构信号</dt><dd id="detail-health-structural-dd">逆回购准备金告急 (1)</dd>
+              <dt>输入快照生成</dt><dd id="detail-health-input-at">—</dd>
+              <dt>Daily 计算起点</dt><dd id="detail-health-run-at">—</dd>
+              <dt>快照时效</dt><dd id="detail-health-freshness">待核验</dd>
+              <dt>结构信号</dt><dd id="detail-health-structural-dd">隔夜逆回购余额偏低 (1)</dd>
             </dl>
           </aside>
         </div>
         <div class="appendix-callout ok" id="detail-health-callout">
           <div class="callout-kicker">现状判读</div>
-          <p id="detail-health-callout-active">数据健康正常，无需触发回退机制。</p>
-          <p id="detail-health-callout-none" hidden>数据健康需关注，当前存在非实时、降级或回退信号。</p>
-          <p><span id="detail-health-live-note-active">系统所有关键数据源处于实时状态，今日主判断的所有证据均可被审计追溯。</span><span id="detail-health-live-note-none" hidden>部分关键数据源未处于实时状态，今日部分证据可能来自非实时、缓存或回退输入，请谨慎解读。</span><span id="detail-health-structural-note-active">唯一需要观察的是 <span id="detail-health-structural-signal">逆回购准备金告急</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
+          <p id="detail-health-callout-active">采集记录正常，观察值时效仍须逐项核对。</p>
+          <p id="detail-health-callout-none" hidden>采集记录需关注，当前存在缺失、降级或回退信号。</p>
+          <p><span id="detail-health-live-note-active">来源正常与数据足够新是两回事。上方OFR单列实际观察、获取和派生计算时间；其它指标以各自观察日为准。</span><span id="detail-health-live-note-none" hidden>部分证据来自缓存或回退；获取时间不改变原观察日，也不证明当前仍有效。</span><span id="detail-health-structural-note-active">另有独立结构信号 <span id="detail-health-structural-signal">隔夜逆回购余额偏低</span>，它独立列示，不提高OFR读数，也不生成仓位指令。</span><span id="detail-health-structural-note-none" hidden>当前快照未记录激活结构信号；不据此判断没有风险。</span></p>
         </div>
 
         <div class="legacy-model-retired" hidden inert>
@@ -947,9 +950,9 @@
           <p class="wo-desc">压力分数 <span id="wo-detail-score">—</span> / 置信度 <span id="wo-detail-confidence">待确认</span> / 市场确认 <span id="wo-detail-market-confirmation">待确认</span>。观察层参数：<span id="wo-detail-risk-bias">—</span>；不表示主分数加分或执行动作。</p>
         </div>
 
-        <p>本层数据来自 4 个外部源：<code>GDELT</code>(全球新闻情绪与冲突)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX 波动率 / 黄金 / 广义美元指数 跨资产同步性)。各外部源的实际新鲜度见下方「数据新鲜度」行，市场确认状态见上方压力分数行。</p>
+        <p>本层数据来自 4 个外部源：<code>GDELT</code>(免费新闻编码记录及历史摘要)、<code>OFAC</code>(经济制裁)、<code>SIPRI</code>(全球军费，年频)、<code>ACLED</code>(冲突事件，周频)，以及 1 个市场确认层(VIX 波动率 / 黄金 / 广义美元指数 跨资产同步性)。已披露的源日期与采集时评级见下方「数据观察窗口」行，市场确认状态见上方压力分数行。</p>
 
-        <p class="wo-freshness">数据新鲜度：ACLED 最新周 <code id="wo-detail-acled-latest-week">—</code>(截至该周的近 4 周冲突事件 <span id="wo-detail-acled-events-4w">—</span>)· 月度截至 <code id="wo-detail-acled-monthly-asof">—</code> · GDELT 冲突记录 <span id="wo-detail-gdelt-conflict-events">—</span>。<span id="wo-detail-source-freshness">来源时效待确认。</span> ACLED 周表与月表需手动下载并导入；工作流成功不代表底层表格已经更新。</p>
+        <p class="wo-freshness"><span id="wo-detail-source-clock">本层快照生成时间待核验。</span> 以下源时效为采集时评级，不是当前实时健康检查。数据观察窗口：ACLED 最新周 <code id="wo-detail-acled-latest-week">—</code>(截至该周的近 4 周冲突事件 <span id="wo-detail-acled-events-4w">—</span>)· 月度截至 <code id="wo-detail-acled-monthly-asof">—</code> · GDELT 冲突记录 <span id="wo-detail-gdelt-conflict-events">—</span>。<span id="wo-detail-source-freshness">来源时效待确认。</span> ACLED 周表与月表由既有定时链更新；工作流成功不代表底层表格已经更新，以以上观察日期为准。</p>
 
         <h4>2. 六维度详情 <em>· Six Dimensions</em></h4>
 
@@ -1202,6 +1205,6 @@
       </div>
     </footer>
   </div>
-  <script type="module" src="scripts/app.js?v=oil-evidence-health-20261106"></script>
+  <script type="module" src="scripts/app.js?v=qqq-week-label-20261114"></script>
 </body>
 </html>

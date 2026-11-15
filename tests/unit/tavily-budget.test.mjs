@@ -8,7 +8,7 @@ import { collectProvider as bubble } from '../../scripts/bubble-watch/collect-we
 import { createSearchKeyPool } from '../../scripts/lib/search-key-pool.mjs';
 
 const clock = Date.parse('2026-09-18T07:00:00.000Z');
-const usage = () => ({ account: { plan_usage: 40, plan_limit: 1000, paygo_usage: 0, paygo_limit: 0 }, key: { usage: 40, limit: 1000 } });
+const usage = () => ({ account: { current_plan: 'Researcher', plan_usage: 40, plan_limit: 1000, paygo_usage: 0, paygo_limit: 0 }, key: { usage: 40, limit: 1000 } });
 const normalized = { planUsage: 40, planLimit: 1000, keyUsage: 40, keyLimit: 1000 };
 const context = { key: 'PRIVATE_TEST_SECRET', payload: { search_depth: 'basic', query: 'PRIVATE_QUERY' }, consumer: 'macro-editorial', mode: 'automated', runId: '123' };
 function row(change = {}) { return { id: randomUUID(), time: new Date(clock).toISOString(), consumer: 'oil-news', mode: 'automated', keyId: 'a'.repeat(16), credits: 1, state: 'success', accountUsageBefore: 0, reportedCredits: 1, runId: '123', ...change }; }

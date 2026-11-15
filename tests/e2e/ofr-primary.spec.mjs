@@ -30,7 +30,7 @@ for (const width of [1440,390]) for (const state of ['negative','zero','cached',
     });
     // A broken old score history must neither seed nor invalidate the OFR curve.
     await page.route('**/data/radar-history.json*', route => route.fulfill({ json: [{ date: null, score: 99 }] }));
-    await page.goto('/index.html'); await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
+    await page.goto('/index.html?view=radar'); await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
     const expected = state === 'negative' ? '-1.829' : state === 'zero' ? '0.000' : '—';
     await expect(page.locator('#hero-score-value')).toHaveText(expected);
     await expect(page.locator('#hero-score-value sup')).toHaveCount(0);

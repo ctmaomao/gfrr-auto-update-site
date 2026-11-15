@@ -1,3 +1,4 @@
+import { assessWeeklyEditorialNewsReadiness } from './weekly-editorial-news.mjs';
 import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { isUsableNews, isLimitedEvidence } from './editorial-evidence-policy.mjs';
 import { createHash } from 'node:crypto';
@@ -90,6 +91,11 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
     dimensions.newsEvidenceQuality = dimensions.newsEvidenceQuality === 'fail' ? 'fail' : 'warn';
     warnings.push('部分新闻来自专业媒体摘要或机构观点，尚未独立核实；按注明出处的有限内容展示。');
   }
+  if (input?.newsContext?.coverageMode === 'limited_single_search') {
+    const readiness = assessWeeklyEditorialNewsReadiness(input.newsContext);
+    if (!readiness.editorialReady || readiness.coverageMode !== 'limited_single_search') blockers.push('单渠道受限输入的来源资格或健康凭据不一致');
+    warnings.push('仅一个完整健康的搜索渠道；新闻覆盖受限，不代表独立来源已充分核实。');
+  }
   if (input?.newsContext?.status === 'partial') {
     dimensions.newsEvidenceQuality = 'warn';
     warnings.push('本周期新闻发现覆盖有限；页面数据限制必须保留这一说明');
@@ -121,6 +127,8 @@ export function reviewWeeklyEditorial({ input, output, generatedAt = new Date().
   return {
     schemaVersion: 'bubble-watch-weekly-editorial-review-v1',
     generatedAt,
+    inputDigest: digest(input),
+    artifactDigest: digest(output),
     inputSchemaVersion: input?.schemaVersion || null,
     outputSchemaVersion: output?.schemaVersion || null,
     status,
@@ -156,6 +164,9 @@ export function projectWeeklyEditorial({ input, output, review, generatedAt = ne
     throw new Error('weekly editorial projection requires display-eligible pass/warn review');
   }
   if (input.fixtureOnly === true) throw new Error('fixture input cannot be projected to production');
+  if (review.inputDigest !== digest(input) || review.artifactDigest !== digest(output)) throw new Error('review input/output digest mismatch');
+  const repeatedReview = reviewWeeklyEditorial({ input, output, generatedAt: review.generatedAt });
+  if (JSON.stringify(review) !== JSON.stringify(repeatedReview)) throw new Error('quality review differs from recomputed evidence review');
 
   const referencedSourceIds = new Set(collectReferenceValues(output, 'sourceRefIds'));
   for (const item of output.sourceAttribution || []) referencedSourceIds.add(item.sourceRefId);
@@ -203,7 +214,8 @@ export function projectWeeklyEditorial({ input, output, review, generatedAt = ne
       sourceCommit,
       runId,
       newsDiscoveryStatus: input.newsContext?.status || null,
-      liveNewsProviderCount: input.newsContext?.liveProviderCount ?? null
+      liveNewsProviderCount: input.newsContext?.liveProviderCount ?? null,
+      ...(input.newsContext?.coverageMode === 'limited_single_search' ? { newsCoverageMode: 'limited_single_search' } : {})
     },
     freshness: {
       artifactGeneratedAt: output.generatedAt,
@@ -280,6 +292,7 @@ function syntheticInputFromProduction(layer, bubbleWatch) {
       windowEnd: layer.asOfDate,
       topicsQueried: 6,
       liveProviderCount: layer.provenance.liveNewsProviderCount,
+      coverageMode: layer.provenance.newsCoverageMode,
       stories: newsStories,
       boundaries: {
         transientArtifactOnly: true,
@@ -323,6 +336,8 @@ export function validateWeeklyEditorialProduction(layer, bubbleWatch) {
   if (layer.provenance?.humanApproved !== false) errors.push('provenance.humanApproved must be false');
   if (!/^[a-f0-9]{64}$/u.test(layer.provenance?.inputDigest || '')) errors.push('provenance.inputDigest must be SHA-256');
   if (!/^[a-f0-9]{64}$/u.test(layer.provenance?.artifactDigest || '')) errors.push('provenance.artifactDigest must be SHA-256');
+  if (!isRecord(layer.output) || layer.provenance?.artifactDigest !== digest(layer.output) || layer.validation?.artifactDigest !== digest(layer.output)) errors.push('artifact digest differs from production output');
+  if (layer.freshness?.artifactGeneratedAt !== layer.output?.generatedAt || layer.freshness?.sourceAsOfDate !== layer.asOfDate || layer.updatedAt !== layer.generatedAt) errors.push('production freshness clocks differ from original issue');
   if (layer.freshness?.isStale !== false || layer.freshness?.maxAgeHours !== PRODUCTION_MAX_AGE_HOURS) errors.push('freshness contract is invalid');
   if (layer.boundaries?.displayOnly !== true || layer.boundaries?.frontendDisplayApproved !== true || layer.boundaries?.notInvestmentAdvice !== true) errors.push('visible display boundaries are invalid');
   for (const key of FALSE_PRODUCTION_BOUNDARIES) {

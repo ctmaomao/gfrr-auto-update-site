@@ -1,4 +1,6 @@
+import { validateEnterpriseScoreEvidence } from './source-observation.mjs';
 // Fixed Core-23; uncertainty never removes a slot or assigns it a green light.
+import { validateArrGap, validateArrEvidenceRecord } from './arr-evidence.mjs';
 import { NVDA_RATIO_CONTRACT, NVDA_GAP_REASON, validateNvdaRatioRecord } from './nvda-ratio-evidence.mjs';
 export const CORE_LAYOUT = Object.freeze([
   ['cape', 'stage', 'valuation'], ['top5_weight', 'stage', 'valuation'], ['nvda_fpe', 'stage', 'valuation'],
@@ -28,11 +30,11 @@ const RANK = { observation: 0, caution: 1, alert: 2, top: 3 };
 const SCORE = { green: 0, yellow: 50, red: 100 };
 const round = value => Number(value.toFixed(1));
 export const evidenceModelVersion = revision => {
-  if (!Number.isInteger(revision) || revision < 1 || revision > 5) throw new Error('Invalid evidence revision');
+  if (!Number.isInteger(revision) || revision < 1 || revision > 6) throw new Error('Invalid evidence revision');
   return `bubble-watch-v3-core23-shadow4-r${revision}`;
 };
 export function modelRevision(version) {
-  const match = /^bubble-watch-v3-core23-shadow4-r([1-5])$/u.exec(version || '');
+  const match = /^bubble-watch-v3-core23-shadow4-r([1-6])$/u.exec(version || '');
   return match ? Number(match[1]) : null;
 }
 function realDay(value) {
@@ -41,11 +43,12 @@ function realDay(value) {
   return Number.isFinite(stamp) && new Date(stamp).toISOString().slice(0, 10) === value;
 }
 export function isRegisteredEvidenceGap(item, { revision, asOfDate } = {}) {
-  if (!Number.isInteger(revision) || revision < 1 || revision > 5 || !realDay(asOfDate)) return false;
+  if (!Number.isInteger(revision) || revision < 1 || revision > 6 || !realDay(asOfDate)) return false;
   const gap = item?.evidence_gap;
   const checked = item?.provenance?.checkedAt;
   const stamp = typeof checked === 'string' ? Date.parse(checked) : NaN;
-  if (item.id === 'nvda_invest_revenue') return revision === 5 && item.score_role === 'core' && item.status === 'unknown'
+  if (item.id === 'arr_2nd_deriv') return revision === 6 && validateArrGap(item, asOfDate);
+  if (item.id === 'nvda_invest_revenue') return revision >= 5 && item.score_role === 'core' && item.status === 'unknown'
     && gap?.policy === NVDA_RATIO_CONTRACT && gap.reasonCode === NVDA_GAP_REASON && gap.checkedDate === asOfDate
     && item.as_of === null && item.stale === false && item.provenance?.mode === 'auto'
     && Number.isFinite(stamp) && new Date(stamp).toISOString().slice(0, 10) === asOfDate
@@ -70,8 +73,8 @@ export function validateEvidenceLayout(indicators, revision) {
     const item = byId.get(id);
     if (!item || item.score_role !== 'core' || item.axis !== axis || item.category !== category) throw new Error(`Core layout mismatch: ${id}`);
     if (item.status === 'unknown') {
-      const nvdaGap = id === 'nvda_invest_revenue' && isRegisteredEvidenceGap(item, { revision, asOfDate: item.evidence_gap?.checkedDate });
-      if (!nvdaGap && (!allowedGaps.includes(id) || item.evidence_gap?.reasonCode !== GAP_REASONS[id])) throw new Error(`Unregistered evidence gap: ${id}`);
+      const additionalGap = ['nvda_invest_revenue', 'arr_2nd_deriv'].includes(id) && isRegisteredEvidenceGap(item, { revision, asOfDate: item.evidence_gap?.checkedDate });
+      if (!additionalGap && (!allowedGaps.includes(id) || item.evidence_gap?.reasonCode !== GAP_REASONS[id])) throw new Error(`Unregistered evidence gap: ${id}`);
     } else if (!LIGHTS.includes(item.status)) throw new Error(`Invalid evidence status: ${id}`);
   }
   for (const id of SHADOW_IDS) {
@@ -139,6 +142,8 @@ export function validateEvidenceScoreFields(data) {
   if (data?.contractVersion !== 'bubble-watch-v3' || !revision) return ['Unregistered v3 contract/model'];
   let replay;
   const nvda = Array.isArray(data.indicators) ? data.indicators.find(item => item?.id === 'nvda_invest_revenue') : null;
+  if (revision === 6) errors.push(...validateArrEvidenceRecord(data.indicators?.find(item => item?.id === 'arr_2nd_deriv'), data.as_of_date));
+  if (revision === 6 && !validateEnterpriseScoreEvidence(data.indicators?.find(item => item?.id === 'enterprise_deploy'), data.as_of_date)) errors.push('Enterprise adoption evidence does not replay');
   if (nvda) errors.push(...validateNvdaRatioRecord(nvda, data.as_of_date));
   try { replay = replayEvidenceScores(data.indicators, revision); } catch (error) { return [error.message]; }
   for (const item of data.indicators.filter(item => item.status === 'unknown')) {

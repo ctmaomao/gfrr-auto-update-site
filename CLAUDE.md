@@ -1,7 +1,7 @@
 # CLAUDE.md — Navigation for AI agents
 
 > 本文档是 Claude Code 启动时的导航入口。不复制规则,只指路。
-> 规则的权威来源仍是 `AGENTS.md`。
+> 规则的权威来源仍是 `AGENTS.md`，开始任务必读；下方 L1 只列按需回查入口。
 
 ## Project
 
@@ -17,7 +17,7 @@ Global Financial Risk Radar (GFRR) v28 — 每日更新的机构级宏观风险�
 | Realtime | Cloudflare Workers + KV (`workers/gfrr-realtime-worker`) |
 | Data | JSON files in `data/`,无数据库 |
 | CI/CD | GitHub Actions（数量以 `.github/workflows/` 实际文件为准）→ GitHub Pages |
-| Dependencies | **0 production deps**,只声明 engines |
+| Dependencies | **0 production deps**；锁定的测试、lint、xlsx 开发依赖见 package.json |
 
 ## Key commands
 
@@ -35,7 +35,7 @@ npm run check:dom         # DOM id 契约
 
 **L0 — 开始任务读当前部分**（历史按需）:
 - `CLAUDE.md` (本文件)
-- `docs/PROJECT_BACKLOG.md` — 项目自我记忆 + 当前活跃任务 + Session Handoff
+- `docs/PROJECT_BACKLOG.md` — 当前任务、真实等待 + Session Handoff；完成过程已归档
 - `docs/DATA_SOURCES.md` — 数据源相关任务必读对应边界
 
 **L1 — 任务相关时按需读**:
@@ -65,5 +65,5 @@ npm run check:dom         # DOM id 契约
 
 - 实施或文档同步任务：按实际影响更新 PROJECT_BACKLOG.md 对应任务和最新四字段交接；重大架构决策才新增 ADR。不为每次回答加日志。
 - 只读审计/解释/设计审阅：在回复中交接，不自动写 backlog 或个人记忆。
-- context 压缩不结束任务，不要求另开会话；保留进展继续执行。确需交接时记录最后基线/改动、当前任务、下一步和阻塞，不把等待远端授权或人工 review 写成全部完成。
+- context 压缩不结束任务，不要求另开会话；保留进展继续执行。确需交接时记录最后基线/改动、当前任务、下一步和阻塞，不把未获授权的操作、未完成的独立 AI review、CI 或生产验收写成全部完成；审查职责和同范围免重复确认按 AGENTS.md / ADR-0092 执行。
 - 个人记忆遵循平台当前机制与授权，不把 AGENTS.md 当记忆库。

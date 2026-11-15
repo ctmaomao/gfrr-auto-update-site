@@ -1,3 +1,6 @@
+import { goldQuoteRows, sourceTimestampAgeSeconds } from './realtime/gold-quote.mjs';
+import { ICE_BRENT_CONTRACT_DATA_URL, parseIceBrentCandidate } from './realtime/ice-brent-candidate.mjs';
+import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -88,37 +91,6 @@ const sourceSpecs = {
     // gold-api is the sole source (owner-confirmed: no new gold source added).
   }
 };
-
-function parseFredCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const out = [];
-  for (const line of lines.slice(1)) {
-    const [date, raw] = line.split(',');
-    if (!date || raw === undefined || raw === '.' || raw.trim() === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    out.push({ date, value });
-  }
-  return out;
-}
-
-function parseFredApiObservations(text) {
-  const json = JSON.parse(text);
-  const observations = json?.observations;
-  if (!Array.isArray(observations)) {
-    throw new Error('FRED API returned invalid observations payload');
-  }
-  const out = [];
-  for (const item of observations) {
-    const date = item?.date;
-    const raw = item?.value;
-    if (!date || raw === undefined || raw === '.' || String(raw).trim() === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    out.push({ date, value });
-  }
-  return out;
-}
 
 function buildFredApiUrl(seriesId, observationStart) {
   const params = new URLSearchParams({
@@ -577,15 +549,7 @@ async function fetchRows(descriptor) {
   );
 
   if (descriptor.kind === 'goldapi') {
-    const json = JSON.parse(text);
-    if (!json || !Number.isFinite(Number(json.price))) {
-      throw new Error(`${descriptor.source} returned invalid data`);
-    }
-    const today = new Date().toISOString().slice(0, 10);
-    return [
-      { date: today, value: Number(json.price) },
-      { date: today, value: Number(json.price) }
-    ];
+    return goldQuoteRows(JSON.parse(text));
   }
   const rows = parseStooqCsv(text);
   if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
@@ -593,53 +557,19 @@ async function fetchRows(descriptor) {
 }
 
 async function fetchBrentIceCandidate(fetchedAt) {
-  const source = 'ice';
-  const delayClass = 'delayed-15m';
-  const url = 'https://www.ice.com/products/219/Brent-Crude-Futures/data?marketId=400137160';
   try {
-    const text = await retryTask(
-      () => fetchWithTimeout(url, {
-        timeoutMs: REQUEST_TIMEOUT_MS,
-        headers: {
-          Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          Referer: 'https://www.ice.com/products/219/Brent-Crude-Futures'
-        }
-      }),
-      { label: 'ice:brent' }
-    );
-
-    const value = extractValueByPatterns(text, [
-      /"lastPrice"\s*:\s*"?([\d.,]+)"?/i,
-      /"settlementPrice"\s*:\s*"?([\d.,]+)"?/i,
-      /"marketPrice"\s*:\s*"?([\d.,]+)"?/i,
-      /"price"\s*:\s*"?([\d.,]+)"?/i,
-      /Last\s*Price[\s\S]{0,160}?>([\d.,]+)</i,
-      /"previousDaySettlementPrice"\s*:\s*"?([\d.,]+)"?/i
-    ]);
-    if (!Number.isFinite(value)) {
-      return buildUnavailableCandidate(source, fetchedAt, delayClass, 'parse-failed:value');
-    }
-    if (!isReasonableBrentValue(value)) {
-      return buildUnavailableCandidate(source, fetchedAt, delayClass, `parse-failed:out-of-range(${value})`);
-    }
-    const observedRaw = firstMatch(text, [
-      /"lastTime"\s*:\s*"([^"]{4,40})"/i,
-      /"lastUpdateTime"\s*:\s*"([^"]{4,40})"/i,
-      /As of\s*([^<]{8,40}(?:GMT|UTC))/i,
-      /Last updated\s*([^<]{8,40}(?:GMT|UTC))/i
-    ]);
-    return {
-      source,
-      value,
-      observedAt: parseObservedAtUtc(observedRaw),
-      fetchedAt,
-      delayClass,
-      available: true,
-      reason: null
-    };
+    // Same structured source already used by the Daily ICE curve. One bounded
+    // request; access/rate-limit failures are unavailable, not retried here.
+    const text = await fetchWithTimeout(ICE_BRENT_CONTRACT_DATA_URL, {
+      timeoutMs: REQUEST_TIMEOUT_MS,
+      headers: { Accept: 'application/json' }
+    });
+    let rows;
+    try { rows = JSON.parse(text); }
+    catch { return buildUnavailableCandidate('ice', fetchedAt, 'delayed-15m', 'parse-failed:non-json'); }
+    return parseIceBrentCandidate(rows, fetchedAt);
   } catch (error) {
-    return buildUnavailableCandidate(source, fetchedAt, delayClass, classifyFetchFailure(error));
+    return buildUnavailableCandidate('ice', fetchedAt, 'delayed-15m', classifyFetchFailure(error));
   }
 }
 
@@ -1080,16 +1010,15 @@ function normalizeLiveResult(key, descriptor, rows, { critical, fallbackUsed = f
     key,
     ok: true,
     value: payload.value,
-    change: payload.change,
+    change: descriptor.kind === 'goldapi' ? null : payload.change,
     source: descriptor.source,
     timestamp: payload.timestamp,
+    timestampKind: descriptor.kind === 'goldapi' ? 'provider_acquisition' : 'observation_date',
     fallbackUsed,
     error: null,
     critical,
     freshnessPrepared: true,
-    ageSeconds: payload.timestamp
-      ? Math.max(0, Math.round((Date.now() - Date.parse(`${payload.timestamp}T00:00:00Z`)) / 1000))
-      : null,
+    ageSeconds: sourceTimestampAgeSeconds(payload.timestamp),
     sourceStatusLabel: fallbackUsed ? `${descriptor.source}:secondary` : descriptor.source
   };
 }
@@ -1102,9 +1031,12 @@ function normalizeFallbackResult(key, descriptor, prev, critical, error) {
     key,
     ok: false,
     value: Number.isFinite(prevValue) ? prevValue : null,
-    change: Number.isFinite(prevChange) ? prevChange : 0,
+    change: key === 'gold' ? null : (Number.isFinite(prevChange) ? prevChange : 0),
     source: descriptor.source,
     timestamp: prevTimestamp,
+    timestampKind: prev?.sourceDetails?.[key]?.timestamp
+      ? (prev.sourceDetails[key].timestampKind || 'unknown')
+      : (prevTimestamp ? 'snapshot_acquisition' : 'unknown'),
     fallbackUsed: true,
     error: stringifyError(error),
     critical,
@@ -1143,6 +1075,7 @@ function buildSourceDetails(results) {
       value: result.value,
       source: result.source,
       timestamp: result.timestamp,
+      timestampKind: result.timestampKind || 'unknown',
       fallbackUsed: result.fallbackUsed,
       error: result.error,
       freshnessPrepared: result.freshnessPrepared,
@@ -1225,6 +1158,7 @@ function buildPayload(results, prev, brentValidation = null) {
       value: brentPromotion.selectedValue,
       source: `${brentPromotion.selectedSource}:public-consensus-promoted`,
       timestamp: brentPromotion.selectedObservedAt,
+      timestampKind: 'reported_candidate_time',
       ageSeconds: Number.isFinite(computeAgeMinutes(brentPromotion.selectedObservedAt, now))
         ? computeAgeMinutes(brentPromotion.selectedObservedAt, now) * 60
         : null,

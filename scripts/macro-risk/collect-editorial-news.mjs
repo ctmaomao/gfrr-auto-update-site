@@ -1,3 +1,4 @@
+import { supplementBlsEmploymentExcerpt } from './bls-release-excerpt.mjs';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
@@ -7,6 +8,7 @@ import { EDITORIAL_QUERIES, buildNewsDiscovery } from './editorial-news.mjs';
 import { classifySearchRequestError } from './search-request-policy.mjs';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { withTavilyBudget } from '../lib/tavily-budget.mjs';
+import { withBraveBudget } from '../lib/brave-budget.mjs';
 import { buildTavilyEditorialSearch, normalizeTavilyEditorialResults } from './editorial-search-plan.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
@@ -53,6 +55,7 @@ async function fetchJson(url, init) {
     if (!response.ok) {
       const error = new Error(`HTTP ${response.status}`);
       error.httpStatus = response.status;
+      error.providerResponseReceived = true;
       throw error;
     }
     return JSON.parse(text);
@@ -61,37 +64,40 @@ async function fetchJson(url, init) {
   }
 }
 
-async function tavily(topic, query, requestWithKeys, budget) {
+async function tavily(topic, query, requestWithKeys, budget, markAttempted) {
   const body = buildTavilyEditorialSearch(topic, query, MAX_RESULTS);
-  const json = await requestWithKeys((key) => budget({ key, payload: body, consumer: 'macro-editorial' }, () => fetchJson('https://api.tavily.com/search', {
+  const json = await requestWithKeys((key) => budget({ key, payload: body, consumer: 'macro-editorial' }, () => { markAttempted(); return fetchJson('https://api.tavily.com/search', {
     method: 'POST',
     redirect: 'error',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT },
     body: JSON.stringify(body)
-  })));
+  }); }));
   return normalizeTavilyEditorialResults(topic, json, body);
 }
 
-async function brave(topic, query, requestWithKeys) {
+async function brave(topic, query, requestWithKeys, braveBudget, markAttempted) {
   const params = new URLSearchParams({ q: query, freshness: 'pw', count: String(MAX_RESULTS), country: 'US', search_lang: 'en', ui_lang: 'en-US', extra_snippets: 'true' });
-  const json = await requestWithKeys((key) => fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+  const json = await requestWithKeys((key) => braveBudget({ key, consumer: 'macro-editorial' }, () => { markAttempted(); return fetchJson(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+    redirect: 'error',
     headers: { Accept: 'application/json', 'Accept-Encoding': 'gzip', 'User-Agent': USER_AGENT, 'X-Subscription-Token': key }
-  }));
-  return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: [item.description, ...(item.extra_snippets || [])].filter(Boolean).join(' ') }));
+  }); }));
+  return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: item.description }));
 }
 
-export async function collectProvider(provider, keys, { budget = withTavilyBudget } = {}) {
+export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveBudget } = {}) {
   if (keys.length === 0) return { rows: [], status: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] } };
   const rows = [];
   const queryRuns = [];
   const requestWithKeys = createSearchKeyPool(keys);
   for (const topic of EDITORIAL_TOPICS) {
+    let providerRequestAttempted = false;
+    const markAttempted = () => { providerRequestAttempted = true; };
     try {
-      const results = provider === 'tavily' ? await tavily(topic, EDITORIAL_QUERIES[topic], requestWithKeys, budget) : await brave(topic, EDITORIAL_QUERIES[topic], requestWithKeys);
+      const results = provider === 'tavily' ? await tavily(topic, EDITORIAL_QUERIES[topic], requestWithKeys, budget, markAttempted) : await brave(topic, EDITORIAL_QUERIES[topic], requestWithKeys, braveBudget, markAttempted);
       rows.push(...results);
       queryRuns.push({ topic, status: 'ok', resultCount: results.length });
     } catch (error) {
-      queryRuns.push({ topic, status: 'error', resultCount: 0, error: classifySearchRequestError(error) });
+      queryRuns.push({ topic, status: 'error', resultCount: 0, error: classifySearchRequestError(error), providerRequestAttempted: providerRequestAttempted || error?.providerRequestAttempted === true });
     }
   }
   const successCount = queryRuns.filter((run) => run.status === 'ok').length;
@@ -114,7 +120,13 @@ async function main() {
   } else {
     sourceStatus = { tavily: { status: 'dry_run', successCount: 0, failureCount: 0, queryRuns: [] }, brave: { status: 'dry_run', successCount: 0, failureCount: 0, queryRuns: [] } };
   }
-  const discovery = buildNewsDiscovery({ rawStories, sourceStatus, generatedAt: new Date().toISOString(), ...window });
+  const generatedAt = new Date().toISOString();
+  // One bounded public-source supplement, never another search/provider request.
+  const supplement = options.allowNetwork
+    ? await supplementBlsEmploymentExcerpt({ rawStories, generatedAt, ...window })
+    : { rawStories, diagnostics: { status: 'not_needed', reason: null, requestCount: 0, robotsAttempted: false, bodyAttempted: false } };
+  const discovery = buildNewsDiscovery({ rawStories: supplement.rawStories, sourceStatus, generatedAt, ...window });
+  discovery.officialExcerptSupplement = supplement.diagnostics;
   writeJson(options.output, discovery);
   console.log(`Macro risk editorial news ${options.allowNetwork ? 'live' : 'dry-run'}: status=${discovery.status}, stories=${discovery.stories.length}, output=${options.output}`);
 }

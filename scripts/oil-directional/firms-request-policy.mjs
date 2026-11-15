@@ -1,4 +1,4 @@
-import { isRetiredFirmsSource } from '../modules/oilThermalSourceLifecycle.js';
+import { isRetiredFirmsSource } from './oil-thermal-source-lifecycle.mjs';
 
 const FAILURE_CATEGORIES = new Set([
   'source_retired',

@@ -7,7 +7,7 @@ const PRIMARY_SEARCHES = Object.freeze({
   },
   growth_employment_consumer: {
     domain: 'bls.gov',
-    query: 'site:bls.gov/news.release/archives/ employment jobs unemployment productivity news release'
+    query: 'site:bls.gov/news.release/archives/ "Employment Situation" payroll unemployment'
   }
 });
 

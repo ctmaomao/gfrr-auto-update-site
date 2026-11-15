@@ -88,6 +88,14 @@ if (!Array.isArray(fixtures.cases) || fixtures.cases.length < 4) {
   fail(`${fixturesPath}: expected at least 4 narrative consistency cases`);
 }
 
+// The legacy fixtures remain historical classifier samples. The approved simplification
+// replaces their predictive display wording with a strict objective presentation contract.
+const objectiveCases = {
+  false_down_physical_stress: ['价格下跌 · 美国周度供需仍紧', '价格回落', '美国周度供需仍偏紧', '不据此认定下跌会逆转'],
+  false_up_unconfirmed: ['价格上涨 · 美国周度供需偏松', '价格走高', '美国周度供需偏松', '不据此认定上涨会逆转'],
+  strong_bullish: ['美国周度供需明显偏紧', '当前压力不等于后续价格预测'],
+  insufficient_data: ['数据不足 · 暂不判断', '本周美国供需数据不足或已超龄', '暂不给出方向判断', '不替代缺失的美国周度依据'],
+};
 const seenCases = new Set();
 for (const testCase of fixtures.cases || []) {
   if (!testCase.name || !testCase.finalBias) {
@@ -98,18 +106,24 @@ for (const testCase of fixtures.cases || []) {
     fail(`${fixturesPath}: duplicate finalBias fixture ${testCase.finalBias}`);
   }
   seenCases.add(testCase.finalBias);
-  requireAll(`fixture ${testCase.name}`, renderer, testCase.requiredRendererTokens || []);
+  const requiredTokens = objectiveCases[testCase.finalBias];
+  if (!requiredTokens) fail(`fixture ${testCase.name}: no objective narrative contract for ${testCase.finalBias}`);
+  else requireAll(`objective fixture ${testCase.name}`, renderer, requiredTokens);
+}
+
+for (const finalBias of Object.keys(objectiveCases)) {
+  if (!seenCases.has(finalBias)) fail(`missing preserved narrative case ${finalBias}`);
 }
 
 requireAll('renderer FINAL_BIAS_ZH', renderer, [
-  "false_down_physical_stress: '假性下跌 · 物理压力仍强'",
-  "false_up_unconfirmed: '假性上涨 · 缺物理确认'",
+  "false_down_physical_stress: '价格下跌 · 美国周度供需仍紧'",
+  "false_up_unconfirmed: '价格上涨 · 美国周度供需偏松'",
   "insufficient_data: '数据不足 · 暂不判断'",
 ]);
 
 requireAll('renderer DIVERGENCE_ZH', renderer, [
-  "false_down_physical_stress: '价格下跌 · 物理仍紧'",
-  "false_up_unconfirmed: '价格上涨 · 物理偏松'",
+  "false_down_physical_stress: '价格下跌 · 美国周度供需仍紧'",
+  "false_up_unconfirmed: '价格上涨 · 美国周度供需偏松'",
 ]);
 
 const falseDownHeadline = sectionBetween(
@@ -119,8 +133,8 @@ const falseDownHeadline = sectionBetween(
 );
 requireAll('false_down_physical_stress headline', falseDownHeadline, [
   '价格回落',
-  '物理链仍偏紧',
-  '下跌未获物理确认',
+  '美国周度供需仍偏紧',
+  '不据此认定下跌会逆转',
 ]);
 
 const falseUpHeadline = sectionBetween(
@@ -130,33 +144,65 @@ const falseUpHeadline = sectionBetween(
 );
 requireAll('false_up_unconfirmed headline', falseUpHeadline, [
   '价格走高',
-  '物理链偏松',
-  '上涨缺物理确认',
+  '美国周度供需偏松',
+  '不据此认定上涨会逆转',
 ]);
 
 const insufficientHeadline = sectionBetween(
   renderer,
-  "case 'insufficient_data':",
+  'function buildHeadline(',
   'function sourceStatusShort',
 );
 requireAll('insufficient_data headline', insufficientHeadline, [
-  '本周物理链数据不足',
+  '本周美国供需数据不足或已超龄',
   '暂不给出方向判断',
 ]);
 
 const insufficientBranch = sectionBetween(
   renderer,
   '// insufficient_data ->',
-  'renderGlobalOverlayCard',
+  "setLeafText('odp-reason-inventory'",
 );
 requireAll('insufficient_data render branch', insufficientBranch, [
   '暂不判断',
-  '本周物理链数据不足',
-  '市场层等待完整物理链',
-  '不替代缺失的周度物理锚',
+  '本周美国供需数据不足或已超龄',
+  '市场、新闻与月度背景',
+  '不替代缺失的美国周度依据',
 ]);
 
-requireAll('high-frequency watch boundary', renderer, fixtures.watchLayerRequiredTokens || []);
+// Historical joint news/thermal display has retired. Require the active news-only
+// safeguards instead; keeping dead satellite copy is not a presentation contract.
+requireAll('active news observation boundary', renderer, [
+  '观察层失败关闭',
+  '不把单一路径报道写成确认事件',
+  '主张方向只显示聚合计数',
+  '不展示原文标题',
+  '不确认霍尔木兹关闭、断供、油轮流向、炼厂事故、制裁影响或油价方向',
+]);
+
+// No legacy artifact or frontend fallback may restore predictive confirmation language.
+for (const token of ['假性下跌', '假性上涨', '确认假跌', '多源部分确认', '多源同向', 'deriveDisplayGlobalOverlay', '/3 确认']) {
+  if (renderer.includes(token)) fail(`retired narrative must not return: ${token}`);
+}
+requireAll('qualified current display', renderer, [
+  'qualifyOdpDisplay(oilData, radarData)',
+  'const finalBias = qualified.displayBias',
+  'priceContext: qualified.priceContext',
+  '油价方向暂不足判断',
+  '快照生成时间不代表报价观察时间',
+  '不独立确认、不提高置信',
+  '缺少同日同口径两腿报价与 ULSD 观察日，不判断收窄',
+]);
+const currentEntry = sectionBetween(renderer, 'export function renderOilDirectional(', '__end_of_file__');
+const addendumEntry = sectionBetween(renderer, 'function renderEnergyAddendum(', 'function reasonInventory(');
+for (const token of ['renderSatelliteThermalWatch(', 'renderCrossConfirmation(', 'renderEvidenceReadinessMatrix(', 'renderEvidenceTimingSummary(', 'renderGlobalOverlay(', 'renderPulseFactorCheck(', 'renderBrentBasisCheck(']) {
+  if (currentEntry.includes(token) || addendumEntry.includes(token)) fail(`retired display invoked by active entry: ${token}`);
+  if (renderer.includes(`function ${token}`)) fail(`retired display implementation must be removed: ${token}`);
+}
+if (currentEntry.includes('it.attribution') || currentEntry.includes('buildGlobalLadderText(') || currentEntry.includes('buildWatchLadderText(')) {
+  fail('active display must not forward legacy attribution or global/watch conclusions');
+}
+
 
 forbidAll('renderer overreach language', renderer, fixtures.forbiddenOverreachTokens || []);
 forbidAll('renderer second-score markers', renderer, fixtures.forbiddenSecondScoreTokens || []);

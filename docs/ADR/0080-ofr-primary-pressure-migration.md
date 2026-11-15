@@ -1,5 +1,7 @@
 # ADR-0080: OFR 主压力读数迁移提案
 
+> **当前状态核对（2026-11-10）**：#491/#492 已分别合入 `b537a779` / `09412f1c`，OFR 主读数与旧公开建议退役已进入生产代码；2026-11-01 双站验收记录保存在[原文快照](../PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)。下方“未接 runtime/待最终确认/Proposed”保留原准备阶段语境，不是今天仍未迁移的结论。当前字段/消费者以 DATA_CONTRACT、DESIGN 及后续明确修订为准；原始/历史数据、冻结七候选、来源和不作概率/仓位映射的边界继续有效。
+
 ## Status
 
 **Owner-selected direction / contract review in progress — owner已选择正式退役旧公开建议，并授权本次讨论issue、独立Codex代审及分项PR推送；最终合并部署待完整迁移补丁可审后确认。** 本补丁仅实施未接入的解析/读数适配器、回归测试与可审阅迁移契约，不修改任何现行评分、DESIGN、checker断言、Daily、前端、生产JSON或workflow。

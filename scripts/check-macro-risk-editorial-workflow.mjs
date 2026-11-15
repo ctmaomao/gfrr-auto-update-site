@@ -53,3 +53,17 @@ assert(pages.includes('- Macro Risk Editorial Refresh'), 'Pages workflow must li
 assert(!pages.includes('- External AI Production Refresh'), 'Pages workflow must not listen for retired external AI refresh');
 
 console.log('Macro risk editorial workflow PASS (upstream completion, durable day/input budget, source-quality skip before provider, fail-closed review/write, protected path, Pages trigger)');
+
+const receiptUploads = workflow.split('\n      - name:').filter(step => step.includes('uses: actions/upload-artifact@'));
+assert(receiptUploads.length === 1 && receiptUploads[0].includes("if: always() && steps.diagnostic_receipt.outcome == 'success'") && /path: manual-artifacts\/[a-z-]+\/safe-diagnostic-receipt\.json\n/u.test(receiptUploads[0]) && !/path: \||deepseek-output|deepseek-failure|editorial-input|news-discovery|production-projection|\*\*/u.test(receiptUploads[0]), 'ADR-0103 permits only the exact safe receipt artifact path');
+
+// ADR-0109 adds a narrow pre-network intentional-pause class, not a bypass of
+// any existing cost/content/writer assertion above. Independently review this
+// additive contract together with the CLI and publication admission tests.
+const preflight = workflow.split('- name: Check shared CNY budget before discovery')[1]?.split('\n      - name:')[0];
+const admission = workflow.split('- name: Admit one refresh for current upstream data')[1]?.split('\n      - name:')[0];
+assert(preflight?.includes('id: budget_preflight') && preflight.includes('--require-eligible --allow-uninitialized-monthly-skip'), 'Macro must explicitly opt into the narrow uninitialized monthly skip');
+assert(!/continue-on-error:/.test(workflow), 'Macro budget/provider/review/write failures cannot be masked');
+assert(admission?.includes("if: steps.budget_preflight.outputs.budget_eligible == 'true'"), 'no day/input reservation before budget eligibility');
+assert(workflow.includes('Verify uninitialized monthly budget skip stayed side-effect free') && workflow.includes('test ! -e manual-artifacts/macro-risk-editorial'), 'expected budget skip must verify zero discovery/provider artifacts');
+assert(workflow.includes('EDITORIAL_BUDGET_REASON: ${{ steps.budget_preflight.outputs.budget_reason }}'), 'safe receipt must retain budget disposition and reason');

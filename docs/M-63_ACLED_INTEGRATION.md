@@ -1,5 +1,7 @@
 # M-63 ACLED Integration
 
+> **范围说明（2026-11-10）**：本文保留 M-63 手工归一化、数据和 reminder 契约。后续固定自动链由 [ADR-0055](ADR/0055-acled-weekly-automation.md) / [ADR-0056](ADR/0056-acled-split-cadence.md) 窄范围替代原 manual-only 采集限制，操作见 [ACLED_AUTOMATIC_UPDATE](ACLED_AUTOMATIC_UPDATE.md)。以下 EULA 原文与权利披露不变；owner 执行授权不是 ACLED 另授自动化权利，旧 API/HAPI 或其它路径未因此解锁。
+
 ## 1. Overview
 
 ACLED (Armed Conflict Location & Event Data) is the project's event-level conflict data source for the World Order Stress Overlay. It gives the overlay a more direct view of political violence, civilian targeting, fatalities, and hot zones than a media-volume proxy alone can provide.

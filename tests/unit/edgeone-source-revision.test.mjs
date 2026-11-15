@@ -21,7 +21,7 @@ test('successful main oil-news completion queues publication after the producer 
   assert.ok(completion, 'completed event is restricted to main');
   assert.deepEqual(completion[1].split(', ').map(value => value.trim()), [
     'Macro Risk Editorial Refresh', 'Bubble Watch Weekly Editorial Refresh',
-    'Bubble Watch Editorial Follow-up', 'Refresh Oil Directional Pressure', name
+    'Bubble Watch Editorial Follow-up', 'Refresh Oil Directional Pressure', name, 'Refresh Oil Thermal Watch'
   ]);
   assert.ok(workflow.includes("if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}"),
     'failed/cancelled upstream runs cannot publish');
@@ -31,10 +31,27 @@ test('successful main oil-news completion queues publication after the producer 
     'completion sees the committed latest main even when the earlier trigger SHA predates the news');
 });
 
-test('completion listener cannot request oil-news collection or broaden data push publication', () => {
+test('successful thermal completion uses the existing guarded publication path', async () => {
+  const producer = readFileSync(new URL('../../.github/workflows/refresh-oil-thermal-watch.yml', import.meta.url), 'utf8');
+  const name = /^name: (.+)$/mu.exec(producer)?.[1].trim();
+  assert.equal(name, 'Refresh Oil Thermal Watch');
+  assert.ok(workflow.includes(`, ${name}]`));
+  const commit = producer.slice(producer.indexOf('- name: Commit'));
+  assert.ok(commit.indexOf('git push') > commit.indexOf('git commit'));
+  assert.match(step('Checkout source repository'), /ref: main/u);
+  assert.ok(workflow.includes('node scripts/review-pages-deployment.mjs --upstream-only'));
+  const { reviewMacroBudgetSkip } = await import('../../scripts/review-pages-deployment.mjs');
+  const decision = await reviewMacroBudgetSkip({
+    eventName: 'workflow_run', event: { workflow_run: { name } },
+    fetchImpl: () => { throw new Error('thermal completion must not query Macro evidence'); }
+  });
+  assert.deepEqual(decision, { shouldPublish: true, reason: 'not_macro_budget_skip' });
+});
+
+test('completion listeners cannot request collection or broaden data push publication', () => {
   const pushPaths = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('\npermissions:'));
-  assert.doesNotMatch(pushPaths, /data\/\*\*|data\/oil-news-event-watch\.json/u);
-  assert.doesNotMatch(workflow, /workflow run |workflow_dispatch.*refresh|build:oil-news|TAVILY|BRAVE_API|DEEPSEEK/u);
+  assert.doesNotMatch(pushPaths, /data\/\*\*|data\/oil-(?:news-event|thermal)-watch\.json/u);
+  assert.doesNotMatch(workflow, /workflow run |workflow_dispatch.*refresh|build:oil-(?:news|thermal)|TAVILY|BRAVE_API|DEEPSEEK|FIRMS_MAP_KEY/u);
 });
 
 test('a producer commit after the first checkout is included by the completion checkout', t => {

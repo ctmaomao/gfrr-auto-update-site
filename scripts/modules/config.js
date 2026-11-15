@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=oil-evidence-health-20261106';
+﻿import { formatFiniteNumber } from './format.js?v=qqq-week-label-20261114';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

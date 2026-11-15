@@ -50,6 +50,8 @@ function main() {
   assertValid(validateWeeklyEditorialInput(input), 'live weekly editorial input');
   const readiness = assessWeeklyEditorialNewsReadiness(discovery);
   if (!readiness.editorialReady) throw new Error(`production provider call is not ready: ${readiness.reason}`);
+  const compactReadiness = assessWeeklyEditorialNewsReadiness(input.newsContext);
+  if (!compactReadiness.editorialReady || (readiness.coverageMode === 'limited_single_search' && input.newsContext.coverageMode !== readiness.coverageMode)) throw new Error('compact input coverage differs from admitted discovery');
   const credibleStories = discovery.stories.filter(isUsableNews);
   if (credibleStories.length < 1) throw new Error('production provider call requires at least one usable official/cross_checked/attributed_media story');
   if (input.fixtureOnly !== false || input.inputMode !== 'live_site_compact_evidence_pack') throw new Error('production provider call rejects fixture/non-live input');
@@ -59,7 +61,7 @@ function main() {
   const forbiddenKeys = new Set(['rawResponse', 'rawContent', 'headers', 'authorization', 'apiKey', 'positionGuidance', 'executionLock', 'actionQueue']);
   const found = collectKeys(input).filter((key) => forbiddenKeys.has(key));
   if (found.length > 0) throw new Error(`provider input contains forbidden keys: ${[...new Set(found)].join(', ')}`);
-  console.log(`Bubble Watch weekly editorial live input PASS (status=${discovery.status}, providers=2, credibleStories=${credibleStories.length}, bytes=${inputBytes}, asOf=${input.asOfDate})`);
+  console.log(`Bubble Watch weekly editorial live input PASS (status=${discovery.status}, providers=${input.newsContext.liveProviderCount}, coverage=${readiness.coverageMode}, credibleStories=${credibleStories.length}, bytes=${inputBytes}, asOf=${input.asOfDate})`);
 }
 
 try {

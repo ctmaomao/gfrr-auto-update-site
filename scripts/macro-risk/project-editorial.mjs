@@ -20,4 +20,4 @@ async function main() {
   console.log(`Macro risk editorial production projection PASS (sources=${macroRiskEditorialLayer.sourceLedger.length}, output=${projectionPath})`);
 }
 
-main().catch((error) => { console.error(`Macro risk editorial projection failed: ${error.message}`); process.exitCode = 1; });
+main().catch(() => { console.error('Macro risk editorial projection failed: details withheld; see safe diagnostic receipt'); process.exitCode = 1; });

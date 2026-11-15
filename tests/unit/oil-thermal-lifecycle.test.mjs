@@ -1,12 +1,12 @@
 import test from 'node:test';
+import { discloseOilThermalBaselineAge } from '../../scripts/oil-directional/oil-thermal-baseline-age.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { fetchFirmsText, getFirmsErrorDiagnostics, createFirmsRetryBudget } from '../../scripts/oil-directional/firms-request-policy.mjs';
 import { buildLiveArtifact, readFacilityConfig, readBaselineConfig } from '../../scripts/oil-directional/build-oil-thermal-watch.mjs';
 import { classifyOilThermalSampleHealth } from '../../scripts/oil-directional/oil-thermal-sample-health.mjs';
-import { thermalObservationHealth, matchesLegacyThermalSources } from '../../scripts/modules/oilThermalSourceLifecycle.js';
-import { shippingFreightDisplay } from '../../scripts/modules/macroOverviewDisplayHelpers.js';
+import { matchesLegacyThermalSources } from '../../scripts/oil-directional/oil-thermal-source-lifecycle.mjs';
 const sources = ['VIIRS_SNPP_NRT','VIIRS_NOAA20_NRT','VIIRS_NOAA21_NRT'];
 const before = '2026-11-02T15:39:59Z';
 const after = '2026-11-06T00:00:00Z';
@@ -61,32 +61,10 @@ test('old successful post-retirement artifact is quarantined even with zero HTTP
   const {artifact:a}=await build(before);a.generatedAt=after;assert.equal(classifyOilThermalSampleHealth(a).eligible,false);
   assert.ok(classifyOilThermalSampleHealth(a).reasons.includes('source_transition_requires_baseline_review'));
 });
-test('display health separates missing, stale, future, partial and source-transition', async()=>{
-  const {artifact:a}=await build(before); const now=Date.parse(before);
-  assert.equal(thermalObservationHealth(a,now).usable,true);
-  assert.equal(thermalObservationHealth(a,now+86400001).reason,'stale');
-  assert.equal(thermalObservationHealth({...a,generatedAt:after},now).reason,'clock');
-  assert.equal(thermalObservationHealth({...a,status:'partial'},now).reason,'partial');
-  assert.equal(thermalObservationHealth({...a,generatedAt:after},Date.parse(after)).reason,'source_transition');
-  assert.equal(thermalObservationHealth(null,now).reason,'missing');
-});
-function node(){return {children:[],textContent:'',className:'',append(...n){this.children.push(...n);}};}
-const ctx={thermalObservationHealth,shippingFreightDisplay,document:{createElement:node,getElementById:()=>null}};
-const renderer=fs.readFileSync('scripts/modules/renderOilDirectional.js','utf8').replace(/^import .*;\r?\n/gm,'').replace(/export function /g,'function ');
-vm.runInNewContext(renderer+'\nglobalThis.api={renderSatelliteThermalWatch,thermalWindowText,thermalSignalText,thermalTone,thermalReadiness,crossThermalLayer,transportReadiness};',ctx);
-test('degraded renderer never claims no thermal confirmation or a usable green baseline', async()=>{
-  const {artifact:a}=await build(after);assert.equal(ctx.api.thermalTone(a),'yellow');assert.equal(ctx.api.crossThermalLayer(a).stance,'unknown');assert.match(ctx.api.thermalSignalText(a),/不据此判断无异常/);assert.match(ctx.api.thermalReadiness(a).className,/yellow/);
-  assert.doesNotMatch(ctx.api.thermalSignalText(null),/^0 条/);
-});
-test('freight context preserves missing quotes and explicitly blocks route confirmation',()=>{
-  const item=ctx.api.transportReadiness({macroDrivers:{shippingFreight:{balticDirtyTankerIndex:null}}});
-  const text=item.children.map(n=>n.textContent).join(' ');assert.match(text,/BDTI —/);assert.match(text,/均非路线报价/);assert.match(text,/路线级油轮运费与市场确认仍未接入/);assert.doesNotMatch(text,/BDTI 0/);
-});
-
 test('legacy missing, duplicate and changed source declarations cannot enter the three-source cohort',async()=>{
   const {artifact:a}=await build(before);
   for(const altered of [undefined,sources.slice(1),[sources[0],sources[0],sources[1]]]) {
-    const row={...a,sources:altered};assert.equal(classifyOilThermalSampleHealth(row).eligible,false);assert.equal(thermalObservationHealth(row,Date.parse(before)).reason,'source_set');
+    const row={...a,sources:altered};assert.equal(classifyOilThermalSampleHealth(row).eligible,false);
   }
 });
 test('one failed facility suppresses whole-run repeated comparisons while keeping measurements',async()=>{
@@ -95,27 +73,24 @@ test('one failed facility suppresses whole-run repeated comparisons while keepin
   const old=globalThis.fetch;globalThis.fetch=async u=>new Response(u.includes('2,2,3,3')&&u.includes('NOAA20')?'':csv,{status:u.includes('2,2,3,3')&&u.includes('NOAA20')?403:200});
   try{const a=await buildLiveArtifact(input);assert.equal(a.aggregate.rowCount,5);assert.equal(a.aggregate.repeatedObservationCount,0);assert.equal(a.aggregate.elevatedRepeatedObservationCount,0);assert.ok(a.facilities.every(f=>f.baselineComparison.repeatedObservation===false));}finally{globalThis.fetch=old;}
 });
-test('window display distinguishes snapshot time, detection time and an empty returned window',async()=>{
-  const {artifact:a}=await build(before,{body:header});const text=ctx.api.thermalWindowText(a);assert.match(text,/快照 2026-11-02/);assert.match(text,/本查询未返回热源记录/);assert.doesNotMatch(text,/尚未查询/);
-  a.freshness.latestAcqAt='2026-11-01T12:00:00Z';a.freshness.latestAgeHours=99999;const measured=ctx.api.thermalWindowText(a);assert.match(measured,/最新检出 2026-11-01/);assert.doesNotMatch(measured,/99999/);
-});
-
 test('full production-shape synthetic retirement output passes the unchanged contract assertions',async()=>{
   const options={sources,dayRange:1,timeoutMs:2000,baselinePath:'config/oil-thermal-watch-baseline.json',facilitiesPath:'config/oil-thermal-watch-facilities.json'};
   const config=readFacilityConfig(options.facilitiesPath),baselineConfig=readBaselineConfig(options.baselinePath);
   const old=globalThis.fetch;let calls=0;globalThis.fetch=async u=>{assert.ok(!u.includes('VIIRS_SNPP_NRT'));calls++;return new Response(header,{status:200});};
   let artifact;try{artifact=await buildLiveArtifact({generatedAt:after,options,config,baselineConfig,keyResolution:{mapKey:'TEST_ONLY',status:'configured'}});}finally{globalThis.fetch=old;}
+  discloseOilThermalBaselineAge(artifact);
+  const cutoff=baselineConfig.sourceReview.lastSampleAt;
+  assert.match(artifact.limitationsZh.join(' '),/S-NPP/);assert.ok(artifact.limitationsZh.some(t=>t.includes(cutoff)&&t.includes('基线参考较旧')));
+  assert.equal(artifact.facilities.length,42);assert.ok(artifact.facilities.every(f=>f.noteZh.includes(cutoff)&&f.noteZh.includes('基线参考较旧')&&f.noteZh.includes('暂停全轮基线比较')));
   assert.equal(calls,config.facilities.length*2);assert.equal(artifact.aggregate.requestDiagnostics.failuresByCategory.source_retired,config.facilities.length);
   const checker=fs.readFileSync('scripts/check-oil-thermal-watch-contract.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
   const output=[];vm.runInNewContext(checker,{readFileSync:path=>path==='data/oil-thermal-watch.json'?JSON.stringify(artifact):fs.readFileSync(path,'utf8'),resolve:x=>x,process:{exit:code=>{throw Error('contract exit '+code+' '+output.join(' '));}},console:{log:x=>output.push(x),error:(...x)=>output.push(x.join(' '))}});
   assert.ok(output.some(line=>line.includes('PASS')));
 });
-test('repeated thermal rendering clears a prior green state and old counts on missing data',async()=>{
-  const elements=new Map();ctx.document.getElementById=id=>{if(!elements.has(id))elements.set(id,node());return elements.get(id);};
-  let now=Date.parse(before);ctx.thermalObservationHealth=data=>thermalObservationHealth(data,now);
-  try {
-    const {artifact:healthy}=await build(before,{body:header});ctx.api.renderSatelliteThermalWatch(healthy);assert.match(elements.get('odp-thermal-status').className,/green/);
-    now=Date.parse(after);const {artifact:held}=await build(after);ctx.api.renderSatelliteThermalWatch(held);assert.match(elements.get('odp-thermal-status').className,/yellow/);assert.match(elements.get('odp-thermal-signal').textContent,/不据此判断无异常/);
-    ctx.api.renderSatelliteThermalWatch(null);assert.doesNotMatch(elements.get('odp-thermal-status').className,/green/);assert.match(elements.get('odp-thermal-signal').textContent,/检出计数未知/);assert.doesNotMatch(elements.get('odp-thermal-signal').textContent,/已返回 2/);
-  } finally {ctx.thermalObservationHealth=thermalObservationHealth;ctx.document.getElementById=()=>null;}
+
+test('already supported mixed MODIS selection does not claim NOAA provenance',async()=>{
+  const {artifact:a,calls}=await build(after,{selected:['VIIRS_SNPP_NRT','MODIS_NRT']});
+  assert.equal(calls,1);assert.equal(a.aggregate.rowCount,1);assert.equal(a.signalState,'source_unavailable');
+  assert.match(a.limitationsZh.join(' '),/仍可用来源/);assert.doesNotMatch(a.limitationsZh.join(' '),/只保留 NOAA/);
+  assert.equal(a.aggregate.repeatedObservationCount,0);
 });

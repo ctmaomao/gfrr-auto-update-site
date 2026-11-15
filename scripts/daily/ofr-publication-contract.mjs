@@ -1,3 +1,4 @@
+import { validateEditorialProduction } from '../macro-risk/editorial-production.mjs';
 import { OFR_READOUT_CONTRACT, OFR_SOURCE_URL, strictOfrDate, validateOfrRows } from './ofr-pressure-readout.mjs';
 
 // A pure publication contract, not a writer or an activation switch.
@@ -161,6 +162,13 @@ export function validateOfrPublicationIfPresent(data) {
   for (const key of ['positionGuidance', 'riskControl', 'rotation', 'assetRotation']) if (Object.hasOwn(data, key)) requireThat(canonical(data[key]) === canonical(retiredObject()), 'no optional legacy allocation advice');
   requireThat(plain(data.independentWarnings) && Array.isArray(data.independentWarnings.structuralSignals) && data.independentWarnings.scope === 'input_conditions_not_position_instructions', 'independent warning observations');
   requireThat(data.warningSystem?.status === '数据与独立警报' && Array.isArray(data.warningSystem.alerts) && data.warningSystem.alerts.every(a => !Object.hasOwn(a, 'action')) && Array.isArray(data.warningSystem.rules) && data.warningSystem.rules.length === 0, 'no warning engine execution advice');
-  for (const key of ['dailyBrief', 'aiInterpretationLayer', 'externalAiInterpretationLayer', 'macroRiskEditorialLayer', 'macroRiskEditorialPreviousIssue']) requireThat(!Object.hasOwn(data, key), 'old narrative not current');
+  for (const key of ['dailyBrief', 'aiInterpretationLayer', 'externalAiInterpretationLayer', 'macroRiskEditorialPreviousIssue']) requireThat(!Object.hasOwn(data, key), 'old narrative not current');
+  // ADR-0088: only the separately versioned, snapshot-bound OFR editorial is
+  // compatible. This is not permission to restore old v1 narratives or advice.
+  if (Object.hasOwn(data, 'macroRiskEditorialLayer')) {
+    requireThat(data.macroRiskEditorialLayer?.schemaVersion === 'macro-risk-editorial-ofr-production-v2', 'old narrative not current');
+    const layer = data.macroRiskEditorialLayer;
+    requireThat(validateEditorialProduction(layer, data, new Date(layer.generatedAt)).ok, 'OFR editorial publication integrity');
+  }
   return true;
 }

@@ -1,4 +1,4 @@
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const WORKFLOW = '.github/workflows/deploy-static-site-to-pages.yml';
@@ -77,7 +77,83 @@ export async function reviewPagesDeployment({ repository, sourceSha, token, forc
   }
 }
 
+// ADR-0109: green Macro budget pauses are not publications. Only authenticated
+// GitHub run/attempt/job/step metadata can establish this no-op; summaries and
+// uploaded artifacts are not trusted as deployment admission evidence.
+export async function reviewMacroBudgetSkip({ repository, eventName, event, token,
+  fetchImpl = fetch, timeoutMs = 6000 }) {
+  const publish = reason => ({ shouldPublish: true, reason });
+  if (eventName !== 'workflow_run' || event?.workflow_run?.name !== 'Macro Risk Editorial Refresh') return publish('not_macro_budget_skip');
+  const validRun = run => run?.name === 'Macro Risk Editorial Refresh'
+    && run?.path === '.github/workflows/macro-risk-editorial-refresh.yml'
+    && run?.repository?.full_name === repository && run?.head_repository?.full_name === repository
+    && run?.head_branch === 'main' && SHA.test(run?.head_sha ?? '')
+    && run?.event === 'workflow_run' && run?.status === 'completed' && run?.conclusion === 'success'
+    && Number.isSafeInteger(run?.id) && run.id > 0
+    && Number.isSafeInteger(run?.workflow_id) && run.workflow_id > 0
+    && Number.isSafeInteger(run?.run_attempt) && run.run_attempt > 0;
+  const trigger = event?.workflow_run;
+  if (repository !== 'ctmaomao/gfrr-auto-update-site' || !token || event?.action !== 'completed'
+    || event?.repository?.full_name !== repository || !validRun(trigger)) return publish('macro_skip_unverified');
+  try {
+    const base = `https://api.github.com/repos/${repository}/actions/runs/${trigger.id}/attempts/${trigger.run_attempt}`;
+    const run = await readJson(base, token, fetchImpl, timeoutMs);
+    if (!validRun(run) || run.id !== trigger.id || run.run_attempt !== trigger.run_attempt
+      || run.workflow_id !== trigger.workflow_id || run.head_sha !== trigger.head_sha) return publish('macro_skip_unverified');
+    const data = await readJson(`${base}/jobs?per_page=100`, token, fetchImpl, timeoutMs);
+    if (data?.total_count !== 1 || !Array.isArray(data.jobs) || data.jobs.length !== 1) return publish('macro_skip_unverified');
+    const job = data.jobs[0];
+    if (!Number.isSafeInteger(job?.id) || job.id <= 0 || job.name !== 'macro-risk-editorial-refresh' || job.run_id !== run.id || job.run_attempt !== run.run_attempt || job.head_sha !== run.head_sha
+      || job.status !== 'completed' || job.conclusion !== 'success' || !Array.isArray(job.steps)) return publish('macro_skip_unverified');
+    const matches = (name, conclusion) => {
+      const steps = job.steps.filter(step => step.name === name);
+      return steps.length === 1 && steps[0].status === 'completed' && steps[0].conclusion === conclusion;
+    };
+    const successfulSteps = ['Checkout repository', 'Sync latest main before refresh', 'Setup Node.js',
+      'Install dependencies', 'Preflight editorial contracts', 'Confirm network and cost authorization',
+      'Check shared CNY budget before discovery',
+      'Verify uninitialized monthly budget skip stayed side-effect free',
+      'Prepare safe editorial diagnostic receipt', 'Upload safe editorial diagnostic receipt'];
+    const skippedSteps = ['Verify expected skip stayed side-effect free', 'Admit one refresh for current upstream data', 'Prepare transient artifact directory',
+        'Collect near-7-day macro news', 'Build compact editorial evidence pack',
+        'Run one DeepSeek editorial call', 'Review editorial quality', 'Project production layer',
+        'Write production editorial layer', 'Validate final production data', 'Protected path assertion',
+        'Commit refreshed macro editorial if changed'];
+    // Exact success allowlist: a new/renamed action requires review here. Only
+    // runner bookkeeping/post-cleanup names are extra; arbitrary successful
+    // steps, duplicate names and mixed-attempt job evidence cannot prove no-op.
+    const allowed = new Map([...successfulSteps.map(name => [name, 'success']),
+      ...skippedSteps.map(name => [name, 'skipped']),
+      ...['Set up job', 'Post Setup Node.js', 'Post Checkout repository', 'Complete job'].map(name => [name, 'success'])]);
+    if (!successfulSteps.every(name => matches(name, 'success')) || !skippedSteps.every(name => matches(name, 'skipped'))
+      || new Set(job.steps.map(step => step.name)).size !== job.steps.length
+      || new Set(job.steps.map(step => step.number)).size !== job.steps.length
+      || job.steps.some(step => !Number.isSafeInteger(step.number) || step.number <= 0 || step.status !== 'completed' || !allowed.has(step.name)
+        || step.conclusion !== allowed.get(step.name))) return publish('macro_skip_unverified');
+    return { shouldPublish: false, reason: 'macro_monthly_budget_uninitialized_no_publication' };
+  } catch {
+    // Missing/failed inspection preserves existing checked publication behavior.
+    return publish('macro_skip_metadata_unavailable');
+  }
+}
+
 async function main() {
+  const upstreamOnly = process.argv.length === 3 && process.argv[2] === '--upstream-only';
+  if (process.argv.length > 2 && !upstreamOnly) throw new Error('unsupported_publication_review_argument');
+  let event;
+  if (process.env.GITHUB_EVENT_NAME === 'workflow_run') {
+    try { event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')); } catch { /* Unknown is never skip proof. */ }
+  }
+  const upstream = await reviewMacroBudgetSkip({ repository: process.env.GITHUB_REPOSITORY,
+    eventName: process.env.GITHUB_EVENT_NAME, event, token: process.env.GH_TOKEN });
+  if (upstreamOnly || !upstream.shouldPublish) {
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,
+      `should_publish=${upstream.shouldPublish}\nshould_deploy=${upstream.shouldPublish}\n`);
+    const message = `Upstream publication: ${upstream.shouldPublish ? 'continue' : 'skip'} (${upstream.reason}).`;
+    if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n`);
+    console.log(message);
+    return;
+  }
   const decision = await reviewPagesDeployment({ repository: process.env.GITHUB_REPOSITORY,
     sourceSha: process.env.SOURCE_SHA, token: process.env.GH_TOKEN, force: process.env.FORCE_DEPLOY === 'true' });
   const message = `Pages publication: ${decision.shouldDeploy ? 'deploy' : 'reuse'} (${decision.reason}).`;

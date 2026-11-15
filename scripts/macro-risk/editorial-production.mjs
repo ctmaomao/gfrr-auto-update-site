@@ -1,7 +1,12 @@
+import { isOfrEditorialVisible } from '../modules/macroRiskEditorialOfrContract.js';
+import { projectOfrEditorialSnapshot } from './editorial-ofr-snapshot.mjs';
 import { createHash } from 'node:crypto';
 
 import {
   PRODUCTION_SCHEMA,
+  OFR_INPUT_SCHEMA,
+  OFR_OUTPUT_SCHEMA,
+  OFR_PRODUCTION_SCHEMA,
   REVIEW_SCHEMA,
   assertValid,
   validateEditorialOutput,
@@ -46,16 +51,17 @@ function compactProductionSource(source) {
 export function reviewEditorial({ input, output, generatedAt = new Date().toISOString() }) {
   const validation = validateEditorialOutput(output, input);
   const blockers = [...validation.errors];
-  const warnings = [];
+  const warnings = [...(validation.warnings || [])];
+  const isOfr = input?.schemaVersion === OFR_INPUT_SCHEMA;
   const referenced = collectReferenceValues(output);
   const newsById = new Map((input?.newsContext?.stories || []).map((story) => [story.id, story]));
   const credibleNewsReferences = [...referenced].filter((id) => ['official', 'cross_checked'].includes(newsById.get(id)?.evidenceStatus));
   if (credibleNewsReferences.length < 1) blockers.push('至少需要引用 1 条 official 或 cross_checked 新闻');
   else if (credibleNewsReferences.length === 1) warnings.push('本期只引用 1 条可信新闻，其余段落依赖站内结构化证据');
-  if (referenced.size < 12) blockers.push(`判读仅引用 ${referenced.size} 个来源，至少需要 12 个`);
+  if (!isOfr && referenced.size < 12) blockers.push(`判读仅引用 ${referenced.size} 个来源，至少需要 12 个`);
   if (input?.newsContext?.status === 'partial') warnings.push('近 7 日新闻发现为 partial，页面必须保留数据限制');
   const visibleTextLength = visibleEditorialText(output).length;
-  if (visibleTextLength < 4000 || visibleTextLength > 5600) warnings.push(`可见判读长度 ${visibleTextLength} 字，超出目标 4,000–5,600 字但仍在兼容范围`);
+  if (!isOfr && (visibleTextLength < 4000 || visibleTextLength > 5600)) warnings.push(`可见判读长度 ${visibleTextLength} 字，超出目标 4,000–5,600 字但仍在兼容范围`);
   const status = blockers.length > 0 ? 'fail' : warnings.length > 0 ? 'warn' : 'pass';
   return {
     schemaVersion: REVIEW_SCHEMA,
@@ -70,7 +76,7 @@ export function reviewEditorial({ input, output, generatedAt = new Date().toISOS
       newsEvidenceQuality: credibleNewsReferences.length < 1 ? 'fail' : credibleNewsReferences.length === 1 ? 'warn' : 'pass',
       scoringBoundaryIntegrity: validation.ok ? 'pass' : 'fail',
       unsafeWording: validation.ok ? 'pass' : 'fail',
-      editorialDepth: referenced.size < 12 ? 'fail' : visibleTextLength < 4000 || visibleTextLength > 5600 ? 'warn' : 'pass',
+      editorialDepth: isOfr ? (warnings.length ? 'warn' : 'pass') : referenced.size < 12 ? 'fail' : visibleTextLength < 4000 || visibleTextLength > 5600 ? 'warn' : 'pass',
       deterministicFallback: 'pass'
     },
     warnings,
@@ -108,7 +114,8 @@ export function projectEditorial({ input, output, review, generatedAt = new Date
   const sourceLedger = (input.sourceRefs || []).filter((source) => referenced.has(source.id)).map(compactProductionSource);
   const artifactDigest = digest(output);
   return {
-    schemaVersion: PRODUCTION_SCHEMA,
+    schemaVersion: input.schemaVersion === OFR_INPUT_SCHEMA ? OFR_PRODUCTION_SCHEMA : PRODUCTION_SCHEMA,
+    ...(input.schemaVersion === OFR_INPUT_SCHEMA ? { pressureSnapshot: structuredClone(input.pressureSnapshot), pressureFreshness: structuredClone(input.pressureFreshness) } : {}),
     status: 'valid',
     displayEnabled: true,
     generatedAt,
@@ -117,7 +124,7 @@ export function projectEditorial({ input, output, review, generatedAt = new Date
     provider: 'deepseek',
     model: output.model,
     mode: 'external_ai_macro_risk_editorial',
-    sourceMode: 'near_7d_news_and_site_structured_compact_v1',
+    sourceMode: input.schemaVersion === OFR_INPUT_SCHEMA ? 'ofr_observation_and_independent_context_v2' : 'near_7d_news_and_site_structured_compact_v1',
     output,
     sourceLedger,
     validation: {
@@ -178,7 +185,19 @@ export function projectEditorial({ input, output, review, generatedAt = new Date
 export function validateEditorialProduction(layer, radarData, now = new Date()) {
   const errors = [];
   if (!isRecord(layer)) return { ok: false, errors: ['macroRiskEditorialLayer must be an object'] };
-  if (layer.schemaVersion !== PRODUCTION_SCHEMA) errors.push(`schemaVersion must be ${PRODUCTION_SCHEMA}`);
+  if (![PRODUCTION_SCHEMA, OFR_PRODUCTION_SCHEMA].includes(layer.schemaVersion)) errors.push(`schemaVersion must be ${PRODUCTION_SCHEMA}`);
+  const migrated = radarData?.mainPressureReadout !== undefined || radarData?.advicePolicy !== undefined || radarData?.scoreRole === 'legacy_model_audit_only';
+  if (migrated && layer.schemaVersion !== OFR_PRODUCTION_SCHEMA) errors.push('OFR publication rejects legacy editorial');
+  if (layer.schemaVersion === OFR_PRODUCTION_SCHEMA) {
+    if (!isOfrEditorialVisible(layer, radarData, now)) errors.push('OFR production static display contract invalid');
+    if (!migrated || layer.output?.schemaVersion !== OFR_OUTPUT_SCHEMA) errors.push('OFR production model mismatch');
+    try {
+      const expected = projectOfrEditorialSnapshot(radarData.mainPressureReadout);
+      if (JSON.stringify(layer.pressureSnapshot) !== JSON.stringify(expected)) errors.push('OFR production trusted snapshot mismatch');
+    } catch { errors.push('OFR production snapshot invalid'); }
+    for (const key of ['scoreSynthesis','moduleAnalysis','score','riskSnapshot','positionGuidance']) if (Object.hasOwn(layer.output || {}, key)) errors.push(`OFR production retired field ${key}`);
+    if (!isRecord(layer.output?.pressureSynthesis) || typeof layer.output?.pressureSynthesis?.assessmentZh !== 'string' || !layer.output.pressureSynthesis.assessmentZh.trim()) errors.push('OFR production missing pressure commentary');
+  }
   if (layer.status !== 'valid' || layer.displayEnabled !== true) errors.push('production layer must be valid and displayEnabled');
   if (layer.sourceDataUpdatedAt !== radarData?.updatedAt) errors.push('sourceDataUpdatedAt must match radar-data.updatedAt');
   if (layer.provider !== 'deepseek' || layer.mode !== 'external_ai_macro_risk_editorial') errors.push('provider/mode must identify DeepSeek macro editorial');
@@ -218,10 +237,12 @@ export function validateEditorialProduction(layer, radarData, now = new Date()) 
 export function applyEditorialProjection(radarData, layer, now = new Date(), input = null) {
   assertValid(validateEditorialProduction(layer, radarData, now), 'macro risk editorial production write');
   if (!isRecord(input) || input.fixtureOnly === true) throw new Error('production write requires original non-fixture compact input');
+  if (layer.schemaVersion === OFR_PRODUCTION_SCHEMA && input.schemaVersion !== OFR_INPUT_SCHEMA) throw new Error('OFR production requires OFR input');
   if (digest(input) !== layer.provenance.inputDigest) throw new Error('production input digest mismatch');
   assertValid(validateEditorialOutput(layer.output, input), 'production final output revalidation');
   const review = reviewEditorial({ input, output: layer.output, generatedAt: layer.qualityReview.reviewedAt });
   const expected = projectEditorial({ input, output: layer.output, review, generatedAt: layer.generatedAt, sourceCommit: layer.provenance.sourceCommit, runId: layer.provenance.runId });
+  if (layer.schemaVersion === OFR_PRODUCTION_SCHEMA && (JSON.stringify(expected.pressureSnapshot) !== JSON.stringify(layer.pressureSnapshot) || JSON.stringify(expected.pressureFreshness) !== JSON.stringify(layer.pressureFreshness))) throw new Error('production pressure snapshot/freshness mismatch');
   if (JSON.stringify(expected.sourceLedger) !== JSON.stringify(layer.sourceLedger)) throw new Error('production source ledger does not match original input');
   if (JSON.stringify(expected.qualityReview) !== JSON.stringify(layer.qualityReview)) throw new Error('production quality review does not match final revalidation');
   const next = structuredClone(radarData);

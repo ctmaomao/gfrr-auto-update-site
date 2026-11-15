@@ -15,19 +15,10 @@
 // a confirmed oil event.
 // P53: claim polarity may be rendered only as aggregate counts from the production
 // artifact; the renderer still must not read article lists or expose headlines.
-// P50: satellite thermal watch must expose baseline quality/sample-window copy
-// and keep the short-window starter caveat visible.
-// P68: baseline quality copy must distinguish the minimum facility window from
-// the global healthy-history audit horizon.
-// P62: satellite request health may render categorized aggregate counters only;
-// raw URLs, provider bodies and free-text errors remain forbidden.
-// P63: Web NGrams may render reviewed aggregate source-health/sample-gate fields
-// only; headlines, URLs, snippets, bodies and raw responses remain forbidden.
-// P54: cross-confirmation may compare oil-news, market, satellite/facility and
-// EIA layers only as display-only confirmation text. It must not change ODP
-// finalBias or promote any single source into a confirmed event.
-// P56: evidence readiness matrix may only classify source maturity/gates from
-// already-loaded layers; it must not become scoring or mutate finalBias.
+// P50/P62/P68 thermal, P54 cross-confirmation and P56 readiness displays are
+// retired by the approved simplification. Their compatibility DOM must stay
+// hidden/inert, their readers must be absent, and unsafe source fields stay banned.
+// P63 reviewed Web NGrams aggregate health remains active; no raw news is allowed.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -37,6 +28,7 @@ const errors = [];
 const fail = (m) => errors.push(m);
 
 const src = readFileSync(resolve('scripts/modules/renderOilDirectional.js'), 'utf8');
+const html = readFileSync(resolve('index.html'), 'utf8');
 
 // (1) No trade-action words. These are instructions; ODP is display-only observation.
 // Directional VIEWS (看涨 / 偏空 / 中性) are allowed — they are assessments, not actions.
@@ -106,74 +98,72 @@ for (const marker of ['聚合背景样本门已通过', '聚合背景样本门�
     fail(`ODP Web NGrams aggregate-health copy must preserve marker: ${marker}`);
   }
 }
-if (!src.includes('odp-thermal-baseline-quality') || !src.includes('thermalBaselineQualityText')) {
-  fail('ODP satellite thermal watch must expose baseline quality/sample-window text');
+// Replacement for the old mandatory thermal baseline/request-health, joint
+// confirmation and readiness copy: a retired layer cannot receive any claims.
+function retiredDomIds(text) {
+  const ids = new Set();
+  const stack = [];
+  const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+  for (const match of text.matchAll(/<\/?([a-z][a-z0-9-]*)\b[^>]*>/gi)) {
+    const token = match[0]; const tag = match[1].toLowerCase();
+    if (token.startsWith('</')) {
+      const index = stack.findLastIndex((entry) => entry.tag === tag);
+      if (index >= 0) stack.length = index;
+      continue;
+    }
+    const retired = Boolean(stack.at(-1)?.retired || (/\shidden(?:\s|=|>)/.test(token) && /\sinert(?:\s|=|>)/.test(token) && /class="[^"]*\blegacy-model-retired\b/.test(token)));
+    const id = token.match(/\bid="([^"]+)"/)?.[1];
+    if (id && retired) ids.add(id);
+    if (!voidTags.has(tag) && !token.endsWith('/>')) stack.push({ tag, retired });
+  }
+  return ids;
 }
-for (const marker of [
-  '短窗口起步基线',
-  '小于 7 天',
-  '不是成熟季节性或长历史运行基线',
-  '部分基线',
-  '不能计作重复升高确认',
+const retiredIds = retiredDomIds(html);
+for (const id of [
+  'odp-thermal-status', 'odp-thermal-source', 'odp-thermal-request-health',
+  'odp-thermal-window', 'odp-thermal-facility', 'odp-thermal-baseline-quality',
+  'odp-thermal-signal', 'odp-thermal-note',
+  'odp-cross-confirmation-status', 'odp-cross-confirmation-eia',
+  'odp-cross-confirmation-market', 'odp-cross-confirmation-news',
+  'odp-cross-confirmation-thermal', 'odp-cross-confirmation-summary', 'odp-cross-confirmation-note',
+  'odp-evidence-readiness-matrix', 'odp-ladder-watch', 'odp-ladder-global',
+  'odp-energy-transport-status', 'odp-energy-transport-date', 'odp-energy-transport-coverage',
+  'odp-energy-transport-hormuz', 'odp-energy-transport-rerouting', 'odp-energy-transport-ais-caveat',
+  'odp-energy-transport-core', 'odp-energy-transport-note',
 ]) {
-  if (!src.includes(marker)) {
-    fail(`ODP satellite thermal baseline copy must preserve marker: ${marker}`);
+  if (!retiredIds.has(id)) fail(`retired ODP compatibility element must remain hidden/inert: ${id}`);
+  if (src.includes(`setLeafText('${id}',`) || src.includes(`setLeafText("${id}",`)) {
+    fail(`retired ODP leaf must not receive a current conclusion: ${id}`);
   }
 }
-if (!src.includes('sampleWindowDays') || !src.includes('sampleCount') || !src.includes('starter_short_window')) {
-  fail('ODP satellite thermal baseline copy must read sampleWindowDays and starter_short_window');
+for (const symbol of [
+  'renderSatelliteThermalWatch', 'thermalBaselineQualityText', 'thermalRequestHealthText',
+  'crossConfirmationSummary', 'renderCrossConfirmation', 'renderEvidenceReadinessMatrix',
+  'thermalReadiness', 'globalReadiness', 'transportReadiness', 'renderEnergyTransport',
+]) {
+  if (new RegExp(`\\b${symbol}\\s*\\(`).test(src)) fail(`retired ODP implementation/call must not return: ${symbol}`);
 }
-for (const marker of ['effectiveQualityWindowDays', '最短设施窗', '全局历史', '所有已晋升设施']) {
-  if (!src.includes(marker)) {
-    fail(`ODP satellite thermal baseline quality must preserve P68 facility-window marker: ${marker}`);
-  }
+// No read of satellite data means even an old artifact cannot bypass its baseline
+// maturity, request-health or facility-window qualification by supplying prose.
+for (const marker of ['oilThermalWatchData', 'aggregate?.requestDiagnostics', 'elevatedRepeatedObservationCount', 'sourceReview.baselineQuality']) {
+  if (src.includes(marker)) fail(`retired satellite evidence must not feed current display: ${marker}`);
 }
-if (
-  !src.includes('odp-thermal-request-health')
-  || !src.includes('thermalRequestHealthText')
-  || !src.includes('aggregate?.requestDiagnostics')
-) {
-  fail('ODP satellite thermal watch must expose categorized aggregate request health');
-}
-for (const marker of ['请求完成', '最终失败', '重试预算耗尽', '仅显示脱敏分类计数']) {
-  if (!src.includes(marker)) {
-    fail(`ODP satellite request-health copy must preserve marker: ${marker}`);
-  }
-}
+// The original unsafe-field prohibition remains unconditional.
 for (const forbidden of ['providerBody', 'responseBody', 'rawUrl', 'errorMessage']) {
   if (src.includes(forbidden)) {
     fail(`ODP renderer must not read unsafe FIRMS request field: ${forbidden}`);
   }
 }
-if (!src.includes('renderCrossConfirmation') || !src.includes('odp-cross-confirmation-status')) {
-  fail('ODP renderer must expose P54 cross-confirmation display-only status');
-}
 for (const marker of [
-  '高频未跟随 EIA',
-  '只读比较新闻、市场、卫星/设施与 EIA 是否同向',
-  '不改 ODP 方向结论',
-  '不确认断供',
+  'qualifyOdpDisplay(oilData, radarData)', 'const ev = qualified.evidence',
+  'const finalBias = qualified.displayBias', 'priceContext: qualified.priceContext',
+  '不独立确认、不提高置信', '仅供参考,不参与平台的风险打分与决策',
+  '缺少同日同口径两腿报价与 ULSD 观察日，不判断收窄',
 ]) {
-  if (!src.includes(marker)) {
-    fail(`ODP cross-confirmation copy must preserve marker: ${marker}`);
-  }
+  if (!src.includes(marker)) fail(`qualified ODP observation boundary missing: ${marker}`);
 }
-if (!src.includes('renderEvidenceReadinessMatrix') || !src.includes('odp-evidence-readiness-matrix')) {
-  fail('ODP renderer must expose P56 evidence readiness matrix');
-}
-for (const marker of [
-  '证据成熟度',
-  '方向锚',
-  '闸门',
-  '不改变 ODP 方向结论',
-  '不进入平台打分',
-]) {
-  if (!src.includes(marker)) {
-    fail(`ODP evidence readiness matrix copy must preserve marker: ${marker}`);
-  }
-}
-if (!src.includes('PortWatch 新鲜度') || !src.includes('C1 Transport Shock')) {
-  fail('ODP evidence readiness matrix must preserve transport freshness and C1 Transport Shock boundary copy');
+for (const marker of ['多源部分确认', '多源同向', '/3 确认', 'deriveDisplayGlobalOverlay']) {
+  if (src.includes(marker)) fail(`retired or unqualified confirmation must not return: ${marker}`);
 }
 
 if (errors.length > 0) {

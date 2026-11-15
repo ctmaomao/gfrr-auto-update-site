@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { withTavilyBudget } from '../lib/tavily-budget.mjs';
+import { withBraveBudget } from '../lib/brave-budget.mjs';
 import { classifySearchRequestError } from '../lib/search-request-policy.mjs';
 
 const DIAGNOSIS_VERSION = 'oil-news-events-diagnosis-p28';
@@ -392,6 +393,8 @@ async function fetchWithTimeout(url, fetchOptions = {}) {
     if (!response.ok) {
       const error = new Error(`${fetchOptions.label || 'fetch'} HTTP ${response.status}`);
       error.status = response.status;
+      error.httpStatus = response.status;
+      error.providerResponseReceived = true;
       error.retryAfter = response.headers.get('Retry-After') || '';
       error.bodySnippet = compactSnippet(text, 180);
       throw error;
@@ -1013,7 +1016,8 @@ async function fetchBrave(querySpec, options, requestWithKeys) {
     extra_snippets: 'true'
   });
   return requestWithKeys(async (key) => {
-      const json = await fetchWithTimeout(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+      const budget = options.braveBudget || withBraveBudget;
+      const json = await budget({ key, consumer: 'oil-news' }, () => fetchWithTimeout(`https://api.search.brave.com/res/v1/news/search?${params}`, {
         asJson: true,
         headers: {
           Accept: 'application/json',
@@ -1022,8 +1026,9 @@ async function fetchBrave(querySpec, options, requestWithKeys) {
           'X-Subscription-Token': key
         },
         timeoutMs: FETCH_TIMEOUT_MS,
-        label: 'Brave'
-      });
+        label: 'Brave',
+        redirect: 'error'
+      }));
       const rows = Array.isArray(json?.results) ? json.results : [];
       return rows.map((item) => {
         const extra = Array.isArray(item.extra_snippets) ? item.extra_snippets.join(' ') : '';

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=oil-evidence-health-20261106';
-import { formatOnRrpYiUsd } from './format.js?v=oil-evidence-health-20261106';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=qqq-week-label-20261114';
+import { formatOnRrpYiUsd } from './format.js?v=qqq-week-label-20261114';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

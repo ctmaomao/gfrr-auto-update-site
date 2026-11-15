@@ -8,24 +8,25 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=oil-evidence-health-20261106';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=oil-evidence-health-20261106';
+} from './config.js?v=qqq-week-label-20261114';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=qqq-week-label-20261114';
 import {
-  brentModeZh,
   moduleTone,
   riskBiasZh,
   sourceModeZh,
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=oil-evidence-health-20261106';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=oil-evidence-health-20261106';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=oil-evidence-health-20261106';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=oil-evidence-health-20261106';
-import { renderTrendSvg } from './renderMacroTrend.js?v=oil-evidence-health-20261106';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-evidence-health-20261106';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=oil-evidence-health-20261106';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=oil-evidence-health-20261106';
+} from './macroOverviewDisplayHelpers.js?v=qqq-week-label-20261114';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=qqq-week-label-20261114';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=qqq-week-label-20261114';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=qqq-week-label-20261114';
+import { renderTrendSvg } from './renderMacroTrend.js?v=qqq-week-label-20261114';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=qqq-week-label-20261114';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=qqq-week-label-20261114';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=qqq-week-label-20261114';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=qqq-week-label-20261114';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=qqq-week-label-20261114';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -223,6 +224,9 @@ function latestRecord(records) {
   return Array.isArray(records) && records.length > 0 ? records[records.length - 1] : null;
 }
 function asNumber(value) {
+  if (value === null || value === undefined || typeof value === 'boolean'
+      || (typeof value === 'string' && value.trim() === '')
+      || !['number', 'string'].includes(typeof value)) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
@@ -288,40 +292,65 @@ function deriveConsumerEngine({ radarData }) {
     return { tone: 'red', status: '消费明显承压' };
   }
   if ((sentiment !== null && sentiment < 60) || regime.includes('走弱')) {
-    return { tone: 'yellow', status: '实际工资压制' };
+    return { tone: 'yellow', status: '消费信心偏弱' };
   }
   return { tone: 'green', status: '消费者稳健' };
 }
 
 // ---------- Block 7: Market Temperature ----------
 
+// Existing display-age contract: review-market-pricing-freshness.mjs.
+const MARKET_MAX_AGE_DAYS = 10;
+const MARKET_MAX_AUXILIARY_LAG_DAYS = 7;
+
+function observationDate(value, nowMs = Date.now()) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:$|T)/u.test(value)) return null;
+  const day = value.slice(0, 10), ms = Date.parse(value);
+  const dayMs = Date.parse(day + 'T00:00:00Z');
+  if (!Number.isFinite(ms) || !Number.isFinite(dayMs) || !Number.isFinite(nowMs)
+      || new Date(dayMs).toISOString().slice(0, 10) !== day || ms > nowMs) return null;
+  return day;
+}
+
+function marketObservation(metrics, key, nowMs = Date.now()) {
+  const asset = metrics?.assets?.[key];
+  const record = latestRecord(asset?.records);
+  const date = observationDate(record?.date, nowMs);
+  const validDate = date && (!asset?.latestMetricDate || asset.latestMetricDate === date);
+  const z = validDate ? strictFiniteDisplay(record?.zScore) : null;
+  const age = validDate ? (nowMs - Date.parse(date + 'T00:00:00Z')) / 86400000 : null;
+  const stale = age !== null && age > MARKET_MAX_AGE_DAYS;
+  const label = z === null ? '— · 读数或周线日期标签待核验'
+    : `${signedFixed(z, 2)}σ · 来源周线标签 ${date} · ${stale ? '标签距今超过10天' : '实际收盘日期未核验'}`;
+  return { record, date: validDate ? date : null, z, stale, label };
+}
+
 function renderMarketTemperature({ marketPricingMetricsData }) {
   try {
     const mpm = marketPricingMetricsData;
-    const qqq = latestRecord(mpm?.assets?.qqq?.records);
-    const ndx = latestRecord(mpm?.assets?.ndx?.records);
-    const ixic = latestRecord(mpm?.assets?.ixic?.records);
-    if (!qqq) return;
-    const qqqZ = asNumber(qqq.zScore);
-    const ndxZ = asNumber(ndx?.zScore);
-    const ixicZ = asNumber(ixic?.zScore);
-    if (qqqZ !== null) {
-      setLeafText('mt-zscore-value', signedFixed(qqqZ, 2));
+    const qqq = marketObservation(mpm, 'qqq');
+    const ndx = marketObservation(mpm, 'ndx');
+    const ixic = marketObservation(mpm, 'ixic');
+    setLeafText('mt-zscore-value', qqq.z !== null ? signedFixed(qqq.z, 2) : '—');
+    setLeafText('mt-observation-state', qqq.z === null ? '等待可核验周线记录' : qqq.stale ? '历史周线记录 · 标签超过10天' : '周线统计 · 收盘日期待核验');
+    const direction = qqq.z === null ? 'QQQ 读数或周线日期标签缺失，待核验。'
+      : `QQQ 来源周线标签为 ${qqq.date} 的价格${qqq.z === 0 ? '等于' : qqq.z > 0 ? '高于' : '低于'} 60 周均值${qqq.z === 0 ? '' : ` ${Math.abs(qqq.z).toFixed(2)} 个标准差`}。`;
+    const observations = [qqq, ndx, ixic];
+    const complete = observations.every(o => o.z !== null);
+    const aligned = complete && observations.every(o => o.date === qqq.date);
+    const auxiliaryLag = complete && [ndx, ixic].some(o => (Date.parse(qqq.date) - Date.parse(o.date)) / 86400000 > MARKET_MAX_AUXILIARY_LAG_DAYS);
+    const comparison = !complete ? '部分周线记录缺失，不作同期比较。'
+      : !aligned ? `来源日期标签不同，不作同期比较。${auxiliaryLag ? '辅助资产的日期标签比QQQ早超过7天。' : ''}`
+        : observations.some(o => o.stale) ? '相同日期标签距今超过10天，不代表当前市场。' : '日期标签相同也不证明实际收盘时点一致，不作同期比较。';
+    setLeafText('mt-narrative', `${direction} QQQ ${qqq.label}；NDX ${ndx.label}；IXIC ${ixic.label}。${comparison} 日期是来源周线记录的标签，不保证是实际收盘日；未核验该周是否完整，不据此确认行情新鲜度，不代表实时市场或历史排名。`);
+    for (const [id, key] of [['mt-close', 'close'], ['mt-ma60', 'ma60'], ['mt-stddev', 'stdDev60']]) {
+      const value = qqq.date ? strictFiniteDisplay(qqq.record?.[key]) : null;
+      setLeafText(id, value !== null ? moneyFixed(value) : '—');
     }
-    if (qqqZ !== null && ndxZ !== null && ixicZ !== null) {
-      setLeafText(
-        'mt-narrative',
-        `纳斯达克100 ETF(QQQ)当前价格距 60 周均值 ${qqqZ.toFixed(2)} 个标准差，处于历史第二极端区间。纳指100(NDX) ${signedFixed(ndxZ, 2)}σ / 纳指综合(IXIC) ${signedFixed(ixicZ, 2)}σ，整个美国成长股板块同步极端。`
-      );
-    }
-    setLeafText('mt-close', moneyFixed(qqq.close));
-    setLeafText('mt-ma60', moneyFixed(qqq.ma60));
-    setLeafText('mt-stddev', moneyFixed(qqq.stdDev60));
-    const minZ = asNumber(mpm?.zScoreRange?.min);
-    const maxZ = asNumber(mpm?.zScoreRange?.max);
-    if (minZ !== null && maxZ !== null) {
-      setLeafText('mt-zscore-range', `[${signedFixed(minZ, 2)}, ${signedFixed(maxZ, 2)}]`);
-    }
+    const range = mpm?.assets?.qqq?.zScoreRange || mpm?.zScoreRange;
+    const minZ = strictFiniteDisplay(range?.min), maxZ = strictFiniteDisplay(range?.max);
+    setLeafText('mt-zscore-range', qqq.z !== null && minZ !== null && maxZ !== null && minZ <= maxZ
+      ? `[${signedFixed(minZ, 2)}, ${signedFixed(maxZ, 2)}]` : '—');
   } catch (error) {
     console.error('[renderMacroOverview] renderMarketTemperature failed:', error);
   }
@@ -337,31 +366,31 @@ function transportShockImpactReasonLabel(reason) {
   if (text === 'candidate_stale_zero_contribution') return 'PortWatch 滞后';
   if (text === 'candidate_not_pressure_status_zero_contribution') return '非压力状态';
   if (text === 'candidate_score_not_positive_zero_contribution') return '候选分不足';
-  if (text === 'base_score_missing_zero_contribution') return '主分基线缺失';
+  if (text === 'base_score_missing_zero_contribution') return '旧模型主分基线缺失';
   if (text === 'candidate_score_below_contribution_threshold_zero_contribution') return '候选未达贡献阈值';
-  if (text === 'score_ceiling_zero_contribution') return '主分已达上限';
+  if (text === 'score_ceiling_zero_contribution') return '旧模型主分已达上限';
   if (text === 'owner_approved_free_proxy_transport_pressure_low_weight_applied') return '授权免费代理触发';
   return text || '影响待确认';
 }
 
 function transportShockImpactDisplay(impact) {
   const known = impact?.contractVersion === 'transport-shock-scoring-impact-v1';
-  const contribution = asNumber(impact?.contributionPct);
-  const cap = asNumber(impact?.maxContributionPct) ?? 3;
+  const contribution = strictFiniteDisplay(impact?.contributionPct);
+  const cap = strictFiniteDisplay(impact?.maxContributionPct) ?? 3;
   const applied = known && impact?.applied === true && contribution !== null && contribution > 0;
   const contributionText = contribution !== null
     ? `${contribution > 0 ? '+' : ''}${contribution.toFixed(0)}`
     : '—';
   const capText = `+${cap.toFixed(0)}`;
   const reasonLabel = transportShockImpactReasonLabel(impact?.reason);
-  const scoreBeforeTransport = asNumber(impact?.scoreBeforeTransport);
-  const scoreAfterTransport = asNumber(impact?.scoreAfterTransport);
+  const scoreBeforeTransport = strictFiniteDisplay(impact?.scoreBeforeTransport);
+  const scoreAfterTransport = strictFiniteDisplay(impact?.scoreAfterTransport);
   const scorePath = scoreBeforeTransport !== null && scoreAfterTransport !== null
-    ? `主分 ${scoreBeforeTransport.toFixed(0)} -> ${scoreAfterTransport.toFixed(0)}`
-    : '主分路径待刷新';
+    ? `旧模型主分 ${scoreBeforeTransport.toFixed(0)} -> ${scoreAfterTransport.toFixed(0)}`
+    : '旧模型主分路径待刷新';
   const rowText = known
-    ? `${contributionText} / ${capText}${applied ? ' · 已触发' : ' · 当前0贡献'}`
-    : '主分影响待刷新';
+    ? `旧模型审计 ${contributionText} / ${capText}${applied ? ' · 已触发' : contribution === 0 ? ' · 审计记录0贡献' : ' · 贡献待核验'}`
+    : '旧模型主分影响待刷新';
   return {
     known,
     applied,
@@ -380,15 +409,15 @@ function transportShockImpactDisplay(impact) {
 function renderTransportShockScoreAttribution({ radarData }) {
   try {
     const impact = transportShockImpactDisplay(radarData?.transportShockScoringImpact);
-    setLeafText('transport-shock-score-attribution-impact', impact.known ? impact.rowText : '主分影响待刷新');
+    setLeafText('transport-shock-score-attribution-impact', impact.known ? impact.rowText : '旧模型主分影响待刷新');
     setLeafText('transport-shock-score-attribution-reason', impact.known ? impact.reasonLabel : '候选待刷新');
     const boundary = impact.applied
       ? `pressure-only · route/market 未接入 · 最高${impact.capText}`
-      : `pressure-only · 当前不改分 · 最高${impact.capText}`;
+      : `pressure-only · 不改变OFR · 最高${impact.capText}`;
     setLeafText('transport-shock-score-attribution-boundary', boundary);
     const note = impact.known
-      ? `${impact.scorePath}。本归因只解释 production payload 已写入的 capped score impact;不确认封锁、断供、路线级油轮运费或油价方向。`
-      : '等待 production payload 写入 transportShockScoringImpact;本归因不从前端自行计算分数。';
+      ? `${impact.scorePath}，仅作旧模型审计，不计入OFR。本归因只解释 production payload 已写入的 capped score impact;不确认封锁、断供、路线级油轮运费或油价方向。`
+      : '旧模型运输审计记录缺失，不计入OFR；本归因不从前端自行计算分数。';
     setLeafText('transport-shock-score-attribution-note', note);
   } catch (error) {
     console.error('[renderMacroOverview] renderTransportShockScoreAttribution failed:', error);
@@ -397,6 +426,7 @@ function renderTransportShockScoreAttribution({ radarData }) {
 
 function renderRiskEngines({ radarData }) {
   try {
+    renderTransportShockScoreAttribution({ radarData });
     if (!radarData) return;
 
     const energyTone = moduleTone(asNumber(radarData.modules?.energy));
@@ -423,7 +453,6 @@ function renderRiskEngines({ radarData }) {
     if (geopoliticalTone) {
       setMiniCardState('engine-card-b6', geopoliticalTone, geopoliticalTone === 'green' ? '地缘降温' : '多战区压力');
     }
-    renderTransportShockScoreAttribution({ radarData });
   } catch (error) {
     console.error('[renderMacroOverview] renderRiskEngines failed:', error);
   }
@@ -574,9 +603,7 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       name: '滞胀压力',
       score: n2Score,
       isActive: n2Active,
-      description: n2Active
-        ? `美国制造业景气(ISM PMI) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价 + 实际工资压制。三件套均已出现,但信用未验证。`
-        : `美国制造业景气(ISM PMI) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '—'} + 能源涨价。三件套尚未集结,观察中。`,
+      description: `美国制造业景气(ISM PMI) ${ismPmi !== null ? ismPmi.toFixed(1) : '—'} ${ismPmi !== null ? (ismPmi < 50 ? '收缩' : '扩张') : '待核验'}。旧模型滞胀观察条件${n2Active ? '已' : '未'}触发；消费与零售方向见各项读数，不据此认定实际工资受压。`,
     },
     {
       shortName: '世界秩序压力穿越',
@@ -732,7 +759,7 @@ function renderMacroCoherence({ radarData, worldOrderStressData, marketPricingMe
       });
       rowsRoot.replaceChildren(...rows);
     }
-    setLeafText('mc-summary-line', coherence?.summaryLine || '—');
+    setLeafText('mc-summary-line', `旧模型定性诊断，非OFR分解或当前建议。${coherence?.summaryLine || '—'}`);
   } catch (error) {
     console.error('[renderMacroOverview] renderMacroCoherence failed:', error);
   }
@@ -989,9 +1016,6 @@ function formatSignedScore(value, digits = 2, suffix = '') {
   return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}${suffix}`;
 }
 
-function latestMarketRecord(marketPricingMetricsData, assetKey) {
-  return latestRecord(marketPricingMetricsData?.assets?.[assetKey]?.records);
-}
 
 // ---------- Stage 5a: Heatmap ----------
 
@@ -1013,6 +1037,7 @@ function renderHeatmap({ radarData }) {
 
 function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
   try {
+    renderMarketComparison({ marketPricingMetricsData });
     if (!radarData) return;
 
     const vix = currentValue(radarData, 'vix');
@@ -1036,61 +1061,58 @@ function renderC7MarketSentiment({ radarData, marketPricingMetricsData }) {
       setLeafText('c7-spx-aux', `52周高位 ${formatWindowProgress(spx52wHigh)}`);
     }
 
-    const qqqRecord = latestMarketRecord(marketPricingMetricsData, 'qqq');
-    const ndxRecord = latestMarketRecord(marketPricingMetricsData, 'ndx');
-    const qqqZ = asNumber(qqqRecord?.zScore);
-    const ndxZ = asNumber(ndxRecord?.zScore);
-    if (ndxZ !== null) {
-      const zText = formatSignedScore(ndxZ, 2);
-      setBadge('c7-ndx-badge', 'yellow', `${zText}σ`);
-      setLeafText('c7-ndx-number', zText);
-      setLeafText('c7-ndx-aux', '纳指100(NDX) vs 60 周均值 · 纳斯达克100 ETF(QQQ)对照');
-      const qqqClause = qqqZ !== null ? `；纳斯达克100 ETF(QQQ) ${formatSignedScore(qqqZ, 2)}σ` : '';
-      setLeafText('c7-ndx-note', `纳指100(NDX) 60 周偏离度(z-score) ${zText}σ${qqqClause}。用于观察美国成长股板块整体温度。本数据为统计描述，不构成投资建议。`);
-    }
+
   } catch (error) {
     console.error('[renderMacroOverview] renderC7MarketSentiment failed:', error);
   }
+}
+
+function renderMarketComparison({ marketPricingMetricsData }) {
+    const qqq = marketObservation(marketPricingMetricsData, 'qqq');
+    const ndx = marketObservation(marketPricingMetricsData, 'ndx');
+    setPendingIndicator('c7-ndx-status', 'c7-ndx-badge');
+    setBadge('c7-ndx-badge', 'pending', ndx.z === null ? '待核验' : ndx.stale ? '历史周线记录' : '周线统计');
+    setLeafText('c7-ndx-number', ndx.z !== null ? signedFixed(ndx.z, 2) : '—');
+    setLeafText('c7-ndx-aux', `NDX ${ndx.label}`);
+    setLeafText('c7-ndx-note', `60 周偏离度：NDX ${ndx.label}；QQQ ${qqq.label}。来源周线标签的统计描述，实际收盘日和完整周尚未核验，不据此推断行情新鲜度或同期板块温度，不构成投资建议。`);
 }
 
 // ---------- Stage 5a: C8 Geopolitics & World Order ----------
 
 function renderC8Geopolitical({ radarData, worldOrderStressData }) {
   try {
-    const geoScore = asNumber(radarData?.modules?.geopolitical);
-    const geoTone = indicatorTone(geoScore);
-    setToneClass('c8-geo-status', 'status-bar', geoTone);
-    setBadge('c8-geo-badge', geoTone);
-    if (geoScore !== null) setLeafText('c8-geo-number', String(Math.round(geoScore)));
-    const geoTrend = trendArrow(asNumber(radarData?.moduleTrends?.geopolitical));
-    setLeafText('c8-geo-aux', `6 底层模块之一 · 模块趋势 ${geoTrend}`);
-    if (geoScore !== null) {
-      setLeafText('c8-geo-note', `底层地缘评分 ${Math.round(geoScore)},直接计入主评分。与世界秩序压力(只做修正、不计分)不是一回事。`);
+    const geoScore = strictFiniteDisplay(radarData?.modules?.geopolitical);
+    if (geoScore !== null) setIndicatorStatus('c8-geo-status', 'c8-geo-badge', indicatorTone(geoScore));
+    else setPendingIndicator('c8-geo-status', 'c8-geo-badge');
+    setLeafText('c8-geo-number', geoScore !== null ? String(Math.round(geoScore)) : '—');
+    const geoTrendValue = strictFiniteDisplay(radarData?.moduleTrends?.geopolitical);
+    const geoTrend = geoTrendValue !== null ? trendArrow(geoTrendValue) : '待核验';
+    setLeafText('c8-geo-aux', `旧模型地缘模块 · 审计趋势 ${geoTrend}`);
+    setLeafText('c8-geo-note', `旧模型地缘评分 ${geoScore !== null ? Math.round(geoScore) : '—'}，仅保留审计，不计入OFR主读数。世界秩序另作独立观察，不升档OFR。`);
+
+    const woScore = strictFiniteDisplay(worldOrderStressData?.score);
+    setLeafText('c8-wo-number', woScore !== null ? String(Math.round(woScore)) : '—');
+    setLeafText('c8-wo-aux', `状态:${woScore !== null ? worldOrderStateLabel(worldOrderStressData?.state, worldOrderStressData?.labelZh) : '待确认'}`);
+    if (woScore === null) setPendingIndicator('c8-wo-status', 'c8-wo-badge');
+    else {
+      setToneClass('c8-wo-status', 'status-bar', 'orange');
+      setBadge('c8-wo-badge', 'orange', '独立观察');
     }
 
-    const woScore = asNumber(worldOrderStressData?.score);
-    if (woScore !== null) setLeafText('c8-wo-number', String(Math.round(woScore)));
-    if (worldOrderStressData?.state || worldOrderStressData?.labelZh) {
-      setLeafText('c8-wo-aux', `状态:${worldOrderStressData.labelZh || '—'}`);
+    // Producer trendFromScore is a score bucket, not a measured time change.
+    // Match the appendix semantics and overwrite every leaf on repeated loads.
+    for (const [key, slug, label] of [
+      ['economicWeaponization', 'econ', '经济武器化'],
+      ['peaceDividendRetreat', 'arms', '军备与冲突'],
+    ]) {
+      const dim = worldOrderStressData?.dimensions?.[key] || {};
+      const score = strictFiniteDisplay(dim.score);
+      if (score === null) setPendingIndicator(`c8-${slug}-status`, `c8-${slug}-badge`);
+      else setIndicatorStatus(`c8-${slug}-status`, `c8-${slug}-badge`, indicatorTone(score));
+      setLeafText(`c8-${slug}-number`, score !== null ? String(Math.round(score)) : '—');
+      setLeafText(`c8-${slug}-aux`, `${label} · ${score !== null ? '当前评分快照' : '数据待确认'}`);
+      setLeafText(`c8-${slug}-note`, '世界秩序独立维度，来源与时效见世界秩序附录。分档不代表较上期升降，也不代表实时观察；不计入OFR主读数。');
     }
-
-    const econ = worldOrderStressData?.dimensions?.economicWeaponization || {};
-    const econScore = asNumber(econ.score);
-    const econTone = indicatorTone(econScore);
-    setToneClass('c8-econ-status', 'status-bar', econTone);
-    setBadge('c8-econ-badge', econTone);
-    if (econScore !== null) setLeafText('c8-econ-number', String(Math.round(econScore)));
-    if (econ.trend) setLeafText('c8-econ-aux', `趋势(trend): ${econ.trend} · 美国制裁清单(OFAC)+全球新闻事件(GDELT)`);
-    if (econ.trend) setLeafText('c8-econ-note', `制裁与经济武器化处于高位区间。趋势(trend): ${econ.trend}。`);
-
-    const arms = worldOrderStressData?.dimensions?.peaceDividendRetreat || {};
-    const armsScore = asNumber(arms.score);
-    const armsTone = indicatorTone(armsScore);
-    setToneClass('c8-arms-status', 'status-bar', armsTone);
-    setBadge('c8-arms-badge', armsTone);
-    if (armsScore !== null) setLeafText('c8-arms-number', String(Math.round(armsScore)));
-    if (arms.trend) setLeafText('c8-arms-aux', `trend: ${arms.trend} · ACLED weekly + SIPRI annual`);
-    if (arms.trend) setLeafText('c8-arms-note', `手动 + 年度数据。不当成实时高频信号读。trend: ${arms.trend}。`);
   } catch (error) {
     console.error('[renderMacroOverview] renderC8Geopolitical failed:', error);
   }
@@ -1211,8 +1233,8 @@ function setIndicatorStatus(statusId, badgeId, tone) {
   setBadge(badgeId, tone);
 }
 
-// Local opt-in qualification for the G C2/C3 nullable fields only. Do not replace
-// the global asNumber: scoring and unrelated readers keep their existing behavior.
+// Strict numeric qualification for producer fields; unlike asNumber, numeric
+// strings are not accepted. Display-only, never changes producer scoring.
 function strictFiniteDisplay(value) {
   return Number.isFinite(value) ? value : null;
 }
@@ -1230,27 +1252,19 @@ function renderC1InflationEnergy({ radarData }) {
     const brentLayer = radarData.brentPricingLayer || {};
     const consumer = radarData.macroDrivers?.consumer || {};
 
-    const brent = currentValue(radarData, 'brent') ?? asNumber(brentLayer.selectedBrent?.value);
-    const brentStatus = brentTone(brent);
-    setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brentStatus);
-    if (brent !== null) setLeafText('c1-brent-number', brent.toFixed(2));
-    if (brentLayer.mode) {
-      setLeafText('c1-brent-aux', `主值取公开现货代理 · 状态:${brentModeZh(brentLayer.mode)}`);
+    const brent = strictFiniteDisplay(radarData.__effectiveDisplayInputs?.brent ?? radarData.displayInputsBaseline?.brent) ?? strictFiniteDisplay(brentLayer.selectedBrent?.value);
+    setIndicatorStatus('c1-brent-status', 'c1-brent-badge', brent === null ? 'pending' : brentTone(brent));
+    setLeafText('c1-brent-number', brent === null ? '—' : brent.toFixed(2));
+    const provenance = buildBrentProvenanceView(brentLayer, brent);
+    for (const key of ['eia', 'futures', 'ice', 'spread', 'divergence', 'note']) {
+      setLeafText(`c1-brent-${key}`, provenance[key]);
     }
-    const eia = asNumber(brentLayer.eiaBrentSpotProxy?.price);
-    const futures = asNumber(brentLayer.futuresProxy?.value);
-    const ice = asNumber(brentLayer.iceFuturesPriceCurve?.frontPrice);
-    const spread = asNumber(brentLayer.proxySpread?.spotMinusFutures);
-    const divergence = asNumber(brentLayer.proxySpread?.maxProxyDivergencePct);
-    if (eia !== null) setLeafText('c1-brent-eia', formatUsd(eia));
-    if (futures !== null) setLeafText('c1-brent-futures', formatUsd(futures));
-    if (ice !== null) setLeafText('c1-brent-ice', formatUsd(ice));
-    if (spread !== null) {
-      const sign = spread >= 0 ? '+$' : '-$';
-      setLeafText('c1-brent-spread', `${sign}${Math.abs(spread).toFixed(2)}`);
-    }
-    if (divergence !== null) setLeafText('c1-brent-divergence', `${divergence.toFixed(1)}%`);
+    setLeafText('c1-brent-aux', provenance.selected);
 
+    for (const slug of ['crack', 'ism']) {
+      setPendingIndicator(`c1-${slug}-status`, `c1-${slug}-badge`);
+      for (const leaf of ['number', 'aux', 'note']) setLeafText(`c1-${slug}-${leaf}`, '—');
+    }
     const crack = asNumber(brentLayer.crackSpread);
     const crackStatus = crackTone(crack);
     setIndicatorStatus('c1-crack-status', 'c1-crack-badge', crackStatus);
@@ -1802,12 +1816,6 @@ function employmentToneFromRegime(regime) {
   return null;
 }
 
-function consumerToneFromRegime(regime) {
-  if (regime === '稳定' || regime === '改善') return 'green';
-  if (regime === '走弱') return 'yellow';
-  if (regime === '急剧走弱' || regime === '衰退') return 'red';
-  return null;
-}
 
 function signedK(value) {
   const n = asNumber(value);
@@ -1892,6 +1900,8 @@ function renderC3CreditCorporate({ radarData }) {
     const nfciNoteState = nfci === null ? '当前读数缺失，待核验' : nfciKnown ? `当前 ${nfci.toFixed(3)}，${nfciRegime}` : `当前 ${nfci.toFixed(3)}，档位待核验`;
     setLeafText('c3-nfci-note', `金融条件指数(NFCI)汇总 100+ 跨市场信号(信用 / 流动性 / 杠杆)。正值表示较历史平均偏紧，负值表示偏松。${nfciNoteState}。`);
 
+    setPendingIndicator('c3-private-status', 'c3-private-badge');
+    for (const leaf of ['number', 'aux', 'bdc', 'pbdc', 'srln', 'regime']) setLeafText(`c3-private-${leaf}`, '—');
     const privateTone = privateCreditToneFromRegime(privateCredit.privateCreditProxyRegime);
     setIndicatorStatus('c3-private-status', 'c3-private-badge', privateTone);
     const intervalNav = asNumber(privateCredit.intervalFundNavPrice);
@@ -1943,14 +1953,63 @@ function renderC3CreditCorporate({ radarData }) {
   }
 }
 
+function renderConsumerRetail({ radarData }) {
+  const retail = radarData?.macroDrivers?.consumerRetail || {};
+  const consumer = radarData?.macroDrivers?.consumer || {};
+  const pct = value => Number.isFinite(value) ? signedPercentFromDecimal(value, 1) : '—';
+  const sourceLabel = status => ({ live: '来源已采集', fallback: '沿用旧值', stale: '来源过期' })[status] || '来源待核验';
+  const sourceUsable = status => ['live', 'fallback', 'stale'].includes(status);
+  const recordDate = observationDate(retail.updatedAt);
+  const nominalDate = observationDate(retail.cartsNominalUpdatedAt);
+  const realDate = observationDate(retail.cartsRealUpdatedAt);
+  const nominal = sourceUsable(retail.sourceStatus?.carts) ? strictFiniteDisplay(retail.cartsNominalYoY) : null;
+  const real = sourceUsable(retail.sourceStatus?.cartsr) ? strictFiniteDisplay(retail.cartsRealYoY) : null;
+  const direction = value => value === null ? '待核验' : value > 0 ? '同比增长' : value < 0 ? '同比下降' : '同比持平';
+  // updatedAt is the newest of several sources, not a per-CARTS observation date.
+  setPendingIndicator('c4-consumer-status', 'c4-consumer-badge');
+  setLeafText('c4-consumer-number', nominal !== null ? pct(nominal).replace('%', '') : '—');
+  setLeafText('c4-consumer-real', pct(real));
+  setLeafText('c4-consumer-aux', `名义零售(CARTS) · 实际 ${pct(real)} YoY · 组合记录 ${recordDate || '日期待核验'}`);
+  setLeafText('c4-consumer-note', `记录中名义零售 ${pct(nominal)}（${direction(nominal)}，${sourceLabel(retail.sourceStatus?.carts)}）；实际零售 ${pct(real)}（${direction(real)}，${sourceLabel(retail.sourceStatus?.cartsr)}）。名义观察日 ${nominalDate || '未提供或待核验'}；实际观察日 ${realDate || '未提供或待核验'}。组合日期不是各项共同观察日，不能仅据组合日期认定当前同步趋势。`);
+  const segmentDate = observationDate(retail.segmentUpdatedAt);
+  const segmentsKnown = segmentDate && sourceUsable(retail.sourceStatus?.retailSegments);
+  const diffusion = segmentsKnown ? strictFiniteDisplay(retail.segmentDiffusionPct) : null;
+  const positive = strictFiniteDisplay(retail.segmentPositiveCount), total = strictFiniteDisplay(retail.segmentSeriesCount);
+  const suffix = positive !== null && total !== null ? ` (${positive}/${total} 类品类正增长占比)` : '';
+  const segmentMeta = `${segmentDate || '日期待核验'} · ${sourceLabel(retail.sourceStatus?.retailSegments)}`;
+  setLeafText('c4-consumer-diffusion', diffusion !== null ? `${diffusion.toFixed(1)}%${suffix} · ${segmentMeta}` : '—');
+  for (const [id, segment] of [['c4-consumer-strongest', retail.strongestSegment], ['c4-consumer-weakest', retail.weakestSegment]]) {
+    setLeafText(id, segmentsKnown && segment?.labelZh && Number.isFinite(segment.yoy) ? `${segment.labelZh} ${pct(segment.yoy)} YoY · ${segmentMeta}` : '—');
+  }
+  const sentimentDate = observationDate(consumer.updatedAt);
+  const sentiment = sentimentDate && sourceUsable(consumer.sourceStatus?.umichSentiment) ? strictFiniteDisplay(consumer.umichSentiment) : null;
+  const sentimentChange = strictFiniteDisplay(consumer.threeMonthChange);
+  setLeafText('c4-consumer-umich', sentiment !== null ? `${sentiment.toFixed(1)} · 3m ${sentimentChange !== null ? signedNumber(sentimentChange, 1) : '—'} · ${sentimentDate} · ${sourceLabel(consumer.sourceStatus?.umichSentiment)}` : '—');
+  const bofaValue = strictFiniteDisplay(retail.bofaCardSpendingExGasYoY);
+  const bofaDate = observationDate(retail.bofaReportDate);
+  const bofaMonth = bofaDate?.endsWith('-01') && typeof retail.bofaReportDate === 'string' && retail.bofaReportDate.includes('T') ? bofaDate.slice(0, 7) : null;
+  const bofaStatus = retail.bofaStatus || retail.sourceStatus?.bofaConsumerCheckpoint;
+  const bofaOld = bofaDate && Date.now() - Date.parse(retail.bofaReportDate) > 62 * 86400000;
+  const bofaStateZh = bofaStatus === 'fallback' ? '沿用旧值' : bofaOld ? '报告较旧' : '已更新';
+  setLeafText('c4-consumer-bofa', bofaValue !== null && bofaMonth && ['live', 'fallback'].includes(bofaStatus)
+    ? `${pct(bofaValue)} YoY · ${bofaMonth}报告 · ${bofaStateZh}` : '— · 缺少可用报告');
+  const redbookDate = observationDate(retail.redbookRetailSalesDate);
+  const redbookStatus = retail.redbookStatus || retail.sourceStatus?.redbookPublicHtml;
+  setLeafText('c4-consumer-redbook', Number.isFinite(retail.redbookRetailSalesYoY) && redbookDate && sourceUsable(redbookStatus)
+    ? `${pct(retail.redbookRetailSalesYoY)} · ${redbookDate} · ${sourceLabel(redbookStatus)}` : '—');
+}
+
 // ---------- Stage 5c: C4 US Economic Temperature ----------
 
 function renderC4UsEconomyTemperature({ radarData }) {
   try {
+    renderConsumerRetail({ radarData });
+    setPendingIndicator('c4-employment-status', 'c4-employment-badge');
+    for (const leaf of ['number', 'aux', 'claims-change', 'continuing', 'jolts', 'u6', 'ahe', 'diffusion', 'regime']) {
+      setLeafText(`c4-employment-${leaf}`, '—');
+    }
     if (!radarData) return;
     const employment = radarData.macroDrivers?.employment || {};
-    const retail = radarData.macroDrivers?.consumerRetail || {};
-    const consumer = radarData.macroDrivers?.consumer || {};
 
     const employmentTone = employmentToneFromRegime(employment.industryDiffusionRegime);
     setIndicatorStatus('c4-employment-status', 'c4-employment-badge', employmentTone);
@@ -1978,43 +2037,7 @@ function renderC4UsEconomyTemperature({ radarData }) {
     }
     if (employment.industryDiffusionRegime) setLeafText('c4-employment-regime', employment.industryDiffusionRegime);
 
-    const consumerTone = consumerToneFromRegime(consumer.regime);
-    setIndicatorStatus('c4-consumer-status', 'c4-consumer-badge', consumerTone);
-    const nominalYoy = signedPercentFromDecimal(retail.cartsNominalYoY, 1);
-    const realYoy = signedPercentFromDecimal(retail.cartsRealYoY, 1);
-    if (nominalYoy) setLeafText('c4-consumer-number', nominalYoy.replace('%', ''));
-    if (realYoy) {
-      setLeafText('c4-consumer-aux', `名义零售(CARTS) · 实际 ${realYoy} YoY`);
-      setLeafText('c4-consumer-real', realYoy);
-    }
-    if (asNumber(retail.segmentDiffusionPct) !== null) {
-      const positive = asNumber(retail.segmentPositiveCount);
-      const total = asNumber(retail.segmentSeriesCount);
-      const suffix = positive !== null && total !== null ? ` (${positive}/${total} 类品类正增长占比)` : '';
-      setLeafText('c4-consumer-diffusion', `${retail.segmentDiffusionPct.toFixed(1)}%${suffix}`);
-    }
-    if (retail.strongestSegment?.labelZh && asNumber(retail.strongestSegment.yoy) !== null) {
-      setLeafText('c4-consumer-strongest', `${retail.strongestSegment.labelZh} ${signedPercentFromDecimal(retail.strongestSegment.yoy, 1)} YoY`);
-    }
-    if (retail.weakestSegment?.labelZh && asNumber(retail.weakestSegment.yoy) !== null) {
-      setLeafText('c4-consumer-weakest', `${retail.weakestSegment.labelZh} ${signedPercentFromDecimal(retail.weakestSegment.yoy, 1)} YoY`);
-    }
-    if (asNumber(consumer.umichSentiment) !== null && asNumber(consumer.threeMonthChange) !== null) {
-      setLeafText('c4-consumer-umich', `${consumer.umichSentiment.toFixed(1)} · 3m ${signedNumber(consumer.threeMonthChange, 1)}`);
-    }
-    const bofaValue = signedPercentFromDecimal(retail.bofaCardSpendingExGasYoY, 1);
-    const bofaDate = typeof retail.bofaReportDate === 'string' ? retail.bofaReportDate : '';
-    const bofaDateMs = Date.parse(bofaDate);
-    const bofaMonth = /^\d{4}-(?:0[1-9]|1[0-2])-01T/u.test(bofaDate) && Number.isFinite(bofaDateMs) && bofaDateMs <= Date.now()
-      ? bofaDate.slice(0, 7) : null;
-    const bofaStatus = retail.bofaStatus || retail.sourceStatus?.bofaConsumerCheckpoint;
-    const bofaOld = Number.isFinite(bofaDateMs) && Date.now() - bofaDateMs > 62 * 86400000;
-    const bofaStateZh = bofaStatus === 'fallback' ? '沿用旧值'
-      : bofaStatus === 'live' ? (bofaOld ? '报告较旧' : '已更新') : '来源不可用';
-    setLeafText('c4-consumer-bofa', bofaValue && bofaMonth && ['live', 'fallback'].includes(bofaStatus)
-      ? `${bofaValue} YoY · ${bofaMonth}报告 · ${bofaStateZh}`
-      : '— · 缺少可用报告');
-    if (signedPercentFromDecimal(retail.redbookRetailSalesYoY, 1)) setLeafText('c4-consumer-redbook', signedPercentFromDecimal(retail.redbookRetailSalesYoY, 1));
+
   } catch (error) {
     console.error('[renderMacroOverview] renderC4UsEconomyTemperature failed:', error);
   }
@@ -2047,7 +2070,7 @@ function renderTransportShockConfirmation({ radarData }) {
     const layer = radarData?.macroDrivers?.energyTransport;
     const candidate = layer?.transportShockCandidate;
     const impact = radarData?.transportShockScoringImpact;
-    const latestAgeDays = asNumber(layer?.latestAgeDays);
+    const latestAgeDays = strictFiniteDisplay(layer?.latestAgeDays);
     const reaction = setObservationReaction(
       'c1-transport-shock-status',
       'c1-transport-shock-badge',
@@ -2055,7 +2078,7 @@ function renderTransportShockConfirmation({ radarData }) {
       signalFromTransportShockCandidate(candidate)
     );
 
-    const score = asNumber(candidate?.score ?? candidate?.candidateScore ?? candidate?.manualCandidateScore);
+    const score = strictFiniteDisplay(candidate?.score ?? candidate?.candidateScore ?? candidate?.manualCandidateScore);
     setLeafText('c1-transport-shock-number', score !== null ? score.toFixed(0) : '—');
 
     const gateLabel = (value) => {
@@ -2081,8 +2104,10 @@ function renderTransportShockConfirmation({ radarData }) {
     setLeafText('c1-transport-shock-score-impact', impactDisplay.rowText);
     const scoreGate = !candidate
       ? '候选字段待刷新'
+      : impactDisplay.contribution === null
+        ? '旧模型贡献待核验'
       : impactApplied
-        ? `已触发低权重入分 · ${impactContributionText} / ${impactCapText}`
+        ? `旧模型审计：已触发低权重入分 · ${impactContributionText} / ${impactCapText}`
         : impactKnown
           ? `低权重闸门未触发 · ${impactReason}`
           : gateReady(routeGate) && gateReady(marketGate)
@@ -2092,8 +2117,8 @@ function renderTransportShockConfirmation({ radarData }) {
 
     const blockers = [];
     if (!candidate) blockers.push('候选字段待刷新');
-    if (impactKnown && !impactApplied) blockers.push(`${impactReason} · 主分0贡献`);
-    if (!impactKnown) blockers.push('主分影响待刷新');
+    if (impactKnown && !impactApplied) blockers.push(`${impactReason} · ${impactDisplay.contribution === 0 ? '旧模型主分0贡献' : '旧模型贡献待核验'}`);
+    if (!impactKnown) blockers.push('旧模型主分影响待刷新');
     if (!gateReady(routeGate)) blockers.push('路线级油轮运费未确认');
     if (!gateReady(marketGate)) blockers.push('市场确认未接入');
     if (latestAgeDays !== null && latestAgeDays > 7) blockers.push('PortWatch 数据龄偏滞后');
@@ -2103,7 +2128,7 @@ function renderTransportShockConfirmation({ radarData }) {
     setLeafText('c1-transport-shock-blockers', blockerText);
 
     const evidence = candidate?.evidence || {};
-    const hormuzPct = asNumber(
+    const hormuzPct = strictFiniteDisplay(
       evidence.hormuzTankerVs30dPct
       ?? evidence.hormuzVs30dPct
       ?? layer?.chokepoints?.hormuz?.capacityTankerVs30dPct
@@ -2115,12 +2140,12 @@ function renderTransportShockConfirmation({ radarData }) {
     const sampleQuality = !candidate
       ? '候选字段待刷新'
       : impactApplied
-        ? '低权重入分已触发 · 非路线确认'
+        ? '旧模型审计：低权重入分已触发 · 非路线确认'
         : candidate.confidence === 'low'
         ? '低置信观察 · 待路线/市场确认'
         : impactKnown
-          ? '低权重影响审阅中 · 当前0贡献'
-          : '样本审阅中 · 主分影响待刷新';
+          ? `旧模型影响审阅中 · ${impactDisplay.contribution === 0 ? '审计记录0贡献' : '贡献待核验'}`
+          : '样本审阅中 · 旧模型主分影响待刷新';
     setLeafText('c1-transport-shock-sample-quality', sampleQuality);
 
     const freshnessText = latestAgeDays !== null
@@ -2131,18 +2156,18 @@ function renderTransportShockConfirmation({ radarData }) {
     const statusText = candidate?.status ? `状态 ${candidate.status}` : '候选字段待刷新';
     const sourceStatus = layer?.sourceStatus?.chokepoints ? `PortWatch ${layer.sourceStatus.chokepoints}` : 'PortWatch 待确认';
     const ageSuffix = latestAgeDays !== null ? ` · ${latestAgeDays.toFixed(0)}天龄` : '';
-    const impactSummary = impactKnown ? `主分 ${impactContributionText} / ${impactCapText}` : '主分影响待刷新';
+    const impactSummary = impactKnown ? `旧模型主分 ${impactContributionText} / ${impactCapText}` : '旧模型主分影响待刷新';
     setLeafText('c1-transport-shock-aux', reactionText(reaction, `${statusText} · ${impactSummary} · 路线 ${routeGate} · 市场 ${marketGate} · ${sourceStatus}${ageSuffix}`));
     const firstReason = Array.isArray(candidate?.reasons) && candidate.reasons.length
       ? candidate.reasons[0]
-      : '运输冲击确认因子读取 PortWatch free-proxy 候选与低权重主分影响;路线级油轮运费与市场确认仍是独立边界。';
+      : '运输冲击确认因子读取 PortWatch free-proxy 候选与旧模型审计：低权重主分影响;路线级油轮运费与市场确认仍是独立边界。';
     const impactCaveat = impactKnown
-      ? ` 低权重主分影响 ${impactContributionText} / ${impactCapText};${impactApplied ? '已触发' : `当前0贡献:${impactReason}`}。`
-      : ' 低权重主分影响待下一轮生产刷新。';
+      ? ` 旧模型审计：低权重主分影响 ${impactContributionText} / ${impactCapText};${impactApplied ? '已触发' : impactDisplay.contribution === 0 ? `审计记录0贡献:${impactReason}` : '贡献待核验'}。`
+      : ' 旧模型审计：低权重主分影响待下一轮生产刷新。';
     const ageCaveat = latestAgeDays !== null && latestAgeDays > 7
       ? ' PortWatch 底层日期超过7天,只作滞后代理观察。'
       : '';
-    setLeafText('c1-transport-shock-note', `${firstReason}${impactCaveat}${ageCaveat}`);
+    setLeafText('c1-transport-shock-note', `旧模型审计，不计入OFR主读数，不产生当前建议。${firstReason}${impactCaveat}${ageCaveat}`);
   } catch (error) {
     console.error('[renderMacroOverview] renderTransportShockConfirmation failed:', error);
   }
@@ -2370,13 +2395,14 @@ function renderDetailData({ radarData }) {
     const scenarios = radarData.scenarioTree || [];
 
     setLeafText('detail-health-score', snapshotDisplayHealth(radarData).collectionLabel);
-    if (realtime.sourceMode) setLeafText('detail-health-source-mode', `${sourceModeZh(realtime.sourceMode)}输入`);
-    const runAt = formatUtcMinute(realtime.capturedAt || realtime.updatedAt);
-    if (runAt) setLeafText('detail-health-run-at', runAt);
+    setLeafText('detail-health-source-mode', realtime.sourceMode === 'live' ? '在线采集' : realtime.sourceMode ? `${sourceModeZh(realtime.sourceMode)}输入` : '未记录');
+    setLeafText('detail-health-run-at', provenanceTime(radarData.updatedAt));
+    setLeafText('detail-health-input-at', provenanceTime(realtime.updatedAt));
+    setLeafText('detail-health-freshness', snapshotDisplayHealth(radarData).freshnessLabel);
     // P3-18 WIRE batch B/C/D: data-health appendix prose + sidebar dd + Fed liquidity mirror
     if (realtime.branch) setLeafText('detail-health-branch', realtime.branch);
     if (realtime.commitSha) setLeafText('detail-health-commit', String(realtime.commitSha).slice(0, 8));
-    if (runAt) setLeafText('detail-health-captured', runAt);
+    setLeafText('detail-health-captured', provenanceTime(realtime.capturedAt));
     setLeafText('detail-health-score-dd', snapshotDisplayHealth(radarData).collectionLabel);
 
     // Structural signals: WIRE count + active/none toggle (batch D — 0-signal safe)
@@ -2390,7 +2416,8 @@ function renderDetailData({ radarData }) {
     setHidden('detail-health-structural-note-none', hasStructuralSignal);
     if (firstSignal) {
       const signalKey = firstSignal.key || 'structuralSignal';
-      const signalLabel = firstSignal.label || signalKey;
+      // Map the stable key so older published snapshots retain truthful current wording.
+      const signalLabel = signalKey === 'onRrpCritical' ? '隔夜逆回购余额偏低' : (firstSignal.label || signalKey);
       const signalDetail = firstSignal.detail || signalLabel;
       setLeafText('detail-fed-signal-label', signalLabel);
       setLeafText('detail-fed-onrrp', signalDetail);
@@ -2572,10 +2599,8 @@ function renderWorldOrderStress({ worldOrderStressData }) {
     setLeafText('wo-detail-gdelt-conflict-events', eventsSummary
       ? `${woCountOrDash(eventsSummary.violenceLower)}～${woCountOrDash(eventsSummary.violenceUpper)}（免费编码记录）`
       : `${woCountOrDash(wo.externalSources?.gdelt?.summary?.conflictEvents)}（历史 Cloud）`);
-    const freshnessLabel = (value) => ({ fresh: '新鲜', aging: '偏旧', stale: '过期', error: '读取失败', not_configured: '未配置', missing: '缺失' })[value] || '待确认';
-    const eventsFreshnessNote = eventsSummary
-      ? `免费记录窗口：${eventsSummary.windowStartDay}～${eventsSummary.windowEndDay}；${eventsSource.status === 'stale' ? '沿用历史窗口' : '完整七日文件'}，未知隔离 ${woCountOrDash(eventsSummary.quarantinedRows)} 行，仅计入两个冲突维度；其余三维仍含历史 Cloud 代理。` : '';
-    setLeafText('wo-detail-source-freshness', `ACLED 周表时效：${freshnessLabel(acledSummary.sourceFreshness)}；月表时效：${freshnessLabel(acledSummary.monthlySourceFreshness)}。${eventsFreshnessNote}`);
+    setLeafText('wo-detail-source-clock', worldOrderSourceClock(wo));
+    setLeafText('wo-detail-source-freshness', worldOrderSourceDisclosure(wo));
 
     const dimMap = {
       peaceDividendRetreat: 'peace',
@@ -2746,7 +2771,7 @@ export function renderMacroOverview({ radarData, worldOrderStressData, marketPri
   observationReactionContext.worldOrderStressData = worldOrderStressData || null;
   // Old editorial has no OFR input contract. This local display projection also
   // fails closed while an old JSON snapshot is served during deployment.
-  radarData = radarData ? { ...radarData, macroRiskEditorialLayer: null, macroRiskEditorialPreviousIssue: null } : null;
+  radarData = radarData ? { ...radarData, macroRiskEditorialLayer: radarData.macroRiskEditorialLayer?.schemaVersion === 'macro-risk-editorial-ofr-production-v2' ? radarData.macroRiskEditorialLayer : null, macroRiskEditorialPreviousIssue: null } : null;
 
   // Stage 4b-1A: Hero + threshold + pressure-sources
   renderOfrPrimary({ radarData, worldOrderStressData });

@@ -25,6 +25,14 @@ counts, metadata and all other fields still participate. Output contains fixed
 section names, dates, file row-count change counts and hashes, not source rows,
 country names or arbitrary input strings. Dates are calendar-validated.
 
+For `quality.weeklyWindow` inputs, [ADR-0108](ADR/0108-acled-common-window-comparison.md)
+aligns comparison with the [ADR-0040](ADR/0040-acled-common-week-window.md)
+sanitizer: `latestWeek` is the minimum of the six source-file endpoints, with
+valid continuous four/twelve-week metadata and complete regional coverage. Source
+ranges may extend later and remain untouched. Explicitly malformed window
+metadata fails closed. Inputs without the field retain the legacy maximum-date
+comparison rule only; runtime still excludes their unverifiable weekly metrics.
+
 - `unchanged`: both semantic configurations match, possibly with serialization or preparation-time changes.
 - `review_required`: at least one date advances or a same-date revision exists.
 - `date_regression_hold`: either candidate date precedes its baseline.

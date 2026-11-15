@@ -2,6 +2,8 @@
 
 ## Status
 
+Partially superseded by [ADR-0092](0092-delegated-ai-review.md) on 2026-11-09: independent AI review now satisfies the generic project merge-review gate, and valid same-scope authorization does not require repeated owner confirmation. The original decision below remains a historical record; local Git, serial trunk and destructive-operation safeguards are unchanged.
+
 Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026-09-06_CLOSEOUT.md#accepted-pr304). That reviewer exception applies only to PR #304; general review requirements remain unchanged. Owner adoption on 2026-09-06 supersedes generic owner-manual Git restrictions and older receipt/ADR wording; domain-specific provider, source-rights, credential, data-release and platform-trust requirements remain unchanged.
 
 ## Decision

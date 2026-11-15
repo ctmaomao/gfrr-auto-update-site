@@ -29,10 +29,13 @@ it is **not** zero network or zero filesystem activity. No ACLED access occurs.
    attribution, compare exact baselines, run strict paired preparation and publish
    using `expectedHeadOid`. No-change skips mutation and refresh. Date regression,
    invalid content, cleanup failure or changed main preserves prior configs.
-   The comparison's regional-date check follows the sanitizer: every regional end
-   is at most `latestWeek`, and their maximum equals it. Regions may genuinely lag;
-   no dates are shifted to manufacture a common cutoff. Existing common-window and
-   freshness validation remains in the unchanged sanitizer/strict content checkers.
+   For common-grid inputs the comparison follows the sanitizer: `latestWeek` is
+   the minimum of the six original regional endpoints, with valid continuous
+   twelve/four-week evidence. Later source coverage remains unchanged. Legacy
+   inputs retain their former maximum-date comparison only and stay excluded by
+   the runtime evidence guard. [ADR-0108](ADR/0108-acled-common-window-comparison.md)
+   corrects the former comparator mismatch without changing sanitizer, strict
+   content checks, freshness, publication or source-rights gates.
 5. Explicitly dispatch World Order with config commit and both SHA256 values.
    GitHub API version 2026-03-10 returns the exact run ID/URLs; never guess the
    run by querying the latest job. No dispatch retry after an uncertain response.
@@ -154,3 +157,22 @@ approved weekly slot is not a retry of the failed slot.
 
 Source permissions remain as disclosed in ADR-0055: the owner's execution approval
 is not a representation that ACLED separately granted website automation rights.
+
+## 2026-11-11 login success and candidate hold
+
+Natural Wednesday [run 42975462379](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/42975462379)
+on `51bebb2d90c3b21201bdbff1862bb58128ca71b2` confirms login, all six weekly
+HTTP 200 files, 14 total source requests, confirmed logout and private sanitizer
+success/cleanup. It then stopped at `candidate_hold` with
+`invalid_config_review_input`; neither configuration nor site was published.
+This establishes that login worked in this run, not end-to-end recovery.
+
+Offline synthetic XLSX reproduced the same hold: three source endpoints were
+newer than the common cutoff, which the old maximum-date comparator rejected.
+ADR-0108 aligns that comparison with the existing common-window contract and
+adds a real-sanitizer/strict-pair offline regression. The original live candidate
+and raw workbooks were intentionally cleaned up, so this is a demonstrated code
+defect consistent with the receipt, not a byte-for-byte replay of that batch.
+No original was reacquired. Keep the spent November 11 claim and existing
+26/14/14 budget; validate live recovery on a subsequent natural slot. A code
+merge or deployment alone does not advance the retained source dates.

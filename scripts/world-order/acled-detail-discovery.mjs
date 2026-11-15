@@ -50,6 +50,7 @@ export async function discoverAcledDetails({username,password,fetchImpl=fetch,ti
   report.requestCount++;
   const login=await controlRequest(AUTH_PROBE.loginUrl,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({name:username,pass:password})},fetchImpl,timeoutMs);
   report.loginHttpStatus=login.httpStatus; report.loginBytes=login.receivedBytes; report.sessionMayRemain=true;
+  if (login.loginFailure) report.loginFailure=login.loginFailure;
   if (!login.ok) return {...report,login:'unconfirmed',reason:login.reason};
   let cookie,csrfToken,logoutToken;
   try {

@@ -670,6 +670,11 @@ function validateMacroDriversConsumerRetail(dataPayload) {
     assert(isFiniteNumberOrNull(consumerRetail[key]), `macroDrivers.consumerRetail.${key} must be finite number or null`);
   }
 
+  // Additive source dates: legacy snapshots may omit them; never infer from aggregate updatedAt.
+  for (const key of ['cartsNominalUpdatedAt', 'cartsRealUpdatedAt']) {
+    if (Object.hasOwn(consumerRetail, key)) validateNullableIsoString(consumerRetail[key], `macroDrivers.consumerRetail.${key}`);
+  }
+
   for (const key of ['bofaReportDate', 'redbookRetailSalesDate']) {
     assert(Object.hasOwn(consumerRetail, key), `macroDrivers.consumerRetail.${key} is missing`);
     validateNullableIsoString(consumerRetail[key], `macroDrivers.consumerRetail.${key}`);

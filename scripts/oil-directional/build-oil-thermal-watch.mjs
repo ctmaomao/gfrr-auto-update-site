@@ -3,7 +3,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
-import { matchesLegacyThermalSources } from '../modules/oilThermalSourceLifecycle.js';
+import { matchesLegacyThermalSources } from './oil-thermal-source-lifecycle.mjs';
+import { discloseOilThermalBaselineAge } from './oil-thermal-baseline-age.mjs';
 import {
   FIRMS_REQUEST_POLICY,
   createFirmsRetryBudget,
@@ -798,7 +799,7 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
     const retired = artifact.aggregate.requestDiagnostics.failuresByCategory.source_retired > 0;
     artifact.displayStatusZh = retired ? 'S-NPP 已停源 · 基线比较暂停' : '来源不完整或组合改变 · 基线比较暂停';
     artifact.limitationsZh.push(retired
-      ? 'S-NPP 自 2026-11-02 15:40 UTC 永久停止数据；本轮只保留 NOAA-20/21 的实际检出，不与旧三源基线混算。新源组合基线须单独审阅，不能把缺测当无异常。'
+      ? 'S-NPP 自 2026-11-02 15:40 UTC 永久停止数据；本轮仅保留仍可用来源的实际检出，不与旧三源基线混算。新源组合基线须单独审阅，不能把缺测当无异常。'
       : '本轮来源不完整或源组合与历史基线不一致，不产生重复异常或无异常结论。');
   } else if (artifact.aggregate.elevatedRepeatedObservationCount > 0) {
     artifact.signalState = 'baseline_elevated_repeated_watch';
@@ -906,6 +907,7 @@ async function main() {
 
   artifact = applyBaselineCoverageCopy(artifact);
   artifact = stabilizeUnqueriedArtifact(options, artifact);
+  artifact = discloseOilThermalBaselineAge(artifact);
   const outputPath = options.writeOutput ? writeJson(options.output, artifact) : null;
   console.log(JSON.stringify({
     status: artifact.status,

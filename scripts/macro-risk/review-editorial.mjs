@@ -22,4 +22,4 @@ async function main() {
   if (review.status === 'fail') process.exitCode = 1;
 }
 
-main().catch((error) => { console.error(`Macro risk editorial review failed: ${error.message}`); process.exitCode = 1; });
+main().catch(() => { console.error('Macro risk editorial review failed: details withheld; see safe diagnostic receipt'); process.exitCode = 1; });

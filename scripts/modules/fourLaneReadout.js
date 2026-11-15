@@ -5,8 +5,8 @@
 // tail-overlay floor and is rendered as such by renderFourLaneReadout. Missing
 // or invalid records must stay distinguishable from a valid empty list.
 
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-evidence-health-20261106';
-import { scoreAttributionText } from './macroOverviewNarrative.js?v=oil-evidence-health-20261106';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=qqq-week-label-20261114';
+import { scoreAttributionText } from './macroOverviewNarrative.js?v=qqq-week-label-20261114';
 
 const NUM = (v) => typeof v === 'number' && Number.isFinite(v);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

@@ -1,3 +1,5 @@
+import { validateEnterpriseObservationRecord } from './bubble-watch/source-observation.mjs';
+import { isExpectedArrGapFailure } from './bubble-watch/arr-evidence.mjs';
 // audit-bubble-watch-sources.mjs — read-only Bubble Watch source-health audit
 //
 // Runs the normal Bubble Watch builder, inspects the generated provenance, then
@@ -123,12 +125,14 @@ function buildReport(data, buildResult, checkResult) {
   const unexpectedFallbackRows = fallbackRows.filter((row) =>
     !isExpectedPaidSkip(row) &&
     !isExpectedCandidateOnly(row) &&
+    !validateEnterpriseObservationRecord(row, data.as_of_date) &&
     !isExpectedPolicyFallback(row, data.as_of_date));
   const fetchFailures = Array.isArray(data.meta?.fetch_failures) ? data.meta.fetch_failures : [];
   const unexpectedFetchFailures = fetchFailures.filter((failure) => {
     const policyFallback = expectedPolicyFallbacks.find((row) => row.id === failure.id);
     return !expectedPaidSkips.some((row) => row.id === failure.id) &&
-      !isExpectedPolicyFetchFailure(failure, policyFallback, data.as_of_date);
+      !isExpectedPolicyFetchFailure(failure, policyFallback, data.as_of_date) &&
+      !isExpectedArrGapFailure(failure, indicators.find(row => row.id === failure.id), data.as_of_date);
   });
   const windRows = rows.filter((row) => /Wind/i.test(`${row.source_name || ''} ${row.source_tag || ''}`));
   const partialLiveRows = indicators
@@ -151,6 +155,9 @@ function buildReport(data, buildResult, checkResult) {
       reasonCode: row.provenance?.detail?.coverageReasonCode || null
     }));
   const warnings = sourceWarningLines(buildResult.text);
+  if (indicators.some(row => validateEnterpriseObservationRecord(row, data.as_of_date))) {
+    warnings.push('KPMG workforce adoption uses reviewed quarterly evidence with its original publication and survey dates; not a live production-deployment measurement');
+  }
   for (const row of indicators.filter(item => item.status === 'unknown')) {
     warnings.push(`Qualified evidence pending: ${row.id} (${row.evidence_gap?.reasonCode || 'unregistered'})`);
   }

@@ -1,11 +1,10 @@
+import { withDeepSeekBudget } from './lib/deepseek-budget.mjs';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import {
   DEFAULT_DEEPSEEK_MODEL,
-  DEEPSEEK_BASE_URL,
-  DEEPSEEK_CHAT_ENDPOINT,
   assertManualProviderAllowed,
   createExternalAiProviderAdapter,
   normalizeExternalAiProvider
@@ -814,42 +813,37 @@ function buildPromptContractCheck(input, promptOptions = {}) {
 }
 
 async function runDeepSeekRequest({ input, apiKey, model, timeoutMs, maxTokens, promptOptions = {} }) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(`${DEEPSEEK_BASE_URL}${DEEPSEEK_CHAT_ENDPOINT}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        stream: false,
-        temperature: 0.2,
-        max_tokens: maxTokens,
-        thinking: { type: 'disabled' },
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: buildDeepSeekSystemPrompt(input, promptOptions) },
-          { role: 'user', content: buildDeepSeekUserPrompt(input, promptOptions) }
-        ]
-      }),
-      signal: controller.signal
-    });
-
-    const responseJson = await response.json();
-    if (!response.ok) {
-      const error = new Error(`DeepSeek API returned HTTP ${response.status}`);
-      error.httpStatus = response.status;
-      error.responseDiagnostics = buildResponseDiagnostics(responseJson, 'http_error');
-      throw error;
+  const payload = {
+    model,
+    stream: false,
+    temperature: 0.2,
+    max_tokens: maxTokens,
+    thinking: { type: 'disabled' },
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: buildDeepSeekSystemPrompt(input, promptOptions) },
+      { role: 'user', content: buildDeepSeekUserPrompt(input, promptOptions) }
+    ]
+  };
+  // The current CNY5 grant covers the two editorial modules only. The shared
+  // gate rejects this separate live-test purpose before any provider transport.
+  return withDeepSeekBudget({ key: apiKey, payload, consumer: 'manual-external-ai' }, async ({ url, headers, body }) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { method: 'POST', headers, body, redirect: 'error', signal: controller.signal });
+      const responseJson = await response.json();
+      if (!response.ok) {
+        const error = new Error(`DeepSeek API returned HTTP ${response.status}`);
+        error.httpStatus = response.status;
+        error.responseDiagnostics = buildResponseDiagnostics(responseJson, 'http_error');
+        throw error;
+      }
+      return responseJson;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return responseJson;
-  } finally {
-    clearTimeout(timeout);
-  }
+  });
 }
 
 function buildPromptModeSelfTestInput() {

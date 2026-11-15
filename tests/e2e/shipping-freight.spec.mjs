@@ -18,7 +18,7 @@ for (const width of [1440, 390]) {
       };
       await route.fulfill({ json: radar });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
     await expect(page.locator('#c1-freight-number')).toHaveText('—');
     await expect(page.locator('#c1-freight-aux')).toContainText('2026-08-10 沿用旧值');
@@ -49,7 +49,7 @@ for (const width of [1440, 390]) {
       radar.macroDrivers.shippingFreight = sf;
       await route.fulfill({ json: radar });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
     await expect(page.locator('#c1-freight-number')).toHaveText('2917');
     await expect(page.locator('#c1-freight-provider')).toHaveText('波罗的海交易所公开行情');

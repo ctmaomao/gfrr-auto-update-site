@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -7,6 +7,18 @@ import childProcess from 'node:child_process';
 import { validateAcledPrivateBatch } from '../../scripts/world-order/acled-private-validation.mjs';
 import { DETAIL_PAGES } from '../../scripts/world-order/acled-detail-discovery.mjs';
 import { workbook } from '../fixtures/acled-weekly-workbook.mjs';
+// Each test owns its temp namespace: unrelated concurrent validators may create
+// and remove same-prefix workspaces in the OS temp directory at any time.
+const systemTemp = fs.realpathSync(os.tmpdir());
+beforeEach(t => {
+  const root = fs.mkdtempSync(path.join(systemTemp, 'gfrr-acled-cleanup-test-'));
+  const tempMock = t.mock.method(os, 'tmpdir', () => root);
+  t.after(() => {
+    tempMock.mock.restore();
+    assert.deepEqual(fs.readdirSync(root), [], 'private validation must leave no owned files');
+    fs.rmdirSync(root);
+  });
+});
 const listing = () => fs.readdirSync(os.tmpdir()).filter(n => n.startsWith('gfrr-acled-private-')).sort();
 const files = () => DETAIL_PAGES.map(p => ({ url: `https://acleddata.com/system/files/2026-09/${p.kind === 'monthly' ? `number_of_${p.identity}_as-of-11Sep2026` : `${p.identity}_aggregated_data_up_to_week_of-2026-09-05`}.xlsx`, bytes: Buffer.from('PRIVATE_INVALID_FILE') }));
 
@@ -113,5 +125,21 @@ test('cleanup failure revokes even successful candidates and discloses retained 
     assert.ok(path.basename(owned).startsWith('gfrr-acled-private-'));
     assert.equal(fs.realpathSync(owned), owned);
     original(owned, { recursive: true });
+  }
+});
+
+
+test('cleanup assertions ignore concurrent foreign workspaces but detect owned leftovers', () => {
+  const before = listing();
+  const foreign = fs.mkdtempSync(path.join(systemTemp, 'gfrr-acled-private-'));
+  const owned = fs.mkdtempSync(path.join(os.tmpdir(), 'gfrr-acled-private-'));
+  try {
+    assert.notDeepEqual(listing(), before, 'an owned leak must remain detectable');
+    fs.rmdirSync(owned);
+    assert.deepEqual(listing(), before, 'another invocation is not an owned leak');
+    assert.equal(fs.existsSync(foreign), true, 'foreign workspace must not be removed');
+  } finally {
+    if (fs.existsSync(owned)) fs.rmdirSync(owned);
+    fs.rmdirSync(foreign);
   }
 });

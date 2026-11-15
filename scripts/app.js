@@ -6,10 +6,11 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
-import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=oil-evidence-health-20261106';
-import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=oil-evidence-health-20261106';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './modules/worldOrderSourceDisplay.js?v=qqq-week-label-20261114';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=qqq-week-label-20261114';
+import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=qqq-week-label-20261114';
 
-const APP_VERSION = 'oil-evidence-health-20261106';
+const APP_VERSION = 'qqq-week-label-20261114';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -204,6 +205,10 @@ function watchSnapshotLabels(radarData, worldOrderStressData = null) {
     const hero = document.getElementById('hero-data-health');
     if (hero) hero.textContent = snapshotDisplayHealth(radarData).heroLabel;
     renderOfrPrimary({ radarData, worldOrderStressData });
+    const sourceClock = document.getElementById('wo-detail-source-clock');
+    if (sourceClock) sourceClock.textContent = worldOrderSourceClock(worldOrderStressData);
+    const sourceFreshness = document.getElementById('wo-detail-source-freshness');
+    if (sourceFreshness) sourceFreshness.textContent = worldOrderSourceDisclosure(worldOrderStressData);
   };
   refresh();
   snapshotLabelTimer = setInterval(refresh, 60_000);
@@ -234,7 +239,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=oil-evidence-health-20261106');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=qqq-week-label-20261114');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

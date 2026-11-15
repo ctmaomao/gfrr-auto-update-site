@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../helpers/deepseek-budget-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -72,7 +73,7 @@ function runLiveCheck(pack) {
 }
 
 test('actual live-input CLI admits media-only evidence and preserves official/cross-checked admission', () => {
-  for (const rows of [[row()], [row('https://oag.ca.gov/news/press-releases/openai')], [row('https://example.org/news/ai'), row('https://example.net/news/ai')]]) {
+  for (const rows of [[row()], [row('https://oag.ca.gov/news/press-releases/openai')], [row('https://example.org/news/ai'), { ...row('https://example.net/news/ai'), snippet: 'Separately worded synthetic reporting notes AI infrastructure funding opportunities alongside uncertain demand and continuing repayment risks.' }]]) {
     const pack = livePack(rows);
     assert.equal(pack.discovery.stories.length, 1);
     const result = runLiveCheck(pack);
@@ -145,6 +146,8 @@ test('paywall text, community pages, missing dates and tiny snippets cannot admi
     assert.equal(assessWeeklyEditorialNewsReadiness(d).expectedSkip, true);
   }
 });
+const reported = text => `2026-10-02 据媒体报道，${text}`;
+
 function scenario() {
   // Freeze the published v2 baseline; qualified v3 is covered by bubble-editorial-score/runtime tests.
   const bubble = structuredClone(read('docs/fixtures/bubble-watch/legacy-contract-bundle.json').files['data/bubble-watch.json']);
@@ -162,6 +165,11 @@ function scenario() {
   for (const claim of claims) if (claim.sourceRefIds.includes(story.id)) {
     claim.titleZh = '融资条件与风险';
     claim.detailZh = '据Morningstar分析，人工智能基础设施融资可能改善信用获取，但需求与偿还风险仍存在。这属于机构观点，尚未独立核实。';
+  }
+  for (const claim of adapted.weeklyTimeline) {
+    claim.date = story.publishedAt.slice(0, 10);
+    claim.titleZh = `报道：${claim.titleZh}`;
+    claim.detailZh = reported(claim.detailZh);
   }
   adapted.sourceAttribution = adapted.sourceAttribution.filter((a,i,all) => all.findIndex((b) => b.sourceRefId === a.sourceRefId) === i);
   return { input, output: adapted, bubble, story };
@@ -213,7 +221,7 @@ test('limited system prompt reaches the provider without the conflicting long-fo
   const { input, output } = scenario();
   assert.ok(buildWeeklyEditorialSystemPrompt(input).includes('Target 600-1,800'));
   let calls = 0;
-  await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
     calls += 1;
     const body = JSON.parse(request.body);
     assert.ok(body.messages[0].content.includes('Target 600-1,800'));
@@ -232,7 +240,7 @@ test('provider receives quantitative-source separation and concise non-quota gui
       input.sourceRefs.push({ ...input.sourceRefs.find(ref => ref.id === input.newsContext.stories[0].id), ...second });
     }
     let calls = 0;
-    await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
+    await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async (_url, request) => {
       calls++;
       const messages = JSON.parse(request.body).messages;
       const prompt = messages[0].content;
@@ -272,7 +280,7 @@ test('provider rejects the incident-sized 6581-character response without trunca
   assert.equal(visibleEditorialText(output).length, 6581);
   const snapshot = JSON.stringify(output);
   let calls = 0;
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
@@ -308,7 +316,7 @@ test('provider canonicalizes only explicitly attributed aliases of the already c
     assert.ok(validateWeeklyEditorialOutput(output, input).warnings.some(warning => warning.includes('归因措辞')));
     const snapshot = JSON.stringify(output);
     let calls = 0;
-    const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+    const result = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => {
       calls++;
       return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
     } });
@@ -324,9 +332,9 @@ test('provider canonicalizes only explicitly attributed aliases of the already c
 test('alias normalization preserves prose and financial blockers while missing textual names are warnings', () => {
   const { input, output, story } = wsjScenario();
   for (const text of ['融资条件改善，但需求风险仍存在。', '据WSJExample分析，信用条件改变。', '据Reuters分析，信用条件改变。', '“据WSJ分析，融资999999亿美元。”', '"据WSJ分析，融资999999亿美元。"']) {
-    output.weeklyTimeline[0].detailZh = text;
+    output.weeklyTimeline[0].detailZh = reported(text);
     const next = normalizeMediaClaimNames(output, input);
-    assert.equal(next.weeklyTimeline[0].detailZh, text);
+    assert.equal(next.weeklyTimeline[0].detailZh, reported(text));
     assert.equal(validateWeeklyEditorialOutput(next, input).ok, text.includes('999999') ? false : true);
   }
   output.weeklyTimeline[0].detailZh = '据WSJ分析，融资999999亿美元。';
@@ -345,7 +353,7 @@ test('failure diagnostics identify claim path and offending numbers without prov
   output.weeklyTimeline[0].detailZh = `据WSJ分析，融资999999亿美元。 PRIVATE_PROSE_MARKER ${secret}`;
   output.weeklyTimeline[0].sourceRefIds.push('news:UNKNOWN_REF_PRIVATE_MARKER');
   let calls = 0;
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: secret, fetchImpl: async () => {
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: secret, fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
@@ -404,7 +412,7 @@ test('claim-local declared indicator pairs complete both representations without
   const { input, output, story } = scenario();
   const claim = output.weeklyTimeline[0];
   input.structuredFacts.find(f => f.indicatorId === 'breadth_50d').factZh = '站内广度35%。';
-  claim.detailZh = '据Morningstar分析，站内广度35%，调查与市场观察仍有差异。';
+  claim.detailZh = reported('据Morningstar分析，站内广度35%，调查与市场观察仍有差异。');
   claim.sourceIndicatorIds = ['breadth_50d'];
   claim.sourceRefIds = [story.id];
   const before = structuredClone({ input, output });
@@ -427,14 +435,14 @@ test('reference completion cannot invent evidence, pool other claims, rescue wro
   const { input, output, story } = scenario();
   input.structuredFacts.find(f => f.indicatorId === 'breadth_50d').factZh = '站内广度35%。';
   const claim = output.weeklyTimeline[0];
-  claim.detailZh = '据Morningstar分析，站内广度35%。';
+  claim.detailZh = reported('据Morningstar分析，站内广度35%。');
   claim.sourceRefIds = [story.id];
   claim.sourceIndicatorIds = ['breadth_50d'];
   for (const mutate of [
     c => { c.sourceIndicatorIds = []; },
     c => { c.sourceIndicatorIds = ['unknown_indicator']; },
     c => { c.sourceIndicatorIds = ['spy_vs_rsp_6m']; },
-    c => { c.detailZh = '据Morningstar分析，站内广度36%。'; },
+    c => { c.detailZh = reported('据Morningstar分析，站内广度36%。'); },
     c => { c.sourceRefIds.push('news:unknown'); },
     c => { c.sourceRefIds = 'indicator:breadth_50d'; }
   ]) {
@@ -461,10 +469,10 @@ test('reference completion cannot invent evidence, pool other claims, rescue wro
 test('live adapter uses the same reference normalization before unchanged review and projection gates', async () => {
   const { input, output, story, bubble } = scenario();
   input.structuredFacts.find(f => f.indicatorId === 'breadth_50d').factZh = '站内广度35%。';
-  Object.assign(output.weeklyTimeline[0], { detailZh: '据Morningstar分析，站内广度35%，仍需谨慎看待摘要覆盖限制。', sourceIndicatorIds: ['breadth_50d'], sourceRefIds: [story.id] });
+  Object.assign(output.weeklyTimeline[0], { detailZh: reported('据Morningstar分析，站内广度35%，仍需谨慎看待摘要覆盖限制。'), sourceIndicatorIds: ['breadth_50d'], sourceRefIds: [story.id] });
   let mockCalls = 0;
   const fetchImpl = async () => { mockCalls++; return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) }; };
-  const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl });
+  const result = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl });
   assert.equal(mockCalls, 1);
   assert.equal(result.diagnostics.referenceNormalization.addedSourceRefs, 1);
   assert.equal(result.diagnostics.retryCount, 0);
@@ -472,8 +480,8 @@ test('live adapter uses the same reference normalization before unchanged review
   assert.equal(review.frontendDisplayEligible, true);
   const layer = projectWeeklyEditorial({ input, output: result.output, review });
   assert.equal(validateWeeklyEditorialProduction(layer, bubble).ok, true);
-  const bad = structuredClone(output); bad.weeklyTimeline[0].detailZh = '据Morningstar分析，站内广度36%。';
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(bad) } }] }) }) }), error => error.category === 'provider_output_contract_invalid');
+  const bad = structuredClone(output); bad.weeklyTimeline[0].detailZh = reported('据Morningstar分析，站内广度36%。');
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(bad) } }] }) }) }), error => error.category === 'provider_output_contract_invalid');
 });
 
 test('typed numeric equivalence matrix covers money, scales, decimals, signs, rates, calendar and ranges', () => {
@@ -539,20 +547,20 @@ test('full validator/provider/review/projection accepts equivalent revenue and e
   const { input, output, story, bubble } = scenario();
   // Pin fixture quantities: a normal future production-data refresh must not change this regression's expected figures.
   input.structuredFacts.find(fact => fact.indicatorId === 'breadth_50d').factZh = '50日均线上方比例约35%，证据仅为站内测试指标。';
-  input.structuredFacts.find(fact => fact.indicatorId === 'spy_vs_rsp_6m').factZh = '市值加权相对等权重领先6.3%，证据仅为站内测试指标。';
+  input.structuredFacts.find(fact => fact.indicatorId === 'spy_vs_rsp_6m').factZh = '市值加权相对等权重领先6.3 个百分点，证据仅为站内测试指标。';
   story.title = 'Revenue and breadth report';
   story.snippet = 'Annualized revenue was roughly $50 billion at the end of September. Market breadth remained poor, according to the supplied public excerpt.';
-  output.weeklyTimeline[0].titleZh = '收入与需求';
-  output.weeklyTimeline[0].detailZh = '据Morningstar报道，9月底年化收入约500亿美元，需求与持续投入仍需对照，摘要不能代替独立核实。';
+  output.weeklyTimeline[0].titleZh = '报道：收入与需求';
+  output.weeklyTimeline[0].detailZh = reported('据Morningstar报道，9月底年化收入约500亿美元，需求与持续投入仍需对照，摘要不能代替独立核实。');
   output.weeklyTimeline[0].sourceRefIds = [story.id];
   const item = output.categoryAnalysis[2];
   item.sourceRefIds = [story.id, 'indicator:breadth_50d', 'indicator:spy_vs_rsp_6m'];
   item.sourceIndicatorIds = ['breadth_50d', 'spy_vs_rsp_6m'];
-  item.detailZh = '据Morningstar分析，市场广度偏弱；站内50日均线上方比例约35%，市值加权相对等权重领先6.3%，不同证据分别归因，保留摘要限制。';
+  item.detailZh = '据Morningstar分析，市场广度偏弱；站内50日均线上方比例约35%，市值加权相对等权重领先6.3 个百分点，不同证据分别归因，保留摘要限制。';
   for (const id of item.sourceRefIds) if (!output.sourceAttribution.some(ref => ref.sourceRefId === id)) output.sourceAttribution.push({ sourceRefId: id, claimType: id.startsWith('indicator:') ? 'site_structured_data' : 'attributed_media_news_context', noteZh: '测试中的已引用来源。' });
   assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
   let calls = 0;
-  const result = await requestWeeklyEditorial({ input, apiKey: 'fixture-key', fetchImpl: async () => {
+  const result = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture-key', fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } });
@@ -575,7 +583,7 @@ test('terminology quotations warn while explicitly verbatim claims still require
   input.newsContext.stories.push(second);
   input.sourceRefs.push({ ...input.sourceRefs.find(ref => ref.id === story.id), ...second });
   output.weeklyTimeline[0].sourceRefIds = [story.id, second.id];
-  output.weeklyTimeline[0].detailZh = '据Morningstar分析，摘要称“financing remains costly”；Financial Times指出“demand remains uncertain”。分别归因于被引来源，保持摘要和机构观点限制。';
+  output.weeklyTimeline[0].detailZh = reported('据Morningstar分析，摘要称“financing remains costly”；Financial Times指出“demand remains uncertain”。分别归因于被引来源，保持摘要和机构观点限制。');
   output.sourceAttribution.push({ sourceRefId: second.id, claimType: 'attributed_media_news_context', noteZh: '测试中的第二条被引媒体。' });
   assert.deepEqual(validateWeeklyEditorialOutput(output, input).errors, []);
   const wrong = structuredClone(output); wrong.weeklyTimeline[0].detailZh += '“unsupported claim phrase”';
@@ -607,7 +615,7 @@ test('unsafe wording in visible source notes or other output text cannot bypass 
   }
 });
 
-test('a rejected provider response retains a bounded redacted replay candidate without raw HTTP or automatic promotion', async () => {
+test('ADR-0103 rejected provider response retains no replay candidate; offline explicit helper stays bounded', async () => {
   const { input, output, story } = scenario();
   const secret = 'fixture-private-781236985401';
   output.weeklyTimeline[0].sourceRefIds = [story.id];
@@ -616,22 +624,15 @@ test('a rejected provider response retains a bounded redacted replay candidate w
   output.rawResponse = { body: 'PRIVATE_HTTP_ENVELOPE' };
   const snapshot = JSON.stringify(output);
   let calls = 0;
-  await assert.rejects(requestWeeklyEditorial({ input, apiKey: secret, fetchImpl: async () => {
+  await assert.rejects(requestWeeklyEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: secret, fetchImpl: async () => {
     calls++;
     return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify(output) } }] }) };
   } }), error => {
-    const candidate = error.replayCandidate;
-    assert.equal(candidate.replayOnly, true);
-    assert.equal(candidate.productionEligible, false);
-    assert.equal(candidate.redactionsApplied, true);
-    assert.equal(candidate.omittedFields, 2);
-    assert.equal(candidate.bounded, false);
-    const serialized = JSON.stringify(candidate);
+    assert.equal(error.replayCandidate, undefined);
+    const serialized = JSON.stringify(error);
     assert.equal(serialized.includes(secret), false);
     assert.equal(serialized.includes('PRIVATE_HTTP_ENVELOPE'), false);
-    assert.ok(serialized.includes('999999'));
-    assert.equal(validateWeeklyEditorialOutput({ replayCandidate: candidate }, input).ok, false, 'failure envelope is never a production output');
-    assert.ok(Buffer.byteLength(serialized) <= 128 * 1024);
+    assert.equal(serialized.includes('据Morningstar报道'), false);
     return true;
   });
   assert.equal(calls, 1);
@@ -675,7 +676,7 @@ test('numeric display policy blocks financial inventions but treats stylistic an
     assert.ok(numericProbe(claim, evidence).blockers.length, claim);
   }
   const { input, output } = scenario();
-  output.weeklyTimeline[0].detailZh = '据Morningstar分析，Core-23框架支持观察；9月底的表达仍需核对原始日期，媒体观点尚未独立核实。';
+  output.weeklyTimeline[0].detailZh = reported('据Morningstar分析，Core-23框架支持观察；9月底的表达仍需核对原始日期，媒体观点尚未独立核实。');
   const validation = validateWeeklyEditorialOutput(output, input);
   assert.deepEqual(validation.errors, []);
   assert.ok(validation.warnings.length);
@@ -689,12 +690,12 @@ test('numeric display policy blocks financial inventions but treats stylistic an
 
 test('short supported editorial and terminology quotes survive provider review and projection as warnings',async()=>{
  const {input,output,bubble}=scenario();
- output.weeklyTimeline[0].detailZh='市场对“七巨头”之外的融资扩张保持关注，摘要内容仍须结合来源复核。';
+ output.weeklyTimeline[0].detailZh=reported('市场对“七巨头”之外的融资扩张保持关注，摘要内容仍须结合来源复核。');
  output.weeklyTimeline=output.weeklyTimeline.slice(0,1);output.keyTensions=[];output.categoryAnalysis=output.categoryAnalysis.slice(0,1);
  output.headlineZh='本期观察';output.leadZh='证据有限，保留可核实内容。';output.watchNextWeek=output.watchNextWeek.slice(0,1);
  output.weeklyTimeline[0].sourceIndicatorIds=[];
  const result=validateWeeklyEditorialOutput(output,input);assert.equal(result.ok,true,JSON.stringify(result.errors));assert.ok(result.warnings.length>0);
- let calls=0;const response=await requestWeeklyEditorial({input,apiKey:'fixture-key',fetchImpl:async()=>{calls++;return{ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};}});
+ let calls=0;const response=await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,input,apiKey:'fixture-key',fetchImpl:async()=>{calls++;return{ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(output)}}]})};}});
  const review=reviewWeeklyEditorial({input,output:response.output});assert.equal(calls,1);assert.equal(review.frontendDisplayEligible,true);assert.equal(review.status,'warn');
  const layer=projectWeeklyEditorial({input,output:response.output,review});assert.ok(layer.qualityReview.warnings.some(w=>w.includes('逐字匹配')));
  assert.equal(validateWeeklyEditorialProduction(layer,bubble).ok,true);
@@ -768,19 +769,14 @@ test('retained failure evidence replays offline and replay failures expose fixed
   }
 });
 
-test('only failed weekly-editorial runs get the longer failure-evidence retention', () => {
+test('ADR-0103 replaces raw failure retention with a three-day receipt-only artifact', () => {
   const workflow = fs.readFileSync('.github/workflows/bubble-watch-weekly-editorial-refresh.yml', 'utf8');
-  const [, failureStep] = workflow.split('Retain failure evidence for triage');
-  assert.ok(failureStep, 'failure evidence upload step must exist');
-  assert.match(failureStep, /if: \$\{\{ failure\(\) \}\}/u);
-  assert.match(failureStep, /bubble-watch-weekly-editorial-failure-\$\{\{ github\.run_id \}\}/u);
-  assert.match(failureStep, /deepseek-failure-latest\.json/u);
-  assert.match(failureStep, /editorial-input-latest\.json/u);
-  assert.equal(failureStep.includes('deepseek-output-latest.json'), false);
-  assert.match(failureStep, /retention-days: 30/u);
-  assert.equal(failureStep.includes('retention-days: 3\n'), false);
-  // The always-uploaded bundle keeps its reviewed 3-day retention for successful runs.
-  const normalStep = workflow.split('Upload sanitized editorial artifacts')[1]?.split('Retain failure evidence for triage')[0] || '';
-  assert.match(normalStep, /if: \$\{\{ always\(\) \}\}/u);
-  assert.match(normalStep, /retention-days: 3/u);
+  assert.equal(workflow.includes('Retain failure evidence for triage'),false);
+  const receipt=workflow.split('Upload safe editorial diagnostic receipt')[1];
+  assert.ok(receipt);
+  assert.ok(receipt.includes("if: always() && steps.diagnostic_receipt.outcome == 'success'"));
+  assert.ok(receipt.includes('safe-diagnostic-receipt.json'));
+  for(const raw of ['deepseek-failure-latest.json','editorial-input-latest.json','deepseek-output-latest.json'])assert.equal(receipt.includes(raw),false);
+  assert.match(receipt,/retention-days: 3/u);
+  assert.equal(receipt.includes('retention-days: 30'),false);
 });

@@ -1,3 +1,4 @@
+import { hasOfrEditorialMarkers, assessOfrEditorialPublication } from './editorial-ofr-snapshot.mjs';
 import { createHash } from 'node:crypto';
 
 export const REPOSITORY = 'ctmaomao/gfrr-auto-update-site';
@@ -32,9 +33,10 @@ export function planAdmission({ eventName, event, runAttempt, repository, ref, r
   } else return hold('ineligible_event');
   // ADR-0058: the expired one-off route is closed even for its old date/input.
   if (event?.inputs?.recovery_id !== undefined && event.inputs.recovery_id !== '') return hold('recovery_retired');
-  // The old compact-input/editorial contract describes the retired score. Hold
-  // before budget metadata, reservations, discovery or provider work.
-  if (radar?.mainPressureReadout !== undefined || radar?.advicePolicy?.mode === 'retired') return hold('model_contract_transition');
+  // ADR-0088: only the complete OFR v2 input/output/writer/display contract
+  // replaces the migration hold. Partial migration and old narratives still
+  // stop before reservations, discovery or provider work.
+  if (hasOfrEditorialMarkers(radar) && !assessOfrEditorialPublication(radar, now).ready) return hold('model_contract_transition');
   const at = Date.parse(now);
   const dates = [radar?.updatedAt, world?.updatedAt, oil?.builtAt].map(timestamp);
   if (!Number.isFinite(at) || dates.some((date) => !Number.isFinite(date) || date > at || at - date > MAX_AGE_MS)) return hold('snapshot_not_fresh');

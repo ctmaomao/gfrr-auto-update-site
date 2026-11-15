@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../tests/helpers/deepseek-budget-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +43,18 @@ function replaceExactStrings(value, replacements) {
   return value;
 }
 
+// This checker remaps news IDs between synthetic fixtures. Keep their publication
+// dates/framing aligned too; runtime/provider output is never repaired this way.
+function bindFixtureTimelineDates(output, stories) {
+  for (const event of output.weeklyTimeline) {
+    const story = stories.find(row => event.sourceRefIds.includes(row.id));
+    assert(story, 'timeline fixture requires a cited news story');
+    event.date = story.publishedAt.slice(0, 10);
+    event.detailZh = `${event.date} 据媒体报道，${event.detailZh.replace(/^\d{4}-\d{2}-\d{2} 据媒体报道，/u, '')}`;
+  }
+  return output;
+}
+
 function withoutWeeklyEditorial(bubbleWatch) {
   const copy = structuredClone(bubbleWatch);
   delete copy.summary.weekly_editorial;
@@ -75,7 +88,7 @@ const replacements = new Map([
   ['news:earnings-sample', credibleStories[1].id],
   ['news:financing-sample', credibleStories[2].id]
 ]);
-let providerOutput = replaceExactStrings(sampleOutput, replacements);
+let providerOutput = bindFixtureTimelineDates(replaceExactStrings(sampleOutput, replacements), discovery.stories);
 providerOutput.asOfDate = input.asOfDate;
 if (input.scoringSnapshot.contractVersion === 'bubble-watch-v3') providerOutput.scorecardSynthesisZh = input.scoringSnapshot.scorecardDisclosureZh;
 providerOutput.sourceAttribution = providerOutput.sourceAttribution.map((item) => {
@@ -92,7 +105,7 @@ assert(JSON.stringify(parseWeeklyEditorialProviderContent(JSON.stringify(provide
 assert(JSON.stringify(parseWeeklyEditorialProviderContent(`\`\`\`json\n${JSON.stringify(providerOutput)}\n\`\`\``)) === JSON.stringify(providerOutput), 'single fenced provider JSON parser replay failed');
 
 const oneCredibleReplacements = new Map(credibleStories.slice(1).map((story) => [story.id, credibleStories[0].id]));
-const oneCredibleOutput = replaceExactStrings(providerOutput, oneCredibleReplacements);
+const oneCredibleOutput = bindFixtureTimelineDates(replaceExactStrings(providerOutput, oneCredibleReplacements), discovery.stories);
 const seenOneCredibleAttributions = new Set();
 oneCredibleOutput.sourceAttribution = oneCredibleOutput.sourceAttribution.filter((item) => {
   if (seenOneCredibleAttributions.has(item.sourceRefId)) return false;
@@ -130,7 +143,7 @@ const fakeFetch = async (url, request) => {
     }
   };
 };
-const providerResult = await requestWeeklyEditorial({
+const providerResult = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
   input,
   apiKey: 'fixture-secret-never-serialized',
   fetchImpl: fakeFetch,
@@ -158,7 +171,7 @@ const missingAttributionOutput = {
   sourceAttribution: providerOutput.sourceAttribution.filter((item) => item.sourceRefId !== omittedAttribution)
 };
 let attributionRepairCalls = 0;
-const attributionRepairResult = await requestWeeklyEditorial({
+const attributionRepairResult = await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
   input,
   apiKey: 'fixture-key',
   fetchImpl: async () => {
@@ -192,16 +205,27 @@ assertValid(validateWeeklyEditorialProduction(layer, bubbleWatch), 'provider-pat
 assert(layer.sourceLedger.every((source) => !Object.hasOwn(source, 'snippet')), 'production source ledger must remove snippets');
 assert(layer.qualityReview.promotionEligible === false && layer.provenance.humanApproved === false, 'production promotion/human approval boundaries drifted');
 
+// Writer admission uses coherent issue clocks and retained original input, never
+// a metadata-only projection. Historical provider fixtures above remain unchanged.
+const writeInput = structuredClone(input);
+writeInput.generatedAt = `${input.asOfDate}T01:00:00.000Z`;
+writeInput.newsContext.generatedAt = `${input.asOfDate}T00:00:00.000Z`;
+writeInput.newsContext.windowStart = input.asOfDate;
+writeInput.newsContext.windowEnd = input.asOfDate;
+const writeOutput = { ...providerResult.output, generatedAt: `${input.asOfDate}T01:01:00.000Z` };
+const writeReview = reviewWeeklyEditorial({ input: writeInput, output: writeOutput, generatedAt: `${input.asOfDate}T01:02:00.000Z` });
+const writeLayer = projectWeeklyEditorial({ input: writeInput, output: writeOutput, review: writeReview,
+  generatedAt: `${input.asOfDate}T01:03:00.000Z`, sourceCommit: layer.provenance.sourceCommit, runId: layer.provenance.runId });
 const projection = {
   schemaVersion: 'bubble-watch-weekly-editorial-production-projection-v1',
   target: 'data/bubble-watch.json.summary.weekly_editorial',
-  weeklyEditorial: layer
+  generatedAt: writeLayer.generatedAt, weeklyEditorial: writeLayer, writeEvidence: { input: writeInput, review: writeReview }
 };
-const nextBubble = buildWeeklyEditorialWriteResult(bubbleWatch, projection);
+const nextBubble = buildWeeklyEditorialWriteResult(bubbleWatch, projection, { now: `${input.asOfDate}T01:04:00.000Z` });
 assert(JSON.stringify(withoutWeeklyEditorial(nextBubble)) === JSON.stringify(withoutWeeklyEditorial(bubbleWatch)), 'writer changed data outside summary.weekly_editorial');
 assert(nextBubble.summary.primary_score_pct === bubbleWatch.summary.primary_score_pct, 'writer changed primary score');
 assert(nextBubble.summary.stage_score === bubbleWatch.summary.stage_score && nextBubble.summary.trigger_score === bubbleWatch.summary.trigger_score, 'writer changed Stage/Trigger');
-assert(JSON.stringify(applyWeeklyEditorialProjection(bubbleWatch, layer)) === JSON.stringify(nextBubble), 'pure writer paths disagree');
+assert(JSON.stringify(applyWeeklyEditorialProjection(bubbleWatch, writeLayer)) === JSON.stringify(nextBubble), 'pure writer paths disagree');
 
 const asOfMismatch = structuredClone(bubbleWatch);
 asOfMismatch.as_of_date = '2026-08-09';
@@ -228,7 +252,7 @@ let invalidJsonCalls = 0;
 let invalidJsonFailure = null;
 let invalidJsonError = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -252,7 +276,7 @@ assert(classifyProviderFailure(truncatedError).category === 'provider_output_tru
 let timeoutCalls = 0;
 let timeoutFailure = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -272,7 +296,7 @@ assert(timeoutFailure?.category === 'provider_timeout' && timeoutFailure.retryAl
 let transportCalls = 0;
 let transportError = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -291,7 +315,7 @@ assert(transportError?.responseDiagnostics?.transportErrorName === 'TypeError' &
 let envelopeCalls = 0;
 let envelopeError = null;
 try {
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {
@@ -311,7 +335,7 @@ let contractCalls = 0;
 let contractError = null;
 try {
   const invalidContractOutput = { ...providerOutput, headlineZh: null };
-  await requestWeeklyEditorial({
+  await requestWeeklyEditorial({ budget: fixtureDeepSeekBudget,
     input,
     apiKey: 'fixture-key',
     fetchImpl: async () => {

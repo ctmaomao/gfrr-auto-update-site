@@ -17,6 +17,8 @@
 // (those land in PR3); the contract is forward-compatible.
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { oilEvidenceNumber, oilObservationMillis, resolveOdpPriceEvidence, qualifiedBrentHistory } from '../modules/oilEvidenceQuality.js';
 import { classifyAt, evaluateGlobalOverlay, finalizeBias } from './odp-classifier.mjs';
 
 const SCHEMA_VERSION = 'odp-1';
@@ -76,8 +78,8 @@ function round(n, dp = 2) {
 }
 
 function ageDaysFrom(iso, builtMs) {
-  const ms = Date.parse(iso);
-  return Number.isFinite(ms) ? Math.max(0, Math.round((builtMs - ms) / DAY_MS)) : null;
+  const ms = oilObservationMillis(iso);
+  return Number.isFinite(ms) && ms <= builtMs ? Math.ceil((builtMs - ms) / DAY_MS * 1000) / 1000 : null;
 }
 
 // Unified freshness gate for EVERY evidence entry (EIA + reuse + curve):
@@ -139,7 +141,7 @@ function changeNObsAgo(series, n) {
 }
 
 function numMaybe(value) {
-  return Number.isFinite(Number(value)) ? round(Number(value), 3) : null;
+  return oilEvidenceNumber(value) === null ? null : round(oilEvidenceNumber(value), 3);
 }
 
 function attributionItem(role, label, text, evidenceKeys, stance) {
@@ -155,9 +157,9 @@ function attributionItem(role, label, text, evidenceKeys, stance) {
 function attributionThesis(reconcile) {
   switch (reconcile.finalBias) {
     case 'false_down_physical_stress':
-      return '价格下跌与周度物理链偏紧并存,当前判读是价格未完全确认物理压力解除。';
+      return '价格回落与美国周度供需偏紧并存；这是背离观察，不证明价格会反转。';
     case 'false_up_unconfirmed':
-      return '价格上涨缺少周度物理链确认,当前判读保留上涨未确认风险。';
+      return '价格上涨与美国周度供需偏松并存；这是背离观察，不证明上涨无效。';
     case 'strong_bullish':
       return '周度物理链显示库存与成品油端同时偏紧,当前判读以物理压力为主。';
     case 'moderate_bullish':
@@ -174,7 +176,7 @@ function attributionThesis(reconcile) {
   }
 }
 
-function buildAttribution({ reconcile, signals, priceContext, crackChange4w, globalOverlay, dataSufficiency }) {
+function buildAttribution({ reconcile, signals, priceContext, globalOverlay, dataSufficiency }) {
   const attribution = {
     schemaVersion: ATTRIBUTION_SCHEMA_VERSION,
     boundary: ATTRIBUTION_BOUNDARY,
@@ -238,14 +240,14 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
       DIRECTIONAL_ROLES.corePhysicalAnchor,
       '馏分油库存偏紧',
       '馏分油库存处在偏紧区间,说明压力不只来自原油库存,还延伸到成品油链条。',
-      ['distillateStocks', 'crackSpread'],
+      ['distillateStocks'],
       'supports_product_stress',
     ));
   }
   if (refinery.high) {
     attribution.supportEvidence.push(attributionItem(
       DIRECTIONAL_ROLES.corePhysicalAnchor,
-      '炼厂加工端确认',
+      '炼厂开工偏高',
       '炼厂开工率偏高,与库存去化共同说明需求/加工端仍在消耗物理库存。',
       ['refineryUtilization', 'refinerCrudeInputs'],
       'supports_physical_confirmation',
@@ -264,7 +266,7 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
     attribution.supportEvidence.push(attributionItem(
       DIRECTIONAL_ROLES.marketConfirmation,
       '期限结构仍偏紧',
-      '公开期货曲线呈 backwardation,市场结构没有确认物理宽松。',
+      '合格的公开期货近月价格高于远月；仅作市场结构背景，不证明现货紧张或后续上涨。',
       ['curve'],
       'confirms_physical_tightness',
     ));
@@ -286,15 +288,6 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
       '近 4 周 Brent 下跌是当前判读的主要反证;ODP 将其解释为价格与物理链背离,而非直接确认物理宽松。',
       ['brentPrice'],
       'counters_physical_pressure',
-    ));
-  }
-  if (Number.isFinite(crackChange4w) && crackChange4w < 0) {
-    attribution.counterEvidence.push(attributionItem(
-      DIRECTIONAL_ROLES.marketConfirmation,
-      '裂解价差收窄',
-      '裂解价差 4 周收窄说明成品油利润代理没有继续扩张,因此会限制成品油压力的置信表达。',
-      ['crackSpread'],
-      'caps_product_confirmation',
     ));
   }
   if (demand.demandFalling || demand.demandDestruction) {
@@ -328,7 +321,7 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
   attribution.confidenceCaps.push(attributionItem(
     DIRECTIONAL_ROLES.dataQuality,
     '官方周报天然滞后',
-    'EIA WPSR 是低噪声官方锚,但对当前流向存在发布滞后;快速信号只能用于确认或观察。',
+    'EIA WPSR 是低噪声官方锚,但对当前流向存在发布滞后;不能把抓取时间当成观察时间。',
     ['crudeStocksExSpr', 'distillateStocks'],
     'caps_timeliness',
   ));
@@ -343,9 +336,9 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
   }
   attribution.confidenceCaps.push(attributionItem(
     DIRECTIONAL_ROLES.highFrequencyWatch,
-    '新闻与卫星仍为观察层',
-    '新闻事件和卫星热异常没有与价格结构、周度库存和设施基线同时印证前,不改变 ODP 方向判读。',
-    ['oilNewsEventWatch', 'oilThermalWatch'],
+    '周度压力不是价格预测',
+    '美国周度库存与加工数据反映局部供需压力，不能单独推断全球油价下一步方向。',
+    ['evidence'],
     'keeps_watch_layer_separate',
   ));
 
@@ -358,8 +351,8 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
   ));
   attribution.viewChangeTriggers.push(attributionItem(
     DIRECTIONAL_ROLES.marketConfirmation,
-    '价格结构确认宽松',
-    '若 Brent 继续回落且公开曲线转为 contango,市场层将从背离转为确认宽松。',
+    '价格结构变化',
+    '若合格的同口径 Brent 继续回落且公开曲线转为 contango，需要重新审视供需偏紧解释。',
     ['brentPrice', 'curve'],
     'would_confirm_market_easing',
   ));
@@ -372,9 +365,9 @@ function buildAttribution({ reconcile, signals, priceContext, crackChange4w, glo
   ));
   attribution.viewChangeTriggers.push(attributionItem(
     DIRECTIONAL_ROLES.highFrequencyWatch,
-    '观察层获得交叉印证',
-    '新闻、卫星或咽喉转运异常只有在价格结构、设施基线和周度库存同时印证后,才提高事件观察置信度。',
-    ['oilNewsEventWatch', 'oilThermalWatch', 'interpretation.globalOverlay'],
+    '月度背景不能替代实测',
+    'STEO 月度估算与预测仅供背景阅读；后续判断仍需合格的同周实测与同口径价格观察。',
+    ['interpretation.globalOverlay'],
     'would_raise_event_confidence',
   ));
 
@@ -490,17 +483,15 @@ function buildEiaEvidence(cfg, fetched, builtMs) {
 
 // Reuse already-fetched price/curve fields from radar-data.json (do NOT re-fetch
 // FRED/Yahoo). These stay $/bbl daily-cadence context fields, NOT the physical chain.
-function reuseFromRadar(builtMs) {
+function reuseFromRadar(builtMs, radarInput = null) {
   let radar;
-  try { radar = JSON.parse(readFileSync(RADAR_PATH, 'utf8')); }
+  try { radar = radarInput || JSON.parse(readFileSync(RADAR_PATH, 'utf8')); }
   catch { return { _radarMissing: true }; }
-  const bp = radar.brentPricingLayer || {};
   const inflationEnergy = ((radar.macroDrivers || {}).inflationEnergy || {});
   const wti = inflationEnergy.wti || {};
   const wtiMarketProxy = inflationEnergy.wtiMarketProxy || {};
-  const sb = bp.selectedBrent || {};
-  const fpc = bp.futuresPriceCurve || {};
-  const num = (v) => (Number.isFinite(Number(v)) ? round(Number(v), 3) : null);
+  const qualified = resolveOdpPriceEvidence(radar, builtMs);
+  const num = numMaybe;
   const priceField = (value, iso, maxAge, source, sourceStatusHint = null) => {
     const v = num(value);
     const a = ageDaysFrom(iso, builtMs);
@@ -550,28 +541,22 @@ function reuseFromRadar(builtMs) {
         marketProxyFallbackReason: 'wtiMarketProxy missing or stale',
         limitationZh: 'WTI 快速市场代理不可用或过期,回退到 FRED 官方 WTI spot;该 spot 可能有数日发布滞后。'
       };
-  const crackAge = ageDaysFrom(radar.updatedAt, builtMs);
-  const curveAge = ageDaysFrom(fpc.updatedAt, builtMs);
-  const curveFmb = num(fpc.frontMinusBack);
-  const curveHasData = curveFmb !== null && !!fpc.curveStatus && fpc.curveStatus !== 'missing';
+  const crackAge = qualified.crackSpread.ageDays;
+
   return {
     wtiPrice,
-    brentPrice: priceField(sb.value, sb.observedAt, 5, 'radar-data:brentPricingLayer.selectedBrent'),
+    brentPrice: { ...priceField(qualified.brentPrice.value, qualified.brentPrice.asOfDate, 5, qualified.brentPrice.source), ...qualified.brentPrice },
     crackSpread: withTimingFields({
-      value: num(bp.crackSpread), unit: '$/bbl', asOfDate: radar.updatedAt || null,
+      value: null, unit: '$/bbl', asOfDate: null,
       frequency: 'daily', ageDays: crackAge, maxAgeDays: 10,
-      sourceStatus: freshnessStatus(num(bp.crackSpread), crackAge, 10),
-      change4w: num(bp.crackSpread4wChange), regime: bp.crackSpreadRegime || null,
-      note: '价格/裂解代理,非馏分油库存',
+      sourceStatus: 'missing',
+      change4w: null, regime: null,
+      note: qualified.crackSpread.note,
       source: 'radar-data:brentPricingLayer.crackSpread',
     }, TIMING_TIERS.dailyMarketProxy, 'daily_downstream_margin_proxy', '观察成品油链条是否确认库存与炼厂压力', DIRECTIONAL_ROLES.marketConfirmation),
     curve: withTimingFields({
-      slopeRegime: fpc.slopeRegime || null, frontMinusBack: curveFmb,
-      frontPrice: num(fpc.frontPrice), backPrice: num(fpc.backPrice),
-      confidence: 'low', curveStatus: fpc.curveStatus || null,
-      frequency: 'daily', asOfDate: fpc.updatedAt || null,
-      ageDays: curveAge, maxAgeDays: 4,
-      sourceStatus: curveHasData ? freshnessStatus(curveFmb, curveAge, 4) : 'missing',
+      ...qualified.curve,
+      confidence: 'low', frequency: 'daily',
       source: 'radar-data:brentPricingLayer.futuresPriceCurve',
       limitationZh: '公开月度期货代理,非官方结算曲线',
     }, TIMING_TIERS.dailyMarketProxy, 'daily_market_structure_proxy', '观察期限结构是否确认现货紧张或宽松', DIRECTIONAL_ROLES.marketConfirmation),
@@ -590,6 +575,9 @@ function globalEnergyContextFromRadar(radar) {
     inventoryBalance: {
       sourceStatus: inventory.sourceStatus?.inventoryBalance || null,
       latestPeriod: inventory.latestPeriod || null,
+      latestIsForecast: typeof inventory.latestIsForecast === 'boolean' ? inventory.latestIsForecast : null,
+      source: inventory.source || null,
+      updatedAt: inventory.updatedAt || null,
       oecdCommercialInventoryMbbl: numMaybe(inventory.oecdCommercialInventoryMbbl),
       oecdCommercialInventoryYoYMbbl: numMaybe(inventory.oecdCommercialInventoryYoYMbbl),
       oecdCommercialInventoryVs5yPct: numMaybe(inventory.oecdCommercialInventoryVs5yPct),
@@ -603,6 +591,9 @@ function globalEnergyContextFromRadar(radar) {
     spareCapacity: {
       sourceStatus: spare.sourceStatus?.spareCapacity || null,
       latestPeriod: spare.latestPeriod || null,
+      latestIsForecast: typeof spare.latestIsForecast === 'boolean' ? spare.latestIsForecast : null,
+      source: spare.source || null,
+      updatedAt: spare.updatedAt || null,
       spareCapacityMbpd: numMaybe(spare.spareCapacityMbpd),
       bufferRegime: spare.bufferRegime || null,
     },
@@ -620,27 +611,29 @@ function globalEnergyContextFromRadar(radar) {
 // Crude price direction for the divergence overlay: Brent ~4-week % change from the
 // committed daily radar history (zero-dep reuse). Returns null when the history is
 // missing/short or lacks a point near ~4w ago -> the overlay then emits no false_*.
-function brentChange4wFromHistory() {
-  let hist;
-  try { hist = JSON.parse(readFileSync(HISTORY_PATH, 'utf8')); }
+function brentChange4wFromHistory(brentPrice, builtMs, historyInput = null) {
+  let history;
+  try { history = historyInput || JSON.parse(readFileSync(HISTORY_PATH, 'utf8')); }
   catch { return null; }
-  if (!Array.isArray(hist) || hist.length < 2) return null;
-  const pts = hist.filter((d) => d && typeof d.date === 'string' && Number.isFinite(Number(d.brent)));
-  if (pts.length < 2) return null;
-  const last = pts[pts.length - 1];
-  const lastMs = Date.parse(last.date + 'T00:00:00Z');
-  const target = lastMs - 28 * DAY_MS;
-  let best = null;
-  let bestDiff = Infinity;
-  for (const d of pts) {
-    const diff = Math.abs(Date.parse(d.date + 'T00:00:00Z') - target);
-    if (diff < bestDiff) { bestDiff = diff; best = d; }
-  }
-  if (!best || bestDiff > 10 * DAY_MS) return null;
-  const prev = Number(best.brent);
-  const cur = Number(last.brent);
-  if (!(prev > 0)) return null;
-  return round(((cur - prev) / prev) * 100, 2);
+  return qualifiedBrentHistory(history, brentPrice, builtMs);
+}
+
+function priceContextFromReuse(reuse, builtMs, historyInput = null) {
+  const brentWindow = brentChange4wFromHistory(reuse.brentPrice, builtMs, historyInput);
+  return { brentWindow, changePct4w:brentWindow?.changePct4w ?? null,
+    curveSlopeRegime:reuse.curve?.sourceStatus === 'live' ? reuse.curve.slopeRegime : null };
+}
+
+// Keep legacy monthly state vocabulary for archived readers, but never count
+// several estimates from the same STEO system as independent confirmations.
+function monthlyBackgroundOverlay(reconcile, physical, price, context) {
+  const legacy = evaluateGlobalOverlay(reconcile, physical, price, context);
+  return { ...legacy, effect:legacy.status === 'active' ? 'neutral' : legacy.effect,
+    confirmationCount:0, confidenceAdjustment:'flat', confidence:'low',
+    demandState:legacy.demandState === 'demand_break_confirmed' ? 'downshift_watch' : legacy.demandState,
+    reasons:['EIA STEO 同一体系的月度估算/预测仅作背景，不是独立实测确认，不提高方向置信度。'],
+    sourceWindows:{...legacy.sourceWindows,inventoryIsForecast:context?.inventoryBalance?.latestIsForecast ?? null,spareIsForecast:context?.spareCapacity?.latestIsForecast ?? null},
+    boundary:'display-only monthly estimate/forecast background; NOT in values/scoring/decision/execution/position' };
 }
 
 async function main() {
@@ -673,8 +666,9 @@ async function main() {
   if (reuse._radarMissing) {
     console.log('[odp] WARN: data/radar-data.json unreadable — reuse price/curve fields skipped.');
   } else {
-    const { globalEnergyContext, ...reuseEvidence } = reuse;
-    Object.assign(evidence, reuseEvidence);
+    for (const [key, value] of Object.entries(reuse)) {
+      if (key !== 'globalEnergyContext') evidence[key] = value;
+    }
   }
 
   // PR3 — productionize the LOCKED physical classifier + the price-divergence overlay.
@@ -693,12 +687,11 @@ async function main() {
     ? classifyAt(history, canonicalPeriod)
     : { period: canonicalPeriod, bias: 'insufficient_data', signals: {} };
 
-  const brentChangePct4w = brentChange4wFromHistory();
-  const curveSlopeRegime = (!reuse._radarMissing && reuse.curve) ? reuse.curve.slopeRegime : null;
-  const crackChange4w = (!reuse._radarMissing && reuse.crackSpread) ? reuse.crackSpread.change4w : null;
-  const priceContextForModel = { changePct4w: brentChangePct4w, curveSlopeRegime };
+  const priceContextForModel = priceContextFromReuse(reuse, builtMs);
+  const { brentWindow, changePct4w:brentChangePct4w, curveSlopeRegime } = priceContextForModel;
+  const crackChange4w = null;
   const reconcile = finalizeBias(physical, priceContextForModel);
-  const globalOverlay = evaluateGlobalOverlay(
+  const globalOverlay = monthlyBackgroundOverlay(
     reconcile,
     physical,
     priceContextForModel,
@@ -716,7 +709,10 @@ async function main() {
       brentChangePct4w,
       curveSlopeRegime,
       crackChange4w,
-      priceDirectionSource: brentChangePct4w === null ? 'unavailable' : 'radar-history-full:brent~4w',
+      priceDirectionSource: brentWindow ? 'dated_same_source_brent_observations' : 'unavailable',
+      brentObservedAt: brentWindow?.endObservedAt ?? null,
+      brentStartObservedAt: brentWindow?.startObservedAt ?? null,
+      brentSource: brentWindow?.source ?? null,
     },
   };
   const attribution = buildAttribution({
@@ -738,7 +734,7 @@ async function main() {
     dataSufficiency,
     globalOverlay,
     attribution,
-    note: 'physical-chain verdict; price-divergence and P6B global overlays are display-only confirms/guards. Audit-only/display-only, NOT in scoring/decision.',
+    note: 'US weekly physical-pressure observation; qualified price divergence is not a reversal forecast. STEO is non-independent estimate/forecast background. Audit-only/display-only, NOT in scoring/decision.',
   };
 
   const out = {
@@ -763,7 +759,8 @@ async function main() {
     `brent4w=${brentChangePct4w == null ? 'n/a' : brentChangePct4w + '%'}); builtAt ${builtAt}`);
 }
 
-main().catch((e) => {
+export { reuseFromRadar, priceContextFromReuse, brentChange4wFromHistory, buildAttribution, globalEnergyContextFromRadar, monthlyBackgroundOverlay };
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((e) => {
   console.error('[odp] build failed:', e && e.message ? e.message : e);
   process.exit(1);
 });

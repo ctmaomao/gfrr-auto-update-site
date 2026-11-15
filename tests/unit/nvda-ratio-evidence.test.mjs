@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { gunzipSync } from 'node:zlib';
 import { inspectNvdaNumerator, qualifyNvdaRatio, validateNvdaRatioRecord, buildNvdaGap } from '../../scripts/bubble-watch/nvda-ratio-evidence.mjs';
 import { qualifiedEdgarLtmRevenue, qualifiedMirrorLtmRevenue } from '../../scripts/bubble-watch/ltm-revenue.mjs';
 import { isRegisteredEvidenceGap, replayEvidenceScores, validateEvidenceScoreFields } from '../../scripts/bubble-watch/evidence-score-contract.mjs';
@@ -130,12 +131,20 @@ test('comparable four-quarter inputs replay the unchanged ratio and light thresh
   assert.equal(nvdaDisplayState(item(),Date.parse(clock)).qualified,true);
   const bad=item();bad.status='green';assert.notDeepEqual(validateNvdaRatioRecord(bad,today),[]);
 });
-test('actual newer ledger is protected, never parsed from prose or replaced by old parameters',()=>{
-  const c=JSON.parse(fs.readFileSync('config/bubble-watch-curated.json'));
+test('newer text ledger is protected, never parsed from prose or replaced by old parameters',()=>{
+  // Fixed historical scenario: production sync may advance beyond this test's
+  // clock. Reading live config here would test a future ledger, not this case.
+  const c={params:{nvdaCommitments:{usd:125e9,desc:'synthetic cumulative commitments and debt',asOfDate:'2026-06-07'}},
+    autoFallback:{nvda_invest_revenue:{asOfDate:'2026-11-01',maxAgeDays:30,note:'synthetic newer text ledger'}}};
   const before=JSON.stringify(c), n=inspectNvdaNumerator(c,today);
   assert.equal(n.status,'unavailable');assert.equal(n.reason,'newer_ledger_requires_comparable_evidence');
   assert.equal(n.newerLedgerProtected,true);assert.equal(n.latestLedgerDate,c.autoFallback.nvda_invest_revenue.asOfDate);
   assert.equal(JSON.stringify(c),before);
+  const future=structuredClone(c);future.autoFallback.nvda_invest_revenue.asOfDate='2026-11-05';
+  assert.equal(inspectNvdaNumerator(future,today).reason,'ledger_date_invalid');
+  const advanced=inspectNvdaNumerator(future,'2026-11-09');
+  assert.equal(advanced.reason,'newer_ledger_requires_comparable_evidence');assert.equal(advanced.newerLedgerProtected,true);
+  assert.equal(advanced.latestLedgerDate,'2026-11-05');
 });
 test('cumulative, guarantees, unsigned intent, missing dates, wrong currency or unmatched records cannot qualify',()=>{
   for(const change of [p=>p.basis='cumulative_commitments',p=>p.includesGuarantees=true,p=>p.includesCollateralizedDebt=true,
@@ -166,7 +175,8 @@ test('r5 narrowly registers the gap and keeps the fixed Core-23 uncertainty deno
     i=>i.provenance.detail.currentEligible=true,i=>i.evidence_gap.checkedDate='2026-11-03']) {
     const bad=structuredClone(gap);mutate(bad);assert.equal(isRegisteredEvidenceGap(bad,{revision:5,asOfDate:today}),false);
   }
-  const data=JSON.parse(fs.readFileSync('data/bubble-watch.json'));
+  // This is an r5 replay, not a mutation of a newer production epoch.
+  const data=JSON.parse(gunzipSync(fs.readFileSync(new URL('../fixtures/bubble-r5-observation-migration.json.gz', import.meta.url)))).before;
   const cards=data.indicators.map(i=>i.id===base.id?gap:i), r=replayEvidenceScores(cards,5);
   assert.equal(r.primary,null);assert.equal(Object.values(r.counts).reduce((a,b)=>a+b),23);
   assert.equal(r.counts.unknown,2);assert.deepEqual(r.primaryRange,{lower:26.1,upper:34.8});

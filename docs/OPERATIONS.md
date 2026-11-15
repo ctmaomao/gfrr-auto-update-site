@@ -4,6 +4,8 @@
 
 2026-09-11 [ADR-0043](ADR/0043-score-input-continuity.md)：Daily 出现 `structural_input_publication_hold:<字段>` 表示此前参与评分/门控的结构值或变化失去可用证据；`all_unavailable` 为全部结构源缺失。`main_score_input_publication_hold:realtime_unavailable` 表示实时输入不可信。上述失败保留旧快照和其原始时间，不能据此判断风险下降。先检查原始观测日期、缓存年龄、FRED/MOVE响应与历史对照完整性；恢复源后走既有运行流程，不改旧 JSON 时间、不恢复无限缓存、不手动降分。首次升级后的旧缓存若无 `sourceObservedAt`，必须成功获取源后才能成为有效新缓存。此条只收紧 Daily 写入，不改变 Worker health 的只读/告警边界。
 
+项目通用审查与确认沿用 [AGENTS.md](../AGENTS.md) / [ADR-0092](ADR/0092-delegated-ai-review.md)：已有有效授权的同范围操作由 AI 完成独立审查、测试与验收后推进，不因本手册历史阶段的“最终确认/人工批准”重复请示；未授权的阶段解锁、费用、来源权利和平台门槛仍保留。不得把命令参数中的确认开关当作用户授权，也不得删除这些写入守卫。
+
 相关文档：
 
 - [9 月 13 日研究后续验收](PRESSURE_MODEL_FOLLOWUP_2026_09_13.md)：ledger v2 按候选保留 warm-up/null，完整输入仍必需。v1 两天记录保持原样；v2 合同/指纹上线后重新计真实时长，不手工拼接旧 cohort。Daily 无关展示改动不再改变评分指纹；新增评分依赖时必须维护 `describeRiskImplementation()`。历史版本审计为手动免费研究，不增加自动取数或生产写入。
@@ -72,7 +74,7 @@ npm run check:data:strict-live-alignment
 
 v28.0I release review 与 v28.0I-8B post-deploy audit 已通过。日常排查 cockpit 解释层时，优先按以下顺序：
 
-1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `oil-evidence-health-20261106`）。
+1. 先看页面 frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `qqq-week-label-20261114`）。
 2. 检查 live `data/radar-data.json` 是否包含 `dailyBrief`、`divergenceLayer` 与 `brentPricingLayer`。
 3. 单独检查 Worker Health；它只反映 Worker 运行链，不是当前静态首页的数据加载闸门。
 4. 检查 Realtime Health；Check Realtime Health 仍是 GitHub `realtime-data` fallback / Daily baseline soft observer。
@@ -87,7 +89,7 @@ v28.0I / v28.0J 新增的 `dailyBrief`、`divergenceLayer`、`macroDrivers.consu
 
 v28.0J-2B post-deploy audit 已通过，rule-based `aiInterpretationLayer` 为 rule-based structured interpretation，不调用 DeepSeek / OpenAI / 外部 AI API。旧 `externalAiInterpretationLayer` 只保留数据兼容；首页当前可见的 DeepSeek 输出是独立 `macroRiskEditorialLayer`。日常排查顺序：
 
-1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `oil-evidence-health-20261106`）。
+1. 检查 live frontend version 是否为当前版本（以 `scripts/app.js` 的 `APP_VERSION` 为准，现 `qqq-week-label-20261114`）。
 2. 检查 live `data/radar-data.json` 是否包含 `aiInterpretationLayer`。
 3. 检查 `aiInterpretationLayer.contractVersion` 是否为 `v28.0J-0`。
 4. 检查 `generatedByExternalAi=false` 与 `usesExternalAiApi=false`。
@@ -128,6 +130,48 @@ npm run check:macro-risk-editorial
 7. 若字段缺失或异常，查看 `Macro Risk Editorial Refresh` 日志与三天期 artifact；不要手工编辑生产 JSON。
 8. provider failure 不得同 run 重试；待问题定位或下一次 scheduled refresh。
 
+<a id="shared-editorial-budget-and-free-search-admission"></a>
+
+### Shared editorial budget and free-search admission
+
+Brave 另有 [ADR-0111](ADR/0111-brave-shared-free-only.md) 的显式 v2 路径：仅在账户 Search Postpaid 已保存的 Free credits only、服务商硬停、所有该plan key覆盖及实际项目key绑定均独立核验后使用。不把唯一key当独占，不把零out-of-pocket当硬停。下文独占key要求仍完整适用于v1；v2只窄范围替代独占与全账户实时配额/历史已知要求，其它hold不变。
+
+v2 的私有 grant 必须含证据与account-plan binding的SHA-256、key指纹、verification/expiry/protection boundary、至多950次项目授权和同时间的dashboard观察；字段契约见ADR-0111。expiresAt不超过31天及已审保护边界；账单日期时区不明时保守提前到期，不伪造period end。账户累计用量不是项目历史或实时余额。
+
+仅确认从未初始化、实际ref缺失且已完成证据审查后，才能显式执行 `npm run review:brave-budget -- --initialize-shared --grant-file <private-file>`。已有任何版本账本拒绝初始化，无自动迁移。初始化时间取可信GitHub Date，初始化前历史始终unknown；续grant仍用原 `--activate --grant-file` 追加，不能清pending、换key或重置950/31天计数。部署代码不等于激活。只读摘要把project剩余与provider余量unknown分开。
+
+另有经独立核验的connector create-only路径：建立只含 `usage.json` 的新树，以已核main commit作为技术parent，再原子创建 `brave-usage-ledger` ref并严格回读；不得更新main、覆盖现存ref或借此恢复已删历史。main parent不是Brave历史，此路线也不能宣称执行过CLI `--initialize`。创建含grant的ref即激活，必须事先完成同等证据、可信时间/时钟余量与初始化资格核验；任何不确定结果先回读，不盲重试，具体操作另行独审。
+
+核对项目key可显式手动选择原 `Tavily Budget Status` workflow的 `brave-key-fingerprint`；默认仍Tavily状态。独立main-only job只给核验步骤两个Brave secrets，仅输出各变量与合并集合的SHA-256前16位、count/missing；无provider/ledger/network诊断。也可在已获授权的环境运行 `npm run review:brave-budget -- --key-fingerprints`，不打印原key。指纹比对仍须私密核验账户/plan归属，多个/缺失/解析有歧义时不能猜测。
+
+[ADR-0090](ADR/0090-shared-editorial-budget-and-free-search.md) 的基础保护继续有效；[ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) 将 monthly 新 genesis 契约设为两篇文章合计 CNY 10/月，代码上线不代表已经初始化、激活或通过线上验收。所有 key、手动与自动请求共用 `deepseek-usage-ledger`。每次按完整上下文最坏预留 CNY 2.161152，因此零历史负担也至多四次/31天，不能按平时低 token 用量估算可调用次数。成功仍保留全额到完成后31天加152秒；不明失败/取消/崩溃永久保留待核，阻止后续调用，不自动退款、月底重置或删账本。
+
+先运行零网络、零写入的计划检查：
+
+```sh
+npm run review:deepseek-budget -- --plan
+npm run review:tavily-budget -- --plan
+npm run review:brave-budget -- --plan
+```
+
+默认 `review:deepseek-budget`、`review:tavily-budget`、`review:brave-budget` 仅查各自账本，不调用 provider；缺配置即 hold。Tavily `--verify` 及现有 `Tavily Budget Status` workflow 也只读账本，明确不能证明当前官方剩余额度。不要把 `--probe` / `--usage-only` 当作只读状态命令：这两项先持久预留 `/usage` meter，需对应操作授权；`--initialize*` / Brave `--activate` 则会改变远端账本，计划检查或源码部署不构成这些操作的批准。
+
+激活前必须逐项核验：
+
+1. 新 monthly 必须使用 `deepseek-budget-v2` schema 与 v2 policy/price digest；旧 v1 monthly 一律 hold，不能自动换 schema、覆盖或重建。创建时重新核实远端账本不存在。两个 one-shot 仍精确绑定旧 policy/grant/price digest，已耗名额和永久预留不变。已知四次 one-shot 保守预留合计 CNY8.644608 不是零历史证明；完整历史证据未足即不激活，不用 token 推算退款。DeepSeek 所有未受控调用已关闭、旧请求确实全部结束，账本不存在时才能准备一次 genesis，已有历史绝不能覆盖。未知历史按 CNY 10 完整隔离31天加152秒。另一方案是经独立复核的完整31天加余量历史；第三方案是严格的当前账单月全账户/所有key累计上界，不能只取项目key、余额或显示时区。后一方案必须证明实际固定 billing UTC offset、账单月起点、全账户绑定及最多5分钟的真实上报延迟（`lagBoundEvidenceSha256`），在停止/排空请求后再等5分钟加152秒观测，5分钟内且同账单月完成准备；观测、切换和准备各自±76秒仍须属于同一账单月。显示金额额外加 CNY 0.01，例如0.14计为0.15；完整 bootstrap digest 独立批准后才可准备，准备本身不写远端。缺任何证明仍hold。
+2. 单独核验当前 CNY 费率、1,048,576-token context、8,000输出上限和请求/响应模型。价格review有效期至多24小时，代码提前76秒hold；复核必须追加并单独固定digest，不能改历史。请求别名不锁定底层模型，费率变化或响应不符需停用与新审阅，不能自动换模型/汇率。
+3. DeepSeek 两个步骤分别注入 `DEEPSEEK_BUDGET_GITHUB_TOKEN`、`DEEPSEEK_BUDGET_GENESIS_SHA`、`DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256`；仅付费步骤有 `DEEPSEEK_API_KEY`。`--require-eligible` 在新闻搜索之前只读预检；它不预留费用，真正provider仍先CAS预留再单次调用。不要把凭证移到job/global环境，或用手动成本确认绕过账本。 每次GitHub元数据响应、读体及完成、最终paid派发前都维持受界时钟；长停顿或clockstep即hold。若PATCH已生效但回包/派发前校时失败，零付费发送且保留pending，不清账重试。
+4. Tavily保留按记录的预留时间统计的31天项目预算：950总额/800自动/150手动，另有50账户余量；这不是已独立证实的真实dispatch滚动硬上限。所有 `/usage` 探测必须走 `tavily-meter-ledger`，缺失需另行初始化；10次/10分钟按661秒保守窗口执行，包含30秒dispatch、30秒时钟误差和1秒HTTP精度。初始化时间取GitHub首次404的可信Date，初始化后≤661秒仍hold，整秒时首次安全准入为662秒；缺旧genesis不自动迁移。未知时间/配额/PAYGO/余额即停止，无缓存替代或换key绕过。
+5. Brave免费确认不是剩余额度。`brave-usage-ledger` 的grant必须有 dashboard 实际请求上限、既有使用、到期、免费确认、来源证据与独占仓库key指纹，grant最多950剩余请求、有效期至多31天；另有按记录预留时间计算的950/31天项目计数，不能声称真实dispatch严格窗口已证实。未知、到期或key不匹配即停止，无自动续月。timeout/网络/5xx/坏JSON结果永久待核，新的grant不能清掉旧待核。实际4xx可记录失败但不退还；402/429/432/433额外hold。
+
+搜索摘要与 `--plan` 明示 `countBasis=recorded_reservation_time`、`strictDispatchWindowVerified=false`。保留旧账本、schema、历史与额度，不补造早期dispatch证据或重置。两搜索provider新准入均要求30秒单调时钟dispatch deadline；Brave还要求成功CAS所读的可信GitHub `serverTime + 30000ms + 1000ms` 严格早于grant到期，边界附近可提前hold。真实免费门禁仍靠Tavily已核Researcher/PAYGO禁用及官方用量/余量、Brave已核独占key免费grant与未决债务hold；Tavily `/usage` 独立权威时钟10次/10分钟规则不变。
+
+[ADR-0109](ADR/0109-macro-budget-pause-notifications.md) 将自动 Macro 的明确 monthly 双空配置记为 `expected_skip / deepseek_budget_uninitialized`，而不是运行故障；仅此 opt-in 路径在网络请求前停止，并跳过日/input 预留、搜索、provider、生产写入和提交。Summary 与安全回执保留原因和跳过验证状态。手动运行、one-shot、缺凭证、畸形/部分配置、API/坏账本/价格/余额/生成错误仍失败；其它 consumer 不变。Pages 与 EdgeOne 仅按经认证的精确 run/attempt/head/job/step 证据跳过这类无内容发布，未知状态继续原部署校验，不把绿色暂停称作新稿已发布。
+
+失败排查先看脱敏预算code、账本摘要和上游状态。不要通过整条AI workflow重跑来探测余额或搜索配额，也不要清除旧日/input/recheck refs。预算失败与搜索失败均不能伪装成健康的零可信新闻skip；未生成新判读时保留确定性fallback和真实旧期日期。`manual:external-ai:deepseek` 的历史手动路线不属于本次两文章额度，当前共享gate拒绝该第三consumer，即使提供key和网络参数也不允许借用本预算。
+
+只停用 `ceo_hedging` 的付费Wind新闻兜底；Daily、其它Wind指标、Bubble完整刷新与source-audit工作流原授权边界保持。免费新闻不足时沿用原缺失/curated回退，不为保红灯降低两独立源要求。
+
 ### Macro editorial refresh / Daily timing
 
 2026-09-11 owner 单次例外见 [ADR-0045](ADR/0045-editorial-single-recovery.md)：仅指定手动 recovery ID、当天截止前、固定 Daily 时间与内容摘要允许额外一次预留；旧 day/input refs 不动，独立 recovery ref 已存在或创建不确定即拒绝。其余调用仍执行以下普通预算规则。
@@ -136,7 +180,7 @@ GitHub Actions cron 使用 UTC，但不保证准时或相对顺序。上游名�
 
 调用前以 create-only Git refs 持久预留 UTC 日预算和 Daily 输入键，路径固定 `refs/tags/macro-editorial-budget/v1/day-YYYY-MM-DD` / `input-<sha256>`。这只是保守尝试凭据，不是发布/成功证明；创建不确定、冲突或部分成功不允许调用，也不清除凭据。任何失败、零可信新闻或取消都不自动退还预算；手动 dispatch 的成本确认不绕过同日/同输入去重。严禁为恢复显示自动删除 tag、修改时间戳或重跑已消费周期。跨日仍相同 Daily 输入不重复调用；真正额外恢复需独立审阅与具体授权。无 `--reserve` 的 admission 是只读预检；已有匹配编辑层会在任何 GitHub 请求前跳过。
 
-`Macro Risk Editorial Refresh` 是 `macroRiskEditorialLayer` 的唯一生产写入路径。流程固定为 upstream/budget admission → news discovery → compact input → one DeepSeek call → output contract → quality review → projection → guarded write → live layer check + `check:data` → protected-path assertion。只允许提交 `data/radar-data.json`；Pages 与 EdgeOne 在 workflow 成功后检查/发布，EdgeOne 保留无变化跳过与发布配额。任何 admission skip 的 Summary 明确零 discovery/provider/production write；工作流绿色不能单独证明新判读生成。
+`Macro Risk Editorial Refresh` 是 `macroRiskEditorialLayer` 的唯一生产写入路径。流程固定为 shared CNY budget preflight → upstream/day/input admission → news discovery → compact input → one DeepSeek call → output contract → quality review → projection → guarded write → live layer check + `check:data` → protected-path assertion。只允许提交 `data/radar-data.json`；Pages 与 EdgeOne 在 workflow 成功后检查/发布，EdgeOne 保留无变化跳过与发布配额。任何 admission skip 的 Summary 明确零 discovery/provider/production write；工作流绿色不能单独证明新判读生成。
 
 普通质量 `warn`（例如只有一条可信新闻或正文偏离 4,000–5,600 字目标但仍在 2,000–6,800 兼容区间）允许只读展示并保留 warning。结构错误、零可信新闻、来源引用断裂、危险操作性文案、provider failure、陈旧/时间错配、路径越界或任何非零生产影响均 hard fail。
 
@@ -150,7 +194,7 @@ scheduled workflow 始终运行远端 `main`，本地修改或仅 push 到 featu
 
 2026-09-07 检索修复：零可信新闻 skip 同时产生 GitHub warning annotation，避免把绿色 workflow 误认为 AI 可用。Tavily 原六个查询中的两个定向查找 Fed/BLS 官方日期发布，其余四个及 Brave 六个仍查新闻；不增加请求预算或 DeepSeek 次数。只接受已登记日期路径且在窗口内的官方结果，不降低 cross-check/引用/质量/30 小时 gate。若仍 skip，核对实际返回的官方日期路径、时间过滤和 provider 状态；不能用旧发布或手工补引用恢复显示。详细检索范围见 [Macro Risk 来源契约](MACRO_RISK_EDITORIAL_DESIGN.md#42-新闻发现来源)。
 
-Tavily/Brave keys 由 Macro Risk、Bubble Watch 与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；按 31 天最坏情形，全部 scheduled flows 合计 767 requests/provider/month，另保留 200 次 manual/diagnostic reserve，由 `check:workflows` 阻止预算超过 1,000。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `http_402_payment_required`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，确认是否为共享月度额度耗尽；不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。等待月度 reset，或由 owner 在 provider dashboard 更新 plan/key。
+Tavily/Brave keys 由 Macro Risk、Bubble Watch（文章及CEO）与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；既有静态排程上限仍由 `check:workflows` 检查，但不是当前剩余额度证明。实际调用须通过上节的共享账本、官方Tavily计量与Brave已核grant，未知即hold。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `http_402_payment_required`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，确认是否为共享月度额度耗尽；不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。核验真实剩余额度与账本；月底、换key或升级plan不自动解除hold，只有符合已审免费准入条件才可恢复。
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。
 
@@ -175,7 +219,7 @@ Provider 请求固定 `max_tokens=8000`，可见正文目标 2,600–3,400 中�
 2,947 字，P90 3,137 字，最大 3,278 字。Token budget 还需容纳 stable IDs、引用、
 边界对象与 JSON 字段名，不得把 8,000 tokens 解读为 8,000 字用户可见正文。
 
-生产顺序固定为：bounded Tavily + Brave discovery → compact input validation → 一次
+生产顺序固定为：shared CNY budget preflight → bounded Tavily + Brave discovery → compact input validation → 一次
 DeepSeek JSON request → output validation → quality review → projection → guarded writer →
 `check:bubble-watch` + `check:all` → exact-path assertion → 只提交
 `data/bubble-watch.json`。两个新闻索引都必须有可用 live 结果；可用 official/cross-checked/attributed_media 为 0
@@ -275,7 +319,7 @@ Non-`none` provider refusal is expected in v28.0K-4C. Do not treat `deepseek` / 
 
 ## External AI DeepSeek Manual Artifact Test
 
-v28.0K-4D adds an explicit DeepSeek manual API test command. Dry-run remains no-network:
+Historical K-4D manual API commands below retain their artifact/validator boundaries. ADR-0090 does not fund this third consumer: the current shared gate refuses its paid request even when the historical flags are supplied. Dry-run remains no-network:
 
 ```bash
 npm run manual:external-ai:dry-run
@@ -616,27 +660,27 @@ window.__GFRR_RUNTIME__?.realtimeFetchAudit
 
 ### 2A. Android Chrome 旧前端缓存排查
 
-当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-evidence-health-20261106`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
+当前前端 cache token 以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `qqq-week-label-20261114`）。普通窗口与无痕窗口若呈现不同内容，先比较实际加载的入口与 module token，再比较两者取得的静态 JSON。页面表现差异本身不能证明 Worker、DNS 或发布渠道正常。
 
 当前处理方式：
 
 ```text
-index.html app.js entry → ?v=oil-evidence-health-20261106
-scripts/app.js and active scripts/modules/*.js local imports → ?v=oil-evidence-health-20261106
+index.html app.js entry → ?v=qqq-week-label-20261114
+scripts/app.js and active scripts/modules/*.js local imports → ?v=qqq-week-label-20261114
 scripts/modules/realtime.js → 未接入的冻结 runtime path;import query 不随当前 asset bump 更新
 app.js APP_VERSION → 见 scripts/app.js（init console 打印 [app] … APP_VERSION=…）
 ```
 
-核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `oil-evidence-health-20261106`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
+核对前端版本：看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`（当前 `qqq-week-label-20261114`），或检查已加载 `app.js?v=…` URL 的 token，两者须一致。缓存版本对应的具体改动以当前任务和提交记录为准，不将旧阶段功能说明当作本次变更。frontend asset cache version must be bumped when index.html or frontend JS changes：以后修改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query；M-94 后冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前入口,其 import query 应保持冻结旧图,不得因此视为前端 realtime overlay 已重接入。只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump；Worker runtime 改动不需要 bump frontend asset version，除非同时改前端 HTML / JS。
 
 v28.0G-9B Frontend Asset Version Bump Helper 提供本地维护命令：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs oil-evidence-health-20261106
-npm run bump:frontend-asset-version -- oil-evidence-health-20261106
+node scripts/bump-frontend-asset-version.mjs qqq-week-label-20261114
+npm run bump:frontend-asset-version -- qqq-week-label-20261114
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `oil-evidence-health-20261106`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `qqq-week-label-20261114`，不要在没有前端发布需要时最终留下测试版本。工具不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。
 
 ## 3. Realtime workflow 排查
 
@@ -1685,17 +1729,17 @@ ACLED 长期运行时效以 [ADR-0038](ADR/0038-acled-runtime-freshness.md) 为�
 
 ## Tavily actual usage budget
 
-The static schedule estimate is not a bill. [ADR-0059](ADR/0059-tavily-runtime-budget.md) adds a shared runtime ledger on the isolated `tavily-usage-ledger` branch. Its deployment remains pending review/publication authorization. All local and Actions Tavily searches require `TAVILY_BUDGET_GITHUB_TOKEN`; Actions receive `github.token` in the search step only. Do not print a token, paste it into commands or store it in the repository. Existing local credential-file guidance applies.
+The static schedule estimate is not a bill. [ADR-0059](ADR/0059-tavily-runtime-budget.md) adds a shared runtime ledger on the isolated `tavily-usage-ledger` branch. ADR-0059 records its original publication authorization; the current [ADR-0090 controls](#shared-editorial-budget-and-free-search-admission) retain its history and require verified activation evidence. All local and Actions Tavily searches require `TAVILY_BUDGET_GITHUB_TOKEN`; Actions receive `github.token` in the search step only. Do not print a token, paste it into commands or store it in the repository. Existing local credential-file guidance applies.
 
 `npm run review:tavily-budget -- --plan` is offline and writes nothing. With a securely supplied token, `npm run review:tavily-budget` reads rolling usage by consumer, key fingerprint, UTC day and execution mode. Each group separates reservations, outcomes, reported credits and requests without a receipt. Only after explicit publication authorization, `npm run review:tavily-budget -- --initialize` creates the missing ledger; it refuses existing state and performs no search. Never delete/recreate the branch to regain quota.
 
-The runtime cap is 950 reserved basic searches per rolling 31 days (800 automatic, 150 manual), independently checking official account/key balance and leaving 50 account credits. The existing 200-request static manual estimate does not override the stricter 150 runtime cap. No calendar reset is inferred. A budget hold remains a source-health error; other sources may proceed, but no fabricated news or AI output is permitted. Pending/failed requests retain reservations. Official reported cost and conservative reserved cost are different metrics; no claim of exact historical billing reconciliation is made.
+The project budget is 950 reserved basic searches per 31 days counted by recorded reservation timestamps (800 automatic, 150 manual), independently checking official account/key usage and leaving 50 account credits. This is not a verified real-dispatch rolling-window guarantee; summaries disclose `countBasis=recorded_reservation_time` and `strictDispatchWindowVerified=false`. Existing ledger history/schema remain intact. The existing 200-request static manual estimate does not override the stricter 150 runtime cap. No calendar reset is inferred. A budget hold remains a source-health error; other sources may proceed, but no fabricated news or AI output is permitted. Pending/failed requests retain reservations. Official reported cost and conservative reserved cost are different metrics; no claim of exact historical billing reconciliation is made.
 
-The console audit found one key at 100%, pay-as-you-go disabled and an enabled 80% email alert. Overview/Billing/Settings did not expose a detailed usage ledger or free-plan period dates. The official read-only `/usage` endpoint exposes key/account counters by service, not a documented billing-period timestamp. `node scripts/review-tavily-budget.mjs --usage-only --key-file <ignored-local-file>` reads only numeric counters; no search or ledger mutation. Do not use account usage to fabricate past per-consumer attribution.
+The console audit found one key at 100%, pay-as-you-go disabled and an enabled 80% email alert. Overview/Billing/Settings did not expose a detailed usage ledger or free-plan period dates. The official read-only `/usage` endpoint exposes key/account counters by service, not a documented billing-period timestamp. `node scripts/review-tavily-budget.mjs --usage-only --key-file <ignored-local-file>` now reserves the shared `/usage` meter before returning allowlisted numeric counters. It performs no search, but is a metered operation with ledger writes, not a read-only status check. Do not use account usage to fabricate past per-consumer attribution.
 
 Console tooltip verification: clicking the single key usage ring showed `1000 / 1000`; the account usage information tooltip states that its total includes active and deleted keys. These are aggregate counters, not per-request billing records.
 
-After integration, dispatch **Tavily Budget Status** on `main` for read-only live acceptance using existing Actions secrets. Its `--verify` mode reads official meters and the ledger, outputs only allowlisted counters/key fingerprints/advisory admission, and performs zero searches or writes. Exhausted quota reports `tavily_budget_account_limit`; malformed or unavailable meters fail the check. Publication and initialization were explicitly authorized by the owner on 2026-09-18; independent review still precedes merge.
+After integration, dispatch **Tavily Budget Status** on `main` for read-only live acceptance using existing Actions secrets. Under ADR-0090, its `--verify` mode reads the ledger only, outputs allowlisted counters/key fingerprints/advisory state, and performs zero provider probes, searches or writes. It does not establish current official quota; missing or malformed ledger state holds. Explicit metered probes are separate operations. Publication and initialization were explicitly authorized by the owner on 2026-09-18; independent review still precedes merge.
 
 ### Bubble 周度判读来源调整（2026-10-06）
 
@@ -1711,3 +1755,112 @@ After integration, dispatch **Tavily Budget Status** on `main` for read-only liv
 See [ADR-0070](ADR/0070-bubble-capex-event-inspection.md). Dry-run `node scripts/collect-bubble-capex-events.mjs` makes zero network requests and writes nothing. For an authorized free inspection, use `Inspect Bubble Capex Events` on main (manual dispatch), or `node scripts/collect-bubble-capex-events.mjs --allow-network --write` locally. The only output is ignored `manual-artifacts/bubble-capex-event-panel-latest.json`; workflow artifact retention is 14 days. No provider/key, production builder, scoring write or deployment is invoked.
 
 Inspect each company's SEC enumeration scope, selected report identity, guidance comparison, publication-clock/session/price gaps and `sourceFailures`. HTTP/timeout/content failures exit 1 and retain derived diagnostics. A successful inspection with evidence gaps does not imply a complete event panel: first guidance disclosure across calls/IR/interim changes is still unverified, and both scoring/production eligibility stay false. Do not retry blocked hosts, substitute SEC acceptance time or promote this artifact into production. Any numeric admission is a separate reviewed contract migration.
+
+<a id="one-shot-additional-editorial-grant"></a>
+
+### One-shot additional editorial grant
+
+[ADR-0094](ADR/0094-editorial-one-shot-additional-grant.md) defines a separate owner-authorized additional CNY 4.33 total, one Macro and one Bubble attempt, no retry, expiring 2026-11-30T00:00:00.000Z. Historical project spending stays unknown and is not charged as zero against the old CNY 5 authorization. Ordinary automatic/monthly calls remain held when their original configuration is missing.
+
+Offline only (zero provider calls, zero remote writes):
+
+```sh
+node scripts/review-deepseek-budget.mjs --one-shot-plan
+node scripts/review-deepseek-budget.mjs --prepare-one-shot /path/to/reviewed-input.json --approved-grant-digest APPROVED_SHA256
+```
+
+Preparation input contains `grant={policy: GRANT, authorizedAt: canonical UTC time, authorizationEvidenceSha256: independently reviewed evidence digest, initializationParentSha: exact independently reviewed existing commit SHA}` and `review={policyDigest: POLICY_DIGEST, verifiedAt: actual UTC verification time, expiresAt: no more than 24 hours later, evidenceSha256: reviewed official-pricing evidence digest}`. Read `GRANT`/`POLICY_DIGEST` from the checked-in modules, not invented values. Independently review `digest(grant)` using the module's canonical digest. Do not put private conversation text, message IDs, credentials, or raw account evidence in public documentation or ledger. The prepare command validates and prints the ledger; it does not write it anywhere. Do not use filesystem timestamps as verification time.
+
+Activation is a separate coordinator-controlled action after independent review, required exact-head CI and normal publication. It must use existing authorized credentials only, without creating/configuring credentials or expanding access:
+
+1. Recheck current official [pricing](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/) and exact model/request policy. Any changed rate/model/limit requires a reviewed policy change, not arbitrary runtime values. Prepare the approved ledger offline. Stop if any prerequisite is unknown.
+2. Check the fixed branch does not already exist. Existing history must be inspected and retained, never replaced. If absent, create one commit containing only `usage.json` with this prepared ledger and exactly the `grant.initializationParentSha` parent bound in the approved grant digest, then create the fixed ref without force. Verify the genesis has exactly that approved parent, empty entries and one review; the monthly ledger remains strictly parentless. Record and independently verify its exact genesis SHA, canonical grant digest and current price-review digest. A lost/uncertain creation acknowledgement requires inspection, never a blind creation retry.
+3. Set only the non-secret variables `DEEPSEEK_ONE_SHOT_GENESIS_SHA`, `DEEPSEEK_ONE_SHOT_GRANT_SHA256`, and `DEEPSEEK_ONE_SHOT_PRICE_REVIEW_SHA256` in the existing production environment. They identify evidence/anchors, not credentials or broader access. Never alter ordinary monthly genesis/history to make this grant work. Price revalidation may append exactly one new review through a non-force CAS transition, preserving grant and all entries; pin its reviewed digest only after verifying the append. It cannot reset a consumed slot.
+4. Verify preflight in the matching existing workflow context before discovery. Explicitly dispatch only the eligible existing production workflow with `budget_selection=editorial-additional-20261109-cny433-v1` and its normal cost/network acknowledgement. Never use rerun, another workflow, direct provider calls or manual artifact promotion. Each run rechecks the consumer and price before reserving and sending. Bubble still requires its separate source/freshness/CI blockers resolved; this grant cannot clear them.
+5. Inspect durable reserve/outcome and existing publication/quality checks. Report actual provider attempts and publication separately. Failed/unknown reservations remain permanently consumed; an unresolved outcome holds the other consumer. Preserve ledger/anchors after completion or expiry. Leave subsequent dispatches on `monthly`; never recreate this grant under another branch or date.
+
+The original monthly ledger, free-search controls, Macro day/input tags, provider timeouts, output/fact/quality/freshness rules and data-only writer are unchanged. Never delete deduplication tags or edit timestamps to force availability. Initialization and dispatch are not performed by offline preparation or by merely deploying this code.
+
+<a id="deepseek-balance-shape-diagnostic"></a>
+
+### DeepSeek balance-shape diagnostic
+
+[ADR-0096](ADR/0096-deepseek-balance-shape-diagnostic.md) records the completed single authorized read, run `42738568668` (number 1, attempt 1). Its sanitized HOLD report showed an object response, boolean availability field type without its value, and two balance rows labeled CNY and USD. Each row's three amount fields were decimal-format strings; no amounts are retained here. This does not establish available funds or debit precedence.
+
+The temporary `deepseek-balance-shape-once-20261110.yml` credential-bearing entrypoint is retired and deleted. Do not dispatch, rerun, rename, recreate or copy it, extend its expiry, or invoke the retained CLI with a real key. No further standalone diagnostic balance read is authorized. Offline pure helpers and privacy/deadline/no-retry/context tests remain; wiring tests require the entrypoint to stay absent and reject copied diagnostic invocation in all active workflows. Ordinary production workflows, follow-up history selectors, paid currency gates and ledgers are unchanged. No Actions write permission or security-setting change is needed for this removal.
+
+### CNY-only one-shot balance admission
+
+[ADR-0097](ADR/0097-one-shot-cny-balance-admission.md) narrows the additional grant's balance check to a unique sufficiently funded CNY row and optional all-zero USD row. Nonzero USD, duplicates, unknown currency, malformed/inconsistent amounts, insufficient CNY or unavailable account still HOLD before reservation and POST. A structural diagnosis never proves a zero USD balance; the normal authorized one-shot attempt performs its existing bounded balance read. Do not call the retired diagnostic or make a separate probe. No conversion or USD budget is allowed. The original CNY 4.33 grant, one attempt per article, permanent reservations and price/quality gates remain unchanged; [ADR-0110](ADR/0110-monthly-cny-ten-and-balance.md) applies this same exact CNY funding validator to monthly admission, retaining fail-closed initialization and the immutable legacy one-shot grants.
+
+<a id="one-shot-verification-editorial-grant"></a>
+
+### New two-page verification grant (2026-11-11)
+
+[ADR-0105](ADR/0105-editorial-verification-grant.md) adds a separately authorized, manual-only CNY 4.33 total grant: one Macro and one Bubble attempt, no retries, expiring 2026-11-13T00:00:00.000Z. It does not revive the spent ADR-0094 allowance. Follow the existing activation/receipt procedure above with these exact substitutions:
+
+- Selection: `editorial-verification-20261111-cny433-v1`.
+- Fixed create-only ledger branch: `deepseek-editorial-verification-20261111`.
+- Policy export: `VERIFICATION_GRANT`; old `GRANT` is unchanged.
+- Non-secret production-environment pins: `DEEPSEEK_VERIFY_20261111_GENESIS_SHA`, `DEEPSEEK_VERIFY_20261111_GRANT_SHA256`, `DEEPSEEK_VERIFY_20261111_PRICE_REVIEW_SHA256`. Never alter the old or monthly pins/history.
+
+Offline planning and preparation only:
+
+```sh
+node scripts/review-deepseek-budget.mjs --one-shot-plan editorial-verification-20261111-cny433-v1
+node scripts/review-deepseek-budget.mjs --prepare-one-shot /path/to/reviewed-input.json --approved-grant-digest APPROVED_SHA256 --selection editorial-verification-20261111-cny433-v1
+```
+
+Use fresh, independently reviewed authorization and official-price evidence, not a reused old authorization hash. The policy reserves CNY 2.161152 per attempt, CNY 4.322304 combined; actual cost remains unverified until authoritative billing is available. The existing provider receipt records token usage, not a settled bill. Currency/funding is checked by the normal authorized attempt before reservation, without printing balances or making a separate probe.
+
+Before dispatch, verify the matching unconsumed grant slot and fresh price approval, Macro's natural current input/day tags, current eligible evidence and other source/quality gates. Dispatch each existing workflow at most once using this explicit selection and normal acknowledgements. If a slot is spent, an outcome is uncertain, an input is already claimed, or access is unavailable, stop the affected action. Never rerun, reset tags, modify data dates, substitute a manual artifact, activate another grant or silently use monthly budget. Report calls, permanent reserves, receipt/quality outcomes and actual two-site publication separately.
+
+### DeepSeek offline key identity diagnostic
+
+On main, manually run the dedicated DeepSeek Key Identity workflow. The existing Tavily Budget Status workflow remains isolated and unchanged. Its two isolated matrix jobs bind the exact `external-ai-production-refresh` and `external-ai-manual` environments, label their results, and read only that environment’s `DEEPSEEK_API_KEY`, performs no network/provider or ledger operation, and prints SHA-256 of the complete key plus SHA-256 of `first8:last4` (the canonical projection is first eight characters, colon, last four characters). No key fragments are printed. Locally, set `DEEPSEEK_KEY_SCOPE` to one of those two exact labels; `node scripts/review-deepseek-key.mjs` diagnoses the environment variable without reading a credential file.
+
+Compare the full hash privately against authenticated receipt key IDs and the projection hash against the provider export's masked keys. Require exactly one observed account-key match; collisions or missing matches remain unknown. Matching a mask is practical identification among the observed keys, not proof of global uniqueness or authority for spending. This diagnostic does not initialize a budget, authorize a call, or establish website spend from an account-wide total.
+
+### Transitional Bubble receipt grant
+
+[ADR-0112](ADR/0112-bubble-receipt-one-call.md) defines a separate once-only gate, not recurring monthly activation. Offline preparation uses `node scripts/review-deepseek-budget.mjs --prepare-receipt-grant <private-json> --approved-grant-digest <reviewed-sha256>` and never initializes remotely. The JSON contains the reviewed grant/snapshot and current price review. All evidence must be independently checked; unreviewed known local/manual project callers remain HOLD; hypothetical copied-code activity is a disclosed boundary, not proof we claim to have. Account-wide evidence is a once-only conservative ceiling, never website actual spending or a long-term budget.
+
+After independent approval, coordinator initialization must first recheck the branch is absent, create only a genesis on `deepseek-bubble-receipt-20261112` with its declared parent, and read it back. Existing ref, partial creation or uncertain outcome must be investigated, never overwritten/recreated. Pin `DEEPSEEK_RECEIPT_20261112_GENESIS_SHA`, `DEEPSEEK_RECEIPT_20261112_GRANT_SHA256` and `DEEPSEEK_RECEIPT_20261112_PRICE_REVIEW_SHA256`. Only explicit Bubble manual selection `editorial-bubble-receipt-20261112-v1` can use them. Never change monthly variables or old grants to make this pass. Preflight and dispatch require authenticated unchanged historical heads, absent monthly ledger and no concurrent editorial run; the current secret must match historical receipt identity. Failure consumes any already-written reservation. No second call or automatic refresh is allowed.
+
+For the new receipt grant only, the workflow retains a successful validated review bundle for at most three days and skips production writer/commit. The bundle contains the exact compact public-source evidence needed for final-writer replay, not prompts/provider envelopes/account evidence. Independent factual review and a separately reviewed coordinator admission authenticating the original GitHub run/artifact/source commit and candidate-digest approval are required before calling the unchanged final-writer function. Do not forge the original run environment or invoke its CLI in a different run; source drift or stale inputs hold publication without another DeepSeek call. Ordinary generation and failure receipt retention remain unchanged. See ADR-0112 for the narrow successful-candidate exception to ADR-0103.
+
+### Brent observation metadata in Daily/Worker audit (2026-11-14)
+
+`audit:daily-worker` remains a read-only observer of the existing realtime input
+and Worker preview; it never selects a source or changes promotion, scoring,
+thresholds, weights or shadow activation. The JSON log and Actions Summary now
+retain an allowlisted `brentObservation` projection: source/instrument, known
+contract, actual observation time and its precision, explicitly supplied fetch
+time, age at audit time, promotion state/reason and candidate exclusion reason.
+Unknown identifiers/reasons are `unknown`; missing times and numeric values are
+null. Source URLs, raw responses and arbitrary diagnostic text are not retained.
+
+The payload `updatedAt` and the audit's Worker retrieval time remain distinct
+from source observation time. Date-only observations have calendar age in days,
+not invented intraday precision. Realtime's promoted candidate date is taken
+from the original candidate, not the synthetic selected timestamp; Worker held
+previous values and derived two-source averages have no known single observation
+time. Their component candidates are recorded separately. Failed cached fallbacks
+lose unverified source/time identity; explicit acquisition or unknown clock types
+are never reported as observations. Successful alternate sources are not treated
+as failed cache reads. No new upstream field
+or timestamp is manufactured, and old logs cannot be retroactively reconstructed.
+
+Each available input includes a SHA-256 of its parsed JSON serialization, with
+that hash basis explicitly named; the Daily realtime commit is recorded only if
+its existing environment value is a full lowercase commit SHA. This identifies
+the actual input without copying its raw diagnostics. It is not a hash of the
+original HTTP/file bytes or proof of upstream authenticity.
+
+`drift.brentComparison` distinguishes `comparable` (same known source,
+instrument/contract and observation time), `different-basis` and `unknown`.
+Rolling futures without a known contract stay unknown. `absDiff`/`pctDiff`,
+`material` and `--fail-on-large-drift` retain their existing arithmetic threshold
+meaning; they do not establish economically comparable observations. Missing
+values never become zero. Payload generation gaps are not quote age gaps.
+Regression coverage: `tests/unit/brent-observation-audit.test.mjs`.

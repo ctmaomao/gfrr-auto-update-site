@@ -12,7 +12,7 @@ function zip(entries) {
   end.writeUInt32LE(directory.length, 12); end.writeUInt32LE(offset, 16);
   return Buffer.concat([...locals, directory, end]);
 }
-export function workbook(serial) {
+export function workbook(serial, { weeks = 12, newestEvents = 1 } = {}) {
   const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   const header = ['WEEK','REGION','COUNTRY','ADMIN1','EVENT_TYPE','SUB_EVENT_TYPE','EVENTS','FATALITIES','POPULATION_EXPOSURE','DISORDER_TYPE','ID','CENTROID_LATITUDE','CENTROID_LONGITUDE'];
   const row = (values, r) => `<row r="${r}">${values.map((v, i) => typeof v === 'number'
@@ -24,6 +24,6 @@ export function workbook(serial) {
     'xl/workbook.xml': `<workbook xmlns="${ns}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>`,
     'xl/_rels/workbook.xml.rels': '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
     'xl/styles.xml': `<styleSheet xmlns="${ns}"><fonts count="1"><font/></fonts><fills count="1"><fill/></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0"/><xf numFmtId="14" applyNumberFormat="1"/></cellXfs></styleSheet>`,
-    'xl/worksheets/sheet1.xml': `<worksheet xmlns="${ns}"><dimension ref="A1:M13"/><sheetData>${row(header,1)}${Array.from({length:12},(_,i)=>row([serial-i*7,'fixture','fixture','fixture','Battles','fixture',1,0,0,'fixture',i,0,0],i+2)).join('')}</sheetData></worksheet>`,
+    'xl/worksheets/sheet1.xml': `<worksheet xmlns="${ns}"><dimension ref="A1:M${weeks + 1}"/><sheetData>${row(header,1)}${Array.from({length:weeks},(_,i)=>row([serial-i*7,'fixture','fixture','fixture','Battles','fixture',i === 0 ? newestEvents : 1,0,0,'fixture',i,0,0],i+2)).join('')}</sheetData></worksheet>`,
   });
 }

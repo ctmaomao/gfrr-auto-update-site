@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { finiteAuditNumber, brentObservationAudit, brentComparability, inputIdentity } from './audit/brent-observation.mjs';
 
 const WORKER_PREVIEW_URL = 'https://gfrr-realtime-worker.gfrrriskradar2026.workers.dev/market.worker-preview.json';
 const REALTIME_INPUT_PATH = 'realtime/market.json';
@@ -20,10 +22,7 @@ function hasArg(name) {
   return process.argv.includes(name);
 }
 
-function finiteNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
+const finiteNumber = finiteAuditNumber;
 
 function readJsonFile(path) {
   return JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -34,13 +33,15 @@ function pickValues(payload) {
   return Object.fromEntries(COMPARED_FIELDS.map((field) => [field, finiteNumber(values[field])]));
 }
 
-function summarizePayload(payload) {
+export function summarizePayload(payload, checkedAt, commit = null) {
   return {
     updatedAt: typeof payload?.updatedAt === 'string' ? payload.updatedAt : null,
     sourceMode: payload?.sourceMode ?? null,
     healthScore: finiteNumber(payload?.healthScore),
     criticalMissing: finiteNumber(payload?.criticalMissing),
     values: pickValues(payload),
+    inputIdentity: inputIdentity(payload, commit),
+    brentObservation: brentObservationAudit(payload, checkedAt),
   };
 }
 
@@ -74,9 +75,7 @@ async function fetchWorkerPreview() {
   } catch (err) {
     const error = err instanceof Error && err.name === 'AbortError'
       ? `timeout after ${WORKER_FETCH_TIMEOUT_MS}ms`
-      : err instanceof Error
-        ? err.message
-        : String(err);
+      : 'worker-fetch-or-json-failed'; // Do not retain arbitrary response/error text.
     return {
       available: false,
       payload: null,
@@ -95,7 +94,7 @@ function minutesBetween(a, b) {
   return Math.round((right - left) / 60000);
 }
 
-function compareField(field, dailyValue, workerValue) {
+export function compareField(field, dailyValue, workerValue) {
   const daily = finiteNumber(dailyValue);
   const worker = finiteNumber(workerValue);
   const absDiff = daily == null || worker == null ? null : Math.abs(worker - daily);
@@ -117,7 +116,7 @@ function compareField(field, dailyValue, workerValue) {
   };
 }
 
-function buildDrift(dailyInput, worker) {
+export function buildDrift(dailyInput, worker) {
   const fields = Object.fromEntries(
     COMPARED_FIELDS.map((field) => [
       field,
@@ -131,7 +130,10 @@ function buildDrift(dailyInput, worker) {
     .filter(([, value]) => value.material)
     .map(([field]) => field);
 
+  const brentComparison = brentComparability(dailyInput.brentObservation?.selected, worker.brentObservation?.selected);
   return {
+    brentComparison,
+    differenceMeaning: 'arithmetic-only-not-source-equivalence',
     ageGapMinutes: minutesBetween(dailyInput.updatedAt, worker.updatedAt),
     fields,
     largestPctDiffField: pctEntries[0]?.[0] ?? null,
@@ -171,16 +173,21 @@ function appendGithubSummary(summary) {
     `| Worker updatedAt | ${tableValue(summary.worker.updatedAt)} |`,
     `| Worker sourceMode | ${tableValue(summary.worker.sourceMode)} |`,
     `| Worker healthScore | ${tableValue(summary.worker.healthScore)} |`,
-    `| Age gap minutes | ${tableValue(summary.drift.ageGapMinutes)} |`,
+    `| Payload generation gap minutes (not quote age) | ${tableValue(summary.drift.ageGapMinutes)} |`,
     `| Material drift fields | ${tableValue(summary.drift.materialDriftFields.join(', ') || 'none')} |`,
     `| Conclusion | ${tableValue(summary.conclusion)} |`,
     '',
-    '| Field | Daily | Worker | Abs diff | Pct diff | Material |',
+    `| Brent comparability | ${tableValue(summary.drift.brentComparison.status)}: ${tableValue(summary.drift.brentComparison.reason)} |`,
+    '',
+    'Differences below are arithmetic only, not evidence of equivalent instruments or observations.',
+    '',
+    '| Field | Daily | Worker | Abs diff | Pct diff | Arithmetic threshold crossed |',
     '|---|---:|---:|---:|---:|---|',
     ...driftRows.map((row) => `| ${row.map(tableValue).join(' | ')} |`),
     '',
   ];
 
+  lines.push('### Brent observation metadata (allowlisted)', '', '```json', JSON.stringify({ daily: { identity: summary.dailyInput.inputIdentity, ...summary.dailyInput.brentObservation }, worker: { identity: summary.worker.inputIdentity, fetchedByAuditAt: summary.worker.fetchedByAuditAt, ...summary.worker.brentObservation } }, null, 2), '```', '');
   fs.appendFileSync(summaryPath, lines.join('\n'));
 }
 
@@ -189,11 +196,13 @@ function buildConclusion(worker, drift) {
     return 'Worker preview unavailable; Daily still uses realtime-data input. Audit only.';
   }
   if (drift.materialDriftFields.length > 0) {
-    return `Material drift observed in ${drift.materialDriftFields.join(', ')}; this is audit-only and does not change Daily input.`;
+    return `Arithmetic difference threshold crossed in ${drift.materialDriftFields.join(', ')}; Brent comparability=${drift.brentComparison.status}. Audit only; Daily input unchanged.`;
   }
-  return 'No material drift observed; Daily input remains realtime-data and Worker remains runtime candidate.';
+  return 'No arithmetic threshold crossed (missing values are not evidence of agreement); Daily input remains realtime-data. Audit only.';
 }
 
+export async function main() {
+const checkedAt = new Date().toISOString();
 const githubSummary = hasArg('--github-summary');
 const failOnLargeDrift = hasArg('--fail-on-large-drift');
 
@@ -201,16 +210,17 @@ let dailyPayload;
 try {
   dailyPayload = readJsonFile(REALTIME_INPUT_PATH);
 } catch (err) {
-  console.error(`[daily-worker-audit] Failed to read ${REALTIME_INPUT_PATH}:`, err instanceof Error ? err.message : String(err));
+  console.error('[daily-worker-audit] realtime-input-read-or-json-failed');
   process.exit(1);
 }
 
-const dailyInput = summarizePayload(dailyPayload);
+const dailyInput = summarizePayload(dailyPayload, checkedAt, process.env.GFRR_REALTIME_COMMIT_SHA);
 const workerFetch = await fetchWorkerPreview();
 const worker = workerFetch.available
   ? {
       available: true,
-      ...summarizePayload(workerFetch.payload),
+      ...summarizePayload(workerFetch.payload, checkedAt),
+      fetchedByAuditAt: new Date().toISOString(),
       error: null,
     }
   : {
@@ -220,11 +230,14 @@ const worker = workerFetch.available
       healthScore: null,
       criticalMissing: null,
       values: Object.fromEntries(COMPARED_FIELDS.map((field) => [field, null])),
+      inputIdentity: null,
+      brentObservation: null,
+      fetchedByAuditAt: null,
       error: workerFetch.error,
     };
 const drift = buildDrift(dailyInput, worker);
 const summary = {
-  checkedAt: new Date().toISOString(),
+  checkedAt,
   dailyInput,
   worker,
   drift,
@@ -237,3 +250,6 @@ if (githubSummary) appendGithubSummary(summary);
 if (failOnLargeDrift && drift.materialDriftFields.length > 0) {
   process.exit(2);
 }
+
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();

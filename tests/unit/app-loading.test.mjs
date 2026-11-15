@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from '../../scripts/modules/worldOrderSourceDisplay.js';
 import { snapshotDisplayHealth } from '../../scripts/modules/snapshotFreshness.js';
 
 function harness(fetch) {
@@ -9,9 +10,10 @@ function harness(fetch) {
     .replace(/import\s*\{[^}]+\}\s*from\s*'\.\/modules\/config\.js';/u, '')
     .replace(/import\s*\{ snapshotDisplayHealth \}\s*from\s*'\.\/modules\/snapshotFreshness\.js(?:\?[^']*)?';/u, '')
     .replace(/import\s*\{ renderOfrPrimary \}\s*from\s*'\.\/modules\/renderOfrPrimary\.js(?:\?[^']*)?';/u, '')
+    .replace(/import\s*\{ worldOrderSourceClock, worldOrderSourceDisclosure \}\s*from\s*'\.\/modules\/worldOrderSourceDisplay\.js(?:\?[^']*)?';/u, '')
     .split('// 启动')[0];
   const context = vm.createContext({
-    fetch, snapshotDisplayHealth, AbortController, console: { error() {} },
+    fetch, snapshotDisplayHealth, worldOrderSourceClock, worldOrderSourceDisclosure, AbortController, console: { error() {} },
     setTimeout: (fn, ms) => setTimeout(fn, Math.min(ms, 30)), clearTimeout,
     dataUrl: 'radar', worldOrderStressUrl: 'world',
   });

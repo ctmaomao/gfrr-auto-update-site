@@ -1,3 +1,7 @@
+import { compactNewsStory } from '../lib/editorial-news-hygiene.mjs';
+import { evidenceAwareNote, indicatorSemanticLabels, semanticNarrativeText } from './evidence-wording.mjs';
+import { createHash } from 'node:crypto';
+import { assessWeeklyEditorialNewsReadiness, usableLimitedSearchStory } from './weekly-editorial-news.mjs';
 import { buildEditorialScoringSnapshot } from './editorial-score-snapshot.mjs';
 import { INPUT_SCHEMA } from './weekly-editorial-contract.mjs';
 
@@ -19,7 +23,7 @@ function compactList(values, maxItems, maxLength = 360) {
 }
 
 function buildStructuredFacts(indicators) {
-  return indicators.slice(0, 27).map((indicator) => ({
+  return indicators.slice(0, 27).map(indicator => ({ ...indicator, ...indicatorSemanticLabels(indicator) })).map((indicator) => ({
     id: `fact:${indicator.id}`,
     indicatorId: indicator.id,
     scoreRole: indicator.score_role,
@@ -28,7 +32,7 @@ function buildStructuredFacts(indicators) {
     status: indicator.status,
     asOfDate: indicator.as_of || null,
     stale: indicator.stale === true,
-    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote(indicator)}`, 340),
+    factZh: compactText(`${indicator.name_zh}: ${indicator.value_display}（${STATUS_ZH[indicator.status] || indicator.status}）。${explicitHyThresholdNote({ ...indicator, note: evidenceAwareNote(indicator) })}`, 340),
     sourceRefIds: [`indicator:${indicator.id}`]
   }));
 }
@@ -75,19 +79,19 @@ function buildNewsSourceRefs(discovery) {
 }
 
 function buildCompactNewsContext(discovery) {
+  const readiness = assessWeeklyEditorialNewsReadiness(discovery);
+  const limitedSearch = readiness.coverageMode === 'limited_single_search';
   const topicCounts = new Map();
   const stories = (Array.isArray(discovery?.stories) ? discovery.stories : [])
     .filter((story) => {
+      if (limitedSearch && !usableLimitedSearchStory(story, discovery)) return false;
       const count = topicCounts.get(story.topic) || 0;
       if (count >= MAX_INPUT_NEWS_PER_TOPIC) return false;
       topicCounts.set(story.topic, count + 1);
       return true;
     })
     .slice(0, MAX_INPUT_NEWS_STORIES)
-    .map((story) => ({
-      ...story,
-      snippet: compactText(story.snippet, 360)
-    }));
+    .map(story => compactNewsStory(story, 360));
   const sourceStatus = Object.fromEntries(Object.entries(discovery?.sourceStatus || {}).map(([provider, status]) => [provider, {
     status: status?.status || 'unavailable',
     successCount: Number.isInteger(status?.successCount) ? status.successCount : 0,
@@ -95,6 +99,7 @@ function buildCompactNewsContext(discovery) {
   }]));
   return {
     ...discovery,
+    ...(limitedSearch ? { coverageMode: readiness.coverageMode, dataGaps: [readiness.disclosure, ...(discovery.dataGaps || [])].slice(0, 12) } : {}),
     sourceStatus,
     topics: (Array.isArray(discovery?.topics) ? discovery.topics : []).map((topic) => ({
       ...topic,
@@ -102,6 +107,17 @@ function buildCompactNewsContext(discovery) {
     })),
     stories
   };
+}
+
+// Retirement is fail-closed even when the new component is absent or malformed.
+// Its audit score and legacy-derived prose must not become current AI evidence.
+function excludesRetiredRadarContext(radar) {
+  return radar !== null && typeof radar === 'object' && (
+    Object.hasOwn(radar, 'mainPressureReadout')
+    || Object.hasOwn(radar, 'advicePolicy')
+    || radar.scoreRole === 'legacy_model_audit_only'
+    || Object.hasOwn(radar, 'legacyModelAudit')
+  );
 }
 
 function buildRadarContext(radar) {
@@ -165,18 +181,29 @@ function buildHistoricalContext(summary) {
   };
 }
 
+export function bubbleEditorialSourceDigest(bubbleWatch) {
+  const snapshot = structuredClone(bubbleWatch);
+  if (snapshot.summary) {
+    delete snapshot.summary.weekly_editorial;
+    delete snapshot.summary.previous_weekly_editorial;
+  }
+  return createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
+}
+
 export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch, discovery, generatedAt = new Date().toISOString(), fixtureOnly = false }) {
   if (!['bubble-watch-v2', 'bubble-watch-v3'].includes(bubbleWatch?.contractVersion)) throw new Error('Bubble Watch input must use registered v2 or v3');
   if (!Array.isArray(bubbleWatch.indicators) || bubbleWatch.indicators.length !== 27) throw new Error('Bubble Watch input must contain 27 indicators');
   const summary = bubbleWatch.summary || {};
   const indicators = bubbleWatch.indicators;
-  const radarContext = buildRadarContext(radarData);
+  const radarExcluded = excludesRetiredRadarContext(radarData);
+  const radarContext = radarExcluded ? null : buildRadarContext(radarData);
   const oilContext = buildOilNewsContext(oilNewsWatch);
   const newsContext = buildCompactNewsContext(discovery);
   const staleIndicators = indicators.filter((indicator) => indicator.stale === true).map((indicator) => indicator.name_zh || indicator.id);
   const dataGaps = [
+    ...(radarExcluded ? ['全球雷达旧模型已退役，旧分数及派生文案不作为本期周评证据；OFR 压力读数未纳入本证据包，不据此推断当前全球风险水平。'] : []),
     ...(indicators.some(i => i.status === 'unknown') ? [`待确认指标: ${indicators.filter(i => i.status === 'unknown').map(i => i.name_zh || i.id).join('、')}；点值为空，保留固定23分母上下界。`] : []),
-    ...(Array.isArray(discovery?.dataGaps) ? discovery.dataGaps : []),
+    ...(Array.isArray(newsContext?.dataGaps) ? newsContext.dataGaps : []),
     ...(staleIndicators.length > 0 ? [`过期指标: ${staleIndicators.join('、')}`] : []),
     ...compactList(summary.narrative_plan?.limitations, 5, 260),
     ...compactList(oilContext?.limitationsZh, 2, 260)
@@ -202,12 +229,13 @@ export function buildWeeklyEditorialInput({ bubbleWatch, radarData, oilNewsWatch
     schemaVersion: INPUT_SCHEMA,
     generatedAt,
     asOfDate: bubbleWatch.as_of_date,
+    sourceSnapshotDigest: bubbleEditorialSourceDigest(bubbleWatch),
     inputMode: fixtureOnly ? 'fixture_compact_evidence_pack' : 'live_site_compact_evidence_pack',
     fixtureOnly,
     scoringSnapshot: buildEditorialScoringSnapshot(bubbleWatch),
     narrativeBaseline: {
       source: summary.verdict_desc_source,
-      verdictDescZh: compactText(summary.verdict_desc, 2800),
+      verdictDescZh: compactText(semanticNarrativeText(summary.verdict_desc, indicators), 2800),
       upstreamVerdictIncluded: false,
       upstreamSummaryAdopted: false
     },

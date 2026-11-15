@@ -5,9 +5,6 @@ import { readFileSync } from 'node:fs';
 
 const DESKTOP = { width: 1440, height: 1000 };
 const MOBILE = { width: 390, height: 844 };
-const OIL_THERMAL_WATCH = JSON.parse(
-  readFileSync('data/oil-thermal-watch.json', 'utf8'),
-);
 
 function capturePageErrors(page) {
   const errors = [];
@@ -83,7 +80,7 @@ for (const viewport of [DESKTOP, MOBILE]) {
       data.macroRiskEditorialPreviousIssue = null;
       await route.fulfill({ response, json: data });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#macro-risk-editorial')).toBeHidden();
     await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('data-editorial-state', 'deterministic-fallback');
@@ -168,7 +165,7 @@ test.describe('desktop smoke', () => {
       radarData.macroRiskEditorialLayer = buildApprovedMacroRiskEditorial(radarData, currentTimestamp);
       await route.fulfill({ response, json: radarData });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#issue-meta-issue')).toContainText('ISSUE v28.0.10');
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
@@ -199,20 +196,32 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#homepage-risk-engines .mini-card')).toHaveCount(6);
     await expect(page.locator('#homepage-macro-coherence .mc-row')).toHaveCount(7);
     await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
-    const thermalRequestDiagnostics = OIL_THERMAL_WATCH.aggregate.requestDiagnostics;
-    const completedThermalRequests = thermalRequestDiagnostics.logicalRequestCount
-      - thermalRequestDiagnostics.failedRequestCount;
-    await expect(page.locator('#odp-thermal-request-health')).toContainText(
-      `请求完成 ${completedThermalRequests}/${thermalRequestDiagnostics.logicalRequestCount}`,
-    );
-    await expect(page.locator('#odp-thermal-request-health')).toContainText(
-      `最终失败 ${thermalRequestDiagnostics.failedRequestCount}`,
-    );
-    await expect(page.locator('#odp-thermal-request-health')).toContainText('仅显示脱敏分类计数');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('自动下载源正常');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('命中');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('文档');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('不用于当前新闻信号');
+    // ADR-0087: legacy satellite data must not repopulate the retired display.
+    // News health above establishes the completed auxiliary render; primary-ready alone does not.
+    // The enclosing evidence fold is open, so hidden means retired, not collapsed.
+    const thermalSection = page.locator('.odp-energy-group:has(#odp-thermal-status)');
+    await expect(thermalSection).toHaveCount(1);
+    await expect(thermalSection).toHaveClass(/legacy-model-retired/u);
+    await expect(thermalSection).toHaveAttribute('hidden', '');
+    await expect(thermalSection).toHaveAttribute('inert', '');
+    await expect(thermalSection).toBeHidden();
+    await expect(thermalSection).toHaveCSS('display', 'none');
+    const retiredThermalIds = [
+      'odp-thermal-status', 'odp-thermal-source', 'odp-thermal-request-health',
+      'odp-thermal-window', 'odp-thermal-facility', 'odp-thermal-baseline-quality',
+      'odp-thermal-signal', 'odp-thermal-note',
+    ];
+    await expect(thermalSection.locator('[id^="odp-thermal-"]')).toHaveCount(retiredThermalIds.length);
+    for (const id of retiredThermalIds) {
+      const leaf = thermalSection.locator('#' + id);
+      await expect(leaf).toHaveCount(1);
+      await expect(leaf).toBeHidden();
+      await expect(leaf).toHaveText('—');
+    }
     expect(pageErrors).toEqual([]);
   });
 
@@ -229,7 +238,7 @@ test.describe('desktop smoke', () => {
         radarData.macroDrivers.consumerRetail.bofaStatus = state === 'future' ? 'live' : state;
         await route.fulfill({ response, json: radarData });
       });
-      await page.goto('/index.html');
+      await page.goto('/index.html?view=radar');
       await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
       const text = page.locator('#c4-consumer-bofa');
       if (state === 'missing' || state === 'future') {
@@ -254,7 +263,7 @@ test.describe('desktop smoke', () => {
       await route.fulfill({ response, json: history });
     });
 
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#trend-line-score')).toBeHidden();
     await expect(page.locator('#trend-line-score')).toHaveAttribute('points', '');
@@ -322,7 +331,7 @@ test.describe('mobile smoke', () => {
       await route.fulfill({ response, json: radarData });
     });
 
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
     await expect(page.locator('#macro-risk-editorial')).toBeHidden();
@@ -461,6 +470,9 @@ for (const viewport of [DESKTOP, MOBILE]) {
 for (const mutation of ['scorecard','checking-clock','same-day-model']) {
   test(`Bubble v3 rejects stale editorial binding: ${mutation}`,async({page})=>{
     const {output}=await buildQualifiedAbsFixture();
+    // This negative isolates current-issue eligibility. The builder now retains
+    // valid history independently; the companion cases below exercise that path.
+    delete output.summary.previous_weekly_editorial;
     const layer=buildApprovedBubbleWeeklyEditorial(output,new Date().toISOString());
     if(mutation==='scorecard') layer.output.scorecardSynthesisZh='主分为0%，缺口已全部按绿灯计入。';
     if(mutation==='checking-clock') layer.sourceScoringSnapshot.qualifiedEvidence.indicators.find(i=>i.id==='dc_abs_spread').provenance.checkedAt='2026-10-13T00:00:00Z';
@@ -471,5 +483,34 @@ for (const mutation of ['scorecard','checking-clock','same-day-model']) {
     await expect(page.locator('#weekly-editorial')).toHaveCount(0);
     await expect(page.locator('.verdict h2')).toHaveText(output.summary.verdict_label);
     await expect(page.locator('.big-number .value .bound')).toHaveCount(2);
+  });
+  test(`Bubble v3 preserves original history after rejecting current binding: ${mutation}`,async({page})=>{
+    const errors=capturePageErrors(page);
+    const {output,baseline}=await buildQualifiedAbsFixture();
+    const original=baseline['data/bubble-watch.json'].summary.weekly_editorial;
+    expect(output.summary.previous_weekly_editorial.editorial).toEqual(original);
+    const layer=buildApprovedBubbleWeeklyEditorial(output,new Date().toISOString());
+    layer.output.headlineZh='不得展示的本期绑定测试正文';
+    if(mutation==='scorecard') layer.output.scorecardSynthesisZh='主分为0%，缺口已全部按绿灯计入。';
+    if(mutation==='checking-clock') layer.sourceScoringSnapshot.qualifiedEvidence.indicators.find(i=>i.id==='dc_abs_spread').provenance.checkedAt='2026-10-13T00:00:00Z';
+    if(mutation==='same-day-model') layer.sourceScoringSnapshot.modelVersion='bubble-watch-v3-core23-shadow4-r2';
+    output.summary.weekly_editorial=layer;
+    await page.route('**/data/bubble-watch.json?*',route=>route.fulfill({json:output}));
+    await page.goto('/bubble-watch.html');
+    const historical=page.locator('#weekly-editorial');
+    await expect(historical).toHaveCount(1);
+    await expect(historical.locator('h3')).toHaveText(`上一期 AI 判读 · ${original.asOfDate}`);
+    await expect(historical).toContainText(`原数据日期 ${original.asOfDate}`);
+    await expect(historical).toContainText(`原生成时间 ${original.generatedAt.slice(0,19).replace('T',' ')} UTC`);
+    await expect(historical).toContainText(original.output.headlineZh);
+    await expect(historical).toContainText(original.output.leadZh);
+    await expect(historical).toContainText(original.output.scorecardSynthesisZh);
+    await expect(historical).toContainText('不代表本期判断');
+    await expect(page.locator('#root')).not.toContainText(layer.output.headlineZh);
+    await expect(page.locator('.verdict h2')).toHaveText(output.summary.verdict_label);
+    await expect(page.locator('.verdict p')).toHaveText(output.summary.verdict_desc);
+    await expect(page.locator('.big-number .value .bound')).toHaveCount(2);
+    await expect(page.locator('section.category article.indicator')).toHaveCount(27);
+    expect(errors).toEqual([]);
   });
 }

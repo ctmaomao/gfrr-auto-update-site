@@ -64,6 +64,9 @@ async function main() {
     generatedAt,
     target: 'data/bubble-watch.json.summary.weekly_editorial',
     weeklyEditorial: layer,
+    // Transient, bounded input evidence: retained for writer revalidation only.
+    // Never copied into the production layer or public source ledger.
+    writeEvidence: { input, review },
     productionImpact: {
       writesProductionData: false,
       modifiesBubbleWatchScoring: false,
@@ -75,7 +78,7 @@ async function main() {
   console.log(`Bubble Watch weekly editorial projection PASS (sources=${layer.sourceLedger.length}, review=${layer.qualityReview.status}, output=${options.projection})`);
 }
 
-main().catch((error) => {
-  console.error(`Bubble Watch weekly editorial projection failed: ${error.message}`);
+main().catch(() => {
+  console.error('Bubble Watch weekly editorial projection failed: details withheld; see safe diagnostic receipt');
   process.exitCode = 1;
 });

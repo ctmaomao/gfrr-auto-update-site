@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { buildAiInterpretationLayer } from '../../scripts/daily/rule-based-interpretation.mjs';
 import { stripTags, decodeHtmlEntities, htmlToText, parseFedSepMedians } from '../../scripts/bubble-watch/public-html-parsers.mjs';
+import { parseFredCsv, parseFredApiObservations } from '../../scripts/lib/fred-observations.mjs';
 
 const generatedAt = '2026-09-09T00:00:00.000Z';
 const complete = {
@@ -58,4 +60,50 @@ test('SEP parser preserves missing row and missing median failure boundaries', (
   const result = parseFedSepMedians('<tr><th>Federal funds rate</th><td>—</td><td>3.0</td></tr>');
   assert.equal(result.dotPlotMedianCurrentYear, null);
   assert.equal(result.dotPlotMedianNextYear, 3);
+});
+
+test('shared FRED parsers preserve observation order, duplicates, zero and negative values', () => {
+  const observations = [
+    { date: '2026-11-03', value: '0' },
+    { date: '2026-11-01', value: '-1.25' },
+    { date: '2026-11-03', value: ' 2.5 ' },
+    { date: '2026-11-04', value: '1e2' },
+  ];
+  const expected = observations.map(({ date, value }) => ({ date, value: Number(value) }));
+  assert.deepEqual(parseFredApiObservations(JSON.stringify({ observations })), expected);
+  for (const newline of ['\n', '\r\n']) {
+    const csv = ['DATE,VALUE', ...observations.map(({ date, value }) => `${date},${value}`)].join(newline);
+    assert.deepEqual(parseFredCsv(`${csv}${newline}`), expected);
+  }
+});
+
+test('shared FRED parsers skip missing observations and nonfinite numbers without fabricating rows', () => {
+  const observations = [
+    null, {}, { date: '', value: '1' }, { date: '2026-11-01' },
+    ...['.', '', ' ', 'NaN', 'Infinity', '-Infinity', 'not-a-number']
+      .map(value => ({ date: '2026-11-01', value })),
+  ];
+  assert.deepEqual(parseFredApiObservations(JSON.stringify({ observations })), []);
+  const csv = 'DATE,VALUE\n,1\n2026-11-01\n2026-11-01,.\n2026-11-01,\n2026-11-01, \n2026-11-01,NaN\n2026-11-01,Infinity\n2026-11-01,-Infinity\n2026-11-01,not-a-number';
+  assert.deepEqual(parseFredCsv(csv), []);
+  assert.deepEqual(parseFredCsv(''), []);
+  assert.deepEqual(parseFredCsv('DATE,VALUE'), []);
+  assert.deepEqual(parseFredApiObservations('{"observations":[]}'), []);
+});
+
+test('shared FRED API parser preserves malformed JSON and payload failures', () => {
+  assert.throws(() => parseFredApiObservations('{'), SyntaxError);
+  for (const payload of [null, {}, [], { observations: null }, { observations: {} }]) {
+    assert.throws(() => parseFredApiObservations(JSON.stringify(payload)), {
+      name: 'Error', message: 'FRED API returned invalid observations payload',
+    });
+  }
+});
+
+test('Daily and realtime use the same FRED parsers without importing either executable', () => {
+  for (const name of ['run-daily-pipeline.mjs', 'run-realtime.mjs']) {
+    const source = readFileSync(new URL(`../../scripts/${name}`, import.meta.url), 'utf8');
+    assert.match(source, /import \{ parseFredCsv, parseFredApiObservations \} from '\.\/lib\/fred-observations\.mjs';/);
+    assert.doesNotMatch(source, /function parseFred(?:Csv|ApiObservations)\(/);
+  }
 });

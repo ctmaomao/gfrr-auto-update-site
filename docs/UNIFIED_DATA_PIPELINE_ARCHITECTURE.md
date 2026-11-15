@@ -235,3 +235,7 @@ Implemented boundary:
 - `realtime_worker_layer` remains non-primary for weekly-history building.
 - `github_actions_backup_validation_layer` still cannot bypass sanitizer or writer approval.
 - No live fetch, source approval, production write, workflow change, history write, or calculation is introduced.
+
+## Bubble market observation extension (2026-11-14)
+
+The existing daily-history credit workflow also owns a separate dated Bubble market display snapshot in `daily_history_layer`; its optional page rendering belongs to `frontend_display_layer`. Existing public sources only, no new scoring/AI pipeline. [Scope and clock/resource contract](BUBBLE_INDEPENDENT_MARKET_OBSERVATIONS.md).

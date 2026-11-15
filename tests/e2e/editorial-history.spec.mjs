@@ -27,7 +27,7 @@ for (const width of [1440, 390]) {
       }
       await route.fulfill({ response, json: data });
     });
-    await page.goto('/index.html');
+    await page.goto('/index.html?view=radar');
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
     await expect(page.locator('#macro-risk-editorial')).toBeHidden();
     await expect(page.locator('.macro-editorial-previous-notice')).toHaveCount(0);
@@ -55,7 +55,7 @@ test('unqualified history remains hidden with deterministic evidence available',
     data.macroRiskEditorialPreviousIssue.qualityReview.status = 'fail';
     await route.fulfill({ response, json: data });
   });
-  await page.goto('/index.html');
+  await page.goto('/index.html?view=radar');
   await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/u);
   await expect(page.locator('#macro-risk-editorial')).toBeHidden();
   await expect(page.locator('#macro-professional-evidence')).toHaveAttribute('open', '');

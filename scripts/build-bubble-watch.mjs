@@ -1,7 +1,15 @@
+import { parseCapeAtom, parseStockAnalysisMetricDate, parseBubbleFredRows, requireDailyObservation } from './bubble-watch/source-observation-inputs.mjs';
+import { alignedEtfSpread } from './bubble-watch/aligned-etf-spread.mjs';
+import { computeEvidenceSimilarity } from './bubble-watch/evidence-similarity.mjs';
+import { syncUpstreamObservation, buildEnterpriseObservationProjection } from './bubble-watch/source-observation.mjs';
+import { buildArrGap, parseArrStaleFailure, ARR_MAX_AGE_DAYS } from './bubble-watch/arr-evidence.mjs';
+import { signedSpreadNote, enterpriseSurveyNote, evidenceAwareNote, indicatorSemanticLabels, broadHyNote, RPO_SCOPE_ZH } from './bubble-watch/evidence-wording.mjs';
+import { collectQualifiedCashFlowConcept, qualifyMirrorCashFlows, requireCashFlowPeriodFloor, alignCashFlowPeriods, CASH_CAPEX_TAGS, OPERATING_CASH_FLOW_TAGS } from './bubble-watch/cash-flow-periods.mjs';
+import { preservePreviousWeeklyIssue } from './bubble-watch/previous-weekly-issue.mjs';
 import { collectQuarterlyCapexPanel } from './bubble-watch/capex-quarterly-panel.mjs';
 import { collectOctoberCapexPanel } from './bubble-watch/capex-october-panel.mjs';
 import { buildQuarterlyCapexIndicator } from './bubble-watch/capex-quarterly-indicator.mjs';
-import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores } from './bubble-watch/evidence-score-contract.mjs';
+import { METHOD_ORDER, evidenceModelVersion, replayEvidenceScores, validateEvidenceScoreFields } from './bubble-watch/evidence-score-contract.mjs';
 import { qualifyDataCenterSpread } from './bubble-watch/qualified-abs.mjs';
 import { collectInsiderWindows } from './bubble-watch/insider-window-collector.mjs';
 import { buildQualifiedInsiderIndicator } from './bubble-watch/insider-indicator.mjs';
@@ -31,6 +39,8 @@ import fs from 'node:fs';
 import { qualifiedEdgarLtmRevenue, qualifiedMirrorLtmRevenue } from './bubble-watch/ltm-revenue.mjs';
 import { inspectNvdaNumerator, qualifyNvdaRatio, buildNvdaGap } from './bubble-watch/nvda-ratio-evidence.mjs';
 import { withTavilyBudget } from './lib/tavily-budget.mjs';
+import { withBraveBudget } from './lib/brave-budget.mjs';
+import { createSearchKeyPool } from './lib/search-key-pool.mjs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
 import os from 'node:os';
@@ -89,7 +99,7 @@ const QUALIFIED_INDICATOR_IDS = METHOD_ORDER.slice(0, EVIDENCE_REVISION);
 const QUALIFIED_REFRESH_ONLY = process.argv.includes('--refresh-qualified-only');
 const QUALIFIED_PUBLISH = process.argv.includes('--publish-qualified');
 if (QUALIFIED_PUBLISH && !QUALIFIED_REFRESH_ONLY) throw new Error('Qualified publish requires --refresh-qualified-only');
-if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4,5].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3, 4 or 5');
+if (QUALIFIED_REFRESH_ONLY && ![1,2,3,4,5,6].includes(EVIDENCE_REVISION)) throw new Error('Qualified-only refresh requires reviewed revision 1, 2, 3, 4, 5 or 6');
 const BUBBLE_WATCH_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-v3' : 'bubble-watch-v2';
 const BUBBLE_WATCH_HISTORY_CONTRACT_VERSION = EVIDENCE_REVISION ? 'bubble-watch-history-v3' : 'bubble-watch-history-v2';
 const SCORING_MODEL_VERSION = EVIDENCE_REVISION ? evidenceModelVersion(EVIDENCE_REVISION) : 'bubble-watch-v2-core23-shadow4';
@@ -150,7 +160,7 @@ const CATEGORY_ORDER = [
 // 27 项指标静态定义。axis 用于 Stage × Trigger 第二层聚合。
 const INDICATOR_DEFS = [
   { id: 'cape', axis: 'stage', category: 'valuation', name_en: 'Shiller CAPE', name_zh: 'CAPE 周期调整 PE', threshold_text: '>35 红 / 25-35 黄 / <25 绿', source_name: 'multpl.com / GuruFocus', mode: 'auto' },
-  { id: 'top5_weight', axis: 'stage', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'SPY holdings (stockanalysis / slickcharts)', mode: 'auto' },
+  { id: 'top5_weight', axis: 'stage', category: 'valuation', name_en: 'S&P 500 Top-5 Weight', name_zh: '前 5 大权重占比', threshold_text: '>25% 红 / 18-25% 黄 / <18% 绿', source_name: 'StockAnalysis SPY holdings', mode: 'auto' },
   { id: 'nvda_fpe', axis: 'stage', category: 'valuation', name_en: 'NVDA Forward P/E', name_zh: 'NVDA 远期 PE', threshold_text: '>40 红 / 30-40 黄 / <30 绿', source_name: 'GuruFocus / StockAnalysis', mode: 'auto' },
   { id: 'private_secondary_marks', axis: 'trigger', category: 'valuation', name_en: 'AI Private Secondary Marks', name_zh: 'AI 私募二级市场标价', threshold_text: '折价/下跌=红 / 溢价收窄+卖压=黄 / 溢价稳定或扩大=绿', source_name: 'Forge Global / Caplight / Hiive', mode: 'curated' },
   { id: 'hyperscaler_capex_yoy', axis: 'stage', category: 'capital', name_en: 'Hyperscaler Capex YoY', name_zh: 'Hyperscaler 资本开支增速', threshold_text: '指引下调=红 / 加速=黄 / 稳健=绿', source_name: 'SEC EDGAR / stockanalysis 季报镜像', mode: 'auto' },
@@ -158,9 +168,9 @@ const INDICATOR_DEFS = [
   { id: 'vc_ai_share', axis: 'stage', category: 'capital', name_en: 'AI / Total VC Funding', name_zh: 'AI 占 VC 投资比重', threshold_text: '>50% 红 / 30-50% 黄 / <30% 绿', source_name: 'Crunchbase / PitchBook(季度研究口径)', mode: 'curated' },
   { id: 'nvda_invest_revenue', axis: 'stage', category: 'capital', name_en: 'NVDA Customer Invest / Rev', name_zh: 'NVDA 客户投资/收入比', threshold_text: '>30% 红 / 15-30% 黄 / <15% 绿 (Lucent 99 峰值 24%)', source_name: '公开披露承诺 ÷ EDGAR/stockanalysis LTM 收入', mode: 'auto' },
   { id: 'breadth_50d', axis: 'trigger', category: 'market_structure', name_en: '% Above 50-Day MA', name_zh: 'S&P 50 日均线上方比例', threshold_text: '<40% 红 / 40-60% 黄 / >60% 绿', source_name: 'Barchart $S5FI / Yahoo Chart × Wikipedia fallback', mode: 'auto' },
-  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '>10% 红 / 5-10% 黄 / <5% 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
+  { id: 'spy_vs_rsp_6m', axis: 'trigger', category: 'market_structure', name_en: 'SPY vs RSP 6M Spread', name_zh: '市值加权 vs 等权重', threshold_text: '差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿', source_name: 'Yahoo Chart(SPY/RSP 6 个月)', mode: 'auto' },
   { id: 'insider_sell_buy', axis: 'trigger', category: 'market_structure', name_en: 'AI Insider Sell/Buy Ratio', name_zh: 'AI 龙头内部人卖买比', threshold_text: '>20x=红 / 5-20x=黄 / <5x=绿 (2000 峰值 23x)', source_name: 'SEC EDGAR Form 4', mode: 'auto' },
-  { id: 'ai_ipo_pipeline', axis: 'stage', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 一级市场发行', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
+  { id: 'ai_ipo_pipeline', axis: 'stage', category: 'market_structure', name_en: 'AI IPO/SPAC Pipeline', name_zh: 'AI 发行/待发行管线', threshold_text: '洪流=红 / 升温=黄 / 平静=绿', source_name: '一级市场公开报道(编辑口径)', mode: 'curated' },
   { id: 'hy_oas', axis: 'trigger', category: 'credit', name_en: 'HY OAS Spread', name_zh: '高收益债利差', threshold_text: '>500 红 / 350-500 黄 / <350 绿', source_name: 'ICE BofA HY Index (FRED)', mode: 'auto' },
   { id: 'dc_abs_spread', axis: 'trigger', category: 'credit', name_en: 'Data Center ABS Spread', name_zh: '数据中心 ABS 利差', threshold_text: '走阔 50bps+ = 红 / 稳定 = 黄 / 收窄 = 绿', source_name: 'Green Street News / 公开发行定价(编辑口径)', mode: 'curated' },
   { id: 'debt_capex_ratio', axis: 'stage', category: 'credit', name_en: 'Debt / Capex Flow Ratio', name_zh: '全口径外部融资/Capex 比', threshold_text: '>60% 红 / 30-60% 黄 / <30% 绿', source_name: 'Morgan Stanley public research / Wind paid cross-check', mode: 'curated' },
@@ -170,7 +180,7 @@ const INDICATOR_DEFS = [
   { id: 'gpu_rental_price', axis: 'trigger', category: 'fundamentals', name_en: 'GPU Rental Spot Price', name_zh: 'GPU 租赁现货价', threshold_text: '环比跌>15%/供过于求=红 / 阴跌=黄 / 稳定或上涨=绿', source_name: 'Thunder Compute / getdeploying', mode: 'curated' },
   { id: 'arr_2nd_deriv', axis: 'trigger', category: 'fundamentals', name_en: 'AI ARR 2nd Derivative', name_zh: 'AI 收入增速的二阶导', threshold_text: '减速=红 / 平稳=黄 / 加速=绿', source_name: 'Sacra / 公开报道(研究口径)', mode: 'curated' },
   { id: 'enterprise_deploy', axis: 'stage', category: 'fundamentals', name_en: 'Enterprise Production Deploy', name_zh: '企业生产环境部署率', threshold_text: '<50%=红 / 50-65%=黄 / >65%=绿', source_name: 'McKinsey / Deloitte(季度调查口径)', mode: 'curated' },
-  { id: 'cloud_rpo_growth', axis: 'trigger', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商递延收入增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
+  { id: 'cloud_rpo_growth', axis: 'trigger', category: 'fundamentals', name_en: 'Cloud RPO Growth', name_zh: '云厂商剩余履约义务（RPO）增速', threshold_text: '负增长=红 / 减速=黄 / 加速=绿', source_name: 'SEC EDGAR / StockAnalysis RPO metrics', mode: 'auto' },
   { id: 'frontier_progress', axis: 'trigger', category: 'fundamentals', name_en: 'Frontier Model Progress', name_zh: '前沿模型能力进展', threshold_text: '停滞=红 / 放缓=黄 / 正常或加速=绿', source_name: 'METR / Epoch AI / ARC Prize', mode: 'curated' },
   { id: 'accounting_events', axis: 'trigger', category: 'macro', name_en: 'Round-Tripping / Accounting', name_zh: '会计造假/round-tripping 事件', threshold_text: '任何=红 / 调查=黄 / 无=绿', source_name: 'SEC / 公开执法报道(编辑口径)', mode: 'curated' },
   { id: 'fed_policy', axis: 'trigger', category: 'macro', name_en: 'Fed Policy Direction', name_zh: 'Fed 政策方向', threshold_text: '加息=红 / 通胀压力=黄 / 降息=绿', source_name: 'Fed SEP / Fed funds futures / FRED', mode: 'auto' },
@@ -372,9 +382,7 @@ async function fredObservations(seriesId, limit) {
         limit: String(limit)
       });
       const json = await fetchWithTimeout(`https://api.stlouisfed.org/fred/series/observations?${params}`, { asJson: true });
-      const rows = (json.observations || [])
-        .filter((o) => o.value !== '.' && Number.isFinite(Number(o.value)))
-        .map((o) => ({ date: o.date, value: Number(o.value) }));
+      const rows = parseBubbleFredRows(json.observations, isoDate());
       if (!rows.length) throw new Error(`FRED ${seriesId} API 无有效观测`);
       return rows; // 倒序:rows[0] 最新
     } catch (error) {
@@ -399,15 +407,10 @@ async function fredGraphCsvObservations(seriesId, limit) {
     headers: { 'User-Agent': UA, Accept: 'text/csv,*/*' },
     timeoutMs: 20000
   });
-  const rows = csv.trim().split(/\r?\n/u)
-    .slice(1)
-    .map((line) => {
-      const [date, value] = line.split(',');
-      return { date: String(date || '').trim(), value: Number(value) };
-    })
-    .filter((row) => /^\d{4}-\d{2}-\d{2}$/u.test(row.date) && Number.isFinite(row.value))
-    .slice(-limit)
-    .reverse();
+  const rows = parseBubbleFredRows(csv.trim().split(/\r?\n/u).slice(1).map(line => {
+    const [date, value] = line.split(',');
+    return { date: String(date || '').trim(), value };
+  }), isoDate()).slice(0, limit);
   if (!rows.length) throw new Error(`FRED ${seriesId} 无有效观测`);
   return rows; // 倒序:rows[0] 最新
 }
@@ -707,6 +710,22 @@ async function fetchSecAiIpoFilingConfirmations(ctx = {}) {
   };
 }
 
+// Cache only within this build. Every candidate tag is evaluated independently;
+// a nonempty historical tag can never mask a newer qualified cash-flow concept.
+const EDGAR_CASH_FLOW_CACHE = new Map();
+const EDGAR_CASH_FLOW_PERIODS = new Map();
+async function edgarCashFlow(cik, kind) {
+  return collectQualifiedCashFlowConcept({ cik, kind, asOfDate: isoDate(),
+    observePeriod: end => { if (end > (EDGAR_CASH_FLOW_PERIODS.get(cik) || '')) EDGAR_CASH_FLOW_PERIODS.set(cik, end); },
+    tags: kind === 'capex' ? CASH_CAPEX_TAGS : OPERATING_CASH_FLOW_TAGS,
+    fetchConcept: url => {
+      if (!EDGAR_CASH_FLOW_CACHE.has(url)) EDGAR_CASH_FLOW_CACHE.set(url,
+        fetchWithTimeout(url, { asJson: true, headers: { 'User-Agent': EDGAR_UA, Accept: 'application/json' } }));
+      return EDGAR_CASH_FLOW_CACHE.get(url);
+    }
+  });
+}
+
 // 现金流类(duration)概念:10-Q 报 YTD 累计,需差分出单季值
 function deriveQuarterlySeries(units) {
   const byKey = new Map();
@@ -761,16 +780,11 @@ function trailing4qYoy(quarters) {
 }
 
 async function fetchMultplCape() {
-  const html = await fetchWithTimeout('https://www.multpl.com/shiller-pe', { headers: { 'User-Agent': BROWSER_UA } });
-  const text = stripTags(html);
-  const m = text.match(/Current Shiller PE Ratio[^0-9]{0,40}([0-9]{1,3}\.[0-9]{1,2})/iu);
-  if (!m) throw new Error('multpl CAPE 解析失败');
-  const v = Number(m[1]);
-  if (!(v > 5 && v < 100)) throw new Error(`multpl CAPE 值越界: ${v}`);
-  return v;
+  const xml = await fetchWithTimeout('https://www.multpl.com/shiller-pe/atom', { headers: { 'User-Agent': BROWSER_UA } });
+  return parseCapeAtom(xml, isoDate());
 }
 
-// S&P 500 权重表:主源 stockanalysis SPY holdings,备源 slickcharts
+// SPY holdings: only a metric-dated table may replace the existing dated snapshot.
 function parseHoldingsRows(html, symbolRe) {
   const rows = [];
   const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gu;
@@ -788,21 +802,13 @@ function parseHoldingsRows(html, symbolRe) {
 }
 
 async function fetchSp500Holdings() {
-  let rows = [];
-  try {
-    const html = await fetchWithTimeout('https://stockanalysis.com/etf/spy/holdings/', { headers: { 'User-Agent': BROWSER_UA } });
-    rows = parseHoldingsRows(html, /href="\/stocks\/([a-z][a-z0-9.\-]{0,9})\/"/u);
-  } catch (error) {
-    console.warn(`[bubble-watch] stockanalysis SPY holdings 失败: ${error.message}`);
-  }
-  if (rows.length < 20) {
-    const html = await fetchWithTimeout('https://www.slickcharts.com/sp500', { headers: { 'User-Agent': BROWSER_UA, Accept: 'text/html' } });
-    rows = parseHoldingsRows(html, /\/symbol\/([A-Z][A-Z0-9.\-]{0,9})/u);
-  }
-  if (rows.length < 20) throw new Error(`S&P 权重表解析行数不足 (${rows.length})`);
+  const html = await fetchWithTimeout('https://stockanalysis.com/etf/spy/holdings/', { headers: { 'User-Agent': BROWSER_UA } });
+  const observationDate = parseStockAnalysisMetricDate(html, 'holdings', isoDate());
+  const rows = parseHoldingsRows(html, /href="\/stocks\/([a-z][a-z0-9.\-]{0,9})\/"/u);
+  if (rows.length < 20) throw new Error(`SPY 权重表解析行数不足 (${rows.length})`);
   const top5 = rows.slice(0, 5).reduce((a, r) => a + r.weight, 0);
   if (!(top5 > 10 && top5 < 60)) throw new Error(`top5 权重越界: ${top5}`);
-  return rows;
+  return { rows, observationDate };
 }
 
 // 全市场成份股名单(Wikipedia List of S&P 500 companies,~503 只)
@@ -980,17 +986,6 @@ function trailing4qCapexOcfCoverage(rowsOldestFirst) {
   };
 }
 
-function saT4qCapexOcfCoverage(ocfNewestFirst, capexNewestFirst) {
-  const n = Math.min(ocfNewestFirst.length, capexNewestFirst.length);
-  if (n < 8) return null;
-  const rowsOldestFirst = Array.from({ length: n }, (_, i) => ({
-    end: `stockanalysis-index-${i}`,
-    ocf: ocfNewestFirst[i],
-    capex: Math.abs(capexNewestFirst[i])
-  })).reverse();
-  return trailing4qCapexOcfCoverage(rowsOldestFirst);
-}
-
 function classifyHyperscalerCashFlowCoverage(ratioPct, over100Count) {
   if (ratioPct >= 75 || over100Count >= 2) return 'red';
   if (ratioPct >= 60 || over100Count >= 1) return 'yellow';
@@ -1091,7 +1086,7 @@ async function fetchNvdaForwardPe() {
     const m = stripTags(html).match(re) || html.match(re);
     if (m) {
       const v = Number(m[1]);
-      if (v > 3 && v < 200) return v;
+      if (v > 3 && v < 200) return { value: v, observationDate: parseStockAnalysisMetricDate(html, 'statistics', isoDate()) };
     }
   }
   throw new Error('stockanalysis NVDA forward PE 解析失败');
@@ -1288,7 +1283,7 @@ function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote, failures = []) {
     status,
     ...(observationDates.length === rows.length ? { as_of: observationDates[0] } : {}),
     value_display: fmtPct(yoy, 0, true),
-    note: `${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${coverageNote}${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
+    note: `${RPO_SCOPE_ZH}${sourceTag}实拉 ${rows.map((c) => c.ticker).join('/')} RPO / 云 backlog 合计 $${(latestYoySum.now / 1e12).toFixed(2)}T,同比 ${fmtPct(yoy, 1, true)}${prevYoy !== null ? `(上一披露期同比 ${fmtPct(prevYoy, 1, true)},${decel ? '边际减速' : '未见减速'})` : ''};分公司:${companySummary}。${coverageNote}${sourceNote}判级:负增长=红 / 减速=黄 / 加速=绿`,
     detail: {
       yoyPct: yoy,
       prevYoyPct: prevYoy,
@@ -1311,18 +1306,20 @@ function summarizeRpoGrowthPanel(rows, sourceTag, sourceNote, failures = []) {
 
 const autoBuilders = {
   async cape() {
-    const v = await retry(fetchMultplCape, 'multpl CAPE');
+    const observation = await retry(fetchMultplCape, 'multpl CAPE');
+    const v = observation.value;
     const status = classifyNumeric(v, 35, 25);
     const distancePct = (((44.19 - v) / 44.19) * 100).toFixed(0);
     return {
       status,
       value_display: v.toFixed(1),
       note: `multpl.com 实时抓取 CAPE = ${v.toFixed(2)},距 2000 年互联网泡沫峰值 44.19 约 ${distancePct}%;earnings yield ≈ ${(100 / v).toFixed(1)}%。阈值:>35 红 / 25-35 黄 / <25 绿`,
-      detail: { cape: v }
+      as_of: observation.observationDate,
+      detail: { cape: v, observationDate: observation.observationDate, sourceTimestamp: observation.sourceTimestamp }
     };
   },
   async top5_weight(ctx) {
-    const rows = await retry(fetchSp500Holdings, 'S&P 500 holdings');
+    const { rows, observationDate } = await retry(fetchSp500Holdings, 'S&P 500 holdings');
     ctx.holdingsRows = rows;
     const top5 = rows.slice(0, 5);
     const sum = top5.reduce((a, r) => a + r.weight, 0);
@@ -1331,17 +1328,19 @@ const autoBuilders = {
       status,
       value_display: `≈${sum.toFixed(1)}%`,
       note: `SPY 持仓表实时抓取:前 5 大权重 ${top5.map((r) => r.symbol).join(' / ')} 合计 ≈${sum.toFixed(1)}%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿`,
-      detail: { top5: top5.map((r) => ({ symbol: r.symbol, weight: r.weight })), sum }
+      as_of: observationDate,
+      detail: { observationDate, top5: top5.map((r) => ({ symbol: r.symbol, weight: r.weight })), sum }
     };
   },
   async nvda_fpe() {
-    const v = await retry(fetchNvdaForwardPe, 'stockanalysis NVDA fPE');
+    const { value: v, observationDate } = await retry(fetchNvdaForwardPe, 'stockanalysis NVDA fPE');
     const status = classifyNumeric(v, 40, 30);
     return {
       status,
       value_display: `≈${v.toFixed(0)}x`,
       note: `StockAnalysis 实时抓取 NVDA 远期 PE ≈ ${v.toFixed(1)}x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿`,
-      detail: { forwardPe: v }
+      as_of: observationDate,
+      detail: { forwardPe: v, observationDate }
     };
   },
   async hyperscaler_capex_yoy() {
@@ -1350,9 +1349,9 @@ const autoBuilders = {
     let sourceTag = 'SEC EDGAR';
     try {
       for (const ticker of companies) {
-        const units = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
-        const yoy = trailing4qYoy(deriveQuarterlySeries(units));
-        if (yoy) perCompany.push({ ticker, ...yoy });
+        const capex = await edgarCashFlow(EDGAR_CIK[ticker], 'capex');
+        const yoy = trailing4qYoy(capex.quarters.map(q => ({ end: q.end, val: q.value })));
+        if (yoy) perCompany.push({ ticker, ...yoy, sourceEvidence: capex });
       }
     } catch (error) {
       console.warn(`[bubble-watch] EDGAR capex 链失败,改走 stockanalysis 镜像: ${error.message}`);
@@ -1363,9 +1362,11 @@ const autoBuilders = {
       perCompany = [];
       for (const ticker of companies) {
         const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
-        const capex = parseSaQuarterlyRow(html, 'Capital Expenditures').map((v) => Math.abs(v));
-        const yoy = saT4qYoy(capex);
-        if (yoy) perCompany.push({ ticker, ...yoy });
+        const { capex } = qualifyMirrorCashFlows(html, isoDate(), { requireOcf: false });
+        requireCashFlowPeriodFloor(capex, EDGAR_CASH_FLOW_PERIODS.get(EDGAR_CIK[ticker]));
+        capex.source.url = `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/financials/cash-flow-statement/?p=quarterly`;
+        const yoy = trailing4qYoy(capex.quarters.map(q => ({ end: q.end, val: q.value })));
+        if (yoy) perCompany.push({ ticker, ...yoy, sourceEvidence: capex });
       }
     }
     if (perCompany.length < 3) throw new Error(`capex 可用公司不足 (${perCompany.length}/4)`);
@@ -1376,8 +1377,9 @@ const autoBuilders = {
     return {
       status,
       value_display: fmtPct(yoyPct, 0, true),
+      as_of: perCompany.map(c => c.latestEnd).sort()[0],
       note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季 capex 合计 $${(now / 1e9).toFixed(0)}B,同比 ${fmtPct(yoyPct, 1, true)}(上年同期 $${(prev / 1e9).toFixed(0)}B);开支仍在${yoyPct >= 15 ? '加速扩张' : yoyPct >= 0 ? '稳健区间' : '收缩——指引下调风险落地'}。判级:实际收缩=红 / 同比 ≥15% 加速=黄 / 稳健=绿`,
-      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, yoyPct: Number(c.yoyPct.toFixed(1)) })) }
+      detail: { yoyPct, source: sourceTag, perCompany: perCompany.map((c) => ({ ticker: c.ticker, yoyPct: Number(c.yoyPct.toFixed(1)), latestEnd: c.latestEnd, sourceEvidence: c.sourceEvidence })) }
     };
   },
   async mag4_fcf_yoy() {
@@ -1386,14 +1388,10 @@ const autoBuilders = {
     let sourceTag = 'SEC EDGAR';
     try {
       for (const ticker of companies) {
-        const ocfUnits = await edgarConcept(EDGAR_CIK[ticker], ['NetCashProvidedByUsedInOperatingActivities', 'NetCashProvidedByUsedInOperatingActivitiesContinuingOperations']);
-        const capexUnits = await edgarConcept(EDGAR_CIK[ticker], ['PaymentsToAcquirePropertyPlantAndEquipment', 'PaymentsToAcquireProductiveAssets']);
-        const capexQ = new Map(deriveQuarterlySeries(capexUnits).map((q) => [q.end, Math.abs(q.val)]));
-        const rows = deriveQuarterlySeries(ocfUnits)
-          .filter((q) => capexQ.has(q.end))
-          .map((q) => ({ end: q.end, ocf: q.val, capex: capexQ.get(q.end) }));
-        const coverage = trailing4qCapexOcfCoverage(rows);
-        if (coverage) perCompany.push({ ticker, ...coverage });
+        const ocf = await edgarCashFlow(EDGAR_CIK[ticker], 'ocf');
+        const capex = await edgarCashFlow(EDGAR_CIK[ticker], 'capex');
+        const coverage = trailing4qCapexOcfCoverage(alignCashFlowPeriods(ocf, capex));
+        if (coverage) perCompany.push({ ticker, ...coverage, sourceEvidence: { ocf, capex } });
       }
     } catch (error) {
       console.warn(`[bubble-watch] EDGAR Big5 cash-flow coverage 链失败,改走 stockanalysis 镜像: ${error.message}`);
@@ -1404,10 +1402,12 @@ const autoBuilders = {
       perCompany = [];
       for (const ticker of companies) {
         const html = await retry(() => fetchSaFinancialPage(ticker, 'cash-flow-statement/'), `SA cash-flow ${ticker}`);
-        const ocf = parseSaQuarterlyRow(html, 'Operating Cash Flow');
-        const capex = parseSaQuarterlyRow(html, 'Capital Expenditures'); // 负值
-        const coverage = saT4qCapexOcfCoverage(ocf, capex);
-        if (coverage) perCompany.push({ ticker, ...coverage });
+        const { ocf, capex } = qualifyMirrorCashFlows(html, isoDate());
+        requireCashFlowPeriodFloor(capex, EDGAR_CASH_FLOW_PERIODS.get(EDGAR_CIK[ticker]));
+        const url = `https://stockanalysis.com/stocks/${ticker.toLowerCase()}/financials/cash-flow-statement/?p=quarterly`;
+        ocf.source.url = url; capex.source.url = url;
+        const coverage = trailing4qCapexOcfCoverage(alignCashFlowPeriods(ocf, capex));
+        if (coverage) perCompany.push({ ticker, ...coverage, sourceEvidence: { ocf, capex } });
       }
     }
     if (perCompany.length !== companies.length) throw new Error(`Big5 cash-flow coverage 可用公司不足 (${perCompany.length}/${companies.length})`);
@@ -1423,6 +1423,7 @@ const autoBuilders = {
     return {
       status,
       value_display: `≈${ratioPct.toFixed(0)}%`,
+      as_of: perCompany.map(c => c.latestEnd).sort()[0],
       note: `${sourceTag}实拉 ${perCompany.map((c) => c.ticker).join('/')} 滚动 4 季经营现金流 $${(nowOcf / 1e9).toFixed(0)}B、cash capex $${(nowCapex / 1e9).toFixed(0)}B,capex/OCF ≈${ratioPct.toFixed(1)}%(上年同期 ${prevRatioPct.toFixed(1)}%,变化 ${fmtPct(ratioChangePct, 1, true)});${over100Count}/5 家 capex 已超过 OCF。该口径采用 Epoch/Apollo 式 hyperscaler 现金流覆盖率,比单纯 FCF YoY 更敏感。阈值:≥75%或2家>100%=红 / 60-75%或1家>100%=黄 / <60%=绿`,
       detail: {
         ratioPct,
@@ -1435,6 +1436,8 @@ const autoBuilders = {
         adoptedModel: 'epoch_apollo_big5_cash_capex_to_ocf_coverage',
         perCompany: perCompany.map((c) => ({
           ticker: c.ticker,
+          latestEnd: c.latestEnd,
+          sourceEvidence: c.sourceEvidence,
           ocfTtmB: Number((c.nowOcf / 1e9).toFixed(1)),
           capexTtmB: Number((c.nowCapex / 1e9).toFixed(1)),
           fcfTtmB: Number((c.fcfNow / 1e9).toFixed(1)),
@@ -1525,16 +1528,17 @@ const autoBuilders = {
     };
   },
   async spy_vs_rsp_6m() {
-    const [spy, rsp] = [await retry(() => yahooCloses('SPY', '6mo'), 'Yahoo SPY'), await retry(() => yahooCloses('RSP', '6mo'), 'Yahoo RSP')];
-    const ret = (closes) => ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;
-    const spread = ret(spy) - ret(rsp);
+    const [spy, rsp] = [await retry(() => yahooCloses('SPY', '6mo', true), 'Yahoo SPY'), await retry(() => yahooCloses('RSP', '6mo', true), 'Yahoo RSP')];
+    const detail = alignedEtfSpread(spy, rsp, isoDate());
+    const { spread, spyRet, rspRet, observationDate } = detail;
     const abs = Math.abs(spread);
     const status = abs > 10 ? 'red' : abs >= 5 ? 'yellow' : 'green';
     return {
       status,
-      value_display: fmtPct(spread, 1, true),
-      note: `Yahoo Chart 实算 6 个月回报:SPY ${fmtPct(ret(spy), 1, true)} vs 等权重 RSP ${fmtPct(ret(rsp), 1, true)},市值加权领先 ${fmtPct(spread, 1, true)}——${abs >= 5 ? '头部独涨、广度未跟上' : '头部与平均股差距可控'}。阈值:>10% 红 / 5-10% 黄 / <5% 绿`,
-      detail: { spyRet: ret(spy), rspRet: ret(rsp), spread }
+      value_display: `${spread > 0 ? '+' : ''}${spread.toFixed(1)} 个百分点`,
+      as_of: observationDate,
+      note: signedSpreadNote(spyRet, rspRet),
+      detail
     };
   },
   async insider_sell_buy(ctx) {
@@ -1613,12 +1617,14 @@ const autoBuilders = {
   },
   async hy_oas() {
     const rows = await retry(() => fredObservations('BAMLH0A0HYM2', 10), 'FRED HY OAS');
+    requireDailyObservation(rows[0].date, isoDate(), 'hy_oas');
     const bps = Math.round(rows[0].value * 100);
     const status = bps > 500 ? 'red' : bps >= 350 ? 'yellow' : 'green';
     return {
       status,
       value_display: `${bps} bps`,
-      note: `FRED 实拉 ICE BofA 高收益债 OAS = ${rows[0].value.toFixed(2)}%(${bps} bps,${rows[0].date});长期均值约 394 bps——信用市场对 AI capex 烧钱${bps < 350 ? '仍未定价压力,是当前最支撑多头的指标' : '开始定价压力'}。阈值:>500 红 / 350-500 黄 / <350 绿`,
+      as_of: rows[0].date,
+      note: broadHyNote(bps, rows[0].date),
       detail: { bps, date: rows[0].date }
     };
   },
@@ -2311,16 +2317,23 @@ async function fetchArrSecondDerivativeFromSaastr(_ctx, entry) {
   const slopeRatio = latest.monthlyDeltaB / prev.monthlyDeltaB;
   const status = slopeRatio < 0.5 ? 'red' : slopeRatio < 0.85 ? 'yellow' : 'green';
   const latestMilestone = milestones[milestones.length - 1];
-  const underlyingObservationFreshness = requireFreshUnderlyingObservation({
+  let underlyingObservationFreshness;
+  try { underlyingObservationFreshness = requireFreshUnderlyingObservation({
     observationDate: latestMilestone.date,
     asOfDate: isoDate(),
-    maxAgeDays: Number(entry?.maxAgeDays)
-  });
+    maxAgeDays: ARR_MAX_AGE_DAYS
+  }); } catch (error) {
+    error.arrRejectionEvidence = { kind: 'saastr_four_post_series', source: 'SaaStr WordPress public API',
+      milestones: milestones.map(({ date, arrB, sourceId }) => ({ date, arrB, sourceId })) };
+    throw error;
+  }
+  if (entry?.maxAgeDays !== ARR_MAX_AGE_DAYS) throw new Error('arr_age_policy_mismatch');
   const display = status === 'red' ? '减速' : status === 'yellow' ? '高位放缓' : '加速中';
   return {
     status,
     value_display: display,
     source_name: 'SaaStr public ARR milestone monitor',
+    as_of: latestMilestone.date,
     note: `SaaStr 公开 Anthropic ARR/run-rate 里程碑解析:${milestones.map((m) => `${m.date} $${m.arrB.toFixed(0)}B`).join(' → ')};最新区间月增量约 $${latest.monthlyDeltaB.toFixed(1)}B,为前一区间的 ${slopeRatio.toFixed(2)}x。该项是公开估算里程碑 proxy,不是审计收入。阈值:明显减速=红 / 高位放缓=黄 / 维持加速=绿`,
     detail: {
       source: 'SaaStr WordPress public API',
@@ -2360,7 +2373,7 @@ async function fetchEnterpriseDeployFromPublicReports() {
     status,
     value_display: `~${pct}%`,
     source_name: 'Google Cloud ROI of AI public report',
-    note: `Google Cloud ROI of AI 公开报告解析:约 ${pct}% 受访高管称组织已在生产中部署 AI agents;Deloitte 同期公开页提示 ≥40% 项目进入 production 的公司数预计继续上升。该项是 enterprise production proxy,不等同所有企业 AI use case。阈值:<50%=红 / 50-65%=黄 / >65%=绿`,
+    note: enterpriseSurveyNote({ productionDeployPct: pct, deloitteSupport }),
     detail: {
       source: 'Google Cloud ROI of AI public report',
       url: 'https://cloud.google.com/transform/roi-of-ai-how-agents-help-business',
@@ -3131,22 +3144,6 @@ function getCeoHedgingResultCounts(result) {
   };
 }
 
-function capSingleSourceCeoHedgingRed(result, reason) {
-  if (result?.status !== 'red') return result;
-  return {
-    ...result,
-    status: 'yellow',
-    value_display: ceoHedgingDisplayForStatus('yellow'),
-    note: `${result.note} 当前只有单一路径达到红色强度,尚未形成独立来源共振,按保守口径先维持黄灯。`,
-    detail: {
-      ...(result.detail || {}),
-      singleSourceCapApplied: true,
-      singleSourceCapReason: reason,
-      uncappedStatus: 'red'
-    }
-  };
-}
-
 function unavailableCeoHedgingConfirmation(source, errorOrReason) {
   return {
     source,
@@ -3486,124 +3483,39 @@ async function fetchCeoHedgingFromGdeltPublic() {
   };
 }
 
-async function tavilySearch(payload) {
-  if (!TAVILY_API_KEYS.length) throw new Error('TAVILY_API_KEYS 未配置');
-  let lastError = null;
-  for (let i = 0; i < TAVILY_API_KEYS.length; i++) {
-    const key = TAVILY_API_KEYS[i];
-    try {
-      return await withTavilyBudget({ key, payload, consumer: 'bubble-ceo' }, async () => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 20000);
-        try {
-          const res = await fetch('https://api.tavily.com/search', {
-            method: 'POST',
-            redirect: 'error',
-            headers: {
-              Authorization: `Bearer ${key}`,
-              'Content-Type': 'application/json',
-              'User-Agent': UA
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-          });
-          const text = await res.text();
-          if (!res.ok) throw new Error(`Tavily HTTP ${res.status}`);
-          try {
-            return JSON.parse(text);
-          } catch (parseError) {
-            throw new Error(`Tavily JSON parse failed: ${parseError.message}`);
-          }
-        } finally {
-          clearTimeout(timer);
-        }
-      });
-    } catch (error) {
-      if (error?.budgetCode) throw error;
-      lastError = error;
-      console.warn(`[bubble-watch] Tavily CEO hedging search key ${i + 1}/${TAVILY_API_KEYS.length} failed: ${error.message}`);
-    }
-  }
-  throw lastError || new Error('Tavily Search API failed');
-}
+const ceoTavilyKeyPool = createSearchKeyPool(TAVILY_API_KEYS);
+const ceoBraveKeyPool = createSearchKeyPool(BRAVE_API_KEYS);
 
-async function braveNewsSearch(params) {
-  if (!BRAVE_API_KEYS.length) throw new Error('BRAVE_API_KEYS 未配置');
-  let lastError = null;
-  for (let i = 0; i < BRAVE_API_KEYS.length; i++) {
-    const key = BRAVE_API_KEYS[i];
+async function tavilySearch(payload, { budget = withTavilyBudget, requestWithKeys = ceoTavilyKeyPool } = {}) {
+  return requestWithKeys(key => budget({ key, payload, consumer: 'bubble-ceo' }, async () => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);
     try {
-      const url = `https://api.search.brave.com/res/v1/news/search?${params}`;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip',
-          'User-Agent': UA,
-          'X-Subscription-Token': key
-        },
-        signal: controller.signal
+      const res = await fetch('https://api.tavily.com/search', {
+        method: 'POST', redirect: 'error',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': UA },
+        body: JSON.stringify(payload), signal: controller.signal
       });
-      const text = await res.text();
-      if (!res.ok) throw new Error(`Brave News HTTP ${res.status}`);
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        throw new Error(`Brave News JSON parse failed: ${parseError.message}`);
-      }
-    } catch (error) {
-      lastError = error;
-      console.warn(`[bubble-watch] Brave CEO hedging news key ${i + 1}/${BRAVE_API_KEYS.length} failed: ${error.message}`);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  throw lastError || new Error('Brave News Search API failed');
+      if (!res.ok) { await res.body?.cancel(); throw new Error(`Tavily HTTP ${res.status}`); }
+      return JSON.parse(await res.text());
+    } finally { clearTimeout(timer); }
+  }));
 }
 
-async function fetchCeoHedgingFromWindNews(gdeltError) {
-  const json = await windMcpCall('financial_docs', 'get_financial_news', {
-    query: 'AI泡沫CEO',
-    top_k: 5
-  });
-  const items = extractWindNewsItems(json);
-  if (!items.length) throw new Error('Wind CEO hedging news 返回空列表');
-  const aiRe = /\bAI\b|人工智能/iu;
-  const overheatRe = /泡沫|过热|非理性|担忧|质疑|风险|破裂|bubble|overbuild|overheated|irrational|mania|capex/iu;
-  const cautionRe = /担忧|质疑|警告|风险|破裂|放缓|非理性|泡沫|bubble|overheated|irrational/iu;
-  const relevant = items.filter((item) => {
-    const text = `${item.title || ''} ${item.content || ''}`;
-    return aiRe.test(text) && overheatRe.test(text);
-  });
-  const executiveHits = relevant.filter((item) => hasNamedCeoFinancialCaution(`${item.title || ''} ${item.content || ''}`));
-  const cautionHits = relevant.filter((item) => cautionRe.test(`${item.title || ''} ${item.content || ''}`));
-  const { status, display } = classifyCeoHedgingEvidence(relevant.length, executiveHits.length);
-  const narrative = status === 'red'
-    ? '对冲表态明显扩散:近期新闻持续围绕 AI 泡沫、估值压力和资本开支可持续性展开,并出现较多 CEO/高管谨慎表述。承认过热的频率与强度已明显偏高,升至红灯。'
-    : status === 'yellow'
-      ? '对冲表态继续升温:近期新闻继续围绕 AI 泡沫、估值压力和资本开支可持续性展开,并出现部分 CEO/高管谨慎表述。频率与强度偏高,但尚未看到 CEO 集体承认过热或暂停投入,维持黄灯。'
-      : '对冲表态暂未扩散:近期公开新闻仍以市场讨论和分析师质疑为主,缺少直接高管共振,维持绿灯。';
-  return {
-    status,
-    value_display: display,
-    source_name: 'Wind MCP paid optional news fallback',
-    note: narrative,
-    detail: {
-      source: 'Wind MCP financial_docs.get_financial_news',
-      freePrimaryFailure: gdeltError?.message || String(gdeltError || ''),
-      articleCount: relevant.length,
-      executiveHitCount: executiveHits.length,
-      cautionHitCount: cautionHits.length,
-      topArticles: relevant.slice(0, 5).map((item) => ({
-        title: item.title || null,
-        date: item.date || null,
-        relevance: item.relevance ?? null,
-        doc_type: item.doc_type || null
-      }))
-    }
-  };
+async function braveNewsSearch(params, { budget = withBraveBudget, requestWithKeys = ceoBraveKeyPool } = {}) {
+  return requestWithKeys(key => budget({ key, consumer: 'bubble-ceo' }, async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch(`https://api.search.brave.com/res/v1/news/search?${params}`, {
+        method: 'GET', redirect: 'error',
+        headers: { Accept: 'application/json', 'Accept-Encoding': 'gzip', 'User-Agent': UA, 'X-Subscription-Token': key },
+        signal: controller.signal
+      });
+      if (!res.ok) { await res.body?.cancel(); throw Object.assign(new Error(`Brave News HTTP ${res.status}`), { httpStatus: res.status, providerResponseReceived: true }); }
+      return JSON.parse(await res.text());
+    } finally { clearTimeout(timer); }
+  }));
 }
 
 async function fetchCeoHedgingFromTavilyPublic(gdeltError, mode = 'fallback') {
@@ -3764,12 +3676,7 @@ async function fetchCeoHedgingWithTieredSources() {
         );
       }
     }
-    console.warn('[bubble-watch] Tavily/Brave CEO hedging fallbacks unavailable, try Wind paid fallback');
-    const windErrorContext = new Error(`GDELT failed: ${error.message}; Tavily/Brave free search unavailable`);
-    return capSingleSourceCeoHedgingRed(
-      await fetchCeoHedgingFromWindNews(windErrorContext),
-      'GDELT/Tavily/Brave 免费新闻路径均不可用,Wind 为唯一付费兜底路径'
-    );
+    throw new Error(`GDELT failed: ${error.message}; Tavily/Brave free search unavailable; CEO Wind fallback disabled by free-only search policy`);
   }
 }
 
@@ -3903,13 +3810,11 @@ async function syncCuratedFromUpstream(config) {
     for (const [id, entry] of Object.entries(config[bucket] || {})) {
       if (UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST.has(id)) continue;
       const up = byId.get(id);
-      if (!up || !STATUS_RANK.hasOwnProperty(up.status)) continue;
-      if (upstream.as_of_date > entry.asOfDate) {
-        entry.status = up.status;
-        entry.value_display = String(up.value_display ?? up.value ?? entry.value_display).slice(0, 40);
-        if (typeof up.note === 'string' && up.note.length > 20) entry.note = up.note.slice(0, 800);
-        entry.asOfDate = upstream.as_of_date;
-        entry.syncedFromUpstream = true;
+      if (!up) continue;
+      const observation = syncUpstreamObservation({ id, entry, upstreamIndicator: up,
+        reportDate: upstream.as_of_date, today: isoDate() });
+      if (observation.accepted && observation.changed) {
+        config[bucket][id] = observation.entry;
         adopted += 1;
       }
     }
@@ -3950,7 +3855,8 @@ function buildCuratedIndicator(def, entry, today) {
     note: stale ? `${entry.note}(沿用 ${entry.asOfDate} 口径)` : entry.note,
     as_of: entry.asOfDate,
     stale,
-    provenance: { mode: 'curated', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays }
+    provenance: { mode: 'curated', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays,
+      ...(entry.sourceObservation ? { reviewAsOfDate: entry.reviewAsOfDate, reportAsOfDate: entry.reportAsOfDate, detail: { sourceObservation: entry.sourceObservation } } : {}) }
   };
 }
 
@@ -3964,7 +3870,8 @@ function buildFallbackIndicator(def, entry, today, reason) {
     note: `${entry.note}(实时抓取失败,沿用 ${entry.asOfDate} 快照)`,
     as_of: entry.asOfDate,
     stale,
-    provenance: { mode: 'auto_fallback', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays, reason }
+    provenance: { mode: 'auto_fallback', asOfDate: entry.asOfDate, ageDays, maxAgeDays: entry.maxAgeDays, reason,
+      ...(entry.sourceObservation ? { reviewAsOfDate: entry.reviewAsOfDate, reportAsOfDate: entry.reportAsOfDate, detail: { sourceObservation: entry.sourceObservation } } : {}) }
   };
 }
 
@@ -4189,7 +4096,7 @@ const PUBLIC_SOURCE_LABELS = {
   breadth_50d: 'Barchart $S5FI 市场广度',
   spy_vs_rsp_6m: '市值加权与等权重 ETF',
   insider_sell_buy: '内部人交易披露',
-  ai_ipo_pipeline: '一级市场公开报道',
+  ai_ipo_pipeline: '发行/待发行管线公开报道与申报',
   hy_oas: 'ICE BofA 高收益债利差',
   dc_abs_spread: '数据中心证券样本与 ABS 基准',
   debt_capex_ratio: '数据中心融资缺口研究',
@@ -4199,7 +4106,7 @@ const PUBLIC_SOURCE_LABELS = {
   gpu_rental_price: 'Thunder Compute / getdeploying',
   arr_2nd_deriv: '公开 ARR 里程碑',
   enterprise_deploy: '企业 AI 部署调查',
-  cloud_rpo_growth: '云厂商订单与 backlog 披露',
+  cloud_rpo_growth: '云厂商 RPO / 积压订单披露',
   frontier_progress: 'METR / Epoch AI / ARC Prize',
   accounting_events: 'SEC / DOJ 执法公告',
   fed_policy: 'Fed 点阵图/期货/FRED',
@@ -4213,7 +4120,7 @@ const PUBLIC_CALIBRATION_SUMMARIES = {
   capex_reaction: '价格惩罚已比较明显，但尚缺直接管理层下调或财报指引惩罚共振，因此按选择性惩罚而非系统性惩罚发布。',
   ceo_hedging: '高管和市场领袖的谨慎措辞增加，但尚未形成集体承认过热或暂停投入的共振。',
   token_revenue_ratio: 'Token 用量与估算支出增速接近，尚未显示收入兑现显著落后于算力消耗。',
-  enterprise_deploy: '单一 AI-agent 口径偏窄，但跨调查仍显示生产部署处于高位，暂不下调灯色。'
+  enterprise_deploy: '单一 AI-agent 调查不能替代登记校准口径，灯色沿用既有校准规则，不代表本轮跨调查确认。'
 };
 
 function publicCalibrationSummary(ind) {
@@ -4277,7 +4184,9 @@ function normalizePublicBubbleCopy(text) {
 }
 
 function publicIndicatorNote(ind) {
-  let note = normalizePublicBubbleCopy(ind.note);
+  const evidenceNote = evidenceAwareNote(ind);
+  if (evidenceNote !== ind.note && ind.id !== 'ai_ipo_pipeline') return normalizePublicBubbleCopy(evidenceNote);
+  let note = normalizePublicBubbleCopy(evidenceNote);
   const calibration = ind.provenance?.detail?.proxyConfidenceCalibration;
   if (calibration?.applied) {
     note = note
@@ -4291,6 +4200,7 @@ function publicIndicatorNote(ind) {
 }
 
 function publicIndicatorSourceName(ind) {
+  if (ind.provenance?.detail?.sourceObservation || ind.evidence_gap?.policy === 'arr-observation-eligibility-v1') return ind.source_name;
   if (ind.evidence_gap?.policy === 'bubble-qualified-evidence-v1') return ind.source_name;
   if (['insider_fixed_12_30_90_v1','fed_market_path_collection_v1','capex_latest_quarterly_call_association_v1'].includes(ind.provenance?.detail?.policy)) return ind.source_name;
   if (ind.id === 'breadth_50d') return breadthSourceLabel(ind);
@@ -4300,6 +4210,7 @@ function publicIndicatorSourceName(ind) {
 function applyPublicIndicatorCopy(indicators) {
   return indicators.map((ind) => ({
     ...ind,
+    ...indicatorSemanticLabels(ind),
     note: publicIndicatorNote(ind),
     source_name: publicIndicatorSourceName(ind)
   }));
@@ -4314,43 +4225,6 @@ function tierFromPct(p) {
   return 'observation';
 }
 
-const HISTORICAL_PERIODS = [
-  { period: '1999-06', label_zh: '互联网泡沫顶前 9 个月', label_en: '9 months before dot-com top' },
-  { period: '2000-02', label_zh: '互联网泡沫顶前 1 个月', label_en: '1 month before dot-com top' },
-  { period: '2007-10', label_zh: '金融危机股市顶', label_en: 'GFC equity top' },
-  { period: '2021-11', label_zh: '成长股/SPAC 顶', label_en: 'Growth/SPAC top' }
-];
-
-// ponytail: Similarity uses only Core-23 rows with a reviewed historical analogue.
-// spy_vs_rsp_6m remains core-scored but stays outside similarity until reviewed;
-// Shadow-4 rows are naturally absent from the current-status map passed here.
-const HISTORICAL_CALIBRATION_ROWS = {
-  cape: ['red', 'red', 'yellow', 'red'],
-  top5_weight: ['yellow', 'red', 'green', 'yellow'],
-  nvda_fpe: ['red', 'red', 'green', 'red'],
-  private_secondary_marks: ['green', 'green', 'yellow', 'green'],
-  hyperscaler_capex_yoy: ['yellow', 'yellow', 'green', 'yellow'],
-  mag4_fcf_yoy: ['yellow', 'red', 'green', 'green'],
-  vc_ai_share: ['red', 'red', 'green', 'red'],
-  nvda_invest_revenue: ['yellow', 'red', 'green', 'green'],
-  breadth_50d: ['yellow', 'red', 'red', 'red'],
-  insider_sell_buy: ['yellow', 'red', 'yellow', 'red'],
-  ai_ipo_pipeline: ['red', 'red', 'yellow', 'red'],
-  hy_oas: ['yellow', 'yellow', 'yellow', 'green'],
-  dc_abs_spread: ['yellow', 'yellow', 'red', 'green'],
-  neocloud_credit: ['green', 'yellow', 'red', 'green'],
-  debt_capex_ratio: ['yellow', 'red', null, 'green'],
-  token_volume_mom: ['green', 'green', null, 'green'],
-  gpu_rental_price: ['green', 'yellow', null, 'green'],
-  arr_2nd_deriv: ['green', 'yellow', null, 'green'],
-  enterprise_deploy: ['green', 'yellow', null, 'green'],
-  cloud_rpo_growth: ['green', 'green', null, 'green'],
-  frontier_progress: ['green', 'green', null, 'green'],
-  accounting_events: ['green', 'yellow', 'yellow', 'yellow'],
-  fed_policy: ['red', 'red', 'green', 'red'],
-  capex_reaction: ['green', 'yellow', null, 'green'],
-  ceo_hedging: ['green', 'yellow', 'yellow', 'yellow']
-};
 
 function meanStatusScore(items) {
   return Number((items.reduce((sum, item) => sum + AXIS_SCORE[item.status], 0) / items.length).toFixed(1));
@@ -4382,31 +4256,7 @@ function computeMomentum(indicators, prevEntry) {
   return { deteriorated, improved, net: deteriorated - improved };
 }
 
-function computeSimilarity(indicators) {
-  const current = new Map(indicators.map((item) => [item.id, item.status]));
-  return HISTORICAL_PERIODS.map((period, periodIndex) => {
-    let matched = 0;
-    let denominator = 0;
-    for (const [id, row] of Object.entries(HISTORICAL_CALIBRATION_ROWS)) {
-      // Refitted indicators lack comparable historical inputs: ABS needs matched bond spreads,
-      // insiders need fixed 30/90d coverage, capex needs guidance events, Fed needs a 3/6m market curve.
-      // Unlock each only after a reviewed historical calibration for that definition.
-      if (EVIDENCE_REVISION && METHOD_ORDER.slice(0, EVIDENCE_REVISION).includes(id)) continue;
-      const historical = row[periodIndex];
-      const status = current.get(id);
-      if (!historical || !status) continue;
-      denominator += 1;
-      const distance = Math.abs(STATUS_RANK[status] - STATUS_RANK[historical]);
-      matched += distance === 0 ? 1 : distance === 1 ? 0.5 : 0;
-    }
-    return {
-      ...period,
-      match_pct: Math.round((matched / denominator) * 100),
-      denominator,
-      basis: 'core_calibrated_indicators_only'
-    };
-  }).sort((a, b) => b.match_pct - a.match_pct);
-}
+
 
 function replayCoreHistoryEntry(entry) {
   if (!entry?.statuses || !CORE_INDICATOR_IDS.every((id) => ['red', 'yellow', 'green'].includes(entry.statuses[id]))) return null;
@@ -4679,7 +4529,7 @@ function buildVerdictDescFromNarrativePlan(plan, fallbackDesc) {
 }
 
 function computeSummary(indicators, today, prevEntry, meta) {
-  if (EVIDENCE_REVISION) return summarizeEvidence(indicators, today, prevEntry, { revision: EVIDENCE_REVISION, promotionPolicy: SHADOW_PROMOTION_POLICY, similarity: computeSimilarity(indicators.filter(i => i.score_role === 'core')) });
+  if (EVIDENCE_REVISION) return summarizeEvidence(indicators, today, prevEntry, { revision: EVIDENCE_REVISION, promotionPolicy: SHADOW_PROMOTION_POLICY, similarity: computeEvidenceSimilarity(indicators, EVIDENCE_REVISION) });
   const total = indicators.length;
   const displayRed = indicators.filter((i) => i.status === 'red').length;
   const displayYellow = indicators.filter((i) => i.status === 'yellow').length;
@@ -4706,7 +4556,7 @@ function computeSummary(indicators, today, prevEntry, meta) {
     meanStatusScore(coreIndicators.filter((item) => item.category === cat.key))
   ]));
   const momentum = computeMomentum(coreIndicators, prevEntry);
-  const similarity = computeSimilarity(coreIndicators);
+  const similarity = computeEvidenceSimilarity(coreIndicators, EVIDENCE_REVISION);
 
   const baseTier = tierFromPct(redPct);
   // 分类强制升级:红灯占比 ≥50% 的分类 ≥2 个 → 至少「高风险预警」
@@ -4857,6 +4707,8 @@ function buildWowChanges(flips, indicators) {
 // ---------- 主流程 ----------
 
 async function main() {
+  let previousEditorialPublication = null;
+  try { previousEditorialPublication = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')); } catch { /* No valid previous publication to preserve. */ }
   // Log only the resolution mode, never the user agent or contact value.
   console.log(`[bubble-watch] SEC EDGAR declared contact: ${describeEdgarIdentity(process.env)}`);
   const previousQualifiedOutput = QUALIFIED_REFRESH_ONLY ? JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')) : null;
@@ -4871,6 +4723,12 @@ async function main() {
     const age = (Date.parse(`${isoDate()}T00:00:00Z`) - stamp) / 86400000;
     if (!Number.isFinite(age) || age < 0 || age > 35 || new Date(stamp).toISOString().slice(0,10) !== fullRefreshAsOfDate) {
       throw new Error('Qualified refresh requires an immutable complete-refresh anchor within 35 days');
+    }
+  }
+  if (QUALIFIED_REFRESH_ONLY && EVIDENCE_REVISION >= 6) {
+    if (previousQualifiedOutput.scoring?.model_version !== SCORING_MODEL_VERSION
+      || validateEvidenceScoreFields({ ...previousQualifiedOutput, as_of_date: isoDate() }).length) {
+      throw new Error('Qualified refresh cannot renew carried r6 evidence; run a complete free refresh');
     }
   }
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
@@ -4992,6 +4850,17 @@ async function main() {
       else throw new Error(`Unknown carried evidence origin: ${def.id}`);
       continue;
     }
+    if (EVIDENCE_REVISION >= 6 && def.id === 'enterprise_deploy') {
+      const entry = config.curated[def.id];
+      const observation = buildEnterpriseObservationProjection(entry, today);
+      if (!observation.ok) throw new Error(`Enterprise reviewed observation unavailable: ${observation.reason}`);
+      const { name_en, name_zh, threshold_text, source_name, status, value_display, note, asOfDate, ageDays, maxAgeDays, detail } = observation;
+      indicators.push({ ...baseIndicator(def), name_en, name_zh, threshold_text, source_name, status, value_display, note,
+        as_of: asOfDate, stale: false, provenance: { mode: 'curated', asOfDate, ageDays, maxAgeDays,
+          reviewAsOfDate: entry.reviewAsOfDate, reportAsOfDate: entry.reportAsOfDate, detail } });
+      curatedCount += 1;
+      continue;
+    }
     if (def.mode === 'curated') {
       const entry = config.curated[def.id];
       if (!entry) throw new Error(`config curated 缺指标 ${def.id}`);
@@ -5068,6 +4937,13 @@ async function main() {
           const fallbackReason = windFallbackBuilder && !WIND_API_KEY
             ? `${candidate.automationStatus} source failed: ${error.message}; paid Wind final fallback skipped: WIND_API_KEY 未配置或已禁用`
             : `${candidate.automationStatus} source failed: ${error.message}`;
+          if (EVIDENCE_REVISION >= 6 && def.id === 'arr_2nd_deriv'
+            && parseArrStaleFailure(error.message, today) && daysBetween(entry.asOfDate, today) > ARR_MAX_AGE_DAYS) {
+            indicators.push(buildArrGap(baseIndicator(def), entry, today, error.message, new Date().toISOString(), error.arrRejectionEvidence));
+            autoCount += 1;
+            hybridCount += 1;
+            continue;
+          }
           const fallbackIndicator = buildFallbackIndicator(def, entry, today, fallbackReason);
           if (error.evidenceGate) fallbackIndicator.provenance.evidenceGate = error.evidenceGate;
           indicators.push(fallbackIndicator);
@@ -5222,6 +5098,9 @@ async function main() {
         hybrid_paid_optional_ids: Object.entries(sourceCandidates.indicators || {})
           .filter(([, candidate]) => candidate?.automationStatus === 'hybrid_paid_optional')
           .map(([id]) => id),
+        reviewed_curated_ids: Object.entries(sourceCandidates.indicators || {})
+          .filter(([, candidate]) => candidate?.automationStatus === 'reviewed_curated')
+          .map(([id]) => id),
         candidate_only_ids: Object.entries(sourceCandidates.indicators || {})
           .filter(([, candidate]) => candidate?.automationStatus === 'candidate_only')
           .map(([id]) => id)
@@ -5232,6 +5111,8 @@ async function main() {
       upstream_sync: upstreamSync
     }
   };
+
+  preservePreviousWeeklyIssue(output, previousEditorialPublication);
 
   const historyOutput = {
     ...history, contractVersion:BUBBLE_WATCH_HISTORY_CONTRACT_VERSION,

@@ -1,3 +1,4 @@
+import { fixtureDeepSeekBudget } from '../tests/helpers/deepseek-budget-fixture.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
@@ -52,7 +53,7 @@ assert(discovery.status === 'ok', `fixture news discovery should be ok, got ${di
 
 const governmentDomainDiscovery = buildNewsDiscovery({
   rawStories: [
-    { provider: 'tavily', topic: 'credit_liquidity', title: 'New York City pension funds publish annual returns', url: 'https://comptroller.nyc.gov/reports/pension-fund-returns', publishedAt: '2026-08-13T02:00:00Z' },
+    { provider: 'tavily', topic: 'credit_liquidity', title: 'New York City pension funds publish annual returns', url: 'https://comptroller.nyc.gov/reports/pension-fund-returns', snippet: 'Synthetic official report describes annual pension fund returns and their reporting limitations.', publishedAt: '2026-08-13T02:00:00Z' },
     { provider: 'brave', topic: 'credit_liquidity', title: 'Macro government themed commentary', url: 'https://macro-gov.example.com/commentary', publishedAt: '2026-08-13T03:00:00Z' }
   ],
   sourceStatus: { tavily: { status: 'ok' }, brave: { status: 'ok' } },
@@ -81,7 +82,7 @@ assert(!degradedNoCredibleReadiness.expectedSkip && degradedNoCredibleReadiness.
 const budgetHeldStatus = {
   status: 'error', successCount: 0, failureCount: EDITORIAL_TOPICS.length,
   queryRuns: EDITORIAL_TOPICS.map((topic, index) => ({ topic, status: 'error', resultCount: 0,
-    error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped' }))
+    error: index === 0 ? 'tavily_budget_account_limit' : 'tavily_budget_session_stopped', providerRequestAttempted: false }))
 };
 const budgetHeldReadiness = assessEditorialNewsReadiness({ ...healthyNoCredibleDiscovery,
   sourceStatus: { ...healthyNoCredibleDiscovery.sourceStatus, tavily: budgetHeldStatus } });
@@ -114,6 +115,8 @@ assert(classifySearchRequestError(new TypeError('fetch failed')) === 'network_er
 assert(classifySearchRequestError(new SyntaxError('invalid JSON')) === 'invalid_json', 'search provider JSON failures must remain categorized');
 
 const radarData = readJson('data/radar-data.json');
+// Historical v1 regression context, explicitly isolated from the OFR v2 suite.
+for (const key of ['mainPressureReadout','advicePolicy','scoreRole','legacyModelAudit']) delete radarData[key];
 const input = buildEditorialInput({
   radarData,
   worldOrder: readJson('data/world-order-stress.json'),
@@ -166,7 +169,7 @@ const output = {
 
 let apiCalls = 0;
 let capturedRequest;
-const result = await requestEditorial({
+const result = await requestEditorial({ budget: fixtureDeepSeekBudget,
   input,
   apiKey: 'fixture-secret-not-serialized',
   fetchImpl: async (url, request) => {
@@ -193,7 +196,7 @@ for (const refs of [null, [], 'site:score', Array(13).fill('site:score')]) {
   let calls = 0;
   let failure;
   try {
-    await requestEditorial({ input, apiKey: 'fixture', now: () => new Date('2026-08-11T06:02:00.000Z'),
+    await requestEditorial({ budget: fixtureDeepSeekBudget, input, apiKey: 'fixture', now: () => new Date('2026-08-11T06:02:00.000Z'),
       fetchImpl: async () => { calls += 1; return { ok: true, status: 200, async json() {
         return { choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(invalidOutput) } }] };
       } }; }

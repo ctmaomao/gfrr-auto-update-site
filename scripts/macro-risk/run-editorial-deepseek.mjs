@@ -1,3 +1,4 @@
+import { safeProviderDiagnostics } from '../lib/editorial-safe-diagnostics.mjs';
 import fs from 'node:fs/promises';
 import process from 'node:process';
 
@@ -33,13 +34,13 @@ async function main() {
     const failureClassification = classifyProviderFailure(error);
     writeJson(options.failureOutput, {
       schemaVersion: 'macro-risk-editorial-provider-failure-v1', generatedAt: new Date().toISOString(), status: 'failed', provider: 'deepseek', model: EDITORIAL_PROVIDER_CONFIG.model,
-      message: ['invalid_provider_json', 'provider_response_envelope_invalid', 'provider_output_contract_invalid'].includes(error?.category) ? error.message : 'macro_risk_editorial_provider_failed',
+      message: 'macro_risk_editorial_provider_failed',
       failureClassification,
-      requestDiagnostics: { inputBytes: Buffer.byteLength(inputRaw), inputDigestShort: shortHash(input, 16), timeoutMs: EDITORIAL_PROVIDER_CONFIG.timeoutMs, maxTokens: EDITORIAL_PROVIDER_CONFIG.maxTokens, apiCallLimit: 1, retryCount: 0, response: error.responseDiagnostics || null },
+      requestDiagnostics: { inputBytes: Buffer.byteLength(inputRaw), inputDigestShort: shortHash(input, 16), timeoutMs: EDITORIAL_PROVIDER_CONFIG.timeoutMs, maxTokens: EDITORIAL_PROVIDER_CONFIG.maxTokens, apiCallLimit: 1, retryCount: 0, response: safeProviderDiagnostics(error.responseDiagnostics, input, String(process.env.DEEPSEEK_API_KEY || '').trim()) },
       productionImpact: { outputWritten: false, productionDataWritten: false, frontendChanged: false, affectsGfrrScoring: false, affectsDecisionModel: false }
     });
     throw new Error(`${failureClassification.category}; sanitized failure artifact=${options.failureOutput}`);
   }
 }
 
-main().catch((error) => { console.error(`Macro risk DeepSeek editorial failed: ${error.message}`); process.exitCode = 1; });
+main().catch(() => { console.error('Macro risk DeepSeek editorial failed: details withheld; see safe diagnostic receipt'); process.exitCode = 1; });

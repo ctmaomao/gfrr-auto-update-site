@@ -1,4 +1,4 @@
-import { FIRMS_SNPP_RETIRED_AT, matchesLegacyThermalSources } from '../modules/oilThermalSourceLifecycle.js';
+import { FIRMS_SNPP_RETIRED_AT, matchesLegacyThermalSources } from './oil-thermal-source-lifecycle.mjs';
 
 const FIRMS_REQUEST_POLICY_VERSION = 'firms-request-policy-1';
 

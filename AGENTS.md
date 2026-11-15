@@ -8,19 +8,20 @@
 
 ## 执行与批准
 
-授权任务连续推进至必要验证完成；常规选择自行判断，缺失关键信息才询问。只读审阅不写文件，设计授权不自动进入实施。批准沿用同任务有效范围，明确的临执行确认、owner 手动操作和费用重确认除外。仅暂停实际触及门槛的步骤，并先完成可独立准备的可审阅结果。
-发消息、部署、发布、删除、付费调用/交易及通知仍须对应明确授权；技能不提供这些权限，也不默认授权安装或更新。
+授权任务连续推进至必要验证和验收完成；常规选择自行判断，缺失关键信息才询问。只读审阅不写文件，设计授权不自动进入实施。有效授权沿用同任务的对象、动作、数据和费用范围；不因步骤切换、同范围修复重试或已有授权的 Git/发布操作重复请示。项目技术方案、代码与发布质量由 AI 审核把控，合并前仍须独立审阅，不以实施者自评代替。
+2026-11-09 owner 要求后续项目审查由 AI 承担，取消项目流程额外设置的重复人工确认；本条与 [ADR-0092](docs/ADR/0092-delegated-ai-review.md) 仅替代通用人工审阅/重复确认要求，不扩大任务授权。历史“待人工 review”“另行最终确认”“owner 手动执行”不再单独阻断已授权且验证通过的同范围操作；后续用户的新限制和实际工具权限仍优先。
+发消息、部署、发布、删除、付费调用/交易及通知仍须对应有效授权；技能和审查通过本身不提供这些权限，也不默认授权安装或更新。涉及未授权的新目标/数据/费用/用途、破坏性操作、凭据与持续访问、来源权利或平台要求临执行确认/本人操作的情况，保留相应门槛。只暂停受影响步骤，继续可独立完成的工作；不把平台限制、第三方权利或真实人工作业事实改写为 AI 已批准。
 
 <a id="git-human-control"></a>
 
 ## Git 分级授权
 
-决策记录见 [ADR-0026](docs/ADR/0026-tiered-git-authorization.md)。
+决策记录见 [ADR-0026](docs/ADR/0026-tiered-git-authorization.md) 与 [ADR-0092](docs/ADR/0092-delegated-ai-review.md)。旧 `git-human-control` 锚点仅为链接兼容。
 
 2026-09-06 owner 已批准以本节替代通用“Git 只能由 owner 手动执行”的要求；历史记录不撤销该授权。保持 serial trunk mode：基于 latest main、一次一个逻辑任务、no stacked PR；旧 PR 不追加其它任务。Git 权限按操作影响判断，不按模型名称或置信度放宽。
 
 - **本地常规操作自主执行**：可读取状态、fetch（不附带删除/prune）、创建任务分支或隔离 worktree、安全切换，以及只暂存本任务改动并在必要检查通过后本地 commit。同步当前分支仅允许工作区/索引干净时 fast-forward，该同步属于本地常规授权；无法快进则保留现场，先确定范围，不自动重写历史。
-- **远端/集成操作按任务授权执行**：push、集成功能分支的 merge 及其触发的部署/发布须有相应目标和动作的明确授权；有效授权可沿用，由 AI 执行，无需 owner 手动敲命令。合并前的独立人工 review 和生产验收要求仍保留。推送到 main 可能触发 Pages，不能把本地 commit 授权当作发布授权。
+- **远端/集成操作按任务授权执行**：push、集成功能分支的 merge 及其触发的部署/发布须有相应目标和动作的明确授权；有效授权可沿用，由 AI 执行，无需 owner 手动敲命令或对同一范围再次确认。合并前由独立 AI reviewer 按 §10 核验实际 diff、必要检查和风险，生产验收要求仍保留。推送到 main 可能触发 Pages，不能把本地 commit 授权当作发布授权。
 - **破坏性操作保留具体确认**：强制推送、丢弃改动、重写共享历史、删除分支/worktree 等，先提供受影响对象与恢复方案，再取得针对具体操作的确认；不靠笼统“收尾”推断。
 
 执行前核对分支、目标、工作区与索引；保留用户和其它任务的改动，不使用全量暂存混入无关文件。无法安全区分改动时只暂停相关 Git 操作。允许 Git 操作不等于必须制造分支或提交；按当前任务需要执行。源权利、付费调用、凭证、数据发布和平台 Hook 信任等单独保障不变。
@@ -42,17 +43,18 @@
 
 ## 1. 项目当前状态与跨任务硬边界
 
+- 当前首页为周报/雷达/Bubble 三标签；雷达主读数为 OFR FSI，旧公开仓位/状态/风险预算/动作建议已退役，旧分与模型保留审计。当前事实见 [PROJECT_BACKLOG](docs/PROJECT_BACKLOG.md)，不要从历史阶段推断新任务。
 - Release/display version 为 v28.0.10；data.version / decisionModel.contractVersion 保留 v27.0。asset cache 读 scripts/app.js 的 APP_VERSION，不机械替换历史版本。
 - Worker 主 preview 为 /market.worker-preview.json；M-94 前端当前读 data/radar-data.json，scripts/modules/realtime.js 冻结且未接入，重接 overlay 需另开评审。
 - core secondary set 为 vix / gold / dxy / us10y / spx，只写 /market.secondary-preview.json，不覆盖或参与任何 values.* 主值或主评分；secondarySources / secondaryDiagnostics / secondarySourceSummary 不得混入 /market.worker-preview.json。
 - v28.0G-4C Trading Economics freshness hard gate：Yahoo 与 TE 均须 fresh。tradingeconomics-observedAt-invalid / tradingeconomics-confirmation-stale 在 promotion 层 hard hold；observedAt failure does not make candidate ok false。PR #53 superseded；KV write guard deferred。
 - worker-health-snapshot、review:worker-health-snapshot 和 Worker health check 只读，不改 Worker runtime、payload contract、KV、data/realtime 产物或前端 fallback，不触发恢复/部署。Daily workflow 主输入保持 realtime-data；Daily vs Worker drift 仅 audit-only。Check Realtime Health 不恢复为 Worker-first runtime hard gate，realtime-data stale 不阻断主运行链路监控；health warning 与 hard-fail 边界不混淆。
 - External AI 仅独立展示，不影响 scoring/decision/execution/position。现行 Macro Risk / Bubble Watch 生产路径仍须成本授权、单次 provider call/no retry、validator/review/freshness；不覆盖 deterministic 输出，不晋升 manual artifacts，不打印凭证。
-- World Order 为独立 regime overlay，不是第七个模块；新增源需 source review / 独立接入授权。ACLED 仅手工 xlsx 标准化，不自动抓取或恢复旧 API；失败不伪造数据或清空可用缓存。
+- World Order 为独立 regime overlay，不是第七个模块；新增源需 source review / 独立接入授权。ACLED 本地运行时只读归一化 JSON；手工路径与已批准的固定自动链分开，现行例外/26-14-14 预算见 [ADR-0055](docs/ADR/0055-acled-weekly-automation.md)、[ADR-0056](docs/ADR/0056-acled-split-cadence.md)和[运行说明](docs/ACLED_AUTOMATIC_UPDATE.md)。不恢复旧 API，不绕过拒绝或扩大来源权利，失败不伪造数据或清空缓存。
 - 宏观代理保留来源/时效/缺失披露。macroDrivers.employment 含 FRED CES0500000003 平均时薪，sourceStatus.{icsa,ccsa,jtsjol,ahe,u6,industryPayroll} 失败降级。macroDrivers.consumerRetail 可展示 Redbook public HTML / BoA 公开摘要，不冒充原始卡数据。macroDrivers.commercialRealEstate 不得伪造为 CDX、私募信贷数据或非公开 CRE loan tape。M-74 后代理按对应源契约 display-only。
 - Transport 的 transport-shock-confirmation-factor-runtime-scoring-migration-authorization-v1 是既有 owner_thread_approval，状态 runtime_scoring_migration_authorized_capped_free_proxy、maxContributionPct=3；P51 transport-shock-scoring-impact-v1 只准现行 free-proxy gate 的 +1/+2/+3、默认 fail-closed 0。routeFreightConfirmation/marketConfirmation 仍 not_connected；不扩展 ODP/Brent promotion/Heatmap/cross-validation/Bubble Watch。
 - route-level tanker freight source-rights 和生产写入须独立批准，manual/preflight 成功不是授权。不降低 checker/validator 或篡改生产 JSON 让检查通过；不删除用户文件、数据、配置或日志。
-- 不引入未经批准的依赖；零生产依赖策略、新增须 ADR 保留。保持现有模块和架构；领域细则无损迁移至 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按上表读取。
+- 不引入未经批准的依赖；零生产依赖策略保留。已准入的开发工具类别按 [ADR-0013](docs/ADR/0013-dev-dependencies-allowed-for-local-tools.md)说明用途、版本与隔离边界，无需每个包重复新建 ADR；超出该范围另行评审。保持现有模块和架构；领域细则无损迁移至 [规则附件](docs/AGENT_DOMAIN_BOUNDARIES.md)，按上表读取。
 - 修改 index.html、scripts/app.js、scripts/modules/*.js 或 assets/styles.css 必须运行 `npm run bump:frontend-asset-version` 同步入口、module import query 与样式表引用；仅 Worker/docs/check/workflow/JSON 改动无需 bump。`assets/styles.css` 自身不带版本参数——参数写在 index.html 的引用上，bump 工具会改写该引用，因此纳入触发集无需改动工具；该路径无条件属于触发集，删除该文件同样计入。该规则由 `check:frontend-asset-version`（`check:all` 内）强制：工作区或已提交历史中存在未 bump 的前端改动时 fail；无法判定时只输出 WATCH，不伪装成违规。检查器作用域直接解析 `bump-frontend-asset-version.mjs` 的声明，不在此重述。scripts/ 的 console.log 可能是 Actions 日志功能，不作为 debug 残留删除。
 
 ## 2. Frontend Design Contract — Mandatory Reading
@@ -116,7 +118,7 @@ Daily/realtime 生成操作仍须授权，按 §4 核对产物并保留用户改
 
 ## 8. 工作流与部署保护
 
-Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准，当前仍为 check:all；副作用见 §5。Realtime/Daily 的 Actions Summary 提供输出、baseline、Decision 与 Transmission Delta 的人工审计记录。
+Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准，当前仍为 check:all；副作用见 §5。Realtime/Daily 的 Actions Summary 提供输出、baseline、Decision 与 Transmission Delta 的可复核审计记录。
 
 ## 9. 推荐输出格式
 
@@ -126,13 +128,15 @@ Pages 部署验证以 .github/workflows/deploy-static-site-to-pages.yml 为准�
 
 ## 10. `/goal` 自主循环 review 守则
 
-本节为 Codex `/goal` 等自主循环工具的人工 review 强制要求。`/goal` 跑完声明 complete + `check:all` 全绿,不等于可以 merge。merge 前必须人工核对以下三点;任一点失败必须先修复或回滚,不得跳过。
+本节为 Codex `/goal` 等实施任务的独立 review 强制要求。`/goal` 跑完声明 complete + `check:all` 全绿，不等于可以 merge。默认由未参与本次实施的独立 AI reviewer 审查实际文件和 diff；实施者的 self-audit 不能替代独立审查，AI review 不标注成人工批准。
+审查记录须注明 base/head（未提交时记录 reviewed tree 或文件 blob）、范围、发现与修复、验证结果和未验证项。未解决的 P1/P2、必需检查失败或缺失均阻止合并。head/base 变化后核对实际新增差异，对受影响部分复审并重跑必要检查；旧 head 的绿灯不能冒充新 head CI。独立 reviewer 不可用时暂停合并，不以自评或请求用户点击确认替代。
+merge 前必须独立核对以下三点；任一点失败必须先修复或按既有授权安全回滚，不得跳过。
 
-- **方案一致性**：merge 前人工打开实际文件，核对实施清单与 owner 拍板的方案一致；不能以汇报声称一致代替检查，不能未经批准改走其它方案。
+- **方案一致性**：merge 前独立 reviewer 打开实际文件，核对实施清单与用户授权的目标及 acceptance baseline 一致；在范围内自行选择并解释实现方案，不能以汇报声称一致代替检查，不能擅自扩大目标或改动禁止范围。
 - **Contract checker 完整性**:必须确认 `/goal` 没有为了让 `check:all` PASS 而擅自放宽现有 contract checker。检查方法:在受影响的 contract / checker 文件上跑 `git diff`,确认 assertion 没被删、没被改宽、没被加 skip。Contract checker 的 assertion 变更属于 ADR-level 决策,必须独立 reviewed PR,不得隐藏在 presentation patch 里。
 - **Ignore list 显性化**:任何新增的 coverage checker / contract checker 的 ignore list 必须在文件内对每一条 ignore 写明理由(为什么 ignore、对应哪个边界、unlock 路径)。无注释的 ignore 是技术债,不得通过 review。
 
-实施或文档同步任务触发实际审批后，将用户拍板方案记录在 PROJECT_BACKLOG.md 对应任务作为 acceptance baseline；只读审计在回复中记录。记录不扩大授权，也无需为记录本身再次请示。
+实施或文档同步任务触发实际审批后，将用户授权目标和已审查方案记录在 PROJECT_BACKLOG.md 对应任务作为 acceptance baseline；只读审计在回复中记录。记录不扩大授权，也无需为记录本身再次请示。
 
 `/goal` 指令模板默认 Done 条件中必须包含一条 self-audit step:在声明 complete 前自己跑一遍上述三点核对,把核对结果写进汇报,而不是只汇报 check:all 通过。
 

@@ -58,3 +58,20 @@ test('untrusted or stale local cache cannot displace Daily; valid aging local in
   assert.equal((await selectMarketConfirmationInput({ dataPayload: daily, realtimePayload: local })).source, 'local-realtime');
   assert.equal((await selectMarketConfirmationInput()).source, 'unavailable');
 });
+
+
+test('Daily fallback rejects missing, malformed and future input clocks without borrowing wrapper time', async (t) => {
+  stubWorker(t, {});
+  for (const updatedAt of [undefined, null, '', 'invalid', atAge(-6)]) {
+    const selected = await selectMarketConfirmationInput({ dataPayload: { ...daily, updatedAt } });
+    assert.equal(selected.source, 'unavailable', String(updatedAt));
+    assert.equal(buildMarketConfirmation({ marketConfirmationInput: selected }).state, 'not_confirmed');
+  }
+  for (const updatedAt of [null, undefined, '', 'invalid', atAge(-6), 123]) {
+    const selected = await selectMarketConfirmationInput({ dataPayload: { ...daily, dailyRealtimeInput: { updatedAt } } });
+    assert.equal(selected.source, 'unavailable', String(updatedAt));
+  }
+  const selected = await selectMarketConfirmationInput({ dataPayload: { ...daily, dailyRealtimeInput: { updatedAt: atAge(-4) } } });
+  assert.equal(selected.source, 'daily-baseline');
+  assert.equal(selected.ageMinutes, 0);
+});

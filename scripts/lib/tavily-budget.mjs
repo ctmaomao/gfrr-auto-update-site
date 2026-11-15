@@ -1,17 +1,21 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
+import { performance } from 'node:perf_hooks';
+import { createMeteredTavilyUsage, createTavilyMeterStore } from './tavily-usage-meter.mjs';
 
 // One authority for all repository checkouts, local runs and Actions. This branch
 // contains only the ledger, never site files; workflow triggers are main-only.
 export const BUDGET_REPOSITORY = 'ctmaomao/gfrr-auto-update-site';
 export const BUDGET_BRANCH = 'tavily-usage-ledger';
+export const DISPATCH_DEADLINE_MS = 30000;
+export const PROJECT_COUNTER_DISCLOSURE = Object.freeze({ countBasis: 'recorded_reservation_time', strictDispatchWindowVerified: false });
 export const POLICY = Object.freeze({ total: 950, automated: 800, manual: 150, windowDays: 31, accountHeadroom: 50 });
 const CONSUMERS = ['macro-editorial', 'bubble-editorial', 'oil-news', 'bubble-ceo'];
 const STATES = ['reserved', 'success', 'failed'];
 const MAX_BYTES = 2 * 1024 * 1024;
 const WINDOW_MS = POLICY.windowDays * 86400000;
 const sha = value => /^[a-f0-9]{40}$/u.test(value || '');
-const fail = code => { const e = new Error(code); e.budgetCode = code; throw e; };
+const fail = (code, providerRequestAttempted = false) => { const e = new Error(code); e.budgetCode = code; e.providerRequestAttempted = providerRequestAttempted; throw e; };
 const timestamp = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 const count = value => Number.isSafeInteger(value) && value >= 0;
 
@@ -44,14 +48,17 @@ export function validateUsage(json) {
   const paygoLimit = a?.paygo_limit === null ? 0 : a?.paygo_limit;
   if (!a || !k || !count(a.plan_usage) || !count(a.plan_limit) || a.plan_limit < 1
     || !count(paygoUsage) || !count(paygoLimit) || !count(k.usage) || !count(k.limit) || k.limit < 1) fail('tavily_budget_usage_unknown');
-  // Account limits are authoritative; upgrading the account never raises project limits.
+  // Researcher is the verified free account plan (ADR-0059). Unknown/paid
+  // plans or any PAYGO capacity cannot enter this free-only search path.
+  if (a.current_plan !== 'Researcher') fail('tavily_budget_free_plan_unverified');
+  if (paygoUsage !== 0 || paygoLimit !== 0 || a.plan_limit > 1000) fail('tavily_budget_paid_capacity_forbidden');
   return { planUsage: a.plan_usage, planLimit: a.plan_limit, paygoUsage, paygoLimit, keyUsage: k.usage, keyLimit: k.limit };
 }
 
 export function summarizeLedger(ledger, now = Date.now()) {
   validateLedger(ledger, now);
   const recent = ledger.entries.filter(row => Date.parse(row.time) > now - WINDOW_MS);
-  const result = { reservedCredits: recent.length, byConsumer: {}, byKey: {}, byDayUtc: {}, byMode: {} };
+  const result = { ...PROJECT_COUNTER_DISCLOSURE, reservedCredits: recent.length, byConsumer: {}, byKey: {}, byDayUtc: {}, byMode: {} };
   for (const row of recent) {
     for (const [groups, name] of [[result.byConsumer, row.consumer], [result.byKey, row.keyId],
       [result.byDayUtc, row.time.slice(0, 10)], [result.byMode, row.mode]]) {
@@ -151,10 +158,14 @@ export async function readTavilyUsage(key, fetchImpl = fetch) {
 
 // Deployment/status probe only. It performs GETs, never reserves or searches;
 // admission below remains advisory until the real request atomically reserves.
-export async function verifyBudgetStatus({ store, keys, readUsage = readTavilyUsage, now = Date.now }) {
+export async function verifyBudgetStatus({ store, keys, readUsage, now = Date.now }) {
   if (!keys.length) fail('tavily_budget_key_missing');
   const { head, ledger } = await store.read();
   const summary = summarizeLedger(ledger, now());
+  // Read-only verification never silently calls a rate-limited endpoint. A live
+  // probe must explicitly inject the shared metered reader. No stale eligibility.
+  if (!readUsage) return { operation: 'read_only_verification', searches: 0, writes: 0, head, policy: POLICY, ...summary,
+    status: 'tavily_budget_usage_unavailable', eligible: false, meters: [] };
   const meters = [];
   for (const key of [...new Set(keys)]) {
     const usage = validateUsage(await readUsage(key));
@@ -175,13 +186,14 @@ export async function verifyBudgetStatus({ store, keys, readUsage = readTavilyUs
   return { operation: 'read_only_verification', searches: 0, writes: 0, head, policy: POLICY, ...summary, meters };
 }
 
-export function createTavilyBudget({ store, readUsage, now = Date.now, id = randomUUID, report = () => {} }) {
-  let stopped = false;
+export function createTavilyBudget({ store, readUsage, now = Date.now, monotonicNow = () => performance.now(), id = randomUUID, report = () => {} }) {
+  let stopped = false, stoppedAfterDispatch = false;
   return async ({ key, payload, consumer, mode = 'manual', runId = 'local' }, request) => {
-    if (stopped) fail('tavily_budget_session_stopped');
+    if (stopped) fail('tavily_budget_session_stopped', stoppedAfterDispatch);
     if (!key || !CONSUMERS.includes(consumer) || !['automated', 'manual'].includes(mode)
       || !/^(local|[0-9]+)$/u.test(runId) || payload?.search_depth !== 'basic' || payload.auto_parameters === true) fail('tavily_budget_invalid_request');
     let entry;
+    const admissionStartedAt = monotonicNow();
     try {
       const baseline = await store.read();
       validateLedger(baseline.ledger, now());
@@ -199,6 +211,8 @@ export function createTavilyBudget({ store, readUsage, now = Date.now, id = rand
         admitted = await store.write(previous, next);
       }
       if (!admitted) fail('tavily_budget_contention');
+      const elapsed = monotonicNow() - admissionStartedAt;
+      if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed >= DISPATCH_DEADLINE_MS) fail('tavily_budget_dispatch_deadline');
     } catch (error) { stopped = true; report({ consumer, status: error.budgetCode || 'tavily_budget_unknown' }); throw error; }
     let result, failure;
     try { result = await request(); } catch (error) { failure = error; }
@@ -215,10 +229,10 @@ export function createTavilyBudget({ store, readUsage, now = Date.now, id = rand
         saved = await store.write(previous, next);
       }
       if (!saved) fail('tavily_budget_receipt_pending');
-    } catch { stopped = true; report({ consumer, status: 'tavily_budget_receipt_pending', reservationId: entry.id }); }
+    } catch { stopped = true; stoppedAfterDispatch = true; report({ consumer, status: 'tavily_budget_receipt_pending', reservationId: entry.id }); }
     report({ consumer, status: failure ? 'failed' : 'success', reservationId: entry.id, reservedCredits: 1, reportedCredits: count(reported) ? reported : null });
-    if (count(reported) && reported > 1) { stopped = true; fail('tavily_budget_cost_contract_changed'); }
-    if (failure) throw failure;
+    if (count(reported) && reported > 1) { stopped = true; stoppedAfterDispatch = true; fail('tavily_budget_cost_contract_changed', true); }
+    if (failure) { failure.providerRequestAttempted = true; throw failure; }
     return result;
   };
 }
@@ -229,7 +243,7 @@ export async function withTavilyBudget({ key, payload, consumer }, request) {
   if (env.GITHUB_ACTIONS === 'true' && env.GITHUB_REPOSITORY !== BUDGET_REPOSITORY) fail('tavily_budget_wrong_repository');
   if (!runtime) runtime = createTavilyBudget({
     store: createGithubLedger({ token: env.TAVILY_BUDGET_GITHUB_TOKEN }),
-    readUsage: readTavilyUsage,
+    readUsage: createMeteredTavilyUsage({ store: createTavilyMeterStore(), readUsage: readTavilyUsage }),
     report: row => {
       console.log(`Tavily budget: ${JSON.stringify(row)}`);
       if (env.GITHUB_STEP_SUMMARY) {

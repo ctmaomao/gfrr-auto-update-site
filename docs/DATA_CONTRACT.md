@@ -1,5 +1,11 @@
 # Global Financial Risk Radar 数据契约说明
 
+## OFR编辑层v2迁移
+
+[ADR-0088](ADR/0088-ofr-editorial-contract.md)显式替代下方“任意迁移均hold/不允许编辑层”的旧阶段约束：完整OFR publication及周差时序验证通过后，只有macro-risk-editorial-ofr-production-v2可写入独立macroRiskEditorialLayer；pressureSnapshot由原input投影并与当前mainPressureReadout精确对齐。旧稿及上一期稿不能移植，旧建议退役保持。该本地补丁尚未发布；不扩大生产或付费授权。
+
+[ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md) 进一步约束新 OFR 编辑正文的定性比较与贡献缺项归属。检查使用原始 compact input 的已验证快照，不改变 `mainPressureReadout`、production schema、旧稿读路径或历史正文；`contributionsPublished=false` 明确仅描述本站快照，不代表 OFR 官方未公布贡献。
+
 ## OFR主压力读数与旧建议退役（ADR-0080，迁移契约）
 
 本节为[讨论#490](https://github.com/ctmaomao/gfrr-auto-update-site/issues/490)对应的窄范围契约：owner已决定正式退役旧公开建议、保留历史审计；准备代码不自动批准生产合并。根`version`与`decisionModel.contractVersion`仍为`v27.0`。
@@ -355,6 +361,7 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `cartsReal` | number \| null | USD billions | FRED:CARTSR（周频 SA） | Chicago Fed CARTS 实际（通胀调整后）零售+餐饮销售最新观测 |
 | `cartsReal4wAverage` | number \| null | USD billions | 派生 | CARTSR 最近 4 个观测点平均 |
 | `cartsRealYoY` | number \| null | 比例 (-1 至 +∞) | 派生 | CARTSR 相对 52 周前的 YoY 变化率 |
+| `cartsNominalUpdatedAt` / `cartsRealUpdatedAt` | string \| null | ISO 8601 | FRED:CARTS / CARTSR | 各自真实观测日期；旧快照可缺省，缺失不得由组合日期推断；fallback 仅保留本源已知日期 |
 | `retailSegments` | object[] | mixed | FRED:MRTS monthly retail trade segments | `MRTSSM441USN` 等 13 个细分零售品类，包含 `key` / `seriesId` / `labelZh` / `value` / `yoy` / `updatedAt` / `sourceStatus` |
 | `segmentDiffusionPct` | number \| null | % | 派生 | 13 个 MRTS 细分品类中 YoY 为正的比例 |
 | `segmentPositiveCount` / `segmentSeriesCount` | number \| null | count | 派生 | YoY 为正品类数 / 有效细分品类数 |
@@ -370,7 +377,7 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `redbookStatus` | string enum | n/a | 拉取状态 | `live` \| `fallback` \| `missing` |
 | `retailRegime` | string enum | n/a | 派生（优先 cartsRealYoY，缺失时使用 redbookRetailSalesYoY） | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `强劲` \| `未知` |
 | `sourceStatus` | object | n/a | 拉取状态 | `sourceStatus.carts` / `sourceStatus.cartsr` / `sourceStatus.retailSegments` / `sourceStatus.bofaConsumerCheckpoint` / `sourceStatus.redbookPublicHtml` 每项为 `live` \| `fallback` \| `missing` |
-| `updatedAt` | string \| null | ISO 8601 | 两个 series 中最新观测日期 | consumerRetail 子树更新时间；前端必须显示 vintage |
+| `updatedAt` | string \| null | ISO 8601 | 全部已连接子源的最新观测日期 | 组合记录日期，不代表 CARTS/CARTSR 同期或实时；前端逐项显示 source vintage |
 | `source` | string | n/a | 固定 | `FRED:CARTS; FRED:CARTSR; FRED:MonthlyRetailTradeSegments; BofA:ConsumerCheckpoint-public-html; TradingEconomics:Redbook-public-html` |
 | `notes` | string[] | n/a | 固定 | 必须说明 CARTS/CARTSR + MRTS + BoA Consumer Checkpoint + Redbook public HTML 均为 audit-only / display-only |
 
@@ -512,7 +519,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 | `macroDrivers.euroVolatility` | DeutscheBoerse:quote_box:V2TX; STOXX(fallback) | `value`, `refDate`, `changePct`, `updatedAt`, `sourceStatus`, `source`, `notes` | VSTOXX / V2TX 是 C5 欧元区波动率 display-only 公开指数代理；主源为 boerse-frankfurt quote_box JSON(`DE000A0C3QF1`),STOXX 官页仅作 fallback；`refDate` 使用 Europe/Berlin 日期且 freshness 超过 5 自然日 fallback/missing；`changePct` 为 day-over-day decimal ratio；不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaEquity` | Yahoo:000001.SS; Yahoo:^HSI; Yahoo:000300.SS | `sseComposite`, `hangSeng`, `csi300`, per-index `price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`, parent `sourceStatus`, `updatedAt`, `source`, `notes` | 上证综指 / 恒生指数 / 沪深 300 是 C6 中国宏观 display-only 公开股指代理；`changePct` 为 5d window decimal ratio；China PMI / CPI / 10Y / CFETS 留 pending，本层不接入 scoring / decision / execution / position |
 | `macroDrivers.inflationEnergy` | FRED:CPIAUCSL; FRED:CPILFESL; FRED:DCOILWTICO; Yahoo:CL=F | `cpi` (`headlineIndex`, `headlineYoY`, `headlineMoM`, `coreIndex`, `coreYoY`, `coreMoM`, `yoyWindow`, `updatedAt`, `seriesStatus`, `sourceStatus`), `wti` (`price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`) and optional `wtiMarketProxy` (`price`, `changePct`, `changeWindow`, `updatedAt`, `sourceStatus`, `limitationZh`), parent `sourceStatus`, `updatedAt`, `source`, `notes` | US CPI headline/core 与 FRED WTI spot 是 C1 通胀与能源 display-only 公开 FRED 代理；`wtiMarketProxy` 为 Yahoo `CL=F` WTI futures 快速市场代理,用于 ODP T1 日频市场代理优先显示,不是 FRED 官方 spot；CPI YoY/MoM、WTI changePct 与 proxy changePct 均为 decimal ratio,render 层乘 100；tone 仅展示,不接入 scoring / decision / execution / position |
-| `macroDrivers.copperGold` | gold-api:HG; gold-api:XAU(备援 Yahoo:HG=F/GC=F) | `copper` / `gold` leg objects (`symbol`, `labelZh`, `price`, `changePct`, `changeWindow`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.{copper,gold,ratio}`, raw `ratio`, `ratioChangePct`, `ratioWindow`, `updatedAt`, `source`, `notes` | 铜金比是 C2 全球流动性 display-only 公开现货价(gold-api HG/XAU 主源,Yahoo HG=F/GC=F 备援——不同厂商,两腿全覆盖,gold-api 宕机时整比率仍可出)；schema 存原始 `copper/gold` 比率,前端显示 `×1000`;`ratioChangePct` 为日变化(较前日,vs 上一轮 Daily)decimal ratio,render 层乘 100；gold-api 实时端点只给现货价,故 changePct 由上轮价派生,Yahoo 备援腿 changePct 置 null(不混窗口);不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
+| `macroDrivers.copperGold` | gold-api:HG; gold-api:XAU(备援 Yahoo:HG=F/GC=F) | `copper` / `gold` leg objects (`symbol`, `labelZh`, `price`, `changePct`, `changeWindow`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.{copper,gold,ratio}`, raw `ratio`, `ratioChangePct`, `ratioWindow`, `updatedAt`, `source`, `notes` | 铜金比是 C2 全球流动性 display-only 公开现货价(gold-api HG/XAU 主源,Yahoo HG=F/GC=F 备援——不同厂商,两腿全覆盖,gold-api 宕机时整比率仍可出)；schema 存原始 `copper/gold` 比率,前端显示 `×1000`;`ratioChangePct` 若有合格日变化应为decimal ratio,render 层乘 100；当前 gold-api 实时端点只有单报价与来源获取时间，没有前交易日观察基准，因此两腿与比率 changePct 均置 null（包括旧缓存）；不把上轮Daily快照当作前日行情，Yahoo备援也不混窗口；不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaBond` | ChinaBond:MOF-yield-curve | `yield10y` object (`value`, `latestObsDate`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.yield10y`, `updatedAt`, `source`, `notes` | 中国 10 年国债收益率来自 ChinaBond 官方 `historyQuery` JSON；`value` 存 percent(例如 `1.72`),render 层显示 `%`；freshness 超过 7 天 fallback/missing；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.cfetsRmb` | ChinaMoney:CFETS-RmbIdx | `cfets`, `bis`, `sdr`, `latestObsDate`, parent `sourceStatus.cfets`, `updatedAt`, `source`, `notes` | CFETS 人民币篮子指数来自 ChinaMoney 官方 `RmbIdxHis` JSON,周频精确篮子,同记录含 BIS/SDR；freshness 超过 14 天 fallback/missing；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
 | `macroDrivers.chinaInflation` | NBS:stats-zxfb; TradingEconomics:China-CPI-PPI-public-html | `cpi` / `ppi` leaf objects (`yoy`, `refMonth`, `publishedAt`, `updatedAt`, `source`, `sourceStatus`), parent `sourceStatus.{cpi,ppi}`, `updatedAt`, `source`, `notes` | 中国 CPI/PPI 同比来自国家统计局发布正文；Trading Economics 公开 HTML 仅作 fallback；`yoy` 存 decimal ratio,render 层乘 100；freshness 使用 endOfRefMonth 或 publishedAt + 45 天；display-only,不接入 `values.*`、`displayInputsBaseline`、`effectiveDisplayInputs`、scoring、decision、execution、position 或 cross-validation |
@@ -1075,7 +1082,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-evidence-health-20261106`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `qqq-week-label-20261114`）。
 
 稳定边界：
 
@@ -1540,24 +1547,24 @@ Boundaries:
 
 各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-evidence-health-20261106`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `qqq-week-label-20261114`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=oil-evidence-health-20261106`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=oil-evidence-health-20261106`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `oil-evidence-health-20261106`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=qqq-week-label-20261114`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=qqq-week-label-20261114`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `qqq-week-label-20261114`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs oil-evidence-health-20261106
-npm run bump:frontend-asset-version -- oil-evidence-health-20261106
+node scripts/bump-frontend-asset-version.mjs qqq-week-label-20261114
+npm run bump:frontend-asset-version -- qqq-week-label-20261114
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `oil-evidence-health-20261106`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `qqq-week-label-20261114`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
@@ -2511,6 +2518,9 @@ M-5(design-only):future `marketPricingTemperatureLayer` 须 display-only、须�
 
 ## bubble-watch 专题数据契约 (ADR-0016 / ADR-0019)
 
+[ADR-0101](ADR/0101-bubble-observation-evidence-r6.md) 明确登记 r6：ARR 45 天过龄且两条来源证明均可重放时保留未知；历史锚点、被拒候选与来源指纹不丢失。企业项迁移为 KPMG 同口径显著员工采用率季度变化，120 天、原调查/发布日期和 typed proof 必须通过；reviewed_curated 不再走 Google/Wind 部署率替身。此窄范围替代下方旧企业 hybrid 与 ARR 新复核快照可续期的描述，其它阈值、Core23/Shadow4、旧 epoch 和来源失败硬门槛不变。所有 upstream 同步将观察日与周报复核日分开。四项定向刷新不会续期 r6 带入证明，跨日不合格时在请求前要求完整免费刷新。
+
+
 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md) 已批准 v3 固定Core-23/Shadow-4证据缺口契约，r1迁移ABS，r2已接入内部人；r3已接入capex事件缺口，r4本轮在独立来源契约#463合并后启用Fed 3/6月市场路径。仅已登记且已迁移核心项可为unknown，附精确reasonCode、检查日、auto检查时间；缺观测日null。主分/压力及受影响的轴/分类点值null，后端发布原固定分母的上下界；区间不是概率。原分档/共振升级规则不变，两端有效档位一致才发布保证档位，否则“判读待确认”。v2按以下旧契约兼容读取，不把unknown转换成零或绿灯。
 
 v3历史按模型epoch保留原记录，不再重贴旧灯色模型；每个当前模型最多滚动16条，点趋势最多10个同模型完整观测，初期可空且页面明确“待累计”。定向更新保留完整刷新anchor及各卡原日期，不能续期旧包。AI输入/生产投影必须保存可重放计分快照并与当期数据绑定，v3评分段逐字使用确定性披露，旧或篡改编辑层回退正文。页面直接展示后端区间和中性待确认，不重算评分。
@@ -2616,3 +2626,24 @@ NVIDIA 时效记录只能声明既定政策，不能选择上限：分子30天�
 
 
 NVIDIA 跨日 carry 使用双时钟：先按原证明日期验证分子、收入的原始年龄/政策/期间一致性，再按当前期次或查看日期重算30/120天资格；证明字段原样保留，不能把新期次日期写回旧证明。仍有效的跨日证据可沿用，任一超龄或未来/篡改证明仍 hold；不改未知资格与23槽分母。见 [跨日独审修正](RADAR_INTEGRATION_2026_11_04.md#independent-review-correction-of-e7aabf7a-original-proof-and-current-eligibility-clocks)。
+
+## 2026-11-09 现有观察字段语义修复
+
+`brentPricingLayer.selectedBrent.observedAt` 仅由相同来源、相同已选数值的 `sourceDetails.brent.observedAt/timestamp` 校验得到，缺失/非法/未来为 null；不再回退为输入或 Daily 生成时间。字段结构和旧价差计算不变。页面只从匹配的原来源日期解读旧快照，未知合约或异日不作直接价差展示。`dailyRealtimeInput.updatedAt` 是输入快照生成、`capturedAt` 是 Daily 采纳输入、顶层 `updatedAt` 是 Daily 计算起点；均不等于逐项源观察时间。详见[本轮核查](DATA_PROVENANCE_CLARITY_2026_11_09.md)。
+
+
+### Cash-flow source-period qualification (ADR-0091)
+
+For newly generated `mag4_fcf_yoy` and `hyperscaler_capex_yoy` auto results, `provenance.detail.perCompany[].sourceEvidence` records the selected SEC concept or quarterly-mirror row, eight contiguous dated quarters, source facts, USD unit and a trusted 120-day period-end freshness assessment. Big5 stores separate `ocf` and `capex` series and requires exact start/end alignment. `latestEnd` preserves each company's actual fiscal period; indicator `as_of` is the oldest selected company period end, not the fetch day. Existing historical publications are not rewritten or represented as having this new proof. [ADR-0091](ADR/0091-cash-flow-period-selection.md) defines the fail-closed selection and the natural-refresh acceptance still required. Score formulas, lights, Core-23 and stale curated fallback semantics are unchanged.
+
+### World Order selected-market provenance audit
+
+`marketConfirmationInput.observationProvenance` is optional for legacy artifacts and present in newly generated inputs. The eight selected market keys each report `matched_metadata` only if numeric `sourceDetails.value` exactly matches the selected value, `ok=true`, and a source plus parseable reported timestamp exist. Otherwise they report `unknown` with a reason and null metadata. `reportedFallbackUsed` preserves the provider boolean or null when absent.
+
+All entries have `qualification=not_assessed`: a metadata match does not certify observation semantics, freshness, instrument identity, source permission or calibrated threshold. `reportedTimestamp` is deliberately not called a verified observation date; old/future timestamps are preserved as reported metadata, not accepted for V2. Daily lacks this per-leaf metadata and remains unknown. No wrapper timestamp is substituted, and this additive field does not change V1 scoring. The checker validates the optional shape without requiring old snapshots to be regenerated.
+
+### Realtime source timestamp semantics (2026-11-13)
+
+GitHub realtime `sourceDetails.*.timestampKind` distinguishes actual FRED/Stooq row `observation_date`, Gold API `provider_acquisition`, fallback aggregate `snapshot_acquisition`, Brent promoted `reported_candidate_time`, and legacy `unknown`. These describe the time's origin, not freshness qualification. World Order optionally preserves `reportedTimestampKind`; old artifacts without it stay supported and unknown. Worker fields are not retroactively assigned a meaning merely from source names.
+
+Gold API's documented `updatedAt` is upstream acquisition time, not exchange observation time ([FAQ](https://gold-api.com/faqs), [provider specification](https://gold-api.com/llms.txt), checked 2026-11-13). Realtime now preserves that full UTC timestamp instead of stamping today; one live quote yields `changes.gold1d=null` rather than two identical invented observations and false zero change. Malformed/nonpositive prices or invalid/future clocks follow the existing fallback path. Full ISO timestamps and daily observation dates both produce finite age metadata. Old provider timestamps stay old; no new freshness cutoff or source is added.
