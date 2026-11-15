@@ -3,16 +3,21 @@
 ## Current status and evidence boundary (2026-11-15)
 
 This section supersedes historical implementation/status statements below. The
-current system is a **backend-only thermal observation artifact**, not an oil-price
-predictor. The old thermal frontend is retired; this review does not restore it or
+current system produces a **backend thermal observation artifact**, not an oil-price
+predictor. The independent Oil Market page also exposes its raw observations and
+limitations read-only. The legacy thermal card remains retired; the research
+primitives below are not connected to that page or scoring. This review does not
 approve scoring, a new data source, paid access, or a new baseline cohort.
 
-Verified artifact: [`5921d88c`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/5921d88cd38a5b1b15725e480a20bd117f191af5/data/oil-thermal-watch.json),
-generated `2026-11-15T16:23:25.337Z` by natural scheduled run
-[43735172747](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43735172747).
+Verified artifact: [`c773c6c3`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/c773c6c318bf997df77b7cd137a37a00a7464912/data/oil-thermal-watch.json),
+generated `2026-11-15T22:51:10.199Z` by natural scheduled run
+[43771552778](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43771552778).
 It contains 42 watched areas, 79 detections in 17 areas, and a latest acquisition
-at `11:29Z`. These are area proxies, not confirmed facility incidents or complete
-coverage. The configured +/-0.05 degree boxes are not verified asset polygons.
+at `11:29Z`, unchanged from the previous snapshot, not a new event. All 25 empty
+areas retain null FRP and acquisition time. Both public sites matched SHA256
+`21806fc3ed5ad566eb75932808a8496ed31dc1163d240177adc2fbc879e83c73` at verification.
+These are area proxies, not confirmed facility incidents or complete coverage.
+The configured +/-0.05 degree boxes are not verified asset polygons.
 
 - S-NPP retirement is enforced before network access: 42 logical retired requests,
   zero attempts or retries; the remaining NOAA-20/21 made 84 actual attempts with
@@ -23,8 +28,9 @@ coverage. The configured +/-0.05 degree boxes are not verified asset polygons.
   by the existing health gate; simply waiting 30 days cannot promote them.
 - [PR #579](https://github.com/ctmaomao/gfrr-auto-update-site/pull/579) fixes missing
   FRP becoming zero and malformed acquisition clocks in watch/diagnostic parsing.
-  Full local checks, independent review and exact CI passed. Its merge is not proof
-  of adoption by a later natural observation run. Baseline sample review now also
+  Full local checks, independent review and exact CI passed. The natural run above
+  used checkout `97a23bf7`, containing #579 and #581; its observed output preserves
+  the missing-value and paused-comparison boundaries. Baseline sample review also
   preserves unknown FRP and reports measured/missing counts. Available-only FRP
   statistics are diagnostic: any facility cohort containing missing FRP is held
   from candidate promotion, avoiding an implicit switch to a conditional estimator.
@@ -171,6 +177,16 @@ true zero coordinates remain valid. Incorporating these records into a scope
 registry, verifying current operation, joining event/routes without double-counting,
 obtaining observations, and validating incremental forecast value remain separate
 reviewed work. This import expands the research inventory, not the live FIRMS budget.
+
+The separate `thermal-research-acceptance.mjs` primitive now tests fixture-case
+semantics only: HTTP success, overpass opportunity, spatial coverage and cloud
+quality are distinct; independently labeled asset/episode/window-bound events
+with no qualified observation remain unassessable. It retains planned/unplanned/
+unknown strata and both all-known-event and qualified-observation counts without
+claiming real recall, false negatives, lead time, price skill or inventory
+completeness. Source-publication and thermal first-known clocks are as-of gates,
+not authenticated timestamps. Physical mechanisms stay separate, price prediction
+is unimplemented/unknown, and evaluation/main-score eligibility remain false.
 
 ## Historical source-review and implementation record
 
