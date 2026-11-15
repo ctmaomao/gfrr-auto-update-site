@@ -124,6 +124,54 @@ or data provenance. Outputs therefore remain `synthetic_fixture_only` and
 independent event labels and globally stratified evaluation must be separately
 implemented and verified; no first-seen history may be backfilled from old snapshots.
 
+## Verified global catalog subset, not operational monitoring
+
+`scripts/oil-directional/ogim_catalog.py` provides the manual, offline
+`import_verified_local(path, version='OGIM_v3.0')` entry (Python 3.11+ standard
+library). It returns bounded JSON bytes and does not write files, fetch sources,
+activate collection, or feed production/frontend/scoring. The original GPKG and
+any returned catalog belong outside Git or in ignored manual artifacts, never in
+`data/`. The input is pinned to the complete official file size, MD5 and SHA256;
+unknown versions, changed schemas or integrity failures are rejected, not silently
+remapped. Tests use small synthetic databases, never a live download or the 3.42 GB
+file in CI.
+
+The [official OGIM v3 record](https://zenodo.org/records/22835235) is CC-BY-4.0,
+published September 18, 2026, with underlying information from 2025 and earlier.
+Source attribution and a modification notice are retained in each output. Its
+`SRC_DATE` is the original source's publication/last-update date, not the facility
+observation date, and is not inferred from the OGIM release date. No independent
+complete v3 capacity dictionary was found, so capacity/throughput are not read or
+interpreted. `FAC_STATUS` and `OGIM_STATUS` remain raw labels, not verified operation.
+
+An independently reproduced local import of the verified file produced **8,256
+source records**: 692 refinery, 3,661 petroleum-terminal and 3,903 offshore-platform
+records. These are three directory tables, not all OGIM, unique physical sites,
+confirmed crude-export terminals, producing platforms or global oil coverage.
+The source-version/table/ID key is not promised stable across future releases.
+All 8,256 points passed GPKG/WKB/SRID/attribute consistency checks; this establishes
+internal geometric consistency, **not accurate site attribution or asset boundaries**.
+7,672 single and 584 composite source references matched the current `Data_Catalog`
+structurally; underlying source pages were not thereby reverified.
+
+The deterministic research output is 9,630,651 bytes, SHA256
+`7a52e8f90c8c4a5d1f00106d5a76e7c892523f8e4fe23e47a32be318a66fa49b`.
+All verified-operating values are null. The five layers remain separate:
+directory presence only; verified operation, qualified observation, comparable
+history and independent event truth are unknown. No coverage percentage or global
+capacity denominator is manufactured. For example, 548 of 692 refinery records
+have both status labels `N/A`, and 670 have source publication/update dates before
+2025. This static seed cannot serve as a real-time operating assessment.
+
+The adapter is bounded to the three allowlisted tables, 10,000 rows and 20 MB of
+output, using read-only immutable SQLite, disabled extensions/trusted schema,
+pinned schema hashes and fixed queries. It never executes SQL supplied by the
+source database. Missing/sentinel dates and mismatched coordinates stay unresolved;
+true zero coordinates remain valid. Incorporating these records into a scope
+registry, verifying current operation, joining event/routes without double-counting,
+obtaining observations, and validating incremental forecast value remain separate
+reviewed work. This import expands the research inventory, not the live FIRMS budget.
+
 ## Historical source-review and implementation record
 
 The sections below preserve earlier design and implementation history. References
