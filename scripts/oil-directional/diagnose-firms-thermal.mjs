@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { firmsFrpOrNull, firmsAcquisitionIso } from './firms-observation-fields.mjs';
 import {
   createFirmsRetryBudget,
   fetchFirmsText,
@@ -255,13 +256,6 @@ function parseCsv(text) {
   });
 }
 
-function toAcqIso(record) {
-  if (!record.acq_date || !record.acq_time) {
-    return null;
-  }
-  const time = String(record.acq_time).padStart(4, '0');
-  return `${record.acq_date}T${time.slice(0, 2)}:${time.slice(2, 4)}:00Z`;
-}
 
 function summarizeRecords(records) {
   const confidenceCounts = {};
@@ -283,7 +277,7 @@ function summarizeRecords(records) {
     const dayNight = record.daynight || 'unknown';
     dayNightCounts[dayNight] = (dayNightCounts[dayNight] ?? 0) + 1;
 
-    const frp = Number(record.frp);
+    const frp = firmsFrpOrNull(record.frp);
     if (Number.isFinite(frp) && (maxFrp === null || frp > maxFrp)) {
       maxFrp = frp;
     }
@@ -294,7 +288,7 @@ function summarizeRecords(records) {
       frpOver100Count += 1;
     }
 
-    const acqAt = toAcqIso(record);
+    const acqAt = firmsAcquisitionIso(record);
     if (acqAt && (!latestAcqAt || acqAt > latestAcqAt)) {
       latestAcqAt = acqAt;
     }
@@ -543,13 +537,13 @@ async function runFirmsRequest(mapKey, request, timeoutMs, retryBudget) {
     timeoutMs,
     retryBudget
   });
-  let records;
+  let summary;
   try {
-    records = parseCsv(response.text);
+    const records = parseCsv(response.text);
+    summary = summarizeRecords(records);
   } catch (error) {
     wrapFirmsResponseError(error, response.diagnostics);
   }
-  const summary = summarizeRecords(records);
   return {
     status: 'ok',
     diagnosis: summary.rowCount > 0 ? 'firms-api-ok-detections-returned' : 'firms-api-ok-no-detections-in-bbox',
