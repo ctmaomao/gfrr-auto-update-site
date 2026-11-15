@@ -43,10 +43,14 @@ refinery interruption can reduce crude demand while constraining products. Therm
 intensity alone cannot identify which mechanism applies. Normal flaring,
 startups/shutdowns and nearby unrelated fires are competing explanations.
 
-Start with 3–5 independently located facilities of one asset type. Verify asset
-boundaries, normal flare locations and source attribution first; preserve the
-existing broad boxes as area proxies until that work is done. Do not expand the
-live query budget or purchase another satellite product to fill an evidence gap.
+The research target is global, stratified by production, refining, export ports,
+transport bottlenecks and inventories. Keep those physical mechanisms separate
+from market confirmation and the non-satellite baseline. A 3–5 asset development
+validation group is an initial test set, not the final coverage target or evidence
+of global capability. Verify boundaries, asset types, normal flare locations and
+source attribution before interpreting observations; preserve existing broad boxes
+as area proxies until then. This design does not expand the live query budget or
+approve another satellite product to fill an evidence gap.
 
 Minimum prospective contract, to implement and test offline before collection:
 
@@ -95,6 +99,30 @@ Source constraints and scientific context:
 - [IMF PortWatch research](https://www.imf.org/en/publications/wp/issues/2025/05/16/nowcasting-global-trade-from-space-566957)
   supports transport-activity proxies, not observed oil cargo barrels; reuse of
   existing GFRR transport data can provide corroborating/conflicting/unknown context.
+
+## Implemented offline receipt primitive (fixture-only)
+
+`scripts/oil-directional/thermal-shadow-ledger.mjs` implements
+`appendThermalReceipt` and `validateThermalLedger`, exercised by the corresponding
+unit test. This is a bounded synthetic receipt/deduplication primitive, **not** the
+complete prospective contract, a real collector, verified asset registry or global
+coverage. It has no network, filesystem, system clock, workflow, frontend or score
+connection. The fixed manifest is scope-neutral rather than a hardcoded refinery
+list; a real global scope/geometry registry is a separate requirement.
+
+It preserves receipt-derived first-seen clocks, unique observation identities and
+content revisions; duplicate observations do not become independent events. Source
+sets, geometry/configuration and cohort identities cannot silently mix. Null FRP
+and real zero remain distinct, request outcomes remain explicit, and coverage stays
+`unknown`. Labels are deliberately empty, never inferred from thermal records.
+
+Deterministic replay checks internal consistency, not authenticity or tamper-proof
+storage. A caller can replace both receipts and derived state consistently; this
+module cannot authenticate claimed arrival times, upstream identity construction
+or data provenance. Outputs therefore remain `synthetic_fixture_only` and
+`eligibleForEvaluation=false`, even when validation passes. Real collection,
+independent event labels and globally stratified evaluation must be separately
+implemented and verified; no first-seen history may be backfilled from old snapshots.
 
 ## Historical source-review and implementation record
 
