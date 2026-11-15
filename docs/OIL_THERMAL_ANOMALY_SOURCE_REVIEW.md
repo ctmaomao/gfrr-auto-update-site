@@ -3,8 +3,10 @@
 ## Current status and evidence boundary (2026-11-15)
 
 This section supersedes historical implementation/status statements below. The
-current system is a **backend-only thermal observation artifact**, not an oil-price
-predictor. The old thermal frontend is retired; this review does not restore it or
+current system produces a **backend thermal observation artifact**, not an oil-price
+predictor. The independent Oil Market page also exposes its raw observations and
+limitations read-only. The legacy thermal card remains retired; the research
+primitives below are not connected to that page or scoring. This review does not
 approve scoring, a new data source, paid access, or a new baseline cohort.
 
 Verified artifact: [`c773c6c3`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/c773c6c318bf997df77b7cd137a37a00a7464912/data/oil-thermal-watch.json),
