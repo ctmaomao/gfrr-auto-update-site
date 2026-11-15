@@ -10,7 +10,7 @@
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `qqq-week-label-20261114` |
+| Cache version | `oil-market-20261116` |
 | 前端输入 | 首页读取静态 JSON；周报为默认入口，另有雷达与 Bubble 标签；`scripts/modules/realtime.js` 冻结、未接入 |
 | 雷达主读数 | OFR 已发表 FSI；旧模型保留审计，旧公开仓位/状态/风险预算/动作建议已退役，不把百分位当风险分或概率 |
 | Worker / Daily | `/market.worker-preview.json` 是 Worker 主预览，secondary 只作诊断；Daily 仍消费 `realtime-data` |
@@ -23,6 +23,8 @@
 ## Section 2 · Open Backlog Items
 
 ### 当前实施与真实等待
+
+- **独立油市观察页**：owner 要求将价格、运费、航道及卫星证据集中呈现，结论接回全球雷达。本轮验收基线为 `oil-market.html` 从现有 ODP 区进入，不改变首页三标签或13项锚点；复用同一 `qualifyOdpDisplay` 供需资格闸门，市场与卫星各守自身观察时点。卫星仅实验性原始聚合，无事故、覆盖完整或价格方向推断；零运力标记数据不足。仅增加现有静态发布白名单与该页触发，不新增取数、付费调用或评分输入。独审、全套、1440/390浏览器与两站部署验收仍待完成。
 
 - **离线审阅器精简**：[#578](https://github.com/ctmaomao/gfrr-auto-update-site/pull/578) 将三个 Oil News 审阅器逐字重复的只读 Git 历史读取提取为共用 helper；各自采样截断、路径授权、错误、来源元数据与安全边界声明保持。新增真实临时 Git 仓库回归；原补丁完整检查和独审通过，最新主干集成仍以精确提交验收为准。
 

@@ -8,6 +8,7 @@ const output = resolve(root, '_site');
 const entries = [
   'index.html',
   'bubble-watch.html',
+  'oil-market.html',
   'weekly-reports.html',
   'reports',
   'weekly-reports',
@@ -21,7 +22,7 @@ const entries = [
 export function isAllowedPagesArtifactFile(relativePath) {
   const normalized = relativePath.replaceAll('\\', '/');
   if (normalized.split('/').some((part) => part.startsWith('.'))) return false;
-  if (normalized === 'index.html' || normalized === 'bubble-watch.html' || normalized === 'weekly-reports.html' || normalized === 'scripts/app.js') return true;
+  if (normalized === 'index.html' || normalized === 'bubble-watch.html' || normalized === 'oil-market.html' || normalized === 'weekly-reports.html' || normalized === 'scripts/app.js') return true;
   if (/^reports\/(?:archive|\d{4}-\d{2}-\d{2})\.html$/.test(normalized)) return true;
   if (/^weekly-reports\/(?:index|\d{4}-\d{2}-\d{2})\.html$/.test(normalized)) return true;
   if (normalized.startsWith('assets/')) return ['.css', '.svg'].includes(extname(normalized));
