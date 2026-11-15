@@ -1,12 +1,103 @@
 # Oil Thermal Anomaly Source Review — NASA FIRMS / VIIRS candidate
 
-Status: P48 production read-only observation artifact is implemented with a
-conservative U.S. Gulf Coast refinery starter whitelist plus a starter production
-baseline. Facility coverage is active for a small EIA/HIFLD-derived refinery set.
-The baseline is established for all 12 starter facilities, but it is explicitly
-`starter_short_window` because it comes from 15 sanitized production-watch samples
-over 2.36 days. Any repeated/elevated observation is still a manual-review thermal
-proxy only.
+## Current status and evidence boundary (2026-11-15)
+
+This section supersedes historical implementation/status statements below. The
+current system is a **backend-only thermal observation artifact**, not an oil-price
+predictor. The old thermal frontend is retired; this review does not restore it or
+approve scoring, a new data source, paid access, or a new baseline cohort.
+
+Verified artifact: [`5921d88c`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/5921d88cd38a5b1b15725e480a20bd117f191af5/data/oil-thermal-watch.json),
+generated `2026-11-15T16:23:25.337Z` by natural scheduled run
+[43735172747](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43735172747).
+It contains 42 watched areas, 79 detections in 17 areas, and a latest acquisition
+at `11:29Z`. These are area proxies, not confirmed facility incidents or complete
+coverage. The configured +/-0.05 degree boxes are not verified asset polygons.
+
+- S-NPP retirement is enforced before network access: 42 logical retired requests,
+  zero attempts or retries; the remaining NOAA-20/21 made 84 actual attempts with
+  zero retries. See [ADR-0086](ADR/0086-oil-thermal-source-retirement.md).
+- All 42 comparisons with the old three-source baseline are suspended. That
+  baseline ends `2026-09-05T04:33:15.490Z`; its historical 30-day maturity does not
+  establish present comparability. Current post-retirement samples remain excluded
+  by the existing health gate; simply waiting 30 days cannot promote them.
+- [PR #579](https://github.com/ctmaomao/gfrr-auto-update-site/pull/579) fixes missing
+  FRP becoming zero and malformed acquisition clocks in watch/diagnostic parsing.
+  Full local checks, independent review and exact CI passed. Its merge is not proof
+  of adoption by a later natural observation run. Existing baseline-review
+  `metricNumber(facility.maxFrp, 0)` must also be resolved before a new cohort is used.
+- Git snapshots retain cross-source facility aggregates, not unique observation
+  identities or valid-overpass/cloud denominators. Repeated snapshots cannot be
+  counted as independent events or used to reconstruct unavailable raw history.
+  For example, the Yanbu summaries generated on November 14 at 18:06 and 22:27
+  both refer to the same latest 10:51 acquisition, two rows and maximum FRP 65.76.
+
+## Prospective evidence pilot (design only, no runtime activation)
+
+The first useful target is **an energy-facility event worth investigating**, not
+Brent direction. An upstream/export interruption may reduce crude supply; a
+refinery interruption can reduce crude demand while constraining products. Thermal
+intensity alone cannot identify which mechanism applies. Normal flaring,
+startups/shutdowns and nearby unrelated fires are competing explanations.
+
+Start with 3–5 independently located facilities of one asset type. Verify asset
+boundaries, normal flare locations and source attribution first; preserve the
+existing broad boxes as area proxies until that work is done. Do not expand the
+live query budget or purchase another satellite product to fill an evidence gap.
+
+Minimum prospective contract, to implement and test offline before collection:
+
+| Record | Required evidence and invariant |
+|---|---|
+| Scope | Facility/area ID, asset type, geometry revision and provenance; verified asset versus area-proxy status remain distinct. |
+| Observation | Product/satellite, acquisition UTC, processing/version identity where supplied, stable dedup identity, FRP with units and null preserved, confidence and day/night. A missing identity cannot become a new event. |
+| Availability | First locally received UTC and fetch UTC, request window, code/config/source-cohort version. `firstSeen` must never be backdated to acquisition time; revised source values remain separate revisions. |
+| Request outcome | Retired, error, invalid response, successful zero rows and successful detections remain distinct. An HTTP success is not a valid-overpass/cloud-free denominator. Unavailable coverage evidence stays unknown. |
+| Privacy/storage | No MAP_KEY, credential-bearing URLs or unreviewed raw CSV publication. Derive bounded sanitized identities from in-memory records; any retained spatial evidence/storage or redistribution change needs its own reviewed contract. Existing aggregates cannot supply missing identities retrospectively. |
+| Independent event | Operator/government/port evidence, first-publication time, event time/uncertainty, planned versus unplanned activity, recovery and affected asset. A satellite alert cannot label itself as a confirmed outage. |
+
+Keep the old three-source cohort separate. Any new NOAA-20/21 baseline needs its
+own source/geometry/day-night definitions and missing-value handling, not a
+relaxed old health gate. Without observation opportunity data, no-detection or
+falling counts must not be interpreted as normal operation or declining production.
+
+Validation proceeds in order: (A) event identification, (B) useful lead time beyond
+existing information, (C) incremental market-risk value beyond the existing
+non-satellite baseline. Passing A does not pass B or C. Freeze event grouping,
+features, evaluation horizons and acceptance thresholds before examining test
+outcomes; use chronological holdouts and held-out facilities, keeping overlapping
+windows and the same event together. Measure event precision/recall where a
+credible event inventory exists, false alerts per facility-month, data gaps and
+lead time using actual availability clocks. For any later Brent test, align
+contract/roll and trading calendars, control repeated model trials, and report
+uncertainty rather than direction hit-rate alone.
+
+Review progress monthly, but require enough independent labeled events rather than
+promising a calendar date for success. Missing labels, missing coverage, excessive
+false alerts or no sample-out-of-time increment are stop/hold results, not reasons
+to lower gates. A defensible conclusion of no useful increment also completes the
+research. No frontend restoration or score promotion follows automatically.
+
+Source constraints and scientific context:
+
+- [NASA FIRMS limitations](https://firms.modaps.eosdis.nasa.gov/alerts/notes.php):
+  clouds, smoke and observation timing can hide events; zero detections is not safety.
+- [NASA LANCE](https://lance.modaps.eosdis.nasa.gov/index.php): near-real-time
+  processing latency follows an observation, not continuous site surveillance.
+- [EOG VIIRS Nightfire](https://eogdata.mines.edu/products/vnf/): current access is
+  through a Data Use License; personal/noncommercial use does not establish free
+  access or republication permission. It is not an activated fallback here.
+- [Brandt 2020 flaring validation](https://smartfields.stanford.edu/publications/journal-articles/accuracy-satellite-derived-estimates-flaring-volume-offshore-oil-and)
+  validates annual flaring estimates, not daily crude production or Brent forecasts.
+- [IMF PortWatch research](https://www.imf.org/en/publications/wp/issues/2025/05/16/nowcasting-global-trade-from-space-566957)
+  supports transport-activity proxies, not observed oil cargo barrels; reuse of
+  existing GFRR transport data can provide corroborating/conflicting/unknown context.
+
+## Historical source-review and implementation record
+
+The sections below preserve earlier design and implementation history. References
+to an allowed display role or starter coverage are historical, not current frontend
+or promotion permission. Current status and the stricter boundaries above prevail.
 
 ## Candidate Source
 
