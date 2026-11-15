@@ -10,6 +10,8 @@ const FROZEN_FRONTEND_MODULE_FILES = new Set([
 ]);
 const fixedFiles = [
   'index.html',
+  // Standalone oil page uses the same versioned module and stylesheet graph.
+  'oil-market.html',
   'scripts/app.js',
   'scripts/check-workflows.mjs',
   'README.md',

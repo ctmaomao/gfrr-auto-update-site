@@ -1,0 +1,36 @@
+import { buildOilMarketView } from './oilMarketModel.js?v=oil-market-20261116';
+const $=id=>document.getElementById(id);
+const el=(tag,text,className)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;};
+const fmt=value=>typeof value==='number'&&Number.isFinite(value)?value.toLocaleString('zh-CN',{maximumFractionDigits:2}):'—';
+const date=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}/.test(value)?value.replace('T',' ').replace(/\.\d+Z$/,' UTC').replace(/Z$/,' UTC'):'观察日未知';
+const state=row=>row.value===null?'缺失':row.sourceStatus==='live'?'来源可用':row.asOfDate?'超龄／时点异常或来源不可用':'时点缺失 · 不作判断';
+const clock=row=>`观察：${date(row.asOfDate)} · ${state(row)}`;
+function cells(host,values){const tr=el('tr');for(const v of values)tr.append(el('td',v));host.append(tr);}
+async function load(path){try{const response=await fetch(path,{cache:'no-cache',signal:AbortSignal.timeout(12000)});if(!response.ok)throw new Error('Unavailable');return await response.json();}catch{return null;}}
+export function renderOilMarket(input,now=Date.now()) {
+ const v=buildOilMarketView(input,now);
+ $('oil-verdict').textContent=v.verdict;
+ $('oil-verdict-time').textContent=`美国统计观察日：${date(v.qualified.evidence.crudeStocksExSpr?.asOfDate)}。供需快照生成：${date(v.oilAt)}。`;
+ $('oil-brent').textContent=fmt(v.brent.value);
+ $('oil-brent-meta').textContent=clock(v.brent);
+ $('oil-curve').replaceChildren();
+ const maximum=Math.max(1,...v.curve.map(row=>row.value || 0));
+ for(const row of v.curve){const host=el('div',undefined,'oil-bar-row');host.append(el('span',row.label || '合约未知'));const track=el('span',undefined,'oil-bar-track');const fill=el('span',undefined,'oil-bar-fill');fill.style.width=`${Math.max(0,(row.value || 0)/maximum*100)}%`;track.append(fill);host.append(track,el('span',fmt(row.value)),el('span',clock(row),'oil-bar-date'));$('oil-curve').append(host);}
+ if(!v.curve.length)$('oil-curve').append(el('p','期货报价未能加载，不绘制曲线。'));
+ $('oil-freight').replaceChildren();
+ for(const row of v.freight){const item=el('article');item.append(el('h3',row.label),el('div',fmt(row.value),'oil-big'),el('p',clock(row),'oil-meta'),el('p',`来源：${row.source?.startsWith('BalticExchangePublicTicker')?'波罗的海交易所公共行情':row.source?.startsWith('StockQ')?'StockQ 公开代理':'未能核实'}。指数点数，不是运费货币金额。`));$('oil-freight').append(item);}
+ $('oil-transport-clock').textContent=`来源：IMF PortWatch。获取时间：${date(v.transportFetchedAt)}；这不是船舶观察时间。`;
+ $('oil-routes').replaceChildren();
+ for(const row of v.routes){const item=el('article',undefined,'oil-route');item.append(el('h4',row.label),el('p',`${fmt(row.value)} 船次 · 过去30日均值 ${fmt(row.average)}`),el('p',clock(row),'oil-meta'));if(row.value!==null && row.average!==null && row.average>=0){const maximum=Math.max(1,row.value,row.average);for(const [label,value] of [['当日',row.value],['30日均值',row.average]]){const comparison=el('div',undefined,'oil-route-bar');comparison.append(el('span',label));const track=el('span',undefined,'oil-bar-track');const fill=el('span',undefined,'oil-bar-fill');fill.style.width=`${Math.max(0,value/maximum*100)}%`;track.append(fill);comparison.append(track);item.append(comparison);}}if(row.incomplete)item.append(el('p','数据不足：运力代理为零，无法据此判断实际货量或航道状态。','oil-warning'));$('oil-routes').append(item);}
+ const weekly=[['crudeStocksExSpr','商业原油库存（不含战略储备）','千桶'],['sprStocks','战略石油储备','千桶'],['distillateStocks','馏分油库存','千桶'],['gasolineStocks','汽油库存','千桶'],['refineryUtilization','炼厂利用率','%'],['refinerCrudeInputs','炼厂原油投入','千桶／日'],['demandGasolineSupplied','汽油产品供应','千桶／日'],['demandDistillateSupplied','馏分油产品供应','千桶／日']];
+ $('oil-weekly').replaceChildren();for(const [key,label,unit] of weekly){const row=v.qualified.evidence[key];cells($('oil-weekly'),[label,`${fmt(row.value)} ${unit}`,date(row.asOfDate),state(row)]);}
+ $('oil-facilities').replaceChildren();
+ if(v.thermal){const t=v.thermal;$('oil-thermal-count').textContent=`${fmt(t.rows)} 条记录`;$('oil-thermal-meta').textContent=`${t.clockStatus==='live'?'最近快照':'历史／超龄或时点无效的快照'}。${t.observationStatus==='live'?'最新采集在24小时内；仍不代表持续覆盖。':'最新采集超24小时或时点未知，不作当前判断。'}${fmt(t.detectedAreas)} 个监测区检出／${fmt(t.areas)} 个起步监测区。最新采集：${date(t.latest)}；快照生成：${date(t.generatedAt)}。${t.status==='partial'?'来源不完整。':'来源状态需结合快照核查。'}`;$('oil-thermal-baseline').textContent=`旧基线截至 ${date(t.baselineAt)}。${t.retired?'本轮存在已停源来源。':''}${t.baselinePaused?'来源组合改变或覆盖不完整，全轮基线比较暂停。':'基线是否可用于当前判断仍需独立核验。'}此页不使用异常等级推断事故。`;
+ for(const row of t.facilities)cells($('oil-facilities'),[row.label || '名称未知',fmt(row.rowCount),date(row.latestAcqAt)]);
+ }else{$('oil-thermal-count').textContent='数据不可用';$('oil-thermal-meta').textContent='未能取得可识别的卫星观测快照；不推断无异常。';$('oil-thermal-baseline').textContent='基线可比性未核实，不作异常判断。';}
+ const missing=['radar','oil','thermal'].filter(key=>!input[key]);$('oil-load-status').textContent=missing.length?`部分数据未加载（${missing.map(k=>({radar:'市场与运输',oil:'周度供需',thermal:'卫星观测'}[k])).join('、')}），对应区域保留缺失状态。`:`已读取三个独立快照。市场快照生成：${date(v.radarAt)}；各项观察时点见下文。`;
+}
+if(typeof document!=='undefined'){
+const [radar,oil,thermal]=await Promise.all([load('data/radar-data.json'),load('data/oil-directional-pressure.json'),load('data/oil-thermal-watch.json')]);
+renderOilMarket({radar,oil,thermal});
+}

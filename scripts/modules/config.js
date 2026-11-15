@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=qqq-week-label-20261114';
+﻿import { formatFiniteNumber } from './format.js?v=oil-market-20261116';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

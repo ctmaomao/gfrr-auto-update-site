@@ -1,7 +1,7 @@
-import { provenanceTime } from './dataProvenanceView.js?v=qqq-week-label-20261114';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=qqq-week-label-20261114';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=qqq-week-label-20261114';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=qqq-week-label-20261114';
+import { provenanceTime } from './dataProvenanceView.js?v=oil-market-20261116';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-market-20261116';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=oil-market-20261116';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=oil-market-20261116';
 
 const DAY = 86400000;
 const finite = Number.isFinite;
