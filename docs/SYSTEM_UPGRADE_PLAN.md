@@ -283,7 +283,7 @@ v28.0J 已完成规则化 AI 解释层的 contract、live data activation、fron
 
 - **L-3J-3** local_compact execution-language prompt fix:run `25598379612` quality 拦 `$.facts[5]` 的 `执行灯`;强化 prompt 禁复述 `decisionContext` 操作语言 + dry-run prompt contract check。
 - **L-3J-4** local_compact provider-call audit sync:run `25598887574` PASS(全链路过,`promotionEligible=false`/`productionDataWritten=false`)。
-- **L-3K** production integration readiness review([`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md)):manual artifact-only 就绪(`fixture_sample`/run `25593082968`、`local_compact`/run `25598887574` 已验);production write/frontend/Daily/auto-call 当时 NO-GO。
+- **L-3K** production integration readiness review([`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a6de1b8e8be8e4a05dfa8b95a36776eedb4a63d/docs/EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md)):manual artifact-only 就绪(`fixture_sample`/run `25593082968`、`local_compact`/run `25598887574` 已验);production write/frontend/Daily/auto-call 当时 NO-GO。
 - **L-3L** production data contract design([`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md)):设计 production schema(status/provenance/freshness/quality/content-safety/validator/write-gate/frontend-gate);当时 NO-GO。
 - **L-3M** production contract validator scaffold:`scripts/check-external-ai-production-contract.mjs` + valid fixture + `check:external-ai-production-contract`(入 check:all);当时 NO-GO。
 - **L-3N** production projection dry-run:`project:external-ai-production:dry-run` + `check:external-ai-production-projection`(只写 ignored artifact + 校验);当时 NO-GO。

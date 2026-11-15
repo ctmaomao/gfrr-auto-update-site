@@ -1353,7 +1353,7 @@ Stop and do not retry repeatedly if the provider returns unavailable, times out,
 - **L-3J-3** local_compact execution-language prompt fix:run `25598379612` quality review `executionLanguageSafety` 拦 `$.facts[5]` 的 `执行灯`;勿削 validator,prompt 修后单跑。
 - **L-3J-4** local_compact provider-call audit:run `25598887574` 过(commit `ade9ca2`,deepseek-v4-flash,quality 过、sanitizer 过、`productionDataWritten=false`)作 local_compact artifact-only 审计记录;下一步 L-3K readiness review。
 
-- **L-3K** production readiness note:readiness review([`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md)),未批 production;artifact 3 天过期、只留 doc 摘要。
+- **L-3K** production readiness note:readiness review([`EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a6de1b8e8be8e4a05dfa8b95a36776eedb4a63d/docs/EXTERNAL_AI_PRODUCTION_READINESS_REVIEW.md)),未批 production;artifact 3 天过期、只留 doc 摘要。
 - **L-3L** production data contract note:设计 production 契约([`EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md`](EXTERNAL_AI_PRODUCTION_DATA_CONTRACT_DESIGN.md)),未批 write;勿手插/手编 layer。
 - **L-3M** production contract validator note:跑 `npm run check:external-ai-production-contract`;勿手插 layer;下一步 projection/dry-run。
 - **L-3N** production projection dry-run note:跑 `npm run check:external-ai-production-projection`(只校验);projection artifact 勿进 `data/`。
