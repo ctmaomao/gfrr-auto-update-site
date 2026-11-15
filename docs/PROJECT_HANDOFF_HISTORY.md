@@ -308,13 +308,13 @@ Historical detail belongs in [MILESTONE_INDEX.md](MILESTONE_INDEX.md), specific 
 ### 2026-09-06 指令与技能维护
 
 - **当前 acceptance baseline**：owner 已明确采纳 Git 分级授权（ADR-0026）；本地常规 Git 可自主执行，远端/集成按任务授权，破坏性操作仍具体确认。保留必要验证与人工 contract review、付费/发布/source-rights 保障。
-- **当前实现**：领域 checker 解耦、普通文档轻量分流、个人维护源和只读升级检测已落地；neat-freak 保留精简定制版，选择吸收上游 v3 触发边界。全量 Markdown 复核和剩余瘦身建议见 [最终复核](REVIEW_2026-09-06_MARKDOWN_FINAL.md)。不改既有无关 .agents/ 与 skills-lock.json。
-- 前三轮执行证据保留在 [初轮](REVIEW_2026-09-06_INSTRUCTIONS.md)、[第二轮](REVIEW_2026-09-06_INSTRUCTIONS_PHASE2.md)、[第三轮](REVIEW_2026-09-06_INSTRUCTIONS_PHASE3.md)。其中旧 Git 手动要求/未启用轻量检查是当时状态，现行规则见根 AGENTS 与 ADR-0025/0026。
-- **本次文档整理 acceptance baseline**：owner 授权合并 Market Pricing / External AI 重复状态、原文归档历史交接；字体/颜色例外先按 [ADR-0027](ADR/0027-design-document-consistency.md) 限定为 token 定义和现有单条 #999 边框，再修正文档。未批准其它视觉漂移；当前进度见 [整理回执](REVIEW_2026-09-06_DOC_CONSOLIDATION.md)。
+- **当前实现**：领域 checker 解耦、普通文档轻量分流、个人维护源和只读升级检测已落地；neat-freak 保留精简定制版，选择吸收上游 v3 触发边界。全量 Markdown 复核和剩余瘦身建议见 [最终复核](REVIEW_2026-09-06_CLOSEOUT.md#markdown-final)。不改既有无关 .agents/ 与 skills-lock.json。
+- 前三轮执行证据保留在 [初轮](REVIEW_2026-09-06_CLOSEOUT.md#instructions)、[第二轮](REVIEW_2026-09-06_CLOSEOUT.md#phase2)、[第三轮](REVIEW_2026-09-06_CLOSEOUT.md#phase3)。其中旧 Git 手动要求/未启用轻量检查是当时状态，现行规则见根 AGENTS 与 ADR-0025/0026。
+- **本次文档整理 acceptance baseline**：owner 授权合并 Market Pricing / External AI 重复状态、原文归档历史交接；字体/颜色例外先按 [ADR-0027](ADR/0027-design-document-consistency.md) 限定为 token 定义和现有单条 #999 边框，再修正文档。未批准其它视觉漂移；当前进度见 [整理回执](REVIEW_2026-09-06_CLOSEOUT.md#doc-consolidation)。
 
-- **ODP/Energy 后续整理 acceptance baseline**：owner 于本轮授权执行前轮建议；将 P3-19/P3-19a 实施历史原文迁出，保留当前授权、待办、回测预登记入口及既有 checker 标题依赖，不改 runtime/checker/审批门槛。结果见 [领域条目整理回执](REVIEW_2026-09-06_ENERGY_BACKLOG.md)。
+- **ODP/Energy 后续整理 acceptance baseline**：owner 于本轮授权执行前轮建议；将 P3-19/P3-19a 实施历史原文迁出，保留当前授权、待办、回测预登记入口及既有 checker 标题依赖，不改 runtime/checker/审批门槛。结果见 [领域条目整理回执](REVIEW_2026-09-06_CLOSEOUT.md#energy-backlog)。
 
-- **标题/schema 依赖迁移 acceptance baseline**：owner 授权继续处理剩余依赖；按 [ADR-0028](ADR/0028-energy-record-assertion-location.md) 将 68 个校验器的历史记录读取目标迁至原文归档，76 项标识及全部断言保留，删除 backlog 兼容索引。独立 checker 合并审阅保留，记录不扩大权限；见 [迁移回执](REVIEW_2026-09-06_ENERGY_ASSERTIONS.md)。
+- **标题/schema 依赖迁移 acceptance baseline**：owner 授权继续处理剩余依赖；按 [ADR-0028](ADR/0028-energy-record-assertion-location.md) 将 68 个校验器的历史记录读取目标迁至原文归档，76 项标识及全部断言保留，删除 backlog 兼容索引。独立 checker 合并审阅保留，记录不扩大权限；见 [迁移回执](REVIEW_2026-09-06_CLOSEOUT.md#energy-assertions)。
 
 - **本轮收尾 acceptance baseline**：owner 授权继续精简并 commit+push 本系列全部已完成的仓库改动。维护状态去快照计数、完成事项与旧 Open 条目原文归档；领域入口澄清阶段、删除空 ignore list 的解释负担，实际 ignore 理由与独立审阅保留。工作推送到独立任务分支，合并前人工 review 不被替代；见 [总回执](REVIEW_2026-09-06_CLOSEOUT.md)。
 

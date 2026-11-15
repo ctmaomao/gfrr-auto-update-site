@@ -22,4 +22,4 @@ This expands local Git execution autonomy and lets an agent execute already-appr
 
 ## Verification
 
-Root permission text and current navigation/handoff references are synchronized. Existing serial-trunk assertions and all production gates are preserved. See the [Markdown review receipt](../REVIEW_2026-09-06_MARKDOWN_FINAL.md) for checks and limits.
+Root permission text and current navigation/handoff references are synchronized. Existing serial-trunk assertions and all production gates are preserved. See the [Markdown review receipt](../REVIEW_2026-09-06_CLOSEOUT.md#markdown-final) for checks and limits.

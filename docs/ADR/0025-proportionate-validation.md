@@ -24,4 +24,4 @@ OpenAI recommends concise, practical agent instructions and verification proport
 
 ## Validation
 
-Unit tests cover light/full classification, mixed edits, deletion, commands and approval language, recursive/root documents, references, images, encoded anchors and broken inbound links. The current implementation/checker changes require the full suite; results are recorded in [the phase-three receipt](../REVIEW_2026-09-06_INSTRUCTIONS_PHASE3.md).
+Unit tests cover light/full classification, mixed edits, deletion, commands and approval language, recursive/root documents, references, images, encoded anchors and broken inbound links. The current implementation/checker changes require the full suite; results are recorded in [the phase-three receipt](../REVIEW_2026-09-06_CLOSEOUT.md#phase3).

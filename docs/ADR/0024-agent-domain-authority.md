@@ -24,4 +24,4 @@ Human review should compare the mechanical path substitutions and the workflow-s
 
 ## Verification
 
-Run `npm run check:docs`, `npm run check:all`, and `git diff --check`. Detailed results and the validation-depth review are recorded in [the phase-two receipt](../REVIEW_2026-09-06_INSTRUCTIONS_PHASE2.md).
+Run `npm run check:docs`, `npm run check:all`, and `git diff --check`. Detailed results and the validation-depth review are recorded in [the phase-two receipt](../REVIEW_2026-09-06_CLOSEOUT.md#phase2).

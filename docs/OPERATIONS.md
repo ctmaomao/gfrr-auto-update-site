@@ -568,7 +568,7 @@ Provider-call artifacts, if implemented later, are still non-production manual d
 
 ### External AI provider-call readiness checklist
 
-v28.0L-3D is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a no-code readiness gate before any provider-call workflow implementation.
+v28.0L-3D is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a no-code readiness gate before any provider-call workflow implementation.
 
 Current operator decision: provider-call implementation is still NO-GO. Do not add `DEEPSEEK_API_KEY` to GitHub Secrets until the L-3D checklist blockers are resolved and a separate implementation PR is approved. Do not run provider calls from GitHub Actions yet. Continue using only the v28.0L-3B dry-run workflow for GitHub Actions validation.
 
@@ -576,7 +576,7 @@ Before any future provider-call implementation, operators must finalize secret s
 
 ### External AI provider-call implementation plan
 
-v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a no-code implementation plan.
+v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a no-code implementation plan.
 
 Do not add `DEEPSEEK_API_KEY` to GitHub Secrets yet. If L-3F is pursued, it should first add a missing-secret-safe workflow skeleton and static checks only: default dry-run must pass, provider-path requested without a secret must fail before provider command, and no real DeepSeek call should run.
 

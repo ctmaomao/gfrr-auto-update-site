@@ -16,4 +16,4 @@ Accepted and merged in PR #304 after [owner-authorized AI review](../REVIEW_2026
 
 `assets/styles.css` defines `--font-serif` with Noto Serif SC, Source Han Serif SC, Songti SC and serif; `.indicator-card .meta` contains the single #999 dashed border. The retired checker files and package entries are absent. No CSS, HTML, renderer, scoring, data, workflow, dependency or asset version is changed.
 
-Only the precisely named token-definition and legacy border exceptions are clarified. Existing unrelated visual drift, if any, is not approved by this ADR. Verification and preservation evidence are recorded in the [documentation consolidation receipt](../REVIEW_2026-09-06_DOC_CONSOLIDATION.md).
+Only the precisely named token-definition and legacy border exceptions are clarified. Existing unrelated visual drift, if any, is not approved by this ADR. Verification and preservation evidence are recorded in the [documentation consolidation receipt](../REVIEW_2026-09-06_CLOSEOUT.md#doc-consolidation).
