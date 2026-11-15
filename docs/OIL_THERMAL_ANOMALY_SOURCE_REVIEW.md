@@ -24,8 +24,11 @@ coverage. The configured +/-0.05 degree boxes are not verified asset polygons.
 - [PR #579](https://github.com/ctmaomao/gfrr-auto-update-site/pull/579) fixes missing
   FRP becoming zero and malformed acquisition clocks in watch/diagnostic parsing.
   Full local checks, independent review and exact CI passed. Its merge is not proof
-  of adoption by a later natural observation run. Existing baseline-review
-  `metricNumber(facility.maxFrp, 0)` must also be resolved before a new cohort is used.
+  of adoption by a later natural observation run. Baseline sample review now also
+  preserves unknown FRP and reports measured/missing counts. Available-only FRP
+  statistics are diagnostic: any facility cohort containing missing FRP is held
+  from candidate promotion, avoiding an implicit switch to a conditional estimator.
+  This does not establish or activate a new comparable cohort.
 - Git snapshots retain cross-source facility aggregates, not unique observation
   identities or valid-overpass/cloud denominators. Repeated snapshots cannot be
   counted as independent events or used to reconstruct unavailable raw history.
