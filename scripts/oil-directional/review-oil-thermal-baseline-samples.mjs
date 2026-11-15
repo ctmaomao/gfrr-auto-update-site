@@ -247,7 +247,7 @@ function extractFacilitySample(facility, sample) {
     sampleGeneratedAt: sample.generatedAt,
     latestAcqAt: isoOrNull(facility.latestAcqAt),
     rowCount: metricNumber(facility.rowCount, 0),
-    maxFrp: metricNumber(facility.maxFrp, 0),
+    maxFrp: Number.isFinite(facility.maxFrp) && facility.maxFrp >= 0 ? facility.maxFrp : null,
     highConfidenceCount: metricNumber(facility.highConfidenceCount, 0),
     frpOver50Count: metricNumber(facility.frpOver50Count, 0),
     frpOver100Count: metricNumber(facility.frpOver100Count, 0),
@@ -423,7 +423,11 @@ function buildFacilityRows(samples, review, minSamples, percentileValue) {
     rows.sort((a, b) => Date.parse(a.sampleGeneratedAt) - Date.parse(b.sampleGeneratedAt));
     const first = rows[0];
     const last = rows[rows.length - 1];
-    const readyForBaseline = rows.length >= minSamples;
+    const measuredFrp = rows.map((item) => item.maxFrp).filter(Number.isFinite);
+    const missingFrpSampleCount = rows.length - measuredFrp.length;
+    // Do not silently promote a conditional (detected-only) percentile as the
+    // original complete-window estimator. Incomplete FRP is diagnostic only.
+    const readyForBaseline = rows.length >= minSamples && missingFrpSampleCount === 0;
     const row = {
       id,
       label: first.label ?? last.label ?? null,
@@ -436,20 +440,25 @@ function buildFacilityRows(samples, review, minSamples, percentileValue) {
       windowDays: dateDiffDays(first.sampleGeneratedAt, last.sampleGeneratedAt),
       metrics: {
         rowCountP95: percentile(rows.map((item) => item.rowCount), percentileValue),
-        maxFrpP95: percentile(rows.map((item) => item.maxFrp), percentileValue),
+        maxFrpP95: percentile(measuredFrp, percentileValue),
         highConfidenceCountP95: percentile(rows.map((item) => item.highConfidenceCount), percentileValue),
         frpOver50CountP95: percentile(rows.map((item) => item.frpOver50Count), percentileValue),
         frpOver100CountP95: percentile(rows.map((item) => item.frpOver100Count), percentileValue),
         sourcesWithDetectionsP95: percentile(rows.map((item) => item.sourcesWithDetections), percentileValue),
-        maxObservedFrp: round(Math.max(...rows.map((item) => item.maxFrp)), 3),
+        maxObservedFrp: measuredFrp.length ? round(Math.max(...measuredFrp), 3) : null,
+        measuredFrpSampleCount: measuredFrp.length,
+        missingFrpSampleCount,
         maxObservedRowCount: Math.max(...rows.map((item) => item.rowCount)),
         samplesWithDetections: rows.filter((item) => item.rowCount > 0).length,
         samplesWithMultiSourceDetections: rows.filter((item) => item.sourcesWithDetections >= 2).length
       },
       warnings: []
     };
-    if (!readyForBaseline) {
+    if (rows.length < minSamples) {
       row.warnings.push(`Need ${minSamples - rows.length} more samples before this facility has a candidate baseline.`);
+    }
+    if (missingFrpSampleCount > 0) {
+      row.warnings.push(`${missingFrpSampleCount} samples lack a valid FRP measurement; available-value FRP statistics are diagnostic only and this facility cannot form a candidate baseline.`);
     }
     facilities.push(row);
   }
@@ -492,6 +501,8 @@ function mergeFacilityRows({ eligibleRows, allRows }) {
         frpOver100CountP95: null,
         sourcesWithDetectionsP95: null,
         maxObservedFrp: null,
+        measuredFrpSampleCount: 0,
+        missingFrpSampleCount: 0,
         maxObservedRowCount: null,
         samplesWithDetections: 0,
         samplesWithMultiSourceDetections: 0
@@ -692,7 +703,10 @@ function finalizeReview(review, allSamples, eligibleSamples, facilityRows, eligi
   }
   for (const facility of facilityRows) {
     if (!facility.readyForBaseline) {
-      addWarning(review, `${facility.id} has ${facility.sampleCount} samples; needs ${review.policy.minSamplesPerFacility}.`);
+      const missingFrp = facility.metrics.missingFrpSampleCount ?? 0;
+      addWarning(review, missingFrp > 0
+        ? `${facility.id} has ${missingFrp} samples without valid FRP; candidate held, not imputed as zero.`
+        : `${facility.id} has ${facility.sampleCount} samples; needs ${review.policy.minSamplesPerFacility}.`);
     }
   }
   if (readyFacilities.length === 0) {

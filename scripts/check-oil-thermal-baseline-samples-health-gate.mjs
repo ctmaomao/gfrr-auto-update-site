@@ -236,11 +236,19 @@ try {
   const fixtureCheck = JSON.parse(readFileSync('docs/fixtures/oil-thermal/oil-thermal-watch-sample-a.json', 'utf8'));
   assert(fixtureCheck.aggregate?.requestErrorCount === 0, 'fixture health evidence should be present');
 
-  const establishedReview = runReview([
-    'docs/fixtures/oil-thermal/oil-thermal-watch-sample-a.json',
-    'docs/fixtures/oil-thermal/oil-thermal-watch-sample-b.json',
-    'docs/fixtures/oil-thermal/oil-thermal-watch-sample-c.json'
-  ]);
+  // Isolate promotion-health gates from the independent missing-FRP gate.
+  // The original a/b/c fixtures contain unknown FRP and must not be filled with zero.
+  const completeFrpPaths = [20, 21, 22].map((day) => {
+    const path = join(promotionTempDir, `complete-frp-${day}.json`);
+    writeFileSync(path, JSON.stringify(buildSample({
+      generatedAt: `2026-06-${day}T00:00:00.000Z`, status: 'ok', maxFrp: 8,
+      requestDiagnostics: { policyVersion: 'firms-request-policy-1', logicalRequestCount: 3,
+        failedRequestCount: 0, failuresByCategory: {} }
+    })), 'utf8');
+    return path;
+  });
+  const establishedReview = runReview(completeFrpPaths);
+  assert(establishedReview.status === 'pass', 'promotion-health fixture must have complete measured FRP');
   const oldReviewPath = join(promotionTempDir, 'review-old-version.json');
   const gateHoldReviewPath = join(promotionTempDir, 'review-gate-hold.json');
   const inconsistentGateReviewPath = join(promotionTempDir, 'review-inconsistent-gate.json');
