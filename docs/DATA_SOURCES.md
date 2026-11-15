@@ -1284,3 +1284,7 @@ The existing HY/CCC/IG FRED display history now has a bounded Tuesday–Saturday
 ### Independent Bubble market observations (2026-11-14)
 
 Existing CAPE/SPY holdings/NVDA PE/SPY–RSP public sources gain a separate dated display snapshot with five bounded credential-free requests. It shares the existing credit workflow, does not repeat credit requests, and never enters weekly scores or AI input. Missing/invalid dates stay unknown; previous valid values keep original dates. [Contract, limits and verification](BUBBLE_INDEPENDENT_MARKET_OBSERVATIONS.md).
+
+### Copper/gold acquisition snapshots (2026-11-15)
+
+Gold API [FAQ](https://gold-api.com/faqs) and [specification](https://gold-api.com/llms.txt) identify live `updatedAt` as provider acquisition time, not a trading-day observation. The Daily copper/gold adapter now reuses the existing strict Gold quote parser, preserves this timestamp and rejects invalid/missing/future clocks instead of inventing a current time. A previous pipeline run is not a verified previous-day close: live and cached leg changes, and therefore ratio daily change, remain null. Prices and current ratio remain available; missing copper cannot become zero. Existing Yahoo fallback, source frequency, scoring and production history are unchanged. No historical/API-key endpoint is added.

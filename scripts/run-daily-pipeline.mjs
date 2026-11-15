@@ -1,3 +1,4 @@
+import { goldQuoteRows } from './realtime/gold-quote.mjs';
 import { normalizeWorldOrderStressHistorySnapshot, mergeWorldOrderStress } from './daily/world-order-history.mjs';
 import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
 import { fetchBalticFreight } from './daily/baltic-freight.mjs';
@@ -178,16 +179,15 @@ const WTI_MARKET_PROXY_MAX = 250;
 const INFLATION_ENERGY_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
 const GOLD_API_PRICE_BASE = 'https://api.gold-api.com/price';
 const COPPER_GOLD_SOURCE = 'gold-api:HG; gold-api:XAU';
-// gold-api's real-time endpoint returns spot price only (no change field), so
-// ratioChangePct is derived day-over-day from the previous Daily run's stored
-// leg price — hence the window is "1d" (vs previous daily run), not 5d intraday.
+// Retain the requested daily-change window contract; values stay null without
+// independent, qualified prior-trading-day observations.
 const COPPER_GOLD_CHANGE_WINDOW = '1d';
 // Range used only when a leg falls back to the Yahoo chart (different provider,
 // keeps both legs covered if gold-api is down); just enough to land a recent
 // close — the Yahoo-fallback changePct is dropped to avoid mixing windows.
 const COPPER_GOLD_YAHOO_FALLBACK_RANGE = '5d';
 const COPPER_GOLD_DISPLAY_NOTE =
-  '铜金比 display-only 公开现货价(gold-api 主 / Yahoo 期货备);regime 观察,不进 scoring/decision/execution/position。';
+  '铜金比 display-only 公开现货价(gold-api 主 / Yahoo 期货备);regime 观察,不进 scoring/decision/execution/position。gold-api 时间为来源获取时间,非交易所观察时间；未有合格前交易日基准,日变化未知。';
 const COPPER_GOLD_STATUS_RANK = { live: 0, fallback: 1, missing: 2 };
 const COPPER_GOLD_LEGS = [
   { key: 'copper', symbol: 'HG', yahooSymbol: 'HG=F', labelZh: '铜现货', min: 0.5, max: 20 },
@@ -2636,8 +2636,8 @@ async function fetchYahooChartQuote(symbol, range = '1mo', interval = '1d') {
 }
 
 // gold-api.com real-time spot price (keyless, unlimited free tier). Returns spot
-// price + updatedAt only (no change field), so changePct is derived elsewhere
-// day-over-day from the previous Daily run. Used by copperGold (display-only).
+// price + provider acquisition time only. No prior trading-day observation;
+// never derive a 1d return from a previous pipeline run (display-only).
 async function fetchGoldApiPrice(symbol) {
   const payload = await fetchJsonText(
     `${GOLD_API_PRICE_BASE}/${encodeURIComponent(symbol)}`,
@@ -2645,11 +2645,7 @@ async function fetchGoldApiPrice(symbol) {
     MACRO_FETCH_TIMEOUT_MS,
     { userAgent: 'Mozilla/5.0 GFRRBot/1.0' }
   );
-  const price = Number(payload?.price);
-  if (!Number.isFinite(price) || price <= 0) throw new Error(`gold-api:${symbol} missing price`);
-  const updatedAt = typeof payload?.updatedAt === 'string' && payload.updatedAt.trim()
-    ? payload.updatedAt
-    : new Date().toISOString();
+  const [{ value: price, date: updatedAt }] = goldQuoteRows(payload);
   return {
     symbol,
     price: +price.toFixed(4),
@@ -3150,7 +3146,7 @@ function normalizePreviousCopperGoldLeg(previous, config) {
     symbol: config.symbol,
     labelZh: config.labelZh,
     price: +Number(previous.price).toFixed(4),
-    changePct: Number.isFinite(previous.changePct) ? +Number(previous.changePct).toFixed(4) : null,
+    changePct: null, // Legacy snapshot returns have no verified prior-day observation.
     changeWindow: typeof previous.changeWindow === 'string' && previous.changeWindow.trim()
       ? previous.changeWindow
       : COPPER_GOLD_CHANGE_WINDOW,
@@ -3163,16 +3159,16 @@ function normalizePreviousCopperGoldLeg(previous, config) {
 }
 
 function deriveCopperGoldRatio(copper, gold) {
-  const copperPrice = Number(copper?.price);
-  const goldPrice = Number(gold?.price);
+  const copperPrice = Number.isFinite(copper?.price) ? copper.price : null;
+  const goldPrice = Number.isFinite(gold?.price) ? gold.price : null;
   if (!Number.isFinite(copperPrice) || !Number.isFinite(goldPrice) || goldPrice <= 0) return null;
   return +(copperPrice / goldPrice).toFixed(8);
 }
 
 function deriveCopperGoldRatioChangePct(copper, gold, ratio) {
   if (!Number.isFinite(ratio)) return null;
-  const copperPrice = Number(copper?.price);
-  const goldPrice = Number(gold?.price);
+  const copperPrice = Number.isFinite(copper?.price) ? copper.price : null;
+  const goldPrice = Number.isFinite(gold?.price) ? gold.price : null;
   // Guard null explicitly: Number(null) === 0 (finite), which would wrongly
   // yield ratioChangePct 0 instead of null when a leg has no changePct (e.g. the
   // Yahoo-fallback path, or the one-time gold-api transition run).
@@ -3222,14 +3218,8 @@ async function fetchCopperGoldLeg(config, prevLeg) {
   try {
     const goldApi = await fetchGoldApiPrice(config.symbol);
     if (isPlausibleCopperGoldQuote(goldApi, config)) {
-      // gold-api gives spot price only; derive changePct day-over-day from the
-      // previous run's gold-api price (null on the one-time Yahoo->gold-api
-      // transition, when the prior leg's source was not gold-api).
-      const prevPrice = Number(prevLeg?.price);
-      const prevFromGoldApi = typeof prevLeg?.source === 'string' && prevLeg.source.startsWith('gold-api');
-      const changePct = (prevFromGoldApi && Number.isFinite(prevPrice) && prevPrice > 0)
-        ? +(((goldApi.price - prevPrice) / prevPrice)).toFixed(4)
-        : null;
+      // Acquisition snapshots are not independent trading-day observations.
+      const changePct = null;
       return { quote: goldApi, sourceStatus: 'live', changePct };
     }
   } catch (_err) { /* fall through to Yahoo fallback */ }
@@ -3237,8 +3227,8 @@ async function fetchCopperGoldLeg(config, prevLeg) {
   try {
     const yahoo = await fetchYahooChartQuote(config.yahooSymbol, COPPER_GOLD_YAHOO_FALLBACK_RANGE, '1d');
     if (isPlausibleCopperGoldQuote(yahoo, config)) {
-      // Different-provider fallback; drop changePct to avoid mixing the gold-api
-      // day-over-day window with Yahoo's intraday window.
+      // Different-provider fallback has no aligned prior-day comparison for
+      // both legs; keep the current price without manufacturing a return.
       return { quote: yahoo, sourceStatus: 'fallback', changePct: null };
     }
   } catch (_err) { /* fall through to previous-run carry-over */ }
