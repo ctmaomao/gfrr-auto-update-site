@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { firmsFrpOrNull, firmsAcquisitionIso } from './firms-observation-fields.mjs';
 import { pathToFileURL } from 'node:url';
 import { matchesLegacyThermalSources } from './oil-thermal-source-lifecycle.mjs';
 import { discloseOilThermalBaselineAge } from './oil-thermal-baseline-age.mjs';
@@ -424,11 +425,6 @@ function parseCsv(text) {
   });
 }
 
-function toAcqIso(record) {
-  if (!record.acq_date || !record.acq_time) return null;
-  const time = String(record.acq_time).padStart(4, '0');
-  return `${record.acq_date}T${time.slice(0, 2)}:${time.slice(2, 4)}:00Z`;
-}
 
 function summarizeRecords(records) {
   const summary = {
@@ -446,13 +442,13 @@ function summarizeRecords(records) {
     summary.confidenceCounts[confidence] = (summary.confidenceCounts[confidence] ?? 0) + 1;
     const numericConfidence = Number(confidence);
     if (confidence === 'h' || (Number.isFinite(numericConfidence) && numericConfidence >= 80)) summary.highConfidenceCount += 1;
-    const frp = Number(record.frp);
+    const frp = firmsFrpOrNull(record.frp);
     if (Number.isFinite(frp) && (summary.maxFrp === null || frp > summary.maxFrp)) summary.maxFrp = frp;
     if (Number.isFinite(frp) && frp >= 50) summary.frpOver50Count += 1;
     if (Number.isFinite(frp) && frp >= 100) summary.frpOver100Count += 1;
     const dayNight = record.daynight || 'unknown';
     summary.dayNightCounts[dayNight] = (summary.dayNightCounts[dayNight] ?? 0) + 1;
-    const acqAt = toAcqIso(record);
+    const acqAt = firmsAcquisitionIso(record);
     if (acqAt && (!summary.latestAcqAt || acqAt > summary.latestAcqAt)) summary.latestAcqAt = acqAt;
   }
   return summary;
@@ -554,9 +550,10 @@ async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retr
     retryBudget,
     nowMs: Date.parse(generatedAt)
   });
-  let records;
+  let summary;
   try {
-    records = parseCsv(request.text);
+    const records = parseCsv(request.text);
+    summary = summarizeRecords(records);
   } catch (error) {
     wrapFirmsResponseError(error, request.diagnostics);
   }
@@ -564,7 +561,7 @@ async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retr
     source,
     sourceStatus: 'live',
     requestDiagnostics: request.diagnostics,
-    summary: summarizeRecords(records)
+    summary
   };
 }
 

@@ -94,3 +94,26 @@ test('already supported mixed MODIS selection does not claim NOAA provenance',as
   assert.match(a.limitationsZh.join(' '),/仍可用来源/);assert.doesNotMatch(a.limitationsZh.join(' '),/只保留 NOAA/);
   assert.equal(a.aggregate.repeatedObservationCount,0);
 });
+
+test('missing FRP remains null in production; real zero remains zero', async () => {
+  for (const [frp, expected] of [['', null], ['0', 0]]) {
+    const {artifact:a} = await build(after, {body:header + `2026-11-01,1200,n,${frp},D\n`});
+    assert.equal(a.aggregate.maxFrp, expected);
+    assert.equal(a.facilities[0].maxFrp, expected);
+    assert.equal(a.aggregate.frpOver50Count, 0);
+    assert.equal(a.aggregate.rowCount, 2);
+  }
+});
+test('bad fields quarantine response without retry or false fresh/high signal', async () => {
+  for (const row of ['2026-02-30,1200,h,100,D', '2026-11-01,2400,h,100,D', '2026-11-01,,h,100,D', '2026-11-01,1200,h,-2,D']) {
+    const {artifact:a,calls} = await build(after, {body:header + row + '\n'});
+    assert.equal(calls, 2);
+    assert.equal(a.aggregate.rowCount, 0);
+    assert.equal(a.aggregate.maxFrp, null);
+    assert.equal(a.aggregate.latestAcqAt, null);
+    assert.equal(a.aggregate.requestDiagnostics.failuresByCategory.response_parse_error, 2);
+    assert.equal(a.aggregate.requestDiagnostics.retryCount, 0);
+    assert.equal(a.aggregate.repeatedObservationCount, 0);
+    assert.equal(classifyOilThermalSampleHealth(a).eligible, false);
+  }
+});
