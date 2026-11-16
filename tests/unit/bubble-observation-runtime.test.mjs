@@ -6,7 +6,7 @@ import { requireFreshUnderlyingObservation } from '../../scripts/bubble-watch/ob
 import { ARR_MAX_AGE_DAYS, buildArrGap, validateArrGap } from '../../scripts/bubble-watch/arr-evidence.mjs';
 import { syncUpstreamObservation, buildEnterpriseObservationProjection } from '../../scripts/bubble-watch/source-observation.mjs';
 const source = fs.readFileSync(new URL('../../scripts/build-bubble-watch.mjs', import.meta.url), 'utf8');
-const config = JSON.parse(fs.readFileSync(new URL('../../config/bubble-watch-curated.json', import.meta.url)));
+const config = JSON.parse(fs.readFileSync(new URL('../fixtures/bubble-observation-config-20261110.json', import.meta.url)));
 const block = (a, b) => source.slice(source.indexOf(a), source.indexOf(b, source.indexOf(a)));
 const rows = ['2026-02-01', '2026-03-01', '2026-04-01', '2026-05-28'].map((date, n) => ({ date, id: [315823, 322211, 323715, 325206][n], arrB: [2, 3, 5, 9][n], title: 'Synthetic bound company run-rate' }));
 function arrCollector(today) {
