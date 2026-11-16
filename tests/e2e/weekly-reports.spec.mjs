@@ -1,31 +1,37 @@
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 for (const width of [1440,390]) {
-  test('weekly homepage and all three tabs preserve reader paths '+width, async ({page}) => {
+  test('weekly homepage and all four tabs preserve reader paths '+width, async ({page}) => {
     await page.setViewportSize({width,height:900});
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto('/');
     await expect(page).toHaveURL(/\/weekly-reports\.html$/);
     await expect(page.locator('.section')).toHaveCount(12);
-    await expect(page.locator('.page-bookmarks a')).toHaveCount(3);
+    await expect(page.locator('.page-bookmarks a')).toHaveCount(4);
     await expect(page.locator('a[aria-current="page"]')).toHaveText('每周周报');
     expect(await page.evaluate(()=>globalThis.document.documentElement.scrollWidth<=globalThis.innerWidth)).toBe(true);
-    await page.screenshot({path:'manual-artifacts/weekly-homepage/weekly-'+width+'.png'});
+    await page.screenshot({path:'test-results/four-nav-weekly-'+width+'.png'});
     await page.locator('#markets').scrollIntoViewIfNeeded();
-    await page.screenshot({path:'manual-artifacts/weekly-homepage/markets-'+width+'.png'});
+    await page.screenshot({path:'test-results/four-nav-markets-'+width+'.png'});
     await page.locator('.page-bookmarks a', {hasText:'全球雷达'}).click();
     await expect(page).toHaveURL(/index\.html\?view=radar$/);
     await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
     await expect(page.locator('#homepage-today-judgment')).toBeVisible();
-    await page.screenshot({path:'manual-artifacts/weekly-homepage/radar-'+width+'.png'});
+    await page.screenshot({path:'test-results/four-nav-radar-'+width+'.png'});
     await page.locator('.page-bookmarks a', {hasText:'AI泡沫'}).click();
     await expect(page.locator('section.category article.indicator')).toHaveCount(27);
-    await page.screenshot({path:'manual-artifacts/weekly-homepage/bubble-'+width+'.png'});
+    await page.screenshot({path:'test-results/four-nav-bubble-'+width+'.png'});
+    await page.locator('.page-bookmarks a', {hasText:'油市观察'}).click();
+    await expect(page).toHaveURL(/oil-market\.html$/);
+    await expect(page.locator('.page-bookmarks a')).toHaveCount(4);
+    await expect(page.locator('a[aria-current="page"]')).toHaveText('油市观察');
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:'test-results/four-nav-oil-'+width+'.png'});
     await page.locator('.page-bookmarks a', {hasText:'每周周报'}).click();
     await expect(page).toHaveURL(/weekly-reports\.html$/);
     await page.goBack();
-    await expect(page).toHaveURL(/bubble-watch\.html$/);
+    await expect(page).toHaveURL(/oil-market\.html$/);
     await page.goForward();
     await expect(page).toHaveURL(/weekly-reports\.html$/);
     expect(errors).toEqual([]);

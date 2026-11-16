@@ -1,4 +1,4 @@
-import { buildOilMarketView } from './oilMarketModel.js?v=oil-consistency-20261116';
+import { buildOilMarketView } from './oilMarketModel.js?v=four-nav-20261116';
 const $=id=>document.getElementById(id);
 const el=(tag,text,className)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;};
 const fmt=value=>typeof value==='number'&&Number.isFinite(value)?value.toLocaleString('zh-CN',{maximumFractionDigits:2}):'—';

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=oil-consistency-20261116';
+﻿import { fmtNumSafe } from './config.js?v=four-nav-20261116';
 
 const SOURCE_MODE_CN = {
   'live': '实时',
