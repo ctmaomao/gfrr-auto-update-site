@@ -1,3 +1,4 @@
+import { parseObservationTimestamp } from './daily/source-observation.mjs';
 import { isFutureTimestampAge } from './health/timestamp-policy.mjs';
 import { observeBrentReceipt } from './realtime/brent-receipt-metadata.mjs';
 import { goldQuoteRows, sourceTimestampAgeSeconds } from './realtime/gold-quote.mjs';
@@ -212,7 +213,15 @@ function parseObservedAtUtc(raw) {
   if (!cleaned) return null;
   if (/^\d{13}$/.test(cleaned)) return new Date(Number(cleaned)).toISOString();
   if (/^\d{10}$/.test(cleaned)) return new Date(Number(cleaned) * 1000).toISOString();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return null;
+  // Validate the date before any format conversion or missing-time fallback.
+  const isoDay = /^\d{4}-\d{2}-\d{2}/.exec(cleaned)?.[0];
+  if (isoDay && parseObservationTimestamp(isoDay) === null) throw new Error('observation_timestamp_invalid');
+  if (cleaned === isoDay) return null;
+  if (/^\d{4}-\d{2}-\d{2}[Tt]/.test(cleaned) || /^\d{4}-\d{2}-\d{2} \d/.test(cleaned)) {
+    const timestamp = parseObservationTimestamp(cleaned);
+    if (timestamp === null) throw new Error('observation_timestamp_invalid');
+    return new Date(timestamp).toISOString();
+  }
   if (!/\b\d{4}\b/.test(cleaned)) return null;
   const hasTimeZone = /(?:Z|GMT|UTC|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[+-]\d{2}:?\d{2})$/i.test(cleaned);
   const utcTime = Date.parse(hasTimeZone ? cleaned : `${cleaned} UTC`);
@@ -457,10 +466,7 @@ function buildBrentConsensus(candidates) {
 }
 
 function parseTimestamp(value) {
-  if (typeof value !== 'string' || !value) return null;
-  const normalized = value.includes('T') ? value : `${value}T00:00:00Z`;
-  const time = Date.parse(normalized);
-  return Number.isFinite(time) ? time : null;
+  return parseObservationTimestamp(value);
 }
 
 function computeAgeMinutes(asOf, reference = now) {
@@ -1315,4 +1321,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
 }
 
 // Pure adapters are exported for offline tests; importing never runs main().
-export { computeAgeMinutes, classifyFreshnessLevel, isFreshEnoughForConsensus, prepareBrentCandidatesForConsensus, buildBrentConsensus, buildBrentPromotionDecision, buildPayload };
+export { parseObservedAtUtc, computeAgeMinutes, classifyFreshnessLevel, isFreshEnoughForConsensus, prepareBrentCandidatesForConsensus, buildBrentConsensus, buildBrentPromotionDecision, buildPayload };

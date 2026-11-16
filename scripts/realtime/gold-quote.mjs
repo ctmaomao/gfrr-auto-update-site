@@ -1,4 +1,4 @@
-import { parseObservationDate } from '../daily/source-observation.mjs';
+import { parseObservationDate, parseObservationTimestamp } from '../daily/source-observation.mjs';
 import { FUTURE_TIMESTAMP_TOLERANCE_MINUTES, isFutureTimestampAge } from '../health/timestamp-policy.mjs';
 
 // Gold API documents updatedAt as upstream acquisition time, NOT exchange time:
@@ -15,8 +15,8 @@ export function goldQuoteRows(payload, nowMs = Date.now()) {
 }
 
 export function sourceTimestampAgeSeconds(timestamp, nowMs = Date.now()) {
-  const time = typeof timestamp === 'string' && timestamp ? Date.parse(timestamp) : NaN;
-  if (!Number.isFinite(time) || !Number.isFinite(nowMs)) return null;
+  const time = parseObservationTimestamp(timestamp);
+  if (time === null || !Number.isFinite(nowMs)) return null;
   const ageMinutes = (nowMs - time) / 60000;
   if (isFutureTimestampAge(ageMinutes)) return null;
   return Math.max(0, Math.round(ageMinutes * 60));

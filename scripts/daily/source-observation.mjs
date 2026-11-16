@@ -29,6 +29,17 @@ function isoParts(value) {
   return Number.isFinite(ms) ? { date, ms } : null;
 }
 
+// Parse a canonical observation clock without applying freshness/future policy.
+export function parseObservationTimestamp(value) {
+  if (typeof value !== 'string') return null;
+  if (DATE.test(value)) return calendarDate(value) === null ? null : Date.parse(`${value}T00:00:00Z`);
+  // Accept equivalent ISO spellings without permitting Date.parse rollover.
+  const match = /^(\d{4}-\d{2}-\d{2})[Tt ](\d{2}:\d{2})(?::(\d{2})(\.\d+)?)?([Zz]|[+-]\d{2}:?\d{2})$/.exec(value);
+  if (!match) return null;
+  const zone = match[5].toUpperCase().replace(/^([+-]\d{2})(\d{2})$/, '$1:$2');
+  return isoParts(`${match[1]}T${match[2]}:${match[3] ?? '00'}${match[4] ?? ''}${zone}`)?.ms ?? null;
+}
+
 export function parseObservationDate(value, nowIso) {
   if (typeof value !== 'string') return null;
   const nowMs = typeof nowIso === 'string' ? Date.parse(nowIso) : NaN;

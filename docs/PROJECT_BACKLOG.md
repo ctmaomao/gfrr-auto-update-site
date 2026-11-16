@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **独立 realtime 日历合法性**：复现无效 `2026-02-30` 被 Date.parse 归一后进入新鲜度/共识。复用既有严格观察日期解析，canonical 日期/带时区 ISO 必须真实有效；HTML canonical 时间在归一前拒绝且保持 unavailable，不能误作缺日期弱确认。保留五分钟容差、合法日线、epoch/月份文字时间路径；日期前缀数字时刻要求显式 ISO 时区，不将 malformed 当缺时刻；不改 Worker、前端、取数配置或生产数据。专项、全套、独审、CI及自然采用分开验收。
+
 - **独立 realtime 时钟保护**：延续 owner 2026-11-16 准确性审核，验收基线为复用既有 5 分钟容差、原始年龄判界；未来/无效候选不能经 `null <= 120` 或 Stooq 日线例外进入共识，未来锚点不晋升，缓存年龄未知不伪零。异常 live 观察走既有失败/fallback 路径；有效过去日期、年龄上限、来源与请求/重试配置保持。仅离线生产函数回归，不重跑采集、改生产 JSON 或 Worker；专项、全套、独审、CI 与自然采用分别验收。
 
 - **Baltic 必需约束完整性**：延续 owner 准确性/维护性审核，实证旧 checker 接受缺失或空 approval/boundary 对象。本轮仅在该 checker 锁定 11/17 必需键及对象形状，保留原逐值布尔检查与全部实质断言；不改通用 helper、fixture、运行逻辑或来源权限。逐键删除/错误类型负例须旧红新绿，专项、完整检查、独审与精确 CI 分别验收；见 [ADR-0115](ADR/0115-baltic-policy-single-authority.md#follow-up-required-policy-keys-2026-11-16)。
