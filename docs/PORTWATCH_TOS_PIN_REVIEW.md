@@ -29,6 +29,12 @@ Therefore, `usageTermsPinned` may move away from generic `partial`, but `redistr
 
 ---
 
+## 2026-11-16 oil-page field interpretation clarification
+
+The [official IMF PortWatch item metadata](https://www.arcgis.com/sharing/rest/content/items/3da2b9ca97684916b75c4013f95d18ab?f=json) defines `capacity_tanker` as estimated tanker trade volume in **metric tons**, using estimated vessel utilization multiplied by deadweight tonnage. It is not available vessel capacity, spare carrying capacity, or independently measured cargo. `n_tanker` counts transits. The internal stored field `capacityTanker` remains unchanged for compatibility; the oil-page view calls it `estimatedTradeVolume` and distinguishes source-reported zero from missing input.
+
+A bounded official query found the latest Hormuz record at 2026-11-08 with one tanker transit and a zero trade-volume estimate, matching the published site; this was not evidence of a local refresh gap. The source supplies no per-row cause code, so zero is preserved without attributing it to empty sailing, missing capacity, AIS interference or closure. It cannot establish actual zero cargo or absence of available ships. Missing/non-numeric inputs remain null, not zero. This is a read-only display interpretation correction, not a new source, historical-price dataset, interpolation, production writer or scoring change. Existing IMF attribution and third-party redistribution caveats remain.
+
 ## 1. Evidence
 
 ### 1.1 Exact ArcGIS Item

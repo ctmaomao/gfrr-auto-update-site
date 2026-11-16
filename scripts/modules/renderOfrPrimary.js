@@ -1,7 +1,7 @@
-import { provenanceTime } from './dataProvenanceView.js?v=freshness-clock-20261116';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=freshness-clock-20261116';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=freshness-clock-20261116';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=freshness-clock-20261116';
+import { provenanceTime } from './dataProvenanceView.js?v=oil-detail-owner-20261116';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-detail-owner-20261116';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=oil-detail-owner-20261116';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=oil-detail-owner-20261116';
 
 const DAY = 86400000;
 const finite = Number.isFinite;

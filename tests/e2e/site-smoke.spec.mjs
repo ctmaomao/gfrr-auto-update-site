@@ -195,6 +195,12 @@ test.describe('desktop smoke', () => {
     await expect(page.locator('#homepage-signal-layers .narrative-item')).toHaveCount(7);
     await expect(page.locator('#homepage-risk-engines .mini-card')).toHaveCount(6);
     await expect(page.locator('#homepage-macro-coherence .mc-row')).toHaveCount(7);
+    // Radar keeps its compatible summary anchor; detailed evidence lives on oil.
+    await expect(page.locator('#oil-directional-pressure')).toHaveCount(1);
+    const oilDetailsLink = page.locator('#oil-directional-pressure a[href^="oil-market.html"]');
+    await expect(oilDetailsLink).toHaveCount(1);
+    await oilDetailsLink.click();
+    await expect(page).toHaveURL(/oil-market\.html#oil-directional-pressure$/);
     await page.locator('#oil-directional-pressure .odp-after-verdict-fold').evaluate((element) => { element.open = true; });
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('自动下载源正常');
     await expect(page.locator('#odp-news-event-web-ngrams-health')).toContainText('命中');

@@ -57,7 +57,8 @@ function requireNoSecondScore(scope, text) {
   }
 }
 
-const html = read('index.html');
+const html = read('oil-market.html');
+const radarHtml = read('index.html');
 const css = read('assets/styles.css');
 const app = read('scripts/app.js');
 const packageJson = read('package.json');
@@ -66,12 +67,20 @@ const renderOilDirectional = read('scripts/modules/renderOilDirectional.js');
 const realtime = read('scripts/modules/realtime.js');
 const currentVersion = currentAssetVersion(app);
 
-const sectionStart = html.indexOf('id="oil-directional-pressure"');
-const sectionEnd = html.indexOf('id="detail-data"', sectionStart);
-const odpHtml = sectionStart >= 0 && sectionEnd > sectionStart
-  ? html.slice(sectionStart, sectionEnd)
-  : '';
-if (!odpHtml) fail('index.html: cannot isolate #oil-directional-pressure section');
+// Bound the detail contract to its own section, including nested sections.
+const sectionStart = html.search(/<section\b[^>]*\bid="oil-directional-pressure"[^>]*>/i);
+let sectionEnd = -1;
+let sectionDepth = 0;
+if (sectionStart >= 0) {
+  const tags = /<\/?section\b[^>]*>/gi;
+  tags.lastIndex = sectionStart;
+  for (let match; (match = tags.exec(html));) {
+    sectionDepth += match[0].startsWith('</') ? -1 : 1;
+    if (sectionDepth === 0) { sectionEnd = tags.lastIndex; break; }
+  }
+}
+const odpHtml = sectionStart >= 0 && sectionEnd > sectionStart ? html.slice(sectionStart, sectionEnd) : '';
+if (!odpHtml) fail('oil-market.html: cannot isolate #oil-directional-pressure section');
 
 const odpCssStart = css.indexOf('/* ===== PR4 · Oil Directional Pressure');
 const mobileCssStart = css.indexOf('MOBILE / NARROW-SCREEN OVERRIDES');
@@ -172,13 +181,16 @@ for (const marker of [
   `assets/styles.css?v=${currentVersion}`,
   `scripts/app.js?v=${currentVersion}`,
 ]) {
-  const source = marker.startsWith('const APP_VERSION') ? app : html;
+  const source = marker.startsWith('const APP_VERSION') ? app : radarHtml;
   requireIncludes('asset version', source, marker);
 }
 
 if (currentVersion && realtime.includes(currentVersion)) {
   fail('scripts/modules/realtime.js is frozen/unconnected and must not be asset-bumped for P46');
 }
+
+requireIncludes('oil page asset version', html, `assets/styles.css?v=${currentVersion}`);
+requireIncludes('oil page asset version', html, `scripts/modules/oilMarketPage.js?v=${currentVersion}`);
 
 if (errors.length > 0) {
   console.error('Oil Directional Pressure responsive-readability check FAILED:');

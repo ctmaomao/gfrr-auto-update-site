@@ -10,7 +10,7 @@ import { resolve } from 'node:path';
 const errors = [];
 const fail = (message) => errors.push(message);
 
-const html = readFileSync(resolve('index.html'), 'utf8');
+const html = readFileSync(resolve('oil-market.html'), 'utf8');
 const renderer = readFileSync(resolve('scripts/modules/renderOilDirectional.js'), 'utf8');
 const css = readFileSync(resolve('assets/styles.css'), 'utf8');
 const data = JSON.parse(readFileSync(resolve('data/oil-directional-pressure.json'), 'utf8'));
@@ -40,7 +40,7 @@ const requiredCssMarkers = [
 ];
 
 if (!html.includes('id="odp-evidence-timing-summary"')) {
-  fail('index.html must include #odp-evidence-timing-summary before #odp-evidence-list');
+  fail('oil-market.html must include #odp-evidence-timing-summary before #odp-evidence-list');
 }
 if (html.indexOf('id="odp-evidence-timing-summary"') > html.indexOf('id="odp-evidence-list"')) {
   fail('#odp-evidence-timing-summary must appear before #odp-evidence-list');

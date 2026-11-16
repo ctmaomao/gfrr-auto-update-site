@@ -6,8 +6,8 @@
 <meta name="description" content="油价、运输与卫星证据的独立观察页，逐项保留来源、时点与不确定性。">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="assets/styles.css?v=freshness-clock-20261116">
-<script type="module" src="scripts/modules/oilMarketPage.js?v=freshness-clock-20261116"></script>
+<link rel="stylesheet" href="assets/styles.css?v=oil-detail-owner-20261116">
+<script type="module" src="scripts/modules/oilMarketPage.js?v=oil-detail-owner-20261116"></script>
 </head>
 <body class="oil-market-page">
 <nav class="page-bookmarks" aria-label="站内页面切换"><a class="pbm" href="weekly-reports.html">每周周报</a><a class="pbm" href="index.html?view=radar">全球雷达</a><a class="pbm" href="bubble-watch.html">AI泡沫</a><a class="pbm pbm-oil pbm-active" href="oil-market.html" aria-current="page">油市观察</a></nav>
@@ -15,10 +15,316 @@
 <header class="masthead"><div class="kicker">GFRR · 独立能源观察</div><h1 class="title">油市观察<br><em>The Oil Brief</em></h1><p class="oil-deck">从价格表面，走向供需、运输与可核查的卫星证据。</p><p class="oil-meta">不同频率，不同证据。观察日逐项列示，不把页面打开时间当作数据更新。</p></header>
 <nav class="oil-nav" aria-label="油市章节"><a href="#oil-conclusion">本期结论</a><a href="#oil-prices">价格</a><a href="#oil-transport">运费与航道</a><a href="#oil-physical">供需锚</a><a href="#oil-satellite">卫星研究</a></nav>
 <p id="oil-load-status" role="status">正在读取已发布数据…</p>
-<section id="oil-conclusion" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">本期证据结论</span><h2 id="oil-verdict">数据待读取 · 暂不判断</h2><p>这是美国周度供需观察，不是全球油价预测。与全球雷达共用同一数据资格闸门，卫星研究不新增方向分。</p></header><div class="oil-conclusion-body"><p id="oil-physical-summary">美国周度供需状态待读取</p><p id="oil-verdict-time">—</p><p>只有同周、可用且未超龄的八项 EIA 周度统计才能形成现有供需判断。来源单一，不等于八个独立确认。</p><a href="index.html?view=radar#oil-directional-pressure">返回全球雷达，查看同口径结论 →</a></div></section>
+<span id="oil-conclusion"></span>
+    <section class="editorial-section" id="oil-directional-pressure" style="--section-accent: var(--risk-red);">
+      <header class="editorial-section-header">
+        <span class="section-kicker">OIL DIRECTIONAL PRESSURE · 油价方向压力研判</span>
+        <span class="section-title" id="odp-verdict">—</span>
+        <p><a href="index.html?view=radar#oil-directional-pressure">返回全球雷达，查看同口径结论 →</a></p>
+        <span class="section-note">独立能源专题 · 美国周度供需与市场价格分列 · 仅供参考,不参与平台评分</span>
+      </header>
+      <div class="editorial-section-body">
+        <div class="odp-reader-flow" aria-label="ODP 阅读路径">
+          <article class="odp-flow-block odp-flow-verdict">
+            <div class="odp-flow-heading">
+              <span>01 · VERDICT</span>
+              <strong>方向与周度压力</strong>
+              <em>价格是否可判断、美国周度供需状态及真实观察日。</em>
+            </div>
+            <p class="odp-headline" id="odp-headline">—</p>
+            <p class="odp-brent-basis-alert" id="odp-brent-basis-alert">—</p>
+            <dl class="odp-meta">
+              <div><dt>美国周度压力</dt><dd id="odp-physical-bias">—</dd></div>
+              <div><dt>价格背离</dt><dd id="odp-divergence">—</dd></div>
+              <div><dt>解释范围</dt><dd id="odp-confidence">—</dd></div>
+              <div><dt>数据充分度</dt><dd id="odp-data-sufficiency">—</dd></div>
+              <div><dt>美国统计观察日</dt><dd id="odp-asof">—</dd></div>
+            </dl>
+          </article>
+          <details id="oil-physical" class="editorial-folded-content odp-after-verdict-fold">
+            <summary>
+              <span><span class="fold-marker"></span> 02-04 · 美国周度依据、市场读数与背景 <em>· 默认收起</em></span>
+              <span class="fold-label">展开/收起</span>
+            </summary>
+            <div class="editorial-section-body">
+              <section class="odp-flow-block odp-flow-why">
+                <div class="odp-flow-heading">
+                  <span>02 · EVIDENCE CHAIN</span>
+                  <strong>美国周度依据</strong>
+                  <em>周度统计描述当前供需压力；市场价格另看日期与可比性。</em>
+                </div>
+                <p class="odp-attribution-thesis" id="odp-attribution-thesis">—</p>
+                <div class="legacy-model-retired" hidden inert>
+                <div class="odp-ladder" aria-label="ODP 判断链">
+                  <article class="odp-ladder-card">
+                    <span class="odp-ladder-kicker">1 · CORE PHYSICAL CHAIN</span>
+                    <strong>核心物理链</strong>
+                    <p id="odp-ladder-core">—</p>
+                  </article>
+                  <article class="odp-ladder-card">
+                    <span class="odp-ladder-kicker">2 · MARKET CONFIRMATION</span>
+                    <strong>市场确认</strong>
+                    <p id="odp-ladder-market">—</p>
+                  </article>
+                  <article class="odp-ladder-card">
+                    <span class="odp-ladder-kicker">3 · GLOBAL CONTEXT</span>
+                    <strong>全球慢变量</strong>
+                    <p id="odp-ladder-global">—</p>
+                  </article>
+                  <article class="odp-ladder-card">
+                    <span class="odp-ladder-kicker">4 · EVENT WATCH / DATA QC</span>
+                    <strong>观察层与时点</strong>
+                    <p id="odp-ladder-watch">—</p>
+                  </article>
+                </div>
+                </div>
+                <div class="odp-support-grid">
+                  <section class="odp-attribution-panel odp-support-panel">
+                    <span class="odp-attribution-kicker">ATTRIBUTION</span>
+                    <strong>观察边界</strong>
+                    <ul id="odp-attribution-support"></ul>
+                  </section>
+                  <div class="odp-reason-panels" aria-label="ODP 方向拆解">
+                    <section class="odp-reason-panel">
+                      <div class="odp-reason-panel-heading">
+                        <span>美国周度统计</span>
+                        <strong>EIA 周度链</strong>
+                      </div>
+                      <ul class="odp-reasons">
+                        <li><span class="odp-reason-label">柴油 / 馏分油</span><span id="odp-reason-diesel">—</span></li>
+                        <li><span class="odp-reason-label">炼厂 / 裂解价差</span><span id="odp-reason-refinery">—</span></li>
+                        <li><span class="odp-reason-label">商业原油库存</span><span id="odp-reason-inventory">—</span></li>
+                        <li><span class="odp-reason-label">SPR 缓冲</span><span id="odp-reason-spr">—</span></li>
+                        <li><span class="odp-reason-label">需求</span><span id="odp-reason-demand">—</span></li>
+                      </ul>
+                    </section>
+                    <section class="odp-reason-panel">
+                      <div class="odp-reason-panel-heading">
+                        <span>市场价格</span>
+                        <strong>价格 / 期限结构</strong>
+                      </div>
+                      <ul class="odp-reasons">
+                        <li><span class="odp-reason-label">期限结构</span><span id="odp-reason-curve">—</span></li>
+                      </ul>
+                    </section>
+                  </div>
+                </div>
+              </section>
+              <section class="odp-flow-block odp-flow-challenge">
+                <div class="odp-flow-heading">
+                  <span>03 · COUNTERWEIGHT</span>
+                  <strong>可能抵消周度压力的依据</strong>
+                  <em>只列已合格的周度或市场反向证据；缺失不能当作没有反证。</em>
+                </div>
+                <div aria-label="ODP 合格反向依据">
+                  <section class="odp-attribution-panel">
+                    <span class="odp-attribution-kicker">COUNTER EVIDENCE</span>
+                    <strong>主要反证</strong>
+                    <ul id="odp-attribution-counter"></ul>
+                  </section>
+                  <section class="odp-attribution-panel legacy-model-retired" hidden inert>
+                    <span class="odp-attribution-kicker">CONFIDENCE CAP</span>
+                    <strong>置信封顶</strong>
+                    <ul id="odp-attribution-caps"></ul>
+                  </section>
+                  <section class="odp-attribution-panel legacy-model-retired" hidden inert>
+                    <span class="odp-attribution-kicker">VIEW CHANGE</span>
+                    <strong>改变判断条件</strong>
+                    <ul id="odp-attribution-triggers"></ul>
+                  </section>
+                </div>
+              </section>
+              <section class="odp-flow-block odp-detail">
+                <div class="odp-flow-heading">
+                  <span>04 · DETAIL LEDGER</span>
+                  <strong>观察值、日期与背景</strong>
+                  <em>同一来源不重复算确认，预测与观察值分开阅读。</em>
+                </div>
+            <div class="odp-detail-subhead">
+              <span>MATRIX</span>
+              <strong>证据矩阵</strong>
+            </div>
+            <p id="odp-evidence-note">—</p>
+            <div class="legacy-model-retired" hidden inert>
+            <div class="odp-evidence-timing-summary" id="odp-evidence-timing-summary" aria-label="ODP 证据时效分层">—</div>
+            <div class="odp-detail-subhead">
+              <span>READINESS</span>
+              <strong>证据成熟度矩阵</strong>
+            </div>
+            <div class="odp-evidence-readiness-matrix" id="odp-evidence-readiness-matrix" aria-label="ODP 证据成熟度矩阵">—</div>
+            </div>
+            <div class="odp-evidence-list" id="odp-evidence-list"></div>
+            <div class="odp-detail-subhead">
+              <span>AUDIT LAYERS</span>
+              <strong>月度与新闻背景</strong>
+            </div>
+            <div class="odp-energy-addendum" id="odp-energy-addendum" aria-label="能源压力补充证据">
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">BRENT BASIS CHECK</span>
+                  <strong>Brent 口径校验</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-brent-basis-status" id="odp-brent-basis-status">—</b></div>
+                  <div><span>Daily 主显示</span><b id="odp-brent-basis-daily">—</b></div>
+                  <div><span>Worker 快照</span><b id="odp-brent-basis-worker">—</b></div>
+                  <div><span>期货代理</span><b id="odp-brent-basis-futures">—</b></div>
+                  <div class="wide"><span>差异</span><b id="odp-brent-basis-spread">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-brent-basis-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">PULSE FACTOR CHECK</span>
+                  <strong>Pulse 三因子校验</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-pulse-factor-status" id="odp-pulse-factor-status">—</b></div>
+                  <div><span>EIA 周报</span><b id="odp-pulse-factor-wpsr">—</b></div>
+                  <div><span>库存</span><b id="odp-pulse-factor-inventory">—</b></div>
+                  <div><span>柴油/裂差</span><b id="odp-pulse-factor-crack">—</b></div>
+                  <div><span>炼厂</span><b id="odp-pulse-factor-refinery">—</b></div>
+                  <div class="wide"><span>时点</span><b id="odp-pulse-factor-window">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-pulse-factor-note">—</p>
+              </div>
+              <div class="odp-energy-group">
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">GLOBAL STOCK GAP</span>
+                  <strong>EIA STEO 月度预测/估算背景</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-global-forecast-status" id="odp-global-forecast-status">—</b></div>
+                  <div><span>美国周报</span><b id="odp-global-forecast-us-weekly">—</b></div>
+                  <div><span>全球库存</span><b id="odp-global-forecast-global-stocks">—</b></div>
+                  <div><span>需求预测</span><b id="odp-global-forecast-demand">—</b></div>
+                  <div><span>供应缓冲</span><b id="odp-global-forecast-buffer">—</b></div>
+                  <div class="wide"><span>真实月期</span><b id="odp-global-forecast-window">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-global-forecast-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">GLOBAL OVERLAY</span>
+                  <strong>全球确认层</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-global-overlay-status" id="odp-global-overlay-status">—</b></div>
+                  <div><span>作用</span><b id="odp-global-overlay-effect">—</b></div>
+                  <div><span>供应缓冲</span><b id="odp-global-overlay-supply">—</b></div>
+                  <div><span>需求</span><b id="odp-global-overlay-demand">—</b></div>
+                  <div><span>运输</span><b id="odp-global-overlay-transport">—</b></div>
+                  <div class="wide"><span>置信修正</span><b id="odp-global-overlay-confidence">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-global-overlay-note">—</p>
+              </div>
+              <div class="odp-energy-group">
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">NEWS EVENT WATCH</span>
+                  <strong>新闻事件观察</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-news-event-status" id="odp-news-event-status">—</b></div>
+                  <div><span>窗口</span><b id="odp-news-event-window">—</b></div>
+                  <div><span>通道/供应</span><b id="odp-news-event-conflict">—</b></div>
+                  <div><span>制裁/航运</span><b id="odp-news-event-sanctions">—</b></div>
+                  <div><span>标题闸门</span><b class="odp-news-headline-gate" id="odp-news-event-headline-gate">—</b></div>
+                  <div class="wide"><span>来源健康</span><b class="odp-news-source-health" id="odp-news-event-source-health">—</b></div>
+                  <div class="wide"><span>Web NGrams 背景</span><b class="odp-news-web-ngrams-health" id="odp-news-event-web-ngrams-health">—</b></div>
+                  <div class="wide"><span>Web NGrams 时效</span><b class="odp-news-web-ngrams-health" id="odp-news-event-web-ngrams-age">—</b></div>
+                  <div class="wide"><span>市场价格</span><b id="odp-news-event-market">—</b></div>
+                  <div class="wide"><span>主张方向</span><b class="odp-news-claim-polarity" id="odp-news-event-claim-polarity">—</b></div>
+                  <div class="wide"><span>主张质量</span><b class="odp-news-claim-quality" id="odp-news-event-claim-quality">—</b></div>
+                  <div class="wide"><span>标题风险</span><b id="odp-news-event-title-risk">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-news-event-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">SATELLITE THERMAL WATCH</span>
+                  <strong>卫星热异常观察</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-thermal-status" id="odp-thermal-status">—</b></div>
+                  <div><span>候选源</span><b id="odp-thermal-source">—</b></div>
+                  <div><span>请求健康</span><b class="odp-thermal-request-health" id="odp-thermal-request-health">—</b></div>
+                  <div><span>时间窗</span><b id="odp-thermal-window">—</b></div>
+                  <div><span>设施范围</span><b id="odp-thermal-facility">—</b></div>
+                  <div><span>基线质量</span><b class="odp-thermal-baseline-quality" id="odp-thermal-baseline-quality">—</b></div>
+                  <div class="wide"><span>信号用途</span><b id="odp-thermal-signal">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-thermal-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">CROSS-CONFIRMATION</span>
+                  <strong>交叉确认</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-cross-confirmation-status" id="odp-cross-confirmation-status">—</b></div>
+                  <div><span>EIA 周度锚</span><b id="odp-cross-confirmation-eia">—</b></div>
+                  <div><span>市场</span><b id="odp-cross-confirmation-market">—</b></div>
+                  <div><span>新闻</span><b id="odp-cross-confirmation-news">—</b></div>
+                  <div class="wide"><span>卫星/设施</span><b id="odp-cross-confirmation-thermal">—</b></div>
+                  <div class="wide"><span>交叉结论</span><b id="odp-cross-confirmation-summary">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-cross-confirmation-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">TIMESTAMP QC</span>
+                  <strong>数据时点/QC</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b class="odp-qc-ledger-status" id="odp-qc-ledger-status">—</b></div>
+                  <div><span>EIA 周报</span><b id="odp-qc-ledger-wpsr">—</b></div>
+                  <div><span>ODP 构建</span><b id="odp-qc-ledger-odp">—</b></div>
+                  <div><span>Daily 快照</span><b id="odp-qc-ledger-daily">—</b></div>
+                  <div><span>Worker 市场</span><b id="odp-qc-ledger-worker">—</b></div>
+                  <div class="wide"><span>慢变量</span><b id="odp-qc-ledger-monthly">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-qc-ledger-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">OPEC BUFFER</span>
+                  <strong>OPEC 闲置产能</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b id="odp-energy-spare-status">—</b></div>
+                  <div><span>闲置产能</span><b id="odp-energy-spare-value">—</b></div>
+                  <div><span>缓冲状态</span><b id="odp-energy-spare-regime">—</b></div>
+                  <div><span>期别</span><b id="odp-energy-spare-period">—</b></div>
+                </div>
+                <p class="odp-energy-note" id="odp-energy-spare-note">—</p>
+              </div>
+              <div class="odp-energy-group legacy-model-retired" hidden inert>
+                <div class="odp-energy-heading">
+                  <span class="odp-energy-kicker">CHOKEPOINT PROXY</span>
+                  <strong>咽喉转运</strong>
+                </div>
+                <div class="odp-energy-metrics">
+                  <div><span>状态</span><b id="odp-energy-transport-status">—</b></div>
+                  <div><span>截至</span><b id="odp-energy-transport-date">—</b></div>
+                  <div><span>覆盖</span><b id="odp-energy-transport-coverage">—</b></div>
+                  <div><span>霍尔木兹</span><b id="odp-energy-transport-hormuz">—</b></div>
+                  <div class="wide"><span>绕行代理</span><b id="odp-energy-transport-rerouting">—</b></div>
+                  <div class="wide"><span>AIS 盲区</span><b id="odp-energy-transport-ais-caveat">—</b></div>
+                </div>
+                <div class="odp-energy-core-list" id="odp-energy-transport-core">—</div>
+                <p class="odp-energy-note" id="odp-energy-transport-note">—</p>
+              </div>
+              <p class="odp-energy-source-boundary" id="odp-energy-source-boundary">—</p>
+            </div>
+            <p class="odp-boundary-note">边界:油价方向研判为独立能源专题,仅供参考,不参与平台的风险打分与决策;数据不足时显式标注「暂不判断」。</p>
+              </section>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
 <section id="oil-prices" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">01 · 价格不是同一种价格</span><h2>现货锚与期货曲线</h2><p>美元／桶。现货与不同交割月不能直接当作同口径报价交叉验证；延时报价不等于官方结算价。</p></header><div class="oil-price-layout"><article class="oil-spot"><h3>Brent 现货锚</h3><div class="oil-big" id="oil-brent">—</div><p id="oil-brent-meta">来源与观察日待核验</p><p>FRED / EIA 公开现货代理，不是实时成交，也不是 Platts Dated Brent。</p></article><div><h3>ICE 公开延时报价 · 各交割月</h3><p class="oil-meta">横条仅比较价格水平；逐合约时点见表。缺失不补值，不把远月价格当作预测。</p><div id="oil-curve" class="oil-bars"></div></div></div></section>
-<section id="oil-transport" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">02 · 运得出去，才是供应</span><h2>运费与关键航道</h2><p>指数反映广义运输背景，不是某条航线的美元／桶报价。路线级运费确认尚未接入。</p></header><div id="oil-freight" class="oil-three"></div><h3>八处咽喉 · 油轮船次代理</h3><p>IMF PortWatch 的 AIS 派生观察。油轮不等于原油，船次不等于货量。定位干扰、隐匿航行、绕航与数据滞后均可能扭曲结果；零运力不证明断供。</p><p id="oil-transport-clock" class="oil-meta"></p><div id="oil-routes" class="oil-route-grid"></div></section>
-<section id="oil-physical" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">03 · 慢一些，但要可比</span><h2>美国周度供需锚</h2><p>EIA 周度官方统计。库存、炼厂投入与产品供应各自对应不同环节，不把炼厂停产一概当作原油供给损失。</p></header><div class="oil-table-wrap"><table><caption>原始统计与观察周，不以快照日期重标</caption><thead><tr><th scope="col">统计项</th><th scope="col">数值</th><th scope="col">观察日</th><th scope="col">可用性</th></tr></thead><tbody id="oil-weekly"></tbody></table></div></section>
+<section id="oil-transport" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">02 · 运得出去，才是供应</span><h2>运费与关键航道</h2><p>指数反映广义运输背景，不是某条航线的美元／桶报价。路线级运费确认尚未接入。</p></header><div id="oil-freight" class="oil-three"></div><h3>八处咽喉 · 油轮船次代理</h3><p>IMF PortWatch 的 AIS 派生观察。油轮不等于原油，船次不等于货量。船次及运输量估计来自 IMF PortWatch，运输量单位为公吨，不是可用运力。定位干扰、隐匿航行、绕航与数据滞后均可能扭曲结果。</p><p id="oil-transport-clock" class="oil-meta"></p><div id="oil-routes" class="oil-route-grid"></div></section>
 <section id="oil-satellite" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">04 · 研究中的证据，不是警报</span><h2>卫星热源观察</h2><p>实验性观察展示。热源记录不是事故、停产或产量；未检出不代表安全。当前没有经过验证的卫星油价预测，不进入风险打分。</p></header><div class="oil-satellite-layout"><article><h3>已发布的实际观测</h3><p class="oil-meta">NASA FIRMS · VIIRS 热源记录。S-NPP 已停源，NOAA-20 / NOAA-21 仍需逐轮核查有效观测。</p><div id="oil-thermal-count" class="oil-big">—</div><p id="oil-thermal-meta">数据待读取</p><p id="oil-thermal-baseline"></p><p>监测框来自设施或邻近城市／港口点，不是精确资产边界；当前起步样本不是全球覆盖。</p></article><article><h3>从观测到判断，仍缺什么？</h3><ol class="oil-research-steps"><li><strong>全球资产目录</strong><br>扩展生产、炼化、出口与运输节点；目录记录不等于已核验在营设施。</li><li><strong>可比的有效观测</strong><br>需核实过境、云层、来源组合与历史基线；请求成功不等于有效覆盖。</li><li><strong>独立事件真值</strong><br>与运营商、监管或可靠事件记录核对，区分检修、常规燃烧与事故。</li><li><strong>样本外增量检验</strong><br>对比不使用卫星的模型，检验误报及额外价值。未通过前不输出方向或概率。</li></ol></article></div><details><summary>展开起步监测区的实际记录</summary><p>行数为原始聚合记录，跨来源与窗口可能重复，不是独立事件数。来源改变时全轮基线比较暂停。</p><div class="oil-table-wrap"><table><thead><tr><th scope="col">监测区名称</th><th scope="col">记录数</th><th scope="col">最新采集时间（UTC）</th></tr></thead><tbody id="oil-facilities"></tbody></table></div></details></section>
 <footer class="method"><p>来源入口：<a href="https://fred.stlouisfed.org/series/DCOILBRENTEU">FRED / EIA Brent</a> · <a href="https://www.ice.com/products/219/Brent-Crude-Futures/data">ICE Brent</a> · <a href="https://www.balticexchange.com/">波罗的海交易所</a> · <a href="https://portwatch.imf.org/">IMF PortWatch</a> · <a href="https://www.eia.gov/petroleum/supply/weekly/">EIA 周报</a> · <a href="https://firms.modaps.eosdis.nasa.gov/">NASA FIRMS</a></p><h2>如何读这份观察</h2><p>价格、运费、船舶与卫星不是四张相互独立的选票。同一事件可能重复出现，不能叠加成确定性。月度估算、新闻与热源不能填补缺失的周度统计。</p><p>仅供参考,不参与平台的风险打分与决策。此页不提供交易建议或油价目标；全球雷达的 OFR 主读数与本页研究保持独立。</p><p><a href="data/radar-data.json">市场与运输快照</a> · <a href="data/oil-directional-pressure.json">EIA 周度依据</a> · <a href="data/oil-thermal-watch.json">卫星观测快照</a></p></footer>
 </main></body></html>

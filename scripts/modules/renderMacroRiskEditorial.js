@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=freshness-clock-20261116';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=oil-detail-owner-20261116';
 
 const MAX_AGE_HOURS = 30;
 
