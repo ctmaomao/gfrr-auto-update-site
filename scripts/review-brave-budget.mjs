@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { keyFingerprint } from './lib/free-search-ledger.mjs';
-import { BRAVE_POLICY, BRAVE_PROJECT_COUNTER_DISCLOSURE, BRAVE_DISPATCH_DEADLINE_MS, createBraveLedger, summarizeBraveLedger, activateBraveGrant } from './lib/brave-budget.mjs';
+import { BRAVE_POLICY, BRAVE_LOGIN_POLICY, BRAVE_LOGIN_BINDING, BRAVE_PROJECT_COUNTER_DISCLOSURE, BRAVE_DISPATCH_DEADLINE_MS, createBraveLedger, summarizeBraveLedger, activateBraveGrant } from './lib/brave-budget.mjs';
 
 const args = process.argv.slice(2);
 try {
@@ -21,11 +21,13 @@ try {
     console.log(JSON.stringify({ policy: BRAVE_POLICY, ...BRAVE_PROJECT_COUNTER_DISCLOSURE, dispatchDeadlineMs: BRAVE_DISPATCH_DEADLINE_MS, searches: 0, writes: 0, requiresInitialization: true,
       requires: ['owner_dashboard_evidence', 'verified_request_limit_and_existing_usage', 'expiry', 'exclusive_repository_key_fingerprint'],
       sharedFreeOnly: { schemaVersion: 'brave-budget-v2', requires: ['reviewed_free_only_hard_stop_evidence_sha256', 'account_plan_key_binding', 'protection_boundary', 'dated_account_observation'], providerRemainingRequests: 'unknown', historyBeforeRecording: 'unknown' },
-      unknownQuota: 'hold_except_reviewed_provider_enforced_free_only_v2', automaticRenewal: false, monetaryBalanceApi: false }));
-  } else if (args.length === 3 && args[0] === '--initialize-shared' && args[1] === '--grant-file') {
+      sharedLoginBinding: { schemaVersion: 'brave-budget-v3', bindingType: BRAVE_LOGIN_BINDING, ...BRAVE_LOGIN_POLICY, requires: ['verified_dashboard_login_identity', 'observed_plan_key_membership', 'all_search_keys_free_only_hard_stop'], automaticRenewal: false },
+      unknownQuota: 'hold_except_reviewed_provider_enforced_free_only_v2_or_v3', automaticRenewal: false, monetaryBalanceApi: false }));
+  } else if (args.length === 3 && ['--initialize-shared', '--initialize-shared-login'].includes(args[0]) && args[1] === '--grant-file') {
     const grant = JSON.parse(readFileSync(args[2], 'utf8'));
     if (grant?.scope !== 'provider_enforced_free_only') throw new Error('brave_budget_grant_invalid');
-    const store = createBraveLedger({ grant, sharedFreeOnly: true });
+    const sharedLoginBinding = args[0] === '--initialize-shared-login';
+    const store = createBraveLedger({ grant, sharedFreeOnly: true, sharedLoginBinding });
     if (!await store.initialize()) throw new Error('brave_budget_initialization_conflict');
     console.log(JSON.stringify({ status: 'initialized_shared_free_only', historyBeforeRecording: 'unknown', searches: 0 }));
   } else if (args[0] === '--initialize' && (args.length === 1 || (args.length === 3 && args[1] === '--grant-file'))) {
