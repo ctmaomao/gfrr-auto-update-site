@@ -1,5 +1,5 @@
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-consistency-20261116';
-import { strictEvidenceDate } from './evidenceAge.js?v=oil-consistency-20261116';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=four-nav-20261116';
+import { strictEvidenceDate } from './evidenceAge.js?v=four-nav-20261116';
 
 // Qualification of independent published records; no contribution to OFR.
 export function worldOrderWarningView(data, nowMs = Date.now()) {

@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=oil-consistency-20261116';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=oil-consistency-20261116';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=four-nav-20261116';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=four-nav-20261116';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

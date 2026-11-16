@@ -10,7 +10,7 @@
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `oil-consistency-20261116` |
+| Cache version | `four-nav-20261116` |
 | 前端输入 | 首页读取静态 JSON；周报为默认入口，另有雷达与 Bubble 标签；`scripts/modules/realtime.js` 冻结、未接入 |
 | 雷达主读数 | OFR 已发表 FSI；旧模型保留审计，旧公开仓位/状态/风险预算/动作建议已退役，不把百分位当风险分或概率 |
 | Worker / Daily | `/market.worker-preview.json` 是 Worker 主预览，secondary 只作诊断；Daily 仍消费 `realtime-data` |
@@ -23,6 +23,8 @@
 ## Section 2 · Open Backlog Items
 
 ### 当前实施与真实等待
+
+- **四页导航**：owner 2026-11-16 明确要求四页右上角互切；仅将油市观察加入同构常显导航、更新 §4.5 并重建周报入口，固定日期周报不改。保留默认周报、雷达旧锚点、当前页 aria-current、纸媒样式及390px键盘/触屏验收。无数据、模型、取源或 workflow 改动；Issue 创建被工具拒绝，未绕过。独审、全套、精确 CI 和线上验收分别核验。
 
 - **退役摘要文档精简（2026-11-16）**：owner 要求进一步提升可维护性；本轮仅归并 M-92/M-93 三篇已退役摘要设计，保留关键误判纠正、阶段边界、固定 Git 原文与 SHA256，迁移入口。无生产代码、checker、数据或权限变更；完整检查和独立审阅后方可集成。见[归档入口](LEGACY_DOCUMENT_STATUS.md#retired-summary-designs)。
 

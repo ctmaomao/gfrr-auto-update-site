@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=oil-consistency-20261116';
+﻿import { fmtNumSafe } from './config.js?v=four-nav-20261116';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
