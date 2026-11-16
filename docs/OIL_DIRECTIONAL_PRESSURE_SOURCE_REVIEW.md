@@ -2,6 +2,16 @@
 
 > **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
 
+## 2026-11-16 研究隔离补充：季度结构参考
+
+`eia-structural-reference.mjs` 固定保存 [EIA Global Energy Security Data](https://www.eia.gov/outlooks/steo/report/energysecurity/article.php) 的 10 个已核对单元，仅作研究口径与冲突回归，不是全球完整目录、实时油流、权重、断供估计或油价预测。它不取数、不改 ODP、前台或评分；PortWatch 仍是已有来源，不能再算独立新增证据。
+
+原始页面于 `2026-11-16T00:29:31.053Z` 一次性获取，78,814 bytes，SHA256 `812535df648559d204165128b3f5f8835c8aab846107feb082670b80d998bd85`；原 HTML 不入仓库。专题日期为 2026-08-12，外层 STEO 日期为 2026-11-10。当前页面没有证明每个单元在专题日期已经可见，故 `sourceVintageVerified=false`、`historicalAsOfEligible=false`；本数据集首次获取不是提供方原始发布时间。
+
+保留表题、表号、原行列与原值、单位、产品、地理和季度起止。Suez+SUMED 不映射为 Suez，Dardanelles 不映射为 Bosporus；LNG 行单位与原油不同，`-` 保留 null 且不猜含义。Hormuz 总分差仅在明示“最近 0.1 舍入”假设下兼容，不能修写原值。Malacca 2025Q4 的表2总量24.9、表3总量24.0及18.0+6.9全部保留，冲突不静默择一；跨表产品口径等价尚未验证。固定来源比较拒绝篡改 locator/raw value 后冒用快照身份；合成算术测试独立标识。所有评价/主评分资格保持 false，后续历史概率研究不得将这些当前季度参考倒灌为当时已知特征。
+
+---
+
 > **Source-review / feasibility only。** 本文为可行性审计 + 数据可得性核验 + 模型设计 + 实施拆分的登记文档,**不写 fetcher、不接 runtime、不改 `data/*.json`、不改 frontend、不触发 GitHub Actions、不进 scoring/decision/execution/position**。
 > **候选模块命名**:**Oil Directional Pressure Model**(内部代号 ODP),中文显示名「油价方向压力研判」。若未来实现,**必为 audit-only / display-only 的独立能源专题**。
 > **Global Risk Heatmap 必须保持独立**——ODP 与其并列,不得合并、挤占或破坏它。
