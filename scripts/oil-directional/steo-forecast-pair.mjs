@@ -1,7 +1,8 @@
 /** Offline, fixed two-workbook feasibility audit. No network, production writes or price outcomes. */
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 export const STEO_PAIR = Object.freeze([
   Object.freeze({ issue: 'October 2026', forecastDate: 'Thursday, October 1, 2026', releaseDate: '2026-10-06', sha256: '54989362410da4aff5673580396380c3a8f4f111fa6d01c6d4fab05ef90efbf4', url: 'https://www.eia.gov/outlooks/steo/archives/oct26_base.xlsx' }),
@@ -53,9 +54,13 @@ export async function inspectSteoPair(paths) {
     const b = fs.readFileSync(p); if (b.length > 5242880 || createHash('sha256').update(b).digest('hex') !== STEO_PAIR[i].sha256) fail('fixed source bytes differ');
     return b;
   });
-  // Existing development-only dependency; never imported by production.
-  const XLSX = await import('xlsx');
-  const sheets = buffers.map(b => XLSX.read(b, { type: 'buffer', cellFormula: true, sheets: '3atab' }).Sheets['3atab']);
+  // Fixed-byte standard-library XML reader; no new XLSX dependency/import boundary.
+  const helper = fileURLToPath(new URL('./steo_forecast_cells.py', import.meta.url));
+  const sheets = buffers.map(input => {
+    const r = spawnSync('python3', [helper], { input, timeout: 15000, maxBuffer: 65536, encoding: 'utf8' });
+    if (r.error || r.status !== 0) fail('fixed XML extraction failed');
+    return JSON.parse(r.stdout);
+  });
   return { ...compareSteoForecastCells(sheets), inspectedAt: new Date().toISOString(),
     sourceByteIdentityVerified: true, sourceCopies: STEO_PAIR.map((s, i) => ({ url: s.url, sha256: s.sha256, bytes: buffers[i].length })),
     firstPublicAvailabilityVerified: false, revisionHistoryComplete: false };

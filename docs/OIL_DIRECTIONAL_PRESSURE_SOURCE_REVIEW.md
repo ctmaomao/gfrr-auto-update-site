@@ -21,7 +21,7 @@
 
 以上仅六位展示，计算保留源数值精度。最后一行不是实测库存变化、缺口确认或油价预测。该差值修订已经是可计算候选特征，而非模型有效性的证据；两个发行点不足以训练或评估。
 
-离线命令：`node scripts/oil-directional/steo-forecast-pair.mjs <oct26_base.xlsx> <nov26_base.xlsx>`。只读两个显式本地常规文件、校验固定 SHA/5 MiB 限额后使用既有开发依赖解析指定表；无网络/输出文件/生产接线。严格匹配表题、年份、月份、期次、单位、来源、重复行，拒绝缺失、非有限/非数值、带公式的数值格和非正世界总量；日期/年份标签按固定副本的缓存值匹配，不执行公式。CLI stdout 只含限定字段及派生摘要，不泄露原始整本或价格。合成单测验证边界与数学；真实文件调用另行验证，不能相互替代。
+离线命令：`node scripts/oil-directional/steo-forecast-pair.mjs <oct26_base.xlsx> <nov26_base.xlsx>`。只读两个显式本地常规文件、校验固定 SHA/5 MiB 限额后使用 Python 标准库固定字节/XML helper 解析指定表（不新增 XLSX 导入）；无网络/输出文件/生产接线。严格匹配表题、年份、月份、期次、单位、来源、重复行，拒绝缺失、非有限/非数值、带公式的数值格和非正世界总量；日期/年份标签按固定副本的缓存值匹配，不执行公式。CLI stdout 只含限定字段及派生摘要，不泄露原始整本或价格。合成单测验证边界与数学；真实文件调用另行验证，不能相互替代。
 
 **可用时点尚未通过**：[当前官方目录](https://www.eia.gov/outlooks/steo/outlook.php) 声明发行日为 2026-10-06 / 2026-11-10，表内 Forecast date 为 10-01 / 11-05；HTTP Last-Modified 又分别为 10-01 / 11-09，均不得替代公众可得时刻。当前副本哈希只认证本次字节身份，不认证历史初版/全修订链；目录的 [October notice](https://www.eia.gov/outlooks/steo/archives/notice_data_10_06_2026.php) 本轮网页读取返回 404。不得把 11-16 接收回填为 10 月或 11 月首发收据，也不得以缺 notice 猜测“无更正”。`firstPublicAvailabilityVerified`、`revisionHistoryComplete` 与所有评估/公开概率/主分资格始终 false。
 

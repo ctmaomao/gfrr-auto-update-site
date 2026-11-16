@@ -50,3 +50,11 @@ test('real-byte interface rejects arbitrary data and symlink before XLSX parsing
   await assert.rejects(inspectSteoPair([p]),/supply October/);
  } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+test('standard-library helper rejects unreviewed bytes without parsing or exposing input',async()=>{
+ const {spawnSync}=await import('node:child_process');
+ const helper=new URL('../../scripts/oil-directional/steo_forecast_cells.py',import.meta.url);
+ for(const input of ['PRIVATE',Buffer.alloc(5242881,65)]){
+  const r=spawnSync('python3',[helper.pathname],{input,encoding:'utf8',timeout:15000});
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.equal(r.stderr.trim(),'STEO fixed XML extraction rejected');
+ }
+});
