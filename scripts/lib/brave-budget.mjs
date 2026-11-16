@@ -228,14 +228,25 @@ export async function activateBraveGrant({ store, grant, now = Date.now }) {
   return ledger;
 }
 
-let runtime;
+let runtime, runtimePrivateProof;
 export async function withBraveBudget({ key, consumer }, request) {
   const env = process.env;
   if (env.GITHUB_ACTIONS === 'true' && env.GITHUB_REPOSITORY !== SEARCH_REPOSITORY) fail('wrong_repository');
-  runtime ||= createBraveBudget({ store: createBraveLedger(), report: row => {
+  const configuredProof = env.BRAVE_BUDGET_PRIVATE_PROOF || null;
+  if (runtime && runtimePrivateProof !== configuredProof) fail('private_proof_configuration_changed');
+  if (!runtime) {
+    let store = createBraveLedger();
+    if (configuredProof) {
+      const { withBravePrivateProof } = await import('./brave-private-proof.mjs');
+      store = withBravePrivateProof(store, configuredProof);
+    }
+    if ((env.BRAVE_BUDGET_PRIVATE_PROOF || null) !== configuredProof) fail('private_proof_configuration_changed');
+    runtimePrivateProof = configuredProof;
+    runtime = createBraveBudget({ store, report: row => {
     console.log(`Brave budget: ${JSON.stringify(row)}`);
     if (env.GITHUB_STEP_SUMMARY) try { appendFileSync(env.GITHUB_STEP_SUMMARY, `\n- Brave budget: ${JSON.stringify(row)}\n`); } catch { /* Durable ledger is authoritative. */ }
-  } });
+    } });
+  }
   const automated = env.GITHUB_ACTIONS === 'true' && ['schedule','workflow_run'].includes(env.GITHUB_EVENT_NAME);
   return runtime({ key, consumer, mode: automated ? 'automated' : 'manual', runId: env.GITHUB_ACTIONS === 'true' ? env.GITHUB_RUN_ID : 'local' }, request);
 }
