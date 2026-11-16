@@ -6557,7 +6557,8 @@ function findMonthlyValueAgo(rows, monthsBack) {
   const target = new Date(Date.UTC(targetYear, targetMonth, 1));
   const targetKey = target.toISOString().slice(0, 7);
   const matched = rows.find((row) => typeof row.date === 'string' && row.date.slice(0, 7) === targetKey);
-  return Number.isFinite(matched?.value) ? matched.value : findValueAgo(rows, 365);
+  // A missing calendar month is unknown, never a different horizon or nearest year.
+  return Number.isFinite(matched?.value) ? matched.value : null;
 }
 
 function calculateWeeklyYoY(rows) {
