@@ -22,6 +22,22 @@
 
 输出是当前保存页面的元信息，不是同期首发存证。当前目录、历史发布/修订、实际首次可用、真实性及公开概率/主分资格保持 false；不改变已冻结的合成协议或 ALFRED v1 拒绝结论。后续获取必须另列固定请求清单、真实墙钟截止、节流/字节/存储预算及失败停机与续跑规则，不能让解析器自动追踪链接或因已有目录映射就下载全史。
 
+## 2026-11-16 官方发行元信息：有界真实验收
+
+在 `5c341ab0` 的离线 parser 上，12:04:46–12:04:59 UTC 执行了一个固定五页批次（下表）：逐页最多 1 MiB、批次最多 2 MiB、请求超时 15 秒、每次开始请求前检查批次已耗时不超过 100 秒（不是响应中的强制中断）、逐页间隔 1 秒；不重试、不跟随重定向、不递归链接。本批次实际五次 HTTP 200，共 439,791 bytes；只在内存中处理 HTML，未保存/发布原 HTML、下载 PDF/CSV 或取得价格序列。下表哈希为当次原始响应字节 SHA256，不证明页面历史不可变。
+
+| 官方页面 | bytes | 原始响应 SHA256 | 当前页面元信息结果 |
+|---|---:|---|---|
+| [目录](https://www.eia.gov/petroleum/supply/weekly/archive/) | 175671 | `f1add7f69352d5183113a2ddca9a1e98994ded54f4a086a387d19c42109010f1` | 798 条映射、0 条隔离；只表明当次可见链接映射完整 |
+| [2022-06-17 数据周](https://www.eia.gov/petroleum/supply/weekly/archive/2022/2022_06_17_data/wpsr_2022_06_17_data.php) | 65710 | `f2ce320acff7d2e69f2ac3f15d33c47a8ea98843ed779a6b2f506fe7448622c4` | 发行日 2022-06-29 |
+| [2022-06-24 数据周](https://www.eia.gov/petroleum/supply/weekly/archive/2022/2022_06_29/wpsr_2022_06_29.php) | 65787 | `db42dc40cb59ba53b0c4a29af561048fbb02d8e679efce310ea9fb50d1472fd1` | 发行日 2022-06-29 |
+| [2023-11-03 数据周](https://www.eia.gov/petroleum/supply/weekly/archive/2023/2023_11_03_data/wpsr_2023_11_03_data.php) | 65601 | `e3b314e0e3e9a33b470e9c0885fa532be5349eff4137d34ef21cb4aecfd59c11` | 发行日 2023-11-15 |
+| [2023-11-10 数据周](https://www.eia.gov/petroleum/supply/weekly/archive/2023/2023_11_15/wpsr_2023_11_15.php) | 67022 | `f9c209f7c02ac766673e06a6ed07243674097794a302c0fc4d33ef6d002c82ee` | 发行日 2023-11-15 |
+
+四份 issue 的页面明确日期均与目录相符，`indexDatesAgree=true`、`quarantined=false`。这是真实 HTML 元信息解析验收，不是历史模型验收。两个发行日各包含两份不同数据周的报告，不能计成四个独立发行时点，也不能用 URL 的数据周日期或常规周历回填可用时间。另经网页核对的 [EIA 2022-06-29 公告](https://www.eia.gov/pressroom/releases/press507.php)说明数据中心硬件故障后的恢复过程中，当晨发布两周 WPSR；这份公告未计入上述五请求批次，也未由该 parser 处理。
+
+四页均保留 `eligibleForEvaluation=false` 与 `inputAuthenticityVerified=false`；目录的历史发布/修订完整性仍未认证。当前获取、页面声称的报告发行日和报价原始首发日是不同证据，不相互替代。2023 年追加的第二个延期案例支持按报告批次验证可用时点，而非假定固定滞后；它不修复 ALFRED v1 的异常、不开放真实拟合或公开概率。下一步仍需在独立 WPSR 方案下核验报告内价格布局、同日成员完整性及版本证据，不能直接把这四页转换为可训练样本。
+
 ## 2026-11-16 WPSR 独立合成时点验证
 
 [`brent-spot-wpsr-report-asof-synthetic-v1`](../config/wpsr-report-asof-synthetic-protocol.json) 于 `2026-11-16T01:54:07.283Z` 经独审后冻结，SHA256 `6b6336acd1ed4cc2b77eec2ff2d99e757a0cabdd5b75c38cbf6203f8d7f408de`。仅允许合成输入、同日批次与时点验证，不生成真实预测样本、收益或模型；新增请求/下载上限为零。它不替代 ALFRED v1，不把报告出现日塞入 v1 初版可用日期，也不授予原始序列上传或持久化权限。
