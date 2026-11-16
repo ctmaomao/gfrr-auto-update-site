@@ -51,20 +51,20 @@ test('strict predictive request and invalid evaluation windows fail before netwo
 test('API and CSV retain identical bounded warmup without adding evaluation dates', async () => {
   const options = parseArgs(['--start-date', '2026-06-12', '--end-date', '2026-06-19']);
   const window = historicalQueryWindow(options);
-  assert.equal(window.observationStartDate, '2026-05-01');
-  assert.equal(window.warmupDays, 42);
-  const observations = ['2026-04-30', '2026-05-01', '2026-05-15', '2026-06-05', '2026-06-11', '2026-06-12', '2026-06-19', '2026-06-20']
+  assert.equal(window.observationStartDate, '2026-04-24');
+  assert.equal(window.warmupDays, 49);
+  const observations = ['2026-04-23', '2026-04-24', '2026-05-01', '2026-05-15', '2026-06-05', '2026-06-11', '2026-06-12', '2026-06-19', '2026-06-20']
     .map(date => ({ date, value: '100' }));
   const api = await fetchFredSeries('DCOILBRENTEU', options, { apiKey: 'offline-placeholder', fetchTextImpl: async url => {
     const params = new URL(url).searchParams;
-    assert.equal(params.get('observation_start'), '2026-05-01');
+    assert.equal(params.get('observation_start'), '2026-04-24');
     assert.equal(params.get('observation_end'), '2026-06-19');
     return JSON.stringify({ observations });
   } });
   const csv = await fetchFredSeries('DCOILBRENTEU', options, { apiKey: '', fetchTextImpl: async () =>
     'DATE,VALUE\n' + observations.map(row => `${row.date},${row.value}`).join('\n') });
   assert.deepEqual(api.rows, csv.rows);
-  assert.equal(api.rows[0].date, '2026-05-01');
+  assert.equal(api.rows[0].date, '2026-04-24');
   assert.equal(api.rows.at(-1).date, '2026-06-19');
   assert.deepEqual(makeWeeklyDates(options.startDate, options.endDate), ['2026-06-12', '2026-06-19']);
   const rules = JSON.parse(readFileSync(new URL('../../config/rules.json', import.meta.url)));

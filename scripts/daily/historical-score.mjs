@@ -1,4 +1,5 @@
 import { deriveRisk } from '../run-daily-pipeline.mjs';
+import { structuralLagValue } from './structural-freshness.mjs';
 
 // Historical inputs are proxies; calculation parity does not imply point-in-time data parity.
 const SERIES_KEYS = ['brent', 'dxy', 'vix', 'hyOas', 'us10y', 'real10y', 'breakeven10y', 'spx', 'walcl', 'onRrp', 't10y2y', 'igOas', 'baa10y'];
@@ -9,7 +10,7 @@ export const HISTORICAL_MAX_AGE_DAYS = Object.freeze(Object.fromEntries(
 ));
 const daysBefore = (date, days) => new Date(Date.parse(`${date}T00:00:00Z`) - days * 86400000).toISOString().slice(0, 10);
 const changePct = (current, previous) => Number.isFinite(current) && Number.isFinite(previous) && previous !== 0
-  ? (current - previous) / previous * 100 : null;
+  ? Number(((current - previous) / previous * 100).toFixed(3)) : null;
 
 export function latestHistoricalRow(rows = [], date) {
   let left = 0, right = rows.length - 1, found = null;
@@ -64,11 +65,14 @@ export function buildHistoricalScoreInputs(date, seriesRows, rules, valueOverrid
   const prepared = prepareHistoricalValues(date, seriesRows, rules, valueOverrides);
   if (prepared.missingRequiredInputs.length) return null;
   const { values, creditProxyUsed, inputDiagnostics, defaultedHistoricalInputs, unavailableHistoricalInputs } = prepared;
-  const at = (key, when) => historicalObservation(seriesRows[key], when, key).value;
+  // Match production lag anchoring/tolerance using only rows known by this replay date.
+  const lag = (key, days, maxGapDays) => structuralLagValue(
+    (seriesRows[key] ?? []).filter(row => row.date <= date), days, maxGapDays
+  );
   const status = value => Number.isFinite(value) ? 'historical' : 'missing';
-  const weekAgo = daysBefore(date, 7);
-  const priorCurve = at('t10y2y', weekAgo);
-  const weekChange = Number.isFinite(values.t10y2y) && Number.isFinite(priorCurve) ? values.t10y2y - priorCurve : null;
+  const priorCurve = lag('t10y2y', 7, 3);
+  const weekChange = Number.isFinite(values.t10y2y) && Number.isFinite(priorCurve)
+    ? Number((values.t10y2y - priorCurve).toFixed(3)) : null;
   const curveRules = rules.macroDrivers.curve;
   const brentRow = latestHistoricalRow(seriesRows.brent, date);
   const previousObservation = brentRow
@@ -97,9 +101,9 @@ export function buildHistoricalScoreInputs(date, seriesRows, rules, valueOverrid
     rt: { values, changes: { brent1d: brentChange } },
     macroDrivers: {
       fedLiquidity: {
-        walcl4wChange: changePct(values.walcl, at('walcl', daysBefore(date, 28))),
+        walcl4wChange: changePct(values.walcl, lag('walcl', 28, 7)),
         onRrp: values.onRrp,
-        onRrpWeekChange: changePct(values.onRrp, at('onRrp', weekAgo)),
+        onRrpWeekChange: changePct(values.onRrp, lag('onRrp', 7, 3)),
         sourceStatus: { walcl: status(values.walcl), onRrp: status(values.onRrp) }
       },
       curve: {

@@ -15,7 +15,7 @@ const LEGACY={hyOas:'BAMLH0A0HYM2',igOas:'BAMLC0A0CM',real10y:'DFII10',walcl:'WA
 const DAY=86400000;
 export function implementationHash(readFile = file => fs.readFileSync(file,'utf8'), scoreImplementation = describeRiskImplementation()) {
   return digest({files:['scripts/daily/pressure-model.mjs','scripts/daily/pressure-evaluation.mjs','scripts/research-pressure-model.mjs',
-    'scripts/daily/historical-score.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/historical-validation.mjs',
+    'scripts/daily/historical-score.mjs','scripts/daily/structural-freshness.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/historical-validation.mjs',
     'scripts/daily/pressure-remediation.mjs','config/rules.json'].map(file=>readFile(file).replaceAll('\r\n','\n')),
     csvParser:parseFredCsv.toString().replaceAll('\r\n','\n'),scoreImplementation});
 }

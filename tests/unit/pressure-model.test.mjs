@@ -202,6 +202,8 @@ test('research fingerprint ignores unrelated Daily text but includes score helpe
   const reader=file=>{files.push(file);return fs.readFileSync(file,'utf8')+(file==='scripts/run-daily-pipeline.mjs'?'\n// display-only change':'');};
   assert.equal(implementationHash(reader),initial);
   assert.ok(!files.includes('scripts/run-daily-pipeline.mjs'));
+  assert.ok(files.includes('scripts/daily/structural-freshness.mjs'));
+  assert.notEqual(implementationHash(file=>fs.readFileSync(file,'utf8')+(file==='scripts/daily/structural-freshness.mjs'?' changed':'')),initial);
   const dependency=describeRiskImplementation();dependency.functions.buildTailRiskOverlay+=' changed';
   assert.notEqual(implementationHash(undefined,dependency),initial);
   assert.notEqual(implementationHash(file=>fs.readFileSync(file,'utf8')+(file==='scripts/daily/historical-validation.mjs'?' changed':'')),initial);

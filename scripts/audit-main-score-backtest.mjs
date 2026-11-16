@@ -162,7 +162,8 @@ async function fetchText(url) {
 }
 
 export function historicalQueryWindow(options) {
-  const warmupDays = 28 + Math.max(...Object.values(HISTORICAL_MAX_AGE_DAYS));
+  // WALCL may lag the replay by 14 days; its 28-day baseline may be 7 days earlier.
+  const warmupDays = 28 + HISTORICAL_MAX_AGE_DAYS.walcl + 7;
   const observationStartDate = msToDate(dateToMs(options.startDate) - warmupDays * 86400000);
   if (!isHistoricalDate(observationStartDate)) throw new Error('Historical warmup date is outside supported calendar range');
   return { evaluationStartDate: options.startDate, evaluationEndDate: options.endDate, observationStartDate, warmupDays };
