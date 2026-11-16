@@ -33,6 +33,27 @@ class Tests(unittest.TestCase):
         with self.assertRaises(UnicodeDecodeError): p.parse_archive_bytes(bad, receipt(bad))
         with self.assertRaises(ValueError): p.parse_archive_bytes(b'x'*(p.MAX_BYTES+1), {})
 
+    def test_document_base_href_is_unsupported_not_silently_ignored(self):
+        for base in ['<base href="https://example.invalid/">',
+                     '<BASE HREF="/petroleum/supply/weekly/archive/2020/">',
+                     '<base href="">', '<base href>',
+                     '<base hidden href="https://example.invalid/">',
+                     '<base href="https://example.invalid/" href="">',
+                     '<base href="https://example.invalid/" />']:
+            for raw, parse in [(archive(), lambda b: p.parse_archive_bytes(b, receipt(b))),
+                               (issue(), parse_issue)]:
+                for changed in [base.encode() + raw, raw + base.encode()]:
+                    with self.subTest(base=base, parser=parse):
+                        with self.assertRaisesRegex(ValueError, 'unsupported document base href'):
+                            parse(changed)
+        # target-only bases do not alter URL resolution. Literal script/comment
+        # text is not a parsed base element and remains compatible.
+        for prefix in ['<base target="_blank">', '<!-- <base href="https://example.invalid/"> -->',
+                       "<script>const x = '<base href=\"https://example.invalid/\">';</script>"]:
+            self.assertFalse(parse_issue(prefix.encode() + issue())['quarantined'])
+            raw = prefix.encode() + archive()
+            self.assertTrue(p.parse_archive_bytes(raw, receipt(raw))['allObservedIssueAnchorsMapped'])
+
     def test_visible_year_and_cross_year_week(self):
         raw = archive(); out = p.parse_archive_bytes(raw, receipt(raw))
         self.assertEqual([e['pageAssertsReleaseDate'] for e in out['entries']], ['2011-01-05', '2012-01-04'])
