@@ -111,3 +111,5 @@
 ## 指令维护入口
 
 [2026-11-15 增量精简](MARKDOWN_MAINTENANCE_2026_11_15.md)与 [2026-11-10 全仓 Markdown 核查](MARKDOWN_MAINTENANCE_2026_11_10.md)记录覆盖、精简和限制；[2026-09-06 总回执](REVIEW_2026-09-06_CLOSEOUT.md)保留先前拆分依据。阶段回执不逐篇预读，规则维护按实际影响验证，机器断言迁移另做独立方案与审阅。
+
+- 已退役的 M-92/M-93 摘要设计与原始证据见 [归档入口](LEGACY_DOCUMENT_STATUS.md#retired-summary-designs)，不作为当前前端任务清单。
