@@ -25,7 +25,7 @@ const observationBaseline = JSON.parse(gunzipSync(readFileSync(new URL('../fixtu
 const observationFixtures = {
   5: observationBaseline.before,
   6: migrateObservationEvidence({ ...observationBaseline,
-    config: JSON.parse(readFileSync(new URL('../../config/bubble-watch-curated.json', import.meta.url))),
+    config: JSON.parse(readFileSync(new URL('../fixtures/bubble-observation-config-20261110.json', import.meta.url))),
     checkedAt: '2026-11-10T06:14:30.988Z' }).after
 };
 

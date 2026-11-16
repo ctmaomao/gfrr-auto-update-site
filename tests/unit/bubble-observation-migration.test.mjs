@@ -14,7 +14,7 @@ const read = file => JSON.parse(fs.readFileSync(new URL(`../../${file}`, import.
 const checkedAt = '2026-11-10T06:00:00Z';
 function fixture() {
   const original = JSON.parse(gunzipSync(fs.readFileSync(new URL('../fixtures/bubble-r5-observation-migration.json.gz', import.meta.url))));
-  return { ...original, config: read('config/bubble-watch-curated.json'), checkedAt };
+  return { ...original, config: read('tests/fixtures/bubble-observation-config-20261110.json'), checkedAt };
 }
 
 test('bounded r6 migration preserves 24 observations and all historical epochs', () => {

@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import { digest } from './pressure-model.mjs';
 import { validateShadowLedger } from './pressure-evaluation.mjs';
 import { isHistoricalDate } from './historical-validation.mjs';
+import { readPersistedPressureArtifacts, PRESSURE_PERSISTENCE_IDENTITY } from './pressure-artifact-readback.mjs';
 
 export const FROZEN_PRESSURE = Object.freeze({
   commit: '5f4fb4c1ea4c870af0dd36b6c3e0683a79f026f6',
@@ -102,7 +103,7 @@ export function validateSharedCycle({ previous, ledger, cache, report, protocol,
 
 // Executes only the unchanged frozen legacy CLI's existing retrieval. Never run
 // manually for testing. Future activation needs independent workflow review.
-export async function prepareSharedPressureCycle({ legacyRoot, previousLedger, targetImplementation, legacyUntil }) {
+async function runLegacyStage({ legacyRoot, previousLedger, legacyUntil }) {
   const identity = { runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT };
   if (process.env.GITHUB_ACTIONS !== 'true' || !/^\d+$/.test(identity.runId ?? '') || !/^\d+$/.test(identity.attempt ?? '')) refuse('ci_only');
   const startedAt = new Date().toISOString();
@@ -153,21 +154,96 @@ export async function prepareSharedPressureCycle({ legacyRoot, previousLedger, t
   if (fs.existsSync(archive)) refuse('archive_exists');
   fs.mkdirSync(archive, { recursive: true });
   for (const [name, bytes] of [['report.json', reportBytes], ['shadow-ledger.json', ledgerBytes]]) saveNew(path.join(archive, name), bytes);
-  // A later shared gate may throw, but the two-file legacy archive survives.
-  // Activation still requires a separate native upload step BEFORE shared gates;
-  // this inactive same-process convenience API is NOT that workflow boundary.
+  return { archive, current, cycle, identity, startedAt, finishedAt, prior, cacheFile,
+    previous, ledger, report, protocol, reportBytes, ledgerBytes };
+}
+
+// Standalone OLD stage: normal return means only that validated old files exist.
+// No cache access, corrected target checks, receipt minting or shared manifest.
+// A future workflow must upload exactly archive/report.json and
+// archive/shadow-ledger.json, then authenticate that remote artifact separately.
+export async function prepareLegacyPressureCycle(options) {
+  const stage = await runLegacyStage(options);
+  return { archive: stage.archive, cohort: FROZEN_PRESSURE.cohort,
+    reportSha256: sha(stage.reportBytes), ledgerSha256: sha(stage.ledgerBytes),
+    localContext: { identity: stage.identity, startedAt: stage.startedAt, finishedAt: stage.finishedAt,
+      previousLedger: stage.prior, cacheFile: stage.cacheFile } };
+}
+
+// Creates a derived claim for the SECOND native upload, never an authority or
+// receipt. A numeric artifact ID alone is not proof of remote persistence; only
+// restorePersistedPressureCycle authenticates both native upload results.
+export async function preparePressureSharedManifest({ legacyStage, legacyRoot, legacyArtifactId, targetImplementation }) {
+  const env = process.env, identity = { runId: env.GITHUB_RUN_ID, attempt: env.GITHUB_RUN_ATTEMPT };
+  const P = PRESSURE_PERSISTENCE_IDENTITY;
+  if (env.GITHUB_ACTIONS !== 'true' || env.GITHUB_REPOSITORY !== P.repository
+    || env.GITHUB_REPOSITORY_ID !== String(P.repositoryId) || env.GITHUB_REF !== 'refs/heads/main'
+    || !/^\d+$/.test(identity.runId ?? '') || !/^\d+$/.test(identity.attempt ?? '')
+    || !/^[1-9]\d*$/.test(legacyArtifactId ?? '') || !Number.isSafeInteger(Number(legacyArtifactId))
+    || !/^[a-f0-9]{40}$/.test(env.GITHUB_SHA ?? '') || env.GITHUB_JOB !== 'research'
+    || !env.RUNNER_NAME || legacyStage?.cohort !== FROZEN_PRESSURE.cohort
+    || digest(legacyStage?.localContext?.identity) !== digest(identity)) refuse('manifest_stage_identity');
+  const current = fs.realpathSync(process.cwd()), root = path.resolve(legacyRoot), cycle = `shared-${identity.runId}-${identity.attempt}`;
+  if (fs.realpathSync(root) !== root || root === current || contained(root, current) || contained(current, root)) refuse('checkout_isolation');
+  const archive = path.join(current, relativeRoot, 'legacy-preserved', cycle), context = legacyStage.localContext;
+  const cacheFile = path.join(root, relativeRoot, cycle, 'source-cache.json');
+  if (legacyStage.archive !== archive || context.cacheFile !== cacheFile
+    || !contained(path.resolve(context.previousLedger), path.join(root, relativeRoot))) refuse('manifest_stage_paths');
+  const checkout = (await execute('git', ['rev-parse', 'HEAD'], { cwd: current,
+    env: { PATH: env.PATH }, timeout: 30000, maxBuffer: 1024 })).stdout.trim();
+  if (checkout !== env.GITHUB_SHA) refuse('manifest_checkout');
+  const files = [path.join(archive, 'report.json'), path.join(archive, 'shadow-ledger.json'), cacheFile, context.previousLedger];
+  files.forEach(regular);
+  const [reportBytes, ledgerBytes, cacheBytes, previousBytes] = files.map(file => fs.readFileSync(file));
+  if (sha(reportBytes) !== legacyStage.reportSha256 || sha(ledgerBytes) !== legacyStage.ledgerSha256) refuse('manifest_old_bytes');
+  const report = JSON.parse(reportBytes), ledger = JSON.parse(ledgerBytes), cache = JSON.parse(cacheBytes), previous = JSON.parse(previousBytes);
+  const protocol = readJson(path.join(current, 'config/pressure-model-research.json')), now = new Date().toISOString();
+  validateShadowLedger(previous, protocol, FROZEN_PRESSURE.implementation, now);
+  validateShadowLedger(ledger, protocol, FROZEN_PRESSURE.implementation, now);
+  const provenance = validateSharedCycle({ previous, ledger, cache, report, protocol, startedAt: context.startedAt, finishedAt: context.finishedAt, identity, targetImplementation });
+  if (Date.parse(now) < Date.parse(context.finishedAt) || Date.parse(now) - Date.parse(context.startedAt) > 15 * 60000
+    || now.slice(0, 10) !== provenance.evaluationDate) refuse('manifest_stage_time');
+  const manifest = { schemaVersion: 'pressure-shared-persistence-v1', repositoryId: P.repositoryId,
+    workflowId: P.workflowId, workflowPath: P.workflowPath, headSha: env.GITHUB_SHA, checkoutSha: checkout,
+    runnerName: env.RUNNER_NAME, jobName: env.GITHUB_JOB, legacyArtifactId, ...provenance,
+    cacheSha256: sha(cacheBytes), legacyReportSha256: sha(reportBytes), legacyLedgerSha256: sha(ledgerBytes) };
+  const directory = path.join(current, relativeRoot, 'shared-evidence', cycle);
+  safeParents(directory);
+  if (fs.existsSync(directory)) refuse('evidence_exists');
+  fs.mkdirSync(directory, { recursive: true });
+  const file = path.join(directory, 'retrieval-receipt.json');
+  saveNew(file, JSON.stringify(manifest, null, 2));
+  return { file, manifest };
+}
+
+// Cross-step entry: only authenticated exact-ID remote evidence can mint here.
+// Caller-provided local JSON never bypasses the readback. No source fetch occurs.
+export async function restorePersistedPressureCycle({ legacyRoot, ...readbackOptions }) {
+  const persisted = await readPersistedPressureArtifacts(readbackOptions);
+  const { manifest, reportBytes, ledgerBytes } = persisted;
+  const current = fs.realpathSync(process.cwd()), root = path.resolve(legacyRoot);
+  if (fs.realpathSync(root) !== root || root === current || contained(root, current) || contained(current, root)) refuse('checkout_isolation');
+  const cacheFile = path.join(root, relativeRoot, `shared-${manifest.runId}-${manifest.attempt}`, 'source-cache.json');
   regular(cacheFile);
-  const cacheBytes = fs.readFileSync(cacheFile), cache = JSON.parse(cacheBytes);
-  const provenance = { ...validateSharedCycle({ previous, ledger, cache, report, protocol, startedAt, finishedAt, identity, targetImplementation }), cacheSha256: sha(cacheBytes), legacyReportSha256: sha(reportBytes), legacyLedgerSha256: sha(ledgerBytes) };
-  // Keep optional shared evidence outside the mandatory two-file old artifact.
-  const evidence = path.join(current, relativeRoot, 'shared-evidence', cycle);
-  safeParents(evidence);
-  if (fs.existsSync(evidence)) refuse('evidence_exists');
-  fs.mkdirSync(evidence, { recursive: true });
-  saveNew(path.join(evidence, 'retrieval-receipt.json'), JSON.stringify(provenance, null, 2));
+  const cacheBytes = fs.readFileSync(cacheFile);
+  if (sha(cacheBytes) !== manifest.cacheSha256) refuse('persisted_cache_digest');
+  const cache = JSON.parse(cacheBytes), ledger = JSON.parse(ledgerBytes), report = JSON.parse(reportBytes);
+  const protocol = readJson(path.join(current, 'config/pressure-model-research.json'));
+  const now = new Date().toISOString();
+  validateShadowLedger(ledger, protocol, FROZEN_PRESSURE.implementation, now);
+  const previous = { ...ledger, records: ledger.records.slice(0, -1) };
+  validateShadowLedger(previous, protocol, FROZEN_PRESSURE.implementation, now);
+  const provenance = { ...validateSharedCycle({ previous, ledger, cache, report, protocol,
+    startedAt: manifest.startedAt, finishedAt: manifest.finishedAt,
+    identity: { runId: manifest.runId, attempt: manifest.attempt }, targetImplementation: readbackOptions.targetImplementation }),
+    cacheSha256: sha(cacheBytes), legacyReportSha256: sha(reportBytes), legacyLedgerSha256: sha(ledgerBytes) };
+  if (Object.entries(provenance).some(([key, value]) => manifest[key] !== value)) refuse('persisted_cycle_binding');
+  // Authenticated readback may consume time; recheck at the actual mint boundary.
+  if (Date.parse(now) < Date.parse(manifest.finishedAt) || Date.parse(now) - Date.parse(manifest.startedAt) > 15 * 60000
+    || now.slice(0, 10) !== manifest.evaluationDate) refuse('persisted_cycle_time');
   const receipt = Object.freeze({});
   receipts.set(receipt, { cache: structuredClone(cache), provenance, root: current });
-  return { receipt, archive, provenance: structuredClone(provenance) };
+  return { receipt, provenance: structuredClone(provenance) };
 }
 
 export function consumeSharedPressureRetrieval(receipt, { protocol, implementation, output, previousLedger, now = new Date().toISOString() }) {

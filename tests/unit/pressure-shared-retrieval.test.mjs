@@ -7,6 +7,8 @@ import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { pressureFeatures, scorePressure, validateResearchProtocol, quantile, mean, digest } from '../../scripts/daily/pressure-model.mjs';
 import { isHistoricalDate } from '../../scripts/daily/historical-validation.mjs';
+import { PRESSURE_PERSISTENCE_IDENTITY, PRESSURE_PERSISTENCE_MANIFEST_FIELDS } from '../../scripts/daily/pressure-artifact-readback.mjs';
+import * as sharedBoundary from '../../scripts/daily/pressure-shared-retrieval.mjs';
 import { FROZEN_PRESSURE as F, validateSharedCycle, consumeSharedPressureRetrieval } from '../../scripts/daily/pressure-shared-retrieval.mjs';
 import { main, parseResearchArgs, implementationHash, evaluateResearch } from '../../scripts/research-pressure-model.mjs';
 import { agreementMetrics, bootstrapAgreement, appendShadowLedger, shadowReadiness, validateShadowLedger } from '../../scripts/daily/pressure-evaluation.mjs';
@@ -45,10 +47,11 @@ function harness(mode='ok', realFixture=null) {
   fs.mkdirSync(path.join(old,'config'),{recursive:true});fs.mkdirSync(path.join(old,relative),{recursive:true});if(!realFixture)fs.mkdirSync(current);
   const data=realFixture?.data ?? fixture(),runId=realFixture?.runId ?? '123',previous=path.join(old,relative,'previous.json');
   fs.writeFileSync(path.join(old,'config/pressure-model-research.json'),JSON.stringify(data.protocol));fs.writeFileSync(previous,JSON.stringify(data.previous));
+  if(!realFixture){fs.mkdirSync(path.join(current,'config'));fs.writeFileSync(path.join(current,'config/pressure-model-research.json'),JSON.stringify(data.protocol));}
   const configBytes=fs.readFileSync(path.join(old,'config/pressure-model-research.json'));
   const configBlob=createHash('sha1').update(`blob ${configBytes.length}\0`).update(configBytes).digest('hex');
   if(mode==='hidden-dirty')fs.writeFileSync(path.join(old,'config/pressure-model-research.json'),JSON.stringify({...data.protocol,modified:true}));
-  let clock=data.startedAt, acquisitions=0, validations=0;
+  let clock=data.startedAt, acquisitions=0, validations=0, persisted=null, readbacks=0;
   class Clock extends Date { constructor(...args){super(...(args.length?args:[clock]));} }
   const execute=async(command,args)=>{
     if(command==='git') return {stdout:args[0]==='rev-parse'?(mode==='wrong-commit'?'other':F.commit):args[0]==='status'?(mode==='dirty'?' M file':''):args[0]==='ls-tree'?`100644 blob ${configBlob}\tconfig/pressure-model-research.json\0`:''};
@@ -68,12 +71,26 @@ function harness(mode='ok', realFixture=null) {
   const processMock={env:{GITHUB_ACTIONS:'true',GITHUB_RUN_ID:runId,GITHUB_RUN_ATTEMPT:'1',PATH:'/safe'},cwd:()=>current,execPath:'/node'};
   const source=fs.readFileSync(new URL('../../scripts/daily/pressure-shared-retrieval.mjs',import.meta.url),'utf8')
     .replace(/^import .*;\n/gm,'').replace(/export /g,'');
-  const api=vm.runInNewContext(source+'\n({prepareSharedPressureCycle,consumeSharedPressureRetrieval})',{
-    fs,path,createHash,execFile:()=>assert.fail('real exec forbidden'),promisify:()=>execute,digest,isHistoricalDate,
+  const api=vm.runInNewContext(source+'\n({prepareLegacyPressureCycle,preparePressureSharedManifest,restorePersistedPressureCycle,consumeSharedPressureRetrieval})',{
+    fs,path,createHash,PRESSURE_PERSISTENCE_IDENTITY,execFile:()=>assert.fail('real exec forbidden'),promisify:()=>execute,digest,isHistoricalDate,
+    readPersistedPressureArtifacts:async()=>{readbacks++;if(!persisted)throw new Error('authenticated readback denied');return structuredClone(persisted);},
     validateShadowLedger:(...args)=>{validations++;if(realFixture)validateShadowLedger(...args);},process:processMock,Date:Clock,structuredClone
   });
-  return {api,root,current,old,data,previous,processMock,Clock,runId,get acquisitions(){return acquisitions;},get validations(){return validations;},
-    prepare:(overrides={})=>api.prepareSharedPressureCycle({legacyRoot:old,previousLedger:previous,targetImplementation:realFixture?.implementation ?? target,legacyUntil:'2026-12-10',...overrides}),
+  return {api,root,current,old,data,previous,processMock,Clock,runId,get acquisitions(){return acquisitions;},get validations(){return validations;},get readbacks(){return readbacks;},setPersisted:value=>{persisted=value;},
+    prepare:async(overrides={})=>{
+      const options={legacyRoot:old,previousLedger:previous,targetImplementation:realFixture?.implementation ?? target,legacyUntil:'2026-12-10',...overrides};
+      const legacyStage=await api.prepareLegacyPressureCycle(options);
+      Object.assign(processMock.env,{GITHUB_REPOSITORY:PRESSURE_PERSISTENCE_IDENTITY.repository,
+        GITHUB_REPOSITORY_ID:String(PRESSURE_PERSISTENCE_IDENTITY.repositoryId),GITHUB_REF:'refs/heads/main',
+        GITHUB_SHA:F.commit,GITHUB_JOB:'research',RUNNER_NAME:'offline-fixture'});
+      const {manifest}=await api.preparePressureSharedManifest({...options,legacyStage,legacyArtifactId:'456'});
+      // Test-only native-upload/readback seam. Real authentication is independently
+      // OS-mocked in pressure-artifact-readback.test.mjs, never bypassed in runtime.
+      persisted={manifest,reportBytes:fs.readFileSync(path.join(legacyStage.archive,'report.json'),'utf8'),
+        ledgerBytes:fs.readFileSync(path.join(legacyStage.archive,'shadow-ledger.json'),'utf8')};
+      const restored=await api.restorePersistedPressureCycle(options);
+      return {...restored,archive:legacyStage.archive};
+    },
     consume:receipt=>api.consumeSharedPressureRetrieval(receipt,{protocol:data.protocol,implementation:target,now:finish,output:path.join(current,relative,'corrected-123-1/report.json')}),
     close:()=>{fs.rmSync(root,{recursive:true,force:true});if(realFixture){
       for(const directory of [path.join(current,relative,'legacy-preserved',`shared-${runId}-1`),path.join(current,relative,'shared-evidence',`shared-${runId}-1`),path.join(current,relative,`corrected-${runId}-1`)]) fs.rmSync(directory,{recursive:true,force:true});
@@ -81,7 +98,7 @@ function harness(mode='ok', realFixture=null) {
 }
 test('one old acquisition yields one immutable memory receipt and independently preserved old files',async()=>{
   const h=harness();try {
-    const result=await h.prepare();assert.equal(h.acquisitions,1);assert.equal(h.validations,2);
+    const result=await h.prepare();assert.equal(h.acquisitions,1);assert.equal(h.validations,6);
     const before=fs.readFileSync(path.join(result.archive,'shadow-ledger.json'),'utf8');
     const raw=path.join(h.old,relative,'shared-123-1/source-cache.json');
     assert.equal(result.provenance.cacheSha256,createHash('sha256').update(fs.readFileSync(raw)).digest('hex'));
@@ -130,7 +147,8 @@ test('public CLI cannot forge cache recording or enable network with a shared to
   let calls=0;const original=globalThis.fetch;globalThis.fetch=()=>{calls++;throw new Error('network forbidden');};
   try {await assert.rejects(main(['--record-shadow'],{sharedRetrieval:{}}),/invalid_or_consumed/);assert.equal(calls,0);} finally {globalThis.fetch=original;}
   const baseline=implementationHash(file=>file,'fixed');
-  assert.notEqual(implementationHash(file=>file+(file.endsWith('pressure-shared-retrieval.mjs')?' altered':''),'fixed'),baseline);
+  for(const dependency of ['pressure-shared-retrieval.mjs','pressure-artifact-readback.mjs'])
+    assert.notEqual(implementationHash(file=>file+(file.endsWith(dependency)?' altered':''),'fixed'),baseline);
 });
 
 function validFixture() {
@@ -169,7 +187,7 @@ test('full valid ledger and receipt drive actual corrected main offline; real ne
     const runId=`${Date.now()}${failNew?2:1}`,h=harness('ok',{data,runId,implementation:implementationHash()});
     let extraFile=null,calls=0;
     try{
-      const result=await h.prepare();assert.equal(h.validations,2);assert.equal(h.acquisitions,1);
+      const result=await h.prepare();assert.equal(h.validations,6);assert.equal(h.acquisitions,1);
       const oldBytes=fs.readFileSync(path.join(result.archive,'shadow-ledger.json'));
       let source=fs.readFileSync('scripts/research-pressure-model.mjs','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
       source=source.slice(0,source.indexOf('\nif(process.argv[1]'));
@@ -212,4 +230,75 @@ test('real validated legacy append survives missing cache before any corrected e
     assert.deepEqual(fs.readdirSync(archive).sort(),['report.json','shadow-ledger.json']);
     assert.equal(fs.existsSync(path.join(h.current,relative,`corrected-${runId}-1`)),false);
   }finally{h.close();}
+});
+
+// The future upload step must depend on THIS isolated stage, not the convenience
+// shared path whose later eligibility failures intentionally throw.
+test('standalone legacy stage succeeds without cache or a corrected implementation',async()=>{
+  const data=validFixture(),runId=`${Date.now()}4`,h=harness('no-cache',{data,runId,implementation:implementationHash()});
+  try{
+    const result=await h.api.prepareLegacyPressureCycle({legacyRoot:h.old,previousLedger:h.previous,legacyUntil:'2026-12-10'});
+    assert.equal(result.cohort,F.cohort);assert.equal(h.acquisitions,1);assert.equal(h.validations,2);
+    assert.equal(result.receipt,undefined);
+    const bytes=fs.readFileSync(path.join(result.archive,'shadow-ledger.json'));
+    assert.equal(result.ledgerSha256,createHash('sha256').update(bytes).digest('hex'));
+    assert.deepEqual(fs.readdirSync(result.archive).sort(),['report.json','shadow-ledger.json']);
+    assert.equal(fs.existsSync(result.localContext.cacheFile),false);
+    assert.throws(()=>h.consume(result),/invalid_or_consumed_receipt/);
+    assert.throws(()=>h.consume(result.localContext),/invalid_or_consumed_receipt/);
+  }finally{h.close();}
+});
+
+// Authenticator has separate OS-level tests. This seam substitutes only that
+// import in the test VM; production has no caller-supplied success/proof bypass.
+test('authenticated readback is required before cache/replay checks can mint a corrected receipt',async()=>{
+  const data=validFixture(),runId=`${Date.now()}5`,implementation=implementationHash();
+  const h=harness('ok',{data,runId,implementation});
+  try{
+    const prepared=await h.prepare();
+    const options={legacyRoot:h.old,targetImplementation:implementation};
+    h.setPersisted(null);
+    await assert.rejects(h.api.restorePersistedPressureCycle(options),/authenticated readback denied/);
+    const persisted={manifest:{...prepared.provenance},
+      reportBytes:fs.readFileSync(path.join(prepared.archive,'report.json'),'utf8'),
+      ledgerBytes:fs.readFileSync(path.join(prepared.archive,'shadow-ledger.json'),'utf8')};
+    h.setPersisted({...persisted,manifest:{...persisted.manifest,legacyRecordHash:'a'.repeat(64)}});
+    await assert.rejects(h.api.restorePersistedPressureCycle(options),/persisted_cycle_binding/);
+    h.setPersisted(persisted);
+    const cacheFile=path.join(h.old,relative,`shared-${runId}-1/source-cache.json`),cacheBytes=fs.readFileSync(cacheFile);
+    fs.writeFileSync(cacheFile,'tampered');
+    await assert.rejects(h.api.restorePersistedPressureCycle(options),/persisted_cache_digest/);
+    fs.writeFileSync(cacheFile,cacheBytes);
+    const restored=await h.api.restorePersistedPressureCycle(options);
+    const consume={protocol:data.protocol,implementation,now:finish,output:path.join(h.current,relative,`corrected-${runId}-1/report.json`)};
+    const shared=h.api.consumeSharedPressureRetrieval(restored.receipt,consume);
+    assert.equal(shared.cache.retrievedAt,finish);
+    assert.throws(()=>h.api.consumeSharedPressureRetrieval(restored.receipt,consume),/invalid_or_consumed_receipt/);
+    assert.equal(h.acquisitions,1);assert.equal(h.readbacks,5);
+    assert.equal(fs.readFileSync(path.join(prepared.archive,'shadow-ledger.json'),'utf8'),persisted.ledgerBytes);
+  }finally{h.close();}
+});
+
+test('standalone old stage produces only a separate hash-only manifest claim, never a receipt',async()=>{
+  const data=validFixture(),runId=`${Date.now()}6`,implementation=implementationHash(),h=harness('ok',{data,runId,implementation});
+  try{
+    const stage=await h.api.prepareLegacyPressureCycle({legacyRoot:h.old,previousLedger:h.previous,legacyUntil:'2026-12-10'});
+    Object.assign(h.processMock.env,{GITHUB_REPOSITORY:PRESSURE_PERSISTENCE_IDENTITY.repository,
+      GITHUB_REPOSITORY_ID:String(PRESSURE_PERSISTENCE_IDENTITY.repositoryId),GITHUB_REF:'refs/heads/main',
+      GITHUB_SHA:F.commit,GITHUB_JOB:'research',RUNNER_NAME:'offline-fixture'});
+    const before=fs.readFileSync(path.join(stage.archive,'shadow-ledger.json'));
+    const result=await h.api.preparePressureSharedManifest({legacyStage:stage,legacyRoot:h.old,legacyArtifactId:'456',targetImplementation:implementation});
+    assert.deepEqual(Object.keys(result.manifest).sort(),[...PRESSURE_PERSISTENCE_MANIFEST_FIELDS].sort());
+    assert.equal(result.manifest.legacyArtifactId,'456');assert.equal(result.manifest.cacheSha256,createHash('sha256').update(fs.readFileSync(stage.localContext.cacheFile)).digest('hex'));
+    assert.equal(result.receipt,undefined);assert.throws(()=>h.consume(result.manifest),/invalid_or_consumed_receipt/);
+    assert.deepEqual(fs.readdirSync(stage.archive).sort(),['report.json','shadow-ledger.json']);
+    assert.deepEqual(fs.readFileSync(path.join(stage.archive,'shadow-ledger.json')),before);
+    assert.equal(h.acquisitions,1);
+    await assert.rejects(h.api.preparePressureSharedManifest({legacyStage:stage,legacyRoot:h.old,legacyArtifactId:'456',targetImplementation:implementation}),/evidence_exists/);
+  }finally{h.close();}
+});
+
+test('there is no exported convenience path around authenticated persistence',()=>{
+  assert.equal(sharedBoundary.prepareSharedPressureCycle,undefined);
+  assert.equal(sharedBoundary.runLegacyStage,undefined);
 });
