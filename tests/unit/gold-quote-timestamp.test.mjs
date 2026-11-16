@@ -26,7 +26,7 @@ test('age seconds accepts both true FRED dates and full provider timestamps', ()
   assert.equal(sourceTimestampAgeSeconds('bad', now), null);
 });
 
-// Execute only the actual pure adapters; importing the realtime CLI would fetch/write.
+// Extract the actual pure adapters with a deterministic clock; no collection runs.
 const source = readFileSync(new URL('../../scripts/run-realtime.mjs', import.meta.url), 'utf8');
 const section = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
 const adapters = vm.runInNewContext([
@@ -53,4 +53,20 @@ test('gold live fetch is wired to the strict adapter; promotion does not inherit
   assert.match(source, /return goldQuoteRows\(JSON.parse\(text\)\)/);
   assert.doesNotMatch(section("if (descriptor.kind === 'goldapi')", 'const rows = parseStooqCsv'), /const today|value: Number\(json.price\)/);
   assert.match(source, /timestamp: brentPromotion.selectedObservedAt,\s+timestampKind: 'reported_candidate_time'/);
+});
+
+
+test('producer source ages never call future/invalid observations zero seconds old', () => {
+  assert.equal(sourceTimestampAgeSeconds('2026-11-13T12:05:00Z', now), 0);
+  assert.equal(sourceTimestampAgeSeconds('2026-11-13T12:05:00.001Z', now), null);
+  for (const value of [null, '', 'bad', '2099-01-01']) assert.equal(sourceTimestampAgeSeconds(value, now), null);
+  assert.equal(sourceTimestampAgeSeconds(quote().updatedAt, NaN), null);
+  for (const date of ['2099-01-01', 'bad']) {
+    assert.throws(() => adapters.normalizeLiveResult('dxy', { kind: 'fred', source: 'fred:DTWEXBGS' }, [{ date, value: 120 }], { critical: true }), /invalid or future observation timestamp/);
+    const fallback = adapters.normalizeFallbackResult('dxy', { source: 'fred:DTWEXBGS' }, { values: { dxy: 120 }, sourceDetails: { dxy: { timestamp: date } } }, true, 'offline');
+    assert.equal(fallback.ageSeconds, null);
+    assert.equal(fallback.ok, false);
+    assert.equal(fallback.timestamp, date);
+    assert.equal(fallback.value, 120);
+  }
 });

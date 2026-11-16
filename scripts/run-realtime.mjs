@@ -1,3 +1,4 @@
+import { isFutureTimestampAge } from './health/timestamp-policy.mjs';
 import { observeBrentReceipt } from './realtime/brent-receipt-metadata.mjs';
 import { goldQuoteRows, sourceTimestampAgeSeconds } from './realtime/gold-quote.mjs';
 import { ICE_BRENT_CONTRACT_DATA_URL, parseIceBrentCandidate } from './realtime/ice-brent-candidate.mjs';
@@ -279,12 +280,10 @@ function computePairDivergencePct(a, b) {
 
 function isFreshEnoughForConsensus(candidate, fetchedAt) {
   if (candidate?.source === 'fred-anchor') return false;
-  if (candidate?.source === 'stooq') return true;
-  const observedTime = parseTimestamp(candidate?.observedAt);
-  const fetchedTime = parseTimestamp(fetchedAt);
-  if (observedTime === null || fetchedTime === null) return false;
-  const ageMinutes = Math.max(0, Math.round((fetchedTime - observedTime) / 60000));
-  return ageMinutes <= BRENT_CONSENSUS_MAX_AGE_MINUTES;
+  const ageMinutes = computeAgeMinutes(candidate?.observedAt, fetchedAt);
+  if (ageMinutes === null) return false;
+  // Preserve the existing Stooq daily-date exception, but not invalid/future clocks.
+  return candidate?.source === 'stooq' || ageMinutes <= BRENT_CONSENSUS_MAX_AGE_MINUTES;
 }
 
 function annotateBrentCandidateForConsensus(candidate, fetchedAt) {
@@ -314,11 +313,11 @@ function annotateBrentCandidateForConsensus(candidate, fetchedAt) {
   if (!isReasonableBrentValue(candidate.value)) {
     return { ...base, excludedFromConsensus: 'out-of-range' };
   }
-  if (candidate.source === 'stooq') {
-    return { ...base, participatesInConsensus: true, consensusRole: 'primary' };
-  }
   if (!candidate.observedAt || parseTimestamp(candidate.observedAt) === null) {
     return { ...base, staleForConsensus: true, excludedFromConsensus: 'observedAt-missing' };
+  }
+  if (computeAgeMinutes(candidate.observedAt, fetchedAt) === null) {
+    return { ...base, staleForConsensus: true, excludedFromConsensus: 'observedAt-invalid-or-future' };
   }
   if (!isFreshEnoughForConsensus(candidate, fetchedAt)) {
     return {
@@ -468,11 +467,13 @@ function computeAgeMinutes(asOf, reference = now) {
   const asOfTime = parseTimestamp(asOf);
   const referenceTime = parseTimestamp(reference);
   if (asOfTime === null || referenceTime === null) return null;
-  return Math.max(0, Math.round((referenceTime - asOfTime) / 60000));
+  const ageMinutes = (referenceTime - asOfTime) / 60000;
+  if (isFutureTimestampAge(ageMinutes)) return null;
+  return Math.max(0, Math.round(ageMinutes));
 }
 
 function classifyFreshnessLevel(ageMinutes, hasRealtime) {
-  if (!hasRealtime || ageMinutes === null) return 'unavailable';
+  if (!hasRealtime || !Number.isFinite(ageMinutes) || ageMinutes < 0) return 'unavailable';
   if (ageMinutes <= FRESHNESS_WINDOWS.fresh) return 'fresh';
   if (ageMinutes <= FRESHNESS_WINDOWS.aging) return 'aging';
   if (ageMinutes <= FRESHNESS_WINDOWS.stale) return 'stale';
@@ -1029,6 +1030,8 @@ function buildBrentPromotionDecision(results, brentValidation, reference = now) 
 
 function normalizeLiveResult(key, descriptor, rows, { critical, fallbackUsed = false } = {}) {
   const payload = buildSeriesPayload(rows);
+  const ageSeconds = sourceTimestampAgeSeconds(payload.timestamp);
+  if (ageSeconds === null) throw new Error(`${descriptor.source} returned invalid or future observation timestamp`);
   return {
     key,
     ok: true,
@@ -1041,7 +1044,7 @@ function normalizeLiveResult(key, descriptor, rows, { critical, fallbackUsed = f
     error: null,
     critical,
     freshnessPrepared: true,
-    ageSeconds: sourceTimestampAgeSeconds(payload.timestamp),
+    ageSeconds,
     sourceStatusLabel: fallbackUsed ? `${descriptor.source}:secondary` : descriptor.source
   };
 }
@@ -1064,7 +1067,7 @@ function normalizeFallbackResult(key, descriptor, prev, critical, error) {
     error: stringifyError(error),
     critical,
     freshnessPrepared: true,
-    ageSeconds: prevTimestamp ? Math.max(0, Math.round((Date.now() - Date.parse(prevTimestamp)) / 1000)) : null,
+    ageSeconds: sourceTimestampAgeSeconds(prevTimestamp),
     sourceStatusLabel: `fallback:${descriptor.source}:${stringifyError(error)}`
   };
 }
@@ -1310,3 +1313,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
     process.exit(1);
   });
 }
+
+// Pure adapters are exported for offline tests; importing never runs main().
+export { computeAgeMinutes, classifyFreshnessLevel, isFreshEnoughForConsensus, prepareBrentCandidatesForConsensus, buildBrentConsensus, buildBrentPromotionDecision, buildPayload };
