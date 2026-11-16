@@ -190,3 +190,5 @@
 - [ADR-0114: Thermal completion publication tail](0114-thermal-publication-completion.md) — one existing producer completion, unchanged publication admission and release quota.
 
 - [ADR-0115: Baltic policy document ownership](0115-baltic-policy-single-authority.md) — canonical policy/fixture plus six checked navigation links; substantive runtime guards unchanged.
+
+- [ADR-0116: Manual artifact dangling-link guard](0116-manual-artifact-dangling-links.md) — inspect path segments without following missing targets; retain ordinary new paths.

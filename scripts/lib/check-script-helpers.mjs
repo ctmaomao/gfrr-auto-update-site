@@ -44,7 +44,8 @@ export function assertManualArtifactWritePath(filePath, prefix = 'manual-artifac
   let cursor = process.cwd();
   for (const segment of relativePath.split('/')) {
     cursor = resolve(cursor, segment);
-    if (existsSync(cursor) && lstatSync(cursor).isSymbolicLink()) {
+    // lstat must inspect the link itself: existsSync follows dangling targets.
+    if (lstatSync(cursor, { throwIfNoEntry: false })?.isSymbolicLink()) {
       throw new Error(`Refusing output through symlink/junction path segment: ${relativePath}`);
     }
   }
