@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=four-nav-20261116';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=four-nav-20261116';
+} from './config.js?v=freshness-clock-20261116';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=freshness-clock-20261116';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,16 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=four-nav-20261116';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=four-nav-20261116';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=four-nav-20261116';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=four-nav-20261116';
-import { renderTrendSvg } from './renderMacroTrend.js?v=four-nav-20261116';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=four-nav-20261116';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=four-nav-20261116';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=four-nav-20261116';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=four-nav-20261116';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=four-nav-20261116';
+} from './macroOverviewDisplayHelpers.js?v=freshness-clock-20261116';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=freshness-clock-20261116';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=freshness-clock-20261116';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=freshness-clock-20261116';
+import { renderTrendSvg } from './renderMacroTrend.js?v=freshness-clock-20261116';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=freshness-clock-20261116';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=freshness-clock-20261116';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=freshness-clock-20261116';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=freshness-clock-20261116';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=freshness-clock-20261116';
 
 // ---------- 阈值 + 派生 helper ----------
 

@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=four-nav-20261116';
+﻿import { fmtNumSafe } from './config.js?v=freshness-clock-20261116';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,
@@ -13,14 +13,21 @@ export function parseTimestamp(value) {
   return Number.isFinite(time) ? time : null;
 }
 
+// Keep clock-skew tolerance aligned with the read-only health timestamp policy.
+// Do not import its .mjs into the published browser module graph.
+export const FUTURE_TIMESTAMP_TOLERANCE_MINUTES = 5;
+
 export function computeAgeMinutes(asOf) {
   const asOfTime = parseTimestamp(asOf);
   if (asOfTime === null) return null;
-  return Math.max(0, Math.round((Date.now() - asOfTime) / 60000));
+  const ageMinutes = (Date.now() - asOfTime) / 60000;
+  // Test the unrounded age: rounding must not hide a clock beyond tolerance.
+  if (!Number.isFinite(ageMinutes) || ageMinutes < -FUTURE_TIMESTAMP_TOLERANCE_MINUTES) return null;
+  return Math.max(0, Math.round(ageMinutes));
 }
 
 export function classifyFreshnessLevel(ageMinutes, hasRealtime) {
-  if (!hasRealtime || ageMinutes === null) return 'unavailable';
+  if (!hasRealtime || !Number.isFinite(ageMinutes) || ageMinutes < 0) return 'unavailable';
   if (ageMinutes <= FRESHNESS_WINDOWS.fresh) return 'fresh';
   if (ageMinutes <= FRESHNESS_WINDOWS.aging) return 'aging';
   if (ageMinutes <= FRESHNESS_WINDOWS.stale) return 'stale';

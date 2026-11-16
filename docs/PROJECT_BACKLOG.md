@@ -10,7 +10,7 @@
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `four-nav-20261116` |
+| Cache version | `freshness-clock-20261116` |
 | 前端输入 | 首页读取静态 JSON；周报为默认入口，另有雷达与 Bubble 标签；`scripts/modules/realtime.js` 冻结、未接入 |
 | 雷达主读数 | OFR 已发表 FSI；旧模型保留审计，旧公开仓位/状态/风险预算/动作建议已退役，不把百分位当风险分或概率 |
 | Worker / Daily | `/market.worker-preview.json` 是 Worker 主预览，secondary 只作诊断；Daily 仍消费 `realtime-data` |
@@ -23,6 +23,8 @@
 ## Section 2 · Open Backlog Items
 
 ### 当前实施与真实等待
+
+- **共享时效时钟保护**：owner 2026-11-16 全项目准确性审核授权下，验收基线为共享 freshness helper 不再把超过既有健康检查 5 分钟容差的未来时钟钳为新鲜；边界用未舍入年龄判断，非有限/负分类输入不可用。仅 Daily 输入审计及共享元数据 helper，冻结 realtime 模块与独立生产采集器不改；不增加取数、评分输入或数据写入。专项、全套、独审、CI 与部署分别验收；此修复不代表旧生产快照恢复。
 
 - **四页导航**：owner 2026-11-16 明确要求四页右上角互切；仅将油市观察加入同构常显导航、更新 §4.5 并重建周报入口，固定日期周报不改。保留默认周报、雷达旧锚点、当前页 aria-current、纸媒样式及390px键盘/触屏验收。无数据、模型、取源或 workflow 改动；Issue 创建被工具拒绝，未绕过。独审、全套、精确 CI 和线上验收分别核验。
 

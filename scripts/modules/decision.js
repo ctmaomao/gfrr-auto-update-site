@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=four-nav-20261116';
-import { formatOnRrpYiUsd } from './format.js?v=four-nav-20261116';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=freshness-clock-20261116';
+import { formatOnRrpYiUsd } from './format.js?v=freshness-clock-20261116';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
