@@ -92,6 +92,11 @@ class _Document(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        # urljoin below deliberately uses the receipt URL. Do not silently
+        # manufacture links when HTML supplies unsupported document-base semantics.
+        # Even empty/inert bases are rejected conservatively; target-only is safe.
+        if tag == 'base' and 'href' in a:
+            raise ValueError('unsupported document base href')
         # Preserve inherited visibility without treating an empty hidden decorative
         # child as hiding its visible parent link. No CSS/layout inference is made.
         # HTMLParser normalizes attribute names. Repeated identical values do not
