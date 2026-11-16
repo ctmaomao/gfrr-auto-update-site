@@ -17,3 +17,10 @@ This snapshot is historical test evidence, not a current source or a refresh.
 The migration rejects different source/history digests and a checking date other
 than the original issue date. Existing r5 score regressions use this frozen epoch
 instead of reading the newer r6 production file.
+
+The three reviewed observation entries are separately frozen in
+`bubble-observation-config-20261110.json`, copied without changes from
+`config/bubble-watch-curated.json` at
+`ffd414b379e744a0b993d5667797d7b463454fad` (r6 migration). Unit and browser
+regressions use this dated config, not the live config that scheduled builds
+legitimately update. Production validation still checks the current evidence.

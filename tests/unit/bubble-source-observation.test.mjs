@@ -7,7 +7,7 @@ import {
   validateEnterpriseObservationRecord
 } from '../../scripts/bubble-watch/source-observation.mjs';
 
-const CONFIG = JSON.parse(fs.readFileSync(new URL('../../config/bubble-watch-curated.json', import.meta.url)));
+const CONFIG = JSON.parse(fs.readFileSync(new URL('../fixtures/bubble-observation-config-20261110.json', import.meta.url)));
 const TODAY = '2026-11-10';
 function entry(id = 'enterprise_deploy') { return structuredClone(CONFIG.curated[id]); }
 function upstream(id, local = entry(id)) {
