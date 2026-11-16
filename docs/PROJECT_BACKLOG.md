@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **双 pressure cohort 隔离骨架（#604，HOLD）**：冻结旧 commit/实际文件与 hash；监督唯一旧轨取数，核验当次新增记录及 cache/report，先独立本地保存旧产物，再签发同进程一次性 receipt；修正版无网络且独立身份/目录，不续旧累计。仅离线模拟 OS 层，真实 validator 与修正版 main 成功/失败链已测；外部 artifact 独立上传和 workflow 接线尚未实现，禁止据此启用或合并 hashed 主入口。
+
 - **历史结构指标窗口对齐**：离线回放曾以评估日而非实际观察日计算 WALCL/RRP/曲线变化，延迟但合格样本会错误变成零变化。仅历史适配层复用生产 lag 选择、容差和三位小数，先截断未来行，离线查询预热覆盖49天边界；不改生产评分/阈值，不取数或重写历史产物。仍是 latest-vintage 回放，不是预测有效性证据；新增依赖纳入 pressure implementationHash，旧 cohort 保留、新 cohort 从零积累，不继承旧累计或最早日期。专项、全套、独审、CI分开验收。
 
 - **独立 realtime 日历合法性**：复现无效 `2026-02-30` 被 Date.parse 归一后进入新鲜度/共识。复用既有严格观察日期解析，canonical 日期/带时区 ISO 必须真实有效；HTML canonical 时间在归一前拒绝且保持 unavailable，不能误作缺日期弱确认。保留五分钟容差、合法日线、epoch/月份文字时间路径；日期前缀数字时刻要求显式 ISO 时区，不将 malformed 当缺时刻；不改 Worker、前端、取数配置或生产数据。专项、全套、独审、CI及自然采用分开验收。
