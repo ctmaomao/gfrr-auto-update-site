@@ -213,9 +213,33 @@ No raw CSV, coordinates, key, URL or exception body is retained. The workflow
 checks current run/attempt/checkout and size before uploading one exact file
 with seven-day retention. Upload/write/quota failure does not fail production;
 missing/expired artifacts remain evidence gaps, not zero detections or persistent
-history. This implementation has only fixture validation until a later natural
-run verifies collection/upload; it is not authenticated provenance, price
-prediction, complete coverage, or an end-to-end evaluation result.
+history. Natural collection/upload was subsequently checked in the bounded audit below;
+that does not establish authenticated provenance, price prediction, complete
+coverage, or an end-to-end evaluation result.
+
+## Natural-run evidence retained before artifact expiry (2026-11-16)
+
+This is a metadata-only audit record, not a retained observation dataset. The authorized scope is to preserve necessary, bounded evidence from already completed runs without provider requests, raw-response storage, production changes, or predictive claims. Source: [NASA FIRMS](https://www.earthdata.nasa.gov/data/tools/firms), part of NASA ESDIS; retain the [FIRMS detection limitations](https://firms.modaps.eosdis.nasa.gov/alerts/notes.php). NASA's [indexed FIRMS use guidance](https://forum.earthdata.nasa.gov/viewtopic.php?t=5184) does not substitute for a completed field-specific redistribution review here. No raw CSV, coordinates, FRP values, individual observation IDs, request URLs, credentials, or full receipts are committed by this record.
+
+[PR #587](https://github.com/ctmaomao/gfrr-auto-update-site/pull/587) merged at 2026-11-16T00:39:20Z. Read-only Actions history spanning that merge identified the first subsequent scheduled run below. Job checkout/capture logs and receipt manifests agree on the actual checkout; event-head SHA alone was not used as proof. Downloaded ZIP digests matched the upload/API digests. These are observed runtime artifacts, unlike synthetic test fixtures, but retain `provenance=unverified_runtime_assertion`.
+
+| Natural scheduled run | Actual checkout | Body-receipt range UTC, 2026-11-16 | Receipt-check / upload completion UTC | Saved artifact / expiration UTC |
+|---|---|---|---|---|
+| [43817570075](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43817570075), attempt 1 | `10e031de581789c9036e23f522284922df8639b1` | 06:34:00.795–06:34:46.316 | 06:38:13 / 06:38:15 | 14203387138 / 2026-11-23T06:38:13Z |
+| [43941319139](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43941319139), attempt 1 | `94d80a59f8d18d51e6d1683dbe74e9433229e090` | 19:38:09.049–19:38:29.449 | 19:41:56 / 19:41:58 | 14261649674 / 2026-11-23T19:41:56Z |
+
+Both receipts are finalized, with all 126 expected logical request slots recorded and unique source/area pairs and ordinals. In each run S-NPP contributes 42 retired records, **zero network attempts**, null body/HTTP status, and no retries; NOAA20 and NOAA21 each contribute 42 HTTP-200 attempts, with no retries. Per-record start ≤ body reception ≤ classification ≤ validation was checked where applicable. Retired-record validation is not HTTP-body reception. `complete=true` means captured requests, not source/spatial/cloud/overpass coverage.
+
+The first run has 84 zero-row NOAA responses and zero observation objects: it does **not** exercise detection deduplication or first-received observation branches and does not prove absence of physical events. The second run has NOAA20 18 rows across nine detecting responses and NOAA21 24 rows across eight; 42 unique observation IDs, 42 references, zero unresolved references, and one revision each. Earliest in-run receipt times agree with their referring responses. There were no duplicate observations in these two runs, so actual duplicate/revision merging is still not naturally demonstrated. All `crossRunFirstSeen` values remain null; coverage/cloud fields remain unknown; evaluation/main-score eligibility remains false.
+
+| Run | JSON bytes / SHA256 | ZIP bytes / SHA256 |
+|---|---|---|
+| 43817570075 | 78604 / `2702e0ed72b5e3922785b768e31886fa4b673ea118659f27f8f47b475cc7a97b` | 7204 / `313eec3bc7638db461f0a566e83af3b6a96155f87c5767b551ef4fcd0f1cffad` |
+| 43941319139 | 101589 / `2a97efda0de7a147d73cfde0a85ea7f9b0cef4c87571a11458b9f135b9112cdb` | 12386 / `a9e23c1756a6e33f9902b4fd93117fc210234b1b387f848f3498564e503a3f9f` |
+
+JSON sizes are below the 262144-byte cap; uploaded ZIP sizes are not that cap's measurement. Both artifacts contained only `receipt.json`; inspection found no forbidden raw-location/request/credential/body fields. At audit time the [primary](https://radar.gfrfinradar.uk/data/oil-thermal-watch.json) and [backup](https://ctmaomao.github.io/gfrr-auto-update-site/data/oil-thermal-watch.json) public products matched commit `487bddb6`, 104904 bytes, SHA256 `8ad4507ef271d6a115a8817fe5480fca829989ef56a8a0fd4b1e01d7a90a20ac`, generated 19:38:08.490Z: partial/source-unavailable with S-NPP retired and baseline comparison paused. This is a point-in-time comparison, not continued publication assurance.
+
+Seven-day expiry removes the detailed artifact evidence; these hashes/counts cannot reconstruct receipt rows, observation histories or original response bytes. Re-fetching later cannot recreate earlier availability clocks. A durable prospective ledger would need a separately reviewed minimal schema, authorized storage and source-use scope, explicit missing-run/expiry markers, immutable receipt identities and append-only revisions, and no backfilled first-seen claims. This summary neither implements that ledger nor authorizes continuous retention; it preserves only this bounded collection/upload audit. No prices, event labels, model fitting, physical-output inference or forecast validation were produced.
 
 ## Historical source-review and implementation record
 
