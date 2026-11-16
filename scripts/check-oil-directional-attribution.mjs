@@ -12,7 +12,7 @@ const fail = (message) => errors.push(message);
 
 const ODP_PATH = resolve('data/oil-directional-pressure.json');
 const FIXTURE_PATH = resolve('docs/fixtures/oil-directional/odp-attribution-fixtures.json');
-const INDEX_PATH = resolve('index.html');
+const OIL_PAGE_PATH = resolve('oil-market.html');
 const RENDERER_PATH = resolve('scripts/modules/renderOilDirectional.js');
 
 const ATTRIBUTION_SCHEMA_VERSION = 'odp-attribution-1';
@@ -145,7 +145,7 @@ function validateCaseExpectations(testCase, path) {
 }
 
 function validateStaticFrontendContract() {
-  const html = readFileSync(INDEX_PATH, 'utf8');
+  const html = readFileSync(OIL_PAGE_PATH, 'utf8');
   const renderer = readFileSync(RENDERER_PATH, 'utf8');
   const requiredIds = [
     'odp-attribution-thesis',
@@ -155,7 +155,7 @@ function validateStaticFrontendContract() {
     'odp-attribution-triggers',
   ];
   for (const id of requiredIds) {
-    if (!html.includes(`id="${id}"`)) fail(`index.html missing attribution DOM id: ${id}`);
+    if (!html.includes(`id="${id}"`)) fail(`oil-market.html missing attribution DOM id: ${id}`);
     if (!renderer.includes(id)) fail(`renderOilDirectional.js missing attribution DOM reference: ${id}`);
   }
   // ADR-0087 replaces raw historical prose forwarding with qualified current evidence.

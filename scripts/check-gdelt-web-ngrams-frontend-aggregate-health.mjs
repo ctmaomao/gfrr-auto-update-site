@@ -155,7 +155,7 @@ function assertProductionCache() {
 }
 
 function assertFrontendProjection() {
-  const html = readText('index.html');
+  const html = readText('oil-market.html');
   const renderer = readText(RENDERER);
   assert(html.includes('id="odp-news-event-web-ngrams-health"'), 'P63 frontend row is missing.');
   assert(html.includes('id="odp-news-event-web-ngrams-age"'), 'P67 sample-age row is missing.');

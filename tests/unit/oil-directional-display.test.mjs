@@ -1,12 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { buildOilMarketView } from '../../scripts/modules/oilMarketModel.js';
 import { renderOilDirectional } from '../../scripts/modules/renderOilDirectional.js';
 import { ODP_PHYSICAL_KEYS } from '../../scripts/modules/oilEvidenceQuality.js';
 
 const NOW = Date.parse('2026-11-06T12:00:00Z');
-const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../../oil-market.html', import.meta.url), 'utf8');
+const radarHtml = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const renderer = readFileSync(new URL('../../scripts/modules/renderOilDirectional.js', import.meta.url), 'utf8');
 const readData = (name) => JSON.parse(readFileSync(new URL(`../../data/${name}`, import.meta.url), 'utf8'));
 const RETIRED_IDS = ['odp-ladder-core', 'odp-ladder-market', 'odp-ladder-global', 'odp-ladder-watch',
@@ -27,11 +31,11 @@ class Element {
 
 // Only model the renderer's DOM operations. Hidden ancestry is read from the actual
 // static HTML, so a removed hidden wrapper or accidentally reactivated leaf fails.
-function staticElements() {
+function staticElements(markup = html) {
   const elements = new Map();
   const stack = [];
   const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-  for (const match of html.matchAll(/<\/?([a-z][a-z0-9-]*)\b[^>]*>/gi)) {
+  for (const match of markup.matchAll(/<\/?([a-z][a-z0-9-]*)\b[^>]*>/gi)) {
     const token = match[0]; const tag = match[1].toLowerCase();
     if (token.startsWith('</')) {
       const index = stack.findLastIndex((entry) => entry.tag === tag);
@@ -284,10 +288,54 @@ test('news separates collection time from article age and aggregate market clock
   assert.match(dom.text('odp-news-event-window'), /快照生成 时点待核.*最新报道 时点待核/);
 });
 
-test('standalone oil title matches actual radar rendering for qualified, missing and expired evidence',t=>{
+test('oil detail and radar conclusions agree for qualified, missing and expired evidence',t=>{
  const dom=harness(t);
  const cases=[{oil:oilFixture(),radar:radarFixture()},{oil:oilFixture(),radar:null},{oil:null,radar:radarFixture()}];
  const missing=oilFixture();missing.evidence.sprStocks.value=null;cases.push({oil:missing,radar:radarFixture()});
  const expired=oilFixture();for(const k of ODP_PHYSICAL_KEYS)expired.evidence[k].asOfDate='2020-01-01';cases.push({oil:expired,radar:radarFixture()});
- for(const input of cases){dom.render(input.oil,input.radar);assert.equal(buildOilMarketView(input,NOW).verdict,dom.text('odp-verdict'));}
+ const results = cases.map(input => {
+   dom.render(input.oil,input.radar);
+   assert.equal(buildOilMarketView(input,NOW).verdict,dom.text('odp-verdict'));
+   return { verdict: dom.text('odp-verdict'), headline: dom.text('odp-headline') };
+ });
+ const radarElements = staticElements(radarHtml);
+ globalThis.document = { getElementById: (id) => radarElements.get(id) || null, createElement: () => new Element() };
+ assert.ok(!radarElements.has('odp-evidence-list'), 'radar contains no detail ledger');
+ cases.forEach((input, index) => {
+   dom.render(input.oil,input.radar);
+   assert.equal(radarElements.get('odp-verdict').textContent,results[index].verdict);
+   assert.equal(radarElements.get('odp-headline').textContent,results[index].headline);
+ });
+});
+
+// Mutation fixtures prove that IDs on a different page cannot mask a missing
+// renderer target. Run the real guard in an isolated miniature repository.
+test('DOM guard enforces radar, oil-detail and shared conclusion ownership', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gfrr-dom-ownership-'));
+  try {
+    mkdirSync(join(root, 'scripts', 'modules'), { recursive: true });
+    writeFileSync(join(root, 'scripts', 'check-dom.mjs'), readFileSync(new URL('../../scripts/check-dom.mjs', import.meta.url)));
+    writeFileSync(join(root, 'scripts', 'app.js'), "setLeafText('radar-only', 'test');");
+    writeFileSync(join(root, 'scripts', 'modules', 'renderOilDirectional.js'),
+      "setLeafText('odp-verdict', 'test'); setLeafText('odp-headline', 'test'); setLeafText('hero-odp-ref-verdict', 'test'); $('odp-evidence-list');");
+    writeFileSync(join(root, 'scripts', 'modules', 'oilMarketPage.js'), "$('oil-price');");
+    const radar = ['radar-only', 'odp-verdict', 'odp-headline', 'hero-odp-ref-verdict'];
+    const oil = ['oil-price', 'odp-verdict', 'odp-headline', 'odp-evidence-list'];
+    const run = (radarIds, oilIds) => {
+      for (const [page, ids] of [['index.html', radarIds], ['oil-market.html', oilIds]]) {
+        writeFileSync(join(root, page), ids.map((id) => `<div id="${id}"></div>`).join(''));
+      }
+      return spawnSync(process.execPath, [join(root, 'scripts', 'check-dom.mjs')], { encoding: 'utf8' });
+    };
+    assert.equal(run(radar, oil).status, 0);
+    for (const [page, id] of [['index.html', 'odp-verdict'], ['oil-market.html', 'odp-headline'],
+      ['index.html', 'hero-odp-ref-verdict'], ['oil-market.html', 'odp-evidence-list'],
+      ['oil-market.html', 'oil-price'], ['index.html', 'radar-only']]) {
+      const result = page === 'index.html'
+        ? run(radar.filter((item) => item !== id), [...oil, id])
+        : run([...radar, id], oil.filter((item) => item !== id));
+      assert.equal(result.status, 1, `${page} #${id} must not be satisfied by another page`);
+      assert.ok(result.stderr.includes(`${page} #${id}`), result.stderr);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

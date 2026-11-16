@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=freshness-clock-20261116';
+﻿import { fmtNumSafe } from './config.js?v=oil-detail-owner-20261116';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

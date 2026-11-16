@@ -6,7 +6,7 @@
 //   (3) keep an explicit "暂不判断" fallback for insufficient data.
 //
 // Scope = scripts/modules/renderOilDirectional.js (the dynamic Chinese copy). The static
-// index.html section copy is boundary disclaimers ("不进打分 / 执行 / 热力图") and is
+// oil-market.html section copy is boundary disclaimers ("不进打分 / 执行 / 热力图") and is
 // reviewed manually under DESIGN.md §4.1/§5.6 + ADR-0014.
 // P32: the oil-news event watch may display headline readiness and title-risk
 // aggregate counts only. It must not render article titles or iterate topArticles.
@@ -28,7 +28,7 @@ const errors = [];
 const fail = (m) => errors.push(m);
 
 const src = readFileSync(resolve('scripts/modules/renderOilDirectional.js'), 'utf8');
-const html = readFileSync(resolve('index.html'), 'utf8');
+const html = readFileSync(resolve('oil-market.html'), 'utf8');
 
 // (1) No trade-action words. These are instructions; ODP is display-only observation.
 // Directional VIEWS (看涨 / 偏空 / 中性) are allowed — they are assessments, not actions.

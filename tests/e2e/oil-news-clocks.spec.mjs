@@ -23,8 +23,8 @@ for (const width of [1440, 390]) for (const missing of [false, true]) {
     }
     await page.route('**/data/oil-news-event-watch.json*', route => route.fulfill({ json: news }));
     await page.route('**/data/world-order-stress.json*', route => route.fulfill({ json: world }));
-    await page.goto('/index.html?view=radar');
-    await expect(page.locator('body')).toHaveClass(/gfrr-data-ready/);
+    await page.goto('/oil-market.html');
+    await expect(page.locator('#odp-news-event-window')).not.toHaveText('—');
     const window = page.locator('#odp-news-event-window');
     const market = page.locator('#odp-news-event-market');
     await expect(window).toContainText('快照生成');

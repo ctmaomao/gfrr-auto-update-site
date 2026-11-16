@@ -33,6 +33,12 @@ for (const width of [1440, 390]) {
     }
     await page.locator('#world-order-stress-section > summary').click();
     await page.locator('#world-order-stress-section').screenshot({ path: testInfo.outputPath(`${variant}-world-order-${width}.png`) });
+    // The immutable baseline predates the standalone page; current evidence moved.
+    if (variant === 'after') {
+      await page.goto('/oil-market.html');
+      await expect(page.locator('#odp-news-event-window')).not.toHaveText('—');
+      await page.evaluate(() => globalThis.document.fonts.ready);
+    }
     await page.locator('#oil-directional-pressure details').first().evaluate(el => { el.open = true; });
     await page.locator('#oil-directional-pressure').screenshot({ path: testInfo.outputPath(`${variant}-oil-${width}.png`) });
     await page.goto('/bubble-watch.html');
