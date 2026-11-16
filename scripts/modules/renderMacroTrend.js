@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=oil-consistency-20261116';
+import { $ } from './config.js?v=freshness-clock-20261116';
 
 function asNumber(value) {
   if (value === null || value === undefined || typeof value === 'boolean'

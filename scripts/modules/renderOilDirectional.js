@@ -11,7 +11,7 @@
 // (guarded by check:oil-directional-zh-copy) — these are observational assessments,
 // not instructions.
 
-import { qualifyOdpDisplay, oilObservationMillis, oilEvidenceNumber } from './oilEvidenceQuality.js?v=oil-consistency-20261116';
+import { qualifyOdpDisplay, oilObservationMillis, oilEvidenceNumber } from './oilEvidenceQuality.js?v=freshness-clock-20261116';
 
 const $ = (id) => document.getElementById(id);
 

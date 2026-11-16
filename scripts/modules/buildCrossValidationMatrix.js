@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=oil-consistency-20261116';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=freshness-clock-20261116';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

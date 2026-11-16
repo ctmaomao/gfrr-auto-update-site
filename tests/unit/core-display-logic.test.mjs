@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { FUTURE_TIMESTAMP_TOLERANCE_MINUTES as HEALTH_CLOCK_TOLERANCE } from '../../scripts/health/timestamp-policy.mjs';
 import { readFileSync } from 'node:fs';
 
 import { classifyByThreshold, finite, normalizeStatus, statusLabel } from '../../scripts/modules/displayStatusThresholds.js';
@@ -19,6 +20,7 @@ const {
   trendClass,
 } = await import(`../../scripts/modules/config.js?v=${assetVersion}`);
 import {
+  FUTURE_TIMESTAMP_TOLERANCE_MINUTES,
   buildRealtimeStatusLabel,
   canUseRealtimePayloadValues,
   classifyFreshnessLevel,
@@ -105,7 +107,10 @@ test('freshness parsing and boundary classification are deterministic', () => {
   assert.equal(parseTimestamp('invalid'), null);
   assert.equal(parseTimestamp('2026-07-13'), Date.parse('2026-07-13T00:00:00Z'));
   assert.equal(parseTimestamp('2026-07-13T01:02:03Z'), Date.parse('2026-07-13T01:02:03Z'));
-  assert.equal(classifyFreshnessLevel(null, true), 'unavailable');
+  assert.equal(FUTURE_TIMESTAMP_TOLERANCE_MINUTES, HEALTH_CLOCK_TOLERANCE);
+  for (const invalidAge of [null, undefined, NaN, Infinity, -Infinity, -1, '0', false]) {
+    assert.equal(classifyFreshnessLevel(invalidAge, true), 'unavailable');
+  }
   assert.equal(classifyFreshnessLevel(1, false), 'unavailable');
   assert.equal(classifyFreshnessLevel(30, true), 'fresh');
   assert.equal(classifyFreshnessLevel(90, true), 'aging');
@@ -116,8 +121,14 @@ test('freshness parsing and boundary classification are deterministic', () => {
   Date.now = () => Date.parse('2026-07-13T01:00:00Z');
   try {
     assert.equal(computeAgeMinutes('2026-07-13T00:30:00Z'), 30);
-    assert.equal(computeAgeMinutes('2026-07-13T02:00:00Z'), 0);
+    assert.equal(computeAgeMinutes('2026-07-13T01:00:00Z'), 0);
+    assert.equal(computeAgeMinutes('2026-07-13T01:05:00Z'), 0);
+    assert.equal(computeAgeMinutes('2026-07-13T01:05:00.001Z'), null);
+    assert.equal(computeAgeMinutes('2026-07-13T02:00:00Z'), null);
+    assert.equal(classifyFreshnessLevel(computeAgeMinutes('2099-01-01'), true), 'unavailable');
     assert.equal(computeAgeMinutes('invalid'), null);
+    Date.now = () => NaN;
+    assert.equal(computeAgeMinutes('2026-07-13T00:30:00Z'), null);
   } finally {
     Date.now = originalNow;
   }

@@ -1,4 +1,4 @@
-import { pressureContainsNumericContent } from './editorialNumericView.js?v=oil-consistency-20261116';
+import { pressureContainsNumericContent } from './editorialNumericView.js?v=freshness-clock-20261116';
 // Browser-only display qualification. No provider, network, or score calculation.
 const MAX_AGE_MS = 30 * 3600000;
 const DAY = 86400000;
