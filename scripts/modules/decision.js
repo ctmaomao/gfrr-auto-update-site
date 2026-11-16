@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=oil-market-20261116';
-import { formatOnRrpYiUsd } from './format.js?v=oil-market-20261116';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=oil-consistency-20261116';
+import { formatOnRrpYiUsd } from './format.js?v=oil-consistency-20261116';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

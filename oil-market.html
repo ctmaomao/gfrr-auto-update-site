@@ -6,8 +6,8 @@
 <meta name="description" content="油价、运输与卫星证据的独立观察页，逐项保留来源、时点与不确定性。">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+SC:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="assets/styles.css?v=oil-market-20261116">
-<script type="module" src="scripts/modules/oilMarketPage.js?v=oil-market-20261116"></script>
+<link rel="stylesheet" href="assets/styles.css?v=oil-consistency-20261116">
+<script type="module" src="scripts/modules/oilMarketPage.js?v=oil-consistency-20261116"></script>
 </head>
 <body class="oil-market-page">
 <nav class="page-bookmarks" aria-label="站内页面切换"><a class="pbm" href="weekly-reports.html">每周周报</a><a class="pbm" href="index.html?view=radar">全球雷达</a><a class="pbm" href="bubble-watch.html">AI泡沫</a></nav>
@@ -15,7 +15,7 @@
 <header class="masthead"><div class="kicker">GFRR · 独立能源观察</div><h1 class="title">油市观察<br><em>The Oil Brief</em></h1><p class="oil-deck">从价格表面，走向供需、运输与可核查的卫星证据。</p><p class="oil-meta">不同频率，不同证据。观察日逐项列示，不把页面打开时间当作数据更新。</p></header>
 <nav class="oil-nav" aria-label="油市章节"><a href="#oil-conclusion">本期结论</a><a href="#oil-prices">价格</a><a href="#oil-transport">运费与航道</a><a href="#oil-physical">供需锚</a><a href="#oil-satellite">卫星研究</a></nav>
 <p id="oil-load-status" role="status">正在读取已发布数据…</p>
-<section id="oil-conclusion" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">本期证据结论</span><h2 id="oil-verdict">数据待读取 · 暂不判断</h2><p>这是美国周度供需观察，不是全球油价预测。与全球雷达共用同一数据资格闸门，卫星研究不新增方向分。</p></header><div class="oil-conclusion-body"><p id="oil-verdict-time">—</p><p>只有同周、可用且未超龄的八项 EIA 周度统计才能形成现有供需判断。来源单一，不等于八个独立确认。</p><a href="index.html?view=radar#oil-directional-pressure">返回全球雷达，查看同口径结论 →</a></div></section>
+<section id="oil-conclusion" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">本期证据结论</span><h2 id="oil-verdict">数据待读取 · 暂不判断</h2><p>这是美国周度供需观察，不是全球油价预测。与全球雷达共用同一数据资格闸门，卫星研究不新增方向分。</p></header><div class="oil-conclusion-body"><p id="oil-physical-summary">美国周度供需状态待读取</p><p id="oil-verdict-time">—</p><p>只有同周、可用且未超龄的八项 EIA 周度统计才能形成现有供需判断。来源单一，不等于八个独立确认。</p><a href="index.html?view=radar#oil-directional-pressure">返回全球雷达，查看同口径结论 →</a></div></section>
 <section id="oil-prices" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">01 · 价格不是同一种价格</span><h2>现货锚与期货曲线</h2><p>美元／桶。现货与不同交割月不能直接当作同口径报价交叉验证；延时报价不等于官方结算价。</p></header><div class="oil-price-layout"><article class="oil-spot"><h3>Brent 现货锚</h3><div class="oil-big" id="oil-brent">—</div><p id="oil-brent-meta">来源与观察日待核验</p><p>FRED / EIA 公开现货代理，不是实时成交，也不是 Platts Dated Brent。</p></article><div><h3>ICE 公开延时报价 · 各交割月</h3><p class="oil-meta">横条仅比较价格水平；逐合约时点见表。缺失不补值，不把远月价格当作预测。</p><div id="oil-curve" class="oil-bars"></div></div></div></section>
 <section id="oil-transport" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">02 · 运得出去，才是供应</span><h2>运费与关键航道</h2><p>指数反映广义运输背景，不是某条航线的美元／桶报价。路线级运费确认尚未接入。</p></header><div id="oil-freight" class="oil-three"></div><h3>八处咽喉 · 油轮船次代理</h3><p>IMF PortWatch 的 AIS 派生观察。油轮不等于原油，船次不等于货量。定位干扰、隐匿航行、绕航与数据滞后均可能扭曲结果；零运力不证明断供。</p><p id="oil-transport-clock" class="oil-meta"></p><div id="oil-routes" class="oil-route-grid"></div></section>
 <section id="oil-physical" class="editorial-section"><header class="editorial-section-header"><span class="section-kicker">03 · 慢一些，但要可比</span><h2>美国周度供需锚</h2><p>EIA 周度官方统计。库存、炼厂投入与产品供应各自对应不同环节，不把炼厂停产一概当作原油供给损失。</p></header><div class="oil-table-wrap"><table><caption>原始统计与观察周，不以快照日期重标</caption><thead><tr><th scope="col">统计项</th><th scope="col">数值</th><th scope="col">观察日</th><th scope="col">可用性</th></tr></thead><tbody id="oil-weekly"></tbody></table></div></section>

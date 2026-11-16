@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=oil-market-20261116';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=oil-consistency-20261116';
 
 const MAX_AGE_HOURS = 30;
 
