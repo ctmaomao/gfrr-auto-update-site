@@ -1864,3 +1864,9 @@ Rolling futures without a known contract stay unknown. `absDiff`/`pctDiff`,
 meaning; they do not establish economically comparable observations. Missing
 values never become zero. Payload generation gaps are not quote age gaps.
 Regression coverage: `tests/unit/brent-observation-audit.test.mjs`.
+
+### Daily publication race
+
+`gfrr-main-writer-main` 串行自动 writer，不锁住 PR 合并。Daily 生成后通过 `publish-daily-candidate.mjs` 检查 main 是否前进：仅 docs/tests 的常规文件变动可在独立 worktree 保留原候选重放，并重新运行 `check:all`，最多三次普通快进推送。其它路径、符号链接、历史分叉或检查失败均停止；不会强推、改写原候选或重取来源。该边界有意拒绝尚未证明独立的新增研究代码/config。
+
+已完成全套检查并提交的候选如未发布，Actions 保留三天 `unconfirmed-daily-candidate-<run>-<attempt>`，仅从不可变候选提交导出三个 Daily 输出及 SHA256/候选、父提交、实时输入提交身份，总量上限 5 MiB，完整准备成功才上传，压缩级别 9。末次推送应答丢失会再只读核验；仍无法确认则明确标记结果未知，不宣称未曾发布。它是待审证据，不是已发布数据，也不是自动恢复授权；不能直接覆盖后续更新。生成/验证失败、候选超限或准备失败不上传未合格/不完整数据；不变更 GitHub $0 预算、不扩容、不重试上传。日志中的成功生成不代表 main 或两站采用，仍需核对正常发布与实物。

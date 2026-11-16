@@ -261,6 +261,7 @@ jobs:
           NODE
 
       - name: Commit updated data files
+        id: publish_daily
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -270,5 +271,27 @@ jobs:
           else
             npm run check:all
             git commit -m "chore: refresh radar data"
-            git push
+            echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            node scripts/publish-daily-candidate.mjs
           fi
+
+      - name: Prepare unconfirmed Daily candidate artifact
+        id: retain_daily
+        if: ${{ failure() && steps.publish_daily.outcome == 'failure' && steps.publish_daily.outputs.candidate_sha != '' }}
+        run: |
+          node scripts/publish-daily-candidate.mjs --receipt
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Retain unconfirmed Daily candidate
+        if: ${{ failure() && steps.retain_daily.outputs.ready == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: unconfirmed-daily-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            daily-candidate-artifact/receipt.json
+            daily-candidate-artifact/data/radar-data.json
+            daily-candidate-artifact/data/radar-history.json
+            daily-candidate-artifact/data/radar-history-full.json
+          compression-level: 9
+          retention-days: 3
+          if-no-files-found: error
