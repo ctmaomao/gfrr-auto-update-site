@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { buildOilMarketView } from '../../scripts/modules/oilMarketModel.js';
 import { renderOilDirectional } from '../../scripts/modules/renderOilDirectional.js';
 import { ODP_PHYSICAL_KEYS } from '../../scripts/modules/oilEvidenceQuality.js';
 
@@ -281,4 +282,12 @@ test('news separates collection time from article age and aggregate market clock
   news.freshness.latestArticleAt = '2026-11-05T12:00:00Z';
   dom.render(oilFixture(), radarFixture(), { oilNewsEventWatchData: news, worldOrderStressData });
   assert.match(dom.text('odp-news-event-window'), /快照生成 时点待核.*最新报道 时点待核/);
+});
+
+test('standalone oil title matches actual radar rendering for qualified, missing and expired evidence',t=>{
+ const dom=harness(t);
+ const cases=[{oil:oilFixture(),radar:radarFixture()},{oil:oilFixture(),radar:null},{oil:null,radar:radarFixture()}];
+ const missing=oilFixture();missing.evidence.sprStocks.value=null;cases.push({oil:missing,radar:radarFixture()});
+ const expired=oilFixture();for(const k of ODP_PHYSICAL_KEYS)expired.evidence[k].asOfDate='2020-01-01';cases.push({oil:expired,radar:radarFixture()});
+ for(const input of cases){dom.render(input.oil,input.radar);assert.equal(buildOilMarketView(input,NOW).verdict,dom.text('odp-verdict'));}
 });

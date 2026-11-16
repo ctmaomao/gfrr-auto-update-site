@@ -1,4 +1,4 @@
-import { buildOilMarketView } from './oilMarketModel.js?v=oil-market-20261116';
+import { buildOilMarketView } from './oilMarketModel.js?v=oil-consistency-20261116';
 const $=id=>document.getElementById(id);
 const el=(tag,text,className)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;};
 const fmt=value=>typeof value==='number'&&Number.isFinite(value)?value.toLocaleString('zh-CN',{maximumFractionDigits:2}):'—';
@@ -10,6 +10,7 @@ async function load(path){try{const response=await fetch(path,{cache:'no-cache',
 export function renderOilMarket(input,now=Date.now()) {
  const v=buildOilMarketView(input,now);
  $('oil-verdict').textContent=v.verdict;
+ $('oil-physical-summary').textContent=v.physicalSummary;
  $('oil-verdict-time').textContent=`美国统计观察日：${date(v.qualified.evidence.crudeStocksExSpr?.asOfDate)}。供需快照生成：${date(v.oilAt)}。`;
  $('oil-brent').textContent=fmt(v.brent.value);
  $('oil-brent-meta').textContent=clock(v.brent);

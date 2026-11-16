@@ -10,3 +10,17 @@ test('thermal raw anomaly cannot become prediction or score',()=>{const v=buildO
 test('published baseline uses identical qualification to radar and preserves all eight routes',()=>{const read=name=>JSON.parse(readFileSync(new URL('../../data/'+name+'.json',import.meta.url)));const v=buildOilMarketView({radar:read('radar-data'),oil:read('oil-directional-pressure'),thermal:read('oil-thermal-watch')},now);assert.equal(v.routes.length,8);assert.equal(v.freight.length,3);assert.equal(v.thermal.facilities.length,read('oil-thermal-watch').facilities.length);assert.equal(v.qualified.evidence.crackSpread.value,null);});
 
 test('thermal old and future clocks are not current observations',()=>{for(const at of ['2020-01-01','2027-01-01',null]){const v=buildOilMarketView({thermal:{module:'oil-thermal-watch',generatedAt:at,aggregate:{rowCount:2,latestAcqAt:at}}},now);assert.notEqual(v.thermal.clockStatus,'live');assert.notEqual(v.thermal.observationStatus,'live');}});
+
+// Fixture values qualify the existing gate only; they are never production inputs.
+function qualifiedFixture() {
+ const radar={brentPricingLayer:{selectedBrent:{value:100,source:'fred:DCOILBRENTEU'},publicSpotProxy:{value:100,source:'fred',observedAt:'2026-11-13',status:'ok'},futuresPriceCurve:{frontMinusBack:2,frontPrice:102,backPrice:100,slopeRegime:'backwardation',curveStatus:'live_public_monthly',updatedAt:'2026-11-13',contracts:[{price:102,updatedAt:'2026-11-13'},{price:100,updatedAt:'2026-11-13'}]}}};
+ const keys=['crudeStocksExSpr','sprStocks','distillateStocks','gasolineStocks','refineryUtilization','refinerCrudeInputs','demandGasolineSupplied','demandDistillateSupplied'];
+ const oil={builtAt:'2026-11-14',finalBias:'false_down_physical_stress',interpretation:{physicalBias:'moderate_bullish'},evidence:{...Object.fromEntries(keys.map(k=>[k,{value:1,asOfDate:'2026-11-06',sourceStatus:'live'}])),brentPrice:{value:100,asOfDate:'2026-11-13',source:'fred:DCOILBRENTEU'},curve:{asOfDate:'2026-11-13',frontMinusBack:2,frontPrice:102,backPrice:100,slopeRegime:'backwardation'}},signals:{priceContext:{brentChangePct4w:-5,priceDirectionSource:'dated_same_source_brent_observations',brentSource:'fred:DCOILBRENTEU',brentObservedAt:'2026-11-13',brentStartObservedAt:'2026-10-16',curveSlopeRegime:'backwardation'}}};return {radar,oil};
+}
+test('qualified price, absent price, absent physical and expired evidence keep separate meanings',()=>{
+ const input=qualifiedFixture();const v=buildOilMarketView(input,now);assert.equal(v.qualified.priceUsable,true);assert.equal(v.verdict,'价格下跌 · 美国周度供需仍紧');assert.equal(v.physicalSummary,'美国周度供需偏紧');
+ const noPrice=structuredClone(input);noPrice.radar=null;const p=buildOilMarketView(noPrice,now);assert.equal(p.verdict,'油价方向暂不足判断');assert.equal(p.physicalSummary,'美国周度供需偏紧');
+ const noPhysical=structuredClone(input);noPhysical.oil.evidence.sprStocks.value=null;assert.equal(buildOilMarketView(noPhysical,now).verdict,'数据不足 · 暂不判断');assert.match(buildOilMarketView(noPhysical,now).physicalSummary,/数据不足/);
+ const expired=buildOilMarketView(input,now+30*86400000);assert.equal(expired.verdict,'数据不足 · 暂不判断');assert.match(expired.physicalSummary,/超龄/);
+ assert.equal(buildOilMarketView({},now).verdict,'数据不可用');
+});
