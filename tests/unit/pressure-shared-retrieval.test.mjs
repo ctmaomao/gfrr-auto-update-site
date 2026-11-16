@@ -59,6 +59,7 @@ function harness(mode='ok', realFixture=null) {
     if(mode==='old-fails') {fs.writeFileSync(output,'partial');throw new Error('old failed');}
     if(mode==='no-append') data.ledger=data.previous;
     if(mode==='changed-prefix') data.ledger.records[0].recordHash='altered';
+    if(mode==='wrong-report') data.report.implementationHash='wrong';
     if(mode==='old-cache') data.cache.retrievedAt='2026-11-15T10:00:00Z';
     if(mode!=='no-cache') fs.writeFileSync(cache,JSON.stringify(data.cache));
     fs.writeFileSync(output,JSON.stringify(data.report));fs.writeFileSync(path.join(path.dirname(output),'shadow-ledger.json'),JSON.stringify(data.ledger));
@@ -72,10 +73,10 @@ function harness(mode='ok', realFixture=null) {
     validateShadowLedger:(...args)=>{validations++;if(realFixture)validateShadowLedger(...args);},process:processMock,Date:Clock,structuredClone
   });
   return {api,root,current,old,data,previous,processMock,Clock,runId,get acquisitions(){return acquisitions;},get validations(){return validations;},
-    prepare:()=>api.prepareSharedPressureCycle({legacyRoot:old,previousLedger:previous,targetImplementation:realFixture?.implementation ?? target,legacyUntil:'2026-12-10'}),
+    prepare:(overrides={})=>api.prepareSharedPressureCycle({legacyRoot:old,previousLedger:previous,targetImplementation:realFixture?.implementation ?? target,legacyUntil:'2026-12-10',...overrides}),
     consume:receipt=>api.consumeSharedPressureRetrieval(receipt,{protocol:data.protocol,implementation:target,now:finish,output:path.join(current,relative,'corrected-123-1/report.json')}),
     close:()=>{fs.rmSync(root,{recursive:true,force:true});if(realFixture){
-      for(const directory of [path.join(current,relative,'legacy-preserved',`shared-${runId}-1`),path.join(current,relative,`corrected-${runId}-1`)]) fs.rmSync(directory,{recursive:true,force:true});
+      for(const directory of [path.join(current,relative,'legacy-preserved',`shared-${runId}-1`),path.join(current,relative,'shared-evidence',`shared-${runId}-1`),path.join(current,relative,`corrected-${runId}-1`)]) fs.rmSync(directory,{recursive:true,force:true});
     }}};
 }
 test('one old acquisition yields one immutable memory receipt and independently preserved old files',async()=>{
@@ -93,9 +94,22 @@ test('one old acquisition yields one immutable memory receipt and independently 
     assert.equal(fs.readFileSync(path.join(result.archive,'shadow-ledger.json'),'utf8'),before);
   } finally {h.close();}
 });
-test('legacy failure, partial outputs, stale cache, modified prefix and wrong checkout cannot authorize new track',async()=>{
-  for(const mode of ['wrong-commit','dirty','hidden-dirty','wrong-cohort','wrong-implementation','old-fails','no-cache','no-append','changed-prefix','old-cache']) {
+test('invalid legacy outputs, modified prefix and wrong checkout cannot be archived or authorize new track',async()=>{
+  for(const mode of ['wrong-commit','dirty','hidden-dirty','wrong-cohort','wrong-implementation','old-fails','no-append','changed-prefix','wrong-report']) {
     const h=harness(mode);try {await assert.rejects(h.prepare());assert.equal(fs.existsSync(path.join(h.current,relative,'legacy-preserved')),false);} finally {h.close();}
+  }
+});
+test('corrected eligibility failure cannot suppress the valid legacy two-file archive',async()=>{
+  for(const mode of ['no-cache','old-cache','bad-target']) {
+    const h=harness(mode);try {
+      await assert.rejects(h.prepare(mode==='bad-target'?{targetImplementation:F.implementation}:{}));
+      const archive=path.join(h.current,relative,'legacy-preserved','shared-123-1');
+      assert.deepEqual(fs.readdirSync(archive).sort(),['report.json','shadow-ledger.json']);
+      assert.equal(fs.readFileSync(path.join(archive,'shadow-ledger.json'),'utf8'),JSON.stringify(h.data.ledger));
+      assert.equal(fs.readFileSync(path.join(archive,'report.json'),'utf8'),JSON.stringify(h.data.report));
+      assert.equal(h.acquisitions,1);
+      assert.equal(fs.existsSync(path.join(h.current,relative,'shared-evidence')),false);
+    } finally {h.close();}
   }
 });
 test('receipt binding and directory isolation fail closed, even on retry',async()=>{
@@ -184,4 +198,18 @@ test('full valid ledger and receipt drive actual corrected main offline; real ne
       assert.equal(calls,0);assert.deepEqual(fs.readFileSync(path.join(result.archive,'shadow-ledger.json')),oldBytes);
     }finally{if(extraFile)fs.unlinkSync(extraFile);h.close();}
   }
+});
+
+test('real validated legacy append survives missing cache before any corrected execution',async()=>{
+  const data=validFixture(),runId=`${Date.now()}3`,h=harness('no-cache',{data,runId,implementation:implementationHash()});
+  try{
+    await assert.rejects(h.prepare(),/ENOENT/);
+    assert.equal(h.validations,2);assert.equal(h.acquisitions,1);
+    const archive=path.join(h.current,relative,'legacy-preserved',`shared-${runId}-1`);
+    const saved=fs.readFileSync(path.join(archive,'shadow-ledger.json'),'utf8');
+    assert.equal(saved,JSON.stringify(data.ledger));
+    validateShadowLedger(JSON.parse(saved),data.protocol,F.implementation,finish);
+    assert.deepEqual(fs.readdirSync(archive).sort(),['report.json','shadow-ledger.json']);
+    assert.equal(fs.existsSync(path.join(h.current,relative,`corrected-${runId}-1`)),false);
+  }finally{h.close();}
 });

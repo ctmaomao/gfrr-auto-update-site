@@ -24,7 +24,7 @@
 
 ### 当前实施与真实等待
 
-- **双 pressure cohort 隔离骨架（#604，HOLD）**：冻结旧 commit/实际文件与 hash；监督唯一旧轨取数，核验当次新增记录及 cache/report，先独立本地保存旧产物，再签发同进程一次性 receipt；修正版无网络且独立身份/目录，不续旧累计。仅离线模拟 OS 层，真实 validator 与修正版 main 成功/失败链已测；外部 artifact 独立上传和 workflow 接线尚未实现，禁止据此启用或合并 hashed 主入口。
+- **双 pressure cohort 隔离骨架（#604，HOLD）**：冻结旧 commit/实际文件与 hash；监督唯一旧轨取数，旧 ledger/report 合法续接后先保存两文件，再检查 cache/新轨资格并另存共享 manifest、签发同进程一次性 receipt；修正版无网络且独立身份/目录，不续旧累计。仅离线模拟 OS 层，真实 validator 与修正版 main 成功/失败链已测；外部 artifact 独立上传和 workflow 接线尚未实现，禁止据此启用或合并 hashed 主入口。
 
 - **历史结构指标窗口对齐**：离线回放曾以评估日而非实际观察日计算 WALCL/RRP/曲线变化，延迟但合格样本会错误变成零变化。仅历史适配层复用生产 lag 选择、容差和三位小数，先截断未来行，离线查询预热覆盖49天边界；不改生产评分/阈值，不取数或重写历史产物。仍是 latest-vintage 回放，不是预测有效性证据；新增依赖纳入 pressure implementationHash，旧 cohort 保留、新 cohort 从零积累，不继承旧累计或最早日期。专项、全套、独审、CI分开验收。
 

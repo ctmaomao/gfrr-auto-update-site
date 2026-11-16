@@ -135,22 +135,36 @@ export async function prepareSharedPressureCycle({ legacyRoot, previousLedger, t
     '--cache', cacheFile, '--output', reportFile]);
   const finishedAt = new Date().toISOString();
   const ledgerFile = path.join(directory, 'shadow-ledger.json');
-  for (const file of [cacheFile, reportFile, ledgerFile]) regular(file);
+  for (const file of [reportFile, ledgerFile]) regular(file);
   if (await git(['rev-parse', 'HEAD']) !== FROZEN_PRESSURE.commit || await git(['status', '--porcelain', '--untracked-files=all']) !== '') refuse('frozen_checkout_changed');
   verifyTree(root, tree);
   if (sha(fs.readFileSync(prior)) !== sha(previousBytes)) refuse('previous_changed');
-  const cacheBytes = fs.readFileSync(cacheFile), reportBytes = fs.readFileSync(reportFile), ledgerBytes = fs.readFileSync(ledgerFile);
-  const cache = JSON.parse(cacheBytes), report = JSON.parse(reportBytes), ledger = JSON.parse(ledgerBytes);
+  const reportBytes = fs.readFileSync(reportFile), ledgerBytes = fs.readFileSync(ledgerFile);
+  const report = JSON.parse(reportBytes), ledger = JSON.parse(ledgerBytes);
   validateShadowLedger(ledger, protocol, FROZEN_PRESSURE.implementation, finishedAt);
-  const provenance = { ...validateSharedCycle({ previous, ledger, cache, report, protocol, startedAt, finishedAt, identity, targetImplementation }), cacheSha256: sha(cacheBytes), legacyReportSha256: sha(reportBytes), legacyLedgerSha256: sha(ledgerBytes) };
-  // Independently saved local archive precedes any corrected-track execution.
-  // Activation MUST upload this archive independently before running corrected.
+  // Preserve a legitimate legacy append BEFORE any corrected-track/cache gate.
+  // These checks belong to legacy continuity, not corrected eligibility.
+  if (ledger.records?.length !== previous.records.length + 1
+    || digest(ledger.records.slice(0, -1)) !== digest(previous.records)) refuse('legacy_not_appended');
+  if (report.implementationHash !== FROZEN_PRESSURE.implementation || report.protocolHash !== digest(protocol)
+    || report.sourceRetrievedAt !== ledger.records.at(-1).sourceRetrievedAt) refuse('legacy_report_binding');
   const archive = path.join(current, relativeRoot, 'legacy-preserved', cycle);
   safeParents(archive);
   if (fs.existsSync(archive)) refuse('archive_exists');
   fs.mkdirSync(archive, { recursive: true });
   for (const [name, bytes] of [['report.json', reportBytes], ['shadow-ledger.json', ledgerBytes]]) saveNew(path.join(archive, name), bytes);
-  saveNew(path.join(archive, 'retrieval-receipt.json'), JSON.stringify(provenance, null, 2));
+  // A later shared gate may throw, but the two-file legacy archive survives.
+  // Activation still requires a separate native upload step BEFORE shared gates;
+  // this inactive same-process convenience API is NOT that workflow boundary.
+  regular(cacheFile);
+  const cacheBytes = fs.readFileSync(cacheFile), cache = JSON.parse(cacheBytes);
+  const provenance = { ...validateSharedCycle({ previous, ledger, cache, report, protocol, startedAt, finishedAt, identity, targetImplementation }), cacheSha256: sha(cacheBytes), legacyReportSha256: sha(reportBytes), legacyLedgerSha256: sha(ledgerBytes) };
+  // Keep optional shared evidence outside the mandatory two-file old artifact.
+  const evidence = path.join(current, relativeRoot, 'shared-evidence', cycle);
+  safeParents(evidence);
+  if (fs.existsSync(evidence)) refuse('evidence_exists');
+  fs.mkdirSync(evidence, { recursive: true });
+  saveNew(path.join(evidence, 'retrieval-receipt.json'), JSON.stringify(provenance, null, 2));
   const receipt = Object.freeze({});
   receipts.set(receipt, { cache: structuredClone(cache), provenance, root: current });
   return { receipt, archive, provenance: structuredClone(provenance) };
