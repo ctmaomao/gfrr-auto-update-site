@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { existsSync, lstatSync, mkdirSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -78,14 +78,14 @@ function assertSafeOutputPath(filePath) {
   if (relativePath.startsWith('..')) throw new Error(`Unsafe output path: ${filePath}`);
   const segments = relativePath.split(/[\\/]+/u).filter(Boolean);
   for (const protectedPath of [manualArtifactsPath, rootPath]) {
-    if (existsSync(protectedPath) && lstatSync(protectedPath).isSymbolicLink()) {
+    if (lstatSync(protectedPath, { throwIfNoEntry: false })?.isSymbolicLink()) {
       throw new Error(`Refusing output through symlink/junction: ${safeRelativePath(protectedPath) || protectedPath}`);
     }
   }
   let cursor = rootPath;
   for (const segment of segments) {
     cursor = resolve(cursor, segment);
-    if (existsSync(cursor) && lstatSync(cursor).isSymbolicLink()) {
+    if (lstatSync(cursor, { throwIfNoEntry: false })?.isSymbolicLink()) {
       throw new Error(`Refusing output through symlink/junction: ${safeRelativePath(cursor) || cursor}`);
     }
   }
