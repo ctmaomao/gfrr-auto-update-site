@@ -14,6 +14,14 @@
 
 **v1 真实研究被数据门槛阻止**：报价日 `2012-12-27` 的初次可用日标为 `2012-12-26`。另一次官方 All Observations 窄范围导出确认 12/26 与 12/27 两个 vintage 都含该报价，原 ZIP SHA256 `afea907c78722cbcb96069b547d1266830e3a43cb3985c35d28699db60704254`，获取于 `2026-11-16T01:05:17.750Z`。日粒度档案不能证明异常由时区造成或确定真实可用日；保留原始证据，不加一天、不删点、不用最新修订覆盖。后续若另立协议，必须显式预注册质量规则、依赖隔离和独立确认集，不能绕过 v1 冻结规则恢复拟合。原始下载留在研究存证中，不作为生产数据入仓库。
 
+## 2026-11-16 脱敏接收元信息：默认关闭接缝
+
+`realtime/brent-receipt-metadata.mjs` 和 `run-realtime.mjs` 的 Brent-only 观察接缝，可在现有 DCOILBRENTEU API/CSV 请求完成后生成有界元信息。默认 observer 为 null，没有 CLI/env 启用、workflow 接入、写盘、上传或持久账本；因此目前**没有自然采集或长期前瞻样本**。生产请求、重试、fallback、parser 与 payload 不因这个默认关闭的接缝改变；模拟网络下验证真实 fetchRows 控制流，不冒称完整线上产物已验收。
+
+元信息仅含白名单 UTC/HTTP/transport、解码后文本 SHA256、字节及解析计数；不保存原文、URL、密钥、异常正文或 quoteDate/value 序列。`decodedResponseTextSha256` 不是原始 wire bytes 哈希。四次尝试、32 KiB 文本解析和 64 行上限只约束研究处理，不限制既有网络 body 读取；超限/无效日期/冲突/缺失不会改生产取数。观察器 throw/reject/永不完成的 Promise 不等待，首次提供方发布与跨轮 firstSeen 均未知；捕获完成不等于来源完整、数据合格或可预测。
+
+现有原始历史序列上传禁令保持。元信息 hash 无法恢复价格或计算标签，7 天 artifact 也不是长期账本；公开 Git 分支属于公开保存。持久研究需要另审字段最小化、来源许可、保存目的地、并发/缺口和首次接收不可后填规则，不得以这次接缝合并替代准入。
+
 ## 2026-11-16 研究隔离补充：季度结构参考
 
 `eia-structural-reference.mjs` 固定保存 [EIA Global Energy Security Data](https://www.eia.gov/outlooks/steo/report/energysecurity/article.php) 的 10 个已核对单元，仅作研究口径与冲突回归，不是全球完整目录、实时油流、权重、断供估计或油价预测。它不取数、不改 ODP、前台或评分；PortWatch 仍是已有来源，不能再算独立新增证据。

@@ -1,3 +1,4 @@
+import { observeBrentReceipt } from './realtime/brent-receipt-metadata.mjs';
 import { goldQuoteRows, sourceTimestampAgeSeconds } from './realtime/gold-quote.mjs';
 import { ICE_BRENT_CONTRACT_DATA_URL, parseIceBrentCandidate } from './realtime/ice-brent-candidate.mjs';
 import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
@@ -92,10 +93,10 @@ const sourceSpecs = {
   }
 };
 
-function buildFredApiUrl(seriesId, observationStart) {
+function buildFredApiUrl(seriesId, observationStart, apiKey = FRED_API_KEY) {
   const params = new URLSearchParams({
     series_id: seriesId,
-    api_key: FRED_API_KEY,
+    api_key: apiKey,
     file_type: 'json',
     observation_start: observationStart,
     sort_order: 'asc'
@@ -481,15 +482,34 @@ function classifyFreshnessLevel(ageMinutes, hasRealtime) {
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
+  // Research is opt-in through an in-memory observer, never through workflow/env.
+  const observer = options.researchObserver ?? null;
+  const clock = () => { try { return (options.clock ?? (() => new Date().toISOString()))(); } catch { return null; } };
+  const requestStartedAt = observer ? clock() : null;
+  let recorded = false;
+  const capture = (outcome, httpStatus, text = null, bodyReceivedAt = null) => {
+    recorded = true;
+    if (!observer) return;
+    // Neither metadata construction nor observer failures may enter source retry logic.
+    try { observeBrentReceipt(observer, { series: 'DCOILBRENTEU', transport: options.researchTransport,
+      requestStartedAt, bodyReceivedAt, classifiedAt: clock(), httpStatus, outcome, text }); } catch { /* isolated */ }
+  };
   try {
-    const response = await fetch(url, {
+    const response = await (options.fetchImpl ?? fetch)(url, {
       method: 'GET',
       headers: { 'User-Agent': USER_AGENT, ...(options.headers || {}) },
       signal: controller.signal
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.text();
+    if (!response.ok) {
+      capture('http_error', response.status);
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const text = await response.text();
+    const bodyReceivedAt = observer ? clock() : null;
+    capture('body', response.status, text, bodyReceivedAt);
+    return text;
   } catch (error) {
+    if (!recorded) capture('network_error', null);
     if (error?.name === 'AbortError') {
       throw new Error(`timeout after ${options.timeoutMs ?? REQUEST_TIMEOUT_MS}ms`);
     }
@@ -499,7 +519,7 @@ async function fetchWithTimeout(url, options = {}) {
   }
 }
 
-async function retryTask(fn, { label, retries = REQUEST_RETRIES } = {}) {
+async function retryTask(fn, { label, retries = REQUEST_RETRIES, sleepImpl = sleep } = {}) {
   let attempt = 0;
   let lastError = null;
   while (attempt <= retries) {
@@ -508,20 +528,23 @@ async function retryTask(fn, { label, retries = REQUEST_RETRIES } = {}) {
     } catch (error) {
       lastError = error;
       if (attempt === retries) break;
-      await sleep(RETRY_DELAY_MS * (attempt + 1));
+      await sleepImpl(RETRY_DELAY_MS * (attempt + 1));
       attempt += 1;
     }
   }
   throw new Error(`${label} failed after ${retries + 1} attempts: ${stringifyError(lastError)}`);
 }
 
-async function fetchRows(descriptor) {
+export async function fetchRows(descriptor, dependencies = {}) {
   if (descriptor.kind === 'fred') {
-    if (FRED_API_KEY) {
+    const apiKey = dependencies.apiKey ?? FRED_API_KEY;
+    const transportOptions = transport => ({ timeoutMs: REQUEST_TIMEOUT_MS,
+      fetchImpl: dependencies.fetchImpl, clock: dependencies.clock,
+      researchObserver: descriptor.id === 'DCOILBRENTEU' ? dependencies.researchObserver : null,
+      researchTransport: transport });
+    if (apiKey) {
       try {
-        const apiText = await fetchWithTimeout(buildFredApiUrl(descriptor.id, cosd), {
-          timeoutMs: REQUEST_TIMEOUT_MS
-        });
+        const apiText = await fetchWithTimeout(buildFredApiUrl(descriptor.id, cosd, apiKey), transportOptions('api'));
         const apiRows = parseFredApiObservations(apiText);
         if (apiRows.length < 2) throw new Error(`${descriptor.source} API returned insufficient rows`);
         return apiRows;
@@ -531,8 +554,8 @@ async function fetchRows(descriptor) {
     }
 
     const text = await retryTask(
-      () => fetchWithTimeout(`${FRED}?cosd=${cosd}&id=${descriptor.id}`, { timeoutMs: REQUEST_TIMEOUT_MS }),
-      { label: descriptor.source }
+      () => fetchWithTimeout(`${FRED}?cosd=${cosd}&id=${descriptor.id}`, transportOptions('csv')),
+      { label: descriptor.source, sleepImpl: dependencies.sleepImpl }
     );
     const rows = parseFredCsv(text);
     if (rows.length < 2) throw new Error(`${descriptor.source} returned insufficient rows`);
@@ -1281,7 +1304,9 @@ async function main() {
   console.log(`实时市场数据构建成功。(${RELEASE_VERSION})`);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
