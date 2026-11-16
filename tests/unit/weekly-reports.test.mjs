@@ -66,3 +66,13 @@ test('weekly content hash inventory stays strict and bounded for every archive c
   assert.ok(result.policy.length<1000);
   assert.ok(result.policy.includes(bundle.styleHashes[0]));
 });
+
+
+test('four current pages and weekly subpaths link to oil with one current tab', () => {
+  for (const path of ['index.html','bubble-watch.html','oil-market.html','weekly-reports.html','weekly-reports/index.html','reports/archive.html']) {
+    const nav=read(path).match(/<nav class="page-bookmarks"[^>]*>([\s\S]*?)<\/nav>/)[1];
+    assert.equal((nav.match(/<a /g)||[]).length,4,path);
+    assert.equal((nav.match(/aria-current="page"/g)||[]).length,1,path);
+    assert.ok(nav.includes('href="'+(path.includes('/')?'../':'')+'oil-market.html"'),path);
+  }
+});
