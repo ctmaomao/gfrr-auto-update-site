@@ -29,7 +29,7 @@
 
 ### 当前产品与发布
 
-- 首页的周报/雷达/Bubble 三标签见 [DESIGN §4.5](../DESIGN.md#45-周报默认入口与三标签2026-11-09)、[周报记录](WEEKLY_HOMEPAGE_VISUAL_2026_11_09.md)与[周报档案说明](../weekly-reports/README.md)。
+- 当前默认入口与跨页导航以 [DESIGN §4.5](../DESIGN.md#45-周报默认入口与三标签2026-11-09) 为准；[周报记录](WEEKLY_HOMEPAGE_VISUAL_2026_11_09.md)是日期化验收证据，[周报档案说明](../weekly-reports/README.md)约束归档。
 - OFR 主压力读数与旧公开建议退役已经实现，见 [ADR-0080](ADR/0080-ofr-primary-pressure-migration.md)、[迁移记录](OFR_PRIMARY_MIGRATION_2026_11_01.md)、现行 DATA_CONTRACT / DESIGN。七候选研究并未因此晋升。
 - 观察日期、缺失/真实零、代理身份及显示修复见 [数据口径核查](DATA_PROVENANCE_CLARITY_2026_11_09.md)。日期化局部回执不扩大修改范围。
 - Pages/EdgeOne 实际 checked-main、发布去重与触发契约见 [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)、[ADR-0066](ADR/0066-pages-publication-coalescing.md)和 OPERATIONS；完整保护网保留。

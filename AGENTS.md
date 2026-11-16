@@ -43,7 +43,7 @@
 
 ## 1. 项目当前状态与跨任务硬边界
 
-- 当前首页为周报/雷达/Bubble 三标签；雷达主读数为 OFR FSI，旧公开仓位/状态/风险预算/动作建议已退役，旧分与模型保留审计。当前事实见 [PROJECT_BACKLOG](docs/PROJECT_BACKLOG.md)，不要从历史阶段推断新任务。
+- 当前默认入口与跨页导航以 [DESIGN §4.5](DESIGN.md#45-周报默认入口与三标签2026-11-09) 为准；雷达主读数为 OFR FSI，旧公开仓位/状态/风险预算/动作建议已退役，旧分与模型保留审计。当前事实见 [PROJECT_BACKLOG](docs/PROJECT_BACKLOG.md)，不要从历史阶段推断新任务。
 - Release/display version 为 v28.0.10；data.version / decisionModel.contractVersion 保留 v27.0。asset cache 读 scripts/app.js 的 APP_VERSION，不机械替换历史版本。
 - Worker 主 preview 为 /market.worker-preview.json；M-94 前端当前读 data/radar-data.json，scripts/modules/realtime.js 冻结且未接入，重接 overlay 需另开评审。
 - core secondary set 为 vix / gold / dxy / us10y / spx，只写 /market.secondary-preview.json，不覆盖或参与任何 values.* 主值或主评分；secondarySources / secondaryDiagnostics / secondarySourceSummary 不得混入 /market.worker-preview.json。
