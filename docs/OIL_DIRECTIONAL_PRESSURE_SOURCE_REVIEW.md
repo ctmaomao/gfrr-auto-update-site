@@ -2,6 +2,18 @@
 
 > **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
 
+## 2026-11-16 前瞻概率研究：冻结协议与数据拒绝
+
+独立研究协议 [`brent-spot-release-direction-v1`](../config/brent-spot-release-direction-protocol.json) 于 `2026-11-16T00:56:22.285Z` 在完整历史导出与任何真实收益/模型结果计算前冻结，文件 SHA256 `2bc3f54ccda10efe2c72ea734d6dbbd6d130fcd5a606491e136fccf6236757e3`。目标为 EIA/FRED `DCOILBRENTEU` 日度现货，不混合期货、不把稀疏站点快照当日历；主目标是发行后第一个有效报价起的 5 个有效报价变化间隔，上涨的补集包括持平，不称为下跌概率。
+
+`brent-release-study-cases.mjs` 仅构造离线研究样本：同一初次可用批次只发行一次，特征截止批次日 D，保守发行时点为 D+2 UTC；严格未来起点、首次发布价格、标签双时点成熟及跨阶段清洗分开核验。输入来源真实性和报价日历完整性不能由纯函数证明，保持 false；数值/日期/同日报价冲突整体拒绝，不静默删除或假定固定滞后。合成回归通过不代表真实预测能力，任何研究输出均不接前台、ODP 或主评分。
+
+数学模块采用固定 train-only 缩放、ridge logistic 与 sigmoid 校准；评估入口从同一 case 构造器生成各期限样本，再计算同样本基线、Brier/logloss、可靠性分箱和移动块区间。当前入口仅接受显式 synthetic fixture 声明，无真实文件读取或运行接线；声明不是输入真实性认证。冻结协议未指定的伪随机实现于查看真实结果前固定为 `mulberry32`；主块长 8、敏感性块长 4/12 均保留，不能择优。次要 1/20 期限采用与主期限相同的保守样本/类别数量门槛，不能挽救主期限失败；这两项工程解释不修改冻结协议原字节。实现正确不等于预测有效，公开概率资格始终为 false。
+
+[ALFRED 官方导出](https://alfred.stlouisfed.org/series?seid=DCOILBRENTEU) 的 Initial Release Only 两个有界分片合并得到 4043 行（其中 72 行缺值），807 个初次可用日；合并原样 CSV 为 117,966 bytes，SHA256 `2ce37cac2ac2ef4f70c7fbfd672c61109078d570298b45784639da19a61d59b8`。这不是 1987 年起的完整历史，实际报价从 2011-04-06 起；日度报价不等于每天独立发行。未计算真实收益或拟合结果。
+
+**v1 真实研究被数据门槛阻止**：报价日 `2012-12-27` 的初次可用日标为 `2012-12-26`。另一次官方 All Observations 窄范围导出确认 12/26 与 12/27 两个 vintage 都含该报价，原 ZIP SHA256 `afea907c78722cbcb96069b547d1266830e3a43cb3985c35d28699db60704254`，获取于 `2026-11-16T01:05:17.750Z`。日粒度档案不能证明异常由时区造成或确定真实可用日；保留原始证据，不加一天、不删点、不用最新修订覆盖。后续若另立协议，必须显式预注册质量规则、依赖隔离和独立确认集，不能绕过 v1 冻结规则恢复拟合。原始下载留在研究存证中，不作为生产数据入仓库。
+
 ## 2026-11-16 研究隔离补充：季度结构参考
 
 `eia-structural-reference.mjs` 固定保存 [EIA Global Energy Security Data](https://www.eia.gov/outlooks/steo/report/energysecurity/article.php) 的 10 个已核对单元，仅作研究口径与冲突回归，不是全球完整目录、实时油流、权重、断供估计或油价预测。它不取数、不改 ODP、前台或评分；PortWatch 仍是已有来源，不能再算独立新增证据。

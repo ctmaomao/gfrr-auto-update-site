@@ -1,0 +1,166 @@
+{
+  "protocolId": "brent-spot-release-direction-v1",
+  "status": "frozen_for_initial_research",
+  "recordedAt": "2026-11-16T00:49:14.345Z",
+  "data": {
+    "series": "DCOILBRENTEU",
+    "origin": "EIA Europe Brent Spot Price FOB",
+    "unit": "USD per barrel",
+    "frequency": "daily closing spot quotes, not futures or intraday",
+    "requiredExport": "official ALFRED initial-release records with per-observation availability date",
+    "maxDownloadBytes": 2097152,
+    "maxRows": 20000,
+    "sourceVintageAssurance": "ALFRED availability date, not exact EIA original release instant",
+    "doNotInferFromQuoteDate": true,
+    "schemaOrAvailabilityFailure": "stop; no assumed-lag fallback under this protocol",
+    "rawHistoricalOutcomesOrModelPerformanceComputed": false
+  },
+  "issuance": {
+    "deduplicate": "one issue per unique initial-release batch only when latest known quote date advances; never one issue per quote in a batch",
+    "earliestArchiveDate": "2011-04-06",
+    "issueTime": "00:00:00Z two calendar days after availability date",
+    "featureQuotes": "initial-release values only; never revise silently or mix futures",
+    "anchor": "first valid quote date strictly after issue UTC date",
+    "endpoint": "anchor index plus horizon valid quote intervals",
+    "horizons": {
+      "primary": 5,
+      "secondary": [
+        1,
+        20
+      ]
+    },
+    "target": "P(endpoint_price > anchor_price); complement is non-up including ties, not down",
+    "maxLookbackSpanDays": 45,
+    "maxFutureIntervalSpanDays": {
+      "1": 5,
+      "5": 14,
+      "20": 45
+    },
+    "noForwardFill": true,
+    "featureCutoff": "availability batch date D; issue at D+2 UTC, intentionally do not use records arriving after D",
+    "labelPriceVersion": "anchor and endpoint use initial-release values only, never latest-revised prices",
+    "labelMatureAt": "max(initial availability date + 2 calendar days at UTC00 for anchor and endpoint)",
+    "featureWindow": "latest21 valid quotes known by batch D, sorted by quote date; no future release, no forward fill",
+    "lookbackSpanDefinition": "latestQuoteDate minus earliest of latest21 quote dates",
+    "maxConsecutiveLookbackGapDays": 7,
+    "maxLatestQuoteAgeAtIssueDays": 10,
+    "futureSpanDefinition": "issue UTC date to endpoint quote date; select first actual future anchor and fixed offset once, never search farther to repair a failure"
+  },
+  "splits": {
+    "train": [
+      "2011-04-06",
+      "2017-12-31"
+    ],
+    "calibration": [
+      "2018-01-01",
+      "2020-12-31"
+    ],
+    "untouchedTest": [
+      "2021-01-01",
+      "2025-12-31"
+    ],
+    "secondaryFinalChronologicalHoldout": [
+      "2026-01-01",
+      "latest_mature_label"
+    ],
+    "splitBy": "issue date",
+    "purge": "label endpoint quote date AND both label values conservative availability times must precede next phase calendar start; all evaluation labels must be mature by actual retrieval cutoff",
+    "testUse": "single frozen run, no tuning after outcomes",
+    "minimumPrimarySamples": {
+      "train": 250,
+      "calibration": 100,
+      "test": 200,
+      "secondaryFinalChronologicalHoldout": 40
+    },
+    "minimumEachClass": {
+      "train": 20,
+      "calibration": 20,
+      "test": 20,
+      "secondaryFinalChronologicalHoldout": 10
+    },
+    "holdoutIsNotProspective": true,
+    "holdoutReporting": "report 2026 separately, even if unavailable or failed; never pool with 2021-2025 or use to retune; failure/unavailability prevents any claim of current qualification"
+  },
+  "model": {
+    "features": [
+      "log_return_1_quote",
+      "log_return_5_quotes",
+      "log_return_20_quotes",
+      "population_std_20_quote_log_returns"
+    ],
+    "scaling": "train mean/std only; reject nonfinite; standard-deviation zero column maps zero",
+    "zClip": 5,
+    "classifier": "ridge logistic regression",
+    "ridgeLambda": 0.1,
+    "penalty": "lambda * sum(nonintercept_weight_squared) / 2 added to mean logloss",
+    "optimizer": {
+      "kind": "deterministic full-batch gradient descent",
+      "learningRate": 0.05,
+      "maxIterations": 50000,
+      "gradientNormTolerance": 1e-07,
+      "nonConvergence": "unavailable",
+      "learningRateRule": "min(0.05,1/(0.25*maximum_augmented_row_squared_norm+ridgeLambda)), computed from fitting partition only"
+    },
+    "calibration": "input raw classifier logits; minimize mean logloss + 0.01*slope^2/2; intercept not penalized; same deterministic optimizer/convergence rules; positive final slope required",
+    "calibrationRidgeLambda": 0.01,
+    "noHyperparameterSearch": true,
+    "noSatelliteOrMacroWithoutAvailabilityEvidence": true,
+    "calibrationValidity": "positive fitted slope and finite fit required; constant/nearly constant raw logits (variance<1e-8) or nonpositive slope => unavailable",
+    "initialization": "classifier all weights and intercept zero; calibration slope1 and intercept0"
+  },
+  "evaluation": {
+    "baselines": [
+      "0.5 symmetric direction probability",
+      "empirical pretest up frequency using train+calibration labels",
+      "uncalibrated price-only logistic"
+    ],
+    "metrics": [
+      "Brier",
+      "logloss",
+      "fixed-width 5-bin reliability with counts",
+      "weighted ECE",
+      "coverage and missingness",
+      "class balance"
+    ],
+    "loglossClip": 1e-06,
+    "bootstrap": {
+      "kind": "paired noncircular moving blocks of issue records",
+      "blockLength": 8,
+      "replicates": 1000,
+      "seed": 20261116,
+      "interval": "percentile 95%",
+      "sensitivityBlockLengths": [
+        4,
+        12
+      ],
+      "sensitivityRule": "report all; block8 remains primary; no selection based on interval/results",
+      "limitation": "blocks are issuance records, not days; research uncertainty intervals do not guarantee nominal coverage under all serial dependence or regime shifts",
+      "quantile": "linear interpolation at 2.5 and97.5 percentiles"
+    },
+    "primaryResearchIncrementGate": {
+      "minimumBrierImprovementAgainstBothSimpleBaselines": 0.005,
+      "upperPaired95DeltaBrierLessThan": 0,
+      "loglossNoWorseThanBothSimpleBaselines": true,
+      "maxECE": 0.05,
+      "pairedBoundAppliesTo": "separate upper95percent delta Brier against each simple baseline"
+    },
+    "secondaryHorizonsCannotRescuePrimary": true,
+    "doNotComputeTradingPnL": true,
+    "pairing": "all predeclared eligible cases, identical complete paired samples for candidate and both simple baselines; no selective dropping based on forecast or outcome",
+    "holdoutGate": "same frozen metrics/gates when minimum samples/classes met; otherwise unavailable; lower sample precision disclosed; cannot overturn failed primary test"
+  },
+  "publication": {
+    "eligibleForPublicProbability": false,
+    "eligibleForMainScore": false,
+    "noCurrentPredictionFromThisStudy": true,
+    "futureReviewNeeds": [
+      "verified actual input availability and series identity",
+      "at least 100 distinct prospective matured primary issues spanning at least 12 months",
+      "same frozen primary performance gates",
+      "independent audit and complete uncertainty/missingness disclosures"
+    ],
+    "noFake50PercentForUnavailable": true
+  },
+  "frozenAt": "2026-11-16T00:56:22.285Z",
+  "independentlyReviewedDraftSha256": "c3aa7adbbe8c349149ef2eac0795f12658a2a7d9f9e4811ca6373ec981d876b0"
+}
