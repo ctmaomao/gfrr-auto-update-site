@@ -117,3 +117,37 @@ test('bad fields quarantine response without retry or false fresh/high signal', 
     assert.equal(classifyOilThermalSampleHealth(a).eligible, false);
   }
 });
+
+test('default-disabled receipt sidecar preserves production bytes, requests and source failures', {timeout:5000}, async () => {
+  const {createThermalReceiptCapture}=await import('../../scripts/oil-directional/thermal-receipt-capture.mjs');
+  const identityHeader='latitude,longitude,instrument,satellite,acq_date,acq_time,confidence,frp,daynight\n';
+  for(const body of [header, 'not CSV', csv, identityHeader+'0.1,0.2,VIIRS,N20,2026-11-01,1200,h,0,D\n']) {
+    const run=async researchRecorder=>{
+      const old=globalThis.fetch;let calls=0;
+      globalThis.fetch=async u=>{calls++; return u.includes('NOAA21')?new Response('SECRET_CANARY',{status:403}):new Response(body,{status:200});};
+      try { return {json:JSON.stringify(await buildLiveArtifact({...inputs(after),researchRecorder})),calls}; }finally{globalThis.fetch=old;}
+    };
+    const plain=await run(null), c=createThermalReceiptCapture();
+    assert.deepEqual(await run(c),plain);
+    assert.deepEqual(await run({record(){throw Error('SECRET_CANARY');}}),plain);
+    assert.deepEqual(await run({async record(){throw Error('SECRET_CANARY');}}),plain);
+    assert.deepEqual(await run({record(){return new Promise(()=>{});}}),plain);
+    assert.deepEqual(await run({record(receipt){receipt.diagnostics.attempts=999;receipt.diagnostics.outcome='error';}}),plain);
+    const s=c.snapshot();assert.equal(s.receipts.length,3);assert.equal(s.receipts[0].outcome,'retired');assert.equal(s.receipts[0].bodyReceivedAt,null);
+    assert.equal(s.receipts[2].outcome,'request_error');assert.equal(s.receipts[2].bodyReceivedAt,null);
+    assert.ok(s.receipts[1].bodyReceivedAt>after);assert.ok(!JSON.stringify(s).includes('SECRET_CANARY'));
+    assert.equal(s.receipts[1].outcome,body==='not CSV'?'parse_invalid':body===header||body===csv?'research_invalid':'success_detections');
+    if(body===csv)assert.equal(s.receipts[1].researchCsvShapeValid,false);
+  }
+});
+
+test('successful retry remains identical with receipt capture enabled', async()=>{
+  const {createThermalReceiptCapture}=await import('../../scripts/oil-directional/thermal-receipt-capture.mjs');
+  const run=async researchRecorder=>{
+    const old=globalThis.fetch;let calls=0;
+    globalThis.fetch=async()=>new Response(calls++===0?'unretained':header,{status:calls===1?500:200});
+    try{return {json:JSON.stringify(await buildLiveArtifact({...inputs(after,[sources[1]]),researchRecorder})),calls};}finally{globalThis.fetch=old;}
+  };
+  const plain=await run(null), c=createThermalReceiptCapture();assert.deepEqual(await run(c),plain);
+  assert.equal(plain.calls,2);assert.equal(c.snapshot().receipts[0].attempts,2);assert.equal(c.snapshot().receipts[0].retryCount,1);
+});

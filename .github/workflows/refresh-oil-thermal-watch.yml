@@ -39,9 +39,13 @@ jobs:
       - run: npm ci
 
       - name: Refresh oil thermal watch
+        id: thermal_refresh
         env:
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
-        run: npm run build:oil-thermal-watch
+        run: |
+          export THERMAL_ACTUAL_CHECKOUT_SHA="$(git rev-parse HEAD)"
+          echo "actual_checkout_sha=$THERMAL_ACTUAL_CHECKOUT_SHA" >> "$GITHUB_OUTPUT" || true
+          npm run build:oil-thermal-watch -- --research-receipt
 
       - run: npm run check:oil-thermal-watch
 
@@ -56,3 +60,36 @@ jobs:
             git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           fi
+
+      - name: Verify current-run research receipt
+        id: research_receipt
+        if: ${{ always() && steps.thermal_refresh.outputs.research_receipt_written == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 1
+        env:
+          THERMAL_CAPTURE_CHECKOUT_SHA: ${{ steps.thermal_refresh.outputs.actual_checkout_sha }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          import { isCurrentThermalReceipt } from './scripts/oil-directional/thermal-receipt-run.mjs';
+          try {
+            const text = readFileSync('manual-artifacts/oil-thermal-research/receipt.json', 'utf8');
+            const sha = process.env.THERMAL_CAPTURE_CHECKOUT_SHA;
+            if (isCurrentThermalReceipt(text, {runId:process.env.GITHUB_RUN_ID,
+                runAttempt:process.env.GITHUB_RUN_ATTEMPT, checkoutSha:sha})) {
+              appendFileSync(process.env.GITHUB_OUTPUT, 'ready=true\n');
+            }
+          } catch { /* Missing/invalid research artifact is not a production failure. */ }
+          NODE
+
+      - name: Upload bounded thermal research receipt
+        if: ${{ always() && steps.research_receipt.outputs.ready == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: oil-thermal-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: manual-artifacts/oil-thermal-research/receipt.json
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: false

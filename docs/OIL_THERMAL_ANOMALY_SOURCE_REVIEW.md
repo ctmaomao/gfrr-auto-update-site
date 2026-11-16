@@ -188,6 +188,35 @@ completeness. Source-publication and thermal first-known clocks are as-of gates,
 not authenticated timestamps. Physical mechanisms stay separate, price prediction
 is unimplemented/unknown, and evaluation/main-score eligibility remain false.
 
+## Prospective research receipt sidecar (2026-11-16 implementation)
+
+`thermal-receipt-capture.mjs` reuses the same already-parsed response rows; it
+never makes another FIRMS request. The CLI defaults off; `--research-receipt`
+opts the existing thermal refresh into the fixed ignored research file, with
+strict run/attempt/actual-checkout/config/geometry identity. Invalid metadata
+skips research only. A run has separate expected request count, finalized status,
+and capture completeness; none proves source/spatial/cloud/overpass coverage.
+Body receipt time is recorded after the existing response finishes, not copied
+from run-start `generatedAt`. Successful-body parse failure retains that clock;
+retired/network failures have null body time and separate classification time.
+Strict research-only CSV/product/calendar/coordinate checks can reject research
+rows without changing production aggregates/errors/retries. Raw coordinates are
+used only inside observation identity hashes, not exported. Processing version
+is nullable revision content, not identity; NASA documents [N/N20/N21 satellite
+codes](https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_VIIRS_Firehotspots.html)
+and [CSV version fields](https://firms.modaps.eosdis.nasa.gov/content/academy/data_api/firms_api_use.html).
+Per-run deduplication/revisions and `firstReceivedInRun` are not physical events;
+`crossRunFirstSeen` stays null. All evaluation/main-score eligibility stays false.
+The 256 KiB / 150 request / 1,000 observation caps mark research truncation
+incomplete. These are **post-response research limits**, not network body caps.
+No raw CSV, coordinates, key, URL or exception body is retained. The workflow
+checks current run/attempt/checkout and size before uploading one exact file
+with seven-day retention. Upload/write/quota failure does not fail production;
+missing/expired artifacts remain evidence gaps, not zero detections or persistent
+history. This implementation has only fixture validation until a later natural
+run verifies collection/upload; it is not authenticated provenance, price
+prediction, complete coverage, or an end-to-end evaluation result.
+
 ## Historical source-review and implementation record
 
 The sections below preserve earlier design and implementation history. References
