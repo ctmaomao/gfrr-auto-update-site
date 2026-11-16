@@ -180,7 +180,8 @@ export async function fetchFirmsText(url, {
   maxRetries = FIRMS_REQUEST_POLICY.maxRetriesPerRequest,
   baseBackoffMs = FIRMS_REQUEST_POLICY.baseBackoffMs,
   maxBackoffMs = FIRMS_REQUEST_POLICY.maxBackoffMs,
-  nowMs = Date.now()
+  nowMs = Date.now(),
+  captureBodyReceivedAt = false
 } = {}) {
   const boundedTimeoutMs = finiteInteger(timeoutMs);
   // A retired satellite can return HTTP 200 with an empty CSV. Do not call it
@@ -268,10 +269,12 @@ export async function fetchFirmsText(url, {
       }
 
       const text = await response.text();
+      const bodyReceivedAt = captureBodyReceivedAt ? new Date().toISOString() : null;
       attempts.push({ outcome: 'success', httpStatus: response.status });
       const lastFailure = [...attempts].reverse().find((attempt) => attempt.outcome === 'error');
       return {
         text,
+        ...(captureBodyReceivedAt ? { bodyReceivedAt } : {}),
         diagnostics: sanitizeDiagnostics({
           outcome: 'success',
           httpStatus: response.status,

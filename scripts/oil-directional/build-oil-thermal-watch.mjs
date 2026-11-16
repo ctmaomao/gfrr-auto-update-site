@@ -2,6 +2,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
+import { runWithThermalReceipt } from './thermal-receipt-run.mjs';
+import { isResearchCsvShapeValid } from './thermal-receipt-capture.mjs';
 import { firmsFrpOrNull, firmsAcquisitionIso } from './firms-observation-fields.mjs';
 import { pathToFileURL } from 'node:url';
 import { matchesLegacyThermalSources } from './oil-thermal-source-lifecycle.mjs';
@@ -53,11 +55,16 @@ function parseArgs(argv) {
     dayRange: DEFAULT_DAY_RANGE,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     writeOutput: true,
-    dryRun: false
+    dryRun: false,
+    researchReceipt: false
   };
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
+    if (arg === '--research-receipt') {
+      options.researchReceipt = true;
+      continue;
+    }
     if (arg === '--dry-run') {
       options.dryRun = true;
       continue;
@@ -543,20 +550,52 @@ function applyBaselineCoverageCopy(artifact) {
   return artifact;
 }
 
-async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retryBudget, generatedAt }) {
-  const url = buildUrl(mapKey, source, facility.bbox.string, dayRange);
-  const request = await fetchFirmsText(url, {
-    timeoutMs,
-    retryBudget,
-    nowMs: Date.parse(generatedAt)
-  });
-  let summary;
+// Research failures never enter provider classification/retry or production output.
+function captureResearch(recorder, receipt, responseText = null) {
+  if (!recorder) return;
   try {
-    const records = parseCsv(request.text);
+    // Never wait on an injected observer; do not expose mutable production diagnostics.
+    const researchCsvShapeValid = receipt.outcome === 'parsed' ? isResearchCsvShapeValid(responseText) : null;
+    void Promise.resolve(recorder.record({ ...receipt, researchCsvShapeValid, diagnostics: { ...receipt.diagnostics } })).catch(() => {});
+  } catch { /* Isolated, unavailable research only. */ }
+}
+
+async function fetchSource({ mapKey, source, facility, dayRange, timeoutMs, retryBudget, generatedAt, researchRecorder }) {
+  const url = buildUrl(mapKey, source, facility.bbox.string, dayRange);
+  const context = { source, areaId: facility.id, bbox: facility.bbox.string, dayRange,
+    logicalRequestStartedAt: researchRecorder ? new Date().toISOString() : null };
+  let request;
+  try {
+    request = await fetchFirmsText(url, {
+      timeoutMs,
+      retryBudget,
+      nowMs: Date.parse(generatedAt),
+      captureBodyReceivedAt: Boolean(researchRecorder)
+    });
+  } catch (error) {
+    if (researchRecorder) captureResearch(researchRecorder, {
+      ...context, outcome: 'request_error', bodyReceivedAt: null, classifiedAt: new Date().toISOString(),
+      diagnostics: getFirmsErrorDiagnostics(error, { timeoutMs })
+    });
+    throw error;
+  }
+  let summary;
+  let records;
+  try {
+    records = parseCsv(request.text);
     summary = summarizeRecords(records);
   } catch (error) {
+    if (researchRecorder) captureResearch(researchRecorder, {
+      ...context, outcome: 'parse_invalid', bodyReceivedAt: request.bodyReceivedAt, classifiedAt: new Date().toISOString(),
+      diagnostics: request.diagnostics
+    });
     wrapFirmsResponseError(error, request.diagnostics);
   }
+  if (researchRecorder) captureResearch(researchRecorder, {
+    ...context, outcome: 'parsed', bodyReceivedAt: request.bodyReceivedAt,
+    classifiedAt: new Date().toISOString(),
+    diagnostics: request.diagnostics, records
+  }, request.text);
   return {
     source,
     sourceStatus: 'live',
@@ -656,7 +695,7 @@ function baseArtifact({ generatedAt, options, config, baselineConfig, keyResolut
   };
 }
 
-async function buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution }) {
+async function buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution, researchRecorder = null }) {
   const artifact = baseArtifact({
     generatedAt,
     options,
@@ -687,7 +726,8 @@ async function buildLiveArtifact({ generatedAt, options, config, baselineConfig,
           dayRange: options.dayRange,
           timeoutMs: options.timeoutMs,
           retryBudget,
-          generatedAt
+          generatedAt,
+          researchRecorder
         }));
         allRequestDiagnostics.push(sourceResults.at(-1).requestDiagnostics);
       } catch (error) {
@@ -899,7 +939,8 @@ async function main() {
       displayStatusZh: 'Dry run'
     });
   } else {
-    artifact = await buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution });
+    artifact = await runWithThermalReceipt({ enabled: options.researchReceipt, config, options },
+      researchRecorder => buildLiveArtifact({ generatedAt, options, config, baselineConfig, keyResolution, researchRecorder }));
   }
 
   artifact = applyBaselineCoverageCopy(artifact);
