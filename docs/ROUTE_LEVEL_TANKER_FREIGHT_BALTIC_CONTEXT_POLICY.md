@@ -109,3 +109,13 @@ does not:
   Order weights, or cross-validation
 
 ---
+
+## Machine contract and navigation
+
+Route-level tanker freight Baltic context policy has one checked machine fixture:
+[`route-level-tanker-freight-baltic-context-policy-v1`](fixtures/route-level-tanker-freight-baltic-context-policy-v1.json).
+Its current policy is `keep_baltic_freight_as_broad_context`, with
+`additive_card_until_separate_deprecation_review` for a future implementation.
+The six authority/history entry points link here rather than repeat these identifiers.
+[ADR-0115](ADR/0115-baltic-policy-single-authority.md) changes only document-check
+ownership; the fixture, production/DOM/renderer checks and source-rights gates remain unchanged.

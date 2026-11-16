@@ -33,7 +33,12 @@ function assertPolicyDoc() {
     'future route-level card is additive if implemented',
     'current thematic card count remains 52',
     'future additive route-level card count would be 53',
-    'Deletion or replacement is not approved'
+    'Deletion or replacement is not approved',
+    'route-level-tanker-freight-baltic-context-policy-v1',
+    'Route-level tanker freight Baltic context policy',
+    'keep_baltic_freight_as_broad_context',
+    'additive_card_until_separate_deprecation_review',
+    '(fixtures/route-level-tanker-freight-baltic-context-policy-v1.json)'
   ]) {
     assertIncludes(doc, marker, POLICY_DOC);
   }
@@ -117,28 +122,20 @@ function assertRendererState() {
 }
 
 function assertAuthorityDocs() {
-  const index = readText('docs/INDEX.md');
-  const dataSources = readText('docs/DATA_SOURCES.md');
-  const dataContract = readText('docs/DATA_CONTRACT.md');
-  const signalIntake = readText('docs/SIGNAL_INTAKE.md');
-  const backlog = readText('docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
-  const agents = readText('docs/AGENT_DOMAIN_BOUNDARIES.md');
+  // ADR-0115: the policy document/fixture own policy text; these six documents
+  // are navigation entry points, not six independent copies of the same policy.
+  // Ignore list: empty. Every listed entry point must link to the canonical doc.
+  const entryPoints = [
+    'docs/INDEX.md', 'docs/DATA_SOURCES.md', 'docs/DATA_CONTRACT.md',
+    'docs/SIGNAL_INTAKE.md', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md',
+    'docs/AGENT_DOMAIN_BOUNDARIES.md'
+  ];
+  for (const entryPoint of entryPoints) {
+    const text = readText(entryPoint);
+    assertIncludes(text, '(ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md)', entryPoint);
+  }
   const packageJson = readJson('package.json');
   const checkSuite = readText('scripts/check-suite.mjs');
-
-  assertIncludes(index, 'ROUTE_LEVEL_TANKER_FREIGHT_BALTIC_CONTEXT_POLICY.md', 'docs/INDEX.md');
-  for (const marker of [
-    'route-level-tanker-freight-baltic-context-policy-v1',
-    'Route-level tanker freight Baltic context policy',
-    'keep_baltic_freight_as_broad_context',
-    'additive_card_until_separate_deprecation_review'
-  ]) {
-    assertIncludes(dataSources, marker, 'docs/DATA_SOURCES.md');
-    assertIncludes(dataContract, marker, 'docs/DATA_CONTRACT.md');
-  }
-  assertIncludes(signalIntake, 'route-level-tanker-freight-baltic-context-policy-v1', 'docs/SIGNAL_INTAKE.md');
-  assertIncludes(backlog, 'Route-level tanker freight Baltic context policy', 'docs/ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md');
-  assertIncludes(agents, 'route-level tanker freight Baltic context policy', 'docs/AGENT_DOMAIN_BOUNDARIES.md');
   assert(packageJson.scripts['check:route-level-tanker-freight-baltic-context-policy'], 'package.json missing Baltic context policy check script.');
   assertIncludes(checkSuite, 'check:route-level-tanker-freight-baltic-context-policy', 'scripts/check-suite.mjs');
 }
