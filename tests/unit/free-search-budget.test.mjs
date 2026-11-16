@@ -815,3 +815,100 @@ test('shared v2 Oil News transport records each request without account usage be
   assert.equal(summary.accountObservation.requestsUsed, 123);
   assert.equal(summary.byConsumer['oil-news'].success, 4);
 });
+
+// v3 is an explicit dashboard-login locator protocol, never a service ID.
+const loginGrant = (patch = {}) => sharedGrant({ bindingType: 'verified_dashboard_login_and_plan_key',
+  loginIdentityVerified: true, planKeyAssociationVerified: true, requestLimit: 50, ...patch });
+const loginFunded = (patch = {}) => ({ ...emptySharedBraveLedger('2026-11-08T11:30:00.000Z', true), grants: [loginGrant(patch)] });
+test('v3 admits only explicit reviewed login/plan-key binding with tighter limits', () => {
+  const ledger = loginFunded();
+  assert.equal(validateBraveLedger(ledger, clock), ledger);
+  assert.equal(summarizeBraveLedger(ledger, clock).projectRemainingRequests, 50);
+  assert.equal(summarizeBraveLedger(ledger, clock).providerRemainingRequests, 'unknown');
+  assert.equal(summarizeBraveLedger(ledger, clock).historyBeforeRecording, 'unknown');
+  for (const patch of [{ bindingType: 'stable_service_ids' }, { loginIdentityVerified: false },
+    { planKeyAssociationVerified: false }, { freeOnlyEnabled: false }, { hardStopConfirmed: false },
+    { requestLimit: 51 }, { expiresAt: '2026-11-09T11:00:00.001Z' },
+    { evidenceSha256: '' }, { accountPlanBindingSha256: '' }, { protectionEndsAt: '2026-11-09T10:59:59.999Z' }]) {
+    assert.throws(() => validateBraveLedger(loginFunded(patch), clock), /grant_invalid/);
+  }
+  for (const field of ['bindingType', 'loginIdentityVerified', 'planKeyAssociationVerified']) {
+    const missing = loginFunded(); delete missing.grants[0][field];
+    assert.throws(() => validateBraveLedger(missing, clock), /grant_invalid/);
+  }
+});
+test('v1/v2/v3 cannot mix binding protocols or silently convert identity semantics', async () => {
+  assert.throws(() => validateBraveLedger({ ...loginFunded(), schemaVersion: 'brave-budget-v2' }, clock), /grant_invalid/);
+  assert.throws(() => validateBraveLedger({ ...sharedFunded(), schemaVersion: 'brave-budget-v3' }, clock), /grant_invalid/);
+  assert.throws(() => validateBraveLedger({ ...funded(), schemaVersion: 'brave-budget-v3' }, clock), /invalid_ledger/);
+  const next = loginGrant({ verifiedAt: new Date(clock).toISOString(), accountObservation: { ...loginGrant().accountObservation, observedAt: new Date(clock).toISOString() } });
+  for (const patch of [{ accountPlanBindingSha256: 'c'.repeat(64) }, { keyId: 'a'.repeat(16) }, { bindingType: 'stable_service_ids' }]) {
+    await assert.rejects(activateBraveGrant({ store: memory(loginFunded()), grant: { ...next, ...patch }, now: () => clock }), /grant_invalid/);
+  }
+  await assert.rejects(activateBraveGrant({ store: memory(sharedFunded()), grant: next, now: () => clock }), /grant_invalid/);
+});
+test('v3 create-only initialization uses trusted clock and refuses existing v2 or v3', async () => {
+  const github = githubMeterFixture(null, 'brave-usage-ledger');
+  const store = createBraveLedger({ token: 'synthetic', fetchImpl: github.fetch, now: github.now, sharedFreeOnly: true, sharedLoginBinding: true, grant: loginGrant() });
+  assert.equal(await store.initialize(), true);
+  assert.equal(github.ledger().schemaVersion, 'brave-budget-v3');
+  assert.equal(github.ledger().recordingStartedAt, new Date(clock).toISOString());
+  await assert.rejects(store.initialize(), /initialization_refused/);
+  const existing = githubMeterFixture(sharedFunded(), 'brave-usage-ledger');
+  await assert.rejects(createBraveLedger({ token: 'synthetic', fetchImpl: existing.fetch, now: existing.now, sharedFreeOnly: true, sharedLoginBinding: true, grant: loginGrant() }).initialize(), /initialization_refused/);
+  assert.throws(() => createBraveLedger({ token: 'synthetic', sharedLoginBinding: true }), /grant_invalid/);
+});
+test('v3 retains CAS, unknown-outcome debt, quota hold and expiry dispatch protection', async () => {
+  const store = memory(loginFunded({ requestLimit: 1 })); let calls = 0;
+  await Promise.allSettled([1, 2].map(() => braveGate(store)(context, async () => { calls++; return { results: [] }; })));
+  assert.equal(calls, 1);
+  for (const error of [new Error('timeout'), rejectedResponse(503), rejectedResponse(429)]) {
+    const failed = memory(loginFunded());
+    await assert.rejects(braveGate(failed)(context, async () => { throw error; }), /provider_/);
+    await assert.rejects(braveGate(failed)(context, never), /pending_accounting|provider_quota_unknown/);
+    assert.equal((await failed.read()).ledger.entries.length, 1);
+  }
+  await assert.rejects(braveGate(memory(loginFunded({ expiresAt: new Date(clock + 31000).toISOString() })))(context, never), /grant_expired/);
+  const expired = loginFunded({ expiresAt: new Date(clock).toISOString() });
+  await assert.rejects(braveGate(memory(expired))(context, never), /grant_expired/);
+});
+test('v3 renewal preserves previous project reservations and cannot reset the rolling cap', async () => {
+  const ledger = loginFunded();
+  const store = memory(ledger); await braveGate(store)(context, async () => ({ results: [] }));
+  const later = clock + 1000;
+  const next = loginGrant({ verifiedAt: new Date(later).toISOString(), accountObservation: { ...loginGrant().accountObservation, observedAt: new Date(later).toISOString() } });
+  const renewed = await activateBraveGrant({ store, grant: next, now: () => later });
+  assert.equal(renewed.entries.length, 1); assert.equal(renewed.grants.length, 2);
+  assert.equal(summarizeBraveLedger(renewed, later).rollingRequests, 1);
+  const summary = summarizeBraveLedger(renewed, later);
+  assert.equal(summary.remainingVerifiedRequests, null);
+  assert.equal(summary.projectRemainingRequests, 50);
+});
+test('v3 950/31-day project ceiling spans short grants rather than refreshing each day', async () => {
+  const ledger = { ...emptySharedBraveLedger(new Date(clock - 21 * 3600000).toISOString(), true) };
+  for (let index = 0; index < 20; index++) {
+    const time = new Date(clock - (20 - index) * 3600000).toISOString();
+    const grant = loginGrant({ verifiedAt: time, expiresAt: new Date(Date.parse(time) + 86400000).toISOString(),
+      accountObservation: { ...loginGrant().accountObservation, observedAt: time } });
+    ledger.grants.push(grant);
+    if (index < 19) for (let request = 0; request < 50; request++) ledger.entries.push({ id: randomUUID(),
+      grantId: grant.id, keyId: grant.keyId, time, consumer: 'oil-news', mode: 'automated', runId: '42',
+      requests: 1, state: 'success', finishedAt: time });
+  }
+  assert.equal(summarizeBraveLedger(ledger, clock).status, 'brave_budget_project_limit');
+  assert.equal(summarizeBraveLedger(ledger, clock).projectRemainingRequests, 0);
+  await assert.rejects(braveGate(memory(ledger))(context, never), /project_limit/);
+});
+test('offline CLI plan distinguishes v3 locator evidence and limits without activating anything', () => {
+  const result = spawnSync(process.execPath, ['scripts/review-brave-budget.mjs', '--plan'], { encoding: 'utf8', env: {} });
+  assert.equal(result.status, 0);
+  const plan = JSON.parse(result.stdout);
+  assert.equal(plan.sharedFreeOnly.schemaVersion, 'brave-budget-v2');
+  assert.equal(plan.sharedLoginBinding.schemaVersion, 'brave-budget-v3');
+  assert.equal(plan.sharedLoginBinding.bindingType, 'verified_dashboard_login_and_plan_key');
+  assert.equal(plan.sharedLoginBinding.maxGrantRequests, 50);
+  assert.equal(plan.sharedLoginBinding.maxGrantDays, 1);
+  assert.equal(plan.sharedLoginBinding.automaticRenewal, false);
+  assert.equal(plan.searches, 0); assert.equal(plan.writes, 0);
+  assert.match(plan.unknownQuota, /v2_or_v3/);
+});
