@@ -14,6 +14,16 @@
 
 **v1 真实研究被数据门槛阻止**：报价日 `2012-12-27` 的初次可用日标为 `2012-12-26`。另一次官方 All Observations 窄范围导出确认 12/26 与 12/27 两个 vintage 都含该报价，原 ZIP SHA256 `afea907c78722cbcb96069b547d1266830e3a43cb3985c35d28699db60704254`，获取于 `2026-11-16T01:05:17.750Z`。日粒度档案不能证明异常由时区造成或确定真实可用日；保留原始证据，不加一天、不删点、不用最新修订覆盖。后续若另立协议，必须显式预注册质量规则、依赖隔离和独立确认集，不能绕过 v1 冻结规则恢复拟合。原始下载留在研究存证中，不作为生产数据入仓库。
 
+## 2026-11-16 WPSR 独立合成时点验证
+
+[`brent-spot-wpsr-report-asof-synthetic-v1`](../config/wpsr-report-asof-synthetic-protocol.json) 于 `2026-11-16T01:54:07.283Z` 经独审后冻结，SHA256 `6b6336acd1ed4cc2b77eec2ff2d99e757a0cabdd5b75c38cbf6203f8d7f408de`。仅允许合成输入、同日批次与时点验证，不生成真实预测样本、收益或模型；新增请求/下载上限为零。它不替代 ALFRED v1，不把报告出现日塞入 v1 初版可用日期，也不授予原始序列上传或持久化权限。
+
+`wpsr-report-timing-fixtures.mjs` 校验固定 manifest 成员、缺成员/同日冲突整批隔离、numeric/source-null/unknown/quarantine 四状态，以及显式依赖路径的支持闭合（closure）。未知或隔离不能按 null 跳过；来源 null 后来变为 numeric 导致路径变化时不能事后重排。closure 必须有可知时间，标签成熟取两端报告日期 D+2 与 closureKnownAt 的最大值；未来闭合不能追认早期特征或穿过训练/校准边界。日期粒度 D 的特征截止按 UTC 日终解释，仍须在发行/as-of 之前；不认证实际发布时间。
+
+显式 `syntheticKnownAtUTC` 与获取时间、官方报告日期及 closure 时间分离；as-of 资格只使用当时已知的报告，未来成员或 null→numeric 变化只进入独立事后审计，不回灌过去结果。这是合成知识时钟，不认证真实历史时点。
+
+同日两份报告只是一批，文件日期和 HTTP Last-Modified 不决定发行时间。七份官方 Table11 样本只支持布局与反例：2022 一份 PDF 元数据为 06/28、官方发行日为 06/29，证明不可使用元数据捷径；2013-01-04 报告中的 2012-12-27 报价不证明原始初发，也不能修补 v1。当前目录、历史发布/修订完整性均未认证。合成调用者声明和显式路径不能证明真正 anchor、完整观察网格或来源真实性；输出只标 synthetic timing 资格，caseConstructionVerified 与公开/主分资格为 false。真实七报告可行性审计须另行有界验证，不能直接将此合成接口晋升为完整历史模型。
+
 ## 2026-11-16 脱敏接收元信息：默认关闭接缝
 
 `realtime/brent-receipt-metadata.mjs` 和 `run-realtime.mjs` 的 Brent-only 观察接缝，可在现有 DCOILBRENTEU API/CSV 请求完成后生成有界元信息。默认 observer 为 null，没有 CLI/env 启用、workflow 接入、写盘、上传或持久账本；因此目前**没有自然采集或长期前瞻样本**。生产请求、重试、fallback、parser 与 payload 不因这个默认关闭的接缝改变；模拟网络下验证真实 fetchRows 控制流，不冒称完整线上产物已验收。
