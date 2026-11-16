@@ -68,6 +68,31 @@ function assertPolicyFixture() {
   assert(policy.currentProductionState?.shippingFreightConnected === true, 'shippingFreight must remain connected.');
   assert(policy.currentProductionState?.routeFreightConfirmation === 'not_connected', 'routeFreightConfirmation must stay not_connected.');
   assert(policy.currentProductionState?.sourceRightsStatus === 'manual_review_required', 'source rights must still require manual review.');
+  // ADR-0115: all-value helpers alone accept empty/missing records. Pin required
+  // keys here (not from the mutable fixture); retain all-value checks for extras.
+  for (const [section, keys] of Object.entries({
+    approvalState: [
+      'deleteBalticFreightApproved', 'mergeBalticFreightApproved',
+      'frontendImplementationApproved', 'productionDataWriteApproved',
+      'productionWriteApproved', 'mainScoreApproved', 'odpFinalBiasApproved',
+      'brentPromotionApproved', 'worldOrderWeightsApproved',
+      'globalRiskHeatmapApproved', 'crossValidationApproved'
+    ],
+    boundaries: [
+      'docsCheckerOnly', 'noFrontendChange', 'noCardDeletion',
+      'noThematicCardCountChange', 'noProductionDataWrite', 'noWorkflowAutomation',
+      'noWorkerRuntime', 'noRouteConfirmation', 'noScoring', 'noDecisionModel',
+      'noExecutionLock', 'noPositionGuidance', 'noBrentPromotion', 'noOdpFinalBias',
+      'noWorldOrderWeights', 'noGlobalRiskHeatmap', 'noCrossValidation'
+    ]
+  })) {
+    const record = policy[section];
+    assert(record !== null && typeof record === 'object' && !Array.isArray(record),
+      `policy.${section} must be an object.`);
+    for (const key of keys) {
+      assert(Object.hasOwn(record, key), `policy.${section}.${key} is required.`);
+    }
+  }
   allFalse(policy.approvalState, 'policy.approvalState');
   allTrue(policy.boundaries, 'policy.boundaries');
 }

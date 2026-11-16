@@ -85,3 +85,21 @@ test('DOM, production, renderer and check registration remain enforced', () => {
   }), false);
   runWith(({ change }) => change('scripts/check-suite.mjs', text => text.replaceAll('check:route-level-tanker-freight-baltic-context-policy', 'removed')), false);
 });
+
+for (const section of ['approvalState', 'boundaries']) {
+  test(`${section} requires a complete boolean object`, () => {
+    const fixture = JSON.parse(fs.readFileSync(path.join(repo, policy), 'utf8'));
+    for (const invalid of [undefined, null, {}, [], false, true, 0, 1, '']) {
+      runWith(({ json }) => json(policy, p => { p[section] = invalid; }), false);
+    }
+    for (const key of Object.keys(fixture[section])) {
+      runWith(({ json }) => json(policy, p => { delete p[section][key]; }), false);
+      for (const invalid of [null, !fixture[section][key], String(fixture[section][key]), 0, 1]) {
+        runWith(({ json }) => json(policy, p => { p[section][key] = invalid; }), false);
+      }
+    }
+    runWith(({ json }) => json(policy, p => { p[section].unexpected = section === 'approvalState'; }), false);
+    // Existing all-value checks still permit additional equally restrictive flags.
+    runWith(({ json }) => json(policy, p => { p[section].additionalGuard = section === 'boundaries'; }), true);
+  });
+}

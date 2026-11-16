@@ -31,7 +31,21 @@ mutations and their respective valid documentation baselines; require equal reje
 Run the full suite and independent actual-diff review, including unchanged substantive
 assertions. This is one policy, not permission to migrate the other Markdown checkers.
 
-The pre-existing generic all-true/all-false helpers do not prove required key presence;
-that separate hardening remains open and is not disguised as solved here. The fixture
+## Follow-up: required policy keys (2026-11-16)
+
+The generic all-true/all-false helpers validate present values only. The actual
+checker accepted omitted, empty or scalar approval/boundary records, and a partial
+record could silently lose a required prohibition. This is a fixture-integrity gap,
+not evidence that production access or scoring was bypassed.
+
+The Baltic checker now requires non-array objects and all 11 approval / 17 boundary
+keys explicitly, then retains the original strict boolean checks over **every** key.
+Additional flags remain accepted only with the same restrictive value. No global
+helper or other policy changes. Tests run the real checker against each missing key,
+wrong values and malformed records; they fail on the previous implementation.
+Full checks and independent review remain required. This strictly narrows fixture
+acceptance, without changing runtime, documentation ownership or source rights.
+
+The fixture
 is an internal contract, not a license or approval from a data provider. Rollback is
 this isolated PR's reverse patch; no production data migration is involved.
