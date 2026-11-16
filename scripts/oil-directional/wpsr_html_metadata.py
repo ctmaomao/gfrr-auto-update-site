@@ -211,18 +211,25 @@ def parse_archive_bytes(raw, receipt):
         cells = row['cells']
         if len(cells) == 1:
             years, month = [], None
-            if re.fullmatch(r'\d{4}(?:\s*-\s*\d{4})?', cells[0]['text']) and not row['invalid']:
+            if re.fullmatch(r'\d{4}(?:\s*-\s*\d{4})?', cells[0]['text']) and row['closed'] and not row['invalid']:
                 years = [int(v) for v in re.findall(r'\d{4}', cells[0]['text'])]
         if not cells:
-            continue
-        if cells[0]['text'] in MONTHS:
-            month = MONTHS[cells[0]['text']]
-        elif cells[0]['text'] and len(cells) > 1:
             month = None
+            continue
         shape = len(cells) == 5 and row['closed'] and not row['invalid'] and all(c['tag'] == 'td' and c['colspan'] == '1' for c in cells)
+        # Context is evidence too: an unsupported/hidden/malformed row must not
+        # supply a month to, or preserve it for, a later blank-month row.
+        if not shape:
+            month = None
+        elif cells[0]['text'] in MONTHS:
+            month = MONTHS[cells[0]['text']]
+        elif cells[0]['text']:
+            month = None
         if row['implicit']:
             shape = shape and len(years) == 2 and years[1] == years[0] + 1 and not cells[0]['text'] and not cells[0]['links']
             shape = shape and all(len(cells[i]['links']) == 1 and re.fullmatch(r'\d{1,2}', cells[i]['text']) and cells[i]['links'][0]['text'] == cells[i]['text'] and not cells[i + 1]['links'] and re.fullmatch(r'(?:\d{1,2}/)?\d{1,2}', cells[i + 1]['text']) for i in (1, 3))
+        if not shape:
+            month = None
         for column, cell in enumerate(cells):
             for link in cell['links']:
                 url = _issue_link(link, ROOT)

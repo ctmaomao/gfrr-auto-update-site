@@ -115,6 +115,33 @@ class Tests(unittest.TestCase):
         bad = archive(orphan)
         self.assertFalse(p.parse_archive_bytes(bad, receipt(bad))['allObservedIssueAnchorsMapped'])
 
+    def test_unclosed_year_header_does_not_supply_context(self):
+        raw = archive().replace(b'</td></tr></thead>', b'</td></thead>', 1)
+        out = p.parse_archive_bytes(raw, receipt(raw))
+        self.assertEqual(out['entries'], [])
+        self.assertEqual(len(out['quarantined']), 2)
+        self.assertFalse(out['allObservedIssueAnchorsMapped'])
+
+    def test_invalid_rows_cannot_supply_or_preserve_inherited_month(self):
+        context = '<tr><td>November</td><td></td><td></td><td></td><td></td></tr>'
+        following = '<tr><td></td><td><a href="/petroleum/supply/weekly/archive/2011/a.php">30</a></td><td>25</td><td><a href="/petroleum/supply/weekly/archive/2012/b.php">29</a></td><td>24</td></tr>'
+        for invalid in [context.replace('<td>November', '<td rowspan="2">November'),
+                        context.replace('<td>November', '<td colspan="2">November'),
+                        context.replace('</tr>', ''),
+                        context.replace('<tr>', '<tr hidden>'),
+                        '<tr><td>November</td><td></td></tr>',
+                        '<td></td><td>not-a-date</td><td></td><td></td><td></td></tr>',
+                        '<tr hidden></tr>']:
+            for prefix in ['', context]:
+                raw = archive(prefix + invalid + following)
+                out = p.parse_archive_bytes(raw, receipt(raw))
+                self.assertEqual(out['entries'], [])
+                self.assertEqual(len(out['quarantined']), 2)
+                self.assertFalse(out['allObservedIssueAnchorsMapped'])
+        # A valid context can be re-established explicitly after a bad row.
+        raw = archive(context.replace('<tr>', '<tr hidden>') + context + following)
+        self.assertTrue(p.parse_archive_bytes(raw, receipt(raw))['allObservedIssueAnchorsMapped'])
+
     def test_legacy_release_only_retains_partial_status_and_exact_cell_span(self):
         raw = 'é汉\r\n<table><tr><td class="update">Released: August 3,2011</td></tr></table><a href="pdf/table11.pdf">Table11</a>'.encode()
         expected = dict(releaseDate='2011-08-03', dataWeekEnding='2011-07-29')
