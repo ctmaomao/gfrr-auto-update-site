@@ -217,7 +217,8 @@ function dateDiffDays(startIso, endIso) {
   if (!Number.isFinite(start) || !Number.isFinite(end)) {
     return null;
   }
-  return round(Math.max(0, end - start) / (24 * 60 * 60 * 1000), 2);
+  // Preserve elapsed-time precision through candidate quality classification.
+  return Math.max(0, end - start) / (24 * 60 * 60 * 1000);
 }
 
 function extractPolicy(rawPolicy) {
