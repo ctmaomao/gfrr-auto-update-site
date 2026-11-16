@@ -188,3 +188,5 @@
 - [ADR-0113: Private Bubble evidence and opaque one-use claim](0113-private-bubble-claim.md) — approved environment-secret evidence, atomic content-free marker and no public usage receipts.
 
 - [ADR-0114: Thermal completion publication tail](0114-thermal-publication-completion.md) — one existing producer completion, unchanged publication admission and release quota.
+
+- [ADR-0115: Baltic policy document ownership](0115-baltic-policy-single-authority.md) — canonical policy/fixture plus six checked navigation links; substantive runtime guards unchanged.
