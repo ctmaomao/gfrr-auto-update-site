@@ -2,6 +2,31 @@
 
 > **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
 
+## 2026-11-16 STEO 两期真实预测字段可行性
+
+按固定两请求清单读取官方 [October workbook](https://www.eia.gov/outlooks/steo/archives/oct26_base.xlsx) 与 [November workbook](https://www.eia.gov/outlooks/steo/archives/nov26_base.xlsx)，每份上限 5 MiB、30 秒、零重试、不跟重定向；全部成功，无额外历史下载或价格收益计算。原始整本只留在本地研究存证，不入仓库或生产。下载前清单固定两份报告和物理供需范围，未预登记具体季度或单元格。随后仅核对相邻两期对同一未来 2027Q1 的供需预测字段，没有读取油价结果以挑选月份。
+
+| 当前取得的官方副本 | Body received UTC | Bytes / SHA256 |
+|---|---|---|
+| October 2026 | 2026-11-16T23:23:50.582074Z | 1,098,385 / `54989362410da4aff5673580396380c3a8f4f111fa6d01c6d4fab05ef90efbf4` |
+| November 2026 | 2026-11-16T23:23:54.141012Z | 1,096,645 / `7d28012ff726ebeafd584905d842ded42bb3c9922550cb26e005af9cd4e27fb5` |
+
+两本 `3atab` 的 BK3/BK4/BL4/BM4 标识 2027 年 Jan/Feb/Mar，A6/A19 为 `papr_world` / `patc_world`，对应世界石油及其它液体燃料生产/消费，单位为 million barrels per day，不是仅原油。BK:BM 的第 6/19 行为本次 12 个数；第 10 行重复生产数，全部一致。B55 明示预测来自 EIA Short-Term Integrated Forecasting System；仅这些自有预测及派生摘要按 [EIA 署名重用政策](https://www.eia.gov/about/copyrights_reuse.php) 纳入研究，不据此放开其它表中的第三方价格或整本公开再分发。历史量与预测不能混同，表中历史/预测字体分界也只是近似说明；本次所选季度晚于两次发行日期。
+
+| 2027Q1，按 31/28/31 日加权，million barrels per day | 10 月预测 | 11 月预测 | 11 月减 10 月 |
+|---|---:|---:|---:|
+| 世界生产 | 106.108737 | 105.997852 | -0.110885 |
+| 世界消费 | 103.082608 | 102.819921 | -0.262687 |
+| 生产减消费（本地派生） | 3.026129 | 3.177931 | +0.151803 |
+
+以上仅六位展示，计算保留源数值精度。最后一行不是实测库存变化、缺口确认或油价预测。该差值修订已经是可计算候选特征，而非模型有效性的证据；两个发行点不足以训练或评估。
+
+离线命令：`node scripts/oil-directional/steo-forecast-pair.mjs <oct26_base.xlsx> <nov26_base.xlsx>`。只读两个显式本地常规文件、校验固定 SHA/5 MiB 限额后使用既有开发依赖解析指定表；无网络/输出文件/生产接线。严格匹配表题、年份、月份、期次、单位、来源、重复行，拒绝缺失、非有限/非数值、带公式的数值格和非正世界总量；日期/年份标签按固定副本的缓存值匹配，不执行公式。CLI stdout 只含限定字段及派生摘要，不泄露原始整本或价格。合成单测验证边界与数学；真实文件调用另行验证，不能相互替代。
+
+**可用时点尚未通过**：[当前官方目录](https://www.eia.gov/outlooks/steo/outlook.php) 声明发行日为 2026-10-06 / 2026-11-10，表内 Forecast date 为 10-01 / 11-05；HTTP Last-Modified 又分别为 10-01 / 11-09，均不得替代公众可得时刻。当前副本哈希只认证本次字节身份，不认证历史初版/全修订链；目录的 [October notice](https://www.eia.gov/outlooks/steo/archives/notice_data_10_06_2026.php) 本轮网页读取返回 404。不得把 11-16 接收回填为 10 月或 11 月首发收据，也不得以缺 notice 猜测“无更正”。`firstPublicAvailabilityVerified`、`revisionHistoryComplete` 与所有评估/公开概率/主分资格始终 false。
+
+下一步应沿独立新协议增加有发行与更正证据的原期供需样本，并单独解决可信价格标签。该脚本固定在两份已审副本，不自动泛化、下载更多期次、修改冻结 v1 或放行真实回测。扩大样本需预先声明固定清单/预算/异常处理；不能仅更换 SHA 将当前结果冒称完整历史验证。
+
 ## 2026-11-16 扩展研究路线：先取得可审计样本，再比较预测增量
 
 本节为独立研究设计建议和公开元信息核验，不修改下文两个冻结协议，不解除 v1 数据拒绝，不实施新采集、拟合、主分或公开概率。已复核现有 case/model/evaluation 模块：时点构造、固定 ridge logistic、sigmoid 校准、配对评分与块区间已有合成测试；重复实现模型不是当前瓶颈。新的真实研究须另立版本，不能为取得结果暗改 v1 的价格版本、发行/锚点或分割。
