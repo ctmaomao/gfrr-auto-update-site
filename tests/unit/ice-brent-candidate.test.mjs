@@ -35,10 +35,7 @@ function extract(name) {
   const end = rest.slice(1).search(/\n(?:async )?function /u);
   return end < 0 ? rest : rest.slice(0,end+1);
 }
-const evaluateFreshness = vm.runInNewContext([
-  'const BRENT_CONSENSUS_MAX_AGE_MINUTES=120;',extract('parseTimestamp'),extract('isFreshEnoughForConsensus'),
-  'isFreshEnoughForConsensus'
-].join('\n'));
+import { isFreshEnoughForConsensus as evaluateFreshness } from '../../scripts/run-realtime.mjs';
 test('actual consensus gate still rejects old ICE timestamps', () => {
   assert.equal(evaluateFreshness(parse([front]),now),true);
   assert.equal(evaluateFreshness(parse([{...front,lastTime:'11/10/2026 08:55 AM GMT'}]),now),false);
