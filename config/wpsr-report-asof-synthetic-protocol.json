@@ -1,0 +1,331 @@
+{
+  "protocolId": "brent-spot-wpsr-report-asof-synthetic-v1",
+  "status": "frozen_synthetic_schema_timing_only",
+  "createdAt": "2026-11-16T01:45:05.585265+00:00",
+  "parentProtocolReference": {
+    "id": "brent-spot-release-direction-v1",
+    "sha256": "2bc3f54ccda10efe2c72ea734d6dbbd6d130fcd5a606491e136fccf6236757e3",
+    "relationship": "Independent report-asof experiment. Original ALFRED protocol remains rejected; no source correction or replacement under that protocol."
+  },
+  "stageControls": {
+    "allowed": [
+      "read existing seven-PDF provenance and metadata solely to specify schema and synthetic counterexamples",
+      "synthetic input/schema/batch/dependency/timing validation only"
+    ],
+    "forbidden": [
+      "additional network downloads at this stage",
+      "full historical collection",
+      "real-price returns or labels computation",
+      "model fitting/calibration/evaluation",
+      "changing source data or original protocol",
+      "production scoring or public probabilities",
+      "generation of real historical prediction samples or labels",
+      "new external receipt persistence/upload or public redistribution of raw price series"
+    ],
+    "incrementalPaidBudgetUSD": 0,
+    "additionalHTTPRequestsAllowed": 0,
+    "additionalPDFDownloadsAllowed": 0,
+    "existingPDFCount": 7,
+    "futureStageRequires": "Separate protocol version with exact acquisition manifest, explicit total request cap including failed requests and every retry, per-file and aggregate byte caps, and approved saving destination/scope. Independent review and freeze before any real samples/returns/fit. Current cap remains zero."
+  },
+  "sourceContract": {
+    "origin": "EIA Europe Brent spot price, USD/barrel; Table11 daily-price block only",
+    "notInterchangeable": [
+      "monthly or weekly averages",
+      "WTI",
+      "futures",
+      "current EIA history",
+      "ALFRED initial-release dates"
+    ],
+    "rowFields": [
+      "reportId",
+      "archiveIndexURL",
+      "pdfURL",
+      "officialReportReleaseDate",
+      "dataWeekEnding",
+      "quoteDate",
+      "rawValue",
+      "parsedValueOrNull",
+      "units",
+      "pdfPage",
+      "rowAndColumnCoordinates",
+      "rawFileSha256",
+      "retrievedAtUTC",
+      "httpLastModifiedRaw",
+      "embeddedPDFDatesRaw",
+      "parserVersion"
+    ],
+    "meaning": "reportReleaseDate is official index-declared release date of a report; it is NOT quote initialAvailableDate or actual receipt time",
+    "dateAuthority": "official issue index and explicit release/delay notices; disagreement quarantines batch; never infer from path alone, dataWeekEnding, HTTP Last-Modified or PDF dates",
+    "historicalAssumption": "Current official issue-specific archive file faithfully represents the edition attributed to that release date. Historical immutability, exact first public availability and exhaustive correction history are unverified. All historical findings remain conditional on this assumption.",
+    "earliestEligibleDate": "first official archived issue actually available within the frozen calendar splits; no shift of split boundaries to compensate for missing early data",
+    "finiteNumericPolicy": "strict finite positive USD/barrel values; source missing marker remains null; no zero/forward/back fill",
+    "datePolicy": "quoteDate must not exceed official report release date; malformed, impossible or contradictory dates reject the affected report batch",
+    "structurePolicy": "validate title, units, year context, monthly blocks, two weekly columns and separate daily columns using text and coordinates; changed/ambiguous layout fails closed",
+    "firstNumericScope": "Corpus-local first complete eligible batch only; left-censored observations do not certify global first release."
+  },
+  "reportVersionPolicy": {
+    "rawFiles": "immutable receipt snapshots; append changed-hash revisions with their own receipt times, never overwrite",
+    "sameDay": "Freeze exact member IDs/hashes for every same-release-date batch from a separately validated manifest; all members form one batch, with no inferred intraday order.",
+    "sameDayOverlaps": "Any missing member, unequal numeric value, numeric/null conflict, date dispute, unparsed or quarantined member rejects entire batch.",
+    "crossDay": "First-numeric means first appearance within this research corpus in a complete eligible batch, not global/source first publication. Preserve left truncation and unknown earlier support. Earlier missing/quarantined support makes dependent sample unavailable until an explicitly preregistered closure establishes otherwise; do not overwrite fixed versions.",
+    "conflictAudit": "report counts, dates and revisions before outcomes; unexpected source ambiguity pauses stage for review, never value-dependent repairs",
+    "noSyntheticHistory": "do not backdate data absent from examined reports or claim that first observed report is the original market release",
+    "newlyDiscoveredMember": "Pause and independently review corpus/protocol; never retroactively amend previous batch membership or predictions."
+  },
+  "issuance": {
+    "deduplicate": "one issue per distinct complete official report-release-date batch only when latest eligible quoteDate advances",
+    "earliestArchiveDate": null,
+    "issueTime": "00:00:00Z two calendar days after official reportReleaseDate D; conservative convention, not verified historical receipt",
+    "featureQuotes": "Corpus-local first-numeric values from complete eligible batches, with verified required support; no left-truncation claim of source-first availability.",
+    "anchor": "first valid quote date strictly after issue UTC date",
+    "endpoint": "anchor index plus horizon valid quote intervals",
+    "horizons": {
+      "primary": 5,
+      "secondary": [
+        1,
+        20
+      ]
+    },
+    "target": "P(endpoint_price > anchor_price); complement is non-up including ties, not down",
+    "maxLookbackSpanDays": 45,
+    "maxFutureIntervalSpanDays": {
+      "1": 5,
+      "5": 14,
+      "20": 45
+    },
+    "noForwardFill": true,
+    "featureCutoff": "official reportReleaseDate<=D; no report from later date even if quoteDate earlier; no pre-release use of file metadata",
+    "labelPriceVersion": "Corpus-local first-numeric value in first complete eligible batch; label version and anchor/index remain pending until preregistered support closure; not ALFRED or global initial release.",
+    "labelMatureAt": "Only after support closure: max(anchor first-complete-eligible-report release date+2 calendar days00UTC, endpoint first-complete-eligible-report release date+2 calendar days00UTC, closureKnownAtUTC). Missing/invalid closureKnownAtUTC => pending. No next-report assumption.",
+    "featureWindow": "latest21 valid first-report quotes eligible by batchD, sorted by original quoteDate with full observation/missing/report-completeness lineage",
+    "lookbackSpanDefinition": "latestQuoteDate minus earliest of latest21 quote dates",
+    "maxConsecutiveLookbackGapDays": 7,
+    "maxLatestQuoteAgeAtIssueDays": 10,
+    "futureSpanDefinition": "issue UTC date to endpoint quote date; select first actual future anchor and fixed offset once, never search farther to repair a failure",
+    "gridIntegrity": "Preserve numeric/source_null/unknown_support/quarantined states. Source_null does not increment valid-quote index; unknown_support or quarantined on feature, anchor-search, endpoint support rejects candidate. No deletion/reindexing, gap bypass or replacement anchor/endpoint. Source_null later becoming numeric requires predeclared support closure before final label, otherwise pending.",
+    "labelTimingCaution": "Due to report lag, a label may mature two or more report batches after issue. Future containing reports establish labels only, never retroactively feature knowledge."
+  },
+  "splits": {
+    "train": [
+      "2011-04-06",
+      "2017-12-31"
+    ],
+    "calibration": [
+      "2018-01-01",
+      "2020-12-31"
+    ],
+    "untouchedTest": [
+      "2021-01-01",
+      "2025-12-31"
+    ],
+    "secondaryFinalChronologicalHoldout": [
+      "2026-01-01",
+      "latest_mature_label"
+    ],
+    "splitBy": "issue date",
+    "purge": "Label endpoint quoteDate and complete labelMatureAt=max(anchor reportD+2UTC,endpoint reportD+2UTC,closureKnownAtUTC) must precede next phase calendar start. All as-of eligibility and retrieval/corpus cutoff checks use the complete maturity timestamp, not only quote/report dates. Feature closure must already be known at feature cutoff and issue; later corroboration never retroactively approves it. Fixed original calendar splits retained; insufficiency => unavailable, not shifted splits.",
+    "testUse": "single frozen run, no tuning after outcomes",
+    "minimumPrimarySamples": {
+      "train": 250,
+      "calibration": 100,
+      "test": 200,
+      "secondaryFinalChronologicalHoldout": 40
+    },
+    "minimumEachClass": {
+      "train": 20,
+      "calibration": 20,
+      "test": 20,
+      "secondaryFinalChronologicalHoldout": 10
+    },
+    "holdoutIsNotProspective": true,
+    "holdoutReporting": "report 2026 separately, even if unavailable or failed; never pool with 2021-2025 or use to retune; failure/unavailability prevents any claim of current qualification"
+  },
+  "model": {
+    "features": [
+      "log_return_1_quote",
+      "log_return_5_quotes",
+      "log_return_20_quotes",
+      "population_std_20_quote_log_returns"
+    ],
+    "scaling": "train mean/std only; reject nonfinite; standard-deviation zero column maps zero",
+    "zClip": 5,
+    "classifier": "ridge logistic regression",
+    "ridgeLambda": 0.1,
+    "penalty": "lambda * sum(nonintercept_weight_squared) / 2 added to mean logloss",
+    "optimizer": {
+      "kind": "deterministic full-batch gradient descent",
+      "learningRate": 0.05,
+      "maxIterations": 50000,
+      "gradientNormTolerance": 1e-07,
+      "nonConvergence": "unavailable",
+      "learningRateRule": "min(0.05,1/(0.25*maximum_augmented_row_squared_norm+ridgeLambda)), computed from fitting partition only"
+    },
+    "calibration": "input raw classifier logits; minimize mean logloss + 0.01*slope^2/2; intercept not penalized; same deterministic optimizer/convergence rules; positive final slope required",
+    "calibrationRidgeLambda": 0.01,
+    "noHyperparameterSearch": true,
+    "noSatelliteOrMacroWithoutAvailabilityEvidence": true,
+    "calibrationValidity": "positive fitted slope and finite fit required; constant/nearly constant raw logits (variance<1e-8) or nonpositive slope => unavailable",
+    "initialization": "classifier all weights and intercept zero; calibration slope1 and intercept0"
+  },
+  "evaluation": {
+    "baselines": [
+      "0.5 symmetric direction probability",
+      "empirical pretest up frequency using train+calibration labels",
+      "uncalibrated price-only logistic"
+    ],
+    "metrics": [
+      "Brier",
+      "logloss",
+      "fixed-width 5-bin reliability with counts",
+      "weighted ECE",
+      "coverage and missingness",
+      "class balance"
+    ],
+    "loglossClip": 1e-06,
+    "bootstrap": {
+      "kind": "paired noncircular moving blocks of issue records",
+      "blockLength": 8,
+      "replicates": 1000,
+      "seed": 20261116,
+      "interval": "percentile 95%",
+      "sensitivityBlockLengths": [
+        4,
+        12
+      ],
+      "sensitivityRule": "report all; block8 remains primary; no selection based on interval/results",
+      "limitation": "blocks are issuance records, not days; research uncertainty intervals do not guarantee nominal coverage under all serial dependence or regime shifts",
+      "quantile": "linear interpolation at 2.5 and97.5 percentiles",
+      "prng": {
+        "name": "mulberry32",
+        "state": "unsigned32 initialized with existing seed20261116, reset per declared horizon/comparison/bootstrap block-length run",
+        "algorithm": "state=(state+0x6D2B79F5)>>>0; t=imul(state^(state>>>15),1|state); t^=t+imul(t^(t>>>7),61|t); return((t^(t>>>14))>>>0)/4294967296",
+        "sampling": "For N paired issue records and block lengthL, choose each noncircular start=floor(U*(N-L+1)); append contiguous L records until>=N, then truncate final block to exactlyN. N<L => unavailable; no wraparound.",
+        "paired": "Use identical sampled indices for candidate and its paired baseline; no resampling exclusions after observing outcomes."
+      }
+    },
+    "primaryResearchIncrementGate": {
+      "minimumBrierImprovementAgainstBothSimpleBaselines": 0.005,
+      "upperPaired95DeltaBrierLessThan": 0,
+      "loglossNoWorseThanBothSimpleBaselines": true,
+      "maxECE": 0.05,
+      "pairedBoundAppliesTo": "separate upper95percent delta Brier against each simple baseline"
+    },
+    "secondaryHorizonsCannotRescuePrimary": true,
+    "doNotComputeTradingPnL": true,
+    "pairing": "all predeclared eligible cases, identical complete paired samples for candidate and both simple baselines; no selective dropping based on forecast or outcome",
+    "holdoutGate": "same frozen metrics/gates when minimum samples/classes met; otherwise unavailable; lower sample precision disclosed; cannot overturn failed primary test",
+    "secondaryHorizonGate": "Secondary1and20 horizons use the same sample/class minimums, metrics, calibration checks and performance gates as primary5; report separately and never rescue primary failure."
+  },
+  "publication": {
+    "eligibleForPublicProbability": false,
+    "eligibleForMainScore": false,
+    "noCurrentPredictionFromThisStudy": true,
+    "futureReviewNeeds": [
+      "verified actual input availability and series identity",
+      "at least 100 distinct prospective matured primary issues spanning at least 12 months",
+      "same frozen primary performance gates",
+      "independent audit and complete uncertainty/missingness disclosures"
+    ],
+    "noFake50PercentForUnavailable": true,
+    "publicRawSeriesRedistributionAllowed": false
+  },
+  "prospectiveReceiptValidation": {
+    "separateFromHistorical": true,
+    "rawReceipt": "Future proposed mechanism only: immutable raw response/hash/actual UTC receipts and append-only revisions, subject to separately approved storage destination, scope and access. Current draft authorizes no new receipt saving/upload.",
+    "liveEarliestDecision": "not earlier than both actual receipt of all required reports and preregistered report-date convention; never recreate old forecasts as prospective",
+    "historicalDownloadToday": "old quotes in newly downloaded file have receipt today, not backdated receipt",
+    "predictionLedger": "freeze model/protocol/input hashes and probability-or-unavailable before outcome; append realized label receipt without rewriting prediction",
+    "labelMaturity": "both label values actually received, not merely assigned report dates",
+    "qualification": [
+      "verified actual input availability and series identity",
+      "at least 100 distinct prospective matured primary issues spanning at least 12 months",
+      "same frozen primary performance gates",
+      "independent audit and complete uncertainty/missingness disclosures"
+    ],
+    "authorizationStatus": "future design only; no destination or new saving/upload authorization is conferred by this draft"
+  },
+  "requiredSyntheticCounterexamples": [
+    "2013-01-04issue contains2012-12-27quote110.04: report evidence does not certify first market availability or fix ALFRED anomaly",
+    "2022-06-29two distinctreports ending06-17/06-24: one batch, overlapping five daily quotes not independent observations",
+    "2022ending06-17filemetadata dated06-28 but officialrelease06-29: reject metadata-as-publication shortcut",
+    "2012-12-19/12-28/2013-01-04Brent missing cells: null not zero/flat return; never repair endpoint by searching farther",
+    "2025-12-03/12-10daily-block overlap: two weekly aggregates must not parse as daily quotes",
+    "all7PDFs: date-specific URLs and current hashes do not prove immutable contemporaneous snapshots",
+    "synthetic same-day conflictingnumeric/null cells => batch quarantine",
+    "synthetic delayed/missing containing report => label pending/unavailable rather than assumed next-week maturity",
+    "synthetic split-crossing label availability => purge despite earlier quoteDate",
+    "synthetic rejected record inside anchor/window => no index compression or replacement",
+    "synthetic revision afterissue => audit only; no retroactive feature/label edit",
+    "synthetic insufficient earliest archive/train samples => unavailable without calendar changes",
+    "incomplete current directory pagination/range => no real-sample gate",
+    "current directory complete but historical publication coverageunknown => historical claim remains conditional",
+    "same-day member absent or newlydiscovered => wholebatch reject/pause, never retroedit",
+    "source_null laternumeric changesanchor/index => pending untildeclaredclosure, no retrospective reorder",
+    "unknown_support/quarantined betweenvalidquotes => reject rather than skip",
+    "mulberry32 deterministic vector and blocktruncation exactlyN with pairedindices",
+    "secondary1/20 sample insufficiency cannot bypass primary-equivalent minimums",
+    "both label endpoint prices known during train but closureKnownAtUTC in calibration => excluded from train by full maturity/purge",
+    "feature values present beforeissue but closureKnownAtUTC afterfeaturecutoff/issue => reject feature/sample; no retrospective validation",
+    "boolean closure without valid closureKnownAtUTC => pending, not matured"
+  ],
+  "openItemsForIndependentReview": [
+    {
+      "id": "final_draft_review",
+      "question": "Confirm this draft remains synthetic-only, with all real-data sample/return/fit and new acquisition/save/upload gates closed."
+    },
+    {
+      "id": "future_separate_version",
+      "question": "Any later real-data protocol must resolve support closure, exact complete manifest and member sets, chronological revision/censoring assumptions, acquisition caps and storage authorization before freeze; this draft does not approve that stage."
+    }
+  ],
+  "noRealReturnsOrModelsComputed": true,
+  "frozenAt": "2026-11-16T01:54:07.283Z",
+  "historicalPublicationCompletenessVerified": false,
+  "manifestCompleteness": {
+    "currentDirectoryCoverage": "A bounded current official directory range must be declared and all pages, range boundaries, delay notices and every linked member enumerated. Every member must parse or be quarantined. Seven selected PDFs do not establish such coverage.",
+    "historicalPublicationAndRevisionCoverage": "Separate and unverified: a complete current directory does not prove all historical publications, publication order, deleted members or revisions were captured.",
+    "currentDirectoryCoverageVerified": false,
+    "historicalPublicationAndRevisionCoverageVerified": false,
+    "withoutRangeProof": "No real samples may be generated; current stage forbids them regardless."
+  },
+  "observationStates": {
+    "numeric": "Finite positive value in a complete eligible batch, with full provenance.",
+    "source_null": "Explicit source missing cell, retained with date and report lineage. Does not count as a valid-quote interval, but must not be mistaken for permanently absent or unknown support.",
+    "unknown_support": "Missing report/member/coverage or incomplete prior observation history; cannot skip to next numeric quote.",
+    "quarantined": "Conflicting/invalid/unsupported record or batch; cannot skip to next numeric quote.",
+    "dependencyRule": "If feature support, anchor search or any endpoint path touches unknown_support or quarantined, reject the candidate rather than compressing or extending the sequence. Earlier source_null followed by numeric can alter anchor/index; label is not final until preregistered support closure.",
+    "noInventedCalendar": "Retain source date topology; do not invent business-day quotes or assume a weekend/holiday calendar proves complete observation support."
+  },
+  "supportClosure": {
+    "status": "not_established_for_real_data",
+    "requiredDefinition": "A future protocol must predeclare finite support boundaries, the containing report/version horizon, manifest completeness, and the treatment of later null-to-numeric observations before real samples are generated.",
+    "currentRule": "Synthetic tests may exercise explicit closure fixtures. Real label lacking proven preregistered closure stays pending; do not silently finalize after next report, reorder quote indices, or choose a closure based on outcomes.",
+    "lateChange": "Null-to-numeric or newly discovered support affecting a fixed anchor/index invalidates closure assumptions and pauses review; do not retroactively relabel or reindex.",
+    "syntheticFixtureRequirement": "Every closure fixture must provide explicit closureKnownAtUTC timestamp; a boolean closed flag is insufficient. Missing, invalid or future closure time cannot be treated as known.",
+    "featureEligibility": "All feature support closures must have closureKnownAtUTC at or before feature cutoff and issue time. Later evidence cannot retroactively validate a feature used in an earlier issuance."
+  },
+  "evidenceManifestReferences": [
+    {
+      "evidenceId": "three-issue-download-manifest.json",
+      "sha256": "6778b2308fe892fc81e2586e2427441ce1985128b719da99a95c9f321a9801ca",
+      "bytes": 2722
+    },
+    {
+      "evidenceId": "three-issue-assessment.json",
+      "sha256": "007d0e7a6edf48f1b9ee1a8911fcb32c9c508df6b2fab9f068130a527b972349",
+      "bytes": 7195
+    },
+    {
+      "evidenceId": "four-issue-download-manifest.json",
+      "sha256": "b87dc006ca935859a41bb45f7ea6c275bfca058c7002b99beb9844c95a88a128",
+      "bytes": 5706
+    },
+    {
+      "evidenceId": "four-issue-assessment.json",
+      "sha256": "75525f34f320c93994e179f8e628548cb3c62aae17d446f73fafbdae2ca83963",
+      "bytes": 15017
+    }
+  ],
+  "independentlyReviewedDraftSha256": "01bb60b22ffbd45ff75c3be3215aa50821f0b3d1a8f0ca364b8e1c33a0623cfe"
+}
