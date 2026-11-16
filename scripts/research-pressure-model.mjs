@@ -9,14 +9,15 @@ import { deriveHistoricalRisk } from './daily/historical-score.mjs';
 import { describeRiskImplementation } from './run-daily-pipeline.mjs';
 import { isHistoricalDate } from './daily/historical-validation.mjs';
 import { pressureRemediationDiagnostics } from './daily/pressure-remediation.mjs';
+import { consumeSharedPressureRetrieval } from './daily/pressure-shared-retrieval.mjs';
 
 const ROOT=path.resolve('manual-artifacts/main-score-audit/pressure-model');
 const LEGACY={hyOas:'BAMLH0A0HYM2',igOas:'BAMLC0A0CM',real10y:'DFII10',walcl:'WALCL',onRrp:'RRPONTSYD',t10y2y:'T10Y2Y'};
 const DAY=86400000;
 export function implementationHash(readFile = file => fs.readFileSync(file,'utf8'), scoreImplementation = describeRiskImplementation()) {
   return digest({files:['scripts/daily/pressure-model.mjs','scripts/daily/pressure-evaluation.mjs','scripts/research-pressure-model.mjs',
-    'scripts/daily/historical-score.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/historical-validation.mjs',
-    'scripts/daily/pressure-remediation.mjs','config/rules.json'].map(file=>readFile(file).replaceAll('\r\n','\n')),
+    'scripts/daily/historical-score.mjs','scripts/daily/structural-freshness.mjs','scripts/daily/score-input-contract.mjs','scripts/daily/historical-validation.mjs',
+    'scripts/daily/pressure-remediation.mjs','scripts/daily/pressure-shared-retrieval.mjs','scripts/daily/pressure-artifact-readback.mjs','config/rules.json'].map(file=>readFile(file).replaceAll('\r\n','\n')),
     csvParser:parseFredCsv.toString().replaceAll('\r\n','\n'),scoreImplementation});
 }
 export function outputPath(file) {
@@ -30,7 +31,7 @@ export function weeklyDates(start,end) {
   const dates=[]; for(;ms<=last;ms+=7*DAY) dates.push(new Date(ms).toISOString().slice(0,10));
   return dates;
 }
-export function parseResearchArgs(argv) {
+export function parseResearchArgs(argv, sharedReceiptPresent = false) {
   const options={allowNetwork:false,recordShadow:false,output:path.join(ROOT,'report.json'),cache:path.join(ROOT,'source-cache.json'),previousLedger:null};
   for(let i=0;i<argv.length;i++) {
     const arg=argv[i];
@@ -42,7 +43,8 @@ export function parseResearchArgs(argv) {
     } else throw new Error(`Unknown research argument: ${arg}`);
   }
   outputPath(options.output); outputPath(options.cache);
-  if(options.recordShadow&&!options.allowNetwork) throw new Error('Prospective recording requires a new live retrieval');
+  if(sharedReceiptPresent && options.allowNetwork) throw new Error('Shared retrieval forbids network');
+  if(options.recordShadow&&!options.allowNetwork&&!sharedReceiptPresent) throw new Error('Prospective recording requires a new live retrieval');
   return options;
 }
 function writeJson(file,value) { const target=outputPath(file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,JSON.stringify(value,null,2)+'\n'); }
@@ -127,18 +129,19 @@ export function evaluateResearch(cache,protocol,today,rules) {
     weeklyScores:Object.fromEntries(Object.entries(histories).map(([id,rows])=>[id,rows.filter(row=>row.date<=protocol.evaluation.historicalCutoff).map(row=>({date:row.date,score:row.score,status:row.status}))]))};
 }
 
-export async function main(argv=process.argv.slice(2)) {
+export async function main(argv=process.argv.slice(2), { sharedRetrieval } = {}) {
   if(argv.length===1&&argv[0]==='--print-cohort') {
     const protocol=JSON.parse(fs.readFileSync('config/pressure-model-research.json','utf8'));validateResearchProtocol(protocol);
     console.log(`pressure-shadow-${digest({protocol,implementation:implementationHash()}).slice(0,16)}`);return;
   }
-  const options=parseResearchArgs(argv), now=new Date().toISOString(), today=now.slice(0,10);
+  const options=parseResearchArgs(argv, sharedRetrieval !== undefined), now=new Date().toISOString(), today=now.slice(0,10);
   const protocol=JSON.parse(fs.readFileSync('config/pressure-model-research.json','utf8'));
   const rules=JSON.parse(fs.readFileSync('config/rules.json','utf8'));validateResearchProtocol(protocol);
   // Emit a fingerprint before source retrieval/results; retain this protocol for
   // the prospective cohort. Historical comparisons remain retrospective.
   console.log(`[pressure-research] protocol=${digest(protocol)}`);
-  const cache=await retrieve(protocol,options,now);
+  const shared = sharedRetrieval === undefined ? null : consumeSharedPressureRetrieval(sharedRetrieval, {protocol,implementation:implementationHash(),output:options.output,previousLedger:options.previousLedger,now});
+  const cache=shared ? shared.cache : await retrieve(protocol,options,now);
   const results=evaluateResearch(cache,protocol,today,rules);
   const existing=options.previousLedger&&fs.existsSync(options.previousLedger)?JSON.parse(fs.readFileSync(options.previousLedger,'utf8')):null;
   validateShadowLedger(existing,protocol,implementationHash(),new Date().toISOString());
@@ -173,6 +176,7 @@ export async function main(argv=process.argv.slice(2)) {
         legacy:compareRows(rows.map(row=>({date:row.date,score:row.legacy.score})),cache.series[key]||[],protocol)}]))}];
   }));
   const report={schemaVersion:'pressure-model-research-report-v1',generatedAt:new Date().toISOString(),protocolHash:digest(protocol),implementationHash:implementationHash(),
+    sharedRetrieval:shared?.provenance ?? null,
     modelId:protocol.modelId,validation:{historicalPointInTime:false,untouchedHistoricalTest:false,predictiveEvidence:false,
       probabilityCalibration:false,positionSizingValidation:false,benchmarkIndependence:false,automaticPromotion:false},
     sourceStatus:cache.sourceStatus,sourceRetrievedAt:cache.retrievedAt,limitations:protocol.limitations,...results,
