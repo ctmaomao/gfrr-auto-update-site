@@ -12,11 +12,6 @@ export const OIL_THERMAL_BASELINE_QUALITY_POLICY = {
   qualityOrder: OIL_THERMAL_BASELINE_QUALITY_ORDER
 };
 
-function round(value, digits = 2) {
-  if (!Number.isFinite(value)) return null;
-  return Number(value.toFixed(digits));
-}
-
 export function oilThermalBaselineQualityForDays(windowDays) {
   if (!Number.isFinite(windowDays) || windowDays < 0) return null;
   if (windowDays < OIL_THERMAL_BASELINE_QUALITY_POLICY.starterShortWindowMaxDays) {
@@ -35,8 +30,10 @@ export function summarizeOilThermalFacilityWindows(facilities) {
     .filter((row) => !Number.isFinite(row?.windowDays) || row.windowDays < 0)
     .map((row) => row?.id ?? 'unknown');
   const windowDays = validRows.map((row) => row.windowDays);
-  const minimumFacilityWindowDays = windowDays.length > 0 ? round(Math.min(...windowDays)) : null;
-  const maximumFacilityWindowDays = windowDays.length > 0 ? round(Math.max(...windowDays)) : null;
+  // Quality thresholds consume these numbers. Round only when displaying them,
+  // never before comparing a facility window with the 7/30-day boundaries.
+  const minimumFacilityWindowDays = windowDays.length > 0 ? Math.min(...windowDays) : null;
+  const maximumFacilityWindowDays = windowDays.length > 0 ? Math.max(...windowDays) : null;
   const facilityIdsBelowTargetDays = validRows
     .filter((row) => row.windowDays < OIL_THERMAL_BASELINE_TARGET_DAYS)
     .map((row) => row.id);
