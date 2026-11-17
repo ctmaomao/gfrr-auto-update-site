@@ -916,3 +916,62 @@ test('production budget report projection is fixed and leaves receipt accounting
   const source = fs.readFileSync('scripts/lib/deepseek-budget.mjs', 'utf8');
   assert.match(source, /report: row => console\.log\(`DeepSeek budget: \$\{JSON\.stringify\(publicBudgetReport\(row\)\)\}`\)/u);
 });
+
+test('private Git transport shares one CNY10 ceiling across two keys and fresh clients', async () => {
+  const remote = github(fresh(), { privateTarget: true });
+  const keys = ['SYNTHETIC_PRODUCTION_KEY', 'SYNTHETIC_SECOND_KEY'];
+  let balances = 0, callbacks = 0;
+  const options = { readBalance: async () => { balances++; return balance(); } };
+  for (let i = 0; i < 4; i++) {
+    await gate(remote.store(), options)(context({ key: keys[i % 2], consumer: i % 2 ? 'bubble-editorial' : 'macro-editorial' }),
+      async () => { callbacks++; return response(); });
+  }
+  const snapshot = await remote.store().read(), summary = summarizeLedger(snapshot.ledger, NOW);
+  assert.equal(summary.capMicroCny, 10_000_000);
+  assert.equal(summary.reservedMicroCny, 8_644_608);
+  assert.equal(summary.remainingMicroCny, 1_355_392);
+  assert.equal(snapshot.ledger.entries.length, 8);
+  assert.deepEqual([...new Set(snapshot.ledger.entries.filter(row => row.kind === 'reserve').map(row => row.keyId))].sort(), keys.map(digest).sort());
+  for (const nextKey of [...keys, 'SYNTHETIC_ROTATED_KEY']) {
+    await assert.rejects(gate(remote.store(), options)(context({ key: nextKey }), async () => { callbacks++; return response(); }), /project_limit/);
+  }
+  assert.equal(balances, 4); assert.equal(callbacks, 4);
+  assert.equal((await remote.store().read()).head, snapshot.head);
+  assert.equal(remote.calls.filter(call => call.method === 'PATCH').length, 8);
+});
+
+test('private unknown outcome remains shared HOLD after key change, 400 days and renewed price evidence', async () => {
+  let now = NOW, balances = 0, callbacks = 0;
+  const remote = github(fresh(), { privateTarget: true, authorityNow: () => now });
+  await assert.rejects(gate(remote.store(), { readBalance: async () => { balances++; return balance(); } })(context({ key: 'SYNTHETIC_KEY_A' }),
+    async () => { callbacks++; throw new Error('synthetic timeout with unknown billing'); }), /unknown billing/);
+  const before = await remote.store().read();
+  assert.equal(before.ledger.entries.at(-1).status, 'failed_unknown');
+  now += 400 * DAY;
+  const store = remote.store({ now: () => now }), previous = await store.read(), updatedReview = review(now);
+  const next = appendPriceReview(previous.ledger, updatedReview, digest(updatedReview), now);
+  assert.equal(await store.write(previous, next), true);
+  const renewed = await remote.store({ now: () => now }).read();
+  assert.deepEqual(renewed.ledger.entries, before.ledger.entries);
+  const summary = summarizeLedger(renewed.ledger, now);
+  assert.equal(summary.reservedMicroCny, POLICY.reserveMicroCny); assert.equal(summary.unresolved, 1);
+  await assert.rejects(gate(remote.store({ now: () => now }), { now: () => now, approvedReviewDigest: digest(updatedReview),
+    readBalance: async () => { balances++; return balance(); } })(context({ key: 'SYNTHETIC_KEY_B' }),
+  async () => { callbacks++; return response(); }), /receipt_pending/);
+  assert.equal(balances, 1); assert.equal(callbacks, 1);
+  assert.equal((await remote.store({ now: () => now }).read()).head, renewed.head);
+});
+
+test('private storage availability does not admit the unapproved manual consumer or bypass price expiry', async () => {
+  const remote = github(fresh(), { privateTarget: true }); let balances = 0, callbacks = 0;
+  const options = { readBalance: async () => { balances++; return balance(); } };
+  await assert.rejects(gate(remote.store(), options)(context({ consumer: 'manual-external-ai', mode: 'manual' }),
+    async () => { callbacks++; return response(); }), /invalid_request/);
+  assert.equal(remote.calls.length, 0);
+  const later = NOW + DAY;
+  const expired = github(fresh(), { privateTarget: true, authorityNow: () => later });
+  await assert.rejects(gate(expired.store({ now: () => later }), { ...options, now: () => later })(context(),
+    async () => { callbacks++; return response(); }), /price_review_required/);
+  assert.equal(balances, 0); assert.equal(callbacks, 0);
+  assert.equal(expired.calls.some(call => call.method === 'POST' || call.method === 'PATCH'), false);
+});

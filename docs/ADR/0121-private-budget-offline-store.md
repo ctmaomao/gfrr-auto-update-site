@@ -19,7 +19,7 @@ Before any separate activation: establish least-privilege access, reconcile all 
 
 ## Verification
 
-Synthetic tests cover fixed identity/visibility, changed privacy after read, failed metadata, redirection, constant errors/status, two-key same-head CAS, forged snapshots and missing refs. Existing ledger tests continue to exercise ancestry, clock drift, price expiry and debt retirement on the unchanged shared algorithm. Real remote permissions and private production wiring remain untested.
+Synthetic tests cover fixed identity/visibility, changed privacy after read, failed metadata, redirection, constant errors/status, two-key same-head CAS, cross-key aggregate ceiling through fresh clients, 400-day unknown-debt HOLD after price-review renewal, unapproved-consumer/expired-price rejection, forged snapshots and missing refs. Existing ledger tests continue to exercise ancestry, clock drift, price expiry and debt retirement on the unchanged shared algorithm. Real remote permissions and private production wiring remain untested.
 
 ## Public-output hardening (still no private-store wiring)
 
