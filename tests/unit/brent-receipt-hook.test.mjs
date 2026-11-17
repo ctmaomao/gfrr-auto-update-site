@@ -76,3 +76,14 @@ test('research parse errors and byte caps do not change existing production pars
   assert.deepEqual(comparable(await run([{ text: oversized }], capped)), comparable(await run([{ text: oversized }], null)));
   assert.equal(capped.snapshot().receipts[0].parseStatus, 'byte_limit');
 });
+
+
+test('nonnumeric API rows cannot satisfy the minimum observations before CSV fallback', async () => {
+  const malformed = JSON.stringify({ observations: [
+    { date: '2026-11-12', value: null }, { date: '2026-11-13', value: false }
+  ] });
+  const result = await run([{ text: malformed }, { text: csv }], null);
+  assert.equal(result.calls.length, 2);
+  assert.deepEqual(result.rows, [{ date: '2026-11-12', value: 70 }, { date: '2026-11-13', value: 71 }]);
+  assert.deepEqual(result.sleeps, []);
+});

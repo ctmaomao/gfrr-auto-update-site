@@ -107,3 +107,11 @@ test('Daily and realtime use the same FRED parsers without importing either exec
     assert.doesNotMatch(source, /function parseFred(?:Csv|ApiObservations)\(/);
   }
 });
+
+
+test('FRED API rejects nonnumeric JSON types without losing numeric zero or ordering', () => {
+  const values = [null, false, true, [], [4], ['5'], {}, { value: 6 }, 0, '0', -1, ' 2.5 ', '1e2'];
+  const observations = values.map(value => ({ date: '2026-11-01', value }));
+  assert.deepEqual(parseFredApiObservations(JSON.stringify({ observations })),
+    [0, 0, -1, 2.5, 100].map(value => ({ date: '2026-11-01', value })));
+});
