@@ -1,31 +1,31 @@
 {
   "contractVersion": "bubble-watch-v3",
-  "issue_number": 32,
-  "as_of_date": "2026-11-10",
-  "generated_at": "2026-11-10T06:14:30.988Z",
+  "issue_number": 33,
+  "as_of_date": "2026-11-17",
+  "generated_at": "2026-11-17T23:06:49.653Z",
   "summary": {
     "total_indicators": 27,
-    "red_count": 6,
+    "red_count": 5,
     "yellow_count": 8,
     "green_count": 10,
-    "unknown_count": 3,
+    "unknown_count": 4,
     "display_red_pct": null,
     "display_weighted_risk_score": null,
     "scoring_total_indicators": 23,
-    "scoring_red_count": 5,
+    "scoring_red_count": 4,
     "scoring_yellow_count": 8,
     "scoring_green_count": 7,
-    "scoring_unknown_count": 3,
+    "scoring_unknown_count": 4,
     "primary_score_pct": null,
     "primary_score_basis": "core_red_light_ratio",
     "red_pct": null,
     "weighted_risk_score": null,
     "primary_score_range_pct": {
-      "lower": 21.7,
+      "lower": 17.4,
       "upper": 34.8
     },
     "weighted_risk_score_range": {
-      "lower": 39.1,
+      "lower": 34.8,
       "upper": 52.2
     },
     "stage_score": null,
@@ -37,7 +37,7 @@
     "stage_label_en": "Pending",
     "trigger_score": null,
     "trigger_score_range": {
-      "lower": 34.6,
+      "lower": 26.9,
       "upper": 50
     },
     "trigger_label": "待确认",
@@ -45,10 +45,10 @@
     "category_scores": {
       "valuation": 66.7,
       "capital": null,
-      "market_structure": 37.5,
+      "market_structure": 50,
       "credit": null,
       "fundamentals": null,
-      "macro": 37.5
+      "macro": null
     },
     "category_score_ranges": {
       "valuation": {
@@ -60,25 +60,25 @@
         "upper": 87.5
       },
       "market_structure": {
-        "lower": 37.5,
-        "upper": 37.5
+        "lower": 50,
+        "upper": 50
       },
       "credit": {
         "lower": 12.5,
         "upper": 37.5
       },
       "fundamentals": {
-        "lower": 25,
-        "upper": 50
+        "lower": 12.5,
+        "upper": 37.5
       },
       "macro": {
-        "lower": 37.5,
+        "lower": 12.5,
         "upper": 37.5
       }
     },
     "momentum": {
-      "deteriorated": 0,
-      "improved": 0,
+      "deteriorated": 1,
+      "improved": 1,
       "net": 0
     },
     "similarity": [
@@ -86,7 +86,7 @@
         "period": "1999-06",
         "label_zh": "互联网泡沫顶前 9 个月",
         "label_en": "9 months before dot-com top",
-        "match_pct": 70,
+        "match_pct": 77,
         "denominator": 15,
         "basis": "core_calibrated_indicators_only"
       },
@@ -94,7 +94,7 @@
         "period": "2000-02",
         "label_zh": "互联网泡沫顶前 1 个月",
         "label_en": "1 month before dot-com top",
-        "match_pct": 60,
+        "match_pct": 67,
         "denominator": 15,
         "basis": "core_calibrated_indicators_only"
       },
@@ -102,7 +102,7 @@
         "period": "2021-11",
         "label_zh": "成长股/SPAC 顶",
         "label_en": "Growth/SPAC top",
-        "match_pct": 57,
+        "match_pct": 63,
         "denominator": 15,
         "basis": "core_calibrated_indicators_only"
       },
@@ -110,14 +110,14 @@
         "period": "2007-10",
         "label_zh": "金融危机股市顶",
         "label_en": "GFC equity top",
-        "match_pct": 38,
+        "match_pct": 42,
         "denominator": 12,
         "basis": "core_calibrated_indicators_only"
       }
     ],
     "verdict_label": "高风险预警",
     "verdict_label_en": "High Risk Alert",
-    "verdict_desc": "截至2026-11-10，固定核心23项中有5项红灯、8项黄灯、7项绿灯、3项待确认。核心红灯比例为21.7–34.8%，辅助压力为39.1–52.2。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为45.0–55.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为39.9（红灯）；前 5 大权重占比为≈27.8%（红灯）；NVDA 远期 PE为≈15x（绿灯）；Hyperscaler 资本开支增速为+87%（黄灯）；Big5 资本开支/经营现金流为≈95%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为34.6–50.0。S&P 50 日均线上方比例为≈69%（绿灯）；市值加权 vs 等权重为-6.5 个百分点（黄灯）；高收益债利差为342 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。NVDA 客户投资/收入比、数据中心 ABS 利差、AI 收入增速的二阶导待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。历史相似度仅为人工结构类比，不是回测准确率。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
+    "verdict_desc": "截至2026-11-17，固定核心23项中有4项红灯、8项黄灯、7项绿灯、4项待确认。核心红灯比例为17.4–34.8%，辅助压力为34.8–52.2。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。\n\n泡沫成熟度为45.0–55.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为38.8（红灯）；前 5 大权重占比为≈26.5%（红灯）；NVDA 远期 PE为≈13x（绿灯）；Hyperscaler 资本开支增速为+87%（黄灯）；Big5 资本开支/经营现金流为≈95%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。\n\n破裂临近度为26.9–50.0。S&P 50 日均线上方比例为≈58%（黄灯）；市值加权 vs 等权重为-7.2 个百分点（黄灯）；高收益债利差为334 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。NVDA 客户投资/收入比、数据中心 ABS 利差、AI 收入增速的二阶导、Fed 3/6个月隐含路径待确认；现有材料不足以给出这些指标的单一灯色。\n\n综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。\n\n上下界只表示证据缺口全部取最低或最高灯色时的数学边界，并非概率或统计置信区间。四项影子观察继续展示但不进入主分、两轴或分类共振。历史相似度仅为人工结构类比，不是回测准确率。旧期记录保留原发布模型，不使用今天材料回填新口径的历史；跨模型不能宣称风险本周改善或恶化。来源限制、观测日期和过期标记应分别阅读；下一期以新增合格证据确认变化，不依据参考网站总分反推本站灯色。",
     "verdict_desc_source": "bubble-watch-narrative-v2",
     "narrative_plan": {
       "version": "bubble-watch-narrative-v2",
@@ -144,11 +144,10 @@
             "enterprise_deploy",
             "cloud_rpo_growth",
             "accounting_events",
-            "fed_policy",
             "capex_reaction",
             "ceo_hedging"
           ],
-          "summaryZh": "截至2026-11-10，固定核心23项中有5项红灯、8项黄灯、7项绿灯、3项待确认。核心红灯比例为21.7–34.8%，辅助压力为39.1–52.2。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
+          "summaryZh": "截至2026-11-17，固定核心23项中有4项红灯、8项黄灯、7项绿灯、4项待确认。核心红灯比例为17.4–34.8%，辅助压力为34.8–52.2。缺口保留在23个槽位中，未作为绿灯或零分，也未通过缩小分母提高红灯比例。"
         },
         {
           "key": "stage",
@@ -163,7 +162,7 @@
             "enterprise_deploy",
             "ceo_hedging"
           ],
-          "summaryZh": "泡沫成熟度为45.0–55.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为39.9（红灯）；前 5 大权重占比为≈27.8%（红灯）；NVDA 远期 PE为≈15x（绿灯）；Hyperscaler 资本开支增速为+87%（黄灯）；Big5 资本开支/经营现金流为≈95%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。"
+          "summaryZh": "泡沫成熟度为45.0–55.0，主要反映估值、资金投入和发行活动。CAPE 周期调整 PE为38.8（红灯）；前 5 大权重占比为≈26.5%（红灯）；NVDA 远期 PE为≈13x（绿灯）；Hyperscaler 资本开支增速为+87%（黄灯）；Big5 资本开支/经营现金流为≈95%（红灯）。这些指标描述当前金融结构，不单独给出见顶时点；公司之间的会计范围和样本限制应结合证据卡阅读。"
         },
         {
           "key": "trigger",
@@ -177,10 +176,9 @@
             "token_volume_mom",
             "cloud_rpo_growth",
             "accounting_events",
-            "fed_policy",
             "capex_reaction"
           ],
-          "summaryZh": "破裂临近度为34.6–50.0。S&P 50 日均线上方比例为≈69%（绿灯）；市值加权 vs 等权重为-6.5 个百分点（黄灯）；高收益债利差为342 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。NVDA 客户投资/收入比、数据中心 ABS 利差、AI 收入增速的二阶导待确认；现有材料不足以给出这些指标的单一灯色。"
+          "summaryZh": "破裂临近度为26.9–50.0。S&P 50 日均线上方比例为≈58%（黄灯）；市值加权 vs 等权重为-7.2 个百分点（黄灯）；高收益债利差为334 bps（绿灯）。信用价格和市场广度回答不同问题，应分别观察，不能将股价上涨直接解释为信用风险消失。NVDA 客户投资/收入比、数据中心 ABS 利差、AI 收入增速的二阶导、Fed 3/6个月隐含路径待确认；现有材料不足以给出这些指标的单一灯色。"
         },
         {
           "key": "verdict",
@@ -188,8 +186,7 @@
             "cape",
             "top5_weight",
             "mag4_fcf_yoy",
-            "vc_ai_share",
-            "fed_policy"
+            "vc_ai_share"
           ],
           "summaryZh": "综合判读为“高风险预警”。缺口的最低与最高补全仍得到相同有效档位；这是规则支持的档位，不能据此忽略未确认材料。辅助压力与两轴描述不同维度，不能相加作为新的总分。"
         },
@@ -202,20 +199,21 @@
       "evidenceGaps": [
         "nvda_invest_revenue",
         "dc_abs_spread",
-        "arr_2nd_deriv"
+        "arr_2nd_deriv",
+        "fed_policy"
       ],
       "evidenceHighlights": [
         {
           "id": "cape",
-          "note_summary": "multpl.com 最新可得数据 CAPE = 39.85,距 2000 年互联网泡沫峰值 44.19 约 10%;earnings yield ≈ 2.5%。阈值:>35 红 / 25-35 黄 / <25 绿"
+          "note_summary": "multpl.com 最新可得数据 CAPE = 38.76,距 2000 年互联网泡沫峰值 44.19 约 12%;earnings yield ≈ 2.6%。阈值:>35 红 / 25-35 黄 / <25 绿"
         },
         {
           "id": "top5_weight",
-          "note_summary": "SPY 持仓表最新可得数据:前 5 大权重 AAPL / NVDA / MSFT / AMZN / GOOGL 合计 ≈27.8%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿"
+          "note_summary": "SPY 持仓表最新可得数据:前 5 大权重 AAPL / MSFT / NVDA / AMZN / GOOGL 合计 ≈26.5%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿"
         },
         {
           "id": "nvda_fpe",
-          "note_summary": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 14.8x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿"
+          "note_summary": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 12.7x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿"
         },
         {
           "id": "hyperscaler_capex_yoy",
@@ -227,27 +225,27 @@
         },
         {
           "id": "vc_ai_share",
-          "note_summary": "Crunchbase 2026-Q3 全球创投融资：AI 102B 美元 / 总额 159B 美元，占比 64.2%。原报告发布于 2026-10-05；后续周报复核不改变该观察日期。"
+          "note_summary": "Crunchbase 2026-Q3 全球创投融资：AI 102B 美元 / 总额 159B 美元，占比 64.2%。原报告发布于 2026-10-05；后续周报复核不改变该观察日期。（沿用最近一期可用样本）"
         },
         {
           "id": "breadth_50d",
-          "note_summary": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 346 只收于 50 日均线上方,占比 ≈69.1%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
+          "note_summary": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 289 只收于 50 日均线上方,占比 ≈57.7%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
         },
         {
           "id": "spy_vs_rsp_6m",
-          "note_summary": "标普500市值加权与等权重ETF的6个月回报（RSP不是小盘股指数）:SPY +1.8% vs 等权重 RSP +8.3%；SPY−RSP -6.5 个百分点，等权重 RSP 领先市值加权 SPY。该差值不单独证明头部独涨或个股广度；既有灯色按差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿。"
+          "note_summary": "标普500市值加权与等权重ETF的6个月回报（RSP不是小盘股指数）:SPY -0.8% vs 等权重 RSP +6.4%；SPY−RSP -7.2 个百分点，等权重 RSP 领先市值加权 SPY。该差值不单独证明头部独涨或个股广度；既有灯色按差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿。"
         },
         {
           "id": "insider_sell_buy",
-          "note_summary": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-11-10，30日返回样本卖出约1700.5万美元、买入0美元，买入未达100万美元，不报倍数；90日返回样本卖出约15.53亿美元、买入约448.3万美元，卖买比约346.4倍。最近已返回P/S交易日2026-11-02；接口响应生成于2026-11-10，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露232笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
+          "note_summary": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-11-17，30日返回样本卖出约8245.0万美元、买入约5.0万美元，买入未达100万美元，不报倍数；90日返回样本卖出约16.11亿美元、买入约453.3万美元，卖买比约355.4倍。最近已返回P/S交易日2026-11-16；接口响应生成于2026-11-17，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露228笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
         },
         {
           "id": "ai_ipo_pipeline",
-          "note_summary": "发行/待发行管线不是已完成发行数；登记公司数为近6个月去重口径，S-1/A 申报不代表已定价或完成上市，申报份数不等于公司数。Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；SEC EDGAR 官方申报确认 6 份 S-1/F-1/424B4,涉及 Cerebras/Anthropic;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。"
+          "note_summary": "发行/待发行管线不是已完成发行数；登记公司数为近6个月去重口径，S-1/A 申报不代表已定价或完成上市，申报份数不等于公司数。Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；SEC EDGAR 官方申报确认 8 份 S-1/F-1/424B4,涉及 Cerebras/Anthropic;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。"
         },
         {
           "id": "hy_oas",
-          "note_summary": "广义高收益债 OAS 反映全市场信用环境，不是 AI 专属债券篮子，不能直接证明 AI 资本开支风险已被或尚未被定价。ICE BofA 高收益债 OAS = 3.42%（342 bps，2026-11-06）。阈值:>500 红 / 350-500 黄 / <350 绿"
+          "note_summary": "广义高收益债 OAS 反映全市场信用环境，不是 AI 专属债券篮子，不能直接证明 AI 资本开支风险已被或尚未被定价。ICE BofA 高收益债 OAS = 3.34%（334 bps，2026-11-16）。阈值:>500 红 / 350-500 黄 / <350 绿"
         },
         {
           "id": "debt_capex_ratio",
@@ -255,11 +253,11 @@
         },
         {
           "id": "neocloud_credit",
-          "note_summary": "CoreWeave、Nebius、Nscale、Lambda、Crusoe近90天扫描未见新的正式违约、评级下调或Watch事件，绿；价格压力与融资讨论不等同合同定义事件。（沿用最近一期可用样本）"
+          "note_summary": "CoreWeave、Nebius、Nscale、Lambda、Crusoe近90天扫描未见新的正式违约、评级下调或Watch事件，绿；贷款人收缩、Nebius搁置高收益债属于压力线索，但不等同合同定义事件。（沿用最近一期可用样本）"
         },
         {
           "id": "token_volume_mom",
-          "note_summary": "公开模型平台用量显示:最近 4 周合计 755.19T tokens,较前 4 周 +23.3%;上一窗口为 +36.5%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿"
+          "note_summary": "公开模型平台用量显示:最近 4 周合计 802.36T tokens,较前 4 周 +23.9%;上一窗口为 +33.7%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿"
         },
         {
           "id": "enterprise_deploy",
@@ -337,7 +335,8 @@
     "unknown_core_ids": [
       "nvda_invest_revenue",
       "dc_abs_spread",
-      "arr_2nd_deriv"
+      "arr_2nd_deriv",
+      "fed_policy"
     ],
     "override_rule": "固定核心23项；缺证据保留区间，原分类与两轴共振规则不变",
     "override_rules": {
@@ -357,15 +356,17 @@
       "threshold_text": ">35 红 / 25-35 黄 / <25 绿",
       "source_name": "CAPE 历史估值序列",
       "status": "red",
-      "value_display": "39.9",
-      "note": "multpl.com 最新可得数据 CAPE = 39.85,距 2000 年互联网泡沫峰值 44.19 约 10%;earnings yield ≈ 2.5%。阈值:>35 红 / 25-35 黄 / <25 绿",
-      "as_of": "2026-11-10",
+      "value_display": "38.8",
+      "note": "multpl.com 最新可得数据 CAPE = 38.76,距 2000 年互联网泡沫峰值 44.19 约 12%;earnings yield ≈ 2.6%。阈值:>35 红 / 25-35 黄 / <25 绿",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:06.553Z",
+        "fetchedAt": "2026-11-17T23:04:23.909Z",
         "detail": {
-          "cape": 39.85
+          "cape": 38.76,
+          "observationDate": "2026-11-17",
+          "sourceTimestamp": "2026-11-17T16:00:00-05:00"
         }
       }
     },
@@ -379,37 +380,38 @@
       "threshold_text": ">25% 红 / 18-25% 黄 / <18% 绿",
       "source_name": "SPY 持仓集中度",
       "status": "red",
-      "value_display": "≈27.8%",
-      "note": "SPY 持仓表最新可得数据:前 5 大权重 AAPL / NVDA / MSFT / AMZN / GOOGL 合计 ≈27.8%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿",
-      "as_of": "2026-11-10",
+      "value_display": "≈26.5%",
+      "note": "SPY 持仓表最新可得数据:前 5 大权重 AAPL / MSFT / NVDA / AMZN / GOOGL 合计 ≈26.5%,贴近 2000 年集中度极值区;市值高度押注少数 AI 龙头。阈值:>25% 红 / 18-25% 黄 / <18% 绿",
+      "as_of": "2026-11-16",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:06.634Z",
+        "fetchedAt": "2026-11-17T23:04:23.981Z",
         "detail": {
+          "observationDate": "2026-11-16",
           "top5": [
             {
               "symbol": "AAPL",
-              "weight": 7.85
-            },
-            {
-              "symbol": "NVDA",
-              "weight": 7.1
+              "weight": 8.04
             },
             {
               "symbol": "MSFT",
-              "weight": 6.19
+              "weight": 6.01
+            },
+            {
+              "symbol": "NVDA",
+              "weight": 5.9
             },
             {
               "symbol": "AMZN",
-              "weight": 4
+              "weight": 3.95
             },
             {
               "symbol": "GOOGL",
-              "weight": 2.63
+              "weight": 2.6
             }
           ],
-          "sum": 27.77
+          "sum": 26.5
         }
       }
     },
@@ -423,15 +425,16 @@
       "threshold_text": ">40 红 / 30-40 黄 / <30 绿",
       "source_name": "NVDA 远期估值",
       "status": "green",
-      "value_display": "≈15x",
-      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 14.8x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿",
-      "as_of": "2026-11-10",
+      "value_display": "≈13x",
+      "note": "StockAnalysis 最新可得数据 NVDA 远期 PE ≈ 12.7x;远期盈利持续上修使倍数处于历史区间低位,NVDA 自身估值并非当前泡沫的主要源头。阈值:>40 红 / 30-40 黄 / <30 绿",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:06.724Z",
+        "fetchedAt": "2026-11-17T23:04:24.016Z",
         "detail": {
-          "forwardPe": 14.75
+          "forwardPe": 12.69,
+          "observationDate": "2026-11-17"
         }
       }
     },
@@ -445,13 +448,13 @@
       "threshold_text": "折价/下跌=红 / 溢价收窄+卖压=黄 / 溢价稳定或扩大=绿",
       "source_name": "Forge / Caplight 私募二级标价",
       "status": "red",
-      "value_display": "Anthropic −13.55% / OpenAI +0.06%",
-      "note": "11/8 Clarity指示标价：Anthropic $985.88、隐含$834.28B，较$965B一级估值折价13.55%，触发红；OpenAI $956.79、隐含$1,250.73B，较11/6新一级估值$1,250B溢价0.06%。均非成交。",
-      "as_of": "2026-11-08",
+      "value_display": "Anthropic −28.05% / OpenAI −0.79%",
+      "note": "11/15 Clarity指示标价：Anthropic $820.51、隐含$694.34B，较$965B一级估值折价28.05%，红；OpenAI $947.83、隐含$1,240.12B，较$1,250B一级估值折价0.79%。均非成交。",
+      "as_of": "2026-11-15",
       "stale": false,
       "provenance": {
         "mode": "curated",
-        "asOfDate": "2026-11-08",
+        "asOfDate": "2026-11-15",
         "ageDays": 2,
         "maxAgeDays": 21
       }
@@ -472,7 +475,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:07.631Z",
+        "fetchedAt": "2026-11-17T23:04:24.756Z",
         "detail": {
           "yoyPct": 86.60805803043445,
           "source": "SEC EDGAR",
@@ -646,8 +649,8 @@
                 ],
                 "freshness": {
                   "observationDate": "2026-09-30",
-                  "asOfDate": "2026-11-10",
-                  "ageDays": 41,
+                  "asOfDate": "2026-11-17",
+                  "ageDays": 48,
                   "maxAgeDays": 120,
                   "status": "fresh"
                 },
@@ -835,8 +838,8 @@
                 ],
                 "freshness": {
                   "observationDate": "2026-09-30",
-                  "asOfDate": "2026-11-10",
-                  "ageDays": 41,
+                  "asOfDate": "2026-11-17",
+                  "ageDays": 48,
                   "maxAgeDays": 120,
                   "status": "fresh"
                 },
@@ -1024,8 +1027,8 @@
                 ],
                 "freshness": {
                   "observationDate": "2026-09-30",
-                  "asOfDate": "2026-11-10",
-                  "ageDays": 41,
+                  "asOfDate": "2026-11-17",
+                  "ageDays": 48,
                   "maxAgeDays": 120,
                   "status": "fresh"
                 },
@@ -1213,8 +1216,8 @@
                 ],
                 "freshness": {
                   "observationDate": "2026-09-30",
-                  "asOfDate": "2026-11-10",
-                  "ageDays": 41,
+                  "asOfDate": "2026-11-17",
+                  "ageDays": 48,
                   "maxAgeDays": 120,
                   "status": "fresh"
                 },
@@ -1253,7 +1256,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:09.188Z",
+        "fetchedAt": "2026-11-17T23:04:26.006Z",
         "detail": {
           "ratioPct": 95.47623784811455,
           "prevRatioPct": 63.97927854663222,
@@ -1433,8 +1436,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -1617,8 +1620,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -1811,8 +1814,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -1995,8 +1998,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -2189,8 +2192,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -2373,8 +2376,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -2567,8 +2570,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -2751,8 +2754,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-09-30",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 41,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 48,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -2945,8 +2948,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-08-31",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 71,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 78,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -3129,8 +3132,8 @@
                   ],
                   "freshness": {
                     "observationDate": "2026-08-31",
-                    "asOfDate": "2026-11-10",
-                    "ageDays": 71,
+                    "asOfDate": "2026-11-17",
+                    "ageDays": 78,
                     "maxAgeDays": 120,
                     "status": "fresh"
                   },
@@ -3290,31 +3293,20 @@
       "name_en": "AI / Total VC Funding",
       "name_zh": "AI 占 VC 投资比重",
       "threshold_text": ">50% 红 / 30-50% 黄 / <30% 绿",
-      "source_name": "VC 市场季度研究",
+      "source_name": "Crunchbase / PitchBook(季度研究口径)",
       "status": "red",
       "value_display": "64.2%",
-      "note": "Crunchbase 2026-Q3 全球创投融资：AI 102B 美元 / 总额 159B 美元，占比 64.2%。原报告发布于 2026-10-05；后续周报复核不改变该观察日期。",
+      "note": "Crunchbase 2026-Q3 全球创投融资：AI 102B 美元 / 总额 159B 美元，占比 64.2%。原报告发布于 2026-10-05；后续周报复核不改变该观察日期。（沿用最近一期可用样本）",
       "as_of": "2026-10-05",
       "stale": false,
       "provenance": {
         "mode": "auto_fallback",
         "asOfDate": "2026-10-05",
-        "ageDays": 36,
+        "ageDays": 43,
         "maxAgeDays": 120,
         "reason": "hybrid_live source failed: vc_current_period_unconfirmed: no recent single-period global AI share evidence",
-        "evidenceGate": {
-          "policy": "bubble-evidence-gap-v1",
-          "reasonCode": "vc_current_period_unconfirmed",
-          "checkedAt": "2026-11-10",
-          "checks": [
-            {
-              "source": "Crunchbase News WordPress API",
-              "status": "ok"
-            }
-          ]
-        },
-        "reviewAsOfDate": "2026-11-08",
-        "reportAsOfDate": "2026-11-08",
+        "reviewAsOfDate": "2026-11-15",
+        "reportAsOfDate": "2026-11-15",
         "detail": {
           "sourceObservation": {
             "contract": "bubble-source-observation-v1",
@@ -3329,6 +3321,17 @@
             "aiFundingUsdB": 102,
             "totalFundingUsdB": 159
           }
+        },
+        "evidenceGate": {
+          "policy": "bubble-evidence-gap-v1",
+          "reasonCode": "vc_current_period_unconfirmed",
+          "checkedAt": "2026-11-17",
+          "checks": [
+            {
+              "source": "Crunchbase News WordPress API",
+              "status": "ok"
+            }
+          ]
         }
       }
     },
@@ -3349,11 +3352,11 @@
       "evidence_gap": {
         "policy": "nvda-period-aligned-ratio-v1",
         "reasonCode": "nvda_comparable_commitment_revenue_evidence_unavailable",
-        "checkedDate": "2026-11-10"
+        "checkedDate": "2026-11-17"
       },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-11-10T00:27:09.954Z",
+        "checkedAt": "2026-11-17T23:04:26.780Z",
         "detail": {
           "contractVersion": "nvda-period-aligned-ratio-v1",
           "qualificationStatus": "unavailable",
@@ -3375,21 +3378,21 @@
       "name_zh": "S&P 50 日均线上方比例",
       "threshold_text": "<40% 红 / 40-60% 黄 / >60% 绿",
       "source_name": "Yahoo 行情与维基百科成份股名单实算",
-      "status": "green",
-      "value_display": "≈69%",
-      "note": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 346 只收于 50 日均线上方,占比 ≈69.1%。阈值:<40% 红 / 40-60% 黄 / >60% 绿",
-      "as_of": "2026-11-09",
+      "status": "yellow",
+      "value_display": "≈58%",
+      "note": "Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 289 只收于 50 日均线上方,占比 ≈57.7%。阈值:<40% 红 / 40-60% 黄 / >60% 绿",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:24.727Z",
+        "fetchedAt": "2026-11-17T23:04:43.440Z",
         "detail": {
           "source": "Yahoo Chart × Wikipedia constituents fallback",
-          "observationDate": "2026-11-09",
+          "observationDate": "2026-11-17",
           "universeSize": 502,
-          "above": 346,
+          "above": 289,
           "counted": 501,
-          "pct": 69.061876247505
+          "pct": 57.684630738522955
         }
       }
     },
@@ -3403,17 +3406,28 @@
       "threshold_text": "差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿",
       "source_name": "市值加权与等权重 ETF",
       "status": "yellow",
-      "value_display": "-6.5 个百分点",
-      "note": "标普500市值加权与等权重ETF的6个月回报（RSP不是小盘股指数）:SPY +1.8% vs 等权重 RSP +8.3%；SPY−RSP -6.5 个百分点，等权重 RSP 领先市值加权 SPY。该差值不单独证明头部独涨或个股广度；既有灯色按差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿。",
-      "as_of": "2026-11-10",
+      "value_display": "-7.2 个百分点",
+      "note": "标普500市值加权与等权重ETF的6个月回报（RSP不是小盘股指数）:SPY -0.8% vs 等权重 RSP +6.4%；SPY−RSP -7.2 个百分点，等权重 RSP 领先市值加权 SPY。该差值不单独证明头部独涨或个股广度；既有灯色按差值绝对值:>10 个百分点 红 / 5–10 个百分点 黄 / <5 个百分点 绿。",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:27:24.869Z",
+        "fetchedAt": "2026-11-17T23:04:43.646Z",
         "detail": {
-          "spyRet": 1.8111747422599984,
-          "rspRet": 8.314128632957203,
-          "spread": -6.502953890697205
+          "spyRet": -0.840725887416355,
+          "rspRet": 6.390528234740966,
+          "spread": -7.2312541221573206,
+          "startDate": "2026-05-18",
+          "observationDate": "2026-11-17",
+          "commonSessions": 128,
+          "priceBasis": "unadjusted_close_price_return",
+          "freshness": {
+            "observationDate": "2026-11-17",
+            "asOfDate": "2026-11-17",
+            "ageDays": 0,
+            "maxAgeDays": 7,
+            "status": "fresh"
+          }
         }
       }
     },
@@ -3427,16 +3441,16 @@
       "threshold_text": "有效返回≥8家；任一窗口卖买≥5倍=黄（买入不足100万美元时，卖出≥500万美元）；其余待确认",
       "source_name": "SEC Form 4公开披露 · XOOMAR返回样本",
       "status": "yellow",
-      "as_of": "2026-11-02",
+      "as_of": "2026-11-16",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-11-10T00:28:36.544Z",
+        "checkedAt": "2026-11-17T23:05:55.464Z",
         "detail": {
           "status": "yellow",
           "policy": "insider_fixed_12_30_90_v1",
-          "windowStartDate": "2026-08-13",
-          "windowEndDate": "2026-11-10",
+          "windowStartDate": "2026-08-20",
+          "windowEndDate": "2026-11-17",
           "basket": [
             "NVDA",
             "MSFT",
@@ -3451,8 +3465,8 @@
             "NOW",
             "SMCI"
           ],
-          "checkedAt": "2026-11-10T00:28:36.544Z",
-          "latestTransactionDate": "2026-11-02",
+          "checkedAt": "2026-11-17T23:05:55.464Z",
+          "latestTransactionDate": "2026-11-16",
           "coverageStatus": "returned_sample_completeness_unverified",
           "validResponseSymbols": [
             "NVDA",
@@ -3487,8 +3501,8 @@
           "companies": [
             {
               "symbol": "NVDA",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:27:25.352Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/NVDA?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:04:44.374Z",
               "returnedRecordCount": 35,
               "oldestReturnedDate": "2026-08-31",
               "newestReturnedDate": "2026-11-04",
@@ -3513,37 +3527,37 @@
             },
             {
               "symbol": "MSFT",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:27:31.794Z",
-              "returnedRecordCount": 44,
-              "oldestReturnedDate": "2026-08-17",
-              "newestReturnedDate": "2026-11-06",
-              "latestIncludedTransactionDate": "2026-10-13",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/MSFT?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:04:50.841Z",
+              "returnedRecordCount": 47,
+              "oldestReturnedDate": "2026-08-31",
+              "newestReturnedDate": "2026-11-16",
+              "latestIncludedTransactionDate": "2026-11-10",
               "localRecordLimitReached": false,
               "windows": {
                 "30": {
                   "buyUsd": "0",
-                  "sellUsd": "3984302.9925",
+                  "sellUsd": "6631633.3939",
                   "transactionCount": 3,
                   "scheduledCount": 0,
                   "scheduleUnknownCount": 3
                 },
                 "90": {
                   "buyUsd": "0",
-                  "sellUsd": "68137679.915",
-                  "transactionCount": 17,
+                  "sellUsd": "74769313.3089",
+                  "transactionCount": 20,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 17
+                  "scheduleUnknownCount": 20
                 }
               }
             },
             {
               "symbol": "AMZN",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:27:37.951Z",
-              "returnedRecordCount": 43,
-              "oldestReturnedDate": "2026-08-15",
-              "newestReturnedDate": "2026-11-02",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMZN?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:04:56.843Z",
+              "returnedRecordCount": 42,
+              "oldestReturnedDate": "2026-08-21",
+              "newestReturnedDate": "2026-11-15",
               "latestIncludedTransactionDate": "2026-11-02",
               "localRecordLimitReached": false,
               "windows": {
@@ -3556,43 +3570,43 @@
                 },
                 "90": {
                   "buyUsd": "0",
-                  "sellUsd": "18545508.9265",
-                  "transactionCount": 26,
+                  "sellUsd": "17562515.4351",
+                  "transactionCount": 23,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 26
+                  "scheduleUnknownCount": 23
                 }
               }
             },
             {
               "symbol": "GOOGL",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:27:44.489Z",
-              "returnedRecordCount": 174,
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/GOOGL?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:03.346Z",
+              "returnedRecordCount": 179,
               "oldestReturnedDate": "2026-08-25",
-              "newestReturnedDate": "2026-10-29",
-              "latestIncludedTransactionDate": "2026-10-29",
+              "newestReturnedDate": "2026-11-12",
+              "latestIncludedTransactionDate": "2026-11-12",
               "localRecordLimitReached": false,
               "windows": {
                 "30": {
                   "buyUsd": "0",
-                  "sellUsd": "23288",
-                  "transactionCount": 1,
+                  "sellUsd": "113288",
+                  "transactionCount": 2,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 1
+                  "scheduleUnknownCount": 2
                 },
                 "90": {
                   "buyUsd": "0",
-                  "sellUsd": "79237.57",
-                  "transactionCount": 3,
+                  "sellUsd": "169237.57",
+                  "transactionCount": 4,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 3
+                  "scheduleUnknownCount": 4
                 }
               }
             },
             {
               "symbol": "ORCL",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:27:57.483Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/ORCL?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:16.346Z",
               "returnedRecordCount": 46,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-10-23",
@@ -3617,8 +3631,8 @@
             },
             {
               "symbol": "AVGO",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:28:03.968Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AVGO?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:22.846Z",
               "returnedRecordCount": 19,
               "oldestReturnedDate": "2026-09-15",
               "newestReturnedDate": "2026-09-23",
@@ -3643,60 +3657,60 @@
             },
             {
               "symbol": "AMD",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:28:10.495Z",
-              "returnedRecordCount": 116,
-              "oldestReturnedDate": "2026-08-13",
-              "newestReturnedDate": "2026-10-15",
-              "latestIncludedTransactionDate": "2026-10-15",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/AMD?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:29.349Z",
+              "returnedRecordCount": 85,
+              "oldestReturnedDate": "2026-08-20",
+              "newestReturnedDate": "2026-11-16",
+              "latestIncludedTransactionDate": "2026-11-16",
               "localRecordLimitReached": false,
               "windows": {
                 "30": {
                   "buyUsd": "0",
-                  "sellUsd": "9333585.37",
-                  "transactionCount": 9,
+                  "sellUsd": "10144573.49",
+                  "transactionCount": 7,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 9
+                  "scheduleUnknownCount": 7
                 },
                 "90": {
                   "buyUsd": "0",
-                  "sellUsd": "114799368.39",
-                  "transactionCount": 85,
+                  "sellUsd": "104952366.91",
+                  "transactionCount": 76,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 85
+                  "scheduleUnknownCount": 76
                 }
               }
             },
             {
               "symbol": "PLTR",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:28:16.981Z",
-              "returnedRecordCount": 48,
-              "oldestReturnedDate": "2026-08-17",
-              "newestReturnedDate": "2026-11-02",
-              "latestIncludedTransactionDate": "2026-11-02",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/PLTR?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:35.844Z",
+              "returnedRecordCount": 53,
+              "oldestReturnedDate": "2026-08-20",
+              "newestReturnedDate": "2026-11-11",
+              "latestIncludedTransactionDate": "2026-11-11",
               "localRecordLimitReached": false,
               "windows": {
                 "30": {
                   "buyUsd": "0",
-                  "sellUsd": "3420848.53",
-                  "transactionCount": 9,
+                  "sellUsd": "65186181.0995",
+                  "transactionCount": 8,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 9
+                  "scheduleUnknownCount": 8
                 },
                 "90": {
                   "buyUsd": "0",
-                  "sellUsd": "100930962.045",
-                  "transactionCount": 41,
+                  "sellUsd": "163075698.4928",
+                  "transactionCount": 44,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 41
+                  "scheduleUnknownCount": 44
                 }
               }
             },
             {
               "symbol": "CRM",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:28:23.481Z",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/CRM?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:42.358Z",
               "returnedRecordCount": 36,
               "oldestReturnedDate": "2026-08-22",
               "newestReturnedDate": "2026-10-22",
@@ -3721,24 +3735,24 @@
             },
             {
               "symbol": "NOW",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:28:29.973Z",
-              "returnedRecordCount": 46,
-              "oldestReturnedDate": "2026-08-13",
-              "newestReturnedDate": "2026-08-31",
-              "latestIncludedTransactionDate": "2026-08-31",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/NOW?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:48.856Z",
+              "returnedRecordCount": 18,
+              "oldestReturnedDate": "2026-08-27",
+              "newestReturnedDate": "2026-11-09",
+              "latestIncludedTransactionDate": "2026-11-09",
               "localRecordLimitReached": false,
               "windows": {
                 "30": {
                   "buyUsd": "0",
-                  "sellUsd": "0",
-                  "transactionCount": 0,
+                  "sellUsd": "131091.3",
+                  "transactionCount": 1,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 0
+                  "scheduleUnknownCount": 1
                 },
                 "90": {
                   "buyUsd": "0",
-                  "sellUsd": "1937914.2198",
+                  "sellUsd": "1880605.5198",
                   "transactionCount": 4,
                   "scheduledCount": 0,
                   "scheduleUnknownCount": 4
@@ -3747,35 +3761,35 @@
             },
             {
               "symbol": "SMCI",
-              "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-08-13&to=2026-11-10&limit=2000",
-              "responseBuiltAt": "2026-11-10T00:28:36.488Z",
-              "returnedRecordCount": 22,
-              "oldestReturnedDate": "2026-08-17",
-              "newestReturnedDate": "2026-10-07",
-              "latestIncludedTransactionDate": "2026-10-07",
+              "sourceUrl": "https://xoomar.com/api/markets/insiders/SMCI?from=2026-08-20&to=2026-11-17&limit=2000",
+              "responseBuiltAt": "2026-11-17T23:05:55.355Z",
+              "returnedRecordCount": 31,
+              "oldestReturnedDate": "2026-09-03",
+              "newestReturnedDate": "2026-11-10",
+              "latestIncludedTransactionDate": "2026-11-06",
               "localRecordLimitReached": false,
               "windows": {
                 "30": {
-                  "buyUsd": "0",
+                  "buyUsd": "49940.6285",
                   "sellUsd": "0",
-                  "transactionCount": 0,
+                  "transactionCount": 1,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 0
+                  "scheduleUnknownCount": 1
                 },
                 "90": {
-                  "buyUsd": "0",
+                  "buyUsd": "49940.6285",
                   "sellUsd": "24441167.4",
-                  "transactionCount": 8,
+                  "transactionCount": 9,
                   "scheduledCount": 0,
-                  "scheduleUnknownCount": 8
+                  "scheduleUnknownCount": 9
                 }
               }
             }
           ],
           "totals": {
             "30": {
-              "buyUsd": "0",
-              "sellUsd": "17005494.8925",
+              "buyUsd": "49940.6285",
+              "sellUsd": "82450237.2834",
               "transactionCount": 23,
               "scheduledCount": 0,
               "scheduleUnknownCount": 23,
@@ -3783,12 +3797,12 @@
               "buyDenominatorSufficient": false
             },
             "90": {
-              "buyUsd": "4483250.8496",
-              "sellUsd": "1552992205.008",
-              "transactionCount": 232,
+              "buyUsd": "4533191.4781",
+              "sellUsd": "1610971271.1783",
+              "transactionCount": 228,
               "scheduledCount": 0,
-              "scheduleUnknownCount": 232,
-              "ratio": 346.3986863787824,
+              "scheduleUnknownCount": 228,
+              "ratio": 355.37242998910506,
               "buyDenominatorSufficient": true
             }
           },
@@ -3817,7 +3831,7 @@
         }
       },
       "value_display": "高卖压·覆盖受限",
-      "note": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-11-10，30日返回样本卖出约1700.5万美元、买入0美元，买入未达100万美元，不报倍数；90日返回样本卖出约15.53亿美元、买入约448.3万美元，卖买比约346.4倍。最近已返回P/S交易日2026-11-02；接口响应生成于2026-11-10，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露232笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
+      "note": "固定12家公司，取得11家合格返回，其中11家有窗口内P/S交易、0家返回空样本。窗口截至2026-11-17，30日返回样本卖出约8245.0万美元、买入约5.0万美元，买入未达100万美元，不报倍数；90日返回样本卖出约16.11亿美元、买入约453.3万美元，卖买比约355.4倍。最近已返回P/S交易日2026-11-16；接口响应生成于2026-11-17，不代表底层数据更新。窗口完整性未核实，最多保守黄灯，其余待确认；金额按原始小数判定，展示约数不作为阈值，未使用买入分母下限。计划属性未披露228笔；未把未知当非计划或折减卖出。1家公司样本暂不可用。统计可能遗漏尚未申报、未入库或后续更正，不等同全市场净卖出，也不与2000年峰值倍数直接比较。"
     },
     {
       "id": "ai_ipo_pipeline",
@@ -3827,15 +3841,15 @@
       "name_en": "AI IPO/SPAC Pipeline",
       "name_zh": "AI 发行/待发行管线",
       "threshold_text": "洪流=红 / 升温=黄 / 平静=绿",
-      "source_name": "一级市场公开报道",
+      "source_name": "发行/待发行管线公开报道与申报",
       "status": "yellow",
-      "value_display": "5 家（升温）",
-      "note": "发行/待发行管线不是已完成发行数；登记公司数为近6个月去重口径，S-1/A 申报不代表已定价或完成上市，申报份数不等于公司数。Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；SEC EDGAR 官方申报确认 6 份 S-1/F-1/424B4,涉及 Cerebras/Anthropic;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。",
-      "as_of": "2026-11-10",
+      "value_display": "6 家（升温）",
+      "note": "发行/待发行管线不是已完成发行数；登记公司数为近6个月去重口径，S-1/A 申报不代表已定价或完成上市，申报份数不等于公司数。Crunchbase News 公开检索命中 2 条 AI IPO/exit 相关报道,涉及 OpenAI/Anthropic/Databricks/Cerebras/SpaceX；SEC EDGAR 官方申报确认 8 份 S-1/F-1/424B4,涉及 Cerebras/Anthropic;最新要点「AI Services And Robotics Lead Diverse Crop Of 29 New Ma…」(2026-06-09)。判级:洪流=红 / 升温=黄 / 平静=绿 发行热度正在升温，但已挂牌和明确待发公司数仍不足以构成 IPO 洪流，因此维持黄灯。",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:38.215Z",
+        "fetchedAt": "2026-11-17T23:05:57.251Z",
         "detail": {
           "source": "Crunchbase News + SEC EDGAR S-1/F-1 confirmation",
           "crunchbaseSource": "Crunchbase News WordPress API",
@@ -3874,7 +3888,7 @@
                 "exchange": null
               }
             ],
-            "filingCount": 6,
+            "filingCount": 8,
             "companyCount": 2,
             "filings": [
               {
@@ -3924,6 +3938,26 @@
                 "ticker": "ANT",
                 "exchange": null,
                 "form": "S-1/A",
+                "filingDate": "2026-11-17",
+                "accessionNumber": "0001628280-26-074338"
+              },
+              {
+                "company": "Anthropic, PBC",
+                "matchedName": "Anthropic",
+                "cik": "0002130357",
+                "ticker": "ANT",
+                "exchange": null,
+                "form": "S-1/A",
+                "filingDate": "2026-11-10",
+                "accessionNumber": "0001628280-26-072484"
+              },
+              {
+                "company": "Anthropic, PBC",
+                "matchedName": "Anthropic",
+                "cik": "0002130357",
+                "ticker": "ANT",
+                "exchange": null,
+                "form": "S-1/A",
                 "filingDate": "2026-11-02",
                 "accessionNumber": "0001628280-26-068676"
               },
@@ -3946,10 +3980,10 @@
             "rawStatus": "red",
             "rawValueDisplay": "洪流",
             "publishedStatus": "yellow",
-            "publishedValueDisplay": "5 家（升温）",
+            "publishedValueDisplay": "6 家（升温）",
             "displayAnchor": {
               "source": "local_curated_snapshot",
-              "asOfDate": "2026-11-08",
+              "asOfDate": "2026-11-15",
               "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
@@ -3962,10 +3996,10 @@
             "rawStatus": "red",
             "rawValueDisplay": "洪流",
             "publishedStatus": "yellow",
-            "publishedValueDisplay": "5 家（升温）",
+            "publishedValueDisplay": "6 家（升温）",
             "displayAnchor": {
               "source": "local_curated_snapshot",
-              "asOfDate": "2026-11-08",
+              "asOfDate": "2026-11-15",
               "ageDays": 2,
               "maxAgeDays": 21,
               "syncedFromUpstream": true
@@ -3973,7 +4007,7 @@
           },
           "sourceCandidateStatus": "hybrid_live",
           "sourceCandidatePrimarySignal": "AI IPO / exit pipeline heat from public startup-market reporting",
-          "curatedFallbackAsOfDate": "2026-11-08"
+          "curatedFallbackAsOfDate": "2026-11-15"
         }
       }
     },
@@ -3987,16 +4021,16 @@
       "threshold_text": ">500 红 / 350-500 黄 / <350 绿",
       "source_name": "ICE BofA 高收益债利差",
       "status": "green",
-      "value_display": "342 bps",
-      "note": "广义高收益债 OAS 反映全市场信用环境，不是 AI 专属债券篮子，不能直接证明 AI 资本开支风险已被或尚未被定价。ICE BofA 高收益债 OAS = 3.42%（342 bps，2026-11-06）。阈值:>500 红 / 350-500 黄 / <350 绿",
-      "as_of": "2026-11-10",
+      "value_display": "334 bps",
+      "note": "广义高收益债 OAS 反映全市场信用环境，不是 AI 专属债券篮子，不能直接证明 AI 资本开支风险已被或尚未被定价。ICE BofA 高收益债 OAS = 3.34%（334 bps，2026-11-16）。阈值:>500 红 / 350-500 黄 / <350 绿",
+      "as_of": "2026-11-16",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:38.410Z",
+        "fetchedAt": "2026-11-17T23:05:57.579Z",
         "detail": {
-          "bps": 342,
-          "date": "2026-11-06"
+          "bps": 334,
+          "date": "2026-11-16"
         }
       }
     },
@@ -4017,11 +4051,11 @@
       "evidence_gap": {
         "policy": "bubble-qualified-evidence-v1",
         "reasonCode": "dc_abs_direct_spread_unavailable",
-        "checkedDate": "2026-11-10"
+        "checkedDate": "2026-11-17"
       },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-11-10T00:28:38.410Z",
+        "checkedAt": "2026-11-17T23:05:57.579Z",
         "detail": {
           "status": "unknown",
           "reasonCode": "dc_abs_direct_spread_unavailable",
@@ -4041,11 +4075,11 @@
       "status": "yellow",
       "value_display": "≈52%",
       "note": "Morgan Stanley 公开研究页解析:2025-2028 数据中心总 capex 约 $2.9T,其中 hyperscaler cash flows 覆盖约 $1.4T,隐含外部融资缺口约 $1.5T,占 capex ≈52%;债务/类债子项(公司债、ABS/CMBS、private credit/JV debt)约 $1.15T,占 capex ≈40%。本项以外部融资缺口/Capex 为主口径,不是单一债券发行额。阈值:>60% 红 / 30-60% 黄 / <30% 绿",
-      "as_of": "2026-11-10",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:38.478Z",
+        "fetchedAt": "2026-11-17T23:05:57.883Z",
         "detail": {
           "source": "Morgan Stanley public AI capex financing split",
           "url": "https://www.morganstanley.com/insights/articles/ai-market-trends-institute-2026",
@@ -4066,7 +4100,7 @@
           },
           "sourceCandidateStatus": "hybrid_live",
           "sourceCandidatePrimarySignal": "External financing gap versus AI data-center capex",
-          "curatedFallbackAsOfDate": "2026-11-08"
+          "curatedFallbackAsOfDate": "2026-11-15"
         }
       }
     },
@@ -4081,19 +4115,19 @@
       "source_name": "Neocloud 公开融资与信用事件",
       "status": "green",
       "value_display": "0 项已确认事件",
-      "note": "CoreWeave、Nebius、Nscale、Lambda、Crusoe近90天扫描未见新的正式违约、评级下调或Watch事件，绿；价格压力与融资讨论不等同合同定义事件。（沿用最近一期可用样本）",
-      "as_of": "2026-11-08",
+      "note": "CoreWeave、Nebius、Nscale、Lambda、Crusoe近90天扫描未见新的正式违约、评级下调或Watch事件，绿；贷款人收缩、Nebius搁置高收益债属于压力线索，但不等同合同定义事件。（沿用最近一期可用样本）",
+      "as_of": "2026-11-15",
       "stale": false,
       "provenance": {
         "mode": "auto_fallback",
-        "asOfDate": "2026-11-08",
+        "asOfDate": "2026-11-15",
         "ageDays": 2,
         "maxAgeDays": 21,
         "reason": "hybrid_live source failed: neocloud_current_coverage_unconfirmed: missing recent dated coverage for CoreWeave/Lambda/Crusoe/Nebius",
         "evidenceGate": {
           "policy": "bubble-evidence-gap-v1",
           "reasonCode": "neocloud_current_coverage_unconfirmed",
-          "checkedAt": "2026-11-10",
+          "checkedAt": "2026-11-17",
           "checks": [
             {
               "source": "PRNewswire:CoreWeave",
@@ -4128,46 +4162,46 @@
       "name_zh": "AI 行业 Token 月度环比",
       "threshold_text": "收缩=红 / 减速=黄 / 加速=绿",
       "source_name": "公开模型平台用量",
-      "status": "yellow",
-      "value_display": "减速(+23.3%)",
-      "note": "公开模型平台用量显示:最近 4 周合计 755.19T tokens,较前 4 周 +23.3%;上一窗口为 +36.5%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿",
-      "as_of": "2026-11-10",
+      "status": "green",
+      "value_display": "加速(+23.9%)",
+      "note": "公开模型平台用量显示:最近 4 周合计 802.36T tokens,较前 4 周 +23.9%;上一窗口为 +33.7%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:42.771Z",
+        "fetchedAt": "2026-11-17T23:06:01.719Z",
         "detail": {
           "source": "OpenRouter /api/frontend/v1/rankings/market-share",
-          "latestWeek": "2026-11-02",
+          "latestWeek": "2026-11-09",
           "rows": [
             {
-              "date": "2026-10-12",
-              "totalTokens": 164043985914931
-            },
-            {
               "date": "2026-10-19",
-              "totalTokens": 188039304051712
+              "totalTokens": 188012184445530
             },
             {
               "date": "2026-10-26",
-              "totalTokens": 193593270018919
+              "totalTokens": 193583878704232
             },
             {
               "date": "2026-11-02",
-              "totalTokens": 209517521188141
+              "totalTokens": 209479742661067
+            },
+            {
+              "date": "2026-11-09",
+              "totalTokens": 211280142506486
             }
           ],
-          "latest4wTokens": 755194081173703,
-          "prev4wTokens": 612438926896408,
+          "latest4wTokens": 802355948317315,
+          "prev4wTokens": 647362365358520,
           "droppedPartialWeek": {
-            "date": "2026-11-09",
-            "totalTokens": 30164848690656
+            "date": "2026-11-16",
+            "totalTokens": 83553648974958
           },
-          "momPct": 23.309288160489768,
-          "prevMomPct": 36.52205400233521,
+          "momPct": 23.94232214487121,
+          "prevMomPct": 33.71983770797096,
           "sourceCandidateStatus": "hybrid_live",
           "sourceCandidatePrimarySignal": "AI token usage growth",
-          "curatedFallbackAsOfDate": "2026-11-08"
+          "curatedFallbackAsOfDate": "2026-11-14"
         }
       }
     },
@@ -4181,62 +4215,60 @@
       "threshold_text": ">2x 红 / 1-2x 黄 / <1x 绿",
       "source_name": "公开模型平台用量与价格口径",
       "status": "green",
-      "value_display": "~0.2x",
-      "note": "公开模型平台用量与价格口径显示:最近 4 周 token volume +23.3%,估算 spend +99.5%,token/spend 增速比 ~0.2x;定价覆盖 61.3%。该口径用于观察平台内用量与价格变化，不能等同厂商确认收入。阈值:>2x 红 / 1-2x 黄 / <1x 绿",
-      "as_of": "2026-11-10",
+      "value_display": "~0.4x",
+      "note": "公开模型平台用量与价格口径显示:最近 4 周 token volume +23.9%,估算 spend +59.8%,token/spend 增速比 ~0.4x;定价覆盖 62.4%。该口径用于观察平台内用量与价格变化，不能等同厂商确认收入。阈值:>2x 红 / 1-2x 黄 / <1x 绿",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:43.023Z",
+        "fetchedAt": "2026-11-17T23:06:02.037Z",
         "detail": {
           "source": "OpenRouter v1 model-rankings-chart + frontend catalog models",
-          "latestWeek": "2026-11-02",
-          "latest4wTokens": 755194080876197,
-          "prev4wTokens": 612438926896408,
-          "latest4wSpendProxyUsd": 220214594.23547158,
-          "prev4wSpendProxyUsd": 110361951.5959942,
-          "tokenGrowthPct": 23.30928811191251,
-          "spendGrowthPct": 99.53851037504187,
-          "ratio": 0.23417356783909685,
-          "pricedCoveragePct": 61.30737403578278,
+          "latestWeek": "2026-11-09",
+          "latest4wTokens": 802355948317315,
+          "prev4wTokens": 647362365358520,
+          "latest4wSpendProxyUsd": 207328306.67916924,
+          "prev4wSpendProxyUsd": 129766913.76302877,
+          "tokenGrowthPct": 23.94232214487121,
+          "spendGrowthPct": 59.76977541268928,
+          "ratio": 0.40057574216329067,
+          "pricedCoveragePct": 62.36576514777404,
           "droppedPartialWeek": {
-            "date": "2026-11-09",
-            "totalTokens": 29286717795987,
-            "pricedTokens": 17692883821083,
-            "spendProxyUsd": 9331497.626167042,
-            "othersTokens": 10759892798454,
-            "missingModels": [
-              "stealth/crouton-alpha"
-            ]
+            "date": "2026-11-16",
+            "totalTokens": 83856766963292,
+            "pricedTokens": 58837357145430,
+            "spendProxyUsd": 16511439.584572246,
+            "othersTokens": 25019409817862,
+            "missingModels": []
           },
           "rows": [
             {
-              "date": "2026-10-12",
-              "totalTokens": 164043985914931,
-              "pricedTokens": 96575714647870,
-              "spendProxyUsd": 54539009.9116559,
-              "othersTokens": 67468271267061
-            },
-            {
               "date": "2026-10-19",
-              "totalTokens": 188039304051712,
-              "pricedTokens": 115986102033291,
-              "spendProxyUsd": 50091646.035897866,
-              "othersTokens": 72053202018421
+              "totalTokens": 188012184445530,
+              "pricedTokens": 115969029275869,
+              "spendProxyUsd": 47025566.954029895,
+              "othersTokens": 72043155169661
             },
             {
               "date": "2026-10-26",
-              "totalTokens": 193593270018919,
-              "pricedTokens": 120190200208807,
-              "spendProxyUsd": 54546270.77880395,
-              "othersTokens": 73403069810112
+              "totalTokens": 193583878704232,
+              "pricedTokens": 120184894166287,
+              "spendProxyUsd": 50873279.15018105,
+              "othersTokens": 73398984537945
             },
             {
               "date": "2026-11-02",
-              "totalTokens": 209517520890635,
-              "pricedTokens": 130237642968894,
-              "spendProxyUsd": 61037667.509113856,
-              "othersTokens": 79279877921741
+              "totalTokens": 209479742661067,
+              "pricedTokens": 130213420719925,
+              "spendProxyUsd": 56732916.029064655,
+              "othersTokens": 79266321941142
+            },
+            {
+              "date": "2026-11-09",
+              "totalTokens": 211280142506486,
+              "pricedTokens": 134028082214691,
+              "spendProxyUsd": 52696544.545893624,
+              "othersTokens": 77252060291795
             }
           ],
           "proxyConfidenceCalibration": {
@@ -4261,12 +4293,12 @@
       "source_name": "Thunder Compute / getdeploying",
       "status": "green",
       "value_display": "$3.99/H100·hr",
-      "note": "GetDeploying当前on-demand中位价$3.99/H100·hr，较上期$3.29上涨21.3%，90天趋势+4%；挂牌价未见供给过剩式下跌，绿。",
-      "as_of": "2026-11-08",
+      "note": "GetDeploying当前on-demand中位价$3.99/H100·hr，与上期持平，90天趋势+12%；47个有价供应商、224个配置未显示供给过剩式下跌，绿。",
+      "as_of": "2026-11-15",
       "stale": false,
       "provenance": {
         "mode": "curated",
-        "asOfDate": "2026-11-08",
+        "asOfDate": "2026-11-15",
         "ageDays": 2,
         "maxAgeDays": 21
       }
@@ -4282,12 +4314,17 @@
       "source_name": "公开 ARR 披露序列（合格近期观测暂缺）",
       "status": "unknown",
       "value_display": "待确认 · ARR 观测过期",
-      "note": "历史披露序列最新观测为 2026-07-31，距本期 102 天，超过 45 天门槛，原红灯退出当前计分。自动候选最新里程碑 2026-05-28 也已过期（166 天）。复核或报告日期不续期；季度实际收入、预测及单个新金额不能替代同口径可重放 ARR 序列。主分下界降低源于证据退出，不代表风险改善。",
       "as_of": null,
       "stale": false,
+      "note": "历史披露序列最新观测为 2026-07-31，距本期 109 天，超过 45 天门槛，原红灯退出当前计分。自动候选最新里程碑 2026-05-28 也已过期（173 天）。复核或报告日期不续期；季度实际收入、预测及单个新金额不能替代同口径可重放 ARR 序列。主分下界降低源于证据退出，不代表风险改善。",
+      "evidence_gap": {
+        "policy": "arr-observation-eligibility-v1",
+        "reasonCode": "arr_current_comparable_series_unavailable",
+        "checkedDate": "2026-11-17"
+      },
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-11-10T06:14:30.988Z",
+        "checkedAt": "2026-11-17T23:06:02.322Z",
         "detail": {
           "contractVersion": "arr-observation-eligibility-v1",
           "qualificationStatus": "unavailable",
@@ -4295,8 +4332,8 @@
           "reason": "historical_and_live_observations_stale",
           "historicalObservation": {
             "observationDate": "2026-07-31",
-            "asOfDate": "2026-11-10",
-            "ageDays": 102,
+            "asOfDate": "2026-11-17",
+            "ageDays": 109,
             "maxAgeDays": 45,
             "status": "stale"
           },
@@ -4339,23 +4376,38 @@
           },
           "rejectedLiveObservation": {
             "observationDate": "2026-05-28",
-            "asOfDate": "2026-11-10",
-            "ageDays": 166,
+            "asOfDate": "2026-11-17",
+            "ageDays": 173,
             "maxAgeDays": 45,
             "status": "stale"
           },
           "rejectionEvidence": {
-            "kind": "published_rejection",
-            "sourceIssueDate": "2026-11-10",
-            "sourceSnapshotSha256": "d91021987cf40ef049fc9f8abf1d00aa728586780279db13c7e01badee9c7ff9",
-            "reason": "hybrid_live source failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 166d old (max 45d)"
+            "kind": "saastr_four_post_series",
+            "source": "SaaStr WordPress public API",
+            "milestones": [
+              {
+                "date": "2025-07-12",
+                "arrB": 4,
+                "sourceId": 315823
+              },
+              {
+                "date": "2026-02-15",
+                "arrB": 14,
+                "sourceId": 322211
+              },
+              {
+                "date": "2026-04-09",
+                "arrB": 30,
+                "sourceId": 323715
+              },
+              {
+                "date": "2026-05-28",
+                "arrB": 44,
+                "sourceId": 325206
+              }
+            ]
           }
         }
-      },
-      "evidence_gap": {
-        "policy": "arr-observation-eligibility-v1",
-        "reasonCode": "arr_current_comparable_series_unavailable",
-        "checkedDate": "2026-11-10"
       }
     },
     {
@@ -4375,10 +4427,10 @@
       "provenance": {
         "mode": "curated",
         "asOfDate": "2026-09-24",
-        "ageDays": 47,
+        "ageDays": 54,
         "maxAgeDays": 120,
-        "reviewAsOfDate": "2026-11-08",
-        "reportAsOfDate": "2026-11-08",
+        "reviewAsOfDate": "2026-11-15",
+        "reportAsOfDate": "2026-11-15",
         "detail": {
           "sourceObservation": {
             "contract": "bubble-source-observation-v1",
@@ -4420,7 +4472,7 @@
       "name_en": "Cloud RPO Growth",
       "name_zh": "云厂商剩余履约义务（RPO）增速",
       "threshold_text": "负增长=红 / 减速=黄 / 加速=绿",
-      "source_name": "云厂商订单与 backlog 披露",
+      "source_name": "云厂商 RPO / 积压订单披露",
       "status": "yellow",
       "value_display": "+89%",
       "note": "RPO/积压订单不等同递延收入或已确认收入；公司业务范围、定义和财季存在差异，合计仅作需求存量观察。SEC EDGAR companyconcept显示 MSFT/ORCL/GOOGL RPO / 云 backlog 合计 $1.91T,同比 +89.4%(上一披露期同比 +196.5%,边际减速);分公司:MSFT +72% / ORCL +46% / GOOGL +260%。实际覆盖 3/4 家;AMZN 缺少可比报告期,未计入。美国公司 XBRL instant RPO 字段可达。判级:负增长=红 / 减速=黄 / 加速=绿",
@@ -4428,7 +4480,7 @@
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:45.477Z",
+        "fetchedAt": "2026-11-17T23:06:03.017Z",
         "detail": {
           "yoyPct": 89.38674579624134,
           "prevYoyPct": 196.5378421900161,
@@ -4486,13 +4538,13 @@
       "threshold_text": "停滞=红 / 放缓=黄 / 正常或加速=绿",
       "source_name": "METR / Epoch AI / ARC Prize",
       "status": "green",
-      "value_display": "ECI +4.62 / 90d",
-      "note": "Epoch ECI滚动SOTA为GPT-6 Astra 169.07（9/3）；90天增幅4.62，过去一年季均4.48，比值1.031，未触发停滞且高于50%门槛，绿。困难基准本周未见同basis新SOTA，90天前沿进入者2个。",
-      "as_of": "2026-11-08",
+      "value_display": "ECI +8.76 / 90d",
+      "note": "Epoch ECI滚动SOTA为Claude Fable 5.2 173.44（11/9）；90天增幅8.76，过去一年季均5.5525，比值1.578，未触发停滞，绿。困难基准未见同basis新SOTA，90天前沿进入者4个。",
+      "as_of": "2026-11-15",
       "stale": false,
       "provenance": {
         "mode": "curated",
-        "asOfDate": "2026-11-08",
+        "asOfDate": "2026-11-15",
         "ageDays": 2,
         "maxAgeDays": 35
       }
@@ -4509,11 +4561,11 @@
       "status": "green",
       "value_display": "0 件",
       "note": "SEC 与 DOJ 官方执法公告近两年未命中核心 AI 名单的会计造假、round-tripping 或欺诈正式事件;该项仍只能说明公开执法监测未见新红灯,不能替代完整法律尽调。判级:任何=红 / 调查=黄 / 无=绿",
-      "as_of": "2026-11-10",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:28:48.088Z",
+        "fetchedAt": "2026-11-17T23:06:06.026Z",
         "detail": {
           "source": "SEC RSS + DOJ News API official monitor",
           "checkedSources": 2,
@@ -4531,7 +4583,7 @@
           "events": [],
           "sourceCandidateStatus": "hybrid_live",
           "sourceCandidatePrimarySignal": "Formal SEC / DOJ accounting, fraud, round-tripping or enforcement event tied to core AI names",
-          "curatedFallbackAsOfDate": "2026-11-08"
+          "curatedFallbackAsOfDate": "2026-11-15"
         }
       }
     },
@@ -4544,165 +4596,38 @@
       "name_zh": "Fed 3/6个月隐含路径",
       "threshold_text": "任一3/6月路径较同期EFFR高≥15基点=红；两者低≥15基点=绿；其余黄，证据不齐待确认",
       "source_name": "Yahoo联邦基金期货日线代理 · FRED实际EFFR · Fed会议日历",
-      "status": "red",
-      "value_display": "3/6个月路径偏上",
-      "as_of": "2026-11-06",
+      "status": "unknown",
+      "value_display": "待确认",
+      "as_of": null,
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-11-10T00:28:48.605Z",
+        "checkedAt": "2026-11-17T23:06:06.203Z",
         "detail": {
           "policy": "fed_market_path_collection_v1",
-          "checkedAt": "2026-11-10T00:28:48.605Z",
+          "checkedAt": "2026-11-17T23:06:06.203Z",
           "sourceEvidence": {
-            "calendar": {
-              "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-              "checkedAt": "2026-11-10T00:28:48.183Z",
-              "lastUpdated": "2026-10-28",
-              "years": {
-                "2026": [
-                  "2026-01-28",
-                  "2026-03-18",
-                  "2026-04-29",
-                  "2026-06-17",
-                  "2026-07-29",
-                  "2026-09-16",
-                  "2026-10-28",
-                  "2026-12-09"
-                ],
-                "2027": [
-                  "2027-01-27",
-                  "2027-03-17",
-                  "2027-04-28",
-                  "2027-06-09",
-                  "2027-07-28",
-                  "2027-09-15",
-                  "2027-10-27",
-                  "2027-12-08"
-                ]
-              }
-            },
-            "baseline": {
-              "series": "DFF",
-              "sourceUrl": "https://fred.stlouisfed.org/series/DFF",
-              "observedAt": "2026-11-06",
-              "value": "3.88",
-              "checkedAt": "2026-11-10T00:28:48.430Z"
-            },
-            "quotes": [
-              {
-                "month": "2027-02",
-                "symbol": "ZQG27.CBT",
-                "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQG27.CBT?range=10d&interval=1d",
-                "exchangeName": "CBT",
-                "instrumentType": "FUTURE",
-                "exchangeTimezoneName": "America/New_York",
-                "dataGranularity": "1d",
-                "timestamp": 1793941200,
-                "rawClose": 95.87999725341797,
-                "reportedVolume": 193284
-              },
-              {
-                "month": "2027-05",
-                "symbol": "ZQK27.CBT",
-                "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQK27.CBT?range=10d&interval=1d",
-                "exchangeName": "CBT",
-                "instrumentType": "FUTURE",
-                "exchangeTimezoneName": "America/New_York",
-                "dataGranularity": "1d",
-                "timestamp": 1793941200,
-                "rawClose": 95.74500274658203,
-                "reportedVolume": 43913
-              }
-            ]
+            "calendar": null,
+            "baseline": null,
+            "quotes": []
           },
           "result": {
             "policy": "fed_3_6_calendar_month_yahoo_daily_proxy_v1",
-            "status": "red",
-            "quoteLabelDate": "2026-11-06",
-            "baselineObservedAt": "2026-11-06",
-            "normalizedQuotes": [
-              {
-                "month": "2027-02",
-                "symbol": "ZQG27.CBT",
-                "labelDate": "2026-11-06",
-                "sourceTimestamp": "2026-11-06T05:00:00.000Z",
-                "derivedLabelEndAt": "2026-11-07T05:00:00.000Z",
-                "rawClose": 95.87999725341797,
-                "normalizedPrice": "95.8800",
-                "priceUnits": "958800",
-                "reportedVolume": 193284,
-                "normalizationPolicy": "remote_zq_0p005_v1"
-              },
-              {
-                "month": "2027-05",
-                "symbol": "ZQK27.CBT",
-                "labelDate": "2026-11-06",
-                "sourceTimestamp": "2026-11-06T05:00:00.000Z",
-                "derivedLabelEndAt": "2026-11-07T05:00:00.000Z",
-                "rawClose": 95.74500274658203,
-                "normalizedPrice": "95.7450",
-                "priceUnits": "957450",
-                "reportedVolume": 43913,
-                "normalizationPolicy": "remote_zq_0p005_v1"
-              }
-            ],
-            "paths": [
-              {
-                "months": 3,
-                "targetDate": "2027-02-10",
-                "chain": [
-                  "2027-02"
-                ],
-                "anchor": "2027-02",
-                "segment": "nonmeeting_month",
-                "rate": {
-                  "numerator": "41200",
-                  "denominator": "1",
-                  "unit": "0.0001_percent"
-                },
-                "delta": {
-                  "numerator": "2400",
-                  "denominator": "1",
-                  "unit": "0.0001_percent"
-                },
-                "expectedRatePct": 4.12,
-                "deltaBp": 24
-              },
-              {
-                "months": 6,
-                "targetDate": "2027-05-10",
-                "chain": [
-                  "2027-05"
-                ],
-                "anchor": "2027-05",
-                "segment": "nonmeeting_month",
-                "rate": {
-                  "numerator": "42550",
-                  "denominator": "1",
-                  "unit": "0.0001_percent"
-                },
-                "delta": {
-                  "numerator": "3750",
-                  "denominator": "1",
-                  "unit": "0.0001_percent"
-                },
-                "expectedRatePct": 4.255,
-                "deltaBp": 37.5
-              }
-            ],
-            "thresholdBp": 15
+            "status": "unknown",
+            "reason": "calendar_schema"
           },
           "sourceFailures": [],
-          "qualityIssues": [],
+          "qualityIssues": [
+            {
+              "source": "calendar",
+              "reason": "reviewed_schedule_changed"
+            }
+          ],
           "attemptedSources": [
-            "calendar",
-            "DFF",
-            "ZQG27.CBT",
-            "ZQK27.CBT"
+            "calendar"
           ],
           "collectionPolicy": {
-            "actualRequests": 4,
+            "actualRequests": 1,
             "maximumRequests": 10,
             "requestTimeoutMs": 12000,
             "calendarMaxBytes": 1048576,
@@ -4713,7 +4638,12 @@
           }
         }
       },
-      "note": "快照日2026-11-10，同期实际有效联邦基金利率3.88%（原观测日2026-11-06）；3个月目标日2027-02-10，隐含有效利率约4.120%，较同期实际利率+24.0基点；6个月目标日2027-05-10，隐含有效利率约4.255%，较同期实际利率+37.5基点。期货共同纽约日线标签2026-11-06，保留原日期。采用3/6个日历月、月末截日；月平均利率按会议前后分段及后续非会议月锚定推导。仅支持已审会议日期及次日生效假设，日历变更、来源失败或报价不合格均待确认。Yahoo日线标签结束至少24小时、距今不超过7日且报告成交量为正；成交量不证明同步成交。该代理不是CME官方结算或实时行情，也不是下次会议加息/降息概率或政策目标区间。期货风险溢价、临时会议及非会议因素可能使实际路径偏离。灯号使用未舍入精确值，展示约数不参与阈值；不沿用年末点阵图、通胀或旧灯号。"
+      "evidence_gap": {
+        "policy": "bubble-qualified-evidence-v1",
+        "reasonCode": "fed_market_path_unavailable",
+        "checkedDate": "2026-11-17"
+      },
+      "note": "本轮未取得完整合格的3/6个月报价、同期实际利率及已审会议日历，路径数值待确认。采用3/6个日历月、月末截日；月平均利率按会议前后分段及后续非会议月锚定推导。仅支持已审会议日期及次日生效假设，日历变更、来源失败或报价不合格均待确认。Yahoo日线标签结束至少24小时、距今不超过7日且报告成交量为正；成交量不证明同步成交。该代理不是CME官方结算或实时行情，也不是下次会议加息/降息概率或政策目标区间。期货风险溢价、临时会议及非会议因素可能使实际路径偏离。灯号使用未舍入精确值，展示约数不参与阈值；不沿用年末点阵图、通胀或旧灯号。"
     },
     {
       "id": "capex_reaction",
@@ -4731,13 +4661,13 @@
       "note": "固定四家面板已核验；1家上调，0家受罚、0家获奖励。微软（MSFT，2027财年第一季度）：2026年公司报告口径资本开支由1750亿美元变为1700亿美元，因第三方产能交付延后，不计为上调，也不据此声称经济投入削减；2026-10-28至2026-10-29收盘，个股-0.16%、QQQ-1.42%，相对+1.25个百分点。Meta（META，2026年第三季度）：2026年含融资租赁本金的指引从1300–1450亿美元变为1350–1450亿美元，仅下限提高；2026-10-21至2026-10-22收盘，个股-6.98%、QQQ-2.86%，相对-4.12个百分点。亚马逊（AMZN，2026年第三季度）：2026年现金资本开支维持2200亿美元，不计为上调；2026-10-29至2026-10-30收盘，个股-1.41%、QQQ-3.47%，相对+2.06个百分点。Alphabet（GOOGL，2026年第三季度）：2026年公司报告口径资本开支维持1950–2050亿美元，不计为上调；2026-10-28至2026-10-29收盘，个股-12.64%、QQQ-1.42%，相对-11.23个百分点。微软本季金额及七月同口径基线、Meta区间和Amazon金额经公司材料核对；Alphabet金额采用具名二手电话会文本，公司文章核对事件身份和发表时段。观察最新季度财报电话会关联反应，未完整追踪季度之间的临时指引，也不证明首次披露时点或资本开支因果。个股收益还受到收入、利润和其他财报信息影响。固定四家样本，不缩减分母；价格为当前版本复权历史收盘价，不是当时可得的历史回测。",
       "provenance": {
         "mode": "auto",
-        "checkedAt": "2026-11-10T00:28:50.948Z",
+        "checkedAt": "2026-11-17T23:06:08.957Z",
         "detail": {
           "schemaVersion": "bubble-quarterly-capex-panel-v2",
           "registryId": "2026-10-reviewed",
           "policy": "capex_latest_quarterly_call_association_v1",
-          "asOfDate": "2026-11-10",
-          "checkedAt": "2026-11-10T00:28:50.948Z",
+          "asOfDate": "2026-11-17",
+          "checkedAt": "2026-11-17T23:06:08.957Z",
           "companies": [
             {
               "symbol": "MSFT",
@@ -4747,7 +4677,7 @@
                 "id": "718712-q1-2027",
                 "quarter": "Q1 2027",
                 "scope": "latest_published_quarter_in_stockanalysis_catalog",
-                "sourceDigest": "93454b39115b7c89535c5ef4d0c09cdcf0b93eeb2ce27a3a31b21b334db7115f",
+                "sourceDigest": "a3843b4739d7c7e9def62bb44dafe186751830a381b8ef859b8dcda51f2e203a",
                 "sourceUrl": "https://stockanalysis.com/stocks/msft/transcripts/"
               },
               "guidance": {
@@ -4766,7 +4696,7 @@
                 "unit": "billion",
                 "periodBasis": "calendar_year",
                 "clauseDigest": "ac191fd2d7ab44cfb687f5d3a357f3833954f969ffe2dbbdcae36e8b35bf7b6a",
-                "documentDigest": "07c13409799e48a9eb4f4f1eb31e84269bb6ac30b3855115a7940e3f79b5a811",
+                "documentDigest": "589463b87520d3f43d546862a77017a1673a34c17f6ebd4d34fd0dd4df4a20c9",
                 "sourceRole": "secondary_attributed_call_transcript",
                 "sourceUrl": "https://stockanalysis.com/stocks/msft/transcripts/718712-q1-2027/"
               },
@@ -4774,9 +4704,9 @@
                 "eventDate": "2026-10-28",
                 "anchorAt": "2026-10-28T21:30:00Z",
                 "anchorKind": "official_scheduled_quarterly_call",
-                "primaryDigest": "7f85fcdc35397f4ad8f0a455d0dc68c67d2acfc1e795a3037855f1d0ea13a820",
-                "scheduleDigest": "104f82915983504cdf8d8e6185c5f0ed64c078af69aac675d0147ee4b866689f",
-                "comparisonDigest": "bd5320d9b1be79a06a9b0f41cbf045bf4bc3cb230c9598a3ba9600e1843835dd",
+                "primaryDigest": "429c69f3cd894ba6a0e22cc65ad9204e3fefbc328d1b6071027bdf59e0591d0a",
+                "scheduleDigest": "c62929b3a2334af16d108c250630fa220c51e2079267aa9054194af41ef3f5d5",
+                "comparisonDigest": "f20e014b388d423b8cbb1deb0ef296cf809ea5ad2d177e5ac5d4bef1d3bb4bf2",
                 "firstGuidanceDisclosureVerified": false,
                 "capexCausalityEstablished": false,
                 "primaryUrl": "https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1",
@@ -4839,7 +4769,7 @@
                 "id": "718643-q3-2026",
                 "quarter": "Q3 2026",
                 "scope": "latest_published_quarter_in_stockanalysis_catalog",
-                "sourceDigest": "036f6c4921771153a8f2631d4fecc7551c7a260a9abf156acb6dcfa799138492",
+                "sourceDigest": "512dd56983344af52a7c340b3356ad1222587d510ec0ad3db505a4901eb17b30",
                 "sourceUrl": "https://stockanalysis.com/stocks/meta/transcripts/"
               },
               "guidance": {
@@ -4858,7 +4788,7 @@
                 "unit": "billion",
                 "periodBasis": "calendar_year",
                 "clauseDigest": "e649fcb6f0c2cecd4b1cb2ffe7847e476d3f6720aa2c1fac34885547f0a72ae2",
-                "documentDigest": "1891b8d8a176ed1ea0b96a84643b4209d6deca49f3602fc196e2b7ac515f2afe",
+                "documentDigest": "4df864657e75c917adcb01f5174473289868e1a5b38f7d50a1d6dd81f8223678",
                 "sourceRole": "secondary_attributed_call_transcript",
                 "sourceUrl": "https://stockanalysis.com/stocks/meta/transcripts/718643-q3-2026/"
               },
@@ -4866,7 +4796,7 @@
                 "eventDate": "2026-10-21",
                 "anchorAt": "2026-10-21T20:30:00Z",
                 "anchorKind": "official_scheduled_quarterly_call",
-                "primaryDigest": "5b482f0c208478d9ee66d12b35353a8a5a47f79e581ede77de2c6baa4371a3ee",
+                "primaryDigest": "1a69bf1c719d5f54f8c662bfbdc5c8d0fb2de1455badbb7c3d25c89f6d9bc0b2",
                 "firstGuidanceDisclosureVerified": false,
                 "capexCausalityEstablished": false,
                 "primaryUrl": "https://www.prnewswire.com/news-releases/meta-reports-third-quarter-2026-results-302915964.html"
@@ -4927,7 +4857,7 @@
                 "id": "720308-q3-2026",
                 "quarter": "Q3 2026",
                 "scope": "latest_published_quarter_in_stockanalysis_catalog",
-                "sourceDigest": "86f755a5fff0684fd655fa3c8c7176a526e5505159abda197a26c233678fe4ae",
+                "sourceDigest": "439a7e226323b737d69e820392dd1ae8c45a9622c9b5dbbc721b2176c5195bcb",
                 "sourceUrl": "https://stockanalysis.com/stocks/amzn/transcripts/"
               },
               "guidance": {
@@ -4946,7 +4876,7 @@
                 "unit": "billion",
                 "periodBasis": "calendar_year",
                 "clauseDigest": "44f9c3b2614400662117bc65e92a5af5a3ad7b0bec9fff82a457d25bb027eb07",
-                "documentDigest": "1ff1aad412af15989791f1012085b6ca6b049e2bb60297097aea8ed3a82fede5",
+                "documentDigest": "cd5adee3fd94fba475610a7c4be95e29f4d0438a5f565c8ba1da5c21f4ecfb7e",
                 "sourceRole": "secondary_attributed_call_transcript",
                 "sourceUrl": "https://stockanalysis.com/stocks/amzn/transcripts/720308-q3-2026/"
               },
@@ -4954,7 +4884,7 @@
                 "eventDate": "2026-10-29",
                 "anchorAt": "2026-10-29T21:00:00Z",
                 "anchorKind": "official_scheduled_quarterly_call",
-                "primaryDigest": "8b6f622e959ae6dda4562ee7ec577b204a09ef8f8c85643338d25cc86dc09855",
+                "primaryDigest": "aac77fdc721c55843d94b6584cf6651f1ac11254ba5a9f4bb3ec5969e65c828a",
                 "scheduleDigest": "ae710edaf7cfee9c71be72cb71302054a3ebbfb47c7bd8d725753e946284319b",
                 "firstGuidanceDisclosureVerified": false,
                 "capexCausalityEstablished": false,
@@ -5017,7 +4947,7 @@
                 "id": "712854-q3-2026",
                 "quarter": "Q3 2026",
                 "scope": "latest_published_quarter_in_stockanalysis_catalog",
-                "sourceDigest": "a456022d7e0b4abae36e93bd816adb078712f335bc9f141e18c2cba0d4d4c58a",
+                "sourceDigest": "57bd5065ea9256d3397d14415cd675afbe4db95443bc4d800c9088d43fe450a0",
                 "sourceUrl": "https://stockanalysis.com/stocks/googl/transcripts/"
               },
               "guidance": {
@@ -5036,7 +4966,7 @@
                 "unit": "billion",
                 "periodBasis": "calendar_year",
                 "clauseDigest": "e2aa5d9bbc29ec1ea82401278764e99a2765e602ae198338f0d4651d26d5f7b5",
-                "documentDigest": "6bd5e8c5e3c1dc2eea545d4d4c12d4d4221d5002bbd6b211446a9af580218eb4",
+                "documentDigest": "517a2f3da25e0c2c19fdb714c5a56e372e23452e08262609568082849fded39d",
                 "sourceRole": "secondary_attributed_call_transcript",
                 "sourceUrl": "https://stockanalysis.com/stocks/googl/transcripts/712854-q3-2026/"
               },
@@ -5044,7 +4974,7 @@
                 "eventDate": "2026-10-28",
                 "anchorAt": "2026-10-28T21:05:00Z",
                 "anchorKind": "official_call_remarks_publication",
-                "primaryDigest": "68a4a0c040dbdd05cc3939373bad0c8647615f12e2eb0b74fe779d2f93b1dd24",
+                "primaryDigest": "ba9831a1e266418d029df3c58ede865ba8350494d4b51c1e55f81fa206c0a2d4",
                 "firstGuidanceDisclosureVerified": false,
                 "capexCausalityEstablished": false,
                 "primaryUrl": "https://blog.google/company-news/inside-google/message-ceo/alphabet-earnings-q3-2026/"
@@ -5107,143 +5037,143 @@
           "requests": [
             {
               "url": "https://stockanalysis.com/stocks/msft/transcripts/",
-              "checkedAt": "2026-11-10T00:28:48.609Z",
+              "checkedAt": "2026-11-17T23:06:06.205Z",
               "status": "ok",
-              "bytes": 602136,
-              "sha256": "93454b39115b7c89535c5ef4d0c09cdcf0b93eeb2ce27a3a31b21b334db7115f"
+              "bytes": 602793,
+              "sha256": "a3843b4739d7c7e9def62bb44dafe186751830a381b8ef859b8dcda51f2e203a"
             },
             {
               "url": "https://stockanalysis.com/stocks/msft/transcripts/718712-q1-2027/",
-              "checkedAt": "2026-11-10T00:28:48.671Z",
+              "checkedAt": "2026-11-17T23:06:06.336Z",
               "status": "ok",
-              "bytes": 309533,
-              "sha256": "07c13409799e48a9eb4f4f1eb31e84269bb6ac30b3855115a7940e3f79b5a811"
+              "bytes": 308601,
+              "sha256": "589463b87520d3f43d546862a77017a1673a34c17f6ebd4d34fd0dd4df4a20c9"
             },
             {
               "url": "https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1",
-              "checkedAt": "2026-11-10T00:28:48.721Z",
+              "checkedAt": "2026-11-17T23:06:06.430Z",
               "status": "ok",
-              "bytes": 352338,
-              "sha256": "7f85fcdc35397f4ad8f0a455d0dc68c67d2acfc1e795a3037855f1d0ea13a820"
+              "bytes": 352193,
+              "sha256": "429c69f3cd894ba6a0e22cc65ad9204e3fefbc328d1b6071027bdf59e0591d0a"
             },
             {
               "url": "https://news.microsoft.com/source/2026/10/07/microsoft-announces-quarterly-earnings-release-date-69/",
-              "checkedAt": "2026-11-10T00:28:48.766Z",
+              "checkedAt": "2026-11-17T23:06:06.664Z",
               "status": "ok",
-              "bytes": 136548,
-              "sha256": "104f82915983504cdf8d8e6185c5f0ed64c078af69aac675d0147ee4b866689f"
+              "bytes": 137189,
+              "sha256": "c62929b3a2334af16d108c250630fa220c51e2079267aa9054194af41ef3f5d5"
             },
             {
               "url": "https://www.microsoft.com/en-us/investor/events/fy-2026/earnings-fy-2026-q4",
-              "checkedAt": "2026-11-10T00:28:48.856Z",
+              "checkedAt": "2026-11-17T23:06:07.001Z",
               "status": "ok",
-              "bytes": 278910,
-              "sha256": "bd5320d9b1be79a06a9b0f41cbf045bf4bc3cb230c9598a3ba9600e1843835dd"
+              "bytes": 278548,
+              "sha256": "f20e014b388d423b8cbb1deb0ef296cf809ea5ad2d177e5ac5d4bef1d3bb4bf2"
             },
             {
               "url": "https://stockanalysis.com/stocks/meta/transcripts/",
-              "checkedAt": "2026-11-10T00:28:48.961Z",
+              "checkedAt": "2026-11-17T23:06:07.158Z",
               "status": "ok",
-              "bytes": 395808,
-              "sha256": "036f6c4921771153a8f2631d4fecc7551c7a260a9abf156acb6dcfa799138492"
+              "bytes": 394875,
+              "sha256": "512dd56983344af52a7c340b3356ad1222587d510ec0ad3db505a4901eb17b30"
             },
             {
               "url": "https://stockanalysis.com/stocks/meta/transcripts/718643-q3-2026/",
-              "checkedAt": "2026-11-10T00:28:49.017Z",
+              "checkedAt": "2026-11-17T23:06:07.205Z",
               "status": "ok",
-              "bytes": 311733,
-              "sha256": "1891b8d8a176ed1ea0b96a84643b4209d6deca49f3602fc196e2b7ac515f2afe"
+              "bytes": 310795,
+              "sha256": "4df864657e75c917adcb01f5174473289868e1a5b38f7d50a1d6dd81f8223678"
             },
             {
               "url": "https://www.prnewswire.com/news-releases/meta-reports-third-quarter-2026-results-302915964.html",
-              "checkedAt": "2026-11-10T00:28:49.074Z",
+              "checkedAt": "2026-11-17T23:06:07.299Z",
               "status": "ok",
               "bytes": 304529,
-              "sha256": "5b482f0c208478d9ee66d12b35353a8a5a47f79e581ede77de2c6baa4371a3ee"
+              "sha256": "1a69bf1c719d5f54f8c662bfbdc5c8d0fb2de1455badbb7c3d25c89f6d9bc0b2"
             },
             {
               "url": "https://stockanalysis.com/stocks/amzn/transcripts/",
-              "checkedAt": "2026-11-10T00:28:49.150Z",
+              "checkedAt": "2026-11-17T23:06:07.391Z",
               "status": "ok",
-              "bytes": 394250,
-              "sha256": "86f755a5fff0684fd655fa3c8c7176a526e5505159abda197a26c233678fe4ae"
+              "bytes": 394337,
+              "sha256": "439a7e226323b737d69e820392dd1ae8c45a9622c9b5dbbc721b2176c5195bcb"
             },
             {
               "url": "https://stockanalysis.com/stocks/amzn/transcripts/720308-q3-2026/",
-              "checkedAt": "2026-11-10T00:28:49.240Z",
+              "checkedAt": "2026-11-17T23:06:07.472Z",
               "status": "ok",
-              "bytes": 283831,
-              "sha256": "1ff1aad412af15989791f1012085b6ca6b049e2bb60297097aea8ed3a82fede5"
+              "bytes": 282889,
+              "sha256": "cd5adee3fd94fba475610a7c4be95e29f4d0438a5f565c8ba1da5c21f4ecfb7e"
             },
             {
               "url": "https://www.aboutamazon.com/news/company-news/amazon-earnings-q3-2026-report",
-              "checkedAt": "2026-11-10T00:28:49.287Z",
+              "checkedAt": "2026-11-17T23:06:07.558Z",
               "status": "ok",
-              "bytes": 203808,
-              "sha256": "8b6f622e959ae6dda4562ee7ec577b204a09ef8f8c85643338d25cc86dc09855"
+              "bytes": 203749,
+              "sha256": "aac77fdc721c55843d94b6584cf6651f1ac11254ba5a9f4bb3ec5969e65c828a"
             },
             {
               "url": "https://press.aboutamazon.com/2026/10/amazon-com-to-webcast-third-quarter-2026-financial-results-conference-call",
-              "checkedAt": "2026-11-10T00:28:49.688Z",
+              "checkedAt": "2026-11-17T23:06:07.742Z",
               "status": "ok",
               "bytes": 144386,
               "sha256": "ae710edaf7cfee9c71be72cb71302054a3ebbfb47c7bd8d725753e946284319b"
             },
             {
               "url": "https://stockanalysis.com/stocks/googl/transcripts/",
-              "checkedAt": "2026-11-10T00:28:49.719Z",
+              "checkedAt": "2026-11-17T23:06:07.883Z",
               "status": "ok",
-              "bytes": 449804,
-              "sha256": "a456022d7e0b4abae36e93bd816adb078712f335bc9f141e18c2cba0d4d4c58a"
+              "bytes": 449896,
+              "sha256": "57bd5065ea9256d3397d14415cd675afbe4db95443bc4d800c9088d43fe450a0"
             },
             {
               "url": "https://stockanalysis.com/stocks/googl/transcripts/712854-q3-2026/",
-              "checkedAt": "2026-11-10T00:28:49.764Z",
+              "checkedAt": "2026-11-17T23:06:08.009Z",
               "status": "ok",
-              "bytes": 320427,
-              "sha256": "6bd5e8c5e3c1dc2eea545d4d4c12d4d4221d5002bbd6b211446a9af580218eb4"
+              "bytes": 319489,
+              "sha256": "517a2f3da25e0c2c19fdb714c5a56e372e23452e08262609568082849fded39d"
             },
             {
               "url": "https://blog.google/company-news/inside-google/message-ceo/alphabet-earnings-q3-2026/",
-              "checkedAt": "2026-11-10T00:28:50.087Z",
+              "checkedAt": "2026-11-17T23:06:08.104Z",
               "status": "ok",
-              "bytes": 351170,
-              "sha256": "68a4a0c040dbdd05cc3939373bad0c8647615f12e2eb0b74fe779d2f93b1dd24"
+              "bytes": 351284,
+              "sha256": "ba9831a1e266418d029df3c58ede865ba8350494d4b51c1e55f81fa206c0a2d4"
             },
             {
               "url": "https://query1.finance.yahoo.com/v8/finance/chart/QQQ?period1=1792540800&period2=1793491200&interval=1d&events=div%2Csplits",
-              "checkedAt": "2026-11-10T00:28:50.546Z",
+              "checkedAt": "2026-11-17T23:06:08.486Z",
               "status": "ok",
-              "bytes": 2049,
-              "sha256": "245f3a6664ce16e5c2b74ffe2c7d7384769729477f900005826467697935dec7"
+              "bytes": 2046,
+              "sha256": "6da2849befcc80c4831a2ad4fd84e0d2baead6d408d7b2e9700214200ac05bb6"
             },
             {
               "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?period1=1792540800&period2=1793491200&interval=1d&events=div%2Csplits",
-              "checkedAt": "2026-11-10T00:28:50.659Z",
+              "checkedAt": "2026-11-17T23:06:08.637Z",
               "status": "ok",
-              "bytes": 2026,
-              "sha256": "46b646f171e080c657b1f91913576499c6851e4f71a2374317c4d910cda46469"
+              "bytes": 2030,
+              "sha256": "347d199a3f3c907c6da376d1be6c6e20b8c719f979a41755d794f3770e4afe0c"
             },
             {
               "url": "https://query1.finance.yahoo.com/v8/finance/chart/META?period1=1792540800&period2=1793491200&interval=1d&events=div%2Csplits",
-              "checkedAt": "2026-11-10T00:28:50.732Z",
+              "checkedAt": "2026-11-17T23:06:08.763Z",
               "status": "ok",
-              "bytes": 2056,
-              "sha256": "eca7b956f2e58de12fd9a924b38ed1a9e36bffaf5a1076a138df1f11260c1abb"
+              "bytes": 2059,
+              "sha256": "25264897cc7568d0d783fa44473439803262050fe7a809423b4fb5bd6930bae2"
             },
             {
               "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMZN?period1=1792540800&period2=1793491200&interval=1d&events=div%2Csplits",
-              "checkedAt": "2026-11-10T00:28:50.837Z",
+              "checkedAt": "2026-11-17T23:06:08.838Z",
               "status": "ok",
-              "bytes": 2047,
-              "sha256": "aa3a8be57e05356e77f42b3e134302c14db8f675f3531a4fd8283b47a38c9845"
+              "bytes": 2045,
+              "sha256": "20f2a2f1cb72c0d608b008fd918d8ea0e767aa2979a3367dc85c105c8fdca56f"
             },
             {
               "url": "https://query1.finance.yahoo.com/v8/finance/chart/GOOGL?period1=1792540800&period2=1793491200&interval=1d&events=div%2Csplits",
-              "checkedAt": "2026-11-10T00:28:50.893Z",
+              "checkedAt": "2026-11-17T23:06:08.903Z",
               "status": "ok",
-              "bytes": 2052,
-              "sha256": "35f7c8e7b9b9b2f0ab5e519798cd3113344d14dfc1aede200a7798af57f9fbca"
+              "bytes": 2055,
+              "sha256": "c4c7abc80a1853020fbf96832c8c07380dc667c7970c9f98933d79c3b1bed4de"
             }
           ],
           "sourceFailures": [],
@@ -5256,7 +5186,7 @@
             "maximumRequests": 20,
             "responseMaxBytes": 2097152,
             "totalMaxBytes": 12582912,
-            "totalBytes": 4849441,
+            "totalBytes": 4845788,
             "totalBudgetExhausted": false,
             "requestTimeoutMs": 12000,
             "applicationRetries": 0,
@@ -5277,12 +5207,12 @@
       "source_name": "公开新闻与高管表态",
       "status": "green",
       "value_display": "无",
-      "note": "Tavily Search 公开源：相关报道 9 条，具名金融泡沫谨慎表态线索 0 条。本轮可用摘要未检出合格的具名谨慎表态线索，维持绿灯；不等于所有高管均未表达担忧。转载日期不等于原始表态日期，未核验的旧引述不作为本期新表态事实。",
-      "as_of": "2026-11-10",
+      "note": "Tavily Search 公开源：相关报道 6 条，具名金融泡沫谨慎表态线索 0 条。本轮可用摘要未检出合格的具名谨慎表态线索，维持绿灯；不等于所有高管均未表达担忧。转载日期不等于原始表态日期，未核验的旧引述不作为本期新表态事实。",
+      "as_of": "2026-11-17",
       "stale": false,
       "provenance": {
         "mode": "auto",
-        "fetchedAt": "2026-11-10T00:29:30.269Z",
+        "fetchedAt": "2026-11-17T23:06:48.856Z",
         "detail": {
           "source": "Tavily Search API fallback",
           "sourceMode": "fallback",
@@ -5290,62 +5220,62 @@
           "query": "\"AI bubble\" OR \"artificial intelligence bubble\" OR \"AI overbuild\" OR \"AI capex bubble\" CEO executive",
           "topic": "news",
           "timeRange": "month",
-          "resultCount": 9,
-          "articleCount": 9,
+          "resultCount": 8,
+          "articleCount": 6,
           "executiveHitCount": 0,
           "usage": {
             "credits": 1
           },
-          "requestId": "5295df06-ff59-4e42-8df7-c1dd41759859",
+          "requestId": "bedee073-1967-4027-a73b-6b6f459abd3d",
           "topArticles": [
-            {
-              "title": "Billionaire Ken Griffin Warns of AI Bubble as Big Tech Spends $700 Billion - CEOWORLD Magazine",
-              "url": "https://ceoworld.biz/2026/10/25/billionaire-ken-griffin-warns-of-ai-bubble-as-big-tech-spends-700-billion",
-              "score": 0.6625569,
-              "published_date": "Sat, 24 Oct 2026 21:33:27 GMT",
-              "snippet": "Frank Brown, D.Litt. Frank Brown, D.Litt.Global Executives Billionaire Ken Griffin Ken Griffin, founder and chief executive of Citadel, has added his voice to a growing debate abo…"
-            },
             {
               "title": "Billionaire CEO: AI Is “The Biggest Bubble Of Our Lifetime,” But Investors Should Keep Buying During The Melt-Up - 24/7 Wall St.",
               "url": "https://247wallst.com/investing/2026/10/19/billionaire-ceo-ai-is-the-biggest-bubble-of-our-lifetime-but-investors-should-keep-buying-during-the-melt-up",
-              "score": 0.6155738,
+              "score": 0.5790434,
               "published_date": "Mon, 19 Oct 2026 14:14:21 GMT",
               "snippet": "A crypto executive and former hedge fund manager is calling artificial intelligence the “biggest bubble of our lifetime” and telling investors to stay in. Mike Novogratz, founder …"
             },
             {
-              "title": "Wall Street sees warning signs of an AI bubble, but valuations tell different story — TradingView News",
-              "url": "https://www.tradingview.com/news/seekingalpha:ad5b7f479094b:0-wall-street-sees-warning-signs-of-an-ai-bubble-but-valuations-tell-different-story",
-              "score": 0.6030211,
-              "published_date": "Sun, 18 Oct 2026 17:40:46 GMT",
-              "snippet": "Nevertheless, some developments resemble earlier periods of market excess. Broadcom AVGO Chief Executive Hock Tan has criticized speculative investors who buy AI-related shares wi…"
+              "title": "Billionaire Ken Griffin Warns of AI Bubble as Big Tech Spends $700 Billion",
+              "url": "https://www.google.com/url?opi=89978449&q=CAESpwEBxCJF1whLWXhBNUC9rPDvaZP48z0z2GKA3Khmltcmktktb4iyzyHKZfzry0qXO2-XGgXthspoM0vm6_RH3O8i8BDiHSQDtYSJWcJKAEZLu9GcOehlcUwJ5dRopqCoDCK3jjZR9QFWZCSj7l1LJzBNskwVyXHQXriB8FqqtnVonigTe15JlsrhANgxs5l-IGlChHtQNm2CmLKkuvdYbw2QtppfGgxneA&sa=U&uoh=3&ved=2ahUKEwit46WWj5CYAxUwLkQIHVTpCZcQxfQBegQICxAC&usg=AOvVaw2be0opzPovBflv8e2If0VG",
+              "score": 0.5416513,
+              "published_date": "Tue, 27 Oct 2026 23:00:00 GMT",
+              "snippet": "Ken Griffin, founder and chief executive of Citadel, has added his voice to a growing debate about the valuation of artificial intelligence stocks."
             },
             {
-              "title": "What Tech Leaders Have Said About an AI Bubble | Kiplinger",
-              "url": "https://www.kiplinger.com/business/what-2026-tech-leaders-have-said-about-an-ai-bubble",
-              "score": 0.6021791,
-              "published_date": "Mon, 19 Oct 2026 11:00:00 GMT",
-              "snippet": "Sam Altman, CEO of OpenAI: \"I'm not worried about our compute buildout plans. I am worried about the world's compute buildout plans. I think we are going to be able to use all of …"
+              "title": "Wall Street CEOs, Big Money Managers Divided Over AI Risks - Bloomberg",
+              "url": "https://www.bloomberg.com/news/articles/2026-11-03/wall-street-ceos-big-global-money-managers-debate-ai-risks",
+              "score": 0.522857,
+              "published_date": "Tue, 03 Nov 2026 05:49:16 GMT",
+              "snippet": "Pacific Investment Management Co.’s Chief Executive Officer Emmanuel Roman and Bain Capital’s chair John Connaughton are among a growing number of investment managers warning of b…"
             },
             {
-              "title": "AI bubble fears: the CapEx risks lurking behind this week’s selloff - InvestmentNews",
-              "url": "https://www.investmentnews.com/equities/the-ai-capex-fears-that-fuelled-market-selloff/268919",
-              "score": 0.5948579,
-              "published_date": "Fri, 06 Nov 2026 17:50:46 GMT",
-              "snippet": "The volatility spoke to a bigger concern: whether these companies can sustain growth, and whether they, and the markets, can handle the stress points around it. ## Is the AI trade…"
+              "title": "The AI payoff is real. The timeline is the problem | Fortune",
+              "url": "https://fortune.com/2026/10/28/will-ai-pay-off-when-bubble-risk-anthropic-ipo",
+              "score": 0.4592277,
+              "published_date": "Wed, 28 Oct 2026 00:00:00 GMT",
+              "snippet": "a year or more to register in corporate earnings and macroeconomic data. Even Goldman’s Solomon has acknowledged that enterprise implementation may unfold more slowly than people …"
+            },
+            {
+              "title": "On theCUBE Pod: AI bubble lets out some air",
+              "url": "https://www.google.com/url?opi=89978449&q=CAESgwEBxCJF1-dOhuW-4m41ZYrjPPTMS7-OnnMaktpXllX0Mv84L3n50PglCOjOEuu_sHpxTzjiNUa0djulmpcFK2q7DQSXjR_N0PPFs9ElMgp-y2jW-kguSq3Yi81d-Z3DrfMOHjdqDtQw5ti7RwQqGjn6CMv-KsR0wOVdzKLUtNjIZ5XQhw&sa=U&uoh=3&ved=2ahUKEwit46WWj5CYAxUwLkQIHVTpCZcQxfQBegQICBAC&usg=AOvVaw3jXXzGYI2epgJ-pi7Mh9qW",
+              "score": 0.29838914,
+              "published_date": "Tue, 03 Nov 2026 23:00:00 GMT",
+              "snippet": "On the latest episode of theCUBE Pod, John Furrier and Dave Vellante discuss the AI infrastructure bubble and changes to the NYSE."
             }
           ],
-          "sourceSummary": "Tavily Search API:无(新闻9,高管0) / Brave News Search API:不可用(brave_budget_uninitialized)",
+          "sourceSummary": "Tavily Search API:无(新闻6,高管0) / Brave News Search API:不可用(brave_budget_grant_expired)",
           "crossConfirmations": [
             {
               "source": "Brave News Search API",
               "status": "unavailable",
-              "reason": "brave_budget_uninitialized"
+              "reason": "brave_budget_grant_expired"
             }
           ],
           "crossConfirmation": {
             "source": "Brave News Search API",
             "status": "unavailable",
-            "reason": "brave_budget_uninitialized"
+            "reason": "brave_budget_grant_expired"
           },
           "crossConfirmationRule": {
             "redRequiresTwoIndependentNewsSources": true,
@@ -5366,7 +5296,7 @@
           },
           "sourceCandidateStatus": "hybrid_live",
           "sourceCandidatePrimarySignal": "CEO / senior-executive bubble-risk or overheat language frequency",
-          "curatedFallbackAsOfDate": "2026-11-08"
+          "curatedFallbackAsOfDate": "2026-11-15"
         }
       }
     }
@@ -5374,8 +5304,8 @@
   "market_technical_heat": {
     "contractVersion": "bubble-watch-market-technical-heat-v1",
     "boundary": "display-only audit panel; excluded from Bubble Watch core/shadow indicator scoring, verdict, decision, execution, and position logic",
-    "as_of_date": "2026-11-09",
-    "generated_at": "2026-11-10T00:29:31.063Z",
+    "as_of_date": "2026-11-17",
+    "generated_at": "2026-11-17T23:06:49.653Z",
     "status": "green",
     "label": "温度可控",
     "heat_score": 10,
@@ -5411,7 +5341,7 @@
       "benchmark": "QQQ",
       "betaBenchmark": "SPY",
       "observationCount": 251,
-      "latestDate": "2026-11-09",
+      "latestDate": "2026-11-17",
       "failedSymbols": []
     },
     "source_priority": [
@@ -5446,13 +5376,13 @@
         "name_en": "AI Basket 21D vs QQQ",
         "threshold_text": ">+8pct 红 / +3~+8 黄 / <+3 绿",
         "status": "green",
-        "value_display": "-3.1pct",
-        "note": "等权 AI 篮子近 21 个交易日回报 -12.6%,QQQ -9.6%,相对超额 -3.1pct。该项只衡量公开市场短线追价热度,不进入红灯主分。",
+        "value_display": "-1.3pct",
+        "note": "等权 AI 篮子近 21 个交易日回报 -9.8%,QQQ -8.5%,相对超额 -1.3pct。该项只衡量公开市场短线追价热度,不进入红灯主分。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "basket21": -12.632750297048915,
-          "qqq21": -9.573128445906379,
-          "excess21": -3.059621851142536
+          "basket21": -9.807083583637,
+          "qqq21": -8.548635001499624,
+          "excess21": -1.258448582137376
         }
       },
       {
@@ -5461,11 +5391,11 @@
         "name_en": "Equal-Weight Basket RSI",
         "threshold_text": "≥75 红 / 65-75 黄 / <65 绿",
         "status": "green",
-        "value_display": "42",
-        "note": "按等权 AI 篮子日线合成价计算 14 日 RSI=41.6。RSI 反映短线超买温度,不能替代估值或基本面判断。",
+        "value_display": "36",
+        "note": "按等权 AI 篮子日线合成价计算 14 日 RSI=36.3。RSI 反映短线超买温度,不能替代估值或基本面判断。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "rsi": 41.64953114226061,
+          "rsi": 36.28229881205199,
           "period": 14
         }
       },
@@ -5475,11 +5405,11 @@
         "name_en": "Bollinger %B",
         "threshold_text": "≥1.05 红 / 0.85-1.05 黄 / <0.85 绿",
         "status": "green",
-        "value_display": "0.30",
-        "note": "20 日 Bollinger %B=0.30;%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。",
+        "value_display": "0.24",
+        "note": "20 日 Bollinger %B=0.24;%B 接近或高于 1 表示价格贴近/突破上轨,属于短线过热信号。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "pctB": 0.2987914171695497,
+          "pctB": 0.24052241785438383,
           "window": 20,
           "bandStdDev": 2
         }
@@ -5490,11 +5420,11 @@
         "name_en": "Distance from 200D SMA",
         "threshold_text": ">25% 红 / 10-25% 黄 / <10% 绿",
         "status": "green",
-        "value_display": "-0.0%",
-        "note": "等权 AI 篮子较 200 日均线偏离 -0.0%。该项捕捉趋势拥挤,不判断企业现金流兑现。",
+        "value_display": "-3.1%",
+        "note": "等权 AI 篮子较 200 日均线偏离 -3.1%。该项捕捉趋势拥挤,不判断企业现金流兑现。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "sma200Deviation": -0.019992507607737662,
+          "sma200Deviation": -3.1471027222556214,
           "window": 200
         }
       },
@@ -5504,12 +5434,12 @@
         "name_en": "60D Correlation / Beta",
         "threshold_text": "ρ≥0.75且β≥1.35 红 / ρ≥0.55或β≥1.15 黄 / 其余绿",
         "status": "yellow",
-        "value_display": "ρ 0.38 / β 1.99",
-        "note": "最近 60 个交易日 AI 篮子平均两两相关性 ρ=0.38,相对 SPY beta=1.99。相关性和 beta 同升时,代表主题交易更容易同涨同跌。",
+        "value_display": "ρ 0.38 / β 1.98",
+        "note": "最近 60 个交易日 AI 篮子平均两两相关性 ρ=0.38,相对 SPY beta=1.98。相关性和 beta 同升时,代表主题交易更容易同涨同跌。",
         "source_name": "Yahoo Chart 公开价格序列",
         "detail": {
-          "avgCorrelation": 0.3841374810600437,
-          "beta": 1.9919292745094603,
+          "avgCorrelation": 0.3783316343148244,
+          "beta": 1.9818314838128726,
           "window": 60,
           "pairCount": 28
         }
@@ -5519,9 +5449,1063 @@
   "credit_spreads": {
     "contractVersion": "bubble-credit-spreads-v1",
     "boundary": "display_only_no_score_impact",
-    "checkedAt": "2026-11-17T16:08:03.920Z",
+    "checkedAt": "2026-11-17T23:04:15.363Z",
     "windowDays": 366,
     "series": {
+      "ccc": [
+        {
+          "date": "2025-11-17",
+          "bps": 908
+        },
+        {
+          "date": "2025-11-18",
+          "bps": 922
+        },
+        {
+          "date": "2025-11-19",
+          "bps": 919
+        },
+        {
+          "date": "2025-11-20",
+          "bps": 920
+        },
+        {
+          "date": "2025-11-21",
+          "bps": 920
+        },
+        {
+          "date": "2025-11-24",
+          "bps": 919
+        },
+        {
+          "date": "2025-11-25",
+          "bps": 916
+        },
+        {
+          "date": "2025-11-26",
+          "bps": 914
+        },
+        {
+          "date": "2025-11-27",
+          "bps": 914
+        },
+        {
+          "date": "2025-11-28",
+          "bps": 917
+        },
+        {
+          "date": "2025-11-30",
+          "bps": 894
+        },
+        {
+          "date": "2025-12-01",
+          "bps": 897
+        },
+        {
+          "date": "2025-12-02",
+          "bps": 897
+        },
+        {
+          "date": "2025-12-03",
+          "bps": 879
+        },
+        {
+          "date": "2025-12-04",
+          "bps": 878
+        },
+        {
+          "date": "2025-12-05",
+          "bps": 868
+        },
+        {
+          "date": "2025-12-08",
+          "bps": 871
+        },
+        {
+          "date": "2025-12-09",
+          "bps": 876
+        },
+        {
+          "date": "2025-12-10",
+          "bps": 883
+        },
+        {
+          "date": "2025-12-11",
+          "bps": 877
+        },
+        {
+          "date": "2025-12-12",
+          "bps": 876
+        },
+        {
+          "date": "2025-12-15",
+          "bps": 879
+        },
+        {
+          "date": "2025-12-16",
+          "bps": 887
+        },
+        {
+          "date": "2025-12-17",
+          "bps": 892
+        },
+        {
+          "date": "2025-12-18",
+          "bps": 891
+        },
+        {
+          "date": "2025-12-19",
+          "bps": 884
+        },
+        {
+          "date": "2025-12-22",
+          "bps": 880
+        },
+        {
+          "date": "2025-12-23",
+          "bps": 873
+        },
+        {
+          "date": "2025-12-24",
+          "bps": 875
+        },
+        {
+          "date": "2025-12-26",
+          "bps": 880
+        },
+        {
+          "date": "2025-12-29",
+          "bps": 878
+        },
+        {
+          "date": "2025-12-30",
+          "bps": 873
+        },
+        {
+          "date": "2025-12-31",
+          "bps": 885
+        },
+        {
+          "date": "2026-01-02",
+          "bps": 888
+        },
+        {
+          "date": "2026-01-05",
+          "bps": 883
+        },
+        {
+          "date": "2026-01-06",
+          "bps": 874
+        },
+        {
+          "date": "2026-01-07",
+          "bps": 870
+        },
+        {
+          "date": "2026-01-08",
+          "bps": 868
+        },
+        {
+          "date": "2026-01-09",
+          "bps": 865
+        },
+        {
+          "date": "2026-01-12",
+          "bps": 864
+        },
+        {
+          "date": "2026-01-13",
+          "bps": 864
+        },
+        {
+          "date": "2026-01-14",
+          "bps": 863
+        },
+        {
+          "date": "2026-01-15",
+          "bps": 856
+        },
+        {
+          "date": "2026-01-16",
+          "bps": 852
+        },
+        {
+          "date": "2026-01-19",
+          "bps": 851
+        },
+        {
+          "date": "2026-01-20",
+          "bps": 864
+        },
+        {
+          "date": "2026-01-21",
+          "bps": 855
+        },
+        {
+          "date": "2026-01-22",
+          "bps": 843
+        },
+        {
+          "date": "2026-01-23",
+          "bps": 849
+        },
+        {
+          "date": "2026-01-26",
+          "bps": 852
+        },
+        {
+          "date": "2026-01-27",
+          "bps": 846
+        },
+        {
+          "date": "2026-01-28",
+          "bps": 838
+        },
+        {
+          "date": "2026-01-29",
+          "bps": 854
+        },
+        {
+          "date": "2026-01-30",
+          "bps": 855
+        },
+        {
+          "date": "2026-01-31",
+          "bps": 874
+        },
+        {
+          "date": "2026-02-02",
+          "bps": 868
+        },
+        {
+          "date": "2026-02-03",
+          "bps": 874
+        },
+        {
+          "date": "2026-02-04",
+          "bps": 880
+        },
+        {
+          "date": "2026-02-05",
+          "bps": 900
+        },
+        {
+          "date": "2026-02-06",
+          "bps": 892
+        },
+        {
+          "date": "2026-02-09",
+          "bps": 887
+        },
+        {
+          "date": "2026-02-10",
+          "bps": 892
+        },
+        {
+          "date": "2026-02-11",
+          "bps": 885
+        },
+        {
+          "date": "2026-02-12",
+          "bps": 897
+        },
+        {
+          "date": "2026-02-13",
+          "bps": 906
+        },
+        {
+          "date": "2026-02-16",
+          "bps": 896
+        },
+        {
+          "date": "2026-02-17",
+          "bps": 900
+        },
+        {
+          "date": "2026-02-18",
+          "bps": 887
+        },
+        {
+          "date": "2026-02-19",
+          "bps": 888
+        },
+        {
+          "date": "2026-02-20",
+          "bps": 887
+        },
+        {
+          "date": "2026-02-23",
+          "bps": 904
+        },
+        {
+          "date": "2026-02-24",
+          "bps": 915
+        },
+        {
+          "date": "2026-02-25",
+          "bps": 918
+        },
+        {
+          "date": "2026-02-26",
+          "bps": 927
+        },
+        {
+          "date": "2026-02-27",
+          "bps": 950
+        },
+        {
+          "date": "2026-02-28",
+          "bps": 952
+        },
+        {
+          "date": "2026-03-02",
+          "bps": 945
+        },
+        {
+          "date": "2026-03-03",
+          "bps": 957
+        },
+        {
+          "date": "2026-03-04",
+          "bps": 942
+        },
+        {
+          "date": "2026-03-05",
+          "bps": 944
+        },
+        {
+          "date": "2026-03-06",
+          "bps": 959
+        },
+        {
+          "date": "2026-03-09",
+          "bps": 969
+        },
+        {
+          "date": "2026-03-10",
+          "bps": 945
+        },
+        {
+          "date": "2026-03-11",
+          "bps": 945
+        },
+        {
+          "date": "2026-03-12",
+          "bps": 961
+        },
+        {
+          "date": "2026-03-13",
+          "bps": 978
+        },
+        {
+          "date": "2026-03-16",
+          "bps": 973
+        },
+        {
+          "date": "2026-03-17",
+          "bps": 963
+        },
+        {
+          "date": "2026-03-18",
+          "bps": 964
+        },
+        {
+          "date": "2026-03-19",
+          "bps": 976
+        },
+        {
+          "date": "2026-03-20",
+          "bps": 979
+        },
+        {
+          "date": "2026-03-23",
+          "bps": 975
+        },
+        {
+          "date": "2026-03-24",
+          "bps": 977
+        },
+        {
+          "date": "2026-03-25",
+          "bps": 974
+        },
+        {
+          "date": "2026-03-26",
+          "bps": 984
+        },
+        {
+          "date": "2026-03-27",
+          "bps": 1013
+        },
+        {
+          "date": "2026-03-30",
+          "bps": 1020
+        },
+        {
+          "date": "2026-03-31",
+          "bps": 994
+        },
+        {
+          "date": "2026-04-01",
+          "bps": 981
+        },
+        {
+          "date": "2026-04-02",
+          "bps": 988
+        },
+        {
+          "date": "2026-04-03",
+          "bps": 989
+        },
+        {
+          "date": "2026-04-06",
+          "bps": 976
+        },
+        {
+          "date": "2026-04-07",
+          "bps": 983
+        },
+        {
+          "date": "2026-04-08",
+          "bps": 953
+        },
+        {
+          "date": "2026-04-09",
+          "bps": 946
+        },
+        {
+          "date": "2026-04-10",
+          "bps": 954
+        },
+        {
+          "date": "2026-04-13",
+          "bps": 958
+        },
+        {
+          "date": "2026-04-14",
+          "bps": 931
+        },
+        {
+          "date": "2026-04-15",
+          "bps": 924
+        },
+        {
+          "date": "2026-04-16",
+          "bps": 921
+        },
+        {
+          "date": "2026-04-17",
+          "bps": 912
+        },
+        {
+          "date": "2026-04-20",
+          "bps": 915
+        },
+        {
+          "date": "2026-04-21",
+          "bps": 913
+        },
+        {
+          "date": "2026-04-22",
+          "bps": 913
+        },
+        {
+          "date": "2026-04-23",
+          "bps": 915
+        },
+        {
+          "date": "2026-04-24",
+          "bps": 918
+        },
+        {
+          "date": "2026-04-27",
+          "bps": 908
+        },
+        {
+          "date": "2026-04-28",
+          "bps": 911
+        },
+        {
+          "date": "2026-04-29",
+          "bps": 909
+        },
+        {
+          "date": "2026-04-30",
+          "bps": 909
+        },
+        {
+          "date": "2026-05-01",
+          "bps": 904
+        },
+        {
+          "date": "2026-05-04",
+          "bps": 910
+        },
+        {
+          "date": "2026-05-05",
+          "bps": 911
+        },
+        {
+          "date": "2026-05-06",
+          "bps": 907
+        },
+        {
+          "date": "2026-05-07",
+          "bps": 915
+        },
+        {
+          "date": "2026-05-08",
+          "bps": 920
+        },
+        {
+          "date": "2026-05-11",
+          "bps": 931
+        },
+        {
+          "date": "2026-05-12",
+          "bps": 937
+        },
+        {
+          "date": "2026-05-13",
+          "bps": 931
+        },
+        {
+          "date": "2026-05-14",
+          "bps": 922
+        },
+        {
+          "date": "2026-05-15",
+          "bps": 935
+        },
+        {
+          "date": "2026-05-18",
+          "bps": 942
+        },
+        {
+          "date": "2026-05-19",
+          "bps": 948
+        },
+        {
+          "date": "2026-05-20",
+          "bps": 940
+        },
+        {
+          "date": "2026-05-21",
+          "bps": 939
+        },
+        {
+          "date": "2026-05-22",
+          "bps": 939
+        },
+        {
+          "date": "2026-05-25",
+          "bps": 939
+        },
+        {
+          "date": "2026-05-26",
+          "bps": 935
+        },
+        {
+          "date": "2026-05-27",
+          "bps": 936
+        },
+        {
+          "date": "2026-05-28",
+          "bps": 935
+        },
+        {
+          "date": "2026-05-29",
+          "bps": 938
+        },
+        {
+          "date": "2026-05-31",
+          "bps": 941
+        },
+        {
+          "date": "2026-06-01",
+          "bps": 946
+        },
+        {
+          "date": "2026-06-02",
+          "bps": 944
+        },
+        {
+          "date": "2026-06-03",
+          "bps": 947
+        },
+        {
+          "date": "2026-06-04",
+          "bps": 946
+        },
+        {
+          "date": "2026-06-05",
+          "bps": 952
+        },
+        {
+          "date": "2026-06-08",
+          "bps": 949
+        },
+        {
+          "date": "2026-06-09",
+          "bps": 951
+        },
+        {
+          "date": "2026-06-10",
+          "bps": 957
+        },
+        {
+          "date": "2026-06-11",
+          "bps": 956
+        },
+        {
+          "date": "2026-06-12",
+          "bps": 948
+        },
+        {
+          "date": "2026-06-15",
+          "bps": 937
+        },
+        {
+          "date": "2026-06-16",
+          "bps": 944
+        },
+        {
+          "date": "2026-06-17",
+          "bps": 939
+        },
+        {
+          "date": "2026-06-18",
+          "bps": 946
+        },
+        {
+          "date": "2026-06-19",
+          "bps": 947
+        },
+        {
+          "date": "2026-06-22",
+          "bps": 947
+        },
+        {
+          "date": "2026-06-23",
+          "bps": 956
+        },
+        {
+          "date": "2026-06-24",
+          "bps": 964
+        },
+        {
+          "date": "2026-06-25",
+          "bps": 968
+        },
+        {
+          "date": "2026-06-26",
+          "bps": 973
+        },
+        {
+          "date": "2026-06-29",
+          "bps": 967
+        },
+        {
+          "date": "2026-06-30",
+          "bps": 970
+        },
+        {
+          "date": "2026-07-01",
+          "bps": 968
+        },
+        {
+          "date": "2026-07-02",
+          "bps": 971
+        },
+        {
+          "date": "2026-07-03",
+          "bps": 969
+        },
+        {
+          "date": "2026-07-06",
+          "bps": 967
+        },
+        {
+          "date": "2026-07-07",
+          "bps": 964
+        },
+        {
+          "date": "2026-07-08",
+          "bps": 975
+        },
+        {
+          "date": "2026-07-09",
+          "bps": 974
+        },
+        {
+          "date": "2026-07-10",
+          "bps": 970
+        },
+        {
+          "date": "2026-07-13",
+          "bps": 972
+        },
+        {
+          "date": "2026-07-14",
+          "bps": 973
+        },
+        {
+          "date": "2026-07-15",
+          "bps": 969
+        },
+        {
+          "date": "2026-07-16",
+          "bps": 970
+        },
+        {
+          "date": "2026-07-17",
+          "bps": 975
+        },
+        {
+          "date": "2026-07-20",
+          "bps": 977
+        },
+        {
+          "date": "2026-07-21",
+          "bps": 978
+        },
+        {
+          "date": "2026-07-22",
+          "bps": 981
+        },
+        {
+          "date": "2026-07-23",
+          "bps": 991
+        },
+        {
+          "date": "2026-07-24",
+          "bps": 996
+        },
+        {
+          "date": "2026-07-27",
+          "bps": 1001
+        },
+        {
+          "date": "2026-07-28",
+          "bps": 1005
+        },
+        {
+          "date": "2026-07-29",
+          "bps": 1013
+        },
+        {
+          "date": "2026-07-30",
+          "bps": 1006
+        },
+        {
+          "date": "2026-07-31",
+          "bps": 1034
+        },
+        {
+          "date": "2026-08-03",
+          "bps": 1028
+        },
+        {
+          "date": "2026-08-04",
+          "bps": 1019
+        },
+        {
+          "date": "2026-08-05",
+          "bps": 1023
+        },
+        {
+          "date": "2026-08-06",
+          "bps": 1017
+        },
+        {
+          "date": "2026-08-07",
+          "bps": 1013
+        },
+        {
+          "date": "2026-08-10",
+          "bps": 1014
+        },
+        {
+          "date": "2026-08-11",
+          "bps": 1023
+        },
+        {
+          "date": "2026-08-12",
+          "bps": 1020
+        },
+        {
+          "date": "2026-08-13",
+          "bps": 1024
+        },
+        {
+          "date": "2026-08-14",
+          "bps": 1012
+        },
+        {
+          "date": "2026-08-17",
+          "bps": 1018
+        },
+        {
+          "date": "2026-08-18",
+          "bps": 1027
+        },
+        {
+          "date": "2026-08-19",
+          "bps": 1030
+        },
+        {
+          "date": "2026-08-20",
+          "bps": 1035
+        },
+        {
+          "date": "2026-08-21",
+          "bps": 1037
+        },
+        {
+          "date": "2026-08-24",
+          "bps": 1036
+        },
+        {
+          "date": "2026-08-25",
+          "bps": 1039
+        },
+        {
+          "date": "2026-08-26",
+          "bps": 1031
+        },
+        {
+          "date": "2026-08-27",
+          "bps": 1031
+        },
+        {
+          "date": "2026-08-28",
+          "bps": 1026
+        },
+        {
+          "date": "2026-08-31",
+          "bps": 1042
+        },
+        {
+          "date": "2026-09-01",
+          "bps": 1049
+        },
+        {
+          "date": "2026-09-02",
+          "bps": 1053
+        },
+        {
+          "date": "2026-09-03",
+          "bps": 1051
+        },
+        {
+          "date": "2026-09-04",
+          "bps": 1054
+        },
+        {
+          "date": "2026-09-07",
+          "bps": 1055
+        },
+        {
+          "date": "2026-09-08",
+          "bps": 1056
+        },
+        {
+          "date": "2026-09-09",
+          "bps": 1064
+        },
+        {
+          "date": "2026-09-10",
+          "bps": 1070
+        },
+        {
+          "date": "2026-09-11",
+          "bps": 1076
+        },
+        {
+          "date": "2026-09-14",
+          "bps": 1081
+        },
+        {
+          "date": "2026-09-15",
+          "bps": 1085
+        },
+        {
+          "date": "2026-09-16",
+          "bps": 1076
+        },
+        {
+          "date": "2026-09-17",
+          "bps": 1076
+        },
+        {
+          "date": "2026-09-18",
+          "bps": 1083
+        },
+        {
+          "date": "2026-09-21",
+          "bps": 1077
+        },
+        {
+          "date": "2026-09-22",
+          "bps": 1075
+        },
+        {
+          "date": "2026-09-23",
+          "bps": 1093
+        },
+        {
+          "date": "2026-09-24",
+          "bps": 1112
+        },
+        {
+          "date": "2026-09-25",
+          "bps": 1128
+        },
+        {
+          "date": "2026-09-28",
+          "bps": 1146
+        },
+        {
+          "date": "2026-09-29",
+          "bps": 1157
+        },
+        {
+          "date": "2026-09-30",
+          "bps": 1179
+        },
+        {
+          "date": "2026-10-01",
+          "bps": 1215
+        },
+        {
+          "date": "2026-10-02",
+          "bps": 1202
+        },
+        {
+          "date": "2026-10-05",
+          "bps": 1211
+        },
+        {
+          "date": "2026-10-06",
+          "bps": 1214
+        },
+        {
+          "date": "2026-10-07",
+          "bps": 1229
+        },
+        {
+          "date": "2026-10-08",
+          "bps": 1252
+        },
+        {
+          "date": "2026-10-09",
+          "bps": 1253
+        },
+        {
+          "date": "2026-10-12",
+          "bps": 1253
+        },
+        {
+          "date": "2026-10-13",
+          "bps": 1267
+        },
+        {
+          "date": "2026-10-14",
+          "bps": 1282
+        },
+        {
+          "date": "2026-10-15",
+          "bps": 1278
+        },
+        {
+          "date": "2026-10-16",
+          "bps": 1297
+        },
+        {
+          "date": "2026-10-19",
+          "bps": 1310
+        },
+        {
+          "date": "2026-10-20",
+          "bps": 1327
+        },
+        {
+          "date": "2026-10-21",
+          "bps": 1307
+        },
+        {
+          "date": "2026-10-22",
+          "bps": 1340
+        },
+        {
+          "date": "2026-10-23",
+          "bps": 1356
+        },
+        {
+          "date": "2026-10-26",
+          "bps": 1345
+        },
+        {
+          "date": "2026-10-27",
+          "bps": 1321
+        },
+        {
+          "date": "2026-10-28",
+          "bps": 1307
+        },
+        {
+          "date": "2026-10-29",
+          "bps": 1325
+        },
+        {
+          "date": "2026-10-30",
+          "bps": 1327
+        },
+        {
+          "date": "2026-11-02",
+          "bps": 1319
+        },
+        {
+          "date": "2026-11-03",
+          "bps": 1316
+        },
+        {
+          "date": "2026-11-04",
+          "bps": 1297
+        },
+        {
+          "date": "2026-11-05",
+          "bps": 1320
+        },
+        {
+          "date": "2026-11-06",
+          "bps": 1317
+        },
+        {
+          "date": "2026-11-09",
+          "bps": 1311
+        },
+        {
+          "date": "2026-11-10",
+          "bps": 1331
+        },
+        {
+          "date": "2026-11-11",
+          "bps": 1330
+        },
+        {
+          "date": "2026-11-12",
+          "bps": 1314
+        },
+        {
+          "date": "2026-11-13",
+          "bps": 1316
+        },
+        {
+          "date": "2026-11-16",
+          "bps": 1310
+        }
+      ],
       "hy": [
         {
           "date": "2025-11-17",
@@ -7629,1079 +8613,25 @@
           "date": "2026-11-16",
           "bps": 90
         }
-      ],
-      "ccc": [
-        {
-          "date": "2025-11-17",
-          "bps": 908
-        },
-        {
-          "date": "2025-11-18",
-          "bps": 922
-        },
-        {
-          "date": "2025-11-19",
-          "bps": 919
-        },
-        {
-          "date": "2025-11-20",
-          "bps": 920
-        },
-        {
-          "date": "2025-11-21",
-          "bps": 920
-        },
-        {
-          "date": "2025-11-24",
-          "bps": 919
-        },
-        {
-          "date": "2025-11-25",
-          "bps": 916
-        },
-        {
-          "date": "2025-11-26",
-          "bps": 914
-        },
-        {
-          "date": "2025-11-27",
-          "bps": 914
-        },
-        {
-          "date": "2025-11-28",
-          "bps": 917
-        },
-        {
-          "date": "2025-11-30",
-          "bps": 894
-        },
-        {
-          "date": "2025-12-01",
-          "bps": 897
-        },
-        {
-          "date": "2025-12-02",
-          "bps": 897
-        },
-        {
-          "date": "2025-12-03",
-          "bps": 879
-        },
-        {
-          "date": "2025-12-04",
-          "bps": 878
-        },
-        {
-          "date": "2025-12-05",
-          "bps": 868
-        },
-        {
-          "date": "2025-12-08",
-          "bps": 871
-        },
-        {
-          "date": "2025-12-09",
-          "bps": 876
-        },
-        {
-          "date": "2025-12-10",
-          "bps": 883
-        },
-        {
-          "date": "2025-12-11",
-          "bps": 877
-        },
-        {
-          "date": "2025-12-12",
-          "bps": 876
-        },
-        {
-          "date": "2025-12-15",
-          "bps": 879
-        },
-        {
-          "date": "2025-12-16",
-          "bps": 887
-        },
-        {
-          "date": "2025-12-17",
-          "bps": 892
-        },
-        {
-          "date": "2025-12-18",
-          "bps": 891
-        },
-        {
-          "date": "2025-12-19",
-          "bps": 884
-        },
-        {
-          "date": "2025-12-22",
-          "bps": 880
-        },
-        {
-          "date": "2025-12-23",
-          "bps": 873
-        },
-        {
-          "date": "2025-12-24",
-          "bps": 875
-        },
-        {
-          "date": "2025-12-26",
-          "bps": 880
-        },
-        {
-          "date": "2025-12-29",
-          "bps": 878
-        },
-        {
-          "date": "2025-12-30",
-          "bps": 873
-        },
-        {
-          "date": "2025-12-31",
-          "bps": 885
-        },
-        {
-          "date": "2026-01-02",
-          "bps": 888
-        },
-        {
-          "date": "2026-01-05",
-          "bps": 883
-        },
-        {
-          "date": "2026-01-06",
-          "bps": 874
-        },
-        {
-          "date": "2026-01-07",
-          "bps": 870
-        },
-        {
-          "date": "2026-01-08",
-          "bps": 868
-        },
-        {
-          "date": "2026-01-09",
-          "bps": 865
-        },
-        {
-          "date": "2026-01-12",
-          "bps": 864
-        },
-        {
-          "date": "2026-01-13",
-          "bps": 864
-        },
-        {
-          "date": "2026-01-14",
-          "bps": 863
-        },
-        {
-          "date": "2026-01-15",
-          "bps": 856
-        },
-        {
-          "date": "2026-01-16",
-          "bps": 852
-        },
-        {
-          "date": "2026-01-19",
-          "bps": 851
-        },
-        {
-          "date": "2026-01-20",
-          "bps": 864
-        },
-        {
-          "date": "2026-01-21",
-          "bps": 855
-        },
-        {
-          "date": "2026-01-22",
-          "bps": 843
-        },
-        {
-          "date": "2026-01-23",
-          "bps": 849
-        },
-        {
-          "date": "2026-01-26",
-          "bps": 852
-        },
-        {
-          "date": "2026-01-27",
-          "bps": 846
-        },
-        {
-          "date": "2026-01-28",
-          "bps": 838
-        },
-        {
-          "date": "2026-01-29",
-          "bps": 854
-        },
-        {
-          "date": "2026-01-30",
-          "bps": 855
-        },
-        {
-          "date": "2026-01-31",
-          "bps": 874
-        },
-        {
-          "date": "2026-02-02",
-          "bps": 868
-        },
-        {
-          "date": "2026-02-03",
-          "bps": 874
-        },
-        {
-          "date": "2026-02-04",
-          "bps": 880
-        },
-        {
-          "date": "2026-02-05",
-          "bps": 900
-        },
-        {
-          "date": "2026-02-06",
-          "bps": 892
-        },
-        {
-          "date": "2026-02-09",
-          "bps": 887
-        },
-        {
-          "date": "2026-02-10",
-          "bps": 892
-        },
-        {
-          "date": "2026-02-11",
-          "bps": 885
-        },
-        {
-          "date": "2026-02-12",
-          "bps": 897
-        },
-        {
-          "date": "2026-02-13",
-          "bps": 906
-        },
-        {
-          "date": "2026-02-16",
-          "bps": 896
-        },
-        {
-          "date": "2026-02-17",
-          "bps": 900
-        },
-        {
-          "date": "2026-02-18",
-          "bps": 887
-        },
-        {
-          "date": "2026-02-19",
-          "bps": 888
-        },
-        {
-          "date": "2026-02-20",
-          "bps": 887
-        },
-        {
-          "date": "2026-02-23",
-          "bps": 904
-        },
-        {
-          "date": "2026-02-24",
-          "bps": 915
-        },
-        {
-          "date": "2026-02-25",
-          "bps": 918
-        },
-        {
-          "date": "2026-02-26",
-          "bps": 927
-        },
-        {
-          "date": "2026-02-27",
-          "bps": 950
-        },
-        {
-          "date": "2026-02-28",
-          "bps": 952
-        },
-        {
-          "date": "2026-03-02",
-          "bps": 945
-        },
-        {
-          "date": "2026-03-03",
-          "bps": 957
-        },
-        {
-          "date": "2026-03-04",
-          "bps": 942
-        },
-        {
-          "date": "2026-03-05",
-          "bps": 944
-        },
-        {
-          "date": "2026-03-06",
-          "bps": 959
-        },
-        {
-          "date": "2026-03-09",
-          "bps": 969
-        },
-        {
-          "date": "2026-03-10",
-          "bps": 945
-        },
-        {
-          "date": "2026-03-11",
-          "bps": 945
-        },
-        {
-          "date": "2026-03-12",
-          "bps": 961
-        },
-        {
-          "date": "2026-03-13",
-          "bps": 978
-        },
-        {
-          "date": "2026-03-16",
-          "bps": 973
-        },
-        {
-          "date": "2026-03-17",
-          "bps": 963
-        },
-        {
-          "date": "2026-03-18",
-          "bps": 964
-        },
-        {
-          "date": "2026-03-19",
-          "bps": 976
-        },
-        {
-          "date": "2026-03-20",
-          "bps": 979
-        },
-        {
-          "date": "2026-03-23",
-          "bps": 975
-        },
-        {
-          "date": "2026-03-24",
-          "bps": 977
-        },
-        {
-          "date": "2026-03-25",
-          "bps": 974
-        },
-        {
-          "date": "2026-03-26",
-          "bps": 984
-        },
-        {
-          "date": "2026-03-27",
-          "bps": 1013
-        },
-        {
-          "date": "2026-03-30",
-          "bps": 1020
-        },
-        {
-          "date": "2026-03-31",
-          "bps": 994
-        },
-        {
-          "date": "2026-04-01",
-          "bps": 981
-        },
-        {
-          "date": "2026-04-02",
-          "bps": 988
-        },
-        {
-          "date": "2026-04-03",
-          "bps": 989
-        },
-        {
-          "date": "2026-04-06",
-          "bps": 976
-        },
-        {
-          "date": "2026-04-07",
-          "bps": 983
-        },
-        {
-          "date": "2026-04-08",
-          "bps": 953
-        },
-        {
-          "date": "2026-04-09",
-          "bps": 946
-        },
-        {
-          "date": "2026-04-10",
-          "bps": 954
-        },
-        {
-          "date": "2026-04-13",
-          "bps": 958
-        },
-        {
-          "date": "2026-04-14",
-          "bps": 931
-        },
-        {
-          "date": "2026-04-15",
-          "bps": 924
-        },
-        {
-          "date": "2026-04-16",
-          "bps": 921
-        },
-        {
-          "date": "2026-04-17",
-          "bps": 912
-        },
-        {
-          "date": "2026-04-20",
-          "bps": 915
-        },
-        {
-          "date": "2026-04-21",
-          "bps": 913
-        },
-        {
-          "date": "2026-04-22",
-          "bps": 913
-        },
-        {
-          "date": "2026-04-23",
-          "bps": 915
-        },
-        {
-          "date": "2026-04-24",
-          "bps": 918
-        },
-        {
-          "date": "2026-04-27",
-          "bps": 908
-        },
-        {
-          "date": "2026-04-28",
-          "bps": 911
-        },
-        {
-          "date": "2026-04-29",
-          "bps": 909
-        },
-        {
-          "date": "2026-04-30",
-          "bps": 909
-        },
-        {
-          "date": "2026-05-01",
-          "bps": 904
-        },
-        {
-          "date": "2026-05-04",
-          "bps": 910
-        },
-        {
-          "date": "2026-05-05",
-          "bps": 911
-        },
-        {
-          "date": "2026-05-06",
-          "bps": 907
-        },
-        {
-          "date": "2026-05-07",
-          "bps": 915
-        },
-        {
-          "date": "2026-05-08",
-          "bps": 920
-        },
-        {
-          "date": "2026-05-11",
-          "bps": 931
-        },
-        {
-          "date": "2026-05-12",
-          "bps": 937
-        },
-        {
-          "date": "2026-05-13",
-          "bps": 931
-        },
-        {
-          "date": "2026-05-14",
-          "bps": 922
-        },
-        {
-          "date": "2026-05-15",
-          "bps": 935
-        },
-        {
-          "date": "2026-05-18",
-          "bps": 942
-        },
-        {
-          "date": "2026-05-19",
-          "bps": 948
-        },
-        {
-          "date": "2026-05-20",
-          "bps": 940
-        },
-        {
-          "date": "2026-05-21",
-          "bps": 939
-        },
-        {
-          "date": "2026-05-22",
-          "bps": 939
-        },
-        {
-          "date": "2026-05-25",
-          "bps": 939
-        },
-        {
-          "date": "2026-05-26",
-          "bps": 935
-        },
-        {
-          "date": "2026-05-27",
-          "bps": 936
-        },
-        {
-          "date": "2026-05-28",
-          "bps": 935
-        },
-        {
-          "date": "2026-05-29",
-          "bps": 938
-        },
-        {
-          "date": "2026-05-31",
-          "bps": 941
-        },
-        {
-          "date": "2026-06-01",
-          "bps": 946
-        },
-        {
-          "date": "2026-06-02",
-          "bps": 944
-        },
-        {
-          "date": "2026-06-03",
-          "bps": 947
-        },
-        {
-          "date": "2026-06-04",
-          "bps": 946
-        },
-        {
-          "date": "2026-06-05",
-          "bps": 952
-        },
-        {
-          "date": "2026-06-08",
-          "bps": 949
-        },
-        {
-          "date": "2026-06-09",
-          "bps": 951
-        },
-        {
-          "date": "2026-06-10",
-          "bps": 957
-        },
-        {
-          "date": "2026-06-11",
-          "bps": 956
-        },
-        {
-          "date": "2026-06-12",
-          "bps": 948
-        },
-        {
-          "date": "2026-06-15",
-          "bps": 937
-        },
-        {
-          "date": "2026-06-16",
-          "bps": 944
-        },
-        {
-          "date": "2026-06-17",
-          "bps": 939
-        },
-        {
-          "date": "2026-06-18",
-          "bps": 946
-        },
-        {
-          "date": "2026-06-19",
-          "bps": 947
-        },
-        {
-          "date": "2026-06-22",
-          "bps": 947
-        },
-        {
-          "date": "2026-06-23",
-          "bps": 956
-        },
-        {
-          "date": "2026-06-24",
-          "bps": 964
-        },
-        {
-          "date": "2026-06-25",
-          "bps": 968
-        },
-        {
-          "date": "2026-06-26",
-          "bps": 973
-        },
-        {
-          "date": "2026-06-29",
-          "bps": 967
-        },
-        {
-          "date": "2026-06-30",
-          "bps": 970
-        },
-        {
-          "date": "2026-07-01",
-          "bps": 968
-        },
-        {
-          "date": "2026-07-02",
-          "bps": 971
-        },
-        {
-          "date": "2026-07-03",
-          "bps": 969
-        },
-        {
-          "date": "2026-07-06",
-          "bps": 967
-        },
-        {
-          "date": "2026-07-07",
-          "bps": 964
-        },
-        {
-          "date": "2026-07-08",
-          "bps": 975
-        },
-        {
-          "date": "2026-07-09",
-          "bps": 974
-        },
-        {
-          "date": "2026-07-10",
-          "bps": 970
-        },
-        {
-          "date": "2026-07-13",
-          "bps": 972
-        },
-        {
-          "date": "2026-07-14",
-          "bps": 973
-        },
-        {
-          "date": "2026-07-15",
-          "bps": 969
-        },
-        {
-          "date": "2026-07-16",
-          "bps": 970
-        },
-        {
-          "date": "2026-07-17",
-          "bps": 975
-        },
-        {
-          "date": "2026-07-20",
-          "bps": 977
-        },
-        {
-          "date": "2026-07-21",
-          "bps": 978
-        },
-        {
-          "date": "2026-07-22",
-          "bps": 981
-        },
-        {
-          "date": "2026-07-23",
-          "bps": 991
-        },
-        {
-          "date": "2026-07-24",
-          "bps": 996
-        },
-        {
-          "date": "2026-07-27",
-          "bps": 1001
-        },
-        {
-          "date": "2026-07-28",
-          "bps": 1005
-        },
-        {
-          "date": "2026-07-29",
-          "bps": 1013
-        },
-        {
-          "date": "2026-07-30",
-          "bps": 1006
-        },
-        {
-          "date": "2026-07-31",
-          "bps": 1034
-        },
-        {
-          "date": "2026-08-03",
-          "bps": 1028
-        },
-        {
-          "date": "2026-08-04",
-          "bps": 1019
-        },
-        {
-          "date": "2026-08-05",
-          "bps": 1023
-        },
-        {
-          "date": "2026-08-06",
-          "bps": 1017
-        },
-        {
-          "date": "2026-08-07",
-          "bps": 1013
-        },
-        {
-          "date": "2026-08-10",
-          "bps": 1014
-        },
-        {
-          "date": "2026-08-11",
-          "bps": 1023
-        },
-        {
-          "date": "2026-08-12",
-          "bps": 1020
-        },
-        {
-          "date": "2026-08-13",
-          "bps": 1024
-        },
-        {
-          "date": "2026-08-14",
-          "bps": 1012
-        },
-        {
-          "date": "2026-08-17",
-          "bps": 1018
-        },
-        {
-          "date": "2026-08-18",
-          "bps": 1027
-        },
-        {
-          "date": "2026-08-19",
-          "bps": 1030
-        },
-        {
-          "date": "2026-08-20",
-          "bps": 1035
-        },
-        {
-          "date": "2026-08-21",
-          "bps": 1037
-        },
-        {
-          "date": "2026-08-24",
-          "bps": 1036
-        },
-        {
-          "date": "2026-08-25",
-          "bps": 1039
-        },
-        {
-          "date": "2026-08-26",
-          "bps": 1031
-        },
-        {
-          "date": "2026-08-27",
-          "bps": 1031
-        },
-        {
-          "date": "2026-08-28",
-          "bps": 1026
-        },
-        {
-          "date": "2026-08-31",
-          "bps": 1042
-        },
-        {
-          "date": "2026-09-01",
-          "bps": 1049
-        },
-        {
-          "date": "2026-09-02",
-          "bps": 1053
-        },
-        {
-          "date": "2026-09-03",
-          "bps": 1051
-        },
-        {
-          "date": "2026-09-04",
-          "bps": 1054
-        },
-        {
-          "date": "2026-09-07",
-          "bps": 1055
-        },
-        {
-          "date": "2026-09-08",
-          "bps": 1056
-        },
-        {
-          "date": "2026-09-09",
-          "bps": 1064
-        },
-        {
-          "date": "2026-09-10",
-          "bps": 1070
-        },
-        {
-          "date": "2026-09-11",
-          "bps": 1076
-        },
-        {
-          "date": "2026-09-14",
-          "bps": 1081
-        },
-        {
-          "date": "2026-09-15",
-          "bps": 1085
-        },
-        {
-          "date": "2026-09-16",
-          "bps": 1076
-        },
-        {
-          "date": "2026-09-17",
-          "bps": 1076
-        },
-        {
-          "date": "2026-09-18",
-          "bps": 1083
-        },
-        {
-          "date": "2026-09-21",
-          "bps": 1077
-        },
-        {
-          "date": "2026-09-22",
-          "bps": 1075
-        },
-        {
-          "date": "2026-09-23",
-          "bps": 1093
-        },
-        {
-          "date": "2026-09-24",
-          "bps": 1112
-        },
-        {
-          "date": "2026-09-25",
-          "bps": 1128
-        },
-        {
-          "date": "2026-09-28",
-          "bps": 1146
-        },
-        {
-          "date": "2026-09-29",
-          "bps": 1157
-        },
-        {
-          "date": "2026-09-30",
-          "bps": 1179
-        },
-        {
-          "date": "2026-10-01",
-          "bps": 1215
-        },
-        {
-          "date": "2026-10-02",
-          "bps": 1202
-        },
-        {
-          "date": "2026-10-05",
-          "bps": 1211
-        },
-        {
-          "date": "2026-10-06",
-          "bps": 1214
-        },
-        {
-          "date": "2026-10-07",
-          "bps": 1229
-        },
-        {
-          "date": "2026-10-08",
-          "bps": 1252
-        },
-        {
-          "date": "2026-10-09",
-          "bps": 1253
-        },
-        {
-          "date": "2026-10-12",
-          "bps": 1253
-        },
-        {
-          "date": "2026-10-13",
-          "bps": 1267
-        },
-        {
-          "date": "2026-10-14",
-          "bps": 1282
-        },
-        {
-          "date": "2026-10-15",
-          "bps": 1278
-        },
-        {
-          "date": "2026-10-16",
-          "bps": 1297
-        },
-        {
-          "date": "2026-10-19",
-          "bps": 1310
-        },
-        {
-          "date": "2026-10-20",
-          "bps": 1327
-        },
-        {
-          "date": "2026-10-21",
-          "bps": 1307
-        },
-        {
-          "date": "2026-10-22",
-          "bps": 1340
-        },
-        {
-          "date": "2026-10-23",
-          "bps": 1356
-        },
-        {
-          "date": "2026-10-26",
-          "bps": 1345
-        },
-        {
-          "date": "2026-10-27",
-          "bps": 1321
-        },
-        {
-          "date": "2026-10-28",
-          "bps": 1307
-        },
-        {
-          "date": "2026-10-29",
-          "bps": 1325
-        },
-        {
-          "date": "2026-10-30",
-          "bps": 1327
-        },
-        {
-          "date": "2026-11-02",
-          "bps": 1319
-        },
-        {
-          "date": "2026-11-03",
-          "bps": 1316
-        },
-        {
-          "date": "2026-11-04",
-          "bps": 1297
-        },
-        {
-          "date": "2026-11-05",
-          "bps": 1320
-        },
-        {
-          "date": "2026-11-06",
-          "bps": 1317
-        },
-        {
-          "date": "2026-11-09",
-          "bps": 1311
-        },
-        {
-          "date": "2026-11-10",
-          "bps": 1331
-        },
-        {
-          "date": "2026-11-11",
-          "bps": 1330
-        },
-        {
-          "date": "2026-11-12",
-          "bps": 1314
-        },
-        {
-          "date": "2026-11-13",
-          "bps": 1316
-        },
-        {
-          "date": "2026-11-16",
-          "bps": 1310
-        }
       ]
     },
     "sources": {
+      "ccc": {
+        "seriesId": "BAMLH0A3HYC",
+        "status": "fresh",
+        "fetchedAt": "2026-11-17T23:04:15.363Z",
+        "observationDate": "2026-11-16"
+      },
       "hy": {
         "seriesId": "BAMLH0A0HYM2",
         "status": "fresh",
-        "fetchedAt": "2026-11-17T16:08:03.920Z",
+        "fetchedAt": "2026-11-17T23:04:15.363Z",
         "observationDate": "2026-11-16"
       },
       "ig": {
         "seriesId": "BAMLC0A0CM",
         "status": "fresh",
-        "fetchedAt": "2026-11-17T16:08:03.920Z",
-        "observationDate": "2026-11-16"
-      },
-      "ccc": {
-        "seriesId": "BAMLH0A3HYC",
-        "status": "fresh",
-        "fetchedAt": "2026-11-17T16:08:03.920Z",
+        "fetchedAt": "2026-11-17T23:04:15.363Z",
         "observationDate": "2026-11-16"
       }
     }
@@ -8709,8 +8639,12 @@
   "history_seed": [],
   "wow_changes": [
     {
-      "type": "flat",
-      "note": "本期修正观测日期与调查口径，ARR 过期后退出当前灯色；区间下界变化不代表市场风险改善，不作跨模型周差比较。"
+      "type": "status_upgrade",
+      "note": "「S&P 50 日均线上方比例」由绿转黄:当前 ≈58%。Barchart $S5FI 直接源暂不可用,回退 公开市场价格显示:S&P 500 成份股 501 只(Wikipedia 实时名单)中 289 只收于 50 日均线上方,占比 ≈57.7%。阈值:<40% 红 / 40-60% 黄 / >60% 绿"
+    },
+    {
+      "type": "status_downgrade",
+      "note": "「AI 行业 Token 月度环比」由黄转绿:当前 加速(+23.9%)。公开模型平台用量显示:最近 4 周合计 802.36T tokens,较前 4 周 +23.9%;上一窗口为 +33.7%。该口径反映公开模型平台活动，不能等同全行业总量。判级:收缩=红 / 减速=黄 / 加速=绿"
     }
   ],
   "meta": {
@@ -8730,7 +8664,7 @@
         "policy": "local_proxy_confidence_v1",
         "displayAnchor": {
           "source": "local_curated_snapshot",
-          "asOfDate": "2026-11-08",
+          "asOfDate": "2026-11-15",
           "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
@@ -8746,7 +8680,7 @@
         "policy": "local_proxy_confidence_v1",
         "displayAnchor": {
           "source": "local_curated_snapshot",
-          "asOfDate": "2026-11-08",
+          "asOfDate": "2026-11-15",
           "ageDays": 2,
           "maxAgeDays": 21,
           "syncedFromUpstream": true
@@ -8770,13 +8704,13 @@
       "hybrid_paid_optional_ids": [
         "dc_abs_spread"
       ],
+      "reviewed_curated_ids": [
+        "enterprise_deploy"
+      ],
       "candidate_only_ids": [
         "private_secondary_marks",
         "gpu_rental_price",
         "frontier_progress"
-      ],
-      "reviewed_curated_ids": [
-        "enterprise_deploy"
       ]
     },
     "fetch_failures": [
@@ -8790,7 +8724,7 @@
       },
       {
         "id": "arr_2nd_deriv",
-        "reason": "hybrid_live_source_failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 166d old (max 45d)"
+        "reason": "hybrid_live_source_failed: arr_underlying_observation_stale: latest milestone 2026-05-28 is 173d old (max 45d)"
       }
     ],
     "fred_key_present": true,
@@ -8798,9 +8732,9 @@
     "upstream_sync": {
       "checked": true,
       "reachable": true,
-      "upstreamAsOf": "2026-11-08",
-      "upstreamIssue": 32,
-      "adopted": 0,
+      "upstreamAsOf": "2026-11-15",
+      "upstreamIssue": 33,
+      "adopted": 19,
       "sourceUrl": "https://raw.githubusercontent.com/crystal-xiaoxiao/ai-bubble-monitor/main/docs/data/latest.json",
       "sourceKind": "latest",
       "snapshotName": null,
@@ -8808,21 +8742,6 @@
       "summaryAvailable": true,
       "summaryAdopted": false,
       "summaryUsage": "not_used_for_production_narrative"
-    },
-    "observation_migration": {
-      "contractVersion": "bubble-observation-migration-r6",
-      "checkedAt": "2026-11-10T06:14:30.988Z",
-      "sourceModelVersion": "bubble-watch-v3-core23-shadow4-r5",
-      "sourceGeneratedAt": "2026-11-10T00:29:31.064Z",
-      "sourceSnapshotDigest": "d46ee9366eac41057704a188f988308a70a62ddd70281747b623a8160dcb1589",
-      "changedIndicatorIds": [
-        "arr_2nd_deriv",
-        "vc_ai_share",
-        "enterprise_deploy"
-      ],
-      "preservedObservationCount": 24,
-      "networkCalls": 0,
-      "paidCalls": 0
     }
   }
 }
