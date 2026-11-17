@@ -21,7 +21,7 @@ test('successful main oil-news completion queues publication after the producer 
   assert.ok(completion, 'completed event is restricted to main');
   assert.deepEqual(completion[1].split(', ').map(value => value.trim()), [
     'Macro Risk Editorial Refresh', 'Bubble Watch Weekly Editorial Refresh',
-    'Bubble Watch Editorial Follow-up', 'Refresh Oil Directional Pressure', name, 'Refresh Oil Thermal Watch'
+    'Bubble Watch Editorial Follow-up', 'Refresh Oil Directional Pressure', name, 'Refresh Oil Thermal Watch', 'Build Daily Radar Data'
   ]);
   assert.ok(workflow.includes("if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}"),
     'failed/cancelled upstream runs cannot publish');
@@ -35,7 +35,7 @@ test('successful thermal completion uses the existing guarded publication path',
   const producer = readFileSync(new URL('../../.github/workflows/refresh-oil-thermal-watch.yml', import.meta.url), 'utf8');
   const name = /^name: (.+)$/mu.exec(producer)?.[1].trim();
   assert.equal(name, 'Refresh Oil Thermal Watch');
-  assert.ok(workflow.includes(`, ${name}]`));
+  assert.ok(workflow.includes(`, ${name}, Build Daily Radar Data]`));
   const commit = producer.slice(producer.indexOf('- name: Commit'));
   assert.ok(commit.indexOf('git push') > commit.indexOf('git commit'));
   assert.match(step('Checkout source repository'), /ref: main/u);
@@ -48,10 +48,24 @@ test('successful thermal completion uses the existing guarded publication path',
   assert.deepEqual(decision, { shouldPublish: true, reason: 'not_macro_budget_skip' });
 });
 
+test('successful Daily completion uses normal admission without Macro budget evidence', async () => {
+  const producer = readFileSync(new URL('../../.github/workflows/build-daily-radar-data.yml', import.meta.url), 'utf8');
+  const name = /^name: (.+)$/mu.exec(producer)?.[1].trim();
+  assert.equal(name, 'Build Daily Radar Data');
+  assert.ok(workflow.includes(`, ${name}]`));
+  assert.ok(producer.includes('node scripts/publish-daily-candidate.mjs'));
+  assert.match(step('Checkout source repository'), /ref: main/u);
+  const { reviewMacroBudgetSkip } = await import('../../scripts/review-pages-deployment.mjs');
+  assert.deepEqual(await reviewMacroBudgetSkip({
+    eventName: 'workflow_run', event: { workflow_run: { name } },
+    fetchImpl: () => { throw new Error('Daily must not query Macro evidence'); }
+  }), { shouldPublish: true, reason: 'not_macro_budget_skip' });
+});
+
 test('completion listeners cannot request collection or broaden data push publication', () => {
   const pushPaths = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('\npermissions:'));
-  assert.doesNotMatch(pushPaths, /data\/\*\*|data\/oil-(?:news-event|thermal)-watch\.json/u);
-  assert.doesNotMatch(workflow, /workflow run |workflow_dispatch.*refresh|build:oil-(?:news|thermal)|TAVILY|BRAVE_API|DEEPSEEK|FIRMS_MAP_KEY/u);
+  assert.doesNotMatch(pushPaths, /data\/\*\*|data\/oil-(?:news-event|thermal)-watch\.json|data\/radar-(?:data|history(?:-full)?)\.json/u);
+  assert.doesNotMatch(workflow, /workflow run |workflow_dispatch.*refresh|build:oil-(?:news|thermal)|build:data|publish-daily-candidate|TAVILY|BRAVE_API|DEEPSEEK|FIRMS_MAP_KEY/u);
 });
 
 test('a producer commit after the first checkout is included by the completion checkout', t => {
