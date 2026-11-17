@@ -306,11 +306,12 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 
 | 字段 | 类型 | 单位 | 来源 | 含义 |
 |---|---|---|---|---|
+| `claimsWindowEvidence` | object（旧快照可缺省） | n/a | 逐系列周窗口 | icsa/ccsa 各含 method=claims-consecutive-weeks-v1 与可回算的4或8条date/value；未验证为null |
 | `initialClaims` | number \| null | 人次 | FRED:ICSA（周频 SA） | 最新初请失业金人数 |
-| `initialClaims4wAverage` | number \| null | 人次 | 派生 | ICSA 最近 4 个观测点平均 |
-| `initialClaims4wChange` | number \| null | 人次 | 派生 | 当前 4w-MA 相对前 4 个观测点 4w-MA 的变化 |
+| `initialClaims4wAverage` | number \| null | 人次 | 派生 | ICSA 最新连续4个相隔7日的观测点平均，缺周为null |
+| `initialClaims4wChange` | number \| null | 人次 | 派生 | 最新连续8周中，后4周均值减前4周均值；任一周缺失为null |
 | `continuingClaims` | number \| null | 人次 | FRED:CCSA（周频 SA，约 1 周滞后） | 最新续请失业金人数 |
-| `continuingClaims4wAverage` | number \| null | 人次 | 派生 | CCSA 最近 4 个观测点平均 |
+| `continuingClaims4wAverage` | number \| null | 人次 | 派生 | CCSA 最新连续4个相隔7日的观测点平均，缺周为null |
 | `joltsOpenings` | number \| null | 人次 | FRED:JTSJOL（月频，约 6 周滞后） | 最新 JOLTS 职位空缺数；FRED 原始单位为 thousands，pipeline 存储时转换为人次 |
 | `joltsOpeningsYoY` | number \| null | 比例 | 派生 | JOLTS 相对 12 个月前同月变化率 |
 | `joltsUpdatedAt` | string \| null | ISO 8601 | JTSJOL 最新数据点日期 | 前端用于显示 JOLTS vintage，避免把月频滞后误读为实时数据 |
@@ -346,6 +347,8 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`、Action Queue、Trigger Monitor 或 Invalidation Rules。
 - 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.employment.*`。
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
+- 初请/续请“4周”必须由连续7日、唯一有序且合法的周观察支持；初请当前4周完整但前4周缺失时仅保留均值，变化为null。零值与真实零变化保留；不改变CARTS的48周日历/行均值。
+- claims缓存须由 `claimsWindowEvidence` 回算且与水平/均值/变化一致；旧快照无证明只保留水平，不复用均值、变化或旧claimsRegime。证明日期是该系列原观察日，不借用employment组合日期刷新。正常来源连贯时数值不变，缺证据时前端不展示不存在的变化，跨市场定性印证层不以缺失作为走弱证据；不改变主评分或matrix评分。
 - 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用非同义替代指标冒充 ICSA / CCSA / JTSJOL / AHE / U-6 / industry payroll basket。
 - JTSJOL、AHE、U-6 与行业 payroll basket 均为月频慢变量，前端必须展示或暗示 vintage/慢变量语义，不得暗示它们是实时就业信号。
 - 行业篮子是既有 11 条公开 FRED 月频季调序列的等权上涨占比（严格大于前月），持平不计上涨；零售 USTRADE 嵌套于 USTPU，不是独立行业覆盖率，也不是 BLS 官方扩散指数（后者给予持平半权重）。不换源、不去重重算历史。

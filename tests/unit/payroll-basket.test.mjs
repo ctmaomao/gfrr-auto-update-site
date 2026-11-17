@@ -1,3 +1,4 @@
+import { claimsWindow, cachedClaimsWindow } from '../../scripts/daily/claims-windows.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -57,7 +58,7 @@ test('actual wrapper, prior normalization and resolver preserve method/date and 
     'latestDateIso','latestIsoDate','findMonthlyValueAgo','calculateMonthlyYoY','calculateMonthlyDelta','classifyClaimsRegime','classifyJoltsRegime','classifyLaborQualityRegime','classifyIndustryDiffusionRegime'];
   const live=compute(fixture()); const prev={...live,sourceStatus:{industryPayroll:'live'}};
   const code=names.map(extract).join('\n')+'\n({resolveEmploymentBreadth,normalizePreviousEmployment})';
-  const make=(fail=false)=>vm.runInNewContext(code,{calculatePayrollBasket,verifiedPayrollBasketFallback,isoNow:now, EMPLOYMENT_INDUSTRY_PAYROLL_SERIES:series,
+  const make=(fail=false)=>vm.runInNewContext(code,{claimsWindow,cachedClaimsWindow,calculatePayrollBasket,verifiedPayrollBasketFallback,isoNow:now, EMPLOYMENT_INDUSTRY_PAYROLL_SERIES:series,
     EMPLOYMENT_SOURCE:'synthetic',fetchFredSeries:async id=>{const i=series.findIndex(s=>s.id===id);if(fail||i<0)throw new Error('missing');return fixture()[i].value;}});
   const fresh=await make().resolveEmploymentBreadth({}); assert.equal(fresh.industryPayrollMethod,PAYROLL_BASKET_METHOD);assert.equal(fresh.sourceStatus.industryPayroll,'live');
   const retained=await make(true).resolveEmploymentBreadth(prev); assert.equal(retained.sourceStatus.industryPayroll,'fallback');assert.equal(retained.industryPayrollUpdatedAt,prev.industryPayrollUpdatedAt);
