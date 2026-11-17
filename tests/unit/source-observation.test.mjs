@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
-  parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange,
+  parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange,
 } from '../../scripts/daily/source-observation.mjs';
 
 const PIPELINE = fileURLToPath(new URL('../../scripts/run-daily-pipeline.mjs', import.meta.url));
@@ -53,6 +53,8 @@ function loadFed(fetchFed, nyFed, prev) {
     latestDatedObservation,
     fallbackObservation,
     sameObservationDay,
+    reserveBalanceChange,
+    cachedReserveBalanceChange,
   };
   const fn = vm.runInNewContext(`${src}\nresolveFedLiquidity`, sandbox);
   return fn(prev);
@@ -515,4 +517,62 @@ test('published FRED credit samples retain actual four-week and quarter changes'
   assert.equal(+creditPeriodChange([{ date: '2026-10-09', value: -0.488 }, { date: '2026-11-06', value: -0.462 }], 'fourWeeks', now).toFixed(3), 0.026);
   assert.equal(+creditPeriodChange([{ date: '2026-07-01', value: 0 }, { date: '2026-10-01', value: 1.7 }], 'quarter', now).toFixed(1), 1.7);
   assert.equal(+creditPeriodChange([{ date: '2026-07-01', value: 1.8 }, { date: '2026-10-01', value: 5.1 }], 'quarter', now).toFixed(1), 3.3);
+});
+
+test('WRESBAL exact four-week endpoints preserve current official sample and holiday Wednesdays', () => {
+  // Minimal official FRED WRESBAL week-average observations, read 2026-11-17.
+  // https://fred.stlouisfed.org/data/WRESBAL ; not Wednesday point levels.
+  const now = '2026-11-17T12:00:00Z';
+  assert.deepEqual(reserveBalanceChange([{ date: '2026-10-14', value: 3022140 },
+    { date: '2026-11-11', value: 2960603 }], now),
+  { change: -2.036, reference: { date: '2026-10-14', value: 3022140 } });
+  assert.equal(reserveBalanceChange([{ date: '2024-12-04', value: 3225075 },
+    { date: '2025-01-01', value: 3095997 }], now).change, -4.002);
+  assert.equal(reserveBalanceChange([{ date: '2026-09-23', value: 100 },
+    { date: '2026-10-21', value: 0 }], now).change, -100);
+});
+
+test('WRESBAL incomplete, duplicate, wrong-date and invalid endpoints cannot fabricate four-week change', () => {
+  const a = { date: '2026-09-23', value: 100 };
+  const b = { date: '2026-10-21', value: 110 };
+  const missing = { change: null, reference: null };
+  for (const rows of [[], [b], [{ date: '2026-10-14', value: 100 }, b], [a, a, b], [a, b, b], [b, a],
+    [{ ...a, value: 0 }, b], [{ ...a, value: null }, b], [{ ...a, value: -1 }, b],
+    [a, { ...b, value: Infinity }], [a, { ...b, date: '2026-10-22' }],
+    [a, { ...b, date: '2026-10-28' }], [a, { ...b, date: '2026-02-30' }]]) {
+    assert.deepEqual(reserveBalanceChange(rows, FIXED_NOW), missing);
+  }
+  assert.equal(reserveBalanceChange([a, { ...b, value: 100 }], FIXED_NOW).change, 0);
+});
+
+test('WRESBAL actual resolver keeps current level/date but refuses absent four-week proof and mixed-period cache', async () => {
+  const fetchRows = rows => async id => {
+    if (id !== 'WRESBAL') return [{ date: '2026-10-21', value: 1 }];
+    if (rows === null) throw Error('offline');
+    return rows;
+  };
+  const a = { date: '2026-09-23', value: 100 };
+  const b = { date: '2026-10-21', value: 110 };
+  const live = await loadFed(fetchRows([a, b]), {}, {});
+  assert.equal(live.reserveBalances4wChange, 10);
+  assert.equal(live.reserveBalances4wReference.date, a.date);
+  const failedFetch = fetchRows(null);
+  const fallback = await loadFed(failedFetch, {}, live);
+  assert.equal(fallback.reserveBalances4wChange, 10);
+  assert.equal(fallback.sourceObservedAt.reserveBalances, b.date);
+  assert.equal(fallback.sourceStatus.reserveBalances, 'fallback');
+  for (const changed of [{ reserveBalances4wReference: null }, { reserveBalances: 111 },
+    { reserveBalances4wChange: 9 }, { sourceObservedAt: { reserveBalances: '2026-10-14' } },
+    { reserveBalances4wReference: { date: '2026-09-30', value: 100 } },
+    { sourceStatus: { reserveBalances: 'missing' } }]) {
+    const out = await loadFed(failedFetch, {}, { ...live, ...changed });
+    assert.equal(out.reserveBalances4wChange, null);
+    assert.equal(out.reserveBalances4wReference, null);
+  }
+  const partial = await loadFed(fetchRows([b]), {}, live);
+  assert.equal(partial.reserveBalances, 110);
+  assert.equal(partial.sourceObservedAt.reserveBalances, b.date);
+  assert.equal(partial.sourceStatus.reserveBalances, 'live');
+  assert.equal(partial.reserveBalances4wChange, null);
+  assert.equal(partial.reserveBalances4wReference, null);
 });

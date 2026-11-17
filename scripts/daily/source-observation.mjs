@@ -101,3 +101,33 @@ export function creditPeriodChange(rows, period, nowIso) {
   if (matches.length !== 1 || !Number.isFinite(matches[0].value)) return null;
   return latest.value - matches[0].value;
 }
+
+// WRESBAL is a weekly average ending Wednesday, not a daily/Wed point level.
+// A missing four-week endpoint cannot be replaced by the nearest available week.
+export function reserveBalanceChange(rows, nowIso) {
+  const missing = { change: null, reference: null };
+  if (!Array.isArray(rows) || rows.length < 2) return missing;
+  let priorDate = '';
+  for (const row of rows) {
+    if (typeof row?.date !== 'string' || parseObservationDate(row.date, nowIso) !== row.date
+      || !DATE.test(row.date) || new Date(`${row.date}T00:00:00Z`).getUTCDay() !== 3
+      || row.date <= priorDate || !Number.isFinite(row.value) || row.value < 0) return missing;
+    priorDate = row.date;
+  }
+  const latest = rows.at(-1);
+  const target = new Date(`${latest.date}T00:00:00Z`);
+  target.setUTCDate(target.getUTCDate() - 28);
+  const reference = rows.find(row => row.date === target.toISOString().slice(0, 10));
+  if (!reference || reference.value === 0) return missing;
+  const change = +(((latest.value - reference.value) / reference.value) * 100).toFixed(3);
+  return Number.isFinite(change) ? { change, reference: { date: reference.date, value: reference.value } } : missing;
+}
+
+export function cachedReserveBalanceChange(previous, nowIso) {
+  const missing = { change: null, reference: null };
+  if (!['live', 'fallback'].includes(previous?.sourceStatus?.reserveBalances)
+    || !previous?.reserveBalances4wReference) return missing;
+  const result = reserveBalanceChange([previous.reserveBalances4wReference,
+    { date: previous.sourceObservedAt?.reserveBalances, value: previous.reserveBalances }], nowIso);
+  return result.change !== null && result.change === previous.reserveBalances4wChange ? result : missing;
+}
