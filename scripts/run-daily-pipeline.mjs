@@ -1,3 +1,4 @@
+import { cpiComparisons, cachedCpiComparisons } from './daily/cpi-comparisons.mjs';
 import { policyTargetRange, cachedPolicyTargetRange, alignPolicyTargetComparisons } from './daily/policy-target.mjs';
 import { calculatePayrollBasket, verifiedPayrollBasketFallback } from './daily/payroll-basket.mjs';
 import { goldQuoteRows } from './realtime/gold-quote.mjs';
@@ -168,8 +169,6 @@ const INFLATION_WTI_MARKET_PROXY_SOURCE = 'Yahoo:CL=F';
 const INFLATION_ENERGY_DISPLAY_NOTE =
   '通胀与能源 display-only 公开数据代理;WTI spot 为 FRED 官方滞后锚,WTI market proxy 为 Yahoo CL=F 快速市场代理;tone 仅展示,不进 scoring/decision/execution/position。';
 const CPI_DAYS_BACK = 450;
-const CPI_YOY_GAP_DAYS = 45;
-const CPI_MOM_GAP_DAYS = 20;
 const WTI_DAYS_BACK = 30;
 const WTI_CHANGE_WINDOW = '5d';
 const WTI_CHANGE_GAP_DAYS = 7;
@@ -2873,23 +2872,14 @@ function buildMissingInflationCpiSeries() {
 
 function normalizePreviousInflationCpiSeries(previous, config) {
   if (!previous || typeof previous !== 'object') return null;
+  const verified = cachedCpiComparisons(previous, config);
+  if (verified) return { ...verified, status: 'fallback' };
+  // Legacy cache has no exact-month proof or individual series clock. Preserve
+  // its index, not an unverified comparison or the other series' newer date.
   const index = Number.isFinite(previous[config.indexField])
-    ? +Number(previous[config.indexField]).toFixed(3)
-    : null;
-  const yoy = Number.isFinite(previous[config.yoyField])
-    ? +Number(previous[config.yoyField]).toFixed(4)
-    : null;
-  const mom = Number.isFinite(previous[config.momField])
-    ? +Number(previous[config.momField]).toFixed(4)
-    : null;
-  if (!Number.isFinite(index) && !Number.isFinite(yoy) && !Number.isFinite(mom)) return null;
-  return {
-    index,
-    yoy,
-    mom,
-    updatedAt: typeof previous.updatedAt === 'string' ? previous.updatedAt : null,
-    status: 'fallback'
-  };
+    ? +previous[config.indexField].toFixed(3) : null;
+  return index === null ? null : { index, yoy: null, mom: null, updatedAt: null,
+    comparisonEvidence: null, status: 'fallback' };
 }
 
 function calculateFredRowChangeRatio(latest, candidate) {
@@ -2901,21 +2891,9 @@ function calculateFredRowChangeRatio(latest, candidate) {
 
 function buildInflationCpiSeries(result, previous, config) {
   if (result.status === 'fulfilled') {
-    const rows = result.value;
-    const latest = Array.isArray(rows) ? rows[rows.length - 1] : null;
-    if (Number.isFinite(latest?.value)) {
-      const yoyCandidate = findFredRowAgoWithin(rows, 365, CPI_YOY_GAP_DAYS);
-      const momCandidate = findFredRowAgoWithin(rows, 30, CPI_MOM_GAP_DAYS);
-      return {
-        index: +Number(latest.value).toFixed(3),
-        yoy: calculateFredRowChangeRatio(latest, yoyCandidate),
-        mom: calculateFredRowChangeRatio(latest, momCandidate),
-        updatedAt: latest.date ? `${latest.date}T00:00:00Z` : null,
-        status: 'live'
-      };
-    }
+    const current = cpiComparisons(result.value);
+    if (current) return { ...current, status: 'live' };
   }
-
   return normalizePreviousInflationCpiSeries(previous, config) || buildMissingInflationCpiSeries();
 }
 
@@ -3033,6 +3011,7 @@ function buildInflationCpi(headline, core) {
     coreYoY: core.yoy,
     coreMoM: core.mom,
     yoyWindow: 'YoY',
+    comparisonEvidence: { headlineIndex: headline.comparisonEvidence || null, coreIndex: core.comparisonEvidence || null },
     updatedAt: latestIsoDate(headline.updatedAt, core.updatedAt),
     source: INFLATION_CPI_SOURCE,
     seriesStatus,
