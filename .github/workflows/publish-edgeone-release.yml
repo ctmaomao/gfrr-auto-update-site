@@ -7,9 +7,9 @@ env:
 on:
   workflow_dispatch:
   workflow_run:
-    # News and thermal producers can commit after an earlier publisher pins main.
-    # Their successful completion queues a fresh checkout (ADR-0085 / ADR-0114).
-    workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch]
+    # Producers can commit after an earlier publisher pins main.
+    # Successful completion queues a fresh checkout (ADR-0119).
+    workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch, Build Daily Radar Data]
     types: [completed]
     branches: [main]
   schedule:

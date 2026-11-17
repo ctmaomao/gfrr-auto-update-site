@@ -421,6 +421,21 @@ test('credit resolver stores NFCI/SLOOS dates and independent large/small status
   });
   const incomplete = await sparse({}, 3.2);
   assert.equal(incomplete.nfci, -0.3);
+  // Late October before the new SLOOS release: April is >180 days old, but
+  // remains the legitimate prior quarter for the latest July observation.
+  const releaseDelayed = vm.runInNewContext(`${src}\nresolveCredit`, { ...sandbox, structuralValueUsable: () => false,
+    fetchFredSeries: async (id, daysBack) => {
+      if (!['DRTSCILM', 'DRTSCIS'].includes(id)) throw new Error('outside fixture');
+      assert.equal(daysBack, 270);
+      const start = Date.parse(FIXED_NOW) - daysBack * 86400000;
+      const rows = [{ date: '2026-04-01', value: 1 }, { date: '2026-07-01', value: 3 }].filter(row => Date.parse(row.date) >= start);
+      if (rows.length < 2) throw new Error('insufficient rows');
+      return rows;
+    },
+  });
+  const delayed = await releaseDelayed({}, 3.2);
+  assert.equal(delayed.sloosTighteningLargeQoQ, 2);
+  assert.equal(delayed.sloosTighteningSmallQoQ, 2);
   for (const field of ['nfci4wChange', 'sloosTighteningLargeQoQ', 'sloosTighteningSmallQoQ']) assert.equal(incomplete[field], null);
 });
 

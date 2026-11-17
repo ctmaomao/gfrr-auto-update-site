@@ -6371,9 +6371,9 @@ async function resolveCredit(prevCredit, hyOasLive) {
   }
 
   // M-46: Series 2 — DRTSCILM (SLOOS Large/Medium C&I tightening, quarterly, net %)
-  // Uses 180-day lookback because SLOOS is quarterly (need to capture latest + previous quarter).
+  // Keep two quarters through the next survey release delay; 180 days can drop the prior quarter.
   try {
-    const rows = await fetchFredSeries('DRTSCILM', 180);
+    const rows = await fetchFredSeries('DRTSCILM', 270);
     const obs = latestDatedObservation(rows, nowIso);
     sloosTighteningLargeFirms = obs.value;
     sourceObservedAt.sloosLarge = obs.date;
@@ -6400,7 +6400,7 @@ async function resolveCredit(prevCredit, hyOasLive) {
   // M-46: Series 3 — DRTSCIS (SLOOS Small Firms C&I tightening, quarterly, net %)
   // Same SLOOS survey, separate series. If first fetch succeeded, this should too.
   try {
-    const rows = await fetchFredSeries('DRTSCIS', 180);
+    const rows = await fetchFredSeries('DRTSCIS', 270);
     const obs = latestDatedObservation(rows, nowIso);
     sloosTighteningSmallFirms = obs.value;
     sourceObservedAt.sloosSmall = obs.date;

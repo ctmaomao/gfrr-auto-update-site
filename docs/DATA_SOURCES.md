@@ -85,7 +85,7 @@
 | `CMBS` | iShares CMBS ETF public proxy | macroDrivers.commercialRealEstate | M-80 |
 | `ICE:CDX-index-settlement-public` | ICE Clear Credit public CDX index EOD settlement price | macroDrivers.privateCreditProxy | M-81 |
 
-NFCI 四周变化仅比较相隔整 28 日的观测；SLOOS 季环比仅比较相邻季度起始日，按日历跨年，不用固定 90 日最近邻替代。目标参照缺失/重复/非数值时变化为 null，真实零变化保留；来源故障仍可保留已有带日期水平，但缓存变化没有参照日期证据，不复用。此规则只影响这三个展示变化字段，不改水平、评分、请求或发布门槛。频率依据：[FRED NFCI](https://fred.stlouisfed.org/series/NFCI)、[DRTSCILM](https://fred.stlouisfed.org/series/DRTSCILM)、[DRTSCIS](https://fred.stlouisfed.org/series/DRTSCIS)。
+NFCI 四周变化仅比较相隔整 28 日的观测；SLOOS 季环比仅比较相邻季度起始日，按日历跨年，不用固定 90 日最近邻替代。目标参照缺失/重复/非数值时变化为 null，真实零变化保留；来源故障仍可保留已有带日期水平，但缓存变化没有参照日期证据，不复用。此规则只影响这三个展示变化字段，不改水平、评分或发布门槛；两个既有 SLOOS 请求回看改为 270 日，覆盖下一期公布前的上一季参照，不新增请求或来源。频率依据：[FRED NFCI](https://fred.stlouisfed.org/series/NFCI)、[DRTSCILM](https://fred.stlouisfed.org/series/DRTSCILM)、[DRTSCIS](https://fred.stlouisfed.org/series/DRTSCIS)。
 
 **注意**: NFCI 正值=收紧、负值=宽松,**与 IG/HY OAS 同向（数值越高越紧）**；NFCI 的 0 轴与 OAS 水平不同。误判方向会让 cross-validation 完全反向。
 
