@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync, unlinkSync as fsRemoveOwnFixture } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -56,7 +56,7 @@ test('missing or wrong explicit identity, truncation and malformed UTF-8 fail cl
 test('normal builder rejects unarchived issue before touching generated pages and preserves conflicting history', () => {
   const root = mkdtempSync(join(tmpdir(), 'weekly-build-'));
   for (const dir of ['scripts', 'reports', 'weekly-reports']) mkdirSync(join(root, dir));
-  for (const file of ['weekly-original.mjs', 'build-weekly-reports.mjs']) copyFileSync(new URL('../../scripts/' + file, import.meta.url), join(root, 'scripts', file));
+  for (const file of ['weekly-original.mjs', 'build-weekly-reports.mjs', 'weekly-remote-handoff.mjs']) copyFileSync(new URL('../../scripts/' + file, import.meta.url), join(root, 'scripts', file));
   const source = join(root, 'input.html');
   writeFileSync(source, bytes);
   writeFileSync(join(root, 'reports', date + '.html'), bytes);
@@ -67,6 +67,11 @@ test('normal builder rejects unarchived issue before touching generated pages an
   saveOriginal({root, source, date, sha:sha(bytes)});
   run();
   const entry = readFileSync(join(root, 'weekly-reports.html'));
+  const orphan = join(root, 'weekly-reports/2026-11-30.html');
+  writeFileSync(orphan, 'orphan');
+  assert.throws(run, /Command failed/);
+  assert.deepEqual(readFileSync(join(root, 'weekly-reports.html')), entry);
+  fsRemoveOwnFixture(orphan);
   const compat = join(root, 'weekly-reports', date + '.html');
   writeFileSync(compat, 'conflict');
   assert.throws(run);

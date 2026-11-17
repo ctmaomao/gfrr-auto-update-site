@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 // Preserve the reviewed bytes first; a date and digest must be supplied at every stage.
 import { createHash, randomUUID } from 'node:crypto';
-import { closeSync, existsSync, fsyncSync, linkSync, mkdirSync, openSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { closeSync, existsSync, fsyncSync, linkSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { buildWeeklyReports, checkWeeklyPageSizes, expectedWeeklyPages, splitIssues } from './build-weekly-reports.mjs';
+import { readRemoteHandoff } from './weekly-remote-handoff.mjs';
 
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const MAX_WEEKLY_BYTES = 2 * 1024 * 1024;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
-function identity(date, sha) {
+export function identity(date, sha) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error('Expected a real YYYY-MM-DD issue date');
   if (!/^[a-f0-9]{64}$/.test(sha)) throw new Error('Expected a lowercase SHA-256 digest');
 }
@@ -66,6 +68,37 @@ export function saveOriginal({ root = defaultRoot, source, date, sha }) {
   validateOriginal(readFileSync(dest), date, sha);
   return dest;
 }
+export function recoverRemoteOriginal({ root = defaultRoot, date, sha, readRemote }) {
+  identity(date, sha);
+  const receipt = readRemote({ date, sha });
+  validateOriginal(receipt.bytes, date, sha);
+  const dir = mkdtempSync(join(tmpdir(), 'gfrr-weekly-recovery-'));
+  try {
+    const input = join(dir, 'original.html');
+    writeFileSync(input, receipt.bytes, { flag: 'wx' });
+    saveOriginal({ root, source: input, date, sha });
+    return receipt.commit;
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+export function writeHandoffReceipt({ root = defaultRoot, date, sha, commit }) {
+  identity(date, sha);
+  if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('A full remote handoff commit is required');
+  immutableWrite(resolve(root, 'weekly-originals', date, 'handoff.json'), Buffer.from(JSON.stringify({ date, sha256: sha, handoffCommit: commit }) + '\n'));
+}
+export function writeExpectedIssue({ root = defaultRoot, date, sha, commit }) {
+  identity(date, sha);
+  if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('A full remote handoff commit is required');
+  const dir = resolve(root, 'weekly-originals');
+  const target = resolve(dir, 'expected.json');
+  if (existsSync(target)) {
+    const previous = JSON.parse(readFileSync(target, 'utf8'));
+    if (typeof previous.date !== 'string' || previous.date > date || (previous.date === date && (previous.sha256 !== sha || previous.handoffCommit !== commit))) throw new Error('Refusing to replace conflicting expected issue');
+  }
+  mkdirSync(dir, { recursive: true });
+  const temp = target + '.' + randomUUID() + '.tmp';
+  writeFileSync(temp, JSON.stringify({ date, sha256: sha, handoffCommit: commit }) + '\n', { flag: 'wx' });
+  renameSync(temp, target);
+}
 export function installOriginal({ root = defaultRoot, date, sha }) {
   identity(date, sha);
   if (readFileSync(resolve(root, 'weekly-originals', date, 'identity.sha256'), 'utf8') !== sha + '\n') throw new Error('Stored issue identity differs from expected digest');
@@ -95,10 +128,22 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const latest = splitIssues(readdirSync(resolve(defaultRoot, 'reports'))).recent[0];
       identity(date, sha);
       if (latest && latest > date + '.html') throw new Error('Expected issue would not be latest');
+      const remoteCommit = recoverRemoteOriginal({ date, sha, readRemote: readRemoteHandoff });
+      console.log('Verified remote handoff commit: ' + remoteCommit);
+      writeHandoffReceipt({ date, sha, commit: remoteCommit });
+      writeExpectedIssue({ date, sha, commit: remoteCommit });
       installOriginal({ date, sha });
       buildWeeklyReports();
       checkIssue({ date, sha });
       buildWeeklyReports({ check: true });
-    } else { checkIssue({ date, sha }); buildWeeklyReports({ check: true }); }
+    } else {
+      const receipt = readRemoteHandoff({ date, sha });
+      checkIssue({ date, sha });
+      const expected = JSON.parse(readFileSync(resolve(defaultRoot, 'weekly-originals/expected.json'), 'utf8'));
+      if (expected.date !== date || expected.sha256 !== sha || expected.handoffCommit !== receipt.commit) throw new Error('Expected issue does not match the remote handoff');
+      if (!readFileSync(originalPath(defaultRoot, date, sha)).equals(receipt.bytes)) throw new Error('Remote handoff differs from local original');
+      buildWeeklyReports({ check: true });
+      console.log('Verified remote handoff commit: ' + receipt.commit);
+    }
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

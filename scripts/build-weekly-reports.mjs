@@ -47,6 +47,10 @@ export function buildWeeklyReports({ check = false } = {}) {
     if (!readFileSync(resolve(root, `reports/${name}`)).equals(original)) throw new Error('Fixed weekly report differs from original: ' + name);
   }
   const pages = expectedWeeklyPages();
+  // An orphan compatibility page would otherwise be published by the static allowlist.
+  for (const name of readdirSync(resolve(root, 'weekly-reports'))) {
+    if (/^\d{4}-\d{2}-\d{2}\.html$/.test(name) && !pages.has('weekly-reports/' + name)) throw new Error('Orphan compatibility weekly page: ' + name);
+  }
   checkWeeklyPageSizes(pages);
   // Dated compatibility pages are immutable. Preflight all before touching any entry page.
   for (const [path, expected] of pages) {
