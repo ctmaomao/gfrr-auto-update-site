@@ -46,7 +46,16 @@
 - **最后已核实的Daily产物**：[运行44018873993](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44018873993)于2026-11-17 04:41 UTC启动并成功，产物提交 `3bad022f`（04:46 UTC）早于上述四项合并。`radar-data.json.updatedAt=2026-11-17T04:41:50.344Z`；两站SHA256均为 `9a3b743a43ae804fdec8a68833846597403a1fd0e01a68ecb27066c4309079d2`，三个新证据字段均未出现。两站一致已核实，修复自然采用未核实，不是发布不一致。
 - **剩余工作/阻塞条件**：等待下一次自然Daily；核对实际代码、生成/校验/提交及两站对应产物，再更新此处。Bubble、thermal、realtime的单独刷新或Pages绿色不能代替Daily采用。若自然数据没有缺失异常，应分开记录“新代码已采用”和“异常分支仅离线验证”，不制造异常或重写生产历史以验收。本轮不触发取数、不修改自动化定义。
 
-- **DeepSeek 私有账本离线生命周期**：授权基线仅显式注入 initializer/runtime factory 与合成测试，不改 workflow、默认路由、凭据或真实账本。初始化只接受独立摘要固定的全额 quarantine、真实新 cutover、单条现价复核；create-only 父less/sole-file 读回与失败 HOLD。独审、全套及后续发布尚待；历史排空、最小权限、实际接线与启用仍独立阻断，见 [ADR-0121](ADR/0121-private-budget-offline-store.md)。
+- **DeepSeek 私有账本：离线交付已完成，生产仍暂停**。[#632](https://github.com/ctmaomao/gfrr-auto-update-site/pull/632) 固定私有存储身份与只读状态，[#633](https://github.com/ctmaomao/gfrr-auto-update-site/pull/633) 收窄月度公开诊断，下一阶段分别完成跨 key 合成验证与显式注入的初始化器/运行时：
+
+  | 阶段 | 合并提交与精确 PR head CI |
+  |---|---|
+  | 私有存储 | `da345ca3`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44055322084) |
+  | 月度公开诊断脱敏 | `92f26367`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44060726736) |
+  | [#635 跨 key 债务合成测试](https://github.com/ctmaomao/gfrr-auto-update-site/pull/635) | `7ef118be`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44070051814) |
+  | [#636 显式注入生命周期](https://github.com/ctmaomao/gfrr-auto-update-site/pull/636) | `cb6ed0e4`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44076410697)；[该合并提交的 Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44077897334) |
+
+  四个 PR 均记录独立审阅，CI 成功；#636 同时记录完整本地检查通过。Pages 成功只证明该站点构建，不验证私有仓库权限、真实账本或付费恢复。依 [ADR-0121](ADR/0121-private-budget-offline-store.md)，实际恢复仍需分别核验：旧调用路径停用及在途请求排空、旧负债与未知结果处理、最小权限及两个 key 的真实环境/调用绑定、独立核验的现价和全额隔离初始化。真实账本未初始化，本轮未接线、未读写凭据、未调用 provider；共用月上限仍为 CNY10，不重置已耗名额或释放旧预留。
 
 - **政策目标双端一致性**：DFEDTARL/U 仅同日生效观察且上下界有序才合成区间，缓存须双端日期与中点可核；缺失不恢复旧派生差或旧regime。所有明确相对目标中点的差值统一重算/置空，保留原市场曲线和时钟，不接评分或增请求。当前3.75–4.00中点3.875正常，调息日错配仅为离线可复现缺陷；实样/异常回归、独审、全套、CI与自然采用分别验收。
 
@@ -125,8 +134,6 @@
 - **来源覆盖缺口**：Bubble ARR 加速、VC/Neocloud 当期覆盖和 AI 专项 ABS 等仍需合格证据；新获取时间不使旧里程碑变新。热观察历史基线截至 9 月 5 日，成熟窗口不证明近期适用；0 条观测不能证明设施安全。已完成的是缺口/旧基线披露，不是恢复全部来源或确认风险消失。
 
 - **Bubble 候选发布准备**：[#548](https://github.com/ctmaomao/gfrr-auto-update-site/pull/548) 已合并 `95a5681c`；纯离线准备器仅重放精确已审候选。新候选仍需认证原 run/artifact/ledger、独立事实复核与原 writer 时效及 CAS 门槛；不代表已生成或上线。见[发布准备契约](BUBBLE_REVIEWED_PUBLICATION.md)。
-
-- **私有预算存储离线阶段**：复用原 CAS/历史验证，新增固定私有目标身份检查及常量状态投影，见 [ADR-0121](ADR/0121-private-budget-offline-store.md)。只用模拟 transport 验证；现行月度公开输出另收窄为状态，Actions 禁止打印敏感离线准备账本，本地准备保留。私有 store 未接生产、未建凭据/genesis、未承接或释放旧债务，不代表月度预算已恢复。
 
 - **DeepSeek key 私密核验与 Bubble 单次准备**：#546/#547/#550 已合并，涵盖不访问 provider 的私密身份诊断、单次候选准备和私密 claim。代码可用不代表预算已激活或新稿已调用/发布。网站用途需与账户其它 key 区分，旧名额消耗和永久预留保持；实际私密配置、证据时效和新稿事实复核仍待完成，不在公开文档披露账户材料。
 
