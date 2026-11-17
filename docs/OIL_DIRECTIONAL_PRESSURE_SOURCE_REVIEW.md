@@ -2,6 +2,18 @@
 
 > **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
 
+## 2026-11-17 STEO 更正范围与时间反例
+
+[2020-12-08 官方公告](https://www.eia.gov/outlooks/steo/archives/notice_data_12_08_2020.php) 明确更正档案中 2019-08 至 2020-11 期 Excel Table 7d part 2 的 C 列：2019 年相关期次涉及 2015-01，2020 年相关期次涉及 2016-01；data browser 与季度表未受此错误影响。它证实档案可追溯修改，但没有指称本次 2026 Table 3a 被改，也不能反过来证明其未改。本轮固定一个 URL、1 MiB 上限、30 秒、无重试/重定向取回 HTML，接收于 `2026-11-17T00:00:46.611246Z`，51,743 bytes，SHA256 `72d1c2723052dd905254588efea6293de424bb6fff5068ee6d70e172819a21e0`，未下载更多工作簿或价格。
+
+旧公告页的共享顶栏显示当前 2026 年发行日期，正文却是 `Released: December 8, 2020`。新增离线 `steo_revision_notice.py` 只在 Notice 正文标题后的段落识别这份已审更正范围，并严格匹配四个规范化关键段落，不能仅靠月份关键词猜关联；多正文日期、缺日期、隐藏正文、错误列/月份、月份与期次对调、否定/冲突段落等保守拒绝，支持真实 HTML 的隐式段落关闭。不抓取、不写文件、不认证输入真实性。范围比较同时匹配期次、表、列、观察月与格式：范围外返回“不属于本公告范围，不证明没有其它修订”，不是 unaffected 或样本可用。合成回归单测及真实 HTML 调用分别核验；该工具不解析任意更正语义，也不建立完整更正链。
+
+[发行日历](https://www.eia.gov/outlooks/steo/release_schedule.php) 仅说通常在 12:00–12:15 EDT/EST，允许提前发布、假日和其它调整；2026 年 10 月标有 Winter Fuels。不得由常规时段合成精确历史首发时刻，也不得忽略夏令时。上述公告的“约中午 Eastern”同样不是精确分钟证据。
+
+另外三份官方正文展示不同证据等级（本轮只读网页，未纳入上述单份 parser）：[2020-03-18](https://www.eia.gov/outlooks/steo/archives/notice_data_03_18_2020.php) 记载 3 月 11 日首发的美国能源总消费 2019–2021 数值在 3 月 18 日约中午更正；[2025-12-18](https://www.eia.gov/outlooks/steo/archives/notice_data_12_18_2025.php) 只是计划下一期修正部分历史 Permian 区域归类；[2026-09-10](https://www.eia.gov/outlooks/steo/archives/notice_data_09_10_2026.php) 记载 Overview 裂解价差错误已改，但无精确更正时刻。这些是事件/计划证据，不是当前文件等同当时字节的证明，均不认证本次 Table 3a。
+
+下一项真实实验仍可推进，但须区分目标：另立协议可预登记固定后验价格版本作为事后结果标签，特征与锚点只用发行时已知版本，训练/校准标签仍须在各预测起点前已成熟；预测起点后才可得的固定后验版本只能用于预登记事后评估，不能倒灌训练。这叫后验标签研究，不能改名为实时版本回测或可交易收益，也不改变 v1 初版标签要求。更强的前瞻路径是从实际接收起保留有限 EIA 自有供需字段及版本，特征快照先冻结、标签成熟后追加；价格数值保存权利需单独明确，哈希不能代替数值样本。更正清单应按字段记录实际发生/未来计划/未知，缺公告不得填“无修订”；计划中的日期不得当成已经发生。尚未执行新协议或计算真实收益。
+
 ## 2026-11-16 STEO 两期真实预测字段可行性
 
 按固定两请求清单读取官方 [October workbook](https://www.eia.gov/outlooks/steo/archives/oct26_base.xlsx) 与 [November workbook](https://www.eia.gov/outlooks/steo/archives/nov26_base.xlsx)，每份上限 5 MiB、30 秒、零重试、不跟重定向；全部成功，无额外历史下载或价格收益计算。原始整本只留在本地研究存证，不入仓库或生产。下载前清单固定两份报告和物理供需范围，未预登记具体季度或单元格。随后仅核对相邻两期对同一未来 2027Q1 的供需预测字段，没有读取油价结果以挑选月份。
