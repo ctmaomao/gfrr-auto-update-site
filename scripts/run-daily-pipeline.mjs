@@ -1961,9 +1961,12 @@ async function fetchFredSeries(seriesId, daysBack = 90) {
 function parseNyFedRateRecord(record) {
   if (!record || typeof record !== 'object') return null;
   const type = typeof record.type === 'string' ? record.type.trim().toUpperCase() : '';
-  const percentRate = Number(record.percentRate);
+  // Missing or nonnumeric JSON fields are not observed zero rates/volumes.
+  const numeric = value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''))
+    ? Number(value) : NaN;
+  const percentRate = numeric(record.percentRate);
   const effectiveDate = typeof record.effectiveDate === 'string' ? record.effectiveDate.trim() : '';
-  const volumeInBillions = Number(record.volumeInBillions);
+  const volumeInBillions = numeric(record.volumeInBillions);
   if (!type || !Number.isFinite(percentRate) || percentRate < 0 || percentRate > 20) return null;
   if (!effectiveDate || !Number.isFinite(Date.parse(`${effectiveDate}T00:00:00Z`))) return null;
   return {
