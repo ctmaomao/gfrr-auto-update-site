@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **EIA 周度类型隔离**：压力/history 共用严格数值投影，拒绝 null/布尔/容器/空白强转零；保留真实零与正常数值字符串。任一无效行整 series missing，不筛掉中间缺失后伪造周差分；保守降级可能减少可用覆盖。模拟 fetch→evidence、独审、全套与自然运行分开验收，不触发采集或改生产快照。详见[来源审计](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+
 - **FRED JSON 数值类型保护**：共享 Daily/realtime parser 拒绝 null、布尔及容器值，避免隐式转换为 0/1 或数组中的数值；保留真正数值零、负值、字符串数字、顺序与 CSV 行为。验收基线为合成解析及实际 fetchRows 模拟不足行 fallback，不新增请求/重试策略、不取数或改历史产物；专项、全套、独审与精确 CI 分别验收。
 
 - **Brave私有证明分层（未启用）**：owner选择保持暂停并开发私有方案；新增固定proof适配原型，公开投影排除账户/plan/key指纹/账单与裸身份哈希，私有随机nonce的HMAC约束防止换proof重归属历史。保留旧门槛/CAS/pending，无自动初始化/续期/迁移，不改权限。owner随后具体批准repository secret私有存储及五个main步骤注入；本轮仅接线与离线回归，真实secret保存/公开项目记录审批/初始化分别核验，不把代码合并说成已恢复搜索。

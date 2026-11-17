@@ -2,6 +2,14 @@
 
 > **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
 
+## 2026-11-17 WPSR 文案更正与 EIA 数值类型隔离
+
+[官方 2026-08-28 勘误](https://www.eia.gov/petroleum/supply/weekly/includes/revision-notice.php)说明 8 月 26 日 10:30 发布的摘要将馏分油库存减少 220 万桶写成增加，12:13 修正文案，表格正确。该案例不证明其它表或当前 API 有误；ODP 的 `WDISTUS1` 库存变化来自 API 数值差分，并不解析这段摘要。[官方日程](https://www.eia.gov/petroleum/supply/weekly/schedule.php)包含假日周四 12:00 的例外，常规周三 10:30 不能认证历史逐期首发时间；现有 16 日新鲜度容限也不是首发时钟。
+
+代码审计另复现独立类型缺陷：`Number(null/false/[]/空白)` 变成 0、`Number(true)` 变成 1。压力与历史构建器现在共用严格周度投影，仅接收有限数值或十进制/科学计数数值字符串，保留真实 0。响应内任一行数值/日期不合法则整条 series 返回 `invalid_observation`，沿既有 missing 分支降级；不能先删掉异常中间行再把跨缺失差值称为一周变化。这是保守策略，旧历史中的缺失也可能令当前 series 不可用，未以补值或静默筛除换覆盖。它不认证响应未返回的缺失周、重复期或历史版本完整性。
+
+离线模拟实际两条 fetch 路径并核验压力 evidence 的 missing/null 与真实零值；未调用 EIA、未改生产快照。检查时仓库快照（builtAt `2026-11-16T03:12:31.139Z`）8 个 EIA 当前值均为正常非零数值，不能据类型反例声称生产曾误算。单测/合并与后续自然运行验收分别记录，历史 builder 不随每日压力刷新执行。
+
 ## 2026-11-17 STEO 更正范围与时间反例
 
 [2020-12-08 官方公告](https://www.eia.gov/outlooks/steo/archives/notice_data_12_08_2020.php) 明确更正档案中 2019-08 至 2020-11 期 Excel Table 7d part 2 的 C 列：2019 年相关期次涉及 2015-01，2020 年相关期次涉及 2016-01；data browser 与季度表未受此错误影响。它证实档案可追溯修改，但没有指称本次 2026 Table 3a 被改，也不能反过来证明其未改。本轮固定一个 URL、1 MiB 上限、30 秒、无重试/重定向取回 HTML，接收于 `2026-11-17T00:00:46.611246Z`，51,743 bytes，SHA256 `72d1c2723052dd905254588efea6293de424bb6fff5068ee6d70e172819a21e0`，未下载更多工作簿或价格。
