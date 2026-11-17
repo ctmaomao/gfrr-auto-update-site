@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateOriginal } from './weekly-original.mjs';
+import { MAX_WEEKLY_BYTES, validateOriginal } from './weekly-original.mjs';
 import { expectedWeeklyPages, splitIssues } from './build-weekly-reports.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sites = ['https://ctmaomao.github.io/gfrr-auto-update-site/', 'https://radar.gfrfinradar.uk/'];
@@ -38,7 +38,7 @@ export async function verifyPublication({ date, sha, commit, read = gitFile, lis
       let size = 0;
       for await (const chunk of response.body) {
         size += chunk.length;
-        if (size > 2 * 1024 * 1024) throw new Error(`${url.href}: response too large`);
+        if (size > MAX_WEEKLY_BYTES) throw new Error(`${url.href}: response too large`);
         chunks.push(chunk);
       }
       const body = Buffer.concat(chunks);
@@ -57,5 +57,5 @@ export async function verifyPublication({ date, sha, commit, read = gitFile, lis
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [date, sha, commit, ...extra] = process.argv.slice(2);
   if (extra.length || !date || !sha || !commit) { console.error('Usage: verify-weekly-publication.mjs DATE SHA256 SOURCE_COMMIT'); process.exitCode = 1; }
-  else verifyPublication({ date, sha, commit }).then(result => console.log(JSON.stringify({ commit, date, receipts: result }, null, 2))).catch(error => { console.error(error.message); process.exitCode = 1; });
+  else verifyPublication({ date, sha, commit }).then(result => console.log(JSON.stringify({ comparison_commit: commit, date, deployment_source: 'not_verified', receipts: result }, null, 2))).catch(error => { console.error(error.message); process.exitCode = 1; });
 }

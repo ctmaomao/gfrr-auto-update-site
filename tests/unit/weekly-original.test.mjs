@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { installOriginal, saveOriginal, validateOriginal } from '../../scripts/weekly-original.mjs';
+import { MAX_WEEKLY_BYTES, installOriginal, saveOriginal, validateOriginal } from '../../scripts/weekly-original.mjs';
 
 const date = '2026-11-23';
 const bytes = Buffer.from('<!doctype html><html><head><title>周报 2026年11月23日</title></head><body><main><section>完整正文</section></main></body></html>');
@@ -42,6 +42,8 @@ test('missing or wrong explicit identity, truncation and malformed UTF-8 fail cl
   assert.throws(() => validateOriginal(quoted, date, sha(quoted)), /base URL/);
   const outside = Buffer.from('<!doctype html><html><head><title>2026年11月23日</title></head><body><header><section>outside</section></header><main></main></body></html>');
   assert.throws(() => validateOriginal(outside, date, sha(outside)), /sections/);
+  const oversized = Buffer.concat([bytes, Buffer.alloc(MAX_WEEKLY_BYTES)]);
+  assert.throws(() => validateOriginal(oversized, date, sha(oversized)), /2 MiB/);
   const truncated = bytes.subarray(0, bytes.length - 7);
   assert.throws(() => validateOriginal(truncated, date, sha(truncated)), /Incomplete/);
   const bad = Buffer.concat([bytes, Buffer.from([0xff])]);
@@ -70,4 +72,18 @@ test('normal builder rejects unarchived issue before touching generated pages an
   assert.throws(run);
   assert.deepEqual(readFileSync(join(root, 'weekly-reports.html')), entry);
   assert.equal(readFileSync(compat, 'utf8'), 'conflict');
+});
+
+test('save refuses a report whose generated entry exceeds the limit before claiming its date', () => {
+  const root = mkdtempSync(join(tmpdir(), 'weekly-limit-'));
+  const marker = '<section>完整正文</section>';
+  const template = bytes.toString().replace(marker, '<section>' + 'x'.repeat(MAX_WEEKLY_BYTES - bytes.length - 16) + '正文</section>');
+  const candidate = Buffer.from(template);
+  assert.ok(candidate.length <= MAX_WEEKLY_BYTES);
+  const source = join(root, 'input.html');
+  writeFileSync(source, candidate);
+  assert.throws(() => saveOriginal({root,source,date,sha:sha(candidate)}), /2 MiB/);
+  assert.equal(existsSync(join(root,'weekly-originals',date,'identity.sha256')),false);
+  writeFileSync(source, bytes);
+  assert.doesNotThrow(() => saveOriginal({root,source,date,sha:sha(bytes)}));
 });

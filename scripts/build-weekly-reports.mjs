@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, writeFileSync, renameSync, existsSync, linkS
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateOriginal } from './weekly-original.mjs';
+import { MAX_WEEKLY_BYTES, validateOriginal } from './weekly-original.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const read = p => readFileSync(resolve(root, p), 'utf8');
 export function splitIssues(names, limit = 52) {
@@ -29,6 +29,11 @@ export function expectedWeeklyPages({ names = readdirSync(resolve(root, 'reports
   for (const name of [...recent, ...archived]) result.set('weekly-reports/' + name, readFile('reports/' + name));
   return result;
 }
+export function checkWeeklyPageSizes(pages) {
+  for (const [path, content] of pages) {
+    if (Buffer.byteLength(content, 'utf8') > MAX_WEEKLY_BYTES) throw new Error('Weekly page exceeds 2 MiB limit: ' + path);
+  }
+}
 export function buildWeeklyReports({ check = false } = {}) {
   // The existing 2026-11-09 fixed report predates original retention; its bytes
   // remain in Git. New reports must carry a matching content-addressed original.
@@ -42,6 +47,7 @@ export function buildWeeklyReports({ check = false } = {}) {
     if (!readFileSync(resolve(root, `reports/${name}`)).equals(original)) throw new Error('Fixed weekly report differs from original: ' + name);
   }
   const pages = expectedWeeklyPages();
+  checkWeeklyPageSizes(pages);
   // Dated compatibility pages are immutable. Preflight all before touching any entry page.
   for (const [path, expected] of pages) {
     if (/^weekly-reports\/\d{4}-\d{2}-\d{2}\.html$/.test(path) && existsSync(resolve(root, path)) && read(path) !== expected) throw new Error('Refusing to overwrite fixed weekly page: ' + path);

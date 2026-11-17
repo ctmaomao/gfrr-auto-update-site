@@ -4,9 +4,10 @@ import { createHash, randomUUID } from 'node:crypto';
 import { closeSync, existsSync, fsyncSync, linkSync, mkdirSync, openSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildWeeklyReports, splitIssues } from './build-weekly-reports.mjs';
+import { buildWeeklyReports, checkWeeklyPageSizes, expectedWeeklyPages, splitIssues } from './build-weekly-reports.mjs';
 
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const MAX_WEEKLY_BYTES = 2 * 1024 * 1024;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 function identity(date, sha) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error('Expected a real YYYY-MM-DD issue date');
@@ -14,6 +15,7 @@ function identity(date, sha) {
 }
 export function validateOriginal(bytes, date, sha) {
   identity(date, sha);
+  if (bytes.length > MAX_WEEKLY_BYTES) throw new Error('Original exceeds weekly 2 MiB limit');
   if (hash(bytes) !== sha) throw new Error('Original SHA-256 does not match the explicitly expected digest');
   const html = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   if (/<base\b/i.test(html)) throw new Error('Report may not redefine the base URL');
@@ -44,6 +46,17 @@ function originalPath(root, date, sha) { return resolve(root, 'weekly-originals'
 export function saveOriginal({ root = defaultRoot, source, date, sha }) {
   const bytes = readFileSync(source);
   validateOriginal(bytes, date, sha);
+  const reportsDir = resolve(root, 'reports');
+  const name = date + '.html';
+  const names = existsSync(reportsDir) ? readdirSync(reportsDir) : [];
+  const latest = splitIssues(names).recent[0];
+  if (latest && latest > name) throw new Error('Expected issue would not be latest');
+  for (const path of [resolve(reportsDir, name), resolve(root, 'weekly-reports', name)]) {
+    if (existsSync(path) && !readFileSync(path).equals(bytes)) throw new Error(`Refusing to overwrite ${path}`);
+  }
+  const allNames = names.includes(name) ? names : [...names, name];
+  const preview = expectedWeeklyPages({ names: allNames, readFile: path => path === `reports/${name}` ? bytes.toString('utf8') : readFileSync(resolve(root, path), 'utf8') });
+  checkWeeklyPageSizes(preview);
   const dir = resolve(root, 'weekly-originals', date);
   // Claim the date before writing the content, so competing digests cannot both win.
   // An interrupted write may resume only with the same expected identity.

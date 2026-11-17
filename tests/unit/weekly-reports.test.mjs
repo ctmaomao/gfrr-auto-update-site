@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { deriveExpectedHashSources, derivePageHashes, buildEdgeoneJson } from '../../scripts/lib/edgeone-csp-policy.mjs';
 import { fileURLToPath } from 'node:url';
-import { splitIssues, expectedWeeklyPages } from '../../scripts/build-weekly-reports.mjs';
+import { splitIssues, expectedWeeklyPages, checkWeeklyPageSizes } from '../../scripts/build-weekly-reports.mjs';
 import { isAllowedPagesArtifactFile } from '../../scripts/build-pages-artifact.mjs';
 const read = p => fs.readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 
@@ -82,4 +82,10 @@ test('four current pages and weekly subpaths link to oil with one current tab', 
     assert.equal((nav.match(/aria-current="page"/g)||[]).length,1,path);
     assert.ok(nav.includes('href="'+(path.includes('/')?'../':'')+'oil-market.html"'),path);
   }
+});
+
+test('generated pages enforce the same byte limit before writing', () => {
+  assert.doesNotThrow(() => checkWeeklyPageSizes(new Map([['x', 'a'.repeat(2 * 1024 * 1024)]])));
+  assert.throws(() => checkWeeklyPageSizes(new Map([['x', 'a'.repeat(2 * 1024 * 1024 + 1)]])), /2 MiB/);
+  assert.throws(() => checkWeeklyPageSizes(new Map([['x', '中'.repeat(700000)]])), /2 MiB/);
 });
