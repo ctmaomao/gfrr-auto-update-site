@@ -4,7 +4,22 @@ import { RECEIPT_GRANT, prepareReceiptLedger } from './lib/deepseek-receipt-gran
 import { GRANT, oneShotSelection, prepareOneShotLedger, verifyOneShotStatus, oneShotRuntimeConfig } from './lib/deepseek-one-shot.mjs';
 import { createGithubLedger, POLICY, POLICY_DIGEST, prepareBootstrapLedger, verifyBudgetStatus } from './lib/deepseek-budget.mjs';
 
+// Public diagnostics are a finite vocabulary, never arbitrary exception text.
+const PUBLIC_REASONS = new Set(['eligible_snapshot_only', ...[
+  'balance_unavailable', 'billing_unknown', 'bootstrap_unproven', 'claim_uncertain', 'claim_unproven',
+  'clock_rollback', 'clock_unknown', 'contention', 'contract_hold', 'credentials_missing', 'currency_unknown',
+  'exposure_changed', 'exposure_unproven', 'grant_consumed', 'grant_expired', 'grant_invalid', 'grant_manual_only',
+  'grant_unapproved', 'history_changed', 'history_rollback', 'history_unproven', 'invalid_ledger', 'invalid_request',
+  'key_mismatch', 'key_missing', 'ledger_full', 'model_changed', 'price_policy_unknown', 'price_review_required',
+  'private_snapshot_unproven', 'private_store_hold', 'project_limit', 'provider_unknown', 'receipt_mismatch',
+  'receipt_pending', 'receipt_unknown', 'request_changed', 'response_too_large', 'session_stopped', 'snapshot_unproven',
+  'source_changed', 'store_unavailable', 'transport_unknown', 'uninitialized', 'unproven_write_parent',
+  'write_uncertain', 'wrong_repository', 'status_unavailable'
+].map(code => `deepseek_budget_${code}`)]);
+const publicReason = reason => PUBLIC_REASONS.has(reason) ? reason : 'deepseek_budget_status_unavailable';
+
 function reportPreflight(disposition, reason) {
+  reason = publicReason(reason);
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT,
     `budget_eligible=${disposition === 'eligible'}\nbudget_disposition=${disposition}\nbudget_reason=${reason}\n`);
   const message = `DeepSeek budget preflight: ${disposition}; reason=${reason}; no provider call and no ledger write.`;
@@ -16,7 +31,7 @@ function reportPreflight(disposition, reason) {
 // review, reads a provider key, calls DeepSeek, or sends a generation request.
 async function main() {
   const args = process.argv.slice(2);
-  if (args[0] === '--prepare-receipt-grant' && process.env.GITHUB_ACTIONS === 'true') throw new Error('deepseek_budget_private_snapshot_unproven');
+  if (['--prepare-bootstrap', '--prepare-one-shot', '--prepare-receipt-grant'].includes(args[0]) && process.env.GITHUB_ACTIONS === 'true') throw new Error('deepseek_budget_private_snapshot_unproven');
   if (args.length === 4 && args[0] === '--prepare-receipt-grant' && args[2] === '--approved-grant-digest') {
     const prepared = JSON.parse(fs.readFileSync(args[1], 'utf8'));
     const ledger = prepareReceiptLedger({ ...prepared, approvedGrantDigest: args[3] });
@@ -87,14 +102,13 @@ async function main() {
     store: createGithubLedger({ token: process.env.DEEPSEEK_BUDGET_GITHUB_TOKEN, genesisSha: process.env.DEEPSEEK_BUDGET_GENESIS_SHA }),
     approvedReviewDigest: process.env.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256
   });
-  console.log(JSON.stringify(result, null, 2));
+  console.log(JSON.stringify({ admission: result.admission === 'eligible_snapshot_only' ? 'eligible_snapshot_only' : 'hold' }));
   if (requireEligible && result.admission !== 'eligible_snapshot_only') throw new Error(result.admission);
   reportPreflight(result.admission === 'eligible_snapshot_only' ? 'eligible' : 'hold', result.admission);
 }
 
 main().catch(error => {
-  const safeCode = /^deepseek_budget_[a-z_]+$/u.test(error?.budgetCode || error?.message || '')
-    ? error.budgetCode || error.message : 'deepseek_budget_status_unavailable';
+  const safeCode = publicReason(error?.budgetCode || error?.message);
   reportPreflight('failure', safeCode);
   console.error(`DeepSeek budget HOLD: ${safeCode}; no provider call and no ledger write.`);
   process.exitCode = 1;

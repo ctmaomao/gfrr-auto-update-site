@@ -20,3 +20,9 @@ Before any separate activation: establish least-privilege access, reconcile all 
 ## Verification
 
 Synthetic tests cover fixed identity/visibility, changed privacy after read, failed metadata, redirection, constant errors/status, two-key same-head CAS, forged snapshots and missing refs. Existing ledger tests continue to exercise ancestry, clock drift, price expiry and debt retirement on the unchanged shared algorithm. Real remote permissions and private production wiring remain untested.
+
+## Public-output hardening (still no private-store wiring)
+
+The existing monthly CLI now prints only the snapshot admission projection, while retaining its original eligibility decisions and exit codes. Public preflight reasons use a finite allowlist; other exception strings become `deepseek_budget_status_unavailable`. Production monthly logs project internal reports to fixed status values without consumer, reservation ID or amount; internal callbacks and accounting are unchanged. Existing one-shot/receipt status JSON is outside this monthly-output change.
+
+Actions refuses all three sensitive `--prepare-*` ledger-output modes before reading input files; explicit local offline preparation remains available. Static plan modes are unchanged. Tests capture stdout/stderr, step outputs and summaries, reject arbitrary error codes, preserve expected-skip semantics and verify zero provider/writer activity. This hardens existing output paths, not permission to use the private store or restore any budget.
