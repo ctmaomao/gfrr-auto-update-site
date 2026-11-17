@@ -339,8 +339,15 @@ test('workflow isolates candidate permissions, schedule and successful upload fr
   const production = workflow.split('\n  refresh:')[1];
   const approvedContactLine = '          BUBBLE_WATCH_EDGAR_CONTACT: ${{ secrets.BUBBLE_WATCH_EDGAR_CONTACT }}\n';
   assert.equal(production.split(approvedContactLine).length - 1, 1);
-  assert.equal(artifactHash(production.replace(approvedContactLine, '')), 'd377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96');
-  assert.equal(artifactHash(production), '2cb6886717d47a0546037b9587eb33e9d80bace7d230cc906c36fc599d16f80b');
+  // ADR-0111: owner-approved step-only private proof injection, never Epoch access.
+  // Remove exactly that line solely to retain both previous immutable baselines;
+  // the full new hash below still requires review for every later job change.
+  const approvedProofLine = '          BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}\n';
+  assert.equal(production.split(approvedProofLine).length - 1, 1);
+  const priorProduction = production.replace(approvedProofLine, '');
+  assert.equal(artifactHash(priorProduction.replace(approvedContactLine, '')), 'd377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96');
+  assert.equal(artifactHash(priorProduction), '2cb6886717d47a0546037b9587eb33e9d80bace7d230cc906c36fc599d16f80b');
+  assert.equal(artifactHash(production), 'f96bc2ee05b3ab6dbdff0cd780e2aae53e56d1d0dbe33951aef5a651a8e1896b');
   assert.ok(!candidate.includes('TAVILY_BUDGET_GITHUB_TOKEN'));
   assert.equal((workflow.split('\n  refresh:')[1].match(/TAVILY_BUDGET_GITHUB_TOKEN:/gu) || []).length, 1);
 });

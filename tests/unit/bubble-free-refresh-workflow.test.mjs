@@ -14,7 +14,7 @@ test('dedicated full refresh is manual/main-only and hard-disables paid provider
   assert.match(workflow, /BUBBLE_WATCH_DISABLE_WIND: '1'/u);
   assert.doesNotMatch(workflow, /WIND_API_KEY|DEEPSEEK|schedule:|workflow_run:|--refresh-qualified|--publish-qualified|allow_paid|continue-on-error/u);
   assert.deepEqual([...workflow.matchAll(/secrets\.([A-Z_]+)/gu)].map(match => match[1]).sort(),
-    ['BRAVE_API_KEYS', 'BUBBLE_WATCH_EDGAR_CONTACT', 'FRED_API_KEY', 'TAVILY_API_KEYS']);
+    ['BRAVE_API_KEYS', 'BRAVE_BUDGET_PRIVATE_PROOF', 'BUBBLE_WATCH_EDGAR_CONTACT', 'FRED_API_KEY', 'TAVILY_API_KEYS']);
   assert.match(workflow, /TAVILY_BUDGET_GITHUB_TOKEN: \$\{\{ github.token \}\}/u);
   assert.equal((workflow.match(/run: npm run build:bubble-watch\n/gu) || []).length, 1);
   assert.doesNotMatch(builder, /api\.deepseek\.com|requestWeeklyEditorial\(|requestEditorial\(/u);

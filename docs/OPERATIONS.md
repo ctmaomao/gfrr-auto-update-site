@@ -144,7 +144,7 @@ v2 的私有 grant 必须含证据与account-plan binding的SHA-256、key指纹�
 
 当官方界面无稳定服务ID时，仅可按 [ADR-0111 v3](ADR/0111-brave-shared-free-only.md#reviewed-dashboard-login-binding-alternative-v3) 的显式登录身份/plan/key协议审查并首次执行 `--initialize-shared-login --grant-file <private-file>`，不能把邮箱/标签冒称服务ID。v3每grant最多50预留、24小时，身份或key变化hold，无自动续期；其余免费硬停、950/31天、pending、create-only与未知历史保护不变。
 
-私有方案原型见 [ADR-0111 v4](ADR/0111-brave-shared-free-only.md#private-proof-separation-prototype-v4-inactive)：公开只投影项目计数，完整proof与随机HMAC nonce保留私有；实际私有存储/注入和公开项目记录仍待单独授权。当前没有启用该存储、初始化或续期路径；到期保持暂停，不得改走公开v3绕过拒绝。
+私有方案原型见 [ADR-0111 v4](ADR/0111-brave-shared-free-only.md#private-proof-separation-prototype-v4-inactive)：公开只投影项目计数，完整proof与随机HMAC nonce保留私有；owner已批准将私有proof保存在本仓库Actions repository secret `BRAVE_BUDGET_PRIVATE_PROOF`，仅映射到Macro新闻、Bubble周评新闻、Oil News、Bubble全量及Free全量五个现有main步骤；不注入CI、Pages、DeepSeek步骤或无main gate的来源审计。repository secret本身没有逐step ACL，workflow编辑者可能读取，不能声称由GitHub强制仅限这五步。代码映射不证明secret已保存；真实保存、公开项目记录审批与create-only初始化均须各自核验。该proof最多50项目预留、≤24小时，到期暂停且不自动续期，secret不会自动删除；不得改走公开v3绕过拒绝。
 
 核对项目key可显式手动选择原 `Tavily Budget Status` workflow的 `brave-key-fingerprint`；默认仍Tavily状态。独立main-only job只给核验步骤两个Brave secrets，仅输出各变量与合并集合的SHA-256前16位、count/missing；无provider/ledger/network诊断。也可在已获授权的环境运行 `npm run review:brave-budget -- --key-fingerprints`，不打印原key。指纹比对仍须私密核验账户/plan归属，多个/缺失/解析有歧义时不能猜测。
 
