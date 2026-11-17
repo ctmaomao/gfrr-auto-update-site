@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { buildNewsDiscovery, LIMITED_SEARCH_DISCLOSURE } from '../../scripts/bubble-watch/weekly-editorial-news.mjs';
 import { buildWeeklyEditorialInput } from '../../scripts/bubble-watch/weekly-editorial-input.mjs';
 import { reviewWeeklyEditorial, projectWeeklyEditorial } from '../../scripts/bubble-watch/weekly-editorial-production.mjs';
@@ -13,7 +15,9 @@ const healthy = { status: 'ok', successCount: 6, failureCount: 0 };
 const failed = { status: 'error', successCount: 0, failureCount: 6 };
 const snippet = 'Morningstar analysts believe AI infrastructure financing could improve credit access while leaving demand and repayment risks unresolved. This is an institutional opinion rather than independent confirmation.';
 function pack() {
-  const bubble = read('data/bubble-watch.json');
+  // The entire snapshot is fixed to this scenario's 2026-11-12 evidence clock.
+  // Production refreshes must not change these source fields or their dates.
+  const bubble = read('tests/fixtures/reviewed-bubble-publication/bubble-watch-2026-11-10.json');
   const date = bubble.as_of_date;
   const discovery = buildNewsDiscovery({ rawStories: [{ provider: 'brave', topic: 'ai_financing_credit',
     title: 'AI financing credit assessment', url: 'https://morningstar.com/bonds/ai-credit', snippet, publishedAt: date }],
@@ -98,6 +102,31 @@ test('pure preparation returns exact existing-writer result and no authenticated
   assert.equal(result.expectedMain, r.expectedMain);
   assert.deepEqual(JSON.parse(result.content), buildWeeklyEditorialWriteResult(JSON.parse(r.currentBubbleBytes), JSON.parse(r.candidateBytes).projection, { now: r.now }));
   assert.deepEqual(structuredClone(r), before);
+});
+test('reviewed publication fixture is unchanged when production snapshot advances or is absent', (t) => {
+  const before = request();
+  const fixturePath = new URL('../fixtures/reviewed-bubble-publication/bubble-watch-2026-11-10.json', import.meta.url);
+  assert.equal(hash(fs.readFileSync(fixturePath)), '8ca06be8d958343fd714de5205664ac68544e4bc7e5db71f8d9c32cbdb821fa1');
+  const productionPath = fileURLToPath(new URL('../../data/bubble-watch.json', import.meta.url));
+  const readFileSync = fs.readFileSync;
+  let productionReads = 0;
+  let unavailable = false;
+  t.mock.method(fs, 'readFileSync', (path, ...args) => {
+    const filename = path instanceof URL ? fileURLToPath(path) : typeof path === 'string' ? resolve(path) : path;
+    if (filename === productionPath) {
+      productionReads++;
+      if (unavailable) throw new Error('synthetic missing production snapshot');
+      return Buffer.from(JSON.stringify({ as_of_date: '2099-12-31', generated_at: '2099-12-31T23:59:59.000Z', indicators: [] }));
+    }
+    return readFileSync(path, ...args);
+  });
+  for (const missing of [false, true]) {
+    unavailable = missing;
+    const after = request();
+    assert.deepEqual(after, before);
+    assert.equal(prepareReviewedBubblePublication(after).status, 'prepared_not_authorized');
+  }
+  assert.equal(productionReads, 0, 'the offline scenario must never read the production snapshot');
 });
 test('run, artifact, content, approval, opaque claim, current head and freshness mismatches HOLD', () => {
   for (const mutate of [
