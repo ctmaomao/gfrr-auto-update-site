@@ -1,3 +1,4 @@
+import { policyTargetRange, cachedPolicyTargetRange, alignPolicyTargetComparisons } from './daily/policy-target.mjs';
 import { calculatePayrollBasket, verifiedPayrollBasketFallback } from './daily/payroll-basket.mjs';
 import { goldQuoteRows } from './realtime/gold-quote.mjs';
 import { normalizeWorldOrderStressHistorySnapshot, mergeWorldOrderStress } from './daily/world-order-history.mjs';
@@ -5981,6 +5982,7 @@ async function resolvePolicyExpectations(prevPolicy) {
   let targetMid = null;
   let effectiveFedFundsRate = null;
   let targetUpdatedAt = null;
+  let targetRangeObservedAt = null;
   let fedFundsFutureFrontPrice = null;
   let fedFundsFutureImpliedRate = null;
   let futureMinusTargetMid = null;
@@ -6015,20 +6017,12 @@ async function resolvePolicyExpectations(prevPolicy) {
     fetchLatestFedCalendarContext()
   ]);
 
-  if (targetLowerResult.status === 'fulfilled' && targetUpperResult.status === 'fulfilled') {
-    targetLower = latestValue(targetLowerResult.value);
-    targetUpper = latestValue(targetUpperResult.value);
-    targetMid = Number.isFinite(targetLower) && Number.isFinite(targetUpper)
-      ? +(((targetLower + targetUpper) / 2)).toFixed(3)
-      : null;
-    targetUpdatedAt = latestIsoDate(latestDateIso(targetLowerResult.value), latestDateIso(targetUpperResult.value));
-    status.targetRange = Number.isFinite(targetMid) ? 'live' : 'missing';
-  } else if (Number.isFinite(fallback.targetMid)) {
-    targetLower = fallback.targetLower;
-    targetUpper = fallback.targetUpper;
-    targetMid = fallback.targetMid;
-    targetUpdatedAt = fallback.targetUpdatedAt;
-    status.targetRange = 'fallback';
+  const liveTarget = targetLowerResult.status === 'fulfilled' && targetUpperResult.status === 'fulfilled'
+    ? policyTargetRange(targetLowerResult.value, targetUpperResult.value, isoNow) : null;
+  const target = Number.isFinite(liveTarget?.targetMid) ? liveTarget : fallback;
+  if (Number.isFinite(target.targetMid)) {
+    ({ targetLower, targetUpper, targetMid, targetUpdatedAt, targetRangeObservedAt } = target);
+    status.targetRange = target === liveTarget ? 'live' : 'fallback';
   }
 
   if (effrResult.status === 'fulfilled') {
@@ -6051,8 +6045,6 @@ async function resolvePolicyExpectations(prevPolicy) {
 
   if (Number.isFinite(fedFundsFutureImpliedRate) && Number.isFinite(targetMid)) {
     futureMinusTargetMid = +(fedFundsFutureImpliedRate - targetMid).toFixed(3);
-  } else if (Number.isFinite(fallback.futureMinusTargetMid)) {
-    futureMinusTargetMid = fallback.futureMinusTargetMid;
   }
 
   if (futuresCurveResult.status === 'fulfilled') {
@@ -6171,12 +6163,13 @@ async function resolvePolicyExpectations(prevPolicy) {
     ? sepData.dotPlotMedianCurrentYear
     : null;
 
-  return {
+  return alignPolicyTargetComparisons({
     targetLower: Number.isFinite(targetLower) ? targetLower : null,
     targetUpper: Number.isFinite(targetUpper) ? targetUpper : null,
     targetMid: Number.isFinite(targetMid) ? targetMid : null,
     effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null,
     targetUpdatedAt,
+    targetRangeObservedAt,
     fedFundsFutureFrontPrice: Number.isFinite(fedFundsFutureFrontPrice) ? fedFundsFutureFrontPrice : null,
     fedFundsFutureImpliedRate: Number.isFinite(fedFundsFutureImpliedRate) ? fedFundsFutureImpliedRate : null,
     futureMinusTargetMid: Number.isFinite(futureMinusTargetMid) ? futureMinusTargetMid : null,
@@ -6215,7 +6208,7 @@ async function resolvePolicyExpectations(prevPolicy) {
       'Fed target range/DFF 来自 FRED；SEP federal funds median、statement 与 minutes 文本来自 federalreserve.gov。',
       'ZQ=F、ZQ 月度合约、SR3 月度 SOFR futures 与 CheckMySwap USD OIS public curve 为公开政策/融资曲线证据；不是 proprietary dealer forward curve。'
     ]
-  };
+  });
 }
 
 export async function resolveCurve(prevCurve) {
@@ -8064,6 +8057,7 @@ function buildMissingPolicyExpectations() {
     targetMid: null,
     effectiveFedFundsRate: null,
     targetUpdatedAt: null,
+    targetRangeObservedAt: null,
     fedFundsFutureFrontPrice: null,
     fedFundsFutureImpliedRate: null,
     futureMinusTargetMid: null,
@@ -8446,21 +8440,20 @@ export function normalizePreviousShippingFreight(prevShippingFreight) {
 
 function normalizePreviousPolicyExpectations(prevPolicy) {
   if (!prevPolicy || typeof prevPolicy !== 'object') return buildMissingPolicyExpectations();
-  const targetLower = Number.isFinite(prevPolicy.targetLower) ? prevPolicy.targetLower : null;
-  const targetUpper = Number.isFinite(prevPolicy.targetUpper) ? prevPolicy.targetUpper : null;
-  const targetMid = Number.isFinite(prevPolicy.targetMid)
-    ? prevPolicy.targetMid
-    : (Number.isFinite(targetLower) && Number.isFinite(targetUpper) ? +(((targetLower + targetUpper) / 2)).toFixed(3) : null);
-  const futureMinusTargetMid = Number.isFinite(prevPolicy.futureMinusTargetMid) ? prevPolicy.futureMinusTargetMid : null;
+  const target = cachedPolicyTargetRange(prevPolicy, isoNow);
+  const { targetLower, targetUpper, targetMid } = target;
+  const futureMinusTargetMid = Number.isFinite(prevPolicy.fedFundsFutureImpliedRate) && Number.isFinite(targetMid)
+    ? +(prevPolicy.fedFundsFutureImpliedRate - targetMid).toFixed(3) : null;
   const dotPlotMedianCurrentYear = Number.isFinite(prevPolicy.dotPlotMedianCurrentYear) ? prevPolicy.dotPlotMedianCurrentYear : null;
   const minutesHawkishTermCount = Number.isFinite(prevPolicy.minutesHawkishTermCount) ? prevPolicy.minutesHawkishTermCount : null;
   const minutesDovishTermCount = Number.isFinite(prevPolicy.minutesDovishTermCount) ? prevPolicy.minutesDovishTermCount : null;
   const minutesTopicCounts = prevPolicy.minutesTopicCounts && typeof prevPolicy.minutesTopicCounts === 'object'
     ? prevPolicy.minutesTopicCounts
     : null;
-  return {
+  return alignPolicyTargetComparisons({
     ...buildMissingPolicyExpectations(),
     ...prevPolicy,
+    ...target,
     targetLower,
     targetUpper,
     targetMid,
@@ -8481,9 +8474,7 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
       : '未知',
     minutesTopicCounts,
     minutesSummaryZh: typeof prevPolicy.minutesSummaryZh === 'string' ? prevPolicy.minutesSummaryZh : null,
-    policyExpectationRegime: typeof prevPolicy.policyExpectationRegime === 'string' && prevPolicy.policyExpectationRegime.trim()
-      ? prevPolicy.policyExpectationRegime
-      : classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
+    policyExpectationRegime: classifyPolicyExpectationRegime(futureMinusTargetMid, dotPlotMedianCurrentYear, targetMid),
     updatedAt: typeof prevPolicy.updatedAt === 'string' ? prevPolicy.updatedAt : null,
     sourceStatus: {
       targetRange: targetMid !== null ? 'fallback' : 'missing',
@@ -8501,7 +8492,7 @@ function normalizePreviousPolicyExpectations(prevPolicy) {
         ? 'fallback'
         : 'manual_required'
     }
-  };
+  });
 }
 
 function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
