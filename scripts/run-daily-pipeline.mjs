@@ -3267,7 +3267,8 @@ async function resolveCopperGold(prevCopperGold) {
   return next;
 }
 function parseChinaOfficialNumber(value) {
-  const n = Number(String(value ?? '').trim());
+  if (typeof value !== 'number' && (typeof value !== 'string' || value.trim() === '')) return null;
+  const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
 
