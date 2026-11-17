@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **Brent 新接收快照可复核入口**：固定单次免费短窗口获得新身份30条报价，私有保留原字节与接收证据；离线校验保留返回槽位、区分私有数值与无价格公开摘要，不把接收回填为原始首发，不恢复失踪旧CSV。真实样本解析、合成反例、独审与发布分别验收，未计算收益或开放v2拟合；详见[来源审计](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
+
 - **NY Fed 利率缺失语义**：仅加固 secured-rates parser，拒绝缺失/布尔/容器值成为零利率，缺失成交量保持 null；真实零、精度、日期及原缓存/fallback策略不变。合成实际 parser→fetch→Fed resolver 回归验证缺失利差不伪造，独审、全套与精确 CI 分别验收；不取数、不改生产快照或全局数值转换。
 
 - **EIA 周度类型隔离**：压力/history 共用严格数值投影，拒绝 null/布尔/容器/空白强转零；保留真实零与正常数值字符串。任一无效行整 series missing，不筛掉中间缺失后伪造周差分；保守降级可能减少可用覆盖。模拟 fetch→evidence、独审、全套与自然运行分开验收，不触发采集或改生产快照。详见[来源审计](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。

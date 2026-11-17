@@ -2,6 +2,14 @@
 
 > **STATUS（2026-06-04 更新）:** ODP PR1–PR5 已全部 merged（EIA 周度物理链接入 + 回测 GATE + classifier + 中文 UI + dailyBrief 只读引用,audit-only/display-only）。本文已从「feasibility / 拟实现」转为**已实现模块的 source-of-record / 历史记录**;下文 §0/§10/§12 的「若未来实现」「PR 拆分」「开工前必答」按当时计划保留作历史,实际状态以 backlog / `DATA_CONTRACT.md` / `DATA_SOURCES.md` 为准。硬边界不变:不进 scoring/decision/execution/position,Global Risk Heatmap 保持独立。
 
+## 2026-11-17 新接收 Brent 短窗口快照（非历史首版）
+
+在本次取数前于 `2026-11-17T02:53:46.372Z` 固定单次 FRED `DCOILBRENTEU` CSV 请求、观察窗口 2026-10-01 至 11-16、1 MiB/30 秒上限、不重试/重定向。实际请求 02:53:58.090Z 开始、02:54:03.288Z 接收，HTTP 200、564 bytes，SHA256 `7c85a0d0e74cc4c92316b31213e002dd3c740d55146ed7656d8657d9eaba6f72`。返回 30 个正数报价槽位、0 个显式缺失，首末日期 10-01 / 11-11；请求末端未返回，不能补齐、推断交易日历完整或据此排除尚未发布/漏报。HTTP Last-Modified 为 11-13 01:31:23 GMT，并不是报价首发时间。
+
+[FRED 系列页](https://fred.stlouisfed.org/series/DCOILBRENTEU)有 Public Domain: Citation Requested 标签，建议署名 EIA/FRED；[EIA 复用说明](https://www.eia.gov/about/copyrights_reuse.php)的第三方材料例外仍适用，不能据此推广至其它报告价格。原 CSV、预先计划及接收记录仅在私有研究存证保存，公开仓库不存原始价格。本次是新版本身份，不恢复或冒充失踪的 ALFRED 原 CSV，也不改写其异常记录。
+
+新增离线接收快照校验器仅核对声明、字节哈希与解析一致性，保留完整返回槽位；它不是服务器签名或时点真实性证明。该副本至早可作为本次接收之后的信息，不得当作 10 月历史起点可见特征或当时已经成熟的训练标签。它可以作为明确固定版本的后验结果候选，但尚未构造标签、收益或拟合；后验标签不解除训练/校准逐起点成熟和独立测试要求。研究输出与公开摘要隔离，公开摘要无价格；v1/v2 不变，evaluation/public probability/main-score 资格继续关闭。
+
 ## 2026-11-17 WPSR 文案更正与 EIA 数值类型隔离
 
 [官方 2026-08-28 勘误](https://www.eia.gov/petroleum/supply/weekly/includes/revision-notice.php)说明 8 月 26 日 10:30 发布的摘要将馏分油库存减少 220 万桶写成增加，12:13 修正文案，表格正确。该案例不证明其它表或当前 API 有误；ODP 的 `WDISTUS1` 库存变化来自 API 数值差分，并不解析这段摘要。[官方日程](https://www.eia.gov/petroleum/supply/weekly/schedule.php)包含假日周四 12:00 的例外，常规周三 10:30 不能认证历史逐期首发时间；现有 16 日新鲜度容限也不是首发时钟。
