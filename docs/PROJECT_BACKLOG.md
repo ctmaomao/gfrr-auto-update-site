@@ -100,6 +100,8 @@
 
 - **Bubble 候选发布准备**：[#548](https://github.com/ctmaomao/gfrr-auto-update-site/pull/548) 已合并 `95a5681c`；纯离线准备器仅重放精确已审候选。新候选仍需认证原 run/artifact/ledger、独立事实复核与原 writer 时效及 CAS 门槛；不代表已生成或上线。见[发布准备契约](BUBBLE_REVIEWED_PUBLICATION.md)。
 
+- **私有预算存储离线阶段**：复用原 CAS/历史验证，新增固定私有目标身份检查及常量状态投影，见 [ADR-0121](ADR/0121-private-budget-offline-store.md)。只用模拟 transport 验证；未接生产、未建凭据/genesis、未承接或释放旧债务，不代表月度预算已恢复。
+
 - **DeepSeek key 私密核验与 Bubble 单次准备**：#546/#547/#550 已合并，涵盖不访问 provider 的私密身份诊断、单次候选准备和私密 claim。代码可用不代表预算已激活或新稿已调用/发布。网站用途需与账户其它 key 区分，旧名额消耗和永久预留保持；实际私密配置、证据时效和新稿事实复核仍待完成，不在公开文档披露账户材料。
 
 - **Brave 免费额度记录**：[#544](https://github.com/ctmaomao/gfrr-auto-update-site/pull/544) 已合并 `df5e8dcc`，v2 共享免费硬限与核验入口已实现；历史不重置。生产激活必须由真实证据和 create-only 流程确认，不能以代码合并宣称恢复调用。见 [ADR-0111](ADR/0111-brave-shared-free-only.md)。

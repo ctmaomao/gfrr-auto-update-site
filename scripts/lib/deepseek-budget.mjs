@@ -396,9 +396,42 @@ export function createGithubLedger(options) {
 
 // Shared transport only. Accounting contracts remain separate and fixed by callers.
 export function createGithubLedgerStore({ token, genesisSha, fetchImpl = fetch, now = Date.now }, { branch, validateLedger, validateTransition, validateGenesis = snapshot => snapshot.parents.length === 0 }) {
+  return createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { branch, validateLedger, validateTransition, validateGenesis });
+}
+
+const PRIVATE_LEDGER_TARGET = Object.freeze({ repository: 'ctmaomao/gfrr-private-budget', id: 1461088406, owner: 'ctmaomao' });
+
+/** Offline integration surface only: no environment lookup, default fetch,
+ * provider callback or initialization. Callers must inject a transport explicitly.
+ * This is not a network sandbox: a supplied real transport could perform I/O.
+ * Snapshots contain private evidence and must never be logged or published.
+ */
+export function createPrivateGithubLedger({ token, genesisSha, fetchImpl, now = Date.now } = {}) {
+  if (typeof fetchImpl !== 'function') fail('private_store_hold');
+  let store;
+  try {
+    store = createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now },
+      { branch: BUDGET_BRANCH, validateLedger, validateTransition, validateGenesis: snapshot => snapshot.parents.length === 0 }, PRIVATE_LEDGER_TARGET);
+  } catch { fail('private_store_hold'); }
+  return Object.freeze({
+    async read() { try { return await store.read(); } catch { fail('private_store_hold'); } },
+    async write(previous, ledger) { try { return await store.write(previous, ledger); } catch { fail('private_store_hold'); } },
+    assertClock() { try { store.assertClock(); } catch { fail('private_store_hold'); } }
+  });
+}
+
+/** Public-safe status projection, never a reservation or permission to dispatch. */
+export async function verifyPrivateBudgetStatus(options) {
+  try {
+    const result = await verifyBudgetStatus(options);
+    return { admission: result.admission === 'eligible_snapshot_only' ? 'eligible_snapshot_only' : 'hold' };
+  } catch { return { admission: 'hold' }; }
+}
+
+function createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { branch, validateLedger, validateTransition, validateGenesis }, target) {
   if (!token) fail('credentials_missing');
   if (!SHA.test(genesisSha || '')) fail('uninitialized');
-  const base = `https://api.github.com/repos/${BUDGET_REPOSITORY}`;
+  const base = `https://api.github.com/repos/${target?.repository || BUDGET_REPOSITORY}`;
   const snapshots = new WeakMap();
   let lastObservedHead, lastObservedDate;
   // The152s retirement margin requires a CURRENT bounded clock, not merely a
@@ -409,9 +442,18 @@ export function createGithubLedgerStore({ token, genesisSha, fetchImpl = fetch, 
     if (!Number.isFinite(observedAt) || Math.abs(time(now()) - observedAt) > POLICY.maxClockSkewMs) fail('clock_unknown');
   };
   const validateDate = observedAt => { assertClock(observedAt); lastObservedDate = observedAt; };
-  const api = (path, method = 'GET', body) => boundedJson(fetchImpl, `${base}${path}`, { method,
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
-    ...(body ? { body: JSON.stringify(body) } : {}) }, validateDate);
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' };
+  const api = async (path, method = 'GET', body) => {
+    if (target) {
+      // Recheck before every operation, including before transmitting ledger bytes.
+      // Administrator changes after this check remain outside this client guarantee.
+      const metadata = await boundedJson(fetchImpl, base, { headers }, validateDate);
+      if (metadata.status !== 200 || metadata.json?.id !== target.id || metadata.json?.private !== true
+        || metadata.json?.full_name !== target.repository || metadata.json?.owner?.login !== target.owner) fail('private_store_hold');
+    }
+    return boundedJson(fetchImpl, `${base}${path}`, { method, headers,
+      ...(body ? { body: JSON.stringify(body) } : {}) }, validateDate);
+  };
   async function load(head) {
     const commit = await api(`/git/commits/${head}`);
     if (commit.status !== 200 || commit.json?.sha !== head || !Array.isArray(commit.json.parents)) fail('history_unproven');
