@@ -192,3 +192,5 @@
 - [ADR-0115: Baltic policy document ownership](0115-baltic-policy-single-authority.md) — canonical policy/fixture plus six checked navigation links; substantive runtime guards unchanged.
 
 - [ADR-0116: Manual artifact dangling-link guard](0116-manual-artifact-dangling-links.md) — inspect path segments without following missing targets; retain ordinary new paths.
+
+- [ADR-0118: Divergence missing evidence](0118-divergence-missing-evidence.md) — missing is not zero; preserve valid golden fixtures and explicitly verify corrected missing output.
