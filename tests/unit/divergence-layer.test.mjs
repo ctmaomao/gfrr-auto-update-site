@@ -37,7 +37,7 @@ function check(layer, key) {
   return layer.checks.find((entry) => entry.key === key);
 }
 
-test('fixed fixtures preserve the exact pre-extraction divergence JSON', () => {
+test('fixed fixtures preserve valid outputs and the reviewed missing-data contract', () => {
   const fixtures = [
     fixture({ risk: { score: 40, modules: { a: 20 } } }),
     fixture({
@@ -63,9 +63,26 @@ test('fixed fixtures preserve the exact pre-extraction divergence JSON', () => {
       confidenceScore: 70,
     }),
   ];
-  const json = JSON.stringify(fixtures.map((input) => buildDivergenceLayer(input)));
-  assert.equal(Buffer.byteLength(json), 25_160);
-  assert.equal(createHash('sha256').update(json).digest('hex'), 'b95645708ef0bad3d6b31adb66c556e6dab69d5ba35ef5aec1df5731d1b7c925');
+  // ADR-0118: keep every fixture; only missing-data output intentionally changes.
+  const expected = [
+    [6493, 'f7206c85fc061e8b9342f9eb0d07b5208ecdaef96ca4805ab08dbc1b10a5f80c'],
+    [6985, '683a52c0771324bbc32c3d437925d7822186ce2f35242908828aca55c12ef3cc'],
+    [3090, '377b92dca52d8273600569ff963266ecc430ddf7d2bd92c6d1db98c90ebf7f22'],
+    [6501, '786aa98be00b4865ccb90d4651a5f7cd40a7fc4aa0f0a52c1ea5de0acebb68e1'],
+  ];
+  const outputs = fixtures.map(input => buildDivergenceLayer(input));
+  outputs.forEach((output, index) => {
+    const json = JSON.stringify(output);
+    assert.equal(Buffer.byteLength(json), expected[index][0]);
+    assert.equal(createHash('sha256').update(json).digest('hex'), expected[index][1]);
+  });
+  assert.equal(outputs[2].state, 'insufficient_data');
+  assert.equal(outputs[2].primaryDivergence.key, 'no_clear_divergence');
+  for (const row of outputs[2].checks) {
+    assert.equal(row.status, 'insufficient_data');
+    assert.equal(row.score, 0);
+    assert.deepEqual(row.evidence, []);
+  }
 });
 
 test('every divergence check fails closed when its required data is unavailable', () => {
