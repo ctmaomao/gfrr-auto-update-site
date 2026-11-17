@@ -1,3 +1,4 @@
+import { buildDivergenceLayer } from '../../scripts/daily/divergence-layer.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -114,4 +115,56 @@ test('FRED API rejects nonnumeric JSON types without losing numeric zero or orde
   const observations = values.map(value => ({ date: '2026-11-01', value }));
   assert.deepEqual(parseFredApiObservations(JSON.stringify({ observations })),
     [0, 0, -1, 2.5, 100].map(value => ({ date: '2026-11-01', value })));
+});
+
+
+const divergenceFields = ['brent', 'us10y', 'real10y', 'spx', 'vix', 'dxy', 'hyOas'];
+function divergenceFixture(value) {
+  return { risk: { score: 70, modules: { banking: 75, debt: 75 } }, realtimePayload: {},
+    displayInputsBaseline: Object.fromEntries(divergenceFields.map(key => [key, value])),
+    macroDrivers: { consumer: { sourceStatus: { umichSentiment: 'live' }, umichSentiment: value, threeMonthChange: value } },
+    confidenceScore: 80, generatedAt: '2026-11-17T00:00:00Z' };
+}
+test('divergence missing/non-numeric inputs produce insufficient data, not zero evidence', () => {
+  for (const value of [null, undefined, '', ' ', false, true, [], [1], {}, NaN, Infinity, 'bad']) {
+    const result = buildDivergenceLayer(divergenceFixture(value));
+    assert.equal(result.state, 'insufficient_data');
+    assert.equal(result.score, 0); // existing finite-score schema, not a genuine zero observation
+    assert.equal(result.primaryDivergence.key, 'no_clear_divergence');
+    for (const check of result.checks) {
+      assert.equal(check.status, 'insufficient_data');
+      assert.deepEqual(check.evidence, []);
+    }
+    assert.equal(result.boundaries.affectsScoring, false);
+    assert.equal(result.boundaries.affectsDecisionModel, false);
+  }
+});
+test('divergence preserves valid numeric strings/zero and does not mutate input', () => {
+  for (const values of [
+    { brent: 100, us10y: 5, real10y: 2.4, spx: 6000, vix: 15, dxy: 106, hyOas: 3 },
+    Object.fromEntries(divergenceFields.map(key => [key, 0]))
+  ]) {
+    const input = divergenceFixture(0); input.displayInputsBaseline = values;
+    const before = structuredClone(input); const result = buildDivergenceLayer(input);
+    const strings = structuredClone(input);
+    strings.displayInputsBaseline = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, ` ${v} `]));
+    strings.macroDrivers.consumer.umichSentiment = '0'; strings.macroDrivers.consumer.threeMonthChange = '0';
+    assert.deepEqual(buildDivergenceLayer(strings), result);
+    assert.deepEqual(input, before);
+    assert.ok(result.checks.every(check => check.status !== 'insufficient_data'));
+    assert.ok(result.checks.flatMap(check => check.evidence).some(row => row.value === 0));
+  }
+});
+test('missing VIX/credit cannot confirm calm markets, partial evidence remains null', () => {
+  const input = divergenceFixture(null);
+  Object.assign(input.displayInputsBaseline, { brent: 90, us10y: 5, spx: 6000 });
+  Object.assign(input.macroDrivers.consumer, { umichSentiment: 60, threeMonthChange: -10 });
+  const result = buildDivergenceLayer(input);
+  const find = key => result.checks.find(check => check.key === key);
+  assert.equal(find('risk_complacency_watch').status, 'insufficient_data');
+  assert.equal(find('rates_vs_risk_assets').score, 44); // not 72 from missing VIX -> 0
+  assert.equal(find('consumer_vs_asset_pricing').score, 66); // not 76 from fake calm pricing
+  const evidence = find('consumer_vs_asset_pricing').evidence;
+  assert.equal(evidence.find(row => row.key === 'vix').value, null);
+  assert.equal(evidence.find(row => row.key === 'hyOas').value, null);
 });

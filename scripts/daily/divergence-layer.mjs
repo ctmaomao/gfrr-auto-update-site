@@ -1,5 +1,12 @@
 import { briefEvidence } from './daily-brief.mjs';
 
+// Missing inputs must not become zero-valued evidence or calm-market signals.
+const inputNumber = value => {
+  if ((typeof value !== 'number' && typeof value !== 'string') || String(value).trim() === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
 const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(n)));
 const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
@@ -43,7 +50,7 @@ function buildDivergenceCheck({ key, labelZh, category, score, summaryZh, eviden
 }
 
 function buildEnergyPricingGapCheck(risk, realtimePayload, displayInputsBaseline) {
-  const brent = Number(displayInputsBaseline.brent);
+  const brent = inputNumber(displayInputsBaseline.brent);
   const validation = realtimePayload?.brentValidation || {};
   const promotion = validation.promotion || {};
   const sourceDetails = realtimePayload?.sourceDetails?.brent || {};
@@ -80,10 +87,10 @@ function buildEnergyPricingGapCheck(risk, realtimePayload, displayInputsBaseline
 }
 
 function buildRatesAssetsCheck(risk, displayInputsBaseline) {
-  const us10y = Number(displayInputsBaseline.us10y);
-  const real10y = Number(displayInputsBaseline.real10y);
-  const spx = Number(displayInputsBaseline.spx);
-  const vix = Number(displayInputsBaseline.vix);
+  const us10y = inputNumber(displayInputsBaseline.us10y);
+  const real10y = inputNumber(displayInputsBaseline.real10y);
+  const spx = inputNumber(displayInputsBaseline.spx);
+  const vix = inputNumber(displayInputsBaseline.vix);
   if (![us10y, real10y, spx, vix].some(Number.isFinite)) {
     return buildDivergenceCheck({
       key: 'rates_vs_risk_assets',
@@ -120,10 +127,10 @@ function buildRatesAssetsCheck(risk, displayInputsBaseline) {
 }
 
 function buildLiquidityCreditCheck(risk, displayInputsBaseline) {
-  const dxy = Number(displayInputsBaseline.dxy);
-  const us10y = Number(displayInputsBaseline.us10y);
-  const hyOas = Number(displayInputsBaseline.hyOas);
-  const vix = Number(displayInputsBaseline.vix);
+  const dxy = inputNumber(displayInputsBaseline.dxy);
+  const us10y = inputNumber(displayInputsBaseline.us10y);
+  const hyOas = inputNumber(displayInputsBaseline.hyOas);
+  const vix = inputNumber(displayInputsBaseline.vix);
   if (![dxy, us10y, hyOas, vix].some(Number.isFinite)) {
     return buildDivergenceCheck({
       key: 'liquidity_vs_credit_transmission',
@@ -161,8 +168,8 @@ function buildLiquidityCreditCheck(risk, displayInputsBaseline) {
 }
 
 function buildRiskComplacencyCheck(risk, displayInputsBaseline) {
-  const vix = Number(displayInputsBaseline.vix);
-  const hyOas = Number(displayInputsBaseline.hyOas);
+  const vix = inputNumber(displayInputsBaseline.vix);
+  const hyOas = inputNumber(displayInputsBaseline.hyOas);
   const elevatedModules = Object.values(risk.modules || {}).filter((value) => value >= 70).length;
   if (!Number.isFinite(risk.score) || !Number.isFinite(vix) || !Number.isFinite(hyOas)) {
     return buildDivergenceCheck({
@@ -201,11 +208,11 @@ function buildRiskComplacencyCheck(risk, displayInputsBaseline) {
 function buildConsumerAssetsCheck(risk, displayInputsBaseline, macroDrivers) {
   const consumer = macroDrivers?.consumer || {};
   const sourceStatus = consumer?.sourceStatus?.umichSentiment || 'missing';
-  const sentiment = Number(consumer.umichSentiment);
-  const threeMonthChange = Number(consumer.threeMonthChange);
-  const spx = Number(displayInputsBaseline.spx);
-  const vix = Number(displayInputsBaseline.vix);
-  const hyOas = Number(displayInputsBaseline.hyOas);
+  const sentiment = inputNumber(consumer.umichSentiment);
+  const threeMonthChange = inputNumber(consumer.threeMonthChange);
+  const spx = inputNumber(displayInputsBaseline.spx);
+  const vix = inputNumber(displayInputsBaseline.vix);
+  const hyOas = inputNumber(displayInputsBaseline.hyOas);
   if (sourceStatus === 'missing' || !Number.isFinite(sentiment) || !Number.isFinite(threeMonthChange)) {
     return buildDivergenceCheck({
       key: 'consumer_vs_asset_pricing',
