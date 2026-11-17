@@ -1,3 +1,4 @@
+import { calculatePayrollBasket } from '../../scripts/daily/payroll-basket.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,7 +17,7 @@ function helpers(series={}) {
   });
   return vm.runInNewContext(functions.join('\n')+`\n({${names.join(',')}})`,{
     fetchFredSeries:async id=>{if(!series[id])throw new Error('synthetic missing source');return structuredClone(series[id]);},
-    normalizePreviousEmployment:()=>({}),EMPLOYMENT_INDUSTRY_PAYROLL_SERIES:[],EMPLOYMENT_SOURCE:'synthetic offline',
+    calculatePayrollBasket, isoNow: '2026-11-17T12:00:00Z', normalizePreviousEmployment:()=>({}),EMPLOYMENT_INDUSTRY_PAYROLL_SERIES:[],EMPLOYMENT_SOURCE:'synthetic offline',
     CONSUMER_RETAIL_SEGMENT_SERIES:[{id:'A',key:'a',labelZh:'甲'},{id:'B',key:'b',labelZh:'乙'}]
   });
 }

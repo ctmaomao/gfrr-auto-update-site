@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=oil-detail-owner-20261116';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=oil-detail-owner-20261116';
+} from './config.js?v=payroll-basket-20261117';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=payroll-basket-20261117';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,16 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=oil-detail-owner-20261116';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=oil-detail-owner-20261116';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=oil-detail-owner-20261116';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=oil-detail-owner-20261116';
-import { renderTrendSvg } from './renderMacroTrend.js?v=oil-detail-owner-20261116';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=oil-detail-owner-20261116';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-detail-owner-20261116';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=oil-detail-owner-20261116';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=oil-detail-owner-20261116';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=oil-detail-owner-20261116';
+} from './macroOverviewDisplayHelpers.js?v=payroll-basket-20261117';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=payroll-basket-20261117';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=payroll-basket-20261117';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=payroll-basket-20261117';
+import { renderTrendSvg } from './renderMacroTrend.js?v=payroll-basket-20261117';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=payroll-basket-20261117';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=payroll-basket-20261117';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=payroll-basket-20261117';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=payroll-basket-20261117';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=payroll-basket-20261117';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -2001,6 +2001,29 @@ function renderConsumerRetail({ radarData }) {
 
 // ---------- Stage 5c: C4 US Economic Temperature ----------
 
+// A qualified custom basket is not the BLS industry diffusion index.
+function employmentBasketDisplay(employment = {}, nowMs = Date.now()) {
+  const pending = { value: '—', period: '—', live: false };
+  if (employment.industryPayrollMethod !== 'custom-overlapping-11-series-mom-v1') {
+    return { ...pending, period: employment.industryPayrollDiffusionPct != null ? '旧快照，周期未核验' : pending.period };
+  }
+  const positive = strictFiniteDisplay(employment.industryPayrollPositiveCount);
+  const total = strictFiniteDisplay(employment.industryPayrollSeriesCount);
+  const pct = strictFiniteDisplay(employment.industryPayrollDiffusionPct);
+  const stamp = employment.industryPayrollUpdatedAt;
+  const day = observationDate(stamp, nowMs);
+  const source = employment.sourceStatus?.industryPayroll;
+  if (!day || !/^\d{4}-\d{2}-01T00:00:00Z$/u.test(stamp)
+      || !['live', 'fallback'].includes(source) || total !== 11
+      || !Number.isInteger(positive) || positive < 0 || positive > total
+      || pct === null || Math.abs(pct - Math.round(positive / total * 1000) / 10) > 0.000001) return pending;
+  return {
+    value: `${pct.toFixed(1)}%（${positive}/${total} 序列）`,
+    period: `${day.slice(0, 7)} 观察 · ${source === 'fallback' ? '沿用旧值' : '本次获取'}`,
+    live: source === 'live',
+  };
+}
+
 function renderC4UsEconomyTemperature({ radarData }) {
   try {
     renderConsumerRetail({ radarData });
@@ -2011,8 +2034,11 @@ function renderC4UsEconomyTemperature({ radarData }) {
     if (!radarData) return;
     const employment = radarData.macroDrivers?.employment || {};
 
-    const employmentTone = employmentToneFromRegime(employment.industryDiffusionRegime);
-    setIndicatorStatus('c4-employment-status', 'c4-employment-badge', employmentTone);
+    const basket = employmentBasketDisplay(employment);
+    if (basket.live) {
+      const employmentTone = employmentToneFromRegime(employment.industryDiffusionRegime);
+      setIndicatorStatus('c4-employment-status', 'c4-employment-badge', employmentTone);
+    }
     const claims = asNumber(employment.initialClaims);
     if (claims !== null) setLeafText('c4-employment-number', formatK(claims));
     const claimsAvg = asNumber(employment.initialClaims4wAverage);
@@ -2029,13 +2055,8 @@ function renderC4UsEconomyTemperature({ radarData }) {
     }
     if (asNumber(employment.u6Rate) !== null) setLeafText('c4-employment-u6', `${employment.u6Rate.toFixed(1)}%`);
     if (signedPercentFromDecimal(employment.averageHourlyEarningsYoY, 1)) setLeafText('c4-employment-ahe', signedPercentFromDecimal(employment.averageHourlyEarningsYoY, 1));
-    if (asNumber(employment.industryPayrollDiffusionPct) !== null) {
-      const positive = asNumber(employment.industryPayrollPositiveCount);
-      const total = asNumber(employment.industryPayrollSeriesCount);
-      const suffix = positive !== null && total !== null ? ` (${positive}/${total} 行业扩张占比)` : '';
-      setLeafText('c4-employment-diffusion', `${employment.industryPayrollDiffusionPct.toFixed(1)}%${suffix}`);
-    }
-    if (employment.industryDiffusionRegime) setLeafText('c4-employment-regime', employment.industryDiffusionRegime);
+    setLeafText('c4-employment-diffusion', basket.value);
+    setLeafText('c4-employment-regime', basket.period);
 
 
   } catch (error) {

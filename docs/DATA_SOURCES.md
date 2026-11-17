@@ -89,6 +89,8 @@ NFCI 四周变化仅比较相隔整 28 日的观测；SLOOS 季环比仅比较�
 
 **注意**: NFCI 正值=收紧、负值=宽松,**与 IG/HY OAS 同向（数值越高越紧）**；NFCI 的 0 轴与 OAS 水平不同。误判方向会让 cross-validation 完全反向。
 
+就业篮子保留现有 11 条月频季调序列及等权正增长占比，不是 11 个独立行业。[USTRADE](https://fred.stlouisfed.org/series/USTRADE) 是零售，嵌套在 [USTPU](https://fred.stlouisfed.org/series/USTPU) 的贸易、运输和公用事业中。全部序列必须具有同一最新观测月和上一日历月；缺项、错月或重复日期不生成新值。持平不计上涨，不采用 [BLS 官方扩散指数](https://www.bls.gov/news.release/empsit.b.htm) 的持平半权重，也不称作全经济行业广度。更换篮子或做相减去重会改变历史口径，当前不实施；旧历史不追算，新口径准入标记及回退见 [数据契约](DATA_CONTRACT.md)。
+
 **M-69/M-77/M-79 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 使用 `CARTS` / `CARTSR`、MRTS 细分零售、BoA Consumer Checkpoint 公开 HTML 摘要与 Trading Economics Redbook public HTML 摘要。BoA Consumer Checkpoint 不是 Redbook；Redbook public HTML 不是 Redbook raw subscription feed；两者都不是 BoA 原始卡明细或非公开 raw feed。
 
 **2026-09-05 BoA 摘要语义复核**：8月[官方 HTML](https://institute.bankofamerica.com/economic-insights/consumer-checkpoint-august-2026.html)改用简写，旧parser因此沿用五月缓存。[同月官方 PDF](https://institute.bankofamerica.com/content/dam/economic-insights/consumer-checkpoint-august-2026.pdf)第1页及Exhibit 1确认7月5.0%、6月6.3%、7月除油4.3%均为每户口径；PDF仅作为本次人工source-review依据，runtime仍只读HTML，不增加PDF抓取或raw card feed。省略per-household的简写仅在精确已审阅HTML/PDF配对下允许，未知报告不自动类推。选取报告年月最新的官方链接，拒绝未来或超过62天报告月龄的新live结果；抓取/语义失败仍可保留旧报告并明确fallback，不拼接不同时期字段。

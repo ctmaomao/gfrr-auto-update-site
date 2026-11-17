@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=oil-detail-owner-20261116';
+﻿import { formatFiniteNumber } from './format.js?v=payroll-basket-20261117';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

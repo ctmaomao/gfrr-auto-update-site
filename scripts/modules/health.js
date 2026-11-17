@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=oil-detail-owner-20261116';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=oil-detail-owner-20261116';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=payroll-basket-20261117';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=payroll-basket-20261117';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

@@ -1,3 +1,4 @@
+import { calculatePayrollBasket, verifiedPayrollBasketFallback } from './daily/payroll-basket.mjs';
 import { goldQuoteRows } from './realtime/gold-quote.mjs';
 import { normalizeWorldOrderStressHistorySnapshot, mergeWorldOrderStress } from './daily/world-order-history.mjs';
 import { parseFredCsv, parseFredApiObservations } from './lib/fred-observations.mjs';
@@ -389,10 +390,10 @@ const EMPLOYMENT_SOURCE =
 const EMPLOYMENT_INDUSTRY_PAYROLL_SERIES = [
   { id: 'MANEMP', label: 'Manufacturing' },
   { id: 'USCONS', label: 'Construction' },
-  { id: 'USTRADE', label: 'Retail and wholesale trade' },
-  { id: 'USTPU', label: 'Transportation and utilities' },
+  { id: 'USTRADE', label: 'Retail trade' },
+  { id: 'USTPU', label: 'Trade, transportation, and utilities' },
   { id: 'USPBS', label: 'Professional and business services' },
-  { id: 'USEHS', label: 'Education and health services' },
+  { id: 'USEHS', label: 'Private education and health services' },
   { id: 'USLAH', label: 'Leisure and hospitality' },
   { id: 'USFIRE', label: 'Financial activities' },
   { id: 'USINFO', label: 'Information' },
@@ -6585,31 +6586,7 @@ function calculateMonthlyDelta(rows, monthsBack) {
 }
 
 function calculateIndustryPayrollDiffusion(seriesResults) {
-  const valid = [];
-  const positive = [];
-  const updatedAtValues = [];
-  seriesResults.forEach((result, index) => {
-    if (result.status !== 'fulfilled') return;
-    const rows = result.value;
-    if (!Array.isArray(rows) || rows.length < 2) return;
-    const latest = rows[rows.length - 1]?.value;
-    const previous = rows[rows.length - 2]?.value;
-    if (!Number.isFinite(latest) || !Number.isFinite(previous)) return;
-    const series = EMPLOYMENT_INDUSTRY_PAYROLL_SERIES[index];
-    valid.push(series.id);
-    if (latest > previous) positive.push(series.id);
-    const updatedAt = latestDateIso(rows);
-    if (updatedAt) updatedAtValues.push(updatedAt);
-  });
-  const validCount = valid.length;
-  const positiveCount = positive.length;
-  return {
-    industryPayrollDiffusionPct: validCount ? +((positiveCount / validCount) * 100).toFixed(1) : null,
-    industryPayrollPositiveCount: validCount ? positiveCount : null,
-    industryPayrollSeriesCount: validCount || null,
-    industryPayrollUpdatedAt: latestIsoDate(...updatedAtValues),
-    positiveSeries: positive
-  };
+  return calculatePayrollBasket(seriesResults, EMPLOYMENT_INDUSTRY_PAYROLL_SERIES, isoNow);
 }
 
 function calculateRetailSegmentSnapshot(seriesResults) {
@@ -6696,6 +6673,7 @@ function buildMissingEmployment() {
     u6Rate: null,
     u6Rate3mChange: null,
     u6UpdatedAt: null,
+    industryPayrollMethod: null,
     industryPayrollDiffusionPct: null,
     industryPayrollPositiveCount: null,
     industryPayrollSeriesCount: null,
@@ -6714,7 +6692,7 @@ function buildMissingEmployment() {
     },
     updatedAt: null,
     source: EMPLOYMENT_SOURCE,
-    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。']
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。篮子为11序列等权上涨占比，含零售嵌套，非BLS官方扩散指数；观察月份不等于发布时间。']
   };
 }
 
@@ -8190,15 +8168,8 @@ function normalizePreviousEmployment(prevEmployment) {
   const averageHourlyEarningsYoY = Number.isFinite(prevEmployment.averageHourlyEarningsYoY) ? prevEmployment.averageHourlyEarningsYoY : null;
   const u6Rate = Number.isFinite(prevEmployment.u6Rate) ? prevEmployment.u6Rate : null;
   const u6Rate3mChange = Number.isFinite(prevEmployment.u6Rate3mChange) ? prevEmployment.u6Rate3mChange : null;
-  const industryPayrollDiffusionPct = Number.isFinite(prevEmployment.industryPayrollDiffusionPct)
-    ? prevEmployment.industryPayrollDiffusionPct
-    : null;
-  const industryPayrollPositiveCount = Number.isFinite(prevEmployment.industryPayrollPositiveCount)
-    ? prevEmployment.industryPayrollPositiveCount
-    : null;
-  const industryPayrollSeriesCount = Number.isFinite(prevEmployment.industryPayrollSeriesCount)
-    ? prevEmployment.industryPayrollSeriesCount
-    : null;
+  const payroll = verifiedPayrollBasketFallback(prevEmployment, isoNow);
+  const { industryPayrollDiffusionPct, industryPayrollPositiveCount, industryPayrollSeriesCount } = payroll;
   return {
     initialClaims,
     initialClaims4wAverage,
@@ -8219,21 +8190,16 @@ function normalizePreviousEmployment(prevEmployment) {
     industryPayrollDiffusionPct,
     industryPayrollPositiveCount,
     industryPayrollSeriesCount,
-    industryPayrollUpdatedAt: typeof prevEmployment.industryPayrollUpdatedAt === 'string'
-      ? prevEmployment.industryPayrollUpdatedAt
-      : null,
+    industryPayrollUpdatedAt: payroll.industryPayrollUpdatedAt,
+    industryPayrollMethod: payroll.industryPayrollMethod,
     claimsRegime: typeof prevEmployment.claimsRegime === 'string' && prevEmployment.claimsRegime.trim()
       ? prevEmployment.claimsRegime
       : classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
     joltsRegime: typeof prevEmployment.joltsRegime === 'string' && prevEmployment.joltsRegime.trim()
       ? prevEmployment.joltsRegime
       : classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
-    laborQualityRegime: typeof prevEmployment.laborQualityRegime === 'string' && prevEmployment.laborQualityRegime.trim()
-      ? prevEmployment.laborQualityRegime
-      : classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct),
-    industryDiffusionRegime: typeof prevEmployment.industryDiffusionRegime === 'string' && prevEmployment.industryDiffusionRegime.trim()
-      ? prevEmployment.industryDiffusionRegime
-      : classifyIndustryDiffusionRegime(industryPayrollDiffusionPct),
+    laborQualityRegime: classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct),
+    industryDiffusionRegime: classifyIndustryDiffusionRegime(industryPayrollDiffusionPct),
     sourceStatus: {
       icsa: initialClaims !== null ? 'fallback' : 'missing',
       ccsa: continuingClaims !== null ? 'fallback' : 'missing',
@@ -8244,7 +8210,7 @@ function normalizePreviousEmployment(prevEmployment) {
     },
     updatedAt: typeof prevEmployment.updatedAt === 'string' ? prevEmployment.updatedAt : null,
     source: EMPLOYMENT_SOURCE,
-    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。']
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。篮子为11序列等权上涨占比，含零售嵌套，非BLS官方扩散指数；观察月份不等于发布时间。']
   };
 }
 
@@ -9000,6 +8966,7 @@ async function resolveEmploymentBreadth(prevEmployment) {
   let industryPayrollPositiveCount = null;
   let industryPayrollSeriesCount = null;
   let industryPayrollUpdatedAt = null;
+  let industryPayrollMethod = null;
 
   const [icsaResult, ccsaResult, joltsResult, aheResult, u6Result, ...industryResults] = await Promise.allSettled([
     fetchFredSeries('ICSA', 420),
@@ -9090,12 +9057,14 @@ async function resolveEmploymentBreadth(prevEmployment) {
     industryPayrollPositiveCount = industryDiffusion.industryPayrollPositiveCount;
     industryPayrollSeriesCount = industryDiffusion.industryPayrollSeriesCount;
     industryPayrollUpdatedAt = industryDiffusion.industryPayrollUpdatedAt;
+    industryPayrollMethod = industryDiffusion.industryPayrollMethod;
     status.industryPayroll = 'live';
   } else if (Number.isFinite(fallback.industryPayrollDiffusionPct)) {
     industryPayrollDiffusionPct = fallback.industryPayrollDiffusionPct;
     industryPayrollPositiveCount = fallback.industryPayrollPositiveCount;
     industryPayrollSeriesCount = fallback.industryPayrollSeriesCount;
     industryPayrollUpdatedAt = fallback.industryPayrollUpdatedAt;
+    industryPayrollMethod = fallback.industryPayrollMethod;
     status.industryPayroll = 'fallback';
   }
 
@@ -9118,6 +9087,7 @@ async function resolveEmploymentBreadth(prevEmployment) {
     industryPayrollPositiveCount: Number.isFinite(industryPayrollPositiveCount) ? industryPayrollPositiveCount : null,
     industryPayrollSeriesCount: Number.isFinite(industryPayrollSeriesCount) ? industryPayrollSeriesCount : null,
     industryPayrollUpdatedAt,
+    industryPayrollMethod,
     claimsRegime: classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
     joltsRegime: classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
     laborQualityRegime: classifyLaborQualityRegime(averageHourlyEarningsYoY, u6Rate3mChange, industryPayrollDiffusionPct),
@@ -9132,7 +9102,7 @@ async function resolveEmploymentBreadth(prevEmployment) {
       industryPayrollUpdatedAt
     ),
     source: EMPLOYMENT_SOURCE,
-    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。']
+    notes: ['ICSA/CCSA 为 FRED SA 周频；JOLTS、AHE、U-6 与行业 payroll basket 为月频；audit-only / display-only。篮子为11序列等权上涨占比，含零售嵌套，非BLS官方扩散指数；观察月份不等于发布时间。']
   };
 }
 

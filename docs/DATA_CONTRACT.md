@@ -318,10 +318,11 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | `u6Rate` | number \| null | % | FRED:U6RATE（月频） | U-6 劳动力低利用率 |
 | `u6Rate3mChange` | number \| null | pp | 派生 | U-6 相对 3 个月前变化 |
 | `u6UpdatedAt` | string \| null | ISO 8601 | U6RATE 最新数据点日期 | U-6 数据 vintage |
-| `industryPayrollDiffusionPct` | number \| null | % | FRED industry payroll basket | 公开行业 payroll series 中环比增加的比例 |
-| `industryPayrollPositiveCount` | number \| null | count | 派生 | 环比增加的行业 series 数量 |
-| `industryPayrollSeriesCount` | number \| null | count | 派生 | 本次有效参与扩散计算的行业 series 数量 |
-| `industryPayrollUpdatedAt` | string \| null | ISO 8601 | 行业 payroll basket 最新数据点日期 | 行业扩散 vintage |
+| `industryPayrollDiffusionPct` | number \| null | % | FRED industry payroll basket | 固定11序列中环比上涨比例，含零售嵌套 |
+| `industryPayrollPositiveCount` | number \| null | count | 派生 | 环比上涨的序列数，持平不计上涨 |
+| `industryPayrollSeriesCount` | number \| null | count | 派生 | 完整篮子为11；不完整为null，不改变分母 |
+| `industryPayrollUpdatedAt` | string \| null | ISO 8601 | 全篮子共同观测月的首日 | 不是抓取/发布时间；回退不重打日期 |
+| `industryPayrollMethod` | string \| null（旧快照可缺省） | n/a | `custom-overlapping-11-series-mom-v1` | 11序列完整且同月/前月比较的准入标记，不认证旧历史 |
 | `claimsRegime` | string enum | n/a | 派生 | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `未知` |
 | `joltsRegime` | string enum | n/a | 派生 | `紧张` \| `平衡` \| `宽松` \| `走弱` \| `未知` |
 | `laborQualityRegime` | string enum | n/a | 派生 | `工资韧性` \| `扩散改善` \| `降温` \| `平衡` \| `未知` |
@@ -345,7 +346,9 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
 - 任一 FRED series 拉取失败必须逐 series 降级为 `fallback` 或 `missing`，不得伪造值，不得用非同义替代指标冒充 ICSA / CCSA / JTSJOL / AHE / U-6 / industry payroll basket。
 - JTSJOL、AHE、U-6 与行业 payroll basket 均为月频慢变量，前端必须展示或暗示 vintage/慢变量语义，不得暗示它们是实时就业信号。
-- 行业扩散只使用公开 FRED payroll basket 代理，不等于 BLS proprietary diffusion index 或职位质量明细。
+- 行业篮子是既有 11 条公开 FRED 月频季调序列的等权上涨占比（严格大于前月），持平不计上涨；零售 USTRADE 嵌套于 USTPU，不是独立行业覆盖率，也不是 BLS 官方扩散指数（后者给予持平半权重）。不换源、不去重重算历史。
+- 新值要求全部 11 条序列最新月份相同、每条具有唯一上一日历月，日期规范且不晚于运行日；缺项、错月、重复、非法或负就业值均返回缺失，合法零就业/零上涨保留。输出比例、分子、分母、共同月份和 method 标记必须一致。
+- 仅此前已带相同 method、完整分母/比例/有效月份且来源为 live/fallback 的缓存可沿用；保留原月份并标 fallback。无标记旧快照不视作通过新准入，不追改原文件；前端显示未复核而不冒充当期数据。缺失后不沿用旧扩散档位。
 
 ### `macroDrivers.consumerRetail` 高频零售消费 contract (v28.0M-69 / M-74 / M-77 / M-79)
 
@@ -1082,7 +1085,7 @@ v28.0J-2 前端只读消费 `aiInterpretationLayer`。首页在“今日主判�
 
 #### v28.0J stable boundary summary
 
-v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-detail-owner-20261116`）。
+v28.0J-2B post-deploy audit 已通过，当前 live data 已包含 `aiInterpretationLayer.contractVersion = v28.0J-0`。当前前端 asset cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `payroll-basket-20261117`）。
 
 稳定边界：
 
@@ -1547,24 +1550,24 @@ Boundaries:
 
 各版本的触发原因按提交记录追溯，不在本段累积：`editorial-history-1` 对应 BoA 消费证据行新增独立报告月份 / 旧值 / 缺失提示；`oil-news-quota-status-1` 对应 ODP 新闻源额度耗尽降级状态可见（只新增展示分支，不改评分、决策、数据写入或新闻资格门槛）；`odp-news-source-attribution-2` 把该状态改为按共享账本真实 code 精确归因——`account_limit` / `project_limit` / `ledger_full`（项目自设 31 天账本容量触顶，对读者同属配额不可用）显示为额度耗尽，`session_stopped` 显示为采集已暂停，其它 `tavily_budget_*` 保留通用降级，同样只改展示分支；`odp-news-source-attribution-3` 不引入新的展示语义，仅因 ledger_full 归因修改晚于上一次 bump 而重新发表同一模块图。
 
-当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `oil-detail-owner-20261116`）。
+当前前端资源 cache 版本以 `scripts/app.js` 的 `APP_VERSION` 为准（现 `payroll-basket-20261117`）。
 
 要求：
 
-- `index.html` 入口 module script 必须指向 `app.js?v=oil-detail-owner-20261116`。
-- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=oil-detail-owner-20261116`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
-- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `oil-detail-owner-20261116`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
+- `index.html` 入口 module script 必须指向 `app.js?v=payroll-basket-20261117`。
+- `scripts/app.js` 与当前前端入口实际加载的 `scripts/modules/*.js` 本地相对 `.js` import 必须使用 `?v=payroll-basket-20261117`；M-94 后有意冻结且当前未接入的 `scripts/modules/realtime.js` 不属于当前前端 runtime 入口,其 import query 不应随当前 asset bump 更新,由 `check:realtime-js-frozen` 守住。
+- 核对线上版本:看 `scripts/app.js` init 时的 console 行 `[app] … APP_VERSION=<版本>`(当前 `payroll-basket-20261117`),或检查已加载的 `app.js?v=…` URL token;两者须与 `?v=` 一致。
 - frontend asset cache version must be bumped when index.html, frontend JS or the stylesheet changes：以后修改 `index.html`、`scripts/app.js`、`assets/styles.css` 或当前入口实际加载的 `scripts/modules/*.js` 时，必须同步 bump version 并替换相关本地 module import query 与样式表引用；冻结的 `scripts/modules/realtime.js` 仅在另开版本重新接入时再纳入。`assets/styles.css` 自身不带版本参数，参数在 `index.html` 的引用上，由 bump 工具改写，因此纳入触发集不需要改动工具。
 - 只改 Worker runtime、docs、check scripts、GitHub Actions、`data/*.json` / `realtime/*.json` 或只 deploy Worker 不需要 bump。
 
 v28.0G-9B Frontend Asset Version Bump Helper 新增本地维护工具：
 
 ```bash
-node scripts/bump-frontend-asset-version.mjs oil-detail-owner-20261116
-npm run bump:frontend-asset-version -- oil-detail-owner-20261116
+node scripts/bump-frontend-asset-version.mjs payroll-basket-20261117
+npm run bump:frontend-asset-version -- payroll-basket-20261117
 ```
 
-该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `oil-detail-owner-20261116`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
+该工具用于以后前端 HTML / JS 改动时统一 bump cache version。当前正式版本仍是 `payroll-basket-20261117`；它只更新前端 asset version、contract 和相关文档，不访问网络、不写 KV、不写 `data/*.json` / `realtime/*.json`、不 deploy Worker。Worker runtime 改动不需要 bump frontend asset version，除非同时改 `index.html`、`scripts/app.js` 或当前入口实际加载的 `scripts/modules/*.js`。
 
 ### Worker generated runtime 状态
 
