@@ -507,7 +507,7 @@ const contracts = [
     required: [
       'name: Refresh Bubble Watch',
       'workflow_dispatch',
-      "cron: '30 5 * * 1'",
+      "cron: '15 0 * * 1'",
       'permissions:',
       'contents: write',
       'concurrency',
@@ -2049,8 +2049,8 @@ function checkRefreshScheduleConsistency() {
   if (fs.existsSync(bubbleWorkflow)) {
     const bubbleSource = fs.readFileSync(bubbleWorkflow, 'utf8');
     const gdeltSource = fs.readFileSync(gdeltReview, 'utf8');
-    if (!bubbleSource.includes("cron: '30 5 * * 1'")) {
-      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch cron must stay Monday 05:30 UTC.');
+    if (!bubbleSource.includes("cron: '15 0 * * 1'") || (bubbleSource.match(/^\s*- cron:/gmu) || []).length !== 1) {
+      addRuntimeFailure(bubbleWorkflow, 'Bubble Watch full refresh must have exactly one cron, Monday 00:15 UTC.');
     }
     if (!bubbleSource.includes('git commit -m "chore: refresh bubble watch"')) {
       addRuntimeFailure(bubbleWorkflow, 'Bubble Watch refresh commit subject must remain available to cache history review.');

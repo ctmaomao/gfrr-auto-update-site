@@ -23,7 +23,7 @@ test('dedicated full refresh is manual/main-only and hard-disables paid provider
 test('ordinary schedule/default and candidate collection remain separate', () => {
   const original = read('.github/workflows/refresh-bubble-watch.yml');
   assert.match(original, /workflow_dispatch:\n  schedule:/u);
-  assert.match(original, /cron: '30 5 \* \* 1'/u);
+  assert.match(original, /cron: '15 0 \* \* 1'/u);
   assert.match(original, /WIND_API_KEY: \$\{\{ secrets.WIND_API_KEY \}\}/u);
   assert.doesNotMatch(original, /BUBBLE_WATCH_DISABLE_WIND|free_only/u);
   assert.match(original, /github.event_name == 'schedule' && github.run_attempt == 1/u);

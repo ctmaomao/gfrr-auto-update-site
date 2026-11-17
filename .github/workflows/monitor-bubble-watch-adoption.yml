@@ -1,0 +1,39 @@
+name: Monitor Bubble Watch Adoption
+
+on:
+  schedule:
+    # After the normal 03:55 UTC EdgeOne publication slot; report only.
+    - cron: '30 4 * * 1'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: bubble-watch-adoption-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout latest main and its commit receipts
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Check scheduled run, main receipt, and both live sites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/monitor-bubble-watch-adoption.mjs
