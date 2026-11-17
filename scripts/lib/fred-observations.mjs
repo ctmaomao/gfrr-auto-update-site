@@ -1,4 +1,4 @@
-// Shared Daily/realtime parsers. Keep source ordering and existing coercion/error
+// Shared Daily/realtime parsers. Keep source ordering and numeric conversion/error
 // behavior; source eligibility, freshness, requests and fallback stay with callers.
 export function parseFredCsv(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -23,7 +23,8 @@ export function parseFredApiObservations(text) {
   for (const item of observations) {
     const date = item?.date;
     const raw = item?.value;
-    if (!date || raw === undefined || raw === '.' || String(raw).trim() === '') continue;
+    // JSON null, booleans and containers must not become numeric observations.
+    if (!date || (typeof raw !== 'string' && typeof raw !== 'number') || raw === '.' || String(raw).trim() === '') continue;
     const value = Number(raw);
     if (!Number.isFinite(value)) continue;
     out.push({ date, value });
