@@ -2654,3 +2654,9 @@ All entries have `qualification=not_assessed`: a metadata match does not certify
 GitHub realtime `sourceDetails.*.timestampKind` distinguishes actual FRED/Stooq row `observation_date`, Gold API `provider_acquisition`, fallback aggregate `snapshot_acquisition`, Brent promoted `reported_candidate_time`, and legacy `unknown`. These describe the time's origin, not freshness qualification. World Order optionally preserves `reportedTimestampKind`; old artifacts without it stay supported and unknown. Worker fields are not retroactively assigned a meaning merely from source names.
 
 Gold API's documented `updatedAt` is upstream acquisition time, not exchange observation time ([FAQ](https://gold-api.com/faqs), [provider specification](https://gold-api.com/llms.txt), checked 2026-11-13). Realtime now preserves that full UTC timestamp instead of stamping today; one live quote yields `changes.gold1d=null` rather than two identical invented observations and false zero change. Malformed/nonpositive prices or invalid/future clocks follow the existing fallback path. Full ISO timestamps and daily observation dates both produce finite age metadata. Old provider timestamps stay old; no new freshness cutoff or source is added.
+
+## CPI 月度比较证据
+
+`macroDrivers.inflationEnergy.cpi` 的同比/环比只采用同一日历月的上年观测和紧邻前月观测，缺月、重复月或无效日期不能用附近日期补位。指数真实零保留；零分母比较为 `null`。这是 display-only CPI 比较，不改变风险评分、来源请求或 WTI 口径。
+
+新生成的可选 `comparisonEvidence` 按 `headlineIndex` / `coreIndex` 分别保存 `cpi-exact-calendar-month-v1` 的原始 `latest`、`yoyBase`、`momBase`（缺失参照为 `null`）。缓存比较必须由这些日期和值回算并匹配已存指数和比例；保留原系列观察日，不从另一个系列或本次采集时钟续期。旧无证据或不匹配缓存只保留指数，比较与不明系列时钟置空。现有生产快照无需手工回写，下一次自然 Daily 生成新证据；新增证据不代表来源一定新鲜，也不是历史首发数据。
