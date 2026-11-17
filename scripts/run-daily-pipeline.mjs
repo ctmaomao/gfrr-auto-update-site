@@ -1,3 +1,4 @@
+import { sentimentPeriods, cachedSentimentPeriods } from './daily/sentiment-periods.mjs';
 import { cpiComparisons, cachedCpiComparisons } from './daily/cpi-comparisons.mjs';
 import { policyTargetRange, cachedPolicyTargetRange, alignPolicyTargetComparisons } from './daily/policy-target.mjs';
 import { calculatePayrollBasket, verifiedPayrollBasketFallback } from './daily/payroll-basket.mjs';
@@ -6481,6 +6482,7 @@ function buildMissingConsumer() {
     previousValue: null,
     threeMonthChange: null,
     sixMonthChange: null,
+    sentimentReferences: null,
     regime: '未知',
     ismManufacturingPmi: null,
     ismManufacturingPmi3mChange: null,
@@ -6497,7 +6499,7 @@ function buildMissingConsumer() {
     },
     updatedAt: null,
     source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
-    notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
+    notes: ['UMCSENT 为 FRED 月频，按来源要求延迟1个月；日期为来源观察月份而非实时调查/发布时间，变化按日历月；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
   };
 }
 
@@ -8536,19 +8538,17 @@ function normalizePreviousPrivateCreditProxy(prevPrivateCredit) {
 
 function normalizePreviousConsumer(prevConsumer) {
   if (!prevConsumer || typeof prevConsumer !== 'object') return buildMissingConsumer();
-  const threeMonthChange = Number.isFinite(prevConsumer.threeMonthChange) ? prevConsumer.threeMonthChange : null;
+  const sentiment = cachedSentimentPeriods(prevConsumer, isoNow);
+  const { threeMonthChange } = sentiment;
   const hasPreviousPmi = Number.isFinite(prevConsumer.ismManufacturingPmi);
   return {
-    umichSentiment: Number.isFinite(prevConsumer.umichSentiment) ? prevConsumer.umichSentiment : null,
-    previousValue: Number.isFinite(prevConsumer.previousValue) ? prevConsumer.previousValue : null,
-    threeMonthChange,
-    sixMonthChange: Number.isFinite(prevConsumer.sixMonthChange) ? prevConsumer.sixMonthChange : null,
-    regime: typeof prevConsumer.regime === 'string' && prevConsumer.regime.trim() ? prevConsumer.regime : classifyConsumerRegime(threeMonthChange),
+    ...sentiment,
+    regime: classifyConsumerRegime(threeMonthChange),
     ismManufacturingPmi: hasPreviousPmi ? prevConsumer.ismManufacturingPmi : null,
     ismManufacturingPmi3mChange: hasPreviousPmi && Number.isFinite(prevConsumer.ismManufacturingPmi3mChange) ? prevConsumer.ismManufacturingPmi3mChange : null,
     ismPmiRegime: typeof prevConsumer.ismPmiRegime === 'string' && prevConsumer.ismPmiRegime.trim() ? prevConsumer.ismPmiRegime : '未知',
     sourceStatus: {
-      umichSentiment: 'fallback',
+      umichSentiment: Number.isFinite(sentiment.umichSentiment) ? 'fallback' : 'missing',
       pmi: hasPreviousPmi ? 'fallback' : 'source_unavailable'
     },
     diagnostics: {
@@ -8560,9 +8560,9 @@ function normalizePreviousConsumer(prevConsumer) {
             parsedAt: isoNow
           }
     },
-    updatedAt: typeof prevConsumer.updatedAt === 'string' ? prevConsumer.updatedAt : null,
+    updatedAt: sentiment.updatedAt,
     source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
-    notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
+    notes: ['UMCSENT 为 FRED 月频，按来源要求延迟1个月；日期为来源观察月份而非实时调查/发布时间，变化按日历月；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
   };
 }
 
@@ -8842,17 +8842,8 @@ async function resolvePrivateCreditProxy(prevPrivateCredit, hyOasLive) {
 async function resolveConsumerSentiment(prevConsumer) {
   try {
     const rows = await fetchFredSeries('UMCSENT', 420);
-    const latest = rows[rows.length - 1] || null;
-    const previous = rows.length >= 2 ? rows[rows.length - 2].value : null;
-    const current = latest?.value;
-    const threeMonthAgo = findValueAgo(rows, 90);
-    const sixMonthAgo = findValueAgo(rows, 180);
-    const threeMonthChange = Number.isFinite(current) && Number.isFinite(threeMonthAgo)
-      ? +(current - threeMonthAgo).toFixed(3)
-      : null;
-    const sixMonthChange = Number.isFinite(current) && Number.isFinite(sixMonthAgo)
-      ? +(current - sixMonthAgo).toFixed(3)
-      : null;
+    const sentiment = sentimentPeriods(rows, isoNow);
+    const { umichSentiment: current, previousValue: previous, threeMonthChange, sixMonthChange } = sentiment;
     let ismManufacturingPmi = null;
     let ismManufacturingPmi3mChange = null;
     let pmiStatus = 'source_unavailable';
@@ -8882,12 +8873,13 @@ async function resolveConsumerSentiment(prevConsumer) {
       previousValue: Number.isFinite(previous) ? previous : null,
       threeMonthChange,
       sixMonthChange,
+      sentimentReferences: sentiment.sentimentReferences,
       regime: classifyConsumerRegime(threeMonthChange),
       ismManufacturingPmi,
       ismManufacturingPmi3mChange,
       ismPmiRegime: classifyPmiRegime(ismManufacturingPmi),
       sourceStatus: {
-        umichSentiment: 'live',
+        umichSentiment: Number.isFinite(current) ? 'live' : 'missing',
         pmi: pmiStatus
       },
       diagnostics: {
@@ -8897,9 +8889,9 @@ async function resolveConsumerSentiment(prevConsumer) {
           errorReason: 'ism-pmi-diagnostics-unavailable'
         }
       },
-      updatedAt: latest?.date ? `${latest.date}T00:00:00Z` : null,
+      updatedAt: sentiment.updatedAt,
       source: 'FRED:UMCSENT; ISM:ManufacturingPMI',
-      notes: ['UMCSENT 为 FRED 月频；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
+      notes: ['UMCSENT 为 FRED 月频，按来源要求延迟1个月；日期为来源观察月份而非实时调查/发布时间，变化按日历月；ISM Manufacturing PMI 直接解析 ismworld.org 公开报告页，audit-only。']
     };
   } catch (_err) {
     const fallback = normalizePreviousConsumer(prevConsumer);
