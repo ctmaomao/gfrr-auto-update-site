@@ -194,3 +194,5 @@
 - [ADR-0116: Manual artifact dangling-link guard](0116-manual-artifact-dangling-links.md) — inspect path segments without following missing targets; retain ordinary new paths.
 
 - [ADR-0118: Divergence missing evidence](0118-divergence-missing-evidence.md) — missing is not zero; preserve valid golden fixtures and explicitly verify corrected missing output.
+
+- [ADR-0119: Daily completion publication tail](0119-daily-publication-completion.md) — normal guarded publication after Daily, independent of Macro budget skips.
