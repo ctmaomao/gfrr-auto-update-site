@@ -168,3 +168,24 @@ test('missing VIX/credit cannot confirm calm markets, partial evidence remains n
   assert.equal(evidence.find(row => row.key === 'vix').value, null);
   assert.equal(evidence.find(row => row.key === 'hyOas').value, null);
 });
+
+
+test('liquidity narrative does not infer absent expansion from missing credit/volatility', () => {
+  const check = (vix, hyOas) => {
+    const input = divergenceFixture(null);
+    Object.assign(input.displayInputsBaseline, { us10y: 5, vix, hyOas });
+    return buildDivergenceLayer(input).checks.find(row => row.key === 'liquidity_vs_credit_transmission');
+  };
+  for (const [vix, hyOas] of [[null, null], [15, null], [null, 3]]) {
+    const result = check(vix, hyOas);
+    assert.equal(result.score, 54);
+    assert.match(result.summaryZh, /数据不足，暂不足以判断/);
+    assert.doesNotMatch(result.summaryZh, /尚未明显扩张|尚未明显扩散/);
+  }
+  assert.match(check(15, 3).summaryZh, /尚未明显扩张/);
+  for (const [vix, hyOas] of [[25, null], [null, 4.5], [25, 4.5]]) {
+    const result = check(vix, hyOas);
+    assert.equal(result.score, 72);
+    assert.match(result.summaryZh, /正在被交叉验证/);
+  }
+});

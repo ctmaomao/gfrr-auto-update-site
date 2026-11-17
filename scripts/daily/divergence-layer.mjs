@@ -151,8 +151,10 @@ function buildLiquidityCreditCheck(risk, displayInputsBaseline) {
     labelZh: '流动性与信用传导背离',
     category: 'liquidity_credit',
     score,
-    summaryZh: liquidityPressure && !creditStress
-      ? '美元或长端利率压力偏高，但信用利差和波动率尚未明显扩张，说明压力尚未明显扩散到信用/波动率。'
+    summaryZh: liquidityPressure && !creditStress && (!Number.isFinite(hyOas) || !Number.isFinite(vix))
+      ? '美元或长端利率压力偏高，但信用利差或波动率数据不足，暂不足以判断压力是否扩散到信用/波动率。'
+      : liquidityPressure && !creditStress
+        ? '美元或长端利率压力偏高，但信用利差和波动率尚未明显扩张，说明压力尚未明显扩散到信用/波动率。'
       : liquidityPressure && creditStress
         ? '流动性、信用和波动率压力正在被交叉验证。'
         : '暂未形成明确的流动性与信用传导背离。',
