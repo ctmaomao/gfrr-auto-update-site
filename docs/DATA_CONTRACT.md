@@ -269,10 +269,11 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 
 | 字段 | 类型 | 单位 | 来源 | 含义 |
 |---|---|---|---|---|
-| `umichSentiment` | number \| null | 指数点（1966=100） | FRED:UMCSENT（月频） | 密歇根消费者信心指数 |
+| `umichSentiment` | number \| null | 指数点（1966年一季度=100） | FRED:UMCSENT（月频） | 密歇根消费者信心指数 |
 | `previousValue` | number \| null | 指数点 | 派生 | 上月值 |
 | `threeMonthChange` | number \| null | 指数点 | 派生 | UMCSENT 3个月变化 |
 | `sixMonthChange` | number \| null | 指数点 | 派生 | UMCSENT 6个月变化 |
+| `sentimentReferences` | object \| null (optional) | 日期、指数点 | UMCSENT原序列 | `{previousValue,threeMonthChange,sixMonthChange}`各为对应1/3/6个月前`{date,value}`或null；旧快照可缺失 |
 | `regime` | string enum | n/a | 派生（基于 threeMonthChange） | `明显走弱` \| `走弱` \| `稳定` \| `改善` \| `未知` |
 | `ismManufacturingPmi` | number \| null (optional) | PMI 指数 0-100 | ISM:ManufacturingPMI（月频公开报告页） | ISM 制造业 PMI（v28.0M-47 起字段;M-67 起修正数据源） |
 | `ismManufacturingPmi3mChange` | number \| null (optional) | 指数点 | 派生 | ISM Manufacturing PMI 3个月变化（v28.0M-47 起字段;M-67 起修正数据源） |
@@ -290,6 +291,7 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - 用于 `driver-growth` 和 `pressure-consumer` 渲染卡片的 audit-only 数据源
 - 用于 cross-validation `stagflation_pressure` narrative 的条件分类（v28.0M-47 起）
 - M-67 后 PMI fetcher 只解析 ismworld.org 公开报告页;若遇到 SSO/login/captcha 或 HTML schema drift,必须降级为 `parse_error`,不得伪造或用替代指标冒充 ISM PMI
+- UMCSENT来源按要求延迟1个月；月初日期是观察月，不是公布/抓取日。前值、3月/6月变化仅按各自精确日历月，缺任一参照只让该项为null，不以90/180日最近值替代。fallback保留原观察月，须参照/原水平/变化一致回算；旧无证明变化及其regime不能续用。前端缺变化显示“—”；消费者背离check标`insufficient_data`并排除于解释层平均（既有有限score存储仍0，不代表健康），规则及交叉验证不产生该变化证据。正常输入及主评分不改，解释层结果可因缺失证据而降级。
 - `regime`（基于 UMCSENT 变化率）与 `ismPmiRegime`（基于 PMI 绝对值）独立分类，可同时显示
 - `ismManufacturing*` 字段标记为 optional 以保持向后兼容性
 - 月频频率：两个 series 都是月频数据，pipeline 跑后即同步更新
