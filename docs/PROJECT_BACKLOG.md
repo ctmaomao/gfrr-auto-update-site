@@ -203,6 +203,9 @@ STEO、库存与 PortWatch 摘要已接入；现行 [P50 授权](fixtures/transp
 
 当前 Core-23 / Shadow-4、已批准 revision 和逐项来源资格以 [ADR-0069](ADR/0069-bubble-qualified-evidence-and-score-bounds.md)、[数据契约](DATA_CONTRACT.md)与实际配置为准。旧 24 指标、固定灯数、“24/24 全 live”属于历史，不能作当前保证；每次真实刷新仍验证证据日期、缺失/缓存、来源边界和独立编辑层资格。
 
+- **周一全量刷新与采用验收**：只把原 [全量工作流](../.github/workflows/refresh-bubble-watch.yml) 移至周一 00:15 UTC（新西兰夏令 13:15／标准时 12:15），仍以 UTC 周为边界，不另开全量触发。现有来源、预算、发布与编辑层准入不变。
+- **观察与运行边界**：[只读采用监控](../.github/workflows/monitor-bubble-watch-adoption.yml) 于周一 04:30 UTC 检查首个计划运行的首次尝试、排队／执行／检查／提交状态、main 绑定提交及 Pages 和 EdgeOne 的同一全量快照标识。独立信用、市场或编辑层覆盖不冒充全量；同一快照不等于逐字节一致或所有来源新鲜。超过观察时间仍未看到运行、提交或双站采用会分别报告，并注明实际观察时间，不倒推 04:30 状态。不取消、不重试、不触发发布或付费调用。新节奏的真实自然运行和双站采用仍须验收。
+
 ## Section 3 · Completed Items
 
 ### 2026-11-15 增量：代码已合并，不代替运行验收

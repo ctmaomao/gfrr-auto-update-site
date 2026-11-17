@@ -316,7 +316,7 @@ test('source failure never produces upload payload or retries and does not leak 
   assert.equal(t.calls.length, 3);
 });
 
-test('workflow isolates candidate permissions, schedule and successful upload from unchanged production job', () => {
+test('workflow isolates candidate permissions, schedule and successful upload from the pinned production job', () => {
   const workflow = readFileSync('.github/workflows/refresh-bubble-watch.yml', 'utf8').replaceAll('\r\n', '\n');
   const candidate = workflow.split('  epoch-candidate:\n')[1].split('\n  refresh:')[0];
   for (const marker of ["github.event_name == 'schedule'", 'github.run_attempt == 1', "github.ref == 'refs/heads/main'",
@@ -328,7 +328,7 @@ test('workflow isolates candidate permissions, schedule and successful upload fr
   for (const forbidden of ['secrets.', 'contents: write', 'actions: write', 'npm ci', 'git push', 'git add', 'build:bubble-watch', 'needs:', 'always()', 'continue-on-error:']) assert.ok(!candidate.includes(forbidden), forbidden);
   assert.match(candidate, /if node scripts\/run-epoch-arr-weekly-candidate\.mjs --allow-network; then\n\s+echo 'candidate_ready=true' >> "\$GITHUB_OUTPUT"/u);
   assert.equal((candidate.match(/candidate_ready=true/gu) || []).length, 1);
-  assert.equal((workflow.match(/cron:/gu) || []).length, 1); assert.ok(workflow.includes("cron: '30 5 * * 1'"));
+  assert.equal((workflow.match(/cron:/gu) || []).length, 1); assert.ok(workflow.includes("cron: '15 0 * * 1'"));
   // Freeze only this integration's existing production job, normalized to LF.
   // ADR-0059 updates baseline d3568a8f solely for the search-step ledger token.
   // This exact new baseline requires independent review with ADR-0059 before merge.
@@ -344,10 +344,17 @@ test('workflow isolates candidate permissions, schedule and successful upload fr
   // the full new hash below still requires review for every later job change.
   const approvedProofLine = '          BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}\n';
   assert.equal(production.split(approvedProofLine).length - 1, 1);
-  const priorProduction = production.replace(approvedProofLine, '');
+  // Weekly adoption monitor: only step display names and the run/attempt commit
+  // trailer changed; strip those exact reviewed edits to retain older baselines.
+  const comparableProduction = production
+    .replace('      - name: Check Bubble payload\n        run: npm run check:bubble-watch', '      - run: npm run check:bubble-watch')
+    .replace('      - name: Check GDELT cache health\n        run: npm run check:gdelt-cache-health', '      - run: npm run check:gdelt-cache-health')
+    .replace(' -m "Bubble-Refresh-Run: ${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"', '');
+  assert.equal(artifactHash(comparableProduction), 'f96bc2ee05b3ab6dbdff0cd780e2aae53e56d1d0dbe33951aef5a651a8e1896b');
+  const priorProduction = comparableProduction.replace(approvedProofLine, '');
   assert.equal(artifactHash(priorProduction.replace(approvedContactLine, '')), 'd377b5ab1e2e7cf4a668a77c8ca44f85859953e8ad33db7c8ef4a99553cbef96');
   assert.equal(artifactHash(priorProduction), '2cb6886717d47a0546037b9587eb33e9d80bace7d230cc906c36fc599d16f80b');
-  assert.equal(artifactHash(production), 'f96bc2ee05b3ab6dbdff0cd780e2aae53e56d1d0dbe33951aef5a651a8e1896b');
+  assert.equal(artifactHash(production), '074748389e13e100c0cb6de493fdc1e1713464a04ffd3ae5acdb792ac5ebf5a2');
   assert.ok(!candidate.includes('TAVILY_BUDGET_GITHUB_TOKEN'));
   assert.equal((workflow.split('\n  refresh:')[1].match(/TAVILY_BUDGET_GITHUB_TOKEN:/gu) || []).length, 1);
 });

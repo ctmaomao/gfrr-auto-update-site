@@ -6,8 +6,8 @@ env:
 on:
   workflow_dispatch:
   schedule:
-    # Monday 05:30 UTC — 周一更新(美股周五收盘 + 周末研究数据落定后)
-    - cron: '30 5 * * 1'
+    # Monday 00:15 UTC — 13:15 NZDT / 12:15 NZST; keep the UTC week boundary.
+    - cron: '15 0 * * 1'
 
 concurrency:
   group: gfrr-main-writer-main
@@ -94,9 +94,11 @@ jobs:
           WIND_API_KEY: ${{ secrets.WIND_API_KEY }}
         run: npm run build:bubble-watch
 
-      - run: npm run check:bubble-watch
+      - name: Check Bubble payload
+        run: npm run check:bubble-watch
 
-      - run: npm run check:gdelt-cache-health
+      - name: Check GDELT cache health
+        run: npm run check:gdelt-cache-health
 
       - name: Commit
         run: |
@@ -105,7 +107,7 @@ jobs:
           git add data/bubble-watch.json data/bubble-watch-history.json data/gdelt-bubble-watch-cache.json config/bubble-watch-curated.json
           if ! git diff --cached --quiet; then
             npm run check:all
-            git commit -m "chore: refresh bubble watch"
+            git commit -m "chore: refresh bubble watch" -m "Bubble-Refresh-Run: ${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
             git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           fi
