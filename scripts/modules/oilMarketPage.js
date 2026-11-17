@@ -1,5 +1,5 @@
-import { renderOilDirectional } from './renderOilDirectional.js?v=oil-detail-owner-20261116';
-import { buildOilMarketView } from './oilMarketModel.js?v=oil-detail-owner-20261116';
+import { renderOilDirectional } from './renderOilDirectional.js?v=payroll-basket-20261117';
+import { buildOilMarketView } from './oilMarketModel.js?v=payroll-basket-20261117';
 const $=id=>document.getElementById(id);
 const el=(tag,text,className)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;};
 const fmt=value=>typeof value==='number'&&Number.isFinite(value)?value.toLocaleString('zh-CN',{maximumFractionDigits:2}):'—';
