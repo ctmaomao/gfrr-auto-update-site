@@ -56,7 +56,7 @@
 | `BAMLC0A0CM` | IG OAS (investment-grade spread) | macroDrivers.credit, macroDrivers.privateCreditProxy | 长期 / M-78 |
 | `DFF` | Effective federal funds rate | macroDrivers.fedLiquidity | M-41 |
 | `SOFR` | Secured overnight financing rate | macroDrivers.fedLiquidity | M-41 |
-| `WRESBAL` | Bank reserve balances (weekly Wed, NSA, M USD) | macroDrivers.fedLiquidity, B4 financial fragility | M-42 |
+| `WRESBAL` | Bank reserve balances (week average ending Wed, NSA, M USD) | macroDrivers.fedLiquidity, B4 financial fragility | M-42 |
 | NY Fed secured rates API `BGCR` / `TGCR` | NY Fed reference repo rates,派生 BGCR-SOFR / TGCR-SOFR spread | macroDrivers.fedLiquidity, repo_stress narrative | M-50 / M-73 |
 | `DRTSCILM` / `DRTSCIS` | SLOOS C&I loan tightening (large/medium + small firms, quarterly) | macroDrivers.credit, liquidity_tightening narrative | M-46 |
 | `NFCI` | Chicago Fed National Financial Conditions Index (weekly) | macroDrivers.credit, credit_spread_warning narrative | M-48 |

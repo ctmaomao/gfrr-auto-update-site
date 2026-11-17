@@ -26,7 +26,7 @@ import { allocateRegimePercentages } from './daily/regime-weights.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
-import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange } from './daily/source-observation.mjs';
+import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange } from './daily/source-observation.mjs';
 import { prepareOfrPublication } from './daily/publish-ofr-pressure.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -5751,6 +5751,7 @@ async function resolveFedLiquidity(prevFed) {
   let sofr = null;
   let reserveBalances = null;
   let reserveBalances4wChange = null;
+  let reserveBalances4wReference = null;
   let bgcr = null;
   let tgcr = null;
   let bgcrUpdatedAt = null;
@@ -5846,19 +5847,18 @@ async function resolveFedLiquidity(prevFed) {
     const obs = latestDatedObservation(rows, nowIso);
     reserveBalances = obs.value;
     sourceObservedAt.reserveBalances = obs.date;
-    const ago = findValueAgo(rows, 28);
-    if (Number.isFinite(reserveBalances) && Number.isFinite(ago) && ago !== 0) {
-      reserveBalances4wChange = +(((reserveBalances - ago) / ago) * 100).toFixed(3);
-    }
+    const comparison = reserveBalanceChange(rows, nowIso);
+    reserveBalances4wChange = comparison.change;
+    reserveBalances4wReference = comparison.reference;
     status.reserveBalances = 'live';
   } catch (_err) {
     const fb = fallbackObservation(prevFed?.reserveBalances, prevFed?.sourceObservedAt?.reserveBalances, nowIso);
     if (fb.value !== null) {
       reserveBalances = fb.value;
       sourceObservedAt.reserveBalances = fb.date;
-      reserveBalances4wChange = Number.isFinite(prevFed.reserveBalances4wChange)
-        ? prevFed.reserveBalances4wChange
-        : null;
+      const comparison = cachedReserveBalanceChange(prevFed, nowIso);
+      reserveBalances4wChange = comparison.change;
+      reserveBalances4wReference = comparison.reference;
       status.reserveBalances = 'fallback';
     } else {
       status.reserveBalances = 'missing';
@@ -5945,6 +5945,7 @@ async function resolveFedLiquidity(prevFed) {
     sofr: Number.isFinite(sofr) ? sofr : null,
     reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null,
     reserveBalances4wChange: Number.isFinite(reserveBalances4wChange) ? reserveBalances4wChange : null,
+    reserveBalances4wReference,
     bgcr: Number.isFinite(bgcr) ? bgcr : null,
     tgcr: Number.isFinite(tgcr) ? tgcr : null,
     bgcrUpdatedAt,

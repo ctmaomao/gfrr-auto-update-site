@@ -566,8 +566,9 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 | `onRrpWeekChange` | number \| null | % | 派生 | 周百分比变化 |
 | `effectiveFedFundsRate` | number \| null (optional) | % | FRED:DFF（日频） | 有效联邦基金利率（v28.0M-41 起） |
 | `sofr` | number \| null (optional) | % | FRED:SOFR（业务日） | 担保隔夜融资利率（v28.0M-41 起） |
-| `reserveBalances` | number \| null (optional) | 百万美元 | FRED:WRESBAL（周频 Wed，NSA） | 银行存放在 Fed 的准备金（v28.0M-42 起） |
+| `reserveBalances` | number \| null (optional) | 百万美元 | FRED:WRESBAL（周频 Wed，NSA） | 银行存放在 Fed 的准备金，截至周三的周平均，非周三点值（v28.0M-42 起） |
 | `reserveBalances4wChange` | number \| null (optional) | % | 派生 | 4 周百分比变化（v28.0M-42 起） |
+| `reserveBalances4wReference` | object \| null (optional) | 百万美元、日期 | FRED:WRESBAL | `{date,value}` 保存恰好28日前观测，供缓存变化回算；legacy可缺失 |
 | `bgcr` | number \| null (optional) | % | NY Fed Markets secured rates API（日频） | Broad General Collateral Rate（v28.0M-50 起；M-73 改为官方 NY Fed API） |
 | `tgcr` | number \| null (optional) | % | NY Fed Markets secured rates API（日频） | Tri-Party General Collateral Rate（v28.0M-50 起；M-73 改为官方 NY Fed API） |
 | `bgcrUpdatedAt` | string \| null (optional) | ISO 8601 | NYFED:secured-rates-latest | BGCR observation date |
@@ -591,6 +592,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 - 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`。
 - `effectiveFedFundsRate` / `sofr` / `reserveBalances` / `reserveBalances4wChange` 标记为 optional 以保持向后兼容性（v28.0M-42 之前的快照不包含全部字段）。
 - `sourceStatus.reserveBalances` 只能为 `live` / `fallback` / `missing`。
+- 准备金4周变化仅使用本期观测日恰好28日前的唯一周三观测；不以最近周或本期代替。缺参照/零分母保留本期水平与原观察日，变化及参照为 null。fallback仅在旧水平、原日期、参照与存储变化可一致回算时沿用；legacy无参照仅保留水平，不把旧变化移至新周期。不改WALCL/RRP评分或研究回放。
 - `bgcr` / `tgcr` / `bgcrSofrSpread` / `tgcrSofrSpread` / `repoSpreadRegime` 字段标记为 optional 以保持向后兼容性。
 - `sourceStatus.bgcr` 与 `sourceStatus.tgcr` 只能为 `live` / `fallback` / `missing`。
 - `bgcrSofrSpread` 和 `tgcrSofrSpread` 内部存储为 %（4 位小数），显示层渲染为 bp（× 100，整数）。
