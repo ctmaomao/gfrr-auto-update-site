@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import fs from 'node:fs';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
   appendPriceReview, appendVerifiedSettlement, BUDGET_BRANCH, BUDGET_REPOSITORY,
-  createDeepSeekBudget, createGithubLedger, DEEPSEEK_URL, digest, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
+  createDeepSeekBudget, createGithubLedger, createPrivateGithubLedger, verifyPrivateBudgetStatus, DEEPSEEK_URL, digest, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
   prepareBootstrapLedger, prepareRequest, readDeepSeekBalance, summarizeLedger,
   validateBalance, validateLedger, validateTransition, verifyBudgetStatus, withDeepSeekBudget
 } from '../../scripts/lib/deepseek-budget.mjs';
@@ -300,14 +302,17 @@ test('completed responses keep full reserve through31 days after completion with
   assert.equal(summarizeLedger(ledger, at).unresolved, 0);
 });
 
-function github(initial = fresh(), { authorityNow = () => NOW } = {}) {
+function github(initial = fresh(), { authorityNow = () => NOW, privateTarget = false } = {}) {
   const genesis = 'a'.repeat(40), commits = new Map([[genesis, { ledger: initial, parents: [] }]]), trees = new Map();
   let head = genesis, serial = 1;
   const calls = [], sha = () => (++serial).toString(16).padStart(40, '0');
   const json = (data, status = 200) => Response.json(data, { status, headers: { date: new Date(authorityNow()).toUTCString() } });
   const fetchImpl = async (url, init) => {
     calls.push({ url, method: init.method, body: init.body }); assert.equal(init.redirect, 'error');
-    const path = url.replace(`https://api.github.com/repos/${BUDGET_REPOSITORY}`, '');
+    const base = `https://api.github.com/repos/${privateTarget ? 'ctmaomao/gfrr-private-budget' : BUDGET_REPOSITORY}`;
+    assert.ok(url.startsWith(base));
+    if (url === base && privateTarget) return json({ id: 1461088406, private: true, full_name: 'ctmaomao/gfrr-private-budget', owner: { login: 'ctmaomao' } });
+    const path = url.slice(base.length);
     if (path === `/git/ref/heads/${BUDGET_BRANCH}`) return head ? json({ object: { sha: head } }) : json({}, 404);
     if (path.startsWith('/git/commits/')) {
       const hash = path.split('/').at(-1), c = commits.get(hash);
@@ -327,7 +332,7 @@ function github(initial = fresh(), { authorityNow = () => NOW } = {}) {
     assert.fail(`unexpected request: ${path}`);
   };
   return { genesis, calls, commits, fetchImpl, setHead: value => { head = value; }, getHead: () => head,
-    store: ({ now = () => NOW } = {}) => createGithubLedger({ token: 'PRIVATE_GITHUB_TOKEN', genesisSha: genesis, fetchImpl, now }) };
+    store: ({ now = () => NOW } = {}) => (privateTarget ? createPrivateGithubLedger : createGithubLedger)({ token: 'PRIVATE_GITHUB_TOKEN', genesisSha: genesis, fetchImpl, now }) };
 }
 
 test('GitHub CAS uses the fixed separate ref, verified complete history and never touches main', async () => {
@@ -812,4 +817,81 @@ test('monthly uses exact CNY funding and accepts only an optional all-zero USD r
     await assert.rejects(gate(store, { readBalance: async () => balanceValue })(context(), () => assert.fail('paid send')), /currency_unknown/);
     assert.equal(store.writes, 0);
   }
+});
+
+
+test('private store requires explicit transport and exposes only fixed status, not financial metadata', async () => {
+  assert.throws(() => createPrivateGithubLedger(), /private_store_hold/);
+  const remote = github(fresh(), { privateTarget: true });
+  const result = await verifyPrivateBudgetStatus({ store: remote.store(), approvedReviewDigest: digest(review()), now: () => NOW });
+  assert.deepEqual(result, { admission: 'eligible_snapshot_only' });
+  assert.deepEqual(await verifyPrivateBudgetStatus({ store: remote.store(), approvedReviewDigest: 'x', now: () => NOW }), { admission: 'hold' });
+  assert.deepEqual(await verifyPrivateBudgetStatus({ store: { read() { throw new Error('PRIVATE_HISTORY'); } } }), { admission: 'hold' });
+  assert.equal(remote.calls.some(c => c.method === 'POST' || c.method === 'PATCH'), false);
+});
+
+test('private store checks immutable identity/privacy before any ledger access and rejects raw transport errors', async () => {
+  const valid = { id: 1461088406, private: true, full_name: 'ctmaomao/gfrr-private-budget', owner: { login: 'ctmaomao' } };
+  for (const change of [{ id: 1 }, { private: false }, { private: undefined }, { full_name: 'ctmaomao/other' }, { owner: { login: 'other' } }]) {
+    let calls = 0;
+    const store = createPrivateGithubLedger({ token: 'FAKE', genesisSha: 'a'.repeat(40), now: () => NOW,
+      fetchImpl: async (url, init) => { calls++; assert.equal(url, 'https://api.github.com/repos/ctmaomao/gfrr-private-budget');
+        assert.equal(init.redirect, 'error'); return Response.json({ ...valid, ...change }, { headers: { date: new Date(NOW).toUTCString() } }); } });
+    await assert.rejects(store.read(), { message: 'deepseek_budget_private_store_hold' }); assert.equal(calls, 1);
+  }
+  for (const status of [301, 404, 500]) {
+    const store = createPrivateGithubLedger({ token: 'FAKE', genesisSha: 'a'.repeat(40), now: () => NOW,
+      fetchImpl: async () => new Response(null, { status, headers: { date: new Date(NOW).toUTCString() } }) });
+    await assert.rejects(store.read(), { message: 'deepseek_budget_private_store_hold' });
+  }
+  const store = createPrivateGithubLedger({ token: 'FAKE', genesisSha: 'a'.repeat(40),
+    fetchImpl: () => { throw new Error('PRIVATE_TOKEN_OR_HISTORY'); } });
+  await assert.rejects(store.read(), { message: 'deepseek_budget_private_store_hold' });
+});
+
+test('private store refuses a privacy change after read before transmitting any ledger bytes', async () => {
+  const remote = github(fresh(), { privateTarget: true }); let changed = false;
+  const store = createPrivateGithubLedger({ token: 'FAKE', genesisSha: remote.genesis, now: () => NOW,
+    fetchImpl: (url, init) => changed ? Response.json({ private: false }, { headers: { date: new Date(NOW).toUTCString() } }) : remote.fetchImpl(url, init) });
+  const previous = await store.read(); changed = true;
+  await assert.rejects(store.write(previous, { ...previous.ledger, entries: [reserve()] }), /private_store_hold/);
+  assert.equal(remote.calls.some(c => c.method === 'POST' || c.method === 'PATCH'), false);
+});
+
+test('two private clients share CAS across different keys, preserve pending and reject forged parents', async () => {
+  const remote = github(fresh(), { privateTarget: true }), a = remote.store(), b = remote.store();
+  const left = await a.read(), right = await b.read();
+  assert.equal(await a.write(left, { ...left.ledger, entries: [reserve(NOW, { keyId: digest('key-A') })] }), true);
+  assert.equal(await b.write(right, { ...right.ledger, entries: [reserve(NOW, { keyId: digest('key-B') })] }), false);
+  assert.deepEqual(await verifyPrivateBudgetStatus({ store: b, approvedReviewDigest: digest(review()), now: () => NOW }), { admission: 'hold' });
+  await assert.rejects(b.write(structuredClone(right), { ...right.ledger, entries: [reserve()] }), /private_store_hold/);
+  remote.setHead(null); await assert.rejects(a.read(), /private_store_hold/);
+  assert.equal(remote.calls.some(c => c.method === 'POST' && c.url.endsWith('/git/refs')), false);
+});
+
+
+test('private APIs remain absent from production callers and workflows', () => {
+  const names = /\b(?:createPrivateGithubLedger|verifyPrivateBudgetStatus)\b/u;
+  function scan(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name);
+      if (entry.isDirectory()) scan(file);
+      else if (/\.(?:mjs|js|yml|yaml)$/u.test(file) && file !== 'scripts/lib/deepseek-budget.mjs') {
+        assert.equal(names.test(fs.readFileSync(file, 'utf8')), false, `offline API referenced by ${file}`);
+      }
+    }
+  }
+  scan('scripts'); scan('.github/workflows');
+});
+
+test('private write errors hide transport details and cannot initialize or dispatch', async () => {
+  const remote = github(fresh(), { privateTarget: true }); let failWrite = false;
+  const store = createPrivateGithubLedger({ token: 'FAKE', genesisSha: remote.genesis, now: () => NOW,
+    fetchImpl: (url, init) => { if (failWrite && init.method === 'POST') throw new Error('PRIVATE_BILLING_HISTORY');
+      return remote.fetchImpl(url, init); } });
+  const previous = await store.read(); failWrite = true;
+  await assert.rejects(store.write(previous, { ...previous.ledger, entries: [reserve()] }), { message: 'deepseek_budget_private_store_hold' });
+  assert.equal(remote.getHead(), remote.genesis);
+  assert.equal(remote.calls.some(c => c.method === 'PATCH'), false);
+  assert.deepEqual(Object.keys(store).sort(), ['assertClock', 'read', 'write']);
 });

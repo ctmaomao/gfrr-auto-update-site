@@ -197,3 +197,5 @@
 
 - [ADR-0119: Daily completion publication tail](0119-daily-publication-completion.md) — normal guarded publication after Daily, independent of Macro budget skips.
 - [ADR-0120: Credit period references](0120-credit-period-reference.md) — exact four-week/calendar-quarter comparisons and bounded SLOOS lookback; preserve unknown changes.
+
+- [ADR-0121: Private budget offline store](0121-private-budget-offline-store.md) — fixed private identity and redacted status; no runtime activation or ledger initialization.
