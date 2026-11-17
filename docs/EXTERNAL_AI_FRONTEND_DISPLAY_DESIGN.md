@@ -249,240 +249,54 @@ Recommended next step:
 v28.0L-3R External AI Frontend Display Scaffold - Hidden by Default
 ```
 
+## Historical progress archive
+
+The sections below summarize dated phase receipts, not current visibility or a task queue. All original numbered headings are retained for links. [Complete pre-compaction original](https://github.com/ctmaomao/gfrr-auto-update-site/blob/00963b925bc0e416c910fcd0bca3d149b1c42a8b/docs/EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md) (488 lines; SHA256 `bd7478ed9a221e76f15755a4b02d84bb6719f710753d19664508695c0cf1e771`) preserves exact wording, next-step proposals and evidence. Current retirement/authority remains the [shared status](LEGACY_DOCUMENT_STATUS.md#external-ai); no provider, display or data permission changes here.
+
 ## 13. v28.0L-3R hidden scaffold status
 
-v28.0L-3R implements the guarded frontend scaffold for reading `externalAiInterpretationLayer`, but it keeps the panel hidden in the current production state.
-
-Status update:
-
-- Hidden scaffold implemented.
-- Hidden container `external-ai-display-panel` is hidden by default.
-- Frontend read logic requires both `displayEnabled=true` and `boundaries.frontendDisplayApproved=true` before any visible render.
-- Current production data keeps `displayEnabled=false` and `boundaries.frontendDisplayApproved=false`, so no visible panel is rendered.
-- No `data/radar-data.json` change is made.
-- No DeepSeek call or workflow trigger is introduced.
-- No scoring / decision / execution / position path is changed.
-- Global Risk Heatmap layout remains unchanged.
-- `check:external-ai-frontend-hidden-scaffold` guards the hidden scaffold.
-
-Recommended next step:
-
-```text
-v28.0L-3S External AI Visible Display Approval + Data Flag Design - No Automatic Provider Call
-```
+Implemented the hidden `external-ai-display-panel` scaffold, guarded by `check:external-ai-frontend-hidden-scaffold`. Both display flags remained false, so no panel rendered; no production data, provider/workflow or scoring/decision/execution/position change. Heatmap layout remained unchanged.
 
 ## 14. v28.0L-3S visible display approval design status
 
-v28.0L-3S adds [`EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md`](EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md) as the approval and data-flag design for a future visible display step.
-
-Status update:
-
-- Visible display approval and data flag design is documented.
-- Display remains disabled in this PR.
-- No frontend code is changed.
-- No `data/radar-data.json` change is made.
-- No DeepSeek call or workflow trigger is introduced.
-- The future visible-display step should be data-only where possible.
-- The future visible-display step should only flip `displayEnabled` and `boundaries.frontendDisplayApproved` after guard approval.
-
-Recommended next step:
-
-```text
-v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
-```
+Documented [the visible-display approval and data-flag design](EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md). Display remained disabled; no frontend/data/provider/workflow change. The proposed next step was a separately guarded, preferably data-only two-flag enablement, not permission granted by this document.
 
 ## 15. v28.0L-3T visible display flag enablement status
 
-v28.0L-3T enables the existing read-only panel through data flags.
-
-Status update:
-
-- Visible display is now enabled through `displayEnabled=true`.
-- Visible display is now approved through `boundaries.frontendDisplayApproved=true`.
-- Rendering remains read-only and gated by the existing scaffold.
-- The panel remains outside Global Risk Heatmap.
-- No frontend code is changed.
-- No AI text content is changed.
-- No scoring / decision / execution / position impact is introduced.
-- No provider call, automatic provider call, or Daily integration is added.
-
-Recommended next step:
-
-```text
-v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
-```
+Enabled `displayEnabled=true` and `boundaries.frontendDisplayApproved=true` through data flags only. Existing read-only scaffold and outside-Heatmap placement remained; frontend code and AI text were unchanged. No provider call, automatic call, Daily integration or scoring/decision/execution/position effect was introduced.
 
 ## 16. v28.0L-3T-1 visible display audit sync
 
-v28.0L-3T-1 records the successful post-merge audit for visible display flag enablement.
-
-Status update:
-
-- The external AI panel is now eligible to render through the existing scaffold.
-- Display remains read-only.
-- The panel must not affect score / decision / execution / position logic.
-- The panel remains outside Global Risk Heatmap.
-- No AI text changed.
-- No provider call was run.
-- Future visual refinements require a separate PR.
-
-Recommended next step:
-
-```text
-v28.0L-3U External AI Visible Display UX Polish - No Provider Call
-```
+Recorded successful post-merge flag-enable audit. The panel became eligible to render read-only outside Heatmap; AI text was unchanged and no provider call ran. Further visual refinement required a separate PR.
 
 ## 17. v28.0L-3U visible display UX polish status
 
-v28.0L-3U improves the visible read-only panel layout without changing the production data layer or provider output.
-
-Status update:
-
-- Visible panel UX polish is implemented.
-- The panel now separates summary, main observations, AI inferences, uncertainty signals, confidence, and update time.
-- The panel remains read-only and secondary.
-- No `data/radar-data.json` change is made.
-- No AI text content is refreshed or edited.
-- No DeepSeek call or workflow trigger is introduced.
-- No provider artifact is refreshed.
-- No automatic provider call or Daily integration is added.
-- No scoring / decision / execution / position path is changed.
-- Global Risk Heatmap layout remains protected.
-
-Recommended next step:
-
-```text
-v28.0L-3U-1 Visible Display UX Audit Sync - No Provider Call
-```
+Polished the panel into summary, main observations, AI inferences, uncertainty, confidence and update-time sections. It remained secondary/read-only; production layer, AI text, provider output/artifact, display flags and Heatmap were unchanged. No provider/workflow/automatic call, Daily integration or model-path change.
 
 ## 18. v28.0L-3U-1 visible display UX audit sync
 
-v28.0L-3U-1 records that the visible display UX polish completed and passed post-merge audit.
-
-Audit result:
-
-- Visible display UX polish completed.
-- Post-merge audit passed.
-- The external AI panel is now visible and polished.
-- The panel remains read-only.
-- Dynamic content uses safe rendering.
-- Raw provider output, run IDs, artifact IDs, and raw provenance remain hidden from normal display.
-- No AI text changed.
-- No provider call was run.
-- No workflow was triggered.
-- No automatic provider call was added.
-- No Daily integration was added.
-- No scoring / decision / execution / position impact was introduced.
-- Global Risk Heatmap layout remains protected.
-
-Current display line decision:
-
-```text
-visible_display_ux_audited_no_provider_call
-```
+Recorded the successful post-merge UX audit: the then-visible panel used safe dynamic rendering and hid raw provider output, run/artifact IDs and raw provenance. No AI text/provider/workflow/automatic-call/Daily/model/Heatmap change. Historical decision: `visible_display_ux_audited_no_provider_call`.
 
 ## 19. v28.0L-4A production refresh workflow status
 
-v28.0L-4A adds the production refresh workflow for the already-visible external AI read-only panel.
-
-Status update:
-
-- Production refresh workflow is implemented.
-- Manual refresh is available through `workflow_dispatch`.
-- Daily refresh is scheduled once per day at `23:50 UTC`.
-- The visible panel will continue to read refreshed production data from `externalAiInterpretationLayer`.
-- Refresh projection preserves the existing visible display flags.
-- No frontend logic change is made by the refresh workflow.
-- No Global Risk Heatmap layout change is made.
-- No scoring / decision / execution / position path is changed.
-- The refresh workflow is the only approved automatic provider call path.
+Added the then-approved `External AI Production Refresh` workflow: manual `workflow_dispatch` and once-daily `23:50 UTC`, preserving visible flags and reading `externalAiInterpretationLayer`. It was the sole automatic provider path at that phase, with no frontend/Heatmap/model-path change. **That workflow and panel are now retired; this is not current call authorization.**
 
 ## 20. v28.0L-4A-1 production refresh workflow audit sync
 
-The visible external AI read-only panel is now backed by a successful `External AI Production Refresh` workflow output from run `25611392014`.
-
-Status update:
-
-- The panel remains read-only.
-- No frontend logic changed during the refresh.
-- Refreshed AI text still flows through the existing production contract, quality review, write guard, frontend scaffold check, and display gates.
-- The refresh committed only `data/radar-data.json` through workflow commit `c32af65`.
-- The workflow artifact was `external-ai-production-refresh-25611392014` with artifact ID `6898516584` and 3-day retention.
-- No Global Risk Heatmap layout, scoring, decision, execution, or position path changed.
+Recorded successful run `25611392014`, data-only commit `c32af65` and artifact `external-ai-production-refresh-25611392014` / ID `6898516584` with 3-day retention. Contract, quality, write guard, scaffold and display gates still applied; no frontend/Heatmap/model change. The expired artifact is not promised downloadable.
 
 ## 21. v28.0L-4B display coverage polish
 
-v28.0L-4B expands the already-visible external AI read-only panel coverage without changing provider output or production data.
-
-Status update:
-
-- The panel now shows capped, safe summaries for `modelJudgments`, `scenarioHypotheses`, `sourceAttribution`, and `qualityReview` when available.
-- Model judgments, scenario hypotheses, source attribution summary, and public review status remain read-only.
-- Raw provider output, raw provenance, run IDs, artifact IDs, and internal diagnostics remain hidden from normal display.
-- No provider call was run.
-- No production data changed.
-- No AI-generated text changed.
-- No automatic provider call or Daily integration was added.
-- No Global Risk Heatmap layout change was made.
-- No scoring / decision / execution / position path changed.
-
-Recommended next step:
-
-```text
-v28.0L-4B-1 Display Coverage Audit Sync - No Provider Call
-```
+Expanded capped safe summaries to `modelJudgments`, `scenarioHypotheses`, `sourceAttribution` and public `qualityReview`. Raw output/provenance/IDs/internal diagnostics stayed hidden. No provider call, production-data/AI-text change, new automatic call, Daily integration or Heatmap/model change.
 
 ## 22. v28.0L-4B-1 display coverage audit sync
 
-v28.0L-4B-1 records that the display coverage polish completed and passed post-merge audit.
-
-Audit result:
-
-- Display coverage polish completed.
-- Post-merge audit passed.
-- The external AI panel now shows broader safe summaries from `externalAiInterpretationLayer`.
-- `modelJudgments` are displayed as capped safe summaries.
-- `scenarioHypotheses` are displayed as capped safe summaries.
-- `sourceAttribution` is displayed as a compact source summary.
-- `qualityReview` is displayed only as public-safe status.
-- Raw provider output is not displayed.
-- Run IDs are not displayed to normal users.
-- Artifact IDs are not displayed to normal users.
-- Raw provenance is not displayed.
-- Raw `decisionContext` is not displayed.
-- Dynamic AI/data content uses `textContent`.
-- No AI text changed.
-- No provider call was run.
-- No workflow was triggered.
-- No automatic provider call was added.
-- No Daily integration was added.
-- No scoring / decision / execution / position impact was introduced.
-- Global Risk Heatmap layout remains protected.
-
-Current display coverage decision:
-
-```text
-display_coverage_audited_no_provider_call
-```
+Recorded successful post-merge coverage audit: dynamic content used `textContent`; raw `decisionContext`, output, provenance and run/artifact IDs remained hidden. No text/provider/workflow/automatic-call/Daily/model/Heatmap change. Historical decision: `display_coverage_audited_no_provider_call`.
 
 ## 23. v28.0M-7V homepage reading path placement note
 
-v28.0M-7V keeps External AI outside the primary 10-step homepage navigation path.
-
-Placement boundary:
-
-- External AI remains auxiliary read-only explanation.
-- The panel keeps `external-ai-display-panel` and the existing display gates.
-- The panel must not replace Macro Overview as the primary judgment.
-- The panel must not be placed inside Global Risk Heatmap, `#detail-data`, or `#method-evidence`.
-- Homepage reading-path UX fixes must not edit AI-generated text, rerun a provider, trigger `External AI Production Refresh`, or change scoring / decision / execution / position logic.
+Kept `external-ai-display-panel` and its gates as auxiliary explanation outside the primary 10-step navigation. It could not replace Macro Overview or enter Heatmap, `#detail-data` or `#method-evidence`. Reading-path repair could not edit AI text, rerun providers, trigger production refresh or change scoring/decision/execution/position.
 
 ## 24. v28.0M-7V-1 homepage reading path audit-sync note
 
-v28.0M-7V-1 records the post-merge audit for the homepage reading path repair.
-
-External AI boundary:
-
-- External AI remains auxiliary read-only explanation outside the 10-step primary nav path.
-- The panel does not affect scoring, decision, execution, or position logic.
-- The audit sync does not change AI-generated text, provider output, display gates, frontend logic, production data, or provider workflows.
+Recorded post-merge reading-path audit with that auxiliary placement and no AI-text/provider-output/gate/frontend/data/workflow/model change.

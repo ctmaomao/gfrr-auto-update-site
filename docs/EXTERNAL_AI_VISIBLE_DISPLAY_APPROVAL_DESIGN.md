@@ -230,63 +230,18 @@ Recommended next step:
 v28.0L-3T External AI Visible Display Flag Enablement - Data Only / No Provider Call
 ```
 
+## Historical progress archive
+
+The sections below summarize dated phase receipts, not current visibility or a task queue. All original numbered headings are retained for links. [Complete pre-compaction original](https://github.com/ctmaomao/gfrr-auto-update-site/blob/00963b925bc0e416c910fcd0bca3d149b1c42a8b/docs/EXTERNAL_AI_VISIBLE_DISPLAY_APPROVAL_DESIGN.md) (292 lines; SHA256 `29fed1a758a008f5dae7837d2e67615920052837e2bb4108107e6f4bbe2dfa23`) preserves exact wording, next-step proposals and evidence. Current retirement/authority remains the [shared status](LEGACY_DOCUMENT_STATUS.md#external-ai); no provider, display or data permission changes here.
+
 ## 11. v28.0L-3T visible display flag enablement status
 
-v28.0L-3T enables visible display through the approved data flags only.
-
-Status update:
-
-- `externalAiInterpretationLayer.displayEnabled=true`.
-- `externalAiInterpretationLayer.boundaries.frontendDisplayApproved=true`.
-- Data change is limited to the two display flags.
-- Existing AI text content is unchanged.
-- No provider call is run.
-- No provider artifact is refreshed.
-- No automatic provider call is added.
-- No Daily integration is added.
-- The existing frontend scaffold may now render the read-only panel.
-- Safety gates remain active through the production contract validator, data validator, production write guard, and frontend display scaffold checker.
-
-Recommended next step:
-
-```text
-v28.0L-3T-1 Visible Display Audit Sync - No Provider Call
-```
+Enabled only `externalAiInterpretationLayer.displayEnabled` and `boundaries.frontendDisplayApproved`. AI text/artifact and existing scaffold were unchanged; contract/data/write/scaffold safety checks stayed active. No provider call, automatic call or Daily integration was added.
 
 ## 12. v28.0L-3T-1 visible display audit sync
 
-v28.0L-3T-1 records that the visible display flag enablement completed and passed post-merge audit.
-
-Audit result:
-
-- Visible display flag enablement completed.
-- Post-merge audit passed.
-- `externalAiInterpretationLayer.displayEnabled=true`.
-- `externalAiInterpretationLayer.boundaries.frontendDisplayApproved=true`.
-- `qualityReview.promotionEligible=false`.
-- No AI text changed.
-- No provider call was run.
-- No workflow was triggered.
-- No automatic provider call was added.
-- No Daily integration was added.
-- Global Risk Heatmap layout remains protected.
-- Scoring / decision / execution / position logic remains unchanged.
-
-Recommended next step:
-
-```text
-v28.0L-3U External AI Visible Display UX Polish - No Provider Call
-```
+Recorded successful post-merge flag-enable audit: both display flags true, `qualityReview.promotionEligible=false`, AI text unchanged. No provider/workflow/automatic-call/Daily integration or scoring/decision/execution/position/Heatmap change.
 
 ## 13. v28.0L-3U-1 visible display UX audit sync
 
-v28.0L-3U-1 records the post-merge audit for the visible display UX polish.
-
-Audit note:
-
-- Visible display data flags were already enabled in L-3T.
-- L-3U polished the visible panel without changing data flags.
-- L-3U did not change AI text content.
-- Visible display remains approved only for the current production layer.
-- No provider call, workflow trigger, automatic provider call, or Daily integration was introduced.
-- Global Risk Heatmap layout remains protected.
+Recorded post-merge UX audit: L-3T had enabled the flags; L-3U polished the panel without changing flags or AI text. Approval covered only that historical production layer, not arbitrary future content. No provider/workflow/automatic-call/Daily integration or Heatmap change. See the [display chronology](EXTERNAL_AI_FRONTEND_DISPLAY_DESIGN.md#18-v280l-3u-1-visible-display-ux-audit-sync).
