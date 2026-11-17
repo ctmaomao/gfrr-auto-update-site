@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
+import { splitIssues } from '../../scripts/build-weekly-reports.mjs';
+const latest = splitIssues(fs.readdirSync('reports')).recent[0];
+const latestDate = latest.slice(0, 10);
+const latestHtml = fs.readFileSync('reports/' + latest, 'utf8');
+const latestSections = (latestHtml.match(/<section\b/gi) || []).length;
 for (const width of [1440,390]) {
   test('weekly homepage and all four tabs preserve reader paths '+width, async ({page}) => {
     await page.setViewportSize({width,height:900});
@@ -7,12 +12,13 @@ for (const width of [1440,390]) {
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto('/');
     await expect(page).toHaveURL(/\/weekly-reports\.html$/);
-    await expect(page.locator('.section')).toHaveCount(12);
+    expect(latestSections).toBeGreaterThan(0);
+    await expect(page.locator('main section:not(.weekly-archive)')).toHaveCount(latestSections);
     await expect(page.locator('.page-bookmarks a')).toHaveCount(4);
     await expect(page.locator('a[aria-current="page"]')).toHaveText('每周周报');
     expect(await page.evaluate(()=>globalThis.document.documentElement.scrollWidth<=globalThis.innerWidth)).toBe(true);
     await page.screenshot({path:'test-results/four-nav-weekly-'+width+'.png'});
-    await page.locator('#markets').scrollIntoViewIfNeeded();
+    await page.locator('main section:not(.weekly-archive)').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:'test-results/four-nav-markets-'+width+'.png'});
     await page.locator('.page-bookmarks a', {hasText:'全球雷达'}).click();
     await expect(page).toHaveURL(/index\.html\?view=radar$/);
@@ -47,20 +53,21 @@ test('old anchors, old weekly paths and download remain usable', async ({page})=
   await expect(page).toHaveURL(/\/weekly-reports\.html#history$/);
   await page.goBack();
   await page.locator('#history a').filter({hasText:'阅读固定期次全文'}).first().click();
-  await expect(page).toHaveURL(/\/reports\/2026-11-09\.html$/);
+  await expect(page).toHaveURL(new RegExp('/reports/' + latest.replace('.', '\\.') + '$'));
   const downloadPromise=page.waitForEvent('download');
   await page.getByText('下载单文件HTML').click();
   const download=await downloadPromise;
-  expect(download.suggestedFilename()).toBe('GFRR_Weekly_2026-11-09.html');
+  expect(download.suggestedFilename()).toBe('GFRR_Weekly_' + latestDate + '.html');
   const body=fs.readFileSync(await download.path(),'utf8');
-  expect(body).toContain('id="source-treasury"');
+  expect(body).toBe(latestHtml);
   await page.goto('/weekly-reports/2026-11-09.html');
   await expect(page.locator('.section')).toHaveCount(12);
 });
 test('fixed report reads offline without any data service', async ({page})=>{
-  const html=fs.readFileSync('reports/2026-11-09.html','utf8');
   await page.context().setOffline(true);
-  await page.setContent(html);
+  await page.setContent(latestHtml);
+  await expect(page.locator('main section')).toHaveCount(latestSections);
+  await page.setContent(fs.readFileSync('reports/2026-11-09.html','utf8'));
   await expect(page.locator('.section')).toHaveCount(12);
   expect(await page.locator('body').evaluate(e=>e.ownerDocument.defaultView.getComputedStyle(e).backgroundColor)).toBe('rgb(251, 247, 240)');
 });

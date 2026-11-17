@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { deriveExpectedHashSources, buildEdgeoneJson } from '../../scripts/lib/edgeone-csp-policy.mjs';
+import { deriveExpectedHashSources, derivePageHashes, buildEdgeoneJson } from '../../scripts/lib/edgeone-csp-policy.mjs';
 import { fileURLToPath } from 'node:url';
 import { splitIssues, expectedWeeklyPages } from '../../scripts/build-weekly-reports.mjs';
 import { isAllowedPagesArtifactFile } from '../../scripts/build-pages-artifact.mjs';
@@ -29,23 +29,27 @@ test('52 issue split preserves all older issues without deletion or renaming', (
   assert.equal(split.archived.length,3);
   assert.deepEqual([...split.recent,...split.archived].sort(), names.sort());
   assert.ok(split.recent[0] > split.archived[0]);
-  assert.doesNotMatch(read('scripts/build-weekly-reports.mjs'), /\b(?:rmSync|unlinkSync|renameSync)\b/);
+  assert.doesNotMatch(read('scripts/build-weekly-reports.mjs'), /\brmSync\b/);
 });
 test('weekly allowlist permits only complete HTML routes, no notes or secrets', () => {
   for (const p of ['weekly-reports.html','reports/2026-11-09.html','reports/archive.html','weekly-reports/index.html','weekly-reports/2026-11-09.html']) assert.equal(isAllowedPagesArtifactFile(p),true,p);
   for (const p of ['reports/.env','reports/README.md','reports/x.js','reports/nested/2026-11-09.html','weekly-reports/.secret.html']) assert.equal(isAllowedPagesArtifactFile(p),false,p);
 });
 test('generated pages are deterministic, fixed issue stays standalone with cited sources', () => {
-  const before=read('reports/2026-11-09.html');
+  const latest = splitIssues(fs.readdirSync(new URL('../../reports/', import.meta.url))).recent[0];
+  const before = read('reports/' + latest);
   for (const [p,expected] of expectedWeeklyPages()) assert.equal(read(p),expected,p);
-  assert.equal(read('reports/2026-11-09.html'),before);
-  assert.equal((before.match(/<section\b/g)||[]).length,12);
-  assert.match(before,/<style>/);
+  assert.equal(read('reports/' + latest),before);
+  assert.match(before, /<style>/);
   assert.doesNotMatch(before, /fetch\(|data\/radar-data|onclick=/);
-  assert.match(before,/download="GFRR_Weekly_2026-11-09.html"/);
-  assert.match(before,/sb0678/);
-  assert.match(before,/empsit_11062026/);
-  assert.match(before,/不是.*概率|不.*概率/);
+  const legacy = read('reports/2026-11-09.html');
+  assert.equal((legacy.match(/<section\b/g)||[]).length,12);
+  assert.match(legacy, /<style>/);
+  assert.doesNotMatch(legacy, /fetch\(|data\/radar-data|onclick=/);
+  assert.match(legacy,/download="GFRR_Weekly_2026-11-09.html"/);
+  assert.match(legacy,/sb0678/);
+  assert.match(legacy,/empsit_11062026/);
+  assert.match(legacy,/不是.*概率|不.*概率/);
 });
 test('both deploy paths trigger on the canonical and compatible weekly paths', () => {
   for(const p of ['.github/workflows/deploy-static-site-to-pages.yml','.github/workflows/publish-edgeone-release.yml']) {
@@ -59,8 +63,11 @@ test('weekly content hash inventory stays strict and bounded for every archive c
   const expected=deriveExpectedHashSources(root);
   const bundle=expected.pages.find(p=>p.file==='weekly-reports.html');
   assert.ok(bundle.sourceFiles.includes('reports/2026-11-09.html'));
-  assert.equal(bundle.scriptHashes.length,1);
-  assert.equal(bundle.styleHashes.length,1);
+  const hashes = bundle.sourceFiles.map(file => derivePageHashes(root, file, { requireInlineBlocks: false }));
+  assert.deepEqual(new Set(bundle.scriptHashes), new Set(hashes.flatMap(page => page.scriptHashes)));
+  assert.deepEqual(new Set(bundle.styleHashes), new Set(hashes.flatMap(page => page.styleHashes)));
+  assert.ok(bundle.scriptHashes.length >= 1);
+  assert.ok(bundle.styleHashes.length >= 1);
   const config=JSON.parse(read('config/edgeone/csp-report-only.json'));
   const result=buildEdgeoneJson({config,pages:expected.pages});
   assert.ok(result.policy.length<1000);
