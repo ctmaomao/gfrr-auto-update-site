@@ -24,6 +24,8 @@
 
 ### 当前实施与真实等待
 
+- **NY Fed 利率缺失语义**：仅加固 secured-rates parser，拒绝缺失/布尔/容器值成为零利率，缺失成交量保持 null；真实零、精度、日期及原缓存/fallback策略不变。合成实际 parser→fetch→Fed resolver 回归验证缺失利差不伪造，独审、全套与精确 CI 分别验收；不取数、不改生产快照或全局数值转换。
+
 - **EIA 周度类型隔离**：压力/history 共用严格数值投影，拒绝 null/布尔/容器/空白强转零；保留真实零与正常数值字符串。任一无效行整 series missing，不筛掉中间缺失后伪造周差分；保守降级可能减少可用覆盖。模拟 fetch→evidence、独审、全套与自然运行分开验收，不触发采集或改生产快照。详见[来源审计](OIL_DIRECTIONAL_PRESSURE_SOURCE_REVIEW.md)。
 
 - **FRED JSON 数值类型保护**：共享 Daily/realtime parser 拒绝 null、布尔及容器值，避免隐式转换为 0/1 或数组中的数值；保留真正数值零、负值、字符串数字、顺序与 CSV 行为。验收基线为合成解析及实际 fetchRows 模拟不足行 fallback，不新增请求/重试策略、不取数或改历史产物；专项、全套、独审与精确 CI 分别验收。

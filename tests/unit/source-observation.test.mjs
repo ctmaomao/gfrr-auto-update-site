@@ -400,3 +400,50 @@ test('credit resolver stores NFCI/SLOOS dates and independent large/small status
   assert.equal(noDate.nfci, -0.3);
   assert.equal(noDate.sourceStatus.nfci, 'fallback');
 });
+
+
+test('NY Fed parser rejects missing/coercible rates and preserves real zero/precision', () => {
+  const parse = vm.runInNewContext(`${extract('parseNyFedRateRecord')}\nparseNyFedRateRecord`, {});
+  const base = { type: ' bgcr ', effectiveDate: '2026-10-15' };
+  for (const value of [null, undefined, '', ' ', false, true, [], [3.9], {}, 'bad', Infinity, -1, 21]) {
+    assert.equal(parse({ ...base, percentRate: value }), null);
+  }
+  for (const value of [0, '0', 3.87654, ' 3.87654 ']) {
+    const result = parse({ ...base, percentRate: value, volumeInBillions: ' 125 ' });
+    assert.equal(result.percentRate, Number(value) === 0 ? 0 : 3.8765);
+    assert.equal(result.type, 'BGCR');
+    assert.equal(result.effectiveDate, base.effectiveDate);
+    assert.equal(result.volumeInBillions, 125);
+  }
+  for (const value of [null, undefined, '', ' ', false, true, [], [125], {}, 'bad', Infinity]) {
+    assert.equal(parse({ ...base, percentRate: 3.9, volumeInBillions: value }).volumeInBillions, null);
+  }
+  assert.equal(parse({ ...base, percentRate: 3.9, volumeInBillions: 0 }).volumeInBillions, 0);
+});
+
+test('NY Fed mocked response drops false-zero legs before Fed liquidity fallback/spreads', async () => {
+  const fixture = { refRates: [
+    { type: 'BGCR', effectiveDate: '2026-10-15', percentRate: null },
+    { type: 'TGCR', effectiveDate: '2026-10-15', percentRate: '' },
+    { type: 'SOFR', effectiveDate: '2026-10-15', percentRate: '3.9' }
+  ] };
+  const fetchRates = vm.runInNewContext(`${extract('parseNyFedRateRecord')}\n${extract('fetchNyFedSecuredRatesLatest')}\nfetchNyFedSecuredRatesLatest`, {
+    retryFetch: async () => JSON.stringify(fixture), NY_FED_SECURED_RATES_LATEST_URL: 'fixture-only',
+    NY_FED_SECURED_RATES_TIMEOUT_MS: 1000, stringifyFetchError: String
+  });
+  const rates = await fetchRates();
+  assert.deepEqual(Object.keys(rates), ['SOFR']);
+  const rows = {
+    WALCL: [{ value: 100, date: '2026-10-14' }, { value: 101, date: '2026-10-21' }],
+    RRPONTSYD: [{ value: 2, date: '2026-10-21' }],
+    DFF: [{ value: 3.88, date: '2026-10-15' }], SOFR: [{ value: 3.9, date: '2026-10-15' }],
+    WRESBAL: [{ value: 3000000, date: '2026-10-14' }]
+  };
+  const result = await loadFed(async id => rows[id] ?? [], rates, {});
+  assert.equal(result.bgcr, null);
+  assert.equal(result.tgcr, null);
+  assert.equal(result.bgcrSofrSpread, null);
+  assert.equal(result.tgcrSofrSpread, null);
+  fixture.refRates.pop();
+  await assert.rejects(fetchRates(), /missing BGCR\/TGCR\/SOFR/);
+});
