@@ -77,7 +77,7 @@
 | `SUBLPDRCSC` | SLOOS Construction/Land Development CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
 | `SUBLPDRCSM` | SLOOS Multifamily CRE Tightening (quarterly) | macroDrivers.commercialRealEstate | M-70 |
 | `CREACBW027SBOG` | Commercial Real Estate Loans, All Commercial Banks, SA (weekly, USD billions) | macroDrivers.commercialRealEstate | M-84 |
-| `DFEDTARL` / `DFEDTARU` / `DFF` | Fed target range lower/upper and effective fed funds rate | macroDrivers.policyExpectations | M-74 |
+| `DFEDTARL` / `DFEDTARU` / `DFF` | Fed target range lower/upper (daily 7-day effective-date pair) and effective fed funds rate | macroDrivers.policyExpectations | M-74 |
 | `BAMLH0A0HYM2` / `BAMLC0A0CM` | ICE BofA US HY / IG OAS cash-bond spread proxy | macroDrivers.privateCreditProxy | M-74 / M-78 |
 | `CheckMySwap USD OIS public curve` | USD OIS curve from DTCC/CFTC public swap data | macroDrivers.policyExpectations.oisForwardCurve | M-80 |
 | `PBDC` / `SRLN` | Listed BDC / senior-loan ETF public proxies | macroDrivers.privateCreditProxy | M-80 |
