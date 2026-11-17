@@ -196,3 +196,4 @@
 - [ADR-0118: Divergence missing evidence](0118-divergence-missing-evidence.md) — missing is not zero; preserve valid golden fixtures and explicitly verify corrected missing output.
 
 - [ADR-0119: Daily completion publication tail](0119-daily-publication-completion.md) — normal guarded publication after Daily, independent of Macro budget skips.
+- [ADR-0120: Credit period references](0120-credit-period-reference.md) — exact four-week/calendar-quarter comparisons and bounded SLOOS lookback; preserve unknown changes.

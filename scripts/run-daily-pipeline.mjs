@@ -25,7 +25,7 @@ import { allocateRegimePercentages } from './daily/regime-weights.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
-import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay } from './daily/source-observation.mjs';
+import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange } from './daily/source-observation.mjs';
 import { prepareOfrPublication } from './daily/publish-ofr-pressure.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -6371,15 +6371,15 @@ async function resolveCredit(prevCredit, hyOasLive) {
   }
 
   // M-46: Series 2 — DRTSCILM (SLOOS Large/Medium C&I tightening, quarterly, net %)
-  // Uses 180-day lookback because SLOOS is quarterly (need to capture latest + previous quarter).
+  // Keep two quarters through the next survey release delay; 180 days can drop the prior quarter.
   try {
-    const rows = await fetchFredSeries('DRTSCILM', 180);
+    const rows = await fetchFredSeries('DRTSCILM', 270);
     const obs = latestDatedObservation(rows, nowIso);
     sloosTighteningLargeFirms = obs.value;
     sourceObservedAt.sloosLarge = obs.date;
-    const ago = findValueAgo(rows, 90);
-    if (Number.isFinite(sloosTighteningLargeFirms) && Number.isFinite(ago)) {
-      sloosTighteningLargeQoQ = +(sloosTighteningLargeFirms - ago).toFixed(1);
+    const change = creditPeriodChange(rows, 'quarter', nowIso);
+    if (Number.isFinite(change)) {
+      sloosTighteningLargeQoQ = +change.toFixed(1);
     }
     status.sloos = 'live';
     status.sloosLarge = 'live';
@@ -6388,9 +6388,7 @@ async function resolveCredit(prevCredit, hyOasLive) {
     if (fb.value !== null) {
       sloosTighteningLargeFirms = fb.value;
       sourceObservedAt.sloosLarge = fb.date;
-      sloosTighteningLargeQoQ = Number.isFinite(prevCredit.sloosTighteningLargeQoQ)
-        ? prevCredit.sloosTighteningLargeQoQ
-        : null;
+      // Cached deltas have no reference-date proof; retain the level, not an unverified period change.
       status.sloos = 'fallback';
       status.sloosLarge = 'fallback';
     } else {
@@ -6402,13 +6400,13 @@ async function resolveCredit(prevCredit, hyOasLive) {
   // M-46: Series 3 — DRTSCIS (SLOOS Small Firms C&I tightening, quarterly, net %)
   // Same SLOOS survey, separate series. If first fetch succeeded, this should too.
   try {
-    const rows = await fetchFredSeries('DRTSCIS', 180);
+    const rows = await fetchFredSeries('DRTSCIS', 270);
     const obs = latestDatedObservation(rows, nowIso);
     sloosTighteningSmallFirms = obs.value;
     sourceObservedAt.sloosSmall = obs.date;
-    const ago = findValueAgo(rows, 90);
-    if (Number.isFinite(sloosTighteningSmallFirms) && Number.isFinite(ago)) {
-      sloosTighteningSmallQoQ = +(sloosTighteningSmallFirms - ago).toFixed(1);
+    const change = creditPeriodChange(rows, 'quarter', nowIso);
+    if (Number.isFinite(change)) {
+      sloosTighteningSmallQoQ = +change.toFixed(1);
     }
     status.sloosSmall = 'live';
   } catch (_err) {
@@ -6416,9 +6414,7 @@ async function resolveCredit(prevCredit, hyOasLive) {
     if (fb.value !== null) {
       sloosTighteningSmallFirms = fb.value;
       sourceObservedAt.sloosSmall = fb.date;
-      sloosTighteningSmallQoQ = Number.isFinite(prevCredit.sloosTighteningSmallQoQ)
-        ? prevCredit.sloosTighteningSmallQoQ
-        : null;
+      // Cached deltas have no reference-date proof.
       status.sloosSmall = 'fallback';
     } else {
       status.sloosSmall = 'missing';
@@ -6432,9 +6428,9 @@ async function resolveCredit(prevCredit, hyOasLive) {
     const obs = latestDatedObservation(rows, nowIso);
     nfci = obs.value;
     sourceObservedAt.nfci = obs.date;
-    const ago = findValueAgo(rows, 28);
-    if (Number.isFinite(nfci) && Number.isFinite(ago)) {
-      nfci4wChange = +(nfci - ago).toFixed(3);
+    const change = creditPeriodChange(rows, 'fourWeeks', nowIso);
+    if (Number.isFinite(change)) {
+      nfci4wChange = +change.toFixed(3);
     }
     status.nfci = 'live';
   } catch (_err) {
@@ -6442,7 +6438,7 @@ async function resolveCredit(prevCredit, hyOasLive) {
     if (fb.value !== null) {
       nfci = fb.value;
       sourceObservedAt.nfci = fb.date;
-      nfci4wChange = Number.isFinite(prevCredit.nfci4wChange) ? prevCredit.nfci4wChange : null;
+      // Cached deltas have no reference-date proof.
       status.nfci = 'fallback';
     } else {
       status.nfci = 'missing';

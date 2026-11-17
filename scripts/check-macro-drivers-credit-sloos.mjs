@@ -60,9 +60,10 @@ if (!credit || typeof credit !== 'object') {
   }
 }
 
+// ADR-0120: exact 270-day windows retain the prior survey quarter through release delay.
 const requiredRunDailyMarkers = [
-  "fetchFredSeries('DRTSCILM', 180)",
-  "fetchFredSeries('DRTSCIS', 180)",
+  "fetchFredSeries('DRTSCILM', 270)",
+  "fetchFredSeries('DRTSCIS', 270)",
   'sloosTighteningLargeFirms: Number.isFinite(sloosTighteningLargeFirms) ? sloosTighteningLargeFirms : null',
   'sloosTighteningSmallFirms: Number.isFinite(sloosTighteningSmallFirms) ? sloosTighteningSmallFirms : null',
   'sloosTighteningLargeQoQ: Number.isFinite(sloosTighteningLargeQoQ) ? sloosTighteningLargeQoQ : null',

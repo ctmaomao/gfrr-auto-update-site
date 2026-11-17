@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
-  parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay,
+  parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange,
 } from '../../scripts/daily/source-observation.mjs';
 
 const PIPELINE = fileURLToPath(new URL('../../scripts/run-daily-pipeline.mjs', import.meta.url));
@@ -349,6 +349,7 @@ test('CRE resolver keeps five dates and fallback reuses per-field dates', async 
 test('credit resolver stores NFCI/SLOOS dates and independent large/small status', async () => {
   const src = extract('resolveCredit', 'async function resolveUlsd');
   const sandbox = {
+    creditPeriodChange,
     Date: FixedDate,
     fetchFredSeries: async (id) => {
       if (id === 'DRTSCIS') throw new Error('small down');
@@ -399,6 +400,43 @@ test('credit resolver stores NFCI/SLOOS dates and independent large/small status
   assert.equal(noDate.sourceObservedAt.nfci, null);
   assert.equal(noDate.nfci, -0.3);
   assert.equal(noDate.sourceStatus.nfci, 'fallback');
+  const allDown = vm.runInNewContext(`${src}\nresolveCredit`, { ...sandbox, fetchFredSeries: async () => { throw new Error('down'); } });
+  const cached = await allDown({ nfci: -0.3, nfci4wChange: 0.7, sloosTighteningLargeFirms: 2, sloosTighteningSmallFirms: 3, sloosTighteningLargeQoQ: 8, sloosTighteningSmallQoQ: 9, sourceObservedAt: { nfci: '2026-10-16', sloosLarge: '2026-10-01', sloosSmall: '2026-10-01' } }, 3.2);
+  assert.equal(cached.nfci, -0.3);
+  assert.equal(cached.sloosTighteningLargeFirms, 2);
+  assert.equal(cached.sloosTighteningSmallFirms, 3);
+  for (const field of ['nfci4wChange', 'sloosTighteningLargeQoQ', 'sloosTighteningSmallQoQ']) assert.equal(cached[field], null);
+  const live = vm.runInNewContext(`${src}\nresolveCredit`, { ...sandbox, fetchFredSeries: async id => id === 'NFCI'
+    ? [{ date: '2026-09-18', value: -0.5 }, { date: '2026-10-16', value: -0.3 }]
+    : [{ date: '2026-07-01', value: 1 }, { date: '2026-10-01', value: 3 }] });
+  const exact = await live({}, 3.2);
+  assert.equal(exact.nfci4wChange, 0.2);
+  assert.equal(exact.sloosTighteningLargeQoQ, 2);
+  assert.equal(exact.sloosTighteningSmallQoQ, 2);
+  const sparse = vm.runInNewContext(`${src}\nresolveCredit`, { ...sandbox,
+    findValueAgo: vm.runInNewContext(`${extract('findValueAgo')}\nfindValueAgo`),
+    fetchFredSeries: async id => id === 'NFCI'
+      ? [{ date: '2026-10-09', value: -0.5 }, { date: '2026-10-16', value: -0.3 }]
+      : [{ date: '2026-04-01', value: 1 }, { date: '2026-10-01', value: 3 }],
+  });
+  const incomplete = await sparse({}, 3.2);
+  assert.equal(incomplete.nfci, -0.3);
+  // Late October before the new SLOOS release: April is >180 days old, but
+  // remains the legitimate prior quarter for the latest July observation.
+  const releaseDelayed = vm.runInNewContext(`${src}\nresolveCredit`, { ...sandbox, structuralValueUsable: () => false,
+    fetchFredSeries: async (id, daysBack) => {
+      if (!['DRTSCILM', 'DRTSCIS'].includes(id)) throw new Error('outside fixture');
+      assert.equal(daysBack, 270);
+      const start = Date.parse(FIXED_NOW) - daysBack * 86400000;
+      const rows = [{ date: '2026-04-01', value: 1 }, { date: '2026-07-01', value: 3 }].filter(row => Date.parse(row.date) >= start);
+      if (rows.length < 2) throw new Error('insufficient rows');
+      return rows;
+    },
+  });
+  const delayed = await releaseDelayed({}, 3.2);
+  assert.equal(delayed.sloosTighteningLargeQoQ, 2);
+  assert.equal(delayed.sloosTighteningSmallQoQ, 2);
+  for (const field of ['nfci4wChange', 'sloosTighteningLargeQoQ', 'sloosTighteningSmallQoQ']) assert.equal(incomplete[field], null);
 });
 
 
@@ -446,4 +484,35 @@ test('NY Fed mocked response drops false-zero legs before Fed liquidity fallback
   assert.equal(result.tgcrSofrSpread, null);
   fixture.refRates.pop();
   await assert.rejects(fetchRates(), /missing BGCR\/TGCR\/SOFR/);
+});
+
+
+test('credit period references cannot silently substitute nearer sparse observations', () => {
+  const now = '2026-11-17T12:00:00Z';
+  const weekly = [{ date: '2026-10-09', value: -0.5 }, { date: '2026-10-30', value: -0.4 }, { date: '2026-11-06', value: -0.3 }];
+  assert.ok(Math.abs(creditPeriodChange(weekly, 'fourWeeks', now) - 0.2) < 1e-10);
+  assert.equal(creditPeriodChange(weekly.slice(1), 'fourWeeks', now), null);
+  assert.equal(creditPeriodChange(weekly.slice(-1), 'fourWeeks', now), null);
+  assert.equal(creditPeriodChange([{ date: '2026-10-09', value: 0 }, { date: '2026-11-06', value: 0 }], 'fourWeeks', now), 0);
+  assert.equal(creditPeriodChange([...weekly.slice(0, 1), ...weekly], 'fourWeeks', now), null);
+  assert.equal(creditPeriodChange([...weekly, { ...weekly.at(-1), value: 9 }], 'fourWeeks', now), null);
+  assert.equal(creditPeriodChange([weekly[0], { date: '2026-11-06T00:00:00Z', value: 9 }], 'fourWeeks', now), null);
+  assert.equal(creditPeriodChange([{ date: '2026-10-09', value: null }, weekly.at(-1)], 'fourWeeks', now), null);
+  assert.equal(creditPeriodChange([{ date: '2026-12-04', value: 1 }], 'fourWeeks', now), null);
+  for (const [previous, latest] of [['2025-10-01', '2026-01-01'], ['2026-01-01', '2026-04-01'], ['2026-04-01', '2026-07-01'], ['2026-07-01', '2026-10-01']]) {
+    assert.equal(creditPeriodChange([{ date: previous, value: 2 }, { date: latest, value: 3 }], 'quarter', now), 1);
+  }
+  assert.equal(creditPeriodChange([{ date: '2026-04-01', value: 2 }, { date: '2026-10-01', value: 3 }], 'quarter', now), null);
+  assert.equal(creditPeriodChange([{ date: '2026-07-02', value: 2 }, { date: '2026-10-01', value: 3 }], 'quarter', now), null);
+  assert.equal(creditPeriodChange([{ date: '2026-07-01', value: 2 }, { date: '2026-10-02', value: 3 }], 'quarter', now), null);
+});
+
+
+test('published FRED credit samples retain actual four-week and quarter changes', () => {
+  // Read-only official table audit 2026-11-17: fred.stlouisfed.org/data/{NFCI,DRTSCILM,DRTSCIS}.
+  // Minimal point pairs, not a downloaded series fixture or a historical-vintage claim.
+  const now = '2026-11-17T12:00:00Z';
+  assert.equal(+creditPeriodChange([{ date: '2026-10-09', value: -0.488 }, { date: '2026-11-06', value: -0.462 }], 'fourWeeks', now).toFixed(3), 0.026);
+  assert.equal(+creditPeriodChange([{ date: '2026-07-01', value: 0 }, { date: '2026-10-01', value: 1.7 }], 'quarter', now).toFixed(1), 1.7);
+  assert.equal(+creditPeriodChange([{ date: '2026-07-01', value: 1.8 }, { date: '2026-10-01', value: 5.1 }], 'quarter', now).toFixed(1), 3.3);
 });

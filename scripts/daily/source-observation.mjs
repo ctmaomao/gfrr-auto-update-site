@@ -83,3 +83,21 @@ export function sameObservationDay(a, b) {
   if (left === null || right === null) return null;
   return left === right;
 }
+
+// Credit changes require the named observation period, not the nearest available
+// boundary. FRED NFCI is weekly; SLOOS observations use quarter-start dates.
+export function creditPeriodChange(rows, period, nowIso) {
+  const latest = latestDatedObservation(rows, nowIso);
+  if (latest.value === null || latest.date === null || rows.at(-1).date !== latest.date
+    || rows.filter(row => row?.date === latest.date).length !== 1) return null;
+  const date = new Date(`${latest.date}T00:00:00Z`);
+  if (period === 'fourWeeks') date.setUTCDate(date.getUTCDate() - 28);
+  else if (period === 'quarter') {
+    if (date.getUTCDate() !== 1 || date.getUTCMonth() % 3 !== 0) return null;
+    date.setUTCMonth(date.getUTCMonth() - 3);
+  } else return null;
+  const referenceDate = date.toISOString().slice(0, 10);
+  const matches = rows.filter(row => row?.date === referenceDate);
+  if (matches.length !== 1 || !Number.isFinite(matches[0].value)) return null;
+  return latest.value - matches[0].value;
+}
