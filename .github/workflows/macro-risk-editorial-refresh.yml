@@ -127,6 +127,7 @@ jobs:
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}
           BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
         run: npm run collect:macro-risk-editorial-news -- --allow-network
 
