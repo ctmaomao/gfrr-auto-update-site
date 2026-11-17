@@ -18,6 +18,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { parseEiaWeeklyObservations } from './eia-weekly-observations.mjs';
 import { oilEvidenceNumber, oilObservationMillis, resolveOdpPriceEvidence, qualifiedBrentHistory } from '../modules/oilEvidenceQuality.js';
 import { classifyAt, evaluateGlobalOverlay, finalizeBias } from './odp-classifier.mjs';
 
@@ -119,13 +120,8 @@ async function fetchEiaSeries(id) {
     const j = await res.json();
     if (j && j.error) return { ok: false, reason: 'api_error' };
     const data = j && j.response && j.response.data;
-    if (!Array.isArray(data) || !data.length) return { ok: false, reason: 'no_data' };
-    const series = data
-      .map((it) => ({ period: String(it.period), value: Number(it.value) }))
-      .filter((it) => /^\d{4}-\d{2}-\d{2}$/.test(it.period) && Number.isFinite(it.value))
-      .sort((a, b) => (a.period < b.period ? -1 : 1));
-    if (!series.length) return { ok: false, reason: 'no_numeric' };
-    return { ok: true, series, frequency: j.response.frequency || 'weekly' };
+    const parsed = parseEiaWeeklyObservations(data);
+    return parsed.ok ? { ...parsed, frequency: j.response.frequency || 'weekly' } : parsed;
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: false, reason: 'timeout' };
     if (e instanceof SyntaxError) return { ok: false, reason: 'non_json' };
@@ -759,7 +755,7 @@ async function main() {
     `brent4w=${brentChangePct4w == null ? 'n/a' : brentChangePct4w + '%'}); builtAt ${builtAt}`);
 }
 
-export { reuseFromRadar, priceContextFromReuse, brentChange4wFromHistory, buildAttribution, globalEnergyContextFromRadar, monthlyBackgroundOverlay };
+export { fetchEiaSeries, buildEiaEvidence, reuseFromRadar, priceContextFromReuse, brentChange4wFromHistory, buildAttribution, globalEnergyContextFromRadar, monthlyBackgroundOverlay };
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((e) => {
   console.error('[odp] build failed:', e && e.message ? e.message : e);
   process.exit(1);

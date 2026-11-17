@@ -16,6 +16,8 @@
 // before 2020. 2014 leaves a safety buffer.
 
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { parseEiaWeeklyObservations } from './eia-weekly-observations.mjs';
 
 const OUT_PATH = 'data/oil-directional-history.json';
 const EIA_BASE = 'https://api.eia.gov/v2/seriesid';
@@ -44,13 +46,7 @@ async function fetchEiaSeries(id) {
     const j = await res.json();
     if (j && j.error) return { ok: false, reason: 'api_error' };
     const data = j && j.response && j.response.data;
-    if (!Array.isArray(data) || !data.length) return { ok: false, reason: 'no_data' };
-    const series = data
-      .map((it) => ({ period: String(it.period), value: Number(it.value) }))
-      .filter((it) => /^\d{4}-\d{2}-\d{2}$/.test(it.period) && Number.isFinite(it.value))
-      .sort((a, b) => (a.period < b.period ? -1 : 1));
-    if (!series.length) return { ok: false, reason: 'no_numeric' };
-    return { ok: true, series };
+    return parseEiaWeeklyObservations(data);
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: false, reason: 'timeout' };
     if (e instanceof SyntaxError) return { ok: false, reason: 'non_json' };
@@ -107,7 +103,8 @@ async function main() {
   console.log(`[odp-history] wrote ${OUT_PATH} — ${okCount}/${EIA_SERIES.length} series live, ${totalPoints} total points, range ${RANGE_START}..present`);
 }
 
-main().catch((e) => {
+export { fetchEiaSeries };
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((e) => {
   console.error('[odp-history] build failed:', e && e.message ? e.message : e);
   process.exit(1);
 });
