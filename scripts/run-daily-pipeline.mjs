@@ -1,3 +1,4 @@
+import { claimsWindow, cachedClaimsWindow } from './daily/claims-windows.mjs';
 import { sentimentPeriods, cachedSentimentPeriods } from './daily/sentiment-periods.mjs';
 import { cpiComparisons, cachedCpiComparisons } from './daily/cpi-comparisons.mjs';
 import { policyTargetRange, cachedPolicyTargetRange, alignPolicyTargetComparisons } from './daily/policy-target.mjs';
@@ -6634,6 +6635,7 @@ function calculateLatestDelta(rows) {
 
 function buildMissingEmployment() {
   return {
+    claimsWindowEvidence: { icsa: null, ccsa: null },
     initialClaims: null,
     initialClaims4wAverage: null,
     initialClaims4wChange: null,
@@ -8133,11 +8135,15 @@ function buildMissingPrivateCreditProxy() {
 
 function normalizePreviousEmployment(prevEmployment) {
   if (!prevEmployment || typeof prevEmployment !== 'object') return buildMissingEmployment();
-  const initialClaims = Number.isFinite(prevEmployment.initialClaims) ? prevEmployment.initialClaims : null;
-  const initialClaims4wAverage = Number.isFinite(prevEmployment.initialClaims4wAverage) ? prevEmployment.initialClaims4wAverage : null;
-  const initialClaims4wChange = Number.isFinite(prevEmployment.initialClaims4wChange) ? prevEmployment.initialClaims4wChange : null;
-  const continuingClaims = Number.isFinite(prevEmployment.continuingClaims) ? prevEmployment.continuingClaims : null;
-  const continuingClaims4wAverage = Number.isFinite(prevEmployment.continuingClaims4wAverage) ? prevEmployment.continuingClaims4wAverage : null;
+  const icsa = cachedClaimsWindow(prevEmployment.initialClaims, prevEmployment.initialClaims4wAverage,
+    prevEmployment.initialClaims4wChange, prevEmployment.claimsWindowEvidence?.icsa, isoNow);
+  const ccsa = cachedClaimsWindow(prevEmployment.continuingClaims, prevEmployment.continuingClaims4wAverage,
+    null, prevEmployment.claimsWindowEvidence?.ccsa, isoNow);
+  const initialClaims = icsa.level;
+  const initialClaims4wAverage = icsa.average;
+  const initialClaims4wChange = icsa.change;
+  const continuingClaims = ccsa.level;
+  const continuingClaims4wAverage = ccsa.average;
   const joltsOpenings = Number.isFinite(prevEmployment.joltsOpenings) ? prevEmployment.joltsOpenings : null;
   const joltsOpeningsYoY = Number.isFinite(prevEmployment.joltsOpeningsYoY) ? prevEmployment.joltsOpeningsYoY : null;
   const averageHourlyEarnings = Number.isFinite(prevEmployment.averageHourlyEarnings) ? prevEmployment.averageHourlyEarnings : null;
@@ -8147,6 +8153,9 @@ function normalizePreviousEmployment(prevEmployment) {
   const payroll = verifiedPayrollBasketFallback(prevEmployment, isoNow);
   const { industryPayrollDiffusionPct, industryPayrollPositiveCount, industryPayrollSeriesCount } = payroll;
   return {
+    claimsWindowEvidence: { icsa: icsa.evidence, ccsa: ccsa.evidence },
+    initialClaimsUpdatedAt: icsa.updatedAt,
+    continuingClaimsUpdatedAt: ccsa.updatedAt,
     initialClaims,
     initialClaims4wAverage,
     initialClaims4wChange,
@@ -8168,9 +8177,7 @@ function normalizePreviousEmployment(prevEmployment) {
     industryPayrollSeriesCount,
     industryPayrollUpdatedAt: payroll.industryPayrollUpdatedAt,
     industryPayrollMethod: payroll.industryPayrollMethod,
-    claimsRegime: typeof prevEmployment.claimsRegime === 'string' && prevEmployment.claimsRegime.trim()
-      ? prevEmployment.claimsRegime
-      : classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
+    claimsRegime: classifyClaimsRegime(initialClaims4wAverage, initialClaims4wChange),
     joltsRegime: typeof prevEmployment.joltsRegime === 'string' && prevEmployment.joltsRegime.trim()
       ? prevEmployment.joltsRegime
       : classifyJoltsRegime(joltsOpenings, joltsOpeningsYoY),
@@ -8909,6 +8916,7 @@ async function resolveEmploymentBreadth(prevEmployment) {
     u6: 'missing',
     industryPayroll: 'missing'
   };
+  const claimsWindowEvidence = { icsa: null, ccsa: null };
   let initialClaims = null;
   let initialClaims4wAverage = null;
   let initialClaims4wChange = null;
@@ -8942,32 +8950,35 @@ async function resolveEmploymentBreadth(prevEmployment) {
 
   if (icsaResult.status === 'fulfilled') {
     const rows = icsaResult.value;
-    initialClaims = latestValue(rows);
-    initialClaims4wAverage = averageRecentValues(rows, 4);
-    const prior4wAverage = averageRecentValues(rows, 4, 4);
-    initialClaims4wChange = Number.isFinite(initialClaims4wAverage) && Number.isFinite(prior4wAverage)
-      ? +(initialClaims4wAverage - prior4wAverage).toFixed(0)
-      : null;
-    initialClaimsUpdatedAt = latestDateIso(rows);
+    const window = claimsWindow(rows, isoNow);
+    initialClaims = window.level;
+    initialClaims4wAverage = window.average;
+    initialClaims4wChange = window.change;
+    initialClaimsUpdatedAt = window.updatedAt;
+    claimsWindowEvidence.icsa = window.evidence;
     status.icsa = 'live';
   } else if (Number.isFinite(fallback.initialClaims)) {
     initialClaims = fallback.initialClaims;
     initialClaims4wAverage = fallback.initialClaims4wAverage;
     initialClaims4wChange = fallback.initialClaims4wChange;
-    initialClaimsUpdatedAt = fallback.updatedAt;
+    initialClaimsUpdatedAt = fallback.initialClaimsUpdatedAt;
+    claimsWindowEvidence.icsa = fallback.claimsWindowEvidence.icsa;
     status.icsa = 'fallback';
   }
 
   if (ccsaResult.status === 'fulfilled') {
     const rows = ccsaResult.value;
-    continuingClaims = latestValue(rows);
-    continuingClaims4wAverage = averageRecentValues(rows, 4);
-    continuingClaimsUpdatedAt = latestDateIso(rows);
+    const window = claimsWindow(rows.slice(-4), isoNow);
+    continuingClaims = window.level;
+    continuingClaims4wAverage = window.average;
+    continuingClaimsUpdatedAt = window.updatedAt;
+    claimsWindowEvidence.ccsa = window.evidence;
     status.ccsa = 'live';
   } else if (Number.isFinite(fallback.continuingClaims)) {
     continuingClaims = fallback.continuingClaims;
     continuingClaims4wAverage = fallback.continuingClaims4wAverage;
-    continuingClaimsUpdatedAt = fallback.updatedAt;
+    continuingClaimsUpdatedAt = fallback.continuingClaimsUpdatedAt;
+    claimsWindowEvidence.ccsa = fallback.claimsWindowEvidence.ccsa;
     status.ccsa = 'fallback';
   }
 
@@ -9032,6 +9043,7 @@ async function resolveEmploymentBreadth(prevEmployment) {
   }
 
   return {
+    claimsWindowEvidence,
     initialClaims: Number.isFinite(initialClaims) ? initialClaims : null,
     initialClaims4wAverage: Number.isFinite(initialClaims4wAverage) ? +initialClaims4wAverage.toFixed(0) : null,
     initialClaims4wChange: Number.isFinite(initialClaims4wChange) ? initialClaims4wChange : null,
