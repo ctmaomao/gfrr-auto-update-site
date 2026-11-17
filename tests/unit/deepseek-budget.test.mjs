@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import {
   appendPriceReview, appendVerifiedSettlement, BUDGET_BRANCH, BUDGET_REPOSITORY,
+  createPrivateQuarantineInitializer, createPrivateBudgetRuntime, validatePrivateBudgetConfig,
   createDeepSeekBudget, createGithubLedger, createPrivateGithubLedger, verifyPrivateBudgetStatus, publicBudgetReport, DEEPSEEK_URL, digest, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
   prepareBootstrapLedger, prepareRequest, readDeepSeekBalance, summarizeLedger,
   validateBalance, validateLedger, validateTransition, verifyBudgetStatus, withDeepSeekBudget
@@ -871,7 +872,7 @@ test('two private clients share CAS across different keys, preserve pending and 
 
 
 test('private APIs remain absent from production callers and workflows', () => {
-  const names = /\b(?:createPrivateGithubLedger|verifyPrivateBudgetStatus)\b/u;
+  const names = /\b(?:createPrivateGithubLedger|verifyPrivateBudgetStatus|createPrivateQuarantineInitializer|createPrivateBudgetRuntime|validatePrivateBudgetConfig)\b/u;
   function scan(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const file = path.join(directory, entry.name);
@@ -974,4 +975,143 @@ test('private storage availability does not admit the unapproved manual consumer
     async () => { callbacks++; return response(); }), /price_review_required/);
   assert.equal(balances, 0); assert.equal(callbacks, 0);
   assert.equal(expired.calls.some(call => call.method === 'POST' || call.method === 'PATCH'), false);
+});
+
+
+// Synthetic lifecycle service. No actual keys, usage or provider/GitHub requests.
+function genesisService({ transform = value => value, existing = false } = {}) {
+  const calls = []; let content, blobSha, head = existing ? 'e'.repeat(40) : null;
+  const treeSha = 'a'.repeat(40), commitSha = 'b'.repeat(40);
+  const fetchImpl = async (url, init = {}) => {
+    const route = url.replace('https://api.github.com/repos/ctmaomao/gfrr-private-budget', '');
+    calls.push({ route, method: init.method || 'GET' });
+    let body, status = 200;
+    if (!route) body = { id: 1461088406, private: true, full_name: 'ctmaomao/gfrr-private-budget', owner: { login: 'ctmaomao' } };
+    else if (route === `/git/ref/heads/${BUDGET_BRANCH}`) { body = { ref: `refs/heads/${BUDGET_BRANCH}`, object: { sha: head } }; if (!head) status = 404; }
+    else if (route === '/git/trees') {
+      const t = JSON.parse(init.body); assert.deepEqual(Object.keys(t), ['tree']); assert.equal(t.tree.length, 1);
+      content = t.tree[0].content; blobSha = createHash('sha1').update(`blob ${Buffer.byteLength(content)}\0`).update(content).digest('hex');
+      body = { sha: treeSha }; status = 201;
+    } else if (route === '/git/commits') {
+      assert.deepEqual(JSON.parse(init.body).parents, []); body = { sha: commitSha }; status = 201;
+    } else if (route === `/git/commits/${commitSha}`) body = { sha: commitSha, tree: { sha: treeSha }, parents: [] };
+    else if (route === `/git/trees/${treeSha}`) body = { sha: treeSha, truncated: false, tree: [{ path: 'usage.json', mode: '100644', type: 'blob', sha: blobSha }] };
+    else if (route === `/git/blobs/${blobSha}`) body = { sha: blobSha, encoding: 'base64', content: Buffer.from(content).toString('base64') };
+    else if (route === '/git/refs') {
+      assert.equal(init.method, 'POST'); const b = JSON.parse(init.body); assert.deepEqual(b, { ref: `refs/heads/${BUDGET_BRANCH}`, sha: commitSha });
+      if (head) status = 422; else { head = b.sha; status = 201; } body = { ref: b.ref, object: { sha: head } };
+    } else assert.fail(`unexpected synthetic route ${route}`);
+    return transform(Response.json(body, { status, headers: { date: new Date(NOW).toUTCString() } }), route, body, status);
+  };
+  return { fetchImpl, calls, head: () => head };
+}
+const quarantine = () => prepareBootstrapLedger({ bootstrap: { ...bootstrap(), cutoverAt: new Date(NOW).toISOString() }, review: review() }, NOW);
+const initArgs = ledger => ({ ledger, approvedLedgerDigest: digest(ledger) });
+const initializer = (remote, now = () => NOW) => createPrivateQuarantineInitializer({ token: 'fake', fetchImpl: remote.fetchImpl, now });
+
+test('private initializer creates only authenticated parentless quarantine and is single use', async () => {
+  assert.equal('initializePrivate' in github().store(), false);
+  const r = genesisService(), init = initializer(r), ledger = quarantine();
+  const result = await init.initialize(initArgs(ledger));
+  assert.deepEqual(result, { genesisSha: 'b'.repeat(40), ledgerDigest: digest(ledger), status: 'quarantined' });
+  assert.equal(r.calls.filter(c => c.route === '/git/refs').length, 1);
+  for (let i = 1; i < r.calls.length; i++) if (r.calls[i].route) assert.equal(r.calls[i - 1].route, '');
+  assert.ok(r.calls.every(c => !['PATCH', 'DELETE'].includes(c.method)));
+  const count = r.calls.length; await assert.rejects(init.initialize(initArgs(ledger)), /private_store_hold/); assert.equal(r.calls.length, count);
+});
+
+test('private initializer rejects unapproved, backdated, nonquarantine, populated or expired candidates before any IO', async () => {
+  for (const change of [l => { l.bootstrap.cutoverAt = new Date(NOW - 1).toISOString(); },
+    l => { l.bootstrap.historicalDebitMicroCny = 0; }, l => { l.bootstrap.outstandingRequests = 1; },
+    l => { l.entries.push(reserve()); }, l => { l.reviews.push(review()); },
+    l => { l.reviews[0].expiresAt = new Date(NOW + 1).toISOString(); },
+    l => { l.bootstrap.history = 'reviewed-complete-history'; }]) {
+    const r = genesisService(), l = quarantine(); change(l);
+    await assert.rejects(initializer(r).initialize(initArgs(l)), /private_store_hold/); assert.equal(r.calls.length, 0);
+  }
+  const r = genesisService(); await assert.rejects(initializer(r).initialize({ ledger: quarantine(), approvedLedgerDigest: 'c'.repeat(64) }), /private_store_hold/);
+  assert.equal(r.calls.length, 0); assert.throws(() => createPrivateQuarantineInitializer({ token: 'fake' }), /private_store_hold/);
+});
+
+test('private initializer existing ref, corruption, lost acknowledgement and race never retry or repair', async () => {
+  const cases = [
+    { existing: true },
+    ...['/git/commits/', '/git/trees/', '/git/blobs/'].map(prefix => ({ transform: (r, route, body) => {
+      if (route.startsWith(prefix)) return Response.json({ ...body, ...(prefix.includes('commits') ? { parents: [{ sha: 'c'.repeat(40) }] } : prefix.includes('trees') ? { tree: [...body.tree, { path: 'extra' }] } : { content: Buffer.from('changed').toString('base64') }) }, { headers: { date: new Date(NOW).toUTCString() } }); return r;
+    } })),
+    { transform: (r, route) => { if (route === '/git/refs') throw new Error('PRIVATE_TOKEN_AND_RECEIPT'); return r; } },
+    { transform: (r, route) => route === '/git/refs' ? Response.json({}, { status: 422, headers: { date: new Date(NOW).toUTCString() } }) : r }
+  ];
+  for (const options of cases) {
+    const r = genesisService(options), init = initializer(r);
+    await assert.rejects(init.initialize(initArgs(quarantine())), { message: 'deepseek_budget_private_store_hold' });
+    const count = r.calls.length; await assert.rejects(init.initialize(initArgs(quarantine())), /private_store_hold/);
+    assert.equal(r.calls.length, count); assert.ok(r.calls.every(c => !['PATCH', 'DELETE'].includes(c.method)));
+  }
+});
+
+test('private initializer rechecks privacy and review expiry before sending financial bytes or creating ref', async () => {
+  for (let stop = 1; stop <= 8; stop++) {
+    let metadata = 0;
+    const r = genesisService({ transform: (res, route, body) => {
+      if (!route && ++metadata === stop) return Response.json({ ...body, private: false }, { headers: { date: new Date(NOW).toUTCString() } }); return res;
+    } });
+    await assert.rejects(initializer(r).initialize(initArgs(quarantine())), /private_store_hold/);
+    assert.equal(r.calls.at(-1).route, '');
+  }
+  let at = NOW, metadata = 0;
+  const r = genesisService({ transform: (res, route) => { if (!route && ++metadata === 2) at += 1000; return res; } });
+  const l = quarantine(); l.reviews[0].expiresAt = new Date(NOW + RETIREMENT_MARGIN_MS / 2 + 500).toISOString();
+  await assert.rejects(initializer(r, () => at).initialize(initArgs(l)), /private_store_hold/);
+  assert.equal(r.calls.filter(c => c.method === 'POST').length, 0);
+});
+
+function runtimeConfig(genesisSha) {
+  return { schemaVersion: 'private-budget-runtime-v1', genesisSha, approvedReviewDigest: digest(review()), bindings: [
+    { keyId: digest(key), environment: 'external-ai-production-refresh', consumer: 'macro-editorial', mode: 'automated' },
+    { keyId: digest('second-fake-key'), environment: 'external-ai-manual', consumer: 'bubble-editorial', mode: 'manual' }
+  ] };
+}
+test('private runtime config uses pinned exact tuples, immutable copies and no default network', async () => {
+  const r = github(fresh(), { privateTarget: true }), c = runtimeConfig(r.genesis), pin = digest(c);
+  const approved = validatePrivateBudgetConfig(c, pin); assert.equal(Object.isFrozen(approved.bindings[0]), true);
+  const run = createPrivateBudgetRuntime({ config: c, approvedConfigDigest: pin, token: 'fake', fetchImpl: r.fetchImpl, readBalance: async () => balance(), now: () => NOW });
+  c.bindings[0].keyId = digest('other'); c.genesisSha = 'f'.repeat(40);
+  await run({ ...context(), environment: 'external-ai-production-refresh' }, async () => response());
+  assert.equal((await r.store().read()).ledger.entries.length, 2);
+  assert.throws(() => createPrivateBudgetRuntime({ config: approved, approvedConfigDigest: pin }), /private_store_hold/);
+  assert.throws(() => validatePrivateBudgetConfig(approved, 'f'.repeat(64)), /private_store_hold/);
+  for (const changes of [{ mode: 'manual' }, { key: 'second-fake-key' }, { environment: 'external-ai-manual' }, { consumer: 'manual-external-ai' }]) {
+    const remote = github(fresh(), { privateTarget: true }), config = runtimeConfig(remote.genesis);
+    const gate = createPrivateBudgetRuntime({ config, approvedConfigDigest: digest(config), token: 'fake', fetchImpl: remote.fetchImpl, readBalance: async () => assert.fail('balance'), now: () => NOW });
+    await assert.rejects(gate({ ...context(), environment: 'external-ai-production-refresh', ...changes }, () => assert.fail('paid')), /private_store_hold/);
+    assert.equal(remote.calls.length, 0);
+  }
+});
+
+test('private runtime fresh full quarantine makes zero balance/provider calls and preserves shared ceiling', async () => {
+  const r = github(quarantine(), { privateTarget: true }), config = runtimeConfig(r.genesis);
+  const run = createPrivateBudgetRuntime({ config, approvedConfigDigest: digest(config), token: 'fake', fetchImpl: r.fetchImpl, readBalance: async () => assert.fail('balance'), now: () => NOW });
+  await assert.rejects(run({ ...context(), environment: 'external-ai-production-refresh' }, () => assert.fail('paid')), /private_store_hold/);
+  assert.equal(r.calls.filter(c => c.method === 'POST' || c.method === 'PATCH').length, 0);
+  assert.equal(summarizeLedger((await r.store().read()).ledger, NOW).reservedMicroCny, POLICY.capMicroCny);
+});
+
+test('private initializer clones approved bytes and refuses altered readback or late expiry before create-ref', async () => {
+  const l = quarantine(), original = digest(l);
+  const r = genesisService({ transform: (response, route) => { if (!route) l.bootstrap.historicalDebitMicroCny = 0; return response; } });
+  const result = await initializer(r).initialize({ ledger: l, approvedLedgerDigest: original });
+  assert.equal(result.ledgerDigest, original);
+  for (let step = 2; step <= 7; step++) {
+    let at = NOW, metadata = 0;
+    const remote = genesisService({ transform: (res, route) => { if (!route && ++metadata === step) at += 1000; return res; } });
+    const candidate = quarantine(); candidate.reviews[0].expiresAt = new Date(NOW + RETIREMENT_MARGIN_MS / 2 + 500).toISOString();
+    await assert.rejects(initializer(remote, () => at).initialize(initArgs(candidate)), /private_store_hold/);
+    assert.equal(remote.calls.filter(c => c.route === '/git/refs').length, 0);
+  }
+  for (const field of ['ref', 'object']) {
+    const remote = genesisService({ transform: (res, route, body) => route === '/git/refs'
+      ? Response.json({ ...body, [field]: field === 'ref' ? 'refs/heads/wrong' : { sha: 'f'.repeat(40) } }, { status: 201, headers: { date: new Date(NOW).toUTCString() } }) : res });
+    await assert.rejects(initializer(remote).initialize(initArgs(quarantine())), /private_store_hold/);
+  }
 });
