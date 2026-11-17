@@ -579,6 +579,13 @@ export function createDeepSeekBudget({ store, readBalance = readDeepSeekBalance,
   };
 }
 
+// Production log projection only; detailed internal callbacks/ledger stay unchanged.
+export function publicBudgetReport(row) {
+  const status = ['complete_unreconciled', 'failed_unknown', 'contract_hold', 'deepseek_budget_receipt_pending'].includes(row?.status)
+    ? row.status : 'hold';
+  return { status };
+}
+
 let runtime;
 export async function withDeepSeekBudget({ key, payload, consumer }, request) {
   const env = process.env;
@@ -594,7 +601,7 @@ export async function withDeepSeekBudget({ key, payload, consumer }, request) {
   if (!runtime) runtime = createDeepSeekBudget({
     store: createGithubLedger({ token: env.DEEPSEEK_BUDGET_GITHUB_TOKEN, genesisSha: env.DEEPSEEK_BUDGET_GENESIS_SHA }),
     approvedReviewDigest: env.DEEPSEEK_BUDGET_PRICE_REVIEW_SHA256,
-    report: row => console.log(`DeepSeek budget: ${JSON.stringify(row)}`)
+    report: row => console.log(`DeepSeek budget: ${JSON.stringify(publicBudgetReport(row))}`)
   });
   return runtime({ key, payload, consumer,
     mode: env.GITHUB_ACTIONS === 'true' && ['schedule', 'workflow_run'].includes(env.GITHUB_EVENT_NAME) ? 'automated' : 'manual',

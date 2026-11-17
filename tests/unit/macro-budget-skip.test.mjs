@@ -76,6 +76,7 @@ test('real CLI keeps API errors, transport errors and bad ledgers red, with zero
   for (const transport of [
     "return new Response('{}', { status: 503, headers: { date: new Date().toUTCString() } });",
     "throw new Error('SYNTHETIC_PRIVATE_TOKEN');",
+    "throw Object.assign(new Error('SYNTHETIC_PRIVATE_TOKEN'), { budgetCode: 'deepseek_budget_private_history' });",
     `const data = url.includes('/git/ref/') ? {object:{sha:'${sha}'}}
       : url.includes('/git/commits/') ? {sha:'${sha}',parents:[]}
       : {encoding:'base64',content:Buffer.from('{"private":"SYNTHETIC_PRIVATE_TOKEN"}').toString('base64')};
@@ -85,6 +86,7 @@ test('real CLI keeps API errors, transport errors and bad ledgers red, with zero
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.match(result.outputs, /budget_disposition=failure/u);
     assert.doesNotMatch(result.outputs + result.summary, /expected_skip/u);
+    assert.doesNotMatch(result.stdout + result.stderr + result.outputs + result.summary, /deepseek_budget_private_history/u);
   }
 });
 
@@ -118,6 +120,34 @@ test('valid monthly snapshot is eligible; stale review, depleted budget, corrupt
     assert.match(result.outputs, new RegExp(`budget_reason=${fixture.reason}`));
     assert.match(result.outputs, new RegExp(`budget_eligible=${fixture.status === 0}`));
     assert.doesNotMatch(result.outputs, /expected_skip/u);
+    const allOutput = result.stdout + result.stderr + result.outputs + result.summary;
+    assert.doesNotMatch(allOutput, /reservedMicroCny|remainingMicroCny|byConsumer|historicalDebitMicroCny|keyId|requestDigest|reservationId/u);
+    assert.ok(!allOutput.includes(sha));
+    if (fixture.status === 0) assert.match(result.stdout, /\{"admission":"eligible_snapshot_only"\}/u);
+  }
+});
+
+test('Actions refuses every sensitive prepare form before reading files or making any request', () => {
+  for (const operation of ['--prepare-bootstrap', '--prepare-one-shot', '--prepare-receipt-grant']) {
+    for (const args of [[operation], [operation, '/PRIVATE_INPUT', '--approved-record-digest', 'a'.repeat(64)]]) {
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import fs from 'node:fs';
+        let reads = 0, requests = 0;
+        const originalRead = fs.readFileSync;
+        fs.readFileSync = (file, ...rest) => {
+          if (file === '/PRIVATE_INPUT' || file === undefined) { reads++; throw new Error('PRIVATE_FILE_CONTENT'); }
+          return originalRead(file, ...rest);
+        };
+        globalThis.fetch = () => { requests++; throw new Error('PRIVATE_NETWORK'); };
+        process.argv = [process.execPath, ${JSON.stringify(cli)}, ...${JSON.stringify(args)}];
+        process.on('exit', () => console.log(JSON.stringify({ reads, requests })));
+        await import(${JSON.stringify(cli)});
+      `], { encoding: 'utf8', timeout: 15000, env: { PATH: process.env.PATH, GITHUB_ACTIONS: 'true' } });
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /deepseek_budget_private_snapshot_unproven/u);
+      assert.match(result.stdout, /"reads":0,"requests":0/u);
+      assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_/u);
+    }
   }
 });
 
@@ -295,4 +325,28 @@ test('both real publication CLI modes stop before deployment metadata on verifie
       } finally { fs.rmSync(root, { recursive: true, force: true }); }
     }
   }
+});
+
+
+test('local offline bootstrap preparation retains its explicit ledger output without network', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'budget-local-prepare-'));
+  try {
+    const now = Date.now(), file = path.join(root, 'synthetic.json');
+    const input = { bootstrap: { cutoverAt: new Date(now - 120000).toISOString(), evidenceSha256: 'c'.repeat(64),
+      history: 'full-cap-quarantine', currency: 'CNY', historicalDebitMicroCny: 10000000,
+      outstandingRequests: 0, ungatedConsumersDisabled: true },
+    review: { policyDigest: POLICY_DIGEST, verifiedAt: new Date(now - 60000).toISOString(),
+      expiresAt: new Date(now + 3600000).toISOString(), evidenceSha256: 'd'.repeat(64) } };
+    fs.writeFileSync(file, JSON.stringify(input));
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      globalThis.fetch = () => { throw new Error('NO_NETWORK'); };
+      process.argv = [process.execPath, ${JSON.stringify(cli)}, '--prepare-bootstrap', ${JSON.stringify(file)}, '--approved-record-digest', 'a'.repeat(64)];
+      await import(${JSON.stringify(cli)});
+    `], { encoding: 'utf8', timeout: 15000, env: { PATH: process.env.PATH } });
+    assert.equal(result.status, 0, result.stderr);
+    const resultBody = JSON.parse(result.stdout);
+    assert.equal(resultBody.operation, 'offline_bootstrap_plan');
+    assert.deepEqual(resultBody.ledger.bootstrap, input.bootstrap);
+    assert.equal(resultBody.writes, 0); assert.equal(resultBody.providerCalls, 0);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
   appendPriceReview, appendVerifiedSettlement, BUDGET_BRANCH, BUDGET_REPOSITORY,
-  createDeepSeekBudget, createGithubLedger, createPrivateGithubLedger, verifyPrivateBudgetStatus, DEEPSEEK_URL, digest, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
+  createDeepSeekBudget, createGithubLedger, createPrivateGithubLedger, verifyPrivateBudgetStatus, publicBudgetReport, DEEPSEEK_URL, digest, POLICY, POLICY_DIGEST, RETIREMENT_MARGIN_MS,
   prepareBootstrapLedger, prepareRequest, readDeepSeekBalance, summarizeLedger,
   validateBalance, validateLedger, validateTransition, verifyBudgetStatus, withDeepSeekBudget
 } from '../../scripts/lib/deepseek-budget.mjs';
@@ -894,4 +894,25 @@ test('private write errors hide transport details and cannot initialize or dispa
   assert.equal(remote.getHead(), remote.genesis);
   assert.equal(remote.calls.some(c => c.method === 'PATCH'), false);
   assert.deepEqual(Object.keys(store).sort(), ['assertClock', 'read', 'write']);
+});
+
+
+test('production budget report projection is fixed and leaves receipt accounting unchanged', async () => {
+  for (const status of ['complete_unreconciled', 'failed_unknown', 'contract_hold', 'deepseek_budget_receipt_pending']) {
+    assert.deepEqual(publicBudgetReport({ status, consumer: 'PRIVATE_CONSUMER', reservationId: 'PRIVATE_ID', reservedMicroCny: 2161152 }), { status });
+  }
+  assert.deepEqual(publicBudgetReport({ status: 'deepseek_budget_private_history' }), { status: 'hold' });
+  assert.deepEqual(publicBudgetReport(null), { status: 'hold' });
+  for (const failed of [false, true]) {
+    const store = memory(), reports = [];
+    const run = gate(store, { report: row => reports.push(publicBudgetReport(row)) })(context(), async () => {
+      if (failed) throw new Error('PRIVATE_PROVIDER_MESSAGE'); return response();
+    });
+    if (failed) await assert.rejects(run, /PRIVATE_PROVIDER_MESSAGE/); else await run;
+    assert.deepEqual(reports, [{ status: failed ? 'failed_unknown' : 'complete_unreconciled' }]);
+    assert.equal((await store.read()).ledger.entries.length, 2);
+    assert.equal(summarizeLedger((await store.read()).ledger, NOW).reservedMicroCny, POLICY.reserveMicroCny);
+  }
+  const source = fs.readFileSync('scripts/lib/deepseek-budget.mjs', 'utf8');
+  assert.match(source, /report: row => console\.log\(`DeepSeek budget: \$\{JSON\.stringify\(publicBudgetReport\(row\)\)\}`\)/u);
 });
