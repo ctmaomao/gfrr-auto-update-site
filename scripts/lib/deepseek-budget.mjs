@@ -396,7 +396,8 @@ export function createGithubLedger(options) {
 
 // Shared transport only. Accounting contracts remain separate and fixed by callers.
 export function createGithubLedgerStore({ token, genesisSha, fetchImpl = fetch, now = Date.now }, { branch, validateLedger, validateTransition, validateGenesis = snapshot => snapshot.parents.length === 0 }) {
-  return createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { branch, validateLedger, validateTransition, validateGenesis });
+  const store = createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { branch, validateLedger, validateTransition, validateGenesis });
+  return { read: store.read, write: store.write, assertClock: store.assertClock };
 }
 
 const PRIVATE_LEDGER_TARGET = Object.freeze({ repository: 'ctmaomao/gfrr-private-budget', id: 1461088406, owner: 'ctmaomao' });
@@ -428,6 +429,76 @@ export async function verifyPrivateBudgetStatus(options) {
   } catch { return { admission: 'hold' }; }
 }
 
+/** Explicit offline-only lifecycle surface. No environment/default network, CLI or workflow wiring. */
+export function createPrivateQuarantineInitializer({ token, fetchImpl, now = Date.now } = {}) {
+  let store, earliestCutover;
+  try {
+    earliestCutover = time(now());
+    if (typeof fetchImpl !== 'function') fail('private_store_hold');
+    store = createFixedGithubLedgerStore({ token, genesisSha: '0'.repeat(40), fetchImpl, now },
+      { branch: BUDGET_BRANCH, validateLedger, validateTransition, validateGenesis: () => false }, PRIVATE_LEDGER_TARGET);
+  } catch { fail('private_store_hold'); }
+  let used = false;
+  return Object.freeze({ async initialize({ ledger, approvedLedgerDigest } = {}) {
+    if (used) fail('private_store_hold');
+    used = true; // Every attempt, including an uncertain acknowledgement, is terminal.
+    try {
+      const candidate = structuredClone(ledger);
+      const check = () => {
+        const at = time(now());
+        validateLedger(candidate, at);
+        if (!HEX.test(approvedLedgerDigest || '') || digest(candidate) !== approvedLedgerDigest
+          || candidate.bootstrap.history !== 'full-cap-quarantine' || candidate.entries.length !== 0
+          || candidate.reviews.length !== 1 || Date.parse(candidate.bootstrap.cutoverAt) < earliestCutover
+          || at - Date.parse(candidate.bootstrap.cutoverAt) > POLICY.maxBootstrapEvidenceAgeMs) fail('bootstrap_unproven');
+        activeReview(candidate, digest(candidate.reviews[0]), at);
+      };
+      check();
+      return await store.initializePrivate(candidate, check);
+    } catch { fail('private_store_hold'); }
+  } });
+}
+
+// Config pins exact tuples, not a Cartesian product of independently allowed identities.
+export function validatePrivateBudgetConfig(config, approvedConfigDigest) {
+  try {
+    const c = structuredClone(config);
+    if (!exact(c, 'schemaVersion,genesisSha,approvedReviewDigest,bindings')
+      || c.schemaVersion !== 'private-budget-runtime-v1' || !SHA.test(c.genesisSha || '')
+      || !HEX.test(c.approvedReviewDigest || '') || !HEX.test(approvedConfigDigest || '')
+      || digest(c) !== approvedConfigDigest || !Array.isArray(c.bindings) || !c.bindings.length || c.bindings.length > 8) fail('private_store_hold');
+    const seen = new Set();
+    for (const b of c.bindings) {
+      if (!exact(b, 'keyId,environment,consumer,mode') || !HEX.test(b.keyId || '')
+        || !['external-ai-manual', 'external-ai-production-refresh'].includes(b.environment)
+        || !CONSUMERS.includes(b.consumer) || !['manual', 'automated'].includes(b.mode)
+        || (b.environment === 'external-ai-manual' && b.mode !== 'manual') || seen.has(digest(b))) fail('private_store_hold');
+      seen.add(digest(b)); Object.freeze(b);
+    }
+    Object.freeze(c.bindings); return Object.freeze(c);
+  } catch { fail('private_store_hold'); }
+}
+
+export function createPrivateBudgetRuntime({ config, approvedConfigDigest, token, fetchImpl, readBalance, now = Date.now } = {}) {
+  try {
+    const c = validatePrivateBudgetConfig(config, approvedConfigDigest);
+    if (typeof fetchImpl !== 'function' || typeof readBalance !== 'function') fail('private_store_hold');
+    const store = createPrivateGithubLedger({ token, genesisSha: c.genesisSha, fetchImpl, now });
+    const run = createDeepSeekBudget({ store, readBalance, approvedReviewDigest: c.approvedReviewDigest, now });
+    let stopped = false;
+    return async (context, request) => {
+      if (stopped) fail('private_store_hold');
+      try {
+        const ctx = structuredClone(context);
+        if (!exact(ctx, 'key,payload,consumer,mode,runId,environment') || typeof ctx.key !== 'string'
+          || !c.bindings.some(b => b.keyId === digest(ctx.key) && b.environment === ctx.environment
+            && b.consumer === ctx.consumer && b.mode === ctx.mode)) fail('private_store_hold');
+        return await run(ctx, request);
+      } catch { stopped = true; fail('private_store_hold'); }
+    };
+  } catch { fail('private_store_hold'); }
+}
+
 function createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { branch, validateLedger, validateTransition, validateGenesis }, target) {
   if (!token) fail('credentials_missing');
   if (!SHA.test(genesisSha || '')) fail('uninitialized');
@@ -443,7 +514,7 @@ function createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { b
   };
   const validateDate = observedAt => { assertClock(observedAt); lastObservedDate = observedAt; };
   const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' };
-  const api = async (path, method = 'GET', body) => {
+  const api = async (path, method = 'GET', body, guard = () => {}) => {
     if (target) {
       // Recheck before every operation, including before transmitting ledger bytes.
       // Administrator changes after this check remain outside this client guarantee.
@@ -451,6 +522,7 @@ function createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { b
       if (metadata.status !== 200 || metadata.json?.id !== target.id || metadata.json?.private !== true
         || metadata.json?.full_name !== target.repository || metadata.json?.owner?.login !== target.owner) fail('private_store_hold');
     }
+    guard();
     return boundedJson(fetchImpl, `${base}${path}`, { method, headers,
       ...(body ? { body: JSON.stringify(body) } : {}) }, validateDate);
   };
@@ -464,6 +536,37 @@ function createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { b
     return { ledger, parents: commit.json.parents };
   }
   return {
+    async initializePrivate(ledger, check) {
+      if (target !== PRIVATE_LEDGER_TARGET) fail('private_store_hold');
+      const guardedApi = async (path, method = 'GET', body) => { check(); const result = await api(path, method, body, check); check(); return result; };
+      const absent = await guardedApi(`/git/ref/heads/${branch}`);
+      if (absent.status !== 404) fail('private_store_hold');
+      const content = JSON.stringify(ledger);
+      const blobSha = createHash('sha1').update(`blob ${Buffer.byteLength(content)}\0`).update(content).digest('hex');
+      const tree = await guardedApi('/git/trees', 'POST', { tree: [{ path: 'usage.json', mode: '100644', type: 'blob', content }] });
+      if (tree.status !== 201 || !SHA.test(tree.json?.sha || '')) fail('private_store_hold');
+      const commit = await guardedApi('/git/commits', 'POST', { message: 'Initialize quarantined private budget', tree: tree.json.sha, parents: [] });
+      if (commit.status !== 201 || !SHA.test(commit.json?.sha || '')) fail('private_store_hold');
+      // Authenticate the immutable objects BEFORE publishing any ref.
+      const saved = await guardedApi(`/git/commits/${commit.json.sha}`);
+      if (saved.status !== 200 || saved.json?.sha !== commit.json.sha || saved.json?.tree?.sha !== tree.json.sha
+        || !Array.isArray(saved.json.parents) || saved.json.parents.length !== 0) fail('private_store_hold');
+      const savedTree = await guardedApi(`/git/trees/${tree.json.sha}`);
+      if (savedTree.status !== 200 || savedTree.json?.sha !== tree.json.sha || savedTree.json.truncated !== false
+        || !Array.isArray(savedTree.json.tree) || savedTree.json.tree.length !== 1) fail('private_store_hold');
+      const entry = savedTree.json.tree[0];
+      if (entry.path !== 'usage.json' || entry.mode !== '100644' || entry.type !== 'blob' || entry.sha !== blobSha) fail('private_store_hold');
+      const blob = await guardedApi(`/git/blobs/${blobSha}`);
+      if (blob.status !== 200 || blob.json?.sha !== blobSha || blob.json.encoding !== 'base64'
+        || typeof blob.json.content !== 'string' || Buffer.from(blob.json.content, 'base64').toString('utf8') !== content) fail('private_store_hold');
+      // POST create is the race arbiter. Never PATCH, force, retry or repair.
+      const created = await guardedApi('/git/refs', 'POST', { ref: `refs/heads/${branch}`, sha: commit.json.sha });
+      if (created.status !== 201 || created.json?.ref !== `refs/heads/${branch}` || created.json?.object?.sha !== commit.json.sha) fail('private_store_hold');
+      const readback = await guardedApi(`/git/ref/heads/${branch}`);
+      if (readback.status !== 200 || readback.json?.ref !== `refs/heads/${branch}` || readback.json?.object?.sha !== commit.json.sha) fail('private_store_hold');
+      assertClock();
+      return Object.freeze({ genesisSha: commit.json.sha, ledgerDigest: digest(ledger), status: 'quarantined' });
+    },
     async read() {
       const ref = await api(`/git/ref/heads/${branch}`);
       if (ref.status === 404) fail('uninitialized');
@@ -505,8 +608,7 @@ function createFixedGithubLedgerStore({ token, genesisSha, fetchImpl, now }, { b
       assertClock();
       return true;
     }
-    // Deliberately no initialize() or force-write. prepareBootstrapLedger is an
-    // offline plan; one-time root creation and protection are operator actions.
+    // Public factories never expose initializePrivate; no force-write exists.
   };
 }
 
