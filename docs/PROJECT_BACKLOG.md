@@ -4,7 +4,7 @@
 
 ## Section 1 · 维护状态
 
-核对基线：2026-11-15 main `d14055f7`，含 #503、#569–#577。下表与当前条目区分代码合并、自然产物和线上验收；未列出的账户激活、来源健康及后续运行不作保证。原实施过程与当时的待审状态保留在[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)，不得把其中旧“待发布”当作当前状态。
+维护基线：2026-11-17 main `23c16785`；本轮仅复核 #637–#640 的合并、CI、Pages 与自然采用状态（见[验收快照](#recent-data-fix-acceptance)），不表示其余条目已重新验收。原2026-11-15基线 `d14055f7` 含 #503、#569–#577。下表与当前条目区分代码合并、自然产物和线上验收；未列出的账户激活、来源健康及后续运行不作保证。原实施过程与当时的待审状态保留在[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)，不得把其中旧“待发布”当作当前状态。
 
 | 项 | 当前依据 / 职责 |
 |---|---|
@@ -24,13 +24,27 @@
 
 ### 当前实施与真实等待
 
-- **中国官方数值缺失类型**：仅收紧ChinaBond/CFETS及中国CPI/PPI/PMI缓存共用数值helper，拒绝null、空白、布尔及容器转0/数组转数；真实零、负数及正常字符串保持。无缓存fallback返回missing而非再次解引用抛错，缺失不伪造成0或BIS/SDR零值。当前生产正常值未证明错误；来源、取数、时效、评分及历史不变。实际resolver/cache/render回归、独审、全套、精确CI与自然采用分别核验。
+- **中国官方数值缺失类型**：仅收紧ChinaBond/CFETS及中国CPI/PPI/PMI缓存共用数值helper，拒绝null、空白、布尔及容器转0/数组转数；真实零、负数及正常字符串保持。无缓存fallback返回missing而非再次解引用抛错，缺失不伪造成0或BIS/SDR零值。当前生产正常值未证明错误；来源、取数、时效、评分及历史不变。当前验收与下一步见[近期修复验收快照](#recent-data-fix-acceptance)。
 
-- **Claims连续周窗口**：ICSA/CCSA四周均值要求连续7日观察，初请变化要求连续8周；缺周不挪用更老行。缓存有可回算窗口证明才续用均值/变化与原时钟，否则仅留水平并重算regime。CARTS共享行均值、来源请求、主评分及生产历史不动。合成缺周会触发旧+25k/明显走弱；当前官方均值195250/1707750正常。专项、下游缺失、独审、全套、精确CI及自然采用分别验收。
+- **Claims连续周窗口**：ICSA/CCSA四周均值要求连续7日观察，初请变化要求连续8周；缺周不挪用更老行。缓存有可回算窗口证明才续用均值/变化与原时钟，否则仅留水平并重算regime。CARTS共享行均值、来源请求、主评分及生产历史不动。合成缺周会触发旧+25k/明显走弱；当前官方均值195250/1707750正常。当前验收与下一步见[近期修复验收快照](#recent-data-fix-acceptance)。
 
-- **UMCSENT日历月与解释缺失**：前值/3月/6月变化按各自精确月份，不以90/180日最近点伪造；缓存原月/参照回算，无证明不续用变化或稳定标签。保留源要求1个月延迟的观察月，不误报当前Sep48.1/Jun49.5=-1.4。PMI、主评分、请求与历史不动；背离展示check标数据不足并排除平均，规则/交叉验证缺证据时降级。实际下游回归、独审、全套、CI及自然采用分别验收。
+- **UMCSENT日历月与解释缺失**：前值/3月/6月变化按各自精确月份，不以90/180日最近点伪造；缓存原月/参照回算，无证明不续用变化或稳定标签。保留源要求1个月延迟的观察月，不误报当前Sep48.1/Jun49.5=-1.4。PMI、主评分、请求与历史不动；背离展示check标数据不足并排除平均，规则/交叉验证缺证据时降级。当前验收与下一步见[近期修复验收快照](#recent-data-fix-acceptance)。
 
-- **CPI 日历同比与缓存参照（2026-11-17）**：仅在同一日历月上年观测/紧邻前月存在时计算同比/环比，不以365日附近的相邻月替代；重复月/无效顺序拒绝。原始观察与参照值按headline/core分别保存，仅可回算的缓存比较保留原系列时钟，旧无证明缓存只留指数；不改来源请求、WTI、评分、前端或生产历史。缺月/零/闰月/缓存回归、独审、完整检查、精确CI及下一自然Daily分别验收；潜在缺陷可离线复现，未证明当前实样错报。
+- **CPI 日历同比与缓存参照（2026-11-17）**：仅在同一日历月上年观测/紧邻前月存在时计算同比/环比，不以365日附近的相邻月替代；重复月/无效顺序拒绝。原始观察与参照值按headline/core分别保存，仅可回算的缓存比较保留原系列时钟，旧无证明缓存只留指数；不改来源请求、WTI、评分、前端或生产历史。潜在缺陷可离线复现，未证明当前实样错报；当前验收与下一步见[近期修复验收快照](#recent-data-fix-acceptance)。
+
+<a id="recent-data-fix-acceptance"></a>
+
+**#637–#640 验收快照（2026-11-17 UTC）**：四项本地完整检查、专项与独立审阅已通过，PR 已合并，以下精确 head CI 与 merge SHA 的 Pages 部署均成功。**代码交付完成；下一自然 Daily 生产采用仍待验收**。此前过程文字保留于[本轮修改前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/23c167856d3c69c0ae5b68d264f76d3301b42d43/docs/PROJECT_BACKLOG.md)。
+
+| 修复 | 已合并 / CI / Pages证据 | 自然采用验收条件 |
+|---|---|---|
+| [#637 CPI](https://github.com/ctmaomao/gfrr-auto-update-site/pull/637) | `11fe9d2e`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44080248624)；[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44081689347) | 新产物含逐系列 `comparisonEvidence`，原观察/同比/环比参照可回算，缺参照不假造比较 |
+| [#638 UMCSENT](https://github.com/ctmaomao/gfrr-auto-update-site/pull/638) | `026927fc`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44088369248)；[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44089817795) | `sentimentReferences` 与1/3/6日历月一致；缺失比较/缓存降级及原观察月正确 |
+| [#639 Claims](https://github.com/ctmaomao/gfrr-auto-update-site/pull/639) | `e8a214d3`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44098147986)；[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44100105726) | `claimsWindowEvidence` 支持连续4/8周；均值/变化可回算，缺失不借旧行或组合时钟 |
+| [#640 中国数值](https://github.com/ctmaomao/gfrr-auto-update-site/pull/640) | `a7efaee0`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44119170392)；[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44120787670) | 无新增身份字段，须确认自然Daily实际使用包含修复的代码并完成生成/校验/提交；正常值本身不能证明缺失分支被触发 |
+
+- **最后已核实的Daily产物**：[运行44018873993](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44018873993)于2026-11-17 04:41 UTC启动并成功，产物提交 `3bad022f`（04:46 UTC）早于上述四项合并。`radar-data.json.updatedAt=2026-11-17T04:41:50.344Z`；两站SHA256均为 `9a3b743a43ae804fdec8a68833846597403a1fd0e01a68ecb27066c4309079d2`，三个新证据字段均未出现。两站一致已核实，修复自然采用未核实，不是发布不一致。
+- **剩余工作/阻塞条件**：等待下一次自然Daily；核对实际代码、生成/校验/提交及两站对应产物，再更新此处。Bubble、thermal、realtime的单独刷新或Pages绿色不能代替Daily采用。若自然数据没有缺失异常，应分开记录“新代码已采用”和“异常分支仅离线验证”，不制造异常或重写生产历史以验收。本轮不触发取数、不修改自动化定义。
 
 - **DeepSeek 私有账本离线生命周期**：授权基线仅显式注入 initializer/runtime factory 与合成测试，不改 workflow、默认路由、凭据或真实账本。初始化只接受独立摘要固定的全额 quarantine、真实新 cutover、单条现价复核；create-only 父less/sole-file 读回与失败 HOLD。独审、全套及后续发布尚待；历史排空、最小权限、实际接线与启用仍独立阻断，见 [ADR-0121](ADR/0121-private-budget-offline-store.md)。
 
