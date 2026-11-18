@@ -1,0 +1,60 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-5nXUMPaCmVPz485bLJ3qZkPdSDgbur6ZwyPYF9TJ0jA='; style-src 'sha256-gLX0delKBRwAvOl0hqLAK0I1Yo6eNQ3GxV9jo4ZUjG8='; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brave 单次测试 · 私有记录助手</title><style>body{font:16px/1.6 system-ui,sans-serif;max-width:850px;margin:36px auto;padding:0 20px;color:#17202a;background:#f7f9fb}h1{font-size:26px}section{background:white;padding:22px;margin:20px 0;border:1px solid #d7dee6;border-radius:10px}label{display:block;margin:14px 0}input:not([type=checkbox]),textarea{box-sizing:border-box;width:100%;padding:9px;border:1px solid #8996a5;border-radius:5px;font:14px/1.5 monospace}input[type=checkbox]{margin-right:8px}button{padding:10px 16px;margin-right:12px}small{display:block;color:#4c5a67}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.warn{border-left:5px solid #a66408;padding-left:15px}textarea{min-height:100px}#output,#evidence{min-height:160px}</style></head><body><fieldset id="privateArea" disabled><h1>Brave 单次测试 · 私有记录助手</h1><p>仅在本人电脑离线使用。此文件不联网、不读剪贴板、不自动保存、不发送。<strong>这里绝不能输入 API key 或密码。</strong>关闭页面会丢失输入。</p><p class="warn">本工具只计算格式和摘要，无法证明账户事实。五条日常调用仍关闭；通过后也最多尝试一次。必须等助手提供已审查的 main SHA，不能用旧版本替代。</p>
+<section><h2>1. 本人核实并取得指纹</h2><p>在官方 Brave 控制台同一次登录中，确认当前账户身份、实际 key 属于 Search / Postpaid，以及保存的 Free credits only 已启用且覆盖所有 Search keys。不要修改付款或额度设置。</p><p>若页面没有非秘密指纹，可用下方 PowerShell 在本人本机计算。必须是无录屏、无转录的私有会话；不要关闭组织强制审计。只在隐藏提示出现后输入实际 key，绝不要把 key 写进命令。若有云剪贴板或历史，不要复制 key，直接本人输入。不要把原 key、输出指纹或生成记录发到聊天或公开仓库。</p><details><summary>显示本地 PowerShell 指纹步骤（代码不含真实 key）</summary><pre>$secret = Read-Host '输入 Brave key（隐藏输入）' -AsSecureString
+$ptr = [IntPtr]::Zero
+$raw = $null; $bytes = $null; $sha = $null
+try {
+  $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret)
+  $raw = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+  if ([string]::IsNullOrEmpty($raw) -or $raw -match '\s') { throw '输入为空或包含空白。' }
+  $bytes = [Text.Encoding]::UTF8.GetBytes($raw)
+  $sha = [Security.Cryptography.SHA256]::Create()
+  $digest = $sha.ComputeHash($bytes)
+  (($digest | ForEach-Object { $_.ToString('x2') }) -join '').Substring(0,16)
+} finally {
+  if ($bytes) { [Array]::Clear($bytes,0,$bytes.Length) }
+  if ($sha) { $sha.Dispose() }
+  if ($ptr -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
+  $raw = $null; $secret.Dispose()
+}</pre><p>仅将输出的 16 位小写指纹填到下方。完成后关闭 PowerShell。计算中会短暂存在明文内存，不能保证消除所有内存副本。</p></details></section>
+<section><h2>2. 填入本次实际观察</h2><p>不要猜测，也不要复用旧截图。所有时间使用 UTC，例如 2026-11-18T04:30:00.000Z。保护截止必须有依据；不清楚就停止。授权可选更早的短期限，绝不超过观察后 24 小时。</p><label>当前登录账户显示的邮箱（保持原大小写）<input disabled id="email" type="text" autocomplete="off" spellcheck="false"></label><label>实际 key 的 16 位小写指纹，不是 key<input disabled id="fingerprint" type="text" autocomplete="off" spellcheck="false" maxlength="16"></label><label>助手提供的已独立审查 main SHA（40 位）<input disabled id="sha" type="text" autocomplete="off" spellcheck="false"></label><label>真实观察时间 UTC（可用下方按钮）<input disabled id="observed" type="text" autocomplete="off" spellcheck="false"></label><label>本次授权截止 UTC（建议在可核实范围内取较短期限）<input disabled id="expiry" type="text" autocomplete="off" spellcheck="false"></label><label>有证据支持的费用保护截止 UTC<input disabled id="protection" type="text" autocomplete="off" spellcheck="false"></label><label>本月实际显示请求次数<input disabled id="requests" type="text" autocomplete="off" spellcheck="false"></label><label>本月用量费用 USD（两位小数）<input disabled id="cost" type="text" autocomplete="off" spellcheck="false"></label><label>本月免费额度 USD（两位小数）<input disabled id="credit" type="text" autocomplete="off" spellcheck="false"></label><label>实际自付金额 USD（须为 0.00）<input disabled id="paid" type="text" autocomplete="off" spellcheck="false"></label><p>控制台只需查四个数字：本月请求次数、用量费用、免费额度、实际自付金额（均以 USD 为准）。先填有根据的保护截止，再按此按钮，可免手算观察和授权时间。不要用此按钮给旧观察重新盖时间戳。</p><button disabled id="justObserved" type="button">我刚核对完页面，取此刻 UTC</button><label>真实保护截止依据（必填，无需凑字数）。如另有核验来源或关联说明，可一并记录。勿输入任何 key、密码或含令牌链接。<textarea disabled id="notes" autocomplete="off" spellcheck="false"></textarea></label></section><section><h2>3. 逐项确认后生成</h2><label><input disabled id="identity" type="checkbox">本人核对了当前真实登录身份和 Search / Postpaid 计划。</label><label><input disabled id="association" type="checkbox">指纹来自本人刚刚核对的该计划实际 key；不是标签、遮蔽字符串或旧日志。</label><label><input disabled id="hardstop" type="checkbox">本人核对了已保存且启用的全 Search keys 免费硬停，当前自付为零，额度未用完。</label><label><input disabled id="reviewed" type="checkbox">助手已独立审查代码并给出此 main SHA；本次观察与截止依据真实，未把勾选当作事实证明。</label><label><input disabled id="private" type="checkbox">我会私下保管核验记录；仅本人将续期 JSON 存入指定 GitHub Secret，不公开或发送原 key。</label><button disabled id="generate" type="button">本地生成私有记录</button><button disabled id="clear" type="button">清空全部</button><p id="message" role="status">尚未生成。</p></section><section><h2>4. 本人保存，不自动提交</h2><p>记录名称：<code>BRAVE_BUDGET_RENEWAL_CHAIN</code>。在助手交接的 GitHub Actions Secret 页面，由本人手动选择并复制下方第一框，填入该记录并点击 Add secret。若平台拒绝，不改用其他渠道。本工具无自动复制按钮。</p><label>私有续期 JSON（仅此框用于 GitHub Secret）<textarea disabled id="output" readonly autocomplete="off" spellcheck="false"></textarea></label><p>其中 requestLimit=50 仅保留既有结构上界；专用持久账本互锁才限制本次最多一次，不授权 50 次或日常调用。代码仍会重新检查过期、真实生产 key、旧证明与账本。</p><label>本次规范化核验原记录（本人私下保管，用于验证摘要；不要贴到公开仓库）<textarea disabled id="evidence" readonly autocomplete="off" spellcheck="false"></textarea></label><p>不需要提供旧 proof、nonce 或原始 API key。生成不表示远端已保存、预检成功、已写账本或已发出测试请求。</p></section></fieldset><script>"use strict";
+const ids=['email','fingerprint','sha','observed','expiry','protection','requests','cost','credit','paid','notes','identity','association','hardstop','reviewed','private'];
+let revision=0;
+const get=id=>document.getElementById(id);
+const message=get('message'), output=get('output'), evidence=get('evidence');
+function clear(){revision++;output.value='';evidence.value='';message.textContent='尚未生成。任何输入变化都会清除旧输出。';}
+for(const id of ids)get(id).addEventListener('input',clear);
+const bad=s=>{throw new Error(s);};
+const money=s=>{if(!/^(0|[1-9][0-9]{0,8})\.[0-9]{2}$/.test(s))bad('金额请用两位小数，例如 0.00。');return BigInt(s.replace('.',''));};
+const date=s=>{const n=Date.parse(s);if(!Number.isFinite(n)||new Date(n).toISOString()!==s)bad('时间必须为精确 UTC 格式：YYYY-MM-DDTHH:mm:ss.sssZ。');return n;};
+async function hash(s){if(!globalThis.crypto?.subtle)bad('此浏览器不支持本地安全哈希。请在现代 Chrome / Edge 中以本地文件打开，不要上传网页。');return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');}
+async function buildRecord(v,now=Date.now()){
+ if(globalThis.location?.protocol!=='file:')bad('仅允许本机 file:// 文件。请下载后本地打开，不要上传或在网站中运行。');
+ if(!Number.isFinite(now))bad('本机时钟不可用。');
+ if(!['identity','association','hardstop','reviewed','private'].every(k=>v[k]===true))bad('请逐项核实后勾选；不确定就停止，不能用勾选代替核实。');
+ if(typeof v.email!=='string'||v.email!==v.email.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email))bad('输入当前账户实际显示的邮箱，保留原大小写，不添空格。');
+ if(!/^[a-f0-9]{16}$/.test(v.fingerprint))bad('只接受 16 位小写十六进制指纹。严禁输入 API key。');
+ if(!/^[a-f0-9]{40}$/.test(v.sha))bad('请填写助手独立审查后提供的完整 main SHA，不要自行猜测。');
+ const at=date(v.observed),end=date(v.expiry),protect=date(v.protection);
+ if(at<=Date.parse('2026-11-17T23:00:00.000Z')||at>now||now-at>86400000)bad('观察必须真实、在旧授权截止之后且不在未来，距现在不超过 24 小时。');
+ if(end<=now+60000||end<=at||end-at>86400000||end>protect||protect<=at)bad('授权须尚有至少一分钟、在观察后 24 小时内，且不超过有根据的保护截止。');
+ if(!/^(0|[1-9][0-9]*)$/.test(v.requests)||!Number.isSafeInteger(Number(v.requests)))bad('请求次数必须为实际显示的非负整数。');
+ const used=money(v.cost),credit=money(v.credit),paid=money(v.paid);
+ if(credit<=0n||used>=credit||paid!==0n)bad('额度已耗尽、实际付费非零或金额不明：不能生成。');
+ if(typeof v.notes!=='string'||v.notes.trim().length<1||v.notes.length>2000)bad('请填写真实的保护截止依据（不超过 2000 字）；不确定就停止，不要填密钥、密码或网址令牌。');
+ const binding=await hash(JSON.stringify(['brave-dashboard-login-plan-key-v1',v.email,'search_postpaid',v.fingerprint]));
+ const observation={source:'owner_dashboard',observedAt:v.observed,requestsUsed:Number(v.requests),usageCostUsd:v.cost,outOfPocketCostUsd:v.paid,monthlyFreeCreditUsd:v.credit};
+ const privateEvidence={schemaVersion:'brave-owner-observation-v1',source:'authenticated_official_dashboard',observedAt:v.observed,keyFingerprint:v.fingerprint,accountPlanBindingSha256:binding,plan:'search_postpaid',freeOnlyEnabled:true,hardStopConfirmed:true,loginIdentityVerified:true,planKeyAssociationVerified:true,protectionEndsAt:v.protection,accountObservation:observation,reviewNotes:v.notes};
+ const evidenceText=JSON.stringify(privateEvidence);
+ const grant={id:'81d366bc-2d48-4a18-a716-a8eb722ef57a',keyId:v.fingerprint,scope:'provider_enforced_free_only',source:'owner_dashboard',evidenceSha256:await hash(evidenceText),accountPlanBindingSha256:binding,verifiedAt:v.observed,expiresAt:v.expiry,protectionEndsAt:v.protection,requestLimit:50,freeOnlyEnabled:true,hardStopConfirmed:true,plan:'search_postpaid',bindingType:'verified_dashboard_login_and_plan_key',loginIdentityVerified:true,planKeyAssociationVerified:true,accountObservation:observation};
+ const record={schemaVersion:'brave-renewal-chain-v1',purpose:'brave-private-renewal-single-canary-20261118',baseHead:'5c9b8d129bcd188b98aeeeac25840a0f3acfe169',approvedDispatchSha:v.sha,freshKeyId:v.fingerprint,freshAccountPlanBindingSha256:binding,grant};
+ const text=JSON.stringify(record);if(new TextEncoder().encode(text).length>48000)bad('记录过大，停止。');
+ return {text,evidenceText};
+}
+get('generate').addEventListener('click',async()=>{clear();const rev=revision;get('generate').disabled=true;try{const v={};for(const id of ids)v[id]=get(id).type==='checkbox'?get(id).checked:get(id).value;const result=await buildRecord(v);if(rev!==revision)return;output.value=result.text;evidence.value=result.evidenceText;message.textContent='仅完成本地格式与完整性检查，不代表事实核验、预检通过或启用。请本人保管核验记录，并仅把第一框内容保存至指定 GitHub Secret。';}catch(e){if(rev===revision)message.textContent=e.message;}finally{get('generate').disabled=globalThis.location?.protocol!=='file:';}});
+get('justObserved').addEventListener('click',()=>{if(globalThis.location?.protocol!=='file:')return;clear();const now=Date.now();get('observed').value=new Date(now).toISOString();get('expiry').value='';try{const protect=date(get('protection').value);const end=Math.min(now+30*60000,protect);if(end<=now+60000)bad('保护截止已到或不足一分钟，不能设置授权。');get('expiry').value=new Date(end).toISOString();message.textContent='已记录你刚刚核实的此刻；授权取 30 分钟与已有真实保护截止中较早者。没有更改保护截止。';}catch{message.textContent='已取此刻 UTC。请先填写有依据的保护截止；未自动设置授权，不代表保护持续有效。';}});
+get('clear').addEventListener('click',()=>{for(const id of ids){if(get(id).type==='checkbox')get(id).checked=false;else get(id).value='';}clear();});
+const localOnly=globalThis.location?.protocol==='file:';
+for(const node of document.querySelectorAll('input,textarea,button')){node.disabled=!localOnly;if(!localOnly){if(node.type==='checkbox')node.checked=false;else node.value='';}}
+get('privateArea').disabled=!localOnly;
+if(!localOnly)message.textContent='不能在网页、网盘或 Library 预览中填写。请下载此文件到本人电脑，以 file:// 本地打开；全部输入已禁用。';
+</script></body></html>
