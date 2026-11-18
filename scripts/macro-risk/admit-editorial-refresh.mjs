@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { admitRefresh, githubClient, planAdmission } from './editorial-refresh-admission.mjs';
+import { admitRefresh, githubClient, isAutomaticOfr, planAdmission } from './editorial-refresh-admission.mjs';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -9,13 +9,14 @@ async function main() {
   const read = (path) => JSON.parse(fs.readFileSync(path, 'utf8').replace(/^\uFEFF/, ''));
   const event = read(process.env.GITHUB_EVENT_PATH);
   const radar = read('data/radar-data.json');
-  const world = read('data/world-order-stress.json');
-  const oil = read('data/oil-directional-pressure.json');
+  const dailyOnly = isAutomaticOfr(process.env.GITHUB_EVENT_NAME, radar);
+  const world = dailyOnly ? null : read('data/world-order-stress.json');
+  const oil = dailyOnly ? null : read('data/oil-directional-pressure.json');
   const now = new Date().toISOString();
   const context = { event, eventName: process.env.GITHUB_EVENT_NAME, runAttempt: process.env.GITHUB_RUN_ATTEMPT, repository: process.env.GITHUB_REPOSITORY, ref: process.env.GITHUB_REF, radar, world, oil, now };
   const plan = planAdmission(context);
   const result = await admitRefresh({
-    plan, event, eventName: context.eventName, now, snapshots: [radar.updatedAt, world.updatedAt, oil.builtAt],
+    plan, event, eventName: context.eventName, now, snapshots: [radar.updatedAt, world?.updatedAt, oil?.builtAt],
     headSha: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
     api: plan.ready ? githubClient({ token: process.env.GITHUB_TOKEN }) : null, reserve: args.includes('--reserve'),
   });
