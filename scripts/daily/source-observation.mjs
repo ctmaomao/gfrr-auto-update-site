@@ -131,3 +131,31 @@ export function cachedReserveBalanceChange(previous, nowIso) {
     { date: previous.sourceObservedAt?.reserveBalances, value: previous.reserveBalances }], nowIso);
   return result.change !== null && result.change === previous.reserveBalances4wChange ? result : missing;
 }
+
+// H.8 CRE bank-loan balance is a Wednesday-ending stock, not a flow.
+// Use exact endpoints 28 and 364 days earlier, independently: an interior
+// missing week is immaterial, but a neighboring week is not a substitute.
+export function creLoanBalanceDate(value, nowIso) {
+  const day = parseObservationDate(value, nowIso);
+  return day && new Date(`${day}T00:00:00Z`).getUTCDay() === 3 ? day : null;
+}
+
+export function creLoanBalanceSnapshot(rows, nowIso) {
+  const empty = { value: null, date: null, fourWeekChange: null, yoy: null };
+  const latest = Array.isArray(rows) ? rows.at(-1) : null;
+  const date = creLoanBalanceDate(latest?.date, nowIso);
+  if (date === null || date !== latest.date || !Number.isFinite(latest.value) || latest.value < 0
+    || rows.filter(row => row?.date === date).length !== 1
+    || rows.some(row => DATE.test(row?.date || '') && row.date > date)) return empty;
+  const ratio = (days) => {
+    const endpoint = new Date(`${date}T00:00:00Z`);
+    endpoint.setUTCDate(endpoint.getUTCDate() - days);
+    const referenceDate = endpoint.toISOString().slice(0, 10);
+    const matches = rows.filter(row => row?.date === referenceDate);
+    const reference = matches[0]?.value;
+    if (matches.length !== 1 || !Number.isFinite(reference) || reference <= 0) return null;
+    const change = +((latest.value - reference) / reference).toFixed(4);
+    return Number.isFinite(change) ? change : null;
+  };
+  return { value: latest.value, date, fourWeekChange: ratio(28), yoy: ratio(364) };
+}

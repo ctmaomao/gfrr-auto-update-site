@@ -31,7 +31,7 @@ import { allocateRegimePercentages } from './daily/regime-weights.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
 import { createBofaFailureDiagnostic, parseBofaCheckpointMetrics, selectLatestBofaCheckpointUrl } from './daily/bofa-checkpoint.mjs';
 import { parseMlfOperation, isFreshMlfDates, findMlfCandidate } from './daily/china-mlf.mjs';
-import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange } from './daily/source-observation.mjs';
+import { parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange, creLoanBalanceDate, creLoanBalanceSnapshot } from './daily/source-observation.mjs';
 import { prepareOfrPublication } from './daily/publish-ofr-pressure.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -8286,9 +8286,8 @@ function normalizePreviousCommercialRealEstate(prevCre, nowIso = new Date().toIS
   const mortgageReitEtf4wChange = Number.isFinite(prevCre.mortgageReitEtf4wChange) ? prevCre.mortgageReitEtf4wChange : null;
   const cmbsEtfPrice = Number.isFinite(prevCre.cmbsEtfPrice) ? prevCre.cmbsEtfPrice : null;
   const cmbsEtf4wChange = Number.isFinite(prevCre.cmbsEtf4wChange) ? prevCre.cmbsEtf4wChange : null;
-  const creLoanBalance = Number.isFinite(prevCre.creLoanBalance) ? prevCre.creLoanBalance : null;
-  const creLoanBalance4wChange = Number.isFinite(prevCre.creLoanBalance4wChange) ? prevCre.creLoanBalance4wChange : null;
-  const creLoanBalanceYoY = Number.isFinite(prevCre.creLoanBalanceYoY) ? prevCre.creLoanBalanceYoY : null;
+  const creLoanBalance = Number.isFinite(prevCre.creLoanBalance) && prevCre.creLoanBalance >= 0 ? prevCre.creLoanBalance : null;
+  const creLoanBalanceDateRaw = creLoanBalance === null ? null : creLoanBalanceDate(prevCre.creLoanBalanceUpdatedAt, nowIso);
   const creDelinquencyUpdatedAtRaw = parseObservationDate(prevCre.creDelinquencyUpdatedAt, nowIso);
   const creChargeOffUpdatedAtRaw = parseObservationDate(prevCre.creChargeOffUpdatedAt, nowIso);
   const sloosCreNonfarmNonresidentialUpdatedAtRaw = parseObservationDate(prevCre.sloosCreNonfarmNonresidentialUpdatedAt, nowIso);
@@ -8325,9 +8324,9 @@ function normalizePreviousCommercialRealEstate(prevCre, nowIso = new Date().toIS
     cmbsEtf4wChange,
     cmbsEtfUpdatedAt: typeof prevCre.cmbsEtfUpdatedAt === 'string' ? prevCre.cmbsEtfUpdatedAt : null,
     creLoanBalance,
-    creLoanBalance4wChange,
-    creLoanBalanceYoY,
-    creLoanBalanceUpdatedAt: typeof prevCre.creLoanBalanceUpdatedAt === 'string' ? prevCre.creLoanBalanceUpdatedAt : null,
+    creLoanBalance4wChange: null,
+    creLoanBalanceYoY: null,
+    creLoanBalanceUpdatedAt: creLoanBalanceDateRaw ? `${creLoanBalanceDateRaw}T00:00:00Z` : null,
     creLoanBalanceStatus: typeof prevCre.creLoanBalanceStatus === 'string'
       ? prevCre.creLoanBalanceStatus
       : (creLoanBalance !== null ? 'fallback' : 'missing'),
@@ -9333,24 +9332,19 @@ async function resolveCommercialRealEstate(prevCre) {
     status.sloosMultifamily = 'fallback';
   }
 
-  if (creLoanBalanceResult.status === 'fulfilled') {
-    const rows = creLoanBalanceResult.value;
-    creLoanBalance = latestValue(rows);
-    const fourWeeksAgo = findValueAgo(rows, 28);
-    const yearAgo = findValueAgo(rows, 52 * 7);
-    creLoanBalance4wChange = Number.isFinite(creLoanBalance) && Number.isFinite(fourWeeksAgo) && fourWeeksAgo !== 0
-      ? +(((creLoanBalance - fourWeeksAgo) / fourWeeksAgo)).toFixed(4)
-      : null;
-    creLoanBalanceYoY = Number.isFinite(creLoanBalance) && Number.isFinite(yearAgo) && yearAgo !== 0
-      ? +(((creLoanBalance - yearAgo) / yearAgo)).toFixed(4)
-      : null;
-    creLoanBalanceUpdatedAt = latestDateIso(rows);
+  const balance = creLoanBalanceSnapshot(
+    creLoanBalanceResult.status === 'fulfilled' ? creLoanBalanceResult.value : null, nowIso
+  );
+  if (balance.value !== null) {
+    creLoanBalance = balance.value;
+    creLoanBalance4wChange = balance.fourWeekChange;
+    creLoanBalanceYoY = balance.yoy;
+    creLoanBalanceUpdatedAt = `${balance.date}T00:00:00Z`;
     creLoanBalanceStatus = 'live';
     status.creLoanBalance = 'live';
   } else if (Number.isFinite(fallback.creLoanBalance)) {
+    // Old public snapshots have no underlying endpoints to revalidate.
     creLoanBalance = fallback.creLoanBalance;
-    creLoanBalance4wChange = fallback.creLoanBalance4wChange;
-    creLoanBalanceYoY = fallback.creLoanBalanceYoY;
     creLoanBalanceUpdatedAt = fallback.creLoanBalanceUpdatedAt;
     creLoanBalanceStatus = 'fallback';
     status.creLoanBalance = 'fallback';

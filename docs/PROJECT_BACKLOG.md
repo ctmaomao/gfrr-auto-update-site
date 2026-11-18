@@ -32,6 +32,8 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 
 ### 当前实施与真实等待
 
+- **银行 CRE 贷款余额精确周参照**：验收基线为 [H.8 / FRED CREACBW027SBOG](https://fred.stlouisfed.org/series/CREACBW027SBOG) 周三观测只比较恰好 28/364 日前的独立有效端点，不取近邻。缺一项不影响另一项；参考值为零不给比率。来源不可用时仅留先前水平和有效原观察日，旧比较不续用。官方 2026-11-04 观察（11 月 13 日更新）仍为 31576.162 亿美元，四周 +0.14%、52 周 +3.81%；合成缺周才复现旧错误，不重写生产历史、不改其它 CRE 系列、请求、评分或工作流。专项、独审、完整 CI、部署和自然采用分别验收。
+
 - **CARTS 48 期参照**：验收基线为名义/实际同比仅比较上年同月同槽，四期均值仅用连续四槽；缺槽、重复或无效不借近邻，缓存只留水平与原观察日，不保留未经验证的比较。FRED 的 07/14/21/28 为芝加哥联储每月四期标签；见[来源说明](DATA_SOURCES.md)。2026-10-28 名义公开实样 615931 对 561937.6，仍为 9.61%；缺槽错误由合成验证，不称旧实样错报。不改外部请求、其他零售序列、发布历史或评分；专项、独审、精确 CI、部署与之后的自然产物分别验收。
 
 - **周报发布链及入口已交付（#644–#648）**：[#644](https://github.com/ctmaomao/gfrr-auto-update-site/pull/644) 加入原件持久交接、固定期次和摘要、Git 端点核验及不可覆盖的日期页；[#645](https://github.com/ctmaomao/gfrr-auto-update-site/pull/645) 将历史、原件下载及四标签置于可再生成的站点入口，不改冻结正文；[#647](https://github.com/ctmaomao/gfrr-auto-update-site/pull/647) 加入同一期独立版号与逐版交接回读，保持固定 URL、历史和回滚约束。对应合并为 `28536984`、`ed2fff7c`、`b3b5bad0`；后两项精确 CI 分别为 [44203221470](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44203221470)、[44205967046](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44205967046)。详见[同一期修订与回滚边界](../weekly-reports/README.md#同一期修订与回滚边界)。
