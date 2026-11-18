@@ -650,6 +650,63 @@ test('the generation step succeeds on the real artifact and prints evidence into
   assert.doesNotMatch(summaryText, /staged file count/iu);
 });
 
+test('the publish step bootstraps only a confirmed missing main and stops on remote errors', (t) => {
+  const bash = requireBash(t);
+  if (!bash) return;
+  const script = stepRunScript('Publish changed artifact with quota guard');
+  const scratch = mkdtempSync(resolve(tmpdir(), 'eo-release-probe-'));
+  t.after(() => rmSync(scratch, { recursive: true, force: true }));
+  const stub = [
+    'set -e',
+    'git() {',
+    '  if [ "$1" = -C ]; then shift 2; fi',
+    '  case "$*" in',
+    '    "ls-remote --exit-code --heads origin refs/heads/main") echo probe >> "$TRACE"; return "$PROBE_STATUS";;',
+    '    "fetch origin main") echo fetch >> "$TRACE"; return "$FETCH_STATUS";;',
+    '    "checkout -B main FETCH_HEAD") echo checkout >> "$TRACE";;',
+    '    "init -b main"|"remote add origin "*) ;;',
+    '    "rev-parse HEAD") echo "$SOURCE_SHA";;',
+    '    "add -A") echo add >> "$TRACE";;',
+    '    "diff --cached --quiet") return "$DIFF_STATUS";;',
+    '    "rev-parse --verify HEAD") return "$PROBE_STATUS";;',
+    '    "rev-list --count "*) echo "$RELEASE_COUNT";;',
+    '    "config user."*) ;;',
+    '    "commit -m "*) echo commit >> "$TRACE";;',
+    '    "push origin main") echo push >> "$TRACE";;',
+    '    *) echo "Unexpected Git command" >&2; return 251;;',
+    '  esac',
+    '}',
+    'rsync() { echo sync >> "$TRACE"; }',
+  ].join('\n');
+  for (const [name, probe, fetch, diff, count, status, expected] of [
+    ['existing', 0, 0, 0, 399, 0, ['probe', 'fetch', 'checkout', 'sync', 'add']],
+    ['changed', 0, 0, 1, 399, 0, ['probe', 'fetch', 'checkout', 'sync', 'add', 'commit', 'push']],
+    ['quota', 0, 0, 1, 400, 1, ['probe', 'fetch', 'checkout', 'sync', 'add']],
+    ['missing', 2, 0, 1, 0, 0, ['probe', 'sync', 'add', 'commit', 'push']],
+    ['transport', 128, 0, 1, 0, 128, ['probe']],
+    ['timeout', 124, 0, 1, 0, 124, ['probe']],
+    ['fetch-failure', 0, 128, 1, 0, 128, ['probe', 'fetch']],
+  ]) {
+    const folder = resolve(scratch, name);
+    mkdirSync(folder);
+    const summary = resolve(folder, 'summary.md');
+    const trace = resolve(folder, 'trace.txt');
+    const result = runInBash(`${stub}\n${script}`, {
+      ...runnerEnv(folder, summary),
+      RELEASE_REPOSITORY: 'offline/fixture',
+      SOURCE_SHA: 'a'.repeat(40),
+      TRACE: trace,
+      PROBE_STATUS: String(probe),
+      FETCH_STATUS: String(fetch),
+      DIFF_STATUS: String(diff),
+      RELEASE_COUNT: String(count),
+    }, bash);
+    assert.equal(result.code, status, `${name}: ${result.out}`);
+    assert.deepEqual(readFileSync(trace, 'utf8').trim().split(/\r?\n/u), expected, name);
+    if (probe !== 0 && probe !== 2) assert.match(result.out, /publication stopped/u, name);
+  }
+});
+
 test('the publish step records the release commit SHA only after a successful push', () => {
   const { steps } = readWorkflowSteps();
   const step = steps.find((entry) => entry.name === 'Publish changed artifact with quota guard');

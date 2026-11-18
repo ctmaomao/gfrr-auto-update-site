@@ -155,9 +155,16 @@ jobs:
           git -C "$release_dir" init -b main
           git -C "$release_dir" remote add origin "git@github.com:${RELEASE_REPOSITORY}.git"
 
-          if git -C "$release_dir" ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
+          if git -C "$release_dir" ls-remote --exit-code --heads origin refs/heads/main >/dev/null 2>&1; then
             git -C "$release_dir" fetch origin main
             git -C "$release_dir" checkout -B main FETCH_HEAD
+          else
+            probe_status=$?
+            # Git status 2 means the remote answered but the exact ref is missing.
+            if [ "$probe_status" -ne 2 ]; then
+              echo "Unable to verify EdgeOne release branch (git ls-remote exited $probe_status); publication stopped." >&2
+              exit "$probe_status"
+            fi
           fi
 
           # Same command as before; only the source moves from the shared Pages artifact to the
