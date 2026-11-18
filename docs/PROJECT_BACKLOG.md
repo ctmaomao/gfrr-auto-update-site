@@ -8,7 +8,7 @@ Owner-approved next scope: repository-secret-backed, independently reviewed curr
 
 Owner-requested safe restoration: preserve fee protection and historical receipts; do not change billing settings or make paid probe requests. The inactive implementation adds only explicit same-identity v4 proof renewal, synthetic regression tests and ADR-0111 operating guidance. No secret, real ledger, workflow or production data is modified. Deployment and actual renewal remain separate; missing original private evidence/nonce, unresolved receipts or unavailable current account/key-binding proof block activation. Independent actual-diff review and full repository checks are required before integration.
 
-本页只保留当前工作、未解依赖与维护入口。已完成任务的过程记录移入[2026-09 至 2026-11 原文快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)；更早记录见[历史目录](MILESTONE_INDEX.md)。旧“待合并/下一步”不覆盖下方已核实的 main 状态，合并也不自动证明生产验收完成。
+本页只保留当前工作、未解依赖与维护入口。已完成任务的过程见[历史交接与完成原件](MILESTONE_INDEX.md#immutable-handoffs)。旧“待合并/下一步”不覆盖下方已核实的 main 状态，合并也不自动证明生产验收完成。
 
 ## Section 1 · 维护状态
 
@@ -175,7 +175,7 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 - **Macro / Bubble 事实隔离与已耗调用**：#532–#536 的两次新授权调用（合计上限 CNY4.33）已完成，但两稿独立事实复核失败；#537/#539 已隔离稿件，#538/#540 修复输入/单位/日期与 OFR 语义，不据此恢复文章。Bubble 原稿 `423c9dc7`（run `42935389410`）、Macro 原稿 `d2905d32`（run `42950570179`）保留；安全回执仅含摘要/哈希。两个名额均已消耗，各永久预留 CNY2.161152、合计 CNY4.322304，token 回执不等于实际结算。旧 monthly 预检失败 run `42946982770` 不恢复名额；单次调用/no retry、全部账本/标签、来源资格与最终 writer/review 门槛保持。具体事实错误、精确恢复和原始运行过程见[收口前固定记录](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)、[提示恢复记录](EDITORIAL_PROMPT_RECOVERY_2026_11_10.md)、[OFR 语义契约](ADR/0107-ofr-editorial-semantic-boundaries.md)。当前预算/私密配置仍待上方各项核验；本轮不调用 provider，也不声称文章恢复或重验线上。
 - **ACLED 候选比较修复**：[#541](https://github.com/ctmaomao/gfrr-auto-update-site/pull/541) 已合并 `f4da1dd8`；随后 `18fa663b` 已提交 reviewed weekly/monthly pair，不再把旧 `42975462379` 的阻塞写作现状。当前源仍按周/月频与自己的观察日解释，非实时事件确认；后续健康按实际运行核验。[运行说明](ACLED_AUTOMATIC_UPDATE.md)与 [ADR-0108](ADR/0108-acled-common-window-comparison.md)保留规则和原失败脉络。
 - **压力研究**：冻结 cohort `pressure-shadow-29d69c0ecb7b98a0` 继续现有采集；84 日/40 输入/12 周及[最终评审标准](PRESSURE_MODEL_FINAL_REVIEW_STANDARD.md)不变，最早时间门槛 2026-12-10 UTC。旧 2 条样本的快照不是当前计数，未重新核对实际 ledger，不声明达标或晋升。OFR 生产主读数迁移不代表七候选研究通过。
-- **CSP**：采集线冻结，生产 C 不启用；原生投递、alarm/清理、隐私、共享额度和真实平台验收缺口保留。原回执、预算、一次性 marker 与锁见[归档](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)，不把归档当重启或重复试验许可。
+- **CSP**：采集线冻结，生产 C 不启用；原生投递、alarm/清理、隐私、共享额度和真实平台验收缺口保留。原回执、预算、一次性 marker 与锁见[归档](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)，不把归档当重启或重复试验许可。
 - **其它观察与源权利**：Oil News 同口径窗口、FIRMS 后续质量与独立晋升、ARR 跨周期证据、路线级运费权利和 HAPI 候选条件保留；没有新证据不制造待办或宣称恢复。旧失败次数、账户额度和样本计数按原日期保留，不冒充最新状态。
 
 ### P0 / P1 / P2
@@ -208,7 +208,7 @@ CARTS、MRTS、BoA 和 Redbook 公开摘要已连接；raw subscription/card fee
 
 #### P3-17 / P3-18 · 已完成清理
 
-F1–F6、stale-display 与 WIRE A–E 已关闭，见[完成记录](PROJECT_COMPLETED_HISTORY.md)。大型模块拆分只是候选，须有明确收益、范围与验证，不能从旧下一步自动启动；现行 DESIGN、asset bump 与冻结边界保持。
+F1–F6、stale-display 与 WIRE A–E 已关闭，见[完成记录](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_COMPLETED_HISTORY.md)。大型模块拆分只是候选，须有明确收益、范围与验证，不能从旧下一步自动启动；现行 DESIGN、asset bump 与冻结边界保持。
 
 #### P3-19: Oil Directional Pressure (ODP)
 
@@ -276,8 +276,8 @@ STEO、库存与 PortWatch 摘要已接入；现行 [P50 授权](fixtures/transp
 
 ## Section 5 · Audit History
 
-- [2026-09 至 2026-11 原文快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)：迁移前完整 backlog，包括成本、失败、CSP negative controls、来源审查和当时未验项。
-- [更早交接与审计](PROJECT_HANDOFF_HISTORY.md)、[完成事项](PROJECT_COMPLETED_HISTORY.md)、[Energy/Transport 历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：保留原始证据和仍有效的领域约束。
+- [历史交接与完成原件](MILESTONE_INDEX.md#immutable-handoffs)：保留迁移前完整 backlog、成本、失败、CSP 负例、来源审查及当时未验项。
+- [Energy/Transport 历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：保留原始证据与适用的领域约束。
 - [本轮 Markdown 核查](MARKDOWN_MAINTENANCE_2026_11_10.md)：覆盖口径、精简选择与验证限制。归档不取消未解条件，也不是新授权。
 
 ## Section 6 · 工作流约定

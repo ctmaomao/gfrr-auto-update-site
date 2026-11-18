@@ -83,5 +83,5 @@ Energy 归档：P3-19/P3-19a 原文移入历史，保留批准、预登记、样
 
 各阶段原文记录完整检查及专项保全通过，也保留首次失败、环境限制和未验项目；本次整理没有重新执行当年的外部技能/Hook 操作。源码、数据、费用、来源权利、生产写入和凭据保护不因归并放宽。PR #304 最终审核及 Hook 启动验收以上方总回执为准，不把早期未验状态重新变为待办。
 
-- [指令维护过程与发布前交接原文](PROJECT_HANDOFF_HISTORY.md#instruction-maintenance-2026-09-07)。
-- [PR #304 交付、审核与 Hook 启动过程原文](PROJECT_HANDOFF_HISTORY.md#instruction-closeout-pr304)。
+- [指令维护过程与发布前交接原文](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_HANDOFF_HISTORY.md#instruction-maintenance-2026-09-07)。
+- [PR #304 交付、审核与 Hook 启动过程原文](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_HANDOFF_HISTORY.md#instruction-closeout-pr304)。
