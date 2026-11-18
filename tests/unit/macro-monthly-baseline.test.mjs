@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const source=fs.readFileSync(new URL('../../scripts/run-daily-pipeline.mjs',import.meta.url),'utf8');
 const names=['latestValue','findValueAgo','findMonthlyValueAgo','calculateMonthlyYoY','calculateMonthlyDelta',
-  'averageRecentValues','latestDateIso','latestIsoDate','calculateIndustryPayrollDiffusion',
+  'latestDateIso','latestIsoDate','calculateIndustryPayrollDiffusion',
   'calculateRetailSegmentSnapshot','fredMillionsToBillions','classifyClaimsRegime','classifyJoltsRegime',
   'classifyIndustryDiffusionRegime','classifyLaborQualityRegime','resolveEmploymentBreadth'];
 function helpers(series={}) {

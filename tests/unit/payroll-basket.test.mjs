@@ -54,7 +54,7 @@ test('only verified coherent cache may be carried forward without redating; lega
     {industryPayrollUpdatedAt:'2026-12-01T00:00:00Z'},{sourceStatus:{industryPayroll:'missing'}}]) missing(verifiedPayrollBasketFallback({...good,...patch},now));
 });
 test('actual wrapper, prior normalization and resolver preserve method/date and never promote legacy aggregates', async () => {
-  const names=['calculateIndustryPayrollDiffusion','resolveEmploymentBreadth','normalizePreviousEmployment','latestValue','averageRecentValues',
+  const names=['calculateIndustryPayrollDiffusion','resolveEmploymentBreadth','normalizePreviousEmployment','latestValue',
     'latestDateIso','latestIsoDate','findMonthlyValueAgo','calculateMonthlyYoY','calculateMonthlyDelta','classifyClaimsRegime','classifyJoltsRegime','classifyLaborQualityRegime','classifyIndustryDiffusionRegime'];
   const live=compute(fixture()); const prev={...live,sourceStatus:{industryPayroll:'live'}};
   const code=names.map(extract).join('\n')+'\n({resolveEmploymentBreadth,normalizePreviousEmployment})';
