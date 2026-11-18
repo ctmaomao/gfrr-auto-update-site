@@ -116,11 +116,16 @@ export async function readBounded(url, fetchImpl = fetch, timeoutMs = 10000, max
 
 export async function probePublishedSnapshots({ baseline, now = Date.now(), fetchImpl = fetch, timeoutMs = 10000 } = {}) {
   if (!Number.isFinite(now) || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 10000) throw new Error('Invalid probe limits');
-  // Validate the entire fixed baseline before ANY network access.
+  // Capture and validate the entire fixed baseline before ANY network access.
+  const expectedByPath = new Map();
   for (const target of TARGETS) {
-    const item = baseline?.[target.path];
-    if (!item || typeof item.text !== 'string' || !date(item.committedAt) || Date.parse(item.committedAt) > now + 300000) throw new Error('Invalid pinned baseline');
-    if (inspectContent(target, item.text, now).errors.some(code => code !== 'snapshot_stale')) throw new Error('Invalid pinned baseline content');
+    const { text, committedAt } = baseline?.[target.path] ?? {};
+    if (typeof text !== 'string' || !date(committedAt)) throw new Error('Invalid pinned baseline');
+    const committedAtMs = Date.parse(committedAt);
+    if (committedAtMs > now + 300000) throw new Error('Invalid pinned baseline');
+    const { sha256, generatedAt, errors } = inspectContent(target, text, now);
+    if (errors.some(code => code !== 'snapshot_stale')) throw new Error('Invalid pinned baseline content');
+    expectedByPath.set(target.path, { sha256, generatedAt, committedAtMs });
   }
   const jobs = SITES.flatMap(site => TARGETS.map(target => ({ site, target })));
   const rows = new Array(jobs.length); let cursor = 0;
@@ -132,11 +137,11 @@ export async function probePublishedSnapshots({ baseline, now = Date.now(), fetc
       rows[index] = row;
       if (response.error) { row.errors.push(response.error); continue; }
       Object.assign(row, inspectContent(target, response.text, now));
-      const expected = inspectContent(target, baseline[target.path].text, now);
+      const expected = expectedByPath.get(target.path);
       row.expectedSha256 = expected.sha256;
       if (row.sha256 !== expected.sha256) {
         const newer = row.generatedAt && expected.generatedAt && Date.parse(row.generatedAt) > Date.parse(expected.generatedAt);
-        const grace = now - Date.parse(baseline[target.path].committedAt) <= site.graceHours * 3600000;
+        const grace = now - expected.committedAtMs <= site.graceHours * 3600000;
         (newer || grace ? row.warnings : row.errors).push(newer ? 'baseline_advanced' : grace ? 'publication_in_progress' : 'baseline_mismatch');
       }
       if (row.sources.some(source => ['error', 'partial', 'missing', 'fallback', 'stale', 'aging', 'manual_required', 'unavailable', 'cached', 'missing_current'].includes(source.status) || source.ageExceeded)) row.warnings.push('source_degraded');

@@ -37,6 +37,34 @@ test('invalid baseline rejected before any network', async () => {
   }
   assert.equal(requests, 0);
 });
+test('both sites compare against the one validated baseline despite later caller changes', async () => {
+  const pinned = baseline();
+  const path = 'scripts/app.js';
+  const altered = contents[path] + ' // divergent publication';
+  let changed = false;
+  const report = await probe(async url => {
+    if (!changed) {
+      changed = true;
+      // A caller-owned record is not proof once the probe has begun.
+      pinned[path].text = altered;
+      pinned[path].committedAt = '2026-09-13T09:59:00Z';
+      delete pinned['data/radar-data.json'];
+    }
+    return fakeFetch((text, item) => item === path ? altered : text)(url);
+  }, pinned);
+  assert.equal(report.requestCount, 12);
+  assert.equal(report.status, 'fail');
+  for (const row of report.rows.filter(row => row.path === path)) {
+    assert.deepEqual(row.errors, ['baseline_mismatch']);
+    assert.notEqual(row.sha256, row.expectedSha256);
+    assert.deepEqual(row.warnings, []);
+  }
+  for (const row of report.rows.filter(row => row.path === 'data/radar-data.json')) {
+    assert.deepEqual(row.errors, []);
+    assert.equal(row.sha256, row.expectedSha256);
+  }
+});
+
 test('network and HTTP failure isolated, no exception/response text leaked', async () => {
   const result = await probe(async url => {
     if (url === SITES[0].base + 'index.html') throw new Error('SECRET_TOKEN');
