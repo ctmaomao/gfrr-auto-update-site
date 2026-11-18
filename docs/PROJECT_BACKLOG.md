@@ -24,11 +24,12 @@
 
 ### 当前实施与真实等待
 
-- **Bubble 发布回执测试夹具固定**：main `5e6633b3` 自然刷新后，离线测试读取移动生产快照却使用 11 月 12 日固定回执时钟，导致正确的时效门禁拒绝测试输入。按授权仅固定完整 11 月 10 日测试快照及来源摘要，并验证未来/缺失生产快照不影响离线场景；不改生产 validator、数据或工作流，不回滚刷新。下一步为独立审阅与精确 CI；此修复不授权发布周评或恢复 provider。
+- **周报发布链及入口已交付（#644–#648）**：[#644](https://github.com/ctmaomao/gfrr-auto-update-site/pull/644) 加入原件持久交接、固定期次和摘要、Git 端点核验及不可覆盖的日期页；[#645](https://github.com/ctmaomao/gfrr-auto-update-site/pull/645) 将历史、原件下载及四标签置于可再生成的站点入口，不改冻结正文；[#647](https://github.com/ctmaomao/gfrr-auto-update-site/pull/647) 加入同一期独立版号与逐版交接回读，保持固定 URL、历史和回滚约束。对应合并为 `28536984`、`ed2fff7c`、`b3b5bad0`；后两项精确 CI 分别为 [44203221470](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44203221470)、[44205967046](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44205967046)。详见[同一期修订与回滚边界](../weekly-reports/README.md#同一期修订与回滚边界)。
 
-- **周报发布链整改**：[#644](https://github.com/ctmaomao/gfrr-auto-update-site/pull/644) 保存并回读验收原件，显式指定期次与摘要，校验实际 Git fetch/push 端点、拒绝 URL 重写，固定日期页不可覆盖，构建可重试；以源码提交的字节和链接核对 Pages、EdgeOne 的日期、最新及历史入口。11 月 16 日原稿已取回并持久交接，尚未发布。独立入口适配验收基线：历史周报、原件下载及现行四标签由三个可再生成的站点入口维护，验证精确链接、下载文件名和原件字节；不为补原稿缺少的站点控件或适配纸媒样式而改写冻结稿或两个日期页。保留目录、旧期、离线、桌面/手机以及原件缺失、期次/摘要和历史门禁；本适配不纳入新期期次文件。编辑取数清单仅供核对，不改变生产取数或成为自动门槛。现有定时任务配置已核实，但当前工作线程的管理接口无法访问该任务；自动生成后的持久交接和强制预期身份尚未接线。远端分支仍可被有权限者修改或删除，后续须按固定提交及摘要回读。历史门禁、代码、完整检查、独审、CI 与实际新期双站验收分别记录，任何一项未完成不得称发布成功。
+  - **已公开期次**：[#648](https://github.com/ctmaomao/gfrr-auto-update-site/pull/648) 合并于 `07009ac5`。2026-11-16 的 **r3** 已在 [Pages](https://ctmaomao.github.io/gfrr-auto-update-site/reports/2026-11-16-r3.html) 和 [EdgeOne](https://radar.gfrfinradar.uk/reports/2026-11-16-r3.html) 发布。双站共四个固定日期入口均与 45,268 字节原件一致，SHA-256 为 `43263cd4fa687526eea6d601bd329a406b69be5f6239c0114d1a0c3f3dc1d1b1`；双站的最新入口、兼容入口和历史入口也与发布提交对应文件一致。r1、r2 保留在交接链中，未加入站点、不覆盖也不补刊。
+  - **发布复核**：[精确 head CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44210966439) 与该合并提交的 [Pages 部署](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44212619899)、[EdgeOne 部署](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44212619657) 通过；独立审阅、手机/桌面、离线及原件下载证据见 #648。此次仅验收已审 r3 发布，**未验收下一次自然定时周报能自动完成生成、持久交接、预期身份校验和双站发布**。现有定时任务的交接与身份校验接线仍待单独核实；不因本次发布推定任务配置已改或自然流程已恢复，也不以周报发布代替下方 Daily 采用验收。
 
-- **周报同一期修订通道**：保留已交接未发布的 11 月 16 日旧稿，但不把旧稿加入站点。先排查网站数据及更新链，再按最新可核验数据重写。同一期修订以原期次加版号保存，单独回读本版和前驱的固定身份，不覆盖、补刊或为 r1 制造新 URL。发布代码与正文分开验收；修订一经公开，回滚仍保留固定 URL、历史保护、身份回读与静态构建兼容，入口不回指旧稿。操作、边界与验收见[同一期修订与回滚边界](../weekly-reports/README.md#同一期修订与回滚边界)。
+- **Bubble 发布回执测试夹具固定**：[#646](https://github.com/ctmaomao/gfrr-auto-update-site/pull/646) 已合并 `35392117`，独立审阅与[精确 head CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44201772800) 通过。main `5e6633b3` 自然刷新后，离线测试的固定回执时钟与移动生产快照冲突；改用固定的完整测试快照与来源摘要，并验证未来或缺失的生产快照不影响测试。不改生产 validator、数据、工作流，不回滚刷新，也不授权发布周评或恢复 provider。
 
 - **中国官方数值缺失类型**：仅收紧ChinaBond/CFETS及中国CPI/PPI/PMI缓存共用数值helper，拒绝null、空白、布尔及容器转0/数组转数；真实零、负数及正常字符串保持。无缓存fallback返回missing而非再次解引用抛错，缺失不伪造成0或BIS/SDR零值。当前生产正常值未证明错误；来源、取数、时效、评分及历史不变。当前验收与下一步见[近期修复验收快照](#recent-data-fix-acceptance)。
 
