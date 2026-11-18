@@ -2,7 +2,7 @@
 
 ## Implemented scope
 
-The existing `credit_spreads` display snapshot is refreshed Tuesday–Saturday at 06:20 UTC and on manual dispatch through `Refresh Bubble Credit Spreads`. It uses the already configured ICE BofA HY, CCC and investment-grade observations from public FRED CSV. The collector starts exactly three requests, each with a 12-second timeout and no application retry. No API credentials, paid provider, search, SEC collection or DeepSeek call is supplied. Existing publication enablement and recorded source-policy choice remain mandatory; the user's risk acceptance is not a claim of an ICE licence.
+The existing `credit_spreads` display snapshot is refreshed Tuesday–Saturday at 06:20 UTC and on manual dispatch through `Refresh Bubble Credit Spreads`. It uses the already configured ICE BofA HY, CCC and investment-grade observations from public FRED CSV. The collector starts exactly three requests, each with a 12-second deadline covering headers and streamed body, no redirects or application retries, and a 64 KiB decoded response cap. No API credentials, paid provider, search, SEC collection or DeepSeek call is supplied. Existing publication enablement and recorded source-policy choice remain mandatory; the user's risk acceptance is not a claim of an ICE licence.
 
 The existing writer permits only `data/bubble-watch.json.credit_spreads` to change. It retains all other fields exactly, including package date, generation time, 27 indicators, score, history seed and current/previous AI narrative. The external Bubble history file is untouched. The page already displays this separate section with individual observation dates and fallback status; the refresh does not make the weekly score, quarterly evidence or AI article current.
 
@@ -16,6 +16,6 @@ A broader separate market observation layer could have useful independently date
 
 ## Acceptance and operational limits
 
-Tests exercise the actual existing writer with injected in-memory files: permitted mutation, dry-run, publication disabled, invalid series and concurrent modification. Collector regressions cover request count, blanks versus genuine zero, malformed/duplicate/future dates, stale success, per-series outage, missing baseline and date regression. Workflow guards require serial publication and full validation, and prohibit credentials, broad builder or paid-editorial triggers.
+Tests exercise the actual existing writer with injected in-memory files: permitted mutation, dry-run, publication disabled, invalid series and concurrent modification. Collector regressions cover request count, blanks versus genuine zero, malformed/duplicate/future dates, strict two-column UTF-8 CSV (including blanks, BOM and CRLF), oversized/stalled or redirected responses, stale success, per-series outage, missing baseline and date regression. Workflow guards require serial publication and full validation, and prohibit credentials, broad builder or paid-editorial triggers.
 
 Code merge and schedule activation are not proof of a successful production refresh. Confirm the natural run's commit and both public sites' `credit_spreads` dates/statuses before claiming updated data is live. Do not regenerate the full weekly issue just to make its date match this section.

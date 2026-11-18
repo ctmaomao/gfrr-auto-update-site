@@ -30,7 +30,7 @@ test('Reject future, impossible, duplicate, descending dates and null/non-finite
 });
 test('Collect independent series without scoring fields, use bounded requests', async () => {
   let calls = 0;
-  const result = await collectCreditSpreads({ now, fetchImpl: async (url, options) => { calls++; assert.ok(options.signal); return { ok: true, text: async () => csv(new URL(url).searchParams.get('id')) }; } });
+  const result = await collectCreditSpreads({ now, fetchImpl: async (url, options) => { calls++; assert.ok(options.signal); assert.equal(options.redirect, 'error'); return new Response(csv(new URL(url).searchParams.get('id'))); } });
   assert.equal(calls, 3); assert.equal(result.boundary, 'display_only_no_score_impact');
   assert.deepEqual(result.series.hy, points); assert.equal(result.sources.ig.status, 'fresh');
   assert.equal(result.summary, undefined); assert.equal(result.indicators, undefined);
@@ -38,7 +38,7 @@ test('Collect independent series without scoring fields, use bounded requests', 
 test('One outage preserves that series and original fetch timestamp; others update', async () => {
   const result = await collectCreditSpreads({ previous, now, fetchImpl: async url => {
     const id = new URL(url).searchParams.get('id'); if (id === CREDIT_SERIES.ccc) throw Error('private response must not escape');
-    return { ok: true, text: async () => csv(id) };
+    return new Response(csv(id));
   } });
   assert.equal(result.sources.ccc.status, 'fallback'); assert.equal(result.sources.hy.status, 'fresh');
   assert.equal(result.sources.ccc.fetchedAt, previous.sources.ccc.fetchedAt); assert.deepEqual(result.series.ccc, points);
@@ -49,9 +49,105 @@ test('Absent or invalid historical data stays missing on outage', async () => {
   for (const key of Object.keys(CREDIT_SERIES)) { assert.equal(result.sources[key].status, 'missing'); assert.deepEqual(result.series[key], []); }
 });
 test('Successful HTTP cannot hide stale observations or regress newer cached dates', async () => {
-  const stale = await collectCreditSpreads({ now: new Date('2026-10-01'), fetchImpl: async url => ({ ok: true, text: async () => csv(new URL(url).searchParams.get('id')) }) });
+  const stale = await collectCreditSpreads({ now: new Date('2026-10-01'), fetchImpl: async url => new Response(csv(new URL(url).searchParams.get('id'))) });
   assert.equal(stale.sources.hy.status, 'stale');
   const newer = structuredClone(previous); newer.series.hy.at(-1).date = '2026-09-14';
-  const result = await collectCreditSpreads({ previous: newer, now, fetchImpl: async url => ({ ok: true, text: async () => csv(new URL(url).searchParams.get('id')) }) });
+  const result = await collectCreditSpreads({ previous: newer, now, fetchImpl: async url => new Response(csv(new URL(url).searchParams.get('id'))) });
   assert.equal(result.sources.hy.status, 'fallback'); assert.equal(result.series.hy.at(-1).date, '2026-09-14');
+});
+
+test('FRED accepts DATE, CRLF and BOM variants but rejects extra or missing columns', () => {
+  const id = CREDIT_SERIES.hy;
+  const valid = '\uFEFF' + csv(id).replace('observation_date', 'DATE').replaceAll('\n', '\r\n') + '\r\n';
+  assert.deepEqual(parseCreditCsv(valid, id, now), points);
+  const genuineZero = csv(id).replace('2.70', '0.00');
+  assert.equal(parseCreditCsv(genuineZero, id, now)[0].bps, 0);
+  for (const malformed of [
+    csv(id).replace(id + '\n', id + ',unknown\n'),
+    csv(id).replace(',2.70', ',2.70,999'),
+    csv(id) + '\n2026-09-13',
+    csv(id) + '\n2026-09-13,.,private'
+  ]) assert.throws(() => parseCreditCsv(malformed, id, now), /credit_csv_(?:header|row)_invalid/u);
+});
+
+
+test('Oversized, redirected and malformed UTF-8 responses never become fresh; no retries', async () => {
+  const badBuffers = [
+    () => new Response(csv(CREDIT_SERIES.hy), { headers: { 'content-length': '65537' } }),
+    () => new Response(new Uint8Array(65537), { headers: { 'content-length': '1' } }),
+    () => new Response(Uint8Array.of(0xff)),
+    () => Response.redirect('https://example.invalid/'),
+    () => {
+      const response = new Response(csv(CREDIT_SERIES.hy));
+      Object.defineProperty(response, 'url', { value: 'https://example.invalid/' });
+      return response;
+    },
+    () => new Response(csv(CREDIT_SERIES.hy).replace('2.70', '2.70,999'))
+  ];
+  for (const badBody of badBuffers) {
+    const hits = [];
+    const result = await collectCreditSpreads({ previous, now, fetchImpl: async (url, options) => {
+      const id = new URL(url).searchParams.get('id');
+      hits.push(id);
+      assert.equal(options.redirect, 'error');
+      return id === CREDIT_SERIES.hy ? badBody() : new Response(csv(id));
+    } });
+    assert.deepEqual(hits.sort(), Object.values(CREDIT_SERIES).sort());
+    assert.equal(result.sources.hy.status, 'fallback');
+    assert.equal(result.sources.hy.fetchedAt, previous.sources.hy.fetchedAt);
+    assert.deepEqual(result.series.hy, points);
+    assert.equal(result.sources.ccc.status, 'fresh');
+    assert.equal(result.sources.ig.status, 'fresh');
+    assert.ok(!JSON.stringify(result).includes('example.invalid'));
+  }
+});
+
+test('Per-series deadline includes both headers and a stalled body; cancels and preserves source clocks', async () => {
+  let bodyCancelled = false;
+  const signals = [];
+  const result = await collectCreditSpreads({ now, previous, timeoutMs: 50, fetchImpl: async (url, { signal }) => {
+    signals.push(signal);
+    const id = new URL(url).searchParams.get('id');
+    if (id === CREDIT_SERIES.hy) return new Promise(() => {});
+    if (id === CREDIT_SERIES.ccc) return new Response(new ReadableStream({
+      cancel() { bodyCancelled = true; }
+    }));
+    return new Response(csv(id));
+  } });
+  assert.equal(signals.length, 3);
+  assert.ok(signals.every(signal => signal.aborted));
+  assert.equal(bodyCancelled, true);
+  for (const key of ['hy', 'ccc']) {
+    assert.equal(result.sources[key].status, 'fallback');
+    assert.equal(result.sources[key].fetchedAt, previous.sources[key].fetchedAt);
+    assert.equal(result.sources[key].observationDate, points.at(-1).date);
+  }
+  assert.equal(result.sources.ig.status, 'fresh');
+});
+
+test('Byte cap accepts exactly 64 KiB and refuses excess bytes across chunks', async () => {
+  let cancelled = false;
+  const fetchImpl = async (url) => {
+    const id = new URL(url).searchParams.get('id');
+    const body = Buffer.from(csv(id));
+    const padding = new Uint8Array(65536 - body.length).fill(10);
+    return new Response(new ReadableStream({
+      start(c) {
+        c.enqueue(body);
+        c.enqueue(padding);
+        if (id === CREDIT_SERIES.ccc) c.enqueue(Uint8Array.of(10));
+        else c.close();
+      },
+      cancel() { cancelled = true; }
+    }));
+  };
+  const result = await collectCreditSpreads({ now, previous, fetchImpl });
+  assert.equal(result.sources.hy.status, 'fresh');
+  assert.equal(result.sources.ccc.status, 'fallback');
+  assert.equal(result.sources.ig.status, 'fresh');
+  assert.equal(cancelled, true);
+  let calls = 0;
+  const invalid = await collectCreditSpreads({ now, previous, timeoutMs: 12001, fetchImpl: async () => { calls++; } });
+  assert.equal(calls, 0);
+  assert.ok(Object.values(invalid.sources).every(source => source.status === 'fallback'));
 });

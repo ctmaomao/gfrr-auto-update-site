@@ -1,6 +1,8 @@
 // Independent display history; never feeds Bubble Watch scoring or AI inputs.
 export const CREDIT_SERIES = Object.freeze({ hy: 'BAMLH0A0HYM2', ccc: 'BAMLH0A3HYC', ig: 'BAMLC0A0CM' });
 const DAY = 86400000;
+const TIMEOUT_MS = 12_000;
+const MAX_CSV_BYTES = 64 * 1024;
 
 export function creditPublicationEnabled(config) {
   return config?.enabled === true && ['owner_confirmed', 'owner_risk_accepted'].includes(config.publicationRights);
@@ -25,11 +27,16 @@ export function validateCreditPoints(points, now = new Date()) {
 
 export function parseCreditCsv(csv, id, now = new Date()) {
   const lines = csv.trim().split(/\r?\n/);
-  if (!['observation_date', 'DATE'].includes(lines[0]?.split(',')[0]) || lines[0]?.split(',')[1] !== id) throw new Error('credit_csv_header_invalid');
+  const header = lines[0].split(',');
+  if (header.length !== 2 || !['observation_date', 'DATE'].includes(header[0]) || header[1] !== id) {
+    throw new Error('credit_csv_header_invalid');
+  }
   const cutoff = new Date(now.getTime() - 366 * DAY).toISOString().slice(0, 10);
   const points = [];
   for (const line of lines.slice(1)) {
-    const [date, raw] = line.split(',');
+    const columns = line.split(',');
+    if (columns.length !== 2) throw new Error('credit_csv_row_invalid');
+    const [date, raw] = columns;
     if (!validCreditDate(date) || date > now.toISOString().slice(0, 10)) throw new Error('credit_date_invalid');
     if (date < cutoff || raw === '.' || raw?.trim() === '') continue;
     if (!/^[0-9]+(?:\.[0-9]+)?$/.test(raw || '')) throw new Error('credit_value_invalid');
@@ -40,15 +47,53 @@ export function parseCreditCsv(csv, id, now = new Date()) {
   return points;
 }
 
-export async function collectCreditSpreads({ previous, now = new Date(), fetchImpl = fetch } = {}) {
+// Timeout is end-to-end even if a fetch implementation ignores abort.
+// Transport refusal is handled by the same independent per-series fallback.
+async function requestCreditCsv(url, fetchImpl, timeoutMs) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > TIMEOUT_MS) throw new Error('credit_timeout_invalid');
+  const controller = new AbortController();
+  let timer, reader;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('credit_timeout'));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([deadline, (async () => {
+      const response = await fetchImpl(url, { signal: controller.signal, redirect: 'error' });
+      if (controller.signal.aborted || !response.ok || response.redirected || (response.url && response.url !== url)) {
+        throw new Error('credit_fetch_failed');
+      }
+      if (Number(response.headers.get('content-length')) > MAX_CSV_BYTES) throw new Error('credit_body_too_large');
+      reader = response.body?.getReader();
+      if (!reader) throw new Error('credit_body_missing');
+      const chunks = [];
+      let bytes = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > MAX_CSV_BYTES) throw new Error('credit_body_too_large');
+        chunks.push(Buffer.from(value));
+      }
+      return new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+    })()]);
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+    if (reader) void reader.cancel().catch(() => {});
+  }
+}
+
+export async function collectCreditSpreads({ previous, now = new Date(), fetchImpl = fetch, timeoutMs = TIMEOUT_MS } = {}) {
   const series = {};
   const sources = {};
   const start = new Date(now.getTime() - 366 * DAY).toISOString().slice(0, 10);
   await Promise.all(Object.entries(CREDIT_SERIES).map(async ([key, id]) => {
     try {
-      const response = await fetchImpl(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, { signal: AbortSignal.timeout(12000) });
-      if (!response.ok) throw new Error('credit_fetch_failed');
-      const points = parseCreditCsv(await response.text(), id, now);
+      const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`;
+      const points = parseCreditCsv(await requestCreditCsv(url, fetchImpl, timeoutMs), id, now);
       let old = null;
       try { old = validateCreditPoints(previous?.series?.[key], now); } catch { /* No qualified historical series. */ }
       if (old && points.at(-1).date < old.at(-1).date) throw new Error('credit_source_regressed');
