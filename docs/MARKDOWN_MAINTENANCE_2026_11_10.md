@@ -16,7 +16,7 @@
 
 | 问题 | 处置 |
 |---|---|
-| backlog 1,202 行持续叠加旧“待合并”，最新交接停在 10 月 10 日 | 完整原文迁入[日期快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)，当前页只留任务、真实等待和范围入口；保存原文 SHA256，逐字节验证迁移 |
+| backlog 1,202 行持续叠加旧“待合并”，最新交接停在 10 月 10 日 | 完整原文迁入[日期快照](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)，当前页只留任务、真实等待和范围入口；保存原文 SHA256，逐字节验证迁移 |
 | INDEX 重复几十项旧任务的进度、人工待审与历史 no-go | 改为权威/范围/历史导航，集中引用现行 ADR 和统一阶段状态；保留实际来源与机器依赖入口 |
 | milestone 把 M-91 当最近生产、缓存版本失效 | 更新近期 main 合入证据，把原 M-series 表保留历史；cache 直接指向 APP_VERSION，避免再复制快照 |
 | README 仍称提供仓位/风险预算约束 | 对齐已上线 OFR 主读数、旧公开建议退役和周报默认入口；不宣称预测概率或投资建议 |

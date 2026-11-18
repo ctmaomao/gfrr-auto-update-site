@@ -21,7 +21,19 @@
 | [#530](https://github.com/ctmaomao/gfrr-auto-update-site/pull/530) | 共享编辑新闻摘要清理 | [ADR-0099](ADR/0099-shared-editorial-news-hygiene.md) |
 | [#529](https://github.com/ctmaomao/gfrr-auto-update-site/pull/529) | 隔离不合格 Bubble 旧稿 | Git/PR 回执；不把旧稿重新晋升 |
 
-历史交接见[2026-09 至 2026-11 快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)、[更早交接](PROJECT_HANDOFF_HISTORY.md)；已完成清理见[完成记录](PROJECT_COMPLETED_HISTORY.md)。ODP/Energy/Transport 逐阶段原文见[专档](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)，其中有效门槛不因归档取消。
+<a id="immutable-handoffs"></a>
+
+## 历史交接与完成原件
+
+三个日期化归档移出当前工作树；下表固定到同一个已合并提交，保留全文、原链接、章节锚点、审批/失败/验证回执及限制。大小和 SHA-256 对应原始文件字节，从固定提交的网页可查看原文或下载 Raw 校验。原路径在当前分支不再跟踪；需要复原时从该固定提交取回同名文件。历史任务中写的“当前／下一步”不代表今日状态，也不产生新批准。
+
+| 记录范围 | 固定 Git 原件 | 字节 | SHA-256 |
+|---|---|---:|---|
+| 2026-09 至 2026-11 的完整交接：OFR 两站验收、CSP 负例、来源取证、编辑预算和当时未验项 | [`PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md) | 319,944 | `ce2fac2b0dd78e74076fb6ed7b11a425ab3a5101e55f92c8474a9a5f8e47170c` |
+| 较早交接及追加研究：指令维护、PR #304、健康整改、旧来源和生产回执 | [`PROJECT_HANDOFF_HISTORY.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_HANDOFF_HISTORY.md) | 311,597 | `7070aa129376886ec00d96c6c1180dcc607a73ec8cd8368ba3ce1c2a8f76d283` |
+| 已完成工作与日期化维护快照：F1–F6、陈旧态、WIRE A–E 和早期编辑层 | [`PROJECT_COMPLETED_HISTORY.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/87fa3710a2975d4d96ea0175c1b51d362089ac66/docs/PROJECT_COMPLETED_HISTORY.md) | 66,024 | `10f9ea8c6ea2a936c655c7f8d32bbd3f066c492e01610a0da8e6fdb7c7a802a5` |
+
+仍生效的要求按 [当前文档导航](INDEX.md)、[AGENTS](../AGENTS.md)、[领域附件](AGENT_DOMAIN_BOUNDARIES.md)、[运行手册](OPERATIONS.md) 和对应 ADR 执行；未解事项见 [当前待办](PROJECT_BACKLOG.md)。ODP/Energy/Transport 的[逐阶段专档](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)仍保留在当前树：现行检查会读取它，领域门槛不因归档取消。
 
 ## Archived (历史 milestone,scope-only,默认不加载)
 

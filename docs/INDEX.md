@@ -103,7 +103,7 @@
 以下默认按需查阅，不定义全项目新门槛：
 
 - [MILESTONE_INDEX.md](MILESTONE_INDEX.md)：已完成 M/v 系列；历史 cache 版本和“下一步”不作今日状态。
-- [2026-09 至 2026-11 交接](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)、[更早交接](PROJECT_HANDOFF_HISTORY.md)、[完成事项](PROJECT_COMPLETED_HISTORY.md)、[Energy/Transport 历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：原批准、失败、预算、验收与限制保留，归档不等于解除。
+- [历史交接与完成原件](MILESTONE_INDEX.md#immutable-handoffs)和[Energy/Transport 历史](ENERGY_TRANSPORT_IMPLEMENTATION_HISTORY.md)：原批准、失败、预算、验收与限制保留，归档不等于解除。
 - [V27_BASELINE.md](V27_BASELINE.md)、[SYSTEM_UPGRADE_PLAN.md](SYSTEM_UPGRADE_PLAN.md)、已完成 milestone scope docs、旧 M-92/M-93 设计/源审计：只说明对应阶段。仍有效的具体来源契约以本页现行入口明确引用为准。
 - `docs/evidence/`、`docs/review-evidence/`、`deliverables/engineering-assurance/` 与日期化审计/修复报告：证据、当时结论或限定任务契约，不证明最新线上健康。测试 fixture README / `manual-artifacts/` README 只说明对应样本和工具。
 - 未逐个列出的任务文档按文内明确范围与后续修订解释；不能因有“必须”二字升级为全仓规则。无法确定是否已被替代时核对相关 ADR、代码和最新回执，不自动删证据或放宽门禁。
