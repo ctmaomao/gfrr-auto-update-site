@@ -113,3 +113,19 @@ export function assertAllTrue(record, label = 'record') {
     if (value !== true) throw new Error(`${label}.${key} must be true.`);
   }
 }
+
+// Shared by the route-freight local checks with exactly this production boundary.
+export function assertRouteFreightProductionDataRemainsUnwired() {
+  const radar = readJson('data/radar-data.json');
+  const energyTransport = radar?.macroDrivers?.energyTransport;
+  if (energyTransport?.routeFreightConfirmation) {
+    throw new Error('Production routeFreightConfirmation field is not approved yet.');
+  }
+  const candidate = energyTransport?.transportShockCandidate;
+  if (candidate && candidate.routeFreightConfirmation !== 'not_connected') {
+    throw new Error('Production transportShockCandidate.routeFreightConfirmation must stay not_connected.');
+  }
+  if (candidate && candidate.marketConfirmation !== 'not_connected') {
+    throw new Error('Production transportShockCandidate.marketConfirmation must stay not_connected.');
+  }
+}

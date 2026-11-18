@@ -1,4 +1,4 @@
-import { assertIncludes, readJson } from './lib/check-script-helpers.mjs';
+import { assertIncludes, assertRouteFreightProductionDataRemainsUnwired, readJson } from './lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -150,16 +150,6 @@ function assertRuntimeRemainsUnwired() {
   }
 }
 
-function assertProductionDataRemainsUnwired() {
-  const radar = readJson('data/radar-data.json');
-  assert(!radar?.macroDrivers?.energyTransport?.routeFreightConfirmation, 'Production routeFreightConfirmation field is not approved yet.');
-  const candidate = radar?.macroDrivers?.energyTransport?.transportShockCandidate;
-  if (candidate) {
-    assert(candidate.routeFreightConfirmation === 'not_connected', 'Production transportShockCandidate.routeFreightConfirmation must stay not_connected.');
-    assert(candidate.marketConfirmation === 'not_connected', 'Production transportShockCandidate.marketConfirmation must stay not_connected.');
-  }
-}
-
 function assertAuthorityDocs() {
   const inputPrepDoc = readText(INPUT_PREP_DOC);
   const dataSources = readText('docs/DATA_SOURCES.md');
@@ -187,7 +177,7 @@ function main() {
   assertScriptSafety();
   assertGuideOutput();
   assertRuntimeRemainsUnwired();
-  assertProductionDataRemainsUnwired();
+  assertRouteFreightProductionDataRemainsUnwired();
   assertAuthorityDocs();
   console.log('Route-level tanker freight source-rights input guide: PASS');
 }
