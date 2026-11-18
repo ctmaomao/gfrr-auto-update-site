@@ -16,18 +16,34 @@ export function safeConcurrentPath(path) {
   return path.startsWith('docs/') || path.startsWith('tests/');
 }
 
-function publishCandidate({ outputs, label }, { cwd = process.cwd(), validate, maxAttempts = 3, runGit } = {}) {
-  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3) throw new Error(`${label}_publish_attempt_limit`);
-  const git = (args, directory = cwd) => (runGit ? runGit(args, directory) : execFileSync('git', args, { cwd: directory, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })).trim();
+// Read raw path/mode pairs, not Git's display-quoted names. Disabling rename
+// folding reports both trees' paths; deletion has destination mode 000000.
+function changedFiles(git, base, head) {
+  const records = git(['diff', '--raw', '--no-renames', '-z', base, head, '--']).split('\0');
+  const changes = [];
+  for (let i = 0; i + 1 < records.length; i += 2) {
+    changes.push({ path: records[i + 1], mode: records[i].split(' ')[1] });
+  }
+  return changes;
+}
+
+function inspectCandidate(git, { outputs, label }) {
   const candidate = git(['rev-parse', 'HEAD']);
   const parents = git(['rev-list', '--parents', '-n', '1', candidate]).split(' ');
   if (parents.length !== 2) throw new Error(`${label}_candidate_requires_single_parent`);
   const base = parents[1];
-  const changed = git(['diff', '--name-only', base, candidate]).split('\n').filter(Boolean);
-  if (!changed.length || changed.some(path => !outputs.includes(path))) throw new Error(`${label}_candidate_path_rejected`);
+  const changed = changedFiles(git, base, candidate);
+  if (!changed.length || changed.some(({ path }) => !outputs.includes(path))) throw new Error(`${label}_candidate_path_rejected`);
   for (const path of outputs) {
     if (!git(['ls-tree', candidate, '--', path]).startsWith('100644 blob ')) throw new Error(`${label}_candidate_file_rejected`);
   }
+  return { candidate, base };
+}
+
+function publishCandidate({ outputs, label }, { cwd = process.cwd(), validate, maxAttempts = 3, runGit } = {}) {
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3) throw new Error(`${label}_publish_attempt_limit`);
+  const git = (args, directory = cwd) => (runGit ? runGit(args, directory) : execFileSync('git', args, { cwd: directory, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })).trim();
+  const { candidate, base } = inspectCandidate(git, { outputs, label });
   let published = candidate;
   let workspace = cwd;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -37,8 +53,8 @@ function publishCandidate({ outputs, label }, { cwd = process.cwd(), validate, m
     try { git(['merge-base', '--is-ancestor', published, remote]); return { candidate, published, attempts: attempt, alreadyPublished: true }; } catch {}
     try { git(['merge-base', '--is-ancestor', base, remote]); } catch { throw new Error(`${label}_remote_history_diverged`); }
     if (remote !== base) {
-      const concurrent = git(['diff', '--name-only', base, remote]).split('\n').filter(Boolean);
-      if (concurrent.some(path => !safeConcurrentPath(path) || !['', '100644', '100755'].includes(git(['ls-tree', remote, '--', path]).split(' ')[0]))) throw new Error(`${label}_generation_inputs_changed`);
+      const concurrent = changedFiles(git, base, remote);
+      if (concurrent.some(({ path, mode }) => !safeConcurrentPath(path) || !['000000', '100644', '100755'].includes(mode))) throw new Error(`${label}_generation_inputs_changed`);
       // Never reset/rebase the original candidate or force-push. Build a separate
       // reviewed tree on the current remote and preserve every concurrent file.
       workspace = join(mkdtempSync(join(tmpdir(), 'gfrr-daily-publish-')), 'worktree');
@@ -70,16 +86,10 @@ function publishCandidate({ outputs, label }, { cwd = process.cwd(), validate, m
 
 function retainCandidate({ outputs, label }, { cwd = process.cwd(), destination = join(cwd, label.replaceAll('_', '-') + '-candidate-artifact') } = {}) {
   const git = args => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  const candidate = git(['rev-parse', 'HEAD']);
-  const parents = git(['rev-list', '--parents', '-n', '1', candidate]).split(' ');
-  if (parents.length !== 2) throw new Error(`${label}_candidate_requires_single_parent`);
-  const base = parents[1];
-  const changed = git(['diff', '--name-only', base, candidate]).split('\n').filter(Boolean);
-  if (!changed.length || changed.some(path => !outputs.includes(path))) throw new Error(`${label}_candidate_path_rejected`);
+  const { candidate, base } = inspectCandidate(git, { outputs, label });
   const files = {};
   let bytes = 0;
   for (const path of outputs) {
-    if (!git(['ls-tree', candidate, '--', path]).startsWith('100644 blob ')) throw new Error(`${label}_candidate_file_rejected`);
     const size = Number(git(['cat-file', '-s', `${candidate}:${path}`]));
     bytes += size;
     if (!Number.isSafeInteger(size) || size < 0 || bytes > 5 * 1024 * 1024) throw new Error(`${label}_candidate_artifact_size_limit`);

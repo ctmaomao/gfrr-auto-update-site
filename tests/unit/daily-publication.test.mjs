@@ -6,13 +6,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WORLD_ORDER_OUTPUTS, publishWorldOrderCandidate, retainWorldOrderCandidate, DAILY_OUTPUTS, publishDailyCandidate, safeConcurrentPath, retainDailyCandidate } from '../../scripts/publish-daily-candidate.mjs';
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-function fixture(outputs = DAILY_OUTPUTS) {
+function fixture(outputs = DAILY_OUTPUTS, baseDoc = null) {
   const dir = mkdtempSync(join(tmpdir(), 'daily-publication-test-'));
   const remote = join(dir, 'remote.git'), cwd = join(dir, 'daily'), other = join(dir, 'other');
   git(dir, 'init', '--bare', remote); git(dir, 'clone', remote, cwd);
   git(cwd, 'checkout', '-b', 'main');
   git(cwd, 'config', 'user.name', 'Test'); git(cwd, 'config', 'user.email', 'test@example.invalid');
   for (const file of outputs) { mkdirSync(join(cwd, 'data'), { recursive: true }); writeFileSync(join(cwd, file), 'old\n'); }
+  if (baseDoc) {
+    mkdirSync(join(cwd, 'docs'));
+    writeFileSync(join(cwd, baseDoc), 'original\n');
+    git(cwd, 'add', '--', baseDoc);
+  }
   git(cwd, 'add', 'data'); git(cwd, 'commit', '-m', 'base'); git(cwd, 'push', 'origin', 'main');
   git(dir, 'clone', '--branch', 'main', remote, other);
   git(other, 'config', 'user.name', 'Test'); git(other, 'config', 'user.email', 'test@example.invalid');
@@ -32,9 +37,20 @@ test('unchanged main publishes exact validated candidate without regeneration', 
   assert.equal(publishDailyCandidate({ cwd: f.cwd }).alreadyPublished, true);
 });
 test('documentation race retains remote content and candidate bytes, rechecks merged tree, original checkout untouched', () => {
-  const f = fixture(); f.advance('docs/note.md'); let checked = 0;
-  const r = publishDailyCandidate({ cwd: f.cwd, validate: cwd => { checked++; assert.equal(readFileSync(join(cwd, 'docs/note.md'), 'utf8'), 'concurrent\n'); for (const p of DAILY_OUTPUTS) assert.equal(readFileSync(join(cwd, p), 'utf8'), 'candidate\n'); } });
+  const f = fixture(); f.advance('docs/验收说明 (Daily).md'); let checked = 0;
+  const r = publishDailyCandidate({ cwd: f.cwd, validate: cwd => { checked++; assert.equal(readFileSync(join(cwd, 'docs/验收说明 (Daily).md'), 'utf8'), 'concurrent\n'); for (const p of DAILY_OUTPUTS) assert.equal(readFileSync(join(cwd, p), 'utf8'), 'candidate\n'); } });
   assert.equal(checked, 1); assert.equal(f.head(), r.published); assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
+});
+test('moving a regular document within the permitted paths preserves an inert concurrent change', () => {
+  const before = 'docs/初稿.md', after = 'docs/定稿 [Daily].md';
+  const f = fixture(DAILY_OUTPUTS, before);
+  git(f.other, 'mv', before, after);
+  git(f.other, 'commit', '-m', 'rename document');
+  git(f.other, 'push', 'origin', 'main');
+  assert.equal(publishDailyCandidate({ cwd: f.cwd, validate: cwd => {
+    assert.equal(readFileSync(join(cwd, after), 'utf8'), 'original\n');
+    assert.throws(() => readFileSync(join(cwd, before)), /ENOENT/);
+  } }).published, f.head());
 });
 test('another safe push during validation retries boundedly with all concurrent files intact', () => {
   const f = fixture(); f.advance('docs/a.md'); let checked = 0;
@@ -60,6 +76,7 @@ test('validation failure and repeated races never force push or discard candidat
 test('candidate scope and attempt bound cannot be broadened', () => {
   const f = fixture(); writeFileSync(join(f.cwd, 'extra.txt'), 'bad'); git(f.cwd, 'add', 'extra.txt'); git(f.cwd, 'commit', '--amend', '--no-edit');
   assert.throws(() => publishDailyCandidate({ cwd: f.cwd }), /daily_candidate_path_rejected/);
+  assert.throws(() => retainDailyCandidate({ cwd: f.cwd }), /daily_candidate_path_rejected/);
   assert.throws(() => publishDailyCandidate({ cwd: f.cwd, maxAttempts: 4 }), /daily_publish_attempt_limit/);
 });
 test('workflow preserves full validation and narrowly retains only validated failed candidate with identity', () => {
