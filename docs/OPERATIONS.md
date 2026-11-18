@@ -905,7 +905,7 @@ pending deltas: 0
 | [GitHub Pages](https://ctmaomao.github.io/gfrr-auto-update-site/) | main 的发布路径 push、列明的成功 main 生产者完成或手动；精确路径、监听名单和 `force_deploy` 见 [Pages workflow](../.github/workflows/deploy-static-site-to-pages.yml)。 | 成功的 Pages deployment 与实际构建 SHA。经验证的同一 revision 已部署时可跳过。 |
 | [EdgeOne](https://radar.gfrfinradar.uk/) | UTC 每 3 小时的第 55 分钟、列明的成功 main 生产者（含 Daily）、获准的即时路径 push 或手动；名单与路径见 [EdgeOne workflow](../.github/workflows/publish-edgeone-release.yml)。个别 Bubble 流程另使用现有受限派发。 | 专用仓库 release commit 先绑定已校验的源码 SHA；再核对 EdgeOne Production deployment 确实使用该 release commit。专用仓库 push 成功不是域名部署完成。 |
 
-两条发布链的实际发布 job 都重新检出运行时最新 main，固定 **实际** SHA 后安装锁定依赖、运行完整 `npm run check:all`，再用 [build:pages-artifact 实现](../scripts/build-pages-artifact.mjs) 生成白名单树。校验后不再拉取新源码；已有 CI 不替代发布验证。白名单由脚本定义，包含受控首页、专题和周报入口及固定页、批准的 CSS/SVG、JSON 和前端 JS；隐藏文件、链接及未允许文件不能进入。EdgeOne 仅在自己的 staging 添加并校验 `edgeone.json`，不更改 Pages 树。详见 [固定 main 与发布尾链](ADR/0057-publication-current-main-and-odp-tail.md)、[Daily 完成事件](ADR/0119-daily-publication-completion.md)及 [Pages 去重](ADR/0066-pages-publication-coalescing.md)。
+两条发布链真正进入发布时都重新检出运行时最新 main，固定 **实际** SHA 后安装锁定依赖、运行完整 `npm run check:all`，再用 [build:pages-artifact 实现](../scripts/build-pages-artifact.mjs) 生成白名单树。校验后不再拉取新源码；已有 CI 不替代发布验证。白名单由脚本定义，包含受控首页、专题和周报入口及固定页、批准的 CSS/SVG、JSON 和前端 JS；隐藏文件、链接及未允许文件不能进入。EdgeOne 仅在自己的 staging 添加并校验 `edgeone.json`，不更改 Pages 树。详见 [固定 main 与发布尾链](ADR/0057-publication-current-main-and-odp-tail.md)、[Daily 完成事件](ADR/0119-daily-publication-completion.md)及 [Pages 去重](ADR/0066-pages-publication-coalescing.md)。
 
 - **先查失败步骤。** 全套失败时按 §1 的检查名称定位；非阻断数据 warning 不是部署失败。`setup-node` cache 不等于安装，Pages 用 `npm ci --include=dev --ignore-scripts`；若 ACLED 私有校验报 `private_validation_failed`、预期 sanitizer 次数 2 实际 0，优先核对锁定的 `xlsx`，不要跳过检查或扩展可接受错误。检查可生成 ignored analyst input，不等于下载 ACLED、调用 provider 或写生产数据。
 - **再查渠道结果。** Pages 已通过全套检查并上传 artifact 后遇 `Deployment failed, try again later`，检查 90 / 180 / 300 秒退避的部署重试结果；耗尽后先对照相邻 Pages runs，再按已授权范围处理失败 job。EdgeOne 的 `No published-file changes` 是正常 no-op，非部署失败。两站对已验证的 Macro 预算暂停可跳过，未知元数据保留正常验证；不把绿色跳过当新稿已发布。
@@ -914,6 +914,8 @@ pending deltas: 0
 ## 8A. EdgeOne 自定义域名低频发布通道
 
 GitHub Pages 为主站。EdgeOne 只连接专用静态仓库 `ctmaomao/gfrr-edgeone-release`，不得连回高频源码 main，避免耗尽免费 Build times。三小时基础批次上限为 31 天 248 次，**不是**含即时触发的发布总量；产物无变化不提交，最近 32 天已有 400 个 release commits 时失败关闭。提交数闸门用于预留缓冲，不是平台实际构建分钟数。不得调高阈值或连续 Redeploy；只有紧急前端修复不能等批次且已有授权时才手动触发一次。
+
+仅 EdgeOne 定时批次先在无发布凭据的预检 job 装锁定依赖、只读比对：当前 main 的白名单/CSP staging 若与公开发布仓库当前 main 的完整 Git 树一致（含模式及 `edgeone.json`），且两端 ref 复核未变，则此次不跑全套、不推送。此结论仅是核对时的 release tree 一致，**不是**渠道部署或域名回读。手动、push 和生产者完成事件维持原流程；任何差异、探测失败或不确定仍进入原全套、配额及部署链。完整验证在所有实际发布前不变。
 
 源码 workflow 权限保持 `contents: read`，`EDGEONE_RELEASE_DEPLOY_KEY` 只对应专用仓库的单仓库写 deploy key，不换 broad PAT、EdgeOne API token 或源码写 token。首次迁移先完整验收新项目临时域名，再切换正式域名，保留旧项目作为回退。紧急停用先禁用发布 workflow；若疑似泄钥，按授权先撤销专用 deploy key `gfrr-edgeone-release-publisher` 和对应 repository secret，再安装新密钥；不改站点内容。
 

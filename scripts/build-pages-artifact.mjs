@@ -43,17 +43,20 @@ function validateArtifactTree(directory, base = directory) {
   }
 }
 
-export function buildPagesArtifact() {
-  rmSync(output, { recursive: true, force: true });
-  mkdirSync(output, { recursive: true });
+export function buildPagesArtifact(candidateOutput) {
+  const targetRoot = candidateOutput === undefined ? output : resolve(candidateOutput);
+  // Only rebuild the established Pages path. A private candidate target is
+  // created exclusively and may never clear or reuse existing files.
+  if (candidateOutput === undefined) rmSync(output, { recursive: true, force: true });
+  mkdirSync(targetRoot, { recursive: candidateOutput === undefined });
   for (const entry of entries) {
     const source = resolve(root, entry);
-    const target = resolve(output, entry);
+    const target = resolve(targetRoot, entry);
     mkdirSync(dirname(target), { recursive: true });
     cpSync(source, target, { recursive: true, filter: (src) => !['weekly-reports', 'reports'].includes(entry) || src === source || isAllowedPagesArtifactFile(relative(root, src)) });
   }
-  validateArtifactTree(output);
-  console.log(`Prepared Pages artifact: ${output}`);
+  validateArtifactTree(targetRoot);
+  console.log(`Prepared Pages artifact: ${targetRoot}`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) buildPagesArtifact();
