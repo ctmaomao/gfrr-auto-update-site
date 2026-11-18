@@ -364,11 +364,11 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 | 字段 | 类型 | 单位 | 来源 | 含义 |
 |---|---|---|---|---|
 | `cartsNominal` | number \| null | USD billions | FRED:CARTS（周频 SA） | Chicago Fed Advance Retail Trade Summary 名义零售+餐饮销售（不含汽车）最新观测；pipeline 将 FRED 原始 millions 转为 billions |
-| `cartsNominal4wAverage` | number \| null | USD billions | 派生 | CARTS 最近 4 个观测点平均 |
-| `cartsNominalYoY` | number \| null | 比例 (-1 至 +∞) | 派生 | CARTS 相对 52 周前的 YoY 变化率 |
+| `cartsNominal4wAverage` | number \| null | USD billions | 派生 | CARTS 最近四个连续来源槽位均值；缺/重/无效槽位为 null |
+| `cartsNominalYoY` | number \| null | 比例 (-1 至 +∞) | 派生 | CARTS 相对上年同月同来源槽位的 YoY；缺/重/无效参照为 null |
 | `cartsReal` | number \| null | USD billions | FRED:CARTSR（周频 SA） | Chicago Fed CARTS 实际（通胀调整后）零售+餐饮销售最新观测 |
-| `cartsReal4wAverage` | number \| null | USD billions | 派生 | CARTSR 最近 4 个观测点平均 |
-| `cartsRealYoY` | number \| null | 比例 (-1 至 +∞) | 派生 | CARTSR 相对 52 周前的 YoY 变化率 |
+| `cartsReal4wAverage` | number \| null | USD billions | 派生 | CARTSR 最近四个连续来源槽位均值；缺/重/无效槽位为 null |
+| `cartsRealYoY` | number \| null | 比例 (-1 至 +∞) | 派生 | CARTSR 相对上年同月同来源槽位的 YoY；缺/重/无效参照为 null |
 | `cartsNominalUpdatedAt` / `cartsRealUpdatedAt` | string \| null | ISO 8601 | FRED:CARTS / CARTSR | 各自真实观测日期；旧快照可缺省，缺失不得由组合日期推断；fallback 仅保留本源已知日期 |
 | `retailSegments` | object[] | mixed | FRED:MRTS monthly retail trade segments | `MRTSSM441USN` 等 13 个细分零售品类，包含 `key` / `seriesId` / `labelZh` / `value` / `yoy` / `updatedAt` / `sourceStatus` |
 | `segmentDiffusionPct` | number \| null | % | 派生 | 13 个 MRTS 细分品类中 YoY 为正的比例 |
@@ -400,6 +400,7 @@ v28.0I-3B 前端展示只读消费 `divergenceLayer`。v28.0I-8 起默认以 com
 - 本字段层不进入 `displayInputsBaseline` / `effectiveDisplayInputs`，前端只读 `data.macroDrivers.consumerRetail.*`。
 - 本字段层不进入 `divergenceLayer.checks[]` / cross-validation matrix，也不扩展 `AI_INTERPRETATION_EVIDENCE_LAYERS`。
 - 任一 FRED / public HTML source 拉取失败必须逐 source 降级为 `fallback` 或 `missing`，不得伪造值，不得用月度 RSAFS / PCE 冒充 CARTS / CARTSR；MRTS 细分品类只能作为月频结构观察，不得写成 Redbook raw feed / BoA raw card feed。
+- CARTS/CARTSR 的 48 期与 FRED 标签见[来源说明](DATA_SOURCES.md)；来源失败时缓存仅保留水平和本源旧观察日，不续用无参照的均值或同比；regime 以剩余可用证据重算。
 - M-69 不接 `CARTSP` 价格指数；该价格 series 仅为 future scope，不能被本层前端或 validator 当作已接入数据。
 - `macroDrivers.consumerRetail.redbookRetailSalesYoY` 只代表 Trading Economics public HTML 页面中的 Redbook same-store sales YoY 摘要，不代表 Redbook raw subscription feed、完整历史授权数据或 BoA raw card feed。
 - M-77 的 BoA Consumer Checkpoint 只解析公开 HTML 摘要中的 card spending per household YoY / ex-gas YoY；它不是 Redbook，也不是 BoA 原始卡明细或非公开 raw feed。

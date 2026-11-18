@@ -93,6 +93,8 @@ NFCI 四周变化仅比较相隔整 28 日的观测；SLOOS 季环比仅比较�
 
 **ICSA/CCSA 周窗口**：FRED为周六截止周频。parser会过滤缺失点，不能据行数断言连续；claims专属窗口核验相隔7日，不影响CARTS的48周日历。缓存只沿用可回算的窗口证明及原观察日，旧无证明缓存只保留水平。
 
+**CARTS/CARTSR 48 期日历**：[芝加哥联储方法](https://www.chicagofed.org/publications/chicago-fed-insights/2024/new-and-improved-carts)将每月分成 1–7、8–14、15–21、22 至月末四期；[FRED 观察表](https://fred.stlouisfed.org/data/CARTS)以 07/14/21/28 标记，28 不是实际期末或发布日期。四期均值须四个连续槽位，跨月也按槽位；同比严格使用上年同月同槽。缺/重/无效参照不借相邻读数。缓存没有原始参照，不续用均值或同比；仍保留各序列此前水平和独立观察日。零售证据仍为展示专用，不接评分。
+
 **M-69/M-77/M-79 注意**: `CARTSP` 价格指数 未接,future scope only；`macroDrivers.consumerRetail` 使用 `CARTS` / `CARTSR`、MRTS 细分零售、BoA Consumer Checkpoint 公开 HTML 摘要与 Trading Economics Redbook public HTML 摘要。BoA Consumer Checkpoint 不是 Redbook；Redbook public HTML 不是 Redbook raw subscription feed；两者都不是 BoA 原始卡明细或非公开 raw feed。
 
 **2026-09-05 BoA 摘要语义复核**：8月[官方 HTML](https://institute.bankofamerica.com/economic-insights/consumer-checkpoint-august-2026.html)改用简写，旧parser因此沿用五月缓存。[同月官方 PDF](https://institute.bankofamerica.com/content/dam/economic-insights/consumer-checkpoint-august-2026.pdf)第1页及Exhibit 1确认7月5.0%、6月6.3%、7月除油4.3%均为每户口径；PDF仅作为本次人工source-review依据，runtime仍只读HTML，不增加PDF抓取或raw card feed。省略per-household的简写仅在精确已审阅HTML/PDF配对下允许，未知报告不自动类推。选取报告年月最新的官方链接，拒绝未来或超过62天报告月龄的新live结果；抓取/语义失败仍可保留旧报告并明确fallback，不拼接不同时期字段。
