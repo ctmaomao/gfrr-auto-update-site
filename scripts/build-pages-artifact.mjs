@@ -2,6 +2,7 @@
 import { cpSync, lstatSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, extname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { issueKeyFromFilename } from './weekly-issue-identity.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = resolve(root, '_site');
@@ -23,8 +24,9 @@ export function isAllowedPagesArtifactFile(relativePath) {
   const normalized = relativePath.replaceAll('\\', '/');
   if (normalized.split('/').some((part) => part.startsWith('.'))) return false;
   if (normalized === 'index.html' || normalized === 'bubble-watch.html' || normalized === 'oil-market.html' || normalized === 'weekly-reports.html' || normalized === 'scripts/app.js') return true;
-  if (/^reports\/(?:archive|\d{4}-\d{2}-\d{2})\.html$/.test(normalized)) return true;
-  if (/^weekly-reports\/(?:index|\d{4}-\d{2}-\d{2})\.html$/.test(normalized)) return true;
+  if (normalized === 'reports/archive.html' || normalized === 'weekly-reports/index.html') return true;
+  const [directory, file, nested] = normalized.split('/');
+  if (nested === undefined && (directory === 'reports' || directory === 'weekly-reports') && issueKeyFromFilename(file)) return true;
   if (normalized.startsWith('assets/')) return ['.css', '.svg'].includes(extname(normalized));
   if (normalized.startsWith('data/') || normalized.startsWith('realtime/')) return extname(normalized) === '.json';
   return normalized.startsWith('scripts/modules/') && extname(normalized) === '.js';
@@ -48,7 +50,7 @@ export function buildPagesArtifact() {
     const source = resolve(root, entry);
     const target = resolve(output, entry);
     mkdirSync(dirname(target), { recursive: true });
-    cpSync(source, target, { recursive: true, filter: (src) => !['weekly-reports', 'reports'].includes(entry) || src === source || /^(?:index|archive|\d{4}-\d{2}-\d{2})\.html$/.test(relative(source, src)) });
+    cpSync(source, target, { recursive: true, filter: (src) => !['weekly-reports', 'reports'].includes(entry) || src === source || isAllowedPagesArtifactFile(relative(root, src)) });
   }
   validateArtifactTree(output);
   console.log(`Prepared Pages artifact: ${output}`);

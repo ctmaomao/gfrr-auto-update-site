@@ -12,6 +12,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
+import { issueKeyFromFilename } from '../weekly-issue-identity.mjs';
 
 export const GOOGLE_FONTS_STYLESHEET = 'https://fonts.googleapis.com';
 export const GOOGLE_FONTS_FILES = 'https://fonts.gstatic.com';
@@ -118,7 +119,7 @@ export function deriveExpectedHashSources(root, files = INLINE_HASH_SOURCE_FILES
   // Minimal fixture trees have no reports directory. Production artifact construction
   // requires the directory and the dedicated weekly check verifies every generated page.
   if (files === INLINE_HASH_SOURCE_FILES && existsSync(resolve(root, 'reports'))) {
-    const weeklyFiles = ['weekly-reports.html', ...readdirSync(resolve(root, 'reports')).filter(name => /^(?:archive|\d{4}-\d{2}-\d{2})\.html$/.test(name)).map(name => 'reports/' + name)];
+    const weeklyFiles = ['weekly-reports.html', ...readdirSync(resolve(root, 'reports')).filter(name => name === 'archive.html' || issueKeyFromFilename(name)).map(name => 'reports/' + name)];
     const weeklySources = [];
     for (const file of weeklyFiles) {
       const page = derivePageHashes(root, file, { requireInlineBlocks: false });
