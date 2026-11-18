@@ -57,9 +57,9 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 
 ### 当前实施与真实等待
 
-- **EdgeOne 定时无变化预检**：基于 main `1f48237d`，近 12 次定时 run 均未推送，却花 44.4 分钟安装与全套检查；预检沿用锁定依赖，只省无用全套；仅确定完整 staging 与当前发布树（路径、模式、配置、字节）一致且双方 ref 复核未变时早退。差异或未知沿用完整发布，见[双站排查](OPERATIONS.md#static-publication)。油 writer 先暂缓：同期抽样 24 次均成功，2 次热监测在独立变更上 rebase；仅允许文档会阻断这 2 次，未发现产品错误。
+- **EdgeOne 定时无变化预检（[#670](https://github.com/ctmaomao/gfrr-auto-update-site/pull/670) 已验收自然早退）**：[2026-11-18 20:56 UTC 计划运行](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44396177825) 复核候选 `fed93155` 与发布仓库 `f4999a52` 完整 Git 树一致（`a427ee4e`）；预检含安装约 3.46 秒，publish job 跳过全套、私钥与推送。这一次证据不代表新平台部署或普遍节时；此前 12 个定时 no-op 的安装与全套共 44.4 分钟、中位 216.6 秒。差异或未知照常完整验证，见[双站排查](OPERATIONS.md#static-publication)。油 writer 暂缓：另抽样 24 次均成功，含 2 次独立文件并发的热监测 rebase；仅允许文档会阻断这 2 次，未发现产品错误。
 
-- **Realtime 发布分支探测复用**：基于 main `99374e94`，常规与 stale recovery 共用精确的 `realtime-data` 分支探测；仅 Git 明确报告无匹配分支时沿用建分支路径，连接、权限等探测失败保留失败码且不继续提交。生成前可信基线检查不变，真正缺失基线仍在生成前停止。保留 payload 校验、并发组、调度和来源；用本地 Git 复核正常、缺分支和探测故障，不主动触发自然链。
+- **Realtime 发布分支探测复用（[#668](https://github.com/ctmaomao/gfrr-auto-update-site/pull/668) 已验收两个自然路径）**：2026-11-18 UTC，[16:35 自动恢复](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44348897398) 推送 `8345e42`；同日后续手动恢复后的 [20:55 计划 Build](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44396116778) 使用同一脚本，生成、校验和非强推发布成功，远端为 `4844db2`。这是两个经确认的发布样本，不保证后续调度不延迟。真实缺基线仍在生成前停止；无匹配分支才可走原建分支路径，Git 探测失败保留失败码。
 
 - **Daily / World Order 发布候选验证去重**：以 main `b003bb12` 为基线，发布和失败回执共用候选父提交、产物路径与文件模式检查。Git 按原始路径识别并发变更，中文文档名不再误判为数据输入，跨范围移动仍触发原保护。保留全量验证、有限重试、输出范围与回执；不重取数据，不变更调度或费用。以本地 Git 回归、独审和精确 CI 验证；自然运行另验。
 
