@@ -1,5 +1,9 @@
 # Project Backlog · GFRR Auto-Update Site
 
+## Brave private-proof continuity acceptance baseline — November 18, 2026
+
+Owner-requested safe restoration: preserve fee protection and historical receipts; do not change billing settings or make paid probe requests. The inactive implementation adds only explicit same-identity v4 proof renewal, synthetic regression tests and ADR-0111 operating guidance. No secret, real ledger, workflow or production data is modified. Deployment and actual renewal remain separate; missing original private evidence/nonce, unresolved receipts or unavailable current account/key-binding proof block activation. Independent actual-diff review and full repository checks are required before integration.
+
 本页只保留当前工作、未解依赖与维护入口。已完成任务的过程记录移入[2026-09 至 2026-11 原文快照](PROJECT_HANDOFF_HISTORY_2026_09_TO_11.md)；更早记录见[历史目录](MILESTONE_INDEX.md)。旧“待合并/下一步”不覆盖下方已核实的 main 状态，合并也不自动证明生产验收完成。
 
 ## Section 1 · 维护状态
