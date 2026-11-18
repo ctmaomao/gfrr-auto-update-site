@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
+import { buildPagesArtifact } from '../../scripts/build-pages-artifact.mjs';
+import { compareEdgeOneTree } from '../../scripts/review-edgeone-noop.mjs';
 
 const workflow = readFileSync(new URL('../../.github/workflows/publish-edgeone-release.yml', import.meta.url), 'utf8');
 const steps = workflow.split(/^      - name: /mu).slice(1);
@@ -138,4 +141,111 @@ test('publication retains low-frequency, no-change and quota protections', () =>
   assert.ok(publish.includes('"$release_count" -ge 400'));
   assert.ok(publish.indexOf('"$release_count" -ge 400') < publish.indexOf('git push origin main'));
   assert.doesNotMatch(workflow, /contents: write|EDGEONE_API_TOKEN/u);
+});
+
+
+test('only a successful schedule-specific no-op proof can skip the unchanged publish path', () => {
+  const probe = step('Prove scheduled EdgeOne artifact is unchanged');
+  assert.match(probe, /if: github.event_name == 'schedule' && steps.review.outcome == 'success' && steps.review.outputs.should_publish == 'true'/);
+  assert.match(probe, /SOURCE_SHA=\$\(git rev-parse HEAD\)\s+export SOURCE_SHA\s+npm ci\s+node scripts\/review-edgeone-noop\.mjs/);
+  assert.match(probe, /continue-on-error: true/);
+  assert.doesNotMatch(probe, /GH_TOKEN|secrets\.|deploy.key/i);
+  assert.ok(workflow.includes("(steps.noop.outcome != 'success' || steps.noop.outputs.identical != 'true')"));
+  assert.ok(workflow.includes("needs.publication_check.result != 'success' || needs.publication_check.outputs.should_publish != 'false'"));
+});
+
+function noopFixture(t) {
+  const root = mkdtempSync(join(tmpdir(), 'edgeone-proof-'));
+  t.after(() => rmSync(root, { force: true, recursive: true }));
+  const source = join(root, 'source');
+  const release = join(root, 'release');
+  const staging = join(root, 'stage');
+  const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  for (const dir of [source, release, staging]) mkdirSync(dir);
+  for (const dir of [source, release]) {
+    git(dir, 'init', '-b', 'main');
+    git(dir, 'config', 'user.name', 'Test');
+    git(dir, 'config', 'user.email', 'test@example.invalid');
+  }
+  for (const dir of [release, staging]) {
+    writeFileSync(join(dir, 'index.html'), 'hello\n');
+    writeFileSync(join(dir, 'edgeone.json'), '{"headers":[]}\n');
+  }
+  git(source, 'commit', '--allow-empty', '-m', 'source');
+  git(release, 'add', '.');
+  git(release, 'commit', '-m', 'release');
+  const sourceSha = git(source, 'rev-parse', 'HEAD');
+  const sourceUrl = pathToFileURL(source).href;
+  const releaseUrl = pathToFileURL(release).href;
+  const compare = overrides => compareEdgeOneTree({ staging, scratch: mkdtempSync(join(root, 'bare-')),
+    sourceUrl, releaseUrl, sourceSha, ...overrides });
+  return { root, source, release, staging, git, sourceSha, compare };
+}
+
+test('scheduled proof compares complete staged and release Git trees, including config and extra or missing paths', t => {
+  const f = noopFixture(t);
+  assert.deepEqual(f.compare(), { reason: 'identical_release_tree', sourceSha: f.sourceSha,
+    releaseCommit: f.git(f.release, 'rev-parse', 'HEAD'), releaseTree: f.git(f.release, 'rev-parse', 'HEAD^{tree}') });
+  for (const [path, original] of [['index.html', 'hello\n'], ['edgeone.json', '{"headers":[]}\n']]) {
+    writeFileSync(join(f.staging, path), 'different\n');
+    assert.equal(f.compare().reason, 'tree_differs', path);
+    writeFileSync(join(f.staging, path), original);
+  }
+  writeFileSync(join(f.staging, 'extra.txt'), 'extra\n');
+  assert.equal(f.compare().reason, 'tree_differs', 'extra path');
+  rmSync(join(f.staging, 'extra.txt'));
+  rmSync(join(f.staging, 'index.html'));
+  assert.equal(f.compare().reason, 'tree_differs', 'missing path');
+});
+
+test('scheduled proof includes Git executable modes even when bytes match', { skip: process.platform === 'win32' }, t => {
+  const f = noopFixture(t);
+  chmodSync(join(f.staging, 'index.html'), 0o755);
+  assert.equal(f.compare().reason, 'tree_differs');
+});
+
+test('ambient Git attributes cannot normalize unequal staging bytes into an equal tree', t => {
+  const f = noopFixture(t);
+  const old = process.env.XDG_CONFIG_HOME;
+  t.after(() => {
+    if (old === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = old;
+  });
+  const configHome = join(f.root, 'config-home');
+  mkdirSync(join(configHome, 'git'), { recursive: true });
+  writeFileSync(join(configHome, 'git', 'attributes'), '*.html text\n');
+  process.env.XDG_CONFIG_HOME = configHome;
+  writeFileSync(join(f.staging, 'index.html'), 'hello\r\n');
+  assert.equal(f.compare().reason, 'tree_differs');
+});
+
+test('regular content cannot match a release symbolic link', { skip: process.platform === 'win32' }, t => {
+  const f = noopFixture(t);
+  rmSync(join(f.release, 'index.html'));
+  symlinkSync('hello\n', join(f.release, 'index.html'));
+  f.git(f.release, 'add', 'index.html');
+  f.git(f.release, 'commit', '-m', 'replace regular file with link');
+  assert.equal(f.compare().reason, 'tree_differs');
+});
+
+test('a private Pages artifact target cannot replace an existing path', t => {
+  const root = mkdtempSync(join(tmpdir(), 'edgeone-proof-output-'));
+  t.after(() => rmSync(root, { force: true, recursive: true }));
+  const marker = join(root, 'marker');
+  writeFileSync(marker, 'preserve');
+  assert.throws(() => buildPagesArtifact(root), /EEXIST/);
+  assert.equal(readFileSync(marker, 'utf8'), 'preserve');
+});
+
+test('missing proof, and a source or release ref race leave publication on its normal validated path', t => {
+  const f = noopFixture(t);
+  assert.equal(f.compare({ releaseUrl: pathToFileURL(join(f.release, 'missing')).href }).reason, 'proof_unavailable');
+  assert.equal(f.compare({ git(cwd, ...args) {
+    if (args[0] === 'ls-remote' && args.includes(pathToFileURL(f.release).href)) {
+      f.git(f.release, 'commit', '--allow-empty', '-m', 'release moved');
+    }
+    return f.git(cwd, ...args);
+  } }).reason, 'ref_changed');
+  f.git(f.source, 'commit', '--allow-empty', '-m', 'source moved');
+  assert.equal(f.compare().reason, 'ref_changed');
 });

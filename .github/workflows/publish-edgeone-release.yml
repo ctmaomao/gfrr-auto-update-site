@@ -48,7 +48,7 @@ jobs:
       contents: read
       actions: read
     outputs:
-      should_publish: ${{ steps.review.outcome != 'success' || steps.review.outputs.should_publish != 'false' }}
+      should_publish: ${{ (steps.review.outcome != 'success' || steps.review.outputs.should_publish != 'false') && (steps.noop.outcome != 'success' || steps.noop.outputs.identical != 'true') }}
     steps:
       - name: Checkout publication admission code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -69,6 +69,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/review-pages-deployment.mjs --upstream-only
+
+      - name: Prove scheduled EdgeOne artifact is unchanged
+        if: github.event_name == 'schedule' && steps.review.outcome == 'success' && steps.review.outputs.should_publish == 'true'
+        id: noop
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          SOURCE_SHA=$(git rev-parse HEAD)
+          export SOURCE_SHA
+          npm ci
+          node scripts/review-edgeone-noop.mjs
 
   publish:
     needs: publication_check
