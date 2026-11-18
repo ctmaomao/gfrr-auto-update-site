@@ -74,3 +74,25 @@ test('a revision has its own two immutable URLs and shell download filename on b
   files.set(originalDir+'predecessor.json',Buffer.from(JSON.stringify({...predecessor,handoffCommit:'d'.repeat(40)})));
   await assert.rejects(verifyPublication({...opts,fetcher:()=>assert.fail('no fetch on mismatched predecessor')}),/predecessor/);
 });
+
+test('weekly readback remains byte-exact, fixed-site, single-request on failure', async () => {
+  const f = fixture();
+  const visibleBytes = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), html]);
+  const cases = [
+    [() => new Response(visibleBytes), /bytes differ/],
+    [() => new Response('hidden server response', { status: 503 }), /HTTP 503/],
+    [() => new Response('placeholder', { headers: { 'content-length': String(2 * 1024 * 1024 + 1) } }), /response too large/],
+    [() => ({ ok: true, status: 200, url: 'https://example.invalid' }), /unexpected response URL/],
+    [() => new Response(null), /response body unavailable/],
+  ];
+  for (const [reply, expected] of cases) {
+    let requests = 0;
+    await assert.rejects(verifyPublication({ date, sha, commit, ...f, fetcher: async (url, options) => {
+      requests++;
+      assert.equal(url.href, 'https://ctmaomao.github.io/gfrr-auto-update-site/reports/' + date + '.html');
+      assert.equal(options.redirect, 'error');
+      return reply();
+    } }), expected);
+    assert.equal(requests, 1, 'no retry or later request after a failed readback');
+  }
+});

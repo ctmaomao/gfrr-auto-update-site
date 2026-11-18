@@ -5,9 +5,12 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { identity, MAX_WEEKLY_BYTES, validateOriginal } from './weekly-original.mjs';
 import { expectedWeeklyPages, splitIssues } from './build-weekly-reports.mjs';
+import { PUBLISHED_SITE_BASES, readPublishedBytes } from './lib/published-site-read.mjs';
 import { issueKeyFromFilename, parseIssueReceipt, samePredecessor, validatePredecessor } from './weekly-issue-identity.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const sites = ['https://ctmaomao.github.io/gfrr-auto-update-site/', 'https://radar.gfrfinradar.uk/'];
+const sites = Object.values(PUBLISHED_SITE_BASES);
+const readbackErrors = { request_timeout: 'response timed out', body_too_large: 'response too large',
+  unexpected_url: 'unexpected response URL', empty_body: 'response body unavailable', network_error: 'request failed' };
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 function gitFile(commit, path) { return execFileSync('git', ['show', `${commit}:${path}`], { cwd: root, maxBuffer: 4 * 1024 * 1024 }); }
 function gitNames(commit) { return execFileSync('git', ['ls-tree', '--name-only', `${commit}:reports`], { cwd: root, encoding: 'utf8' }).trim().split('\n'); }
@@ -46,16 +49,8 @@ export async function verifyPublication({ date, sha, commit, read = gitFile, lis
   for (const site of sites) {
     for (const path of paths) {
       const url = new URL(path, site);
-      const response = await fetcher(url, { redirect: 'error', signal: AbortSignal.timeout(15000) });
-      if (!response.ok) throw new Error(`${url.href}: HTTP ${response.status}`);
-      const chunks = [];
-      let size = 0;
-      for await (const chunk of response.body) {
-        size += chunk.length;
-        if (size > MAX_WEEKLY_BYTES) throw new Error(`${url.href}: response too large`);
-        chunks.push(chunk);
-      }
-      const body = Buffer.concat(chunks);
+      const { bytes: body, error, httpStatus } = await readPublishedBytes(url, fetcher, 15000, MAX_WEEKLY_BYTES);
+      if (error) throw new Error(`${url.href}: ${error === 'http_error' ? `HTTP ${httpStatus}` : readbackErrors[error]}`);
       if (!body.equals(committed.get(path))) throw new Error(`${url.href}: bytes differ from committed artifact`);
       const links = hrefs(body.toString('utf8'), url);
       const contains = target => links.includes(new URL(target, site).href);

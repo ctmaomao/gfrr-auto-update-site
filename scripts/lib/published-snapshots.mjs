@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
 import { inspectPublishedOfr } from './published-ofr-snapshots.mjs';
+import { PUBLISHED_SITE_BASES, readPublishedBytes } from './published-site-read.mjs';
 
 export const SITES = Object.freeze([
-  { id: 'pages', base: 'https://ctmaomao.github.io/gfrr-auto-update-site/', graceHours: 1 },
+  { id: 'pages', base: PUBLISHED_SITE_BASES.pages, graceHours: 1 },
   // EdgeOne data-only publication runs every 3h; allow another hour for delivery.
-  { id: 'custom', base: 'https://radar.gfrfinradar.uk/', graceHours: 4 }
+  { id: 'custom', base: PUBLISHED_SITE_BASES.custom, graceHours: 4 }
 ]);
 // These are delivery-age limits, NOT source freshness or scoring thresholds.
 export const TARGETS = Object.freeze([
@@ -85,33 +86,10 @@ export function inspectContent(target, text, now) {
   return result;
 }
 
-// Single request, no redirect/retry; deadline covers headers AND streamed body.
+// Snapshots retain their text/normalized-hash contract; weekly readback uses raw bytes.
 export async function readBounded(url, fetchImpl = fetch, timeoutMs = 10000, maxBytes = 2 * 1024 * 1024) {
-  const controller = new AbortController();
-  let timer, reader;
-  try {
-    return await Promise.race([
-      (async () => {
-        const response = await fetchImpl(url, { signal: controller.signal, redirect: 'error' });
-        if (!response.ok) return { httpStatus: response.status, error: 'http_error' };
-        if (response.url && response.url !== url) return { httpStatus: response.status, error: 'unexpected_url' };
-        if (Number(response.headers.get('content-length')) > maxBytes) return { httpStatus: response.status, error: 'body_too_large' };
-        if (!response.body) return { httpStatus: response.status, error: 'empty_body' };
-        reader = response.body.getReader();
-        const chunks = []; let size = 0;
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          size += value.byteLength;
-          if (size > maxBytes) return { httpStatus: response.status, error: 'body_too_large' };
-          chunks.push(Buffer.from(value));
-        }
-        return { httpStatus: response.status, text: Buffer.concat(chunks).toString('utf8') };
-      })(),
-      new Promise(resolve => { timer = setTimeout(() => { controller.abort(); resolve({ error: 'request_timeout', httpStatus: null }); }, timeoutMs); })
-    ]);
-  } catch { return { httpStatus: null, error: 'network_error' }; }
-  finally { clearTimeout(timer); controller.abort(); if (reader) void reader.cancel().catch(() => {}); }
+  const { bytes, ...result } = await readPublishedBytes(url, fetchImpl, timeoutMs, maxBytes);
+  return bytes ? { ...result, text: bytes.toString('utf8') } : result;
 }
 
 export async function probePublishedSnapshots({ baseline, now = Date.now(), fetchImpl = fetch, timeoutMs = 10000 } = {}) {
