@@ -1,5 +1,9 @@
 # Project Backlog · GFRR Auto-Update Site
 
+## Brave private manual one-shot acceptance baseline — November 18, 2026
+
+Owner-approved next scope: repository-secret-backed, independently reviewed current-main manual preview and at most one free test through the shared ledger. Preserve original proof, private history, receipts, all normal caps and billing settings; no five-workflow business restoration. The private supplement is a separately reviewed attestation, not a substitute for unknown facts. This code-only candidate adds no real secret, dispatch, evidence, account mutation or ledger write. Preview is read-only; the fixed canary grant has a durable one-shot interlock, dedicated manual receipt and authoritative settlement readback. Details and private preparation format are in ADR-0111. Before integration, independent actual-diff review and complete checks remain required; before real use, independently verified fresh evidence/key binding and the private reviewed-main SHA must exist. Missing evidence is a blocker, not a value to fabricate.
+
 ## Brave private-proof continuity acceptance baseline — November 18, 2026
 
 Owner-requested safe restoration: preserve fee protection and historical receipts; do not change billing settings or make paid probe requests. The inactive implementation adds only explicit same-identity v4 proof renewal, synthetic regression tests and ADR-0111 operating guidance. No secret, real ledger, workflow or production data is modified. Deployment and actual renewal remain separate; missing original private evidence/nonce, unresolved receipts or unavailable current account/key-binding proof block activation. Independent actual-diff review and full repository checks are required before integration.

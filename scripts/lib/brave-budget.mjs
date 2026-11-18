@@ -10,6 +10,8 @@ export const BRAVE_LOGIN_BINDING = 'verified_dashboard_login_and_plan_key';
 export const BRAVE_LOGIN_POLICY = Object.freeze({ maxGrantRequests: 50, maxGrantDays: 1 });
 const isShared = ledger => ['brave-budget-v2', 'brave-budget-v3'].includes(ledger?.schemaVersion);
 const CONSUMERS = ['macro-editorial', 'bubble-editorial', 'oil-news', 'bubble-ceo'];
+export const BRAVE_RENEWAL_SMOKE_GRANT_ID = '81d366bc-2d48-4a18-a716-a8eb722ef57a';
+const isSmoke = row => row.consumer === 'brave-renewal-smoke' && row.mode === 'manual';
 const fail = (suffix, providerRequestAttempted = false) => {
   try { budgetFailure(`brave_budget_${suffix}`); } catch (error) { error.providerRequestAttempted = providerRequestAttempted; throw error; }
 };
@@ -53,6 +55,7 @@ function validateSharedBraveLedger(ledger, now) {
       || observation.outOfPocketCostUsd !== '0.00') fail('grant_invalid');
     grants.set(grant.id, grant); prior = grant;
   }
+  if (ledger.entries.filter(row => row?.consumer === 'brave-renewal-smoke').length > 1) fail('invalid_ledger');
   const ids = new Set();
   for (const row of ledger.entries) {
     const grant = grants.get(row?.grantId);
@@ -60,7 +63,7 @@ function validateSharedBraveLedger(ledger, now) {
       || !/^[a-f0-9-]{36}$/u.test(row.id || '') || ids.has(row.id) || !isTime(row.time) || Date.parse(row.time) > now
       || Date.parse(row.time) < Date.parse(ledger.recordingStartedAt)
       || !grant || Date.parse(row.time) < Date.parse(grant.verifiedAt) || Date.parse(row.time) >= Date.parse(grant.expiresAt)
-      || row.keyId !== grant.keyId || row.requests !== 1 || !CONSUMERS.includes(row.consumer)
+      || row.keyId !== grant.keyId || row.requests !== 1 || !(CONSUMERS.includes(row.consumer) || (loginBinding && isSmoke(row) && row.grantId === BRAVE_RENEWAL_SMOKE_GRANT_ID))
       || !['manual','automated'].includes(row.mode) || !/^(local|[0-9]+)$/u.test(row.runId || '')
       || !['reserved','success','failed'].includes(row.state)
       || (row.state === 'reserved' ? row.finishedAt !== null : !isTime(row.finishedAt)
@@ -147,7 +150,7 @@ export function createBraveBudget({ store, now = Date.now, monotonicNow = () => 
   let stopped = false, stoppedAfterDispatch = false;
   return async ({ key, consumer, mode = 'manual', runId = 'local' }, request) => {
     if (stopped) fail('session_stopped', stoppedAfterDispatch);
-    if (!key || !CONSUMERS.includes(consumer) || !['manual','automated'].includes(mode) || !/^(local|[0-9]+)$/u.test(runId)) fail('invalid_request');
+    if (!key || !(CONSUMERS.includes(consumer) || isSmoke({ consumer, mode })) || !['manual','automated'].includes(mode) || !/^(local|[0-9]+)$/u.test(runId)) fail('invalid_request');
     const admissionStartedAt = monotonicNow();
     const row = { id: id(), keyId: keyFingerprint(key), time: new Date(now()).toISOString(), consumer, mode, runId, requests: 1, state: 'reserved', finishedAt: null };
     try {

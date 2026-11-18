@@ -170,8 +170,11 @@ test('repository endpoint inventory binds every Tavily and Brave search caller t
     ['scripts/oil-directional/diagnose-oil-news-events.mjs', 'oil-news']
   ];
   const files = scriptInventory();
-  for (const endpoint of [/https:\/\/api\.tavily\.com\/search/u, /https:\/\/api\.search\.brave\.com\/res\/v1\/(?:news\/)?search/u]) {
-    assert.deepEqual(files.filter(file => endpoint.test(text(file))).sort(), expected.map(([file]) => file).sort(),
+  for (const [endpoint, extra] of [[/https:\/\/api\.tavily\.com\/search/u, []],
+    [/https:\/\/api\.search\.brave\.com\/res\/v1\/(?:news\/)?search/u, ['scripts/lib/brave-manual-canary.mjs']]]) {
+    // ADR-0111: the explicitly authorized one-shot manual canary shares the
+    // same durable gate; it is not a fifth business consumer or Tavily caller.
+    assert.deepEqual(files.filter(file => endpoint.test(text(file))).sort(), [...expected.map(([file]) => file), ...extra].sort(),
       'a new provider caller requires explicit shared-ledger admission and inventory review');
   }
   for (const [file, consumer] of expected) {
@@ -191,4 +194,13 @@ test('npm aggregate retains old checks and reaches all new offline budget tests'
     assert.ok(scripts[`check:${name}`].includes(`node --test tests/unit/${name}.test.mjs`));
   }
   for (const name of ['deepseek', 'tavily', 'brave']) assert.equal(scripts[`review:${name}-budget`], `node scripts/review-${name}-budget.mjs`);
+});
+
+test('single authorized Brave canary uses shared budget and private proof, never business generation', () => {
+  const source = text('scripts/lib/brave-manual-canary.mjs');
+  assert.match(source, /import \{ createBraveBudget,/u);
+  assert.match(source, /oneShotStore\(adapter, next\)/u);
+  assert.match(source, /consumer: 'brave-renewal-smoke', mode: 'manual'/u);
+  assert.match(source, /withBravePrivateProof\(store, next, now\)/u);
+  assert.doesNotMatch(source, /withTavilyBudget|run-daily-pipeline|build-bubble-watch|collect-editorial-news/u);
 });

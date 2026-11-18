@@ -15,6 +15,9 @@ test('private proof is injected only into the five reviewed Brave steps, not job
   for (const file of readdirSync(directory).filter(name => /\.ya?ml$/u.test(name))) {
     const source = readFileSync(directory + file, 'utf8').replaceAll('\r\n', '\n');
     if (!source.includes('BRAVE_BUDGET_PRIVATE_PROOF')) continue;
+    // ADR-0111 explicitly adds only this separately constrained manual canary.
+    // Its complete secret inventory is asserted below, not exempted from review.
+    if (file === 'brave-private-canary.yml') continue;
     found.push(file);
     assert.ok(expected.has(file), `unreviewed proof consumer: ${file}`);
     assert.equal(source.match(/BRAVE_BUDGET_PRIVATE_PROOF/gu).length, 2);
@@ -43,4 +46,31 @@ test('private wiring does not authorize extra collection, broaden token permissi
   const diagnostic = readFileSync(directory + 'tavily-budget-status.yml', 'utf8');
   assert.ok(!audit.includes('BRAVE_BUDGET_PRIVATE_PROOF'));
   assert.ok(!diagnostic.includes('BRAVE_BUDGET_PRIVATE_PROOF'));
+});
+
+test('only two fixed main manual canary steps receive the private renewal chain and original proof', () => {
+  const filename = 'brave-private-canary.yml';
+  const source = readFileSync(directory + filename, 'utf8').replaceAll('\r\n', '\n');
+  const chainInjection = '          BRAVE_BUDGET_RENEWAL_CHAIN: ${{ secrets.BRAVE_BUDGET_RENEWAL_CHAIN }}';
+  const chainFiles = readdirSync(directory).filter(name => /\.ya?ml$/u.test(name)
+    && readFileSync(directory + name, 'utf8').includes('BRAVE_BUDGET_RENEWAL_CHAIN'));
+  assert.deepEqual(chainFiles, [filename]);
+  assert.equal(source.match(/BRAVE_BUDGET_PRIVATE_PROOF/gu).length, 4);
+  assert.equal(source.match(/BRAVE_BUDGET_RENEWAL_CHAIN/gu).length, 4);
+  assert.equal(source.split('\n').filter(line => line === injection).length, 2);
+  assert.equal(source.split('\n').filter(line => line === chainInjection).length, 2);
+  for (const name of ['Private read-only preflight', 'One durable authorized request only']) {
+    const step = source.split(/^      - /mu).find(part => part.startsWith(`name: ${name}\n`));
+    assert.ok(step?.includes(injection)); assert.ok(step.includes(chainInjection));
+    assert.match(step, /^        env:$/mu);
+    assert.match(step, /^        run: node scripts\/run-brave-private-canary\.mjs$/mu);
+  }
+  // Indentation/count above excludes top-level/job-scope injection; exact
+  // commands and identities exclude using these secrets in other execution.
+  assert.equal((source.match(/^        run:/gmu) || []).length, 2);
+  assert.equal((source.match(/github.ref == 'refs\/heads\/main'/gu) || []).length, 2);
+  assert.equal((source.match(/ref: \$\{\{ github.sha \}\}/gu) || []).length, 2);
+  assert.match(source, /needs: preview/u); assert.match(source, /workflow_dispatch:/u);
+  assert.doesNotMatch(source, /schedule:|pull_request:|workflow_run:|workflow_call:|push:|set -x|printenv|toJSON\(secrets\)|upload-artifact|GITHUB_STEP_SUMMARY/u);
+  assert.doesNotMatch(source, /TAVILY_BUDGET_GITHUB_TOKEN|DEEPSEEK_|secrets\.GITHUB_TOKEN/u);
 });
