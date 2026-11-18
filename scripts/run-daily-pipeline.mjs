@@ -1,3 +1,4 @@
+import { cartsCalendarComparisons } from './daily/carts-calendar.mjs';
 import { claimsWindow, cachedClaimsWindow } from './daily/claims-windows.mjs';
 import { sentimentPeriods, cachedSentimentPeriods } from './daily/sentiment-periods.mjs';
 import { cpiComparisons, cachedCpiComparisons } from './daily/cpi-comparisons.mjs';
@@ -6505,13 +6506,6 @@ function buildMissingConsumer() {
   };
 }
 
-function averageRecentValues(rows, count, offset = 0) {
-  if (!Array.isArray(rows) || rows.length < count + offset) return null;
-  const slice = rows.slice(rows.length - count - offset, rows.length - offset);
-  if (slice.length !== count || slice.some((row) => !Number.isFinite(row.value))) return null;
-  return +(slice.reduce((sum, row) => sum + row.value, 0) / count).toFixed(3);
-}
-
 function latestDateIso(rows) {
   const latest = Array.isArray(rows) ? rows[rows.length - 1] : null;
   return latest?.date ? `${latest.date}T00:00:00Z` : null;
@@ -6536,14 +6530,6 @@ function findMonthlyValueAgo(rows, monthsBack) {
   const matched = rows.find((row) => typeof row.date === 'string' && row.date.slice(0, 7) === targetKey);
   // A missing calendar month is unknown, never a different horizon or nearest year.
   return Number.isFinite(matched?.value) ? matched.value : null;
-}
-
-function calculateWeeklyYoY(rows) {
-  const current = latestValue(rows);
-  const yearAgo = findValueAgo(rows, 52 * 7);
-  return Number.isFinite(current) && Number.isFinite(yearAgo) && yearAgo > 0
-    ? +(((current - yearAgo) / yearAgo)).toFixed(4)
-    : null;
 }
 
 function calculateMonthlyYoY(rows) {
@@ -8201,11 +8187,7 @@ function normalizePreviousEmployment(prevEmployment) {
 function normalizePreviousConsumerRetail(prevConsumerRetail) {
   if (!prevConsumerRetail || typeof prevConsumerRetail !== 'object') return buildMissingConsumerRetail();
   const cartsNominal = Number.isFinite(prevConsumerRetail.cartsNominal) ? prevConsumerRetail.cartsNominal : null;
-  const cartsNominal4wAverage = Number.isFinite(prevConsumerRetail.cartsNominal4wAverage) ? prevConsumerRetail.cartsNominal4wAverage : null;
-  const cartsNominalYoY = Number.isFinite(prevConsumerRetail.cartsNominalYoY) ? prevConsumerRetail.cartsNominalYoY : null;
   const cartsReal = Number.isFinite(prevConsumerRetail.cartsReal) ? prevConsumerRetail.cartsReal : null;
-  const cartsReal4wAverage = Number.isFinite(prevConsumerRetail.cartsReal4wAverage) ? prevConsumerRetail.cartsReal4wAverage : null;
-  const cartsRealYoY = Number.isFinite(prevConsumerRetail.cartsRealYoY) ? prevConsumerRetail.cartsRealYoY : null;
   const retailSegments = Array.isArray(prevConsumerRetail.retailSegments)
     ? prevConsumerRetail.retailSegments
     : buildMissingConsumerRetail().retailSegments;
@@ -8223,12 +8205,8 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
     : null;
   return {
     cartsNominal,
-    cartsNominal4wAverage,
-    cartsNominalYoY,
     cartsNominalUpdatedAt: consumerRetailObservationIso(prevConsumerRetail.cartsNominalUpdatedAt),
     cartsReal,
-    cartsReal4wAverage,
-    cartsRealYoY,
     cartsRealUpdatedAt: consumerRetailObservationIso(prevConsumerRetail.cartsRealUpdatedAt),
     retailSegments,
     segmentPositiveCount: Number.isFinite(prevConsumerRetail.segmentPositiveCount)
@@ -8266,9 +8244,6 @@ function normalizePreviousConsumerRetail(prevConsumerRetail) {
     redbookReportUrl: typeof prevConsumerRetail.redbookReportUrl === 'string' ? prevConsumerRetail.redbookReportUrl : null,
     redbookStatus: redbookRetailSalesYoY !== null ? 'fallback' : 'missing',
     redbookSummary: typeof prevConsumerRetail.redbookSummary === 'string' ? prevConsumerRetail.redbookSummary : null,
-    retailRegime: typeof prevConsumerRetail.retailRegime === 'string' && prevConsumerRetail.retailRegime.trim()
-      ? prevConsumerRetail.retailRegime
-      : classifyRetailRegime(cartsRealYoY, redbookRetailSalesYoY),
     sourceStatus: {
       carts: cartsNominal !== null ? 'fallback' : 'missing',
       cartsr: cartsReal !== null ? 'fallback' : 'missing',
@@ -9113,14 +9088,13 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   if (cartsResult.status === 'fulfilled') {
     const rows = cartsResult.value;
     cartsNominal = fredMillionsToBillions(latestValue(rows));
-    cartsNominal4wAverage = fredMillionsToBillions(averageRecentValues(rows, 4));
-    cartsNominalYoY = calculateWeeklyYoY(rows);
+    const { average, yoy } = cartsCalendarComparisons(rows, isoNow);
+    cartsNominal4wAverage = fredMillionsToBillions(average);
+    cartsNominalYoY = yoy;
     cartsNominalUpdatedAt = consumerRetailObservationIso(latestDateIso(rows));
     status.carts = 'live';
   } else if (Number.isFinite(fallback.cartsNominal)) {
     cartsNominal = fallback.cartsNominal;
-    cartsNominal4wAverage = fallback.cartsNominal4wAverage;
-    cartsNominalYoY = fallback.cartsNominalYoY;
     cartsNominalUpdatedAt = fallback.cartsNominalUpdatedAt;
     status.carts = 'fallback';
   }
@@ -9128,14 +9102,13 @@ async function resolveConsumerRetail(prevConsumerRetail) {
   if (cartsrResult.status === 'fulfilled') {
     const rows = cartsrResult.value;
     cartsReal = fredMillionsToBillions(latestValue(rows));
-    cartsReal4wAverage = fredMillionsToBillions(averageRecentValues(rows, 4));
-    cartsRealYoY = calculateWeeklyYoY(rows);
+    const { average, yoy } = cartsCalendarComparisons(rows, isoNow);
+    cartsReal4wAverage = fredMillionsToBillions(average);
+    cartsRealYoY = yoy;
     cartsRealUpdatedAt = consumerRetailObservationIso(latestDateIso(rows));
     status.cartsr = 'live';
   } else if (Number.isFinite(fallback.cartsReal)) {
     cartsReal = fallback.cartsReal;
-    cartsReal4wAverage = fallback.cartsReal4wAverage;
-    cartsRealYoY = fallback.cartsRealYoY;
     cartsRealUpdatedAt = fallback.cartsRealUpdatedAt;
     status.cartsr = 'fallback';
   }

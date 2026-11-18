@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { cartsCalendarComparisons } from '../../scripts/daily/carts-calendar.mjs';
 import { claimsWindow, cachedClaimsWindow } from '../../scripts/daily/claims-windows.mjs';
 import { parseFredApiObservations } from '../../scripts/lib/fred-observations.mjs';
 import { buildMacroCoherence } from '../../scripts/modules/buildCrossValidationMatrix.js';
@@ -12,8 +13,8 @@ const rows = dates.map((date,i)=>row(date,i===0?100000:200000));
 const source = fs.readFileSync(new URL('../../scripts/run-daily-pipeline.mjs',import.meta.url),'utf8');
 function extract(name) { const start=source.indexOf(`function ${name}(`); assert.ok(start>=0); return (source.slice(start-6,start)==='async '?'async ':'')+source.slice(start,source.indexOf('\n}',start)+2); }
 function harness(icsa,ccsa=icsa) {
-  const names=['buildMissingEmployment','normalizePreviousEmployment','resolveEmploymentBreadth','classifyClaimsRegime','classifyJoltsRegime','classifyIndustryDiffusionRegime','classifyLaborQualityRegime','latestIsoDate','averageRecentValues'];
-  return vm.runInNewContext(names.map(extract).join('\n')+'\n({resolveEmploymentBreadth,averageRecentValues})',{
+  const names=['buildMissingEmployment','normalizePreviousEmployment','resolveEmploymentBreadth','classifyClaimsRegime','classifyJoltsRegime','classifyIndustryDiffusionRegime','classifyLaborQualityRegime','latestIsoDate'];
+  return vm.runInNewContext(names.map(extract).join('\n')+'\n({resolveEmploymentBreadth})',{
     isoNow:now,claimsWindow,cachedClaimsWindow,EMPLOYMENT_SOURCE:'test',EMPLOYMENT_INDUSTRY_PAYROLL_SERIES:[],
     verifiedPayrollBasketFallback:()=>({}),calculateIndustryPayrollDiffusion:()=>({}),
     fetchFredSeries:async(id)=>{const data=id==='ICSA'?icsa:id==='CCSA'?ccsa:null;if(data===null)throw Error('offline');return data;}
@@ -63,7 +64,9 @@ test('cache needs recomputable proof, preserves original clock and rejects stale
 
 test('actual parser and resolver omit a missing-week change before downstream interpretation',async()=>{
   const parsed=parseFredApiObservations(JSON.stringify({observations:rows.map(r=>({...r,value:r.date==='2026-10-03'?'.':String(r.value)}))}));
-  const before=harness(rows).averageRecentValues(parsed,4)-harness(rows).averageRecentValues(parsed,4,4);
+  // Historical row-based behavior, kept only as the counterexample.
+  const oldMean = window => window.reduce((sum, item) => sum + item.value, 0) / 4;
+  const before=oldMean(parsed.slice(-4))-oldMean(parsed.slice(-8,-4));
   assert.equal(before,25000);
   const old=buildMacroCoherence({macroDrivers:{employment:{initialClaims4wChange:before}},displayInputsBaseline:{vix:16}});
   assert.equal(old.signals.find(s=>s.id==='main_vs_wall').verdict,'背离');
@@ -76,9 +79,10 @@ test('actual parser and resolver omit a missing-week change before downstream in
   assert.ok(JSON.stringify(missing).includes('就业/零售实体数据未刷新'));
 });
 
-test('shared CARTS mean stays row-based for its 48-week calendar',()=>{
+test('CARTS accepts its consecutive non-seven-day slots while claims still require seven days',()=>{
   const unusual=[row('2026-09-28',100),row('2026-10-07',200),row('2026-10-14',300),row('2026-10-21',400)];
-  assert.equal(harness(rows).averageRecentValues(unusual,4),250);
+  assert.equal(cartsCalendarComparisons(unusual,now).average,250);
+  assert.equal(cartsCalendarComparisons([row('2026-09-21',1), ...unusual.filter(r=>r.date!=='2026-10-07')],now).average,null);
   assert.equal(claimsWindow(unusual,now).average,null);
 });
 
