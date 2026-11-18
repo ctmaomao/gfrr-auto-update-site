@@ -189,9 +189,7 @@ jobs:
 
       - name: Validate final data and repository contracts
         if: steps.build_input.outputs.editorial_ready == 'true'
-        run: |
-          npm run check:bubble-watch
-          npm run check:all
+        run: npm run check:all
 
       - name: Protected path assertion
         if: steps.build_input.outputs.editorial_ready == 'true' && inputs.budget_selection != 'editorial-bubble-receipt-20261112-v1'
