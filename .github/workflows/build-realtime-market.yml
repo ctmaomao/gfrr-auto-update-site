@@ -94,12 +94,7 @@ jobs:
           # Clean the tracked worktree file so branch switching cannot be blocked.
           git restore --worktree --staged realtime/market.json
 
-          if git ls-remote --exit-code --heads origin realtime-data; then
-            git fetch origin realtime-data
-            git switch --create realtime-data --track origin/realtime-data || git switch realtime-data
-          else
-            git switch --create realtime-data
-          fi
+          bash scripts/realtime/switch-publish-branch.sh
 
           mkdir -p realtime
           # Restore the generated realtime payload onto the publish branch.
