@@ -56,6 +56,29 @@ export function isTransportShockManualArtifactPath(filePath) {
   return isManualArtifactPath(filePath, 'manual-artifacts/transport-shock-confirmation-factor/');
 }
 
+// Frozen field order belongs to byte-stable offline Transport Shock audit artifacts.
+// Return a fresh map: callers must not share mutable output state.
+export function transportAuditImpact() {
+  return {
+    writesProductionData: false,
+    modifiesFrontend: false,
+    modifiesWorkerRuntime: false,
+    modifiesWorkflow: false,
+    affectsValues: false,
+    affectsDisplayInputsBaseline: false,
+    affectsEffectiveDisplayInputs: false,
+    affectsScoring: false,
+    affectsDecisionModel: false,
+    affectsExecutionLock: false,
+    affectsPositionGuidance: false,
+    affectsBrentPromotion: false,
+    affectsOdpFinalBias: false,
+    affectsMainJudgment: false,
+    affectsGlobalRiskHeatmap: false,
+    affectsCrossValidation: false
+  };
+}
+
 export function shortHash(value, length = 16) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, length);
 }

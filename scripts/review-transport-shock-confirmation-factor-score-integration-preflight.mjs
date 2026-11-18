@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -101,27 +101,6 @@ function readJsonInput(filePath) {
     present: true,
     path: safeRelativePath(filePath),
     data: JSON.parse(readFileSync(absolutePath, 'utf8'))
-  };
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
   };
 }
 
@@ -289,7 +268,7 @@ function buildReview(inputs) {
     mainScoreApproved: false,
     eligibleForMainScore: false,
     promotionEligible: false,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本飞检只判断是否具备另开入分设计审查的前置条件;即使通过也不自动写分、不改主判断、不改 ODP finalBias。'

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -98,27 +98,6 @@ function readJson(filePath, label) {
     label,
     safePath: safeRelativePath(filePath),
     data: JSON.parse(readFileSync(absolutePath, 'utf8'))
-  };
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
   };
 }
 
@@ -285,7 +264,7 @@ function buildReview(candidateInput, replayInput) {
           'runtime_integration_requires_separate_review'
         ]
       : ['design_review_blocked_keep_no_score_write'],
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本 review 只确认免费代理候选的 3% cap 与 replay 控制是否自洽;它不批准生产写分,也不证明历史回测、真实误报率或今日油价方向。'

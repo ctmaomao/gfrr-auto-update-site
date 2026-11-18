@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -90,27 +90,6 @@ function readJson(filePath) {
     missing: false,
     safePath: safeRelativePath(filePath),
     data: JSON.parse(readFileSync(absolutePath, 'utf8'))
-  };
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
   };
 }
 
@@ -242,7 +221,7 @@ function buildReview(input) {
     ],
     blockerCount: blockers.length,
     blockers,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本 review 只列出未来运行时入分设计门槛;它不改主分、不批准生产写分、不证明历史回测,也不改变今天的油价方向判断。'

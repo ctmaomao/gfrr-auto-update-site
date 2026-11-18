@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -99,27 +99,6 @@ function readInput(inputPath) {
     missing: false,
     safePath: safeRelativePath(inputPath),
     data: JSON.parse(readFileSync(absolutePath, 'utf8'))
-  };
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
   };
 }
 
@@ -243,7 +222,7 @@ function buildReplay(input) {
     },
     blockers: allBlockers,
     warnings: passed ? ['dry_run_only', 'fixture_or_manual_artifact_replay_only'] : [],
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本 dry-run runner 只读取人工样本集审查 artifact 并计算审计指标,不读取生产数据,不执行生产回测,不生成主分数,不进入今日总判断打分。'

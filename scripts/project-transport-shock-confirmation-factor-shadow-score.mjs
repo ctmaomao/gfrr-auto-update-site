@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -105,27 +105,6 @@ function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
 }
 
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
-}
-
 function boundaries() {
   return {
     outputOnlyToManualArtifacts: true,
@@ -167,7 +146,7 @@ function buildBlockedProjection(input, blockers) {
     eligibleForMainScore: false,
     blockers,
     warnings: [],
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY
   };
@@ -271,7 +250,7 @@ function buildProjection(input) {
     },
     blockers: [],
     warnings,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本影子分只是人工路线信号切片投影,缺少实时物理、市场、新闻和设施交叉确认;不得写入生产数据、前端卡片、ODP finalBias 或今日总判断打分。'

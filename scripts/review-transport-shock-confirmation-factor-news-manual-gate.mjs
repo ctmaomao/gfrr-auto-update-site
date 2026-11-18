@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -126,27 +126,6 @@ function readOptionalOperatorReview(filePath) {
 
 function asNumber(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function boundaries() {
@@ -311,7 +290,7 @@ function evaluateGate(input, options, operatorReviewInput = { present: false, pa
     frontendDisplayApproved: false,
     eligibleForMainScore: false,
     promotionEligible: false,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本闸门只判断 Oil News claim ledger 是否可进入下一层交叉确认审阅;它不确认通道关闭/重开、断供、油轮流向、设施事故、制裁影响或油价方向,也不批准今日总判断打分。'

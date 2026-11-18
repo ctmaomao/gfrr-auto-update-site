@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -210,27 +210,6 @@ function latestRowsByChokepoint(rows, asOf) {
   }));
 }
 
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
-}
-
 function buildReview(payload, options, sourceMode) {
   const rows = parseRows(payload);
   const latestDate = rows[0]?.date ?? null;
@@ -278,7 +257,7 @@ function buildReview(payload, options, sourceMode) {
       scoreWriteApproved: false,
       eligibleForMainScore: false
     },
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       productionDataWriteApproved: false,

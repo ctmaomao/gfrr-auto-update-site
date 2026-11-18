@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -147,27 +147,6 @@ function isPlainObject(value) {
 
 function asNumber(value) {
   return Number.isFinite(value) ? value : null;
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function boundaries() {
@@ -510,7 +489,7 @@ function buildReview(inputs, options) {
     promotionEligible: false,
     routeFreightConfirmation: 'not_connected',
     marketConfirmation: 'not_connected',
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本审阅只把运输候选、新闻人工闸门、新闻/卫星高频确认和 ODP 周度锚放在同一张交叉确认表;它不确认封锁、断供、油轮流向、设施事故、制裁影响或油价方向,也不批准今日总判断打分。'

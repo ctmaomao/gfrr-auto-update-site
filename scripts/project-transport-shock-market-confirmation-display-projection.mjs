@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, shortHash, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, shortHash, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -83,27 +83,6 @@ function readReview(inputPath) {
   const absolutePath = resolve(inputPath);
   if (!existsSync(absolutePath)) throw new Error(`Input file does not exist: ${inputPath}`);
   return JSON.parse(readFileSync(absolutePath, 'utf8'));
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function assertReview(review) {
@@ -198,7 +177,7 @@ function buildProjection(review, options) {
       marketConfirmation: 'not_connected',
       eligibleForMainScore: false
     },
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,

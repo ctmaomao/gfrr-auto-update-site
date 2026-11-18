@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -124,27 +124,6 @@ function readScoreReadiness(inputPath) {
   };
 }
 
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
-}
-
 function boundaries() {
   return {
     outputOnlyToManualArtifacts: true,
@@ -256,7 +235,7 @@ function buildBlockedProjection(input, readinessInput, blockers, {
         : 0
     },
     blockers,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY
   };
@@ -345,7 +324,7 @@ function buildProjection(input, readinessInput) {
       'candidate_contribution_projected_but_no_score_write',
       'requires_separate_reviewed_score_pr'
     ],
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本投影只把免费代理低权重路径转成候选贡献审阅 artifact;即使候选贡献达到 cap,仍不得写入生产数据、前端卡片、ODP finalBias 或今日总判断打分。'
