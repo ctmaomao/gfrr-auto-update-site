@@ -180,7 +180,7 @@ npm run review:brave-budget -- --plan
 
 2026-09-11 owner 单次例外见 [ADR-0045](ADR/0045-editorial-single-recovery.md)：仅指定手动 recovery ID、当天截止前、固定 Daily 时间与内容摘要允许额外一次预留；旧 day/input refs 不动，独立 recovery ref 已存在或创建不确定即拒绝。其余调用仍执行以下普通预算规则。
 
-GitHub Actions cron 使用 UTC，但不保证准时或相对顺序。上游名义时刻仍为 `Build Daily Radar Data` 22:30、`Refresh World Order Stress` 23:00、`Refresh Oil Directional Pressure` 23:45。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，`Macro Risk Editorial Refresh` 改听这三项完成事件，不再另排 00:05 cron。只接受同库 main 的首次 scheduled 成功事件，回查最新上游及本期快照就绪后才允许新闻/AI 开销；未齐、乱序、失败或过旧均 hold，等后续合格事件。Daily 本身不调用 DeepSeek。
+GitHub Actions cron 使用 UTC，但不保证准时或相对顺序。上游名义时刻仍为 `Build Daily Radar Data` 22:30、`Refresh World Order Stress` 23:00、`Refresh Oil Directional Pressure` 23:45。[ADR-0032](ADR/0032-macro-editorial-upstream-admission.md) 起，`Macro Risk Editorial Refresh` 改听这三项完成事件，不再另排 00:05 cron。只接受同库 main 的首次 scheduled 成功事件，自动 OFR 判读仅接受 Daily 的完成事件，回查最新 Daily、核对本期快照时间在该运行起止之间并验证完整 OFR 契约；World Order 或油市迟到、失败不再拦截。旧版非 OFR 自动流程继续回查三路，手动准入不变。见[准入回放](#ofr-admission-replay)。Daily 本身不调用 DeepSeek。
 
 调用前以 create-only Git refs 持久预留 UTC 日预算和 Daily 输入键，路径固定 `refs/tags/macro-editorial-budget/v1/day-YYYY-MM-DD` / `input-<sha256>`。这只是保守尝试凭据，不是发布/成功证明；创建不确定、冲突或部分成功不允许调用，也不清除凭据。任何失败、零可信新闻或取消都不自动退还预算；手动 dispatch 的成本确认不绕过同日/同输入去重。严禁为恢复显示自动删除 tag、修改时间戳或重跑已消费周期。跨日仍相同 Daily 输入不重复调用；真正额外恢复需独立审阅与具体授权。无 `--reserve` 的 admission 是只读预检；已有匹配编辑层会在任何 GitHub 请求前跳过。
 
@@ -1874,3 +1874,19 @@ Regression coverage: `tests/unit/brent-observation-audit.test.mjs`.
 `gfrr-main-writer-main` 串行自动 writer，不锁住 PR 合并。Daily 生成后通过 `publish-daily-candidate.mjs` 检查 main 是否前进：仅 docs/tests 的常规文件变动可在独立 worktree 保留原候选重放，并重新运行 `check:all`，最多三次普通快进推送。其它路径、符号链接、历史分叉或检查失败均停止；不会强推、改写原候选或重取来源。该边界有意拒绝尚未证明独立的新增研究代码/config。
 
 已完成全套检查并提交的候选如未发布，Actions 保留三天 `unconfirmed-daily-candidate-<run>-<attempt>`，仅从不可变候选提交导出三个 Daily 输出及 SHA256/候选、父提交、实时输入提交身份，总量上限 5 MiB，完整准备成功才上传，压缩级别 9。末次推送应答丢失会再只读核验；仍无法确认则明确标记结果未知，不宣称未曾发布。它是待审证据，不是已发布数据，也不是自动恢复授权；不能直接覆盖后续更新。生成/验证失败、候选超限或准备失败不上传未合格/不完整数据；不变更 GitHub $0 预算、不扩容、不重试上传。日志中的成功生成不代表 main 或两站采用，仍需核对正常发布与实物。
+
+
+### OFR admission replay
+
+此次变更只调整自动 OFR 的上游条件，不初始化预算，不更改模型、价格、预算、失败回退或旧版路径。OFR 契约完整不意味着每项指标都是最新值；原有缺数、缓存和陈旧标记仍须如实展示。保留同库 main 首次成功计划任务、最新 Daily、30 小时、当期输入绑定、日/输入双占位和共享写锁。旧版仍消费 World/ODP，因此工作流仍接收其完成通知；OFR 对两者直接跳过。
+
+历史反事实回放使用当时 Git 数据且不改日期、上游真实完成时刻及 Actions 运行元数据；重建 completed 事件壳，模拟只读 GitHub GET、假设日/输入 ref 不存在、禁止预留与外呼。下表不是收费或发布记录。
+
+| 样本（UTC） | 当时数据提交 | 旧 / 新准入（假设预算另行合格） |
+| --- | --- | --- |
+| [11/18 Daily 03:51](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44232725217) | c0492f57 | 等待 / 可申请；当天 World 失败 |
+| [11/17 Daily 04:46](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44018873993) | 3bad022f | 等待 / 可申请 |
+| [11/17 Oil 05:18](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44022719484) | 0ff5b21c | 可申请 / 不触发 |
+| [11/16 Daily 失败](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/43791327331) | 04c81c04 | 拒绝 / 拒绝 |
+
+11/18 [实际宏观运行](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44233282488) 在月预算未初始化时已跳过，没有运行上述准入；新规则不会令该预算状态生成文章。两个编辑模块仍合计 31 天 ¥10，每次保守预留 ¥2.161152，最多四次，既有负担可能更少；无自动重试或退款。
