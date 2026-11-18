@@ -332,15 +332,18 @@ test('refresh receipt requires ancestor and exact pair bytes; projection checks 
   assert.equal(acledSourceMatches({ ...source, status: 'partial' }, source), false);
 });
 
-test('refresh workflow keeps input hashes out of shell, verifies before/after and dispatches EdgeOne only after commit', () => {
+test('refresh workflow keeps input hashes out of shell, verifies before/after and dispatches EdgeOne only after publication', () => {
   const source = fs.readFileSync('.github/workflows/refresh-world-order-stress.yml', 'utf8');
   const pages = fs.readFileSync('.github/workflows/deploy-static-site-to-pages.yml', 'utf8');
   assert.match(source, /^name: Refresh World Order Stress\r?$/mu);
   assert.doesNotMatch(source, /^run-name:/mu, 'keep the stable name used by workflow_run listeners');
   assert.match(pages, /^      - Refresh World Order Stress\r?$/mu);
   assert.ok(source.indexOf('--before') < source.indexOf('npm run build:world-order'));
-  assert.ok(source.indexOf('--after') < source.indexOf('git push'));
-  assert.ok(source.indexOf('--edgeone') > source.indexOf('git push'));
+  const publish = source.indexOf('node scripts/publish-daily-candidate.mjs --world-order\n');
+  assert.ok(publish > source.indexOf('git commit'));
+  assert.ok(source.indexOf('--after') < publish);
+  assert.ok(source.indexOf('--edgeone') > publish);
+  assert.match(source, /name: Dispatch custom-domain synchronization after verified ACLED refresh\n\s+if: \$\{\{ inputs\.acled_config_commit != '' \}\}/u);
   assert.match(source, /ACLED_CONFIG_COMMIT: \$\{\{ inputs\.acled_config_commit \}\}/u);
   assert.ok(!source.includes('secrets.ACLED_DOWNLOAD')); assert.ok(!source.includes('run: ${{ inputs.'));
 });

@@ -88,7 +88,8 @@ jobs:
         if: ${{ inputs.acled_config_commit != '' || inputs.acled_weekly_sha256 != '' || inputs.acled_monthly_sha256 != '' }}
         run: node scripts/verify-acled-refresh.mjs --after
 
-      - name: Commit
+      - name: Commit and publish validated World Order output
+        id: publish_world_order
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -96,8 +97,29 @@ jobs:
           if ! git diff --cached --quiet; then
             npm run check:all
             git commit -m "chore: refresh world order stress"
-            git push
+            echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            node scripts/publish-daily-candidate.mjs --world-order
           fi
+
+      - name: Prepare unconfirmed World Order candidate artifact
+        id: retain_world_order
+        if: ${{ failure() && steps.publish_world_order.outcome == 'failure' && steps.publish_world_order.outputs.candidate_sha != '' }}
+        run: |
+          node scripts/publish-daily-candidate.mjs --world-order-receipt
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Retain unconfirmed World Order candidate
+        if: ${{ failure() && steps.retain_world_order.outputs.ready == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: unconfirmed-world-order-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            world-order-candidate-artifact/receipt.json
+            world-order-candidate-artifact/data/world-order-stress.json
+            world-order-candidate-artifact/data/gdelt-world-order-cache.json
+          compression-level: 9
+          retention-days: 3
+          if-no-files-found: error
 
       - name: Dispatch custom-domain synchronization after verified ACLED refresh
         if: ${{ inputs.acled_config_commit != '' }}
