@@ -84,6 +84,18 @@ test('deadline covers hanging headers and streaming body', async () => {
   const body = await readBounded('https://example.invalid', async () => new Response(new ReadableStream({ cancel() { cancelled = true; } })), 20);
   assert.equal(body.error, 'request_timeout'); assert.equal(cancelled, true);
 });
+test('response arriving after the deadline is cancelled without opening a reader', async () => {
+  let resolveHeaders;
+  let cancelled = false, readersOpened = 0;
+  const headers = new Promise(resolve => { resolveHeaders = resolve; });
+  const result = await readBounded('https://example.invalid', () => headers, 20);
+  assert.equal(result.error, 'request_timeout');
+  resolveHeaders({ body: { cancel: async () => { cancelled = true; }, getReader: () => { readersOpened++; } } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(cancelled, true);
+  assert.equal(readersOpened, 0);
+});
+
 test('bounded body checks both declared and actual size; redirect rejected', async () => {
   assert.equal((await readBounded('x', async () => new Response('x', { headers: { 'content-length': '999' } }), 50, 8)).error, 'body_too_large');
   assert.equal((await readBounded('x', async () => new Response('123456789'), 50, 8)).error, 'body_too_large');
