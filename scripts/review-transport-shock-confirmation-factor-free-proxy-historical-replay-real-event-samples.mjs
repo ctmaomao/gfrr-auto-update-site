@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { DEFAULT_MANIFEST_PATH, readEvidenceManifest } from './lib/free-proxy-evidence-manifest.mjs';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
@@ -154,27 +154,6 @@ function expandInputFiles(options) {
     files.push(...jsonFiles);
   }
   return [...new Set(files)];
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function boundaries() {
@@ -339,7 +318,7 @@ function buildReview(inputs, options) {
     samples,
     blockers,
     warnings,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本 review 只聚合 sanitized 真实事件样本 archive,不执行生产回测,不生成分数,不写生产数据,不进入今日总判断打分。'

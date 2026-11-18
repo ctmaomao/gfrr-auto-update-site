@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, readJson, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, readJson, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import process from 'node:process';
 
 const INPUT_SCHEMA = 'transport-shock-confirmation-factor-free-proxy-historical-replay-real-event-samples-review-v1';
@@ -107,27 +107,6 @@ function parseArgs(argv) {
     throw new Error(`Refusing to write gate outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
   }
   return options;
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function boundaries() {
@@ -248,7 +227,7 @@ function buildGate(review, options) {
     blockerCount: blockers.length,
     contributionBasis: 'manual_review_not_model_backtest',
     blockers,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本 gate 只聚合 P-score-30 人工事件样本；候选贡献与命中/误报统计来自人工标注，不是生产模型历史回测。通过只允许另开 reviewed score integration 设计，不批准生产写入或自动入分。'

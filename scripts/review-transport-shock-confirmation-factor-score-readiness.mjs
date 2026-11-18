@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -159,27 +159,6 @@ function falseCandidateBoundaries(candidate) {
     'affectsGlobalRiskHeatmap',
     'affectsCrossValidation'
   ].every((key) => boundaries[key] === false);
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function row({ id, labelZh, status, severity, reasonZh, evidence = {} }) {
@@ -541,7 +520,7 @@ function buildReadiness(inputs, options) {
       labelZh: item.labelZh,
       reasonZh: item.reasonZh
     })),
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,

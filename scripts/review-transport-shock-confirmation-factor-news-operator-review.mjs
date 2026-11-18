@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -100,27 +100,6 @@ function hashObject(value) {
 
 function asNumber(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function sourceQualitySufficient(ledger) {
@@ -227,7 +206,7 @@ function buildReview(ledger, options) {
       frontendDisplayApproved: false,
       eligibleForMainScore: false
     },
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,

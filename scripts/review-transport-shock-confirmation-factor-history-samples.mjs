@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
@@ -163,29 +163,8 @@ function falseBoundaryFlags(candidate) {
   ].every((key) => boundaries[key] === false);
 }
 
-function productionImpactFalseMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
-}
-
 function impactBlockers(impact) {
-  const required = productionImpactFalseMap();
+  const required = transportAuditImpact();
   return Object.keys(required).filter((key) => impact?.[key] === true);
 }
 
@@ -323,7 +302,7 @@ function buildReview(inputs, options) {
     samples,
     blockers,
     warnings,
-    productionImpact: productionImpactFalseMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,
@@ -359,7 +338,7 @@ function buildEmptyReview(options) {
     routeFreightConfirmation: 'not_connected',
     marketConfirmation: 'not_connected',
     eligibleForMainScore: false,
-    productionImpact: productionImpactFalseMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,

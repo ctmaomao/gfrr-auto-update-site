@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
@@ -141,27 +141,6 @@ function emptyDirectionCounts() {
   return Object.fromEntries(DIRECTIONS.map((direction) => [direction, 0]));
 }
 
-function productionImpactFalseMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
-}
-
 function artifactBlockers(artifact) {
   const blockers = [];
   if (artifact.schemaVersion !== SAMPLE_REVIEW_SCHEMA) blockers.push('schema_version_invalid');
@@ -282,7 +261,7 @@ function buildReview(inputs, options) {
     })),
     blockers,
     warnings,
-    productionImpact: productionImpactFalseMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,
@@ -316,7 +295,7 @@ function buildEmptyReview(options) {
     routeFreightConfirmation: 'not_connected',
     marketConfirmation: 'not_connected',
     eligibleForMainScore: false,
-    productionImpact: productionImpactFalseMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: {
       outputOnlyToManualArtifacts: true,
       noNetworkCall: true,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath } from './lib/check-script-helpers.mjs';
+import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -143,27 +143,6 @@ function isIsoDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(value);
 }
 
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
-}
-
 function boundaries() {
   return {
     outputOnlyToManualArtifacts: true,
@@ -265,7 +244,7 @@ function buildSampleReview(input, blockers) {
       blockers,
       warnings: accepted ? ['manual_real_event_intake_only', 'future_replay_dataset_only'] : []
     },
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本 intake 只把人工真实事件候选样本转为 sanitized replay sample review,不执行生产回测,不生成分数,不写生产数据,不进入今日总判断打分。'
@@ -300,7 +279,7 @@ function buildSidecar(options, input, sampleReview, paths) {
     scoreWriteApproved: false,
     productionWriteApproved: false,
     eligibleForMainScore: false,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY
   };
@@ -345,7 +324,7 @@ function buildIntake(input, options) {
     eligibleForMainScore: false,
     routeFreightConfirmation: 'not_connected',
     marketConfirmation: 'not_connected',
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本工具只归档 sanitized 人工真实事件样本审查结果,用于后续人工历史样本集扩展;它不抓取外部源,不执行生产回测,不写生产数据,不进入主判断打分。'

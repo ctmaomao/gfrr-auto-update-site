@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { safeRelativePath, writeJson } from './lib/check-script-helpers.mjs';
+import { safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
@@ -137,27 +137,6 @@ function readJsonInput(filePath) {
 
 function asNumber(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
-}
-
-function falseImpactMap() {
-  return {
-    writesProductionData: false,
-    modifiesFrontend: false,
-    modifiesWorkerRuntime: false,
-    modifiesWorkflow: false,
-    affectsValues: false,
-    affectsDisplayInputsBaseline: false,
-    affectsEffectiveDisplayInputs: false,
-    affectsScoring: false,
-    affectsDecisionModel: false,
-    affectsExecutionLock: false,
-    affectsPositionGuidance: false,
-    affectsBrentPromotion: false,
-    affectsOdpFinalBias: false,
-    affectsMainJudgment: false,
-    affectsGlobalRiskHeatmap: false,
-    affectsCrossValidation: false
-  };
 }
 
 function boundaries() {
@@ -412,7 +391,7 @@ function buildReview(options, inputs) {
     marketConfirmation: 'not_connected',
     blockers: readinessBlockers,
     warnings,
-    productionImpact: falseImpactMap(),
+    productionImpact: transportAuditImpact(),
     boundaries: boundaries(),
     boundary: BOUNDARY,
     limitationZh: '本审阅只区分新闻重复升高、设施热异常重复观察和设施热异常升高重复观察;即使出现 partial progress,也不得确认断供、炼厂事故、霍尔木兹中断或油价方向,不得写入今日总判断打分。'
