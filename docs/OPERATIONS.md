@@ -810,7 +810,7 @@ Build Daily Radar Data
 
 `dailyRealtimeInput.commitSha` 用于判断 Daily 当时消费的是哪一次 `realtime-data` payload。如果页面、`main` 数据和 `realtime-data` 暂时不同步，先用这个字段确认 Daily 的输入版本。
 
-Daily 成功提交 `data/*.json` 后，Pages 部署通过 `Deploy Static Site to Pages` 的 `workflow_run` 触发器接续运行。若 Daily Summary 显示数据已更新但页面仍停留在旧 baseline，除检查 Daily 提交外，还应检查紧随其后的 Pages deploy 是否成功。
+Daily 成功提交 `data/*.json` 后，Pages 部署通过 `Deploy Static Site to Pages` 的 `workflow_run` 触发器接续运行。若 Daily Summary 显示更新但线上仍旧，按[双站发布证据链](#static-publication)核对实际提交、渠道部署和原件。
 
 ### Daily Realtime Input Audit
 
@@ -896,56 +896,26 @@ pending deltas: 0
 
 ## 8. Pages 部署失败排查
 
-`Deploy Static Site to Pages` 在上传 artifact 和部署前会自动运行完整验证链（生产数据只读，ignored analyst input 副作用见 §1）：
+<a id="static-publication"></a>
 
-```bash
-npm ci --include=dev --ignore-scripts
-npm run check:all
-npm run build:pages-artifact
-```
+**双站共用排查顺序：生产者提交 → 已校验的源码 SHA → 渠道部署 → 线上原件。** 不要用成功的生成日志、触发事件 SHA 或一个站点的绿灯替代后续证据。
 
-依赖安装使用现有 lockfile，包含开发依赖且不执行包生命周期脚本；`setup-node` 的 npm cache 不是 `node_modules`。完整检查中的 ACLED 私有校验会在临时目录调用现有 sanitizer，需要已锁定的 `xlsx`。若 PR CI 通过而 Pages 出现 `private_validation_failed`、预期 sanitizer 调用次数为 2 而实际为 0，先核对安装步骤，不跳过测试或扩大可接受错误。安装不等于下载 ACLED 数据或允许生产写入，Pages 产物仍使用原有白名单。
+| 渠道 | 何时运行 | 部署证据 |
+|---|---|---|
+| [GitHub Pages](https://ctmaomao.github.io/gfrr-auto-update-site/) | main 的发布路径 push、列明的成功 main 生产者完成或手动；精确路径、监听名单和 `force_deploy` 见 [Pages workflow](../.github/workflows/deploy-static-site-to-pages.yml)。 | 成功的 Pages deployment 与实际构建 SHA。经验证的同一 revision 已部署时可跳过。 |
+| [EdgeOne](https://radar.gfrfinradar.uk/) | UTC 每 3 小时的第 55 分钟、列明的成功 main 生产者（含 Daily）、获准的即时路径 push 或手动；名单与路径见 [EdgeOne workflow](../.github/workflows/publish-edgeone-release.yml)。个别 Bubble 流程另使用现有受限派发。 | 专用仓库 release commit 先绑定已校验的源码 SHA；再核对 EdgeOne Production deployment 确实使用该 release commit。专用仓库 push 成功不是域名部署完成。 |
 
-失败时按类型排查：
+两条发布链的实际发布 job 都重新检出运行时最新 main，固定 **实际** SHA 后安装锁定依赖、运行完整 `npm run check:all`，再用 [build:pages-artifact 实现](../scripts/build-pages-artifact.mjs) 生成白名单树。校验后不再拉取新源码；已有 CI 不替代发布验证。白名单由脚本定义，包含受控首页、专题和周报入口及固定页、批准的 CSS/SVG、JSON 和前端 JS；隐藏文件、链接及未允许文件不能进入。EdgeOne 仅在自己的 staging 添加并校验 `edgeone.json`，不更改 Pages 树。详见 [固定 main 与发布尾链](ADR/0057-publication-current-main-and-odp-tail.md)、[Daily 完成事件](ADR/0119-daily-publication-completion.md)及 [Pages 去重](ADR/0066-pages-publication-coalescing.md)。
 
-- `check:syntax` 失败：查看具体 JS / MJS 文件语法错误。
-- `check:dom` 失败：检查 `index.html` 是否误删关键 DOM id。
-- `check:modules` 失败：检查模块 import / export，尤其是 `render.js` re-export 和 `scripts/modules/*`。
-- `check:frontend-zh-copy` 失败：检查用户可见文案是否回退，例如“广义美元指数”被写成“广义美元 / 美元指数”，“亿美元”被写成“十亿美元”，或传导网络 delta 被写回“Δ --”。
-- `Check workflow contract / check:workflows` 失败：检查 GitHub Actions workflow 是否误删关键保护项，例如 Realtime 每小时 6 次错峰调度、Daily 消费 origin/realtime-data、Daily / Decision / Transmission Summary、Pages 部署前检查链路、upload-pages-artifact / deploy-pages 步骤。
-- `Check documentation links / check:docs` 失败：检查 README.md、AGENTS.md 和 docs/*.md 中的本地 Markdown 链接是否指向不存在的文件；http / https / mailto / 纯锚点链接会跳过。
-- `Validate data contract / check:data` 失败：检查 `data/radar-data.json`、`realtime/market.json`、Brent validation、decision contract、transmission delta contract 等数据契约，并查看 `validate-data.mjs` 的输出信息。
-- `actions/deploy-pages` 返回 `Deployment failed, try again later`：若前置 `check:all` 和 `upload-pages-artifact` 已成功，通常是 GitHub Pages deployment 环境的短时拒绝，不代表站点构建错误。Pages workflow 会按 90 / 180 / 300 秒退避最多重试 3 次；若仍失败，再检查相邻 Pages runs 是否也失败，必要时手动 rerun failed jobs。
-
-`check:syntax` 会自动扫描 `scripts/` 下的 `.js` / `.mjs`；`check:modules` 会自动扫描 `scripts/modules/*.js`。
-
-GitHub Actions workflow baseline 使用 Node 24 LTS compatible official actions：`actions/checkout@v6`、`actions/setup-node@v6` 和 `actions/upload-artifact@v7`；`setup-node` 使用 `node-version: 24`。每个 workflow 必须设置 top-level `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`。不要使用 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`、`FORCE_JAVASCRIPT_ACTIONS_TO_NODE20`、Node 20 或 Node 25 作为默认项目 runtime。
-
-`build:pages-artifact` 只允许两张 HTML、`assets` 静态类型、`data/realtime` JSON、`scripts/app.js` 与 `scripts/modules/*.js`，并拒绝任意层级的隐藏配置、非白名单扩展或 symlink。`validate-data.mjs` 的 warning 不等于失败；只有 exit code 非 0 才会阻止部署。Pages deploy 当前运行完整 `check:all`（含 ignored analyst input 生成项）；如果 workflow 入口未来调整,以 `.github/workflows/deploy-static-site-to-pages.yml` 为准。
+- **先查失败步骤。** 全套失败时按 §1 的检查名称定位；非阻断数据 warning 不是部署失败。`setup-node` cache 不等于安装，Pages 用 `npm ci --include=dev --ignore-scripts`；若 ACLED 私有校验报 `private_validation_failed`、预期 sanitizer 次数 2 实际 0，优先核对锁定的 `xlsx`，不要跳过检查或扩展可接受错误。检查可生成 ignored analyst input，不等于下载 ACLED、调用 provider 或写生产数据。
+- **再查渠道结果。** Pages 已通过全套检查并上传 artifact 后遇 `Deployment failed, try again later`，检查 90 / 180 / 300 秒退避的部署重试结果；耗尽后先对照相邻 Pages runs，再按已授权范围处理失败 job。EdgeOne 的 `No published-file changes` 是正常 no-op，非部署失败。两站对已验证的 Macro 预算暂停可跳过，未知元数据保留正常验证；不把绿色跳过当新稿已发布。
+- **最后回读相应站点。** 对 Pages、EdgeOne（迁移时含临时域名）分别读取 `scripts/app.js` 的 `APP_VERSION` 和目标 JSON 的内容哈希，必要时绕过 HTTP 缓存并按实际源码/发布版本比对。正常批次延迟、内容未变与真实交付失败分别记录；不为验收重触发采集或付费调用。[只读双站巡检](../.github/workflows/check-published-snapshots.yml)能区分交付错误和来源降级，不替代生产者采用证据。
 
 ## 8A. EdgeOne 自定义域名低频发布通道
 
-`ctmaomao.github.io/gfrr-auto-update-site/` 仍是 GitHub Pages 主发布站。腾讯云 EdgeOne 自定义域名只允许连接专用静态仓库 `ctmaomao/gfrr-edgeone-release`，不得重新直接连接本源码仓库的 `main`；源码仓库的高频数据提交会让 EdgeOne 对每个 commit 自动构建，并撞上免费版每月 500 分钟 Build times 限额。
+GitHub Pages 为主站。EdgeOne 只连接专用静态仓库 `ctmaomao/gfrr-edgeone-release`，不得连回高频源码 main，避免耗尽免费 Build times。三小时基础批次上限为 31 天 248 次，**不是**含即时触发的发布总量；产物无变化不提交，最近 32 天已有 400 个 release commits 时失败关闭。提交数闸门用于预留缓冲，不是平台实际构建分钟数。不得调高阈值或连续 Redeploy；只有紧急前端修复不能等批次且已有授权时才手动触发一次。
 
-`.github/workflows/publish-edgeone-release.yml` 是唯一受审发布入口：
-
-- 每 3 小时的第 55 分钟运行，理论上最多 8 次/天、31 天最多 248 次；前端 HTML / CSS / JS 改动可额外即时发布。
-- 成功的 Macro Risk/Bubble editorial 及 ODP 完成事件也可唤醒发布；ODP 不依赖 AI 成功。上述 248 次仅是基础 cron，不是全部发布总量。每次仍按无变化 no-op 和最近 32 天 400 次总上限判断，不为即时事件绕过限额；见 [ADR-0057](ADR/0057-publication-current-main-and-odp-tail.md)。
-- 每次先运行 `npm run check:all` 和 `npm run build:pages-artifact`，只同步 `_site` 白名单产物；产物无变化时不提交，因此不会触发 EdgeOne 构建。
-- 排队后 checkout 显式读取运行时最新 `main`，在安装/校验/构建前固定实际 source SHA；发布提交和 Summary 使用这个 SHA，而不是可能已旧的触发事件 SHA。校验后不再更新源 checkout，避免产物与已验证代码脱节；三小时正常批次延迟仍是有意保留的配额边界。
-- 专用仓库最近 32 天已有 400 次发布时 fail closed，保留至少 100 次额度缓冲；不要为了越过保护而改阈值或反复手动部署。
-- 源码仓库只保存 Actions secret `EDGEONE_RELEASE_DEPLOY_KEY`；对应公钥仅作为专用仓库的单仓库 write deploy key。workflow 的源码仓库权限必须保持 `contents: read`，不得改用 broad PAT、EdgeOne API token 或源码仓库 write token。
-- 首次迁移必须先让新 EdgeOne 项目的临时域名完整通过，再从旧项目解绑并把 `radar.gfrfinradar.uk` 绑定到新项目；不要先删除旧项目或旧域名。
-
-日常排查顺序：
-
-1. 查看 `Publish EdgeOne Release Channel` 最近一次 run 是否成功；若显示 `No published-file changes`，这是正常 no-op。
-2. 查看 `ctmaomao/gfrr-edgeone-release` 最新 commit message 中的 source SHA，确认对应源码 `main`。
-3. 查看 EdgeOne 项目的最近一次 Production deployment 是否使用同一 release commit。
-4. 对 GitHub Pages、EdgeOne 临时域名和 `radar.gfrfinradar.uk` 使用 cache-busting query，比较 `scripts/app.js` 的 `APP_VERSION` 以及关键 JSON 的内容哈希。
-5. 只有确有紧急前端修复且等待 3 小时不可接受时，才手动触发一次 workflow；不要在 EdgeOne 控制台连续点击 Redeploy。
-
-若需要立即停用发布，先在源码仓库禁用该 workflow；若怀疑密钥泄露，同时删除专用仓库 deploy key `gfrr-edgeone-release-publisher` 和源码仓库 secret `EDGEONE_RELEASE_DEPLOY_KEY`，然后创建并替换一对新 key。密钥轮换不要求修改站点内容。
+源码 workflow 权限保持 `contents: read`，`EDGEONE_RELEASE_DEPLOY_KEY` 只对应专用仓库的单仓库写 deploy key，不换 broad PAT、EdgeOne API token 或源码写 token。首次迁移先完整验收新项目临时域名，再切换正式域名，保留旧项目作为回退。紧急停用先禁用发布 workflow；若疑似泄钥，按授权先撤销专用 deploy key `gfrr-edgeone-release-publisher` 和对应 repository secret，再安装新密钥；不改站点内容。
 
 ## v28.0L-3I-0 Workflow / runtime hygiene
 
