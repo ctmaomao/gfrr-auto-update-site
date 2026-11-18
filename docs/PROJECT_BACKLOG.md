@@ -12,7 +12,7 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 
 ## Section 1 · 维护状态
 
-维护基线：2026-11-17 main `23c16785`；本轮仅复核 #637–#640 的合并、CI、Pages 与自然采用状态（见[验收快照](#recent-data-fix-acceptance)），不表示其余条目已重新验收。原2026-11-15基线 `d14055f7` 含 #503、#569–#577。下表与当前条目区分代码合并、自然产物和线上验收；未列出的账户激活、来源健康及后续运行不作保证。原实施过程与当时的待审状态保留在[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)，不得把其中旧“待发布”当作当前状态。
+维护基线：2026-11-18 main `08e3f137`；本轮仅更新 #637–#640 的自然 Daily 与双站验收状态（见[验收快照](#recent-data-fix-acceptance)），不表示其余条目已重新验收。原2026-11-15基线 `d14055f7` 含 #503、#569–#577。下表与当前条目区分代码合并、自然产物和线上验收；未列出的账户激活、来源健康及后续运行不作保证。原实施过程与当时的待审状态保留在[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)，不得把其中旧“待发布”当作当前状态。
 
 | 项 | 当前依据 / 职责 |
 |---|---|
@@ -39,7 +39,7 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 |---|---|---|---|
 | 交付与自然采用 / P0 | 周报 r3 已发布；自然发布链仍待验。World Order #653 已合并，后续刷新不能替代自然采用证据；宏观 Daily/OFR 准入 #661 已合并，待下次自然运行核验 | 主动改进负责验收；Actions 日检只处理失败。核对下一次相关自然运行、实际提交与两站原始产物 | 不为验收盲目重跑或调用 provider；按下方专题及[周报契约](../weekly-reports/README.md)分别留证，代码、产物、线上一致后关闭对应项 |
 | Bubble 全量恢复 / P1 | 等待下一次自然全量更新，不能用 credit-only partial 代替 | 既有一次性核验负责首验；主动改进仅接未解决项 | 全量代码路径、生成与检查、提交、两站实物一致；无新运行时保持等待，不重复取数 |
-| 来源质量 / P1 | #637–#640 等已合并；自然采用逐项核验，热观察类型保护不代表恢复旧三源比较 | 主动改进按[验收快照](#recent-data-fix-acceptance)逐项更新；每日 Actions 发现新增失败才转修复 | 观察日期、缺失语义与实际消费路径一致；无效/未知不填零，不把绿色 workflow 当数据完整证明 |
+| 来源质量 / P1 | #637–#640 已验收自然 Daily 与双站；#652 CARTS、#654 CRE 等后续修复单独核验，热观察类型保护不代表恢复旧三源比较 | 主动改进按[验收快照](#recent-data-fix-acceptance)逐项更新；每日 Actions 发现新增失败才转修复 | 观察日期、缺失语义与实际消费路径一致；无效/未知不填零，不把绿色 workflow 当数据完整证明 |
 | 私有预算与安全恢复 / P1 | DeepSeek 共享预算尚未启用；账本及 proof 代码与真实激活分离，仍需真实私有证据 | 主动改进限定单包；复杂约束先独立设计复核，再做最小闭环 | 保留 CNY 10 合并预算、凭据保密、原账本与 receipts；不伪造证据、不绕过 disabled。下方专题及 ADR 是具体步骤，旧自设门槛可审查改进但不得默默绕开 |
 | 代码与流程精简 / P1 | 按可复现问题抽取公共逻辑，避免只追求行数下降 | 主动改进选择一个有独立交付的小包；独立审查后串行集成 | 记录减少的重复逻辑/调用/重复检查及回归覆盖；保留费用保护、真实数据和必要发布检查，安全降级须可观察、可回退 |
 | 文档与工作表 / P2 | 本表为当前调度入口；历史只保留固定证据入口 | 主动改进维护同一行；周审找矛盾、失效链接和缺口 | 不新建重复总结；当前事实与历史明确分离，仍有效边界不可因归档丢失 |
@@ -86,7 +86,7 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 
 <a id="recent-data-fix-acceptance"></a>
 
-**#637–#640 验收快照（2026-11-17 UTC）**：四项本地完整检查、专项与独立审阅已通过，PR 已合并，以下精确 head CI 与 merge SHA 的 Pages 部署均成功。**代码交付完成；下一自然 Daily 生产采用仍待验收**。此前过程文字保留于[本轮修改前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/23c167856d3c69c0ae5b68d264f76d3301b42d43/docs/PROJECT_BACKLOG.md)。
+**#637–#640 验收快照（2026-11-18 UTC）**：四项本地完整检查、专项与独立审阅已通过，PR 已合并，以下精确 head CI 与 merge SHA 的 Pages 部署均成功。**代码交付、自然 Daily 采用与双站产物均已核实；#640 异常值路径仅离线验证**。此前过程文字保留于[本轮修改前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/23c167856d3c69c0ae5b68d264f76d3301b42d43/docs/PROJECT_BACKLOG.md)。
 
 | 修复 | 已合并 / CI / Pages证据 | 自然采用验收条件 |
 |---|---|---|
@@ -95,8 +95,8 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 | [#639 Claims](https://github.com/ctmaomao/gfrr-auto-update-site/pull/639) | `e8a214d3`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44098147986)；[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44100105726) | `claimsWindowEvidence` 支持连续4/8周；均值/变化可回算，缺失不借旧行或组合时钟 |
 | [#640 中国数值](https://github.com/ctmaomao/gfrr-auto-update-site/pull/640) | `a7efaee0`；[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44119170392)；[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44120787670) | 无新增身份字段，须确认自然Daily实际使用包含修复的代码并完成生成/校验/提交；正常值本身不能证明缺失分支被触发 |
 
-- **最后已核实的Daily产物**：[运行44018873993](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44018873993)于2026-11-17 04:41 UTC启动并成功，产物提交 `3bad022f`（04:46 UTC）早于上述四项合并。`radar-data.json.updatedAt=2026-11-17T04:41:50.344Z`；两站SHA256均为 `9a3b743a43ae804fdec8a68833846597403a1fd0e01a68ecb27066c4309079d2`，三个新证据字段均未出现。两站一致已核实，修复自然采用未核实，不是发布不一致。
-- **剩余工作/阻塞条件**：等待下一次自然Daily；核对实际代码、生成/校验/提交及两站对应产物，再更新此处。Bubble、thermal、realtime的单独刷新或Pages绿色不能代替Daily采用。若自然数据没有缺失异常，应分开记录“新代码已采用”和“异常分支仅离线验证”，不制造异常或重写生产历史以验收。本轮不触发取数、不修改自动化定义。
+- **自然 Daily 与双站验收**：[自然运行 44232725217](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44232725217) 于 2026-11-18 03:46 UTC 启动，同步、生成、校验与提交步骤通过。该运行触发 SHA `18de2528` 已包含四项修复；[产物提交 `c0492f57`](https://github.com/ctmaomao/gfrr-auto-update-site/commit/c0492f57bd9049040ba31694d45b951e83d12e8e) 于 03:51 UTC 记录 `updatedAt=2026-11-18T03:47:03.711Z`。[Pages 原件](https://ctmaomao.github.io/gfrr-auto-update-site/data/radar-data.json) 和 [EdgeOne 原件](https://radar.gfrfinradar.uk/data/radar-data.json) 回读与该 Git 原件同为 SHA-256 `ceb9e9ff86f004d17a5ae932588e1a0dbd2bb4190de149b98d5e4db547e97ad9`（此为核验时快照，不要求在线文件以后仍为同一版本）。
+- **证据与边界**：CPI 两系列十月 YoY 参照缺失、同比留空，MoM 用各自 9 月值回算；UMCSENT 九月读数保留 8/6/3 月参照；Claims 初请 8 周和续请 4 周证据均连续，4 周均值分别为 195250 和 1707750。中国数值修复已进入运行代码，ChinaBond/CFETS/CPI/PPI/PMI 正常返回，不能据此称空值等异常分支在生产触发。此次产物早于 #652 CARTS、#654 CRE 和 #661 Macro 准入，不关闭这些项目，也不代替任何独立 Bubble / World Order / 周报验收。
 
 - **World Order 发布竞态（2026-11-18 UTC）**：[自然运行 44234237553](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44234237553) 完成生成和校验，但 main 并发推进使候选未推送；该失败时两站仍一致提供前次结果。修复 [#653](https://github.com/ctmaomao/gfrr-auto-update-site/pull/653) 已合并 `41e8a144`，main 后续已有 `91585db3`、`b3226a02` 刷新；这些提交本身不证明自然采用或双站验收。独立审阅的修复边界：仅限 World Order 既有两个生产输出，优先确认发布结果，最多三次非强制推送；只允许在无生成输入变更的 docs/tests 并发后重验原候选，其他变更停止；已校验而未确认发布的两个文件及摘要保留三天。保留 Events 缓存和 ACLED 专用发布顺序，不新增取数、provider 重试或手动调度；本修复不恢复失败运行的候选；后续自然运行与对应两站实物继续单列验收。
 
