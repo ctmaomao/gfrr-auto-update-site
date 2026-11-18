@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual, randomBytes, randomUUID } from 'node:crypto';
-import { validateBraveLedger } from './brave-budget.mjs';
-import { budgetFailure, SEARCH_REPOSITORY } from './free-search-ledger.mjs';
+import { validateBraveLedger, BRAVE_DISPATCH_DEADLINE_MS } from './brave-budget.mjs';
+import { budgetFailure, SEARCH_REPOSITORY, SEARCH_CLOCK_POLICY } from './free-search-ledger.mjs';
 
 // This module never prints or persists private evidence. Only project accounting
 // crosses the public store boundary. Storage/secret setup is a separate approval.
@@ -112,4 +112,65 @@ export function withBravePrivateProof(store, privateProof, now = Date.now) {
       return store.write(raw, projected);
     }
   };
+}
+
+// Explicit offline preparation, not runtime renewal. Existing evidence is an
+// immutable prefix; no identity/nonce rotation or new-ledger fallback exists.
+export function prepareBravePrivateRenewal({ privateProof, grant, now = Date.now() }) {
+  const old = parseBravePrivateProof(privateProof, now);
+  const next = parseBravePrivateProof({ ...old, grants: [...old.grants, grant] }, now);
+  validateRenewalPair(old, next);
+  return next;
+}
+
+function validateRenewalPair(old, next) {
+  // Existing approved GitHub secret destination: conservative UTF-8 bound for
+  // the exact compact encoding, before any irreversible public CAS.
+  if (Buffer.byteLength(JSON.stringify(next), 'utf8') > 48000) fail();
+  const oldIdentity = { ...old, grants: [] }, nextIdentity = { ...next, grants: [] };
+  const stable = value => JSON.stringify(canonical(value));
+  if (stable(oldIdentity) !== stable(nextIdentity) || next.grants.length !== old.grants.length + 1
+    || old.grants.some((grant, index) => stable(grant) !== stable(next.grants[index]))) fail();
+  const last = old.grants.at(-1), added = next.grants.at(-1);
+  if (old.grants.some(grant => Date.parse(added.verifiedAt) <= Date.parse(grant.expiresAt))
+    || added.requestLimit > last.requestLimit
+    || old.grants.some(grant => grant.evidenceSha256 === added.evidenceSha256)) fail();
+}
+
+// No CLI, workflow, provider call, secret read/write or automatic invocation.
+// The caller must privately retain both complete proofs before the one public
+// CAS. A mismatched secret/ledger pair cannot admit calls in either order.
+export async function renewBravePrivateProof({ store, privateProof, nextPrivateProof,
+  now = Date.now, monotonicNow = () => performance.now() }) {
+  const old = parseBravePrivateProof(privateProof, now());
+  const next = parseBravePrivateProof(nextPrivateProof, now());
+  validateRenewalPair(old, next);
+  const started = monotonicNow();
+  const previous = await store.read();
+  const local = now(), elapsed = monotonicNow() - started;
+  // Use the same conservative skew/HTTP precision/dispatch bounds as admission.
+  // The old grant must have expired even at the earliest plausible server time;
+  // the next must remain valid throughout a complete dispatch window.
+  const server = previous.serverTime;
+  if (!/^[a-f0-9]{40}$/u.test(previous.head || '') || !Number.isFinite(server) || !Number.isFinite(local)
+    || Math.abs(local - server) > SEARCH_CLOCK_POLICY.maxSkewMs || !Number.isFinite(elapsed) || elapsed < 0 || elapsed >= BRAVE_DISPATCH_DEADLINE_MS
+    || old.grants.some(grant => Math.min(local, server - SEARCH_CLOCK_POLICY.httpDatePrecisionMs) <= Date.parse(grant.expiresAt))
+    || Date.parse(next.grants.at(-1).verifiedAt) > Math.min(local, server - SEARCH_CLOCK_POLICY.httpDatePrecisionMs)
+    || Math.max(local, server) + BRAVE_DISPATCH_DEADLINE_MS + SEARCH_CLOCK_POLICY.httpDatePrecisionMs >= Date.parse(next.grants.at(-1).expiresAt)) fail();
+  const ledger = hydrate(previous.ledger, old, local);
+  const added = next.grants.at(-1);
+  if (ledger.hold !== null || ledger.entries.some(row => row.state === 'reserved'
+    || Date.parse(row.finishedAt) >= Date.parse(added.verifiedAt))) fail();
+  // This is the only modification. project() revalidates all historical rows;
+  // no receipt, unknown-history flag, identity, or earlier grant is replaced.
+  ledger.grants = structuredClone(next.grants);
+  const projected = project(ledger, next, local);
+  let saved;
+  try { saved = await store.write(previous, projected); }
+  catch { budgetFailure('brave_budget_renewal_write_uncertain'); }
+  if (saved === false) budgetFailure('brave_budget_renewal_conflict');
+  if (saved !== true) budgetFailure('brave_budget_renewal_write_uncertain');
+  // Returning a public projection is not proof that secret cutover or provider
+  // use succeeded. Never return/log hydrated account metadata here.
+  return structuredClone(projected);
 }
