@@ -63,6 +63,8 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 - **最后已核实的Daily产物**：[运行44018873993](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44018873993)于2026-11-17 04:41 UTC启动并成功，产物提交 `3bad022f`（04:46 UTC）早于上述四项合并。`radar-data.json.updatedAt=2026-11-17T04:41:50.344Z`；两站SHA256均为 `9a3b743a43ae804fdec8a68833846597403a1fd0e01a68ecb27066c4309079d2`，三个新证据字段均未出现。两站一致已核实，修复自然采用未核实，不是发布不一致。
 - **剩余工作/阻塞条件**：等待下一次自然Daily；核对实际代码、生成/校验/提交及两站对应产物，再更新此处。Bubble、thermal、realtime的单独刷新或Pages绿色不能代替Daily采用。若自然数据没有缺失异常，应分开记录“新代码已采用”和“异常分支仅离线验证”，不制造异常或重写生产历史以验收。本轮不触发取数、不修改自动化定义。
 
+- **World Order 发布竞态（2026-11-18 UTC）**：[自然运行 44234237553](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44234237553) 完成生成和校验，但 main 并发推进使候选未推送；两站仍一致提供前次结果。独立审阅的修复边界：仅限 World Order 既有两个生产输出，优先确认发布结果，最多三次非强制推送；只允许在无生成输入变更的 docs/tests 并发后重验原候选，其他变更停止；已校验而未确认发布的两个文件及摘要保留三天。保留 Events 缓存和 ACLED 专用发布顺序，不新增取数、provider 重试或手动调度；本修复不恢复失败运行的候选，新产物待自然运行及两站核验。
+
 - **DeepSeek 私有账本：离线交付已完成，生产仍暂停**。[#632](https://github.com/ctmaomao/gfrr-auto-update-site/pull/632) 固定私有存储身份与只读状态，[#633](https://github.com/ctmaomao/gfrr-auto-update-site/pull/633) 收窄月度公开诊断，下一阶段分别完成跨 key 合成验证与显式注入的初始化器/运行时：
 
   | 阶段 | 合并提交与精确 PR head CI |

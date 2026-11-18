@@ -4,19 +4,19 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DAILY_OUTPUTS, publishDailyCandidate, safeConcurrentPath, retainDailyCandidate } from '../../scripts/publish-daily-candidate.mjs';
+import { WORLD_ORDER_OUTPUTS, publishWorldOrderCandidate, retainWorldOrderCandidate, DAILY_OUTPUTS, publishDailyCandidate, safeConcurrentPath, retainDailyCandidate } from '../../scripts/publish-daily-candidate.mjs';
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-function fixture() {
+function fixture(outputs = DAILY_OUTPUTS) {
   const dir = mkdtempSync(join(tmpdir(), 'daily-publication-test-'));
   const remote = join(dir, 'remote.git'), cwd = join(dir, 'daily'), other = join(dir, 'other');
   git(dir, 'init', '--bare', remote); git(dir, 'clone', remote, cwd);
   git(cwd, 'checkout', '-b', 'main');
   git(cwd, 'config', 'user.name', 'Test'); git(cwd, 'config', 'user.email', 'test@example.invalid');
-  for (const file of DAILY_OUTPUTS) { mkdirSync(join(cwd, 'data'), { recursive: true }); writeFileSync(join(cwd, file), 'old\n'); }
+  for (const file of outputs) { mkdirSync(join(cwd, 'data'), { recursive: true }); writeFileSync(join(cwd, file), 'old\n'); }
   git(cwd, 'add', 'data'); git(cwd, 'commit', '-m', 'base'); git(cwd, 'push', 'origin', 'main');
   git(dir, 'clone', '--branch', 'main', remote, other);
   git(other, 'config', 'user.name', 'Test'); git(other, 'config', 'user.email', 'test@example.invalid');
-  for (const file of DAILY_OUTPUTS) writeFileSync(join(cwd, file), 'candidate\n');
+  for (const file of outputs) writeFileSync(join(cwd, file), 'candidate\n');
   git(cwd, 'add', 'data'); git(cwd, 'commit', '-m', 'candidate');
   const candidate = git(cwd, 'rev-parse', 'HEAD');
   function advance(path, content = 'concurrent\n', symlink = false) {
@@ -100,4 +100,35 @@ test('oversized immutable output cannot create an upload candidate', () => {
   const f = fixture(); writeFileSync(join(f.cwd, DAILY_OUTPUTS[0]), Buffer.alloc(5 * 1024 * 1024));
   git(f.cwd, 'add', 'data'); git(f.cwd, 'commit', '--amend', '--no-edit');
   assert.throws(() => retainDailyCandidate({ cwd: f.cwd }), /daily_candidate_artifact_size_limit/);
+});
+
+test('World Order publishes only its checked outputs over inert concurrent documentation', () => {
+  const f = fixture(WORLD_ORDER_OUTPUTS); f.advance('docs/note.md'); let checks = 0;
+  const result = publishWorldOrderCandidate({ cwd: f.cwd, validate: cwd => {
+    checks++;
+    assert.equal(readFileSync(join(cwd, 'docs/note.md'), 'utf8'), 'concurrent\n');
+    for (const path of WORLD_ORDER_OUTPUTS) assert.equal(readFileSync(join(cwd, path), 'utf8'), 'candidate\n');
+  } });
+  assert.equal(checks, 1);
+  assert.equal(f.head(), result.published);
+  assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
+});
+test('World Order holds source, config, workflow and concurrent output changes and retains exact checked blobs', () => {
+  for (const path of ['scripts/world-order/reader.mjs', 'config/world-order-acled-global-monthly.json', '.github/workflows/refresh-world-order-stress.yml', WORLD_ORDER_OUTPUTS[0]]) {
+    const f = fixture(WORLD_ORDER_OUTPUTS); f.advance(path); const before = f.head();
+    assert.throws(() => publishWorldOrderCandidate({ cwd: f.cwd, validate: () => assert.fail('unsafe tree') }), /world_order_generation_inputs_changed/);
+    assert.equal(f.head(), before);
+    const receipt = retainWorldOrderCandidate({ cwd: f.cwd });
+    assert.deepEqual(Object.keys(receipt.files), WORLD_ORDER_OUTPUTS);
+    assert.ok(!('realtimeInputCommit' in receipt));
+  }
+  assert.throws(() => publishWorldOrderCandidate({ cwd: fixture().cwd }), /world_order_candidate_path_rejected/);
+});
+test('World Order workflow validates, uses bounded publisher and conditionally retains only committed production outputs', () => {
+  const source = readFileSync(new URL('../../.github/workflows/refresh-world-order-stress.yml', import.meta.url), 'utf8');
+  assert.match(source, /npm run check:all\s+git commit/);
+  assert.match(source, /node scripts\/publish-daily-candidate.mjs --world-order\n/);
+  assert.match(source, /failure\(\).*steps.publish_world_order.outputs.candidate_sha != ''/);
+  assert.match(source, /node scripts\/publish-daily-candidate.mjs --world-order-receipt/);
+  assert.doesNotMatch(source, /git push|git reset --hard|git rebase/);
 });
