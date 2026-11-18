@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { checkWeeklyAdmission } from '../../scripts/check-weekly-admission.mjs';
@@ -78,4 +78,48 @@ test('explicitly expected issue missing from reports cannot pass as the legacy i
   mkdirSync(join(root,'weekly-originals'));
   writeFileSync(join(root,'weekly-originals/expected.json'), JSON.stringify({date,sha256:sha,handoffCommit:commit}));
   assert.throws(()=>checkWeeklyAdmission({cwd:root,readRemote:()=>assert.fail('remote not needed')}),/latest/);
+});
+
+test('revision admission cannot change its predecessor or downgrade the expected identity', () => {
+  const root = fixture();
+  const revision = date + '-r2';
+  const revised = Buffer.from(bytes.toString().replace('11月23日','11月23日 · 第2版'));
+  const revisedSha = createHash('sha256').update(revised).digest('hex');
+  const input = join(root,'revision.html');
+  const predecessor = {sha256:sha,handoffCommit:'b'.repeat(40)};
+  const options = {root,date:revision,sha:revisedSha,predecessor,commit};
+  const remote = () => [{date:revision,sha256:revisedSha,commit,bytes:revised,predecessor}];
+  writeFileSync(input,revised);
+  assert.throws(() => saveOriginal({...options,source:input,predecessor:null}),/pinned predecessor/);
+  saveOriginal({...options,source:input});
+  installOriginal(options);
+  writeHandoffReceipt(options);
+  writeExpectedIssue(options);
+  assert.equal(checkWeeklyAdmission({cwd:root,readRemote:remote}).revision,2);
+  assert.equal(existsSync(join(root,'reports',date+'.html')),false);
+  assert.throws(() => writeExpectedIssue({root,date,sha,commit}),/conflicting/);
+  assert.throws(() => installOriginal({...options,date:revision+'0'}),/ENOENT/);
+  assert.throws(() => checkWeeklyAdmission({cwd:root,readRemote:()=>[{...remote()[0],predecessor:{...predecessor,handoffCommit:'c'.repeat(40)}}]}),/remote handoff/);
+  writeFileSync(join(root,'weekly-originals',revision,'predecessor.json'),JSON.stringify({...predecessor,handoffCommit:'c'.repeat(40)}));
+  assert.throws(() => checkWeeklyAdmission({cwd:root,readRemote:()=>assert.fail('remote not needed')}),/local identity/);
+});
+
+test('the expected pointer rejects a second writer and cannot move backward after retry', () => {
+  const root = fixture();
+  const expected = join(root,'weekly-originals','expected.json');
+  const lock = join(root,'weekly-originals','.prepare.lock');
+  const initial = {root,date,sha,commit};
+  const revision = {root,date:date+'-r2',sha:'d'.repeat(64),commit:'d'.repeat(40),predecessor:{sha256:sha,handoffCommit:commit}};
+  writeExpectedIssue(initial);
+  const old = readFileSync(expected);
+  // Deterministically simulate the first writer holding the lock before its atomic rename.
+  writeFileSync(lock,'123456\n',{flag:'wx'});
+  assert.throws(()=>writeExpectedIssue(revision),/holds .prepare.lock/);
+  assert.deepEqual(readFileSync(expected),old);
+  assert.equal(readFileSync(lock,'utf8'),'123456\n');
+  unlinkSync(lock);
+  writeExpectedIssue(revision);
+  assert.throws(()=>writeExpectedIssue(initial),/conflicting/);
+  assert.equal(JSON.parse(readFileSync(expected,'utf8')).revision,2);
+  assert.equal(existsSync(lock),false);
 });

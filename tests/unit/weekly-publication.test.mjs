@@ -38,3 +38,39 @@ test('missing, malformed and mismatching committed identity fail before fetching
   f.files.set(`weekly-reports/${date}.html`,Buffer.from('bad'));
   await assert.rejects(verifyPublication({date, sha, commit, ...f}), /do not match/);
 });
+
+test('a revision has its own two immutable URLs and shell download filename on both hosts', async () => {
+  const issue = date + '-r2';
+  const revised = Buffer.from(html.toString().replace('11月23日','11月23日 · 第2版'));
+  const revisedSha = digest(revised);
+  const predecessor = {sha256:sha,handoffCommit:'b'.repeat(40)};
+  const metadata = Buffer.from(JSON.stringify({date,revision:2,sha256:revisedSha,handoffCommit:'c'.repeat(40),predecessor}));
+  const originalDir = 'weekly-originals/'+issue+'/';
+  const names = [issue+'.html'];
+  const pages = expectedWeeklyPages({names,readFile:()=>revised.toString('utf8')});
+  const files = new Map([...pages].map(([p,s])=>[p,Buffer.from(s)]));
+  files.set('reports/'+issue+'.html',revised);
+  files.set(originalDir+revisedSha+'.html',revised);
+  files.set(originalDir+'identity.sha256',Buffer.from(revisedSha+'\n'));
+  files.set(originalDir+'handoff.json',metadata);
+  files.set(originalDir+'predecessor.json',Buffer.from(JSON.stringify(predecessor)));
+  files.set('weekly-originals/expected.json',metadata);
+  const opts = {date:issue,sha:revisedSha,commit,list:()=>names,read:(_,p)=>files.get(p),fetcher:async url=>{
+    const path = url.pathname.replace(/^\/gfrr-auto-update-site\//,'').replace(/^\//,'');
+    return new Response(files.get(path)||'',{status:files.has(path)?200:404});
+  }};
+  const receipts = await verifyPublication(opts);
+  assert.equal(receipts.length,10);
+  assert.equal(receipts.filter(r=>r.sha256===revisedSha&&r.url.endsWith(issue+'.html')).length,4);
+  assert.ok(receipts.every(r=>!r.url.endsWith('/'+date+'.html')));
+  names.push(date+'.html');
+  files.set('reports/'+date+'.html',html);
+  for (const [path,value] of expectedWeeklyPages({names,readFile:p=>files.get(p).toString('utf8')})) {
+    files.set(path,Buffer.from(value));
+  }
+  const withPublishedPredecessor = await verifyPublication(opts);
+  assert.equal(withPublishedPredecessor.length,14);
+  assert.equal(withPublishedPredecessor.filter(r=>r.sha256===sha&&r.url.endsWith(date+'.html')).length,4);
+  files.set(originalDir+'predecessor.json',Buffer.from(JSON.stringify({...predecessor,handoffCommit:'d'.repeat(40)})));
+  await assert.rejects(verifyPublication({...opts,fetcher:()=>assert.fail('no fetch on mismatched predecessor')}),/predecessor/);
+});

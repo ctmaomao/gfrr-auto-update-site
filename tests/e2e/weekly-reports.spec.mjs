@@ -2,11 +2,11 @@ import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import { splitIssues } from '../../scripts/build-weekly-reports.mjs';
 const latest = splitIssues(fs.readdirSync('reports')).recent[0];
-const latestDate = latest.slice(0, 10);
+const latestIssue = latest.slice(0, -5);
 const fixedBytes = fs.readFileSync('reports/' + latest);
 const latestHtml = fixedBytes.toString('utf8');
-const originalBytes = latestDate === '2026-11-09' ? fixedBytes : fs.readFileSync(
-  'weekly-originals/' + latestDate + '/' + fs.readFileSync('weekly-originals/' + latestDate + '/identity.sha256', 'utf8').trim() + '.html'
+const originalBytes = latestIssue === '2026-11-09' ? fixedBytes : fs.readFileSync(
+  'weekly-originals/' + latestIssue + '/' + fs.readFileSync('weekly-originals/' + latestIssue + '/identity.sha256', 'utf8').trim() + '.html'
 );
 const latestSections = (latestHtml.match(/<section\b/gi) || []).length;
 const actions = page => page.getByRole('navigation', {name:'周报操作',exact:true});
@@ -53,7 +53,7 @@ for (const width of [1440,390]) {
     expect(errors).toEqual([]);
   });
 }
-test('old anchors, old weekly paths and download remain usable', async ({page})=>{
+test('old anchors, fixed original bytes and old weekly paths remain usable', async ({page})=>{
   await page.goto('/index.html#oil-directional-pressure');
   await expect(page.locator('#oil-directional-pressure')).toBeVisible();
   expect(page.url()).toContain('index.html#oil-directional-pressure');
@@ -83,7 +83,7 @@ for (const route of ['/weekly-reports.html','/weekly-reports/index.html','/repor
       page.waitForEvent('download'),
       toolbar.getByRole('link',{name:'下载单文件HTML',exact:true}).click(),
     ]);
-    expect(download.suggestedFilename()).toBe('GFRR_Weekly_' + latestDate + '.html');
+    expect(download.suggestedFilename()).toBe('GFRR_Weekly_' + latestIssue + '.html');
     const body=fs.readFileSync(await download.path());
     expect(body.equals(originalBytes),'download contains the exact archived original bytes').toBe(true);
     await expect(page).toHaveURL(new RegExp(route.replace('.', '\\.')+'$'));

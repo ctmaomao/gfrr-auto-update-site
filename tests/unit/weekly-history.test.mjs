@@ -55,3 +55,19 @@ test('an anchor only on a second-parent branch is not a trusted first-parent bas
   git('merge','--no-ff','side','-m','merge side');
   assert.throws(()=>checkWeeklyHistory({cwd,anchor}),/first-parent/);
 });
+
+test('both fixed revision URLs and predecessor metadata become immutable on the first-parent history', () => {
+  const {cwd,git,anchor} = fixture();
+  const revision = '2026-11-23-r2';
+  mkdirSync(join(cwd,'weekly-originals',revision));
+  const paths = ['reports/'+revision+'.html','weekly-reports/'+revision+'.html',
+    ...['identity.sha256','predecessor.json','handoff.json','a'.repeat(64)+'.html'].map(name=>'weekly-originals/'+revision+'/'+name)];
+  for (const path of paths) writeFileSync(join(cwd,path),'revision');
+  git('add','.'); git('commit','-m','publish revision');
+  assert.equal(checkWeeklyHistory({cwd,anchor}),9);
+  writeFileSync(join(cwd,paths[3]),'replacement predecessor');
+  assert.throws(()=>checkWeeklyHistory({cwd,anchor}),/Historical weekly file changed/);
+  writeFileSync(join(cwd,paths[3]),'revision');
+  git('rm','--cached',paths[0],paths[1]);
+  assert.throws(()=>checkWeeklyHistory({cwd,anchor}),/missing from index/);
+});

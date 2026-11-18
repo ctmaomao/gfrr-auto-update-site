@@ -32,8 +32,24 @@ test('52 issue split preserves all older issues without deletion or renaming', (
   assert.doesNotMatch(read('scripts/build-weekly-reports.mjs'), /\brmSync\b/);
 });
 test('weekly allowlist permits only complete HTML routes, no notes or secrets', () => {
-  for (const p of ['weekly-reports.html','reports/2026-11-09.html','reports/archive.html','weekly-reports/index.html','weekly-reports/2026-11-09.html']) assert.equal(isAllowedPagesArtifactFile(p),true,p);
-  for (const p of ['reports/.env','reports/README.md','reports/x.js','reports/nested/2026-11-09.html','weekly-reports/.secret.html']) assert.equal(isAllowedPagesArtifactFile(p),false,p);
+  for (const p of ['weekly-reports.html','reports/2026-11-09.html','reports/2026-11-09-r2.html','reports/archive.html','weekly-reports/index.html','weekly-reports/2026-11-09.html','weekly-reports/2026-11-09-r2.html']) assert.equal(isAllowedPagesArtifactFile(p),true,p);
+  for (const p of ['reports/.env','reports/README.md','reports/x.js','reports/nested/2026-11-09.html','weekly-reports/.secret.html','reports/2026-11-09-r02.html','reports/2026-11-09-r1.html','weekly-originals/2026-11-09-r2/predecessor.json','reports/2026-02-30-r2.html']) assert.equal(isAllowedPagesArtifactFile(p),false,p);
+});
+test('versions sort numerically within a date without using up additional recent issue slots', () => {
+  const dates = Array.from({length:53}, (_,i) => new Date(Date.UTC(2026, 0, i+1)).toISOString().slice(0,10));
+  const latest = dates.at(-1);
+  const names = [...dates.map(date=>date+'.html'), latest+'-r9.html', latest+'-r10.html', dates[0]+'-r2.html'];
+  const {recent,archived} = splitIssues(names);
+  assert.deepEqual(recent.slice(0,3),[latest+'-r10.html',latest+'-r9.html',latest+'.html']);
+  assert.equal(new Set(recent.map(name=>name.slice(0,10))).size,52);
+  assert.deepEqual(archived,[dates[0]+'-r2.html',dates[0]+'.html']);
+  assert.throws(() => splitIssues([latest+'-r02.html']),/Invalid dated weekly path/);
+  const original = '<!doctype html><html><head><title>例</title></head><body><main><section>正文</section></main></body></html>';
+  const pages = expectedWeeklyPages({names,readFile:()=>original});
+  for (const path of ['weekly-reports.html','weekly-reports/index.html','reports/archive.html']) assert.ok(pages.get(path).includes('download="GFRR_Weekly_'+latest+'-r10.html"'),path);
+  assert.match(pages.get('weekly-reports.html'), /第10版.*第9版（已被取代）.*第1版（已被取代）/);
+  assert.match(pages.get('reports/archive.html'), /当前共有 1 期/);
+  assert.equal(pages.get('weekly-reports/'+latest+'-r10.html'),original);
 });
 test('generated pages are deterministic, fixed issue stays standalone with cited sources', () => {
   const latest = splitIssues(fs.readdirSync(new URL('../../reports/', import.meta.url))).recent[0];
@@ -82,6 +98,24 @@ test('generated weekly shells supply history and byte-preserving download even i
     const dated = pages.get(path.replace('reports/', 'weekly-reports/'));
     assert.deepEqual(Buffer.from(dated),Buffer.from(original),path);
   }
+});
+
+test('site shells use the same head, title and body boundaries as the original identity reader', () => {
+  const issue = '2026-11-23-r2.html';
+  const meta = '<meta name="description" content="a > <body class=fake>">';
+  const comment = '<!-- <title>伪刊头</title></head><body> -->';
+  const css = '<style>body::after {content:"</head><body>"}</style>';
+  const title = '<title>全球金融系统性风险周报｜2026-11-23｜第2版</title>';
+  const body = '<body class="actual" data-label="a > b">';
+  const original = '<!doctype html><html><head>' + meta + comment + css + title + '</head>' + body + '<main><section>原件</section></main></body></html>';
+  const pages = expectedWeeklyPages({names:[issue],readFile:()=>original});
+  for (const path of ['weekly-reports.html','weekly-reports/index.html','reports/archive.html']) {
+    const html = pages.get(path);
+    assert.ok(html.includes(meta + comment + css),path);
+    assert.ok(html.includes('</style></head>' + body + '<div class="weekly-site-shell">'),path);
+    assert.ok(html.includes(path === 'reports/archive.html' ? '<title>历史周报归档｜GFRR</title>' : title),path);
+  }
+  assert.equal(pages.get('weekly-reports/'+issue),original);
 });
 test('both deploy paths trigger on the canonical and compatible weekly paths', () => {
   for(const p of ['.github/workflows/deploy-static-site-to-pages.yml','.github/workflows/publish-edgeone-release.yml']) {

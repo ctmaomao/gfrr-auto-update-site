@@ -53,10 +53,54 @@ test('missing or wrong explicit identity, truncation and malformed UTF-8 fail cl
   assert.throws(() => installOriginal({ root, date, sha: sha(bytes) }));
 });
 
+test('the visible title identifies exactly one issue date and matching edition, even for a bare key', () => {
+  const withTitle = title => Buffer.from(bytes.toString().replace('周报 2026年11月23日', title));
+  const assertTitle = (title,key) => {
+    const candidate = withTitle(title);
+    return validateOriginal(candidate,key,sha(candidate));
+  };
+  for (const title of ['2026年11月23日 第2版','2026-11-23-r2','2026年11月23日 第&#50;版',
+    '2026年11月23日 第２版','2026年11月23日 第2&nbsp版','2026年11月23日 第二版','2026年11月23日 修订版',
+    '2026-11-23｜首次修订','首次修订｜2026-11-23','2026-11-23｜第1版（首次修订）']) {
+    assert.throws(()=>assertTitle(title,date),/revision|revised report/i);
+  }
+  assert.throws(()=>assertTitle('2026年11月23日 第2版 / 2026-11-30',date+'-r2'),/issue date/);
+  assert.throws(()=>assertTitle('2026年11月23日 第2版 / 第3版',date+'-r2'),/revision/);
+  assert.throws(()=>assertTitle('2026年11月23日 第2版</title><title>2026-11-30',date+'-r2'),/one identity title/);
+  assert.throws(()=>assertTitle('2026年11月23日',date+'-r2'),/revision/);
+  assert.throws(()=>assertTitle('2026年11月23日 / 2026-11-23 · 第2版',date+'-r2'),/issue date/);
+  assert.doesNotThrow(()=>assertTitle('全球金融系统性风险周报｜2026-11-23｜第2版（首次修订）',date+'-r2'));
+  assert.doesNotThrow(()=>assertTitle('2026年11月23日 第1版',date));
+  assert.doesNotThrow(()=>assertTitle('2026年11月23日',date));
+});
+
+test('commented heads, template titles and browser-ambiguous head tokens cannot supply identity', () => {
+  const html = bytes.toString();
+  const validate = text => {
+    const candidate = Buffer.from(text);
+    return validateOriginal(candidate,date,sha(candidate));
+  };
+  assert.throws(()=>validate(html.replace('<html>', '<!-- <html><head><title>周报 2026年11月23日</title></head> --><html>')
+    .replace('<head><title>周报 2026年11月23日','<head><title>周报 2026年11月30日')),/unambiguous document head/);
+  assert.throws(()=>validate(html.replace('<head>', '<head><template>').replace('</head>', '</template></head>')),/ambiguous or unsupported metadata/);
+  assert.throws(()=>validate(html.replace('<head>', '<head><style></style ignore><title>周报 2026年11月30日</title></style>')),/ambiguous style terminator/);
+  assert.throws(()=>validate(html.replace('<head>', '<head><!-- --!><title>周报 2026年11月30日</title> -->')),/ambiguous or unsupported metadata/);
+  assert.throws(()=>validate(html.replace('<head>', '<head><!--><title>周报 2026年11月30日</title> -->')),/ambiguous or unsupported metadata/);
+  assert.throws(()=>validate(html.replace('<head>', '<head data-name" ignored">')),/unambiguous document head/);
+  assert.throws(()=>validate(html.replace('<head>', '<head><meta "dummy > <title>伪标题</title>">')),/ambiguous or unsupported metadata/);
+  assert.throws(()=>validate(html.replace('<head>', '<head><meta name=x=y>')),/ambiguous or unsupported metadata/);
+  assert.doesNotThrow(()=>validate(html.replace('<head>', '<head><!-- <head><title>伪标题</title></head> -->')));
+  assert.doesNotThrow(()=>validate(html.replace('<head>', '<head><meta name="description" content="a > <body>"><style>body {color:black}</style>')
+    .replace('完整正文','完整正文<svg><title>配图标题</title></svg>')));
+  assert.doesNotThrow(()=>validate(html.replace('<head>', `<head><meta name=description content='a > <body>' />`)));
+  assert.doesNotThrow(()=>validate('\uFEFF'+html));
+  assert.throws(()=>validate('\uFEFF\uFEFF'+html),/unambiguous document head/);
+});
+
 test('normal builder rejects unarchived issue before touching generated pages and preserves conflicting history', () => {
   const root = mkdtempSync(join(tmpdir(), 'weekly-build-'));
   for (const dir of ['scripts', 'reports', 'weekly-reports']) mkdirSync(join(root, dir));
-  for (const file of ['weekly-original.mjs', 'build-weekly-reports.mjs', 'weekly-remote-handoff.mjs']) copyFileSync(new URL('../../scripts/' + file, import.meta.url), join(root, 'scripts', file));
+  for (const file of ['weekly-original.mjs', 'build-weekly-reports.mjs', 'weekly-remote-handoff.mjs', 'weekly-issue-identity.mjs']) copyFileSync(new URL('../../scripts/' + file, import.meta.url), join(root, 'scripts', file));
   const source = join(root, 'input.html');
   writeFileSync(source, bytes);
   writeFileSync(join(root, 'reports', date + '.html'), bytes);

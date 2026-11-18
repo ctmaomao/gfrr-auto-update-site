@@ -4,11 +4,12 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ISSUE_KEY_PATTERN } from './weekly-issue-identity.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // This checked main commit predates this guard and fixes the known 2026-11-09 baseline.
 const trustedAnchor = 'd2ceeb14a4b4dc88937f013e22e0e72dc036a6fd';
-const protectedPath = /^(?:reports\/\d{4}-\d{2}-\d{2}\.html|weekly-reports\/\d{4}-\d{2}-\d{2}\.html|weekly-originals\/\d{4}-\d{2}-\d{2}\/(?:identity\.sha256|handoff\.json|[a-f0-9]{64}\.html))$/;
+const protectedPath = new RegExp(String.raw`^(?:(?:reports|weekly-reports)/${ISSUE_KEY_PATTERN}\.html|weekly-originals/${ISSUE_KEY_PATTERN}/(?:identity\.sha256|handoff\.json|predecessor\.json|[a-f0-9]{64}\.html))$`);
 function git(cwd, args, encoding = 'utf8') {
   return execFileSync('git', args, { cwd, encoding, maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 }

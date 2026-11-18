@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -21,7 +21,7 @@ async function fixture() {
   git(seed, 'add','.'); git(seed, 'commit','-m','baseline'); git(root, 'clone','--bare',seed,remote);
   writeFileSync(input, html);
   const moduleDir=join(root,'module'); mkdirSync(moduleDir);
-  for (const name of ['weekly-original.mjs','weekly-remote-handoff.mjs','build-weekly-reports.mjs']) {
+  for (const name of ['weekly-original.mjs','weekly-remote-handoff.mjs','build-weekly-reports.mjs','weekly-issue-identity.mjs']) {
     let contents=readFileSync(new URL('../../scripts/'+name,import.meta.url),'utf8');
     if (name==='weekly-remote-handoff.mjs') {
       const original="const productionRemote = 'https://github.com/ctmaomao/gfrr-auto-update-site.git';";
@@ -63,7 +63,7 @@ test('real CLI requires remote handoff and explicit expected identity before adm
   const project = join(root,'project');
   git(root,'clone',remote,project);
   mkdirSync(join(project,'scripts')); mkdirSync(join(project,'weekly-reports'));
-  for (const name of ['weekly-original.mjs','weekly-remote-handoff.mjs','build-weekly-reports.mjs','check-weekly-admission.mjs']) {
+  for (const name of ['weekly-original.mjs','weekly-remote-handoff.mjs','build-weekly-reports.mjs','check-weekly-admission.mjs','weekly-issue-identity.mjs']) {
     let contents=readFileSync(new URL('../../scripts/'+name,import.meta.url),'utf8');
     // Isolated test copy substitutes only the fixed destination; production has no override flag.
     if (name==='weekly-remote-handoff.mjs') {
@@ -82,6 +82,74 @@ test('real CLI requires remote handoff and explicit expected identity before adm
   run('scripts/weekly-original.mjs','prepare',issue,digest(html));
   assert.match(run('scripts/weekly-original.mjs','check',issue,digest(html)),/Verified remote handoff commit/);
   assert.match(run('scripts/check-weekly-admission.mjs'),/remote_originals_verified/);
+
+  const next = '2026-11-30', revision = next+'-r2';
+  const nextDraft = Buffer.from(html.toString().replace('11月23日','11月30日'));
+  // Exercise handoff, preparation and both fixed copies without dropping a legal UTF-8 BOM.
+  const revised = Buffer.from('\uFEFF'+nextDraft.toString().replace('11月30日','11月30日 · 第2版'));
+  const nextPath = join(root,'next.html');
+  writeFileSync(nextPath,nextDraft);
+  const old = JSON.parse(run('scripts/weekly-remote-handoff.mjs','save',next,digest(nextDraft),nextPath));
+  writeFileSync(nextPath,revised);
+  const nextReceipt = JSON.parse(run('scripts/weekly-remote-handoff.mjs','save',revision,digest(revised),nextPath,old.sha256,old.remote_commit));
+  const pins = [nextReceipt.remote_commit,old.sha256,old.remote_commit];
+  assert.deepEqual(nextReceipt.predecessor,{sha256:old.sha256,handoffCommit:old.remote_commit});
+  assert.throws(()=>run('scripts/weekly-original.mjs','prepare',revision,digest(revised)),/HANDOFF_COMMIT/);
+  assert.throws(()=>run('scripts/weekly-original.mjs','prepare',revision,digest(revised),'e'.repeat(40),...pins.slice(1)),/explicitly pinned/);
+  assert.throws(()=>run('scripts/weekly-original.mjs','prepare',revision,digest(revised),...pins.slice(0,2),'e'.repeat(40)),/explicitly pinned/);
+  assert.equal(existsSync(join(project,'weekly-originals',revision)),false);
+  const lock = join(project,'weekly-originals','.prepare.lock');
+  writeFileSync(lock,'123456\n',{flag:'wx'});
+  assert.throws(()=>run('scripts/weekly-original.mjs','prepare',revision,digest(revised),...pins),/holds .prepare.lock/);
+  assert.equal(existsSync(join(project,'weekly-originals',revision)),false);
+  unlinkSync(lock);
+  run('scripts/weekly-original.mjs','prepare',revision,digest(revised),...pins);
+  assert.match(run('scripts/weekly-original.mjs','check',revision,digest(revised),...pins),/Verified remote handoff commit/);
+  assert.match(run('scripts/check-weekly-admission.mjs'),/"revision":2/);
+  for (const prefix of ['reports','weekly-reports']) {
+    assert.equal(existsSync(join(project,prefix,next+'.html')),false);
+    assert.deepEqual(readFileSync(join(project,prefix,revision+'.html')),revised);
+  }
+  assert.equal(existsSync(join(project,'weekly-originals',next)),false);
+  assert.doesNotMatch(readFileSync(join(project,'weekly-reports.html'),'utf8'),new RegExp(next+'\\.html'));
+});
+
+test('same-date revision pins its predecessor without exposing it or advancing its branch', async () => {
+  const {root,remote,input,git,client,moduleUrl} = await fixture();
+  const revision = issue + '-r2';
+  const revised = Buffer.from(html.toString().replace('11月23日','11月23日 · 第2版').replace('已验收正文','已验收修订稿'));
+  const revisedInput = join(root,'revised.html');
+  writeFileSync(revisedInput,revised);
+  const first = client.persistRemoteHandoff({source:input,date:issue,sha:digest(html)});
+  const predecessor = {sha256:first.sha256,handoffCommit:first.commit};
+  const args = {source:revisedInput,date:revision,sha:digest(revised),predecessor};
+  const firstRef = `refs/heads/weekly-originals/${issue}`;
+  const revisionRef = firstRef + '-r2';
+  assert.throws(() => client.persistRemoteHandoff({...args,predecessor:undefined}),/pinned predecessor/);
+  assert.throws(() => client.persistRemoteHandoff({...args,predecessor:{...predecessor,handoffCommit:'a'.repeat(40)}}),/predecessor commit differs/);
+  assert.throws(() => git(remote,'show-ref','--verify',revisionRef));
+  const accepted = client.persistRemoteHandoff(args);
+  assert.deepEqual(accepted.predecessor,predecessor);
+  assert.deepEqual(accepted.bytes,revised);
+  assert.equal(git(remote,'rev-parse',firstRef),first.commit);
+  assert.deepEqual(git(remote,'ls-tree','-r','--name-only',revisionRef).split('\n'), [
+    `weekly-originals/${revision}/${digest(revised)}.html`, `weekly-originals/${revision}/identity.sha256`, `weekly-originals/${revision}/predecessor.json`,
+  ].sort());
+  assert.equal(git(remote,'rev-list','--count',revisionRef),'1');
+  assert.equal(client.persistRemoteHandoff(args).commit,accepted.commit);
+  assert.deepEqual(client.readRemoteHandoffs({issues:[{date:revision,sha:args.sha},{date:issue,sha:predecessor.sha256}]}).map(x=>x.commit),[accepted.commit,first.commit]);
+  const replacement = Buffer.concat([revised,Buffer.from('\n')]);
+  const replacementInput = join(root,'replacement.html');
+  writeFileSync(replacementInput,replacement);
+  assert.throws(() => client.persistRemoteHandoff({...args,source:replacementInput,sha:digest(replacement)}),/differs/);
+  assert.equal(git(remote,'rev-parse',revisionRef),accepted.commit);
+  // An unchanged original file at a different branch tip still fails the pinned commit check.
+  const changedTip = git(remote,'-c','user.name=Test','-c','user.email=test@example.invalid','commit-tree',git(remote,'rev-parse',firstRef+'^{tree}'),'-p',first.commit,'-m','changed tip');
+  git(remote,'update-ref',firstRef,changedTip,first.commit);
+  assert.throws(() => client.readRemoteHandoff({date:revision,sha:args.sha}),/predecessor commit differs/);
+  assert.throws(() => client.readRemoteHandoffs({issues:[{date:revision,sha:args.sha}]}),/predecessor commit differs/);
+  git(remote,'update-ref','-d',firstRef,changedTip);
+  assert.throws(() => client.readRemoteHandoff({date:revision,sha:args.sha}),/Git operation failed/);
 });
 
 test('accepted push with lost response is read back without a second push', async () => {
@@ -117,6 +185,29 @@ test('two competing originals for one date cannot both be accepted', async () =>
   const winner=results.find(result=>result.status===0).output;
   assert.ok([digest(html),digest(other)].includes(winner));
   assert.equal(readRemoteHandoff({remote,date:issue,sha:winner}).sha256,winner);
+});
+
+test('racing revisions cannot overwrite the winning remote handoff', async () => {
+  const {root,remote,input,git,client,moduleUrl} = await fixture();
+  const initial = client.persistRemoteHandoff({source:input,date:issue,sha:digest(html)});
+  const revision = issue + '-r2';
+  const predecessor = {sha256:initial.sha256,handoffCommit:initial.commit};
+  const program = `import {persistRemoteHandoff} from ${JSON.stringify(moduleUrl)}; const [source,date,sha,prior]=process.argv.slice(1); try { console.log(persistRemoteHandoff({source,date,sha,predecessor:JSON.parse(prior)}).sha256); } catch { process.exitCode=1; }`;
+  const variants = ['修订正文甲','修订正文乙'].map((body,i) => {
+    const source = join(root,'r2-'+i+'.html');
+    const bytes = Buffer.from(html.toString().replace('11月23日','11月23日 · 第2版').replace('已验收正文',body));
+    writeFileSync(source,bytes);
+    return {source,sha:digest(bytes)};
+  });
+  const results = await Promise.all(variants.map(({source,sha}) => new Promise((resolve,reject) => {
+    const child = spawn(process.execPath,['--input-type=module','-e',program,source,revision,sha,JSON.stringify(predecessor)],{stdio:['ignore','pipe','pipe']});
+    let digestOut=''; child.stdout.on('data',chunk=>digestOut+=chunk);
+    child.on('error',reject); child.on('close',status=>resolve({status,digestOut:digestOut.trim()}));
+  })));
+  const winners = results.filter(result=>result.status===0);
+  assert.equal(winners.length,1);
+  assert.equal(client.readRemoteHandoff({date:revision,sha:winners[0].digestOut}).sha256,winners[0].digestOut);
+  assert.equal(git(remote,'rev-parse','refs/heads/weekly-originals/'+issue),initial.commit);
 });
 
 test('batch read verifies multiple independently stored weekly originals', async () => {
