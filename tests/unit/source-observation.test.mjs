@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
-  parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange,
+  parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange, creLoanBalanceDate, creLoanBalanceSnapshot,
 } from '../../scripts/daily/source-observation.mjs';
 
 const PIPELINE = fileURLToPath(new URL('../../scripts/run-daily-pipeline.mjs', import.meta.url));
@@ -262,7 +262,7 @@ test('FRED SOFR keeps priority and its own date; NYFed same-day SOFR is never bo
 test('CRE normalizer preserves each prior date and nulls invalid/missing', () => {
   const src = extract('normalizePreviousCommercialRealEstate', 'function normalizePreviousPolicyExpectations');
   const fn = vm.runInNewContext(`${src}\nnormalizePreviousCommercialRealEstate`, {
-    parseObservationDate,
+    parseObservationDate, creLoanBalanceDate,
     buildMissingCommercialRealEstate: () => ({}),
     classifyCrePublicMarketProxyRegime: () => '未知',
     CRE_PUBLIC_MARKET_PROXY_SOURCE: 'TEST',
@@ -304,8 +304,7 @@ test('CRE resolver keeps five dates and fallback reuses per-field dates', async 
     latestDateIso: (rows) => rows.at(-1)?.date ?? null,
     latestIsoDate: (...dates) => dates.filter((d) => typeof d === 'string').sort().at(-1) ?? null,
     calculateLatestDelta: () => null,
-    findValueAgo: () => null,
-    parseObservationDate,
+    parseObservationDate, creLoanBalanceDate, creLoanBalanceSnapshot,
     latestDatedObservation,
     normalizePreviousCommercialRealEstate: null,
     buildMissingCommercialRealEstate: () => ({}),
@@ -320,7 +319,7 @@ test('CRE resolver keeps five dates and fallback reuses per-field dates', async 
   assert.equal(first.sloosCreNonfarmNonresidentialUpdatedAt, '2026-07-01T00:00:00Z');
   assert.equal(first.sloosCreConstructionUpdatedAt, '2026-07-01T00:00:00Z');
   assert.equal(first.sloosCreMultifamilyUpdatedAt, '2026-07-01T00:00:00Z');
-  assert.equal(first.creLoanBalanceUpdatedAt, '2026-10-07');
+  assert.equal(first.creLoanBalanceUpdatedAt, '2026-10-07T00:00:00Z');
   failDelinquency = true;
   const second = await fn(first);
   assert.equal(second.creDelinquencyUpdatedAt, '2026-07-01T00:00:00Z');
@@ -346,6 +345,76 @@ test('CRE resolver keeps five dates and fallback reuses per-field dates', async 
   assert.equal(legacy.sloosCreNonfarmNonresidentialUpdatedAt, null);
   assert.equal(legacy.sloosCreConstructionUpdatedAt, null);
   assert.equal(legacy.sloosCreMultifamilyUpdatedAt, null);
+});
+
+test('H.8 CRE loan balances require exact Wednesday references and cannot redate cache', async () => {
+  const src = ['normalizePreviousCommercialRealEstate', 'resolveCommercialRealEstate'].map(name => extract(name)).join('\n');
+  const row = (date, value) => ({ date, value });
+  // Federal Reserve H.8 via FRED CREACBW027SBOG, 2026-11-13 vintage checked against
+  // https://fred.stlouisfed.org/data/CREACBW027SBOG (billions; week ending Wednesday).
+  const year = row('2025-11-05', 3041.7196);
+  const fourWeeks = row('2026-10-07', 3153.1508);
+  const current = row('2026-11-04', 3157.6162);
+  let balances = [year, fourWeeks, current];
+  const clock = '2026-11-18T16:00:00Z';
+  class Clock extends Date {
+    constructor(...args) { super(...(args.length ? args : [clock])); }
+  }
+  const resolve = vm.runInNewContext(`${src}\nresolveCommercialRealEstate`, {
+    Date: Clock, parseObservationDate, latestDatedObservation, creLoanBalanceDate, creLoanBalanceSnapshot,
+    fetchFredSeries: async id => {
+      if (id === 'CREACBW027SBOG' && balances) return balances;
+      throw new Error('offline');
+    },
+    fetchYahooChartQuote: async () => { throw new Error('offline'); },
+    latestIsoDate: (...dates) => dates.filter(Boolean).sort().at(-1) ?? null,
+    calculateLatestDelta: () => null, buildMissingCommercialRealEstate: () => ({}),
+    classifyCrePublicMarketProxyRegime: () => '未知', classifyCreStressRegime: () => '未知',
+    CRE_PUBLIC_MARKET_PROXY_SOURCE: 'test'
+  });
+  const live = await resolve(null);
+  assert.equal(live.creLoanBalance, 3157.6162);
+  assert.equal(live.creLoanBalanceUpdatedAt, '2026-11-04T00:00:00Z');
+  assert.equal(live.creLoanBalance4wChange, 0.0014);
+  assert.equal(live.creLoanBalanceYoY, 0.0381);
+  assert.equal(live.sourceStatus.creLoanBalance, 'live');
+
+  balances = [row('2025-10-29', 1000), row('2026-10-14', 2000), current];
+  const missing = await resolve(null);
+  assert.equal(missing.creLoanBalance, current.value);
+  assert.equal(missing.creLoanBalance4wChange, null);
+  assert.equal(missing.creLoanBalanceYoY, null);
+
+  // Missing weeks inside the span do not replace the two exact endpoints.
+  balances = [year, fourWeeks, fourWeeks, current];
+  const duplicate = await resolve(null);
+  assert.equal(duplicate.creLoanBalance4wChange, null);
+  assert.equal(duplicate.creLoanBalanceYoY, 0.0381);
+
+  for (const invalid of [null, [year, row('2026-11-04', null)], [year, row('2026-11-05', 4000)],
+    [year, row('2026-11-25', 4000)], [year, current, current]]) {
+    balances = invalid;
+    const held = await resolve({ ...live, updatedAt: clock });
+    assert.equal(held.creLoanBalance, live.creLoanBalance);
+    assert.equal(held.creLoanBalanceUpdatedAt, live.creLoanBalanceUpdatedAt);
+    assert.equal(held.creLoanBalance4wChange, null);
+    assert.equal(held.creLoanBalanceYoY, null);
+    assert.equal(held.sourceStatus.creLoanBalance, 'fallback');
+  }
+  balances = [current, year];
+  const untrusted = await resolve(null);
+  assert.equal(untrusted.creLoanBalance, null);
+  assert.equal(untrusted.sourceStatus.creLoanBalance, 'missing');
+  for (const date of ['2026-11-03', '2026-11-25', '2026-11-18T23:00:00Z', null]) {
+    const undated = await resolve({ ...live, creLoanBalanceUpdatedAt: date, updatedAt: clock });
+    assert.equal(undated.creLoanBalance, live.creLoanBalance);
+    assert.equal(undated.creLoanBalanceUpdatedAt, null);
+  }
+  balances = [row(year.date, 0), fourWeeks, row(current.date, 0)];
+  const zero = await resolve(null);
+  assert.equal(zero.creLoanBalance, 0);
+  assert.equal(zero.creLoanBalance4wChange, -1);
+  assert.equal(zero.creLoanBalanceYoY, null);
 });
 
 test('credit resolver stores NFCI/SLOOS dates and independent large/small status', async () => {
