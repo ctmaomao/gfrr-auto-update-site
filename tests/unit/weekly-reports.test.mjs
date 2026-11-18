@@ -51,6 +51,38 @@ test('generated pages are deterministic, fixed issue stays standalone with cited
   assert.match(legacy,/empsit_11062026/);
   assert.match(legacy,/不是.*概率|不.*概率/);
 });
+
+test('generated weekly shells supply history and byte-preserving download even if the original only prints', () => {
+  const dates = Array.from({length:53}, (_,i) => new Date(Date.UTC(2026, 0, i+1)).toISOString().slice(0,10)+'.html');
+  const latest = dates.at(-1);
+  const main = '<main><section>本期正文 <a href="https://example.test/source">出处</a></section>';
+  const latestOriginal = '<!doctype html><html lang="zh-CN"><head><title>' + latest.slice(0,10) +
+    '</title><style>body{margin:0}</style></head><body class="original"><button type="button">打印</button>' +
+    main + '</main></body></html>\r\n';
+  const originals = new Map(dates.map(name => ['reports/' + name, name === latest ? latestOriginal : '<!doctype html><html><body>更早原稿</body></html>']));
+  const pages = expectedWeeklyPages({ names: dates, readFile: path => originals.get(path) });
+  for (const [path, prefix] of [['weekly-reports.html',''],['weekly-reports/index.html','../'],['reports/archive.html','../']]) {
+    const html = pages.get(path);
+    const toolbar = html.match(/<nav class="weekly-shell-actions"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+    assert.equal(toolbar, '<a href="' + prefix + 'weekly-reports.html#history">历史周报</a><a href="' + prefix +
+      'reports/' + latest + '" download="GFRR_Weekly_' + latest + '">下载单文件HTML</a>', path);
+    const tabs = html.match(/<nav class="page-bookmarks"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+    assert.equal((tabs.match(/<a /g)||[]).length,4,path);
+    assert.equal((tabs.match(/aria-current="page"/g)||[]).length,1,path);
+    assert.ok(html.includes('<body class="original">'), path);
+    if (path !== 'reports/archive.html') {
+      assert.ok(html.includes('<button type="button">打印</button>' + main), path);
+      assert.ok(html.includes('href="' + prefix + 'reports/archive.html"'), path);
+    } else {
+      assert.ok(html.includes('href="' + dates[0] + '">阅读固定期次全文</a>'), path);
+      assert.ok(!html.includes(main), path);
+    }
+  }
+  for (const [path, original] of originals) {
+    const dated = pages.get(path.replace('reports/', 'weekly-reports/'));
+    assert.deepEqual(Buffer.from(dated),Buffer.from(original),path);
+  }
+});
 test('both deploy paths trigger on the canonical and compatible weekly paths', () => {
   for(const p of ['.github/workflows/deploy-static-site-to-pages.yml','.github/workflows/publish-edgeone-release.yml']) {
     const text=read(p);

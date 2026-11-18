@@ -12,19 +12,67 @@ export function splitIssues(names, limit = 52) {
 export function archiveHtml(names, prefix = 'reports/') {
   return names.map(name => '<li><time datetime="' + name.slice(0,10) + '">' + name.slice(0,10) + '</time><a href="' + prefix + name + '">阅读固定期次全文</a></li>').join('\n');
 }
+
+// The generated site chrome owns its styles; frozen issues may have different typography or no navigation at all.
+// Keep this one inline block identical across the three shells for the static CSP hash inventory.
+const shellStyle = `<style>
+.weekly-site-shell, .weekly-archive {
+  --paper-bg:#FBF7F0; --paper-ink:#1A1815; --paper-line:rgba(26,24,21,.16); --paper-line-strong:#1A1815;
+  --font-display:"Playfair Display","Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+  --font-serif:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+  --font-mono:"IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
+  background:var(--paper-bg); color:var(--paper-ink);
+}
+.weekly-site-shell .page-bookmarks { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0; position:relative; padding:0; border:0; margin:16px clamp(18px,4vw,48px) 0; }
+.weekly-site-shell .page-bookmarks .pbm { display:block; padding:10px 14px; border:1px solid var(--paper-line); border-bottom:2px solid var(--paper-line-strong); background:var(--paper-bg); color:var(--paper-ink); font:13px/1.4 var(--font-serif); text-decoration:none; }
+.weekly-site-shell .page-bookmarks .pbm + .pbm { border-left:0; }
+.weekly-site-shell .page-bookmarks .pbm[aria-current="page"] { background:var(--paper-ink); color:var(--paper-bg); }
+.weekly-site-shell .weekly-shell-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0 18px; margin:8px clamp(18px,4vw,48px) 0; border-bottom:1px solid var(--paper-line); }
+.weekly-site-shell .weekly-shell-actions a { display:inline-flex; align-items:center; min-height:44px; color:var(--paper-ink); font:13px/1.4 var(--font-mono); text-decoration:underline; text-underline-offset:4px; }
+.weekly-site-shell .page-bookmarks .pbm:hover, .weekly-site-shell .weekly-shell-actions a:hover { text-decoration:underline; text-underline-offset:4px; }
+.weekly-site-shell a:focus-visible { outline:2px solid var(--paper-line-strong); outline-offset:2px; }
+.weekly-archive { margin:42px 0 0; padding:28px 0; border-top:3px double var(--paper-ink); font-family:var(--font-serif); }
+.weekly-archive h1, .weekly-archive h2 { font-family:var(--font-display); }
+.weekly-archive ol { list-style:none; padding:0; }
+.weekly-archive li { border-bottom:1px solid var(--paper-line); padding:12px 0; }
+.weekly-archive time { font:12px var(--font-mono); margin-right:14px; }
+.weekly-archive p { font-size:14px; }
+.archive-container { max-width:960px; margin:auto; padding:40px 20px; }
+@media(max-width:600px) {
+  .weekly-site-shell .page-bookmarks { margin:12px 18px 0; }
+  .weekly-site-shell .page-bookmarks .pbm { padding:9px 11px; font-size:12px; }
+}
+@media print { .weekly-site-shell { display:none; } }
+</style>`;
+
+function siteShell(prefix, latest) {
+  const navigation = '<nav class="page-bookmarks" aria-label="站内页面切换"><a class="pbm pbm-weekly pbm-active" href="' + prefix + 'weekly-reports.html" aria-current="page">每周周报</a><a class="pbm pbm-radar" href="' + prefix + 'index.html?view=radar">全球雷达</a><a class="pbm pbm-bubble" href="' + prefix + 'bubble-watch.html">AI泡沫</a><a class="pbm pbm-oil" href="' + prefix + 'oil-market.html">油市观察</a></nav>';
+  const actions = '<nav class="weekly-shell-actions" aria-label="周报操作"><a href="' + prefix + 'weekly-reports.html#history">历史周报</a><a href="' + prefix + 'reports/' + latest + '" download="GFRR_Weekly_' + latest + '">下载单文件HTML</a></nav>';
+  return '<div class="weekly-site-shell">' + navigation + actions + '</div>';
+}
+
 export function expectedWeeklyPages({ names = readdirSync(resolve(root, 'reports')), readFile = read } = {}) {
   const { recent, archived } = splitIssues(names);
   if (!recent.length) throw new Error('No dated weekly report exists');
   const latest = readFile('reports/' + recent[0]);
-  const archive = '<section class="weekly-archive" id="history"><h2>历史周报</h2><p>最近52期列于此处。更早期次转入历史归档目录，原固定链接和正文继续保留，不自动永久删除。</p><ol>' + archiveHtml(recent) + '</ol><p><a href="reports/archive.html">查看更早期次</a></p></section>';
-  // Current navigation belongs to generated entry pages, not immutable dated issues.
-  const weeklyNavigation = '<nav class="page-bookmarks" aria-label="站内页面切换"><a class="pbm pbm-weekly pbm-active" href="weekly-reports.html" aria-current="page">每周周报</a><a class="pbm pbm-radar" href="index.html?view=radar">全球雷达</a><a class="pbm pbm-bubble" href="bubble-watch.html">AI泡沫</a><a class="pbm pbm-oil" href="oil-market.html">油市观察</a></nav>';
-  const current = latest.replace(/<nav class="page-bookmarks"[^>]*>[\s\S]*?<\/nav>/, weeklyNavigation.replaceAll('href="', 'href="../'));
-  const home = current.replaceAll('href="../', 'href="').replace(/<\/main\s*>/i, archive + '</main>');
   const bodyTag = /<body\b[^>]*>/i.exec(latest);
   if (!bodyTag) throw new Error('Weekly report has no body tag');
-  const older = latest.slice(0, bodyTag.index + bodyTag[0].length).replace(/<title>[\s\S]*?<\/title>/, '<title>历史周报归档｜GFRR</title>') + weeklyNavigation.replaceAll('href="', 'href="../') + '<main class="archive-container"><section class="weekly-archive"><h1>更早期次归档</h1><p>超过最近52期的正文保留固定日期链接，不自动删除。当前共有 ' + archived.length + ' 期。</p><ol>' + archiveHtml(archived, '') + '</ol><p><a href="../weekly-reports.html#history">返回最近52期</a></p></section></main></body></html>';
-  const result = new Map([['weekly-reports.html', home], ['weekly-reports/index.html', home.replaceAll('href="reports/', 'href="../reports/').replaceAll('href="index.html', 'href="../index.html').replaceAll('href="bubble-watch.html', 'href="../bubble-watch.html').replaceAll('href="oil-market.html', 'href="../oil-market.html').replaceAll('href="weekly-reports.html', 'href="../weekly-reports.html')], ['reports/archive.html', older]]);
+  const head = latest.slice(0, bodyTag.index);
+  const styledHead = /<\/head\s*>/i.test(head) ? head.replace(/<\/head\s*>/i, close => shellStyle + close) : head + shellStyle + '</head>';
+  const body = latest.slice(bodyTag.index + bodyTag[0].length)
+    .replace(/<nav class="page-bookmarks"[^>]*>[\s\S]*?<\/nav>/i, '');
+  // Only the frozen 2026-11-09 edition has these two legacy site actions.
+  // Omit their duplicates from its rendered entry, leaving its original, print control and text alone.
+  const article = recent[0] === '2026-11-09.html' ? body
+    .replace('<a class="btn" href="../reports/2026-11-09.html" download="GFRR_Weekly_2026-11-09.html">下载单文件HTML</a>', '')
+    .replace('<a class="btn" href="../weekly-reports.html#history">历史周报</a>', '') : body;
+  function entry(prefix) {
+    const archive = '<section class="weekly-archive" id="history"><h2>历史周报</h2><p>最近52期列于此处。更早期次转入历史归档目录，原固定链接和正文继续保留，不自动永久删除。</p><ol>' + archiveHtml(recent, prefix + 'reports/') + '</ol><p><a href="' + prefix + 'reports/archive.html">查看更早期次</a></p></section>';
+    const content = prefix ? article : article.replaceAll('href="../', 'href="');
+    return styledHead + bodyTag[0] + siteShell(prefix, recent[0]) + content.replace(/<\/main\s*>/i, close => archive + close);
+  }
+  const older = styledHead.replace(/<title\b[^>]*>[\s\S]*?<\/title\s*>/i, '<title>历史周报归档｜GFRR</title>') + bodyTag[0] + siteShell('../', recent[0]) + '<main class="archive-container"><section class="weekly-archive"><h1>更早期次归档</h1><p>超过最近52期的正文保留固定日期链接，不自动删除。当前共有 ' + archived.length + ' 期。</p><ol>' + archiveHtml(archived, '') + '</ol><p><a href="../weekly-reports.html#history">返回最近52期</a></p></section></main></body></html>';
+  const result = new Map([['weekly-reports.html', entry('')], ['weekly-reports/index.html', entry('../')], ['reports/archive.html', older]]);
   // Compatibility copies are deterministic; canonical dated reports are NEVER rewritten here.
   for (const name of [...recent, ...archived]) result.set('weekly-reports/' + name, readFile('reports/' + name));
   return result;
