@@ -23,6 +23,9 @@ export function trustedUpstream(run) {
     && run?.status === 'completed' && run?.conclusion === 'success' && Number.isSafeInteger(run?.id);
 }
 
+// Automatic OFR input uses only Daily. Manual and legacy policies are unchanged.
+export const isAutomaticOfr = (eventName, radar) => eventName === 'workflow_run' && hasOfrEditorialMarkers(radar);
+
 export function planAdmission({ eventName, event, runAttempt, repository, ref, radar, world, oil, now }) {
   if (repository !== REPOSITORY || ref !== 'refs/heads/main') return hold('untrusted_context');
   if (String(runAttempt) !== '1') return hold('rerun_requires_new_review');
@@ -38,16 +41,18 @@ export function planAdmission({ eventName, event, runAttempt, repository, ref, r
   // stop before reservations, discovery or provider work.
   if (hasOfrEditorialMarkers(radar) && !assessOfrEditorialPublication(radar, now).ready) return hold('model_contract_transition');
   const at = Date.parse(now);
-  const dates = [radar?.updatedAt, world?.updatedAt, oil?.builtAt].map(timestamp);
+  const dailyOnly = isAutomaticOfr(eventName, radar);
+  if (dailyOnly && event.workflow_run.name !== UPSTREAMS[0][0]) return hold('ofr_requires_daily_completion');
+  const dates = (dailyOnly ? [radar?.updatedAt] : [radar?.updatedAt, world?.updatedAt, oil?.builtAt]).map(timestamp);
   if (!Number.isFinite(at) || dates.some((date) => !Number.isFinite(date) || date > at || at - date > MAX_AGE_MS)) return hold('snapshot_not_fresh');
   // Never transplant yesterday's editorial onto a new Daily timestamp.
   if (radar?.macroRiskEditorialLayer?.sourceDataUpdatedAt === radar.updatedAt) return hold('input_already_has_editorial');
-  if (eventName === 'workflow_run' && (dates[1] < dates[0] || dates[2] < dates[0])) return hold('waiting_for_upstream_snapshots');
+  if (eventName === 'workflow_run' && !dailyOnly && (dates[1] < dates[0] || dates[2] < dates[0])) return hold('waiting_for_upstream_snapshots');
   const sourceDataUpdatedAt = new Date(dates[0]).toISOString();
   const inputKey = createHash('sha256').update(sourceDataUpdatedAt).digest('hex');
   const refs = [`${PREFIX}day-${now.slice(0, 10)}`, `${PREFIX}input-${inputKey}`];
 
-  return { ready: true, reason: 'candidate', sourceDataUpdatedAt, refs };
+  return { ready: true, reason: 'candidate', sourceDataUpdatedAt, dailyOnly, refs };
 }
 
 // Only GitHub metadata is read. No provider key, artifact body or untrusted code.
@@ -86,8 +91,8 @@ export async function admitRefresh({ plan, eventName, event, now, snapshots, hea
   if (!/^[a-f0-9]{40}$/.test(headSha)) throw new Error('invalid_checkout_sha');
   if (eventName === 'workflow_run') {
     const trigger = await api(`/actions/runs/${event.workflow_run.id}`);
-    if (trigger.status !== 200 || !trustedUpstream(trigger.data) || trigger.data.id !== event.workflow_run.id) throw new Error('upstream_identity_unverified');
-    for (let index = 0; index < UPSTREAMS.length; index++) {
+    if (trigger.status !== 200 || !trustedUpstream(trigger.data) || trigger.data.id !== event.workflow_run.id || trigger.data.name !== event.workflow_run.name) throw new Error('upstream_identity_unverified');
+    for (let index = 0; index < (plan.dailyOnly ? 1 : UPSTREAMS.length); index++) {
       const [name, file] = UPSTREAMS[index];
       const result = await api(`/actions/workflows/${file}/runs?branch=main&event=schedule&per_page=1`);
       if (result.status !== 200 || !Array.isArray(result.data?.workflow_runs)) throw new Error('upstream_status_unavailable');
@@ -97,6 +102,7 @@ export async function admitRefresh({ plan, eventName, event, now, snapshots, hea
       const ended = timestamp(latest.updated_at);
       const current = Date.parse(now);
       if (!Number.isFinite(created) || !Number.isFinite(ended) || created > ended || ended > current || current - created > MAX_AGE_MS || timestamp(snapshots[index]) < created) return hold('upstream_snapshot_not_current');
+      if (plan.dailyOnly && (latest.id !== trigger.data.id || timestamp(plan.sourceDataUpdatedAt) !== timestamp(snapshots[0]) || timestamp(snapshots[0]) > ended)) return hold('daily_snapshot_not_bound_to_run');
       if (latest.name === trigger.data.name && latest.id !== trigger.data.id) return hold('superseded_upstream_event');
     }
   }

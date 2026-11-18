@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { ofrEditorialFixture } from '../fixtures/macro-editorial-ofr.mjs';
 import assert from 'node:assert/strict';
 import { admitRefresh, githubClient, planAdmission, REPOSITORY, UPSTREAMS } from '../../scripts/macro-risk/editorial-refresh-admission.mjs';
 
@@ -161,4 +162,41 @@ test('HTTP client is bounded, rejects redirects, redacts failures and never retr
   const bounded = githubClient({ token: 'secret', fetchImpl: async () => new Response('{}') });
   for (let i = 0; i < 10; i++) await bounded('/git/ref/tags/x');
   await assert.rejects(bounded('/git/ref/tags/x'), /out_of_bounds/);
+});
+
+
+test('automatic OFR checks just the latest successful Daily and binds its snapshot before any reservation', async () => {
+  const { radar, at } = ofrEditorialFixture();
+  const daily = { ...runs[0], created_at: '2026-11-01T11:58:00Z', updated_at: at };
+  const ctx = { ...context(), radar, world: undefined, oil: undefined, now: at,
+    event: { action: 'completed', workflow_run: daily } };
+  const plan = planAdmission(ctx);
+  assert.equal(plan.ready, true);
+  for (const other of runs.slice(1)) {
+    const result = planAdmission({ ...ctx, event: { action: 'completed', workflow_run: other } });
+    assert.equal(result.reason, 'ofr_requires_daily_completion');
+  }
+  const opts = { plan, eventName: ctx.eventName, event: ctx.event, now: at, snapshots: [at], headSha: sha, reserve: false };
+  async function replay(latest, snapshots = [at], existing = false) {
+    const paths = [];
+    const api = async (path, method = 'GET') => {
+      assert.equal(method, 'GET'); paths.push(path);
+      if (path === '/actions/runs/1') return { status: 200, data: daily };
+      if (path === '/actions/workflows/build-daily-radar-data.yml/runs?branch=main&event=schedule&per_page=1') return { status: 200, data: { workflow_runs: [latest] } };
+      assert.ok(path.startsWith('/git/ref/tags/macro-editorial-budget/v1/'));
+      return { status: existing ? 200 : 404 };
+    };
+    return { result: await admitRefresh({ ...opts, snapshots, api }), paths };
+  }
+  assert.equal((await replay(daily, [new Date(at).toISOString()])).result.reason, 'dry_run_would_reserve');
+  assert.equal((await replay(daily, [at], true)).result.reason, 'budget_already_reserved');
+  for (const [run, snapshots] of [
+    [{ ...daily, id: 999 }, [at]], [{ ...daily, run_attempt: 2 }, [at]],
+    [{ ...daily, conclusion: 'failure' }, [at]], [{ ...daily, updated_at: '2026-11-01T11:59:59Z' }, [at]],
+    [daily, []], [daily, ['bad']], [daily, ['2026-11-01T11:59:59Z']]
+  ]) {
+    const { result, paths } = await replay(run, snapshots);
+    assert.equal(result.ready, false); assert.ok(paths.every(path => !path.startsWith('/git/')));
+  }
+  assert.equal(planAdmission({ ...ctx, eventName: 'workflow_dispatch', event: { inputs: { acknowledge_cost: true, allow_network: true } } }).reason, 'snapshot_not_fresh');
 });
