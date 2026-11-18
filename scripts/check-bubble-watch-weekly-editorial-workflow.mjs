@@ -1,10 +1,17 @@
 import fs from 'node:fs';
+import { readRepositoryReport } from './review-check-all-coverage.mjs';
 
 const WORKFLOW = '.github/workflows/bubble-watch-weekly-editorial-refresh.yml';
 const PAGES = '.github/workflows/deploy-static-site-to-pages.yml';
 const PROVIDER = 'scripts/bubble-watch/weekly-editorial-provider.mjs';
 const WRITER = 'scripts/write-bubble-watch-weekly-editorial.mjs';
 const errors = [];
+
+// The preflight runs this before provider admission. Check the actual npm
+// script graph, not the spelling or indentation of the workflow command.
+if (!readRepositoryReport().reachable.includes('check:bubble-watch')) {
+  errors.push('check:all must reach check:bubble-watch for final editorial validation');
+}
 
 function requireMarker(text, marker, label) {
   if (!text.includes(marker)) errors.push(`${label} missing marker: ${marker}`);
