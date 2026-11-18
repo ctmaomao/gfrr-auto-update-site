@@ -2,6 +2,8 @@ import test from 'node:test';
 import { discloseOilThermalBaselineAge } from '../../scripts/oil-directional/oil-thermal-baseline-age.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import vm from 'node:vm';
 import { fetchFirmsText, getFirmsErrorDiagnostics, createFirmsRetryBudget } from '../../scripts/oil-directional/firms-request-policy.mjs';
 import { buildLiveArtifact, readFacilityConfig, readBaselineConfig } from '../../scripts/oil-directional/build-oil-thermal-watch.mjs';
@@ -150,4 +152,76 @@ test('successful retry remains identical with receipt capture enabled', async()=
   };
   const plain=await run(null), c=createThermalReceiptCapture();assert.deepEqual(await run(c),plain);
   assert.equal(plain.calls,2);assert.equal(c.snapshot().receipts[0].attempts,2);assert.equal(c.snapshot().receipts[0].retryCount,1);
+});
+
+function jsonBaseline(raw) {
+  const dir = fs.mkdtempSync(join(tmpdir(), 'thermal-baseline-number-test-'));
+  try {
+    const path = join(dir, 'baseline.json');
+    fs.writeFileSync(path, JSON.stringify(raw));
+    return readBaselineConfig(path);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('Baseline JSON does not coerce missing or malformed metrics into an established zero baseline', async () => {
+  const valid = { id: 'synthetic-test', sampleCount: 20, rowCountP95: 0, maxFrpP95: 0,
+    sourcesWithDetectionsP95: 0, highConfidenceCountP95: 0, frpOver50CountP95: 0 };
+  const old = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response(csv, {status:200}); };
+  try {
+    for (const invalid of [null, false, true, '', '   ', '0', [], [0], {}, -1]) {
+      const baselineConfig = jsonBaseline({ status: 'established', facilities: [{ ...valid, maxFrpP95: invalid }] });
+      assert.equal(baselineConfig.facilitiesById.get(valid.id).maxFrpP95, null);
+      const artifact = await buildLiveArtifact({ ...inputs(before), baselineConfig });
+      assert.equal(artifact.aggregate.rowCount, 3);
+      assert.equal(artifact.aggregate.repeatedObservationCount, 0);
+      assert.notEqual(artifact.facilities[0].baselineComparison.status, 'established');
+      assert.equal(artifact.facilities[0].baselineComparison.maxFrpP95, null);
+      assert.ok(Object.values(artifact.productionImpact).every(v => v === false));
+    }
+    const baselineConfig = jsonBaseline({ status: 'established', facilities: [valid] });
+    const artifact = await buildLiveArtifact({ ...inputs(before), baselineConfig });
+    assert.equal(artifact.facilities[0].baselineComparison.maxFrpP95, 0);
+    assert.equal(artifact.aggregate.repeatedObservationCount, 1);
+    assert.equal(calls, 33);
+  } finally {
+    globalThis.fetch = old;
+  }
+});
+
+test('Baseline JSON preserves explicit numeric zeros but not invalid policy or review numbers', () => {
+  for (const invalid of [null, false, true, ' ', '0', [], [0], {}]) {
+    const baseline = jsonBaseline({
+      policy: { minSamplesPerFacility: invalid, minRepeatSources: invalid, rowCountP95Margin: 0 },
+      sourceReview: { sampleCount: invalid, sampleWindowDays: invalid, minimumFacilityWindowDays: invalid,
+        facilitiesBelowQualityTarget: 0 },
+      facilities: [{ id: 'synthetic-test', sampleCount: invalid, rowCountP95: invalid,
+        maxFrpP95: 0, sourcesWithDetectionsP95: invalid }]
+    });
+    assert.equal(baseline.policy.minSamplesPerFacility, 8);
+    assert.equal(baseline.policy.minRepeatSources, 2);
+    assert.equal(baseline.policy.rowCountP95Margin, 0);
+    assert.equal(baseline.sourceReview.sampleCount, null);
+    assert.equal(baseline.sourceReview.effectiveQualityWindowDays, null);
+    assert.equal(baseline.sourceReview.minimumFacilityWindowDays, null);
+    assert.equal(baseline.sourceReview.facilitiesBelowQualityTarget, 0);
+    const row = baseline.facilitiesById.get('synthetic-test');
+    assert.equal(row.sampleCount, 0);
+    assert.equal(row.rowCountP95, null);
+    assert.equal(row.maxFrpP95, 0);
+    assert.equal(row.sourcesWithDetectionsP95, null);
+  }
+  assert.equal(jsonBaseline({ policy: null }).policy.minSamplesPerFacility, 8);
+  const legacy = jsonBaseline({ sourceReview: { sampleWindowDays: 9.2 } });
+  assert.equal(legacy.sourceReview.effectiveQualityWindowDays, 9.2);
+  for (const review of [{ baselineQualityBasis: 'minimum_facility_window_days' },
+    { effectiveQualityWindowDays: null }, { effectiveQualityWindowDays: '0' }]) {
+    const baseline = jsonBaseline({ sourceReview: { sampleWindowDays: 40, ...review } });
+    assert.equal(baseline.sourceReview.effectiveQualityWindowDays, null);
+  }
+  assert.equal(jsonBaseline({ sourceReview: { sampleWindowDays: 40, effectiveQualityWindowDays: 0 } })
+    .sourceReview.effectiveQualityWindowDays, 0);
 });

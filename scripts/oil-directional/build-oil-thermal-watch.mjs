@@ -180,21 +180,21 @@ function readFacilityConfig(path) {
   };
 }
 
-function numberOrDefault(value, fallback) {
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : fallback;
+// Baseline inputs are structured JSON, not CSV: only observed numeric
+// values may be thresholds/statistics. In particular null is not zero.
+function finiteNumberOrNull(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
-function normalizeBaselinePolicy(rawPolicy = {}) {
+function numberOrDefault(value, fallback) {
+  return finiteNumberOrNull(value) ?? fallback;
+}
+
+function normalizeBaselinePolicy(rawPolicy) {
   return Object.fromEntries(Object.entries(DEFAULT_BASELINE_POLICY).map(([key, fallback]) => [
     key,
-    numberOrDefault(rawPolicy[key], fallback)
+    numberOrDefault(rawPolicy?.[key], fallback)
   ]));
-}
-
-function finiteNumberOrNull(value) {
-  const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : null;
 }
 
 function validIsoOrNull(value) {
@@ -208,8 +208,12 @@ function normalizeBaselineSourceReview(rawReview) {
     ? rawReview.caveats.filter((note) => typeof note === 'string')
     : [];
   const sampleWindowDays = finiteNumberOrNull(rawReview.sampleWindowDays);
-  const effectiveQualityWindowDays = finiteNumberOrNull(rawReview.effectiveQualityWindowDays)
-    ?? sampleWindowDays;
+  const baselineQualityBasis = typeof rawReview.baselineQualityBasis === 'string'
+    ? rawReview.baselineQualityBasis : 'global_sample_window_days_legacy';
+  const effectiveQualityWindowDays = !Object.hasOwn(rawReview, 'effectiveQualityWindowDays')
+    && baselineQualityBasis === 'global_sample_window_days_legacy'
+    ? sampleWindowDays
+    : finiteNumberOrNull(rawReview.effectiveQualityWindowDays);
   return {
     promotionVersion: typeof rawReview.promotionVersion === 'string' ? rawReview.promotionVersion : null,
     promotionStage: typeof rawReview.promotionStage === 'string' ? rawReview.promotionStage : null,
@@ -220,9 +224,7 @@ function normalizeBaselineSourceReview(rawReview) {
     minimumFacilityWindowDays: finiteNumberOrNull(rawReview.minimumFacilityWindowDays),
     maximumFacilityWindowDays: finiteNumberOrNull(rawReview.maximumFacilityWindowDays),
     effectiveQualityWindowDays,
-    baselineQualityBasis: typeof rawReview.baselineQualityBasis === 'string'
-      ? rawReview.baselineQualityBasis
-      : 'global_sample_window_days_legacy',
+    baselineQualityBasis,
     qualityTargetDays: finiteNumberOrNull(rawReview.qualityTargetDays),
     facilitiesMeetingQualityTarget: finiteNumberOrNull(rawReview.facilitiesMeetingQualityTarget),
     facilitiesBelowQualityTarget: finiteNumberOrNull(rawReview.facilitiesBelowQualityTarget),
