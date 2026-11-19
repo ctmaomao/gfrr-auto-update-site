@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -22,7 +23,6 @@ import {
   REPO_ROOT,
   buildStagingDirectory,
   checkStagingDirectory,
-  fileInventory,
   manifestFromArtifact,
   validateStagingTree,
   writeManifest,
@@ -257,12 +257,6 @@ test('validateStagingTree rejects a content mismatch and an extra nested file', 
   assert.throws(() => validateStagingTree(target, { artifactDir: source }), /unexpected file in staging/u);
 });
 
-test('fileInventory covers nested paths', () => {
-  const dir = makeTree('inventory', { 'bubble-watch.html': PAGE, 'assets/a/b.css': 'body{}' });
-  const inventory = fileInventory(dir);
-  assert.deepEqual([...inventory.keys()].sort(), ['assets/a/b.css', 'bubble-watch.html']);
-});
-
 // ---------------------------------------------------------------------------
 // Fix 5 — --check compares the whole document
 // ---------------------------------------------------------------------------
@@ -447,11 +441,12 @@ test('the disabled state also rejects an added header rule it never declared', (
 });
 
 test('manifestFromArtifact records size and hash for every file', () => {
-  const artifact = makeTree('manifest-src', { 'bubble-watch.html': PAGE, 'assets/a/b.css': 'body{}' });
-  const manifest = manifestFromArtifact(artifact);
+  const files = { 'assets/a/b.css': 'body{}', 'bubble-watch.html': PAGE };
+  const manifest = manifestFromArtifact(makeTree('manifest-src', files));
   assert.equal(manifest.fileCount, 2);
-  assert.deepEqual(manifest.files.map((entry) => entry.path).sort(), ['assets/a/b.css', 'bubble-watch.html']);
-  for (const entry of manifest.files) assert.match(entry.sha256, /^[0-9a-f]{64}$/u);
+  assert.deepEqual(manifest.files, Object.entries(files).map(([path, content]) => ({
+    path, size: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex'),
+  })));
 });
 
 // ---------------------------------------------------------------------------
