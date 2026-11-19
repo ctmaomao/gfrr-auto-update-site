@@ -1,0 +1,45 @@
+{
+  "schema": "oil-thermal-independent-event-inventory-local-v0",
+  "base": "c67cb7605264d4e17411a966a6e223362855c2c0",
+  "reviewedOn": "2026-11-19",
+  "authenticity": "manually_indexed_public_evidence",
+  "promotionEligible": false,
+  "evaluationEligible": false,
+  "episodes": [
+    {
+      "id": "tx-galveston-bay-2023-05-15",
+      "binding": "usgc_refinery_marathon_galveston_bay_tx",
+      "classification": "unplanned_fire",
+      "observedAt": {"date": "2023-05-15", "precision": "minute_reported", "utc": "2023-05-15T14:32:00Z", "sourceZone": "America/Chicago"},
+      "severity": {"fatalities": 1, "medicalTransfers": null, "refiningReduction": null, "operationalRecoveryAt": null},
+      "evidence": [
+        {"id": "csb-v2-16", "publishedAt": "2025-03-12", "publicationPrecision": "day", "issuer": "CSB", "origin": "agency_summary_based_on_operator_investigation", "stage": "report_volume", "supersedes": null, "url": "https://www.csb.gov/assets/1/6/Incident_Reports_Volume_2_2025-03-12.pdf", "locator": "Volume 2, printed p. 35, Texas City entry; use release announcement for publication date"}
+      ]
+    },
+    {
+      "id": "tx-deer-park-2024-10-10",
+      "binding": "usgc_refinery_deer_park_tx",
+      "classification": "unplanned_release_during_maintenance",
+      "observedAt": {"date": "2024-10-10", "precision": "minute_approximate", "utc": "2024-10-10T21:23:00Z", "sourceZone": "America/Chicago"},
+      "severity": {"fatalities": 2, "medicalTransfers": 13, "refiningReduction": null, "operationalRecoveryAt": null},
+      "evidence": [
+        {"id": "csb-2024-05-i-tx-update", "publishedAt": "2024-11-20", "publicationPrecision": "day", "issuer": "CSB", "origin": "independent_federal_investigation", "stage": "preliminary", "supersedes": null, "url": "https://www.csb.gov/us-chemical-safety-board-releases-investigation-update-into-fatal-hydrogen-sulfide-release-at-pemex-deer-park-refinery-in-deer-park-texas/", "locator": "Dated investigative update; onset and fatalities"},
+        {"id": "csb-2024-05-i-tx-final", "publishedAt": "2026-02-23", "publicationPrecision": "day", "issuer": "CSB", "origin": "independent_federal_investigation", "stage": "final", "supersedes": "csb-2024-05-i-tx-update", "url": "https://www.csb.gov/us-chemical-safety-board-releases-investigation-report-on-fatal-hydrogen-sulfide-release-at-the-pemex-deer-park-refinery-in-texas/", "locator": "Dated final release announcement; onset, fatalities, 13 transported; prefer final over inconsistent index/body"}
+      ]
+    },
+    {
+      "id": "tx-galveston-bay-2014-q1-turnaround",
+      "binding": "usgc_refinery_marathon_galveston_bay_tx",
+      "classification": "planned_maintenance_completed",
+      "observedAt": {"date": null, "precision": "quarter_completion", "utc": null, "sourceZone": null, "completionPeriod": "2014-Q1"},
+      "severity": {"fatalities": null, "medicalTransfers": null, "refiningReduction": null, "operationalRecoveryAt": null},
+      "evidence": [
+        {"id": "mpc-2014-q1", "publishedAt": "2014-05-01", "publicationPrecision": "day", "issuer": "Marathon Petroleum Corporation", "origin": "operator_statement_hosted_by_sec", "stage": "operator_completed_activity", "supersedes": null, "url": "https://www.sec.gov/Archives/edgar/data/1510295/000119312514174495/d720324dex991.htm", "locator": "First-quarter results, completed Galveston Bay turnaround"}
+      ]
+    }
+  ],
+  "controls": [
+    {"id": "routine-refinery-flaring", "status": "not_verified", "observationPeriod": null, "trueNegative": null},
+    {"id": "no-documented-event", "status": "not_sampled", "observationPeriod": null, "trueNegative": null}
+  ]
+}
