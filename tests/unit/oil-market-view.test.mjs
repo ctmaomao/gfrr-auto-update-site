@@ -35,3 +35,23 @@ test('oil route trade estimate distinguishes a source zero from missing without 
   assert.deepEqual(input,before);
  }
 });
+
+test('thermal comparison counts only qualified rows and keeps an established history separate',()=>{
+ const paused={status:'established',reason:'source_coverage_incomplete_or_changed'};
+ const performed={status:'established',reason:'within_baseline_or_not_repeated'};
+ const unavailable={status:'insufficient_samples',reason:'baseline_missing_or_insufficient_samples'};
+ const view=(second=paused,secondId='b',areas=2,status='established')=>buildOilMarketView({thermal:{module:'oil-thermal-watch',status:'partial',
+  baseline:{status,sourceReview:{lastSampleAt:'2026-09-05T00:00:00Z'}},
+  aggregate:{facilityCount:areas},
+  facilities:[{id:'a',baselineComparison:paused},{id:secondId,baselineComparison:second}]}},now).thermal;
+ const t=view();
+ assert.equal(t.baselineStatus,'established');
+ assert.equal(t.baselineAt,'2026-09-05T00:00:00Z');
+ assert.deepEqual(t.baselineComparison,{areas:2,compared:0,paused:2});
+ assert.deepEqual(view(performed).baselineComparison,{areas:2,compared:1,paused:1});
+ assert.deepEqual(view(unavailable).baselineComparison,{areas:2,compared:0,paused:1});
+ for(const fixture of [view(null),view({status:'established',reason:'unknown'}),view({...performed,status:'insufficient_samples'}),
+  view(performed,'b',2,'not_established'),view(performed,'a'),view(performed,'b',3),view(performed,'b','2')]) {
+  assert.equal(fixture.baselineComparison,null);
+ }
+});

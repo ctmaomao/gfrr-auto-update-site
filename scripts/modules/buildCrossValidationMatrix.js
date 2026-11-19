@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=payroll-basket-20261117';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=thermal-baseline-display-20261119';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

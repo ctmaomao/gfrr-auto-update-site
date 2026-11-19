@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=payroll-basket-20261117';
+﻿import { formatFiniteNumber } from './format.js?v=thermal-baseline-display-20261119';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';
