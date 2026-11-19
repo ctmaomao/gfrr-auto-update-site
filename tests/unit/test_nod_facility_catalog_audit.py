@@ -12,7 +12,7 @@ import zipfile
 
 
 MODULE = runpy.run_path(str(
-    Path(__file__).resolve().parents[2] / "scripts/oil-directional/check-nod-facility-catalog-audit.py"
+    Path(__file__).resolve().parents[2] / "tools/oil-directional/check-nod-facility-catalog-audit.py"
 ))
 summarize, check, UNKNOWN = (MODULE[name] for name in ("summarize", "check", "UNKNOWN"))
 BASE = {
