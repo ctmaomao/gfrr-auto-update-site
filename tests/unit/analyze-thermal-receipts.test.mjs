@@ -11,21 +11,21 @@ import { createThermalReceiptCapture } from '../../scripts/oil-directional/therm
 const noaa = 'VIIRS_NOAA20_NRT';
 const snpp = 'VIIRS_SNPP_NRT';
 const checkoutSha = 'a'.repeat(40);
-const runAttempt = 1;
 const time = '2025-01-01T12:00:00.000Z';
 const body1 = '2025-01-01T12:01:00.000Z';
 const body2 = '2025-01-01T12:02:00.000Z';
 
-function capture(runId = '123', { zero = false, configDigest = 'b'.repeat(64) } = {}) {
+function capture(runId = '123', { zero = false, extra = 0, frp = '8', runAttempt = 1, configDigest = 'b'.repeat(64) } = {}) {
   const pins = { runId, runAttempt, checkoutSha };
   const collector = createThermalReceiptCapture({ ...pins, configDigest, geometryDigest: 'c'.repeat(64),
     sourceSet: [noaa, snpp], expectedRequests: 4 });
   const observation = { instrument: 'VIIRS', satellite: 'N20', latitude: '1', longitude: '1',
-    acq_date: '2025-01-01', acq_time: '1201', frp: '8', confidence: 'h', daynight: 'D' };
+    acq_date: '2025-01-01', acq_time: '1201', frp, confidence: 'h', daynight: 'D' };
   for (const [index, bodyReceivedAt] of [body1, body2].entries()) {
     const context = { areaId: 'private-fixture-' + index, bbox: index ? '0,0,3,3' : '0,0,2,2', dayRange: 1,
       logicalRequestStartedAt: time, classifiedAt: bodyReceivedAt };
     const records = index ? [observation, { ...observation, frp: '9' }] : [observation, observation];
+    records.push(...Array.from({ length: extra }, (_, n) => ({ ...observation, latitude: (1 + (n + 1) / 100).toFixed(2) })));
     collector.record({ ...context, source: noaa, outcome: 'parsed', bodyReceivedAt,
       diagnostics: { outcome: 'success', httpStatus: 200, attempts: 1, retryCount: 0 },
       researchCsvShapeValid: true, records: zero ? [] : records });
@@ -40,7 +40,7 @@ function mutate(input, change) {
   return { ...input, text: JSON.stringify(data) };
 }
 
-test('reports exact source aggregates and preserves unknowns, deduplicating only in each run', () => {
+test('reports exact source aggregates and preserves existing run-scoped totals and unknowns', () => {
   const first = capture(), replayedIdentity = capture('456'), empty = capture('789', { zero: true });
   const inputs = [first, replayedIdentity, empty];
   const summary = analyzeThermalReceipts(inputs);
@@ -51,6 +51,10 @@ test('reports exact source aggregates and preserves unknowns, deduplicating only
   deepStrictEqual(summary.bySource[snpp], { logicalRequests: 6, transportAttempts: 0, retries: 0, successfulHttpBodies: 0,
     outcomes: { success_detections: 0, success_zero: 0, parse_invalid: 0, request_error: 0, retired: 6 },
     parsedRows: 0, observationReferences: 0, runScopedUniqueCaptures: 0, runScopedUniqueRevisions: 0 });
+  deepStrictEqual(summary.suppliedReceiptCaptureOverlapBySource, {
+    [noaa]: { unionUniqueCaptures: 1, capturesInMultipleReceipts: 1 },
+    [snpp]: { unionUniqueCaptures: 0, capturesInMultipleReceipts: 0 }
+  });
   equal(summary.runAttempts, 3);
   equal(summary.completenessScope, 'captured_requests_not_source_coverage');
   equal(summary.provenance, 'unverified_runtime_assertion');
@@ -62,6 +66,39 @@ test('reports exact source aggregates and preserves unknowns, deduplicating only
     snapshot.receipts[0].areaIdHash, snapshot.receipts[0].geometryHash, snapshot.observations[0].observationId, body1]) {
     equal(output.includes(privateValue), false);
   }
+});
+
+test('distinguishes a two-receipt subset delta from run totals and does not conflate revisions with new captures', () => {
+  const first = capture('123', { extra: 10 });
+  const second = capture('456', { extra: 30, frp: '17' });
+  const receipts = [first, second];
+  const summary = analyzeThermalReceipts(receipts);
+  equal(summary.bySource[noaa].runScopedUniqueCaptures, 42);
+  deepStrictEqual(summary.suppliedReceiptCaptureOverlapBySource[noaa],
+    { unionUniqueCaptures: 31, capturesInMultipleReceipts: 11 });
+  deepStrictEqual(analyzeThermalReceipts([second, first]), summary);
+  equal(summary.crossRunFirstSeen, null);
+
+  const retry = capture('123', { extra: 10, runAttempt: 2 });
+  const retriedSummary = analyzeThermalReceipts([first, retry]);
+  equal(retriedSummary.runAttempts, 2);
+  deepStrictEqual(retriedSummary.suppliedReceiptCaptureOverlapBySource[noaa],
+    { unionUniqueCaptures: 11, capturesInMultipleReceipts: 11 });
+
+  const replay = capture('789', { extra: 10 });
+  deepStrictEqual(analyzeThermalReceipts([...receipts, replay]).suppliedReceiptCaptureOverlapBySource,
+    summary.suppliedReceiptCaptureOverlapBySource);
+  deepStrictEqual(analyzeThermalReceipts([first]).suppliedReceiptCaptureOverlapBySource[noaa],
+    { unionUniqueCaptures: 11, capturesInMultipleReceipts: 0 });
+});
+
+test('rejects contradictory visible identity fields for a repeated opaque ID', () => {
+  const inconsistent = mutate(capture('456'), receipt => {
+    receipt.observations[0].acquiredAt = '2025-01-01T12:00:00Z';
+  });
+  // Without the other receipt the opaque ID cannot be recomputed.
+  equal(analyzeThermalReceipts([inconsistent]).runAttempts, 1);
+  throws(() => analyzeThermalReceipts([capture(), inconsistent]), /Inconsistent capture identity/);
 });
 
 test('HTTP body parse failure and transport failure do not count as parsed zero', () => {

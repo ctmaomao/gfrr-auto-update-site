@@ -147,6 +147,9 @@ function tallyRun(snapshot, bySource) {
 export function analyzeThermalReceipts(inputs) {
   demand(Array.isArray(inputs) && inputs.length > 0 && inputs.length <= MAX_RUNS, 'Expected 1 to 32 receipt inputs');
   const seen = new Set(), bySource = {};
+  const suppliedReceiptCaptureOverlapBySource = {};
+  // At most MAX_RUNS * MAX_OBSERVATIONS entries, in memory for this call only.
+  const suppliedCaptures = new Map();
   let cohort;
   for (const input of inputs) {
     const { text, runId, runAttempt, checkoutSha } = input ?? {};
@@ -164,11 +167,31 @@ export function analyzeThermalReceipts(inputs) {
     const current = tallyRun(snapshot, bySource);
     demand(cohort === undefined || current === cohort, 'Inputs do not share one receipt cohort');
     cohort = current;
+
+    for (const source of Object.keys(bySource)) {
+      suppliedReceiptCaptureOverlapBySource[source] ??= { unionUniqueCaptures: 0, capturesInMultipleReceipts: 0 };
+    }
+    // tallyRun has validated one closed, unique observation entry per ID per receipt.
+    for (const { observationId, source, instrument, satellite, acquiredAt } of snapshot.observations) {
+      const tally = suppliedReceiptCaptureOverlapBySource[source];
+      const identity = JSON.stringify([source, instrument, satellite, acquiredAt]);
+      const seenCapture = suppliedCaptures.get(observationId);
+      if (!seenCapture) {
+        suppliedCaptures.set(observationId, { identity, inMultipleReceipts: false });
+        tally.unionUniqueCaptures++;
+      } else {
+        demand(seenCapture.identity === identity, 'Inconsistent capture identity across supplied receipts');
+        if (!seenCapture.inMultipleReceipts) {
+          seenCapture.inMultipleReceipts = true;
+          tally.capturesInMultipleReceipts++;
+        }
+      }
+    }
   }
   return {
     completenessScope: SCOPE, provenance: PROVENANCE, sample: 'supplied_complete_receipts_only',
     runAttempts: seen.size, ...UNKNOWN, crossRunFirstSeen: null,
-    eligibleForEvaluation: false, eligibleForMainScore: false, bySource
+    eligibleForEvaluation: false, eligibleForMainScore: false, bySource, suppliedReceiptCaptureOverlapBySource
   };
 }
 
