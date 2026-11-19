@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=payroll-basket-20261117';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=thermal-baseline-display-20261119';
 
 const MAX_AGE_HOURS = 30;
 

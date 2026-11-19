@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=payroll-basket-20261117';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=payroll-basket-20261117';
+} from './config.js?v=thermal-baseline-display-20261119';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=thermal-baseline-display-20261119';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,16 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=payroll-basket-20261117';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=payroll-basket-20261117';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=payroll-basket-20261117';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=payroll-basket-20261117';
-import { renderTrendSvg } from './renderMacroTrend.js?v=payroll-basket-20261117';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=payroll-basket-20261117';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=payroll-basket-20261117';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=payroll-basket-20261117';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=payroll-basket-20261117';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=payroll-basket-20261117';
+} from './macroOverviewDisplayHelpers.js?v=thermal-baseline-display-20261119';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=thermal-baseline-display-20261119';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=thermal-baseline-display-20261119';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=thermal-baseline-display-20261119';
+import { renderTrendSvg } from './renderMacroTrend.js?v=thermal-baseline-display-20261119';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=thermal-baseline-display-20261119';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=thermal-baseline-display-20261119';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=thermal-baseline-display-20261119';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=thermal-baseline-display-20261119';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=thermal-baseline-display-20261119';
 
 // ---------- 阈值 + 派生 helper ----------
 

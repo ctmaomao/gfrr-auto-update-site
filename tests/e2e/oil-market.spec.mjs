@@ -45,3 +45,22 @@ for(const [label,estimate,observed,warning] of [
  await expect(route).not.toContainText('运力代理为零');
  if(label==='stale-zero')await expect(route).toContainText('超龄');
 });
+
+for(const width of [1440,390])test(`thermal baseline ${width}: established history is not a comparable snapshot`,async({page})=>{
+ await page.setViewportSize({width,height:1000});
+ await page.clock.setFixedTime(new Date('2026-11-19T12:00:00Z'));
+ await page.route('**/data/oil-thermal-watch.json',route=>route.fulfill({json:{
+  module:'oil-thermal-watch',status:'partial',generatedAt:'2026-11-19T11:00:00Z',
+  aggregate:{facilityCount:42,facilitiesWithDetections:1,rowCount:1,latestAcqAt:'2026-11-19T10:00:00Z'},
+  baseline:{status:'established',sourceReview:{lastSampleAt:'2026-09-05T04:33:15Z'}},
+  facilities:Array.from({length:42},(_,i)=>({id:`fixture-${i}`,baselineComparison:{status:'established',reason:'source_coverage_incomplete_or_changed'}})),
+ }}));
+ await page.goto('/oil-market.html');
+ const baseline=page.locator('#oil-thermal-baseline');
+ await expect(baseline).toBeVisible();
+ await expect(baseline).toContainText('历史基线：已建立（样本截至 2026-09-05 04:33:15 UTC）');
+ await expect(baseline).toContainText('本快照可比监测区：0／42。来源不完整或组合改变，全轮基线比较暂停。');
+ await expect(baseline).toContainText('比较状态不代表设施运行正常，热源记录也不确认事故。');
+ await expect(page.locator('#oil-thermal-meta')).toContainText('来源不完整');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

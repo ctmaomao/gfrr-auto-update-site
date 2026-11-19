@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=payroll-basket-20261117';
+﻿import { fmtNumSafe } from './config.js?v=thermal-baseline-display-20261119';
 
 const SOURCE_MODE_CN = {
   'live': '实时',

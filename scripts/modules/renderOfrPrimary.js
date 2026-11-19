@@ -1,7 +1,7 @@
-import { provenanceTime } from './dataProvenanceView.js?v=payroll-basket-20261117';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=payroll-basket-20261117';
-import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=payroll-basket-20261117';
-import { buildFourLaneReadout } from './fourLaneReadout.js?v=payroll-basket-20261117';
+import { provenanceTime } from './dataProvenanceView.js?v=thermal-baseline-display-20261119';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=thermal-baseline-display-20261119';
+import { worldOrderWarningView, tailWarningView } from './independentWarningView.js?v=thermal-baseline-display-20261119';
+import { buildFourLaneReadout } from './fourLaneReadout.js?v=thermal-baseline-display-20261119';
 
 const DAY = 86400000;
 const finite = Number.isFinite;

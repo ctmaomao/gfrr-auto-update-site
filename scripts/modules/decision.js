@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=payroll-basket-20261117';
-import { formatOnRrpYiUsd } from './format.js?v=payroll-basket-20261117';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=thermal-baseline-display-20261119';
+import { formatOnRrpYiUsd } from './format.js?v=thermal-baseline-display-20261119';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
