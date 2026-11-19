@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import {
   POLICY_DIRECTIVE_ORDER, REPORT_URI_ENDPOINT, REPORT_ONLY_HEADER,
   validateCspConfig, serializePolicy, buildEdgeoneJson, deriveExpectedHashSources,
@@ -116,14 +116,22 @@ test('staging builds with the candidate, rejects endpoint tampering, and removal
   const temp = mkdtempSync(resolve(tmpdir(), 'gfrr-report-uri-'));
   t.after(() => rmSync(temp, { recursive: true, force: true }));
   const artifactDir = resolve(temp, 'artifact');
-  mkdirSync(artifactDir);
-  writeFileSync(resolve(artifactDir, 'bubble-watch.html'), readFileSync(resolve(root, 'bubble-watch.html')));
-  writeFileSync(resolve(artifactDir, 'index.html'), '<!doctype html><title>local fixture</title>');
+  // Keep the entry points independent of the hash inventory; discover changing issue names from it.
+  const requiredFiles = ['index.html', 'bubble-watch.html', 'weekly-reports.html'];
+  assert.ok(pages.some((page) => page.file === 'bubble-watch.html'));
+  const weekly = pages.find((page) => page.file === 'weekly-reports.html');
+  assert.ok(weekly?.sourceFiles?.some((file) => file.startsWith('reports/') && file !== 'reports/archive.html'));
+  const artifactFiles = [...new Set([...requiredFiles, ...pages.flatMap((page) => page.sourceFiles ?? [page.file])])].sort();
+  for (const file of artifactFiles) {
+    const destination = resolve(artifactDir, file);
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(destination, readFileSync(resolve(root, file)));
+  }
   const candidatePath = resolve(temp, 'candidate.json');
   writeFileSync(candidatePath, JSON.stringify(reportingConfig()));
   const stagingDir = resolve(temp, 'candidate-staging');
   const built = buildStagingDirectory({ outDir: stagingDir, artifactDir, configPath: candidatePath });
-  assert.deepEqual(built.tree.files, ['bubble-watch.html', 'index.html']);
+  assert.deepEqual(built.tree.files, artifactFiles);
   assert.equal(built.policy, `${legacyPolicy}; report-uri ${REPORT_URI_ENDPOINT}`);
   assert.equal(checkStagingDirectory({ stagingDir, artifactDir, configPath: candidatePath }).ok, true);
   const documentPath = resolve(stagingDir, 'edgeone.json');
