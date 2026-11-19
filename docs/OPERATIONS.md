@@ -956,114 +956,17 @@ Runtime hygiene work does not approve provider calls, production data writes, fr
 
 ## 9. Cloudflare Worker realtime backend 规划
 
-- 当前 **v28.0E** 已采用 Worker-first realtime 链路：前端优先读取 `/market.worker-preview.json`，通过 strict gate 后作为 realtime overlay。
-- GitHub `realtime-data` 与 local fallback 仍保留为安全回退路径。
-- Worker Cron 仍按 free-tier safe 策略运行，预览 KV 写入保持低频 / 单次写入边界。
-- 仓库内 `workers/gfrr-realtime-worker/` 是当前 Worker backend 源码；部署与回滚以 Wrangler 与 Cloudflare 控制台为准，不改变现有 Pages 与 workflow 契约。
-- **v28.0B-1 preview 管道（free-tier safe）**：Worker Cron 保持每 **3** 分钟运行，但每轮最多 **1** 次 KV write；成功时写 KV 键 **`market:latest-preview`**，失败时写 **`market:worker-heartbeat`** / status，不再每轮同时写 heartbeat 和 preview。`GET /market.preview.json` 用于自测 Worker API 与 KV 读写；观察成功刷新应优先看 `workerPreview.fetchedAt`，不要期待 heartbeat 每轮更新。heartbeat 只代表失败 / 状态记录，不再代表每轮成功心跳。可用 `node tools/observe-worker-preview.mjs --samples=24 --interval-minutes=15` 做本地观察；该脚本只读 `/market.preview.json`，不使用 Wrangler，不读取 heartbeat，不写 Cloudflare KV，因此不会消耗 KV write quota。**`market:latest` 仍未由该管道写入**；前端 **仍不** 读取 Worker；当前生产 realtime 链路 **仍是** GitHub Actions + `realtime-data`。
-- **v28.0B-2A Worker-generated preview MVP**：Worker 可独立抓取 FRED / Gold API / Brent validation 轻量来源并写 KV 键 **`market:worker-generated-preview`**；`GET /market.worker-preview.json` 仅用于观察该 MVP。它不参与前端生产读取链路，不改变 Brent 主值链路（`values.brent` 仍以 FRED anchor 为准，consensus 仅作验证层），不改变 GitHub Actions。free-tier safe 策略保持：**3** 分钟 Cron、GitHub mirror preview 与 Worker generated preview 交替写入、每轮最多 **1** 次 KV write，因此单个 preview key 通常约 **6** 分钟刷新一次。
-- **v28.0B-2A.1 Worker source diagnostics / fetch hardening**：Worker generated preview 会记录 `workerGeneratedPreview.diagnostics`，包括 FRED 是否全部失败、失败 status、各候选源 HTTP 摘要、retry / duration / content type / body length。若看到 `sourceMode: "worker-generated-unavailable"`，应先查看 diagnostics 判断是否为 Cloudflare Worker 出口到 FRED / Yahoo / Stooq / Google Finance / Trading Economics 的可达性或限流问题，**不应** 因该 preview 不可用而接入前端。Google Finance / Trading Economics 仅为 diagnostic-only experimental Brent 候选源，不参与 consensus，不覆盖 `values.brent`。GitHub Actions + `realtime-data` 仍是当前生产数据源，Worker generated preview 仍是实验观察层。
-- **v28.0B-2B Worker vs mirror preview 对比**：可用 `node tools/compare-worker-vs-mirror.mjs --samples=24 --interval-minutes=15` 连续比较 `/market.worker-preview.json` 与 `/market.preview.json`。该脚本只读 HTTP endpoint，不使用 Wrangler，不读取 / 写入 KV，不消耗 KV write quota；只有当 Worker-generated preview 与 GitHub mirror preview 连续观察稳定后，才考虑后续 **v28.0C** 前端接入。
-- **v28.0C-1 Worker candidate readiness**：前端开始只读 `/market.worker-preview.json` 并显示 `Worker候选源` 状态；该 candidate 不参与 GitHub realtime-data overlay、`effectiveDisplayInputs`、scoring、decision 或 fallback。当前生产 realtime overlay 来源仍是 GitHub `realtime-data`，页面显示 Worker 候选源可用只代表 readiness 观察，不代表已切换生产数据源。
-- **v28.0C-2 Worker-first realtime source priority**：前端 runtime realtime 优先级升级为 **Worker generated preview → GitHub realtime-data → local fallback**。Worker 只有通过 strict safety gate 才能作为主 realtime source：HTTP 200、`workerGeneratedPreview.enabled === true`、`unavailable !== true`、`sourceMode === "worker-generated-preview"`、`healthScore >= 85`、`criticalMissing <= 1`、`updatedAt` 不超过 **10** 分钟，且 `values.brent / dxy / vix / hyOas / us10y / real10y` 均为 finite number。Worker 不通过时自动回退 GitHub；GitHub 不通过时自动回退 local fallback。本阶段不改变 Worker、GitHub Actions 或 data generation。
-- **v28.0C-3 Worker-first rollback switch**：前端 realtime source preference 集中在 `scripts/modules/config.js` 的 `realtimeSourcePolicy`。默认：
+当前运行边界以 [ADR-0018](ADR/0018-m94-path-c-static-frontend-runtime.md) 为准：
 
-```text
-workerFirstEnabled: true
-Worker generated preview → GitHub realtime-data → local fallback
-```
+- **首页**：[入口](../index.html) 加载 [app.js](../scripts/app.js)，按 [config.js](../scripts/modules/config.js) 读取静态 `./data/radar-data.json`。不读取 Worker preview、不运行旧 strict gate 或实时叠加；`scripts/modules/realtime.js` 已冻结且未接入，重接须另行评审。
+- **Realtime 分支与 Daily**：`Build Daily Radar Data` 仍以 `origin/realtime-data:realtime/market.json` 为输入。分支时效与恢复见 [§4](#4-realtime-health-watchdog-排查)，本次 Daily 实际输入及发布排查见 [§5](#5-daily-workflow-排查)。Daily 与 Worker 的输入差异仅供审计。
+- **Worker**：`/market.worker-preview.json` 仍是 Worker 主预览，`/market.secondary-preview.json` 仅作独立诊断。健康判定见 [§4A](#4a-worker-first-health-check-排查)，Worker 端点和部署资料见 [Worker README](../workers/gfrr-realtime-worker/README.md)；其中旧前端链路描述不适用于现行首页。
 
-紧急回退只改前端配置，不改 Worker、不改 GitHub Actions、不改数据生成逻辑。回退开关位置：
+### v28.0B–E 历史实施记录
 
-```text
-scripts/modules/config.js
-realtimeSourcePolicy.workerFirstEnabled
-```
+[ADR-0002](ADR/0002-worker-first-realtime.md) 及[固定版旧运维记录](https://github.com/ctmaomao/gfrr-auto-update-site/blob/d0b77b1564ef5d62f4d6d3e164eabaa202c8a844/docs/OPERATIONS.md#L959-L1066) 保留原前端链路、安全闸门和回退步骤，仅供历史查阅。旧 `workerFirstEnabled` 开关不是现行首页的回退手段，不执行旧版提交或发布命令。
 
-当 `workerFirstEnabled: false` 时，前端跳过 Worker 主源选择，优先级变为：
-
-```text
-GitHub realtime-data → local fallback
-```
-
-健康面板应显示 `GitHub优先（Worker已由配置关闭）`，这表示运营配置回退，不表示 Worker endpoint 出错。
-
-紧急回退步骤：
-
-1. 修改 `scripts/modules/config.js`：
-
-```javascript
-workerFirstEnabled: false
-```
-
-2. 运行检查：
-
-```bash
-node --check scripts/modules/config.js
-node --check scripts/modules/realtime.js
-node --check scripts/modules/health.js
-npm run check:all
-```
-
-3. 提交并部署：
-
-```bash
-git add scripts/modules/config.js scripts/modules/realtime.js scripts/modules/health.js docs/OPERATIONS.md docs/DATA_CONTRACT.md
-git commit -m "Temporarily disable Worker-first realtime source"
-git pull --rebase origin main
-npm run check:all
-git push origin main
-```
-
-4. 验证页面健康面板显示：
-
-```text
-GitHub优先（Worker已由配置关闭）
-```
-
-重新启用 Worker-first：
-
-1. 修改 `scripts/modules/config.js`：
-
-```javascript
-workerFirstEnabled: true
-```
-
-2. 运行同样检查：
-
-```bash
-node --check scripts/modules/config.js
-node --check scripts/modules/realtime.js
-node --check scripts/modules/health.js
-npm run check:all
-```
-
-3. 提交：
-
-```bash
-git add scripts/modules/config.js scripts/modules/realtime.js scripts/modules/health.js docs/OPERATIONS.md docs/DATA_CONTRACT.md
-git commit -m "Re-enable Worker-first realtime source"
-git pull --rebase origin main
-npm run check:all
-git push origin main
-```
-
-回退触发条件：
-
-- Worker age > **10** 分钟持续两次以上。
-- Worker endpoint 非 200。
-- `healthScore < 85`。
-- `criticalMissing > 1`。
-- `brent / dxy / vix / hyOas / us10y / real10y` 任一核心字段无效。
-- 页面健康面板或主源显示出现明显异常。
-- `node tools/compare-worker-vs-mirror.mjs --samples=24 --interval-minutes=15` 显示 Worker 与 GitHub 多字段持续 critical fail。
-
-不应回退的情况：
-
-- GitHub mirror stale 但 Worker fresh 且通过 strict gate。
-- Worker 偶发 1 次 warn 后恢复。
-- VIX 短时差异但没有 critical fail。
-- GitHub Actions schedule 空窗，但 Worker 当前 fresh 且健康。
+以下 D/E 段为各阶段实施记录；其中的前端回退、早期 secondary 集合和当时的门槛不代表现行状态。现行 Worker 健康边界见 [§4A](#4a-worker-first-health-check-排查)，Brent 排查见 [§6](#6-brent-主值与验证层排查)。
 
 **v28.0D-1 / v28.0D-2-lite secondary diagnostics isolation**：D-1 曾尝试在 Worker generated preview 内加入 DXY、VIX、HY OAS、Gold、US10Y 第二源诊断；部署后 Worker scheduled preview 曾停止刷新，`/market.worker-preview.json` stale，前端安全闸门已正确回退到 GitHub。线上 Cloudflare Worker 已手动 rollback 到稳定版本 `679fb678-fe1d-4ff3-b9b9-53829d4d31f7`。v28.0D-2-lite 起，第二源诊断必须独立于主 Worker preview：`/market.worker-preview.json` 不得包含 `secondarySources` / `secondaryDiagnostics`，不得执行第二源外部请求；独立 endpoint 为 `/market.secondary-preview.json`，只读 KV key `market:secondary-preview`。该 key 默认不由 scheduled 写入；不存在时 endpoint 返回小型 unavailable payload，不影响主链路。
 
@@ -1089,7 +992,7 @@ git push origin main
 
 ## v28.0G-6 Operations Runbook / Decision Matrix
 
-本节是 Worker-first 稳定化后的运维判断入口。先看 `Check Worker Health`，再看 `Check Realtime Health` / recovery，最后看 Brent、secondary 和 KV usage。不要把 soft observer warning 当成 Worker runtime failure。
+本节用于判断 Worker 预览和 `realtime-data` 分支各自的健康与恢复，不判断静态首页是否健康。按问题所属链路查看 [Worker §4A](#4a-worker-first-health-check-排查)、[Realtime §4](#4-realtime-health-watchdog-排查) 或 [Daily §5](#5-daily-workflow-排查)；不要把分支时效 warning 当成 Worker runtime failure。
 
 ### Check Worker Health
 
@@ -1104,7 +1007,7 @@ git push origin main
 - `fresh` / `aging`：fallback `realtime-data` 可用。
 - `stale` / `unavailable`：soft observer warning，不代表 Worker-first runtime failure。
 - `shouldRecover=true`：检查 `Recover Stale Realtime Market` 和 `Build Realtime Market`。
-- 如果 Worker Health ok，但 Realtime Health stale：页面主链路仍健康，先观察或查 fallback pipeline。
+- 如果 Worker Health ok，但 Realtime Health stale：先查 `realtime-data` 分支；Worker 健康不能证明静态首页或 Daily 输入正常。
 - 如果长期 stale：检查 build / recover workflow 和 `realtime-data` branch。
 
 ### Recover Stale Realtime Market
@@ -1209,7 +1112,7 @@ npm run review:worker-health-snapshot -- health-worker-snapshot.json
 
 该 helper 只是历史 snapshot 快速审阅工具，不替代 `Check Worker Health` hard gate。若 review 输出 FAIL，应回到 runbook 的 `Check Worker Health` / Brent / secondary / rollback 规则定位原因。
 
-**v28.0D-7 Brent source explainability UI**：页面“盘中快变量 / 布伦特”会显示 Brent 来源与 D-6 move status，例如 FRED 日度锚点、FRED 滞后且 Yahoo + Trading Economics 双源确认、正常 / 较大波动观察 / 已确认极端波动 / 未确认跳变。该 UI 仅用于解释 selected realtime payload，不改变 Worker 数据、Brent promotion、scoring、decision，也不读取或展示 secondary diagnostics preview。
+**v28.0D-7 Brent source explainability UI**（历史，非现行首页）：旧版页面“盘中快变量 / 布伦特”会显示 Brent 来源与 D-6 move status，例如 FRED 日度锚点、FRED 滞后且 Yahoo + Trading Economics 双源确认、正常 / 较大波动观察 / 已确认极端波动 / 未确认跳变。该 UI 仅用于解释 selected realtime payload，不改变 Worker 数据、Brent promotion、scoring、decision，也不读取或展示 secondary diagnostics preview。
 
 **v28.0D-8 Brent source hygiene**：Google Finance Brent 继续只作为 HTML experimental diagnostic，可能命中 futures chain 中的 `0` 或非主价格；非正值必须标记 `excluded-non-positive-or-invalid`，不参与 consensus 或 promotion。（**Stooq `brn.f` / `brn.c` worker diagnostic candidate 已于 F6（2026-06-02）删除**；不影响 `scripts/run-realtime.mjs` 的实时 Stooq Brent consensus 候选。）当前 Brent 主值逻辑仍是 FRED anchor + Yahoo / Trading Economics confirmed promotion，失败的 Google Finance 不影响 `healthScore` / `criticalMissing` / `unavailable`。
 
@@ -1219,7 +1122,7 @@ npm run review:worker-health-snapshot -- health-worker-snapshot.json
 
 ### v28.0D-8B Source Probe Findings
 
-v28.0D-8B-lite **已上线运行并通过验证**。以下为一次典型线上 `sourceProbe.probes[]` **结论型快照**（diagnostic-only，不是主 Brent 来源；失败不得影响 `healthScore` / `criticalMissing` / `unavailable`，因为它们只是 probes）：
+历史阶段 v28.0D-8B-lite **已上线运行并通过验证**。以下为当时一次典型线上 `sourceProbe.probes[]` **结论型快照**（diagnostic-only，不是主 Brent 来源；失败不得影响 `healthScore` / `criticalMissing` / `unavailable`，因为它们只是 probes）：
 
 - `google-finance:BZW00:NYMEX` canonical：**`parseStatus = unreliable-html-parse`**
 - `google-finance:BZY00:NYMEX` front-month：**`parseStatus = unreliable-html-parse`**
