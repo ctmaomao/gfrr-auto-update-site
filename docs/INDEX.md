@@ -28,6 +28,7 @@
 只约束点名子系统、路径或任务，不是全项目新增限制。根 AGENTS 委托的 [AGENT_DOMAIN_BOUNDARIES.md](AGENT_DOMAIN_BOUNDARIES.md) 保留机器校验的领域规则；按 runtime / external-ai / sources / energy / transport 条目读取。
 
 ### 当前产品与发布
+- [卫星热观察回溯协议](OIL_THERMAL_RETROSPECTIVE_PROTOCOL.md)：只限延迟、汇总研究；不是有效观测、实测结果或生产授权。
 
 - 当前默认入口与跨页导航以 [DESIGN §4.5](../DESIGN.md#45-周报默认入口与三标签2026-11-09) 为准；[周报记录](WEEKLY_HOMEPAGE_VISUAL_2026_11_09.md)是日期化验收证据，[周报档案说明](../weekly-reports/README.md)约束归档。
 - OFR 主压力读数与旧公开建议退役已经实现，见 [ADR-0080](ADR/0080-ofr-primary-pressure-migration.md)、[迁移记录](OFR_PRIMARY_MIGRATION_2026_11_01.md)、现行 DATA_CONTRACT / DESIGN。七候选研究并未因此晋升。
