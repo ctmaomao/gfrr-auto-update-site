@@ -217,6 +217,29 @@ history. Natural collection/upload was subsequently checked in the bounded audit
 that does not establish authenticated provenance, price prediction, complete
 coverage, or an end-to-end evaluation result.
 
+### Offline aggregate analysis of retained receipts
+
+After checking the official GitHub Actions ZIP digest and exact `receipt.json`
+member, pin each run ID, attempt and **actual checkout** from independent run
+evidence. From the repository root:
+
+```sh
+node scripts/oil-directional/analyze-thermal-receipts.mjs RUN_ID:ATTEMPT:ACTUAL_CHECKOUT_SHA /local/path/receipt.json
+```
+
+Repeat the pin/path pair for up to 32 inputs. The analyzer never fetches or
+writes receipts, and metadata equality alone proves neither authenticity nor
+scheduling. It refuses partial receipts, duplicate run attempts, inconsistent
+source/area matrices and mixed cohorts. Its totals describe only the supplied
+complete receipts, not an uninterrupted run history. Aggregate HTTP bodies,
+parsed zeros, parse failures, request failures and unattempted retired slots are
+separate. Unique captures/revisions are counted **within each run and then
+summed**; repeated identities across runs may count again. No individual data
+or hashes are output. A parsed zero is not a clear view or evidence that an
+incident did not happen; coverage, spatial coverage, overpass and cloud quality
+remain unknown. The result is ineligible for evaluation or main scoring and
+does not establish cross-run first seen.
+
 ## Natural-run evidence retained before artifact expiry (2026-11-16)
 
 This is a metadata-only audit record, not a retained observation dataset. The authorized scope is to preserve necessary, bounded evidence from already completed runs without provider requests, raw-response storage, production changes, or predictive claims. Source: [NASA FIRMS](https://www.earthdata.nasa.gov/data/tools/firms), part of NASA ESDIS; retain the [FIRMS detection limitations](https://firms.modaps.eosdis.nasa.gov/alerts/notes.php). NASA's [indexed FIRMS use guidance](https://forum.earthdata.nasa.gov/viewtopic.php?t=5184) does not substitute for a completed field-specific redistribution review here. No raw CSV, coordinates, FRP values, individual observation IDs, request URLs, credentials, or full receipts are committed by this record.
