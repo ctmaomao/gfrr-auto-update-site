@@ -33,14 +33,14 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 <a id="active-worktable"></a>
 ### 单一工作表 · 当前推进队列
 
-盘点基线：2026-11-18 main `1f92900d`。本表统一调度当前工作；下方专题条目保留事实、验收细节与证据，不另建平行待办。状态只代表列明阶段，不把已合并、已部署或任务已运行等同于自然采用。未重新检查的项目保持待核验；新证据到达时直接更新本行，不追加重复任务。
+本轮核对基线：2026-11-19 main `b005131f`（仅更新 Daily、World Order 与 Macro 接续状态）。本表统一调度当前工作；下方专题条目保留事实、验收细节与证据，不另建平行待办。状态只代表列明阶段，不把已合并、已部署或任务已运行等同于自然采用。未重新检查的项目保持待核验；新证据到达时直接更新本行，不追加重复任务。
 
 | 工作包 / 优先级 | 当前阶段与价值 | 单一职责 / 下一步 | 阻塞与完成标准 |
 |---|---|---|---|
-| 交付与自然采用 / P0 | 周报 r3 已发布；既有任务接线已核实，待 11/24 09:00 Auckland 自然首验。World Order #653 已合并，后续刷新不能替代自然采用证据；宏观 Daily/OFR 准入 #661 已合并，待下次自然运行核验 | 主动改进负责验收；Actions 日检只处理失败。核对下一次相关自然运行、实际提交与两站原始产物 | 不为验收盲目重跑或调用 provider；按下方专题及[周报契约](../weekly-reports/README.md)分别留证，代码、产物、线上一致后关闭对应项 |
+| 交付与自然采用 / P0 | 周报 r3 已发布，待 11/24 09:00 Auckland 自然首验；[11/19 Daily 与 World Order](#nov-19-natural-adoption) 已验收正常发布及双站原件，#661 仅触发、未进入 OFR 准入 | 主动改进跟踪周报首验及 Daily／World Order 启动延迟；Actions 日检只处理失败 | 不为验收盲目重跑或调用 provider；按下方专题及[周报契约](../weekly-reports/README.md)分别留证，代码、产物、线上一致后关闭对应项 |
 | Bubble 全量恢复 / P1 | 等待下一次自然全量更新，不能用 credit-only partial 代替 | 既有一次性核验负责首验；主动改进仅接未解决项 | 全量代码路径、生成与检查、提交、两站实物一致；无新运行时保持等待，不重复取数 |
-| 来源质量 / P1 | #637–#640 已验收自然 Daily 与双站；#652 CARTS、#654 CRE 等后续修复单独核验，热观察类型保护不代表恢复旧三源比较 | 主动改进按[验收快照](#recent-data-fix-acceptance)逐项更新；每日 Actions 发现新增失败才转修复 | 观察日期、缺失语义与实际消费路径一致；无效/未知不填零，不把绿色 workflow 当数据完整证明 |
-| 私有预算与安全恢复 / P1 | DeepSeek 共享预算尚未启用；账本及 proof 代码与真实激活分离，仍需真实私有证据 | 主动改进限定单包；复杂约束先独立设计复核，再做最小闭环 | 保留 CNY 10 合并预算、凭据保密、原账本与 receipts；不伪造证据、不绕过 disabled。下方专题及 ADR 是具体步骤，旧自设门槛可审查改进但不得默默绕开 |
+| 来源质量 / P1 | #637–#640、#652 CARTS、#654 CRE 均已验收自然 Daily 正常路径与双站；CARTS/CRE 的缺槽、缺周和失败降级仅离线验证，热观察旧三源比较未恢复 | 主动改进按[验收快照](#recent-data-fix-acceptance)逐项更新；每日 Actions 发现新增失败才转修复 | 观察日期、缺失语义与实际消费路径一致；无效/未知不填零，不把绿色 workflow 当数据完整证明 |
+| 私有预算与安全恢复 / P1 | DeepSeek 共享预算未初始化；#661 在准入前跳过（见[自然接续回执](#nov-19-natural-adoption)），账本及 proof 代码与真实激活分离 | 主动改进限定单包；复杂约束先独立设计复核，再做最小闭环 | 保留 CNY 10 合并预算、凭据保密、原账本与 receipts；不伪造证据、不绕过 disabled。下方专题及 ADR 是具体步骤，旧自设门槛可审查改进但不得默默绕开 |
 | 代码与流程精简 / P1 | 按可复现问题抽取公共逻辑，避免只追求行数下降 | 主动改进选择一个有独立交付的小包；独立审查后串行集成 | 记录减少的重复逻辑/调用/重复检查及回归覆盖；保留费用保护、真实数据和必要发布检查，安全降级须可观察、可回退 |
 | 文档与工作表 / P2 | 本表为当前调度入口；历史只保留固定证据入口；Pages/EdgeOne 共用[双站发布排查](OPERATIONS.md#static-publication) | 主动改进维护同一行；周审找矛盾、失效链接和缺口 | 不新建重复总结；当前事实与历史明确分离，仍有效边界不可因归档丢失 |
 | Brent 模型研究 / P2 | 研究候选，不是已验证预测或生产评分 | 每日油价研究拥有冻结协议与阶段结论；工程只承接明确实施包 | point-in-time、版本/定义断点、基线与样本外检验齐备；阶段结论允许有效、无增量或不可行，不无限追加特征 |
@@ -61,7 +61,7 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 
 - **Realtime 发布分支探测复用（[#668](https://github.com/ctmaomao/gfrr-auto-update-site/pull/668) 已验收两个自然路径）**：2026-11-18 UTC，[16:35 自动恢复](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44348897398) 推送 `8345e42`；同日后续手动恢复后的 [20:55 计划 Build](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44396116778) 使用同一脚本，生成、校验和非强推发布成功，远端为 `4844db2`。这是两个经确认的发布样本，不保证后续调度不延迟。真实缺基线仍在生成前停止；无匹配分支才可走原建分支路径，Git 探测失败保留失败码。
 
-- **Daily / World Order 发布候选验证去重**：以 main `b003bb12` 为基线，发布和失败回执共用候选父提交、产物路径与文件模式检查。Git 按原始路径识别并发变更，中文文档名不再误判为数据输入，跨范围移动仍触发原保护。保留全量验证、有限重试、输出范围与回执；不重取数据，不变更调度或费用。以本地 Git 回归、独审和精确 CI 验证；自然运行另验。
+- **Daily / World Order 发布候选验证去重**：以 main `b003bb12` 为基线，发布和失败回执共用候选父提交、产物路径与文件模式检查。Git 按原始路径识别并发变更，中文文档名不再误判为数据输入，跨范围移动仍触发原保护。保留全量验证、有限重试、输出范围与回执；不重取数据，不变更调度或费用。以本地 Git 回归、独审和精确 CI 验证；[11/19](#nov-19-natural-adoption) 仅验收首次推送正常路径。
 
 - **Transport 离线影响声明去重**：23 个仅供复核/回放的 CLI 共用既有 helper 内的一份全 false 声明。验收为各原字段顺序和值、新对象独立性、同一输入/冻结时钟的 CLI 输出及现有检查保持；不共享不同 schema，也不改写入策略、运行时、数据、权限、评分、工作流、来源或付费路径。按单一工作表的「代码与流程精简」独审、全套与精确 CI 后串行集成。
 
@@ -104,7 +104,13 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 - **自然 Daily 与双站验收**：[自然运行 44232725217](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44232725217) 于 2026-11-18 03:46 UTC 启动，同步、生成、校验与提交步骤通过。该运行触发 SHA `18de2528` 已包含四项修复；[产物提交 `c0492f57`](https://github.com/ctmaomao/gfrr-auto-update-site/commit/c0492f57bd9049040ba31694d45b951e83d12e8e) 于 03:51 UTC 记录 `updatedAt=2026-11-18T03:47:03.711Z`。[Pages 原件](https://ctmaomao.github.io/gfrr-auto-update-site/data/radar-data.json) 和 [EdgeOne 原件](https://radar.gfrfinradar.uk/data/radar-data.json) 回读与该 Git 原件同为 SHA-256 `ceb9e9ff86f004d17a5ae932588e1a0dbd2bb4190de149b98d5e4db547e97ad9`（此为核验时快照，不要求在线文件以后仍为同一版本）。
 - **证据与边界**：CPI 两系列十月 YoY 参照缺失、同比留空，MoM 用各自 9 月值回算；UMCSENT 九月读数保留 8/6/3 月参照；Claims 初请 8 周和续请 4 周证据均连续，4 周均值分别为 195250 和 1707750。中国数值修复已进入运行代码，ChinaBond/CFETS/CPI/PPI/PMI 正常返回，不能据此称空值等异常分支在生产触发。此次产物早于 #652 CARTS、#654 CRE 和 #661 Macro 准入，不关闭这些项目，也不代替任何独立 Bubble / World Order / 周报验收。
 
-- **World Order 发布竞态（2026-11-18 UTC）**：[自然运行 44234237553](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44234237553) 完成生成和校验，但 main 并发推进使候选未推送；该失败时两站仍一致提供前次结果。修复 [#653](https://github.com/ctmaomao/gfrr-auto-update-site/pull/653) 已合并 `41e8a144`，main 后续已有 `91585db3`、`b3226a02` 刷新；这些提交本身不证明自然采用或双站验收。独立审阅的修复边界：仅限 World Order 既有两个生产输出，优先确认发布结果，最多三次非强制推送；只允许在无生成输入变更的 docs/tests 并发后重验原候选，其他变更停止；已校验而未确认发布的两个文件及摘要保留三天。保留 Events 缓存和 ACLED 专用发布顺序，不新增取数、provider 重试或手动调度；本修复不恢复失败运行的候选；后续自然运行与对应两站实物继续单列验收。
+- **World Order 发布竞态（2026-11-18 UTC）**：[自然运行 44234237553](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44234237553) 完成生成和校验，但 main 并发推进使候选未推送；该失败时两站仍一致提供前次结果。修复 [#653](https://github.com/ctmaomao/gfrr-auto-update-site/pull/653) 已合并 `41e8a144`，main 后续已有 `91585db3`、`b3226a02` 刷新；这些提交本身不证明自然采用或双站验收。独立审阅的修复边界：仅限 World Order 既有两个生产输出，优先确认发布结果，最多三次非强制推送；只允许在无生成输入变更的 docs/tests 并发后重验原候选，其他变更停止；已校验而未确认发布的两个文件及摘要保留三天。保留 Events 缓存和 ACLED 专用发布顺序，不新增取数、provider 重试或手动调度；本修复不恢复失败运行的候选；下一次正常推送及两站实物见下方回执，不能替代竞态分支验收。
+
+<a id="nov-19-natural-adoption"></a>
+
+- **11/19 自然 Daily（UTC）**：[44453516528](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44453516528) 03:44 启动并通过；预检复用 `realtime-data` 的 `e22cb1d8`（02:27:21，约 77 分钟），未触发恢复。#652 CARTS、#654 CRE 正常路径已采用，缺槽/缺周及失败分支仍仅离线验证；#667 常规推送首试成功。03:49 提交 [808a02a8](https://github.com/ctmaomao/gfrr-auto-update-site/blob/808a02a8/data/radar-data.json)，[Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44454067335) 与 [EdgeOne](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44454067163)（release `24b35b19`）至 03:54 均回读到同一 SHA-256：`6f51aa7f60e07af009c981424bece2eb6d7c1a821de21058d83cac3eda8dec92`。下游 [#661](https://github.com/ctmaomao/gfrr-auto-update-site/pull/661) [运行](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44454067031) 已触发，因预算未初始化在 OFR 准入前跳过；未验证实际准入、未调用付费 provider、未写账本。
+- **11/19 自然 World Order（UTC）**：[44454948885](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44454948885) 03:57 启动，验证通过并于 04:03 首试常规推送成功（`attempts:1`）；#653/#667 仅确认代码可用和正常路径采用，未走竞态重放或保留候选。唯一改动 [data/world-order-stress.json](https://github.com/ctmaomao/gfrr-auto-update-site/blob/c35c588a/data/world-order-stress.json)（04:00:13 生成）与 [Pages 回执](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44455717002)、[EdgeOne 后续发布回执](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44459649089) 对应的两站实物一致，SHA-256 为 `4c170425e3c417854c6c02ecc90fe29d3c4d652f948060286b1c6a0f3e0afd3e`。EdgeOne 没有 World Order 完成或本次数据路径的直接发布触发；后续合格发布 `8bd07391` 从 `b005131f` 带入同一文件。时效仍为 partial：免费 GDELT Events 更新至 11/18；9/26 GDELT Cloud 缓存未变且过期。发布成功不代表来源覆盖恢复。
+- **调度仍需观察**：11/18 UTC 配置为 Daily 22:30、World Order 23:00；上述自然运行实际均晚约五小时。保留节奏问题，不以一次成功推送和双站回读关闭。
 
 - **DeepSeek 私有账本：离线交付已完成，生产仍暂停**。[#632](https://github.com/ctmaomao/gfrr-auto-update-site/pull/632) 固定私有存储身份与只读状态，[#633](https://github.com/ctmaomao/gfrr-auto-update-site/pull/633) 收窄月度公开诊断，下一阶段分别完成跨 key 合成验证与显式注入的初始化器/运行时：
 
@@ -124,7 +130,7 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 - **就业篮子同月与含义（2026-11-17）**：保持既有11序列/等权正增长公式，不换源、不增请求或改评分；校正零售与贸易运输公用事业的嵌套说明，不能包装成独立行业广度或BLS扩散指数。验收基线为全部11序列同月且有唯一前月，缺失不出新数；新method标记的已验缓存才可原月fallback，旧无标记快照只作未核验历史。前端明确观察月份、自定义/重叠/非BLS，按设计与移动端核验；真实当前7/11仍63.6%，不追算历史。专项、全套、独审、CI与自然采用分别验收。
 - **退役 AI 展示记录精简**：仅压缩两份旧展示设计的重复阶段进度，保留前部完整字段/门槛/回滚、所有原标题锚点及固定提交原文与 SHA256；不删文件、不改 checker 或现行授权。链接/原文可恢复性、独审与文档检查分别验收，不将旧可见/定时调用记录解释为当前状态。
 
-- **Daily → EdgeOne 发布尾链**：仅补成功 Daily 完成 listener，保留既有六生产者、main/success、Macro 暂停、完整检查、固定来源 SHA、串行/无变化/400次限额；不采集或派发工作流。专项、完整检查、独审、精确 CI 与下一自然 Daily 线上验收分别核验，详见 [ADR-0119](ADR/0119-daily-publication-completion.md)。
+- **Daily → EdgeOne 发布尾链**：仅补成功 Daily 完成 listener，保留既有六生产者、main/success、Macro 暂停、完整检查、固定来源 SHA、串行/无变化/400次限额；不采集或派发工作流。自然 Daily 及 EdgeOne 线上验收见[11/19 回执](#nov-19-natural-adoption)，详见 [ADR-0119](ADR/0119-daily-publication-completion.md)。
 
 - **Brent 接收版本用途隔离**：离线重验原字节后区分起点特征、训练标签与后验评估候选；接收晚于起点拒绝历史用途，接收较早也不自证真实性/日历/标签成熟，后验候选不授予训练许可。复用私有30行快照做时钟反例，不取数、不拟合、不新增采样计划；专项、独审及全套分别核验。
 
