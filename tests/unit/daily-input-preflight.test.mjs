@@ -36,3 +36,61 @@ test('failed recovery and exhausted polling fail closed without repeated dispatc
   assert.equal(calls,1); assert.equal(reads,3);
   await assert.rejects(prepareDailyInput({read:async()=>null,recover:async()=>{throw Error('dispatch failed');},wait:async()=>{throw Error('must not poll');}}),/dispatch failed/);
 });
+
+test('one terminal receipt reports fresh selection before or after recovery', async () => {
+  const stale = { ...candidate, payload: { ...payload, updatedAt: '2026-09-10T01:00:00Z' } };
+  const untrusted = { ...candidate, payload: { ...payload, sourceMode: 'mock' } };
+  const receipts = [];
+  const onReceipt = receipt => receipts.push(receipt);
+  const inputs = [stale, untrusted, candidate];
+  const actions = [];
+  const deps = {
+    read: async () => { actions.push('read'); return inputs.shift(); },
+    recover: async () => { actions.push('dispatch'); },
+    wait: async () => { actions.push('wait'); },
+    now: () => now,
+    onReceipt
+  };
+  assert.equal(await prepareDailyInput({ ...deps, read: async () => candidate }), candidate);
+  assert.deepEqual(actions, []);
+  assert.equal(await prepareDailyInput(deps), candidate);
+  assert.deepEqual(actions, ['read', 'dispatch', 'wait', 'read', 'wait', 'read']);
+  assert.deepEqual(receipts, [
+    { outcome: 'selected', reason: 'initial_input', initialStatus: 'fresh', status: 'fresh', ageMinutes: 20, reads: 1, polls: 0, dispatchAttempts: 0 },
+    { outcome: 'selected', reason: 'recovered_input', initialStatus: 'stale', status: 'fresh', ageMinutes: 20, reads: 3, polls: 2, dispatchAttempts: 1 }
+  ]);
+});
+
+test('blocked receipts distinguish input status and terminal failure without private details', async () => {
+  const privateError = new Error('private path /tmp/example\nsecret');
+  const badTimestamp = { ...candidate, payload: { ...payload, updatedAt: 'not-a-date' } };
+  const untrusted = { ...candidate, payload: { ...payload, sourceMode: 'mock' } };
+  const receipts = [];
+  const deps = { read: async () => badTimestamp, now: () => now, recover: async () => {}, wait: async () => {}, maxPolls: 1, onReceipt: receipt => receipts.push(receipt) };
+  await assert.rejects(prepareDailyInput({ ...deps, recover: async () => { throw privateError; } }), error => error === privateError);
+  let reads = 0;
+  await assert.rejects(prepareDailyInput({ ...deps, read: async () => ++reads === 1 ? { sha: 'private invalid SHA' } : untrusted }), /generation must not start/);
+  await assert.rejects(prepareDailyInput({ ...deps, read: async () => { throw privateError; }, wait: async () => { throw privateError; } }), error => error === privateError);
+  assert.deepEqual(receipts, [
+    { outcome: 'blocked', reason: 'dispatch_error', initialStatus: 'invalid_timestamp', status: 'invalid_timestamp', ageMinutes: null, reads: 1, polls: 0, dispatchAttempts: 1 },
+    { outcome: 'blocked', reason: 'poll_exhausted', initialStatus: 'invalid_commit', status: 'untrusted', ageMinutes: 20, reads: 2, polls: 1, dispatchAttempts: 1 },
+    { outcome: 'blocked', reason: 'poll_wait_error', initialStatus: 'input_unavailable', status: 'input_unavailable', ageMinutes: null, reads: 1, polls: 0, dispatchAttempts: 1 }
+  ]);
+  assert.doesNotMatch(JSON.stringify(receipts), /private|secret|not-a-date|sha|updatedAt/i);
+});
+
+test('throwing or rejecting receipt sinks do not change success or mask failure', async () => {
+  const originalError = new Error('original dispatch failure');
+  for (const onReceipt of [
+    () => { throw new Error('sink error'); },
+    async () => { throw new Error('async sink error'); }
+  ]) {
+    const deps = { read: async () => candidate, now: () => now, onReceipt };
+    assert.equal(await prepareDailyInput(deps), candidate);
+    await assert.rejects(prepareDailyInput({
+      ...deps,
+      read: async () => null,
+      recover: async () => { throw originalError; }
+    }), error => error === originalError);
+  }
+});
