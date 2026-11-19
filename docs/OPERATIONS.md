@@ -1358,53 +1358,10 @@ Current operational rules:
 - Historical external-AI manual provider tools remain artifact-only and opt-in. They may not write `macroRiskEditorialLayer`, production JSON, or frontend output.
 - Legacy incidents/runs `25611392014`, `27049623075`, `27084750986`, and related L-4A/L-4C/M-3H details remain available in git history and the `EXTERNAL_AI_*` phase documents; they are not current runbook actions.
 - Never hand-edit either AI field, add automatic retries, copy artifacts into production, or weaken no-scoring/no-decision/no-execution/no-position boundaries.
-> **Market Pricing + Editorial 阶段 operator-note 历史(B-consolidated 折叠 · M-4 → N-16):** 以下各阶段 operator note 折成索引(完整见 git history + `MILESTONE_INDEX.md` + 对应 scope docs)。统一边界:Market Pricing Temperature display-only;勿手编 `data/market-pricing-history.json` / `data/radar-data.json`、勿伪造 Nasdaq/QQQ/MA60/标准差/z-score、SPX 仅 fallback 不冒充 Nasdaq;各 scaffold 命令本地安全/不抓网/不写 production;editorial(N-*)为前端版面,不改 scoring/decision/execution/position。**当前 Market Pricing 运维以下方 M-24 first-real-record-write 与 M-91 NDX/IXIC refresh 为准。**
 
-- **M-4** macro overview structure audit-sync:Macro Overview 稳定(M-1 skeleton→M-3 unified→M-3H preservation 后),为首读判断路径;Heatmap 独立。
-- **M-5** market pricing temperature design note:温度模块数据源计划(当时未激活);waiting-for-history 非牛非熊,勿手填/伪造,display-only。
-- **M-6** market pricing history scaffold note:scaffold-only history 契约 + `check:market-pricing-history`;勿手编 records,SPX 仅 fallback。
-- **M-7** source adapter dry-run note:`market-pricing:source-adapter:dry-run` 本地安全(不抓网、不写 history),后续 fetch 须 artifact-only first。
-- **M-8** artifact-only fetch design note:future artifact-only fetch 路径(不抓数据);<60 周观测则温度 waiting;勿自动 retry。
-- **M-9** artifact fetch scaffold note:`market-pricing:artifact-fetch:scaffold` 本地(`--allow-network` 仍拒),勿手粘 records。
-- **M-10** artifact sanitizer scaffold note:`market-pricing:artifact-sanitizer:scaffold` 本地;valid fixture 仅 `readyForProductionWrite=false` 过,拒则勿手改 data。
-- **M-11** real-record contract design note:future real-record 契约(不抓数据);勿手加 records,计算须 ≥60 周观测 + 独立 PR。
-
-- **M-12** real-record sanitizer scaffold note:`market-pricing:real-record-sanitizer:scaffold` 仅验 synthetic fixtures;勿导真实数据,拒则勿手改 production。
-- **M-13** source selection review note:仅审候选资产/源,不批/不跑 fetch;不确定则 `liveFetchApproved=false`;`check:market-pricing-source-selection-review` 须过。
-- **M-14** proof-of-source design note:future proof-of-source 路径(不批/不跑 Stooq/Yahoo/FRED/licensed);QQQ 仅 target metadata,下一步 scaffold 网络须禁用。
-- **M-15** source-specific artifact fetch scaffold note:`market-pricing:source-specific-artifact-fetch:scaffold` 本地(网络禁用,`--allow-network` 拒);勿手批源/手粘。
-- **M-15A** unified data pipeline architecture note:Daily=慢/历史/production write 层、Worker=realtime 快变层(~3min)、GitHub Actions backup=校验层;新源须先声明 `assignedLayer`(`daily_history_layer`/`realtime_worker_layer`/`github_actions_backup_validation_layer`/`artifact_sanitizer_layer`/`frontend_display_layer`),勿建 ad-hoc pipeline;`check:unified-data-pipeline-architecture` 须过。
-- **M-16** network gate design note:定义 source-specific network gate 但不开网;勿手设 `networkGateApproved/networkGateOpen/networkAllowed=true`;`check:market-pricing-network-gate-design` 须过。
-- **M-17** network gate scaffold note:`market-pricing:network-gate:scaffold` 本地 closed-gate(`--allow-network` 拒);拒因 `source_not_approved`/`live_fetch_not_approved`/`network_gate_not_approved`。
-- **M-18** source compliance review scaffold note:`market-pricing:source-compliance-review:scaffold` 本地(`--mark-reviewed` 拒);7 项 checklist 全 false,合规须人工。
-
-- **M-19** symbol mapping verification design note:design-only(无 scaffold script);保持 `symbolMappingVerified=false`、`noSpxSubstitution=true`(SPX 永不替 Nasdaq/QQQ);QQQ 仅候选。
-- **M-20** source format verification design note:design-only;`noPriceFabrication=true`(缺价保持缺、勿插值/前推)、`noHtmlErrorPageMasquerade=true`(HTML 错误页勿当 CSV)。
-- **M-21** network open throttled note:首个可 `fetch()` 的 M 命令,仅手动 throttled audit(`market-pricing:network-open-throttled:dry-run` 网络仍闭);手动 open 仅抓 manifest 单源(Stooq QQQ CSV),1 fetch/30s/1 retry,过 M-20 格式校验才写 artifact;**勿在 CI 跑 `--network=open-throttled`**。
-- **M-22** manual weekly input sanitizer design note:2026-05-12 Stooq 端点变更后改道——M-21 auto-fetch 弃用,改手动下载 NASDAQ QQQ 周历史置于 `manual-artifacts/market-pricing/manual-weekly-input/`(design-only)。
-- **M-23** manual weekly input sanitizer scaffold note:可执行 sanitizer,读 NASDAQ CSV→写 `manual-artifacts/market-pricing/sanitized-output/`(`market-pricing:manual-weekly-input-sanitizer:dry-run`/`:run`);勿 copy 进 history(M-24 才是首个 history-write)。
-
-- **M-7U** homepage IA de-duplication note:Macro Risk Overview 为唯一主判断,Daily Brief 移为证据/源明细;重复模块查 DESIGN.md §4.1(ADR-0014)+ `check:frontend-live-contracts`;Heatmap 独立,勿手编生成内容。
-- **M-7V** homepage reading path note:顶部导航映射真实可见段(今日总判断→压力来源→信号分层→四大驱动→市场温度→风险引擎→交叉验证→风险热力图→详细数据→方法说明),不改数据/AI 文本;clutter 调分组锚点非内容。
-- **M-7V-1** homepage reading path audit-sync:10 步导航合并 + post-merge 审计;UX 问题查 DESIGN.md §4.1 + `check:frontend-live-contracts`,勿手编生成内容;`check:world-order` partial-freshness warning 在 `check:all` 过时非阻断。
-
-- **N-1** editorial first-fold:首屏 editorial skin(frontend-only);保 DESIGN.md §4.1 IA 顺序/锚点;勿改 AI 文本/scoring/decision/execution/position/workflow,温度 waiting。
-- **N-2** editorial pressure-source:压力来源版面 polish(`homepage-pressure-sources`);status class/count pill 仅展示。
-- **N-3** editorial signal-layer:信号分层版面 polish(`homepage-signal-layers`);bucket/summary/card 仅展示,不改信号判定计算。
-- **N-4** editorial paper/font:paper 背景 + Bubble Watch 字体栈基础;勿加外部 font/CDN/image URL,保 dark legacy 可读。
-- **N-5** editorial macro-driver:四大驱动版面 polish(`homepage-macro-drivers`);growth/inflation/liquidity/policy 卡仅渲染证据,不改驱动判定。
-- **N-6** editorial market-temperature waiting-state:温度 waiting-state polish(`homepage-market-temperature`);保 waiting-for-history、勿推冷/热状态、保 60周/MA60/z-score 缺口可见。
-- **N-7** editorial risk-engine:风险引擎版面 polish(`homepage-risk-engines`);仅渲染证据,不改引擎判定,不转交易建议。
-- **N-8** editorial cross-validation:交叉验证版面 polish(`homepage-cross-validation`);仅渲染,不从部分验证强推宏观结论。
-
-- **N-9** editorial Global Risk Heatmap:热力图 polish(`global-risk-heatmap`/`world-heatmap`/`heatmap-list`);保独立、视觉突出,不改 heatmap scoring/region 计算。
-- **N-10** editorial Detailed Data appendix:详细数据附录 polish(`detail-data`/`detail-data-header`);为次级审计附录,非首读路径。
-- **N-11** editorial Method/Evidence/Boundary appendix:方法附录 polish(`method-evidence`);为 Detailed Data 之后的次级解释附录。
-- **N-12** editorial External AI read-only panel:`external-ai-display-panel` polish;保 External AI 辅助只读 + hidden/aria-hidden 行为,不改 AI 文本/provider/schema/write。
-- **N-13** editorial inline dark theme cleanup:清残留 dark inline 样式以统一 paper theme;勿加外部 font/CDN URL。
-- **N-14** editorial Big Number + threshold scale:首屏大数字 + 阈值刻度 polish;保 `stageFromScore` 阈值 0-50/50-65/65-85/85-100 + score 计算不变(除非另开 reviewed logic PR)。
-- **N-15** editorial Key Changes + Watch List:叙述块,为既有结构化数据/缺口/反证的摘要;勿加源、勿把 pending 变结论。
-- **N-16** editorial redesign contract guard:guard/validation 层;触 editorial shell/macro overview renderer/paper theme 时跑 `npm run check:frontend-live-contracts` + 看 DESIGN.md §5.6(M-94 V0 视觉契约,ADR-0014);guard 非重设计 UI 的批准。
+> **Market Pricing + Editorial 阶段历史（M-4 → N-16）：** [固定原文](https://github.com/ctmaomao/gfrr-auto-update-site/blob/350ae2c9b85ccaa8dc499342786138e50897bd47/docs/OPERATIONS.md#L1361-L1408)保留旧 operator notes；更多阶段见 [Milestone Index](MILESTONE_INDEX.md)。旧 waiting/scaffold、联网路径、前端面板及阈值描述不是当前操作步骤，也不构成授权。
+>
+> 当前 Market Pricing 操作见下方 [M-24](#v280m-24-market-pricing-first-real-record-write-operator-note)、[M-91](#v280m-91-market-pricing-ndxixic-auxiliary-refresh-operator-note)和[时效核查](#market-pricing-freshnessalignment-review)；[旧阶段状态](LEGACY_DOCUMENT_STATUS.md#market-pricing)说明 display-only 边界。勿手编生产历史或雷达 JSON，勿伪造价格、周历史或计算指标，勿把 SPX 当作 Nasdaq/QQQ。当前页面以 [DESIGN](../DESIGN.md) 为准；旧版面记录不改变评分、决策、执行或仓位边界。
 
 ### v28.0M-24 market pricing first real record write operator note
 
