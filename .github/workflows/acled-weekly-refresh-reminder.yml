@@ -98,13 +98,19 @@ jobs:
             const mondayIso = formatIsoDate(monday);
             const title = `M-63c ACLED weekly regional xlsx refresh available (HDX as-of ${probe.asOfDate})`;
             const body = [
-              `ACLED weekly regional aggregate files must be downloaded manually by the operator. This issue opened only after HDX CKAN metadata showed all three ACLED aggregate packages at as-of ${probe.asOfDate}.`,
+              `This reminder opened after HDX CKAN metadata showed all three ACLED aggregate packages at as-of ${probe.asOfDate}. That date is a release-availability proxy, not the observation cutoff of the weekly data accepted by GFRR.`,
               ``,
-              `The HDX check is a release-availability proxy only: HDX data is month-country/year-country, not the weekly-admin signal used by GFRR. This workflow does not download HDX data files, does not fetch ACLED data files, and does not contact acleddata.com. ACLED EULA Section 3.3 still prohibits automated scraping/crawling.`,
+              `This reminder workflow reads HDX metadata only; it does not download HDX data files, does not fetch ACLED data files, and does not contact acleddata.com. ACLED EULA Section 3.3 still prohibits automated scraping/crawling.`,
+              ``,
+              `## Check automatic acquisition first`,
+              ``,
+              `Check the latest corresponding [ACLED Automatic Update run](../actions/workflows/acled-auto-update.yml) from Monday, Wednesday, or Friday, then verify the [normalized weekly regional config on main](../blob/main/config/world-order-acled-regional-weekly.json). The normalized \`latestWeek\` and coverage describe the accepted weekly observations; HDX is not the weekly-admin data GFRR uses.`,
+              ``,
+              `If the accepted data is current, no manual download is needed. If only site publication is pending or failed, follow the [source-free recovery runbook](../blob/main/docs/ACLED_AUTOMATIC_UPDATE.md#status-and-recovery). Use the manual steps below only when the automatic path did not produce the needed data and newer source files are confirmed available.`,
               ``,
               `Calendar week at workflow run: ${mondayIso}.`,
               ``,
-              `## Download`,
+              `## Manual fallback: download`,
               ``,
               `- Download URL: https://acleddata.com/conflict-data/download-data-files`,
               `- Target directory: \`manual-artifacts/world-order/acled-input/weekly/\` (gitignored)`,
@@ -153,7 +159,7 @@ jobs:
               ``,
               `This workflow skips if any issue, open or closed, already exists with this exact HDX as-of title and the \`acled-weekly-refresh\` label. Different HDX as-of dates open new reminders; unchanged HDX metadata stays silent.`,
               ``,
-              `_Auto-opened by \`.github/workflows/acled-weekly-refresh-reminder.yml\`. Closing without action will silently age the ACLED weekly data — re-open or recreate manually if needed._`,
+              `_Auto-opened by \`.github/workflows/acled-weekly-refresh-reminder.yml\`. Opening or closing this issue does not start, stop, or change automatic acquisition._`,
             ].join('\n');
 
             const { data: existing } = await github.rest.issues.listForRepo({
