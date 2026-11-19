@@ -17,9 +17,11 @@ function coordinate(value, limit) {
   demand(typeof value === 'string' && /^-?\d{1,3}(?:\.\d{1,10})?$/.test(value));
   const number = Number(value); demand(Math.abs(number) <= limit); return number === 0 ? 0 : number;
 }
+export function matchesThermalObservationProduct(source, instrument, satellite) {
+  return Object.hasOwn(PRODUCTS, source) && instrument === PRODUCTS[source][0] && PRODUCTS[source].slice(1).includes(satellite);
+}
 function observation(row, source, receivedAt) {
-  const product = PRODUCTS[source];
-  demand(row.instrument === product[0] && product.slice(1).includes(row.satellite));
+  demand(matchesThermalObservationProduct(source, row.instrument, row.satellite));
   const latitude = coordinate(row.latitude, 90), longitude = coordinate(row.longitude, 180);
   const acquiredAt = firmsAcquisitionIso(row); demand(Date.parse(acquiredAt) <= Date.parse(receivedAt));
   demand(typeof row.frp === 'string' && row.frp.length <= 24);
