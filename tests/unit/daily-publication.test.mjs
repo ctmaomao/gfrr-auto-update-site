@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, lstatSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { WORLD_ORDER_OUTPUTS, publishWorldOrderCandidate, retainWorldOrderCandidate, DAILY_OUTPUTS, publishDailyCandidate, safeConcurrentPath, retainDailyCandidate } from '../../scripts/publish-daily-candidate.mjs';
+import { BUBBLE_CREDIT_OUTPUTS, publishBubbleCreditCandidate, WORLD_ORDER_OUTPUTS, publishWorldOrderCandidate, retainWorldOrderCandidate, DAILY_OUTPUTS, publishDailyCandidate, safeConcurrentPath, retainDailyCandidate } from '../../scripts/publish-daily-candidate.mjs';
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-function fixture(outputs = DAILY_OUTPUTS, baseDoc = null) {
+function fixture(outputs = DAILY_OUTPUTS, baseDoc = null, updatedOutputs = outputs, baseDocLink = null) {
   const dir = mkdtempSync(join(tmpdir(), 'daily-publication-test-'));
   const remote = join(dir, 'remote.git'), cwd = join(dir, 'daily'), other = join(dir, 'other');
   git(dir, 'init', '--bare', remote); git(dir, 'clone', remote, cwd);
@@ -15,13 +15,15 @@ function fixture(outputs = DAILY_OUTPUTS, baseDoc = null) {
   for (const file of outputs) { mkdirSync(join(cwd, 'data'), { recursive: true }); writeFileSync(join(cwd, file), 'old\n'); }
   if (baseDoc) {
     mkdirSync(join(cwd, 'docs'));
-    writeFileSync(join(cwd, baseDoc), 'original\n');
+    if (baseDocLink) symlinkSync(baseDocLink, join(cwd, baseDoc));
+    else writeFileSync(join(cwd, baseDoc), 'original\n');
     git(cwd, 'add', '--', baseDoc);
   }
-  git(cwd, 'add', 'data'); git(cwd, 'commit', '-m', 'base'); git(cwd, 'push', 'origin', 'main');
+  writeFileSync(join(cwd, '.gitignore'), 'node_modules/\n');
+  git(cwd, 'add', 'data', '.gitignore'); git(cwd, 'commit', '-m', 'base'); git(cwd, 'push', 'origin', 'main');
   git(dir, 'clone', '--branch', 'main', remote, other);
   git(other, 'config', 'user.name', 'Test'); git(other, 'config', 'user.email', 'test@example.invalid');
-  for (const file of outputs) writeFileSync(join(cwd, file), 'candidate\n');
+  for (const file of updatedOutputs) writeFileSync(join(cwd, file), 'candidate\n');
   git(cwd, 'add', 'data'); git(cwd, 'commit', '-m', 'candidate');
   const candidate = git(cwd, 'rev-parse', 'HEAD');
   function advance(path, content = 'concurrent\n', symlink = false) {
@@ -148,4 +150,121 @@ test('World Order workflow validates, uses bounded publisher and conditionally r
   assert.match(source, /failure\(\).*steps.publish_world_order.outputs.candidate_sha != ''/);
   assert.match(source, /node scripts\/publish-daily-candidate.mjs --world-order-receipt/);
   assert.doesNotMatch(source, /git push|git reset --hard|git rebase/);
+});
+
+
+test('Bubble credit replays the exact allowlisted pair once per safe main revision, including an unchanged file', () => {
+  assert.deepEqual(BUBBLE_CREDIT_OUTPUTS, ['data/bubble-watch.json', 'data/bubble-market-observations.json']);
+  const f = fixture(BUBBLE_CREDIT_OUTPUTS, null, BUBBLE_CREDIT_OUTPUTS.slice(0, 1));
+  f.advance('docs/refresh note.md');
+  let validations = 0;
+  const result = publishBubbleCreditCandidate({ cwd: f.cwd, validate: cwd => {
+    assert.equal(readFileSync(join(cwd, 'docs/refresh note.md'), 'utf8'), 'concurrent\n');
+    assert.deepEqual(git(cwd, 'diff', '--name-only', 'HEAD^', 'HEAD').split('\n'), BUBBLE_CREDIT_OUTPUTS.slice(0, 1));
+    for (const path of BUBBLE_CREDIT_OUTPUTS) {
+      assert.equal(git(cwd, 'rev-parse', `HEAD:${path}`), git(f.cwd, 'rev-parse', `${f.candidate}:${path}`));
+    }
+    if (++validations === 1) f.advance('tests/concurrent.txt');
+    else assert.equal(readFileSync(join(cwd, 'tests/concurrent.txt'), 'utf8'), 'concurrent\n');
+  } });
+  assert.equal(validations, 2);
+  assert.equal(result.attempts, 2);
+  assert.equal(result.published, f.head());
+  assert.notEqual(result.published, f.candidate);
+  assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
+});
+
+test('replay makes existing dependencies usable inside a Git-ignored real directory', () => {
+  const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+  f.advance('docs/validation.md');
+  const deps = join(f.cwd, 'node_modules');
+  const packageDir = join(deps, '@fixture', 'checked');
+  mkdirSync(packageDir, { recursive: true });
+  mkdirSync(join(deps, '.bin'));
+  writeFileSync(join(packageDir, 'index.js'), 'module.exports = "resolved";\n');
+  symlinkSync('../@fixture/checked/index.js', join(deps, '.bin', 'checked'));
+  const result = publishBubbleCreditCandidate({ cwd: f.cwd, validate: cwd => {
+    const replayDeps = join(cwd, 'node_modules');
+    assert.equal(lstatSync(replayDeps).isDirectory(), true);
+    assert.equal(git(cwd, 'ls-files', '--others', '--exclude-standard'), '');
+    assert.equal(readFileSync(join(replayDeps, '.bin', 'checked'), 'utf8'), 'module.exports = "resolved";\n');
+    assert.equal(execFileSync(process.execPath, ['-p', 'require("@fixture/checked")'], { cwd, encoding: 'utf8' }).trim(), 'resolved');
+  } });
+  assert.equal(result.published, f.head());
+});
+
+test('Bubble credit rejects changes to either output, producer code or config, and docs symlinks before any push', () => {
+  for (const path of [...BUBBLE_CREDIT_OUTPUTS, 'scripts/refresh-bubble-credit-spreads.mjs', 'config/bubble-credit-spreads.json', 'docs/link']) {
+    const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+    f.advance(path, 'remote', path === 'docs/link');
+    const before = f.head();
+    assert.throws(() => publishBubbleCreditCandidate({
+      cwd: f.cwd, validate: () => assert.fail('unsafe tree was revalidated'),
+      runGit: (args, cwd) => {
+        assert.notEqual(args[0], 'push');
+        return git(cwd, ...args);
+      }
+    }), /bubble_credit_generation_inputs_changed/);
+    assert.equal(f.head(), before);
+    assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
+  }
+});
+
+test('replay rejects removal or replacement of a previously non-regular docs entry', () => {
+  for (const replace of [false, true]) {
+    const path = 'docs/link';
+    const f = fixture(BUBBLE_CREDIT_OUTPUTS, path, BUBBLE_CREDIT_OUTPUTS, '../data/bubble-watch.json');
+    unlinkSync(join(f.other, path));
+    if (replace) writeFileSync(join(f.other, path), 'regular replacement\n');
+    git(f.other, 'add', '--', path);
+    git(f.other, 'commit', '-m', 'change previously non-regular doc');
+    git(f.other, 'push', 'origin', 'main');
+    const before = f.head();
+    assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd, validate: () => assert.fail('unsafe tree') }), /bubble_credit_generation_inputs_changed/);
+    assert.equal(f.head(), before);
+  }
+});
+
+test('Bubble credit never pushes a failed or replaced replay and rejects unrelated staged content', () => {
+  const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+  f.advance('tests/fixtures.txt'); const before = f.head();
+  assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd, validate: () => { throw new Error('full validation failed'); } }), /full validation failed/);
+  assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd, validate: cwd => {
+    writeFileSync(join(cwd, BUBBLE_CREDIT_OUTPUTS[0]), 'replacement\n');
+    git(cwd, 'add', BUBBLE_CREDIT_OUTPUTS[0]);
+    git(cwd, 'commit', '--amend', '--no-edit');
+  } }), /bubble_credit_replay_identity_changed/);
+  assert.equal(f.head(), before);
+  writeFileSync(join(f.cwd, 'unrelated.txt'), 'not approved');
+  git(f.cwd, 'add', 'unrelated.txt'); git(f.cwd, 'commit', '--amend', '--no-edit');
+  assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd }), /bubble_credit_candidate_path_rejected/);
+  assert.equal(f.head(), before);
+});
+
+test('Bubble credit refuses a fourth push and never force-pushes', () => {
+  const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+  let pushes = 0;
+  const runGit = (args, cwd) => {
+    if (args[0] === 'push') {
+      pushes++;
+      assert.match(args.join(' '), /^push origin [0-9a-f]{40}:refs\/heads\/main$/u);
+      f.advance(`docs/race-${pushes}.md`);
+    }
+    return git(cwd, ...args);
+  };
+  assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd, validate: () => {}, runGit }), /bubble_credit_publish_retry_exhausted/);
+  assert.equal(pushes, 3);
+  assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
+});
+
+test('Bubble credit workflow keeps no-change successful, dispatches EdgeOne only after success and retains no new artifact', () => {
+  const source = readFileSync(new URL('../../.github/workflows/refresh-bubble-credit-spreads.yml', import.meta.url), 'utf8');
+  const block = source.match(/      - name: Commit and publish only the verified Bubble display payload\n        run: \|\n([\s\S]+?)(?=      - name:)/u);
+  assert.ok(block);
+  assert.match(source, /npm run check:all\n      - name: Commit and publish/u);
+  assert.match(block[1], /git add data\/bubble-watch\.json data\/bubble-market-observations\.json\n          if ! git diff --cached --quiet; then\n            git commit[^\n]+\n            node scripts\/publish-daily-candidate\.mjs --bubble-credit\n          fi\s*$/u);
+  assert.match(source, /name: Request the existing guarded custom-domain publisher\n(?:        #[^\n]*\n)?        if: \$\{\{ success\(\) \}\}[\s\S]+?gh workflow run publish-edgeone-release\.yml/u);
+  assert.doesNotMatch(source, /git push|git rebase|git reset|continue-on-error|--receipt|upload-artifact|retention-days/u);
+  assert.equal(source.match(/scripts\/refresh-bubble-credit-spreads\.mjs --write/gu)?.length, 1);
+  assert.equal(source.match(/scripts\/refresh-bubble-market-observations\.mjs --write/gu)?.length, 1);
 });
