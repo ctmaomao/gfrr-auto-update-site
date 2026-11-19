@@ -90,16 +90,8 @@ export function readManifest(manifestPath) {
  */
 export function validateStagingAgainstExpectation(stagingDir, expectation) {
   const target = resolve(stagingDir);
-  const expected = 'files' in expectation
-    ? new Map(expectation.files.map((entry) => [entry.path, entry]))
-    : (() => {
-      const root = resolve(expectation.artifactDir);
-      return new Map(walkFiles(root).map((file) => [file, {
-        path: file,
-        size: statSync(resolve(root, file)).size,
-        sha256: sha256File(resolve(root, file)),
-      }]));
-    })();
+  const manifest = 'files' in expectation ? expectation : manifestFromArtifact(expectation.artifactDir);
+  const expected = new Map(manifest.files.map((entry) => [entry.path, entry]));
 
   const problems = [];
   const staged = new Set(walkFiles(target));
@@ -196,14 +188,6 @@ export function assertNoSymlinks(directory, label) {
   walk(resolve(directory));
 }
 
-/** root-relative path -> byte size, for every regular file in the tree. */
-export function fileInventory(directory) {
-  const root = resolve(directory);
-  const inventory = new Map();
-  for (const file of walkFiles(root)) inventory.set(file, statSync(resolve(root, file)).size);
-  return inventory;
-}
-
 /**
  * Validates the final staging tree against the artifact it was copied from:
  *   - no symlinks anywhere, in the input OR the final tree;
@@ -215,9 +199,10 @@ export function validateStagingTree(stagingDir, { artifactDir }) {
   const source = resolve(artifactDir);
   assertNoSymlinks(source, 'input artifact');
   assertNoSymlinks(target, 'staging tree');
-  const result = validateStagingAgainstExpectation(target, { artifactDir: source });
+  const manifest = manifestFromArtifact(source);
+  const result = validateStagingAgainstExpectation(target, manifest);
   if (!result.ok) throw new Error(`staging tree validation failed: ${result.problems.join('; ')}`);
-  return { fileCount: result.expectedFileCount, files: walkFiles(source) };
+  return { fileCount: result.expectedFileCount, files: manifest.files.map((entry) => entry.path) };
 }
 
 export function fingerprintDirectory(directory) {
