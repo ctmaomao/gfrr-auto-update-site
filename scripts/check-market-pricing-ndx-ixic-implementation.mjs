@@ -171,9 +171,9 @@ function assertImplementationSource() {
   ]) {
     assert(source.includes(marker), `${IMPLEMENTATION_PATH} must contain ${marker}`);
   }
-  for (const marker of ['process.env', 'wrangler', 'KV', '.github/workflows']) {
-    assert(!source.includes(marker), `${IMPLEMENTATION_PATH} must not contain ${marker}`);
-  }
+  const cliPath = 'scripts/market-pricing/yahoo-history-refresh-cli.mjs';
+  assert(source.includes("from './yahoo-history-refresh-cli.mjs'"), 'the Yahoo refresh CLI helper must remain covered by the source guard');
+  assertNoMarkersInFiles([IMPLEMENTATION_PATH, cliPath], ['process.env', 'wrangler', 'KV', '.github/workflows'], 'Daily/manual boundary');
 }
 
 function assertWorkerBoundary() {

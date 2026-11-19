@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import test from 'node:test';
+import { createYahooHistoryRefreshCli } from '../../scripts/market-pricing/yahoo-history-refresh-cli.mjs';
 import { buildCoverage, canonicalizeWeeklyRecords } from '../../scripts/market-pricing/yahoo-weekly-records.mjs';
 
 const options = { today: '2026-01-15', range: '10y', interval: '1wk' };
@@ -44,4 +46,34 @@ test('coverage retains empty, 59-week and 60-week contracts', () => {
   const records = Array.from({ length: 60 }, (_, index) => ({ date: String(index) }));
   assert.equal(buildCoverage(records.slice(0, 59)).hasAtLeast60Weeks, false);
   assert.deepEqual(buildCoverage(records), { weeklyRows: 60, hasAtLeast60Weeks: true, oldestDate: '0', latestDate: '59' });
+});
+
+test('shared refresh CLI keeps path defaults, argument order and error labels', () => {
+  const root = path.resolve('fixture-repo');
+  const historyFile = 'data/market-pricing-history.json';
+  const artifactRoot = 'manual-artifacts/market-pricing';
+  for (const [label, directory] of [['QQQ', 'qqq-yahoo'], ['NDX/IXIC', 'ndx-ixic-yahoo']]) {
+    const artifactPath = `${artifactRoot}/${directory}/${directory}-latest.json`;
+    const cli = createYahooHistoryRefreshCli({ root, artifactDefault: artifactPath, label });
+    const defaults = { historyFile, artifactPath, dryRun: true, commitHistory: false, quiet: false };
+    assert.deepEqual(cli.parseCliArgs([]), defaults);
+    assert.deepEqual(cli.parseCliArgs(['--commit-history', '--dry-run', '--quiet']), { ...defaults, quiet: true });
+    assert.deepEqual(cli.parseCliArgs(['--dry-run', '--commit-history', '--history-file', '-value',
+      '--history-file=', '--artifact-path=old', '--artifact-path', 'path=with=equals']),
+    { ...defaults, historyFile: '', artifactPath: 'path=with=equals', dryRun: false, commitHistory: true });
+    const invalid = (action, message) => assert.throws(action, { message, exitCode: 2 });
+    for (const flag of ['--history-file', '--artifact-path']) {
+      for (const args of [[flag], [flag, '--quiet']]) invalid(() => cli.parseCliArgs(args), `Missing value for ${flag}`);
+    }
+    invalid(() => cli.parseCliArgs(['--quiet=true']), `Unknown ${label} refresh argument: --quiet=true`);
+    assert.equal(cli.resolveHistoryFile(''), path.resolve(root, historyFile));
+    assert.equal(cli.resolveHistoryFile(`./${historyFile}`), path.resolve(root, historyFile));
+    invalid(() => cli.resolveHistoryFile('data/alternate.json'), `History file target must be ${historyFile}`);
+    assert.equal(cli.toProjectRelative(cli.resolveArtifactPath('')), artifactPath);
+    assert.equal(cli.toProjectRelative(cli.resolveArtifactPath(artifactRoot)), artifactRoot);
+    assert.equal(cli.toProjectRelative(cli.resolveArtifactPath(`${artifactRoot}/nested/file.json`)), `${artifactRoot}/nested/file.json`);
+    for (const outside of [`${artifactRoot}-other/file.json`, `${artifactRoot}/../escape.json`]) {
+      invalid(() => cli.resolveArtifactPath(outside), `${label} Yahoo artifact path must stay under ${artifactRoot}/.`);
+    }
+  }
 });
