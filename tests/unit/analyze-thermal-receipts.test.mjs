@@ -1,4 +1,5 @@
 import { deepStrictEqual, equal, match, throws } from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,7 +16,7 @@ const time = '2025-01-01T12:00:00.000Z';
 const body1 = '2025-01-01T12:01:00.000Z';
 const body2 = '2025-01-01T12:02:00.000Z';
 
-function capture(runId = '123', { zero = false, extra = 0, frp = '8', runAttempt = 1, configDigest = 'b'.repeat(64) } = {}) {
+function capture(runId = '123', { zero = false, extra = 0, frp = '8', versions, runAttempt = 1, configDigest = 'b'.repeat(64) } = {}) {
   const pins = { runId, runAttempt, checkoutSha };
   const collector = createThermalReceiptCapture({ ...pins, configDigest, geometryDigest: 'c'.repeat(64),
     sourceSet: [noaa, snpp], expectedRequests: 4 });
@@ -24,7 +25,8 @@ function capture(runId = '123', { zero = false, extra = 0, frp = '8', runAttempt
   for (const [index, bodyReceivedAt] of [body1, body2].entries()) {
     const context = { areaId: 'private-fixture-' + index, bbox: index ? '0,0,3,3' : '0,0,2,2', dayRange: 1,
       logicalRequestStartedAt: time, classifiedAt: bodyReceivedAt };
-    const records = index ? [observation, { ...observation, frp: '9' }] : [observation, observation];
+    const records = versions ? versions[index].map(version => ({ ...observation, version }))
+      : index ? [observation, { ...observation, frp: '9' }] : [observation, observation];
     records.push(...Array.from({ length: extra }, (_, n) => ({ ...observation, latitude: (1 + (n + 1) / 100).toFixed(2) })));
     collector.record({ ...context, source: noaa, outcome: 'parsed', bodyReceivedAt,
       diagnostics: { outcome: 'success', httpStatus: 200, attempts: 1, retryCount: 0 },
@@ -90,6 +92,36 @@ test('distinguishes a two-receipt subset delta from run totals and does not conf
     summary.suppliedReceiptCaptureOverlapBySource);
   deepStrictEqual(analyzeThermalReceipts([first]).suppliedReceiptCaptureOverlapBySource[noaa],
     { unionUniqueCaptures: 11, capturesInMultipleReceipts: 0 });
+});
+
+test('round-trips URT, RT and NRT as three revisions of one capture, ignoring an exact repeat', () => {
+  const input = capture('123', { versions: [['2.0URT', '2.0RT'], ['2.0NRT', '2.0NRT']] });
+  const snapshot = JSON.parse(input.text);
+  equal(snapshot.complete, true);
+  equal(snapshot.observations.length, 1);
+  const [observation] = snapshot.observations;
+  deepStrictEqual(observation.revisions.map(r => r.processingVersion), ['2.0URT', '2.0RT', '2.0NRT']);
+  for (const row of [snapshot.receipts[0], snapshot.receipts[2]]) {
+    deepStrictEqual(row.observationIds, [observation.observationId]);
+  }
+  const summary = analyzeThermalReceipts([input]);
+  equal(summary.bySource[noaa].runScopedUniqueCaptures, 1);
+  equal(summary.bySource[noaa].runScopedUniqueRevisions, 3);
+});
+
+test('rejects invalid revision versions even when their content hash matches', () => {
+  const input = capture();
+  for (const processingVersion of [undefined, '', 2, '2.0rT', '2.0RT ', '2.0URT\n', '2.0RTURT',
+    '2.0.0.1RT', '2.001URT', 'URT']) {
+    const malformed = mutate(input, receipt => {
+      const revision = receipt.observations[0].revisions[0];
+      const { frp, confidence, daynight } = revision;
+      revision.processingVersion = processingVersion;
+      revision.contentHash = createHash('sha256')
+        .update(JSON.stringify({ frp, confidence, daynight, processingVersion })).digest('hex');
+    });
+    throws(() => analyzeThermalReceipts([malformed]), /Malformed or incomplete research receipt/);
+  }
 });
 
 test('rejects contradictory visible identity fields for a repeated opaque ID', () => {

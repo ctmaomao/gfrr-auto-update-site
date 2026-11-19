@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { closeSync, constants, fstatSync, openSync, readSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { matchesThermalObservationProduct } from './thermal-receipt-capture.mjs';
+import { isThermalProcessingVersion, matchesThermalObservationProduct } from './thermal-receipt-capture.mjs';
 import { isCurrentThermalReceipt } from './thermal-receipt-run.mjs';
 
 const MAX_BYTES = 262144; // The existing receipt writer's cap.
@@ -123,7 +123,7 @@ function tallyRun(snapshot, bySource) {
       revisionCapacity.set(key, revisionCapacity.get(key) - 1);
       const { frp, confidence, daynight, processingVersion } = revision;
       demand((frp === null || Number.isFinite(frp) && frp >= 0) && ['D', 'N'].includes(daynight)
-        && (processingVersion === null || typeof processingVersion === 'string' && /^\d{1,2}(?:\.\d{1,2}){0,2}(?:NRT)?$/.test(processingVersion))
+        && isThermalProcessingVersion(processingVersion)
         && (observation.source === 'MODIS_NRT'
           ? typeof confidence === 'string' && /^(?:100|\d{1,2})$/.test(confidence) : ['l', 'n', 'h'].includes(confidence)));
       const contentHash = createHash('sha256').update(JSON.stringify({ frp, confidence, daynight, processingVersion })).digest('hex');

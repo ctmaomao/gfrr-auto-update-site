@@ -216,9 +216,14 @@ retired/network failures have null body time and separate classification time.
 Strict research-only CSV/product/calendar/coordinate checks can reject research
 rows without changing production aggregates/errors/retries. Raw coordinates are
 used only inside observation identity hashes, not exported. Processing version
-is nullable revision content, not identity; NASA documents [N/N20/N21 satellite
-codes](https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_VIIRS_Firehotspots.html)
+is nullable revision content, not identity; NASA documents [VIIRS satellite
+codes and processing versions](https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_VIIRS_Firehotspots.html)
 and [CSV version fields](https://firms.modaps.eosdis.nasa.gov/content/academy/data_api/firms_api_use.html).
+The research capture and offline analyzer share the same bounded numeric
+version format with optional uppercase `NRT`, `RT` or `URT` suffix, as
+shown in NASA’s VIIRS and [MODIS attribute tables](https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_MODIS_Firehotspots.html).
+A version-only change for the same capture is a content revision, not another
+capture or evidence of coverage.
 Per-run deduplication/revisions and `firstReceivedInRun` are not physical events;
 `crossRunFirstSeen` stays null. All evaluation/main-score eligibility stays false.
 The 256 KiB / 150 request / 1,000 observation caps mark research truncation
