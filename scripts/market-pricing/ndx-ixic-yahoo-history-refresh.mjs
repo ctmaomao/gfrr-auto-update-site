@@ -18,10 +18,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalizeWeeklyRecords, buildCoverage } from './yahoo-weekly-records.mjs';
+import { createYahooHistoryRefreshCli } from './yahoo-history-refresh-cli.mjs';
 
-const ROOT = process.cwd();
-const DEFAULT_HISTORY_FILE = 'data/market-pricing-history.json';
-const DEFAULT_ARTIFACT_PATH = 'manual-artifacts/market-pricing/ndx-ixic-yahoo/ndx-ixic-yahoo-latest.json';
+const { parseCliArgs, resolveHistoryFile, resolveArtifactPath, toProjectRelative } = createYahooHistoryRefreshCli({
+  root: process.cwd(), label: 'NDX/IXIC',
+  artifactDefault: 'manual-artifacts/market-pricing/ndx-ixic-yahoo/ndx-ixic-yahoo-latest.json'
+});
 const CONTRACT_VERSION = 'v28.0M-91-ndx-ixic-yahoo-history-refresh-1';
 const SOURCE_REVIEW_DOC = 'docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md';
 const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
@@ -73,102 +75,8 @@ function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function toProjectRelative(absolutePath) {
-  return path.relative(ROOT, absolutePath).replace(/\\/g, '/');
-}
-
 function yahooChartUrl(config) {
   return `${YAHOO_CHART_BASE}/${config.yahooEncodedSymbol}?range=${RANGE}&interval=${INTERVAL}`;
-}
-
-function parseCliArgs(argv) {
-  const options = {
-    historyFile: DEFAULT_HISTORY_FILE,
-    artifactPath: DEFAULT_ARTIFACT_PATH,
-    dryRun: true,
-    commitHistory: false,
-    quiet: false
-  };
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-
-    if (arg === '--dry-run') {
-      options.dryRun = true;
-      options.commitHistory = false;
-      continue;
-    }
-
-    if (arg === '--commit-history') {
-      options.dryRun = false;
-      options.commitHistory = true;
-      continue;
-    }
-
-    if (arg === '--history-file') {
-      if (!argv[index + 1] || argv[index + 1].startsWith('--')) {
-        throw Object.assign(new Error('Missing value for --history-file'), { exitCode: 2 });
-      }
-      options.historyFile = argv[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--history-file=')) {
-      options.historyFile = arg.slice('--history-file='.length);
-      continue;
-    }
-
-    if (arg === '--artifact-path') {
-      if (!argv[index + 1] || argv[index + 1].startsWith('--')) {
-        throw Object.assign(new Error('Missing value for --artifact-path'), { exitCode: 2 });
-      }
-      options.artifactPath = argv[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--artifact-path=')) {
-      options.artifactPath = arg.slice('--artifact-path='.length);
-      continue;
-    }
-
-    if (arg === '--quiet') {
-      options.quiet = true;
-      continue;
-    }
-
-    throw Object.assign(new Error(`Unknown NDX/IXIC refresh argument: ${arg}`), { exitCode: 2 });
-  }
-
-  return options;
-}
-
-function resolveHistoryFile(rawHistoryFile) {
-  const resolved = path.resolve(ROOT, rawHistoryFile || DEFAULT_HISTORY_FILE);
-  const required = path.resolve(ROOT, DEFAULT_HISTORY_FILE);
-
-  if (resolved !== required) {
-    throw Object.assign(new Error(`History file target must be ${DEFAULT_HISTORY_FILE}`), {
-      exitCode: 2
-    });
-  }
-
-  return resolved;
-}
-
-function resolveArtifactPath(rawArtifactPath) {
-  const resolved = path.resolve(ROOT, rawArtifactPath || DEFAULT_ARTIFACT_PATH);
-  const allowedRoot = path.resolve(ROOT, 'manual-artifacts', 'market-pricing');
-
-  if (resolved !== allowedRoot && !resolved.startsWith(`${allowedRoot}${path.sep}`)) {
-    throw Object.assign(
-      new Error('NDX/IXIC Yahoo artifact path must stay under manual-artifacts/market-pricing/.'),
-      { exitCode: 2 }
-    );
-  }
-
-  return resolved;
 }
 
 async function fetchYahooChart(config) {
@@ -289,8 +197,8 @@ function writeArtifact(artifactPath, report) {
 
 export async function buildNdxIxicYahooHistoryRefreshReport(options = {}) {
   const dryRun = options.dryRun !== false;
-  const historyFile = resolveHistoryFile(options.historyFile || DEFAULT_HISTORY_FILE);
-  const artifactPath = resolveArtifactPath(options.artifactPath || DEFAULT_ARTIFACT_PATH);
+  const historyFile = resolveHistoryFile(options.historyFile);
+  const artifactPath = resolveArtifactPath(options.artifactPath);
   const generatedAt = nowIso();
   const assetReports = {};
 
