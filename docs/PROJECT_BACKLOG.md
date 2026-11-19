@@ -1,14 +1,11 @@
 # Project Backlog · GFRR Auto-Update Site
 
-## Brave private manual one-shot acceptance baseline — November 18, 2026
-
-Owner-approved next scope: repository-secret-backed, independently reviewed current-main manual preview and at most one free test through the shared ledger. Preserve original proof, private history, receipts, all normal caps and billing settings; no five-workflow business restoration. The private supplement is a separately reviewed attestation, not a substitute for unknown facts. This code-only candidate adds no real secret, dispatch, evidence, account mutation or ledger write. Preview is read-only; the fixed canary grant has a durable one-shot interlock, dedicated manual receipt and authoritative settlement readback. Details and private preparation format are in ADR-0111. Before integration, independent actual-diff review and complete checks remain required; before real use, independently verified fresh evidence/key binding and the private reviewed-main SHA must exist. Missing evidence is a blocker, not a value to fabricate.
-
-## Brave private-proof continuity acceptance baseline — November 18, 2026
-
-Owner-requested safe restoration: preserve fee protection and historical receipts; do not change billing settings or make paid probe requests. The inactive implementation adds only explicit same-identity v4 proof renewal, synthetic regression tests and ADR-0111 operating guidance. No secret, real ledger, workflow or production data is modified. Deployment and actual renewal remain separate; missing original private evidence/nonce, unresolved receipts or unavailable current account/key-binding proof block activation. Independent actual-diff review and full repository checks are required before integration.
-
 本页只保留当前工作、未解依赖与维护入口。已完成任务的过程见[历史交接与完成原件](MILESTONE_INDEX.md#immutable-handoffs)。旧“待合并/下一步”不覆盖下方已核实的 main 状态，合并也不自动证明生产验收完成。
+
+<a id="brave-private-manual-one-shot-acceptance-baseline--november-18-2026"></a>
+<a id="brave-private-proof-continuity-acceptance-baseline--november-18-2026"></a>
+
+**Brave 单次验收与当前边界**：[手动免费 canary 44252310781](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44252310781) 的只读预检和单次测试均成功，仅验收这次测试，五个业务工作流的 Brave 调用仍不恢复；不授权重跑。原证明、账本历史和收据保留，不变更计费设置。参见 [ADR-0111](ADR/0111-brave-shared-free-only.md#one-fixed-private-manual-canary-separate-from-business-restoration)和[固定版原验收基线](https://github.com/ctmaomao/gfrr-auto-update-site/blob/989d67b650903e461d16d38916594ddda84dc37a/docs/PROJECT_BACKLOG.md#brave-private-manual-one-shot-acceptance-baseline--november-18-2026)。
 
 ## Section 1 · 维护状态
 
@@ -33,11 +30,11 @@ Owner-requested safe restoration: preserve fee protection and historical receipt
 <a id="active-worktable"></a>
 ### 单一工作表 · 当前推进队列
 
-本轮核对基线：2026-11-19 main `b005131f`（仅更新 Daily、World Order 与 Macro 接续状态）。本表统一调度当前工作；下方专题条目保留事实、验收细节与证据，不另建平行待办。状态只代表列明阶段，不把已合并、已部署或任务已运行等同于自然采用。未重新检查的项目保持待核验；新证据到达时直接更新本行，不追加重复任务。
+本轮核对基线：2026-11-19 main `989d67b6`（仅补核 #675 合并与发布回执）。本表统一调度当前工作；下方专题条目保留事实、验收细节与证据，不另建平行待办。状态只代表列明阶段，不把已合并、已部署或任务已运行等同于自然采用。未重新检查的项目保持待核验；新证据到达时直接更新本行，不追加重复任务。
 
 | 工作包 / 优先级 | 当前阶段与价值 | 单一职责 / 下一步 | 阻塞与完成标准 |
 |---|---|---|---|
-| 交付与自然采用 / P0 | 周报 r3 已发布，待 11/24 09:00 Auckland 自然首验；[11/19 Daily 与 World Order](#nov-19-natural-adoption) 已验收正常发布及双站原件，#661 仅触发、未进入 OFR 准入 | 主动改进跟踪周报首验及 Daily／World Order 启动延迟；Actions 日检只处理失败 | 不为验收盲目重跑或调用 provider；按下方专题及[周报契约](../weekly-reports/README.md)分别留证，代码、产物、线上一致后关闭对应项 |
+| 交付与自然采用 / P0 | 周报 r3 待 11/24 09:00 Auckland 自然首验；[11/19 Daily 与 World Order](#nov-19-natural-adoption) 已验正常发布及双站原件，#661 仅触发、未进入 OFR 准入。World Order → EdgeOne [#675](https://github.com/ctmaomao/gfrr-auto-update-site/pull/675) 已合并 `de6a4b4b`，[PR CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44464471266) 与该提交 push 部署 [Pages](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44468054044)／[EdgeOne](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44468053976) 成功；直接接线待自然采用，11/19 修复前的油市随带不是验收 | 主动改进跟踪周报首验及 Daily／World Order 启动延迟，并核对下一次自然定时成功的 World Order 是否直接触发 EdgeOne 与实际检出的源码 SHA；Actions 日检只处理失败 | 按[双站排查](OPERATIONS.md#static-publication)核对绑定的 release commit、生产部署和两个域名的原件，无内容变化则核对完整树一致的有效早退回执；不得用其它触发补发代替。其它事项按专题及[周报契约](../weekly-reports/README.md)分别留证，代码、产物、线上一致后关闭；不盲目重跑或调用 provider |
 | Bubble 全量恢复 / P1 | 等待下一次自然全量更新，不能用 credit-only partial 代替 | 既有一次性核验负责首验；主动改进仅接未解决项 | 全量代码路径、生成与检查、提交、两站实物一致；无新运行时保持等待，不重复取数 |
 | 来源质量 / P1 | #637–#640、#652 CARTS、#654 CRE 均已验收自然 Daily 正常路径与双站；CARTS/CRE 的缺槽、缺周和失败降级仅离线验证，热观察旧三源比较未恢复 | 主动改进按[验收快照](#recent-data-fix-acceptance)逐项更新；每日 Actions 发现新增失败才转修复 | 观察日期、缺失语义与实际消费路径一致；无效/未知不填零，不把绿色 workflow 当数据完整证明 |
 | 私有预算与安全恢复 / P1 | DeepSeek 共享预算未初始化；#661 在准入前跳过（见[自然接续回执](#nov-19-natural-adoption)），账本及 proof 代码与真实激活分离 | 主动改进限定单包；复杂约束先独立设计复核，再做最小闭环 | 保留 CNY 10 合并预算、凭据保密、原账本与 receipts；不伪造证据、不绕过 disabled。下方专题及 ADR 是具体步骤，旧自设门槛可审查改进但不得默默绕开 |
