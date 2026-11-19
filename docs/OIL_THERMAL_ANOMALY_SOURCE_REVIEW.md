@@ -248,8 +248,20 @@ source/area matrices and mixed cohorts. Its totals describe only the supplied
 complete receipts, not an uninterrupted run history. Aggregate HTTP bodies,
 parsed zeros, parse failures, request failures and unattempted retired slots are
 separate. Unique captures/revisions are counted **within each run and then
-summed**; repeated identities across runs may count again. No individual data
-or hashes are output. A parsed zero is not a clear view or evidence that an
+summed** in `bySource`; repeated identities across runs may count again there.
+Separately, `suppliedReceiptCaptureOverlapBySource` counts stable capture IDs
+once across the supplied receipts (`unionUniqueCaptures`) and counts how many
+appear in at least two supplied receipts (`capturesInMultipleReceipts`).
+A receipt is keyed by run ID plus attempt; retries of one run can overlap and
+do not imply two independently scheduled runs. For two receipts this second
+count is their intersection. For example, if 11
+captures in one receipt all appear in a second receipt of 31, the union is 31
+and the intersection is 11. The other 20 are present only in the second of
+these two receipts, not historically first seen. This comparison is
+order-independent, does not deduplicate the run-scoped revision totals, and
+does not infer a distinct facility, an incident, or coverage. An ID with
+conflicting visible identity fields across receipts is rejected. No
+individual data or hashes are output. A parsed zero is not a clear view or evidence that an
 incident did not happen; coverage, spatial coverage, overpass and cloud quality
 remain unknown. The result is ineligible for evaluation or main scoring and
 does not establish cross-run first seen.
