@@ -6,8 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { buildPagesArtifact } from './build-pages-artifact.mjs';
 import { buildStagingDirectory, checkStagingDirectory } from './build-edgeone-release-artifact.mjs';
 
-const SOURCE_URL = 'https://github.com/ctmaomao/gfrr-auto-update-site.git';
-const RELEASE_URL = 'https://github.com/ctmaomao/gfrr-edgeone-release.git';
+const SOURCE_REPO = 'ctmaomao/gfrr-auto-update-site';
+const RELEASE_REPO = 'ctmaomao/gfrr-edgeone-release';
+const SOURCE_URL = 'https://github.com/' + SOURCE_REPO + '.git';
+const RELEASE_URL = 'https://github.com/' + RELEASE_REPO + '.git';
 const MAIN = 'refs/heads/main';
 const SHA = /^[a-f0-9]{40}$/u;
 const checkout = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -49,10 +51,30 @@ export function compareEdgeOneTree({ staging, scratch, sourceSha, sourceUrl = SO
   }
 }
 
+export function isScheduledWorldOrderCompletion({ eventName, ref, repository, event }) {
+  const run = event?.workflow_run;
+  return eventName === 'workflow_run' && ref === MAIN && repository === SOURCE_REPO
+    && event?.action === 'completed' && run?.status === 'completed' && run.conclusion === 'success'
+    && run.event === 'schedule' && run.head_branch === 'main'
+    && run.name === 'Refresh World Order Stress' && run.path === '.github/workflows/refresh-world-order-stress.yml'
+    && [event.repository, run.repository, run.head_repository].every(repo => repo?.full_name === SOURCE_REPO);
+}
+
+export function isEdgeOneNoopTrigger(context) {
+  return context.ref === MAIN && context.repository === SOURCE_REPO && context.releaseRepository === RELEASE_REPO
+    && (context.eventName === 'schedule' || isScheduledWorldOrderCompletion(context));
+}
+
+function eventContext() {
+  const { GITHUB_EVENT_NAME: eventName, GITHUB_REF: ref, GITHUB_REPOSITORY: repository,
+    RELEASE_REPOSITORY: releaseRepository, GITHUB_EVENT_PATH: eventPath } = process.env;
+  // GitHub supplies this file. Never use a workflow_run checkout or producer artifact.
+  const event = eventName === 'workflow_run' ? JSON.parse(readFileSync(eventPath, 'utf8')) : undefined;
+  return { eventName, ref, repository, releaseRepository, event };
+}
+
 function review() {
-  if (process.env.GITHUB_EVENT_NAME !== 'schedule' || process.env.GITHUB_REF !== MAIN
-    || process.env.GITHUB_REPOSITORY !== 'ctmaomao/gfrr-auto-update-site'
-    || process.env.RELEASE_REPOSITORY !== 'ctmaomao/gfrr-edgeone-release') return { reason: 'not_admitted' };
+  if (!isEdgeOneNoopTrigger(eventContext())) return { reason: 'not_admitted' };
   const { scripts } = JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8'));
   if (scripts['build:pages-artifact'] !== 'node scripts/build-pages-artifact.mjs'
     || 'prebuild:pages-artifact' in scripts || 'postbuild:pages-artifact' in scripts) return { reason: 'build_entry_changed' };
@@ -76,6 +98,18 @@ function review() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv[2] === '--admit-world-order') {
+    let admitted = false;
+    try { admitted = isScheduledWorldOrderCompletion(eventContext()); }
+    catch { /* Missing or unreadable trigger metadata cannot authorize publication. */ }
+    if (admitted) appendFileSync(process.env.GITHUB_OUTPUT, 'admitted=true\n');
+    else console.log('World Order completion not admitted.');
+  } else {
+    runProof();
+  }
+}
+
+function runProof() {
   let result;
   try { result = review(); }
   catch { result = { reason: 'proof_unavailable' }; }

@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
   workflow_run:
     # Producers can commit after an earlier publisher pins main.
-    # Successful completion queues a fresh checkout (ADR-0119).
-    workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch, Build Daily Radar Data]
+    # Successful completion queues a fresh checkout (the existing ADR-0119 pattern).
+    workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch, Build Daily Radar Data, Refresh World Order Stress]
     types: [completed]
     branches: [main]
   schedule:
@@ -48,6 +48,7 @@ jobs:
       contents: read
       actions: read
     outputs:
+      world_order_admitted: ${{ steps.world_order.outputs.admitted }}
       should_publish: ${{ (steps.review.outcome != 'success' || steps.review.outputs.should_publish != 'false') && (steps.noop.outcome != 'success' || steps.noop.outputs.identical != 'true') }}
     steps:
       - name: Checkout publication admission code
@@ -63,15 +64,22 @@ jobs:
           node-version: 24
           package-manager-cache: false
 
+      # Match either identity field to subject mismatches to the same fail-closed gate.
+      - name: Admit scheduled World Order completion
+        if: github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'Refresh World Order Stress' || github.event.workflow_run.path == '.github/workflows/refresh-world-order-stress.yml')
+        id: world_order
+        run: node scripts/review-edgeone-noop.mjs --admit-world-order
+
       - name: Review upstream publication admission
+        if: steps.world_order.outcome == 'skipped' || steps.world_order.outputs.admitted == 'true'
         id: review
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/review-pages-deployment.mjs --upstream-only
 
-      - name: Prove scheduled EdgeOne artifact is unchanged
-        if: github.event_name == 'schedule' && steps.review.outcome == 'success' && steps.review.outputs.should_publish == 'true'
+      - name: Prove eligible EdgeOne artifact is unchanged
+        if: (github.event_name == 'schedule' || steps.world_order.outputs.admitted == 'true') && steps.review.outcome == 'success' && steps.review.outputs.should_publish == 'true'
         id: noop
         continue-on-error: true
         timeout-minutes: 2
@@ -84,7 +92,14 @@ jobs:
 
   publish:
     needs: publication_check
-    if: ${{ !cancelled() && (needs.publication_check.result != 'success' || needs.publication_check.outputs.should_publish != 'false') && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
+    # A failed/missing World Order admission is not an inconclusive artifact proof.
+    if: >-
+      ${{ !cancelled()
+          && (needs.publication_check.result != 'success' || needs.publication_check.outputs.should_publish != 'false')
+          && github.ref == 'refs/heads/main'
+          && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success'
+              && ((github.event.workflow_run.name != 'Refresh World Order Stress' && github.event.workflow_run.path != '.github/workflows/refresh-world-order-stress.yml')
+                  || needs.publication_check.outputs.world_order_admitted == 'true'))) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

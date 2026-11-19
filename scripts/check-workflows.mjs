@@ -121,9 +121,16 @@ const contracts = [
     file: '.github/workflows/publish-edgeone-release.yml',
     required: [
       'name: Publish EdgeOne Release Channel',
-      // ADR-0119 retains all six existing triggers and adds the Daily
-      // completion tail; no source refresh or broad data push trigger.
-      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch, Build Daily Radar Data]',
+      // Daily and the schedule-only World Order tail use the existing named
+      // completion pattern (ADR-0119); no source refresh or broad data push.
+      'workflows: [Macro Risk Editorial Refresh, Bubble Watch Weekly Editorial Refresh, Bubble Watch Editorial Follow-up, Refresh Oil Directional Pressure, Refresh Oil News Event Watch, Refresh Oil Thermal Watch, Build Daily Radar Data, Refresh World Order Stress]',
+      "if: github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'Refresh World Order Stress' || github.event.workflow_run.path == '.github/workflows/refresh-world-order-stress.yml')",
+      'run: node scripts/review-edgeone-noop.mjs --admit-world-order',
+      'world_order_admitted: ${{ steps.world_order.outputs.admitted }}',
+      "if: steps.world_order.outcome == 'skipped' || steps.world_order.outputs.admitted == 'true'",
+      "&& ((github.event.workflow_run.name != 'Refresh World Order Stress' && github.event.workflow_run.path != '.github/workflows/refresh-world-order-stress.yml')",
+      "|| needs.publication_check.outputs.world_order_admitted == 'true')",
+      "if: (github.event_name == 'schedule' || steps.world_order.outputs.admitted == 'true') && steps.review.outcome == 'success' && steps.review.outputs.should_publish == 'true'",
       'types: [completed]',
       'branches: [main]',
       'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true',
