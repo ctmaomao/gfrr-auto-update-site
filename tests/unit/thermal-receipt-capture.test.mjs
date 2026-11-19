@@ -83,10 +83,29 @@ test('manifest is whitelisted and finalize compares expected requests without cl
   assert.throws(()=>createThermalReceiptCapture({...manifest,checkoutSha:'SECRET_CANARY'}));
 });
 
-test('processing version is nullable revision content, not observation identity',()=>{
-  const c=createThermalReceiptCapture();c.record(receipt());c.record(receipt([{...row,version:'2.0NRT'}]));
-  const s=c.snapshot();assert.equal(s.observations.length,1);assert.deepEqual(s.observations[0].revisions.map(r=>r.processingVersion),[null,'2.0NRT']);
-  c.record(receipt([{...row,version:'SECRET_CANARY'}]));assert.equal(c.snapshot().receipts.at(-1).invalidIdentityRowCount,1);assert.ok(!JSON.stringify(c.snapshot()).includes('SECRET_CANARY'));
+test('processing version is normalized only for missing or empty input and remains revision content', () => {
+  const c = createThermalReceiptCapture();
+  for (const version of [undefined, null, '', '6.1URT', '6.1RT', '6.1NRT', '61.10.99']) {
+    c.record(receipt([{ ...row, instrument: 'MODIS', satellite: 'T', confidence: '85', version }], { source: 'MODIS_NRT' }));
+  }
+  const snapshot = c.snapshot();
+  assert.equal(snapshot.complete, true);
+  assert.equal(snapshot.observations.length, 1);
+  assert.deepEqual(snapshot.observations[0].revisions.map(r => r.processingVersion),
+    [null, '6.1URT', '6.1RT', '6.1NRT', '61.10.99']);
+});
+
+test('processing version rejects unsupported strings and nonstring input without leaking raw values', () => {
+  for (const version of ['SECRET_CANARY', 2, {}, '2.0rt', '2.0RT ', '2.0URT\n', '2.0RTURT',
+    '2.0.0.1RT', '2.001URT', 'URT']) {
+    const c = createThermalReceiptCapture();
+    c.record(receipt([{ ...row, version }]));
+    const snapshot = c.snapshot();
+    assert.equal(snapshot.complete, false);
+    assert.equal(snapshot.receipts[0].invalidIdentityRowCount, 1);
+    assert.equal(snapshot.observations.length, 0);
+    assert.ok(!JSON.stringify(snapshot).includes('SECRET_CANARY'));
+  }
 });
 
 test('duplicate logical request cannot satisfy an expected denominator and invalid validation clock stays incomplete',()=>{

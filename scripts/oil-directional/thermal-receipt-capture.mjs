@@ -20,6 +20,9 @@ function coordinate(value, limit) {
 export function matchesThermalObservationProduct(source, instrument, satellite) {
   return Object.hasOwn(PRODUCTS, source) && instrument === PRODUCTS[source][0] && PRODUCTS[source].slice(1).includes(satellite);
 }
+export function isThermalProcessingVersion(value) {
+  return value === null || typeof value === 'string' && /^\d{1,2}(?:\.\d{1,2}){0,2}(?:NRT|RT|URT)?$/.test(value);
+}
 function observation(row, source, receivedAt) {
   demand(matchesThermalObservationProduct(source, row.instrument, row.satellite));
   const latitude = coordinate(row.latitude, 90), longitude = coordinate(row.longitude, 180);
@@ -31,7 +34,7 @@ function observation(row, source, receivedAt) {
   demand(source === 'MODIS_NRT' ? /^(?:100|\d{1,2})$/.test(confidence) : ['l', 'n', 'h'].includes(confidence));
   demand(['D', 'N'].includes(row.daynight));
   const processingVersion = row.version == null || row.version === '' ? null : row.version;
-  demand(processingVersion === null || typeof processingVersion === 'string' && /^\d{1,2}(?:\.\d{1,2}){0,2}(?:NRT)?$/.test(processingVersion));
+  demand(isThermalProcessingVersion(processingVersion));
   const identity = { source, instrument: row.instrument, satellite: row.satellite, acquiredAt, latitude, longitude };
   return { observationId: hash(identity), ...identity, content: { frp, confidence, daynight: row.daynight, processingVersion } };
 }
