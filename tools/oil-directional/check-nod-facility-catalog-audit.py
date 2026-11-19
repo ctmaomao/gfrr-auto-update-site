@@ -98,7 +98,7 @@ def check(archive, fixture=FIXTURE):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit("Usage: python3 scripts/oil-directional/check-nod-facility-catalog-audit.py /path/to/fclPoint.zip")
+        sys.exit("Usage: python3 tools/oil-directional/check-nod-facility-catalog-audit.py /path/to/fclPoint.zip")
     try:
         check(Path(sys.argv[1]))
     except (ValueError, KeyError, OSError, csv.Error, zipfile.BadZipFile) as error:

@@ -53,7 +53,7 @@ def check(pdf: Path) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit("Usage: python3 scripts/oil-directional/check-eia-refinery-context-audit.py /path/to/table1.pdf")
+        sys.exit("Usage: python3 tools/oil-directional/check-eia-refinery-context-audit.py /path/to/table1.pdf")
     try:
         check(Path(sys.argv[1]))
     except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
