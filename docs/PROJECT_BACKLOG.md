@@ -15,7 +15,7 @@
 |---|---|
 | Release/display version | `v28.0.10`；以 package.json / release 定义为准 |
 | Data/decision contract version | `data.version` / `decisionModel.contractVersion` 保持 `v27.0`，不可机械同步展示版本 |
-| Cache version | `thermal-baseline-display-20261119` |
+| Cache version | [scripts/app.js](../scripts/app.js) 中的 `APP_VERSION` |
 | 前端输入 | 首页读取静态 JSON；默认入口与跨页导航见 [DESIGN §4.5](../DESIGN.md#45-周报默认入口与三标签2026-11-09)；`scripts/modules/realtime.js` 冻结、未接入 |
 | 雷达主读数 | OFR 已发表 FSI；旧模型保留审计，旧公开仓位/状态/风险预算/动作建议已退役，不把百分位当风险分或概率 |
 | Worker / Daily | `/market.worker-preview.json` 是 Worker 主预览，secondary 只作诊断；Daily 仍消费 `realtime-data` |
