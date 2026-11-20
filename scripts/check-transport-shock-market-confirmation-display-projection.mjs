@@ -53,8 +53,9 @@ function assert(condition, message) {
 function assertScriptSafety() {
   assert(fs.existsSync(absolute(PROJECT_SCRIPT)), 'Transport shock market-confirmation display projection script is missing.');
   const source = readText(PROJECT_SCRIPT);
+  const cli = readText('scripts/lib/transport-display-projection-cli.mjs');
   for (const marker of SCRIPT_FORBIDDEN_MARKERS) {
-    assert(!source.includes(marker), `Projection script contains forbidden marker: ${marker}`);
+    assert(!source.includes(marker) && !cli.includes(marker), `Projection script contains forbidden marker: ${marker}`);
   }
   for (const marker of [
     'dry-run-only Transport Shock market-confirmation display projection',
