@@ -162,7 +162,6 @@ function assertSuiteWiring() {
 function assertImplementationSource() {
   const source = readText(IMPLEMENTATION_PATH);
   for (const marker of [
-    'query1.finance.yahoo.com/v8/finance/chart',
     '%5ENDX',
     '%5EIXIC',
     'marketPricingDailyOnly',
@@ -173,7 +172,10 @@ function assertImplementationSource() {
   }
   const cliPath = 'scripts/market-pricing/yahoo-history-refresh-cli.mjs';
   assert(source.includes("from './yahoo-history-refresh-cli.mjs'"), 'the Yahoo refresh CLI helper must remain covered by the source guard');
-  assertNoMarkersInFiles([IMPLEMENTATION_PATH, cliPath], ['process.env', 'wrangler', 'KV', '.github/workflows'], 'Daily/manual boundary');
+  const chartPath = 'scripts/market-pricing/yahoo-weekly-chart.mjs';
+  assert(source.includes("from './yahoo-weekly-chart.mjs'") && readText(chartPath).includes('query1.finance.yahoo.com/v8/finance/chart'),
+    'the Yahoo refresh must use the shared Yahoo chart endpoint');
+  assertNoMarkersInFiles([IMPLEMENTATION_PATH, cliPath, chartPath], ['process.env', 'wrangler', 'KV', '.github/workflows'], 'Daily/manual boundary');
 }
 
 function assertWorkerBoundary() {
