@@ -1,0 +1,44 @@
+{
+  "scope": "Norwegian continental-shelf reported monthly net oil. Field registry is a later snapshot, not the August operational record. No platform assignment.",
+  "retrievedDateUtc": "2026-11-20",
+  "period": [2026, 8],
+  "sources": [
+    {
+      "table": "https://factmaps.sodir.no/api/rest/services/DataService/Data/FeatureServer/7100/query",
+      "where": "1=1",
+      "outFields": "fldNpdidField,fldCurrentActivitySatus,fldHcType",
+      "orderByFields": "fldNpdidField",
+      "returnGeometry": false,
+      "f": "json",
+      "bytes": 14770,
+      "sha256": "4a6c5a403961dbe17a57b0590ca53fcca2ab5e8fa3ada589fa00bce5f55ab699"
+    },
+    {
+      "table": "https://factmaps.sodir.no/api/rest/services/DataService/Data/FeatureServer/7300/query",
+      "where": "prfYear=2026 AND prfMonth=8",
+      "outFields": "prfNpdidInformationCarrier,prfInformationCarrierKind,prfYear,prfMonth,prfPrdOilNetMillSm3",
+      "orderByFields": "prfNpdidInformationCarrier",
+      "returnGeometry": false,
+      "f": "json",
+      "bytes": 16357,
+      "sha256": "fb66aabcfb4d32bd443d4f7f98c4db4ce1c3362109733d24ec0af7eeff6ef9ac"
+    }
+  ],
+  "aggregate": {
+    "registryRows": 142,
+    "matchedFieldRows": 106,
+    "counts": {
+      "FIELDRows": 106,
+      "DISCOVERYRows": 1,
+      "positive": 90,
+      "zero": 16,
+      "Producing:positive": 90,
+      "Producing:zero": 10,
+      "Shut down:zero": 6,
+      "Approved for production:noMonthlyRow": 11,
+      "Producing:noMonthlyRow": 2,
+      "Shut down:noMonthlyRow": 23
+    },
+    "oilNetMillionSm3": {"DISCOVERY": "0.004563", "FIELD": "9.237999"}
+  }
+}
