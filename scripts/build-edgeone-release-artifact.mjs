@@ -249,7 +249,7 @@ export function buildStagingDirectory({ outDir, artifactDir = DEFAULT_ARTIFACT_D
  * configuration and the pages in that directory, then comparing structure and policy in full.
  * Comparing hashes alone would accept a document whose other directives were rewritten.
  */
-export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_PATH, artifactDir = null, manifestPath = null, trustAnchorSupplied = false }) {
+export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_PATH, artifactDir = null, manifestPath = null }) {
   const target = resolve(stagingDir);
   if (!existsSync(target)) throw new Error(`staging directory does not exist: ${target}`);
   const config = validateCspConfig(JSON.parse(readFileSync(configPath, 'utf8')));
@@ -260,31 +260,28 @@ export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_
   // 1. Structure: compare against a trusted expectation when one is available. The result must be
   //    READ, not merely produced — calling the validator and discarding its problems would report a
   //    tree with extra or missing files as passing.
-  let hasAnchor = trustAnchorSupplied;
   let structure = null;
   try {
     if (manifestPath) {
       structure = validateStagingAgainstExpectation(target, readManifest(manifestPath));
-      hasAnchor = true;
     } else if (artifactDir) {
       assertNoSymlinks(artifactDir, 'input artifact');
       structure = validateStagingAgainstExpectation(target, { artifactDir });
-      hasAnchor = true;
     }
   } catch (error) {
     problems.push(error.message);
-    hasAnchor = true;
   }
   if (structure && !structure.ok) problems.push(...structure.problems);
-  if (!hasAnchor) {
+  if (!manifestPath && !artifactDir) {
     problems.push('no trusted expectation was supplied: pass --artifact-dir or --manifest '
       + '(otherwise missing and extra files cannot be detected)');
   }
 
+  const checkedStructure = structure !== null;
   const documentPath = resolve(target, 'edgeone.json');
   if (!existsSync(documentPath)) {
     problems.push('edgeone.json is missing');
-    return { ok: false, state, problems, fingerprint: null, checkedStructure: hasAnchor };
+    return { ok: false, state, problems, fingerprint: null, checkedStructure };
   }
   const document = JSON.parse(readFileSync(documentPath, 'utf8'));
 
@@ -296,7 +293,7 @@ export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_
     expected = expectedDocumentFor(target, config);
   } catch (error) {
     problems.push(`cannot derive the expected document: ${error.message}`);
-    return { ok: false, state, problems, fingerprint: fingerprintDirectory(target), checkedStructure: hasAnchor };
+    return { ok: false, state, problems, fingerprint: fingerprintDirectory(target), checkedStructure };
   }
   if (!documentsEqual(document, expected.json)) {
     problems.push('document differs from the document regenerated from this configuration and these pages');
@@ -329,7 +326,7 @@ export function checkStagingDirectory({ stagingDir, configPath = DEFAULT_CONFIG_
     problems,
     policy: expected.policy,
     fingerprint: fingerprintDirectory(target),
-    checkedStructure: hasAnchor,
+    checkedStructure,
   };
 }
 
@@ -383,7 +380,6 @@ function main() {
         configPath,
         artifactDir: options.artifactDir ? artifactDir : null,
         manifestPath: options.manifestPath ? resolve(options.manifestPath) : null,
-        trustAnchorSupplied: Boolean(options.artifactDir || options.manifestPath),
       });
       console.log(`edgeone staging check: ${result.ok ? 'PASS' : 'FAIL'} (state=${result.state}, structure=${result.checkedStructure ? 'checked against a trusted expectation' : 'NOT checked'})`);
       console.log(`  fingerprint: ${result.fingerprint}`);

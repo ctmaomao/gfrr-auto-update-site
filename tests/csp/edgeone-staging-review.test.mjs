@@ -334,14 +334,20 @@ test('withAdditionalHashes keeps the shared template and appends only what is as
 // ---------------------------------------------------------------------------
 
 test('check requires a trusted expectation and says so when none was supplied', () => {
-  const { outDir, configPath } = buildStaging('anchor-required');
+  const { outDir, configPath, artifact } = buildStaging('anchor-required');
   const withoutAnchor = checkStagingDirectory({ stagingDir: outDir, configPath });
   assert.equal(withoutAnchor.ok, false);
   assert.equal(withoutAnchor.checkedStructure, false);
   assert.ok(withoutAnchor.problems.some((problem) => /no trusted expectation was supplied/u.test(problem)));
 
+  assert.deepEqual(checkStagingDirectory({ stagingDir: outDir, configPath, trustAnchorSupplied: true }), withoutAnchor);
   const withAnchor = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: resolve(outDir, '..', 'artifact-missing') });
   assert.equal(withAnchor.ok, false, 'a non-existent artifact directory cannot serve as the anchor');
+  assert.equal(withAnchor.checkedStructure, false);
+  const invalidManifest = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact, manifestPath: configPath });
+  assert.equal(invalidManifest.ok, false, 'an invalid manifest must not fall back to a valid artifact');
+  assert.equal(invalidManifest.checkedStructure, false);
+  assert.ok(invalidManifest.problems.some(problem => problem.includes('is not a edgeone-staging-manifest-v1 document')));
 });
 
 test('check rejects an extra file and a missing file against the artifact directory', () => {
@@ -351,6 +357,7 @@ test('check rejects an extra file and a missing file against the artifact direct
   writeFileSync(resolve(outDir, 'unexpected.js'), 'console.log(1)');
   const extra = checkStagingDirectory({ stagingDir: outDir, configPath, artifactDir: artifact });
   assert.equal(extra.ok, false);
+  assert.equal(extra.checkedStructure, true, 'a completed comparison can reject the tree');
   assert.ok(extra.problems.some((problem) => /unexpected file in staging/u.test(problem)));
 });
 
