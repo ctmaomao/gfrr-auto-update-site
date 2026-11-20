@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { isManualArtifactPath, safeRelativePath } from '../lib/check-script-helpers.mjs';
+import { isManualArtifactPath } from '../lib/check-script-helpers.mjs';
 import { createHash } from 'node:crypto';
+import { expandInputFiles, isSafeInputPath } from './oil-news-review-input-files.mjs';
 import { WATCH_PATH, readCommitRows, readWatchAtCommit } from './oil-news-watch-history.mjs';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, extname, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 
 const REVIEW_VERSION = 'oil-news-claim-ledger-p52';
@@ -179,20 +180,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function isFixturePath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return Boolean(relativePath && relativePath.startsWith('docs/fixtures/'));
-}
-
-function isProductionWatchPath(filePath) {
-  const relativePath = safeRelativePath(filePath);
-  return relativePath === WATCH_PATH;
-}
-
-function isSafeInputPath(filePath) {
-  return isManualArtifactPath(filePath) || isFixturePath(filePath) || isProductionWatchPath(filePath);
-}
-
 function isSafeOutputPath(filePath) {
   return isManualArtifactPath(filePath);
 }
@@ -210,20 +197,6 @@ function finiteNumber(value, fallback = 0) {
 
 function round(value, digits = 3) {
   return Number.isFinite(value) ? Number(value.toFixed(digits)) : null;
-}
-
-function expandInputFiles(options) {
-  const files = [...options.inputs];
-  for (const inputDir of options.inputDirs) {
-    const absoluteDir = resolve(inputDir);
-    if (!existsSync(absoluteDir)) throw new Error(`Input directory does not exist: ${inputDir}`);
-    const jsonFiles = readdirSync(absoluteDir)
-      .filter((name) => extname(name).toLowerCase() === '.json' && !name.endsWith('.archive-meta.json'))
-      .sort((a, b) => a.localeCompare(b))
-      .map((name) => `${inputDir.replace(/\\/g, '/')}/${name}`);
-    files.push(...jsonFiles);
-  }
-  return [...new Set(files)];
 }
 
 function readInputFile(filePath) {
