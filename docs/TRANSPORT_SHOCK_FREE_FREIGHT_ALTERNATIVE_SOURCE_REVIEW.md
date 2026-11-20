@@ -25,6 +25,16 @@ Owner 已授权依次调查、实施可做事项、验证、commit+push、独立
 
 现行免费物理代理继续按已批准契约运行，不升级为路线运价确认。新的可实施替代源至少须给出具体产品/endpoint、范围/频率、费用、留存期限、公开 JSON 与衍生成果权利及署名条件，并通过粒度、现货/期货、时效、缺失与修订口径复核。若有明确免费许可或合适的官方开放 API，再做有界读取、失败隔离及独立来源接入评审；若只有历史船流量或需付费的运价，不声称已解决等价替代。本轮来源复核可关闭，**来源恢复/替换仍受外部许可和数据适用性阻塞**。
 
+## Census monthly shadow intake (2026-11-20)
+
+The [U.S. Census import archive](https://www.census.gov/foreign-trade/data/dataproducts.html) provides a separate national monthly cost measure. From the [IMP_COMM layout](https://www.census.gov/foreign-trade/reference/products/layouts/imdb.html), sum same-month U.S. general vessel shipping weight and [import charges](https://www.census.gov/foreign-trade/reference/definitions/index.html) across HTS10 codes starting `270900`, then calculate `charges_usd × 1000 / weight_kg`. Charges include freight, insurance and other transport costs, not duties. This is not a route, tanker class, spot assessment, TCE or clean freight-only series; origin mix and insurance can move it.
+
+Run `python3 tools/oil-directional/fetch-census-import-cost.py 2025-11` to read just the public national commodity member by bounded HTTPS ranges. The November 2025 archive independently reproduced **US$17.17245/metric tonne** (US$139,629,980 / 8,131,046,060 kg). The September 2026 archive returned **US$22.51436/metric tonne** in five requests with 2,754,234 response bytes. With no strong ETag, the collector checks matching ZIP member directory metadata before and after reading and validates its CRC; the second directory request may be served by a CDN cache. It records the extracted member hash and all observed range modification clocks, not an immutable upstream edition. No raw archive or records were saved. The independent [monthly workflow](../.github/workflows/census-import-cost-shadow.yml) defaults to the statistical month two months prior and archives only successful derived summaries for 30 days; it never rewrites the site or the last good data. It records statistical month, archive evidence and retrieval time separately, not first publication or point-in-time availability. No credentials, paid service, model input or production publish hook.
+
+VLCC's public [route CSV](https://github.com/Data4ThePeople/VLCC/blob/main/data/baltic_td3c_weekly.csv) includes vintage-sensitive estimates. Its August 14, 2026 Worldscale value was reconstructed from the August 21 report, and its TCE interpolated. Row date is not knowledge date; exclude these estimates from a primary walk-forward test and require per-metric first-known evidence on all observed rows. GFRR already uses its own upstream Brent/WTI inputs; a mirror of them is not an independent signal.
+
+Before score use: compare detection and incremental false alerts against existing PortWatch on frozen independent disruption/control windows with capped-score ablation. Before oil forecast use: use a separate preregistered horizon, lag-aware walk-forward test, skill against the existing oil model and a naive baseline, and uncertainty; do not use revised archives as first-release vintages. The Census job is only a research input for those tests, not an authorization to activate either model path.
+
 ## Purpose
 
 This review defines the legal free-source fallback path when licensed Baltic TD/TC route assessment values are unavailable.
