@@ -1,0 +1,53 @@
+name: Census Crude Import Cost Shadow
+
+on:
+  schedule:
+    - cron: '17 18 20 * *'
+  workflow_dispatch:
+    inputs:
+      month:
+        description: Closed statistical month (YYYY-MM); blank selects two months ago
+        required: false
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONDONTWRITEBYTECODE: '1'
+  TZ: UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: census-import-cost-shadow
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Test parser and range boundaries
+        run: python3 -m unittest discover -s tools/oil-directional -p 'test_*census_import_cost.py'
+      - name: Read official national monthly archive
+        env:
+          REQUEST_MONTH: ${{ inputs.month }}
+        run: |
+          set -euo pipefail
+          month="${REQUEST_MONTH:-$(date -u -d "$(date -u +%Y-%m-01) -2 months" +%Y-%m)}"
+          output="$RUNNER_TEMP/census-import-cost-summary.json"
+          python3 tools/oil-directional/fetch-census-import-cost.py "$month" > "$output"
+          jq -e --arg month "$month" '.result.status == "ok" and .result.period == $month
+            and .eligibleForMainScore == false and .eligibleForPricePrediction == false' "$output" >/dev/null
+          jq -r '"Statistical month: \(.result.period)\n\nMatched U.S. vessel import charges: USD \(.result.usdPerMetricTonne)/metric tonne (includes insurance and other charges). Not a route quote or a score input."' "$output" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload only the derived summary
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: census-import-cost-shadow-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/census-import-cost-summary.json
+          if-no-files-found: error
+          retention-days: 30
