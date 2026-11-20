@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { isTransportShockManualArtifactPath as isManualArtifactPath, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readJson, safeRelativePath, writeJson, transportAuditImpact } from './lib/check-script-helpers.mjs';
+import { parseDisplayProjectionArgs } from './lib/transport-display-projection-cli.mjs';
 import process from 'node:process';
 
 const SCHEMA_VERSION = 'transport-shock-confirmation-factor-display-projection-v1';
@@ -26,61 +25,6 @@ Boundary:
   Reads only manual-artifacts/transport-shock-confirmation-factor/ or docs/fixtures/transport-shock-confirmation-factor/.
   Writes only manual-artifacts/transport-shock-confirmation-factor/.
   No network, env, production data, frontend, workflow, Worker, ODP finalBias, or main judgment scoring.`);
-}
-
-function isFixturePath(filePath) {
-  return safeRelativePath(filePath)?.startsWith('docs/fixtures/transport-shock-confirmation-factor/') === true;
-}
-
-function parseArgs(argv) {
-  const options = {
-    input: DEFAULT_INPUT,
-    output: DEFAULT_OUTPUT,
-    printJson: false,
-    writeOutput: true,
-    strict: false
-  };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--help' || arg === '-h') {
-      usage();
-      process.exit(0);
-    }
-    if (arg === '--json') {
-      options.printJson = true;
-      continue;
-    }
-    if (arg === '--no-output') {
-      options.writeOutput = false;
-      continue;
-    }
-    if (arg === '--strict') {
-      options.strict = true;
-      continue;
-    }
-    const nextValue = () => {
-      const value = argv[index + 1];
-      if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);
-      index += 1;
-      return value;
-    };
-    if (arg === '--input') options.input = nextValue();
-    else if (arg === '--output') options.output = nextValue();
-    else throw new Error(`Unknown argument: ${arg}`);
-  }
-  if (!isManualArtifactPath(options.input) && !isFixturePath(options.input)) {
-    throw new Error(`Refusing to read input outside allowed Transport Shock artifact paths: ${options.input}`);
-  }
-  if (options.writeOutput && !isManualArtifactPath(options.output)) {
-    throw new Error(`Refusing to write display projection outside manual-artifacts/transport-shock-confirmation-factor/: ${options.output}`);
-  }
-  return options;
-}
-
-function readShadow(inputPath) {
-  const absolutePath = resolve(inputPath);
-  if (!existsSync(absolutePath)) throw new Error(`Input file does not exist: ${inputPath}`);
-  return JSON.parse(readFileSync(absolutePath, 'utf8'));
 }
 
 function assertShadow(shadow) {
@@ -194,8 +138,8 @@ function printSummary(projection) {
 
 function main() {
   try {
-    const options = parseArgs(process.argv.slice(2));
-    const projection = buildProjection(readShadow(options.input), options);
+    const options = parseDisplayProjectionArgs(process.argv.slice(2), DEFAULT_INPUT, DEFAULT_OUTPUT, usage);
+    const projection = buildProjection(readJson(options.input), options);
     if (options.writeOutput) writeJson(options.output, projection);
     if (options.printJson) console.log(JSON.stringify(projection, null, 2));
     else printSummary(projection);
