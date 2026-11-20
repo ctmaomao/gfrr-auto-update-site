@@ -30,3 +30,20 @@ export function expandInputFiles(options) {
   }
   return [...new Set(files)];
 }
+
+export function validateNoForbiddenSerializedText(text, label) {
+  for (const needle of [
+    'TAVILY_API_KEY',
+    'TAVILY_API_KEYS',
+    'BRAVE_API_KEY',
+    'BRAVE_API_KEYS',
+    'Authorization',
+    'X-Subscription-Token',
+    'Bearer ',
+    '"snippet"',
+    '"body"',
+    '"rawResponse"'
+  ]) {
+    if (text.includes(needle)) throw new Error(`${label} contains forbidden marker: ${needle}`);
+  }
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { isManualArtifactPath } from '../lib/check-script-helpers.mjs';
-import { expandInputFiles, isSafeInputPath } from './oil-news-review-input-files.mjs';
+import { expandInputFiles, isSafeInputPath, validateNoForbiddenSerializedText } from './oil-news-review-input-files.mjs';
 import { WATCH_PATH, readCommitRows, readWatchAtCommit } from './oil-news-watch-history.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -154,23 +154,6 @@ function productionImpactFalseMap() {
     affectsGlobalRiskHeatmap: false,
     affectsCrossValidation: false
   };
-}
-
-function validateNoForbiddenSerializedText(text, label) {
-  for (const needle of [
-    'TAVILY_API_KEY',
-    'TAVILY_API_KEYS',
-    'BRAVE_API_KEY',
-    'BRAVE_API_KEYS',
-    'Authorization',
-    'X-Subscription-Token',
-    'Bearer ',
-    '"snippet"',
-    '"body"',
-    '"rawResponse"'
-  ]) {
-    if (text.includes(needle)) throw new Error(`${label} contains forbidden marker: ${needle}`);
-  }
 }
 
 function sourceIsLive(status) {
