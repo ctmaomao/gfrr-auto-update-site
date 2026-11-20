@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalizeWeeklyRecords, buildCoverage } from './yahoo-weekly-records.mjs';
+import { fetchYahooChart, RANGE, INTERVAL } from './yahoo-weekly-chart.mjs';
 import { createYahooHistoryRefreshCli } from './yahoo-history-refresh-cli.mjs';
 
 const { parseCliArgs, resolveHistoryFile, resolveArtifactPath, toProjectRelative } = createYahooHistoryRefreshCli({
@@ -26,10 +27,6 @@ const { parseCliArgs, resolveHistoryFile, resolveArtifactPath, toProjectRelative
 });
 const CONTRACT_VERSION = 'v28.0M-91-ndx-ixic-yahoo-history-refresh-1';
 const SOURCE_REVIEW_DOC = 'docs/MARKET_PRICING_NDX_IXIC_SOURCE_REVIEW_M91.md';
-const YAHOO_CHART_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart';
-const RANGE = '10y';
-const INTERVAL = '1wk';
-const TIMEOUT_MS = 8000;
 const DAILY_ONLY_MARKER = 'marketPricingDailyOnly';
 
 const ASSETS = {
@@ -73,37 +70,6 @@ function cloneJson(value) {
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function yahooChartUrl(config) {
-  return `${YAHOO_CHART_BASE}/${config.yahooEncodedSymbol}?range=${RANGE}&interval=${INTERVAL}`;
-}
-
-async function fetchYahooChart(config) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  const url = yahooChartUrl(config);
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'GFRRBot/1.0',
-        Referer: 'https://finance.yahoo.com/'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`yahoo_chart_http_${response.status}`);
-    }
-
-    return {
-      url,
-      json: await response.json()
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 function buildAssetHistory(config, records, sourceUrl, committedAt) {
@@ -204,7 +170,7 @@ export async function buildNdxIxicYahooHistoryRefreshReport(options = {}) {
 
   for (const assetKey of ASSET_KEYS) {
     const config = ASSETS[assetKey];
-    const fetched = await fetchYahooChart(config);
+    const fetched = await fetchYahooChart(config.yahooEncodedSymbol);
     const records = canonicalizeWeeklyRecords(config, fetched.json, { today: todayIso(), range: RANGE, interval: INTERVAL });
     if (records.length === 0) {
       throw new Error(`${assetKey}: no_valid_weekly_records`);

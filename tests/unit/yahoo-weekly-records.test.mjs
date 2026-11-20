@@ -77,3 +77,30 @@ test('shared refresh CLI keeps path defaults, argument order and error labels', 
     }
   }
 });
+
+test('Yahoo weekly chart shares exact endpoint, headers, failure and timeout behavior without network', async (t) => {
+  const { fetchYahooChart } = await import('../../scripts/market-pricing/yahoo-weekly-chart.mjs');
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.parse('2026-01-15T00:00:00Z') });
+  let reply = async () => ({ ok: true, json: async () => ({ chart: {} }) });
+  const mock = t.mock.method(globalThis, 'fetch', (...args) => reply(...args));
+  for (const symbol of ['QQQ', '%5ENDX', '%5EIXIC']) {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1wk`;
+    assert.deepEqual(await fetchYahooChart(symbol), { url, json: { chart: {} } });
+    const [actual, request] = mock.mock.calls.at(-1).arguments;
+    assert.equal(actual, url);
+    assert.deepEqual(request.headers, { 'User-Agent': 'GFRRBot/1.0', Referer: 'https://finance.yahoo.com/' });
+  }
+  reply = async () => ({ ok: false, status: 429 });
+  await assert.rejects(fetchYahooChart('QQQ'), { message: 'yahoo_chart_http_429' });
+  reply = async () => ({ ok: true, json: async () => { throw new SyntaxError('bad JSON'); } });
+  await assert.rejects(fetchYahooChart('QQQ'), { name: 'SyntaxError', message: 'bad JSON' });
+  reply = (_url, { signal }) => new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+  const pending = fetchYahooChart('QQQ');
+  const signal = mock.mock.calls.at(-1).arguments[1].signal;
+  t.mock.timers.tick(7999);
+  assert.equal(signal.aborted, false);
+  t.mock.timers.tick(1);
+  await assert.rejects(pending, { name: 'AbortError' });
+  assert.equal(mock.mock.callCount(), 6);
+  for (const call of mock.mock.calls.slice(0, -1)) assert.equal(call.arguments[1].signal.aborted, false);
+});
