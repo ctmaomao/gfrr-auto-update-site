@@ -1,7 +1,7 @@
 {
   "schemaVersion": "oil-thermal-watch-1",
   "module": "oil-thermal-watch",
-  "generatedAt": "2026-11-20T02:20:52.206Z",
+  "generatedAt": "2026-11-20T11:44:12.232Z",
   "source": "NASA FIRMS Area API",
   "sources": [
     "VIIRS_SNPP_NRT",
@@ -18,8 +18,8 @@
   },
   "freshness": {
     "windowDays": 1,
-    "latestAcqAt": null,
-    "latestAgeHours": null,
+    "latestAcqAt": "2026-11-20T09:00:00Z",
+    "latestAgeHours": 2.7,
     "cadenceZh": "分钟至数小时级;受卫星过境、云层、热源持续性和 FIRMS NRT 延迟影响"
   },
   "facilityCoverage": {
@@ -136,17 +136,23 @@
     ]
   },
   "aggregate": {
-    "rowCount": 0,
-    "latestAcqAt": null,
-    "maxFrp": null,
-    "confidenceCounts": {},
-    "highConfidenceCount": 0,
+    "rowCount": 72,
+    "latestAcqAt": "2026-11-20T09:00:00Z",
+    "maxFrp": 20.66,
+    "confidenceCounts": {
+      "n": 69,
+      "h": 3
+    },
+    "highConfidenceCount": 3,
     "frpOver50Count": 0,
     "frpOver100Count": 0,
-    "dayNightCounts": {},
-    "latestAgeHours": null,
+    "dayNightCounts": {
+      "N": 51,
+      "D": 21
+    },
+    "latestAgeHours": 2.7,
     "facilityCount": 42,
-    "facilitiesWithDetections": 0,
+    "facilitiesWithDetections": 12,
     "requestCount": 126,
     "requestErrorCount": 42,
     "requestDiagnostics": {
@@ -176,7 +182,9 @@
     "elevatedRepeatedObservationCount": 0,
     "facilitiesWithEstablishedBaseline": 42,
     "facilitiesByAnomalyLevel": {
-      "none_observed": 42
+      "none_observed": 30,
+      "watch": 7,
+      "low_signal": 5
     }
   },
   "facilities": [
@@ -225,7 +233,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_marathon_galveston_bay_tx",
@@ -233,19 +241,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=MARATHON PETROLEUM CO LP; Site=Galveston Bay; State=Texas; PADD=3; AD_Mbpd=625.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 22,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 1.47,
+      "confidenceCounts": {
+        "n": 22
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 22
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -258,8 +270,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -269,10 +281,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_marathon_garyville_la",
@@ -319,7 +331,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_baytown_tx",
@@ -327,19 +339,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baytown; State=Texas; PADD=3; AD_Mbpd=584.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 7,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 3.25,
+      "confidenceCounts": {
+        "n": 7
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 7
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -352,8 +368,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -363,10 +379,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_baton_rouge_la",
@@ -374,19 +390,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=EXXONMOBIL REFINING & SUPPLY CO; Site=Baton Rouge; State=Louisiana; PADD=3; AD_Mbpd=542.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 4,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 3.06,
+      "confidenceCounts": {
+        "n": 4
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 4
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -399,7 +419,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -410,10 +430,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "low_signal",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_citgo_lake_charles_la",
@@ -421,19 +441,23 @@
       "region": "US Gulf Coast / Louisiana",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=CITGO PETROLEUM CORP; Site=Lake Charles; State=Louisiana; PADD=3; AD_Mbpd=440.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 6,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 1.19,
+      "confidenceCounts": {
+        "n": 6
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 6
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -446,7 +470,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -457,10 +481,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_exxon_beaumont_tx",
@@ -507,7 +531,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_deer_park_tx",
@@ -515,19 +539,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=DEER PARK REFINING LTD PARTNERSHIP; Site=Deer Park; State=Texas; PADD=3; AD_Mbpd=340.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 5,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 1.7,
+      "confidenceCounts": {
+        "n": 5
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 5
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -540,8 +568,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -551,10 +579,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_valero_corpus_christi_tx",
@@ -562,19 +590,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=VALERO REFINING CO TEXAS LP; Site=Corpus Christi; State=Texas; PADD=3; AD_Mbpd=297.0; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 1.66,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 2
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -587,7 +619,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -598,10 +630,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "low_signal",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_phillips_sweeny_tx",
@@ -609,19 +641,23 @@
       "region": "US Gulf Coast / Texas",
       "assetType": "refinery",
       "sourceNote": "EIA/HIFLD Petroleum_Refineries_US_2021 shapefile; row Company=PHILLIPS 66 COMPANY; Site=Sweeny; State=Texas; PADD=3; AD_Mbpd=278.9; Period=As of Jan. 1 2021; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "2/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 3,
+      "latestAcqAt": "2026-11-20T08:49:00Z",
+      "maxFrp": 3.22,
+      "confidenceCounts": {
+        "n": 3
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 3
+      },
+      "latestAgeHours": 2.9,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -634,8 +670,8 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
-        "sourceRepeatMet": false,
+        "sourcesWithDetections": 2,
+        "sourceRepeatMet": true,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
         "highConfidenceAboveP95": false,
@@ -645,10 +681,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "low_signal",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_phillips_belle_chasse_la",
@@ -695,7 +731,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "usgc_refinery_shell_norco_la",
@@ -742,7 +778,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_terminal_ras_tanura",
@@ -789,7 +825,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_processing_abqaiq_buqayq",
@@ -836,7 +872,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_gosp_khurais",
@@ -883,7 +919,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_oil_field_shaybah",
@@ -930,7 +966,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_port_yanbu_industrial_city",
@@ -977,7 +1013,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_saudi_port_jazan",
@@ -1024,7 +1060,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_oil_terminal_kharg_island",
@@ -1071,7 +1107,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_tehran_oil_refinery",
@@ -1118,7 +1154,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_area_abadan",
@@ -1126,19 +1162,23 @@
       "region": "Middle East / Iran",
       "assetType": "refinery_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Abadan; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-06; lat_dd=30.3392; long_dd=48.3043; mod_dt_ft=2014-08-08T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. NIORDC contact/refineries pages separately list Abadan Oil Refining Company. This is a refinery-area proxy from the official Abadan place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 3,
+      "latestAcqAt": "2026-11-20T09:00:00Z",
+      "maxFrp": 8.27,
+      "confidenceCounts": {
+        "n": 3
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 3
+      },
+      "latestAgeHours": 2.7,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1151,7 +1191,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 1,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1162,10 +1202,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "low_signal",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_refinery_area_bandar_abbas",
@@ -1212,7 +1252,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iran_energy_area_asaluyeh",
@@ -1220,19 +1260,24 @@
       "region": "Middle East / Iran",
       "assetType": "energy_processing_area",
       "sourceNote": "NGA GNS country file Iran.txt; row full_name=Asaluyeh; desig_cd=PPLA2; fc=P; cc_ft=IRN; adm1=IR-18; lat_dd=27.47383219; long_dd=52.60782293; mod_dt_ft=2023-06-08T21:35:22.000Z; point converted to +/-0.05 degree FIRMS watch box. This is a broad energy-processing area proxy from the official place point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iran.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 13,
+      "latestAcqAt": "2026-11-20T09:00:00Z",
+      "maxFrp": 19.17,
+      "confidenceCounts": {
+        "n": 12,
+        "h": 1
+      },
+      "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 13
+      },
+      "latestAgeHours": 2.7,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1245,7 +1290,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1256,10 +1301,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_refinery_area_haifa_bay",
@@ -1267,19 +1312,23 @@
       "region": "Middle East / Israel",
       "assetType": "refinery_area",
       "sourceNote": "NGA GNS country file Israel.txt; row full_name=Haifa Bay Area; desig_cd=VAL; fc=T; cc_ft=ISR; adm1=IL-HA; lat_dd=32.870326; long_dd=35.081473; mod_dt_ft=2014-08-25T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box. Bazan public page separately states Oil Refineries Ltd. is located in the Haifa Bay area. This is a refinery-area proxy from the official bay-area point, not a facility polygon; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Israel.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
+      "rowCount": 2,
+      "latestAcqAt": "2026-11-20T00:20:00Z",
+      "maxFrp": 1.71,
+      "confidenceCounts": {
+        "n": 2
+      },
       "highConfidenceCount": 0,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "N": 2
+      },
+      "latestAgeHours": 11.4,
+      "rawSignalLevel": "low_signal",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1292,7 +1341,7 @@
         "frpOver50CountP95": 0,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 2,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1303,10 +1352,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "low_signal",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_refinery_area_ashdod",
@@ -1353,7 +1402,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_israel_port_eilat",
@@ -1400,7 +1449,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_ruwais_refinery_area",
@@ -1447,7 +1496,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_jebel_dhanna_terminal_area",
@@ -1494,7 +1543,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_das_island_terminal_area",
@@ -1502,19 +1551,23 @@
       "region": "Middle East / UAE / Abu Dhabi",
       "assetType": "export_terminal_proxy",
       "sourceNote": "NGA GNS country file official point; country=United Arab Emirates; full_name=Das Island Terminal; desig_cd=TRMO; fc=S; cc_ft=ARE; adm1=AE-AZ; mod_dt_ft=1993-12-13T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/United%20Arab%20Emirates.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 1,
+      "latestAcqAt": "2026-11-20T08:58:00Z",
+      "maxFrp": 20.66,
+      "confidenceCounts": {
+        "h": 1
+      },
+      "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 1
+      },
+      "latestAgeHours": 2.8,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -1527,7 +1580,7 @@
         "frpOver50CountP95": 4,
         "frpOver100CountP95": 1,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -1538,10 +1591,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_uae_fujairah_energy_port_area",
@@ -1588,7 +1641,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_ras_laffan_energy_port_area",
@@ -1635,7 +1688,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_mesaieed_industrial_port_area",
@@ -1682,7 +1735,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_dukhan_oilfield_area",
@@ -1729,7 +1782,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_qatar_halul_terminal_area",
@@ -1776,7 +1829,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_mina_al_ahmadi_terminal_area",
@@ -1823,7 +1876,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_mina_abdullah_terminal_area",
@@ -1870,7 +1923,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_shuaiba_port_refinery_area",
@@ -1917,7 +1970,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_kuwait_burgan_oilfield_area",
@@ -1964,7 +2017,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_khawr_al_amaya_terminal_area",
@@ -2011,7 +2064,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_zubair_oilfield_area",
@@ -2058,7 +2111,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_rumaila_oilfield_area",
@@ -2066,19 +2119,24 @@
       "region": "Middle East / Iraq / Basra",
       "assetType": "oilfield_proxy",
       "sourceNote": "NGA GNS country file official point; country=Iraq; full_name=Ar Rumaila; desig_cd=PPL; fc=P; cc_ft=IRQ; adm1=IQ-BA; mod_dt_ft=2002-10-22T00:00:00.000Z; point converted to +/-0.05 degree FIRMS watch box; sourceUrl=https://geonames.nga.mil/geonames/GNSData/Iraq.zip",
-      "sourceAgreement": "0/3",
+      "sourceAgreement": "1/3",
       "sourceStatus": "partial",
       "requestErrorCount": 1,
-      "rowCount": 0,
-      "latestAcqAt": null,
-      "maxFrp": null,
-      "confidenceCounts": {},
-      "highConfidenceCount": 0,
+      "rowCount": 4,
+      "latestAcqAt": "2026-11-20T09:00:00Z",
+      "maxFrp": 19.14,
+      "confidenceCounts": {
+        "n": 3,
+        "h": 1
+      },
+      "highConfidenceCount": 1,
       "frpOver50Count": 0,
       "frpOver100Count": 0,
-      "dayNightCounts": {},
-      "latestAgeHours": null,
-      "rawSignalLevel": "none_observed",
+      "dayNightCounts": {
+        "D": 4
+      },
+      "latestAgeHours": 2.7,
+      "rawSignalLevel": "watch",
       "baselineComparison": {
         "status": "established",
         "sampleCount": 193,
@@ -2091,7 +2149,7 @@
         "frpOver50CountP95": 2,
         "frpOver100CountP95": 0,
         "sourcesWithDetectionsP95": 3,
-        "sourcesWithDetections": 0,
+        "sourcesWithDetections": 1,
         "sourceRepeatMet": false,
         "rowCountAboveP95": false,
         "maxFrpAboveP95": false,
@@ -2102,10 +2160,10 @@
         "elevatedRepeatedObservation": false,
         "reason": "source_coverage_incomplete_or_changed"
       },
-      "anomalyLevel": "none_observed",
+      "anomalyLevel": "watch",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     },
     {
       "id": "me_iraq_kirkuk_oilfield_area",
@@ -2152,7 +2210,7 @@
       "anomalyLevel": "none_observed",
       "anomalyLabelZh": "来源不完整或改变 · 暂不判断",
       "baselineStatus": "established",
-      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+      "noteZh": "本轮卫星覆盖不完整或组合改变；保留实际热源记录，暂停全轮基线比较，不判断重复异常或无异常。 历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
     }
   ],
   "productionImpact": {
@@ -2172,6 +2230,6 @@
     "生产展示只保留设施级聚合摘要,不保存 MAP_KEY、raw URL 或原始火点明细。",
     "基线与重复观测规则只用于人工复核分层,不确认事故、断供或油价方向。",
     "S-NPP 自 2026-11-02 15:40 UTC 永久停止数据；本轮仅保留仍可用来源的实际检出，不与旧三源基线混算。新源组合基线须单独审阅，不能把缺测当无异常。",
-    "历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 75.9 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
+    "历史基线时效：历史基线截至 2026-09-05T04:33:15.490Z,距本轮生成 76.3 天;基线参考较旧(间隔已超过其采样跨度),需复核适用性;历史窗口成熟度不代表近期有效,基线不会随每轮观测自动更新。"
   ]
 }
