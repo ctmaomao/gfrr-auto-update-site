@@ -490,7 +490,13 @@ The script output remains ignored:
 manual-artifacts/treasury-fiscal-data/liquidity-model-cross-audit-latest.json
 ```
 
-Observed cross-audit output after tightening the candidate gate:
+Walk-forward tuning now uses only training rows whose full label horizon ends
+strictly before the test year starts. Test rows are unchanged. This removes
+label overlap at the fold boundary, not observation release or revision-vintage
+lookahead; the signal-lag check remains a sensitivity test.
+
+Historical output after tightening the candidate gate (before the fold-boundary
+fix; not recomputed):
 
 | Field | Result |
 |---|---:|
