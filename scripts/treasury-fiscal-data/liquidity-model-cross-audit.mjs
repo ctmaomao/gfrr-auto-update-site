@@ -31,6 +31,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/treasury-fiscal-data/liquidity-model-cross-audit-latest.json';
 const DEFAULT_START_DATE = '1996-01-01'; // 30y ambition; per-series coverage reported honestly
@@ -744,7 +745,7 @@ function episodeAnalysis(rows, signalKeys) {
 }
 
 // ---- walk-forward tuned variant ----------------------------------------------------------------
-function walkForward(rows, horizon, targetKey, startTestYear, endTestYear) {
+export function walkForward(rows, horizon, targetKey, startTestYear, endTestYear) {
   const grid = [];
   for (const p of [30, 45, 60]) grid.push({ mode: 'pressureOnly', p, z: null });
   for (const z of [1.0, 1.5, 2.0]) grid.push({ mode: 'tgaOnly', p: null, z });
@@ -770,8 +771,11 @@ function walkForward(rows, horizon, targetKey, startTestYear, endTestYear) {
   const folds = [];
   const oos = { tp: 0, fp: 0, tn: 0, fn: 0 };
   for (let year = startTestYear; year <= endTestYear; year += 1) {
-    const train = rows.filter((r) => r.date < `${year}-01-01`);
-    const test = rows.filter((r) => r.date >= `${year}-01-01` && r.date <= `${year}-12-31`);
+    const testStart = `${year}-01-01`;
+    // The forward label includes its endpoint, so equality also overlaps the test fold.
+    const trainCutoff = addDays(testStart, -horizon);
+    const train = rows.filter((r) => r.date < trainCutoff);
+    const test = rows.filter((r) => r.date >= testStart && r.date <= `${year}-12-31`);
     if (!test.length || train.length < 100) continue;
     let best = null;
     for (const cfg of grid) {
@@ -1141,7 +1145,7 @@ async function main() {
   console.log('[cross-audit] formulaApproved=false; productionDataWritten=false; runtimeChanged=false; scoringChanged=false');
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((error) => {
   console.error(`[cross-audit] FATAL: ${error?.message || error}`);
   process.exit(1);
 });
