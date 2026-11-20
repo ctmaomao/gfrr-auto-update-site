@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { isManualArtifactPath } from './lib/check-script-helpers.mjs';
+import { parseHistoryArchiveArgs } from './lib/history-archive-cli.mjs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -30,69 +30,18 @@ Options:
   --help               Show this help.`);
 }
 
-function parseArgs(argv) {
-  const options = {
-    outputDir: DEFAULT_OUTPUT_DIR,
-    maxCommits: DEFAULT_MAX_COMMITS,
-    maxSamples: DEFAULT_MAX_SAMPLES,
-    overwrite: false,
-    allowEmpty: false,
-    dryRun: false,
-    printJson: false
-  };
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--help' || arg === '-h') {
-      printUsage();
-      process.exit(0);
-    }
-    if (arg === '--overwrite') {
-      options.overwrite = true;
-      continue;
-    }
-    if (arg === '--allow-empty') {
-      options.allowEmpty = true;
-      continue;
-    }
-    if (arg === '--dry-run') {
-      options.dryRun = true;
-      continue;
-    }
-    if (arg === '--json') {
-      options.printJson = true;
-      continue;
-    }
-
-    const nextValue = () => {
-      const value = argv[index + 1];
-      if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);
-      index += 1;
-      return value;
-    };
-
-    if (arg === '--output-dir') {
-      options.outputDir = nextValue();
-    } else if (arg === '--max-commits') {
-      options.maxCommits = Number(nextValue());
-    } else if (arg === '--max-samples') {
-      options.maxSamples = Number(nextValue());
-    } else {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-
-  if (!Number.isInteger(options.maxCommits) || options.maxCommits < 1 || options.maxCommits > 500) {
+function validateTransportHistoryWindow(maxCommits, maxSamples) {
+  if (!Number.isInteger(maxCommits) || maxCommits < 1 || maxCommits > 500) {
     throw new Error('Invalid --max-commits. Expected integer 1..500.');
   }
-  if (!Number.isInteger(options.maxSamples) || options.maxSamples < 1 || options.maxSamples > 100) {
+  if (!Number.isInteger(maxSamples) || maxSamples < 1 || maxSamples > 100) {
     throw new Error('Invalid --max-samples. Expected integer 1..100.');
   }
-  if (!isManualArtifactPath(options.outputDir)) {
-    throw new Error(`Refusing to write outside manual-artifacts/: ${options.outputDir}`);
-  }
+}
 
-  return options;
+function parseArgs(argv) {
+  return parseHistoryArchiveArgs(argv, { outputDir: DEFAULT_OUTPUT_DIR, maxCommits: DEFAULT_MAX_COMMITS, maxSamples: DEFAULT_MAX_SAMPLES },
+    printUsage, validateTransportHistoryWindow);
 }
 
 function isPlainObject(value) {
