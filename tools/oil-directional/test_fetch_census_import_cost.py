@@ -118,11 +118,25 @@ def curl_response(headers, body=b"", *, returncode=0):
     return run
 
 
+def curl_version(args, **kwargs):
+    return subprocess.CompletedProcess(args, 0, b"curl 8.4.0 (test) libcurl/8.4.0 SSL/1.0\n", b"")
+
+
+def delegate(stubs):
+    return lambda *args, **kwargs: next(stubs)(*args, **kwargs)
+
+
 class TestCurlBoundary(unittest.TestCase):
     def test_head_metadata_and_header_parse_fail_closed(self):
         for raw, diagnostic in (
-            (b"HTTP/2 200\r\nETag: private\r\n\r\n",
-             "stage=head_metadata reason=content_length_missing http_status=200"),
+            (b"HTTP/2 200\r\nContent-Length:\r\n\r\n",
+             "stage=head_metadata reason=content_length_invalid http_status=200"),
+            (b"HTTP/2 200\r\nContent-Length: +3\r\n\r\n",
+             "stage=head_metadata reason=content_length_invalid http_status=200"),
+            (b"HTTP/2 200\r\nContent-Length: 3\r\nContent-Length: 3\r\n\r\n",
+             "stage=head_metadata reason=content_length_invalid http_status=200"),
+            (b"HTTP/2 200\r\nContent-Length: 0\r\n\r\n",
+             "stage=head_metadata reason=content_length_out_of_bounds http_status=200"),
             (b"HTTP/2 200\r\nContent-Length: private\r\n\r\n",
              "stage=head_metadata reason=content_length_invalid http_status=200"),
             (b"HTTP/2 200\r\nContent-Length: 700000001\r\n\r\n",
@@ -198,6 +212,170 @@ class TestCurlBoundary(unittest.TestCase):
         del answer["retrievedAt"], baseline["retrievedAt"]
         self.assertEqual(answer, baseline)
         self.assertEqual(answer["bytesFetched"], len(raw))
+
+    def test_missing_head_length_probe_keeps_summary_and_version_contract(self):
+        tmp = BytesIO()
+        with ZipFile(tmp, "w", compression=ZIP_DEFLATED) as archive:
+            archive.writestr("IMP_COMM.txt", row())
+            archive.writestr("IMP_DETL.txt", b"ignored")
+        raw = tmp.getvalue()
+        strong = b'ETag: "test-private-etag"\r\n'
+        weak = b'ETag: W/"test-private-etag"\r\n'
+        for head_tag, probe_tag, range_tag in ((strong, strong, strong), (weak, strong, strong),
+                                               (b"", b"", b""), (b"", weak, b"")):
+            with self.subTest(head_tag=head_tag, probe_tag=probe_tag):
+                head = b"HTTP/2 200\r\n" + head_tag + b"\r\n"
+                regular_head = (f"HTTP/2 200\r\nContent-Length: {len(raw)}\r\n".encode()
+                                + range_tag + b"\r\n")
+                probe = (f"HTTP/2 206\r\nContent-Range: bytes 0-0/{len(raw)}\r\n".encode()
+                         + probe_tag + b"Last-Modified: probe-is-not-data\r\n\r\n")
+                tail = (f"HTTP/2 206\r\nContent-Range: bytes 0-{len(raw)-1}/{len(raw)}\r\n".encode()
+                        + range_tag + b"Last-Modified: tail-data\r\n\r\n")
+                reads = [curl_response(tail, raw)] * (1 if range_tag else 2)
+                stubs = iter([curl_response(regular_head), *reads, curl_response(head), curl_version,
+                              curl_response(probe, raw[:1]), *reads])
+                with patch.object(subprocess, "run", side_effect=delegate(stubs)) as run:
+                    baseline = collector.collect("2025-11")
+                    answer = collector.collect("2025-11")
+                baseline["requestCount"] += 1
+                baseline["bytesFetched"] += 1
+                del answer["retrievedAt"], baseline["retrievedAt"]
+                self.assertEqual(answer, baseline)
+                self.assertEqual(answer["archiveETag"], '"test-private-etag"' if range_tag else None)
+                self.assertEqual(answer["rangeLastModified"], ["tail-data"])
+                self.assertFalse(answer["eligibleForMainScore"])
+                self.assertFalse(answer["eligibleForPricePrediction"])
+                calls = run.call_args_list[len(reads)+1:]
+                self.assertEqual(len(calls), len(reads)+3)
+                self.assertEqual(calls[1].args[0], ["curl", "-q", "--version"])
+                version_header = ["--header", 'if-match: "test-private-etag"']
+                for call, span, size, tagged in (
+                    (calls[2], "0-0", 1, head_tag == strong),
+                    *((call, f"0-{len(raw)-1}", len(raw), bool(range_tag)) for call in calls[3:]),
+                ):
+                    args = call.args[0]
+                    self.assertEqual(args, [
+                        "curl", "-q", "--silent", "--show-error", "--fail", "--suppress-connect-headers",
+                        "--proto", "=https", "--connect-timeout", "8", "--max-time", "15",
+                        "--range", span, "--max-filesize", str(size), "--header", "accept-encoding: identity",
+                        *(version_header if tagged else []), "--dump-header", args[-2],
+                        "https://www.census.gov/trade/downloads/2025/Merch/im_m/IMDB2511.ZIP",
+                    ])
+
+    def test_probe_path_preserves_identity_and_crc_failures(self):
+        tmp = BytesIO()
+        with ZipFile(tmp, "w", compression=ZIP_DEFLATED) as archive:
+            archive.writestr("IMP_COMM.txt", row())
+        raw = tmp.getvalue()
+        edited = bytearray(raw)
+        edited[raw.index(b"PK\x01\x02") + 16] ^= 1
+        head = b"HTTP/2 200\r\n\r\n"
+        probe = f"HTTP/2 206\r\nContent-Range: bytes 0-0/{len(raw)}\r\n".encode()
+        tail = f"HTTP/2 206\r\nContent-Range: bytes 0-{len(raw)-1}/{len(raw)}\r\n".encode()
+        tag = b'ETag: "test-private-etag"\r\n'
+        for probe_tag, responses, reason in (
+            (b"", [curl_response(tail + b"\r\n", raw), curl_response(tail + b"\r\n", edited)],
+             "stage=archive reason=commodity_member_identity_changed"),
+            (b"", [curl_response(tail + b"\r\n", edited)],
+             "stage=archive reason=zip_integrity_failure"),
+            (tag, [curl_response(tail + b'ETag: "changed"\r\n\r\n', raw)],
+             "stage=range_envelope reason=etag_mismatch"),
+            (tag, [curl_response(tail + tag + b'ETag: "changed"\r\n\r\n', raw)],
+             "stage=range_envelope reason=etag_mismatch"),
+        ):
+            stubs = iter([curl_response(head), curl_version,
+                          curl_response(probe + probe_tag + b"\r\n", raw[:1]), *responses])
+            with self.subTest(reason=reason), patch.object(
+                    subprocess, "run", side_effect=delegate(stubs)) as run:
+                with self.assertRaisesRegex(collector.CollectionFailure, reason):
+                    collector.collect("2025-11")
+                self.assertEqual(run.call_count, len(responses) + 3)
+
+    def test_metadata_probe_envelope_and_transport_fail_closed(self):
+        head = HEAD.replace(b"Content-Length: 3\r\n", b"")
+        expected = b'Content-Range: bytes 0-0/100\r\nETag: "test-private-etag"\r\n'
+        for status, headers, body, code, diagnostic in (
+            (200, expected, b"x", 0, "envelope reason=unexpected_status"),
+            (206, expected.replace(b"bytes 0-0/100", b"bytes 0-1/100"), b"x", 0,
+             "envelope reason=content_range_invalid"),
+            (206, expected.replace(b"bytes 0-0/100", b"bytes 0-0/*"), b"x", 0,
+             "envelope reason=content_range_invalid"),
+            (206, expected.replace(b"bytes 0-0/100", b"bytes 0-0/0"), b"x", 0,
+             "envelope reason=content_range_invalid"),
+            (206, expected.split(b"\r\n", 1)[1], b"x", 0, "envelope reason=content_range_invalid"),
+            (206, expected + expected.split(b"\r\n", 1)[0] + b"\r\n", b"x", 0,
+             "envelope reason=content_range_invalid"),
+            (206, expected.replace(b"/100", b"/700000001"), b"x", 0,
+             "envelope reason=archive_length_out_of_bounds"),
+            (206, expected + b"Content-Encoding: gzip\r\n", b"x", 0,
+             "envelope reason=content_encoding_mismatch"),
+            (206, expected + b"Content-Encoding: identity\r\nContent-Encoding: gzip\r\n", b"x", 0,
+             "envelope reason=content_encoding_mismatch"),
+            (206, expected + b"Content-Length: 2\r\n", b"x", 0, "envelope reason=content_length_invalid"),
+            (206, expected + b"Content-Length: 1\r\nContent-Length: 1\r\n", b"x", 0,
+             "envelope reason=content_length_invalid"),
+            (206, expected.replace(b"test-private-etag", b"changed-private-etag"), b"x", 0,
+             "envelope reason=etag_mismatch"),
+            (206, expected.split(b"\r\n", 1)[0] + b"\r\n", b"x", 0, "envelope reason=etag_mismatch"),
+            (206, expected, b"", 0, "envelope reason=body_length_mismatch"),
+            (206, expected, b"xy", 0, "envelope reason=body_length_mismatch"),
+            (200, expected, b"xy", 63, "transport reason=curl_size_limit"),
+            (412, expected, b"", 22, "transport reason=curl_http_error"),
+        ):
+            reply = f"HTTP/2 {status}\r\n".encode() + headers + b"\r\n"
+            stubs = iter((curl_response(head), curl_version, curl_response(reply, body, returncode=code)))
+            with self.subTest(diagnostic=diagnostic, headers=headers), patch.object(
+                    subprocess, "run", side_effect=delegate(stubs)) as run, patch.object(
+                    sys, "argv", [str(path), "2025-11"]), redirect_stdout(StringIO()) as stdout:
+                with self.assertRaises(SystemExit) as exit:
+                    runpy.run_path(str(path), run_name="__main__")
+                self.assertEqual(exit.exception.code, "Census import-cost collection failed: "
+                                 f"stage=metadata_probe_{diagnostic} http_status={status}")
+                self.assertEqual(stdout.getvalue(), "")
+                self.assertEqual(run.call_count, 3)
+
+    def test_metadata_probe_rejects_duplicate_tags_without_head_tag(self):
+        head = b"HTTP/2 200\r\n\r\n"
+        probe = (b"HTTP/2 206\r\nContent-Range: bytes 0-0/100\r\n"
+                 b'ETag: "one"\r\nETag: "two"\r\n\r\n')
+        stubs = iter((curl_response(head), curl_version, curl_response(probe, b"x")))
+        with patch.object(subprocess, "run", side_effect=delegate(stubs)) as run:
+            with self.assertRaisesRegex(collector.CollectionFailure,
+                                        "stage=metadata_probe_envelope reason=etag_mismatch"):
+                collector.collect("2025-11")
+            self.assertEqual(run.call_count, 3)
+
+    def test_metadata_probe_requires_unknown_length_bounding_before_network(self):
+        head = HEAD.replace(b"Content-Length: 3\r\n", b"")
+        for version in (b"curl 8.3.0 (test) libcurl/8.3.0", b"curl 8.4.0 (test) libcurl/8.3.0",
+                        b"curl fake-version", b""):
+            stubs = iter((curl_response(head), lambda args, **kw:
+                          subprocess.CompletedProcess(args, 0, version, b"")))
+            with self.subTest(version=version), patch.object(
+                    subprocess, "run", side_effect=delegate(stubs)) as run:
+                with self.assertRaisesRegex(collector.CollectionFailure,
+                                            "stage=metadata_probe_transport reason=curl_size_limit_unverified"):
+                    collector.collect("2025-11")
+                self.assertEqual(run.call_count, 2)
+
+    def test_metadata_probe_and_following_reads_use_shared_budgets(self):
+        head = HEAD.replace(b"Content-Length: 3\r\n", b"")
+        probe = (b'HTTP/2 206\r\nContent-Range: bytes 0-0/3\r\nContent-Length: 1\r\n'
+                 b'Content-Encoding: identity\r\nETag: "test-private-etag"\r\n\r\n')
+        for limit, value, requests, reason in (
+            ("MAX_REQUESTS", 1, 1, "request_limit"),
+            ("MAX_BYTES", 0, 1, "transfer_byte_limit"),
+            ("MAX_REQUESTS", 2, 3, "request_limit"),
+            ("MAX_BYTES", 3, 3, "transfer_byte_limit"),
+        ):
+            stubs = iter((curl_response(head), curl_version, curl_response(probe, b"x")))
+            with self.subTest(limit=limit, value=value), patch.object(
+                    subprocess, "run", side_effect=delegate(stubs)) as run, patch.object(
+                    collector, limit, value):
+                with self.assertRaisesRegex(collector.CollectionFailure, f"stage=budget reason={reason}"):
+                    remote = collector.RangeZip("https://example.invalid")
+                    remote.read(1)
+                self.assertEqual(run.call_count, requests)
 
     def test_cli_failure_only_emits_sanitized_diagnostic(self):
         hidden_url = b"https://example.invalid/test-private-url"
