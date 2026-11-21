@@ -1,0 +1,98 @@
+name: H41 one-off runner qualification
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [main]
+    paths: [.github/workflows/h41-qualification-20261121.yml]
+
+permissions: {}
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  qualification:
+    if: >-
+      github.repository == 'ctmaomao/gfrr-auto-update-site' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'h41-qualification-20261121' &&
+      github.run_attempt == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Probe only the three dated public H41 pages
+        shell: bash
+        run: |
+          # Actions expression string comparisons ignore case. Enforce literal branch here.
+          [ "$GITHUB_HEAD_REF" = 'h41-qualification-20261121' ] || exit 0
+          python3 -I - <<'PY'
+          import hashlib, http.client, json, signal
+          from html.parser import HTMLParser
+
+          cap = 1 << 20
+          releases = (
+              ("20261119", "November 19, 2026", "Nov 18, 2026"),
+              ("20261022", "October 22, 2026", "Oct 21, 2026"),
+              ("20251128", "November 28, 2025", "Nov 26, 2025"),
+          )
+
+          class Text(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.chunks = []
+
+              def handle_data(self, text):
+                  self.chunks.append(text)
+
+          def deadline(*_):
+              raise TimeoutError
+
+          signal.signal(signal.SIGALRM, deadline)
+          qualified = True
+          for slug, release, observation in releases:
+              conn = http.client.HTTPSConnection("www.federalreserve.gov", timeout=5)
+              body, code, outcome, html = bytearray(), None, "transport_error", False
+              signal.alarm(12)
+              try:
+                  conn.request("GET", f"/releases/h41/{slug}/", headers={"Accept-Encoding": "identity"})
+                  with conn.getresponse() as response:
+                      code = response.status
+                      html = response.headers.get_content_type() == "text/html"
+                      while len(body) < cap:
+                          chunk = response.read1(min(65536, cap - len(body)))
+                          if not chunk:
+                              break
+                          body.extend(chunk)
+                      outcome = ("cap_reached" if len(body) == cap else
+                                 "complete" if response.length in (None, 0) else "incomplete")
+              except TimeoutError:
+                  outcome = "timeout"
+              except (OSError, http.client.HTTPException):
+                  pass
+              finally:
+                  signal.alarm(0)
+                  conn.close()
+
+              markers = None
+              if code == 200 and outcome == "complete" and html and body:
+                  try:
+                      parser = Text()
+                      parser.feed(body.decode("utf-8", errors="replace"))
+                      parser.close()
+                      page = " ".join(" ".join(parser.chunks).lower().split())
+                      markers = {key: marker.lower() in page for key, marker in {
+                          "release_date": f"Release Date: {release}",
+                          "table_1": "1. Factors Affecting Reserve Balances of Depository Institutions",
+                          "table_5": "5. Consolidated Statement of Condition of All Federal Reserve Banks",
+                          "wednesday": f"Wednesday {observation}",
+                          "week_ended": f"Week ended {observation}",
+                      }.items()}
+                  except ValueError:
+                      pass
+              identified = bool(markers and all(markers.values()))
+              print(json.dumps({"release": slug, "http": code, "body_outcome": outcome,
+                                "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest() if code else None,
+                                "board_markers_match": identified, "markers": markers}), flush=True)
+              qualified = qualified and identified
+          raise SystemExit(0 if qualified else 1)
+          PY
