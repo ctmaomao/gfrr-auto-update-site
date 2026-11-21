@@ -593,6 +593,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 | `sourceObservedAt.effectiveFedFundsRate` | string \| null (optional) | ISO 8601 | FRED:DFF | DFF 值与本次取值同一行的 observation date；legacy 快照可为 null |
 | `sourceObservedAt.sofr` | string \| null (optional) | ISO 8601 | FRED:SOFR 或 NYFED:secured-rates-latest | SOFR 值与本次取值同一行的 observation date；不借组 updatedAt |
 | `sourceObservedAt.reserveBalances` | string \| null (optional) | ISO 8601 | FRED:WRESBAL | WRESBAL 最新观测日；legacy 可为 null |
+| `h41SourceReceipts` | object (optional) | 百万美元及 ISO 8601 | Fed H.4.1 | 仅已采用的 `walcl` / `reserveBalances`：`current` 和可用时 `reference`。每端包含 `value`、`observationDate`、`releaseDate`、`url`、`bodySha256`、`scheduledReleaseAt`（排程，不是实际上线时间）及 `retrievedAt`（实际取回时间）。本次实际成功读取为 `live`，缓存为 `fallback`；保留原缓存时保留仍匹配原端点的回执，FRED 复原时不继续附旧回执。 |
 | `sofrSource` | string \| null (optional) | n/a | 固定 | `FRED:SOFR` 或 `NYFED:secured-rates-latest`；与 `sourceObservedAt.sofr` 同源 |
 | `repoSpreadDateStatus` | object (optional) | n/a | 派生 | `{ bgcrSofr: 'same_day' \| 'mismatch' \| 'unknown', tgcrSofr: ... }`；逐腿独立 |
 

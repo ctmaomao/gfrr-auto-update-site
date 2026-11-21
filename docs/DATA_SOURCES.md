@@ -24,6 +24,8 @@
 
 2026-09-11 结构评分源时效补充（[ADR-0043](ADR/0043-score-input-continuity.md)）：现有 FRED WALCL 采用原始观测日起 14 日上限，RRPONTSYD/T10Y2Y/BAMLC0A0CM 为 7 日，按 UTC 观测日零时计算，拒绝未来/无效日期。live 与缓存均遵守同一上限，缓存不得使用 radar.updatedAt 续期；没有原始日期的旧缓存不可复用入分。WALCL 四周参照允许距目标 7 日，其余一周变化允许 3 日，缺参照不生成假零。新增政策不扩展源范围或费用；此前可用的入分证据消失时保留旧发布，详见运行手册。其它 display-only 宏观源不因此自动获得评分资格。
 
+Daily 的 WALCL / WRESBAL 保留 FRED 首选。只有某序列不可用时才尝试联储委员会公开的 [H.4.1](https://www.federalreserve.gov/releases/h41/) 同口径副源，不比较健康序列；WALCL 仍按原14日门槛，WRESBAL 驳回非法周三观测或负值但不新增年龄门槛。月历仅核准纽约排程，实际采用需取回准确日期的 H.4.1 页面、匹配发布日和观测日并解析：表5周三总资产（WALCL）与表1截至周三的周平均准备金（WRESBAL），均为百万美元。每轮最多3个月历与2份日期固定的发布页；严格新于可用缓存才采纳，平局保留缓存及原回执。WALCL 副源要求确切28日前的正值参照；WRESBAL 缺参照或零分母仍可采用水平但不迁移旧变化。无合格副源按原 fallback/hold；不改评分公式、权重、调度、历史或权限。同口径 WALCL 一旦采用，仍作为既有结构输入，能沿既有链路改变评分输出；WRESBAL 保持原用途。
+
 ### OFR — Financial Stress Index（生产运行，首次两站验收通过）
 
 [ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md)：OFR 原值正负比较的是其校准历史均值；本站严格过去十年 midrank 是另一项样本排序，不能从负值推出该窗口低位或宽松状态。[OFR 官方说明](https://www.financialresearch.gov/financial-stress-index/)提供类别及地区贡献；`mainPressureReadout.contributionsPublished=false` 仅是本站当前快照不发布未完成修订比较的贡献项，不是官方缺少数据。此次仅增强编辑输入和新稿检查，不新增来源、取数、贡献发布或评分。

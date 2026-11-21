@@ -7,6 +7,10 @@ import {
   parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange, creLoanBalanceDate, creLoanBalanceSnapshot,
 } from '../../scripts/daily/source-observation.mjs';
 
+import { matchingH41Receipt } from '../../scripts/daily/h41-provenance.mjs';
+import { requireStructuralObservation, structuralValueUsable, structuralObservationUsable,
+  requireStructuralContinuity } from '../../scripts/daily/structural-freshness.mjs';
+
 const PIPELINE = fileURLToPath(new URL('../../scripts/run-daily-pipeline.mjs', import.meta.url));
 const FIXED_NOW = '2026-10-22T12:00:00Z';
 class FixedDate extends Date {
@@ -31,7 +35,7 @@ const CLASSIFY_REPO_SPREAD = vm.runInNewContext(
   {},
 );
 
-function loadFed(fetchFed, nyFed, prev) {
+function loadFed(fetchFed, nyFed, prev, options = {}) {
   const src = extract('resolveFedLiquidity', 'async function resolvePolicyExpectations');
   const sandbox = {
     Date: FixedDate,
@@ -55,6 +59,9 @@ function loadFed(fetchFed, nyFed, prev) {
     sameObservationDay,
     reserveBalanceChange,
     cachedReserveBalanceChange,
+    matchingH41Receipt,
+    acquireH41: async () => ({ rows: {} }),
+    ...options,
   };
   const fn = vm.runInNewContext(`${src}\nresolveFedLiquidity`, sandbox);
   return fn(prev);
@@ -748,4 +755,126 @@ test('WRESBAL actual resolver keeps current level/date but refuses absent four-w
   assert.equal(partial.sourceStatus.reserveBalances, 'live');
   assert.equal(partial.reserveBalances4wChange, null);
   assert.equal(partial.reserveBalances4wReference, null);
+});
+
+const h41Endpoint = (date, releaseDate, value) => ({
+  value, observationDate: date, releaseDate,
+  url: `https://www.federalreserve.gov/releases/h41/${releaseDate.replaceAll('-', '')}/`,
+  scheduledReleaseAt: `${releaseDate}T20:30:00.000Z`,
+  retrievedAt: `${releaseDate}T21:01:00.000Z`,
+  bodySha256: 'a'.repeat(64),
+});
+const h41Row = (current, prior) => ({
+  observationDate: current.observationDate, value: current.value, receipt: current,
+  ...(prior && { baseline: { observationDate: prior.observationDate, value: prior.value, receipt: prior } }),
+});
+const currentReserves = h41Endpoint('2026-10-14', '2026-10-15', 110);
+const priorReserves = h41Endpoint('2026-09-16', '2026-09-17', 100);
+const currentAssets = { ...currentReserves, value: 7000 };
+const priorAssets = { ...priorReserves, value: 5000 };
+const fedRows = (id) => [{ date: '2026-10-21', value: id === 'WALCL' ? 6000 : 20 }];
+const availableAssertions = {
+  requireStructuralObservation: (rows, name, now = Date.parse(FIXED_NOW)) => requireStructuralObservation(rows, name, now),
+  structuralValueUsable,
+  structuralObservationUsable: (date, name, now = Date.parse(FIXED_NOW)) => structuralObservationUsable(date, name, now),
+};
+
+test('healthy FRED levels never invoke H.4.1, even when one comparison is unavailable', async () => {
+  let attempts = 0;
+  const out = await loadFed(async id => fedRows(id), {}, {}, { ...availableAssertions, acquireH41: async () => { attempts++; } });
+  assert.equal(attempts, 0);
+  assert.equal(out.sourceStatus.walcl, 'live');
+  assert.equal(out.sourceStatus.reserveBalances, 'live');
+  assert.equal(out.walcl4wChange, null);
+  assert.equal(out.reserveBalances4wChange, null);
+  assert.equal(out.h41SourceReceipts, undefined);
+});
+
+test('H.4.1 failed reserve fallback preserves healthy WALCL and never carries a comparison to a new level', async () => {
+  const prior = { reserveBalances: 100, reserveBalances4wChange: 25,
+    reserveBalances4wReference: {date:'2026-09-09',value:80},
+    sourceObservedAt: {reserveBalances:'2026-10-07'}, sourceStatus:{reserveBalances:'live'} };
+  for (const invalid of [-1, 'malformed', 'nonwednesday', 'noncanonical', 'future', 'empty']) {
+    const dates = { malformed: '2026-02-30', nonwednesday: '2026-10-20', noncanonical: '2026-10-21T00:00:00Z', future: '2026-10-28' };
+    const out = await loadFed(async id => id !== 'WRESBAL' ? fedRows(id)
+      : invalid === 'empty' ? [] : [{date:dates[invalid] ?? '2026-10-21',value:invalid === -1 ? -1 : 200}], {}, prior, {
+      ...availableAssertions,
+      acquireH41: async ({now, primary}) => {
+        assert.equal(now, Date.parse(FIXED_NOW));
+        assert.equal(primary.WALCL.failed, false);
+        assert.equal(primary.WRESBAL.failed, true);
+        assert.equal(primary.WRESBAL.usableIncumbentDate, '2026-10-07');
+        return { rows: { WRESBAL: h41Row({...currentReserves,value:0}) } };
+      },
+    });
+    assert.equal(out.walcl, 6000);
+    assert.equal(out.sourceStatus.walcl, 'live');
+    assert.equal(out.reserveBalances, 0);
+    assert.equal(out.sourceStatus.reserveBalances, 'live');
+    assert.equal(out.sourceObservedAt.reserveBalances, '2026-10-14');
+    assert.equal(out.reserveBalances4wChange, null);
+    assert.equal(out.reserveBalances4wReference, null);
+    assert.equal(out.h41SourceReceipts.walcl, undefined);
+    assert.equal(out.h41SourceReceipts.reserveBalances.current.value, 0);
+  }
+});
+
+test('a healthy old WRESBAL observation is not age-gated; a stale WALCL level is eligible for H.4.1', async () => {
+  const out = await loadFed(async (id) => ['WALCL','WRESBAL'].includes(id) ?
+    [{date:'2026-08-05',value:10}] : fedRows(id), {}, {}, {
+    ...availableAssertions, acquireH41: async ({primary}) => {
+      assert.equal(primary.WALCL.failed, true);
+      assert.equal(primary.WRESBAL.failed, false);
+      return {rows:{ WALCL:h41Row(currentAssets,priorAssets) }};
+    },
+  });
+  assert.equal(out.walcl4wChange, 40);
+  assert.equal(out.sourceStatus.walcl, 'live');
+  assert.equal(out.reserveBalances, 10);
+  assert.equal(out.sourceStatus.reserveBalances, 'live');
+});
+
+test('exact official pairs replay from the cache with unchanged receipts; FRED recovery clears official receipt', async () => {
+  const down = async () => { throw new Error('offline'); };
+  const sourced = await loadFed(down, {}, {}, {
+    ...availableAssertions,
+    acquireH41: async () => ({rows:{WALCL:h41Row(currentAssets,priorAssets),WRESBAL:h41Row(currentReserves,priorReserves)}}),
+  });
+  assert.equal(sourced.walcl4wChange,40);
+  assert.equal(sourced.reserveBalances4wChange,10);
+  assert.equal(sourced.reserveBalances4wReference.date,'2026-09-16');
+  assert.equal(sourced.h41SourceReceipts.walcl.reference.observationDate,'2026-09-16');
+  assert.equal(sourced.h41SourceReceipts.reserveBalances.reference.observationDate,'2026-09-16');
+  const cached = await loadFed(down, {}, sourced, {
+    ...availableAssertions, acquireH41: async ({primary}) => {
+      assert.equal(primary.WALCL.usableIncumbentDate,'2026-10-14');
+      assert.equal(primary.WRESBAL.usableIncumbentDate,'2026-10-14');
+      return {rows:{}};
+    },
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(cached.h41SourceReceipts)),JSON.parse(JSON.stringify(sourced.h41SourceReceipts)));
+  assert.equal(cached.sourceStatus.walcl,'fallback');
+  assert.equal(cached.sourceStatus.reserveBalances,'fallback');
+  const futureReceipt = JSON.parse(JSON.stringify(cached));
+  futureReceipt.h41SourceReceipts.walcl.current.retrievedAt = '2026-10-23T12:00:00.000Z';
+  futureReceipt.h41SourceReceipts.reserveBalances.reference.retrievedAt = '2026-10-23T12:00:00.000Z';
+  const rejectedClock = await loadFed(down, {}, futureReceipt, availableAssertions);
+  assert.equal(rejectedClock.h41SourceReceipts.walcl, undefined);
+  assert.equal(rejectedClock.h41SourceReceipts.reserveBalances.reference, undefined);
+  const tampered = await loadFed(down, {}, {...cached, walcl4wChange:1, reserveBalances4wChange:50}, availableAssertions);
+  assert.equal(tampered.h41SourceReceipts.walcl,undefined);
+  assert.equal(tampered.h41SourceReceipts.reserveBalances.reference,undefined);
+  assert.equal(tampered.reserveBalances4wChange,null);
+  assert.equal((await loadFed(async id => fedRows(id), {}, cached, availableAssertions)).h41SourceReceipts,undefined);
+});
+
+test('lost WALCL evidence with no incumbent still triggers structural continuity hold', async () => {
+  const out = await loadFed(async id => {
+    if (id === 'WALCL') throw new Error('offline');
+    return fedRows(id);
+  }, {}, {walcl:7000, walcl4wChange:12, sourceObservedAt:{walcl:'2026-09-30'}, sourceStatus:{walcl:'live'}}, availableAssertions);
+  assert.equal(out.walcl,null);
+  assert.equal(out.sourceStatus.walcl,'missing');
+  assert.throws(() => requireStructuralContinuity({fedLiquidity:{walcl:7000,walcl4wChange:12,sourceStatus:{walcl:'live'}}},
+    {fedLiquidity:out}), /structural_input_publication_hold:walcl/);
 });

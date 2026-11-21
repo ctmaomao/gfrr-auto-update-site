@@ -26,6 +26,8 @@ import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
 import { calendarScoreChanges, calendarScoreWindow } from './daily/score-change.mjs';
 import { scoreInput, validateScoreWeights, structuralSourceUsable } from './daily/score-input-contract.mjs';
 import { buildExposureGuidance } from './daily/exposure-guidance.mjs';
+import { acquireH41 } from './daily/h41-acquire.mjs';
+import { matchingH41Receipt } from './daily/h41-provenance.mjs';
 import { requireStructuralObservation, structuralObservationUsable, requireStructuralContinuity, structuralLagValue, structuralValueUsable } from './daily/structural-freshness.mjs';
 import { allocateRegimePercentages } from './daily/regime-weights.mjs';
 import { isUsableFreightCache, parseStockqFreight } from './daily/stockq-freight.mjs';
@@ -5720,6 +5722,7 @@ function computeFedLiquidityPressure(walcl4wChange, onRrp, onRrpWeekChange) {
 async function resolveFedLiquidity(prevFed) {
   const nowIso = new Date().toISOString();
   const sourceObservedAt = {};
+  const h41SourceReceipts = {};
   const status = {
     walcl: 'missing',
     onRrp: 'missing',
@@ -5832,6 +5835,10 @@ async function resolveFedLiquidity(prevFed) {
   try {
     const rows = await fetchFredSeries('WRESBAL', 90);
     const obs = latestDatedObservation(rows, nowIso);
+    if (obs.value === null || obs.value < 0 || obs.date === null || rows.at(-1).date !== obs.date
+      || new Date(`${obs.date}T00:00:00Z`).getUTCDay() !== 3) {
+      throw new Error('reserve_balance_observation_unavailable');
+    }
     reserveBalances = obs.value;
     sourceObservedAt.reserveBalances = obs.date;
     const comparison = reserveBalanceChange(rows, nowIso);
@@ -5840,7 +5847,7 @@ async function resolveFedLiquidity(prevFed) {
     status.reserveBalances = 'live';
   } catch (_err) {
     const fb = fallbackObservation(prevFed?.reserveBalances, prevFed?.sourceObservedAt?.reserveBalances, nowIso);
-    if (fb.value !== null) {
+    if (fb.value !== null && fb.value >= 0) {
       reserveBalances = fb.value;
       sourceObservedAt.reserveBalances = fb.date;
       const comparison = cachedReserveBalanceChange(prevFed, nowIso);
@@ -5849,6 +5856,55 @@ async function resolveFedLiquidity(prevFed) {
       status.reserveBalances = 'fallback';
     } else {
       status.reserveBalances = 'missing';
+    }
+  }
+
+  // FRED remains primary. H.4.1 must beat an eligible incumbent on observation date.
+  if (status.walcl !== 'live' || status.reserveBalances !== 'live') {
+    const { rows, diagnostics } = await acquireH41({
+      now: Date.parse(nowIso),
+      primary: {
+        WALCL: { failed: status.walcl !== 'live', usableIncumbentDate: sourceObservedAt.walcl },
+        WRESBAL: { failed: status.reserveBalances !== 'live',
+          usableIncumbentDate: sourceObservedAt.reserveBalances === prevFed?.sourceObservedAt?.reserveBalances
+            && new Date(sourceObservedAt.reserveBalances).getUTCDay() === 3 ? sourceObservedAt.reserveBalances : null },
+      },
+    });
+    for (const [series, reason] of Object.entries(diagnostics ?? {})) {
+      if (reason !== 'usable-incumbent') console.warn(`[H.4.1] ${series}: ${reason}`);
+    }
+    const assets = rows.WALCL;
+    if (assets && structuralValueUsable(assets.value, 'walcl')
+      && structuralObservationUsable(assets.observationDate, 'walcl', Date.parse(nowIso))) {
+      walcl = assets.value;
+      sourceObservedAt.walcl = assets.observationDate;
+      walcl4wChange = +(((assets.value - assets.baseline.value) / assets.baseline.value) * 100).toFixed(3);
+      status.walcl = 'live';
+      h41SourceReceipts.walcl = { current: { ...assets.receipt, value: assets.value },
+        reference: { ...assets.baseline.receipt, value: assets.baseline.value } };
+    }
+    const reserves = rows.WRESBAL;
+    if (reserves) {
+      reserveBalances = reserves.value;
+      sourceObservedAt.reserveBalances = reserves.observationDate;
+      const comparison = reserveBalanceChange(reserves.baseline ? [
+        { date: reserves.baseline.observationDate, value: reserves.baseline.value },
+        { date: reserves.observationDate, value: reserves.value },
+      ] : [], nowIso);
+      reserveBalances4wChange = comparison.change;
+      reserveBalances4wReference = comparison.reference;
+      status.reserveBalances = 'live';
+      h41SourceReceipts.reserveBalances = { current: { ...reserves.receipt, value: reserves.value },
+        ...(comparison.reference && { reference: { ...reserves.baseline.receipt, value: reserves.baseline.value } }) };
+    }
+    for (const [name, value, change, reference] of [
+      ['walcl', walcl, walcl4wChange, null],
+      ['reserveBalances', reserveBalances, reserveBalances4wChange, reserveBalances4wReference],
+    ]) {
+      if (status[name] !== 'fallback' || h41SourceReceipts[name]) continue;
+      const receipt = matchingH41Receipt(name, prevFed?.h41SourceReceipts?.[name],
+        { value, date: sourceObservedAt[name], change, reference, nowIso });
+      if (receipt) h41SourceReceipts[name] = receipt;
     }
   }
 
@@ -5952,6 +6008,7 @@ async function resolveFedLiquidity(prevFed) {
     onRrpLevel: rrpLevel,
     pressure,
     sourceObservedAt,
+    ...(Object.keys(h41SourceReceipts).length && { h41SourceReceipts }),
     sourceStatus: status
   };
 }
