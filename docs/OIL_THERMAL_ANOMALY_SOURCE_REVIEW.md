@@ -279,6 +279,15 @@ incident did not happen; coverage, spatial coverage, overpass and cloud quality
 remain unknown. The result is ineligible for evaluation or main scoring and
 does not establish cross-run first seen.
 
+Matching sources, configuration, geometry and relative day range do not establish
+a shared fixed acquisition window. The [NASA FIRMS Area API documentation](https://firms.modaps.eosdis.nasa.gov/api/area)
+defines requests without a date relative to TODAY (with the current provider day
+counted as the first day), but does not specify the timezone for that
+day boundary. Zero shared captures means only that no capture ID appeared more
+than once across the supplied receipts. It does not show that FIRMS deleted a
+record, that no physical event occurred, or that the windows or coverage were
+comparable.
+
 ## Natural-run evidence retained before artifact expiry (2026-11-16)
 
 This is a metadata-only audit record, not a retained observation dataset. The authorized scope is to preserve necessary, bounded evidence from already completed runs without provider requests, raw-response storage, production changes, or predictive claims. Source: [NASA FIRMS](https://www.earthdata.nasa.gov/data/tools/firms), part of NASA ESDIS; retain the [FIRMS detection limitations](https://firms.modaps.eosdis.nasa.gov/alerts/notes.php). NASA's [indexed FIRMS use guidance](https://forum.earthdata.nasa.gov/viewtopic.php?t=5184) does not substitute for a completed field-specific redistribution review here. No raw CSV, coordinates, FRP values, individual observation IDs, request URLs, credentials, or full receipts are committed by this record.
