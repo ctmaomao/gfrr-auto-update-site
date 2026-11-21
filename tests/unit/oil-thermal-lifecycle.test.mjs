@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 import { fetchFirmsText, getFirmsErrorDiagnostics, createFirmsRetryBudget } from '../../scripts/oil-directional/firms-request-policy.mjs';
 import { buildLiveArtifact, readFacilityConfig, readBaselineConfig } from '../../scripts/oil-directional/build-oil-thermal-watch.mjs';
+import { parseFirmsCsvLine } from '../../scripts/oil-directional/firms-observation-fields.mjs';
 import { classifyOilThermalSampleHealth } from '../../scripts/oil-directional/oil-thermal-sample-health.mjs';
 import { matchesLegacyThermalSources } from '../../scripts/oil-directional/oil-thermal-source-lifecycle.mjs';
 const sources = ['VIIRS_SNPP_NRT','VIIRS_NOAA20_NRT','VIIRS_NOAA21_NRT'];
@@ -15,6 +16,10 @@ const after = '2026-11-06T00:00:00Z';
 const header = 'acq_date,acq_time,confidence,frp,daynight\n';
 const csv = header + '2026-11-01,1200,h,100,D\n';
 const url = source => 'https://firms.modaps.eosdis.nasa.gov/api/area/csv/TEST_ONLY/' + source + '/0,0,1,1/1';
+test('FIRMS line tokenizer preserves quoted, blank and permissively parsed fields', () => {
+  assert.deepEqual(parseFirmsCsvLine(' a ,"b,c","d""e",,'), [' a ', 'b,c', 'd"e', '', '']);
+  assert.deepEqual(parseFirmsCsvLine('a,"b,c  '), ['a', 'b,c  ']);
+});
 test('retired S-NPP is classified without network, retry, secret, or response disclosure', async () => {
   let calls=0; const budget=createFirmsRetryBudget();
   await assert.rejects(fetchFirmsText(url(sources[0]), { nowMs:Date.parse(after), retryBudget:budget, fetchImpl:async()=>{calls++; throw Error('unexpected');} }), error=>{
