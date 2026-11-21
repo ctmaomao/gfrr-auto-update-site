@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
-import { firmsFrpOrNull, firmsAcquisitionIso } from './firms-observation-fields.mjs';
+import { firmsFrpOrNull, firmsAcquisitionIso, parseFirmsCsvLine } from './firms-observation-fields.mjs';
 import {
   createFirmsRetryBudget,
   fetchFirmsText,
@@ -200,31 +200,6 @@ function redactUrl(url, mapKey) {
   return url.replace(encodeURIComponent(mapKey), '<FIRMS_MAP_KEY>');
 }
 
-function parseCsvLine(line) {
-  const cells = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i += 1) {
-    const ch = line[i];
-    const next = line[i + 1];
-    if (ch === '"' && inQuotes && next === '"') {
-      current += '"';
-      i += 1;
-    } else if (ch === '"') {
-      inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
-      cells.push(current);
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-
-  cells.push(current);
-  return cells;
-}
-
 function parseCsv(text) {
   const lines = text
     .replace(/^\uFEFF/, '')
@@ -239,7 +214,7 @@ function parseCsv(text) {
     throw new Error('FIRMS response was not CSV.');
   }
 
-  const headers = parseCsvLine(lines[0]).map((header) => header.trim());
+  const headers = parseFirmsCsvLine(lines[0]).map((header) => header.trim());
   const requiredHeaders = ['latitude', 'longitude', 'acq_date', 'acq_time', 'confidence', 'frp'];
   const missing = requiredHeaders.filter((header) => !headers.includes(header));
   if (missing.length > 0) {
@@ -247,7 +222,7 @@ function parseCsv(text) {
   }
 
   return lines.slice(1).map((line) => {
-    const cells = parseCsvLine(line);
+    const cells = parseFirmsCsvLine(line);
     const record = {};
     headers.forEach((header, index) => {
       record[header] = cells[index] ?? '';
