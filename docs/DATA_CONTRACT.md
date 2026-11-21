@@ -615,7 +615,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 - `repoSpreadRegime` 只由 BGCR 腿决定；TGCR 错日只清 `tgcrSofrSpread`，不改变 `repoSpreadRegime`。
 - 日期仅表示 observation period，不是 publication/PIT；不得用 `updatedAt` 续期。BGCR/TGCR 与 SOFR 仅在同一 observation date 时才计算相应 spread，否则该腿 null、regime 未知。
 - `sourceStatus.*` 只表示 fetch 状态，不是日期核验：fetch 成功即可能为 `live` 而 `sourceObservedAt` 仍为 null；日期缺失/非法一律按 unknown 处理，不得由 status 推断日期有效。
-- FRED SOFR 值 finite 时 NYFed 记录不替换（即使其 `effectiveDate` 与 BGCR/TGCR 同日），因此该腿可保守为 null/`未知`；NYFed SOFR 仅在 FRED 无 finite 值时兜底，并按自身日期参与同日 gate。
+- 现有 NY Fed 批次中的 SOFR 仅在原始利率为有限数值（0–20%，含端点，不接受字符串）、原始 `effectiveDate` 为有效且非未来的 `YYYY-MM-DD`（不接受空白修剪），且当前候选缺值、无日期或日期较旧时，才一起替换值、日期、来源及状态（`live`）；同日（即使值有冲突）或较旧不替换，BGCR/TGCR 仍各按同日 gate 判定。
 - optional 字段在 catch-all 降级或旧快照中缺席时同样视为 unknown/missing；不得用组 `updatedAt` 或另一腿日期补齐。
 - 日期 helper 以本次 run 的 US 日期标签/UTC 日期（`YYYY-MM-DD`）为准，不做通用时区 instant 归一化；带偏移的跨日标签可能被判为 unknown。
 
