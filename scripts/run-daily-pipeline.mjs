@@ -1970,6 +1970,9 @@ function parseNyFedRateRecord(record) {
     ? Number(value) : NaN;
   const percentRate = numeric(record.percentRate);
   const effectiveDate = typeof record.effectiveDate === 'string' ? record.effectiveDate.trim() : '';
+  // SOFR source selection requires raw JSON numbers and untrimmed day labels.
+  if (type === 'SOFR' && (typeof record.percentRate !== 'number' || effectiveDate !== record.effectiveDate
+      || !/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate))) return null;
   const volumeInBillions = numeric(record.volumeInBillions);
   if (!type || !Number.isFinite(percentRate) || percentRate < 0 || percentRate > 20) return null;
   if (!effectiveDate || !Number.isFinite(Date.parse(`${effectiveDate}T00:00:00Z`))) return null;
@@ -5893,10 +5896,15 @@ async function resolveFedLiquidity(prevFed) {
     status.tgcr = 'missing';
   }
 
-  if (!Number.isFinite(sofr) && nyFedSofrRecord) {
-    sofr = nyFedSofrRecord.percentRate;
-    sourceObservedAt.sofr = parseObservationDate(`${nyFedSofrRecord.effectiveDate}T00:00:00Z`, nowIso);
-    sofrSource = 'NYFED:secured-rates-latest';
+  // Prefer a strictly newer observation; same-day ties keep the incumbent provenance.
+  const nyFedSofr = nyFedSofrRecord?.percentRate;
+  const nyFedSofrDate = parseObservationDate(nyFedSofrRecord?.effectiveDate, nowIso);
+  if (Number.isFinite(nyFedSofr) && nyFedSofr >= 0 && nyFedSofr <= 20
+      && nyFedSofrDate !== null && nyFedSofrDate === nyFedSofrRecord.effectiveDate
+      && (!Number.isFinite(sofr) || sourceObservedAt.sofr === null || nyFedSofrDate > sourceObservedAt.sofr)) {
+    sofr = nyFedSofr;
+    sourceObservedAt.sofr = nyFedSofrDate;
+    sofrSource = NY_FED_SECURED_RATES_SOURCE;
     status.sofr = 'live';
   }
 

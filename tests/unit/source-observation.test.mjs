@@ -36,7 +36,7 @@ function loadFed(fetchFed, nyFed, prev) {
   const sandbox = {
     Date: FixedDate,
     fetchFredSeries: fetchFed,
-    fetchNyFedSecuredRatesLatest: async () => nyFed,
+    fetchNyFedSecuredRatesLatest: typeof nyFed === 'function' ? nyFed : async () => nyFed,
     requireStructuralObservation: (rows) => (rows.at(-1)?.date ?? null),
     structuralLagValue: (rows) => (rows.length > 1 ? rows[0].value : null),
     findValueAgo: (rows) => (rows.length > 1 ? rows[0].value : null),
@@ -169,39 +169,45 @@ test('repo classifier maps null/NaN to 未知 and a real 0 spread to 正常', as
   assert.equal(out.repoSpreadRegime, '正常');
 });
 
-test('fed fallback keeps same-field date; NYFed SOFR fallback keeps its own date', async () => {
+test('fed fallback keeps DFF same-field date; newer NYFed SOFR replaces older or undated cache', async () => {
   const prev = {
     effectiveFedFundsRate: 3.8,
-    sourceObservedAt: { effectiveFedFundsRate: '2026-10-14' },
+    sourceObservedAt: { effectiveFedFundsRate: '2026-10-14', sofr: '2026-10-14' },
     sofr: 3.8,
-    sofrSource: 'garbage',
-    sourceObservedAtSofr: '2026-10-14',
+    sofrSource: 'FRED:SOFR',
   };
-  prev.sourceObservedAt.sofr = '2026-10-14';
   const out = await loadFed(async (id) => {
     if (id === 'DFF' || id === 'SOFR') throw new Error('down');
     return [{ value: 1, date: '2026-10-15' }];
   }, { SOFR: { percentRate: 3.9, effectiveDate: '2026-10-16' } }, prev);
   assert.equal(out.sourceObservedAt.effectiveFedFundsRate, '2026-10-14');
-  assert.equal(out.sourceObservedAt.sofr, '2026-10-14'); // FRED fallback takes precedence; no NYFed date theft
-  assert.equal(out.sofrSource, null);
+  assert.equal(out.effectiveFedFundsRate, 3.8);
+  assert.equal(out.sourceStatus.effectiveFedFundsRate, 'fallback');
+  assert.equal(out.sofr, 3.9);
+  assert.equal(out.sourceObservedAt.sofr, '2026-10-16');
+  assert.equal(out.sofrSource, 'NYFED:secured-rates-latest');
+  assert.equal(out.sourceStatus.sofr, 'live');
   const nyOnly = await loadFed(async (id) => {
     if (id === 'DFF' || id === 'SOFR') throw new Error('down');
     return [{ value: 1, date: '2026-10-15' }];
   }, { SOFR: { percentRate: 3.9, effectiveDate: '2026-10-16' } }, {});
+  assert.equal(nyOnly.sofr, 3.9);
+  assert.equal(nyOnly.sourceStatus.sofr, 'live');
+  assert.equal(nyOnly.sourceStatus.effectiveFedFundsRate, 'missing');
   assert.equal(nyOnly.sourceObservedAt.sofr, '2026-10-16');
   assert.equal(nyOnly.sofrSource, 'NYFED:secured-rates-latest');
   const legacySofr = await loadFed(async (id) => {
     if (id === 'SOFR') throw new Error('down');
     return [{ value: 1, date: '2026-10-15' }];
   }, { SOFR: { percentRate: 3.9, effectiveDate: '2026-10-16' } }, { sofr: 3.7, sourceObservedAt: {} });
-  assert.equal(legacySofr.sofr, 3.7);
-  assert.equal(legacySofr.sourceObservedAt.sofr, null);
-  assert.equal(legacySofr.sofrSource, null);
+  assert.equal(legacySofr.sofr, 3.9);
+  assert.equal(legacySofr.sourceObservedAt.sofr, '2026-10-16');
+  assert.equal(legacySofr.sofrSource, 'NYFED:secured-rates-latest');
+  assert.equal(legacySofr.sourceStatus.sofr, 'live');
   assert.equal(legacySofr.bgcrSofrSpread, null);
 });
 
-test('FRED SOFR keeps priority and its own date; NYFed same-day SOFR is never borrowed', async () => {
+test('SOFR prefers newer valid dates, not dates that would enable repo spreads', async () => {
   const baseRows = {
     WALCL: [{ value: 100, date: '2026-10-14' }],
     RRPONTSYD: [{ value: 2, date: '2026-10-21' }],
@@ -222,12 +228,15 @@ test('FRED SOFR keeps priority and its own date; NYFed same-day SOFR is never bo
   );
   assert.equal(offDate.sofr, 3.95);
   assert.equal(offDate.sofrSource, 'FRED:SOFR');
+  assert.equal(offDate.sourceStatus.sofr, 'live');
+  assert.equal(offDate.repoSpreadDateStatus.bgcrSofr, 'mismatch');
+  assert.equal(offDate.repoSpreadDateStatus.tgcrSofr, 'mismatch');
   assert.equal(offDate.sourceObservedAt.sofr, '2026-10-16');
   assert.equal(offDate.bgcrSofrSpread, null);
   assert.equal(offDate.tgcrSofrSpread, null);
   assert.equal(offDate.repoSpreadRegime, '未知');
 
-  // Finite FRED fallback keeps its own prior date; NYFed is not consulted.
+  // A newer dated cache also wins over the older direct reading.
   const fallback = await loadFed(
     async (id) => {
       if (id === 'SOFR') throw new Error('down');
@@ -239,24 +248,95 @@ test('FRED SOFR keeps priority and its own date; NYFed same-day SOFR is never bo
   assert.equal(fallback.sofr, 3.7);
   assert.equal(fallback.sourceObservedAt.sofr, '2026-10-16');
   assert.equal(fallback.sofrSource, 'FRED:SOFR');
+  assert.equal(fallback.sourceStatus.sofr, 'fallback');
   assert.equal(fallback.bgcrSofrSpread, null);
+  assert.equal(fallback.tgcrSofrSpread, null);
   assert.equal(fallback.repoSpreadRegime, '未知');
 
-  // NYFed same-day SOFR is used only when the FRED path has no finite value.
-  const nySameDay = await loadFed(
-    async (id) => {
-      if (id === 'SOFR') throw new Error('down');
-      return baseRows[id];
-    },
+  // Newer direct SOFR still wins when the older FRED row matches both repo rates.
+  const mixedDays = await loadFed(
+    async (id) => (id === 'SOFR' ? [{ value: 3.95, date: '2026-10-15' }] : baseRows[id]),
+    { ...ny, SOFR: { percentRate: 3.91, effectiveDate: '2026-10-16' } },
+    {},
+  );
+  assert.equal(mixedDays.sofr, 3.91);
+  assert.equal(mixedDays.sourceObservedAt.sofr, '2026-10-16');
+  assert.equal(mixedDays.sofrSource, 'NYFED:secured-rates-latest');
+  assert.equal(mixedDays.sourceStatus.sofr, 'live');
+  assert.equal(mixedDays.repoSpreadDateStatus.bgcrSofr, 'mismatch');
+  assert.equal(mixedDays.repoSpreadDateStatus.tgcrSofr, 'mismatch');
+  assert.equal(mixedDays.bgcrSofrSpread, null);
+  assert.equal(mixedDays.tgcrSofrSpread, null);
+  assert.equal(mixedDays.repoSpreadRegime, '未知');
+
+  const newerSameDay = await loadFed(
+    async (id) => (id === 'SOFR' ? [{ value: 3.95, date: '2026-10-14' }] : baseRows[id]),
     ny,
     {},
   );
-  assert.equal(nySameDay.sofr, 3.9);
-  assert.equal(nySameDay.sourceObservedAt.sofr, '2026-10-15');
-  assert.equal(nySameDay.sofrSource, 'NYFED:secured-rates-latest');
-  assert.equal(nySameDay.repoSpreadDateStatus.bgcrSofr, 'same_day');
-  assert.equal(nySameDay.bgcrSofrSpread, -0.03);
-  assert.equal(nySameDay.repoSpreadRegime, '正常');
+  assert.equal(newerSameDay.sofr, 3.9);
+  assert.equal(newerSameDay.sourceObservedAt.sofr, '2026-10-15');
+  assert.equal(newerSameDay.sofrSource, 'NYFED:secured-rates-latest');
+  assert.equal(newerSameDay.sourceStatus.sofr, 'live');
+  assert.equal(newerSameDay.repoSpreadDateStatus.bgcrSofr, 'same_day');
+  assert.equal(newerSameDay.repoSpreadDateStatus.tgcrSofr, 'same_day');
+  assert.equal(newerSameDay.bgcrSofrSpread, -0.03);
+  assert.equal(newerSameDay.tgcrSofrSpread, -0.04);
+  assert.equal(newerSameDay.repoSpreadRegime, '正常');
+});
+
+test('same-day SOFR ties keep incumbent value, source, date and status even with conflicting rates', async () => {
+  const date = '2026-10-15';
+  for (const direct of [3.8, 3.9]) {
+    const ny = { SOFR: { percentRate: direct, effectiveDate: date } };
+    const live = await loadFed(async () => [{ value: 3.8, date }], ny, {});
+    const prev = { sofr: 3.8, sofrSource: 'NYFED:secured-rates-latest', sourceObservedAt: { sofr: date } };
+    const cached = await loadFed(async () => { throw new Error('down'); }, ny, prev);
+    for (const [result, source, status] of [
+      [live, 'FRED:SOFR', 'live'], [cached, prev.sofrSource, 'fallback'],
+    ]) {
+      assert.equal(result.sofr, 3.8);
+      assert.equal(result.sourceObservedAt.sofr, date);
+      assert.equal(result.sofrSource, source);
+      assert.equal(result.sourceStatus.sofr, status);
+    }
+  }
+});
+
+test('direct SOFR must be a real in-range number with a canonical non-future day', async () => {
+  const offline = async (id) => {
+    if (id === 'SOFR') throw new Error('down');
+    return [{ value: 1, date: '2026-10-15' }];
+  };
+  const date = '2026-10-15';
+  const valid = { percentRate: 3.9, effectiveDate: date };
+  const prev = { sofr: 3.8, sofrSource: 'FRED:SOFR', sourceObservedAt: { sofr: '2026-10-14' } };
+  const invalid = [
+    undefined, null, {}, { ...valid, effectiveDate: undefined }, { ...valid, effectiveDate: null },
+    ...['garbage', '2026-02-30', '2026-10-23', date + 'T00:00:00Z', ' ' + date, '2026-10-5']
+      .map(effectiveDate => ({ ...valid, effectiveDate })),
+    ...[undefined, null, '', '0', '3.9', false, [3.9], NaN, Infinity, -0.01, 20.01]
+      .map(percentRate => ({ ...valid, percentRate })),
+  ];
+  for (const SOFR of invalid) {
+    const missing = await loadFed(offline, { SOFR }, {});
+    assert.equal(missing.sofr, null);
+    assert.equal(missing.sourceObservedAt.sofr, undefined);
+    assert.equal(missing.sofrSource, null);
+    assert.equal(missing.sourceStatus.sofr, 'missing');
+    const retained = await loadFed(offline, { SOFR }, prev);
+    assert.equal(retained.sofr, prev.sofr);
+    assert.equal(retained.sourceObservedAt.sofr, prev.sourceObservedAt.sofr);
+    assert.equal(retained.sofrSource, prev.sofrSource);
+    assert.equal(retained.sourceStatus.sofr, 'fallback');
+  }
+  for (const percentRate of [0, 20]) {
+    const out = await loadFed(offline, { SOFR: { ...valid, percentRate } }, prev);
+    assert.equal(out.sofr, percentRate);
+    assert.equal(out.sourceObservedAt.sofr, date);
+    assert.equal(out.sofrSource, 'NYFED:secured-rates-latest');
+    assert.equal(out.sourceStatus.sofr, 'live');
+  }
 });
 
 test('CRE normalizer preserves each prior date and nulls invalid/missing', () => {
@@ -530,11 +610,11 @@ test('NY Fed parser rejects missing/coercible rates and preserves real zero/prec
   assert.equal(parse({ ...base, percentRate: 3.9, volumeInBillions: 0 }).volumeInBillions, 0);
 });
 
-test('NY Fed mocked response drops false-zero legs before Fed liquidity fallback/spreads', async () => {
+test('raw NY Fed JSON replays through parser and Fed resolver without false-zero or coerced direct rates', async () => {
   const fixture = { refRates: [
     { type: 'BGCR', effectiveDate: '2026-10-15', percentRate: null },
     { type: 'TGCR', effectiveDate: '2026-10-15', percentRate: '' },
-    { type: 'SOFR', effectiveDate: '2026-10-15', percentRate: '3.9' }
+    { type: 'SOFR', effectiveDate: '2026-10-15', percentRate: 0 }
   ] };
   const fetchRates = vm.runInNewContext(`${extract('parseNyFedRateRecord')}\n${extract('fetchNyFedSecuredRatesLatest')}\nfetchNyFedSecuredRatesLatest`, {
     retryFetch: async () => JSON.stringify(fixture), NY_FED_SECURED_RATES_LATEST_URL: 'fixture-only',
@@ -545,16 +625,40 @@ test('NY Fed mocked response drops false-zero legs before Fed liquidity fallback
   const rows = {
     WALCL: [{ value: 100, date: '2026-10-14' }, { value: 101, date: '2026-10-21' }],
     RRPONTSYD: [{ value: 2, date: '2026-10-21' }],
-    DFF: [{ value: 3.88, date: '2026-10-15' }], SOFR: [{ value: 3.9, date: '2026-10-15' }],
+    DFF: [{ value: 3.88, date: '2026-10-15' }], SOFR: [{ value: 3.9, date: '2026-10-14' }],
     WRESBAL: [{ value: 3000000, date: '2026-10-14' }]
   };
-  const result = await loadFed(async id => rows[id] ?? [], rates, {});
+  const fetchFred = async id => rows[id] ?? [];
+  const result = await loadFed(fetchFred, fetchRates, {});
+  assert.equal(result.sofr, 0);
+  assert.equal(result.sourceObservedAt.sofr, '2026-10-15');
+  assert.equal(result.sofrSource, 'NYFED:secured-rates-latest');
+  assert.equal(result.sourceStatus.sofr, 'live');
   assert.equal(result.bgcr, null);
   assert.equal(result.tgcr, null);
   assert.equal(result.bgcrSofrSpread, null);
   assert.equal(result.tgcrSofrSpread, null);
-  fixture.refRates.pop();
+  const rawSofr = fixture.refRates.pop();
   await assert.rejects(fetchRates(), /missing BGCR\/TGCR\/SOFR/);
+
+  // Keep repo-rate parsing compatible, including its numeric strings and date trimming.
+  fixture.refRates[0] = { type: 'BGCR', effectiveDate: ' 2026-10-14 ', percentRate: ' 3.87 ' };
+  for (const invalid of [
+    { percentRate: '0' }, { percentRate: '3.9' }, { percentRate: '0x10' },
+    { effectiveDate: ' 2026-10-15 ' }, { effectiveDate: '2026-10-15\n' },
+    { effectiveDate: '2026-10-15T00:00:00Z' },
+  ]) {
+    fixture.refRates[2] = { ...rawSofr, ...invalid };
+    const parsed = await fetchRates();
+    assert.deepEqual(Object.keys(parsed), ['BGCR']);
+    assert.equal(parsed.BGCR.percentRate, 3.87);
+    assert.equal(parsed.BGCR.effectiveDate, '2026-10-14');
+    const retained = await loadFed(fetchFred, fetchRates, {});
+    assert.equal(retained.sofr, 3.9);
+    assert.equal(retained.sourceObservedAt.sofr, '2026-10-14');
+    assert.equal(retained.sofrSource, 'FRED:SOFR');
+    assert.equal(retained.sourceStatus.sofr, 'live');
+  }
 });
 
 
