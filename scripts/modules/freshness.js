@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=thermal-baseline-display-20261119';
+﻿import { fmtNumSafe } from './config.js?v=qqq-signal-copy-20261121';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

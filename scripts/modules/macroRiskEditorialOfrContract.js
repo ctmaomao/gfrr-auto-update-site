@@ -1,4 +1,4 @@
-import { pressureContainsNumericContent } from './editorialNumericView.js?v=thermal-baseline-display-20261119';
+import { pressureContainsNumericContent } from './editorialNumericView.js?v=qqq-signal-copy-20261121';
 // Browser-only display qualification. No provider, network, or score calculation.
 const MAX_AGE_MS = 30 * 3600000;
 const DAY = 86400000;

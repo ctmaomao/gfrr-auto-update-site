@@ -1,5 +1,5 @@
 // Read-only view of published evidence. No score, forecast or production writer.
-import { oilEvidenceNumber as number, oilObservation, qualifyOdpDisplay } from './oilEvidenceQuality.js?v=thermal-baseline-display-20261119';
+import { oilEvidenceNumber as number, oilObservation, qualifyOdpDisplay } from './oilEvidenceQuality.js?v=qqq-signal-copy-20261121';
 export const BIAS_LABELS = Object.freeze({strong_bullish:'美国周度供需明显偏紧',moderate_bullish:'美国周度供需偏紧',neutral_range:'美国周度供需中性',bearish:'美国周度供需偏松',false_down_physical_stress:'价格下跌 · 美国周度供需仍紧',false_up_unconfirmed:'价格上涨 · 美国周度供需偏松',product_crisis:'美国成品油库存压力较高',insufficient_data:'数据不足 · 暂不判断'});
 const ROUTES = {hormuz:'霍尔木兹海峡',babElMandeb:'曼德海峡',suez:'苏伊士运河',capeGoodHope:'好望角',malacca:'马六甲海峡',gibraltar:'直布罗陀海峡',bosporus:'博斯普鲁斯海峡',panama:'巴拿马运河'};
 const THERMAL_COMPARISON_REASONS = new Set(['within_baseline_or_not_repeated','above_baseline_repeated','above_baseline_repeated_elevated']);

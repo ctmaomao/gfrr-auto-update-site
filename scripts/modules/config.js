@@ -1,4 +1,4 @@
-﻿import { formatFiniteNumber } from './format.js?v=thermal-baseline-display-20261119';
+﻿import { formatFiniteNumber } from './format.js?v=qqq-signal-copy-20261121';
 
 export const dataUrl = './data/radar-data.json';
 export const historyUrl = './data/radar-history.json';

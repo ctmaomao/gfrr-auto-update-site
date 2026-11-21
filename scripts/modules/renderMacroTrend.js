@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=thermal-baseline-display-20261119';
+import { $ } from './config.js?v=qqq-signal-copy-20261121';
 
 function asNumber(value) {
   if (value === null || value === undefined || typeof value === 'boolean'

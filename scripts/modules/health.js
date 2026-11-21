@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=thermal-baseline-display-20261119';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=thermal-baseline-display-20261119';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=qqq-signal-copy-20261121';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=qqq-signal-copy-20261121';
 
 export function normalizeHealthLevel(level) {
   switch (level) {

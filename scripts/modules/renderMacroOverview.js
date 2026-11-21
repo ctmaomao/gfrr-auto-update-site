@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=thermal-baseline-display-20261119';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=thermal-baseline-display-20261119';
+} from './config.js?v=qqq-signal-copy-20261121';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=qqq-signal-copy-20261121';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,16 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=thermal-baseline-display-20261119';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=thermal-baseline-display-20261119';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=thermal-baseline-display-20261119';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=thermal-baseline-display-20261119';
-import { renderTrendSvg } from './renderMacroTrend.js?v=thermal-baseline-display-20261119';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=thermal-baseline-display-20261119';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=thermal-baseline-display-20261119';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=thermal-baseline-display-20261119';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=thermal-baseline-display-20261119';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=thermal-baseline-display-20261119';
+} from './macroOverviewDisplayHelpers.js?v=qqq-signal-copy-20261121';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=qqq-signal-copy-20261121';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=qqq-signal-copy-20261121';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=qqq-signal-copy-20261121';
+import { renderTrendSvg } from './renderMacroTrend.js?v=qqq-signal-copy-20261121';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=qqq-signal-copy-20261121';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=qqq-signal-copy-20261121';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=qqq-signal-copy-20261121';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=qqq-signal-copy-20261121';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=qqq-signal-copy-20261121';
 
 // ---------- 阈值 + 派生 helper ----------
 
@@ -548,6 +548,11 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
   const woScore = asNumber(worldOrderStressData?.score);
   const woDisplay = worldOrderStateLabel(worldOrderStressData?.state, worldOrderStressData?.labelZh);
   const qqqZ = latestQqqZ(marketPricingMetricsData);
+  // Use the existing qualified display independently of the legacy score inputs.
+  const qqqObservation = marketObservation(marketPricingMetricsData, 'qqq');
+  const qqqReadout = qqqObservation.z === null
+    ? 'QQQ 周线读数或日期标签待核验。'
+    : `QQQ 60 周均值偏离度 ${signedFixed(qqqZ, 2)}σ · 来源周线标签 ${qqqObservation.date}${qqqObservation.stale ? '（历史标签）' : ''}。实际收盘日期未核验。`;
   const hyOas = asNumber(radarData?.macroDrivers?.credit?.hyOas);
   const igOas = asNumber(radarData?.macroDrivers?.credit?.igOas);
   const nfci = asNumber(radarData?.macroDrivers?.credit?.nfci);
@@ -619,18 +624,14 @@ function deriveNarratives({ radarData, worldOrderStressData, marketPricingMetric
       name: '风险资产错配',
       score: n4Score,
       isActive: n4Active,
-      description: n4Active
-        ? '标普500(SPX)仍在高位但纳指100(NDX)跑赢,内部分化已达高警戒。'
-        : '标普500(SPX)仍在高位但纳指100(NDX)跑赢,内部分化未到危机程度。',
+      description: `${qqqReadout}本项只用 QQQ 作为代理，不比较不同指数的表现。`,
     },
     {
-      shortName: '过热确认',
-      name: '过热确认',
+      shortName: 'QQQ 周线偏离',
+      name: 'QQQ 周线偏离',
       score: n5Score,
       isActive: n5Active,
-      description: n5Active
-        ? `纳斯达克100 ETF(QQQ)偏离度(z-score) ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},波动率与信用未同步,缺少印证。`
-        : `纳斯达克100 ETF(QQQ)偏离度(z-score) ${signedFixed(qqqZ, 2)}σ ${(qqqZ ?? 0) > 2 ? '极度过热' : '偏热'},但信用 + 波动率没有验证,缺少同步证据。`,
+      description: `${qqqReadout}仅描述相对自身均值的位置，不判断当前市场是否过热。`,
     },
     {
       shortName: '信用利差告警',
