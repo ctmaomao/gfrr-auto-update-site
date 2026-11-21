@@ -4,6 +4,8 @@
 
 2026-09-11 [ADR-0043](ADR/0043-score-input-continuity.md)：Daily 出现 `structural_input_publication_hold:<字段>` 表示此前参与评分/门控的结构值或变化失去可用证据；`all_unavailable` 为全部结构源缺失。`main_score_input_publication_hold:realtime_unavailable` 表示实时输入不可信。上述失败保留旧快照和其原始时间，不能据此判断风险下降。先检查原始观测日期、缓存年龄、FRED/MOVE响应与历史对照完整性；恢复源后走既有运行流程，不改旧 JSON 时间、不恢复无限缓存、不手动降分。首次升级后的旧缓存若无 `sourceObservedAt`，必须成功获取源后才能成为有效新缓存。此条只收紧 Daily 写入，不改变 Worker health 的只读/告警边界。
 
+WALCL/WRESBAL 的 H.4.1 同口径备用仍使用同一 Daily 调度；检查 `macroDrivers.fedLiquidity.h41SourceReceipts` 区分官方备用及原缓存，核对两个观察端点、日期固定的 URL、响应摘要及真实取回时间。排程不证明实际上线；托管可达性、离线解析或测试通过都不算自然采用。无合格资料沿用原 fallback/hold，禁止通过手动改时间或强制运行制造采用证据。
+
 项目通用审查与确认沿用 [AGENTS.md](../AGENTS.md) / [ADR-0092](ADR/0092-delegated-ai-review.md)：已有有效授权的同范围操作由 AI 完成独立审查、测试与验收后推进，不因本手册历史阶段的“最终确认/人工批准”重复请示；未授权的阶段解锁、费用、来源权利和平台门槛仍保留。不得把命令参数中的确认开关当作用户授权，也不得删除这些写入守卫。
 
 相关文档：
