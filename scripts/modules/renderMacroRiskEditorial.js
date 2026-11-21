@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=thermal-baseline-display-20261119';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=qqq-signal-copy-20261121';
 
 const MAX_AGE_HOURS = 30;
 

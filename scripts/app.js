@@ -6,11 +6,11 @@ import {
   dataUrl,
   worldOrderStressUrl,
 } from './modules/config.js';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './modules/worldOrderSourceDisplay.js?v=thermal-baseline-display-20261119';
-import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=thermal-baseline-display-20261119';
-import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=thermal-baseline-display-20261119';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './modules/worldOrderSourceDisplay.js?v=qqq-signal-copy-20261121';
+import { snapshotDisplayHealth } from './modules/snapshotFreshness.js?v=qqq-signal-copy-20261121';
+import { renderOfrPrimary } from './modules/renderOfrPrimary.js?v=qqq-signal-copy-20261121';
 
-const APP_VERSION = 'thermal-baseline-display-20261119';
+const APP_VERSION = 'qqq-signal-copy-20261121';
 const RELEASE_VERSION_FALLBACK = 'v28.0.10';
 const MARKET_PRICING_METRICS_URL = './data/market-pricing-metrics.json';
 const RADAR_HISTORY_URL = './data/radar-history.json';
@@ -239,7 +239,7 @@ async function renderLoadedData({ radarData, worldOrderStressData = null, market
   // Stage 4b-1A: 调用 renderMacroOverview (Hero + threshold + pressure-sources)
   let macroOverviewRendered = false;
   try {
-    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=thermal-baseline-display-20261119');
+    const { renderMacroOverview } = await import('./modules/renderMacroOverview.js?v=qqq-signal-copy-20261121');
     renderMacroOverview({ radarData, worldOrderStressData, marketPricingMetricsData, radarHistoryData, oilDirectionalData });
     macroOverviewRendered = true;
   } catch (error) {

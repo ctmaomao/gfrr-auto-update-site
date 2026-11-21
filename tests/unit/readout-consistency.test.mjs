@@ -317,3 +317,30 @@ test('weekly labels cannot certify an actual close date, complete week or source
   }
   assert.match(html, /周线价格\(close\): <span id="mt-close"/);
 });
+
+test('professional evidence displays only the qualified QQQ observation, without changing legacy signal states', () => {
+  assert.match(html, /href="#macro-professional-evidence"/u);
+  assert.match(html, /<details[^>]+id="macro-professional-evidence">\s*<summary\b[\s\S]*?id="homepage-signal-layers"[\s\S]*?id="narrative-4-desc"[\s\S]*?id="narrative-5-desc"[\s\S]*?<\/details>/u);
+  const radarData = JSON.parse(fs.readFileSync(new URL('../../data/radar-data.json', import.meta.url)));
+  // Force the documented public fallback path, in which professional evidence is open.
+  delete radarData.macroRiskEditorialLayer;
+  for (const [data, scores, reading] of [
+    [market(2.6), ['89 · 已激活', '69 · 已激活'], /\+2\.60σ · 来源周线标签 2026-10-30/u],
+    [market(-0.8), ['38 · 潜伏', '18 · 潜伏'], /-0\.80σ · 来源周线标签 2026-10-30/u],
+    [market(0.2), ['53 · 潜伏', '33 · 潜伏'], /\+0\.20σ · 来源周线标签 2026-10-30/u],
+    [market(2.6, '2026-11-20'), ['89 · 已激活', '69 · 已激活'], /周线读数或日期标签待核验/u],
+    [null, ['50 · 潜伏', '30 · 潜伏'], /周线读数或日期标签待核验/u],
+  ]) {
+    api.renderMacroOverview({ radarData, marketPricingMetricsData: data });
+    assert.equal(el('macro-professional-evidence').open, true);
+    for (const [index, score] of [[4, scores[0]], [5, scores[1]]]) {
+      assert.equal(text(`narrative-${index}-score`), `分数 ${score}`);
+      assert.match(text(`narrative-${index}-desc`), reading);
+      assert.doesNotMatch(text(`narrative-${index}-desc`), /NDX|SPX|跑赢|偏热|未同步|没有验证/u);
+    }
+    assert.match(text('narrative-4-desc'), /不比较不同指数的表现/u);
+    assert.match(text('narrative-5-desc'), /不判断当前市场是否过热/u);
+    assert.equal(text('narrative-5-name'), 'QQQ 周线偏离');
+  }
+  assert.deepEqual(errors, []);
+});

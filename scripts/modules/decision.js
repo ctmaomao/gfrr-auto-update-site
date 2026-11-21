@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=thermal-baseline-display-20261119';
-import { formatOnRrpYiUsd } from './format.js?v=thermal-baseline-display-20261119';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=qqq-signal-copy-20261121';
+import { formatOnRrpYiUsd } from './format.js?v=qqq-signal-copy-20261121';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',
