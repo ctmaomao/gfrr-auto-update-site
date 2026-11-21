@@ -50,9 +50,46 @@ def response_head(path, stage):
     return status, headers
 
 
-def request_census(request, timeout):
+def header_values(headers, name):
+    if hasattr(headers, "get_all"):
+        return headers.get_all(name, [])
+    value = headers.get(name)
+    return [] if value is None else [value]
+
+
+def decimal(value):
+    """Parse an HTTP decimal without accepting signs, Unicode or unbounded integers."""
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]+", value := value.strip(" \t")):
+        return None
+    digits = value.lstrip("0")
+    return MAX_ZIP + 1 if len(digits) > len(str(MAX_ZIP)) else int(digits or "0")
+
+
+def strong_etag(value):
+    return isinstance(value, str) and bool(re.fullmatch(r'"[!#-~]*"', value))
+
+
+def require_probe_size_limit():
+    # Older curl only honors --max-filesize when the size is known in advance.
+    # This probe is specifically for an endpoint that may omit Content-Length.
+    try:
+        info = subprocess.run(["curl", "-q", "--version"], capture_output=True,
+                              timeout=2, check=True)
+    except (subprocess.SubprocessError, OSError):
+        raise CollectionFailure("metadata_probe_transport", "curl_size_limit_unverified") from None
+    line = info.stdout.split(b"\n", 1)[0]
+    versions = (re.match(rb"curl ([0-9]{1,4})\.([0-9]{1,4})\.([0-9]{1,4})(?: |$)", line),
+                re.search(rb" libcurl/([0-9]{1,4})\.([0-9]{1,4})\.([0-9]{1,4})(?: |$)", line))
+    if not all(match and tuple(map(int, match.groups())) >= (8, 4, 0) for match in versions):
+        raise CollectionFailure("metadata_probe_transport", "curl_size_limit_unverified")
+
+
+def request_census(request, timeout, *, metadata_probe=False):
     # Ordinary HTTPS to the official public bulk endpoint, no redirects or cookies.
     stage = "head_transport" if request.method == "HEAD" else "range_transport"
+    if metadata_probe:
+        stage = "metadata_probe_transport"
+        require_probe_size_limit()
     headers = {key.lower(): value for key, value in request.header_items()}
     args = ["curl", "-q", "--silent", "--show-error", "--fail", "--suppress-connect-headers",
             "--proto", "=https", "--connect-timeout", "8", "--max-time", str(timeout)]
@@ -98,26 +135,72 @@ class RangeZip:
             status = response.status
             if status != 200:
                 raise CollectionFailure("head_metadata", "unexpected_status", status=status)
-            length = response.headers.get("Content-Length")
-            if not length:
-                raise CollectionFailure("head_metadata", "content_length_missing", status=status)
-            try:
-                self.length = int(length)
-            except ValueError:
-                raise CollectionFailure("head_metadata", "content_length_invalid", status=status) from None
-            if not 1 <= self.length <= MAX_ZIP:
-                raise CollectionFailure("head_metadata", "content_length_out_of_bounds", status=status)
+            lengths = header_values(response.headers, "Content-Length")
+            self.probed_length = not lengths
             # A strong ETag binds every range. Some Census cache replicas expose
             # different Last-Modified clocks for the same file, so without an
-            # ETag the ZIP member's directory identity and CRC are authoritative.
+            # ETag the ZIP member's directory identity and CRC remain authoritative.
             etag = response.headers.get("ETag", "")
-            self.etag = etag if etag.startswith('"') else None
+            self.etag = etag if isinstance(etag, str) and etag.startswith('"') else None
+            if lengths:
+                if len(lengths) != 1 or (length := decimal(lengths[0])) is None:
+                    raise CollectionFailure("head_metadata", "content_length_invalid", status=status)
+                if not 1 <= length <= MAX_ZIP:
+                    raise CollectionFailure("head_metadata", "content_length_out_of_bounds", status=status)
+                self.length = length
+                return
+            if getattr(response.headers, "defects", ()):
+                raise CollectionFailure("head_metadata", "headers_invalid", status=status)
+            tags = header_values(response.headers, "ETag")
+            if len(tags) > 1 or (self.etag and not strong_etag(self.etag)):
+                raise CollectionFailure("head_metadata", "etag_invalid", status=status)
+        self.length = self.probe_length()
 
-    def open(self, method, headers):
+    def probe_length(self):
+        stage = "metadata_probe_envelope"
+        if self.received + 1 > MAX_BYTES:
+            raise CollectionFailure("budget", "transfer_byte_limit")
+        headers = {"Range": "bytes=0-0", "Accept-Encoding": "identity"}
+        if self.etag:
+            headers["If-Match"] = self.etag
+        with self.open("GET", headers, metadata_probe=True) as response:
+            status = response.status
+            if status != 206:
+                raise CollectionFailure(stage, "unexpected_status", status=status)
+            if getattr(response.headers, "defects", ()):
+                raise CollectionFailure(stage, "headers_invalid", status=status)
+            ranges = header_values(response.headers, "Content-Range")
+            match = (re.fullmatch(r"bytes 0-0/([1-9][0-9]*)", ranges[0])
+                     if len(ranges) == 1 and isinstance(ranges[0], str) else None)
+            if not match:
+                raise CollectionFailure(stage, "content_range_invalid", status=status)
+            total = decimal(match[1])
+            if total > MAX_ZIP:
+                raise CollectionFailure(stage, "archive_length_out_of_bounds", status=status)
+            lengths = header_values(response.headers, "Content-Length")
+            if lengths and (len(lengths) != 1 or decimal(lengths[0]) != 1):
+                raise CollectionFailure(stage, "content_length_invalid", status=status)
+            encodings = header_values(response.headers, "Content-Encoding")
+            if encodings not in ([], ["identity"]):
+                raise CollectionFailure(stage, "content_encoding_mismatch", status=status)
+            tags = header_values(response.headers, "ETag")
+            if len(tags) > 1 or (self.etag and tags != [self.etag]):
+                raise CollectionFailure(stage, "etag_mismatch", status=status)
+            if len(response.read(2)) != 1:
+                raise CollectionFailure(stage, "body_length_mismatch", status=status)
+            if not self.etag and tags and strong_etag(tags[0]):
+                self.etag = tags[0]
+        self.received += 1
+        return total
+
+    def open(self, method, headers, *, metadata_probe=False):
         self.count += 1
         if self.count > MAX_REQUESTS:
             raise CollectionFailure("budget", "request_limit")
-        return self.request(Request(self.url, headers=headers, method=method), timeout=15)
+        request = Request(self.url, headers=headers, method=method)
+        if metadata_probe and self.request is request_census:
+            return self.request(request, timeout=15, metadata_probe=True)
+        return self.request(request, timeout=15)
 
     def seek(self, offset, whence=io.SEEK_SET):
         start = {io.SEEK_SET: 0, io.SEEK_CUR: self.pos, io.SEEK_END: self.length}[whence]
@@ -163,7 +246,8 @@ class RangeZip:
                 raise CollectionFailure("range_envelope", "unexpected_status", status=status)
             if response.headers.get("Content-Range") != expected:
                 raise CollectionFailure("range_envelope", "content_range_mismatch", status=status)
-            if self.etag and response.headers.get("ETag") != self.etag:
+            if self.etag and (response.headers.get("ETag") != self.etag or (
+                    self.probed_length and header_values(response.headers, "ETag") != [self.etag])):
                 raise CollectionFailure("range_envelope", "etag_mismatch", status=status)
             if response.headers.get("Content-Encoding", "identity") != "identity":
                 raise CollectionFailure("range_envelope", "content_encoding_mismatch", status=status)
