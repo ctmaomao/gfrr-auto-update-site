@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildDateChunks, parseFredCsv } from './fred-csv.mjs';
 
 const DEFAULT_OUTPUT = 'manual-artifacts/treasury-fiscal-data/liquidity-long-backtest-latest.json';
 const DEFAULT_START_DATE = '2014-01-01';
@@ -287,35 +288,6 @@ function buildFredCsvUrl(seriesId, startDate, endDate) {
     id: seriesId
   });
   return `${FRED_CSV_BASE}?${params.toString()}`;
-}
-
-function parseFredCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const out = [];
-  for (const line of lines.slice(1)) {
-    const [date, raw] = line.split(',');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) continue;
-    if (raw === undefined || raw.trim() === '' || raw.trim() === '.') continue;
-    const value = Number(raw);
-    if (Number.isFinite(value)) out.push({ date, value });
-  }
-  return out;
-}
-
-function buildDateChunks(startDate, endDate, chunkYears) {
-  const chunks = [];
-  let year = Number(startDate.slice(0, 4));
-  const endYear = Number(endDate.slice(0, 4));
-
-  while (year <= endYear) {
-    const chunkStart = year === Number(startDate.slice(0, 4)) ? startDate : `${year}-01-01`;
-    const chunkEndYear = Math.min(year + chunkYears - 1, endYear);
-    const chunkEnd = chunkEndYear === endYear ? endDate : `${chunkEndYear}-12-31`;
-    chunks.push({ startDate: chunkStart, endDate: chunkEnd });
-    year = chunkEndYear + 1;
-  }
-
-  return chunks;
 }
 
 async function fetchFredCsvSeries(seriesId, startDate, endDate, cadence) {
