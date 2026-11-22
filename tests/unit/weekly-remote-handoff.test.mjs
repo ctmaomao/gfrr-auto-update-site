@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -10,8 +10,18 @@ import { pathToFileURL } from 'node:url';
 const issue = '2026-11-23';
 const html = Buffer.from('<!doctype html><html><head><title>周报 2026年11月23日</title></head><body><main><section>已验收正文</section></main></body></html>');
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
-async function fixture() {
+async function fixture(t) {
+  const childCloses = [];
   const root = mkdtempSync(join(tmpdir(), 'gfrr-remote-test-'));
+  t.after(async () => {
+    // Promise.all in the race tests can reject while another child still uses the fixture.
+    await Promise.all(childCloses);
+    rmSync(root, { force: true, recursive: true });
+  });
+  function trackChild(child) {
+    childCloses.push(new Promise(resolve => child.once('close', resolve)));
+    return child;
+  }
   const seed = join(root, 'seed'), remote = join(root, 'remote.git'), input = join(root, 'issue.html');
   mkdirSync(seed); mkdirSync(join(seed, 'reports'));
   const git = (cwd, ...args) => execFileSync('git', args, {cwd, encoding:'utf8', stdio:'pipe'}).trim();
@@ -32,10 +42,10 @@ async function fixture() {
   }
   const moduleUrl=pathToFileURL(join(moduleDir,'weekly-remote-handoff.mjs')).href;
   const client=await import(moduleUrl);
-  return { root, remote, input, git, client, moduleUrl };
+  return { root, remote, input, git, client, moduleUrl, trackChild };
 }
-test('remote handoff persists and reads back identical original; retries do not overwrite', async () => {
-  const {remote,input,git,client,moduleUrl} = await fixture();
+test('remote handoff persists and reads back identical original; retries do not overwrite', async t => {
+  const {remote,input,git,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const args = {remote,source:input,date:issue,sha:digest(html)};
   const first = persistRemoteHandoff(args);
@@ -51,14 +61,14 @@ test('remote handoff persists and reads back identical original; retries do not 
   assert.equal(git(remote,'rev-parse',`refs/heads/weekly-originals/${issue}`),first.commit);
   assert.deepEqual(readRemoteHandoff(args).bytes,html);
 });
-test('missing and mismatched handoffs fail closed', async () => {
-  const {remote,client,moduleUrl} = await fixture();
+test('missing and mismatched handoffs fail closed', async t => {
+  const {remote,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   assert.throws(() => readRemoteHandoff({remote,date:issue,sha:digest(html)}),/failed/i);
   assert.throws(() => readRemoteHandoff({remote,date:'../invalid',sha:digest(html)}));
 });
-test('real CLI requires remote handoff and explicit expected identity before admission', async () => {
-  const {root,remote,input,git,client,moduleUrl} = await fixture();
+test('real CLI requires remote handoff and explicit expected identity before admission', async t => {
+  const {root,remote,input,git,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const project = join(root,'project');
   git(root,'clone',remote,project);
@@ -114,8 +124,8 @@ test('real CLI requires remote handoff and explicit expected identity before adm
   assert.doesNotMatch(readFileSync(join(project,'weekly-reports.html'),'utf8'),new RegExp(next+'\\.html'));
 });
 
-test('same-date revision pins its predecessor without exposing it or advancing its branch', async () => {
-  const {root,remote,input,git,client,moduleUrl} = await fixture();
+test('same-date revision pins its predecessor without exposing it or advancing its branch', async t => {
+  const {root,remote,input,git,client,moduleUrl} = await fixture(t);
   const revision = issue + '-r2';
   const revised = Buffer.from(html.toString().replace('11月23日','11月23日 · 第2版').replace('已验收正文','已验收修订稿'));
   const revisedInput = join(root,'revised.html');
@@ -152,8 +162,8 @@ test('same-date revision pins its predecessor without exposing it or advancing i
   assert.throws(() => client.readRemoteHandoff({date:revision,sha:args.sha}),/Git operation failed/);
 });
 
-test('accepted push with lost response is read back without a second push', async () => {
-  const {root,remote,input,client,moduleUrl} = await fixture();
+test('accepted push with lost response is read back without a second push', async t => {
+  const {root,remote,input,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const wrapperDir = join(root,'bin'); mkdirSync(wrapperDir);
   const wrapper = join(wrapperDir,'git');
@@ -169,15 +179,15 @@ test('accepted push with lost response is read back without a second push', asyn
   assert.deepEqual(readRemoteHandoff({remote,date:issue,sha:digest(html)}).bytes,html);
 });
 
-test('two competing originals for one date cannot both be accepted', async () => {
-  const {root,remote,input,client,moduleUrl} = await fixture();
+test('two competing originals for one date cannot both be accepted', async t => {
+  const {root,remote,input,client,moduleUrl,trackChild} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const alternate = join(root,'alternate.html');
   const other = Buffer.from(html.toString().replace('已验收正文','另一份原件'));
   writeFileSync(alternate,other);
   const program = `import {persistRemoteHandoff} from ${JSON.stringify(moduleUrl)}; const [remote,source,date,sha]=process.argv.slice(1); try { const r=persistRemoteHandoff({remote,source,date,sha}); console.log(r.sha256); } catch { process.exitCode=1; }`;
   const run = (source,sha) => new Promise((resolve,reject) => {
-    const child=spawn(process.execPath,['--input-type=module','-e',program,remote,source,issue,sha],{stdio:['ignore','pipe','pipe']});
+    const child=trackChild(spawn(process.execPath,['--input-type=module','-e',program,remote,source,issue,sha],{stdio:['ignore','pipe','pipe']}));
     let output=''; child.stdout.on('data',chunk=>output+=chunk); child.on('error',reject); child.on('close',status=>resolve({status,output:output.trim()}));
   });
   const results=await Promise.all([run(input,digest(html)),run(alternate,digest(other))]);
@@ -187,8 +197,8 @@ test('two competing originals for one date cannot both be accepted', async () =>
   assert.equal(readRemoteHandoff({remote,date:issue,sha:winner}).sha256,winner);
 });
 
-test('racing revisions cannot overwrite the winning remote handoff', async () => {
-  const {root,remote,input,git,client,moduleUrl} = await fixture();
+test('racing revisions cannot overwrite the winning remote handoff', async t => {
+  const {root,remote,input,git,client,moduleUrl,trackChild} = await fixture(t);
   const initial = client.persistRemoteHandoff({source:input,date:issue,sha:digest(html)});
   const revision = issue + '-r2';
   const predecessor = {sha256:initial.sha256,handoffCommit:initial.commit};
@@ -200,7 +210,7 @@ test('racing revisions cannot overwrite the winning remote handoff', async () =>
     return {source,sha:digest(bytes)};
   });
   const results = await Promise.all(variants.map(({source,sha}) => new Promise((resolve,reject) => {
-    const child = spawn(process.execPath,['--input-type=module','-e',program,source,revision,sha,JSON.stringify(predecessor)],{stdio:['ignore','pipe','pipe']});
+    const child = trackChild(spawn(process.execPath,['--input-type=module','-e',program,source,revision,sha,JSON.stringify(predecessor)],{stdio:['ignore','pipe','pipe']}));
     let digestOut=''; child.stdout.on('data',chunk=>digestOut+=chunk);
     child.on('error',reject); child.on('close',status=>resolve({status,digestOut:digestOut.trim()}));
   })));
@@ -210,8 +220,8 @@ test('racing revisions cannot overwrite the winning remote handoff', async () =>
   assert.equal(git(remote,'rev-parse','refs/heads/weekly-originals/'+issue),initial.commit);
 });
 
-test('batch read verifies multiple independently stored weekly originals', async () => {
-  const {root,remote,input,client,moduleUrl} = await fixture();
+test('batch read verifies multiple independently stored weekly originals', async t => {
+  const {root,remote,input,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const nextDate='2026-11-30';
   const next=Buffer.from(html.toString().replace('2026年11月23日','2026年11月30日'));
@@ -223,8 +233,8 @@ test('batch read verifies multiple independently stored weekly originals', async
   assert.deepEqual(result.map(x=>x.bytes),[html,next]);
 });
 
-test('production CLI refuses fetch and push URL rewrites before any remote mutation', async () => {
-  const {root,remote,input,git,client,moduleUrl} = await fixture();
+test('production CLI refuses fetch and push URL rewrites before any remote mutation', async t => {
+  const {root,remote,input,git,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const canonical='https://github.com/ctmaomao/gfrr-auto-update-site.git';
   for (const key of ['insteadOf','pushInsteadOf']) {
@@ -246,8 +256,8 @@ test('production CLI refuses fetch and push URL rewrites before any remote mutat
   }
 });
 
-test('production CLI refuses a separately configured pushurl', async () => {
-  const {remote,input,git,client,moduleUrl} = await fixture();
+test('production CLI refuses a separately configured pushurl', async t => {
+  const {remote,input,git,client,moduleUrl} = await fixture(t);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const env={...process.env,GIT_CONFIG_COUNT:'1',GIT_CONFIG_KEY_0:'remote.origin.pushurl',GIT_CONFIG_VALUE_0:`file://${remote}`};
   const child=spawnSync(process.execPath,['scripts/weekly-remote-handoff.mjs','save',issue,digest(html),input],{encoding:'utf8',timeout:5000,env});
@@ -257,8 +267,8 @@ test('production CLI refuses a separately configured pushurl', async () => {
   assert.throws(()=>git(remote,'show-ref','--verify',`refs/heads/weekly-originals/${issue}`));
 });
 
-test('production CLI rejects URL-specific TLS and redirect overrides before network access', async () => {
-  const {root,remote,input,git}=await fixture();
+test('production CLI rejects URL-specific TLS and redirect overrides before network access', async t => {
+  const {root,remote,input,git}=await fixture(t);
   const wrapperDir=join(root,'network-blocker'); mkdirSync(wrapperDir);
   const wrapper=join(wrapperDir,'git');
   const realGit=execFileSync('which',['git'],{encoding:'utf8'}).trim();
@@ -284,8 +294,8 @@ test('production CLI rejects URL-specific TLS and redirect overrides before netw
   }
 });
 
-test('exported production entry points ignore an injected destination', async () => {
-  const {root,remote,input,git}=await fixture();
+test('exported production entry points ignore an injected destination', async t => {
+  const {root,remote,input,git}=await fixture(t);
   const config=join(root,'rewrite');
   writeFileSync(config,`[url "file://${remote}"]\n\tinsteadOf = https://github.com/ctmaomao/gfrr-auto-update-site.git\n`);
   const moduleUrl=new URL('../../scripts/weekly-remote-handoff.mjs',import.meta.url).href;
@@ -296,8 +306,8 @@ test('exported production entry points ignore an injected destination', async ()
   assert.throws(()=>git(remote,'show-ref','--verify',`refs/heads/weekly-originals/${issue}`));
 });
 
-test('production CLI rejects a custom Git remote transport before network access', async () => {
-  const {root,input}=await fixture();
+test('production CLI rejects a custom Git remote transport before network access', async t => {
+  const {root,input}=await fixture(t);
   const wrapperDir=join(root,'transport-blocker'); mkdirSync(wrapperDir);
   const realGit=execFileSync('which',['git'],{encoding:'utf8'}).trim();
   const log=join(root,'unexpected-transport');
