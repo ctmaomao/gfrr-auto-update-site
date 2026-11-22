@@ -6,6 +6,8 @@
 
 WALCL/WRESBAL 的 H.4.1 同口径备用仍使用同一 Daily 调度；检查 `macroDrivers.fedLiquidity.h41SourceReceipts` 区分官方备用及原缓存，核对两个观察端点、日期固定的 URL、响应摘要及真实取回时间。排程不证明实际上线；托管可达性、离线解析或测试通过都不算自然采用。无合格资料沿用原 fallback/hold，禁止通过手动改时间或强制运行制造采用证据。
 
+Daily ON RRP 原值或日期不可用时才尝试一次纽约联储备用。通过 `macroDrivers.fedLiquidity` 的 `onRrpSource`、`sourceStatus.onRrp` 和 `sourceObservedAt.onRrp` 区分备用实取、原缓存与原始操作日；`onRrpWeekChangeStatus` 区分零参照和缺参照。离线回放或 CI 不代表自然采用；若下一轮 FRED 健康，只核验仍使用 FRED，不强制制造故障或补跑。
+
 项目通用审查与确认沿用 [AGENTS.md](../AGENTS.md) / [ADR-0092](ADR/0092-delegated-ai-review.md)：已有有效授权的同范围操作由 AI 完成独立审查、测试与验收后推进，不因本手册历史阶段的“最终确认/人工批准”重复请示；未授权的阶段解锁、费用、来源权利和平台门槛仍保留。不得把命令参数中的确认开关当作用户授权，也不得删除这些写入守卫。
 
 相关文档：

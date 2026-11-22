@@ -7,6 +7,8 @@ import {
   parseObservationDate, latestDatedObservation, fallbackObservation, sameObservationDay, creditPeriodChange, reserveBalanceChange, cachedReserveBalanceChange, creLoanBalanceDate, creLoanBalanceSnapshot,
 } from '../../scripts/daily/source-observation.mjs';
 
+import { parseFredApiObservations, parseFredCsv } from '../../scripts/lib/fred-observations.mjs';
+import { NY_FED_ON_RRP_URL, parseNyFedOnRrpRows, resolveOnRrp } from '../../scripts/daily/on-rrp.mjs';
 import { matchingH41Receipt } from '../../scripts/daily/h41-provenance.mjs';
 import { requireStructuralObservation, structuralValueUsable, structuralObservationUsable,
   requireStructuralContinuity } from '../../scripts/daily/structural-freshness.mjs';
@@ -39,6 +41,9 @@ function loadFed(fetchFed, nyFed, prev, options = {}) {
   const src = extract('resolveFedLiquidity', 'async function resolvePolicyExpectations');
   const sandbox = {
     Date: FixedDate,
+    NY_FED_ON_RRP_URL,
+    resolveOnRrp,
+    fetchWithTimeout: async () => { throw new Error('offline-only'); },
     fetchFredSeries: fetchFed,
     fetchNyFedSecuredRatesLatest: typeof nyFed === 'function' ? nyFed : async () => nyFed,
     requireStructuralObservation: (rows) => (rows.at(-1)?.date ?? null),
@@ -877,4 +882,164 @@ test('lost WALCL evidence with no incumbent still triggers structural continuity
   assert.equal(out.sourceStatus.walcl,'missing');
   assert.throws(() => requireStructuralContinuity({fedLiquidity:{walcl:7000,walcl4wChange:12,sourceStatus:{walcl:'live'}}},
     {fedLiquidity:out}), /structural_input_publication_hold:walcl/);
+});
+
+function reverseRepoOperation(operationDate, amtAccepted, termCalenderDays = 1) {
+  return { operationDate, operationType: 'Reverse Repo', auctionStatus: 'Results',
+    term: 'Overnight', termCalenderDays, totalAmtAccepted: 990e9,
+    details: [{ securityType: 'Treasury', amtAccepted }] };
+}
+
+const reverseRepoPayload = (...operations) => ({ repo: { operations } });
+const RRP_SOURCE = 'NYFED:overnight-reverse-repo-results';
+const RRP_TEST_NOW = '2026-11-22T12:00:00Z';
+
+test('direct ON RRP parses chronological operation dates, not maturity or headline totals', () => {
+  const friday = { ...reverseRepoOperation('2026-11-20', 401e6, 3), maturityDate: '2026-11-23' };
+  const thursdayBeforeHoliday = { ...reverseRepoOperation('2026-11-19', 0, 4), maturityDate: '2026-11-23' };
+  assert.deepEqual(parseNyFedOnRrpRows(reverseRepoPayload(friday, thursdayBeforeHoliday), RRP_TEST_NOW), [
+    { date: '2026-11-19', value: 0 },
+    { date: '2026-11-20', value: 0.401 },
+  ]);
+});
+
+test('direct ON RRP fails closed on mixed, ambiguous or malformed operations', () => {
+  const row = reverseRepoOperation('2026-11-20', 401e6, 3);
+  const unique = reverseRepoOperation('2026-11-19', 405e6);
+  const malformedRows = [
+    null, { operationDate: '2026-11-31' }, { operationDate: '2026-11-23' }, { operationDate: '2026-11-20T00:00:00Z' },
+    { operationType: 'Repo' }, { auctionStatus: 'Announcement' }, { term: 'Term' },
+    { termCalenderDays: 0 }, { termCalenderDays: '3' },
+    { details: [] }, { details: { 0: row.details[0] } }, { details: [row.details[0], row.details[0]] },
+    { details: [{ securityType: 'Unknown', amtAccepted: 401e6 }] },
+    ...[null, '', '401000000', false, [], {}, -1, Infinity, NaN].map(amtAccepted => ({
+      details: [{ securityType: 'Treasury', amtAccepted }],
+    })),
+  ];
+  for (const override of malformedRows) {
+    assert.deepEqual(parseNyFedOnRrpRows(reverseRepoPayload(unique, override && { ...row, ...override }), RRP_TEST_NOW), []);
+  }
+  assert.deepEqual(parseNyFedOnRrpRows(reverseRepoPayload(row, row), RRP_TEST_NOW), []);
+  assert.deepEqual(parseNyFedOnRrpRows(reverseRepoPayload(...Array(7).fill(row)), RRP_TEST_NOW), []);
+  assert.deepEqual(parseNyFedOnRrpRows({}, RRP_TEST_NOW), []);
+});
+
+test('healthy single-row FRED ON RRP is live with missing lag and no direct request', async () => {
+  const calls = [];
+  const result = await loadFed(async (...args) => {
+    if (args[0] !== 'RRPONTSYD') throw Error('offline-only');
+    calls.push(args);
+    return [{ date: '2026-10-21', value: 0 }];
+  }, {}, { onRrp: 0.4, onRrpSource: RRP_SOURCE, sourceStatus: { onRrp: 'fallback' },
+    sourceObservedAt: { onRrp: '2026-10-22' } }, {
+    structuralValueUsable,
+    fetchWithTimeout: async (...args) => { calls.push(args); throw Error('unexpected direct request'); },
+  });
+  assert.deepEqual(calls, [['RRPONTSYD', 30, Date.parse(FIXED_NOW)]]);
+  assert.equal(result.onRrp, 0);
+  assert.equal(result.sourceObservedAt.onRrp, '2026-10-21');
+  assert.equal(result.sourceStatus.onRrp, 'live');
+  assert.equal(result.onRrpWeekChange, null);
+  assert.equal(result.onRrpWeekChangeStatus, 'missing');
+  assert.equal('onRrpSource' in result, false);
+});
+
+test('Daily adopts direct ON RRP on primary failure using one bounded request and the original lag rule', async () => {
+  const attempts = [];
+  const fixture = reverseRepoPayload(
+    reverseRepoOperation('2026-10-21', 405e6),
+    reverseRepoOperation('2026-10-19', 90e6),
+    reverseRepoOperation('2026-10-13', 200e6),
+  );
+  const result = await loadFed(async () => { throw Error('FRED unavailable'); }, {}, {}, {
+    structuralValueUsable,
+    fetchWithTimeout: async (url, timeout, options) => {
+      attempts.push([url, timeout, options.headers.Accept]);
+      return JSON.stringify(fixture);
+    },
+  });
+  assert.deepEqual(attempts, [[NY_FED_ON_RRP_URL, 8000, 'application/json']]);
+  assert.equal(result.onRrp, 0.405);
+  assert.equal(result.onRrpSource, RRP_SOURCE);
+  assert.equal(result.sourceObservedAt.onRrp, '2026-10-21');
+  assert.equal(result.sourceStatus.onRrp, 'live');
+  assert.equal(result.onRrpWeekChange, 102.5);
+  assert.equal(result.onRrpWeekChangeStatus, 'observed');
+});
+
+test('direct reading can preserve real zero or missing lag, never mix sources, and invalid primary levels fall through', async () => {
+  const incumbent = { onRrp: 0.2, sourceObservedAt: { onRrp: '2026-11-19' },
+    sourceStatus: { onRrp: 'live' }, onRrpWeekChange: 71 };
+  const baseline = reverseRepoOperation('2026-11-13', 0, 3);
+  const latest = reverseRepoOperation('2026-11-20', 0, 3);
+  const primary = async () => [{ date: '2026-11-20', value: -1 }];
+  const zero = await resolveOnRrp(incumbent, RRP_TEST_NOW, primary, async () => reverseRepoPayload(latest, baseline));
+  assert.deepEqual(zero, { value: 0, date: '2026-11-20', weekChange: null, weekChangeStatus: 'undefined_zero_baseline',
+    status: 'live', source: RRP_SOURCE });
+  const noLag = await resolveOnRrp(incumbent, RRP_TEST_NOW, primary, async () => reverseRepoPayload(latest));
+  assert.deepEqual(noLag, { ...zero, weekChangeStatus: 'missing' });
+});
+
+test('same-day and older direct results keep eligible cache; failure preserves only actual direct attribution', async () => {
+  const original = { onRrp: 0.21, sourceObservedAt: { onRrp: '2026-11-20' },
+    sourceStatus: { onRrp: 'live' }, onRrpWeekChangeStatus: 'undefined_zero_baseline' };
+  const noPrimary = async () => [{ date: '2026-11-14', value: 0.3 }];
+  const expected = { value: 0.21, date: '2026-11-20', weekChange: null,
+    weekChangeStatus: 'undefined_zero_baseline', status: 'fallback', source: null };
+  for (const date of ['2026-11-20', '2026-11-19']) {
+    const direct = async () => reverseRepoPayload(reverseRepoOperation(date, 1e9));
+    assert.deepEqual(await resolveOnRrp(original, RRP_TEST_NOW, noPrimary, direct), expected);
+  }
+  const fetchFailure = async () => { throw Error('offline-only'); };
+  assert.deepEqual(await resolveOnRrp({ ...original, onRrpSource: RRP_SOURCE }, RRP_TEST_NOW, noPrimary, fetchFailure),
+    { ...expected, source: RRP_SOURCE });
+  assert.deepEqual(await resolveOnRrp({ ...original, onRrpSource: 'other' }, RRP_TEST_NOW, noPrimary, fetchFailure), expected);
+  const invalid = await resolveOnRrp({ ...original, sourceObservedAt: { onRrp: '2026-11-13' } },
+    RRP_TEST_NOW, noPrimary, async () => reverseRepoPayload(reverseRepoOperation('2026-11-13', 1e9)));
+  assert.deepEqual(invalid, { value: null, date: null, weekChange: null, weekChangeStatus: 'missing', status: 'missing', source: null });
+});
+
+test('keyed FRED singleton retains CSV history or its own eligible level without reaching NY Fed', async () => {
+  const primaryDate = '2026-10-21';
+  const priorDate = '2026-10-14';
+  const primary = [{ date: primaryDate, value: '0.4' }];
+  for (const [name, apiRows, csv, expectedCalls, expectedValue, expectedChange] of [
+    ['prefer usual API history', [{ date: priorDate, value: '0.2' }, ...primary], null, ['api'], 0.4, 100],
+    ['keep usual CSV history', primary, `observation_date,RRPONTSYD\n${priorDate},0.2\n${primaryDate},0.5`, ['api', 'csv'], 0.5, 150],
+    ['CSV transport failure', primary, null, ['api', 'csv'], 0.4, null],
+    ['older CSV history', primary, `observation_date,RRPONTSYD\n${priorDate},0.2\n2026-10-20,0.3`, ['api', 'csv'], 0.4, null],
+    ['invalid CSV level', primary, `observation_date,RRPONTSYD\n${priorDate},0.2\n${primaryDate},-1`, ['api', 'csv'], 0.4, null],
+    ['newer singleton CSV', [{ date: '2026-10-20', value: '0.4' }], `observation_date,RRPONTSYD\n${primaryDate},0.5`, ['api', 'csv'], 0.5, null],
+  ]) {
+    const calls = [];
+    const fred = vm.runInNewContext(`${extract('fetchFredSeries')}\nfetchFredSeries`, {
+      FRED_API_KEY: 'mock-only',
+      FRED_BASE: 'mock:csv',
+      cosdIso: () => '2026-09-22',
+      buildFredApiUrl: () => 'mock:api',
+      runFredApiSerialized: task => task(),
+      parseFredApiObservations, parseFredCsv, structuralValueUsable, structuralObservationUsable, stringifyFetchError: String,
+      console: { warn() {} },
+      retryFetch: async (url, label) => {
+        if (!label.endsWith(':RRPONTSYD')) throw Error('offline-only');
+        if (url === 'mock:api') {
+          calls.push('api');
+          return JSON.stringify({ observations: apiRows });
+        }
+        calls.push('csv');
+        if (csv === null) throw Error('offline-only');
+        return csv;
+      },
+    });
+    const result = await loadFed(fred, {}, {}, {
+      structuralValueUsable,
+      fetchWithTimeout: async () => { calls.push('nyfed'); throw Error('unexpected direct request'); },
+    });
+    assert.deepEqual(calls, expectedCalls, name);
+    assert.equal(result.onRrp, expectedValue, name);
+    assert.equal(result.sourceObservedAt.onRrp, primaryDate, name);
+    assert.equal(result.onRrpWeekChange, expectedChange, name);
+    assert.equal(result.sourceStatus.onRrp, 'live', name);
+    assert.equal('onRrpSource' in result, false, name);
+  }
 });

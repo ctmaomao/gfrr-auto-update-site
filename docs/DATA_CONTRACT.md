@@ -563,7 +563,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 
 #### macroDrivers.fedLiquidity
 
-`macroDrivers.fedLiquidity` 是美联储资产负债表与利率层指标。所有字段为 audit-only / display-only，不参与 scoring、`decisionModel`、`executionLock` 或 `positionGuidance`。
+`macroDrivers.fedLiquidity` 是美联储资产负债表与利率层指标。新增利率、准备金与利差字段为 audit-only / display-only；既有 WALCL 和 ON RRP 水平与变化仍是结构输入。
 
 字段 contract (v28.0M-50):
 
@@ -571,7 +571,8 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 |---|---|---|---|---|
 | `walcl` | number \| null | 百万美元 | FRED:WALCL（周频） | Fed 总资产 |
 | `walcl4wChange` | number \| null | % | 派生 | 4 周百分比变化 |
-| `onRrp` | number \| null | 十亿美元 | FRED:RRPONTSYD（日频） | ON RRP 余额 |
+| `onRrp` | number \| null | 十亿美元 | FRED:RRPONTSYD 首选 / NY Fed 隔夜逆回购结果（日频） | ON RRP 余额 |
+| `onRrpSource` | string (optional) | n/a | 固定 | 仅实际采用纽约联储备用时为 `NYFED:overnight-reverse-repo-results`；沿用该缓存则保留，FRED 恢复、legacy 或缺值时不添加 |
 | `onRrpWeekChange` | number \| null | % | 派生 | 周百分比变化 |
 | `effectiveFedFundsRate` | number \| null (optional) | % | FRED:DFF（日频） | 有效联邦基金利率（v28.0M-41 起） |
 | `sofr` | number \| null (optional) | % | FRED:SOFR（业务日） | 担保隔夜融资利率（v28.0M-41 起） |
@@ -599,7 +600,7 @@ Route-level tanker freight proof-of-source 当前只是设计契约;route-level 
 
 边界：
 
-- 本字段层不改变 `values.*`、scoring、`decisionModel`、`executionLock`、`positionGuidance`。
+- ON RRP 备用仍进入既有结构输入链；不更改 `values.*` 或 scoring、`decisionModel`、`executionLock`、`positionGuidance` 的规则和阈值。按同源 `structuralLagValue(rows, 7, 3)` 计算周变化；参照为零时变化是 null、状态为 `undefined_zero_baseline`，缺参照时变化是 null、状态为 `missing`。仅当取得并采用合格的本轮观测时记为 `live`，缓存记为 `fallback`。
 - `effectiveFedFundsRate` / `sofr` / `reserveBalances` / `reserveBalances4wChange` 标记为 optional 以保持向后兼容性（v28.0M-42 之前的快照不包含全部字段）。
 - `sourceStatus.reserveBalances` 只能为 `live` / `fallback` / `missing`。
 - 准备金4周变化仅使用本期观测日恰好28日前的唯一周三观测；不以最近周或本期代替。缺参照/零分母保留本期水平与原观察日，变化及参照为 null。fallback仅在旧水平、原日期、参照与存储变化可一致回算时沿用；legacy无参照仅保留水平，不把旧变化移至新周期。不改WALCL/RRP评分或研究回放。
