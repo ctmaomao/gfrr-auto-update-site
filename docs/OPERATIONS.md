@@ -568,27 +568,15 @@ If operators rerun the workflow, keep it dry-run only with the default `fixture_
 
 ### External AI provider-call workflow design status
 
-v28.0L-3C is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md). It is design-only.
-
-Do not add `DEEPSEEK_API_KEY` to GitHub Secrets until a provider-call implementation PR is explicitly approved. Continue using the v28.0L-3B `External AI Manual Dry Run` workflow for no-secret validation. The dry-run workflow must remain `provider=none`, no-network, no-secret, and no-provider-call.
-
-Provider-call artifacts, if implemented later, are still non-production manual diagnostics. A successful provider-call artifact would not imply Daily readiness, frontend readiness, production data readiness, or scoring / decision / execution / position readiness.
+v28.0L-3C ([`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md`](EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_DESIGN.md)) was design-only. The L-3B `External AI Manual Dry Run` remains `provider=none`, with no network, secrets, or provider calls. Manual workflow artifacts are non-production diagnostics, not evidence of Daily, frontend, or production readiness. See [External AI status and current authority](LEGACY_DOCUMENT_STATUS.md#external-ai): L-3C–L-3E describe their phases, not current authorization. They grant no permission to configure credentials, call providers, incur costs, publish artifacts as production output, or affect scoring / decision / execution / position.
 
 ### External AI provider-call readiness checklist
 
-v28.0L-3D is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md). It is a no-code readiness gate before any provider-call workflow implementation.
-
-Current operator decision: provider-call implementation is still NO-GO. Do not add `DEEPSEEK_API_KEY` to GitHub Secrets until the L-3D checklist blockers are resolved and a separate implementation PR is approved. Do not run provider calls from GitHub Actions yet. Continue using only the v28.0L-3B dry-run workflow for GitHub Actions validation.
-
-Before any future provider-call implementation, operators must finalize secret storage, rotation/revocation, trigger permissions, missing-secret failure behavior, artifact sanitization, cost budget, concurrency policy, and fail-closed exit policy. The first approved provider-call path must remain manual `workflow_dispatch`, artifact-only, non-production, and separate from Daily, frontend display, production data writes, and scoring / decision / execution / position logic.
+v28.0L-3D ([`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_READINESS_CHECKLIST.md)) recorded the pre-implementation NO-GO pending resolution of its readiness gates and separate approval of a manual-only, artifact-only implementation.
 
 ### External AI provider-call implementation plan
 
-v28.0L-3E is documented in [`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md). It is a no-code implementation plan.
-
-Do not add `DEEPSEEK_API_KEY` to GitHub Secrets yet. If L-3F is pursued, it should first add a missing-secret-safe workflow skeleton and static checks only: default dry-run must pass, provider-path requested without a secret must fail before provider command, and no real DeepSeek call should run.
-
-Do not run a real provider call until L-3F is merged, audited, and followed by a separate approval that records secret location, rotation/revocation, cost acknowledgement, non-production acknowledgement, artifact sanitization, and operator approval. L-3F output must not be treated as production data.
+v28.0L-3E ([`EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md`](https://github.com/ctmaomao/gfrr-auto-update-site/blob/1d1db6093a4109c99b04c9458a41e0a11562d155/docs/EXTERNAL_AI_PROVIDER_CALL_WORKFLOW_IMPLEMENTATION_PLAN.md)) proposed a no-code plan: L-3F would first require a passing default dry run and fail before a provider command if the secret was missing. A real call required a later, separately approved and audited step.
 
 ### External AI Manual Provider Test workflow
 
