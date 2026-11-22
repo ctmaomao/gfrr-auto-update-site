@@ -1,4 +1,4 @@
-import test, { after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -6,21 +6,16 @@ import { createMacroOverviewRenderVm } from '../helpers/macro-overview-render-vm
 
 const ROOT = process.cwd();
 
-async function buildRenderApi() {
-  const { body, context, elementFor } = await createMacroOverviewRenderVm();
-  vm.runInContext(body, context, { filename: 'renderMacroOverview.vm.js' });
-  return {
-    api: vm.runInContext('({ renderC2GlobalLiquidity, renderC3CreditCorporate, deriveNarratives, renderConsumerRetail, renderC8Geopolitical, renderC4UsEconomyTemperature, renderC1InflationEnergy, asNumber })', context),
-    elementFor,
-  };
-}
-
-const originalDocument = globalThis.document;
-const { api, elementFor } = await buildRenderApi();
-after(() => {
-  if (originalDocument === undefined) delete globalThis.document;
-  else globalThis.document = originalDocument;
-});
+const { api, elementFor } = await createMacroOverviewRenderVm([
+  'renderC2GlobalLiquidity',
+  'renderC3CreditCorporate',
+  'deriveNarratives',
+  'renderConsumerRetail',
+  'renderC8Geopolitical',
+  'renderC4UsEconomyTemperature',
+  'renderC1InflationEnergy',
+  'asNumber',
+]);
 
 const FIXTURE = {
   updatedAt: '2026-10-23T00:48:31.687Z',

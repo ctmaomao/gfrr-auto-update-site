@@ -1,54 +1,12 @@
-import test, { after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import vm from 'node:vm';
-import { pathToFileURL } from 'node:url';
+import { createMacroOverviewRenderVm } from '../helpers/macro-overview-render-vm.mjs';
 
 const ROOT = process.cwd();
-const RENDER_PATH = `${ROOT}/scripts/modules/renderMacroOverview.js`;
-const RENDER_SOURCE = fs.readFileSync(RENDER_PATH, 'utf8');
-const IMPORT_RE = /import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"]\s*;?/g;
-
-async function buildRenderApi() {
-  const bindings = {};
-  for (const match of RENDER_SOURCE.matchAll(IMPORT_RE)) {
-    const module = await import(new URL(match[2], pathToFileURL(RENDER_PATH)).href);
-    for (const name of match[1].split(',').map((item) => item.trim()).filter(Boolean)) {
-      if (!(name in module)) throw new Error(`missing real export ${name} from ${match[2]}`);
-      bindings[name] = module[name];
-    }
-  }
-  const elements = new Map();
-  const elementFor = (id) => {
-    if (!elements.has(id)) {
-      elements.set(id, { id, textContent: '', className: '', hidden: false, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } } });
-    }
-    return elements.get(id);
-  };
-  const documentStub = { getElementById: elementFor, querySelector: () => null, querySelectorAll: () => [], createElement: (tag) => elementFor(`created-${tag}`) };
-  globalThis.document = documentStub;
-  const body = RENDER_SOURCE
-    .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?[ \t]*$/gm, '')
-    .replace(/^export[ \t]+/gm, '');
-  const sandbox = {
-    document: documentStub,
-    console: { error: (...args) => { throw new Error(`unexpected catch: ${args.map(String).join(' ')}`); } },
-    setTimeout: () => {}, clearTimeout: () => {}, window: {}, ...bindings,
-  };
-  const context = vm.createContext(sandbox);
-  vm.runInContext(body, context, { filename: 'renderMacroOverview.vm.js' });
-  return {
-    api: vm.runInContext('({ renderC2GlobalLiquidity, renderWowSection, renderMacroDriversPillars, deriveNarratives })', context),
-    elementFor,
-  };
-}
-
-const originalDocument = globalThis.document;
-const { api, elementFor } = await buildRenderApi();
-after(() => {
-  if (originalDocument === undefined) delete globalThis.document;
-  else globalThis.document = originalDocument;
-});
+const { api, elementFor, renderSource: RENDER_SOURCE, renderUrl } = await createMacroOverviewRenderVm([
+  'renderC2GlobalLiquidity', 'renderWowSection', 'renderMacroDriversPillars', 'deriveNarratives',
+]);
 
 const FIXTURE = {
   updatedAt: '2026-10-25T00:26:37.771Z',
@@ -85,7 +43,7 @@ const renderPillar = (data) => api.renderMacroDriversPillars({ radarData: data }
 async function loadMatrixThroughQuery() {
   const match = RENDER_SOURCE.match(/from\s+['"](\.\/buildCrossValidationMatrix\.js\?[^'"]+)['"]/u);
   assert.ok(match, 'matrix import with query not found');
-  return import(new URL(match[1], pathToFileURL(RENDER_PATH)).href);
+  return import(new URL(match[1], renderUrl).href);
 }
 
 test('C2 Fed Path valid, zero, missing/invalid and repeated clears', () => {

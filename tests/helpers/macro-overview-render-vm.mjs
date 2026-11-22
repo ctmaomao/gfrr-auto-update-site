@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { after } from 'node:test';
 import vm from 'node:vm';
 import { pathToFileURL } from 'node:url';
 
@@ -7,7 +8,7 @@ const RENDER_URL = pathToFileURL(`${ROOT}/scripts/modules/renderMacroOverview.js
 const RENDER_SOURCE = fs.readFileSync(RENDER_URL, 'utf8');
 const IMPORT_RE = /import\s*\{([\s\S]*?)\}\s*from\s*['"]([^'"]+)['"]\s*;?/g;
 
-export async function createMacroOverviewRenderVm() {
+export async function createMacroOverviewRenderVm(names) {
   const bindings = {};
   for (const match of RENDER_SOURCE.matchAll(IMPORT_RE)) {
     const module = await import(new URL(match[2], RENDER_URL).href);
@@ -35,6 +36,13 @@ export async function createMacroOverviewRenderVm() {
     querySelectorAll: () => [],
     createElement: (tag) => elementFor(`created-${tag}`),
   };
+  // Real imported helpers resolve document in the host realm, not in the VM.
+  const hadDocument = Object.hasOwn(globalThis, 'document');
+  const originalDocument = globalThis.document;
+  after(() => {
+    if (hadDocument) globalThis.document = originalDocument;
+    else delete globalThis.document;
+  });
   globalThis.document = documentStub;
   const body = RENDER_SOURCE
     .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?[ \t]*$/gm, '')
@@ -48,5 +56,7 @@ export async function createMacroOverviewRenderVm() {
     ...bindings,
   };
   const context = vm.createContext(sandbox);
-  return { body, context, elements, elementFor, renderSource: RENDER_SOURCE };
+  vm.runInContext(body, context, { filename: 'renderMacroOverview.vm.js' });
+  const api = vm.runInContext(`({ ${names.join(', ')} })`, context);
+  return { api, elementFor, renderSource: RENDER_SOURCE, renderUrl: RENDER_URL };
 }
