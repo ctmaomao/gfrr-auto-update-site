@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, lstatSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, lstatSync, rmSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BUBBLE_CREDIT_OUTPUTS, publishBubbleCreditCandidate, WORLD_ORDER_OUTPUTS, publishWorldOrderCandidate, retainWorldOrderCandidate, DAILY_OUTPUTS, publishDailyCandidate, safeConcurrentPath, retainDailyCandidate } from '../../scripts/publish-daily-candidate.mjs';
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-function fixture(outputs = DAILY_OUTPUTS, baseDoc = null, updatedOutputs = outputs, baseDocLink = null) {
+function fixture(t, outputs = DAILY_OUTPUTS, baseDoc = null, updatedOutputs = outputs, baseDocLink = null) {
   const dir = mkdtempSync(join(tmpdir(), 'daily-publication-test-'));
+  t.after(() => rmSync(dir, { force: true, recursive: true }));
   const remote = join(dir, 'remote.git'), cwd = join(dir, 'daily'), other = join(dir, 'other');
   git(dir, 'init', '--bare', remote); git(dir, 'clone', remote, cwd);
   git(cwd, 'checkout', '-b', 'main');
@@ -33,19 +34,19 @@ function fixture(outputs = DAILY_OUTPUTS, baseDoc = null, updatedOutputs = outpu
   }
   return { cwd, other, remote, candidate, advance, head: () => git(dir, '--git-dir', remote, 'rev-parse', 'main') };
 }
-test('unchanged main publishes exact validated candidate without regeneration', () => {
-  const f = fixture(); const r = publishDailyCandidate({ cwd: f.cwd, validate: () => assert.fail('unneeded validation') });
+test('unchanged main publishes exact validated candidate without regeneration', t => {
+  const f = fixture(t); const r = publishDailyCandidate({ cwd: f.cwd, validate: () => assert.fail('unneeded validation') });
   assert.equal(f.head(), f.candidate); assert.equal(r.attempts, 1);
   assert.equal(publishDailyCandidate({ cwd: f.cwd }).alreadyPublished, true);
 });
-test('documentation race retains remote content and candidate bytes, rechecks merged tree, original checkout untouched', () => {
-  const f = fixture(); f.advance('docs/验收说明 (Daily).md'); let checked = 0;
+test('documentation race retains remote content and candidate bytes, rechecks merged tree, original checkout untouched', t => {
+  const f = fixture(t); f.advance('docs/验收说明 (Daily).md'); let checked = 0;
   const r = publishDailyCandidate({ cwd: f.cwd, validate: cwd => { checked++; assert.equal(readFileSync(join(cwd, 'docs/验收说明 (Daily).md'), 'utf8'), 'concurrent\n'); for (const p of DAILY_OUTPUTS) assert.equal(readFileSync(join(cwd, p), 'utf8'), 'candidate\n'); } });
   assert.equal(checked, 1); assert.equal(f.head(), r.published); assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
 });
-test('moving a regular document within the permitted paths preserves an inert concurrent change', () => {
+test('moving a regular document within the permitted paths preserves an inert concurrent change', t => {
   const before = 'docs/初稿.md', after = 'docs/定稿 [Daily].md';
-  const f = fixture(DAILY_OUTPUTS, before);
+  const f = fixture(t, DAILY_OUTPUTS, before);
   git(f.other, 'mv', before, after);
   git(f.other, 'commit', '-m', 'rename document');
   git(f.other, 'push', 'origin', 'main');
@@ -54,29 +55,29 @@ test('moving a regular document within the permitted paths preserves an inert co
     assert.throws(() => readFileSync(join(cwd, before)), /ENOENT/);
   } }).published, f.head());
 });
-test('another safe push during validation retries boundedly with all concurrent files intact', () => {
-  const f = fixture(); f.advance('docs/a.md'); let checked = 0;
+test('another safe push during validation retries boundedly with all concurrent files intact', t => {
+  const f = fixture(t); f.advance('docs/a.md'); let checked = 0;
   const r = publishDailyCandidate({ cwd: f.cwd, validate: () => { if (++checked === 1) f.advance('tests/b.txt'); } });
   assert.equal(r.attempts, 2); assert.equal(checked, 2); assert.equal(git(f.cwd, 'show', `${f.head()}:tests/b.txt`), 'concurrent');
 });
-test('generation inputs, outputs, workflows, source code, symlinks fail closed without overwriting', () => {
+test('generation inputs, outputs, workflows, source code, symlinks fail closed without overwriting', t => {
   for (const path of ['config/new.json', 'scripts/new.mjs', '.github/workflows/x.yml', 'data/radar-data.json', 'docs/link']) {
-    const f = fixture(); f.advance(path, 'changed', path === 'docs/link'); const before = f.head();
+    const f = fixture(t); f.advance(path, 'changed', path === 'docs/link'); const before = f.head();
     assert.throws(() => publishDailyCandidate({ cwd: f.cwd, validate: () => assert.fail('unsafe tree') }), /daily_generation_inputs_changed/);
     assert.equal(f.head(), before);
   }
   assert.equal(safeConcurrentPath('docs-other/x'), false);
 });
-test('validation failure and repeated races never force push or discard candidate', () => {
-  const f = fixture(); f.advance('docs/a.md'); const before = f.head();
+test('validation failure and repeated races never force push or discard candidate', t => {
+  const f = fixture(t); f.advance('docs/a.md'); const before = f.head();
   assert.throws(() => publishDailyCandidate({ cwd: f.cwd, validate: () => { throw new Error('validation failed'); } }), /validation failed/);
   assert.equal(f.head(), before);
   let n = 0;
   assert.throws(() => publishDailyCandidate({ cwd: f.cwd, validate: () => f.advance(`docs/race-${++n}.md`) }), /daily_publish_retry_exhausted/);
   assert.equal(n, 3); assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
 });
-test('candidate scope and attempt bound cannot be broadened', () => {
-  const f = fixture(); writeFileSync(join(f.cwd, 'extra.txt'), 'bad'); git(f.cwd, 'add', 'extra.txt'); git(f.cwd, 'commit', '--amend', '--no-edit');
+test('candidate scope and attempt bound cannot be broadened', t => {
+  const f = fixture(t); writeFileSync(join(f.cwd, 'extra.txt'), 'bad'); git(f.cwd, 'add', 'extra.txt'); git(f.cwd, 'commit', '--amend', '--no-edit');
   assert.throws(() => publishDailyCandidate({ cwd: f.cwd }), /daily_candidate_path_rejected/);
   assert.throws(() => retainDailyCandidate({ cwd: f.cwd }), /daily_candidate_path_rejected/);
   assert.throws(() => publishDailyCandidate({ cwd: f.cwd, maxAttempts: 4 }), /daily_publish_attempt_limit/);
@@ -91,9 +92,9 @@ test('workflow preserves full validation and narrowly retains only validated fai
   assert.doesNotMatch(source, /git push --force|git reset --hard|git rebase/);
 });
 
-test('final push response loss is read-only confirmed; final fetch failure remains unknown', () => {
+test('final push response loss is read-only confirmed; final fetch failure remains unknown', t => {
   for (const unknown of [false, true]) {
-    const f = fixture(); let pushes = 0;
+    const f = fixture(t); let pushes = 0;
     const runGit = (args, cwd) => {
       if (args[0] === 'push') {
         if (++pushes === 3) git(cwd, ...args);
@@ -107,22 +108,22 @@ test('final push response loss is read-only confirmed; final fetch failure remai
     assert.equal(pushes, 3); assert.equal(f.head(), f.candidate);
   }
 });
-test('retention exports exact immutable blobs, ignores dirty worktree, and is create-only', () => {
-  const f = fixture(); writeFileSync(join(f.cwd, DAILY_OUTPUTS[0]), 'unvalidated dirty data');
+test('retention exports exact immutable blobs, ignores dirty worktree, and is create-only', t => {
+  const f = fixture(t); writeFileSync(join(f.cwd, DAILY_OUTPUTS[0]), 'unvalidated dirty data');
   const receipt = retainDailyCandidate({ cwd: f.cwd });
   assert.equal(receipt.candidate, f.candidate); assert.equal(receipt.status, 'publication_not_confirmed');
   for (const path of DAILY_OUTPUTS) assert.equal(readFileSync(join(f.cwd, 'daily-candidate-artifact', path), 'utf8'), 'candidate\n');
   assert.equal(Object.keys(receipt.files).length, 3);
   assert.throws(() => retainDailyCandidate({ cwd: f.cwd }), /EEXIST/);
 });
-test('oversized immutable output cannot create an upload candidate', () => {
-  const f = fixture(); writeFileSync(join(f.cwd, DAILY_OUTPUTS[0]), Buffer.alloc(5 * 1024 * 1024));
+test('oversized immutable output cannot create an upload candidate', t => {
+  const f = fixture(t); writeFileSync(join(f.cwd, DAILY_OUTPUTS[0]), Buffer.alloc(5 * 1024 * 1024));
   git(f.cwd, 'add', 'data'); git(f.cwd, 'commit', '--amend', '--no-edit');
   assert.throws(() => retainDailyCandidate({ cwd: f.cwd }), /daily_candidate_artifact_size_limit/);
 });
 
-test('World Order publishes only its checked outputs over inert concurrent documentation', () => {
-  const f = fixture(WORLD_ORDER_OUTPUTS); f.advance('docs/note.md'); let checks = 0;
+test('World Order publishes only its checked outputs over inert concurrent documentation', t => {
+  const f = fixture(t, WORLD_ORDER_OUTPUTS); f.advance('docs/note.md'); let checks = 0;
   const result = publishWorldOrderCandidate({ cwd: f.cwd, validate: cwd => {
     checks++;
     assert.equal(readFileSync(join(cwd, 'docs/note.md'), 'utf8'), 'concurrent\n');
@@ -132,16 +133,16 @@ test('World Order publishes only its checked outputs over inert concurrent docum
   assert.equal(f.head(), result.published);
   assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
 });
-test('World Order holds source, config, workflow and concurrent output changes and retains exact checked blobs', () => {
+test('World Order holds source, config, workflow and concurrent output changes and retains exact checked blobs', t => {
   for (const path of ['scripts/world-order/reader.mjs', 'config/world-order-acled-global-monthly.json', '.github/workflows/refresh-world-order-stress.yml', WORLD_ORDER_OUTPUTS[0]]) {
-    const f = fixture(WORLD_ORDER_OUTPUTS); f.advance(path); const before = f.head();
+    const f = fixture(t, WORLD_ORDER_OUTPUTS); f.advance(path); const before = f.head();
     assert.throws(() => publishWorldOrderCandidate({ cwd: f.cwd, validate: () => assert.fail('unsafe tree') }), /world_order_generation_inputs_changed/);
     assert.equal(f.head(), before);
     const receipt = retainWorldOrderCandidate({ cwd: f.cwd });
     assert.deepEqual(Object.keys(receipt.files), WORLD_ORDER_OUTPUTS);
     assert.ok(!('realtimeInputCommit' in receipt));
   }
-  assert.throws(() => publishWorldOrderCandidate({ cwd: fixture().cwd }), /world_order_candidate_path_rejected/);
+  assert.throws(() => publishWorldOrderCandidate({ cwd: fixture(t).cwd }), /world_order_candidate_path_rejected/);
 });
 test('World Order workflow validates, uses bounded publisher and conditionally retains only committed production outputs', () => {
   const source = readFileSync(new URL('../../.github/workflows/refresh-world-order-stress.yml', import.meta.url), 'utf8');
@@ -153,9 +154,9 @@ test('World Order workflow validates, uses bounded publisher and conditionally r
 });
 
 
-test('Bubble credit replays the exact allowlisted pair once per safe main revision, including an unchanged file', () => {
+test('Bubble credit replays the exact allowlisted pair once per safe main revision, including an unchanged file', t => {
   assert.deepEqual(BUBBLE_CREDIT_OUTPUTS, ['data/bubble-watch.json', 'data/bubble-market-observations.json']);
-  const f = fixture(BUBBLE_CREDIT_OUTPUTS, null, BUBBLE_CREDIT_OUTPUTS.slice(0, 1));
+  const f = fixture(t, BUBBLE_CREDIT_OUTPUTS, null, BUBBLE_CREDIT_OUTPUTS.slice(0, 1));
   f.advance('docs/refresh note.md');
   let validations = 0;
   const result = publishBubbleCreditCandidate({ cwd: f.cwd, validate: cwd => {
@@ -174,8 +175,8 @@ test('Bubble credit replays the exact allowlisted pair once per safe main revisi
   assert.equal(git(f.cwd, 'rev-parse', 'HEAD'), f.candidate);
 });
 
-test('replay makes existing dependencies usable inside a Git-ignored real directory', () => {
-  const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+test('replay makes existing dependencies usable inside a Git-ignored real directory', t => {
+  const f = fixture(t, BUBBLE_CREDIT_OUTPUTS);
   f.advance('docs/validation.md');
   const deps = join(f.cwd, 'node_modules');
   const packageDir = join(deps, '@fixture', 'checked');
@@ -193,9 +194,9 @@ test('replay makes existing dependencies usable inside a Git-ignored real direct
   assert.equal(result.published, f.head());
 });
 
-test('Bubble credit rejects changes to either output, producer code or config, and docs symlinks before any push', () => {
+test('Bubble credit rejects changes to either output, producer code or config, and docs symlinks before any push', t => {
   for (const path of [...BUBBLE_CREDIT_OUTPUTS, 'scripts/refresh-bubble-credit-spreads.mjs', 'config/bubble-credit-spreads.json', 'docs/link']) {
-    const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+    const f = fixture(t, BUBBLE_CREDIT_OUTPUTS);
     f.advance(path, 'remote', path === 'docs/link');
     const before = f.head();
     assert.throws(() => publishBubbleCreditCandidate({
@@ -210,10 +211,10 @@ test('Bubble credit rejects changes to either output, producer code or config, a
   }
 });
 
-test('replay rejects removal or replacement of a previously non-regular docs entry', () => {
+test('replay rejects removal or replacement of a previously non-regular docs entry', t => {
   for (const replace of [false, true]) {
     const path = 'docs/link';
-    const f = fixture(BUBBLE_CREDIT_OUTPUTS, path, BUBBLE_CREDIT_OUTPUTS, '../data/bubble-watch.json');
+    const f = fixture(t, BUBBLE_CREDIT_OUTPUTS, path, BUBBLE_CREDIT_OUTPUTS, '../data/bubble-watch.json');
     unlinkSync(join(f.other, path));
     if (replace) writeFileSync(join(f.other, path), 'regular replacement\n');
     git(f.other, 'add', '--', path);
@@ -225,8 +226,8 @@ test('replay rejects removal or replacement of a previously non-regular docs ent
   }
 });
 
-test('Bubble credit never pushes a failed or replaced replay and rejects unrelated staged content', () => {
-  const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+test('Bubble credit never pushes a failed or replaced replay and rejects unrelated staged content', t => {
+  const f = fixture(t, BUBBLE_CREDIT_OUTPUTS);
   f.advance('tests/fixtures.txt'); const before = f.head();
   assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd, validate: () => { throw new Error('full validation failed'); } }), /full validation failed/);
   assert.throws(() => publishBubbleCreditCandidate({ cwd: f.cwd, validate: cwd => {
@@ -241,8 +242,8 @@ test('Bubble credit never pushes a failed or replaced replay and rejects unrelat
   assert.equal(f.head(), before);
 });
 
-test('Bubble credit refuses a fourth push and never force-pushes', () => {
-  const f = fixture(BUBBLE_CREDIT_OUTPUTS);
+test('Bubble credit refuses a fourth push and never force-pushes', t => {
+  const f = fixture(t, BUBBLE_CREDIT_OUTPUTS);
   let pushes = 0;
   const runGit = (args, cwd) => {
     if (args[0] === 'push') {
