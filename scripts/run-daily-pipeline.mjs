@@ -26,6 +26,7 @@ import { buildDivergenceLayer } from './daily/divergence-layer.mjs';
 import { calendarScoreChanges, calendarScoreWindow } from './daily/score-change.mjs';
 import { scoreInput, validateScoreWeights, structuralSourceUsable } from './daily/score-input-contract.mjs';
 import { buildExposureGuidance } from './daily/exposure-guidance.mjs';
+import { NY_FED_ON_RRP_URL, resolveOnRrp } from './daily/on-rrp.mjs';
 import { acquireH41 } from './daily/h41-acquire.mjs';
 import { matchingH41Receipt } from './daily/h41-provenance.mjs';
 import { requireStructuralObservation, structuralObservationUsable, requireStructuralContinuity, structuralLagValue, structuralValueUsable } from './daily/structural-freshness.mjs';
@@ -1938,8 +1939,15 @@ function runFredApiSerialized(task) {
   return run;
 }
 
-async function fetchFredSeries(seriesId, daysBack = 90) {
+async function fetchFredSeries(seriesId, daysBack = 90, onRrpNow = null) {
   const observationStart = cosdIso(daysBack);
+  const allowRrpSingleton = seriesId === 'RRPONTSYD' && Number.isFinite(onRrpNow);
+  const usableRrpDate = rows => {
+    const row = rows.at(-1);
+    return structuralValueUsable(row?.value, 'onRrp') && structuralObservationUsable(row?.date, 'onRrp', onRrpNow)
+      ? row.date : null;
+  };
+  let apiSingleton = null;
 
   if (FRED_API_KEY) {
     try {
@@ -1950,18 +1958,31 @@ async function fetchFredSeries(seriesId, daysBack = 90) {
         () => retryFetch(buildFredApiUrl(seriesId, observationStart), `fred-api:${seriesId}`),
       );
       const apiRows = parseFredApiObservations(apiText);
-      if (apiRows.length < 2) throw new Error(`fred:${seriesId} API insufficient rows`);
-      return apiRows;
+      if (apiRows.length >= 2) return apiRows;
+      if (!allowRrpSingleton || !usableRrpDate(apiRows)) throw new Error(`fred:${seriesId} API insufficient rows`);
+      // Keep the eligible API level, but still try CSV for the normal history.
+      apiSingleton = apiRows;
     } catch (err) {
       console.warn(`[fred-api-fallback] fred:${seriesId}: ${stringifyFetchError(err)}`);
     }
   }
 
   const url = `${FRED_BASE}?cosd=${observationStart}&id=${seriesId}`;
-  const text = await retryFetch(url, `fred:${seriesId}`);
-  const rows = parseFredCsv(text);
-  if (rows.length < 2) throw new Error(`fred:${seriesId} insufficient rows`);
-  return rows;
+  try {
+    const text = await retryFetch(url, `fred:${seriesId}`);
+    const rows = parseFredCsv(text);
+    if (apiSingleton) {
+      const csvDate = usableRrpDate(rows);
+      if (!csvDate || csvDate < apiSingleton[0].date || (csvDate === apiSingleton[0].date && rows.length < 2)) {
+        return apiSingleton;
+      }
+    }
+    if (rows.length < (allowRrpSingleton ? 1 : 2)) throw new Error(`fred:${seriesId} insufficient rows`);
+    return rows;
+  } catch (error) {
+    if (apiSingleton) return apiSingleton;
+    throw error;
+  }
 }
 
 function parseNyFedRateRecord(record) {
@@ -5734,9 +5755,6 @@ async function resolveFedLiquidity(prevFed) {
   };
   let walcl = null;
   let walcl4wChange = null;
-  let onRrp = null;
-  let onRrpWeekChange = null;
-  let onRrpWeekChangeStatus = 'missing';
   let effectiveFedFundsRate = null;
   let sofr = null;
   let reserveBalances = null;
@@ -5770,28 +5788,14 @@ async function resolveFedLiquidity(prevFed) {
     }
   }
 
-  try {
-    const rows = await fetchFredSeries('RRPONTSYD', 30);
-    sourceObservedAt.onRrp = requireStructuralObservation(rows, 'onRrp');
-    onRrp = latestValue(rows);
-    const ago = structuralLagValue(rows, 7, 3);
-    onRrpWeekChangeStatus = ago === 0 ? 'undefined_zero_baseline' : Number.isFinite(ago) ? 'observed' : 'missing';
-    if (Number.isFinite(onRrp) && Number.isFinite(ago) && ago !== 0) {
-      onRrpWeekChange = +(((onRrp - ago) / ago) * 100).toFixed(3);
-    }
-    status.onRrp = 'live';
-  } catch (_err) {
-    if (structuralValueUsable(prevFed?.onRrp, 'onRrp') && structuralSourceUsable(prevFed?.sourceStatus?.onRrp) && structuralObservationUsable(prevFed?.sourceObservedAt?.onRrp, 'onRrp')) {
-      sourceObservedAt.onRrp = prevFed.sourceObservedAt.onRrp;
-      onRrp = prevFed.onRrp;
-      onRrpWeekChange = Number.isFinite(prevFed.onRrpWeekChange) ? prevFed.onRrpWeekChange : null;
-      onRrpWeekChangeStatus = Number.isFinite(onRrpWeekChange) ? 'observed'
-        : prevFed.onRrpWeekChangeStatus === 'undefined_zero_baseline' ? 'undefined_zero_baseline' : 'missing';
-      status.onRrp = 'fallback';
-    } else {
-      status.onRrp = 'missing';
-    }
-  }
+  const { value: onRrp, date: onRrpDate, weekChange: onRrpWeekChange,
+    weekChangeStatus: onRrpWeekChangeStatus, status: onRrpStatus, source: onRrpSource } = await resolveOnRrp(
+    prevFed, nowIso, () => fetchFredSeries('RRPONTSYD', 30, Date.parse(nowIso)),
+    async () => JSON.parse(await fetchWithTimeout(NY_FED_ON_RRP_URL, 8000,
+      { userAgent: 'GFRRBot/1.0', headers: { Accept: 'application/json' } })),
+  );
+  if (onRrpDate !== null) sourceObservedAt.onRrp = onRrpDate;
+  status.onRrp = onRrpStatus;
 
   // M-41: DFF gives direct Effective Federal Funds Rate evidence for the policy driver.
   try {
@@ -5989,6 +5993,7 @@ async function resolveFedLiquidity(prevFed) {
     onRrp: Number.isFinite(onRrp) ? onRrp : null,
     onRrpWeekChange: Number.isFinite(onRrpWeekChange) ? onRrpWeekChange : null,
     onRrpWeekChangeStatus,
+    ...(onRrpSource && { onRrpSource }),
     effectiveFedFundsRate: Number.isFinite(effectiveFedFundsRate) ? effectiveFedFundsRate : null,
     sofr: Number.isFinite(sofr) ? sofr : null,
     reserveBalances: Number.isFinite(reserveBalances) ? reserveBalances : null,

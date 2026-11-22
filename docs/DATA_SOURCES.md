@@ -26,6 +26,8 @@
 
 Daily 的 WALCL / WRESBAL 保留 FRED 首选。只有某序列不可用时才尝试联储委员会公开的 [H.4.1](https://www.federalreserve.gov/releases/h41/) 同口径副源，不比较健康序列；WALCL 仍按原14日门槛，WRESBAL 驳回非法周三观测或负值但不新增年龄门槛。月历仅核准纽约排程，实际采用需取回准确日期的 H.4.1 页面、匹配发布日和观测日并解析：表5周三总资产（WALCL）与表1截至周三的周平均准备金（WRESBAL），均为百万美元。每轮最多3个月历与2份日期固定的发布页；严格新于可用缓存才采纳，平局保留缓存及原回执。WALCL 副源要求确切28日前的正值参照；WRESBAL 缺参照或零分母仍可采用水平但不迁移旧变化。无合格副源按原 fallback/hold；不改评分公式、权重、调度、历史或权限。同口径 WALCL 一旦采用，仍作为既有结构输入，能沿既有链路改变评分输出；WRESBAL 保持原用途。
 
+Daily 的 ON RRP 保留 FRED `RRPONTSYD` 首选；API 仅返回一条可用水平时，仍先按既有顺序尝试 FRED CSV 以保留可用历史；CSV 失败或不合格则采用该水平，即使缺周参照也不请求备用。仅当原水平不可用时，尝试一次 [纽约联储公开隔夜逆回购结果](https://markets.newyorkfed.org/api/rp/reverserepo/all/results/last/6.json)（最近 6 笔，8 秒超时，无密钥、无付费、无重试）。以已出结果的隔夜逆回购 Treasury 实际接受额除以 10 亿，并采用操作日；拒绝歧义或数据类型错误，周末/假期跨日不改变隔夜口径。2026-11-13、16–20 的 6 日同口径样本与 FRED 一致。两源均用既有 7 日时效及一周比较规则；备用水平缺参照时不借其它来源补数。只采纳比可用缓存更新的备用值；平局保留原缓存及来源。备用属于 `daily_history_layer` 的既有结构输入，不建独立产物、不公开原响应，仍经原 Daily 校验与发布链，不改变评分或决策公式。
+
 ### OFR — Financial Stress Index（生产运行，首次两站验收通过）
 
 [ADR-0107](ADR/0107-ofr-editorial-semantic-boundaries.md)：OFR 原值正负比较的是其校准历史均值；本站严格过去十年 midrank 是另一项样本排序，不能从负值推出该窗口低位或宽松状态。[OFR 官方说明](https://www.financialresearch.gov/financial-stress-index/)提供类别及地区贡献；`mainPressureReadout.contributionsPublished=false` 仅是本站当前快照不发布未完成修订比较的贡献项，不是官方缺少数据。此次仅增强编辑输入和新稿检查，不新增来源、取数、贡献发布或评分。
