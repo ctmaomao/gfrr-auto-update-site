@@ -1,6 +1,13 @@
 #!/usr/bin/env node
-import { isManualArtifactPath } from '../lib/check-script-helpers.mjs';
-import { expandInputFiles, isSafeInputPath, validateNoForbiddenSerializedText } from './oil-news-review-input-files.mjs';
+import {
+  DEFAULT_MAX_COMMITS,
+  DEFAULT_MAX_SAMPLES,
+  DEFAULT_MIN_SAMPLES,
+  expandInputFiles,
+  isSafeInputPath,
+  parseOilNewsReviewArgs,
+  validateNoForbiddenSerializedText
+} from './oil-news-review-input-files.mjs';
 import { WATCH_PATH, readCommitRows, readWatchAtCommit } from './oil-news-watch-history.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -8,9 +15,6 @@ import process from 'node:process';
 
 const REVIEW_VERSION = 'oil-news-source-health-samples-review-p34';
 const DEFAULT_OUTPUT = 'manual-artifacts/oil-news/oil-news-source-health-samples-review-latest.json';
-const DEFAULT_MAX_COMMITS = 30;
-const DEFAULT_MAX_SAMPLES = 12;
-const DEFAULT_MIN_SAMPLES = 2;
 const SOURCES = [
   { key: 'gdeltDoc', detailKey: 'gdelt_doc', label: 'GDELT DOC' },
   { key: 'tavily', detailKey: 'tavily', label: 'Tavily' },
@@ -37,86 +41,6 @@ Options:
   --json               Print full JSON review to stdout.
   --no-output          Do not write the review artifact.
   --help               Show this help.`);
-}
-
-function parseArgs(argv) {
-  const options = {
-    inputs: [],
-    inputDirs: [],
-    maxCommits: DEFAULT_MAX_COMMITS,
-    maxSamples: DEFAULT_MAX_SAMPLES,
-    minSamples: DEFAULT_MIN_SAMPLES,
-    output: DEFAULT_OUTPUT,
-    allowEmpty: false,
-    strict: false,
-    printJson: false,
-    writeOutput: true
-  };
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--help' || arg === '-h') {
-      printUsage();
-      process.exit(0);
-    }
-    if (arg === '--allow-empty') {
-      options.allowEmpty = true;
-      continue;
-    }
-    if (arg === '--strict') {
-      options.strict = true;
-      continue;
-    }
-    if (arg === '--json') {
-      options.printJson = true;
-      continue;
-    }
-    if (arg === '--no-output') {
-      options.writeOutput = false;
-      continue;
-    }
-
-    const nextValue = () => {
-      const value = argv[index + 1];
-      if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);
-      index += 1;
-      return value;
-    };
-
-    if (arg === '--input') {
-      options.inputs.push(nextValue());
-    } else if (arg === '--input-dir') {
-      options.inputDirs.push(nextValue());
-    } else if (arg === '--max-commits') {
-      options.maxCommits = Number(nextValue());
-    } else if (arg === '--max-samples') {
-      options.maxSamples = Number(nextValue());
-    } else if (arg === '--min-samples') {
-      options.minSamples = Number(nextValue());
-    } else if (arg === '--output') {
-      options.output = nextValue();
-    } else {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-
-  if (!Number.isInteger(options.maxCommits) || options.maxCommits < 1 || options.maxCommits > 500) {
-    throw new Error('Invalid --max-commits. Expected integer 1..500.');
-  }
-  if (!Number.isInteger(options.maxSamples) || options.maxSamples < 1 || options.maxSamples > 100) {
-    throw new Error('Invalid --max-samples. Expected integer 1..100.');
-  }
-  if (!Number.isInteger(options.minSamples) || options.minSamples < 1 || options.minSamples > 100) {
-    throw new Error('Invalid --min-samples. Expected integer 1..100.');
-  }
-  if (options.writeOutput && !isSafeOutputPath(options.output)) {
-    throw new Error(`Refusing to write review outside manual-artifacts/: ${options.output}`);
-  }
-  return options;
-}
-
-function isSafeOutputPath(filePath) {
-  return isManualArtifactPath(filePath);
 }
 
 function isoOrNull(value) {
@@ -546,7 +470,7 @@ function printSummary(review) {
 }
 
 function main() {
-  const options = parseArgs(process.argv.slice(2));
+  const options = parseOilNewsReviewArgs(process.argv.slice(2), { defaultOutput: DEFAULT_OUTPUT, outputLabel: 'review', printUsage });
   const raws = rawInputs(options);
   const samples = [];
   const invalid = [];
