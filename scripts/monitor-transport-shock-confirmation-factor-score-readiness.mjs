@@ -283,6 +283,8 @@ function appendGithubSummary(options, result) {
   const lines = [
     '## Transport Shock Score-Readiness Monitor',
     '',
+    'Scope: a separate score-design readiness review. A blocker does not imply that the production candidate is missing or that the existing capped free-proxy path is disabled. That path can contribute only to the legacy model audit; the public OFR FSI is unchanged.',
+    '',
     `- Status: \`${result.status}\``,
     `- Readiness: \`${result.readiness.status}\``,
     `- Score ready: \`${result.readiness.scoreReady}\``,
