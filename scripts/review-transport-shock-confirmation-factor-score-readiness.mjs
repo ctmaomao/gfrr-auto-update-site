@@ -179,12 +179,12 @@ function productionCandidateRow(radar) {
   if (!falseCandidateBoundaries(candidate)) blockers.push('candidate_boundary_flags_invalid');
   return row({
     id: 'production_transport_candidate',
-    labelZh: '生产候选字段',
+    labelZh: '生产候选字段（更高置信路径审查）',
     status: blockers.length === 0 ? 'pass' : 'blocker',
     severity: blockers.length === 0 ? 'supporting' : 'hard_blocker',
     reasonZh: blockers.length === 0
-      ? '生产 payload 已包含 candidate-only 运输冲击候选字段,但仍明确不入主判断打分。'
-      : `生产候选字段不满足边界: ${blockers.join(', ')}`,
+      ? '已找到生产候选字段，符合本审查要求的仅观测边界；此项通过不代表更高置信路径可计分。'
+      : `${isPlainObject(candidate) ? '已找到生产候选字段，但不满足本审查的候选边界' : '未找到可供本审查核对的生产候选字段'}：${blockers.join(', ')}`,
     evidence: {
       candidatePresent: isPlainObject(candidate),
       candidateStatus: candidate?.status ?? null,
