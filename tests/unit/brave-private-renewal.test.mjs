@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { createBraveBudget } from '../../scripts/lib/brave-budget.mjs';
+import { BRAVE_RENEWAL_SMOKE_GRANT_ID, createBraveBudget } from '../../scripts/lib/brave-budget.mjs';
 import { keyFingerprint, createSearchLedger } from '../../scripts/lib/free-search-ledger.mjs';
 import { prepareBravePrivateProof, createBravePublicProjection, withBravePrivateProof,
   prepareBravePrivateRenewal, renewBravePrivateProof } from '../../scripts/lib/brave-private-proof.mjs';
@@ -23,16 +23,16 @@ function fixture() {
     requests: 1, time: iso(before + 1000), finishedAt: iso(before + 2000), state: 'success' });
   return { old, next, ledger };
 }
-function memory(initial) {
+function memory(initial, at = time) {
   let ledger = structuredClone(initial), rev = 1;
   const writes = [];
-  return { writes, async read() { return { head: rev.toString(16).padStart(40, '0'), serverTime: time, ledger: structuredClone(ledger) }; },
+  return { writes, async read() { return { head: rev.toString(16).padStart(40, '0'), serverTime: at, ledger: structuredClone(ledger) }; },
     async write(previous, next) { if (previous.head !== rev.toString(16).padStart(40, '0')) return false;
       writes.push(structuredClone(next)); ledger = structuredClone(next); rev++; return true; } };
 }
 const args = (store, f) => ({ store, privateProof: f.old, nextPrivateProof: f.next, now: () => time });
 const context = { key, consumer: 'oil-news', mode: 'automated', runId: '42' };
-const gate = (store, proof) => createBraveBudget({ store: withBravePrivateProof(store, proof, () => time), now: () => time });
+const gate = (store, proof, now = () => time) => createBraveBudget({ store: withBravePrivateProof(store, proof, now), now });
 const never = () => assert.fail('No provider request permitted');
 test.before(() => { globalThis.fetch = async () => { throw new Error('OFFLINE_NETWORK_FORBIDDEN'); }; });
 
@@ -51,6 +51,45 @@ test('explicit v4 renewal preserves complete public history and uses the unchang
     f.next.grants[1].evidenceSha256, 'accountObservation', 'accountPlanBindingSha256', 'search_postpaid']) {
     assert.ok(!JSON.stringify(store.writes).includes(token));
   }
+});
+test('expired settled smoke proof can be reconstructed for one append-only business renewal', async () => {
+  const { old: p0, ledger: original } = fixture();
+  const smoke = { ...grant(time - 60000, 'c'), id: BRAVE_RENEWAL_SMOKE_GRANT_ID };
+  const prepare = (privateProof, grant, now) => prepareBravePrivateRenewal({ privateProof, grant, now });
+  const smokeProofAtSettlement = prepare(p0, smoke, time);
+  const smokeReceipt = { id: randomUUID(), grantId: smoke.id, consumer: 'brave-renewal-smoke', mode: 'manual',
+    runId: '43', requests: 1, time: iso(time), finishedAt: iso(time + 1000), state: 'success' };
+  const settled = { ...createBravePublicProjection({ privateProof: smokeProofAtSettlement, now: time }),
+    entries: [...original.entries, smokeReceipt] };
+  const recovery = time + 7200000, now = () => recovery, store = memory(settled, recovery);
+  const frozen = await store.read();
+  const readonly = { read: () => store.read(), write: () => assert.fail('Read-only rehearsal attempted a write') };
+  const p1 = prepare(p0, structuredClone(smoke), recovery);
+  const business = grant(recovery - 60000, 'd');
+  assert.notEqual(business.id, smoke.id);
+  const p2 = prepare(p1, business, recovery);
+  const readWith = (proof, backing = readonly) => withBravePrivateProof(backing, proof, now).read();
+  const matched = await readWith(p1);
+  assert.equal(matched.head, frozen.head);
+  assert.deepEqual(matched.ledger.entries.slice(1), [{ ...smokeReceipt, keyId: keyFingerprint(key) }]);
+  for (const mismatch of [p0, p2]) {
+    await assert.rejects(gate(readonly, mismatch, now)(context, never), /private_proof_invalid/);
+  }
+  await assert.rejects(gate(readonly, p1, now)(context, never), /brave_budget_grant_expired/);
+  assert.deepEqual(await store.read(), frozen);
+
+  const result = await renewBravePrivateProof({ store, privateProof: p1, nextPrivateProof: p2, now });
+  const projection = createBravePublicProjection({ privateProof: p2, now: recovery });
+  assert.notEqual(result.proofCommitment, settled.proofCommitment);
+  assert.deepEqual(result, { ...settled, proofCommitment: projection.proofCommitment,
+    grants: [...settled.grants, { id: business.id, verifiedAt: business.verifiedAt, expiresAt: business.expiresAt,
+      requestLimit: business.requestLimit }] });
+  assert.deepEqual(store.writes, [result]);
+  assert.deepEqual((await store.read()).ledger, result);
+  await assert.rejects(readWith(p1), /private_proof_invalid/);
+  const admitted = (await readWith(p2)).ledger;
+  assert.deepEqual(admitted.grants, [...matched.ledger.grants, business]);
+  assert.deepEqual(admitted.entries, matched.ledger.entries);
 });
 test('two-phase mismatch is fail-closed in either order, old clients cannot write the new ledger', async () => {
   const f = fixture(), store = memory(f.ledger);
