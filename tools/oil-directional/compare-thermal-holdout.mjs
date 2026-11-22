@@ -54,15 +54,17 @@ export function compareThermalHoldout(manifest, evidence) {
   const byStratum = Object.fromEntries(['planned','unplanned','indeterminate','event_free','out_of_scope','unknown']
     .map(key => [key,emptyCoverage()]));
   function count(key, field) { coverage[field]++; byStratum[key][field]++; }
-  const token = value => typeof value === 'string' && value.trim().length > 0;
+  const nonblank = value => typeof value === 'string' && value.trim().length > 0;
+  // Identity keys must already be canonical; never rewrite sealed identifiers.
+  const canonicalId = value => typeof value === 'string' && value.length > 0 && value === value.trim();
   requireThat(Array.isArray(manifest.trainingEpisodeIds) && manifest.trainingEpisodeIds.length <= 1000
-    && manifest.trainingEpisodeIds.every(token), 'Expected sealed training episode list');
+    && manifest.trainingEpisodeIds.every(canonicalId), 'Expected sealed training episode list');
   const trainingEpisodes = new Set(manifest.trainingEpisodeIds);
   for (const window of manifest.windows) {
     const start = utc(window.start), end = utc(window.end);
     requireThat(start >= previousEnd && end > start, 'Unsorted or overlapping holdout windows');
     previousEnd = end;
-    requireThat(typeof window.id === 'string' && window.id && !eligibleIds.has(window.id), 'Duplicate or invalid sealed window');
+    requireThat(canonicalId(window.id) && !eligibleIds.has(window.id), 'Duplicate or invalid sealed window');
     eligibleIds.add(window.id);
   }
   for (const row of evidence) {
@@ -77,14 +79,14 @@ export function compareThermalHoldout(manifest, evidence) {
     requireThat(cutoff >= start && cutoff <= utc(window.end)
       && utc(window.end) <= ascertainment, 'Invalid decision or ascertainment cutoff');
     const block = window.negativeBlockId;
-    requireThat(typeof block === 'string' && block.length > 0, 'Missing sealed time block');
+    requireThat(canonicalId(block), 'Missing sealed time block');
     if (block !== activeBlock) {
       requireThat(!closedBlocks.has(block), 'Overlapping negative blocks');
       if (activeBlock !== null) closedBlocks.add(activeBlock);
       activeBlock = block;
     }
     if (!row || !['event','event_free','out_of_scope'].includes(row.truth)
-      || row.truthReceipt?.independent !== true || !token(row.truthReceipt.reference)
+      || row.truthReceipt?.independent !== true || !nonblank(row.truthReceipt.reference)
       || !knownBy(row.truthReceipt.knownAt, ascertainment)
       || utc(row.truthReceipt.knownAt) < utc(window.end)) {
       count('unknown','missingTruthWindows');
@@ -93,14 +95,14 @@ export function compareThermalHoldout(manifest, evidence) {
     if (row.truth === 'out_of_scope') { count('out_of_scope','adjudicatedOutOfScopeWindows'); continue; }
     const stratum = row.truth === 'event' ? row.planning : 'event_free';
     if (row.truth === 'event') {
-      requireThat(token(row.episodeId), 'Missing adjudicated event episode');
+      requireThat(canonicalId(row.episodeId), 'Missing adjudicated event episode');
       requireThat(['planned','unplanned','indeterminate'].includes(stratum), 'Missing valid planning stratum');
       requireThat(!episodePlanning.has(row.episodeId) || episodePlanning.get(row.episodeId) === stratum,
         'Conflicting episode planning strata');
       episodePlanning.set(row.episodeId,stratum);
       episodeIds.add(row.episodeId);
     } else if (row.episodeId !== null) {
-      requireThat(token(row.episodeId), 'Control needs explicit null or nonblank episode identifier');
+      requireThat(canonicalId(row.episodeId), 'Control needs explicit null or canonical episode identifier');
       count(stratum,'missingTruthWindows');
       blockers.add('episode_linked_control');
       continue;
