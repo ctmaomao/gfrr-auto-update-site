@@ -1,4 +1,4 @@
-import { assertIncludes, assertRouteFreightProductionDataRemainsUnwired, readJson } from './lib/check-script-helpers.mjs';
+import { assertAllFalse, assertAllTrue, assertIncludes, assertRouteFreightProductionDataRemainsUnwired, readJson } from './lib/check-script-helpers.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -48,18 +48,6 @@ function readText(relativePath) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function assertAllFalse(record, label) {
-  for (const [key, value] of Object.entries(record || {})) {
-    assert(value === false, `${label}.${key} must be false.`);
-  }
-}
-
-function assertAllTrue(record, label) {
-  for (const [key, value] of Object.entries(record || {})) {
-    assert(value === true, `${label}.${key} must be true.`);
-  }
 }
 
 function runPrepFixture() {
