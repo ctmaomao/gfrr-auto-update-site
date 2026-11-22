@@ -378,11 +378,11 @@ function dryRunSourceResult(source, options, keyState) {
   };
 }
 
-async function fetchWithTimeout(url, fetchOptions = {}) {
+async function fetchWithTimeout(url, fetchOptions, fetchImpl) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), fetchOptions.timeoutMs || FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
+    const response = await fetchImpl(url, {
       method: fetchOptions.method || 'GET',
       headers: fetchOptions.headers || {},
       body: fetchOptions.body,
@@ -965,7 +965,7 @@ async function fetchGdeltDocBroad(options) {
   }
 }
 
-async function fetchTavily(querySpec, options, requestWithKeys) {
+async function fetchTavily(querySpec, options, requestWithKeys, fetchProvider) {
   const payload = {
     query: querySpec.query,
     topic: 'news',
@@ -990,7 +990,7 @@ async function fetchTavily(querySpec, options, requestWithKeys) {
         body: JSON.stringify(payload),
         timeoutMs: FETCH_TIMEOUT_MS,
         label: 'Tavily'
-      }));
+      }, fetchProvider));
       const rows = Array.isArray(json?.results) ? json.results : [];
       return rows.map((item) => normalizeArticle({
         source: 'tavily',
@@ -1005,7 +1005,7 @@ async function fetchTavily(querySpec, options, requestWithKeys) {
   });
 }
 
-async function fetchBrave(querySpec, options, requestWithKeys) {
+async function fetchBrave(querySpec, options, requestWithKeys, fetchProvider) {
   const params = new URLSearchParams({
     q: querySpec.query,
     freshness: options.windowDays <= 7 ? 'pw' : 'pm',
@@ -1028,7 +1028,7 @@ async function fetchBrave(querySpec, options, requestWithKeys) {
         timeoutMs: FETCH_TIMEOUT_MS,
         label: 'Brave',
         redirect: 'error'
-      }));
+      }, fetchProvider));
       const rows = Array.isArray(json?.results) ? json.results : [];
       return rows.map((item) => {
         const extra = Array.isArray(item.extra_snippets) ? item.extra_snippets.join(' ') : '';
@@ -1184,14 +1184,21 @@ async function collectSource(source, options, keyState) {
     };
   }
 
+  let networkUsed = false;
+  // Count dispatches from this source collection, not budget/usage I/O or a
+  // stopped session's earlier request. Failed fetches are still attempts.
+  const fetchProvider = (url, init) => {
+    networkUsed = true;
+    return fetch(url, init);
+  };
   const requestWithKeys = createSearchKeyPool(keyState._keys[source] || []);
   for (const querySpec of QUERY_SET) {
     try {
       let rows;
       if (source === 'tavily') {
-        rows = await fetchTavily(querySpec, options, requestWithKeys);
+        rows = await fetchTavily(querySpec, options, requestWithKeys, fetchProvider);
       } else if (source === 'brave') {
-        rows = await fetchBrave(querySpec, options, requestWithKeys);
+        rows = await fetchBrave(querySpec, options, requestWithKeys, fetchProvider);
       } else {
         throw new Error(`Unsupported source: ${source}`);
       }
@@ -1218,7 +1225,7 @@ async function collectSource(source, options, keyState) {
     source,
     status: successCount > 0 ? (failureCount > 0 ? 'partial' : 'ok') : 'error',
     enabled: true,
-    networkUsed: true,
+    networkUsed,
     startedAt,
     finishedAt: new Date().toISOString(),
     queryRuns,

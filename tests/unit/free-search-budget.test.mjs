@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 import { createBraveBudget, emptySharedBraveLedger, emptyBraveLedger, summarizeBraveLedger, validateBraveLedger, activateBraveGrant, createBraveLedger } from '../../scripts/lib/brave-budget.mjs';
 import { createMeteredTavilyUsage, emptyMeterLedger as newMeterLedger, validateMeterLedger, createTavilyMeterStore } from '../../scripts/lib/tavily-usage-meter.mjs';
-import { keyFingerprint, createSearchLedger } from '../../scripts/lib/free-search-ledger.mjs';
+import { budgetFailure, keyFingerprint, createSearchLedger } from '../../scripts/lib/free-search-ledger.mjs';
 import { createTavilyBudget, emptyLedger, validateUsage, verifyBudgetStatus, summarizeLedger } from '../../scripts/lib/tavily-budget.mjs';
 import { createSearchKeyPool } from '../../scripts/lib/search-key-pool.mjs';
 import { collectProvider as macro } from '../../scripts/macro-risk/collect-editorial-news.mjs';
@@ -325,6 +325,91 @@ test('Brave grant expiry during accounting still sends zero provider requests', 
   store.write = async (...args) => { const result = await write(...args); time += 2; return result; };
   await assert.rejects(createBraveBudget({ store, now: () => time })(context, never), /grant_expired/);
   assert.equal((await store.read()).ledger.entries[0].state, 'reserved');
+});
+
+test('Oil News networkUsed records search dispatch, not budget I/O or query outcomes', async t => {
+  const oldCwd = process.cwd(), directory = mkdtempSync(join(tmpdir(), 'gfrr-oil-dispatch-'));
+  process.chdir(directory);
+  t.after(() => { process.chdir(oldCwd); rmSync(directory, { recursive: true, force: true }); });
+  for (const provider of ['BRAVE', 'TAVILY']) {
+    for (const [suffix, value] of [['API_KEYS', key], ['API_KEY', '']]) {
+      const name = `${provider}_${suffix}`, old = process.env[name];
+      process.env[name] = value;
+      t.after(() => { if (old === undefined) delete process.env[name]; else process.env[name] = old; });
+    }
+  }
+
+  const dispatches = [];
+  let fetchSearch;
+  const budgetReads = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    if (url === 'https://api.github.com/synthetic-ledger' || url === 'https://api.tavily.com/usage') {
+      budgetReads.push(url);
+      return Response.json({});
+    }
+    dispatches.push(new URL(url).hostname);
+    return fetchSearch();
+  });
+  const config = { allowNetwork: true, windowDays: 7, maxResults: 5, writeOutput: false };
+  const verify = (row, { dispatched, successes = 0, errors }) => {
+    assert.equal(row.successCount, successes);
+    assert.equal(row.failureCount, 4 - successes);
+    assert.equal(row.status, successes === 4 ? 'ok' : successes ? 'partial' : 'error');
+    assert.equal(row.articleCount, 0);
+    assert.deepEqual(row.queryRuns.map(run => run.error ?? null), errors);
+    assert.equal(row.networkUsed, dispatched, row.source);
+  };
+
+  await t.test('pre-dispatch private-proof and usage-meter holds', async () => {
+    const braveBudget = braveGate({
+      read: async () => {
+        await fetch('https://api.github.com/synthetic-ledger');
+        budgetFailure('brave_budget_private_proof_invalid');
+      },
+      write: never
+    });
+    const budget = createTavilyBudget({ store: memory(emptyLedger()), now: () => clock, readUsage: async () => {
+      await fetch('https://api.tavily.com/usage');
+      budgetFailure('tavily_budget_usage_unavailable');
+    } });
+    const result = await runDiagnosis({ ...config, sources: ['brave', 'tavily'], braveBudget, budget });
+    assert.deepEqual(dispatches, []);
+    assert.deepEqual(budgetReads, ['https://api.github.com/synthetic-ledger', 'https://api.tavily.com/usage']);
+    assert.deepEqual(result.sourceResults.map(row => row.networkUsed), [false, false]);
+    verify(result.sourceResults[0], { dispatched: false,
+      errors: ['brave_budget_private_proof_invalid', ...Array(3).fill('brave_budget_session_stopped')] });
+    verify(result.sourceResults[1], { dispatched: false,
+      errors: ['tavily_budget_usage_unavailable', ...Array(3).fill('tavily_budget_session_stopped')] });
+  });
+
+  for (const [label, response] of [
+    ['success', () => Response.json({ results: [], usage: { credits: 1 } })],
+    ['HTTP rejection', () => new Response('', { status: 403 })],
+    ['transport failure', () => { throw new TypeError('fetch failed'); }]
+  ]) {
+    await t.test(label, async () => {
+      dispatches.length = 0;
+      fetchSearch = response;
+      const braveBudget = braveGate(memory(funded()));
+      const budget = createTavilyBudget({ store: memory(emptyLedger()), now: () => clock, readUsage: async () => usage() });
+      const result = await runDiagnosis({ ...config, sources: ['brave', 'tavily'], braveBudget, budget });
+      const success = label === 'success', transportFailure = label === 'transport failure';
+      const error = success ? null : 'http_403_forbidden';
+      assert.deepEqual(dispatches, [...Array(transportFailure ? 1 : 4).fill('api.search.brave.com'), ...Array(4).fill('api.tavily.com')]);
+      verify(result.sourceResults[0], { dispatched: true, successes: success ? 4 : 0, errors: transportFailure
+        ? ['brave_budget_provider_outcome_unknown', ...Array(3).fill('brave_budget_session_stopped')] : Array(4).fill(error) });
+      verify(result.sourceResults[1], { dispatched: true, successes: success ? 4 : 0,
+        errors: Array(4).fill(transportFailure ? 'network_error' : error) });
+      if (transportFailure) {
+        // A later collection in this process must not mistake a stopped
+        // session's earlier dispatch provenance for a new request.
+        dispatches.length = 0;
+        const stopped = await runDiagnosis({ ...config, sources: ['brave'], braveBudget });
+        assert.deepEqual(dispatches, []);
+        verify(stopped.sourceResults[0], { dispatched: false, errors: Array(4).fill('brave_budget_session_stopped') });
+      }
+    });
+  }
 });
 
 test('four actual Brave callers share one full-repository allowance, not one allowance per consumer', async t => {
