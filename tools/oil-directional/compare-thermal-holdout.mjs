@@ -129,6 +129,16 @@ export function compareThermalHoldout(manifest, evidence) {
   if ([...episodeIds].some(id => trainingEpisodes.has(id))) blockers.add('training_episode_overlap');
   if (events.size < manifest.minEventEpisodes) blockers.add('insufficient_event_episodes');
   if (negatives.size < manifest.minNegativeBlocks) blockers.add('insufficient_negative_blocks');
+  const {minimumGain,maximumHarm} = manifest;
+  const hasMinimumGain = Object.hasOwn(manifest, 'minimumGain');
+  const hasMaximumHarm = Object.hasOwn(manifest, 'maximumHarm');
+  const hasFrozenMargins = hasMinimumGain || hasMaximumHarm;
+  // Gain is a fraction of positive episodes; harm is additional false alerts per 100 negative windows.
+  if (hasFrozenMargins && (!hasMinimumGain || !hasMaximumHarm
+    || !Number.isFinite(minimumGain) || minimumGain < 0 || minimumGain > 1
+    || !Number.isFinite(maximumHarm) || maximumHarm < 0 || maximumHarm > 100)) {
+    blockers.add('invalid_frozen_margins');
+  }
   const result = {status:'inconclusive', blockers:[...blockers], sealedWindows:manifest.windows.length,
     eventEpisodes:events.size, negativeBlocks:negatives.size, coverage, byStratum, gain:null, harm:null, eligibleForProduction:false,
     pairedObservable:{eventEpisodes:pairedEvents.size,negativeBlocks:pairedNegatives.size,gain:null,harm:null}};
@@ -139,8 +149,7 @@ export function compareThermalHoldout(manifest, evidence) {
   if (pairedEvents.size >= manifest.minEventEpisodes) result.pairedObservable.gain = summarize(eventClusters(pairedEvents), 1);
   if (pairedNegatives.size >= manifest.minNegativeBlocks) result.pairedObservable.harm = summarize([...pairedNegatives.values()], 100);
   result.harm = summarize([...negatives.values()], 100);
-  const {minimumGain,maximumHarm} = manifest;
-  if (Number.isFinite(minimumGain) && Number.isFinite(maximumHarm)) {
+  if (hasFrozenMargins) {
     if (result.gain.interval95[0] > minimumGain && result.harm.interval95[1] < maximumHarm) result.status = 'clears_frozen_margins';
     else if (result.gain.interval95[1] < minimumGain || result.harm.interval95[0] > maximumHarm) result.status = 'fails_frozen_margins';
   } else result.status = 'descriptive_only';

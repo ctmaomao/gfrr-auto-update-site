@@ -20,6 +20,47 @@ test('paired episode gain and block harm; explicit unavailable falls back to A',
   assert.deepEqual(compareThermalHoldout(manifest,[...evidence].reverse()),result);
   assert.equal(compareThermalHoldout({...manifest,minimumGain:.1,maximumHarm:5},evidence).status,'fails_frozen_margins');
 });
+test('supplied frozen margins must be a complete finite pair in their stated units',()=>{
+  const {manifest,evidence}=packet();
+  for (const margins of [
+    {minimumGain:-.1,maximumHarm:101}, // formerly cleared despite 100 additional false alerts per 100
+    {minimumGain:.1,maximumHarm:101},
+    {minimumGain:5,maximumHarm:5}, // percentage points in a fraction field
+    {minimumGain:.1,maximumHarm:-1},
+    {minimumGain:null,maximumHarm:null},
+    {minimumGain:'0.1',maximumHarm:5},
+    {minimumGain:.1,maximumHarm:'5'},
+    {minimumGain:NaN,maximumHarm:5},
+    {minimumGain:.1,maximumHarm:Infinity},
+    {minimumGain:.1},
+    {maximumHarm:5},
+    {minimumGain:undefined}
+  ]) {
+    const result=compareThermalHoldout({...manifest,...margins},evidence);
+    assert.equal(result.status,'inconclusive',JSON.stringify(margins));
+    assert.deepEqual(result.blockers,['invalid_frozen_margins']);
+    assert.equal(result.eligibleForProduction,false);
+  }
+});
+
+test('valid frozen margins include endpoints and retain strict interval comparisons',()=>{
+  const {manifest,evidence}=packet();
+  evidence[0].thermal.status='available';
+  for (const row of evidence.slice(3)) row.b.alert=false;
+  for (const [minimumGain,maximumHarm,status] of [
+    [0,100,'clears_frozen_margins'],
+    [1,100,'inconclusive'], // gain touches its margin
+    [0,0,'inconclusive'] // harm touches its cap
+  ]) {
+    const result=compareThermalHoldout({...manifest,minimumGain,maximumHarm},evidence);
+    assert.equal(result.status,status);
+    assert.deepEqual(result.blockers,[]);
+    assert.deepEqual(result.gain.interval95,[1,1]);
+    assert.deepEqual(result.harm.interval95,[0,0]);
+    assert.equal(result.eligibleForProduction,false);
+  }
+});
+
 test('missing evidence, unknown cutoff, or a same-episode control abstains',()=>{
   for (const [blocker,modify] of [
     ['unresolved_independent_truth',rows=>rows.pop()],
