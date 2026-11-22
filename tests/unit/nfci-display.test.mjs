@@ -1,4 +1,4 @@
-import test, { after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -6,23 +6,9 @@ import { createMacroOverviewRenderVm } from '../helpers/macro-overview-render-vm
 
 const ROOT = process.cwd();
 
-async function buildRenderApi() {
-  const { body, context, elementFor, elements, renderSource } = await createMacroOverviewRenderVm();
-  vm.runInContext(`${body}\n({ renderC3CreditCorporate, renderMacroDriversPillars, deriveNarratives, asNumber })`, context, { filename: 'renderMacroOverview.vm.js' });
-  return {
-    api: vm.runInContext('({ renderC3CreditCorporate, renderMacroDriversPillars, deriveNarratives, asNumber })', context),
-    elements,
-    renderSource,
-    elementFor,
-  };
-}
-
-const originalDocument = globalThis.document;
-const { api, elementFor, renderSource: RENDER_SOURCE } = await buildRenderApi();
-after(() => {
-  if (originalDocument === undefined) delete globalThis.document;
-  else globalThis.document = originalDocument;
-});
+const { api, elementFor, renderSource: RENDER_SOURCE } = await createMacroOverviewRenderVm([
+  'renderC3CreditCorporate', 'renderMacroDriversPillars', 'deriveNarratives', 'asNumber',
+]);
 
 // Fixed synthetic representative fixture; not a historical observation.
 // Real browser baseline (2026-10-23) has nfci4wChange +0.032; this fixture keeps 0.037 intentionally.

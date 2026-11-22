@@ -1,22 +1,12 @@
-import test, { after } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import vm from 'node:vm';
 import { createMacroOverviewRenderVm } from '../helpers/macro-overview-render-vm.mjs';
 
-async function buildRenderApi() {
-  const { body, context, elementFor, elements } = await createMacroOverviewRenderVm();
-  vm.runInContext(`${body}\n({ renderC4UsEconomyTemperature, employmentBasketDisplay })`, context, { filename: 'renderMacroOverview.vm.js' });
-  return {
-    api: vm.runInContext('({ renderC4UsEconomyTemperature, employmentBasketDisplay })', context),
-    elements,
-    elementFor,
-  };
-}
+const { api, elementFor } = await createMacroOverviewRenderVm([
+  'renderC4UsEconomyTemperature', 'employmentBasketDisplay',
+]);
 
-const originalDocument = globalThis.document;
-const { api, elementFor } = await buildRenderApi();
-after(() => { if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument; });
 const fixture = {
   industryPayrollMethod: 'custom-overlapping-11-series-mom-v1',
   industryPayrollDiffusionPct: 63.6, industryPayrollPositiveCount: 7, industryPayrollSeriesCount: 11,
