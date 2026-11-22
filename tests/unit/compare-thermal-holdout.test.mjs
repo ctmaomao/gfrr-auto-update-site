@@ -87,3 +87,24 @@ test('decision cutoff is inside its sealed window, independent of later ascertai
     assert.throws(()=>compareThermalHoldout(manifest,evidence),/Invalid decision or ascertainment cutoff/);
   }
 });
+
+for (const [name,modify,message] of [
+  ['training episode',manifest=>{manifest.trainingEpisodeIds=['episode-2 '];},/Expected sealed training episode list/],
+  ['alternate row in the same episode',(_,rows)=>{rows[2].episodeId=' episode-2';},/Missing adjudicated event episode/],
+  ['split negative block',manifest=>{manifest.windows[5].negativeBlockId='2\t';},/Missing sealed time block/],
+  ['matched window and evidence', (manifest,rows)=>{manifest.windows[0].id=rows[0].windowId='0 ';},/Duplicate or invalid sealed window/],
+  ['linked control',(_,rows)=>{rows[3].episodeId='episode-1 ';},/Control needs explicit null or canonical episode identifier/]
+]) {
+  test(`rejects a padded identifier: ${name}`,()=>{
+    const {manifest,evidence}=packet();
+    modify(manifest,evidence);
+    assert.throws(()=>compareThermalHoldout(manifest,evidence),message);
+  });
+}
+
+test('a nonblank free-text truth reference need not be a canonical identifier',()=>{
+  const {manifest,evidence}=packet();
+  const result=compareThermalHoldout(manifest,evidence);
+  evidence[0].truthReceipt.reference=' synthetic-review ';
+  assert.deepEqual(compareThermalHoldout(manifest,evidence),result);
+});
