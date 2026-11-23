@@ -1,0 +1,66 @@
+name: Brave Official Oil News Discovery
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Read-only preview or the single authorized discovery
+        type: choice
+        default: preview
+        options:
+          - preview
+          - single-discovery
+permissions:
+  contents: read
+concurrency:
+  group: brave-oil-news-official-discovery
+  cancel-in-progress: false
+jobs:
+  preview:
+    if: ${{ github.ref == 'refs/heads/main' && (inputs.operation == 'preview' || inputs.operation == 'single-discovery') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Private read-only preflight
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}
+          BRAVE_BUDGET_RENEWAL_CHAIN: ${{ secrets.BRAVE_BUDGET_RENEWAL_CHAIN }}
+          BRAVE_BUDGET_OIL_R2: ${{ secrets.BRAVE_BUDGET_OIL_R2 }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+        run: node scripts/run-brave-oil-news-official-discovery.mjs
+  single-discovery:
+    needs: preview
+    if: ${{ github.ref == 'refs/heads/main' && inputs.operation == 'single-discovery' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: One durable authorized Oil News discovery request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}
+          BRAVE_BUDGET_RENEWAL_CHAIN: ${{ secrets.BRAVE_BUDGET_RENEWAL_CHAIN }}
+          BRAVE_BUDGET_OIL_R2: ${{ secrets.BRAVE_BUDGET_OIL_R2 }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+        run: node scripts/run-brave-oil-news-official-discovery.mjs

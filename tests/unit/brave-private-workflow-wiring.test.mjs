@@ -9,6 +9,7 @@ const expected = new Map([
   ['refresh-bubble-watch.yml', ['Refresh bubble watch data', 'build:bubble-watch']],
   ['refresh-bubble-watch-free.yml', ['Refresh all Bubble evidence using free sources only', 'build:bubble-watch']]
 ]);
+const discoveryWorkflow = 'brave-oil-news-official-discovery.yml';
 const injection = '          BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}';
 test('private proof is injected only into the five reviewed Brave steps, not jobs, CI or publication', () => {
   const found = [];
@@ -17,7 +18,9 @@ test('private proof is injected only into the five reviewed Brave steps, not job
     if (!source.includes('BRAVE_BUDGET_PRIVATE_PROOF')) continue;
     // ADR-0111 explicitly adds only this separately constrained manual canary.
     // Its complete secret inventory is asserted below, not exempted from review.
-    if (file === 'brave-private-canary.yml') continue;
+    // The new fixed official-discovery workflow likewise has its exact
+    // scope, command and step-only secret allowlist asserted separately.
+    if (file === 'brave-private-canary.yml' || file === discoveryWorkflow) continue;
     found.push(file);
     assert.ok(expected.has(file), `unreviewed proof consumer: ${file}`);
     assert.equal(source.match(/BRAVE_BUDGET_PRIVATE_PROOF/gu).length, 2);
@@ -54,7 +57,7 @@ test('only two fixed main manual canary steps receive the private renewal chain 
   const chainInjection = '          BRAVE_BUDGET_RENEWAL_CHAIN: ${{ secrets.BRAVE_BUDGET_RENEWAL_CHAIN }}';
   const chainFiles = readdirSync(directory).filter(name => /\.ya?ml$/u.test(name)
     && readFileSync(directory + name, 'utf8').includes('BRAVE_BUDGET_RENEWAL_CHAIN'));
-  assert.deepEqual(chainFiles, [filename]);
+  assert.deepEqual(chainFiles.sort(), [discoveryWorkflow, filename].sort());
   assert.equal(source.match(/BRAVE_BUDGET_PRIVATE_PROOF/gu).length, 4);
   assert.equal(source.match(/BRAVE_BUDGET_RENEWAL_CHAIN/gu).length, 4);
   assert.equal(source.split('\n').filter(line => line === injection).length, 2);
@@ -73,4 +76,34 @@ test('only two fixed main manual canary steps receive the private renewal chain 
   assert.match(source, /needs: preview/u); assert.match(source, /workflow_dispatch:/u);
   assert.doesNotMatch(source, /schedule:|pull_request:|workflow_run:|workflow_call:|push:|set -x|printenv|toJSON\(secrets\)|upload-artifact|GITHUB_STEP_SUMMARY/u);
   assert.doesNotMatch(source, /TAVILY_BUDGET_GITHUB_TOKEN|DEEPSEEK_|secrets\.GITHUB_TOKEN/u);
+});
+
+test('only the two fixed manual R2 steps receive its proof chain, key and private authorization', () => {
+  const source = readFileSync(directory + discoveryWorkflow, 'utf8').replaceAll('\r\n', '\n');
+  const files = readdirSync(directory).filter(name => /\.ya?ml$/u.test(name)
+    && readFileSync(directory + name, 'utf8').includes('BRAVE_BUDGET_OIL_R2'));
+  assert.deepEqual(files, [discoveryWorkflow]);
+  const env = [
+    '          GITHUB_TOKEN: ${{ github.token }}',
+    injection,
+    '          BRAVE_BUDGET_RENEWAL_CHAIN: ${{ secrets.BRAVE_BUDGET_RENEWAL_CHAIN }}',
+    '          BRAVE_BUDGET_OIL_R2: ${{ secrets.BRAVE_BUDGET_OIL_R2 }}',
+    '          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}',
+    '          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}'
+  ];
+  for (const [name, job] of [['Private read-only preflight', 'preview'], ['One durable authorized Oil News discovery request', 'single-discovery']]) {
+    const step = source.split(/^      - /mu).find(part => part.startsWith(`name: ${name}\n`));
+    assert.ok(step, name);
+    assert.deepEqual(step.split(/\n(?= {0,7}\S)/u)[0].trimEnd().split('\n').slice(1), ['        env:', ...env, '        run: node scripts/run-brave-oil-news-official-discovery.mjs']);
+    const scope = source.split(/^  (?=preview:|single-discovery:)/mu).find(part => part.startsWith(`${job}:\n`));
+    assert.ok(scope.includes("github.ref == 'refs/heads/main'"));
+    assert.equal(scope.includes('contents: write'), job === 'single-discovery');
+  }
+  for (const row of env) assert.equal(source.split('\n').filter(line => line === row).length, 2);
+  assert.equal((source.match(/secrets\./gu) ?? []).length, 10);
+  assert.equal((source.match(/^        run:/gmu) ?? []).length, 2);
+  assert.equal((source.match(/ref: \$\{\{ github\.sha \}\}/gu) ?? []).length, 2);
+  assert.match(source, /permissions:\n  contents: read/u);
+  assert.match(source, /single-discovery:\n    needs: preview/u);
+  assert.doesNotMatch(source, /schedule:|pull_request:|workflow_run:|workflow_call:|push:|set -x|printenv|upload-artifact|GITHUB_STEP_SUMMARY|environment:|npm /u);
 });
