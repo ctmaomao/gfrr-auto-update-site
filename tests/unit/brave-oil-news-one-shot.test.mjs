@@ -73,6 +73,79 @@ test('preview projects without writes or Brave contact and preflights the offici
   assert.deepEqual(await runBraveOilDiscovery(opts), { status: 'PREVIEW_READY' });
   assert.equal(f.writes(), 0); assert.deepEqual(f.calls, [OIL_DISCOVERY.feed]);
 });
+const eiaXmlDeclaration = '<?xml version="1.0" encoding="ISO-8859-1" ?>';
+const eiaStylesheetHint = '<?xml-stylesheet href="rss.xsl" type="text/xsl" media="screen"?>';
+test('EIA presentation-hint fixture passes read-only preview without fetching the stylesheet', async () => {
+  for (const prefix of [eiaXmlDeclaration + '\n' + eiaStylesheetHint, eiaStylesheetHint,
+    `<?xml-stylesheet title='External &amp; inert' alternate="yes"\tmedia="print" charset="UTF-8"
+      type="text/css" href="https://example.invalid/style?a=1&amp;b=2"?>`,
+    '<?xml-stylesheet href="https://example.invalid/style"?>']) {
+    const f = fixture(), opts = f.options();
+    opts.context.job = opts.context.operation = 'preview';
+    opts.fetchImpl = async (url, options) => {
+      f.calls.push(url);
+      assert.equal(url, OIL_DISCOVERY.feed);
+      assert.equal(options.redirect, 'error');
+      assert.equal(options.credentials, 'omit');
+      assert.deepEqual(options.headers, { Accept: 'application/rss+xml, application/xml, text/xml' });
+      return new Response(prefix + '\n' + f.xml({ date: 'Sun, 22 Nov 2026 08:00:00 EST' }), {
+        headers: { 'content-type': 'text/xml; charset=ISO-8859-1' }
+      });
+    };
+    assert.deepEqual(await runBraveOilDiscovery(opts), { status: 'PREVIEW_READY' });
+    assert.deepEqual(f.calls, [OIL_DISCOVERY.feed]);
+    assert.equal(f.writes(), 0);
+  }
+});
+
+test('preview discloses only a fixed source status, with no writes or Brave contact', async () => {
+  for (const [name, makeXml] of [
+    ['wrong target', xml => eiaXmlDeclaration + '<?other href="rss.xsl"?>' + xml],
+    ['invalid declaration', xml => '<?xml bogus?>' + eiaStylesheetHint + xml],
+    ['unknown attribute', xml => eiaStylesheetHint.replace('media=', 'foreign=') + xml],
+    ['missing href', xml => '<?xml-stylesheet type="text/xsl"?>' + xml],
+    ['empty href', xml => '<?xml-stylesheet href=" "?>' + xml],
+    ['empty type', xml => '<?xml-stylesheet href="rss.xsl" type=""?>' + xml],
+    ['bad alternate', xml => '<?xml-stylesheet href="rss.xsl" alternate="maybe"?>' + xml],
+    ['raw comment in attribute', xml => '<?xml-stylesheet href="r<!-- not valid -->ss.xsl"?>' + xml],
+    ['raw CDATA in attribute', xml => '<?xml-stylesheet href="r<![CDATA[ss.xsl]]>"?>' + xml],
+    ['non-XML delimiter', xml => '<?xml-stylesheet href="rss.xsl"\u00a0type="text/xsl"?>' + xml],
+    ['control in attribute', xml => '<?xml-stylesheet href="rss.xsl\u0001"?>' + xml],
+    ['unescaped ampersand', xml => '<?xml-stylesheet href="https://example.invalid/?a=1&b=2"?>' + xml],
+    ['unknown stylesheet reference', xml => '<?xml-stylesheet href="rss&unknown;.xsl"?>' + xml],
+    ['malformed numeric reference', xml => '<?xml-stylesheet href="rss&#xZZ;.xsl"?>' + xml],
+    ['numeric control reference', xml => '<?xml-stylesheet href="rss&#0;.xsl"?>' + xml],
+    ['malformed stylesheet', xml => '<?xml-stylesheet href="rss.xsl" type=text/xsl?>' + xml],
+    ['duplicate stylesheet', xml => eiaStylesheetHint + eiaStylesheetHint + xml],
+    ['duplicate attribute', xml => '<?xml-stylesheet href="rss.xsl" href="rss.xsl" type="text/xsl"?>' + xml],
+    ['unbounded stylesheet', xml => eiaStylesheetHint.replace(' href', ' '.repeat(256) + 'href') + xml],
+    ['interior hint', xml => xml.replace('<channel>', '<channel>' + eiaStylesheetHint)],
+    ['interior PI', xml => xml.replace('<item>', '<item><?other value?>')],
+    ['DTD', xml => eiaStylesheetHint + '<!DOCTYPE rss>' + xml],
+    ['entity declaration', xml => eiaStylesheetHint + '<!ENTITY synthetic "private">' + xml],
+    ['unknown entity reference', xml => eiaStylesheetHint + xml.replace('<title>', '<title>&synthetic;')],
+    ['non-XML', () => '<html>synthetic unreadable feed</html>'],
+    ['redirect refusal', () => null],
+    ['no eligible item', () => eiaStylesheetHint + fixture().xml({ date: 'Sun, 22 Nov 2020 08:00:00 EST' })]
+  ]) {
+    const f = fixture(), opts = f.options();
+    opts.context.job = opts.context.operation = 'preview';
+    opts.fetchImpl = async (url, options) => {
+      f.calls.push(url);
+      assert.equal(url, OIL_DISCOVERY.feed);
+      assert.equal(options.redirect, 'error');
+      const xml = makeXml(f.xml());
+      if (xml === null) return new Response(null, { status: 302, headers: { Location: 'https://example.invalid/' } });
+      return new Response(xml, { headers: { 'content-type': 'text/xml' } });
+    };
+    const status = name === 'no eligible item'
+      ? 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST' : 'OFFICIAL_VERIFICATION_UNAVAILABLE_NO_REQUEST';
+    assert.deepEqual(await runBraveOilDiscovery(opts), { status }, name);
+    assert.deepEqual(f.calls, [OIL_DISCOVERY.feed], name);
+    assert.equal(f.writes(), 0, name);
+  }
+});
+
 test('one settled manual receipt preserves P0/R1 history; only independently verified result escapes', async () => {
   const f = fixture();
   assert.deepEqual(await runBraveOilDiscovery(f.options()), { status: 'OFFICIAL_RELEASE_VERIFIED', officialUrl: f.matching, releaseDate: '2026-11-22' });

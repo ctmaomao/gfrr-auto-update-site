@@ -67,7 +67,12 @@ try {
     baseSnapshot, store, fetchImpl: fetch,
     verifyReviewedAnchor: (reviewed, checkout) => verifyBraveOilReviewedAnchor({ reviewed, checkout, git, root: process.cwd() })
   });
-  if (result.status === 'OFFICIAL_RELEASE_VERIFIED') {
+  if (operation === 'preview' && (result.status === 'OFFICIAL_VERIFICATION_UNAVAILABLE_NO_REQUEST'
+    || result.status === 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST')) {
+    // A failed source preflight must still block the dependent job.
+    console.error(`BRAVE_OIL_PREVIEW_${result.status}`);
+    process.exitCode = 1;
+  } else if (result.status === 'OFFICIAL_RELEASE_VERIFIED') {
     require(/^https:\/\/www\.eia\.gov\/todayinenergy\/detail\.php\?id=[1-9][0-9]{3,6}$/u.test(result.officialUrl)
       && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(result.releaseDate));
     console.log(`BRAVE_OIL_OFFICIAL_RELEASE_VERIFIED ${result.releaseDate} ${result.officialUrl}`);

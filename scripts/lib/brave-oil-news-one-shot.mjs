@@ -167,7 +167,6 @@ export async function runBraveOilDiscovery({ priorProof, authorization, keys, co
     if (typeof fetchImpl !== 'function') refuse();
     const official = await readOfficialReleases(fetchImpl, now());
     if (!official || official.size === 0) {
-      if (context.operation === 'preview') refuse();
       return outcome(official ? 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST' : 'OFFICIAL_VERIFICATION_UNAVAILABLE_NO_REQUEST');
     }
     if (context.operation === 'preview') return outcome('PREVIEW_READY');
@@ -263,11 +262,37 @@ function rssItems(xml) {
   // structural matching; never interpret comments or embedded feed text as
   // tags. The marker syntax cannot appear in an XML 1.0 input.
   if (xml.includes('\0')) return null;
+  // Validate the raw prolog first so comment/CDATA removal cannot repair
+  // malformed pseudoattributes. Ignore a single bounded stylesheet hint;
+  // none of its values are resolved, expanded, or fetched.
+  const prolog = xml.replace(/^\uFEFF?[\t\r\n ]*(?:<\?xml[\t\r\n ]+version[\t\r\n ]*=[\t\r\n ]*(?:"1\.0"|'1\.0')(?:[\t\r\n ]+encoding[\t\r\n ]*=[\t\r\n ]*(?:"[A-Za-z][A-Za-z0-9._-]{0,39}"|'[A-Za-z][A-Za-z0-9._-]{0,39}'))?(?:[\t\r\n ]+standalone[\t\r\n ]*=[\t\r\n ]*(?:"(?:yes|no)"|'(?:yes|no)'))?[\t\r\n ]*\?>[\t\r\n ]*)?/u, '');
+  const hint = /^<\?xml-stylesheet([\t\r\n ][^<>]{1,255})\?>/u.exec(prolog);
+  if (hint) {
+    const attrs = new Map();
+    let rest = hint[1].replace(/[\t\r\n ]+$/u, '');
+    while (rest) {
+      const attr = /^[\t\r\n ]+(href|type|title|media|charset|alternate)[\t\r\n ]*=[\t\r\n ]*(?:"([^"]*)"|'([^']*)')/u.exec(rest);
+      if (!attr || attrs.has(attr[1])) return null;
+      const value = attr[2] ?? attr[3];
+      if (/[\u0000-\u001f\u007f-\u009f]/u.test(value)
+        || value.replace(/&(?:(?:amp|apos|gt|lt|quot)|#([0-9]+)|#x([0-9a-fA-F]+));/gu, (ref, dec, hex) => {
+          if (dec === undefined && hex === undefined) return '';
+          const cp = dec === undefined ? Number.parseInt(hex, 16) : Number(dec);
+          return (cp >= 0x20 && cp <= 0x7e) || (cp >= 0xa0 && cp <= 0xd7ff)
+            || (cp >= 0xe000 && cp <= 0xfffd) || (cp >= 0x10000 && cp <= 0x10ffff) ? '' : ref;
+        }).includes('&')) return null;
+      attrs.set(attr[1], value);
+      rest = rest.slice(attr[0].length);
+    }
+    if (!attrs.get('href')?.trim() || (attrs.has('type') && !attrs.get('type').trim())
+      || (attrs.has('alternate') && !['yes', 'no'].includes(attrs.get('alternate')))) return null;
+  }
   const data = [];
-  const safe = xml.replace(/<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>/gu,
-    (_, cdata) => cdata === undefined ? '' : `\0${data.push(cdata) - 1}\0`);
-  if (/<!DOCTYPE|<!ENTITY|<!--|<!\[CDATA\[/iu.test(safe)) return null;
-  const channel = /^\s*(?:<\?xml[^?]*\?>\s*)?<rss\b[^>]*>\s*<channel\b[^>]*>([\s\S]+)<\/channel>\s*<\/rss>\s*$/u.exec(safe)?.[1];
+  const rss = prolog.slice(hint?.[0].length ?? 0).replace(/<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>/gu,
+    (_, cdata) => cdata === undefined ? '' : `\0${data.push(cdata) - 1}\0`).trimStart();
+  if (/<!DOCTYPE|<!ENTITY|<!--|<!\[CDATA\[/iu.test(rss) || rss.includes('<?')
+    || /&(?!(?:amp|apos|gt|lt|quot);)[\w.:-]+;/u.test(rss)) return null;
+  const channel = /^<rss\b[^>]*>\s*<channel\b[^>]*>([\s\S]+)<\/channel>\s*<\/rss>\s*$/u.exec(rss)?.[1];
   if (!channel || /<\/?channel\b/u.test(channel)) return null;
   const directItems = [];
   const stack = [];
