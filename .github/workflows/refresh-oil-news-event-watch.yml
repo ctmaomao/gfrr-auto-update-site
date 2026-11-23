@@ -6,7 +6,7 @@ env:
 on:
   workflow_dispatch:
   schedule:
-    # Every 6 hours. Keeps the shared Tavily/Brave monthly request budget below free-tier limits.
+    # Every 6 hours. See the free-search planning estimate in docs/OPERATIONS.md.
     - cron: '37 */6 * * *'
 
 concurrency:
@@ -43,6 +43,7 @@ jobs:
           TAVILY_BUDGET_GITHUB_TOKEN: ${{ github.token }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           BRAVE_BUDGET_PRIVATE_PROOF: ${{ secrets.BRAVE_BUDGET_PRIVATE_PROOF }}
         run: npm run build:oil-news-event-watch
 

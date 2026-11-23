@@ -56,7 +56,7 @@ test('both real editorial entry points default to the shared gate and make zero 
   }
 });
 
-test('real article search collectors cannot use supplied keys without shared accounting configuration', () => {
+test('real article search collectors cannot use supplied keys without free-only admission', () => {
   for (const module of ['macro-risk/collect-editorial-news', 'bubble-watch/collect-weekly-editorial-news']) {
     const result = offlineChild(`
       const assert = (await import('node:assert/strict')).default;
@@ -69,7 +69,7 @@ test('real article search collectors cannot use supplied keys without shared acc
         assert.equal(result.status.queryRuns.length, 6);
         for (const row of result.status.queryRuns) {
           assert.equal(row.status, 'error');
-          assert.match(row.error, new RegExp('^' + provider + '_budget_'));
+          assert.match(row.error, provider === 'tavily' ? /^tavily_budget_/u : /^brave_provider_disabled$/u);
         }
       }
     `, { TAVILY_API_KEY: key });
@@ -177,12 +177,12 @@ test('repository endpoint inventory binds every Tavily and Brave search caller t
     // limited to the same durable ledger and is not a regular buyer or Tavily
     // caller. Both exact paths are asserted by purpose below.
     assert.deepEqual(files.filter(file => endpoint.test(text(file))).sort(), [...expected.map(([file]) => file), ...extra].sort(),
-      'a new provider caller requires explicit shared-ledger admission and inventory review');
+      'a new provider caller requires explicit admission and inventory review');
   }
   for (const [file, consumer] of expected) {
     const source = text(file);
     assert.match(source, /import \{ withTavilyBudget \} from ['"].*lib\/tavily-budget\.mjs['"]/u);
-    assert.match(source, /import \{ withBraveBudget \} from ['"].*lib\/brave-budget\.mjs['"]/u);
+    assert.match(source, /import \{ withBraveProviderCap \} from ['"].*lib\/brave-provider-cap\.mjs['"]/u);
     assert.match(source, new RegExp(`budget\\(\\{ key, payload(?:[: ,][^}]+)?, consumer: '${consumer}' \\}`, 'u'));
     assert.match(source, new RegExp(`(?:braveBudget|budget)\\(\\{ key, consumer: '${consumer}' \\}`, 'u'));
   }

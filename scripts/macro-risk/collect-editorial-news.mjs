@@ -8,7 +8,7 @@ import { EDITORIAL_QUERIES, buildNewsDiscovery } from './editorial-news.mjs';
 import { classifySearchRequestError } from './search-request-policy.mjs';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { withTavilyBudget } from '../lib/tavily-budget.mjs';
-import { withBraveBudget } from '../lib/brave-budget.mjs';
+import { withBraveProviderCap } from '../lib/brave-provider-cap.mjs';
 import { buildTavilyEditorialSearch, normalizeTavilyEditorialResults } from './editorial-search-plan.mjs';
 
 const PREFIX = 'manual-artifacts/macro-risk-editorial/';
@@ -84,7 +84,7 @@ async function brave(topic, query, requestWithKeys, braveBudget, markAttempted) 
   return (json?.results || []).map((item) => ({ provider: 'brave', topic, title: item.title, url: item.url, publishedAt: item.page_age || item.age, snippet: item.description }));
 }
 
-export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveBudget } = {}) {
+export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveProviderCap } = {}) {
   if (keys.length === 0) return { rows: [], status: { status: 'not_configured', successCount: 0, failureCount: EDITORIAL_TOPICS.length, queryRuns: [] } };
   const rows = [];
   const queryRuns = [];

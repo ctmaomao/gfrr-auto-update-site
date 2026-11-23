@@ -138,6 +138,14 @@ npm run check:macro-risk-editorial
 
 ### Shared editorial budget and free-search admission
 
+**常规 Brave 搜索切换**：实际防扣费只靠同一个 Search Postpaid 计划已保存、覆盖该计划各 key 的 **Free credits only** 硬停。默认关闭，先私下核对官方页面当前仍强制免费硬停，且与已核验的实际 Actions key 属于同一计划。此前 [canary](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44252310781) 和 [R2 预检](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45133465686) 校验实际 runner key 与私有证明的同一身份；它们本身不证明今天的计费设置。两个现有 key Secret 合计必须恰好一个不同的 key，并匹配原私有证明的身份。沿用该证明只作身份校验，不使用额度、到期时间、grant、请求预留、账本或每月续填。缺失、歧义、换 key 或无法核对计划时不调用；不打印 key、指纹或私有证明。
+
+- 切换点是 `config/brave-provider-cap.json`。核验后首次仅设 `"enabled": {"oil-news": ["schedule"]}` 并看下一次自然刷新；不手动 rerun。只在本仓库主分支对应的既有工作流尝试，手动和其他消费者保持关闭。将来若启用 Bubble，须先核对并审查该路径两个 key Secret 的注入。撤回时将 `enabled` 恢复为空对象。若 key 或计划/免费设置要改变，应先关闭并重新核验；程序无法实时读取后台设置。
+- Brave 返回 402/432/433 时，本次仅 Brave 不可用，不换 key、不重试，不阻断 Tavily/GDELT，也不变更新闻证据或发布门槛。429、5xx 或传输/解析结果不确定时，本轮同样不再尝试 Brave，但分别记录限速或未知结果，不冒称额度用完。下一次自然运行可重新尝试；不需要月度重置或授权。其他账户应用可以更早用完共享免费额度。
+- 保留既有排程：31 天保守自动估计 767 次，加入 200 次手动规划余量共 967 次；这是计划估算，不是项目运行配额、实际账单或官方剩余次数。Tavily/DeepSeek 预算规则不变。
+- 旧 Brave 手动 canary、R2 和私有 grant 路径的记录及账本均保留为历史，不再作为可 dispatch 的付费边界。以下旧 Brave 账本操作仅供历史审计，不适用于常规 Brave 搜索。
+
+
 Brave 另有 [ADR-0111](ADR/0111-brave-shared-free-only.md) 的显式 v2 路径：仅在账户 Search Postpaid 已保存的 Free credits only、服务商硬停、所有该plan key覆盖及实际项目key绑定均独立核验后使用。不把唯一key当独占，不把零out-of-pocket当硬停。下文独占key要求仍完整适用于v1；v2只窄范围替代独占与全账户实时配额/历史已知要求，其它hold不变。
 
 v2 的私有 grant 必须含证据与account-plan binding的SHA-256、key指纹、verification/expiry/protection boundary、至多950次项目授权和同时间的dashboard观察；字段契约见ADR-0111。expiresAt不超过31天及已审保护边界；账单日期时区不明时保守提前到期，不伪造period end。账户累计用量不是项目历史或实时余额。
@@ -172,7 +180,7 @@ npm run review:brave-budget -- --plan
 4. Tavily保留按记录的预留时间统计的31天项目预算：950总额/800自动/150手动，另有50账户余量；这不是已独立证实的真实dispatch滚动硬上限。所有 `/usage` 探测必须走 `tavily-meter-ledger`，缺失需另行初始化；10次/10分钟按661秒保守窗口执行，包含30秒dispatch、30秒时钟误差和1秒HTTP精度。初始化时间取GitHub首次404的可信Date，初始化后≤661秒仍hold，整秒时首次安全准入为662秒；缺旧genesis不自动迁移。未知时间/配额/PAYGO/余额即停止，无缓存替代或换key绕过。
 5. Brave免费确认不是剩余额度。`brave-usage-ledger` 的grant必须有 dashboard 实际请求上限、既有使用、到期、免费确认、来源证据与独占仓库key指纹，grant最多950剩余请求、有效期至多31天；另有按记录预留时间计算的950/31天项目计数，不能声称真实dispatch严格窗口已证实。未知、到期或key不匹配即停止，无自动续月。timeout/网络/5xx/坏JSON结果永久待核，新的grant不能清掉旧待核。实际4xx可记录失败但不退还；402/429/432/433额外hold。
 
-搜索摘要与 `--plan` 明示 `countBasis=recorded_reservation_time`、`strictDispatchWindowVerified=false`。保留旧账本、schema、历史与额度，不补造早期dispatch证据或重置。两搜索provider新准入均要求30秒单调时钟dispatch deadline；Brave还要求成功CAS所读的可信GitHub `serverTime + 30000ms + 1000ms` 严格早于grant到期，边界附近可提前hold。真实免费门禁仍靠Tavily已核Researcher/PAYGO禁用及官方用量/余量、Brave已核独占key免费grant与未决债务hold；Tavily `/usage` 独立权威时钟10次/10分钟规则不变。
+搜索摘要与 `--plan` 明示 `countBasis=recorded_reservation_time`、`strictDispatchWindowVerified=false`。保留旧账本、schema、历史与额度，不补造早期dispatch证据或重置。两搜索provider新准入均要求30秒单调时钟dispatch deadline；Brave还要求成功CAS所读的可信GitHub `serverTime + 30000ms + 1000ms` 严格早于grant到期，边界附近可提前hold。真实免费门禁仍靠Tavily已核Researcher/PAYGO禁用及官方用量/余量、旧 Brave 台账路径已核独占key免费grant与未决债务hold（仅历史）；Tavily `/usage` 独立权威时钟10次/10分钟规则不变。
 
 [ADR-0109](ADR/0109-macro-budget-pause-notifications.md) 将自动 Macro 的明确 monthly 双空配置记为 `expected_skip / deepseek_budget_uninitialized`，而不是运行故障；仅此 opt-in 路径在网络请求前停止，并跳过日/input 预留、搜索、provider、生产写入和提交。Summary 与安全回执保留原因和跳过验证状态。手动运行、one-shot、缺凭证、畸形/部分配置、API/坏账本/价格/余额/生成错误仍失败；其它 consumer 不变。Pages 与 EdgeOne 仅按经认证的精确 run/attempt/head/job/step 证据跳过这类无内容发布，未知状态继续原部署校验，不把绿色暂停称作新稿已发布。
 
@@ -202,7 +210,7 @@ scheduled workflow 始终运行远端 `main`，本地修改或仅 push 到 featu
 
 2026-09-07 检索修复：零可信新闻 skip 同时产生 GitHub warning annotation，避免把绿色 workflow 误认为 AI 可用。Tavily 原六个查询中的两个定向查找 Fed/BLS 官方日期发布，其余四个及 Brave 六个仍查新闻；不增加请求预算或 DeepSeek 次数。只接受已登记日期路径且在窗口内的官方结果，不降低 cross-check/引用/质量/30 小时 gate。若仍 skip，核对实际返回的官方日期路径、时间过滤和 provider 状态；不能用旧发布或手工补引用恢复显示。详细检索范围见 [Macro Risk 来源契约](MACRO_RISK_EDITORIAL_DESIGN.md#42-新闻发现来源)。
 
-Tavily/Brave keys 由 Macro Risk、Bubble Watch（文章及CEO）与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；既有静态排程上限仍由 `check:workflows` 检查，但不是当前剩余额度证明。实际调用须通过上节的共享账本、官方Tavily计量与Brave已核grant，未知即hold。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `http_402_payment_required`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，确认是否为共享月度额度耗尽；不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。核验真实剩余额度与账本；月底、换key或升级plan不自动解除hold，只有符合已审免费准入条件才可恢复。
+Tavily/Brave keys 由 Macro Risk、Bubble Watch（文章及CEO）与 Oil News 共享。`Refresh Oil News Event Watch` 固定每 6 小时运行；既有静态排程上限仍由 `check:workflows` 检查，但不是当前剩余额度证明。Tavily 实际调用须通过其共享账本和官方计量；Brave 仅按上节的计划硬停及身份准入。若 Macro artifact 出现 `http_432_plan_limit`（Tavily）或 `brave_provider_quota_unavailable`（Brave），先检查同时间的 `data/oil-news-event-watch.json.sourceStatus.details`，再按对应服务商核验。不得把 source-health hard failure 降为 expected skip，也不得为此触发可能进入 DeepSeek 的完整手动 rerun。
 
 若 discovery 已有可信新闻但 review 报 `至少需要引用 1 条 official 或 cross_checked 新闻`，说明 provider 没有在任何事实对象的 `sourceRefIds` 中实际使用已枚举的可信新闻；只在 `sourceAttribution` 或 `dataGaps` 提及不算通过。保持 production write 为 0，审阅脱敏 artifact，并修订 provider prompt/回归；不得手工给 artifact 补引用，也不得同 run 或未经新授权再次付费调用。
 

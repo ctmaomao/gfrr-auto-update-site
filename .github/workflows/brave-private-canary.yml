@@ -18,7 +18,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preview:
-    if: ${{ github.ref == 'refs/heads/main' && (inputs.operation == 'preview' || inputs.operation == 'single-test') }}
+    # Retired; preserved only as historical wiring for the one-shot receipts.
+    if: ${{ false && github.ref == 'refs/heads/main' && (inputs.operation == 'preview' || inputs.operation == 'single-test') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -40,7 +41,8 @@ jobs:
         run: node scripts/run-brave-private-canary.mjs
   single-test:
     needs: preview
-    if: ${{ github.ref == 'refs/heads/main' && inputs.operation == 'single-test' }}
+    # Retired; preserved only as historical wiring for the one-shot receipts.
+    if: ${{ false && github.ref == 'refs/heads/main' && inputs.operation == 'single-test' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

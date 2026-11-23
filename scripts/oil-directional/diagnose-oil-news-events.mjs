@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { fetchGdeltDocJson, sanitizeGdeltDiagnostics } from '../gdelt/fetch-gdelt.mjs';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { withTavilyBudget } from '../lib/tavily-budget.mjs';
-import { withBraveBudget } from '../lib/brave-budget.mjs';
+import { withBraveProviderCap } from '../lib/brave-provider-cap.mjs';
 import { classifySearchRequestError } from '../lib/search-request-policy.mjs';
 
 const DIAGNOSIS_VERSION = 'oil-news-events-diagnosis-p28';
@@ -1016,7 +1016,7 @@ async function fetchBrave(querySpec, options, requestWithKeys, fetchProvider) {
     extra_snippets: 'true'
   });
   return requestWithKeys(async (key) => {
-      const budget = options.braveBudget || withBraveBudget;
+      const budget = options.braveBudget || withBraveProviderCap;
       const json = await budget({ key, consumer: 'oil-news' }, () => fetchWithTimeout(`https://api.search.brave.com/res/v1/news/search?${params}`, {
         asJson: true,
         headers: {

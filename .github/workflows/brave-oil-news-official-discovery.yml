@@ -18,7 +18,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preview:
-    if: ${{ github.ref == 'refs/heads/main' && (inputs.operation == 'preview' || inputs.operation == 'single-discovery') }}
+    # Retired; preserved only as historical wiring for the one-shot receipts.
+    if: ${{ false && github.ref == 'refs/heads/main' && (inputs.operation == 'preview' || inputs.operation == 'single-discovery') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -42,7 +43,8 @@ jobs:
         run: node scripts/run-brave-oil-news-official-discovery.mjs
   single-discovery:
     needs: preview
-    if: ${{ github.ref == 'refs/heads/main' && inputs.operation == 'single-discovery' }}
+    # Retired; preserved only as historical wiring for the one-shot receipts.
+    if: ${{ false && github.ref == 'refs/heads/main' && inputs.operation == 'single-discovery' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

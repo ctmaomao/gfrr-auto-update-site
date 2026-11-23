@@ -633,9 +633,8 @@ for (const contract of contracts) {
   }
 }
 
-// Both providers include 1,000 monthly free requests. Keep a 200-request reserve
-// for bounded manual reruns and key-rotation diagnostics instead of scheduling to
-// the hard limit. Counts are conservative worst cases for a 31-day month.
+// Conservative 31-day planning forecast. Keep the existing Tavily CI ceiling.
+// Brave’s comparable forecast is planning only; Brave enforces its own cap.
 const sharedSearchScheduledRequests =
   (31 * 4 * OIL_NEWS_QUERY_SET.length) +
   (31 * MACRO_EDITORIAL_TOPICS.length) +
@@ -648,10 +647,11 @@ const sharedSearchMonthlyLimit = 1000;
 if (sharedSearchScheduledRequests + sharedSearchManualReserve > sharedSearchMonthlyLimit) {
   addRuntimeFailure(
     '.github/workflows/refresh-oil-news-event-watch.yml',
-    `shared Tavily/Brave monthly budget exceeds limit: scheduled=${sharedSearchScheduledRequests}, reserve=${sharedSearchManualReserve}, limit=${sharedSearchMonthlyLimit}`
+    `Tavily monthly plan exceeds limit: scheduled=${sharedSearchScheduledRequests}, reserve=${sharedSearchManualReserve}, limit=${sharedSearchMonthlyLimit}`
   );
 }
-console.log(`Shared Tavily/Brave monthly budget: scheduled=${sharedSearchScheduledRequests}, reserve=${sharedSearchManualReserve}, limit=${sharedSearchMonthlyLimit}`);
+console.log(`Tavily monthly plan: scheduled=${sharedSearchScheduledRequests}, reserve=${sharedSearchManualReserve}, limit=${sharedSearchMonthlyLimit}`);
+console.log(`Brave 31-day planning estimate: scheduled=${sharedSearchScheduledRequests}, including manual allowance=${sharedSearchScheduledRequests + sharedSearchManualReserve}; not a runtime quota`);
 
 const gitignoreFile = '.gitignore';
 if (fs.existsSync(gitignoreFile)) {
