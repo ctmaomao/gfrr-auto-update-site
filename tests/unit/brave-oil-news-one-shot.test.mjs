@@ -98,6 +98,36 @@ test('EIA presentation-hint fixture passes read-only preview without fetching th
   }
 });
 
+test('EIA date padding permits only horizontal ASCII whitespace between year and time', async () => {
+  for (const [date, status] of [
+    ['Thu, 12 Nov 2026  09:00:00 EST', 'PREVIEW_READY'],
+    ['Thu, 12 Nov 2026 \t09:00:00 EST', 'PREVIEW_READY'],
+    ['Thu, 12 Nov 2026\n09:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Thu, 12 Nov 2026\u00a009:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Thu, 12 Nov 202609:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Fri, 12 Nov 2026  09:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Tue, 31 Nov 2026  09:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Thu, 12 Nov 2026  24:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Thu, 12 Nov 2026  09:00:00 +2460', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Thu, 12 Nov 2026  09:00:00', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Tue, 24 Nov 2026  09:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST'],
+    ['Sun, 08 Nov 2026  09:00:00 EST', 'NO_RECENT_OFFICIAL_RELEASE_NO_REQUEST']
+  ]) {
+    const f = fixture(), opts = f.options();
+    opts.context.job = opts.context.operation = 'preview';
+    const calls = [];
+    opts.fetchImpl = async (url, options) => {
+      calls.push(url);
+      assert.equal(url, OIL_DISCOVERY.feed);
+      assert.equal(options.redirect, 'error');
+      return new Response(eiaStylesheetHint + f.xml({ date }), { headers: { 'content-type': 'text/xml' } });
+    };
+    assert.deepEqual(await runBraveOilDiscovery(opts), { status }, date);
+    assert.deepEqual(calls, [OIL_DISCOVERY.feed], date);
+    assert.equal(f.writes(), 0, date);
+  }
+});
+
 test('preview discloses only a fixed source status, with no writes or Brave contact', async () => {
   for (const [name, makeXml] of [
     ['wrong target', xml => eiaXmlDeclaration + '<?other href="rss.xsl"?>' + xml],
