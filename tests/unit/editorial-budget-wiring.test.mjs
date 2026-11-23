@@ -171,9 +171,11 @@ test('repository endpoint inventory binds every Tavily and Brave search caller t
   ];
   const files = scriptInventory();
   for (const [endpoint, extra] of [[/https:\/\/api\.tavily\.com\/search/u, []],
-    [/https:\/\/api\.search\.brave\.com\/res\/v1\/(?:news\/)?search/u, ['scripts/lib/brave-manual-canary.mjs']]]) {
+    [/https:\/\/api\.search\.brave\.com\/res\/v1\/(?:news\/)?search/u, ['scripts/lib/brave-manual-canary.mjs', 'scripts/lib/brave-oil-news-one-shot.mjs']]]) {
     // ADR-0111: the explicitly authorized one-shot manual canary shares the
-    // same durable gate; it is not a fifth business consumer or Tavily caller.
+    // same durable gate. The distinct one-shot Oil News official discovery is
+    // limited to the same durable ledger and is not a regular buyer or Tavily
+    // caller. Both exact paths are asserted by purpose below.
     assert.deepEqual(files.filter(file => endpoint.test(text(file))).sort(), [...expected.map(([file]) => file), ...extra].sort(),
       'a new provider caller requires explicit shared-ledger admission and inventory review');
   }
@@ -202,5 +204,14 @@ test('single authorized Brave canary uses shared budget and private proof, never
   assert.match(source, /oneShotStore\(adapter, next\)/u);
   assert.match(source, /consumer: 'brave-renewal-smoke', mode: 'manual'/u);
   assert.match(source, /withBravePrivateProof\(store, next, now\)/u);
+  assert.doesNotMatch(source, /withTavilyBudget|run-daily-pipeline|build-bubble-watch|collect-editorial-news/u);
+});
+
+test('one-shot official discovery provider transport is reachable only through private proof and the shared budget', () => {
+  const source = text('scripts/lib/brave-oil-news-one-shot.mjs');
+  assert.match(source, /createBraveBudget\(\{ store: withBravePrivateProof\(target, next, now\)/u);
+  assert.match(source, /consumer: BRAVE_OIL_DISCOVERY_CONSUMER, mode: 'manual'/u);
+  assert.match(source, /gate\(singleWriteStore\)\(opts, \(\) => requestBraveHints\(key, fetchImpl\)\)/u);
+  assert.equal((source.match(/requestBraveHints\(/gu) ?? []).length, 2, 'one declaration and one budget-wrapped call');
   assert.doesNotMatch(source, /withTavilyBudget|run-daily-pipeline|build-bubble-watch|collect-editorial-news/u);
 });

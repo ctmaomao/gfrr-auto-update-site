@@ -7,6 +7,8 @@
 
 **Brave 单次验收与当前边界**：[手动免费 canary 44252310781](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44252310781) 的只读预检和单次测试均成功，仅验收这次测试，五个业务工作流的 Brave 调用仍不恢复；不授权重跑。原证明、账本历史和收据保留，不变更计费设置。参见 [ADR-0111](ADR/0111-brave-shared-free-only.md#one-fixed-private-manual-canary-separate-from-business-restoration)和[固定版原验收基线](https://github.com/ctmaomao/gfrr-auto-update-site/blob/989d67b650903e461d16d38916594ddda84dc37a/docs/PROJECT_BACKLOG.md#brave-private-manual-one-shot-acceptance-baseline--november-18-2026)。
 
+**Brave 官方 Oil News 搜索恢复（窄范围）**：本次范围只包括一次手动官方来源发现，不恢复旧 canary 或五条常规调用，不改变计费或扣费上限。先校验此前私有证明与账本收据、当期免费硬停、对应运行 SHA 与固定 EIA RSS 发布源；只读预览不调用 Brave 或写账本。实际运行仍按同一账本预留并结算一次：只有可核实的同一份 EIA 首发来源可输出一条官方链接和发布日期；无合格命中则如实记录无匹配，不保存 Brave 标题、结果链接、摘要或响应。暂不接入站点产物、事件确认、油价或风险分；不得自动开启后续调用。离线检查不等于私有配置、生产预览或实际查询已完成。
+
 ## Section 1 · 维护状态
 
 维护基线：2026-11-18 main `08e3f137`；本轮仅更新 #637–#640 的自然 Daily 与双站验收状态（见[验收快照](#recent-data-fix-acceptance)），不表示其余条目已重新验收。原2026-11-15基线 `d14055f7` 含 #503、#569–#577。下表与当前条目区分代码合并、自然产物和线上验收；未列出的账户激活、来源健康及后续运行不作保证。原实施过程与当时的待审状态保留在[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)，不得把其中旧“待发布”当作当前状态。
