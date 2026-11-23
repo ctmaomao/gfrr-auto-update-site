@@ -18,7 +18,47 @@ const canonical = value => Array.isArray(value) ? value.map(canonical)
   : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
 const stable = value => JSON.stringify(canonical(value));
 
-function inputs({ priorProof, authorization, keys, context, now }) {
+// Bounded first-parent evidence from the exact, trusted current-main checkout.
+const NATURAL_DATA_PATHS = new Set([
+  'data/oil-thermal-watch.json',
+  'data/radar-data.json', 'data/radar-history.json', 'data/radar-history-full.json',
+  'data/world-order-stress.json', 'data/gdelt-world-order-cache.json',
+  'data/oil-news-event-watch.json', 'data/gdelt-news-cache.json',
+  'data/bubble-watch.json', 'data/bubble-market-observations.json', 'data/bubble-watch-history.json', 'data/gdelt-bubble-watch-cache.json'
+]);
+const REGULAR_UPDATE = /^:100644 100644 [a-f0-9]{40} [a-f0-9]{40} M$/u;
+function onlyNaturalDataUpdates(delta) {
+  const fields = delta.split('\0');
+  if (fields.pop() !== '' || fields.length < 2 || fields.length % 2 || fields.length > NATURAL_DATA_PATHS.size * 2) return false;
+  const paths = new Set();
+  for (let i = 0; i < fields.length; i += 2) {
+    const path = fields[i + 1];
+    if (!REGULAR_UPDATE.test(fields[i]) || !NATURAL_DATA_PATHS.has(path) || paths.has(path)) return false;
+    paths.add(path);
+  }
+  return true;
+}
+export function verifyBraveOilReviewedAnchor({ reviewed, checkout, git }) {
+  if (!sha(reviewed) || !sha(checkout) || typeof git !== 'function') return false;
+  if (reviewed === checkout) return true;
+  try {
+    const lines = git(['log', '--first-parent', '--max-count=33', '--format=%H %P', checkout, '--']).trimEnd().split('\n');
+    if (lines.length > 33) return false;
+    let current = checkout;
+    for (const line of lines) {
+      const [commit, parent, ...extra] = line.trimEnd().split(' ');
+      if (commit !== current) return false;
+      if (commit === reviewed) return true;
+      if (extra.length || !sha(parent)) return false;
+      const delta = git(['diff-tree', '-r', '--raw', '-z', '--no-commit-id', '--no-renames', '--no-abbrev', '--ignore-submodules=none', parent, commit, '--']);
+      if (!onlyNaturalDataUpdates(delta)) return false;
+      current = parent;
+    }
+  } catch { /* Unavailable or incomplete history never proves equivalence. */ }
+  return false;
+}
+
+function inputs({ priorProof, authorization, keys, context, verifyReviewedAnchor, now }) {
   if (typeof authorization !== 'string' || Buffer.byteLength(authorization) > 48000) refuse();
   const record = JSON.parse(authorization);
   if (!exact(record, 'approvedDispatchSha,baseHead,grant,purpose,schemaVersion')
@@ -26,10 +66,12 @@ function inputs({ priorProof, authorization, keys, context, now }) {
     || record.purpose !== OIL_DISCOVERY.purpose || record.baseHead !== OIL_DISCOVERY.baseHead
     || !sha(record.approvedDispatchSha) || context.actions !== 'true' || context.repository !== SEARCH_REPOSITORY
     || context.event !== 'workflow_dispatch' || context.ref !== 'refs/heads/main'
-    || context.sha !== record.approvedDispatchSha || context.workflowSha !== context.sha || context.liveMainSha !== context.sha
+    || !sha(context.sha) || context.workflowSha !== context.sha || context.liveMainSha !== context.sha
     || context.workflowRef !== `${SEARCH_REPOSITORY}/${OIL_DISCOVERY.workflow}@refs/heads/main`
     || !/^[0-9]+$/u.test(context.runId || '') || context.job !== context.operation
     || !['preview', 'single-discovery'].includes(context.operation)) refuse();
+  if (context.sha !== record.approvedDispatchSha
+    && verifyReviewedAnchor?.(record.approvedDispatchSha, context.sha) !== true) refuse();
   const unique = [...new Set(keys.flatMap(value => String(value || '').split(/[\n,;]+/u)).map(value => value.trim()).filter(Boolean))];
   if (unique.length !== 1 || /\s/u.test(unique[0])) refuse();
   const key = unique[0], prior = parseBravePrivateProof(priorProof, now);
@@ -42,10 +84,10 @@ function inputs({ priorProof, authorization, keys, context, now }) {
 // No invoker, environment reads, provider credentials, public-result artifact,
 // or fixture-controlled transport defaults. The caller owns exact-ref checks
 // and the trusted fixed GitHub store/snapshot, bound in the private authorization.
-export async function runBraveOilDiscovery({ priorProof, authorization, keys, context, baseSnapshot, store, fetchImpl,
+export async function runBraveOilDiscovery({ priorProof, authorization, keys, context, baseSnapshot, store, fetchImpl, verifyReviewedAnchor,
   now = Date.now, monotonicNow = () => performance.now() }) {
   try {
-    const { key, prior, next } = inputs({ priorProof, authorization, keys, context, now: now() });
+    const { key, prior, next } = inputs({ priorProof, authorization, keys, context, verifyReviewedAnchor, now: now() });
     if (baseSnapshot?.head !== OIL_DISCOVERY.baseHead) refuse();
     const anchored = await withBravePrivateProof({ read: async () => structuredClone(baseSnapshot) }, prior, now).read();
     const receipts = anchored.ledger.entries;
