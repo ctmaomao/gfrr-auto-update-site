@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { lstatSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { BRAVE_OIL_DISCOVERY_CONSUMER, BRAVE_OIL_DISCOVERY_GRANT_ID, BRAVE_RENEWAL_SMOKE_GRANT_ID,
   BRAVE_DISPATCH_DEADLINE_MS, createBraveBudget } from './brave-budget.mjs';
 import { parseBravePrivateProof, prepareBravePrivateRenewal, renewBravePrivateProof, withBravePrivateProof } from './brave-private-proof.mjs';
@@ -18,43 +21,88 @@ const canonical = value => Array.isArray(value) ? value.map(canonical)
   : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
 const stable = value => JSON.stringify(canonical(value));
 
-// Bounded first-parent evidence from the exact, trusted current-main checkout.
-const NATURAL_DATA_PATHS = new Set([
-  'data/oil-thermal-watch.json',
-  'data/radar-data.json', 'data/radar-history.json', 'data/radar-history-full.json',
-  'data/world-order-stress.json', 'data/gdelt-world-order-cache.json',
-  'data/oil-news-event-watch.json', 'data/gdelt-news-cache.json',
-  'data/bubble-watch.json', 'data/bubble-market-observations.json', 'data/bubble-watch-history.json', 'data/gdelt-bubble-watch-cache.json'
-]);
-const REGULAR_UPDATE = /^:100644 100644 [a-f0-9]{40} [a-f0-9]{40} M$/u;
-function onlyNaturalDataUpdates(delta) {
-  const fields = delta.split('\0');
-  if (fields.pop() !== '' || fields.length < 2 || fields.length % 2 || fields.length > NATURAL_DATA_PATHS.size * 2) return false;
-  const paths = new Set();
-  for (let i = 0; i < fields.length; i += 2) {
-    const path = fields[i + 1];
-    if (!REGULAR_UPDATE.test(fields[i]) || !NATURAL_DATA_PATHS.has(path) || paths.has(path)) return false;
-    paths.add(path);
+// Fixed executable closure of this workflow, including brave-budget's literal
+// dynamic import of brave-private-proof. No package installation or loaders.
+const REVIEWED_RUNTIME = [
+  OIL_DISCOVERY.workflow,
+  'scripts/run-brave-oil-news-official-discovery.mjs',
+  'scripts/lib/brave-oil-news-one-shot.mjs',
+  'scripts/lib/brave-manual-canary.mjs',
+  'scripts/lib/brave-budget.mjs',
+  'scripts/lib/brave-private-proof.mjs',
+  'scripts/lib/free-search-ledger.mjs'
+];
+const RUNTIME_ANCESTORS = ['.github', '.github/workflows', 'scripts', 'scripts/lib'];
+const RUNTIME_METADATA = [
+  ...['', ...RUNTIME_ANCESTORS.map(path => path + '/')].flatMap(prefix =>
+    ['.gitattributes', '.gitignore'].map(name => prefix + name)),
+  '.gitmodules', 'package.json', 'scripts/package.json', 'scripts/lib/package.json'
+];
+const ANCHOR_PATHS = [...REVIEWED_RUNTIME, ...RUNTIME_METADATA];
+const ANCHOR_PATHSPECS = ANCHOR_PATHS.map(path => ':(top,literal)' + path);
+const MAX_ANCHOR_HOPS = 32;
+
+function committedRuntime(commit, git) {
+  const rows = git(['ls-tree', '-rtz', '--full-tree', commit, '--', ...ANCHOR_PATHSPECS]).split('\0');
+  if (rows.pop() !== '') refuse();
+  const files = new Map(), directories = new Set();
+  for (const row of rows) {
+    const tree = /^040000 tree [a-f0-9]{40}\t([^\t\n]+)$/u.exec(row);
+    if (tree && RUNTIME_ANCESTORS.includes(tree[1]) && !directories.has(tree[1])) {
+      directories.add(tree[1]);
+      continue;
+    }
+    const file = /^100644 blob ([a-f0-9]{40})\t([^\t\n]+)$/u.exec(row);
+    if (!file || !ANCHOR_PATHS.includes(file[2]) || files.has(file[2])) refuse();
+    files.set(file[2], file[1]);
+  }
+  if (directories.size !== RUNTIME_ANCESTORS.length || !REVIEWED_RUNTIME.every(path => files.has(path))) refuse();
+  return files;
+}
+
+function checkoutMatchesReviewedFiles(files, git, root) {
+  for (const ancestor of RUNTIME_ANCESTORS) {
+    if (!lstatSync(join(root, ancestor)).isDirectory()) return false;
+  }
+  for (const path of ANCHOR_PATHS) {
+    const oid = files.get(path), fullPath = join(root, path);
+    const stat = lstatSync(fullPath, { throwIfNoEntry: false });
+    if (!oid) {
+      if (stat) return false;
+      continue;
+    }
+    if (!stat?.isFile() || (stat.mode & 0o111) !== 0) return false;
+    // Compare the actual bytes, without Git clean filters or index stat caching.
+    const bytes = readFileSync(fullPath);
+    const rawOid = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+    if (rawOid !== oid || git(['cat-file', '-t', oid]) !== 'blob\n') return false;
   }
   return true;
 }
-export function verifyBraveOilReviewedAnchor({ reviewed, checkout, git }) {
-  if (!sha(reviewed) || !sha(checkout) || typeof git !== 'function') return false;
-  if (reviewed === checkout) return true;
+
+export function verifyBraveOilReviewedAnchor({ reviewed, checkout, git, root }) {
+  if (!sha(reviewed) || !sha(checkout) || typeof git !== 'function' || typeof root !== 'string' || !root) return false;
   try {
-    const lines = git(['log', '--first-parent', '--max-count=33', '--format=%H %P', checkout, '--']).trimEnd().split('\n');
-    if (lines.length > 33) return false;
+    if (git(['cat-file', '-t', checkout]) !== 'commit\n') return false;
+    const pinned = committedRuntime(checkout, git);
+    if (!checkoutMatchesReviewedFiles(pinned, git, root)) return false;
+    if (reviewed === checkout) return true;
+    const lines = git(['log', '--first-parent', '--max-count=' + (MAX_ANCHOR_HOPS + 1), '--format=%H %P', checkout, '--']).split('\n');
+    if (lines.pop() !== '' || lines.length > MAX_ANCHOR_HOPS + 1) return false;
     let current = checkout;
     for (const line of lines) {
-      const [commit, parent, ...extra] = line.trimEnd().split(' ');
-      if (commit !== current) return false;
-      if (commit === reviewed) return true;
-      if (extra.length || !sha(parent)) return false;
-      const delta = git(['diff-tree', '-r', '--raw', '-z', '--no-commit-id', '--no-renames', '--no-abbrev', '--ignore-submodules=none', parent, commit, '--']);
-      if (!onlyNaturalDataUpdates(delta)) return false;
+      const row = /^([a-f0-9]{40}) ((?:[a-f0-9]{40}(?: [a-f0-9]{40})*)?)$/u.exec(line);
+      if (!row || row[1] !== current) return false;
+      if (current === reviewed) return true;
+      const parent = row[2];
+      if (!sha(parent)) return false; // An intervening root, merge or shallow boundary.
+      // Compare each parent's scoped raw tree entries, not just the endpoints:
+      // a transient change and revert still invalidate the owner anchor.
+      const files = committedRuntime(parent, git);
+      if (!ANCHOR_PATHS.every(path => files.get(path) === pinned.get(path))) return false;
       current = parent;
     }
-  } catch { /* Unavailable or incomplete history never proves equivalence. */ }
+  } catch { /* Unavailable or incomplete evidence never proves equivalence. */ }
   return false;
 }
 
@@ -70,8 +118,7 @@ function inputs({ priorProof, authorization, keys, context, verifyReviewedAnchor
     || context.workflowRef !== `${SEARCH_REPOSITORY}/${OIL_DISCOVERY.workflow}@refs/heads/main`
     || !/^[0-9]+$/u.test(context.runId || '') || context.job !== context.operation
     || !['preview', 'single-discovery'].includes(context.operation)) refuse();
-  if (context.sha !== record.approvedDispatchSha
-    && verifyReviewedAnchor?.(record.approvedDispatchSha, context.sha) !== true) refuse();
+  if (verifyReviewedAnchor?.(record.approvedDispatchSha, context.sha) !== true) refuse();
   const unique = [...new Set(keys.flatMap(value => String(value || '').split(/[\n,;]+/u)).map(value => value.trim()).filter(Boolean))];
   if (unique.length !== 1 || /\s/u.test(unique[0])) refuse();
   const key = unique[0], prior = parseBravePrivateProof(priorProof, now);

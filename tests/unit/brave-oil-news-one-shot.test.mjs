@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { isBuiltin } from 'node:module';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { BRAVE_OIL_DISCOVERY_CONSUMER, BRAVE_OIL_DISCOVERY_GRANT_ID, BRAVE_RENEWAL_SMOKE_GRANT_ID,
   createBraveBudget } from '../../scripts/lib/brave-budget.mjs';
 import { OIL_DISCOVERY, runBraveOilDiscovery, verifyBraveOilReviewedAnchor } from '../../scripts/lib/brave-oil-news-one-shot.mjs';
@@ -60,7 +63,7 @@ function fixture() {
     return Response.json({ results: [{ url: matching, title: 'NEVER_EXPOSE_PROVIDER_TITLE', description: 'NEVER_EXPOSE_PROVIDER_SNIPPET' }] });
   };
   return { fetchImpl, options: () => ({ priorProof: prior, authorization: JSON.stringify(record), keys: [key], now: () => clock,
-    monotonicNow: () => 0, context: { ...context }, baseSnapshot, store, fetchImpl }), context, store, calls,
+    monotonicNow: () => 0, context: { ...context }, baseSnapshot, store, fetchImpl, verifyReviewedAnchor: () => true }), context, store, calls,
   baseSnapshot, prior, record, matching, xml, writes: () => writes };
 }
 
@@ -185,37 +188,156 @@ test('the only proposed runner is exact main dispatch; preview is read-only and 
   assert.equal(rejected.stderr.trim(), 'BRAVE_OIL_DISCOVERY_REFUSED_OR_UNCERTAIN');
 });
 
-test('reviewed ancestor admits only a bounded contiguous single-parent chain of named natural data updates', () => {
-  const a = 'a'.repeat(40), b = 'b'.repeat(40), c = 'c'.repeat(40);
-  const row = (before, after, path) => `:100644 100644 ${before} ${after} M\0${path}\0`;
-  const ok = row(b, c, 'data/oil-thermal-watch.json');
-  const older = row(a, b, 'data/oil-thermal-watch.json');
-  const multi = row(b, c, 'data/radar-data.json') + row(b, c, 'data/radar-history.json');
-  const invoke = (graph, delta, previousDelta = older) => args => {
-    if (args[0] === 'log') return graph;
-    assert.deepEqual(args.slice(0, 8), ['diff-tree', '-r', '--raw', '-z', '--no-commit-id', '--no-renames', '--no-abbrev', '--ignore-submodules=none']);
-    return args[9] === c ? delta : previousDelta;
+const entry = 'scripts/run-brave-oil-news-official-discovery.mjs';
+const runtimeModules = ['brave-oil-news-one-shot', 'brave-manual-canary', 'brave-budget', 'brave-private-proof', 'free-search-ledger']
+  .map(name => `scripts/lib/${name}.mjs`);
+const runtimeFiles = [OIL_DISCOVERY.workflow, entry, ...runtimeModules];
+
+function history(t) {
+  const root = mkdtempSync(join(tmpdir(), 'brave-oil-reviewed-anchor-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = args => execFileSync('git', ['--no-replace-objects', '-c', 'core.fsmonitor=false', ...args], {
+    cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: process.env.PATH, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' }
+  });
+  const commit = () => {
+    git(['add', '-A']);
+    git(['commit', '--quiet', '--allow-empty', '-m', 'synthetic']);
+    return head();
   };
-  const graph = `${c} ${b}\n${b} ${a}\n${a}\n`;
-  const ver = (git, reviewed = a) => verifyBraveOilReviewedAnchor({ reviewed, checkout: c, git });
-  assert.equal(ver(() => assert.fail('exact SHA needs no history'), c), true);
-  assert.equal(ver(invoke(graph, ok)), true);
-  assert.equal(ver(invoke(graph, multi)), true);
-  for (const delta of ['', ok + ok, ok.replace('100644 100644', '100644 120000'),
-    ok.replace(' M', ' A'), ok.replace(' M', ' D'), ok.replace('oil-thermal-watch.json', 'unknown.json'),
-    multi + row(b, c, 'config/bubble-watch-curated.json'),
-    ok.replace('data/oil-thermal-watch.json', '.github/workflows/brave-oil-news-official-discovery.yml')]) {
-    assert.equal(ver(invoke(graph, delta)), false);
+  const head = () => git(['rev-parse', 'HEAD']).trim();
+  const put = (path, value = '{}\n') => {
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), value);
+  };
+  git(['init', '-q', '-b', 'main']);
+  git(['config', 'user.email', 'fixture@example.invalid']);
+  git(['config', 'user.name', 'Fixture']);
+  for (const path of runtimeFiles) put(path, '// reviewed\n');
+  put('.gitignore', '*.ignored\n');
+  put('package.json');
+  const reviewed = commit();
+  const verify = (anchor = reviewed, checkout = head(), runnerGit = git) =>
+    verifyBraveOilReviewedAnchor({ reviewed: anchor, checkout, root, git: runnerGit });
+  return { root, git, put, head, commit, reviewed, verify };
+}
+
+test('bounded runtime history permits natural Oil, QQQ, Bubble, curated and World Order updates', t => {
+  const h = history(t);
+  assert.equal(h.verify(), true);
+  for (const path of ['data/oil-directional-pressure.json', 'data/qqq-overheat-history.json',
+    'data/market-pricing-history.json', 'data/bubble-watch-editorial-status.json', 'config/bubble-watch-curated.json',
+    'config/acled.json', 'scripts/check-world-order-stress.mjs', 'docs/project.md']) {
+    h.put(path);
+    h.commit();
   }
-  assert.equal(ver(invoke(graph, ok, row(c, b, 'data/oil-thermal-watch.json'))), true, 'allowed data bytes may repeat');
-  assert.equal(ver(invoke(graph, ok, row(a, b, 'scripts/run-brave-oil-news-official-discovery.mjs'))), false, 'unsafe intermediate delta is fatal');
-  for (const wrong of [`${c} ${b} ${a}\n${b} ${a}\n${a}\n`, `${c} ${b}\n${a}\n`, `${c} ${b}\n${b}\n`,
-    `${c} ${b}\n`.repeat(34)]) assert.equal(ver(invoke(wrong, ok)), false);
-  assert.equal(ver(() => { throw new Error('missing history'); }), false);
+  assert.equal(h.verify(), true);
+  for (let i = 8; i < 32; i++) h.commit();
+  assert.equal(h.verify(), true, '32 hops inclusive');
+  h.commit();
+  assert.equal(h.verify(), false, '33 hops rejected');
+});
+
+test('every runtime and metadata path is bound per hop, including changes reverted at HEAD', t => {
+  const h = history(t);
+  for (const path of [...runtimeFiles, '.gitattributes', 'scripts/.gitattributes', 'scripts/lib/.gitattributes',
+    '.github/.gitattributes', '.github/workflows/.gitattributes', '.gitmodules', '.gitignore',
+    'scripts/.gitignore', 'scripts/lib/.gitignore', '.github/.gitignore', '.github/workflows/.gitignore', 'package.json', 'scripts/package.json', 'scripts/lib/package.json']) {
+    h.git(['reset', '--hard', h.reviewed]);
+    h.put(path, 'changed\n');
+    const changed = h.commit();
+    assert.equal(h.verify(), false, path);
+    h.git(['revert', '--no-edit', changed]);
+    assert.equal(h.verify(), false, path + ' reverted');
+  }
+});
+
+test('modes, missing files/objects, path types, merge and malformed Git evidence fail closed', t => {
+  const h = history(t), file = join(h.root, entry);
+  chmodSync(file, 0o755);
+  assert.equal(h.verify(), false, 'exact SHA worktree mode changed');
+  h.commit();
+  assert.equal(h.verify(h.head()), false, 'exact SHA tracked mode changed');
+  h.git(['reset', '--hard', h.reviewed]);
+  rmSync(file);
+  assert.equal(h.verify(), false, 'exact SHA file missing on disk');
+  const missing = h.commit();
+  assert.equal(h.verify(missing), false, 'required tracked script missing');
+  h.git(['reset', '--hard', h.reviewed]);
+  rmSync(file); symlinkSync('lib/brave-budget.mjs', file);
+  assert.equal(h.verify(), false, 'exact SHA local symlink');
+  const symlink = h.commit();
+  assert.equal(h.verify(symlink), false, 'tracked symlink');
+  h.git(['reset', '--hard', h.reviewed]);
+  h.git(['update-index', '--cacheinfo', `160000,${h.reviewed},${entry}`]);
+  h.git(['commit', '--quiet', '-m', 'synthetic gitlink']);
+  assert.equal(h.verify(h.head()), false, 'tracked gitlink');
+  h.git(['reset', '--hard', h.reviewed]);
+  h.put('scripts/lib/package.json/data');
+  const directory = h.commit();
+  assert.equal(h.verify(directory), false, 'metadata directory is not a plain blob');
+  h.git(['reset', '--hard', h.reviewed]);
+  h.put(entry, '// modified on disk only\n');
+  assert.equal(h.verify(), false, 'actual checkout bytes changed');
+  h.git(['reset', '--hard', h.reviewed]);
+  h.put('scripts/lib/package.json');
+  assert.equal(h.verify(), false, 'metadata expected absent on disk');
+  rmSync(join(h.root, 'scripts/lib/package.json'));
+  h.git(['switch', '-qc', 'side']);
+  h.put('unrelated.txt'); h.commit();
+  h.git(['switch', '-q', 'main']);
+  h.git(['merge', '--no-ff', '-qm', 'merge', 'side']);
+  assert.equal(h.verify(), false, 'otherwise unrelated merge');
+  assert.equal(h.verify('f'.repeat(40)), false, 'unknown reviewed ancestor');
+  h.git(['reset', '--hard', h.reviewed]);
+  h.put('data/ordinary.json'); h.commit();
+  const tip = h.head();
+  assert.equal(h.verify(), true);
+  for (const cmd of ['ls-tree', 'cat-file', 'log']) {
+    assert.equal(h.verify(h.reviewed, tip, args => args[0] === cmd ? h.git(args) + 'malformed' : h.git(args)), false);
+    assert.equal(h.verify(h.reviewed, tip, args => {
+      if (args[0] === cmd) throw new Error('incomplete evidence');
+      return h.git(args);
+    }), false);
+  }
+  writeFileSync(join(h.root, '.git/shallow'), tip + '\n');
+  assert.equal(h.verify(), false, 'shallow boundary before reviewed anchor');
+});
+
+test('dedicated runtime closure covers all checked-in local imports including the literal dynamic edge', () => {
+  const pending = [entry], visited = new Set(), dynamic = [];
+  while (pending.length) {
+    const file = pending.pop();
+    if (visited.has(file)) continue;
+    visited.add(file);
+    const content = readFileSync(file, 'utf8');
+    assert.doesNotMatch(content, /\bcreateRequire\s*\(/u);
+    // The entry's locally defined assertion helper is not CommonJS require.
+    if (file === entry) assert.match(content, /^const require = condition =>/mu);
+    else assert.doesNotMatch(content, /\brequire\s*\(/u);
+    const specifiers = Array.from(content.matchAll(/^\s*(?:import|export)\s+(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/gmu), match => match[1]);
+    const calls = [...content.matchAll(/\bimport\s*\(\s*([^)]*?)\s*\)/gu)];
+    assert.equal(calls.length, (content.match(/\bimport\s*\(/gu) || []).length);
+    for (const [, arg] of calls) {
+      const literal = /^['"]([^'"]+)['"]$/u.exec(arg);
+      assert.ok(literal, `non-literal dynamic import in ${file}`);
+      dynamic.push([file, literal[1]]);
+      specifiers.push(literal[1]);
+    }
+    for (const specifier of specifiers) {
+      if (specifier.startsWith('.')) pending.push(join(dirname(file), specifier));
+      else assert.ok(specifier.startsWith('node:') && isBuiltin(specifier), `non-builtin import in ${file}`);
+    }
+  }
+  assert.deepEqual([...visited].sort(), [entry, ...runtimeModules].sort());
+  assert.deepEqual(dynamic, [['scripts/lib/brave-budget.mjs', './brave-private-proof.mjs']]);
 });
 test('reviewed ancestor is additive to, not a substitute for, exact current trusted main and workflow identities', async () => {
   const f = fixture(), opts = f.options();
   opts.context.job = opts.context.operation = 'preview';
+  await assert.rejects(runBraveOilDiscovery({ ...opts, verifyReviewedAnchor: () => false }));
+  await assert.rejects(runBraveOilDiscovery({ ...opts, verifyReviewedAnchor: undefined }));
+  assert.deepEqual(f.calls, [], 'even exact SHA requires usable fixed checkout before external contact');
   opts.context.sha = opts.context.liveMainSha = opts.context.workflowSha = 'f'.repeat(40);
   let matched = 0;
   opts.verifyReviewedAnchor = (reviewed, checkout) => {

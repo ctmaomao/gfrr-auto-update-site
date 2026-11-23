@@ -65,7 +65,7 @@ try {
       event: env.GITHUB_EVENT_NAME, sha: env.GITHUB_SHA, workflowSha: env.GITHUB_WORKFLOW_SHA, liveMainSha: main.object?.sha,
       workflowRef: env.GITHUB_WORKFLOW_REF, runId: env.GITHUB_RUN_ID, job: operation, operation },
     baseSnapshot, store, fetchImpl: fetch,
-    verifyReviewedAnchor: (reviewed, checkout) => verifyBraveOilReviewedAnchor({ reviewed, checkout, git })
+    verifyReviewedAnchor: (reviewed, checkout) => verifyBraveOilReviewedAnchor({ reviewed, checkout, git, root: process.cwd() })
   });
   if (result.status === 'OFFICIAL_RELEASE_VERIFIED') {
     require(/^https:\/\/www\.eia\.gov\/todayinenergy\/detail\.php\?id=[1-9][0-9]{3,6}$/u.test(result.officialUrl)
