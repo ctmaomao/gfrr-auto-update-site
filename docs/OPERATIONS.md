@@ -808,16 +808,9 @@ Daily 成功提交 `data/*.json` 后，Pages 部署通过 `Deploy Static Site to
 
 `Build Daily Radar Data` 在运行 `run-daily-pipeline.mjs` 读取 `origin/realtime-data:realtime/market.json` 后，会在日志与 GitHub Step Summary 中输出 **Daily Realtime Input Audit**（控制台前缀 `[Daily Realtime Audit]`，Summary 小节标题 `Daily Realtime Input Audit`）。用于确认本次 Daily 实际读到的 `updatedAt`、`ageMinutes`、按与站点一致的窗口划分的 `freshness`（fresh / aging / stale / unavailable）、`sourceMode`、`healthScore`、以及 `values.brent` 与 `brentValidation.consensus` 的推荐值 / `canPromoteToPrimary` / `confidence`。
 
-当审计显示 **stale** 或 **unavailable**（`result: WARNING`）时，只表示输入快照偏旧或无法判定时效，**不会**中断 Daily 构建。排查宜优先：
+管线内审计的 **stale** 或 **unavailable** 只记 `WARNING`，本身不拦截也不触发备用构建；不改变评分、决策或 Brent 主值，推荐值不等于主值。托管 Daily 的门禁在生成前：[输入预检](#realtime-stale-recovery)不通过时最多请求一次现有 Build Realtime Market，限次轮询后仍无可信输入则停止，不生成或发布 Daily。
 
-- `Build Realtime Market` 最近是否成功、是否按时写入 `realtime-data`。
-- `realtime/market.json` 的 `updatedAt` 是否持续更新。
-- `Check Realtime Health` 是否连续失败。
-- 上游行情源是否异常。
-
-该审计仅用于诊断与可观测性，**不改变** scoring、decision、Brent 主值生成或任何 fallback 行为；主 Brent 仍以管线内的 `values.brent` 为准，推荐值不等于主值。
-
-Daily 与前端共用 **`canUseRealtimePayloadValues`**（见 `docs/DATA_CONTRACT.md`）。若审计或 payload 显示 **cache-only**、**unavailable**、**healthScore 归零**、**criticalMissing 过高**，或 **degradedMode** 且非 **live-with-fallback**，则 Daily 应走现有 **buildFallback**，不得用该 realtime 重算 baseline；前端亦不应进入实时 overlay，而应呈现基线 / fallback 状态。此时优先核对 `sourceMode`、`cacheOnly`、`healthScore`、`criticalMissing`，并查看 **Check Realtime Health** 与 **Build Realtime Market** 是否异常。
+排查先核对 `realtime-data` 的提交及 `updatedAt`、`sourceMode`、`cacheOnly`、`healthScore`、`criticalMissing`，再看 Build Realtime Market 和 Check Realtime Health。Daily 与前端按 [`canUseRealtimePayloadValues`](DATA_CONTRACT.md) 拒绝不可信 payload，不用它重算基线或叠加实时值；这不保证 Daily 会改跑 `buildFallback`。GitHub `realtime-data` 快照与 Worker 预览分别核对，前者陈旧不等于 Worker 故障，后者正常也不能放行 Daily。
 
 ### Daily vs Worker Input Audit
 
