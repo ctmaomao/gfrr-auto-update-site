@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed, local implementation. Independent review, integration, key binding and explicit ledger activation remain separate. No real account identifiers, credentials or dashboard evidence are committed here.
+Historical ledger design. The current staged business policy uses Brave’s plan hard stop and retains this private proof only for identity; see [Operations](../OPERATIONS.md#shared-editorial-budget-and-free-search-admission). No real account identifiers, credentials or dashboard evidence are committed here.
 
 ## Context
 

@@ -5,6 +5,8 @@
 <a id="brave-private-manual-one-shot-acceptance-baseline--november-18-2026"></a>
 <a id="brave-private-proof-continuity-acceptance-baseline--november-18-2026"></a>
 
+**Brave 常规恢复验收基线**：改由同一已核 Search Postpaid 计划的 Free credits only 执行唯一扣费硬停，现有私有证明只用来匹配实际 Actions key；不改计费或原账本、不续期、不预留、不发实时试探请求。常规配置默认关闭。核验当前保护与同一 key 后，独立审查通过才仅打开 Oil News 自然排程，观察 Brave 有结果或明确只停 Brave、Tavily/GDELT 原路径仍有效。其余路径不随本次切换启用；未产生自然回执不得称生产验收。详见[运行说明](OPERATIONS.md#shared-editorial-budget-and-free-search-admission)。
+
 **Brave 单次验收与当前边界**：[手动免费 canary 44252310781](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44252310781) 的只读预检和单次测试均成功，仅验收这次测试，五个业务工作流的 Brave 调用仍不恢复；不授权重跑。原证明、账本历史和收据保留，不变更计费设置。参见 [ADR-0111](ADR/0111-brave-shared-free-only.md#one-fixed-private-manual-canary-separate-from-business-restoration)和[固定版原验收基线](https://github.com/ctmaomao/gfrr-auto-update-site/blob/989d67b650903e461d16d38916594ddda84dc37a/docs/PROJECT_BACKLOG.md#brave-private-manual-one-shot-acceptance-baseline--november-18-2026)。
 
 **Brave 官方 Oil News 搜索恢复（窄范围）**：本次范围只包括一次手动官方来源发现，不恢复旧 canary 或五条常规调用，不改变计费或扣费上限。先校验此前私有证明与账本收据、当期免费硬停、对应运行 SHA 与固定 EIA RSS 发布源；只读预览不调用 Brave 或写账本。实际运行仍按同一账本预留并结算一次：只有可核实的同一份 EIA 首发来源可输出一条官方链接和发布日期；无合格命中则如实记录无匹配，不保存 Brave 标题、结果链接、摘要或响应。暂不接入站点产物、事件确认、油价或风险分；不得自动开启后续调用。离线检查不等于私有配置、生产预览或实际查询已完成。

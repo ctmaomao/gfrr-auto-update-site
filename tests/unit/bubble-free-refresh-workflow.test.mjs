@@ -97,7 +97,7 @@ test('all three Wind MCP services reject before any request when disabled', asyn
 test('CEO search retains both durable free-only budget gates and test stays in aggregate', () => {
   assert.match(builder, /async function tavilySearch\(payload, \{ budget = withTavilyBudget/u);
   assert.match(builder, /budget\(\{ key, payload, consumer: 'bubble-ceo' \}/u);
-  assert.match(builder, /async function braveNewsSearch\(params, \{ budget = withBraveBudget/u);
+  assert.match(builder, /async function braveNewsSearch\(params, \{ budget = withBraveProviderCap/u);
   assert.match(builder, /budget\(\{ key, consumer: 'bubble-ceo' \}/u);
   const scripts = JSON.parse(read('package.json')).scripts;
   assert.ok(scripts['check:workflows'].includes('tests/unit/bubble-free-refresh-workflow.test.mjs'));

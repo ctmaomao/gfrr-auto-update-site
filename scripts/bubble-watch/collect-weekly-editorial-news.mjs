@@ -3,7 +3,7 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 import { createSearchKeyPool } from '../lib/search-key-pool.mjs';
 import { withTavilyBudget } from '../lib/tavily-budget.mjs';
-import { withBraveBudget } from '../lib/brave-budget.mjs';
+import { withBraveProviderCap } from '../lib/brave-provider-cap.mjs';
 
 import { assertManualArtifactWritePath, writeJson } from '../lib/check-script-helpers.mjs';
 import { EDITORIAL_SEARCH_DOMAINS } from './editorial-evidence-policy.mjs';
@@ -64,7 +64,7 @@ function resolveWindow(asOfDate) {
 }
 
 function safeError(error) {
-  if (/^(?:tavily|brave)_budget_[a-z_]+$/u.test(error?.budgetCode || '')) return error.budgetCode;
+  if (/^(?:tavily_budget|brave_budget|brave_provider)_[a-z_]+$/u.test(error?.budgetCode || '')) return error.budgetCode;
   if (error?.name === 'AbortError') return 'request_timeout';
   const message = String(error?.message || 'request_failed');
   const http = message.match(/HTTP\s+(\d{3})/u);
@@ -148,7 +148,7 @@ async function fetchBrave(topic, query, requestWithKeys, braveBudget) {
   }));
 }
 
-export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveBudget } = {}) {
+export async function collectProvider(provider, keys, { budget = withTavilyBudget, braveBudget = withBraveProviderCap } = {}) {
   const rows = [];
   const queryRuns = [];
   if (keys.length === 0) {

@@ -10,6 +10,7 @@ import { createBraveBudget, emptySharedBraveLedger, emptyBraveLedger, summarizeB
 import { createMeteredTavilyUsage, emptyMeterLedger as newMeterLedger, validateMeterLedger, createTavilyMeterStore } from '../../scripts/lib/tavily-usage-meter.mjs';
 import { budgetFailure, keyFingerprint, createSearchLedger } from '../../scripts/lib/free-search-ledger.mjs';
 import { createTavilyBudget, emptyLedger, validateUsage, verifyBudgetStatus, summarizeLedger } from '../../scripts/lib/tavily-budget.mjs';
+import { createBraveProviderGate } from '../../scripts/lib/brave-provider-cap.mjs';
 import { createSearchKeyPool } from '../../scripts/lib/search-key-pool.mjs';
 import { collectProvider as macro } from '../../scripts/macro-risk/collect-editorial-news.mjs';
 import { collectProvider as bubble } from '../../scripts/bubble-watch/collect-weekly-editorial-news.mjs';
@@ -45,7 +46,7 @@ function ceoApi(fetchImpl, braveBudget, tavilyBudget) {
   const start = source.indexOf('const ceoTavilyKeyPool =');
   const end = source.indexOf('async function fetchCeoHedgingFromTavilyPublic', start);
   return vm.runInNewContext(`${source.slice(start, end)}\n({ braveNewsSearch, tavilySearch })`, {
-    createSearchKeyPool, TAVILY_API_KEYS: [key], BRAVE_API_KEYS: [key], withBraveBudget: braveBudget,
+    createSearchKeyPool, TAVILY_API_KEYS: [key], BRAVE_API_KEYS: [key], withBraveProviderCap: braveBudget,
     withTavilyBudget: tavilyBudget, fetch: fetchImpl, AbortController, setTimeout, clearTimeout, UA: 'offline-test'
   });
 }
@@ -996,4 +997,100 @@ test('offline CLI plan distinguishes v3 locator evidence and limits without acti
   assert.equal(plan.sharedLoginBinding.automaticRenewal, false);
   assert.equal(plan.searches, 0); assert.equal(plan.writes, 0);
   assert.match(plan.unknownQuota, /v2_or_v3/);
+});
+
+function providerCapEnvironment() {
+  // The proof is intentionally long expired with only one old reservation.
+  // Binding remains valid: the current provider hard stop is the only cap.
+  const verifiedAt = '2020-01-01T00:00:00.000Z', expiresAt = '2020-01-01T12:00:00.000Z';
+  const repository = 'ctmaomao/gfrr-auto-update-site';
+  return { GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: repository,
+    GITHUB_REF: 'refs/heads/main', GITHUB_EVENT_NAME: 'schedule',
+    GITHUB_WORKFLOW_REF: repository + '/.github/workflows/refresh-oil-news-event-watch.yml@refs/heads/main',
+    BRAVE_API_KEYS: key, BRAVE_API_KEY: key,
+    BRAVE_BUDGET_PRIVATE_PROOF: JSON.stringify({
+      schemaVersion: 'brave-private-proof-v1', repository, branch: 'brave-usage-ledger',
+      ledgerId: randomUUID(), commitmentNonce: 'c'.repeat(64), recordingStartedAt: verifiedAt,
+      grants: [{ id: randomUUID(), keyId: keyFingerprint(key), scope: 'provider_enforced_free_only', source: 'owner_dashboard',
+        evidenceSha256: 'a'.repeat(64), accountPlanBindingSha256: 'b'.repeat(64), verifiedAt, expiresAt,
+        protectionEndsAt: expiresAt, requestLimit: 1, freeOnlyEnabled: true, hardStopConfirmed: true,
+        plan: 'search_postpaid', bindingType: 'verified_dashboard_login_and_plan_key', loginIdentityVerified: true,
+        planKeyAssociationVerified: true, accountObservation: { source: 'owner_dashboard', observedAt: verifiedAt,
+          requestsUsed: 0, usageCostUsd: '0.00', outOfPocketCostUsd: '0.00', monthlyFreeCreditUsd: '5.00' } }]
+    })
+  };
+}
+const stagedOilPolicy = { 'oil-news': ['schedule'] };
+
+test('staged provider gate refuses default/other workflows and missing, rotated or ambiguous keys without any dispatch', async () => {
+  const env = providerCapEnvironment();
+  await assert.rejects(createBraveProviderGate(env, {})(context, never), /brave_provider_disabled/);
+  for (const patch of [{ GITHUB_ACTIONS: 'false' }, { GITHUB_REPOSITORY: 'another/repository' },
+    { GITHUB_REF: 'refs/heads/pr' }, { GITHUB_EVENT_NAME: 'workflow_dispatch' }, { GITHUB_WORKFLOW_REF: 'ci' },
+    { BRAVE_API_KEYS: '', BRAVE_API_KEY: '' }, { BRAVE_BUDGET_PRIVATE_PROOF: 'SYNTHETIC_SECRET_BAD_JSON' },
+    { BRAVE_BUDGET_PRIVATE_PROOF: undefined }, { BRAVE_API_KEYS: 'different', BRAVE_API_KEY: 'different' },
+    { BRAVE_API_KEYS: key + ',different' }, { BRAVE_API_KEY: 'different' }, { BRAVE_API_KEYS: key + ' two' }]) {
+    const run = createBraveProviderGate({ ...env, ...patch }, stagedOilPolicy);
+    await assert.rejects(run(context, never), /^Error: brave_provider_(?:disabled|binding_unverified)$/u);
+  }
+  const run = createBraveProviderGate(env, stagedOilPolicy);
+  await assert.rejects(run({ ...context, consumer: 'macro-editorial' }, never), /brave_provider_disabled/);
+  await assert.rejects(run({ ...context, key: 'not-the-configured-key' }, never), /brave_provider_binding_unverified/);
+  for (let i = 0; i < 51; i++) assert.equal(await run(context, () => 'ok'), 'ok');
+});
+
+test('real Oil collector treats quota refusals as Brave-only, leaves Tavily intact, and probes again next run', async t => {
+  const checkpoint = [];
+  let firstResponse;
+  const gdeltPath = mkdtempSync(join(tmpdir(), 'synthetic-gdelt-provider-cap-'));
+  t.after(() => rmSync(gdeltPath, { recursive: true, force: true }));
+  const env = providerCapEnvironment();
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    const host = new URL(url).hostname;
+    checkpoint.push(host);
+    switch (host) {
+      case 'api.search.brave.com':
+        assert.equal(options.headers['X-Subscription-Token'], key);
+        assert.equal(options.redirect, 'error');
+        if (firstResponse === 'transport') throw new TypeError('SYNTHETIC_PRIVATE_BODY');
+        return firstResponse ? new Response('SYNTHETIC_PRIVATE_BODY', { status: firstResponse }) : Response.json({ results: [] });
+      case 'api.gdeltproject.org': return Response.json({ articles: [] });
+      case 'api.tavily.com': return Response.json({ results: [], usage: { credits: 1 } });
+      default: assert.fail('unexpected API or accounting: ' + host);
+    }
+  });
+  const execute = (braveBudget, includeGdelt = false) => runDiagnosis({ allowNetwork: true,
+    sources: ['brave', 'tavily', ...(includeGdelt ? ['gdelt_doc'] : [])], gdeltCachePath: join(gdeltPath, 'absent.json'),
+    windowDays: 7, maxResults: 5, writeOutput: false, braveBudget,
+    budget: createTavilyBudget({ store: memory(emptyLedger()), now: () => clock, readUsage: async () => usage() }) });
+  for (const name of ['BRAVE_API_KEYS', 'BRAVE_API_KEY', 'TAVILY_API_KEYS', 'TAVILY_API_KEY']) {
+    const original = process.env[name];
+    process.env[name] = key;
+    t.after(() => { if (original === undefined) delete process.env[name]; else process.env[name] = original; });
+  }
+  const disabled = await execute(undefined);
+  assert.equal(disabled.sourceResults[0].networkUsed, false);
+  assert.ok(disabled.sourceResults[0].queryRuns.every(row => /^brave_provider_(?:disabled|binding_unverified)$/u.test(row.error)));
+  assert.deepEqual(checkpoint, Array(4).fill('api.tavily.com'));
+  for (const status of [402, 432, 433, 429, 503, 'transport']) {
+    firstResponse = status;
+    checkpoint.length = 0;
+    const run = createBraveProviderGate(env, stagedOilPolicy);
+    const { sourceResults: [brave, tavily, gdelt] } = await execute(run, status === 402);
+    assert.deepEqual(checkpoint, ['api.search.brave.com', ...Array(4).fill('api.tavily.com'),
+      ...(status === 402 ? ['api.gdeltproject.org'] : [])]);
+    if (status === 402) assert.equal(gdelt.status, 'ok');
+    assert.equal(brave.networkUsed, true);
+    assert.equal(brave.status, 'error');
+    const reason = status === 429 ? 'rate_limited' : [503, 'transport'].includes(status) ? 'outcome_unknown' : 'quota_unavailable';
+    assert.deepEqual(brave.queryRuns.map(row => row.error), Array(4).fill('brave_provider_' + reason));
+    assert.equal(tavily.status, 'ok');
+    assert.doesNotMatch(JSON.stringify(brave), /SYNTHETIC_PRIVATE_BODY|SYNTHETIC_ONLY_SECRET/u);
+    await assert.rejects(run(context, never), { providerRequestAttempted: false, httpStatus: reason === 'outcome_unknown' ? undefined : status });
+  }
+  firstResponse = null;
+  checkpoint.length = 0;
+  const { sourceResults: [brave, tavily] } = await execute(createBraveProviderGate(env, stagedOilPolicy));
+  assert.deepEqual(checkpoint, [...Array(4).fill('api.search.brave.com'), ...Array(4).fill('api.tavily.com')]);
+  assert.equal(brave.status, 'ok'); assert.equal(tavily.status, 'ok');
 });

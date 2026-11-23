@@ -31,6 +31,9 @@ test('private proof is injected only into the five reviewed Brave steps, not job
     assert.match(step, /^        env:$/mu);
     assert.ok(step.includes(command));
     assert.ok(step.includes('secrets.BRAVE_API_KEYS'));
+    assert.equal(step.includes('secrets.BRAVE_API_KEY }}'),
+      file === 'refresh-oil-news-event-watch.yml' || file === 'macro-risk-editorial-refresh.yml',
+      'do not widen dormant Bubble steps; review their selector wiring on a future activation');
     assert.ok(!/set -x|printenv|toJSON\(secrets\)|echo.*PRIVATE_PROOF/u.test(step));
     const jobScope = source.slice(0, source.indexOf(`      - name: ${name}\n`));
     assert.ok(jobScope.includes("github.ref == 'refs/heads/main'"));
@@ -106,4 +109,12 @@ test('only the two fixed manual R2 steps receive its proof chain, key and privat
   assert.match(source, /permissions:\n  contents: read/u);
   assert.match(source, /single-discovery:\n    needs: preview/u);
   assert.doesNotMatch(source, /schedule:|pull_request:|workflow_run:|workflow_call:|push:|set -x|printenv|upload-artifact|GITHUB_STEP_SUMMARY|environment:|npm /u);
+});
+
+test('legacy one-shot configuration is historical and neither job can execute', () => {
+  for (const file of ['brave-private-canary.yml', discoveryWorkflow]) {
+    const source = readFileSync(directory + file, 'utf8');
+    assert.equal((source.match(/^    if: \$\{\{ false && /gmu) || []).length, 2, file);
+    assert.equal((source.match(/^    runs-on:/gmu) || []).length, 2, file);
+  }
 });

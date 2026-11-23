@@ -39,7 +39,7 @@ import fs from 'node:fs';
 import { qualifiedEdgarLtmRevenue, qualifiedMirrorLtmRevenue } from './bubble-watch/ltm-revenue.mjs';
 import { inspectNvdaNumerator, qualifyNvdaRatio, buildNvdaGap } from './bubble-watch/nvda-ratio-evidence.mjs';
 import { withTavilyBudget } from './lib/tavily-budget.mjs';
-import { withBraveBudget } from './lib/brave-budget.mjs';
+import { withBraveProviderCap } from './lib/brave-provider-cap.mjs';
 import { createSearchKeyPool } from './lib/search-key-pool.mjs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
 import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
@@ -3502,7 +3502,7 @@ async function tavilySearch(payload, { budget = withTavilyBudget, requestWithKey
   }));
 }
 
-async function braveNewsSearch(params, { budget = withBraveBudget, requestWithKeys = ceoBraveKeyPool } = {}) {
+async function braveNewsSearch(params, { budget = withBraveProviderCap, requestWithKeys = ceoBraveKeyPool } = {}) {
   return requestWithKeys(key => budget({ key, consumer: 'bubble-ceo' }, async () => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);
