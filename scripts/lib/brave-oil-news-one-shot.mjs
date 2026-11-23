@@ -245,7 +245,8 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 function parseRssDate(value) {
   // RSS 2.0 uses RFC-822 mail dates. Accept explicit publisher time zones
   // only, and reject normalized invalid dates, clock values and wrong weekday.
-  const m = /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat), ([0-9]{1,2}) ([A-Z][a-z]{2}) ([0-9]{4}) ([0-9]{2}):([0-9]{2}):([0-9]{2}) (GMT|UTC|EST|EDT|[+-][0-9]{4})$/u.exec(value);
+  // EIA pads the year-to-time separator with horizontal whitespace.
+  const m = /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat), ([0-9]{1,2}) ([A-Z][a-z]{2}) ([0-9]{4})[ \t]+([0-9]{2}):([0-9]{2}):([0-9]{2}) (GMT|UTC|EST|EDT|[+-][0-9]{4})$/u.exec(value);
   if (!m) return null;
   const [, weekday, day, month, year, hour, minute, sec, zone] = m;
   const idx = months.indexOf(month), date = new Date(Date.UTC(+year, idx, +day, +hour, +minute, +sec));
