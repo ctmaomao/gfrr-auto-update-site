@@ -3,13 +3,20 @@
 // This schema cannot authenticate provenance or prove unlisted training episodes absent.
 // Bootstrap intervals can be degenerate (for example identical clustered outcomes).
 const RESAMPLES = 10_000;
+function parseUtc(value) {
+  const time = typeof value === 'string' ? Date.parse(value) : NaN;
+  return Number.isFinite(time) && new Date(time).toISOString() === value ? time : NaN;
+}
 function utc(value) {
-  const time = typeof value === 'string' && Date.parse(value);
-  if (!Number.isFinite(time) || new Date(time).toISOString() !== value) throw new Error('Expected canonical UTC timestamp');
+  const time = parseUtc(value);
+  if (!Number.isFinite(time)) throw new Error('Expected canonical UTC timestamp');
   return time;
 }
+// Manifest clocks define the cohort and must be valid. Unusable evidence clocks
+// instead leave their sealed window unresolved, with no estimate for the cohort.
 function knownBy(value, cutoff, earliest = -Infinity) {
-  return value != null && utc(value) <= cutoff && utc(value) >= earliest;
+  const time = parseUtc(value);
+  return time >= earliest && time <= cutoff;
 }
 function requireThat(condition, message) { if (!condition) throw new Error(message); }
 function add(map, key, value) {
@@ -75,9 +82,8 @@ export function compareThermalHoldout(manifest, evidence) {
   let activeBlock = null;
   for (const window of manifest.windows) {
     const row = evidenceById.get(window.id);
-    const cutoff = utc(window.cutoff), start = utc(window.start);
-    requireThat(cutoff >= start && cutoff <= utc(window.end)
-      && utc(window.end) <= ascertainment, 'Invalid decision or ascertainment cutoff');
+    const cutoff = utc(window.cutoff), start = utc(window.start), end = utc(window.end);
+    requireThat(cutoff >= start && cutoff <= end && end <= ascertainment, 'Invalid decision or ascertainment cutoff');
     const block = window.negativeBlockId;
     requireThat(canonicalId(block), 'Missing sealed time block');
     if (block !== activeBlock) {
@@ -87,8 +93,7 @@ export function compareThermalHoldout(manifest, evidence) {
     }
     if (!row || !['event','event_free','out_of_scope'].includes(row.truth)
       || row.truthReceipt?.independent !== true || !nonblank(row.truthReceipt.reference)
-      || !knownBy(row.truthReceipt.knownAt, ascertainment)
-      || utc(row.truthReceipt.knownAt) < utc(window.end)) {
+      || !knownBy(row.truthReceipt.knownAt, ascertainment, end)) {
       count('unknown','missingTruthWindows');
       blockers.add('unresolved_independent_truth'); continue;
     }
@@ -114,8 +119,8 @@ export function compareThermalHoldout(manifest, evidence) {
     }
     let augmented = row.a.alert;
     if (row.thermal.status === 'unavailable') count(stratum,'fallbackWindows');
-    else if (row.b && typeof row.b.alert === 'boolean' && knownBy(row.b.knownAt, cutoff)
-      && utc(row.b.knownAt) >= Math.max(utc(row.a.knownAt), utc(row.thermal.knownAt))) augmented = row.b.alert;
+    else if (row.b && typeof row.b.alert === 'boolean'
+      && knownBy(row.b.knownAt, cutoff, Math.max(utc(row.a.knownAt), utc(row.thermal.knownAt)))) augmented = row.b.alert;
     else { count(stratum,'missingAsOfWindows'); blockers.add('unresolved_as_of_receipt'); continue; }
     const pair = [row.a.alert, augmented];
     if (row.truth === 'event') add(events, row.episodeId, pair);

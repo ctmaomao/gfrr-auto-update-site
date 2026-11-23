@@ -76,6 +76,45 @@ test('missing evidence, unknown cutoff, or a same-episode control abstains',()=>
     assert.ok(result.blockers.includes(blocker));
   }
 });
+test('malformed receipt clocks retain the sealed cohort but withhold all estimates',()=>{
+  for (const invalid of ['not-a-date','2025-02-30T00:00:00.000Z','2025-01-05T00:00:00Z',0]) {
+    for (const [receipt,index,field,blocker,stratum] of [
+      ['truthReceipt',1,'missingTruthWindows','unresolved_independent_truth','unknown'],
+      ['truthReceipt',3,'missingTruthWindows','unresolved_independent_truth','unknown'],
+      ['a',1,'missingAsOfWindows','unresolved_as_of_receipt','unplanned'],
+      ['thermal',0,'missingAsOfWindows','unresolved_as_of_receipt','planned'],
+      ['thermal',1,'missingAsOfWindows','unresolved_as_of_receipt','unplanned'],
+      ['b',1,'missingAsOfWindows','unresolved_as_of_receipt','unplanned']
+    ]) {
+      const {manifest,evidence}=packet();
+      // An unreadable out-of-scope receipt cannot silently remove a window either.
+      if (receipt==='truthReceipt' && index===3) evidence[index].truth='out_of_scope';
+      evidence[index][receipt].knownAt=invalid;
+      const result=compareThermalHoldout(manifest,evidence);
+      assert.equal(result.status,'inconclusive');
+      assert.ok(result.blockers.includes(blocker));
+      assert.equal(result.sealedWindows,manifest.windows.length);
+      assert.equal(result.coverage[field],1);
+      assert.equal(result.byStratum[stratum][field],1);
+      assert.equal(result.coverage.adjudicatedOutOfScopeWindows,0);
+      assert.equal(result.gain,null);
+      assert.equal(result.harm,null);
+      assert.equal(result.pairedObservable.gain,null);
+      assert.equal(result.pairedObservable.harm,null);
+      assert.equal(result.eligibleForProduction,false);
+    }
+  }
+});
+
+test('malformed sealed manifest clocks still reject structural input',()=>{
+  for (const field of ['frozenAt','holdoutStart','ascertainmentCutoff','start','end','cutoff']) {
+    const {manifest,evidence}=packet();
+    const target=Object.hasOwn(manifest,field) ? manifest : manifest.windows[0];
+    target[field]='2025-02-30T00:00:00.000Z';
+    assert.throws(()=>compareThermalHoldout(manifest,evidence),/Expected canonical UTC timestamp/);
+  }
+});
+
 test('duplicates, overlap and noncontiguous reuse of a negative block are rejected',()=>{
   const {manifest,evidence}=packet();
   assert.throws(()=>compareThermalHoldout(manifest,[evidence[0],evidence[0]]),/Duplicate/);
