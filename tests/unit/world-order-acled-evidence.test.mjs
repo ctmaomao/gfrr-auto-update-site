@@ -7,9 +7,7 @@ import { applyAcledFreshness } from '../../scripts/world-order/acled-freshness.m
 
 const radar = JSON.parse(readFileSync('data/radar-data.json', 'utf8'));
 const world = JSON.parse(readFileSync('data/world-order-stress.json', 'utf8'));
-const narrativeFor = source => {
-  const input = structuredClone(world);
-  input.externalSources.acled = source;
+const worldOrderNarrative = input => {
   const before = JSON.stringify([radar, input]);
   const result = buildCrossValidationMatrix(radar, input).narratives.find(n => n.id === 'world_order_pressure_crossing');
   assert.equal(JSON.stringify([radar, input]), before);
@@ -34,25 +32,116 @@ test('absent ACLED is disclosed; healthy ACLED retains original supporting evide
   assert.equal(result.supportingEvidence.filter(e => e.source === 'acled').length, 1);
 });
 
-test('the September 11 weekly age transition reaches the unchanged narrative checker', () => {
+const narrativeFor = source => {
+  const input = structuredClone(world);
+  input.externalSources.acled = source;
+  return worldOrderNarrative(input);
+};
+
+function checkNarrativeDensity(input, evidenceOverride) {
+  const bytes = readFileSync('data/world-order-stress.json');
+  const child = `
+    import fs from 'node:fs'; import path from 'node:path';
+    import { registerHooks, syncBuiltinESMExports } from 'node:module';
+    const { world, evidenceOverride } = JSON.parse(fs.readFileSync(0, 'utf8'));
+    const read = fs.readFileSync;
+    fs.readFileSync = function(file, ...args) {
+      return typeof file === 'string' && path.resolve(file) === path.resolve('data/world-order-stress.json')
+        ? JSON.stringify(world) : read.call(this, file, ...args);
+    };
+    syncBuiltinESMExports();
+    if (evidenceOverride) {
+      const builderUrl = new URL('./scripts/modules/buildCrossValidationMatrix.js', import.meta.url).href;
+      const realBuilder = await import(builderUrl + '?unmodified');
+      const { source, add } = evidenceOverride;
+      globalThis.fixtureBuilder = (...args) => {
+        const matrix = realBuilder.buildCrossValidationMatrix(...args);
+        const narrative = matrix.narratives.find(n => n.id === 'world_order_pressure_crossing');
+        if (add) {
+          narrative.supportingEvidence.push({ source, detail: 'injected fixture evidence' });
+        } else {
+          narrative.supportingEvidence = narrative.supportingEvidence.filter(e => e.source !== source);
+        }
+        return matrix;
+      };
+      registerHooks({
+        load(url, context, nextLoad) {
+          if (url === builderUrl) {
+            return { format: 'module', source: 'export const buildCrossValidationMatrix = globalThis.fixtureBuilder;', shortCircuit: true };
+          }
+          return nextLoad(url, context);
+        },
+      });
+    }
+    await import('./scripts/check-world-order-narrative-density.mjs');
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', child], {
+    input: JSON.stringify({ world: input, evidenceOverride }), encoding: 'utf8', windowsHide: true,
+  });
+  assert.deepEqual(readFileSync('data/world-order-stress.json'), bytes);
+  return result;
+}
+
+test('the September 11 weekly age transition reaches the narrative checker', () => {
   const input = structuredClone(world);
   const source = { status: 'ok', confidence: 0.8, summary: { latestWeek: '2026-08-28', monthlyAsOfDate: '2026-08-21' }, evidence: [] };
   assert.equal(applyAcledFreshness(source, Date.parse('2026-09-10T00:49:30Z')).status, 'ok');
   input.externalSources.acled = applyAcledFreshness(source, Date.parse('2026-09-11T00:48:50Z'));
   assert.equal(input.externalSources.acled.status, 'partial');
   assert.equal(input.externalSources.acled.summary.sourceFreshness, 'aging');
-  const bytes = readFileSync('data/world-order-stress.json');
-  const child = `
-    import fs from 'node:fs'; import path from 'node:path';
-    import { syncBuiltinESMExports } from 'node:module';
-    const payload = fs.readFileSync(0, 'utf8'), read = fs.readFileSync;
-    fs.readFileSync = function(file, ...args) {
-      return typeof file === 'string' && path.resolve(file) === path.resolve('data/world-order-stress.json')
-        ? payload : read.call(this, file, ...args);
-    };
-    syncBuiltinESMExports(); await import('./scripts/check-world-order-narrative-density.mjs');
-  `;
-  const result = spawnSync(process.execPath, ['--input-type=module', '-e', child], { input: JSON.stringify(input), encoding: 'utf8', windowsHide: true });
+  const result = checkNarrativeDensity(input);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.deepEqual(readFileSync('data/world-order-stress.json'), bytes);
+});
+
+function lowerPressureWorldOrder() {
+  // Freeze the other evidence branches so this regression isolates the three
+  // thresholded dimensions rather than inheriting the daily evidence floor.
+  return {
+    score: 43,
+    state: 'bloc_fragmentation',
+    freshness: 'fresh',
+    confidence: 0.55,
+    dominantDrivers: [{ key: 'multiTheaterConflict', score: 51 }],
+    dimensions: {
+      economicWeaponization: { score: 49 },
+      capitalControlRisk: { score: 48 },
+      blocFormation: { score: 47 },
+      multiTheaterConflict: { score: 51 },
+      marketConfirmation: { score: 51, state: 'confirmed' },
+    },
+    marketConfirmationInput: { source: 'worker-generated-preview' },
+    externalSources: {
+      gdelt: { status: 'stale' },
+      ofac: { status: 'ok', summary: { recentActionsCount: 1 } },
+      acled: { status: 'ok', summary: { latestWeek: '2026-11-13', eventsDelta4Vs12: 0.1, regionsTracked: 8 } },
+      sipri: { status: 'manual_required' },
+    },
+  };
+}
+
+test('narrative density accepts the natural score-43 pattern when three dimensions are below 50', () => {
+  const input = lowerPressureWorldOrder();
+  const sources = worldOrderNarrative(input).supportingEvidence.map(e => e.source);
+  for (const source of ['economic_weaponization', 'capital_control_risk', 'bloc_formation']) {
+    assert.ok(!sources.includes(source), source);
+  }
+  const result = checkNarrativeDensity(input);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('narrative density requires evidence at 50, but rejects forged evidence below 50', () => {
+  const input = lowerPressureWorldOrder();
+  input.dimensions.economicWeaponization.score = 50;
+  const sources = worldOrderNarrative(input).supportingEvidence.map(e => e.source);
+  assert.ok(sources.includes('economic_weaponization'));
+  const valid = checkNarrativeDensity(input);
+  assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+
+  const omitted = checkNarrativeDensity(input, { source: 'economic_weaponization', add: false });
+  assert.equal(omitted.status, 1, omitted.stdout + omitted.stderr);
+  assert.match(omitted.stderr, /missing supporting evidence source: economic_weaponization/u);
+
+  const forged = checkNarrativeDensity(input, { source: 'capital_control_risk', add: true });
+  assert.equal(forged.status, 1, forged.stdout + forged.stderr);
+  assert.match(forged.stderr, /unexpected supporting evidence source: capital_control_risk/u);
 });
