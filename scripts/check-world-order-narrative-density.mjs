@@ -62,14 +62,27 @@ if (!narrative) {
   for (const source of [
     'world_order_state',
     'dominant_driver',
-    'economic_weaponization',
-    'capital_control_risk',
-    'bloc_formation',
     'market_confirmation_source',
     'ofac_recent_actions',
   ]) {
     if (!supportingSources.has(source)) {
       fail(`world_order_pressure_crossing missing supporting evidence source: ${source}`);
+    }
+  }
+
+  // The builder treats these dimensions as supporting evidence only at 50 or above.
+  // Below the threshold they must not be used to confirm pressure.
+  for (const [source, dimension] of [
+    ['economic_weaponization', 'economicWeaponization'],
+    ['capital_control_risk', 'capitalControlRisk'],
+    ['bloc_formation', 'blocFormation'],
+  ]) {
+    const score = worldOrder?.dimensions?.[dimension]?.score;
+    const expectsEvidence = Number.isFinite(score) && score >= 50;
+    if (expectsEvidence && !supportingSources.has(source)) {
+      fail(`world_order_pressure_crossing missing supporting evidence source: ${source} (dimension score >= 50)`);
+    } else if (!expectsEvidence && supportingSources.has(source)) {
+      fail(`world_order_pressure_crossing unexpected supporting evidence source: ${source} (dimension score must be finite and >= 50)`);
     }
   }
 
