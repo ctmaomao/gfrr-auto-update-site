@@ -2091,6 +2091,264 @@
           }
         }
       }
+    },
+    {
+      "date": "2026-11-23",
+      "week": "11-23",
+      "issue_number": 34,
+      "red_pct": null,
+      "risk_score": null,
+      "scoring_model_version": "bubble-watch-v3-core23-shadow4-r6",
+      "core_red_pct": null,
+      "core_risk_score": null,
+      "display_red_pct": null,
+      "display_risk_score": null,
+      "stage_score": null,
+      "trigger_score": null,
+      "statuses": {
+        "cape": "red",
+        "top5_weight": "red",
+        "nvda_fpe": "green",
+        "private_secondary_marks": "green",
+        "hyperscaler_capex_yoy": "yellow",
+        "mag4_fcf_yoy": "red",
+        "vc_ai_share": "red",
+        "nvda_invest_revenue": "unknown",
+        "breadth_50d": "yellow",
+        "spy_vs_rsp_6m": "yellow",
+        "insider_sell_buy": "yellow",
+        "ai_ipo_pipeline": "yellow",
+        "hy_oas": "yellow",
+        "dc_abs_spread": "unknown",
+        "debt_capex_ratio": "yellow",
+        "neocloud_credit": "green",
+        "token_volume_mom": "green",
+        "token_revenue_ratio": "green",
+        "gpu_rental_price": "green",
+        "arr_2nd_deriv": "unknown",
+        "enterprise_deploy": "green",
+        "cloud_rpo_growth": "yellow",
+        "frontier_progress": "green",
+        "accounting_events": "green",
+        "fed_policy": "unknown",
+        "capex_reaction": "yellow",
+        "ceo_hedging": "green"
+      },
+      "score_bounds": {
+        "primary": {
+          "lower": 17.4,
+          "upper": 34.8
+        },
+        "pressure": {
+          "lower": 37,
+          "upper": 54.3
+        },
+        "stage": {
+          "lower": 45,
+          "upper": 55
+        },
+        "trigger": {
+          "lower": 30.8,
+          "upper": 53.8
+        }
+      },
+      "tier_range": {
+        "lower": "alert",
+        "upper": "alert"
+      },
+      "effective_tier": "alert",
+      "unknown_core_ids": [
+        "nvda_invest_revenue",
+        "dc_abs_spread",
+        "arr_2nd_deriv",
+        "fed_policy"
+      ],
+      "gap_metadata": {
+        "nvda_invest_revenue": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "nvda-period-aligned-ratio-v1",
+            "reasonCode": "nvda_comparable_commitment_revenue_evidence_unavailable",
+            "checkedDate": "2026-11-23"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-23T07:37:58.563Z",
+            "detail": {
+              "contractVersion": "nvda-period-aligned-ratio-v1",
+              "qualificationStatus": "unavailable",
+              "reason": "newer_ledger_requires_comparable_evidence",
+              "latestLedgerDate": "2026-11-08",
+              "parameterDate": "2026-06-07",
+              "newerLedgerProtected": true,
+              "ratioPct": null,
+              "currentEligible": false
+            }
+          }
+        },
+        "dc_abs_spread": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "bubble-qualified-evidence-v1",
+            "reasonCode": "dc_abs_direct_spread_unavailable",
+            "checkedDate": "2026-11-23"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-23T07:39:33.168Z",
+            "detail": {
+              "status": "unknown",
+              "reasonCode": "dc_abs_direct_spread_unavailable",
+              "qualificationFailure": "wrong_market_or_subject"
+            }
+          }
+        },
+        "arr_2nd_deriv": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "arr-observation-eligibility-v1",
+            "reasonCode": "arr_current_comparable_series_unavailable",
+            "checkedDate": "2026-11-23"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-23T07:39:47.776Z",
+            "detail": {
+              "contractVersion": "arr-observation-eligibility-v1",
+              "qualificationStatus": "unavailable",
+              "currentEligible": false,
+              "reason": "historical_and_live_observations_stale",
+              "historicalObservation": {
+                "observationDate": "2026-07-31",
+                "asOfDate": "2026-11-23",
+                "ageDays": 115,
+                "maxAgeDays": 45,
+                "status": "stale"
+              },
+              "historicalSourceObservation": {
+                "contract": "bubble-source-observation-v1",
+                "basis": "same_basis_disclosed_series_3m_vs_prior3m",
+                "observationDate": "2026-07-31",
+                "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute",
+                "measurement": "historical_disclosed_run_rate_anchors",
+                "company": "Anthropic",
+                "revenueBasis": "gross",
+                "productionEligible": false,
+                "anchors": [
+                  {
+                    "asOfDate": "2025-12-31",
+                    "amountUsdB": 9,
+                    "qualifier": "about",
+                    "isForecast": false,
+                    "sourceDate": "2026-04-06",
+                    "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute"
+                  },
+                  {
+                    "asOfDate": "2026-04-06",
+                    "amountUsdB": 30,
+                    "qualifier": "more_than",
+                    "isForecast": false,
+                    "sourceDate": "2026-04-06",
+                    "sourceUrl": "https://www.anthropic.com/news/google-broadcom-partnership-compute"
+                  },
+                  {
+                    "asOfDate": "2026-07-31",
+                    "amountUsdB": 65,
+                    "qualifier": "more_than",
+                    "isForecast": false,
+                    "sourceDate": "2026-08-17",
+                    "sourceUrl": "https://www.marketscreener.com/news/anthropic-revenue-run-rate-tops-65-billion-source-says-ce7859dcdd80ff2d",
+                    "companyConfirmed": false
+                  }
+                ]
+              },
+              "rejectedLiveObservation": {
+                "observationDate": "2026-05-28",
+                "asOfDate": "2026-11-23",
+                "ageDays": 179,
+                "maxAgeDays": 45,
+                "status": "stale"
+              },
+              "rejectionEvidence": {
+                "kind": "saastr_four_post_series",
+                "source": "SaaStr WordPress public API",
+                "milestones": [
+                  {
+                    "date": "2025-07-12",
+                    "arrB": 4,
+                    "sourceId": 315823
+                  },
+                  {
+                    "date": "2026-02-15",
+                    "arrB": 14,
+                    "sourceId": 322211
+                  },
+                  {
+                    "date": "2026-04-09",
+                    "arrB": 30,
+                    "sourceId": 323715
+                  },
+                  {
+                    "date": "2026-05-28",
+                    "arrB": 44,
+                    "sourceId": 325206
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "fed_policy": {
+          "as_of": null,
+          "stale": false,
+          "evidence_gap": {
+            "policy": "bubble-qualified-evidence-v1",
+            "reasonCode": "fed_market_path_unavailable",
+            "checkedDate": "2026-11-23"
+          },
+          "provenance": {
+            "mode": "auto",
+            "checkedAt": "2026-11-23T07:39:51.468Z",
+            "detail": {
+              "policy": "fed_market_path_collection_v1",
+              "checkedAt": "2026-11-23T07:39:51.468Z",
+              "sourceEvidence": {
+                "calendar": null,
+                "baseline": null,
+                "quotes": []
+              },
+              "result": {
+                "policy": "fed_3_6_calendar_month_yahoo_daily_proxy_v1",
+                "status": "unknown",
+                "reason": "calendar_schema"
+              },
+              "sourceFailures": [],
+              "qualityIssues": [
+                {
+                  "source": "calendar",
+                  "reason": "reviewed_schedule_changed"
+                }
+              ],
+              "attemptedSources": [
+                "calendar"
+              ],
+              "collectionPolicy": {
+                "actualRequests": 1,
+                "maximumRequests": 10,
+                "requestTimeoutMs": 12000,
+                "calendarMaxBytes": 1048576,
+                "csvMaxBytes": 65536,
+                "quoteMaxBytes": 1048576,
+                "applicationRetries": 0,
+                "redirects": "error"
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
