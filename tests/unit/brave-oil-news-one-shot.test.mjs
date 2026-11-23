@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { BRAVE_OIL_DISCOVERY_CONSUMER, BRAVE_OIL_DISCOVERY_GRANT_ID, BRAVE_RENEWAL_SMOKE_GRANT_ID,
   createBraveBudget } from '../../scripts/lib/brave-budget.mjs';
-import { OIL_DISCOVERY, runBraveOilDiscovery } from '../../scripts/lib/brave-oil-news-one-shot.mjs';
+import { OIL_DISCOVERY, runBraveOilDiscovery, verifyBraveOilReviewedAnchor } from '../../scripts/lib/brave-oil-news-one-shot.mjs';
 import { keyFingerprint, SEARCH_REPOSITORY } from '../../scripts/lib/free-search-ledger.mjs';
 import { prepareBravePrivateProof, prepareBravePrivateRenewal, createBravePublicProjection, withBravePrivateProof } from '../../scripts/lib/brave-private-proof.mjs';
 
@@ -168,6 +168,7 @@ test('the only proposed runner is exact main dispatch; preview is read-only and 
   assert.equal((workflow.match(/run: node scripts\/run-brave-oil-news-official-discovery\.mjs/gu) ?? []).length, 2);
   assert.equal((workflow.match(/BRAVE_BUDGET_OIL_R2: \$\{\{ secrets\.BRAVE_BUDGET_OIL_R2 \}\}/gu) ?? []).length, 2);
   assert.equal((workflow.match(/persist-credentials: false/gu) ?? []).length, 2);
+  assert.equal((workflow.match(/fetch-depth: 34/gu) ?? []).length, 2);
   assert.equal((workflow.match(/ref: \$\{\{ github\.sha \}\}/gu) ?? []).length, 2);
   assert.match(workflow, /default: preview/u);
   assert.match(workflow, /permissions:\n  contents: read/u);
@@ -182,4 +183,48 @@ test('the only proposed runner is exact main dispatch; preview is read-only and 
   assert.equal(rejected.status, 1);
   assert.equal(rejected.stdout, '');
   assert.equal(rejected.stderr.trim(), 'BRAVE_OIL_DISCOVERY_REFUSED_OR_UNCERTAIN');
+});
+
+test('reviewed ancestor admits only a bounded contiguous single-parent chain of named natural data updates', () => {
+  const a = 'a'.repeat(40), b = 'b'.repeat(40), c = 'c'.repeat(40);
+  const row = (before, after, path) => `:100644 100644 ${before} ${after} M\0${path}\0`;
+  const ok = row(b, c, 'data/oil-thermal-watch.json');
+  const older = row(a, b, 'data/oil-thermal-watch.json');
+  const multi = row(b, c, 'data/radar-data.json') + row(b, c, 'data/radar-history.json');
+  const invoke = (graph, delta, previousDelta = older) => args => {
+    if (args[0] === 'log') return graph;
+    assert.deepEqual(args.slice(0, 8), ['diff-tree', '-r', '--raw', '-z', '--no-commit-id', '--no-renames', '--no-abbrev', '--ignore-submodules=none']);
+    return args[9] === c ? delta : previousDelta;
+  };
+  const graph = `${c} ${b}\n${b} ${a}\n${a}\n`;
+  const ver = (git, reviewed = a) => verifyBraveOilReviewedAnchor({ reviewed, checkout: c, git });
+  assert.equal(ver(() => assert.fail('exact SHA needs no history'), c), true);
+  assert.equal(ver(invoke(graph, ok)), true);
+  assert.equal(ver(invoke(graph, multi)), true);
+  for (const delta of ['', ok + ok, ok.replace('100644 100644', '100644 120000'),
+    ok.replace(' M', ' A'), ok.replace(' M', ' D'), ok.replace('oil-thermal-watch.json', 'unknown.json'),
+    multi + row(b, c, 'config/bubble-watch-curated.json'),
+    ok.replace('data/oil-thermal-watch.json', '.github/workflows/brave-oil-news-official-discovery.yml')]) {
+    assert.equal(ver(invoke(graph, delta)), false);
+  }
+  assert.equal(ver(invoke(graph, ok, row(c, b, 'data/oil-thermal-watch.json'))), true, 'allowed data bytes may repeat');
+  assert.equal(ver(invoke(graph, ok, row(a, b, 'scripts/run-brave-oil-news-official-discovery.mjs'))), false, 'unsafe intermediate delta is fatal');
+  for (const wrong of [`${c} ${b} ${a}\n${b} ${a}\n${a}\n`, `${c} ${b}\n${a}\n`, `${c} ${b}\n${b}\n`,
+    `${c} ${b}\n`.repeat(34)]) assert.equal(ver(invoke(wrong, ok)), false);
+  assert.equal(ver(() => { throw new Error('missing history'); }), false);
+});
+test('reviewed ancestor is additive to, not a substitute for, exact current trusted main and workflow identities', async () => {
+  const f = fixture(), opts = f.options();
+  opts.context.job = opts.context.operation = 'preview';
+  opts.context.sha = opts.context.liveMainSha = opts.context.workflowSha = 'f'.repeat(40);
+  let matched = 0;
+  opts.verifyReviewedAnchor = (reviewed, checkout) => {
+    assert.equal(reviewed, f.record.approvedDispatchSha); assert.equal(checkout, 'f'.repeat(40)); matched++; return true;
+  };
+  assert.deepEqual(await runBraveOilDiscovery(opts), { status: 'PREVIEW_READY' });
+  for (const identity of ['liveMainSha', 'workflowSha', 'ref', 'event', 'workflowRef']) {
+    await assert.rejects(runBraveOilDiscovery({ ...opts, context: { ...opts.context, [identity]: 'untrusted' } }));
+  }
+  await assert.rejects(runBraveOilDiscovery({ ...opts, verifyReviewedAnchor: () => false }));
+  assert.equal(matched, 1); assert.equal(f.writes(), 0); assert.deepEqual(f.calls, [OIL_DISCOVERY.feed]);
 });

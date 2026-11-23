@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createBraveLedger } from './lib/brave-budget.mjs';
 import { CANARY } from './lib/brave-manual-canary.mjs';
-import { OIL_DISCOVERY, runBraveOilDiscovery } from './lib/brave-oil-news-one-shot.mjs';
+import { OIL_DISCOVERY, runBraveOilDiscovery, verifyBraveOilReviewedAnchor } from './lib/brave-oil-news-one-shot.mjs';
 import { prepareBravePrivateRenewal } from './lib/brave-private-proof.mjs';
 import { SEARCH_REPOSITORY } from './lib/free-search-ledger.mjs';
 
@@ -17,9 +17,12 @@ try {
   const event = JSON.parse(readFileSync(env.GITHUB_EVENT_PATH, 'utf8')), operation = env.GITHUB_JOB;
   require(Object.keys(event.inputs || {}).join(',') === 'operation' && ['preview', 'single-discovery'].includes(event.inputs.operation)
     && ['preview', 'single-discovery'].includes(operation) && (operation === 'preview' || event.inputs.operation === operation));
-  require(execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', env: {
-    PATH: env.PATH, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null'
-  } }).trim() === env.GITHUB_SHA);
+  const git = args => execFileSync('git', ['--no-replace-objects', '-c', 'core.fsmonitor=false', ...args], {
+    encoding: 'utf8', timeout: 5000, maxBuffer: 65536, stdio: ['ignore', 'pipe', 'ignore'],
+    env: { PATH: env.PATH, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' }
+  });
+  require(git(['rev-parse', 'HEAD']).trim() === env.GITHUB_SHA);
+  require(git(['status', '--porcelain=v1', '-z', '--untracked-files=all']) === '');
   const priorSupplement = env.BRAVE_BUDGET_RENEWAL_CHAIN;
   require(typeof priorSupplement === 'string' && Buffer.byteLength(priorSupplement) <= 48000);
   const record = JSON.parse(priorSupplement);
@@ -61,7 +64,8 @@ try {
     context: { actions: env.GITHUB_ACTIONS, repository: env.GITHUB_REPOSITORY, ref: env.GITHUB_REF,
       event: env.GITHUB_EVENT_NAME, sha: env.GITHUB_SHA, workflowSha: env.GITHUB_WORKFLOW_SHA, liveMainSha: main.object?.sha,
       workflowRef: env.GITHUB_WORKFLOW_REF, runId: env.GITHUB_RUN_ID, job: operation, operation },
-    baseSnapshot, store, fetchImpl: fetch
+    baseSnapshot, store, fetchImpl: fetch,
+    verifyReviewedAnchor: (reviewed, checkout) => verifyBraveOilReviewedAnchor({ reviewed, checkout, git })
   });
   if (result.status === 'OFFICIAL_RELEASE_VERIFIED') {
     require(/^https:\/\/www\.eia\.gov\/todayinenergy\/detail\.php\?id=[1-9][0-9]{3,6}$/u.test(result.officialUrl)
