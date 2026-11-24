@@ -58,7 +58,7 @@
   }
   .big-number .value.range .bound { display:block; font-size:0.75em; }
   .big-number .range-connector { display:block; font:12px "IBM Plex Mono", monospace; letter-spacing:0; margin:6px 0; }
-  .status-bar.unknown, .badge.unknown { background:var(--muted); }
+  .status-bar.unknown, .badge.unknown, .status-bar.retained-coverage, .badge.retained-coverage { background:var(--muted); }
   .axis-uncertainty { position:absolute; top:0; bottom:0; border:2px solid var(--ink); background:transparent; }
   .big-number .value sup { font-size: 0.4em; vertical-align: super; }
   .big-number .breakdown { font-family: "IBM Plex Mono", monospace; font-size: 12px; margin-top: 12px; opacity: 0.7; line-height: 1.6; }
@@ -623,7 +623,7 @@ function renderWeeklyEditorial(layer, historical = false) {
 }
 
 function statusBadge(status) {
-  const map = { red: '● RED', yellow: '◐ YELLOW', green: '○ GREEN', unknown:'待确认' };
+  const map = { red: '● RED', yellow: '◐ YELLOW', green: '○ GREEN', unknown:'待确认', 'retained-coverage':'覆盖待核' };
   return `<span class="badge ${status}">${map[status] || status}</span>`;
 }
 
@@ -970,7 +970,7 @@ function render(data, editorialStatus = null) {
               const ratioView = nvdaDisplayState(ind);
               const coverageNotice = sourceCoverageNotice(ind);
               const retainedCredit = ind.id === 'neocloud_credit' && ind.provenance?.mode === 'auto_fallback';
-              const shownStatus = retainedCredit ? 'unknown' : ind.status;
+              const shownStatus = retainedCredit ? 'retained-coverage' : ind.status;
               const retainedLight = { green: '绿灯', yellow: '黄灯', red: '红灯' }[ind.status] || '待确认';
               const carried = !ind.stale && ind.as_of && data.as_of_date && ind.as_of < data.as_of_date;
               return `

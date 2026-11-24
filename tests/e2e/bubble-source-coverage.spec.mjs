@@ -43,7 +43,8 @@ for (const width of [1440, 390]) {
     await expect(card.locator('.source-coverage-notice')).toContainText('更新核验 2026-11-10');
     await expect(card.locator('.number')).toHaveText('本期覆盖待确认');
     await expect(card.locator('.note').first()).toContainText('历史快照（2026-11-08）：0 项已确认事件。已发布总分仍按该快照的绿灯计算');
-    await expect(card.locator('.status-bar')).toHaveClass('status-bar unknown');
+    await expect(card.locator('.status-bar')).toHaveClass('status-bar retained-coverage');
+    await expect(card.locator('.badge.retained-coverage')).toHaveText('覆盖待核');
     const vc = page.locator('section.category article.indicator').filter({ has: page.locator('.name-en', { hasText: /^AI \/ Total VC Funding$/ }) });
     await expect(vc.locator('.source-coverage-notice')).toContainText('同一期间的合格全球 AI 创投占比');
     await capture('coverage-fallback');
