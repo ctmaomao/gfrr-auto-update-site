@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 const BASE = 'bae3b06d7bb5dd9cf26a12f4f6ff9d78411f9007';
+// Keep the full-year source check before the frozen browser clock below.
+const FULL_YEAR_CREDIT_FIXTURE = 'be188d0082346f73db05e97137eef4a75de3fbf3';
 for (const width of [1440, 390]) test(`date labels stay inside short and full-year charts at ${width}px`, async ({page}, info)=>{
  await page.setViewportSize({width,height:1000});
  await page.clock.install({time:new Date('2026-11-20T23:59:30Z')});
@@ -51,7 +53,7 @@ for (const width of [1440, 390]) test(`date labels stay inside short and full-ye
   await page.evaluate(()=>drawTrend({...lastData,history_seed:Array.from({length:10},(_,i)=>({week:`09-${String(i+1).padStart(2,'0')}`,red_pct:i*10,risk_score:i*10+5}))}));
   await capture('#trend-chart-wrap','trend-dense-dates');
   if(variant==='after') await boundedLabels(page, '#trend-chart-wrap .trend-date-label');
-  const real=JSON.parse(readFileSync('data/bubble-watch.json','utf8'));
+  const real=JSON.parse(execFileSync('git',['show',FULL_YEAR_CREDIT_FIXTURE+':data/bubble-watch.json'],{encoding:'utf8'}));
   await page.evaluate(credit=>{ document.getElementById('credit-spreads').outerHTML=creditSectionHtml(credit); drawCreditTrend(credit); },real.credit_spreads);
   await capture('#credit-spreads','credit-full-year');
   if(variant==='after') await boundedLabels(page, '#credit-spreads .credit-date-label');
