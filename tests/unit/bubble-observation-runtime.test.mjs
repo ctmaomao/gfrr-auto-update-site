@@ -5,6 +5,9 @@ import vm from 'node:vm';
 import { requireFreshUnderlyingObservation } from '../../scripts/bubble-watch/observation-freshness.mjs';
 import { ARR_MAX_AGE_DAYS, buildArrGap, validateArrGap } from '../../scripts/bubble-watch/arr-evidence.mjs';
 import { syncUpstreamObservation, buildEnterpriseObservationProjection } from '../../scripts/bubble-watch/source-observation.mjs';
+import { selectVcObservation, VC_QUARTERLY_PARSER } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
+import { htmlToText } from '../../scripts/bubble-watch/public-html-parsers.mjs';
+import { checkVcSourceResponse, evidenceGapError } from '../../scripts/bubble-watch/source-health-policy.mjs';
 const source = fs.readFileSync(new URL('../../scripts/build-bubble-watch.mjs', import.meta.url), 'utf8');
 const config = JSON.parse(fs.readFileSync(new URL('../fixtures/bubble-observation-config-20261110.json', import.meta.url)));
 const block = (a, b) => source.slice(source.indexOf(a), source.indexOf(b, source.indexOf(a)));
@@ -61,4 +64,32 @@ test('actual r6 enterprise branch never falls through to incompatible Google or 
   vm.runInContext(`for (const def of defs) { ${code} throw new Error('unrelated source collector reached'); }`, context);
   assert.equal(indicators.length, 1); assert.equal(indicators[0].as_of, '2026-09-24');
   assert.equal(indicators[0].status, 'green'); assert.equal(indicators[0].provenance.mode, 'curated');
+});
+
+test('production VC builder queries latest complete global quarter and replays the dated article body', async () => {
+  const requests = [];
+  const date = '2026-11-24';
+  const link = config.curated.vc_ai_share.sourceObservation.sourceUrl;
+  const row = { id: 94169, date: '2026-10-05T09:00:00', link,
+    title: { rendered: 'Crunchbase Data: Q3 2026 Posted A Record Count Of Billion-Dollar Rounds As The Global AI Race Heats Up' },
+    excerpt: { rendered: '<p>Global venture funding totaled $1 billion in Q3 2026.</p>' },
+    content: { rendered: '<p>Global venture funding totaled $159 billion in Q3 2026.</p><p>AI-driven startups across the stack raised $102 billion, or 64% of global venture capital.</p>' } };
+  const context = vm.createContext({ URLSearchParams, htmlToText, selectVcObservation, VC_QUARTERLY_PARSER,
+    evidenceGapError, checkVcSourceResponse, BROWSER_UA: 'fixture', isoDate: () => date, retry: task => task(),
+    fetchWithTimeout: async url => {
+      requests.push(new URL(url));
+      return requests.at(-1).searchParams.has('slug') ? [row] : [];
+    }
+  });
+  vm.runInContext(block('async function crunchbaseWpPosts(', 'function extractPublicSearchLinks(')
+    + block('async function fetchVcAiShareFromCrunchbase(', 'async function fetchAiIpoPipelineFromCrunchbase(')
+    + '\nglobalThis.collect=fetchVcAiShareFromCrunchbase;', context);
+  const result = await context.collect({ config });
+  assert.equal(requests[0].searchParams.get('search'), 'Q3 2026 global');
+  assert.equal(requests[1].searchParams.get('slug'), new URL(link).pathname.split('/')[2]);
+  assert.equal(requests.length, 2);
+  assert.equal(result.as_of, '2026-10-05');
+  assert.equal(result.detail.sourceObservation.periodEnd, '2026-09-30');
+  assert.equal(result.status, 'red');
+  assert.equal(result.value_display, '64.2%');
 });

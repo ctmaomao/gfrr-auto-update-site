@@ -42,7 +42,8 @@ import { withTavilyBudget } from './lib/tavily-budget.mjs';
 import { withBraveProviderCap } from './lib/brave-provider-cap.mjs';
 import { createSearchKeyPool } from './lib/search-key-pool.mjs';
 import { collectCreditSpreads, creditPublicationEnabled } from './bubble-watch/credit-spreads.mjs';
-import { checkVcSourceResponse, checkNeocloudSourceContent, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
+import { probeNeocloudSources } from './bubble-watch/neocloud-source-probes.mjs';
+import { checkVcSourceResponse, evidenceGapError } from './bubble-watch/source-health-policy.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -53,7 +54,7 @@ import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-ev
 import { requireFreshUnderlyingObservation } from './bubble-watch/observation-freshness.mjs';
 import { extractAnthropicArrB } from './bubble-watch/arr-milestone-parser.mjs';
 import { evaluateInsiderLiveCoverage } from './bubble-watch/insider-source-policy.mjs';
-import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, requireObservationDate, selectVcObservation, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, extractVcAiFundingShare, assertRpoCoverage, RPO_COMPANIES } from './bubble-watch/source-evidence-policy.mjs';
+import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, requireObservationDate, selectVcObservation, alignedBreadth, breadthSourceLabel, parseRpoTable, pairRpoPeriods, VC_QUARTERLY_PARSER, assertRpoCoverage, RPO_COMPANIES } from './bubble-watch/source-evidence-policy.mjs';
 import { describeEdgarIdentity, resolveEdgarIdentity } from './bubble-watch/edgar-contact.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1122,24 +1123,26 @@ async function crunchbaseWpPost(id) {
   return { id: post.id || id, date: post.date || null, link: post.link || null, title, text };
 }
 
-async function crunchbaseWpPosts(query, perPage = 10, sourceChecks = null) {
+async function crunchbaseWpPosts(query, perPage = 10, options = {}) {
   const params = new URLSearchParams({
     search: query,
     per_page: String(perPage),
     _fields: 'id,date,link,title,excerpt,content'
   });
+  if (options.slug) { params.delete('search'); params.set('slug', options.slug); }
+  else if (options.sourceChecks) params.set('orderby', 'relevance');
   const rows = await fetchWithTimeout(`https://news.crunchbase.com/wp-json/wp/v2/posts?${params}`, {
     asJson: true,
     headers: { 'User-Agent': BROWSER_UA }
   });
   if (!Array.isArray(rows)) throw new Error('Crunchbase posts 返回结构异常');
-  if (sourceChecks) sourceChecks.push(checkVcSourceResponse(rows, isoDate()));
+  if (options.sourceChecks) options.sourceChecks.push(checkVcSourceResponse(rows, isoDate()));
   return rows.map((post) => ({
     id: post.id,
     date: post.date || null,
     link: post.link || null,
     title: htmlToText(post.title?.rendered || post.title || ''),
-    text: htmlToText(`${post.title?.rendered || ''} ${post.excerpt?.rendered || ''} ${post.content?.rendered || ''}`)
+    text: htmlToText(options.sourceChecks ? post.content?.rendered || '' : `${post.title?.rendered || ''} ${post.excerpt?.rendered || ''} ${post.content?.rendered || ''}`)
   })).filter((post) => post.id && post.title);
 }
 
@@ -1743,33 +1746,70 @@ const autoBuilders = {
 // ---------- 研究口径 hybrid builders ----------
 
 async function fetchVcAiShareFromCrunchbase(ctx = {}) {
+  const today = isoDate();
+  const entry = ctx.config?.curated?.vc_ai_share;
+  const maxAgeDays = entry?.maxAgeDays || 120;
+  // Discover the latest completed global quarter first. A rolling generic news
+  // query can stay healthy while omitting that quarter's original report.
+  let index = Number(today.slice(0, 4)) * 4 + Math.floor((Number(today.slice(5, 7)) - 1) / 3) - 1;
   const sourceChecks = [];
-  const posts = await retry(() => crunchbaseWpPosts('AI venture funding', 20, sourceChecks), 'Crunchbase AI VC posts', 1);
+  const failures = [];
   let observation;
-  try {
-    observation = selectVcObservation(posts, extractVcAiFundingShare, isoDate(), ctx.config?.curated?.vc_ai_share?.maxAgeDays || 120);
-  } catch (error) {
-    throw evidenceGapError(error, 'vc_ai_share', sourceChecks, isoDate());
+  for (let attempt = 0; attempt < 2 && !observation; attempt += 1, index -= 1) {
+    const year = Math.floor(index / 4);
+    const quarter = index % 4 + 1;
+    const search = `Q${quarter} ${year} global`;
+    const options = { sourceChecks };
+    const knownUrl = entry?.sourceObservation?.sourceUrl;
+    const slug = typeof knownUrl === 'string' && knownUrl.match(new RegExp(`^https://news\\.crunchbase\\.com/venture/(q${quarter}-${year}-global-[a-z0-9-]+)/$`, 'u'))?.[1];
+    for (const opts of [options, ...(slug ? [{ ...options, slug }] : [])]) {
+      let posts;
+      try {
+        posts = await retry(() => crunchbaseWpPosts(search, opts.slug ? 1 : 30, opts), 'Crunchbase global quarterly VC posts', 1);
+      } catch (error) {
+        failures.push(error);
+        continue;
+      }
+      try {
+        observation = selectVcObservation(posts, today, maxAgeDays);
+        if (observation.period === `${year}-Q${quarter}` && (!entry?.sourceObservation?.period || observation.period >= entry.sourceObservation.period)) break;
+        observation = null;
+      } catch { /* Try the dated original, if registered, or a still-fresh prior quarter. */ }
+    }
   }
-  const { post, parsed, articleDate, observationDate } = observation;
-  const { aiFundingB, sharePct, totalFundingB, evidenceText } = parsed;
-  if (!(aiFundingB > 1 && sharePct > 0 && sharePct <= 100)) throw new Error(`Crunchbase AI VC 数值越界 ${aiFundingB}/${sharePct}`);
-  const status = classifyNumeric(sharePct, 50, 30);
+  if (!observation) {
+    if (failures.length) throw failures[0];
+    const check = {
+      source: 'Crunchbase News WordPress API',
+      status: sourceChecks.length && sourceChecks.every(item => item.status === 'ok') ? 'ok' : 'invalid_content'
+    };
+    const error = new Error('vc_current_period_unconfirmed: no recent single-period global AI share evidence');
+    throw evidenceGapError(error, 'vc_ai_share', [check], today);
+  }
+  const { post, parsed, articleDate, period, start, end } = observation;
+  const { aiFundingB, totalFundingB, publishedSharePct, sharePct, evidenceText } = parsed;
+  const status = sharePct > 50 ? 'red' : sharePct >= 30 ? 'yellow' : 'green';
   return {
     status,
-    value_display: `~${sharePct.toFixed(0)}%`,
-    source_name: 'Crunchbase News public article parser',
-    as_of: observationDate,
-    note: `Crunchbase News 公开文章(${articleDate})解析:AI startup funding 约 $${aiFundingB.toFixed(0)}B,占全球 VC ${sharePct.toFixed(0)}%${Number.isFinite(totalFundingB) ? `,隐含/披露总额约 $${totalFundingB.toFixed(0)}B` : ''};>50% 仍属资金面红区。阈值:>50% 红 / 30-50% 黄 / <30% 绿`,
+    value_display: `${sharePct.toFixed(1)}%`,
+    source_name: 'Crunchbase 全球创投季度报告',
+    as_of: articleDate,
+    note: `Crunchbase ${period} 全球创投融资：AI ${aiFundingB}B 美元 / 总额 ${totalFundingB}B 美元，按披露金额计算为 ${sharePct.toFixed(1)}%（原报告披露 ${publishedSharePct}%）。报告发布于 ${articleDate}，数据对应当季而非本周。`,
     detail: {
       source: 'Crunchbase News WordPress API',
-      url: post.link,
+      sourceObservation: {
+        contract: 'bubble-source-observation-v1', basis: 'crunchbase_global_quarterly',
+        observationDate: articleDate, publicationDate: articleDate, sourceUrl: post.link,
+        period, periodStart: start, periodEnd: end, geography: 'global',
+        aiFundingUsdB: aiFundingB, totalFundingUsdB: totalFundingB
+      },
       articleDate,
-      observationDate,
+      articleTitle: post.title,
       aiFundingB,
       totalFundingB,
+      publishedSharePct,
       sharePct,
-      parser: 'ai_sector_total_global_vc_sentence_v2',
+      parser: VC_QUARTERLY_PARSER,
       evidenceText
     }
   };
@@ -2383,76 +2423,11 @@ async function fetchEnterpriseDeployFromPublicReports() {
   };
 }
 
-function sentenceMatches(text, companyRe, termRe) {
-  return String(text || '')
-    .split(/[.!?。；;\n]/u)
-    .map((s) => s.replace(/\s+/gu, ' ').trim())
-    .filter((s) => s.length >= 28 && s.length <= 360 && companyRe.test(s) && termRe.test(s))
-    .slice(0, 12);
-}
-
-async function fetchNeocloudCreditFromPublicMonitor(ctx = {}) {
-  const pages = [
-    { source: 'PRNewswire:CoreWeave', url: 'https://www.prnewswire.com/news/coreweave/' },
-    { source: 'Lambda official blog', url: 'https://lambda.ai/blog/lambda-closes-1-billion-senior-secured-credit-facility' },
-    { source: 'Crusoe official newsroom', url: 'https://www.crusoe.ai/resources/newsroom/crusoe-secures-usd750-million-credit-facility-from-brookfield-to-accelerate' },
-    { source: 'Nebius newsroom financing update', url: 'https://nebius.com/newsroom/nebius-provides-financing-update' },
-    { source: 'Nebius newsroom offering close', url: 'https://nebius.com/newsroom/nebius-group-announces-closings-of-its-public-offering-of-class-a-ordinary-shares-and-concurrent-private-offering-of-convertible-senior-notes-with-aggregate-gross-proceeds-to-date-of-approximately-4-2-billion' }
-  ];
-  const companyRe = /\b(CoreWeave|Nebius|Lambda|Crusoe)\b/iu;
-  const negativeRe = /\b(default|payment default|downgrade|downgraded|distressed|distress|bankruptcy|insolvency|covenant breach|negative outlook|rating watch negative)\b|违约|降级|债务重组|破产|资不抵债/iu;
-  const financingRe = /\b(credit facility|senior secured credit facility|senior notes|convertible senior notes|financing|offering|debt secured|gross proceeds|funding)\b|融资|信贷|优先票据|可转换票据/iu;
-  const negativeEvents = [];
-  const financingEvents = [];
-  const failures = [];
-  const datedEvidence = [];
-  const sourceChecks = [];
-  let checkedPages = 0;
-  for (const page of pages) {
-    const sourceCheck = { source: page.source, status: 'fetch_failed' };
-    sourceChecks.push(sourceCheck);
-    try {
-      const html = await fetchWithTimeout(page.url, { headers: { 'User-Agent': BROWSER_UA }, timeoutMs: 15000 });
-      checkedPages += 1;
-      const text = htmlToText(html);
-      sourceCheck.status = checkNeocloudSourceContent(page.source, text).status;
-      const publishedAt = articlePublishedDate(html);
-      requireObservationDate(publishedAt, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21, 'neocloud');
-      const company = page.source.match(/CoreWeave|Lambda|Crusoe|Nebius/u)?.[0];
-      datedEvidence.push({ ...page, company, publishedAt });
-      for (const snippet of sentenceMatches(text, companyRe, negativeRe)) negativeEvents.push({ ...page, publishedAt, snippet: compactSnippet(snippet, 180) });
-      for (const snippet of sentenceMatches(text, companyRe, financingRe)) financingEvents.push({ ...page, publishedAt, snippet: compactSnippet(snippet, 180) });
-    } catch (error) {
-      failures.push({ source: page.source, reason: error.message });
-    }
-  }
-  let coverage;
-  try {
-    coverage = requireNeocloudCoverage(datedEvidence, isoDate(), ctx.config?.curated?.neocloud_credit?.maxAgeDays || 21);
-  } catch (error) {
-    throw evidenceGapError(error, 'neocloud_credit', sourceChecks, isoDate());
-  }
-  if (!checkedPages || !financingEvents.length) {
-    throw new Error(`neocloud public credit monitor evidence 不足: checked=${checkedPages}, financing=${financingEvents.length}, failures=${failures.length}`);
-  }
-  const status = negativeEvents.length ? 'red' : 'green';
-  return {
-    status,
-    value_display: negativeEvents.length ? `${negativeEvents.length} 件` : '0 件',
-    source_name: 'CoreWeave / Lambda / Crusoe / Nebius public credit-event monitor',
-    as_of: coverage.map(row => row.publishedAt).sort()[0],
-    note: negativeEvents.length
-      ? `公开 neocloud 信用事件监测命中 ${negativeEvents.length} 条违约/降级/困境融资线索,首条「${negativeEvents[0].snippet}」;按口径任何正式信用事件即红。`
-      : `公开 neocloud 信用事件监测覆盖 CoreWeave/Lambda/Crusoe/Nebius 共 ${checkedPages} 个页面,未命中违约、降级或困境重组词;同时记录 ${financingEvents.length} 条融资/票据/credit facility 正常事件。该项不是完整评级数据库。判级:任何违约/降级=红 / 无正式事件=绿`,
-    detail: {
-      source: 'public neocloud credit-event monitor',
-      datedEvidence: coverage,
-      checkedPages,
-      failures,
-      negativeEvents: negativeEvents.slice(0, 5),
-      financingEvents: financingEvents.slice(0, 8)
-    }
-  };
+function fetchNeocloudCreditFromPublicMonitor() {
+  return probeNeocloudSources({
+    today: isoDate(),
+    loadText: async url => htmlToText(await fetchWithTimeout(url, { headers: { 'User-Agent': BROWSER_UA }, timeoutMs: 15000 }))
+  });
 }
 
 function returnPctOverDays(closes, days) {

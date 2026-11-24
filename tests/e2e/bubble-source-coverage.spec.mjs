@@ -6,7 +6,7 @@ import { writeFile } from 'node:fs/promises';
 for (const width of [1440, 390]) {
   test(`retained source coverage remains visible at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 });
-    await page.clock.setFixedTime(new Date('2026-11-13T23:00:00Z'));
+    await page.clock.setFixedTime(new Date('2026-11-23T23:00:00Z'));
     const data = JSON.parse(readFileSync('data/bubble-watch.json', 'utf8'));
     const row = data.indicators.find(item => item.id === 'neocloud_credit');
     // Deterministic diagnostics fixture; later production refreshes cannot erase this case.
@@ -29,11 +29,22 @@ for (const width of [1440, 390]) {
       await writeFile(testInfo.outputPath(`${name}-${width}-styles.json`), JSON.stringify(styles, null, 2));
       await card.screenshot({ path: testInfo.outputPath(`${name}-${width}.png`) });
     };
+    const arr = data.indicators.find(item => item.id === 'arr_2nd_deriv');
+    arr.status = 'unknown';
+    arr.note = '自动候选最新里程碑 2026-05-28 也已过期（179 天）。';
+    arr.evidence_gap = { policy: 'arr-observation-eligibility-v1' };
+    data.as_of_date = '2026-11-23';
     await page.goto('/bubble-watch.html');
+    const arrCard = page.locator('section.category article.indicator').filter({ has: page.locator('.name-en', { hasText: /^AI ARR 2nd Derivative$/ }) });
+    await expect(arrCard.locator('.note').first()).toContainText('SaaStr 报道日期为 2026-05-28');
+    await expect(arrCard.locator('.arr-issuer-context')).toContainText('2026-10-31，公司年化收入运行率约 810 亿美元');
+    await expect(arrCard.locator('.status-bar')).toHaveClass('status-bar unknown');
     await expect(card.locator('.source-coverage-notice')).toContainText('0 项不代表当前已确认没有信用事件');
     await expect(card.locator('.source-coverage-notice')).toContainText('更新核验 2026-11-10');
-    await expect(card.locator('.number')).toHaveText(original.value);
-    await expect(card.locator('.status-bar')).toHaveClass(`status-bar ${original.status}`);
+    await expect(card.locator('.number')).toHaveText('本期覆盖待确认');
+    await expect(card.locator('.note').first()).toContainText('历史快照（2026-11-08）：0 项已确认事件。已发布总分仍按该快照的绿灯计算');
+    await expect(card.locator('.status-bar')).toHaveClass('status-bar retained-coverage');
+    await expect(card.locator('.badge.retained-coverage')).toHaveText('覆盖待核');
     const vc = page.locator('section.category article.indicator').filter({ has: page.locator('.name-en', { hasText: /^AI \/ Total VC Funding$/ }) });
     await expect(vc.locator('.source-coverage-notice')).toContainText('同一期间的合格全球 AI 创投占比');
     await capture('coverage-fallback');
@@ -41,7 +52,9 @@ for (const width of [1440, 390]) {
     // A subsequent successfully published observation must not inherit the warning.
     row.provenance.mode = 'auto';
     delete row.provenance.evidenceGate;
+    data.as_of_date = '2026-11-18';
     await page.reload();
+    await expect(arrCard.locator('.arr-issuer-context')).toHaveCount(0);
     await expect(card.locator('.source-coverage-notice')).toHaveCount(0);
     await expect(card.locator('.number')).toHaveText(original.value);
     await capture('coverage-normal');

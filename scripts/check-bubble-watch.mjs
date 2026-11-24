@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCoreAiAccountingEnforcementEvent } from './bubble-watch/accounting-event-classifier.mjs';
 import { assessUnderlyingObservationFreshness } from './bubble-watch/observation-freshness.mjs';
-import { extractVcAiFundingShare } from './bubble-watch/source-evidence-policy.mjs';
+import { selectVcObservation, VC_QUARTERLY_PARSER } from './bubble-watch/source-evidence-policy.mjs';
 import {
   evaluateInsiderLiveCoverage,
   INSIDER_PARTIAL_COVERAGE_POLICY
@@ -644,22 +644,31 @@ check('contract', buildSrc.includes('const multiSourceConfirmed = confirmingSour
   'ceo_hedging 活跃多源合并路径必须保留单源红灯封顶规则');
 check('contract', !buildSrc.includes('fetchCeoHedgingFromWindNews'),
   'ceo_hedging 不得恢复付费 Wind 回退');
-check('contract', buildSrc.includes('extractVcAiFundingShare') && buildSrc.includes('ai_sector_total_global_vc_sentence_v2'),
-  'vc_ai_share 必须使用 AI sector / total global VC 句子级解析器,避免误抓巨额轮次数值');
+check('contract', buildSrc.includes('selectVcObservation') && buildSrc.includes('VC_QUARTERLY_PARSER'),
+  'vc_ai_share 必须使用同季度全球美元分子与分母证据解析器');
 check('contract', buildSrc.includes('UPSTREAM_SYNC_LOCAL_AUTHORITY_BLOCKLIST') && buildSrc.includes("'mag4_fcf_yoy'"),
   'mag4_fcf_yoy 必须在上游同步 blocklist 中,不得被参考站编辑口径覆盖');
 
 const vcAiShare = indicatorById.vc_ai_share;
-if (vcAiShare?.provenance?.mode === 'auto' && /Crunchbase News WordPress API/iu.test(vcAiShare.provenance?.detail?.source || '')) {
-  const detail = vcAiShare.provenance.detail;
-  check('contract', detail.parser === 'ai_sector_total_global_vc_sentence_v2', 'vc_ai_share Crunchbase 路径必须标注 v2 parser');
-  // ADR-0048: validate original sector evidence, not Q1 2026's frozen numerical floor.
-  const replay = extractVcAiFundingShare(detail.evidenceText);
-  check('contract', replay && replay.aiFundingB === detail.aiFundingB && replay.sharePct === detail.sharePct
-    && detail.aiFundingB > 0 && detail.sharePct > 0 && detail.sharePct <= 100,
-    `vc_ai_share Crunchbase 数值必须可从全球 AI 行业占比原文重放: aiFundingB=${detail.aiFundingB}, sharePct=${detail.sharePct}`);
-  check('contract', /total global venture funding/iu.test(detail.evidenceText || ''),
-    'vc_ai_share evidenceText 必须来自 total global venture funding 句子');
+if (vcAiShare?.provenance?.mode === 'auto') {
+  const detail = vcAiShare.provenance.detail || {};
+  const source = detail.sourceObservation || {};
+  let replay = null;
+  try {
+    replay = selectVcObservation([{ title: detail.articleTitle, date: detail.articleDate,
+      link: source.sourceUrl, text: detail.evidenceText }], data.as_of_date);
+  } catch { /* Missing or inconsistent evidence fails the check below. */ }
+  check('contract', detail.source === 'Crunchbase News WordPress API' && detail.parser === VC_QUARTERLY_PARSER
+    && replay && source.contract === 'bubble-source-observation-v1' && source.basis === 'crunchbase_global_quarterly'
+    && source.geography === 'global' && source.period === replay.period && source.periodStart === replay.start
+    && source.periodEnd === replay.end && replay.articleDate === source.publicationDate
+    && source.publicationDate === source.observationDate && source.observationDate === vcAiShare.as_of
+    && replay.parsed.aiFundingB === detail.aiFundingB && detail.aiFundingB === source.aiFundingUsdB
+    && replay.parsed.totalFundingB === detail.totalFundingB && detail.totalFundingB === source.totalFundingUsdB
+    && replay.parsed.publishedSharePct === detail.publishedSharePct && replay.parsed.sharePct === detail.sharePct
+    && vcAiShare.value_display === `${detail.sharePct.toFixed(1)}%`
+    && vcAiShare.status === (detail.sharePct > 50 ? 'red' : detail.sharePct >= 30 ? 'yellow' : 'green'),
+    'vc_ai_share Crunchbase 数值与公开观察必须可从同季度全球创投金额原文重放');
 }
 
 const mag4Fcf = indicatorById.mag4_fcf_yoy;

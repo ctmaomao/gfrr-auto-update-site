@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { hasNamedCeoFinancialCaution, classifyCeoCautionCounts, selectVcObservation, extractVcAiFundingShare, articlePublishedDate, requireNeocloudCoverage, alignedBreadth, breadthSourceLabel, pairRpoPeriods, parseRpoTable, describeRpoCoverage, assertRpoCoverage, MIN_RPO_COMPANIES, RPO_COMPANIES } from '../../scripts/bubble-watch/source-evidence-policy.mjs';
+import { probeNeocloudSources } from '../../scripts/bubble-watch/neocloud-source-probes.mjs';
 
 test('CEO news volume without attributed financial caution cannot change the light', () => {
   assert.deepEqual(classifyCeoCautionCounts(20, 0), { status: 'green', display: '无' });
@@ -48,32 +49,56 @@ test('CEO evidence rejects denial and explicitly recycled quotation context', ()
   ]) assert.equal(hasNamedCeoFinancialCaution(text), false, text);
 });
 
-const today = '2026-09-14';
-const sector = 'AI was the leading sector, with $210 billion going to companies in the sector, representing 70% of total global venture funding.';
-const post = { title: 'H1 2026 funding', date: '2026-07-01T12:00:00', text: sector };
+const vcToday = '2026-11-24';
+const title = 'Crunchbase Data: Q3 2026 Posted A Record Count Of Billion-Dollar Rounds As The Global AI Race Heats Up';
+const link = 'https://news.crunchbase.com/venture/q3-2026-global-startup-funding-ai-billion-dollar-rounds-exits-data/';
+const total = 'Global venture funding totaled $159 billion in Q3 2026 with close to 6,000 startups funded, Crunchbase data shows.';
+const sector = 'AI-driven startups across the stack raised $102 billion, or 64% of global venture capital, down from the two previous quarters, but still 14 percentage points above Q3 2025 global funding.';
+const post = { title, link, date: '2026-10-05T12:00:00', text: `${total} ${sector}` };
 
-test('VC accepts a lower genuine sector share and preserves its observation period', () => {
-  const value = selectVcObservation([post], extractVcAiFundingShare, today);
-  assert.equal(value.parsed.sharePct, 70);
-  assert.equal(value.observationDate, '2026-06-30');
-  assert.equal(value.articleDate, '2026-07-01');
+test('VC accepts the primary Q3 2026 report with comparative periods and preserves both dates', () => {
+  const value = selectVcObservation([post], vcToday);
+  assert.equal(value.parsed.aiFundingB, 102);
+  assert.equal(value.parsed.totalFundingB, 159);
+  assert.equal(value.parsed.sharePct.toFixed(1), '64.2');
+  assert.equal(value.parsed.publishedSharePct, 64);
+  assert.equal(value.period, '2026-Q3');
+  assert.equal(value.end, '2026-09-30');
+  assert.equal(value.articleDate, '2026-10-05');
+  assert.equal(value.parsed.evidenceText, `${total} ${sector}`);
+  assert.deepEqual(extractVcAiFundingShare(value.parsed.evidenceText, value.period), value.parsed);
 });
-test('VC rejects stale, future, mixed-period and megadeal-only evidence', () => {
+test('VC rejects wrong scope, inferred totals, mismatched quarters and inconsistent values', () => {
   for (const invalid of [
-    { ...post, title: 'Q1 2026 funding', date: '2026-04-01' },
-    { ...post, title: 'Q1 2026 funding', date: today },
-    { ...post, title: 'Q3 2026 funding' },
-    { ...post, title: 'H1 2026 compared with H1 2025' },
-    { ...post, text: 'Four AI megadeals raised $188 billion, 65% of quarterly funding.' },
-    { ...post, text: 'Four AI megadeals raised $188 billion, 65% of total global venture funding.' }
-  ]) assert.throws(() => selectVcObservation([invalid], extractVcAiFundingShare, today), /unconfirmed/);
-  assert.equal(extractVcAiFundingShare('Four AI megadeals raised $188 billion, 65% of quarterly funding.'), null);
-  assert.equal(extractVcAiFundingShare('Four AI megadeals raised $188 billion, 65% of total global venture funding.'), null);
+    { ...post, title: 'H1 2026 funding' },
+    { ...post, title: 'Q3 2026 compared with Q3 2025' },
+    { ...post, title: 'Q3 2026 YTD funding' },
+    { ...post, link: link.replace('global', 'north-america') },
+    { ...post, link: link.replace('news.crunchbase.com', 'example.com') },
+    { ...post, date: '2026-09-29' },
+    { ...post, date: '2026-11-25' },
+    { ...post, text: sector },
+    { ...post, text: `Global venture funding totaled $159 billion in Q3 2026 excluding European deals. ${sector}` },
+    { ...post, text: `Global venture funding totaled $159 billion in Q3 2026 in our preliminary scenario. ${sector}` },
+    { ...post, text: `${total} ${sector.replace('the two previous quarters, but still', 'the two previous quarters excluding Europe, but still')}` },
+    { ...post, text: `${total.replace('Q3 2026', 'Q2 2026')} ${sector}` },
+    { ...post, text: `${total} ${sector.replace('64%', '65%')}` },
+    { ...post, text: `${total} ${sector.replace('global', 'US')}` },
+    { ...post, text: `${total} ${sector.replace('venture capital, down', 'venture capital in Q2 2026, down')}` },
+    { ...post, text: `${total} ${sector.replace('venture capital, down', 'venture capital in October 2026, down')}` },
+    { ...post, text: `${total} ${sector.replace('global venture capital', 'global deal count')}` },
+    { ...post, text: `${total} Four AI megadeals raised $102 billion, or 64% of global venture capital.` },
+  ]) assert.throws(() => selectVcObservation([invalid], vcToday), /unconfirmed/);
+  assert.throws(() => selectVcObservation([post], '2027-02-01'), /unconfirmed/);
 });
 test('VC chooses the latest verified period instead of the first search hit', () => {
-  const result = selectVcObservation([{ ...post, title: 'Q1 2026 funding', date: '2026-04-01' }, post], extractVcAiFundingShare, today);
-  assert.equal(result.observationDate, '2026-06-30');
+  const q2 = { title: 'Q2 2026 funding', link: link.replace('q3-2026', 'q2-2026'), date: '2026-07-06',
+    text: `${total.replace('Q3 2026','Q2 2026')} ${sector}` };
+  assert.equal(selectVcObservation([q2], '2026-10-01').period, '2026-Q2');
+  assert.equal(selectVcObservation([q2, post], '2026-10-06').period, '2026-Q3');
 });
+
+const today = '2026-09-14';
 test('Neocloud index modification and old financing pages cannot prove current zero events', () => {
   assert.equal(articlePublishedDate('<meta property="article:modified_time" content="2026-09-14">'), null);
   assert.equal(articlePublishedDate('<script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2025-05-01","dateModified":"2026-09-14"}</script>'), '2025-05-01');
@@ -200,4 +225,29 @@ test('RPO coverage gate keeps the >=2 company rule and records per-company sourc
   const unbounded = describeRpoCoverage({ failures: Array.from({ length: 4 }, (_, i) => ({ ticker: 'ORCL', source: 'stockanalysis', reason: 'x'.repeat(500) + `\n${i}` })) });
   assert.ok(unbounded.length <= 600);
   assert.equal(/\n/u.test(unbounded), false);
+});
+
+for (const phrase of [
+  'may default if a covenant is breached',
+  'has not defaulted on any debt',
+  'deploys a new optical network',
+  'closes a new secured financing',
+  'says a counterparty defaulted yesterday',
+  'repeats a previously announced downgrade',
+  'was downgraded today' // Even a seemingly definitive assertion on a non-register isn't complete cohort evidence.
+]) test(`legacy probes cannot score: ${phrase}`, async () => {
+  const calls = [];
+  await assert.rejects(probeNeocloudSources({ today: '2026-11-24', loadText: async url => {
+    calls.push(url);
+    return `2026-11-24 CoreWeave, Lambda, Nebius and Crusoe: each issuer ${phrase}. `.repeat(3);
+  } }), e => e.evidenceGate.reasonCode === 'neocloud_current_coverage_unconfirmed'
+    && e.evidenceGate.checks.length === 5 && e.evidenceGate.checks.every(c => c.status === 'ok'));
+  assert.equal(new Set(calls).size, 5);
+});
+test('transport and response failures stay distinguishable from an evidence gap with healthy sources', async () => {
+  await assert.rejects(probeNeocloudSources({ today: '2026-11-24', loadText: async url => {
+    if (new URL(url).hostname === 'lambda.com') throw Error('offline');
+    return 'Access Denied';
+  } }), e => e.evidenceGate.checks.filter(c => c.status === 'fetch_failed').length === 1
+    && e.evidenceGate.checks.filter(c => c.status === 'invalid_content').length === 4);
 });

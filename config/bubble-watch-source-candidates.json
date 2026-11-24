@@ -8,10 +8,10 @@
       "freeSourceCandidates": [
         {
           "source": "Crunchbase News WordPress API",
-          "url": "https://news.crunchbase.com/wp-json/wp/v2/search?search=AI%20venture%20funding%202026",
+          "url": "https://news.crunchbase.com/wp-json/wp/v2/posts",
           "cadence": "quarterly",
-          "role": "public article parser for AI funding dollars and share",
-          "limitations": "Crunchbase article text can move; PitchBook remains paywalled and is not scraped."
+          "role": "latest completed global quarterly report with same-period disclosed AI dollars and disclosed total dollars",
+          "limitations": "Targeted by quarter; ambiguous periods, monthly/YTD data and implied denominators are rejected. PitchBook remains paywalled and is not scraped."
         }
       ]
     },
