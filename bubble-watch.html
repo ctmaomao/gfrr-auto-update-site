@@ -442,6 +442,17 @@ function escapeHtml(s) {
   return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function isArrEvidenceGap(item) {
+  return item.id === 'arr_2nd_deriv' && item.status === 'unknown'
+    && item.evidence_gap?.policy === 'arr-observation-eligibility-v1';
+}
+
+function arrIssuerContext(item, issueDate) {
+  // Context only: the SEC filing is not an input to the published ARR series or its freshness.
+  if (!isArrEvidenceGap(item) || !strictEvidenceDate(issueDate) || issueDate < '2026-11-19') return '';
+  return `<div class="note arr-issuer-context"><a href="https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Anthropic 招股书</a>：截至 2026-10-31，公司年化收入运行率约 810 亿美元，较 9 月末增加 100 亿美元。该口径含用量费用，不是订阅 ARR 或已确认收入；缺少可比序列，仅供背景参考，不更新本卡评分。</div>`;
+}
+
 function safeHttpsUrl(value) {
   try {
     const url = new URL(String(value || ''));
@@ -958,20 +969,25 @@ function render(data, editorialStatus = null) {
             ${items.map(ind => {
               const ratioView = nvdaDisplayState(ind);
               const coverageNotice = sourceCoverageNotice(ind);
+              const retainedCredit = ind.id === 'neocloud_credit' && ind.provenance?.mode === 'auto_fallback';
+              const shownStatus = retainedCredit ? 'unknown' : ind.status;
+              const retainedLight = { green: '绿灯', yellow: '黄灯', red: '红灯' }[ind.status] || '待确认';
               const carried = !ind.stale && ind.as_of && data.as_of_date && ind.as_of < data.as_of_date;
               return `
               <article class="indicator${ind.stale || freshness.cards[indicators.indexOf(ind)].status === 'stale' ? ' stale' : ''}">
-                <div class="status-bar ${ind.status}"></div>
+                <div class="status-bar ${shownStatus}"></div>
                 <div class="head">
                   <div>
                     <div class="name-en">${escapeHtml(ind.name_en)}</div>
                     <div class="name-zh">${escapeHtml(ind.name_zh)}</div>
                     <div class="score-role ${ind.score_role === 'shadow' ? 'shadow' : 'core'}">${ind.score_role === 'shadow' ? '影子观察' : '固定核心'}</div>
                   </div>
-                  ${statusBadge(ind.status)}${ratioView ? `<span class="carry-tag">${escapeHtml(ratioView.label)}</span>` : ''}
+                  ${statusBadge(shownStatus)}${ratioView ? `<span class="carry-tag">${escapeHtml(ratioView.label)}</span>` : ''}
                 </div>
-                <div class="number">${escapeHtml(ratioView ? ratioView.value : ind.value_display || ind.value)}</div>
-                <div class="note">${escapeHtml(ratioView ? ratioView.note : ind.note)}</div>
+                <div class="number">${escapeHtml(retainedCredit ? '本期覆盖待确认' : ratioView ? ratioView.value : ind.value_display || ind.value)}</div>
+                <div class="note">${retainedCredit ? `历史快照（${escapeHtml(strictEvidenceDate(ind.as_of) ? ind.as_of : '日期未核实')}）：${escapeHtml(ind.value_display || '未记录')}。已发布总分仍按该快照的${retainedLight}计算。 ` : ''}${escapeHtml(ratioView ? ratioView.note : isArrEvidenceGap(ind)
+                  ? (ind.note || '').replace('自动候选最新里程碑', '自动候选的最新 SaaStr 报道日期为') : ind.note)}</div>
+                ${arrIssuerContext(ind, data.as_of_date)}
                 ${coverageNotice ? `<div class="note source-coverage-notice">${escapeHtml(coverageNotice)}</div>` : ''}
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>

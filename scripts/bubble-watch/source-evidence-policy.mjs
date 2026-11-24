@@ -7,34 +7,35 @@ export function requireObservationDate(date, today, maxAgeDays, label) {
   return result;
 }
 
-export function vcObservationPeriod(post) {
-  const text = `${post.title || ''} ${post.text || ''}`;
-  const periods = [];
-  for (const m of text.matchAll(/\b(Q[1-4]|H[12])\s*[-/]?\s*(20\d{2})\b/giu)) {
-    const month = Number(m[1][1]) * (m[1][0].toUpperCase() === 'Q' ? 3 : 6);
-    periods.push(new Date(Date.UTC(Number(m[2]), month, 0)).toISOString().slice(0, 10));
-  }
-  // A mixed-period article is not a machine-verifiable single observation.
-  const unique = [...new Set(periods)];
-  return unique.length === 1 ? unique[0] : null;
+function vcQuarter(title) {
+  const matches = [...String(title || '').matchAll(/\bQ([1-4])\s+((?:20)\d{2})\b/giu)];
+  if (matches.length !== 1 || /\b(?:YTD|year.to.date|first half|second half)\b/iu.test(title)) return null;
+  const [, q, year] = matches[0];
+  return {
+    period: `${year}-Q${q}`,
+    start: `${year}-${String((Number(q) - 1) * 3 + 1).padStart(2, '0')}-01`,
+    end: new Date(Date.UTC(Number(year), Number(q) * 3, 0)).toISOString().slice(0, 10)
+  };
 }
 
-export function selectVcObservation(posts, parseShare, today, maxAgeDays = 120) {
+export function selectVcObservation(posts, today, maxAgeDays = 120) {
   const qualified = [];
   for (const post of posts) {
     try {
+      const quarter = vcQuarter(post.title);
+      const url = new URL(post.link);
+      // Accept an original global quarterly report, not a recap/article that cites one.
+      if (!quarter || url.origin !== 'https://news.crunchbase.com' || url.username || url.password || url.search || url.hash
+          || !new RegExp(`^/venture/q${quarter.period.at(-1)}-${quarter.period.slice(0, 4)}-global-[a-z0-9-]+/$`, 'u').test(url.pathname)) continue;
       const articleDate = String(post.date || '').slice(0, 10);
       requireObservationDate(articleDate, today, maxAgeDays, 'vc_article');
-      const observationDate = vcObservationPeriod(post);
-      requireObservationDate(observationDate, today, maxAgeDays, 'vc_period');
-      if (articleDate < observationDate) continue;
-      const parsed = parseShare(post.text);
-      if (!parsed || !/total global venture funding/iu.test(parsed.evidenceText)
-          || !(parsed.aiFundingB > 0 && parsed.sharePct > 0 && parsed.sharePct <= 100)) continue;
-      qualified.push({ post, parsed, articleDate, observationDate });
+      requireObservationDate(quarter.end, today, maxAgeDays, 'vc_period');
+      if (articleDate < quarter.end) continue;
+      const parsed = extractVcAiFundingShare(post.text, quarter.period);
+      if (parsed) qualified.push({ post, parsed, articleDate, ...quarter });
     } catch { /* Missing, future, old or ambiguous evidence falls back to dated research. */ }
   }
-  qualified.sort((a, b) => b.observationDate.localeCompare(a.observationDate) || b.articleDate.localeCompare(a.articleDate));
+  qualified.sort((a, b) => b.end.localeCompare(a.end) || b.articleDate.localeCompare(a.articleDate));
   if (!qualified.length) throw new Error('vc_current_period_unconfirmed: no recent single-period global AI share evidence');
   return qualified[0];
 }
@@ -115,35 +116,27 @@ export function parseRpoTable(html, label, parseNumber, today) {
   throw new Error('RPO dated value row is unavailable');
 }
 
-export function extractVcAiFundingShare(text) {
-  const normalized = String(text || '').replace(/\s+/gu, ' ').trim();
-  const sentences = normalized
-    .split(/(?<=[.!?。])\s+/u)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const preferred = sentences.find((sentence) => (
-    /\bAI\b/iu.test(sentence)
-    && /total global venture funding|global venture funding/iu.test(sentence)
-    && /\bsector\b/iu.test(sentence)
-  ));
-  const preferredMatch = preferred?.match(/\$?([0-9]+(?:\.[0-9]+)?)\s*billion[^.]{0,140}?([0-9]{1,3})%\s+of\s+total\s+global\s+venture\s+funding/iu);
-  if (preferredMatch) {
-    const sharePct = Number(preferredMatch[2]);
-    const aiFundingB = Number(preferredMatch[1]);
-    const totalFundingB = inferTotalVcFundingB(normalized, aiFundingB, sharePct);
-    return { aiFundingB, sharePct, totalFundingB, evidenceText: preferred };
-  }
+export const VC_QUARTERLY_PARSER = 'crunchbase_paired_global_quarter_v3';
 
-  return null;
+export function extractVcAiFundingShare(text, period) {
+  if (!/^20\d{2}-Q[1-4]$/u.test(period)) return null;
+  const [year, quarter] = period.split('-');
+  const sentences = String(text || '').replace(/\s+/gu, ' ').trim().split(/(?<=[.!?。])\s+/u);
+  // Require a complete, unqualified global aggregate for the named quarter.
+  const totalRe = new RegExp(String.raw`^Global venture funding totaled \$([0-9]+(?:\.[0-9]+)?) billion in ${quarter} ${year}(?: with (?:close to |about )?[\d,]+ startups funded, Crunchbase data shows)?\.?$`, 'iu');
+  const comparison = String.raw`(?:, (?:up|down) from (?:the )?(?:two previous quarters|previous quarter|same quarter a year earlier)(?:, but still \d+ percentage points (?:above|below) Q[1-4] 20\d{2} global funding)?)?`;
+  const aiRe = new RegExp(String.raw`^(?:AI-driven startups(?: across the stack)?|AI startups|AI companies) raised \$([0-9]+(?:\.[0-9]+)?) billion,? or ([0-9]{1,3}(?:\.[0-9]+)?)% of (?:total )?global venture (?:capital|funding)(?: in ${quarter}(?: ${year})?)?${comparison}\.?$`, 'iu');
+  const totals = sentences.map(sentence => sentence.match(totalRe)).filter(Boolean);
+  const ai = sentences.map(sentence => sentence.match(aiRe)).filter(Boolean);
+  if (totals.length !== 1 || ai.length !== 1) return null;
+  const totalFundingB = Number(totals[0][1]);
+  const aiFundingB = Number(ai[0][1]);
+  const publishedSharePct = Number(ai[0][2]);
+  const sharePct = aiFundingB / totalFundingB * 100;
+  if (!(totalFundingB > 0 && aiFundingB > 0 && aiFundingB <= totalFundingB && publishedSharePct > 0
+    && publishedSharePct <= 100 && Math.abs(sharePct - publishedSharePct) <= 0.6)) return null;
+  return { aiFundingB, totalFundingB, publishedSharePct, sharePct, evidenceText: [totals[0][0], ai[0][0]].join(' ') };
 }
-
-function inferTotalVcFundingB(text, aiFundingB, sharePct) {
-  const totalMatch = String(text || '').match(/poured\s+\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu)
-    || String(text || '').match(/global venture (?:investment|funding)[^.]{0,100}?\$?([0-9]+(?:\.[0-9]+)?)\s*billion/iu);
-  if (totalMatch) return Number(totalMatch[1]);
-  return aiFundingB / (sharePct / 100);
-}
-
 
 // The four registered cloud companies. Kept in one place so the coverage gate, the
 // excluded-company disclosure and the builder iterate the same list.
