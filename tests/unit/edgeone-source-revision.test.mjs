@@ -147,7 +147,7 @@ test('publication retains low-frequency, no-change and quota protections', () =>
 test('only a successful eligible no-op proof can skip the unchanged publish path', () => {
   const probe = step('Prove eligible EdgeOne artifact is unchanged');
   assert.match(probe, /if: \(github.event_name == 'schedule' \|\| steps.world_order.outputs.admitted == 'true'\) && steps.review.outcome == 'success' && steps.review.outputs.should_publish == 'true'/);
-  assert.match(probe, /SOURCE_SHA=\$\(git rev-parse HEAD\)\s+export SOURCE_SHA\s+npm ci\s+node scripts\/review-edgeone-noop\.mjs/);
+  assert.match(probe, /SOURCE_SHA=\$\(git rev-parse HEAD\)\s+export SOURCE_SHA\s+node scripts\/review-edgeone-noop\.mjs/);
   assert.match(probe, /continue-on-error: true/);
   assert.doesNotMatch(probe, /GH_TOKEN|secrets\.|deploy.key/i);
   assert.ok(workflow.includes("(steps.noop.outcome != 'success' || steps.noop.outputs.identical != 'true')"));

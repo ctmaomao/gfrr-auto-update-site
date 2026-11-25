@@ -88,7 +88,6 @@ jobs:
           set -euo pipefail
           SOURCE_SHA=$(git rev-parse HEAD)
           export SOURCE_SHA
-          npm ci
           node scripts/review-edgeone-noop.mjs
 
   publish:
