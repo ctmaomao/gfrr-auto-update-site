@@ -13,7 +13,7 @@
 
 ## Section 1 · 维护状态
 
-维护基线：2026-11-18 main `08e3f137`；本轮仅更新 #637–#640 的自然 Daily 与双站验收状态（见[验收快照](#recent-data-fix-acceptance)），不表示其余条目已重新验收。原2026-11-15基线 `d14055f7` 含 #503、#569–#577。下表与当前条目区分代码合并、自然产物和线上验收；未列出的账户激活、来源健康及后续运行不作保证。原实施过程与当时的待审状态保留在[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)，不得把其中旧“待发布”当作当前状态。
+历史核对：11/18 main `08e3f137` 的 #637–#640 Daily／双站见[验收快照](#recent-data-fix-acceptance)；11/15 main `d14055f7` 覆盖 #503、#569–#577。原过程见[收口前固定版本](https://github.com/ctmaomao/gfrr-auto-update-site/blob/7a23c8d4911b7a35c5a17e6e01c6fcf9e606698c/docs/PROJECT_BACKLOG.md)；当前状态以[单一工作表](#active-worktable)为准。
 
 | 项 | 当前依据 / 职责 |
 |---|---|
@@ -34,7 +34,7 @@
 <a id="active-worktable"></a>
 ### 单一工作表 · 当前推进队列
 
-局部核对基线：11/24 UTC main `4adfb1f7`（仅交付与 Bubble 全量；其余沿用[前版](https://github.com/ctmaomao/gfrr-auto-update-site/blob/10e5007ad1527f4337e885fd849bf8a5d606d641/docs/PROJECT_BACKLOG.md#active-worktable)）。合并、部署、自然采用分验；新证据更新原行。
+局部核对：11/25 UTC main `4af16fd6`，仅整理精简项与验收状态；其他行保留各自的证据时间（[核对原版](https://github.com/ctmaomao/gfrr-auto-update-site/blob/4af16fd62da73438102890e632e449a3a4bc0507/docs/PROJECT_BACKLOG.md#active-worktable)）。合并、部署、自然采用分验；新证据更新原行。
 
 | 工作包 / 优先级 | 当前阶段与价值 | 单一职责 / 下一步 | 阻塞与完成标准 |
 |---|---|---|---|
@@ -44,7 +44,7 @@
 | 来源质量 / P1 | Census 9 月手验；[#720 托管](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/44846634404) HEAD 200 缺长度、无产物，[#721](https://github.com/ctmaomao/gfrr-auto-update-site/pull/721) 单字节探测待实证。[#722](https://github.com/ctmaomao/gfrr-auto-update-site/pull/722) HKAB／HKMA 仅证据；Daily 已走 [#729](https://github.com/ctmaomao/gfrr-auto-update-site/pull/729) FRED 主路（WALCL／WRESBAL 11/18），[H.4.1](#daily-fed-h41-fallback) 未尝试；[#731](https://github.com/ctmaomao/gfrr-auto-update-site/pull/731) ON RRP 备用待自然 Daily | 依 [Census 月度回执](../.github/workflows/census-import-cost-shadow.yml)核对限额、成员身份、CRC；CARTS/CRE 离线，[H.8](DATA_SOURCES.md#h8-cre-manual-check)仅手验。备用依[运维手册](OPERATIONS.md)验收，不造故障、不强发 EdgeOne | 无效未知不填零，Census 不入油价或评分，HKMA 不改运行或评分。[Oil News](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45063506620) 误记联网；[#745](https://github.com/ctmaomao/gfrr-auto-update-site/pull/745) 仅据实际 HTTP 记请求；[#759](https://github.com/ctmaomao/gfrr-auto-update-site/pull/759)／[#760](https://github.com/ctmaomao/gfrr-auto-update-site/pull/760) 只恢复 Oil News 定时 Brave。[自然运行](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45295877920) Brave 4/4、Tavily 成功、GDELT 仍受限；其余 Brave 调用仍关闭，不改调度、计费或预算 |
 | 卫星热观察 / P1 | [自然 FIRMS](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45513830086) 11/24 23:54:36.691 UTC，`55bce65d`；EdgeOne 同源 release `d1a29360`，11/25 双站实物与 Git 一致，SHA-256 `07ea991c9120ae710d734c4294f75266f3580527677f3c2c432c18ff36ecf1e9`。 | NOAA20/21：84 个实际请求，42 个 S-NPP 槽退役未联网；公开产物 102 行、15 个探测框有检出，首轮回执含 97 个去重观测 ID（不同口径）。覆盖／过境／云况未知，不推断运营；旧三源比较仍停 | 按[回溯协议](OIL_THERMAL_RETROSPECTIVE_PROTOCOL.md)验配准、云／热质量、有效分母、独立事件／对照；历史地区／GOES 不证实 VIIRS 覆盖，仅复用既有配对。离线：[#743](https://github.com/ctmaomao/gfrr-auto-update-site/pull/743) 拒绝首尾空白标识、不改写；[#746](https://github.com/ctmaomao/gfrr-auto-update-site/pull/746) 门槛成对且有限（增益 0–1、每百负例容许新增误报 0–100）；缺一或无效不下结论，全省略仅描述。[#756](https://github.com/ctmaomao/gfrr-auto-update-site/pull/756) 已合并离线比较器：回执时间无效保留封存窗口、整组不估计；封存时钟仍须有效，不构成统计验证。不改生产、数据或调度，不增取数、费用、告警、方向或评分 |
 | 私有预算与安全恢复 / P1 | DeepSeek 共享预算未初始化；#661 在准入前跳过（见[自然接续回执](#nov-19-natural-adoption)），账本及 proof 代码与真实激活分离 | 主动改进限定单包；复杂约束先独立设计复核，再做最小闭环 | 保留 CNY 10 合并预算、凭据保密、原账本与 receipts；不伪造证据、不绕过 disabled。下方专题及 ADR 是具体步骤，旧自设门槛可审查改进但不得默默绕开 |
-| 代码与流程精简 / P1 | [#747](https://github.com/ctmaomao/gfrr-auto-update-site/pull/747) 已合并，共用宏观展示 VM 测试准备，测试净减 61 行，[精确 CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45073257356) 通过；[#740](https://github.com/ctmaomao/gfrr-auto-update-site/pull/740) 去重运费权限检查断言，净减 72 行 | 既有用例、版本化导入、独立 VM 与 DOM 清理保留；其余改动经专项、全套与独审后串行集成 | 不改生产运行、数据、评分、调度，不重算研究历史 |
+| 代码与流程精简 / P1 | [#747](https://github.com/ctmaomao/gfrr-auto-update-site/pull/747) 宏观展示 VM 测试净减 61 行（[CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45073257356)）；[#740](https://github.com/ctmaomao/gfrr-auto-update-site/pull/740) 运费权限检查断言净减 72 行；[#770](https://github.com/ctmaomao/gfrr-auto-update-site/pull/770) 已合并周报说明文档单独推送时的静态发布过滤 | **已本地核验，待集成**：[#772](https://github.com/ctmaomao/gfrr-auto-update-site/pull/772) 拟删 EdgeOne 只读验证的无用安装，[精确 CI](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45584750170) 待结果；[#773](https://github.com/ctmaomao/gfrr-auto-update-site/pull/773) 共用 Realtime 主流程／恢复发布 shell，运行代码净减 21 行、另加回归测试，待托管 CI。互不重叠可并行，独审后串行集成 | **等待自然验收**：#770 尚待一次纯周报说明改动的自然推送证据，不造触发。四项仅后端提交触发 Pages 部署（[例](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45036557157)），逐一核过检出 SHA，完整检查合计 930 秒；各本地发布文件及摘要与父提交一致，不等于线上字节比对或未来节时。[#774](https://github.com/ctmaomao/gfrr-auto-update-site/pull/774) 拟收窄 Pages 触发，待托管 CI 及自然验收 |
 | 文档与工作表 / P2 | 本表为当前调度入口；历史只保留固定证据入口；Pages/EdgeOne 共用[双站发布排查](OPERATIONS.md#static-publication) | 主动改进维护同一行；周审找矛盾、失效链接和缺口 | 不新建重复总结；当前事实与历史明确分离，仍有效边界不可因归档丢失 |
 | Brent 模型研究 / P2 | 研究候选，不是已验证预测或生产评分 | 每日油价研究拥有冻结协议与阶段结论；工程只承接明确实施包 | point-in-time、版本/定义断点、基线与样本外检验齐备；阶段结论允许有效、无增量或不可行，不无限追加特征 |
 | 独立审计 / P2 | 周审覆盖全项目盲点及优先级，不复制日检 | 周审检查本表遗漏和验收证据，必要时调整同一队列 | 报告新增风险、已关闭项、真实阻塞；无新证据不重启已完成修复 |
@@ -66,11 +66,11 @@
 
 - **Daily / World Order 发布候选验证去重**：以 main `b003bb12` 为基线，发布和失败回执共用候选父提交、产物路径与文件模式检查。Git 按原始路径识别并发变更，中文文档名不再误判为数据输入，跨范围移动仍触发原保护。保留全量验证、有限重试、输出范围与回执；不重取数据，不变更调度或费用。以本地 Git 回归、独审和精确 CI 验证；[11/19](#nov-19-natural-adoption) 仅验收首次推送正常路径。
 
-- **Transport 离线影响声明去重**：23 个仅供复核/回放的 CLI 共用既有 helper 内的一份全 false 声明。验收为各原字段顺序和值、新对象独立性、同一输入/冻结时钟的 CLI 输出及现有检查保持；不共享不同 schema，也不改写入策略、运行时、数据、权限、评分、工作流、来源或付费路径。按单一工作表的「代码与流程精简」独审、全套与精确 CI 后串行集成。
+- **Transport 离线影响声明去重（[#662](https://github.com/ctmaomao/gfrr-auto-update-site/pull/662) 已合并）**：23 个离线 CLI 共用一份全 false 声明；保留字段顺序和值、新对象独立性及冻结输入的 CLI 输出。不共用不同 schema，不改生产边界。
 
 - **热观察基线 JSON 数值保护**：仅基线配置读入接受有限、非负 JSON 数字，保留真零；空值、布尔、字符串、容器不当作零 P95，缺必要 P95 时不能建立比较；无效策略值使用既有默认。旧全局质量窗口只在其有效窗口字段未提供时沿用，明确缺失/无效的有效窗口保持未知。完整三源合成回放可复现旧缺值被当零后触发重复提示；目前冻结配置 42 行核心 P95 均为数字，S-NPP 退役后的旧三源比较仍暂停，未发现实际生产误报。不新增 FIRMS 请求，不改基线文件、历史、评分、源启用或晋升，专项、独审、全套、精确 CI、部署与未来自然采用分别验收。
 
-- **Bubble 周评最终验证去重**：成稿后的最终验证仅运行一次 `check:all`。调用 provider 前，现有工作流检查从实际 npm 脚本图确认 `check:bubble-watch` 仍可达；预算、写入锁、质量门禁、产物与调度不变，不为验证触发周评。
+- **Bubble 周评最终验证去重（[#658](https://github.com/ctmaomao/gfrr-auto-update-site/pull/658) 已合并）**：成稿后的 `check:all` 只跑一次；调用前仍验证脚本图可达 `check:bubble-watch`。预算、写入锁、质量门禁、产物及调度不变，不为验收触发周评。
 
 - **Bubble 独立信用曲线响应边界**：仅加固现有三条 ICE BofA / FRED CSV 请求（HY、CCC、IG），保持每次 12 秒上限并覆盖完整流式响应、64 KiB 字节上限、禁止重定向/重试，CSV 必须是对应系列的两列。三条官方短样本均为 `observation_date,系列ID`；保留 `DATE`、CRLF、BOM、空白/点缺失和真实零兼容。单源拒绝不冒充新鲜数据，保留该源历史和原时点；不改来源权利、刷新周期、数据历史、评分或编辑调用。专项、独审、全套、精确 CI、部署与下一自然信用刷新分别验收。见[信用曲线运维说明](BUBBLE_CREDIT_DAILY_REFRESH_2026_11_12.md)。
 
