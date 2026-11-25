@@ -84,4 +84,5 @@ jobs:
           NODE
 
       - name: Commit updated realtime file to publish branch
-        run: bash scripts/realtime/publish-market.sh "chore: refresh realtime market" "No changes to commit."
+        run: |
+          bash scripts/realtime/publish-market.sh "chore: refresh realtime market" "No changes to commit."

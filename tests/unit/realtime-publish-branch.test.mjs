@@ -99,6 +99,8 @@ test('both workflows keep validation ahead of the shared switch and existing non
     assert.ok(source.indexOf('npm run check:realtime-local-schema') > -1);
     assert.ok(source.indexOf(invocation) > source.indexOf('npm run check:realtime-local-schema'));
     assert.equal(source.split(invocation).length, 2);
+    assert.ok(source.replaceAll('\r\n', '\n').includes(`        run: |\n          ${invocation}\n`),
+      'publisher command with a colon-space in its shell arguments must use a YAML block scalar');
     assert.doesNotMatch(source, /git ls-remote|git push.*--force/);
   }
 });
