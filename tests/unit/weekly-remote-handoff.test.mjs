@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -43,6 +43,17 @@ async function fixture(t) {
   const moduleUrl=pathToFileURL(join(moduleDir,'weekly-remote-handoff.mjs')).href;
   const client=await import(moduleUrl);
   return { root, remote, input, git, client, moduleUrl, trackChild };
+}
+function frozenProductionCli(root) {
+  // Keep the real canonical host and CLI bytes, but do not couple the transport
+  // guards to whichever issue happens to be latest in the production checkout.
+  const cwd = join(root, 'seed');
+  const scripts = join(cwd, 'scripts');
+  mkdirSync(scripts);
+  for (const name of ['weekly-original.mjs', 'weekly-remote-handoff.mjs', 'build-weekly-reports.mjs', 'weekly-issue-identity.mjs']) {
+    copyFileSync(new URL('../../scripts/' + name, import.meta.url), join(scripts, name));
+  }
+  return (args, env) => spawnSync(process.execPath, args, { cwd, encoding: 'utf8', timeout: 5000, env });
 }
 test('remote handoff persists and reads back identical original; retries do not overwrite', async t => {
   const {remote,input,git,client,moduleUrl} = await fixture(t);
@@ -235,6 +246,7 @@ test('batch read verifies multiple independently stored weekly originals', async
 
 test('production CLI refuses fetch and push URL rewrites before any remote mutation', async t => {
   const {root,remote,input,git,client,moduleUrl} = await fixture(t);
+  const cli = frozenProductionCli(root);
   const {persistRemoteHandoff,readRemoteHandoff,readRemoteHandoffs}=client;
   const canonical='https://github.com/ctmaomao/gfrr-auto-update-site.git';
   for (const key of ['insteadOf','pushInsteadOf']) {
@@ -247,7 +259,7 @@ test('production CLI refuses fetch and push URL rewrites before any remote mutat
       ['scripts/weekly-original.mjs','prepare',issue,digest(html)],
       ['scripts/weekly-original.mjs','check',issue,digest(html)],
     ]) {
-      const child=spawnSync(process.execPath,args,{encoding:'utf8',timeout:5000,env});
+      const child = cli(args, env);
       assert.equal(child.status,1,child.stderr);
       assert.match(child.stderr,/Unexpected Git fetch or push endpoint/);
       assert.doesNotMatch(child.stderr,/remote\.git/);
@@ -269,6 +281,7 @@ test('production CLI refuses a separately configured pushurl', async t => {
 
 test('production CLI rejects URL-specific TLS and redirect overrides before network access', async t => {
   const {root,remote,input,git}=await fixture(t);
+  const cli = frozenProductionCli(root);
   const wrapperDir=join(root,'network-blocker'); mkdirSync(wrapperDir);
   const wrapper=join(wrapperDir,'git');
   const realGit=execFileSync('which',['git'],{encoding:'utf8'}).trim();
@@ -285,7 +298,7 @@ test('production CLI rejects URL-specific TLS and redirect overrides before netw
       ['scripts/weekly-original.mjs','prepare',issue,digest(html)],
       ['scripts/weekly-original.mjs','check',issue,digest(html)],
     ]) {
-      const child=spawnSync(process.execPath,args,{encoding:'utf8',timeout:5000,env});
+      const child = cli(args, env);
       assert.equal(child.status,1,child.stderr);
       assert.match(child.stderr,/Unsafe effective Git HTTPS settings/);
     }
@@ -308,6 +321,7 @@ test('exported production entry points ignore an injected destination', async t 
 
 test('production CLI rejects a custom Git remote transport before network access', async t => {
   const {root,input}=await fixture(t);
+  const cli = frozenProductionCli(root);
   const wrapperDir=join(root,'transport-blocker'); mkdirSync(wrapperDir);
   const realGit=execFileSync('which',['git'],{encoding:'utf8'}).trim();
   const log=join(root,'unexpected-transport');
@@ -321,7 +335,7 @@ test('production CLI rejects a custom Git remote transport before network access
     ['scripts/weekly-original.mjs','prepare',issue,digest(html)],
     ['scripts/weekly-original.mjs','check',issue,digest(html)],
   ]) {
-    const child=spawnSync(process.execPath,args,{encoding:'utf8',timeout:5000,env});
+    const child = cli(args, env);
     assert.equal(child.status,1,child.stderr);
     assert.match(child.stderr,/Unexpected Git remote transport/);
   }
