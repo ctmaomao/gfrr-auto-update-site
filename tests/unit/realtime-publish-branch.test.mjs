@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const script = fileURLToPath(new URL('../../scripts/realtime/switch-publish-branch.sh', import.meta.url));
+const publisher = fileURLToPath(new URL('../../scripts/realtime/publish-market.sh', import.meta.url));
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const bash = process.platform === 'win32'
   ? resolve(execFileSync('git', ['--exec-path'], { encoding: 'utf8' }).trim(), '../../../bin/bash.exe')
@@ -23,9 +24,16 @@ function fixture(t, ref = 'refs/tags/realtime-data') {
   git(root, 'init', '-b', 'main', seed);
   git(seed, 'config', 'user.name', 'Test');
   git(seed, 'config', 'user.email', 'test@example.invalid');
-  git(seed, 'commit', '--allow-empty', '-m', 'main seed');
+  mkdirSync(join(seed, 'realtime'));
+  mkdirSync(join(seed, 'scripts/realtime'), { recursive: true });
+  writeFileSync(join(seed, 'realtime/market.json'), '{"fixture":"prior"}\n');
+  writeFileSync(join(seed, 'scripts/realtime/switch-publish-branch.sh'), readFileSync(script));
+  writeFileSync(join(seed, 'scripts/realtime/publish-market.sh'), readFileSync(publisher));
+  git(seed, 'add', 'realtime', 'scripts');
+  git(seed, 'commit', '-m', 'main seed');
   git(seed, 'push', remote, 'main');
-  git(seed, 'commit', '--allow-empty', '-m', 'publish seed');
+  git(seed, 'rm', '-r', 'scripts'); // Publisher must finish even if switching removes its own file.
+  git(seed, 'commit', '-m', 'publish seed');
   const publishSha = git(seed, 'rev-parse', 'HEAD');
   git(seed, 'push', remote, `HEAD:${ref}`);
 
@@ -34,7 +42,7 @@ function fixture(t, ref = 'refs/tags/realtime-data') {
   git(runner, 'remote', 'add', 'origin', pathToFileURL(remote).href);
   git(runner, 'fetch', '--depth=1', 'origin', '+refs/heads/main:refs/remotes/origin/main');
   git(runner, 'switch', '-c', 'main', 'origin/main');
-  return { runner, publishSha, missingRemote: join(root, 'no-such-remote.git') };
+  return { root, remote, runner, publishSha, missingRemote: join(root, 'no-such-remote.git') };
 }
 
 test('shallow main checkout switches to existing realtime-data and tracks the fetched commit', t => {
@@ -76,11 +84,47 @@ test('a failed remote probe preserves its real Git exit status and does not swit
   assert.equal(git(runner, 'branch', '--list', 'realtime-data'), '');
 });
 
+const workflowCases = [
+  ['build-realtime-market', 'chore: refresh realtime market', 'No changes to commit.'],
+  ['recover-stale-realtime-market', 'chore: recover stale realtime market', 'No changes to commit']
+];
+
 test('both workflows keep validation ahead of the shared switch and existing non-force publish', () => {
-  for (const filename of ['build-realtime-market', 'recover-stale-realtime-market']) {
+  const publisherSource = readFileSync(publisher, 'utf8');
+  assert.match(publisherSource, /bash scripts\/realtime\/switch-publish-branch\.sh[\s\S]*?git push --set-upstream origin realtime-data/);
+  assert.doesNotMatch(publisherSource, /git ls-remote|git push.*--force/);
+  for (const [filename, message, noop] of workflowCases) {
     const source = readFileSync(new URL(`../../.github/workflows/${filename}.yml`, import.meta.url), 'utf8');
-    assert.match(source, /npm run check:realtime-local-schema[\s\S]*?bash scripts\/realtime\/switch-publish-branch\.sh[\s\S]*?git push --set-upstream origin realtime-data/);
-    assert.equal(source.match(/switch-publish-branch\.sh/g)?.length, 1);
+    const invocation = `bash scripts/realtime/publish-market.sh "${message}" "${noop}"`;
+    assert.ok(source.indexOf('npm run check:realtime-local-schema') > -1);
+    assert.ok(source.indexOf(invocation) > source.indexOf('npm run check:realtime-local-schema'));
+    assert.equal(source.split(invocation).length, 2);
     assert.doesNotMatch(source, /git ls-remote|git push.*--force/);
   }
 });
+
+for (const [filename, message, noop] of workflowCases) {
+  test(`${filename}: shared publish writes only changed realtime bytes with existing commit subject`, t => {
+    const { root, remote, runner, publishSha } = fixture(t, 'refs/heads/realtime-data');
+    const payload = '{"fixture":"updated"}\n';
+    writeFileSync(join(runner, 'realtime/market.json'), payload);
+    const out = spawnSync(bash, ['scripts/realtime/publish-market.sh', message, noop], {
+      cwd: runner, env: { ...process.env, RUNNER_TEMP: root }, encoding: 'utf8'
+    });
+    assert.equal(out.status, 0, out.stdout + out.stderr);
+    assert.equal(git(remote, 'rev-parse', 'realtime-data^'), publishSha);
+    assert.equal(git(remote, 'show', '-s', '--format=%s', 'realtime-data'), message);
+    assert.equal(git(remote, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'realtime-data'), 'realtime/market.json');
+    assert.equal(execFileSync('git', ['show', 'realtime-data:realtime/market.json'], { cwd: remote, encoding: 'utf8' }), payload);
+  });
+
+  test(`${filename}: identical realtime payload retains exact no-op outcome without pushing`, t => {
+    const { root, remote, runner, publishSha } = fixture(t, 'refs/heads/realtime-data');
+    const out = spawnSync(bash, ['scripts/realtime/publish-market.sh', message, noop], {
+      cwd: runner, env: { ...process.env, RUNNER_TEMP: root }, encoding: 'utf8'
+    });
+    assert.equal(out.status, 0, out.stdout + out.stderr);
+    assert.ok(out.stdout.split(/\r?\n/).includes(noop));
+    assert.equal(git(remote, 'rev-parse', 'realtime-data'), publishSha);
+  });
+}
