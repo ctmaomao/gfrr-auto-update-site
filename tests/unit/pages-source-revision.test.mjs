@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { posix } from 'node:path';
 import test from 'node:test';
 
 test('queued production Pages jobs build checked latest-main rather than the triggering revision', () => {
@@ -45,4 +46,39 @@ test('Pages reuse is bounded to read-only metadata and inspection failure preser
   assert.match(workflow, /deploy:\s+needs: publication_check/u);
   assert.ok(workflow.includes("!cancelled() && (needs.publication_check.result != 'success' || needs.publication_check.outputs.should_deploy != 'false')"));
   assert.equal((workflow.match(/run: npm run check:all/gu) ?? []).length, 1);
+});
+
+test('Pages main pushes filter backend-only work without losing public or publication inputs', () => {
+  const workflowPath = '.github/workflows/deploy-static-site-to-pages.yml';
+  const workflow = readFileSync(workflowPath, 'utf8');
+  const push = /^  push:\n    branches:\n      - main\n    paths:\n((?:      - '[^'\n]+'\n)+)/mu.exec(workflow);
+  assert.ok(push, 'production push must remain a paths-filtered main trigger');
+  const patterns = [...push[1].matchAll(/^      - '([^']+)'$/gmu)].map(([, value]) => value);
+  // Evaluate the filters in declaration order: a negative match excludes only that path.
+  const triggers = files => files.some(file => patterns.reduce((included, pattern) => {
+    const excludes = pattern.startsWith('!');
+    return posix.matchesGlob(file, excludes ? pattern.slice(1) : pattern) ? !excludes : included;
+  }, false));
+
+  const builder = 'scripts/build-pages-artifact.mjs';
+  const admission = 'scripts/review-pages-deployment.mjs';
+  const builderImports = [...readFileSync(builder, 'utf8').matchAll(/^import\s+.+?\s+from\s+'(\.[^']+)'/gmu)]
+    .map(([, source]) => posix.join(posix.dirname(builder), source));
+  assert.deepEqual(builderImports, ['scripts/weekly-issue-identity.mjs']);
+  for (const file of [builder, ...builderImports, admission]) assert.ok(patterns.includes(file), file);
+
+  const backend = ['scripts/check-workflows.mjs', 'scripts/run-daily-pipeline.mjs',
+    'scripts/market-pricing/qqq-yahoo-history-refresh.mjs', 'tests/unit/pages-source-revision.test.mjs',
+    'docs/PROJECT_BACKLOG.md', 'workers/gfrr-realtime-worker/src/index.js', 'package.json', 'package-lock.json'];
+  const readme = 'weekly-reports/README.md';
+  for (const file of [...backend, readme]) assert.equal(triggers([file]), false, file);
+  assert.equal(triggers([...backend, readme]), false);
+  for (const file of ['index.html', 'bubble-watch.html', 'oil-market.html', 'weekly-reports.html',
+    'reports/2026-11-23.html', 'weekly-reports/index.html', 'weekly-reports/2026-11-23-r2.html',
+    'assets/styles.css', 'scripts/app.js', 'scripts/modules/renderWorldOrder.js',
+    'scripts/modules/subdirectory/new-renderer.js', 'data/radar-data.json', 'realtime/market.json',
+    builder, ...builderImports, admission, workflowPath]) {
+    assert.equal(triggers([file]), true, file);
+    assert.equal(triggers([...backend, readme, file]), true, `mixed push with ${file}`);
+  }
 });
