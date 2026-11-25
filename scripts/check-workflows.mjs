@@ -29,7 +29,8 @@ const contracts = [
       'Validate realtime payload',
       'npm run check:realtime-local-schema',
       'Summarize realtime output',
-      'Commit updated realtime file'
+      'Commit updated realtime file',
+      'bash scripts/realtime/publish-market.sh "chore: refresh realtime market" "No changes to commit."'
     ],
     forbidden: [
       '\n  FRED_API_KEY: ${{ secrets.FRED_API_KEY }}',
@@ -55,7 +56,7 @@ const contracts = [
       'package-manager-cache: false',
       'node scripts/check-realtime-health.mjs --soft --github-output',
       'npm run build:realtime',
-      'git push --set-upstream origin realtime-data'
+      'bash scripts/realtime/publish-market.sh "chore: recover stale realtime market" "No changes to commit"'
     ],
     forbidden: [
       'npm run build:daily',
@@ -632,6 +633,10 @@ for (const contract of contracts) {
     }
   }
 }
+
+// Recovery's existing exact push contract now follows the shared writer.
+const realtimePublisherFile = 'scripts/realtime/publish-market.sh';
+requireSourceMarker(realtimePublisherFile, fs.readFileSync(realtimePublisherFile, 'utf8'), 'git push --set-upstream origin realtime-data');
 
 // Conservative 31-day planning forecast. Keep the existing Tavily CI ceiling.
 // Brave’s comparable forecast is planning only; Brave enforces its own cap.
