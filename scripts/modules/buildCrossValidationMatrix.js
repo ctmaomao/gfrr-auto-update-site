@@ -1,4 +1,4 @@
-import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=qqq-signal-copy-20261121';
+import { classifyRepoEvidence } from './macroOverviewNarrative.js?v=oil-route-estimates-20261127';
 
 const ASSESSMENT_LABELS = {
   strong_confirmation: '强确认',

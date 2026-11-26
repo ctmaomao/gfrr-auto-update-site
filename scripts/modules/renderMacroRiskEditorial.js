@@ -1,4 +1,4 @@
-import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=qqq-signal-copy-20261121';
+import { isOfrEditorialVisible } from './macroRiskEditorialOfrContract.js?v=oil-route-estimates-20261127';
 
 const MAX_AGE_HOURS = 30;
 

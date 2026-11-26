@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=qqq-signal-copy-20261121';
-import { formatOnRrpYiUsd } from './format.js?v=qqq-signal-copy-20261121';
+﻿import { fmtNumSafe, fmtDeltaSafe, trendClass, riskColor } from './config.js?v=oil-route-estimates-20261127';
+import { formatOnRrpYiUsd } from './format.js?v=oil-route-estimates-20261127';
 
 export const MODULE_LABELS = {
   geopolitical: '地缘政治',

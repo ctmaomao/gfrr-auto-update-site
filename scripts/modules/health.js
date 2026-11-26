@@ -1,5 +1,5 @@
-﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=qqq-signal-copy-20261121';
-import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=qqq-signal-copy-20261121';
+﻿import { fmtNumSafe, riskColor, trendClass } from './config.js?v=oil-route-estimates-20261127';
+import { classifyFreshnessLevel, computeAgeMinutes } from './freshness.js?v=oil-route-estimates-20261127';
 
 export function normalizeHealthLevel(level) {
   switch (level) {
