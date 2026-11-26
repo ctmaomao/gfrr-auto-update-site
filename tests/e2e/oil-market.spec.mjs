@@ -29,21 +29,33 @@ test('oil data load failures never retain figures or imply safety',async({page},
 
 test('expired thermal observations remain explicit history',async({page},testInfo)=>{await page.setViewportSize({width:390,height:1000});await page.clock.setFixedTime(new Date(snapshotNow+49*3600000));await page.goto('/oil-market.html');await expect(page.locator('#oil-load-status')).not.toContainText('正在读取');await expect(page.locator('#oil-thermal-meta')).toContainText('历史／超龄');await expect(page.locator('#oil-thermal-meta')).toContainText('不作当前判断');await page.locator('#oil-satellite').screenshot({path:testInfo.outputPath('oil-expired-390.png')});});
 
-for(const [label,estimate,observed,warning] of [
+for(const [label,estimate,observed,warning,width=390,tankers=1] of [
  ['source-zero',0,'2026-11-15','源报油轮运输量估计为0'],
  ['missing',null,'2026-11-15','油轮运输量估计缺失'],
- ['reported',15038,'2026-11-15',null],
+ ['reported-mobile',15038,'2026-11-15',null],
+ ['reported-desktop',15038,'2026-11-15',null,1440],
+ ['reported-without-count',15038,'2026-11-15',null,390,null],
+ ['stale-reported',15038,'2026-10-01',null],
+ ['invalid-negative',-1,'2026-11-15','油轮运输量估计缺失'],
  ['stale-zero',0,'2026-10-01','源报油轮运输量估计为0'],
 ])test(`oil route ${label}: trade estimate is not available capacity`,async({page})=>{
+ await page.setViewportSize({width,height:1000});
  await page.clock.setFixedTime(new Date('2026-11-16T00:00:00Z'));
  const radar=JSON.parse(readFileSync('data/radar-data.json','utf8'));
- radar.macroDrivers.energyTransport.chokepoints.hormuz={latest:{nTanker:1,capacityTanker:estimate,date:observed},avg30d:{nTanker:2},sourceStatus:'live'};
+ radar.macroDrivers.energyTransport.chokepoints.hormuz={latest:{nTanker:tankers,capacityTanker:estimate,date:observed},avg30d:{nTanker:2},sourceStatus:'live'};
  await page.route('**/data/radar-data.json',route=>route.fulfill({json:radar}));
  await page.goto('/oil-market.html');await expect(page.locator('#oil-load-status')).not.toContainText('正在读取');
- const route=page.locator('#oil-routes article').first();await expect(route).toContainText('1 船次');
+ const route=page.locator('#oil-routes article').first();await expect(route).toContainText(tankers===null?'— 船次':'1 船次');
  if(warning)await expect(route.locator('.oil-warning')).toContainText(warning);else await expect(route.locator('.oil-warning')).toHaveCount(0);
  await expect(route).not.toContainText('运力代理为零');
+ const volume=route.getByText('油轮运输量估计：15,038 公吨',{exact:true});
+ if(estimate>0){
+  await expect(volume).toBeVisible();
+  await expect(volume.locator('xpath=following-sibling::p[1]')).toContainText(observed);
+  await expect(volume.locator('xpath=following-sibling::p[1]')).toContainText(label.startsWith('stale')?'超龄':'来源可用');
+ }else await expect(volume).toHaveCount(0);
  if(label==='stale-zero')await expect(route).toContainText('超龄');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 for(const width of [1440,390])test(`thermal baseline ${width}: established history is not a comparable snapshot`,async({page})=>{

@@ -8,8 +8,8 @@ import {
   fmtSigned,
   fmtNumSafe,
   fmtDeltaSafe,
-} from './config.js?v=qqq-signal-copy-20261121';
-import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=qqq-signal-copy-20261121';
+} from './config.js?v=oil-route-estimates-20261127';
+import { buildCrossValidationMatrix, buildMacroCoherence } from './buildCrossValidationMatrix.js?v=oil-route-estimates-20261127';
 import {
   moduleTone,
   riskBiasZh,
@@ -17,16 +17,16 @@ import {
   shippingFreightDisplay,
   trendArrow,
   worldOrderStateLabel,
-} from './macroOverviewDisplayHelpers.js?v=qqq-signal-copy-20261121';
-import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=qqq-signal-copy-20261121';
-import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=qqq-signal-copy-20261121';
-import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=qqq-signal-copy-20261121';
-import { renderTrendSvg } from './renderMacroTrend.js?v=qqq-signal-copy-20261121';
-import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=qqq-signal-copy-20261121';
-import { snapshotDisplayHealth } from './snapshotFreshness.js?v=qqq-signal-copy-20261121';
-import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=qqq-signal-copy-20261121';
-import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=qqq-signal-copy-20261121';
-import { renderOfrPrimary } from './renderOfrPrimary.js?v=qqq-signal-copy-20261121';
+} from './macroOverviewDisplayHelpers.js?v=oil-route-estimates-20261127';
+import { buildMacroOverviewHeadline, buildMacroOverviewVerdictBody } from './macroOverviewNarrative.js?v=oil-route-estimates-20261127';
+import { scoreAttributionText, classifyRepoEvidence, repoEvidenceLabel, repoEvidenceNote } from './macroOverviewNarrative.js?v=oil-route-estimates-20261127';
+import { renderMacroRiskEditorial } from './renderMacroRiskEditorial.js?v=oil-route-estimates-20261127';
+import { renderTrendSvg } from './renderMacroTrend.js?v=oil-route-estimates-20261127';
+import { buildBrentProvenanceView, provenanceTime } from './dataProvenanceView.js?v=oil-route-estimates-20261127';
+import { snapshotDisplayHealth } from './snapshotFreshness.js?v=oil-route-estimates-20261127';
+import { renderFourLaneReadout } from './renderFourLaneReadout.js?v=oil-route-estimates-20261127';
+import { worldOrderSourceClock, worldOrderSourceDisclosure } from './worldOrderSourceDisplay.js?v=oil-route-estimates-20261127';
+import { renderOfrPrimary } from './renderOfrPrimary.js?v=oil-route-estimates-20261127';
 
 // ---------- 阈值 + 派生 helper ----------
 

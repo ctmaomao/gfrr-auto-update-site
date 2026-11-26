@@ -1,4 +1,4 @@
-﻿import { fmtNumSafe } from './config.js?v=qqq-signal-copy-20261121';
+﻿import { fmtNumSafe } from './config.js?v=oil-route-estimates-20261127';
 
 export const FRESHNESS_WINDOWS = {
   fresh: 30,

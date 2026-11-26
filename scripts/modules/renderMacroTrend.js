@@ -1,7 +1,7 @@
 // Responsive Macro Overview trend SVG renderer.
 // Display-only: reads provided snapshots and writes the existing trend DOM contract.
 
-import { $ } from './config.js?v=qqq-signal-copy-20261121';
+import { $ } from './config.js?v=oil-route-estimates-20261127';
 
 function asNumber(value) {
   if (value === null || value === undefined || typeof value === 'boolean'
