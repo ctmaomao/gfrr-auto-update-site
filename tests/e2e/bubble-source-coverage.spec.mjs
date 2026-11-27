@@ -47,6 +47,11 @@ for (const width of [1440, 390]) {
     await expect(card.locator('.badge.retained-coverage')).toHaveText('覆盖待核');
     const vc = page.locator('section.category article.indicator').filter({ has: page.locator('.name-en', { hasText: /^AI \/ Total VC Funding$/ }) });
     await expect(vc.locator('.source-coverage-notice')).toContainText('同一期间的合格全球 AI 创投占比');
+    await expect(vc.locator('.vc-monthly-context')).toContainText('2026 年 10 月，AI 公司获得全球创投融资的 66%');
+    await expect(vc.locator('.vc-monthly-context')).toContainText('不替代本卡的季度数据，也不参与评分');
+    await expect(vc.locator('.vc-monthly-context a')).toHaveAttribute('href', 'https://news.crunchbase.com/venture/october-2026-global-startup-funding-strong-china-deepseek/');
+    const originalVc = data.indicators.find(item => item.id === 'vc_ai_share');
+    await expect(vc.locator('.number')).toHaveText(String(originalVc.value_display || originalVc.value));
     await capture('coverage-fallback');
     await vc.screenshot({ path: testInfo.outputPath(`coverage-vc-${width}.png`) });
     // A subsequent successfully published observation must not inherit the warning.
@@ -58,5 +63,8 @@ for (const width of [1440, 390]) {
     await expect(card.locator('.source-coverage-notice')).toHaveCount(0);
     await expect(card.locator('.number')).toHaveText(original.value);
     await capture('coverage-normal');
+    data.as_of_date = '2026-11-03';
+    await page.reload();
+    await expect(vc.locator('.vc-monthly-context')).toHaveCount(0);
   });
 }
