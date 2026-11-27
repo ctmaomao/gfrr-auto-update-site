@@ -103,7 +103,7 @@ export function projectDnavCohort(readSnapshot, target, release, cutoff) {
 }
 
 const maxPageBytes = 512 * 1024;
-export async function probeDnavCohort(target, releaseAt, {now = Date.now(), fetchImpl = fetch} = {}) {
+export async function probeDnavCohort(target, releaseAt, {now = Date.now(), fetchImpl = fetch, project = false} = {}) {
  const releaseMs = Date.parse(releaseAt);
  const targetMs = strictDate(target);
  if (!Number.isFinite(releaseMs) || new Date(releaseMs).toISOString() !== releaseAt
@@ -136,7 +136,7 @@ export async function probeDnavCohort(target, releaseAt, {now = Date.now(), fetc
   return [id,Buffer.concat(chunks,size)];
  }));
  const byId = new Map(pages);
- return replayDnavCohort(id=>byId.get(id),target,release,cutoff);
+ return (project ? projectDnavCohort : replayDnavCohort)(id=>byId.get(id),target,release,cutoff);
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href===import.meta.url) {

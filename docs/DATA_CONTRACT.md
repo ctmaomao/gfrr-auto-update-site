@@ -841,7 +841,7 @@ M-49 在 brentPricingLayer 新增柴油裂解价差字段，扩展能源链条�
 
 ODP 是**独立数据文件** `data/oil-directional-pressure.json`(不在 `radar-data.json` 内),audit-only / display-only 能源专题。evidence + freshness + seasonality 自 PR1 起落地;**PR3 起 `signals` / `finalBias` / `interpretation` 由 classifier 模型填充**(见下「PR3 模型输出」),仍 display-only。
 
-顶层:`schemaVersion` 必须为 `odp-1`;`module` 为 `oil-directional-pressure`;`boundary` 字符串声明 audit-only/display-only 且含「NOT in」scoring 路径;`builtAt` ISO;`ingestion` = `{mode:'A', provider:'EIA API v2', route:'/v2/seriesid/PET.<id>.W'}`。
+顶层:`schemaVersion` 必须为 `odp-1`;`module` 为 `oil-directional-pressure`;`boundary` 字符串声明 audit-only/display-only 且含「NOT in」scoring 路径;`builtAt` ISO;`ingestion` = `{mode:'A', provider:'EIA API v2', route:'/v2/seriesid/PET.<id>.W'}`。备用批次另报 `{mode:'A-fallback', provider:'EIA DNav', route:'/dnav/pet/hist/LeafHandler.ashx', asOfDate, scheduledReleaseAt}`；八项证据须为同周 `live`、列明正确的 `EIA:dnav:PET.<id>.W` 与原响应 `sourceSha256`，不与 API 混用。
 
 `evidence`(12 项,每项带 freshness 四件套 `frequency`/`ageDays`/`maxAgeDays`/`sourceStatus`):
 - 8 个 EIA(`crudeStocksExSpr`/`sprStocks`/`distillateStocks`/`gasolineStocks`/`refineryUtilization`/`refinerCrudeInputs`/`demandGasolineSupplied`/`demandDistillateSupplied`):`value`(number|null)、`unit` ∈ {`thousand barrels`,`thousand barrels per day`,`percent`}、`asOfDate`、`source` 以 `EIA:` 开头、`change1w/4w/13w`、`vs5yAvgPct`、`fiveYrRangePosition`、`historyWeeks`、`signalGroup`。
