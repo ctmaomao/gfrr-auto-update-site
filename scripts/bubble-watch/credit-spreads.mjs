@@ -87,8 +87,8 @@ async function requestCreditCsv(url, fetchImpl, timeoutMs) {
 }
 
 export async function collectCreditSpreads({ previous, now = new Date(), fetchImpl = fetch, timeoutMs = TIMEOUT_MS } = {}) {
-  const series = {};
-  const sources = {};
+  const series = Object.fromEntries(Object.keys(CREDIT_SERIES).map(key => [key, null]));
+  const sources = { ...series };
   const start = new Date(now.getTime() - 366 * DAY).toISOString().slice(0, 10);
   await Promise.all(Object.entries(CREDIT_SERIES).map(async ([key, id]) => {
     try {
