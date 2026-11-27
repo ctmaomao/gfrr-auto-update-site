@@ -1,5 +1,6 @@
 // Offline research: caller supplies previously saved official bytes and the expected observation week.
-// A publisher release day is not proof of exact time-of-day availability. No network, writes or scoring.
+// A publisher release day is not proof of exact time-of-day availability. No writes or scoring.
+// Only the explicit --probe-cohort mode makes requests.
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
@@ -69,13 +70,14 @@ function parseDnav(html, id, targetDay, cutoffDay) {
 export function inspectDnav(html, id, targetDay, cutoffDay) {
  return parseDnav(html, id, targetDay, cutoffDay).receipt;
 }
+const dnavUrl = id => 'https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=' + id + '&f=W';
 function replaySnapshot(bytes, id, target, cutoff, project = false) {
  const {receipt, observations} = parseDnav(bytes.toString('utf8'), id, target, cutoff);
  const sha256 = createHash('sha256').update(bytes).digest('hex');
  return project ? {
   id,
   releaseDate: receipt.releaseDate,
-  sourceUrl: 'https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=' + id + '&f=W',
+  sourceUrl: dnavUrl(id),
   sha256,
   observations: [...observations].map(([ms,value])=>({period:new Date(ms).toISOString().slice(0,10),value})),
  } : {...receipt,sha256};
@@ -100,15 +102,57 @@ export function projectDnavCohort(readSnapshot, target, release, cutoff) {
  return {targetDay:target, releaseDate:release, sourceFormat:'eia-dnav-html', byId:Object.fromEntries(rows.map(({id,...row})=>[id,row]))};
 }
 
+const maxPageBytes = 512 * 1024;
+export async function probeDnavCohort(target, releaseAt, {now = Date.now(), fetchImpl = fetch} = {}) {
+ const releaseMs = Date.parse(releaseAt);
+ const targetMs = strictDate(target);
+ if (!Number.isFinite(releaseMs) || new Date(releaseMs).toISOString() !== releaseAt
+  || !Number.isFinite(now) || new Date(targetMs).getUTCDay() !== 5
+  || releaseMs <= targetMs || releaseMs >= targetMs + week || now < releaseMs) {
+  throw Error('invalid or not-yet-reached release window');
+ }
+ const cutoff = new Date(now).toISOString().slice(0,10);
+ const release = releaseAt.slice(0,10);
+ const signal = AbortSignal.timeout(15_000);
+ const pages = await Promise.all(Object.keys(series).map(async id=>{
+  const res = await fetchImpl(dnavUrl(id), {signal, redirect:'error'});
+  if (!res.ok || !/^text\/html(?:;|$)/i.test(res.headers.get('content-type') ?? '') || !res.body) {
+   await res.body?.cancel();
+   throw Error('unexpected DNav response for '+id);
+  }
+  const reader = res.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+   const {value,done} = await reader.read();
+   if (done) break;
+   size += value.byteLength;
+   if (size > maxPageBytes) {
+    await reader.cancel();
+    throw Error('DNav response too large for '+id);
+   }
+   chunks.push(value);
+  }
+  return [id,Buffer.concat(chunks,size)];
+ }));
+ const byId = new Map(pages);
+ return replayDnavCohort(id=>byId.get(id),target,release,cutoff);
+}
+
 if (process.argv[1] && pathToFileURL(process.argv[1]).href===import.meta.url) {
  const args = process.argv.slice(2);
- const project = args[0] === '--project-cohort';
- const cohort = project || args[0] === '--cohort';
- if (args.length !== (cohort ? 5 : 4) || args.some(arg=>!arg)) {
-  throw Error('Usage: node tools/oil-directional/replay-eia-dnav-weekly.mjs <snapshot.html> <series> <target-Friday> <cutoff-date> or --cohort/--project-cohort <directory> <target-Friday> <release-day> <cutoff-date>');
+ if (args[0] === '--probe-cohort') {
+  if (args.length !== 3) throw Error('Usage: --probe-cohort <target-Friday> <scheduled-release-UTC>');
+  console.log(JSON.stringify(await probeDnavCohort(...args.slice(1)),null,2));
+ } else {
+  const project = args[0] === '--project-cohort';
+  const cohort = project || args[0] === '--cohort';
+  if (args.length !== (cohort ? 5 : 4) || args.some(arg=>!arg)) {
+   throw Error('Usage: node tools/oil-directional/replay-eia-dnav-weekly.mjs <snapshot.html> <series> <target-Friday> <cutoff-date> or --cohort/--project-cohort <directory> <target-Friday> <release-day> <cutoff-date>');
+  }
+  const result = cohort
+   ? (project ? projectDnavCohort : replayDnavCohort)(id=>readFileSync(join(args[1], id+'-dnav.html')), ...args.slice(2))
+   : replaySnapshot(readFileSync(args[0]), ...args.slice(1));
+  console.log(JSON.stringify(result, null, 2));
  }
- const result = cohort
-  ? (project ? projectDnavCohort : replayDnavCohort)(id=>readFileSync(join(args[1], id+'-dnav.html')), ...args.slice(2))
-  : replaySnapshot(readFileSync(args[0]), ...args.slice(1));
- console.log(JSON.stringify(result, null, 2));
 }
