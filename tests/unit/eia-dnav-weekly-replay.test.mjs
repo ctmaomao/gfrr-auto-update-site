@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inspectDnav, replayDnavCohort } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
+import { inspectDnav, projectDnavCohort, replayDnavCohort } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
 
 const target='2026-11-20',cutoff='2026-11-26',id='WDIUPUS2';
 const day=86400000, ms=Date.parse(target);
@@ -73,4 +73,23 @@ test('one missing terminal value cannot produce a partial cohort',()=>{
 });
 test('rejects a future pinned day before requesting any snapshot',()=>{
  assert.throws(()=>replayDnavCohort(()=>assert.fail('read before release'),target,'2026-11-27',cutoff),/outside replay/);
+});
+
+test('projection keys independent numeric series by ID, not response position',()=>{
+ const group=projectDnavCohort(readFixture,target,release,cutoff);
+ assert.equal(group.sourceFormat,'eia-dnav-html');
+ assert.deepEqual(Object.keys(group.byId).sort(),Object.keys(cohortTitles).sort());
+ const utilization=group.byId.WPULEUS3;
+ assert.deepEqual(utilization.observations.at(-1),{period:target,value:97.5});
+ assert.deepEqual(group.byId.WCRRIUS2.observations.at(-1),{period:target,value:3917});
+ assert.equal(utilization.releaseDate,release);
+ assert.equal(new URL(utilization.sourceUrl).searchParams.get('s'),'WPULEUS3');
+ assert.equal(utilization.sha256,replayDnavCohort(readFixture,target,release,cutoff).series.find(x=>x.id==='WPULEUS3').sha256);
+ assert.equal(utilization.observations.length,19);
+ assert.ok(utilization.observations.every((x,i,a)=>!i||a[i-1].period<x.period));
+});
+test('projection cannot return observations from a partial or wrong-ID cohort',()=>{
+ assert.throws(()=>projectDnavCohort(key=>readFixture(key===id?'WCRRIUS2':key),target,release,cutoff),/identity/);
+ assert.throws(()=>projectDnavCohort(key=>key===id
+  ? Buffer.from(h.replace('3012','W')) : readFixture(key),target,release,cutoff),/incomplete/);
 });

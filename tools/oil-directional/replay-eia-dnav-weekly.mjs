@@ -23,7 +23,7 @@ function strictDate(date) {
  if (!Number.isFinite(ms) || new Date(ms).toISOString().slice(0,10) !== date) throw Error('invalid calendar date');
  return ms;
 }
-export function inspectDnav(html, id, targetDay, cutoffDay) {
+function parseDnav(html, id, targetDay, cutoffDay) {
  if (typeof html!=='string' || !Object.hasOwn(series,id)) throw Error('series identity or unit mismatch');
  const title = html.match(/<title>\s*([^<]+)<\/title>/i)?.[1];
  if (!series[id] || !title || norm(title)!==series[id] || !html.includes('../hist_xls/'+id+'w.xls')) throw Error('series identity or unit mismatch');
@@ -63,32 +63,52 @@ export function inspectDnav(html, id, targetDay, cutoffDay) {
   return [...observations.keys()].filter(x=>Math.abs(x-ms)<=week).sort((a,b)=>Math.abs(a-ms)-Math.abs(b-ms))[0];
  });
  if(comparable.some(x=>x===undefined)) throw Error('insufficient five-year reference');
- return {id,releaseDate,targetDay,latest:observations.get(target),valuePrior:observations.get(target-week),change4w:Number((observations.get(target)-observations.get(target-4*week)).toFixed(3)),change13w:Number((observations.get(target)-observations.get(target-13*week)).toFixed(3)),seasonalReferences:comparable.map(x=>new Date(x).toISOString().slice(0,10)),points:observations.size,spanYears:(target-[...observations.keys()][0])/86400000/365.25};
+ const receipt = {id,releaseDate,targetDay,latest:observations.get(target),valuePrior:observations.get(target-week),change4w:Number((observations.get(target)-observations.get(target-4*week)).toFixed(3)),change13w:Number((observations.get(target)-observations.get(target-13*week)).toFixed(3)),seasonalReferences:comparable.map(x=>new Date(x).toISOString().slice(0,10)),points:observations.size,spanYears:(target-[...observations.keys()][0])/86400000/365.25};
+ return {receipt,observations};
 }
-function replaySnapshot(bytes, id, target, cutoff) {
- return {...inspectDnav(bytes.toString('utf8'), id, target, cutoff), sha256:createHash('sha256').update(bytes).digest('hex')};
+export function inspectDnav(html, id, targetDay, cutoffDay) {
+ return parseDnav(html, id, targetDay, cutoffDay).receipt;
+}
+function replaySnapshot(bytes, id, target, cutoff, project = false) {
+ const {receipt, observations} = parseDnav(bytes.toString('utf8'), id, target, cutoff);
+ const sha256 = createHash('sha256').update(bytes).digest('hex');
+ return project ? {
+  id,
+  releaseDate: receipt.releaseDate,
+  sourceUrl: 'https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=' + id + '&f=W',
+  sha256,
+  observations: [...observations].map(([ms,value])=>({period:new Date(ms).toISOString().slice(0,10),value})),
+ } : {...receipt,sha256};
 }
 
-export function replayDnavCohort(readSnapshot, target, release, cutoff) {
+function readCohort(readSnapshot, target, release, cutoff, project) {
  if (strictDate(release) < strictDate(target) || strictDate(release) > strictDate(cutoff)) {
   throw Error('pinned release day outside replay interval');
  }
  const results = Object.keys(series).map(id => {
-  const replay = replaySnapshot(readSnapshot(id), id, target, cutoff);
+  const replay = replaySnapshot(readSnapshot(id), id, target, cutoff, project);
   if (replay.releaseDate !== release) throw Error('cohort release day differs from pinned release');
   return replay;
  });
- return {targetDay:target, releaseDate:release, series:results};
+ return results;
+}
+export function replayDnavCohort(readSnapshot, target, release, cutoff) {
+ return {targetDay:target, releaseDate:release, series:readCohort(readSnapshot,target,release,cutoff,false)};
+}
+export function projectDnavCohort(readSnapshot, target, release, cutoff) {
+ const rows = readCohort(readSnapshot,target,release,cutoff,true);
+ return {targetDay:target, releaseDate:release, sourceFormat:'eia-dnav-html', byId:Object.fromEntries(rows.map(({id,...row})=>[id,row]))};
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href===import.meta.url) {
  const args = process.argv.slice(2);
- const cohort = args[0] === '--cohort';
+ const project = args[0] === '--project-cohort';
+ const cohort = project || args[0] === '--cohort';
  if (args.length !== (cohort ? 5 : 4) || args.some(arg=>!arg)) {
-  throw Error('Usage: node tools/oil-directional/replay-eia-dnav-weekly.mjs <snapshot.html> <series> <target-Friday> <cutoff-date> or --cohort <directory> <target-Friday> <release-day> <cutoff-date>');
+  throw Error('Usage: node tools/oil-directional/replay-eia-dnav-weekly.mjs <snapshot.html> <series> <target-Friday> <cutoff-date> or --cohort/--project-cohort <directory> <target-Friday> <release-day> <cutoff-date>');
  }
  const result = cohort
-  ? replayDnavCohort(id=>readFileSync(join(args[1], id+'-dnav.html')), ...args.slice(2))
+  ? (project ? projectDnavCohort : replayDnavCohort)(id=>readFileSync(join(args[1], id+'-dnav.html')), ...args.slice(2))
   : replaySnapshot(readFileSync(args[0]), ...args.slice(1));
  console.log(JSON.stringify(result, null, 2));
 }
