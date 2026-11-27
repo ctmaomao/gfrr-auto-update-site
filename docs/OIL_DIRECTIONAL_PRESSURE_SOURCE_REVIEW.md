@@ -245,7 +245,11 @@ dnav 模式:XLS = `eia.gov/dnav/pet/hist_xls/<ID>w.xls` · HTML = `eia.gov/dnav/
 
 ---
 
+<a id="dnav-bounded-cohort-fallback"></a>
+
 ## 2. 数据源可得性裁决（D 级:期限结构单独标注难度）
+
+**2026-11-27 窄范围替代**：下方通用 HTML 最新行不可信的结论保留；依据 owner 要求完善 GFRR 自动备用取数，仅替代下方及 §9、§12、§13 的 HTML 元数据限制中「已批准 EIA 的 §1.2 八个固定系列、ODP 整批备用」这一部分，维持 owner 2026-06-03 的 A-first 与 XLS 限制。仍先用 API；仅按[官方发布时间表](https://www.eia.gov/petroleum/supply/weekly/schedule.php)中代码明确列出的已发布期次，在 API 未对齐时尝试一次。同一周及发布日期、身份与单位、连续 14 周及五年参照均须匹配；任何重叠值不一致或任一系列失败时保留原 API 路径。 [托管实测](https://github.com/ctmaomao/gfrr-auto-update-site/actions/runs/45942745288)取齐 11/20 八项；[历史证据](PROJECT_BACKLOG.md#active-worktable)不当作实时版本一致性证明。2027-01-06 15:30 UTC 到期停用，待重新核对日历；不扩展 XLS、历史回填、Brent 条件或主评分。
 
 | 源 | 免费 | 稳定 | 需 key | 频率 | 裁决 |
 |---|---|---|---|---|---|
@@ -382,7 +386,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 - ⚠️ **ADR-0013 硬约束(写 `data/` 的代码必须零依赖)**:`docs/ADR/0013-*.md` 明确 devDependency(含 `xlsx`)**不得**被任何写 `data/` 的代码、或任何 GitHub Actions production 路径脚本导入(line 30/36)。因此 **xlsx 不能用于直写 `data/oil-directional-pressure.json` 的 fetcher/build,也不能在 CI 自动 refresh 里跑**。两条合规路径:
     - **(A) CI 自动【owner 终裁 = 已选主路】**:EIA API v2 返 **JSON → 零依赖解析 → build 写 `data/`**;需免费 EIA key(GitHub secret,同 FRED/GDELT 管理);全程无 devDep。前置硬 gate 见 §12。
     - **(B) 手动 sanitizer(ACLED 模式)【fallback / manual seed / API 不通退路】**:operator 本地下 dnav `.xls` → `scripts/oil-directional/sanitize-*.mjs`(xlsx,dev-time entry,**只写 `config/`**)→ 零依赖 build 读 config 写 `data/`;xlsx 永不进 CI/`data/`(ADR-0013 line 23/29 sanctioned 模式)。**选 B 须同步放宽 `AGENTS.md`(:86)/ `DATA_SOURCES.md`(:317)的「xlsx 仅限 ACLED sanitizer」边界以纳入 ODP sanitizer(选 A 不动)。**
-- **结构化解析**:无论 A/B,latest-row 都从结构化源取;**HTML LeafHandler 仅确认 series 存在/元数据,不取 latest-row**(见 §2 实测教训)。
+- **结构化解析**:无论 A/B,latest-row 都从结构化源取;**HTML LeafHandler 仅确认 series 存在/元数据,不取 latest-row**(见 §2 实测教训；仅有[按期整批备用例外](#dnav-bounded-cohort-fallback))。
 - 低频 + 按日期缓存 + UA `GFRRBot/1.0`;不绕 SSO/captcha;只用官方显式端点 URL,不广扫站点。
 - **Fail closed**:空记录 / schema 变化 / 非 200 / 解析失败 / 超期 → `missing` / `stale` / `fallback`,**不得伪造缺失值、不得把 stale 当 live**。
 - source 标签:EIA dnav 物理链标 `EIA:dnav:<ID>`;复用字段标 `radar-data:<path>`。
@@ -417,7 +421,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 
 ## 12. PR1 source-review 开放问题（开工前必须先回答）
 
-1. **取数架构 —— owner 2026-06-03 终裁:A-first**(EIA API v2 JSON,零依赖 + 免费 key,CI 自动);**B(手动 xlsx sanitizer→`config/`→零依赖 build)仅作 fallback / manual seed / API 不通退路**。**硬 gate(PR1 第一个动作)**:用 EIA key live-proof 8 个 WPSR series 的 API route(`petroleum` route 或 v2 `/seriesid/` legacy)—— 覆盖 / 返回结构 / 单位频率坐实才写正式 build;映射不稳或结构不适合才切 B。顺带查 dnav 是否另有零依赖 CSV 端点(若有则 A 连 key 都省)。**不接受**为自动化让 xlsx 进 CI 写 `data/`(撞 ADR-0013)。
+1. **取数架构 —— owner 2026-06-03 终裁:A-first**(EIA API v2 JSON,零依赖 + 免费 key,CI 自动);**B(手动 xlsx sanitizer→`config/`→零依赖 build)仅作 fallback / manual seed / API 不通退路**。**硬 gate(PR1 第一个动作)**:用 EIA key live-proof 8 个 WPSR series 的 API route(`petroleum` route 或 v2 `/seriesid/` legacy)—— 覆盖 / 返回结构 / 单位频率坐实才写正式 build;映射不稳或结构不适合才切 B。顺带查 dnav 是否另有零依赖 CSV 端点(若有则 A 连 key 都省)。**不接受**为自动化让 xlsx 进 CI 写 `data/`(撞 ADR-0013)。A-first 不变；同源 HTML 仅有[按期整批备用例外](#dnav-bounded-cohort-fallback)。
 2. **deploy-trigger 接线**:新 refresh workflow commit 到 main,`check-workflows` 是否强制它进 `deploy-static-site-to-pages.yml` 的 `workflow_run.workflows`?(PR1-3 前端尚未读此文件,理想是不触发 Pages 重建;须确认 checker 是否允许非部署型 commit workflow,否则接入即可,无害重建。)
 3. **dnav 稳定性**:连续几次拉取确认 XLS 结构不变、无地理封锁(EIA 在 US runner 应可达,不同于 pbc.gov.cn)。
 4. **`WGFUPUS2` / `WDIUPUS2` / days-of-supply**:确认 product-supplied 口径是否满足 `demandDestructionRisk` 需求;days-of-supply 采「`WCESTUS1 ÷ WCRRIUS2` 派生」。
@@ -427,7 +431,7 @@ PR1 只落 **evidence + freshness + seasonality**;`signals` / `finalBias` / `int
 ## 13. 待办 / 注
 
 - 本文为 source-review / feasibility,**无代码改动、无 runtime、无 data 写入、无 frontend 改动、无 workflow 触发**。
-- 数据可得性核验状态:EIA 8 系列 2026-06-03 live 确认存在 + 单位/频率坐实(Codex 另用结构化 xlsx 复核 latest 行一致 @2026-05-22);取数架构**已裁为 A-first**(EIA API v2 JSON,零依赖;owner 2026-06-03);B 仅 fallback / manual seed;PR1 先过 EIA API route discovery 硬 gate;HTML 仅取元数据。
+- 数据可得性核验状态:EIA 8 系列 2026-06-03 live 确认存在 + 单位/频率坐实(Codex 另用结构化 xlsx 复核 latest 行一致 @2026-05-22);取数架构**已裁为 A-first**(EIA API v2 JSON,零依赖;owner 2026-06-03);B 仅 fallback / manual seed;PR1 先过 EIA API route discovery 硬 gate;通用 HTML 仅取元数据，[按期整批备用例外](#dnav-bounded-cohort-fallback)除外。
 - 任何实现须各自另开 PR 走完整复核流程(outline → 实证 → brief → 复核 → 实施 → diff 复核),且永不进 scoring/decision/execution/position。
 
 ---

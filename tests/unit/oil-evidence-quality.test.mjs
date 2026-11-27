@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { ODP_PHYSICAL_KEYS, oilEvidenceNumber, oilObservationMillis, oilObservation, resolveOdpPriceEvidence, qualifiedBrentHistory, qualifyOdpDisplay } from '../../scripts/modules/oilEvidenceQuality.js';
-import { reuseFromRadar, priceContextFromReuse, globalEnergyContextFromRadar, monthlyBackgroundOverlay, buildAttribution } from '../../scripts/oil-directional/build-oil-directional-pressure.mjs';
+import { EIA_SERIES, reuseFromRadar, priceContextFromReuse, globalEnergyContextFromRadar, monthlyBackgroundOverlay, buildAttribution } from '../../scripts/oil-directional/build-oil-directional-pressure.mjs';
 import { finalizeBias, evaluateGlobalOverlay, GLOBAL_OVERLAY_EFFECT_VALUES, GLOBAL_OVERLAY_STATUS_VALUES } from '../../scripts/oil-directional/odp-classifier.mjs';
 
 const NOW = Date.parse('2026-11-06T12:00:00Z');
@@ -155,7 +155,7 @@ test('new reuse evidence passes the unchanged production shape, freshness and de
     for(const name of ['contract','freshness','degradation']) {
       const code=readFileSync(new URL('../../scripts/check-oil-directional-'+name+'.mjs',import.meta.url),'utf8').replace(/^import .*;$/gm,'');
       const errors=[];
-      vm.runInNewContext(code,{readFileSync:()=>JSON.stringify(snapshot),resolve:x=>x,GLOBAL_OVERLAY_EFFECT_VALUES,GLOBAL_OVERLAY_STATUS_VALUES,console:{log(){},error(...args){errors.push(args.join(' '));}},process:{exit(code){throw new Error('contract '+name+' exit '+code+': '+errors.join('; '));}}});
+      vm.runInNewContext(code,{readFileSync:()=>JSON.stringify(snapshot),resolve:x=>x,EIA_SERIES,GLOBAL_OVERLAY_EFFECT_VALUES,GLOBAL_OVERLAY_STATUS_VALUES,console:{log(){},error(...args){errors.push(args.join(' '));}},process:{exit(code){throw new Error('contract '+name+' exit '+code+': '+errors.join('; '));}}});
     }
   }
 });

@@ -1,3 +1,5 @@
+import { selectEiaWeeklyCohort } from '../../scripts/oil-directional/eia-weekly-fallback.mjs';
+import { buildEiaEvidence } from '../../scripts/oil-directional/build-oil-directional-pressure.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inspectDnav, probeDnavCohort, projectDnavCohort, replayDnavCohort } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
@@ -127,5 +129,69 @@ test('probe rejects errors, excessive actual body bytes and wrong-period HTML as
    const key=new URL(address).searchParams.get('s');
    return key===id ? bad() : new Response(readFixture(key),{headers:htmlHeaders});
   }}),reason);
+ }
+});
+
+test('runtime uses the pinned whole cohort and preserves model math, not API/DNav mixtures', async () => {
+ const ids = Object.keys(cohortTitles);
+ const projected = projectDnavCohort(readFixture, target, release, cutoff);
+ const api = Object.fromEntries(ids.map(id => [id,{ok: true, series: projected.byId[id].observations}]));
+ api.WDIUPUS2 = {ok: false, reason: 'timeout'};
+ const calls = [];
+ const probe = (week, at, options) => {
+  calls.push([week, at, options]);
+  return probeDnavCohort(week, at, {...options,fetchImpl: async address =>
+   new Response(readFixture(new URL(address).searchParams.get('s')),{headers:htmlHeaders})});
+ };
+ const out = await selectEiaWeeklyCohort(api, ids, afterRelease, probe);
+ assert.deepEqual(calls,[[target, scheduled, {now:afterRelease,project:true}]]);
+ assert.deepEqual(out.fallback,{asOfDate:target,scheduledReleaseAt:scheduled});
+ assert.ok(ids.every(id => out.seriesById[id].dnavSha256 === projected.byId[id].sha256));
+ const cfg = {id:'WDIUPUS2',unit:'thousand barrels per day',signalGroup:'demandDestructionRisk'};
+ const [fallback, season] = buildEiaEvidence(cfg,out.seriesById.WDIUPUS2,afterRelease);
+ const [primary, ref] = buildEiaEvidence(cfg,{ok:true,series:projected.byId.WDIUPUS2.observations},afterRelease);
+ assert.equal(fallback.source,'EIA:dnav:PET.WDIUPUS2.W');
+ const {sourceSha256,...equivalent} = fallback;
+ assert.equal(sourceSha256,projected.byId.WDIUPUS2.sha256);
+ assert.deepEqual({...equivalent,source:primary.source},primary);
+ assert.deepEqual(season,ref);
+ assert.equal(buildEiaEvidence(cfg,api.WDIUPUS2,afterRelease)[0].sourceStatus,'missing');
+});
+
+test('runtime omits DNav before known release, after expiry, with current API or on a newer API week', async () => {
+ const ids = Object.keys(cohortTitles);
+ const current = Object.fromEntries(ids.map(id=>[id,{ok:true,series:[{period:target,value:1}]}]));
+ const newer = {...current,WDIUPUS2:{ok:true,series:[{period:'2026-11-27',value:1}]}};
+ for (const [api, now] of [
+  [{}, afterRelease-2],
+  [{}, Date.parse('2027-01-06T15:30:00.000Z')],
+  [current, afterRelease],
+  [newer, afterRelease],
+ ]) {
+  let tries = 0;
+  assert.deepEqual(await selectEiaWeeklyCohort(api,ids,now,()=>{tries++;}),{seriesById:api,fallback:null});
+  assert.equal(tries,0);
+ }
+});
+
+test('runtime retains the unmodified API map on partial, old, conflicting or failed fallback', async () => {
+ const ids = Object.keys(cohortTitles);
+ const group = projectDnavCohort(readFixture,target,release,cutoff);
+ const primary = { WDIUPUS2: {ok:true,series:[{period:target,value:3917}]} };
+ const { WCRRIUS2: other, ...partial } = group.byId;
+ const old = {...group.byId,WCRRIUS2:{observations:other.observations.slice(0,-1)}};
+ const conflict = {...primary,WDIUPUS2:{ok:true,series:[{period:target,value:3918}]}};
+ const seasonal = group.byId.WDIUPUS2.observations[0];
+ const olderConflict = {WDIUPUS2:{ok:true,series:[{...seasonal,value:seasonal.value+1},...primary.WDIUPUS2.series]}};
+ for (const [api, probe] of [
+  [primary,()=>({byId:partial})],
+  [primary,()=>({byId:old})],
+  [primary,()=>{throw Error('network unavailable');}],
+  [conflict,()=>group],
+  [olderConflict,()=>group],
+ ]) {
+  const out = await selectEiaWeeklyCohort(api,ids,afterRelease,probe);
+  assert.equal(out.seriesById,api);
+  assert.equal(out.fallback,null);
  }
 });

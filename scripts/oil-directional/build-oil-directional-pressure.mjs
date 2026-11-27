@@ -18,6 +18,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { selectEiaWeeklyCohort } from './eia-weekly-fallback.mjs';
 import { parseEiaWeeklyObservations } from './eia-weekly-observations.mjs';
 import { oilEvidenceNumber, oilObservationMillis, resolveOdpPriceEvidence, qualifiedBrentHistory } from '../modules/oilEvidenceQuality.js';
 import { classifyAt, evaluateGlobalOverlay, finalizeBias } from './odp-classifier.mjs';
@@ -454,7 +455,8 @@ function buildEiaEvidence(cfg, fetched, builtMs) {
     ageDays,
     maxAgeDays: WEEKLY_MAX_AGE_DAYS,
     sourceStatus,
-    source: `EIA:api-v2:seriesid:PET.${cfg.id}.W`,
+    source: fetched.dnavSha256 ? `EIA:dnav:PET.${cfg.id}.W` : `EIA:api-v2:seriesid:PET.${cfg.id}.W`,
+    ...(fetched.dnavSha256 ? { sourceSha256: fetched.dnavSha256 } : {}),
     sourceUrl: `https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=${cfg.id}&f=W`,
     change1w: changeNObsAgo(series, 1),
     change4w: changeNObsAgo(series, 4),
@@ -645,8 +647,11 @@ async function main() {
   const history = { series: {} };
   let liveCount = 0;
 
+  const api = {};
+  for (const {id} of EIA_SERIES) api[id] = await fetchEiaSeries(id);
+  const {seriesById, fallback} = await selectEiaWeeklyCohort(api, EIA_SERIES.map(({id}) => id), builtMs);
   for (const cfg of EIA_SERIES) {
-    const fetched = await fetchEiaSeries(cfg.id);
+    const fetched = seriesById[cfg.id];
     const [ev, season] = buildEiaEvidence(cfg, fetched, builtMs);
     evidence[cfg.key] = ev;
     if (season) seasonality[cfg.key] = season;
@@ -739,7 +744,9 @@ async function main() {
     boundary:
       'audit-only/display-only; NOT in values/scoring/decisionModel/executionLock/positionGuidance; Global Risk Heatmap independent',
     builtAt,
-    ingestion: { mode: 'A', provider: 'EIA API v2', route: '/v2/seriesid/PET.<id>.W' },
+    ingestion: fallback
+      ? { mode: 'A-fallback', provider: 'EIA DNav', route: '/dnav/pet/hist/LeafHandler.ashx', ...fallback }
+      : { mode: 'A', provider: 'EIA API v2', route: '/v2/seriesid/PET.<id>.W' },
     evidence,
     seasonality,
     // PR3 — physical classifier + price-divergence overlay (display-only).
@@ -755,7 +762,7 @@ async function main() {
     `brent4w=${brentChangePct4w == null ? 'n/a' : brentChangePct4w + '%'}); builtAt ${builtAt}`);
 }
 
-export { fetchEiaSeries, buildEiaEvidence, reuseFromRadar, priceContextFromReuse, brentChange4wFromHistory, buildAttribution, globalEnergyContextFromRadar, monthlyBackgroundOverlay };
+export { EIA_SERIES, fetchEiaSeries, buildEiaEvidence, reuseFromRadar, priceContextFromReuse, brentChange4wFromHistory, buildAttribution, globalEnergyContextFromRadar, monthlyBackgroundOverlay };
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((e) => {
   console.error('[odp] build failed:', e && e.message ? e.message : e);
   process.exit(1);

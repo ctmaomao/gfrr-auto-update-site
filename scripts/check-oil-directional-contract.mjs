@@ -4,6 +4,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { EIA_SERIES } from './oil-directional/build-oil-directional-pressure.mjs';
 import { GLOBAL_OVERLAY_EFFECT_VALUES, GLOBAL_OVERLAY_STATUS_VALUES } from './oil-directional/odp-classifier.mjs';
 
 const errors = [];
@@ -12,10 +13,7 @@ const numOrNull = (v) => v === null || Number.isFinite(v);
 
 const data = JSON.parse(readFileSync(resolve('data/oil-directional-pressure.json'), 'utf8'));
 
-const EIA_KEYS = [
-  'crudeStocksExSpr', 'sprStocks', 'distillateStocks', 'gasolineStocks',
-  'refineryUtilization', 'refinerCrudeInputs', 'demandGasolineSupplied', 'demandDistillateSupplied',
-];
+const EIA_KEYS = EIA_SERIES.map(({key}) => key);
 const REUSE_PRICE_KEYS = ['wtiPrice', 'brentPrice', 'crackSpread'];
 const UNITS = new Set(['thousand barrels', 'thousand barrels per day', 'percent', '$/bbl']);
 const LATENCY_TIERS = new Set(['T1_daily_market_proxy', 'T2_weekly_official_anchor']);
@@ -99,6 +97,17 @@ if (typeof data.boundary !== 'string' || !data.boundary.includes('audit-only')) 
 }
 if (typeof data.builtAt !== 'string' || Number.isNaN(Date.parse(data.builtAt))) fail('builtAt must be an ISO timestamp');
 if (!data.ingestion || typeof data.ingestion !== 'object') fail('ingestion metadata object missing');
+const dnav = data.ingestion?.mode === 'A-fallback';
+const canonicalIso = (value, size) => typeof value === 'string' && value.length === size &&
+  Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, size) === value;
+if (dnav && (data.ingestion.provider !== 'EIA DNav' ||
+  data.ingestion.route !== '/dnav/pet/hist/LeafHandler.ashx' ||
+  !canonicalIso(data.ingestion.asOfDate, 10) || new Date(data.ingestion.asOfDate).getUTCDay() !== 5 ||
+  !canonicalIso(data.ingestion.scheduledReleaseAt, 24) ||
+  !(Date.parse(data.ingestion.asOfDate) < Date.parse(data.ingestion.scheduledReleaseAt) &&
+    Date.parse(data.ingestion.scheduledReleaseAt) <= Date.parse(data.builtAt)))) {
+  fail('invalid EIA DNav cohort provenance');
+}
 
 const ev = data.evidence;
 if (!ev || typeof ev !== 'object') {
@@ -108,13 +117,16 @@ if (!ev || typeof ev !== 'object') {
     if (!(k in ev)) fail(`evidence.${k} missing`);
   }
 
-  for (const k of EIA_KEYS) {
+  for (const {key:k, id, unit} of EIA_SERIES) {
     const e = ev[k];
     if (!e || typeof e !== 'object') { fail(`evidence.${k} is not an object`); continue; }
     validateTimingFields(e, `evidence.${k}`, 'T2_weekly_official_anchor', 'core_physical_anchor');
     if (!numOrNull(e.value)) fail(`evidence.${k}.value must be number|null`);
     if (!UNITS.has(e.unit)) fail(`evidence.${k}.unit unsupported: ${e.unit}`);
     if (typeof e.source !== 'string' || !e.source.startsWith('EIA:')) fail(`evidence.${k}.source must start with 'EIA:'`);
+    if (dnav ? e.source !== `EIA:dnav:PET.${id}.W` || !/^[a-f0-9]{64}$/.test(e.sourceSha256 ?? '') ||
+      e.sourceUrl !== `https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=${id}&f=W` ||
+      e.asOfDate !== data.ingestion.asOfDate || !Number.isFinite(e.value) || e.unit !== unit || e.sourceStatus !== 'live' : e.source?.startsWith?.('EIA:dnav:')) fail(`evidence.${k} mismatches EIA DNav cohort provenance`);
     if (typeof e.sourceUrl !== 'string') fail(`evidence.${k}.sourceUrl must be a string`);
     for (const f of ['change1w', 'change4w', 'change13w', 'vs5yAvgPct', 'fiveYrRangePosition']) {
       if (!numOrNull(e[f])) fail(`evidence.${k}.${f} must be number|null`);
