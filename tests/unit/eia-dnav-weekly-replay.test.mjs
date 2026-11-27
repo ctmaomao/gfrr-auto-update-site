@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inspectDnav } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
+import { inspectDnav, replayDnavCohort } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
 
 const target='2026-11-20',cutoff='2026-11-26',id='WDIUPUS2';
 const day=86400000, ms=Date.parse(target);
 const date=value=>new Date(value).toISOString().slice(0,10);
-function fixture() {
+function fixture(utilization = false) {
  const weeks=[...Array.from({length:5},(_,i)=>{
    const candidate=Date.parse((2021+i)+'-11-19');
-   return [date(candidate+((5-new Date(candidate).getUTCDay()+7)%7)*day),String(1000+i)];
- }),...Array.from({length:14},(_,i)=>[date(ms-(13-i)*7*day),i===13?'3,917':String(3000+i)])];
+   return [date(candidate+((5-new Date(candidate).getUTCDay()+7)%7)*day),utilization ? String(80+i) : String(1000+i)];
+ }),...Array.from({length:14},(_,i)=>[date(ms-(13-i)*7*day),utilization ? (i===13?'97.5':String(84+i)) : (i===13?'3,917':String(3000+i))])];
  const months=new Map();
  for(const [d,v] of weeks){
   const key=d.slice(0,4)+'-'+new Date(d).toLocaleString('en',{month:'short',timeZone:'UTC'});
@@ -41,3 +41,36 @@ for(const [name,html,series,day,known,reason] of [
 ]){
  test('refuses '+name,()=>assert.throws(()=>inspectDnav(html,series,day,known),reason));
 }
+
+const cohortTitles = {
+ WCESTUS1:'Weekly U.S. Ending Stocks excluding SPR of Crude Oil (Thousand Barrels)',
+ WCSSTUS1:'Weekly U.S. Ending Stocks of Crude Oil in SPR (Thousand Barrels)',
+ WDISTUS1:'Weekly U.S. Ending Stocks of Distillate Fuel Oil (Thousand Barrels)',
+ WGTSTUS1:'Weekly U.S. Ending Stocks of Total Gasoline (Thousand Barrels)',
+ WGFUPUS2:'Weekly U.S. Product Supplied of Finished Motor Gasoline (Thousand Barrels per Day)',
+ WPULEUS3:'Weekly U.S. Percent Utilization of Refinery Operable Capacity (Percent)',
+ WCRRIUS2:'Weekly U.S. Refiner Net Input of Crude Oil (Thousand Barrels per Day)',
+ WDIUPUS2:'Weekly U.S. Product Supplied of Distillate Fuel Oil (Thousand Barrels per Day)',
+};
+const readFixture = key => Buffer.from(fixture(key==='WPULEUS3')
+ .replace(/<title>[^<]+/, '<title>'+cohortTitles[key]).replace('WDIUPUS2w.xls',key+'w.xls'));
+const release='2026-11-25';
+
+test('one cohort returns exactly eight pinned sources with fingerprints',()=>{
+ const group=replayDnavCohort(readFixture,target,release,cutoff);
+ assert.equal(group.targetDay,target);
+ assert.equal(group.releaseDate,release);
+ assert.deepEqual(group.series.map(x=>x.id).sort(),Object.keys(cohortTitles).sort());
+ assert.ok(group.series.every(x=>x.releaseDate===release && /^[a-f0-9]{64}$/.test(x.sha256)));
+});
+test('individually valid alternate release day cannot complete a cohort',()=>{
+ assert.throws(()=>replayDnavCohort(key=>key===id
+  ? Buffer.from(h.replace('11/25/2026','11/26/2026')) : readFixture(key),target,release,cutoff),/pinned release/);
+});
+test('one missing terminal value cannot produce a partial cohort',()=>{
+ assert.throws(()=>replayDnavCohort(key=>key===id
+  ? Buffer.from(h.replace('3,917','W')) : readFixture(key),target,release,cutoff),/incomplete/);
+});
+test('rejects a future pinned day before requesting any snapshot',()=>{
+ assert.throws(()=>replayDnavCohort(()=>assert.fail('read before release'),target,'2026-11-27',cutoff),/outside replay/);
+});
