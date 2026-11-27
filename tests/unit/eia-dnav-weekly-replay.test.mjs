@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inspectDnav, projectDnavCohort, replayDnavCohort } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
+import { inspectDnav, probeDnavCohort, projectDnavCohort, replayDnavCohort } from '../../tools/oil-directional/replay-eia-dnav-weekly.mjs';
 
 const target='2026-11-20',cutoff='2026-11-26',id='WDIUPUS2';
 const day=86400000, ms=Date.parse(target);
@@ -92,4 +92,40 @@ test('projection cannot return observations from a partial or wrong-ID cohort',(
  assert.throws(()=>projectDnavCohort(key=>readFixture(key===id?'WCRRIUS2':key),target,release,cutoff),/identity/);
  assert.throws(()=>projectDnavCohort(key=>key===id
   ? Buffer.from(h.replace('3012','W')) : readFixture(key),target,release,cutoff),/incomplete/);
+});
+
+const scheduled='2026-11-25T15:30:00.000Z';
+const afterRelease=Date.parse(scheduled)+1;
+const htmlHeaders={'content-type':'text/html; charset=utf-8'};
+test('probe makes one request per fixed EIA ID and emits a complete pinned receipt',async()=>{
+ const ids=[];
+ const fetchImpl=async (address,{signal,redirect})=>{
+  const url=new URL(address), key=url.searchParams.get('s');
+  assert.equal(url.origin,'https://www.eia.gov');
+  assert.equal(url.searchParams.get('f'),'W');
+  assert.equal(redirect,'error');
+  assert.ok(signal instanceof AbortSignal);
+  ids.push(key);
+  return new Response(readFixture(key),{headers:htmlHeaders});
+ };
+ const result=await probeDnavCohort(target,scheduled,{now:afterRelease,fetchImpl});
+ assert.deepEqual(ids.sort(),Object.keys(cohortTitles).sort());
+ assert.deepEqual(result,replayDnavCohort(readFixture,target,release,cutoff));
+});
+test('probe does not request data before the pinned release or with an invalid target',async()=>{
+ const fetchImpl=()=>assert.fail('early request');
+ await assert.rejects(probeDnavCohort(target,scheduled,{now:afterRelease-2,fetchImpl}),/release window/);
+ await assert.rejects(probeDnavCohort('2026-11-19',scheduled,{now:afterRelease,fetchImpl}),/release window/);
+});
+test('probe rejects errors, excessive actual body bytes and wrong-period HTML as whole cohorts',async()=>{
+ for(const [bad,reason] of [
+  [()=>new Response('retry later',{status:503,headers:htmlHeaders}),/unexpected/],
+  [()=>new Response(new Uint8Array(512*1024+1),{headers:htmlHeaders}),/too large/],
+  [()=>new Response(h.replace('11/25/2026','11/26/2026'),{headers:htmlHeaders}),/release/],
+ ]){
+  await assert.rejects(probeDnavCohort(target,scheduled,{now:afterRelease,fetchImpl:async address=>{
+   const key=new URL(address).searchParams.get('s');
+   return key===id ? bad() : new Response(readFixture(key),{headers:htmlHeaders});
+  }}),reason);
+ }
 });
