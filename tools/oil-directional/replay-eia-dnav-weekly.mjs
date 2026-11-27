@@ -3,6 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
 
 const series = {
  WCESTUS1:'Weekly U.S. Ending Stocks excluding SPR of Crude Oil (Thousand Barrels)',
@@ -64,10 +65,30 @@ export function inspectDnav(html, id, targetDay, cutoffDay) {
  if(comparable.some(x=>x===undefined)) throw Error('insufficient five-year reference');
  return {id,releaseDate,targetDay,latest:observations.get(target),valuePrior:observations.get(target-week),change4w:Number((observations.get(target)-observations.get(target-4*week)).toFixed(3)),change13w:Number((observations.get(target)-observations.get(target-13*week)).toFixed(3)),seasonalReferences:comparable.map(x=>new Date(x).toISOString().slice(0,10)),points:observations.size,spanYears:(target-[...observations.keys()][0])/86400000/365.25};
 }
+function replaySnapshot(bytes, id, target, cutoff) {
+ return {...inspectDnav(bytes.toString('utf8'), id, target, cutoff), sha256:createHash('sha256').update(bytes).digest('hex')};
+}
+
+export function replayDnavCohort(readSnapshot, target, release, cutoff) {
+ if (strictDate(release) < strictDate(target) || strictDate(release) > strictDate(cutoff)) {
+  throw Error('pinned release day outside replay interval');
+ }
+ const results = Object.keys(series).map(id => {
+  const replay = replaySnapshot(readSnapshot(id), id, target, cutoff);
+  if (replay.releaseDate !== release) throw Error('cohort release day differs from pinned release');
+  return replay;
+ });
+ return {targetDay:target, releaseDate:release, series:results};
+}
+
 if (process.argv[1] && pathToFileURL(process.argv[1]).href===import.meta.url) {
- const [, , file, id, target, cutoff] = process.argv;
- if (!file || !id || !target || !cutoff || process.argv.length!==6) throw Error('Usage: node tools/oil-directional/replay-eia-dnav-weekly.mjs <snapshot.html> <series> <target-Friday> <cutoff-date>');
- const bytes = readFileSync(file);
- const replay = inspectDnav(bytes.toString('utf8'), id, target, cutoff);
- console.log(JSON.stringify({...replay, sha256:createHash('sha256').update(bytes).digest('hex')}, null, 2));
+ const args = process.argv.slice(2);
+ const cohort = args[0] === '--cohort';
+ if (args.length !== (cohort ? 5 : 4) || args.some(arg=>!arg)) {
+  throw Error('Usage: node tools/oil-directional/replay-eia-dnav-weekly.mjs <snapshot.html> <series> <target-Friday> <cutoff-date> or --cohort <directory> <target-Friday> <release-day> <cutoff-date>');
+ }
+ const result = cohort
+  ? replayDnavCohort(id=>readFileSync(join(args[1], id+'-dnav.html')), ...args.slice(2))
+  : replaySnapshot(readFileSync(args[0]), ...args.slice(1));
+ console.log(JSON.stringify(result, null, 2));
 }
