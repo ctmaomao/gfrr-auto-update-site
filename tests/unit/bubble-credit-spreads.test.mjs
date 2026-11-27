@@ -151,3 +151,32 @@ test('Byte cap accepts exactly 64 KiB and refuses excess bytes across chunks', a
   assert.equal(calls, 0);
   assert.ok(Object.values(invalid.sources).every(source => source.status === 'fallback'));
 });
+
+test('Credit display serialization follows registry order, not delivery order', async () => {
+  const keys = Object.keys(CREDIT_SERIES);
+  const run = order => {
+    const pending = {};
+    const result = collectCreditSpreads({ previous, now, fetchImpl: url => {
+      const id = new URL(url).searchParams.get('id');
+      return new Promise((resolve, reject) => {
+        pending[id] = () => id === CREDIT_SERIES.ccc ? reject(new Error('fixture refusal')) : resolve(new Response(csv(id)));
+      });
+    } });
+    return (async () => {
+      for (const key of order) {
+        pending[CREDIT_SERIES[key]]();
+        await new Promise(resolve => setImmediate(resolve));
+      }
+      return result;
+    })();
+  };
+  const a = await run(keys);
+  const b = await run([...keys].reverse());
+  assert.equal(a.sources.ccc.status, 'fallback');
+  assert.equal(b.sources.ig.status, 'fresh');
+  for (const data of [a, b]) {
+    assert.deepEqual(Object.keys(data.series), keys);
+    assert.deepEqual(Object.keys(data.sources), keys);
+  }
+  assert.equal(JSON.stringify(a), JSON.stringify(b));
+});
