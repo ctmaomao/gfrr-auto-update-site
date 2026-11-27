@@ -1,7 +1,7 @@
 {
   "schemaVersion": "gdelt-news-cache-p37",
   "module": "gdelt-news-cache",
-  "generatedAt": "2026-11-25T21:57:34.010Z",
+  "generatedAt": "2026-11-27T08:59:41.093Z",
   "sourceKey": "gdelt_news_cache",
   "cacheScope": "odp_oil_news_event_watch",
   "status": "ok",
@@ -41,48 +41,39 @@
     "endpointType": "doc",
     "label": "GDELT DOC broad oil-news cache",
     "status": 200,
-    "attempts": 2,
-    "retryCount": 1,
+    "attempts": 1,
+    "retryCount": 0,
     "rateLimited": false,
-    "timeout": true,
+    "timeout": false,
     "retryAfterSeconds": null,
     "timeoutMs": 20000,
     "minIntervalMs": 8000,
     "maxRetries": 1,
     "retryAfterCapSeconds": 15,
-    "elapsedMs": 39425,
+    "elapsedMs": 12428,
     "errorCode": null
   },
   "availability": {
     "contractVersion": "gdelt-doc-availability-v1",
     "historyLimit": 64,
-    "latestAttemptAt": "2026-11-25T21:56:54.581Z",
-    "lastLiveSuccessAt": "2026-11-25T21:56:54.581Z",
+    "latestAttemptAt": "2026-11-27T08:59:28.660Z",
+    "lastLiveSuccessAt": "2026-11-27T08:59:28.660Z",
     "latestOutcome": "success",
     "windows": {
       "days7": {
-        "attemptCount": 5,
-        "successCount": 2,
+        "attemptCount": 6,
+        "successCount": 3,
         "failureCount": 3,
-        "successRatePct": 40
+        "successRatePct": 50
       },
       "days30": {
-        "attemptCount": 28,
-        "successCount": 5,
+        "attemptCount": 29,
+        "successCount": 6,
         "failureCount": 23,
-        "successRatePct": 17.9
+        "successRatePct": 20.7
       }
     },
     "history": [
-      {
-        "attemptedAt": "2026-09-24T17:30:27.041Z",
-        "outcome": "network_error",
-        "attempts": 2,
-        "retryCount": 1,
-        "status": null,
-        "errorCode": "network_error",
-        "elapsedMs": 28405
-      },
       {
         "attemptedAt": "2026-09-24T21:44:15.665Z",
         "outcome": "rate_limited",
@@ -649,24 +640,43 @@
         "status": 200,
         "errorCode": null,
         "elapsedMs": 39425
+      },
+      {
+        "attemptedAt": "2026-11-27T08:59:28.660Z",
+        "outcome": "success",
+        "attempts": 1,
+        "retryCount": 0,
+        "status": 200,
+        "errorCode": null,
+        "elapsedMs": 12428
       }
     ]
   },
   "aggregate": {
     "articleCount": 32,
     "bucketCounts": {
-      "chokepoint": 9,
+      "chokepoint": 11,
       "sanctions": 0,
       "supply_disruption": 3,
-      "facility_event": 0,
-      "tanker_shipping": 3,
-      "middle_east_risk": 11,
-      "market_reaction": 17
+      "facility_event": 1,
+      "tanker_shipping": 1,
+      "middle_east_risk": 7,
+      "market_reaction": 10
     }
   },
   "articles": [
     {
-      "domain": "tribune.com.pk",
+      "domain": "economictimes.indiatimes.com",
+      "publishedAt": null,
+      "buckets": [
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "business-standard.com",
       "publishedAt": null,
       "buckets": [
         "market_reaction",
@@ -687,25 +697,19 @@
       ]
     },
     {
-      "domain": "business-standard.com",
+      "domain": "ksevradio.com",
       "publishedAt": null,
       "buckets": [
-        "chokepoint",
-        "market_reaction",
-        "middle_east_risk",
-        "supply_disruption"
+        "middle_east_risk"
       ],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
     },
     {
-      "domain": "arabnews.com",
+      "domain": "cfi.net.cn",
       "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
+      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -730,10 +734,30 @@
       ]
     },
     {
-      "domain": "economictimes.indiatimes.com",
+      "domain": "jo24.net",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "businesstimes.com.sg",
       "publishedAt": null,
       "buckets": [
-        "market_reaction",
+        "chokepoint",
+        "facility_event",
+        "market_reaction"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "shipandbunker.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint",
         "middle_east_risk"
       ],
       "queryIds": [
@@ -741,11 +765,9 @@
       ]
     },
     {
-      "domain": "futures.cnfol.com",
+      "domain": "beritasatu.com",
       "publishedAt": null,
-      "buckets": [
-        "market_reaction"
-      ],
+      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -763,11 +785,29 @@
       ]
     },
     {
+      "domain": "beritasatu.com",
+      "publishedAt": null,
+      "buckets": [
+        "middle_east_risk"
+      ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
       "domain": "economictimes.indiatimes.com",
       "publishedAt": null,
       "buckets": [
         "market_reaction"
       ],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "gold.cnfol.com",
+      "publishedAt": null,
+      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -781,12 +821,9 @@
       ]
     },
     {
-      "domain": "aol.com",
+      "domain": "24.ae",
       "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "tanker_shipping"
-      ],
+      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -810,40 +847,12 @@
       ]
     },
     {
-      "domain": "businesstoday.in",
-      "publishedAt": null,
-      "buckets": [
-        "chokepoint",
-        "middle_east_risk",
-        "tanker_shipping"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
       "domain": "news.az",
       "publishedAt": null,
       "buckets": [
         "chokepoint",
         "market_reaction"
       ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "akhbaregy.com",
-      "publishedAt": null,
-      "buckets": [],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "moneycontrol.com",
-      "publishedAt": null,
-      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -859,55 +868,28 @@
       ]
     },
     {
-      "domain": "beritasatu.com",
+      "domain": "akhbaregy.com",
+      "publishedAt": null,
+      "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "asiaone.com",
       "publishedAt": null,
       "buckets": [
-        "middle_east_risk"
+        "chokepoint",
+        "supply_disruption"
       ],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
     },
     {
-      "domain": "arynews.tv",
+      "domain": "tribune.com.pk",
       "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "arynews.tv",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "arynews.tv",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "arynews.tv",
-      "publishedAt": null,
-      "buckets": [
-        "market_reaction",
-        "middle_east_risk"
-      ],
+      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -929,9 +911,11 @@
       ]
     },
     {
-      "domain": "tribune.com.pk",
+      "domain": "beritasatu.com",
       "publishedAt": null,
-      "buckets": [],
+      "buckets": [
+        "middle_east_risk"
+      ],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -944,14 +928,6 @@
         "market_reaction",
         "supply_disruption"
       ],
-      "queryIds": [
-        "gdelt_broad_oil_news"
-      ]
-    },
-    {
-      "domain": "wallstreetcn.com",
-      "publishedAt": null,
-      "buckets": [],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
@@ -979,9 +955,20 @@
       ]
     },
     {
-      "domain": "alquds.co.uk",
+      "domain": "wallstreetcn.com",
       "publishedAt": null,
       "buckets": [],
+      "queryIds": [
+        "gdelt_broad_oil_news"
+      ]
+    },
+    {
+      "domain": "cnbc.com",
+      "publishedAt": null,
+      "buckets": [
+        "chokepoint",
+        "middle_east_risk"
+      ],
       "queryIds": [
         "gdelt_broad_oil_news"
       ]
