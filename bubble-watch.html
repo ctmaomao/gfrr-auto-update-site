@@ -453,6 +453,12 @@ function arrIssuerContext(item, issueDate) {
   return `<div class="note arr-issuer-context"><a href="https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Anthropic 招股书</a>：截至 2026-10-31，公司年化收入运行率约 810 亿美元，较 9 月末增加 100 亿美元。该口径含用量费用，不是订阅 ARR 或已确认收入；缺少可比序列，仅供背景参考，不更新本卡评分。</div>`;
 }
 
+function vcMonthlyContext(item, issueDate) {
+  // Historical source note only; do not substitute a monthly value into the quarterly series.
+  if (item.id !== 'vc_ai_share' || !strictEvidenceDate(issueDate) || issueDate <= '2026-11-03') return '';
+  return `<div class="note vc-monthly-context">月度背景：2026 年 10 月，AI 公司获得全球创投融资的 66%。<a href="https://news.crunchbase.com/venture/october-2026-global-startup-funding-strong-china-deepseek/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Crunchbase 11 月 3 日发布</a>。单月占比不替代本卡的季度数据，也不参与评分。</div>`;
+}
+
 function safeHttpsUrl(value) {
   try {
     const url = new URL(String(value || ''));
@@ -988,6 +994,7 @@ function render(data, editorialStatus = null) {
                 <div class="note">${retainedCredit ? `历史快照（${escapeHtml(strictEvidenceDate(ind.as_of) ? ind.as_of : '日期未核实')}）：${escapeHtml(ind.value_display || '未记录')}。已发布总分仍按该快照的${retainedLight}计算。 ` : ''}${escapeHtml(ratioView ? ratioView.note : isArrEvidenceGap(ind)
                   ? (ind.note || '').replace('自动候选最新里程碑', '自动候选的最新 SaaStr 报道日期为') : ind.note)}</div>
                 ${arrIssuerContext(ind, data.as_of_date)}
+                ${vcMonthlyContext(ind, data.as_of_date)}
                 ${coverageNotice ? `<div class="note source-coverage-notice">${escapeHtml(coverageNotice)}</div>` : ''}
                 <div class="meta">
                   <span>${escapeHtml(ind.threshold_text)}</span>
