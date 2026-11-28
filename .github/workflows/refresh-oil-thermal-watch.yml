@@ -47,7 +47,7 @@ jobs:
           echo "actual_checkout_sha=$THERMAL_ACTUAL_CHECKOUT_SHA" >> "$GITHUB_OUTPUT" || true
           npm run build:oil-thermal-watch -- --research-receipt
 
-      - name: Validate and publish
+      - name: Commit
         run: |
           git add data/oil-thermal-watch.json
           if git diff --cached --quiet; then
